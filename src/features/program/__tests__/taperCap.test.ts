@@ -6,10 +6,7 @@
  * lights up only inside the taper window.
  */
 import { describe, it, expect } from "vitest";
-import {
-  getRacePhaseLabel,
-  isCurrentWeekInTaper,
-} from "../runScheduler";
+import { getRacePhaseLabel, isCurrentWeekInTaper } from "../runScheduler";
 
 /* The internal getPhaseForWeek is not exported; we exercise it
    indirectly through the public getRacePhaseLabel + isCurrentWeekInTaper.
@@ -17,7 +14,7 @@ import {
 
 function countWeeksByPhase(
   totalWeeks: number,
-  distance: "5k" | "10k" | "half" | "marathon",
+  distance: "5k" | "10k" | "half" | "marathon"
 ) {
   const counts = { Base: 0, Build: 0, Taper: 0, Race: 0 } as Record<
     string,

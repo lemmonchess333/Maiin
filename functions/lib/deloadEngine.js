@@ -24,6 +24,7 @@
  */
 
 const DELOAD_REPS_FLOOR = 3;
+const HOLD_STEP_SECONDS = 5;
 
 /**
  * Apply the deload transform to a full week of workout days.
@@ -39,7 +40,14 @@ function applyDeloadToWorkouts(workouts, experience) {
     exercises: day.exercises.map((ex) => {
       const sets = Math.max(2, ex.sets - 1);
       if (holdLoad) {
-        return { ...ex, sets, reps: Math.max(DELOAD_REPS_FLOOR, ex.reps - 2) };
+        return {
+          ...ex,
+          sets,
+          reps:
+            ex.repUnit === "seconds"
+              ? Math.max(10, ex.reps - HOLD_STEP_SECONDS)
+              : Math.max(DELOAD_REPS_FLOOR, ex.reps - 2),
+        };
       }
       return {
         ...ex,

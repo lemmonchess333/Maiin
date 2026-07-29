@@ -108,6 +108,8 @@ interface ProgrammeSettingsProps {
     goal?: string,
     weeklyTarget?: number
   ) => Promise<void> | void;
+  /** Re-hydrates profile state after the atomic server-side rebuild. */
+  refreshProfile: () => Promise<void>;
   /** Opens the day-by-day weekly-layout editor (ScheduleLayoutSheet). */
   onOpenWeeklyLayout: () => void;
   /** Optional hook so the host can refresh after a save. */
@@ -384,6 +386,7 @@ export default function ProgrammeSettings({
   programState,
   updateSettings,
   regenerateProgram,
+  refreshProfile,
   onOpenWeeklyLayout,
   onSaved,
   variant = "full",
@@ -539,6 +542,11 @@ export default function ProgrammeSettings({
         primaryGoal,
         nutritionPhase,
         experience,
+        // Without this a level change is invisible to the builder — it
+        // preserves the saved week whenever the day count is unchanged, so
+        // Beginner ↔ Advanced produced byte-identical workouts behind this
+        // flow's own "Plan updated" toast.
+        previousExperience: saved.experience,
         // D-LIFT-5: seed bodyweight-relative cold-start loads on regen.
         bodyweightKg: profile.weightKg,
         sex: profile.sex,
@@ -580,6 +588,25 @@ export default function ProgrammeSettings({
         weekSchedule: plan.weekSchedule,
       });
 
+      // configurePlan writes through the Admin SDK, outside updateProfile's
+      // optimistic local-state path. Re-hydrating the authoritative profile
+      // also retriggers useProgram's loader, so the form and programme cannot
+      // keep showing (or later re-save) the pre-change experience/schedule.
+      try {
+        await refreshProfile();
+      } catch (refreshErr) {
+        // The atomic server write has already succeeded. Do not tell the user
+        // the save failed (or invite a duplicate retry); reload as the
+        // authoritative fallback, matching onboarding's post-callable path.
+        logger.warn(
+          "[ProgrammeSettings] plan saved but profile refresh failed; reloading",
+          refreshErr
+        );
+        toast.success("Plan updated");
+        onSaved?.();
+        window.location.reload();
+        return;
+      }
       toast.success("Plan updated");
       onSaved?.();
     } catch (err) {

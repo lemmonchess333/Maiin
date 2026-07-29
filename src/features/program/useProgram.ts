@@ -36,6 +36,7 @@ import {
   applyProgression,
 } from "./programEngine";
 import { loadContextFrom } from "./startingLoads";
+import { toExperience } from "./experienceModel";
 import { recoveryStateFrom } from "./adjustmentRule";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { logger } from "@/lib/logger";
@@ -486,7 +487,12 @@ export function useProgram() {
           weeklyTarget,
           undefined,
           profile.primaryGoal,
-          loadContextFrom(profile)
+          loadContextFrom(profile),
+          // Backlog #10 (M6): the week's SHAPE, so back-to-back days aren't
+          // the two that load the same lower back. Read-only — this does not
+          // date-pin lifts (ADR-0002).
+          profile.weekSchedule,
+          toExperience(profile.experience)
         );
 
         // Generate run schedule only for an active race plan. PR-0b-ii: V2
@@ -809,6 +815,7 @@ export function useProgram() {
           exerciseId: ex.exerciseId,
           exerciseName: ex.name,
           category: ex.movementCategory,
+          ...(ex.repUnit !== undefined ? { repUnit: ex.repUnit } : {}),
           sets,
           caloriesBurned: 0,
         };
@@ -816,7 +823,10 @@ export function useProgram() {
 
       const tonnage = exercises.reduce(
         (t, ex) =>
-          t + ex.sets.reduce((s, set) => s + set.weightKg * set.reps, 0),
+          t +
+          (ex.repUnit === "seconds"
+            ? 0
+            : ex.sets.reduce((s, set) => s + set.weightKg * set.reps, 0)),
         0
       );
       const completedSetCount = exercises.reduce(
@@ -1628,7 +1638,9 @@ export function useProgram() {
         weeklyTarget,
         programState?.workouts,
         primaryGoal,
-        loadContextFrom(profile)
+        loadContextFrom(profile),
+        overrides?.weekSchedule ?? profile.weekSchedule,
+        toExperience(profile.experience)
       );
 
       // Regenerate run schedule. PR-0b-ii: V2 writers. Full regen

@@ -60,6 +60,16 @@ const { estimateLiftBurn } = require("./workoutBurn");
 // applyDeloadWeek reducer (PROGRAM-DELOAD-01).
 const { applyDeloadToWorkouts } = require("./deloadEngine");
 
+const TIMED_EXERCISE_IDS = new Set([
+  "plank",
+  "superman-hold",
+  "side-plank",
+  "weighted-plank",
+]);
+function repUnitForExerciseId(exerciseId) {
+  return TIMED_EXERCISE_IDS.has(exerciseId) ? "seconds" : undefined;
+}
+
 // 31-day receipt retention. Command receipts live at
 // users/{uid}/programState/current/commandReceipts/{commandId} and make a
 // retried offline / timed-out command idempotent. A bounded scheduled cleanup
@@ -1042,17 +1052,19 @@ function addExercises(state, command) {
   // Deterministic instance ids derived from the commandId — a retry with the
   // same commandId produces the same ids (and is short-circuited by the receipt
   // anyway), so the reducer stays pure.
-  const built = command.exercises.map((input, i) =>
-    buildProgramExercise({
+  const built = command.exercises.map((input, i) => {
+    const repUnit = repUnitForExerciseId(input.exerciseId);
+    return buildProgramExercise({
       name: resolveCatalogExercise(input.exerciseId, "added"),
       exerciseId: input.exerciseId,
       instanceId: `cmd-${command.commandId}-${i}`,
       // Match the client add default (3×10×0) when a field is omitted.
       sets: input.sets ?? 3,
-      reps: input.reps ?? 10,
+      reps: input.reps ?? (repUnit === "seconds" ? 30 : 10),
       weight: input.weight ?? 0,
-    })
-  );
+      ...(repUnit !== undefined ? { repUnit } : {}),
+    });
+  });
 
   const exercises = day.exercises.slice();
   const at =
@@ -1077,20 +1089,39 @@ function replaceExercise(state, command) {
     "replacement"
   );
   const old = day.exercises[idx];
-  // Mirror the client replaceExercise: carry the old prescription, re-infer
-  // the category, mint a new instance. The slot's prescription fields carry
-  // too (backlog #7) — see Program.tsx for why each one, including why
-  // preDeloadWeight is deliberately excluded.
+  const replacementRepUnit = repUnitForExerciseId(
+    command.replacementExerciseId
+  );
+  const unitChanged =
+    (old.repUnit === "seconds") !== (replacementRepUnit === "seconds");
+  const replacementReps = unitChanged
+    ? replacementRepUnit === "seconds"
+      ? 30
+      : 10
+    : old.reps;
+  // Mirror the client replaceExercise's identity/unit boundary: carry the
+  // role-level prescription, re-infer the category, mint a new instance, and
+  // reset a reps↔seconds transition. This server copy has no trusted profile
+  // calibration context, so it deliberately leaves the new load at 0.
   const replacement = buildProgramExercise({
     name,
     exerciseId: command.replacementExerciseId,
     instanceId: `cmd-${command.commandId}`,
     sets: old.sets,
-    reps: old.reps,
-    weight: old.weight,
-    baseReps: old.baseReps,
+    reps: replacementReps,
+    // No trusted target-specific calibration exists in this reducer. Carrying
+    // kilograms across an arbitrary catalog replacement is unsafe (bench →
+    // front squat, deadlift → glute bridge), so the new movement starts
+    // explicitly uncalibrated rather than inheriting a lie.
+    weight: 0,
+    baseReps: unitChanged ? replacementReps : old.baseReps,
     progressionType: old.progressionType,
-    ...(old.repRangeMax !== undefined ? { repRangeMax: old.repRangeMax } : {}),
+    ...(!unitChanged && old.repRangeMax !== undefined
+      ? { repRangeMax: old.repRangeMax }
+      : {}),
+    ...(replacementRepUnit !== undefined
+      ? { repUnit: replacementRepUnit }
+      : {}),
     ...(old.baseSets !== undefined ? { baseSets: old.baseSets } : {}),
     ...(old.restSeconds !== undefined ? { restSeconds: old.restSeconds } : {}),
     ...(old.isAccessory !== undefined ? { isAccessory: old.isAccessory } : {}),
@@ -1170,13 +1201,18 @@ function completeWorkoutDayWithEffect(state, profile, command, now) {
       exerciseId: ex.exerciseId,
       exerciseName: ex.name,
       category: ex.movementCategory,
+      ...(ex.repUnit !== undefined ? { repUnit: ex.repUnit } : {}),
       sets,
       caloriesBurned: 0,
     };
   });
 
   const tonnage = exercises.reduce(
-    (t, ex) => t + ex.sets.reduce((s, set) => s + set.weightKg * set.reps, 0),
+    (t, ex) =>
+      t +
+      (ex.repUnit === "seconds"
+        ? 0
+        : ex.sets.reduce((s, set) => s + set.weightKg * set.reps, 0)),
     0
   );
   const completedSetCount = exercises.reduce((c, ex) => c + ex.sets.length, 0);

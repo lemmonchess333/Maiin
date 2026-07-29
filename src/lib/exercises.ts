@@ -82,6 +82,11 @@ export const EXERCISES: Exercise[] = [
       "Press up and slightly back, squeezing the upper chest at lockout.",
     ],
     tip: "Cranking the bench above 45° turns this into a front-delt press. Keep the incline low or you're not training upper chest.",
+    commonMistakes: [
+      "Setting the bench too steep \u2014 past about 45 degrees it becomes a shoulder press.",
+      "Letting the shoulder blades come unset off the bench as the press starts.",
+      "Bouncing the bar off the upper chest instead of controlling the touch.",
+    ],
   },
   {
     id: "decline-bench",
@@ -113,6 +118,11 @@ export const EXERCISES: Exercise[] = [
       "Lower under control to a deep chest stretch with elbows at about 45°.",
     ],
     tip: "Letting the dumbbells drift and clang together at the top. Press up and slightly in, stopping short of touching, wrists stacked over elbows the whole way.",
+    commonMistakes: [
+      "Flaring the elbows straight out to the sides instead of tucking them slightly.",
+      "Clashing the dumbbells together at the top and losing tension.",
+      "Dropping the shoulders off the bench to chase a deeper stretch.",
+    ],
   },
   {
     id: "incline-db-press",
@@ -129,6 +139,11 @@ export const EXERCISES: Exercise[] = [
       "Lower slowly to a full stretch on the upper chest.",
     ],
     tip: "Arching hard turns the incline into a flat press. Keep your upper back on the bench and lower the bells to your upper chest.",
+    commonMistakes: [
+      "Letting the dumbbells drift toward the face instead of tracking over the upper chest.",
+      "Losing the shoulder-blade set as the arms come overhead.",
+      "Going so deep the shoulder rolls forward at the bottom.",
+    ],
   },
   {
     id: "decline-db-press",
@@ -360,6 +375,11 @@ export const EXERCISES: Exercise[] = [
       "Lower under control to a full stretch, keeping the hinge locked.",
     ],
     tip: "If your torso keeps rising to yank the bar up, you're cheating with leg drive. Lock the hinge or drop weight — standing reps train traps, not lats.",
+    commonMistakes: [
+      "Standing up through the pull so the torso angle changes rep to rep.",
+      "Rounding the lower back to reach the bar at the bottom.",
+      "Yanking with the arms before the shoulder blades have started to pull.",
+    ],
   },
   {
     id: "pendlay-row",
@@ -392,6 +412,11 @@ export const EXERCISES: Exercise[] = [
       "Lower under control to a full stretch before the next rep.",
     ],
     tip: "A rounded, twisting back under a heavy dumbbell. Keep your spine long, brace on the bench, and row the elbow to your hip without rotating.",
+    commonMistakes: [
+      "Rotating the torso open to help the weight up.",
+      "Pulling the elbow out wide instead of driving it back along the ribs.",
+      "Shrugging the shoulder up at the top instead of pulling the blade in.",
+    ],
   },
   {
     id: "chest-supported-db-row",
@@ -439,6 +464,11 @@ export const EXERCISES: Exercise[] = [
       "Lower under control to a full dead hang — no kipping, no swing.",
     ],
     tip: "Kipping and half-reps train nothing but your ego. If you can't hit a dead-hang chin-over-bar, use a band or lat pulldown until you can.",
+    commonMistakes: [
+      "Kipping or swinging to get the chin over the bar.",
+      "Cutting the range at the bottom instead of reaching a full hang.",
+      "Shrugging the shoulders up at the top rather than pulling the blades down.",
+    ],
   },
   {
     id: "chin-ups",
@@ -455,6 +485,11 @@ export const EXERCISES: Exercise[] = [
       "Lower to a full dead hang under control before the next rep.",
     ],
     tip: "Half reps from a bent hang. Start from a dead hang, pull your chin over the bar, and lower under control — full range beats extra reps.",
+    commonMistakes: [
+      "Letting the elbows drift forward so the biceps take the whole movement.",
+      "Bouncing out of the bottom of the hang.",
+      "Failing to control the descent.",
+    ],
   },
   {
     id: "lat-pulldown",
@@ -471,6 +506,11 @@ export const EXERCISES: Exercise[] = [
       "Return slowly to a full overhead stretch, keeping tension on the lats.",
     ],
     tip: "Leaning way back and heaving turns it into a row. Stay near upright, pull the bar to your collarbone, and drive the elbows down — not the hands.",
+    commonMistakes: [
+      "Leaning far back and turning it into a row.",
+      "Pulling the bar behind the neck, which strains the shoulder.",
+      "Letting the weight pull the shoulders up at the top of each rep.",
+    ],
   },
   {
     id: "single-arm-lat-pulldown",
@@ -503,6 +543,11 @@ export const EXERCISES: Exercise[] = [
       "Extend your arms slowly without letting your lower back round.",
     ],
     tip: "Rocking the torso to move the stack. Keep your chest tall and still, and pull the handle to your stomach with elbows close.",
+    commonMistakes: [
+      "Leaning far back at the finish and turning it into a lower-back movement.",
+      "Letting the shoulders roll forward at the stretch instead of staying set.",
+      "Pulling to the sternum with the elbows flared rather than back along the sides.",
+    ],
   },
   {
     id: "t-bar-row",
@@ -519,6 +564,11 @@ export const EXERCISES: Exercise[] = [
       "Lower to a full stretch without letting your back round.",
     ],
     tip: "Standing up and heaving with the hips. Set a strong hinge, keep it fixed, and row the handle to your chest.",
+    commonMistakes: [
+      "Heaving the whole body upright to start each rep.",
+      "Letting the lower back round as the weight gets heavy.",
+      "Cutting the range short at the bottom so the lats never stretch.",
+    ],
   },
   {
     id: "face-pulls",
@@ -600,6 +650,11 @@ export const EXERCISES: Exercise[] = [
       "Punch your head through at lockout so the bar is over your ears.",
     ],
     tip: "If your lower back arches hard to get the bar up, you're losing the brace. Squeeze glutes and abs like a vice — no spinal load, no cheat press.",
+    commonMistakes: [
+      "Arching the lower back to muscle the bar up instead of holding the brace.",
+      "Pressing around the face rather than tucking the chin and letting the bar pass close.",
+      "Stopping short of lockout, with the bar in front of the head rather than over the ears.",
+    ],
   },
   {
     id: "db-shoulder-press",
@@ -770,6 +825,11 @@ export const EXERCISES: Exercise[] = [
       "Lower under control to the starting position.",
     ],
     tip: "Pulling the bar above chest height with a narrow grip impinges shoulders. If your elbows pass your shoulders, stop short or drop to a wider grip.",
+    commonMistakes: [
+      "Pulling the elbows above shoulder height \u2014 the position most associated with shoulder impingement (Schoenfeld 2011). Keep them level or below.",
+      "Gripping too narrow, which forces more internal rotation.",
+      "Using the legs to bounce the bar up.",
+    ],
   },
   {
     id: "shrugs",
@@ -866,6 +926,11 @@ export const EXERCISES: Exercise[] = [
       "Lower slowly to a full stretch without swinging your torso.",
     ],
     tip: "Rocking your hips back to fling the bar up is ego lifting, not biceps training. Lock the torso or drop weight — clean reps grow arms.",
+    commonMistakes: [
+      "Swinging the hips to throw the bar up once it gets heavy.",
+      "Letting the elbows drift forward so the front delts take over at the top.",
+      "Dropping the bar through the lowering phase instead of controlling it.",
+    ],
   },
   {
     id: "ez-bar-curl",
@@ -1068,6 +1133,11 @@ export const EXERCISES: Exercise[] = [
       "Return slowly to a full stretch without letting elbows drift forward.",
     ],
     tip: "Elbows drifting forward turns it into a shove. Pin them to your sides and split the rope apart at the bottom.",
+    commonMistakes: [
+      "Letting the elbows flare out and away from the ribs.",
+      "Leaning over the weight to push with bodyweight rather than the triceps.",
+      "Stopping short of lockout, where the triceps do most of their work.",
+    ],
   },
   {
     id: "skull-crushers",
@@ -1162,6 +1232,11 @@ export const EXERCISES: Exercise[] = [
       "Press back to lockout, driving through the triceps.",
     ],
     tip: "Grip any closer than shoulder-width and you torque the wrists without training the triceps any harder. Shoulder-width in, elbows tucked — that's where it works.",
+    commonMistakes: [
+      "Gripping so narrow the wrists bend back painfully \u2014 shoulder-width is close enough.",
+      "Flaring the elbows, which turns it back into a regular bench.",
+      "Letting the bar drift up toward the collarbone instead of touching low on the chest.",
+    ],
   },
   {
     id: "tricep-kickback",
@@ -1282,6 +1357,11 @@ export const EXERCISES: Exercise[] = [
       "Drive up through your whole foot, keeping elbows high all the way.",
     ],
     tip: "If your elbows drop, the bar rolls off your shoulders and onto your neck. Keep elbows up like you're holding a tray — dropped elbows end the set.",
+    commonMistakes: [
+      "Elbows dropping, which rolls the bar off the shoulders and onto the neck.",
+      "Letting the torso pitch forward \u2014 the front rack punishes it far faster than a back squat.",
+      "Gripping the bar in the hands instead of resting it on the front delts.",
+    ],
   },
   {
     id: "goblet-squat",
@@ -1345,6 +1425,11 @@ export const EXERCISES: Exercise[] = [
       "Press back up through your heels without locking out hard.",
     ],
     tip: "Heels lifting off the plate at depth. Set your feet high enough on the platform that you can sit deep with flat feet.",
+    commonMistakes: [
+      "Letting the heels lift as the depth increases.",
+      "Bouncing out of the bottom instead of controlling the turnaround.",
+      "Letting the knees cave inward on the drive up.",
+    ],
   },
   {
     id: "leg-press",
@@ -1361,6 +1446,11 @@ export const EXERCISES: Exercise[] = [
       "Press back up without fully locking the knees.",
     ],
     tip: "Loading deep until your lower back rounds off the pad is how people herniate discs on the leg press. Stop the range where the back stays glued to the pad.",
+    commonMistakes: [
+      "Letting the lower back round off the pad at the bottom of the range.",
+      "Locking the knees out hard at the top.",
+      "Cutting the range short and loading the sled instead of the legs.",
+    ],
   },
   {
     id: "leg-extension",
@@ -1409,6 +1499,11 @@ export const EXERCISES: Exercise[] = [
       "Drive your hips forward to stand, squeezing glutes at lockout.",
     ],
     tip: "If you turn this into a squat by bending the knees, you've lost the movement. Knees stay soft but fixed — the hips do the work.",
+    commonMistakes: [
+      "Squatting the weight down instead of pushing the hips back \u2014 the knees should stay soft, not bend.",
+      "Rounding the lower back once the bar passes the knees.",
+      "Going deeper than the hamstrings can hold position, so the spine finishes the range.",
+    ],
   },
   {
     id: "db-rdl",
@@ -1472,6 +1567,11 @@ export const EXERCISES: Exercise[] = [
       "Lower under control, knees tracking over your toes all the way down.",
     ],
     tip: "If your hips shoot up first, you're a stiff-leg deadlift with wide feet. Drive knees and hips up together — wide stance means legs stay involved.",
+    commonMistakes: [
+      "Letting the bar drift away from the body instead of staying close over the centre of the foot.",
+      "Letting the knees collapse inward rather than spreading them out over the ankles.",
+      "Hitching the hips through before the bar has cleared the knees.",
+    ],
   },
   {
     id: "trap-bar-deadlift",
@@ -1488,6 +1588,11 @@ export const EXERCISES: Exercise[] = [
       "Lower under control, hips back first, then knees bend.",
     ],
     tip: "Hips shooting up first and turning it into a stiff-leg pull. Brace, push the floor away, and keep hips and shoulders rising together.",
+    commonMistakes: [
+      "Starting with the hips too high, which turns it into a stiff-legged pull.",
+      "Jerking the bar off the floor before taking the slack out.",
+      "Leaning back and hyperextending at lockout.",
+    ],
   },
   {
     id: "lunges",
@@ -1567,6 +1672,11 @@ export const EXERCISES: Exercise[] = [
       "Drive through the front heel to stand, completing reps before switching.",
     ],
     tip: "If your front knee caves inward under load, drop weight. This is a one-leg loaded movement — caving knees mean the hip can't handle the stress yet.",
+    commonMistakes: [
+      "Setting the front foot too close, so the front knee travels far past the toes.",
+      "Letting the front knee cave inward under fatigue.",
+      "Pushing off the rear foot instead of driving through the front leg.",
+    ],
   },
   {
     id: "barbell-step-ups",
@@ -1661,6 +1771,11 @@ export const EXERCISES: Exercise[] = [
       "Lower under control, keeping your ribs stacked over your pelvis.",
     ],
     tip: "Hyperextending at the top — ribs flaring up — loads your lower back, not your glutes. Squeeze glutes hard, keep ribs down, stop when hips are in line.",
+    commonMistakes: [
+      "Hyperextending the lower back at the top instead of finishing with the glutes.",
+      "Letting the chin and ribs flare up so the movement comes from the spine.",
+      "Setting the feet too far out, which turns it into a hamstring movement.",
+    ],
   },
   {
     id: "glute-bridge",
@@ -1928,6 +2043,11 @@ export const EXERCISES: Exercise[] = [
       "Return slowly to upright, keeping hips fixed — this is an ab crunch, not a hip pull.",
     ],
     tip: "Pulling with your arms instead of flexing your abs. Lock your hips in place and crunch ribs to pelvis — the rope just comes along for the ride.",
+    commonMistakes: [
+      "Pulling with the arms and hips instead of flexing the spine.",
+      "Letting the hips rise and fall so it becomes a hip-flexor movement.",
+      "Rushing the reps rather than squeezing the abs at the bottom.",
+    ],
   },
   {
     id: "cable-woodchopper",

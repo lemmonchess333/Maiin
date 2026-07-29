@@ -17,7 +17,11 @@ import {
   balancePushPull,
   volumeLandmark,
 } from "./volumeModel";
-import { seedStartingLoads, type StartingLoadContext } from "./startingLoads";
+import {
+  seedStartingLoads,
+  weightAfterExerciseSwap,
+  type StartingLoadContext,
+} from "./startingLoads";
 import {
   countPlateauedExercises,
   resolveAdjustment,
@@ -30,7 +34,13 @@ import {
   MICROPLATE_STEP,
   PLATE_PAIR_STEP,
 } from "./movementClass";
-import { leastTrainedCategory, surplusExposures } from "./overlapModel";
+import {
+  capRepeatedLifts,
+  lowCostAlternative,
+  orderForAdjacency,
+  surplusExposures,
+} from "./overlapModel";
+import { applyComplexityGate, usesUndulation } from "./experienceModel";
 import { isBodyweightExerciseId } from "@/lib/exercises";
 import { format } from "date-fns";
 
@@ -99,6 +109,39 @@ export function goalProfileFor(primaryGoal?: PrimaryGoal): GoalProfile {
 const RPE_HOLD_THRESHOLD = 9.5;
 /** Bodyweight rep target stops climbing here; the user is prompted to add load. */
 const MAX_BODYWEIGHT_REPS = 20;
+/**
+ * Ceilings the GENERATOR will not prescribe past (2026-07-28 audit).
+ *
+ * `applyDayRoles` shifts a pump day +2 reps with a floor and no ceiling, and
+ * the final pass then stamps `repRangeMax = reps + span`. On the higher-rep
+ * goal profiles the two compounded into prescriptions nobody would write:
+ * `Pull-Ups 3×17-22`, `Barbell Squat 4×17-20`, `Deadlift 3×15-20`.
+ *
+ * 20 is not a new number — `MAX_BODYWEIGHT_REPS` above is already the point
+ * where the progression engine stops adding reps and tells the user to add
+ * load. Prescribing past it asks for something the app's own advice says to
+ * stop doing. Bodyweight lifts stop earlier still: they cannot be loaded
+ * DOWN, so a high-rep target is the wrong tool rather than a hard one, and a
+ * beginner handed 17-rep pull-ups simply cannot start the set.
+ */
+const MAX_PRESCRIBED_REPS = MAX_BODYWEIGHT_REPS;
+const MAX_PRESCRIBED_BODYWEIGHT_REPS = 15;
+
+/** Highest rep target the generator may prescribe for this exercise. */
+function prescribedRepCeiling(ex: {
+  exerciseId?: string;
+  repUnit?: string;
+}): number {
+  // Timed holds count seconds, not reps — a 30-45s plank is not a 30-rep set.
+  if (ex.repUnit === "seconds") return Number.POSITIVE_INFINITY;
+  return isBodyweightExerciseId(ex.exerciseId)
+    ? MAX_PRESCRIBED_BODYWEIGHT_REPS
+    : MAX_PRESCRIBED_REPS;
+}
+/** Timed holds climb in 5-second steps (N2's time axis). */
+const HOLD_STEP_SECONDS = 5;
+/** Ceiling for a hold with no authored range — past this, add load instead. */
+const MAX_HOLD_SECONDS = 60;
 // Load step (backlog #7, H3) — the discriminator lives in movementClass.ts;
 // see that module for why `isAccessory` was the wrong one.
 
@@ -255,6 +298,17 @@ export function primaryGoalLabel(g?: PrimaryGoal): string {
  * which re-picks from the non-primary pool and can't carry `existing` —
  * using it there would rewrite users' exercises and wipe their logged loads
  * on every regenerate. Hence the parameter (backlog #15).
+ *
+ * `existing` is only carried when it is the SAME MOVEMENT. The builders find
+ * it positionally (`findExisting(dayIdx, exIdx)`), which assumes the saved
+ * plan's slots line up with the ones being built — true for a
+ * generated→generated regenerate, and false for anyone whose plan came from a
+ * TEMPLATE. Measured 2026-07-28 on a template user's first settings change:
+ * `Bench Press@100 [from Barbell Squat]`, `Pull-Ups@106 [from Deadlift]` —
+ * a deadlift's load landed on a bodyweight pull-up. The category check makes
+ * the corruption impossible; a slot with no same-movement predecessor falls
+ * back to defaults and is then seeded, which loses a load but never lies
+ * about one. (`carryExistingAccessories` has always guarded this way.)
  */
 function makeExercise(
   category: MovementCategory,
@@ -262,32 +316,78 @@ function makeExercise(
   reps: number,
   weight: number,
   progression: "double" | "linear",
-  existing?: ProgramExercise,
+  existingAtSlot?: ProgramExercise,
   isAccessory = false
 ): ProgramExercise {
-  const ex = pickExercise(
-    category,
-    existing?.plateauCount ?? 0,
-    existing?.exerciseId
-  );
-  const w = existing?.weight ?? weight;
+  const existing =
+    existingAtSlot?.movementCategory === category ? existingAtSlot : undefined;
+  const currentOption =
+    existing && (existing.plateauCount ?? 0) < 3
+      ? (exerciseBank[category] ?? []).find(
+          (option) => option.id === existing.exerciseId
+        )
+      : undefined;
+  // Keep a valid, non-stalled carried variation stable. `makeExercise` does
+  // not receive the user's experience, so asking `pickExercise` to validate
+  // it here applies the default intermediate gate and silently turns an
+  // advanced specialist lift back into the primary on the next regeneration.
+  // The experience-aware post-pass below owns downgrades and will still
+  // replace this row if the user's level no longer permits it.
+  const ex =
+    currentOption ??
+    pickExercise(category, existing?.plateauCount ?? 0, existing?.exerciseId);
+  const identityChanged =
+    existing !== undefined && existing.exerciseId !== ex.id;
+  const w = identityChanged
+    ? weightAfterExerciseSwap(existing, ex.id).weight
+    : (existing?.weight ?? weight);
   return {
     name: ex.name,
     exerciseId: ex.id,
-    instanceId: existing?.instanceId ?? generateInstanceId(), // #1038
+    instanceId:
+      existing && !identityChanged ? existing.instanceId : generateInstanceId(), // #1038
     movementCategory: category,
     sets,
     reps,
     baseReps: reps,
     weight: w,
     progressionType: progression,
-    lastSuccessfulWeight: existing?.lastSuccessfulWeight ?? w,
-    lastAttemptedWeight: existing?.lastAttemptedWeight ?? w,
-    consecutiveFailures: existing?.consecutiveFailures ?? 0,
-    plateauCount: existing?.plateauCount ?? 0,
-    performanceHistory: existing?.performanceHistory ?? [],
-    lastPerformance: existing?.lastPerformance ?? null,
+    lastSuccessfulWeight:
+      existing && !identityChanged ? existing.lastSuccessfulWeight : w,
+    lastAttemptedWeight:
+      existing && !identityChanged ? existing.lastAttemptedWeight : w,
+    consecutiveFailures:
+      existing && !identityChanged ? existing.consecutiveFailures : 0,
+    plateauCount: existing && !identityChanged ? existing.plateauCount : 0,
+    performanceHistory:
+      existing && !identityChanged ? existing.performanceHistory : [],
+    lastPerformance:
+      existing && !identityChanged ? existing.lastPerformance : null,
     isAccessory,
+  };
+}
+
+function swapExerciseIdentity(
+  ex: ProgramExercise,
+  to: { id: string; name: string },
+  loadCtx?: StartingLoadContext,
+  calibrationSource: ProgramExercise = ex
+): ProgramExercise {
+  if (ex.exerciseId === to.id) return ex;
+  const calibrated = weightAfterExerciseSwap(calibrationSource, to.id, loadCtx);
+  return {
+    ...ex,
+    exerciseId: to.id,
+    name: to.name,
+    instanceId: generateInstanceId(),
+    movementCategory: calibrated.movementCategory,
+    weight: calibrated.weight,
+    lastSuccessfulWeight: calibrated.weight,
+    lastAttemptedWeight: calibrated.weight,
+    consecutiveFailures: 0,
+    plateauCount: 0,
+    performanceHistory: [],
+    lastPerformance: null,
   };
 }
 
@@ -790,7 +890,12 @@ function buildPPL(
           15,
           15,
           "linear",
-          findExisting(2, 4)
+          // Was findExisting(2, 4) — an off-by-one. This day has four slots
+          // (0-3), so index 4 never resolved and the core lift was rebuilt
+          // from defaults on EVERY regenerate, silently dropping the user's
+          // logged weight and history. Same family as #17; found by the
+          // regenerate-preserves-load test rather than by reading indices.
+          findExisting(2, 3)
         ),
       ],
     },
@@ -927,19 +1032,54 @@ export function expectedDayCount(weeklyTarget: number): number {
  * reorderable list doesn't churn. Pure.
  */
 export function rotateUntrainedAccessories(
-  workouts: WorkoutDay[]
+  workouts: WorkoutDay[],
+  /**
+   * The lifter's level. Without it the mesocycle rotation was a second escape
+   * route around the complexity gate (2026-07-28 sweep): at weeks 5, 9, … a
+   * beginner's untrained accessories were re-picked from the FULL bank, so a
+   * plan that started correctly gated drifted above their level four weeks in.
+   */
+  experience?: Experience
 ): WorkoutDay[] {
   return workouts.map((day) => ({
     ...day,
     exercises: day.exercises.map((ex) => {
       if (!ex.isAccessory) return ex; // mains never rotate
       if ((ex.performanceHistory?.length ?? 0) > 0) return ex; // trained → keep
-      const next = pickAccessory(ex.movementCategory, ex.exerciseId);
+      const next = pickAccessory(
+        ex.movementCategory,
+        ex.exerciseId,
+        experience
+      );
       if (next.id === ex.exerciseId) return ex; // no alternative available
       return {
         ...ex,
         exerciseId: next.id,
         name: next.name,
+        // NOT rescaled, deliberately — and this is the one swap site where
+        // that is the right call.
+        //
+        // Rescaling by the load-factor ratio is correct for a ONE-SHOT swap
+        // (equipment, injury, the complexity gate), which is why those three
+        // do it. This path is different: it re-fires at EVERY mesocycle
+        // boundary, so the scale compounds against a weight that is itself
+        // already scaled, and it does not round-trip with the deload
+        // store/restore. Measured over two mesocycles: 50 kg -> 30 -> 12.5.
+        // A silently shrinking load is worse than a mis-scaled one.
+        //
+        // Fixing it properly needs an anchor the slot does not currently
+        // carry (its ORIGINAL seed, so each rotation scales from that rather
+        // than from the last rotation's output). Recorded as open rather than
+        // bodged — see the backlog. The blast radius is bounded: rotation
+        // only touches UNTRAINED accessories, so no logged progress is at
+        // stake, and the next `seedStartingLoads` on a regenerate re-derives
+        // the number anyway.
+        //
+        // Guarded by "never compounds across mesocycles" and "ramps
+        // accessories …" in programEngine.test.ts — both fail if a rescale is
+        // re-added here. (A purpose-written test was tried and deleted: it
+        // passed with the rescale restored, i.e. it proved nothing. The
+        // existing pair already does the job.)
         lastPerformance: null,
         consecutiveFailures: 0,
         plateauCount: 0,
@@ -964,7 +1104,7 @@ export function dedupeDayExercises(workouts: WorkoutDay[]): WorkoutDay[] {
         return ex; // no free variation — leave it
       }
       seen.add(alt.id);
-      return { ...ex, exerciseId: alt.id, name: alt.name };
+      return swapExerciseIdentity(ex, alt);
     });
     return { ...day, exercises };
   });
@@ -1000,7 +1140,16 @@ function assignDayRoles(count: number): DayRole[] {
  * stay role-consistent. Presentation policy: INVISIBLE — the
  * prescription simply differs; no labels, no new UI.
  */
-function applyDayRoles(workouts: WorkoutDay[]): WorkoutDay[] {
+function applyDayRoles(
+  workouts: WorkoutDay[],
+  experience?: Experience
+): WorkoutDay[] {
+  // Not for a novice (2026-07-28). Undulation exists because an intermediate
+  // can no longer add load every session, so the stimulus has to be varied
+  // instead; a novice CAN, and a heavy day plus a pump day muddies the one
+  // signal their programme runs on — did today beat last time? See
+  // `usesUndulation`.
+  if (!usesUndulation(experience)) return workouts;
   const roles = assignDayRoles(workouts.length);
   return workouts.map((day, i) => {
     const role = roles[i];
@@ -1010,7 +1159,10 @@ function applyDayRoles(workouts: WorkoutDay[]): WorkoutDay[] {
       ...day,
       exercises: day.exercises.map((ex) => {
         const floor = ex.isAccessory === true ? 6 : 3;
-        const reps = Math.max(floor, ex.reps + delta);
+        const reps = Math.min(
+          prescribedRepCeiling(ex),
+          Math.max(floor, ex.reps + delta)
+        );
         return { ...ex, reps, baseReps: reps };
       }),
     };
@@ -1018,28 +1170,85 @@ function applyDayRoles(workouts: WorkoutDay[]): WorkoutDay[] {
 }
 
 /**
+ * Carry a user's accessories through a regenerate (backlog #17).
+ *
+ * `makeAccessory` takes no `existing` — unlike `makeExercise` — so it re-rolls
+ * `pickAccessory` (which is `Math.random()`-backed) and rebuilds from the
+ * passed defaults on EVERY regenerate. Measured on main: regenerating a 4-day
+ * programme turned a 55 kg Bulgarian Split Squat with logged history into a
+ * 40 kg Hack Squat with none, and reset an Incline DB Press from 55 kg to 30.
+ * A regenerate is what a settings change triggers — goal, days per week,
+ * split — so changing any of those silently wiped every accessory's load and
+ * history and shuffled the exercises.
+ *
+ * Done as a post-pass rather than threading `existing` through fifteen
+ * `makeAccessory` call sites: one place to reason about, and it uses the same
+ * positional correspondence `findExisting` already relies on. Only IDENTITY
+ * and LOGGED state carry — sets and reps stay whatever the builders and the
+ * volume machinery just computed, so a genuine prescription change still
+ * lands. Guarded on category equality, so a slot that legitimately changed
+ * movement (see `applyOverlapCaps`) is left alone.
+ *
+ * This also puts Tropos properly on the side of N5's "stability within a
+ * block, novelty between blocks": `rotateUntrainedAccessories` still refreshes
+ * untrained accessories at each mesocycle boundary, which is the intended
+ * novelty — it just no longer happens by accident on every settings change.
+ */
+function carryExistingAccessories(
+  workouts: WorkoutDay[],
+  existing?: WorkoutDay[]
+): WorkoutDay[] {
+  if (!existing) return workouts;
+  return workouts.map((day, dayIndex) => ({
+    ...day,
+    exercises: day.exercises.map((ex, exIndex) => {
+      if (ex.isAccessory !== true) return ex; // makeExercise already carries
+      const prev = existing[dayIndex]?.exercises[exIndex];
+      if (
+        !prev ||
+        prev.isAccessory !== true ||
+        prev.movementCategory !== ex.movementCategory
+      ) {
+        return ex;
+      }
+      return {
+        ...ex,
+        exerciseId: prev.exerciseId,
+        name: prev.name,
+        instanceId: prev.instanceId,
+        weight: prev.weight,
+        lastSuccessfulWeight: prev.lastSuccessfulWeight,
+        lastAttemptedWeight: prev.lastAttemptedWeight,
+        consecutiveFailures: prev.consecutiveFailures,
+        plateauCount: prev.plateauCount,
+        performanceHistory: prev.performanceHistory,
+        lastPerformance: prev.lastPerformance,
+      };
+    }),
+  }));
+}
+
+/**
  * Backlog #10 (training-book backlog; D1 + M6 + H6): re-point the
  * expensive-pattern slots that exceed the overlap caps. The decision is pure
- * (overlapModel.ts); this only rebuilds the chosen slots, because the
- * builders are module-private.
+ * (overlapModel.ts); this only rewrites `exerciseId` / `name` on the chosen
+ * slots.
  *
- * A demoted slot keeps its sets and its accessory role — only the movement
- * changes, to whatever the week trains least. So this reshapes the week
- * without changing how much work is in it.
+ * A demoted slot keeps its category, its sets, its reps, its accessory role,
+ * its position and its history — the ONLY thing that moves is which variation
+ * of the same movement fills it, from a barbell pull to something that spares
+ * the lower back. That is the whole of what the cap is trying to achieve, and
+ * keeping everything else fixed is what makes the pass safe: the positional
+ * accessory carry still matches, the muscle keeps its weekly volume, and the
+ * builder's authoring of the day is not second-guessed.
  *
- * `existingWorkouts` is threaded in for the carry. The builders' `findExisting`
- * is POSITIONAL and category-blind, so once this pass changes a slot's
- * category, the next regenerate would rebuild that position as a hinge again
- * (inheriting the replacement's logged weight onto a deadlift), and then
- * re-point it to a brand-new exercise — wiping the user's history on every
- * regenerate. Matching the previous slot at the same position BY CATEGORY
- * closes that: the choice is deterministic, so a stable programme carries its
- * instanceId, load and history across regenerates like any other slot.
+ * See `lowCostAlternative` for the three defects the previous cross-category
+ * version shipped, all of them measured.
  */
 function applyOverlapCaps(
   workouts: WorkoutDay[],
-  profile: GoalProfile,
-  existingWorkouts?: WorkoutDay[]
+  experience?: Experience,
+  loadCtx?: StartingLoadContext
 ): WorkoutDay[] {
   const surplus = surplusExposures(workouts);
   if (surplus.length === 0) return workouts;
@@ -1048,22 +1257,54 @@ function applyOverlapCaps(
   for (const { dayIndex, exIndex } of surplus) {
     const day = out[dayIndex];
     const old = day.exercises[exIndex];
-    const inDay = new Set(day.exercises.map((e) => e.movementCategory));
-    const category = leastTrainedCategory(out, inDay);
-    if (!category) continue; // every alternative already in this day — leave it
-    const prev = existingWorkouts?.[dayIndex]?.exercises[exIndex];
-    const isAccessory = old.isAccessory === true;
-    day.exercises[exIndex] = makeExercise(
-      category,
-      old.sets,
-      isAccessory ? profile.accessoryReps : profile.mainReps,
-      0, // uncalibrated when fresh — seedStartingLoads runs after this
-      isAccessory ? "double" : profile.mainProgression,
-      prev?.movementCategory === category ? prev : undefined,
-      isAccessory
+    const swap = lowCostAlternative(
+      old.movementCategory,
+      new Set(day.exercises.map((e) => e.exerciseId)),
+      old.isAccessory !== true,
+      experience
     );
+    // No back-sparing variation left in the category that isn't already in
+    // the day. Leave the slot alone — the cap is a bias, not a guarantee, and
+    // dropping the work or importing a foreign movement are both worse.
+    if (!swap) continue;
+    day.exercises[exIndex] = swapExerciseIdentity(old, swap, loadCtx);
   }
   return out;
+}
+
+/**
+ * The builders predate the experience argument and their `makeExercise` call
+ * cannot see it. Re-resolve only carried, stalled main slots here so the real
+ * generation lifecycle reaches the same specialist choice as the pure picker.
+ */
+function applyExperienceAwarePlateauPicks(
+  workouts: WorkoutDay[],
+  existing: WorkoutDay[] | undefined,
+  experience: Experience | undefined,
+  loadCtx: StartingLoadContext | undefined
+): WorkoutDay[] {
+  if (!existing) return workouts;
+  return workouts.map((day, dayIndex) => ({
+    ...day,
+    exercises: day.exercises.map((ex, exIndex) => {
+      if (ex.isAccessory === true) return ex;
+      const previous = existing[dayIndex]?.exercises[exIndex];
+      if (
+        !previous ||
+        previous.movementCategory !== ex.movementCategory ||
+        (previous.plateauCount ?? 0) < 3
+      ) {
+        return ex;
+      }
+      const pick = pickExercise(
+        ex.movementCategory,
+        previous.plateauCount ?? 0,
+        previous.exerciseId,
+        experience
+      );
+      return swapExerciseIdentity(ex, pick, loadCtx, previous);
+    }),
+  }));
 }
 
 export function generateProgram(
@@ -1071,7 +1312,28 @@ export function generateProgram(
   weeklyTarget: number,
   existingWorkouts?: WorkoutDay[],
   primaryGoal?: PrimaryGoal,
-  loadCtx?: StartingLoadContext
+  loadCtx?: StartingLoadContext,
+  /**
+   * The user's planned week SHAPE (backlog #10, M6 adjacency). Read-only, and
+   * used for one thing: knowing whether the planned lift days are
+   * back-to-back, so two posterior-chain-heavy sessions aren't scheduled on
+   * consecutive days. This does NOT date-pin lifts — ADR-0002 keeps them
+   * split-ordered on purpose, because pinning would mark a
+   * Tuesday-instead-of-Monday session as "missed Monday" and drop its volume.
+   * Absent → adjacency is simply not applied.
+   */
+  weekSchedule?: ReadonlyArray<{ day: number; type: string }>,
+  /**
+   * The lifter's level (`experienceModel.ts`). Gates movement COMPLEXITY and
+   * whether the week undulates — never volume.
+   *
+   * Deliberately its OWN parameter rather than read off `loadCtx.experience`,
+   * even though the context carries it: `loadCtx` is undefined whenever the
+   * bodyweight is unknown, so reading it there would silently hand a beginner
+   * the intermediate programme for an unrelated reason. Absent → intermediate,
+   * which is the behaviour every caller had before this existed.
+   */
+  experience?: Experience
 ): { splitType: SplitType; workouts: WorkoutDay[] } {
   // 0 lift days → run-only athlete, return empty workouts
   if (weeklyTarget <= 0) {
@@ -1086,83 +1348,231 @@ export function generateProgram(
   const profile = goalProfileFor(primaryGoal);
 
   const splitType = chooseSplit(weeklyTarget);
-  let workouts: WorkoutDay[];
 
-  switch (splitType) {
-    case "full_body": {
-      // `chooseSplit` now returns "full_body" for 3-day targets too
-      // (beats 3-day PPL for hypertrophy). Cap at 3 days of rotation.
-      const fbDays = Math.min(weeklyTarget, 3);
-      workouts = buildFullBody(
-        profile,
-        nutritionGoal,
-        fbDays,
-        existingWorkouts
-      );
-      break;
-    }
-    case "ppl":
-      workouts = buildPPL(profile, nutritionGoal, existingWorkouts).slice(0, 3);
-      break;
-    case "upper_lower": {
-      const ul = buildUpperLower(profile, nutritionGoal, existingWorkouts);
-      // 2-day uses first upper + first lower only
-      workouts = weeklyTarget <= 2 ? ul.slice(0, 2) : ul;
-      break;
-    }
-    case "ppl_ul":
-      workouts = [
-        ...buildPPL(profile, nutritionGoal, existingWorkouts).slice(0, 3),
-        ...buildUpperLower(profile, nutritionGoal, existingWorkouts).slice(
+  const buildSplit = (existingWorkouts?: WorkoutDay[]): WorkoutDay[] => {
+    let workouts: WorkoutDay[];
+
+    switch (splitType) {
+      case "full_body": {
+        // `chooseSplit` now returns "full_body" for 3-day targets too
+        // (beats 3-day PPL for hypertrophy). Cap at 3 days of rotation.
+        const fbDays = Math.min(weeklyTarget, 3);
+        workouts = buildFullBody(
+          profile,
+          nutritionGoal,
+          fbDays,
+          existingWorkouts
+        );
+        break;
+      }
+      case "ppl":
+        workouts = buildPPL(profile, nutritionGoal, existingWorkouts).slice(
           0,
-          2
-        ),
-      ];
-      break;
-    case "ppl_x2": {
-      const ppl = buildPPL(profile, nutritionGoal, existingWorkouts);
-      workouts = [...ppl, buildLegsB(profile, nutritionGoal, existingWorkouts)];
-      break;
+          3
+        );
+        break;
+      case "upper_lower": {
+        const ul = buildUpperLower(profile, nutritionGoal, existingWorkouts);
+        // 2-day uses first upper + first lower only
+        workouts = weeklyTarget <= 2 ? ul.slice(0, 2) : ul;
+        break;
+      }
+      case "ppl_ul":
+        // The second builder starts at week position 3, so it must be handed
+        // the saved plan FROM position 3 — its `findExisting(0, …)` means
+        // "my first day", not "the week's first day". Without the slice the
+        // Upper/Lower half of a 5-day plan carried its loads from the
+        // Push/Pull days; found 2026-07-28 once the carry test used
+        // distinct per-lift weights instead of stamping 61 everywhere.
+        workouts = [
+          ...buildPPL(profile, nutritionGoal, existingWorkouts).slice(0, 3),
+          ...buildUpperLower(
+            profile,
+            nutritionGoal,
+            existingWorkouts?.slice(3)
+          ).slice(0, 2),
+        ];
+        break;
+      case "ppl_x2": {
+        const ppl = buildPPL(profile, nutritionGoal, existingWorkouts);
+        workouts = [
+          ...ppl,
+          buildLegsB(profile, nutritionGoal, existingWorkouts),
+        ];
+        break;
+      }
+      case "ppl_x2_fb": {
+        // Retained for backward-compat — `chooseSplit` no longer returns
+        // this (capped at 6 days) but existing programState rows on disk
+        // may still pass through here on regeneration.
+        const ppl7 = buildPPL(profile, nutritionGoal, existingWorkouts);
+        // Same offset rule as `ppl_ul` — this day sits at week position 6.
+        const fb = buildFullBody(
+          profile,
+          nutritionGoal,
+          1,
+          existingWorkouts?.slice(6)
+        );
+        workouts = [
+          ...ppl7,
+          buildLegsB(profile, nutritionGoal, existingWorkouts),
+          {
+            ...fb[0],
+            dayName: "Full Body (Recovery)",
+            completed: false,
+            exercises: fb[0].exercises.map((ex) => ({ ...ex })),
+          },
+        ];
+        break;
+      }
+      default:
+        workouts = buildUpperLower(profile, nutritionGoal, existingWorkouts);
     }
-    case "ppl_x2_fb": {
-      // Retained for backward-compat — `chooseSplit` no longer returns
-      // this (capped at 6 days) but existing programState rows on disk
-      // may still pass through here on regeneration.
-      const ppl7 = buildPPL(profile, nutritionGoal, existingWorkouts);
-      const fb = buildFullBody(profile, nutritionGoal, 1, existingWorkouts);
-      workouts = [
-        ...ppl7,
-        buildLegsB(profile, nutritionGoal, existingWorkouts),
-        {
-          ...fb[0],
-          dayName: "Full Body (Recovery)",
-          completed: false,
-          exercises: fb[0].exercises.map((ex) => ({ ...ex })),
-        },
-      ];
-      break;
+    return workouts;
+  };
+
+  /**
+   * Align a saved plan to the builders' CANONICAL day order before handing it
+   * over (backlog #10).
+   *
+   * The builders carry a saved exercise by POSITION (`findExisting(dayIdx,
+   * exIdx)`), which silently assumes the saved plan is in the same day order
+   * the builder emits. Adjacency ordering breaks that assumption, and the
+   * failure is data corruption rather than a visible error: with a saved
+   * order of Pull,Push,Legs and a builder order of Push,Pull,Legs, the user's
+   * logged pull-up weight lands on bench press.
+   *
+   * Matching on `dayName` fixes it, and fixes it generally — the carry stops
+   * depending on day order at all, so ANY future reordering is safe. A probe
+   * build (no existing, so it is pure and cheap) supplies the canonical order.
+   *
+   * SLOTS are aligned the same way, and for the same reason one layer down
+   * (added 2026-07-28). Day names only line up between two GENERATED plans;
+   * a plan seeded from a template has names the generator never emits
+   * ("Full Body A", "Upper A", "Push A"), so alignment bailed and every
+   * template user's first settings change carried their saved loads onto
+   * whatever the builder happened to put at the same index. `makeExercise`
+   * now refuses a cross-movement carry outright, which makes that safe; this
+   * pass is what makes it lossLESS as well, by putting each saved lift at the
+   * index its own movement will be built at.
+   */
+  const alignSlots = (saved: WorkoutDay, reference: WorkoutDay): WorkoutDay => {
+    const pool = [...saved.exercises];
+    const take = (match: (e: ProgramExercise) => boolean) => {
+      const i = pool.findIndex(match);
+      return i >= 0 ? pool.splice(i, 1)[0] : undefined;
+    };
+    // Two passes so an exact same-lift match is never stolen by a
+    // same-category slot that happens to come first.
+    const byId = reference.exercises.map((ref) =>
+      take((e) => e.exerciseId === ref.exerciseId)
+    );
+    const exercises = reference.exercises.map(
+      (ref, i) =>
+        byId[i] ?? take((e) => e.movementCategory === ref.movementCategory)
+    );
+    // Leftovers keep their identity at the tail; unmatched slots take a
+    // placeholder the category guard in `makeExercise` will reject.
+    return {
+      ...saved,
+      exercises: exercises.map((e, i) => e ?? pool[i] ?? saved.exercises[i]),
+    };
+  };
+
+  const alignExistingTo = (
+    saved: WorkoutDay[] | undefined,
+    reference: WorkoutDay[]
+  ): WorkoutDay[] | undefined => {
+    if (!saved || saved.length !== reference.length) return saved;
+    const byName = new Map<string, WorkoutDay[]>();
+    for (const d of saved) {
+      const list = byName.get(d.dayName);
+      if (list) list.push(d);
+      else byName.set(d.dayName, [d]);
     }
-    default:
-      workouts = buildUpperLower(profile, nutritionGoal, existingWorkouts);
-  }
+    // Names match one-for-one → a generated plan; align days by name. Any
+    // mismatch means the plan came from somewhere else (a template) and the
+    // day ORDER is all we can keep.
+    const namesLineUp = reference.every(
+      (c) => (byName.get(c.dayName) ?? []).length > 0
+    );
+    const dayAligned: WorkoutDay[] = [];
+    if (namesLineUp) {
+      const pool = new Map([...byName].map(([k, v]) => [k, [...v]]));
+      for (const c of reference) {
+        const list = pool.get(c.dayName);
+        if (!list || list.length === 0) return saved;
+        dayAligned.push(list.shift() as WorkoutDay);
+      }
+    } else {
+      dayAligned.push(...saved);
+    }
+    return dayAligned.map((d, i) => alignSlots(d, reference[i]));
+  };
+
+  const existingForBuild = alignExistingTo(
+    existingWorkouts,
+    buildSplit(undefined)
+  );
+  let workouts = buildSplit(existingForBuild);
+  workouts = applyExperienceAwarePlateauPicks(
+    workouts,
+    existingForBuild,
+    experience,
+    loadCtx
+  );
 
   // D-LIFT-12: ensure no day picks the same exercise twice (e.g. a main that
   // rotated to a variation an accessory then matched). Re-picks the duplicate
   // to another variation in the same movement category.
+  // Backlog #10 (M6 adjacency): order the week so back-to-back days aren't the
+  // two that hammer the same lower back. Safe to apply on EVERY generation
+  // now that the carry keys on day NAME rather than position — reordering
+  // used to land a logged pull-up weight on bench press, which is what kept
+  // this unbuilt.
+  workouts = orderForAdjacency(workouts, weekSchedule);
+
+  // Everything below still matches the saved plan POSITIONALLY, so realign it
+  // to the order the week actually ended up in. Missing this is exactly the
+  // bug above, one layer down: the builders carried correctly and then the
+  // accessory carry put day 0's accessories on whatever day now sits first.
+  const alignedExisting = alignExistingTo(existingWorkouts, workouts);
+
+  // Backlog #17: accessories keep their identity and logged state across a
+  // regenerate — makeAccessory rebuilds from defaults and re-rolls its
+  // random pick, so without this a settings change wipes them.
+  workouts = carryExistingAccessories(workouts, alignedExisting);
   workouts = dedupeDayExercises(workouts);
   // Backlog #10: cap expensive-pattern overlap BEFORE day roles and the
   // volume balancers, so a re-pointed slot is shifted and budgeted exactly
   // like an originally-built one rather than escaping both.
-  workouts = applyOverlapCaps(workouts, profile, existingWorkouts);
+  workouts = applyOverlapCaps(workouts, experience, loadCtx);
   // Backlog #3: day roles — see applyDayRoles above.
-  workouts = applyDayRoles(workouts);
+  workouts = applyDayRoles(workouts, experience);
+  // Experience gate: no movement above the lifter's level. Runs with the
+  // other identity-only post-passes, and BEFORE the repeat cap so the cap
+  // counts the exercises the user will actually receive.
+  workouts = applyComplexityGate(
+    workouts,
+    experience,
+    exerciseBank,
+    (ex, toId) =>
+      weightAfterExerciseSwap(ex as ProgramExercise, toId, loadCtx).weight
+  );
+  // Variety: no single lift more than twice a week. Must run BEFORE the
+  // volume balancers so they budget against the shape the user actually
+  // gets, and AFTER the overlap caps so a re-pointed slot is counted.
+  workouts = capRepeatedLifts(workouts, experience, (ex, to) =>
+    swapExerciseIdentity(ex, to, loadCtx)
+  );
   // D-LIFT-1 (active): nudge under-dosed muscles up toward the goal volume
   // landmark by growing their accessories (add-only, mains untouched).
   workouts = balanceWeeklyVolume(workouts, volumeLandmark(primaryGoal));
   // D-LIFT-3: keep weekly pull volume ≥ push (shoulder-health balance).
-  workouts = balancePushPull(workouts);
-  // D-LIFT-5: seed bodyweight-relative cold-start loads on never-trained mains
-  // (no-op without a load context, or for lifts with logged history).
+  workouts = balancePushPull(workouts, volumeLandmark(primaryGoal));
+  // D-LIFT-5: seed bodyweight-relative cold-start loads on never-trained lifts
+  // (no-op without a load context, or for lifts with logged history). Runs
+  // last so it also calibrates whatever the caps above re-pointed.
   if (loadCtx) workouts = seedStartingLoads(workouts, loadCtx);
 
   // Backlog #5: stamp the steady-state volume anchor AFTER balancing and
@@ -1183,7 +1593,11 @@ export function generateProgram(
     exercises: day.exercises.map((ex) => {
       const span = ex.isAccessory === true ? accessorySpan : mainSpan;
       const out: ProgramExercise = { ...ex, baseSets: ex.sets };
-      if (span > 0) out.repRangeMax = ex.reps + span;
+      // The ceiling is clamped too, not just the floor — otherwise a target
+      // clamped to 15 still advertises a 20-rep top end and the double
+      // progression climbs straight back through it.
+      const ceiling = Math.min(ex.reps + span, prescribedRepCeiling(ex));
+      if (span > 0 && ceiling > ex.reps) out.repRangeMax = ceiling;
       return out;
     }),
   }));
@@ -1240,9 +1654,15 @@ export function applyProgression(
   // BW fallback would mislabel the movement going forward.
   const isUncalibrated = !isBodyweight && exercise.weight === 0;
   if (isUncalibrated) {
+    const calibratedWeight =
+      Number.isFinite(actualWeight) && actualWeight > 0
+        ? actualWeight
+        : exercise.weight;
     return {
       ...updated,
-      lastSuccessfulWeight: actualWeight,
+      weight: calibratedWeight,
+      lastSuccessfulWeight: calibratedWeight,
+      lastAttemptedWeight: calibratedWeight,
       consecutiveFailures: 0,
       plateauCount: 0,
     };
@@ -1266,12 +1686,29 @@ export function applyProgression(
   const loadBonus = microplate ? 0 : goalWeightBonus(goal);
   // D-LIFT-11: bodyweight rep target rises by 1 per success, but is capped —
   // a pull-up shouldn't drift to "25 reps"; at the cap, prompt adding load.
+  // Backlog #7's time axis (N2). A timed hold counts SECONDS, not reps, so
+  // neither the +1 step nor the 20-rep ceiling means anything to it: a plank
+  // prescribed 30-45s starts ABOVE the rep cap, so any overshoot immediately
+  // advised "add load" at an ordinary hold length. Time climbs in 5-second
+  // steps toward the authored ceiling, and the add-load prompt waits until
+  // the hold is genuinely long.
+  const isTimed = exercise.repUnit === "seconds";
   const bumpBodyweightReps = () => {
-    if (exercise.reps >= MAX_BODYWEIGHT_REPS) {
-      updated.notes =
-        "Hitting 20+ reps — add load (weighted vest / band) to keep progressing.";
+    if (isTimed) {
+      const ceiling = exercise.repRangeMax ?? MAX_HOLD_SECONDS;
+      if (exercise.reps >= ceiling) {
+        updated.notes =
+          "Holding this long already — add load (weighted vest / band) to keep progressing.";
+      } else {
+        updated.reps = Math.min(ceiling, exercise.reps + HOLD_STEP_SECONDS);
+      }
+      return;
+    }
+    const ceiling = exercise.repRangeMax ?? MAX_BODYWEIGHT_REPS;
+    if (exercise.reps >= ceiling) {
+      updated.notes = `Hitting ${ceiling}+ reps — add load (weighted vest / band) to keep progressing.`;
     } else {
-      updated.reps = exercise.reps + 1;
+      updated.reps = Math.min(ceiling, exercise.reps + 1);
     }
   };
 
@@ -1437,7 +1874,14 @@ export function applyDeload(
     exercises: day.exercises.map((ex) => {
       const sets = Math.max(2, ex.sets - 1);
       if (holdLoad) {
-        return { ...ex, sets, reps: Math.max(DELOAD_REPS_FLOOR, ex.reps - 2) };
+        return {
+          ...ex,
+          sets,
+          reps:
+            ex.repUnit === "seconds"
+              ? Math.max(10, ex.reps - HOLD_STEP_SECONDS)
+              : Math.max(DELOAD_REPS_FLOOR, ex.reps - 2),
+        };
       }
       return {
         ...ex,
@@ -1555,7 +1999,10 @@ const ACCESSORY_ANCHOR_FLOOR = 2;
  */
 function applyAdjustment(
   workouts: WorkoutDay[],
-  action: AdjustmentAction
+  action: AdjustmentAction,
+  /** Level gate — `reorganize` re-picks a variation, so it needs the same
+   *  constraint the generator applies (2026-07-28 sweep). */
+  experience?: Experience
 ): WorkoutDay[] {
   if (action === "hold") return workouts;
   return workouts.map((day) => ({
@@ -1577,13 +2024,16 @@ function applyAdjustment(
       if (action === "reorganize" && (ex.plateauCount ?? 0) > 0) {
         const swap = pickExercise(
           ex.movementCategory,
-          ex.plateauCount ?? 0,
-          ex.exerciseId
+          Math.max(3, ex.plateauCount ?? 0),
+          ex.exerciseId,
+          experience
         );
-        out.exerciseId = swap.id;
-        out.name = swap.name;
-        out.plateauCount = 0;
-        out.consecutiveFailures = 0;
+        // Only clear the stall once the reorganisation actually changed the
+        // movement. Previously counts 1–2 made `pickExercise` return the same
+        // id and we still erased the evidence of the unresolved plateau.
+        if (swap.id !== ex.exerciseId) {
+          return swapExerciseIdentity(out, swap, undefined, ex);
+        }
       }
       return out;
     }),
@@ -1637,7 +2087,7 @@ export function advanceWeek(
     workouts = applyWeeklyVolumeShape(workouts, nextWeek);
     // Only apply fatigue on non-deload weeks to avoid double volume reduction
     workouts = applyFatigue(workouts, fatigue);
-    workouts = applyAdjustment(workouts, action);
+    workouts = applyAdjustment(workouts, action, experience);
   }
 
   // Reset the memory once the stall itself clears; otherwise carry it, and
@@ -1654,7 +2104,9 @@ export function advanceWeek(
   // mains are the progression anchor, and a lift the user actually trains is
   // theirs to keep. Re-deduped so a rotation can't collide within a day.
   if (nextWeek % 4 === 1) {
-    workouts = dedupeDayExercises(rotateUntrainedAccessories(workouts));
+    workouts = dedupeDayExercises(
+      rotateUntrainedAccessories(workouts, experience)
+    );
   } else if (action === "reorganize") {
     // Same hazard from #9's rotation: a swapped lift can collide with
     // another exercise already in that day.

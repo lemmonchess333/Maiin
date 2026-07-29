@@ -7,6 +7,10 @@ import {
   lazy,
   Suspense,
 } from "react";
+import {
+  showsRpeByDefault,
+  toExperience,
+} from "@/features/program/experienceModel";
 import { createPortal } from "react-dom";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import { cn } from "@/lib/utils";
@@ -27,6 +31,12 @@ import { Button } from "@/components/ui/Button";
 import { motion, AnimatePresence } from "framer-motion";
 import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
+import {
+  buildInitialSetLogs,
+  toCompletionSetLogs,
+} from "@/features/program/warmupRamp";
+import { formatRepTarget } from "@/features/program/templateConversion";
+import { isSetEligibleForStrengthPr } from "@/features/program/sessionSetPolicy";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { useStreaks } from "@/features/streaks/useStreaks";
@@ -254,19 +264,22 @@ export default function WorkoutSession({
     initialDraft?.currentExIndex ?? 0
   );
   const [currentSetIndex, setCurrentSetIndex] = useState(0);
-  const [setLogs, setSetLogs] = useState<SetLog[][]>(
-    () =>
-      (initialDraft?.setLogs as SetLog[][]) ??
-      day.exercises.map((ex) =>
-        Array.from({ length: ex.sets }, () => ({
-          reps: ex.reps,
-          weight: ex.weight,
-          completed: false,
-          type: "working" as SetType,
-        }))
-      )
+  const [setLogs, setSetLogs] = useState<SetLog[][]>(() => {
+    if (initialDraft?.setLogs) return initialDraft.setLogs as SetLog[][];
+    // Backlog #12: pre-fill a warm-up ramp on the first loaded exercise per
+    // body part (N7's scoping rule). They're ordinary rows carrying the
+    // existing `warmup` type (N11), so every volume/PR/calorie path that
+    // already filters on that type excludes them for free.
+    return buildInitialSetLogs(day.exercises);
+  });
+  // Earned complexity (experienceModel.ts): RPE is a genuinely useful tool
+  // for someone who can calibrate it and noise-plus-jargon for someone who
+  // cannot, so an advanced lifter opens the session with it on and everyone
+  // else opts in. This was `useState(false)` with no gate at all, against a
+  // presentation policy that lists RPE under "experience-gated".
+  const [showRPE, setShowRPE] = useState(() =>
+    showsRpeByDefault(toExperience(profile?.experience))
   );
-  const [showRPE, setShowRPE] = useState(false);
   // D-LIFT-14: form guide reachable mid-workout (no more exit → History → Form).
   const [showFormGuide, setShowFormGuide] = useState(false);
   const [exerciseNotes, setExerciseNotes] = useState<Record<number, string>>(
@@ -310,8 +323,7 @@ export default function WorkoutSession({
   useEffect(() => {
     const container = tabsRef.current;
     const activeBtn = container?.children[currentExIndex] as
-      | HTMLElement
-      | undefined;
+      HTMLElement | undefined;
     activeBtn?.scrollIntoView({
       behavior: "smooth",
       block: "nearest",
@@ -782,7 +794,10 @@ export default function WorkoutSession({
     // we don't auto-celebrate it. They can confirm/re-enter from
     // the History view if it really IS a PR.
     let prContext: NonNullable<typeof lastCompleted>["pr"] | undefined;
-    if (!validation.warn) {
+    if (
+      !validation.warn &&
+      isSetEligibleForStrengthPr(set.type, currentExercise.repUnit)
+    ) {
       const prBucket = checkSetPR(
         exName,
         set.weight,
@@ -841,7 +856,7 @@ export default function WorkoutSession({
           `New ${repBucketLabel(prBucket)}! ${set.weight}kg × ${set.reps} on ${exName}`
         );
       }
-    } else {
+    } else if (validation.warn) {
       // Surface the warn message so the user knows why no PR
       // celebration fired. They can re-confirm via History edit.
       toast.message(validation.warn.message);
@@ -866,7 +881,11 @@ export default function WorkoutSession({
       // total work for this exercise in one session. Quietly visible per
       // the presentation policy: one toast, no mechanism talk. Gated on
       // the validator like set PRs.
-      if (!validation.warn && !firedVolumePRs.current.has(exName)) {
+      if (
+        !validation.warn &&
+        isSetEligibleForStrengthPr(set.type, currentExercise.repUnit) &&
+        !firedVolumePRs.current.has(exName)
+      ) {
         const sessionVolume = exerciseSessionVolume(
           currentSets
             .map((st, i) =>
@@ -1036,13 +1055,9 @@ export default function WorkoutSession({
         completionId: completionIdRef.current,
         completionCommandId: completionCommandIdRef.current,
         durationMinutes: sessionDurationMinutes,
-        setLogs: setLogs.map((exSets) =>
-          exSets.map((s) => ({
-            weight: s.weight,
-            reps: s.reps,
-            completed: s.completed,
-          }))
-        ),
+        // Backlog #12: warm-ups are NOT logged work — see toCompletionSetLogs
+        // for why this boundary matters and why it lives in a pure module.
+        setLogs: toCompletionSetLogs(setLogs),
         sessionVariant,
       });
 
@@ -1117,16 +1132,7 @@ export default function WorkoutSession({
   };
 
   const handleStartFresh = () => {
-    setSetLogs(
-      day.exercises.map((ex) =>
-        Array.from({ length: ex.sets }, () => ({
-          reps: ex.reps,
-          weight: ex.weight,
-          completed: false,
-          type: "working" as SetType,
-        }))
-      )
-    );
+    setSetLogs(buildInitialSetLogs(day.exercises));
     setExerciseNotes({});
     setElapsedSeconds(0);
     setCurrentExIndex(0);
@@ -1465,7 +1471,8 @@ export default function WorkoutSession({
                     );
                     if (updated[currentExIndex]) {
                       updated[currentExIndex] = updated[currentExIndex].map(
-                        (st) => ({ ...st, weight: target })
+                        (st) =>
+                          st.type === "warmup" ? st : { ...st, weight: target }
                       );
                     }
                     return updated;
@@ -1485,14 +1492,18 @@ export default function WorkoutSession({
               ? getExerciseById(currentExercise.exerciseId)?.equipment ===
                 "Bodyweight"
               : false;
+            const isTimedExercise = currentExercise?.repUnit === "seconds";
             const prevLabel = prev
-              ? prev.weight > 0
-                ? `${prev.weight}×${prev.reps}`
-                : isBWExercise
-                  ? `BW×${prev.reps}`
-                  : "—"
+              ? isTimedExercise
+                ? `${prev.reps}s`
+                : prev.weight > 0
+                  ? `${prev.weight}×${prev.reps}`
+                  : isBWExercise
+                    ? `BW×${prev.reps}`
+                    : "—"
               : "—";
-            const canFillPrev = prev != null && prev.weight > 0;
+            const canFillPrev =
+              prev != null && (isTimedExercise || prev.weight > 0);
 
             return (
               <>
@@ -1513,7 +1524,9 @@ export default function WorkoutSession({
                       <Disc className="size-3.5" aria-hidden="true" />
                     </button>
                   </div>
-                  <div className="col-span-3">Reps</div>
+                  <div className="col-span-3">
+                    {isTimedExercise ? "Seconds" : "Reps"}
+                  </div>
                   <div className="col-span-2 text-center">Done</div>
                 </div>
                 {currentSets.map((set, setIdx) => {
@@ -1626,7 +1639,9 @@ export default function WorkoutSession({
                           <input
                             type="number"
                             value={set.reps || ""}
-                            aria-label={`Set ${setIdx + 1} reps`}
+                            aria-label={`Set ${setIdx + 1} ${
+                              isTimedExercise ? "seconds" : "reps"
+                            }`}
                             onChange={(e) =>
                               updateSetLog(
                                 currentExIndex,
@@ -1660,8 +1675,9 @@ export default function WorkoutSession({
                           )}
                         </div>
                       </div>
-                      {/* RPE selector for completed sets */}
-                      {showRPE && set.completed && (
+                      {/* Pick effort before completion so it reaches the
+                          progression call made when the final set is logged. */}
+                      {showRPE && !set.completed && set.type !== "warmup" && (
                         <div className="flex flex-wrap items-center gap-1 px-4 py-1.5 border-t border-border/30 bg-muted/30">
                           <span className="text-xs text-muted-foreground mr-1 self-center">
                             RPE:
@@ -1796,7 +1812,8 @@ export default function WorkoutSession({
         {/* Prescription hint */}
         {currentExercise && (
           <p className="text-xs text-muted-foreground text-center">
-            Target: {currentExercise.sets}&times;{currentExercise.reps}
+            Target: {currentExercise.sets}&times;
+            {formatRepTarget(currentExercise)}
             {currentExercise.weight > 0
               ? ` @ ${currentExercise.weight}kg`
               : getExerciseById(currentExercise.exerciseId)?.equipment ===

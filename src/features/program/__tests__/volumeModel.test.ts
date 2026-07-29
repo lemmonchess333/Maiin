@@ -181,6 +181,65 @@ describe("balanceWeeklyVolume (D-LIFT-1 active)", () => {
     expect(out[0].exercises[0].sets).toBe(13); // add-only; nothing to do
   });
 
+  it("declines an add whose cost lands on a muscle already at its ceiling", () => {
+    // The balancers were add-only with no ceiling at all, so chasing one
+    // under-dosed muscle up to MEV freely pushed the muscles that SHARE the
+    // exercise past MRV — a 2026-07-28 audit measured generated weeks
+    // violating both landmarks at once (Back = 39 against a high of 20 while
+    // hamstrings sat at 11 against a low of 12).
+    //
+    // A hip thrust is Glutes-primary with Hamstrings secondary (0.5/set), so
+    // topping up under-dosed glutes also spends hamstring volume — and here
+    // the hamstrings are already at the ceiling.
+    const atCeiling = () =>
+      ex({
+        exerciseId: "seated-leg-curl", // Hamstrings 1.0/set
+        movementCategory: "hip_dominant",
+        sets: 19, // with the hip thrust's 0.5/set this puts Hamstrings AT 20
+        isAccessory: false, // a main, so the balancer can't grow it
+      });
+    const out = balanceWeeklyVolume(
+      [
+        day([
+          ex({
+            exerciseId: "hip-thrust",
+            movementCategory: "hip_dominant",
+            sets: 2, // Glutes = 2, far under the low of 12
+            isAccessory: true,
+          }),
+          atCeiling(),
+        ]),
+      ],
+      hyper
+    );
+    expect(out[0].exercises[0].sets).toBe(2); // add declined
+  });
+
+  it("still grows when the cost lands somewhere with room", () => {
+    // The guard must not become a blanket freeze — the identical shape with
+    // the hamstrings nowhere near their ceiling still gets the glute top-up.
+    const out = balanceWeeklyVolume(
+      [
+        day([
+          ex({
+            exerciseId: "hip-thrust",
+            movementCategory: "hip_dominant",
+            sets: 2,
+            isAccessory: true,
+          }),
+          ex({
+            exerciseId: "seated-leg-curl",
+            movementCategory: "hip_dominant",
+            sets: 4,
+            isAccessory: false,
+          }),
+        ]),
+      ],
+      hyper
+    );
+    expect(out[0].exercises[0].sets).toBeGreaterThan(2);
+  });
+
   it("does not mutate the input workouts", () => {
     const input = [
       day([

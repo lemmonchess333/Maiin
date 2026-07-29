@@ -61,6 +61,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { getExerciseById } from "@/lib/exercises";
 import type { Exercise } from "@/lib/exercises";
 import { normalizeExercise } from "@/features/program/programTypes";
+import { repUnitForExerciseId } from "@/features/program/repUnits";
+import { formatRepTarget } from "@/features/program/templateConversion";
+import {
+  loadContextFrom,
+  weightAfterExerciseSwap,
+} from "@/features/program/startingLoads";
 import {
   splitLabel,
   primaryGoalLabel,
@@ -467,10 +473,9 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     // the new category from the new exercise's name. Replacing Lat
     // Pulldown (vertical_pull) with Dumbbell Curl shouldn't keep the
     // pull tag; downstream consumers (analytics, MuscleHeatMap, social
-    // posts) need the actual movement pattern. Sets / reps / weight
-    // carry over as the user's customisation — the user can re-tune
-    // them post-replacement if the new exercise needs different
-    // prescription.
+    // posts) need the actual movement pattern. Sets and role-level
+    // prescription carry; the working load is recalibrated for the target
+    // movement, and crossing into/out of a timed hold resets its target unit.
     // The slot's prescription fields carry too (backlog #7). They're the
     // slot's identity, not the old movement's: `isAccessory` now picks the
     // progression scheme AND the load step, so dropping it re-prices a
@@ -480,16 +485,33 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     // restSeconds is the authored rest. `preDeloadWeight` deliberately does
     // NOT carry — the replacement keeps its deloaded load rather than
     // jumping back up to a weight it never lifted.
+    const replacementRepUnit = repUnitForExerciseId(newEx.id);
+    const unitChanged =
+      (old.repUnit === "seconds") !== (replacementRepUnit === "seconds");
+    const replacementReps = unitChanged
+      ? replacementRepUnit === "seconds"
+        ? 30
+        : 10
+      : old.reps;
+    const calibrated = weightAfterExerciseSwap(
+      old,
+      newEx.id,
+      loadContextFrom(profile)
+    );
     const replacement = normalizeExercise({
       name: newEx.name,
       exerciseId: newEx.id,
       sets: old.sets,
-      reps: old.reps,
-      weight: old.weight,
-      baseReps: old.baseReps,
+      reps: replacementReps,
+      weight: calibrated.weight,
+      movementCategory: calibrated.movementCategory,
+      baseReps: unitChanged ? replacementReps : old.baseReps,
       progressionType: old.progressionType,
-      ...(old.repRangeMax !== undefined
+      ...(!unitChanged && old.repRangeMax !== undefined
         ? { repRangeMax: old.repRangeMax }
+        : {}),
+      ...(replacementRepUnit !== undefined
+        ? { repUnit: replacementRepUnit }
         : {}),
       ...(old.baseSets !== undefined ? { baseSets: old.baseSets } : {}),
       ...(old.restSeconds !== undefined
@@ -520,15 +542,17 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     // "horizontal_push" was tagging every added exercise (including
     // pulls, legs, isolations) as a horizontal press, contaminating
     // analytics, MuscleHeatMap input, and social-post muscle groups.
-    const newExs = exercises.map((e) =>
-      normalizeExercise({
+    const newExs = exercises.map((e) => {
+      const repUnit = repUnitForExerciseId(e.id);
+      return normalizeExercise({
         name: e.name,
         exerciseId: e.id,
         sets: 3,
-        reps: 10,
+        reps: repUnit === "seconds" ? 30 : 10,
         weight: 0,
-      })
-    );
+        ...(repUnit !== undefined ? { repUnit } : {}),
+      });
+    });
     const updated = programState.workouts.map((d, i) =>
       i === dayIdx ? { ...d, exercises: [...d.exercises, ...newExs] } : d
     );
@@ -1314,9 +1338,9 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                                         </span>{" "}
                                         sets ×{" "}
                                         <span className="font-mono tabular-nums">
-                                          {ex.reps}
+                                          {formatRepTarget(ex)}
                                         </span>{" "}
-                                        reps
+                                        {ex.repUnit === "seconds" ? "" : "reps"}
                                         {!isBW && ex.weight > 0 ? (
                                           <>
                                             {" · "}
@@ -1330,7 +1354,14 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                                       {lastPerf && (
                                         <p className="text-xs mt-0.5 text-muted-foreground">
                                           Last:{" "}
-                                          {lastPerf.weight > 0 ? (
+                                          {ex.repUnit === "seconds" ? (
+                                            <>
+                                              <span className="font-mono tabular-nums">
+                                                {lastPerf.reps}
+                                              </span>
+                                              s
+                                            </>
+                                          ) : lastPerf.weight > 0 ? (
                                             <>
                                               <span className="font-mono tabular-nums">
                                                 {lastPerf.weight}
@@ -1420,9 +1451,9 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                                       </span>{" "}
                                       sets ×{" "}
                                       <span className="font-mono tabular-nums">
-                                        {ex.reps}
+                                        {formatRepTarget(ex)}
                                       </span>{" "}
-                                      reps
+                                      {ex.repUnit === "seconds" ? "" : "reps"}
                                       {!isBW && ex.weight > 0 ? (
                                         <>
                                           {" · "}
@@ -1436,7 +1467,14 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                                     {lastPerf && (
                                       <p className="text-xs mt-0.5 text-muted-foreground/80">
                                         Last:{" "}
-                                        {lastPerf.weight > 0 ? (
+                                        {ex.repUnit === "seconds" ? (
+                                          <>
+                                            <span className="font-mono tabular-nums">
+                                              {lastPerf.reps}
+                                            </span>
+                                            s
+                                          </>
+                                        ) : lastPerf.weight > 0 ? (
                                           <>
                                             <span className="font-mono tabular-nums">
                                               {lastPerf.weight}

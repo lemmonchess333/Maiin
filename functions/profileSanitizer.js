@@ -220,7 +220,12 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
 
   // Program / goal
   primaryGoal: (v) => cleanString(v, 30),
-  experience: (v) => cleanString(v, 30),
+  // A VOCABULARY field, not free text. `cleanString(v, 30)` accepted any
+  // string, and the client's complexity gate then threw a TypeError on
+  // anything outside the three levels — so a casing slip or a legacy value
+  // was a hard crash of programme generation. `cleanEnum` drops the write
+  // instead, which is the same shape every other vocabulary field here uses.
+  experience: (v) => cleanEnum(v, ["beginner", "intermediate", "advanced"]),
   daysPerWeek: (v) => cleanNumber(v, { min: 0, max: 14, integer: true }),
   equipment: (v) => cleanString(v, 30),
   preferredSplit: (v) => cleanString(v, 30),
