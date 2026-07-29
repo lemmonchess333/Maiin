@@ -87,4 +87,43 @@ describe("ExerciseHistory — empty states (shared hexagon EmptyState)", () => {
     expect(screen.queryByText("No sessions logged yet")).toBeNull();
     expect(screen.queryByText("Exercise not found")).toBeNull();
   });
+
+  it("renders a timed hold in seconds instead of as repetition PRs", () => {
+    workoutsMock.value = {
+      loading: false,
+      workouts: [
+        {
+          id: "w1",
+          date: "2026-07-20",
+          exercises: [
+            {
+              exerciseId: "plank",
+              exerciseName: "Plank",
+              category: "core",
+              repUnit: "seconds",
+              sets: [
+                { setNumber: 1, reps: 30, weightKg: 0 },
+                { setNumber: 2, reps: 45, weightKg: 0 },
+              ],
+              caloriesBurned: 0,
+            },
+          ],
+          totalCalories: 0,
+          durationMinutes: 5,
+          notes: "",
+        },
+      ],
+    } as any;
+    renderAt("Plank");
+    expect(screen.getByText("Longest hold")).toBeInTheDocument();
+    expect(screen.getAllByText("45s")).toHaveLength(2);
+    expect(
+      screen.getByText(
+        (_, element) =>
+          element?.tagName === "P" &&
+          element.textContent?.includes("75s total") === true
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Personal bests by reps")).toBeNull();
+  });
 });

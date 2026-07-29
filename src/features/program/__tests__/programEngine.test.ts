@@ -15,6 +15,7 @@ import {
   isCycleEndWeek,
 } from "../programEngine";
 import { exerciseBank } from "../variationBank";
+import { EXERCISES, isBodyweightExerciseId } from "@/lib/exercises";
 import { deloadWeight } from "../easierToday";
 import { PROGRAMME_PLATEAU_MIN } from "../adjustmentRule";
 import type {
@@ -167,6 +168,22 @@ describe("applyProgression — bodyweight exercises", () => {
   });
 });
 
+describe("applyProgression — uncalibrated loaded exercise", () => {
+  it("promotes the first real logged load into the programme", () => {
+    const exercise = makeTestExercise({
+      exerciseId: "lat-pulldown",
+      movementCategory: "vertical_pull",
+      weight: 0,
+      lastSuccessfulWeight: 0,
+      lastAttemptedWeight: 0,
+    });
+    const out = applyProgression(exercise, exercise.reps, 35, "recomp", false);
+    expect(out.weight).toBe(35);
+    expect(out.lastSuccessfulWeight).toBe(35);
+    expect(out.lastAttemptedWeight).toBe(35);
+  });
+});
+
 // ── RPE autoregulation (D-LIFT-6) ───────────────
 
 describe("applyProgression — RPE autoregulation", () => {
@@ -212,6 +229,13 @@ describe("applyProgression — bodyweight rep cap", () => {
     const out = applyProgression(ex, 14, 0, "recomp", false);
     expect(out.reps).toBe(13);
     expect(out.notes).toBeUndefined();
+  });
+
+  it("honours a generated rep-range ceiling below the global cap", () => {
+    const ex = makeBodyweightExercise({ reps: 15, repRangeMax: 15 });
+    const out = applyProgression(ex, 17, 0, "recomp", false);
+    expect(out.reps).toBe(15);
+    expect(out.notes).toMatch(/15\+ reps/i);
   });
 });
 
@@ -934,7 +958,12 @@ describe("progression scheme per exercise type (backlog #7)", () => {
     const { workouts } = generateProgram("recomp", 3, undefined, "hypertrophy");
     for (const ex of allEx(workouts)) {
       const span = ex.isAccessory === true ? 3 : 4; // 12→15 acc, 8→12 main
-      expect(ex.repRangeMax! - ex.reps).toBe(span);
+      // …unless the prescription ceiling bit first (2026-07-28 audit): a
+      // bodyweight lift stops at 15 reps rather than advertising a 17-rep
+      // top end nobody would program. Then the ceiling IS the ceiling.
+      const clamped =
+        ex.reps + span > 15 && isBodyweightExerciseId(ex.exerciseId);
+      expect(ex.repRangeMax! - ex.reps).toBe(clamped ? 15 - ex.reps : span);
     }
     // and the roles really did move: heavy day A mains sit under pump day C
     const mainReps = (i: number) =>
@@ -1259,6 +1288,9 @@ describe("adjustment rule application (backlog #9)", () => {
     expect(st.plateauResponses).toBe(1);
     const beforeAnchors = anchors(st);
     st = stall(st, 4); // still stalled
+    const beforeIds = st.workouts.flatMap((d) =>
+      d.exercises.map((ex) => ex.exerciseId)
+    );
     const out = advanceWeek(st, "beginner", "strained");
     // anchor DROPS now (less total volume), and the counter stops climbing
     out.workouts.forEach((d, di) => {
@@ -1267,6 +1299,10 @@ describe("adjustment rule application (backlog #9)", () => {
         expect(ex.baseSets).toBeLessThanOrEqual(beforeAnchors[di][ei] ?? 0);
       });
     });
+    const afterIds = out.workouts.flatMap((d) =>
+      d.exercises.map((ex) => ex.exerciseId)
+    );
+    expect(afterIds.some((id, i) => id !== beforeIds[i])).toBe(true);
     expect(out.plateauResponses).toBe(1);
   });
 
@@ -1447,10 +1483,20 @@ describe("full-body accessory slots (backlog #15)", () => {
 // bugs the first cut had: the replacement escaping its day role, and the
 // positional history carry breaking once a slot changed category.
 describe("overlap caps in generateProgram (backlog #10)", () => {
+  // The cap is about LOWER-BACK cost, not the hip pattern as such. A hip
+  // thrust and a seated leg curl are both hip_dominant but neither loads the
+  // spine, and no source in the review warns about them — so they do not
+  // count. They are also exactly what the pass swaps TO: a demoted slot keeps
+  // its category (see `lowCostAlternative`).
+  const SPINAL_SPARING = new Set(["hip-thrust", "seated-leg-curl"]);
   const hingeSlots = (workouts: WorkoutDay[]) =>
     workouts.map(
       (d) =>
-        d.exercises.filter((e) => e.movementCategory === "hip_dominant").length
+        d.exercises.filter(
+          (e) =>
+            e.movementCategory === "hip_dominant" &&
+            !SPINAL_SPARING.has(e.exerciseId)
+        ).length
     );
 
   it("no split exceeds the caps", () => {
@@ -1557,5 +1603,445 @@ describe("overlap caps in generateProgram (backlog #10)", () => {
       workouts = generateProgram("recomp", 3, workouts, "hypertrophy").workouts;
       expect(idsOf(workouts)).toEqual(first);
     }
+  });
+});
+
+// Backlog #17 — accessories used to be rebuilt from scratch on every
+// regenerate. makeAccessory takes no `existing` (unlike makeExercise), so it
+// re-rolled its Math.random pick and reset load/history. A regenerate is what
+// a settings change triggers, so changing goal / days / split silently wiped
+// every accessory a user had trained.
+describe("accessory identity across a regenerate (backlog #17)", () => {
+  const trainAll = (workouts: WorkoutDay[]) =>
+    workouts.map((d) => ({
+      ...d,
+      exercises: d.exercises.map((ex) => ({
+        ...ex,
+        weight: 55,
+        lastSuccessfulWeight: 55,
+        performanceHistory: [
+          { date: "2026-01-01", weight: 55, repsCompleted: 8, repsTarget: 8 },
+        ],
+      })),
+    }));
+
+  it("keeps exercise, instance, load and history for every accessory", () => {
+    // 4 days → upper/lower, which is a split that uses makeAccessory. This
+    // exact fixture regressed on main: a 55 kg Bulgarian Split Squat with
+    // history became a 40 kg Hack Squat with none.
+    const first = generateProgram(
+      "recomp",
+      4,
+      undefined,
+      "hypertrophy"
+    ).workouts;
+    const trained = trainAll(first);
+    const again = generateProgram("recomp", 4, trained, "hypertrophy").workouts;
+
+    trained.forEach((d, di) =>
+      d.exercises.forEach((before, ei) => {
+        const after = again[di].exercises[ei];
+        expect(after.exerciseId, `d${di}/e${ei}`).toBe(before.exerciseId);
+        expect(after.instanceId, `d${di}/e${ei}`).toBe(before.instanceId);
+        expect(after.weight, `d${di}/e${ei}`).toBe(55);
+        expect(after.performanceHistory, `d${di}/e${ei}`).toHaveLength(1);
+      })
+    );
+  });
+
+  it("holds across repeated regenerates, not just the first", () => {
+    let workouts = trainAll(
+      generateProgram("recomp", 6, undefined, "hypertrophy").workouts
+    );
+    const ids = workouts.map((d) => d.exercises.map((e) => e.exerciseId));
+    for (let i = 0; i < 3; i += 1) {
+      workouts = generateProgram("recomp", 6, workouts, "hypertrophy").workouts;
+      expect(workouts.map((d) => d.exercises.map((e) => e.exerciseId))).toEqual(
+        ids
+      );
+    }
+  });
+
+  it("still lets the PRESCRIPTION change — only identity and log carry", () => {
+    // The carry must not freeze sets/reps, or a real goal change would be
+    // silently ignored.
+    const strength = trainAll(
+      generateProgram("recomp", 4, undefined, "strength").workouts
+    );
+    const swapped = generateProgram(
+      "recomp",
+      4,
+      strength,
+      "hypertrophy"
+    ).workouts;
+    const repsOf = (w: WorkoutDay[]) =>
+      w.flatMap((d) => d.exercises.map((e) => e.reps));
+    expect(repsOf(swapped)).not.toEqual(repsOf(strength));
+  });
+
+  it("does not carry across a slot that legitimately changed movement", () => {
+    // applyOverlapCaps re-points slots; the carry is category-guarded so it
+    // can't drag a deadlift's log onto the replacement.
+    const first = generateProgram(
+      "recomp",
+      3,
+      undefined,
+      "hypertrophy"
+    ).workouts;
+    first.forEach((d) =>
+      d.exercises.forEach((e) => expect(e.movementCategory).toBeDefined())
+    );
+    const again = generateProgram(
+      "recomp",
+      3,
+      trainAll(first),
+      "hypertrophy"
+    ).workouts;
+    again.forEach((d, di) =>
+      d.exercises.forEach((e, ei) =>
+        expect(e.movementCategory).toBe(
+          first[di].exercises[ei].movementCategory
+        )
+      )
+    );
+  });
+});
+
+// The variation bank's ids were never pinned against the exercise DB — the
+// integrity test covers templates and injury substitutions only. #11 added
+// roles to those entries, so pin the ids too before they drift.
+describe("variation bank id integrity", () => {
+  it("every bank exerciseId resolves to a real EXERCISES entry", () => {
+    const ids = new Set(EXERCISES.map((e) => e.id));
+    const bad: string[] = [];
+    for (const [category, options] of Object.entries(exerciseBank)) {
+      for (const o of options) {
+        if (!ids.has(o.id)) bad.push(`${category}/${o.id}`);
+      }
+    }
+    expect(bad).toEqual([]);
+  });
+});
+
+// Backlog #7's time axis (N2) — timed holds count SECONDS, not reps.
+describe("timed holds (backlog #7 time axis)", () => {
+  const plank = (o: Partial<ProgramExercise> = {}) =>
+    makeTestExercise({
+      name: "Plank",
+      exerciseId: "plank",
+      movementCategory: "core",
+      weight: 0,
+      lastSuccessfulWeight: 0,
+      lastAttemptedWeight: 0,
+      reps: 30,
+      baseReps: 30,
+      repRangeMax: 45,
+      repUnit: "seconds",
+      ...o,
+    });
+
+  it("climbs in 5-second steps, not 1-rep steps", () => {
+    const out = applyProgression(plank(), 32, 0, "recomp", false);
+    expect(out.reps).toBe(35);
+  });
+
+  it("stops at the authored ceiling rather than drifting", () => {
+    const out = applyProgression(
+      plank({ reps: 43, baseReps: 43 }),
+      45,
+      0,
+      "recomp",
+      false
+    );
+    expect(out.reps).toBe(45);
+  });
+
+  it("prompts to add load at the ceiling, not at 20 'reps'", () => {
+    // The defect: a plank starts at 30, already ABOVE MAX_BODYWEIGHT_REPS, so
+    // any overshoot immediately advised "Hitting 20+ reps — add load" at what
+    // is an ordinary hold length.
+    const belowCeiling = applyProgression(plank(), 32, 0, "recomp", false);
+    expect(belowCeiling.notes).toBeUndefined();
+
+    const atCeiling = applyProgression(
+      plank({ reps: 45, baseReps: 45 }),
+      47,
+      0,
+      "recomp",
+      false
+    );
+    expect(atCeiling.notes).toMatch(/add load/i);
+    expect(atCeiling.notes).not.toMatch(/20\+ reps/);
+    expect(atCeiling.reps).toBe(45); // held, not bumped past the ceiling
+  });
+
+  it("falls back to a 60s ceiling when no range was authored", () => {
+    const out = applyProgression(
+      plank({ reps: 60, baseReps: 60, repRangeMax: undefined }),
+      65,
+      0,
+      "recomp",
+      false
+    );
+    expect(out.notes).toMatch(/add load/i);
+    expect(out.reps).toBe(60);
+  });
+
+  it("leaves ordinary bodyweight reps alone", () => {
+    // The rep path must be untouched: a pull-up still steps by 1 and still
+    // uses the 20-rep cap.
+    const pullup = makeBodyweightExercise({ reps: 8 });
+    expect(applyProgression(pullup, 10, 0, "recomp", false).reps).toBe(9);
+    const capped = makeBodyweightExercise({ reps: 20 });
+    const out = applyProgression(capped, 22, 0, "recomp", false);
+    expect(out.reps).toBe(20);
+    expect(out.notes).toMatch(/20\+ reps/);
+  });
+});
+
+// Backlog #10 (M6 adjacency) wired into generateProgram. The week's SHAPE
+// comes from profile.weekSchedule — read-only. Lifts stay split-ordered
+// (ADR-0002); this only decides which session sits next to which.
+describe("adjacency ordering (backlog #10, M6)", () => {
+  const sched = (days: number[]) =>
+    [0, 1, 2, 3, 4, 5, 6].map((d) => ({
+      day: d,
+      type: days.includes(d) ? "lift" : "rest",
+    }));
+  const gen = (
+    n: number,
+    schedule?: ReadonlyArray<{ day: number; type: string }>,
+    existing?: WorkoutDay[]
+  ) =>
+    generateProgram("recomp", n, existing, "hypertrophy", undefined, schedule)
+      .workouts;
+
+  it("changes nothing for a spread-out week", () => {
+    // Mon/Wed/Fri — no two sessions are back-to-back, so there is nothing
+    // adjacency can improve. This is the case the rule MUST leave alone.
+    const plain = gen(3).map((d) => d.dayName);
+    const spread = gen(3, sched([1, 3, 5])).map((d) => d.dayName);
+    expect(spread).toEqual(plain);
+  });
+
+  it("changes nothing when no schedule is supplied", () => {
+    expect(gen(6, undefined).map((d) => d.dayName)).toEqual(
+      gen(6, undefined).map((d) => d.dayName)
+    );
+  });
+
+  it("separates posterior-heavy days on a fully consecutive week", () => {
+    const before = gen(6);
+    const after = gen(6, sched([1, 2, 3, 4, 5, 6]));
+    const posterior = (w: WorkoutDay[]) =>
+      w.map((d) =>
+        d.exercises.reduce(
+          (n, e) =>
+            n +
+            (e.movementCategory === "hip_dominant" ||
+            e.movementCategory === "horizontal_pull" ||
+            e.movementCategory === "vertical_pull"
+              ? e.sets
+              : 0),
+          0
+        )
+      );
+    const cost = (w: WorkoutDay[]) => {
+      const p = posterior(w);
+      let c = 0;
+      for (let i = 0; i + 1 < p.length; i += 1) c += Math.min(p[i], p[i + 1]);
+      return c;
+    };
+    expect(cost(after)).toBeLessThanOrEqual(cost(before));
+  });
+
+  it("keeps the push/pull/legs rotation intact", () => {
+    // The worry that kept this unbuilt: a GENERIC overlap metric reorders PPL
+    // out of its rotation. Scoring only the posterior chain does not — a
+    // 6-day week stays a clean two-cycle rotation, just possibly starting on
+    // a different day.
+    const names = gen(6, sched([1, 2, 3, 4, 5, 6])).map(
+      (d) => d.dayName.split(" ")[0]
+    );
+    expect(names.slice(0, 3)).toEqual(names.slice(3, 6));
+  });
+
+  it("keeps the order stable across regenerates", () => {
+    const S = sched([1, 2, 3, 4, 5, 6]);
+    const established = gen(6, S);
+    let current = established;
+    for (let i = 0; i < 3; i += 1) {
+      current = gen(6, S, current);
+      expect(current.map((d) => d.dayName)).toEqual(
+        established.map((d) => d.dayName)
+      );
+    }
+  });
+
+  it("carries every exercise to the RIGHT day after reordering", () => {
+    // The bug this feature was blocked on, now a regression pin. The builders
+    // carry saved exercises by POSITION, which assumed saved order == builder
+    // order. Reordering broke that silently: with saved Pull,Push,Legs and
+    // builder Push,Pull,Legs, a logged pull-up weight landed on bench press.
+    // `alignToCanonical` makes the carry key on day NAME instead.
+    const S = sched([1, 2, 3, 4, 5, 6]);
+    const established = gen(6, S);
+    const trained = established.map((d) => ({
+      ...d,
+      exercises: d.exercises.map((e) => ({ ...e, weight: 61 })),
+    }));
+    const again = gen(6, S, trained);
+
+    again.forEach((d, di) => {
+      expect(d.dayName).toBe(trained[di].dayName);
+      d.exercises.forEach((e, ei) => {
+        const before = trained[di].exercises[ei];
+        if (!before) return;
+        expect(e.exerciseId, `d${di}/e${ei} (${d.dayName})`).toBe(
+          before.exerciseId
+        );
+        expect(e.weight, `d${di}/e${ei}`).toBe(61);
+      });
+    });
+  });
+
+  it("aligns by name even when the saved plan is in a different order", () => {
+    // Directly: hand the engine a saved plan whose days are shuffled and
+    // confirm each day's content follows its NAME, not its index.
+    const S = sched([1, 2, 3, 4, 5, 6]);
+    const base = gen(6, S);
+    const shuffled = [...base].reverse().map((d) => ({
+      ...d,
+      exercises: d.exercises.map((e) => ({ ...e, weight: 77 })),
+    }));
+    const out = gen(6, S, shuffled);
+    out.forEach((d) => {
+      const source = shuffled.find((x) => x.dayName === d.dayName);
+      expect(source).toBeDefined();
+      d.exercises.forEach((e, ei) => {
+        const before = source!.exercises[ei];
+        if (before) expect(e.exerciseId).toBe(before.exerciseId);
+      });
+    });
+  });
+});
+
+// A regenerate must never drop a logged load, on ANY split. This is the guard
+// for the whole class rather than for one slot: the builders carry saved
+// exercises through hand-written `findExisting(dayIdx, exIdx)` calls, and a
+// single wrong index silently rebuilds that lift from defaults every time the
+// user changes a setting. One such off-by-one (the PPL legs day's core slot,
+// calling findExisting(2, 4) into a four-slot day) survived until this test
+// existed.
+//
+// CORRECTED 2026-07-28. This test used to stamp `weight: 61` on EVERY
+// exercise and then assert every exercise still read 61 — so any permutation
+// of the carry passed it, including the one an audit found shipping
+// (`Bench Press@100 [from Barbell Squat]`). It also computed a `before` and
+// never compared against it. Distinct per-slot weights are the whole point:
+// they make a swap visible.
+describe("regenerate preserves every logged load (all splits)", () => {
+  it.each([1, 2, 3, 4, 5, 6])("%i-day split", (days) => {
+    const first = generateProgram(
+      "recomp",
+      days,
+      undefined,
+      "hypertrophy"
+    ).workouts;
+    // A unique load per LIFT, so a mis-carry names its own source.
+    const loadFor = new Map<string, number>();
+    first
+      .flatMap((d) => d.exercises)
+      .forEach((e, i) => {
+        if (!loadFor.has(e.exerciseId)) loadFor.set(e.exerciseId, 100 + i);
+      });
+    const trained = first.map((d) => ({
+      ...d,
+      exercises: d.exercises.map((e) => {
+        const w = loadFor.get(e.exerciseId) as number;
+        return {
+          ...e,
+          weight: w,
+          performanceHistory: [
+            { date: "2026-01-01", weight: w, repsCompleted: 8, repsTarget: 8 },
+          ],
+        };
+      }),
+    }));
+    const again = generateProgram(
+      "recomp",
+      days,
+      trained,
+      "hypertrophy"
+    ).workouts;
+
+    const sourceOf = (w: number) =>
+      [...loadFor.entries()].find(([, v]) => v === w)?.[0] ?? "unknown";
+
+    again.forEach((d) =>
+      d.exercises.forEach((e, ei) => {
+        const expected = loadFor.get(e.exerciseId);
+        expect(
+          expected,
+          `${d.dayName} / slot ${ei}: ${e.exerciseId} was not in the saved plan`
+        ).toBeDefined();
+        expect(
+          e.weight,
+          `${d.dayName} / slot ${ei}: ${e.exerciseId} carried ${sourceOf(e.weight)}'s load`
+        ).toBe(expected);
+        expect(
+          e.performanceHistory?.length,
+          `${d.dayName} / slot ${ei} (${e.exerciseId})`
+        ).toBe(1);
+      })
+    );
+  });
+});
+
+// The owner-reported defect: a default 3-day programme prescribed Barbell
+// Squat x3/week and a 4-day prescribed Barbell Curl x3 — on every goal, i.e.
+// the two most common configurations in the app. Helms's literal
+// counter-example, shipped. Guarded across every split and goal.
+describe("no lift is prescribed more than twice a week", () => {
+  const GOALS = ["hypertrophy", "strength", "fat_loss", "general"] as const;
+  it.each(GOALS)("%s, every split", (goal) => {
+    for (const days of [1, 2, 3, 4, 5, 6]) {
+      const { workouts } = generateProgram("recomp", days, undefined, goal);
+      const counts = new Map<string, number>();
+      for (const ex of workouts.flatMap((d) => d.exercises)) {
+        counts.set(ex.name, (counts.get(ex.name) ?? 0) + 1);
+      }
+      const over = [...counts.entries()].filter(([, n]) => n > 2);
+      expect(over, `${goal} / ${days}-day`).toEqual([]);
+    }
+  });
+
+  it("leaves no duplicate exercise within any single day", () => {
+    // The end-to-end guarantee: the repeat cap must not undo what
+    // dedupeDayExercises did earlier in the pipeline.
+    for (const days of [1, 2, 3, 4, 5, 6]) {
+      const { workouts } = generateProgram(
+        "recomp",
+        days,
+        undefined,
+        "hypertrophy"
+      );
+      workouts.forEach((d) => {
+        const ids = d.exercises.map((e) => e.exerciseId);
+        expect(new Set(ids).size, `${days}-day / ${d.dayName}`).toBe(
+          ids.length
+        );
+      });
+    }
+  });
+
+  it("still trains the muscle at the split's promised frequency", () => {
+    // The cap must change WHICH variation fills a slot, never how often the
+    // muscle is trained — that frequency is what splitRationale promises.
+    const { workouts } = generateProgram("recomp", 3, undefined, "hypertrophy");
+    const kneeDays = workouts.filter((d) =>
+      d.exercises.some((e) => e.movementCategory === "knee_dominant")
+    );
+    expect(kneeDays).toHaveLength(3);
   });
 });

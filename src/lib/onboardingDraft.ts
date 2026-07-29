@@ -41,7 +41,12 @@ import {
   type RaceDistance,
 } from "@/features/program/programTypes";
 
-export const DRAFT_VERSION = 1;
+// 2 (2026-07-28): added `experience`. Strict validation already rejects a
+// draft missing it, so the bump doesn't change the OUTCOME for in-flight
+// drafts — it makes the discard explicit and self-documenting rather than
+// looking like a validation failure, which is what this module's contract
+// says a schema change should do.
+export const DRAFT_VERSION = 2;
 export const DRAFT_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 
 const keyFor = (uid: string) => `tropos.onboarding.draft.${uid}`;
@@ -51,7 +56,12 @@ const keyFor = (uid: string) => `tropos.onboarding.draft.${uid}`;
  * `draft.gender` etc. straight into its own typed state, so a value added
  * here that Onboarding doesn't know (or vice versa on the draft side)
  * fails the build at the call site. */
-export const DRAFT_GENDERS = ["male", "female", "unspecified"] as const;
+export const DRAFT_EXPERIENCE = [
+  "beginner",
+  "intermediate",
+  "advanced",
+] as const;
+const DRAFT_GENDERS = ["male", "female", "unspecified"] as const;
 export const DRAFT_AGE_RANGES = [
   "under-16",
   "16-24",
@@ -91,6 +101,7 @@ export interface OnboardingDraft {
   heightUnit: (typeof DRAFT_UNITS_HEIGHT)[number];
   weightUnit: (typeof DRAFT_UNITS_WEIGHT)[number];
   trainingWhy: string;
+  experience: (typeof DRAFT_EXPERIENCE)[number];
 }
 
 interface DraftEnvelope {
@@ -142,7 +153,8 @@ export function isValidDraft(
     finiteInRange(d.weightKg, 30, 300) &&
     oneOf(DRAFT_UNITS_HEIGHT, d.heightUnit) &&
     oneOf(DRAFT_UNITS_WEIGHT, d.weightUnit) &&
-    typeof d.trainingWhy === "string"
+    typeof d.trainingWhy === "string" &&
+    oneOf(DRAFT_EXPERIENCE, d.experience)
   );
 }
 

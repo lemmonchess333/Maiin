@@ -10,6 +10,7 @@
  * "db-bench" (Dumbbells) category-mate; "db-row" (Dumbbells) is already fine.
  */
 import { describe, it, expect } from "vitest";
+import { rescaleForSwap } from "@/features/program/variationBank";
 import { applyEquipmentFilterToWorkouts } from "../matchTemplate";
 import { getExerciseById } from "@/lib/exercises";
 import type {
@@ -58,7 +59,7 @@ describe("applyEquipmentFilterToWorkouts", () => {
     expect(out[0].exercises[0].exerciseId).toBe("bench-press");
   });
 
-  it("swaps a Barbell exercise to an available category-mate at home_gym, carrying load", () => {
+  it("swaps a Barbell exercise to an available category-mate at home_gym, RESCALING the load", () => {
     const w = [
       day([
         ex("bench-press", "Bench Press", "horizontal_push", { weight: 80 }),
@@ -70,7 +71,16 @@ describe("applyEquipmentFilterToWorkouts", () => {
     expect(HOME_OK.has(getExerciseById(swapped.exerciseId)!.equipment)).toBe(
       true
     );
-    expect(swapped.weight).toBe(80); // load carried
+    // CORRECTED 2026-07-28: this asserted `toBe(80)` — "load carried". A
+    // swap changes the MOVEMENT, and 80 kg of barbell bench is not 80 kg of
+    // per-hand dumbbell press. Measured on a real plan, carrying it verbatim
+    // handed an 80 kg beginner a 35 kg dumbbell press and a 55 kg Bulgarian
+    // split squat. The load is now rescaled by the two variations' load
+    // factors, so it must be LOWER here and derived, not equal.
+    expect(swapped.weight).toBe(
+      rescaleForSwap(80, "bench-press", swapped.exerciseId, "horizontal_push")
+    );
+    expect(swapped.weight).toBeLessThan(80);
     expect(swapped.notes).toMatch(/not available with your equipment/i);
   });
 

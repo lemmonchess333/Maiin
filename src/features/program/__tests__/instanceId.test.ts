@@ -38,7 +38,9 @@ describe("instanceId — #1038", () => {
   });
 
   it("generateInstanceId returns unique-ish values", () => {
-    const ids = new Set(Array.from({ length: 100 }, () => generateInstanceId()));
+    const ids = new Set(
+      Array.from({ length: 100 }, () => generateInstanceId())
+    );
     expect(ids.size).toBe(100);
   });
 

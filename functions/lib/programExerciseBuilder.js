@@ -57,6 +57,7 @@ function buildProgramExercise(ex) {
     ...(ex.preDeloadReps !== undefined
       ? { preDeloadReps: ex.preDeloadReps }
       : {}),
+    ...(ex.repUnit !== undefined ? { repUnit: ex.repUnit } : {}),
     ...(ex.restSeconds !== undefined ? { restSeconds: ex.restSeconds } : {}),
     ...(ex.isAccessory !== undefined ? { isAccessory: ex.isAccessory } : {}),
     weight: ex.weight ?? 0,

@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   startingWeightForCategory,
   seedStartingLoads,
+  weightAfterExerciseSwap,
   type StartingLoadContext,
 } from "../startingLoads";
 import type { ProgramExercise, WorkoutDay } from "../programTypes";
@@ -76,7 +77,83 @@ describe("startingWeightForCategory", () => {
   });
 });
 
+describe("weightAfterExerciseSwap", () => {
+  it("seeds a loaded target when the source was bodyweight", () => {
+    const swapped = weightAfterExerciseSwap(
+      ex({
+        exerciseId: "push-ups",
+        movementCategory: "horizontal_push",
+        weight: 0,
+      }),
+      "db-bench",
+      ctx()
+    );
+    expect(swapped.weight).toBeGreaterThan(0);
+    expect(swapped.movementCategory).toBe("horizontal_push");
+  });
+
+  it("uses the target category for a cross-category injury substitution", () => {
+    const swapped = weightAfterExerciseSwap(
+      ex({
+        exerciseId: "deadlift",
+        movementCategory: "hip_dominant",
+        weight: 120,
+      }),
+      "incline-db-press",
+      ctx()
+    );
+    expect(swapped.movementCategory).toBe("horizontal_push");
+    expect(swapped.weight).toBeGreaterThan(0);
+    expect(swapped.weight).toBeLessThan(120);
+  });
+
+  it("infers the target category for catalog exercises outside the variation bank", () => {
+    const swapped = weightAfterExerciseSwap(
+      ex({
+        exerciseId: "bench-press",
+        movementCategory: "horizontal_push",
+        weight: 100,
+      }),
+      "leg-extension",
+      ctx()
+    );
+    expect(swapped.movementCategory).toBe("knee_dominant");
+    expect(swapped.weight).toBeGreaterThan(0);
+  });
+
+  it("drops kilograms when the target is bodyweight", () => {
+    const swapped = weightAfterExerciseSwap(
+      ex({
+        exerciseId: "deadlift",
+        movementCategory: "hip_dominant",
+        weight: 120,
+      }),
+      "glute-bridge",
+      ctx()
+    );
+    expect(swapped.weight).toBe(0);
+  });
+});
+
 describe("seedStartingLoads", () => {
+  it("calibrates an untrained loaded template row that starts at 0 kg", () => {
+    const out = seedStartingLoads(
+      [
+        day([
+          ex({
+            exerciseId: "bench-press",
+            movementCategory: "horizontal_push",
+            weight: 0,
+            lastSuccessfulWeight: 0,
+            lastAttemptedWeight: 0,
+          }),
+        ]),
+      ],
+      ctx()
+    );
+    expect(out[0].exercises[0].weight).toBe(35);
+  });
+
   it("reweights untrained MAIN lifts to the bodyweight-relative seed", () => {
     const out = seedStartingLoads(
       [day([ex({ movementCategory: "knee_dominant", weight: 80 })])],
@@ -86,11 +163,17 @@ describe("seedStartingLoads", () => {
     expect(out[0].exercises[0].lastSuccessfulWeight).toBe(55);
   });
 
-  it("never touches accessories", () => {
+  // CORRECTED 2026-07-28. This used to assert "never touches accessories".
+  // That skip is what silently disabled cold-start seeding for the whole
+  // full-body segment the moment backlog #15 marked its slots 2-4 as
+  // accessories: the same 80 kg beginner was prescribed Bench Press at 35 kg
+  // as a main and 60 kg as an accessory, in the same week.
+  it("seeds accessories too — the flag is a volume role, not a load claim", () => {
     const out = seedStartingLoads(
       [
         day([
           ex({
+            exerciseId: "squat",
             movementCategory: "knee_dominant",
             weight: 80,
             isAccessory: true,
@@ -99,7 +182,51 @@ describe("seedStartingLoads", () => {
       ],
       ctx()
     );
-    expect(out[0].exercises[0].weight).toBe(80); // unchanged
+    expect(out[0].exercises[0].weight).toBe(55); // same seed a main would get
+  });
+
+  it("scales the seed to the VARIATION, not just the category", () => {
+    // The reason seeding accessories is safe. A leg curl and a deadlift are
+    // both hip_dominant; without the per-exercise factor the leg curl would
+    // be seeded at the deadlift's 68 kg.
+    const out = seedStartingLoads(
+      [
+        day([
+          ex({
+            exerciseId: "deadlift",
+            movementCategory: "hip_dominant",
+            weight: 80,
+          }),
+          ex({
+            exerciseId: "seated-leg-curl",
+            movementCategory: "hip_dominant",
+            weight: 80,
+            isAccessory: true,
+          }),
+        ]),
+      ],
+      ctx()
+    );
+    expect(out[0].exercises[0].weight).toBe(67.5); // 80 × 0.85
+    expect(out[0].exercises[1].weight).toBe(17.5); // × 0.25 → 17.5
+  });
+
+  it("leaves a catalog bodyweight lift as bodyweight even in a loaded category", () => {
+    // Chin-ups are vertical_pull like a lat pulldown; the catalog's
+    // `equipment: "Bodyweight"` is what decides, not the category.
+    const out = seedStartingLoads(
+      [
+        day([
+          ex({
+            exerciseId: "chin-ups",
+            movementCategory: "knee_dominant", // deliberately a loaded category
+            weight: 40,
+          }),
+        ]),
+      ],
+      ctx()
+    );
+    expect(out[0].exercises[0].weight).toBe(40); // untouched
   });
 
   it("never touches a lift with logged history (keeps progressed weight)", () => {

@@ -41,6 +41,7 @@ import type {
   Goal,
   PreferredSplit,
   PrimaryGoal,
+  ProgramExercise,
   ProgramState,
   ScheduledRunDay,
   RunPlan,
@@ -54,7 +55,13 @@ import {
 import { generateSchedule, type ScheduleDay } from "@/lib/scheduleUtils";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
 import { generateProgram, expectedDayCount } from "./programEngine";
-import { loadContextFrom } from "./startingLoads";
+import {
+  loadContextFrom,
+  seedStartingLoads,
+  weightAfterExerciseSwap,
+} from "./startingLoads";
+import { applyComplexityGate, toExperience } from "./experienceModel";
+import { exerciseBank } from "./variationBank";
 import {
   applyInjuryFiltersToWorkouts,
   applyEquipmentFilterToWorkouts,
@@ -80,6 +87,23 @@ export interface PlanBuilderInput {
   nutritionPhase: Goal;
 
   experience: "beginner" | "intermediate" | "advanced";
+
+  /**
+   * The experience level the EXISTING plan was built at, when there is one.
+   *
+   * Without it a level change is invisible to the builder: `buildLiftProgram`
+   * preserves the saved week whenever the lift-day count is unchanged, so
+   * switching Beginner ↔ Advanced in Settings produced byte-identical
+   * workouts — while the confirm modal listed "Experience: intermediate →
+   * beginner" as a change and the flow ended on a "Plan updated" toast.
+   * Measured 2026-07-28; the plan the user was told they had updated was the
+   * plan they already had.
+   *
+   * Not persisted on ProgramState: the caller edits a profile and therefore
+   * already knows the value it is replacing, and a stored copy would be a
+   * second source of truth for something the profile already owns.
+   */
+  previousExperience?: string;
 
   /** Bodyweight (kg) + sex — seed bodyweight-relative cold-start starting loads
    *  (D-LIFT-5). Optional: when absent the engine keeps its hardcoded defaults. */
@@ -188,33 +212,41 @@ function buildWeekSchedule(input: PlanBuilderInput): ScheduleDay[] {
 /**
  * Lift programme. Pgm5 (Q2 — structure-preserving regeneration): a CONTENT
  * edit (goal / nutrition / experience / equipment / injuries with the same
- * lift-day count) PRESERVES the user's current workouts verbatim — day
- * structure, the exercise list (including swaps / adds / reorders), sets,
- * reps, weights and history all survive. This honours Pgm5 ("the engine never
- * silently discards a user decision"). The engine only rebuilds from template
- * when there is no existing programme, or the lift-day count changed (a
- * different skeleton is then unavoidable). Explicit Reset stays destructive via
- * a separate path (useProgram.regenerateProgram → generateProgram directly).
+ * lift-day count) preserves the user's day structure and all safe exercise
+ * customisations. The engine only rebuilds from template when there is no
+ * existing programme, the experience tier changes, or the lift-day count
+ * changes. Explicit Reset stays destructive via a separate path
+ * (useProgram.regenerateProgram → generateProgram directly).
  *
- * Content edits preserve structure + customizations AND now re-apply the
- * user's CURRENT injuries in place (applyInjuryFiltersToWorkouts swaps only
- * contraindicated exercises, carrying weight/history). Remaining follow-ups:
- * goal-driven rep/volume rescheme (needs a per-exercise role anchor the stored
- * ProgramExercise lacks) and equipment re-pick (the regeneration engine has no
- * equipment filter yet).
+ * Injury/equipment edits re-apply their filters in place. Only an exercise
+ * that is now unsafe or unavailable changes identity; its slot prescription
+ * survives while its movement-specific load/history is safely reinitialised.
+ * A remaining follow-up is goal-driven rep/volume rescheme (it needs a
+ * per-exercise role anchor the stored ProgramExercise lacks).
  */
 function buildLiftProgram(input: PlanBuilderInput): {
   splitType: SplitType;
   workouts: WorkoutDay[];
 } {
   const existing = input.existingState?.workouts;
+  const loadCtx = loadContextFrom({
+    weightKg: input.bodyweightKg,
+    experience: input.experience,
+    sex: input.sex,
+  });
   const sameDayCount =
     !!existing &&
     existing.length > 0 &&
     existing.length === expectedDayCount(input.liftDays);
+  // A level change restructures the programme — which movements are chosen
+  // and whether the week undulates — so it has to rebuild even though the
+  // skeleton is the same shape.
+  const levelChanged =
+    input.previousExperience !== undefined &&
+    toExperience(input.previousExperience) !== toExperience(input.experience);
 
   const base =
-    sameDayCount && input.existingState
+    sameDayCount && !levelChanged && input.existingState
       ? // Content edit → preserve the user's structure + customizations.
         { splitType: input.existingState.splitType, workouts: existing }
       : // No existing plan, or lift-days changed → rebuild from template.
@@ -223,12 +255,27 @@ function buildLiftProgram(input: PlanBuilderInput): {
           input.liftDays,
           existing,
           input.primaryGoal,
-          loadContextFrom({
-            weightKg: input.bodyweightKg,
-            experience: input.experience,
-            sex: input.sex,
-          })
+          loadCtx,
+          // Backlog #10 (M6): the week's SHAPE, derived from the SAME inputs
+          // this builder uses for the schedule it is about to write, so the
+          // programme is ordered against the week the user will actually get.
+          // Read-only — lifts stay split-ordered (ADR-0002).
+          buildWeekSchedule(input),
+          toExperience(input.experience)
         );
+
+  // Experience gate (2026-07-28). `generateProgram` gates internally, but that
+  // is not enough and a sweep proved it: the PRESERVE branch above never calls
+  // `generateProgram` at all, so a beginner seeded from a template — the only
+  // seed path at onboarding — was never gated once. Running it here covers
+  // both branches, and it is idempotent, so the generated path pays nothing.
+  const levelled = applyComplexityGate(
+    base.workouts,
+    toExperience(input.experience),
+    exerciseBank,
+    (ex, toId) =>
+      weightAfterExerciseSwap(ex as ProgramExercise, toId, loadCtx).weight
+  );
 
   // Pgm5 follow-ups: honour the user's CURRENT injuries and equipment on the
   // regeneration path (generateProgram ignores both; the preserve branch keeps
@@ -236,18 +283,33 @@ function buildLiftProgram(input: PlanBuilderInput): {
   // equipment picker is injury-aware, so a swap never reintroduces a risk.
   // Both deep-clone (the pure builder never aliases existingState) and are
   // no-ops for healthy / full-gym users.
+  //
+  // These run AFTER the gate and are NOT level-aware, which is a measured
+  // decision — see `applyEquipmentFilterToWorkouts`. Gating them was tried and
+  // either made things worse (a beginner keeping equipment they don't own) or
+  // changed nothing (no simple alternative exists in the bank). What remains
+  // is bank coverage, recorded in the backlog, not a filter bug.
   const injurySafe = applyInjuryFiltersToWorkouts(
-    base.workouts,
-    input.injuries
+    levelled,
+    input.injuries,
+    input.equipment,
+    loadCtx
   );
-  return {
-    splitType: base.splitType,
-    workouts: applyEquipmentFilterToWorkouts(
-      injurySafe,
-      input.equipment,
-      input.injuries
-    ),
-  };
+  const equipmentSafe = applyEquipmentFilterToWorkouts(
+    injurySafe,
+    input.equipment,
+    input.injuries,
+    toExperience(input.experience),
+    loadCtx
+  );
+  // Template-seeded onboarding takes the preserve branch above. Those rows
+  // historically arrived at 0 kg and therefore never passed through
+  // generateProgram's cold-start seeding. Run the idempotent seeder across
+  // the final shape so both generated and preserved plans are calibrated.
+  const workouts = loadCtx
+    ? seedStartingLoads(equipmentSafe, loadCtx)
+    : equipmentSafe;
+  return { splitType: base.splitType, workouts };
 }
 
 /** Builds runDays + runPlan for the requested mode. Pure (relies on

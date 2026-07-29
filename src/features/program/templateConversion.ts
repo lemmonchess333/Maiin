@@ -15,6 +15,7 @@ import type {
   PrimaryGoal,
   ProgramExercise,
   ProgressionType,
+  RepUnit,
 } from "@/features/program/programTypes";
 import { goalProfileFor } from "@/features/program/programEngine";
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
@@ -34,15 +35,38 @@ import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 export function parseTemplateReps(reps: string): {
   reps: number;
   repRangeMax?: number;
+  repUnit?: RepUnit;
 } {
-  const range = /^(\d+)\s*-\s*(\d+)$/.exec(reps.trim());
+  const trimmed = reps.trim();
+
+  // Timed holds — "30-45s", "20-30s", "45s" (backlog #7's time axis, N2).
+  // Structurally these are ranges that climb exactly like a rep range; the
+  // only thing that made them special was that nothing carried the UNIT, so
+  // a 30-second plank was stored as "30 reps" and displayed as such.
+  const durRange = /^(\d+)\s*-\s*(\d+)\s*s$/i.exec(trimmed);
+  if (durRange) {
+    const lo = parseInt(durRange[1], 10);
+    const hi = parseInt(durRange[2], 10);
+    return hi > lo
+      ? { reps: lo, repRangeMax: hi, repUnit: "seconds" }
+      : { reps: lo, repUnit: "seconds" };
+  }
+  const durSingle = /^(\d+)\s*s$/i.exec(trimmed);
+  if (durSingle) {
+    return { reps: parseInt(durSingle[1], 10), repUnit: "seconds" };
+  }
+
+  const range = /^(\d+)\s*-\s*(\d+)$/.exec(trimmed);
   if (range) {
     const lo = parseInt(range[1], 10);
     const hi = parseInt(range[2], 10);
     if (hi > lo) return { reps: lo, repRangeMax: hi };
     return { reps: lo };
   }
-  return { reps: parseInt(reps, 10) || 8 };
+  // Per-side forms ("10/leg", "20/side") stay plain reps: ten reps per leg
+  // logged as ten reps is a defensible simplification, and unlike a duration
+  // the NUMBER is already in the right unit.
+  return { reps: parseInt(trimmed, 10) || 8 };
 }
 
 /**
@@ -73,7 +97,7 @@ export function templateExToProgEx(
   te: TemplateExercise,
   mainProgression: ProgressionType
 ): ProgramExercise {
-  const { reps, repRangeMax } = parseTemplateReps(te.reps);
+  const { reps, repRangeMax, repUnit } = parseTemplateReps(te.reps);
   const isAccessory = te.isAccessory === true;
   return {
     name: te.name,
@@ -94,6 +118,7 @@ export function templateExToProgEx(
     // whatever the target had climbed to.
     baseReps: reps,
     ...(repRangeMax !== undefined ? { repRangeMax } : {}),
+    ...(repUnit !== undefined ? { repUnit } : {}),
     weight: 0,
     // Backlog #7 (H3): the scheme belongs to the exercise, not the goal —
     // isolations climb reps within their authored range, mains follow the
@@ -116,4 +141,20 @@ export function templateExToProgEx(
     // swapped exercises with no context for why.
     ...(te.notes !== undefined ? { notes: te.notes } : {}),
   };
+}
+
+/**
+ * The prescription target as the user should read it (backlog #7's time
+ * axis). A timed hold shows seconds and its authored range — a plank was
+ * rendering as a bare "30", indistinguishable from thirty repetitions.
+ * Reps keep their existing bare-number display, so nothing changes for the
+ * overwhelming majority of exercises.
+ */
+export function formatRepTarget(
+  ex: Pick<ProgramExercise, "reps" | "repRangeMax" | "repUnit">
+): string {
+  if (ex.repUnit !== "seconds") return String(ex.reps);
+  return ex.repRangeMax && ex.repRangeMax > ex.reps
+    ? `${ex.reps}-${ex.repRangeMax}s`
+    : `${ex.reps}s`;
 }
