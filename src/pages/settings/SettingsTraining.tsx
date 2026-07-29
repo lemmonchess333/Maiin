@@ -25,9 +25,13 @@ import ProgrammeSettings from "@/components/program/ProgrammeSettings";
 import ScheduleLayoutSheet from "@/components/program/ScheduleLayoutSheet";
 
 export default function SettingsTraining() {
-  const { profile, updateProfile } = useAuth();
-  const { programState, updateSettings, regenerateProgram, refreshRunSchedule } =
-    useProgram();
+  const { profile, updateProfile, refreshProfile } = useAuth();
+  const {
+    programState,
+    updateSettings,
+    regenerateProgram,
+    refreshRunSchedule,
+  } = useProgram();
 
   const [editLayoutOpen, setEditLayoutOpen] = useState(false);
 
@@ -48,6 +52,7 @@ export default function SettingsTraining() {
           programState={programState}
           updateSettings={updateSettings}
           regenerateProgram={regenerateProgram}
+          refreshProfile={refreshProfile}
           onOpenWeeklyLayout={() => setEditLayoutOpen(true)}
         />
       </SettingsSection>

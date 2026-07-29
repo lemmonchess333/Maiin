@@ -8,7 +8,6 @@ import {
 import { useNavigate } from "react-router-dom";
 import { haptic } from "@/lib/haptic";
 import { useAuth } from "@/lib/auth";
-import type { UserProfile } from "@/lib/auth";
 import { doc, serverTimestamp } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { httpsCallable } from "firebase/functions";
@@ -62,6 +61,7 @@ import {
   User,
   Heart,
   Ruler,
+  Award,
   Target,
   Calendar,
   Warehouse,
@@ -81,11 +81,7 @@ import { validateDisplayName } from "@/lib/displayName";
 type Gender = "male" | "female" | "unspecified";
 type AgeRange = "under-16" | "16-24" | "25-34" | "35-44" | "45-54" | "55+";
 type PrimaryGoal =
-  | "hypertrophy"
-  | "strength"
-  | "fat_loss"
-  | "general"
-  | "running";
+  "hypertrophy" | "strength" | "fat_loss" | "general" | "running";
 // Experience / Equipment / RunMode / RaceDistance are imported from the
 // single-source measure vocabularies (D3) — no longer re-declared here.
 type DaysPerWeek = 2 | 3 | 4 | 5 | 6;
@@ -297,7 +293,7 @@ const TRAINING_WHY_CHIPS = [
 ============================ */
 
 export default function Onboarding() {
-  const { user, updateProfile } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const navigate = useNavigate();
   // D-2 (frontend-design-principles-2026-07): rehydrate any saved draft
   // ONCE, before the state it seeds. A backgrounded PWA reclaim / WKWebView
@@ -381,8 +377,19 @@ export default function Onboarding() {
     draft?.primaryGoal ?? "hypertrophy"
   );
 
-  // ── Experience (DEFERRED — no UI step; default kept at intermediate)
-  const experience: Experience = "intermediate";
+  // ── Experience
+  //
+  // Captured on the "About you" step rather than a step of its own — the
+  // fast-start flow deliberately went 13 → 8 steps, and this belongs with
+  // the other "who are you" questions. It was DEFERRED and hardcoded to
+  // "intermediate" for every user until 2026-07-28, which meant "beginner"
+  // was a value the app could store and never produce: `startingLoads`,
+  // `applyDeload`'s novice branch and `matchTemplate` all read it, and all
+  // three only ever saw the constant. It now drives movement complexity and
+  // whether the week undulates (`experienceModel.ts`).
+  const [experience, setExperience] = useState<Experience>(
+    draft?.experience ?? "intermediate"
+  );
 
   // ── Days per week
   const [daysPerWeek, setDaysPerWeek] = useState<DaysPerWeek>(
@@ -440,6 +447,7 @@ export default function Onboarding() {
       heightUnit,
       weightUnit,
       trainingWhy,
+      experience,
     });
   }, [
     user,
@@ -461,6 +469,7 @@ export default function Onboarding() {
     heightUnit,
     weightUnit,
     trainingWhy,
+    experience,
   ]);
 
   // ── Derived values
@@ -784,25 +793,11 @@ export default function Onboarding() {
       clearOnboardingDraft(user.uid);
 
       // Data is saved server-side (the CF flipped onboardingComplete=true
-      // via the Admin SDK). Mirror it into local state so App.tsx switches
-      // to the authenticated route set WITHOUT a reload. If that local
-      // write fails for ANY reason, the SERVER is already authoritative —
-      // reload to pick up the completed profile instead of stranding the
-      // user on onboarding.
-      //
-      // CRITICAL: pass `throwOnError` so a failed write actually throws.
-      // Without it, updateProfile returns `{ ok: false }` (and shows its
-      // own toast), the optimistic setProfile never runs, and the old
-      // `catch` here never fired — so navigate("/") below landed straight
-      // back on Onboarding (onboardingComplete still locally false). That
-      // was the "Start my program just loads and won't progress" hang.
+      // and wrote the chosen experience/plan fields via the Admin SDK).
+      // Re-read that authoritative profile so App.tsx switches route sets
+      // without a reload AND the first session sees the chosen experience.
       try {
-        const res = await updateProfile(
-          { onboardingComplete: true } as Partial<UserProfile>,
-          { allowProtected: true, throwOnError: true }
-        );
-        if (!res.ok)
-          throw res.error ?? new Error("local-profile-update-failed");
+        await refreshProfile();
       } catch (localUpdateErr) {
         logger.warn(
           "Onboarding: local profile update failed; reloading to pick up server state",
@@ -1466,6 +1461,47 @@ export default function Onboarding() {
                     </p>
                   </div>
                 )}
+              </div>
+
+              {/* Training experience */}
+              <div className="space-y-2">
+                <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                  Training experience
+                </p>
+                {(
+                  [
+                    {
+                      id: "beginner" as Experience,
+                      label: "New to lifting",
+                      desc: "0 – 6 months. We'll keep it to the core lifts.",
+                    },
+                    {
+                      id: "intermediate" as Experience,
+                      label: "Some experience",
+                      desc: "6 months – 2 years of consistent training",
+                    },
+                    {
+                      id: "advanced" as Experience,
+                      label: "Experienced",
+                      // Says what ships, and no more. It read "Unlocks the
+                      // full exercise library" until 2026-07-28, when the
+                      // advanced movements were genuinely unreachable; they
+                      // now surface when a lift stalls, which is what this
+                      // describes.
+                      desc: "2+ years. Specialist lifts when you stall, and effort (RPE) shown in sessions.",
+                    },
+                  ] as const
+                ).map((opt, i) => (
+                  <OptionCard
+                    key={opt.id}
+                    selected={experience === opt.id}
+                    onSelect={() => setExperience(opt.id)}
+                    icon={<Award size={22} style={{ color: THEME.brand }} />}
+                    label={opt.label}
+                    desc={opt.desc}
+                    index={i}
+                  />
+                ))}
               </div>
 
               {/* Height */}

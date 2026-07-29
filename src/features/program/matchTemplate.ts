@@ -4,7 +4,12 @@ import { PROGRAM_TEMPLATES } from "./templates";
 import type { WorkoutDay, ProgramExercise } from "./programTypes";
 import { EXERCISES, getExerciseById } from "@/lib/exercises";
 import { findSafeSubstitute } from "./injurySubstitutions";
+import { allowsComplexity, type Experience } from "./experienceModel";
 import { exerciseBank } from "./variationBank";
+import {
+  weightAfterExerciseSwap,
+  type StartingLoadContext,
+} from "./startingLoads";
 
 /**
  * Result of a `matchTemplate` call.
@@ -33,6 +38,31 @@ export interface MatchTemplateResult {
 const EXERCISE_ID_BY_NAME = new Map<string, string>(
   EXERCISES.map((ex) => [ex.name.toLowerCase(), ex.id])
 );
+
+function replaceExercise(
+  ex: ProgramExercise,
+  exerciseId: string,
+  name: string,
+  loadCtx: StartingLoadContext | undefined,
+  notes: string
+): ProgramExercise {
+  if (exerciseId === ex.exerciseId) return { ...ex, notes };
+  const calibrated = weightAfterExerciseSwap(ex, exerciseId, loadCtx);
+  return {
+    ...ex,
+    exerciseId,
+    name,
+    movementCategory: calibrated.movementCategory,
+    weight: calibrated.weight,
+    lastSuccessfulWeight: calibrated.weight,
+    lastAttemptedWeight: calibrated.weight,
+    consecutiveFailures: 0,
+    plateauCount: 0,
+    performanceHistory: [],
+    lastPerformance: null,
+    notes,
+  };
+}
 
 function resolveExerciseId(name: string): string | null {
   return EXERCISE_ID_BY_NAME.get(name.toLowerCase()) ?? null;
@@ -293,8 +323,9 @@ export function applyInjuryFilters(
  * runs on `ProgramTemplate`s at onboarding). Structure-preserving
  * regeneration (planBuilder) calls this so that when a user changes their
  * injuries in Programme Settings, ONLY the now-contraindicated exercises in
- * their current workouts are swapped — carrying sets / reps / weight / history
- * — without touching the day structure or any safe exercise.
+ * their current workouts are swapped. The slot's sets/reps/role survive, but
+ * movement-specific load and performance history are recalibrated/reset so a
+ * deadlift record can never be relabelled as its substitute.
  *
  * Over-swap guard: an exercise is swapped only when the contra index (built
  * from the template library, keyed by exerciseId) flags it for one of the
@@ -307,9 +338,22 @@ export function applyInjuryFilters(
  * swapped exercise (no pre-swap id is stored) — safe + acceptable; un-swap is
  * a future enhancement.
  */
+/**
+ * NOT experience-gated, deliberately (2026-07-28). Its sibling
+ * `applyEquipmentFilterToWorkouts` IS, because an equipment swap has many
+ * candidates and no safety stake. An injury swap has neither property: the
+ * substitute is chosen from a curated safety map, and if the only movement
+ * that spares an injured knee happens to be a technical one, an injured
+ * novice still needs it. Safety outranks simplicity, so a beginner CAN
+ * receive an above-level movement by this route — the one documented
+ * exception to the complexity gate.
+ */
 export function applyInjuryFiltersToWorkouts(
   workouts: readonly WorkoutDay[],
-  injuries: readonly string[]
+  injuries: readonly string[],
+  /** Equipment tier — a PREFERENCE for the substitute, never a hard filter. */
+  equipment?: string,
+  loadCtx?: StartingLoadContext
 ): WorkoutDay[] {
   const cloneDay = (d: WorkoutDay): WorkoutDay => ({
     ...d,
@@ -336,15 +380,29 @@ export function applyInjuryFiltersToWorkouts(
       const relevant = contras ? injuries.filter((i) => contras.has(i)) : [];
       if (relevant.length === 0) return { ...ex };
 
-      const safe = findSafeSubstitute(ex.exerciseId, relevant, usedIds);
+      const allowedEq = equipment
+        ? EQUIPMENT_AVAILABILITY[equipment]
+        : undefined;
+      const safe = findSafeSubstitute(
+        ex.exerciseId,
+        relevant,
+        usedIds,
+        allowedEq
+          ? (id) => {
+              const eq = getExerciseById(id)?.equipment;
+              return eq === undefined || allowedEq.has(eq);
+            }
+          : undefined
+      );
       if (safe) {
         usedIds.add(safe.id);
-        return {
-          ...ex, // carry sets / reps / weight / progression / history
-          exerciseId: safe.id,
-          name: safe.name,
-          notes: `Swapped from ${ex.name} (${relevant.join(", ")}): ${safe.rationale}.`,
-        };
+        return replaceExercise(
+          ex,
+          safe.id,
+          safe.name,
+          loadCtx,
+          `Swapped from ${ex.name} (${relevant.join(", ")}): ${safe.rationale}.`
+        );
       }
       // No safe substitute — keep the exercise but flag it (tier 4).
       return {
@@ -381,9 +439,10 @@ const EQUIPMENT_AVAILABILITY: Record<string, ReadonlySet<string>> = {
  * When a user changes their equipment (e.g. full_gym → minimal while
  * travelling), structure-preserving regeneration calls this to swap any
  * exercise whose equipment the user no longer has for a same-movement-category
- * alternative that fits — carrying sets / reps / weight / history. full_gym (or
- * any unrecognised tier) is a no-op (everything available). An exercise whose
- * id we can't resolve in EXERCISES is left untouched. No fitting alternative →
+ * alternative that fits. The slot's sets/reps/role survive; the target load is
+ * recalibrated and movement-specific history is reset. full_gym (or any
+ * unrecognised tier) is a no-op (everything available). An exercise whose id
+ * we can't resolve in EXERCISES is left untouched. No fitting alternative is
  * kept with a warning note.
  *
  * Composes after `applyInjuryFiltersToWorkouts`: the candidate picker also
@@ -393,7 +452,9 @@ const EQUIPMENT_AVAILABILITY: Record<string, ReadonlySet<string>> = {
 export function applyEquipmentFilterToWorkouts(
   workouts: readonly WorkoutDay[],
   equipment: string,
-  injuries: readonly string[] = []
+  injuries: readonly string[] = [],
+  experience?: Experience,
+  loadCtx?: StartingLoadContext
 ): WorkoutDay[] {
   const cloneDay = (d: WorkoutDay): WorkoutDay => ({
     ...d,
@@ -423,22 +484,44 @@ export function applyEquipmentFilterToWorkouts(
       if (isAvailable(ex.exerciseId)) return { ...ex };
 
       const options = exerciseBank[ex.movementCategory] ?? [];
-      const pick = options.find(
-        (o) =>
-          o.id !== ex.exerciseId &&
-          !usedIds.has(o.id) &&
-          isAvailable(o.id) &&
-          !isInjuryContra(o.id)
-      );
+      // NOT complexity-gated, and that is a measured decision rather than an
+      // oversight (2026-07-28). Adding `allowsComplexity` to this predicate
+      // was tried twice and neither form helps:
+      //
+      //   AND-ed into the find  → complexity violations 603 → 315, but
+      //                           equipment violations 462 → 798. It does not
+      //                           find simpler movements; it finds NOTHING and
+      //                           leaves the slot holding a barbell the user
+      //                           does not own. Strictly worse.
+      //   preferred, then fall  → identical to no gate at all on both counts
+      //   back to any available   (603 / 462), because in every failing case
+      //                           there IS no simple, equipment-available
+      //                           option in that category.
+      //
+      // The residue is exercise-BANK COVERAGE, not filter logic: on
+      // `home_gym`/`minimal`, `knee_dominant` has exactly one non-primary the
+      // user owns and it is `bulgarian-split` (technical) — front squat is a
+      // barbell, leg press and hack squat are machines. No predicate can
+      // conjure an option that is not in the bank. See the backlog entry.
+      const eligible = (o: (typeof options)[number]) =>
+        o.id !== ex.exerciseId &&
+        !usedIds.has(o.id) &&
+        isAvailable(o.id) &&
+        !isInjuryContra(o.id);
+      const pick =
+        options.find(
+          (o) => eligible(o) && allowsComplexity(experience, o.complexity)
+        ) ?? options.find(eligible);
       if (pick) {
         usedIds.delete(ex.exerciseId);
         usedIds.add(pick.id);
-        return {
-          ...ex, // carry sets / reps / weight / progression / history
-          exerciseId: pick.id,
-          name: pick.name,
-          notes: `Swapped from ${ex.name} — not available with your equipment.`,
-        };
+        return replaceExercise(
+          ex,
+          pick.id,
+          pick.name,
+          loadCtx,
+          `Swapped from ${ex.name} — not available with your equipment.`
+        );
       }
       // No fitting alternative — keep but flag.
       return {

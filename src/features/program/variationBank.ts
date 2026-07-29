@@ -1,4 +1,9 @@
 import type { MovementCategory } from "./programTypes";
+import {
+  allowsComplexity,
+  type Experience,
+  type MovementComplexity,
+} from "./experienceModel";
 
 /* ================================
    EXERCISE BANK BY MOVEMENT CATEGORY
@@ -16,124 +21,580 @@ interface ExerciseOption {
    * compound (the progression anchor) regardless.
    */
   lengthened?: boolean;
+  /**
+   * What job this variation does when it replaces the category's main
+   * (training-book backlog #11 — B6). Three sources categorise by ROLE
+   * rather than by muscle: Hayes splits "exercises that teach me how to
+   * lift" from brute-strength ones, Jenkins frames non-competition lifts as
+   * "tools in the arsenal", and Green assigns each bench variant an explicit
+   * job (paused = technique, wide-grip paused = bottom range, slingshot =
+   * lockout, incline/OHP = size and base).
+   *
+   *   technique  — reinforces position and control; improves the parent lift
+   *   weak_point — targets a sticking point (bottom range or lockout)
+   *   size       — hypertrophy and base building
+   *
+   * Absent on the category primary, which is the lift being substituted FOR.
+   */
+  role?: "technique" | "weak_point" | "size";
+  /**
+   * Working weight relative to the category's PRIMARY lift, used to seed a
+   * cold-start load (`startingWeightForExercise`). Absent = 1 (loads like the
+   * primary).
+   *
+   * Added 2026-07-28 after an audit measured the cost of not having it: the
+   * seed table is per-CATEGORY, so every variation inherited the compound's
+   * number. A Romanian deadlift, a hip thrust and a leg curl are all
+   * `hip_dominant`, and a beginner was handed the deadlift's 68 kg on all
+   * three. That was tolerable while the builders only ever emitted the
+   * primary; it stopped being tolerable once #10's overlap caps started
+   * re-pointing slots to variations.
+   *
+   * These are conservative working-weight ratios, deliberately erring light —
+   * the module's existing stance is that a light start self-corrects in a
+   * session or two whereas a heavy one costs a failed first workout.
+   */
+  loadFactor?: number;
+  /**
+   * How much technique the movement demands (`experienceModel.ts`). Absent =
+   * `simple`. Gates which VARIATIONS a lifter is offered — a category primary
+   * is always allowed regardless, because it is the lift the programme is
+   * built around and the one the form content covers most thoroughly.
+   */
+  complexity?: MovementComplexity;
 }
 
 export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
   horizontal_push: [
     { id: "bench-press", name: "Bench Press", primary: true },
-    { id: "incline-bench", name: "Incline Bench Press", primary: false },
+    {
+      id: "incline-bench",
+      loadFactor: 0.8,
+      name: "Incline Bench Press",
+      primary: false,
+      role: "size",
+    },
     {
       id: "db-bench",
+      loadFactor: 0.35,
       name: "Dumbbell Bench Press",
       primary: false,
       lengthened: true,
+      role: "size",
     },
     {
       id: "incline-db-press",
+      loadFactor: 0.3,
       name: "Incline Dumbbell Press",
       primary: false,
       lengthened: true,
+      role: "size",
     },
-    { id: "close-grip-bench", name: "Close Grip Bench Press", primary: false },
+    {
+      id: "close-grip-bench",
+      complexity: "technical",
+      loadFactor: 0.8,
+      name: "Close Grip Bench Press",
+      primary: false,
+      role: "weak_point",
+    },
+    {
+      id: "barbell-floor-press",
+      loadFactor: 0.85,
+      name: "Barbell Floor Press",
+      primary: false,
+      complexity: "advanced",
+      role: "weak_point",
+    },
+    // HOME / MINIMAL COVERAGE (2026-07-28). Appended, deliberately, at the END
+    // of the category: `pickAccessory` takes pool[0] of the LENGTHENED options
+    // and the complexity gate takes the first allowed non-primary, so adding
+    // here cannot change what a full-gym user receives — measured before and
+    // after to confirm.
+    //
+    // A 216-config audit found 462 slots prescribing equipment the user does
+    // not own. The cause was not the equipment FILTER (gating that was tried
+    // twice and made things worse or nothing); it was that the bank had
+    // nothing to swap TO. `hip_dominant` had ZERO home-gym-available options
+    // and `knee_dominant` had exactly one, and it was technical — so a
+    // home-gym beginner kept a barbell deadlift and a machine hack squat.
+    // Every id here was already in the catalog and already used by the
+    // TEMPLATES; only the generator's bank lacked them.
+    {
+      id: "push-ups",
+      loadFactor: 0,
+      name: "Push-Ups",
+      primary: false,
+      role: "size",
+    },
   ],
   vertical_push: [
     { id: "overhead-press", name: "Overhead Press", primary: true },
     {
       id: "db-shoulder-press",
+      loadFactor: 0.35,
       name: "Dumbbell Shoulder Press",
       primary: false,
+      role: "size",
     },
-    { id: "arnold-press", name: "Arnold Press", primary: false },
-    { id: "landmine-press", name: "Landmine Press", primary: false },
+    {
+      id: "arnold-press",
+      complexity: "technical",
+      loadFactor: 0.3,
+      name: "Arnold Press",
+      primary: false,
+      role: "size",
+    },
+    {
+      id: "landmine-press",
+      complexity: "technical",
+      loadFactor: 0.5,
+      name: "Landmine Press",
+      primary: false,
+      role: "technique",
+    },
   ],
   horizontal_pull: [
     { id: "barbell-row", name: "Barbell Row", primary: true },
-    { id: "db-row", name: "Dumbbell Row", primary: false },
-    { id: "t-bar-row", name: "T-Bar Row", primary: false },
+    {
+      id: "db-row",
+      loadFactor: 0.4,
+      name: "Dumbbell Row",
+      primary: false,
+      role: "size",
+    },
+    {
+      id: "t-bar-row",
+      loadFactor: 0.8,
+      name: "T-Bar Row",
+      primary: false,
+      role: "size",
+    },
     {
       id: "seated-row",
+      loadFactor: 0.9,
       name: "Seated Cable Row",
       primary: false,
       lengthened: true,
+      role: "size",
     },
     {
       id: "chest-supported-db-row",
+      complexity: "technical",
+      loadFactor: 0.35,
       name: "Chest-Supported DB Row",
       primary: false,
       lengthened: true,
+      role: "technique",
+    },
+    // ADVANCED (2026-07-28). Already in the catalog, never reachable from the
+    // bank — the PR that added exercise ROLES noted these were "the natural
+    // weak_point entries later". Later is now: they are what "experienced
+    // lifters get access to all this other stuff" means concretely, and they
+    // are gated so a novice never meets them.
+    {
+      id: "pendlay-row",
+      loadFactor: 0.85,
+      name: "Pendlay Row",
+      primary: false,
+      complexity: "advanced",
+      role: "technique",
+    },
+    // HOME / MINIMAL COVERAGE (2026-07-28). Appended, deliberately, at the END
+    // of the category: `pickAccessory` takes pool[0] of the LENGTHENED options
+    // and the complexity gate takes the first allowed non-primary, so adding
+    // here cannot change what a full-gym user receives — measured before and
+    // after to confirm.
+    //
+    // A 216-config audit found 462 slots prescribing equipment the user does
+    // not own. The cause was not the equipment FILTER (gating that was tried
+    // twice and made things worse or nothing); it was that the bank had
+    // nothing to swap TO. `hip_dominant` had ZERO home-gym-available options
+    // and `knee_dominant` had exactly one, and it was technical — so a
+    // home-gym beginner kept a barbell deadlift and a machine hack squat.
+    // Every id here was already in the catalog and already used by the
+    // TEMPLATES; only the generator's bank lacked them.
+    {
+      id: "inverted-row",
+      loadFactor: 0,
+      name: "Inverted Row",
+      primary: false,
+      role: "technique",
     },
   ],
   vertical_pull: [
     { id: "pull-ups", name: "Pull-Ups", primary: true },
     {
       id: "lat-pulldown",
+      loadFactor: 0.6,
       name: "Lat Pulldown",
       primary: false,
       lengthened: true,
+      role: "size",
     },
-    { id: "chin-ups", name: "Chin-Ups", primary: false },
+    {
+      id: "chin-ups",
+      loadFactor: 0,
+      name: "Chin-Ups",
+      primary: false,
+      role: "size",
+    },
     {
       id: "single-arm-lat-pulldown",
+      complexity: "technical",
+      loadFactor: 0.25,
       name: "Single-Arm Lat Pulldown",
       primary: false,
       lengthened: true,
+      role: "technique",
     },
   ],
   knee_dominant: [
     { id: "squat", name: "Barbell Squat", primary: true },
-    { id: "front-squat", name: "Front Squat", primary: false },
-    { id: "leg-press", name: "Leg Press", primary: false },
-    { id: "hack-squat", name: "Hack Squat", primary: false, lengthened: true },
+    {
+      id: "front-squat",
+      complexity: "technical",
+      loadFactor: 0.75,
+      name: "Front Squat",
+      primary: false,
+      role: "technique",
+    },
+    {
+      id: "leg-press",
+      loadFactor: 1.6,
+      name: "Leg Press",
+      primary: false,
+      role: "size",
+    },
+    {
+      id: "hack-squat",
+      loadFactor: 0.9,
+      name: "Hack Squat",
+      primary: false,
+      lengthened: true,
+      role: "size",
+    },
     {
       id: "bulgarian-split",
+      complexity: "technical",
+      loadFactor: 0.25,
       name: "Bulgarian Split Squat",
       primary: false,
       lengthened: true,
+      role: "technique",
+    },
+    // HOME / MINIMAL COVERAGE (2026-07-28). Appended, deliberately, at the END
+    // of the category: `pickAccessory` takes pool[0] of the LENGTHENED options
+    // and the complexity gate takes the first allowed non-primary, so adding
+    // here cannot change what a full-gym user receives — measured before and
+    // after to confirm.
+    //
+    // A 216-config audit found 462 slots prescribing equipment the user does
+    // not own. The cause was not the equipment FILTER (gating that was tried
+    // twice and made things worse or nothing); it was that the bank had
+    // nothing to swap TO. `hip_dominant` had ZERO home-gym-available options
+    // and `knee_dominant` had exactly one, and it was technical — so a
+    // home-gym beginner kept a barbell deadlift and a machine hack squat.
+    // Every id here was already in the catalog and already used by the
+    // TEMPLATES; only the generator's bank lacked them.
+    {
+      id: "goblet-squat",
+      loadFactor: 0.3,
+      name: "Goblet Squat",
+      primary: false,
+      role: "technique",
+    },
+    {
+      id: "bodyweight-squat",
+      loadFactor: 0,
+      name: "Bodyweight Squat",
+      primary: false,
+      role: "technique",
     },
   ],
   hip_dominant: [
     { id: "deadlift", name: "Deadlift", primary: true },
     {
       id: "romanian-deadlift",
+      complexity: "technical",
+      loadFactor: 0.65,
       name: "Romanian Deadlift",
       primary: false,
       lengthened: true,
+      role: "size",
     },
-    { id: "hip-thrust", name: "Hip Thrust", primary: false },
-    { id: "sumo-deadlift", name: "Sumo Deadlift", primary: false },
-    { id: "trap-bar-deadlift", name: "Trap Bar Deadlift", primary: false },
+    {
+      id: "hip-thrust",
+      loadFactor: 0.9,
+      name: "Hip Thrust",
+      primary: false,
+      role: "size",
+    },
+    {
+      id: "sumo-deadlift",
+      complexity: "technical",
+      loadFactor: 0.95,
+      name: "Sumo Deadlift",
+      primary: false,
+      role: "technique",
+    },
+    {
+      id: "trap-bar-deadlift",
+      complexity: "technical",
+      loadFactor: 1.0,
+      name: "Trap Bar Deadlift",
+      primary: false,
+      role: "technique",
+    },
+    // The only HAMSTRING-primary option in the whole bank, and the only hinge
+    // with no spinal load at all. Added 2026-07-28: an audit measured the
+    // 4-day and 6-day builds losing HALF their hamstring volume once #10's
+    // per-session hinge cap demoted the Romanian deadlift, because there was
+    // nothing back-sparing in the category to demote it TO — the cap had to
+    // leave the category entirely. It also gives `balanceWeeklyVolume` an
+    // accessory it can grow for hamstrings, which it previously never had.
+    {
+      id: "seated-leg-curl",
+      loadFactor: 0.25,
+      name: "Seated Leg Curl",
+      primary: false,
+      lengthened: true,
+      role: "size",
+    },
+    {
+      id: "rack-pull",
+      loadFactor: 1.15,
+      name: "Rack Pull",
+      primary: false,
+      complexity: "advanced",
+      role: "weak_point",
+    },
+    // HOME / MINIMAL COVERAGE (2026-07-28). Appended, deliberately, at the END
+    // of the category: `pickAccessory` takes pool[0] of the LENGTHENED options
+    // and the complexity gate takes the first allowed non-primary, so adding
+    // here cannot change what a full-gym user receives — measured before and
+    // after to confirm.
+    //
+    // A 216-config audit found 462 slots prescribing equipment the user does
+    // not own. The cause was not the equipment FILTER (gating that was tried
+    // twice and made things worse or nothing); it was that the bank had
+    // nothing to swap TO. `hip_dominant` had ZERO home-gym-available options
+    // and `knee_dominant` had exactly one, and it was technical — so a
+    // home-gym beginner kept a barbell deadlift and a machine hack squat.
+    // Every id here was already in the catalog and already used by the
+    // TEMPLATES; only the generator's bank lacked them.
+    {
+      id: "db-rdl",
+      loadFactor: 0.25,
+      name: "Dumbbell Romanian Deadlift",
+      primary: false,
+      lengthened: true,
+      role: "size",
+    },
+    {
+      id: "glute-bridge",
+      loadFactor: 0,
+      name: "Glute Bridge",
+      primary: false,
+      role: "size",
+    },
+    // The last of the 12 residual equipment violations, and a precise one: a
+    // lower-back-injured HOME-GYM user needs two hinge slots, and had exactly
+    // one option that was both available and safe (the glute bridge) — the
+    // dumbbell RDL is contraindicated for that injury and everything else in
+    // the category is a barbell or a machine. So a machine leg curl stayed in
+    // a plan for someone with no machine. Nordic curls are bodyweight,
+    // hamstring-primary and load no spine, which is exactly the gap.
+    // `technical` because most beginners cannot do one unassisted — the
+    // equipment filter still falls back to it over prescribing a machine
+    // they do not own.
+    {
+      id: "nordic-hamstring-curl",
+      loadFactor: 0,
+      name: "Nordic Hamstring Curl",
+      primary: false,
+      complexity: "technical",
+      lengthened: true,
+      role: "technique",
+    },
   ],
   arms_biceps: [
     { id: "barbell-curl", name: "Barbell Curl", primary: true },
-    { id: "db-curl", name: "Dumbbell Curl", primary: false },
-    { id: "hammer-curl", name: "Hammer Curl", primary: false },
-    { id: "preacher-curl", name: "Preacher Curl", primary: false },
-    { id: "cable-curl", name: "Cable Curl", primary: false, lengthened: true },
+    {
+      id: "db-curl",
+      loadFactor: 0.4,
+      name: "Dumbbell Curl",
+      primary: false,
+      role: "size",
+    },
+    {
+      id: "hammer-curl",
+      loadFactor: 0.4,
+      name: "Hammer Curl",
+      primary: false,
+      role: "size",
+    },
+    {
+      id: "preacher-curl",
+      loadFactor: 0.7,
+      name: "Preacher Curl",
+      primary: false,
+      role: "size",
+    },
+    {
+      id: "cable-curl",
+      loadFactor: 0.8,
+      name: "Cable Curl",
+      primary: false,
+      lengthened: true,
+      role: "size",
+    },
   ],
   arms_triceps: [
     { id: "rope-tricep-pushdown", name: "Rope Tricep Pushdown", primary: true },
     {
       id: "skull-crushers",
+      complexity: "technical",
+      loadFactor: 0.6,
       name: "Skull Crushers",
       primary: false,
       lengthened: true,
+      role: "size",
     },
     {
       id: "overhead-extension",
+      loadFactor: 0.6,
       name: "Overhead Tricep Extension",
       primary: false,
       lengthened: true,
+      role: "size",
     },
-    { id: "tricep-dips", name: "Tricep Dips", primary: false },
+    {
+      id: "tricep-dips",
+      complexity: "technical",
+      loadFactor: 0,
+      name: "Tricep Dips",
+      primary: false,
+      role: "size",
+    },
   ],
   core: [
     { id: "cable-crunch", name: "Cable Crunch", primary: true },
-    { id: "leg-raise", name: "Hanging Leg Raise", primary: false },
-    { id: "ab-wheel", name: "Ab Wheel Rollout", primary: false },
-    { id: "pallof-press", name: "Pallof Press", primary: false },
-    { id: "russian-twist", name: "Russian Twist", primary: false },
+    {
+      id: "leg-raise",
+      loadFactor: 0,
+      name: "Hanging Leg Raise",
+      primary: false,
+      role: "size",
+    },
+    {
+      id: "ab-wheel",
+      complexity: "technical",
+      loadFactor: 0,
+      name: "Ab Wheel Rollout",
+      primary: false,
+      role: "size",
+    },
+    {
+      id: "pallof-press",
+      complexity: "technical",
+      loadFactor: 0.5,
+      name: "Pallof Press",
+      primary: false,
+      role: "technique",
+    },
+    {
+      id: "russian-twist",
+      complexity: "technical",
+      loadFactor: 0.3,
+      name: "Russian Twist",
+      primary: false,
+      role: "size",
+    },
   ],
 };
+
+/**
+ * Working weight of a variation relative to its category's primary lift.
+ *
+ * Unknown ids return 1 — that is exactly today's behaviour (the seed table is
+ * per-category), so an exercise arriving from outside the bank (an injury or
+ * equipment substitution) is no worse off than before.
+ */
+/**
+ * Rescale a carried working weight when a slot's EXERCISE changes but its
+ * movement category does not.
+ *
+ * Every in-place swap in the codebase is `{...ex, exerciseId, name}` — it
+ * carries the previous movement's load onto a different one. Measured on an
+ * 80 kg beginner, that produced loads wrong in both directions:
+ *
+ *   Bench Press 35 kg  -> Dumbbell Bench Press @35 kg   (per hand; want 12.5)
+ *   Barbell Squat      -> Bulgarian Split Squat @55 kg  (want 15)
+ *   Hack Squat 50 kg   -> Leg Press @50 kg              (want 87.5)
+ *   Seated Leg Curl 17.5 -> Hip Thrust @17.5            (want 60)
+ *
+ * Too heavy is a failed set or an injury; too light is a wasted session.
+ *
+ * The ratio of the two variations' `loadFactor` is the whole answer, and it
+ * needs no bodyweight, no profile and no context — which matters, because the
+ * swap sites include `advanceWeek`, which has none of those. It also beats
+ * re-seeding from scratch: a lifter who has already worked a lift up keeps
+ * that earned level, scaled to the new movement, instead of being reset to a
+ * novice's starting number.
+ *
+ * Returns 0 for a bodyweight boundary, an unknown/cross-category id, or a
+ * factor of 0. In each case there is no safe ratio; callers with profile
+ * context may replace that uncalibrated 0 with a target-specific seed.
+ */
+export function rescaleForSwap(
+  weight: number,
+  fromExerciseId: string | undefined,
+  toExerciseId: string | undefined,
+  category: MovementCategory
+): number {
+  if (!Number.isFinite(weight) || weight <= 0) return 0;
+  if (fromExerciseId === toExerciseId) return weight;
+
+  const options = exerciseBank[category] ?? [];
+  const fromOption = options.find((option) => option.id === fromExerciseId);
+  const toOption = options.find((option) => option.id === toExerciseId);
+  // An unknown/cross-category id has no meaningful ratio. Returning the old
+  // load here is dangerous (for example deadlift kilograms on a glute bridge);
+  // callers with profile context can seed the target, otherwise 0 is the only
+  // honest uncalibrated value.
+  if (!fromOption || !toOption) return 0;
+
+  const from = fromOption.loadFactor ?? 1;
+  const to = toOption.loadFactor ?? 1;
+  // A zero target factor is bodyweight. A zero source factor cannot calibrate
+  // a newly loaded movement without bodyweight/profile context.
+  if (from <= 0 || to <= 0) return 0;
+  if (from === to) return weight;
+  return Math.max(2.5, Math.round((weight * (to / from)) / 2.5) * 2.5);
+}
+
+/** The bank category that owns an exercise id, if it is a bank movement. */
+export function movementCategoryForExerciseId(
+  exerciseId: string | undefined
+): MovementCategory | undefined {
+  if (!exerciseId) return undefined;
+  for (const category of Object.keys(exerciseBank) as MovementCategory[]) {
+    if (exerciseBank[category].some((option) => option.id === exerciseId)) {
+      return category;
+    }
+  }
+  return undefined;
+}
+
+export function loadFactorFor(
+  exerciseId: string | undefined,
+  category: MovementCategory
+): number {
+  if (!exerciseId) return 1;
+  const opt = (exerciseBank[category] ?? []).find((o) => o.id === exerciseId);
+  return opt?.loadFactor ?? 1;
+}
 
 /**
  * Pick the primary exercise for a movement category,
@@ -142,9 +603,15 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
 export function pickExercise(
   category: MovementCategory,
   plateauCount: number,
-  currentExerciseId?: string
+  currentExerciseId?: string,
+  experience?: Experience
 ): { id: string; name: string } {
-  const options = exerciseBank[category];
+  // The category PRIMARY is always allowed — it is the lift the programme is
+  // built around and the one the form content covers most thoroughly. What
+  // experience gates is which VARIATIONS a lifter is offered instead of it.
+  const options = exerciseBank[category].filter(
+    (e) => e.primary || allowsComplexity(experience, e.complexity)
+  );
 
   // No plateau — return primary or current
   if (plateauCount < 3) {
@@ -156,29 +623,97 @@ export function pickExercise(
     return { id: primary.id, name: primary.name };
   }
 
-  // Plateau >= 3 — rotate to a different variation
+  // Plateau >= 3 — rotate to a PURPOSEFUL variation (backlog #11 — P4/B6/N5).
+  //
+  // This was `others[Math.floor(Math.random() * others.length)]`, which had
+  // two problems. It picked an arbitrary sibling, when three sources say the
+  // substitute should have a job (B6); and being random, it re-rolled on
+  // every regenerate, so a plateaued main churned to a different exercise
+  // each time the user changed a setting. Nippard (N5) is the third argument:
+  // changing exercises flattens the progression curve, so when you DO change,
+  // change to something that improves the parent lift.
+  //
+  // Ranked, deterministic, tie-broken by bank order. Technique first —
+  // Hayes's "exercises that teach me how to lift", and a stall is more often
+  // a position problem than a missing sticking-point. `weak_point` moves
+  // ahead of it once the user can say WHERE the lift fails, which is the
+  // other half of P4 and needs a UI question this doesn't have yet.
+  //
+  // Within a role, the MORE SPECIALISED tool wins for a lifter who can use it
+  // (added 2026-07-28). Ties previously broke on bank order, which is
+  // arbitrary — whichever entry happened to be appended last always lost — and
+  // that is why the `advanced` variations were unreachable in practice: a
+  // stalled advanced lifter got the same substitute as an intermediate.
+  //
+  // The tie has to break somewhere, and this is the direction the sources
+  // point. Green assigns each variant an explicit job and Jenkins frames the
+  // non-competition lifts as "tools in the arsenal"; the advanced tier IS the
+  // specialised-tool tier. The moment a specialised tool is warranted is
+  // exactly this one — the standard variation has not resolved the stall, and
+  // the lifter has the base to use something sharper. `allowsComplexity`
+  // already filtered the pool, so a novice can never reach this branch.
   const others = options.filter((e) => e.id !== currentExerciseId);
-  const pick = others[Math.floor(Math.random() * others.length)] ?? options[0];
+  if (others.length === 0) return { id: options[0].id, name: options[0].name };
+  const rank = (o: ExerciseOption) =>
+    o.role === "technique" ? 0 : o.role === "weak_point" ? 1 : 2;
+  const specialisation = (o: ExerciseOption) =>
+    o.complexity === "advanced" ? 2 : o.complexity === "technical" ? 1 : 0;
+  let pick = others[0];
+  for (const o of others.slice(1)) {
+    if (rank(o) < rank(pick)) pick = o;
+    else if (rank(o) === rank(pick) && specialisation(o) > specialisation(pick))
+      pick = o;
+  }
   return { id: pick.id, name: pick.name };
 }
 
 /**
- * Pick an accessory (non-primary) exercise for variety. Biases toward
- * LENGTHENED-position options when the category has any (D-LIFT-2) — accessories
- * are isolation/hypertrophy work, where training at long muscle length yields
- * more growth per set. Falls back to the full non-primary pool when none are
- * tagged, preserving variety.
+ * Pick an accessory (non-primary) exercise. Biases toward LENGTHENED-position
+ * options when the category has any (D-LIFT-2) — accessories are
+ * isolation/hypertrophy work, where training at long muscle length yields more
+ * growth per set. Falls back to the full non-primary pool when none are tagged.
+ *
+ * DETERMINISTIC as of 2026-07-28. This was
+ * `pool[Math.floor(Math.random() * pool.length)]`, and it made the whole
+ * generator nondeterministic: twelve `generateProgram` calls with byte-identical
+ * inputs produced EIGHT different programmes. That is the same defect backlog
+ * #11 already fixed one function up in this file (`pickExercise`'s plateau
+ * rotation), for the same reasons, and it was left here:
+ *
+ *   - Nippard (N5): changing exercises flattens the progression curve.
+ *     Novelty belongs at block boundaries, which is what
+ *     `rotateUntrainedAccessories` is for — not at every build.
+ *   - A regenerate is what a settings change triggers. Before any history
+ *     exists to carry, changing days-per-week re-rolled the user's accessories
+ *     into different exercises for no reason they could see.
+ *   - Every claim in this arc about the pipeline being deterministic (#10,
+ *     #11, #17) was false while this stood, and every measurement taken
+ *     against generated output was a sample rather than a fact.
+ *
+ * Variety across the week is not lost: `dedupeDayExercises` removes in-day
+ * duplicates, `capRepeatedLifts` re-points anything appearing more than twice,
+ * and `excludeId` keeps an accessory off its own category primary.
+ *
+ * `experience` gates the pool by movement COMPLEXITY (`experienceModel.ts`) —
+ * a novice is not handed a Bulgarian split squat as their leg accessory.
  */
 export function pickAccessory(
   category: MovementCategory,
-  excludeId?: string
+  excludeId?: string,
+  experience?: Experience
 ): { id: string; name: string } {
-  const options = exerciseBank[category].filter(
+  const eligible = exerciseBank[category].filter(
     (e) => !e.primary && e.id !== excludeId
   );
+  // Experience gates the pool, but never empties it: a level with nothing
+  // left falls back to the full non-primary list rather than returning the
+  // category primary, which would duplicate the day's main lift.
+  const allowed = eligible.filter((e) =>
+    allowsComplexity(experience, e.complexity)
+  );
+  const options = allowed.length > 0 ? allowed : eligible;
   const lengthened = options.filter((e) => e.lengthened);
   const pool = lengthened.length > 0 ? lengthened : options;
-  const pick =
-    pool[Math.floor(Math.random() * pool.length)] ?? exerciseBank[category][0];
+  const pick = pool[0] ?? exerciseBank[category][0];
   return { id: pick.id, name: pick.name };
 }

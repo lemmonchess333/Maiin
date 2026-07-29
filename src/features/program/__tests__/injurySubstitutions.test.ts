@@ -85,9 +85,7 @@ describe("findSafeSubstitute — excludeIds", () => {
 
 describe("findSafeSubstitute — guards", () => {
   it("returns null for an exercise id with no entry in the table", () => {
-    const result = findSafeSubstitute("not-a-real-exercise-id", [
-      "lower_back",
-    ]);
+    const result = findSafeSubstitute("not-a-real-exercise-id", ["lower_back"]);
     expect(result).toBeNull();
   });
 
