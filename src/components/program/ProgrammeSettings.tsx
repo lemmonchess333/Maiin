@@ -429,9 +429,651 @@ export default function ProgrammeSettings({
   // weight vs current (the locked goalWeightPlan / MacroFactor model, owned
   // by /settings/nutrition). This editor showed a direct cut/lean-bulk/recomp
   // picker that wrote `program.goal` independently of goal weight, so the two
-  // couldß¾ü¶‰žËkºwµçh€€€€€€€€€€€€€€¼ø(€€€€€€€€€€€€ð½1¥¹¬ø(€€€€€€€€€€ð½‘¥Øø(€€€€€€€€¥ô((€€€€€€€€ñ‘¥Øø(€€€€€€€€€€ñM•Ñ¥½¹1…‰•°ùáÁ•É¥•¹”ð½M•Ñ¥½¹1…‰•°ø(€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰ÍÁ…”µä´Èˆø(€€€€€€€€€€€íaAI%9}=AQ%=9L¹µ…À ¡½ÁÐ°¤¤€ôø€ (€€€€€€€€€€€€€€ñM•ÑÑ¥¹Í=ÁÑ¥½¹…É(€€€€€€€€€€€€€€€­•äõí½ÁÐ¹¥‘ô(€€€€€€€€€€€€€€€Í•±•Ñ•õí•áÁ•É¥•¹”€ôôô½ÁÐ¹¥‘ô(€€€€€€€€€€€€€€€½¹M•±•Ðõì ¤€ôøÍ•ÑáÁ•É¥•¹”¡½ÁÐ¹¥¥ô(€€€€€€€€€€€€€€€¥¹‘•àõí¥ô(€€€€€€€€€€€€€€€¥½¸õí½ÁÐ¹¥½¹ô(€€€€€€€€€€€€€€€±…‰•°õí½ÁÐ¹±…‰•±ô(€€€€€€€€€€€€€€€‘•ÍŒõí½ÁÐ¹‘•Íô(€€€€€€€€€€€€€€¼ø(€€€€€€€€€€€€¤¥ô(€€€€€€€€€€ð½‘¥Øø(€€€€€€€€ð½‘¥Øø(€€€€€€ð½AÉ½É…µµ•M•ÑÑ¥¹ÍÉ½ÕÀø((€€€€€ì¼¨ƒŠRŠR É½ÕÀ€Èè]••­±äÁ±…¸ƒŠP€‰!½Ü‘½•ÌÑÉ…¥¹¥¹œ™¥Ð¥¹Ñ¼µäÝ••¬üˆƒŠRŠR €¨½ô(€€€€€€ñAÉ½É…µµ•M•ÑÑ¥¹ÍÉ½ÕÀ(€€€€€€€Ñ¥Ñ±”ô‰]••­±äÁ±…¸ˆ(€€€€€€€ÍÕ‰Ñ¥Ñ±”ô‰M•ÐÑ¡”ÑÉ…¥¹¥¹œÉ¡åÑ¡´Ý”±°‰Õ¥±…É½Õ¹¸ˆ(€€€€€€ø(€€€€€€€€ñ‘¥Øø(€€€€€€€€€€ñM•Ñ¥½¹1…‰•°ù1¥™Ð‘…åÌÁ•ÈÝ••¬ð½M•Ñ¥½¹1…‰•°ø(€€€€€€€€€€ñM•µ•¹Ñ•‘½¹ÑÉ½°(€€€€€€€€€€€…É¥…1…‰•°ô‰1¥™Ð‘…åÌÁ•ÈÝ••¬ˆ(€€€€€€€€€€€½ÁÑ¥½¹ÌõílÈ°€Ì°€Ð°€Ô°€Ùt¹µ…À ¡¤€ôø€¡ì(€€€€€€€€€€€€€Ù…±Õ”è°(€€€€€€€€€€€€€€¼¼9Õµ•É¥ŒÁ¥­•È±…‰•±Ì™½±±½ÜÑ¡”‘•Í¥¸ÉÕ±”èµ½¹¼€¬Ñ…‰Õ±…È¸(€€€€€€€€€€€€€±…‰•°è€ñÍÁ…¸±…ÍÍ9…µ”ô‰™½¹Ðµµ½¹¼Ñ…‰Õ±…Èµ¹ÕµÌˆùí‘ôð½ÍÁ…¸ø°(€€€€€€€€€€€ô¤¥ô(€€€€€€€€€€€Ù…±Õ”õí±¥™Ñ…åÍô(€€€€€€€€€€€½¹¡…¹”õíÍ•Ñ1¥™Ñ…åÍô(€€€€€€€€€€¼ø(€€€€€€€€ð½‘¥Øø((€€€€€€€ì¼¨A´Ô€¡DÄ¤èÍÁ±¥Ð¥Ì„‘•É¥Ù•%MA1dƒŠPÑ¡”½… Í•ÑÌ¥Ð™É½´å½ÕÈ(€€€€€€€€€€€Ý••­±äÑÉ…¥¹¥¹œ‘…åÌìÑ¡”ÕÍ•È•áÁÉ•ÍÍ•ÌÁÉ•™•É•¹”Ù¥„±¥™Ðµ‘…åÌ€¬(€€€€€€€€€€€Ñ¡”•á•É¥Í”•‘¥Ñ½È°¹½Ð„ÍÁ±¥ÐÑ½±”¸€¨½ô(€€€€€€€€ñ‘¥Øø(€€€€€€€€€€ñM•Ñ¥½¹1…‰•°ùMÁ±¥Ðð½M•Ñ¥½¹1…‰•°ø(€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰É½Õ¹‘•µá°‰œµµÕÑ•Áà´ÌÁä´È¸Ôˆø(€€€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰Ñ•áÐµÍ´™½¹Ðµµ•‘¥Õ´Ñ•áÐµ™½É•É½Õ¹ˆø(€€€€€€€€€€€€€íÕÉÉ•¹ÑMÁ±¥Ñ1…‰•±ô(€€€€€€€€€€€€ð½Àø(€€€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰µÐ´À¸ÔÑ•áÐµáÌ±•…‘¥¹œµÍ¹ÕœÑ•áÐµµÕÑ•µ™½É•É½Õ¹ˆø(€€€€€€€€€€€€€íÍÁ±¥ÑI…Ñ¥½¹…±”¡±¥™Ñ…åÌ¥ô(€€€€€€€€€€€€€í±¥™Ñ…åÌ€„ôôÍ…Ù•¹±¥™Ñ…åÌ€˜˜€ (€€€€€€€€€€€€€€€€ðø(€€€€€€€€€€€€€€€€€ìˆ€‰ô(€€€€€€€€€€€€€€€€€Ð€ñÍÁ…¸±…ÍÍ9…µ”ô‰™½¹Ðµµ½¹¼Ñ…‰Õ±…Èµ¹ÕµÌˆø(€€€€€€€€€€€€€€€€€€€í±¥™Ñ…åÍô(€€€€€€€€€€€€€€€€€€ð½ÍÁ…¸ùìˆ€‰ô(€€€€€€€€€€€€€€€€€í±¥™Ñ…åÌ€ôôô€Ä€ü€‰‘…äˆ€è€‰‘…åÌ‰ô¥Ð‰•½µ•Íìˆ€‰ô(€€€€€€€€€€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰™½¹Ðµµ•‘¥Õ´Ñ•áÐµ™½É•É½Õ¹ˆø(€€€€€€€€€€€€€€€€€€€í•¹•É…Ñ•‘MÁ±¥Ñ1…‰•±ô(€€€€€€€€€€€€€€€€€€ð½ÍÁ…¸ø(€€€€€€€€€€€€€€€€€€¸(€€€€€€€€€€€€€€€€ð¼ø(€€€€€€€€€€€€€€¥ô(€€€€€€€€€€€€ð½Àø(€€€€€€€€€€ð½‘¥Øø(€€€€€€€€ð½‘¥Øø((€€€€€€€ì¼¨ƒŠRŠR IÕ¹¹¥¹œƒŠPIµ=91dÍÕµµ…Éä€¡ÄÐ‘•‘ÕÁ”¤¸IÕ¸µÁ±…¸™¥•±‘Ì(€€€€€€€€€€€€¡µ½‘”°É…”½…°°ÉÕ¸‘…åÌ°A´ØÑÕ¹¥¹œ¤…É”•‘¥Ñ•¥¸=9(€€€€€€€€€€€Á±…”èÑ¡”™½ÕÍ•€½Í•ÑÑ¥¹Ì½ÉÕ¸µÁ±…¸•‘¥Ñ½È°Ý¡½Í”ÉÕ¸µ½¹±ä(€€€€€€€€€€€ÝÉ¥Ñ•ÉÌ¹•Ù•ÈÑÉ¥•ÈÑ¡¥Ì•‘¥Ñ½ÈÌ™Õ±°µÁÉ½É…µµ”É•‰Õ¥±¸(€€€€€€€€€€€‘¥Ñ¥¹œÑ¡•´¡•É”Ñ½¼…Ù”Ñ¡”Í…µ”™¥•±‘ÌÑÝ¼‘¥™™•É•¹ÐÍ…Ù”(€€€€€€€€€€€µ½‘•±Ì€¡É•‰Õ¥±ÙÌÉÕ¸µ½¹±äÁ…Ñ ¤ƒŠPÑ¡”Í…µ”ÑÝ¼µ•‘¥Ñ½ÉÌ´(€€€€€€€€€€€‘É¥™Ð™…¥±ÕÉ”Ñ¡”9ÕÑÉ¥Ñ¥½¸Á¡…Í”…É…‰½Ù”Í½±Ù•Ñ¡”Í…µ”(€€€€€€€€€€€Ý…ä¸!¥‘‘•¸¥¸Ñ¡”±¥™Ðµ½¹±äÙ¥•Ü¸€¨½ô(€€€€€€€ì…±¥™Ñ=¹±ä€˜˜€ (€€€€€€€€€€ñ‘¥Øø(€€€€€€€€€€€€ñM•Ñ¥½¹1…‰•°ùIÕ¹¹¥¹œð½M•Ñ¥½¹1…‰•°ø(€€€€€€€€€€€€ñ1¥¹¬(€€€€€€€€€€€€€Ñ¼ôˆ½Í•ÑÑ¥¹Ì½ÉÕ¸µÁ±…¸ˆ(€€€€€€€€€€€€€±…ÍÍ9…µ”ô‰™±•à¥Ñ•µÌµ•¹Ñ•È…À´ÌÉ½Õ¹‘•´Éá°‰½É‘•È‰½É‘•Èµ‰½É‘•È¼ÜÀ‰œµ…ÉÁà´Ì¸ÔÁä´ÌÍ¡…‘½ÜµÍ´ÑÉ…¹Í¥Ñ¥½¸µ…±°…Ñ¥Ù”éÍ…±”µlÀ¸äátˆ(€€€€€€€€€€€€ø(€€€€€€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰É¥Í¥é”´äÍ¡É¥¹¬´ÀÁ±…”µ¥Ñ•µÌµ•¹Ñ•ÈÉ½Õ¹‘•µá°‰œµµÕÑ•¼ÔÀˆø(€€€€€€€€€€€€€€€€ñ½½ÑÁÉ¥¹ÑÌÍ¥é”õìÄáô±…ÍÍ9…µ”ô‰Ñ•áÐµÉÕ¹¹¥¹œˆ€¼ø(€€€€€€€€€€€€€€ð½ÍÁ…¸ø(€€€€€€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰µ¥¸µÜ´À™±•à´Äˆø(€€€€€€€€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰‰±½¬Ñ•áÐµ‰½‘ä™½¹Ðµ‰½±±•…‘¥¹œµÑ¥¡Ðˆø(€€€€€€€€€€€€€€€€€íÍ…Ù•¹ÉÕ¹5½‘”€ôôô€‰É…•}ÁÉ•Àˆ(€€€€€€€€€€€€€€€€€€€€üI…”ÁÉ•Àƒ
-Ü€‘íI}%MQ9}1	1MmÍ…Ù•¹É…•¥ÍÑ…¹•t€üüÍ…Ù•¹É…•¥ÍÑ…¹•õ€(€€€€€€€€€€€€€€€€€€€€è€‰É••™½É´ÉÕ¹¹¥¹œ‰ô(€€€€€€€€€€€€€€€€ð½ÍÁ…¸ø(€€€€€€€€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰µÐ´À¸Ô‰±½¬Ñ•áÐµáÌ±•…‘¥¹œµÍ¹ÕœÑ•áÐµµÕÑ•µ™½É•É½Õ¹ˆø(€€€€€€€€€€€€€€€€€íÍ…Ù•¹ÉÕ¹5½‘”€ôôô€‰É…•}ÁÉ•Àˆ(€€€€€€€€€€€€€€€€€€€€ü€‘íÍ…Ù•¹Ý••­±åIÕ¹…åÍôÉÕ¸€‘íÍ…Ù•¹Ý••­±åIÕ¹…åÌ€ôôô€Ä€ü€‰‘…äˆ€è€‰‘…åÌ‰ô½Ý••¬ƒŠPÑ…ÀÑ¼•‘¥Ð¥¸IÕ¸Á±…¹€(€€€€€€€€€€€€€€€€€€€€è€‰IÕ¸Ý¡•¹•Ù•Èå½Ô±¥­”ƒŠPÑ…ÀÑ¼Í•Ð„É…”½…°‰ô(€€€€€€€€€€€€€€€€ð½ÍÁ…¸ø(€€€€€€€€€€€€€€ð½ÍÁ…¸ø(€€€€€€€€€€€€€€ñ¡•ÙÉ½¹I¥¡Ð(€€€€€€€€€€€€€€€±…ÍÍ9…µ”ô‰Í¥é”´ÐÍ¡É¥¹¬´ÀÑ•áÐµµÕÑ•µ™½É•É½Õ¹ˆ(€€€€€€€€€€€€€€€…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆ(€€€€€€€€€€€€€€¼ø(€€€€€€€€€€€€ð½1¥¹¬ø(€€€€€€€€€€ð½‘¥Øø(€€€€€€€€¥ô((€€€€€€€ì¼¨@ÈèÝ••­±äµ±…å½ÕÐÁÉ•Ù¥•ÜƒŠP½Õ¹ÑÌ‘•É¥Ù•™É½´Ñ¡”‘É…™Ð±¥™Ð½ÉÕ¸(€€€€€€€€€‘…åÌì½Á•¹ÌÑ¡”•á¥ÍÑ¥¹œ‘…äµ‰äµ‘…ä•‘¥Ñ½È€¡M¡•‘Õ±•1…å½ÕÑM¡••Ð¤¸€¨½ô(€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰É½Õ¹‘•µá°‰œµµÕÑ•Áà´ÌÁä´È¸Ôˆø(€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•à¥Ñ•µÌµ•¹Ñ•È©ÕÍÑ¥™äµ‰•ÑÝ••¸…À´Ìˆø(€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰µ¥¸µÜ´Àˆø(€€€€€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰Ñ•áÐµÍ´™½¹Ðµµ•‘¥Õ´Ñ•áÐµ™½É•É½Õ¹ˆø(€€€€€€€€€€€€€€€]••­±ä±…å½ÕÐ(€€€€€€€€€€€€€€ð½Àø(€€€€€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰µÐ´À¸ÔÑ•áÐµáÌÑ•áÐµµÕÑ•µ™½É•É½Õ¹ˆø(€€€€€€€€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰™½¹Ðµµ½¹¼Ñ…‰Õ±…Èµ¹ÕµÌˆùíÝ••­1¥™Ñ…åÍôð½ÍÁ…¸ùìˆ€‰ô(€€€€€€€€€€€€€€€±¥™Ð(€€€€€€€€€€€€€€€íÝ••­IÕ¹…åÌ€ø€À€˜˜€ (€€€€€€€€€€€€€€€€€€ðø(€€€€€€€€€€€€€€€€€€€ìˆƒ
-Ü€‰ô(€€€€€€€€€€€€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰™½¹Ðµµ½¹¼Ñ…‰Õ±…Èµ¹ÕµÌˆø(€€€€€€€€€€€€€€€€€€€€€íÝ••­IÕ¹…åÍô(€€€€€€€€€€€€€€€€€€€€ð½ÍÁ…¸ùìˆ€‰ô(€€€€€€€€€€€€€€€€€€€ÉÕ¸(€€€€€€€€€€€€€€€€€€ð¼ø(€€€€€€€€€€€€€€€€¥ô(€€€€€€€€€€€€€€€íÝ••­½Õ‰±•…åÌ€ø€À€˜˜€ (€€€€€€€€€€€€€€€€€€ðø(€€€€€€€€€€€€€€€€€€€ìˆƒ
-Ü€‰ô(€€€€€€€€€€€€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰™½¹Ðµµ½¹¼Ñ…‰Õ±…Èµ¹ÕµÌˆø(€€€€€€€€€€€€€€€€€€€€€íÝ••­½Õ‰±•…åÍô(€€€€€€€€€€€€€€€€€€€€ð½ÍÁ…¸ùìˆ€‰ô(€€€€€€€€€€€€€€€€€€€‘½Õ‰±”(€€€€€€€€€€€€€€€€€€ð¼ø(€€€€€€€€€€€€€€€€¥ô(€€€€€€€€€€€€€€€íÝ••­I•ÍÑ…åÌ€ø€À€˜˜€ (€€€€€€€€€€€€€€€€€€ðø(€€€€€€€€€€€€€€€€€€€ìˆƒ
-Ü€‰ô(€€€€€€€€€€€€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰™½¹Ðµµ½¹¼Ñ…‰Õ±…Èµ¹ÕµÌˆø(€€€€€€€€€€€€€€€€€€€€€íÝ••­I•ÍÑ…åÍô(€€€€€€€€€€€€€€€€€€€€ð½ÍÁ…¸ùìˆ€‰ô(€€€€€€€€€€€€€€€€€€€É•ÍÐ(€€€€€€€€€€€€€€€€€€ð¼ø(€€€€€€€€€€€€€€€€¥ô(€€€€€€€€€€€€€€ð½Àø(€€€€€€€€€€€€ð½‘¥Øø(€€€€€€€€€€€€ñ‰ÕÑÑ½¸(€€€€€€€€€€€€€ÑåÁ”ô‰‰ÕÑÑ½¸ˆ(€€€€€€€€€€€€€½¹±¥¬õí½¹=Á•¹]••­±å1…å½ÕÑô(€€€€€€€€€€€€€±…ÍÍ9…µ”ôˆµµÈ´Ä¥¹±¥¹”µ™±•àµ¥¸µ µlÐÑÁátÍ¡É¥¹¬´À¥Ñ•µÌµ•¹Ñ•È…À´ÄÁà´ÄÑ•áÐµáÌ™½¹ÐµÍ•µ¥‰½±Ñ•áÐµÁÉ¥µ…ÉäÑÉ…¹Í¥Ñ¥½¸µÑÉ…¹Í™½É´…Ñ¥Ù”éÍ…±”µlÀ¸äÝtˆ(€€€€€€€€€€€€ø(€€€€€€€€€€€€€‘¥Ð‘…åÌ€™É…ÉÈì(€€€€€€€€€€€€ð½‰ÕÑÑ½¸ø(€€€€€€€€€€ð½‘¥Øø(€€€€€€€€ð½‘¥Øø(€€€€€€ð½AÉ½É…µµ•M•ÑÑ¥¹ÍÉ½ÕÀø((€€€€€ì¼¨ƒŠRŠR É½ÕÀ€Ìè½¹ÍÑÉ…¥¹ÑÌƒŠP€‰]¡…ÐµÕÍÐÑ¡”Á±…¸…‘…ÁÐ…É½Õ¹üˆƒŠRŠR €¨½ô(€€€€€€ñAÉ½É…µµ•M•ÑÑ¥¹ÍÉ½ÕÀ(€€€€€€€Ñ¥Ñ±”ô‰½¹ÍÑÉ…¥¹ÑÌˆ(€€€€€€€ÍÕ‰Ñ¥Ñ±”ô‰]”±°¡½½Í”•á•É¥Í•Ì…É½Õ¹Ý¡…Ðå½Ô¡…Ù”…¹Ý¡…Ðå½Ô¹••Ñ¼…Ù½¥¸ˆ(€€€€€€ø(€€€€€€€€ñ‘¥Øø(€€€€€€€€€€ñM•Ñ¥½¹1…‰•°ùÅÕ¥Áµ•¹Ð…•ÍÌð½M•Ñ¥½¹1…‰•°ø(€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰ÍÁ…”µä´Èˆø(€€€€€€€€€€€íEU%A59Q}=AQ%=9L¹µ…À ¡½ÁÐ°¤¤€ôø€ (€€€€€€€€€€€€€€ñM•ÑÑ¥¹Í=ÁÑ¥½¹…É(€€€€€€€€€€€€€€€­•äõí½ÁÐ¹¥‘ô(€€€€€€€€€€€€€€€Í•±•Ñ•õí•ÅÕ¥Áµ•¹Ð€ôôô½ÁÐ¹¥‘ô(€€€€€€€€€€€€€€€½¹M•±•Ðõì ¤€ôøÍ•ÑÅÕ¥Áµ•¹Ð¡½ÁÐ¹¥¥ô(€€€€€€€€€€€€€€€¥¹‘•àõí¥ô(€€€€€€€€€€€€€€€¥½¸õí½ÁÐ¹¥½¹ô(€€€€€€€€€€€€€€€±…‰•°õí½ÁÐ¹±…‰•±ô(€€€€€€€€€€€€€€€‘•ÍŒõí½ÁÐ¹‘•Íô(€€€€€€€€€€€€€€¼ø(€€€€€€€€€€€€¤¥ô(€€€€€€€€€€ð½‘¥Øø(€€€€€€€€ð½‘¥Øø((€€€€€€€€ñ‘¥Øø(€€€€€€€€€€ñM•Ñ¥½¹1…‰•°ù%¹©ÕÉ¥•Ìð½M•Ñ¥½¹1…‰•°ø(€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰ÍÁ…”µä´Èˆø(€€€€€€€€€€€í%9)UIe}=AQ%=9L¹µ…À ¡½ÁÐ°¤¤€ôø€ (€€€€€€€€€€€€€€ñM•ÑÑ¥¹Í=ÁÑ¥½¹…É(€€€€€€€€€€€€€€€­•äõí½ÁÐ¹¥‘ô(€€€€€€€€€€€€€€€Í•±•Ñ•õí¥¹©ÕÉ¥•Ì¹¥¹±Õ‘•Ì¡½ÁÐ¹¥¥ô(€€€€€€€€€€€€€€€½¹M•±•Ðõì ¤€ôøÑ½±•%¹©ÕÉä¡½ÁÐ¹¥¥ô(€€€€€€€€€€€€€€€¥¹‘•àõí¥ô(€€€€€€€€€€€€€€€¥½¸õí½ÁÐ¹¥½¹ô(€€€€€€€€€€€€€€€±…‰•°õí½ÁÐ¹±…‰•±ô(€€€€€€€€€€€€€€€‘•ÍŒõí½ÁÐ¹‘•Íô(€€€€€€€€€€€€€€¼ø(€€€€€€€€€€€€¤¥ô(€€€€€€€€€€ð½‘¥Øø(€€€€€€€€ð½‘¥Øø(€€€€€€ð½AÉ½É…µµ•M•ÑÑ¥¹ÍÉ½ÕÀø((€€€€€ì¼¨ƒŠRŠR É½ÕÀ€Ðè‘Ù…¹•€¡•¹¥¹”Ñ½±•ÌƒŠP±¥Ù”µÍ…Ù”°¹¼É•‰Õ¥±¤ƒŠRŠR €¨½ô(€€€€€€ñAÉ½É…µµ•M•ÑÑ¥¹ÍÉ½ÕÀ(€€€€€€€Ñ¥Ñ±”ô‰‘Ù…¹•ˆ(€€€€€€€ÍÕ‰Ñ¥Ñ±”ô‰¥¹”µÑÕ¹”ÁÉ½É•ÍÍ¥½¸‰•¡…Ù¥½ÕÈ¸M…Ù•¥¹ÍÑ…¹Ñ±äƒŠP¹¼É•‰Õ¥±¸ˆ(€€€€€€ø(€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰ÍÁ…”µä´Ìˆø(€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•à¥Ñ•µÌµ•¹Ñ•È©ÕÍÑ¥™äµ‰•ÑÝ••¸ˆø(€€€€€€€€€€€€ñ‘¥Øø(€€€€€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰Ñ•áÐµÍ´Ñ•áÐµ™½É•É½Õ¹ˆùÕÑ¼AÉ½É•ÍÍ¥½¸ð½Àø(€€€€€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰Ñ•áÐµáÌÑ•áÐµµÕÑ•µ™½É•É½Õ¹ˆø(€€€€€€€€€€€€€€€	ÕµÁÌ¹•áÐÍ•ÍÍ¥½¸ÌÝ•¥¡ÐÝ¡•¸å½Ô½µÁ±•Ñ”•Ù•ÉäÍ•Ð±•…¹±ä(€€€€€€€€€€€€€€ð½Àø(€€€€€€€€€€€€ð½‘¥Øø(€€€€€€€€€€€€ñQ½±”(€€€€€€€€€€€€€¡•­•õíÍ•ÑÑ¥¹Ì¹…ÕÑ½AÉ½É•ÍÍ¥½¹ô(€€€€€€€€€€€€€±…‰•°ô‰ÕÑ¼ÁÉ½É•ÍÍ¥½¸ˆ(€€€€€€€€€€€€€±…ÍÍ9…µ”ô‰µ°´Ìˆ(€€€€€€€€€€€€€½¹¡…¹”õì ¤€ôø(€€€€€€€€€€€€€€€ÕÁ‘…Ñ•M•ÑÑ¥¹Ì¡ì…ÕÑ½AÉ½É•ÍÍ¥½¸è€…Í•ÑÑ¥¹Ì¹…ÕÑ½AÉ½É•ÍÍ¥½¸ô¤(€€€€€€€€€€€€€ô(€€€€€€€€€€€€¼ø(€€€€€€€€€€ð½‘¥Øø(€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•à¥Ñ•µÌµ•¹Ñ•È©ÕÍÑ¥™äµ‰•ÑÝ••¸ˆø(€€€€€€€€€€€€ñ‘¥Øø(€€€€€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰Ñ•áÐµÍ´Ñ•áÐµ™½É•É½Õ¹ˆù5¥É½±½…‘¥¹œð½Àø(€€€€€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰Ñ•áÐµáÌÑ•áÐµµÕÑ•µ™½É•É½Õ¹ˆø(€€€€€€€€€€€€€€€UÍ”ƒ
-ô­œ©ÕµÁÌ½¸Íµ…±±•È±¥™ÑÌÍ¼ÁÉ½É•ÍÍ¥½¸­••ÁÌµ½Ù¥¹œÁ…ÍÐ(€€€€€€€€€€€€€€€ÍÑ…±±Ì(€€€€€€€€€€€€€€ð½Àø(€€€€€€€€€€€€ð½‘¥Øø(€€€€€€€€€€€€ñQ½±”(€€€€€€€€€€€€€¡•­•õíÍ•ÑÑ¥¹Ì¹µ¥É½±½…‘¥¹ô(€€€€€€€€€€€€€±…‰•°ô‰5¥É½±½…‘¥¹œˆ(€€€€€€€€€€€€€±…ÍÍ9…µ”ô‰µ°´Ìˆ(€€€€€€€€€€€€€½¹¡…¹”õì ¤€ôø(€€€€€€€€€€€€€€€ÕÁ‘…Ñ•M•ÑÑ¥¹Ì¡ìµ¥É½±½…‘¥¹œè€…Í•ÑÑ¥¹Ì¹µ¥É½±½…‘¥¹œô¤(€€€€€€€€€€€€€ô(€€€€€€€€€€€€¼ø(€€€€€€€€€€ð½‘¥Øø(€€€€€€€€ð½‘¥Øø(€€€€€€ð½AÉ½É…µµ•M•ÑÑ¥¹ÍÉ½ÕÀø((€€€€€ì¼¨ƒŠRŠR É½ÕÀ€Ôè…¹•Èé½¹”€¡‘•ÍÑÉÕÑ¥Ù”É•Í•Ð°Í•Á…É…Ñ•™É½´ÑÕ¹¥¹œ¤ƒŠRŠR (€€€€€€€€€]¡½±”µÁÉ½É…µµ”É•Í•ÐƒŠP¡¥‘‘•¸¥¸Ñ¡”±¥™Ðµ½¹±äÙ¥•Ü€¡¥ÐÉ•Í•ÑÌ(€€€€€€€€€ÉÕ¹¹¥¹œ€¬¹ÕÑÉ¥Ñ¥½¸Ñ½¼°Í¼¥Ð‰•±½¹ÌÑ¼Ñ¡”™Õ±°•‘¥Ñ½È¤¸€¨½ô(€€€€€ì…±¥™Ñ=¹±ä€˜˜€ (€€€€€€€€ñAÉ½É…µµ•M•ÑÑ¥¹ÍÉ½ÕÀ(€€€€€€€€€Ñ¥Ñ±”ô‰…¹•Èé½¹”ˆ(€€€€€€€€€Ñ½¹”ô‰‘…¹•Èˆ(€€€€€€€€€ÍÕ‰Ñ¥Ñ±”ô‰I•Í•ÑÑ¥¹œÉ•‰Õ¥±‘Ìå½ÕÈÁÉ½É…µµ”™É½´ÍÉ…Ñ ƒŠPå½Ô±°ÍÑ…ÉÐ…Ð]••¬€Ä…¹Á…ÍÐÝ••¬ÍÕµµ…É¥•Ì±•…È¸1½•Ý½É­½ÕÑÌ…¹ÉÕ¹ÌÍÑ…ä¥¸!¥ÍÑ½Éä¸ˆ(€€€€€€€€ø(€€€€€€€€€€ñ	ÕÑÑ½¸(€€€€€€€€€€€Ù…É¥…¹Ðô‰‘•ÍÑÉÕÑ¥Ù”µÑ¥¹Ñ•ˆ(€€€€€€€€€€€™Õ±±]¥‘Ñ (€€€€€€€€€€€½¹±¥¬õì ¤€ôøÍ•Ñ½¹™¥ÉµI•Í•Ð¡ÑÉÕ”¥ô(€€€€€€€€€€ø(€€€€€€€€€€€I•Í•ÐAÉ½É…µµ”(€€€€€€€€€€ð½	ÕÑÑ½¸ø(€€€€€€€€ð½AÉ½É…µµ•M•ÑÑ¥¹ÍÉ½ÕÀø(€€€€€€¥ô((€€€€€ì¼¨ƒŠRŠR MÑ¥­äÍ…Ù”‰…ÈƒŠRŠR €¨½ô(€€€€€ì¡‘¥ÉÑäñðÍ…Ù¥¹œ¤€˜˜€ (€€€€€€€€ñ‘¥Ø(€€€€€€€€€±…ÍÍ9…µ”ô‰ÍÑ¥­äè´ÈÀ€µµà´ÐÁà´ÐÁÐ´ÌÁˆ´Ì‰œµ‰…­É½Õ¹¼äÈ‰…­‘É½Àµ‰±ÕÈ‰½É‘•ÈµÐ‰½É‘•Èµ‰½É‘•ÈÍ¡…‘½ÜµlÁ|´ÄÁÁá|ÈÑÁá}É‰„ ÄÔ°ÈÌ°ÐÈ°À¸Àà¥tˆ(€€€€€€€€€ÍÑå±”õíì‰½ÑÑ½´è€‰…±Œ¡Ù…È ´µÑ…ˆµ‰…Èµ¡•¥¡Ð¤€¬Ù…È ´µÍ…™”µ‰½ÑÑ½´¤¤ˆõô(€€€€€€€€ø(€€€€€€€€€€ñA•¹‘¥¹¡…¹•ÍMÕµµ…Éä(€€€€€€€€€€€½Õ¹Ðõí¡…¹•Ì¹±•¹Ñ¡ô(€€€€€€€€€€€±…ÍÍ9…µ”ô‰µˆ´ÈÑ•áÐµ•¹Ñ•Èˆ(€€€€€€€€€€¼ø(€€€€€€€€€€ñ‰ÕÑÑ½¸(€€€€€€€€€€€ÑåÁ”ô‰‰ÕÑÑ½¸ˆ(€€€€€€€€€€€½¹±¥¬õì ¤€ôøÍ•Ñ½¹™¥ÉµI•‰Õ¥±¡ÑÉÕ”¥ô(€€€€€€€€€€€‘¥Í…‰±•õì…‘¥ÉÑäñðÍ…Ù¥¹ô(€€€€€€€€€€€±…ÍÍ9…µ”õí¸ (€€€€€€€€€€€€€€‰Üµ™Õ±°Áä´Ì¸ÔÉ½Õ¹‘•´Éá°Ñ•áÐµÍ´™½¹Ðµ‰½±ÑÉ…¹Í¥Ñ¥½¸µ…±°…Ñ¥Ù”éÍ…±”µlÀ¸äátˆ°(€€€€€€€€€€€€€€…‘¥ÉÑäñðÍ…Ù¥¹œ(€€€€€€€€€€€€€€€€ü€‰‰œµµÕÑ•Ñ•áÐµµÕÑ•µ™½É•É½Õ¹½Á…¥Ñä´ØÀˆ(€€€€€€€€€€€€€€€€è€‰‰œµÁÉ¥µ…ÉäÑ•áÐµÁÉ¥µ…Éäµ™½É•É½Õ¹ˆ(€€€€€€€€€€€€¥ô(€€€€€€€€€€ø(€€€€€€€€€€€íÍ…Ù¥¹œ€ü€‰M…Ù¥¹ŸŠ˜ˆ€è€‰M…Ù”¡…¹•Ì‰ô(€€€€€€€€€€ð½‰ÕÑÑ½¸ø(€€€€€€€€ð½‘¥Øø(€€€€€€¥ô((€€€€€ì¼¨ƒŠRŠR ½¹™¥Éµ…Ñ¥½¸µ½‘…±ÌƒŠRŠR €¨½ô(€€€€€€ñ¹¥µ…Ñ•AÉ•Í•¹”ø(€€€€€€€ì¡½¹™¥ÉµI•‰Õ¥±ñð½¹™¥ÉµI•Í•Ð¤€˜˜€ (€€€€€€€€€€ðø(€€€€€€€€€€€€ñµ½Ñ¥½¸¹‘¥Ø(€€€€€€€€€€€€€¥¹¥Ñ¥…°õíì½Á…¥Ñäè€Àõô(€€€€€€€€€€€€€…¹¥µ…Ñ”õíì½Á…¥Ñäè€Äõô(€€€€€€€€€€€€€•á¥Ðõíì½Á…¥Ñäè€Àõô(€€€€€€€€€€€€€½¹±¥¬õì ¤€ôøì(€€€€€€€€€€€€€€€Í•Ñ½¹™¥ÉµI•‰Õ¥±¡™…±Í”¤ì(€€€€€€€€€€€€€€€Í•Ñ½¹™¥ÉµI•Í•Ð¡™…±Í”¤ì(€€€€€€€€€€€€€õô(€€€€€€€€€€€€€±…ÍÍ9…µ”ô‰™¥á•¥¹Í•Ð´À‰œµ‰±…¬¼ØÀèµlØÁtˆ(€€€€€€€€€€€€¼ø(€€€€€€€€€€€€ñµ½Ñ¥½¸¹‘¥Ø(€€€€€€€€€€€€€É½±”ô‰…±•ÉÑ‘¥…±½œˆ(€€€€€€€€€€€€€…É¥„µµ½‘…°ô‰ÑÉÕ”ˆ(€€€€€€€€€€€€€¥¹¥Ñ¥…°õíì½Á…¥Ñäè€À°Í…±”è€À¸äØõô(€€€€€€€€€€€€€…¹¥µ…Ñ”õíì½Á…¥Ñäè€Ä°Í…±”è€Äõô(€€€€€€€€€€€€€•á¥Ðõíì½Á…¥Ñäè€À°Í…±”è€À¸äØõô(€€€€€€€€€€€€€ÑÉ…¹Í¥Ñ¥½¸õíì‘ÕÉ…Ñ¥½¸è€À¸ÄÔõô(€€€€€€€€€€€€€±…ÍÍ9…µ”ô‰™¥á•¥¹Í•Ðµà´ÐÑ½À´Ä¼È€µÑÉ…¹Í±…Ñ”µä´Ä¼ÈèµlØÅt‰œµ…ÉÉ½Õ¹‘•´Éá°À´ÐÍÁ…”µä´Ìµ…àµÜµÍ´µàµ…ÕÑ¼Í¡…‘½Üµá°ˆ(€€€€€€€€€€€€ø(€€€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•à¥Ñ•µÌµÍÑ…ÉÐ…À´Ìˆø(€€€€€€€€€€€€€€€€ñ‘¥Ø(€€€€€€€€€€€€€€€€€±…ÍÍ9…µ”ô‰Í¥é”´äÉ½Õ¹‘•µá°™±•à¥Ñ•µÌµ•¹Ñ•È©ÕÍÑ¥™äµ•¹Ñ•ÈÍ¡É¥¹¬´Àˆ(€€€€€€€€€€€€€€€€€ÍÑå±”õíì‰…­É½Õ¹‘½±½Èè€‘íQ!5¹…µ‰•ÉôÅ€õô(€€€€€€€€€€€€€€€€ø(€€€€€€€€€€€€€€€€€€ñ±•ÉÑQÉ¥…¹±”(€€€€€€€€€€€€€€€€€€€±…ÍÍ9…µ”ô‰Í¥é”´Ðˆ(€€€€€€€€€€€€€€€€€€€ÍÑå±”õíì½±½ÈèQ!5¹…µ‰•Èõô(€€€€€€€€€€€€€€€€€€¼ø(€€€€€€€€€€€€€€€€ð½‘¥Øø(€€€€€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰µ¥¸µÜ´Àˆø(€€€€€€€€€€€€€€€€€€ñ Ì±…ÍÍ9…µ”ô‰Ñ•áÐµÍ´™½¹ÐµÍ•µ¥‰½±Ñ•áÐµ™½É•É½Õ¹ˆø(€€€€€€€€€€€€€€€€€€€í½¹™¥ÉµI•Í•Ð€ü€‰I•Í•ÐÁÉ½É…µµ”üˆ€è€‰M…Ù”¡…¹•Ìü‰ô(€€€€€€€€€€€€€€€€€€ð½ Ìø(€€€€€€€€€€€€€€€€€€ñÀ±…ÍÍ9…µ”ô‰Ñ•áÐµáÌÑ•áÐµµÕÑ•µ™½É•É½Õ¹µÐ´Ä±•…‘¥¹œµÉ•±…á•ˆø(€€€€€€€€€€€€€€€€€€€í½¹™¥ÉµI•Í•Ð(€€€€€€€€€€€€€€€€€€€€€€ü€‰]”±°É•‰Õ¥±å½ÕÈÁÉ½É…µµ”™É½´ÍÉ…Ñ Ý¥Ñ å½ÕÈÕÉÉ•¹ÐÍ•ÑÑ¥¹Ì¸e½Ô±°ÍÑ…ÉÐ™É•Í …Ð]••¬€ÄƒŠPÁ…ÍÐÝ••¬ÍÕµµ…É¥•Ì±•…È¸e½ÕÈ±½•Ý½É­½ÕÑÌ…¹ÉÕ¹ÌÍÑ…ä¥¸!¥ÍÑ½Éä¸ˆ(€€€€€€€€€€€€€€€€€€€€€€èÁÉ½É…µµ•AÉ•Í•ÉÙ…Ñ¥½¹9½Ñ”¡ì(€€€€€€€€€€€€€€€€€€€€€€€€€±¥™Ñ…åÍ¡…¹•°(€€€€€€€€€€€€€€€€€€€€€€€€€Ý••­9Õµ‰•ÈèÁÉ½É…µMÑ…Ñ”ü¹Ý••­9Õµ‰•È°(€€€€€€€€€€€€€€€€€€€€€€€ô¥ô(€€€€€€€€€€€€€€€€€€ð½Àø(€€€€€€€€€€€€€€€€ð½‘¥Øø(€€€€€€€€€€€€€€ð½‘¥Øø((€€€€€€€€€€€€€ì¼¨]¡…ÐÌ¡…¹¥¹œƒŠPÉ•…À½˜Ñ¡”Ñ½Õ¡•™¥•±‘Ì€¡É•‰Õ¥±½¹±ä¤¸€¨½ô(€€€€€€€€€€€€€ì…½¹™¥ÉµI•Í•Ð€˜˜¡…¹•Ì¹±•¹Ñ €ø€À€˜˜€ (€€€€€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰É½Õ¹‘•µá°‰œµµÕÑ•¼ØÀÁà´ÌÁä´È¸Ôˆø(€€€€€€€€€€€€€€€€€€ñ	…Í•M•Ñ¥½¹1…‰•°Ñ¥•Èô‰Í•Ñ¥½¸ˆ±…ÍÍ9…µ”ô‰µˆ´Ä¸Ôˆø(€€€€€€€€€€€€€€€€€€€¡…¹•Ì(€€€€€€€€€€€€€€€€€€ð½	…Í•M•Ñ¥½¹1…‰•°ø(€€€€€€€€€€€€€€€€€€ñÕ°±…ÍÍ9…µ”ô‰ÍÁ…”µä´Äµ…àµ ´ÐÐ½Ù•É™±½Üµäµ…ÕÑ¼ˆø(€€€€€€€€€€€€€€€€€€€í¡…¹•Ì¹µ…À ¡Œ¤€ôø€ (€€€€€€€€€€€€€€€€€€€€€€ñ±¤(€€€€€€€€€€€€€€€€€€€€€€€­•äõíŒ¹±…‰•±ô(€€€€€€€€€€€€€€€€€€€€€€€±…ÍÍ9…µ”ô‰™±•à¥Ñ•µÌµ‰…Í•±¥¹”©ÕÍÑ¥™äµ‰•ÑÝ••¸…À´ÈÑ•áÐµáÌˆ(€€€€€€€€€€€€€€€€€€€€€€ø(€€€€€€€€€€€€€€€€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰Ñ•áÐµµÕÑ•µ™½É•É½Õ¹Í¡É¥¹¬´Àˆø(€€€€€€€€€€€€€€€€€€€€€€€€€íŒ¹±…‰•±ô(€€€€€€€€€€€€€€€€€€€€€€€€ð½ÍÁ…¸ø(€€€€€€€€€€€€€€€€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰µ¥¸µÜ´ÀÑ•áÐµÉ¥¡Ð™½¹Ðµµ•‘¥Õ´Ñ•áÐµ™½É•É½Õ¹ˆø(€€€€€€€€€€€€€€€€€€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰Ñ•áÐµµÕÑ•µ™½É•É½Õ¹ˆø(€€€€€€€€€€€€€€€€€€€€€€€€€€€íŒ¹™É½µô(€€€€€€€€€€€€€€€€€€€€€€€€€€ð½ÍÁ…¸ø(€€€€€€€€€€€€€€€€€€€€€€€€€€ñÍÁ…¸±…ÍÍ9…µ”ô‰µà´ÄÑ•áÐµµÕÑ•µ™½É•É½Õ¹ˆûŠHð½ÍÁ…¸ø(€€€€€€€€€€€€€€€€€€€€€€€€€íŒ¹Ñ½ô(€€€€€€€€€€€€€€€€€€€€€€€€ð½ÍÁ…¸ø(€€€€€€€€€€€€€€€€€€€€€€ð½±¤ø(€€€€€€€€€€€€€€€€€€€€¤¥ô(€€€€€€€€€€€€€€€€€€ð½Õ°ø(€€€€€€€€€€€€€€€€ð½‘¥Øø(€€€€€€€€€€€€€€¥ô(€€€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰™±•à…À´ÈÁÐ´Äˆø(€€€€€€€€€€€€€€€€ñ	ÕÑÑ½¸(€€€€€€€€€€€€€€€€€Ù…É¥…¹Ðô‰Í•½¹‘…Éäˆ(€€€€€€€€€€€€€€€€€±…ÍÍ9…µ”ô‰™±•à´Äˆ(€€€€€€€€€€€€€€€€€½¹±¥¬õì ¤€ôøì(€€€€€€€€€€€€€€€€€€€Í•Ñ½¹™¥ÉµI•‰Õ¥±¡™…±Í”¤ì(€€€€€€€€€€€€€€€€€€€Í•Ñ½¹™¥ÉµI•Í•Ð¡™…±Í”¤ì(€€€€€€€€€€€€€€€€€õô(€€€€€€€€€€€€€€€€ø(€€€€€€€€€€€€€€€€€…¹•°(€€€€€€€€€€€€€€€€ð½	ÕÑÑ½¸ø(€€€€€€€€€€€€€€€€ñ	ÕÑÑ½¸(€€€€€€€€€€€€€€€€€±…ÍÍ9…µ”ô‰™±•à´Äˆ(€€€€€€€€€€€€€€€€€½¹±¥¬õí½¹™¥ÉµI•Í•Ð€ü…ÁÁ±åI•Í•Ð€è…ÁÁ±åI•‰Õ¥±‘ô(€€€€€€€€€€€€€€€€ø(€€€€€€€€€€€€€€€€€í½¹™¥ÉµI•Í•Ð€ü€‰I•Í•Ðˆ€è€‰M…Ù”‰ô(€€€€€€€€€€€€€€€€ð½	ÕÑÑ½¸ø(€€€€€€€€€€€€€€ð½‘¥Øø(€€€€€€€€€€€€ð½µ½Ñ¥½¸¹‘¥Øø(€€€€€€€€€€ð¼ø(€€€€€€€€¥ô(€€€€€€ð½¹¥µ…Ñ•AÉ•Í•¹”ø(€€€€ð½‘¥Øø(€€¤ì)ô
+  // could disagree (pick "Cut" here while goal weight said maintain â†’ drift).
+  // We keep the current phase as a plain derived value and thread it through
+  // buildPlan unchanged; the read-only card below links out to change it.
+  const nutritionPhase: Goal = saved.nutritionPhase;
+  const [experience, setExperience] = useState<Experience>(saved.experience);
+  const [liftDays, setLiftDays] = useState<number>(saved.liftDays);
+  const [equipment, setEquipment] = useState<Equipment>(saved.equipment);
+  const [injuries, setInjuries] = useState<string[]>(saved.injuries);
+  // D14 dedupe: run-plan fields are NO LONGER edited here â€” the focused
+  // /settings/run-plan editor (RunPlanSettings) is the one place they
+  // change, with run-only save semantics (never a full rebuild). This
+  // editor reads the SAVED run values and threads them through the
+  // rebuild unchanged, and renders a read-only Running summary that
+  // links out (same treatment as the derived Nutrition phase card).
+
+  const [saving, setSaving] = useState(false);
+  const [confirmRebuild, setConfirmRebuild] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
+
+  const settings = programState?.settings ?? {
+    autoProgression: true,
+    microloading: true,
+  };
+
+  // The per-field diff is the single source of truth: the recap shown in the
+  // confirm modal and the dirty state both derive from it, so they can't drift.
+  const changes = computeProgrammeChanges(saved, {
+    primaryGoal,
+    nutritionPhase,
+    experience,
+    liftDays,
+    preferredSplit: saved.preferredSplit,
+    equipment,
+    injuries,
+    // Run fields mirror `saved` â€” run edits live on /settings/run-plan,
+    // so they can never appear in this editor's change recap.
+    runMode: saved.runMode,
+    weeklyRunDays: saved.weeklyRunDays,
+    raceDistance: saved.raceDistance,
+    raceTargetDate: saved.raceTargetDate,
+    runVolume: saved.runVolume,
+    runDifficulty: saved.runDifficulty,
+  });
+  const dirty = changes.length > 0;
+  // Pgm5 (Q3): content edits now PRESERVE the user's workouts â€” only a
+  // lift-days change re-derives the skeleton. The confirm copy must name the
+  // customization reset for a day-count change, and reassure otherwise.
+  const liftDaysChanged = liftDays !== saved.liftDays;
+
+  const effectiveRunDays =
+    saved.runMode === "freeform" ? 0 : saved.weeklyRunDays;
+
+  // â”€â”€ Derived display values (P1/P2/P3 â€” presentational only) â”€â”€â”€â”€â”€â”€â”€
+  // "Current setup" reflects the SAVED snapshot (not the draft), so it reads
+  // as "what your programme is currently built around" and never duplicates a
+  // draft option label into the DOM.
+  const labelFor = (
+    opts: readonly { id: string; label: string }[],
+    id: string
+  ): string => opts.find((o) => o.id === id)?.label ?? id;
+
+  const savedRealInjuries = saved.injuries.filter((i) => i !== "none");
+  const currentSetupLines = [
+    `${labelFor(FOCUS_OPTIONS, saved.primaryGoal)} Â· ${labelFor(NUTRITION_OPTIONS, saved.nutritionPhase)}`,
+    `${saved.liftDays} lift ${saved.liftDays === 1 ? "day" : "days"} Â· ${saved.runMode === "race_prep" ? "Race prep" : "Freeform running"}`,
+    `${labelFor(EQUIPMENT_OPTIONS, saved.equipment)} Â· ${
+      savedRealInjuries.length === 0
+        ? "No injuries"
+        : `${savedRealInjuries.length} ${savedRealInjuries.length === 1 ? "injury" : "injuries"}`
+    }`,
+  ];
+
+  // P3: the engine derives the split from weekly lift days (chooseSplit); it
+  // does NOT honour an explicit preference in this rebuild path. Surface the
+  // split it WILL generate for the current draft so the picker reads honestly
+  // rather than implying control the generation doesn't grant.
+  const generatedSplitLabel = splitLabel(chooseSplit(liftDays));
+  // Pgm5 (Q1): the split is shown, not chosen. Prefer the actual current
+  // structure (programState.splitType); fall back to what the engine would
+  // derive for the saved lift-days.
+  const currentSplitLabel = splitLabel(
+    programState?.splitType ?? chooseSplit(saved.liftDays)
+  );
+
+  // P2: weekly-layout preview counts, derived from the draft lift/run days
+  // (consistent with the double-day warning) â€” no stored weekSchedule needed.
+  const weekLiftDays = liftDays;
+  const weekRunDays = effectiveRunDays;
+  const weekDoubleDays = Math.max(0, weekLiftDays + weekRunDays - 7);
+  const weekRestDays = Math.max(0, 7 - weekLiftDays - weekRunDays);
+
+  function toggleInjury(id: string) {
+    if (id === "none") {
+      setInjuries((prev) => (prev.includes("none") ? [] : ["none"]));
+      return;
+    }
+    setInjuries((prev) => {
+      const withoutNone = prev.filter((i) => i !== "none");
+      return prev.includes(id)
+        ? withoutNone.filter((i) => i !== id)
+        : [...withoutNone, id];
+    });
+  }
+
+  async function applyRebuild() {
+    if (saving) return;
+    setConfirmRebuild(false);
+    setSaving(true);
+    try {
+      const plan = buildPlan({
+        primaryGoal,
+        nutritionPhase,
+        experience,
+        // Without this a level change is invisible to the builder â€” it
+        // preserves the saved week whenever the day count is unchanged, so
+        // Beginner â†” Advanced produced byte-identical workouts behind this
+        // flow's own "Plan updated" toast.
+        previousExperience: saved.experience,
+        // D-LIFT-5: seed bodyweight-relative cold-start loads on regen.
+        bodyweightKg: profile.weightKg,
+        sex: profile.sex,
+        liftDays,
+        // Pgm5 (Q1): split is no longer user-chosen here; thread the persisted
+        // value (inert in generation, keeps profileUpdates consistent).
+        preferredSplit:
+          saved.preferredSplit === "auto" ? "full_body" : saved.preferredSplit,
+        // D14: the run plan threads through the rebuild from the SAVED
+        // profile values â€” lifting edits never disturb the run plan, and
+        // run edits happen on /settings/run-plan.
+        runMode: saved.runMode,
+        weeklyRunDays: effectiveRunDays,
+        runTuning: { volume: saved.runVolume, difficulty: saved.runDifficulty },
+        ...(saved.runMode === "race_prep" && saved.raceTargetDate
+          ? {
+              raceGoal: {
+                distance: saved.raceDistance,
+                targetDate: saved.raceTargetDate,
+                // Preserve the optional event name through the rebuild â€”
+                // omit the key entirely when absent (clean writes).
+                ...(saved.raceEventName
+                  ? { eventName: saved.raceEventName }
+                  : {}),
+              },
+            }
+          : {}),
+        equipment,
+        injuries,
+        currentDate: localDateString(new Date()),
+        existingState: programState ?? undefined,
+        preserveHistory: true,
+      });
+
+      const configurePlanCallable = httpsCallable(functions, "configurePlan");
+      await configurePlanCallable({
+        profileUpdates: plan.profileUpdates,
+        programState: plan.programState,
+        weekSchedule: plan.weekSchedule,
+      });
+
+      // configurePlan writes through the Admin SDK, outside updateProfile's
+      // optimistic local-state path. Re-hydrating the authoritative profile
+      // also retriggers useProgram's loader, so the form and programme cannot
+      // keep showing (or later re-save) the pre-change experience/schedule.
+      try {
+        await refreshProfile();
+      } catch (refreshErr) {
+        // The atomic server write has already succeeded. Do not tell the user
+        // the save failed (or invite a duplicate retry); reload as the
+        // authoritative fallback, matching onboarding's post-callable path.
+        logger.warn(
+          "[ProgrammeSettings] plan saved but profile refresh failed; reloading",
+          refreshErr
+        );
+        toast.success("Plan updated");
+        onSaved?.();
+        window.location.reload();
+        return;
+      }
+      toast.success("Plan updated");
+      onSaved?.();
+    } catch (err) {
+      logger.error("[ProgrammeSettings] save failed:", err);
+      const code = (err as { code?: string })?.code;
+      if (code === "functions/unauthenticated" || code === "unauthenticated") {
+        toast.error("Please sign in again to update your plan.");
+      } else if (
+        code === "functions/invalid-argument" ||
+        code === "invalid-argument"
+      ) {
+        toast.error("Plan didn't validate â€” try a different combination.");
+      } else {
+        toast.error("Couldn't save your plan. Please try again.");
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function applyReset() {
+    setConfirmReset(false);
+    await regenerateProgram();
+    toast.success("Programme reset");
+  }
+
+  return (
+    <div className="space-y-6 pb-6">
+      {/* â”€â”€ Current setup anchor (read-only summary of the saved plan) â”€â”€
+          Hidden in the lift-only view: it summarises nutrition + running
+          too, which would reintroduce the "everything" feel this focused
+          screen exists to avoid. */}
+      {!liftOnly && <CurrentProgrammeSummary lines={currentSetupLines} />}
+
+      {/* â”€â”€ Group 1: Goal â€” "What are we optimizing for?" â”€â”€ */}
+      <ProgrammeSettingsGroup
+        title="Goal"
+        subtitle="Shape the programme around your current objective."
+      >
+        <div>
+          <SectionLabel>Training focus</SectionLabel>
+          <div className="space-y-2">
+            {FOCUS_OPTIONS.map((opt, i) => (
+              <SettingsOptionCard
+                key={opt.id}
+                selected={primaryGoal === opt.id}
+                onSelect={() => setPrimaryGoal(opt.id)}
+                index={i}
+                icon={opt.icon}
+                accent={THEME.brand}
+                label={opt.label}
+                desc={opt.desc}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Nutrition phase â€” READ-ONLY derived display. Direction is owned
+            by goal weight vs current (the locked goalWeightPlan model), set
+            in /settings/nutrition. Showing it here as a picker let it drift
+            from goal weight; now it's a calm summary that links out to the
+            one place that sets it. Hidden in the lift-only view. */}
+        {!liftOnly && (
+          <div>
+            <SectionLabel>Nutrition phase</SectionLabel>
+            <Link
+              to="/settings/nutrition"
+              className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card px-3.5 py-3 shadow-sm transition-all active:scale-[0.98]"
+            >
+              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-muted/50">
+                <Apple size={18} style={{ color: THEME.warning }} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-body font-bold leading-tight">
+                  {NUTRITION_OPTIONS.find((o) => o.id === nutritionPhase)
+                    ?.label ?? "Recomp"}
+                </span>
+                <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
+                  Set by your goal weight â€” tap to adjust in Nutrition
+                </span>
+              </span>
+              <ChevronRight
+                className="size-4 shrink-0 text-muted-foreground"
+                aria-hidden="true"
+              />
+            </Link>
+          </div>
+        )}
+
+        <div>
+          <SectionLabel>Experience</SectionLabel>
+          <div className="space-y-2">
+            {EXPERIENCE_OPTIONS.map((opt, i) => (
+              <SettingsOptionCard
+                key={opt.id}
+                selected={experience === opt.id}
+                onSelect={() => setExperience(opt.id)}
+                index={i}
+                icon={opt.icon}
+                label={opt.label}
+                desc={opt.desc}
+              />
+            ))}
+          </div>
+        </div>
+      </ProgrammeSettingsGroup>
+
+      {/* â”€â”€ Group 2: Weekly plan â€” "How does training fit into my week?" â”€â”€ */}
+      <ProgrammeSettingsGroup
+        title="Weekly plan"
+        subtitle="Set the training rhythm we'll build around."
+      >
+        <div>
+          <SectionLabel>Lift days per week</SectionLabel>
+          <SegmentedControl
+            ariaLabel="Lift days per week"
+            options={[2, 3, 4, 5, 6].map((d) => ({
+              value: d,
+              // Numeric picker labels follow the design rule: mono + tabular.
+              label: <span className="font-mono tabular-nums">{d}</span>,
+            }))}
+            value={liftDays}
+            onChange={setLiftDays}
+          />
+        </div>
+
+        {/* Pgm5 (Q1): split is a derived DISPLAY â€” the coach sets it from your
+            weekly training days; the user expresses preference via lift-days +
+            the exercise editor, not a split toggle. */}
+        <div>
+          <SectionLabel>Split</SectionLabel>
+          <div className="rounded-xl bg-muted px-3 py-2.5">
+            <p className="text-sm font-medium text-foreground">
+              {currentSplitLabel}
+            </p>
+            <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
+              {splitRationale(liftDays)}
+              {liftDays !== saved.liftDays && (
+                <>
+                  {" "}
+                  At <span className="font-mono tabular-nums">
+                    {liftDays}
+                  </span>{" "}
+                  {liftDays === 1 ? "day" : "days"} it becomes{" "}
+                  <span className="font-medium text-foreground">
+                    {generatedSplitLabel}
+                  </span>
+                  .
+                </>
+              )}
+            </p>
+          </div>
+        </div>
+
+        {/* â”€â”€ Running â€” READ-ONLY summary (D14 dedupe). Run-plan fields
+            (mode, race goal, run days, Pgm6 tuning) are edited in ONE
+            place: the focused /settings/run-plan editor, whose run-only
+            writers never trigger this editor's full-programme rebuild.
+            Editing them here too gave the same fields two different save
+            models (rebuild vs run-only patch) â€” the same two-editors-
+            drift failure the Nutrition phase card above solved the same
+            way. Hidden in the lift-only view. */}
+        {!liftOnly && (
+          <div>
+            <SectionLabel>Running</SectionLabel>
+            <Link
+              to="/settings/run-plan"
+              className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card px-3.5 py-3 shadow-sm transition-all active:scale-[0.98]"
+            >
+              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-muted/50">
+                <Footprints size={18} className="text-running" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-body font-bold leading-tight">
+                  {saved.runMode === "race_prep"
+                    ? `Race prep Â· ${RACE_DISTANCE_LABELS[saved.raceDistance] ?? saved.raceDistance}`
+                    : "Freeform running"}
+                </span>
+                <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
+                  {saved.runMode === "race_prep"
+                    ? `${saved.weeklyRunDays} run ${saved.weeklyRunDays === 1 ? "day" : "days"}/week â€” tap to edit in Run plan`
+                    : "Run whenever you like â€” tap to set a race goal"}
+                </span>
+              </span>
+              <ChevronRight
+                className="size-4 shrink-0 text-muted-foreground"
+                aria-hidden="true"
+              />
+            </Link>
+          </div>
+        )}
+
+        {/* P2: weekly-layout preview â€” counts derived from the draft lift/run
+          days; opens the existing day-by-day editor (ScheduleLayoutSheet). */}
+        <div className="rounded-xl bg-muted px-3 py-2.5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-foreground">
+                Weekly layout
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                <span className="font-mono tabular-nums">{weekLiftDays}</span>{" "}
+                lift
+                {weekRunDays > 0 && (
+                  <>
+                    {" Â· "}
+                    <span className="font-mono tabular-nums">
+                      {weekRunDays}
+                    </span>{" "}
+                    run
+                  </>
+                )}
+                {weekDoubleDays > 0 && (
+                  <>
+                    {" Â· "}
+                    <span className="font-mono tabular-nums">
+                      {weekDoubleDays}
+                    </span>{" "}
+                    double
+                  </>
+                )}
+                {weekRestDays > 0 && (
+                  <>
+                    {" Â· "}
+                    <span className="font-mono tabular-nums">
+                      {weekRestDays}
+                    </span>{" "}
+                    rest
+                  </>
+                )}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onOpenWeeklyLayout}
+              className="-mr-1 inline-flex min-h-[44px] shrink-0 items-center gap-1 px-1 text-xs font-semibold text-primary transition-transform active:scale-[0.97]"
+            >
+              Edit days &rarr;
+            </button>
+          </div>
+        </div>
+      </ProgrammeSettingsGroup>
+
+      {/* â”€â”€ Group 3: Constraints â€” "What must the plan adapt around?" â”€â”€ */}
+      <ProgrammeSettingsGroup
+        title="Constraints"
+        subtitle="We'll choose exercises around what you have and what you need to avoid."
+      >
+        <div>
+          <SectionLabel>Equipment access</SectionLabel>
+          <div className="space-y-2">
+            {EQUIPMENT_OPTIONS.map((opt, i) => (
+              <SettingsOptionCard
+                key={opt.id}
+                selected={equipment === opt.id}
+                onSelect={() => setEquipment(opt.id)}
+                index={i}
+                icon={opt.icon}
+                label={opt.label}
+                desc={opt.desc}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <SectionLabel>Injuries</SectionLabel>
+          <div className="space-y-2">
+            {INJURY_OPTIONS.map((opt, i) => (
+              <SettingsOptionCard
+                key={opt.id}
+                selected={injuries.includes(opt.id)}
+                onSelect={() => toggleInjury(opt.id)}
+                index={i}
+                icon={opt.icon}
+                label={opt.label}
+                desc={opt.desc}
+              />
+            ))}
+          </div>
+        </div>
+      </ProgrammeSettingsGroup>
+
+      {/* â”€â”€ Group 4: Advanced (engine toggles â€” live-save, no rebuild) â”€â”€ */}
+      <ProgrammeSettingsGroup
+        title="Advanced"
+        subtitle="Fine-tune progression behaviour. Saved instantly â€” no rebuild."
+      >
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-foreground">Auto Progression</p>
+              <p className="text-xs text-muted-foreground">
+                Bumps next session's weight when you complete every set cleanly
+              </p>
+            </div>
+            <Toggle
+              checked={settings.autoProgression}
+              label="Auto progression"
+              className="ml-3"
+              onChange={() =>
+                updateSettings({ autoProgression: !settings.autoProgression })
+              }
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-foreground">Microloading</p>
+              <p className="text-xs text-muted-foreground">
+                Use Â½ kg jumps on smaller lifts so progression keeps moving past
+                stalls
+              </p>
+            </div>
+            <Toggle
+              checked={settings.microloading}
+              label="Microloading"
+              className="ml-3"
+              onChange={() =>
+                updateSettings({ microloading: !settings.microloading })
+              }
+            />
+          </div>
+        </div>
+      </ProgrammeSettingsGroup>
+
+      {/* â”€â”€ Group 5: Danger zone (destructive reset, separated from tuning) â”€â”€
+          Whole-programme reset â€” hidden in the lift-only view (it resets
+          running + nutrition too, so it belongs to the full editor). */}
+      {!liftOnly && (
+        <ProgrammeSettingsGroup
+          title="Danger zone"
+          tone="danger"
+          subtitle="Resetting rebuilds your programme from scratch â€” you'll start at Week 1 and past week summaries clear. Logged workouts and runs stay in History."
+        >
+          <Button
+            variant="destructive-tinted"
+            fullWidth
+            onClick={() => setConfirmReset(true)}
+          >
+            Reset Programme
+          </Button>
+        </ProgrammeSettingsGroup>
+      )}
+
+      {/* â”€â”€ Sticky save bar â”€â”€ */}
+      {(dirty || saving) && (
+        <div
+          className="sticky z-20 -mx-4 px-4 pt-3 pb-3 bg-background/92 backdrop-blur border-t border-border shadow-[0_-10px_24px_rgba(15,23,42,0.08)]"
+          style={{ bottom: "calc(var(--tab-bar-height) + var(--safe-bottom))" }}
+        >
+          <PendingChangesSummary
+            count={changes.length}
+            className="mb-2 text-center"
+          />
+          <button
+            type="button"
+            onClick={() => setConfirmRebuild(true)}
+            disabled={!dirty || saving}
+            className={cn(
+              "w-full py-3.5 rounded-2xl text-sm font-bold transition-all active:scale-[0.98]",
+              !dirty || saving
+                ? "bg-muted text-muted-foreground opacity-60"
+                : "bg-primary text-primary-foreground"
+            )}
+          >
+            {saving ? "Savingâ€¦" : "Save changes"}
+          </button>
+        </div>
+      )}
+
+      {/* â”€â”€ Confirmation modals â”€â”€ */}
+      <AnimatePresence>
+        {(confirmRebuild || confirmReset) && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setConfirmRebuild(false);
+                setConfirmReset(false);
+              }}
+              className="fixed inset-0 bg-black/60 z-[60]"
+            />
+            <motion.div
+              role="alertdialog"
+              aria-modal="true"
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ duration: 0.15 }}
+              className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[61] bg-card rounded-2xl p-4 space-y-3 max-w-sm mx-auto shadow-xl"
+            >
+              <div className="flex items-start gap-3">
+                <div
+                  className="size-9 rounded-xl flex items-center justify-center shrink-0"
+                  style={{ backgroundColor: `${THEME.amber}1F` }}
+                >
+                  <AlertTriangle
+                    className="size-4"
+                    style={{ color: THEME.amber }}
+                  />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-semibold text-foreground">
+                    {confirmReset ? "Reset programme?" : "Save changes?"}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                    {confirmReset
+                      ? "We'll rebuild your programme from scratch with your current settings. You'll start fresh at Week 1 â€” past week summaries clear. Your logged workouts and runs stay in History."
+                      : programmePreservationNote({
+                          liftDaysChanged,
+                          weekNumber: programState?.weekNumber,
+                        })}
+                  </p>
+                </div>
+              </div>
+
+              {/* What's changing â€” recap of the touched fields (rebuild only). */}
+              {!confirmReset && changes.length > 0 && (
+                <div className="rounded-xl bg-muted/60 px-3 py-2.5">
+                  <BaseSectionLabel tier="section" className="mb-1.5">
+                    Changes
+                  </BaseSectionLabel>
+                  <ul className="space-y-1 max-h-44 overflow-y-auto">
+                    {changes.map((c) => (
+                      <li
+                        key={c.label}
+                        className="flex items-baseline justify-between gap-2 text-xs"
+                      >
+                        <span className="text-muted-foreground shrink-0">
+                          {c.label}
+                        </span>
+                        <span className="min-w-0 text-right font-medium text-foreground">
+                          <span className="text-muted-foreground">
+                            {c.from}
+                          </span>
+                          <span className="mx-1 text-muted-foreground">â†’</span>
+                          {c.to}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <div className="flex gap-2 pt-1">
+                <Button
+                  variant="secondary"
+                  className="flex-1"
+                  onClick={() => {
+                    setConfirmRebuild(false);
+                    setConfirmReset(false);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={confirmReset ? applyReset : applyRebuild}
+                >
+                  {confirmReset ? "Reset" : "Save"}
+                </Button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}

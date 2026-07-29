@@ -365,4 +365,1712 @@ export function useProgram() {
       // flashing stale cached state after the effect re-ran.
       try {
         const cachedSnap = await getDocFromCache(ref);
-        i×ÎºòÚ$z{-®éÜj×RÐ¢÷fW'&–FW3òçvVVµ66†VGVÆRóò&öf–ÆRçvVVµ66†VGVÆRóòµÓ°¢6öç7B'VåF&vWBÐ¢÷fW'&–FW3òçvVV¶Ç•'VäF—5F&vWBóò†vWEvVV¶Ç•'VåF&vWB‡&öf–ÆR’ÇÂ2“°¢6öç7BvVVµ7F'BÒÆö6ÅvVV´¶W’‚“°¢ÆWB'VäF—3¢66†VGVÆVE'VäF•µÓ°¢ÆWB'VåÆâÒ&öw&Õ7FFRç'VåÆã° ¢òò"Ôc¢6æ6†÷BW"ÖF’W6W$÷fW'&–FW2$Tdõ$R&VvVæW&F–ærà¢òò&RÕ"ÔbÂ&Vg&W6…'Vå66†VGVÆR6ÆÆVBF†RvVæW&F÷"‡v†–6€¢òò'V–ÆG2g&W6‚'VäF—2f–'V–ÆE'VäF•c"v—F‚æòW6W$÷fW'&–FP¢òòf–VÆB’æBw&÷FRF†R&W7VÇBF—&V7FÇ’(	B6–ÆVçFÇ’FW7G&÷––æp¢òòç’W"ÖF’FV×ÆFR÷fW'&–FW2F†RW6W"†B6WBf–F†P¢òò–æÆ–æRÇ6VÆV7Câ–â&öw&ÖÖU'Vå6V7F–öâw2W"ÖF’Æ—7Bà¢òò6æ6†÷BF”–æFW‚(i"W6W$÷fW'&–FRÖ²&W7F÷&RgFW"F†P¢òòvVæW&F÷"'Vç2'WBöæÇ’f÷"F—27F–ÆÂ66†VGVÆVB0¢òò'Vâö&÷F‚†÷'†â÷fW'&–FW2öâF’F†B&V6ÖR&W7BvW@¢òòG&÷VB’à¢6öç7B÷fW'&–FU6æ6†÷C¢&V6÷&CÆçVÖ&W"Â7G&–æsâÒ·Ó°¢f÷"†6öç7B&Böb&öw&Õ7FFRç'VäF—2óòµÒ’°¢–b‡&BçW6W$÷fW'&–FR’°¢÷fW'&–FU6æ6†÷E·&BæF”–æFW…ÒÒ&BçW6W$÷fW'&–FS°¢Ð¢Ð ¢òò"ÔS¢&V6÷fW'’†6RF¶W2&V6VFVæ6R÷fW"F†R'VäÖöFP¢òò'&æ6†W2âv†VâF†RW6W"§W7B6ö×ÆWFVB&6RæB—0¢òòÖ–B×&V6÷fW'’‡'VåÆâç†6RÓÓÒ'&V6÷fW'’"²æ÷B–W@¢òòW‡—&VB’ÂVÖ—BÆÂV7•ó3FV×ÆFW2&Vv&FÆW72öbÖöFRà¢òò'VäÖöFR7F—2B&6U÷&WGW&–ær&V6÷fW'“²F†R†6RfÆp¢òòFöW2F†RF–ffW&VçF–F–öââ"ÔBw&—FW2F†R†6Röâ&6P¢òò6ö×ÆWF–öã²F†—2vVæW&F÷"6öç7VÖW2—Böâ7V'6WVVç@¢òò&Vg&W6†W2†RærâÖ–B×vVV²66†VGVÆRVF—G2v†–ÆR&V6÷fW&–ær’à¢6öç7B–å&V6÷fW'’Ò—4–å&V6÷fW'”öâ€¢&öw&Õ7FFRç'VåÆâÀ¢Æö6ÄFFU7G&–ær‚¢“° ¢–b†–å&V6÷fW'’’°¢'VäF—2Ò66†VGVÆU&V6÷fW'•vVVµc"‡²vVVµ66†VGVÆRÂvVVµ7F'BÒ“°¢'VåÆâÒ²ââç&öw&Õ7FFRç'VåÆâÓ°¢ÒVÇ6R–b€¢&öf–ÆRç'VäÖöFRÓÓÒ'&6U÷&W"b`¢&öf–ÆRç&6TvöÂb`¢òò#3¢FöâwB&VvVæW&FR&6R×&WÆâf÷"&6RF†B†2Ç&VG¢òò76VBâ&V6÷fW'’†2VæFVB†W&R†VÇ6R–å&V6÷fW'–—2G'VR’Â'WBF†P¢òò6W'fW"6ÆV'2&öf–ÆRç&6TvöÂöæÇ’B&V6÷fW'”VæDFFR²vC²–âF†@¢òòv–æF÷râVÆ6VB&6R×W7BfÆÂF‡&÷Vv‚Fòg&VVf÷&ÒÂäõB7vâ¢òòg&W6‚ÆâFFVB–âF†R7B‡&VvVæW&FU&6UÆâv—F‚7BF&vW@¢òò&öGV6VB"×vVV²†çFöÒ&Æö6²’âÆö6Â7G&–ær6ö×&RÒFFR6ö×&Rà¢Æö6ÄFFU7G&–ær‚’ÃÒ&öf–ÆRç&6TvöÂçF&vWDFFP¢’°¢òò&Vg&W6‚&W6W'fW27W'&VçEvVV²²F÷FÅvVV·26òF†RW6W"w0¢òò&6R×7G&—÷6—F–öâ7F—2WB7&÷72Ö–B×vVV²66†VGVÆP¢òòVF—G2âöæÇ’6ö×&W76VFWFFW2…c"Ö’fÆ——B–bF†P¢òò66†VGVÆR6†ævRW6†VB'Vâ6÷VçB&VÆ÷r&6RÖ6öæf–p¢òòF‡&W6†öÆG2’â"ÔS¢Ç6ò6ÆV"ç’7FÆR&V6÷fW'’†6P¢òò(	B–bW6W"†2vVB÷WBöb&V6÷fW'’‡&V6÷fW'”VæDFFP¢òò76VB’æBvRw&R&R×&VæFW&–ær&6U÷&WÂG&÷†6P¢òòæB&V6÷fW'”VæDFFRà¢‡²'VäF—2Â'VåÆâÒÒ&VvVæW&FU&6UÆâ‡°¢GVæ–æs¢÷fW'&–FW3òçGVæ–æróò'VåGVæ–ætg&öÕ&öf–ÆR‡&öf–ÆR’À¢&6TvöÃ¢&öf–ÆRç&6TvöÂÀ¢vVVµ66†VGVÆRÀ¢vVV¶Ç•'VäF—3¢'VåF&vWBÀ¢7W'&VçDFFS¢Æö6ÄFFU7G&–ær‚’À¢vVVµ7F'BÀ¢6''“¢°¢7W'&VçEvVV³¢&öw&Õ7FFRç'VåÆãòæ7W'&VçEvVV²À¢F÷FÅvVV·3¢&öw&Õ7FFRç'VåÆãòçF÷FÅvVV·2À¢6ö×ÆWFVE&6W3¢&öw&Õ7FFRç'VåÆãòæ6ö×ÆWFVE&6W2À¢ÒÀ¢Ò’“°¢ÒVÇ6R°¢òò%TâÔÓ¢7G'V7GW&VB&WF—&VB(	Bæöâ×&6R7FFR—2g&VVf÷&Òà¢'VäF—2ÒµÓ°¢'VåÆâÒVæFVf–æVC°¢Ð ¢òò&RÖÇ’&W6W'fVB÷fW'&–FW2âF†RvVæW&F÷"VÖ—G2VçG&–W0¢òò¶W–VB'’F”–æFWƒ²vR&RÖ¶W’F†R6æ6†÷BF†R6ÖRv’6ð¢òòW6W"w2$ÖöæF“×FV×ò"–çFVçB7W'f—fW2vVV¶Ç•'VäF—0¢òòVF—G2Â66†VGVÆR&W6‡VffÆW2ÂæBÖöFRfÆ—2‡f–F†R6†— ¢òò&÷rw2†æFÆTÖöFT6†ævRF‚’âFV×ÆFW2F†B&RæòÆöævW ¢òò66†VGVÆVBG&÷6–ÆVçFÇ’‡6æ6†÷BÆöö·WÖ—76W3²÷&–v–æÀ¢òòvVæW&F÷"FV×ÆFRv–ç2’à¢'VäF—2Ò'VäF—2æÖ‚‡&B’Óâ°¢6öç7B&W6W'fVBÒ÷fW'&–FU6æ6†÷E·&BæF”–æFW…Ó°¢&WGW&â&W6W'fV@¢ò²ââç&BÂW6W$÷fW'&–FS¢&W6W'fVBÂFV×ÆFT–C¢&W6W'fVBÐ¢¢&C°¢Ò“° ¢v—B6fU&öw&Ò‡²ââç&öw&Õ7FFRÂ'VäF—2Â'VåÆâÒ“°¢ÒÀ¢·&öw&Õ7FFRÂ&öf–ÆRÂ6fU&öw&ÕÐ¢“° ¢òò"Ô3¢6¶—×&V6÷fW'’ÖV&Ç’w&—FW"âFöÖ–2†6R6ÆV"²ÖöFP¢òòfÆ—²'Vâ×66†VGVÆR&VvVæW&FRâ6ÆÆVBg&öÒF†R÷7B×&6P¢òò6&Bv†VâF†RW6W"÷G2÷WBöbF†R6ögBv–æF÷râ&6R—27BÀ¢òò&6TvöÂ&W6W'fVB…#tDTB’Â'WBF†RW6W"vçG2æ÷&ÖÀ¢òòG&–æ–ær&6²äõr–ç7FVBöbv—F–ærf÷"F†RrÖF’w&6RFð¢òòVÆ6RæBF†R&V6÷fW'’ÖW†—BVffV7BFòf—&Rà¢òð¢òòv‡’FVF–6FVBw&—FW"–ç7FVBöb6ö×÷6–ær6¶—&V6÷fW'’°¢òò†æFÆTÖöFT6†ævR²&Vg&W6ƒ¢&Vg&W6…'Vå66†VGVÆR&VG0¢òò&öw&Õ7FFRç'VåÆâç†6Vg&öÒ—G26Æ÷7W&Râ–bvR6ÆV&V@¢òò†6Rf–6fU&öw&ÒæBF†Vâ6ÆÆVB&Vg&W6‚ÂF†R6Æ÷7W&P¢òòv÷VÆBÆræB&Vg&W6‚v÷VÆB7F–ÆÂVÖ—BV7•ó3â'’Fö–ærF†P¢òòv†öÆRG&ç6—F–öâ–âöæR6fU&öw&Ò6ÆÂÂvR6–FW7FWF†P¢òò6Æ÷7W&RÖÆr&ö&ÆVÒà¢6öç7B6¶—&V6÷fW'”V&Ç’ÒW6T6ÆÆ&6²†7–æ2‚’Óâ°¢–b‚&öw&Õ7FFRÇÂ&öf–ÆR’&WGW&ã°¢–b‡&öw&Õ7FFRç'VåÆãòç†6RÓÒ'&V6÷fW'’"’&WGW&ã° ¢òò'Vã’Tär†¢’²#2Ö7–6ÆRö&6·Fö&6³¢W†—F–ær&V6÷fW'’&WGW&ç2F†RW6W"Fð¢òòe$TTdõ$Ò‡F†R&6R—2FöæR(	B—Bw2&V6÷&FVB–â6ö×ÆWFVE&6W2’ÂTäÄU52¢òòæWvW"&6Rv26WBGW&–ærF†R&V6÷fW'’v–æF÷rÂv†–6‚×W7B&R&W6W'fVBà¢òò&W6öÇfU&V6÷fW'”W†—F—2F†R6–ævÆR6÷W&6RöbF†B'VÆR‡Væ—B×FW7FVB–à¢òò'VäÖöFU&W6öÇWF–öâçFW7BçG2“²F†RF6‚—B&WGW&ç2Çv—26ò×w&—FW2F†P¢òòÖFW&–Æ—¦VB'VäÖöFV6òF†R–çf&–çB6âwB&Rf–öÆFVB†W&Rà¢6öç7B6ö×ÆWFVE&6TvöÂÐ¢&öw&Õ7FFRç'VåÆãòç&6TvöÂóò&öf–ÆRç&6TvöÂóòçVÆÃ°¢6öç7BW†—BÒ&W6öÇfU&V6÷fW'”W†—B‡°¢7W'&VçE&6TvöÃ¢&öf–ÆRç&6TvöÂóòçVÆÂÀ¢6ö×ÆWFVE&6TvöÂÀ¢Ò“° ¢–b†W†—Bç'VäÖöFRÓÓÒ&g&VVf÷&Ò"’°¢òò6–ævÆR&6RFöæR(i"g&VVf÷&Ó¢G&÷F†R'VåÆâ²'VäF—2â6fU&öw&Ð¢òòFöW2gVÆÂ6WDFö2Â6òöÖ—GF–ær'VåÆæ‡VæFVf–æVB(i"7G&—VB¢òò&VÖ÷fW2—Bg&öÒF†RFö2â'Vã’6Ö–“¢F†R&6TvöÃ¢çVÆÆ6ÆV"F†@¢òò&W6öÇfU&V6÷fW'”W†—B&WGW&ç2—2æ÷rÆ–VBW‡Æ–6—FÇ’‡F†R&öf–ÆRG—P¢òòv2v–FVæVBFòÆÆ÷r—B’Â6òF†RÖFW&–Æ—¦VB'VäÖöFRæBF†RvöÂ6à¢òòæWfW"F—6w&VR(	BæòÖ÷&RÆVgBÖ÷fW"vöÂVæFW"g&VVf÷&ÒâF†R67@¢òò'&–FvW2F†RW&R6÷&Rw2Æö÷6RF—7Fæ6S¢7G&–ævFòF†Ræ'&÷rVæ–öâà¢ÆövvW"æÆör‚%·6¶—&V6÷fW'”V&Ç•Ò&6RFöæR(i"g&VVf÷&Ó²6ÆV&–ærÆâ"“°¢v—B&öÖ—6RæÆÂ…°¢WFFU&öf–ÆR†W†—B2'F–ÃÅW6W%&öf–ÆSâ’À¢6fU&öw&Ò‡²ââç&öw&Õ7FFRÂ'VäF—3¢µÒÂ'VåÆã¢VæFVf–æVBÒ’À¢Ò“°¢&WGW&ã°¢Ð ¢òò&6²×FòÖ&6³¢æWvW"gWGW&R&6Rv26WBGW&–ær&V6÷fW'’(i"7F¢òò&6U÷&WÂ§W7B6ÆV"F†R&V6÷fW'’†6RâF†R&6R×ÆâÆöB÷&VvVæW&FP¢òòF‚&V'V–ÆG2'VäF—2f÷"F†RæWr&6S²vRFöâwB&VvVæW&FR†W&Rà¢ÆövvW"æÆör€¢%·6¶—&V6÷fW'”V&Ç•ÒæWvW"&6R6WBGW&–ær&V6÷fW'’(i"W†—B&V6÷fW'’Â¶VW&6U÷&W ¢“°¢6öç7BæW‡E'VåÆâÒ²ââç&öw&Õ7FFRç'VåÆâÒ2&V6÷&CÇ7G&–ærÂVæ¶æ÷vãã°¢FVÆWFRæW‡E'VåÆâç†6S°¢FVÆWFRæW‡E'VåÆâç&V6÷fW'”VæDFFS°¢v—B&öÖ—6RæÆÂ…°¢WFFU&öf–ÆR‡²'VäÖöFS¢'&6U÷&W"Ò’À¢6fU&öw&Ò‡°¢ââç&öw&Õ7FFRÀ¢'VåÆã¢æW‡E'VåÆâ2Væ¶æ÷vâ2'VåÆâÀ¢Ò’À¢Ò“°¢ÒÂ·&öw&Õ7FFRÂ&öf–ÆRÂ6fU&öw&ÒÂWFFU&öf–ÆUÒ“° ¢òò)H)H'Vã’†6RÓ2…6Æ–6RDR“¢öæR×F&VÆ–vâ)H)H)H)H)H)H)H)H)H)H)H)H)H)H)H)H)H ¢òð¢òòF†R&RÕ'Vã’fVÆÂÖ&V†–æB6†VWBöffW&VBF‡&VR7F–öç2‡6†–gB³vBð¢òò6ö×&W72ò6¶—’âF†R&VFW6–vâ6öÆÆ6W2F†RGvòÆâÖ6†æv–ær7F–öç0¢òò–çFòôäR&–Ö'’%&VÆ–vâ"†¶VWF†R&6RFFRÂ&R×ÆâF†R&VÖ–æ–æp¢òòvVV·2g&öÒFöF’’ÇW2&×’&6RÖ÷fVB(i""&÷WFRFò÷6WGF–æw2÷G&–æ–æp¢òò†T’æf–vFRÂæ÷Bw&—FW"(	BF†R³vBWFò×6†–gBwVW72—2&WF—&VB’âF†P¢òò6¶—F‚7F—22F—6Ö—74fVÆÄ&V†–æE&ö×F&÷fRà ¢ò¢¢#B†’’(	BF—6Ö—72F†R&ö×Bv—F†÷WB6†æv–ærF†RÆââ¢ð¢6öç7BF—6Ö—74fVÆÄ&V†–æE&ö×BÒW6T6ÆÆ&6²†7–æ2‚’Óâ°¢–b‚&öw&Õ7FFR’&WGW&ã°¢–b‚&öw&Õ7FFRçVæF–ætfVÆÄ&V†–æE&ö×B’&WGW&ã°¢6öç7BæW‡BÒ²ââç&öw&Õ7FFRÓ°¢FVÆWFRæW‡BçVæF–ætfVÆÄ&V†–æE&ö×C°¢ÆövvW"æÆör‚%¶fVÆÄ&V†–æEÒF—6Ö—76VBv—F†÷WBÆâ6†ævR"“°¢v—B6fU&öw&Ò†æW‡B“°¢ÒÂ·&öw&Õ7FFRÂ6fU&öw&ÕÒ“° ¢ò¢¢$ôu$ÒÔDTÄôBÓ(	BÇ’÷&WfW'BF†RFVÆöBvVV²f–F†R6W'fW ¢¢Ç•&öw&Ô6öÖÖæFG&ç67F–öâ‡F†R6¶WBÓ‚6öÖÖæB&÷VæF'“°¢¢F†W6R&R—G2f—'7B6Æ–VçB6öç7VÖW'2’âF†R6W'fW"÷vç2F†P¢¢×WFF–öâ(	BF†RFVÆöBG&ç6f÷&ÒÂF†Ræ÷BÖÇ&VG’ÖFVÆöFVBð¢¢6æ6†÷B×&W6VçB&V6öæF—F–öç2ÂæBF†R&V6V—BÖ&6VB–FV×÷FVæ7¢¢ÆÂ'Vâ–âöæRG&ç67F–öâ(	B6òöâ7V66W72vR$TdUD4‚F†P¢¢WF†÷&—FF—fRFö2&F†W"F†â&RÖFW&—f–ærÆö6ÆÇ’‡F†P¢¢FW7FVBÖ6÷’×g2×'Vææ–ærÖ6÷’'VÆR’â&WV—&W2æWGv÷&³¢VæÆ–¶RF†P¢¢öffÆ–æR×VWVVB6WDFö4wV&FVBw&—FW'2Â6ÆÆ&ÆR6âwB&WÆ’À¢¢æBvVV²ÖÆöB×WFF–öâ—2æ÷B6öÖWF†–ærFòÇ’&Æ–æBâ¢ð¢6öç7B6VæDFVÆöD6öÖÖæBÒW6T6ÆÆ&6²€¢7–æ2†¶–æC¢&Ç”FVÆöEvVV²"Â'&WfW'DFVÆöEvVV²"“¢&öÖ—6SÆ&ööÆVãâÓâ°¢–b‚W6W"ÇÂ&öw&Õ7FFR’&WGW&âfÇ6S°¢G'’°¢6öç7B6ÆÂÒ‡GG46ÆÆ&ÆR†vWDgVæ7F–öç2‚’Â&Ç•&öw&Ô6öÖÖæB"“°¢v—B6ÆÂ‡°¢¶–æBÀ¢òò&WW6W2F†R&÷VæFVB6fRÖÇ†&WB–BvVæW&F÷"…UT”Bv—F‚¢òòæöâÖ7'—FòfÆÆ&6²’(	B&÷F‚6†W26F—6g’F†R6ÆÆ&ÆRw0¢òò4ôÔÔäEô”Eõ$Rà¢6öÖÖæD–C¢vVæW&FT–ç7Fæ6T–B‚’À¢W‡V7FVEvVV´çVÖ&W#¢&öw&Õ7FFRçvVV´çVÖ&W"À¢Ò“°¢6öç7B&VbÒFö2†F"Â'W6W'2"ÂW6W"çV–BÂ'&öw&Õ7FFR"Â$ôu$ÕôDô2“°¢6öç7B6æÒv—BvWDFö2‡&Vb“°¢–b‡6ææW†—7G2‚’’°¢6öç7Bæ÷&ÖÆ—¦VBÒæ÷&ÖÆ—¦U&öw&Õ7FFR€¢6ææFF‚’2&öw&Õ7FFRÀ¢²&–Ö'”vöÃ¢&öf–ÆSòç&–Ö'”vöÂÐ¢“°¢6WE&öw&Õ7FFR†Ö–w&FU&öw&Õ7FFR†æ÷&ÖÆ—¦VBÂÆö6ÅvVV´¶W’‚’’“°¢Ð¢&WGW&âG'VS°¢Ò6F6‚†W'"’°¢ÆövvW"æW'&÷"†·W6U&öw&ÕÒG¶¶–æGÒf–ÆVFÂW'"“°¢&WGW&âfÇ6S°¢Ð¢ÒÀ¢·W6W"Â&öf–ÆRÂ&öw&Õ7FFUÐ¢“° ¢6öç7BÇ”FVÆöEvVV²ÒW6T6ÆÆ&6²€¢‚’Óâ6VæDFVÆöD6öÖÖæB‚&Ç”FVÆöEvVV²"’À¢·6VæDFVÆöD6öÖÖæEÐ¢“° ¢6öç7B&WfW'DFVÆöEvVV²ÒW6T6ÆÆ&6²€¢‚’Óâ6VæDFVÆöD6öÖÖæB‚'&WfW'DFVÆöEvVV²"’À¢·6VæDFVÆöD6öÖÖæEÐ¢“° ¢ò¢¢'Vã’†6RÓ2…6Æ–6RDR’(	B&RÖæ6†÷"F†R&6RÆâFòFöF’Â¶VW–ærF†P¢¢&6RFFRâ&VvVæW&FW2g&öÒFöF’6òF†RvVV·2×Fò×&6RFVÇF‡6‡&–æ¶–æp¢¢2F–ÖR76W2’G&—fW2F†RvVæW&F÷#¢F–v‡Bv––VÆG26ö×&W76VFÀ¢¢&VÆ÷rF†RFW"×6fRfÆö÷"—B––VÆG2F†Rf–æ—6‚×6fVÇ’6†R†&VÆ÷tfÆö÷"’à¢¢6'&–W2FW&Ö–æÂ7FGW2²&RÖ¶W—2ÖçVÄ6ö×ÆWF–öç2…6Æ–6R’6òF†P¢¢7W'&VçBvVV²w26ö×ÆWF–öç27W'f—fRF†R&VvVââ6ÆV'2F†R6W'fW"×w&—GFVà¢¢fVÆÂÖ&V†–æBfÆr–b&W6VçB(	B'WBv÷&·2t•D„õUB—BFöòÂ6–æ6RF†R–â×F ¢¢&VÆ–vâ&ææW"6â&RG&–vvW&VBç’F–ÖRF†RW6W"fVVÇ2&V†–æBâ&WGW&ç0¢¢F†RF–Ö–ær²F÷FÅvVV·26òF†R6ÆÆW"6âFö7BF†R&–v‡B6÷’â¢ð¢6öç7B&VÆ–vå&6UÆâÒW6T6ÆÆ&6²†7–æ2‚“¢&öÖ—6SÇ°¢F–Ö–æs¢&6UF–Ö–æs°¢F÷FÅvVV·3¢çVÖ&W#°¢ÓâÓâ°¢–b‚&öw&Õ7FFRÇÂ&öf–ÆR’&WGW&â²F–Ö–æs¢&†VÇF‡’"ÂF÷FÅvVV·3¢Ó°¢–b‡&öf–ÆRç'VäÖöFRÓÒ'&6U÷&W"ÇÂ&öf–ÆRç&6TvöÂ¢&WGW&â²F–Ö–æs¢&†VÇF‡’"ÂF÷FÅvVV·3¢Ó°¢òò%TâÔƒ¢&VÆ–vâ&R×Æç2&6R×G&–æ–ærvVV·3²—B—2ÖVæ–ævÆW72GW&–ærà¢òò7F—fR&V6÷fW'’v–æF÷r‡F†R&6R—2FöæR’æBv÷VÆB&VvVæW&FR&6P¢òòÆâF†BG&÷2F†R&V6÷fW'’†6RâF†RfVÆÂÖ&V†–æB&ö×BF†BG&–vvW'0¢òò&VÆ–vâ—2Ç&VG’7W&W76VBGW&–ær&V6÷fW'’Â'WBwV&BW‡Æ–6—FÇ’6ð¢òò&V6÷fW'’W†—B7F—2FVÆ–&W&FRFV6—6–öâ‡&W6öÇfU&V6÷fW'”W†—B’à¢–b†—4–å&V6÷fW'”öâ‡&öw&Õ7FFRç'VåÆâÂÆö6ÄFFU7G&–ær‚’’’°¢&WGW&â²F–Ö–æs¢&†VÇF‡’"ÂF÷FÅvVV·3¢Ó°¢Ð¢òò#3¢&6RF†B†2Ç&VG’76VB‡&V6÷fW'’VæFVBÂ&6TvöÂæ÷B–W@¢òò6W'fW"Ö6ÆV&VBB&V6÷fW'”VæDFFR²vB’×W7Bæ÷B&R&VÆ–væVB(	@¢òò&VvVæW&F–ærv÷VÆB&öGV6R†çFöÒÆâFFVB–âF†R7BâÆVfR—Bf÷ ¢òòF†Rg&VVf÷&ÒG&ç6—F–öâÂ6ÖR2&Vg&W6…'Vå66†VGVÆRòF†R&öÆÆ÷fW'2à¢–b†Æö6ÄFFU7G&–ær‚’â&öf–ÆRç&6TvöÂçF&vWDFFR’°¢&WGW&â²F–Ö–æs¢&†VÇF‡’"ÂF÷FÅvVV·3¢Ó°¢Ð¢6öç7B&We'VåÆâÒ&öw&Õ7FFRç'VåÆã°¢6öç7B²'VäF—2Â'VåÆâÂÖçVÄ6ö×ÆWF–öç2ÒÒ&VvVæW&FU&6UÆâ‡°¢GVæ–æs¢'VåGVæ–ætg&öÕ&öf–ÆR‡&öf–ÆR’À¢&6TvöÃ¢&öf–ÆRç&6TvöÂÀ¢vVVµ66†VGVÆS¢&öf–ÆRçvVVµ66†VGVÆRóòµÒÀ¢vVV¶Ç•'VäF—3¢vWEvVV¶Ç•'VåF&vWB‡&öf–ÆR’ÇÂ2À¢7W'&VçDFFS¢Æö6ÄFFU7G&–ær‚’À¢vVVµ7F'C¢Æö6ÅvVV´¶W’‚’À¢6''“¢°¢7W'&VçEvVV³¢&We'VåÆãòæ7W'&VçEvVV²À¢6ö×ÆWFVE&6W3¢&We'VåÆãòæ6ö×ÆWFVE&6W2À¢ÒÀ¢&–÷#¢°¢'VäF—3¢&öw&Õ7FFRç'VäF—2óòµÒÀ¢ÖçVÄ6ö×ÆWF–öç3¢&öw&Õ7FFRæÖçVÄ6ö×ÆWF–öç2À¢ÒÀ¢Ò“°¢6öç7BæW‡BÒ²ââç&öw&Õ7FFRÂ'VäF—2Â'VåÆâÂÖçVÄ6ö×ÆWF–öç2Ó°¢FVÆWFRæW‡BçVæF–ætfVÆÄ&V†–æE&ö×C°¢6öç7BF–Ö–æs¢&6UF–Ö–ærÒ'VåÆâæ&VÆ÷tfÆö÷ ¢ò&&VÆ÷rÖfÆö÷" ¢¢'VåÆâæ6ö×&W76V@¢ò&6ö×&W76–&ÆR ¢¢&†VÇF‡’#°¢ÆövvW"æÆör€¢·&VÆ–våÒ&RÖæ6†÷&VB&6RÆâg&öÒFöF’(	BF–Ö–æsÒG·F–Ö–æwÒÂ°¢F÷FÅvVV·3ÒG·'VåÆâçF÷FÅvVV·7ÒÂ&VÆ÷tfÆö÷#ÒG²'VåÆâæ&VÆ÷tfÆö÷'Ö ¢“°¢v—B6fU&öw&Ò†æW‡B“°¢&WGW&â²F–Ö–ærÂF÷FÅvVV·3¢'VåÆâçF÷FÅvVV·2óòÓ°¢ÒÂ·&öw&Õ7FFRÂ&öf–ÆRÂ6fU&öw&ÕÒ“° ¢òòvVV²æf–vF–öà¢6öç7Bf–WuvVV²ÒW6T6ÆÆ&6²‚††—7F÷'”–æFWƒ¢çVÖ&W"ÂçVÆÂ’Óâ°¢6WEf–Wv–æt†—7F÷'”–æFW‚††—7F÷'”–æFW‚“°¢ÒÂµÒ“° ¢6öç7Bf–WvVEv÷&¶÷WG2Ð¢f–Wv–æt†—7F÷'”–æFW‚ÓÒçVÆÀ¢ò‡&öw&Õ7FFSòçvVV´†—7F÷'“òå·f–Wv–æt†—7F÷'”–æFW…Óòçv÷&¶÷WG2óòçVÆÂ¢¢çVÆÃ° ¢6öç7Bf–WvVEvVV´çVÖ&W"Ð¢f–Wv–æt†—7F÷'”–æFW‚ÓÒçVÆÀ¢ò‡&öw&Õ7FFSòçvVV´†—7F÷'“òå·f–Wv–æt†—7F÷'”–æFW…ÓòçvVV´çVÖ&W"óòçVÆÂ¢¢çVÆÃ° ¢6öç7B&W67&—F–öâÒ&öw&Õ7FFP¢òvVæW&FUvVVµ&W67&—F–öâ‡&öw&Õ7FFRçvVV´çVÖ&W"¢¢çVÆÃ° ¢&WGW&â°¢&öw&Õ7FFRÀ¢&W67&—F–öâÀ¢ÆöF–ærÀ¢6ö×ÆWFUv÷&¶÷WDF’À¢6¶—v÷&¶÷WDF’À¢6WDæW‡Ev÷&¶÷WBÀ¢Gfæ6UFôæW‡EvVV²À¢ÆötW†W&6—6RÀ¢WFFTW†W&6—6RÀ¢WFFU6WGF–æw2À¢&VvVæW&FU&öw&ÒÀ¢6fU&öw&ÒÀ¢Ö&´ÖçVÄ6ö×ÆWFRÀ¢VæÖ&´ÖçVÄ6ö×ÆWFRÀ¢6¶—'VäF’À¢&W7F÷&U'VäF’À¢&W7F÷&Uv÷&¶÷WDF’À¢Ö÷fU'VäF’À¢÷fW'&–FU'VäF’À¢&Vg&W6…'Vå66†VGVÆRÀ¢6¶—&V6÷fW'”V&Ç’À¢F—6Ö—74fVÆÄ&V†–æE&ö×BÀ¢Ç”FVÆöEvVV²À¢&WfW'DFVÆöEvVV²À¢&VÆ–vå&6UÆâÀ¢f–WuvVV²À¢f–Wv–æt†—7F÷'”–æFW‚À¢f–WvVEv÷&¶÷WG2À¢f–WvVEvVV´çVÖ&W"À¢Ó°§Ð
+        if (!cancelled && cachedSnap.exists()) {
+          const cachedNorm = normalizeProgramState(
+            cachedSnap.data() as ProgramState,
+            { primaryGoal: profile.primaryGoal }
+          );
+          setProgramState(migrateProgramState(cachedNorm, localWeekKey()));
+          setLoading(false);
+        }
+      } catch {
+        // Cache miss / persistence unavailable â€” fall through to the
+        // server read. No regression: this is the pre-cache-first path.
+      }
+
+      const snap = await getDoc(ref);
+
+      if (snap.exists()) {
+        const raw = snap.data() as ProgramState;
+        // Pass profile.primaryGoal as the backfill source so pre-W1a
+        // programState docs â€” written before primaryGoal was persisted â€”
+        // still return a normalised state with the user's actual goal,
+        // not an empty field. Onboarding already stores primaryGoal on
+        // the profile, so the backfill is always available at read time.
+        const normalized = normalizeProgramState(raw, {
+          primaryGoal: profile.primaryGoal,
+        });
+
+        // PR-0b-i: shape-aware migration on read. Repairs V1-shaped
+        // runDays (missing id / date / weekKey / status) and aligns
+        // inconsistent completedâ†”status pairs. Idempotent â€” healthy
+        // V2 docs return the input reference, and the
+        // JSON.stringify guard below avoids writes when nothing
+        // changed. Migration NEVER regenerates workouts; any
+        // customizations the user made survive untouched.
+        const migrated = migrateProgramState(normalized, localWeekKey());
+
+        // Persist-if-changed guard. Avoids a Firestore write on every
+        // cold app open for users whose docs are already clean. The
+        // stringify comparison is safe here because the doc is plain
+        // JSON (no undefineds, functions, Symbols, or Dates that
+        // wouldn't survive serialisation). It's a write optimisation
+        // â€” the React state below uses `migrated` directly, so
+        // correctness doesn't depend on this guard firing.
+        if (JSON.stringify(migrated) !== JSON.stringify(raw)) {
+          // Defence-in-depth (issue #845): strip undefined fields
+          // before the write. normalizeProgramState was already
+          // fixed at the source, but any future field that lands
+          // in `migrated` as `undefined` would silently re-introduce
+          // the "Failed to load programme" loop. setDocGuarded strips
+          // undefined recursively (a no-op for already-clean docs).
+          await setDocGuarded(ref, migrated, { merge: true });
+        }
+
+        if (
+          profile.runMode === "structured" &&
+          ((migrated.runDays && migrated.runDays.length > 0) ||
+            migrated.runPlan)
+        ) {
+          // Run9 (3a): retire `structured`. Wipe the orphaned auto-assigned
+          // runDays + runPlan (the user is now freeform; runMode is being
+          // migrated above). deleteField removes the stale runPlan under a
+          // merge write; runDays:[] overwrites the structured days.
+          const localCleared = { ...migrated, runDays: [] } as ProgramState;
+          delete (localCleared as { runPlan?: unknown }).runPlan;
+          await setDocGuarded(
+            ref,
+            { runDays: [], runPlan: deleteField(), updatedAt: Date.now() },
+            { merge: true }
+          );
+          setProgramState(localCleared);
+        } else if (
+          // Hydrate run days only for an active race plan with no days yet.
+          // (Run9: `structured` no longer generates a week â€” only race_prep.)
+          !migrated.runDays &&
+          effectiveRunMode === "race_prep" &&
+          profile.raceGoal
+        ) {
+          // PR-0b-ii: V2 writers. Reads weekSchedule directly so
+          // hybrid Both-day slots get a scheduled run (V1 lost them
+          // because it derived run-eligible days from liftIndices).
+          // PR-0b-i's backfill above guarantees a valid 7-entry
+          // weekSchedule is present on profile by this point.
+          const weekSchedule = profile.weekSchedule ?? [];
+          const runTarget = getWeeklyRunTarget(profile) || 3;
+          const weekStart = localWeekKey();
+          const { runDays, runPlan } = regenerateRacePlan({
+            tuning: runTuningFromProfile(profile),
+            raceGoal: profile.raceGoal,
+            weekSchedule,
+            weeklyRunDays: runTarget,
+            currentDate: localDateString(),
+            weekStart,
+          });
+
+          const withRuns = { ...migrated, runDays, runPlan };
+          // Issue #845 defence-in-depth â€” same reason as the
+          // persist-if-changed branch above. `withRuns` inherits any
+          // undefined field that survived `migrated`; setDocGuarded
+          // strips them before the write.
+          await setDocGuarded(
+            ref,
+            { ...withRuns, updatedAt: Date.now() },
+            { merge: true }
+          );
+          setProgramState(withRuns);
+        } else {
+          // PR-0b-i: drive React state from the migrated value so
+          // the UI sees v2-shaped runDays + corrected status/
+          // completed pairs. Pre-PR-0b-i this set `normalized`,
+          // which would leave consumers reading legacy fields.
+          setProgramState(migrated);
+        }
+      } else {
+        const goal = profile.program?.goal ?? "recomp";
+        const weeklyTarget = profile.weeklyWorkoutsTarget ?? 4;
+        // Thread primaryGoal through so the procedural engine reps track
+        // what the user asked for. Pre-W1a this call dropped primaryGoal
+        // entirely and hypertrophy-rep defaults leaked into every goal.
+        const { splitType, workouts } = generateProgram(
+          goal,
+          weeklyTarget,
+          undefined,
+          profile.primaryGoal,
+          loadContextFrom(profile),
+          // Backlog #10 (M6): the week's SHAPE, so back-to-back days aren't
+          // the two that load the same lower back. Read-only â€” this does not
+          // date-pin lifts (ADR-0002).
+          profile.weekSchedule,
+          toExperience(profile.experience)
+        );
+
+        // Generate run schedule only for an active race plan. PR-0b-ii: V2
+        // writers. Run9 (3a): `structured` is retired â€” freeform (incl. a
+        // migrated structured user) gets no auto-assigned runDays.
+        let runDays: ScheduledRunDay[] | undefined;
+        let runPlan: ProgramState["runPlan"];
+        if (effectiveRunMode === "race_prep" && profile.raceGoal) {
+          const weekSchedule = profile.weekSchedule ?? [];
+          const runTarget = getWeeklyRunTarget(profile) || 3;
+          const weekStart = localWeekKey();
+          ({ runDays, runPlan } = regenerateRacePlan({
+            tuning: runTuningFromProfile(profile),
+            raceGoal: profile.raceGoal,
+            weekSchedule,
+            weeklyRunDays: runTarget,
+            currentDate: localDateString(),
+            weekStart,
+          }));
+        }
+
+        const initial: ProgramState = {
+          goal,
+          // Persist primaryGoal alongside the engine-derived workouts.
+          // Loading already backfills via normalizeProgramState (see
+          // line ~80) but the initial doc should write the field
+          // explicitly so the persisted shape matches reads.
+          ...(profile.primaryGoal !== undefined && {
+            primaryGoal: profile.primaryGoal,
+          }),
+          currentPhase: "base",
+          weekNumber: 1,
+          splitType,
+          workouts,
+          fatigueScore: 0,
+          updatedAt: Date.now(),
+          settings: { autoProgression: true, microloading: true },
+          weekHistory: [],
+          // PR-0b-ii: explicit schema version on initial creation so
+          // PR-0b-i's shape-aware migration sees a current doc on
+          // next read. Without this, the doc would migrate (no-op)
+          // on every cold open until the next saveProgram.
+          programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+          ...(runDays !== undefined && { runDays }),
+          ...(runPlan !== undefined && { runPlan }),
+        };
+
+        await setDocGuarded(ref, initial);
+        setProgramState(initial);
+      }
+
+      setLoading(false);
+    };
+
+    loadProgram().catch((err) => {
+      logger.error("Failed to load program:", err);
+      setLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+    // updateProfile is intentionally omitted: it's a stable
+    // function reference from useAuth's context and including it
+    // would force a re-run on every render that recreates it.
+    // The PR-0b-i profilePatch call uses updateProfile inside the
+    // effect body â€” same call style as elsewhere in the file.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, profile]);
+
+  // Save program to Firestore
+  const saveProgram = useCallback(
+    async (state: ProgramState) => {
+      if (!user) return;
+      const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
+      // Strip undefined values â€” Firestore rejects them
+      const clean = Object.fromEntries(
+        Object.entries({ ...state, updatedAt: Date.now() }).filter(
+          ([, v]) => v !== undefined
+        )
+      );
+      try {
+        await setDocGuarded(ref, clean);
+        setProgramState(state);
+      } catch (error) {
+        logger.error("[Program] Save failed:", error);
+        toast.error("Couldn't save your changes. Try again.");
+        throw error;
+      }
+    },
+    [user]
+  );
+
+  // PR-L L5 â€” the race-no-show transition (PR-D) and recovery-phase
+  // exit (PR-E) effects used to live here as `useEffect`s that wrote
+  // to programState. They moved to server-side Cloud Functions per
+  // the PR-L plan so non-React clients (Apple Watch, future native)
+  // reach the same state without per-client logic.
+  //
+  // The replacements are:
+  //   - Race-no-show: `dailyRaceReconciliationSweep` (Pub/Sub, 04:00
+  //     UTC daily). Reads programState + the race-date saved-runs
+  //     bucket; writes `runDay.status: race_no_show` when the 3-day
+  //     grace has passed and no real race-templated saved-run matched.
+  //   - Recovery-exit: same scheduled function. Clears
+  //     `runPlan.phase` + `recoveryEndDate` when today is past
+  //     `recoveryEndDate + 7d`.
+  //   - Recovery-entry: `onRunCreated` extension (`_maybeWriteRecoveryEntry
+  //     ForRun`). Writes recovery state when a saved run is a strict
+  //     race-day match.
+  //
+  // No client write path remains for these transitions. The hook is
+  // now a pure Firestore reader + UI dispatcher for race-day state.
+  // Latency trade-off: recovery hero pops in 3-10s vs <1s pre-L5
+  // (next Cloud Function invocation); acceptable per the PR-L scope.
+
+  // PR-G: auto week-rollover effect. When the user opens the app
+  // and the calendar week has advanced past the week their
+  // runDays were generated for, automatically rotate forward to
+  // catch up. Mirrors what the user-tapped "Advance to Next Week"
+  // button does on the Lift tab, but driven by calendar instead
+  // of lift completion.
+  //
+  // Ordering: this effect is declared AFTER PR-D's auto-transition
+  // and PR-E's recovery-exit so they run first. Without that
+  // ordering, the rollover would archive a planned race-day
+  // runDay into weekHistory BEFORE the auto-transition writes
+  // `race_no_show` to it, losing the inferred state.
+  //
+  // Detection: `programState.runDays[0]?.weekKey` is the Sunday of
+  // the week the runDays were last generated for. If that's
+  // before `localWeekKey()`, the user is â‰¥1 week stale.
+  //
+  // Loop: while stale, run `advanceWeek` and regenerate runDays
+  // for the new week. Cap at 12 iterations to prevent runaway
+  // in pathological cases (user gone for months). Each iteration
+  // archives the previous week into `weekHistory` and increments
+  // `weekNumber`.
+  //
+  // Trade-off (per the design grill): a planned-but-never-done
+  // Saturday run gets archived as `status: "planned"` in
+  // weekHistory on the Monday rollover. That's intentional â€”
+  // honest record of "we didn't do this." Better than zombie
+  // planned entries lingering in the current week.
+  //
+  // Skips: freeform users (no runDays to rotate); users whose
+  // runDays is empty (no signal to compare).
+  useEffect(() => {
+    if (!programState || !profile) return;
+    if (!profile.runMode || profile.runMode === "freeform") return;
+
+    const runDayWeekKey = programState.runDays?.[0]?.weekKey;
+    if (!runDayWeekKey) return;
+
+    const todayKeyG = localWeekKey();
+    if (runDayWeekKey >= todayKeyG) return;
+
+    // Loop up to 12 iterations. Each iteration advances the
+    // local `rolling` state but doesn't write to Firestore â€” we
+    // batch all writes into a single saveProgram at the end.
+    let rolling = programState;
+    let iterations = 0;
+    while (iterations < 12) {
+      const currentRunWeekKey = rolling.runDays?.[0]?.weekKey;
+      if (!currentRunWeekKey || currentRunWeekKey >= todayKeyG) break;
+
+      // Advance lift side (workouts, weekNumber, weekHistory).
+      // Backlog #8: the deload recipe follows training age (Helms H4).
+      // Backlog #9: plus the joint plateau x recovery adjustment rule.
+      const advanced = advanceWeek(rolling, profile.experience, recovery);
+
+      // Advance run side. Compute the next week's start key. Take
+      // one week step from the current runDay week key.
+      const nextWeekStart = localWeekKey(
+        addLocalDays(parseLocalDate(currentRunWeekKey), 7)
+      );
+      const nextWeekCurrentDate = localDateString(
+        addLocalDays(parseLocalDate(currentRunWeekKey), 7)
+      );
+      const weekSchedule = profile.weekSchedule ?? [];
+      const runTarget = getWeeklyRunTarget(profile) || 3;
+
+      const advRunPlan = advanced.runPlan;
+      // Asked about NEXT week's date, not today: the question is whether the
+      // week being rolled into is still inside the recovery window. The
+      // explicit `!!advRunPlan` is what carries the non-null guarantee into
+      // the block below, which spreads it â€” `isInRecoveryOn` deliberately
+      // does not narrow (see its doc).
+      const inRecovery =
+        !!advRunPlan && isInRecoveryOn(advRunPlan, nextWeekCurrentDate);
+
+      if (inRecovery) {
+        // RUN-H1: a week rolling over mid-recovery must STAY a recovery week
+        // and keep phase/recoveryEndDate â€” never regenerate a race plan (which
+        // emits race-training runDays AND drops the recovery flags via
+        // makeRunPlanRecord). Mirrors refreshRunSchedule's recovery branch;
+        // recovery exit is a deliberate decision (resolveRecoveryExit), not a
+        // rollover side effect.
+        advanced.runDays = scheduleRecoveryWeekV2({
+          weekSchedule,
+          weekStart: nextWeekStart,
+        });
+        advanced.runPlan = { ...advRunPlan };
+      } else if (
+        profile.runMode === "race_prep" &&
+        profile.raceGoal &&
+        // R3: same elapsed guard as refreshRunSchedule â€” a week rolling over
+        // after an elapsed race (recovery ended, raceGoal not yet server-
+        // cleared) must go freeform, not regenerate a plan dated in the past.
+        nextWeekCurrentDate <= profile.raceGoal.targetDate
+      ) {
+        const r = regenerateRacePlan({
+          tuning: runTuningFromProfile(profile),
+          raceGoal: profile.raceGoal,
+          weekSchedule,
+          weeklyRunDays: runTarget,
+          currentDate: nextWeekCurrentDate,
+          weekStart: nextWeekStart,
+          carry: {
+            currentWeek: (advanced.runPlan?.currentWeek ?? 0) + 1,
+            totalWeeks: advanced.runPlan?.totalWeeks,
+            completedRaces: advanced.runPlan?.completedRaces,
+          },
+        });
+        advanced.runDays = r.runDays;
+        advanced.runPlan = r.runPlan;
+      } else {
+        // RUN-M: structured mode is retired (Run9a â€” the Run surface is two
+        // states, freeform + race_prep). This else is unreachable today (the
+        // effect early-returns on freeform), so a non-race state IS freeform:
+        // no auto-assigned runDays, no runPlan. Never resurrect a structured
+        // week here.
+        advanced.runDays = [];
+        advanced.runPlan = undefined;
+      }
+
+      rolling = advanced;
+      iterations++;
+    }
+
+    if (iterations === 0) return;
+
+    logger.log(
+      `[auto-rollover] advanced ${iterations} week${iterations > 1 ? "s" : ""} (from ${runDayWeekKey} to ${rolling.runDays?.[0]?.weekKey ?? "?"})`
+    );
+
+    saveProgram(rolling)
+      .then(() => {
+        toast.success(
+          `Week advanced â€” ${iterations} week${iterations > 1 ? "s" : ""}`
+        );
+      })
+      .catch((err) => {
+        logger.warn("[auto-rollover] save failed", err);
+      });
+  }, [programState, profile, saveProgram, recovery]);
+
+  // Mark a workout day as completed (does NOT auto-advance week)
+  // Also writes to workouts collection so Home stats can see it.
+  //
+  // `sessionData` (optional) carries the wall-clock duration and per-set
+  // completion state from an active WorkoutSession. When supplied, the saved
+  // record reflects actual execution; otherwise we fall back to planned data
+  // (every set assumed completed at `ex.lastAttemptedWeight || ex.weight`).
+  const completeWorkoutDay = useCallback(
+    async (dayIndex: number, sessionData: CompletedSessionData) => {
+      // Fail CLOSED â€” returning silently here would let the session UI clear
+      // its draft as if the workout persisted. The caller surfaces the throw.
+      if (!programState || !user) {
+        throw new Error(
+          "Cannot complete a workout without an active programme and user."
+        );
+      }
+      const day = programState.workouts[dayIndex];
+      if (!day) {
+        throw new Error("Cannot complete a programme day that does not exist.");
+      }
+      if (!sessionData?.completionId) {
+        throw new Error("Workout completion is missing its idempotency key.");
+      }
+
+      const updated: ProgramState = {
+        ...programState,
+        workouts: programState.workouts.map((d, i) =>
+          i === dayIndex ? { ...d, completed: true, skipped: false } : d
+        ),
+        // Clear next-workout override if completing the overridden day
+        ...(programState.nextWorkoutOverride === dayIndex && {
+          nextWorkoutOverride: undefined,
+        }),
+      };
+
+      // Local date key so the written workout is picked up by the
+      // useEffectiveTargets / useHomeData filters, which both format in
+      // the viewer's local timezone via isWorkoutOnDate.
+      const today = localDateString();
+
+      // Build exercises array â€” from actual setLogs when available,
+      // otherwise from planned data (every set assumed completed).
+      const exercises = day.exercises.map((ex, exIndex) => {
+        const logs = sessionData.setLogs?.[exIndex];
+        const plannedWeight = ex.lastAttemptedWeight || ex.weight;
+        const plannedReps = ex.lastPerformance?.reps ?? ex.reps;
+
+        const sets = logs
+          ? logs
+              .filter((l) => l.completed)
+              .map((l, i) => ({
+                setNumber: i + 1,
+                reps: l.reps,
+                weightKg: l.weight,
+              }))
+          : Array.from({ length: ex.sets }, (_, i) => ({
+              setNumber: i + 1,
+              reps: plannedReps,
+              weightKg: plannedWeight,
+            }));
+
+        return {
+          exerciseId: ex.exerciseId,
+          exerciseName: ex.name,
+          category: ex.movementCategory,
+          ...(ex.repUnit !== undefined ? { repUnit: ex.repUnit } : {}),
+          sets,
+          caloriesBurned: 0,
+        };
+      });
+
+      const tonnage = exercises.reduce(
+        (t, ex) =>
+          t +
+          (ex.repUnit === "seconds"
+            ? 0
+            : ex.sets.reduce((s, set) => s + set.weightKg * set.reps, 0)),
+        0
+      );
+      const completedSetCount = exercises.reduce(
+        (c, ex) => c + ex.sets.length,
+        0
+      );
+
+      // Require bodyweight to compute a sensible burn. If it's missing we
+      // save the workout anyway â€” the helper returns 0 â€” but log so the
+      // operator can notice.
+      const bodyweightKg = profile?.weightKg ?? 0;
+      if (bodyweightKg <= 0) {
+        logger.warn(
+          "completeWorkoutDay: profile.weightKg missing â€” workout will save with totalCalories=0"
+        );
+      }
+
+      const durationMinutes =
+        sessionData.durationMinutes && sessionData.durationMinutes > 0
+          ? sessionData.durationMinutes
+          : 0;
+      const effectiveDurationMin =
+        durationMinutes > 0 ? durationMinutes : completedSetCount * 3;
+
+      const totalCalories = estimateLiftBurn({
+        durationMinutes,
+        tonnageKg: tonnage,
+        bodyweightKg,
+        completedSetCount,
+      });
+
+      // â”€â”€ CORE persistence boundary â€” atomic programme + workout write.
+      // Pre-packet-15 this was saveProgram(updated) FOLLOWED BY a separate
+      // workout write inside a log-only catch: a workout-write failure left
+      // the day permanently completed with no matching workout record (a
+      // split state that broke History / calorie totals / performance). One
+      // writeBatch commits both or neither. The id is deterministic
+      // (programme-<completionId>) so a retried Finish overwrites the same
+      // doc rather than appending a second log.
+      const programRef = doc(
+        db,
+        "users",
+        user.uid,
+        "programState",
+        PROGRAM_DOC
+      );
+      const workoutId = `programme-${sessionData.completionId}`;
+      const workoutRef = doc(db, "users", user.uid, "workouts", workoutId);
+
+      try {
+        const batch = writeBatch(db);
+        batch.set(
+          programRef,
+          stripUndefined({ ...updated, updatedAt: Date.now() })
+        );
+        batch.set(
+          workoutRef,
+          stripUndefined({
+            date: today,
+            exercises,
+            totalCalories,
+            durationMinutes: effectiveDurationMin,
+            notes: `${day.dayName} â€” Programme Week ${programState.weekNumber}`,
+            createdAt: Timestamp.now(),
+            source: "programme",
+            completionId: sessionData.completionId,
+            sessionVariant: sessionData.sessionVariant,
+          })
+        );
+        await batch.commit();
+        // Local programme state changes only after BOTH docs commit.
+        setProgramState(updated);
+      } catch (error) {
+        logger.error("[Program] completion batch failed:", error);
+        toast.error(
+          "Couldn't save your workout. Your session is still ready to retry."
+        );
+        throw error;
+      }
+
+      // â”€â”€ POST-SAVE best-effort: sharing must NOT invalidate a saved workout.
+      try {
+        // Share composer: prompt the user (or replay their saved
+        // default) for visibility + caption. Returns null if they
+        // declined to share. Replaces the old autoPostWorkouts flag â€”
+        // see src/lib/shareComposer.ts for the preference store.
+        const decision = await compose(user.uid, {
+          type: "workout",
+          title: day.dayName,
+          meta: [
+            `${day.exercises.length} exercise${day.exercises.length === 1 ? "" : "s"}`,
+            tonnage > 0
+              ? `${Math.round(tonnage).toLocaleString()}kg volume`
+              : "",
+            effectiveDurationMin > 0 ? `${effectiveDurationMin} min` : "",
+          ].filter(Boolean),
+        });
+        if (decision) {
+          const uniqueCategories = [
+            ...new Set(
+              day.exercises.map((ex) => ex.movementCategory).filter(Boolean)
+            ),
+          ];
+          const payload = {
+            authorId: user.uid,
+            authorName: profile?.displayName || "Athlete",
+            ...(profile?.photoURL ? { authorPhotoURL: profile.photoURL } : {}),
+            type: "workout" as const,
+            visibility: decision.visibility,
+            ...(decision.caption ? { caption: decision.caption } : {}),
+            workoutName: day.dayName,
+            activityTitle: day.dayName,
+            exerciseCount: day.exercises.length,
+            totalVolume: tonnage,
+            duration: effectiveDurationMin * 60,
+            muscleGroups: uniqueCategories,
+            // Exercises â€” full list (was previously sliced to 3) with
+            // structured fields per exercise so feed viewers can
+            // "Save as routine" (PR 4) without parsing the summary
+            // string. ActivityCard renders only the top 3 visually
+            // for compactness; the rest sit on the doc for the routine
+            // copy flow.
+            exercises: exercises.map((ex) => {
+              const setCount = ex.sets.length;
+              const targetReps = ex.sets[0]?.reps ?? 0;
+              const targetWeightKg = ex.sets[0]?.weightKg ?? 0;
+              return {
+                name: ex.exerciseName,
+                exerciseId: ex.exerciseId,
+                summary: `${setCount}Ã—${targetReps}Ã—${targetWeightKg}kg`,
+                setCount,
+                targetReps,
+                targetWeightKg,
+              };
+            }),
+          };
+          try {
+            await postActivity(payload);
+          } catch (socialErr) {
+            // Network failures (offline, transient) â€” queue and let
+            // ShareComposerSheet's drain effect retry on reconnect.
+            // Auth/identity errors still surface as a warning since
+            // those won't recover by retrying.
+            const isNetwork =
+              typeof navigator !== "undefined" && navigator.onLine === false;
+            if (isNetwork) {
+              enqueueShare(user.uid, payload);
+              showQueuedToast();
+            } else {
+              logger.warn("Failed to post workout to feed:", socialErr);
+            }
+          }
+        }
+      } catch (err) {
+        // Post-save sharing/social failure â€” the workout already committed.
+        logger.warn("[Program] post-save workout sharing failed:", err);
+      }
+
+      const allDone = updated.workouts.every((d) => d.completed || d.skipped);
+      if (allDone) {
+        toast.success(
+          "All workouts complete! Advance to next week when ready."
+        );
+      }
+      return { workoutId };
+    },
+    [programState, user, profile]
+  );
+
+  // Skip a workout day (no stats, no social post)
+  const skipWorkoutDay = useCallback(
+    async (dayIndex: number) => {
+      if (!programState || !user) return;
+      const updated: ProgramState = {
+        ...programState,
+        workouts: programState.workouts.map((d, i) =>
+          i === dayIndex ? { ...d, skipped: true } : d
+        ),
+      };
+      await saveProgram(updated);
+    },
+    [programState, user, saveProgram]
+  );
+
+  // Set a specific day as the next workout (override default progression),
+  // or null to follow programme order again. PROGRAM-SESSION-ORDER-01: a
+  // cursor change only â€” layout, loads, history and fatigue are untouched.
+  // The writer accepts only an in-range, unfinished day; terminal or
+  // malformed selections are ignored (the derive-time guard in Program.tsx
+  // already falls back, but a bad override must not persist either).
+  // `undefined` is stripped by the guarded write path, so a reset removes
+  // the field rather than storing a stale value.
+  const setNextWorkout = useCallback(
+    async (dayIndex: number | null) => {
+      if (!programState) return;
+      if (dayIndex === null) {
+        if (programState.nextWorkoutOverride == null) return;
+        await saveProgram({ ...programState, nextWorkoutOverride: undefined });
+        return;
+      }
+      const day = programState.workouts[dayIndex];
+      if (!Number.isInteger(dayIndex) || !day || day.completed || day.skipped) {
+        return;
+      }
+      await saveProgram({ ...programState, nextWorkoutOverride: dayIndex });
+    },
+    [programState, saveProgram]
+  );
+
+  // Manually advance to next week (called from UI)
+  const advanceToNextWeek = useCallback(async () => {
+    if (!programState) return;
+    if (!shouldAdvanceWeek(programState.workouts)) return;
+
+    // Backlog #8: the deload recipe follows training age (Helms H4).
+    // Backlog #9: plus the joint plateau x recovery adjustment rule.
+    const advanced = advanceWeek(programState, profile?.experience, recovery);
+
+    // Refresh run days for new week. PR-0b-ii: V2 writers + next-
+    // week date vantage so the saved runDays carry next-week
+    // dates / weekKey. `currentWeek` increments to track week-
+    // since-plan-start; `totalWeeks` preserved from prev so the
+    // race-strip "Week N of M" display stays consistent.
+    if (profile?.runMode && profile.runMode !== "freeform") {
+      const weekSchedule = profile.weekSchedule ?? [];
+      const runTarget = getWeeklyRunTarget(profile) || 3;
+      const nextWeekStart = localWeekKey(addLocalDays(new Date(), 7));
+      const nextWeekCurrentDate = localDateString(addLocalDays(new Date(), 7));
+
+      const advRunPlan = advanced.runPlan;
+      // Asked about NEXT week's date, not today: the question is whether the
+      // week being rolled into is still inside the recovery window. The
+      // explicit `!!advRunPlan` is what carries the non-null guarantee into
+      // the block below, which spreads it â€” `isInRecoveryOn` deliberately
+      // does not narrow (see its doc).
+      const inRecovery =
+        !!advRunPlan && isInRecoveryOn(advRunPlan, nextWeekCurrentDate);
+
+      if (inRecovery) {
+        // RUN-H1: a week rolling over mid-recovery must STAY a recovery week
+        // and keep phase/recoveryEndDate â€” never regenerate a race plan (which
+        // emits race-training runDays AND drops the recovery flags via
+        // makeRunPlanRecord). Mirrors refreshRunSchedule's recovery branch;
+        // recovery exit is a deliberate decision (resolveRecoveryExit), not a
+        // rollover side effect.
+        advanced.runDays = scheduleRecoveryWeekV2({
+          weekSchedule,
+          weekStart: nextWeekStart,
+        });
+        advanced.runPlan = { ...advRunPlan };
+      } else if (
+        profile.runMode === "race_prep" &&
+        profile.raceGoal &&
+        // R3: same elapsed guard as refreshRunSchedule â€” a week rolling over
+        // after an elapsed race (recovery ended, raceGoal not yet server-
+        // cleared) must go freeform, not regenerate a plan dated in the past.
+        nextWeekCurrentDate <= profile.raceGoal.targetDate
+      ) {
+        const r = regenerateRacePlan({
+          tuning: runTuningFromProfile(profile),
+          raceGoal: profile.raceGoal,
+          weekSchedule,
+          weeklyRunDays: runTarget,
+          currentDate: nextWeekCurrentDate,
+          weekStart: nextWeekStart,
+          carry: {
+            currentWeek: (advanced.runPlan?.currentWeek ?? 0) + 1,
+            totalWeeks: advanced.runPlan?.totalWeeks,
+            completedRaces: advanced.runPlan?.completedRaces,
+          },
+        });
+        advanced.runDays = r.runDays;
+        advanced.runPlan = r.runPlan;
+      } else {
+        // RUN-M: structured retired â€” a non-race state is freeform (no runDays).
+        advanced.runDays = [];
+        advanced.runPlan = undefined;
+      }
+    }
+
+    await saveProgram(advanced);
+
+    const rx = generateWeekPrescription(advanced.weekNumber);
+    if (rx.deload) {
+      toast.info("Deload week â€” reduce intensity and recover");
+    } else {
+      toast.success(`Week ${advanced.weekNumber} started`);
+    }
+  }, [programState, profile, saveProgram, recovery]);
+
+  // P0-6: Mark a run day as completed.
+  //
+  // Accepts either a v2 ScheduledRunDay.id (string) for precise
+  // by-id completion, or a legacy dayIndex (number) for the
+  // pre-v2 path that's still wired elsewhere in the UI. When the
+  // id path resolves, status transitions via `transitionStatus`
+  // (planned â†’ completed_exact). The runtime `completed: true`
+  // flag is set on both paths for back-compat â€” the in-app
+  // `runDays.find(d => !d.completed)` lookups still work.
+  //
+  // The transition validation is a soft guard: a no-op (status
+  // already terminal) logs a warning and falls through without
+  // writing â€” completing the same scheduled run twice shouldn't
+  // double-fire the "ready for next week" toast.
+  /**
+   * PR-J Q2 (a'''') â€” Manual mark-complete writer.
+   *
+   * Records explicit user intent to mark a runDay slot complete
+   * via `programState.manualCompletions[runDayId]`. The derivation
+   * (Q2 P27) reads the map alongside saved-run claims + legacy
+   * status to surface the âœ… in UI. NO synthetic saved-run write â€”
+   * gamification (streaks, PI, badges, challenges) only consumes
+   * real activity per Q2 P25.
+   *
+   * Behavior pins inherited from the lock:
+   * - P20 (skipped â†’ planned â†’ map): when target is `skipped`,
+   *   first transitions back to `planned` then writes the map key.
+   * - P21 (race-day UI suppression): caller responsibility â€” this
+   *   writer doesn't enforce it because the writer is the lower
+   *   layer. DayActionSheet hides the button on race-day slots.
+   *
+   * Q1 P9 + linkedRunId: not written (the field is dropped from
+   * the type by this PR).
+   */
+  const markManualComplete = useCallback(
+    async (runDayId: string) => {
+      if (!programState?.runDays || !user) return;
+      const targetIndex = programState.runDays.findIndex(
+        (rd) => rd.id === runDayId
+      );
+      if (targetIndex === -1) {
+        logger.warn(
+          `[markManualComplete] no runDay matched id=${runDayId}; skipping`
+        );
+        return;
+      }
+      const targetDay = programState.runDays[targetIndex];
+
+      // RUN-RACE-GUARD-01: a race completes only via a logged run
+      // (RunSummary reconciliation), never a manual mark â€” otherwise a
+      // race overridden to easy + manual-completed silently erases the
+      // race. Gate on the immutable race identity.
+      if (isScheduledRaceRunDay(targetDay)) {
+        logger.warn(
+          `[markManualComplete] refusing to manually complete a scheduled race (id=${targetDay.id}); a race completes via a logged run`
+        );
+        return;
+      }
+
+      // P20: skipped â†’ planned two-step. The transition gate uses
+      // the updated LEGAL_TRANSITIONS table that now permits
+      // skipped â†’ planned (Q1 P7).
+      let updatedDays = programState.runDays;
+      const fromStatus = getScheduledRunStatus(targetDay);
+      if (fromStatus === "skipped") {
+        if (!transitionStatus(fromStatus, "planned")) {
+          logger.warn(
+            `[markManualComplete] invalid transition ${fromStatus} â†’ planned for runDay ${targetDay.id}; skipping`
+          );
+          return;
+        }
+        updatedDays = programState.runDays.slice();
+        updatedDays[targetIndex] = {
+          ...targetDay,
+          status: "planned" as ScheduledRunStatus,
+          completed: false,
+        };
+      }
+
+      const updatedMap: Record<string, ManualCompletion> = {
+        ...(programState.manualCompletions ?? {}),
+        [runDayId]: { completedAt: new Date() },
+      };
+
+      const updated: ProgramState = {
+        ...programState,
+        runDays: updatedDays,
+        manualCompletions: updatedMap,
+      };
+      await saveProgram(updated);
+    },
+    [programState, user, saveProgram]
+  );
+
+  /**
+   * PR-J Q2 P11 â€” Undo a manual mark-complete.
+   *
+   * Drops the map key. Per Q7 P96 the UI surfaces a separate toast
+   * ("Marked as planned again") from the saved-run-deletion toast
+   * â€” DayActionSheet wires the copy.
+   */
+  const unmarkManualComplete = useCallback(
+    async (runDayId: string) => {
+      if (!programState?.manualCompletions || !user) return;
+      if (!(runDayId in programState.manualCompletions)) return;
+      const next = { ...programState.manualCompletions };
+      delete next[runDayId];
+      const updated: ProgramState = {
+        ...programState,
+        manualCompletions: next,
+      };
+      await saveProgram(updated);
+    },
+    [programState, user, saveProgram]
+  );
+
+  // P1-3: Skip a run day (planned â†’ skipped). Same id-or-index
+  // overload as completeRunDay so the Week tab's overflow menu can
+  // dispatch either way. Transition is gated by transitionStatus,
+  // so a no-op call against a terminal-state runDay logs and exits
+  // without writing.
+  const skipRunDay = useCallback(
+    async (idOrDayIndex: string | number) => {
+      if (!programState?.runDays || !user) return;
+
+      const targetIndex =
+        typeof idOrDayIndex === "string"
+          ? programState.runDays.findIndex((rd) => rd.id === idOrDayIndex)
+          : programState.runDays.findIndex(
+              (rd) => rd.dayIndex === idOrDayIndex
+            );
+      if (targetIndex === -1) {
+        logger.warn(
+          `[skipRunDay] no runDay matched ${typeof idOrDayIndex === "string" ? "id" : "dayIndex"}=${idOrDayIndex}; skipping`
+        );
+        return;
+      }
+      const targetDay = programState.runDays[targetIndex];
+      // PR-0b-iii: legacy-completed-aware status read via the
+      // central helper. A pre-status doc with completed: true +
+      // status: undefined resolves to "completed_exact" (not
+      // "planned"), so transitionStatus refuses the
+      // completed_exact â†’ completed_exact illegal transition and
+      // we skip + log instead of double-completing.
+      const fromStatus = getScheduledRunStatus(targetDay);
+      const toStatus: ScheduledRunStatus = "skipped";
+      if (!transitionStatus(fromStatus, toStatus)) {
+        logger.warn(
+          `[skipRunDay] invalid transition ${fromStatus} â†’ ${toStatus} for runDay ${targetDay.id ?? targetDay.dayIndex}; skipping`
+        );
+        return;
+      }
+
+      const updatedDays = programState.runDays.slice();
+      updatedDays[targetIndex] = {
+        ...targetDay,
+        // `completed` stays false â€” skipped is distinct from
+        // completed. The Week tab + status-derived analytics need
+        // to tell the two states apart.
+        status: toStatus,
+      };
+      await saveProgram({ ...programState, runDays: updatedDays });
+    },
+    [programState, user, saveProgram]
+  );
+
+  // SESSION-RESTORE-01: a skip is a reversible decision. Restore a
+  // skipped run slot (or a race_no_show) back to `planned` â€” a pure
+  // status reversal, NOT a completion or an implicit start. It creates
+  // no activity record, progression stimulus, streak day, share, Circle
+  // event, or manual-completion key. Template, date, stable id, override,
+  // race identity (`type`), move metadata, and the manualCompletions map
+  // are all untouched. The transition gate (`skipped â†’ planned`,
+  // `race_no_show â†’ planned`) is the sole legality check â€” any other
+  // status (planned / completed_*) is refused with a log, so a
+  // completed run can never be silently reopened.
+  const restoreRunDay = useCallback(
+    async (idOrDayIndex: string | number) => {
+      if (!programState?.runDays || !user) return;
+      const targetIndex =
+        typeof idOrDayIndex === "string"
+          ? programState.runDays.findIndex((rd) => rd.id === idOrDayIndex)
+          : programState.runDays.findIndex(
+              (rd) => rd.dayIndex === idOrDayIndex
+            );
+      if (targetIndex === -1) {
+        logger.warn(
+          `[restoreRunDay] no runDay matched ${typeof idOrDayIndex === "string" ? "id" : "dayIndex"}=${idOrDayIndex}; skipping`
+        );
+        return;
+      }
+      const targetDay = programState.runDays[targetIndex];
+      const fromStatus = getScheduledRunStatus(targetDay);
+      // Only skipped / race_no_show restore to planned; the gate refuses
+      // planned (nothing to restore) and terminal completed_* states.
+      if (!transitionStatus(fromStatus, "planned")) {
+        logger.warn(
+          `[restoreRunDay] invalid transition ${fromStatus} â†’ planned for runDay ${targetDay.id ?? targetDay.dayIndex}; skipping`
+        );
+        return;
+      }
+      const updatedDays = programState.runDays.slice();
+      updatedDays[targetIndex] = {
+        ...targetDay,
+        status: "planned" as ScheduledRunStatus,
+        completed: false,
+      };
+      await saveProgram({ ...programState, runDays: updatedDays });
+    },
+    [programState, user, saveProgram]
+  );
+
+  // SESSION-RESTORE-01 (lift half): clear `skipped` on a lift day,
+  // reversing a skip back to a plannable session. Only reverses a
+  // genuine skip on a NON-completed day â€” a completed day is never
+  // reopened, and a non-skipped day is a no-op. No stats, streak, or
+  // social side effect (mirrors skipWorkoutDay's write shape).
+  const restoreWorkoutDay = useCallback(
+    async (dayIndex: number) => {
+      if (!programState || !user) return;
+      const day = programState.workouts[dayIndex];
+      if (!day || !day.skipped || day.completed) return;
+      const updated: ProgramState = {
+        ...programState,
+        workouts: programState.workouts.map((d, i) =>
+          i === dayIndex ? { ...d, skipped: false } : d
+        ),
+      };
+      await saveProgram(updated);
+    },
+    [programState, user, saveProgram]
+  );
+
+  // RUN-RESCHEDULE-01: one-off move of a planned run to another day WITHIN
+  // its generated Sunday-start week. Moves the plan, not the goalposts â€” the
+  // stable id, template, override, status, completion truth, race identity,
+  // and manualCompletions map all survive; only `date`/`dayIndex` and the
+  // truthful clash metadata change (see runReschedule.computeRunMove).
+  // Guards mirror overrideRunDay: a race is immovable (its date is the
+  // event, RUN-RACE-GUARD-01) and only an editable/planned slot moves.
+  // `weekSchedule` isn't mutated, and the plan isn't regenerated.
+  const moveRunDay = useCallback(
+    async (idOrDayIndex: string | number, targetDayIndex: number) => {
+      if (!programState?.runDays || !user) return;
+      const target = programState.runDays.find((rd) =>
+        typeof idOrDayIndex === "string"
+          ? rd.id === idOrDayIndex
+          : rd.dayIndex === idOrDayIndex
+      );
+      if (!target) {
+        logger.warn(
+          `[moveRunDay] no runDay matched ${typeof idOrDayIndex === "string" ? "id" : "dayIndex"}=${idOrDayIndex}; skipping`
+        );
+        return;
+      }
+      if (!canRescheduleRun(target)) {
+        logger.warn(
+          `[moveRunDay] runDay ${target.id ?? target.dayIndex} is not reschedulable (race or non-planned); skipping`
+        );
+        return;
+      }
+      if (targetDayIndex === target.dayIndex) return; // no-op: same day
+      // Integrity guard: never double-book a day (the UI already blocks
+      // occupied days, but two runs sharing a dayIndex corrupts the week).
+      if (
+        programState.runDays.some(
+          (rd) => rd.id !== target.id && rd.dayIndex === targetDayIndex
+        )
+      ) {
+        logger.warn(
+          `[moveRunDay] dayIndex=${targetDayIndex} already occupied; skipping`
+        );
+        return;
+      }
+      const patch = computeRunMove(
+        target,
+        targetDayIndex,
+        profile?.weekSchedule ?? []
+      );
+      if (!patch) {
+        logger.warn(
+          `[moveRunDay] could not resolve a date for dayIndex=${targetDayIndex}; skipping`
+        );
+        return;
+      }
+      const updatedDays = programState.runDays.map((rd) => {
+        if (rd.id !== target.id) return rd;
+        // Rebuild the day so a snap-back-to-origin can DROP the move markers
+        // (setting them undefined would leave stale values on the array).
+        const next: ScheduledRunDay = {
+          ...rd,
+          date: patch.date,
+          dayIndex: patch.dayIndex,
+          clashesWithLift: patch.clashesWithLift,
+        };
+        if (patch.movedFromDate) next.movedFromDate = patch.movedFromDate;
+        else delete next.movedFromDate;
+        if (patch.movedToDate) next.movedToDate = patch.movedToDate;
+        else delete next.movedToDate;
+        return next;
+      });
+      await saveProgram({ ...programState, runDays: updatedDays });
+    },
+    [programState, user, profile?.weekSchedule, saveProgram]
+  );
+
+  // Override a run day template. Refuses to write when the target
+  // runDay is already in a terminal status (completed_*, skipped,
+  // race_no_show) â€” the UI is expected to disable the template
+  // dropdown in those cases, and this is the defence-in-depth gate
+  // for any caller that slips past. Without this, swapping a
+  // template on a skipped/completed runDay would silently update
+  // the dropdown but leave the day terminal, surfacing as "the
+  // change didn't take" from the user's perspective.
+  //
+  // The "re-engage a skipped run" use case isn't covered here on
+  // purpose â€” that requires an explicit status reset and the
+  // current state-machine map (P0-A) treats `skipped` as terminal.
+  // If product wants un-skip, add `skipped â†’ planned` to
+  // LEGAL_TRANSITIONS and surface an "un-skip" button in the
+  // Week tab overflow instead of overloading override semantics.
+  // PR-1: id-preferring overload. Same shape as completeRunDay /
+  // skipRunDay â€” string = runDay.id, number = legacy dayIndex.
+  // V2 docs have stable IDs (PR-0b-i); future surfaces (Home
+  // DayActionSheet) need to address a specific runDay across weeks,
+  // not "whichever runDay happens to match this dayIndex". The
+  // dayIndex fallback stays for legacy callers (Programme Run tab
+  // row select, Week-tab template select) that still pass dow.
+  const overrideRunDay = useCallback(
+    async (idOrDayIndex: string | number, templateId: string) => {
+      if (!programState?.runDays) return;
+      const target =
+        typeof idOrDayIndex === "string"
+          ? programState.runDays.find((rd) => rd.id === idOrDayIndex)
+          : programState.runDays.find((rd) => rd.dayIndex === idOrDayIndex);
+      if (!target) {
+        logger.warn(
+          `[overrideRunDay] no runDay matched ${typeof idOrDayIndex === "string" ? "id" : "dayIndex"}=${idOrDayIndex}; skipping`
+        );
+        return;
+      }
+      // RUN-RACE-GUARD-01: a scheduled race's identity is immutable.
+      // Swapping its template to an easy run (then completing it as an
+      // ordinary run) would erase the race â€” refuse by the immutable
+      // `type: "race"` signal, which an override never changes.
+      if (isScheduledRaceRunDay(target)) {
+        logger.warn(
+          `[overrideRunDay] refusing to swap a scheduled race (id=${target.id ?? target.dayIndex}); race identity is immutable`
+        );
+        return;
+      }
+
+      // PR-0b-iii: editability gate via the central helper.
+      // Only `planned` qualifies for in-place template swap.
+      // race_completed_unlinked (reconciliation) is now excluded
+      // â€” its only outgoing path is via a future linking UI, not
+      // the shared template editor.
+      const status = getScheduledRunStatus(target);
+      if (!isScheduledRunEditable(status)) {
+        logger.warn(
+          `[overrideRunDay] refusing to swap template on non-editable runDay (status="${status}", id=${target.id ?? target.dayIndex}); use Configure Plan to rebuild instead`
+        );
+        return;
+      }
+
+      // Match against the resolved target's id when present
+      // (id-preferring), falling back to dayIndex. Without this
+      // a multi-week V2 runDays array could double-overwrite
+      // (multiple rows with the same dayIndex).
+      const updated: ProgramState = {
+        ...programState,
+        runDays: programState.runDays.map((rd) =>
+          (target.id && rd.id === target.id) ||
+          (!target.id && rd.dayIndex === target.dayIndex)
+            ? { ...rd, templateId, userOverride: templateId }
+            : rd
+        ),
+      };
+
+      await saveProgram(updated);
+      // No success toast â€” the schedule UI shows the new run-day state.
+    },
+    [programState, saveProgram]
+  );
+
+  // Log exercise performance with auto-progression
+  const logExercise = useCallback(
+    async (
+      dayIndex: number,
+      exerciseIndex: number,
+      actualReps: number,
+      actualWeight: number,
+      actualRpe?: number
+    ) => {
+      if (!programState) return;
+
+      const settings = programState.settings ?? {
+        autoProgression: true,
+        microloading: true,
+      };
+      const exercise =
+        programState.workouts[dayIndex]?.exercises[exerciseIndex];
+      if (!exercise) return;
+
+      let updatedExercise: ProgramExercise;
+      if (settings.autoProgression) {
+        updatedExercise = applyProgression(
+          exercise,
+          actualReps,
+          actualWeight,
+          programState.goal,
+          settings.microloading,
+          actualRpe
+        );
+      } else {
+        updatedExercise = {
+          ...exercise,
+          lastAttemptedWeight: actualWeight,
+          lastPerformance: {
+            sets: exercise.sets,
+            reps: actualReps,
+            weight: actualWeight,
+            completed: actualReps >= exercise.reps,
+          },
+        };
+      }
+
+      if (
+        updatedExercise.plateauCount > 0 &&
+        updatedExercise.plateauCount !== exercise.plateauCount
+      ) {
+        toast("Plateau detected â€” variation may rotate", { icon: "âš ï¸" });
+      }
+
+      const updatedWorkouts = programState.workouts.map((day, di) => {
+        if (di !== dayIndex) return day;
+        return {
+          ...day,
+          exercises: day.exercises.map((ex, ei) =>
+            ei === exerciseIndex ? updatedExercise : ex
+          ),
+        };
+      });
+
+      await saveProgram({ ...programState, workouts: updatedWorkouts });
+    },
+    [programState, saveProgram]
+  );
+
+  // Update exercise manually (weight override)
+  const updateExercise = useCallback(
+    async (
+      dayIndex: number,
+      exerciseIndex: number,
+      updates: Partial<ProgramExercise>
+    ) => {
+      if (!programState) return;
+
+      const updatedWorkouts = programState.workouts.map((day, di) => {
+        if (di !== dayIndex) return day;
+        return {
+          ...day,
+          exercises: day.exercises.map((ex, ei) =>
+            ei === exerciseIndex ? { ...ex, ...updates } : ex
+          ),
+        };
+      });
+
+      await saveProgram({ ...programState, workouts: updatedWorkouts });
+    },
+    [programState, saveProgram]
+  );
+
+  // Update settings
+  const updateSettings = useCallback(
+    async (updates: Partial<ProgramSettings>) => {
+      if (!programState) return;
+      const current = programState.settings ?? {
+        autoProgression: true,
+        microloading: true,
+      };
+      const newSettings = { ...current, ...updates };
+      await saveProgram({ ...programState, settings: newSettings });
+    },
+    [programState, saveProgram]
+  );
+
+  // Regenerate program (goal or split change).
+  //
+  // `overrides` lets callers pass FRESH state directly instead of
+  // relying on `profile` having already round-tripped through the
+  // hook. Settings â†’ Apply schedule changes used to call
+  // `regenerateProgram(undefined, pendingLiftDays)` and then
+  // `updateProfile({ weekSchedule: ... })` â€” so the regenerate ran
+  // against the OLD schedule (liftIndices were computed from
+  // `profile.weekSchedule` before the new schedule was saved). The
+  // resulting run schedule didn't reflect the layout the user just
+  // confirmed. Passing schedule + run target via `overrides` makes
+  // the regenerate correct on the first call.
+  const regenerateProgram = useCallback(
+    async (
+      goalOverride?: string,
+      weeklyTargetOverride?: number,
+      overrides?: { weekSchedule?: ScheduleDay[]; weeklyRunDaysTarget?: number }
+    ) => {
+      if (!profile) return;
+
+      const goal = (goalOverride ??
+        programState?.goal ??
+        profile.program?.goal ??
+        "recomp") as ProgramState["goal"];
+      const weeklyTarget =
+        weeklyTargetOverride ?? profile.weeklyWorkoutsTarget ?? 4;
+      // Prefer programState's persisted primaryGoal (set at onboarding),
+      // falling back to the profile value. Regenerate with goal-aware reps.
+      const primaryGoal = programState?.primaryGoal ?? profile.primaryGoal;
+      const { splitType, workouts } = generateProgram(
+        goal,
+        weeklyTarget,
+        programState?.workouts,
+        primaryGoal,
+        loadContextFrom(profile),
+        overrides?.weekSchedule ?? profile.weekSchedule,
+        toExperience(profile.experience)
+      );
+
+      // Regenerate run schedule. PR-0b-ii: V2 writers. Full regen
+      // resets currentWeek to 0 and trusts V2's fresh totalWeeks
+      // (caller intent is "rebuild this plan from scratch").
+      let runDays: ScheduledRunDay[] | undefined;
+      let runPlan: ProgramState["runPlan"];
+      if (profile.runMode && profile.runMode !== "freeform") {
+        const runTarget =
+          overrides?.weeklyRunDaysTarget ?? (getWeeklyRunTarget(profile) || 3);
+        const effectiveSchedule =
+          overrides?.weekSchedule ?? profile.weekSchedule ?? [];
+        const weekStart = localWeekKey();
+        if (profile.runMode === "race_prep" && profile.raceGoal) {
+          ({ runDays, runPlan } = regenerateRacePlan({
+            tuning: runTuningFromProfile(profile),
+            raceGoal: profile.raceGoal,
+            weekSchedule: effectiveSchedule,
+            weeklyRunDays: runTarget,
+            currentDate: localDateString(),
+            weekStart,
+          }));
+        } else {
+          // RUN-M: structured retired â€” a non-race state is freeform.
+          runDays = [];
+          runPlan = undefined;
+        }
+      }
+
+      const newState: ProgramState = {
+        goal,
+        // Persist primaryGoal across regenerate. Without this, the
+        // engine USED primaryGoal to pick rep ranges when generating
+        // the new workouts (line above), but the saved state lost
+        // the field â€” so the Program header's "Built for {goal}" line
+        // (Program.tsx:381 â†’ primaryGoalLabel) silently fell back to
+        // "General Fitness" after every Goal change / Refresh, even
+        // for a hypertrophy or strength user.
+        ...(primaryGoal !== undefined && { primaryGoal }),
+        currentPhase: "base",
+        weekNumber: 1,
+        splitType,
+        workouts,
+        fatigueScore: programState?.fatigueScore ?? 0,
+        updatedAt: Date.now(),
+        settings: programState?.settings ?? {
+          autoProgression: true,
+          microloading: true,
+        },
+        weekHistory: [],
+        // PR-0b-ii: explicit schema version on regenerate so the
+        // freshly-rebuilt state matches the current contract. Pre-
+        // PR-0b-ii this was inherited from the prior doc (or
+        // missing), which is exactly the V1-shape-in-current-
+        // version footgun PR-0b-i's shape-aware migration repairs.
+        programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+        ...(runDays !== undefined && { runDays }),
+        ...(runPlan !== undefined && { runPlan }),
+      };
+
+      await saveProgram(newState);
+      // Sync goal to profile so Settings Training Phase stays in sync
+      await updateProfile({
+        program: {
+          goal,
+          startWeight: profile.program?.startWeight ?? profile.weightKg ?? 70,
+          currentPhase: "base",
+        },
+      });
+      setViewingHistoryIndex(null);
+      toast.success("Program regenerated");
+    },
+    [profile, programState, saveProgram, updateProfile]
+  );
+
+  // Refresh run schedule without resetting program (called when
+  // weekSchedule changes). PR-0b-ii: V2 writers + optional
+  // overrides to avoid stale-closure reads of profile.weekSchedule.
+  // Editor apply path passes the freshly-confirmed schedule
+  // through explicitly so we never use the pre-`updateProfile`
+  // value.
+  const refreshRunSchedule = useCallback(
+    async (overrides?: RefreshRunScheduleOverrides) => {
+      if (!programState || !profile) return;
+      if (!profile.runMode || profile.runMode === "freeform") return;
+
+      const weekSchedule =
+        overrides?.weekSchedule ?? profile.weekSchedule ?? [];
+      const runTarget =
+        overrides?.weeklyRunDaysTarget ?? (getWeeklyRunTarget(profile) || 3);
+      const weekStart = localWeekKey();
+      let runDays: ScheduledRunDay[];
+      let runPlan = programState.runPlan;
+
+      // PR-F: snapshot per-day userOverrides BEFORE regenerating.
+      // Pre-PR-F, refreshRunSchedule called the generator (which
+      // builds fresh runDays via buildRunDayV2 with no userOverride
+      // field) and wrote the result directly â€” silently destroying
+      // any per-day template overrides the user had set via the
+      // inline <select> in ProgrammeRunSection's per-day list.
+      // Snapshot dayIndex â†’ userOverride map; restore after the
+      // generator runs but only for days still scheduled as
+      // run/both (orphan overrides on a day that became rest get
+      // dropped).
+      const overrideSnapshot: Record<number, string> = {};
+      for (const rd of programState.runDays ?? []) {
+        if (rd.userOverride) {
+          overrideSnapshot[rd.dayIndex] = rd.userOverride;
+        }
+      }
+
+      // PR-E: recovery phase takes precedence over the runMode
+      // branches. When the user just completed a race and is
+      // mid-recovery (runPlan.phase === "recovery" + not yet
+      // expired), emit all easy_30 templates regardless of mode.
+      // runMode stays at race_prep during recovery; the phase flag
+      // does the differentiation. PR-D writes the phase on race
+      // completion; this generator consumes it on subsequent
+      // refreshes (e.g. mid-week schedule edits while recovering).
+      const inRecovery = isInRecoveryOn(
+        programState.runPlan,
+        localDateString()
+      );
+
+      if (inRecovery) {
+        runDays = scheduleRecoveryWeekV2({ weekSchedule, weekStart });
+        runPlan = { ...programState.runPlan! };
+      } else if (
+        profile.runMode === "race_prep" &&
+        profile.raceGoal &&
+        // R3: don't regenerate a race-prep plan for a race that has already
+        // passed. Recovery has ended here (else `inRecovery` is true), but the
+        // server clears profile.raceGoal only at recoveryEndDate + 7d; in that
+        // window an elapsed race must fall through to freeform, NOT spawn a
+        // fresh plan dated in the past (regenerateRacePlan with a past target
+        // produced a 2-week phantom block). Local string compare = date compare.
+        localDateString() <= profile.raceGoal.targetDate
+      ) {
+        // Refresh preserves currentWeek + totalWeeks so the user's
+        // race-strip position stays put across mid-week schedule
+        // edits. Only `compressed` updates (V2 may flip it if the
+        // schedule change pushed run count below race-config
+        // thresholds). PR-E: also clear any stale recovery phase
+        // â€” if user has aged out of recovery (recoveryEndDate
+        // passed) and we're re-rendering race_prep, drop phase
+        // and recoveryEndDate.
+        ({ runDays, runPlan } = regenerateRacePlan({
+          tuning: overrides?.tuning ?? runTuningFromProfile(profile),
+          raceGoal: profile.raceGoal,
+          weekSchedule,
+          weeklyRunDays: runTarget,
+          currentDate: localDateString(),
+          weekStart,
+          carry: {
+            currentWeek: programState.runPlan?.currentWeek,
+            totalWeeks: programState.runPlan?.totalWeeks,
+            completedRaces: programState.runPlan?.completedRaces,
+          },
+        }));
+      } else {
+        // RUN-M: structured retired â€” a non-race state is freeform.
+        runDays = [];
+        runPlan = undefined;
+      }
+
+      // Re-apply preserved overrides. The generator emits entries
+      // keyed by dayIndex; we re-key the snapshot the same way so
+      // a user's "Monday=tempo" intent survives weeklyRunDays
+      // edits, schedule reshuffles, and mode flips (via the chip
+      // row's handleModeChange path). Templates that are no longer
+      // scheduled drop silently (snapshot lookup misses; original
+      // generator template wins).
+      runDays = runDays.map((rd) => {
+        const preserved = overrideSnapshot[rd.dayIndex];
+        return preserved
+          ? { ...rd, userOverride: preserved, templateId: preserved }
+          : rd;
+      });
+
+      await saveProgram({ ...programState, runDays, runPlan });
+    },
+    [programState, profile, saveProgram]
+  );
+
+  // PR-C: skip-recovery-early writer. Atomic phase clear + mode
+  // flip + run-schedule regenerate. Called from the post-race
+  // card when the user opts out of the soft window. Race is past,
+  // raceGoal preserved (R1 GATED), but the user wants normal
+  // training back NOW instead of waiting for the 7-day grace to
+  // elapse and the recovery-exit effect to fire.
+  //
+  // Why a dedicated writer instead of composing skipRecovery +
+  // handleModeChange + refresh: refreshRunSchedule reads
+  // `programState.runPlan.phase` from its closure. If we cleared
+  // phase via saveProgram and then called refresh, the closure
+  // would lag and refresh would still emit easy_30. By doing the
+  // whole transition in one saveProgram call, we sidestep the
+  // closure-lag problem.
+  const skipRecoveryEarly = useCallback(async () => {
+    if (!programState || !profile) return;
+    if (programState.runPlan?.phase !== "recovery") return;
+
+    // Run9 ENG(j) + R3-cycle/backtoback: exiting recovery returns the user to
+    // FREEFORM (the race is done â€” it's recorded in completedRaces), UNLESS a
+    // newer race was set during the recovery window, which must be preserved.
+    // `resolveRecoveryExit` is the single source of that rule (unit-tested in
+    // runModeResolution.test.ts); the patch it returns always co-writes the
+    // materialized `runMode` so the invariant can't be violated here.
+    const completedRaceGoal =
+      programState.runPlan?.raceGoal ?? profile.raceGoal ?? null;
+    const exit = resolveRecoveryExit({
+      currentRaceGoal: profile.raceGoal ?? null,
+      completedRaceGoal,
+    });
+
+    if (exit.runMode === "freeform") {
+      // Single race done â†’ freeform: drop the runPlan + runDays. saveProgram
+      // does a full setDoc, so omitting `runPlan` (undefined â†’ stripped)
+      // removes it from the doc. Run9 3a-ii: the `raceGoal: null` clear that
+      // resolveRecoveryExit returns is now applied explicitly (the profile type
+      // was widened to allow it), so the materialized runMode and the goal can
+      // never disagree â€” no more left-over goal under freeform. The cast
+      // bridges the pure core's loose `distance: string` to the narrow union.
+      logger.log("[skipRecoveryEarly] race done â†’ freeform; clearing plan");
+      await Promise.all([
+        updateProfile(exit as Partial<UserProfile>),
+        saveProgram({ ...programState, runDays: [], runPlan: undefined }),
+      ]);
+      return;
+    }
+
+    // Back-to-back: a newer future race was set during recovery â†’ stay
+    // race_prep, just clear the recovery phase. The race-plan load/regenerate
+    // path rebuilds runDays for the new race; we don't regenerate here.
+    logger.log(
+      "[skipRecoveryEarly] newer race set during recovery â†’ exit recovery, keep race_prep"
+    );
+    const nextRunPlan = { ...programState.runPlan } as Record<string, unknown>;
+    delete nextRunPlan.phase;
+    delete nextRunPlan.recoveryEndDate;
+    await Promise.all([
+      updateProfile({ runMode: "race_prep" }),
+      saveProgram({
+        ...programState,
+        runPlan: nextRunPlan as unknown as RunPlan,
+      }),
+    ]);
+  }, [programState, profile, saveProgram, updateProfile]);
+
+  // â”€â”€ Run9 phase-3 (Slice DE): one-tap Realign â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  //
+  // The pre-Run9 fell-behind sheet offered three actions (shift +7d /
+  // compress / skip). The redesign collapses the two plan-changing actions
+  // into ONE primary "Realign" (keep the race date, re-plan the remaining
+  // weeks from today) plus a "my race moved â†’" route to /settings/training
+  // (a UI navigate, not a writer â€” the +7d auto-shift guess is retired). The
+  // skip path stays as `dismissFellBehindPrompt` above.
+
+  /** Q24 (i) â€” dismiss the prompt without changing the plan. */
+  const dismissFellBehindPrompt = useCallback(async () => {
+    if (!programState) return;
+    if (!programState.pendingFellBehindPrompt) return;
+    const next = { ...programState };
+    delete next.pendingFellBehindPrompt;
+    logger.log("[fellBehind] dismissed without plan change");
+    await saveProgram(next);
+  }, [programState, saveProgram]);
+
+  /** PROGRAM-DELOAD-01 â€” apply/revert the deload week via the server
+   *  `applyProgramCommand` transaction (the packet-18 command boundary;
+   *  these are its first client consumers). The server owns the
+   *  mutation â€” the deload transform, the not-already-deloaded /
+   *  snapshot-present preconditions, and the receipt-based idempotency
+   *  all run in one transaction â€” so on success we REFETCH the
+   *  authoritative doc rather than re-deriving locally (the
+   *  tested-copy-vs-running-copy rule). Requires network: unlike the
+   *  offline-queued setDocGuarded writers, a callable can't replay,
+   *  and a week-load mutation is not something to apply blind. */
+  const sendDeloadCommand = useCallback(
+    async (kind: "applyDeloadWeek" | "revertDeloadWeek"): Promise<boolean> => {
+      if (!user || !programState) return false;
+      try {
+        const call = httpsCallable(getFunctions(), "applyProgramCommand");
+        await call({
+          kind,
+          // Reuses the bounded safe-alphabet id generator (UUID with a
+          // non-crypto fallback) â€” both shapes satisfy the callable's
+          // COMMAND_ID_RE.
+          commandId: generateInstanceId(),
+          expectedWeekNumber: programState.weekNumber,
+        });
+        const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+          const normalized = normalizeProgramState(
+            snap.data() as ProgramState,
+            { primaryGoal: profile?.primaryGoal }
+          );
+          setProgramState(migrateProgramState(normalized, localWeekKey()));
+        }
+        return true;
+      } catch (err) {
+        logger.error(`[useProgram] ${kind} failed`, err);
+        return false;
+      }
+    },
+    [user, profile, programState]
+  );
+
+  const applyDeloadWeek = useCallback(
+    () => sendDeloadCommand("applyDeloadWeek"),
+    [sendDeloadCommand]
+  );
+
+  const revertDeloadWeek = useCallback(
+    () => sendDeloadCommand("revertDeloadWeek"),
+    [sendDeloadCommand]
+  );
+
+  /** Run9 phase-3 (Slice DE) â€” re-anchor the race plan to today, keeping the
+   *  race date. Regenerates from today so the weeks-to-race delta (shrinking
+   *  as time passes) drives the generator: a tight gap yields `compressed`,
+   *  below the taper-safe floor it yields the finish-safely shape (belowFloor).
+   *  Carries terminal status + re-keys manualCompletions (Slice A) so the
+   *  current week's completions survive the regen. Clears the server-written
+   *  fell-behind flag if present â€” but works WITHOUT it too, since the in-tab
+   *  Realign banner can be triggered any time the user feels behind. Returns
+   *  the timing + totalWeeks so the caller can toast the right copy. */
+  const realignRacePlan = useCallback(async (): Promise<{
+    timing: RaceTiming;
+    totalWeeks: number;
+  }> => {
+    if (!programState || !profile) return { timing: "healthy", totalWeeks: 0 };
+    if (profile.runMode !== "race_prep" || !profile.raceGoal)
+      return { timing: "healthy", totalWeeks: 0 };
+    // RUN-H1: realign re-plans race-training weeks; it is meaningless during an
+    // active recovery window (the race is done) and would regenerate a race
+    // plan that drops the recovery phase. The fell-behind prompt that triggers
+    // realign is already suppressed during recovery, but guard explicitly so
+    // recovery exit stays a deliberate decision (resolveRecoveryExit).
+    if (isInRecoveryOn(programState.runPlan, localDateString())) {
+      return { timing: "healthy", totalWeeks: 0 };
+    }
+    // R3: a race that has already passed (recovery ended, raceGoal not yet
+    // server-cleared at recoveryEndDate + 7d) must not be realigned â€”
+    // regenerating would produce a phantom plan dated in the past. Leave it for
+    // the freeform transition, same as refreshRunSchedule / the rollovers.
+    if (localDateString() > profile.raceGoal.targetDate) {
+      return { timing: "healthy", totalWeeks: 0 };
+    }
+    const prevRunPlan = programState.runPlan;
+    const { runDays, runPlan, manualCompletions } = regenerateRacePlan({
+      tuning: runTuningFromProfile(profile),
+      raceGoal: profile.raceGoal,
+      weekSchedule: profile.weekSchedule ?? [],
+      weeklyRunDays: getWeeklyRunTarget(profile) || 3,
+      currentDate: localDateString(),
+      weekStart: localWeekKey(),
+      carry: {
+        currentWeek: prevRunPlan?.currentWeek,
+        completedRaces: prevRunPlan?.completedRaces,
+      },
+      prior: {
+        runDays: programState.runDays ?? [],
+        manualCompletions: programState.manualCompletions,
+      },
+    });
+    const next = { ...programState, runDays, runPlan, manualCompletions };
+    delete next.pendingFellBehindPrompt;
+    const timing: RaceTiming = runPlan.belowFloor
+      ? "below-floor"
+      : runPlan.compressed
+        ? "compressible"
+        : "healthy";
+    logger.log(
+      `[realign] re-anchored race plan from today â€” timing=${timing}, ` +
+        `totalWeeks=${runPlan.totalWeeks}, belowFloor=${!!runPlan.belowFloor}`
+    );
+    await saveProgram(next);
+    return { timing, totalWeeks: runPlan.totalWeeks ?? 0 };
+  }, [programState, profile, saveProgram]);
+
+  // Week navigation
+  const viewWeek = useCallback((historyIndex: number | null) => {
+    setViewingHistoryIndex(historyIndex);
+  }, []);
+
+  const viewedWorkouts =
+    viewingHistoryIndex !== null
+      ? (programState?.weekHistory?.[viewingHistoryIndex]?.workouts ?? null)
+      : null;
+
+  const viewedWeekNumber =
+    viewingHistoryIndex !== null
+      ? (programState?.weekHistory?.[viewingHistoryIndex]?.weekNumber ?? null)
+      : null;
+
+  const prescription = programState
+    ? generateWeekPrescription(programState.weekNumber)
+    : null;
+
+  return {
+    programState,
+    prescription,
+    loading,
+    completeWorkoutDay,
+    skipWorkoutDay,
+    setNextWorkout,
+    advanceToNextWeek,
+    logExercise,
+    updateExercise,
+    updateSettings,
+    regenerateProgram,
+    saveProgram,
+    markManualComplete,
+    unmarkManualComplete,
+    skipRunDay,
+    restoreRunDay,
+    restoreWorkoutDay,
+    moveRunDay,
+    overrideRunDay,
+    refreshRunSchedule,
+    skipRecoveryEarly,
+    dismissFellBehindPrompt,
+    applyDeloadWeek,
+    revertDeloadWeek,
+    realignRacePlan,
+    viewWeek,
+    viewingHistoryIndex,
+    viewedWorkouts,
+    viewedWeekNumber,
+  };
+}

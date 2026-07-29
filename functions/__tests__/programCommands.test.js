@@ -540,5 +540,1012 @@ describe("preconditionless commands", () => {
       runDayId: "run-1",
     });
   });
-})ãŸy¶‰žËkºwµçP¡ÍÑ…Ñ”¹Ý½É­½ÕÑÍlÅt¹½µÁ±•Ñ•¤¹Ñ½	”¡™…±Í”¤ì€¼¼½Ñ¡•È‘…äÕ¹Ñ½Õ¡•(€€€•áÁ•Ð ‰¹•áÑ]½É­½ÕÑ=Ù•ÉÉ¥‘”ˆ¥¸ÍÑ…Ñ”¤¹Ñ½	”¡™…±Í”¤ì€¼¼±•…É•€¡Ý…Ì€À¤(€ô¤ì((€¥Ð ‰‰Õ¥±‘ÌÑ¡”Ý½É­½ÕÐÉ•½É™É½´½µÁ±•Ñ•Í•Ð±½Ìˆ°€ ¤€ôøì(€€€½¹ÍÐì•™™•ÑÌô€ôÉÕ¸¡ìÝ•¥¡Ñ-œè€àÀô¤ì(€€€½¹ÍÐÜ€ô•™™•ÑÌ¹Ý½É­½ÕÐì(€€€•áÁ•Ð¡Ü¹•á•É¥Í•Ì¤¹Ñ½!…Ù•1•¹Ñ  È¤ì(€€€•áÁ•Ð¡Ü¹•á•É¥Í•ÍlÁt¤¹Ñ½ÅÕ…°¡ì(€€€€€•á•É¥Í•%è€‰‰•¹ µÁÉ•ÍÌˆ°(€€€€€•á•É¥Í•9…µ”è€‰	•¹ ˆ°(€€€€€…Ñ•½Éäè€‰¡½É¥é½¹Ñ…±}ÁÕÍ ˆ°(€€€€€…±½É¥•Í	ÕÉ¹•è€À°(€€€€€Í•ÑÌèl(€€€€€€€ìÍ•Ñ9Õµ‰•Èè€Ä°É•ÁÌè€à°Ý•¥¡Ñ-œè€ÄÀÀô°(€€€€€€€ìÍ•Ñ9Õµ‰•Èè€È°É•ÁÌè€à°Ý•¥¡Ñ-œè€ÄÀÀô°(€€€€€t°(€€€ô¤ì(€€€•áÁ•Ð¡Ü¹•á•É¥Í•ÍlÅt¹Í•ÑÌ¤¹Ñ½ÅÕ…°¡l(€€€€€ìÍ•Ñ9Õµ‰•Èè€Ä°É•ÁÌè€ÄÀ°Ý•¥¡Ñ-œè€ØÀô°(€€€t¤ì(€ô¤ì((€¥Ð ‰½µÁÕÑ•ÌÑ½Ñ…±…±½É¥•ÌÙ¥„Ñ¡”µ¥ÉÉ½É•…±½É¥”•¹¥¹”ˆ°€ ¤€ôøì(€€€€¼¼Ñ½¹¹…”€ÈÈÀÀ°€ÌÍ•ÑÌ°€ÐÔµ¥¸°€àÁ­œƒŠH5P€Ì¸ÔƒŠHÉ½Õ¹ ÐÔ¨àÀ¨Ì¸Ô¼ØÀ¤€ô€ÈÄÀ(€€€½¹ÍÐì•™™•ÑÌô€ôÉÕ¸¡ìÝ•¥¡Ñ-œè€àÀô¤ì(€€€•áÁ•Ð¡•™™•ÑÌ¹Ý½É­½ÕÐ¹Ñ½Ñ…±…±½É¥•Ì¤¹Ñ½	” ÈÄÀ¤ì(€€€•áÁ•Ð¡•™™•ÑÌ¹Ý½É­½ÕÐ¹‘ÕÉ…Ñ¥½¹5¥¹ÕÑ•Ì¤¹Ñ½	” ÐÔ¤ì(€ô¤ì((€¥Ð ‰Í…Ù•Ì€À…±½É¥•ÌÝ¡•¸‰½‘åÝ•¥¡Ð¥Ìµ¥ÍÍ¥¹œˆ°€ ¤€ôøì(€€€½¹ÍÐì•™™•ÑÌô€ôÉÕ¸¡íô¤ì(€€€•áÁ•Ð¡•™™•ÑÌ¹Ý½É­½ÕÐ¹Ñ½Ñ…±…±½É¥•Ì¤¹Ñ½	” À¤ì(€ô¤ì((€¥Ð ‰ÍÑ…µÁÌÑ¡”‘…Ñ”¥¸Ñ¡”ÕÍ•ÈÌÑ¥µ•é½¹”€¡¹½ÐÍ•ÉÙ•ÈUQ¤ˆ°€ ¤€ôøì(€€€€¼¼€ÀÈèÌÀUQ½¸€ÈÀÈØ´ÀÜ´ÄÌ¥Ì€ÈÈèÌÀ½¸€ÈÀÈØ´ÀÜ´ÄÈ¥¸9•Üe½É¬€¡P¤¸(€€€•áÁ•Ð¡ÉÕ¸¡ìÑ¥µ•é½¹”è€‰µ•É¥„½9•Ý}e½É¬ˆô¤¹•™™•ÑÌ¹Ý½É­½ÕÐ¹‘…Ñ”¤¹Ñ½	” (€€€€€€ˆÈÀÈØ´ÀÜ´ÄÈˆ(€€€€¤ì(€€€•áÁ•Ð¡ÉÕ¸¡íô¤¹•™™•ÑÌ¹Ý½É­½ÕÐ¹‘…Ñ”¤¹Ñ½	” ˆÈÀÈØ´ÀÜ´ÄÌˆ¤ì€¼¼UQ™…±±‰…¬(€ô¤ì((€¥Ð ‰Í•ÑÌ¹½Ñ•Ì½Í½ÕÉ”½½µÁ±•Ñ¥½¹%…¹½µ¥ÑÌÉ•…Ñ•‘Ð€¡…±±…‰±”¥¹©•ÑÌ¥Ð¤ˆ°€ ¤€ôøì(€€€½¹ÍÐÜ€ôÉÕ¸¡ìÝ•¥¡Ñ-œè€àÀô¤¹•™™•ÑÌ¹Ý½É­½ÕÐì(€€€•áÁ•Ð¡Ü¹¹½Ñ•Ì¤¹Ñ½	” ‰AÕÍ ƒŠPAÉ½É…µµ”]••¬€Ôˆ¤ì(€€€•áÁ•Ð¡Ü¹Í½ÕÉ”¤¹Ñ½	” ‰ÁÉ½É…µµ”ˆ¤ì(€€€•áÁ•Ð¡Ü¹½µÁ±•Ñ¥½¹%¤¹Ñ½	” ‰Í•ÍÍ}…‰‘•˜ÀÄˆ¤ì(€€€•áÁ•Ð ‰É•…Ñ•‘Ðˆ¥¸Ü¤¹Ñ½	”¡™…±Í”¤ì(€€€•áÁ•Ð ‰Í•ÍÍ¥½¹Y…É¥…¹Ðˆ¥¸Ü¤¹Ñ½	”¡™…±Í”¤ì(€ô¤ì((€¥Ð ‰…ÉÉ¥•ÌÍ•ÍÍ¥½¹Y…É¥…¹ÐÝ¡•¸ÁÉ½Ù¥‘•ˆ°€ ¤€ôøì(€€€½¹ÍÐÜ€ôÉÕ¸¡íô°ìÍ•ÍÍ¥½¹Y…É¥…¹Ðè€‰•áÁÉ•ÍÌÌÀˆô¤¹•™™•ÑÌ¹Ý½É­½ÕÐì(€€€•áÁ•Ð¡Ü¹Í•ÍÍ¥½¹Y…É¥…¹Ð¤¹Ñ½	” ‰•áÁÉ•ÍÌÌÀˆ¤ì(€ô¤ì((€¥Ð ‰™…±±Ì‰…¬Ñ¼Á±…¹¹•‘…Ñ„Ý¡•¸„Í•Ð±½œ¥Ì…‰Í•¹Ðˆ°€ ¤€ôøì(€€€½¹ÍÐÜ€ôÉÕ¸¡íô°ìÍ•Ñ1½Ìèmtô¤¹•™™•ÑÌ¹Ý½É­½ÕÐì(€€€€¼¼¹¼±½ÌƒŠHÁ±…¹¹•è‰•¹ €ÌÍ•ÑÌ É•ÁÌ€à€¼Ý•¥¡Ð€ÄÀÀ(€€€•áÁ•Ð¡Ü¹•á•É¥Í•ÍlÁt¹Í•ÑÌ¤¹Ñ½ÅÕ…°¡l(€€€€€ìÍ•Ñ9Õµ‰•Èè€Ä°É•ÁÌè€à°Ý•¥¡Ñ-œè€ÄÀÀô°(€€€€€ìÍ•Ñ9Õµ‰•Èè€È°É•ÁÌè€à°Ý•¥¡Ñ-œè€ÄÀÀô°(€€€€€ìÍ•Ñ9Õµ‰•Èè€Ì°É•ÁÌè€à°Ý•¥¡Ñ-œè€ÄÀÀô°(€€€t¤ì(€ô¤ì((€¥Ð ‰‘½•Ì¹½ÐµÕÑ…Ñ”Ñ¡”¥¹ÁÕÐÍÑ…Ñ”ˆ°€ ¤€ôøì(€€€½¹ÍÐ¥¹ÁÕÐ€ô½µÁ±•Ñ•MÑ…Ñ” ¤ì(€€€…ÁÁ±åAÉ½É…µ½µµ…¹¡ì(€€€€€ÍÑ…Ñ”è¥¹ÁÕÐ°(€€€€€ÁÉ½™¥±”èìÝ•¥¡Ñ-œè€àÀô°(€€€€€½µµ…¹èì(€€€€€€€­¥¹è€‰½µÁ±•Ñ•]½É­½ÕÑ…äˆ°(€€€€€€€½µµ…¹‘%è5°(€€€€€€€€¸¸¹‘…åAÉ” ¤°(€€€€€€€½µÁ±•Ñ¥½¸°(€€€€€ô°(€€€€€¹½Üè…Ñ”¹Á…ÉÍ” ˆÈÀÈØ´ÀÜ´ÄÍPÀÈèÌÀèÀÁhˆ¤°(€€€ô¤ì(€€€•áÁ•Ð¡¥¹ÁÕÐ¹Ý½É­½ÕÑÍlÁt¹½µÁ±•Ñ•¤¹Ñ½	”¡™…±Í”¤ì(€ô¤ì)ô¤ì()‘•ÍÉ¥‰” ‰…‘‘á•É¥Í•Ì€¼É•Á±…•á•É¥Í”€¡…Ñ…±½œµ‘•É¥Ù•°µ¥ÉÉ½ÉÌÁ¥¹¹•‰äÉ½ÍÌµÑ•ÍÑÌ¤ˆ°€ ¤€ôøì(€¥Ð ‰…‘‘á•É¥Í•Ì…ÁÁ•¹‘Ì…Ñ…±½œµ‘•É¥Ù••á•É¥Í•Ì…ÐÑ¡”•¹‰ä‘•™…Õ±Ðˆ°€ ¤€ôøì(€€€½¹ÍÐìÍÑ…Ñ”ô€ô…ÁÁ±ä¡ì(€€€€€­¥¹è€‰…‘‘á•É¥Í•Ìˆ°(€€€€€½µµ…¹‘%è5°(€€€€€€¸¸¹‘…åAÉ” ¤°(€€€€€•á•É¥Í•Ìèl(€€€€€€€ì•á•É¥Í•%è€‰‰•¹ µÁÉ•ÍÌˆô°(€€€€€€€ì•á•É¥Í•%è€‰™É½¹ÐµÍÅÕ…Ðˆ°Í•ÑÌè€Ð°É•ÁÌè€Ô°Ý•¥¡Ðè€àÀô°(€€€€€t°(€€€ô¤ì(€€€½¹ÍÐ•à€ôÍÑ…Ñ”¹Ý½É­½ÕÑÍlÁt¹•á•É¥Í•Ìì(€€€•áÁ•Ð¡•à¤¹Ñ½!…Ù•1•¹Ñ  Ð¤ì€¼¼¥¹ÍÐµ„°¥¹ÍÐµˆ°€¬€È…ÁÁ•¹‘•(€€€€¼¼±¥•¹Ð…‘‘•™…Õ±Ð€ Ï\ÄÃ\À¤Ý¡•¸™¥•±‘Ì½µ¥ÑÑ•(€€€•áÁ•Ð¡•álÉt¤¹Ñ½5…Ñ¡=‰©•Ð¡ì(€€€€€•á•É¥Í•%è€‰‰•¹ µÁÉ•ÍÌˆ°(€€€€€¹…µ”è€‰	•¹ AÉ•ÍÌˆ°(€€€€€Í•ÑÌè€Ì°(€€€€€É•ÁÌè€ÄÀ°(€€€€€Ý•¥¡Ðè€À°(€€€€€µ½Ù•µ•¹Ñ…Ñ•½Éäè€‰¡½É¥é½¹Ñ…±}ÁÕÍ ˆ°(€€€ô¤ì(€€€€¼¼•áÁ±¥¥ÐÁÉ•ÍÉ¥ÁÑ¥½¸¡½¹½ÕÉ•(€€€•áÁ•Ð¡•álÍt¤¹Ñ½5…Ñ¡=‰©•Ð¡ì(€€€€€•á•É¥Í•%è€‰™É½¹ÐµÍÅÕ…Ðˆ°(€€€€€Í•ÑÌè€Ð°(€€€€€É•ÁÌè€Ô°(€€€€€Ý•¥¡Ðè€àÀ°(€€€€€µ½Ù•µ•¹Ñ…Ñ•½Éäè€‰­¹••}‘½µ¥¹…¹Ðˆ°(€€€ô¤ì(€€€€¼¼‘•Ñ•Éµ¥¹¥ÍÑ¥Œ¥¹ÍÑ…¹”¥‘Ì‘•É¥Ù•™É½´Ñ¡”½µµ…¹‘%(€€€•áÁ•Ð¡•álÉt¹¥¹ÍÑ…¹•%¤¹Ñ½	”¡µ´‘í5ô´Á€¤ì(€€€•áÁ•Ð¡•álÍt¹¥¹ÍÑ…¹•%¤¹Ñ½	”¡µ´‘í5ô´Å€¤ì(€ô¤ì((€¥Ð ‰…‘‘á•É¥Í•Ì¡½¹½ÕÉÌ¥¹Í•ÉÑÐˆ°€ ¤€ôøì(€€€½¹ÍÐìÍÑ…Ñ”ô€ô…ÁÁ±ä¡ì(€€€€€­¥¹è€‰…‘‘á•É¥Í•Ìˆ°(€€€€€½µµ…¹‘%è5°(€€€€€€¸¸¹‘…åAÉ” ¤°(€€€€€•á•É¥Í•Ìèmì•á•É¥Í•%è€‰‰•¹ µÁÉ•ÍÌˆõt°(€€€€€¥¹Í•ÉÑÐè€Ä°(€€€ô¤ì(€€€•áÁ•Ð¡ÍÑ…Ñ”¹Ý½É­½ÕÑÍlÁt¹•á•É¥Í•Ì¹µ…À ¡”¤€ôø”¹¥¹ÍÑ…¹•%¤¤¹Ñ½ÅÕ…°¡l(€€€€€€‰¥¹ÍÐµ„ˆ°(€€€€€µ´‘í5ô´Á€°(€€€€€€‰¥¹ÍÐµˆˆ°(€€€t¤ì(€ô¤ì((€¥Ð ‰…‘‘á•É¥Í•ÌÉ•©•ÑÌ…¸Õ¹­¹½Ý¸…Ñ…±½œ¥Ý¥Ñ ¥¹Ù…±¥µ…ÉÕµ•¹Ðˆ°€ ¤€ôøì(€€€•áÁ•Ñ!ÑÑÁÌ (€€€€€€ ¤€ôø(€€€€€€€…ÁÁ±ä¡ì(€€€€€€€€€­¥¹è€‰…‘‘á•É¥Í•Ìˆ°(€€€€€€€€€½µµ…¹‘%è5°(€€€€€€€€€€¸¸¹‘…åAÉ” ¤°(€€€€€€€€€•á•É¥Í•Ìèmì•á•É¥Í•%è€‰¹½Ðµ„µÉ•…°µ•á•É¥Í”ˆõt°(€€€€€€€ô¤°(€€€€€€‰¥¹Ù…±¥µ…ÉÕµ•¹Ðˆ(€€€€¤ì(€ô¤ì((€¥Ð ‰É•Á±…•á•É¥Í”ÍÝ…ÁÌÑ¡”•á•É¥Í”Ý¥Ñ¡½ÕÐ…ÉÉå¥¹œ…¸Õ¹Í…™”±½…ˆ°€ ¤€ôøì(€€€½¹ÍÐìÍÑ…Ñ”ô€ô…ÁÁ±ä¡ì(€€€€€­¥¹è€‰É•Á±…•á•É¥Í”ˆ°(€€€€€½µµ…¹‘%è5°(€€€€€€¸¸¹‘…åAÉ” ¤°(€€€€€½±‘%¹ÍÑ…¹•%è€‰¥¹ÍÐµ„ˆ°€¼¼	•¹ °Í•ÑÌ€ÌÉ•ÁÌ€àÝ•¥¡Ð€ÄÀÀ(€€€€€É•Á±…•µ•¹Ñá•É¥Í•%è€‰™É½¹ÐµÍÅÕ…Ðˆ°(€€€ô¤ì(€€€½¹ÍÐ•à€ôÍÑ…Ñ”¹Ý½É­½ÕÑÍlÁt¹•á•É¥Í•Ìì(€€€•áÁ•Ð¡•à¤¹Ñ½!…Ù•1•¹Ñ  È¤ì(€€€•áÁ•Ð¡•álÁt¤¹Ñ½5…Ñ¡=‰©•Ð¡ì(€€€€€•á•É¥Í•%è€‰™É½¹ÐµÍÅÕ…Ðˆ°(€€€€€¹…µ”è€‰É½¹ÐMÅÕ…Ðˆ°(€€€€€Í•ÑÌè€Ì°(€€€€€É•ÁÌè€à°(€€€€€Ý•¥¡Ðè€À°€¼¼…É‰¥ÑÉ…ÉäÉ½ÍÌµµ½Ù•µ•¹Ð­¥±½É…µÌ…É”Õ¹…±¥‰É…Ñ•(€€€€€µ½Ù•µ•¹Ñ…Ñ•½Éäè€‰­¹••}‘½µ¥¹…¹Ðˆ°(€€€€€¥¹ÍÑ…¹•%èµ´‘í5õ€°(€€€ô¤ì(€€€•áÁ•Ð¡•álÅt¹¥¹ÍÑ…¹•%¤¹Ñ½	” ‰¥¹ÍÐµˆˆ¤ì€¼¼Õ¹Ñ½Õ¡•(€ô¤ì((€¥Ð ‰É•Á±…•á•É¥Í”¡…¹•ÌÑ¥µ•µ¡½±Õ¹¥ÑÌ…¹É•Í•ÑÌÑ¡”Ñ…É•Ð½¡•É•¹Ñ±äˆ°€ ¤€ôøì(€€€½¹ÍÐìÍÑ…Ñ”ô€ô…ÁÁ±ä¡ì(€€€€€­¥¹è€‰É•Á±…•á•É¥Í”ˆ°(€€€€€½µµ…¹‘%è5°(€€€€€€¸¸¹‘…åAÉ” ¤°(€€€€€½±‘%¹ÍÑ…¹•%è€‰¥¹ÍÐµ„ˆ°(€€€€€É•Á±…•µ•¹Ñá•É¥Í•%è€‰Á±…¹¬ˆ°(€€€ô¤ì(€€€•áÁ•Ð¡ÍÑ…Ñ”¹Ý½É­½ÕÑÍlÁt¹•á•É¥Í•ÍlÁt¤¹Ñ½5…Ñ¡=‰©•Ð¡ì(€€€€€•á•É¥Í•%è€‰Á±…¹¬ˆ°(€€€€€É•ÁÌè€ÌÀ°(€€€€€‰…Í•I•ÁÌè€ÌÀ°(€€€€€É•ÁU¹¥Ðè€‰Í•½¹‘Ìˆ°(€€€€€Ý•¥¡Ðè€À°(€€€ô¤ì(€ô¤ì((€¥Ð ‰É•Á±…•á•É¥Í”…ÉÉ¥•ÌÑ¡”Í±½ÐÌÁÉ•ÍÉ¥ÁÑ¥½¸™¥•±‘Ì€¡‰…­±½œ€ŒÜ¤ˆ°€ ¤€ôøì(€€€€¼¼¥Í•ÍÍ½Éä¹½ÜÁ¥­Ì	=Q Ñ¡”ÁÉ½É•ÍÍ¥½¸Í¡•µ”…¹Ñ¡”±½…ÍÑ•À°Í¼(€€€€¼¼‘É½ÁÁ¥¹œ¥Ð½¸„ÍÝ…ÀÍ¥±•¹Ñ±äÉ”µÁÉ¥•Ì…¸¥Í½±…Ñ¥½¸…Ì„½µÁ½Õ¹(€€€€¼¼€ È¸Ô­œ½¸„ÕÉ°¤¸‰…Í•M•ÑÌ¥ÌÑ¡”Ù½±Õµ”µÉ…µÀ…¹¡½ÈìÉ•ÁI…¹•5…à€¬(€€€€¼¼‰…Í•I•ÁÌ…É”Ñ¡”É…¹”¥Ð±¥µ‰ÌìÉ•ÍÑM•½¹‘Ì¥ÌÑ¡”…ÕÑ¡½É•É•ÍÐ¸(€€€½¹ÍÐÍÑ…Ñ”€ô‰…Í•MÑ…Ñ” ¤ì(€€€=‰©•Ð¹…ÍÍ¥¸¡ÍÑ…Ñ”¹Ý½É­½ÕÑÍlÁt¹•á•É¥Í•ÍlÁt°ì(€€€€€¥Í•ÍÍ½ÉäèÑÉÕ”°(€€€€€ÁÉ½É•ÍÍ¥½¹QåÁ”è€‰‘½Õ‰±”ˆ°(€€€€€É•ÁI…¹•5…àè€ÄÔ°(€€€€€‰…Í•I•ÁÌè€ÄÈ°(€€€€€‰…Í•M•ÑÌè€Ð°(€€€€€É•ÍÑM•½¹‘Ìè€ØÀ°(€€€€€ÁÉ••±½…‘]•¥¡Ðè€ÄÈÀ°(€€€ô¤ì(€€€½¹ÍÐ½ÕÐ€ô…ÁÁ±ä (€€€€€ì(€€€€€€€­¥¹è€‰É•Á±…•á•É¥Í”ˆ°(€€€€€€€½µµ…¹‘%è5°(€€€€€€€€¸¸¹‘…åAÉ” ¤°(€€€€€€€½±‘%¹ÍÑ…¹•%è€‰¥¹ÍÐµ„ˆ°(€€€€€€€É•Á±…•µ•¹Ñá•É¥Í•%è€‰™É½¹ÐµÍÅÕ…Ðˆ°(€€€€€ô°(€€€€€ÍÑ…Ñ”(€€€€¤ì(€€€•áÁ•Ð¡½ÕÐ¹ÍÑ…Ñ”¹Ý½É­½ÕÑÍlÁt¹•á•É¥Í•ÍlÁt¤¹Ñ½5…Ñ¡=‰©•Ð¡ì(€€€€€•á•É¥Í•%è€‰™É½¹ÐµÍÅÕ…Ðˆ°(€€€€€¥Í•ÍÍ½ÉäèÑÉÕ”°(€€€€€ÁÉ½É•ÍÍ¥½¹QåÁ”è€‰‘½Õ‰±”ˆ°(€€€€€É•ÁI…¹•5…àè€ÄÔ°(€€€€€‰…Í•I•ÁÌè€ÄÈ°(€€€€€‰…Í•M•ÑÌè€Ð°(€€€€€É•ÍÑM•½¹‘Ìè€ØÀ°(€€€ô¤ì(€€€€¼¼ÁÉ••±½…‘]•¥¡Ð‘•±¥‰•É…Ñ•±ä‘½•Ì9=P…ÉÉäƒŠPÑ¡”É•Á±…•µ•¹Ð­••ÁÌ¥ÑÌ(€€€€¼¼‘•±½…‘•±½…É…Ñ¡•ÈÑ¡…¸©ÕµÁ¥¹œÑ¼„Ý•¥¡Ð¥Ð¹•Ù•È±¥™Ñ•¸(€€€•áÁ•Ð ‰ÁÉ••±½…‘]•¥¡Ðˆ¥¸½ÕÐ¹ÍÑ…Ñ”¹Ý½É­½ÕÑÍlÁt¹•á•É¥Í•ÍlÁt¤¹Ñ½	”¡™…±Í”¤ì(€ô¤ì((€¥Ð ‰É•Á±…•á•É¥Í”É•©•ÑÌ…¸Õ¹­¹½Ý¸½±¥¹ÍÑ…¹”¥ˆ°€ ¤€ôøì(€€€•áÁ•Ñ!ÑÑÁÌ (€€€€€€ ¤€ôø(€€€€€€€…ÁÁ±ä¡ì(€€€€€€€€€­¥¹è€‰É•Á±…•á•É¥Í”ˆ°(€€€€€€€€€½µµ…¹‘%è5°(€€€€€€€€€€¸¸¹‘…åAÉ” ¤°(€€€€€€€€€½±‘%¹ÍÑ…¹•%è€‰¥¹ÍÐµàˆ°(€€€€€€€€€É•Á±…•µ•¹Ñá•É¥Í•%è€‰™É½¹ÐµÍÅÕ…Ðˆ°(€€€€€€€ô¤°(€€€€€€‰™…¥±•µÁÉ•½¹‘¥Ñ¥½¸ˆ(€€€€¤ì(€ô¤ì((€¥Ð ‰É•Á±…•á•É¥Í”É•©•ÑÌ…¸Õ¹­¹½Ý¸É•Á±…•µ•¹Ð…Ñ…±½œ¥ˆ°€ ¤€ôøì(€€€•áÁ•Ñ!ÑÑÁÌ (€€€€€€ ¤€ôø(€€€€€€€…ÁÁ±ä¡ì(€€€€€€€€€­¥¹è€‰É•Á±…•á•É¥Í”ˆ°(€€€€€€€€€½µµ…¹‘%è5°(€€€€€€€€€€¸¸¹‘…åAÉ” ¤°(€€€€€€€€€½±‘%¹ÍÑ…¹•%è€‰¥¹ÍÐµ„ˆ°(€€€€€€€€€É•Á±…•µ•¹Ñá•É¥Í•%è€‰¹½Ðµ„µÉ•…°µ•á•É¥Í”ˆ°(€€€€€€€ô¤°(€€€€€€‰¥¹Ù…±¥µ…ÉÕµ•¹Ðˆ(€€€€¤ì(€ô¤ì((€¥Ð ‰‘½•Ì¹½ÐµÕÑ…Ñ”Ñ¡”¥¹ÁÕÐÍÑ…Ñ”ˆ°€ ¤€ôøì(€€€½¹ÍÐ¥¹ÁÕÐ€ô‰…Í•MÑ…Ñ” ¤ì(€€€…ÁÁ±ä (€€€€€ì(€€€€€€€­¥¹è€‰…‘‘á•É¥Í•Ìˆ°(€€€€€€€½µµ…¹‘%è5°(€€€€€€€€¸¸¹‘…åAÉ” ¤°(€€€€€€€•á•É¥Í•Ìèmì•á•É¥Í•%è€‰‰•¹ µÁÉ•ÍÌˆõt°(€€€€€ô°(€€€€€¥¹ÁÕÐ(€€€€¤ì(€€€•áÁ•Ð¡¥¹ÁÕÐ¹Ý½É­½ÕÑÍlÁt¹•á•É¥Í•Ì¤¹Ñ½!…Ù•1•¹Ñ  È¤ì(€ô¤ì)ô¤ì()‘•ÍÉ¥‰” ‰±½á•É¥Í”€¡É•‘Õ•ÈÝ¥É¥¹œƒŠPÁÉ½É•ÍÍ¥½¸µ…Ñ Á¥¹¹•‰äÉ½ÍÌµÑ•ÍÐ¤ˆ°€ ¤€ôøì(€™Õ¹Ñ¥½¸±½µ¡½Ù•ÉÉ¥‘•Ì¤ì(€€€É•ÑÕÉ¸ì(€€€€€­¥¹è€‰±½á•É¥Í”ˆ°(€€€€€½µµ…¹‘%è5°(€€€€€€¸¸¹‘…åAÉ” ¤°(€€€€€•á•É¥Í•%¹ÍÑ…¹•%è€‰¥¹ÍÐµ„ˆ°(€€€€€…ÑÕ…°èìÝ•¥¡Ðè€ÄÀÀ°É•ÁÌè€à°½µÁ±•Ñ•èÑÉÕ”ô°(€€€€€€¸¸¹½Ù•ÉÉ¥‘•Ì°(€€€ôì(€ô((€¥Ð ‰…ÕÑ½AÉ½É•ÍÍ¥½¸½¸è…ÁÁ±¥•ÌÁÉ½É•ÍÍ¥½¸Ñ¼Ñ¡”Ñ…É•Ð•á•É¥Í”ˆ°€ ¤€ôøì(€€€€¼¼¥¹ÍÐµ„è±¥¹•…È€¡¹¼ÁÉ½É•ÍÍ¥½¹QåÁ”¤°µ¥É½±½…‘¥¹œ½¸°½µÁ±•Ñ•Í•Ð…Ð(€€€€¼¼ÁÉ•ÍÉ¥ÁÑ¥½¸ƒŠH€¬Å­œµ¥É½±½…€¡±¥•¹Ð…ÁÁ±åAÉ½É•ÍÍ¥½¸ÉÕ±”¤¸(€€€½¹ÍÐìÍÑ…Ñ”ô€ô…ÁÁ±ä¡±½µ ¤¤ì(€€€½¹ÍÐÉ½Ü€ôÍÑ…Ñ”¹Ý½É­½ÕÑÍlÁt¹•á•É¥Í•Ì¹™¥¹ (€€€€€€¡”¤€ôø”¹¥¹ÍÑ…¹•%€ôôô€‰¥¹ÍÐµ„ˆ(€€€€¤ì(€€€•áÁ•Ð¡É½Ü¹Ý•¥¡Ð¤¹Ñ½	” ÄÀÄ¤ì(€€€•áÁ•Ð¡É½Ü¹±…ÍÑÑÑ•µÁÑ•‘]•¥¡Ð¤¹Ñ½	” ÄÀÀ¤ì(€€€•áÁ•Ð¡É½Ü¹Á•É™½Éµ…¹•!¥ÍÑ½Éä¤¹Ñ½!…Ù•1•¹Ñ  Ä¤ì(€ô¤ì((€¥Ð ‰…ÕÑ½AÉ½É•ÍÍ¥½¸½™˜èÉ•½É‘ÌÑ¡”…ÑÑ•µÁÐÝ¥Ñ¡½ÕÐ¡…¹¥¹œÁÉ•ÍÉ¥ÁÑ¥½¸ˆ°€ ¤€ôøì(€€€½¹ÍÐÌ€ô‰…Í•MÑ…Ñ” ¤ì(€€€Ì¹Í•ÑÑ¥¹Ì€ôì…ÕÑ½AÉ½É•ÍÍ¥½¸è™…±Í”°µ¥É½±½…‘¥¹œèÑÉÕ”ôì(€€€½¹ÍÐìÍÑ…Ñ”ô€ô…ÁÁ±ä¡±½µ ¤°Ì¤ì(€€€½¹ÍÐÉ½Ü€ôÍÑ…Ñ”¹Ý½É­½ÕÑÍlÁt¹•á•É¥Í•Ì¹™¥¹ (€€€€€€¡”¤€ôø”¹¥¹ÍÑ…¹•%€ôôô€‰¥¹ÍÐµ„ˆ(€€€€¤ì(€€€•áÁ•Ð¡É½Ü¹Ý•¥¡Ð¤¹Ñ½	” ÄÀÀ¤ì€¼¼Õ¹¡…¹•(€€€•áÁ•Ð¡É½Ü¹±…ÍÑÑÑ•µÁÑ•‘]•¥¡Ð¤¹Ñ½	” ÄÀÀ¤ì(€€€•áÁ•Ð¡É½Ü¹±…ÍÑA•É™½Éµ…¹”¤¹Ñ½ÅÕ…°¡ì(€€€€€Í•ÑÌè€Ì°(€€€€€É•ÁÌè€à°(€€€€€Ý•¥¡Ðè€ÄÀÀ°(€€€€€½µÁ±•Ñ•èÑÉÕ”°(€€€ô¤ì(€ô¤ì((€¥Ð ‰½¹±äÑ¡”Ñ…É•Ð•á•É¥Í”¡…¹•ÌìÑ¡”½Ñ¡•È¥ÌÕ¹Ñ½Õ¡•ˆ°€ ¤€ôøì(€€€½¹ÍÐìÍÑ…Ñ”ô€ô…ÁÁ±ä¡±½µ ¤¤ì(€€€½¹ÍÐ½Ñ¡•È€ôÍÑ…Ñ”¹Ý½É­½ÕÑÍlÁt¹•á•É¥Í•Ì¹™¥¹ (€€€€€€¡”¤€ôø”¹¥¹ÍÑ…¹•%€ôôô€‰¥¹ÍÐµˆˆ(€€€€¤ì(€€€•áÁ•Ð¡½Ñ¡•È¹Ý•¥¡Ð¤¹Ñ½	” ØÀ¤ì(€€€•áÁ•Ð¡½Ñ¡•È¹±…ÍÑÑÑ•µÁÑ•‘]•¥¡Ð¤¹Ñ½	•U¹‘•™¥¹• ¤ì(€ô¤ì((€¥Ð ‰É•©•ÑÌ…¸Õ¹­¹½Ý¸•á•É¥Í”¥¹ÍÑ…¹”¥ˆ°€ ¤€ôøì(€€€•áÁ•Ñ!ÑÑÁÌ (€€€€€€ ¤€ôø…ÁÁ±ä¡±½µ¡ì•á•É¥Í•%¹ÍÑ…¹•%è€‰¥¹ÍÐµàˆô¤¤°(€€€€€€‰™…¥±•µÁÉ•½¹‘¥Ñ¥½¸ˆ(€€€€¤ì(€ô¤ì((€¥Ð ‰‘½•Ì¹½ÐµÕÑ…Ñ”Ñ¡”¥¹ÁÕÐÍÑ…Ñ”ˆ°€ ¤€ôøì(€€€½¹ÍÐ¥¹ÁÕÐ€ô‰…Í•MÑ…Ñ” ¤ì(€€€…ÁÁ±ä¡±½µ ¤°¥¹ÁÕÐ¤ì(€€€•áÁ•Ð¡¥¹ÁÕÐ¹Ý½É­½ÕÑÍlÁt¹•á•É¥Í•ÍlÁt¹Ý•¥¡Ð¤¹Ñ½	” ÄÀÀ¤ì(€ô¤ì)ô¤ì()‘•ÍÉ¥‰” ‰‘•±½…Ý••¬½µµ…¹‘Ì€¡AI=I4µ1=´ÀÄ¤ˆ°€ ¤€ôøì(€½¹ÍÐ…ÁÁ±åµ€ô€¡½Ù•ÉÉ¥‘•Ì¤€ôø€¡ì(€€€­¥¹è€‰…ÁÁ±å•±½…‘]••¬ˆ°(€€€½µµ…¹‘%è5°(€€€•áÁ•Ñ•‘]••­9Õµ‰•Èè€Ô°(€€€€¸¸¹½Ù•ÉÉ¥‘•Ì°(€ô¤ì(€½¹ÍÐÉ•Ù•ÉÑµ€ô€¡½Ù•ÉÉ¥‘•Ì¤€ôø€¡ì(€€€­¥¹è€‰É•Ù•ÉÑ•±½…‘]••¬ˆ°(€€€½µµ…¹‘%è5°(€€€•áÁ•Ñ•‘]••­9Õµ‰•Èè€Ô°(€€€€¸¸¹½Ù•ÉÉ¥‘•Ì°(€ô¤ì((€¥Ð ‰…ÁÁ±¥•ÌÑ¡”µ¥ÉÉ½É•ÑÉ…¹Í™½É´èƒŠ"HÄÍ•Ð€¡™±½½È€È¤°Ý•¥¡Ðƒ\À¸àÔƒŠH¹•…É•ÍÐ€È¸Ôˆ°€ ¤€ôøì(€€€½¹ÍÐìÍÑ…Ñ”ô€ô…ÁÁ±ä¡…ÁÁ±åµ ¤¤ì(€€€½¹ÍÐmÁÕÍ °±•Ít€ôÍÑ…Ñ”¹Ý½É­½ÕÑÌì(€€€€¼¼€ÄÀÀƒ\À¸àÔ€ô€àÔ€¡…±É•…‘ä½¸Ñ¡”€È¸ÔÉ¥¤(€€€•áÁ•Ð¡ÁÕÍ ¹•á•É¥Í•ÍlÁt¤¹Ñ½5…Ñ¡=‰©•Ð¡ìÍ•ÑÌè€È°Ý•¥¡Ðè€àÔô¤ì(€€€€¼¼€ØÀƒ\À¸àÔ€ô€ÔÄƒŠH€ÔÀ(€€€•áÁ•Ð¡ÁÕÍ ¹•á•É¥Í•ÍlÅt¤¹Ñ½5…Ñ¡=‰©•Ð¡ìÍ•ÑÌè€È°Ý•¥¡Ðè€ÔÀô¤ì(€€€€¼¼€ÄÐÀƒ\À¸àÔ€ô€ÄÄäƒŠH€ÄÈÀ(€€€•áÁ•Ð¡±•Ì¹•á•É¥Í•ÍlÁt¤¹Ñ½5…Ñ¡=‰©•Ð¡ìÍ•ÑÌè€È°Ý•¥¡Ðè€ÄÈÀô¤ì(€ô¤ì((€¥Ð ‰Á½ÍÐµ¹½Ù¥”±¥™Ñ•ÉÌ•ÐÑ¡”Ù½±Õµ”É•¥Á”¥¹ÍÑ•…€¡‰…­±½œ€Œà¤ˆ°€ ¤€ôøì(€€€€¼¼!•±µÌ Ðè¥¹Ñ•Éµ•‘¥…Ñ”¬Ñ…­”ù¡…±˜Ñ¡”Ù½±Õµ”…ÐÑ¡”M5±½…°Í¼Ñ¡”(€€€€¼¼É•‘Õ•ÈµÕÍÐÉ•…ÁÉ½™¥±”¹•áÁ•É¥•¹”¸¸…‰Í•¹Ð½Õ¹­¹½Ý¸Ù…±Õ”ÍÑ…åÌ½¸(€€€€¼¼Ñ¡”¹½Ù¥”É•¥Á”Ñ¡”ÑÝ¼Ñ•ÍÑÌ•¥Ñ¡•ÈÍ¥‘”½˜Ñ¡¥Ì½¹”Á¥¸¸(€€€½¹ÍÐÝ¥Ñ¡áÁ•É¥•¹”€ô€¡•áÁ•É¥•¹”¤€ôø(€€€€€…ÁÁ±åAÉ½É…µ½µµ…¹¡ì(€€€€€€€ÍÑ…Ñ”è‰…Í•MÑ…Ñ” ¤°(€€€€€€€ÁÉ½™¥±”èì•áÁ•É¥•¹”ô°(€€€€€€€½µµ…¹è…ÁÁ±åµ ¤°(€€€€€€€¹½Üè9=\°(€€€€€ô¤¹ÍÑ…Ñ”¹Ý½É­½ÕÑÌì((€€€½¹ÍÐ¥¹Ñ•È€ôÝ¥Ñ¡áÁ•É¥•¹” ‰¥¹Ñ•Éµ•‘¥…Ñ”ˆ¤ì(€€€€¼¼AÕÍ è‰•¹ €Ï\ã\ÄÀÀƒŠH€Ë\Û\ÄÀÀìÉ½Ü€Ï\ÄÃ\ØÀƒŠH€Ë\ã\ØÀ(€€€•áÁ•Ð¡¥¹Ñ•ÉlÁt¹•á•É¥Í•ÍlÁt¤¹Ñ½5…Ñ¡=‰©•Ð¡ì(€€€€€Í•ÑÌè€È°(€€€€€É•ÁÌè€Ø°(€€€€€Ý•¥¡Ðè€ÄÀÀ°(€€€ô¤ì(€€€•áÁ•Ð¡¥¹Ñ•ÉlÁt¹•á•É¥Í•ÍlÅt¤¹Ñ½5…Ñ¡=‰©•Ð¡ì(€€€€€Í•ÑÌè€È°(€€€€€É•ÁÌè€à°(€€€€€Ý•¥¡Ðè€ØÀ°(€€€ô¤ì(€€€€¼¼1•ÌèÍÅÕ…Ð€Ï\×\ÄÐÀƒŠH€Ë\Ï\ÄÐÀ€¡É•À™±½½È¥Ì€Ì¤(€€€•áÁ•Ð¡¥¹Ñ•ÉlÅt¹•á•É¥Í•ÍlÁt¤¹Ñ½5…Ñ¡=‰©•Ð¡ì(€€€€€Í•ÑÌè€È°(€€€€€É•ÁÌè€Ì°(€€€€€Ý•¥¡Ðè€ÄÐÀ°(€€€ô¤ì((€€€•áÁ•Ð¡Ý¥Ñ¡áÁ•É¥•¹” ‰…‘Ù…¹•ˆ¤¤¹Ñ½ÅÕ…°¡¥¹Ñ•È¤ì(€€€€¼¼U¹­¹½Ý¸€¼…‰Í•¹ÐƒŠH¹½Ù¥”É•¥Á”€¡±½…ÕÐ°É•ÁÌÕ¹Ñ½Õ¡•¤(€€€•áÁ•Ð¡Ý¥Ñ¡áÁ•É¥•¹” ‰¹½¹Í•¹Í”ˆ¥lÁt¹•á•É¥Í•ÍlÁt¤¹Ñ½5…Ñ¡=‰©•Ð¡ì(€€€€€Í•ÑÌè€È°(€€€€€É•ÁÌè€à°(€€€€€Ý•¥¡Ðè€àÔ°(€€€ô¤ì(€€€•áÁ•Ð¡Ý¥Ñ¡áÁ•É¥•¹”¡Õ¹‘•™¥¹•¥lÁt¹•á•É¥Í•ÍlÁt¤¹Ñ½5…Ñ¡=‰©•Ð¡ì(€€€€€Ý•¥¡Ðè€àÔ°(€€€ô¤ì(€ô¤ì((€¥Ð ‰Í•ÑÌÕÉÉ•¹ÑA¡…Í”‘•±½…°±•…ÉÌ™…Ñ¥Õ”°ÍÑ…µÁÌÕÁ‘…Ñ•‘Ðˆ°€ ¤€ôøì(€€€½¹ÍÐ¥¹ÁÕÐ€ô‰…Í•MÑ…Ñ” ¤ì(€€€¥¹ÁÕÐ¹™…Ñ¥Õ•M½É”€ô€Üì(€€€½¹ÍÐìÍÑ…Ñ”ô€ô…ÁÁ±ä¡…ÁÁ±åµ ¤°¥¹ÁÕÐ¤ì(€€€•áÁ•Ð¡ÍÑ…Ñ”¹ÕÉÉ•¹ÑA¡…Í”¤¹Ñ½	” ‰‘•±½…ˆ¤ì(€€€•áÁ•Ð¡ÍÑ…Ñ”¹™…Ñ¥Õ•M½É”¤¹Ñ½	” À¤ì(€€€•áÁ•Ð¡ÍÑ…Ñ”¹ÕÁ‘…Ñ•‘Ð¤¹Ñ½	”¡9=\¤ì(€ô¤ì((€¥Ð ‰ÍÑ…Í¡•ÌÑ¡”ÁÉ”µ‘•±½…Í¹…ÁÍ¡½Ð™½ÈÕ¹‘¼ˆ°€ ¤€ôøì(€€€½¹ÍÐ¥¹ÁÕÐ€ô‰…Í•MÑ…Ñ” ¤ì(€€€¥¹ÁÕÐ¹™…Ñ¥Õ•M½É”€ô€Üì(€€€½¹ÍÐìÍÑ…Ñ”ô€ô…ÁÁ±ä¡…ÁÁ±åµ ¤°¥¹ÁÕÐ¤ì(€€€•áÁ•Ð¡ÍÑ…Ñ”¹‘•±½…‘M¹…ÁÍ¡½Ð¤¹Ñ½5…Ñ¡=‰©•Ð¡ì(€€€€€Ý••­9Õµ‰•Èè€Ô°(€€€€€ÕÉÉ•¹ÑA¡…Í”è€‰ÁÉ½É•ÍÍ¥½¸ˆ°(€€€€€™…Ñ¥Õ•M½É”è€Ü°(€€€€€…ÁÁ±¥•‘Ðè9=\°(€€€ô¤ì(€€€•áÁ•Ð¡ÍÑ…Ñ”¹‘•±½…‘M¹…ÁÍ¡½Ð¹Ý½É­½ÕÑÌ¤¹Ñ½ÅÕ…°¡‰…Í•MÑ…Ñ” ¤¹Ý½É­½ÕÑÌ¤ì(€ô¤ì((€¥Ð ‰É•©•ÑÌ„Í•½¹…ÁÁ±äƒŠP¹¼ƒ\À¸à×
-È½µÁ½Õ¹‘¥¹œˆ°€ ¤€ôøì(€€€½¹ÍÐìÍÑ…Ñ”ô€ô…ÁÁ±ä¡…ÁÁ±åµ ¤¤ì(€€€•áÁ•Ñ!ÑÑÁÌ  ¤€ôø…ÁÁ±ä¡…ÁÁ±åµ ¤°ÍÑ…Ñ”¤°€‰™…¥±•µÁÉ•½¹‘¥Ñ¥½¸ˆ¤ì(€ô¤ì((€¥Ð ‰É•©•ÑÌ„ÍÑ…±”Ý••¬ÕÉÍ½Èˆ°€ ¤€ôøì(€€€•áÁ•Ñ!ÑÑÁÌ (€€€€€€ ¤€ôø…ÁÁ±ä¡…ÁÁ±åµ¡ì•áÁ•Ñ•‘]••­9Õµ‰•Èè€Ðô¤¤°(€€€€€€‰™…¥±•µÁÉ•½¹‘¥Ñ¥½¸ˆ(€€€€¤ì(€€€•áÁ•Ñ!ÑÑÁÌ (€€€€€€ ¤€ôø…ÁÁ±ä¡É•Ù•ÉÑµ¡ì•áÁ•Ñ•‘]••­9Õµ‰•Èè€Ðô¤¤°(€€€€€€‰™…¥±•µÁÉ•½¹‘¥Ñ¥½¸ˆ(€€€€¤ì(€ô¤ì((€¥Ð ‰É•Ù•ÉÐÉ•ÍÑ½É•ÌÑ¡”ÍÑ…Í •á…Ñ±ä…¹É•µ½Ù•Ì¥Ðˆ°€ ¤€ôøì(€€€½¹ÍÐ¥¹ÁÕÐ€ô‰…Í•MÑ…Ñ” ¤ì(€€€¥¹ÁÕÐ¹™…Ñ¥Õ•M½É”€ô€Üì(€€€½¹ÍÐìÍÑ…Ñ”è‘•±½…‘•ô€ô…ÁÁ±ä¡…ÁÁ±åµ ¤°¥¹ÁÕÐ¤ì(€€€½¹ÍÐìÍÑ…Ñ”èÉ•Ù•ÉÑ•ô€ô…ÁÁ±ä¡É•Ù•ÉÑµ ¤°‘•±½…‘•¤ì(€€€•áÁ•Ð¡É•Ù•ÉÑ•¹Ý½É­½ÕÑÌ¤¹Ñ½ÅÕ…°¡‰…Í•MÑ…Ñ” ¤¹Ý½É­½ÕÑÌ¤ì(€€€•áÁ•Ð¡É•Ù•ÉÑ•¹ÕÉÉ•¹ÑA¡…Í”¤¹Ñ½	” ‰ÁÉ½É•ÍÍ¥½¸ˆ¤ì(€€€•áÁ•Ð¡É•Ù•ÉÑ•¹™…Ñ¥Õ•M½É”¤¹Ñ½	” Ü¤ì(€€€•áÁ•Ð ‰‘•±½…‘M¹…ÁÍ¡½Ðˆ¥¸É•Ù•ÉÑ•¤¹Ñ½	”¡™…±Í”¤ì(€ô¤ì((€¥Ð ‰É•Ù•ÉÐÝ¥Ñ¡½ÕÐ„Í¹…ÁÍ¡½ÐÉ•©•ÑÌˆ°€ ¤€ôøì(€€€•áÁ•Ñ!ÑÑÁÌ  ¤€ôø…ÁÁ±ä¡É•Ù•ÉÑµ ¤¤°€‰™…¥±•µÁÉ•½¹‘¥Ñ¥½¸ˆ¤ì(€ô¤ì((€¥Ð ‰É•Ù•ÉÐÝ¥Ñ „Í¹…ÁÍ¡½Ð™É½´…¹½Ñ¡•ÈÝ••¬É•©•ÑÌ€¡¥¹•ÉÐ…™Ñ•ÈÉ½±±½Ù•È¤ˆ°€ ¤€ôøì(€€€½¹ÍÐìÍÑ…Ñ”è‘•±½…‘•ô€ô…ÁÁ±ä¡…ÁÁ±åµ ¤¤ì(€€€€¼¼M¥µÕ±…Ñ”„É½±±½Ù•ÈèÑ¡”ÕÉÍ½Èµ½Ù•½¸‰ÕÐÑ¡”ÍÑ…±”ÍÑ…Í É•µ…¥¹Ì¸(€€€½¹ÍÐÉ½±±•€ôì€¸¸¹‘•±½…‘•°Ý••­9Õµ‰•Èè€Ø°ÕÉÉ•¹ÑA¡…Í”è€‰ÁÉ½É•ÍÍ¥½¸ˆôì(€€€•áÁ•Ñ!ÑÑÁÌ (€€€€€€ ¤€ôø…ÁÁ±ä¡É•Ù•ÉÑµ¡ì•áÁ•Ñ•‘]••­9Õµ‰•Èè€Øô¤°É½±±•¤°(€€€€€€‰™…¥±•µÁÉ•½¹‘¥Ñ¥½¸ˆ(€€€€¤ì(€ô¤ì((€¥Ð ‰‘½•Ì¹½ÐµÕÑ…Ñ”Ñ¡”¥¹ÁÕÐÍÑ…Ñ”ˆ°€ ¤€ôøì(€€€½¹ÍÐ¥¹ÁÕÐ€ô‰…Í•MÑ…Ñ” ¤ì(€€€…ÁÁ±ä¡…ÁÁ±åµ ¤°¥¹ÁÕÐ¤ì(€€€•áÁ•Ð¡¥¹ÁÕÐ¹Ý½É­½ÕÑÍlÁt¹•á•É¥Í•ÍlÁt¤¹Ñ½5…Ñ¡=‰©•Ð¡ì(€€€€€Í•ÑÌè€Ì°(€€€€€Ý•¥¡Ðè€ÄÀÀ°(€€€ô¤ì(€€€•áÁ•Ð¡¥¹ÁÕÐ¹ÕÉÉ•¹ÑA¡…Í”¤¹Ñ½	” ‰ÁÉ½É•ÍÍ¥½¸ˆ¤ì(€€€•áÁ•Ð ‰‘•±½…‘M¹…ÁÍ¡½Ðˆ¥¸¥¹ÁÕÐ¤¹Ñ½	”¡™…±Í”¤ì(€ô¤ì)ô¤ì
+});
+
+describe("every declared client kind round-trips", () => {
+  it("CLIENT_COMMAND_KINDS matches the validated set (no orphan kind)", () => {
+    expect(new Set(CLIENT_COMMAND_KINDS)).toEqual(
+      new Set([
+        "completeWorkoutDay",
+        "skipWorkoutDay",
+        "setNextWorkout",
+        "logExercise",
+        "removeExercise",
+        "addExercises",
+        "replaceExercise",
+        "updateExercise",
+        "reorderExercises",
+        "setProgramSettings",
+        "setProgramGoalMirror",
+        "setManualRunCompletion",
+        "transitionRunDay",
+        "overrideRunDay",
+        "applyDeloadWeek",
+        "revertDeloadWeek",
+      ])
+    );
+  });
+});
+
+describe("makeCommandReceipt", () => {
+  it("holds only kind + timestamps with 31-day retention", () => {
+    const now = 1_700_000_000_000;
+    const receipt = makeCommandReceipt({
+      command: { kind: "skipWorkoutDay" },
+      now,
+    });
+    expect(receipt).toEqual({
+      kind: "skipWorkoutDay",
+      appliedAt: now,
+      cleanupAfter: now + PROGRAM_COMMAND_RECEIPT_RETENTION_MS,
+    });
+    expect(PROGRAM_COMMAND_RECEIPT_RETENTION_MS).toBe(31 * 24 * 60 * 60 * 1000);
+  });
+
+  it("never leaks the command payload into the receipt", () => {
+    const receipt = makeCommandReceipt({
+      command: { kind: "logExercise", actual: { weight: 999 } },
+      now: 1,
+    });
+    expect(Object.keys(receipt).sort()).toEqual([
+      "appliedAt",
+      "cleanupAfter",
+      "kind",
+    ]);
+  });
+
+  it("rejects a missing kind or non-finite timestamp", () => {
+    expect(() => makeCommandReceipt({ command: {}, now: 1 })).toThrow(
+      ProgramCommandError
+    );
+    expect(() =>
+      makeCommandReceipt({ command: { kind: "skipWorkoutDay" }, now: NaN })
+    ).toThrow(ProgramCommandError);
+  });
+});
+
+// ===========================================================================
+// Reducer (applyProgramCommand) â€” packet 18, PR2
+// ===========================================================================
+
+const NOW = 2_000_000;
+
+function baseState() {
+  return {
+    goal: "recomp",
+    currentPhase: "progression",
+    weekNumber: 5,
+    splitType: "upper_lower",
+    fatigueScore: 0,
+    updatedAt: 1000,
+    settings: { autoProgression: true, microloading: true },
+    weekHistory: [],
+    workouts: [
+      {
+        dayName: "Push",
+        dayType: "push",
+        completed: false,
+        skipped: false,
+        exercises: [
+          {
+            name: "Bench",
+            exerciseId: "bench",
+            instanceId: "inst-a",
+            sets: 3,
+            reps: 8,
+            weight: 100,
+          },
+          {
+            name: "Row",
+            exerciseId: "row",
+            instanceId: "inst-b",
+            sets: 3,
+            reps: 10,
+            weight: 60,
+          },
+        ],
+      },
+      {
+        dayName: "Legs",
+        dayType: "legs",
+        completed: false,
+        skipped: false,
+        exercises: [
+          {
+            name: "Squat",
+            exerciseId: "squat",
+            instanceId: "inst-c",
+            sets: 3,
+            reps: 5,
+            weight: 140,
+          },
+        ],
+      },
+    ],
+    runDays: [
+      {
+        id: "run-1",
+        dayIndex: 2,
+        templateId: "easy_30",
+        type: "easy",
+        status: "planned",
+        completed: false,
+      },
+      {
+        id: "run-2",
+        dayIndex: 4,
+        templateId: "tempo_20",
+        type: "tempo",
+        status: "skipped",
+        completed: false,
+      },
+    ],
+    manualCompletions: {},
+  };
+}
+
+const PUSH_SIG = "Push|inst-a|inst-b";
+const CMD = "cmd_reducer0123456789";
+
+function dayPre(overrides) {
+  return {
+    dayIndex: 0,
+    expectedWeekNumber: 5,
+    expectedDaySignature: PUSH_SIG,
+    ...overrides,
+  };
+}
+
+function apply(command, state) {
+  return applyProgramCommand({
+    state: state || baseState(),
+    profile: {},
+    command,
+    now: NOW,
+  });
+}
+
+function expectHttps(fn, httpsCode) {
+  let thrown;
+  try {
+    fn();
+  } catch (error) {
+    thrown = error;
+  }
+  expect(thrown).toBeDefined();
+  expect(isProgramCommandError(thrown)).toBe(true);
+  expect(thrown.httpsCode).toBe(httpsCode);
+  return thrown;
+}
+
+describe("workoutDaySignature", () => {
+  it("is dayName joined with exercise instanceIds by |", () => {
+    expect(workoutDaySignature(baseState().workouts[0])).toBe(PUSH_SIG);
+    expect(workoutDaySignature(baseState().workouts[1])).toBe("Legs|inst-c");
+  });
+});
+
+describe("applyProgramCommand â€” envelope", () => {
+  it("rejects a non-finite now with invalid-argument", () => {
+    expectHttps(
+      () =>
+        applyProgramCommand({
+          state: baseState(),
+          command: { kind: "skipWorkoutDay", commandId: CMD, ...dayPre() },
+          now: NaN,
+        }),
+      "invalid-argument"
+    );
+  });
+
+  it("stamps updatedAt = now and returns empty effects", () => {
+    const { state, effects } = apply({
+      kind: "skipWorkoutDay",
+      commandId: CMD,
+      ...dayPre(),
+    });
+    expect(state.updatedAt).toBe(NOW);
+    expect(effects).toEqual({});
+  });
+
+  it("does not mutate the input state (immutability)", () => {
+    const input = baseState();
+    apply({ kind: "skipWorkoutDay", commandId: CMD, ...dayPre() }, input);
+    expect(input.workouts[0].skipped).toBe(false);
+  });
+});
+
+describe("WorkoutDayPrecondition enforcement", () => {
+  it("rejects a stale week number with failed-precondition", () => {
+    expectHttps(
+      () =>
+        apply({
+          kind: "skipWorkoutDay",
+          commandId: CMD,
+          ...dayPre({ expectedWeekNumber: 4 }),
+        }),
+      "failed-precondition"
+    );
+  });
+
+  it("rejects a stale day signature with failed-precondition", () => {
+    expectHttps(
+      () =>
+        apply({
+          kind: "skipWorkoutDay",
+          commandId: CMD,
+          ...dayPre({ expectedDaySignature: "Push|inst-a" }),
+        }),
+      "failed-precondition"
+    );
+  });
+
+  it("rejects an out-of-range day index with failed-precondition", () => {
+    expectHttps(
+      () =>
+        apply({
+          kind: "skipWorkoutDay",
+          commandId: CMD,
+          ...dayPre({ dayIndex: 9 }),
+        }),
+      "failed-precondition"
+    );
+  });
+});
+
+describe("workout-day commands", () => {
+  it("skipWorkoutDay sets skipped on only the target day", () => {
+    const { state } = apply({
+      kind: "skipWorkoutDay",
+      commandId: CMD,
+      ...dayPre(),
+    });
+    expect(state.workouts[0].skipped).toBe(true);
+    expect(state.workouts[0].completed).toBe(false);
+    expect(state.workouts[1].skipped).toBe(false);
+  });
+
+  it("setNextWorkout sets nextWorkoutOverride", () => {
+    const { state } = apply({
+      kind: "setNextWorkout",
+      commandId: CMD,
+      ...dayPre(),
+    });
+    expect(state.nextWorkoutOverride).toBe(0);
+  });
+
+  it("removeExercise drops the targeted instance, preserving the other", () => {
+    const { state } = apply({
+      kind: "removeExercise",
+      commandId: CMD,
+      ...dayPre(),
+      exerciseInstanceId: "inst-a",
+    });
+    expect(state.workouts[0].exercises.map((e) => e.instanceId)).toEqual([
+      "inst-b",
+    ]);
+  });
+
+  it("removeExercise rejects an unknown instance id", () => {
+    expectHttps(
+      () =>
+        apply({
+          kind: "removeExercise",
+          commandId: CMD,
+          ...dayPre(),
+          exerciseInstanceId: "inst-x",
+        }),
+      "failed-precondition"
+    );
+  });
+
+  it("updateExercise merges only the bounded patch", () => {
+    const { state } = apply({
+      kind: "updateExercise",
+      commandId: CMD,
+      ...dayPre(),
+      exerciseInstanceId: "inst-b",
+      patch: { weight: 65 },
+    });
+    const row = state.workouts[0].exercises.find(
+      (e) => e.instanceId === "inst-b"
+    );
+    expect(row.weight).toBe(65);
+    expect(row.reps).toBe(10); // untouched
+    expect(row.name).toBe("Row");
+  });
+
+  it("reorderExercises rearranges to the requested order", () => {
+    const { state } = apply({
+      kind: "reorderExercises",
+      commandId: CMD,
+      ...dayPre(),
+      orderedInstanceIds: ["inst-b", "inst-a"],
+    });
+    expect(state.workouts[0].exercises.map((e) => e.instanceId)).toEqual([
+      "inst-b",
+      "inst-a",
+    ]);
+  });
+
+  it("reorderExercises rejects a set that isn't the day's exact instances", () => {
+    expectHttps(
+      () =>
+        apply({
+          kind: "reorderExercises",
+          commandId: CMD,
+          ...dayPre(),
+          orderedInstanceIds: ["inst-a", "inst-x"],
+        }),
+      "failed-precondition"
+    );
+  });
+});
+
+describe("preconditionless field commands", () => {
+  it("setProgramSettings replaces settings", () => {
+    const { state } = apply({
+      kind: "setProgramSettings",
+      commandId: CMD,
+      settings: { autoProgression: false, microloading: false },
+    });
+    expect(state.settings).toEqual({
+      autoProgression: false,
+      microloading: false,
+    });
+  });
+
+  it("setProgramGoalMirror updates goal", () => {
+    const { state } = apply({
+      kind: "setProgramGoalMirror",
+      commandId: CMD,
+      goal: "cut",
+    });
+    expect(state.goal).toBe("cut");
+  });
+});
+
+describe("run-day commands", () => {
+  it("setManualRunCompletion marks a planned run complete via the map", () => {
+    const { state } = apply({
+      kind: "setManualRunCompletion",
+      commandId: CMD,
+      runDayId: "run-1",
+      completed: true,
+    });
+    expect(state.manualCompletions["run-1"]).toEqual({ completedAt: NOW });
+    expect(state.runDays[0].status).toBe("planned");
+  });
+
+  it("setManualRunCompletion two-steps a skipped run back to planned first", () => {
+    const { state } = apply({
+      kind: "setManualRunCompletion",
+      commandId: CMD,
+      runDayId: "run-2",
+      completed: true,
+    });
+    expect(state.runDays[1].status).toBe("planned");
+    expect(state.runDays[1].completed).toBe(false);
+    expect(state.manualCompletions["run-2"]).toEqual({ completedAt: NOW });
+  });
+
+  it("setManualRunCompletion completed:false removes an existing map key", () => {
+    const seeded = baseState();
+    seeded.manualCompletions = { "run-1": { completedAt: 1 } };
+    const { state } = apply(
+      {
+        kind: "setManualRunCompletion",
+        commandId: CMD,
+        runDayId: "run-1",
+        completed: false,
+      },
+      seeded
+    );
+    expect(state.manualCompletions["run-1"]).toBeUndefined();
+  });
+
+  it("setManualRunCompletion completed:false on an absent key is a no-op", () => {
+    const { state } = apply({
+      kind: "setManualRunCompletion",
+      commandId: CMD,
+      runDayId: "run-1",
+      completed: false,
+    });
+    expect(state.manualCompletions).toEqual({});
+  });
+
+  it("setManualRunCompletion rejects an unknown runDayId", () => {
+    expectHttps(
+      () =>
+        apply({
+          kind: "setManualRunCompletion",
+          commandId: CMD,
+          runDayId: "nope",
+          completed: true,
+        }),
+      "failed-precondition"
+    );
+  });
+
+  it("transitionRunDay skips a planned run", () => {
+    const { state } = apply({
+      kind: "transitionRunDay",
+      commandId: CMD,
+      runDayId: "run-1",
+      to: "skipped",
+    });
+    expect(state.runDays[0].status).toBe("skipped");
+  });
+
+  it("transitionRunDay rejects an illegal transition (skipped -> skipped)", () => {
+    expectHttps(
+      () =>
+        apply({
+          kind: "transitionRunDay",
+          commandId: CMD,
+          runDayId: "run-2",
+          to: "skipped",
+        }),
+      "failed-precondition"
+    );
+  });
+
+  it("overrideRunDay swaps templateId + userOverride on an editable run", () => {
+    const { state } = apply({
+      kind: "overrideRunDay",
+      commandId: CMD,
+      runDayId: "run-1",
+      templateId: "hills_8x1",
+    });
+    expect(state.runDays[0].templateId).toBe("hills_8x1");
+    expect(state.runDays[0].userOverride).toBe("hills_8x1");
+  });
+
+  it("overrideRunDay rejects a non-editable (skipped) run", () => {
+    expectHttps(
+      () =>
+        apply({
+          kind: "overrideRunDay",
+          commandId: CMD,
+          runDayId: "run-2",
+          templateId: "hills_8x1",
+        }),
+      "failed-precondition"
+    );
+  });
+});
+
+describe("completeWorkoutDay (effect â€” calorie mirror pinned by cross-test)", () => {
+  // Dedicated state: Push day with categorised exercises + a run/override to
+  // prove isolation.
+  function completeState() {
+    const s = baseState();
+    s.nextWorkoutOverride = 0;
+    s.workouts[0].exercises = [
+      {
+        name: "Bench",
+        exerciseId: "bench-press",
+        instanceId: "inst-a",
+        movementCategory: "horizontal_push",
+        sets: 3,
+        reps: 8,
+        weight: 100,
+      },
+      {
+        name: "Row",
+        exerciseId: "cable-row",
+        instanceId: "inst-b",
+        movementCategory: "horizontal_pull",
+        sets: 3,
+        reps: 10,
+        weight: 60,
+      },
+    ];
+    return s;
+  }
+
+  const completion = {
+    completionId: "sess_abcdef01",
+    durationMinutes: 45,
+    setLogs: [
+      [
+        { weight: 100, reps: 8, completed: true },
+        { weight: 100, reps: 8, completed: true },
+        { weight: 100, reps: 7, completed: false },
+      ],
+      [{ weight: 60, reps: 10, completed: true }],
+    ],
+  };
+
+  function run(profile, extra) {
+    return applyProgramCommand({
+      state: completeState(),
+      profile: profile || {},
+      command: {
+        kind: "completeWorkoutDay",
+        commandId: CMD,
+        ...dayPre(),
+        completion: { ...completion, ...(extra || {}) },
+      },
+      now: Date.parse("2026-07-13T02:30:00Z"),
+    });
+  }
+
+  it("marks the day complete, forces skipped:false, clears a matching override", () => {
+    const { state } = run();
+    expect(state.workouts[0].completed).toBe(true);
+    expect(state.workouts[0].skipped).toBe(false);
+    expect(state.workouts[1].completed).toBe(false); // other day untouched
+    expect("nextWorkoutOverride" in state).toBe(false); // cleared (was 0)
+  });
+
+  it("builds the workout record from completed set logs", () => {
+    const { effects } = run({ weightKg: 80 });
+    const w = effects.workout;
+    expect(w.exercises).toHaveLength(2);
+    expect(w.exercises[0]).toEqual({
+      exerciseId: "bench-press",
+      exerciseName: "Bench",
+      category: "horizontal_push",
+      caloriesBurned: 0,
+      sets: [
+        { setNumber: 1, reps: 8, weightKg: 100 },
+        { setNumber: 2, reps: 8, weightKg: 100 },
+      ],
+    });
+    expect(w.exercises[1].sets).toEqual([
+      { setNumber: 1, reps: 10, weightKg: 60 },
+    ]);
+  });
+
+  it("computes totalCalories via the mirrored calorie engine", () => {
+    // tonnage 2200, 3 sets, 45 min, 80kg â†’ MET 3.5 â†’ round(45*80*3.5/60) = 210
+    const { effects } = run({ weightKg: 80 });
+    expect(effects.workout.totalCalories).toBe(210);
+    expect(effects.workout.durationMinutes).toBe(45);
+  });
+
+  it("saves 0 calories when bodyweight is missing", () => {
+    const { effects } = run({});
+    expect(effects.workout.totalCalories).toBe(0);
+  });
+
+  it("stamps the date in the user's timezone (not server UTC)", () => {
+    // 02:30 UTC on 2026-07-13 is 22:30 on 2026-07-12 in New York (EDT).
+    expect(run({ timezone: "America/New_York" }).effects.workout.date).toBe(
+      "2026-07-12"
+    );
+    expect(run({}).effects.workout.date).toBe("2026-07-13"); // UTC fallback
+  });
+
+  it("sets notes/source/completionId and omits createdAt (callable injects it)", () => {
+    const w = run({ weightKg: 80 }).effects.workout;
+    expect(w.notes).toBe("Push â€” Programme Week 5");
+    expect(w.source).toBe("programme");
+    expect(w.completionId).toBe("sess_abcdef01");
+    expect("createdAt" in w).toBe(false);
+    expect("sessionVariant" in w).toBe(false);
+  });
+
+  it("carries sessionVariant when provided", () => {
+    const w = run({}, { sessionVariant: "express30" }).effects.workout;
+    expect(w.sessionVariant).toBe("express30");
+  });
+
+  it("falls back to planned data when a set log is absent", () => {
+    const w = run({}, { setLogs: [] }).effects.workout;
+    // no logs â†’ planned: bench 3 sets @ reps 8 / weight 100
+    expect(w.exercises[0].sets).toEqual([
+      { setNumber: 1, reps: 8, weightKg: 100 },
+      { setNumber: 2, reps: 8, weightKg: 100 },
+      { setNumber: 3, reps: 8, weightKg: 100 },
+    ]);
+  });
+
+  it("does not mutate the input state", () => {
+    const input = completeState();
+    applyProgramCommand({
+      state: input,
+      profile: { weightKg: 80 },
+      command: {
+        kind: "completeWorkoutDay",
+        commandId: CMD,
+        ...dayPre(),
+        completion,
+      },
+      now: Date.parse("2026-07-13T02:30:00Z"),
+    });
+    expect(input.workouts[0].completed).toBe(false);
+  });
+});
+
+describe("addExercises / replaceExercise (catalog-derived, mirrors pinned by cross-tests)", () => {
+  it("addExercises appends catalog-derived exercises at the end by default", () => {
+    const { state } = apply({
+      kind: "addExercises",
+      commandId: CMD,
+      ...dayPre(),
+      exercises: [
+        { exerciseId: "bench-press" },
+        { exerciseId: "front-squat", sets: 4, reps: 5, weight: 80 },
+      ],
+    });
+    const ex = state.workouts[0].exercises;
+    expect(ex).toHaveLength(4); // inst-a, inst-b, + 2 appended
+    // client add default (3Ã—10Ã—0) when fields omitted
+    expect(ex[2]).toMatchObject({
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      sets: 3,
+      reps: 10,
+      weight: 0,
+      movementCategory: "horizontal_push",
+    });
+    // explicit prescription honoured
+    expect(ex[3]).toMatchObject({
+      exerciseId: "front-squat",
+      sets: 4,
+      reps: 5,
+      weight: 80,
+      movementCategory: "knee_dominant",
+    });
+    // deterministic instance ids derived from the commandId
+    expect(ex[2].instanceId).toBe(`cmd-${CMD}-0`);
+    expect(ex[3].instanceId).toBe(`cmd-${CMD}-1`);
+  });
+
+  it("addExercises honours insertAt", () => {
+    const { state } = apply({
+      kind: "addExercises",
+      commandId: CMD,
+      ...dayPre(),
+      exercises: [{ exerciseId: "bench-press" }],
+      insertAt: 1,
+    });
+    expect(state.workouts[0].exercises.map((e) => e.instanceId)).toEqual([
+      "inst-a",
+      `cmd-${CMD}-0`,
+      "inst-b",
+    ]);
+  });
+
+  it("addExercises rejects an unknown catalog id with invalid-argument", () => {
+    expectHttps(
+      () =>
+        apply({
+          kind: "addExercises",
+          commandId: CMD,
+          ...dayPre(),
+          exercises: [{ exerciseId: "not-a-real-exercise" }],
+        }),
+      "invalid-argument"
+    );
+  });
+
+  it("replaceExercise swaps the exercise without carrying an unsafe load", () => {
+    const { state } = apply({
+      kind: "replaceExercise",
+      commandId: CMD,
+      ...dayPre(),
+      oldInstanceId: "inst-a", // Bench, sets 3 reps 8 weight 100
+      replacementExerciseId: "front-squat",
+    });
+    const ex = state.workouts[0].exercises;
+    expect(ex).toHaveLength(2);
+    expect(ex[0]).toMatchObject({
+      exerciseId: "front-squat",
+      name: "Front Squat",
+      sets: 3,
+      reps: 8,
+      weight: 0, // arbitrary cross-movement kilograms are uncalibrated
+      movementCategory: "knee_dominant",
+      instanceId: `cmd-${CMD}`,
+    });
+    expect(ex[1].instanceId).toBe("inst-b"); // untouched
+  });
+
+  it("replaceExercise changes timed-hold units and resets the target coherently", () => {
+    const { state } = apply({
+      kind: "replaceExercise",
+      commandId: CMD,
+      ...dayPre(),
+      oldInstanceId: "inst-a",
+      replacementExerciseId: "plank",
+    });
+    expect(state.workouts[0].exercises[0]).toMatchObject({
+      exerciseId: "plank",
+      reps: 30,
+      baseReps: 30,
+      repUnit: "seconds",
+      weight: 0,
+    });
+  });
+
+  it("replaceExercise carries the slot's prescription fields (backlog #7)", () => {
+    // isAccessory now picks BOTH the progression scheme and the load step, so
+    // dropping it on a swap silently re-prices an isolation as a compound
+    // (2.5 kg on a curl). baseSets is the volume-ramp anchor; repRangeMax +
+    // baseReps are the range it climbs; restSeconds is the authored rest.
+    const state = baseState();
+    Object.assign(state.workouts[0].exercises[0], {
+      isAccessory: true,
+      progressionType: "double",
+      repRangeMax: 15,
+      baseReps: 12,
+      baseSets: 4,
+      restSeconds: 60,
+      preDeloadWeight: 120,
+    });
+    const out = apply(
+      {
+        kind: "replaceExercise",
+        commandId: CMD,
+        ...dayPre(),
+        oldInstanceId: "inst-a",
+        replacementExerciseId: "front-squat",
+      },
+      state
+    );
+    expect(out.state.workouts[0].exercises[0]).toMatchObject({
+      exerciseId: "front-squat",
+      isAccessory: true,
+      progressionType: "double",
+      repRangeMax: 15,
+      baseReps: 12,
+      baseSets: 4,
+      restSeconds: 60,
+    });
+    // preDeloadWeight deliberately does NOT carry â€” the replacement keeps its
+    // deloaded load rather than jumping to a weight it never lifted.
+    expect("preDeloadWeight" in out.state.workouts[0].exercises[0]).toBe(false);
+  });
+
+  it("replaceExercise rejects an unknown old instance id", () => {
+    expectHttps(
+      () =>
+        apply({
+          kind: "replaceExercise",
+          commandId: CMD,
+          ...dayPre(),
+          oldInstanceId: "inst-x",
+          replacementExerciseId: "front-squat",
+        }),
+      "failed-precondition"
+    );
+  });
+
+  it("replaceExercise rejects an unknown replacement catalog id", () => {
+    expectHttps(
+      () =>
+        apply({
+          kind: "replaceExercise",
+          commandId: CMD,
+          ...dayPre(),
+          oldInstanceId: "inst-a",
+          replacementExerciseId: "not-a-real-exercise",
+        }),
+      "invalid-argument"
+    );
+  });
+
+  it("does not mutate the input state", () => {
+    const input = baseState();
+    apply(
+      {
+        kind: "addExercises",
+        commandId: CMD,
+        ...dayPre(),
+        exercises: [{ exerciseId: "bench-press" }],
+      },
+      input
+    );
+    expect(input.workouts[0].exercises).toHaveLength(2);
+  });
+});
+
+describe("logExercise (reducer wiring â€” progression math pinned by cross-test)", () => {
+  function logCmd(overrides) {
+    return {
+      kind: "logExercise",
+      commandId: CMD,
+      ...dayPre(),
+      exerciseInstanceId: "inst-a",
+      actual: { weight: 100, reps: 8, completed: true },
+      ...overrides,
+    };
+  }
+
+  it("autoProgression on: applies progression to the target exercise", () => {
+    // inst-a: linear (no progressionType), microloading on, completed set at
+    // prescription â†’ +1kg microload (client applyProgression rule).
+    const { state } = apply(logCmd());
+    const row = state.workouts[0].exercises.find(
+      (e) => e.instanceId === "inst-a"
+    );
+    expect(row.weight).toBe(101);
+    expect(row.lastAttemptedWeight).toBe(100);
+    expect(row.performanceHistory).toHaveLength(1);
+  });
+
+  it("autoProgression off: records the attempt without changing prescription", () => {
+    const s = baseState();
+    s.settings = { autoProgression: false, microloading: true };
+    const { state } = apply(logCmd(), s);
+    const row = state.workouts[0].exercises.find(
+      (e) => e.instanceId === "inst-a"
+    );
+    expect(row.weight).toBe(100); // unchanged
+    expect(row.lastAttemptedWeight).toBe(100);
+    expect(row.lastPerformance).toEqual({
+      sets: 3,
+      reps: 8,
+      weight: 100,
+      completed: true,
+    });
+  });
+
+  it("only the target exercise changes; the other is untouched", () => {
+    const { state } = apply(logCmd());
+    const other = state.workouts[0].exercises.find(
+      (e) => e.instanceId === "inst-b"
+    );
+    expect(other.weight).toBe(60);
+    expect(other.lastAttemptedWeight).toBeUndefined();
+  });
+
+  it("rejects an unknown exercise instance id", () => {
+    expectHttps(
+      () => apply(logCmd({ exerciseInstanceId: "inst-x" })),
+      "failed-precondition"
+    );
+  });
+
+  it("does not mutate the input state", () => {
+    const input = baseState();
+    apply(logCmd(), input);
+    expect(input.workouts[0].exercises[0].weight).toBe(100);
+  });
+});
+
+describe("deload week commands (PROGRAM-DELOAD-01)", () => {
+  const applyCmd = (overrides) => ({
+    kind: "applyDeloadWeek",
+    commandId: CMD,
+    expectedWeekNumber: 5,
+    ...overrides,
+  });
+  const revertCmd = (overrides) => ({
+    kind: "revertDeloadWeek",
+    commandId: CMD,
+    expectedWeekNumber: 5,
+    ...overrides,
+  });
+
+  it("applies the mirrored transform: âˆ’1 set (floor 2), weight Ã—0.85 â†’ nearest 2.5", () => {
+    const { state } = apply(applyCmd());
+    const [push, legs] = state.workouts;
+    // 100 Ã—0.85 = 85 (already on the 2.5 grid)
+    expect(push.exercises[0]).toMatchObject({ sets: 2, weight: 85 });
+    // 60 Ã—0.85 = 51 â†’ 50
+    expect(push.exercises[1]).toMatchObject({ sets: 2, weight: 50 });
+    // 140 Ã—0.85 = 119 â†’ 120
+    expect(legs.exercises[0]).toMatchObject({ sets: 2, weight: 120 });
+  });
+
+  it("post-novice lifters get the volume recipe instead (backlog #8)", () => {
+    // Helms H4: intermediate+ take ~half the volume at the SAME load, so the
+    // reducer must read profile.experience. An absent/unknown value stays on
+    // the novice recipe the two tests either side of this one pin.
+    const withExperience = (experience) =>
+      applyProgramCommand({
+        state: baseState(),
+        profile: { experience },
+        command: applyCmd(),
+        now: NOW,
+      }).state.workouts;
+
+    const inter = withExperience("intermediate");
+    // Push: bench 3Ã—8Ã—100 â†’ 2Ã—6Ã—100; row 3Ã—10Ã—60 â†’ 2Ã—8Ã—60
+    expect(inter[0].exercises[0]).toMatchObject({
+      sets: 2,
+      reps: 6,
+      weight: 100,
+    });
+    expect(inter[0].exercises[1]).toMatchObject({
+      sets: 2,
+      reps: 8,
+      weight: 60,
+    });
+    // Legs: squat 3Ã—5Ã—140 â†’ 2Ã—3Ã—140 (rep floor is 3)
+    expect(inter[1].exercises[0]).toMatchObject({
+      sets: 2,
+      reps: 3,
+      weight: 140,
+    });
+
+    expect(withExperience("advanced")).toEqual(inter);
+    // Unknown / absent â†’ novice recipe (load cut, reps untouched)
+    expect(withExperience("nonsense")[0].exercises[0]).toMatchObject({
+      sets: 2,
+      reps: 8,
+      weight: 85,
+    });
+    expect(withExperience(undefined)[0].exercises[0]).toMatchObject({
+      weight: 85,
+    });
+  });
+
+  it("sets currentPhase deload, clears fatigue, stamps updatedAt", () => {
+    const input = baseState();
+    input.fatigueScore = 7;
+    const { state } = apply(applyCmd(), input);
+    expect(state.currentPhase).toBe("deload");
+    expect(state.fatigueScore).toBe(0);
+    expect(state.updatedAt).toBe(NOW);
+  });
+
+  it("stashes the pre-deload snapshot for undo", () => {
+    const input = baseState();
+    input.fatigueScore = 7;
+    const { state } = apply(applyCmd(), input);
+    expect(state.deloadSnapshot).toMatchObject({
+      weekNumber: 5,
+      currentPhase: "progression",
+      fatigueScore: 7,
+      appliedAt: NOW,
+    });
+    expect(state.deloadSnapshot.workouts).toEqual(baseState().workouts);
+  });
+
+  it("rejects a second apply â€” no Ã—0.85Â² compounding", () => {
+    const { state } = apply(applyCmd());
+    expectHttps(() => apply(applyCmd(), state), "failed-precondition");
+  });
+
+  it("rejects a stale week cursor", () => {
+    expectHttps(
+      () => apply(applyCmd({ expectedWeekNumber: 4 })),
+      "failed-precondition"
+    );
+    expectHttps(
+      () => apply(revertCmd({ expectedWeekNumber: 4 })),
+      "failed-precondition"
+    );
+  });
+
+  it("revert restores the stash exactly and removes it", () => {
+    const input = baseState();
+    input.fatigueScore = 7;
+    const { state: deloaded } = apply(applyCmd(), input);
+    const { state: reverted } = apply(revertCmd(), deloaded);
+    expect(reverted.workouts).toEqual(baseState().workouts);
+    expect(reverted.currentPhase).toBe("progression");
+    expect(reverted.fatigueScore).toBe(7);
+    expect("deloadSnapshot" in reverted).toBe(false);
+  });
+
+  it("revert without a snapshot rejects", () => {
+    expectHttps(() => apply(revertCmd()), "failed-precondition");
+  });
+
+  it("revert with a snapshot from another week rejects (inert after rollover)", () => {
+    const { state: deloaded } = apply(applyCmd());
+    // Simulate a rollover: the cursor moved on but the stale stash remains.
+    const rolled = { ...deloaded, weekNumber: 6, currentPhase: "progression" };
+    expectHttps(
+      () => apply(revertCmd({ expectedWeekNumber: 6 }), rolled),
+      "failed-precondition"
+    );
+  });
+
+  it("does not mutate the input state", () => {
+    const input = baseState();
+    apply(applyCmd(), input);
+    expect(input.workouts[0].exercises[0]).toMatchObject({
+      sets: 3,
+      weight: 100,
+    });
+    expect(input.currentPhase).toBe("progression");
+    expect("deloadSnapshot" in input).toBe(false);
+  });
+});
