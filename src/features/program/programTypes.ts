@@ -90,6 +90,16 @@ export interface GoalProfile {
 
 export type ProgressionType = "double" | "linear";
 
+/**
+ * What `reps` counts (training-book backlog #7's time axis, N2). Absent
+ * means repetitions — the overwhelming default, and what every legacy row
+ * carries. `"seconds"` marks an isometric hold, where the same number means
+ * a duration: a plank prescribed "30-45s" was being stored AND displayed as
+ * "30 reps", and any overshoot tripped the 20-rep bodyweight cap into
+ * advising "add load" at what is an ordinary hold length.
+ */
+export type RepUnit = "reps" | "seconds";
+
 /* ================================
    PERFORMANCE HISTORY
 ================================ */
@@ -160,6 +170,8 @@ export interface ProgramExercise {
    * their experience level mid-mesocycle must still get their reps back.
    */
   preDeloadReps?: number;
+  /** Unit for `reps` / `repRangeMax`. Absent = repetitions. */
+  repUnit?: RepUnit;
   /**
    * Per-exercise rest between sets in seconds, carried from
    * TemplateExercise.restSeconds. WorkoutSession prefers this over
@@ -670,6 +682,7 @@ export function normalizeExercise(
     ...(ex.preDeloadReps !== undefined
       ? { preDeloadReps: ex.preDeloadReps }
       : {}),
+    ...(ex.repUnit !== undefined ? { repUnit: ex.repUnit } : {}),
     ...(ex.restSeconds !== undefined ? { restSeconds: ex.restSeconds } : {}),
     ...(ex.isAccessory !== undefined ? { isAccessory: ex.isAccessory } : {}),
     weight: ex.weight ?? 0,

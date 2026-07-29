@@ -1,10 +1,12 @@
 import { describe, it, expect } from "vitest";
 
 import {
+  formatRepTarget,
   parseTemplateReps,
   templateExToProgEx,
   templateProgressionFor,
 } from "@/features/program/templateConversion";
+import type { ProgramExercise } from "@/features/program/programTypes";
 import type { TemplateExercise } from "@/features/program/templates";
 import { applyProgression } from "@/features/program/programEngine";
 
@@ -35,11 +37,32 @@ describe("parseTemplateReps", () => {
     expect(parseTemplateReps("10")).toEqual({ reps: 10 });
   });
 
-  it("keeps legacy behaviour for duration/format strings — no fabricated range", () => {
-    // "30-45s" must NOT become a rep range of 30-45: time progression is a
-    // separate backlog item. parseInt legacy: 30.
-    expect(parseTemplateReps("30-45s")).toEqual({ reps: 30 });
+  // Backlog #7's time axis (N2). A hold is structurally a range that climbs
+  // like a rep range — the only thing missing was the UNIT, so "30-45s" was
+  // stored AND displayed as thirty repetitions.
+  it("parses a duration range into seconds with its ceiling", () => {
+    expect(parseTemplateReps("30-45s")).toEqual({
+      reps: 30,
+      repRangeMax: 45,
+      repUnit: "seconds",
+    });
+    expect(parseTemplateReps("20-30s")).toEqual({
+      reps: 20,
+      repRangeMax: 30,
+      repUnit: "seconds",
+    });
+  });
+
+  it("parses a single duration", () => {
+    expect(parseTemplateReps("45s")).toEqual({ reps: 45, repUnit: "seconds" });
+    expect(parseTemplateReps("60 s")).toEqual({ reps: 60, repUnit: "seconds" });
+  });
+
+  it("leaves per-side forms as plain reps — the number is already right", () => {
+    // Ten reps per leg logged as ten reps is a defensible simplification;
+    // unlike a duration, the UNIT is not wrong.
     expect(parseTemplateReps("10/leg")).toEqual({ reps: 10 });
+    expect(parseTemplateReps("20/side")).toEqual({ reps: 20 });
   });
 
   it("falls back to 8 for unparseable strings", () => {
@@ -135,5 +158,33 @@ describe("templateExToProgEx", () => {
     ex = applyProgression(ex, 8, 60, "recomp", false, 9.5);
     expect(ex.reps).toBe(8); // held — no climb on a near-maximal set
     expect(ex.weight).toBe(60);
+  });
+});
+
+describe("formatRepTarget (backlog #7 time axis)", () => {
+  const ex = (o: Partial<ProgramExercise>) => o as ProgramExercise;
+
+  it("shows a bare number for reps — unchanged for almost every exercise", () => {
+    expect(formatRepTarget(ex({ reps: 8 }))).toBe("8");
+    expect(formatRepTarget(ex({ reps: 8, repRangeMax: 12 }))).toBe("8");
+  });
+
+  it("shows seconds and the authored range for a hold", () => {
+    expect(
+      formatRepTarget(ex({ reps: 30, repRangeMax: 45, repUnit: "seconds" }))
+    ).toBe("30-45s");
+  });
+
+  it("shows a single duration when there is no range", () => {
+    expect(formatRepTarget(ex({ reps: 45, repUnit: "seconds" }))).toBe("45s");
+  });
+
+  it("a plank no longer reads as thirty repetitions", () => {
+    const plank = templateExToProgEx(
+      te({ name: "Plank", exerciseId: "plank", reps: "30-45s" }),
+      "double"
+    );
+    expect(plank.repUnit).toBe("seconds");
+    expect(formatRepTarget(plank)).toBe("30-45s");
   });
 });
