@@ -47,6 +47,7 @@ import {
   parseLocalDate,
 } from "@/lib/dateHelpers";
 import { isScheduledRunCompleted } from "@/lib/scheduledRunStatus";
+import { repUnitForExerciseId } from "./repUnits";
 
 // PR-0b-iii: COMPLETED_STATUSES + isScheduledRunCompleted moved to
 // `src/lib/scheduledRunStatus.ts` so every consumer shares one
@@ -159,10 +160,9 @@ function migrateScheduledRunDay(
  * reference is returned unchanged. The caller's deep-equality
  * persist guard then skips the Firestore write.
  *
- * **Never regenerates `workouts`, `weekHistory`, `runPlan`, or
- * any other field outside `runDays` + `programSchemaVersion`.**
- * Customisations the user made (exercise swaps, weight
- * progressions, recent completions) survive untouched.
+ * **Never regenerates programme content.** It repairs run-day shape and adds
+ * a missing duration unit to known timed-hold exercises; every authored set,
+ * load, history entry and customisation otherwise survives untouched.
  *
  * @param state - existing program state (possibly legacy or
  *   internally inconsistent)
@@ -196,16 +196,30 @@ export function migrateProgramState(
   // how we keep the returned reference === input when nothing
   // needs repair.
   const runDaysChanged = migratedRunDays.some((rd, i) => rd !== runDays[i]);
+  let workoutsChanged = false;
+  const migratedWorkouts = state.workouts.map((day) => {
+    let dayChanged = false;
+    const exercises = day.exercises.map((exercise) => {
+      if (exercise.repUnit !== undefined) return exercise;
+      const repUnit = repUnitForExerciseId(exercise.exerciseId);
+      if (!repUnit) return exercise;
+      workoutsChanged = true;
+      dayChanged = true;
+      return { ...exercise, repUnit };
+    });
+    return dayChanged ? { ...day, exercises } : day;
+  });
   const versionChanged =
     state.programSchemaVersion !== CURRENT_PROGRAM_SCHEMA_VERSION;
 
-  if (!runDaysChanged && !versionChanged) {
+  if (!runDaysChanged && !workoutsChanged && !versionChanged) {
     return state;
   }
 
   return {
     ...state,
     runDays: migratedRunDays,
+    ...(workoutsChanged ? { workouts: migratedWorkouts } : {}),
     programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
   };
 }

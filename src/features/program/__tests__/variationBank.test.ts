@@ -16,7 +16,35 @@
  * specific id (which would require mocking Math.random).
  */
 import { describe, it, expect } from "vitest";
-import { exerciseBank, pickExercise, pickAccessory } from "../variationBank";
+import {
+  exerciseBank,
+  pickExercise,
+  pickAccessory,
+  rescaleForSwap,
+} from "../variationBank";
+
+describe("rescaleForSwap — unsafe boundaries", () => {
+  it("zeros a loaded-to-bodyweight swap instead of carrying kilograms", () => {
+    expect(
+      rescaleForSwap(80, "bench-press", "push-ups", "horizontal_push")
+    ).toBe(0);
+  });
+
+  it("leaves a bodyweight-to-loaded swap explicitly uncalibrated", () => {
+    expect(rescaleForSwap(0, "push-ups", "db-bench", "horizontal_push")).toBe(
+      0
+    );
+  });
+
+  it("does not invent a ratio for an unknown or cross-category target", () => {
+    expect(
+      rescaleForSwap(120, "deadlift", "glute-bridge", "hip_dominant")
+    ).toBe(0);
+    expect(
+      rescaleForSwap(120, "deadlift", "incline-db-press", "hip_dominant")
+    ).toBe(0);
+  });
+});
 
 describe("exerciseBank — structural invariants", () => {
   it("covers every MovementCategory", () => {

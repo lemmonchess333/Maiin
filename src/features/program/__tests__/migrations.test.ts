@@ -66,6 +66,32 @@ describe("migrateProgramState", () => {
     expect(migrated).toBe(upToDate); // referentially equal (no work done)
   });
 
+  it("backfills seconds for legacy timed holds even at the current version", () => {
+    const state = makeLegacyProgramState({
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      workouts: [
+        {
+          dayName: "Core",
+          dayType: "full_body",
+          completed: false,
+          exercises: [
+            {
+              exerciseId: "plank",
+              name: "Plank",
+              reps: 30,
+              sets: 3,
+              weight: 0,
+            },
+          ],
+        },
+      ] as ProgramState["workouts"],
+    });
+    const migrated = migrateProgramState(state, "2026-05-10");
+    expect(migrated.workouts[0].exercises[0].repUnit).toBe("seconds");
+    expect(migrated.workouts[0].exercises[0].reps).toBe(30);
+    expect(migrateProgramState(migrated, "2026-05-10")).toBe(migrated);
+  });
+
   it("adds id/date/weekKey/status to legacy runDays", () => {
     const legacy = makeLegacyProgramState({
       runDays: [

@@ -60,6 +60,7 @@ function setup(
   const updateSettings = vi.fn();
   const regenerateProgram = vi.fn();
   const onOpenWeeklyLayout = vi.fn();
+  const refreshProfile = vi.fn().mockResolvedValue(undefined);
   render(
     <MemoryRouter>
       <ProgrammeSettings
@@ -68,11 +69,17 @@ function setup(
         programState={programState}
         updateSettings={updateSettings}
         regenerateProgram={regenerateProgram}
+        refreshProfile={refreshProfile}
         onOpenWeeklyLayout={onOpenWeeklyLayout}
       />
     </MemoryRouter>
   );
-  return { updateSettings, regenerateProgram, onOpenWeeklyLayout };
+  return {
+    updateSettings,
+    regenerateProgram,
+    refreshProfile,
+    onOpenWeeklyLayout,
+  };
 }
 
 beforeEach(() => {
@@ -148,11 +155,12 @@ describe("ProgrammeSettings — lift variant (Section-Split)", () => {
   });
 
   it("a lift edit still saves via configurePlan (rebuild path intact)", async () => {
-    setup({}, "lift");
+    const { refreshProfile } = setup({}, "lift");
     fireEvent.click(screen.getByText("Get stronger"));
     fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
     fireEvent.click(await screen.findByRole("button", { name: /^save$/i }));
     await vi.waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    await vi.waitFor(() => expect(refreshProfile).toHaveBeenCalledTimes(1));
     const arg = configureSpy.mock.calls[0][0] as {
       profileUpdates?: Record<string, unknown>;
     };

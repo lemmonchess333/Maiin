@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import {
+  buildInitialSetLogs,
   warmupRamp,
   warmupTargets,
   toCompletionSetLogs,
@@ -70,6 +71,20 @@ describe("warmupRamp", () => {
     expect(warmupRamp(BAR_KG)).toEqual([]); // already at the bar
     expect(warmupRamp(15)).toEqual([]); // below the bar
     expect(warmupRamp(Number.NaN)).toEqual([]);
+  });
+
+  it("does not impose a 20 kg bar on dumbbell or machine work", () => {
+    expect(warmupRamp(22.5, "Dumbbells")).toEqual([
+      { weight: 12.5, reps: 5 },
+      { weight: 15, reps: 3 },
+    ]);
+    expect(warmupRamp(22.5, "Machine").some((set) => set.weight === 20)).toBe(
+      false
+    );
+  });
+
+  it("does not ramp a bodyweight movement even if a bad carried load exists", () => {
+    expect(warmupRamp(60, "Bodyweight")).toEqual([]);
   });
 });
 
@@ -165,5 +180,18 @@ describe("toCompletionSetLogs", () => {
       "reps",
       "weight",
     ]);
+  });
+});
+
+describe("buildInitialSetLogs", () => {
+  it("restores the same warm-up and working rows when a session starts fresh", () => {
+    const bench = {
+      ...ex("bench-press", 100),
+      sets: 3,
+      reps: 5,
+    };
+    const logs = buildInitialSetLogs([bench]);
+    expect(logs[0].filter((set) => set.type === "warmup")).toHaveLength(3);
+    expect(logs[0].filter((set) => set.type === "working")).toHaveLength(3);
   });
 });

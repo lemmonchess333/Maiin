@@ -467,6 +467,31 @@ describe("buildPlan · preserveHistory", () => {
     const out = buildPlan(makeInput({ existingState, preserveHistory: false }));
     expect(out.programState.weekNumber).toBe(1);
   });
+
+  it("calibrates zero-load template rows on the onboarding preserve branch", () => {
+    const existingState = buildPlan(makeInput()).programState;
+    existingState.workouts = existingState.workouts.map((day) => ({
+      ...day,
+      exercises: day.exercises.map((exercise) => ({
+        ...exercise,
+        weight: 0,
+        lastSuccessfulWeight: 0,
+        lastAttemptedWeight: 0,
+        performanceHistory: [],
+      })),
+    }));
+    const out = buildPlan(
+      makeInput({
+        existingState,
+        preserveHistory: false,
+        bodyweightKg: 80,
+      })
+    ).programState;
+    const bench = out.workouts
+      .flatMap((day) => day.exercises)
+      .find((exercise) => exercise.exerciseId === "bench-press");
+    expect(bench?.weight).toBeGreaterThan(0);
+  });
 });
 
 /* ─── Pgm5 Q2 · structure-preserving regeneration ──────────────── */

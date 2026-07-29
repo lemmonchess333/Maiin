@@ -4,9 +4,12 @@ import { PROGRAM_TEMPLATES } from "./templates";
 import type { WorkoutDay, ProgramExercise } from "./programTypes";
 import { EXERCISES, getExerciseById } from "@/lib/exercises";
 import { findSafeSubstitute } from "./injurySubstitutions";
-import { rescaleForSwap } from "./variationBank";
 import { allowsComplexity, type Experience } from "./experienceModel";
 import { exerciseBank } from "./variationBank";
+import {
+  weightAfterExerciseSwap,
+  type StartingLoadContext,
+} from "./startingLoads";
 
 /**
  * Result of a `matchTemplate` call.
@@ -35,6 +38,31 @@ export interface MatchTemplateResult {
 const EXERCISE_ID_BY_NAME = new Map<string, string>(
   EXERCISES.map((ex) => [ex.name.toLowerCase(), ex.id])
 );
+
+function replaceExercise(
+  ex: ProgramExercise,
+  exerciseId: string,
+  name: string,
+  loadCtx: StartingLoadContext | undefined,
+  notes: string
+): ProgramExercise {
+  if (exerciseId === ex.exerciseId) return { ...ex, notes };
+  const calibrated = weightAfterExerciseSwap(ex, exerciseId, loadCtx);
+  return {
+    ...ex,
+    exerciseId,
+    name,
+    movementCategory: calibrated.movementCategory,
+    weight: calibrated.weight,
+    lastSuccessfulWeight: calibrated.weight,
+    lastAttemptedWeight: calibrated.weight,
+    consecutiveFailures: 0,
+    plateauCount: 0,
+    performanceHistory: [],
+    lastPerformance: null,
+    notes,
+  };
+}
 
 function resolveExerciseId(name: string): string | null {
   return EXERCISE_ID_BY_NAME.get(name.toLowerCase()) ?? null;
@@ -295,8 +323,9 @@ export function applyInjuryFilters(
  * runs on `ProgramTemplate`s at onboarding). Structure-preserving
  * regeneration (planBuilder) calls this so that when a user changes their
  * injuries in Programme Settings, ONLY the now-contraindicated exercises in
- * their current workouts are swapped — carrying sets / reps / weight / history
- * — without touching the day structure or any safe exercise.
+ * their current workouts are swapped. The slot's sets/reps/role survive, but
+ * movement-specific load and performance history are recalibrated/reset so a
+ * deadlift record can never be relabelled as its substitute.
  *
  * Over-swap guard: an exercise is swapped only when the contra index (built
  * from the template library, keyed by exerciseId) flags it for one of the
@@ -323,7 +352,8 @@ export function applyInjuryFiltersToWorkouts(
   workouts: readonly WorkoutDay[],
   injuries: readonly string[],
   /** Equipment tier — a PREFERENCE for the substitute, never a hard filter. */
-  equipment?: string
+  equipment?: string,
+  loadCtx?: StartingLoadContext
 ): WorkoutDay[] {
   const cloneDay = (d: WorkoutDay): WorkoutDay => ({
     ...d,
@@ -366,20 +396,13 @@ export function applyInjuryFiltersToWorkouts(
       );
       if (safe) {
         usedIds.add(safe.id);
-        return {
-          ...ex, // carry sets / reps / progression / history
-          exerciseId: safe.id,
-          name: safe.name,
-          // Same reason as the equipment swap below — a different movement
-          // does not take the previous movement's working weight.
-          weight: rescaleForSwap(
-            ex.weight,
-            ex.exerciseId,
-            safe.id,
-            ex.movementCategory
-          ),
-          notes: `Swapped from ${ex.name} (${relevant.join(", ")}): ${safe.rationale}.`,
-        };
+        return replaceExercise(
+          ex,
+          safe.id,
+          safe.name,
+          loadCtx,
+          `Swapped from ${ex.name} (${relevant.join(", ")}): ${safe.rationale}.`
+        );
       }
       // No safe substitute — keep the exercise but flag it (tier 4).
       return {
@@ -416,9 +439,10 @@ const EQUIPMENT_AVAILABILITY: Record<string, ReadonlySet<string>> = {
  * When a user changes their equipment (e.g. full_gym → minimal while
  * travelling), structure-preserving regeneration calls this to swap any
  * exercise whose equipment the user no longer has for a same-movement-category
- * alternative that fits — carrying sets / reps / weight / history. full_gym (or
- * any unrecognised tier) is a no-op (everything available). An exercise whose
- * id we can't resolve in EXERCISES is left untouched. No fitting alternative →
+ * alternative that fits. The slot's sets/reps/role survive; the target load is
+ * recalibrated and movement-specific history is reset. full_gym (or any
+ * unrecognised tier) is a no-op (everything available). An exercise whose id
+ * we can't resolve in EXERCISES is left untouched. No fitting alternative is
  * kept with a warning note.
  *
  * Composes after `applyInjuryFiltersToWorkouts`: the candidate picker also
@@ -429,7 +453,8 @@ export function applyEquipmentFilterToWorkouts(
   workouts: readonly WorkoutDay[],
   equipment: string,
   injuries: readonly string[] = [],
-  experience?: Experience
+  experience?: Experience,
+  loadCtx?: StartingLoadContext
 ): WorkoutDay[] {
   const cloneDay = (d: WorkoutDay): WorkoutDay => ({
     ...d,
@@ -490,22 +515,13 @@ export function applyEquipmentFilterToWorkouts(
       if (pick) {
         usedIds.delete(ex.exerciseId);
         usedIds.add(pick.id);
-        return {
-          ...ex, // carry sets / reps / progression / history
-          exerciseId: pick.id,
-          name: pick.name,
-          // …but NOT the weight verbatim: this swap changes the MOVEMENT, and
-          // carrying the old one's load put a beginner's 35 kg barbell bench
-          // onto a per-hand dumbbell press and a 55 kg squat onto a Bulgarian
-          // split squat. Rescaled by the two variations' load factors.
-          weight: rescaleForSwap(
-            ex.weight,
-            ex.exerciseId,
-            pick.id,
-            ex.movementCategory
-          ),
-          notes: `Swapped from ${ex.name} — not available with your equipment.`,
-        };
+        return replaceExercise(
+          ex,
+          pick.id,
+          pick.name,
+          loadCtx,
+          `Swapped from ${ex.name} — not available with your equipment.`
+        );
       }
       // No fitting alternative — keep but flag.
       return {

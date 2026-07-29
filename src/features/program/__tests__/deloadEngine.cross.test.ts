@@ -51,6 +51,8 @@ function fixtureWeek(): WorkoutDay[] {
         mkEx("row", 4, 10, 60),
         // Bodyweight stays 0; sets floor at 2.
         mkEx("pullup", 2, 12, 0),
+        // A timed hold steps down by five seconds, never by "two reps".
+        { ...mkEx("plank", 3, 30, 0), repUnit: "seconds" },
       ],
     },
     {
@@ -121,6 +123,14 @@ describe("deload rule parity (client engine ↔ CF mirror ↔ easierToday)", () 
       ])[0].exercises[0].weight;
       expect(viaEngine).toBe(deloadWeight(w));
     }
+  });
+
+  it("reduces a post-novice timed hold by five seconds", () => {
+    const out = applyDeload(fixtureWeek(), "advanced");
+    const plank = out
+      .flatMap((day) => day.exercises)
+      .find((exercise) => exercise.exerciseId === "plank");
+    expect(plank?.reps).toBe(25);
   });
 
   it("input is not mutated by either copy", () => {

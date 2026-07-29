@@ -55,7 +55,7 @@ import type {
   WorkoutDay,
 } from "./programTypes";
 import { weeklyVolumeByMuscle, type CanonicalMuscle } from "./volumeModel";
-import { exerciseBank } from "./variationBank";
+import { exerciseBank, rescaleForSwap } from "./variationBank";
 import { allowsComplexity, type Experience } from "./experienceModel";
 
 /** Patterns whose systemic cost is capped independently of muscle volume. */
@@ -222,7 +222,11 @@ export const MAX_WEEKLY_LIFT_EXPOSURES = 2;
  */
 export function capRepeatedLifts(
   workouts: WorkoutDay[],
-  experience?: Experience
+  experience?: Experience,
+  replace?: (
+    ex: ProgramExercise,
+    to: { id: string; name: string }
+  ) => ProgramExercise
 ): WorkoutDay[] {
   const slots: Array<{ d: number; e: number; ex: ProgramExercise }> = [];
   workouts.forEach((day, d) =>
@@ -271,7 +275,26 @@ export function capRepeatedLifts(
           allowsComplexity(experience, o.complexity)
       );
       if (!pick) continue; // category exhausted — leave it rather than duplicate
-      day.exercises[s.e] = { ...s.ex, exerciseId: pick.id, name: pick.name };
+      const weight = rescaleForSwap(
+        s.ex.weight ?? 0,
+        s.ex.exerciseId,
+        pick.id,
+        s.ex.movementCategory
+      );
+      day.exercises[s.e] = replace
+        ? replace(s.ex, pick)
+        : {
+            ...s.ex,
+            exerciseId: pick.id,
+            name: pick.name,
+            weight,
+            lastSuccessfulWeight: weight,
+            lastAttemptedWeight: weight,
+            consecutiveFailures: 0,
+            plateauCount: 0,
+            performanceHistory: [],
+            lastPerformance: null,
+          };
       usage.set(id, (usage.get(id) ?? 1) - 1);
       usage.set(pick.id, (usage.get(pick.id) ?? 0) + 1);
     }
@@ -295,10 +318,10 @@ export function capRepeatedLifts(
  * are consecutive — which `profile.weekSchedule` already carries and the
  * generator simply never received.
  *
- * Returns one flag per adjacent pair (length = sessions − 1). A Mon/Wed/Fri
- * lifter gets all-false and the whole rule correctly becomes a no-op for
- * them; a Mon/Tue/Wed lifter gets all-true. The week does not wrap: the last
- * session and the first are a week apart in execution terms.
+ * Returns one flag per within-week adjacent pair (length = sessions − 1).
+ * The recurring Saturday→Sunday seam is handled separately by
+ * `weekWrapsBackToBack`; those sessions are one calendar day apart even
+ * though their weekday numbers sit at opposite ends of the array.
  */
 export function backToBackPairs(
   schedule: ReadonlyArray<{ day: number; type: string }> | undefined | null,
@@ -319,6 +342,21 @@ export function backToBackPairs(
     const b = liftDays[i + 1];
     return a != null && b != null && b - a === 1;
   });
+}
+
+/** Whether the final lift day and next week's first lift day are consecutive. */
+export function weekWrapsBackToBack(
+  schedule: ReadonlyArray<{ day: number; type: string }> | undefined | null,
+  sessionCount: number
+): boolean {
+  if (!schedule || sessionCount <= 1) return false;
+  const liftDays = [...schedule]
+    .filter((day) => day.type === "lift" || day.type === "both")
+    .sort((a, b) => a.day - b.day)
+    .slice(0, sessionCount)
+    .map((day) => day.day);
+  if (liftDays.length < sessionCount) return false;
+  return (liftDays[0] ?? 0) + 7 - (liftDays[liftDays.length - 1] ?? 0) === 1;
 }
 
 /**
@@ -375,7 +413,8 @@ export function orderForAdjacency(
   const n = workouts.length;
   if (n < 3) return workouts; // nothing meaningful to permute
   const adjacency = backToBackPairs(schedule, n);
-  if (!adjacency.some(Boolean)) return workouts; // spread-out week — no-op
+  const wrapAdjacent = weekWrapsBackToBack(schedule, n);
+  if (!adjacency.some(Boolean) && !wrapAdjacent) return workouts;
 
   const cost = (order: number[]) => {
     let total = 0;
@@ -384,6 +423,12 @@ export function orderForAdjacency(
       total += posteriorChainOverlap(
         workouts[order[i]],
         workouts[order[i + 1]]
+      );
+    }
+    if (wrapAdjacent) {
+      total += posteriorChainOverlap(
+        workouts[order[order.length - 1]],
+        workouts[order[0]]
       );
     }
     return total;

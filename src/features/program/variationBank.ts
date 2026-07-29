@@ -543,8 +543,9 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
  * that earned level, scaled to the new movement, instead of being reset to a
  * novice's starting number.
  *
- * Returns the input unchanged for a bodyweight slot (0), an unknown id, or a
- * factor of 0 — in each case there is nothing meaningful to scale.
+ * Returns 0 for a bodyweight boundary, an unknown/cross-category id, or a
+ * factor of 0. In each case there is no safe ratio; callers with profile
+ * context may replace that uncalibrated 0 with a target-specific seed.
  */
 export function rescaleForSwap(
   weight: number,
@@ -552,12 +553,38 @@ export function rescaleForSwap(
   toExerciseId: string | undefined,
   category: MovementCategory
 ): number {
-  if (!Number.isFinite(weight) || weight <= 0) return weight;
-  const from = loadFactorFor(fromExerciseId, category);
-  const to = loadFactorFor(toExerciseId, category);
-  if (from <= 0 || to <= 0) return weight;
+  if (!Number.isFinite(weight) || weight <= 0) return 0;
+  if (fromExerciseId === toExerciseId) return weight;
+
+  const options = exerciseBank[category] ?? [];
+  const fromOption = options.find((option) => option.id === fromExerciseId);
+  const toOption = options.find((option) => option.id === toExerciseId);
+  // An unknown/cross-category id has no meaningful ratio. Returning the old
+  // load here is dangerous (for example deadlift kilograms on a glute bridge);
+  // callers with profile context can seed the target, otherwise 0 is the only
+  // honest uncalibrated value.
+  if (!fromOption || !toOption) return 0;
+
+  const from = fromOption.loadFactor ?? 1;
+  const to = toOption.loadFactor ?? 1;
+  // A zero target factor is bodyweight. A zero source factor cannot calibrate
+  // a newly loaded movement without bodyweight/profile context.
+  if (from <= 0 || to <= 0) return 0;
   if (from === to) return weight;
   return Math.max(2.5, Math.round((weight * (to / from)) / 2.5) * 2.5);
+}
+
+/** The bank category that owns an exercise id, if it is a bank movement. */
+export function movementCategoryForExerciseId(
+  exerciseId: string | undefined
+): MovementCategory | undefined {
+  if (!exerciseId) return undefined;
+  for (const category of Object.keys(exerciseBank) as MovementCategory[]) {
+    if (exerciseBank[category].some((option) => option.id === exerciseId)) {
+      return category;
+    }
+  }
+  return undefined;
 }
 
 export function loadFactorFor(

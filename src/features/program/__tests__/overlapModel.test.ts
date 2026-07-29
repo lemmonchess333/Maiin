@@ -7,6 +7,7 @@ import {
   lowCostAlternative,
   orderForAdjacency,
   surplusExposures,
+  weekWrapsBackToBack,
   EXPENSIVE_PATTERNS,
   MAX_EXPENSIVE_SESSIONS_PER_WEEK,
 } from "../overlapModel";
@@ -230,6 +231,11 @@ describe("backToBackPairs — the week's SHAPE, not date-pinned lifts", () => {
 
   it("is empty for a single session", () => {
     expect(backToBackPairs(sched([1]), 1)).toEqual([]);
+  });
+
+  it("detects the recurring Saturday-to-Sunday seam", () => {
+    expect(weekWrapsBackToBack(sched([0, 3, 6]), 3)).toBe(true);
+    expect(weekWrapsBackToBack(sched([1, 3, 5]), 3)).toBe(false);
   });
 });
 

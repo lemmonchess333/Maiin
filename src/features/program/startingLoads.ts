@@ -13,7 +13,8 @@
  * progression engine ramps load fast), whereas too-heavy risks failed first
  * sessions. Pure + mirror-ready.
  */
-import { EXERCISES } from "@/lib/exercises";
+import { EXERCISES, getExerciseById } from "@/lib/exercises";
+import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 
 import type {
   Experience,
@@ -21,7 +22,11 @@ import type {
   ProgramExercise,
   WorkoutDay,
 } from "./programTypes";
-import { loadFactorFor } from "./variationBank";
+import {
+  loadFactorFor,
+  movementCategoryForExerciseId,
+  rescaleForSwap,
+} from "./variationBank";
 
 // Re-exported, not redeclared. This was a hand-written duplicate of the union
 // `programTypes.VALID_EXPERIENCE` already derives — a second copy of one
@@ -116,9 +121,45 @@ export function startingWeightForExercise(
 }
 
 /**
+ * Safe working load when an exercise identity changes.
+ *
+ * Same-category loaded swaps preserve earned strength through the variation
+ * ratio. Bodyweight boundaries and cross-category substitutions have no valid
+ * ratio, so they are freshly seeded when profile context exists and otherwise
+ * remain explicitly uncalibrated at 0 kg.
+ */
+export function weightAfterExerciseSwap(
+  ex: Pick<ProgramExercise, "weight" | "exerciseId" | "movementCategory">,
+  toExerciseId: string,
+  ctx?: StartingLoadContext
+): { weight: number; movementCategory: MovementCategory } {
+  const catalogTarget = getExerciseById(toExerciseId);
+  const targetCategory =
+    movementCategoryForExerciseId(toExerciseId) ??
+    (catalogTarget
+      ? inferMovementCategory(catalogTarget.name, catalogTarget.id)
+      : ex.movementCategory);
+  const sameCategory = targetCategory === ex.movementCategory;
+  const scaled = sameCategory
+    ? rescaleForSwap(
+        ex.weight ?? 0,
+        ex.exerciseId,
+        toExerciseId,
+        ex.movementCategory
+      )
+    : 0;
+  const weight =
+    scaled > 0 || !ctx
+      ? scaled
+      : startingWeightForExercise(toExerciseId, targetCategory, ctx);
+  return { weight, movementCategory: targetCategory };
+}
+
+/**
  * Seed cold-start starting weights on a generated week. Reweights every lift
- * that has NEVER been trained (`performanceHistory` empty) and carries a real
- * (non-bodyweight) load — so a fresh program reflects the user's size/level,
+ * that has NEVER been trained (`performanceHistory` empty) and resolves to a
+ * loaded exercise — including template rows that arrive uncalibrated at 0 kg
+ * — so a fresh program reflects the user's size/level,
  * while any lift with logged history keeps its progressed weight. Pure;
  * returns a new workouts array.
  *
@@ -151,7 +192,7 @@ export function seedStartingLoads(
     ...day,
     exercises: day.exercises.map((ex: ProgramExercise) => {
       const untrained = (ex.performanceHistory?.length ?? 0) === 0;
-      if (!untrained || (ex.weight ?? 0) <= 0) return ex;
+      if (!untrained) return ex;
       const seed = startingWeightForExercise(
         ex.exerciseId,
         ex.movementCategory,

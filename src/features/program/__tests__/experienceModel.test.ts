@@ -652,6 +652,71 @@ describe("advanced movements surface when a lift stalls", () => {
     ).toBe("close-grip-bench");
   });
 
+  it("wires the specialist choice through a real programme regeneration", () => {
+    const first = generateProgram(
+      "recomp",
+      4,
+      undefined,
+      "hypertrophy",
+      CTX("advanced"),
+      undefined,
+      "advanced"
+    ).workouts;
+    let found = false;
+    const stalled = first.map((day) => ({
+      ...day,
+      exercises: day.exercises.map((ex) => {
+        if (ex.exerciseId !== "barbell-row") return ex;
+        found = true;
+        return {
+          ...ex,
+          weight: 100,
+          plateauCount: 3,
+          performanceHistory: [
+            {
+              date: "2026-07-01",
+              weight: 100,
+              repsCompleted: 5,
+              repsTarget: 5,
+            },
+          ],
+        };
+      }),
+    }));
+    expect(found).toBe(true);
+
+    const regenerated = generateProgram(
+      "recomp",
+      4,
+      stalled,
+      "hypertrophy",
+      CTX("advanced"),
+      undefined,
+      "advanced"
+    ).workouts;
+    const specialist = regenerated
+      .flatMap((day) => day.exercises)
+      .find((ex) => ex.exerciseId === "pendlay-row");
+    expect(specialist).toBeDefined();
+    expect(specialist?.plateauCount).toBe(0);
+    expect(specialist?.performanceHistory).toEqual([]);
+
+    const stable = generateProgram(
+      "recomp",
+      4,
+      regenerated,
+      "hypertrophy",
+      CTX("advanced"),
+      undefined,
+      "advanced"
+    ).workouts;
+    expect(
+      stable
+        .flatMap((day) => day.exercises)
+        .some((ex) => ex.exerciseId === "pendlay-row")
+    ).toBe(true);
+  });
+
   it("does not fire below the plateau threshold, at any level", () => {
     // Stability within a block (N5) — a lift that is still progressing keeps
     // its exercise. The advanced tier changes what a STALL escalates to, not

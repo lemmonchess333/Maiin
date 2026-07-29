@@ -33,6 +33,7 @@
 
 import type { ProgramExercise } from "./programTypes";
 import { primaryCanonicalForExercise } from "./volumeModel";
+import { getExerciseById } from "@/lib/exercises";
 
 export interface WarmupSet {
   weight: number;
@@ -51,30 +52,83 @@ const RAMP_STEPS: ReadonlyArray<{ pct: number; reps: number }> = [
   { pct: 0.7, reps: 3 },
 ];
 
-const roundToPlate = (kg: number) => Math.round(kg / 2.5) * 2.5;
+const roundToIncrement = (kg: number, increment: number) =>
+  Math.round(kg / increment) * increment;
 
 /**
  * The ramp for one lift, from its working weight. Empty when there is
  * nothing sensible to ramp: bodyweight and uncalibrated lifts (weight 0),
  * and anything at or below the bar.
  */
-export function warmupRamp(workingWeight: number): WarmupSet[] {
-  if (!Number.isFinite(workingWeight) || workingWeight <= BAR_KG) return [];
+export function warmupRamp(
+  workingWeight: number,
+  equipment = "Barbell"
+): WarmupSet[] {
+  if (!Number.isFinite(workingWeight) || workingWeight <= 0) return [];
+  if (equipment === "Bodyweight") return [];
+
+  const isBarbell = equipment === "Barbell";
+  if (isBarbell && workingWeight <= BAR_KG) return [];
 
   const out: WarmupSet[] = [];
-  if (workingWeight >= BAR_SET_MIN_WORKING_KG) {
+  if (isBarbell && workingWeight >= BAR_SET_MIN_WORKING_KG) {
     out.push({ weight: BAR_KG, reps: 10 });
   }
   for (const { pct, reps } of RAMP_STEPS) {
-    const weight = roundToPlate(workingWeight * pct);
-    // Skip a step that lands on the bar (already covered, or not worth a row)
-    // or that meets the working weight — a "warm-up" at the working load is
-    // just a working set.
-    if (weight > BAR_KG && weight < workingWeight) out.push({ weight, reps });
+    // Barbell work stays on the existing 2.5 kg plate grid. Dumbbells,
+    // machines and cables use the same conservative grid, but crucially have
+    // no imaginary 20 kg bar floor.
+    const weight = roundToIncrement(workingWeight * pct, 2.5);
+    const aboveFloor = isBarbell ? weight > BAR_KG : weight > 0;
+    if (
+      aboveFloor &&
+      weight < workingWeight &&
+      !out.some((set) => set.weight === weight)
+    ) {
+      out.push({ weight, reps });
+    }
   }
-  // A light lift can end up with nothing above the bar; give it the bar.
-  if (out.length === 0) out.push({ weight: BAR_KG, reps: 10 });
+  // A light barbell lift can end up with nothing above the bar; give it the
+  // empty bar. Non-barbell movements keep their percentage ramp instead.
+  if (out.length === 0 && isBarbell) {
+    out.push({ weight: BAR_KG, reps: 10 });
+  }
   return out;
+}
+
+export interface InitialSessionSet {
+  reps: number;
+  weight: number;
+  completed: boolean;
+  type: "warmup" | "working";
+}
+
+/**
+ * One canonical constructor for a fresh session. Resume-reset and first mount
+ * must produce the same rows; keeping this here also makes the boundary
+ * testable without rendering the full workout screen.
+ */
+export function buildInitialSetLogs(
+  exercises: ProgramExercise[]
+): InitialSessionSet[][] {
+  const ramps = warmupTargets(exercises);
+  return exercises.map((ex, i) => [
+    ...(ramps[i]
+      ? warmupRamp(ex.weight, getExerciseById(ex.exerciseId)?.equipment).map(
+          (set) => ({
+            ...set,
+            completed: false,
+            type: "warmup" as const,
+          })
+        )
+      : []),
+    ...Array.from({ length: ex.sets }, () => ({
+      reps: ex.reps,
+      weight: ex.weight,
+      completed: false,
+      type: "working" as const,
+    })),
+  ]);
 }
 
 /**
@@ -115,7 +169,12 @@ export function toCompletionSetLogs<
 export function warmupTargets(exercises: ProgramExercise[]): boolean[] {
   const seen = new Set<string>();
   return exercises.map((ex) => {
-    if (warmupRamp(ex.weight).length === 0) return false;
+    if (
+      warmupRamp(ex.weight, getExerciseById(ex.exerciseId)?.equipment)
+        .length === 0
+    ) {
+      return false;
+    }
     const muscle = primaryCanonicalForExercise(ex);
     if (!muscle || seen.has(muscle)) return false;
     seen.add(muscle);

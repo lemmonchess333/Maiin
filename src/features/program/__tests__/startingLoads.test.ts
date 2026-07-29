@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   startingWeightForCategory,
   seedStartingLoads,
+  weightAfterExerciseSwap,
   type StartingLoadContext,
 } from "../startingLoads";
 import type { ProgramExercise, WorkoutDay } from "../programTypes";
@@ -76,7 +77,83 @@ describe("startingWeightForCategory", () => {
   });
 });
 
+describe("weightAfterExerciseSwap", () => {
+  it("seeds a loaded target when the source was bodyweight", () => {
+    const swapped = weightAfterExerciseSwap(
+      ex({
+        exerciseId: "push-ups",
+        movementCategory: "horizontal_push",
+        weight: 0,
+      }),
+      "db-bench",
+      ctx()
+    );
+    expect(swapped.weight).toBeGreaterThan(0);
+    expect(swapped.movementCategory).toBe("horizontal_push");
+  });
+
+  it("uses the target category for a cross-category injury substitution", () => {
+    const swapped = weightAfterExerciseSwap(
+      ex({
+        exerciseId: "deadlift",
+        movementCategory: "hip_dominant",
+        weight: 120,
+      }),
+      "incline-db-press",
+      ctx()
+    );
+    expect(swapped.movementCategory).toBe("horizontal_push");
+    expect(swapped.weight).toBeGreaterThan(0);
+    expect(swapped.weight).toBeLessThan(120);
+  });
+
+  it("infers the target category for catalog exercises outside the variation bank", () => {
+    const swapped = weightAfterExerciseSwap(
+      ex({
+        exerciseId: "bench-press",
+        movementCategory: "horizontal_push",
+        weight: 100,
+      }),
+      "leg-extension",
+      ctx()
+    );
+    expect(swapped.movementCategory).toBe("knee_dominant");
+    expect(swapped.weight).toBeGreaterThan(0);
+  });
+
+  it("drops kilograms when the target is bodyweight", () => {
+    const swapped = weightAfterExerciseSwap(
+      ex({
+        exerciseId: "deadlift",
+        movementCategory: "hip_dominant",
+        weight: 120,
+      }),
+      "glute-bridge",
+      ctx()
+    );
+    expect(swapped.weight).toBe(0);
+  });
+});
+
 describe("seedStartingLoads", () => {
+  it("calibrates an untrained loaded template row that starts at 0 kg", () => {
+    const out = seedStartingLoads(
+      [
+        day([
+          ex({
+            exerciseId: "bench-press",
+            movementCategory: "horizontal_push",
+            weight: 0,
+            lastSuccessfulWeight: 0,
+            lastAttemptedWeight: 0,
+          }),
+        ]),
+      ],
+      ctx()
+    );
+    expect(out[0].exercises[0].weight).toBe(35);
+  });
+
   it("reweights untrained MAIN lifts to the bodyweight-relative seed", () => {
     const out = seedStartingLoads(
       [day([ex({ movementCategory: "knee_dominant", weight: 80 })])],
