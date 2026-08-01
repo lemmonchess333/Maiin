@@ -107,6 +107,38 @@ describe("sanitizeProgramState", () => {
       expect(PROGRAM_STATE_KEYS.has(key)).toBe(true);
     }
   });
+
+  // PROGRAM-BLOCK-02. The fixture above can't cover this: `trainingBlock` is
+  // client-written and never appears in a buildPlan output, so the
+  // covers-every-key test would still pass with the key missing. The two
+  // server paths that round-trip a whole programState fail in OPPOSITE
+  // directions without it — applyProgramCommand rejects the command outright
+  // (the deload button throws for every block user), configurePlan warns and
+  // drops (the block silently disappears on every settings save) — so the
+  // property worth pinning is simply that the field survives a round trip.
+  it("carries an active trainingBlock through untouched", () => {
+    const withBlock = {
+      ...realProgramState,
+      trainingBlock: {
+        id: "2026-08-01-1754035200000",
+        owned: true,
+        focus: "strength",
+        pace: "full",
+        durationWeeks: 8,
+        startDate: "2026-08-01",
+        goalBefore: "hypertrophy",
+        amnestyWeeksLeft: 3,
+        weeklyLiftTarget: 4,
+        anchorExerciseIds: ["squat"],
+        why: "",
+        createdAt: 1754035200000,
+        schemaVersion: 1,
+      },
+    };
+    const { value, dropped } = sanitizeProgramState(withBlock);
+    expect(dropped).toEqual([]);
+    expect(value.trainingBlock).toEqual(withBlock.trainingBlock);
+  });
 });
 
 describe("programStateTooLarge", () => {
