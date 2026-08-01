@@ -8,9 +8,10 @@ import {
   isProgressionHeld,
   BLOCK_AMNESTY_WEEKS,
 } from "../represcribe";
-import { generateProgram, advanceWeek } from "../programEngine";
+import { generateProgram, advanceWeek, goalProfileFor } from "../programEngine";
 import type {
   ActiveTrainingBlock,
+  PrimaryGoal,
   ProgramExercise,
   ProgramState,
   WorkoutDay,
@@ -641,5 +642,58 @@ describe("blockConsequence — copy matches the mechanism", () => {
     });
     expect(s).toMatch(/Nothing about your sessions changes/i);
     expect(s).not.toMatch(/short session/i);
+  });
+});
+
+describe("blockConsequence — the load claim tracks scaleLoadForReps", () => {
+  const label = () => "x";
+  const say = (focus: PrimaryGoal, currentFocus: PrimaryGoal) =>
+    blockConsequence({
+      focus,
+      currentFocus,
+      pace: "full",
+      durationWeeks: 8,
+      focusLabel: label,
+    });
+
+  // The copy said "the weights come down a little" for EVERY focus change.
+  // scaleLoadForReps only reduces a load when the rep target goes UP, so
+  // that was false for 13 of the 20 ordered pairs — including the pair the
+  // picker puts first.
+  it("promises no weight change when the rep target does not rise", () => {
+    // hypertrophy 8 → strength 5: fewer reps, load held.
+    expect(say("strength", "hypertrophy")).toMatch(/same weights/i);
+    expect(say("strength", "hypertrophy")).not.toMatch(/come down/i);
+    // equal-rep pair (both mainReps 8).
+    expect(say("general", "hypertrophy")).toMatch(/same weights/i);
+  });
+
+  it("still promises the drop when the target genuinely rises", () => {
+    // strength 5 → hypertrophy 8, and hypertrophy 8 → fat_loss 12.
+    expect(say("hypertrophy", "strength")).toMatch(/come down a little/i);
+    expect(say("fat_loss", "hypertrophy")).toMatch(/come down a little/i);
+  });
+
+  it("agrees with scaleLoadForReps on every ordered focus pair", () => {
+    const all: PrimaryGoal[] = [
+      "hypertrophy",
+      "strength",
+      "fat_loss",
+      "general",
+      "running",
+    ];
+    for (const from of all) {
+      for (const to of all) {
+        if (from === to) continue;
+        const moved =
+          scaleLoadForReps(
+            100,
+            goalProfileFor(from).mainReps,
+            goalProfileFor(to).mainReps
+          ) < 100;
+        const claims = /come down a little/i.test(say(to, from));
+        expect(claims, `${from} -> ${to}`).toBe(moved);
+      }
+    }
   });
 });
