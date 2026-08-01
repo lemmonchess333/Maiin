@@ -50,6 +50,18 @@ const PROGRAM_STATE_KEYS = new Set([
   // this entry the transaction's own sanitizer would strip the snapshot
   // it just wrote and undo would always fail.
   "deloadSnapshot",
+  // PROGRAM-BLOCK-02: the active training block, which owns the lift
+  // prescription for its duration (plan-file row Blk2). Client-written and
+  // never read by a function — this entry exists so the two server paths
+  // that round-trip a whole programState don't destroy it. Both failure
+  // modes are silent-to-loud in opposite directions, which is why the key
+  // lands BEFORE the client starts writing the field:
+  //   applyProgramCommand REJECTS the whole command when anything is
+  //     dropped, so an unlisted key would make the deload button throw
+  //     invalid-argument for every user with an active block;
+  //   configurePlan only warns and drops, so an unlisted key would delete
+  //     the user's block on every settings save, with nothing surfaced.
+  "trainingBlock",
 ]);
 
 // Generous ceiling well under Firestore's ~1 MiB document limit. A real
