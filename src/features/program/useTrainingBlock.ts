@@ -1,12 +1,16 @@
 /**
  * Training Block data hook (PROGRAM-BLOCK-01, slice 4).
  *
- * Owns the owner-only `users/{uid}/trainingBlocks` subcollection:
- * loads the block list once per uid, exposes the single ACTIVE block
- * (a UI constraint — the schema keeps full history), and provides the
- * three writes: create, finish-with-explicit-outcome, and the lazy
- * review-workout fetch (only when the review actually opens — no
- * standing subscription over historical workouts).
+ * ARCHIVE ONLY as of Blk2. The ACTIVE block moved onto
+ * `programState.trainingBlock`, which is what makes start and release
+ * atomic — block, focus and workouts are one document, so Firestore's
+ * own single-document guarantee replaces a transaction and two active
+ * blocks became structurally impossible rather than merely guarded by a
+ * `find` over a createdAt-sorted list.
+ *
+ * What is left here is the history of FINISHED blocks: the list read, one
+ * archive write, and the lazy review-workout fetch (only when the review
+ * actually opens — no standing subscription over historical workouts).
  *
  * All writes go through the guarded wrappers (repo rule: never raw
  * setDoc — undefined stripping + offline-queue survival).
@@ -20,28 +24,11 @@ import { logger } from "@/lib/logger";
 import {
   blockDocPath,
   blocksCollectionPath,
-  makeBlockId,
   parseTrainingBlock,
-  presetLabel,
-  type BlockDurationWeeks,
-  type BlockOutcomeChoice,
-  type BlockPreset,
   type TrainingBlock,
 } from "./trainingBlock";
 import { blockEndDate } from "./trainingBlock";
 import type { ReviewWorkoutDoc } from "./blockReviewViewModel";
-
-export interface CreateBlockInput {
-  preset: BlockPreset;
-  durationWeeks: BlockDurationWeeks;
-  /** Local YYYY-MM-DD start. */
-  startDate: string;
-  weeklyLiftTarget: number;
-  /** ≤3 exerciseIds; v1 derives these from the programme's main
-   *  compounds at creation (no picker yet). */
-  anchorExerciseIds: string[];
-  why: string;
-}
 
 export function useTrainingBlock(uid: string | undefined) {
   // null = loading; [] = loaded, none
@@ -69,58 +56,26 @@ export function useTrainingBlock(uid: string | undefined) {
     };
   }, [uid]);
 
-  const activeBlock = blocks?.find((b) => b.status === "active") ?? null;
-
-  const createBlock = useCallback(
-    async (input: CreateBlockInput): Promise<TrainingBlock | null> => {
-      if (!uid) return null;
-      const createdAt = Date.now();
-      const block: TrainingBlock = {
-        id: makeBlockId(input.startDate, createdAt),
-        preset: input.preset,
-        title: presetLabel(input.preset),
-        startDate: input.startDate,
-        durationWeeks: input.durationWeeks,
-        weeklyLiftTarget: Math.max(1, input.weeklyLiftTarget),
-        anchorExerciseIds: input.anchorExerciseIds.slice(0, 3),
-        why: input.why,
-        status: "active",
-        createdAt,
-      };
+  /**
+   * Write a finished block to the history collection.
+   *
+   * Idempotent by doc id, and deliberately called BEFORE the programState
+   * write that clears the live block: if the second write fails the user
+   * still has their block and a harmless duplicate archive row, whereas the
+   * reverse order can lose the record of what was trained.
+   */
+  const archiveBlock = useCallback(
+    async (block: TrainingBlock): Promise<boolean> => {
+      if (!uid) return false;
       try {
         await setDocGuarded(doc(db, blockDocPath(uid, block.id)), block);
-        setBlocks((prev) => [block, ...(prev ?? [])]);
-        return block;
-      } catch (err) {
-        logger.error("trainingBlock: create failed", err);
-        return null;
-      }
-    },
-    [uid]
-  );
-
-  /** Records the EXPLICIT end-of-block choice. Never touches the
-   *  programme — "adjust"/"new" navigation is the caller's job. */
-  const finishBlock = useCallback(
-    async (
-      block: TrainingBlock,
-      outcome: BlockOutcomeChoice
-    ): Promise<boolean> => {
-      if (!uid) return false;
-      const finished: TrainingBlock = {
-        ...block,
-        status: "completed",
-        outcome,
-        endedAt: Date.now(),
-      };
-      try {
-        await setDocGuarded(doc(db, blockDocPath(uid, block.id)), finished);
-        setBlocks((prev) =>
-          (prev ?? []).map((b) => (b.id === block.id ? finished : b))
-        );
+        setBlocks((prev) => [
+          block,
+          ...(prev ?? []).filter((b) => b.id !== block.id),
+        ]);
         return true;
       } catch (err) {
-        logger.error("trainingBlock: finish failed", err);
+        logger.error("trainingBlock: archive failed", err);
         return false;
       }
     },
@@ -173,9 +128,7 @@ export function useTrainingBlock(uid: string | undefined) {
   return {
     loading: uid !== undefined && blocks === null,
     blocks: blocks ?? [],
-    activeBlock,
-    createBlock,
-    finishBlock,
+    archiveBlock,
     loadReviewWorkouts,
   };
 }

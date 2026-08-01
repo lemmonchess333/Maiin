@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
+  blockConsequence,
+  blockOfferBlockedByRace,
   represcribeWorkouts,
   scaleLoadForReps,
   isProgressionHeld,
@@ -399,5 +401,123 @@ describe("advanceWeek — block amnesty", () => {
     const after = advanceWeek(stalledState(spent), "intermediate", "strained");
     const ids = after.workouts[0].exercises.map((e) => e.exerciseId);
     expect(ids).not.toEqual(["bench-press", "barbell-row", "squat"]);
+  });
+});
+
+describe("blockConsequence — the copy that carries GsPb1", () => {
+  const label = (
+    g: "hypertrophy" | "strength" | "fat_loss" | "general" | "running"
+  ) =>
+    ({
+      hypertrophy: "Build muscle",
+      strength: "Get stronger",
+      fat_loss: "Lose fat",
+      general: "Stay fit",
+      running: "Running support",
+    })[g];
+
+  it("names the exact new rep range when the focus changes", () => {
+    const s = blockConsequence({
+      focus: "strength",
+      currentFocus: "hypertrophy",
+      pace: "full",
+      durationWeeks: 8,
+      focusLabel: label,
+    });
+    expect(s).toContain("sets of 5-7");
+    expect(s).toContain("8 weeks");
+    expect(s).toContain("Same exercises, same days");
+  });
+
+  // "Showing up is the whole goal" is only honest if it is literally true,
+  // so a same-focus block must not claim a change it does not make.
+  it("says nothing changes when the focus is unchanged", () => {
+    const s = blockConsequence({
+      focus: "hypertrophy",
+      currentFocus: "hypertrophy",
+      pace: "full",
+      durationWeeks: 8,
+      focusLabel: label,
+    });
+    expect(s).toMatch(/Nothing about your sessions changes/i);
+    expect(s).not.toMatch(/sets of/);
+  });
+
+  it("mentions the two-week hold only for the easing pace", () => {
+    const of = (pace: "full" | "lighter" | "easing") =>
+      blockConsequence({
+        focus: "hypertrophy",
+        currentFocus: "hypertrophy",
+        pace,
+        durationWeeks: 4,
+        focusLabel: label,
+      });
+    expect(of("easing")).toMatch(/hold steady for the first two weeks/i);
+    expect(of("lighter")).not.toMatch(/hold steady/i);
+    expect(of("full")).not.toMatch(/hold steady/i);
+    expect(of("lighter")).toMatch(/30 minutes/);
+  });
+
+  it("combines a focus change with an easing pace", () => {
+    const s = blockConsequence({
+      focus: "strength",
+      currentFocus: "hypertrophy",
+      pace: "easing",
+      durationWeeks: 12,
+      focusLabel: label,
+    });
+    expect(s).toContain("sets of 5-7");
+    expect(s).toMatch(/30 minutes/);
+    expect(s).toMatch(/hold steady/i);
+  });
+});
+
+describe("blockOfferBlockedByRace", () => {
+  it("refuses inside the taper + race-week window", () => {
+    // marathon floor = 4 weeks (3 taper + race week)
+    expect(
+      blockOfferBlockedByRace({
+        runMode: "race_prep",
+        raceDistance: "marathon",
+        raceTargetDate: "2026-08-15",
+        today: "2026-08-01",
+      })
+    ).toBe(true);
+  });
+
+  it("allows a block well before the taper", () => {
+    expect(
+      blockOfferBlockedByRace({
+        runMode: "race_prep",
+        raceDistance: "marathon",
+        raceTargetDate: "2026-11-01",
+        today: "2026-08-01",
+      })
+    ).toBe(false);
+  });
+
+  // Post-race recovery is the OPPOSITE case: running volume is down and
+  // the athlete has room for a lifting focus.
+  it("allows a block after the race has passed", () => {
+    expect(
+      blockOfferBlockedByRace({
+        runMode: "race_prep",
+        raceDistance: "marathon",
+        raceTargetDate: "2026-07-20",
+        today: "2026-08-01",
+      })
+    ).toBe(false);
+  });
+
+  it("never blocks a freeform runner", () => {
+    expect(
+      blockOfferBlockedByRace({
+        runMode: "freeform",
+        raceDistance: "marathon",
+        raceTargetDate: "2026-08-02",
+        today: "2026-08-01",
+      })
+    ).toBe(false);
+    expect(blockOfferBlockedByRace({ today: "2026-08-01" })).toBe(false);
   });
 });

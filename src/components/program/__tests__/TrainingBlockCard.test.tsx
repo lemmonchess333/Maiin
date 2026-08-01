@@ -1,18 +1,21 @@
 /**
- * TrainingBlockCard — Blk1 hand-off behaviour pins.
+ * TrainingBlockCard — Blk2 behaviour pins.
  *
- *   1. goal-flavoured preset (Muscle Building) → block saves FIRST, then
- *      the in-sheet offer step appears ("Tune programme" / "Keep as is")
- *   2. "Tune programme" navigates to /settings/lift-plan with the
- *      validated route state (prefillGoal + source + blockTitle)
- *   3. habit preset (Consistency Reset) → one-tap create, NO offer step
- *   4. the offer is never a gate: "Keep programme as is" closes with the
- *      block already saved
+ * The Blk1 hand-off tests this file used to carry are GONE, and their
+ * removal is the point rather than collateral: they pinned an in-sheet
+ * "Tune programme?" offer shown AFTER the block was saved, routing to
+ * /settings/lift-plan with a `prefillGoal`. Blk2 deletes that whole
+ * mechanism — the block IS the programme change, so there is nothing left
+ * to hand off to, and the consequence line states the change BEFORE the
+ * write instead of asking about it afterwards.
+ *
+ * What is pinned here is what replaced them, plus the one thing that must
+ * NOT have changed: PROGRAM-CIRCLE-01's privacy fence.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import type { TrainingBlock } from "@/features/program/trainingBlock";
+import type { ActiveTrainingBlock } from "@/features/program/programTypes";
 
 const navigateMock = vi.fn();
 vi.mock("react-router-dom", async (importOriginal) => {
@@ -20,17 +23,12 @@ vi.mock("react-router-dom", async (importOriginal) => {
   return { ...actual, useNavigate: () => navigateMock };
 });
 
-const createBlockMock = vi.fn();
-/* PROGRAM-CIRCLE-01: the hand-off tests need an ACTIVE block; the
-   holder is read lazily at render time so each test can set it. */
-const hookState: { activeBlock: TrainingBlock | null } = { activeBlock: null };
+const archiveBlockMock = vi.fn(async (_block: unknown) => true);
 vi.mock("@/features/program/useTrainingBlock", () => ({
   useTrainingBlock: () => ({
     loading: false,
     blocks: [],
-    activeBlock: hookState.activeBlock,
-    createBlock: (...args: unknown[]) => createBlockMock(...args),
-    finishBlock: vi.fn(),
+    archiveBlock: (block: unknown) => archiveBlockMock(block),
     loadReviewWorkouts: vi.fn(async () => []),
   }),
 }));
@@ -40,148 +38,205 @@ vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 import TrainingBlockCard from "../TrainingBlockCard";
 import { blockEndDate } from "@/features/program/trainingBlock";
 
-function makeBlock(preset: TrainingBlock["preset"]): TrainingBlock {
+const onStart = vi.fn(async (_input: unknown) => true);
+const onRelease = vi.fn(async () => true);
+const onKeepFocus = vi.fn(async () => true);
+
+function localToday(): string {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
+}
+
+function activeBlock(
+  over: Partial<ActiveTrainingBlock> = {}
+): ActiveTrainingBlock {
   return {
-    id: `2026-07-11-${preset}`,
-    preset,
-    title:
-      preset === "muscle_building" ? "Muscle Building" : "Consistency Reset",
-    startDate: "2026-07-11",
+    id: "2026-07-11-1",
+    owned: true,
+    focus: "strength",
+    pace: "full",
     durationWeeks: 12,
+    startDate: localToday(),
+    goalBefore: "hypertrophy",
+    amnestyWeeksLeft: 3,
     weeklyLiftTarget: 4,
     anchorExerciseIds: [],
     why: "",
-    status: "active",
     createdAt: 1,
+    schemaVersion: 1,
+    ...over,
   };
 }
 
-function renderCard() {
+function renderCard(
+  over: Partial<React.ComponentProps<typeof TrainingBlockCard>> = {}
+) {
   return render(
     <MemoryRouter>
       <TrainingBlockCard
         uid="u1"
-        defaultWeeklyLiftTarget={4}
+        block={undefined}
+        currentFocus="hypertrophy"
+        liftDaysPerWeek={4}
         mainCompoundIds={[]}
         trainingWhy=""
+        onStart={onStart}
+        onRelease={onRelease}
+        onKeepFocus={onKeepFocus}
+        {...over}
       />
     </MemoryRouter>
   );
 }
 
-async function openSheetAndPick(
-  preset: "Muscle Building" | "Consistency Reset"
-) {
-  fireEvent.click(
-    await screen.findByRole("button", { name: /start a training block/i })
-  );
-  fireEvent.click(await screen.findByText(new RegExp(`^${preset}$`)));
-  fireEvent.click(screen.getByRole("button", { name: /^start block$/i }));
-}
-
 beforeEach(() => {
-  navigateMock.mockClear();
-  createBlockMock.mockReset();
-  hookState.activeBlock = null;
+  vi.clearAllMocks();
 });
 
-/** Local YYYY-MM-DD "today" — keeps the active-block tests in-window
- *  regardless of when they run. */
-function localToday(): string {
-  const now = new Date();
-  const m = String(now.getMonth() + 1).padStart(2, "0");
-  const d = String(now.getDate()).padStart(2, "0");
-  return `${now.getFullYear()}-${m}-${d}`;
-}
-
-describe("TrainingBlockCard (Blk1)", () => {
-  it("goal preset → saves the block, then shows the in-sheet offer", async () => {
-    createBlockMock.mockResolvedValue(makeBlock("muscle_building"));
-    renderCard();
-    await openSheetAndPick("Muscle Building");
-
-    expect(
-      await screen.findByText(/tune your programme for this focus/i)
-    ).toBeInTheDocument();
-    // The save happened BEFORE the offer.
-    expect(createBlockMock).toHaveBeenCalledTimes(1);
-    expect(
-      screen.getByRole("button", { name: /tune programme/i })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /keep programme as is/i })
-    ).toBeInTheDocument();
-  });
-
-  it("Tune programme navigates to the lift-plan editor with the hand-off state", async () => {
-    createBlockMock.mockResolvedValue(makeBlock("muscle_building"));
-    renderCard();
-    await openSheetAndPick("Muscle Building");
-    fireEvent.click(
-      await screen.findByRole("button", { name: /tune programme/i })
-    );
+describe("TrainingBlockCard (Blk2) — the create moment", () => {
+  it("opens on the user's CURRENT focus, not a hardcoded default", async () => {
+    // The old sheet always reset to "strength_foundation". Harmless when a
+    // preset changed nothing; under Blk2 an idle tap would re-prescribe a
+    // hypertrophy user's whole week as strength.
+    renderCard({ currentFocus: "hypertrophy" });
+    fireEvent.click(screen.getByText("Start a training block"));
     await waitFor(() =>
-      expect(navigateMock).toHaveBeenCalledWith("/settings/lift-plan", {
-        state: {
-          prefillGoal: "hypertrophy",
-          source: "block",
-          blockTitle: "Muscle Building",
-        },
-      })
+      expect(screen.getByText("Your focus now")).toBeInTheDocument()
     );
+    const buildMuscle = screen
+      .getAllByRole("button")
+      .find((b) => b.textContent?.includes("Build muscle"));
+    expect(buildMuscle).toHaveAttribute("aria-pressed", "true");
   });
 
-  it("habit preset → one-tap create, no offer step", async () => {
-    createBlockMock.mockResolvedValue(makeBlock("consistency_reset"));
-    renderCard();
-    await openSheetAndPick("Consistency Reset");
-    await waitFor(() => expect(createBlockMock).toHaveBeenCalledTimes(1));
-    expect(screen.queryByText(/tune your programme/i)).toBeNull();
-    expect(navigateMock).not.toHaveBeenCalled();
-  });
-
-  /* PROGRAM-CIRCLE-01 (slice 4a) — the detail sheet's "Train together"
-     hand-off carries EXACTLY the space type, the block's display title
-     and its end date. Nothing else may ever travel (privacy fence). */
-  it("active block detail sheet: Train together navigates with exactly type/title/date params", async () => {
-    const block: TrainingBlock = {
-      ...makeBlock("muscle_building"),
-      id: `${localToday()}-muscle_building`,
-      startDate: localToday(),
-    };
-    hookState.activeBlock = block;
-    renderCard();
-
-    // The active row opens the detail sheet (in-window, not finished).
-    fireEvent.click(screen.getByRole("button", { name: /muscle building/i }));
-    fireEvent.click(
-      await screen.findByRole("button", { name: "Train together" })
-    );
-
-    await waitFor(() => expect(navigateMock).toHaveBeenCalledTimes(1));
-    expect(navigateMock).toHaveBeenCalledWith(
-      `/social?circleCreate=strength_block&circleTitle=${encodeURIComponent(
-        block.title
-      )}&circleDate=${blockEndDate(block)}`
-    );
-  });
-
-  it("declining the offer closes the sheet without navigating; the block is already saved", async () => {
-    createBlockMock.mockResolvedValue(makeBlock("muscle_building"));
-    const { baseElement } = renderCard();
-    await openSheetAndPick("Muscle Building");
-    fireEvent.click(
-      await screen.findByRole("button", { name: /keep programme as is/i })
-    );
-    // The sheet enters its closed state (vaul keeps it mounted through
-    // the exit animation in jsdom — assert the state, not the unmount)…
+  it("states the exact prescription change BEFORE the write", async () => {
+    // GsPb1's "never a silent programme rewrite", upheld. The user is told
+    // what changes while they can still decline it.
+    renderCard({ currentFocus: "hypertrophy" });
+    fireEvent.click(screen.getByText("Start a training block"));
+    fireEvent.click(await screen.findByText("Get stronger"));
     await waitFor(() =>
       expect(
-        baseElement.querySelector('[data-vaul-drawer][data-state="closed"]')
-      ).not.toBeNull()
+        screen.getByText(/main lifts move to sets of 5-7 for 8 weeks/i)
+      ).toBeInTheDocument()
     );
-    // …and nothing else happened: no navigation, exactly one save.
-    expect(navigateMock).not.toHaveBeenCalled();
-    expect(createBlockMock).toHaveBeenCalledTimes(1);
+    expect(onStart).not.toHaveBeenCalled();
+  });
+
+  it("says plainly that a same-focus block changes nothing", async () => {
+    // The habit paces are only honest if "showing up is the whole goal" is
+    // literally true, so the copy must not overstate.
+    renderCard({ currentFocus: "hypertrophy" });
+    fireEvent.click(screen.getByText("Start a training block"));
+    expect(
+      await screen.findByText(/Nothing about your sessions changes/i)
+    ).toBeInTheDocument();
+  });
+
+  it("passes focus, pace and duration through to the writer", async () => {
+    renderCard({ currentFocus: "hypertrophy" });
+    fireEvent.click(screen.getByText("Start a training block"));
+    fireEvent.click(await screen.findByText("Get stronger"));
+    fireEvent.click(screen.getByText("Training around something?"));
+    fireEvent.click(await screen.findByText("Easing back in"));
+    fireEvent.click(screen.getByRole("button", { name: "Start block" }));
+    await waitFor(() => expect(onStart).toHaveBeenCalledTimes(1));
+    expect(onStart.mock.calls[0][0]).toMatchObject({
+      focus: "strength",
+      pace: "easing",
+      durationWeeks: 8,
+    });
+  });
+
+  it("hides pace behind a disclosure — most blocks are just 'full'", async () => {
+    renderCard();
+    fireEvent.click(screen.getByText("Start a training block"));
+    await screen.findByText("Training around something?");
+    expect(screen.queryByText("Easing back in")).not.toBeInTheDocument();
+  });
+});
+
+describe("TrainingBlockCard (Blk2) — who is offered a block", () => {
+  it("offers nothing to a run-only athlete", () => {
+    // The old card rendered the row and seeded a weekly target of 1 lift
+    // onto a plan with no lifts.
+    renderCard({ liftDaysPerWeek: 0 });
+    expect(
+      screen.queryByText("Start a training block")
+    ).not.toBeInTheDocument();
+  });
+
+  it("offers nothing inside a race taper or race week", () => {
+    renderCard({ raceTaperActive: true });
+    expect(
+      screen.queryByText("Start a training block")
+    ).not.toBeInTheDocument();
+  });
+
+  it("still shows an ACTIVE block during a taper — only starting is blocked", () => {
+    renderCard({ raceTaperActive: true, block: activeBlock() });
+    expect(screen.getByText(/Get stronger/)).toBeInTheDocument();
+  });
+});
+
+describe("TrainingBlockCard (Blk2) — the active block", () => {
+  it("labels the row by focus and counts BLOCK weeks", () => {
+    renderCard({ block: activeBlock() });
+    expect(screen.getByText(/Get stronger/)).toBeInTheDocument();
+    expect(screen.getByText(/Block week/)).toBeInTheDocument();
+  });
+
+  it("claims no prescription for an adopted legacy block", () => {
+    // `owned: false` means the block never represcribed anything, so the
+    // row must not tell the user their lifts are at a focus's rep range.
+    renderCard({ block: activeBlock({ owned: false }) });
+    expect(screen.queryByText(/Main lifts at/)).not.toBeInTheDocument();
+  });
+
+  it("says weights are holding during an easing block's first two weeks", () => {
+    renderCard({ block: activeBlock({ pace: "easing" }) });
+    expect(screen.getByText(/Weights holding steady/)).toBeInTheDocument();
+  });
+
+  it("keeps the Circles hand-off, and leaks only type/title/date", async () => {
+    // PROGRAM-CIRCLE-01's privacy fence is unchanged by Blk2 — the focus's
+    // prescription, exercises and loads must never travel.
+    const block = activeBlock();
+    renderCard({ block });
+    fireEvent.click(screen.getByText(/Get stronger/));
+    fireEvent.click(await screen.findByText("Train together"));
+    await waitFor(() => expect(navigateMock).toHaveBeenCalledTimes(1));
+    const url = navigateMock.mock.calls[0][0] as string;
+    expect(url).toContain("circleCreate=strength_block");
+    expect(url).toContain(`circleDate=${blockEndDate(block)}`);
+    expect(url).not.toContain("pace");
+    expect(url).not.toContain("goalBefore");
+  });
+
+  it("ending early archives BEFORE releasing the programme", async () => {
+    // Archive first: the reverse order loses the record of what was
+    // trained if the second write fails.
+    renderCard({ block: activeBlock() });
+    fireEvent.click(screen.getByText(/Get stronger/));
+    fireEvent.click(await screen.findByText("End block early"));
+    // `hidden: true` because vaul keeps the drawer mounted through its exit
+    // animation in jsdom, so the aria-hidden it puts on outside content
+    // outlives the close. The component DOES close the sheet before raising
+    // this dialog — without that a screen-reader user genuinely could not
+    // reach the confirm button.
+    fireEvent.click(
+      await screen.findByRole("button", { name: "End block", hidden: true })
+    );
+    await waitFor(() => expect(onRelease).toHaveBeenCalledTimes(1));
+    expect(archiveBlockMock).toHaveBeenCalledTimes(1);
+    expect(archiveBlockMock.mock.invocationCallOrder[0]).toBeLessThan(
+      onRelease.mock.invocationCallOrder[0]
+    );
+    expect(archiveBlockMock.mock.calls[0][0]).toMatchObject({
+      status: "abandoned",
+      endedEarly: true,
+      focus: "strength",
+      goalBefore: "hypertrophy",
+    });
   });
 });
