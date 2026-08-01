@@ -627,6 +627,59 @@ rather than a patch. None of them are speculative; each was measured.
     fires at 1 — so the branch cuts sets and resets the plateau counter
     without changing a single exercise.
 
+### Follow-up audit (2026-08-01) — re-measured on `main` after the merge
+
+The 216-config matrix was re-run against merged `main` (`ec0296d`) rather than
+against the audit branch, because the branch picked up commits after the last
+one this audit measured. Equipment violations held at **0**. Complexity
+violations read **327** where the branch measured 273 — 309 of them arrive via
+injury substitution, which is the ungated-by-design path, and the remaining 18
+are same-day collisions on `home_gym` / `minimal` at 5–6 days: the simple
+option is already occupied by another slot in that day, so the swap falls back
+to the technical one. Both were expected residue. The doc's earlier phrasing —
+"there IS no simple, equipment-available option in that category" — was
+accurate when written and is now imprecise: after the bank additions, the
+option exists and is simply taken. The conclusion (bank coverage, not filter
+logic) is unchanged; the reason is "the day already holds it".
+
+**One new defect, fixed here: the 0 kg lat pulldown.**
+
+`BW_MULTIPLE` declared `vertical_pull` and `core` as `0`, commented
+"bodyweight" / "mostly bodyweight". That reasoned from the category PRIMARY
+(pull-ups; near enough for core) to the whole category, and
+`startingWeightForExercise` short-circuits on `base <= 0` — so the zero made
+every member of both categories unseedable, including the loaded ones. The
+`loadFactor` values sitting in the bank for exactly those lifts
+(`lat-pulldown` 0.6, `single-arm-lat-pulldown` 0.25, `pallof-press` 0.5) were
+dead code the function could never reach.
+
+It surfaced where a swap has nothing else to fall back on: a shoulder-injured
+beginner is moved off pull-ups onto a lat pulldown, `rescaleForSwap(0, …)` is
+0 because the source was bodyweight, and the category seed that should have
+caught it was 0 too. **"Lat Pulldown 4×8 @ 0 kg", in 12 of the 216 configs.**
+
+The fix is to let the category describe its loaded members and leave the
+zeroing to the per-EXERCISE guards that already do it correctly —
+`BODYWEIGHT_IDS` catches pull-ups / chin-ups / leg-raise / russian-twist by
+catalog equipment, `loadFactor: 0` catches ab-wheel. `vertical_pull` becomes
+0.75 / 0.95 / 1.15 and `core` 0.35 / 0.45 / 0.55 (anchored on cable crunch,
+which is loaded).
+
+The method point is the one this audit keeps re-learning. `generatorAudit`
+already had a "never ships a 0 kg prescription" pin, and it passed throughout
+— because it called `generateProgram`, and this defect lives one layer up in
+`buildPlan`, where the injury and equipment filters re-point slots the
+generator never saw. **The audit was testing the programme the generator
+returns, not the programme a user opens.** The new pin runs the full pipeline
+across the same 216 configs. Reverting the fix fails it, plus three unit pins
+— checked by mutation, not assumed.
+
+One of those three was a pre-existing vacuous test: `seedStartingLoads`
+"leaves bodyweight lifts (weight 0) as bodyweight" passed a placeholder
+`exerciseId: "x"` and asserted 0, so it was testing the category zero rather
+than the lift being bodyweight — the very conflation being fixed. It now pins
+a real bodyweight id alongside a loaded one in the same category.
+
 ## Presentation policy (operator decision, 2026-07-27)
 
 Locked with the operator when implementation began: **the app is the coach,
