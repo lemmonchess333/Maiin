@@ -17,6 +17,7 @@ import ProgrammeWeekSelector from "@/components/program/ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "@/components/program/ProgrammeWeekSelector";
 import SessionCommandCard from "@/components/program/SessionCommandCard";
 import TrainingBlockCard from "@/components/program/TrainingBlockCard";
+import { blockOfferBlockedByRace } from "@/features/program/represcribe";
 import { THEME } from "@/lib/theme";
 import WeekPhaseRow from "@/components/program/WeekPhaseRow";
 import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
@@ -156,6 +157,9 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     dismissFellBehindPrompt,
     applyDeloadWeek,
     revertDeloadWeek,
+    startTrainingBlock,
+    releaseTrainingBlock,
+    keepTrainingBlockFocus,
   } = useProgram();
   const { profile, updateProfile } = useAuth();
   const { awardEventBadge } = useStreaks();
@@ -1186,9 +1190,20 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                       {profile?.uid && programState && (
                         <TrainingBlockCard
                           uid={profile.uid}
-                          defaultWeeklyLiftTarget={programState.workouts.length}
+                          block={programState.trainingBlock}
+                          currentFocus={programState.primaryGoal ?? "general"}
+                          liftDaysPerWeek={programState.workouts.length}
                           mainCompoundIds={blockAnchorIds}
                           trainingWhy={profile?.trainingWhy?.trim() ?? ""}
+                          raceTaperActive={blockOfferBlockedByRace({
+                            runMode: profile?.runMode,
+                            raceDistance: profile?.raceGoal?.distance,
+                            raceTargetDate: profile?.raceGoal?.targetDate,
+                            today: localDateString(),
+                          })}
+                          onStart={startTrainingBlock}
+                          onRelease={releaseTrainingBlock}
+                          onKeepFocus={keepTrainingBlockFocus}
                         />
                       )}
 

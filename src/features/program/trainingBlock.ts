@@ -134,35 +134,59 @@ export const BLOCK_PRESETS: Array<{
 
 export const BLOCK_DURATIONS: BlockDurationWeeks[] = [4, 8, 12];
 
-export function presetLabel(preset: BlockPreset): string {
-  return BLOCK_PRESETS.find((p) => p.value === preset)?.label ?? preset;
+/**
+ * The training-focus vocabulary, shared by the block picker and the
+ * lift-plan editor.
+ *
+ * One source of truth on purpose. Blk1's original confusion was two
+ * pickers speaking the same vocabulary with different effects; under Blk2
+ * they have the SAME effect, so the words must also be the same, or the
+ * user sees "Muscle Building" in one place and "Build muscle" in the other
+ * for what is now literally one setting.
+ */
+export const FOCUS_LABELS: Record<PrimaryGoal, string> = {
+  hypertrophy: "Build muscle",
+  strength: "Get stronger",
+  fat_loss: "Lose fat",
+  general: "Stay fit",
+  running: "Running support",
+};
+
+export function focusLabel(goal: PrimaryGoal): string {
+  return FOCUS_LABELS[goal] ?? FOCUS_LABELS.general;
 }
 
-/**
- * Blk1 lock (1): the explicit programme hand-off is offered ONLY where a
- * truthful one-field prefill exists — the preset maps to a PrimaryGoal the
- * lift-plan editor can preselect. The two habit presets return null: their
- * point is "same programme, just show up", and a wrong prefill is worse
- * than none. This mapping is the single source of truth for the offer.
- */
-export function presetProgrammeGoal(
-  preset: BlockPreset | undefined
-): "strength" | "hypertrophy" | "running" | null {
-  // A Blk2 block carries `focus` directly and has no preset to map from,
-  // so there is no hand-off to offer — the block already IS the change.
-  if (preset === undefined) return null;
-  switch (preset) {
-    case "strength_foundation":
-      return "strength";
-    case "muscle_building":
-      return "hypertrophy";
-    case "hybrid_support":
-      return "running";
-    case "consistency_reset":
-    case "return_to_training":
-      return null;
-  }
-}
+/** Ordered for the picker — the two most-asked-for first. */
+export const FOCUS_ORDER: readonly PrimaryGoal[] = [
+  "hypertrophy",
+  "strength",
+  "fat_loss",
+  "general",
+  "running",
+];
+
+export const PACE_OPTIONS: ReadonlyArray<{
+  value: BlockPace;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: "full",
+    label: "Full",
+    description: "Your sessions as they are.",
+  },
+  {
+    value: "lighter",
+    label: "Lighter",
+    description: "Shorter sessions — accessory work trimmed.",
+  },
+  {
+    value: "easing",
+    label: "Easing back in",
+    description:
+      "Shorter sessions, and your weights hold steady for the first two weeks.",
+  },
+];
 
 /** Where a user's training blocks live. The ONLY place the collection
  *  name is written — `useTrainingBlock` reads the list and writes
