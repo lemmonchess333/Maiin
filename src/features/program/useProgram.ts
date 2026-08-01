@@ -31,7 +31,7 @@ import {
   isProgressionHeld,
   represcribeWorkouts,
 } from "./represcribe";
-import { blockWeekOf } from "./trainingBlock";
+import { blockWeekOf, makeBlockId } from "./trainingBlock";
 import { normalizeProgramState, transitionStatus } from "./programTypes";
 import { resolveRecoveryExit } from "./runModeResolution";
 import {
@@ -2028,7 +2028,7 @@ export function useProgram() {
         profile?.primaryGoal ?? programState.primaryGoal ?? "general";
       const now = Date.now();
       const block: ActiveTrainingBlock = {
-        id: `${input.startDate}-${now}`,
+        id: makeBlockId(input.startDate, now),
         owned: true,
         focus: input.focus,
         pace: input.pace,
