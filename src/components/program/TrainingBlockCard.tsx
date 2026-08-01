@@ -154,7 +154,9 @@ export default function TrainingBlockCard({
     }
     setShowReview(false);
     haptic("light");
-    if (outcome === "repeat") {
+    // A preset-less (Blk2) block has no preset to repeat FROM, and never
+    // reaches this card in the first place — its review is its own surface.
+    if (outcome === "repeat" && activeBlock.preset) {
       const repeated = await createBlock({
         preset: activeBlock.preset,
         durationWeeks: activeBlock.durationWeeks,
