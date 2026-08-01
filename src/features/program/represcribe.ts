@@ -209,6 +209,28 @@ function localMidnight(date: string): number {
   return new Date(y, (m ?? 1) - 1, d ?? 1).getTime();
 }
 
+/**
+ * Whether the block's pace should put the SHORT session in front.
+ *
+ * This is the other half of what "lighter" and "easing back in" promise,
+ * and it shipped missing: the pace was stored, the copy said "shorter
+ * sessions", and nothing anywhere read it — so the words described
+ * behaviour the app did not have. Copy that overstates is worse than a
+ * feature that is absent, and the create sheet's whole claim to honesty
+ * rests on the consequence line being literally true.
+ *
+ * A PROMOTION, never a lock. The pre-session chooser still lists every
+ * variant and the full session is still one tap; the block only changes
+ * which one is offered first. Forcing it would take a choice away from
+ * someone who feels good today, and the pace is a statement about the
+ * next few weeks rather than about this morning.
+ */
+export function blockPrefersShorterSessions(
+  block: Pick<ActiveTrainingBlock, "pace"> | undefined
+): boolean {
+  return !!block && block.pace !== "full";
+}
+
 /** Weeks an "easing back in" block holds load before resuming progression. */
 export const EASING_HOLD_WEEKS = 2;
 
@@ -244,7 +266,7 @@ export function blockConsequence(input: {
 }): string {
   const { focus, currentFocus, pace, durationWeeks, focusLabel } = input;
   const weeks = `${durationWeeks} weeks`;
-  const trimmed = "trimmed to about 30 minutes";
+  const trimmed = "starting from the short session";
   const hold = "Your weights hold steady for the first two weeks.";
 
   if (focus !== currentFocus) {
@@ -266,9 +288,9 @@ export function blockConsequence(input: {
     return `Nothing about your sessions changes — the block just gives ${weeks} of ${kept} a shape and a finish line.`;
   }
   if (pace === "lighter") {
-    return `Same sessions, ${trimmed} for ${weeks}.`;
+    return `Same prescription for ${weeks}, ${trimmed} each time — the full one is always a tap away.`;
   }
-  return `Same sessions, ${trimmed}. ${hold}`;
+  return `Same prescription, ${trimmed} each time. ${hold}`;
 }
 
 /**

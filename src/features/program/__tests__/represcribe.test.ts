@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   blockConsequence,
+  blockPrefersShorterSessions,
   blockOfferBlockedByRace,
   represcribeWorkouts,
   scaleLoadForReps,
@@ -526,7 +527,7 @@ describe("blockConsequence — the copy that carries GsPb1", () => {
     expect(of("easing")).toMatch(/hold steady for the first two weeks/i);
     expect(of("lighter")).not.toMatch(/hold steady/i);
     expect(of("full")).not.toMatch(/hold steady/i);
-    expect(of("lighter")).toMatch(/30 minutes/);
+    expect(of("lighter")).toMatch(/short session/i);
   });
 
   it("combines a focus change with an easing pace", () => {
@@ -538,7 +539,7 @@ describe("blockConsequence — the copy that carries GsPb1", () => {
       focusLabel: label,
     });
     expect(s).toContain("sets of 5-7");
-    expect(s).toMatch(/30 minutes/);
+    expect(s).toMatch(/short session/i);
     expect(s).toMatch(/hold steady/i);
   });
 });
@@ -590,5 +591,55 @@ describe("blockOfferBlockedByRace", () => {
       })
     ).toBe(false);
     expect(blockOfferBlockedByRace({ today: "2026-08-01" })).toBe(false);
+  });
+});
+
+describe("blockPrefersShorterSessions", () => {
+  // This shipped missing, and the copy shipped anyway: PACE_OPTIONS and
+  // blockConsequence both promised shorter sessions while nothing read
+  // `pace` at all. A promise with no mechanism is worse than no promise.
+  const b = (pace: "full" | "lighter" | "easing") =>
+    ({ pace }) as Pick<ActiveTrainingBlock, "pace">;
+
+  it("is true for both non-full paces and false otherwise", () => {
+    expect(blockPrefersShorterSessions(b("lighter"))).toBe(true);
+    expect(blockPrefersShorterSessions(b("easing"))).toBe(true);
+    expect(blockPrefersShorterSessions(b("full"))).toBe(false);
+    expect(blockPrefersShorterSessions(undefined)).toBe(false);
+  });
+});
+
+describe("blockConsequence — copy matches the mechanism", () => {
+  const label = () => "Build muscle";
+
+  // The specific defect: the copy said "trimmed to about 30 minutes",
+  // which claimed the session WAS shortened. What actually happens is the
+  // short option is offered first and the full one stays one tap away.
+  // The sentence has to describe a promotion, not a trim.
+  it("describes a promotion, never a forced trim", () => {
+    for (const pace of ["lighter", "easing"] as const) {
+      const s = blockConsequence({
+        focus: "hypertrophy",
+        currentFocus: "hypertrophy",
+        pace,
+        durationWeeks: 8,
+        focusLabel: label,
+      });
+      expect(s).toMatch(/short session/i);
+      expect(s).not.toMatch(/trimmed to/i);
+      expect(s).not.toMatch(/30 minutes/);
+    }
+  });
+
+  it("still promises nothing at all for a full same-focus block", () => {
+    const s = blockConsequence({
+      focus: "hypertrophy",
+      currentFocus: "hypertrophy",
+      pace: "full",
+      durationWeeks: 8,
+      focusLabel: label,
+    });
+    expect(s).toMatch(/Nothing about your sessions changes/i);
+    expect(s).not.toMatch(/short session/i);
   });
 });

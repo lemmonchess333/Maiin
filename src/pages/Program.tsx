@@ -17,7 +17,10 @@ import type { ProgrammeWeekSelectorCell } from "@/components/program/ProgrammeWe
 import SessionCommandCard from "@/components/program/SessionCommandCard";
 import TrainingBlockCard from "@/components/program/TrainingBlockCard";
 import ExperienceSuggestionCard from "@/components/program/ExperienceSuggestionCard";
-import { blockOfferBlockedByRace } from "@/features/program/represcribe";
+import {
+  blockOfferBlockedByRace,
+  blockPrefersShorterSessions,
+} from "@/features/program/represcribe";
 import { THEME } from "@/lib/theme";
 import WeekPhaseRow from "@/components/program/WeekPhaseRow";
 import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
@@ -160,6 +163,7 @@ function ProgramInner() {
     revertDeloadWeek,
     undoRecoveryReduction,
     startTrainingBlock,
+    adoptLegacyTrainingBlock,
     releaseTrainingBlock,
     keepTrainingBlockFocus,
   } = useProgram();
@@ -1238,6 +1242,7 @@ function ProgramInner() {
                             today: localDateString(),
                           })}
                           onStart={startTrainingBlock}
+                          onAdoptLegacy={adoptLegacyTrainingBlock}
                           onRelease={releaseTrainingBlock}
                           onKeepFocus={keepTrainingBlockFocus}
                         />
@@ -1847,6 +1852,9 @@ function ProgramInner() {
             ? pickLighterDay(programState.workouts, expressChooserDay)
             : null
         }
+        blockPrefersShorter={blockPrefersShorterSessions(
+          programState.trainingBlock
+        )}
         onSwapToDay={(index) => {
           setExpressChooserDay(null);
           setSessionVariant("full");

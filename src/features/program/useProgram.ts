@@ -25,8 +25,17 @@ import type {
   ScheduledRunDay,
   ScheduledRunStatus,
 } from "./programTypes";
-import { isProgressionHeld, represcribeWorkouts } from "./represcribe";
-import { blockWeekOf } from "./trainingBlock";
+import {
+  BLOCK_AMNESTY_WEEKS,
+  isProgressionHeld,
+  represcribeWorkouts,
+} from "./represcribe";
+import {
+  blockWeekOf,
+  legacyToActiveBlock,
+  makeBlockId,
+  type TrainingBlock,
+} from "./trainingBlock";
 import { normalizeProgramState, transitionStatus } from "./programTypes";
 import { resolveRecoveryExit } from "./runModeResolution";
 import { fetchRecentLayoff } from "./fetchRecentLayoff";
@@ -3045,6 +3054,34 @@ export function useProgram() {
     return true;
   }, [programState, runProgramCommand, refetchProgramState]);
 
+  /**
+   * Adopt a pre-Blk2 block that was still open when Blk2 shipped.
+   *
+   * Idempotent by construction: gated on there being no live block, so a
+   * second call after the first write is a no-op. Writes `owned: false`,
+   * which is what stops the adopted block ever represcribing anything —
+   * on adoption or on release.
+   */
+  const adoptLegacyTrainingBlock = useCallback(
+    async (legacy: TrainingBlock): Promise<boolean> => {
+      if (!programState || programState.trainingBlock) return false;
+      if (programState.workouts.length === 0) return false;
+      try {
+        await saveProgram({
+          ...programState,
+          trainingBlock: legacyToActiveBlock(
+            legacy,
+            programState.primaryGoal ?? profile?.primaryGoal ?? "general"
+          ),
+        });
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [programState, profile, saveProgram]
+  );
+
   const applyDeloadWeek = useCallback(
     () => sendDeloadCommand("applyDeloadWeek"),
     [sendDeloadCommand]
@@ -3195,6 +3232,7 @@ export function useProgram() {
     skipRecoveryEarly,
     dismissFellBehindPrompt,
     startTrainingBlock,
+    adoptLegacyTrainingBlock,
     releaseTrainingBlock,
     keepTrainingBlockFocus,
     applyDeloadWeek,
