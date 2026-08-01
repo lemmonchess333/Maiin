@@ -46,3 +46,7 @@ public/exercise-demos/_preview.html
 # Local Playwright capture-run output (CI owns the app-screenshots branch;
 # the local dir is generated noise — CI force-adds with -f)
 /screenshots/
+
+# graphify output — generated knowledge graph (rebuildable via /graphify .);
+# untracked so a build never trips the closeout stop-hook. Remove to commit it.
+graphify-out/
