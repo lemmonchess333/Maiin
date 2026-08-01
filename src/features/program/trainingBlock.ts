@@ -24,6 +24,8 @@
  * a UI constraint, not a schema one (history keeps past blocks).
  */
 
+import type { BlockPace, PrimaryGoal } from "./programTypes";
+
 export type BlockPreset =
   | "strength_foundation"
   | "muscle_building"
@@ -38,10 +40,25 @@ export type BlockStatus = "active" | "completed" | "abandoned";
 /** Explicit end-of-block decisions — never a silent rewrite. */
 export type BlockOutcomeChoice = "continue" | "repeat" | "adjust" | "new";
 
+/** Closed vocabularies, for validating an untrusted Firestore read. */
+const PRIMARY_GOALS: readonly PrimaryGoal[] = [
+  "hypertrophy",
+  "strength",
+  "fat_loss",
+  "general",
+  "running",
+];
+const BLOCK_PACES: readonly BlockPace[] = ["full", "lighter", "easing"];
+
 export interface TrainingBlock {
-  /** Doc id — `${startDate}-${preset}` keeps ids stable + readable. */
+  /** Doc id — `${startDate}-${createdAt}`, readable and unique per block. */
   id: string;
-  preset: BlockPreset;
+  /**
+   * The pre-Blk2 preset. OPTIONAL because Blk2 replaces it with the
+   * `focus` × `pace` pair; every archived block written before that still
+   * carries one, and must keep parsing.
+   */
+  preset?: BlockPreset;
   /** Editable display title, defaults to the preset label. */
   title: string;
   /** Local YYYY-MM-DD the block starts (a Monday is conventional but
@@ -62,6 +79,23 @@ export interface TrainingBlock {
   endedAt?: number;
   /** The explicit end-of-block choice, recorded at review. */
   outcome?: BlockOutcomeChoice;
+  /* ─── Blk2 archive fields ──────────────────────────────────────
+     What the block actually did to the programme, recorded when it is
+     archived. All optional: pre-Blk2 rows have none of them, and a block
+     is legible without them. `ActiveTrainingBlock` in programTypes.ts is
+     the live counterpart — this is the finished record. ── */
+  /** Training focus the block prescribed. */
+  focus?: PrimaryGoal;
+  pace?: BlockPace;
+  /** The standing focus restored at release. */
+  goalBefore?: PrimaryGoal;
+  /**
+   * Whether the block owned the prescription. Absent or false for the
+   * pre-Blk2 wrapper blocks and for one adopted at deploy.
+   */
+  owned?: boolean;
+  /** True when the user ended it before the window elapsed. */
+  endedEarly?: true;
   /** ms epoch, client clock. */
   createdAt: number;
 }
@@ -112,8 +146,11 @@ export function presetLabel(preset: BlockPreset): string {
  * than none. This mapping is the single source of truth for the offer.
  */
 export function presetProgrammeGoal(
-  preset: BlockPreset
+  preset: BlockPreset | undefined
 ): "strength" | "hypertrophy" | "running" | null {
+  // A Blk2 block carries `focus` directly and has no preset to map from,
+  // so there is no hand-off to offer — the block already IS the change.
+  if (preset === undefined) return null;
   switch (preset) {
     case "strength_foundation":
       return "strength";
@@ -139,8 +176,22 @@ export function blockDocPath(uid: string, blockId: string): string {
   return `${blocksCollectionPath(uid)}/${blockId}`;
 }
 
-export function makeBlockId(startDate: string, preset: BlockPreset): string {
-  return `${startDate}-${preset}`;
+/**
+ * Archive doc id. Readable, and unique per BLOCK rather than per
+ * (day, preset).
+ *
+ * Was `${startDate}-${preset}`, which collides for real: the archive write
+ * is a no-merge `setDoc`, so starting a block, ending it and starting
+ * another of the same kind on the same calendar day silently OVERWRITES the
+ * row that was just completed. That is live data loss today, not a
+ * hypothetical for Blk2 — it just gets easier to hit once "change focus"
+ * exists as a one-tap action.
+ *
+ * `createdAt` rather than the preset because Blk2 retires the preset
+ * vocabulary, and a block's identity was never really its kind.
+ */
+export function makeBlockId(startDate: string, createdAt: number): string {
+  return `${startDate}-${createdAt}`;
 }
 
 /** Local YYYY-MM-DD → ms epoch at local midnight. */
@@ -186,11 +237,24 @@ export function isBlockFinished(
   return localDateMs(today) >= localDateMs(blockEndDate(block));
 }
 
-/** Boundary guard for Firestore reads. Null for anything malformed. */
+/**
+ * Boundary guard for Firestore reads. Null for anything malformed.
+ *
+ * RELAX, NEVER TIGHTEN. This is all-or-nothing and `useTrainingBlock`
+ * filters the nulls out silently, so adding a REQUIRED field here makes
+ * every pre-existing block disappear from the user's history with nothing
+ * logged and nothing surfaced. The same goes for the return literal below:
+ * a field not named there is stripped on read and then destroyed by the
+ * next full-document write, so new fields have to be carried explicitly
+ * even though they are optional.
+ */
 export function parseTrainingBlock(data: unknown): TrainingBlock | null {
   if (data == null || typeof data !== "object") return null;
   const d = data as Record<string, unknown>;
-  const presetValid = BLOCK_PRESETS.some((p) => p.value === d.preset);
+  // Blk2 retires the preset vocabulary, so ABSENT is legal — but a preset
+  // that is present and unrecognised is still malformed.
+  const presetValid =
+    d.preset === undefined || BLOCK_PRESETS.some((p) => p.value === d.preset);
   const durationValid =
     d.durationWeeks === 4 || d.durationWeeks === 8 || d.durationWeeks === 12;
   const statusValid =
@@ -222,9 +286,12 @@ export function parseTrainingBlock(data: unknown): TrainingBlock | null {
     d.outcome === "new"
       ? d.outcome
       : undefined;
+  const focus = PRIMARY_GOALS.find((g) => g === d.focus);
+  const pace = BLOCK_PACES.find((p) => p === d.pace);
+  const goalBefore = PRIMARY_GOALS.find((g) => g === d.goalBefore);
   return {
     id: d.id,
-    preset: d.preset as BlockPreset,
+    ...(d.preset !== undefined ? { preset: d.preset as BlockPreset } : {}),
     title: d.title,
     startDate: d.startDate,
     durationWeeks: d.durationWeeks as BlockDurationWeeks,
@@ -234,6 +301,14 @@ export function parseTrainingBlock(data: unknown): TrainingBlock | null {
     status: d.status as BlockStatus,
     ...(typeof d.endedAt === "number" ? { endedAt: d.endedAt } : {}),
     ...(outcome ? { outcome } : {}),
+    // Blk2 archive fields. Carried so a finished block records what it
+    // actually did to the programme — without them the history would
+    // re-render every Blk2 block as an unlabelled wrapper.
+    ...(focus ? { focus } : {}),
+    ...(pace ? { pace } : {}),
+    ...(goalBefore ? { goalBefore } : {}),
+    ...(typeof d.owned === "boolean" ? { owned: d.owned } : {}),
+    ...(d.endedEarly === true ? { endedEarly: true as const } : {}),
     createdAt: d.createdAt,
   };
 }
