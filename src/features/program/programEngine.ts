@@ -127,8 +127,15 @@ const MAX_BODYWEIGHT_REPS = 20;
 const MAX_PRESCRIBED_REPS = MAX_BODYWEIGHT_REPS;
 const MAX_PRESCRIBED_BODYWEIGHT_REPS = 15;
 
-/** Highest rep target the generator may prescribe for this exercise. */
-function prescribedRepCeiling(ex: {
+/**
+ * Highest rep target the generator may prescribe for this exercise.
+ *
+ * Exported for `represcribe.ts` (Blk2), which re-derives a whole week's
+ * prescription for a new training focus without going near a builder. It
+ * has to clamp exactly as generation does or a block could hand out the
+ * `Pull-Ups 3×17-22` this ceiling exists to prevent.
+ */
+export function prescribedRepCeiling(ex: {
   exerciseId?: string;
   repUnit?: string;
 }): number {
@@ -1114,15 +1121,50 @@ export function dedupeDayExercises(workouts: WorkoutDay[]): WorkoutDay[] {
    DAY ROLES (backlog #3 — N9 daily undulating periodization)
 ================================ */
 
-type DayRole = "heavy" | "moderate" | "pump";
+export type DayRole = "heavy" | "moderate" | "pump";
+
+/** Rep shift a day role applies on top of the goal profile's base. */
+export function repDeltaForRole(role: DayRole): number {
+  return role === "heavy" ? -2 : role === "pump" ? 2 : 0;
+}
+
+/** Lowest rep target a shifted day may fall to, by session role. */
+export function repFloorFor(ex: { isAccessory?: boolean }): number {
+  return ex.isAccessory === true ? 6 : 3;
+}
+
+/**
+ * The stamped top of an exercise's rep range, or `undefined` when the goal
+ * profile authors no span (in which case the field is omitted, not zeroed).
+ *
+ * Clamped at both ends: a target already clamped to the prescribed ceiling
+ * must not still advertise a higher top end, or double progression climbs
+ * straight back through it. Shared by generation's final pass and by
+ * `represcribe.ts`, so a block's ranges are stamped by the same rule.
+ */
+export function repRangeMaxFor(
+  ex: { exerciseId?: string; repUnit?: string },
+  reps: number,
+  span: number
+): number | undefined {
+  const ceiling = Math.min(reps + span, prescribedRepCeiling(ex));
+  return span > 0 && ceiling > reps ? ceiling : undefined;
+}
 
 /**
  * Deterministic role per generated day: first half of the week heavier,
  * back half higher-rep, an odd middle day at the goal base, and a
- * single-day week entirely at base. Module-private by design — the only
- * contract is generateProgram's output (reachability guardrail).
+ * single-day week entirely at base.
+ *
+ * Was module-private ("the only contract is generateProgram's output").
+ * Exported for `represcribe.ts` (Blk2): a training block re-derives the
+ * week's rep targets for a new focus WITHOUT calling a builder, so it has
+ * to reproduce this role delta itself. Writing a flat per-tier rep target
+ * instead would silently delete weekly undulation for every intermediate
+ * and advanced user — the shift below happens after the goal profile, so
+ * it is invisible to anything reading `GOAL_PROFILES` alone.
  */
-function assignDayRoles(count: number): DayRole[] {
+export function assignDayRoles(count: number): DayRole[] {
   if (count <= 1) return count === 1 ? ["moderate"] : [];
   return Array.from({ length: count }, (_, i) => {
     if (i < Math.floor(count / 2)) return "heavy";
@@ -1154,14 +1196,13 @@ function applyDayRoles(
   return workouts.map((day, i) => {
     const role = roles[i];
     if (role === "moderate") return day;
-    const delta = role === "heavy" ? -2 : 2;
+    const delta = repDeltaForRole(role);
     return {
       ...day,
       exercises: day.exercises.map((ex) => {
-        const floor = ex.isAccessory === true ? 6 : 3;
         const reps = Math.min(
           prescribedRepCeiling(ex),
-          Math.max(floor, ex.reps + delta)
+          Math.max(repFloorFor(ex), ex.reps + delta)
         );
         return { ...ex, reps, baseReps: reps };
       }),
@@ -1593,11 +1634,11 @@ export function generateProgram(
     exercises: day.exercises.map((ex) => {
       const span = ex.isAccessory === true ? accessorySpan : mainSpan;
       const out: ProgramExercise = { ...ex, baseSets: ex.sets };
-      // The ceiling is clamped too, not just the floor — otherwise a target
-      // clamped to 15 still advertises a 20-rep top end and the double
-      // progression climbs straight back through it.
-      const ceiling = Math.min(ex.reps + span, prescribedRepCeiling(ex));
-      if (span > 0 && ceiling > ex.reps) out.repRangeMax = ceiling;
+      // The ceiling is clamped at both ends inside `repRangeMaxFor` —
+      // otherwise a target clamped to 15 still advertises a 20-rep top end
+      // and the double progression climbs straight back through it.
+      const rangeMax = repRangeMaxFor(ex, ex.reps, span);
+      if (rangeMax !== undefined) out.repRangeMax = rangeMax;
       return out;
     }),
   }));
@@ -2072,11 +2113,28 @@ export function advanceWeek(
   // week just TRAINED (state.workouts), before the weekly reshape rewrites
   // sets, so it reads the stall the user actually just hit.
   const plateauedExercises = countPlateauedExercises(state.workouts);
-  const action = resolveAdjustment({
-    plateauedExercises,
-    recovery,
-    priorReductions: state.plateauResponses ?? 0,
-  });
+  // Blk2 amnesty. A block that changed the focus, or that the user set to
+  // "easing back in", makes early misses EXPECTED rather than informative:
+  // the rep targets just moved, or the user is deliberately under-reaching
+  // while they find their feet. Without this, a represcribe can plateau
+  // every main at once and `resolveAdjustment` escalates to `reorganize`,
+  // whose arm calls `swapExerciseIdentity` on mains and zeroes their
+  // history — the exact "fights the adaptive engine" failure Blk1 named.
+  //
+  // Only the programme-level RESPONSE is held. `plateauCount` keeps
+  // accumulating truthfully on each lift, so nothing is being hidden; the
+  // engine simply doesn't act on it for the first few weeks. The counter
+  // self-decrements below, so amnesty expires with no sweep, no clock and
+  // no review step — including for a user who abandons the block.
+  const amnestyWeeksLeft = state.trainingBlock?.amnestyWeeksLeft ?? 0;
+  const action =
+    amnestyWeeksLeft > 0
+      ? "hold"
+      : resolveAdjustment({
+          plateauedExercises,
+          recovery,
+          priorReductions: state.plateauResponses ?? 0,
+        });
 
   if (prescription.deload) {
     // A deload week IS the light week — don't stack an adjustment on top of
@@ -2123,6 +2181,15 @@ export function advanceWeek(
     // value so the field is meaningful + observable (no longer dead).
     fatigueScore: prescription.deload ? 0 : fatigue,
     plateauResponses,
+    // Blk2: monotone, so amnesty runs out on its own.
+    ...(state.trainingBlock
+      ? {
+          trainingBlock: {
+            ...state.trainingBlock,
+            amnestyWeeksLeft: Math.max(0, amnestyWeeksLeft - 1),
+          },
+        }
+      : {}),
     updatedAt: Date.now(),
     nextWorkoutOverride: undefined,
   };

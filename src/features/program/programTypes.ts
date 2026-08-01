@@ -532,6 +532,84 @@ export interface ManualCompletion {
   completedAt: { seconds: number; nanoseconds: number } | Date | number;
 }
 
+/**
+ * How hard a training block asks the user to go (Blk2).
+ *
+ * The second of the block's two axes, and the reason `BlockPreset` was
+ * retired. The old five presets mixed three training STIMULI (strength /
+ * muscle / hybrid) with two adherence POSTURES (consistency reset / return
+ * to training) — one list, two questions — which is exactly why
+ * `presetProgrammeGoal` had to return `null` twice. `PrimaryGoal` has
+ * values on the first axis only. Splitting them means a returning strength
+ * lifter can finally say "get stronger, easing back in" instead of picking
+ * which half of their situation to describe.
+ */
+export type BlockPace = "full" | "lighter" | "easing";
+
+export type BlockDurationWeeks = 4 | 8 | 12;
+
+/**
+ * The training block that owns the lift prescription right now (Blk2).
+ *
+ * Lives on `programState` rather than in `users/{uid}/trainingBlocks`, which
+ * is what makes start and release atomic — block, focus and workouts are one
+ * document, so Firestore's own single-document guarantee replaces a
+ * transaction and overlap becomes structurally impossible. The subcollection
+ * stays as the ARCHIVE of finished blocks.
+ *
+ * Absent means no block, which is exactly today's behaviour — the reason
+ * this needs no schema-version bump.
+ */
+export interface ActiveTrainingBlock {
+  /** Archive doc id, `${startDate}-${createdAt}`. */
+  id: string;
+  /**
+   * Whether this block owns the prescription. False for a legacy block
+   * adopted at deploy: it was created as a narrative wrapper, never
+   * represcribed anything, and must not have a prescription applied or
+   * released retroactively.
+   */
+  owned: boolean;
+  focus: PrimaryGoal;
+  pace: BlockPace;
+  durationWeeks: BlockDurationWeeks;
+  /** Local YYYY-MM-DD. Block weeks are counted from here. */
+  startDate: string;
+  /**
+   * The standing focus to restore at release, captured from the profile at
+   * start. This one scalar is the entire inverse of the block — see
+   * `represcribe.ts` on why there is no per-slot snapshot.
+   */
+  goalBefore: PrimaryGoal;
+  /**
+   * Weeks of plateau-RESPONSE amnesty remaining, decremented by
+   * `advanceWeek`. Set when the focus changed or the pace is easing, both
+   * of which make early misses expected rather than informative.
+   *
+   * A counter rather than a date so it expires monotonically with no sweep,
+   * no clock and no review step — including for a user who abandons the
+   * block and never opens the app again.
+   */
+  amnestyWeeksLeft: number;
+  /**
+   * Lifts a week this block asks for. Display and the review denominator
+   * only — NEVER mirrored to `profile.weeklyWorkoutsTarget`, which feeds
+   * `expectedDayCount` and would silently send the user's next unrelated
+   * settings save down the REBUILD branch with `liftDaysChanged` false, so
+   * the loss-disclosing confirm never fires.
+   */
+  weeklyLiftTarget: number;
+  anchorExerciseIds: string[];
+  why: string;
+  createdAt: number;
+  /**
+   * Embedded discriminator, not a document version — the one-version-per
+   * -document rule is untouched. An unrecognised value reads as
+   * `owned: false` so an unknown shape can never drive a prescription.
+   */
+  schemaVersion: 1;
+}
+
 export interface ProgramState {
   goal: Goal;
   currentPhase: string;
@@ -614,6 +692,19 @@ export interface ProgramState {
    * (id/date/weekKey/status) to ScheduledRunDay.
    */
   programSchemaVersion?: number;
+  /**
+   * Blk2: the training block that owns the lift prescription, or absent for
+   * the overwhelmingly common no-block case. Optional with a defaulting
+   * reader → no schema bump, same pattern as `plateauResponses` above.
+   *
+   * Client-written and never read by a function, but it is allow-listed in
+   * `functions/lib/programStateSanitizer.js` — keep in lockstep, and note
+   * the two server paths fail in OPPOSITE directions without the entry:
+   * `applyProgramCommand` rejects the whole command (the deload button
+   * throws), `configurePlan` warns and drops (the block silently vanishes
+   * on every settings save).
+   */
+  trainingBlock?: ActiveTrainingBlock;
   /**
    * PROGRAM-DELOAD-01: present only between a user-applied deload and
    * its undo (or the next week rollover, after which the weekNumber
