@@ -43,8 +43,10 @@ import {
   repRangeMaxFor,
 } from "./programEngine";
 import { usesUndulation } from "./experienceModel";
+import { getRaceFloorWeeks } from "./runScheduler";
 import type {
   ActiveTrainingBlock,
+  BlockPace,
   Experience,
   PrimaryGoal,
   ProgramExercise,
@@ -172,8 +174,100 @@ export function isProgressionHeld(
   return blockWeek !== null && blockWeek <= EASING_HOLD_WEEKS;
 }
 
+/**
+ * Whether a lift block should be offered right now, given the run plan.
+ *
+ * Refused inside a race taper or race week: a "Get stronger" block raises
+ * lift stimulus at exactly the point the run plan is shedding it, and the
+ * user cannot see that conflict from the lift tab. The window is
+ * `getRaceFloorWeeks(distance)` — taper weeks plus the race week, which is
+ * already the scheduler's own definition, so this can't drift from it.
+ *
+ * Post-race RECOVERY is deliberately NOT refused. Running volume is down
+ * and the athlete has room; that is a good moment to pick a lifting focus
+ * up, not a moment to be locked out of one.
+ */
+export function blockOfferBlockedByRace(input: {
+  runMode?: string;
+  raceDistance?: "5k" | "10k" | "half" | "marathon";
+  raceTargetDate?: string;
+  today: string;
+}): boolean {
+  const { runMode, raceDistance, raceTargetDate, today } = input;
+  if (runMode !== "race_prep" || !raceDistance || !raceTargetDate) return false;
+  const days = Math.round(
+    (localMidnight(raceTargetDate) - localMidnight(today)) / 86_400_000
+  );
+  if (Number.isNaN(days) || days < 0) return false; // race passed → recovery
+  return days <= getRaceFloorWeeks(raceDistance) * 7;
+}
+
+function localMidnight(date: string): number {
+  const [y, m, d] = date.split("-").map(Number);
+  return new Date(y, (m ?? 1) - 1, d ?? 1).getTime();
+}
+
 /** Weeks an "easing back in" block holds load before resuming progression. */
 export const EASING_HOLD_WEEKS = 2;
+
+/** "5-7" — the main-lift rep range a focus prescribes. */
+export function focusRepSummary(goal: PrimaryGoal): string {
+  const p = goalProfileFor(goal);
+  return p.mainRepsMax > p.mainReps
+    ? `${p.mainReps}-${p.mainRepsMax}`
+    : `${p.mainReps}`;
+}
+
+/**
+ * The sentence shown directly above "Start block", stating the exact change
+ * BEFORE the write happens.
+ *
+ * This is the load-bearing copy of the whole feature, which is why it is a
+ * pure function with tests rather than JSX. GsPb1's "never a silent
+ * programme rewrite" survives Blk2 intact, and this is what carries it: the
+ * user is told what will change to their sessions while they can still not
+ * do it. That is a stricter reading than the post-save offer it replaces,
+ * which asked AFTER the block was already saved.
+ *
+ * It must never overstate. A same-focus block genuinely changes nothing
+ * about the prescription, and saying so plainly is what makes the habit
+ * paces honest — "showing up is the whole goal" has to be literally true.
+ */
+export function blockConsequence(input: {
+  focus: PrimaryGoal;
+  currentFocus: PrimaryGoal;
+  pace: BlockPace;
+  durationWeeks: number;
+  focusLabel: (goal: PrimaryGoal) => string;
+}): string {
+  const { focus, currentFocus, pace, durationWeeks, focusLabel } = input;
+  const weeks = `${durationWeeks} weeks`;
+  const trimmed = "trimmed to about 30 minutes";
+  const hold = "Your weights hold steady for the first two weeks.";
+
+  if (focus !== currentFocus) {
+    const lead =
+      `Your main lifts move to sets of ${focusRepSummary(focus)} for ${weeks}` +
+      (pace === "full" ? "." : `, ${trimmed}.`);
+    const tail =
+      pace === "easing"
+        ? ` ${hold}`
+        : " Same exercises, same days — the weights come down a little to" +
+          " match the new target, then climb again.";
+    return lead + tail;
+  }
+
+  // Same focus: the prescription is untouched, so the block's whole value is
+  // the window and the pace. Naming the focus keeps it concrete.
+  const kept = focusLabel(currentFocus).toLowerCase();
+  if (pace === "full") {
+    return `Nothing about your sessions changes — the block just gives ${weeks} of ${kept} a shape and a finish line.`;
+  }
+  if (pace === "lighter") {
+    return `Same sessions, ${trimmed} for ${weeks}.`;
+  }
+  return `Same sessions, ${trimmed}. ${hold}`;
+}
 
 /**
  * Weeks of plateau-RESPONSE amnesty a block opens with when it changes the
