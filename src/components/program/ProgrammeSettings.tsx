@@ -56,6 +56,7 @@ import { functions } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import { getNutritionPhase } from "@/lib/nutritionPhase";
 import { THEME } from "@/lib/theme";
+import { focusLabel } from "@/features/program/trainingBlock";
 import { Toggle } from "@/components/ui/Toggle";
 import { Button } from "@/components/ui/Button";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
@@ -135,6 +136,16 @@ interface ProgrammeSettingsProps {
    * the per-field diff then flags the change like any manual edit.
    */
   prefillGoal?: PrimaryGoal;
+  /**
+   * Blk2: the focus owned by the active training block, if any. When set,
+   * the training-focus picker becomes a read-only display — the block is
+   * the one place that setting lives while it runs, so two editable copies
+   * would be exactly the drift Blk1's original confusion came from.
+   *
+   * Also threaded into the rebuild, so a save cannot move `primaryGoal`
+   * away from the block's focus even if some future caller forgets.
+   */
+  activeBlockFocus?: PrimaryGoal;
 }
 
 /* Programme-settings convenience wrapper — the page's section labels
@@ -391,6 +402,7 @@ export default function ProgrammeSettings({
   onSaved,
   variant = "full",
   prefillGoal,
+  activeBlockFocus,
 }: ProgrammeSettingsProps) {
   const liftOnly = variant === "lift";
   // ── Persisted values (also the dirty-check baseline) ──────────────
@@ -539,7 +551,10 @@ export default function ProgrammeSettings({
     setSaving(true);
     try {
       const plan = buildPlan({
-        primaryGoal,
+        // Blk2: a block owns the focus, so it wins over the draft. buildPlan
+        // pins this again from the carried block, but threading it here
+        // keeps the payload honest rather than relying on a downstream fix.
+        primaryGoal: activeBlockFocus ?? primaryGoal,
         nutritionPhase,
         experience,
         // Without this a level change is invisible to the builder — it
@@ -648,20 +663,39 @@ export default function ProgrammeSettings({
       >
         <div>
           <SectionLabel>Training focus</SectionLabel>
-          <div className="space-y-2">
-            {FOCUS_OPTIONS.map((opt, i) => (
-              <SettingsOptionCard
-                key={opt.id}
-                selected={primaryGoal === opt.id}
-                onSelect={() => setPrimaryGoal(opt.id)}
-                index={i}
-                icon={opt.icon}
-                accent={THEME.brand}
-                label={opt.label}
-                desc={opt.desc}
-              />
-            ))}
-          </div>
+          {activeBlockFocus ? (
+            /* Blk2: a block OWNS the focus while it runs, so this becomes a
+               read-only display pointing at the one place that sets it —
+               the same pattern PR #953 used for the split picker once the
+               engine took ownership. Days, experience, equipment and
+               injuries stay editable below, so an injury or an equipment
+               change never costs the user their block. */
+            <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card px-3.5 py-3 shadow-sm">
+              <span className="min-w-0 flex-1">
+                <span className="block text-body font-bold leading-tight">
+                  {focusLabel(activeBlockFocus)}
+                </span>
+                <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
+                  Set by your training block — change it there.
+                </span>
+              </span>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {FOCUS_OPTIONS.map((opt, i) => (
+                <SettingsOptionCard
+                  key={opt.id}
+                  selected={primaryGoal === opt.id}
+                  onSelect={() => setPrimaryGoal(opt.id)}
+                  index={i}
+                  icon={opt.icon}
+                  accent={THEME.brand}
+                  label={opt.label}
+                  desc={opt.desc}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Nutrition phase — READ-ONLY derived display. Direction is owned

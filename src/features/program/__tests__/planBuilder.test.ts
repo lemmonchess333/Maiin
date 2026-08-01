@@ -564,6 +564,13 @@ describe("buildPlan · structure-preserving regeneration (Pgm5 Q2)", () => {
     expect(rebuilt.programState.primaryGoal).toBe("hypertrophy");
   });
 
+  // This used a GOAL change as its example of a "content edit" and asserted
+  // the workouts came back byte-identical — so it pinned two properties at
+  // once, and only one of them was intended. The structural half (a content
+  // edit must not blow away the user's customisations) is Pgm5 Q2 and is
+  // kept, on an input that is genuinely structure-only. The other half — a
+  // training-focus change moving 0 of 18 slots — is the defect Blk2 exists
+  // to fix, and it was being held in place by its own regression test.
   it("a content edit (same lift-days) preserves the existing workouts verbatim", () => {
     const first = buildPlan(
       makeInput({ liftDays: 4, primaryGoal: "hypertrophy" })
@@ -571,13 +578,37 @@ describe("buildPlan · structure-preserving regeneration (Pgm5 Q2)", () => {
     const edited = buildPlan(
       makeInput({
         liftDays: 4,
-        primaryGoal: "strength", // content edit, same day count
+        primaryGoal: "hypertrophy",
+        equipment: "full_gym", // content edit, same day count, same focus
         existingState: first.programState,
         preserveHistory: true,
       })
     );
     expect(edited.programState.workouts).toEqual(first.programState.workouts);
     expect(edited.programState.splitType).toBe(first.programState.splitType);
+  });
+
+  // The focus is now owned by a training block, and `buildPlan` pins
+  // `primaryGoal` to it. What this documents is that buildPlan is NOT where
+  // a focus change is applied — `represcribeWorkouts` is — so passing a
+  // different goal here still leaves the week alone. Anyone reaching for
+  // buildPlan to change someone's focus should find this and go elsewhere.
+  it("does not represcribe on a bare goal change — that is the block's job", () => {
+    const first = buildPlan(
+      makeInput({ liftDays: 4, primaryGoal: "hypertrophy" })
+    );
+    const edited = buildPlan(
+      makeInput({
+        liftDays: 4,
+        primaryGoal: "strength",
+        existingState: first.programState,
+        preserveHistory: true,
+      })
+    );
+    const reps = (s: typeof first.programState) =>
+      s.workouts.flatMap((d) => d.exercises.map((e) => e.reps));
+    expect(reps(edited.programState)).toEqual(reps(first.programState));
+    expect(edited.programState.primaryGoal).toBe("strength");
   });
 
   it("preserves user structural edits (added + reordered exercises) on a content edit", () => {
