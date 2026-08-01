@@ -55,9 +55,16 @@ describe("startingWeightForCategory", () => {
     expect(startingWeightForCategory("knee_dominant", ctx())).toBe(55);
   });
 
-  it("returns 0 for bodyweight patterns", () => {
-    expect(startingWeightForCategory("vertical_pull", ctx())).toBe(0);
-    expect(startingWeightForCategory("core", ctx())).toBe(0);
+  // vertical_pull and core used to be pinned at 0 here, which is what let the
+  // 0 kg lat-pulldown ship: the category seed is the ONLY input
+  // `startingWeightForExercise` has, and a 0 short-circuits it before any
+  // per-exercise loadFactor applies. Zeroing is the per-EXERCISE guards' job,
+  // pinned in the sibling describe below.
+  it("seeds the loaded members of pull/core patterns", () => {
+    // 80 × 0.75 = 60 — the notional full-range vertical pull.
+    expect(startingWeightForCategory("vertical_pull", ctx())).toBe(60);
+    // 80 × 0.35 = 28 → 27.5 — anchored on cable crunch.
+    expect(startingWeightForCategory("core", ctx())).toBe(27.5);
   });
 
   it("applies a lower factor for female lifters", () => {
@@ -132,6 +139,47 @@ describe("weightAfterExerciseSwap", () => {
       ctx()
     );
     expect(swapped.weight).toBe(0);
+  });
+
+  // The shipped defect: this is the exact swap the shoulder-injury filter
+  // performs, and it landed at 0 kg — "Lat Pulldown 4×8 @ 0 kg" — because
+  // rescaleForSwap(0, …) is 0 and the vertical_pull category seed was 0 too,
+  // so there was nothing left to fall back to.
+  it("seeds a loaded lat pulldown swapped in for pull-ups", () => {
+    const swapped = weightAfterExerciseSwap(
+      ex({
+        exerciseId: "pull-ups",
+        movementCategory: "vertical_pull",
+        weight: 0,
+      }),
+      "lat-pulldown",
+      ctx()
+    );
+    expect(swapped.movementCategory).toBe("vertical_pull");
+    // 80 × 0.75 = 60 base, × 0.6 lat-pulldown loadFactor = 36 → 35.
+    expect(swapped.weight).toBe(35);
+  });
+
+  // The other half of the same fix: opening the category seed must not start
+  // handing kilograms to the members that really are bodyweight. Each is
+  // guarded differently, so each is pinned.
+  it("keeps the bodyweight members of an opened category at 0 kg", () => {
+    const from = ex({
+      exerciseId: "lat-pulldown",
+      movementCategory: "vertical_pull",
+      weight: 40,
+    });
+    // catalog equipment "Bodyweight" → BODYWEIGHT_IDS
+    expect(weightAfterExerciseSwap(from, "chin-ups", ctx()).weight).toBe(0);
+    // core: catalog bodyweight
+    const core = ex({
+      exerciseId: "cable-crunch",
+      movementCategory: "core",
+      weight: 30,
+    });
+    expect(weightAfterExerciseSwap(core, "leg-raise", ctx()).weight).toBe(0);
+    // core: not catalog-bodyweight ("Ab Wheel"), zeroed by loadFactor: 0
+    expect(weightAfterExerciseSwap(core, "ab-wheel", ctx()).weight).toBe(0);
   });
 });
 
@@ -252,12 +300,31 @@ describe("seedStartingLoads", () => {
     expect(out[0].exercises[0].weight).toBe(100); // history → untouched
   });
 
+  // This used to pass with a placeholder `exerciseId: "x"`, which made it a
+  // test of the vertical_pull CATEGORY seed being 0 rather than of the lift
+  // being bodyweight — the exact conflation that shipped the 0 kg lat
+  // pulldown. Pinned on a real bodyweight id, it tests what it claims: the
+  // loaded members of the same category are seeded in the case below.
   it("leaves bodyweight lifts (weight 0) as bodyweight", () => {
     const out = seedStartingLoads(
-      [day([ex({ movementCategory: "vertical_pull", weight: 0 })])],
+      [
+        day([
+          ex({
+            exerciseId: "pull-ups",
+            movementCategory: "vertical_pull",
+            weight: 0,
+          }),
+          ex({
+            exerciseId: "lat-pulldown",
+            movementCategory: "vertical_pull",
+            weight: 0,
+          }),
+        ]),
+      ],
       ctx()
     );
     expect(out[0].exercises[0].weight).toBe(0);
+    expect(out[0].exercises[1].weight).toBe(35);
   });
 
   it("does not mutate the input", () => {
