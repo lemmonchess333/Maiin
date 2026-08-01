@@ -54,7 +54,11 @@ export default function SettingsTraining() {
           regenerateProgram={regenerateProgram}
           refreshProfile={refreshProfile}
           onOpenWeeklyLayout={() => setEditLayoutOpen(true)}
-          activeBlockFocus={programState?.trainingBlock?.focus}
+          activeBlockFocus={
+            programState?.trainingBlock?.owned
+              ? programState.trainingBlock.focus
+              : undefined
+          }
         />
       </SettingsSection>
 
