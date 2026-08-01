@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import { generateProgram } from "../programEngine";
+import { buildPlan } from "../planBuilder";
 import { weeklyVolumeByMuscle, type CanonicalMuscle } from "../volumeModel";
 import { isBodyweightExerciseId } from "@/lib/exercises";
 import type { WorkoutDay } from "../programTypes";
@@ -132,6 +133,50 @@ describe("generator audit — every prescribed lift is calibrated", () => {
         }
       }
     }
+  });
+
+  // The test above stops at `generateProgram`. That is where the audit
+  // stopped too, and it is why a second 0 kg prescription shipped anyway:
+  // the injury and equipment filters run ABOVE the generator, in
+  // `buildPlan`, and they re-point slots the generator never saw. A
+  // shoulder-injured beginner was moved off pull-ups onto
+  // "Lat Pulldown 4×8 @ 0 kg" in 12 of these 216 configurations, because
+  // the vertical_pull category seed was 0 and the swap had nothing to fall
+  // back to. Audit the programme a user opens, not the one the generator
+  // returns.
+  it("never ships a 0 kg prescription through the whole plan pipeline", () => {
+    const offenders: string[] = [];
+    for (const goal of ["hypertrophy", "strength", "fat_loss"] as const) {
+      for (const days of DAYS) {
+        for (const equipment of ["full_gym", "home_gym", "minimal"] as const) {
+          for (const injuries of [[], ["lower_back"], ["knee"], ["shoulder"]]) {
+            const plan = buildPlan({
+              primaryGoal: goal,
+              nutritionPhase: "recomp",
+              experience: "beginner",
+              bodyweightKg: 80,
+              sex: "male",
+              liftDays: days,
+              preferredSplit: "auto",
+              runMode: "freeform",
+              weeklyRunDays: 0,
+              equipment,
+              injuries,
+              currentDate: "2026-07-28",
+              preserveHistory: false,
+            });
+            for (const ex of allEx(plan.programState.workouts)) {
+              if (isBodyweightExerciseId(ex.exerciseId)) continue;
+              if ((ex.weight ?? 0) > 0) continue;
+              offenders.push(
+                `${goal}/${days}d/${equipment}/${injuries.join("+") || "none"} ${ex.exerciseId}`
+              );
+            }
+          }
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
   });
 
   it("prescribes ONE load per lift across the week", () => {
