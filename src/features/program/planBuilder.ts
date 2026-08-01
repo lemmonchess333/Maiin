@@ -499,6 +499,18 @@ export function buildPlan(input: PlanBuilderInput): PlanBuilderOutput {
   const { runDays, runPlan } = buildRunPlan(input, weekSchedule);
   const profileUpdates = buildProfileUpdates(input, weekSchedule);
 
+  // Blk2. This literal spreads nothing from `existingState`, so every
+  // preserved field has to be named — and `configurePlan` writes the result
+  // with `batch.set`, a full replace. Omitting the block would delete it on
+  // every settings save (equipment, injuries, days), silently in both
+  // directions: nothing errors, and the user's focus quietly reverts.
+  // Carried on the same condition as currentPhase/weekNumber; a plan built
+  // fresh legitimately has no block.
+  const carriedBlock =
+    input.preserveHistory && input.existingState?.trainingBlock
+      ? input.existingState.trainingBlock
+      : undefined;
+
   const programState: ProgramState = {
     goal: input.nutritionPhase,
     currentPhase:
@@ -526,8 +538,14 @@ export function buildPlan(input: PlanBuilderInput): PlanBuilderOutput {
         : [],
     runDays,
     runPlan,
-    primaryGoal: input.primaryGoal,
+    // Blk2: while a block is active it OWNS the focus, so the focus the
+    // caller passed loses. Enforced here rather than by asking every call
+    // site to thread `block.focus` — this literal is the single place a
+    // ProgramState is constructed, so making the pair un-driftable here
+    // means no future caller can reintroduce the drift by forgetting.
+    primaryGoal: carriedBlock ? carriedBlock.focus : input.primaryGoal,
     programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+    ...(carriedBlock ? { trainingBlock: carriedBlock } : {}),
   };
 
   const output: PlanBuilderOutput = {
