@@ -78,12 +78,21 @@ describe("block date math", () => {
 
 describe("ids and paths", () => {
   it("builds stable readable ids and owner paths", () => {
-    expect(makeBlockId("2026-07-06", "strength_foundation")).toBe(
-      "2026-07-06-strength_foundation"
+    expect(makeBlockId("2026-07-06", 1751760000000)).toBe(
+      "2026-07-06-1751760000000"
     );
-    expect(blockDocPath("u1", "2026-07-06-strength_foundation")).toBe(
-      "users/u1/trainingBlocks/2026-07-06-strength_foundation"
+    expect(blockDocPath("u1", "2026-07-06-1751760000000")).toBe(
+      "users/u1/trainingBlocks/2026-07-06-1751760000000"
     );
+  });
+
+  // The id was `${startDate}-${preset}`, and the archive write is a
+  // no-merge setDoc — so ending a block and starting another of the same
+  // kind on the same calendar day silently overwrote the row just
+  // completed. Live data loss, and Blk2's one-tap "change focus" makes it
+  // easy to hit.
+  it("distinguishes two blocks started on the same day", () => {
+    expect(makeBlockId("2026-07-06", 1)).not.toBe(makeBlockId("2026-07-06", 2));
   });
 });
 
@@ -123,10 +132,58 @@ describe("parseTrainingBlock", () => {
     ).toBeUndefined();
   });
 
+  /* ─── Blk2 · relax, never tighten ──────────────────────────────
+     This parse is all-or-nothing and useTrainingBlock filters the nulls
+     out SILENTLY, so a field made required here deletes every existing
+     block from the user's history with nothing logged. Same for the
+     return literal: a field it doesn't name is stripped on read and then
+     destroyed by the next full-document write. ── */
+
+  it("still parses a pre-Blk2 block, preset and all", () => {
+    // `valid` above IS a pre-Blk2 doc — this pins that retiring the preset
+    // vocabulary doesn't strand the blocks written under it.
+    const parsed = parseTrainingBlock(valid);
+    expect(parsed).not.toBeNull();
+    expect(parsed?.preset).toBe("strength_foundation");
+  });
+
+  it("parses a Blk2 block that has focus/pace and no preset", () => {
+    const { preset: _preset, ...noPreset } = valid;
+    const parsed = parseTrainingBlock({
+      ...noPreset,
+      focus: "strength",
+      pace: "easing",
+      goalBefore: "hypertrophy",
+      owned: true,
+      endedEarly: true,
+    });
+    expect(parsed).not.toBeNull();
+    expect(parsed?.preset).toBeUndefined();
+    // Carried explicitly, or the next write destroys them.
+    expect(parsed?.focus).toBe("strength");
+    expect(parsed?.pace).toBe("easing");
+    expect(parsed?.goalBefore).toBe("hypertrophy");
+    expect(parsed?.owned).toBe(true);
+    expect(parsed?.endedEarly).toBe(true);
+  });
+
+  it("drops Blk2 fields with values outside their vocabulary", () => {
+    const parsed = parseTrainingBlock({
+      ...valid,
+      focus: "powerlifting",
+      pace: "sprint",
+      owned: "yes",
+    });
+    expect(parsed?.focus).toBeUndefined();
+    expect(parsed?.pace).toBeUndefined();
+    expect(parsed?.owned).toBeUndefined();
+  });
+
   it("rejects malformed data", () => {
     expect(parseTrainingBlock(null)).toBeNull();
     expect(parseTrainingBlock({})).toBeNull();
     expect(parseTrainingBlock({ ...valid, durationWeeks: 6 })).toBeNull();
+    // Absent is legal; PRESENT-and-unrecognised is still malformed.
     expect(parseTrainingBlock({ ...valid, preset: "bulk" })).toBeNull();
     expect(parseTrainingBlock({ ...valid, startDate: "6 July" })).toBeNull();
     expect(parseTrainingBlock({ ...valid, status: "paused" })).toBeNull();
