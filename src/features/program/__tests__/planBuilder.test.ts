@@ -497,6 +497,73 @@ describe("buildPlan · preserveHistory", () => {
 /* ─── Pgm5 Q2 · structure-preserving regeneration ──────────────── */
 
 describe("buildPlan · structure-preserving regeneration (Pgm5 Q2)", () => {
+  /* ─── Blk2 · the active training block survives a settings save ─── */
+
+  // buildPlan constructs a fresh ProgramState literal and spreads nothing
+  // from existingState, and configurePlan writes the result with batch.set
+  // — a full replace. So a field that isn't named here is DELETED on every
+  // settings save, silently in both directions: nothing errors, and the
+  // user's focus quietly reverts mid-block.
+  const activeBlock = {
+    id: "2026-08-01-1754035200000",
+    owned: true as const,
+    focus: "strength" as const,
+    pace: "full" as const,
+    durationWeeks: 8 as const,
+    startDate: "2026-08-01",
+    goalBefore: "hypertrophy" as const,
+    amnestyWeeksLeft: 3,
+    weeklyLiftTarget: 4,
+    anchorExerciseIds: ["squat"],
+    why: "",
+    createdAt: 1754035200000,
+    schemaVersion: 1 as const,
+  };
+
+  it("carries an active training block through a content edit", () => {
+    const first = buildPlan(makeInput({ liftDays: 4 }));
+    const edited = buildPlan(
+      makeInput({
+        liftDays: 4,
+        existingState: { ...first.programState, trainingBlock: activeBlock },
+        preserveHistory: true,
+      })
+    );
+    expect(edited.programState.trainingBlock).toEqual(activeBlock);
+  });
+
+  it("keeps primaryGoal pinned to the block's focus, whatever the caller passes", () => {
+    // The pair is made un-driftable where the state is CONSTRUCTED rather
+    // than by asking every call site to thread block.focus — otherwise one
+    // forgetful caller silently detaches the focus from the block.
+    const first = buildPlan(makeInput({ liftDays: 4 }));
+    const edited = buildPlan(
+      makeInput({
+        liftDays: 4,
+        primaryGoal: "fat_loss", // a stale/standing goal from the editor
+        existingState: { ...first.programState, trainingBlock: activeBlock },
+        preserveHistory: true,
+      })
+    );
+    expect(edited.programState.primaryGoal).toBe("strength");
+  });
+
+  it("does not invent a block on a fresh plan, or carry one without preserveHistory", () => {
+    expect(
+      buildPlan(makeInput({ liftDays: 4 })).programState.trainingBlock
+    ).toBeUndefined();
+    const first = buildPlan(makeInput({ liftDays: 4 }));
+    const rebuilt = buildPlan(
+      makeInput({
+        liftDays: 4,
+        existingState: { ...first.programState, trainingBlock: activeBlock },
+        preserveHistory: false,
+      })
+    );
+    expect(rebuilt.programState.trainingBlock).toBeUndefined();
+    expect(rebuilt.programState.primaryGoal).toBe("hypertrophy");
+  });
+
   it("a content edit (same lift-days) preserves the existing workouts verbatim", () => {
     const first = buildPlan(
       makeInput({ liftDays: 4, primaryGoal: "hypertrophy" })
