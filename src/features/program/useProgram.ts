@@ -14,7 +14,11 @@ import { useAuth, type UserProfile } from "@/lib/auth";
 import { postActivity } from "@/lib/socialApi";
 import { compose, enqueueShare, showQueuedToast } from "@/lib/shareComposer";
 import type {
+  ActiveTrainingBlock,
+  BlockDurationWeeks,
+  BlockPace,
   ManualCompletion,
+  PrimaryGoal,
   ProgramState,
   ProgramSettings,
   ProgramExercise,
@@ -22,6 +26,12 @@ import type {
   ScheduledRunDay,
   ScheduledRunStatus,
 } from "./programTypes";
+import {
+  BLOCK_AMNESTY_WEEKS,
+  isProgressionHeld,
+  represcribeWorkouts,
+} from "./represcribe";
+import { blockWeekOf } from "./trainingBlock";
 import { normalizeProgramState, transitionStatus } from "./programTypes";
 import { resolveRecoveryExit } from "./runModeResolution";
 import {
@@ -1521,8 +1531,43 @@ export function useProgram() {
         programState.workouts[dayIndex]?.exercises[exerciseIndex];
       if (!exercise) return;
 
+      // Blk2: an "easing back in" block holds load for its first two weeks,
+      // so a returning lifter's numbers cannot go backwards while they find
+      // their feet and a miss cannot be read as a stall. Deliberately NOT
+      // done by flipping `settings.autoProgression` — that is a switch the
+      // user owns in Programme settings, and a block must not silently move
+      // someone's setting. Unlike the autoProgression:false branch below,
+      // this one still APPENDS to performanceHistory: the sessions happened
+      // and the user should see them.
+      const held = isProgressionHeld(
+        programState.trainingBlock,
+        programState.trainingBlock
+          ? blockWeekOf(programState.trainingBlock, localDateString())
+          : null
+      );
+
       let updatedExercise: ProgramExercise;
-      if (settings.autoProgression) {
+      if (held) {
+        updatedExercise = {
+          ...exercise,
+          lastAttemptedWeight: actualWeight,
+          lastPerformance: {
+            sets: exercise.sets,
+            reps: actualReps,
+            weight: actualWeight,
+            completed: actualReps >= exercise.reps,
+          },
+          performanceHistory: [
+            ...(exercise.performanceHistory ?? []),
+            {
+              date: localDateString(),
+              weight: actualWeight,
+              repsCompleted: actualReps,
+              repsTarget: exercise.reps,
+            },
+          ].slice(-20),
+        };
+      } else if (settings.autoProgression) {
         updatedExercise = applyProgression(
           exercise,
           actualReps,
@@ -1950,6 +1995,128 @@ export function useProgram() {
     [user, profile, programState]
   );
 
+  /* ─── Training blocks (Blk2) ─────────────────────────────────────
+     A block owns the lift prescription for its duration. Start and
+     release are ONE `saveProgram` each, because the block, the focus and
+     the workouts all live on the same document — Firestore's own
+     single-document guarantee replaces a transaction, and two active
+     blocks are structurally impossible rather than merely guarded.
+
+     Neither writer touches the profile. `profile.primaryGoal` holds the
+     user's STANDING focus, which is what `goalBefore` restores from — so
+     the mirror rule is satisfied by having no mirror to go stale, not by
+     keeping two copies in step. And neither writes
+     `profile.weeklyWorkoutsTarget`: it feeds `expectedDayCount`, so a
+     block target of 2 on a 4-day plan would send the user's next
+     unrelated settings save down the REBUILD branch with
+     `liftDaysChanged` false, silently regenerating a 2-day programme
+     with no loss-disclosing confirm. ── */
+
+  const startTrainingBlock = useCallback(
+    async (input: {
+      focus: PrimaryGoal;
+      pace: BlockPace;
+      durationWeeks: BlockDurationWeeks;
+      startDate: string;
+      anchorExerciseIds?: string[];
+      why?: string;
+    }): Promise<boolean> => {
+      if (!programState || programState.trainingBlock) return false;
+      // A run-only athlete has no prescription for a block to own.
+      if (programState.workouts.length === 0) return false;
+      const goalBefore =
+        profile?.primaryGoal ?? programState.primaryGoal ?? "general";
+      const now = Date.now();
+      const block: ActiveTrainingBlock = {
+        id: `${input.startDate}-${now}`,
+        owned: true,
+        focus: input.focus,
+        pace: input.pace,
+        durationWeeks: input.durationWeeks,
+        startDate: input.startDate,
+        goalBefore,
+        // Amnesty only where early misses are expected: the targets just
+        // moved, or the user is deliberately under-reaching.
+        amnestyWeeksLeft:
+          input.focus !== goalBefore || input.pace === "easing"
+            ? BLOCK_AMNESTY_WEEKS
+            : 0,
+        weeklyLiftTarget: programState.workouts.length,
+        anchorExerciseIds: (input.anchorExerciseIds ?? []).slice(0, 3),
+        why: input.why ?? "",
+        createdAt: now,
+        schemaVersion: 1,
+      };
+      try {
+        await saveProgram({
+          ...programState,
+          primaryGoal: input.focus,
+          workouts: represcribeWorkouts(
+            programState.workouts,
+            input.focus,
+            toExperience(profile?.experience)
+          ),
+          trainingBlock: block,
+        });
+        return true;
+      } catch {
+        return false; // saveProgram has already surfaced the failure
+      }
+    },
+    [programState, profile, saveProgram]
+  );
+
+  /**
+   * End the active block and hand the prescription back to the user's
+   * standing focus. Applying the same transform with `goalBefore` IS the
+   * inverse — there is no snapshot to restore, so a slot added, removed or
+   * swapped mid-block needs no special case.
+   *
+   * Loads are deliberately NOT rewound. By release the progression engine
+   * has been climbing from the stepped-down weight for weeks, so the
+   * current load is the truth; `scaleLoadForReps` re-applies only if the
+   * restored target is HIGHER.
+   */
+  const releaseTrainingBlock = useCallback(async (): Promise<boolean> => {
+    const block = programState?.trainingBlock;
+    if (!programState || !block) return false;
+    try {
+      await saveProgram({
+        ...programState,
+        primaryGoal: block.goalBefore,
+        // A legacy block adopted at deploy never represcribed anything, so
+        // releasing it must not retroactively rewrite a prescription it
+        // never owned.
+        workouts: block.owned
+          ? represcribeWorkouts(
+              programState.workouts,
+              block.goalBefore,
+              toExperience(profile?.experience)
+            )
+          : programState.workouts,
+        trainingBlock: undefined,
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }, [programState, profile, saveProgram]);
+
+  /**
+   * End the block but KEEP its focus as the user's programme focus — the
+   * review's "keep this focus, no block" outcome. The prescription stays
+   * exactly as the block left it, so there is nothing to re-derive.
+   */
+  const keepTrainingBlockFocus = useCallback(async (): Promise<boolean> => {
+    if (!programState?.trainingBlock) return false;
+    try {
+      await saveProgram({ ...programState, trainingBlock: undefined });
+      return true;
+    } catch {
+      return false;
+    }
+  }, [programState, saveProgram]);
+
   const applyDeloadWeek = useCallback(
     () => sendDeloadCommand("applyDeloadWeek"),
     [sendDeloadCommand]
@@ -2065,6 +2232,9 @@ export function useProgram() {
     refreshRunSchedule,
     skipRecoveryEarly,
     dismissFellBehindPrompt,
+    startTrainingBlock,
+    releaseTrainingBlock,
+    keepTrainingBlockFocus,
     applyDeloadWeek,
     revertDeloadWeek,
     realignRacePlan,
