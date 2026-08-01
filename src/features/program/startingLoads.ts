@@ -43,17 +43,32 @@ export interface StartingLoadContext {
 }
 
 // Working-weight as a fraction of bodyweight, by movement pattern × experience.
-// vertical_pull is bodyweight (0); arms/core get a small BW-relative seed.
+// Every pattern seeds a LOADED figure; whether a given lift is bodyweight is
+// decided per exercise in `startingWeightForExercise`, never per category.
 const BW_MULTIPLE: Record<MovementCategory, Record<Experience, number>> = {
   horizontal_push: { beginner: 0.45, intermediate: 0.7, advanced: 0.95 },
   vertical_push: { beginner: 0.3, intermediate: 0.45, advanced: 0.6 },
   horizontal_pull: { beginner: 0.45, intermediate: 0.65, advanced: 0.85 },
-  vertical_pull: { beginner: 0, intermediate: 0, advanced: 0 }, // bodyweight
+  // Both of these read 0 until 2026-08-01, on the reasoning that the category
+  // PRIMARY is bodyweight (pull-ups) or near enough (core). That confused the
+  // primary with the category: `startingWeightForExercise` short-circuits on
+  // `base <= 0`, so a zero here made EVERY member unseedable — including the
+  // loaded ones, whose `loadFactor` in the bank (lat-pulldown 0.6,
+  // single-arm 0.25, pallof-press 0.5) was dead code it could never reach.
+  // A beginner with a shoulder injury was substituted off pull-ups onto
+  // "Lat Pulldown 4×8 @ 0 kg" in 12 of the 216 audited configs.
+  // The per-EXERCISE guards already zero what should be zero — `BODYWEIGHT_IDS`
+  // catches pull-ups / chin-ups / leg-raise / russian-twist by catalog
+  // equipment, and `loadFactor: 0` catches ab-wheel — so the category seed is
+  // free to describe the loaded members. It is the notional full-range pull
+  // (lat-pulldown lands at 0.6× of it), not a pull-up's load.
+  vertical_pull: { beginner: 0.75, intermediate: 0.95, advanced: 1.15 },
   knee_dominant: { beginner: 0.7, intermediate: 1.05, advanced: 1.4 },
   hip_dominant: { beginner: 0.85, intermediate: 1.25, advanced: 1.65 },
   arms_biceps: { beginner: 0.12, intermediate: 0.18, advanced: 0.24 },
   arms_triceps: { beginner: 0.12, intermediate: 0.18, advanced: 0.24 },
-  core: { beginner: 0, intermediate: 0, advanced: 0 }, // mostly bodyweight
+  // Anchored on the category primary, cable crunch, which IS loaded.
+  core: { beginner: 0.35, intermediate: 0.45, advanced: 0.55 },
 };
 
 function sexFactor(sex: string | undefined): number {
@@ -79,8 +94,9 @@ export function loadContextFrom(
 
 /**
  * Conservative starting WORKING weight (kg, rounded to 2.5) for a movement
- * pattern given the user's bodyweight / experience / sex. Returns 0 for
- * bodyweight patterns (the caller leaves those as bodyweight).
+ * pattern given the user's bodyweight / experience / sex. This is the
+ * category's notional LOADED figure — bodyweight lifts are excluded by
+ * identity in `startingWeightForExercise`, not by zeroing a whole pattern.
  */
 export function startingWeightForCategory(
   category: MovementCategory,
