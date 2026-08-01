@@ -1702,7 +1702,13 @@ function ProgramInner() {
       {activeTab === "lift" && (
         <WeeklyVolumeCard
           workouts={displayWorkouts}
-          primaryGoal={profile?.primaryGoal}
+          // Blk2 / M4: the programState copy, which is what a block owns
+          // and what balanceWeeklyVolume already targets. Reading the
+          // profile copy painted a "Get stronger" block's week against the
+          // PRE-block band — "below target · 12-20/week" for volume the
+          // block deliberately chose, under a header reading
+          // "Built for Strength".
+          primaryGoal={programState.primaryGoal ?? profile?.primaryGoal}
         />
       )}
 

@@ -182,13 +182,13 @@ export const PACE_OPTIONS: ReadonlyArray<{
   {
     value: "lighter",
     label: "Lighter",
-    description: "The short session is offered first, every time.",
+    description: "The short session is offered first, when there is one.",
   },
   {
     value: "easing",
     label: "Easing back in",
     description:
-      "Short session first, and your weights hold steady for two weeks.",
+      "Short session first where there is one, and your weights hold for two weeks.",
   },
 ];
 

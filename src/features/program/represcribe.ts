@@ -286,11 +286,21 @@ export function blockConsequence(input: {
     const tail =
       pace === "easing"
         ? ` ${hold}`
-        : loadDrops
-          ? " Same exercises, same days — the weights come down a little to" +
-            " match the new target, then climb again."
-          : " Same exercises, same days, same weights — only what you're" +
-            " aiming for changes.";
+        : // "Same exercises, same days" is only true at pace `full`. Once
+          // the short session is promoted, the trim drops accessories and
+          // cuts sets — so the lead would promote a trim and the tail deny
+          // one, in the same sentence pair.
+          pace !== "full"
+          ? loadDrops
+            ? " The weights come down a little to match the new target," +
+              " then climb again."
+            : " Your weights stay where they are — only what you're aiming" +
+              " for changes."
+          : loadDrops
+            ? " Same exercises, same days — the weights come down a little to" +
+              " match the new target, then climb again."
+            : " Same exercises, same days, same weights — only what you're" +
+              " aiming for changes.";
     return lead + tail;
   }
 

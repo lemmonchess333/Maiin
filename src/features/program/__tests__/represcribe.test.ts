@@ -697,3 +697,33 @@ describe("blockConsequence — the load claim tracks scaleLoadForReps", () => {
     }
   });
 });
+
+describe("blockConsequence — L2, the lead and tail must not contradict", () => {
+  const label = () => "x";
+  it("drops 'same exercises, same days' once a trim is being promoted", () => {
+    for (const pace of ["lighter", "easing"] as const) {
+      const s = blockConsequence({
+        focus: "strength",
+        currentFocus: "hypertrophy",
+        pace,
+        durationWeeks: 8,
+        focusLabel: label,
+      });
+      // The lead promotes the short session, which drops accessories and
+      // cuts sets — so the tail cannot also claim the day is unchanged.
+      expect(s).toMatch(/short session/i);
+      expect(s).not.toMatch(/same exercises, same days/i);
+    }
+  });
+
+  it("keeps it at pace full, where the day really is unchanged", () => {
+    const s = blockConsequence({
+      focus: "strength",
+      currentFocus: "hypertrophy",
+      pace: "full",
+      durationWeeks: 8,
+      focusLabel: label,
+    });
+    expect(s).toMatch(/same exercises, same days/i);
+  });
+});
