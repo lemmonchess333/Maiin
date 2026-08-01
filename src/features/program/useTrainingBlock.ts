@@ -74,8 +74,9 @@ export function useTrainingBlock(uid: string | undefined) {
   const createBlock = useCallback(
     async (input: CreateBlockInput): Promise<TrainingBlock | null> => {
       if (!uid) return null;
+      const createdAt = Date.now();
       const block: TrainingBlock = {
-        id: makeBlockId(input.startDate, input.preset),
+        id: makeBlockId(input.startDate, createdAt),
         preset: input.preset,
         title: presetLabel(input.preset),
         startDate: input.startDate,
@@ -84,7 +85,7 @@ export function useTrainingBlock(uid: string | undefined) {
         anchorExerciseIds: input.anchorExerciseIds.slice(0, 3),
         why: input.why,
         status: "active",
-        createdAt: Date.now(),
+        createdAt,
       };
       try {
         await setDocGuarded(doc(db, blockDocPath(uid, block.id)), block);
