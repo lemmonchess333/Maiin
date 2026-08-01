@@ -25,7 +25,7 @@
  * structurally impossible. `useTrainingBlock` is now the ARCHIVE only.
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CalendarRange, ChevronRight, Flag } from "lucide-react";
 import { toast } from "@/lib/toast";
@@ -95,6 +95,13 @@ interface Props {
    */
   raceTaperActive?: boolean;
   onStart: (input: StartBlockInput) => Promise<boolean>;
+  /**
+   * Adopts a pre-Blk2 block that was still open when Blk2 shipped. Without
+   * it the block vanishes from the UI: the archive still says active, but
+   * nothing puts it on programState, so this card offers "Start a training
+   * block" to someone who already has one running.
+   */
+  onAdoptLegacy: (legacy: TrainingBlock) => Promise<boolean>;
   onRelease: () => Promise<boolean>;
   onKeepFocus: () => Promise<boolean>;
 }
@@ -141,11 +148,12 @@ export default function TrainingBlockCard({
   trainingWhy,
   raceTaperActive = false,
   onStart,
+  onAdoptLegacy,
   onRelease,
   onKeepFocus,
 }: Props) {
   const navigate = useNavigate();
-  const { archiveBlock, loadReviewWorkouts } = useTrainingBlock(uid);
+  const { blocks, archiveBlock, loadReviewWorkouts } = useTrainingBlock(uid);
   const [showCreate, setShowCreate] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
   const [confirmEnd, setConfirmEnd] = useState<"switch" | "end" | null>(null);
@@ -181,6 +189,22 @@ export default function TrainingBlockCard({
       setDuration(8);
     }
   }, [showCreate, currentFocus]);
+
+  // One-shot legacy adoption. Guarded three ways so it can't loop: the
+  // ref fires it once per mount, the writer itself no-ops when a live
+  // block already exists, and the archive row is only a candidate while
+  // its window is still open — an elapsed legacy block is history, not
+  // something to resurrect.
+  const adoptedRef = useRef(false);
+  useEffect(() => {
+    if (block || adoptedRef.current || liftDaysPerWeek === 0) return;
+    const legacy = blocks.find(
+      (b) => b.status === "active" && !isBlockFinished(b, today)
+    );
+    if (!legacy) return;
+    adoptedRef.current = true;
+    void onAdoptLegacy(legacy);
+  }, [block, blocks, liftDaysPerWeek, today, onAdoptLegacy]);
 
   const consequence = useMemo(
     () =>

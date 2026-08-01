@@ -49,6 +49,14 @@ interface ExpressSessionSheetProps {
   lighterDay?: LighterDaySwap | null;
   /** Launches the swapped day (full prescription) instead of today's. */
   onSwapToDay?: (index: number) => void;
+  /**
+   * Blk2: true while a training block's pace is "lighter" or "easing
+   * back in". PROMOTES the 30-minute option to the primary slot and
+   * demotes the full session — it never removes a choice, and the full
+   * plan stays one tap. This is what makes the pace copy true; without
+   * it "shorter sessions" described nothing.
+   */
+  blockPrefersShorter?: boolean;
 }
 
 export default function ExpressSessionSheet({
@@ -59,25 +67,34 @@ export default function ExpressSessionSheet({
   onStart,
   lighterDay = null,
   onSwapToDay,
+  blockPrefersShorter = false,
 }: ExpressSessionSheetProps) {
   if (!day) return null;
 
   const variants = expressChoices(day);
+  // Only promote when the short session is actually on offer for this
+  // day — a day too small to trim has no express30, and promoting a
+  // choice that isn't there would leave the sheet with no primary.
+  const promote = blockPrefersShorter && variants.includes("express30");
   const choices: Choice[] = variants.map((variant) => {
     if (variant === "full") {
       return {
         id: "full",
         label: `Full session · ~${estimateSessionMinutes(day.exercises)} min`,
-        variant: "primary",
+        variant: promote ? "secondary" : "primary",
         onSelect: async () => onStart("full"),
       };
     }
     const plan = buildExpressSession(day, variant);
     const minutes = variant === "express45" ? 45 : 30;
+    const promoted = promote && variant === "express30";
     return {
       id: variant,
       label: `${minutes} min · ${summarizeTrim(plan.trim)}`,
-      variant: "secondary",
+      sublabel: promoted
+        ? "Your block is running lighter sessions."
+        : undefined,
+      variant: promoted ? "primary" : "secondary",
       onSelect: async () => onStart(variant),
     };
   });
@@ -114,7 +131,11 @@ export default function ExpressSessionSheet({
       open={open}
       onClose={onClose}
       title="How do you want to train today?"
-      description="Full plan is the default. Short on time or feeling beat up — pick the honest version. Your programme doesn't change."
+      description={
+        promote
+          ? "Your block is running lighter sessions, so the short one is first. The full plan is still here whenever you want it."
+          : "Full plan is the default. Short on time or feeling beat up — pick the honest version. Your programme doesn't change."
+      }
       choices={choices}
       logTag="sessionChooser"
     />
