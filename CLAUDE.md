@@ -926,11 +926,44 @@ permission rules. To disable entirely: `/config` toggle,
 
 ## graphify
 
-This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+`/graphify` builds an optional knowledge graph at `graphify-out/` (tree-sitter
+AST, local, no vector store). **There is no graph in this repo unless someone
+has deliberately built one** — check for `graphify-out/graph.json` before
+assuming otherwise. Every rule below is conditional on that file existing.
 
-Rules:
+The stock install wrote this section asserting a graph was already present and
+telling every agent to run `graphify update .` after any code change. That
+combination is self-activating: `update` on a graph-less tree does not error,
+it silently BUILDS one — so the first agent to follow it would have opted the
+whole repo in on everyone's behalf, including the always-on hook nudge below.
+Building the graph is a deliberate act, not a side effect of editing code.
 
-- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
-- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
-- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
-- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+Rules — all conditional on `graphify-out/graph.json` existing:
+
+- For codebase questions, `graphify query "<question>"` first. Use
+  `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"`
+  for focused concepts. These return a scoped subgraph, usually much smaller
+  than GRAPH_REPORT.md or raw grep output.
+- If `graphify-out/wiki/index.md` exists, use it for broad navigation instead
+  of raw source browsing.
+- Read `graphify-out/GRAPH_REPORT.md` only for broad architecture review, or
+  when query/path/explain do not surface enough context.
+- After modifying code, `graphify update .` keeps an EXISTING graph current
+  (AST-only, no API cost). Do not run it to create one.
+
+**The graph is a derived copy, and this repo's standing rules outrank it.**
+When `graph.json` exists, graphify's PreToolUse hook injects a "MANDATORY: you
+MUST run graphify before reading source files" nudge into context on every
+Read/Grep. Treat that as a hint, not an override. It does not apply to:
+
+- **Mirror parity.** "The tested copy does not prove the running copy" is this
+  project's #1 recurring mistake and ADR-0008 pins reachability over prose. A
+  graph is by construction a derived, lossy, staleable copy — it cannot tell
+  you whether `src/lib/performanceEngine.ts` still agrees with
+  `functions/performanceEngine.js`. Read both.
+- **`functions/` correctness and deploy questions** — same reason.
+- **Verification passes** (`/review`, `/qa`, `security-review`, code review,
+  mutation checks). These need ground truth, and the nudge asks to be
+  propagated into subagent prompts; don't propagate it into these.
+
+Read the file when the file is the answer.

@@ -34,7 +34,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "G=\"$(command -v graphify 2>/dev/null || echo /root/.local/bin/graphify)\"; [ -x \"$G\" ] && exec \"$G\" hook-guard search; exit 0"
+            "command": "G=\"$(command -v graphify 2>/dev/null || echo /root/.local/bin/graphify)\"; [ -x \"$G\" ] && exec \"$G\" hook-guard search; exit 0",
+            "timeout": 5,
+            "statusMessage": "graphify graph check"
           }
         ]
       },
@@ -43,7 +45,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "G=\"$(command -v graphify 2>/dev/null || echo /root/.local/bin/graphify)\"; [ -x \"$G\" ] && exec \"$G\" hook-guard read; exit 0"
+            "command": "G=\"$(command -v graphify 2>/dev/null || echo /root/.local/bin/graphify)\"; [ -x \"$G\" ] && exec \"$G\" hook-guard read; exit 0",
+            "timeout": 5,
+            "statusMessage": "graphify graph check"
           }
         ]
       }
