@@ -538,6 +538,95 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     expect(lastWrite.runDays).toBeDefined();
     lastWrite.runDays!.forEach(expectV2Shape);
   });
+
+  // Blk2 / H1. `saveProgram` is a no-merge full replace and regenerate's
+  // newState literal spreads nothing from programState, so any field it
+  // does not name is DELETED. The block was not named.
+  //
+  // This is not a rare path: `useProgrammeScheduleEditor`'s restructure
+  // confirm calls regenerateProgram on any lift-day-count change, so an
+  // ordinary two-tap edit destroyed an 8-week block — while leaving its
+  // rep prescription and focus in force, with no goalBefore left to
+  // release to. planBuilder carries the block through the identical
+  // hazard; the fix was never carried to this sibling.
+  it("regenerateProgram does not destroy an active training block", async () => {
+    const block = {
+      id: "2026-08-01-1",
+      owned: true as const,
+      focus: "strength" as const,
+      pace: "full" as const,
+      durationWeeks: 8 as const,
+      startDate: "2026-08-01",
+      goalBefore: "hypertrophy" as const,
+      amnestyWeeksLeft: 3,
+      weeklyLiftTarget: 4,
+      anchorExerciseIds: [],
+      why: "",
+      createdAt: 1,
+      schemaVersion: 1 as const,
+    };
+    mockProfile = raceProfile("2027-01-01");
+    seedProgram({
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 5,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, microloading: true },
+      weekHistory: [],
+      runDays: [],
+      runPlan: { mode: "race_prep" },
+      trainingBlock: block,
+    } as ProgramState);
+
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    markWrites();
+
+    await act(async () => {
+      await result.current.regenerateProgram();
+    });
+
+    const lastWrite = setDocCalls()[setDocCalls().length - 1]
+      .data as ProgramState;
+    expect(lastWrite.trainingBlock).toEqual(block);
+  });
+
+  // The other direction, so the carry can't be "always write something".
+  it("regenerateProgram writes no block when there was none", async () => {
+    mockProfile = raceProfile("2027-01-01");
+    seedProgram({
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 5,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, microloading: true },
+      weekHistory: [],
+      runDays: [],
+      runPlan: { mode: "race_prep" },
+    } as ProgramState);
+
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    markWrites();
+
+    await act(async () => {
+      await result.current.regenerateProgram();
+    });
+
+    const lastWrite = setDocCalls()[setDocCalls().length - 1]
+      .data as ProgramState;
+    expect(lastWrite.trainingBlock).toBeUndefined();
+  });
 });
 
 // ─── PR-0b-iii — writers respect status-aware gates ──────────────────

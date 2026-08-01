@@ -271,11 +271,24 @@ export function blockConsequence(input: {
     const lead =
       `Your main lifts move to sets of ${focusRepSummary(focus)} for ${weeks}` +
       (pace === "full" ? "." : `, ${trimmed}.`);
+    // The load only moves when the rep target goes UP — `scaleLoadForReps`
+    // holds the weight for a move to FEWER reps, deliberately, because
+    // climbing is the progression engine's job. Base mainReps are strength
+    // 5, hypertrophy/general/running 8, fat_loss 12, so of the twenty
+    // ordered focus pairs only SEVEN raise the target. The old copy claimed
+    // "the weights come down a little" for all of them — including
+    // Build muscle → Get stronger, the first two entries in the picker and
+    // the likeliest change anyone makes.
+    const loadDrops =
+      goalProfileFor(focus).mainReps > goalProfileFor(currentFocus).mainReps;
     const tail =
       pace === "easing"
         ? ` ${hold}`
-        : " Same exercises, same days — the weights come down a little to" +
-          " match the new target, then climb again.";
+        : loadDrops
+          ? " Same exercises, same days — the weights come down a little to" +
+            " match the new target, then climb again."
+          : " Same exercises, same days, same weights — only what you're" +
+            " aiming for changes.";
     return lead + tail;
   }
 
