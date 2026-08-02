@@ -11,15 +11,39 @@
  * This guard fails if any `.pubsub.schedule(...)` is missing a `.timeZone(...)`,
  * or if any `.timeZone(...)` uses a non-UTC zone (the BST footgun). A new cron
  * on a local zone fails CI before it can drift.
+ *
+ * Scans ALL of `functions/**` rather than `functions/index.js` alone. Every
+ * scheduled function lives in index.js today, so the widening is a no-op right
+ * now — but it is a precondition, not a tidy-up: the moment a cron is defined
+ * in (or moved to) another module, an index.js-only scan stops seeing it and
+ * goes quiet instead of failing. A guard that silently narrows its own scope is
+ * worse than no guard, because the green tick still reads as "checked".
  */
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { dirname, resolve } from "node:path";
+import { dirname, resolve, join } from "node:path";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../../..");
-const indexSrc = readFileSync(resolve(repoRoot, "functions/index.js"), "utf8");
+
+/** Every production .js under functions/ — tests and deps excluded. */
+function functionsSources(dir: string): string[] {
+  const out: string[] = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (entry.name === "node_modules" || entry.name === "__tests__") continue;
+      out.push(...functionsSources(full));
+    } else if (entry.name.endsWith(".js")) {
+      out.push(full);
+    }
+  }
+  return out;
+}
+
+const SOURCES = functionsSources(resolve(repoRoot, "functions"));
+const indexSrc = SOURCES.map((f) => readFileSync(f, "utf8")).join("\n");
 
 /** The only timezone identifiers a scheduled function may anchor to. */
 const UTC_ZONES = new Set(["UTC", "Etc/UTC"]);
@@ -32,6 +56,13 @@ describe("scheduled-function UTC enforcement", () => {
 
   it("there is at least one scheduled function (scan isn't vacuous)", () => {
     expect(scheduleCount).toBeGreaterThan(0);
+  });
+
+  it("the file scan itself isn't vacuous", () => {
+    // Without this, a glob that silently matched nothing would make every
+    // assertion below pass on an empty string.
+    expect(SOURCES.length).toBeGreaterThan(1);
+    expect(SOURCES.some((f) => f.endsWith("functions/index.js"))).toBe(true);
   });
 
   it("every scheduled function declares a timeZone", () => {
