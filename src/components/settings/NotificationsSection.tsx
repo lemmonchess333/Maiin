@@ -17,7 +17,7 @@ import { toast } from "@/lib/toast";
 import type { MealReminders } from "@/hooks/useMealReminders";
 import type { WorkoutReminders } from "@/hooks/useWorkoutReminders";
 import type { StreakReminderPrefs } from "@/hooks/useStreakReminder";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { usePushSettings } from "@/hooks/usePushSettings";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "@/lib/firebase";
@@ -48,7 +48,7 @@ export default function NotificationsSection({
   // Push (server-side FCM) consent — #969. Separate from the on-device
   // reminders above: this is the global kill-switch + per-type consent the
   // server senders read, plus token register/revoke on the global toggle.
-  const { user } = useAuth();
+  const uid = useUid();
   const { consent: pushConsent, update: updatePushConsent } = usePushSettings();
 
   // #965 — fire a server→device test push to this user's registered tokens.
@@ -452,8 +452,8 @@ export default function NotificationsSection({
                   return;
                 }
                 await updatePushConsent({ enabled: true });
-                if (user) {
-                  const result = await registerDeviceToken(user.uid);
+                if (uid) {
+                  const result = await registerDeviceToken(uid);
                   if (result.ok) {
                     toast.success("Push on — this device is registered.");
                   } else {
@@ -467,9 +467,9 @@ export default function NotificationsSection({
                 }
               } else {
                 await updatePushConsent({ enabled: false });
-                if (user) {
+                if (uid) {
                   try {
-                    await unregisterDeviceToken(user.uid);
+                    await unregisterDeviceToken(uid);
                   } catch {
                     // Server consent is already off, so no sender targets the
                     // account while the user retries device cleanup online.

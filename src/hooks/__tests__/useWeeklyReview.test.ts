@@ -22,6 +22,8 @@ vi.mock("@/lib/logger", () => ({
 let mockProfile: Record<string, unknown> | null = null;
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: { uid: "u1" }, profile: mockProfile }),
+  useUid: () =>
+    ({ user: { uid: "u1" }, profile: mockProfile }).user?.uid ?? null,
 }));
 
 import {

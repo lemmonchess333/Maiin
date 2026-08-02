@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useDailyLogs } from "@/hooks/useFirestore";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { addDays, format } from "date-fns";
 import { toast } from "@/lib/toast";
 import { motion } from "framer-motion";
@@ -112,7 +112,7 @@ interface OFFResult {
 }
 
 export default function Food() {
-  const { user } = useAuth();
+  const uid = useUid();
   const { saveLog } = useDailyLogs();
 
   // Food6 ci5: deep-link `/food?date=YYYY-MM-DD` makes the URL the
@@ -475,7 +475,7 @@ export default function Food() {
    * each empty section header.
    */
   const handleCopyAllMissingFromYesterday = async () => {
-    if (copyingMealKey || !user) return;
+    if (copyingMealKey || !uid) return;
     // Use a sentinel value so the in-flight UI guard works even though
     // there's no single mealKey driving this call.
     setCopyingMealKey("__all__");
@@ -487,7 +487,7 @@ export default function Food() {
         const items = yesterdaySegmented[mealKey] ?? [];
         if (items.length === 0) continue;
         for (const item of items) {
-          await addDocGuarded(collection(db, "users", user.uid, "meals"), {
+          await addDocGuarded(collection(db, "users", uid, "meals"), {
             date: selectedDate,
             meal: mealKey,
             foodName: item.foodName,
@@ -753,10 +753,10 @@ export default function Food() {
 
   const handleOFFConfirm = async (servings: number) => {
     const food = offDrawerFood;
-    if (!user || !food) return;
+    if (!uid || !food) return;
     const s = servings;
     try {
-      await addDocGuarded(collection(db, "users", user.uid, "meals"), {
+      await addDocGuarded(collection(db, "users", uid, "meals"), {
         date: selectedDate,
         foodName: food.name,
         items: [
@@ -790,7 +790,7 @@ export default function Food() {
   };
 
   const handleNLParse = async () => {
-    if (!nlInput.trim() || !user) return;
+    if (!nlInput.trim() || !uid) return;
     setNlParsing(true);
     let items: ParsedFood[];
     let confidence: string;
@@ -869,7 +869,7 @@ export default function Food() {
       const totalCarbs = items.reduce((s, i) => s + i.carbs, 0);
       const totalFat = items.reduce((s, i) => s + i.fat, 0);
       try {
-        await addDocGuarded(collection(db, "users", user.uid, "meals"), {
+        await addDocGuarded(collection(db, "users", uid, "meals"), {
           date: selectedDate,
           foodName: items.map((i) => i.name).join(", "),
           items: items.map((i) => ({
@@ -977,7 +977,7 @@ export default function Food() {
       totalFat?: number;
     } | null;
   }) => {
-    if (!user || !editingGroup) return;
+    if (!uid || !editingGroup) return;
     const { meals: groupMeals, foodName } = editingGroup;
     const currentCount = groupMeals.length;
     const { targetCount, targetMeal, targetName, targetMacros } = changes;
@@ -1036,7 +1036,7 @@ export default function Food() {
         const source = groupMeals[groupMeals.length - 1];
         const adds = targetCount - currentCount;
         for (let i = 0; i < adds; i++) {
-          await addDocGuarded(collection(db, "users", user.uid, "meals"), {
+          await addDocGuarded(collection(db, "users", uid, "meals"), {
             date: selectedDate,
             foodName: source.foodName,
             items: source.items ?? [],
@@ -1451,7 +1451,7 @@ export default function Food() {
   };
 
   const handleQuickMealAdd = async (meal: (typeof quickMeals)[number]) => {
-    if (!user || quickAdding || !quickAddGuard.begin()) return;
+    if (!uid || quickAdding || !quickAddGuard.begin()) return;
     /* Telemetry — emit BEFORE the save so we capture taps that
        fail mid-write too. favouriteId is undefined for recents /
        seeded defaults, which is meaningful — dashboards can split
@@ -1465,7 +1465,7 @@ export default function Food() {
       // (composition preserved); plain chips keep the single synthetic
       // item. Pure helper so the 1/2/3+-item shapes are unit-tested.
       const payload = buildQuickAddMealPayload(meal);
-      await addDocGuarded(collection(db, "users", user.uid, "meals"), {
+      await addDocGuarded(collection(db, "users", uid, "meals"), {
         date: selectedDate,
         foodName: payload.foodName,
         items: payload.items,
@@ -1498,14 +1498,14 @@ export default function Food() {
   const handlePantrySelect = async (
     fav: (typeof pantrySuggestions)[number]
   ) => {
-    if (!user || quickAdding) return;
+    if (!uid || quickAdding) return;
     trackFoodEvent("food_pantry_typeahead_selected", {
       favouriteId: fav.id,
       useCount: fav.useCount,
     });
     setQuickAdding(fav.name);
     try {
-      await addDocGuarded(collection(db, "users", user.uid, "meals"), {
+      await addDocGuarded(collection(db, "users", uid, "meals"), {
         date: selectedDate,
         foodName: fav.name,
         items: [
@@ -1844,7 +1844,7 @@ export default function Food() {
         {/* NUTR-CONSISTENCY-01 — weekly logging focus. Private
             commitment + derived progress; the only social affordance
             is the opt-in constant status line once MET. */}
-        {user && <FoodConsistencyCard uid={user.uid} />}
+        {uid && <FoodConsistencyCard uid={uid} />}
 
         <FoodTimeline
           meals={visibleTodaysMeals}

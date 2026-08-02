@@ -9,7 +9,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { logger } from "../lib/logger";
-import { useAuth } from "../lib/auth";
+import { useUid } from "../lib/auth";
 import { isVolumeEligible } from "../lib/runStatsEligibility";
 import { localWeekKey } from "../lib/dateHelpers";
 
@@ -88,7 +88,7 @@ export function aggregateWeeklyData(runs: RunSummaryItem[]): RunningWeekData[] {
 }
 
 export function useRunningStats(days: number = 30) {
-  const { user } = useAuth();
+  const uid = useUid();
   const [weeklyData, setWeeklyData] = useState<RunningWeekData[]>([]);
   const [runs, setRuns] = useState<RunSummaryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -101,8 +101,6 @@ export function useRunningStats(days: number = 30) {
   const loadedUidRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const uid = user?.uid ?? null;
-
     if (!uid) {
       // Clear the previous account's data on sign-out — not just `loading`.
       // If the component stays mounted across an account switch (shared-device
@@ -214,7 +212,7 @@ export function useRunningStats(days: number = 30) {
     return () => {
       cancelled = true;
     };
-  }, [user?.uid, days, refreshTick]);
+  }, [uid, days, refreshTick]);
 
   return {
     weeklyData,

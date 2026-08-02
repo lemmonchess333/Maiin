@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { logger } from "@/lib/logger";
 import { DEFAULT_PUSH_CONSENT, type PushConsent } from "@/lib/pushConsent";
@@ -20,8 +20,7 @@ type PushSettingsState = {
 };
 
 export function usePushSettings() {
-  const { user } = useAuth();
-  const uid = user?.uid ?? null;
+  const uid = useUid();
   const [state, setState] = useState<PushSettingsState>({
     uid: null,
     consent: DEFAULT_PUSH_CONSENT,

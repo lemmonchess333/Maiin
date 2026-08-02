@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Bookmark, Trash2, Play } from "lucide-react";
 import { toast } from "@/lib/toast";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import {
   listSavedRoutines,
   deleteSavedRoutine,
@@ -25,17 +25,17 @@ import { haptic } from "@/lib/haptic";
  * with a delete affordance.
  */
 export default function SavedRoutinesSection() {
-  const { user } = useAuth();
+  const uid = useUid();
   const [routines, setRoutines] = useState<SavedRoutine[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (!uid) return;
     let cancelled = false;
     void (async () => {
       try {
-        const items = await listSavedRoutines(user.uid);
+        const items = await listSavedRoutines(uid);
         if (cancelled) return;
         setRoutines(items);
       } catch {
@@ -49,19 +49,19 @@ export default function SavedRoutinesSection() {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [uid]);
 
-  if (!user) return null;
+  if (!uid) return null;
   // Hide the section entirely when there's nothing saved AND we're not
   // loading — empty-state chrome on a non-essential surface adds noise.
   if (!loading && routines.length === 0) return null;
 
   const handleDelete = async (routineId: string) => {
-    if (!user || deletingId) return;
+    if (!uid || deletingId) return;
     setDeletingId(routineId);
     haptic("light");
     try {
-      await deleteSavedRoutine(user.uid, routineId);
+      await deleteSavedRoutine(uid, routineId);
       setRoutines((prev) => prev.filter((r) => r.id !== routineId));
       toast.success("Routine removed");
     } catch {

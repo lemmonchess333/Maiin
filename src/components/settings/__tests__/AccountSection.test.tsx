@@ -57,6 +57,7 @@ vi.mock("@/lib/logger", () => ({
 const useAuthMock = vi.fn();
 vi.mock("@/lib/auth", () => ({
   useAuth: () => useAuthMock(),
+  useUid: () => useAuthMock().user?.uid ?? null,
 }));
 
 import AccountSection from "../AccountSection";

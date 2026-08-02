@@ -16,7 +16,7 @@ import {
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { noteActivitySnapshot } from "@/lib/activationTracker";
 import { db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { sumMealTotals } from "@/lib/mealTotals";
 import { validateFoodEntry } from "@/lib/foodValidation";
 import { logger } from "@/lib/logger";
@@ -177,7 +177,7 @@ function parseMealDoc(id: string, raw: Record<string, unknown>): Meal {
 }
 
 export function useMeals() {
-  const { user } = useAuth();
+  const uid = useUid();
   // Internal store holds BOTH active and soft-deleted meals; the
   // returned `meals` filters to active only, `deletedMeals` to
   // soft-deleted only. Single subscription powers both surfaces.
@@ -193,7 +193,7 @@ export function useMeals() {
   const PAGE_SIZE = 400;
 
   useEffect(() => {
-    if (!user) {
+    if (!uid) {
       const reset = () => {
         setAllMeals([]);
         setLoading(false);
@@ -202,7 +202,7 @@ export function useMeals() {
       return;
     }
 
-    const mealsRef = collection(db, "users", user.uid, "meals");
+    const mealsRef = collection(db, "users", uid, "meals");
     const q = query(mealsRef, orderBy("createdAt", "desc"), limit(PAGE_SIZE));
 
     const unsubscribe = onSnapshot(
@@ -219,7 +219,7 @@ export function useMeals() {
         // across all creation sites. Baseline-guarded + deduped by uid.
         noteActivitySnapshot(
           "food",
-          user.uid,
+          uid,
           snapshot.docs.map((d) => d.id)
         );
       },
@@ -234,7 +234,7 @@ export function useMeals() {
     );
 
     return unsubscribe;
-  }, [user]);
+  }, [uid]);
 
   // F5c — split active vs soft-deleted. Existing call sites only see
   // active meals via `meals`; the Settings recently-deleted archive
@@ -247,8 +247,8 @@ export function useMeals() {
   );
 
   const loadMore = useCallback(async () => {
-    if (!user || !lastDoc || !hasMore) return;
-    const mealsRef = collection(db, "users", user.uid, "meals");
+    if (!uid || !lastDoc || !hasMore) return;
+    const mealsRef = collection(db, "users", uid, "meals");
     const q = query(
       mealsRef,
       orderBy("createdAt", "desc"),
@@ -262,7 +262,7 @@ export function useMeals() {
     setAllMeals((prev) => [...prev, ...newData]);
     setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
     setHasMore(snapshot.docs.length >= PAGE_SIZE);
-  }, [user, lastDoc, hasMore]);
+  }, [uid, lastDoc, hasMore]);
 
   // F5c — soft-delete: writes `deletedAt: serverTimestamp()` instead
   // of removing the doc. Restoration clears `deletedAt`; the 24h
@@ -274,26 +274,26 @@ export function useMeals() {
   // longer-term recovery within 24h.
   const deleteMeal = useCallback(
     async (mealId: string) => {
-      if (!user) return;
+      if (!uid) return;
       await setDocGuarded(
-        doc(db, "users", user.uid, "meals", mealId),
+        doc(db, "users", uid, "meals", mealId),
         { deletedAt: serverTimestamp() },
         { merge: true }
       );
     },
-    [user]
+    [uid]
   );
 
   const restoreMeal = useCallback(
     async (mealId: string) => {
-      if (!user) return;
+      if (!uid) return;
       await setDocGuarded(
-        doc(db, "users", user.uid, "meals", mealId),
+        doc(db, "users", uid, "meals", mealId),
         { deletedAt: null },
         { merge: true }
       );
     },
-    [user]
+    [uid]
   );
 
   /**
@@ -316,7 +316,7 @@ export function useMeals() {
    */
   const editMeal = useCallback(
     async (mealId: string, updates: EditMealUpdates): Promise<void> => {
-      if (!user) throw new Error("Not authenticated");
+      if (!uid) throw new Error("Not authenticated");
 
       // Validate against the create-path floor when macros are
       // present. We only block on the hard ceiling; WARN-tier values
@@ -331,7 +331,7 @@ export function useMeals() {
         throw new Error(validation.reason);
       }
 
-      const ref = doc(db, "users", user.uid, "meals", mealId);
+      const ref = doc(db, "users", uid, "meals", mealId);
       await runTransaction(db, async (tx) => {
         const snap = await tx.get(ref);
         if (!snap.exists()) throw new Error("Meal not found");
@@ -361,7 +361,7 @@ export function useMeals() {
         });
       });
     },
-    [user]
+    [uid]
   );
 
   /** Hard-delete — bypasses the soft-delete window. Reserved for the
@@ -369,10 +369,10 @@ export function useMeals() {
    *  callers OUTSIDE that surface should call `deleteMeal` instead. */
   const hardDeleteMeal = useCallback(
     async (mealId: string) => {
-      if (!user) return;
-      await deleteDoc(doc(db, "users", user.uid, "meals", mealId));
+      if (!uid) return;
+      await deleteDoc(doc(db, "users", uid, "meals", mealId));
     },
-    [user]
+    [uid]
   );
 
   const getMealsForDate = useCallback(

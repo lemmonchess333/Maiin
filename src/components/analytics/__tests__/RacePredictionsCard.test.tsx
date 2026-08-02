@@ -13,6 +13,7 @@ import { predictRaceTimeS } from "@/lib/runPaces";
 const mockUseAuth = vi.fn();
 vi.mock("@/lib/auth", () => ({
   useAuth: () => mockUseAuth(),
+  useUid: () => mockUseAuth().user?.uid ?? null,
 }));
 
 function renderCard(runFitness: unknown) {
