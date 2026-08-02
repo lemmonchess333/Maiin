@@ -55,7 +55,11 @@ import type {
   WorkoutDay,
 } from "./programTypes";
 import { weeklyVolumeByMuscle, type CanonicalMuscle } from "./volumeModel";
-import { exerciseBank, rescaleForSwap } from "./variationBank";
+import {
+  exerciseBank,
+  exerciseDisplayName,
+  rescaleForSwap,
+} from "./variationBank";
 import { allowsComplexity, type Experience } from "./experienceModel";
 
 /** Patterns whose systemic cost is capped independently of muscle volume. */
@@ -223,10 +227,7 @@ export const MAX_WEEKLY_LIFT_EXPOSURES = 2;
 export function capRepeatedLifts(
   workouts: WorkoutDay[],
   experience?: Experience,
-  replace?: (
-    ex: ProgramExercise,
-    to: { id: string; name: string }
-  ) => ProgramExercise
+  replace?: (ex: ProgramExercise, to: { id: string }) => ProgramExercise
 ): WorkoutDay[] {
   const slots: Array<{ d: number; e: number; ex: ProgramExercise }> = [];
   workouts.forEach((day, d) =>
@@ -286,7 +287,7 @@ export function capRepeatedLifts(
         : {
             ...s.ex,
             exerciseId: pick.id,
-            name: pick.name,
+            name: exerciseDisplayName(pick.id),
             weight,
             lastSuccessfulWeight: weight,
             lastAttemptedWeight: weight,
@@ -503,7 +504,7 @@ export function lowCostAlternative(
     if (idsInDay.has(id)) continue;
     const opt = options.find((o) => o.id === id);
     if (opt && allowsComplexity(experience, opt.complexity)) {
-      return { id: opt.id, name: opt.name };
+      return { id: opt.id, name: exerciseDisplayName(opt.id) };
     }
   }
   return null;

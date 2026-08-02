@@ -16,6 +16,7 @@ import type { ProgramExercise } from "../features/program/programTypes";
 import { Skeleton } from "../components/LoadingSkeleton";
 import WorkoutSession from "../components/WorkoutSession";
 import { estimateLiftBurn } from "../lib/workoutBurn";
+import { projectWorkoutSets } from "@/features/program/workoutSetRecord";
 import { compose, enqueueShare, showQueuedToast } from "../lib/shareComposer";
 import { postActivity } from "../lib/socialApi";
 import { toast } from "@/lib/toast";
@@ -119,7 +120,13 @@ export default function Routine() {
         completionId: string;
         durationMinutes: number;
         setLogs: Array<
-          Array<{ weight: number; reps: number; completed: boolean }>
+          Array<{
+            weight: number;
+            reps: number;
+            completed: boolean;
+            type?: string;
+            rpe?: number;
+          }>
         >;
       }
     ) => {
@@ -138,19 +145,16 @@ export default function Routine() {
 
       const exercises = synthDay.exercises.map((ex, exIndex) => {
         const logs = sessionData?.setLogs?.[exIndex];
-        const sets = logs
-          ? logs
-              .filter((l) => l.completed)
-              .map((l, i) => ({
-                setNumber: i + 1,
-                reps: l.reps,
-                weightKg: l.weight,
-              }))
-          : Array.from({ length: ex.sets }, (_, i) => ({
-              setNumber: i + 1,
-              reps: ex.reps,
-              weightKg: ex.weight,
-            }));
+        // D2: the same shared projection the programme path uses. These two
+        // were independent copies of identical logic, which is exactly the
+        // shape CLAUDE.md's "the tested copy does not prove the running copy"
+        // rule warns about — widening one and forgetting the other would have
+        // left routine sessions silently three-field.
+        const sets = projectWorkoutSets(logs, {
+          sets: ex.sets,
+          reps: ex.reps,
+          weightKg: ex.weight,
+        });
         return {
           exerciseId: ex.exerciseId,
           exerciseName: ex.name,

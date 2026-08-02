@@ -63,3 +63,58 @@ describe("generateSchedule realization (exhaustive)", () => {
     });
   });
 });
+
+/* ─── Separate days, and why this is a training property not a layout one ──
+   Wilson's meta-analysis (Schoenfeld p.164) measures concurrent training's
+   interference against SEPARATION: same-day lift+run gives ES 0.8, separate
+   days 1.05. §3.4 of the v8 evaluation makes "prefer separate days" one of
+   four sub-rules, and it is the one Tropos already gets right — the builder
+   only ever emits a "both" day when the week genuinely cannot fit.
+
+   That behaviour was UNDEFENDED. The existing exposure tests assert
+   `both >= 1` on the overflow cases, which a schedule that doubled up EVERY
+   day would also satisfy — and doubling up every day is precisely the
+   interference case Wilson quantifies. So the assertions that exist could not
+   tell the correct schedule from the worst one.
+
+   Verified before pinning: 0 violations across all 64 combinations. ── */
+describe("generateSchedule prefers separate days (Wilson, Schoenfeld p.164)", () => {
+  /** The fewest doubled-up days the week can be built with. Each "both" day
+   *  absorbs one lift AND one run, so it takes `total - 7` of them to fit, and
+   *  neither modality can supply more than it has. */
+  const minimumBothDays = (lift: number, run: number) =>
+    Math.max(0, Math.min(lift + run - 7, lift, run));
+
+  it("never doubles up a day the week did not need to", () => {
+    const excess: string[] = [];
+    for (let lift = 0; lift <= 7; lift++) {
+      for (let run = 0; run <= 7; run++) {
+        const both = counts(generateSchedule(lift, run)).both;
+        const need = minimumBothDays(lift, run);
+        if (both !== need) {
+          excess.push(
+            `(${lift} lift, ${run} run): both=${both}, minimum=${need}`
+          );
+        }
+      }
+    }
+    expect(
+      excess,
+      `Each unnecessary "both" day costs a hybrid user measured adaptation ` +
+        `(ES 0.8 same-day vs 1.05 separate):\n  ${excess.join("\n  ")}`
+    ).toEqual([]);
+  });
+
+  it("a week that fits in seven days has NO doubled-up day", () => {
+    // The common case, stated on its own so a failure reads as what it is
+    // rather than as one line of a 64-cell sweep.
+    for (let lift = 0; lift <= 7; lift++) {
+      for (let run = 0; run + lift <= 7; run++) {
+        expect(
+          counts(generateSchedule(lift, run)).both,
+          `(${lift} lift, ${run} run) fits in a week`
+        ).toBe(0);
+      }
+    }
+  });
+});

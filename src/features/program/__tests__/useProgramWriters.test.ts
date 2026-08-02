@@ -1,4 +1,5 @@
 // @vitest-environment jsdom — needs DOM/storage APIs; the rest of this directory runs in the fast node environment (audit batch 2).
+import { createRequire } from "node:module";
 /**
  * PR-0b-ii: integration tests for useProgram's writer paths.
  *
@@ -24,6 +25,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { generateSchedule } from "@/lib/scheduleUtils";
+import { toCompletionSetLogs } from "../warmupRamp";
 import {
   localWeekKey,
   localDateString,
@@ -165,11 +167,15 @@ const mockUpdateProfile = vi.fn(async (patch: Partial<MockProfile>) => {
 // literal every call would churn useProgram's useEffect deps and
 // produce an infinite re-render loop in tests.
 const stableUser = { uid: "test-user-1" };
+const mockRefreshProfile = vi.fn(async () => undefined);
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({
     user: stableUser,
     profile: mockProfile,
     updateProfile: mockUpdateProfile,
+    // Added when skipRecoveryEarly migrated: that command's profile half
+    // lands server-side, so the hook re-reads the profile afterwards.
+    refreshProfile: mockRefreshProfile,
   }),
   useUid: () =>
     ({
@@ -181,6 +187,44 @@ vi.mock("@/lib/auth", () => ({
 
 // Stub everything else useProgram imports but doesn't matter for
 // PR-0b-ii's writer assertions.
+/* P6: `setNextWorkout` (and the other migrated writers) no longer `setDoc` —
+   they send a command. Mocked here so this suite can assert the command
+   instead of a write it will never see.
+
+   THE MOCK VALIDATES. It runs the REAL server validator
+   (functions/lib/programCommands.js) before recording, so every test that
+   exercises a migrated writer also proves the command it builds is one the
+   server would accept.
+
+   This is not belt-and-braces — it closes a gap that had already shipped a
+   regression. The client suite mocked the sender, so it proved only what was
+   SENT; the functions suite hand-builds commands, so it proved only what was
+   ACCEPTED. Nothing joined the two, and `skipWorkoutDay` / `setNextWorkout`
+   went out sending a bare `dayIndex` against a validator that requires all
+   three precondition fields. Every such command was rejected, the client
+   rolled back and refetched, and the user's skip silently did nothing — with
+   both suites green. ADR-0008, reachability over prose: the pin has to sit on
+   the path that actually runs. */
+const require_ = createRequire(import.meta.url);
+const { assertClientProgramCommand } = require_(
+  "../../../../functions/lib/programCommands"
+) as { assertClientProgramCommand: (c: unknown) => unknown };
+
+const sentCommands: Record<string, unknown>[] = [];
+vi.mock("../programCommandClient", () => ({
+  sendProgramCommand: async (command: Record<string, unknown>) => {
+    try {
+      assertClientProgramCommand(command);
+    } catch (err) {
+      throw new Error(
+        `the server would REJECT this ${command.kind} command: ` +
+          `${(err as Error).message}\n${JSON.stringify(command, null, 2)}`
+      );
+    }
+    sentCommands.push(command);
+  },
+}));
+
 vi.mock("@/lib/socialApi", () => ({ postActivity: vi.fn() }));
 vi.mock("@/lib/shareComposer", () => ({
   compose: vi.fn(),
@@ -245,6 +289,10 @@ beforeEach(() => {
   batchMark = 0;
   mockProfile = null;
   mockUpdateProfile.mockClear();
+  // Migrated writers assert with `sentCommands.find(...)`, which would
+  // happily match a command left behind by the PREVIOUS test. Reset it with
+  // the write log rather than by hand in each test.
+  sentCommands.length = 0;
 });
 
 describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
@@ -755,18 +803,13 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
       await result.current.overrideRunDay("runday_target_id", "tempo_20");
     });
 
-    expect(setDocCalls().length).toBe(1);
-    const written = setDocCalls()[0].data as ProgramState;
-    const updated = written.runDays!.find((rd) => rd.id === "runday_target_id");
-    const untouched = written.runDays!.find(
-      (rd) => rd.id === "runday_other_id"
-    );
-    expect(updated!.templateId).toBe("tempo_20");
-    expect(updated!.userOverride).toBe("tempo_20");
-    // The other row stays on easy_30 — id lookup did not splash
-    // across dayIndex matches.
-    expect(untouched!.templateId).toBe("easy_30");
-    expect(untouched!.userOverride).toBeUndefined();
+    // Through the boundary: the command names the ONE slot to change, so
+    // "did not splash across dayIndex matches" is now a property of the
+    // address rather than of the written array.
+    expect(setDocCalls().length).toBe(0);
+    const cmd = sentCommands.find((c) => c.kind === "overrideRunDay");
+    expect(cmd?.runDayId).toBe("runday_target_id");
+    expect(cmd?.templateId).toBe("tempo_20");
   });
 
   it("called with a number dayIndex updates the matching runDay (legacy fallback)", async () => {
@@ -796,11 +839,14 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
       await result.current.overrideRunDay(3, "tempo_20");
     });
 
-    expect(setDocCalls().length).toBe(1);
-    const written = setDocCalls()[0].data as ProgramState;
-    const updated = written.runDays!.find((rd) => rd.dayIndex === 3);
-    expect(updated!.templateId).toBe("tempo_20");
-    expect(updated!.userOverride).toBe("tempo_20");
+    // The dayIndex overload survives the migration as a LOOKUP: the caller
+    // still passes a dow, and the writer resolves it to the stable id the
+    // command addresses. dayIndex never reaches the wire.
+    expect(setDocCalls().length).toBe(0);
+    const cmd = sentCommands.find((c) => c.kind === "overrideRunDay");
+    expect(cmd?.runDayId).toBe("runday_b");
+    expect(cmd?.templateId).toBe("tempo_20");
+    expect(cmd).not.toHaveProperty("dayIndex");
   });
 
   it("refuses to override a non-editable runDay (terminal status)", async () => {
@@ -1345,17 +1391,24 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
       await result.current.skipRecoveryEarly();
     });
 
-    // Materialization invariant: the SAME patch co-writes runMode + the null
-    // raceGoal clear.
-    expect(mockUpdateProfile).toHaveBeenCalledWith({
-      raceGoal: null,
-      runMode: "freeform",
-    });
-    // The plan is dropped (runPlan omitted → stripped; runDays emptied).
-    const lastWrite = setDocCalls()[setDocCalls().length - 1]
-      .data as ProgramState;
-    expect(lastWrite.runDays).toEqual([]);
-    expect(lastWrite.runPlan).toBeUndefined();
+    // P6: the materialization invariant is no longer this client's to keep.
+    // It used to issue `Promise.all([updateProfile(patch), saveProgram(next)])`
+    // — two documents, two independent writes, either able to land alone. Now
+    // ONE command carries no payload at all and the reducer resolves the exit
+    // from transaction-current state, writing both halves together. That
+    // atomicity is asserted where it can actually be observed: against a real
+    // emulator in functions/__tests__/integration/programCommands.test.js.
+    //
+    // What this test still owns is that the client stopped writing directly.
+    expect(setDocCalls().length).toBe(0);
+    expect(mockUpdateProfile).not.toHaveBeenCalled();
+    const cmd = sentCommands.find((c) => c.kind === "skipRecoveryEarly");
+    expect(cmd).toBeDefined();
+    // No payload — the exit decision is server-derived, so anything else here
+    // would be the client asserting a race outcome it does not own.
+    expect(Object.keys(cmd!).sort()).toEqual(["commandId", "kind"]);
+    // And that it re-reads the profile, since that half landed server-side.
+    expect(mockRefreshProfile).toHaveBeenCalled();
   });
 });
 
@@ -1734,16 +1787,22 @@ describe("PROGRAM-SESSION-ORDER-01 — setNextWorkout writer contract", () => {
     return result;
   }
 
-  it("sets the override for an in-range unfinished day", async () => {
+  it("sets the override via a setNextWorkout COMMAND (P6)", async () => {
     seedLiftState();
+    sentCommands.length = 0;
     const result = await mount();
     await act(async () => {
       await result.current.setNextWorkout(2);
     });
-    expect(setDocCalls().length).toBeGreaterThan(0);
-    expect(
-      setDocCalls()[setDocCalls().length - 1].data.nextWorkoutOverride
-    ).toBe(2);
+    const sent = sentCommands.find((c) => c.kind === "setNextWorkout");
+    expect(sent).toBeDefined();
+    expect(sent?.dayIndex).toBe(2);
+    // Asserting the COMMAND, not the resulting state: on success the hook
+    // refetches the authoritative document, and the mocked sender never
+    // applied anything to it — so the post-command state is the seed, which is
+    // correct here and says nothing. The optimistic-then-refetch behaviour is
+    // covered in `useProgramCommandBoundary.test.ts`, which can hold the send
+    // open and observe it.
   });
 
   it("ignores terminal and out-of-range selections (no write)", async () => {
@@ -1757,17 +1816,23 @@ describe("PROGRAM-SESSION-ORDER-01 — setNextWorkout writer contract", () => {
     expect(setDocCalls().length).toBe(0);
   });
 
-  it("null resets: the persisted doc drops the field entirely", async () => {
+  it("null resets via a clearNextWorkout COMMAND, dropping the field", async () => {
+    // P6: this used to assert the persisted document. The writer no longer
+    // writes one — it sends a command, and the reset needed its own kind
+    // because `setNextWorkout`'s dayIndex is part of the day precondition and
+    // cannot express "no day". What must still hold is that the field is
+    // REMOVED rather than left holding a stale value.
     seedLiftState({ nextWorkoutOverride: 2 });
+    sentCommands.length = 0;
     const result = await mount();
     await act(async () => {
       await result.current.setNextWorkout(null);
     });
-    expect(setDocCalls().length).toBeGreaterThan(0);
-    const saved = setDocCalls()[setDocCalls().length - 1].data;
-    // The guarded write path strips undefined — a reset must REMOVE the
-    // field, not persist a stale value.
-    expect("nextWorkoutOverride" in saved).toBe(false);
+    expect(sentCommands.map((c) => c.kind)).toContain("clearNextWorkout");
+    // The command carries no dayIndex — that is the whole reason it exists
+    // rather than a nullable `setNextWorkout`.
+    const clear = sentCommands.find((c) => c.kind === "clearNextWorkout");
+    expect("dayIndex" in (clear ?? {})).toBe(false);
   });
 
   it("null with no active override is a no-op (no write)", async () => {
@@ -1893,15 +1958,18 @@ describe("SESSION-RESTORE-01 — restore writers reverse a skip", () => {
       await result.current.restoreRunDay("runday_restore_1");
     });
 
-    expect(setDocCalls().length).toBe(1);
-    const saved = setDocCalls()[0].data as ProgramState;
-    expect(saved.runDays?.[0].status).toBe("planned");
-    expect(saved.runDays?.[0].completed).toBe(false);
-    // Restore is a pure status reversal — never a manual completion.
-    expect(saved.manualCompletions?.["runday_restore_1"]).toBeUndefined();
-    // Identity preserved.
-    expect(saved.runDays?.[0].id).toBe("runday_restore_1");
-    expect(saved.runDays?.[0].templateId).toBe("easy_30");
+    // Through the command boundary: no direct write, one addressed command.
+    expect(setDocCalls().length).toBe(0);
+    const cmd = sentCommands.find((c) => c.kind === "transitionRunDay");
+    expect(cmd).toBeDefined();
+    expect(cmd?.runDayId).toBe("runday_restore_1");
+    expect(cmd?.to).toBe("planned");
+    // Restore is a pure status reversal — the command carries no
+    // completion intent, and the reducer's own `completed: false` mirror is
+    // pinned server-side in programCommands.test.js.
+    expect(cmd).not.toHaveProperty("completed");
+    // Nothing else was sent — a restore must not also mark the slot done.
+    expect(sentCommands.map((c) => c.kind)).toEqual(["transitionRunDay"]);
   });
 
   it("restoreRunDay: race_no_show → planned", async () => {
@@ -1917,10 +1985,10 @@ describe("SESSION-RESTORE-01 — restore writers reverse a skip", () => {
       await result.current.restoreRunDay("runday_restore_1");
     });
 
-    expect(setDocCalls().length).toBe(1);
-    expect((setDocCalls()[0].data as ProgramState).runDays?.[0].status).toBe(
-      "planned"
-    );
+    expect(setDocCalls().length).toBe(0);
+    const cmd = sentCommands.find((c) => c.kind === "transitionRunDay");
+    expect(cmd?.runDayId).toBe("runday_restore_1");
+    expect(cmd?.to).toBe("planned");
   });
 
   it("restoreRunDay: refuses a completed slot (terminal → no write)", async () => {
@@ -1978,10 +2046,17 @@ describe("SESSION-RESTORE-01 — restore writers reverse a skip", () => {
       await result.current.restoreWorkoutDay(0);
     });
 
-    expect(setDocCalls().length).toBe(1);
-    expect((setDocCalls()[0].data as ProgramState).workouts[0].skipped).toBe(
-      false
-    );
+    // Through the boundary now (P6), paired with skipWorkoutDay so the set
+    // and the reset share one write path. The command carries only the day
+    // precondition — WHAT to restore is the day's own `skipped` flag, which
+    // the reducer reads from its copy; the clearing itself is pinned
+    // server-side in programCommands.test.js.
+    expect(setDocCalls().length).toBe(0);
+    const cmd = sentCommands.find((c) => c.kind === "restoreWorkoutDay");
+    expect(cmd).toBeDefined();
+    expect(cmd?.dayIndex).toBe(0);
+    expect(cmd?.expectedWeekNumber).toBe(1);
+    expect(typeof cmd?.expectedDaySignature).toBe("string");
   });
 
   it("restoreWorkoutDay: refuses a completed lift day (no write)", async () => {
@@ -2073,28 +2148,38 @@ describe("RUN-RESCHEDULE-01 — moveRunDay", () => {
     await run([plannedToday()], (api) =>
       api.moveRunDay("runday_move_1", target)
     );
-    expect(setDocCalls().length).toBe(1);
-    const saved = setDocCalls()[0].data as ProgramState;
-    const moved = saved.runDays!.find((rd) => rd.id === "runday_move_1")!;
-    expect(moved.dayIndex).toBe(target);
-    expect(moved.date).toBe(
-      localDateString(addLocalDays(parseLocalDate(localWeekKey()), target))
-    );
-    expect(moved.movedFromDate).toBe(
-      localDateString(addLocalDays(new Date(), 0))
-    );
-    expect(moved.movedToDate).toBe(moved.date);
-    // Identity + status preserved.
-    expect(moved.id).toBe("runday_move_1");
-    expect(moved.templateId).toBe("easy_30");
-    expect(moved.status).toBe("planned");
+    // P6: through the boundary. The command names the run and the day and
+    // NOTHING else — the date, both move markers and the clash flag are
+    // re-derived server-side from the run's own week anchor, so a client
+    // cannot place a run outside its week. Where the run lands is pinned in
+    // programCommands.test.js and the two copies agree by
+    // runReschedule.cross.test.ts; what this owns is that the client stopped
+    // writing the document and stopped asserting the destination.
+    expect(setDocCalls().length).toBe(0);
+    const cmd = sentCommands.find((c) => c.kind === "moveRunDay");
+    expect(cmd).toBeDefined();
+    expect(Object.keys(cmd!).sort()).toEqual([
+      "commandId",
+      "kind",
+      "runDayId",
+      "targetDayIndex",
+    ]);
+    expect(cmd?.runDayId).toBe("runday_move_1");
+    expect(cmd?.targetDayIndex).toBe(target);
   });
 
+  /* The three refusals now assert NO COMMAND as well as no write. Checking
+     only `setDocCalls()` would pass trivially post-migration — this writer no
+     longer writes documents at all — so each of these would have kept its
+     green tick while sending the refused move to the server. The reducer
+     refuses them too (programCommands.test.js), but a client that fires a
+     doomed command has still lost its guard. */
   it("refuses to move a race slot (immovable identity)", async () => {
     await run([plannedToday({ type: "race", templateId: "10k_race" })], (api) =>
       api.moveRunDay("runday_move_1", target)
     );
     expect(setDocCalls().length).toBe(0);
+    expect(sentCommands.filter((c) => c.kind === "moveRunDay")).toEqual([]);
   });
 
   it("refuses to move a skipped (non-editable) slot", async () => {
@@ -2102,6 +2187,7 @@ describe("RUN-RESCHEDULE-01 — moveRunDay", () => {
       api.moveRunDay("runday_move_1", target)
     );
     expect(setDocCalls().length).toBe(0);
+    expect(sentCommands.filter((c) => c.kind === "moveRunDay")).toEqual([]);
   });
 
   it("refuses to double-book an occupied day", async () => {
@@ -2110,5 +2196,203 @@ describe("RUN-RESCHEDULE-01 — moveRunDay", () => {
       (api) => api.moveRunDay("runday_move_1", target)
     );
     expect(setDocCalls().length).toBe(0);
+    expect(sentCommands.filter((c) => c.kind === "moveRunDay")).toEqual([]);
+  });
+});
+
+/* ─── D1 · the lift week rolls over on the calendar ─────────────────────
+   The defect these pin: the auto-rollover keyed on `runDays[0].weekKey` and
+   returned early for freeform users, so a pure lifter had no automatic
+   rollover at all. Their only other path was a manual button gated on EVERY
+   day being completed-or-skipped — so missing one Friday and never tapping
+   "skip" froze the programme on week N permanently. No deload, no adjustment
+   rule, no mesocycle rotation, forever.
+
+   Deliberately driven through the real hook rather than `advanceWeek`
+   directly: `advanceWeek` was never broken. The bug was that nothing called
+   it, which is exactly the class of failure ADR-0008 exists for
+   ("reachability over prose"). A unit test of the engine passes on the
+   broken build. ── */
+describe("auto week-rollover for a freeform lifter (D1)", () => {
+  /** A lifter: no run mode, no runDays, one incomplete day — the state that
+   *  used to freeze forever. */
+  function frozenLifter(liftWeekKey: string | undefined): ProgramState {
+    return {
+      goal: "recomp",
+      currentPhase: "progression",
+      weekNumber: 3,
+      splitType: "upper_lower",
+      fatigueScore: 0,
+      updatedAt: 0,
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      ...(liftWeekKey ? { liftWeekKey } : {}),
+      workouts: [
+        {
+          dayName: "Upper",
+          dayType: "push",
+          completed: true,
+          exercises: [],
+        },
+        // Never completed, never skipped — the whole point.
+        {
+          dayName: "Lower",
+          dayType: "legs",
+          completed: false,
+          exercises: [],
+        },
+      ],
+    } as unknown as ProgramState;
+  }
+
+  const lifterProfile = (): MockProfile => ({
+    uid: "test-user-1",
+    weekSchedule: generateSchedule(4, 0),
+    weekScheduleVersion: 1,
+    weeklyWorkoutsTarget: 4,
+    weeklyRunDaysTarget: 0,
+    primaryGoal: "hypertrophy",
+    // No runMode at all — the modal pure lifter.
+  });
+
+  /** Three calendar weeks behind. */
+  const staleKey = () =>
+    localWeekKey(addLocalDays(parseLocalDate(localWeekKey()), -21));
+
+  it("advances a stale lifter even with a day left incomplete", async () => {
+    mockProfile = lifterProfile();
+    resetFirestore();
+    seedProgram(frozenLifter(staleKey()));
+
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+
+    await waitFor(
+      () => {
+        const writes = setDocCalls();
+        const last = writes[writes.length - 1]?.data as ProgramState;
+        expect(last?.liftWeekKey).toBe(localWeekKey());
+      },
+      { timeout: 2000 }
+    );
+
+    const last = setDocCalls()[setDocCalls().length - 1].data as ProgramState;
+    // Three weeks stale → three rollovers, 3 → 6.
+    expect(last.weekNumber).toBe(6);
+    // …and the unattended day is archived rather than silently marked done.
+    expect(last.weekHistory?.length).toBeGreaterThan(0);
+  });
+
+  it("does nothing when the anchor is already the current week", async () => {
+    mockProfile = lifterProfile();
+    resetFirestore();
+    seedProgram(frozenLifter(localWeekKey()));
+
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    markWrites();
+    await new Promise((r) => setTimeout(r, 50));
+
+    // Anchored on a positive first (loading flipped above), then asserting no
+    // FURTHER writes — a bare "expect nothing" would be satisfied at t=0.
+    expect(setDocCalls().filter((_, i) => i >= writeMark).length).toBe(0);
+  });
+
+  it("does nothing for a pre-D1 doc with no anchor (migration seeds it first)", async () => {
+    // Absent must never read as "stale since the epoch" — that would roll a
+    // returning user forward by the whole iteration cap on first open.
+    mockProfile = lifterProfile();
+    resetFirestore();
+    seedProgram(frozenLifter(undefined));
+
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+
+    const writes = setDocCalls();
+    const last = writes[writes.length - 1]?.data as ProgramState | undefined;
+    // The migration seeds today; the rollover then finds nothing to do.
+    expect(last?.weekNumber ?? 3).toBe(3);
+  });
+});
+
+/* ─── D2 · the per-set evidence reaches Firestore ───────────────────────
+   The unit tests above prove the projection is correct in isolation. This
+   proves the whole write path carries it, which is the thing that was broken:
+   every hop existed and worked, and the data still died at
+   `toCompletionSetLogs` one function before the batch commit.
+
+   None of this is backfillable — every workout document ever written has
+   three fields per set, and `applyProgression` overwrites the prescription
+   immediately after each session — so the value of this change is entirely in
+   the clock it starts. Nothing reads these fields yet, by design. ── */
+describe("per-set evidence survives the save (D2)", () => {
+  it("writes set type, RPE and the planned pair onto the workout doc", async () => {
+    mockProfile = structuredProfile({ runMode: "freeform" });
+    resetFirestore();
+
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    markWrites();
+
+    await act(async () => {
+      await result.current.completeWorkoutDay(0, {
+        completionId: "abcdefgh",
+        completionCommandId: "abcdefghabcdefgh",
+        durationMinutes: 45,
+        // Fed through the REAL capture boundary rather than hand-built.
+        // A hand-built payload skips `toCompletionSetLogs` — which is where
+        // the evidence was being destroyed — so the assertions below would
+        // pass against the broken build. (They did, on the first attempt;
+        // the mutation check is what caught it.) The warm-up row is here to
+        // prove the filter that must NOT change still fires.
+        setLogs: toCompletionSetLogs([
+          [
+            { weight: 40, reps: 5, completed: true, type: "warmup", rpe: 4 },
+            { weight: 100, reps: 8, completed: true, type: "working", rpe: 8 },
+            { weight: 60, reps: 12, completed: true, type: "dropset" },
+          ],
+        ]),
+      });
+    });
+
+    const workoutWrite = batchCommits()
+      .flat()
+      .find((w) => w.ref.path.includes("/workouts/"));
+
+    expect(workoutWrite).toBeDefined();
+    const ex = (
+      workoutWrite!.data!.exercises as Array<{
+        sets: Array<Record<string, unknown>>;
+        plannedSetCount?: number;
+      }>
+    )[0];
+
+    expect(ex.sets[0]).toMatchObject({
+      reps: 8,
+      weightKg: 100,
+      type: "working",
+      rpe: 8,
+    });
+    // The prescription the set was executed against — destroyed by
+    // applyProgression a moment later, so unrecoverable from any later read.
+    expect(ex.sets[0].plannedReps).toBeTypeOf("number");
+    expect(ex.sets[0].plannedWeightKg).toBeTypeOf("number");
+    // A drop set is PERSISTED (it is real work) even though D3 bars it from
+    // driving progression.
+    expect(ex.sets[1]).toMatchObject({ type: "dropset", weightKg: 60 });
+    // Planned-vs-completed set count, recorded additively.
+    expect(ex.plannedSetCount).toBeTypeOf("number");
+
+    // Session-level provenance, so a consumer can tell whose RPE this is.
+    expect(workoutWrite!.data!.rpeProvenance).toMatchObject({
+      shownByDefault: expect.any(Boolean),
+    });
   });
 });

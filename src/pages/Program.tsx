@@ -61,13 +61,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { getExerciseById } from "@/lib/exercises";
 import type { Exercise } from "@/lib/exercises";
-import { normalizeExercise } from "@/features/program/programTypes";
-import { repUnitForExerciseId } from "@/features/program/repUnits";
 import { formatRepTarget } from "@/features/program/templateConversion";
-import {
-  loadContextFrom,
-  weightAfterExerciseSwap,
-} from "@/features/program/startingLoads";
 import {
   splitLabel,
   primaryGoalLabel,
@@ -140,7 +134,11 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     advanceToNextWeek,
     logExercise,
     regenerateProgram,
-    saveProgram,
+    reorderDayExercises,
+    removeExerciseFromDay,
+    addExercisesToDayCmd,
+    replaceExerciseInDay,
+    restoreRemovedExercise,
     viewWeek,
     viewingHistoryIndex,
     viewedWorkouts,
@@ -401,30 +399,27 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   const removeExFromDay = async (dayIdx: number, exIndex: number) => {
     if (!programState) return;
     const removed = programState.workouts[dayIdx]?.exercises[exIndex];
-    if (!removed) return;
-    const updated = programState.workouts.map((d, i) =>
-      i === dayIdx
-        ? { ...d, exercises: d.exercises.filter((_, ei) => ei !== exIndex) }
-        : d
-    );
-    await saveProgram({ ...programState, workouts: updated });
+    if (!removed?.instanceId) return;
+    if (!(await removeExerciseFromDay(dayIdx, removed.instanceId))) return;
     // Exercise delete is destructive; offer an undo (parity with set-undo in
-    // the workout session). Re-insert at the original index against the LATEST
-    // state (the removing save has already advanced it).
+    // the workout session).
+    //
+    // P6: the undo is a SERVER command now, not a client re-insert. It used to
+    // splice the removed exercise object back in from a React closure — which
+    // is the one thing the boundary cannot accept, because a client-supplied
+    // exercise is exactly what the validator refuses. The reducer soft-deletes
+    // instead, stashing the original verbatim, so `restoreExercise` returns the
+    // same lift with its history and load rather than a catalog rebuild of it.
+    //
+    // That is also why this pair could not be half-migrated: leaving the undo
+    // as a direct write would have kept the mixed-mode clobbering the boundary
+    // exists to remove.
     toast(`Removed ${removed.name}`, {
       action: {
         label: "Undo",
         onClick: () => {
-          const latest = programStateRef.current;
-          const day = latest?.workouts[dayIdx];
-          if (!latest || !day) return;
-          const exercises = [...day.exercises];
-          exercises.splice(Math.min(exIndex, exercises.length), 0, removed);
-          const restored = latest.workouts.map((d, i) =>
-            i === dayIdx ? { ...d, exercises } : d
-          );
           haptic("light");
-          void saveProgram({ ...latest, workouts: restored });
+          void restoreRemovedExercise(dayIdx);
         },
       },
     });
@@ -438,12 +433,12 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
       .map((ex) => ex.exerciseId)
       .lastIndexOf(exerciseId);
     if (lastIdx === -1) return;
-    const updated = programState.workouts.map((d, i) =>
-      i === dayIdx
-        ? { ...d, exercises: d.exercises.filter((_, ei) => ei !== lastIdx) }
-        : d
-    );
-    await saveProgram({ ...programState, workouts: updated });
+    // P6: through the boundary. This is the remove with NO undo partner, which
+    // is what makes it migratable — the other one offers an undo that restores
+    // the exercise's history and load, and the server cannot rebuild either.
+    const instanceId = exercises[lastIdx]?.instanceId;
+    if (!instanceId) return;
+    await removeExerciseFromDay(dayIdx, instanceId);
   };
 
   const moveExercise = async (
@@ -459,10 +454,11 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
       exercises[newIdx],
       exercises[exIndex],
     ];
-    const updated = programState.workouts.map((d, i) =>
-      i === dayIdx ? { ...d, exercises } : d
+    // P6: same boundary as drag-and-drop — one reorder path, one authority.
+    await reorderDayExercises(
+      dayIdx,
+      exercises.map((ex) => ex.instanceId ?? "")
     );
-    await saveProgram({ ...programState, workouts: updated });
     setContextMenu(null);
   };
 
@@ -473,69 +469,16 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   ) => {
     if (!programState) return;
     const old = programState.workouts[dayIdx].exercises[exIndex];
-    // Don't preserve old.movementCategory — let normalizeExercise infer
-    // the new category from the new exercise's name. Replacing Lat
-    // Pulldown (vertical_pull) with Dumbbell Curl shouldn't keep the
-    // pull tag; downstream consumers (analytics, MuscleHeatMap, social
-    // posts) need the actual movement pattern. Sets and role-level
-    // prescription carry; the working load is recalibrated for the target
-    // movement, and crossing into/out of a timed hold resets its target unit.
-    // The slot's prescription fields carry too (backlog #7). They're the
-    // slot's identity, not the old movement's: `isAccessory` now picks the
-    // progression scheme AND the load step, so dropping it re-prices a
-    // swapped-in isolation as a compound (2.5 kg on a curl); repRangeMax +
-    // baseReps are the range it climbs; baseSets is the volume-ramp anchor
-    // (without it, a week-3 swap re-anchors at base+1 permanently);
-    // restSeconds is the authored rest. `preDeloadWeight` deliberately does
-    // NOT carry — the replacement keeps its deloaded load rather than
-    // jumping back up to a weight it never lifted.
-    const replacementRepUnit = repUnitForExerciseId(newEx.id);
-    const unitChanged =
-      (old.repUnit === "seconds") !== (replacementRepUnit === "seconds");
-    const replacementReps = unitChanged
-      ? replacementRepUnit === "seconds"
-        ? 30
-        : 10
-      : old.reps;
-    const calibrated = weightAfterExerciseSwap(
-      old,
-      newEx.id,
-      loadContextFrom(profile)
-    );
-    const replacement = normalizeExercise({
-      name: newEx.name,
-      exerciseId: newEx.id,
-      sets: old.sets,
-      reps: replacementReps,
-      weight: calibrated.weight,
-      movementCategory: calibrated.movementCategory,
-      baseReps: unitChanged ? replacementReps : old.baseReps,
-      progressionType: old.progressionType,
-      ...(!unitChanged && old.repRangeMax !== undefined
-        ? { repRangeMax: old.repRangeMax }
-        : {}),
-      ...(replacementRepUnit !== undefined
-        ? { repUnit: replacementRepUnit }
-        : {}),
-      ...(old.baseSets !== undefined ? { baseSets: old.baseSets } : {}),
-      ...(old.restSeconds !== undefined
-        ? { restSeconds: old.restSeconds }
-        : {}),
-      ...(old.isAccessory !== undefined
-        ? { isAccessory: old.isAccessory }
-        : {}),
-    });
-    const updated = programState.workouts.map((d, i) =>
-      i === dayIdx
-        ? {
-            ...d,
-            exercises: d.exercises.map((ex, ei) =>
-              ei === exIndex ? replacement : ex
-            ),
-          }
-        : d
-    );
-    await saveProgram({ ...programState, workouts: updated });
+    if (!old?.instanceId) return;
+    // P6: through the boundary. The identity work the long comment here used
+    // to describe — carry the role-level prescription, re-infer the category,
+    // mint a new instance, reset a reps<->seconds transition — now lives in
+    // `replaceExerciseInDay` and in the server reducer that is its authority.
+    //
+    // The one thing that could NOT simply move is the load: the reducer has no
+    // profile, so it used to hard-code 0. The calibrated weight is computed
+    // client-side and sent as a bounded scalar; see the reducer's note.
+    await replaceExerciseInDay(dayIdx, old.instanceId, newEx.id);
     setReplaceTarget(null);
   };
 
@@ -546,21 +489,15 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     // "horizontal_push" was tagging every added exercise (including
     // pulls, legs, isolations) as a horizontal press, contaminating
     // analytics, MuscleHeatMap input, and social-post muscle groups.
-    const newExs = exercises.map((e) => {
-      const repUnit = repUnitForExerciseId(e.id);
-      return normalizeExercise({
-        name: e.name,
-        exerciseId: e.id,
-        sets: 3,
-        reps: repUnit === "seconds" ? 30 : 10,
-        weight: 0,
-        ...(repUnit !== undefined ? { repUnit } : {}),
-      });
-    });
-    const updated = programState.workouts.map((d, i) =>
-      i === dayIdx ? { ...d, exercises: [...d.exercises, ...newExs] } : d
+    // P6: through the boundary. Only IDS cross the wire — the server derives
+    // the name and category from the catalog rather than trusting a
+    // client-supplied exercise object, which is the boundary's security stance.
+    // Equivalent because both sides start an added movement UNCALIBRATED at
+    // 3x10x0; that is what separates this from `replaceExercise`.
+    await addExercisesToDayCmd(
+      dayIdx,
+      exercises.map((e) => e.id)
     );
-    await saveProgram({ ...programState, workouts: updated });
     setShowAddPicker(false);
   };
 
@@ -630,18 +567,19 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     if (oldIdx < 0 || newIdx < 0) return;
 
     const reordered = arrayMove(exercises, oldIdx, newIdx);
-    const updatedWorkouts = programState.workouts.map((d, i) =>
-      i === dayIndex ? { ...d, exercises: reordered } : d
-    );
 
     // Green flash — track the dropped exercise by its stable id so the flash
     // lands on the right row after the re-render reorders the list.
     setJustDroppedId(rowId(reordered[newIdx], dayIndex, newIdx));
     setTimeout(() => setJustDroppedId(null), 300);
 
-    // Persist via useProgram's saveProgram
-    const updatedState = { ...programState, workouts: updatedWorkouts };
-    await saveProgram(updatedState);
+    // P6: through the command boundary, not `saveProgram`. The reorder applies
+    // optimistically first, so the drop still settles immediately; the server
+    // is the authority for what actually persists.
+    await reorderDayExercises(
+      dayIndex,
+      reordered.map((ex) => ex.instanceId ?? "")
+    );
   };
 
   // Today index: first incomplete workout (respects nextWorkoutOverride)

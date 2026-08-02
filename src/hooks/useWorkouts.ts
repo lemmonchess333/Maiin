@@ -46,10 +46,29 @@ function normaliseWorkoutDate(input: string | Date | undefined): string {
   }
 }
 
+/**
+ * D2: widened from `{setNumber, reps, weightKg}`.
+ *
+ * The canonical definition and the single projection that builds these live in
+ * `src/features/program/workoutSetRecord.ts` — read that file for why the
+ * evidence matters, why none of it is backfillable, and why nothing reads the
+ * new fields yet.
+ */
 export interface WorkoutSet {
   setNumber: number;
   reps: number;
   weightKg: number;
+  /** working | warmup | dropset | failure. Absent on pre-D2 documents;
+   *  `src/lib/export.ts` has always defaulted it to "working". */
+  type?: string;
+  /** Helms's 6–10 half-point scale. Interpret via the workout document's
+   *  session-level `rpeProvenance`. */
+  rpe?: number;
+  /** The PRESCRIPTION this set was executed against, captured at write time
+   *  because `applyProgression` overwrites it immediately afterwards — so
+   *  planned-vs-actual is unrecoverable from any later read. */
+  plannedReps?: number;
+  plannedWeightKg?: number;
 }
 
 export interface WorkoutExercise {

@@ -10,8 +10,16 @@ const {
 } = require("../lib/programStateSanitizer");
 
 // A representative buildPlan() output — every key here is legitimate and must
-// pass through untouched. If a future buildPlan field is added without
-// updating PROGRAM_STATE_KEYS, this test fails (the "silently dropped" guard).
+// pass through untouched.
+//
+// This fixture does NOT guard against a new ProgramState field missing from
+// PROGRAM_STATE_KEYS, despite the comment that used to claim it did. The
+// fixture is hand-maintained too, so a field added to the interface and to
+// neither the fixture nor the key set stayed green — which is exactly how
+// `plateauResponses` shipped unlisted and made the deload button throw
+// invalid-argument for every user who had rolled a week. A fixture cannot pin
+// a type. That pin lives in `programStateKeyParity.test.js`, which derives the
+// expected key set from the ProgramState interface itself.
 const realProgramState = {
   goal: "lean bulk",
   currentPhase: "Hypertrophy",
