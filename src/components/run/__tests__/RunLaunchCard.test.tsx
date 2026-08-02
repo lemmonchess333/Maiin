@@ -22,7 +22,7 @@ const workout: RunTemplate = {
   icon: "person-standing",
   description: "Conversational pace — recovery day",
   estimatedDuration: 30,
-  config: { targetDistance: 5 },
+  config: { targetDistanceKm: 5 },
 };
 
 function setup(
