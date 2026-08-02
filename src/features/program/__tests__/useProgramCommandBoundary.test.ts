@@ -654,6 +654,7 @@ describe("every migrated writer sends a command the server accepts", () => {
       await c.setNextWorkout(0);
       await c.updateSettings({ autoProgression: false });
       await c.dismissFellBehindPrompt();
+      await c.releaseTrainingBlock();
       await c.keepTrainingBlockFocus();
       await c.moveRunDay("rd-1", 1);
       await c.skipRecoveryEarly();
@@ -678,5 +679,48 @@ describe("every migrated writer sends a command the server accepts", () => {
     expect(kinds).toContain("endTrainingBlockKeepingFocus");
     expect(kinds).toContain("skipRecoveryEarly");
     expect(kinds).toContain("moveRunDay");
+    expect(kinds).toContain("releaseTrainingBlock");
+  });
+
+  it("startTrainingBlock — needs its own fixture", async () => {
+    // Cannot share the block above. `startTrainingBlock` refuses when a
+    // block already exists, and ending the seeded one only clears it
+    // OPTIMISTICALLY — the post-success refetch re-reads the seeded doc (the
+    // mocked sender never mutates it), so the block is back before the next
+    // call. Two preconditions that contradict each other need two fixtures,
+    // not a clever ordering.
+    seedFirestore({
+      [RUN_PROGRAM]: {
+        weekNumber: 1,
+        splitType: "upper_lower",
+        goal: "recomp",
+        primaryGoal: "hypertrophy",
+        workouts: [
+          {
+            dayName: "Push",
+            dayType: "upper",
+            completed: false,
+            skipped: false,
+            exercises: [ex("i-a", "Alpha")],
+          },
+        ],
+        runDays: [],
+        settings: { autoProgression: true, microloading: true },
+      } as unknown as Record<string, unknown>,
+    });
+    const hook = renderHook(() => useProgram());
+    await waitFor(() => expect(hook.result.current.programState).toBeTruthy());
+
+    await act(async () => {
+      await hook.result.current.startTrainingBlock({
+        focus: "strength",
+        pace: "full",
+        durationWeeks: 8,
+        startDate: "2026-03-02",
+      });
+    });
+
+    const kinds = sendProgramCommand.mock.calls.map((a) => (a[0] as any).kind);
+    expect(kinds).toContain("startTrainingBlock");
   });
 });

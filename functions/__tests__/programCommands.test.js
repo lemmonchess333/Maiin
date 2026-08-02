@@ -581,6 +581,8 @@ describe("every declared client kind round-trips", () => {
         "endTrainingBlockKeepingFocus",
         "skipRecoveryEarly",
         "moveRunDay",
+        "startTrainingBlock",
+        "releaseTrainingBlock",
       ])
     );
   });
@@ -726,6 +728,12 @@ function apply(command, state, profile) {
     command,
     now: NOW,
   });
+}
+
+// Apply the represcribe transform directly, for the block round-trip test.
+function represcribed(state, goal) {
+  const { represcribeWorkouts } = require("../lib/represcribe");
+  return represcribeWorkouts(state.workouts, goal, "advanced");
 }
 
 function expectHttps(fn, httpsCode) {
@@ -925,6 +933,144 @@ describe("preconditionless field commands", () => {
       goal: "cut",
     });
     expect(state.goal).toBe("cut");
+  });
+});
+
+describe("training block start/release (Blk2)", () => {
+  const START = {
+    kind: "startTrainingBlock",
+    commandId: CMD,
+    focus: "strength",
+    pace: "full",
+    durationWeeks: 8,
+    startDate: "2026-03-02",
+  };
+  const RELEASE = { kind: "releaseTrainingBlock", commandId: CMD };
+
+  it("starts a block, represcribes the week, and moves primaryGoal", () => {
+    const seeded = baseState();
+    seeded.primaryGoal = "hypertrophy";
+    const { state } = apply(START, seeded, { experience: "advanced" });
+
+    expect(state.primaryGoal).toBe("strength");
+    expect(state.trainingBlock.focus).toBe("strength");
+    expect(state.trainingBlock.owned).toBe(true);
+    // goalBefore is captured from SERVER state, not sent.
+    expect(state.trainingBlock.goalBefore).toBe("hypertrophy");
+    expect(state.trainingBlock.id).toBe(`2026-03-02-${NOW}`);
+    expect(state.trainingBlock.createdAt).toBe(NOW);
+    expect(state.trainingBlock.weeklyLiftTarget).toBe(
+      baseState().workouts.length
+    );
+    // The prescription actually moved — strength mains are 5 reps before
+    // undulation, so an advanced lifter's first (heavy) day lands at 3.
+    expect(state.workouts[0].exercises[0].reps).toBeLessThan(8);
+    expect(state.workouts[0].exercises[0].baseReps).toBe(
+      state.workouts[0].exercises[0].reps
+    );
+  });
+
+  it("grants amnesty when the focus CHANGES", () => {
+    const seeded = baseState();
+    seeded.primaryGoal = "hypertrophy";
+    const { state } = apply(START, seeded, {});
+    expect(state.trainingBlock.amnestyWeeksLeft).toBeGreaterThan(0);
+  });
+
+  it("grants NO amnesty when the focus is unchanged at full pace", () => {
+    const seeded = baseState();
+    seeded.primaryGoal = "strength";
+    const { state } = apply(START, seeded, { primaryGoal: "strength" });
+    expect(state.trainingBlock.amnestyWeeksLeft).toBe(0);
+  });
+
+  it("grants amnesty for an easing pace even when the focus is unchanged", () => {
+    const seeded = baseState();
+    seeded.primaryGoal = "strength";
+    const { state } = apply({ ...START, pace: "easing" }, seeded, {
+      primaryGoal: "strength",
+    });
+    expect(state.trainingBlock.amnestyWeeksLeft).toBeGreaterThan(0);
+  });
+
+  it("a client cannot grant itself amnesty or a fake goalBefore", () => {
+    // Neither field is on the command surface at all — the validator rejects
+    // them, which is what keeps the reducer's derivation authoritative.
+    expectRejected({ ...START, commandId: CMD_ID, amnestyWeeksLeft: 99 });
+    expectRejected({ ...START, commandId: CMD_ID, goalBefore: "fat_loss" });
+    expectRejected({ ...START, commandId: CMD_ID, owned: false });
+  });
+
+  it("refuses a second block", () => {
+    const seeded = baseState();
+    seeded.trainingBlock = { id: "blk1", owned: true, goalBefore: "general" };
+    expectHttps(() => apply(START, seeded), "failed-precondition");
+  });
+
+  it("refuses a block for a run-only athlete (no lift week to own)", () => {
+    const seeded = baseState();
+    seeded.workouts = [];
+    expectHttps(() => apply(START, seeded), "failed-precondition");
+  });
+
+  it("caps anchorExerciseIds at 3 and bounds the enums", () => {
+    expectRejected({
+      ...START,
+      commandId: CMD_ID,
+      anchorExerciseIds: ["a", "b", "c", "d"],
+    });
+    expectRejected({ ...START, commandId: CMD_ID, durationWeeks: 6 });
+    expectRejected({ ...START, commandId: CMD_ID, pace: "brutal" });
+    expectRejected({ ...START, commandId: CMD_ID, focus: "not_a_goal" });
+    expectRejected({ ...START, commandId: CMD_ID, startDate: "03/02/2026" });
+  });
+
+  it("accepts an EMPTY why (the field is optional in the UI)", () => {
+    expect(
+      assertClientProgramCommand({ ...START, commandId: CMD_ID, why: "" }).why
+    ).toBe("");
+  });
+
+  // ── release ──────────────────────────────────────────────────────────
+
+  it("release restores goalBefore and re-derives the week from it", () => {
+    const seeded = baseState();
+    seeded.primaryGoal = "hypertrophy";
+    const started = apply(START, seeded, { experience: "advanced" }).state;
+
+    const { state } = apply(RELEASE, started, { experience: "advanced" });
+    expect("trainingBlock" in state).toBe(false);
+    expect(state.primaryGoal).toBe("hypertrophy");
+    // Round-trip: the SAME transform with goalBefore IS the inverse, so the
+    // rep targets come back. (Loads deliberately do not rewind — see the
+    // reducer — so only the rep prescription is compared.)
+    const before = represcribed(seeded, "hypertrophy");
+    expect(state.workouts.map((d) => d.exercises.map((e) => e.reps))).toEqual(
+      before.map((d) => d.exercises.map((e) => e.reps))
+    );
+  });
+
+  it("release does NOT represcribe a legacy un-owned block", () => {
+    const seeded = baseState();
+    seeded.primaryGoal = "hypertrophy";
+    seeded.trainingBlock = {
+      id: "legacy",
+      owned: false,
+      goalBefore: "strength",
+    };
+    const { state } = apply(RELEASE, seeded, { experience: "advanced" });
+    expect(state.primaryGoal).toBe("strength");
+    // Untouched: it never owned a prescription, so releasing must not
+    // retroactively rewrite one.
+    expect(state.workouts).toEqual(seeded.workouts);
+  });
+
+  it("release rejects when there is no block", () => {
+    expectHttps(() => apply(RELEASE, baseState()), "failed-precondition");
+  });
+
+  it("release carries no payload the client could steer", () => {
+    expectRejected({ ...RELEASE, commandId: CMD_ID, goalBefore: "fat_loss" });
   });
 });
 

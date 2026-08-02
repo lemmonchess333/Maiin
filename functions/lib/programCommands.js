@@ -75,6 +75,14 @@ const { isRaceTemplateId } = require("./raceTemplateIds");
 const { resolveRecoveryExit } = require("./runModeResolution");
 // One-off run move (RUN-RESCHEDULE-01), pinned by a parity cross-test.
 const { computeRunMove } = require("./runReschedule");
+// Goal-prescription engine (pinned by a parity cross-test). The transform a
+// training block applies at start and un-applies at release.
+const {
+  BLOCK_AMNESTY_WEEKS,
+  makeBlockId,
+  represcribeWorkouts,
+  toExperience,
+} = require("./represcribe");
 // Deload-transform mirror (pinned by a parity cross-test). Used by the
 // applyDeloadWeek reducer (PROGRAM-DELOAD-01).
 const {
@@ -126,6 +134,8 @@ const CLIENT_COMMAND_KINDS = Object.freeze([
   "endTrainingBlockKeepingFocus",
   "skipRecoveryEarly",
   "moveRunDay",
+  "startTrainingBlock",
+  "releaseTrainingBlock",
 ]);
 const CLIENT_COMMAND_KIND_SET = new Set(CLIENT_COMMAND_KINDS);
 
@@ -135,6 +145,14 @@ const CLIENT_COMMAND_KIND_SET = new Set(CLIENT_COMMAND_KINDS);
 const PRIVATE_SERVER_KINDS = new Set(["replaceProgramme"]);
 
 const PROGRAM_GOALS = new Set(["cut", "lean bulk", "recomp"]);
+// Blk2. `PRIMARY_GOALS` is the represcribe mirror's own list, which the
+// cross-test pins set-equal to the client union — so a new goal cannot be
+// accepted here without the prescription table gaining a row for it.
+const PRIMARY_GOAL_SET = new Set(require("./represcribe").PRIMARY_GOALS);
+const BLOCK_PACES = new Set(["full", "lighter", "easing"]);
+const BLOCK_DURATION_WEEKS = new Set([4, 8, 12]);
+const MAX_ANCHOR_EXERCISE_IDS = 3;
+const MAX_BLOCK_WHY_LEN = 500;
 const SESSION_VARIANTS = new Set(["express45", "express30"]);
 
 // Bounds. Generous but finite — a legitimate command is comfortably inside
@@ -675,6 +693,56 @@ const KIND_VALIDATORS = {
   // see the reducer.
   skipRecoveryEarly(command, out) {
     assertKeys(command, "skipRecoveryEarly", ["kind", "commandId"], []);
+    void out;
+  },
+
+  // Blk2 — start a training block. The block's DERIVED fields (id,
+  // goalBefore, amnesty, weeklyLiftTarget, createdAt) are all computed by the
+  // reducer; only the user's actual choices cross the wire.
+  startTrainingBlock(command, out) {
+    assertKeys(
+      command,
+      "startTrainingBlock",
+      ["kind", "commandId", "focus", "pace", "durationWeeks", "startDate"],
+      ["anchorExerciseIds", "why"]
+    );
+    out.focus = assertEnum(command.focus, "focus", PRIMARY_GOAL_SET);
+    out.pace = assertEnum(command.pace, "pace", BLOCK_PACES);
+    // NOT assertEnum: that requires a string, and BlockDurationWeeks is a
+    // NUMERIC union (4 | 8 | 12). Passing a number through assertEnum
+    // rejects every valid command with invalid-argument — which is exactly
+    // what happened on the first run here.
+    if (!BLOCK_DURATION_WEEKS.has(command.durationWeeks)) {
+      invalidCommand("durationWeeks must be 4, 8 or 12.");
+    }
+    out.durationWeeks = command.durationWeeks;
+    out.startDate = assertLocalDate(command.startDate, "startDate");
+    if ("anchorExerciseIds" in command) {
+      const ids = command.anchorExerciseIds;
+      if (!Array.isArray(ids)) {
+        invalidCommand("anchorExerciseIds must be an array.");
+      }
+      if (ids.length > MAX_ANCHOR_EXERCISE_IDS) {
+        invalidCommand("anchorExerciseIds has too many entries.");
+      }
+      out.anchorExerciseIds = ids.map((id, i) =>
+        assertString(id, `anchorExerciseIds[${i}]`, MAX_ID_LEN)
+      );
+    }
+    if ("why" in command) {
+      // minLen 0: an empty `why` is legitimate (the field is optional in the
+      // UI and the reducer defaults it to ""). assertString's 4th parameter
+      // is a LENGTH, not a boolean — passing `true` would silently take the
+      // default floor of 1 and reject it.
+      out.why = assertString(command.why, "why", MAX_BLOCK_WHY_LEN, 0);
+    }
+  },
+
+  // Blk2 — end the block and hand the prescription back to the standing
+  // focus. No payload: WHICH block and WHAT to restore are both read from
+  // state (`trainingBlock.goalBefore`), which is the entire inverse.
+  releaseTrainingBlock(command, out) {
+    assertKeys(command, "releaseTrainingBlock", ["kind", "commandId"], []);
     void out;
   },
 
@@ -1280,6 +1348,94 @@ function transitionRunDay(state, command) {
   }));
 }
 
+/**
+ * Blk2 — start a training block (the transform lives in represcribe.js).
+ *
+ * The block's DERIVED state is computed here, not accepted: its id,
+ * `goalBefore`, the amnesty counter, `weeklyLiftTarget` and `createdAt` all
+ * come from server-read state plus the transaction's `now`, so a client
+ * cannot grant itself amnesty weeks or claim a `goalBefore` that was never
+ * its focus.
+ */
+function startTrainingBlock(state, profile, command, now) {
+  if (isPlainObject(state.trainingBlock)) {
+    failedPrecondition("You already have an active training block.");
+  }
+  const workouts = Array.isArray(state.workouts) ? state.workouts : [];
+  // A run-only athlete has no prescription for a block to own.
+  if (workouts.length === 0) {
+    failedPrecondition("There is no lift week for a block to own.");
+  }
+  const goalBefore =
+    (profile && profile.primaryGoal) || state.primaryGoal || "general";
+
+  const block = {
+    id: makeBlockId(command.startDate, now),
+    owned: true,
+    focus: command.focus,
+    pace: command.pace,
+    durationWeeks: command.durationWeeks,
+    startDate: command.startDate,
+    goalBefore,
+    // Amnesty only where early misses are expected: the targets just moved,
+    // or the user is deliberately under-reaching.
+    amnestyWeeksLeft:
+      command.focus !== goalBefore || command.pace === "easing"
+        ? BLOCK_AMNESTY_WEEKS
+        : 0,
+    weeklyLiftTarget: workouts.length,
+    anchorExerciseIds: (command.anchorExerciseIds || []).slice(0, 3),
+    why: command.why || "",
+    createdAt: now,
+    schemaVersion: 1,
+  };
+
+  return {
+    ...state,
+    primaryGoal: command.focus,
+    workouts: represcribeWorkouts(
+      workouts,
+      command.focus,
+      toExperience(profile && profile.experience)
+    ),
+    trainingBlock: block,
+  };
+}
+
+/**
+ * Blk2 — end the block and hand the prescription back to the standing focus.
+ *
+ * Applying the SAME transform with `goalBefore` IS the inverse, which is why
+ * there is no per-slot snapshot: a slot added, removed or swapped mid-block
+ * needs no special case. Loads are deliberately NOT rewound — by release the
+ * progression engine has been climbing from the stepped-down weight for
+ * weeks, so the current load is the truth, and `scaleLoadForReps` re-applies
+ * only if the restored target is HIGHER.
+ */
+function releaseTrainingBlock(state, profile, command) {
+  void command;
+  const block = state.trainingBlock;
+  if (!isPlainObject(block)) {
+    failedPrecondition("There is no active training block.");
+  }
+  const workouts = Array.isArray(state.workouts) ? state.workouts : [];
+  const { trainingBlock: _released, ...withoutBlock } = state;
+  return {
+    ...withoutBlock,
+    primaryGoal: block.goalBefore,
+    // A legacy block adopted at deploy never represcribed anything, so
+    // releasing it must not retroactively rewrite a prescription it never
+    // owned.
+    workouts: block.owned
+      ? represcribeWorkouts(
+          workouts,
+          block.goalBefore,
+          toExperience(profile && profile.experience)
+        )
+      : workouts,
+  };
+}
+
 function moveRunDay(state, profile, command) {
   const idx = findRunDayIndex(state, command.runDayId);
   if (idx === -1) {
@@ -1869,6 +2025,12 @@ function applyProgramCommand({ state, profile, command, now }) {
       break;
     case "moveRunDay":
       next = moveRunDay(current, profile || {}, validated);
+      break;
+    case "startTrainingBlock":
+      next = startTrainingBlock(current, profile || {}, validated, now);
+      break;
+    case "releaseTrainingBlock":
+      next = releaseTrainingBlock(current, profile || {}, validated);
       break;
     case "applyDeloadWeek":
       next = applyDeloadWeekCommand(current, profile || {}, validated, now);

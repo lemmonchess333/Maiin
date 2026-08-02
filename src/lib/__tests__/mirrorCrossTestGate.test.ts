@@ -134,6 +134,11 @@ const PINNED: Record<string, string> = {
   // that decides where the run is actually stored.
   "functions/lib/runReschedule.js":
     "src/features/program/__tests__/runReschedule.cross.test.ts",
+  // Blk2 — the goal-prescription engine a training block applies at start
+  // and un-applies at release. The server copy is the one that decides what
+  // a block actually writes.
+  "functions/lib/represcribe.js":
+    "src/features/program/__tests__/represcribe.cross.test.ts",
   // Race-template ids — data-list mirror of the race-TYPE RUN_TEMPLATES
   // entries. Same shape as spaceIds below: the server cannot import the
   // catalogue, so the list is pinned set-equal instead.

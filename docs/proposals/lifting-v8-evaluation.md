@@ -1461,7 +1461,20 @@ gets a direct write, which both honours the reorder and persists the ids so
 the next one goes through the boundary. Removing it would break drag-and-drop
 for those users; it self-heals in one use.
 
-**Blocked on the goal-prescription engine (2 sites).** `startTrainingBlock`
+**Blocked on the goal-prescription engine — DONE 2026-08-02.**
+`functions/lib/represcribe.js` now mirrors the engine (GOAL_PROFILES,
+goalProfileFor, prescribedRepCeiling, assignDayRoles, repDeltaForRole,
+repFloorFor, repRangeMaxFor, usesUndulation, toExperience, scaleLoadForReps,
+represcribeWorkouts, BLOCK_AMNESTY_WEEKS, makeBlockId), pinned by a cross-test
+that walks every goal x every experience x week lengths 0-6. Both writers are
+on the boundary. ONE deliberate divergence, documented in the mirror header
+rather than hidden: an unknown goal falls back to `general` server-side where
+the client returns undefined and throws, because the reducer reads
+`block.goalBefore` from untrusted stored state and a throw inside the
+transaction fails the whole command. The week engine (`advanceWeek`) is a
+SEPARATE mirror and still outstanding — it was described below as overlapping
+this one, and only the shared leaf helpers actually overlap. Original entry:
+`startTrainingBlock`
 and `releaseTrainingBlock` both run `represcribeWorkouts`, which needs
 `goalProfileFor` (and its profile table), `assignDayRoles`, `repDeltaForRole`,
 `repFloorFor`, `repRangeMaxFor`, `prescribedRepCeiling`, `usesUndulation` and

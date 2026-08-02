@@ -14,7 +14,6 @@ import { useAuth } from "@/lib/auth";
 import { postActivity } from "@/lib/socialApi";
 import { compose, enqueueShare, showQueuedToast } from "@/lib/shareComposer";
 import type {
-  ActiveTrainingBlock,
   BlockDurationWeeks,
   BlockPace,
   ManualCompletion,
@@ -26,12 +25,8 @@ import type {
   ScheduledRunDay,
   ScheduledRunStatus,
 } from "./programTypes";
-import {
-  BLOCK_AMNESTY_WEEKS,
-  isProgressionHeld,
-  represcribeWorkouts,
-} from "./represcribe";
-import { blockWeekOf, makeBlockId } from "./trainingBlock";
+import { isProgressionHeld, represcribeWorkouts } from "./represcribe";
+import { blockWeekOf } from "./trainingBlock";
 import { normalizeProgramState, transitionStatus } from "./programTypes";
 import { resolveRecoveryExit } from "./runModeResolution";
 import { workoutDayPrecondition } from "./programCommandPrecondition";
@@ -2820,46 +2815,49 @@ export function useProgram() {
       if (!programState || programState.trainingBlock) return false;
       // A run-only athlete has no prescription for a block to own.
       if (programState.workouts.length === 0) return false;
-      const goalBefore =
-        profile?.primaryGoal ?? programState.primaryGoal ?? "general";
-      const now = Date.now();
-      const block: ActiveTrainingBlock = {
-        id: makeBlockId(input.startDate, now),
-        owned: true,
-        focus: input.focus,
-        pace: input.pace,
-        durationWeeks: input.durationWeeks,
-        startDate: input.startDate,
-        goalBefore,
-        // Amnesty only where early misses are expected: the targets just
-        // moved, or the user is deliberately under-reaching.
-        amnestyWeeksLeft:
-          input.focus !== goalBefore || input.pace === "easing"
-            ? BLOCK_AMNESTY_WEEKS
-            : 0,
-        weeklyLiftTarget: programState.workouts.length,
-        anchorExerciseIds: (input.anchorExerciseIds ?? []).slice(0, 3),
-        why: input.why ?? "",
-        createdAt: now,
-        schemaVersion: 1,
-      };
-      try {
-        await saveProgram({
-          ...programState,
+      // P6: through the boundary. Only the user's actual CHOICES cross the
+      // wire — the block's id, `goalBefore`, amnesty counter,
+      // `weeklyLiftTarget` and `createdAt` are all derived by the reducer
+      // from server-read state, so a client cannot grant itself amnesty
+      // weeks or claim a `goalBefore` that was never its focus. The
+      // represcribe runs server-side too (functions/lib/represcribe.js,
+      // pinned by represcribe.cross.test.ts) — sending the represcribed
+      // workouts would be the whole-document write the boundary refuses.
+      const outcome = await runProgramCommand(
+        {
+          kind: "startTrainingBlock",
+          commandId: generateInstanceId(),
+          focus: input.focus,
+          pace: input.pace,
+          durationWeeks: input.durationWeeks,
+          startDate: input.startDate,
+          ...(input.anchorExerciseIds?.length
+            ? { anchorExerciseIds: input.anchorExerciseIds.slice(0, 3) }
+            : {}),
+          ...(input.why === undefined ? {} : { why: input.why }),
+        },
+        // Optimistic: the same transform, from the same shared rule. The
+        // block object itself is left to the refetch — its id embeds the
+        // server's `now`, and inventing a local one would show a value that
+        // is about to be replaced.
+        (state) => ({
+          ...state,
           primaryGoal: input.focus,
           workouts: represcribeWorkouts(
-            programState.workouts,
+            state.workouts,
             input.focus,
             toExperience(profile?.experience)
           ),
-          trainingBlock: block,
-        });
-        return true;
-      } catch {
-        return false; // saveProgram has already surfaced the failure
+        })
+      );
+      if (outcome === "rejected") {
+        toast.error("Couldn't start that block. Refreshing.");
+        await refetchProgramState();
+        return false;
       }
+      return true;
     },
-    [programState, profile, saveProgram]
+    [programState, profile, runProgramCommand, refetchProgramState]
   );
 
   /**
@@ -2876,27 +2874,35 @@ export function useProgram() {
   const releaseTrainingBlock = useCallback(async (): Promise<boolean> => {
     const block = programState?.trainingBlock;
     if (!programState || !block) return false;
-    try {
-      await saveProgram({
-        ...programState,
-        primaryGoal: block.goalBefore,
-        // A legacy block adopted at deploy never represcribed anything, so
-        // releasing it must not retroactively rewrite a prescription it
-        // never owned.
-        workouts: block.owned
-          ? represcribeWorkouts(
-              programState.workouts,
-              block.goalBefore,
-              toExperience(profile?.experience)
-            )
-          : programState.workouts,
-        trainingBlock: undefined,
-      });
-      return true;
-    } catch {
+    const outcome = await runProgramCommand(
+      { kind: "releaseTrainingBlock", commandId: generateInstanceId() },
+      // Applying the same transform with `goalBefore` IS the inverse, which
+      // is why there is no snapshot to restore. A legacy un-owned block
+      // never represcribed anything, so releasing it must not retroactively
+      // rewrite a prescription it never owned.
+      (state) => {
+        const next = {
+          ...state,
+          primaryGoal: block.goalBefore,
+          workouts: block.owned
+            ? represcribeWorkouts(
+                state.workouts,
+                block.goalBefore,
+                toExperience(profile?.experience)
+              )
+            : state.workouts,
+        };
+        delete next.trainingBlock;
+        return next;
+      }
+    );
+    if (outcome === "rejected") {
+      toast.error("Couldn't end that block. Refreshing.");
+      await refetchProgramState();
       return false;
     }
-  }, [programState, profile, saveProgram]);
+    return true;
+  }, [programState, profile, runProgramCommand, refetchProgramState]);
 
   /**
    * End the block but KEEP its focus as the user's programme focus — the
