@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";
 
-import { applyDeload } from "../programEngine";
+import { advanceWeek, applyDeload } from "../programEngine";
 import { deloadWeight } from "../easierToday";
-import type { WorkoutDay } from "../programTypes";
+import type { ProgramState, WorkoutDay } from "../programTypes";
 
 /**
  * Parity guard (PROGRAM-DELOAD-01): the deload rule is triple-sited — the
@@ -142,5 +142,92 @@ describe("deload rule parity (client engine ↔ CF mirror ↔ easierToday)", () 
       expect(a).toEqual(fixtureWeek());
       expect(b).toEqual(fixtureWeek());
     }
+  });
+});
+
+/* ─── D4 · a user-applied deload must give the load back ────────────────
+   Not a unit test of either copy — the user story across both, because the
+   defect lived in the SEAM. The client's automatic week-4 path has always
+   run `applyDeload(prepareForDeload(...))`; the server's applyDeloadWeek
+   command ran `applyDeloadToWorkouts` alone. Nothing stashed, so nothing
+   restored, and the cut became permanent at meso exit — novices 15% lighter
+   forever, post-novices two reps down forever.
+
+   Why it was invisible: `prepareForDeload`'s own doc comment claimed the
+   manual path was covered "with its undo snapshot", and every existing test
+   exercised the two transforms in isolation, where both are correct. Only
+   running the command and THEN the rollover shows it. ── */
+describe("applyDeloadWeek command → week rollover (D4)", () => {
+  const cmds = require("../../../../functions/lib/programCommands") as {
+    applyProgramCommand: (a: {
+      state: unknown;
+      profile: unknown;
+      command: unknown;
+      now: number;
+    }) => { state: ProgramState };
+  };
+
+  const stateAtWeek1 = (): ProgramState => ({
+    goal: "recomp",
+    currentPhase: "progression",
+    weekNumber: 1,
+    splitType: "upper_lower",
+    fatigueScore: 0,
+    updatedAt: 0,
+    workouts: [
+      {
+        dayName: "Upper",
+        dayType: "push",
+        completed: false,
+        exercises: [mkEx("bench-press", 4, 8, 100)],
+      } as WorkoutDay,
+    ],
+  });
+
+  const deload = (experience: string) =>
+    cmds.applyProgramCommand({
+      state: stateAtWeek1(),
+      profile: { experience },
+      command: {
+        kind: "applyDeloadWeek",
+        commandId: "aaaaaaaaaaaaaaaa",
+        expectedWeekNumber: 1,
+      },
+      now: 1,
+    }).state;
+
+  it("stashes the pre-deload load so meso exit can restore it (novice)", () => {
+    const after = deload("beginner");
+    const ex = after.workouts[0].exercises[0];
+    expect(ex.weight).toBe(85); // 100 × 0.85
+    expect(ex.preDeloadWeight).toBe(100);
+  });
+
+  it("restores the novice load on the next week rollover", () => {
+    const rolled = advanceWeek(deload("beginner"), "beginner", "unknown");
+    const ex = rolled.workouts[0].exercises[0];
+    expect(ex.weight).toBe(100);
+    expect(ex.preDeloadWeight).toBeUndefined();
+  });
+
+  it("restores the post-novice rep target on the next week rollover", () => {
+    const after = deload("intermediate");
+    expect(after.workouts[0].exercises[0].reps).toBe(6); // 8 − 2
+    expect(after.workouts[0].exercises[0].preDeloadReps).toBe(8);
+
+    const rolled = advanceWeek(after, "intermediate", "unknown");
+    const ex = rolled.workouts[0].exercises[0];
+    expect(ex.reps).toBe(8);
+    expect(ex.weight).toBe(100); // the post-novice recipe never cut it
+    expect(ex.preDeloadReps).toBeUndefined();
+  });
+
+  it("keeps anything the user progressed DURING the deload week", () => {
+    // max()-wins restore: a user who added load mid-deload keeps the higher
+    // number rather than being walked back to the stash.
+    const after = deload("beginner");
+    after.workouts[0].exercises[0].weight = 105;
+    const rolled = advanceWeek(after, "beginner", "unknown");
+    expect(rolled.workouts[0].exercises[0].weight).toBe(105);
   });
 });

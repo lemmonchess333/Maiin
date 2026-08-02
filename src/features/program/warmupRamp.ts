@@ -146,14 +146,42 @@ export function buildInitialSetLogs(
  * lines up with `day.exercises` — the server maps them positionally.
  */
 export function toCompletionSetLogs<
-  T extends { weight: number; reps: number; completed: boolean; type: string },
+  T extends {
+    weight: number;
+    reps: number;
+    completed: boolean;
+    type: string;
+    rpe?: number;
+  },
 >(
   setLogs: T[][]
-): Array<Array<{ weight: number; reps: number; completed: boolean }>> {
+): Array<
+  Array<{
+    weight: number;
+    reps: number;
+    completed: boolean;
+    type: string;
+    rpe?: number;
+  }>
+> {
   return setLogs.map((exSets) =>
     exSets
       .filter((s) => s.type !== "warmup")
-      .map((s) => ({ weight: s.weight, reps: s.reps, completed: s.completed }))
+      // D2: `type` and `rpe` now survive the boundary. They used to be
+      // dropped precisely here — the app captured RPE on Helms's exact scale,
+      // wrote it to the draft, and then this projection deleted it one
+      // function before the Firestore write. Nothing about it is
+      // backfillable, so this single line is the whole reason the evidence
+      // clock can start. The warm-up filter above is unchanged and must stay:
+      // a completed warm-up reaching the saved workout would inflate tonnage,
+      // set count and calories, which feed the performance baselines.
+      .map((s) => ({
+        weight: s.weight,
+        reps: s.reps,
+        completed: s.completed,
+        type: s.type,
+        ...(typeof s.rpe === "number" ? { rpe: s.rpe } : {}),
+      }))
   );
 }
 

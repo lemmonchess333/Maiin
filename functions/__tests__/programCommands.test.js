@@ -12,6 +12,7 @@ const {
   ProgramCommandError,
   PROGRAM_COMMAND_RECEIPT_RETENTION_MS,
   CLIENT_COMMAND_KINDS,
+  RESTORE_WINDOW_MS,
 } = require("../lib/programCommands");
 
 // A valid 16..128 char opaque id.
@@ -502,27 +503,33 @@ describe("preconditionless commands", () => {
     });
   });
 
-  it("transitionRunDay permits only to:skipped", () => {
-    expect(
-      assertClientProgramCommand({
+  // Widened from skipped-only when `restoreRunDay` migrated to the boundary
+  // (SESSION-RESTORE-01). These are the two USER-initiated transitions; the
+  // completed_* states stay engine-only, which is what this still pins.
+  it("transitionRunDay permits skipped and planned, nothing else", () => {
+    for (const to of ["skipped", "planned"]) {
+      expect(
+        assertClientProgramCommand({
+          kind: "transitionRunDay",
+          commandId: CMD_ID,
+          runDayId: "run-1",
+          to,
+        }).to
+      ).toBe(to);
+    }
+    for (const to of [
+      "completed_exact",
+      "completed_modified",
+      "completed_late",
+      "race_no_show",
+    ]) {
+      expectRejected({
         kind: "transitionRunDay",
         commandId: CMD_ID,
         runDayId: "run-1",
-        to: "skipped",
-      }).to
-    ).toBe("skipped");
-    expectRejected({
-      kind: "transitionRunDay",
-      commandId: CMD_ID,
-      runDayId: "run-1",
-      to: "planned",
-    });
-    expectRejected({
-      kind: "transitionRunDay",
-      commandId: CMD_ID,
-      runDayId: "run-1",
-      to: "completed_exact",
-    });
+        to,
+      });
+    }
   });
 
   it("overrideRunDay validates runDayId + templateId", () => {
@@ -562,6 +569,20 @@ describe("every declared client kind round-trips", () => {
         "overrideRunDay",
         "applyDeloadWeek",
         "revertDeloadWeek",
+        // P6: the soft-delete undo. Added deliberately — this list is frozen
+        // precisely so a new kind cannot arrive unnoticed, and it caught this
+        // one on the first run.
+        "restoreExercise",
+        "clearNextWorkout",
+        // P6: the lift-side restore, paired with skipWorkoutDay so set and
+        // reset share one write path, and the fell-behind dismissal.
+        "restoreWorkoutDay",
+        "dismissFellBehindPrompt",
+        "endTrainingBlockKeepingFocus",
+        "skipRecoveryEarly",
+        "moveRunDay",
+        "startTrainingBlock",
+        "releaseTrainingBlock",
       ])
     );
   });
@@ -696,13 +717,23 @@ function dayPre(overrides) {
   };
 }
 
-function apply(command, state) {
+// `profile` gained a parameter with skipRecoveryEarly, the first reducer whose
+// OUTCOME depends on the user document (it resolves the recovery exit from the
+// transaction-current raceGoal). Defaults to {} so every existing call is
+// unchanged.
+function apply(command, state, profile) {
   return applyProgramCommand({
     state: state || baseState(),
-    profile: {},
+    profile: profile || {},
     command,
     now: NOW,
   });
+}
+
+// Apply the represcribe transform directly, for the block round-trip test.
+function represcribed(state, goal) {
+  const { represcribeWorkouts } = require("../lib/represcribe");
+  return represcribeWorkouts(state.workouts, goal, "advanced");
 }
 
 function expectHttps(fn, httpsCode) {
@@ -905,6 +936,463 @@ describe("preconditionless field commands", () => {
   });
 });
 
+describe("training block start/release (Blk2)", () => {
+  const START = {
+    kind: "startTrainingBlock",
+    commandId: CMD,
+    focus: "strength",
+    pace: "full",
+    durationWeeks: 8,
+    startDate: "2026-03-02",
+  };
+  const RELEASE = { kind: "releaseTrainingBlock", commandId: CMD };
+
+  it("starts a block, represcribes the week, and moves primaryGoal", () => {
+    const seeded = baseState();
+    seeded.primaryGoal = "hypertrophy";
+    const { state } = apply(START, seeded, { experience: "advanced" });
+
+    expect(state.primaryGoal).toBe("strength");
+    expect(state.trainingBlock.focus).toBe("strength");
+    expect(state.trainingBlock.owned).toBe(true);
+    // goalBefore is captured from SERVER state, not sent.
+    expect(state.trainingBlock.goalBefore).toBe("hypertrophy");
+    expect(state.trainingBlock.id).toBe(`2026-03-02-${NOW}`);
+    expect(state.trainingBlock.createdAt).toBe(NOW);
+    expect(state.trainingBlock.weeklyLiftTarget).toBe(
+      baseState().workouts.length
+    );
+    // The prescription actually moved — strength mains are 5 reps before
+    // undulation, so an advanced lifter's first (heavy) day lands at 3.
+    expect(state.workouts[0].exercises[0].reps).toBeLessThan(8);
+    expect(state.workouts[0].exercises[0].baseReps).toBe(
+      state.workouts[0].exercises[0].reps
+    );
+  });
+
+  it("grants amnesty when the focus CHANGES", () => {
+    const seeded = baseState();
+    seeded.primaryGoal = "hypertrophy";
+    const { state } = apply(START, seeded, {});
+    expect(state.trainingBlock.amnestyWeeksLeft).toBeGreaterThan(0);
+  });
+
+  it("grants NO amnesty when the focus is unchanged at full pace", () => {
+    const seeded = baseState();
+    seeded.primaryGoal = "strength";
+    const { state } = apply(START, seeded, { primaryGoal: "strength" });
+    expect(state.trainingBlock.amnestyWeeksLeft).toBe(0);
+  });
+
+  it("grants amnesty for an easing pace even when the focus is unchanged", () => {
+    const seeded = baseState();
+    seeded.primaryGoal = "strength";
+    const { state } = apply({ ...START, pace: "easing" }, seeded, {
+      primaryGoal: "strength",
+    });
+    expect(state.trainingBlock.amnestyWeeksLeft).toBeGreaterThan(0);
+  });
+
+  it("a client cannot grant itself amnesty or a fake goalBefore", () => {
+    // Neither field is on the command surface at all — the validator rejects
+    // them, which is what keeps the reducer's derivation authoritative.
+    expectRejected({ ...START, commandId: CMD_ID, amnestyWeeksLeft: 99 });
+    expectRejected({ ...START, commandId: CMD_ID, goalBefore: "fat_loss" });
+    expectRejected({ ...START, commandId: CMD_ID, owned: false });
+  });
+
+  it("refuses a second block", () => {
+    const seeded = baseState();
+    seeded.trainingBlock = { id: "blk1", owned: true, goalBefore: "general" };
+    expectHttps(() => apply(START, seeded), "failed-precondition");
+  });
+
+  it("refuses a block for a run-only athlete (no lift week to own)", () => {
+    const seeded = baseState();
+    seeded.workouts = [];
+    expectHttps(() => apply(START, seeded), "failed-precondition");
+  });
+
+  it("caps anchorExerciseIds at 3 and bounds the enums", () => {
+    expectRejected({
+      ...START,
+      commandId: CMD_ID,
+      anchorExerciseIds: ["a", "b", "c", "d"],
+    });
+    expectRejected({ ...START, commandId: CMD_ID, durationWeeks: 6 });
+    expectRejected({ ...START, commandId: CMD_ID, pace: "brutal" });
+    expectRejected({ ...START, commandId: CMD_ID, focus: "not_a_goal" });
+    expectRejected({ ...START, commandId: CMD_ID, startDate: "03/02/2026" });
+  });
+
+  it("accepts an EMPTY why (the field is optional in the UI)", () => {
+    expect(
+      assertClientProgramCommand({ ...START, commandId: CMD_ID, why: "" }).why
+    ).toBe("");
+  });
+
+  // ── release ──────────────────────────────────────────────────────────
+
+  it("release restores goalBefore and re-derives the week from it", () => {
+    const seeded = baseState();
+    seeded.primaryGoal = "hypertrophy";
+    const started = apply(START, seeded, { experience: "advanced" }).state;
+
+    const { state } = apply(RELEASE, started, { experience: "advanced" });
+    expect("trainingBlock" in state).toBe(false);
+    expect(state.primaryGoal).toBe("hypertrophy");
+    // Round-trip: the SAME transform with goalBefore IS the inverse, so the
+    // rep targets come back. (Loads deliberately do not rewind — see the
+    // reducer — so only the rep prescription is compared.)
+    const before = represcribed(seeded, "hypertrophy");
+    expect(state.workouts.map((d) => d.exercises.map((e) => e.reps))).toEqual(
+      before.map((d) => d.exercises.map((e) => e.reps))
+    );
+  });
+
+  it("release does NOT represcribe a legacy un-owned block", () => {
+    const seeded = baseState();
+    seeded.primaryGoal = "hypertrophy";
+    seeded.trainingBlock = {
+      id: "legacy",
+      owned: false,
+      goalBefore: "strength",
+    };
+    const { state } = apply(RELEASE, seeded, { experience: "advanced" });
+    expect(state.primaryGoal).toBe("strength");
+    // Untouched: it never owned a prescription, so releasing must not
+    // retroactively rewrite one.
+    expect(state.workouts).toEqual(seeded.workouts);
+  });
+
+  it("release rejects when there is no block", () => {
+    expectHttps(() => apply(RELEASE, baseState()), "failed-precondition");
+  });
+
+  it("release carries no payload the client could steer", () => {
+    expectRejected({ ...RELEASE, commandId: CMD_ID, goalBefore: "fat_loss" });
+  });
+});
+
+describe("moveRunDay (RUN-RESCHEDULE-01)", () => {
+  const SCHEDULE = [
+    { day: 0, type: "rest" },
+    { day: 1, type: "lift" },
+    { day: 2, type: "run" },
+    { day: 3, type: "both" },
+    { day: 4, type: "rest" },
+  ];
+
+  function weekState(extra = {}) {
+    const s = baseState();
+    s.runDays = [
+      {
+        id: "run-1",
+        dayIndex: 2,
+        date: "2026-03-03",
+        weekKey: "2026-03-01",
+        templateId: "tempo_20",
+        type: "tempo",
+        status: "planned",
+        completed: false,
+        ...extra,
+      },
+      {
+        id: "run-2",
+        dayIndex: 4,
+        date: "2026-03-05",
+        weekKey: "2026-03-01",
+        templateId: "easy_30",
+        type: "easy",
+        status: "planned",
+        completed: false,
+      },
+    ];
+    return s;
+  }
+
+  const move = (targetDayIndex, runDayId = "run-1") => ({
+    kind: "moveRunDay",
+    commandId: CMD,
+    runDayId,
+    targetDayIndex,
+  });
+
+  it("moves the run and DERIVES the date from the week anchor", () => {
+    const { state } = apply(move(1), weekState(), { weekSchedule: SCHEDULE });
+    expect(state.runDays[0].dayIndex).toBe(1);
+    // The date is computed server-side, not sent — Monday of that week.
+    expect(state.runDays[0].date).toBe("2026-03-02");
+    expect(state.runDays[0].movedFromDate).toBe("2026-03-03");
+    expect(state.runDays[0].movedToDate).toBe("2026-03-02");
+    // A hard run onto a lift day clashes truthfully.
+    expect(state.runDays[0].clashesWithLift).toBe(true);
+    // Identity survives — this is a move, not a rebuild.
+    expect(state.runDays[0].id).toBe("run-1");
+    expect(state.runDays[0].templateId).toBe("tempo_20");
+    expect(state.runDays[0].status).toBe("planned");
+  });
+
+  it("snapping back to the origin DELETES the move markers", () => {
+    const moved = weekState({
+      dayIndex: 3,
+      date: "2026-03-04",
+      movedFromDate: "2026-03-03",
+      movedToDate: "2026-03-04",
+    });
+    const { state } = apply(move(2), moved, { weekSchedule: SCHEDULE });
+    expect(state.runDays[0].date).toBe("2026-03-03");
+    // Deleted, not undefined — Firestore rejects undefined, and a stale
+    // marker would read as "this run was moved" forever.
+    expect("movedFromDate" in state.runDays[0]).toBe(false);
+    expect("movedToDate" in state.runDays[0]).toBe(false);
+  });
+
+  it("refuses to double-book a day", () => {
+    // run-2 already sits on day 4.
+    expectHttps(
+      () => apply(move(4), weekState(), { weekSchedule: SCHEDULE }),
+      "failed-precondition"
+    );
+  });
+
+  it("is a no-op when the run is already on that day", () => {
+    const { state } = apply(move(2), weekState(), { weekSchedule: SCHEDULE });
+    expect(state.runDays[0].date).toBe("2026-03-03");
+    expect(state.runDays[0].dayIndex).toBe(2);
+  });
+
+  it("RUN-RACE-GUARD-01: a race cannot be moved", () => {
+    for (const raceShape of [{ type: "race" }, { templateId: "10k_race" }]) {
+      expectHttps(
+        () => apply(move(1), weekState(raceShape), { weekSchedule: SCHEDULE }),
+        "failed-precondition"
+      );
+    }
+  });
+
+  it("refuses a non-planned run", () => {
+    for (const status of ["skipped", "completed_exact", "race_no_show"]) {
+      expectHttps(
+        () => apply(move(1), weekState({ status }), { weekSchedule: SCHEDULE }),
+        "failed-precondition"
+      );
+    }
+  });
+
+  it("refuses a run with no week anchor", () => {
+    expectHttps(
+      () =>
+        apply(move(1), weekState({ weekKey: undefined }), {
+          weekSchedule: SCHEDULE,
+        }),
+      "failed-precondition"
+    );
+  });
+
+  it("rejects an unknown runDayId", () => {
+    expectHttps(
+      () => apply(move(1, "nope"), weekState(), { weekSchedule: SCHEDULE }),
+      "failed-precondition"
+    );
+  });
+
+  it("an out-of-week target day is rejected by the VALIDATOR", () => {
+    expectRejected({
+      kind: "moveRunDay",
+      commandId: CMD_ID,
+      runDayId: "run-1",
+      targetDayIndex: 7,
+    });
+  });
+});
+
+describe("skipRecoveryEarly (P6 — the atomicity fix)", () => {
+  const CMD_SRE = { kind: "skipRecoveryEarly", commandId: CMD };
+
+  function recoveringState(runPlanExtra = {}) {
+    const s = baseState();
+    s.runPlan = {
+      mode: "race_prep",
+      phase: "recovery",
+      recoveryEndDate: "2026-04-01",
+      ...runPlanExtra,
+    };
+    return s;
+  }
+
+  const RACE = { distance: "marathon", targetDate: "2026-03-15" };
+  const NEWER = { distance: "10k", targetDate: "2026-09-01" };
+
+  it("rejects when the user is not in recovery", () => {
+    expectHttps(() => apply(CMD_SRE, baseState()), "failed-precondition");
+    const notRecovering = baseState();
+    notRecovering.runPlan = { mode: "race_prep", phase: "build" };
+    expectHttps(() => apply(CMD_SRE, notRecovering), "failed-precondition");
+  });
+
+  it("race done, no successor: freeform, plan dropped, raceGoal CLEARED", () => {
+    const { state, effects } = apply(
+      CMD_SRE,
+      recoveringState({ raceGoal: RACE }),
+      { raceGoal: RACE }
+    );
+    // runPlan deleted, not undefined — Firestore rejects undefined.
+    expect("runPlan" in state).toBe(false);
+    expect(state.runDays).toEqual([]);
+    // BOTH halves of the materialization, in one transaction. The client used
+    // to issue these as two independent writes.
+    expect(effects.profile).toEqual({ raceGoal: null, runMode: "freeform" });
+  });
+
+  it("newer race set during recovery: stays race_prep, keeps the successor", () => {
+    const { state, effects } = apply(
+      CMD_SRE,
+      recoveringState({ raceGoal: RACE }),
+      { raceGoal: NEWER }
+    );
+    expect(effects.profile.runMode).toBe("race_prep");
+    // The successor must NOT be cleared — that is the whole back-to-back case.
+    expect(effects.profile.raceGoal).toBeUndefined();
+    // Only the recovery markers go; the plan itself survives.
+    expect(state.runPlan.mode).toBe("race_prep");
+    expect("phase" in state.runPlan).toBe(false);
+    expect("recoveryEndDate" in state.runPlan).toBe(false);
+    expect(state.runPlan.raceGoal).toEqual(RACE);
+  });
+
+  it("the exit is decided from SERVER state, not from anything the client sent", () => {
+    // Same command, same programState, two different profiles — two different
+    // outcomes. The command carries no payload at all, so a client that still
+    // believes it has a race cannot talk the server into preserving one.
+    const withNewer = apply(CMD_SRE, recoveringState({ raceGoal: RACE }), {
+      raceGoal: NEWER,
+    });
+    const withNone = apply(CMD_SRE, recoveringState({ raceGoal: RACE }), {});
+    expect(withNewer.effects.profile.runMode).toBe("race_prep");
+    expect(withNone.effects.profile.runMode).toBe("freeform");
+  });
+
+  it("falls back to the profile's race when runPlan carries no mirror", () => {
+    const { effects } = apply(CMD_SRE, recoveringState(), { raceGoal: RACE });
+    expect(effects.profile).toEqual({ raceGoal: null, runMode: "freeform" });
+  });
+});
+
+describe("restoreWorkoutDay + dismissFellBehindPrompt (P6)", () => {
+  function skippedState() {
+    const s = baseState();
+    s.workouts[0].skipped = true;
+    return s;
+  }
+
+  const restoreCmd = {
+    kind: "restoreWorkoutDay",
+    commandId: CMD,
+    dayIndex: 0,
+    expectedWeekNumber: 5,
+    expectedDaySignature: PUSH_SIG,
+  };
+
+  it("clears `skipped` on a skipped day", () => {
+    const { state } = apply(restoreCmd, skippedState());
+    expect(state.workouts[0].skipped).toBe(false);
+    // Nothing else moves — no completion, no stats side effect.
+    expect(state.workouts[0].completed).toBe(false);
+    expect(state.workouts[0].exercises).toHaveLength(2);
+  });
+
+  it("REFUSES to reopen a completed day", () => {
+    // The load-bearing guard: a completed day returning to plannable would
+    // double-count on every consumer that reads `completed`.
+    const s = skippedState();
+    s.workouts[0].completed = true;
+    expectHttps(() => apply(restoreCmd, s), "failed-precondition");
+  });
+
+  it("is an idempotent no-op on a day that is not skipped", () => {
+    const { state } = apply(restoreCmd, baseState());
+    expect(state.workouts[0].skipped).toBe(false);
+  });
+
+  it("enforces the day precondition like every other day command", () => {
+    expectHttps(
+      () =>
+        apply(
+          { ...restoreCmd, expectedDaySignature: "Push|stale" },
+          skippedState()
+        ),
+      "failed-precondition"
+    );
+  });
+
+  it("dismissFellBehindPrompt DELETES the key rather than nulling it", () => {
+    const s = baseState();
+    s.pendingFellBehindPrompt = { weekKey: "2026-03-01", ran: 1, target: 3 };
+    const { state } = apply(
+      { kind: "dismissFellBehindPrompt", commandId: CMD },
+      s
+    );
+    // Firestore rejects undefined, and readers test for absence.
+    expect("pendingFellBehindPrompt" in state).toBe(false);
+  });
+
+  it("dismissFellBehindPrompt on an absent prompt is a no-op", () => {
+    const { state } = apply(
+      { kind: "dismissFellBehindPrompt", commandId: CMD },
+      baseState()
+    );
+    expect(state.pendingFellBehindPrompt).toBeUndefined();
+  });
+
+  it("endTrainingBlockKeepingFocus removes the block and KEEPS primaryGoal", () => {
+    const s = baseState();
+    s.trainingBlock = {
+      id: "blk1",
+      owned: true,
+      focus: "strength",
+      pace: "standard",
+      durationWeeks: 8,
+      startDate: "2026-03-02",
+      goalBefore: "hypertrophy",
+    };
+    s.primaryGoal = "strength";
+    const { state } = apply(
+      { kind: "endTrainingBlockKeepingFocus", commandId: CMD },
+      s
+    );
+    expect("trainingBlock" in state).toBe(false);
+    // Keeping the focus IS the outcome — this must NOT revert to goalBefore,
+    // which is what releaseTrainingBlock does instead.
+    expect(state.primaryGoal).toBe("strength");
+    // The prescription the block left behind is untouched.
+    expect(state.workouts[0].exercises[0].reps).toBe(8);
+  });
+
+  it("endTrainingBlockKeepingFocus rejects when there is no block", () => {
+    expectHttps(
+      () =>
+        apply(
+          { kind: "endTrainingBlockKeepingFocus", commandId: CMD },
+          baseState()
+        ),
+      "failed-precondition"
+    );
+  });
+
+  it("dismissFellBehindPrompt leaves the rest of the plan alone", () => {
+    const s = baseState();
+    s.pendingFellBehindPrompt = { weekKey: "2026-03-01" };
+    const { state } = apply(
+      { kind: "dismissFellBehindPrompt", commandId: CMD },
+      s
+    );
+    expect(state.workouts).toHaveLength(baseState().workouts.length);
+    expect(state.runDays).toHaveLength(2);
+    expect(state.weekNumber).toBe(5);
+  });
+});
+
 describe("run-day commands", () => {
   it("setManualRunCompletion marks a planned run complete via the map", () => {
     const { state } = apply({
@@ -1013,6 +1501,165 @@ describe("run-day commands", () => {
       "failed-precondition"
     );
   });
+
+  // ── SESSION-RESTORE-01 — the restore half of transitionRunDay ──────────
+
+  it("transitionRunDay restores a skipped run to planned", () => {
+    const { state } = apply({
+      kind: "transitionRunDay",
+      commandId: CMD,
+      runDayId: "run-2",
+      to: "planned",
+    });
+    expect(state.runDays[1].status).toBe("planned");
+    // A restore is a pure status reversal — never a completion.
+    expect(state.manualCompletions["run-2"]).toBeUndefined();
+    // Identity survives.
+    expect(state.runDays[1].id).toBe("run-2");
+    expect(state.runDays[1].templateId).toBe("tempo_20");
+  });
+
+  it("transitionRunDay resets the legacy `completed` mirror on restore", () => {
+    // The inconsistency has to be SEEDED to prove anything: a fixture that
+    // already reads `completed: false` passes with the mirror deleted, which
+    // is how the first version of this test was worthless.
+    //
+    // It is reachable, too. The client aligns status↔completed during
+    // read-migration ("status wins"), but `normalizeForReducer` deliberately
+    // does NOT migrate, so a legacy doc reaches the reducer with the pair
+    // still disagreeing. Without the mirror the restore would produce
+    // `status: "planned", completed: true` — a slot that reads planned in
+    // the week rail and completed to anything asking the legacy field.
+    const seeded = baseState();
+    seeded.runDays[1].completed = true;
+    const { state } = apply(
+      {
+        kind: "transitionRunDay",
+        commandId: CMD,
+        runDayId: "run-2",
+        to: "planned",
+      },
+      seeded
+    );
+    expect(state.runDays[1].status).toBe("planned");
+    expect(state.runDays[1].completed).toBe(false);
+  });
+
+  it("transitionRunDay restores a race_no_show run to planned", () => {
+    const seeded = baseState();
+    seeded.runDays[1].status = "race_no_show";
+    const { state } = apply(
+      {
+        kind: "transitionRunDay",
+        commandId: CMD,
+        runDayId: "run-2",
+        to: "planned",
+      },
+      seeded
+    );
+    expect(state.runDays[1].status).toBe("planned");
+  });
+
+  it("transitionRunDay refuses to reopen a completed run", () => {
+    const seeded = baseState();
+    seeded.runDays[0].status = "completed_exact";
+    seeded.runDays[0].completed = true;
+    expectHttps(
+      () =>
+        apply(
+          {
+            kind: "transitionRunDay",
+            commandId: CMD,
+            runDayId: "run-1",
+            to: "planned",
+          },
+          seeded
+        ),
+      "failed-precondition"
+    );
+  });
+
+  // ── RUN-RACE-GUARD-01 — a race's identity is immutable ────────────────
+  //
+  // These pin the guard the SERVER was missing while both client writers
+  // enforced it. Each runs twice: once against `type: "race"` (the
+  // load-bearing signal) and once against a race templateId with no type
+  // (the legacy shape), because those are two independent code paths in
+  // `isRaceRunDay` and a guard that only catches one is not a guard.
+
+  function raceState(shape) {
+    const seeded = baseState();
+    seeded.runDays[0] =
+      shape === "type"
+        ? { ...seeded.runDays[0], type: "race", templateId: "easy_30" }
+        : {
+            ...seeded.runDays[0],
+            templateId: "marathon_race",
+            type: undefined,
+          };
+    return seeded;
+  }
+
+  for (const shape of ["type", "templateId"]) {
+    it(`setManualRunCompletion refuses to tick a race complete (by ${shape})`, () => {
+      expectHttps(
+        () =>
+          apply(
+            {
+              kind: "setManualRunCompletion",
+              commandId: CMD,
+              runDayId: "run-1",
+              completed: true,
+            },
+            raceState(shape)
+          ),
+        "failed-precondition"
+      );
+    });
+
+    it(`overrideRunDay refuses to swap a race's template (by ${shape})`, () => {
+      expectHttps(
+        () =>
+          apply(
+            {
+              kind: "overrideRunDay",
+              commandId: CMD,
+              runDayId: "run-1",
+              templateId: "easy_30",
+            },
+            raceState(shape)
+          ),
+        "failed-precondition"
+      );
+    });
+  }
+
+  it("UNMARKING a race is still allowed — it is the repair path", () => {
+    // A slot ticked before the guard existed must be un-tickable, or the
+    // guard strands exactly the documents it was added to protect.
+    const seeded = raceState("type");
+    seeded.manualCompletions = { "run-1": { completedAt: 1 } };
+    const { state } = apply(
+      {
+        kind: "setManualRunCompletion",
+        commandId: CMD,
+        runDayId: "run-1",
+        completed: false,
+      },
+      seeded
+    );
+    expect(state.manualCompletions["run-1"]).toBeUndefined();
+  });
+
+  it("a non-race run is unaffected by the race guard", () => {
+    const { state } = apply({
+      kind: "setManualRunCompletion",
+      commandId: CMD,
+      runDayId: "run-1",
+      completed: true,
+    });
+    expect(state.manualCompletions["run-1"]).toEqual({ completedAt: NOW });
+  });
 });
 
 describe("completeWorkoutDay (effect — calorie mirror pinned by cross-test)", () => {
@@ -1088,13 +1735,38 @@ describe("completeWorkoutDay (effect — calorie mirror pinned by cross-test)", 
       exerciseName: "Bench",
       category: "horizontal_push",
       caloriesBurned: 0,
+      // D2: the per-set record now carries how the set was performed and the
+      // PRESCRIPTION it was performed against, via the projection shared with
+      // the client (functions/lib/workoutSetRecord.js, pinned by
+      // workoutSetRecord.cross.test.ts).
       sets: [
-        { setNumber: 1, reps: 8, weightKg: 100 },
-        { setNumber: 2, reps: 8, weightKg: 100 },
+        {
+          setNumber: 1,
+          reps: 8,
+          weightKg: 100,
+          type: "working",
+          plannedReps: 8,
+          plannedWeightKg: 100,
+        },
+        {
+          setNumber: 2,
+          reps: 8,
+          weightKg: 100,
+          type: "working",
+          plannedReps: 8,
+          plannedWeightKg: 100,
+        },
       ],
     });
     expect(w.exercises[1].sets).toEqual([
-      { setNumber: 1, reps: 10, weightKg: 60 },
+      {
+        setNumber: 1,
+        reps: 10,
+        weightKg: 60,
+        type: "working",
+        plannedReps: 10,
+        plannedWeightKg: 60,
+      },
     ]);
   });
 
@@ -1134,11 +1806,20 @@ describe("completeWorkoutDay (effect — calorie mirror pinned by cross-test)", 
 
   it("falls back to planned data when a set log is absent", () => {
     const w = run({}, { setLogs: [] }).effects.workout;
-    // no logs → planned: bench 3 sets @ reps 8 / weight 100
+    // no logs → planned: bench 3 sets @ reps 8 / weight 100. D2: the
+    // synthesised rows are typed "working" and carry actual === planned,
+    // since there is no execution to distinguish them from.
+    const planned = {
+      reps: 8,
+      weightKg: 100,
+      type: "working",
+      plannedReps: 8,
+      plannedWeightKg: 100,
+    };
     expect(w.exercises[0].sets).toEqual([
-      { setNumber: 1, reps: 8, weightKg: 100 },
-      { setNumber: 2, reps: 8, weightKg: 100 },
-      { setNumber: 3, reps: 8, weightKg: 100 },
+      { setNumber: 1, ...planned },
+      { setNumber: 2, ...planned },
+      { setNumber: 3, ...planned },
     ]);
   });
 
@@ -1237,7 +1918,10 @@ describe("addExercises / replaceExercise (catalog-derived, mirrors pinned by cro
       name: "Front Squat",
       sets: 3,
       reps: 8,
-      weight: 0, // arbitrary cross-movement kilograms are uncalibrated
+      // Omitting `replacementWeight` keeps the pre-existing behaviour: the
+      // reducer has no profile of its own, so an unsupplied load stays 0
+      // rather than inheriting the old movement's kilograms.
+      weight: 0,
       movementCategory: "knee_dominant",
       instanceId: `cmd-${CMD}`,
     });
@@ -1314,6 +1998,238 @@ describe("addExercises / replaceExercise (catalog-derived, mirrors pinned by cro
     );
   });
 
+  it("clearNextWorkout drops the override, and takes no day precondition", () => {
+    // A clear is not scoped to a day, so unlike setNextWorkout it carries no
+    // dayIndex/signature. It exists so setNextWorkout can migrate WHOLE —
+    // set and reset of one field on two write paths is the mixed-mode hazard
+    // the boundary removes.
+    const withOverride = { ...baseState(), nextWorkoutOverride: 1 };
+    const { state } = apply(
+      { kind: "clearNextWorkout", commandId: CMD },
+      withOverride
+    );
+    // Deleted, not set to undefined — Firestore rejects undefined outright.
+    expect("nextWorkoutOverride" in state).toBe(false);
+  });
+
+  it("clearNextWorkout is a no-op when there is no override", () => {
+    const { state } = apply({ kind: "clearNextWorkout", commandId: CMD });
+    expect("nextWorkoutOverride" in state).toBe(false);
+  });
+
+  it("removeExercise SOFT-deletes — the exercise is stashed verbatim", () => {
+    // The undo has to return the same exercise, not a catalog rebuild of it.
+    // History and calibrated load are exactly what a rebuild cannot recover.
+    const { state } = apply({
+      kind: "removeExercise",
+      commandId: CMD,
+      ...dayPre(),
+      exerciseInstanceId: "inst-a",
+    });
+    expect(state.workouts[0].exercises).toHaveLength(1);
+    expect(state.lastRemovedExercise).toMatchObject({
+      dayIndex: 0,
+      index: 0,
+      exercise: { instanceId: "inst-a" },
+    });
+    expect(typeof state.lastRemovedExercise.removedAt).toBe("number");
+  });
+
+  it("restoreExercise puts it back at its original index, then clears the slot", () => {
+    const removed = apply({
+      kind: "removeExercise",
+      commandId: CMD,
+      ...dayPre(),
+      exerciseInstanceId: "inst-a",
+    }).state;
+    const { state } = apply(
+      {
+        kind: "restoreExercise",
+        commandId: "cmd_restore0123456789a",
+        // POST-removal signature: the day is one exercise shorter now, and the
+        // precondition rightly refuses a signature from before the remove.
+        ...dayPre({
+          expectedDaySignature: workoutDaySignature(removed.workouts[0]),
+        }),
+      },
+      removed
+    );
+    expect(state.workouts[0].exercises.map((e) => e.instanceId)).toEqual([
+      "inst-a",
+      "inst-b",
+    ]);
+    // One slot, consumed. Leaving it would let a second undo duplicate the row.
+    expect(state.lastRemovedExercise).toBeUndefined();
+  });
+
+  it("restoreExercise returns the ORIGINAL exercise, history and all", () => {
+    // The property the whole soft delete exists for. A catalog rebuild would
+    // produce the right name and nothing else.
+    const before = baseState().workouts[0].exercises[0];
+    const removed = apply({
+      kind: "removeExercise",
+      commandId: CMD,
+      ...dayPre(),
+      exerciseInstanceId: "inst-a",
+    }).state;
+    const { state } = apply(
+      {
+        kind: "restoreExercise",
+        commandId: "cmd_restore0123456789b",
+        ...dayPre({
+          expectedDaySignature: workoutDaySignature(removed.workouts[0]),
+        }),
+      },
+      removed
+    );
+    expect(state.workouts[0].exercises[0]).toEqual(before);
+  });
+
+  it("restoreExercise refuses an empty slot, a stale one, and the wrong day", () => {
+    expectHttps(
+      () => apply({ kind: "restoreExercise", commandId: CMD, ...dayPre() }),
+      "failed-precondition"
+    );
+
+    const removed = apply({
+      kind: "removeExercise",
+      commandId: CMD,
+      ...dayPre(),
+      exerciseInstanceId: "inst-a",
+    }).state;
+
+    // Older than the window — an undo of something long forgotten is a
+    // surprise, not an undo.
+    expectHttps(
+      () =>
+        apply(
+          {
+            kind: "restoreExercise",
+            commandId: "cmd_restore0123456789c",
+            ...dayPre({
+              expectedDaySignature: workoutDaySignature(removed.workouts[0]),
+            }),
+          },
+          {
+            ...removed,
+            lastRemovedExercise: {
+              ...removed.lastRemovedExercise,
+              removedAt: NOW - RESTORE_WINDOW_MS - 1,
+            },
+          }
+        ),
+      "failed-precondition"
+    );
+
+    // A different day's removal must not surface as this day's undo.
+    expectHttps(
+      () =>
+        apply(
+          {
+            kind: "restoreExercise",
+            commandId: "cmd_restore0123456789d",
+            ...dayPre({
+              dayIndex: 1,
+              expectedDaySignature: workoutDaySignature(
+                baseState().workouts[1]
+              ),
+            }),
+          },
+          removed
+        ),
+      "failed-precondition"
+    );
+  });
+
+  it("restoreExercise is idempotent when the exercise is already back", () => {
+    // A replay whose receipt was lost, or a manual re-add. Must not duplicate.
+    const removed = apply({
+      kind: "removeExercise",
+      commandId: CMD,
+      ...dayPre(),
+      exerciseInstanceId: "inst-a",
+    }).state;
+    const restored = apply(
+      {
+        kind: "restoreExercise",
+        commandId: "cmd_restore0123456789e",
+        ...dayPre({
+          expectedDaySignature: workoutDaySignature(removed.workouts[0]),
+        }),
+      },
+      removed
+    ).state;
+    // Second attempt against the RESTORED day — signature is the original
+    // again, because the exercise is back.
+    const { state } = apply(
+      {
+        kind: "restoreExercise",
+        commandId: "cmd_restore0123456789f",
+        ...dayPre(),
+      },
+      { ...restored, lastRemovedExercise: removed.lastRemovedExercise }
+    );
+    expect(
+      state.workouts[0].exercises.filter((e) => e.instanceId === "inst-a")
+    ).toHaveLength(1);
+  });
+
+  it("replaceExercise seeds the CALIBRATED load when the client sends one", () => {
+    // The reducer cannot compute this — it has no profile — and hard-coding 0
+    // meant routing a swap through the boundary silently downgraded every
+    // replacement to uncalibrated. A bounded scalar is accepted for exactly
+    // this, and nothing else about the exercise is taken from the client.
+    const { state } = apply({
+      kind: "replaceExercise",
+      commandId: CMD,
+      ...dayPre(),
+      oldInstanceId: "inst-a",
+      replacementExerciseId: "front-squat",
+      replacementWeight: 42.5,
+    });
+    expect(state.workouts[0].exercises[0]).toMatchObject({
+      exerciseId: "front-squat",
+      name: "Front Squat", // still catalog-derived
+      weight: 42.5,
+    });
+  });
+
+  it("replaceExercise bounds the client-sent load", () => {
+    // The scalar is trusted only within bounds. Same treatment as every other
+    // client-supplied weight (logExercise, updateExercise.patch).
+    for (const bad of [-1, 1e9, "60", NaN, Infinity, null]) {
+      expectHttps(
+        () =>
+          apply({
+            kind: "replaceExercise",
+            commandId: CMD,
+            ...dayPre(),
+            oldInstanceId: "inst-a",
+            replacementExerciseId: "front-squat",
+            replacementWeight: bad,
+          }),
+        "invalid-argument"
+      );
+    }
+  });
+
+  it("replaceExercise still refuses a client-supplied exercise object", () => {
+    // The load relaxation must not become a general patch. Name and category
+    // stay server-derived; an unknown key is rejected outright.
+    expectHttps(
+      () =>
+        apply({
+          kind: "replaceExercise",
+          commandId: CMD,
+          ...dayPre(),
+          oldInstanceId: "inst-a",
+          replacementExerciseId: "front-squat",
+          name: "Totally Legit Lift",
+        }),
+      "invalid-argument"
+    );
+  });
+
   it("replaceExercise rejects an unknown replacement catalog id", () => {
     expectHttps(
       () =>
@@ -1365,6 +2281,73 @@ describe("logExercise (reducer wiring — progression math pinned by cross-test)
     expect(row.weight).toBe(101);
     expect(row.lastAttemptedWeight).toBe(100);
     expect(row.performanceHistory).toHaveLength(1);
+  });
+
+  // ── Blk2: the easing-block hold — the reducer's THIRD branch ──────────
+  //
+  // Added with the boundary migration. The client had this branch and the
+  // reducer did not, so migrating logExercise as-was would have progressed a
+  // returning lifter straight through the window designed to hold them —
+  // silently, since both branches write a plausible-looking exercise.
+
+  function easingState(startDate = "2026-03-02") {
+    const s = baseState();
+    s.trainingBlock = { pace: "easing", startDate, durationWeeks: 8 };
+    return s;
+  }
+
+  it("easing block, week 2: HOLDS the load but still records the session", () => {
+    const { state } = apply(logCmd({ today: "2026-03-09" }), easingState());
+    const row = state.workouts[0].exercises.find(
+      (e) => e.instanceId === "inst-a"
+    );
+    // Held: no microload, unlike the autoProgression branch above (which
+    // takes the same input to 101).
+    expect(row.weight).toBe(100);
+    // But recorded — this is what separates the hold from autoProgression:off,
+    // which writes no history at all. The sessions happened.
+    expect(row.performanceHistory).toHaveLength(1);
+    expect(row.performanceHistory[0]).toMatchObject({
+      weight: 100,
+      repsCompleted: 8,
+      repsTarget: 8,
+    });
+    expect(row.lastAttemptedWeight).toBe(100);
+  });
+
+  it("easing block, week 3: the hold has expired and load progresses", () => {
+    // 2026-03-16 is the first day of week 3 — one day past EASING_HOLD_WEEKS.
+    // Pinning the day AFTER the boundary is what makes the previous test
+    // mean "held" rather than "this fixture never progresses anyway".
+    const { state } = apply(logCmd({ today: "2026-03-16" }), easingState());
+    expect(
+      state.workouts[0].exercises.find((e) => e.instanceId === "inst-a").weight
+    ).toBe(101);
+  });
+
+  it("a non-easing block does not hold", () => {
+    const s = easingState();
+    s.trainingBlock.pace = "standard";
+    const { state } = apply(logCmd({ today: "2026-03-09" }), s);
+    expect(
+      state.workouts[0].exercises.find((e) => e.instanceId === "inst-a").weight
+    ).toBe(101);
+  });
+
+  it("no `today` on the command means no hold (a pre-migration client)", () => {
+    const { state } = apply(logCmd(), easingState());
+    expect(
+      state.workouts[0].exercises.find((e) => e.instanceId === "inst-a").weight
+    ).toBe(101);
+  });
+
+  it("actualRpe reaches the progression engine", () => {
+    // The command used to drop RPE entirely, so a maximal-effort set
+    // progressed exactly like an easy one. 10 is past RPE_HOLD_THRESHOLD.
+    const { state } = apply(logCmd({ actualRpe: 10 }));
+    expect(
+      state.workouts[0].exercises.find((e) => e.instanceId === "inst-a").weight
+    ).toBe(100);
   });
 
   it("autoProgression off: records the attempt without changing prescription", () => {
