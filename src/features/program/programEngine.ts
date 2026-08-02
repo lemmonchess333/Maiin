@@ -18,6 +18,12 @@ import {
   exerciseDisplayName,
 } from "./variationBank";
 import {
+  applyRecoverySession,
+  escalatesToWholeBody,
+  musclesAtMrv,
+  recoveryTargets,
+} from "./recoveryTrigger";
+import {
   balanceWeeklyVolume,
   balancePushPull,
   volumeLandmark,
@@ -2236,16 +2242,43 @@ export function advanceWeek(
           priorReductions: state.plateauResponses ?? 0,
         });
 
-  if (prescription.deload) {
+  /* 14b — the evidence-triggered tier, read from the week just TRAINED.
+     The calendar deload (`week % 4 === 0`) is a starting point, not a
+     detector: Schoenfeld p.200 says no study has quantified that cadence.
+     This reads RP Ch3 P154's two-session regression instead, escalates
+     muscle-local → whole-body per Ch3 P209-212, and biases toward firing
+     because a false positive costs ~nothing (Ch3 P213; Schoenfeld p.200's
+     3-week-break study) while a miss costs overtraining.
+
+     Muscles still re-entering from LAST week's recovery session are excluded
+     — the cut restores itself in full, so without that they would re-trigger
+     forever. See `recoveryTrigger.ts`. */
+  const { atMrv, trained } = musclesAtMrv(state.workouts);
+  const recoveryMuscles = recoveryTargets(atMrv, state.recoveringMuscles);
+  const escalateWholeBody =
+    !prescription.deload &&
+    recoveryMuscles.length > 0 &&
+    escalatesToWholeBody(recoveryMuscles, trained);
+
+  if (prescription.deload || escalateWholeBody) {
     // A deload week IS the light week — don't stack an adjustment on top of
     // it. The rule's bookkeeping below still runs, so a stall that spans a
     // deload is remembered rather than silently forgiven.
+    //
+    // The escalated case takes the SAME path deliberately: `prepareForDeload`
+    // is what anchors sets and stashes load/reps so the cut cannot compound
+    // across cycles, which is the D4 hazard this arc already paid for once.
     workouts = applyDeload(prepareForDeload(workouts), experience);
   } else {
     workouts = applyWeeklyVolumeShape(workouts, nextWeek);
     // Only apply fatigue on non-deload weeks to avoid double volume reduction
     workouts = applyFatigue(workouts, fatigue);
     workouts = applyAdjustment(workouts, action, experience);
+    // Muscle-local recovery sessions land LAST, on the shaped week — halve
+    // what the lifter would otherwise have done, not what they did before the
+    // shape ran. Zatsiorsky p.81: fatigue is specific, so the muscles that are
+    // fine keep their full week.
+    workouts = applyRecoverySession(workouts, recoveryMuscles);
   }
 
   // Reset the memory once the stall itself clears; otherwise carry it, and
@@ -2291,6 +2324,16 @@ export function advanceWeek(
         }
       : {}),
     ...(nextWeekKey ? { liftWeekKey: nextWeekKey } : {}),
+    // The refractory list for next week. Written even when empty so a muscle
+    // that finishes re-entering is released rather than held forever, and
+    // omitted entirely when there is nothing to say — Firestore rejects
+    // `undefined`, and an always-present empty array is bytes for no
+    // information. A whole-body escalation records nothing: `applyDeload` is
+    // its own restore cycle and does not need this guard.
+    ...(!escalateWholeBody &&
+    (recoveryMuscles.length > 0 || state.recoveringMuscles?.length)
+      ? { recoveringMuscles: recoveryMuscles }
+      : {}),
     updatedAt: Date.now(),
     nextWorkoutOverride: undefined,
   };
