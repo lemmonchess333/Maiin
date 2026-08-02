@@ -890,7 +890,15 @@ Affects: `src/lib/offlineQueue.ts`, `src/lib/shareComposer.ts`.
 
 - [ ] Two-account device test. Sign in as A, go offline, log a workout. Sign out, sign in as B (same device). Confirm A's queued workout does NOT appear under B's account, and that `localStorage['tropos_offline_queue']` still contains the entry tagged `uid: <A>`. Sign back in as A, return online — confirm the queue flushes under A's auth.
 - [ ] Same flow for the share composer queue (`tropos.share.queue`) — queue an offline share as A, switch to B, confirm no posts appear in B's feed; return to A, confirm A's post finally lands.
-- [ ] Confirm legacy pre-deploy items are dropped on first read (the migration is a one-time filter in `getQueue`). Users who upgraded with pending queued writes will lose those — intended, but worth a release-note line.
+- [x] Legacy pre-deploy items dropped on first read — covered by
+      `offlineQueue.test.ts` ("drops legacy items missing a uid field"), which
+      seeds one untagged and one tagged entry and asserts the untagged one is
+      filtered out of both the global and per-uid counts. This was never a
+      device check; the migration is a pure filter in `getQueue`.
+- [ ] Still owed: the **release-note line**. Users who upgrade with pending
+      queued writes lose them. That is intended and tested — but it is a
+      user-facing consequence nobody has been told about, which is a comms
+      task, not a verification one.
 
 ### Apple subscription uniqueness binding (PR #822)
 
@@ -915,7 +923,18 @@ Affects: `functions/index.js` (`onWorkoutCreated` / `onRunCreated` now call `app
 - [ ] **First real shared day counts.** With two test accounts that mutually follow + have a bond, log a workout (or run) as A, then as B on the same local day. Confirm the `partnerBonds/<id>` doc flips `streak: 0 → 1` and `lastSharedDay` to today, and `onWorkoutCreated`/`onRunCreated` logs show no `applyPartnerActivity: error`.
 - [ ] **Same-day re-log is a no-op write.** Log a SECOND workout as A on the same day; confirm the bond doc's `updateTime` does NOT change (the engine's MAX-idempotency + the changed-guard skip the write).
 - [ ] **Ineligible run doesn't count.** Save an `isInvalid` / `savedAnyway` / sub-threshold run; confirm the bond's `lastActive` does NOT update (gated on the same eligibility predicate as challenges).
-- [ ] **Freeze ledger uses Monday weeks.** Over a gap that consumes a freeze, confirm `freezeWeek.<uid>` is the Monday-anchored week key (e.g. a Friday log stores that week's Monday), NOT a Sunday — proves the mirror's `weekKey` (not the Sunday `getWeekKey`) is the one that ran.
+- [x] **Freeze ledger uses Monday weeks** — covered, by composition rather
+      than by one test, which is why it did not look covered. Three links,
+      each pinned: `engineMirror.test.ts` asserts Monday-anchoring against a
+      LITERAL (`weekKey("2026-06-14") === "2026-06-08"`, Sunday → prior
+      Monday), so a Sunday regression is loud; `streakEngine.test.ts` asserts
+      the consumed freeze stores `weekKey`'s output; and
+      `partnerStreakPersist.js` never references a week function at all — it
+      passes `next.freezeWeek` straight through, so there is no site at which
+      the Sunday `getWeekKey` could substitute itself.
+      Worth noting the near-miss: `streakEngine.test.ts` computes its expected
+      value by calling `weekKey`, so on its own it pins nothing about Monday.
+      The literal pin in the mirror test is what makes the chain real.
 
 ### Social context arc — coach prompts + space engagement (2026-07-26, PRs #1776-#1793)
 
@@ -947,6 +966,43 @@ Affects: `src/pages/Social.tsx` (renders `SoloFirstFeed` for cold-start users), 
 - [ ] **Sub-tab default interaction.** A new user's feed sub-tab defaults to Explore (`n>0?following:explore`). Confirm the solo stack still leads (it's sub-tab-agnostic) and that switching to Following shows the stack, not the empty "Your feed is empty" prompt.
 - [ ] **Challenge slot before rollover.** In the ~5-min window before the daily `rolloverChallenges` first materialises `global-monthly-*`, confirm the challenge slot simply collapses (no broken/empty card).
 - [ ] **Share cold-start vs preloaded.** With nothing logged, the Share card shows the prompt and NO button. After logging a workout, it offers "Create a share card" and opens the sheet preloaded with that session's volume/exercise count.
+
+### Backlog audit 2026-08-02 — what a skeptical pass found
+
+Ran the remaining rows against the code rather than re-reading them, on the
+theory that produced three corrections earlier the same day (the
+`askGeminiText` prune, the `STORAGE_XSERVICE_APPROVED` dispatch note, and
+`Date.parse` locale sensitivity). Four outcomes worth recording, because two
+of them are "the row was right" and that is the part a re-audit would
+otherwise redo.
+
+**Two rows were already satisfied and are now ticked** — the offline-queue
+legacy drop and the partner-streak Monday freeze ledger, both above. Neither
+was ever a device check. The Monday one is the more interesting: it is held by
+a COMPOSITION of three tests, none of which says "Monday freeze ledger", so it
+reads as uncovered until you follow the chain. A grep for the item's own words
+finds nothing.
+
+**One row survived the scepticism, which is worth stating explicitly.** The
+storage deletion write-freeze (below) asks for verification on a non-production
+project. `storage.rules.test.ts` DOES contain the whole matrix — active
+statuses × four prefixes, tombstone, and the negative case — but those 12 tests
+**self-skip in the agent sandbox**, because cross-service Firestore reads are
+not available to the Storage emulator here. The suite reports "17 passed | 12
+skipped" and exits 0, with a `console.warn` naming the reason. So the row is
+correct as written, the coverage exists for the day the environment supports
+it, and the skip is honest rather than silent. Do not "close" it by pointing at
+the test file.
+
+**A near-miss worth internalising.** `streakEngine.test.ts` asserts
+`freezeWeek.alice === weekKey(...)` — computing the expectation with the same
+function under test, so on its own it pins nothing about Monday. It is saved by
+a separate literal pin in the mirror test. That is the same shape as the
+`moveRunDay` refusal tests (which asserted only "no document write" after the
+writer stopped writing documents) and PR #1775's accept-path fixture: an
+assertion that looks like a check and is actually a tautology. When a test's
+expected value is computed by the code path it is testing, it is pinning
+consistency, not behaviour.
 
 ### Storage deletion write-freeze — cross-service approval + first deploy (packet 11, operator-in-loop)
 
