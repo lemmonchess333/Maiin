@@ -161,10 +161,200 @@ const RULES: Rule[] = [
 
 const FALLBACK: MovementCategory = "core";
 
+/**
+ * Stored movement category, keyed by exercise id.
+ *
+ * Replaces name-string inference as the ANSWER; the keyword rules below stay
+ * as the fallback for custom exercises that are not in the catalogue.
+ *
+ * Why this exists. Inference matched keywords against the display name,
+ * first-match-wins, and got 27 of the 151 catalogue exercises wrong. The
+ * expensive one: "fly"/"flye" sit under horizontal_push, so `Reverse Flyes`
+ * and `Rear Delt Machine Fly` — both PULL movements — classified as PUSH.
+ * `balancePushPull` keys on this category and exists specifically to keep
+ * pull >= push for shoulder health, so it was counting rear-delt work as the
+ * very thing it was protecting against. Others were merely absurd:
+ * `Nordic Hamstring Curl` matched "curl" and became a biceps exercise,
+ * `Cable Glute Kickback` matched "kickback" and became triceps, and 38
+ * exercises fell through every rule into the `core` fallback — including
+ * five chest presses and an Arnold press.
+ *
+ * A name is not an identifier. This table is, and every entry is reviewable
+ * in one place rather than emergent from rule ordering. Pinned exhaustively
+ * by `exerciseMovementCategory.test.ts` so all 151 assignments are explicit,
+ * and mirrored in `functions/lib/exerciseMovementCategory.js`.
+ *
+ * Two deliberate non-corrections, so they are not read as oversights:
+ *   - the four calf raises stay `knee_dominant`. There is no calves category
+ *     in this nine-value taxonomy; adding one is the taxonomy split (13a).
+ *   - Cardio and Full Body conditioning stay `core`. Same reason — there is
+ *     no "not a resistance pattern" value. They are already excluded from the
+ *     volume tally by `weeklyVolumeByMuscle`, so nothing downstream reads it.
+ */
+const STORED_CATEGORY: Record<string, MovementCategory> = {
+  "ab-wheel": "core",
+  "arnold-press": "vertical_push",
+  "assault-bike": "core",
+  "barbell-curl": "arms_biceps",
+  "barbell-floor-press": "horizontal_push",
+  "barbell-row": "horizontal_pull",
+  "barbell-shrug": "horizontal_pull",
+  "barbell-step-ups": "knee_dominant",
+  "barbell-upright-row": "vertical_push",
+  "battle-ropes": "core",
+  "bayesian-cable-curl": "arms_biceps",
+  "bench-dips": "horizontal_push",
+  "bench-press": "horizontal_push",
+  "bicycle-crunch": "core",
+  bike: "core",
+  "bodyweight-lunge": "knee_dominant",
+  "bodyweight-squat": "knee_dominant",
+  "box-jumps": "core",
+  "bulgarian-split": "knee_dominant",
+  burpees: "core",
+  "cable-crossover": "horizontal_push",
+  "cable-crunch": "core",
+  "cable-curl": "arms_biceps",
+  "cable-fly": "horizontal_push",
+  "cable-glute-kickback": "hip_dominant",
+  "cable-lateral-raise": "vertical_push",
+  "cable-woodchopper": "core",
+  "calf-raise": "knee_dominant",
+  "chest-press-machine": "horizontal_push",
+  "chest-supported-db-row": "horizontal_pull",
+  "chin-ups": "vertical_pull",
+  "clean-and-press": "core",
+  "close-grip-bench": "horizontal_push",
+  "concentration-curl": "arms_biceps",
+  "cross-body-hammer-curl": "arms_biceps",
+  crunches: "core",
+  "cuban-press": "vertical_push",
+  "db-bench": "horizontal_push",
+  "db-curl": "arms_biceps",
+  "db-flyes": "horizontal_push",
+  "db-rdl": "hip_dominant",
+  "db-row": "horizontal_pull",
+  "db-shoulder-press": "vertical_push",
+  "dead-bug": "core",
+  deadlift: "hip_dominant",
+  "decline-bench": "horizontal_push",
+  "decline-db-press": "horizontal_push",
+  "decline-sit-up": "core",
+  "diamond-push-ups": "horizontal_push",
+  dips: "horizontal_push",
+  "donkey-calf-raise": "knee_dominant",
+  "dragon-flag": "core",
+  elliptical: "core",
+  "ez-bar-curl": "arms_biceps",
+  "face-pulls": "horizontal_pull",
+  "farmers-carry": "core",
+  "front-raise": "vertical_push",
+  "front-squat": "knee_dominant",
+  "glute-bridge": "hip_dominant",
+  "glute-ham-raise": "hip_dominant",
+  "goblet-squat": "knee_dominant",
+  "hack-squat": "knee_dominant",
+  "hammer-curl": "arms_biceps",
+  "handstand-push-ups": "vertical_push",
+  "hip-abduction-machine": "hip_dominant",
+  "hip-adduction-machine": "hip_dominant",
+  "hip-thrust": "hip_dominant",
+  "incline-bench": "horizontal_push",
+  "incline-db-curl": "arms_biceps",
+  "incline-db-press": "horizontal_push",
+  "incline-treadmill-walk": "core",
+  "inverted-row": "horizontal_pull",
+  "jm-press": "arms_triceps",
+  "jump-rope": "core",
+  "kettlebell-swing": "hip_dominant",
+  "l-sit": "core",
+  "landmine-press": "vertical_push",
+  "landmine-squat": "knee_dominant",
+  "lat-pulldown": "vertical_pull",
+  "lateral-raise": "vertical_push",
+  "leg-extension": "knee_dominant",
+  "leg-press": "knee_dominant",
+  "leg-raise": "core",
+  "lu-raise": "vertical_push",
+  lunges: "knee_dominant",
+  "machine-chest-fly": "horizontal_push",
+  "man-maker": "core",
+  "meadows-row": "horizontal_pull",
+  "mountain-climbers": "core",
+  "muscle-ups": "core",
+  "nordic-hamstring-curl": "hip_dominant",
+  "overhead-cable-tricep-extension": "arms_triceps",
+  "overhead-extension": "arms_triceps",
+  "overhead-press": "vertical_push",
+  "pallof-press": "core",
+  "pec-deck": "horizontal_push",
+  "pendlay-row": "horizontal_pull",
+  "pike-push-up": "vertical_push",
+  "pistol-squat": "knee_dominant",
+  plank: "core",
+  "preacher-curl": "arms_biceps",
+  "pull-ups": "vertical_pull",
+  "push-ups": "horizontal_push",
+  "rack-pull": "hip_dominant",
+  "rear-delt-machine-fly": "horizontal_pull",
+  "reverse-barbell-curl": "arms_biceps",
+  "reverse-flyes": "horizontal_pull",
+  "reverse-grip-cable-pushdown": "arms_triceps",
+  "reverse-pec-deck": "horizontal_pull",
+  "romanian-deadlift": "hip_dominant",
+  "rope-tricep-pushdown": "arms_triceps",
+  "rowing-machine": "core",
+  "russian-twist": "core",
+  "seated-calf-raise": "knee_dominant",
+  "seated-leg-curl": "hip_dominant",
+  "seated-row": "horizontal_pull",
+  "shoulder-press-machine": "vertical_push",
+  shrugs: "horizontal_pull",
+  "side-plank": "core",
+  "single-arm-cable-pushdown": "arms_triceps",
+  "single-arm-lat-pulldown": "vertical_pull",
+  "sissy-squat": "knee_dominant",
+  "ski-erg": "core",
+  "skull-crushers": "arms_triceps",
+  "sled-push-pull": "core",
+  "smith-bench-press": "horizontal_push",
+  "smith-machine-squat": "knee_dominant",
+  "smith-shoulder-press": "vertical_push",
+  "spider-db-curl": "arms_biceps",
+  "spin-bike": "core",
+  squat: "knee_dominant",
+  stairmaster: "core",
+  "standing-calf-raise": "knee_dominant",
+  "straight-arm-pulldown": "vertical_pull",
+  "sumo-deadlift": "hip_dominant",
+  "superman-hold": "core",
+  swimming: "core",
+  "t-bar-row": "horizontal_pull",
+  thrusters: "core",
+  "toe-touches": "core",
+  "trap-bar-deadlift": "hip_dominant",
+  treadmill: "core",
+  "tricep-dips": "horizontal_push",
+  "tricep-kickback": "arms_triceps",
+  "turkish-get-up": "core",
+  "walking-dumbbell-lunges": "knee_dominant",
+  "weighted-chest-dip": "horizontal_push",
+  "weighted-plank": "core",
+  "weighted-push-ups": "horizontal_push",
+  "zercher-squat": "knee_dominant",
+  "zottman-curl": "arms_biceps",
+};
+
 export function inferMovementCategory(
   name: string,
   exerciseId?: string
 ): MovementCategory {
+  // The stored answer wins. Keyword matching is the fallback for custom
+  // exercises the catalogue has never seen.
+  if (exerciseId) {
+    const stored = STORED_CATEGORY[exerciseId];
+    if (stored) return stored;
+  }
   const haystack = `${name} ${exerciseId ?? ""}`.toLowerCase();
   for (const rule of RULES) {
     for (const kw of rule.keywords) {

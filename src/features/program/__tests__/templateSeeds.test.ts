@@ -72,12 +72,16 @@ describe("template-path load seeds (P1)", () => {
     );
   });
 
-  it("the bank's category wins over name inference (cause 2)", () => {
-    // `Leg Curl` infers knee_dominant (the squat pattern, 85 kg); the bank
-    // knows it as hip_dominant with loadFactor 0.25.
-    expect(inferMovementCategory("Leg Curl", "seated-leg-curl")).toBe(
-      "knee_dominant"
-    );
+  it("the bank's category wins over a disagreeing caller (cause 2)", () => {
+    // Originally: `Leg Curl` INFERRED knee_dominant (the squat pattern, 85 kg)
+    // while the bank knew it as hip_dominant with loadFactor 0.25. The stored
+    // category table has since fixed the inference too, so the two agree at
+    // this call site now — but the seeder must not depend on that, because a
+    // caller can still pass a stale or wrong category from persisted state.
+    // Passing the OLD wrong value directly proves the guard is real.
+    expect(
+      startingWeightForExercise("seated-leg-curl", "knee_dominant", CTX, true)
+    ).toBe(25);
     expect(seedFromTemplate("Leg Curl", "seated-leg-curl")).toBe(25);
   });
 
