@@ -11,7 +11,12 @@ import type {
   WeeklyPrescription,
 } from "./programTypes";
 import { generateInstanceId } from "./programTypes";
-import { pickExercise, pickAccessory, exerciseBank } from "./variationBank";
+import {
+  pickExercise,
+  pickAccessory,
+  exerciseBank,
+  exerciseDisplayName,
+} from "./variationBank";
 import {
   balanceWeeklyVolume,
   balancePushPull,
@@ -382,7 +387,7 @@ function makeExercise(
     ? weightAfterExerciseSwap(existing, ex.id).weight
     : (existing?.weight ?? weight);
   return {
-    name: ex.name,
+    name: exerciseDisplayName(ex.id),
     exerciseId: ex.id,
     instanceId:
       existing && !identityChanged ? existing.instanceId : generateInstanceId(), // #1038
@@ -409,7 +414,9 @@ function makeExercise(
 
 function swapExerciseIdentity(
   ex: ProgramExercise,
-  to: { id: string; name: string },
+  // Id only. The display name comes from the catalogue (11b) — a caller that
+  // also happens to hold a name must not be able to write a different one.
+  to: { id: string },
   loadCtx?: StartingLoadContext,
   calibrationSource: ProgramExercise = ex
 ): ProgramExercise {
@@ -418,7 +425,7 @@ function swapExerciseIdentity(
   return {
     ...ex,
     exerciseId: to.id,
-    name: to.name,
+    name: exerciseDisplayName(to.id),
     instanceId: generateInstanceId(),
     movementCategory: calibrated.movementCategory,
     weight: calibrated.weight,
@@ -1650,7 +1657,8 @@ export function generateProgram(
     experience,
     exerciseBank,
     (ex, toId) =>
-      weightAfterExerciseSwap(ex as ProgramExercise, toId, loadCtx).weight
+      weightAfterExerciseSwap(ex as ProgramExercise, toId, loadCtx).weight,
+    exerciseDisplayName
   );
   // Variety: no single lift more than twice a week. Must run BEFORE the
   // volume balancers so they budget against the shape the user actually

@@ -264,7 +264,7 @@ const STORED_CATEGORY = {
   "toe-touches": "core",
   "trap-bar-deadlift": "hip_dominant",
   "treadmill": "core",
-  "tricep-dips": "horizontal_push",
+  "tricep-dips": "arms_triceps",
   "tricep-kickback": "arms_triceps",
   "turkish-get-up": "core",
   "walking-dumbbell-lunges": "knee_dominant",

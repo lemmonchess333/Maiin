@@ -5,7 +5,7 @@ import type { WorkoutDay, ProgramExercise } from "./programTypes";
 import { EXERCISES, getExerciseById } from "@/lib/exercises";
 import { findSafeSubstitute } from "./injurySubstitutions";
 import { allowsComplexity, type Experience } from "./experienceModel";
-import { exerciseBank } from "./variationBank";
+import { exerciseBank, exerciseDisplayName } from "./variationBank";
 import {
   weightAfterExerciseSwap,
   type StartingLoadContext,
@@ -518,7 +518,7 @@ export function applyEquipmentFilterToWorkouts(
         return replaceExercise(
           ex,
           pick.id,
-          pick.name,
+          exerciseDisplayName(pick.id),
           loadCtx,
           `Swapped from ${ex.name} — not available with your equipment.`
         );

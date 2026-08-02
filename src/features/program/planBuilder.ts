@@ -61,7 +61,7 @@ import {
   weightAfterExerciseSwap,
 } from "./startingLoads";
 import { applyComplexityGate, toExperience } from "./experienceModel";
-import { exerciseBank } from "./variationBank";
+import { exerciseBank, exerciseDisplayName } from "./variationBank";
 import {
   applyInjuryFiltersToWorkouts,
   applyEquipmentFilterToWorkouts,
@@ -274,7 +274,8 @@ function buildLiftProgram(input: PlanBuilderInput): {
     toExperience(input.experience),
     exerciseBank,
     (ex, toId) =>
-      weightAfterExerciseSwap(ex as ProgramExercise, toId, loadCtx).weight
+      weightAfterExerciseSwap(ex as ProgramExercise, toId, loadCtx).weight,
+    exerciseDisplayName
   );
 
   // Pgm5 follow-ups: honour the user's CURRENT injuries and equipment on the

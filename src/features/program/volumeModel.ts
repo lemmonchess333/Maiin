@@ -107,7 +107,12 @@ export interface MuscleVolume {
 
 export interface FineMuscleVolume {
   muscle: FineMuscle;
-  /** Weekly hard sets (primary 1.0 + secondary 0.5), rounded to 0.5. */
+  /**
+   * Weekly hard sets (primary 1.0 + secondary `SECONDARY_SET_WEIGHT`),
+   * UNROUNDED. This is substrate — the canonical view rounds once, at the
+   * level it publishes, because rounding each part and adding the results is
+   * a different number from rounding the sum.
+   */
   sets: number;
   /** Where this rolls up in the published ten, or `null` when the ten-group
    *  taxonomy has no home for it (forearms, hip flexors). */
@@ -126,9 +131,9 @@ export interface FineMuscleVolume {
 export const SECONDARY_SET_WEIGHT = 0.5;
 
 /**
- * The one attribution pass, unrounded. Both public views are derived from it,
- * so they cannot disagree about what a week contains — and each applies its own
- * rounding at its own level (see `weeklyVolumeByMuscle`).
+ * The one attribution pass. `weeklyVolumeByMuscle` is a roll-up of this, so
+ * there is a single place a week is read and the two views cannot disagree
+ * about what it contains.
  */
 function fineTally(workouts: WorkoutDay[]): Map<FineMuscle, number> {
   const tally = new Map<FineMuscle, number>();
@@ -193,7 +198,7 @@ export function weeklyVolumeByFineMuscle(
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .map(([muscle, sets]) => ({
       muscle,
-      sets: Math.round(sets * 2) / 2,
+      sets,
       canonical: fineToCanonical(muscle),
     }));
 }
@@ -203,15 +208,14 @@ export function weeklyVolumeByFineMuscle(
  * are excluded (no stimulus); completed/planned days count. Returns only
  * muscles with non-zero volume, in CANONICAL_MUSCLE_ORDER.
  *
- * A roll-up of the same attribution pass since 13a. It sums the UNROUNDED fine
- * tallies and rounds once, at this level — rounding each part first and adding
+ * A roll-up of `weeklyVolumeByFineMuscle` since 13a. It sums that view's
+ * UNROUNDED sets and rounds once, here — rounding each part first and adding
  * the results is a different number, and this one has to stay bit-identical to
  * what the app published before the taxonomy split.
  */
 export function weeklyVolumeByMuscle(workouts: WorkoutDay[]): MuscleVolume[] {
   const tally = new Map<CanonicalMuscle, number>();
-  for (const [fine, sets] of fineTally(workouts)) {
-    const canonical = fineToCanonical(fine);
+  for (const { sets, canonical } of weeklyVolumeByFineMuscle(workouts)) {
     if (!canonical) continue;
     tally.set(canonical, (tally.get(canonical) ?? 0) + sets);
   }
