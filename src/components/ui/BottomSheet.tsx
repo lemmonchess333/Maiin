@@ -76,7 +76,7 @@ export function BottomSheet({
 }: BottomSheetProps) {
   // Device/browser BACK closes the sheet instead of navigating the page away.
   // A non-dismissible sheet still registers (with a no-op) so back is trapped,
-  // not passed through to the router. See lib/backDismiss.tsx.
+  // not passed through to the router. See lib/backDismiss.ts.
   useBackDismiss(open, () => {
     if (dismissible) onOpenChange(false);
   });
