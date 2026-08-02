@@ -763,21 +763,52 @@ Firestore emulator up — 1156 tests, 76 files, none skipped.
 - [ ] Native/transitive deps are the residual risk the test run cannot cover —
       the suite exercises the code, not the deployed container image.
 
-### `functions/` dependency advisories — 18, one critical, all but one transitive
+### `functions/` dependency advisories — the bump was TRIED and declined
 
 `npm audit --omit=dev` in `functions/` reports 18 (1 low, 12 moderate, 4 high,
-1 critical). The **only direct dependency implicated is `firebase-admin`**
-(`^13.10.0`); everything else — `tar`, `websocket-driver`, `uuid`,
-`teeny-request`, `retry-request` — is transitive beneath it.
+1 critical). The obvious move — bump `firebase-admin`, the only DIRECT
+dependency implicated — was attempted on 2026-08-02, measured, and reverted.
+Recorded here so nobody re-runs the investigation to reach the same answer.
 
-Deliberately NOT auto-fixed. `npm audit fix` on the SDK every function imports
-is a change that wants its own PR and its own test run, and most of these
-advisories sit in tooling paths a deployed function never executes. Recorded so
-the number is known rather than rediscovered, not because it is urgent.
+**There is no in-range fix.** `13.10.0` is already the newest 13.x, so `^13`
+cannot be updated into a clean tree. The only path is the 14.x major.
 
-- [ ] Bump `firebase-admin` in its own PR; re-run `npm audit --omit=dev` and
-      the functions suite. Check the count actually drops — a bump that moves
-      the transitive tree without clearing the advisories is not a fix.
+**14.2.0 helps, but not with the one that matters.** Measured, not assumed:
+
+|          | before | after 14.2.0     |
+| -------- | ------ | ---------------- |
+| total    | 18     | 14               |
+| critical | 1      | **1 — survives** |
+
+It clears `firebase-admin` itself plus `@google-cloud/firestore`,
+`@grpc/grpc-js` and `google-gax`. The four survivors are all transitive under
+`firebase-admin@14.2.0`, the newest that exists, so they are upstream's to fix
+and no bump here reaches them.
+
+**The cost is a migration, not a version bump.** v14 removes the ENTIRE
+namespaced API: `admin.firestore`, `admin.auth`, `admin.messaging`,
+`admin.storage`, `admin.credential` and `admin.apps` are all `undefined`.
+`index.js` + `lib/` use `admin.firestore` **115 times**, and 13 test files use
+`admin.apps`. Shipped naively it throws at `index.js:27` — module load, every
+function, backend down. The functions suite caught it on the first run.
+
+**The critical advisory is not reachable.** `websocket-driver` hangs off
+`@firebase/database` (Realtime Database) via `faye-websocket`. Nothing in
+`functions/` uses RTDB — checked, no `admin.database()` / `getDatabase` call
+sites. It is present in the dependency tree and absent from every execution
+path.
+
+**v14 requires `node >= 22`** (13.x wanted `>= 18`), so this only became
+possible at all with the runtime bump above. Worth knowing if the order ever
+matters again.
+
+- [ ] Revisit when upstream clears the transitives, or if the
+      namespaced → modular migration becomes wanted for its own reasons
+      (`getFirestore()`, `Timestamp`, `FieldValue`, `getAuth()`,
+      `getMessaging()`). It is largely mechanical and the 1156-test functions
+      suite is a real safety net — but it is a single-purpose PR, not an
+      advisory fix, and ~130 sites of churn to clear 4 of 18 is a bad trade on
+      its own.
 
 ### Race-day completion predicate (PR #1775)
 
