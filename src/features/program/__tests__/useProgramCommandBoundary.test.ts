@@ -361,3 +361,70 @@ describe("addExercisesToDayCmd", () => {
     expect(sendProgramCommand).not.toHaveBeenCalled();
   });
 });
+
+describe("replaceExerciseInDay — the load the reducer cannot compute", () => {
+  it("sends the CALIBRATED weight, not zero and not the old bar", async () => {
+    // The reducer has no profile and used to hard-code `weight: 0`, so routing
+    // the swap through the boundary without this would have downgraded every
+    // replacement to uncalibrated. The client seeds it from the profile and
+    // sends it as a bounded scalar.
+    const hook = await mounted();
+
+    await act(async () => {
+      await hook.result.current.replaceExerciseInDay(0, "i-b", "back-squat");
+    });
+
+    const sent = sendProgramCommand.mock.calls[0][0] as any;
+    expect(sent.kind).toBe("replaceExercise");
+    expect(sent.oldInstanceId).toBe("i-b");
+    expect(sent.replacementExerciseId).toBe("back-squat");
+    expect(typeof sent.replacementWeight).toBe("number");
+    expect(sent.replacementWeight).toBeGreaterThanOrEqual(0);
+    // Not the old exercise's bar — carrying kilograms across an arbitrary swap
+    // is the unsafe thing the reducer's comment refuses.
+    expect(sent.replacementWeight).not.toBe(60);
+  });
+
+  it("sends only ids and a number — never a built exercise", async () => {
+    // The part of the boundary's stance that does NOT relax: name and category
+    // stay server-derived from the catalog. The validator rejects unknown keys,
+    // so anything extra here would be a latent invalid-argument.
+    const hook = await mounted();
+    await act(async () => {
+      await hook.result.current.replaceExerciseInDay(0, "i-b", "back-squat");
+    });
+    expect(
+      Object.keys(sendProgramCommand.mock.calls[0][0] as any).sort()
+    ).toEqual([
+      "commandId",
+      "dayIndex",
+      "kind",
+      "oldInstanceId",
+      "replacementExerciseId",
+      "replacementWeight",
+    ]);
+  });
+
+  it("REFETCHES on rejection — a stale swap cannot be forced", async () => {
+    sendProgramCommand.mockRejectedValue(
+      callableError("functions/failed-precondition")
+    );
+    const hook = await mounted();
+    const before = writeLog().length;
+
+    await act(async () => {
+      await hook.result.current.replaceExerciseInDay(0, "i-b", "back-squat");
+    });
+
+    expect(writeLog().length).toBe(before);
+    expect(names(hook)).toEqual(["Alpha", "Bravo", "Charlie"]);
+  });
+
+  it("does nothing when the exercise is not in the day", async () => {
+    const hook = await mounted();
+    await act(async () => {
+      await hook.result.current.replaceExerciseInDay(0, "nope", "back-squat");
+    });
+    expect(sendProgramCommand).not.toHaveBeenCalled();
+  });
+});

@@ -1271,7 +1271,10 @@ describe("addExercises / replaceExercise (catalog-derived, mirrors pinned by cro
       name: "Front Squat",
       sets: 3,
       reps: 8,
-      weight: 0, // arbitrary cross-movement kilograms are uncalibrated
+      // Omitting `replacementWeight` keeps the pre-existing behaviour: the
+      // reducer has no profile of its own, so an unsupplied load stays 0
+      // rather than inheriting the old movement's kilograms.
+      weight: 0,
       movementCategory: "knee_dominant",
       instanceId: `cmd-${CMD}`,
     });
@@ -1345,6 +1348,62 @@ describe("addExercises / replaceExercise (catalog-derived, mirrors pinned by cro
           replacementExerciseId: "front-squat",
         }),
       "failed-precondition"
+    );
+  });
+
+  it("replaceExercise seeds the CALIBRATED load when the client sends one", () => {
+    // The reducer cannot compute this — it has no profile — and hard-coding 0
+    // meant routing a swap through the boundary silently downgraded every
+    // replacement to uncalibrated. A bounded scalar is accepted for exactly
+    // this, and nothing else about the exercise is taken from the client.
+    const { state } = apply({
+      kind: "replaceExercise",
+      commandId: CMD,
+      ...dayPre(),
+      oldInstanceId: "inst-a",
+      replacementExerciseId: "front-squat",
+      replacementWeight: 42.5,
+    });
+    expect(state.workouts[0].exercises[0]).toMatchObject({
+      exerciseId: "front-squat",
+      name: "Front Squat", // still catalog-derived
+      weight: 42.5,
+    });
+  });
+
+  it("replaceExercise bounds the client-sent load", () => {
+    // The scalar is trusted only within bounds. Same treatment as every other
+    // client-supplied weight (logExercise, updateExercise.patch).
+    for (const bad of [-1, 1e9, "60", NaN, Infinity, null]) {
+      expectHttps(
+        () =>
+          apply({
+            kind: "replaceExercise",
+            commandId: CMD,
+            ...dayPre(),
+            oldInstanceId: "inst-a",
+            replacementExerciseId: "front-squat",
+            replacementWeight: bad,
+          }),
+        "invalid-argument"
+      );
+    }
+  });
+
+  it("replaceExercise still refuses a client-supplied exercise object", () => {
+    // The load relaxation must not become a general patch. Name and category
+    // stay server-derived; an unknown key is rejected outright.
+    expectHttps(
+      () =>
+        apply({
+          kind: "replaceExercise",
+          commandId: CMD,
+          ...dayPre(),
+          oldInstanceId: "inst-a",
+          replacementExerciseId: "front-squat",
+          name: "Totally Legit Lift",
+        }),
+      "invalid-argument"
     );
   });
 

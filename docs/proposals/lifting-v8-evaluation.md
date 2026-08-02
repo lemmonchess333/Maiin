@@ -272,6 +272,41 @@ struck. This document supersedes the pack for the lifting arc.
 > fresh client id would be swapped for a different React key on the refetch,
 > visibly remounting the row the user just added.
 
+> **STATUS 2026-08-02i — `replaceExercise` migrated; the load calibration is
+> sent, not mirrored. Operator decision.** The reducer hard-coded `weight: 0`
+> because it has no profile, so the choice was: mirror `startingLoads.ts`
+> server-side, or accept the calibrated number as a bounded scalar. Put to the
+> owner, who chose the scalar. Recorded here because a future security review
+> will ask why the client sets a weight.
+>
+> The reasoning that made it defensible rather than merely cheap:
+>
+> - **It is not an exception to the boundary's stance, which is about
+>   OBJECTS.** The validator refuses a client-supplied exercise — name,
+>   category, identity — and still does; those stay catalog-derived
+>   server-side. A bounded non-negative number is the same shape as the weight
+>   already accepted on `logExercise` and `updateExercise.patch`.
+> - **The mirror would have been the 15th, over data edited twice in this arc
+>   alone.** It needs the variation bank's loadFactor table and the
+>   per-category seed table — both touched by P1 and again by 11b. CLAUDE.md
+>   calls mirror drift the project's #1 recurring mistake; adding a high-churn
+>   one to avoid a bounded scalar is the wrong trade.
+> - **The failure mode is bounded and self-correcting.** A silly value yields
+>   a bad starting weight in that user's own programme, which the progression
+>   engine fixes in a session or two — which is what `startingLoads` already
+>   says about deliberately erring light.
+>
+> Pinned on both sides: the reducer uses the sent load (mutating it back to 0
+> fails), the validator bounds it against negatives, overflow, strings, NaN,
+> Infinity and null (removing the bound fails), and a client-supplied `name`
+> is still rejected outright — so the relaxation cannot creep into a general
+> patch.
+>
+> **`Program.tsx` is now fully on the boundary except the remove/undo pair.**
+> That one still needs a server-side soft delete: the undo restores the removed
+> exercise WITH its history and load, which `addExercises` cannot rebuild from
+> the catalog.
+
 > - **11b's headline value was not the data entry.** §5 frames it as "150
 >   exercises × ~6 fields of domain-judgement data entry with no lead-time
 >   pressure". The merge itself found three live drifts first: a name the

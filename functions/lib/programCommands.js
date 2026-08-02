@@ -489,7 +489,7 @@ const KIND_VALIDATORS = {
       command,
       "replaceExercise",
       ["kind", "commandId", "oldInstanceId", "replacementExerciseId", ...PRECONDITION_KEYS],
-      []
+      ["replacementWeight"]
     );
     validatePrecondition(command, out);
     out.oldInstanceId = assertString(command.oldInstanceId, "oldInstanceId", MAX_ID_LEN);
@@ -498,6 +498,17 @@ const KIND_VALIDATORS = {
       "replacementExerciseId",
       MAX_ID_LEN
     );
+    // Cold-start load for the replacement, calibrated CLIENT-side. See the
+    // note on the reducer for why this one value is accepted from the client
+    // when an exercise object never is.
+    if ("replacementWeight" in command) {
+      out.replacementWeight = assertFiniteNumber(
+        command.replacementWeight,
+        "replacementWeight",
+        0,
+        MAX_WEIGHT
+      );
+    }
   },
 
   updateExercise(command, out) {
@@ -1133,21 +1144,48 @@ function replaceExercise(state, command) {
       ? 30
       : 10
     : old.reps;
-  // Mirror the client replaceExercise's identity/unit boundary: carry the
-  // role-level prescription, re-infer the category, mint a new instance, and
-  // reset a reps↔seconds transition. This server copy has no trusted profile
-  // calibration context, so it deliberately leaves the new load at 0.
+  /* Mirror the client replaceExercise's identity/unit boundary: carry the
+     role-level prescription, re-infer the category, mint a new instance, and
+     reset a reps↔seconds transition.
+
+     ── Why the LOAD arrives from the client ─────────────────────────────
+     This reducer used to hard-code `weight: 0`, because it has no profile
+     calibration context. That was safe and it was also a regression waiting
+     to happen: the client seeds the replacement from
+     `weightAfterExerciseSwap(old, newId, loadContextFrom(profile))`, so
+     routing the swap through this boundary would have silently downgraded
+     every replacement to uncalibrated — undoing load-seeding work done
+     elsewhere in this arc.
+
+     Two ways to fix it. Mirror `startingLoads.ts` here (it would be the 15th
+     TS↔JS mirror, and it carries the variation bank's loadFactor table plus
+     the per-category seed table — data actively edited twice in this arc
+     alone, so a high-drift mirror by construction). Or accept the calibrated
+     number as a bounded scalar. This takes the second.
+
+     That is consistent with the boundary's stance rather than an exception to
+     it. What the validator refuses is a client-supplied EXERCISE OBJECT — the
+     name, the category, the identity — because those must be derived from the
+     catalog server-side, and they still are. A bounded non-negative number is
+     the same shape as the weight already accepted on `logExercise` and
+     `updateExercise.patch`. The failure mode if a client sends a silly value
+     is a bad starting weight in that user's own programme, which the
+     progression engine corrects within a session or two — the module that
+     computes it says exactly that about erring light.
+
+     `?? 0` keeps the old behaviour for a caller that omits it, so nothing
+     that does not opt in changes. */
   const replacement = buildProgramExercise({
     name,
     exerciseId: command.replacementExerciseId,
     instanceId: `cmd-${command.commandId}`,
     sets: old.sets,
     reps: replacementReps,
-    // No trusted target-specific calibration exists in this reducer. Carrying
-    // kilograms across an arbitrary catalog replacement is unsafe (bench →
-    // front squat, deadlift → glute bridge), so the new movement starts
-    // explicitly uncalibrated rather than inheriting a lie.
-    weight: 0,
+    // NOT the old exercise's load — carrying kilograms across an arbitrary
+    // catalog replacement is unsafe (bench → front squat, deadlift → glute
+    // bridge). This is the calibrated seed for the TARGET movement, or 0 when
+    // the caller did not supply one.
+    weight: command.replacementWeight ?? 0,
     baseReps: unitChanged ? replacementReps : old.baseReps,
     progressionType: old.progressionType,
     ...(!unitChanged && old.repRangeMax !== undefined

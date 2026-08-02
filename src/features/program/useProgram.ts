@@ -46,7 +46,7 @@ import {
   applyProgression,
 } from "./programEngine";
 import { PERFORMANCE_HISTORY_CAP } from "./programEngine";
-import { loadContextFrom } from "./startingLoads";
+import { loadContextFrom, weightAfterExerciseSwap } from "./startingLoads";
 import { showsRpeByDefault, toExperience } from "./experienceModel";
 import { recoveryStateFrom } from "./adjustmentRule";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
@@ -2381,6 +2381,116 @@ export function useProgram() {
     [programState, runProgramCommand, refetchProgramState]
   );
 
+  /**
+   * Swap one exercise for another, through the boundary.
+   *
+   * The load is calibrated HERE and sent as a bounded scalar. That is the
+   * decision that unblocked this site: the reducer previously hard-coded
+   * `weight: 0` because it has no profile context, so routing the swap through
+   * the boundary would have silently downgraded every replacement to
+   * uncalibrated. The alternative was a 15th TS↔JS mirror carrying the
+   * variation bank's loadFactor table — data edited twice in this arc alone.
+   * The reducer's own note records the reasoning in full.
+   *
+   * Only the load crosses as a number. The replacement's NAME and CATEGORY are
+   * still derived server-side from the catalog, which is the part the
+   * boundary's security stance is actually about.
+   *
+   * A rejection refetches rather than rolling back: "that exercise is no longer
+   * in this workout" means the client's view is stale, and re-reading is the
+   * only honest answer to that.
+   */
+  const replaceExerciseInDay = useCallback(
+    async (
+      dayIndex: number,
+      oldInstanceId: string,
+      replacementExerciseId: string
+    ): Promise<boolean> => {
+      if (!programState) return false;
+      const day = programState.workouts[dayIndex];
+      const old = day?.exercises.find((ex) => ex.instanceId === oldInstanceId);
+      if (!old) return false;
+
+      const calibrated = weightAfterExerciseSwap(
+        old,
+        replacementExerciseId,
+        loadContextFrom(profile)
+      );
+      const commandId = generateInstanceId();
+      const replacementRepUnit = repUnitForExerciseId(replacementExerciseId);
+      const unitChanged =
+        (old.repUnit === "seconds") !== (replacementRepUnit === "seconds");
+      const replacementReps = unitChanged
+        ? replacementRepUnit === "seconds"
+          ? 30
+          : 10
+        : old.reps;
+
+      const outcome = await runProgramCommand(
+        {
+          kind: "replaceExercise",
+          commandId,
+          dayIndex,
+          oldInstanceId,
+          replacementExerciseId,
+          replacementWeight: calibrated.weight,
+        },
+        (state) => ({
+          ...state,
+          workouts: state.workouts.map((d, i) =>
+            i === dayIndex
+              ? {
+                  ...d,
+                  exercises: d.exercises.map((ex) =>
+                    ex.instanceId === oldInstanceId
+                      ? normalizeExercise({
+                          name:
+                            getExerciseById(replacementExerciseId)?.name ??
+                            replacementExerciseId,
+                          exerciseId: replacementExerciseId,
+                          // The reducer's deterministic id, so the refetch does
+                          // not remount the row.
+                          instanceId: `cmd-${commandId}`,
+                          sets: old.sets,
+                          reps: replacementReps,
+                          weight: calibrated.weight,
+                          movementCategory: calibrated.movementCategory,
+                          baseReps: unitChanged
+                            ? replacementReps
+                            : old.baseReps,
+                          progressionType: old.progressionType,
+                          ...(!unitChanged && old.repRangeMax !== undefined
+                            ? { repRangeMax: old.repRangeMax }
+                            : {}),
+                          ...(replacementRepUnit !== undefined
+                            ? { repUnit: replacementRepUnit }
+                            : {}),
+                          ...(old.baseSets !== undefined
+                            ? { baseSets: old.baseSets }
+                            : {}),
+                          ...(old.restSeconds !== undefined
+                            ? { restSeconds: old.restSeconds }
+                            : {}),
+                          ...(old.isAccessory !== undefined
+                            ? { isAccessory: old.isAccessory }
+                            : {}),
+                        })
+                      : ex
+                  ),
+                }
+              : d
+          ),
+        })
+      );
+      if (outcome === "rejected") {
+        toast.error("Couldn't swap that. Refreshing.");
+        await refetchProgramState();
+      }
+      return outcome !== "rejected";
+    },
+    [programState, profile, runProgramCommand, refetchProgramState]
+  );
+
   /** PROGRAM-DELOAD-01 — apply/revert the deload week via the server
    *  `applyProgramCommand` transaction (the packet-18 command boundary;
    *  these are its first client consumers). The server owns the
@@ -2665,6 +2775,7 @@ export function useProgram() {
     reorderDayExercises,
     removeExerciseFromDay,
     addExercisesToDayCmd,
+    replaceExerciseInDay,
     markManualComplete,
     unmarkManualComplete,
     skipRunDay,

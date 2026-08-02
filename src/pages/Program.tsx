@@ -61,13 +61,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { getExerciseById } from "@/lib/exercises";
 import type { Exercise } from "@/lib/exercises";
-import { normalizeExercise } from "@/features/program/programTypes";
-import { repUnitForExerciseId } from "@/features/program/repUnits";
 import { formatRepTarget } from "@/features/program/templateConversion";
-import {
-  loadContextFrom,
-  weightAfterExerciseSwap,
-} from "@/features/program/startingLoads";
 import {
   splitLabel,
   primaryGoalLabel,
@@ -144,6 +138,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     reorderDayExercises,
     removeExerciseFromDay,
     addExercisesToDayCmd,
+    replaceExerciseInDay,
     viewWeek,
     viewingHistoryIndex,
     viewedWorkouts,
@@ -477,69 +472,16 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   ) => {
     if (!programState) return;
     const old = programState.workouts[dayIdx].exercises[exIndex];
-    // Don't preserve old.movementCategory — let normalizeExercise infer
-    // the new category from the new exercise's name. Replacing Lat
-    // Pulldown (vertical_pull) with Dumbbell Curl shouldn't keep the
-    // pull tag; downstream consumers (analytics, MuscleHeatMap, social
-    // posts) need the actual movement pattern. Sets and role-level
-    // prescription carry; the working load is recalibrated for the target
-    // movement, and crossing into/out of a timed hold resets its target unit.
-    // The slot's prescription fields carry too (backlog #7). They're the
-    // slot's identity, not the old movement's: `isAccessory` now picks the
-    // progression scheme AND the load step, so dropping it re-prices a
-    // swapped-in isolation as a compound (2.5 kg on a curl); repRangeMax +
-    // baseReps are the range it climbs; baseSets is the volume-ramp anchor
-    // (without it, a week-3 swap re-anchors at base+1 permanently);
-    // restSeconds is the authored rest. `preDeloadWeight` deliberately does
-    // NOT carry — the replacement keeps its deloaded load rather than
-    // jumping back up to a weight it never lifted.
-    const replacementRepUnit = repUnitForExerciseId(newEx.id);
-    const unitChanged =
-      (old.repUnit === "seconds") !== (replacementRepUnit === "seconds");
-    const replacementReps = unitChanged
-      ? replacementRepUnit === "seconds"
-        ? 30
-        : 10
-      : old.reps;
-    const calibrated = weightAfterExerciseSwap(
-      old,
-      newEx.id,
-      loadContextFrom(profile)
-    );
-    const replacement = normalizeExercise({
-      name: newEx.name,
-      exerciseId: newEx.id,
-      sets: old.sets,
-      reps: replacementReps,
-      weight: calibrated.weight,
-      movementCategory: calibrated.movementCategory,
-      baseReps: unitChanged ? replacementReps : old.baseReps,
-      progressionType: old.progressionType,
-      ...(!unitChanged && old.repRangeMax !== undefined
-        ? { repRangeMax: old.repRangeMax }
-        : {}),
-      ...(replacementRepUnit !== undefined
-        ? { repUnit: replacementRepUnit }
-        : {}),
-      ...(old.baseSets !== undefined ? { baseSets: old.baseSets } : {}),
-      ...(old.restSeconds !== undefined
-        ? { restSeconds: old.restSeconds }
-        : {}),
-      ...(old.isAccessory !== undefined
-        ? { isAccessory: old.isAccessory }
-        : {}),
-    });
-    const updated = programState.workouts.map((d, i) =>
-      i === dayIdx
-        ? {
-            ...d,
-            exercises: d.exercises.map((ex, ei) =>
-              ei === exIndex ? replacement : ex
-            ),
-          }
-        : d
-    );
-    await saveProgram({ ...programState, workouts: updated });
+    if (!old?.instanceId) return;
+    // P6: through the boundary. The identity work the long comment here used
+    // to describe — carry the role-level prescription, re-infer the category,
+    // mint a new instance, reset a reps<->seconds transition — now lives in
+    // `replaceExerciseInDay` and in the server reducer that is its authority.
+    //
+    // The one thing that could NOT simply move is the load: the reducer has no
+    // profile, so it used to hard-code 0. The calibrated weight is computed
+    // client-side and sent as a bounded scalar; see the reducer's note.
+    await replaceExerciseInDay(dayIdx, old.instanceId, newEx.id);
     setReplaceTarget(null);
   };
 
