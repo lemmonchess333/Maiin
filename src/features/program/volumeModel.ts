@@ -113,7 +113,7 @@ const CATEGORY_TO_CANONICAL: Record<string, CanonicalMuscle> = {
   core: "Core",
 };
 
-function toCanonical(name: string | undefined): CanonicalMuscle | null {
+export function toCanonical(name: string | undefined): CanonicalMuscle | null {
   if (!name) return null;
   return MUSCLE_TO_CANONICAL[name.toLowerCase().trim()] ?? null;
 }
