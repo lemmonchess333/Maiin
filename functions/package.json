@@ -2,7 +2,7 @@
   "name": "maiin-functions",
   "main": "index.js",
   "engines": {
-    "node": "20"
+    "node": "22"
   },
   "scripts": {
     "test": "vitest run",
