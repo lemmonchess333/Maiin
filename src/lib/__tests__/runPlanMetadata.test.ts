@@ -925,7 +925,7 @@ describe("spec v7 #9 — ?template= fallback never completes the WRONG scheduled
 // ────────────────────────────────────────────────────────────────────
 //
 // Pins the km→m conversion in templateToPrefill against the user
-// path. Pre-PR-0a long_10k.config.targetDistance (10) flowed
+// path. Pre-PR-0a long_10k.config.targetDistanceKm (10) flowed
 // through unchanged, hitting RunSetupModal's value/1000 display
 // as 0.01km. After the fix, every distance template emits metres
 // via the prefill so the RunConfig contract is honoured end-to-end.
