@@ -33,6 +33,27 @@
  * goes wrong. Do it as one domain per PR, and spot-check the deployed
  * source afterwards (CI green does not prove an upload happened — see the
  * dedup/bundle-hash gotcha in CLAUDE.md).
+ *
+ * STATUS 2026-08-02 — hold RE-EXAMINED and it STANDS. The prompt this time
+ * was a knowledge-graph clustering run that flagged index.js as the
+ * weakest-cohesion community in the whole codebase (89 nodes, cohesion
+ * 0.023) and asked whether it should be split. It should not, and the score
+ * is not evidence that it should: an entrypoint that MUST export every
+ * deployed function is low-cohesion by construction, and a clustering
+ * algorithm cannot tell that apart from tangled logic. The audit that
+ * followed found no export earning extraction on testability grounds — the
+ * inline race-reconciliation decisions are already test-reachable, and
+ * ADR-0008 classifies them as deliberate non-mirrors.
+ *
+ * Recording it here because this is at least the FOURTH time the question
+ * has been asked, and each round re-derives the same answer from scratch.
+ * If you are reading this while considering a split: the answer is no
+ * unless something other than size or a graph metric has changed.
+ *
+ * A fifth-time note: `timeoutSeconds` was added to the schedule rows below
+ * on the same date. Until then SCHEDULED_CAP's timeout half was unpinned,
+ * so "the mandatory cap is pinned by this very file" — the sentence this
+ * hold rests on — was only three-quarters true.
  */
 import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";
@@ -135,18 +156,21 @@ const EXPECTED = {
     maxInstances: 1,
     secrets: [],
     schedule: "15 23 * * 0",
+    timeoutSeconds: 540,
   },
   dailyPerformanceRefresh: {
     kind: "schedule",
     maxInstances: 1,
     secrets: [],
     schedule: "10 2 * * *",
+    timeoutSeconds: 540,
   },
   rolloverChallenges: {
     kind: "schedule",
     maxInstances: 1,
     secrets: [],
     schedule: "5 0 * * *",
+    timeoutSeconds: 540,
   },
   // SOC-P2a — weekly Coach prompts seeded into every Community Space.
   weeklyCoachPrompts: {
@@ -154,12 +178,14 @@ const EXPECTED = {
     maxInstances: 1,
     secrets: [],
     schedule: "0 6 * * 1",
+    timeoutSeconds: 540,
   },
   hourlyStreakNudge: {
     kind: "schedule",
     maxInstances: 1,
     secrets: [],
     schedule: "0 * * * *",
+    timeoutSeconds: 540,
   },
   sendTestPush: {
     kind: "callable",
@@ -171,6 +197,7 @@ const EXPECTED = {
     maxInstances: 1,
     secrets: [],
     schedule: "0 4 * * *",
+    timeoutSeconds: 540,
   },
   onChallengeParticipantCreated: {
     kind: "event",
@@ -292,6 +319,7 @@ const EXPECTED = {
     maxInstances: 1,
     secrets: [],
     schedule: "0 5 * * 1",
+    timeoutSeconds: 540,
   },
   createGoalSpace: {
     kind: "callable",
@@ -354,7 +382,17 @@ function endpointSummary(fn) {
     kind,
     maxInstances: ep.maxInstances ?? null,
     secrets: (ep.secretEnvironmentVariables || []).map((s) => s.key).sort(),
-    ...(ep.scheduleTrigger ? { schedule: ep.scheduleTrigger.schedule } : {}),
+    /* `timeoutSeconds` is pinned for schedules only: SCHEDULED_CAP is the one
+       tier that sets it ({ maxInstances: 1, timeoutSeconds: 540 }), and until
+       2026-08-02 the snapshot pinned only the maxInstances half — so dropping
+       the timeout from a cron passed this table unchanged, and a long rollup
+       would start being killed at the 60s default with nothing failing here. */
+    ...(ep.scheduleTrigger
+      ? {
+          schedule: ep.scheduleTrigger.schedule,
+          timeoutSeconds: ep.timeoutSeconds ?? null,
+        }
+      : {}),
     ...(ep.eventTrigger
       ? {
           eventType: ep.eventTrigger.eventType,
