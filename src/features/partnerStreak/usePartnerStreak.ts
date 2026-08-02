@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { isFollowing } from "@/lib/socialApi";
 import { logger } from "@/lib/logger";
 import {
@@ -37,8 +37,8 @@ export interface UsePartnerStreak {
  * absent or is the current user — the card renders nothing in both.
  */
 export function usePartnerStreak(partnerUid?: string): UsePartnerStreak {
-  const { user } = useAuth();
-  const me = user?.uid;
+  const uid = useUid();
+  const me = uid;
   const isSelf = !!me && me === partnerUid;
 
   const [loading, setLoading] = useState(true);

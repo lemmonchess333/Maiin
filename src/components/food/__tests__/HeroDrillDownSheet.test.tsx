@@ -28,6 +28,7 @@ vi.mock("@/lib/subscription", () => ({
 // Micro reference targets read profile.sex via useAuth — stub it.
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ profile: { sex: "male" } }),
+  useUid: () => null,
 }));
 
 // Stub ProModal so we can assert it mounts with the right feature key without

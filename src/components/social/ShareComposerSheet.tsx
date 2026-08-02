@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { haptic } from "@/lib/haptic";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { postActivity } from "@/lib/socialApi";
 import { containsProfanity } from "@/lib/profanityFilter";
 import {
@@ -46,7 +46,7 @@ export default function ShareComposerSheet() {
   const [caption, setCaption] = useState("");
   const [remember, setRemember] = useState(false);
   const { isOnline } = useOnlineStatus();
-  const { user } = useAuth();
+  const uid = useUid();
 
   // Subscribe to singleton state changes.
   useEffect(() => {
@@ -63,8 +63,7 @@ export default function ShareComposerSheet() {
   // Scoped to the current user — items queued under a different
   // uid stay in the queue for that user's next sign-in.
   useEffect(() => {
-    if (!isOnline || !user) return;
-    const uid = user.uid;
+    if (!isOnline || !uid) return;
     let cancelled = false;
     void (async () => {
       try {
@@ -79,7 +78,7 @@ export default function ShareComposerSheet() {
     return () => {
       cancelled = true;
     };
-  }, [isOnline, user]);
+  }, [isOnline, uid]);
 
   if (!state.preview || !state.type) {
     return null;

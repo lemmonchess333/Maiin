@@ -8,16 +8,16 @@ import {
 } from "firebase/firestore";
 import { addDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import type { PrivacyZone } from "@/lib/privacyZones";
 
 export function usePrivacyZones() {
-  const { user } = useAuth();
+  const uid = useUid();
   const [zones, setZones] = useState<PrivacyZone[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) {
+    if (!uid) {
       const reset = () => {
         setZones([]);
         setLoading(false);
@@ -26,7 +26,7 @@ export function usePrivacyZones() {
       return;
     }
 
-    const ref = collection(db, "users", user.uid, "privacyZones");
+    const ref = collection(db, "users", uid, "privacyZones");
     const unsub = onSnapshot(
       ref,
       (snap) => {
@@ -44,25 +44,25 @@ export function usePrivacyZones() {
     );
 
     return unsub;
-  }, [user]);
+  }, [uid]);
 
   const addZone = useCallback(
     async (zone: Omit<PrivacyZone, "id">) => {
-      if (!user) return;
-      await addDocGuarded(collection(db, "users", user.uid, "privacyZones"), {
+      if (!uid) return;
+      await addDocGuarded(collection(db, "users", uid, "privacyZones"), {
         ...zone,
         createdAt: serverTimestamp(),
       });
     },
-    [user]
+    [uid]
   );
 
   const removeZone = useCallback(
     async (zoneId: string) => {
-      if (!user) return;
-      await deleteDoc(doc(db, "users", user.uid, "privacyZones", zoneId));
+      if (!uid) return;
+      await deleteDoc(doc(db, "users", uid, "privacyZones", zoneId));
     },
-    [user]
+    [uid]
   );
 
   return { zones, loading, addZone, removeZone };

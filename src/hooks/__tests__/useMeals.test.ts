@@ -5,6 +5,7 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 const mockUser = { uid: "me" };
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: mockUser }),
+  useUid: () => ({ user: mockUser }).user?.uid ?? null,
 }));
 
 /**

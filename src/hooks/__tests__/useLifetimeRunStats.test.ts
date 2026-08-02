@@ -26,6 +26,7 @@ vi.mock("@/lib/logger", () => ({
 let mockUser: { uid: string } | null = { uid: "u1" };
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: mockUser, profile: {} }),
+  useUid: () => ({ user: mockUser, profile: {} }).user?.uid ?? null,
 }));
 
 import { useLifetimeRunStats } from "../useLifetimeRunStats";

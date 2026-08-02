@@ -9,7 +9,7 @@ import {
 } from "firebase/firestore";
 import { addDocGuarded, updateDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
 
@@ -27,50 +27,59 @@ export interface Shoe {
 }
 
 export function useShoes() {
-  const { user } = useAuth();
+  const uid = useUid();
   const [shoes, setShoes] = useState<Shoe[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!user) {
-      const reset = () => { setShoes([]); setLoading(false); };
+    if (!uid) {
+      const reset = () => {
+        setShoes([]);
+        setLoading(false);
+      };
       reset();
       return;
     }
 
-    const ref = collection(db, "users", user.uid, "shoes");
-    const unsub = onSnapshot(ref, (snap) => {
-      setError(null);
-      const list: Shoe[] = snap.docs.map((d) => {
-        const data = d.data();
-        return {
-          id: d.id,
-          name: data.name ?? "",
-          brand: data.brand ?? "",
-          totalKm: data.totalKm ?? 0,
-          maxKm: data.maxKm ?? 600,
-          isDefault: data.isDefault ?? false,
-          retired: data.retired ?? false,
-          addedAt: data.addedAt?.toDate?.() ?? new Date(),
-          alert85Shown: data.alert85Shown ?? false,
-          alert100Shown: data.alert100Shown ?? false,
-        };
-      });
-      setShoes(list.sort((a, b) => (a.retired ? 1 : 0) - (b.retired ? 1 : 0)));
-      setLoading(false);
-    }, (err) => {
-      logger.error("useShoes snapshot error:", err);
-      setError(err);
-      setLoading(false);
-    });
+    const ref = collection(db, "users", uid, "shoes");
+    const unsub = onSnapshot(
+      ref,
+      (snap) => {
+        setError(null);
+        const list: Shoe[] = snap.docs.map((d) => {
+          const data = d.data();
+          return {
+            id: d.id,
+            name: data.name ?? "",
+            brand: data.brand ?? "",
+            totalKm: data.totalKm ?? 0,
+            maxKm: data.maxKm ?? 600,
+            isDefault: data.isDefault ?? false,
+            retired: data.retired ?? false,
+            addedAt: data.addedAt?.toDate?.() ?? new Date(),
+            alert85Shown: data.alert85Shown ?? false,
+            alert100Shown: data.alert100Shown ?? false,
+          };
+        });
+        setShoes(
+          list.sort((a, b) => (a.retired ? 1 : 0) - (b.retired ? 1 : 0))
+        );
+        setLoading(false);
+      },
+      (err) => {
+        logger.error("useShoes snapshot error:", err);
+        setError(err);
+        setLoading(false);
+      }
+    );
 
     return unsub;
-  }, [user]);
+  }, [uid]);
 
   const addShoe = async (name: string, brand: string, maxKm: number = 600) => {
-    if (!user) return;
-    const ref = collection(db, "users", user.uid, "shoes");
+    if (!uid) return;
+    const ref = collection(db, "users", uid, "shoes");
     await addDocGuarded(ref, {
       name,
       brand,
@@ -85,35 +94,41 @@ export function useShoes() {
   };
 
   const retireShoe = async (shoeId: string) => {
-    if (!user) return;
-    const ref = doc(db, "users", user.uid, "shoes", shoeId);
+    if (!uid) return;
+    const ref = doc(db, "users", uid, "shoes", shoeId);
     await updateDocGuarded(ref, { retired: true, isDefault: false });
   };
 
   const setDefault = async (shoeId: string) => {
-    if (!user) return;
+    if (!uid) return;
     // Unset all others
     for (const s of shoes) {
       if (s.isDefault && s.id !== shoeId) {
-        await updateDocGuarded(doc(db, "users", user.uid, "shoes", s.id), { isDefault: false });
+        await updateDocGuarded(doc(db, "users", uid, "shoes", s.id), {
+          isDefault: false,
+        });
       }
     }
-    await updateDocGuarded(doc(db, "users", user.uid, "shoes", shoeId), { isDefault: true });
+    await updateDocGuarded(doc(db, "users", uid, "shoes", shoeId), {
+      isDefault: true,
+    });
   };
 
   const updateMileage = async (shoeId: string, addKm: number) => {
-    if (!user) return;
+    if (!uid) return;
     const shoe = shoes.find((s) => s.id === shoeId);
     if (!shoe) return;
     const newTotal = shoe.totalKm + addKm;
-    const updates: Record<string, number | boolean> = { totalKm: Math.round(newTotal * 10) / 10 };
+    const updates: Record<string, number | boolean> = {
+      totalKm: Math.round(newTotal * 10) / 10,
+    };
 
     // Alert flags
     const pct = newTotal / shoe.maxKm;
     if (pct >= 0.85 && !shoe.alert85Shown) updates.alert85Shown = true;
     if (pct >= 1.0 && !shoe.alert100Shown) updates.alert100Shown = true;
 
-    await updateDocGuarded(doc(db, "users", user.uid, "shoes", shoeId), updates);
+    await updateDocGuarded(doc(db, "users", uid, "shoes", shoeId), updates);
 
     // Return alert status
     if (pct >= 1.0 && !shoe.alert100Shown) return "replace";
@@ -122,7 +137,8 @@ export function useShoes() {
   };
 
   const activeShoes = shoes.filter((s) => !s.retired);
-  const defaultShoe = activeShoes.find((s) => s.isDefault) ?? activeShoes[0] ?? null;
+  const defaultShoe =
+    activeShoes.find((s) => s.isDefault) ?? activeShoes[0] ?? null;
 
   /**
    * Recompute every shoe's totalKm from the user's actual run history.
@@ -145,9 +161,9 @@ export function useShoes() {
    * Retired shoes are left untouched — historical totals preserved.
    */
   const reconcileMileageFromRuns = useCallback(async () => {
-    if (!user) return { updated: 0, totalRuns: 0 };
+    if (!uid) return { updated: 0, totalRuns: 0 };
 
-    const runsSnap = await getDocs(collection(db, "users", user.uid, "runs"));
+    const runsSnap = await getDocs(collection(db, "users", uid, "runs"));
     const currentDefaultId = defaultShoe?.id ?? null;
 
     const kmByShoe = new Map<string, number>();
@@ -166,7 +182,8 @@ export function useShoes() {
       // 20km/0:08 "too-fast" save inflate the shoe by 20km and
       // trigger the replacement-prompt at 85%/100% prematurely.
       if (!isVolumeEligible(data)) continue;
-      const distanceMeters = typeof data.distance === "number" ? data.distance : 0;
+      const distanceMeters =
+        typeof data.distance === "number" ? data.distance : 0;
       if (distanceMeters <= 0) continue;
 
       const resolvedId =
@@ -175,7 +192,7 @@ export function useShoes() {
 
       kmByShoe.set(
         resolvedId,
-        (kmByShoe.get(resolvedId) ?? 0) + distanceMeters / 1000,
+        (kmByShoe.get(resolvedId) ?? 0) + distanceMeters / 1000
       );
     }
 
@@ -183,7 +200,7 @@ export function useShoes() {
     for (const shoe of activeShoes) {
       const total = Math.round((kmByShoe.get(shoe.id) ?? 0) * 10) / 10;
       const pct = shoe.maxKm > 0 ? total / shoe.maxKm : 0;
-      batch.update(doc(db, "users", user.uid, "shoes", shoe.id), {
+      batch.update(doc(db, "users", uid, "shoes", shoe.id), {
         totalKm: total,
         alert85Shown: pct >= 0.85,
         alert100Shown: pct >= 1.0,
@@ -192,7 +209,7 @@ export function useShoes() {
     await batch.commit();
 
     return { updated: activeShoes.length, totalRuns: runsSnap.size };
-  }, [user, activeShoes, defaultShoe]);
+  }, [uid, activeShoes, defaultShoe]);
 
   return {
     shoes,

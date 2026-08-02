@@ -16,7 +16,7 @@ import {
   getFollowingCount,
   blockUser,
 } from "../lib/socialApi";
-import { useAuth } from "../lib/auth";
+import { useUid } from "../lib/auth";
 import FollowButton from "../components/social/FollowButton";
 import TrainingForChip from "@/features/spaces/TrainingForChip";
 import PartnerStreakCard from "../features/partnerStreak/PartnerStreakCard";
@@ -50,7 +50,9 @@ import { Spinner } from "../components/ui/Spinner";
 
 export default function UserProfile() {
   const { uid } = useParams<{ uid: string }>();
-  const { user } = useAuth();
+  // `uid` is the profile being VIEWED (route param); `viewerUid` is the
+  // signed-in reader. Most of this page compares the two.
+  const viewerUid = useUid();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<{
     uid: string;
@@ -94,7 +96,7 @@ export default function UserProfile() {
     // signed-in user changes. Matches the isOwnProfile derivation below for
     // render-time gating, but we can't use that binding here — it's declared
     // after this effect.
-    const isOwnProfile = user?.uid === uid;
+    const isOwnProfile = viewerUid === uid;
     setStatsLoading(true);
 
     // NOTE: users/{uid} is doc-level owner-only per firestore.rules:55-56, so
@@ -300,14 +302,14 @@ export default function UserProfile() {
     ]).finally(() => {
       setStatsLoading(false);
     });
-  }, [uid, user?.uid]);
+  }, [uid, viewerUid]);
 
-  const isOwnProfile = user?.uid === uid;
+  const isOwnProfile = viewerUid === uid;
 
   const handleBlock = async () => {
-    if (!user || !uid || !profile) return;
+    if (!viewerUid || !uid || !profile) return;
     try {
-      await blockUser(user.uid, uid);
+      await blockUser(viewerUid, uid);
       toast.success(`Blocked ${profile.displayName || "user"}`);
       navigate(-1);
     } catch {

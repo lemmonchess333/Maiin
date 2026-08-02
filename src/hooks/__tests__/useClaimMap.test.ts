@@ -40,6 +40,7 @@ let currentUser: { uid: string } | null = mockUser;
 
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: currentUser }),
+  useUid: () => ({ user: currentUser }).user?.uid ?? null,
 }));
 
 vi.mock("@/lib/firebase", () => ({ db: {} }));

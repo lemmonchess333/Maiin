@@ -24,6 +24,14 @@ import {
 import { logger } from "@/lib/logger";
 
 export function useDailyNutritionSnapshot(): void {
+  // Deliberately NOT `useUid()`, unlike the ~50 other uid-only consumers.
+  // This effect uses `user`'s OBJECT IDENTITY as its retry heartbeat: a failed
+  // write clears `lastSigRef`, and the retry then rides the next
+  // onAuthStateChanged re-emission (same uid, fresh User object — CLAUDE.md
+  // notes it fires several times per sign-in). Narrowing the dep to the uid
+  // string removes that trigger, so a transient failure would strand the day's
+  // snapshot until the targets themselves changed. Pinned by "lets a retry
+  // through after a failed write, at the SAME target".
   const { user } = useAuth();
   const targets = useEffectiveTargets(); // today
   // Last signature written this session — skips redundant same-value writes.

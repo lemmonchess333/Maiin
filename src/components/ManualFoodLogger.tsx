@@ -3,7 +3,7 @@ import { THEME } from "@/lib/theme";
 import { doc, Timestamp } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -39,7 +39,7 @@ interface Props {
 }
 
 export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
-  const { user } = useAuth();
+  const uid = useUid();
   const { addFavourite } = useFoodFavourites();
   const [name, setName] = useState("");
   const [calories, setCalories] = useState("");
@@ -55,12 +55,12 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
   const [warnDescription, setWarnDescription] = useState<string>("");
 
   const performSave = async (entry: FoodEntry) => {
-    if (!user) return;
+    if (!uid) return;
     setSaving(true);
     try {
       const logDate = date || localDateString();
       const id = `${logDate}_${Date.now()}`;
-      await setDocGuarded(doc(db, "users", user.uid, "meals", id), {
+      await setDocGuarded(doc(db, "users", uid, "meals", id), {
         date: logDate,
         foodName: entry.name,
         items: [
@@ -121,7 +121,7 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
   };
 
   const handleSave = async () => {
-    if (!user || !name.trim()) return;
+    if (!uid || !name.trim()) return;
 
     const entry: FoodEntry = {
       name: name.trim(),
