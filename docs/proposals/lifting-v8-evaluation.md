@@ -79,9 +79,11 @@ struck. This document supersedes the pack for the lifting arc.
 >   guide's body diagram — a lateral raise with no shoulder — plus 36 dropped
 >   secondaries. §3.9 reasoned about the taxonomy's expressiveness; the live
 >   cost was in a table it never mentions.
->   **STATUS 2026-08-02c — P3's three items, and two of them turned out not to
->   be builds.** 14b shipped as specified (see `recoveryTrigger.ts`). The other
->   two were investigated first, and the investigation changed the answer:
+
+> **STATUS 2026-08-02c — P3's three items, and two of them turned out not to be
+> builds.** 14b shipped as specified (see `recoveryTrigger.ts`). The other two
+> were investigated first, and the investigation changed the answer:
+>
 > - **§3.4's "pass weekly aerobic minutes into `buildLiftProgram`" is NOT
 >   built, and should not be until a source locates the optimum.** §3.4 itself
 >   says so — "the correct framing for a hybrid user is an optimum, not a
@@ -118,6 +120,45 @@ struck. This document supersedes the pack for the lifting arc.
 >   (`training-book-reviews.md:683`). The engine work is genuinely small; the
 >   decision about whether Tropos asks the user to approve prescriptions is
 >   not mine to take unilaterally.
+
+> **STATUS 2026-08-02d — P4 (handoff 12) shipped, and the anchor slot it aimed
+> at turned out to be computed-but-rendered-nowhere.** §5 says the strength
+> readout goes "into the existing block-review anchor slot". The slot exists in
+> `blockReviewViewModel`, and a grep for a production consumer of
+> `review.anchors` returns **nothing** — it has been computed and shown to no
+> one since the review shipped. So P4 both filled the slot and rendered it,
+> which the GsPb1 lock explicitly provides for ("an optional anchor-movement
+> metric").
+>
+> Two corrections to §5's framing of handoff 12:
+>
+> - **The anchor metric was not merely a point estimate — it ignored reps
+>   entirely.** `bestSetKg` is the heaviest bar touched, so it ranks 100 kg × 1
+>   above 95 kg × 10, and the second is the stronger performance by 27%. That is
+>   a worse defect than the constant-confidence one §5 names, and it sat in the
+>   exact slot the handoff was aiming at. Both load fields stay — heaviest bar
+>   is a real fact — with the e1RM range added alongside.
+> - **The ranking/display split has to be explicit.** §5 asks for a range, but
+>   `epley1RMExact` must stay the single source for COMPARISONS (best-set
+>   selection, PR scoring, chart series): overlapping bands have no order, and
+>   those surfaces need a total order. So the point estimate keeps its job and
+>   nothing PRESENTS it as though its confidence were constant. A test pins that
+>   the two never drift apart.
+>
+> On the widths: the three tiers are sourced (Helms p75 for the tight 3–6
+> region; Schoenfeld p.92 and Zatsiorsky p.62 for the breakdown; `null` above
+> ~15 rather than an ever-wider band, because a reader anchors on a band's
+> midpoint either way). The ±5/±10/±20 percentages are a **declared prior**,
+> scaled against Schoenfeld p.92's one-person worked example — 80% 1RM being a
+> 6RM, 10RM and 15RM on three exercises, which puts Epley 4% low, 7% high and
+> 20% high respectively. One subject and three exercises is not a calibration
+> set; saying so in the module matters more than picking better numbers.
+>
+> The deferred date back-map is now written out in §8.3 rather than referred to,
+> with the three things a future implementation must not lose — chiefly that it
+> needs a TESTED single, not an estimate: seeding a six-week plate ramp from the
+> midpoint of a band this arc just finished widening would compound the error
+> across every prescription in the block.
 
 > - **11b's headline value was not the data entry.** §5 frames it as "150
 >   exercises × ~6 fields of domain-judgement data entry with no lead-time
@@ -1152,6 +1193,30 @@ treats that as evidence against; and the repo already deferred it deliberately a
 backlog D4. **Handoff 12 ships the e1RM range without it**, and the back-map spec
 goes into the handoff as _specified-but-unbuilt_ with the objection recorded, so
 it is not re-derived a third time.
+
+**The spec, written down so the deferral is a decision rather than a gap**
+(DL p40–41; converged on by two further practitioner sources):
+
+> Given a target lift and a date: goal = current PR + 10–20 lb (≈5–10 kg).
+> Six training weeks plus one rest week back from the date. Top singles ramp
+> at goal − 75 lb, − 50 lb, − 25 lb across the block, with the attempt in the
+> final week.
+
+Three things a future implementation must not lose:
+
+1. **It needs a real 1RM, and `estimate1RMRange` will not supply one.** The
+   ramp is denominated in absolute plate weights off a known max. Seeding it
+   from an estimate — let alone from the midpoint of a band this arc just
+   finished widening — would compound the estimate's error across six weeks of
+   prescriptions. The back-map wants a tested single or nothing.
+2. **The increments are imperial and were authored for a specific population.**
+   10–20 lb on a squat and on a press are not the same relative step, and the
+   sources do not scale them. Converting to kg is not the hard part.
+3. **The objection stands on its own.** Neither Hevy nor Strong offers a
+   date-driven peaking plan, and CLAUDE.md's reference-app rule reads three
+   apps not having a feature as evidence against building it. Nothing about
+   the corpus's convergence answers that — the authors are writing for coached
+   powerlifters, which is not who opens Tropos.
 
 ### 8.4 Week rollover for lifters: **calendar-based, unattended days archived as `planned`**
 
