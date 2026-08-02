@@ -18,136 +18,45 @@
  * growing their accessories (add-only, mains untouched).
  */
 import { getExerciseById, type Exercise } from "@/lib/exercises";
+import {
+  CANONICAL_MUSCLE_ORDER,
+  fineToCanonical,
+  toFine,
+  type CanonicalMuscle,
+  type FineMuscle,
+} from "./muscleTaxonomy";
 import type { ProgramExercise, WorkoutDay } from "./programTypes";
 
-export type CanonicalMuscle =
-  | "Chest"
-  | "Back"
-  | "Shoulders"
-  | "Biceps"
-  | "Triceps"
-  | "Quads"
-  | "Hamstrings"
-  | "Glutes"
-  | "Calves"
-  | "Core";
-
-/** Display order (push → pull → legs → core), used by the summary UI. */
-export const CANONICAL_MUSCLE_ORDER: CanonicalMuscle[] = [
-  "Chest",
-  "Shoulders",
-  "Triceps",
-  "Back",
-  "Biceps",
-  "Quads",
-  "Hamstrings",
-  "Glutes",
-  "Calves",
-  "Core",
-];
-
-// Map every muscleGroup / secondaryMuscle string in the exercise DB to a
-// canonical group, or null to EXCLUDE from the resistance-volume tally
-// (cardio, whole-body conditioning, or labels too coarse to attribute).
-const MUSCLE_TO_CANONICAL: Record<string, CanonicalMuscle | null> = {
-  // Chest
-  pectorals: "Chest",
-  chest: "Chest",
-  "upper chest": "Chest",
-  "lower chest": "Chest",
-  // Back
-  lats: "Back",
-  "mid back": "Back",
-  "middle back": "Back",
-  "full back": "Back",
-  "lower back": "Back",
-  rhomboids: "Back",
-  "teres major": "Back",
-  traps: "Back",
-  back: "Back",
-  // Shoulders
-  deltoids: "Shoulders",
-  shoulders: "Shoulders",
-  "front delts": "Shoulders",
-  "side delts": "Shoulders",
-  "rear delts": "Shoulders",
-  "rotator cuff": "Shoulders",
-  // Arms
-  biceps: "Biceps",
-  triceps: "Triceps",
-  // Legs
-  quads: "Quads",
-  // The adductors are hip ADDUCTORS, not quadriceps — they used to map to
-  // "Quads", which meant a Hip Adduction Machine booked quad volume. Adductor
-  // magnus is a primary hip extensor and is trained by the same movements as
-  // the glutes (sumo pulls, wide squats), so "Glutes" is the honest home for
-  // it in a ten-group taxonomy.
-  adductors: "Glutes",
-  hamstrings: "Hamstrings",
-  "posterior chain": "Hamstrings",
-  glutes: "Glutes",
-  calves: "Calves",
-  soleus: "Calves",
-  // Core
-  core: "Core",
-  abs: "Core",
-  "lower abs": "Core",
-  obliques: "Core",
-
-  /* ── Deliberately excluded, each for its own reason ───────────────────
-     `null` means "contributes no resistance volume", and it is a DECISION
-     here rather than an oversight — the assertions in
-     `volumeModel.test.ts` pin each one so a future edit has to argue with
-     them. ── */
-
-  // Whole-body conditioning and cardio are not resistance volume. Note the
-  // primary being null no longer discards the whole lift: `weeklyVolumeByMuscle`
-  // now falls through to the SECONDARIES for non-cardio movements, so a
-  // Zercher squat books its quads and glutes instead of nothing at all.
-  "full body": null,
-  cardio: null,
-  // Too coarse to attribute — "legs" and "arms" name a region, not a muscle.
-  legs: null,
-  arms: null,
-  // No Forearms group exists in this ten-group taxonomy, and no exercise in
-  // the DB has forearms as its PRIMARY — they appear only as a secondary on
-  // curls and carries. Rather than inflate Biceps with them, they earn
-  // nothing. Revisit when the taxonomy is split (13a); adding a group here
-  // would move every biceps tally.
-  forearms: null,
-  brachioradialis: null,
-  // The hip flexors are the iliopsoas, not the quadriceps. This used to map
-  // to "Quads", and because "hip flexors" is a secondary on nearly every ab
-  // movement in the DB — crunches, sit-ups, leg raises, russian twists,
-  // dead bugs, dragon flags, L-sits — every core session silently booked
-  // quad volume. The quad-dominant exercises that also list it (sissy squat,
-  // leg extension) already count 1.0 through their PRIMARY, so nothing real
-  // is lost.
-  "hip flexors": null,
-  // NOTE: a `"hip flexors "` key with a trailing space used to sit here. It
-  // was unreachable — `toCanonical` trims before lookup, so the un-trimmed
-  // key above always won — and it mapped to a DIFFERENT value, so it read as
-  // a contradiction that TypeScript could not catch (the keys differ).
-  // Deleted; the live mapping is the one above.
+// The taxonomy moved to `muscleTaxonomy.ts` in 13a so the fine layer and the
+// canonical ten could live together without an import cycle. Re-exported here
+// because every existing consumer imports them from this module, and moving a
+// type is not a reason to touch ten call sites.
+export {
+  CANONICAL_MUSCLE_ORDER,
+  fineToCanonical,
+  toFine,
+  type CanonicalMuscle,
+  type FineMuscle,
 };
 
 // Fallback when an exercise isn't in the DB (custom exercise): attribute by its
-// movement category so custom lifts still count.
-const CATEGORY_TO_CANONICAL: Record<string, CanonicalMuscle> = {
-  horizontal_push: "Chest",
-  vertical_push: "Shoulders",
-  horizontal_pull: "Back",
-  vertical_pull: "Back",
+// movement category so custom lifts still count. Category is a MOVEMENT, not a
+// muscle, so it can only ever name a coarse bucket — which is why these resolve
+// to the `*Unspecified` members rather than pretending to know a head.
+const CATEGORY_TO_FINE: Record<string, FineMuscle> = {
+  horizontal_push: "ChestUnspecified",
+  vertical_push: "DeltsUnspecified",
+  horizontal_pull: "BackUnspecified",
+  vertical_pull: "BackUnspecified",
   knee_dominant: "Quads",
   hip_dominant: "Hamstrings",
   arms_biceps: "Biceps",
   arms_triceps: "Triceps",
-  core: "Core",
+  core: "CoreUnspecified",
 };
 
 export function toCanonical(name: string | undefined): CanonicalMuscle | null {
-  if (!name) return null;
-  return MUSCLE_TO_CANONICAL[name.toLowerCase().trim()] ?? null;
+  return fineToCanonical(toFine(name));
 }
 
 /** The canonical PRIMARY muscle an exercise trains (DB primary, else movement
@@ -157,7 +66,7 @@ export function primaryCanonicalForExercise(
 ): CanonicalMuscle | null {
   const dbEx = getExerciseById(ex.exerciseId);
   if (dbEx) return toCanonical(dbEx.muscleGroup);
-  return CATEGORY_TO_CANONICAL[ex.movementCategory] ?? null;
+  return fineToCanonical(CATEGORY_TO_FINE[ex.movementCategory] ?? null);
 }
 
 /**
@@ -187,14 +96,23 @@ export interface MuscleVolume {
   sets: number;
 }
 
+export interface FineMuscleVolume {
+  muscle: FineMuscle;
+  /** Weekly hard sets (primary 1.0 + secondary 0.5), rounded to 0.5. */
+  sets: number;
+  /** Where this rolls up in the published ten, or `null` when the ten-group
+   *  taxonomy has no home for it (forearms, hip flexors). */
+  canonical: CanonicalMuscle | null;
+}
+
 /**
- * Weekly sets per canonical muscle group across a week's workouts. Skipped days
- * are excluded (no stimulus); completed/planned days count. Returns only
- * muscles with non-zero volume, in CANONICAL_MUSCLE_ORDER.
+ * The one attribution pass, unrounded. Both public views are derived from it,
+ * so they cannot disagree about what a week contains — and each applies its own
+ * rounding at its own level (see `weeklyVolumeByMuscle`).
  */
-export function weeklyVolumeByMuscle(workouts: WorkoutDay[]): MuscleVolume[] {
-  const tally = new Map<CanonicalMuscle, number>();
-  const add = (m: CanonicalMuscle | null, n: number) => {
+function fineTally(workouts: WorkoutDay[]): Map<FineMuscle, number> {
+  const tally = new Map<FineMuscle, number>();
+  const add = (m: FineMuscle | null, n: number) => {
     if (!m) return;
     tally.set(m, (tally.get(m) ?? 0) + n);
   };
@@ -211,7 +129,7 @@ export function weeklyVolumeByMuscle(workouts: WorkoutDay[]): MuscleVolume[] {
         // book leg sets.
         if (dbEx.category === "Cardio") continue;
 
-        const primary = toCanonical(dbEx.muscleGroup);
+        const primary = toFine(dbEx.muscleGroup);
         if (primary) add(primary, sets);
         // An unattributable PRIMARY used to discard the whole lift, so the
         // thirteen "Full Body" movements in the DB — Zercher squat, landmine
@@ -224,13 +142,58 @@ export function weeklyVolumeByMuscle(workouts: WorkoutDay[]): MuscleVolume[] {
         // underlying `muscleGroup: "Full Body"` labels is exercise-DB work
         // (handoff 11b), not this.
         for (const sec of dbEx.secondaryMuscles ?? []) {
-          add(toCanonical(sec), sets * 0.5);
+          add(toFine(sec), sets * 0.5);
         }
       } else {
         // Custom exercise not in the DB — attribute by movement category.
-        add(CATEGORY_TO_CANONICAL[ex.movementCategory] ?? null, sets);
+        add(CATEGORY_TO_FINE[ex.movementCategory] ?? null, sets);
       }
     }
+  }
+
+  return tally;
+}
+
+/**
+ * Weekly sets per FINE muscle — the layer the attribution actually runs on.
+ *
+ * `weeklyVolumeByMuscle` rolls this up, so there is one attribution pass and
+ * the two views cannot drift. Ordered by descending volume, then name; callers
+ * that need a fixed display order should impose their own.
+ *
+ * Includes fine muscles with no canonical home (forearms, hip flexors). They
+ * carry `canonical: null` and are dropped by the roll-up, which is why making
+ * them visible here moved no published number.
+ */
+export function weeklyVolumeByFineMuscle(
+  workouts: WorkoutDay[]
+): FineMuscleVolume[] {
+  return [...fineTally(workouts)]
+    .filter(([, sets]) => sets > 0)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([muscle, sets]) => ({
+      muscle,
+      sets: Math.round(sets * 2) / 2,
+      canonical: fineToCanonical(muscle),
+    }));
+}
+
+/**
+ * Weekly sets per canonical muscle group across a week's workouts. Skipped days
+ * are excluded (no stimulus); completed/planned days count. Returns only
+ * muscles with non-zero volume, in CANONICAL_MUSCLE_ORDER.
+ *
+ * A roll-up of the same attribution pass since 13a. It sums the UNROUNDED fine
+ * tallies and rounds once, at this level — rounding each part first and adding
+ * the results is a different number, and this one has to stay bit-identical to
+ * what the app published before the taxonomy split.
+ */
+export function weeklyVolumeByMuscle(workouts: WorkoutDay[]): MuscleVolume[] {
+  const tally = new Map<CanonicalMuscle, number>();
+  for (const [fine, sets] of fineTally(workouts)) {
+    const canonical = fineToCanonical(fine);
+    if (!canonical) continue;
+    tally.set(canonical, (tally.get(canonical) ?? 0) + sets);
   }
 
   return CANONICAL_MUSCLE_ORDER.filter((m) => (tally.get(m) ?? 0) > 0).map(
