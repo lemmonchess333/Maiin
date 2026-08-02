@@ -11,6 +11,42 @@ read and measured. Where the pack is right it is kept and strengthened. Where it
 is wrong it is replaced. Where it describes work that is already shipped it is
 struck. This document supersedes the pack for the lifting arc.
 
+> **STATUS 2026-08-02 — the P0 set is implemented, and building it corrected
+> this document.** Three amendments, kept here rather than edited into the body
+> so the original claim and its correction both stay legible:
+>
+> - **§2.3 D3 named the wrong predicate.** It said the guard "already exists 26
+>   lines above and is not applied", pointing at `isSetEligibleForStrengthPr`.
+>   That predicate is `setType !== "warmup" && repUnit !== "seconds"` — **a drop
+>   set passes it**, so applying it verbatim would have fixed nothing. The
+>   shipped fix adds a separate `isSetEligibleForProgression` (working and
+>   failure count; warmup and dropset do not; `repUnit` is a PR concern that
+>   does not belong). The near-miss is what let the bug survive review, and it
+>   nearly let a non-fix ship.
+> - **§2.3 D2 undercounted the projection.** There are **three** copies, not
+>   two: `useProgram`, `Routine`, and `functions/lib/programCommands.js:1184`.
+>   The server one is latent — the client only sends `applyDeloadWeek` /
+>   `revertDeloadWeek` over the command boundary — but it is in the frozen
+>   command vocabulary. Relatedly, the command validator allowed **no** optional
+>   keys on a set log, so widening the client alone would have made a
+>   `completeWorkoutDay` command reject outright.
+> - **A sixteenth defect, found while verifying D4, that outranks it. D16:**
+>   `plateauResponses` is emitted unconditionally by `advanceWeek` and was
+>   **absent from `PROGRAM_STATE_KEYS`**. `runProgramCommandTransaction` throws
+>   `invalid-argument` when the sanitiser drops any key, so "Apply deload week"
+>   did not merely lose load for anyone who had ever rolled a week — it
+>   **hard-errored and did nothing**. Only a freshly-built plan (which carries no
+>   `plateauResponses`) reached D4's load leak at all. The claimed guard could
+>   not catch it: the coverage test iterates a hand-written fixture rather than
+>   the interface, so a field added to the type and to neither the fixture nor
+>   the key set stayed green. Fixed, plus the missing type pin — the same third
+>   pin `profileFieldRegistry.test.ts` added for `UserProfile` after three
+>   recurrences of exactly this.
+>
+> §2.3's D4 is also narrower than written: the client's restore path already
+> handles reps as well as load, and `programExerciseBuilder` already carries
+> both fields. Only the server command lacked the stash.
+
 **Method, stated plainly so the confidence is legible.** Thirteen deep passes ran
 in parallel: five book extractions (Zatsiorsky; Schoenfeld; Fleck & Kraemer;
 Helms; Renaissance Periodization), one practitioner-corpus extraction
