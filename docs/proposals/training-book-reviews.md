@@ -13,6 +13,13 @@ correct earlier ones where evidence shifted — read a proposal's LAST mention,
 not its first. Finding IDs (P1…, D1…, B1…, M1…, N1…, H1…) are stable and
 referenced throughout.
 
+**See also — `lifting-v8-evaluation.md` (2026-08-02).** A second reading pass
+covering five academic sources this document does not (Zatsiorsky; Schoenfeld;
+Fleck & Kraemer; Renaissance Periodization; plus a re-read of Helms), evaluated
+against the code rather than in the abstract. It supersedes this document for the
+lifting arc where the two disagree, and it closes **M4** (the deload load-axis
+question) as resolved-keep. Read it before acting on any backlog item below.
+
 ## Consolidated backlog (final state after all seven books)
 
 Ordered by Helms's pyramid (section 6) — adherence beats programming, and

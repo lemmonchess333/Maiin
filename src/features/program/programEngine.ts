@@ -11,7 +11,18 @@ import type {
   WeeklyPrescription,
 } from "./programTypes";
 import { generateInstanceId } from "./programTypes";
-import { pickExercise, pickAccessory, exerciseBank } from "./variationBank";
+import {
+  pickExercise,
+  pickAccessory,
+  exerciseBank,
+  exerciseDisplayName,
+} from "./variationBank";
+import {
+  applyRecoverySession,
+  escalatesToWholeBody,
+  musclesAtMrv,
+  recoveryTargets,
+} from "./recoveryTrigger";
 import {
   balanceWeeklyVolume,
   balancePushPull,
@@ -149,6 +160,29 @@ export function prescribedRepCeiling(ex: {
 const HOLD_STEP_SECONDS = 5;
 /** Ceiling for a hold with no authored range — past this, add load instead. */
 const MAX_HOLD_SECONDS = 60;
+
+/**
+ * Per-exercise `performanceHistory` ceiling.
+ *
+ * D2: this was `.slice(-10)` here and in the server mirror, but `.slice(-20)`
+ * on `useProgram`'s block-amnesty branch — so how much history a lifter kept
+ * silently depended on whether a training block happened to be holding
+ * progression that week. Exported so the three sites share one number.
+ *
+ * NOT raised to cover the multi-week phenomena the lifting arc cares about
+ * (interference takes ~8 weeks to appear, periodisation diverges after ~6),
+ * even though 10 sessions is plainly shorter than that. The reason is
+ * document size, not principle: `advanceWeek` snapshots the WHOLE `workouts`
+ * array into `weekHistory` and keeps 8 of them, so every record here is
+ * multiplied ~9× inside one programState doc — and
+ * `programStateTooLarge` rejects the command outright past its ceiling.
+ * Raising it needs that size analysis first.
+ *
+ * It is also less urgent than it looks: the durable evidence now lives in the
+ * per-session workout documents, which are uncapped (D2). This array is a
+ * convenience cache on programState, not the record of truth.
+ */
+export const PERFORMANCE_HISTORY_CAP = 10;
 // Load step (backlog #7, H3) — the discriminator lives in movementClass.ts;
 // see that module for why `isAccessory` was the wrong one.
 
@@ -156,21 +190,31 @@ const MAX_HOLD_SECONDS = 60;
    WEEKLY PRESCRIPTION
 ================================ */
 
+/**
+ * The mesocycle position of a week. Every 4th week is a deload.
+ *
+ * This used to also return `intensityMultiplier` (`1 + (week % 4) * 0.025`,
+ * i.e. an advertised 2.5%/week intensity ramp) and `volumeModifier`. Both were
+ * written here and read NOWHERE — not in `src/`, not in `functions/`, not by
+ * `advanceWeek`, which branches only on `.deload`. The ramp did not exist as
+ * behaviour, so the whole "periodization" was already this one boolean; the
+ * two fields only made it look like more.
+ *
+ * Deleted rather than wired, because wiring them would change every user's
+ * prescription and none of the sources support that particular shape:
+ * Schoenfeld p.193 (systematic review of 12 studies — no clear benefit to
+ * periodizing for HYPERTROPHY; it is established for strength), p.194 (linear
+ * and undulating equivalent across a meta-analysis plus 8 primary studies),
+ * Helms p.79 ("asking 'which type of periodization is the best?' is the wrong
+ * question"). A mod-4 intensity ramp is not a finding, it is a decoration.
+ *
+ * Safe to delete outright: `WeeklyPrescription` is computed on demand at each
+ * call site and never persisted — `advanceWeek` stores only the derived
+ * `currentPhase` string — so there is no stored document carrying these
+ * fields and no sanitiser allow-list to update.
+ */
 export function generateWeekPrescription(week: number): WeeklyPrescription {
-  if (week % 4 === 0) {
-    return {
-      week,
-      intensityMultiplier: 0.85,
-      volumeModifier: 0.7,
-      deload: true,
-    };
-  }
-  return {
-    week,
-    intensityMultiplier: 1 + (week % 4) * 0.025,
-    volumeModifier: 1,
-    deload: false,
-  };
+  return { week, deload: week % 4 === 0 };
 }
 
 /**
@@ -349,7 +393,7 @@ function makeExercise(
     ? weightAfterExerciseSwap(existing, ex.id).weight
     : (existing?.weight ?? weight);
   return {
-    name: ex.name,
+    name: exerciseDisplayName(ex.id),
     exerciseId: ex.id,
     instanceId:
       existing && !identityChanged ? existing.instanceId : generateInstanceId(), // #1038
@@ -376,7 +420,9 @@ function makeExercise(
 
 function swapExerciseIdentity(
   ex: ProgramExercise,
-  to: { id: string; name: string },
+  // Id only. The display name comes from the catalogue (11b) — a caller that
+  // also happens to hold a name must not be able to write a different one.
+  to: { id: string },
   loadCtx?: StartingLoadContext,
   calibrationSource: ProgramExercise = ex
 ): ProgramExercise {
@@ -385,7 +431,7 @@ function swapExerciseIdentity(
   return {
     ...ex,
     exerciseId: to.id,
-    name: to.name,
+    name: exerciseDisplayName(to.id),
     instanceId: generateInstanceId(),
     movementCategory: calibrated.movementCategory,
     weight: calibrated.weight,
@@ -671,16 +717,18 @@ function buildUpperLower(
           round(3 * vm),
           12,
           12,
-          "linear",
-          findExisting(0, 3)
+          "double",
+          findExisting(0, 3),
+          true
         ),
         makeExercise(
           "arms_triceps",
           round(3 * vm),
           12,
           15,
-          "linear",
-          findExisting(0, 4)
+          "double",
+          findExisting(0, 4),
+          true
         ),
       ],
     },
@@ -711,8 +759,9 @@ function buildUpperLower(
           round(3 * vm),
           12,
           15,
-          "linear",
-          findExisting(1, 3)
+          "double",
+          findExisting(1, 3),
+          true
         ),
       ],
     },
@@ -743,16 +792,18 @@ function buildUpperLower(
           round(3 * vm),
           12,
           10,
-          "linear",
-          findExisting(2, 3)
+          "double",
+          findExisting(2, 3),
+          true
         ),
         makeExercise(
           "arms_triceps",
           round(3 * vm),
           12,
           12,
-          "linear",
-          findExisting(2, 4)
+          "double",
+          findExisting(2, 4),
+          true
         ),
       ],
     },
@@ -776,8 +827,9 @@ function buildUpperLower(
           round(3 * vm),
           12,
           15,
-          "linear",
-          findExisting(3, 3)
+          "double",
+          findExisting(3, 3),
+          true
         ),
       ],
     },
@@ -824,8 +876,9 @@ function buildPPL(
           round(3 * vm),
           12,
           15,
-          "linear",
-          findExisting(0, 3)
+          "double",
+          findExisting(0, 3),
+          true
         ),
         makeAccessory(
           "arms_triceps",
@@ -863,8 +916,9 @@ function buildPPL(
           round(3 * vm),
           12,
           12,
-          "linear",
-          findExisting(1, 3)
+          "double",
+          findExisting(1, 3),
+          true
         ),
         makeAccessory("arms_biceps", round(3 * vm), 15, 8, "barbell-curl"),
       ],
@@ -896,13 +950,14 @@ function buildPPL(
           round(3 * vm),
           15,
           15,
-          "linear",
+          "double",
           // Was findExisting(2, 4) — an off-by-one. This day has four slots
           // (0-3), so index 4 never resolved and the core lift was rebuilt
           // from defaults on EVERY regenerate, silently dropping the user's
           // logged weight and history. Same family as #17; found by the
           // regenerate-preserves-load test rather than by reading indices.
-          findExisting(2, 3)
+          findExisting(2, 3),
+          true
         ),
       ],
     },
@@ -926,8 +981,9 @@ function buildPPL(
           round(3 * vm),
           12,
           15,
-          "linear",
-          findExisting(3, 3)
+          "double",
+          findExisting(3, 3),
+          true
         ),
       ],
     },
@@ -951,8 +1007,9 @@ function buildPPL(
           round(3 * vm),
           12,
           10,
-          "linear",
-          findExisting(4, 3)
+          "double",
+          findExisting(4, 3),
+          true
         ),
       ],
     },
@@ -999,7 +1056,15 @@ function buildLegsB(
       // Accessories in reversed order with different rep ranges
       makeAccessory("hip_dominant", round(3 * vm), 10, 40, "deadlift"),
       makeAccessory("knee_dominant", round(3 * vm), 10, 40, "squat"),
-      makeExercise("core", round(3 * vm), 12, 15, "linear", findExisting(4)),
+      makeExercise(
+        "core",
+        round(3 * vm),
+        12,
+        15,
+        "double",
+        findExisting(4),
+        true
+      ),
     ],
   };
 }
@@ -1598,7 +1663,8 @@ export function generateProgram(
     experience,
     exerciseBank,
     (ex, toId) =>
-      weightAfterExerciseSwap(ex as ProgramExercise, toId, loadCtx).weight
+      weightAfterExerciseSwap(ex as ProgramExercise, toId, loadCtx).weight,
+    exerciseDisplayName
   );
   // Variety: no single lift more than twice a week. Must run BEFORE the
   // volume balancers so they budget against the shape the user actually
@@ -1665,7 +1731,9 @@ export function applyProgression(
     repsCompleted: actualReps,
     repsTarget: exercise.reps,
   };
-  const history = [...(exercise.performanceHistory || []), record].slice(-10);
+  const history = [...(exercise.performanceHistory || []), record].slice(
+    -PERFORMANCE_HISTORY_CAP
+  );
 
   const updated: ProgramExercise = {
     ...exercise,
@@ -2051,6 +2119,31 @@ function applyAdjustment(
     exercises: day.exercises.map((ex) => {
       const out: ProgramExercise = { ...ex };
       const base = ex.baseSets ?? ex.sets;
+      // Every lever below is ACCESSORY-ONLY, including the reorganise swap.
+      // Mains are the progression anchor — the same reason `add_volume` and
+      // `reduce_volume` have always been scoped this way.
+      //
+      // The swap used to sit OUTSIDE this guard, so a stalled MAIN could be
+      // re-picked and run through `swapExerciseIdentity`, which zeroes
+      // `performanceHistory`, `lastPerformance`, `consecutiveFailures` and
+      // `plateauCount`. That is an unrecoverable response to a stall: a coach
+      // does not answer a plateau by deleting the lift's training log, and the
+      // user cannot undo it. `represcribe.ts` already documented this as a
+      // live hazard and worked around it (Epley rescaling + a 3-week amnesty)
+      // rather than fixing it here.
+      //
+      // Ordered by REVERSIBILITY, an exercise swap is a costlier intervention
+      // than a deload even though it is a smaller-looking change: a deload's
+      // error cost is near zero (Schoenfeld p.200 — a 3-week break mid-
+      // programme did not interfere with adaptations; RP Ch3 P213 — deloading
+      // early is less detrimental than deloading late), whereas a swap's error
+      // cost is a destroyed history. So the cheap intervention is the one the
+      // engine is allowed to apply unattended, and the expensive one is not.
+      //
+      // A stalled MAIN is not left unhandled: `applyProgression`'s backoff
+      // still cuts its load 5% every third failure, the mesocycle deload still
+      // reaches it, and a user who genuinely wants a different main lift can
+      // swap it themselves. What is removed is the engine silently doing it.
       if (ex.isAccessory === true) {
         if (action === "add_volume") {
           out.baseSets = Math.min(ACCESSORY_RAMP_CAP, base + 1);
@@ -2061,19 +2154,20 @@ function applyAdjustment(
           out.baseSets = Math.max(ACCESSORY_ANCHOR_FLOOR, base - 1);
           out.sets = Math.max(ACCESSORY_ANCHOR_FLOOR, out.sets - 1);
         }
-      }
-      if (action === "reorganize" && (ex.plateauCount ?? 0) > 0) {
-        const swap = pickExercise(
-          ex.movementCategory,
-          Math.max(3, ex.plateauCount ?? 0),
-          ex.exerciseId,
-          experience
-        );
-        // Only clear the stall once the reorganisation actually changed the
-        // movement. Previously counts 1–2 made `pickExercise` return the same
-        // id and we still erased the evidence of the unresolved plateau.
-        if (swap.id !== ex.exerciseId) {
-          return swapExerciseIdentity(out, swap, undefined, ex);
+
+        if (action === "reorganize" && (ex.plateauCount ?? 0) > 0) {
+          const swap = pickExercise(
+            ex.movementCategory,
+            Math.max(3, ex.plateauCount ?? 0),
+            ex.exerciseId,
+            experience
+          );
+          // Only clear the stall once the reorganisation actually changed the
+          // movement. Previously counts 1–2 made `pickExercise` return the same
+          // id and we still erased the evidence of the unresolved plateau.
+          if (swap.id !== ex.exerciseId) {
+            return swapExerciseIdentity(out, swap, undefined, ex);
+          }
         }
       }
       return out;
@@ -2084,7 +2178,19 @@ function applyAdjustment(
 export function advanceWeek(
   state: ProgramState,
   experience?: Experience,
-  recovery: RecoveryState = "unknown"
+  recovery: RecoveryState = "unknown",
+  /**
+   * D1: local Sunday week key the rolled-into week belongs to. Stamped onto
+   * `liftWeekKey` so the calendar rollover has an anchor to compare against
+   * next time. Passed in rather than read from the clock here to keep this
+   * function pure — every other input is already explicit.
+   *
+   * Optional so existing callers and the whole test suite keep compiling; when
+   * omitted the anchor is carried forward unchanged, which is the correct
+   * degenerate behaviour (a caller that does not know the date must not
+   * pretend the week moved).
+   */
+  nextWeekKey?: string
 ): ProgramState {
   // Cap at 52 weeks (1 year) then recycle — the 4-week periodization cycle
   // continues via modulo, but the number stays meaningful for UI display
@@ -2136,16 +2242,43 @@ export function advanceWeek(
           priorReductions: state.plateauResponses ?? 0,
         });
 
-  if (prescription.deload) {
+  /* 14b — the evidence-triggered tier, read from the week just TRAINED.
+     The calendar deload (`week % 4 === 0`) is a starting point, not a
+     detector: Schoenfeld p.200 says no study has quantified that cadence.
+     This reads RP Ch3 P154's two-session regression instead, escalates
+     muscle-local → whole-body per Ch3 P209-212, and biases toward firing
+     because a false positive costs ~nothing (Ch3 P213; Schoenfeld p.200's
+     3-week-break study) while a miss costs overtraining.
+
+     Muscles still re-entering from LAST week's recovery session are excluded
+     — the cut restores itself in full, so without that they would re-trigger
+     forever. See `recoveryTrigger.ts`. */
+  const { atMrv, trained } = musclesAtMrv(state.workouts);
+  const recoveryMuscles = recoveryTargets(atMrv, state.recoveringMuscles);
+  const escalateWholeBody =
+    !prescription.deload &&
+    recoveryMuscles.length > 0 &&
+    escalatesToWholeBody(recoveryMuscles, trained);
+
+  if (prescription.deload || escalateWholeBody) {
     // A deload week IS the light week — don't stack an adjustment on top of
     // it. The rule's bookkeeping below still runs, so a stall that spans a
     // deload is remembered rather than silently forgiven.
+    //
+    // The escalated case takes the SAME path deliberately: `prepareForDeload`
+    // is what anchors sets and stashes load/reps so the cut cannot compound
+    // across cycles, which is the D4 hazard this arc already paid for once.
     workouts = applyDeload(prepareForDeload(workouts), experience);
   } else {
     workouts = applyWeeklyVolumeShape(workouts, nextWeek);
     // Only apply fatigue on non-deload weeks to avoid double volume reduction
     workouts = applyFatigue(workouts, fatigue);
     workouts = applyAdjustment(workouts, action, experience);
+    // Muscle-local recovery sessions land LAST, on the shaped week — halve
+    // what the lifter would otherwise have done, not what they did before the
+    // shape ran. Zatsiorsky p.81: fatigue is specific, so the muscles that are
+    // fine keep their full week.
+    workouts = applyRecoverySession(workouts, recoveryMuscles);
   }
 
   // Reset the memory once the stall itself clears; otherwise carry it, and
@@ -2189,6 +2322,17 @@ export function advanceWeek(
             amnestyWeeksLeft: Math.max(0, amnestyWeeksLeft - 1),
           },
         }
+      : {}),
+    ...(nextWeekKey ? { liftWeekKey: nextWeekKey } : {}),
+    // The refractory list for next week. Written even when empty so a muscle
+    // that finishes re-entering is released rather than held forever, and
+    // omitted entirely when there is nothing to say — Firestore rejects
+    // `undefined`, and an always-present empty array is bytes for no
+    // information. A whole-body escalation records nothing: `applyDeload` is
+    // its own restore cycle and does not need this guard.
+    ...(!escalateWholeBody &&
+    (recoveryMuscles.length > 0 || state.recoveringMuscles?.length)
+      ? { recoveringMuscles: recoveryMuscles }
       : {}),
     updatedAt: Date.now(),
     nextWorkoutOverride: undefined,

@@ -3,8 +3,11 @@ import {
   weeklyVolumeByMuscle,
   volumeLandmark,
   classifyVolume,
+  classifyVolumeDose,
+  SECONDARY_SET_WEIGHT,
   balanceWeeklyVolume,
   balancePushPull,
+  toCanonical,
 } from "../volumeModel";
 import type { ProgramExercise, WorkoutDay } from "../programTypes";
 
@@ -344,8 +347,8 @@ describe("balancePushPull (D-LIFT-3)", () => {
 
 describe("volumeLandmark + classifyVolume", () => {
   it("hypertrophy carries the highest target band", () => {
-    expect(volumeLandmark("hypertrophy")).toEqual({ low: 12, high: 20 });
-    expect(volumeLandmark("strength")).toEqual({ low: 8, high: 14 });
+    expect(volumeLandmark("hypertrophy")).toEqual({ mv: 5, low: 12, high: 20 });
+    expect(volumeLandmark("strength")).toEqual({ mv: 4, low: 8, high: 14 });
   });
 
   it("classifies under / optimal / high against the band", () => {
@@ -355,5 +358,145 @@ describe("volumeLandmark + classifyVolume", () => {
     expect(classifyVolume(24, lm)).toBe("high");
     expect(classifyVolume(12, lm)).toBe("optimal"); // inclusive low
     expect(classifyVolume(20, lm)).toBe("optimal"); // inclusive high
+  });
+});
+
+/* ─── 13a · maintenance volume and the four-band ladder ──────────────────
+   MV was missing, and its absence made "redistribute volume" unimplementable:
+   specialisation drops non-target muscles to MV, not to MEV, and the band
+   between the two is the one RP calls out as pure cost — "more fatigue than
+   four sets by a long shot, but no additional benefit" (Ch8 P30 / Ch7 P159).
+
+   Nothing consumes the four-band ladder for a prescription yet. What it must
+   not do is move the three-band view underneath the surfaces that DO read it,
+   which is what the fold-back assertions below are for. ── */
+describe("volume currency (13a, ADR-0010)", () => {
+  it("the constant is the thing that actually runs, not documentation", () => {
+    // A named constant nothing reads is worse than a literal: it reads as a
+    // seam that exists. bench-press is Pectorals primary + Triceps and Front
+    // Delts secondary, so one set books exactly one SECONDARY_SET_WEIGHT of
+    // triceps — if the tally still had 0.5 hard-coded, this would not track.
+    const v = weeklyVolumeByMuscle([
+      day([ex({ exerciseId: "bench-press", sets: 4 })]),
+    ]);
+    expect(v.find((x) => x.muscle === "Triceps")?.sets).toBe(
+      4 * SECONDARY_SET_WEIGHT
+    );
+    expect(v.find((x) => x.muscle === "Chest")?.sets).toBe(4); // primary is always 1.0
+  });
+
+  it("is still 0.5 — the flip is staged, and staged on a condition", () => {
+    // ADR-0010: 1:1 is the correct currency and the bands assume it, but
+    // flipping before the day builders consult the landmarks doubles the
+    // per-muscle readings over a ceiling (180/825 -> 364/825 across the
+    // 90-config sweep). When the builders become landmark-aware, flip this AND
+    // re-baseline D-VOL's ratchet in planSweep.golden.test.ts in the same
+    // commit — those bounds are denominated in this currency.
+    expect(SECONDARY_SET_WEIGHT).toBe(0.5);
+  });
+});
+
+describe("maintenance volume (13a)", () => {
+  it("MV sits at 0.40–0.50 of MEV, the only ratio the sources support", () => {
+    // Two worked pairs in the corpus, no table: back MEV 10 / MV 4 (Ch7 P155)
+    // and MV/MEV/MRV 2/4/7 (Ch7 P147-149). Anything outside that range is an
+    // invented number and should have to argue with this test.
+    for (const goal of [
+      "hypertrophy",
+      "strength",
+      "fat_loss",
+      "running",
+      "general",
+      undefined,
+    ]) {
+      const lm = volumeLandmark(goal);
+      const ratio = lm.mv / lm.low;
+      expect(
+        ratio,
+        `${goal}: MV ${lm.mv} / MEV ${lm.low}`
+      ).toBeGreaterThanOrEqual(0.4);
+      expect(ratio, `${goal}: MV ${lm.mv} / MEV ${lm.low}`).toBeLessThanOrEqual(
+        0.5
+      );
+      // …and the ladder is ordered, so no band can be empty or inverted.
+      expect(lm.mv, `${goal}`).toBeLessThan(lm.low);
+      expect(lm.low, `${goal}`).toBeLessThan(lm.high);
+    }
+  });
+
+  it("separates 'losing the muscle' from 'paying for nothing'", () => {
+    const lm = volumeLandmark("hypertrophy"); // mv 5, 12..20
+    expect(classifyVolumeDose(3, lm)).toBe("below_maintenance");
+    expect(classifyVolumeDose(5, lm)).toBe("junk"); // MV itself: the parking spot
+    expect(classifyVolumeDose(11.5, lm)).toBe("junk");
+    expect(classifyVolumeDose(12, lm)).toBe("optimal");
+    expect(classifyVolumeDose(20, lm)).toBe("optimal");
+    expect(classifyVolumeDose(20.5, lm)).toBe("high");
+  });
+
+  it("the three-band view every surface reads is unchanged by MV", () => {
+    // The whole safety property of 13a: WeeklyVolumeCard and the balancers see
+    // exactly what they saw before. Both sub-MEV bands fold back to `low`.
+    const lm = volumeLandmark("hypertrophy");
+    for (let sets = 0; sets <= 30; sets += 0.5) {
+      const expected =
+        sets < lm.low ? "low" : sets > lm.high ? "high" : "optimal";
+      expect(classifyVolume(sets, lm), `${sets} sets`).toBe(expected);
+    }
+  });
+});
+
+/* ─── P1 · muscle attribution, as DECISIONS rather than accidents ────────
+   Each of these was a defect measured by the audit in
+   docs/proposals/lifting-v8-evaluation.md §2.4 and pinned by the golden
+   sweep before being changed. They are asserted here so a future edit has
+   to argue with the reasoning rather than silently revert it. ── */
+describe("muscle attribution (P1)", () => {
+  it("adductors are hip adductors, not quadriceps", () => {
+    // Was "Quads", so a Hip Adduction Machine booked quad volume. Adductor
+    // magnus is a primary hip extensor, trained alongside the glutes.
+    expect(toCanonical("adductors")).toBe("Glutes");
+  });
+
+  it("hip flexors do not book quad volume off every ab movement", () => {
+    // Was "Quads". "hip flexors" is a SECONDARY on nearly every ab movement
+    // in the DB — crunches, sit-ups, leg raises, russian twists, dead bugs,
+    // dragon flags, L-sits — so core sessions silently fed the quad tally.
+    expect(toCanonical("hip flexors")).toBeNull();
+  });
+
+  it("the trailing-space hip-flexors key is gone, and trimming still works", () => {
+    // `"hip flexors "` was an unreachable key (toCanonical trims first) that
+    // mapped to a DIFFERENT value than the live one — a contradiction
+    // TypeScript could not catch, because the two keys differ.
+    expect(toCanonical("  Hip Flexors  ")).toBe(toCanonical("hip flexors"));
+  });
+
+  it("forearms earn nothing, deliberately", () => {
+    // Not an oversight: there is no Forearms group in this ten-group
+    // taxonomy, and no exercise has forearms as its PRIMARY. Mapping them
+    // into Biceps would move every biceps tally to avoid a rounding error.
+    // Revisit in the taxonomy split (13a).
+    expect(toCanonical("forearms")).toBeNull();
+    expect(toCanonical("brachioradialis")).toBeNull();
+  });
+
+  it("a Full Body lift books its secondaries instead of nothing", () => {
+    // An unattributable PRIMARY used to `continue` past the whole lift, so
+    // the thirteen "Full Body" movements — Zercher squat, thrusters,
+    // kettlebell swing, Turkish get-up — trained nothing as far as the model
+    // was concerned, despite naming real muscles as secondaries.
+    const week = [day([ex({ exerciseId: "zercher-squat", sets: 4 })])];
+    const tally = weeklyVolumeByMuscle(week);
+    const quads = tally.find((t) => t.muscle === "Quads");
+    expect(quads?.sets).toBe(2); // 4 sets × 0.5 secondary credit
+    expect(tally.find((t) => t.muscle === "Glutes")?.sets).toBe(2);
+  });
+
+  it("cardio still books nothing, whatever its secondaries claim", () => {
+    // The counter-case to the rule above: a treadmill lists Quads/Calves as
+    // secondaries and must NOT contribute resistance volume.
+    const week = [day([ex({ exerciseId: "treadmill", sets: 3 })])];
+    expect(weeklyVolumeByMuscle(week)).toEqual([]);
   });
 });

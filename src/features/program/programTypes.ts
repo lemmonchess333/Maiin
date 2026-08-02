@@ -10,6 +10,7 @@ import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
    (2026-07-11 repo audit batch 3): this file imports the inference
    function, so the inference module must not import back from here. */
 import type { MovementCategory } from "@/lib/exerciseMovementCategory";
+import type { CanonicalMuscle } from "./muscleTaxonomy";
 export type { MovementCategory } from "@/lib/exerciseMovementCategory";
 
 export type SplitType =
@@ -713,16 +714,93 @@ export interface ProgramState {
    * keep in lockstep.
    */
   deloadSnapshot?: DeloadSnapshot;
+  /**
+   * D1: local week key (Sunday, `localWeekKey()`) of the week the current
+   * `workouts` were generated for. The LIFT side's calendar anchor.
+   *
+   * Why it had to exist. The auto week-rollover was keyed on
+   * `runDays[0].weekKey` — a RUN field — and returned early for freeform
+   * users, who have no runDays. So a pure lifter had no automatic rollover at
+   * all, and the only other path was a manual button gated on every day being
+   * completed-or-skipped. Miss one Friday, never tap "skip", and the
+   * programme froze on week N permanently: no deload, no adjustment rule, no
+   * mesocycle rotation, forever. Per CLAUDE.md's design-for-the-user-base
+   * rule that is the modal path, not an edge case.
+   *
+   * Written by `advanceWeek`, so both the manual and automatic paths stamp it
+   * without either having to remember. Backfilled to the CURRENT week by
+   * `migrateProgramState` — a legacy doc has no anchor, and treating "absent"
+   * as "stale since epoch" would roll a returning user forward twelve weeks
+   * and three deloads on first open.
+   *
+   * Optional with a defaulting reader → no schema bump (see
+   * docs/proposals/schema-versioning.md).
+   */
+  liftWeekKey?: string;
+
+  /**
+   * Canonical muscles given a RECOVERY SESSION on the most recent weekly
+   * advance (14b) — halved sets and reps at held load, per RP Ch3 P202.
+   *
+   * Persisted for one reason: the cut restores itself in full via
+   * `applyWeeklyVolumeShape`, so a muscle sitting at its ceiling would show
+   * the MRV signal again immediately and oscillate half → full → half. This is
+   * the refractory list that stops that — a muscle here is re-entering and is
+   * not eligible for another recovery session this week. `advanceWeek` clears
+   * it as it writes the next one, so it never accumulates.
+   *
+   * NOT a history: it holds one week only, and `recoveryTrigger.ts` explains
+   * why this is a local device rather than RP Ch3 P203's midpoint re-entry.
+   *
+   * Optional with a defaulting reader → no schema bump. Absent means "nothing
+   * re-entering", which is the correct reading for every existing document, so
+   * there is nothing to backfill.
+   */
+  recoveringMuscles?: CanonicalMuscle[];
+
+  /**
+   * The last exercise removed through the command boundary, stashed verbatim
+   * so `restoreExercise` can undo it (P6).
+   *
+   * SERVER-WRITTEN. `removeExercise` fills it; `restoreExercise` consumes and
+   * clears it. The client never sets it — that is the point: the client cannot
+   * reconstruct a removed exercise's logged history or calibrated load, so an
+   * undo that rebuilt from the catalog would silently return a different
+   * exercise wearing the same name.
+   *
+   * ONE slot, overwritten by the next removal. A history of removals is a
+   * different feature; the v8 evaluation argues specifically for "a
+   * single-slot lastEngineChange + one-tap undo" over an immutable version
+   * store, and this is that shape.
+   *
+   * Optional with a defaulting reader → no schema bump. Absent means "nothing
+   * to undo", correct for every existing document.
+   */
+  lastRemovedExercise?: {
+    dayIndex: number;
+    /** Position it held, so the undo puts it back where it was. */
+    index: number;
+    exercise: ProgramExercise;
+    /** Epoch ms — the server refuses a restore older than its window. */
+    removedAt: number;
+  };
 }
 
 /* ================================
    WEEKLY PRESCRIPTION
 ================================ */
 
+/**
+ * Transient — computed per call by `generateWeekPrescription`, never persisted.
+ *
+ * `intensityMultiplier` and `volumeModifier` were removed here after a grep
+ * across `src/` and `functions/` found zero readers: they were written on
+ * every call and consumed by nothing, so the advertised 2.5%/week intensity
+ * ramp was never behaviour. See `generateWeekPrescription` for why they were
+ * deleted rather than wired.
+ */
 export interface WeeklyPrescription {
   week: number;
-  intensityMultiplier: number;
-  volumeModifier: number;
   deload: boolean;
 }
 

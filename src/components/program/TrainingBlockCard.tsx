@@ -31,6 +31,7 @@ import { CalendarRange, ChevronRight, Flag } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { haptic } from "@/lib/haptic";
 import { cn } from "@/lib/utils";
+import { formatOneRepMaxRange } from "@/lib/analytics";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { BottomSheet } from "@/components/ui/BottomSheet";
@@ -565,6 +566,55 @@ export default function TrainingBlockCard({
               </span>{" "}
               planned lifts.
             </p>
+            {/* Main-lift strength readout (handoff 12). `review.anchors` has
+                been computed since the review shipped and rendered NOWHERE —
+                the GsPb1 lock explicitly provides for "an optional
+                anchor-movement metric", and this is it finally arriving.
+
+                Shown as a RANGE, because an estimate from a set of 12 is not
+                as good as one from a set of 3 and a single number says
+                otherwise (see `estimate1RMRange`). Anchors whose best set was
+                above ~15 reps show nothing rather than a very wide band.
+
+                The gain is shown only when it is positive. The end estimate is
+                always there either way, so nothing is hidden — but a calm
+                end-of-block checkpoint is not the place to render a red
+                minus sign, and "never a guilt trip" is one of this surface's
+                locked constraints. */}
+            {review.anchors.some((a) => a.endE1rm) && (
+              <div className="space-y-1.5">
+                <SectionLabel>Main lifts</SectionLabel>
+                {review.anchors
+                  .filter((a) => a.endE1rm)
+                  .map((a) => {
+                    const gain =
+                      a.startE1rm && a.endE1rm
+                        ? a.endE1rm.point - a.startE1rm.point
+                        : 0;
+                    return (
+                      <div
+                        key={a.exerciseId}
+                        className="flex items-baseline justify-between gap-3"
+                      >
+                        <p className="text-xs text-foreground truncate">
+                          {a.exerciseName}
+                        </p>
+                        <p className="text-xs text-muted-foreground shrink-0">
+                          <span className="font-mono tabular-nums">
+                            ~{formatOneRepMaxRange(a.endE1rm!)}
+                          </span>
+                          {gain > 0 && (
+                            <span className="ml-1.5 font-mono tabular-nums text-success">
+                              +{gain} kg
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+
             {block?.owned && (
               <p className="text-xs text-muted-foreground">
                 You trained at{" "}

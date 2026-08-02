@@ -1,3 +1,5 @@
+import { getExerciseById } from "@/lib/exercises";
+
 import type { MovementCategory } from "./programTypes";
 import {
   allowsComplexity,
@@ -10,17 +12,44 @@ import {
    Maps movement categories to exercise IDs from src/lib/exercises.ts
 ================================ */
 
+/**
+ * What the GENERATOR knows about an exercise, on top of what the exercise
+ * catalogue already says about it.
+ *
+ * ── One exercise record (11b) ────────────────────────────────────────────
+ *
+ * This used to duplicate `name` and the lengthened-position flag from
+ * `src/lib/exercises.ts`, and the duplication had drifted in every way it
+ * could:
+ *
+ *   - **`name` disagreed on one row.** The bank said "Chest-Supported DB Row",
+ *     the catalogue said "Chest-Supported Dumbbell Row" — and the bank's copy
+ *     is the one written into the user's programme, so the exercise guide and
+ *     the programme card named the same lift differently.
+ *   - **`lengthened` and `Exercise.lengthenedBias` are the same fact under two
+ *     names, and all the data was on one side.** Fifteen bank entries carried
+ *     it; ZERO catalogue rows did. `lengthenedBias` was a documented field with
+ *     no data and no reader, so anything consulting the catalogue for it got
+ *     `false` for every exercise in the app.
+ *   - **The bank's category grouping disagreed with `STORED_CATEGORY`** on
+ *     `tricep-dips` (`arms_triceps` here, `horizontal_push` there). The bank
+ *     seeds loads and the stored table stamps `movementCategory` onto the
+ *     programme, so one exercise was two different movements depending on which
+ *     module asked.
+ *
+ * So: the fields that describe the EXERCISE live in the catalogue and are read
+ * from there. The fields below are the ones that describe how this GENERATOR
+ * uses it — its category grouping and order, which entry is the category's
+ * anchor lift, what job a variation does, how heavy it loads relative to the
+ * anchor, and how much technique it demands. Those are properties of the
+ * programme, not of the movement, and they stay here.
+ *
+ * `variationBank.test.ts` pins every bank id present in the catalogue and every
+ * bank grouping equal to `STORED_CATEGORY`, so neither can drift back.
+ */
 interface ExerciseOption {
   id: string;
-  name: string;
   primary: boolean;
-  /**
-   * Trains the target muscle at a LONG muscle length (deep stretch under load) —
-   * more hypertrophy per set (Maeo 2021/2023; Pedrosa 2022). Accessory
-   * selection biases toward these (D-LIFT-2). Mains stay the canonical
-   * compound (the progression anchor) regardless.
-   */
-  lengthened?: boolean;
   /**
    * What job this variation does when it replaces the category's main
    * (training-book backlog #11 — B6). Three sources categorise by ROLE
@@ -66,42 +95,35 @@ interface ExerciseOption {
 
 export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
   horizontal_push: [
-    { id: "bench-press", name: "Bench Press", primary: true },
+    { id: "bench-press", primary: true },
     {
       id: "incline-bench",
       loadFactor: 0.8,
-      name: "Incline Bench Press",
       primary: false,
       role: "size",
     },
     {
       id: "db-bench",
       loadFactor: 0.35,
-      name: "Dumbbell Bench Press",
       primary: false,
-      lengthened: true,
       role: "size",
     },
     {
       id: "incline-db-press",
       loadFactor: 0.3,
-      name: "Incline Dumbbell Press",
       primary: false,
-      lengthened: true,
       role: "size",
     },
     {
       id: "close-grip-bench",
       complexity: "technical",
       loadFactor: 0.8,
-      name: "Close Grip Bench Press",
       primary: false,
       role: "weak_point",
     },
     {
       id: "barbell-floor-press",
       loadFactor: 0.85,
-      name: "Barbell Floor Press",
       primary: false,
       complexity: "advanced",
       role: "weak_point",
@@ -123,17 +145,15 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     {
       id: "push-ups",
       loadFactor: 0,
-      name: "Push-Ups",
       primary: false,
       role: "size",
     },
   ],
   vertical_push: [
-    { id: "overhead-press", name: "Overhead Press", primary: true },
+    { id: "overhead-press", primary: true },
     {
       id: "db-shoulder-press",
       loadFactor: 0.35,
-      name: "Dumbbell Shoulder Press",
       primary: false,
       role: "size",
     },
@@ -141,7 +161,6 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
       id: "arnold-press",
       complexity: "technical",
       loadFactor: 0.3,
-      name: "Arnold Press",
       primary: false,
       role: "size",
     },
@@ -149,42 +168,35 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
       id: "landmine-press",
       complexity: "technical",
       loadFactor: 0.5,
-      name: "Landmine Press",
       primary: false,
       role: "technique",
     },
   ],
   horizontal_pull: [
-    { id: "barbell-row", name: "Barbell Row", primary: true },
+    { id: "barbell-row", primary: true },
     {
       id: "db-row",
       loadFactor: 0.4,
-      name: "Dumbbell Row",
       primary: false,
       role: "size",
     },
     {
       id: "t-bar-row",
       loadFactor: 0.8,
-      name: "T-Bar Row",
       primary: false,
       role: "size",
     },
     {
       id: "seated-row",
       loadFactor: 0.9,
-      name: "Seated Cable Row",
       primary: false,
-      lengthened: true,
       role: "size",
     },
     {
       id: "chest-supported-db-row",
       complexity: "technical",
       loadFactor: 0.35,
-      name: "Chest-Supported DB Row",
       primary: false,
-      lengthened: true,
       role: "technique",
     },
     // ADVANCED (2026-07-28). Already in the catalog, never reachable from the
@@ -195,7 +207,6 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     {
       id: "pendlay-row",
       loadFactor: 0.85,
-      name: "Pendlay Row",
       primary: false,
       complexity: "advanced",
       role: "technique",
@@ -217,25 +228,21 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     {
       id: "inverted-row",
       loadFactor: 0,
-      name: "Inverted Row",
       primary: false,
       role: "technique",
     },
   ],
   vertical_pull: [
-    { id: "pull-ups", name: "Pull-Ups", primary: true },
+    { id: "pull-ups", primary: true },
     {
       id: "lat-pulldown",
       loadFactor: 0.6,
-      name: "Lat Pulldown",
       primary: false,
-      lengthened: true,
       role: "size",
     },
     {
       id: "chin-ups",
       loadFactor: 0,
-      name: "Chin-Ups",
       primary: false,
       role: "size",
     },
@@ -243,44 +250,36 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
       id: "single-arm-lat-pulldown",
       complexity: "technical",
       loadFactor: 0.25,
-      name: "Single-Arm Lat Pulldown",
       primary: false,
-      lengthened: true,
       role: "technique",
     },
   ],
   knee_dominant: [
-    { id: "squat", name: "Barbell Squat", primary: true },
+    { id: "squat", primary: true },
     {
       id: "front-squat",
       complexity: "technical",
       loadFactor: 0.75,
-      name: "Front Squat",
       primary: false,
       role: "technique",
     },
     {
       id: "leg-press",
       loadFactor: 1.6,
-      name: "Leg Press",
       primary: false,
       role: "size",
     },
     {
       id: "hack-squat",
       loadFactor: 0.9,
-      name: "Hack Squat",
       primary: false,
-      lengthened: true,
       role: "size",
     },
     {
       id: "bulgarian-split",
       complexity: "technical",
       loadFactor: 0.25,
-      name: "Bulgarian Split Squat",
       primary: false,
-      lengthened: true,
       role: "technique",
     },
     // HOME / MINIMAL COVERAGE (2026-07-28). Appended, deliberately, at the END
@@ -300,33 +299,28 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     {
       id: "goblet-squat",
       loadFactor: 0.3,
-      name: "Goblet Squat",
       primary: false,
       role: "technique",
     },
     {
       id: "bodyweight-squat",
       loadFactor: 0,
-      name: "Bodyweight Squat",
       primary: false,
       role: "technique",
     },
   ],
   hip_dominant: [
-    { id: "deadlift", name: "Deadlift", primary: true },
+    { id: "deadlift", primary: true },
     {
       id: "romanian-deadlift",
       complexity: "technical",
       loadFactor: 0.65,
-      name: "Romanian Deadlift",
       primary: false,
-      lengthened: true,
       role: "size",
     },
     {
       id: "hip-thrust",
       loadFactor: 0.9,
-      name: "Hip Thrust",
       primary: false,
       role: "size",
     },
@@ -334,7 +328,6 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
       id: "sumo-deadlift",
       complexity: "technical",
       loadFactor: 0.95,
-      name: "Sumo Deadlift",
       primary: false,
       role: "technique",
     },
@@ -342,7 +335,6 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
       id: "trap-bar-deadlift",
       complexity: "technical",
       loadFactor: 1.0,
-      name: "Trap Bar Deadlift",
       primary: false,
       role: "technique",
     },
@@ -356,15 +348,12 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     {
       id: "seated-leg-curl",
       loadFactor: 0.25,
-      name: "Seated Leg Curl",
       primary: false,
-      lengthened: true,
       role: "size",
     },
     {
       id: "rack-pull",
       loadFactor: 1.15,
-      name: "Rack Pull",
       primary: false,
       complexity: "advanced",
       role: "weak_point",
@@ -386,15 +375,12 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     {
       id: "db-rdl",
       loadFactor: 0.25,
-      name: "Dumbbell Romanian Deadlift",
       primary: false,
-      lengthened: true,
       role: "size",
     },
     {
       id: "glute-bridge",
       loadFactor: 0,
-      name: "Glute Bridge",
       primary: false,
       role: "size",
     },
@@ -411,79 +397,66 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     {
       id: "nordic-hamstring-curl",
       loadFactor: 0,
-      name: "Nordic Hamstring Curl",
       primary: false,
       complexity: "technical",
-      lengthened: true,
       role: "technique",
     },
   ],
   arms_biceps: [
-    { id: "barbell-curl", name: "Barbell Curl", primary: true },
+    { id: "barbell-curl", primary: true },
     {
       id: "db-curl",
       loadFactor: 0.4,
-      name: "Dumbbell Curl",
       primary: false,
       role: "size",
     },
     {
       id: "hammer-curl",
       loadFactor: 0.4,
-      name: "Hammer Curl",
       primary: false,
       role: "size",
     },
     {
       id: "preacher-curl",
       loadFactor: 0.7,
-      name: "Preacher Curl",
       primary: false,
       role: "size",
     },
     {
       id: "cable-curl",
       loadFactor: 0.8,
-      name: "Cable Curl",
       primary: false,
-      lengthened: true,
       role: "size",
     },
   ],
   arms_triceps: [
-    { id: "rope-tricep-pushdown", name: "Rope Tricep Pushdown", primary: true },
+    { id: "rope-tricep-pushdown", primary: true },
     {
       id: "skull-crushers",
       complexity: "technical",
       loadFactor: 0.6,
-      name: "Skull Crushers",
       primary: false,
-      lengthened: true,
       role: "size",
     },
     {
       id: "overhead-extension",
       loadFactor: 0.6,
-      name: "Overhead Tricep Extension",
       primary: false,
-      lengthened: true,
       role: "size",
     },
     {
       id: "tricep-dips",
       complexity: "technical",
       loadFactor: 0,
-      name: "Tricep Dips",
       primary: false,
       role: "size",
     },
   ],
   core: [
-    { id: "cable-crunch", name: "Cable Crunch", primary: true },
+    { id: "cable-crunch", primary: true },
     {
       id: "leg-raise",
       loadFactor: 0,
-      name: "Hanging Leg Raise",
       primary: false,
       role: "size",
     },
@@ -491,7 +464,6 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
       id: "ab-wheel",
       complexity: "technical",
       loadFactor: 0,
-      name: "Ab Wheel Rollout",
       primary: false,
       role: "size",
     },
@@ -499,7 +471,6 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
       id: "pallof-press",
       complexity: "technical",
       loadFactor: 0.5,
-      name: "Pallof Press",
       primary: false,
       role: "technique",
     },
@@ -507,7 +478,6 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
       id: "russian-twist",
       complexity: "technical",
       loadFactor: 0.3,
-      name: "Russian Twist",
       primary: false,
       role: "size",
     },
@@ -597,6 +567,36 @@ export function loadFactorFor(
 }
 
 /**
+ * The exercise's display NAME, from the catalogue — the one place it is
+ * written down. A bank id with no catalogue row would be a broken reference
+ * rather than a naming question, so it falls back to the id: visibly wrong in
+ * the UI, rather than an empty string that reads as a rendering bug.
+ * `variationBank.test.ts` pins that no such id exists.
+ */
+export function exerciseDisplayName(id: string): string {
+  return getExerciseById(id)?.name ?? id;
+}
+
+/** `{id, name}` as the callers want it, with the name resolved once. */
+function picked(option: ExerciseOption): { id: string; name: string } {
+  return { id: option.id, name: exerciseDisplayName(option.id) };
+}
+
+/**
+ * Trains the target muscle at a LONG muscle length (deep stretch under load) —
+ * more hypertrophy per set (Maeo 2021/2023; Pedrosa 2022). Accessory selection
+ * biases toward these (D-LIFT-2); mains stay the canonical compound (the
+ * progression anchor) regardless.
+ *
+ * A property of the movement, so it reads from the catalogue rather than being
+ * restated here. It carried fifteen entries in the bank and none in the
+ * catalogue until 11b moved the data across.
+ */
+function isLengthened(option: ExerciseOption): boolean {
+  return getExerciseById(option.id)?.lengthenedBias === true;
+}
+
+/**
  * Pick the primary exercise for a movement category,
  * or rotate to a different variation if plateaued.
  */
@@ -617,10 +617,10 @@ export function pickExercise(
   if (plateauCount < 3) {
     if (currentExerciseId) {
       const current = options.find((e) => e.id === currentExerciseId);
-      if (current) return { id: current.id, name: current.name };
+      if (current) return picked(current);
     }
     const primary = options.find((e) => e.primary) ?? options[0];
-    return { id: primary.id, name: primary.name };
+    return picked(primary);
   }
 
   // Plateau >= 3 — rotate to a PURPOSEFUL variation (backlog #11 — P4/B6/N5).
@@ -653,7 +653,7 @@ export function pickExercise(
   // the lifter has the base to use something sharper. `allowsComplexity`
   // already filtered the pool, so a novice can never reach this branch.
   const others = options.filter((e) => e.id !== currentExerciseId);
-  if (others.length === 0) return { id: options[0].id, name: options[0].name };
+  if (others.length === 0) return picked(options[0]);
   const rank = (o: ExerciseOption) =>
     o.role === "technique" ? 0 : o.role === "weak_point" ? 1 : 2;
   const specialisation = (o: ExerciseOption) =>
@@ -664,7 +664,7 @@ export function pickExercise(
     else if (rank(o) === rank(pick) && specialisation(o) > specialisation(pick))
       pick = o;
   }
-  return { id: pick.id, name: pick.name };
+  return picked(pick);
 }
 
 /**
@@ -712,8 +712,8 @@ export function pickAccessory(
     allowsComplexity(experience, e.complexity)
   );
   const options = allowed.length > 0 ? allowed : eligible;
-  const lengthened = options.filter((e) => e.lengthened);
+  const lengthened = options.filter(isLengthened);
   const pool = lengthened.length > 0 ? lengthened : options;
   const pick = pool[0] ?? exerciseBank[category][0];
-  return { id: pick.id, name: pick.name };
+  return picked(pick);
 }

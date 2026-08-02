@@ -128,3 +128,77 @@ describe("buildBlockReview", () => {
     expect(JSON.stringify(review)).not.toMatch(/bodyweight|weightLoss/i);
   });
 });
+
+/* ─── The strength readout (handoff 12) ──────────────────────────────────
+   The anchor slot's only metric was `bestSetKg` — the heaviest bar touched,
+   which ignores reps entirely and therefore ranks 100 kg × 1 above 95 kg × 10.
+   That is a real fact about the block and it stays, but it is not a strength
+   readout: the second of those is the stronger performance.
+
+   These pin the e1RM half. Note the ranking/display split — the SET is chosen
+   by the point estimate (bands overlap, and overlapping bands have no order),
+   while what gets shown is the band. ── */
+describe("buildBlockReview — anchor e1RM (handoff 12)", () => {
+  const withSets = (
+    date: string,
+    sets: Array<{ reps: number; weightKg: number }>
+  ): ReviewWorkoutDoc => ({
+    date,
+    exercises: [
+      { exerciseId: "bench-press", exerciseName: "Bench Press", sets },
+    ],
+  });
+
+  it("picks the best set by estimated 1RM, not by the heaviest bar", () => {
+    // 100x1 = 100 e1RM; 95x10 = 126.7. The heavier bar is the weaker set, and
+    // this is exactly the case `bestSetKg` gets backwards.
+    const review = buildBlockReview(block, [
+      withSets("2026-07-06", [
+        { reps: 1, weightKg: 100 },
+        { reps: 10, weightKg: 95 },
+      ]),
+    ]);
+    const anchor = review.anchors.find((a) => a.exerciseId === "bench-press")!;
+    expect(anchor.startBestKg).toBe(100); // heaviest bar — unchanged
+    expect(anchor.startE1rm!.point).toBe(127); // strongest performance
+  });
+
+  it("carries the band, not just the point", () => {
+    const review = buildBlockReview(block, [
+      withSets("2026-07-06", [{ reps: 10, weightKg: 95 }]),
+    ]);
+    const e = review.anchors[0].startE1rm!;
+    expect(e.low).toBeLessThan(e.point);
+    expect(e.high).toBeGreaterThan(e.point);
+  });
+
+  it("declines rather than guessing when the best set is a high-rep one", () => {
+    // Above ~15 reps the %1RM map has broken down (Schoenfeld p.92). The row
+    // still appears — the load fields are real — but the estimate is absent.
+    const review = buildBlockReview(block, [
+      withSets("2026-07-06", [{ reps: 25, weightKg: 40 }]),
+    ]);
+    expect(review.anchors[0].startBestKg).toBe(40);
+    expect(review.anchors[0].startE1rm).toBeNull();
+  });
+
+  it("gives both halves independently, so a gain is computable", () => {
+    const review = buildBlockReview(block, [
+      withSets("2026-07-06", [{ reps: 5, weightKg: 90 }]), // week 1
+      withSets("2026-07-27", [{ reps: 5, weightKg: 100 }]), // week 4
+    ]);
+    const a = review.anchors[0];
+    expect(a.startE1rm!.point).toBe(105);
+    expect(a.endE1rm!.point).toBe(117);
+    expect(a.endE1rm!.point - a.startE1rm!.point).toBeGreaterThan(0);
+  });
+
+  it("degrades gracefully — a half with no data is null, not zero", () => {
+    // The locked constraint: thin data produces a usable review, never an
+    // error state. Zero would render as "your 1RM is 0 kg".
+    const review = buildBlockReview(block, [
+      withSets("2026-07-06", [{ reps: 5, weightKg: 90 }]),
+    ]);
+    expect(review.anchors[0].endE1rm).toBeNull();
+  });
+});
