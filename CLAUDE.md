@@ -693,13 +693,91 @@ Affects: `functions/index.js` (`dailyRaceReconciliationSweep` L3) + new `functio
 - [ ] **First natural firing materializes.** At the next 04:00 UTC sweep, spot-check a race-prep user whose recovery ended >7 days ago (`runPlan.phase === "recovery"`, `today >= recoveryEndDate + 7d`) with **no** successor race: their profile should flip to `runMode: "freeform"` + `raceGoal: null`, and `programState.runPlan` should have `phase: null`, `recoveryEndDate: null`, `raceGoal: null`. Logs show `done — noShow=X, recoveryCleared=Y` with no `fatal error:`.
 - [ ] **Newer-race case preserved.** A user who set a new FUTURE race during recovery (anchor mismatch) must stay `runMode: "race_prep"` with that raceGoal intact after the sweep — only `phase`/`recoveryEndDate` cleared. Confirm the sweep does NOT delete the successor race.
 
-### `askGeminiText` retirement — needs a deploy to actually stop serving
+### `askGeminiText` retirement — DONE 2026-07-26, confirmed from the deploy log
 
-Removing the export from `functions/index.js` does **not** take the endpoint down. Until `deploy-functions.yml` runs, the previously-deployed `askGeminiText` container keeps accepting authenticated calls and billing Vertex. That was the main reason to retire it: with no client caller, any traffic reaching it was by definition not from the app, and App Check is not yet enforced.
+**RESOLVED 2026-08-02.** The endpoint is gone from production. The deploy that
+shipped the retirement (`da7c1ce`, run 30213576939) pruned it in the same run:
 
-- [ ] After the next functions deploy, confirm `askGeminiText` is **gone** from the Cloud Functions list (Console → Functions, or `firebase functions:list`). A stale container is the whole risk this retirement was meant to close.
-- [ ] If it lingers, delete it explicitly: `firebase functions:delete askGeminiText --project adaptive-fitness-af8bb`. Firebase usually prunes removed exports on deploy, but it prompts for confirmation, and a non-interactive CI deploy can skip the prune.
-- [ ] No client change is needed — there were zero call sites. `rateLimits/{uid}_askGemini` docs stop being written; existing ones are swept by the account-deletion range filter already covered in `accountDeletionRateLimitsRange.test.ts`.
+```
+17:58:05  i functions: deleting Node.js 20 (1st Gen) function askGeminiText(us-central1)...
+17:58:09  ✔ functions[askGeminiText(us-central1)] Successful delete operation.
+```
+
+**The risk this row warned about did not exist, and the reason is worth
+keeping.** It said "Firebase usually prunes removed exports on deploy, but it
+prompts for confirmation, and a non-interactive CI deploy can skip the prune."
+`deploy-functions.yml` passes **`--force`**, which suppresses that prompt and
+lets the prune run unattended. So a removed export IS reliably deleted by this
+pipeline — no manual `functions:delete` is needed after retiring one.
+
+Same shape as the `STORAGE_XSERVICE_APPROVED` correction below: a plausible
+hazard written into the runbook, never checked against the pipeline that would
+have to exhibit it, and left steering people wrong for a week. When a row
+predicts a tool will misbehave, read the flags the workflow actually passes.
+
+- [x] Deleted from the Cloud Functions list — proven by the delete lines above,
+      and corroborated by later deploys (through `127ac38`) listing neither an
+      update nor a delete for it.
+- [x] No client change needed — there were zero call sites. `rateLimits/{uid}_askGemini`
+      docs stop being written; existing ones are swept by the account-deletion
+      range filter covered in `accountDeletionRateLimitsRange.test.ts`.
+
+### Node runtime — bumped to 22 (2026-08-02); watch the first deploy
+
+The `127ac38` deploy log warned that Node 20 "will be decommissioned on
+2026-10-30, after which you will not be able to deploy without upgrading" —
+a hard blocker on **every** future deploy, including an emergency fix.
+Confirmed against firebase-tools' own runtime metadata rather than the warning
+text alone: `nodejs20.decommissionDate = "2026-10-30"`.
+
+**Bumped to `nodejs22`.** THREE places pin the runtime and they must agree —
+missing one leaves the deploy resolving a version you did not choose:
+
+| File                          | Field                                               |
+| ----------------------------- | --------------------------------------------------- |
+| `firebase.json`               | `functions.runtime` — the authoritative declaration |
+| `functions/package.json`      | `engines.node`                                      |
+| `functions/package-lock.json` | mirrors `engines` (regenerate, don't hand-edit)     |
+
+`deploy-functions.yml`'s `node-version` was also moved 20 → 22. That one is the
+CI RUNNER's node, not the functions runtime — unrelated to this deadline (its
+own deprecation notice is about Actions) — but it should not trail the runtime
+it deploys.
+
+**Why 22 and not 24, given both are GA:** they share a decommission date
+(2028-10-31), so 24 buys no extra deploy runway — only a later deprecation
+_warning_ (2028-04-30 vs 2027-04-30). 22 is what the CI runners and the agent
+sandbox actually run, so the test evidence is against the real target rather
+than a version nothing here exercises.
+
+Evidence before merge: full functions suite green on Node v22.22.2 with the
+Firestore emulator up — 1156 tests, 76 files, none skipped.
+
+- [ ] **Watch the first deploy after this merges.** The runtime switch
+      redeploys every function at once, so a runtime-level incompatibility
+      shows up everywhere simultaneously rather than in one endpoint. Expect
+      the Node 20 deprecation warning to disappear from the log.
+- [ ] Spot-check one callable and one Firestore trigger in the Console
+      afterwards (the `// CI build: <sha>` marker at the top of the deployed
+      source confirms which commit is live).
+- [ ] Native/transitive deps are the residual risk the test run cannot cover —
+      the suite exercises the code, not the deployed container image.
+
+### `functions/` dependency advisories — 18, one critical, all but one transitive
+
+`npm audit --omit=dev` in `functions/` reports 18 (1 low, 12 moderate, 4 high,
+1 critical). The **only direct dependency implicated is `firebase-admin`**
+(`^13.10.0`); everything else — `tar`, `websocket-driver`, `uuid`,
+`teeny-request`, `retry-request` — is transitive beneath it.
+
+Deliberately NOT auto-fixed. `npm audit fix` on the SDK every function imports
+is a change that wants its own PR and its own test run, and most of these
+advisories sit in tooling paths a deployed function never executes. Recorded so
+the number is known rather than rediscovered, not because it is urgent.
+
+- [ ] Bump `firebase-admin` in its own PR; re-run `npm audit --omit=dev` and
+      the functions suite. Check the count actually drops — a bump that moves
+      the transitive tree without clearing the advisories is not a fix.
 
 ### Race-day completion predicate (PR #1775)
 
