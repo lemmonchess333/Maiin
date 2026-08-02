@@ -722,33 +722,46 @@ predicts a tool will misbehave, read the flags the workflow actually passes.
       docs stop being written; existing ones are swept by the account-deletion
       range filter covered in `accountDeletionRateLimitsRange.test.ts`.
 
-### Node 20 runtime is DECOMMISSIONED 2026-10-30 — hard deploy blocker
+### Node runtime — bumped to 22 (2026-08-02); watch the first deploy
 
-Surfaced by the `127ac38` deploy log, and not previously recorded anywhere:
+The `127ac38` deploy log warned that Node 20 "will be decommissioned on
+2026-10-30, after which you will not be able to deploy without upgrading" —
+a hard blocker on **every** future deploy, including an emergency fix.
+Confirmed against firebase-tools' own runtime metadata rather than the warning
+text alone: `nodejs20.decommissionDate = "2026-10-30"`.
 
-```
-⚠ functions: Runtime Node.js 20 was deprecated on 2026-04-30 and will be
-  decommissioned on 2026-10-30, after which you will not be able to deploy
-  without upgrading.
-```
+**Bumped to `nodejs22`.** THREE places pin the runtime and they must agree —
+missing one leaves the deploy resolving a version you did not choose:
 
-`functions/package.json` pins `"engines": { "node": "20" }`. After 2026-10-30
-this blocks **every** functions deploy, not just new work — including an
-emergency fix. Treat the date as the deadline for a migration that should
-happen well before it, not on it.
+| File                          | Field                                               |
+| ----------------------------- | --------------------------------------------------- |
+| `firebase.json`               | `functions.runtime` — the authoritative declaration |
+| `functions/package.json`      | `engines.node`                                      |
+| `functions/package-lock.json` | mirrors `engines` (regenerate, don't hand-edit)     |
 
-De-risking evidence already in hand: the agent sandbox runs **Node v22.22.2**,
-and the full functions suite (1156 tests, 76 files, emulator up) passes there.
-So the code is known-good on 22 under test; what is unverified is the deployed
-runtime, third-party native deps, and anything timing- or API-surface-specific.
+`deploy-functions.yml`'s `node-version` was also moved 20 → 22. That one is the
+CI RUNNER's node, not the functions runtime — unrelated to this deadline (its
+own deprecation notice is about Actions) — but it should not trail the runtime
+it deploys.
 
-- [ ] Bump `functions/package.json` `engines.node` to `22`, and the
-      `setup-node` version in `deploy-functions.yml` to match.
-- [ ] Deploy to a NON-production project first if one is available; otherwise
-      deploy off-peak and watch the logs, because the runtime switch redeploys
-      every function at once.
-- [ ] Do it as its own PR. Bundling a runtime migration with feature work makes
-      the revert non-atomic if a function misbehaves on the new runtime.
+**Why 22 and not 24, given both are GA:** they share a decommission date
+(2028-10-31), so 24 buys no extra deploy runway — only a later deprecation
+_warning_ (2028-04-30 vs 2027-04-30). 22 is what the CI runners and the agent
+sandbox actually run, so the test evidence is against the real target rather
+than a version nothing here exercises.
+
+Evidence before merge: full functions suite green on Node v22.22.2 with the
+Firestore emulator up — 1156 tests, 76 files, none skipped.
+
+- [ ] **Watch the first deploy after this merges.** The runtime switch
+      redeploys every function at once, so a runtime-level incompatibility
+      shows up everywhere simultaneously rather than in one endpoint. Expect
+      the Node 20 deprecation warning to disappear from the log.
+- [ ] Spot-check one callable and one Firestore trigger in the Console
+      afterwards (the `// CI build: <sha>` marker at the top of the deployed
+      source confirms which commit is live).
+- [ ] Native/transitive deps are the residual risk the test run cannot cover —
+      the suite exercises the code, not the deployed container image.
 
 ### `functions/` dependency advisories — 18, one critical, all but one transitive
 
