@@ -1,13 +1,21 @@
 /**
  * PR-J chunk B3a — useClaimMap hook tests.
  *
- * The hook is mostly plumbing — the heavy lifting (date window,
- * quality bucket, single-claim walk) lives in `computeClaims` and
- * is exhaustively covered by:
- *   - functions/__tests__/scheduledRunCompletion.test.js (29 tests)
- *   - src/lib/__tests__/scheduledRunCompletion.cross.test.ts (parity)
+ * The heavy lifting (date window, quality bucket, single-claim walk) lives in
+ * `computeClaims`. This header used to say that logic was "exhaustively
+ * covered by" `functions/__tests__/scheduledRunCompletion.test.js` (29 tests)
+ * and `src/lib/__tests__/scheduledRunCompletion.cross.test.ts` — but BOTH were
+ * deleted in #1733 along with the JS port they pinned (see the rationale in
+ * `src/lib/scheduledRunCompletion.ts`). Nothing replaced them, so this file is
+ * now the ONLY coverage of the completion predicate.
  *
- * So this file pins ONLY hook-level behaviour:
+ * That stale pointer had teeth: it told anyone extending these tests that the
+ * distance and bucket branches were already covered elsewhere, which is a good
+ * part of why the 70% gate went 1000x wrong (kilometres over metres) with a
+ * green suite until #1834. If you add a branch to `computeClaims`, it gets its
+ * test HERE.
+ *
+ * Beyond that predicate, this file pins hook-level behaviour:
  *   - subscription lifecycle (no user → empty, user → onSnapshot)
  *   - downstream wiring: snapshot rows reach computeClaims
  *   - Q3 P90: unclaimedByDate shares the same memo / excludes
@@ -334,5 +342,79 @@ describe("useClaimMap - distance threshold", () => {
       5000
     );
     expect(r.claimMap.get("rd-long")?.claimedSavedRunId).toBe("saved-d");
+  });
+});
+/**
+ * The quality-bucket half of the same "which session is this day?" question.
+ *
+ * `tempo_20` and `easy_30` are deliberate: neither carries a
+ * `targetDistanceKm`, so planned distance is 0 and the distance branch is
+ * skipped entirely — whatever these assert is the BUCKET's doing.
+ */
+describe("useClaimMap - quality bucket honours userOverride", () => {
+  beforeEach(() => {
+    resetFirestore();
+    currentUser = mockUser;
+    mockProgramState = null;
+  });
+
+  async function claimWith(
+    runDay: Record<string, unknown>,
+    avgPace: number
+  ): Promise<ReturnType<typeof useClaimMap>> {
+    mockProgramState = { runDays: [runDay], manualCompletions: {} };
+    const { result } = renderHook(() => useClaimMap("2026-05-26"));
+    await act(async () => {
+      seedRuns([
+        {
+          id: "saved-b",
+          data: {
+            date: "2026-05-26",
+            distance: 6000,
+            avgPace,
+            createdAt: Timestamp.fromMillis(1716700000_000),
+          },
+        },
+      ]);
+      await flushSnapshots();
+    });
+    return result.current;
+  }
+
+  const EASY_PACE = 330; // 5:30/km — reads as "easy"
+
+  it("an easy day swapped UP to a tempo is not completed by an easy run", async () => {
+    // Reading `templateId` alone would bucket this as easy and complete it.
+    const r = await claimWith(
+      {
+        id: "rd-up",
+        date: "2026-05-26",
+        dayIndex: 2,
+        templateId: "easy_30",
+        userOverride: "tempo_20",
+        type: "easy",
+        status: "planned",
+      },
+      EASY_PACE
+    );
+    expect(r.claimMap.get("rd-up")?.claimedSavedRunId).toBeUndefined();
+  });
+
+  it("a tempo day swapped DOWN to easy IS completed by an easy run", async () => {
+    // The user removed the quality requirement; holding them to the tempo's
+    // pace bar would be judging a session they chose not to do.
+    const r = await claimWith(
+      {
+        id: "rd-down",
+        date: "2026-05-26",
+        dayIndex: 2,
+        templateId: "tempo_20",
+        userOverride: "easy_30",
+        type: "tempo",
+        status: "planned",
+      },
+      EASY_PACE
+    );
+    expect(r.claimMap.get("rd-down")?.claimedSavedRunId).toBe("saved-b");
   });
 });
