@@ -166,8 +166,6 @@ describe("plan generation — golden sweep", () => {
    §2.4, which measured these but which I had not re-run myself — building
    this fixture is what verifies them. ── */
 describe("KNOWN_DEFECTS — asserted so the snapshot is not read as approval", () => {
-  const find = (c: string) => SWEEP.find((s) => s.config === c)!;
-
   it("D-VOL: the generator violates its own landmark bands, in BOTH directions", () => {
     // volumeModel's `overshootsCeiling` only vetoes ADDS; volumeModel.ts's own
     // comment concedes "the builders are not policed by this". So the tally it
@@ -183,20 +181,35 @@ describe("KNOWN_DEFECTS — asserted so the snapshot is not read as approval", (
     expect(underfed.length).toBeGreaterThan(0);
   });
 
-  it("D-ACC: upper/lower and PPL tag arm isolation as MAIN lifts", () => {
-    // `buildFullBody` passes the isAccessory flag; `buildUpperLower` and
-    // `buildPPL` do not for their vertical-push, biceps, triceps and core
-    // slots. Consequence: `balanceWeeklyVolume` can only grow accessories, so
-    // those muscles can never be topped up, and `applyWeeklyVolumeShape`
-    // holds them flat because it treats them as progression anchors.
-    const day1 = find("4d/full_gym/hypertrophy").prescription[0];
-    // Named explicitly rather than regex-sniffed, so this cannot quietly pass
-    // against a plan that no longer contains them.
-    expect(day1).toContain("barbell-curl ");
-    expect(day1).toContain("rope-tricep-pushdown ");
-    // …and neither carries the `~` marker, i.e. both are MAIN lifts.
-    expect(day1).not.toContain("barbell-curl~");
-    expect(day1).not.toContain("rope-tricep-pushdown~");
+  /* D-ACC — REPAIRED. Was: `buildFullBody` passed the isAccessory flag but
+     `buildUpperLower` and `buildPPL` did not, so arm isolation and core work
+     were tagged MAIN. `balanceWeeklyVolume` only grows accessories and
+     `applyWeeklyVolumeShape` holds mains flat, so those muscles could never
+     be topped up no matter how far under the floor they sat.
+
+     Effect on this snapshot: accessory-tagged slots go 525 → 825, and the
+     audit's headline case resolves — 4d/full_gym/hypertrophy had Biceps=10
+     against a floor of 12 with no growable slot, and now reads 12. Seven
+     fewer under-floor readings overall. The regression pin is below. */
+  it("arm isolation and core are ACCESSORIES in every split (D-ACC pin)", () => {
+    // The property, not one example: no split may tag arm isolation or core
+    // work as a main lift, because that silently disables every volume lever
+    // the model has for them.
+    const violations: string[] = [];
+    for (const s of SWEEP) {
+      for (const line of s.prescription) {
+        for (const slot of line.split(" | ")) {
+          const isArmOrCore =
+            /\b(curl|pushdown|tricep|crunch|plank|leg-raise|cable-woodchopper)/i.test(
+              slot
+            ) && !/nordic|hamstring|leg-curl/i.test(slot);
+          if (isArmOrCore && !/~\s/.test(slot)) {
+            violations.push(`${s.config} :: ${slot.trim()}`);
+          }
+        }
+      }
+    }
+    expect(violations, violations.slice(0, 8).join("\n")).toEqual([]);
   });
 
   it("D-CAT: movementCategory is inferred from the exercise NAME, not stored", () => {

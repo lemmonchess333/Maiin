@@ -704,16 +704,18 @@ function buildUpperLower(
           round(3 * vm),
           12,
           12,
-          "linear",
-          findExisting(0, 3)
+          "double",
+          findExisting(0, 3),
+          true
         ),
         makeExercise(
           "arms_triceps",
           round(3 * vm),
           12,
           15,
-          "linear",
-          findExisting(0, 4)
+          "double",
+          findExisting(0, 4),
+          true
         ),
       ],
     },
@@ -744,8 +746,9 @@ function buildUpperLower(
           round(3 * vm),
           12,
           15,
-          "linear",
-          findExisting(1, 3)
+          "double",
+          findExisting(1, 3),
+          true
         ),
       ],
     },
@@ -776,16 +779,18 @@ function buildUpperLower(
           round(3 * vm),
           12,
           10,
-          "linear",
-          findExisting(2, 3)
+          "double",
+          findExisting(2, 3),
+          true
         ),
         makeExercise(
           "arms_triceps",
           round(3 * vm),
           12,
           12,
-          "linear",
-          findExisting(2, 4)
+          "double",
+          findExisting(2, 4),
+          true
         ),
       ],
     },
@@ -809,8 +814,9 @@ function buildUpperLower(
           round(3 * vm),
           12,
           15,
-          "linear",
-          findExisting(3, 3)
+          "double",
+          findExisting(3, 3),
+          true
         ),
       ],
     },
@@ -857,8 +863,9 @@ function buildPPL(
           round(3 * vm),
           12,
           15,
-          "linear",
-          findExisting(0, 3)
+          "double",
+          findExisting(0, 3),
+          true
         ),
         makeAccessory(
           "arms_triceps",
@@ -896,8 +903,9 @@ function buildPPL(
           round(3 * vm),
           12,
           12,
-          "linear",
-          findExisting(1, 3)
+          "double",
+          findExisting(1, 3),
+          true
         ),
         makeAccessory("arms_biceps", round(3 * vm), 15, 8, "barbell-curl"),
       ],
@@ -929,13 +937,14 @@ function buildPPL(
           round(3 * vm),
           15,
           15,
-          "linear",
+          "double",
           // Was findExisting(2, 4) — an off-by-one. This day has four slots
           // (0-3), so index 4 never resolved and the core lift was rebuilt
           // from defaults on EVERY regenerate, silently dropping the user's
           // logged weight and history. Same family as #17; found by the
           // regenerate-preserves-load test rather than by reading indices.
-          findExisting(2, 3)
+          findExisting(2, 3),
+          true
         ),
       ],
     },
@@ -959,8 +968,9 @@ function buildPPL(
           round(3 * vm),
           12,
           15,
-          "linear",
-          findExisting(3, 3)
+          "double",
+          findExisting(3, 3),
+          true
         ),
       ],
     },
@@ -984,8 +994,9 @@ function buildPPL(
           round(3 * vm),
           12,
           10,
-          "linear",
-          findExisting(4, 3)
+          "double",
+          findExisting(4, 3),
+          true
         ),
       ],
     },
@@ -1032,7 +1043,15 @@ function buildLegsB(
       // Accessories in reversed order with different rep ranges
       makeAccessory("hip_dominant", round(3 * vm), 10, 40, "deadlift"),
       makeAccessory("knee_dominant", round(3 * vm), 10, 40, "squat"),
-      makeExercise("core", round(3 * vm), 12, 15, "linear", findExisting(4)),
+      makeExercise(
+        "core",
+        round(3 * vm),
+        12,
+        15,
+        "double",
+        findExisting(4),
+        true
+      ),
     ],
   };
 }
