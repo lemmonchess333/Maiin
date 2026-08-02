@@ -69,6 +69,10 @@ const { projectWorkoutSets } = require("./workoutSetRecord");
 // Race-template ids (pinned set-equal to the race-TYPE RUN_TEMPLATES entries by
 // raceTemplateIds.cross.test.ts). Used by RUN-RACE-GUARD-01 below.
 const { isRaceTemplateId } = require("./raceTemplateIds");
+// Recovery-exit resolution (Run9 3b) — already the single source of the
+// "who does exiting recovery return to?" rule on this side, and already
+// pinned to the client copy by a cross-test.
+const { resolveRecoveryExit } = require("./runModeResolution");
 // Deload-transform mirror (pinned by a parity cross-test). Used by the
 // applyDeloadWeek reducer (PROGRAM-DELOAD-01).
 const {
@@ -118,6 +122,7 @@ const CLIENT_COMMAND_KINDS = Object.freeze([
   "restoreWorkoutDay",
   "dismissFellBehindPrompt",
   "endTrainingBlockKeepingFocus",
+  "skipRecoveryEarly",
 ]);
 const CLIENT_COMMAND_KIND_SET = new Set(CLIENT_COMMAND_KINDS);
 
@@ -661,6 +666,15 @@ const KIND_VALIDATORS = {
   // is its own arc, and it cannot be dodged by sending the represcribed
   // workouts: a client-supplied workouts array is exactly the whole-document
   // write the boundary exists to refuse.
+  // Run9 PR-C. Carries NO payload: who the user returns to is decided by
+  // `resolveRecoveryExit` over server-read profile + programState, never by
+  // anything the client asserts. That is the whole point of moving it here —
+  // see the reducer.
+  skipRecoveryEarly(command, out) {
+    assertKeys(command, "skipRecoveryEarly", ["kind", "commandId"], []);
+    void out;
+  },
+
   endTrainingBlockKeepingFocus(command, out) {
     assertKeys(
       command,
@@ -993,6 +1007,57 @@ function restoreWorkoutDay(state, command) {
     ...d,
     skipped: false,
   }));
+}
+
+/**
+ * Exit the post-race recovery window early (Run9 PR-C).
+ *
+ * ── Why this one was worth migrating ─────────────────────────────────────
+ *
+ * The client did `Promise.all([updateProfile(exit), saveProgram(next)])` —
+ * two INDEPENDENT writes to two documents. Either can land without the other,
+ * and when that happens `profile.runMode` disagrees with
+ * `programState.runPlan.phase`: a user stuck showing the recovery hero with a
+ * freeform plan underneath, or the reverse. The client comment right above it
+ * says the patch "always co-writes the materialized runMode so the invariant
+ * can't be violated here" — true of the VALUE it computed, and not true of
+ * the two writes it then issued separately.
+ *
+ * Inside the transaction both halves commit together or neither does. This is
+ * the "persist every mirrored and derived field in the same write" rule, and
+ * the migration fixes a live instance of it rather than relocating one.
+ *
+ * The exit decision is server-derived end to end: `resolveRecoveryExit` reads
+ * the transaction-current profile and runPlan, so a client that believes it
+ * still has a race cannot talk the server into preserving one.
+ */
+function skipRecoveryEarly(state, profile, command) {
+  void command;
+  const runPlan = isPlainObject(state.runPlan) ? state.runPlan : null;
+  if (!runPlan || runPlan.phase !== "recovery") {
+    failedPrecondition("You are not in a recovery window.");
+  }
+  const currentRaceGoal = (profile && profile.raceGoal) || null;
+  const completedRaceGoal = runPlan.raceGoal || currentRaceGoal || null;
+  const exit = resolveRecoveryExit({ currentRaceGoal, completedRaceGoal });
+
+  if (exit.runMode === "freeform") {
+    // The race is done and no successor exists. Drop the plan wholesale —
+    // `runPlan` is DELETED rather than set undefined (Firestore rejects
+    // undefined), matching every other clear in this reducer.
+    const { runPlan: _dropped, ...withoutPlan } = state;
+    return { state: { ...withoutPlan, runDays: [] }, profile: exit };
+  }
+
+  // Back-to-back: a newer future race was set during the window, so stay in
+  // race_prep and clear only the recovery markers. The race-plan path
+  // rebuilds runDays for the new race; nothing is regenerated here.
+  const {
+    phase: _phase,
+    recoveryEndDate: _recoveryEndDate,
+    ...nextRunPlan
+  } = runPlan;
+  return { state: { ...state, runPlan: nextRunPlan }, profile: exit };
 }
 
 function setNextWorkout(state, command) {
@@ -1637,6 +1702,18 @@ function applyProgramCommand({ state, profile, command, now }) {
     return {
       state: { ...result.state, updatedAt: now },
       effects: result.effects,
+    };
+  }
+
+  // skipRecoveryEarly is the second command with an effect (a profile patch),
+  // and the only one that writes outside programState's own document. Handled
+  // here for the same reason completeWorkoutDay is: the plain switch below
+  // returns state alone.
+  if (validated.kind === "skipRecoveryEarly") {
+    const result = skipRecoveryEarly(current, profile || {}, validated);
+    return {
+      state: { ...result.state, updatedAt: now },
+      effects: { profile: result.profile },
     };
   }
 

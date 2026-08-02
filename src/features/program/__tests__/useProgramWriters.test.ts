@@ -167,11 +167,15 @@ const mockUpdateProfile = vi.fn(async (patch: Partial<MockProfile>) => {
 // literal every call would churn useProgram's useEffect deps and
 // produce an infinite re-render loop in tests.
 const stableUser = { uid: "test-user-1" };
+const mockRefreshProfile = vi.fn(async () => undefined);
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({
     user: stableUser,
     profile: mockProfile,
     updateProfile: mockUpdateProfile,
+    // Added when skipRecoveryEarly migrated: that command's profile half
+    // lands server-side, so the hook re-reads the profile afterwards.
+    refreshProfile: mockRefreshProfile,
   }),
   useUid: () =>
     ({
@@ -1387,17 +1391,24 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
       await result.current.skipRecoveryEarly();
     });
 
-    // Materialization invariant: the SAME patch co-writes runMode + the null
-    // raceGoal clear.
-    expect(mockUpdateProfile).toHaveBeenCalledWith({
-      raceGoal: null,
-      runMode: "freeform",
-    });
-    // The plan is dropped (runPlan omitted → stripped; runDays emptied).
-    const lastWrite = setDocCalls()[setDocCalls().length - 1]
-      .data as ProgramState;
-    expect(lastWrite.runDays).toEqual([]);
-    expect(lastWrite.runPlan).toBeUndefined();
+    // P6: the materialization invariant is no longer this client's to keep.
+    // It used to issue `Promise.all([updateProfile(patch), saveProgram(next)])`
+    // — two documents, two independent writes, either able to land alone. Now
+    // ONE command carries no payload at all and the reducer resolves the exit
+    // from transaction-current state, writing both halves together. That
+    // atomicity is asserted where it can actually be observed: against a real
+    // emulator in functions/__tests__/integration/programCommands.test.js.
+    //
+    // What this test still owns is that the client stopped writing directly.
+    expect(setDocCalls().length).toBe(0);
+    expect(mockUpdateProfile).not.toHaveBeenCalled();
+    const cmd = sentCommands.find((c) => c.kind === "skipRecoveryEarly");
+    expect(cmd).toBeDefined();
+    // No payload — the exit decision is server-derived, so anything else here
+    // would be the client asserting a race outcome it does not own.
+    expect(Object.keys(cmd!).sort()).toEqual(["commandId", "kind"]);
+    // And that it re-reads the profile, since that half landed server-side.
+    expect(mockRefreshProfile).toHaveBeenCalled();
   });
 });
 

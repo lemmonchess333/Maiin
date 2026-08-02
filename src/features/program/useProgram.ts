@@ -10,7 +10,7 @@ import {
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { stripUndefined } from "@/lib/firestoreGuards";
 import { db } from "@/lib/firebase";
-import { useAuth, type UserProfile } from "@/lib/auth";
+import { useAuth } from "@/lib/auth";
 import { postActivity } from "@/lib/socialApi";
 import { compose, enqueueShare, showQueuedToast } from "@/lib/shareComposer";
 import type {
@@ -303,7 +303,7 @@ interface RefreshRunScheduleOverrides {
 }
 
 export function useProgram() {
-  const { user, profile, updateProfile } = useAuth();
+  const { user, profile, updateProfile, refreshProfile } = useAuth();
   // Backlog #9 (H5): the recovery half of the adjustment rule. A limit-1
   // read — the rule is only consulted on a week advance, so this is the
   // cheapest way to have the answer in hand when that happens. Resolves to
@@ -2278,12 +2278,19 @@ export function useProgram() {
     if (!programState || !profile) return;
     if (programState.runPlan?.phase !== "recovery") return;
 
-    // Run9 ENG(j) + R3-cycle/backtoback: exiting recovery returns the user to
-    // FREEFORM (the race is done — it's recorded in completedRaces), UNLESS a
-    // newer race was set during the recovery window, which must be preserved.
-    // `resolveRecoveryExit` is the single source of that rule (unit-tested in
-    // runModeResolution.test.ts); the patch it returns always co-writes the
-    // materialized `runMode` so the invariant can't be violated here.
+    // P6: ONE command, replacing `Promise.all([updateProfile, saveProgram])`.
+    //
+    // That pair was two independent writes to two documents, and either could
+    // land without the other — leaving `profile.runMode` disagreeing with
+    // `runPlan.phase`, which is precisely the invariant the code above it
+    // claimed to protect. The reducer now resolves the exit and writes both
+    // halves inside one transaction, so they commit together or not at all.
+    //
+    // The command carries NO payload: `resolveRecoveryExit` runs server-side
+    // over the transaction-current profile and runPlan, so who the user
+    // returns to is never something this client asserts. The optimistic patch
+    // below therefore has to reproduce the same decision locally, and it does
+    // it by calling the same shared function.
     const completedRaceGoal =
       programState.runPlan?.raceGoal ?? profile.raceGoal ?? null;
     const exit = resolveRecoveryExit({
@@ -2291,39 +2298,38 @@ export function useProgram() {
       completedRaceGoal,
     });
 
-    if (exit.runMode === "freeform") {
-      // Single race done → freeform: drop the runPlan + runDays. saveProgram
-      // does a full setDoc, so omitting `runPlan` (undefined → stripped)
-      // removes it from the doc. Run9 3a-ii: the `raceGoal: null` clear that
-      // resolveRecoveryExit returns is now applied explicitly (the profile type
-      // was widened to allow it), so the materialized runMode and the goal can
-      // never disagree — no more left-over goal under freeform. The cast
-      // bridges the pure core's loose `distance: string` to the narrow union.
-      logger.log("[skipRecoveryEarly] race done → freeform; clearing plan");
-      await Promise.all([
-        updateProfile(exit as Partial<UserProfile>),
-        saveProgram({ ...programState, runDays: [], runPlan: undefined }),
-      ]);
+    const outcome = await runProgramCommand(
+      { kind: "skipRecoveryEarly", commandId: generateInstanceId() },
+      (state) => {
+        if (exit.runMode === "freeform") {
+          const next = { ...state, runDays: [] };
+          delete next.runPlan;
+          return next;
+        }
+        const nextRunPlan = { ...state.runPlan } as Record<string, unknown>;
+        delete nextRunPlan.phase;
+        delete nextRunPlan.recoveryEndDate;
+        return { ...state, runPlan: nextRunPlan as unknown as RunPlan };
+      }
+    );
+
+    if (outcome === "rejected") {
+      toast.error("Couldn't end recovery. Refreshing.");
+      await refetchProgramState();
       return;
     }
-
-    // Back-to-back: a newer future race was set during recovery → stay
-    // race_prep, just clear the recovery phase. The race-plan load/regenerate
-    // path rebuilds runDays for the new race; we don't regenerate here.
-    logger.log(
-      "[skipRecoveryEarly] newer race set during recovery → exit recovery, keep race_prep"
-    );
-    const nextRunPlan = { ...programState.runPlan } as Record<string, unknown>;
-    delete nextRunPlan.phase;
-    delete nextRunPlan.recoveryEndDate;
-    await Promise.all([
-      updateProfile({ runMode: "race_prep" }),
-      saveProgram({
-        ...programState,
-        runPlan: nextRunPlan as unknown as RunPlan,
-      }),
-    ]);
-  }, [programState, profile, saveProgram, updateProfile]);
+    // The profile half landed SERVER-side, so the local copy is stale until
+    // it is re-read. Without this the recovery hero would linger on a plan
+    // that no longer has a recovery phase.
+    await refreshProfile();
+    logger.log(`[skipRecoveryEarly] exited recovery → ${exit.runMode}`);
+  }, [
+    programState,
+    profile,
+    runProgramCommand,
+    refetchProgramState,
+    refreshProfile,
+  ]);
 
   // ── Run9 phase-3 (Slice DE): one-tap Realign ─────────────────
   //

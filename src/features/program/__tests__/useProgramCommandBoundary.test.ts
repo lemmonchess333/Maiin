@@ -55,11 +55,17 @@ const stableProfile = {
   runMode: "freeform",
 };
 const stableUpdateProfile = vi.fn(async () => ({ ok: true }));
+const stableRefreshProfile = vi.fn(async () => undefined);
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({
     user: stableUser,
     profile: stableProfile,
     updateProfile: stableUpdateProfile,
+    // Added when skipRecoveryEarly migrated: the profile half of that
+    // command lands server-side, so the hook re-reads it. A mock missing an
+    // export the hook transitively needs is the same failure shape as the
+    // useUid gap that only showed up in CI.
+    refreshProfile: stableRefreshProfile,
   }),
   // Added by #1833, which split the uid onto its own context. `useProgram`
   // reaches it through `usePerformanceWeeks`, so a mock without it renders
@@ -590,6 +596,12 @@ describe("every migrated writer sends a command the server accepts", () => {
           },
         ],
         runDays: [],
+        // skipRecoveryEarly refuses unless the plan is actually in recovery.
+        runPlan: {
+          mode: "race_prep",
+          phase: "recovery",
+          recoveryEndDate: "2026-04-01",
+        },
         // Likewise for the dismissal — no prompt, no command.
         pendingFellBehindPrompt: { weekKey: "2026-03-01", ran: 1, target: 3 },
         // Same reason as the two above: no block, no command.
@@ -631,6 +643,7 @@ describe("every migrated writer sends a command the server accepts", () => {
       await c.updateSettings({ autoProgression: false });
       await c.dismissFellBehindPrompt();
       await c.keepTrainingBlockFocus();
+      await c.skipRecoveryEarly();
     });
 
     // Every kind above reached the wire — otherwise the afterEach validated
@@ -650,5 +663,6 @@ describe("every migrated writer sends a command the server accepts", () => {
     expect(kinds).toContain("restoreWorkoutDay");
     expect(kinds).toContain("dismissFellBehindPrompt");
     expect(kinds).toContain("endTrainingBlockKeepingFocus");
+    expect(kinds).toContain("skipRecoveryEarly");
   });
 });

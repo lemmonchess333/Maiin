@@ -1476,8 +1476,12 @@ and it carries an actively-edited data table — the same judgement the
 than drifted into. (`keepTrainingBlockFocus` was the third block writer and
 DID migrate — it re-derives nothing.)
 
-**Blocked on cross-document atomicity (3 sites).** `skipRecoveryEarly` (×2)
-and `realignRacePlan` write the profile AND programState, today as
+**Blocked on cross-document atomicity (1 site left).** STATUS 2026-08-02 —
+`skipRecoveryEarly` (2 of the 3 sites) is DONE: the `profile` effect described
+below now exists, and the writer commits both halves in one transaction.
+`realignRacePlan` remains, and can follow the same pattern. Original entry:
+`skipRecoveryEarly` (×2) and `realignRacePlan` write the profile AND
+programState, today as
 `Promise.all([updateProfile, saveProgram])` — two independent writes that can
 half-land and leave `profile.runMode` disagreeing with `runPlan.phase`. That
 is already a live instance of the "persist every mirrored and derived field in

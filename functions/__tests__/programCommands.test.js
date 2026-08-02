@@ -579,6 +579,7 @@ describe("every declared client kind round-trips", () => {
         "restoreWorkoutDay",
         "dismissFellBehindPrompt",
         "endTrainingBlockKeepingFocus",
+        "skipRecoveryEarly",
       ])
     );
   });
@@ -713,10 +714,14 @@ function dayPre(overrides) {
   };
 }
 
-function apply(command, state) {
+// `profile` gained a parameter with skipRecoveryEarly, the first reducer whose
+// OUTCOME depends on the user document (it resolves the recovery exit from the
+// transaction-current raceGoal). Defaults to {} so every existing call is
+// unchanged.
+function apply(command, state, profile) {
   return applyProgramCommand({
     state: state || baseState(),
-    profile: {},
+    profile: profile || {},
     command,
     now: NOW,
   });
@@ -919,6 +924,78 @@ describe("preconditionless field commands", () => {
       goal: "cut",
     });
     expect(state.goal).toBe("cut");
+  });
+});
+
+describe("skipRecoveryEarly (P6 — the atomicity fix)", () => {
+  const CMD_SRE = { kind: "skipRecoveryEarly", commandId: CMD };
+
+  function recoveringState(runPlanExtra = {}) {
+    const s = baseState();
+    s.runPlan = {
+      mode: "race_prep",
+      phase: "recovery",
+      recoveryEndDate: "2026-04-01",
+      ...runPlanExtra,
+    };
+    return s;
+  }
+
+  const RACE = { distance: "marathon", targetDate: "2026-03-15" };
+  const NEWER = { distance: "10k", targetDate: "2026-09-01" };
+
+  it("rejects when the user is not in recovery", () => {
+    expectHttps(() => apply(CMD_SRE, baseState()), "failed-precondition");
+    const notRecovering = baseState();
+    notRecovering.runPlan = { mode: "race_prep", phase: "build" };
+    expectHttps(() => apply(CMD_SRE, notRecovering), "failed-precondition");
+  });
+
+  it("race done, no successor: freeform, plan dropped, raceGoal CLEARED", () => {
+    const { state, effects } = apply(
+      CMD_SRE,
+      recoveringState({ raceGoal: RACE }),
+      { raceGoal: RACE }
+    );
+    // runPlan deleted, not undefined — Firestore rejects undefined.
+    expect("runPlan" in state).toBe(false);
+    expect(state.runDays).toEqual([]);
+    // BOTH halves of the materialization, in one transaction. The client used
+    // to issue these as two independent writes.
+    expect(effects.profile).toEqual({ raceGoal: null, runMode: "freeform" });
+  });
+
+  it("newer race set during recovery: stays race_prep, keeps the successor", () => {
+    const { state, effects } = apply(
+      CMD_SRE,
+      recoveringState({ raceGoal: RACE }),
+      { raceGoal: NEWER }
+    );
+    expect(effects.profile.runMode).toBe("race_prep");
+    // The successor must NOT be cleared — that is the whole back-to-back case.
+    expect(effects.profile.raceGoal).toBeUndefined();
+    // Only the recovery markers go; the plan itself survives.
+    expect(state.runPlan.mode).toBe("race_prep");
+    expect("phase" in state.runPlan).toBe(false);
+    expect("recoveryEndDate" in state.runPlan).toBe(false);
+    expect(state.runPlan.raceGoal).toEqual(RACE);
+  });
+
+  it("the exit is decided from SERVER state, not from anything the client sent", () => {
+    // Same command, same programState, two different profiles — two different
+    // outcomes. The command carries no payload at all, so a client that still
+    // believes it has a race cannot talk the server into preserving one.
+    const withNewer = apply(CMD_SRE, recoveringState({ raceGoal: RACE }), {
+      raceGoal: NEWER,
+    });
+    const withNone = apply(CMD_SRE, recoveringState({ raceGoal: RACE }), {});
+    expect(withNewer.effects.profile.runMode).toBe("race_prep");
+    expect(withNone.effects.profile.runMode).toBe("freeform");
+  });
+
+  it("falls back to the profile's race when runPlan carries no mirror", () => {
+    const { effects } = apply(CMD_SRE, recoveringState(), { raceGoal: RACE });
+    expect(effects.profile).toEqual({ raceGoal: null, runMode: "freeform" });
   });
 });
 
