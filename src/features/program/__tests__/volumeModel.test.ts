@@ -5,6 +5,7 @@ import {
   classifyVolume,
   balanceWeeklyVolume,
   balancePushPull,
+  toCanonical,
 } from "../volumeModel";
 import type { ProgramExercise, WorkoutDay } from "../programTypes";
 
@@ -355,5 +356,60 @@ describe("volumeLandmark + classifyVolume", () => {
     expect(classifyVolume(24, lm)).toBe("high");
     expect(classifyVolume(12, lm)).toBe("optimal"); // inclusive low
     expect(classifyVolume(20, lm)).toBe("optimal"); // inclusive high
+  });
+});
+
+/* ─── P1 · muscle attribution, as DECISIONS rather than accidents ────────
+   Each of these was a defect measured by the audit in
+   docs/proposals/lifting-v8-evaluation.md §2.4 and pinned by the golden
+   sweep before being changed. They are asserted here so a future edit has
+   to argue with the reasoning rather than silently revert it. ── */
+describe("muscle attribution (P1)", () => {
+  it("adductors are hip adductors, not quadriceps", () => {
+    // Was "Quads", so a Hip Adduction Machine booked quad volume. Adductor
+    // magnus is a primary hip extensor, trained alongside the glutes.
+    expect(toCanonical("adductors")).toBe("Glutes");
+  });
+
+  it("hip flexors do not book quad volume off every ab movement", () => {
+    // Was "Quads". "hip flexors" is a SECONDARY on nearly every ab movement
+    // in the DB — crunches, sit-ups, leg raises, russian twists, dead bugs,
+    // dragon flags, L-sits — so core sessions silently fed the quad tally.
+    expect(toCanonical("hip flexors")).toBeNull();
+  });
+
+  it("the trailing-space hip-flexors key is gone, and trimming still works", () => {
+    // `"hip flexors "` was an unreachable key (toCanonical trims first) that
+    // mapped to a DIFFERENT value than the live one — a contradiction
+    // TypeScript could not catch, because the two keys differ.
+    expect(toCanonical("  Hip Flexors  ")).toBe(toCanonical("hip flexors"));
+  });
+
+  it("forearms earn nothing, deliberately", () => {
+    // Not an oversight: there is no Forearms group in this ten-group
+    // taxonomy, and no exercise has forearms as its PRIMARY. Mapping them
+    // into Biceps would move every biceps tally to avoid a rounding error.
+    // Revisit in the taxonomy split (13a).
+    expect(toCanonical("forearms")).toBeNull();
+    expect(toCanonical("brachioradialis")).toBeNull();
+  });
+
+  it("a Full Body lift books its secondaries instead of nothing", () => {
+    // An unattributable PRIMARY used to `continue` past the whole lift, so
+    // the thirteen "Full Body" movements — Zercher squat, thrusters,
+    // kettlebell swing, Turkish get-up — trained nothing as far as the model
+    // was concerned, despite naming real muscles as secondaries.
+    const week = [day([ex({ exerciseId: "zercher-squat", sets: 4 })])];
+    const tally = weeklyVolumeByMuscle(week);
+    const quads = tally.find((t) => t.muscle === "Quads");
+    expect(quads?.sets).toBe(2); // 4 sets × 0.5 secondary credit
+    expect(tally.find((t) => t.muscle === "Glutes")?.sets).toBe(2);
+  });
+
+  it("cardio still books nothing, whatever its secondaries claim", () => {
+    // The counter-case to the rule above: a treadmill lists Quads/Calves as
+    // secondaries and must NOT contribute resistance volume.
+    const week = [day([ex({ exerciseId: "treadmill", sets: 3 })])];
+    expect(weeklyVolumeByMuscle(week)).toEqual([]);
   });
 });

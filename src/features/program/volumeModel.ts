@@ -77,8 +77,12 @@ const MUSCLE_TO_CANONICAL: Record<string, CanonicalMuscle | null> = {
   triceps: "Triceps",
   // Legs
   quads: "Quads",
-  "hip flexors": "Quads",
-  adductors: "Quads",
+  // The adductors are hip ADDUCTORS, not quadriceps — they used to map to
+  // "Quads", which meant a Hip Adduction Machine booked quad volume. Adductor
+  // magnus is a primary hip extensor and is trained by the same movements as
+  // the glutes (sumo pulls, wide squats), so "Glutes" is the honest home for
+  // it in a ten-group taxonomy.
+  adductors: "Glutes",
   hamstrings: "Hamstrings",
   "posterior chain": "Hamstrings",
   glutes: "Glutes",
@@ -89,14 +93,42 @@ const MUSCLE_TO_CANONICAL: Record<string, CanonicalMuscle | null> = {
   abs: "Core",
   "lower abs": "Core",
   obliques: "Core",
-  // Excluded — not attributable resistance volume
+
+  /* ── Deliberately excluded, each for its own reason ───────────────────
+     `null` means "contributes no resistance volume", and it is a DECISION
+     here rather than an oversight — the assertions in
+     `volumeModel.test.ts` pin each one so a future edit has to argue with
+     them. ── */
+
+  // Whole-body conditioning and cardio are not resistance volume. Note the
+  // primary being null no longer discards the whole lift: `weeklyVolumeByMuscle`
+  // now falls through to the SECONDARIES for non-cardio movements, so a
+  // Zercher squat books its quads and glutes instead of nothing at all.
   "full body": null,
   cardio: null,
+  // Too coarse to attribute — "legs" and "arms" name a region, not a muscle.
   legs: null,
   arms: null,
+  // No Forearms group exists in this ten-group taxonomy, and no exercise in
+  // the DB has forearms as its PRIMARY — they appear only as a secondary on
+  // curls and carries. Rather than inflate Biceps with them, they earn
+  // nothing. Revisit when the taxonomy is split (13a); adding a group here
+  // would move every biceps tally.
   forearms: null,
   brachioradialis: null,
-  "hip flexors ": null,
+  // The hip flexors are the iliopsoas, not the quadriceps. This used to map
+  // to "Quads", and because "hip flexors" is a secondary on nearly every ab
+  // movement in the DB — crunches, sit-ups, leg raises, russian twists,
+  // dead bugs, dragon flags, L-sits — every core session silently booked
+  // quad volume. The quad-dominant exercises that also list it (sissy squat,
+  // leg extension) already count 1.0 through their PRIMARY, so nothing real
+  // is lost.
+  "hip flexors": null,
+  // NOTE: a `"hip flexors "` key with a trailing space used to sit here. It
+  // was unreachable — `toCanonical` trims before lookup, so the un-trimmed
+  // key above always won — and it mapped to a DIFFERENT value, so it read as
+  // a contradiction that TypeScript could not catch (the keys differ).
+  // Deleted; the live mapping is the one above.
 };
 
 // Fallback when an exercise isn't in the DB (custom exercise): attribute by its
@@ -174,10 +206,23 @@ export function weeklyVolumeByMuscle(workouts: WorkoutDay[]): MuscleVolume[] {
       if (sets <= 0) continue;
       const dbEx: Exercise | undefined = getExerciseById(ex.exerciseId);
       if (dbEx) {
+        // Cardio is not resistance volume at all — skip it outright, whatever
+        // its secondaries say. A treadmill listing "Quads/Calves" must not
+        // book leg sets.
+        if (dbEx.category === "Cardio") continue;
+
         const primary = toCanonical(dbEx.muscleGroup);
-        // Unattributable primary (e.g. Cardio/Full Body) → skip the whole lift.
-        if (!primary) continue;
-        add(primary, sets);
+        if (primary) add(primary, sets);
+        // An unattributable PRIMARY used to discard the whole lift, so the
+        // thirteen "Full Body" movements in the DB — Zercher squat, landmine
+        // squat, thrusters, kettlebell swing, Turkish get-up, muscle-ups —
+        // booked ZERO volume despite naming real muscles as secondaries. A
+        // Zercher squat trained nothing, as far as the model was concerned.
+        // Falling through to the secondaries understates them (0.5 each
+        // rather than a primary's 1.0), but understating a squat's legs is a
+        // great deal closer than pretending it never happened. Fixing the
+        // underlying `muscleGroup: "Full Body"` labels is exercise-DB work
+        // (handoff 11b), not this.
         for (const sec of dbEx.secondaryMuscles ?? []) {
           add(toCanonical(sec), sets * 0.5);
         }

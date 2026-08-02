@@ -39,11 +39,7 @@
 import { describe, it, expect } from "vitest";
 
 import { buildPlan } from "../planBuilder";
-import {
-  weeklyVolumeByMuscle,
-  volumeLandmark,
-  toCanonical,
-} from "../volumeModel";
+import { weeklyVolumeByMuscle, volumeLandmark } from "../volumeModel";
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import type { PlanBuilderInput } from "../planBuilder";
 import type { PrimaryGoal } from "../programTypes";
@@ -218,13 +214,15 @@ describe("KNOWN_DEFECTS — asserted so the snapshot is not read as approval", (
     expect(inferMovementCategory("Cable Glute Kickback")).toBe("arms_triceps");
   });
 
-  it("D-MAP: the muscle map mis-attributes and silently drops muscles", () => {
-    // Anatomically wrong: adductors and hip flexors are not quadriceps, so a
-    // Hip Adduction Machine currently books quad volume.
-    expect(toCanonical("adductors")).toBe("Quads");
-    expect(toCanonical("hip flexors")).toBe("Quads");
-    // Dropped entirely: forearm work earns zero volume anywhere.
-    expect(toCanonical("Forearms")).toBeNull();
-    expect(toCanonical("Brachioradialis")).toBeNull();
-  });
+  /* D-MAP — REPAIRED. Was: adductors and hip flexors both mapped to "Quads",
+     so a Hip Adduction Machine booked quad volume and every ab movement fed
+     the quad tally through its hip-flexor secondary; a trailing-space
+     `"hip flexors "` key contradicted the live one from an unreachable line;
+     and an unattributable PRIMARY discarded the whole lift, so thirteen
+     "Full Body" movements trained nothing.
+
+     Effect on this snapshot: 16 fewer false HIGH readings across the 90
+     configurations, and Quads drops by 1 wherever ab work had been inflating
+     it. The decisions now live as assertions in `volumeModel.test.ts` so they
+     have to be argued with rather than silently reverted. */
 });
