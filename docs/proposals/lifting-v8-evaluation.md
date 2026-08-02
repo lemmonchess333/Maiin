@@ -79,6 +79,46 @@ struck. This document supersedes the pack for the lifting arc.
 >   guide's body diagram — a lateral raise with no shoulder — plus 36 dropped
 >   secondaries. §3.9 reasoned about the taxonomy's expressiveness; the live
 >   cost was in a table it never mentions.
+>   **STATUS 2026-08-02c — P3's three items, and two of them turned out not to
+>   be builds.** 14b shipped as specified (see `recoveryTrigger.ts`). The other
+>   two were investigated first, and the investigation changed the answer:
+> - **§3.4's "pass weekly aerobic minutes into `buildLiftProgram`" is NOT
+>   built, and should not be until a source locates the optimum.** §3.4 itself
+>   says so — "the correct framing for a hybrid user is an optimum, not a
+>   penalty, and no source locates it" — but the P3 row still schedules the
+>   wiring. Wilson's r = .75 is a CORRELATION with interference, not a
+>   dose-response for the lift prescription, and Schoenfeld p.209 rules out
+>   trading the two loads at all ("no exchange rate"). So passing minutes in
+>   means either a parameter nothing reads, or an invented curve. F&K's 12–15RM
+>   / 2×wk / 20–30 min runner prescription (p.120) is the only concrete dose in
+>   the corpus, it is gated on being a distance runner rather than on minutes,
+>   and it is from the **1987 first edition** — a thin basis for re-scheming
+>   every running-goal user's mains. Checked what the engine already does: the
+>   `running` goal prescribes 8–12 mains / 12–15 accessories at a 0.85 volume
+>   multiplier, so F&K's accessory range is already matched.
+> - **§3.4's separate-days sub-rule was already implemented — and completely
+>   undefended.** `generateSchedule` only ever emits a "both" day when the week
+>   cannot fit (verified: 0 violations across all 64 lift×run combinations).
+>   But the tests asserted `both >= 1` on overflow cases, which a schedule that
+>   doubled up EVERY day would also satisfy — i.e. the existing assertions
+>   could not tell the correct schedule from the worst one, and the worst one
+>   is exactly Wilson's interference case (ES 0.8 same-day vs 1.05 separate).
+>   Pinned exhaustively with the citation; adding one unnecessary both-day now
+>   fails six tests. Per the pack's own preamble, an existing deliverable is
+>   struck rather than reimplemented — but "exists" and "is defended" are
+>   different claims, and this one was only the first.
+> - **The adaptation-permission enum (`insights`/`suggest`/`auto`) is deferred
+>   as a PRODUCT decision, not an engineering one.** §5 calls it cheap because
+>   it maps onto `ProgramSettings.autoProgression`, and the two end states do:
+>   `auto` is `true`, `insights` is `false`. The middle state is the feature —
+>   compute the change, show it, let the user accept — and that is a new
+>   user-facing affordance, which interacts with the INVISIBLE presentation
+>   policy the adjustment rule and the deload recipe both carry, and with the
+>   locked "surface outcomes, hide mechanisms" operator decision
+>   (`training-book-reviews.md:683`). The engine work is genuinely small; the
+>   decision about whether Tropos asks the user to approve prescriptions is
+>   not mine to take unilaterally.
+
 > - **11b's headline value was not the data entry.** §5 frames it as "150
 >   exercises × ~6 fields of domain-judgement data entry with no lead-time
 >   pressure". The merge itself found three live drifts first: a name the
