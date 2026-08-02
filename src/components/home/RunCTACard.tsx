@@ -65,8 +65,8 @@ export default function RunCTACard({
   // Descriptions are coaching-led now ("Steady, controlled effort"), so the
   // distance no longer lives in the text; reading config also makes the metric
   // work for race templates whose descriptions carry no distance.
-  const runKeyMetric = tmpl?.config.targetDistance
-    ? `${tmpl.config.targetDistance}km`
+  const runKeyMetric = tmpl?.config.targetDistanceKm
+    ? `${tmpl.config.targetDistanceKm}km`
     : null;
 
   // HOME-ACTION-01: startability decides BOTH the pill label AND where the

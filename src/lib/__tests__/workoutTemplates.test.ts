@@ -75,7 +75,7 @@ describe("RUN_TEMPLATES", () => {
       (t) => t.type === "long" || t.type === "race"
     );
     for (const t of distanceTemplates) {
-      expect(t.config.targetDistance).toBeGreaterThan(0);
+      expect(t.config.targetDistanceKm).toBeGreaterThan(0);
     }
   });
 

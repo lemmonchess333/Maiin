@@ -97,24 +97,50 @@ function defaultPaceBucketFor(saved: SavedRunLike): "quality" | "easy" {
 }
 
 /**
- * Default planned-distance lookup from RUN_TEMPLATES. Returns 0
- * when the template isn't in the registry (triggers Q1 P29 fallback
+ * Default planned-distance lookup from RUN_TEMPLATES, in METRES.
+ *
+ * The catalogue authors distances in kilometres (`targetDistanceKm`), but
+ * `saved.distance` is metres end-to-end through the run flow (RunSummary.tsx:
+ * "`distance` is metres throughout the run flow"). `distanceAndBucketOk`
+ * divides one by the other, so this map MUST be metres.
+ *
+ * It was kilometres until 2026-08-02, which made the ratio 1000× too large
+ * and the 70% threshold (PR-J-Q1 pin P2) a no-op: a `long_15k` slot was
+ * claimable by a 10.5-METRE run, `marathon_race` by 29.5m. Every fixture in
+ * the test file used metres against km templates, so all of them cleared the
+ * bar trivially and none asserted a rejection — the same shape as the
+ * `templateId === "race"` bug in PR #1775.
+ *
+ * Returns 0 when the template isn't in the registry (triggers Q1 P29 fallback
  * — date + template-bucket match, distance branch skipped).
  */
-const PLANNED_DISTANCE_BY_TEMPLATE: Record<string, number> = (() => {
+const PLANNED_DISTANCE_M_BY_TEMPLATE: Record<string, number> = (() => {
   const map: Record<string, number> = {};
   for (const t of RUN_TEMPLATES) {
-    const d = t.config?.targetDistance;
-    if (typeof d === "number" && d > 0) {
-      map[t.id] = d;
+    const km = t.config?.targetDistanceKm;
+    if (typeof km === "number" && km > 0) {
+      map[t.id] = km * 1000;
     }
   }
   return map;
 })();
 
-function defaultPlannedDistanceFor(runDay: { templateId?: string }): number {
-  if (!runDay.templateId) return 0;
-  return PLANNED_DISTANCE_BY_TEMPLATE[runDay.templateId] ?? 0;
+/**
+ * Resolve on `userOverride ?? templateId` — a swapped day is the session the
+ * user actually chose. Every other resolution site does this
+ * (`runPlanMetadata.ts:626`, `runProgrammeViewModel.ts:143`,
+ * `adjustWeek.ts:55`, `runHeroState.ts:136`, `raceRunDaysReconcile.ts:62`),
+ * and `scheduledRunCompletion.ts:132` resolves the same way for the race
+ * short-circuit — so reading `templateId` alone meant a day swapped from
+ * `long_15k` to `easy_30` still had to clear the 15K bar.
+ */
+function defaultPlannedDistanceFor(runDay: {
+  templateId?: string;
+  userOverride?: string;
+}): number {
+  const id = runDay.userOverride || runDay.templateId;
+  if (!id) return 0;
+  return PLANNED_DISTANCE_M_BY_TEMPLATE[id] ?? 0;
 }
 
 const DEFAULT_DEPS: CompletionDeps = {
