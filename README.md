@@ -12,7 +12,7 @@ deep design context, see `CLAUDE.md` (project conventions + invariants).
 ## Quick start
 
 ```bash
-nvm use         # if you use nvm; this repo targets Node 20 LTS
+nvm use         # if you use nvm; this repo targets Node 22 LTS
 npm install
 cp .env.example .env.local   # fill in the Firebase / Stripe / Vertex env vars
 npm run dev

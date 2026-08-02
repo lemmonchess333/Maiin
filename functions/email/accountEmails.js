@@ -26,7 +26,7 @@ const verificationEmail = require("../lib/verificationEmail");
 // (defineSecret registers by NAME; index.js declaring the same name is fine.)
 const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
 
-/** Deliver one email via the Resend REST API (Node 20 global fetch — no SDK
+/** Deliver one email via the Resend REST API (global fetch, no SDK
  *  dependency). `from` is a plain env var so the sender can move from Resend's
  *  test domain (onboarding@resend.dev — sends only to the Resend account
  *  owner) to a verified domain at launch without a code change. */
