@@ -574,6 +574,10 @@ describe("every declared client kind round-trips", () => {
         // one on the first run.
         "restoreExercise",
         "clearNextWorkout",
+        // P6: the lift-side restore, paired with skipWorkoutDay so set and
+        // reset share one write path, and the fell-behind dismissal.
+        "restoreWorkoutDay",
+        "dismissFellBehindPrompt",
       ])
     );
   });
@@ -914,6 +918,85 @@ describe("preconditionless field commands", () => {
       goal: "cut",
     });
     expect(state.goal).toBe("cut");
+  });
+});
+
+describe("restoreWorkoutDay + dismissFellBehindPrompt (P6)", () => {
+  function skippedState() {
+    const s = baseState();
+    s.workouts[0].skipped = true;
+    return s;
+  }
+
+  const restoreCmd = {
+    kind: "restoreWorkoutDay",
+    commandId: CMD,
+    dayIndex: 0,
+    expectedWeekNumber: 5,
+    expectedDaySignature: PUSH_SIG,
+  };
+
+  it("clears `skipped` on a skipped day", () => {
+    const { state } = apply(restoreCmd, skippedState());
+    expect(state.workouts[0].skipped).toBe(false);
+    // Nothing else moves — no completion, no stats side effect.
+    expect(state.workouts[0].completed).toBe(false);
+    expect(state.workouts[0].exercises).toHaveLength(2);
+  });
+
+  it("REFUSES to reopen a completed day", () => {
+    // The load-bearing guard: a completed day returning to plannable would
+    // double-count on every consumer that reads `completed`.
+    const s = skippedState();
+    s.workouts[0].completed = true;
+    expectHttps(() => apply(restoreCmd, s), "failed-precondition");
+  });
+
+  it("is an idempotent no-op on a day that is not skipped", () => {
+    const { state } = apply(restoreCmd, baseState());
+    expect(state.workouts[0].skipped).toBe(false);
+  });
+
+  it("enforces the day precondition like every other day command", () => {
+    expectHttps(
+      () =>
+        apply(
+          { ...restoreCmd, expectedDaySignature: "Push|stale" },
+          skippedState()
+        ),
+      "failed-precondition"
+    );
+  });
+
+  it("dismissFellBehindPrompt DELETES the key rather than nulling it", () => {
+    const s = baseState();
+    s.pendingFellBehindPrompt = { weekKey: "2026-03-01", ran: 1, target: 3 };
+    const { state } = apply(
+      { kind: "dismissFellBehindPrompt", commandId: CMD },
+      s
+    );
+    // Firestore rejects undefined, and readers test for absence.
+    expect("pendingFellBehindPrompt" in state).toBe(false);
+  });
+
+  it("dismissFellBehindPrompt on an absent prompt is a no-op", () => {
+    const { state } = apply(
+      { kind: "dismissFellBehindPrompt", commandId: CMD },
+      baseState()
+    );
+    expect(state.pendingFellBehindPrompt).toBeUndefined();
+  });
+
+  it("dismissFellBehindPrompt leaves the rest of the plan alone", () => {
+    const s = baseState();
+    s.pendingFellBehindPrompt = { weekKey: "2026-03-01" };
+    const { state } = apply(
+      { kind: "dismissFellBehindPrompt", commandId: CMD },
+      s
+    );
+    expect(state.workouts).toHaveLength(baseState().workouts.length);
+    expect(state.runDays).toHaveLength(2);
+    expect(state.weekNumber).toBe(5);
   });
 });
 

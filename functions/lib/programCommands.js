@@ -115,6 +115,8 @@ const CLIENT_COMMAND_KINDS = Object.freeze([
   "revertDeloadWeek",
   "restoreExercise",
   "clearNextWorkout",
+  "restoreWorkoutDay",
+  "dismissFellBehindPrompt",
 ]);
 const CLIENT_COMMAND_KIND_SET = new Set(CLIENT_COMMAND_KINDS);
 
@@ -623,6 +625,29 @@ const KIND_VALIDATORS = {
     void out;
   },
 
+  // SESSION-RESTORE-01 (lift half). Carries the day precondition and nothing
+  // else — WHAT to restore is "this day's skip", which the reducer reads from
+  // its own state. Paired deliberately with skipWorkoutDay: leaving the set on
+  // the boundary and the reset on a document write is the mixed-mode hazard
+  // the boundary exists to remove, and it is the same argument that brought
+  // clearNextWorkout in.
+  restoreWorkoutDay(command, out) {
+    assertKeys(
+      command,
+      "restoreWorkoutDay",
+      ["kind", "commandId", ...PRECONDITION_KEYS],
+      []
+    );
+    validatePrecondition(command, out);
+  },
+
+  // Run9 Slice DE. A state-level flag, so no day precondition — same shape as
+  // clearNextWorkout.
+  dismissFellBehindPrompt(command, out) {
+    assertKeys(command, "dismissFellBehindPrompt", ["kind", "commandId"], []);
+    void out;
+  },
+
   setProgramSettings(command, out) {
     assertKeys(command, "setProgramSettings", ["kind", "commandId", "settings"], []);
     assertKeys(command.settings, "settings", ["autoProgression", "microloading"], []);
@@ -925,6 +950,25 @@ function skipWorkoutDay(state, command) {
   return mapWorkoutDay(state, command.dayIndex, (day) => ({
     ...day,
     skipped: true,
+  }));
+}
+
+function restoreWorkoutDay(state, command) {
+  const day = requireWorkoutDay(state, command);
+  // Never reopen a finished session. This is a real guard, not an
+  // idempotency case: the client refuses it too, and a completed day that
+  // came back as plannable would double-count on every downstream consumer
+  // that reads `completed`.
+  if (day.completed) {
+    failedPrecondition("A completed session can't be restored.");
+  }
+  // Not skipped: nothing to reverse. Idempotent no-op rather than a
+  // rejection, so a replayed or duplicated restore is harmless — the same
+  // call setManualRunCompletion makes for an absent map key.
+  if (!day.skipped) return state;
+  return mapWorkoutDay(state, command.dayIndex, (d) => ({
+    ...d,
+    skipped: false,
   }));
 }
 
@@ -1602,6 +1646,16 @@ function applyProgramCommand({ state, profile, command, now }) {
     case "replaceExercise":
       next = replaceExercise(current, validated);
       break;
+    case "restoreWorkoutDay":
+      next = restoreWorkoutDay(current, validated);
+      break;
+    case "dismissFellBehindPrompt": {
+      // Delete, never set undefined — Firestore rejects undefined, and every
+      // reader treats an absent field as "no prompt". Absent already: no-op.
+      const { pendingFellBehindPrompt: _dismissed, ...withoutPrompt } = current;
+      next = withoutPrompt;
+      break;
+    }
     case "clearNextWorkout": {
       // Delete rather than set undefined: Firestore rejects undefined, and the
       // readers all treat an absent field as "follow programme order".

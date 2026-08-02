@@ -575,8 +575,23 @@ describe("every migrated writer sends a command the server accepts", () => {
               ex("i-c", "Charlie"),
             ],
           },
+          // Day 1 is seeded ALREADY SKIPPED. Restoring day 0 after skipping
+          // it in the same act() does not work: the post-success refetch
+          // re-reads the seeded doc (the mocked sender never mutates it), so
+          // the optimistic `skipped` is gone by the next call and the writer
+          // early-returns. Seeding the precondition is what makes the
+          // command actually reach the wire.
+          {
+            dayName: "Pull",
+            dayType: "upper",
+            completed: false,
+            skipped: true,
+            exercises: [ex("i-d", "Delta")],
+          },
         ],
         runDays: [],
+        // Likewise for the dismissal — no prompt, no command.
+        pendingFellBehindPrompt: { weekKey: "2026-03-01", ran: 1, target: 3 },
         settings: { autoProgression: true, microloading: true },
       } as unknown as Record<string, unknown>,
     });
@@ -601,8 +616,10 @@ describe("every migrated writer sends a command the server accepts", () => {
       await c.restoreRemovedExercise(0);
       await c.logExercise(0, 0, 8, 60);
       await c.skipWorkoutDay(0);
+      await c.restoreWorkoutDay(1);
       await c.setNextWorkout(0);
       await c.updateSettings({ autoProgression: false });
+      await c.dismissFellBehindPrompt();
     });
 
     // Every kind above reached the wire — otherwise the afterEach validated
@@ -619,5 +636,7 @@ describe("every migrated writer sends a command the server accepts", () => {
     expect(kinds).toContain("addExercises");
     expect(kinds).toContain("replaceExercise");
     expect(kinds).toContain("restoreExercise");
+    expect(kinds).toContain("restoreWorkoutDay");
+    expect(kinds).toContain("dismissFellBehindPrompt");
   });
 });

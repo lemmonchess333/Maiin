@@ -1668,15 +1668,27 @@ export function useProgram() {
       if (!programState || !user) return;
       const day = programState.workouts[dayIndex];
       if (!day || !day.skipped || day.completed) return;
-      const updated: ProgramState = {
-        ...programState,
-        workouts: programState.workouts.map((d, i) =>
-          i === dayIndex ? { ...d, skipped: false } : d
-        ),
-      };
-      await saveProgram(updated);
+      const precondition = workoutDayPrecondition(programState, dayIndex);
+      if (!precondition) return;
+      const outcome = await runProgramCommand(
+        {
+          kind: "restoreWorkoutDay",
+          commandId: generateInstanceId(),
+          ...precondition,
+        },
+        (state) => ({
+          ...state,
+          workouts: state.workouts.map((d, i) =>
+            i === dayIndex ? { ...d, skipped: false } : d
+          ),
+        })
+      );
+      if (outcome === "rejected") {
+        toast.error("Couldn't restore that session. Refreshing.");
+        await refetchProgramState();
+      }
     },
-    [programState, user, saveProgram]
+    [programState, user, runProgramCommand, refetchProgramState]
   );
 
   // RUN-RESCHEDULE-01: one-off move of a planned run to another day WITHIN
@@ -2326,11 +2338,17 @@ export function useProgram() {
   const dismissFellBehindPrompt = useCallback(async () => {
     if (!programState) return;
     if (!programState.pendingFellBehindPrompt) return;
-    const next = { ...programState };
-    delete next.pendingFellBehindPrompt;
     logger.log("[fellBehind] dismissed without plan change");
-    await saveProgram(next);
-  }, [programState, saveProgram]);
+    const outcome = await runProgramCommand(
+      { kind: "dismissFellBehindPrompt", commandId: generateInstanceId() },
+      (state) => {
+        const next = { ...state };
+        delete next.pendingFellBehindPrompt;
+        return next;
+      }
+    );
+    if (outcome === "rejected") await refetchProgramState();
+  }, [programState, runProgramCommand, refetchProgramState]);
 
   /**
    * Reorder one day's exercises through the command boundary — the first

@@ -2035,10 +2035,17 @@ describe("SESSION-RESTORE-01 — restore writers reverse a skip", () => {
       await result.current.restoreWorkoutDay(0);
     });
 
-    expect(setDocCalls().length).toBe(1);
-    expect((setDocCalls()[0].data as ProgramState).workouts[0].skipped).toBe(
-      false
-    );
+    // Through the boundary now (P6), paired with skipWorkoutDay so the set
+    // and the reset share one write path. The command carries only the day
+    // precondition — WHAT to restore is the day's own `skipped` flag, which
+    // the reducer reads from its copy; the clearing itself is pinned
+    // server-side in programCommands.test.js.
+    expect(setDocCalls().length).toBe(0);
+    const cmd = sentCommands.find((c) => c.kind === "restoreWorkoutDay");
+    expect(cmd).toBeDefined();
+    expect(cmd?.dayIndex).toBe(0);
+    expect(cmd?.expectedWeekNumber).toBe(1);
+    expect(typeof cmd?.expectedDaySignature).toBe("string");
   });
 
   it("restoreWorkoutDay: refuses a completed lift day (no write)", async () => {
