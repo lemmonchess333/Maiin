@@ -103,7 +103,7 @@ export default function FoodCameraModal({
   }, [onClose]);
 
   // Device/browser BACK closes the camera instead of leaving the Food tab —
-  // the #1 back-trap. See lib/backDismiss.tsx.
+  // the #1 back-trap. See lib/backDismiss.ts.
   useBackDismiss(open, () => onCloseRef.current());
 
   // a11y: this is a full-screen overlay (not the Dialog/BottomSheet primitive —

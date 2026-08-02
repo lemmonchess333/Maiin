@@ -130,7 +130,7 @@ export function Dialog({
 
   // Device/browser BACK closes the dialog when Escape would (back ≈ escape);
   // a forced-choice dialog (closeOnEscape=false) traps back instead of letting
-  // it navigate the page away. See lib/backDismiss.tsx.
+  // it navigate the page away. See lib/backDismiss.ts.
   useBackDismiss(open, () => {
     if (closeOnEscape) onClose();
   });
