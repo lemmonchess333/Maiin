@@ -47,6 +47,48 @@ struck. This document supersedes the pack for the lifting arc.
 > handles reps as well as load, and `programExerciseBuilder` already carries
 > both fields. Only the server command lacked the stash.
 
+> **STATUS 2026-08-02b — P1 and P2 implemented. Four corrections to this
+> document, and one item that turned out to be complete by design.**
+>
+> - **11a needs nothing further, and that is a decision rather than an
+>   omission.** §6 schedules "11a alone, with zero consumers by design" in P2,
+>   but its substance is D2, which shipped in P0. What remains of the handoff is
+>   `eligibleForCalibration` — and per §8.5 that predicate has no caller until
+>   the relative-RPE check exists. Shipping it now is exactly the
+>   written-ahead-of-its-wiring debt the reachability gate discourages, so
+>   `workoutSetRecord.ts` records the refusal in writing: the DATA ships here,
+>   the predicate ships with its caller. **P2's 11a row is closed as
+>   already-done.**
+> - **§8.1's currency flip is staged, against what that section implied.** It
+>   said the P1 fixtures "are what make that safe to do". They made it safe to
+>   MEASURE, and the measurement changed the answer: flipping to 1:1 alone takes
+>   per-muscle readings over a ceiling from 180/825 to **364/825** while
+>   under-floor falls 263 → 147 — worse in total and worse in the costlier
+>   direction. Both predictions I had made were wrong, including the hoped-for
+>   offset from `overshootsCeiling`. The currency decision stands (1:1 is
+>   correct); ADR-0010 records it and stages the flip to land with
+>   landmark-aware builders. See the ADR for the full table.
+> - **§3.8(c) is right that MV is missing but understates the consequence.**
+>   Without it the model cannot distinguish "losing the muscle" from "paying
+>   fatigue for no growth" — two different failures that both read as `low`. The
+>   shipped ladder is `below_maintenance / junk / optimal / high`, with
+>   `classifyVolume` derived from it so no existing surface moves.
+> - **13a's taxonomy work surfaced a defect §3.9 could not see, and it was
+>   user-visible.** A FOURTH label table lived in `exerciseDemo.ts`, unpinned:
+>   **12 exercises highlighted no primary muscle at all** on the exercise
+>   guide's body diagram — a lateral raise with no shoulder — plus 36 dropped
+>   secondaries. §3.9 reasoned about the taxonomy's expressiveness; the live
+>   cost was in a table it never mentions.
+> - **11b's headline value was not the data entry.** §5 frames it as "150
+>   exercises × ~6 fields of domain-judgement data entry with no lead-time
+>   pressure". The merge itself found three live drifts first: a name the
+>   programme card and the exercise guide disagreed on, a documented
+>   `lengthenedBias` field with data in the bank and none in the catalogue, and
+>   `tricep-dips` classified as two different movements by two different tables.
+>   The re-labelling half remains, and is now MEASURED rather than estimated —
+>   23.8% of attributed volume cannot be resolved to a muscle part, ratcheted in
+>   `muscleTaxonomy.test.ts`.
+
 **Method, stated plainly so the confidence is legible.** Thirteen deep passes ran
 in parallel: five book extractions (Zatsiorsky; Schoenfeld; Fleck & Kraemer;
 Helms; Renaissance Periodization), one practitioner-corpus extraction
