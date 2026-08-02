@@ -117,6 +117,7 @@ const CLIENT_COMMAND_KINDS = Object.freeze([
   "clearNextWorkout",
   "restoreWorkoutDay",
   "dismissFellBehindPrompt",
+  "endTrainingBlockKeepingFocus",
 ]);
 const CLIENT_COMMAND_KIND_SET = new Set(CLIENT_COMMAND_KINDS);
 
@@ -645,6 +646,28 @@ const KIND_VALIDATORS = {
   // clearNextWorkout.
   dismissFellBehindPrompt(command, out) {
     assertKeys(command, "dismissFellBehindPrompt", ["kind", "commandId"], []);
+    void out;
+  },
+
+  // Blk: the review's "keep this focus, no block" outcome — end the block and
+  // leave the prescription exactly as the block left it.
+  //
+  // This is the ONLY one of the three block writers that can cross the
+  // boundary today. `startTrainingBlock` and `releaseTrainingBlock` both run
+  // `represcribeWorkouts`, which needs the goal-prescription engine
+  // (goalProfileFor's profile table, assignDayRoles, repDeltaForRole,
+  // repFloorFor, repRangeMaxFor, prescribedRepCeiling, usesUndulation,
+  // scaleLoadForReps) mirrored server-side — none of which exists here. That
+  // is its own arc, and it cannot be dodged by sending the represcribed
+  // workouts: a client-supplied workouts array is exactly the whole-document
+  // write the boundary exists to refuse.
+  endTrainingBlockKeepingFocus(command, out) {
+    assertKeys(
+      command,
+      "endTrainingBlockKeepingFocus",
+      ["kind", "commandId"],
+      []
+    );
     void out;
   },
 
@@ -1654,6 +1677,17 @@ function applyProgramCommand({ state, profile, command, now }) {
       // reader treats an absent field as "no prompt". Absent already: no-op.
       const { pendingFellBehindPrompt: _dismissed, ...withoutPrompt } = current;
       next = withoutPrompt;
+      break;
+    }
+    case "endTrainingBlockKeepingFocus": {
+      if (!isPlainObject(current.trainingBlock)) {
+        failedPrecondition("There is no active training block.");
+      }
+      // Delete rather than set undefined, as with every other clear here.
+      // `primaryGoal` is deliberately untouched: keeping the focus IS the
+      // outcome, so the block's focus stays the programme's focus.
+      const { trainingBlock: _ended, ...withoutBlock } = current;
+      next = withoutBlock;
       break;
     }
     case "clearNextWorkout": {

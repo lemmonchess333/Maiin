@@ -592,6 +592,16 @@ describe("every migrated writer sends a command the server accepts", () => {
         runDays: [],
         // Likewise for the dismissal — no prompt, no command.
         pendingFellBehindPrompt: { weekKey: "2026-03-01", ran: 1, target: 3 },
+        // Same reason as the two above: no block, no command.
+        trainingBlock: {
+          id: "blk1",
+          owned: true,
+          focus: "strength",
+          pace: "standard",
+          durationWeeks: 8,
+          startDate: "2026-03-02",
+          goalBefore: "hypertrophy",
+        },
         settings: { autoProgression: true, microloading: true },
       } as unknown as Record<string, unknown>,
     });
@@ -620,6 +630,7 @@ describe("every migrated writer sends a command the server accepts", () => {
       await c.setNextWorkout(0);
       await c.updateSettings({ autoProgression: false });
       await c.dismissFellBehindPrompt();
+      await c.keepTrainingBlockFocus();
     });
 
     // Every kind above reached the wire — otherwise the afterEach validated
@@ -638,5 +649,6 @@ describe("every migrated writer sends a command the server accepts", () => {
     expect(kinds).toContain("restoreExercise");
     expect(kinds).toContain("restoreWorkoutDay");
     expect(kinds).toContain("dismissFellBehindPrompt");
+    expect(kinds).toContain("endTrainingBlockKeepingFocus");
   });
 });

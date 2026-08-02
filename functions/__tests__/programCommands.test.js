@@ -578,6 +578,7 @@ describe("every declared client kind round-trips", () => {
         // reset share one write path, and the fell-behind dismissal.
         "restoreWorkoutDay",
         "dismissFellBehindPrompt",
+        "endTrainingBlockKeepingFocus",
       ])
     );
   });
@@ -985,6 +986,41 @@ describe("restoreWorkoutDay + dismissFellBehindPrompt (P6)", () => {
       baseState()
     );
     expect(state.pendingFellBehindPrompt).toBeUndefined();
+  });
+
+  it("endTrainingBlockKeepingFocus removes the block and KEEPS primaryGoal", () => {
+    const s = baseState();
+    s.trainingBlock = {
+      id: "blk1",
+      owned: true,
+      focus: "strength",
+      pace: "standard",
+      durationWeeks: 8,
+      startDate: "2026-03-02",
+      goalBefore: "hypertrophy",
+    };
+    s.primaryGoal = "strength";
+    const { state } = apply(
+      { kind: "endTrainingBlockKeepingFocus", commandId: CMD },
+      s
+    );
+    expect("trainingBlock" in state).toBe(false);
+    // Keeping the focus IS the outcome — this must NOT revert to goalBefore,
+    // which is what releaseTrainingBlock does instead.
+    expect(state.primaryGoal).toBe("strength");
+    // The prescription the block left behind is untouched.
+    expect(state.workouts[0].exercises[0].reps).toBe(8);
+  });
+
+  it("endTrainingBlockKeepingFocus rejects when there is no block", () => {
+    expectHttps(
+      () =>
+        apply(
+          { kind: "endTrainingBlockKeepingFocus", commandId: CMD },
+          baseState()
+        ),
+      "failed-precondition"
+    );
   });
 
   it("dismissFellBehindPrompt leaves the rest of the plan alone", () => {

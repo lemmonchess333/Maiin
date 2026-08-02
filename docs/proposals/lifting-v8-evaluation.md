@@ -1448,6 +1448,70 @@ uncalibrated scale and needs first-and-last set — i.e. it needs 11a.
 
 ---
 
+## 8.6 P6 boundary migration — the remaining sites, triaged
+
+STATUS 2026-08-02. Recorded because three separate sessions have now
+re-derived this same triage from scratch. 13 `saveProgram` sites remain, all
+in `useProgram.ts`. They are NOT one kind of work, and the split matters more
+than the count.
+
+**Deliberately staying a document write (1 site).** `reorderDayExercises`'
+rejection fallback. A legacy document whose `instanceId`s were never persisted
+gets a direct write, which both honours the reorder and persists the ids so
+the next one goes through the boundary. Removing it would break drag-and-drop
+for those users; it self-heals in one use.
+
+**Blocked on the goal-prescription engine (2 sites).** `startTrainingBlock`
+and `releaseTrainingBlock` both run `represcribeWorkouts`, which needs
+`goalProfileFor` (and its profile table), `assignDayRoles`, `repDeltaForRole`,
+`repFloorFor`, `repRangeMaxFor`, `prescribedRepCeiling`, `usesUndulation` and
+`scaleLoadForReps` mirrored into `functions/`. None exists there today —
+`programExerciseBuilder.js` builds a single exercise from the catalog, which
+is a different question. This cannot be dodged by having the client send the
+represcribed workouts: a client-supplied workouts array is precisely the
+whole-document write the boundary exists to refuse, which is why
+`replaceProgramme` is a private server transition by construction. Sizeable,
+and it carries an actively-edited data table — the same judgement the
+`startingLoads.ts` mirror faced, and it should be taken deliberately rather
+than drifted into. (`keepTrainingBlockFocus` was the third block writer and
+DID migrate — it re-derives nothing.)
+
+**Blocked on cross-document atomicity (3 sites).** `skipRecoveryEarly` (×2)
+and `realignRacePlan` write the profile AND programState, today as
+`Promise.all([updateProfile, saveProgram])` — two independent writes that can
+half-land and leave `profile.runMode` disagreeing with `runPlan.phase`. That
+is already a live instance of the "persist every mirrored and derived field in
+the same write" rule, so migrating these FIXES something rather than merely
+relocating it. The pieces are further along than they look:
+`programCommandTransaction.js` already reads `profileRef` and already has an
+`effects` mechanism (used for the completeWorkoutDay workout doc), and
+`resolveRecoveryExit` is already mirrored + cross-tested in
+`functions/lib/runModeResolution.js` from Run9 3b. What is missing is a
+`profile` effect on the transaction. This is the highest-value remaining
+slice.
+
+**Blocked on the week engine (3 sites).** `advanceToNextWeek` plus the two
+internal rollover writes all call `advanceWeek`, which archives into
+`weekHistory` and steps the prescription. Overlaps the prescription-engine
+mirror above.
+
+**Whole-plan regeneration (2 sites).** `regenerateProgram` and
+`refreshRunSchedule` rebuild the plan from the generator / run scheduler.
+These are `configurePlan`-shaped — a private server transition with its own
+plan validation, not a client command. Should go through that path rather
+than gaining a public kind.
+
+**Run reschedule (1 site).** `moveRunDay` needs `computeRunMove` mirrored plus
+`profile.weekSchedule`, which the transaction already reads. Self-contained;
+a reasonable small slice.
+
+One rule holds across all of them, and it is what every blocker so far was
+found by: **check the reducer against its client for equivalence BEFORE
+migrating, never assume the kinds match the behaviour.** That check turned up
+the client-only race guard, the missing `restoreRunDay` transition, the absent
+easing-block hold in `logExercise`, and the seven writers whose commands the
+validator rejected on every call.
+
 ## 9. Open questions I could not resolve
 
 1. **Does the pack's Handoff 11–14 text carry the same swapped

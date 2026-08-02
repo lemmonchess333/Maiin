@@ -2866,13 +2866,21 @@ export function useProgram() {
    */
   const keepTrainingBlockFocus = useCallback(async (): Promise<boolean> => {
     if (!programState?.trainingBlock) return false;
-    try {
-      await saveProgram({ ...programState, trainingBlock: undefined });
-      return true;
-    } catch {
+    const outcome = await runProgramCommand(
+      { kind: "endTrainingBlockKeepingFocus", commandId: generateInstanceId() },
+      (state) => {
+        const next = { ...state };
+        delete next.trainingBlock;
+        return next;
+      }
+    );
+    if (outcome === "rejected") {
+      toast.error("Couldn't end that block. Refreshing.");
+      await refetchProgramState();
       return false;
     }
-  }, [programState, saveProgram]);
+    return true;
+  }, [programState, runProgramCommand, refetchProgramState]);
 
   const applyDeloadWeek = useCallback(
     () => sendDeloadCommand("applyDeloadWeek"),
