@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '../lib/auth';
-import { getFollowerIds } from '../lib/socialApi';
-import { captureError } from '../lib/errorReporting';
+import { useState, useEffect } from "react";
+import { useUid } from "../lib/auth";
+import { getFollowerIds } from "../lib/socialApi";
+import { captureError } from "../lib/errorReporting";
 
 /* Module-level cache + listener registry mirroring useBlockedUsers.
  *
@@ -34,8 +34,7 @@ export interface UseFollowersOfMeReturn {
 }
 
 export function useFollowersOfMe(): UseFollowersOfMeReturn {
-  const { user } = useAuth();
-  const uid = user?.uid;
+  const uid = useUid();
   /* Force-render counter — same pattern as useBlockedUsers; avoids
      react-hooks/set-state-in-effect by deriving the value during
      render and only bumping a tick when the cache mutates. */
@@ -59,9 +58,13 @@ export function useFollowersOfMe(): UseFollowersOfMeReturn {
           notify(uid);
         })
         .catch((e) => {
-          captureError(e instanceof Error ? e : new Error(String(e)), 'network', {
-            hook: 'useFollowersOfMe',
-          });
+          captureError(
+            e instanceof Error ? e : new Error(String(e)),
+            "network",
+            {
+              hook: "useFollowersOfMe",
+            }
+          );
         });
     }
 
@@ -70,7 +73,9 @@ export function useFollowersOfMe(): UseFollowersOfMeReturn {
     };
   }, [uid]);
 
-  const followers: Set<string> = uid ? cache.get(uid) ?? new Set() : new Set();
+  const followers: Set<string> = uid
+    ? (cache.get(uid) ?? new Set())
+    : new Set();
 
   const addFollower = (id: string) => {
     if (!uid) return;

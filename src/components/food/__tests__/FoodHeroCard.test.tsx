@@ -22,6 +22,7 @@ import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ profile: { targetCalories: 2000 } }),
+  useUid: () => null,
 }));
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));

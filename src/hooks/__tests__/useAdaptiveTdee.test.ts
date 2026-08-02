@@ -18,7 +18,10 @@ const subMock = vi.fn<() => { isPro: boolean }>(() => ({ isPro: true }));
 const bodyweightMock = vi.fn<() => Promise<{ date: string; weight: number }[]>>(
   async () => []
 );
-vi.mock("@/lib/auth", () => ({ useAuth: () => authMock() }));
+vi.mock("@/lib/auth", () => ({
+  useAuth: () => authMock(),
+  useUid: () => authMock().user?.uid ?? null,
+}));
 vi.mock("@/lib/subscription", () => ({ useSubscription: () => subMock() }));
 vi.mock("@/lib/firebase", () => ({ db: {} }));
 vi.mock("@/lib/api", () => ({

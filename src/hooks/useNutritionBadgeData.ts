@@ -19,7 +19,7 @@ import {
   query,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import type { DayTargetSnapshot, DayWater } from "@/lib/nutritionBadgeDays";
 import { resolveConsumedMl, resolveTargetMl } from "@/lib/waterUnits";
@@ -47,7 +47,7 @@ function num(v: unknown): number {
 }
 
 export function useNutritionBadgeData(): NutritionBadgeData {
-  const { user } = useAuth();
+  const uid = useUid();
   const [macroTargetsByDay, setMacroTargets] =
     useState<Map<string, DayTargetSnapshot>>(EMPTY_MACRO_TARGETS);
   const [waterByDay, setWater] = useState<Map<string, DayWater>>(EMPTY_WATER);
@@ -55,7 +55,7 @@ export function useNutritionBadgeData(): NutritionBadgeData {
   const [waterLoaded, setWaterLoaded] = useState(false);
 
   useEffect(() => {
-    if (!user) {
+    if (!uid) {
       // Deliberate sign-out reset so a previous account's per-day nutrition
       // data can't leak into the next session's badge pass (CLAUDE.md uid-
       // scoping). Runs only on user→null (deps: [user]), so it can't loop —
@@ -79,7 +79,7 @@ export function useNutritionBadgeData(): NutritionBadgeData {
       };
 
     const targetsQ = query(
-      collection(db, "users", user.uid, "dailyNutrition"),
+      collection(db, "users", uid, "dailyNutrition"),
       orderBy("date", "desc"),
       limit(DAILY_NUTRITION_LIMIT)
     );
@@ -111,7 +111,7 @@ export function useNutritionBadgeData(): NutritionBadgeData {
     );
 
     const waterQ = query(
-      collection(db, "users", user.uid, "waterLog"),
+      collection(db, "users", uid, "waterLog"),
       orderBy("updatedAt", "desc"),
       limit(WATER_LIMIT)
     );
@@ -144,7 +144,7 @@ export function useNutritionBadgeData(): NutritionBadgeData {
       unsubTargets();
       unsubWater();
     };
-  }, [user]);
+  }, [uid]);
 
   return {
     macroTargetsByDay,

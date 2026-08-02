@@ -40,7 +40,7 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { useProgram } from "@/features/program/useProgram";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { localDateString } from "@/lib/dateHelpers";
@@ -176,7 +176,7 @@ interface UseClaimMapResult {
  *   future midnight-rollover effect). Defaults to the local date.
  */
 export function useClaimMap(dateAnchor?: string): UseClaimMapResult {
-  const { user } = useAuth();
+  const uid = useUid();
   const { programState } = useProgram();
   const [savedRuns, setSavedRuns] = useState<SavedRunDoc[]>([]);
   const [loading, setLoading] = useState(true);
@@ -185,12 +185,12 @@ export function useClaimMap(dateAnchor?: string): UseClaimMapResult {
 
   useEffect(
     function () {
-      if (!user) {
+      if (!uid) {
         setSavedRuns([]);
         setLoading(false);
         return;
       }
-      const runsRef = collection(db, "users", user.uid, "runs");
+      const runsRef = collection(db, "users", uid, "runs");
       const q = query(runsRef, orderBy("createdAt", "desc"));
       const unsub = onSnapshot(
         q,
@@ -241,7 +241,7 @@ export function useClaimMap(dateAnchor?: string): UseClaimMapResult {
       );
       return unsub;
     },
-    [user]
+    [uid]
   );
 
   const runDays = programState?.runDays ?? [];

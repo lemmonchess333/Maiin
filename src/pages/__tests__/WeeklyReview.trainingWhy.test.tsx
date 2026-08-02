@@ -19,6 +19,8 @@ let mockLoading = false;
 
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: { uid: "u-1" }, profile: mockProfile }),
+  useUid: () =>
+    ({ user: { uid: "u-1" }, profile: mockProfile }).user?.uid ?? null,
 }));
 
 vi.mock("@/hooks/useWeeklyReview", () => ({

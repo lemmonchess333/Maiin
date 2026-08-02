@@ -5,7 +5,7 @@ import {
 } from "@/components/share/ShareCardSheet";
 import { useDiscoverFeed } from "@/hooks/useDiscoverFeed";
 import { useFeedSubTabFreshness } from "@/hooks/useFeedSubTabFreshness";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { useEffect, useMemo, useRef, useState, Suspense } from "react";
 import type { MutableRefObject } from "react";
 import SpacesDirectory from "@/features/spaces/SpacesDirectory";
@@ -98,8 +98,8 @@ export default function FeedView({
 }: FeedViewProps) {
   // uid scopes the per-sub-tab freshness pointers (SOCIAL-ATTENTION-01)
   // so a shared browser doesn't leak account A's "seen" dots to B.
-  const { user } = useAuth();
-  const freshnessUid = user?.uid ?? null;
+  const uid = useUid();
+  const freshnessUid = uid;
 
   // Feed hooks — discover only fetches when active (#7)
   /* Following feed is enabled only when the user is on the Feed tab
@@ -244,10 +244,10 @@ export default function FeedView({
   const [trajectory, setTrajectory] = useState<PersonalTrajectory | null>(null);
   const [trajectoryLoading, setTrajectoryLoading] = useState(true);
   useEffect(() => {
-    if (!trajectoryEnabled || !user) return;
+    if (!trajectoryEnabled || !uid) return;
     let cancelled = false;
     setTrajectoryLoading(true);
-    getPersonalTrajectory(user.uid)
+    getPersonalTrajectory(uid)
       .then((d) => {
         if (!cancelled) setTrajectory(d);
       })
@@ -260,7 +260,7 @@ export default function FeedView({
     return () => {
       cancelled = true;
     };
-  }, [trajectoryEnabled, user]);
+  }, [trajectoryEnabled, uid]);
   /* The week is "open" (no sessions yet) only once the data says so —
      never while loading, and never for leaderboard-tier users whose
      slot doesn't fetch trajectory at all. */
@@ -697,9 +697,7 @@ export default function FeedView({
                        finished sessions are displayed. Own cards only:
                        sharing someone ELSE's session raises consent
                        questions this deliberately doesn't open. */
-                    onShare={
-                      item.authorId === user?.uid ? openShareCard : undefined
-                    }
+                    onShare={item.authorId === uid ? openShareCard : undefined}
                   />
                 ))}
               </div>

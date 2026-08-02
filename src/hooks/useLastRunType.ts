@@ -12,16 +12,16 @@
 import { useEffect, useState } from "react";
 import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { resolveRepeatType } from "@/components/run/runConfigDefaults";
 import type { ActivityType } from "@/types/run";
 
 export function useLastRunType(): ActivityType | null {
-  const { user } = useAuth();
+  const uid = useUid();
   const [repeatType, setRepeatType] = useState<ActivityType | null>(null);
 
   useEffect(() => {
-    if (!user) {
+    if (!uid) {
       setRepeatType(null);
       return;
     }
@@ -30,7 +30,7 @@ export function useLastRunType(): ActivityType | null {
       try {
         const snap = await getDocs(
           query(
-            collection(db, "users", user.uid, "runs"),
+            collection(db, "users", uid, "runs"),
             orderBy("completedAt", "desc"),
             limit(5)
           )
@@ -44,7 +44,7 @@ export function useLastRunType(): ActivityType | null {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [uid]);
 
   return repeatType;
 }

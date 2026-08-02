@@ -16,6 +16,7 @@ vi.mock("firebase/firestore");
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: { uid: "viewer-1" } }),
+  useUid: () => ({ user: { uid: "viewer-1" } }).user?.uid ?? null,
 }));
 vi.mock("@/hooks/useBlockedUsers", () => ({
   useBlockedUsers: () => ({ blocked: new Set(), addBlocked: vi.fn() }),

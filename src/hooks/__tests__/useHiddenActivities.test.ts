@@ -10,6 +10,7 @@ import { renderHook, act } from "@testing-library/react";
 const useAuthMock = vi.fn(() => ({ user: { uid: "u-1" } }));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => useAuthMock(),
+  useUid: () => useAuthMock().user?.uid ?? null,
 }));
 
 import { useHiddenActivities } from "../useHiddenActivities";
@@ -28,7 +29,7 @@ describe("useHiddenActivities — initial read", () => {
   it("rehydrates from localStorage on mount", () => {
     window.localStorage.setItem(
       "tropos.hiddenActivities.u-1",
-      JSON.stringify(["act-A", "act-B"]),
+      JSON.stringify(["act-A", "act-B"])
     );
     const { result } = renderHook(() => useHiddenActivities());
     expect(result.current.hidden.has("act-A")).toBe(true);
@@ -38,11 +39,11 @@ describe("useHiddenActivities — initial read", () => {
   it("scopes by uid — a different user on the same device sees their own set", () => {
     window.localStorage.setItem(
       "tropos.hiddenActivities.u-1",
-      JSON.stringify(["act-A"]),
+      JSON.stringify(["act-A"])
     );
     window.localStorage.setItem(
       "tropos.hiddenActivities.u-2",
-      JSON.stringify(["act-B"]),
+      JSON.stringify(["act-B"])
     );
     useAuthMock.mockReturnValue({ user: { uid: "u-2" } });
     const { result } = renderHook(() => useHiddenActivities());
@@ -59,7 +60,7 @@ describe("useHiddenActivities — hide / unhide", () => {
     });
     expect(result.current.hidden.has("act-1")).toBe(true);
     const stored = JSON.parse(
-      window.localStorage.getItem("tropos.hiddenActivities.u-1") ?? "[]",
+      window.localStorage.getItem("tropos.hiddenActivities.u-1") ?? "[]"
     );
     expect(stored).toContain("act-1");
   });
@@ -76,7 +77,7 @@ describe("useHiddenActivities — hide / unhide", () => {
   it("unhide(id) removes the id and persists", () => {
     window.localStorage.setItem(
       "tropos.hiddenActivities.u-1",
-      JSON.stringify(["act-1", "act-2"]),
+      JSON.stringify(["act-1", "act-2"])
     );
     const { result } = renderHook(() => useHiddenActivities());
     act(() => {
@@ -87,7 +88,9 @@ describe("useHiddenActivities — hide / unhide", () => {
   });
 
   it("hide is a no-op when no user is signed in", () => {
-    useAuthMock.mockReturnValue({ user: null } as unknown as ReturnType<typeof useAuthMock>);
+    useAuthMock.mockReturnValue({ user: null } as unknown as ReturnType<
+      typeof useAuthMock
+    >);
     const { result } = renderHook(() => useHiddenActivities());
     act(() => {
       result.current.hide("act-1");

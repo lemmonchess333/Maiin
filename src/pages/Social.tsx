@@ -3,7 +3,7 @@ import { useBlockedUsers } from "../hooks/useBlockedUsers";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useAuth } from "../lib/auth";
+import { useUid } from "../lib/auth";
 import { getBoundedFollowingCount } from "../lib/socialApi";
 /* SOCIAL-HOME-01 Stage A: the three tab sections are extracted into
    view components (mechanical decomposition, zero behaviour change).
@@ -37,7 +37,7 @@ import type {
 export type { SocialTab, FeedSubTab };
 
 export default function Social() {
-  const { user } = useAuth();
+  const uid = useUid();
   /* useBlockedUsers now returns { blocked, addBlocked, removeBlocked }
      so ActivityCard can mutate the shared set after a block write
      completes. We only care about the Set here for filtering — the
@@ -146,9 +146,9 @@ export default function Social() {
   );
   const [followingCount, setFollowingCount] = useState<number | null>(null);
   useEffect(() => {
-    if (!user || followingCount !== null) return;
+    if (!uid || followingCount !== null) return;
     let cancelled = false;
-    getBoundedFollowingCount(user.uid, SOCIAL_GATES.FOLLOWING_FEED_MIN_FOLLOWS)
+    getBoundedFollowingCount(uid, SOCIAL_GATES.FOLLOWING_FEED_MIN_FOLLOWS)
       .then((n) => {
         if (cancelled) return;
         setFollowingCount(n);
@@ -165,7 +165,7 @@ export default function Social() {
     return () => {
       cancelled = true;
     };
-  }, [user, followingCount, feedFromUrl]);
+  }, [uid, followingCount, feedFromUrl]);
 
   /* The old Soc5c smart default (send brand-new users to the People
      tab) is gone: Together is the default surface and owns the
@@ -381,7 +381,7 @@ export default function Social() {
         active={tab === "together"}
         openPeople={openPeople}
         chromeHidden={chromeHidden}
-        uid={user?.uid}
+        uid={uid ?? undefined}
         refreshRef={communityRefreshRef}
       />
 

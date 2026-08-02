@@ -42,6 +42,7 @@ const h = vi.hoisted(() => ({
 // fake.
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: h.user, profile: h.profile }),
+  useUid: () => ({ user: h.user, profile: h.profile }).user?.uid ?? null,
 }));
 
 vi.mock("@/hooks/useAdaptiveTdee", () => ({

@@ -32,6 +32,9 @@ vi.mock("@/lib/auth", function () {
     useAuth: function () {
       return { user: { uid: "u1" }, profile: profileRef.current };
     },
+    useUid: function () {
+      return "u1";
+    },
   };
 });
 

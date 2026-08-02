@@ -4,7 +4,7 @@ import { spaceDef } from "@/features/spaces/spaceDefs";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { searchUsers } from "@/lib/socialApi";
 import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
 import FollowButton from "@/components/social/FollowButton";
@@ -47,7 +47,7 @@ export default function PeopleView({
   isNewUser,
   openTogether,
 }: PeopleViewProps) {
-  const { user } = useAuth();
+  const uid = useUid();
 
   // Suggested People — fetches lazily only when the Discover tab is shown.
   // SOCIAL-PRIVACY-01: also wait for the block list so a blocked user
@@ -75,7 +75,7 @@ export default function PeopleView({
      gated below when isRestricted. Loading state is treated as not-
      restricted so we don't flash the gate on slow networks for the
      vast majority of users who aren't restricted. */
-  const { isRestricted } = useRestrictedStatus(user?.uid);
+  const { isRestricted } = useRestrictedStatus(uid ?? undefined);
 
   /* S4e-P13: fire social_restricted_gate_shown once per Find-tab
      mount where the gate actually renders. Guard with a ref so
@@ -133,7 +133,7 @@ export default function PeopleView({
         const results = await searchUsers(query);
         if (seq !== searchSeqRef.current) return; // stale, newer search in flight
         const filtered = results
-          .filter((u) => u.uid !== user?.uid)
+          .filter((u) => u.uid !== uid)
           // Don't surface blocked users in search hits — same shared cache
           // the feed filters use, so a block from one surface flows here.
           .filter((u) => !blockedUsers.has(u.uid));
@@ -145,7 +145,7 @@ export default function PeopleView({
       }
       if (seq === searchSeqRef.current) setSearching(false);
     },
-    [searchQuery, user?.uid, blockedUsers]
+    [searchQuery, uid, blockedUsers]
   );
 
   const handleSearchInputChange = (value: string) => {

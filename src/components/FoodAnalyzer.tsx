@@ -8,7 +8,7 @@ import { doc, Timestamp, collection } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { uploadFoodPhoto } from "@/lib/foodPhotoUpload";
 import { db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { safeNum, parseServingGrams, round1 } from "@/lib/foodParseHelpers";
 import { toast } from "@/lib/toast";
 import { logger } from "@/lib/logger";
@@ -160,7 +160,7 @@ export default function FoodAnalyzer({
   onRequestManualLog,
   effectiveDailyTarget,
 }: Props) {
-  const { user } = useAuth();
+  const uid = useUid();
   const { addFavourite } = useFoodFavourites();
 
   const {
@@ -364,7 +364,7 @@ export default function FoodAnalyzer({
   };
 
   const performSave = async (meal: MealResult) => {
-    if (!user) return;
+    if (!uid) return;
     setSaving(true);
     try {
       /* For barcode + single-item AI we keep the original "scale by global
@@ -417,7 +417,7 @@ export default function FoodAnalyzer({
         ? meal.foodName
         : buildFoodNameFromItems(persistedItems, meal.foodName);
 
-      const mealRef = doc(collection(db, "users", user.uid, "meals"));
+      const mealRef = doc(collection(db, "users", uid, "meals"));
       await setDocGuarded(mealRef, {
         date,
         foodName: derivedFoodName,
@@ -445,7 +445,7 @@ export default function FoodAnalyzer({
          harmless field add on a hidden doc. */
       if (capturedBase64) {
         const photoBase64 = capturedBase64;
-        void uploadFoodPhoto(user.uid, photoBase64).then((photo) => {
+        void uploadFoodPhoto(uid, photoBase64).then((photo) => {
           if (!photo) return;
           return setDocGuarded(
             mealRef,
