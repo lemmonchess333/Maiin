@@ -1,4 +1,5 @@
 // @vitest-environment jsdom — needs DOM/storage APIs; the rest of this directory runs in the fast node environment (audit batch 2).
+import { createRequire } from "node:module";
 /**
  * PR-0b-ii: integration tests for useProgram's writer paths.
  *
@@ -184,10 +185,38 @@ vi.mock("@/lib/auth", () => ({
 // PR-0b-ii's writer assertions.
 /* P6: `setNextWorkout` (and the other migrated writers) no longer `setDoc` —
    they send a command. Mocked here so this suite can assert the command
-   instead of a write it will never see. */
+   instead of a write it will never see.
+
+   THE MOCK VALIDATES. It runs the REAL server validator
+   (functions/lib/programCommands.js) before recording, so every test that
+   exercises a migrated writer also proves the command it builds is one the
+   server would accept.
+
+   This is not belt-and-braces — it closes a gap that had already shipped a
+   regression. The client suite mocked the sender, so it proved only what was
+   SENT; the functions suite hand-builds commands, so it proved only what was
+   ACCEPTED. Nothing joined the two, and `skipWorkoutDay` / `setNextWorkout`
+   went out sending a bare `dayIndex` against a validator that requires all
+   three precondition fields. Every such command was rejected, the client
+   rolled back and refetched, and the user's skip silently did nothing — with
+   both suites green. ADR-0008, reachability over prose: the pin has to sit on
+   the path that actually runs. */
+const require_ = createRequire(import.meta.url);
+const { assertClientProgramCommand } = require_(
+  "../../../../functions/lib/programCommands"
+) as { assertClientProgramCommand: (c: unknown) => unknown };
+
 const sentCommands: Record<string, unknown>[] = [];
 vi.mock("../programCommandClient", () => ({
   sendProgramCommand: async (command: Record<string, unknown>) => {
+    try {
+      assertClientProgramCommand(command);
+    } catch (err) {
+      throw new Error(
+        `the server would REJECT this ${command.kind} command: ` +
+          `${(err as Error).message}\n${JSON.stringify(command, null, 2)}`
+      );
+    }
     sentCommands.push(command);
   },
 }));

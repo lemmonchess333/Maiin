@@ -126,6 +126,10 @@ const PINNED: Record<string, string> = {
   // applyDeload (and the easierToday.deloadWeight weight rule).
   "functions/lib/deloadEngine.js":
     "src/features/program/__tests__/deloadEngine.cross.test.ts",
+  // Easing-block progression hold — the third branch of logExercise, which
+  // the server reducer lacked until the writer migrated to the boundary.
+  "functions/lib/progressionHold.js":
+    "src/features/program/__tests__/progressionHold.cross.test.ts",
   // Race-template ids — data-list mirror of the race-TYPE RUN_TEMPLATES
   // entries. Same shape as spaceIds below: the server cannot import the
   // catalogue, so the list is pinned set-equal instead.

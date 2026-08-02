@@ -34,6 +34,7 @@ import {
 import { blockWeekOf, makeBlockId } from "./trainingBlock";
 import { normalizeProgramState, transitionStatus } from "./programTypes";
 import { resolveRecoveryExit } from "./runModeResolution";
+import { workoutDayPrecondition } from "./programCommandPrecondition";
 import {
   migrateProgramState,
   backfillWeekScheduleIfMissing,
@@ -1226,11 +1227,13 @@ export function useProgram() {
       if (!programState || !user) return;
       // P6: through the boundary. Equivalent — the reducer sets the same one
       // flag on the same day.
+      const skipPrecondition = workoutDayPrecondition(programState, dayIndex);
+      if (!skipPrecondition) return;
       const outcome = await runProgramCommand(
         {
           kind: "skipWorkoutDay",
           commandId: generateInstanceId(),
-          dayIndex,
+          ...skipPrecondition,
         },
         (state) => ({
           ...state,
@@ -1275,11 +1278,13 @@ export function useProgram() {
       if (!Number.isInteger(dayIndex) || !day || day.completed || day.skipped) {
         return;
       }
+      const nextPrecondition = workoutDayPrecondition(programState, dayIndex);
+      if (!nextPrecondition) return;
       const outcome = await runProgramCommand(
         {
           kind: "setNextWorkout",
           commandId: generateInstanceId(),
-          dayIndex,
+          ...nextPrecondition,
         },
         (state) => ({ ...state, nextWorkoutOverride: dayIndex })
       );
@@ -1940,34 +1945,53 @@ export function useProgram() {
         };
       });
 
-      await saveProgram({ ...programState, workouts: updatedWorkouts });
+      // Through the boundary. The exercise is addressed by instanceId, not
+      // index — the command's whole job is to survive a stale client, and an
+      // index is only meaningful against the array the client happened to be
+      // holding. `today` is the one input the server cannot derive (see
+      // functions/lib/progressionHold.js); everything above is recomputed
+      // server-side from its own copy of the state.
+      const precondition = workoutDayPrecondition(programState, dayIndex);
+      if (!precondition) return;
+      const outcome = await runProgramCommand(
+        {
+          kind: "logExercise",
+          commandId: generateInstanceId(),
+          ...precondition,
+          exerciseInstanceId: exercise.instanceId,
+          actual: {
+            weight: actualWeight,
+            reps: actualReps,
+            completed: actualReps >= exercise.reps,
+          },
+          today: localDateString(),
+          ...(actualRpe === undefined ? {} : { actualRpe }),
+        },
+        (state) => ({ ...state, workouts: updatedWorkouts })
+      );
+      if (outcome === "rejected") {
+        toast.error("Couldn't save that set. Refreshing.");
+        await refetchProgramState();
+      }
     },
-    [programState, saveProgram]
+    [programState, runProgramCommand, refetchProgramState]
   );
 
-  // Update exercise manually (weight override)
-  const updateExercise = useCallback(
-    async (
-      dayIndex: number,
-      exerciseIndex: number,
-      updates: Partial<ProgramExercise>
-    ) => {
-      if (!programState) return;
-
-      const updatedWorkouts = programState.workouts.map((day, di) => {
-        if (di !== dayIndex) return day;
-        return {
-          ...day,
-          exercises: day.exercises.map((ex, ei) =>
-            ei === exerciseIndex ? { ...ex, ...updates } : ex
-          ),
-        };
-      });
-
-      await saveProgram({ ...programState, workouts: updatedWorkouts });
-    },
-    [programState, saveProgram]
-  );
+  /* `updateExercise` (manual sets/reps/weight override) was DELETED here
+   * rather than migrated. It had zero consumers: defined, returned from the
+   * hook, and referenced by no component, page or test anywhere in `src`.
+   * Migrating it would have been work to make dead code go through the
+   * boundary, and the boundary's own reachability gate can't see it — the
+   * symbol gate checks module exports, and this was a property of the hook's
+   * return object. Same call as `epley1RM` in P4.
+   *
+   * The server's `updateExercise` command KIND stays. It is a validated
+   * branch inside `applyProgramCommand`, not a separately-deployed endpoint,
+   * so the "stale container still serving" hazard that retired
+   * `askGeminiText` does not apply — and a manual-override UI is a plausible
+   * future caller for it. It now has no client caller; that is the note, not
+   * a defect.
+   */
 
   // Update settings
   const updateSettings = useCallback(
@@ -2368,11 +2392,13 @@ export function useProgram() {
         };
       };
 
+      const precondition = workoutDayPrecondition(programState, dayIndex);
+      if (!precondition) return false;
       const outcome = await runProgramCommand(
         {
           kind: "reorderExercises",
           commandId: generateInstanceId(),
-          dayIndex,
+          ...precondition,
           orderedInstanceIds,
         },
         permute
@@ -2410,11 +2436,13 @@ export function useProgram() {
   const removeExerciseFromDay = useCallback(
     async (dayIndex: number, instanceId: string): Promise<boolean> => {
       if (!programState) return false;
+      const precondition = workoutDayPrecondition(programState, dayIndex);
+      if (!precondition) return false;
       const outcome = await runProgramCommand(
         {
           kind: "removeExercise",
           commandId: generateInstanceId(),
-          dayIndex,
+          ...precondition,
           exerciseInstanceId: instanceId,
         },
         (state) => ({
@@ -2457,11 +2485,13 @@ export function useProgram() {
     async (dayIndex: number, exerciseIds: string[]): Promise<boolean> => {
       if (!programState || exerciseIds.length === 0) return false;
       const commandId = generateInstanceId();
+      const precondition = workoutDayPrecondition(programState, dayIndex);
+      if (!precondition) return false;
       const outcome = await runProgramCommand(
         {
           kind: "addExercises",
           commandId,
-          dayIndex,
+          ...precondition,
           exercises: exerciseIds.map((exerciseId) => ({ exerciseId })),
         },
         (state) => ({
@@ -2519,11 +2549,13 @@ export function useProgram() {
   const restoreRemovedExercise = useCallback(
     async (dayIndex: number): Promise<boolean> => {
       if (!programState) return false;
+      const precondition = workoutDayPrecondition(programState, dayIndex);
+      if (!precondition) return false;
       const outcome = await runProgramCommand(
         {
           kind: "restoreExercise",
           commandId: generateInstanceId(),
-          dayIndex,
+          ...precondition,
         },
         (state) => state
       );
@@ -2581,11 +2613,13 @@ export function useProgram() {
           : 10
         : old.reps;
 
+      const precondition = workoutDayPrecondition(programState, dayIndex);
+      if (!precondition) return false;
       const outcome = await runProgramCommand(
         {
           kind: "replaceExercise",
           commandId,
-          dayIndex,
+          ...precondition,
           oldInstanceId,
           replacementExerciseId,
           replacementWeight: calibrated.weight,
@@ -2923,7 +2957,6 @@ export function useProgram() {
     setNextWorkout,
     advanceToNextWeek,
     logExercise,
-    updateExercise,
     updateSettings,
     regenerateProgram,
     saveProgram,

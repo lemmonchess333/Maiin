@@ -44,7 +44,14 @@
 
 // Server mirror of the client progression engine (pinned by a parity
 // cross-test). Used by the logExercise reducer.
-const { applyProgression } = require("./progressionEngine");
+const {
+  applyProgression,
+  dateStampUTC,
+  PERFORMANCE_HISTORY_CAP,
+} = require("./progressionEngine");
+// Easing-block progression hold (pinned by a parity cross-test). The third
+// branch of the logExercise reducer.
+const { holdsProgression } = require("./progressionHold");
 // Catalog name mirror + ProgramExercise builder (both pinned by cross-tests).
 // Used by the addExercises / replaceExercise reducers to derive exercise fields
 // server-side rather than trust a client-supplied exercise object.
@@ -249,6 +256,23 @@ function assertBoundedInt(value, label, min, max) {
   return value;
 }
 
+// A plain YYYY-MM-DD calendar day. Deliberately NOT a timestamp: the only
+// thing a client sends this for is "which local day is it for me", and a
+// bounded date string can't carry a timezone the server would then have to
+// reason about. Range-checked so a typo'd year can't put a training block
+// thousands of weeks out.
+const LOCAL_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+function assertLocalDate(value, label) {
+  if (typeof value !== "string" || !LOCAL_DATE_RE.test(value)) {
+    invalidCommand(`${label} must be a YYYY-MM-DD date.`);
+  }
+  const [y, m, d] = value.split("-").map(Number);
+  if (y < 2000 || y > 2200 || m < 1 || m > 12 || d < 1 || d > 31) {
+    invalidCommand(`${label} is not a valid date.`);
+  }
+  return value;
+}
+
 function assertEnum(value, label, allowedSet) {
   if (typeof value !== "string" || !allowedSet.has(value)) {
     invalidCommand(`${label} is not a permitted value.`);
@@ -441,7 +465,12 @@ const KIND_VALIDATORS = {
       command,
       "logExercise",
       ["kind", "commandId", "exerciseInstanceId", "actual", ...PRECONDITION_KEYS],
-      []
+      // `today` is the user's LOCAL calendar day, which the server cannot
+      // derive (no timezone on programState). It feeds the easing-block hold
+      // only. `actualRpe` is the client's optional RPE — the progression
+      // engine already takes it; the command used to drop it, which silently
+      // progressed a session the user had flagged as maximal.
+      ["today", "actualRpe"]
     );
     validatePrecondition(command, out);
     out.exerciseInstanceId = assertString(
@@ -450,6 +479,12 @@ const KIND_VALIDATORS = {
       MAX_ID_LEN
     );
     out.actual = validateSetLog(command.actual, "actual");
+    if ("today" in command) {
+      out.today = assertLocalDate(command.today, "today");
+    }
+    if ("actualRpe" in command) {
+      out.actualRpe = assertFiniteNumber(command.actualRpe, "actualRpe", 1, 10);
+    }
   },
 
   removeExercise(command, out) {
@@ -1205,18 +1240,49 @@ function logExercise(state, command, now) {
     ? state.settings
     : { autoProgression: true, microloading: true };
 
-  // Mirrors useProgram.logExercise. The client also accepts an optional RPE;
-  // the command union deliberately omits it, so the server always progresses
-  // without an RPE hold (actualRpe === undefined).
+  // Mirrors useProgram.logExercise — all THREE of its branches. The held one
+  // arrived with the boundary migration: the client had it and this reducer
+  // did not, so the server would have progressed a returning lifter straight
+  // through the window designed to hold them. See lib/progressionHold.js.
   let updatedExercise;
-  if (settings.autoProgression) {
+  if (holdsProgression(state.trainingBlock, command.today)) {
+    // Blk2: an "easing back in" block holds LOAD, but still records the
+    // session — the sessions happened and the user should see them. This is
+    // what separates the hold from the autoProgression:false branch below,
+    // which writes no history at all.
+    const history = [
+      ...(Array.isArray(exercise.performanceHistory)
+        ? exercise.performanceHistory
+        : []),
+      {
+        // UTC stamp, as everywhere else on the server. The field is
+        // informational and not week-bucketed — progressionEngine.js makes
+        // the same call and documents it.
+        date: dateStampUTC(now),
+        weight: command.actual.weight,
+        repsCompleted: command.actual.reps,
+        repsTarget: exercise.reps,
+      },
+    ].slice(-PERFORMANCE_HISTORY_CAP);
+    updatedExercise = {
+      ...exercise,
+      lastAttemptedWeight: command.actual.weight,
+      lastPerformance: {
+        sets: exercise.sets,
+        reps: command.actual.reps,
+        weight: command.actual.weight,
+        completed: command.actual.reps >= exercise.reps,
+      },
+      performanceHistory: history,
+    };
+  } else if (settings.autoProgression) {
     updatedExercise = applyProgression(
       exercise,
       command.actual.reps,
       command.actual.weight,
       state.goal,
       settings.microloading,
-      undefined,
+      command.actualRpe,
       now
     );
   } else {

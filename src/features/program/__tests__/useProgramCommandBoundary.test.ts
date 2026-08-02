@@ -22,7 +22,8 @@
  */
 /* eslint-disable @typescript-eslint/no-explicit-any -- firebase mock surface */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createRequire } from "node:module";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { generateSchedule } from "@/lib/scheduleUtils";
 
@@ -87,6 +88,37 @@ vi.mock("../programCommandClient", () => ({
   sendProgramCommand: (...args: unknown[]) =>
     (sendProgramCommand as any)(...args),
 }));
+
+/**
+ * Every command this suite sends must be one the REAL server validator
+ * accepts. Asserted in an afterEach rather than inside the mock because half
+ * these tests replace the implementation with `mockRejectedValue` to exercise
+ * the rejection paths — an implementation-side check would vanish exactly
+ * where the interesting cases are.
+ *
+ * The gap this closes: the file already asserted the exact KEY SET of two
+ * commands, with a comment noting the validator rejects unknown keys. It only
+ * ever caught keys that were extra. Every one of these commands was missing
+ * two REQUIRED precondition fields and would have been rejected in
+ * production, and this suite — the one named for the boundary — read green.
+ */
+afterEach(() => {
+  const cfRequire = createRequire(import.meta.url);
+  const { assertClientProgramCommand } = cfRequire(
+    "../../../../functions/lib/programCommands"
+  ) as { assertClientProgramCommand: (c: unknown) => unknown };
+  for (const [command] of sendProgramCommand.mock.calls) {
+    try {
+      assertClientProgramCommand(command);
+    } catch (err) {
+      throw new Error(
+        `the server would REJECT this ${(command as { kind?: string })?.kind} ` +
+          `command: ${(err as Error).message}\n` +
+          JSON.stringify(command, null, 2)
+      );
+    }
+  }
+});
 
 import { useProgram } from "../useProgram";
 import { __resetCommandOutboxForTests, outboxLength } from "../commandOutbox";
@@ -398,6 +430,8 @@ describe("replaceExerciseInDay — the load the reducer cannot compute", () => {
     ).toEqual([
       "commandId",
       "dayIndex",
+      "expectedDaySignature",
+      "expectedWeekNumber",
       "kind",
       "oldInstanceId",
       "replacementExerciseId",
@@ -443,7 +477,13 @@ describe("restoreRemovedExercise — the soft-delete undo", () => {
 
     expect(
       Object.keys(sendProgramCommand.mock.calls[0][0] as any).sort()
-    ).toEqual(["commandId", "dayIndex", "kind"]);
+    ).toEqual([
+      "commandId",
+      "dayIndex",
+      "expectedDaySignature",
+      "expectedWeekNumber",
+      "kind",
+    ]);
     expect((sendProgramCommand.mock.calls[0][0] as any).kind).toBe(
       "restoreExercise"
     );
@@ -497,5 +537,87 @@ describe("restoreRemovedExercise — the soft-delete undo", () => {
     });
 
     expect(writeLog().length).toBe(before);
+  });
+});
+
+/**
+ * Coverage gate for the validating `afterEach` above.
+ *
+ * The afterEach only proves what the suite actually SENDS, and that is a
+ * sharper limitation than it sounds: after fixing the missing-precondition
+ * bug, reintroducing it in `skipWorkoutDay` still passed both suites, because
+ * nothing drove that writer through the send path. A validator you never
+ * reach is prose.
+ *
+ * So this drives every migrated writer at least once. It asserts almost
+ * nothing itself — the afterEach is the assertion. What it owns is
+ * REACHABILITY: when the next writer migrates, it gets a line here, and its
+ * command shape is then checked against the real validator for free.
+ */
+describe("every migrated writer sends a command the server accepts", () => {
+  const RUN_PROGRAM = "users/test-user-1/programState/current";
+
+  function seedFull(): void {
+    seedFirestore({
+      [RUN_PROGRAM]: {
+        weekNumber: 1,
+        splitType: "upper_lower",
+        goal: "recomp",
+        workouts: [
+          {
+            dayName: "Push",
+            dayType: "upper",
+            completed: false,
+            skipped: false,
+            exercises: [
+              ex("i-a", "Alpha"),
+              ex("i-b", "Bravo"),
+              ex("i-c", "Charlie"),
+            ],
+          },
+        ],
+        runDays: [],
+        settings: { autoProgression: true, microloading: true },
+      } as unknown as Record<string, unknown>,
+    });
+  }
+
+  async function mountedFull() {
+    seedFull();
+    const hook = renderHook(() => useProgram());
+    await waitFor(() => expect(hook.result.current.programState).toBeTruthy());
+    return hook;
+  }
+
+  it("lift-side writers", async () => {
+    const hook = await mountedFull();
+    const c = hook.result.current;
+
+    await act(async () => {
+      await c.reorderDayExercises(0, ["i-c", "i-a", "i-b"]);
+      await c.removeExerciseFromDay(0, "i-b");
+      await c.addExercisesToDayCmd(0, ["bench-press"]);
+      await c.replaceExerciseInDay(0, "i-a", "back-squat");
+      await c.restoreRemovedExercise(0);
+      await c.logExercise(0, 0, 8, 60);
+      await c.skipWorkoutDay(0);
+      await c.setNextWorkout(0);
+      await c.updateSettings({ autoProgression: false });
+    });
+
+    // Every kind above reached the wire — otherwise the afterEach validated
+    // an empty list and proved nothing.
+    const kinds = new Set(
+      sendProgramCommand.mock.calls.map((a) => (a[0] as any).kind)
+    );
+    expect(kinds).toContain("skipWorkoutDay");
+    expect(kinds).toContain("setNextWorkout");
+    expect(kinds).toContain("logExercise");
+    expect(kinds).toContain("setProgramSettings");
+    expect(kinds).toContain("reorderExercises");
+    expect(kinds).toContain("removeExercise");
+    expect(kinds).toContain("addExercises");
+    expect(kinds).toContain("replaceExercise");
+    expect(kinds).toContain("restoreExercise");
   });
 });

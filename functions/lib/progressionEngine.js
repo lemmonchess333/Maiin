@@ -22,6 +22,11 @@
 const { isBodyweightExerciseId } = require("./bodyweightExerciseIds");
 
 const RPE_HOLD_THRESHOLD = 9.5;
+// Mirrors PERFORMANCE_HISTORY_CAP in programEngine.ts (pinned by the
+// applyProgression cross-test). Named + exported rather than an inline -10:
+// programCommands.js's easing-hold branch appends history too, and a second
+// literal is exactly how the two copies drift apart.
+const PERFORMANCE_HISTORY_CAP = 10;
 const MAX_BODYWEIGHT_REPS = 20;
 // Backlog #7's time axis (N2) — mirror of the client constants.
 const HOLD_STEP_SECONDS = 5;
@@ -81,9 +86,9 @@ function applyProgression(
     repsCompleted: actualReps,
     repsTarget: exercise.reps,
   };
-  // Mirrors PERFORMANCE_HISTORY_CAP in programEngine.ts (pinned by the
-  // applyProgression cross-test).
-  const history = [...(exercise.performanceHistory || []), record].slice(-10);
+  const history = [...(exercise.performanceHistory || []), record].slice(
+    -PERFORMANCE_HISTORY_CAP
+  );
 
   const updated = {
     ...exercise,
@@ -227,7 +232,9 @@ function applyProgression(
 
 module.exports = {
   applyProgression,
+  dateStampUTC,
   goalWeightBonus,
+  PERFORMANCE_HISTORY_CAP,
   RPE_HOLD_THRESHOLD,
   MAX_BODYWEIGHT_REPS,
 };

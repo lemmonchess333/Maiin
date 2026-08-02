@@ -1807,6 +1807,73 @@ describe("logExercise (reducer wiring — progression math pinned by cross-test)
     expect(row.performanceHistory).toHaveLength(1);
   });
 
+  // ── Blk2: the easing-block hold — the reducer's THIRD branch ──────────
+  //
+  // Added with the boundary migration. The client had this branch and the
+  // reducer did not, so migrating logExercise as-was would have progressed a
+  // returning lifter straight through the window designed to hold them —
+  // silently, since both branches write a plausible-looking exercise.
+
+  function easingState(startDate = "2026-03-02") {
+    const s = baseState();
+    s.trainingBlock = { pace: "easing", startDate, durationWeeks: 8 };
+    return s;
+  }
+
+  it("easing block, week 2: HOLDS the load but still records the session", () => {
+    const { state } = apply(logCmd({ today: "2026-03-09" }), easingState());
+    const row = state.workouts[0].exercises.find(
+      (e) => e.instanceId === "inst-a"
+    );
+    // Held: no microload, unlike the autoProgression branch above (which
+    // takes the same input to 101).
+    expect(row.weight).toBe(100);
+    // But recorded — this is what separates the hold from autoProgression:off,
+    // which writes no history at all. The sessions happened.
+    expect(row.performanceHistory).toHaveLength(1);
+    expect(row.performanceHistory[0]).toMatchObject({
+      weight: 100,
+      repsCompleted: 8,
+      repsTarget: 8,
+    });
+    expect(row.lastAttemptedWeight).toBe(100);
+  });
+
+  it("easing block, week 3: the hold has expired and load progresses", () => {
+    // 2026-03-16 is the first day of week 3 — one day past EASING_HOLD_WEEKS.
+    // Pinning the day AFTER the boundary is what makes the previous test
+    // mean "held" rather than "this fixture never progresses anyway".
+    const { state } = apply(logCmd({ today: "2026-03-16" }), easingState());
+    expect(
+      state.workouts[0].exercises.find((e) => e.instanceId === "inst-a").weight
+    ).toBe(101);
+  });
+
+  it("a non-easing block does not hold", () => {
+    const s = easingState();
+    s.trainingBlock.pace = "standard";
+    const { state } = apply(logCmd({ today: "2026-03-09" }), s);
+    expect(
+      state.workouts[0].exercises.find((e) => e.instanceId === "inst-a").weight
+    ).toBe(101);
+  });
+
+  it("no `today` on the command means no hold (a pre-migration client)", () => {
+    const { state } = apply(logCmd(), easingState());
+    expect(
+      state.workouts[0].exercises.find((e) => e.instanceId === "inst-a").weight
+    ).toBe(101);
+  });
+
+  it("actualRpe reaches the progression engine", () => {
+    // The command used to drop RPE entirely, so a maximal-effort set
+    // progressed exactly like an easy one. 10 is past RPE_HOLD_THRESHOLD.
+    const { state } = apply(logCmd({ actualRpe: 10 }));
+    expect(
+      state.workouts[0].exercises.find((e) => e.instanceId === "inst-a").weight
+    ).toBe(100);
+  });
+
   it("autoProgression off: records the attempt without changing prescription", () => {
     const s = baseState();
     s.settings = { autoProgression: false, microloading: true };
