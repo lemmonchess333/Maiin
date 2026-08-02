@@ -16,7 +16,9 @@ import {
   needsPosterior,
   needsAnterior,
   getExerciseDemo,
+  demoMusclesForLabel,
 } from "../exerciseDemo";
+import { EXERCISES } from "@/lib/exercises";
 
 describe("mapMuscles", () => {
   it("translates free-exercise-db names to react-body-highlighter ids", () => {
@@ -122,5 +124,74 @@ describe("getExerciseDemo — image merge (D-LIFT-18)", () => {
     // Bench Press was backfilled with commonMistakes in D-LIFT-19.
     const demo = await getExerciseDemo("Bench Press");
     expect(demo?.commonMistakes?.length).toBeGreaterThan(0);
+  });
+});
+
+/* ─── The body diagram shades every exercise (11b) ───────────────────────
+   `LOCAL_MUSCLE_MAP` was a hand-maintained table over raw muscle labels, and
+   an unmapped label silently produced `[]` — the exercise contributed nothing
+   to the diagram and nothing reported it. Twelve exercises highlighted NO
+   primary muscle: a lateral raise with no shoulder, four chest machines, four
+   rows, a leg raise and a rack pull. Thirty-six secondary attributions were
+   dropped on top, including `rhomboids` on twelve rows.
+
+   It is now keyed off `FineMuscle`, so `toFine` owns label normalisation and
+   the taxonomy's own coverage test is what catches an unknown label. These
+   pin the property that motivated the change. ── */
+describe("demoMusclesForLabel — every DB label shades something", () => {
+  it("no exercise has an unshadeable PRIMARY muscle", () => {
+    const blank = EXERCISES.filter(
+      (ex) => demoMusclesForLabel(ex.muscleGroup).length === 0
+    ).map((ex) => `${ex.id} (${ex.muscleGroup})`);
+    expect(
+      blank,
+      `These render an empty body diagram:\n  ${blank.join("\n  ")}`
+    ).toEqual([]);
+    expect(EXERCISES.length).toBeGreaterThan(100); // the scan is not empty
+  });
+
+  it("no SECONDARY muscle is silently dropped", () => {
+    const blank = new Set<string>();
+    for (const ex of EXERCISES) {
+      for (const s of ex.secondaryMuscles ?? []) {
+        if (demoMusclesForLabel(s).length === 0) blank.add(s);
+      }
+    }
+    expect([...blank].sort()).toEqual([]);
+  });
+
+  it("everything it emits survives the highlighter whitelist", () => {
+    // A label mapping to a free-exercise-db name that MUSCLE_MAP doesn't know,
+    // or that isn't in VALID_MUSCLES, is the same silent blank one layer down.
+    const labels = new Set<string>();
+    for (const ex of EXERCISES) {
+      labels.add(ex.muscleGroup);
+      for (const s of ex.secondaryMuscles ?? []) labels.add(s);
+    }
+    for (const label of labels) {
+      const names = demoMusclesForLabel(label);
+      expect(mapMuscles(names).length, `${label} → ${names.join("/")}`).toBe(
+        names.length
+      );
+    }
+  });
+
+  it("the specific rows that rendered blank now shade the right thing", () => {
+    // Named cases, so a future regression says WHICH exercise broke.
+    expect(demoMusclesForLabel("Side Delts")).toEqual(["shoulders"]);
+    expect(demoMusclesForLabel("Chest")).toEqual(["chest"]);
+    expect(demoMusclesForLabel("Mid Back")).toEqual(["middle back"]);
+    expect(demoMusclesForLabel("Lower Abs")).toEqual(["abdominals"]);
+    expect(demoMusclesForLabel("Rhomboids")).toEqual(["middle back"]);
+    expect(demoMusclesForLabel("Soleus")).toEqual(["calves"]);
+    expect(demoMusclesForLabel("Posterior Chain")).toEqual([
+      "hamstrings",
+      "glutes",
+      "lower back",
+    ]);
+    // A region label still shades, via the coarse fallback.
+    expect(demoMusclesForLabel("Cardio").length).toBeGreaterThan(0);
+    // …and an unknown string still yields nothing rather than throwing.
+    expect(demoMusclesForLabel("not a muscle")).toEqual([]);
   });
 });

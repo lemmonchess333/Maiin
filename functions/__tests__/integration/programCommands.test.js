@@ -215,6 +215,90 @@ suite("runProgramCommandTransaction — apply + receipt", () => {
     expect(state.workouts[0].skipped).toBe(true);
   });
 
+  it("skipRecoveryEarly commits the profile patch and the plan change TOGETHER", async () => {
+    // The reason this writer moved to the boundary. As two client writes
+    // (Promise.all([updateProfile, saveProgram])) either could land alone,
+    // leaving profile.runMode disagreeing with runPlan.phase. One transaction
+    // is the only thing that actually rules that out — the reducer unit tests
+    // can only prove the two VALUES are consistent, not that both land.
+    const race = { distance: "marathon", targetDate: "2026-03-15" };
+    await programRef().update({
+      runPlan: {
+        mode: "race_prep",
+        phase: "recovery",
+        recoveryEndDate: "2026-04-01",
+        raceGoal: race,
+      },
+    });
+    await db
+      .collection("users")
+      .doc(UID)
+      .set({
+        weightKg: 80,
+        timezone: "UTC",
+        runMode: "race_prep",
+        raceGoal: race,
+      });
+
+    await runProgramCommandTransaction({
+      firestore: db,
+      uid: UID,
+      command: validate({
+        kind: "skipRecoveryEarly",
+        commandId: "cmd_int_skiprecov_0001",
+      }),
+      now: NOW,
+    });
+
+    const state = (await programRef().get()).data();
+    expect(state.runPlan).toBeUndefined();
+    expect(state.runDays).toEqual([]);
+
+    const profile = (await db.collection("users").doc(UID).get()).data();
+    expect(profile.runMode).toBe("freeform");
+    // `raceGoal: null` must actually reach the document. The profile
+    // sanitizer DROPS null (cleanObject returns undefined), which is exactly
+    // why this effect bypasses it — and why asserting the reducer's return
+    // value alone would not have caught a sanitized write path.
+    expect(profile.raceGoal).toBeNull();
+    // Untouched fields survive the merge.
+    expect(profile.weightKg).toBe(80);
+  });
+
+  it("skipRecoveryEarly keeps a successor race and stays race_prep", async () => {
+    const older = { distance: "marathon", targetDate: "2026-03-15" };
+    const newer = { distance: "10k", targetDate: "2026-09-01" };
+    await programRef().update({
+      runPlan: {
+        mode: "race_prep",
+        phase: "recovery",
+        recoveryEndDate: "2026-04-01",
+        raceGoal: older,
+      },
+    });
+    await db
+      .collection("users")
+      .doc(UID)
+      .set({ weightKg: 80, runMode: "race_prep", raceGoal: newer });
+
+    await runProgramCommandTransaction({
+      firestore: db,
+      uid: UID,
+      command: validate({
+        kind: "skipRecoveryEarly",
+        commandId: "cmd_int_skiprecov_0002",
+      }),
+      now: NOW,
+    });
+
+    const profile = (await db.collection("users").doc(UID).get()).data();
+    expect(profile.runMode).toBe("race_prep");
+    expect(profile.raceGoal).toEqual(newer);
+    const state = (await programRef().get()).data();
+    expect(state.runPlan.mode).toBe("race_prep");
+    expect(state.runPlan.phase).toBeUndefined();
+  });
+
   it("completeWorkoutDay writes the programme workout doc with createdAt", async () => {
     await runProgramCommandTransaction({
       firestore: db,

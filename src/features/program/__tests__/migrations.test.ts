@@ -52,6 +52,7 @@ describe("migrateProgramState", () => {
   it("returns input unchanged when already at current version", () => {
     const upToDate = makeLegacyProgramState({
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      liftWeekKey: "2026-01-04",
       runDays: [
         {
           ...legacyRunDay(),
@@ -321,6 +322,7 @@ describe("PR-0b-i — migrateProgramState shape-aware repair", () => {
   it("fully V2 doc returns reference-equal (===) state (zero work)", () => {
     const v2 = makeLegacyProgramState({
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      liftWeekKey: "2026-01-04",
       runDays: [
         {
           ...legacyRunDay({ dayIndex: 2, completed: false }),
@@ -529,6 +531,7 @@ describe("PR-0b-i — persist-if-changed integration semantics", () => {
   it("healthy V2 doc stringifies identically before/after migration", () => {
     const v2 = makeLegacyProgramState({
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      liftWeekKey: "2026-01-04",
       runDays: [
         {
           ...legacyRunDay({ dayIndex: 2, completed: false }),
@@ -549,5 +552,40 @@ describe("PR-0b-i — persist-if-changed integration semantics", () => {
     });
     const migrated = migrateProgramState(v1, "2026-05-10");
     expect(JSON.stringify(migrated)).not.toBe(JSON.stringify(v1));
+  });
+});
+
+/* ─── D1 · the lift-week anchor backfill ────────────────────────────────
+   The anchor is what lets a pure lifter's week roll over on the calendar.
+   Every document written before D1 lacks it, and the rollover treats
+   "anchor older than this week" as stale — so the backfill's job is to seed
+   TODAY, never the epoch. Get that wrong and the first app-open after deploy
+   rolls a returning user forward by the full iteration cap: twelve weeks,
+   three deloads, three mesocycle rotations, none of which they did. ── */
+describe("migrateProgramState — liftWeekKey backfill (D1)", () => {
+  const legacy = () =>
+    makeLegacyProgramState({
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [],
+    });
+
+  it("seeds a missing anchor to the CURRENT week, not the epoch", () => {
+    const out = migrateProgramState(legacy(), "2026-03-11"); // a Wednesday
+    // Normalised to that week's Sunday, matching every other week key.
+    expect(out.liftWeekKey).toBe("2026-03-08");
+  });
+
+  it("never re-seeds an existing anchor — that would cancel a real absence", () => {
+    const stale = { ...legacy(), liftWeekKey: "2025-12-07" };
+    const out = migrateProgramState(stale, "2026-03-11");
+    expect(out.liftWeekKey).toBe("2025-12-07");
+  });
+
+  it("the seeded anchor does not read as stale on the same day", () => {
+    // The property that actually matters: immediately after the backfill the
+    // rollover must find nothing to do. If this ever inverts, every existing
+    // user gets a twelve-week catch-up on first open.
+    const out = migrateProgramState(legacy(), "2026-03-11");
+    expect(out.liftWeekKey! >= "2026-03-08").toBe(true);
   });
 });

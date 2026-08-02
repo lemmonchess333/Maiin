@@ -36,7 +36,10 @@ import {
   toCompletionSetLogs,
 } from "@/features/program/warmupRamp";
 import { formatRepTarget } from "@/features/program/templateConversion";
-import { isSetEligibleForStrengthPr } from "@/features/program/sessionSetPolicy";
+import {
+  isSetEligibleForStrengthPr,
+  progressionSetFor,
+} from "@/features/program/sessionSetPolicy";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { useStreaks } from "@/features/streaks/useStreaks";
@@ -323,7 +326,8 @@ export default function WorkoutSession({
   useEffect(() => {
     const container = tabsRef.current;
     const activeBtn = container?.children[currentExIndex] as
-      HTMLElement | undefined;
+      | HTMLElement
+      | undefined;
     activeBtn?.scrollIntoView({
       behavior: "smooth",
       block: "nearest",
@@ -907,15 +911,38 @@ export default function WorkoutSession({
         }
       }
 
-      // Log exercise performance (use last set's reps/weight/RPE — the latter
-      // drives RPE autoregulation in applyProgression, D-LIFT-6).
-      await onLogExercise(
-        dayIndex,
-        currentExIndex,
-        set.reps,
-        set.weight,
-        set.rpe
+      // Log exercise performance from the last set that is ELIGIBLE to drive
+      // progression — not simply the last set. (RPE drives autoregulation in
+      // applyProgression, D-LIFT-6.)
+      //
+      // D3: this used to pass `set` unconditionally, so a lifter who finished
+      // an exercise with a drop set or a back-off set logged
+      // `actualWeight < exercise.weight`, which `applyProgression` scores as a
+      // failure — every single session. Three sessions of that and the backoff
+      // cut the load 5%, indefinitely. The volume-PR check twenty lines above
+      // was already type-aware; the progression call was not.
+      //
+      // Falling back to the last eligible WORKING set is the right answer
+      // rather than skipping: the drop set is bonus volume after the top-end
+      // effort, and the top-end effort is exactly what progression should read.
+      // If nothing is eligible (an exercise logged as warm-ups only, or a lone
+      // drop set) we skip entirely — there is no working-set evidence, and
+      // inventing some would be worse than waiting for the next session.
+      const progressionSet = progressionSetFor(
+        currentSets.map((st, i) =>
+          i === currentSetIndex ? { ...set, completed: true } : st
+        )
       );
+
+      if (progressionSet) {
+        await onLogExercise(
+          dayIndex,
+          currentExIndex,
+          progressionSet.reps,
+          progressionSet.weight,
+          progressionSet.rpe
+        );
+      }
 
       if (isLastExercise) {
         setSessionDurationMinutes(

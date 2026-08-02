@@ -9,113 +9,63 @@
  *
  * Counting convention (fractional/indirect volume, the MASS/RP standard):
  *   - a set counts 1.0 toward the exercise's PRIMARY muscle group
- *   - and 0.5 toward each SECONDARY group it trains
+ *   - and `SECONDARY_SET_WEIGHT` toward each SECONDARY group it trains
  * Exercises with no muscle attribution (Cardio / "Full Body" conditioning, or
  * too-coarse labels) are excluded — this is a *resistance* volume view.
+ *
+ * That convention DISAGREES with the bands it is judged against: the goal bands
+ * came from meta-analyses that counted 1:1. `docs/adr/0010-volume-currency.md`
+ * settles the currency in favour of 1:1 and records why the flip is staged to
+ * land with landmark-aware builders rather than before them — measured, not
+ * assumed: flipping alone doubles the per-muscle readings over a ceiling.
+ *
+ * The muscle taxonomy itself lives in `muscleTaxonomy.ts` (13a): attribution
+ * runs on a 27-member fine layer and these ten groups are a roll-up of it.
  *
  * It both SURFACES the tally (WeeklyVolumeCard) and DRIVES selection:
  * `balanceWeeklyVolume` nudges under-dosed muscles toward the landmark low by
  * growing their accessories (add-only, mains untouched).
  */
 import { getExerciseById, type Exercise } from "@/lib/exercises";
+import {
+  CANONICAL_MUSCLE_ORDER,
+  fineToCanonical,
+  toFine,
+  type CanonicalMuscle,
+  type FineMuscle,
+} from "./muscleTaxonomy";
 import type { ProgramExercise, WorkoutDay } from "./programTypes";
 
-export type CanonicalMuscle =
-  | "Chest"
-  | "Back"
-  | "Shoulders"
-  | "Biceps"
-  | "Triceps"
-  | "Quads"
-  | "Hamstrings"
-  | "Glutes"
-  | "Calves"
-  | "Core";
-
-/** Display order (push → pull → legs → core), used by the summary UI. */
-export const CANONICAL_MUSCLE_ORDER: CanonicalMuscle[] = [
-  "Chest",
-  "Shoulders",
-  "Triceps",
-  "Back",
-  "Biceps",
-  "Quads",
-  "Hamstrings",
-  "Glutes",
-  "Calves",
-  "Core",
-];
-
-// Map every muscleGroup / secondaryMuscle string in the exercise DB to a
-// canonical group, or null to EXCLUDE from the resistance-volume tally
-// (cardio, whole-body conditioning, or labels too coarse to attribute).
-const MUSCLE_TO_CANONICAL: Record<string, CanonicalMuscle | null> = {
-  // Chest
-  pectorals: "Chest",
-  chest: "Chest",
-  "upper chest": "Chest",
-  "lower chest": "Chest",
-  // Back
-  lats: "Back",
-  "mid back": "Back",
-  "middle back": "Back",
-  "full back": "Back",
-  "lower back": "Back",
-  rhomboids: "Back",
-  "teres major": "Back",
-  traps: "Back",
-  back: "Back",
-  // Shoulders
-  deltoids: "Shoulders",
-  shoulders: "Shoulders",
-  "front delts": "Shoulders",
-  "side delts": "Shoulders",
-  "rear delts": "Shoulders",
-  "rotator cuff": "Shoulders",
-  // Arms
-  biceps: "Biceps",
-  triceps: "Triceps",
-  // Legs
-  quads: "Quads",
-  "hip flexors": "Quads",
-  adductors: "Quads",
-  hamstrings: "Hamstrings",
-  "posterior chain": "Hamstrings",
-  glutes: "Glutes",
-  calves: "Calves",
-  soleus: "Calves",
-  // Core
-  core: "Core",
-  abs: "Core",
-  "lower abs": "Core",
-  obliques: "Core",
-  // Excluded — not attributable resistance volume
-  "full body": null,
-  cardio: null,
-  legs: null,
-  arms: null,
-  forearms: null,
-  brachioradialis: null,
-  "hip flexors ": null,
+// The taxonomy moved to `muscleTaxonomy.ts` in 13a so the fine layer and the
+// canonical ten could live together without an import cycle. Re-exported here
+// because every existing consumer imports them from this module, and moving a
+// type is not a reason to touch ten call sites.
+export {
+  CANONICAL_MUSCLE_ORDER,
+  fineToCanonical,
+  toFine,
+  type CanonicalMuscle,
+  type FineMuscle,
 };
 
 // Fallback when an exercise isn't in the DB (custom exercise): attribute by its
-// movement category so custom lifts still count.
-const CATEGORY_TO_CANONICAL: Record<string, CanonicalMuscle> = {
-  horizontal_push: "Chest",
-  vertical_push: "Shoulders",
-  horizontal_pull: "Back",
-  vertical_pull: "Back",
+// movement category so custom lifts still count. Category is a MOVEMENT, not a
+// muscle, so it can only ever name a coarse bucket — which is why these resolve
+// to the `*Unspecified` members rather than pretending to know a head.
+const CATEGORY_TO_FINE: Record<string, FineMuscle> = {
+  horizontal_push: "ChestUnspecified",
+  vertical_push: "DeltsUnspecified",
+  horizontal_pull: "BackUnspecified",
+  vertical_pull: "BackUnspecified",
   knee_dominant: "Quads",
   hip_dominant: "Hamstrings",
   arms_biceps: "Biceps",
   arms_triceps: "Triceps",
-  core: "Core",
+  core: "CoreUnspecified",
 };
 
-function toCanonical(name: string | undefined): CanonicalMuscle | null {
-  if (!name) return null;
-  return MUSCLE_TO_CANONICAL[name.toLowerCase().trim()] ?? null;
+export function toCanonical(name: string | undefined): CanonicalMuscle | null {
+  return fineToCanonical(toFine(name));
 }
 
 /** The canonical PRIMARY muscle an exercise trains (DB primary, else movement
@@ -125,7 +75,7 @@ export function primaryCanonicalForExercise(
 ): CanonicalMuscle | null {
   const dbEx = getExerciseById(ex.exerciseId);
   if (dbEx) return toCanonical(dbEx.muscleGroup);
-  return CATEGORY_TO_CANONICAL[ex.movementCategory] ?? null;
+  return fineToCanonical(CATEGORY_TO_FINE[ex.movementCategory] ?? null);
 }
 
 /**
@@ -155,14 +105,39 @@ export interface MuscleVolume {
   sets: number;
 }
 
+export interface FineMuscleVolume {
+  muscle: FineMuscle;
+  /**
+   * Weekly hard sets (primary 1.0 + secondary `SECONDARY_SET_WEIGHT`),
+   * UNROUNDED. This is substrate — the canonical view rounds once, at the
+   * level it publishes, because rounding each part and adding the results is
+   * a different number from rounding the sum.
+   */
+  sets: number;
+  /** Where this rolls up in the published ten, or `null` when the ten-group
+   *  taxonomy has no home for it (forearms, hip flexors). */
+  canonical: CanonicalMuscle | null;
+}
+
 /**
- * Weekly sets per canonical muscle group across a week's workouts. Skipped days
- * are excluded (no stimulus); completed/planned days count. Returns only
- * muscles with non-zero volume, in CANONICAL_MUSCLE_ORDER.
+ * What one set of an exercise contributes to a muscle it trains INDIRECTLY —
+ * a secondary rather than the target. See `docs/adr/0010-volume-currency.md`
+ * for why this is 0.5 today, why the literature's convention is 1.0, and the
+ * measurement that decided to stage the change rather than take it here.
+ *
+ * The primary is always 1.0; there is no constant for it because a convention
+ * in which the target muscle earns anything else does not exist.
  */
-export function weeklyVolumeByMuscle(workouts: WorkoutDay[]): MuscleVolume[] {
-  const tally = new Map<CanonicalMuscle, number>();
-  const add = (m: CanonicalMuscle | null, n: number) => {
+export const SECONDARY_SET_WEIGHT = 0.5;
+
+/**
+ * The one attribution pass. `weeklyVolumeByMuscle` is a roll-up of this, so
+ * there is a single place a week is read and the two views cannot disagree
+ * about what it contains.
+ */
+function fineTally(workouts: WorkoutDay[]): Map<FineMuscle, number> {
+  const tally = new Map<FineMuscle, number>();
+  const add = (m: FineMuscle | null, n: number) => {
     if (!m) return;
     tally.set(m, (tally.get(m) ?? 0) + n);
   };
@@ -174,18 +149,75 @@ export function weeklyVolumeByMuscle(workouts: WorkoutDay[]): MuscleVolume[] {
       if (sets <= 0) continue;
       const dbEx: Exercise | undefined = getExerciseById(ex.exerciseId);
       if (dbEx) {
-        const primary = toCanonical(dbEx.muscleGroup);
-        // Unattributable primary (e.g. Cardio/Full Body) → skip the whole lift.
-        if (!primary) continue;
-        add(primary, sets);
+        // Cardio is not resistance volume at all — skip it outright, whatever
+        // its secondaries say. A treadmill listing "Quads/Calves" must not
+        // book leg sets.
+        if (dbEx.category === "Cardio") continue;
+
+        const primary = toFine(dbEx.muscleGroup);
+        if (primary) add(primary, sets);
+        // An unattributable PRIMARY used to discard the whole lift, so the
+        // thirteen "Full Body" movements in the DB — Zercher squat, landmine
+        // squat, thrusters, kettlebell swing, Turkish get-up, muscle-ups —
+        // booked ZERO volume despite naming real muscles as secondaries. A
+        // Zercher squat trained nothing, as far as the model was concerned.
+        // Falling through to the secondaries understates them (0.5 each
+        // rather than a primary's 1.0), but understating a squat's legs is a
+        // great deal closer than pretending it never happened. Fixing the
+        // underlying `muscleGroup: "Full Body"` labels is exercise-DB work
+        // (handoff 11b), not this.
         for (const sec of dbEx.secondaryMuscles ?? []) {
-          add(toCanonical(sec), sets * 0.5);
+          add(toFine(sec), sets * SECONDARY_SET_WEIGHT);
         }
       } else {
         // Custom exercise not in the DB — attribute by movement category.
-        add(CATEGORY_TO_CANONICAL[ex.movementCategory] ?? null, sets);
+        add(CATEGORY_TO_FINE[ex.movementCategory] ?? null, sets);
       }
     }
+  }
+
+  return tally;
+}
+
+/**
+ * Weekly sets per FINE muscle — the layer the attribution actually runs on.
+ *
+ * `weeklyVolumeByMuscle` rolls this up, so there is one attribution pass and
+ * the two views cannot drift. Ordered by descending volume, then name; callers
+ * that need a fixed display order should impose their own.
+ *
+ * Includes fine muscles with no canonical home (forearms, hip flexors). They
+ * carry `canonical: null` and are dropped by the roll-up, which is why making
+ * them visible here moved no published number.
+ */
+export function weeklyVolumeByFineMuscle(
+  workouts: WorkoutDay[]
+): FineMuscleVolume[] {
+  return [...fineTally(workouts)]
+    .filter(([, sets]) => sets > 0)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([muscle, sets]) => ({
+      muscle,
+      sets,
+      canonical: fineToCanonical(muscle),
+    }));
+}
+
+/**
+ * Weekly sets per canonical muscle group across a week's workouts. Skipped days
+ * are excluded (no stimulus); completed/planned days count. Returns only
+ * muscles with non-zero volume, in CANONICAL_MUSCLE_ORDER.
+ *
+ * A roll-up of `weeklyVolumeByFineMuscle` since 13a. It sums that view's
+ * UNROUNDED sets and rounds once, here — rounding each part first and adding
+ * the results is a different number, and this one has to stay bit-identical to
+ * what the app published before the taxonomy split.
+ */
+export function weeklyVolumeByMuscle(workouts: WorkoutDay[]): MuscleVolume[] {
+  const tally = new Map<CanonicalMuscle, number>();
+  for (const { sets, canonical } of weeklyVolumeByFineMuscle(workouts)) {
+    if (!canonical) continue;
+    tally.set(canonical, (tally.get(canonical) ?? 0) + sets);
   }
 
   return CANONICAL_MUSCLE_ORDER.filter((m) => (tally.get(m) ?? 0) > 0).map(
@@ -194,6 +226,19 @@ export function weeklyVolumeByMuscle(workouts: WorkoutDay[]): MuscleVolume[] {
 }
 
 export interface VolumeLandmark {
+  /**
+   * Maintenance volume — the least that RETAINS the muscle. Below it the
+   * muscle is being lost, which is a different failure from "not growing" and
+   * the reason 13a added it.
+   *
+   * Without MV, "redistribute volume" is unimplementable: specialisation works
+   * by dropping non-target muscles to MV, *not* to MEV. RP Ch7 P155 — "an
+   * advanced lifter might have a weekly back MEV of 10 sets, but a weekly back
+   * MV of four … that difference grows across the adaptive window." Park a
+   * deprioritised muscle between the two and you get "more fatigue than four
+   * sets by a long shot, but no additional benefit" (Ch8 P30 / Ch7 P159).
+   */
+  mv: number;
   /** Below this = under-dosed (under MEV). */
   low: number;
   /** Above this = high (approaching MRV). */
@@ -201,36 +246,83 @@ export interface VolumeLandmark {
 }
 
 /**
- * Goal-driven weekly set landmarks per muscle (simplified RP MEV–MAV bands).
+ * Goal-driven weekly set landmarks per muscle (simplified RP MV–MEV–MAV bands).
  * `primaryGoal` is the training intent. Hypertrophy carries the highest target;
  * strength is lower-volume/higher-intensity; fat-loss/running lean lower.
+ *
+ * ── Where the MV numbers come from ───────────────────────────────────────
+ *
+ * The corpus gives two worked MV↔MEV pairs and no table: back MEV 10 / MV 4
+ * (Ch7 P155, 0.40) and the hypocaloric example's MV/MEV/MRV 2/4/7 (Ch7
+ * P147–149, 0.50). So MV sits at roughly 0.4–0.5 of MEV, and the values below
+ * are each written out rather than computed so they can be argued with
+ * individually. `volumeModel.test.ts` pins the ratio inside that range, which
+ * is the part the sources actually support.
+ *
+ * They scale with the goal because `low` does. In the sources MV is a property
+ * of the muscle and the athlete, not of what you are training for — but our
+ * `low` is a goal-scaled proxy for a per-muscle MEV we do not have, so an
+ * MV that did NOT scale with it would sit at a different fraction of the band
+ * for every goal and the ladder would stop meaning the same thing. Per-muscle
+ * landmarks (§3.8's displaceable priors) are the real fix, and they need the
+ * response data 13b is waiting on.
  */
 export function volumeLandmark(
   primaryGoal: string | undefined
 ): VolumeLandmark {
   switch (primaryGoal) {
     case "hypertrophy":
-      return { low: 12, high: 20 };
+      return { mv: 5, low: 12, high: 20 };
     case "strength":
-      return { low: 8, high: 14 };
+      return { mv: 4, low: 8, high: 14 };
     case "fat_loss":
     case "running":
-      return { low: 6, high: 14 };
+      return { mv: 3, low: 6, high: 14 };
     case "general":
     default:
-      return { low: 8, high: 16 };
+      return { mv: 4, low: 8, high: 16 };
   }
+}
+
+/**
+ * The four-band ladder, MV included.
+ *
+ * `junk` is RP's term and it is the DEFAULT reading of the MV–MEV band: enough
+ * work to cost recovery, not enough to grow. The one legitimate occupant of
+ * that band is a muscle deliberately parked at MV during a specialisation
+ * block — and telling those two apart needs a per-muscle priority the model
+ * has no input for yet, so a caller that has one must override rather than
+ * trust the label.
+ *
+ * `high` is a separate failure, not more junk: above the ceiling the volume is
+ * unrecoverable rather than merely unproductive.
+ */
+export type VolumeDose = "below_maintenance" | "junk" | "optimal" | "high";
+
+export function classifyVolumeDose(
+  sets: number,
+  landmark: VolumeLandmark
+): VolumeDose {
+  if (sets < landmark.mv) return "below_maintenance";
+  if (sets < landmark.low) return "junk";
+  if (sets > landmark.high) return "high";
+  return "optimal";
 }
 
 export type VolumeStatus = "low" | "optimal" | "high";
 
+/**
+ * The three-band view every existing consumer reads. Derived from the ladder
+ * above rather than reimplementing the comparisons, so the two cannot disagree
+ * about where a boundary sits — the sub-MEV bands both fold back to `low`,
+ * which is exactly what they were before MV existed.
+ */
 export function classifyVolume(
   sets: number,
   landmark: VolumeLandmark
 ): VolumeStatus {
-  if (sets < landmark.low) return "low";
-  if (sets > landmark.high) return "high";
-  return "optimal";
+  const dose = classifyVolumeDose(sets, landmark);
+  return dose === "below_maintenance" || dose === "junk" ? "low" : dose;
 }
 
 /** Don't push any single accessory beyond this many sets. */

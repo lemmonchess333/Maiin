@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { Trophy, ChevronRight, Footprints } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { EXERCISES } from "@/lib/exercises";
-import { epley1RM } from "@/lib/analytics";
+import { estimate1RMRange, formatOneRepMaxRange } from "@/lib/analytics";
 import PRBadge from "@/components/analytics/PRBadge";
 import PRCard from "@/components/analytics/PRCard";
 
@@ -69,11 +69,15 @@ interface PRsTabProps {
 }
 
 function LiftPRRow({ pr }: { pr: LiftPR }) {
-  /* Use the shared epley1RM from lib/analytics so a future tweak
-     to the formula (e.g. swapping to Brzycki / Lombardi) lands in
-     one place. The shared helper also guards reps<=0 / weight<=0
-     which can't happen for a real PR but defends against bad data. */
-  const e1rm = epley1RM(pr.weight, pr.reps);
+  /* A RANGE, not a point (handoff 12). This row used to render a bare
+     `~N kg 1RM`, which gives an estimate inferred from a set of 15 exactly
+     the same authority as one inferred from a set of 3 — and Schoenfeld p.92
+     measured that spread: 7 to 24 reps to failure at the same %1RM, and one
+     person's 80% being a 6RM, a 10RM and a 15RM on three exercises. Above
+     ~15 reps the helper returns null and nothing is shown, because a very
+     wide band is not a weaker claim than a point estimate — the reader
+     anchors on its midpoint either way. */
+  const e1rm = estimate1RMRange(pr.weight, pr.reps);
   const dateLabel = new Date(pr.date + "T12:00:00").toLocaleDateString(
     "en-GB",
     { day: "numeric", month: "short" }
@@ -109,8 +113,10 @@ function LiftPRRow({ pr }: { pr: LiftPR }) {
             )}{" "}
             × {pr.reps}
           </p>
-          {isBW && pr.weight === 0 ? null : pr.weight > 0 ? (
-            <p className="text-xs text-muted-foreground">~{e1rm} kg 1RM</p>
+          {isBW && pr.weight === 0 ? null : e1rm ? (
+            <p className="text-xs text-muted-foreground font-mono tabular-nums">
+              ~{formatOneRepMaxRange(e1rm)} 1RM
+            </p>
           ) : null}
         </div>
         <ChevronRight

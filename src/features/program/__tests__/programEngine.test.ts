@@ -560,25 +560,31 @@ describe("generateProgram — PPL×2", () => {
 // ── Weekly Prescription ─────────────────────────
 
 describe("generateWeekPrescription", () => {
-  it("week 4 is deload", () => {
-    const p = generateWeekPrescription(4);
-    expect(p.deload).toBe(true);
-    expect(p.intensityMultiplier).toBe(0.85);
-    expect(p.volumeModifier).toBe(0.7);
+  it("every 4th week is a deload, and no other week is", () => {
+    for (let w = 1; w <= 12; w++) {
+      expect(generateWeekPrescription(w).deload).toBe(w % 4 === 0);
+    }
   });
 
-  it("week 8 is deload", () => {
-    expect(generateWeekPrescription(8).deload).toBe(true);
-  });
+  /* ─── reachability guard (D8) ──────────────────────────────────
+     This replaces a test called "non-deload weeks have increasing
+     intensity", which asserted that `intensityMultiplier` stepped
+     1.025 → 1.05 → 1.075. That test passed for the entire life of
+     the field while the behaviour it described reached NO user:
+     nothing in src/ or functions/ ever read the value, and
+     `advanceWeek` branches only on `.deload`. A green test named
+     after a behaviour nobody could experience is worse than no
+     test, because it is cited as evidence the behaviour exists.
 
-  it("non-deload weeks have increasing intensity", () => {
-    const w1 = generateWeekPrescription(1);
-    const w2 = generateWeekPrescription(2);
-    const w3 = generateWeekPrescription(3);
-    expect(w1.deload).toBe(false);
-    expect(w1.intensityMultiplier).toBe(1.025);
-    expect(w2.intensityMultiplier).toBe(1.05);
-    expect(w3.intensityMultiplier).toBe(1.075);
+     So the pin is now on the SHAPE. A field here is either consumed
+     or it is decoration; if you add one, this fails and you have to
+     wire a reader in the same change. ADR-0008's rule applied to a
+     value rather than a mirror — reachability over prose. ── */
+  it("returns only fields that something actually reads", () => {
+    expect(Object.keys(generateWeekPrescription(3)).sort()).toEqual([
+      "deload",
+      "week",
+    ]);
   });
 });
 

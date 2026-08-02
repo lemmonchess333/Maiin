@@ -10,11 +10,10 @@ import {
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { stripUndefined } from "@/lib/firestoreGuards";
 import { db } from "@/lib/firebase";
-import { useAuth, type UserProfile } from "@/lib/auth";
+import { useAuth } from "@/lib/auth";
 import { postActivity } from "@/lib/socialApi";
 import { compose, enqueueShare, showQueuedToast } from "@/lib/shareComposer";
 import type {
-  ActiveTrainingBlock,
   BlockDurationWeeks,
   BlockPace,
   ManualCompletion,
@@ -26,14 +25,11 @@ import type {
   ScheduledRunDay,
   ScheduledRunStatus,
 } from "./programTypes";
-import {
-  BLOCK_AMNESTY_WEEKS,
-  isProgressionHeld,
-  represcribeWorkouts,
-} from "./represcribe";
-import { blockWeekOf, makeBlockId } from "./trainingBlock";
+import { isProgressionHeld, represcribeWorkouts } from "./represcribe";
+import { blockWeekOf } from "./trainingBlock";
 import { normalizeProgramState, transitionStatus } from "./programTypes";
 import { resolveRecoveryExit } from "./runModeResolution";
+import { workoutDayPrecondition } from "./programCommandPrecondition";
 import {
   migrateProgramState,
   backfillWeekScheduleIfMissing,
@@ -45,8 +41,9 @@ import {
   generateWeekPrescription,
   applyProgression,
 } from "./programEngine";
-import { loadContextFrom } from "./startingLoads";
-import { toExperience } from "./experienceModel";
+import { PERFORMANCE_HISTORY_CAP } from "./programEngine";
+import { loadContextFrom, weightAfterExerciseSwap } from "./startingLoads";
+import { showsRpeByDefault, toExperience } from "./experienceModel";
 import { recoveryStateFrom } from "./adjustmentRule";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { logger } from "@/lib/logger";
@@ -59,6 +56,16 @@ export interface CompletedSetLog {
   weight: number;
   reps: number;
   completed: boolean;
+  /** D2: how the set was performed. Captured in the session UI since the set
+   *  tracker shipped, dropped at the write boundary until now. Optional at
+   *  this boundary because the projection defaults an absent/unknown value to
+   *  "working"; the real writer (`toCompletionSetLogs`) always supplies it. */
+  type?: string;
+  /** D2: Helms's 6–10 half-point scale, present only when the session
+   *  surfaced the control. Interpret via the session-level `rpeProvenance` on
+   *  the workout document — a novice's RPE is not the same instrument as an
+   *  RPE-familiar advanced lifter's (Helms p73). */
+  rpe?: number;
 }
 
 /**
@@ -105,6 +112,7 @@ import {
 } from "@/lib/dateHelpers";
 import { isInRecoveryOn } from "@/lib/runPlanResolver";
 import { CURRENT_PROGRAM_SCHEMA_VERSION } from "./programTypes";
+import { projectWorkoutSets } from "./workoutSetRecord";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 import {
   getScheduledRunStatus,
@@ -113,8 +121,11 @@ import {
 import { isScheduledRaceRunDay } from "@/lib/workoutTemplates";
 import { canRescheduleRun, computeRunMove } from "@/lib/runReschedule";
 import { toast } from "@/lib/toast";
-import { getFunctions, httpsCallable } from "firebase/functions";
-import { generateInstanceId } from "./programTypes";
+import { generateInstanceId, normalizeExercise } from "./programTypes";
+import { enqueueCommand, isTransportFailure } from "./commandOutbox";
+import { repUnitForExerciseId } from "./repUnits";
+import { getExerciseById } from "@/lib/exercises";
+import { sendProgramCommand } from "./programCommandClient";
 
 const PROGRAM_DOC = "current";
 
@@ -287,7 +298,7 @@ interface RefreshRunScheduleOverrides {
 }
 
 export function useProgram() {
-  const { user, profile, updateProfile } = useAuth();
+  const { user, profile, updateProfile, refreshProfile } = useAuth();
   // Backlog #9 (H5): the recovery half of the adjustment rule. A limit-1
   // read — the rule is only consulted on a week advance, so this is the
   // cheapest way to have the answer in hand when that happens. Resolves to
@@ -596,6 +607,91 @@ export function useProgram() {
     [user]
   );
 
+  /**
+   * Re-read the authoritative programme document.
+   *
+   * Every command path needs this and for the same reason: the server may have
+   * applied more than the client modelled, so re-deriving the result locally is
+   * the tested-copy-vs-running-copy mistake. Extracted once three callers
+   * wanted it — success, a rejected remove/add, and the deload command.
+   */
+  const refetchProgramState = useCallback(async () => {
+    if (!user) return;
+    const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return;
+    const normalized = normalizeProgramState(snap.data() as ProgramState, {
+      primaryGoal: profile?.primaryGoal,
+    });
+    setProgramState(migrateProgramState(normalized, localWeekKey()));
+  }, [user, profile]);
+
+  /**
+   * Run a programme command through the server boundary, optimistically.
+   *
+   * ── The seam the boundary migration needs (P6) ─────────────────────────
+   *
+   * There are 32 `saveProgram` call sites against one command-boundary
+   * caller, and the reason is not neglect: a `setDoc` rides Firestore's
+   * `persistentLocalCache` and replays offline, while a callable does not, and
+   * a callable also costs a round trip where `setDoc` resolves from cache
+   * instantly. Dragging an exercise and waiting 300ms for the list to settle
+   * is a worse app.
+   *
+   * This closes both gaps at once. The optimistic transform applies locally
+   * first, so the UI is as fast as it was; the command goes to the server,
+   * which is the sole authority; a transport failure QUEUES the command
+   * (`commandOutbox`) and keeps the optimistic state, because the command is
+   * durable and will replay; and only a server REJECTION rolls back, because
+   * that is the one case where the intent will never be applied.
+   *
+   * On success it refetches rather than trusting the local transform. The
+   * server may have applied more than the client modelled — and re-deriving
+   * the result locally is the tested-copy-vs-running-copy mistake.
+   *
+   * Returns which of the three happened, not a boolean: callers need to tell
+   * "rejected" from "queued", and a `false` meaning both is the shape that made
+   * the first version of this wrong.
+   *
+   * A `rejected` result rolls the state back and logs, but deliberately does
+   * NOT toast — because every caller so far has a better answer than "your
+   * change vanished", and a generic error toast on top of a caller's own
+   * recovery reads as a bug. **A new caller must handle `rejected`**: leaving
+   * it unhandled means the user watches their change silently undo itself.
+   */
+  const runProgramCommand = useCallback(
+    async (
+      command: { kind: string; commandId: string } & Record<string, unknown>,
+      optimistic: (state: ProgramState) => ProgramState
+    ): Promise<"applied" | "queued" | "rejected"> => {
+      if (!user || !programState) return "rejected";
+      const before = programState;
+      setProgramState(optimistic(before));
+      try {
+        await sendProgramCommand(command);
+      } catch (err) {
+        if (isTransportFailure(err)) {
+          // Durable: it replays on reconnect, and the server dedupes on
+          // commandId. Keeping the optimistic state is correct — the intent
+          // stands, it just has not landed yet.
+          enqueueCommand(user.uid, command);
+          logger.log(`[useProgram] ${command.kind} queued — offline`);
+          return "queued";
+        }
+        // The server considered it and said no. This is the only case where
+        // the user's change is genuinely not happening, so it is the only
+        // case that rolls back. A caller with a better answer than "undo it"
+        // acts on the `rejected` result and repairs its own state.
+        setProgramState(before);
+        logger.error(`[useProgram] ${command.kind} rejected`, err);
+        return "rejected";
+      }
+      await refetchProgramState();
+      return "applied";
+    },
+    [user, programState, refetchProgramState]
+  );
+
   // PR-L L5 — the race-no-show transition (PR-D) and recovery-phase
   // exit (PR-E) effects used to live here as `useEffect`s that wrote
   // to programState. They moved to server-side Cloud Functions per
@@ -672,7 +768,18 @@ export function useProgram() {
       // Advance lift side (workouts, weekNumber, weekHistory).
       // Backlog #8: the deload recipe follows training age (Helms H4).
       // Backlog #9: plus the joint plateau x recovery adjustment rule.
-      const advanced = advanceWeek(rolling, profile.experience, recovery);
+      // 4th arg (D1): keep the lift anchor moving in lockstep on this path
+      // too, so a user who later switches to freeform doesn't inherit a stale
+      // `liftWeekKey` and trigger a spurious catch-up.
+      const nextLiftWeekKey = localWeekKey(
+        addLocalDays(parseLocalDate(currentRunWeekKey), 7)
+      );
+      const advanced = advanceWeek(
+        rolling,
+        profile.experience,
+        recovery,
+        nextLiftWeekKey
+      );
 
       // Advance run side. Compute the next week's start key. Take
       // one week step from the current runDay week key.
@@ -760,6 +867,82 @@ export function useProgram() {
       });
   }, [programState, profile, saveProgram, recovery]);
 
+  /**
+   * D1 — calendar week rollover for the LIFT side.
+   *
+   * The effect above only ever ran for users with a run plan: it returns early
+   * on freeform and needs `runDays[0].weekKey` as its anchor. A pure lifter has
+   * neither, so their only path to a new week was the manual button, which is
+   * gated on EVERY day being completed-or-skipped. Miss one Friday, never tap
+   * "skip", and the whole weekly tier stopped forever — no deload, no
+   * adjustment rule, no mesocycle rotation. Per CLAUDE.md's
+   * design-for-the-user-base rule that is the modal lifter, not an edge case,
+   * and it made every acceptance criterion in the v8 lifting arc unmeasurable
+   * in production.
+   *
+   * Deliberately a SEPARATE effect rather than a generalisation of the one
+   * above. That one carries ordering constraints against PR-D's
+   * auto-transition and PR-E's recovery exit, plus three race-plan branches;
+   * folding a second anchor into it risks all of that to save a few lines. The
+   * two are mutually exclusive by construction — this runs exactly when that
+   * one bails — so they can never both write.
+   *
+   * Unattended days roll over as they stand and are archived into
+   * `weekHistory` by `advanceWeek`. That is the same honest-record trade-off
+   * the run side already made ("better than zombie planned entries lingering
+   * in the current week"): the archive says what actually happened, so the
+   * adherence-sensitive readers downstream are not fed a lie.
+   */
+  useEffect(() => {
+    if (!programState || !profile) return;
+
+    // Precisely the complement of the run-side effect's guards, so exactly one
+    // of the two can act on any given state.
+    const runSideOwnsRollover =
+      !!profile.runMode &&
+      profile.runMode !== "freeform" &&
+      !!programState.runDays?.[0]?.weekKey;
+    if (runSideOwnsRollover) return;
+
+    const anchor = programState.liftWeekKey;
+    // Absent means a pre-D1 document that `migrateProgramState` has not
+    // repaired yet. Do nothing — seeding here would race the migration, and
+    // treating absent as stale would roll a returning user forward by the
+    // whole iteration cap on first open.
+    if (!anchor) return;
+
+    const todayKey = localWeekKey();
+    if (anchor >= todayKey) return;
+
+    let rolling = programState;
+    let iterations = 0;
+    // Same cap as the run side: a user gone for months catches up twelve weeks
+    // and then stops, rather than spinning through a year of deloads.
+    while (iterations < 12) {
+      const current = rolling.liftWeekKey;
+      if (!current || current >= todayKey) break;
+      const nextKey = localWeekKey(addLocalDays(parseLocalDate(current), 7));
+      rolling = advanceWeek(rolling, profile.experience, recovery, nextKey);
+      iterations++;
+    }
+
+    if (iterations === 0) return;
+
+    logger.log(
+      `[auto-rollover:lift] advanced ${iterations} week${iterations > 1 ? "s" : ""} (from ${anchor} to ${rolling.liftWeekKey ?? "?"})`
+    );
+
+    saveProgram(rolling)
+      .then(() => {
+        toast.success(
+          `Week advanced — ${iterations} week${iterations > 1 ? "s" : ""}`
+        );
+      })
+      .catch((err) => {
+        logger.warn("[auto-rollover:lift] save failed", err);
+      });
+  }, [programState, profile, saveProgram, recovery]);
+
   // Mark a workout day as completed (does NOT auto-advance week)
   // Also writes to workouts collection so Home stats can see it.
   //
@@ -804,22 +987,29 @@ export function useProgram() {
       // otherwise from planned data (every set assumed completed).
       const exercises = day.exercises.map((ex, exIndex) => {
         const logs = sessionData.setLogs?.[exIndex];
+        // D2: the no-logs fallback keeps its historical shape — the last
+        // ATTEMPTED load and the last actual reps, which is the best guess
+        // available when a day is marked done without a live session.
         const plannedWeight = ex.lastAttemptedWeight || ex.weight;
         const plannedReps = ex.lastPerformance?.reps ?? ex.reps;
 
+        // D2: one shared projection across all three call sites (here,
+        // Routine, and the server command reducer). The planned pair recorded
+        // on each set is the PRESCRIPTION — `ex.reps` / `ex.weight` — because
+        // that is what `applyProgression` scores the actual against, and what
+        // it overwrites a moment later. The fallback branch below has no
+        // prescription to preserve, so it reuses its own planned values.
         const sets = logs
-          ? logs
-              .filter((l) => l.completed)
-              .map((l, i) => ({
-                setNumber: i + 1,
-                reps: l.reps,
-                weightKg: l.weight,
-              }))
-          : Array.from({ length: ex.sets }, (_, i) => ({
-              setNumber: i + 1,
+          ? projectWorkoutSets(logs, {
+              sets: ex.sets,
+              reps: ex.reps,
+              weightKg: ex.weight,
+            })
+          : projectWorkoutSets(undefined, {
+              sets: ex.sets,
               reps: plannedReps,
               weightKg: plannedWeight,
-            }));
+            });
 
         return {
           exerciseId: ex.exerciseId,
@@ -827,6 +1017,13 @@ export function useProgram() {
           category: ex.movementCategory,
           ...(ex.repUnit !== undefined ? { repUnit: ex.repUnit } : {}),
           sets,
+          // D2: how many sets were PRESCRIBED, against `sets.length` which is
+          // how many were completed. The array stays completed-only — every
+          // downstream reader (workoutBurn's completedSetCount, the volume
+          // tallies, the PR scan) assumes that, and emitting incomplete rows
+          // would silently move calories, tonnage and PRs for every user. This
+          // recovers "planned 4, did 3" additively, with no reader moved.
+          plannedSetCount: ex.sets,
           caloriesBurned: 0,
         };
       });
@@ -904,6 +1101,19 @@ export function useProgram() {
             source: "programme",
             completionId: sessionData.completionId,
             sessionVariant: sessionData.sessionVariant,
+            // D2: session-level provenance for any per-set RPE above. Helms
+            // p139 keeps novices on %1RM rather than RPE for their first
+            // month, and p73 claims accuracy only for lifters who are
+            // advanced AND RPE-familiar AND near failure — so a future
+            // consumer must be able to tell whose number it is holding rather
+            // than calibrating on an uncalibrated beginner's guess. Recorded
+            // once per session because it cannot vary within one.
+            rpeProvenance: {
+              experience: profile?.experience,
+              shownByDefault: showsRpeByDefault(
+                toExperience(profile?.experience)
+              ),
+            },
           })
         );
         await batch.commit();
@@ -1010,15 +1220,26 @@ export function useProgram() {
   const skipWorkoutDay = useCallback(
     async (dayIndex: number) => {
       if (!programState || !user) return;
-      const updated: ProgramState = {
-        ...programState,
-        workouts: programState.workouts.map((d, i) =>
-          i === dayIndex ? { ...d, skipped: true } : d
-        ),
-      };
-      await saveProgram(updated);
+      // P6: through the boundary. Equivalent — the reducer sets the same one
+      // flag on the same day.
+      const skipPrecondition = workoutDayPrecondition(programState, dayIndex);
+      if (!skipPrecondition) return;
+      const outcome = await runProgramCommand(
+        {
+          kind: "skipWorkoutDay",
+          commandId: generateInstanceId(),
+          ...skipPrecondition,
+        },
+        (state) => ({
+          ...state,
+          workouts: state.workouts.map((d, i) =>
+            i === dayIndex ? { ...d, skipped: true } : d
+          ),
+        })
+      );
+      if (outcome === "rejected") await refetchProgramState();
     },
-    [programState, user, saveProgram]
+    [programState, user, runProgramCommand, refetchProgramState]
   );
 
   // Set a specific day as the next workout (override default progression),
@@ -1032,18 +1253,39 @@ export function useProgram() {
   const setNextWorkout = useCallback(
     async (dayIndex: number | null) => {
       if (!programState) return;
+      // P6: BOTH branches go through the boundary. The clear needed its own
+      // kind — `setNextWorkout`'s `dayIndex` is part of the day precondition,
+      // so it cannot express "no day" — and adding it is what let this migrate
+      // whole rather than leaving set and reset on two write paths.
       if (dayIndex === null) {
         if (programState.nextWorkoutOverride == null) return;
-        await saveProgram({ ...programState, nextWorkoutOverride: undefined });
+        const outcome = await runProgramCommand(
+          { kind: "clearNextWorkout", commandId: generateInstanceId() },
+          (state) => {
+            const { nextWorkoutOverride: _cleared, ...rest } = state;
+            return rest as ProgramState;
+          }
+        );
+        if (outcome === "rejected") await refetchProgramState();
         return;
       }
       const day = programState.workouts[dayIndex];
       if (!Number.isInteger(dayIndex) || !day || day.completed || day.skipped) {
         return;
       }
-      await saveProgram({ ...programState, nextWorkoutOverride: dayIndex });
+      const nextPrecondition = workoutDayPrecondition(programState, dayIndex);
+      if (!nextPrecondition) return;
+      const outcome = await runProgramCommand(
+        {
+          kind: "setNextWorkout",
+          commandId: generateInstanceId(),
+          ...nextPrecondition,
+        },
+        (state) => ({ ...state, nextWorkoutOverride: dayIndex })
+      );
+      if (outcome === "rejected") await refetchProgramState();
     },
-    [programState, saveProgram]
+    [programState, runProgramCommand, refetchProgramState]
   );
 
   // Manually advance to next week (called from UI)
@@ -1053,7 +1295,17 @@ export function useProgram() {
 
     // Backlog #8: the deload recipe follows training age (Helms H4).
     // Backlog #9: plus the joint plateau x recovery adjustment rule.
-    const advanced = advanceWeek(programState, profile?.experience, recovery);
+    // D1: stamp the CURRENT calendar week, not the next one. The anchor means
+    // "which calendar week these workouts belong to", and a user finishing
+    // early is still inside this one — so the automatic rollover stays quiet
+    // until the calendar genuinely moves on, instead of firing again days
+    // later on top of the advance the user just asked for.
+    const advanced = advanceWeek(
+      programState,
+      profile?.experience,
+      recovery,
+      localWeekKey()
+    );
 
     // Refresh run days for new week. PR-0b-ii: V2 writers + next-
     // week date vantage so the saved runDays carry next-week
@@ -1211,14 +1463,25 @@ export function useProgram() {
         [runDayId]: { completedAt: new Date() },
       };
 
-      const updated: ProgramState = {
-        ...programState,
-        runDays: updatedDays,
-        manualCompletions: updatedMap,
-      };
-      await saveProgram(updated);
+      const outcome = await runProgramCommand(
+        {
+          kind: "setManualRunCompletion",
+          commandId: generateInstanceId(),
+          runDayId,
+          completed: true,
+        },
+        (state) => ({
+          ...state,
+          runDays: updatedDays,
+          manualCompletions: updatedMap,
+        })
+      );
+      if (outcome === "rejected") {
+        toast.error("Couldn't mark that complete. Refreshing.");
+        await refetchProgramState();
+      }
     },
-    [programState, user, saveProgram]
+    [programState, user, runProgramCommand, refetchProgramState]
   );
 
   /**
@@ -1234,13 +1497,22 @@ export function useProgram() {
       if (!(runDayId in programState.manualCompletions)) return;
       const next = { ...programState.manualCompletions };
       delete next[runDayId];
-      const updated: ProgramState = {
-        ...programState,
-        manualCompletions: next,
-      };
-      await saveProgram(updated);
+
+      const outcome = await runProgramCommand(
+        {
+          kind: "setManualRunCompletion",
+          commandId: generateInstanceId(),
+          runDayId,
+          completed: false,
+        },
+        (state) => ({ ...state, manualCompletions: next })
+      );
+      if (outcome === "rejected") {
+        toast.error("Couldn't undo that. Refreshing.");
+        await refetchProgramState();
+      }
     },
-    [programState, user, saveProgram]
+    [programState, user, runProgramCommand, refetchProgramState]
   );
 
   // P1-3: Skip a run day (planned → skipped). Same id-or-index
@@ -1280,6 +1552,17 @@ export function useProgram() {
         return;
       }
 
+      // The command addresses the slot by STABLE ID, so the dayIndex overload
+      // has to resolve to one first. It always can: `migrateRunDay` assigns
+      // `id` on read and the load path persists the repaired doc, so a
+      // legacy id-less runDay is healed before any command runs.
+      if (!targetDay.id) {
+        logger.warn(
+          `[skipRunDay] runDay at dayIndex=${targetDay.dayIndex} has no stable id; skipping`
+        );
+        return;
+      }
+
       const updatedDays = programState.runDays.slice();
       updatedDays[targetIndex] = {
         ...targetDay,
@@ -1288,9 +1571,21 @@ export function useProgram() {
         // to tell the two states apart.
         status: toStatus,
       };
-      await saveProgram({ ...programState, runDays: updatedDays });
+      const outcome = await runProgramCommand(
+        {
+          kind: "transitionRunDay",
+          commandId: generateInstanceId(),
+          runDayId: targetDay.id,
+          to: toStatus,
+        },
+        (state) => ({ ...state, runDays: updatedDays })
+      );
+      if (outcome === "rejected") {
+        toast.error("Couldn't skip that run. Refreshing.");
+        await refetchProgramState();
+      }
     },
-    [programState, user, saveProgram]
+    [programState, user, runProgramCommand, refetchProgramState]
   );
 
   // SESSION-RESTORE-01: a skip is a reversible decision. Restore a
@@ -1328,15 +1623,34 @@ export function useProgram() {
         );
         return;
       }
+      if (!targetDay.id) {
+        logger.warn(
+          `[restoreRunDay] runDay at dayIndex=${targetDay.dayIndex} has no stable id; skipping`
+        );
+        return;
+      }
+
       const updatedDays = programState.runDays.slice();
       updatedDays[targetIndex] = {
         ...targetDay,
         status: "planned" as ScheduledRunStatus,
         completed: false,
       };
-      await saveProgram({ ...programState, runDays: updatedDays });
+      const outcome = await runProgramCommand(
+        {
+          kind: "transitionRunDay",
+          commandId: generateInstanceId(),
+          runDayId: targetDay.id,
+          to: "planned",
+        },
+        (state) => ({ ...state, runDays: updatedDays })
+      );
+      if (outcome === "rejected") {
+        toast.error("Couldn't restore that run. Refreshing.");
+        await refetchProgramState();
+      }
     },
-    [programState, user, saveProgram]
+    [programState, user, runProgramCommand, refetchProgramState]
   );
 
   // SESSION-RESTORE-01 (lift half): clear `skipped` on a lift day,
@@ -1349,15 +1663,27 @@ export function useProgram() {
       if (!programState || !user) return;
       const day = programState.workouts[dayIndex];
       if (!day || !day.skipped || day.completed) return;
-      const updated: ProgramState = {
-        ...programState,
-        workouts: programState.workouts.map((d, i) =>
-          i === dayIndex ? { ...d, skipped: false } : d
-        ),
-      };
-      await saveProgram(updated);
+      const precondition = workoutDayPrecondition(programState, dayIndex);
+      if (!precondition) return;
+      const outcome = await runProgramCommand(
+        {
+          kind: "restoreWorkoutDay",
+          commandId: generateInstanceId(),
+          ...precondition,
+        },
+        (state) => ({
+          ...state,
+          workouts: state.workouts.map((d, i) =>
+            i === dayIndex ? { ...d, skipped: false } : d
+          ),
+        })
+      );
+      if (outcome === "rejected") {
+        toast.error("Couldn't restore that session. Refreshing.");
+        await refetchProgramState();
+      }
     },
-    [programState, user, saveProgram]
+    [programState, user, runProgramCommand, refetchProgramState]
   );
 
   // RUN-RESCHEDULE-01: one-off move of a planned run to another day WITHIN
@@ -1401,6 +1727,18 @@ export function useProgram() {
         );
         return;
       }
+      if (!target.id) {
+        logger.warn(
+          `[moveRunDay] runDay at dayIndex=${target.dayIndex} has no stable id; skipping`
+        );
+        return;
+      }
+      // Computed here for the OPTIMISTIC paint only. The command sends just
+      // the run id and the target day: the date, the move markers and the
+      // clash flag are all re-derived server-side from the run's own week
+      // anchor, so a client cannot place a run outside its week — the one
+      // thing this feature is defined not to do. Same shared rule both
+      // sides, pinned by runReschedule.cross.test.ts.
       const patch = computeRunMove(
         target,
         targetDayIndex,
@@ -1412,25 +1750,46 @@ export function useProgram() {
         );
         return;
       }
-      const updatedDays = programState.runDays.map((rd) => {
-        if (rd.id !== target.id) return rd;
-        // Rebuild the day so a snap-back-to-origin can DROP the move markers
-        // (setting them undefined would leave stale values on the array).
-        const next: ScheduledRunDay = {
-          ...rd,
-          date: patch.date,
-          dayIndex: patch.dayIndex,
-          clashesWithLift: patch.clashesWithLift,
-        };
-        if (patch.movedFromDate) next.movedFromDate = patch.movedFromDate;
-        else delete next.movedFromDate;
-        if (patch.movedToDate) next.movedToDate = patch.movedToDate;
-        else delete next.movedToDate;
-        return next;
-      });
-      await saveProgram({ ...programState, runDays: updatedDays });
+      const targetId = target.id;
+      const outcome = await runProgramCommand(
+        {
+          kind: "moveRunDay",
+          commandId: generateInstanceId(),
+          runDayId: targetId,
+          targetDayIndex,
+        },
+        (state) => ({
+          ...state,
+          runDays: (state.runDays ?? []).map((rd) => {
+            if (rd.id !== targetId) return rd;
+            // Rebuild the day so a snap-back-to-origin can DROP the move
+            // markers (setting them undefined would leave stale values).
+            const next: ScheduledRunDay = {
+              ...rd,
+              date: patch.date,
+              dayIndex: patch.dayIndex,
+              clashesWithLift: patch.clashesWithLift,
+            };
+            if (patch.movedFromDate) next.movedFromDate = patch.movedFromDate;
+            else delete next.movedFromDate;
+            if (patch.movedToDate) next.movedToDate = patch.movedToDate;
+            else delete next.movedToDate;
+            return next;
+          }),
+        })
+      );
+      if (outcome === "rejected") {
+        toast.error("Couldn't move that run. Refreshing.");
+        await refetchProgramState();
+      }
     },
-    [programState, user, profile?.weekSchedule, saveProgram]
+    [
+      programState,
+      user,
+      profile?.weekSchedule,
+      runProgramCommand,
+      refetchProgramState,
+    ]
   );
 
   // Override a run day template. Refuses to write when the target
@@ -1492,24 +1851,41 @@ export function useProgram() {
         return;
       }
 
-      // Match against the resolved target's id when present
-      // (id-preferring), falling back to dayIndex. Without this
-      // a multi-week V2 runDays array could double-overwrite
-      // (multiple rows with the same dayIndex).
-      const updated: ProgramState = {
-        ...programState,
-        runDays: programState.runDays.map((rd) =>
-          (target.id && rd.id === target.id) ||
-          (!target.id && rd.dayIndex === target.dayIndex)
-            ? { ...rd, templateId, userOverride: templateId }
-            : rd
-        ),
-      };
+      if (!target.id) {
+        logger.warn(
+          `[overrideRunDay] runDay at dayIndex=${target.dayIndex} has no stable id; skipping`
+        );
+        return;
+      }
 
-      await saveProgram(updated);
+      // Match against the resolved target's id — the dayIndex fallback that
+      // used to sit here is gone with the id guard above, and it was the
+      // riskier branch anyway (a multi-week V2 runDays array can hold several
+      // rows with the same dayIndex, so it could double-overwrite).
+      const targetId = target.id;
+      const outcome = await runProgramCommand(
+        {
+          kind: "overrideRunDay",
+          commandId: generateInstanceId(),
+          runDayId: targetId,
+          templateId,
+        },
+        (state) => ({
+          ...state,
+          runDays: (state.runDays ?? []).map((rd) =>
+            rd.id === targetId
+              ? { ...rd, templateId, userOverride: templateId }
+              : rd
+          ),
+        })
+      );
+      if (outcome === "rejected") {
+        toast.error("Couldn't change that run. Refreshing.");
+        await refetchProgramState();
+      }
       // No success toast — the schedule UI shows the new run-day state.
     },
-    [programState, saveProgram]
+    [programState, runProgramCommand, refetchProgramState]
   );
 
   // Log exercise performance with auto-progression
@@ -1565,7 +1941,10 @@ export function useProgram() {
               repsCompleted: actualReps,
               repsTarget: exercise.reps,
             },
-          ].slice(-20),
+            // D2: one cap across all three sites. Was 20 here and 10 in the
+            // engine, so a lifter under an active block silently kept twice
+            // the history of one who was not.
+          ].slice(-PERFORMANCE_HISTORY_CAP),
         };
       } else if (settings.autoProgression) {
         updatedExercise = applyProgression(
@@ -1606,34 +1985,53 @@ export function useProgram() {
         };
       });
 
-      await saveProgram({ ...programState, workouts: updatedWorkouts });
+      // Through the boundary. The exercise is addressed by instanceId, not
+      // index — the command's whole job is to survive a stale client, and an
+      // index is only meaningful against the array the client happened to be
+      // holding. `today` is the one input the server cannot derive (see
+      // functions/lib/progressionHold.js); everything above is recomputed
+      // server-side from its own copy of the state.
+      const precondition = workoutDayPrecondition(programState, dayIndex);
+      if (!precondition) return;
+      const outcome = await runProgramCommand(
+        {
+          kind: "logExercise",
+          commandId: generateInstanceId(),
+          ...precondition,
+          exerciseInstanceId: exercise.instanceId,
+          actual: {
+            weight: actualWeight,
+            reps: actualReps,
+            completed: actualReps >= exercise.reps,
+          },
+          today: localDateString(),
+          ...(actualRpe === undefined ? {} : { actualRpe }),
+        },
+        (state) => ({ ...state, workouts: updatedWorkouts })
+      );
+      if (outcome === "rejected") {
+        toast.error("Couldn't save that set. Refreshing.");
+        await refetchProgramState();
+      }
     },
-    [programState, saveProgram]
+    [programState, runProgramCommand, refetchProgramState]
   );
 
-  // Update exercise manually (weight override)
-  const updateExercise = useCallback(
-    async (
-      dayIndex: number,
-      exerciseIndex: number,
-      updates: Partial<ProgramExercise>
-    ) => {
-      if (!programState) return;
-
-      const updatedWorkouts = programState.workouts.map((day, di) => {
-        if (di !== dayIndex) return day;
-        return {
-          ...day,
-          exercises: day.exercises.map((ex, ei) =>
-            ei === exerciseIndex ? { ...ex, ...updates } : ex
-          ),
-        };
-      });
-
-      await saveProgram({ ...programState, workouts: updatedWorkouts });
-    },
-    [programState, saveProgram]
-  );
+  /* `updateExercise` (manual sets/reps/weight override) was DELETED here
+   * rather than migrated. It had zero consumers: defined, returned from the
+   * hook, and referenced by no component, page or test anywhere in `src`.
+   * Migrating it would have been work to make dead code go through the
+   * boundary, and the boundary's own reachability gate can't see it — the
+   * symbol gate checks module exports, and this was a property of the hook's
+   * return object. Same call as `epley1RM` in P4.
+   *
+   * The server's `updateExercise` command KIND stays. It is a validated
+   * branch inside `applyProgramCommand`, not a separately-deployed endpoint,
+   * so the "stale container still serving" hazard that retired
+   * `askGeminiText` does not apply — and a manual-override UI is a plausible
+   * future caller for it. It now has no client caller; that is the note, not
+   * a defect.
+   */
 
   // Update settings
   const updateSettings = useCallback(
@@ -1644,9 +2042,23 @@ export function useProgram() {
         microloading: true,
       };
       const newSettings = { ...current, ...updates };
-      await saveProgram({ ...programState, settings: newSettings });
+      // P6: the reducer replaces the whole settings object, so the MERGE stays
+      // client-side and the full result is sent. Both fields are required by
+      // the validator, which is why a partial patch would be rejected.
+      const outcome = await runProgramCommand(
+        {
+          kind: "setProgramSettings",
+          commandId: generateInstanceId(),
+          settings: {
+            autoProgression: newSettings.autoProgression,
+            microloading: newSettings.microloading,
+          },
+        },
+        (state) => ({ ...state, settings: newSettings })
+      );
+      if (outcome === "rejected") await refetchProgramState();
     },
-    [programState, saveProgram]
+    [programState, runProgramCommand, refetchProgramState]
   );
 
   // Regenerate program (goal or split change).
@@ -1742,6 +2154,12 @@ export function useProgram() {
         // missing), which is exactly the V1-shape-in-current-
         // version footgun PR-0b-i's shape-aware migration repairs.
         programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+        // D1: `saveProgram` is a no-merge full replace, so a field this
+        // literal does not name is DELETED — the trap that has already cost
+        // this codebase the training block once. A regenerate resets to week 1,
+        // so the honest anchor is the current calendar week: the rebuilt
+        // programme belongs to the week the user is standing in.
+        liftWeekKey: localWeekKey(),
         ...(runDays !== undefined && { runDays }),
         ...(runPlan !== undefined && { runPlan }),
       };
@@ -1888,12 +2306,19 @@ export function useProgram() {
     if (!programState || !profile) return;
     if (programState.runPlan?.phase !== "recovery") return;
 
-    // Run9 ENG(j) + R3-cycle/backtoback: exiting recovery returns the user to
-    // FREEFORM (the race is done — it's recorded in completedRaces), UNLESS a
-    // newer race was set during the recovery window, which must be preserved.
-    // `resolveRecoveryExit` is the single source of that rule (unit-tested in
-    // runModeResolution.test.ts); the patch it returns always co-writes the
-    // materialized `runMode` so the invariant can't be violated here.
+    // P6: ONE command, replacing `Promise.all([updateProfile, saveProgram])`.
+    //
+    // That pair was two independent writes to two documents, and either could
+    // land without the other — leaving `profile.runMode` disagreeing with
+    // `runPlan.phase`, which is precisely the invariant the code above it
+    // claimed to protect. The reducer now resolves the exit and writes both
+    // halves inside one transaction, so they commit together or not at all.
+    //
+    // The command carries NO payload: `resolveRecoveryExit` runs server-side
+    // over the transaction-current profile and runPlan, so who the user
+    // returns to is never something this client asserts. The optimistic patch
+    // below therefore has to reproduce the same decision locally, and it does
+    // it by calling the same shared function.
     const completedRaceGoal =
       programState.runPlan?.raceGoal ?? profile.raceGoal ?? null;
     const exit = resolveRecoveryExit({
@@ -1901,39 +2326,38 @@ export function useProgram() {
       completedRaceGoal,
     });
 
-    if (exit.runMode === "freeform") {
-      // Single race done → freeform: drop the runPlan + runDays. saveProgram
-      // does a full setDoc, so omitting `runPlan` (undefined → stripped)
-      // removes it from the doc. Run9 3a-ii: the `raceGoal: null` clear that
-      // resolveRecoveryExit returns is now applied explicitly (the profile type
-      // was widened to allow it), so the materialized runMode and the goal can
-      // never disagree — no more left-over goal under freeform. The cast
-      // bridges the pure core's loose `distance: string` to the narrow union.
-      logger.log("[skipRecoveryEarly] race done → freeform; clearing plan");
-      await Promise.all([
-        updateProfile(exit as Partial<UserProfile>),
-        saveProgram({ ...programState, runDays: [], runPlan: undefined }),
-      ]);
+    const outcome = await runProgramCommand(
+      { kind: "skipRecoveryEarly", commandId: generateInstanceId() },
+      (state) => {
+        if (exit.runMode === "freeform") {
+          const next = { ...state, runDays: [] };
+          delete next.runPlan;
+          return next;
+        }
+        const nextRunPlan = { ...state.runPlan } as Record<string, unknown>;
+        delete nextRunPlan.phase;
+        delete nextRunPlan.recoveryEndDate;
+        return { ...state, runPlan: nextRunPlan as unknown as RunPlan };
+      }
+    );
+
+    if (outcome === "rejected") {
+      toast.error("Couldn't end recovery. Refreshing.");
+      await refetchProgramState();
       return;
     }
-
-    // Back-to-back: a newer future race was set during recovery → stay
-    // race_prep, just clear the recovery phase. The race-plan load/regenerate
-    // path rebuilds runDays for the new race; we don't regenerate here.
-    logger.log(
-      "[skipRecoveryEarly] newer race set during recovery → exit recovery, keep race_prep"
-    );
-    const nextRunPlan = { ...programState.runPlan } as Record<string, unknown>;
-    delete nextRunPlan.phase;
-    delete nextRunPlan.recoveryEndDate;
-    await Promise.all([
-      updateProfile({ runMode: "race_prep" }),
-      saveProgram({
-        ...programState,
-        runPlan: nextRunPlan as unknown as RunPlan,
-      }),
-    ]);
-  }, [programState, profile, saveProgram, updateProfile]);
+    // The profile half landed SERVER-side, so the local copy is stale until
+    // it is re-read. Without this the recovery hero would linger on a plan
+    // that no longer has a recovery phase.
+    await refreshProfile();
+    logger.log(`[skipRecoveryEarly] exited recovery → ${exit.runMode}`);
+  }, [
+    programState,
+    profile,
+    runProgramCommand,
+    refetchProgramState,
+    refreshProfile,
+  ]);
 
   // ── Run9 phase-3 (Slice DE): one-tap Realign ─────────────────
   //
@@ -1948,11 +2372,365 @@ export function useProgram() {
   const dismissFellBehindPrompt = useCallback(async () => {
     if (!programState) return;
     if (!programState.pendingFellBehindPrompt) return;
-    const next = { ...programState };
-    delete next.pendingFellBehindPrompt;
     logger.log("[fellBehind] dismissed without plan change");
-    await saveProgram(next);
-  }, [programState, saveProgram]);
+    const outcome = await runProgramCommand(
+      { kind: "dismissFellBehindPrompt", commandId: generateInstanceId() },
+      (state) => {
+        const next = { ...state };
+        delete next.pendingFellBehindPrompt;
+        return next;
+      }
+    );
+    if (outcome === "rejected") await refetchProgramState();
+  }, [programState, runProgramCommand, refetchProgramState]);
+
+  /**
+   * Reorder one day's exercises through the command boundary — the first
+   * writer migrated off `saveProgram` (P6).
+   *
+   * Chosen first because it is the only exercise edit that is PROVABLY
+   * equivalent to its server reducer: a pure permutation by `instanceId`, no
+   * load calibration, no catalog rebuild, no undo partner. The reducer refuses
+   * anything but an exact permutation of the day's current ids, so a stale
+   * client cannot silently drop or duplicate a slot.
+   *
+   * ── The legacy-document case, and why the obvious guard does not work ──
+   *
+   * `instanceId` is assigned LAZILY by `normalizeExercise` on READ, so a
+   * document written before the field existed carries none until some save
+   * rewrites it. The first version of this checked "do all the exercises have
+   * ids?" before sending — which is DEAD, because normalisation has already
+   * filled them in by the time any of this runs. The client always sees ids;
+   * the server's copy is what may not have them, and the client cannot see
+   * that. A test caught the guard never firing.
+   *
+   * So the fallback is on the REJECTION instead: if the reducer refuses the
+   * permutation, write directly, which both honours the reorder and persists
+   * the ids so the next one goes through the boundary. It self-heals in one
+   * use.
+   *
+   * The cost is honest and bounded: a genuinely stale client also lands here
+   * and gets last-write-wins, which is the pre-boundary behaviour for this
+   * exact operation rather than a new hazard. A reorder is a permutation of
+   * slots the user is looking at, so the blast radius is one day's ordering —
+   * not the load-bearing state the boundary exists to protect.
+   */
+  const reorderDayExercises = useCallback(
+    async (
+      dayIndex: number,
+      orderedInstanceIds: string[]
+    ): Promise<boolean> => {
+      if (!programState) return false;
+      const day = programState.workouts[dayIndex];
+      if (!day || orderedInstanceIds.length !== day.exercises.length) {
+        return false;
+      }
+
+      const permute = (state: ProgramState): ProgramState => {
+        const target = state.workouts[dayIndex];
+        if (!target) return state;
+        const byId = new Map(
+          target.exercises.map((ex) => [ex.instanceId, ex] as const)
+        );
+        const reordered = orderedInstanceIds.map((id) => byId.get(id));
+        if (reordered.some((ex) => ex === undefined)) return state;
+        return {
+          ...state,
+          workouts: state.workouts.map((d, i) =>
+            i === dayIndex
+              ? { ...d, exercises: reordered as ProgramExercise[] }
+              : d
+          ),
+        };
+      };
+
+      const precondition = workoutDayPrecondition(programState, dayIndex);
+      if (!precondition) return false;
+      const outcome = await runProgramCommand(
+        {
+          kind: "reorderExercises",
+          commandId: generateInstanceId(),
+          ...precondition,
+          orderedInstanceIds,
+        },
+        permute
+      );
+
+      if (outcome === "rejected") {
+        logger.log(
+          "[useProgram] reorder rejected — writing directly, which also persists the instanceIds"
+        );
+        await saveProgram(permute(programState));
+      }
+      // Applied, queued, or written directly — the user's reorder stuck in all
+      // three. Only the early bail above returns false.
+      return true;
+    },
+    [programState, runProgramCommand, saveProgram]
+  );
+
+  /**
+   * Remove one exercise from a day, through the boundary.
+   *
+   * Migrated because it is equivalent: the reducer is a pure removal by
+   * `instanceId`, exactly what the client did by index. Note this is the
+   * remove with NO undo partner — the other one offers an undo that
+   * re-inserts the exercise WITH its history and load, and the server's
+   * `addExercises` rebuilds from the catalog and can restore neither, so
+   * migrating that half while its undo stays a direct write would leave
+   * precisely the mixed-mode clobbering the boundary exists to remove.
+   *
+   * A rejection here means "it is already gone" — the client's view is stale,
+   * so it REFETCHES rather than rolling back to a state now known to be wrong.
+   * That is a different recovery from the reorder's, and deliberately so: you
+   * cannot repair a stale removal by forcing it.
+   */
+  const removeExerciseFromDay = useCallback(
+    async (dayIndex: number, instanceId: string): Promise<boolean> => {
+      if (!programState) return false;
+      const precondition = workoutDayPrecondition(programState, dayIndex);
+      if (!precondition) return false;
+      const outcome = await runProgramCommand(
+        {
+          kind: "removeExercise",
+          commandId: generateInstanceId(),
+          ...precondition,
+          exerciseInstanceId: instanceId,
+        },
+        (state) => ({
+          ...state,
+          workouts: state.workouts.map((d, i) =>
+            i === dayIndex
+              ? {
+                  ...d,
+                  exercises: d.exercises.filter(
+                    (ex) => ex.instanceId !== instanceId
+                  ),
+                }
+              : d
+          ),
+        })
+      );
+      if (outcome === "rejected") {
+        toast.error("Couldn't remove that. Refreshing.");
+        await refetchProgramState();
+      }
+      return outcome !== "rejected";
+    },
+    [programState, runProgramCommand, refetchProgramState]
+  );
+
+  /**
+   * Append exercises to a day, through the boundary.
+   *
+   * Equivalent because both sides start an added movement UNCALIBRATED: the
+   * reducer's own comment says it matches "the client add default (3×10×0)",
+   * and it does. That is what separates this from `replaceExercise`, where the
+   * client calibrates against the profile and the server deliberately does not
+   * — migrating that one would regress every swap to 0 kg.
+   *
+   * The server derives the name and category from the catalog rather than
+   * trusting a client-supplied exercise object, which is the boundary's whole
+   * security stance, so only ids cross the wire.
+   */
+  const addExercisesToDayCmd = useCallback(
+    async (dayIndex: number, exerciseIds: string[]): Promise<boolean> => {
+      if (!programState || exerciseIds.length === 0) return false;
+      const commandId = generateInstanceId();
+      const precondition = workoutDayPrecondition(programState, dayIndex);
+      if (!precondition) return false;
+      const outcome = await runProgramCommand(
+        {
+          kind: "addExercises",
+          commandId,
+          ...precondition,
+          exercises: exerciseIds.map((exerciseId) => ({ exerciseId })),
+        },
+        (state) => ({
+          ...state,
+          workouts: state.workouts.map((d, i) =>
+            i === dayIndex
+              ? {
+                  ...d,
+                  exercises: [
+                    ...d.exercises,
+                    ...exerciseIds.map((exerciseId, n) => {
+                      const repUnit = repUnitForExerciseId(exerciseId);
+                      return normalizeExercise({
+                        name: getExerciseById(exerciseId)?.name ?? exerciseId,
+                        exerciseId,
+                        // Mirror the reducer's deterministic ids so the
+                        // optimistic rows and the refetched ones are the same
+                        // rows — otherwise React remounts every added item.
+                        instanceId: `cmd-${commandId}-${n}`,
+                        sets: 3,
+                        reps: repUnit === "seconds" ? 30 : 10,
+                        weight: 0,
+                        ...(repUnit !== undefined ? { repUnit } : {}),
+                      });
+                    }),
+                  ],
+                }
+              : d
+          ),
+        })
+      );
+      if (outcome === "rejected") {
+        toast.error("Couldn't add that. Refreshing.");
+        await refetchProgramState();
+      }
+      return outcome !== "rejected";
+    },
+    [programState, runProgramCommand, refetchProgramState]
+  );
+
+  /**
+   * Undo the last removal, through the boundary (P6).
+   *
+   * Carries no payload beyond the precondition: WHAT to restore is server
+   * state. That is the point of the soft delete — the client cannot rebuild a
+   * removed exercise's logged history or calibrated load, so an undo that
+   * reconstructed it from the catalog would hand back a different exercise
+   * wearing the same name. The reducer stashed the original verbatim.
+   *
+   * No optimistic transform. Restoring locally would mean reconstructing the
+   * exercise the client just dropped — exactly the thing it cannot do
+   * faithfully — so this one waits for the refetch. An undo tap is rare and
+   * deliberate, unlike a drag.
+   */
+  const restoreRemovedExercise = useCallback(
+    async (dayIndex: number): Promise<boolean> => {
+      if (!programState) return false;
+      const precondition = workoutDayPrecondition(programState, dayIndex);
+      if (!precondition) return false;
+      const outcome = await runProgramCommand(
+        {
+          kind: "restoreExercise",
+          commandId: generateInstanceId(),
+          ...precondition,
+        },
+        (state) => state
+      );
+      if (outcome === "rejected") {
+        toast.error("Couldn't undo that.");
+        await refetchProgramState();
+      }
+      return outcome !== "rejected";
+    },
+    [programState, runProgramCommand, refetchProgramState]
+  );
+
+  /**
+   * Swap one exercise for another, through the boundary.
+   *
+   * The load is calibrated HERE and sent as a bounded scalar. That is the
+   * decision that unblocked this site: the reducer previously hard-coded
+   * `weight: 0` because it has no profile context, so routing the swap through
+   * the boundary would have silently downgraded every replacement to
+   * uncalibrated. The alternative was a 15th TS↔JS mirror carrying the
+   * variation bank's loadFactor table — data edited twice in this arc alone.
+   * The reducer's own note records the reasoning in full.
+   *
+   * Only the load crosses as a number. The replacement's NAME and CATEGORY are
+   * still derived server-side from the catalog, which is the part the
+   * boundary's security stance is actually about.
+   *
+   * A rejection refetches rather than rolling back: "that exercise is no longer
+   * in this workout" means the client's view is stale, and re-reading is the
+   * only honest answer to that.
+   */
+  const replaceExerciseInDay = useCallback(
+    async (
+      dayIndex: number,
+      oldInstanceId: string,
+      replacementExerciseId: string
+    ): Promise<boolean> => {
+      if (!programState) return false;
+      const day = programState.workouts[dayIndex];
+      const old = day?.exercises.find((ex) => ex.instanceId === oldInstanceId);
+      if (!old) return false;
+
+      const calibrated = weightAfterExerciseSwap(
+        old,
+        replacementExerciseId,
+        loadContextFrom(profile)
+      );
+      const commandId = generateInstanceId();
+      const replacementRepUnit = repUnitForExerciseId(replacementExerciseId);
+      const unitChanged =
+        (old.repUnit === "seconds") !== (replacementRepUnit === "seconds");
+      const replacementReps = unitChanged
+        ? replacementRepUnit === "seconds"
+          ? 30
+          : 10
+        : old.reps;
+
+      const precondition = workoutDayPrecondition(programState, dayIndex);
+      if (!precondition) return false;
+      const outcome = await runProgramCommand(
+        {
+          kind: "replaceExercise",
+          commandId,
+          ...precondition,
+          oldInstanceId,
+          replacementExerciseId,
+          replacementWeight: calibrated.weight,
+        },
+        (state) => ({
+          ...state,
+          workouts: state.workouts.map((d, i) =>
+            i === dayIndex
+              ? {
+                  ...d,
+                  exercises: d.exercises.map((ex) =>
+                    ex.instanceId === oldInstanceId
+                      ? normalizeExercise({
+                          name:
+                            getExerciseById(replacementExerciseId)?.name ??
+                            replacementExerciseId,
+                          exerciseId: replacementExerciseId,
+                          // The reducer's deterministic id, so the refetch does
+                          // not remount the row.
+                          instanceId: `cmd-${commandId}`,
+                          sets: old.sets,
+                          reps: replacementReps,
+                          weight: calibrated.weight,
+                          movementCategory: calibrated.movementCategory,
+                          baseReps: unitChanged
+                            ? replacementReps
+                            : old.baseReps,
+                          progressionType: old.progressionType,
+                          ...(!unitChanged && old.repRangeMax !== undefined
+                            ? { repRangeMax: old.repRangeMax }
+                            : {}),
+                          ...(replacementRepUnit !== undefined
+                            ? { repUnit: replacementRepUnit }
+                            : {}),
+                          ...(old.baseSets !== undefined
+                            ? { baseSets: old.baseSets }
+                            : {}),
+                          ...(old.restSeconds !== undefined
+                            ? { restSeconds: old.restSeconds }
+                            : {}),
+                          ...(old.isAccessory !== undefined
+                            ? { isAccessory: old.isAccessory }
+                            : {}),
+                        })
+                      : ex
+                  ),
+                }
+              : d
+          ),
+        })
+      );
+      if (outcome === "rejected") {
+        toast.error("Couldn't swap that. Refreshing.");
+        await refetchProgramState();
+      }
+      return outcome !== "rejected";
+    },
+    [programState, profile, runProgramCommand, refetchProgramState]
+  );
 
   /** PROGRAM-DELOAD-01 — apply/revert the deload week via the server
    *  `applyProgramCommand` transaction (the packet-18 command boundary;
@@ -1967,16 +2745,16 @@ export function useProgram() {
   const sendDeloadCommand = useCallback(
     async (kind: "applyDeloadWeek" | "revertDeloadWeek"): Promise<boolean> => {
       if (!user || !programState) return false;
+      const command = {
+        kind,
+        // Reuses the bounded safe-alphabet id generator (UUID with a
+        // non-crypto fallback) — both shapes satisfy the callable's
+        // COMMAND_ID_RE.
+        commandId: generateInstanceId(),
+        expectedWeekNumber: programState.weekNumber,
+      };
       try {
-        const call = httpsCallable(getFunctions(), "applyProgramCommand");
-        await call({
-          kind,
-          // Reuses the bounded safe-alphabet id generator (UUID with a
-          // non-crypto fallback) — both shapes satisfy the callable's
-          // COMMAND_ID_RE.
-          commandId: generateInstanceId(),
-          expectedWeekNumber: programState.weekNumber,
-        });
+        await sendProgramCommand(command);
         const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
         const snap = await getDoc(ref);
         if (snap.exists()) {
@@ -1988,7 +2766,20 @@ export function useProgram() {
         }
         return true;
       } catch (err) {
-        logger.error(`[useProgram] ${kind} failed`, err);
+        // P6: a transport failure is queued for replay rather than lost. The
+        // server dedupes on `commandId` inside the transaction, so a command
+        // that actually landed before the timeout cannot double-apply on
+        // reconnect — which is the property that makes queuing safe at all.
+        //
+        // A SERVER rejection is not queued: it would fail identically on every
+        // flush forever. `failed-precondition` is the live case here — the week
+        // may already be deloaded by the time the queue drains.
+        if (isTransportFailure(err)) {
+          enqueueCommand(user.uid, command);
+          logger.log(`[useProgram] ${kind} queued — offline`);
+        } else {
+          logger.error(`[useProgram] ${kind} failed`, err);
+        }
         return false;
       }
     },
@@ -2024,46 +2815,49 @@ export function useProgram() {
       if (!programState || programState.trainingBlock) return false;
       // A run-only athlete has no prescription for a block to own.
       if (programState.workouts.length === 0) return false;
-      const goalBefore =
-        profile?.primaryGoal ?? programState.primaryGoal ?? "general";
-      const now = Date.now();
-      const block: ActiveTrainingBlock = {
-        id: makeBlockId(input.startDate, now),
-        owned: true,
-        focus: input.focus,
-        pace: input.pace,
-        durationWeeks: input.durationWeeks,
-        startDate: input.startDate,
-        goalBefore,
-        // Amnesty only where early misses are expected: the targets just
-        // moved, or the user is deliberately under-reaching.
-        amnestyWeeksLeft:
-          input.focus !== goalBefore || input.pace === "easing"
-            ? BLOCK_AMNESTY_WEEKS
-            : 0,
-        weeklyLiftTarget: programState.workouts.length,
-        anchorExerciseIds: (input.anchorExerciseIds ?? []).slice(0, 3),
-        why: input.why ?? "",
-        createdAt: now,
-        schemaVersion: 1,
-      };
-      try {
-        await saveProgram({
-          ...programState,
+      // P6: through the boundary. Only the user's actual CHOICES cross the
+      // wire — the block's id, `goalBefore`, amnesty counter,
+      // `weeklyLiftTarget` and `createdAt` are all derived by the reducer
+      // from server-read state, so a client cannot grant itself amnesty
+      // weeks or claim a `goalBefore` that was never its focus. The
+      // represcribe runs server-side too (functions/lib/represcribe.js,
+      // pinned by represcribe.cross.test.ts) — sending the represcribed
+      // workouts would be the whole-document write the boundary refuses.
+      const outcome = await runProgramCommand(
+        {
+          kind: "startTrainingBlock",
+          commandId: generateInstanceId(),
+          focus: input.focus,
+          pace: input.pace,
+          durationWeeks: input.durationWeeks,
+          startDate: input.startDate,
+          ...(input.anchorExerciseIds?.length
+            ? { anchorExerciseIds: input.anchorExerciseIds.slice(0, 3) }
+            : {}),
+          ...(input.why === undefined ? {} : { why: input.why }),
+        },
+        // Optimistic: the same transform, from the same shared rule. The
+        // block object itself is left to the refetch — its id embeds the
+        // server's `now`, and inventing a local one would show a value that
+        // is about to be replaced.
+        (state) => ({
+          ...state,
           primaryGoal: input.focus,
           workouts: represcribeWorkouts(
-            programState.workouts,
+            state.workouts,
             input.focus,
             toExperience(profile?.experience)
           ),
-          trainingBlock: block,
-        });
-        return true;
-      } catch {
-        return false; // saveProgram has already surfaced the failure
+        })
+      );
+      if (outcome === "rejected") {
+        toast.error("Couldn't start that block. Refreshing.");
+        await refetchProgramState();
+        return false;
       }
+      return true;
     },
-    [programState, profile, saveProgram]
+    [programState, profile, runProgramCommand, refetchProgramState]
   );
 
   /**
@@ -2080,27 +2874,35 @@ export function useProgram() {
   const releaseTrainingBlock = useCallback(async (): Promise<boolean> => {
     const block = programState?.trainingBlock;
     if (!programState || !block) return false;
-    try {
-      await saveProgram({
-        ...programState,
-        primaryGoal: block.goalBefore,
-        // A legacy block adopted at deploy never represcribed anything, so
-        // releasing it must not retroactively rewrite a prescription it
-        // never owned.
-        workouts: block.owned
-          ? represcribeWorkouts(
-              programState.workouts,
-              block.goalBefore,
-              toExperience(profile?.experience)
-            )
-          : programState.workouts,
-        trainingBlock: undefined,
-      });
-      return true;
-    } catch {
+    const outcome = await runProgramCommand(
+      { kind: "releaseTrainingBlock", commandId: generateInstanceId() },
+      // Applying the same transform with `goalBefore` IS the inverse, which
+      // is why there is no snapshot to restore. A legacy un-owned block
+      // never represcribed anything, so releasing it must not retroactively
+      // rewrite a prescription it never owned.
+      (state) => {
+        const next = {
+          ...state,
+          primaryGoal: block.goalBefore,
+          workouts: block.owned
+            ? represcribeWorkouts(
+                state.workouts,
+                block.goalBefore,
+                toExperience(profile?.experience)
+              )
+            : state.workouts,
+        };
+        delete next.trainingBlock;
+        return next;
+      }
+    );
+    if (outcome === "rejected") {
+      toast.error("Couldn't end that block. Refreshing.");
+      await refetchProgramState();
       return false;
     }
-  }, [programState, profile, saveProgram]);
+    return true;
+  }, [programState, profile, runProgramCommand, refetchProgramState]);
 
   /**
    * End the block but KEEP its focus as the user's programme focus — the
@@ -2109,13 +2911,21 @@ export function useProgram() {
    */
   const keepTrainingBlockFocus = useCallback(async (): Promise<boolean> => {
     if (!programState?.trainingBlock) return false;
-    try {
-      await saveProgram({ ...programState, trainingBlock: undefined });
-      return true;
-    } catch {
+    const outcome = await runProgramCommand(
+      { kind: "endTrainingBlockKeepingFocus", commandId: generateInstanceId() },
+      (state) => {
+        const next = { ...state };
+        delete next.trainingBlock;
+        return next;
+      }
+    );
+    if (outcome === "rejected") {
+      toast.error("Couldn't end that block. Refreshing.");
+      await refetchProgramState();
       return false;
     }
-  }, [programState, saveProgram]);
+    return true;
+  }, [programState, runProgramCommand, refetchProgramState]);
 
   const applyDeloadWeek = useCallback(
     () => sendDeloadCommand("applyDeloadWeek"),
@@ -2218,10 +3028,14 @@ export function useProgram() {
     setNextWorkout,
     advanceToNextWeek,
     logExercise,
-    updateExercise,
     updateSettings,
     regenerateProgram,
     saveProgram,
+    reorderDayExercises,
+    removeExerciseFromDay,
+    addExercisesToDayCmd,
+    replaceExerciseInDay,
+    restoreRemovedExercise,
     markManualComplete,
     unmarkManualComplete,
     skipRunDay,

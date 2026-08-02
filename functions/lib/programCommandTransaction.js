@@ -29,6 +29,15 @@ const {
 } = require("./programStateSanitizer");
 
 /**
+ * The ONLY profile fields a command reducer may write. Deliberately tiny: the
+ * programme boundary owns programState, and reaching into the user document
+ * at all is an exception made for one materialization invariant (runMode must
+ * agree with runPlan.phase). Anything outside this list is dropped and logged
+ * rather than written.
+ */
+const PROFILE_EFFECT_KEYS = ["runMode", "raceGoal"];
+
+/**
  * @param {object} args
  * @param {FirebaseFirestore.Firestore} args.firestore
  * @param {string} args.uid
@@ -128,6 +137,41 @@ async function runProgramCommandTransaction({ firestore, uid, command, now }) {
         ...result.effects.workout,
         createdAt: admin.firestore.Timestamp.now(),
       });
+    }
+    // skipRecoveryEarly's effect: the run-mode materialization patch. Written
+    // in the SAME transaction as the programState change, which is the whole
+    // reason that writer moved here — as two separate client writes, either
+    // could land alone and leave profile.runMode disagreeing with
+    // runPlan.phase.
+    //
+    // NOT routed through sanitizeProfileData, deliberately and for the same
+    // reason dailyRaceReconciliationSweep isn't: that sanitizer DROPS
+    // `raceGoal: null` (its cleanObject returns undefined for null), so the
+    // clear — the entire point of the freeform exit — would silently not
+    // happen. Safe because this patch is server-derived: it comes from
+    // `resolveRecoveryExit` over transaction-current state, and the command
+    // carries no profile payload at all. The key allow-list below keeps that
+    // true if a future reducer emits a wider effect.
+    if (result.effects.profile) {
+      const patch = {};
+      for (const key of PROFILE_EFFECT_KEYS) {
+        if (key in result.effects.profile) {
+          patch[key] = result.effects.profile[key];
+        }
+      }
+      const unexpected = Object.keys(result.effects.profile).filter(
+        (k) => !PROFILE_EFFECT_KEYS.includes(k)
+      );
+      if (unexpected.length > 0) {
+        functions.logger.warn("applyProgramCommand.profile_effect_dropped", {
+          uid,
+          kind: command.kind,
+          dropped: unexpected,
+        });
+      }
+      if (Object.keys(patch).length > 0) {
+        tx.set(profileRef, patch, { merge: true });
+      }
     }
     tx.create(receiptRef, programCommands.makeCommandReceipt({ command, now }));
     committedUpdatedAt = now;
