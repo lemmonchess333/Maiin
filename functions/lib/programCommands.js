@@ -73,6 +73,8 @@ const { isRaceTemplateId } = require("./raceTemplateIds");
 // "who does exiting recovery return to?" rule on this side, and already
 // pinned to the client copy by a cross-test.
 const { resolveRecoveryExit } = require("./runModeResolution");
+// One-off run move (RUN-RESCHEDULE-01), pinned by a parity cross-test.
+const { computeRunMove } = require("./runReschedule");
 // Deload-transform mirror (pinned by a parity cross-test). Used by the
 // applyDeloadWeek reducer (PROGRAM-DELOAD-01).
 const {
@@ -123,6 +125,7 @@ const CLIENT_COMMAND_KINDS = Object.freeze([
   "dismissFellBehindPrompt",
   "endTrainingBlockKeepingFocus",
   "skipRecoveryEarly",
+  "moveRunDay",
 ]);
 const CLIENT_COMMAND_KIND_SET = new Set(CLIENT_COMMAND_KINDS);
 
@@ -728,6 +731,26 @@ const KIND_VALIDATORS = {
     out.to = assertEnum(command.to, "to", new Set(["skipped", "planned"]));
   },
 
+  // RUN-RESCHEDULE-01. Only "which run" and "which day" cross the wire — the
+  // date, the move markers and the clash flag are all DERIVED server-side, so
+  // a client cannot place a run outside its own week, which is the one thing
+  // the feature is defined not to do.
+  moveRunDay(command, out) {
+    assertKeys(
+      command,
+      "moveRunDay",
+      ["kind", "commandId", "runDayId", "targetDayIndex"],
+      []
+    );
+    out.runDayId = assertString(command.runDayId, "runDayId", MAX_ID_LEN);
+    out.targetDayIndex = assertBoundedInt(
+      command.targetDayIndex,
+      "targetDayIndex",
+      0,
+      6
+    );
+  },
+
   overrideRunDay(command, out) {
     assertKeys(
       command,
@@ -1255,6 +1278,61 @@ function transitionRunDay(state, command) {
     status: command.to,
     completed: false,
   }));
+}
+
+function moveRunDay(state, profile, command) {
+  const idx = findRunDayIndex(state, command.runDayId);
+  if (idx === -1) {
+    failedPrecondition("That scheduled run is no longer available.");
+  }
+  const target = state.runDays[idx];
+
+  // Guards mirror overrideRunDay's, and for the same reason: a race's date IS
+  // the event (RUN-RACE-GUARD-01), and only a planned slot moves.
+  if (isRaceRunDay(target)) {
+    failedPrecondition("A race can't be moved — its date is the event.");
+  }
+  if (!isScheduledRunEditable(getScheduledRunStatus(target))) {
+    failedPrecondition("That run can no longer be moved.");
+  }
+  if (target.dayIndex === command.targetDayIndex) {
+    return state; // no-op: already there
+  }
+  // Integrity: never double-book a day. Two runs sharing a dayIndex corrupts
+  // the week, and the UI's own block on occupied days is not a guarantee.
+  if (
+    state.runDays.some(
+      (rd, i) => i !== idx && rd && rd.dayIndex === command.targetDayIndex
+    )
+  ) {
+    failedPrecondition("There is already a run on that day.");
+  }
+
+  const patch = computeRunMove(
+    target,
+    command.targetDayIndex,
+    (profile && profile.weekSchedule) || []
+  );
+  if (!patch) {
+    failedPrecondition("That day isn't part of this run's week.");
+  }
+
+  return mapRunDay(state, idx, (rd) => {
+    // Rebuilt rather than spread-with-undefined so a snap-back to the origin
+    // DELETES the move markers; Firestore rejects undefined, and a stale
+    // marker would read as "this run was moved" forever.
+    const next = {
+      ...rd,
+      date: patch.date,
+      dayIndex: patch.dayIndex,
+      clashesWithLift: patch.clashesWithLift,
+    };
+    if (patch.movedFromDate) next.movedFromDate = patch.movedFromDate;
+    else delete next.movedFromDate;
+    if (patch.movedToDate) next.movedToDate = patch.movedToDate;
+    else delete next.movedToDate;
+    return next;
+  });
 }
 
 function overrideRunDay(state, command) {
@@ -1788,6 +1866,9 @@ function applyProgramCommand({ state, profile, command, now }) {
       break;
     case "overrideRunDay":
       next = overrideRunDay(current, validated);
+      break;
+    case "moveRunDay":
+      next = moveRunDay(current, profile || {}, validated);
       break;
     case "applyDeloadWeek":
       next = applyDeloadWeekCommand(current, profile || {}, validated, now);

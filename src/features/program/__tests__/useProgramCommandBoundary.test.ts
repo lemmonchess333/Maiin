@@ -595,7 +595,19 @@ describe("every migrated writer sends a command the server accepts", () => {
             exercises: [ex("i-d", "Delta")],
           },
         ],
-        runDays: [],
+        // moveRunDay needs a planned run with a week anchor to move.
+        runDays: [
+          {
+            id: "rd-1",
+            dayIndex: 2,
+            date: "2026-03-03",
+            weekKey: "2026-03-01",
+            templateId: "tempo_20",
+            type: "tempo",
+            status: "planned",
+            completed: false,
+          },
+        ],
         // skipRecoveryEarly refuses unless the plan is actually in recovery.
         runPlan: {
           mode: "race_prep",
@@ -643,6 +655,7 @@ describe("every migrated writer sends a command the server accepts", () => {
       await c.updateSettings({ autoProgression: false });
       await c.dismissFellBehindPrompt();
       await c.keepTrainingBlockFocus();
+      await c.moveRunDay("rd-1", 1);
       await c.skipRecoveryEarly();
     });
 
@@ -664,5 +677,6 @@ describe("every migrated writer sends a command the server accepts", () => {
     expect(kinds).toContain("dismissFellBehindPrompt");
     expect(kinds).toContain("endTrainingBlockKeepingFocus");
     expect(kinds).toContain("skipRecoveryEarly");
+    expect(kinds).toContain("moveRunDay");
   });
 });

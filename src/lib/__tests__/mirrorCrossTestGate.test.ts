@@ -130,6 +130,10 @@ const PINNED: Record<string, string> = {
   // the server reducer lacked until the writer migrated to the boundary.
   "functions/lib/progressionHold.js":
     "src/features/program/__tests__/progressionHold.cross.test.ts",
+  // One-off run move — the copy inside the command transaction is the one
+  // that decides where the run is actually stored.
+  "functions/lib/runReschedule.js":
+    "src/features/program/__tests__/runReschedule.cross.test.ts",
   // Race-template ids — data-list mirror of the race-TYPE RUN_TEMPLATES
   // entries. Same shape as spaceIds below: the server cannot import the
   // catalogue, so the list is pinned set-equal instead.

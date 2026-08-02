@@ -580,6 +580,7 @@ describe("every declared client kind round-trips", () => {
         "dismissFellBehindPrompt",
         "endTrainingBlockKeepingFocus",
         "skipRecoveryEarly",
+        "moveRunDay",
       ])
     );
   });
@@ -924,6 +925,139 @@ describe("preconditionless field commands", () => {
       goal: "cut",
     });
     expect(state.goal).toBe("cut");
+  });
+});
+
+describe("moveRunDay (RUN-RESCHEDULE-01)", () => {
+  const SCHEDULE = [
+    { day: 0, type: "rest" },
+    { day: 1, type: "lift" },
+    { day: 2, type: "run" },
+    { day: 3, type: "both" },
+    { day: 4, type: "rest" },
+  ];
+
+  function weekState(extra = {}) {
+    const s = baseState();
+    s.runDays = [
+      {
+        id: "run-1",
+        dayIndex: 2,
+        date: "2026-03-03",
+        weekKey: "2026-03-01",
+        templateId: "tempo_20",
+        type: "tempo",
+        status: "planned",
+        completed: false,
+        ...extra,
+      },
+      {
+        id: "run-2",
+        dayIndex: 4,
+        date: "2026-03-05",
+        weekKey: "2026-03-01",
+        templateId: "easy_30",
+        type: "easy",
+        status: "planned",
+        completed: false,
+      },
+    ];
+    return s;
+  }
+
+  const move = (targetDayIndex, runDayId = "run-1") => ({
+    kind: "moveRunDay",
+    commandId: CMD,
+    runDayId,
+    targetDayIndex,
+  });
+
+  it("moves the run and DERIVES the date from the week anchor", () => {
+    const { state } = apply(move(1), weekState(), { weekSchedule: SCHEDULE });
+    expect(state.runDays[0].dayIndex).toBe(1);
+    // The date is computed server-side, not sent — Monday of that week.
+    expect(state.runDays[0].date).toBe("2026-03-02");
+    expect(state.runDays[0].movedFromDate).toBe("2026-03-03");
+    expect(state.runDays[0].movedToDate).toBe("2026-03-02");
+    // A hard run onto a lift day clashes truthfully.
+    expect(state.runDays[0].clashesWithLift).toBe(true);
+    // Identity survives — this is a move, not a rebuild.
+    expect(state.runDays[0].id).toBe("run-1");
+    expect(state.runDays[0].templateId).toBe("tempo_20");
+    expect(state.runDays[0].status).toBe("planned");
+  });
+
+  it("snapping back to the origin DELETES the move markers", () => {
+    const moved = weekState({
+      dayIndex: 3,
+      date: "2026-03-04",
+      movedFromDate: "2026-03-03",
+      movedToDate: "2026-03-04",
+    });
+    const { state } = apply(move(2), moved, { weekSchedule: SCHEDULE });
+    expect(state.runDays[0].date).toBe("2026-03-03");
+    // Deleted, not undefined — Firestore rejects undefined, and a stale
+    // marker would read as "this run was moved" forever.
+    expect("movedFromDate" in state.runDays[0]).toBe(false);
+    expect("movedToDate" in state.runDays[0]).toBe(false);
+  });
+
+  it("refuses to double-book a day", () => {
+    // run-2 already sits on day 4.
+    expectHttps(
+      () => apply(move(4), weekState(), { weekSchedule: SCHEDULE }),
+      "failed-precondition"
+    );
+  });
+
+  it("is a no-op when the run is already on that day", () => {
+    const { state } = apply(move(2), weekState(), { weekSchedule: SCHEDULE });
+    expect(state.runDays[0].date).toBe("2026-03-03");
+    expect(state.runDays[0].dayIndex).toBe(2);
+  });
+
+  it("RUN-RACE-GUARD-01: a race cannot be moved", () => {
+    for (const raceShape of [{ type: "race" }, { templateId: "10k_race" }]) {
+      expectHttps(
+        () => apply(move(1), weekState(raceShape), { weekSchedule: SCHEDULE }),
+        "failed-precondition"
+      );
+    }
+  });
+
+  it("refuses a non-planned run", () => {
+    for (const status of ["skipped", "completed_exact", "race_no_show"]) {
+      expectHttps(
+        () => apply(move(1), weekState({ status }), { weekSchedule: SCHEDULE }),
+        "failed-precondition"
+      );
+    }
+  });
+
+  it("refuses a run with no week anchor", () => {
+    expectHttps(
+      () =>
+        apply(move(1), weekState({ weekKey: undefined }), {
+          weekSchedule: SCHEDULE,
+        }),
+      "failed-precondition"
+    );
+  });
+
+  it("rejects an unknown runDayId", () => {
+    expectHttps(
+      () => apply(move(1, "nope"), weekState(), { weekSchedule: SCHEDULE }),
+      "failed-precondition"
+    );
+  });
+
+  it("an out-of-week target day is rejected by the VALIDATOR", () => {
+    expectRejected({
+      kind: "moveRunDay",
+      commandId: CMD_ID,
+      runDayId: "run-1",
+      targetDayIndex: 7,
+    });
   });
 });
 

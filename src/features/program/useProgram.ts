@@ -1732,6 +1732,18 @@ export function useProgram() {
         );
         return;
       }
+      if (!target.id) {
+        logger.warn(
+          `[moveRunDay] runDay at dayIndex=${target.dayIndex} has no stable id; skipping`
+        );
+        return;
+      }
+      // Computed here for the OPTIMISTIC paint only. The command sends just
+      // the run id and the target day: the date, the move markers and the
+      // clash flag are all re-derived server-side from the run's own week
+      // anchor, so a client cannot place a run outside its week — the one
+      // thing this feature is defined not to do. Same shared rule both
+      // sides, pinned by runReschedule.cross.test.ts.
       const patch = computeRunMove(
         target,
         targetDayIndex,
@@ -1743,25 +1755,46 @@ export function useProgram() {
         );
         return;
       }
-      const updatedDays = programState.runDays.map((rd) => {
-        if (rd.id !== target.id) return rd;
-        // Rebuild the day so a snap-back-to-origin can DROP the move markers
-        // (setting them undefined would leave stale values on the array).
-        const next: ScheduledRunDay = {
-          ...rd,
-          date: patch.date,
-          dayIndex: patch.dayIndex,
-          clashesWithLift: patch.clashesWithLift,
-        };
-        if (patch.movedFromDate) next.movedFromDate = patch.movedFromDate;
-        else delete next.movedFromDate;
-        if (patch.movedToDate) next.movedToDate = patch.movedToDate;
-        else delete next.movedToDate;
-        return next;
-      });
-      await saveProgram({ ...programState, runDays: updatedDays });
+      const targetId = target.id;
+      const outcome = await runProgramCommand(
+        {
+          kind: "moveRunDay",
+          commandId: generateInstanceId(),
+          runDayId: targetId,
+          targetDayIndex,
+        },
+        (state) => ({
+          ...state,
+          runDays: (state.runDays ?? []).map((rd) => {
+            if (rd.id !== targetId) return rd;
+            // Rebuild the day so a snap-back-to-origin can DROP the move
+            // markers (setting them undefined would leave stale values).
+            const next: ScheduledRunDay = {
+              ...rd,
+              date: patch.date,
+              dayIndex: patch.dayIndex,
+              clashesWithLift: patch.clashesWithLift,
+            };
+            if (patch.movedFromDate) next.movedFromDate = patch.movedFromDate;
+            else delete next.movedFromDate;
+            if (patch.movedToDate) next.movedToDate = patch.movedToDate;
+            else delete next.movedToDate;
+            return next;
+          }),
+        })
+      );
+      if (outcome === "rejected") {
+        toast.error("Couldn't move that run. Refreshing.");
+        await refetchProgramState();
+      }
     },
-    [programState, user, profile?.weekSchedule, saveProgram]
+    [
+      programState,
+      user,
+      profile?.weekSchedule,
+      runProgramCommand,
+      refetchProgramState,
+    ]
   );
 
   // Override a run day template. Refuses to write when the target

@@ -2148,28 +2148,38 @@ describe("RUN-RESCHEDULE-01 — moveRunDay", () => {
     await run([plannedToday()], (api) =>
       api.moveRunDay("runday_move_1", target)
     );
-    expect(setDocCalls().length).toBe(1);
-    const saved = setDocCalls()[0].data as ProgramState;
-    const moved = saved.runDays!.find((rd) => rd.id === "runday_move_1")!;
-    expect(moved.dayIndex).toBe(target);
-    expect(moved.date).toBe(
-      localDateString(addLocalDays(parseLocalDate(localWeekKey()), target))
-    );
-    expect(moved.movedFromDate).toBe(
-      localDateString(addLocalDays(new Date(), 0))
-    );
-    expect(moved.movedToDate).toBe(moved.date);
-    // Identity + status preserved.
-    expect(moved.id).toBe("runday_move_1");
-    expect(moved.templateId).toBe("easy_30");
-    expect(moved.status).toBe("planned");
+    // P6: through the boundary. The command names the run and the day and
+    // NOTHING else — the date, both move markers and the clash flag are
+    // re-derived server-side from the run's own week anchor, so a client
+    // cannot place a run outside its week. Where the run lands is pinned in
+    // programCommands.test.js and the two copies agree by
+    // runReschedule.cross.test.ts; what this owns is that the client stopped
+    // writing the document and stopped asserting the destination.
+    expect(setDocCalls().length).toBe(0);
+    const cmd = sentCommands.find((c) => c.kind === "moveRunDay");
+    expect(cmd).toBeDefined();
+    expect(Object.keys(cmd!).sort()).toEqual([
+      "commandId",
+      "kind",
+      "runDayId",
+      "targetDayIndex",
+    ]);
+    expect(cmd?.runDayId).toBe("runday_move_1");
+    expect(cmd?.targetDayIndex).toBe(target);
   });
 
+  /* The three refusals now assert NO COMMAND as well as no write. Checking
+     only `setDocCalls()` would pass trivially post-migration — this writer no
+     longer writes documents at all — so each of these would have kept its
+     green tick while sending the refused move to the server. The reducer
+     refuses them too (programCommands.test.js), but a client that fires a
+     doomed command has still lost its guard. */
   it("refuses to move a race slot (immovable identity)", async () => {
     await run([plannedToday({ type: "race", templateId: "10k_race" })], (api) =>
       api.moveRunDay("runday_move_1", target)
     );
     expect(setDocCalls().length).toBe(0);
+    expect(sentCommands.filter((c) => c.kind === "moveRunDay")).toEqual([]);
   });
 
   it("refuses to move a skipped (non-editable) slot", async () => {
@@ -2177,6 +2187,7 @@ describe("RUN-RESCHEDULE-01 — moveRunDay", () => {
       api.moveRunDay("runday_move_1", target)
     );
     expect(setDocCalls().length).toBe(0);
+    expect(sentCommands.filter((c) => c.kind === "moveRunDay")).toEqual([]);
   });
 
   it("refuses to double-book an occupied day", async () => {
@@ -2185,6 +2196,7 @@ describe("RUN-RESCHEDULE-01 — moveRunDay", () => {
       (api) => api.moveRunDay("runday_move_1", target)
     );
     expect(setDocCalls().length).toBe(0);
+    expect(sentCommands.filter((c) => c.kind === "moveRunDay")).toEqual([]);
   });
 });
 

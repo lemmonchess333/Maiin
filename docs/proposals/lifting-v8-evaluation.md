@@ -1476,10 +1476,14 @@ and it carries an actively-edited data table — the same judgement the
 than drifted into. (`keepTrainingBlockFocus` was the third block writer and
 DID migrate — it re-derives nothing.)
 
-**Blocked on cross-document atomicity (1 site left).** STATUS 2026-08-02 —
-`skipRecoveryEarly` (2 of the 3 sites) is DONE: the `profile` effect described
-below now exists, and the writer commits both halves in one transaction.
-`realignRacePlan` remains, and can follow the same pattern. Original entry:
+**Blocked on cross-document atomicity — RESOLVED, and the third site was
+mis-triaged.** STATUS 2026-08-02 — `skipRecoveryEarly` (2 of the 3 sites) is
+DONE: the `profile` effect described below now exists, and the writer commits
+both halves in one transaction. `realignRacePlan` does NOT belong in this
+bucket at all — it READS the profile but writes only `programState`, so its
+real blocker is `regenerateRacePlan` (the run scheduler), which puts it with
+`refreshRunSchedule` under whole-plan regeneration. Caught by reading it
+before migrating, which is the standing rule below. Original entry:
 `skipRecoveryEarly` (×2) and `realignRacePlan` write the profile AND
 programState, today as
 `Promise.all([updateProfile, saveProgram])` — two independent writes that can
@@ -1505,9 +1509,11 @@ These are `configurePlan`-shaped — a private server transition with its own
 plan validation, not a client command. Should go through that path rather
 than gaining a public kind.
 
-**Run reschedule (1 site).** `moveRunDay` needs `computeRunMove` mirrored plus
-`profile.weekSchedule`, which the transaction already reads. Self-contained;
-a reasonable small slice.
+**Run reschedule (1 site).** STATUS 2026-08-02 — DONE.
+`functions/lib/runReschedule.js` mirrors `computeRunMove`, pinned by a
+cross-test that walks every day of the week. Original entry: `moveRunDay`
+needs `computeRunMove` mirrored plus `profile.weekSchedule`, which the
+transaction already reads. Self-contained; a reasonable small slice.
 
 One rule holds across all of them, and it is what every blocker so far was
 found by: **check the reducer against its client for equivalence BEFORE
