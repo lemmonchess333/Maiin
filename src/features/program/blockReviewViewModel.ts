@@ -16,6 +16,9 @@
  *     usable review, never an error state or a guilt trip
  */
 
+import { epley1RMExact, estimate1RMRange } from "@/lib/analytics";
+import type { OneRepMaxRange } from "@/lib/analytics";
+
 import type { TrainingBlock } from "./trainingBlock";
 import { blockEndDate, blockWeekOf } from "./trainingBlock";
 
@@ -39,6 +42,19 @@ export interface AnchorProgress {
   endBestKg: number | null;
   /** endBestKg - startBestKg when both halves have data. */
   deltaKg: number | null;
+  /**
+   * Estimated 1RM of the block's best set, as a RANGE (handoff 12).
+   *
+   * The load fields above answer "what is the heaviest bar you touched",
+   * which is a real fact and stays. It is NOT a strength readout: 100 kg × 1
+   * beats 95 kg × 10 on that measure, and the second is the stronger
+   * performance. These two carry the reps.
+   *
+   * `null` when the block's best set was above ~15 reps or unloaded — see
+   * `estimate1RMRange`, which declines rather than widening the band forever.
+   */
+  startE1rm: OneRepMaxRange | null;
+  endE1rm: OneRepMaxRange | null;
 }
 
 export interface BlockReview {
@@ -72,6 +88,35 @@ function bestSetKg(
     }
   }
   return best;
+}
+
+/**
+ * The set with the highest estimated 1RM — the block's best PERFORMANCE, as
+ * opposed to `bestSetKg`'s heaviest bar.
+ *
+ * Ranked on the unrounded point estimate rather than on the band, because
+ * bands overlap and overlapping bands have no order. The range is what gets
+ * DISPLAYED; the point estimate is what picks which set to display.
+ */
+function bestSetE1rm(
+  workouts: ReviewWorkoutDoc[],
+  exerciseId: string
+): OneRepMaxRange | null {
+  let bestScore = 0;
+  let best: { reps: number; weightKg: number } | null = null;
+  for (const w of workouts) {
+    for (const ex of w.exercises) {
+      if (ex.exerciseId !== exerciseId) continue;
+      for (const s of ex.sets) {
+        const score = epley1RMExact(s.weightKg, s.reps);
+        if (score > bestScore) {
+          bestScore = score;
+          best = s;
+        }
+      }
+    }
+  }
+  return best ? estimate1RMRange(best.weightKg, best.reps) : null;
 }
 
 function verdictFor(consistency: number, isEmpty: boolean): string {
@@ -139,6 +184,8 @@ export function buildBlockReview(
         startBestKg !== null && endBestKg !== null
           ? Math.round((endBestKg - startBestKg) * 10) / 10
           : null,
+      startE1rm: bestSetE1rm(firstHalf, anchorId),
+      endE1rm: bestSetE1rm(secondHalf, anchorId),
     });
   }
 

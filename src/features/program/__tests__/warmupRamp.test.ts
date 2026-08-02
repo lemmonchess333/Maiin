@@ -140,10 +140,10 @@ describe("toCompletionSetLogs", () => {
         [s("working", 40), s("failure", 40)],
       ])
     ).toEqual([
-      [{ weight: 100, reps: 5, completed: true }],
+      [{ weight: 100, reps: 5, completed: true, type: "working" }],
       [
-        { weight: 40, reps: 5, completed: true },
-        { weight: 40, reps: 5, completed: true },
+        { weight: 40, reps: 5, completed: true, type: "working" },
+        { weight: 40, reps: 5, completed: true, type: "failure" },
       ],
     ]);
   });
@@ -173,11 +173,34 @@ describe("toCompletionSetLogs", () => {
     expect(out[1][0].weight).toBe(60);
   });
 
-  it("drops the type field — it is not part of the command contract", () => {
-    const out = toCompletionSetLogs([[s("working", 60)]]);
+  /* ─── D2 · the type and RPE now SURVIVE this boundary ──────────
+     This test used to assert the opposite ("drops the type field —
+     it is not part of the command contract"), and it was right
+     about the contract: `validateSetLog` allowed no optional keys,
+     so a set log carrying `type` would have been rejected outright.
+     Widening the client without widening that validator would have
+     created exactly the drift D2 exists to remove, so both moved
+     together — `type` and `rpe` are now bounded optional keys on
+     the command. ── */
+  it("carries the set type and RPE through to the command payload", () => {
+    const out = toCompletionSetLogs([[{ ...s("working", 60), rpe: 8.5 }]]);
     expect(Object.keys(out[0][0]).sort()).toEqual([
       "completed",
       "reps",
+      "rpe",
+      "type",
+      "weight",
+    ]);
+  });
+
+  it("omits rpe entirely when the session never captured one", () => {
+    // Firestore rejects `undefined`, so an absent RPE must be an absent KEY.
+    const out = toCompletionSetLogs([[s("working", 60)]]);
+    expect("rpe" in out[0][0]).toBe(false);
+    expect(Object.keys(out[0][0]).sort()).toEqual([
+      "completed",
+      "reps",
+      "type",
       "weight",
     ]);
   });

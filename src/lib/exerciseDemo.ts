@@ -4,6 +4,7 @@
  */
 
 import { EXERCISES } from "@/lib/exercises";
+import { toFine, type FineMuscle } from "@/features/program/muscleTaxonomy";
 
 /**
  * Provenance of `images` (Demo1 lock) — it decides what the player may DO:
@@ -69,39 +70,95 @@ const MUSCLE_MAP: Record<string, string> = {
   abductors: "abductors",
 };
 
-// Mapping from local exercises.ts muscleGroup/secondaryMuscles names → free-exercise-db names
-// (which then get mapped through MUSCLE_MAP to highlighter IDs)
-const LOCAL_MUSCLE_MAP: Record<string, string[]> = {
-  pectorals: ["chest"],
-  "upper chest": ["chest", "shoulders"],
-  "lower chest": ["chest"],
-  triceps: ["triceps"],
-  biceps: ["biceps"],
-  "front delts": ["shoulders"],
-  "rear delts": ["shoulders"],
-  deltoids: ["shoulders"],
-  lats: ["lats"],
-  "upper back": ["middle back"],
-  "full back": ["lats", "lower back", "middle back"],
-  "lower back": ["lower back"],
-  traps: ["traps"],
-  quads: ["quadriceps"],
-  quadriceps: ["quadriceps"],
-  hamstrings: ["hamstrings"],
-  glutes: ["glutes"],
-  calves: ["calves"],
-  core: ["abdominals", "obliques"],
-  abs: ["abdominals"],
-  obliques: ["obliques"],
-  forearms: ["forearms"],
-  legs: ["quadriceps", "hamstrings", "glutes"],
-  "full body": ["chest", "lats", "quadriceps", "shoulders", "abdominals"],
-  shoulders: ["shoulders"],
-  "hip flexors": ["quadriceps", "abdominals"],
-  adductors: ["adductors"],
-  abductors: ["abductors"],
-  cardio: ["quadriceps", "hamstrings", "calves", "glutes"],
+/**
+ * Local muscle label → free-exercise-db muscle names (which `MUSCLE_MAP` then
+ * turns into react-body-highlighter IDs).
+ *
+ * ── Keyed off the TAXONOMY, not the raw label (11b) ──────────────────────
+ *
+ * This was a hand-maintained `Record<string, string[]>` over the raw
+ * `muscleGroup` / `secondaryMuscles` strings — the FOURTH table in the app
+ * mapping those labels to something, after `volumeModel`, the bank, and
+ * `STORED_CATEGORY`. It had drifted the way an unpinned table does: an
+ * unmapped label silently yields `[]`, so the exercise contributed NOTHING to
+ * the body diagram, and nothing anywhere reported it.
+ *
+ * Measured before the change: **12 exercises highlighted no primary muscle at
+ * all** — a lateral raise showing no shoulder (`side delts`), four chest
+ * machines (`chest`), four rows (`mid back`), a leg raise (`lower abs`) and a
+ * rack pull (`posterior chain`). Another 36 secondary attributions were
+ * dropped, including `rhomboids` on twelve rows and `chest` on nine pressing
+ * movements. Three keys were dead in the other direction (`upper back`,
+ * `quadriceps`, `abductors`) — no exercise has ever used them, which is how a
+ * table this wrong could look maintained.
+ *
+ * Keying on `FineMuscle` fixes the class rather than the instances: `toFine`
+ * already owns label normalisation and alias handling, and its coverage test
+ * fails on any DB label it does not know. So a new label can no longer reach
+ * here unrecognised — it fails the taxonomy test first.
+ */
+const FINE_TO_DEMO_MUSCLES: Record<FineMuscle, string[]> = {
+  UpperChest: ["chest", "shoulders"],
+  LowerChest: ["chest"],
+  ChestUnspecified: ["chest"],
+
+  Lats: ["lats"],
+  UpperBack: ["middle back"],
+  Traps: ["traps"],
+  LowerBack: ["lower back"],
+  BackUnspecified: ["lats", "lower back", "middle back"],
+
+  // The highlighter has `front-deltoids` / `back-deltoids`, but the
+  // free-exercise-db vocabulary this maps INTO has only `shoulders`, which
+  // `MUSCLE_MAP` resolves to `front-deltoids`. Splitting the diagram by head
+  // means teaching `MUSCLE_MAP` a rear-delt name, which is a body-diagram
+  // change rather than a label change — deliberately not bundled here.
+  FrontDelts: ["shoulders"],
+  SideDelts: ["shoulders"],
+  RearDelts: ["shoulders"],
+  RotatorCuff: ["shoulders"],
+  DeltsUnspecified: ["shoulders"],
+
+  Biceps: ["biceps"],
+  Triceps: ["triceps"],
+  Forearms: ["forearms"],
+
+  Quads: ["quadriceps"],
+  Hamstrings: ["hamstrings"],
+  PosteriorChainUnspecified: ["hamstrings", "glutes", "lower back"],
+  Glutes: ["glutes"],
+  Adductors: ["adductors"],
+  Gastrocnemius: ["calves"],
+  Soleus: ["calves"],
+  HipFlexors: ["quadriceps", "abdominals"],
+
+  Abs: ["abdominals"],
+  Obliques: ["obliques"],
+  CoreUnspecified: ["abdominals", "obliques"],
 };
+
+/**
+ * Labels that name a REGION rather than a muscle, so the taxonomy resolves
+ * them to `null` (they earn no resistance volume). A body diagram still wants
+ * to shade something for them, so they keep their own coarse mapping.
+ *
+ * `arms` is new: it was missing before, so `battle-ropes` dropped its only
+ * secondary attribution.
+ */
+const COARSE_LABEL_MUSCLES: Record<string, string[]> = {
+  cardio: ["quadriceps", "hamstrings", "calves", "glutes"],
+  "full body": ["chest", "lats", "quadriceps", "shoulders", "abdominals"],
+  legs: ["quadriceps", "hamstrings", "glutes"],
+  arms: ["biceps", "triceps", "forearms"],
+};
+
+/** free-exercise-db muscle names for one local label; `[]` when the label
+ *  names nothing the diagram can shade. */
+export function demoMusclesForLabel(label: string): string[] {
+  const fine = toFine(label);
+  if (fine) return FINE_TO_DEMO_MUSCLES[fine];
+  return COARSE_LABEL_MUSCLES[label.toLowerCase().trim()] ?? [];
+}
 
 // Valid muscle IDs accepted by react-body-highlighter
 const VALID_MUSCLES = new Set([
@@ -234,9 +291,7 @@ function buildLocalFallback(name: string): ExerciseDemo | null {
   );
   if (!match) return null;
 
-  // Map local muscleGroup name to free-exercise-db muscle names
-  const mapLocal = (label: string): string[] =>
-    LOCAL_MUSCLE_MAP[label.toLowerCase()] ?? [];
+  const mapLocal = demoMusclesForLabel;
 
   return {
     name: match.name,

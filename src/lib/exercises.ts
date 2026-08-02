@@ -110,6 +110,7 @@ export const EXERCISES: Exercise[] = [
     muscleGroup: "Pectorals",
     secondaryMuscles: ["Triceps", "Front Delts"],
     equipment: "Dumbbells",
+    lengthenedBias: true,
     caloriesPerMinute: 7,
     instructions: [
       "Sit on a flat bench with dumbbells resting on your thighs.",
@@ -131,6 +132,7 @@ export const EXERCISES: Exercise[] = [
     muscleGroup: "Upper Chest",
     secondaryMuscles: ["Triceps", "Front Delts"],
     equipment: "Dumbbells",
+    lengthenedBias: true,
     caloriesPerMinute: 7,
     instructions: [
       "Set the bench to 30° and sit with dumbbells on your thighs.",
@@ -425,6 +427,7 @@ export const EXERCISES: Exercise[] = [
     muscleGroup: "Mid Back",
     secondaryMuscles: ["Rhomboids", "Rear Delts", "Biceps"],
     equipment: "Dumbbells",
+    lengthenedBias: true,
     caloriesPerMinute: 6.5,
     instructions: [
       "Set an incline bench to 30-45° and lie face down, dumbbells hanging below.",
@@ -498,6 +501,7 @@ export const EXERCISES: Exercise[] = [
     muscleGroup: "Lats",
     secondaryMuscles: ["Biceps", "Rear Delts"],
     equipment: "Cable Machine",
+    lengthenedBias: true,
     caloriesPerMinute: 6,
     instructions: [
       "Sit with thighs pinned under the pad, grip the bar slightly wider than shoulders.",
@@ -519,6 +523,7 @@ export const EXERCISES: Exercise[] = [
     muscleGroup: "Lats",
     secondaryMuscles: ["Biceps", "Rear Delts"],
     equipment: "Cable Machine",
+    lengthenedBias: true,
     caloriesPerMinute: 6,
     instructions: [
       "Attach a single handle to a high pulley and sit or kneel facing it.",
@@ -535,6 +540,7 @@ export const EXERCISES: Exercise[] = [
     muscleGroup: "Mid Back",
     secondaryMuscles: ["Rhomboids", "Biceps", "Rear Delts"],
     equipment: "Cable Machine",
+    lengthenedBias: true,
     caloriesPerMinute: 6,
     instructions: [
       "Sit with feet braced, knees softly bent, torso upright.",
@@ -1047,6 +1053,7 @@ export const EXERCISES: Exercise[] = [
     muscleGroup: "Biceps",
     secondaryMuscles: ["Forearms"],
     equipment: "Cable Machine",
+    lengthenedBias: true,
     caloriesPerMinute: 4.5,
     instructions: [
       "Stand facing a low cable pulley, grip the bar with an underhand grip at shoulder-width.",
@@ -1146,6 +1153,7 @@ export const EXERCISES: Exercise[] = [
     muscleGroup: "Triceps",
     secondaryMuscles: ["Chest", "Front Delts"],
     equipment: "Barbell",
+    lengthenedBias: true,
     caloriesPerMinute: 5.5,
     instructions: [
       "Lie flat with the bar pressed up over your chest, narrow overhand grip.",
@@ -1162,6 +1170,7 @@ export const EXERCISES: Exercise[] = [
     muscleGroup: "Triceps",
     secondaryMuscles: ["Shoulders"],
     equipment: "Dumbbells",
+    lengthenedBias: true,
     caloriesPerMinute: 5,
     instructions: [
       "Stand or sit, hold one dumbbell with both hands straight overhead.",
@@ -1417,6 +1426,7 @@ export const EXERCISES: Exercise[] = [
     muscleGroup: "Quads",
     secondaryMuscles: ["Glutes"],
     equipment: "Machine",
+    lengthenedBias: true,
     caloriesPerMinute: 8,
     instructions: [
       "Set your back flat against the pad, shoulders under the pads, feet mid-platform.",
@@ -1475,6 +1485,7 @@ export const EXERCISES: Exercise[] = [
     muscleGroup: "Hamstrings",
     secondaryMuscles: ["Calves"],
     equipment: "Machine",
+    lengthenedBias: true,
     caloriesPerMinute: 5,
     instructions: [
       "Sit with the thigh pad pinning your legs and the ankle pad on your lower calves.",
@@ -1491,6 +1502,7 @@ export const EXERCISES: Exercise[] = [
     muscleGroup: "Hamstrings",
     secondaryMuscles: ["Glutes", "Lower Back"],
     equipment: "Barbell",
+    lengthenedBias: true,
     caloriesPerMinute: 8,
     instructions: [
       "Start standing, bar at your hips, feet hip-width, soft knees locked.",
@@ -1512,6 +1524,7 @@ export const EXERCISES: Exercise[] = [
     muscleGroup: "Hamstrings",
     secondaryMuscles: ["Glutes", "Lower Back"],
     equipment: "Dumbbells",
+    lengthenedBias: true,
     caloriesPerMinute: 7,
     instructions: [
       "Stand with dumbbells at your thighs, feet hip-width, soft knees.",
@@ -1528,6 +1541,7 @@ export const EXERCISES: Exercise[] = [
     muscleGroup: "Hamstrings",
     secondaryMuscles: ["Calves"],
     equipment: "Bodyweight",
+    lengthenedBias: true,
     caloriesPerMinute: 7,
     instructions: [
       "Kneel on a pad with a partner or strap anchoring your ankles firmly.",
@@ -1664,6 +1678,7 @@ export const EXERCISES: Exercise[] = [
     muscleGroup: "Quads",
     secondaryMuscles: ["Glutes", "Hamstrings"],
     equipment: "Dumbbells",
+    lengthenedBias: true,
     caloriesPerMinute: 7.5,
     instructions: [
       "Stand about two feet in front of a bench, back foot laces-down on the bench.",

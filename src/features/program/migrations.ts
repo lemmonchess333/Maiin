@@ -212,7 +212,26 @@ export function migrateProgramState(
   const versionChanged =
     state.programSchemaVersion !== CURRENT_PROGRAM_SCHEMA_VERSION;
 
-  if (!runDaysChanged && !workoutsChanged && !versionChanged) {
+  // D1: seed the lift-week anchor to the CURRENT week, never to the epoch.
+  //
+  // Every document written before D1 lacks `liftWeekKey`, and the rollover
+  // treats "anchor older than this week" as stale. If absent read as
+  // infinitely stale, the first app-open after this ships would roll a
+  // returning user forward by the full iteration cap — twelve weeks, three
+  // deloads, three mesocycle rotations — as an artefact of the migration
+  // rather than anything they did. Seeding to today means the anchor starts
+  // correct and the very next real calendar week is the first rollover.
+  //
+  // Deliberately does NOT re-seed an anchor that already exists: that would
+  // silently cancel a genuine multi-week absence.
+  const liftWeekKeyChanged = state.liftWeekKey === undefined;
+
+  if (
+    !runDaysChanged &&
+    !workoutsChanged &&
+    !versionChanged &&
+    !liftWeekKeyChanged
+  ) {
     return state;
   }
 
@@ -220,6 +239,7 @@ export function migrateProgramState(
     ...state,
     runDays: migratedRunDays,
     ...(workoutsChanged ? { workouts: migratedWorkouts } : {}),
+    ...(liftWeekKeyChanged ? { liftWeekKey: normalizedWeekStart } : {}),
     programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
   };
 }

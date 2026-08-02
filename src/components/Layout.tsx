@@ -13,6 +13,7 @@ import {
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
 import { getQueueLength } from "@/lib/offlineQueue";
+import { outboxLength } from "@/features/program/commandOutbox";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
@@ -30,7 +31,12 @@ function useQueueCount(isOnline: boolean): number {
     [isOnline]
   );
   const getSnapshot = useCallback(
-    () => (isOnline ? 0 : getQueueLength()),
+    // Two queues, one count. `offlineQueue` holds Firestore writes;
+    // `commandOutbox` holds programme COMMANDS, which cannot ride the same
+    // queue because they are callable invocations rather than `setDoc` calls
+    // (P6). A user whose deload is waiting to sync should see the same pending
+    // state as one whose meal is — the distinction is ours, not theirs.
+    () => (isOnline ? 0 : getQueueLength() + outboxLength()),
     [isOnline]
   );
   return useSyncExternalStore(subscribe, getSnapshot);
