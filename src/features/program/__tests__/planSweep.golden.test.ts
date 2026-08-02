@@ -166,19 +166,40 @@ describe("plan generation — golden sweep", () => {
    §2.4, which measured these but which I had not re-run myself — building
    this fixture is what verifies them. ── */
 describe("KNOWN_DEFECTS — asserted so the snapshot is not read as approval", () => {
-  it("D-VOL: the generator violates its own landmark bands, in BOTH directions", () => {
-    // volumeModel's `overshootsCeiling` only vetoes ADDS; volumeModel.ts's own
-    // comment concedes "the builders are not policed by this". So the tally it
-    // publishes disagrees with the bands it publishes, in the same week.
-    const offenders = SWEEP.filter((s) =>
-      Object.values(s.volume).some((v) => v.includes("HIGH"))
-    );
-    expect(offenders.length).toBeGreaterThan(0);
+  /* D-VOL — STILL OPEN, and the largest remaining defect in the generator.
+     `overshootsCeiling` only vetoes ADDS, and volumeModel.ts's own comment
+     concedes "the builders are not policed by this" — so the tally the model
+     publishes disagrees with the bands the model publishes, in the same week.
 
-    const underfed = SWEEP.filter((s) =>
+     P1 moved it without closing it. Per-muscle readings went 196 → 180 over
+     ceiling (the attribution fix) and 270 → 263 under floor (the accessory
+     fix); by CONFIGURATION it now stands at 53 of 90 over and 60 of 90 under.
+     Back still reads HIGH in 45 configurations and Glutes LOW in 40, because
+     the day BUILDERS hard-code their slot counts and nothing reconciles them
+     against the landmarks afterwards.
+
+     Closing it means making the builders landmark-aware, which changes every
+     generated programme and produces a large snapshot diff — P2/P3-sized, not
+     a P1 repair. Left as a RATCHET instead: the bounds below are the current
+     actuals, so the numbers can only go down. Tighten them whenever they
+     improve; the test fails the moment a change makes it worse. */
+  it("D-VOL: landmark violations are ratcheted and must only shrink", () => {
+    const high = SWEEP.filter((s) =>
+      Object.values(s.volume).some((v) => v.includes("HIGH"))
+    ).length;
+    const low = SWEEP.filter((s) =>
       Object.values(s.volume).some((v) => v.includes("LOW"))
+    ).length;
+
+    expect(high, `${high} configs over a landmark ceiling`).toBeLessThanOrEqual(
+      53
     );
-    expect(underfed.length).toBeGreaterThan(0);
+    expect(low, `${low} configs under a landmark floor`).toBeLessThanOrEqual(
+      60
+    );
+
+    // …and it is genuinely not solved, so the ratchet is never read as a pass.
+    expect(high + low).toBeGreaterThan(0);
   });
 
   /* D-ACC — REPAIRED. Was: `buildFullBody` passed the isAccessory flag but
