@@ -78,6 +78,52 @@ describe("getSubscriptionInfo", () => {
     expect(info.isInTrial).toBe(false);
   });
 
+  /**
+   * The backlog listed a manual client roundtrip here, on the stated worry
+   * that "`Date.parse` of the stored string is locale-sensitive".
+   *
+   * It is not, for the only format ever written. `Date.parse` is
+   * implementation-defined for arbitrary strings, but ECMA-262 mandates
+   * deterministic parsing of the ISO 8601 format — and the sole writer of
+   * this field is `functions/applePurchase.js`, which stores
+   * `expiresAt.toISOString()`. A UTC-offset ISO string denotes one absolute
+   * instant regardless of the reader's timezone or locale.
+   *
+   * So these pin the contract rather than defer to a device: the format the
+   * server writes, and the verdict's independence from the reader's clock
+   * zone. If a future writer stores something non-ISO, the first test fails
+   * and the concern becomes real again.
+   */
+  it("the stored format is ISO 8601 with a UTC designator", () => {
+    // Mirrors what applePurchase.js writes. If this shape changes, the
+    // locale-independence argument below no longer holds.
+    const written = new Date(Date.UTC(2026, 7, 2, 21, 0, 0)).toISOString();
+    expect(written).toBe("2026-08-02T21:00:00.000Z");
+    expect(Date.parse(written)).toBe(Date.UTC(2026, 7, 2, 21, 0, 0));
+  });
+
+  it("an elapsed expiry reads as free from any timezone", () => {
+    // The actual worry, tested directly: same stored string, readers whose
+    // local offset spans a full day either side of UTC.
+    const past = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const original = process.env.TZ;
+    try {
+      for (const tz of ["UTC", "Pacific/Kiritimati", "Pacific/Midway"]) {
+        process.env.TZ = tz;
+        const info = getSubscriptionInfo(
+          makeProfile({
+            subscriptionTier: "pro",
+            subscriptionSource: "ios_iap",
+            subscriptionExpiresAt: past,
+          })
+        );
+        expect(info.isPro, `expired should read free in ${tz}`).toBe(false);
+      }
+    } finally {
+      process.env.TZ = original;
+    }
+  });
+
   it("treats subscriptionTier=pro with an elapsed expiresAt as free (dropped-webhook defence)", () => {
     // Apple's EXPIRED notification or a Stripe webhook can be lost
     // — without the client-side expiry check, the user would remain
