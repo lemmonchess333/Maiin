@@ -5,8 +5,8 @@
  * The provider component lives in `BackDismissProvider.tsx` (split out so this
  * file exports only non-components — react-refresh rule). Overlays call
  * `useBackDismiss`; the provider's native backButton listener (Android) calls
- * `dispatchBack`. See the provider + `scratchpad/spec-back-dismiss.md` for the
- * platform scope (native now, web popstate as a fast-follow).
+ * `dispatchBack`. The provider's header carries the platform scope (native now,
+ * web popstate as a fast-follow).
  */
 import { createContext, useContext, useEffect, useRef } from "react";
 
