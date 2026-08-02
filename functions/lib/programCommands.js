@@ -680,7 +680,7 @@ function makeCommandReceipt({ command, now }) {
 // MIRRORS. The run-day transition table + status helpers below mirror the
 // client (`programTypes.ts` LEGAL_TRANSITIONS / `scheduledRunStatus.ts`). They
 // are pinned in lockstep by a parity test
-// (src/features/program/__tests__/programReducerParity.test.ts) that imports
+// (src/features/program/__tests__/programCommands.cross.test.ts) that imports
 // both copies and asserts they agree — the sanctioned mitigation for the
 // tested-copy-vs-running-copy rule.
 
