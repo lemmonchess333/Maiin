@@ -60,7 +60,7 @@ interface BadgeSummary {
   count: number;
 }
 
-// Mirror of the toIsoString helper in src/features/streaks/useStreaks.ts.
+// Mirror of the toIsoString helper in src/features/streaks/useStreaks.tsx.
 // Kept inline since this script runs outside the src/ module graph. If the
 // runtime shape of EarnedBadge.earnedAt ever broadens, keep the two in sync.
 function toIsoString(value: unknown): string {
@@ -73,9 +73,7 @@ function toIsoString(value: unknown): string {
   return new Date().toISOString();
 }
 
-function computeBadgeSummary(
-  badges: unknown,
-): BadgeSummary | undefined {
+function computeBadgeSummary(badges: unknown): BadgeSummary | undefined {
   if (!Array.isArray(badges) || badges.length === 0) return undefined;
   const earnedMap: Record<string, string> = {};
   for (const b of badges) {
@@ -93,7 +91,7 @@ function computeBadgeSummary(
 
 function badgeSummariesEqual(
   a: BadgeSummary | undefined,
-  b: BadgeSummary | undefined,
+  b: BadgeSummary | undefined
 ): boolean {
   if (!a && !b) return true;
   if (!a || !b) return false;
@@ -105,7 +103,7 @@ function badgeSummariesEqual(
 }
 
 async function backfillOne(
-  uid: string,
+  uid: string
 ): Promise<
   | { status: "mirrored"; currentStreak: number; longestStreak: number }
   | { status: "skipped-no-streaks-doc" }
@@ -131,38 +129,52 @@ async function backfillOne(
       const streaksData = streaksSnap.data() ?? {};
       // Number.isFinite (not typeof === "number") because NaN passes the
       // typeof check but would re-poison the mirror on the next write.
-      const currentStreak =
-        Number.isFinite(streaksData.currentStreak) ? (streaksData.currentStreak as number) : 0;
-      const longestStreak =
-        Number.isFinite(streaksData.longestStreak) ? (streaksData.longestStreak as number) : 0;
+      const currentStreak = Number.isFinite(streaksData.currentStreak)
+        ? (streaksData.currentStreak as number)
+        : 0;
+      const longestStreak = Number.isFinite(streaksData.longestStreak)
+        ? (streaksData.longestStreak as number)
+        : 0;
       const computedBadgeSummary = computeBadgeSummary(streaksData.badges);
 
-      const userData = userSnap.exists ? userSnap.data() ?? {} : {};
-      const userCurrent =
-        Number.isFinite(userData.currentStreak) ? (userData.currentStreak as number) : null;
-      const userLongest =
-        Number.isFinite(userData.longestStreak) ? (userData.longestStreak as number) : null;
+      const userData = userSnap.exists ? (userSnap.data() ?? {}) : {};
+      const userCurrent = Number.isFinite(userData.currentStreak)
+        ? (userData.currentStreak as number)
+        : null;
+      const userLongest = Number.isFinite(userData.longestStreak)
+        ? (userData.longestStreak as number)
+        : null;
 
       // Public-doc projection. Falls back to user-doc values for the
       // non-streak fields since users/{uid} is where displayName etc. live.
-      const displayName = typeof userData.displayName === "string" ? userData.displayName : null;
-      const photoURL = typeof userData.photoURL === "string" ? userData.photoURL : null;
+      const displayName =
+        typeof userData.displayName === "string" ? userData.displayName : null;
+      const photoURL =
+        typeof userData.photoURL === "string" ? userData.photoURL : null;
       const athleteType =
-        typeof userData.athleteType === "string" ? userData.athleteType : "Lifter";
+        typeof userData.athleteType === "string"
+          ? userData.athleteType
+          : "Lifter";
       const createdAt =
         userData.createdAt ?? admin.firestore.FieldValue.serverTimestamp();
 
-      const publicData = publicSnap.exists ? publicSnap.data() ?? {} : {};
-      const publicCurrent =
-        Number.isFinite(publicData.currentStreak) ? (publicData.currentStreak as number) : null;
-      const publicLongest =
-        Number.isFinite(publicData.longestStreak) ? (publicData.longestStreak as number) : null;
+      const publicData = publicSnap.exists ? (publicSnap.data() ?? {}) : {};
+      const publicCurrent = Number.isFinite(publicData.currentStreak)
+        ? (publicData.currentStreak as number)
+        : null;
+      const publicLongest = Number.isFinite(publicData.longestStreak)
+        ? (publicData.longestStreak as number)
+        : null;
       const publicDisplayName =
-        publicData.displayName === undefined ? "__missing__" : publicData.displayName;
+        publicData.displayName === undefined
+          ? "__missing__"
+          : publicData.displayName;
       const publicPhotoURL =
         publicData.photoURL === undefined ? "__missing__" : publicData.photoURL;
       const publicAthleteType =
-        typeof publicData.athleteType === "string" ? publicData.athleteType : null;
+        typeof publicData.athleteType === "string"
+          ? publicData.athleteType
+          : null;
       const publicBadgeSummary =
         publicData.badgeSummary && typeof publicData.badgeSummary === "object"
           ? (publicData.badgeSummary as BadgeSummary)
@@ -206,7 +218,7 @@ async function backfillOne(
                 : {}),
             ...(publicSnap.exists ? {} : { createdAt }),
           },
-          { merge: true },
+          { merge: true }
         );
       }
 
@@ -256,21 +268,25 @@ async function main() {
         case "mirrored":
           summary.mirrored++;
           console.log(
-            `[${processed}/${total}] uid=${uid} mirrored currentStreak=${result.currentStreak} longestStreak=${result.longestStreak}`,
+            `[${processed}/${total}] uid=${uid} mirrored currentStreak=${result.currentStreak} longestStreak=${result.longestStreak}`
           );
           break;
         case "skipped-no-streaks-doc":
           summary.skippedNoStreaksDoc++;
-          console.log(`[${processed}/${total}] uid=${uid} skipped (no streaks/data doc)`);
+          console.log(
+            `[${processed}/${total}] uid=${uid} skipped (no streaks/data doc)`
+          );
           break;
         case "skipped-in-sync":
           summary.skippedAlreadyInSync++;
-          console.log(`[${processed}/${total}] uid=${uid} skipped (already in sync)`);
+          console.log(
+            `[${processed}/${total}] uid=${uid} skipped (already in sync)`
+          );
           break;
         case "error":
           summary.errors++;
           console.error(
-            `[${processed}/${total}] uid=${uid} error: ${result.reason}`,
+            `[${processed}/${total}] uid=${uid} error: ${result.reason}`
           );
           break;
       }
@@ -282,7 +298,7 @@ async function main() {
 
   console.log("");
   console.log(
-    `Backfill complete. Mirrored: ${summary.mirrored}. Skipped: ${summary.skippedNoStreaksDoc + summary.skippedAlreadyInSync} (${summary.skippedNoStreaksDoc} no streaks/data, ${summary.skippedAlreadyInSync} in sync). Errors: ${summary.errors}.`,
+    `Backfill complete. Mirrored: ${summary.mirrored}. Skipped: ${summary.skippedNoStreaksDoc + summary.skippedAlreadyInSync} (${summary.skippedNoStreaksDoc} no streaks/data, ${summary.skippedAlreadyInSync} in sync). Errors: ${summary.errors}.`
   );
 }
 
