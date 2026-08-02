@@ -202,15 +202,15 @@ export default function DayActionSheet({
     return sessionPaceDisplay(
       resolveSessionPaces(selectedRunTemplate.type, table, {
         raceDistanceKey: raceDistanceKeyFromKm(
-          selectedRunTemplate.config.targetDistance
+          selectedRunTemplate.config.targetDistanceKm
         ),
       })
     );
   })();
   const selectedRunMeta = selectedRunTemplate
     ? [
-        selectedRunTemplate.config.targetDistance
-          ? `${selectedRunTemplate.config.targetDistance}km`
+        selectedRunTemplate.config.targetDistanceKm
+          ? `${selectedRunTemplate.config.targetDistanceKm}km`
           : `${selectedRunTemplate.estimatedDuration} min`,
         ...(selectedRunPace ? [selectedRunPace] : []),
       ].join(" · ")
