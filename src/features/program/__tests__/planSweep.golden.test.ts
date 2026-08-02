@@ -182,7 +182,15 @@ describe("KNOWN_DEFECTS — asserted so the snapshot is not read as approval", (
      generated programme and produces a large snapshot diff — P2/P3-sized, not
      a P1 repair. Left as a RATCHET instead: the bounds below are the current
      actuals, so the numbers can only go down. Tighten them whenever they
-     improve; the test fails the moment a change makes it worse. */
+     improve; the test fails the moment a change makes it worse.
+
+     These bounds are denominated in the CURRENT volume currency (indirect sets
+     at 0.5). ADR-0010 settles that the literature's 1:1 is correct and stages
+     the flip to land with the landmark-aware builders — measured here: 1:1
+     alone takes per-muscle readings over a ceiling from 180/825 to 364/825
+     while under-floor goes 263 -> 147. When the flip lands, RE-BASELINE these
+     two bounds in the same commit. A re-baseline is not a ratchet regression;
+     the numbers are in a different unit. */
   it("D-VOL: landmark violations are ratcheted and must only shrink", () => {
     const high = SWEEP.filter((s) =>
       Object.values(s.volume).some((v) => v.includes("HIGH"))

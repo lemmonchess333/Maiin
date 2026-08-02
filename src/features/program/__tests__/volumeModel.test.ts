@@ -4,6 +4,7 @@ import {
   volumeLandmark,
   classifyVolume,
   classifyVolumeDose,
+  SECONDARY_SET_WEIGHT,
   balanceWeeklyVolume,
   balancePushPull,
   toCanonical,
@@ -369,6 +370,32 @@ describe("volumeLandmark + classifyVolume", () => {
    Nothing consumes the four-band ladder for a prescription yet. What it must
    not do is move the three-band view underneath the surfaces that DO read it,
    which is what the fold-back assertions below are for. ── */
+describe("volume currency (13a, ADR-0010)", () => {
+  it("the constant is the thing that actually runs, not documentation", () => {
+    // A named constant nothing reads is worse than a literal: it reads as a
+    // seam that exists. bench-press is Pectorals primary + Triceps and Front
+    // Delts secondary, so one set books exactly one SECONDARY_SET_WEIGHT of
+    // triceps — if the tally still had 0.5 hard-coded, this would not track.
+    const v = weeklyVolumeByMuscle([
+      day([ex({ exerciseId: "bench-press", sets: 4 })]),
+    ]);
+    expect(v.find((x) => x.muscle === "Triceps")?.sets).toBe(
+      4 * SECONDARY_SET_WEIGHT
+    );
+    expect(v.find((x) => x.muscle === "Chest")?.sets).toBe(4); // primary is always 1.0
+  });
+
+  it("is still 0.5 — the flip is staged, and staged on a condition", () => {
+    // ADR-0010: 1:1 is the correct currency and the bands assume it, but
+    // flipping before the day builders consult the landmarks doubles the
+    // per-muscle readings over a ceiling (180/825 -> 364/825 across the
+    // 90-config sweep). When the builders become landmark-aware, flip this AND
+    // re-baseline D-VOL's ratchet in planSweep.golden.test.ts in the same
+    // commit — those bounds are denominated in this currency.
+    expect(SECONDARY_SET_WEIGHT).toBe(0.5);
+  });
+});
+
 describe("maintenance volume (13a)", () => {
   it("MV sits at 0.40–0.50 of MEV, the only ratio the sources support", () => {
     // Two worked pairs in the corpus, no table: back MEV 10 / MV 4 (Ch7 P155)

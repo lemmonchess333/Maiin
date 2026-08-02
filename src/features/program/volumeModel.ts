@@ -9,9 +9,18 @@
  *
  * Counting convention (fractional/indirect volume, the MASS/RP standard):
  *   - a set counts 1.0 toward the exercise's PRIMARY muscle group
- *   - and 0.5 toward each SECONDARY group it trains
+ *   - and `SECONDARY_SET_WEIGHT` toward each SECONDARY group it trains
  * Exercises with no muscle attribution (Cardio / "Full Body" conditioning, or
  * too-coarse labels) are excluded — this is a *resistance* volume view.
+ *
+ * That convention DISAGREES with the bands it is judged against: the goal bands
+ * came from meta-analyses that counted 1:1. `docs/adr/0010-volume-currency.md`
+ * settles the currency in favour of 1:1 and records why the flip is staged to
+ * land with landmark-aware builders rather than before them — measured, not
+ * assumed: flipping alone doubles the per-muscle readings over a ceiling.
+ *
+ * The muscle taxonomy itself lives in `muscleTaxonomy.ts` (13a): attribution
+ * runs on a 27-member fine layer and these ten groups are a roll-up of it.
  *
  * It both SURFACES the tally (WeeklyVolumeCard) and DRIVES selection:
  * `balanceWeeklyVolume` nudges under-dosed muscles toward the landmark low by
@@ -106,6 +115,17 @@ export interface FineMuscleVolume {
 }
 
 /**
+ * What one set of an exercise contributes to a muscle it trains INDIRECTLY —
+ * a secondary rather than the target. See `docs/adr/0010-volume-currency.md`
+ * for why this is 0.5 today, why the literature's convention is 1.0, and the
+ * measurement that decided to stage the change rather than take it here.
+ *
+ * The primary is always 1.0; there is no constant for it because a convention
+ * in which the target muscle earns anything else does not exist.
+ */
+export const SECONDARY_SET_WEIGHT = 0.5;
+
+/**
  * The one attribution pass, unrounded. Both public views are derived from it,
  * so they cannot disagree about what a week contains — and each applies its own
  * rounding at its own level (see `weeklyVolumeByMuscle`).
@@ -142,7 +162,7 @@ function fineTally(workouts: WorkoutDay[]): Map<FineMuscle, number> {
         // underlying `muscleGroup: "Full Body"` labels is exercise-DB work
         // (handoff 11b), not this.
         for (const sec of dbEx.secondaryMuscles ?? []) {
-          add(toFine(sec), sets * 0.5);
+          add(toFine(sec), sets * SECONDARY_SET_WEIGHT);
         }
       } else {
         // Custom exercise not in the DB — attribute by movement category.
