@@ -836,17 +836,53 @@ Affects: `functions/index.js`, `src/pages/RunSummary.tsx`. Eight verified bugs i
 - [ ] On a BST day, `weeklyPerformanceRollup` and `dailyPerformanceRefresh` log timestamps confirm the timezone fix landed (23:15 UTC and 02:10 UTC respectively — was 22:15 / 01:10 pre-fix due to Europe/London)
 - [ ] On a real workout save, `onWorkoutCreated` logs include challenge-progress increments (pre-fix this silently TypeErrored on `participantSnap.exists()` and was swallowed)
 
-### Public profile uid binding (PR #818)
+### Public profile uid binding (PR #818) — AUTOMATED 2026-08-02
 
-Affects: `firestore.rules` lines ~200-215.
+Affects: `firestore.rules` (the `users/{uid}/public/{doc}` block).
 
-- [ ] From the client SDK, attempt `setDoc(doc(db, 'users/<me>/public/profile'), { uid: '<other-uid>', displayName: 'Victim' }, { merge: true })` — must be rejected with `permission-denied`. Same write WITHOUT the `uid` field (or with `uid: '<me>'`) should still succeed.
+This was listed as a manual "from the client SDK, attempt…" check. It is a
+rules test, and the Firestore emulator runs in the agent sandbox — so it is
+now eight of them in `firestore.profile.rules.test.ts`, run by
+`npm run test:rules`.
 
-### Subscription expiresAt client-side guard (PR #818)
+The gap was real, not theoretical: the rule carries a detailed comment about
+the impersonation it prevents, and **nothing executed it**. The only tests
+touching `public/profile` asserted that a badgeSummary write SUCCEEDS. A
+security rule no test exercises is a comment.
 
-Affects: `src/lib/subscription.ts`.
+Mutation-checked — deleting the uid identity gate from `firestore.rules`
+fails the new test.
 
-- [ ] Manually set `subscriptionTier: "pro"` + `subscriptionExpiresAt: <past ISO>` on a test user's doc. Open the app — `useSubscription().isPro` should return `false`. Tests pin this but want a real client roundtrip too because `Date.parse` of the stored string is locale-sensitive.
+- [x] Body `uid` naming another user is refused; owner's own uid and
+      field-absent both accepted (the paired positives keep the rejection
+      from passing for the wrong reason).
+- [x] Another user writing your public profile is refused outright.
+- [x] The other two value gates on the same document, previously untested:
+      `trainingForSpaceId` closed vocabulary, and `hasOnly` so the
+      cross-user-readable projection cannot silently grow a field.
+
+### Subscription expiresAt client-side guard (PR #818) — CLOSED 2026-08-02
+
+The row asked for a real client roundtrip "because `Date.parse` of the stored
+string is locale-sensitive". **It is not, for the only format ever written.**
+`Date.parse` is implementation-defined for arbitrary strings, but ECMA-262
+mandates deterministic parsing of ISO 8601 — and the sole writer of this field
+is `functions/applePurchase.js`, which stores `expiresAt.toISOString()`. A
+UTC-designated ISO string denotes one absolute instant regardless of the
+reader's zone.
+
+Two tests in `subscription.test.ts` now pin the contract instead: the format
+the server writes, and the verdict's independence from the reader's timezone
+(checked across a full day of offset either side of UTC). If a future writer
+stores something non-ISO, the format test fails and the concern becomes real
+again.
+
+Third instance this session of a runbook hazard that did not survive contact
+with the code — see the `askGeminiText` prune and the
+`STORAGE_XSERVICE_APPROVED` dispatch note. The pattern is worth naming: a
+plausible-sounding risk gets written into the backlog, nobody checks it
+against the thing that would have to exhibit it, and it keeps work manual for
+months.
 
 ### Offline + share queue uid scoping (PR #820)
 
