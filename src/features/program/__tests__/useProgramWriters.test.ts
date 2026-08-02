@@ -2106,3 +2106,123 @@ describe("RUN-RESCHEDULE-01 — moveRunDay", () => {
     expect(setDocCalls().length).toBe(0);
   });
 });
+
+/* ─── D1 · the lift week rolls over on the calendar ─────────────────────
+   The defect these pin: the auto-rollover keyed on `runDays[0].weekKey` and
+   returned early for freeform users, so a pure lifter had no automatic
+   rollover at all. Their only other path was a manual button gated on EVERY
+   day being completed-or-skipped — so missing one Friday and never tapping
+   "skip" froze the programme on week N permanently. No deload, no adjustment
+   rule, no mesocycle rotation, forever.
+
+   Deliberately driven through the real hook rather than `advanceWeek`
+   directly: `advanceWeek` was never broken. The bug was that nothing called
+   it, which is exactly the class of failure ADR-0008 exists for
+   ("reachability over prose"). A unit test of the engine passes on the
+   broken build. ── */
+describe("auto week-rollover for a freeform lifter (D1)", () => {
+  /** A lifter: no run mode, no runDays, one incomplete day — the state that
+   *  used to freeze forever. */
+  function frozenLifter(liftWeekKey: string | undefined): ProgramState {
+    return {
+      goal: "recomp",
+      currentPhase: "progression",
+      weekNumber: 3,
+      splitType: "upper_lower",
+      fatigueScore: 0,
+      updatedAt: 0,
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      ...(liftWeekKey ? { liftWeekKey } : {}),
+      workouts: [
+        {
+          dayName: "Upper",
+          dayType: "push",
+          completed: true,
+          exercises: [],
+        },
+        // Never completed, never skipped — the whole point.
+        {
+          dayName: "Lower",
+          dayType: "legs",
+          completed: false,
+          exercises: [],
+        },
+      ],
+    } as unknown as ProgramState;
+  }
+
+  const lifterProfile = (): MockProfile => ({
+    uid: "test-user-1",
+    weekSchedule: generateSchedule(4, 0),
+    weekScheduleVersion: 1,
+    weeklyWorkoutsTarget: 4,
+    weeklyRunDaysTarget: 0,
+    primaryGoal: "hypertrophy",
+    // No runMode at all — the modal pure lifter.
+  });
+
+  /** Three calendar weeks behind. */
+  const staleKey = () =>
+    localWeekKey(addLocalDays(parseLocalDate(localWeekKey()), -21));
+
+  it("advances a stale lifter even with a day left incomplete", async () => {
+    mockProfile = lifterProfile();
+    resetFirestore();
+    seedProgram(frozenLifter(staleKey()));
+
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+
+    await waitFor(
+      () => {
+        const writes = setDocCalls();
+        const last = writes[writes.length - 1]?.data as ProgramState;
+        expect(last?.liftWeekKey).toBe(localWeekKey());
+      },
+      { timeout: 2000 }
+    );
+
+    const last = setDocCalls()[setDocCalls().length - 1].data as ProgramState;
+    // Three weeks stale → three rollovers, 3 → 6.
+    expect(last.weekNumber).toBe(6);
+    // …and the unattended day is archived rather than silently marked done.
+    expect(last.weekHistory?.length).toBeGreaterThan(0);
+  });
+
+  it("does nothing when the anchor is already the current week", async () => {
+    mockProfile = lifterProfile();
+    resetFirestore();
+    seedProgram(frozenLifter(localWeekKey()));
+
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    markWrites();
+    await new Promise((r) => setTimeout(r, 50));
+
+    // Anchored on a positive first (loading flipped above), then asserting no
+    // FURTHER writes — a bare "expect nothing" would be satisfied at t=0.
+    expect(setDocCalls().filter((_, i) => i >= writeMark).length).toBe(0);
+  });
+
+  it("does nothing for a pre-D1 doc with no anchor (migration seeds it first)", async () => {
+    // Absent must never read as "stale since the epoch" — that would roll a
+    // returning user forward by the whole iteration cap on first open.
+    mockProfile = lifterProfile();
+    resetFirestore();
+    seedProgram(frozenLifter(undefined));
+
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+
+    const writes = setDocCalls();
+    const last = writes[writes.length - 1]?.data as ProgramState | undefined;
+    // The migration seeds today; the rollover then finds nothing to do.
+    expect(last?.weekNumber ?? 3).toBe(3);
+  });
+});

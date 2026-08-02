@@ -2120,7 +2120,19 @@ function applyAdjustment(
 export function advanceWeek(
   state: ProgramState,
   experience?: Experience,
-  recovery: RecoveryState = "unknown"
+  recovery: RecoveryState = "unknown",
+  /**
+   * D1: local Sunday week key the rolled-into week belongs to. Stamped onto
+   * `liftWeekKey` so the calendar rollover has an anchor to compare against
+   * next time. Passed in rather than read from the clock here to keep this
+   * function pure — every other input is already explicit.
+   *
+   * Optional so existing callers and the whole test suite keep compiling; when
+   * omitted the anchor is carried forward unchanged, which is the correct
+   * degenerate behaviour (a caller that does not know the date must not
+   * pretend the week moved).
+   */
+  nextWeekKey?: string
 ): ProgramState {
   // Cap at 52 weeks (1 year) then recycle — the 4-week periodization cycle
   // continues via modulo, but the number stays meaningful for UI display
@@ -2226,6 +2238,7 @@ export function advanceWeek(
           },
         }
       : {}),
+    ...(nextWeekKey ? { liftWeekKey: nextWeekKey } : {}),
     updatedAt: Date.now(),
     nextWorkoutOverride: undefined,
   };

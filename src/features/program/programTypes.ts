@@ -713,6 +713,29 @@ export interface ProgramState {
    * keep in lockstep.
    */
   deloadSnapshot?: DeloadSnapshot;
+  /**
+   * D1: local week key (Sunday, `localWeekKey()`) of the week the current
+   * `workouts` were generated for. The LIFT side's calendar anchor.
+   *
+   * Why it had to exist. The auto week-rollover was keyed on
+   * `runDays[0].weekKey` — a RUN field — and returned early for freeform
+   * users, who have no runDays. So a pure lifter had no automatic rollover at
+   * all, and the only other path was a manual button gated on every day being
+   * completed-or-skipped. Miss one Friday, never tap "skip", and the
+   * programme froze on week N permanently: no deload, no adjustment rule, no
+   * mesocycle rotation, forever. Per CLAUDE.md's design-for-the-user-base
+   * rule that is the modal path, not an edge case.
+   *
+   * Written by `advanceWeek`, so both the manual and automatic paths stamp it
+   * without either having to remember. Backfilled to the CURRENT week by
+   * `migrateProgramState` — a legacy doc has no anchor, and treating "absent"
+   * as "stale since epoch" would roll a returning user forward twelve weeks
+   * and three deloads on first open.
+   *
+   * Optional with a defaulting reader → no schema bump (see
+   * docs/proposals/schema-versioning.md).
+   */
+  liftWeekKey?: string;
 }
 
 /* ================================

@@ -545,6 +545,12 @@ export function buildPlan(input: PlanBuilderInput): PlanBuilderOutput {
     // means no future caller can reintroduce the drift by forgetting.
     primaryGoal: carriedBlock ? carriedBlock.focus : input.primaryGoal,
     programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+    // D1: the lift-week calendar anchor. Same no-merge reasoning as the block
+    // above — unnamed here means deleted on every settings save, which would
+    // silently disable the automatic week rollover for the exact user it was
+    // built for. Derived from `input.currentDate` rather than the clock so
+    // `buildPlan` stays a pure function of its input.
+    liftWeekKey: localWeekKey(parseLocalDate(input.currentDate)),
     ...(carriedBlock ? { trainingBlock: carriedBlock } : {}),
   };
 

@@ -672,7 +672,18 @@ export function useProgram() {
       // Advance lift side (workouts, weekNumber, weekHistory).
       // Backlog #8: the deload recipe follows training age (Helms H4).
       // Backlog #9: plus the joint plateau x recovery adjustment rule.
-      const advanced = advanceWeek(rolling, profile.experience, recovery);
+      // 4th arg (D1): keep the lift anchor moving in lockstep on this path
+      // too, so a user who later switches to freeform doesn't inherit a stale
+      // `liftWeekKey` and trigger a spurious catch-up.
+      const nextLiftWeekKey = localWeekKey(
+        addLocalDays(parseLocalDate(currentRunWeekKey), 7)
+      );
+      const advanced = advanceWeek(
+        rolling,
+        profile.experience,
+        recovery,
+        nextLiftWeekKey
+      );
 
       // Advance run side. Compute the next week's start key. Take
       // one week step from the current runDay week key.
@@ -757,6 +768,82 @@ export function useProgram() {
       })
       .catch((err) => {
         logger.warn("[auto-rollover] save failed", err);
+      });
+  }, [programState, profile, saveProgram, recovery]);
+
+  /**
+   * D1 — calendar week rollover for the LIFT side.
+   *
+   * The effect above only ever ran for users with a run plan: it returns early
+   * on freeform and needs `runDays[0].weekKey` as its anchor. A pure lifter has
+   * neither, so their only path to a new week was the manual button, which is
+   * gated on EVERY day being completed-or-skipped. Miss one Friday, never tap
+   * "skip", and the whole weekly tier stopped forever — no deload, no
+   * adjustment rule, no mesocycle rotation. Per CLAUDE.md's
+   * design-for-the-user-base rule that is the modal lifter, not an edge case,
+   * and it made every acceptance criterion in the v8 lifting arc unmeasurable
+   * in production.
+   *
+   * Deliberately a SEPARATE effect rather than a generalisation of the one
+   * above. That one carries ordering constraints against PR-D's
+   * auto-transition and PR-E's recovery exit, plus three race-plan branches;
+   * folding a second anchor into it risks all of that to save a few lines. The
+   * two are mutually exclusive by construction — this runs exactly when that
+   * one bails — so they can never both write.
+   *
+   * Unattended days roll over as they stand and are archived into
+   * `weekHistory` by `advanceWeek`. That is the same honest-record trade-off
+   * the run side already made ("better than zombie planned entries lingering
+   * in the current week"): the archive says what actually happened, so the
+   * adherence-sensitive readers downstream are not fed a lie.
+   */
+  useEffect(() => {
+    if (!programState || !profile) return;
+
+    // Precisely the complement of the run-side effect's guards, so exactly one
+    // of the two can act on any given state.
+    const runSideOwnsRollover =
+      !!profile.runMode &&
+      profile.runMode !== "freeform" &&
+      !!programState.runDays?.[0]?.weekKey;
+    if (runSideOwnsRollover) return;
+
+    const anchor = programState.liftWeekKey;
+    // Absent means a pre-D1 document that `migrateProgramState` has not
+    // repaired yet. Do nothing — seeding here would race the migration, and
+    // treating absent as stale would roll a returning user forward by the
+    // whole iteration cap on first open.
+    if (!anchor) return;
+
+    const todayKey = localWeekKey();
+    if (anchor >= todayKey) return;
+
+    let rolling = programState;
+    let iterations = 0;
+    // Same cap as the run side: a user gone for months catches up twelve weeks
+    // and then stops, rather than spinning through a year of deloads.
+    while (iterations < 12) {
+      const current = rolling.liftWeekKey;
+      if (!current || current >= todayKey) break;
+      const nextKey = localWeekKey(addLocalDays(parseLocalDate(current), 7));
+      rolling = advanceWeek(rolling, profile.experience, recovery, nextKey);
+      iterations++;
+    }
+
+    if (iterations === 0) return;
+
+    logger.log(
+      `[auto-rollover:lift] advanced ${iterations} week${iterations > 1 ? "s" : ""} (from ${anchor} to ${rolling.liftWeekKey ?? "?"})`
+    );
+
+    saveProgram(rolling)
+      .then(() => {
+        toast.success(
+          `Week advanced — ${iterations} week${iterations > 1 ? "s" : ""}`
+        );
+      })
+      .catch((err) => {
+        logger.warn("[auto-rollover:lift] save failed", err);
       });
   }, [programState, profile, saveProgram, recovery]);
 
@@ -1053,7 +1140,17 @@ export function useProgram() {
 
     // Backlog #8: the deload recipe follows training age (Helms H4).
     // Backlog #9: plus the joint plateau x recovery adjustment rule.
-    const advanced = advanceWeek(programState, profile?.experience, recovery);
+    // D1: stamp the CURRENT calendar week, not the next one. The anchor means
+    // "which calendar week these workouts belong to", and a user finishing
+    // early is still inside this one — so the automatic rollover stays quiet
+    // until the calendar genuinely moves on, instead of firing again days
+    // later on top of the advance the user just asked for.
+    const advanced = advanceWeek(
+      programState,
+      profile?.experience,
+      recovery,
+      localWeekKey()
+    );
 
     // Refresh run days for new week. PR-0b-ii: V2 writers + next-
     // week date vantage so the saved runDays carry next-week
@@ -1742,6 +1839,12 @@ export function useProgram() {
         // missing), which is exactly the V1-shape-in-current-
         // version footgun PR-0b-i's shape-aware migration repairs.
         programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+        // D1: `saveProgram` is a no-merge full replace, so a field this
+        // literal does not name is DELETED — the trap that has already cost
+        // this codebase the training block once. A regenerate resets to week 1,
+        // so the honest anchor is the current calendar week: the rebuilt
+        // programme belongs to the week the user is standing in.
+        liftWeekKey: localWeekKey(),
         ...(runDays !== undefined && { runDays }),
         ...(runPlan !== undefined && { runPlan }),
       };
