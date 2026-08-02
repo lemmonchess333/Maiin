@@ -59,6 +59,9 @@ const { estimateLiftBurn } = require("./workoutBurn");
 // Per-set record projection mirror (pinned by a parity cross-test). Used by
 // the completeWorkoutDay effect to build the saved workout's sets.
 const { projectWorkoutSets } = require("./workoutSetRecord");
+// Race-template ids (pinned set-equal to the race-TYPE RUN_TEMPLATES entries by
+// raceTemplateIds.cross.test.ts). Used by RUN-RACE-GUARD-01 below.
+const { isRaceTemplateId } = require("./raceTemplateIds");
 // Deload-transform mirror (pinned by a parity cross-test). Used by the
 // applyDeloadWeek reducer (PROGRAM-DELOAD-01).
 const {
@@ -619,9 +622,13 @@ const KIND_VALIDATORS = {
   transitionRunDay(command, out) {
     assertKeys(command, "transitionRunDay", ["kind", "commandId", "runDayId", "to"], []);
     out.runDayId = assertString(command.runDayId, "runDayId", MAX_ID_LEN);
-    // Only the "skipped" client transition is permitted here; all other run-day
-    // transitions are engine/server-driven through the legal transition table.
-    out.to = assertEnum(command.to, "to", new Set(["skipped"]));
+    // The two USER-initiated run-day transitions: skip a planned run, and
+    // restore a skipped / race_no_show one (SESSION-RESTORE-01 — a skip is a
+    // reversible decision). Every other transition is engine- or
+    // server-driven and stays out of the client's reach; which of these two
+    // is legal from the CURRENT status is still the transition table's call,
+    // not this enum's.
+    out.to = assertEnum(command.to, "to", new Set(["skipped", "planned"]));
   },
 
   overrideRunDay(command, out) {
@@ -775,6 +782,32 @@ function getScheduledRunStatus(rd) {
 // Mirror of scheduledRunStatus.ts isScheduledRunEditable — only planned edits.
 function isScheduledRunEditable(status) {
   return status === "planned";
+}
+
+/**
+ * RUN-RACE-GUARD-01 — mirror of `isScheduledRaceRunDay` (workoutTemplates.ts).
+ *
+ * This arrived WITH the run-day migration, not before it: both client writers
+ * being migrated here (`markManualComplete`, `overrideRunDay`) carried this
+ * guard and the reducers did not, so the boundary would have been strictly
+ * weaker than the writer it replaced. The whole point of the boundary is that
+ * the server is the authority, and an authority missing a rule its callers
+ * enforce is the tested-copy-vs-running-copy defect in its purest form.
+ *
+ * What it protects: a race's identity is immutable. Swapping a race's template
+ * to an easy run, or manually ticking it complete, ERASES the race — the slot
+ * stops being a race and the recovery/no-show machinery downstream never sees
+ * one. A race completes exactly one way: a logged run reconciled by
+ * `raceDayCompletion`.
+ *
+ * `type === "race"` is the load-bearing half; the template-id check is the
+ * back-stop for legacy slots written before `type` existed. Deliberately NOT
+ * `templateId === "race"` — that literal is the bug PR #1775 fixed, and
+ * `raceTemplateIds.js` exists so no server module has to re-learn it.
+ */
+function isRaceRunDay(rd) {
+  if (!rd || typeof rd !== "object") return false;
+  return rd.type === "race" || isRaceTemplateId(rd.templateId);
 }
 
 function failedPrecondition(message) {
@@ -992,6 +1025,15 @@ function setManualRunCompletion(state, command, now) {
     : {};
 
   if (command.completed) {
+    // RUN-RACE-GUARD-01. Only on the mark path: UNMARKING a race is the
+    // repair for a slot that was ticked before this guard existed, so
+    // refusing that too would strand exactly the documents the guard is
+    // meant to protect.
+    if (isRaceRunDay(state.runDays[idx])) {
+      failedPrecondition(
+        "A race completes by logging the run, not by marking it done."
+      );
+    }
     let next = state;
     // Two-step reversal: a skipped slot returns to planned first (Q2 P20),
     // gated by the same legal-transition table.
@@ -1027,15 +1069,38 @@ function transitionRunDay(state, command) {
   }
   const from = getScheduledRunStatus(state.runDays[idx]);
   if (!transitionStatus(from, command.to)) {
-    failedPrecondition("That run can't be skipped from its current state.");
+    failedPrecondition(
+      command.to === "planned"
+        ? "That run can't be restored from its current state."
+        : "That run can't be skipped from its current state."
+    );
   }
-  return mapRunDay(state, idx, (rd) => ({ ...rd, status: command.to }));
+  // `completed` is a legacy mirror of `status`, and the migration's rule is
+  // "status wins — after this step the two can't disagree". Both transitions
+  // this command permits land on a non-completed status, so writing the
+  // mirror keeps the invariant enforced AT THE WRITE rather than relying on
+  // read-time repair. For `skipped` it is a no-op (the only legal `from` is
+  // `planned`); for `planned` it is the restore path's explicit reset, and
+  // matches what `setManualRunCompletion` already does on its own
+  // skipped → planned step.
+  return mapRunDay(state, idx, (rd) => ({
+    ...rd,
+    status: command.to,
+    completed: false,
+  }));
 }
 
 function overrideRunDay(state, command) {
   const idx = findRunDayIndex(state, command.runDayId);
   if (idx === -1) {
     failedPrecondition("That scheduled run is no longer available.");
+  }
+  // RUN-RACE-GUARD-01: an override is precisely the erasure this guards —
+  // swap the race for an easy run, complete it as an ordinary run, and the
+  // race is gone. Checked BEFORE the editability gate so a planned race
+  // reports the real reason rather than passing the weaker test.
+  if (isRaceRunDay(state.runDays[idx])) {
+    failedPrecondition("A race can't be swapped for another session.");
   }
   if (!isScheduledRunEditable(getScheduledRunStatus(state.runDays[idx]))) {
     failedPrecondition("That run can no longer be changed.");

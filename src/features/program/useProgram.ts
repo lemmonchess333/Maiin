@@ -1463,14 +1463,25 @@ export function useProgram() {
         [runDayId]: { completedAt: new Date() },
       };
 
-      const updated: ProgramState = {
-        ...programState,
-        runDays: updatedDays,
-        manualCompletions: updatedMap,
-      };
-      await saveProgram(updated);
+      const outcome = await runProgramCommand(
+        {
+          kind: "setManualRunCompletion",
+          commandId: generateInstanceId(),
+          runDayId,
+          completed: true,
+        },
+        (state) => ({
+          ...state,
+          runDays: updatedDays,
+          manualCompletions: updatedMap,
+        })
+      );
+      if (outcome === "rejected") {
+        toast.error("Couldn't mark that complete. Refreshing.");
+        await refetchProgramState();
+      }
     },
-    [programState, user, saveProgram]
+    [programState, user, runProgramCommand, refetchProgramState]
   );
 
   /**
@@ -1486,13 +1497,22 @@ export function useProgram() {
       if (!(runDayId in programState.manualCompletions)) return;
       const next = { ...programState.manualCompletions };
       delete next[runDayId];
-      const updated: ProgramState = {
-        ...programState,
-        manualCompletions: next,
-      };
-      await saveProgram(updated);
+
+      const outcome = await runProgramCommand(
+        {
+          kind: "setManualRunCompletion",
+          commandId: generateInstanceId(),
+          runDayId,
+          completed: false,
+        },
+        (state) => ({ ...state, manualCompletions: next })
+      );
+      if (outcome === "rejected") {
+        toast.error("Couldn't undo that. Refreshing.");
+        await refetchProgramState();
+      }
     },
-    [programState, user, saveProgram]
+    [programState, user, runProgramCommand, refetchProgramState]
   );
 
   // P1-3: Skip a run day (planned → skipped). Same id-or-index
@@ -1532,6 +1552,17 @@ export function useProgram() {
         return;
       }
 
+      // The command addresses the slot by STABLE ID, so the dayIndex overload
+      // has to resolve to one first. It always can: `migrateRunDay` assigns
+      // `id` on read and the load path persists the repaired doc, so a
+      // legacy id-less runDay is healed before any command runs.
+      if (!targetDay.id) {
+        logger.warn(
+          `[skipRunDay] runDay at dayIndex=${targetDay.dayIndex} has no stable id; skipping`
+        );
+        return;
+      }
+
       const updatedDays = programState.runDays.slice();
       updatedDays[targetIndex] = {
         ...targetDay,
@@ -1540,9 +1571,21 @@ export function useProgram() {
         // to tell the two states apart.
         status: toStatus,
       };
-      await saveProgram({ ...programState, runDays: updatedDays });
+      const outcome = await runProgramCommand(
+        {
+          kind: "transitionRunDay",
+          commandId: generateInstanceId(),
+          runDayId: targetDay.id,
+          to: toStatus,
+        },
+        (state) => ({ ...state, runDays: updatedDays })
+      );
+      if (outcome === "rejected") {
+        toast.error("Couldn't skip that run. Refreshing.");
+        await refetchProgramState();
+      }
     },
-    [programState, user, saveProgram]
+    [programState, user, runProgramCommand, refetchProgramState]
   );
 
   // SESSION-RESTORE-01: a skip is a reversible decision. Restore a
@@ -1580,15 +1623,34 @@ export function useProgram() {
         );
         return;
       }
+      if (!targetDay.id) {
+        logger.warn(
+          `[restoreRunDay] runDay at dayIndex=${targetDay.dayIndex} has no stable id; skipping`
+        );
+        return;
+      }
+
       const updatedDays = programState.runDays.slice();
       updatedDays[targetIndex] = {
         ...targetDay,
         status: "planned" as ScheduledRunStatus,
         completed: false,
       };
-      await saveProgram({ ...programState, runDays: updatedDays });
+      const outcome = await runProgramCommand(
+        {
+          kind: "transitionRunDay",
+          commandId: generateInstanceId(),
+          runDayId: targetDay.id,
+          to: "planned",
+        },
+        (state) => ({ ...state, runDays: updatedDays })
+      );
+      if (outcome === "rejected") {
+        toast.error("Couldn't restore that run. Refreshing.");
+        await refetchProgramState();
+      }
     },
-    [programState, user, saveProgram]
+    [programState, user, runProgramCommand, refetchProgramState]
   );
 
   // SESSION-RESTORE-01 (lift half): clear `skipped` on a lift day,
@@ -1744,24 +1806,41 @@ export function useProgram() {
         return;
       }
 
-      // Match against the resolved target's id when present
-      // (id-preferring), falling back to dayIndex. Without this
-      // a multi-week V2 runDays array could double-overwrite
-      // (multiple rows with the same dayIndex).
-      const updated: ProgramState = {
-        ...programState,
-        runDays: programState.runDays.map((rd) =>
-          (target.id && rd.id === target.id) ||
-          (!target.id && rd.dayIndex === target.dayIndex)
-            ? { ...rd, templateId, userOverride: templateId }
-            : rd
-        ),
-      };
+      if (!target.id) {
+        logger.warn(
+          `[overrideRunDay] runDay at dayIndex=${target.dayIndex} has no stable id; skipping`
+        );
+        return;
+      }
 
-      await saveProgram(updated);
+      // Match against the resolved target's id — the dayIndex fallback that
+      // used to sit here is gone with the id guard above, and it was the
+      // riskier branch anyway (a multi-week V2 runDays array can hold several
+      // rows with the same dayIndex, so it could double-overwrite).
+      const targetId = target.id;
+      const outcome = await runProgramCommand(
+        {
+          kind: "overrideRunDay",
+          commandId: generateInstanceId(),
+          runDayId: targetId,
+          templateId,
+        },
+        (state) => ({
+          ...state,
+          runDays: (state.runDays ?? []).map((rd) =>
+            rd.id === targetId
+              ? { ...rd, templateId, userOverride: templateId }
+              : rd
+          ),
+        })
+      );
+      if (outcome === "rejected") {
+        toast.error("Couldn't change that run. Refreshing.");
+        await refetchProgramState();
+      }
       // No success toast — the schedule UI shows the new run-day state.
     },
-    [programState, saveProgram]
+    [programState, runProgramCommand, refetchProgramState]
   );
 
   // Log exercise performance with auto-progression

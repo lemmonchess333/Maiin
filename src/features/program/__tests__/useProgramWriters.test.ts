@@ -256,6 +256,10 @@ beforeEach(() => {
   batchMark = 0;
   mockProfile = null;
   mockUpdateProfile.mockClear();
+  // Migrated writers assert with `sentCommands.find(...)`, which would
+  // happily match a command left behind by the PREVIOUS test. Reset it with
+  // the write log rather than by hand in each test.
+  sentCommands.length = 0;
 });
 
 describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
@@ -766,18 +770,13 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
       await result.current.overrideRunDay("runday_target_id", "tempo_20");
     });
 
-    expect(setDocCalls().length).toBe(1);
-    const written = setDocCalls()[0].data as ProgramState;
-    const updated = written.runDays!.find((rd) => rd.id === "runday_target_id");
-    const untouched = written.runDays!.find(
-      (rd) => rd.id === "runday_other_id"
-    );
-    expect(updated!.templateId).toBe("tempo_20");
-    expect(updated!.userOverride).toBe("tempo_20");
-    // The other row stays on easy_30 — id lookup did not splash
-    // across dayIndex matches.
-    expect(untouched!.templateId).toBe("easy_30");
-    expect(untouched!.userOverride).toBeUndefined();
+    // Through the boundary: the command names the ONE slot to change, so
+    // "did not splash across dayIndex matches" is now a property of the
+    // address rather than of the written array.
+    expect(setDocCalls().length).toBe(0);
+    const cmd = sentCommands.find((c) => c.kind === "overrideRunDay");
+    expect(cmd?.runDayId).toBe("runday_target_id");
+    expect(cmd?.templateId).toBe("tempo_20");
   });
 
   it("called with a number dayIndex updates the matching runDay (legacy fallback)", async () => {
@@ -807,11 +806,14 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
       await result.current.overrideRunDay(3, "tempo_20");
     });
 
-    expect(setDocCalls().length).toBe(1);
-    const written = setDocCalls()[0].data as ProgramState;
-    const updated = written.runDays!.find((rd) => rd.dayIndex === 3);
-    expect(updated!.templateId).toBe("tempo_20");
-    expect(updated!.userOverride).toBe("tempo_20");
+    // The dayIndex overload survives the migration as a LOOKUP: the caller
+    // still passes a dow, and the writer resolves it to the stable id the
+    // command addresses. dayIndex never reaches the wire.
+    expect(setDocCalls().length).toBe(0);
+    const cmd = sentCommands.find((c) => c.kind === "overrideRunDay");
+    expect(cmd?.runDayId).toBe("runday_b");
+    expect(cmd?.templateId).toBe("tempo_20");
+    expect(cmd).not.toHaveProperty("dayIndex");
   });
 
   it("refuses to override a non-editable runDay (terminal status)", async () => {
@@ -1916,15 +1918,18 @@ describe("SESSION-RESTORE-01 — restore writers reverse a skip", () => {
       await result.current.restoreRunDay("runday_restore_1");
     });
 
-    expect(setDocCalls().length).toBe(1);
-    const saved = setDocCalls()[0].data as ProgramState;
-    expect(saved.runDays?.[0].status).toBe("planned");
-    expect(saved.runDays?.[0].completed).toBe(false);
-    // Restore is a pure status reversal — never a manual completion.
-    expect(saved.manualCompletions?.["runday_restore_1"]).toBeUndefined();
-    // Identity preserved.
-    expect(saved.runDays?.[0].id).toBe("runday_restore_1");
-    expect(saved.runDays?.[0].templateId).toBe("easy_30");
+    // Through the command boundary: no direct write, one addressed command.
+    expect(setDocCalls().length).toBe(0);
+    const cmd = sentCommands.find((c) => c.kind === "transitionRunDay");
+    expect(cmd).toBeDefined();
+    expect(cmd?.runDayId).toBe("runday_restore_1");
+    expect(cmd?.to).toBe("planned");
+    // Restore is a pure status reversal — the command carries no
+    // completion intent, and the reducer's own `completed: false` mirror is
+    // pinned server-side in programCommands.test.js.
+    expect(cmd).not.toHaveProperty("completed");
+    // Nothing else was sent — a restore must not also mark the slot done.
+    expect(sentCommands.map((c) => c.kind)).toEqual(["transitionRunDay"]);
   });
 
   it("restoreRunDay: race_no_show → planned", async () => {
@@ -1940,10 +1945,10 @@ describe("SESSION-RESTORE-01 — restore writers reverse a skip", () => {
       await result.current.restoreRunDay("runday_restore_1");
     });
 
-    expect(setDocCalls().length).toBe(1);
-    expect((setDocCalls()[0].data as ProgramState).runDays?.[0].status).toBe(
-      "planned"
-    );
+    expect(setDocCalls().length).toBe(0);
+    const cmd = sentCommands.find((c) => c.kind === "transitionRunDay");
+    expect(cmd?.runDayId).toBe("runday_restore_1");
+    expect(cmd?.to).toBe("planned");
   });
 
   it("restoreRunDay: refuses a completed slot (terminal → no write)", async () => {

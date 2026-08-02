@@ -503,27 +503,33 @@ describe("preconditionless commands", () => {
     });
   });
 
-  it("transitionRunDay permits only to:skipped", () => {
-    expect(
-      assertClientProgramCommand({
+  // Widened from skipped-only when `restoreRunDay` migrated to the boundary
+  // (SESSION-RESTORE-01). These are the two USER-initiated transitions; the
+  // completed_* states stay engine-only, which is what this still pins.
+  it("transitionRunDay permits skipped and planned, nothing else", () => {
+    for (const to of ["skipped", "planned"]) {
+      expect(
+        assertClientProgramCommand({
+          kind: "transitionRunDay",
+          commandId: CMD_ID,
+          runDayId: "run-1",
+          to,
+        }).to
+      ).toBe(to);
+    }
+    for (const to of [
+      "completed_exact",
+      "completed_modified",
+      "completed_late",
+      "race_no_show",
+    ]) {
+      expectRejected({
         kind: "transitionRunDay",
         commandId: CMD_ID,
         runDayId: "run-1",
-        to: "skipped",
-      }).to
-    ).toBe("skipped");
-    expectRejected({
-      kind: "transitionRunDay",
-      commandId: CMD_ID,
-      runDayId: "run-1",
-      to: "planned",
-    });
-    expectRejected({
-      kind: "transitionRunDay",
-      commandId: CMD_ID,
-      runDayId: "run-1",
-      to: "completed_exact",
-    });
+        to,
+      });
+    }
   });
 
   it("overrideRunDay validates runDayId + templateId", () => {
@@ -1018,6 +1024,165 @@ describe("run-day commands", () => {
         }),
       "failed-precondition"
     );
+  });
+
+  // ── SESSION-RESTORE-01 — the restore half of transitionRunDay ──────────
+
+  it("transitionRunDay restores a skipped run to planned", () => {
+    const { state } = apply({
+      kind: "transitionRunDay",
+      commandId: CMD,
+      runDayId: "run-2",
+      to: "planned",
+    });
+    expect(state.runDays[1].status).toBe("planned");
+    // A restore is a pure status reversal — never a completion.
+    expect(state.manualCompletions["run-2"]).toBeUndefined();
+    // Identity survives.
+    expect(state.runDays[1].id).toBe("run-2");
+    expect(state.runDays[1].templateId).toBe("tempo_20");
+  });
+
+  it("transitionRunDay resets the legacy `completed` mirror on restore", () => {
+    // The inconsistency has to be SEEDED to prove anything: a fixture that
+    // already reads `completed: false` passes with the mirror deleted, which
+    // is how the first version of this test was worthless.
+    //
+    // It is reachable, too. The client aligns status↔completed during
+    // read-migration ("status wins"), but `normalizeForReducer` deliberately
+    // does NOT migrate, so a legacy doc reaches the reducer with the pair
+    // still disagreeing. Without the mirror the restore would produce
+    // `status: "planned", completed: true` — a slot that reads planned in
+    // the week rail and completed to anything asking the legacy field.
+    const seeded = baseState();
+    seeded.runDays[1].completed = true;
+    const { state } = apply(
+      {
+        kind: "transitionRunDay",
+        commandId: CMD,
+        runDayId: "run-2",
+        to: "planned",
+      },
+      seeded
+    );
+    expect(state.runDays[1].status).toBe("planned");
+    expect(state.runDays[1].completed).toBe(false);
+  });
+
+  it("transitionRunDay restores a race_no_show run to planned", () => {
+    const seeded = baseState();
+    seeded.runDays[1].status = "race_no_show";
+    const { state } = apply(
+      {
+        kind: "transitionRunDay",
+        commandId: CMD,
+        runDayId: "run-2",
+        to: "planned",
+      },
+      seeded
+    );
+    expect(state.runDays[1].status).toBe("planned");
+  });
+
+  it("transitionRunDay refuses to reopen a completed run", () => {
+    const seeded = baseState();
+    seeded.runDays[0].status = "completed_exact";
+    seeded.runDays[0].completed = true;
+    expectHttps(
+      () =>
+        apply(
+          {
+            kind: "transitionRunDay",
+            commandId: CMD,
+            runDayId: "run-1",
+            to: "planned",
+          },
+          seeded
+        ),
+      "failed-precondition"
+    );
+  });
+
+  // ── RUN-RACE-GUARD-01 — a race's identity is immutable ────────────────
+  //
+  // These pin the guard the SERVER was missing while both client writers
+  // enforced it. Each runs twice: once against `type: "race"` (the
+  // load-bearing signal) and once against a race templateId with no type
+  // (the legacy shape), because those are two independent code paths in
+  // `isRaceRunDay` and a guard that only catches one is not a guard.
+
+  function raceState(shape) {
+    const seeded = baseState();
+    seeded.runDays[0] =
+      shape === "type"
+        ? { ...seeded.runDays[0], type: "race", templateId: "easy_30" }
+        : {
+            ...seeded.runDays[0],
+            templateId: "marathon_race",
+            type: undefined,
+          };
+    return seeded;
+  }
+
+  for (const shape of ["type", "templateId"]) {
+    it(`setManualRunCompletion refuses to tick a race complete (by ${shape})`, () => {
+      expectHttps(
+        () =>
+          apply(
+            {
+              kind: "setManualRunCompletion",
+              commandId: CMD,
+              runDayId: "run-1",
+              completed: true,
+            },
+            raceState(shape)
+          ),
+        "failed-precondition"
+      );
+    });
+
+    it(`overrideRunDay refuses to swap a race's template (by ${shape})`, () => {
+      expectHttps(
+        () =>
+          apply(
+            {
+              kind: "overrideRunDay",
+              commandId: CMD,
+              runDayId: "run-1",
+              templateId: "easy_30",
+            },
+            raceState(shape)
+          ),
+        "failed-precondition"
+      );
+    });
+  }
+
+  it("UNMARKING a race is still allowed — it is the repair path", () => {
+    // A slot ticked before the guard existed must be un-tickable, or the
+    // guard strands exactly the documents it was added to protect.
+    const seeded = raceState("type");
+    seeded.manualCompletions = { "run-1": { completedAt: 1 } };
+    const { state } = apply(
+      {
+        kind: "setManualRunCompletion",
+        commandId: CMD,
+        runDayId: "run-1",
+        completed: false,
+      },
+      seeded
+    );
+    expect(state.manualCompletions["run-1"]).toBeUndefined();
+  });
+
+  it("a non-race run is unaffected by the race guard", () => {
+    const { state } = apply({
+      kind: "setManualRunCompletion",
+      commandId: CMD,
+      runDayId: "run-1",
+      completed: true,
+    });
+    expect(state.manualCompletions["run-1"]).toEqual({ completedAt: NOW });
   });
 });
 
