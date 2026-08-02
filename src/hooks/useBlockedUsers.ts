@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useAuth } from "../lib/auth";
+import { useUid } from "../lib/auth";
 import { getBlockedUsers } from "../lib/socialApi";
 import { captureError } from "../lib/errorReporting";
 
@@ -43,8 +43,7 @@ export interface UseBlockedUsersReturn {
 }
 
 export function useBlockedUsers(): UseBlockedUsersReturn {
-  const { user } = useAuth();
-  const uid = user?.uid;
+  const uid = useUid();
   /* Force-render counter. Listeners bump this when the cache mutates
      (addBlocked / removeBlocked / fetch resolution); the actual
      `blocked` value is derived from cache during render so we never
@@ -102,25 +101,31 @@ export function useBlockedUsers(): UseBlockedUsersReturn {
   const ready: boolean = uid ? readyCache.has(uid) : false;
 
   const addBlocked = useCallback(
-    (uid: string) => {
-      if (!user) return;
-      const next = new Set<string>(cache.get(user.uid) ?? []);
-      next.add(uid);
-      cache.set(user.uid, next);
-      notify(user.uid);
+    // `target` (was `uid`) — the account being blocked. It must not shadow the
+    // signed-in `uid`, which is the CACHE KEY: pre-`useUid` this body reached
+    // past the shadow via `user.uid`.
+    (target: string) => {
+      if (!uid) return;
+      const next = new Set<string>(cache.get(uid) ?? []);
+      next.add(target);
+      cache.set(uid, next);
+      notify(uid);
     },
-    [user]
+    [uid]
   );
 
   const removeBlocked = useCallback(
-    (uid: string) => {
-      if (!user) return;
-      const next = new Set<string>(cache.get(user.uid) ?? []);
-      next.delete(uid);
-      cache.set(user.uid, next);
-      notify(user.uid);
+    // `target` (was `uid`) — the account being blocked. It must not shadow the
+    // signed-in `uid`, which is the CACHE KEY: pre-`useUid` this body reached
+    // past the shadow via `user.uid`.
+    (target: string) => {
+      if (!uid) return;
+      const next = new Set<string>(cache.get(uid) ?? []);
+      next.delete(target);
+      cache.set(uid, next);
+      notify(uid);
     },
-    [user]
+    [uid]
   );
 
   return { blocked, ready, addBlocked, removeBlocked };

@@ -20,6 +20,7 @@ import {
 const AUTH = vi.hoisted(() => ({ user: { uid: "me" } }));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => AUTH,
+  useUid: () => AUTH.user?.uid ?? null,
 }));
 vi.mock("@/lib/firebase", () => ({ db: {} }));
 vi.mock("@/lib/logger", () => ({

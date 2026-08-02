@@ -34,6 +34,7 @@ let mockUser: { uid: string } | null = { uid: "u1" };
 let mockProfile: Record<string, unknown> | null = {};
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: mockUser, profile: mockProfile }),
+  useUid: () => ({ user: mockUser, profile: mockProfile }).user?.uid ?? null,
 }));
 
 import { useWorkoutRemindersInternal } from "../useWorkoutReminders";

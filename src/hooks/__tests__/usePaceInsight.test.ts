@@ -28,7 +28,10 @@ const H = vi.hoisted(() => ({
 const authState = H.authState;
 const fbAuth = H.fbAuth;
 
-vi.mock("@/lib/auth", () => ({ useAuth: () => H.authState }));
+vi.mock("@/lib/auth", () => ({
+  useAuth: () => H.authState,
+  useUid: () => H.authState.user?.uid ?? null,
+}));
 vi.mock("@/lib/subscription", () => ({
   useSubscription: () => ({ isPro: H.isPro }),
 }));

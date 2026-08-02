@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/lib/toast";
 import { Check } from "lucide-react";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
 import { THEME } from "@/lib/theme";
@@ -123,7 +123,7 @@ export default function SaveRoutineSheet({
   sourceWorkoutName,
   exercises,
 }: Props) {
-  const { user } = useAuth();
+  const uid = useUid();
   const navigate = useNavigate();
   const [name, setName] = useState(defaultName);
   const [saving, setSaving] = useState(false);
@@ -131,9 +131,9 @@ export default function SaveRoutineSheet({
      actually be saved. Saving ANOTHER member's workout blanks their
      working weights (the lib redacts on write too — this keeps the sheet
      honest); saving your own keeps your loads. */
-  const external = isExternalRoutineSource(user?.uid ?? "", sourceAuthorId);
+  const external = isExternalRoutineSource(uid ?? "", sourceAuthorId);
   const previewExercises = redactExternalRoutineExercises(
-    user?.uid ?? "",
+    uid ?? "",
     sourceAuthorId,
     exercises
   );
@@ -145,7 +145,7 @@ export default function SaveRoutineSheet({
   const [saved, setSaved] = useState(false);
 
   const handleSave = async () => {
-    if (!user || saving || saved) return;
+    if (!uid || saving || saved) return;
     const trimmed = name.trim();
     if (!trimmed) {
       toast.error("Give the routine a name");
@@ -154,7 +154,7 @@ export default function SaveRoutineSheet({
     setSaving(true);
     haptic("light");
     try {
-      const routineId = await saveRoutine(user.uid, {
+      const routineId = await saveRoutine(uid, {
         name: trimmed,
         sourceActivityId,
         sourceAuthorId,

@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { refreshDeviceTokenForCurrentUser } from "@/lib/pushNotifications";
 
 /**
@@ -10,8 +10,7 @@ import { refreshDeviceTokenForCurrentUser } from "@/lib/pushNotifications";
  * refreshes the old uid again.
  */
 export function usePushTokenRefresh(): void {
-  const { user } = useAuth();
-  const uid = user?.uid ?? null;
+  const uid = useUid();
 
   useEffect(() => {
     if (!uid) return;

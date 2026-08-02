@@ -44,6 +44,7 @@ vi.mock("@/hooks/useHiddenActivities", () => ({
 
 vi.mock("../../../lib/auth", () => ({
   useAuth: () => ({ user: { uid: "u-self" } }),
+  useUid: () => ({ user: { uid: "u-self" } }).user?.uid ?? null,
 }));
 
 import ReportModal from "../ReportModal";

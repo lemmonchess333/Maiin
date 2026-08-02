@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import {
   scheduleNotification,
@@ -171,7 +171,7 @@ export function computeTomorrowOccurrence(timeHHMM: string): Date | null {
  * RemindersProvider.tsx which reads this hook's output from context.
  */
 export function useStreakReminderInternal() {
-  const { user } = useAuth();
+  const uid = useUid();
   const {
     currentStreak,
     hasLoggedToday,
@@ -183,12 +183,12 @@ export function useStreakReminderInternal() {
   // ── Firestore load / persist ──────────────────────────────────────────
 
   useEffect(() => {
-    if (!user) {
+    if (!uid) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: clear loading when signed out
       setLoading(false);
       return;
     }
-    const ref = doc(db, "users", user.uid, "settings", "streakReminder");
+    const ref = doc(db, "users", uid, "settings", "streakReminder");
     getDoc(ref)
       .then((snap) => {
         if (snap.exists()) {
@@ -203,14 +203,14 @@ export function useStreakReminderInternal() {
         logger.error("[StreakReminder] load failed", err);
         setLoading(false);
       });
-  }, [user]);
+  }, [uid]);
 
   const updatePrefs = useCallback(
     async (updates: Partial<StreakReminderPrefs>) => {
-      if (!user) return;
+      if (!uid) return;
       const next = { ...prefs, ...updates };
       setPrefs(next);
-      const ref = doc(db, "users", user.uid, "settings", "streakReminder");
+      const ref = doc(db, "users", uid, "settings", "streakReminder");
       try {
         await setDocGuarded(ref, next);
       } catch (err) {
@@ -222,7 +222,7 @@ export function useStreakReminderInternal() {
         );
       }
     },
-    [user, prefs]
+    [uid, prefs]
   );
 
   // ── Reschedule on any relevant state change ───────────────────────────

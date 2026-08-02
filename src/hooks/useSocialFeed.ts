@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { getFeed, fetchActivitiesByIds, batchGetKudos } from "../lib/socialApi";
-import { useAuth } from "../lib/auth";
+import { useUid } from "../lib/auth";
 import type { DocumentSnapshot } from "firebase/firestore";
 import { logger } from "../lib/logger";
 
@@ -69,7 +69,7 @@ export function useSocialFeed(
   enabled = true,
   hiddenActivityIds?: Set<string>
 ) {
-  const { user } = useAuth();
+  const uid = useUid();
   const [items, setItems] = useState<FeedItem[]>([]);
   /* `internalLoading` reflects whether a fetch is in flight; the
      publicly-returned `loading` is derived from it AND `enabled`.
@@ -91,9 +91,9 @@ export function useSocialFeed(
      it. Complements the HOME-ACCOUNT-01 remount boundary as defence in
      depth (and prevents a stale-account commit inside a single mount). */
   const genRef = useRef(0);
-  const [ownerUid, setOwnerUid] = useState<string | undefined>(user?.uid);
-  if (ownerUid !== user?.uid) {
-    setOwnerUid(user?.uid);
+  const [ownerUid, setOwnerUid] = useState<string | null>(uid);
+  if (ownerUid !== uid) {
+    setOwnerUid(uid);
     genRef.current++;
     lastDocRef.current = undefined;
     setItems([]);
@@ -102,7 +102,7 @@ export function useSocialFeed(
 
   const loadFeed = useCallback(
     async (refresh = false) => {
-      if (!user) return;
+      if (!uid) return;
       const myGen = genRef.current;
       const isCurrent = () => genRef.current === myGen;
       if (refresh) lastDocRef.current = undefined;
@@ -110,7 +110,7 @@ export function useSocialFeed(
       setError(null);
       try {
         const result = await getFeed(
-          user.uid,
+          uid,
           20,
           refresh ? undefined : lastDocRef.current
         );
@@ -121,7 +121,7 @@ export function useSocialFeed(
         const activityIds = feedItems.map((i) => i.activityId);
         const [activityMap, kudosMap] = await Promise.all([
           fetchActivitiesByIds(activityIds),
-          batchGetKudos(activityIds, user.uid),
+          batchGetKudos(activityIds, uid),
         ]);
 
         let enriched: FeedItem[] = feedItems.map((item) => {
@@ -196,7 +196,7 @@ export function useSocialFeed(
       }
       if (isCurrent()) setInternalLoading(false);
     },
-    [user, highlightsOnly, blockedUsers, hiddenActivityIds]
+    [uid, highlightsOnly, blockedUsers, hiddenActivityIds]
   );
 
   useEffect(() => {

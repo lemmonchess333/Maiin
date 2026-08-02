@@ -72,6 +72,12 @@ vi.mock("@/lib/auth", () => ({
     profile: { uid: "u-1" },
     updateProfile: mockUpdateProfile,
   }),
+  useUid: () =>
+    ({
+      user: { uid: "u-1" },
+      profile: { uid: "u-1" },
+      updateProfile: mockUpdateProfile,
+    }).user?.uid ?? null,
 }));
 
 // PR-J chunk B3b — ProgrammeRunSection now consumes useClaimMap,
