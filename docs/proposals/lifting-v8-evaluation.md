@@ -160,6 +160,50 @@ struck. This document supersedes the pack for the lifting arc.
 > midpoint of a band this arc just finished widening would compound the error
 > across every prescription in the block.
 
+> **STATUS 2026-08-02f — P6 part 1 started. The boundary migration is blocked
+> on a prerequisite neither §5 nor §6 names, and the writer count was
+> understated.**
+>
+> - **32 `saveProgram` call sites, not 19** — 26 in `useProgram.ts` and 7 in
+>   `Program.tsx`, against ONE command-boundary caller (the deload button). The
+>   ◻ figure counted one file.
+> - **The migration is not a mechanical rewrite, and doing it today would make
+>   the app worse.** `saveProgram` calls `setDocGuarded` → Firestore `setDoc`,
+>   and `firebase.ts` initialises the SDK with `persistentLocalCache`, so those
+>   writes queue in the SDK and replay on reconnect. `applyProgramCommand` is an
+>   HTTPS callable, which does not. `sendDeloadCommand` already says exactly
+>   this in its own comment — "unlike the offline-queued setDocGuarded writers,
+>   a callable can't replay" — which is why the boundary has one consumer, and
+>   why that consumer is the single write that genuinely requires network.
+>
+>   So migrating a writer today trades a clobbering bug for offline DATA LOSS.
+>   For a gym app, a basement with no signal is the normal case; losing a logged
+>   workout is categorically worse than a two-tab race. Packet 18's own plan
+>   listed "the client subscriber/outbox" as a later PR — that outbox is the
+>   real blocker, and it did not exist.
+>
+> - **It exists now** (`commandOutbox.ts`), and it is small because the hard
+>   half already shipped: `runProgramCommandTransaction` reads
+>   `commandReceipts/{commandId}` INSIDE the transaction and short-circuits, so
+>   replaying a command cannot double-apply. The client half is just "persist
+>   it, replay it, let the server decide". Only transport failures queue — a
+>   server rejection is dropped, because CLAUDE.md already records what a queue
+>   that retries poison costs ("a raw write that fails online fails forever on
+>   every flush", ~25 call sites to fix). `failed-precondition` is the live
+>   case: a command queued offline may arrive into a world where its
+>   precondition no longer holds.
+> - **Part 2 (the ledger) stays gated, on §5's own argument** — "an audit trail
+>   over a document that 19 client writers can still clobber is an audit trail
+>   over a record that lies". 32 writers is a stronger version of the same
+>   argument, not a weaker one.
+>
+>   One finding for when it is built: `PROGRAM_COMMAND_RECEIPT_RETENTION_MS`
+>   (31 days) currently serves TWO purposes with different requirements.
+>   Idempotency needs only "longer than any plausible replay window" — days.
+>   Audit needs "longer than the phenomena being audited" — §5's ~400 days,
+>   because the adaptations take 6–8 weeks. Widening the single constant would
+>   over-retain idempotency markers; the two want separating, not raising.
+
 > - **11b's headline value was not the data entry.** §5 frames it as "150
 >   exercises × ~6 fields of domain-judgement data entry with no lead-time
 >   pressure". The merge itself found three live drifts first: a name the

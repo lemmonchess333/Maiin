@@ -338,6 +338,15 @@ function AppRoutes() {
           flushQueue(db, uid).catch(() => {});
         });
       });
+      // P6 — programme COMMANDS are a separate queue from the Firestore write
+      // queue above, and cannot share it: that one replays `setDoc` calls,
+      // while these are callable invocations. Replay is safe because the
+      // server dedupes on `commandId` inside its transaction.
+      import("@/features/program/programCommandClient").then(
+        ({ flushProgramCommands }) => {
+          flushProgramCommands(uid).catch(() => {});
+        }
+      );
     };
     // Initial flush on sign-in (covers the resumed-session case
     // where writes were queued in a prior tab / session).

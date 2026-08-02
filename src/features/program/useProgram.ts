@@ -125,8 +125,9 @@ import {
 import { isScheduledRaceRunDay } from "@/lib/workoutTemplates";
 import { canRescheduleRun, computeRunMove } from "@/lib/runReschedule";
 import { toast } from "@/lib/toast";
-import { getFunctions, httpsCallable } from "firebase/functions";
 import { generateInstanceId } from "./programTypes";
+import { enqueueCommand, isTransportFailure } from "./commandOutbox";
+import { sendProgramCommand } from "./programCommandClient";
 
 const PROGRAM_DOC = "current";
 
@@ -2112,16 +2113,16 @@ export function useProgram() {
   const sendDeloadCommand = useCallback(
     async (kind: "applyDeloadWeek" | "revertDeloadWeek"): Promise<boolean> => {
       if (!user || !programState) return false;
+      const command = {
+        kind,
+        // Reuses the bounded safe-alphabet id generator (UUID with a
+        // non-crypto fallback) — both shapes satisfy the callable's
+        // COMMAND_ID_RE.
+        commandId: generateInstanceId(),
+        expectedWeekNumber: programState.weekNumber,
+      };
       try {
-        const call = httpsCallable(getFunctions(), "applyProgramCommand");
-        await call({
-          kind,
-          // Reuses the bounded safe-alphabet id generator (UUID with a
-          // non-crypto fallback) — both shapes satisfy the callable's
-          // COMMAND_ID_RE.
-          commandId: generateInstanceId(),
-          expectedWeekNumber: programState.weekNumber,
-        });
+        await sendProgramCommand(command);
         const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
         const snap = await getDoc(ref);
         if (snap.exists()) {
@@ -2133,7 +2134,20 @@ export function useProgram() {
         }
         return true;
       } catch (err) {
-        logger.error(`[useProgram] ${kind} failed`, err);
+        // P6: a transport failure is queued for replay rather than lost. The
+        // server dedupes on `commandId` inside the transaction, so a command
+        // that actually landed before the timeout cannot double-apply on
+        // reconnect — which is the property that makes queuing safe at all.
+        //
+        // A SERVER rejection is not queued: it would fail identically on every
+        // flush forever. `failed-precondition` is the live case here — the week
+        // may already be deloaded by the time the queue drains.
+        if (isTransportFailure(err)) {
+          enqueueCommand(user.uid, command);
+          logger.log(`[useProgram] ${kind} queued — offline`);
+        } else {
+          logger.error(`[useProgram] ${kind} failed`, err);
+        }
         return false;
       }
     },
