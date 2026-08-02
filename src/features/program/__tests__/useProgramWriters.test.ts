@@ -182,6 +182,16 @@ vi.mock("@/lib/auth", () => ({
 
 // Stub everything else useProgram imports but doesn't matter for
 // PR-0b-ii's writer assertions.
+/* P6: `setNextWorkout` (and the other migrated writers) no longer `setDoc` —
+   they send a command. Mocked here so this suite can assert the command
+   instead of a write it will never see. */
+const sentCommands: Record<string, unknown>[] = [];
+vi.mock("../programCommandClient", () => ({
+  sendProgramCommand: async (command: Record<string, unknown>) => {
+    sentCommands.push(command);
+  },
+}));
+
 vi.mock("@/lib/socialApi", () => ({ postActivity: vi.fn() }));
 vi.mock("@/lib/shareComposer", () => ({
   compose: vi.fn(),
@@ -1735,16 +1745,22 @@ describe("PROGRAM-SESSION-ORDER-01 — setNextWorkout writer contract", () => {
     return result;
   }
 
-  it("sets the override for an in-range unfinished day", async () => {
+  it("sets the override via a setNextWorkout COMMAND (P6)", async () => {
     seedLiftState();
+    sentCommands.length = 0;
     const result = await mount();
     await act(async () => {
       await result.current.setNextWorkout(2);
     });
-    expect(setDocCalls().length).toBeGreaterThan(0);
-    expect(
-      setDocCalls()[setDocCalls().length - 1].data.nextWorkoutOverride
-    ).toBe(2);
+    const sent = sentCommands.find((c) => c.kind === "setNextWorkout");
+    expect(sent).toBeDefined();
+    expect(sent?.dayIndex).toBe(2);
+    // Asserting the COMMAND, not the resulting state: on success the hook
+    // refetches the authoritative document, and the mocked sender never
+    // applied anything to it — so the post-command state is the seed, which is
+    // correct here and says nothing. The optimistic-then-refetch behaviour is
+    // covered in `useProgramCommandBoundary.test.ts`, which can hold the send
+    // open and observe it.
   });
 
   it("ignores terminal and out-of-range selections (no write)", async () => {
@@ -1758,17 +1774,23 @@ describe("PROGRAM-SESSION-ORDER-01 — setNextWorkout writer contract", () => {
     expect(setDocCalls().length).toBe(0);
   });
 
-  it("null resets: the persisted doc drops the field entirely", async () => {
+  it("null resets via a clearNextWorkout COMMAND, dropping the field", async () => {
+    // P6: this used to assert the persisted document. The writer no longer
+    // writes one — it sends a command, and the reset needed its own kind
+    // because `setNextWorkout`'s dayIndex is part of the day precondition and
+    // cannot express "no day". What must still hold is that the field is
+    // REMOVED rather than left holding a stale value.
     seedLiftState({ nextWorkoutOverride: 2 });
+    sentCommands.length = 0;
     const result = await mount();
     await act(async () => {
       await result.current.setNextWorkout(null);
     });
-    expect(setDocCalls().length).toBeGreaterThan(0);
-    const saved = setDocCalls()[setDocCalls().length - 1].data;
-    // The guarded write path strips undefined — a reset must REMOVE the
-    // field, not persist a stale value.
-    expect("nextWorkoutOverride" in saved).toBe(false);
+    expect(sentCommands.map((c) => c.kind)).toContain("clearNextWorkout");
+    // The command carries no dayIndex — that is the whole reason it exists
+    // rather than a nullable `setNextWorkout`.
+    const clear = sentCommands.find((c) => c.kind === "clearNextWorkout");
+    expect("dayIndex" in (clear ?? {})).toBe(false);
   });
 
   it("null with no active override is a no-op (no write)", async () => {

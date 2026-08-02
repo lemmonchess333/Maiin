@@ -567,6 +567,7 @@ describe("every declared client kind round-trips", () => {
         // precisely so a new kind cannot arrive unnoticed, and it caught this
         // one on the first run.
         "restoreExercise",
+        "clearNextWorkout",
       ])
     );
   });
@@ -1354,6 +1355,25 @@ describe("addExercises / replaceExercise (catalog-derived, mirrors pinned by cro
         }),
       "failed-precondition"
     );
+  });
+
+  it("clearNextWorkout drops the override, and takes no day precondition", () => {
+    // A clear is not scoped to a day, so unlike setNextWorkout it carries no
+    // dayIndex/signature. It exists so setNextWorkout can migrate WHOLE —
+    // set and reset of one field on two write paths is the mixed-mode hazard
+    // the boundary removes.
+    const withOverride = { ...baseState(), nextWorkoutOverride: 1 };
+    const { state } = apply(
+      { kind: "clearNextWorkout", commandId: CMD },
+      withOverride
+    );
+    // Deleted, not set to undefined — Firestore rejects undefined outright.
+    expect("nextWorkoutOverride" in state).toBe(false);
+  });
+
+  it("clearNextWorkout is a no-op when there is no override", () => {
+    const { state } = apply({ kind: "clearNextWorkout", commandId: CMD });
+    expect("nextWorkoutOverride" in state).toBe(false);
   });
 
   it("removeExercise SOFT-deletes — the exercise is stashed verbatim", () => {

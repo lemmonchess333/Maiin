@@ -340,6 +340,35 @@ struck. This document supersedes the pack for the lifting arc.
 >
 > Remaining: ~27 sites, all in `useProgram.ts`.
 
+> **STATUS 2026-08-02k — three more writers in `useProgram.ts`; 23 sites left.**
+> `skipWorkoutDay`, `setNextWorkout` (both branches) and `updateSettings`, all
+> against existing reducers verified equivalent rather than assumed so.
+>
+> `setNextWorkout` needed a new kind to migrate WHOLE. Its reducer only ever
+> SETS the override; the reset had no command at all, and `setNextWorkout`
+> cannot express one because its `dayIndex` is part of the day PRECONDITION —
+> it names the day whose signature is being checked, so there is no way to say
+> "no day". `clearNextWorkout` takes no precondition, the same shape
+> `setProgramSettings` already uses for a state-level write. Without it, set
+> and reset of one field would sit on two different write paths, which is the
+> mixed-mode hazard the boundary exists to remove — the same argument that
+> blocked the remove/undo pair until the soft delete.
+>
+> Two things worth carrying into the next batch:
+>
+> - **The seam had to move.** `runProgramCommand` and `refetchProgramState`
+>   were declared below these writers, so migrating them was a
+>   used-before-declaration error. They now sit directly after `saveProgram`,
+>   which is where the alternative write path belongs anyway.
+> - **Two existing tests failed, correctly, and retargeting them exposed a
+>   limit of the harness.** They asserted that `setNextWorkout` wrote a
+>   document; it now sends a command. Retargeted at the command — but the
+>   obvious follow-up assertion (that the resulting state changed) does NOT
+>   hold there, because the hook refetches on success and the mocked sender
+>   never applied anything to the seeded doc. That assertion belongs in
+>   `useProgramCommandBoundary.test.ts`, which can hold the send open and
+>   observe the optimistic state before the refetch.
+
 > - **11b's headline value was not the data entry.** §5 frames it as "150
 >   exercises × ~6 fields of domain-judgement data entry with no lead-time
 >   pressure". The merge itself found three live drifts first: a name the

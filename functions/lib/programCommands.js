@@ -104,6 +104,7 @@ const CLIENT_COMMAND_KINDS = Object.freeze([
   "applyDeloadWeek",
   "revertDeloadWeek",
   "restoreExercise",
+  "clearNextWorkout",
 ]);
 const CLIENT_COMMAND_KIND_SET = new Set(CLIENT_COMMAND_KINDS);
 
@@ -565,6 +566,23 @@ const KIND_VALIDATORS = {
       seen.add(value);
       return value;
     });
+  },
+
+  /**
+   * Drop the next-workout override (P6).
+   *
+   * A separate kind rather than a nullable `dayIndex` on `setNextWorkout`,
+   * because `dayIndex` is part of the day PRECONDITION there — it identifies
+   * the day whose signature is being checked. A clear is not scoped to a day
+   * at all, so it takes no precondition, exactly like `setProgramSettings`.
+   *
+   * It exists so `setNextWorkout` can migrate WHOLE. Leaving the clear as a
+   * direct write would put set and reset of one field on two different write
+   * paths, which is the mixed-mode hazard the boundary exists to remove.
+   */
+  clearNextWorkout(command, out) {
+    assertKeys(command, "clearNextWorkout", ["kind", "commandId"], []);
+    void out;
   },
 
   setProgramSettings(command, out) {
@@ -1453,6 +1471,13 @@ function applyProgramCommand({ state, profile, command, now }) {
     case "replaceExercise":
       next = replaceExercise(current, validated);
       break;
+    case "clearNextWorkout": {
+      // Delete rather than set undefined: Firestore rejects undefined, and the
+      // readers all treat an absent field as "follow programme order".
+      const { nextWorkoutOverride: _cleared, ...withoutOverride } = current;
+      next = withoutOverride;
+      break;
+    }
     case "setProgramSettings":
       next = { ...current, settings: { ...validated.settings } };
       break;

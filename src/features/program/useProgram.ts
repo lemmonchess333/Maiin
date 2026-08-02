@@ -611,6 +611,91 @@ export function useProgram() {
     [user]
   );
 
+  /**
+   * Re-read the authoritative programme document.
+   *
+   * Every command path needs this and for the same reason: the server may have
+   * applied more than the client modelled, so re-deriving the result locally is
+   * the tested-copy-vs-running-copy mistake. Extracted once three callers
+   * wanted it — success, a rejected remove/add, and the deload command.
+   */
+  const refetchProgramState = useCallback(async () => {
+    if (!user) return;
+    const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return;
+    const normalized = normalizeProgramState(snap.data() as ProgramState, {
+      primaryGoal: profile?.primaryGoal,
+    });
+    setProgramState(migrateProgramState(normalized, localWeekKey()));
+  }, [user, profile]);
+
+  /**
+   * Run a programme command through the server boundary, optimistically.
+   *
+   * ── The seam the boundary migration needs (P6) ─────────────────────────
+   *
+   * There are 32 `saveProgram` call sites against one command-boundary
+   * caller, and the reason is not neglect: a `setDoc` rides Firestore's
+   * `persistentLocalCache` and replays offline, while a callable does not, and
+   * a callable also costs a round trip where `setDoc` resolves from cache
+   * instantly. Dragging an exercise and waiting 300ms for the list to settle
+   * is a worse app.
+   *
+   * This closes both gaps at once. The optimistic transform applies locally
+   * first, so the UI is as fast as it was; the command goes to the server,
+   * which is the sole authority; a transport failure QUEUES the command
+   * (`commandOutbox`) and keeps the optimistic state, because the command is
+   * durable and will replay; and only a server REJECTION rolls back, because
+   * that is the one case where the intent will never be applied.
+   *
+   * On success it refetches rather than trusting the local transform. The
+   * server may have applied more than the client modelled — and re-deriving
+   * the result locally is the tested-copy-vs-running-copy mistake.
+   *
+   * Returns which of the three happened, not a boolean: callers need to tell
+   * "rejected" from "queued", and a `false` meaning both is the shape that made
+   * the first version of this wrong.
+   *
+   * A `rejected` result rolls the state back and logs, but deliberately does
+   * NOT toast — because every caller so far has a better answer than "your
+   * change vanished", and a generic error toast on top of a caller's own
+   * recovery reads as a bug. **A new caller must handle `rejected`**: leaving
+   * it unhandled means the user watches their change silently undo itself.
+   */
+  const runProgramCommand = useCallback(
+    async (
+      command: { kind: string; commandId: string } & Record<string, unknown>,
+      optimistic: (state: ProgramState) => ProgramState
+    ): Promise<"applied" | "queued" | "rejected"> => {
+      if (!user || !programState) return "rejected";
+      const before = programState;
+      setProgramState(optimistic(before));
+      try {
+        await sendProgramCommand(command);
+      } catch (err) {
+        if (isTransportFailure(err)) {
+          // Durable: it replays on reconnect, and the server dedupes on
+          // commandId. Keeping the optimistic state is correct — the intent
+          // stands, it just has not landed yet.
+          enqueueCommand(user.uid, command);
+          logger.log(`[useProgram] ${command.kind} queued — offline`);
+          return "queued";
+        }
+        // The server considered it and said no. This is the only case where
+        // the user's change is genuinely not happening, so it is the only
+        // case that rolls back. A caller with a better answer than "undo it"
+        // acts on the `rejected` result and repairs its own state.
+        setProgramState(before);
+        logger.error(`[useProgram] ${command.kind} rejected`, err);
+        return "rejected";
+      }
+      await refetchProgramState();
+      return "applied";
+    },
+    [user, programState, refetchProgramState]
+  );
+
   // PR-L L5 — the race-no-show transition (PR-D) and recovery-phase
   // exit (PR-E) effects used to live here as `useEffect`s that wrote
   // to programState. They moved to server-side Cloud Functions per
@@ -1139,15 +1224,24 @@ export function useProgram() {
   const skipWorkoutDay = useCallback(
     async (dayIndex: number) => {
       if (!programState || !user) return;
-      const updated: ProgramState = {
-        ...programState,
-        workouts: programState.workouts.map((d, i) =>
-          i === dayIndex ? { ...d, skipped: true } : d
-        ),
-      };
-      await saveProgram(updated);
+      // P6: through the boundary. Equivalent — the reducer sets the same one
+      // flag on the same day.
+      const outcome = await runProgramCommand(
+        {
+          kind: "skipWorkoutDay",
+          commandId: generateInstanceId(),
+          dayIndex,
+        },
+        (state) => ({
+          ...state,
+          workouts: state.workouts.map((d, i) =>
+            i === dayIndex ? { ...d, skipped: true } : d
+          ),
+        })
+      );
+      if (outcome === "rejected") await refetchProgramState();
     },
-    [programState, user, saveProgram]
+    [programState, user, runProgramCommand, refetchProgramState]
   );
 
   // Set a specific day as the next workout (override default progression),
@@ -1161,18 +1255,37 @@ export function useProgram() {
   const setNextWorkout = useCallback(
     async (dayIndex: number | null) => {
       if (!programState) return;
+      // P6: BOTH branches go through the boundary. The clear needed its own
+      // kind — `setNextWorkout`'s `dayIndex` is part of the day precondition,
+      // so it cannot express "no day" — and adding it is what let this migrate
+      // whole rather than leaving set and reset on two write paths.
       if (dayIndex === null) {
         if (programState.nextWorkoutOverride == null) return;
-        await saveProgram({ ...programState, nextWorkoutOverride: undefined });
+        const outcome = await runProgramCommand(
+          { kind: "clearNextWorkout", commandId: generateInstanceId() },
+          (state) => {
+            const { nextWorkoutOverride: _cleared, ...rest } = state;
+            return rest as ProgramState;
+          }
+        );
+        if (outcome === "rejected") await refetchProgramState();
         return;
       }
       const day = programState.workouts[dayIndex];
       if (!Number.isInteger(dayIndex) || !day || day.completed || day.skipped) {
         return;
       }
-      await saveProgram({ ...programState, nextWorkoutOverride: dayIndex });
+      const outcome = await runProgramCommand(
+        {
+          kind: "setNextWorkout",
+          commandId: generateInstanceId(),
+          dayIndex,
+        },
+        (state) => ({ ...state, nextWorkoutOverride: dayIndex })
+      );
+      if (outcome === "rejected") await refetchProgramState();
     },
-    [programState, saveProgram]
+    [programState, runProgramCommand, refetchProgramState]
   );
 
   // Manually advance to next week (called from UI)
@@ -1786,9 +1899,23 @@ export function useProgram() {
         microloading: true,
       };
       const newSettings = { ...current, ...updates };
-      await saveProgram({ ...programState, settings: newSettings });
+      // P6: the reducer replaces the whole settings object, so the MERGE stays
+      // client-side and the full result is sent. Both fields are required by
+      // the validator, which is why a partial patch would be rejected.
+      const outcome = await runProgramCommand(
+        {
+          kind: "setProgramSettings",
+          commandId: generateInstanceId(),
+          settings: {
+            autoProgression: newSettings.autoProgression,
+            microloading: newSettings.microloading,
+          },
+        },
+        (state) => ({ ...state, settings: newSettings })
+      );
+      if (outcome === "rejected") await refetchProgramState();
     },
-    [programState, saveProgram]
+    [programState, runProgramCommand, refetchProgramState]
   );
 
   // Regenerate program (goal or split change).
@@ -2101,91 +2228,6 @@ export function useProgram() {
     logger.log("[fellBehind] dismissed without plan change");
     await saveProgram(next);
   }, [programState, saveProgram]);
-
-  /**
-   * Re-read the authoritative programme document.
-   *
-   * Every command path needs this and for the same reason: the server may have
-   * applied more than the client modelled, so re-deriving the result locally is
-   * the tested-copy-vs-running-copy mistake. Extracted once three callers
-   * wanted it — success, a rejected remove/add, and the deload command.
-   */
-  const refetchProgramState = useCallback(async () => {
-    if (!user) return;
-    const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) return;
-    const normalized = normalizeProgramState(snap.data() as ProgramState, {
-      primaryGoal: profile?.primaryGoal,
-    });
-    setProgramState(migrateProgramState(normalized, localWeekKey()));
-  }, [user, profile]);
-
-  /**
-   * Run a programme command through the server boundary, optimistically.
-   *
-   * ── The seam the boundary migration needs (P6) ─────────────────────────
-   *
-   * There are 32 `saveProgram` call sites against one command-boundary
-   * caller, and the reason is not neglect: a `setDoc` rides Firestore's
-   * `persistentLocalCache` and replays offline, while a callable does not, and
-   * a callable also costs a round trip where `setDoc` resolves from cache
-   * instantly. Dragging an exercise and waiting 300ms for the list to settle
-   * is a worse app.
-   *
-   * This closes both gaps at once. The optimistic transform applies locally
-   * first, so the UI is as fast as it was; the command goes to the server,
-   * which is the sole authority; a transport failure QUEUES the command
-   * (`commandOutbox`) and keeps the optimistic state, because the command is
-   * durable and will replay; and only a server REJECTION rolls back, because
-   * that is the one case where the intent will never be applied.
-   *
-   * On success it refetches rather than trusting the local transform. The
-   * server may have applied more than the client modelled — and re-deriving
-   * the result locally is the tested-copy-vs-running-copy mistake.
-   *
-   * Returns which of the three happened, not a boolean: callers need to tell
-   * "rejected" from "queued", and a `false` meaning both is the shape that made
-   * the first version of this wrong.
-   *
-   * A `rejected` result rolls the state back and logs, but deliberately does
-   * NOT toast — because every caller so far has a better answer than "your
-   * change vanished", and a generic error toast on top of a caller's own
-   * recovery reads as a bug. **A new caller must handle `rejected`**: leaving
-   * it unhandled means the user watches their change silently undo itself.
-   */
-  const runProgramCommand = useCallback(
-    async (
-      command: { kind: string; commandId: string } & Record<string, unknown>,
-      optimistic: (state: ProgramState) => ProgramState
-    ): Promise<"applied" | "queued" | "rejected"> => {
-      if (!user || !programState) return "rejected";
-      const before = programState;
-      setProgramState(optimistic(before));
-      try {
-        await sendProgramCommand(command);
-      } catch (err) {
-        if (isTransportFailure(err)) {
-          // Durable: it replays on reconnect, and the server dedupes on
-          // commandId. Keeping the optimistic state is correct — the intent
-          // stands, it just has not landed yet.
-          enqueueCommand(user.uid, command);
-          logger.log(`[useProgram] ${command.kind} queued — offline`);
-          return "queued";
-        }
-        // The server considered it and said no. This is the only case where
-        // the user's change is genuinely not happening, so it is the only
-        // case that rolls back. A caller with a better answer than "undo it"
-        // acts on the `rejected` result and repairs its own state.
-        setProgramState(before);
-        logger.error(`[useProgram] ${command.kind} rejected`, err);
-        return "rejected";
-      }
-      await refetchProgramState();
-      return "applied";
-    },
-    [user, programState, refetchProgramState]
-  );
 
   /**
    * Reorder one day's exercises through the command boundary — the first
