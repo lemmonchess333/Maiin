@@ -141,6 +141,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     logExercise,
     regenerateProgram,
     saveProgram,
+    reorderDayExercises,
     viewWeek,
     viewingHistoryIndex,
     viewedWorkouts,
@@ -459,10 +460,11 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
       exercises[newIdx],
       exercises[exIndex],
     ];
-    const updated = programState.workouts.map((d, i) =>
-      i === dayIdx ? { ...d, exercises } : d
+    // P6: same boundary as drag-and-drop — one reorder path, one authority.
+    await reorderDayExercises(
+      dayIdx,
+      exercises.map((ex) => ex.instanceId ?? "")
     );
-    await saveProgram({ ...programState, workouts: updated });
     setContextMenu(null);
   };
 
@@ -630,18 +632,19 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     if (oldIdx < 0 || newIdx < 0) return;
 
     const reordered = arrayMove(exercises, oldIdx, newIdx);
-    const updatedWorkouts = programState.workouts.map((d, i) =>
-      i === dayIndex ? { ...d, exercises: reordered } : d
-    );
 
     // Green flash — track the dropped exercise by its stable id so the flash
     // lands on the right row after the re-render reorders the list.
     setJustDroppedId(rowId(reordered[newIdx], dayIndex, newIdx));
     setTimeout(() => setJustDroppedId(null), 300);
 
-    // Persist via useProgram's saveProgram
-    const updatedState = { ...programState, workouts: updatedWorkouts };
-    await saveProgram(updatedState);
+    // P6: through the command boundary, not `saveProgram`. The reorder applies
+    // optimistically first, so the drop still settles immediately; the server
+    // is the authority for what actually persists.
+    await reorderDayExercises(
+      dayIndex,
+      reordered.map((ex) => ex.instanceId ?? "")
+    );
   };
 
   // Today index: first incomplete workout (respects nextWorkoutOverride)

@@ -2100,6 +2100,162 @@ export function useProgram() {
     await saveProgram(next);
   }, [programState, saveProgram]);
 
+  /**
+   * Run a programme command through the server boundary, optimistically.
+   *
+   * ── The seam the boundary migration needs (P6) ─────────────────────────
+   *
+   * There are 32 `saveProgram` call sites against one command-boundary
+   * caller, and the reason is not neglect: a `setDoc` rides Firestore's
+   * `persistentLocalCache` and replays offline, while a callable does not, and
+   * a callable also costs a round trip where `setDoc` resolves from cache
+   * instantly. Dragging an exercise and waiting 300ms for the list to settle
+   * is a worse app.
+   *
+   * This closes both gaps at once. The optimistic transform applies locally
+   * first, so the UI is as fast as it was; the command goes to the server,
+   * which is the sole authority; a transport failure QUEUES the command
+   * (`commandOutbox`) and keeps the optimistic state, because the command is
+   * durable and will replay; and only a server REJECTION rolls back, because
+   * that is the one case where the intent will never be applied.
+   *
+   * On success it refetches rather than trusting the local transform. The
+   * server may have applied more than the client modelled — and re-deriving
+   * the result locally is the tested-copy-vs-running-copy mistake.
+   *
+   * Returns which of the three happened, not a boolean: callers need to tell
+   * "rejected" from "queued", and a `false` meaning both is the shape that made
+   * the first version of this wrong.
+   *
+   * A `rejected` result rolls the state back and logs, but deliberately does
+   * NOT toast — because every caller so far has a better answer than "your
+   * change vanished", and a generic error toast on top of a caller's own
+   * recovery reads as a bug. **A new caller must handle `rejected`**: leaving
+   * it unhandled means the user watches their change silently undo itself.
+   */
+  const runProgramCommand = useCallback(
+    async (
+      command: { kind: string; commandId: string } & Record<string, unknown>,
+      optimistic: (state: ProgramState) => ProgramState
+    ): Promise<"applied" | "queued" | "rejected"> => {
+      if (!user || !programState) return "rejected";
+      const before = programState;
+      setProgramState(optimistic(before));
+      try {
+        await sendProgramCommand(command);
+      } catch (err) {
+        if (isTransportFailure(err)) {
+          // Durable: it replays on reconnect, and the server dedupes on
+          // commandId. Keeping the optimistic state is correct — the intent
+          // stands, it just has not landed yet.
+          enqueueCommand(user.uid, command);
+          logger.log(`[useProgram] ${command.kind} queued — offline`);
+          return "queued";
+        }
+        // The server considered it and said no. This is the only case where
+        // the user's change is genuinely not happening, so it is the only
+        // case that rolls back. A caller with a better answer than "undo it"
+        // acts on the `rejected` result and repairs its own state.
+        setProgramState(before);
+        logger.error(`[useProgram] ${command.kind} rejected`, err);
+        return "rejected";
+      }
+      const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        const normalized = normalizeProgramState(snap.data() as ProgramState, {
+          primaryGoal: profile?.primaryGoal,
+        });
+        setProgramState(migrateProgramState(normalized, localWeekKey()));
+      }
+      return "applied";
+    },
+    [user, profile, programState]
+  );
+
+  /**
+   * Reorder one day's exercises through the command boundary — the first
+   * writer migrated off `saveProgram` (P6).
+   *
+   * Chosen first because it is the only exercise edit that is PROVABLY
+   * equivalent to its server reducer: a pure permutation by `instanceId`, no
+   * load calibration, no catalog rebuild, no undo partner. The reducer refuses
+   * anything but an exact permutation of the day's current ids, so a stale
+   * client cannot silently drop or duplicate a slot.
+   *
+   * ── The legacy-document case, and why the obvious guard does not work ──
+   *
+   * `instanceId` is assigned LAZILY by `normalizeExercise` on READ, so a
+   * document written before the field existed carries none until some save
+   * rewrites it. The first version of this checked "do all the exercises have
+   * ids?" before sending — which is DEAD, because normalisation has already
+   * filled them in by the time any of this runs. The client always sees ids;
+   * the server's copy is what may not have them, and the client cannot see
+   * that. A test caught the guard never firing.
+   *
+   * So the fallback is on the REJECTION instead: if the reducer refuses the
+   * permutation, write directly, which both honours the reorder and persists
+   * the ids so the next one goes through the boundary. It self-heals in one
+   * use.
+   *
+   * The cost is honest and bounded: a genuinely stale client also lands here
+   * and gets last-write-wins, which is the pre-boundary behaviour for this
+   * exact operation rather than a new hazard. A reorder is a permutation of
+   * slots the user is looking at, so the blast radius is one day's ordering —
+   * not the load-bearing state the boundary exists to protect.
+   */
+  const reorderDayExercises = useCallback(
+    async (
+      dayIndex: number,
+      orderedInstanceIds: string[]
+    ): Promise<boolean> => {
+      if (!programState) return false;
+      const day = programState.workouts[dayIndex];
+      if (!day || orderedInstanceIds.length !== day.exercises.length) {
+        return false;
+      }
+
+      const permute = (state: ProgramState): ProgramState => {
+        const target = state.workouts[dayIndex];
+        if (!target) return state;
+        const byId = new Map(
+          target.exercises.map((ex) => [ex.instanceId, ex] as const)
+        );
+        const reordered = orderedInstanceIds.map((id) => byId.get(id));
+        if (reordered.some((ex) => ex === undefined)) return state;
+        return {
+          ...state,
+          workouts: state.workouts.map((d, i) =>
+            i === dayIndex
+              ? { ...d, exercises: reordered as ProgramExercise[] }
+              : d
+          ),
+        };
+      };
+
+      const outcome = await runProgramCommand(
+        {
+          kind: "reorderExercises",
+          commandId: generateInstanceId(),
+          dayIndex,
+          orderedInstanceIds,
+        },
+        permute
+      );
+
+      if (outcome === "rejected") {
+        logger.log(
+          "[useProgram] reorder rejected — writing directly, which also persists the instanceIds"
+        );
+        await saveProgram(permute(programState));
+      }
+      // Applied, queued, or written directly — the user's reorder stuck in all
+      // three. Only the early bail above returns false.
+      return true;
+    },
+    [programState, runProgramCommand, saveProgram]
+  );
+
   /** PROGRAM-DELOAD-01 — apply/revert the deload week via the server
    *  `applyProgramCommand` transaction (the packet-18 command boundary;
    *  these are its first client consumers). The server owns the
@@ -2381,6 +2537,7 @@ export function useProgram() {
     updateSettings,
     regenerateProgram,
     saveProgram,
+    reorderDayExercises,
     markManualComplete,
     unmarkManualComplete,
     skipRunDay,

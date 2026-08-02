@@ -204,6 +204,50 @@ struck. This document supersedes the pack for the lifting arc.
 >   because the adaptations take 6–8 weeks. Widening the single constant would
 >   over-retain idempotency markers; the two want separating, not raising.
 
+> **STATUS 2026-08-02g — the boundary migration is started, and the mapping is
+> the finding.** Of the 32 writers, the exercise-list edits in `Program.tsx`
+> looked like the obvious first slice: 7 sites, all with a server reducer
+> already written. Checking each against its reducer instead of assuming
+> equivalence cut that to 5, and only one is provably equivalent today.
+>
+> - **`replaceExercise` would regress every swap to 0 kg.** The client calls
+>   `weightAfterExerciseSwap(old, newId, loadContextFrom(profile))`; the server
+>   reducer sets `weight: 0` and says why — "no trusted profile calibration
+>   context". Migrating it would undo the load-seeding P1 fixed. The
+>   transaction DOES read the profile, so the reducer could be given the
+>   context — but that means mirroring `startingLoads.ts` server-side, with a
+>   cross-test. **The boundary's second prerequisite, and it is a mirror.**
+> - **`addExercises` IS equivalent** — the client also seeds `weight: 0`.
+> - **The remove/undo PAIR cannot be half-migrated.** The undo re-inserts the
+>   removed exercise object with its history and load; the server's
+>   `addExercises` rebuilds from the catalog and cannot restore either. And
+>   migrating the remove while its undo stays a direct write leaves precisely
+>   the mixed-mode clobbering the boundary exists to remove. Faithful undo
+>   needs a server-side soft delete — a new command kind, not a call-site swap.
+> - **`reorderExercises` is the one that is provably equivalent**: a pure
+>   permutation by `instanceId`, no calibration, no catalog rebuild, no undo
+>   partner, and a reducer that refuses anything but an exact permutation.
+>   Migrated, both sites (drag-and-drop and the move-up/down menu).
+>
+> Two things the migration itself taught, both caught by tests rather than by
+> reasoning:
+>
+> - **A callable costs a round trip where `setDoc` resolves from cache.** So
+>   the seam is optimistic-first: apply locally, send, refetch on success. A
+>   drag that waits 300ms to settle is a worse app than the one being replaced,
+>   and "correctness" that ships that is not a win.
+> - **The obvious legacy-document guard is dead code.** `instanceId` is
+>   assigned lazily on READ, so the client always sees ids and only the server
+>   knows its copy lacks them. A pre-flight "do they all have ids?" check never
+>   fires. The fallback belongs on the REJECTION, where it also persists the
+>   ids and self-heals in one use.
+>
+> Remaining: ~29 sites. The blockers are now named rather than counted — the
+> load-calibration mirror, a soft-delete for undo, and (for the whole-state
+> writers like `regenerateProgram`, `startTrainingBlock`, `realignRacePlan`) no
+> command kind at all, because `replaceProgramme` is a private server
+> transition by construction.
+
 > - **11b's headline value was not the data entry.** §5 frames it as "150
 >   exercises × ~6 fields of domain-judgement data entry with no lead-time
 >   pressure". The merge itself found three live drifts first: a name the
