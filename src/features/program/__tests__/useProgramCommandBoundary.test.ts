@@ -60,6 +60,11 @@ vi.mock("@/lib/auth", () => ({
     profile: stableProfile,
     updateProfile: stableUpdateProfile,
   }),
+  // Added by #1833, which split the uid onto its own context. `useProgram`
+  // reaches it through `usePerformanceWeeks`, so a mock without it renders
+  // nothing — and because that landed on main AFTER this branch forked, it
+  // failed only in CI (which tests the merge) while passing locally.
+  useUid: () => stableUser.uid,
 }));
 vi.mock("@/lib/socialApi", () => ({ postActivity: vi.fn() }));
 vi.mock("@/lib/shareComposer", () => ({
