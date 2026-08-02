@@ -266,3 +266,119 @@ suite("registry ↔ engine", () => {
     ).toEqual([]);
   }, 60_000);
 });
+
+/**
+ * users/{uid}/public/profile — the cross-user-readable projection.
+ *
+ * A DIFFERENT document from `users/{uid}` above, and a more exposed one:
+ * `allow read: if request.auth != null`, so every signed-in user can read
+ * every other user's copy. The rules carry three value gates on it, and
+ * until now the only tests touching this path asserted that a badgeSummary
+ * write SUCCEEDS — nothing exercised a rejection.
+ *
+ * That gap is why these exist. The backlog listed the uid gate as a manual
+ * "from the client SDK, attempt…" check, which is precisely a rules test:
+ * the emulator runs here, and a security rule nothing executes is a comment.
+ */
+suite("users/{uid}/public/profile — the uid identity gate", () => {
+  const ME = "pub-me";
+  const VICTIM = "pub-victim";
+
+  function publicProfile(over: Record<string, unknown> = {}) {
+    return { displayName: "Me", athleteType: "Lifter", ...over };
+  }
+
+  it("refuses a body uid that names ANOTHER user", async () => {
+    // The impersonation the rule's own comment describes: any consumer
+    // trusting the body's `uid` over the grandparent doc id would attribute
+    // this profile to the victim.
+    const db = env.authenticatedContext(ME).firestore();
+    await assertFails(
+      setDoc(
+        doc(db, `users/${ME}/public/profile`),
+        publicProfile({ uid: VICTIM, displayName: "Victim" }),
+        { merge: true }
+      )
+    );
+  });
+
+  it("accepts the same write with the OWNER's uid", async () => {
+    // Guards the test above against passing for the wrong reason — if the
+    // whole write shape were rejected, the rejection would prove nothing
+    // about the uid gate specifically.
+    const db = env.authenticatedContext(ME).firestore();
+    await assertSucceeds(
+      setDoc(
+        doc(db, `users/${ME}/public/profile`),
+        publicProfile({ uid: ME }),
+        { merge: true }
+      )
+    );
+  });
+
+  it("accepts the same write with NO uid field at all", async () => {
+    // Field-absent is explicitly allowed; the gate is on the value, not on
+    // the field's presence.
+    const db = env.authenticatedContext(ME).firestore();
+    await assertSucceeds(
+      setDoc(doc(db, `users/${ME}/public/profile`), publicProfile(), {
+        merge: true,
+      })
+    );
+  });
+
+  it("refuses another user writing your public profile at all", async () => {
+    const db = env.authenticatedContext(VICTIM).firestore();
+    await assertFails(
+      setDoc(doc(db, `users/${ME}/public/profile`), publicProfile(), {
+        merge: true,
+      })
+    );
+  });
+});
+
+suite("users/{uid}/public/profile — the other two value gates", () => {
+  const ME = "pub-gates";
+
+  it("refuses an arbitrary string in trainingForSpaceId", async () => {
+    // SOC-P2f: closed vocabulary. An arbitrary string would ride a public,
+    // cross-user-readable field.
+    const db = env.authenticatedContext(ME).firestore();
+    await assertFails(
+      setDoc(
+        doc(db, `users/${ME}/public/profile`),
+        { displayName: "Me", trainingForSpaceId: "not-a-space" },
+        { merge: true }
+      )
+    );
+  });
+
+  it("accepts a KNOWN space id, and accepts null (opted out)", async () => {
+    const db = env.authenticatedContext(ME).firestore();
+    await assertSucceeds(
+      setDoc(
+        doc(db, `users/${ME}/public/profile`),
+        { displayName: "Me", trainingForSpaceId: "new-to-tropos" },
+        { merge: true }
+      )
+    );
+    await assertSucceeds(
+      setDoc(
+        doc(db, `users/${ME}/public/profile`),
+        { displayName: "Me", trainingForSpaceId: null },
+        { merge: true }
+      )
+    );
+  });
+
+  it("refuses an unlisted key (hasOnly), so the projection cannot grow silently", async () => {
+    const db = env.authenticatedContext(ME).firestore();
+    await assertFails(
+      setDoc(
+        doc(db, `users/${ME}/public/profile`),
+        { displayName: "Me", email: "m@example.com" },
+        { merge: true }
+      )
+    );
+  });
+});
