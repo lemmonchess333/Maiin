@@ -42,6 +42,12 @@ vi.mock("@/lib/auth", () => ({
     profile: authProfileMock(),
     loading: false,
   }),
+  useUid: () =>
+    ({
+      user: { uid: "test-uid", email: "test@example.com" },
+      profile: authProfileMock(),
+      loading: false,
+    }).user?.uid ?? null,
 }));
 
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));

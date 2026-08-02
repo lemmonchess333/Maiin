@@ -12,7 +12,7 @@ import {
   type PendingNotification,
 } from "@/lib/notifications";
 import { getQueueLength } from "@/lib/offlineQueue";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
@@ -151,7 +151,7 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 export default function Diagnostics() {
-  const { user } = useAuth();
+  const uid = useUid();
   const [swState, setSwState] = useState<SwState | null>(null);
   const [appCheckToken, setAppCheckToken] = useState<string | null | "loading">(
     () => (isAppCheckActive() ? "loading" : null)
@@ -169,7 +169,7 @@ export default function Diagnostics() {
     readSwState().then(setSwState);
     getNotificationPermissionState().then(setPermission);
     getPendingNotifications().then(setPending);
-    if (user) readRecentCrashes(user.uid).then(setCrashes);
+    if (uid) readRecentCrashes(uid).then(setCrashes);
     if (isAppCheckActive()) {
       getAppCheckToken().then((result) => {
         if (!result) {
@@ -179,7 +179,7 @@ export default function Diagnostics() {
         setAppCheckToken(result.token);
       });
     }
-  }, [user]);
+  }, [uid]);
 
   // Analytics init resolves asynchronously (dynamic import + isSupported());
   // poll briefly so the readout settles from "pending" to its final state
@@ -238,7 +238,7 @@ export default function Diagnostics() {
           </p>
           <Row label="Version" value={`v${__APP_VERSION__}`} />
           <Row label="Build" value={buildMode} />
-          <Row label="UID" value={user?.uid ?? "<not signed in>"} />
+          <Row label="UID" value={uid ?? "<not signed in>"} />
         </section>
 
         <section className="bg-card rounded-2xl p-4 space-y-1">

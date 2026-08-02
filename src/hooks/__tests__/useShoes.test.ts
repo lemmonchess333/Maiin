@@ -24,6 +24,7 @@ vi.mock("@/lib/logger", () => ({
 const mockUser = { uid: "u1" };
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: mockUser, profile: {} }),
+  useUid: () => ({ user: mockUser, profile: {} }).user?.uid ?? null,
 }));
 
 import { useShoes } from "../useShoes";

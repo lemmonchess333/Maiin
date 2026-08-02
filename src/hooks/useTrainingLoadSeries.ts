@@ -8,7 +8,7 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import { localDateString } from "@/lib/dateHelpers";
@@ -42,12 +42,12 @@ export function useTrainingLoadSeries(displayDays: number): {
   points: LoadPoint[];
   loading: boolean;
 } {
-  const { user } = useAuth();
+  const uid = useUid();
   const [points, setPoints] = useState<LoadPoint[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) {
+    if (!uid) {
       setPoints([]);
       setLoading(false);
       return;
@@ -63,14 +63,14 @@ export function useTrainingLoadSeries(displayDays: number): {
         const sinceKey = localDateString(since);
 
         const runsQ = query(
-          collection(db, "users", user.uid, "runs"),
+          collection(db, "users", uid, "runs"),
           where("completedAt", ">=", Timestamp.fromDate(since)),
           orderBy("completedAt", "desc")
         );
         // Workout docs key their local day in a `date` string (YYYY-MM-DD),
         // which orders lexicographically.
         const workoutsQ = query(
-          collection(db, "users", user.uid, "workouts"),
+          collection(db, "users", uid, "workouts"),
           where("date", ">=", sinceKey),
           orderBy("date", "desc")
         );
@@ -135,7 +135,7 @@ export function useTrainingLoadSeries(displayDays: number): {
     return () => {
       cancelled = true;
     };
-  }, [user, displayDays]);
+  }, [uid, displayDays]);
 
   return { points, loading };
 }

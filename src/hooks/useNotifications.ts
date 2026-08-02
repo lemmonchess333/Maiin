@@ -8,7 +8,7 @@ import {
   type Timestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 
 /**
  * In-app reader for social notifications (kudos / comment / follow /
@@ -114,8 +114,7 @@ function readLastSeenMs(uid: string | undefined): number {
 }
 
 export function useNotifications() {
-  const { user } = useAuth();
-  const uid = user?.uid;
+  const uid = useUid();
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
   // NOTIFICATION-TRUST-01: a failed read is a DISTINCT state, not an
@@ -131,7 +130,7 @@ export function useNotifications() {
 
   // Last-seen is uid-owned; recompute when the account changes.
   useEffect(() => {
-    setLastSeenMs(readLastSeenMs(uid));
+    setLastSeenMs(readLastSeenMs(uid ?? undefined));
   }, [uid]);
 
   useEffect(() => {

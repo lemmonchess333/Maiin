@@ -21,6 +21,7 @@ import { renderHook, act, waitFor } from "@testing-library/react";
 let currentUser: { uid: string } | null = { uid: "A" };
 vi.mock("../../lib/auth", () => ({
   useAuth: () => ({ user: currentUser }),
+  useUid: () => ({ user: currentUser }).user?.uid ?? null,
 }));
 
 const logError = vi.fn();

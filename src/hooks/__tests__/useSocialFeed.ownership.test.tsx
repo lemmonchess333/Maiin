@@ -12,6 +12,7 @@ const authUser = vi.hoisted(() => ({
 }));
 vi.mock("../../lib/auth", () => ({
   useAuth: () => ({ user: authUser.current }),
+  useUid: () => ({ user: authUser.current }).user?.uid ?? null,
 }));
 
 // getFeed returns a promise we resolve by hand so we can switch accounts

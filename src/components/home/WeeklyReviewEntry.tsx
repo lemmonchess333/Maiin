@@ -1,10 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { ChevronRight, CalendarCheck } from "lucide-react";
-import { useAuth } from "@/lib/auth";
-import {
-  useReviewEligibility,
-  reviewViewedKey,
-} from "@/hooks/useWeeklyReview";
+import { useUid } from "@/lib/auth";
+import { useReviewEligibility, reviewViewedKey } from "@/hooks/useWeeklyReview";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import { haptic } from "@/lib/haptic";
 
@@ -17,13 +14,11 @@ import { haptic } from "@/lib/haptic";
  */
 export default function WeeklyReviewEntry() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const uid = useUid();
   const { eligibility, weekKey } = useReviewEligibility();
-  const { dismissed } = useDismissOnce(
-    reviewViewedKey(user?.uid ?? "anon", weekKey)
-  );
+  const { dismissed } = useDismissOnce(reviewViewedKey(uid ?? "anon", weekKey));
 
-  if (!user || dismissed || eligibility !== "eligible") return null;
+  if (!uid || dismissed || eligibility !== "eligible") return null;
 
   return (
     <button

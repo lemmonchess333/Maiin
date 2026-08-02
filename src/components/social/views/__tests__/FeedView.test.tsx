@@ -32,6 +32,7 @@ vi.mock("@/hooks/useFeedSubTabFreshness", () => ({
 }));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: { uid: "me" } }),
+  useUid: () => ({ user: { uid: "me" } }).user?.uid ?? null,
 }));
 vi.mock("@/features/spaces/SpacesDirectory", () => ({
   default: () => null,

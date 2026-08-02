@@ -7,22 +7,21 @@
  * once via <RevenueCatIdentity/> high in the tree.
  */
 import { useEffect, useRef } from "react";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { rcLogIn, rcLogOut } from "@/lib/revenuecat";
 
 export function useRevenueCatIdentity(): void {
-  const { user } = useAuth();
+  const uid = useUid();
   // onAuthStateChanged fires several times per sign-in (CLAUDE.md); only act on
   // an ACTUAL uid change so we don't re-logIn on every settle tick.
   const lastUidRef = useRef<string | null | undefined>(undefined);
 
   useEffect(() => {
-    const uid = user?.uid ?? null;
     if (uid === lastUidRef.current) return;
     lastUidRef.current = uid;
     if (uid) void rcLogIn(uid);
     else void rcLogOut();
-  }, [user]);
+  }, [uid]);
 }
 
 /** Render-null mount point for the single session-wide RC identity sync. */

@@ -19,7 +19,7 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import { BADGE_DEFINITIONS, initBadges, type EarnedBadge } from "./badges";
 import { badgesToAward, earnedBadgeCount } from "./badgeEarning";
@@ -317,7 +317,7 @@ export function computeStreakSpan(
 // runs it once near the authenticated root, and consumers read from context.
 
 function useStreaksInternal() {
-  const { user } = useAuth();
+  const uid = useUid();
 
   // Streaks doc state (persisted badges + longest streak)
   const [streakData, setStreakData] = useState<StreakData>(DEFAULT_STREAKS);
@@ -356,7 +356,7 @@ function useStreaksInternal() {
   // ── Subscribe to all 4 streams ─────────────────────────────────────────
 
   useEffect(() => {
-    if (!user) {
+    if (!uid) {
       // Reset state on sign-out. This branch is cleanup-only — there's no
       // external system to sync to when the user is gone.
       setStreakData(DEFAULT_STREAKS);
@@ -385,7 +385,7 @@ function useStreaksInternal() {
         setLoadedFlag(true);
       };
 
-    const streaksRef = doc(db, "users", user.uid, "streaks", "data");
+    const streaksRef = doc(db, "users", uid, "streaks", "data");
     const unsubStreaks = onSnapshot(
       streaksRef,
       (snap) => {
@@ -471,7 +471,7 @@ function useStreaksInternal() {
       onSubscriptionError("streaks", setStreaksDocLoaded)
     );
 
-    const workoutsRef = collection(db, "users", user.uid, "workouts");
+    const workoutsRef = collection(db, "users", uid, "workouts");
     const workoutsQ = query(
       workoutsRef,
       orderBy("date", "desc"),
@@ -493,7 +493,7 @@ function useStreaksInternal() {
       onSubscriptionError("workouts", setWorkoutsLoaded)
     );
 
-    const runsRef = collection(db, "users", user.uid, "runs");
+    const runsRef = collection(db, "users", uid, "runs");
     const runsQ = query(
       runsRef,
       orderBy("completedAt", "desc"),
@@ -529,7 +529,7 @@ function useStreaksInternal() {
       onSubscriptionError("runs", setRunsLoaded)
     );
 
-    const mealsRef = collection(db, "users", user.uid, "meals");
+    const mealsRef = collection(db, "users", uid, "meals");
     const mealsQ = query(
       mealsRef,
       orderBy("createdAt", "desc"),
@@ -573,7 +573,7 @@ function useStreaksInternal() {
       unsubRuns();
       unsubMeals();
     };
-  }, [user]);
+  }, [uid]);
 
   const allLoaded =
     streaksDocLoaded && workoutsLoaded && runsLoaded && mealsLoaded;
@@ -745,7 +745,7 @@ function useStreaksInternal() {
 
   const awardBadge = useCallback(
     async (badgeId: string, silent: boolean) => {
-      if (!user) return;
+      if (!uid) return;
 
       // Read fresh state via a snapshot of the current badges array
       const badge = streakData.badges.find((b) => b.id === badgeId);
@@ -778,8 +778,8 @@ function useStreaksInternal() {
         count: Object.keys(earnedMap).length,
       };
 
-      const streaksRef = doc(db, "users", user.uid, "streaks", "data");
-      const publicProfileRef = doc(db, "users", user.uid, "public", "profile");
+      const streaksRef = doc(db, "users", uid, "streaks", "data");
+      const publicProfileRef = doc(db, "users", uid, "public", "profile");
       try {
         const batch = writeBatch(db);
         batch.set(streaksRef, { badges: updatedBadges }, { merge: true });
@@ -801,7 +801,7 @@ function useStreaksInternal() {
         awardInFlightRef.current.delete(badgeId);
       }
     },
-    [user, streakData.badges]
+    [uid, streakData.badges]
   );
 
   // ── Badge check logic — runs after every snapshot change once loaded ─
@@ -870,7 +870,7 @@ function useStreaksInternal() {
   // only the two summary numbers we denormalise for cross-surface reads.
 
   useEffect(() => {
-    if (!allLoaded || !user) return;
+    if (!allLoaded || !uid) return;
     if (currentStreak === lastWrittenStreakRef.current) return;
     // Skip initial write if Firestore already has the right value (avoids
     // a pointless write on every fresh mount).
@@ -882,9 +882,9 @@ function useStreaksInternal() {
       return;
     }
 
-    const streaksRef = doc(db, "users", user.uid, "streaks", "data");
-    const userRef = doc(db, "users", user.uid);
-    const publicProfileRef = doc(db, "users", user.uid, "public", "profile");
+    const streaksRef = doc(db, "users", uid, "streaks", "data");
+    const userRef = doc(db, "users", uid);
+    const publicProfileRef = doc(db, "users", uid, "public", "profile");
     const today = format(new Date(), "yyyy-MM-dd");
     const nextLongest = Math.max(currentStreak, streakData.longestStreak);
 
@@ -914,7 +914,7 @@ function useStreaksInternal() {
     batch.set(
       publicProfileRef,
       {
-        uid: user.uid,
+        uid,
         currentStreak,
         longestStreak: nextLongest,
       },
@@ -943,7 +943,7 @@ function useStreaksInternal() {
       });
   }, [
     allLoaded,
-    user,
+    uid,
     currentStreak,
     totalActiveDays,
     activeDateSet,

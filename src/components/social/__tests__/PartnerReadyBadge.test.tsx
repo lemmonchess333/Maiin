@@ -13,6 +13,7 @@ const mockUsePartnerStreak = vi.fn();
 
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: { uid: "me" } }),
+  useUid: () => ({ user: { uid: "me" } }).user?.uid ?? null,
 }));
 vi.mock("../../../hooks/useFollowersOfMe", () => ({
   useFollowersOfMe: () => ({ followers: mockFollowers() }),

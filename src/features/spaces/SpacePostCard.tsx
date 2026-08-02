@@ -18,7 +18,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { useBlockedUsers } from "@/hooks/useBlockedUsers";
 import { blockUser } from "@/lib/socialApi";
 import { getTimeAgo } from "@/lib/timeAgo";
@@ -75,7 +75,7 @@ export default function SpacePostCard({
   commentDelta?: number;
   onOpenComments?: () => void;
 }) {
-  const { user } = useAuth();
+  const uid = useUid();
   const { addBlocked } = useBlockedUsers();
   /* SOC-P2b — the system Coach variant: brand-marked avatar tile +
      "Coach" badge (purple, not the green Team badge) + the share-your-
@@ -87,7 +87,7 @@ export default function SpacePostCard({
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const isAuthor = user?.uid === post.authorId;
+  const isAuthor = uid === post.authorId;
   const activity = post.activity;
   const isRunAttach =
     activity?.type === "run" &&
@@ -223,7 +223,7 @@ export default function SpacePostCard({
                 : ""}
             </p>
           </div>
-          {user && (
+          {uid && (
             <div className="relative">
               <IconButton
                 onClick={() => setShowMenu(!showMenu)}
@@ -427,10 +427,10 @@ export default function SpacePostCard({
         destructive
         onConfirm={async () => {
           setShowBlockConfirm(false);
-          if (!user) return;
+          if (!uid) return;
           haptic("heavy");
           try {
-            await blockUser(user.uid, post.authorId);
+            await blockUser(uid, post.authorId);
             addBlocked(post.authorId);
             toast.success(`Blocked ${post.authorName}`);
           } catch {

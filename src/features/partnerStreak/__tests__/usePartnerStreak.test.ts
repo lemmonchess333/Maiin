@@ -3,6 +3,7 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: { uid: "me" } }),
+  useUid: () => ({ user: { uid: "me" } }).user?.uid ?? null,
 }));
 vi.mock("@/lib/logger", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },

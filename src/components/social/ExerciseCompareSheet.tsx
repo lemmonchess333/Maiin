@@ -1,6 +1,6 @@
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import SectionLabel from "@/components/ui/SectionLabel";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { useUserPRMap } from "@/hooks/useUserPRMap";
 import {
   getRepBucket,
@@ -62,8 +62,8 @@ export default function ExerciseCompareSheet({
   authorTargetReps,
   authorTargetWeightKg,
 }: Props) {
-  const { user } = useAuth();
-  const { prMap, loading, error } = useUserPRMap(open ? user?.uid : null);
+  const uid = useUid();
+  const { prMap, loading, error } = useUserPRMap(open ? uid : null);
 
   const bucket = getRepBucket(authorTargetReps);
   const yourPR: ExercisePR | null = prMap?.[exerciseName]?.[bucket] ?? null;

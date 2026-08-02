@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
 
@@ -25,7 +25,7 @@ export interface LifetimeRunStats {
  */
 export function useLifetimeRunStats(options?: { enabled?: boolean }) {
   const enabled = options?.enabled ?? true;
-  const { user } = useAuth();
+  const uid = useUid();
   const [stats, setStats] = useState<LifetimeRunStats>({
     runCount: 0,
     totalDistanceM: 0,
@@ -33,14 +33,14 @@ export function useLifetimeRunStats(options?: { enabled?: boolean }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user || !enabled) {
+    if (!uid || !enabled) {
       setLoading(false);
       return;
     }
     let cancelled = false;
     (async () => {
       try {
-        const snap = await getDocs(collection(db, "users", user.uid, "runs"));
+        const snap = await getDocs(collection(db, "users", uid, "runs"));
         if (cancelled) return;
         let total = 0;
         let count = 0;
@@ -60,7 +60,7 @@ export function useLifetimeRunStats(options?: { enabled?: boolean }) {
     return () => {
       cancelled = true;
     };
-  }, [user, enabled]);
+  }, [uid, enabled]);
 
   return { ...stats, loading };
 }
