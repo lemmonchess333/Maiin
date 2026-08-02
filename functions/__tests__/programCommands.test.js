@@ -12,6 +12,7 @@ const {
   ProgramCommandError,
   PROGRAM_COMMAND_RECEIPT_RETENTION_MS,
   CLIENT_COMMAND_KINDS,
+  RESTORE_WINDOW_MS,
 } = require("../lib/programCommands");
 
 // A valid 16..128 char opaque id.
@@ -562,6 +563,10 @@ describe("every declared client kind round-trips", () => {
         "overrideRunDay",
         "applyDeloadWeek",
         "revertDeloadWeek",
+        // P6: the soft-delete undo. Added deliberately — this list is frozen
+        // precisely so a new kind cannot arrive unnoticed, and it caught this
+        // one on the first run.
+        "restoreExercise",
       ])
     );
   });
@@ -1349,6 +1354,163 @@ describe("addExercises / replaceExercise (catalog-derived, mirrors pinned by cro
         }),
       "failed-precondition"
     );
+  });
+
+  it("removeExercise SOFT-deletes — the exercise is stashed verbatim", () => {
+    // The undo has to return the same exercise, not a catalog rebuild of it.
+    // History and calibrated load are exactly what a rebuild cannot recover.
+    const { state } = apply({
+      kind: "removeExercise",
+      commandId: CMD,
+      ...dayPre(),
+      exerciseInstanceId: "inst-a",
+    });
+    expect(state.workouts[0].exercises).toHaveLength(1);
+    expect(state.lastRemovedExercise).toMatchObject({
+      dayIndex: 0,
+      index: 0,
+      exercise: { instanceId: "inst-a" },
+    });
+    expect(typeof state.lastRemovedExercise.removedAt).toBe("number");
+  });
+
+  it("restoreExercise puts it back at its original index, then clears the slot", () => {
+    const removed = apply({
+      kind: "removeExercise",
+      commandId: CMD,
+      ...dayPre(),
+      exerciseInstanceId: "inst-a",
+    }).state;
+    const { state } = apply(
+      {
+        kind: "restoreExercise",
+        commandId: "cmd_restore0123456789a",
+        // POST-removal signature: the day is one exercise shorter now, and the
+        // precondition rightly refuses a signature from before the remove.
+        ...dayPre({
+          expectedDaySignature: workoutDaySignature(removed.workouts[0]),
+        }),
+      },
+      removed
+    );
+    expect(state.workouts[0].exercises.map((e) => e.instanceId)).toEqual([
+      "inst-a",
+      "inst-b",
+    ]);
+    // One slot, consumed. Leaving it would let a second undo duplicate the row.
+    expect(state.lastRemovedExercise).toBeUndefined();
+  });
+
+  it("restoreExercise returns the ORIGINAL exercise, history and all", () => {
+    // The property the whole soft delete exists for. A catalog rebuild would
+    // produce the right name and nothing else.
+    const before = baseState().workouts[0].exercises[0];
+    const removed = apply({
+      kind: "removeExercise",
+      commandId: CMD,
+      ...dayPre(),
+      exerciseInstanceId: "inst-a",
+    }).state;
+    const { state } = apply(
+      {
+        kind: "restoreExercise",
+        commandId: "cmd_restore0123456789b",
+        ...dayPre({
+          expectedDaySignature: workoutDaySignature(removed.workouts[0]),
+        }),
+      },
+      removed
+    );
+    expect(state.workouts[0].exercises[0]).toEqual(before);
+  });
+
+  it("restoreExercise refuses an empty slot, a stale one, and the wrong day", () => {
+    expectHttps(
+      () => apply({ kind: "restoreExercise", commandId: CMD, ...dayPre() }),
+      "failed-precondition"
+    );
+
+    const removed = apply({
+      kind: "removeExercise",
+      commandId: CMD,
+      ...dayPre(),
+      exerciseInstanceId: "inst-a",
+    }).state;
+
+    // Older than the window — an undo of something long forgotten is a
+    // surprise, not an undo.
+    expectHttps(
+      () =>
+        apply(
+          {
+            kind: "restoreExercise",
+            commandId: "cmd_restore0123456789c",
+            ...dayPre({
+              expectedDaySignature: workoutDaySignature(removed.workouts[0]),
+            }),
+          },
+          {
+            ...removed,
+            lastRemovedExercise: {
+              ...removed.lastRemovedExercise,
+              removedAt: NOW - RESTORE_WINDOW_MS - 1,
+            },
+          }
+        ),
+      "failed-precondition"
+    );
+
+    // A different day's removal must not surface as this day's undo.
+    expectHttps(
+      () =>
+        apply(
+          {
+            kind: "restoreExercise",
+            commandId: "cmd_restore0123456789d",
+            ...dayPre({
+              dayIndex: 1,
+              expectedDaySignature: workoutDaySignature(
+                baseState().workouts[1]
+              ),
+            }),
+          },
+          removed
+        ),
+      "failed-precondition"
+    );
+  });
+
+  it("restoreExercise is idempotent when the exercise is already back", () => {
+    // A replay whose receipt was lost, or a manual re-add. Must not duplicate.
+    const removed = apply({
+      kind: "removeExercise",
+      commandId: CMD,
+      ...dayPre(),
+      exerciseInstanceId: "inst-a",
+    }).state;
+    const restored = apply(
+      {
+        kind: "restoreExercise",
+        commandId: "cmd_restore0123456789e",
+        ...dayPre({
+          expectedDaySignature: workoutDaySignature(removed.workouts[0]),
+        }),
+      },
+      removed
+    ).state;
+    // Second attempt against the RESTORED day — signature is the original
+    // again, because the exercise is back.
+    const { state } = apply(
+      {
+        kind: "restoreExercise",
+        commandId: "cmd_restore0123456789f",
+        ...dayPre(),
+      },
+      { ...restored, lastRemovedExercise: removed.lastRemovedExercise }
+    );
+    expect(
+      state.workouts[0].exercises.filter((e) => e.instanceId === "inst-a")
+    ).toHaveLength(1);
   });
 
   it("replaceExercise seeds the CALIBRATED load when the client sends one", () => {

@@ -2382,6 +2382,40 @@ export function useProgram() {
   );
 
   /**
+   * Undo the last removal, through the boundary (P6).
+   *
+   * Carries no payload beyond the precondition: WHAT to restore is server
+   * state. That is the point of the soft delete — the client cannot rebuild a
+   * removed exercise's logged history or calibrated load, so an undo that
+   * reconstructed it from the catalog would hand back a different exercise
+   * wearing the same name. The reducer stashed the original verbatim.
+   *
+   * No optimistic transform. Restoring locally would mean reconstructing the
+   * exercise the client just dropped — exactly the thing it cannot do
+   * faithfully — so this one waits for the refetch. An undo tap is rare and
+   * deliberate, unlike a drag.
+   */
+  const restoreRemovedExercise = useCallback(
+    async (dayIndex: number): Promise<boolean> => {
+      if (!programState) return false;
+      const outcome = await runProgramCommand(
+        {
+          kind: "restoreExercise",
+          commandId: generateInstanceId(),
+          dayIndex,
+        },
+        (state) => state
+      );
+      if (outcome === "rejected") {
+        toast.error("Couldn't undo that.");
+        await refetchProgramState();
+      }
+      return outcome !== "rejected";
+    },
+    [programState, runProgramCommand, refetchProgramState]
+  );
+
+  /**
    * Swap one exercise for another, through the boundary.
    *
    * The load is calibrated HERE and sent as a bounded scalar. That is the
@@ -2776,6 +2810,7 @@ export function useProgram() {
     removeExerciseFromDay,
     addExercisesToDayCmd,
     replaceExerciseInDay,
+    restoreRemovedExercise,
     markManualComplete,
     unmarkManualComplete,
     skipRunDay,

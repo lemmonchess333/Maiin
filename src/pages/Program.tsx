@@ -134,11 +134,11 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     advanceToNextWeek,
     logExercise,
     regenerateProgram,
-    saveProgram,
     reorderDayExercises,
     removeExerciseFromDay,
     addExercisesToDayCmd,
     replaceExerciseInDay,
+    restoreRemovedExercise,
     viewWeek,
     viewingHistoryIndex,
     viewedWorkouts,
@@ -399,30 +399,27 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   const removeExFromDay = async (dayIdx: number, exIndex: number) => {
     if (!programState) return;
     const removed = programState.workouts[dayIdx]?.exercises[exIndex];
-    if (!removed) return;
-    const updated = programState.workouts.map((d, i) =>
-      i === dayIdx
-        ? { ...d, exercises: d.exercises.filter((_, ei) => ei !== exIndex) }
-        : d
-    );
-    await saveProgram({ ...programState, workouts: updated });
+    if (!removed?.instanceId) return;
+    if (!(await removeExerciseFromDay(dayIdx, removed.instanceId))) return;
     // Exercise delete is destructive; offer an undo (parity with set-undo in
-    // the workout session). Re-insert at the original index against the LATEST
-    // state (the removing save has already advanced it).
+    // the workout session).
+    //
+    // P6: the undo is a SERVER command now, not a client re-insert. It used to
+    // splice the removed exercise object back in from a React closure — which
+    // is the one thing the boundary cannot accept, because a client-supplied
+    // exercise is exactly what the validator refuses. The reducer soft-deletes
+    // instead, stashing the original verbatim, so `restoreExercise` returns the
+    // same lift with its history and load rather than a catalog rebuild of it.
+    //
+    // That is also why this pair could not be half-migrated: leaving the undo
+    // as a direct write would have kept the mixed-mode clobbering the boundary
+    // exists to remove.
     toast(`Removed ${removed.name}`, {
       action: {
         label: "Undo",
         onClick: () => {
-          const latest = programStateRef.current;
-          const day = latest?.workouts[dayIdx];
-          if (!latest || !day) return;
-          const exercises = [...day.exercises];
-          exercises.splice(Math.min(exIndex, exercises.length), 0, removed);
-          const restored = latest.workouts.map((d, i) =>
-            i === dayIdx ? { ...d, exercises } : d
-          );
           haptic("light");
-          void saveProgram({ ...latest, workouts: restored });
+          void restoreRemovedExercise(dayIdx);
         },
       },
     });

@@ -307,6 +307,39 @@ struck. This document supersedes the pack for the lifting arc.
 > exercise WITH its history and load, which `addExercises` cannot rebuild from
 > the catalog.
 
+> **STATUS 2026-08-02j — soft delete shipped; `Program.tsx` is now entirely off
+> `saveProgram`.** All 7 of its call sites go through the boundary, and the
+> `saveProgram` destructure is gone from the file.
+>
+> `removeExercise` now stashes the removed exercise verbatim into a
+> single-slot `lastRemovedExercise`, and a new `restoreExercise` kind puts it
+> back at its original index and clears the slot. That is what let the
+> remove/undo PAIR migrate together — the undo used to splice a client-held
+> exercise object back in, which is precisely what the validator refuses, and
+> a catalog rebuild would have returned a different lift wearing the same name.
+>
+> **The shape is the one §5 already argued for**, arriving from the other
+> direction: "generalise it to a single-slot `lastEngineChange` + one-tap undo"
+> rather than an immutable version store. One slot, overwritten by the next
+> removal, with a 24-hour window — the affordance is a transient toast, so
+> seconds is the real window and a day is headroom for an undo queued offline.
+> Past that, restoring something long forgotten is a surprise, not an undo.
+>
+> Three things the frozen vocabulary and the pins caught on the way:
+>
+> - **`CLIENT_COMMAND_KINDS` is pinned against a literal list**, so adding a
+>   kind fails a test until it is declared. It fired on the first run, which is
+>   the list doing its job rather than being in the way.
+> - **The day-signature precondition rejected the restore** until the test sent
+>   the POST-removal signature. Correct: the day IS one exercise shorter, and a
+>   client holding the pre-removal signature is by definition stale.
+> - **`lastRemovedExercise` needed the sanitiser allow-list**, the third field
+>   this arc's parity pin has caught before it shipped unlisted. Unlisted it
+>   would not merely lose the undo — `applyProgramCommand` rejects on any
+>   dropped key, so every removal would have hard-errored.
+>
+> Remaining: ~27 sites, all in `useProgram.ts`.
+
 > - **11b's headline value was not the data entry.** §5 frames it as "150
 >   exercises × ~6 fields of domain-judgement data entry with no lead-time
 >   pressure". The merge itself found three live drifts first: a name the

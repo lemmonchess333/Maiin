@@ -103,6 +103,7 @@ const CLIENT_COMMAND_KINDS = Object.freeze([
   "overrideRunDay",
   "applyDeloadWeek",
   "revertDeloadWeek",
+  "restoreExercise",
 ]);
 const CLIENT_COMMAND_KIND_SET = new Set(CLIENT_COMMAND_KINDS);
 
@@ -511,6 +512,19 @@ const KIND_VALIDATORS = {
     }
   },
 
+  /**
+   * One-tap undo of the last removal (P6).
+   *
+   * Carries no payload beyond the precondition: WHAT to restore is server
+   * state (`lastRemovedExercise`), not a client claim. That is the whole point
+   * — the client cannot reconstruct the removed exercise's history and load, so
+   * letting it try would be both a fidelity bug and a hole.
+   */
+  restoreExercise(command, out) {
+    assertKeys(command, "restoreExercise", ["kind", "commandId", ...PRECONDITION_KEYS], []);
+    validatePrecondition(command, out);
+  },
+
   updateExercise(command, out) {
     assertKeys(
       command,
@@ -833,7 +847,7 @@ function setNextWorkout(state, command) {
   return { ...state, nextWorkoutOverride: command.dayIndex };
 }
 
-function removeExercise(state, command) {
+function removeExercise(state, command, now) {
   const day = requireWorkoutDay(state, command);
   const idx = day.exercises.findIndex(
     (ex) => ex && ex.instanceId === command.exerciseInstanceId
@@ -841,10 +855,69 @@ function removeExercise(state, command) {
   if (idx === -1) {
     failedPrecondition("That exercise is no longer in this workout.");
   }
-  return mapWorkoutDay(state, command.dayIndex, (d) => ({
+  const next = mapWorkoutDay(state, command.dayIndex, (d) => ({
     ...d,
     exercises: d.exercises.filter((_, i) => i !== idx),
   }));
+  // SOFT delete (P6). The exercise is stashed verbatim — history, load,
+  // prescription — so `restoreExercise` can put back exactly what was there.
+  //
+  // This is what unblocked migrating the remove that offers an undo. The
+  // client's undo re-inserted the whole object; the boundary's `addExercises`
+  // rebuilds from the catalog and can restore neither the logged history nor
+  // the calibrated load, so a hard delete would have made undo lossy. And
+  // migrating the remove while leaving its undo a direct write would have kept
+  // exactly the mixed-mode clobbering the boundary exists to remove.
+  //
+  // ONE slot, overwritten by the next removal — the shape the v8 evaluation
+  // argues for over an immutable version store: "a single-slot lastEngineChange
+  // + one-tap undo". A history of removals is a different feature and nobody
+  // asked for it.
+  return {
+    ...next,
+    lastRemovedExercise: {
+      dayIndex: command.dayIndex,
+      index: idx,
+      exercise: day.exercises[idx],
+      removedAt: now,
+    },
+  };
+}
+
+/**
+ * How long an undo stays offerable. The affordance is a transient toast, so
+ * seconds is the real window; a day is generous headroom for a command that
+ * was queued offline and replayed later. Past it, restoring an exercise the
+ * user has long forgotten removing would be a surprise rather than an undo.
+ */
+const RESTORE_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+function restoreExercise(state, command, now) {
+  const slot = state.lastRemovedExercise;
+  if (!slot || !slot.exercise) {
+    failedPrecondition("There is nothing to restore.");
+  }
+  if (typeof slot.removedAt !== "number" || now - slot.removedAt > RESTORE_WINDOW_MS) {
+    failedPrecondition("That removal is too old to undo.");
+  }
+  if (slot.dayIndex !== command.dayIndex) {
+    failedPrecondition("That removal was from a different workout.");
+  }
+  const day = requireWorkoutDay(state, command);
+  // Already back — a replayed restore whose receipt was lost, or a manual
+  // re-add. Idempotent rather than a duplicate row.
+  if (day.exercises.some((ex) => ex && ex.instanceId === slot.exercise.instanceId)) {
+    const { lastRemovedExercise: _drop, ...rest } = state;
+    return rest;
+  }
+  const next = mapWorkoutDay(state, command.dayIndex, (d) => {
+    const exercises = d.exercises.slice();
+    // Clamp: the day may have shrunk since. Same rule the client's undo used.
+    exercises.splice(Math.min(slot.index, exercises.length), 0, slot.exercise);
+    return { ...d, exercises };
+  });
+  const { lastRemovedExercise: _used, ...rest } = next;
+  return rest;
 }
 
 function updateExercise(state, command) {
@@ -1360,7 +1433,10 @@ function applyProgramCommand({ state, profile, command, now }) {
       next = setNextWorkout(current, validated);
       break;
     case "removeExercise":
-      next = removeExercise(current, validated);
+      next = removeExercise(current, validated, now);
+      break;
+    case "restoreExercise":
+      next = restoreExercise(current, validated, now);
       break;
     case "updateExercise":
       next = updateExercise(current, validated);
@@ -1406,6 +1482,7 @@ function applyProgramCommand({ state, profile, command, now }) {
 }
 
 module.exports = {
+  RESTORE_WINDOW_MS,
   assertClientProgramCommand,
   assertCommandId,
   applyProgramCommand,

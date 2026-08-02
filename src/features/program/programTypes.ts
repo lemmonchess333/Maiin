@@ -757,6 +757,33 @@ export interface ProgramState {
    * there is nothing to backfill.
    */
   recoveringMuscles?: CanonicalMuscle[];
+
+  /**
+   * The last exercise removed through the command boundary, stashed verbatim
+   * so `restoreExercise` can undo it (P6).
+   *
+   * SERVER-WRITTEN. `removeExercise` fills it; `restoreExercise` consumes and
+   * clears it. The client never sets it — that is the point: the client cannot
+   * reconstruct a removed exercise's logged history or calibrated load, so an
+   * undo that rebuilt from the catalog would silently return a different
+   * exercise wearing the same name.
+   *
+   * ONE slot, overwritten by the next removal. A history of removals is a
+   * different feature; the v8 evaluation argues specifically for "a
+   * single-slot lastEngineChange + one-tap undo" over an immutable version
+   * store, and this is that shape.
+   *
+   * Optional with a defaulting reader → no schema bump. Absent means "nothing
+   * to undo", correct for every existing document.
+   */
+  lastRemovedExercise?: {
+    dayIndex: number;
+    /** Position it held, so the undo puts it back where it was. */
+    index: number;
+    exercise: ProgramExercise;
+    /** Epoch ms — the server refuses a restore older than its window. */
+    removedAt: number;
+  };
 }
 
 /* ================================

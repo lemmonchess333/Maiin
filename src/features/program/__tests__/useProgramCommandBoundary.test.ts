@@ -428,3 +428,74 @@ describe("replaceExerciseInDay — the load the reducer cannot compute", () => {
     expect(sendProgramCommand).not.toHaveBeenCalled();
   });
 });
+
+describe("restoreRemovedExercise — the soft-delete undo", () => {
+  it("sends restoreExercise with NO payload beyond the precondition", async () => {
+    // What to restore is SERVER state. The client cannot rebuild a removed
+    // exercise's history or calibrated load, so an undo that sent one would
+    // hand back a different exercise wearing the same name — and the validator
+    // refuses a client-supplied exercise anyway.
+    const hook = await mounted();
+
+    await act(async () => {
+      await hook.result.current.restoreRemovedExercise(0);
+    });
+
+    expect(
+      Object.keys(sendProgramCommand.mock.calls[0][0] as any).sort()
+    ).toEqual(["commandId", "dayIndex", "kind"]);
+    expect((sendProgramCommand.mock.calls[0][0] as any).kind).toBe(
+      "restoreExercise"
+    );
+  });
+
+  it("does NOT guess the restored state locally", async () => {
+    // Deliberately no optimistic transform: reconstructing the exercise is the
+    // exact thing the client cannot do faithfully. It waits for the refetch.
+    const hook = await mounted();
+    let release: (() => void) | undefined;
+    sendProgramCommand.mockImplementation(
+      () => new Promise<undefined>((r) => (release = () => r(undefined)))
+    );
+
+    let pending: Promise<boolean> | undefined;
+    await act(async () => {
+      pending = hook.result.current.restoreRemovedExercise(0);
+    });
+    expect(names(hook)).toEqual(["Alpha", "Bravo", "Charlie"]);
+
+    await act(async () => {
+      release?.();
+      await pending;
+    });
+  });
+
+  it("QUEUES an undo taken offline", async () => {
+    // The soft-delete slot is server state and survives, so the undo is still
+    // meaningful when it replays.
+    sendProgramCommand.mockRejectedValue(
+      callableError("functions/unavailable")
+    );
+    const hook = await mounted();
+
+    await act(async () => {
+      await hook.result.current.restoreRemovedExercise(0);
+    });
+
+    expect(outboxLength("test-user-1")).toBe(1);
+  });
+
+  it("refetches when the server says there is nothing to restore", async () => {
+    sendProgramCommand.mockRejectedValue(
+      callableError("functions/failed-precondition")
+    );
+    const hook = await mounted();
+    const before = writeLog().length;
+
+    await act(async () => {
+      await hook.result.current.restoreRemovedExercise(0);
+    });
+
+    expect(writeLog().length).toBe(before);
+  });
+});

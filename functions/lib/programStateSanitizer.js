@@ -82,6 +82,11 @@ const PROGRAM_STATE_KEYS = new Set([
   // Unlisted, it would strand a muscle mid-re-entry AND reject the deload
   // command outright for any user carrying one.
   "recoveringMuscles",
+  // P6 soft delete: the single-slot stash the `restoreExercise` undo reads.
+  // Unlisted, `removeExercise` would write a key the sanitiser drops — and
+  // `applyProgramCommand` REJECTS on any dropped key, so every removal would
+  // hard-error rather than merely losing the undo.
+  "lastRemovedExercise",
 ]);
 
 // Generous ceiling well under Firestore's ~1 MiB document limit. A real
