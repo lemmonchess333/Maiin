@@ -3,6 +3,7 @@ import {
   weeklyVolumeByMuscle,
   volumeLandmark,
   classifyVolume,
+  classifyVolumeDose,
   balanceWeeklyVolume,
   balancePushPull,
   toCanonical,
@@ -345,8 +346,8 @@ describe("balancePushPull (D-LIFT-3)", () => {
 
 describe("volumeLandmark + classifyVolume", () => {
   it("hypertrophy carries the highest target band", () => {
-    expect(volumeLandmark("hypertrophy")).toEqual({ low: 12, high: 20 });
-    expect(volumeLandmark("strength")).toEqual({ low: 8, high: 14 });
+    expect(volumeLandmark("hypertrophy")).toEqual({ mv: 5, low: 12, high: 20 });
+    expect(volumeLandmark("strength")).toEqual({ mv: 4, low: 8, high: 14 });
   });
 
   it("classifies under / optimal / high against the band", () => {
@@ -356,6 +357,65 @@ describe("volumeLandmark + classifyVolume", () => {
     expect(classifyVolume(24, lm)).toBe("high");
     expect(classifyVolume(12, lm)).toBe("optimal"); // inclusive low
     expect(classifyVolume(20, lm)).toBe("optimal"); // inclusive high
+  });
+});
+
+/* ─── 13a · maintenance volume and the four-band ladder ──────────────────
+   MV was missing, and its absence made "redistribute volume" unimplementable:
+   specialisation drops non-target muscles to MV, not to MEV, and the band
+   between the two is the one RP calls out as pure cost — "more fatigue than
+   four sets by a long shot, but no additional benefit" (Ch8 P30 / Ch7 P159).
+
+   Nothing consumes the four-band ladder for a prescription yet. What it must
+   not do is move the three-band view underneath the surfaces that DO read it,
+   which is what the fold-back assertions below are for. ── */
+describe("maintenance volume (13a)", () => {
+  it("MV sits at 0.40–0.50 of MEV, the only ratio the sources support", () => {
+    // Two worked pairs in the corpus, no table: back MEV 10 / MV 4 (Ch7 P155)
+    // and MV/MEV/MRV 2/4/7 (Ch7 P147-149). Anything outside that range is an
+    // invented number and should have to argue with this test.
+    for (const goal of [
+      "hypertrophy",
+      "strength",
+      "fat_loss",
+      "running",
+      "general",
+      undefined,
+    ]) {
+      const lm = volumeLandmark(goal);
+      const ratio = lm.mv / lm.low;
+      expect(
+        ratio,
+        `${goal}: MV ${lm.mv} / MEV ${lm.low}`
+      ).toBeGreaterThanOrEqual(0.4);
+      expect(ratio, `${goal}: MV ${lm.mv} / MEV ${lm.low}`).toBeLessThanOrEqual(
+        0.5
+      );
+      // …and the ladder is ordered, so no band can be empty or inverted.
+      expect(lm.mv, `${goal}`).toBeLessThan(lm.low);
+      expect(lm.low, `${goal}`).toBeLessThan(lm.high);
+    }
+  });
+
+  it("separates 'losing the muscle' from 'paying for nothing'", () => {
+    const lm = volumeLandmark("hypertrophy"); // mv 5, 12..20
+    expect(classifyVolumeDose(3, lm)).toBe("below_maintenance");
+    expect(classifyVolumeDose(5, lm)).toBe("junk"); // MV itself: the parking spot
+    expect(classifyVolumeDose(11.5, lm)).toBe("junk");
+    expect(classifyVolumeDose(12, lm)).toBe("optimal");
+    expect(classifyVolumeDose(20, lm)).toBe("optimal");
+    expect(classifyVolumeDose(20.5, lm)).toBe("high");
+  });
+
+  it("the three-band view every surface reads is unchanged by MV", () => {
+    // The whole safety property of 13a: WeeklyVolumeCard and the balancers see
+    // exactly what they saw before. Both sub-MEV bands fold back to `low`.
+    const lm = volumeLandmark("hypertrophy");
+    for (let sets = 0; sets <= 30; sets += 0.5) {
+      const expected =
+        sets < lm.low ? "low" : sets > lm.high ? "high" : "optimal";
+      expect(classifyVolume(sets, lm), `${sets} sets`).toBe(expected);
+    }
   });
 });
 

@@ -202,6 +202,19 @@ export function weeklyVolumeByMuscle(workouts: WorkoutDay[]): MuscleVolume[] {
 }
 
 export interface VolumeLandmark {
+  /**
+   * Maintenance volume — the least that RETAINS the muscle. Below it the
+   * muscle is being lost, which is a different failure from "not growing" and
+   * the reason 13a added it.
+   *
+   * Without MV, "redistribute volume" is unimplementable: specialisation works
+   * by dropping non-target muscles to MV, *not* to MEV. RP Ch7 P155 — "an
+   * advanced lifter might have a weekly back MEV of 10 sets, but a weekly back
+   * MV of four … that difference grows across the adaptive window." Park a
+   * deprioritised muscle between the two and you get "more fatigue than four
+   * sets by a long shot, but no additional benefit" (Ch8 P30 / Ch7 P159).
+   */
+  mv: number;
   /** Below this = under-dosed (under MEV). */
   low: number;
   /** Above this = high (approaching MRV). */
@@ -209,36 +222,83 @@ export interface VolumeLandmark {
 }
 
 /**
- * Goal-driven weekly set landmarks per muscle (simplified RP MEV–MAV bands).
+ * Goal-driven weekly set landmarks per muscle (simplified RP MV–MEV–MAV bands).
  * `primaryGoal` is the training intent. Hypertrophy carries the highest target;
  * strength is lower-volume/higher-intensity; fat-loss/running lean lower.
+ *
+ * ── Where the MV numbers come from ───────────────────────────────────────
+ *
+ * The corpus gives two worked MV↔MEV pairs and no table: back MEV 10 / MV 4
+ * (Ch7 P155, 0.40) and the hypocaloric example's MV/MEV/MRV 2/4/7 (Ch7
+ * P147–149, 0.50). So MV sits at roughly 0.4–0.5 of MEV, and the values below
+ * are each written out rather than computed so they can be argued with
+ * individually. `volumeModel.test.ts` pins the ratio inside that range, which
+ * is the part the sources actually support.
+ *
+ * They scale with the goal because `low` does. In the sources MV is a property
+ * of the muscle and the athlete, not of what you are training for — but our
+ * `low` is a goal-scaled proxy for a per-muscle MEV we do not have, so an
+ * MV that did NOT scale with it would sit at a different fraction of the band
+ * for every goal and the ladder would stop meaning the same thing. Per-muscle
+ * landmarks (§3.8's displaceable priors) are the real fix, and they need the
+ * response data 13b is waiting on.
  */
 export function volumeLandmark(
   primaryGoal: string | undefined
 ): VolumeLandmark {
   switch (primaryGoal) {
     case "hypertrophy":
-      return { low: 12, high: 20 };
+      return { mv: 5, low: 12, high: 20 };
     case "strength":
-      return { low: 8, high: 14 };
+      return { mv: 4, low: 8, high: 14 };
     case "fat_loss":
     case "running":
-      return { low: 6, high: 14 };
+      return { mv: 3, low: 6, high: 14 };
     case "general":
     default:
-      return { low: 8, high: 16 };
+      return { mv: 4, low: 8, high: 16 };
   }
+}
+
+/**
+ * The four-band ladder, MV included.
+ *
+ * `junk` is RP's term and it is the DEFAULT reading of the MV–MEV band: enough
+ * work to cost recovery, not enough to grow. The one legitimate occupant of
+ * that band is a muscle deliberately parked at MV during a specialisation
+ * block — and telling those two apart needs a per-muscle priority the model
+ * has no input for yet, so a caller that has one must override rather than
+ * trust the label.
+ *
+ * `high` is a separate failure, not more junk: above the ceiling the volume is
+ * unrecoverable rather than merely unproductive.
+ */
+export type VolumeDose = "below_maintenance" | "junk" | "optimal" | "high";
+
+export function classifyVolumeDose(
+  sets: number,
+  landmark: VolumeLandmark
+): VolumeDose {
+  if (sets < landmark.mv) return "below_maintenance";
+  if (sets < landmark.low) return "junk";
+  if (sets > landmark.high) return "high";
+  return "optimal";
 }
 
 export type VolumeStatus = "low" | "optimal" | "high";
 
+/**
+ * The three-band view every existing consumer reads. Derived from the ladder
+ * above rather than reimplementing the comparisons, so the two cannot disagree
+ * about where a boundary sits — the sub-MEV bands both fold back to `low`,
+ * which is exactly what they were before MV existed.
+ */
 export function classifyVolume(
   sets: number,
   landmark: VolumeLandmark
 ): VolumeStatus {
-  if (sets < landmark.low) return "low";
-  if (sets > landmark.high) return "high";
-  return "optimal";
+  const dose = classifyVolumeDose(sets, landmark);
+  return dose === "below_maintenance" || dose === "junk" ? "low" : dose;
 }
 
 /** Don't push any single accessory beyond this many sets. */
