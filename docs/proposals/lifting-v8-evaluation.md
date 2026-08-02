@@ -1450,6 +1450,16 @@ uncalibrated scale and needs first-and-last set — i.e. it needs 11a.
 
 ## 8.6 P6 boundary migration — the remaining sites, triaged
 
+**STATUS 2026-08-02 — the boundary is DONE at 24 of 32 writers, and the
+remaining 8 are a deliberate stop, not a backlog. See ADR-0011.** The blocker
+was measured rather than estimated: `advanceWeek`'s closure is 12 of 16
+helpers unmirrored, two of which are data tables `functions/` has no form of
+(per-exercise muscle attributions for ~300 exercises, and the 719-line
+variation bank) — 1,500-2,000 lines across 5-6 modules, plus two new
+hand-maintained data mirrors on an actively-edited catalogue. Read ADR-0011
+before treating the outstanding count as work to be picked up; the per-site
+detail below stays accurate and is what that ADR summarises.
+
 STATUS 2026-08-02. Recorded because three separate sessions have now
 re-derived this same triage from scratch. 13 `saveProgram` sites remain, all
 in `useProgram.ts`. They are NOT one kind of work, and the split matters more

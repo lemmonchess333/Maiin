@@ -855,18 +855,19 @@ Read the relevant ADR before re-deciding something it already settled —
 an audit that re-derives a locked decision is wasted effort even when it
 lands in the same place (the plan-file lock rule, applied to ADRs):
 
-| ADR  | Decision                                                                    |
-| ---- | --------------------------------------------------------------------------- |
-| 0001 | Domain depth lives in `src/lib` helpers — file size is NOT a depth signal   |
-| 0002 | Dual scheduling ontology: runs are date-pinned, lifts are split-ordered     |
-| 0003 | UI primitives contract (`Button` / `IconButton` / `Toggle`)                 |
-| 0004 | Surface coordinator                                                         |
-| 0005 | Profile-sanitizer drift is an observability seam, not a consolidation       |
-| 0006 | Adopt RevenueCat for IAP                                                    |
-| 0007 | HealthKit reconciliation                                                    |
-| 0008 | Mirror parity must pin the RUNNING copy — reachability over prose           |
-| 0009 | One Firestore test fake; injecting the `db` handle buys nothing             |
-| 0010 | Volume currency — 1:1 is correct; the flip waits on landmark-aware builders |
+| ADR  | Decision                                                                           |
+| ---- | ---------------------------------------------------------------------------------- |
+| 0001 | Domain depth lives in `src/lib` helpers — file size is NOT a depth signal          |
+| 0002 | Dual scheduling ontology: runs are date-pinned, lifts are split-ordered            |
+| 0003 | UI primitives contract (`Button` / `IconButton` / `Toggle`)                        |
+| 0004 | Surface coordinator                                                                |
+| 0005 | Profile-sanitizer drift is an observability seam, not a consolidation              |
+| 0006 | Adopt RevenueCat for IAP                                                           |
+| 0007 | HealthKit reconciliation                                                           |
+| 0008 | Mirror parity must pin the RUNNING copy — reachability over prose                  |
+| 0009 | One Firestore test fake; injecting the `db` handle buys nothing                    |
+| 0010 | Volume currency — 1:1 is correct; the flip waits on landmark-aware builders        |
+| 0011 | Programme command boundary stops at the week engine — 8 sites stay document writes |
 
 ## Dynamic workflows & `ultracode` (when to escalate)
 
