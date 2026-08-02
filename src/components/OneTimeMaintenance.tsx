@@ -3,7 +3,7 @@ import { getFunctions, httpsCallable } from "firebase/functions";
 import { doc, getDoc } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 
 /**
@@ -26,11 +26,11 @@ import { logger } from "@/lib/logger";
  * Settings button.
  */
 export default function OneTimeMaintenance() {
-  const { user } = useAuth();
+  const uid = useUid();
   const firedRef = useRef(false);
 
   useEffect(() => {
-    if (!user || firedRef.current) return;
+    if (!uid || firedRef.current) return;
 
     let cancelled = false;
     const FLAG_KEY = "tropos.muscleGroupsBackfilled.v1";
@@ -48,10 +48,10 @@ export default function OneTimeMaintenance() {
 
       try {
         const fns = getFunctions();
-        const fn = httpsCallable<unknown, { ok: boolean; scanned: number; updated: number; skipped: number }>(
-          fns,
-          "backfillMyActivityCategories",
-        );
+        const fn = httpsCallable<
+          unknown,
+          { ok: boolean; scanned: number; updated: number; skipped: number }
+        >(fns, "backfillMyActivityCategories");
         const r = await fn({});
         if (cancelled) return;
         if (r.data?.ok) {
@@ -87,13 +87,17 @@ export default function OneTimeMaintenance() {
         return;
       }
       try {
-        const ref = doc(db, "users", user.uid, "public", "profile");
+        const ref = doc(db, "users", uid, "public", "profile");
         const snap = await getDoc(ref);
         if (cancelled) return;
         if (!snap.exists()) {
           // No public profile to migrate; mark done so we don't keep
           // hitting the read on every session.
-          try { localStorage.setItem(LOWER_FLAG, "1"); } catch { /* ignore */ }
+          try {
+            localStorage.setItem(LOWER_FLAG, "1");
+          } catch {
+            /* ignore */
+          }
           return;
         }
         const data = snap.data() as Record<string, unknown>;
@@ -101,11 +105,22 @@ export default function OneTimeMaintenance() {
         const existingLower = data.displayNameLower;
         const targetLower = dn ? dn.toLowerCase() : "";
         if (existingLower !== targetLower) {
-          await setDocGuarded(ref, { displayNameLower: targetLower || null }, { merge: true });
+          await setDocGuarded(
+            ref,
+            { displayNameLower: targetLower || null },
+            { merge: true }
+          );
         }
-        try { localStorage.setItem(LOWER_FLAG, "1"); } catch { /* ignore */ }
+        try {
+          localStorage.setItem(LOWER_FLAG, "1");
+        } catch {
+          /* ignore */
+        }
       } catch (err) {
-        logger.warn("[OneTimeMaintenance] displayNameLower backfill skipped", err);
+        logger.warn(
+          "[OneTimeMaintenance] displayNameLower backfill skipped",
+          err
+        );
       }
     };
 
@@ -138,7 +153,7 @@ export default function OneTimeMaintenance() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [user]);
+  }, [uid]);
 
   return null;
 }

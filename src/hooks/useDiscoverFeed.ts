@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { getDiscoverFeed, batchGetKudos } from "../lib/socialApi";
 import { captureError } from "@/lib/errorReporting";
-import { useAuth } from "../lib/auth";
+import { useUid } from "../lib/auth";
 import type { DocumentSnapshot } from "firebase/firestore";
 import type { FeedItem, ActivityData } from "./useSocialFeed";
 
 export function useDiscoverFeed(enabled = true, blockedUsers?: Set<string>) {
-  const { user } = useAuth();
+  const uid = useUid();
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,9 +19,9 @@ export function useDiscoverFeed(enabled = true, blockedUsers?: Set<string>) {
      state (or items) under account B. `genRef` bumps on uid change;
      each load commits only if it still owns the current generation. */
   const genRef = useRef(0);
-  const [ownerUid, setOwnerUid] = useState<string | undefined>(user?.uid);
-  if (ownerUid !== user?.uid) {
-    setOwnerUid(user?.uid);
+  const [ownerUid, setOwnerUid] = useState<string | null>(uid);
+  if (ownerUid !== uid) {
+    setOwnerUid(uid);
     genRef.current++;
     lastDocRef.current = undefined;
     setItems([]);
@@ -90,10 +90,10 @@ export function useDiscoverFeed(enabled = true, blockedUsers?: Set<string>) {
         }));
 
         // Batch get kudos status for current user — immutable map (#22)
-        if (user) {
+        if (uid) {
           const kudosMap = await batchGetKudos(
             feedItems.map((i) => i.activityId),
-            user.uid
+            uid
           );
           feedItems = feedItems.map((item) => ({
             ...item,
@@ -132,7 +132,7 @@ export function useDiscoverFeed(enabled = true, blockedUsers?: Set<string>) {
       }
       if (isCurrent()) setLoading(false);
     },
-    [user, enabled, blockedUsers]
+    [uid, enabled, blockedUsers]
   );
 
   useEffect(() => {

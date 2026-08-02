@@ -171,6 +171,12 @@ vi.mock("@/lib/auth", () => ({
     profile: mockProfile,
     updateProfile: mockUpdateProfile,
   }),
+  useUid: () =>
+    ({
+      user: stableUser,
+      profile: mockProfile,
+      updateProfile: mockUpdateProfile,
+    }).user?.uid ?? null,
 }));
 
 // Stub everything else useProgram imports but doesn't matter for

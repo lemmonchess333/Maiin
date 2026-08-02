@@ -10,6 +10,8 @@ vi.mock("@/lib/pushNotifications", () => ({
 }));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: currentUid ? { uid: currentUid } : null }),
+  useUid: () =>
+    ({ user: currentUid ? { uid: currentUid } : null }).user?.uid ?? null,
 }));
 
 import { usePushTokenRefresh } from "@/hooks/usePushTokenRefresh";

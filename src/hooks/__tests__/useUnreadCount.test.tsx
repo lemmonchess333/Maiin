@@ -26,6 +26,9 @@ import { renderHook, act, waitFor } from "@testing-library/react";
 const authUid = vi.hoisted(() => ({ current: "me" as string | undefined }));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: authUid.current ? { uid: authUid.current } : null }),
+  useUid: () =>
+    ({ user: authUid.current ? { uid: authUid.current } : null }).user?.uid ??
+    null,
 }));
 
 vi.mock("firebase/firestore");

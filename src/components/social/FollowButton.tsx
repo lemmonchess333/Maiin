@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "../../lib/auth";
+import { useUid } from "../../lib/auth";
 import { isFollowing, followUser, unfollowUser } from "../../lib/socialApi";
 import { logger } from "../../lib/logger";
 import { haptic } from "../../lib/haptic";
@@ -37,18 +37,18 @@ export default function FollowButton({
   onFollowChange,
   disabled,
 }: FollowButtonProps) {
-  const { user } = useAuth();
+  const uid = useUid();
   const [following, setFollowing] = useState(false);
   const [initialising, setInitialising] = useState(true);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    if (!user || user.uid === targetUid) {
+    if (!uid || uid === targetUid) {
       setInitialising(false);
       return;
     }
-    isFollowing(user.uid, targetUid)
+    isFollowing(uid, targetUid)
       .then((v) => {
         if (!cancelled) setFollowing(v);
       })
@@ -62,10 +62,10 @@ export default function FollowButton({
     return () => {
       cancelled = true;
     };
-  }, [user, targetUid]);
+  }, [uid, targetUid]);
 
   const handleToggle = async () => {
-    if (!user || busy || disabled) return;
+    if (!uid || busy || disabled) return;
     const nextFollowing = !following;
     // Tactile confirmation on the commit — follow is stronger haptic
     // (meaningful new relationship), unfollow is lighter (undo action).
@@ -76,9 +76,9 @@ export default function FollowButton({
     setBusy(true);
     try {
       if (nextFollowing) {
-        await followUser(user.uid, targetUid);
+        await followUser(uid, targetUid);
       } else {
-        await unfollowUser(user.uid, targetUid);
+        await unfollowUser(uid, targetUid);
       }
       onFollowChange?.(nextFollowing);
     } catch (err) {
@@ -91,7 +91,7 @@ export default function FollowButton({
     }
   };
 
-  if (!user || user.uid === targetUid) return null;
+  if (!uid || uid === targetUid) return null;
 
   const showSpinner = initialising || busy;
 

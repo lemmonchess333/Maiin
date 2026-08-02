@@ -615,6 +615,27 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+/**
+ * The signed-in uid, on its own context.
+ *
+ * `AuthContext` fuses three things with three different change frequencies:
+ * the uid (changes on sign-in/sign-out only), the profile (changes on every
+ * settings / programme / nutrition write), and the credential flows (never
+ * change after mount — `Login.tsx` is their only consumer). Because the
+ * context value is memoised over all of them, a single `updateProfile` call
+ * re-rendered every consumer in the app.
+ *
+ * Most consumers don't want any of that: they want one string to scope a
+ * Firestore read with. Splitting the uid onto its own context lets them
+ * subscribe to the thing that actually changes for them, so a profile write
+ * no longer re-renders them.
+ *
+ * `null` is a real value here (signed out), so the "no provider" sentinel has
+ * to be distinguishable from it — hence the `undefined` default and the throw
+ * in `useUid`, mirroring `useAuth`'s guard.
+ */
+const AuthUidContext = createContext<string | null | undefined>(undefined);
+
 // Static field lists used by updateProfile. Module-scoped (not in-component)
 // so they have a stable identity and don't need to appear in the
 // updateProfile useCallback's dependency array.
@@ -1233,7 +1254,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     ]
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  // Memoised on the uid alone — this is the whole point of the second
+  // context. `children` is a stable prop reference across AuthProvider's own
+  // re-renders, so when only `value` changes React re-renders this Provider
+  // but bails out of the subtree, and uid consumers stay put.
+  const uid = user?.uid ?? null;
+
+  return (
+    <AuthContext.Provider value={value}>
+      <AuthUidContext.Provider value={uid}>{children}</AuthUidContext.Provider>
+    </AuthContext.Provider>
+  );
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -1241,4 +1272,20 @@ export function useAuth() {
   const ctx = use(AuthContext);
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
+}
+
+/**
+ * The signed-in uid, or `null` when signed out.
+ *
+ * Prefer this over `useAuth().user?.uid` wherever the uid is all you need —
+ * it subscribes to `AuthUidContext`, so profile writes don't re-render the
+ * caller. Reach for `useAuth()` when you need the profile, the `User` object
+ * itself, or any of the auth actions.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useUid() {
+  const uid = use(AuthUidContext);
+  if (uid === undefined)
+    throw new Error("useUid must be used within AuthProvider");
+  return uid;
 }
