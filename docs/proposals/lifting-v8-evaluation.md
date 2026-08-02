@@ -1150,6 +1150,31 @@ uncalibrated scale and needs first-and-last set — i.e. it needs 11a.
    knee-dominant, triceps long vs lateral/medial)? The narrower version is
    cheaper and covers every case Schoenfeld names. I lean narrow, but this is a
    real fork and it belongs in 13a's ADR.
+
+   **STATUS 2026-08-02 — resolved, and the fork dissolves rather than being
+   picked.** Neither branch is right, because both set the taxonomy by
+   deciding what we WANT to track. The shipped rule sets it by what the data
+   can already say: **split wherever the exercise DB carries the finer label on
+   at least one exercise.** Every split is then a distinction the old map was
+   discarding, nothing is invented, and no exercise had to be re-labelled.
+   That lands at 27 fine muscles — the "20–25" ballpark, arrived at by a rule
+   rather than a target.
+
+   Checked against the four cases the question names: **delts ×3 is in** (the
+   DB has `Front/Side/Rear Delts` and `Rotator Cuff`). **Quad heads and triceps
+   heads are out** — no exercise labels either, so the split is not
+   representable; the blocker is the data, not the taxonomy, and when the
+   labels exist each split is one row. **Hamstrings hip- vs knee-dominant is
+   not a taxonomy question at all** — it is one muscle trained by two movement
+   patterns, which `movementCategory` already distinguishes, so putting it in
+   the muscle table would have been a category error.
+
+   The reasoning lives in `muscleTaxonomy.ts` rather than an ADR because the
+   file IS the decision — an ADR pointing at a table that can drift from it
+   would be the second source of truth this arc keeps deleting. What the module
+   does carry, and what a response engine must read before titrating, is which
+   splits are CITED (delts, back) versus merely data-preserving.
+
 4. **The delt volume target is a live disagreement between two practitioner
    sources** — Meadows's _high_ band for shoulders (11–12 sets) sits below
    Nippard's front-delt-only allocation. Whatever number the engine picks, it is
