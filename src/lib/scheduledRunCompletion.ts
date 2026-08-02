@@ -106,7 +106,14 @@ function distanceAndBucketOk(
   const plannedDistanceFor =
     (deps && deps.plannedDistanceFor) || defaultPlannedDistanceFor;
   const plannedDistance = plannedDistanceFor(runDay);
-  const bucket = templateBucket(runDay.templateId, deps);
+  /* `userOverride || templateId` — a swapped day is the session the user
+     actually chose, and the bucket has to agree with the other two reads of
+     the day's identity: the race short-circuit below already resolves this
+     way, and `plannedDistanceFor` began doing so in #1834. Until then the
+     bucket alone read `templateId`, so swapping an easy day to a tempo left
+     it completable by any easy-paced run (and swapping a tempo down to easy
+     kept a pace bar the user had explicitly removed). */
+  const bucket = templateBucket(runDay.userOverride || runDay.templateId, deps);
 
   if (plannedDistance > 0) {
     const ratio =
