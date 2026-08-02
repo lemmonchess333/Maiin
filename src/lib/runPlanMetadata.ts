@@ -655,7 +655,7 @@ function templateToPrefill(
   paceTable?: PaceTable | null
 ): RunPlanPrefill {
   const prefill: RunPlanPrefill = { activityType: tmpl.type };
-  if (tmpl.config.targetDistance) {
+  if (tmpl.config.targetDistanceKm) {
     // RUN_TEMPLATES authoring uses kilometres (friendlier for
     // editing templates), but RunConfig.target.value is metres
     // per the canonical contract documented on the RunConfig
@@ -665,7 +665,7 @@ function templateToPrefill(
     // directly, no scattered multipliers.
     prefill.target = {
       type: "distance",
-      value: tmpl.config.targetDistance * 1000,
+      value: tmpl.config.targetDistanceKm * 1000,
     };
   } else if (tmpl.config.targetPace || paceTable) {
     // Adaptive Paces: resolve the prescribed pace from the user's fitness

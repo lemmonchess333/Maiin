@@ -708,7 +708,7 @@ export default function RunSummary() {
     const table = paceTableFromFitness(profile?.runFitness ?? null);
     if (!table) return null;
     const paces = resolveSessionPaces(tmpl.type, table, {
-      raceDistanceKey: raceDistanceKeyFromKm(tmpl.config.targetDistance),
+      raceDistanceKey: raceDistanceKeyFromKm(tmpl.config.targetDistanceKm),
     });
     const target =
       paces.targetPace ??

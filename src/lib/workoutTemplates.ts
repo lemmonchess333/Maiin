@@ -7,7 +7,7 @@ export interface RunTemplate {
   estimatedDuration: number;
   config: {
     targetPace?: number;
-    targetDistance?: number;
+    targetDistanceKm?: number;
     intervals?: {
       reps: number;
       workDistance?: number;
@@ -79,7 +79,7 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     icon: "route",
     description: "Easy-to-moderate effort, time on feet",
     estimatedDuration: 55,
-    config: { targetDistance: 10 },
+    config: { targetDistanceKm: 10 },
   },
   {
     id: "long_15k",
@@ -88,7 +88,7 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     icon: "route",
     description: "Steady, controlled effort",
     estimatedDuration: 80,
-    config: { targetDistance: 15 },
+    config: { targetDistanceKm: 15 },
   },
   {
     id: "5k_race",
@@ -97,7 +97,7 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     icon: "flag",
     description: "All-out 5km effort",
     estimatedDuration: 25,
-    config: { targetDistance: 5 },
+    config: { targetDistanceKm: 5 },
   },
   {
     id: "10k_race",
@@ -106,7 +106,7 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     icon: "flag",
     description: "All-out 10km effort",
     estimatedDuration: 50,
-    config: { targetDistance: 10 },
+    config: { targetDistanceKm: 10 },
   },
   {
     id: "half_race",
@@ -115,7 +115,7 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     icon: "flag",
     description: "All-out half-marathon effort",
     estimatedDuration: 110,
-    config: { targetDistance: 21.1 },
+    config: { targetDistanceKm: 21.1 },
   },
   {
     id: "marathon_race",
@@ -124,7 +124,7 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     icon: "flag",
     description: "All-out marathon effort",
     estimatedDuration: 240,
-    config: { targetDistance: 42.2 },
+    config: { targetDistanceKm: 42.2 },
   },
 ];
 
