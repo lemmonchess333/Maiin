@@ -284,23 +284,147 @@ export function runTuningFromProfile(profile: {
   return { volume, difficulty };
 }
 
-/** Resolve a long-run template ID by phase + race-distance peak,
- *  through the volume knob:
- *    lighter  → long runs cap at the 10K tier for every distance
- *    standard → historical threshold (≥15km peak → long_15k)
- *    bigger   → the 15K tier unlocks from a 10km peak (10K/half/
- *               marathon plans long at 15K; a 5K plan stays 10K)
- *  Centralised here so every race-prep week picks the same way. */
-function pickLongTemplateId(
-  peakLongKm: number,
-  phase: "base" | "build" | "taper" | "race",
-  volume: RunVolumePreset
-): string {
-  if (phase === "taper" || phase === "race") return "easy_30";
-  const effectivePeak =
-    volume === "lighter" ? Math.min(peakLongKm, 10) : peakLongKm;
-  const threshold = volume === "bigger" ? 10 : 15;
-  return effectivePeak >= threshold ? "long_15k" : "long_10k";
+/**
+ * The long-run tiers available to the scheduler, ascending.
+ *
+ * Kept as a local ladder rather than derived from RUN_TEMPLATES so the
+ * scheduler's choice is explicit and ordered; pinned set-equal to the
+ * `type: "long"` templates by `longRunProgression.test.ts`.
+ */
+const LONG_RUN_TIERS: ReadonlyArray<{ id: string; km: number }> = [
+  { id: "long_10k", km: 10 },
+  { id: "long_15k", km: 15 },
+  { id: "long_20k", km: 20 },
+  { id: "long_25k", km: 25 },
+  { id: "long_30k", km: 30 },
+];
+
+/** Every 4th week is a cutback — the long run steps back rather than up. */
+const CUTBACK_EVERY = 4;
+/** How much a cutback week takes off the ramped distance. */
+const CUTBACK_FRACTION = 0.75;
+
+/**
+ * Pgm6 volume knob, expressed as a scale on the distance's OWN peak.
+ *
+ * The pre-existing knob was absolute — `lighter` clamped every distance to
+ * the 10K tier and `bigger` unlocked the 15K tier from a 10km peak — which
+ * reproduced the same defect this module exists to fix, one level down: a
+ * marathon and a half on `lighter` got byte-identical long runs. Scaling the
+ * distance's own peak keeps the knob's meaning (a lighter or bigger version
+ * of THIS race's plan) while preserving the race-relative shape.
+ *
+ * `bigger` is additionally clamped to the top tier: 25% over a marathon's
+ * 32km peak would prescribe 40km long runs, past every mainstream ceiling
+ * (Pfitzinger tops out ~32-35km, Hansons ~26km). The knob tunes the plan; it
+ * does not get to invent a training load no methodology endorses.
+ */
+const LIGHTER_PEAK_FACTOR = 0.75;
+const BIGGER_PEAK_FACTOR = 1.25;
+
+function effectivePeakKm(peakLongKm: number, volume: RunVolumePreset): number {
+  if (volume === "lighter") return peakLongKm * LIGHTER_PEAK_FACTOR;
+  if (volume === "bigger") {
+    const ceiling = LONG_RUN_TIERS[LONG_RUN_TIERS.length - 1].km;
+    return Math.min(peakLongKm * BIGGER_PEAK_FACTOR, ceiling);
+  }
+  return peakLongKm;
+}
+
+/**
+ * Target long-run distance for a given week of a race plan.
+ *
+ * ── Why this exists ──────────────────────────────────────────────────────
+ *
+ * It replaces a picker that returned one of two fixed templates for the
+ * WHOLE plan. The consequences were not subtle: a 27-week marathon plan
+ * prescribed `long_15k` every single week and then a 42.2 km race — a 2.8x
+ * jump from the longest training run. `peakLongKm: 32` was declared in
+ * RACE_CONFIGS and never reached, because it only ever fed a `>= 15`
+ * comparison, so marathon and half generated identical long runs.
+ *
+ * ── What the literature actually supports ────────────────────────────────
+ *
+ * That the long run must PROGRESS toward the race demand is not seriously
+ * disputed by any mainstream methodology — Daniels, Pfitzinger & Douglas,
+ * Hansons and Noakes disagree about the ceiling, not about the ramp. Their
+ * marathon ceilings bracket this implementation: Hansons is deliberately the
+ * most conservative at ~26 km (justified by high weekly volume and cumulative
+ * fatigue), Pfitzinger goes to 32-35 km. A 30 km peak sits inside that range.
+ *
+ * The SHAPE here is convention rather than trial-proven, and it is worth
+ * being honest about which is which:
+ *   - ramp toward the race demand — universal, uncontested;
+ *   - periodic cutback weeks — universal practice, thin direct evidence;
+ *   - the "10% per week" rule — deliberately NOT used. It is folk wisdom, and
+ *     the one RCT to test it directly (Buist et al., 2008) found a 10%-graded
+ *     programme did not reduce injury rate versus a standard one. Capping the
+ *     ramp by tier and inserting cutbacks is what the actual programmes do.
+ *
+ * ── Shape ────────────────────────────────────────────────────────────────
+ *
+ * Linear ramp from the distance's `baseLongKm` to the volume-adjusted peak
+ * across the pre-taper weeks, with the peak landing on the LAST pre-taper
+ * week, a cutback every 4th week, and taper/race weeks handled by the caller.
+ */
+export function longRunKmForWeek(input: {
+  weekIndex: number;
+  totalWeeks: number;
+  baseLongKm: number;
+  peakLongKm: number;
+  taperWeeks: number;
+  volume: RunVolumePreset;
+}): number {
+  const { weekIndex, totalWeeks, baseLongKm, taperWeeks, volume } = input;
+  // No headroom in the PLAN — checked before the knob, so "bigger" cannot
+  // manufacture headroom the caller deliberately withheld. This is what makes
+  // the below-floor caller's safety precedence structural rather than a
+  // coercion: it passes peak === base, and neither knob can act on that.
+  if (input.peakLongKm <= baseLongKm) return baseLongKm;
+  // ...and none left after the knob: "lighter" is allowed to flatten it.
+  const peak = effectivePeakKm(input.peakLongKm, volume);
+  if (peak <= baseLongKm) return baseLongKm;
+
+  // Pre-taper window: [0, lastRampWeek]. The final race week and the taper
+  // weeks before it are the caller's business.
+  const lastRampWeek = Math.max(0, totalWeeks - 1 - taperWeeks - 1);
+  if (lastRampWeek === 0) return baseLongKm;
+
+  const clamped = Math.min(Math.max(0, weekIndex), lastRampWeek);
+  const progress = clamped / lastRampWeek;
+  const ramped = baseLongKm + (peak - baseLongKm) * progress;
+
+  // Cutback every 4th week — but never on the final ramp week, which is the
+  // peak the whole block builds toward.
+  const isCutback =
+    (weekIndex + 1) % CUTBACK_EVERY === 0 && weekIndex !== lastRampWeek;
+  return isCutback ? Math.max(baseLongKm, ramped * CUTBACK_FRACTION) : ramped;
+}
+
+/** Snap a target distance to the nearest tier at or below it, with the
+ *  shortest tier as the floor. Never prescribes MORE than asked for. */
+export function longTierForKm(km: number): string {
+  let chosen = LONG_RUN_TIERS[0];
+  for (const tier of LONG_RUN_TIERS) {
+    if (tier.km <= km) chosen = tier;
+  }
+  return chosen.id;
+}
+
+/** Resolve the long-run template for a week of a race plan. Taper and race
+ *  weeks drop to an easy run — the taper's volume cut, unchanged from the
+ *  original behaviour. */
+function pickLongTemplateId(input: {
+  weekIndex: number;
+  totalWeeks: number;
+  phase: "base" | "build" | "taper" | "race";
+  baseLongKm: number;
+  peakLongKm: number;
+  taperWeeks: number;
+  volume: RunVolumePreset;
+}): string {
+  if (input.phase === "taper" || input.phase === "race") return "easy_30";
+  return longTierForKm(longRunKmForWeek(input));
 }
 
 export interface StructuredWeekV2Input {
@@ -550,15 +674,28 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
       week.push(
         buildRunDayV2({
           dayIndex: longSlot,
-          // Cap at baseLongKm (not peak) so the long run never jumps.
-          // Pgm6 safety precedence: "bigger" is IGNORED below the floor —
-          // the finish-safely shape never inflates. "lighter" (more
-          // conservative) is always honoured.
-          templateId: pickLongTemplateId(
-            config.baseLongKm,
+          // Cap at baseLongKm (not peak) so the long run never jumps, and
+          // with it the Pgm6 safety precedence: peak === base leaves no
+          // headroom, so "bigger" has nothing to inflate into.
+          //
+          // Be clear about its status: with the CURRENT floor definition
+          // this cap is belt-and-braces, not load-bearing. belowFloor means
+          // totalWeeks < taperWeeks + 1, which forces longRunKmForWeek's
+          // pre-taper window to zero, so the ramp is already flat here
+          // whatever peak it is handed. Mutating this argument to
+          // config.peakLongKm changes no output today — a fact pinned by
+          // `longRunProgression.test.ts` ("a below-floor plan has no room to
+          // ramp"), so that lowering getRaceFloorWeeks surfaces the
+          // dependency instead of silently making this the only guard.
+          templateId: pickLongTemplateId({
+            weekIndex: w,
+            totalWeeks,
             phase,
-            tuning.volume === "bigger" ? "standard" : tuning.volume
-          ),
+            baseLongKm: config.baseLongKm,
+            peakLongKm: config.baseLongKm,
+            taperWeeks: TAPER_WEEKS_BY_DISTANCE[input.raceGoal.distance],
+            volume: tuning.volume,
+          }),
           type: phase === "taper" ? "easy" : "long",
           weekStart,
         })
@@ -581,7 +718,15 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     week.push(
       buildRunDayV2({
         dayIndex: longSlot,
-        templateId: pickLongTemplateId(config.peakLongKm, phase, tuning.volume),
+        templateId: pickLongTemplateId({
+          weekIndex: w,
+          totalWeeks,
+          phase,
+          baseLongKm: config.baseLongKm,
+          peakLongKm: config.peakLongKm,
+          taperWeeks: TAPER_WEEKS_BY_DISTANCE[input.raceGoal.distance],
+          volume: tuning.volume,
+        }),
         type: phase === "taper" ? "easy" : "long",
         weekStart,
       })
