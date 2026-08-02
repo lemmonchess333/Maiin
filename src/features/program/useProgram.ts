@@ -125,8 +125,10 @@ import {
 import { isScheduledRaceRunDay } from "@/lib/workoutTemplates";
 import { canRescheduleRun, computeRunMove } from "@/lib/runReschedule";
 import { toast } from "@/lib/toast";
-import { generateInstanceId } from "./programTypes";
+import { generateInstanceId, normalizeExercise } from "./programTypes";
 import { enqueueCommand, isTransportFailure } from "./commandOutbox";
+import { repUnitForExerciseId } from "./repUnits";
+import { getExerciseById } from "@/lib/exercises";
 import { sendProgramCommand } from "./programCommandClient";
 
 const PROGRAM_DOC = "current";
@@ -2101,6 +2103,25 @@ export function useProgram() {
   }, [programState, saveProgram]);
 
   /**
+   * Re-read the authoritative programme document.
+   *
+   * Every command path needs this and for the same reason: the server may have
+   * applied more than the client modelled, so re-deriving the result locally is
+   * the tested-copy-vs-running-copy mistake. Extracted once three callers
+   * wanted it — success, a rejected remove/add, and the deload command.
+   */
+  const refetchProgramState = useCallback(async () => {
+    if (!user) return;
+    const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return;
+    const normalized = normalizeProgramState(snap.data() as ProgramState, {
+      primaryGoal: profile?.primaryGoal,
+    });
+    setProgramState(migrateProgramState(normalized, localWeekKey()));
+  }, [user, profile]);
+
+  /**
    * Run a programme command through the server boundary, optimistically.
    *
    * ── The seam the boundary migration needs (P6) ─────────────────────────
@@ -2160,17 +2181,10 @@ export function useProgram() {
         logger.error(`[useProgram] ${command.kind} rejected`, err);
         return "rejected";
       }
-      const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
-      const snap = await getDoc(ref);
-      if (snap.exists()) {
-        const normalized = normalizeProgramState(snap.data() as ProgramState, {
-          primaryGoal: profile?.primaryGoal,
-        });
-        setProgramState(migrateProgramState(normalized, localWeekKey()));
-      }
+      await refetchProgramState();
       return "applied";
     },
-    [user, profile, programState]
+    [user, programState, refetchProgramState]
   );
 
   /**
@@ -2254,6 +2268,117 @@ export function useProgram() {
       return true;
     },
     [programState, runProgramCommand, saveProgram]
+  );
+
+  /**
+   * Remove one exercise from a day, through the boundary.
+   *
+   * Migrated because it is equivalent: the reducer is a pure removal by
+   * `instanceId`, exactly what the client did by index. Note this is the
+   * remove with NO undo partner — the other one offers an undo that
+   * re-inserts the exercise WITH its history and load, and the server's
+   * `addExercises` rebuilds from the catalog and can restore neither, so
+   * migrating that half while its undo stays a direct write would leave
+   * precisely the mixed-mode clobbering the boundary exists to remove.
+   *
+   * A rejection here means "it is already gone" — the client's view is stale,
+   * so it REFETCHES rather than rolling back to a state now known to be wrong.
+   * That is a different recovery from the reorder's, and deliberately so: you
+   * cannot repair a stale removal by forcing it.
+   */
+  const removeExerciseFromDay = useCallback(
+    async (dayIndex: number, instanceId: string): Promise<boolean> => {
+      if (!programState) return false;
+      const outcome = await runProgramCommand(
+        {
+          kind: "removeExercise",
+          commandId: generateInstanceId(),
+          dayIndex,
+          exerciseInstanceId: instanceId,
+        },
+        (state) => ({
+          ...state,
+          workouts: state.workouts.map((d, i) =>
+            i === dayIndex
+              ? {
+                  ...d,
+                  exercises: d.exercises.filter(
+                    (ex) => ex.instanceId !== instanceId
+                  ),
+                }
+              : d
+          ),
+        })
+      );
+      if (outcome === "rejected") {
+        toast.error("Couldn't remove that. Refreshing.");
+        await refetchProgramState();
+      }
+      return outcome !== "rejected";
+    },
+    [programState, runProgramCommand, refetchProgramState]
+  );
+
+  /**
+   * Append exercises to a day, through the boundary.
+   *
+   * Equivalent because both sides start an added movement UNCALIBRATED: the
+   * reducer's own comment says it matches "the client add default (3×10×0)",
+   * and it does. That is what separates this from `replaceExercise`, where the
+   * client calibrates against the profile and the server deliberately does not
+   * — migrating that one would regress every swap to 0 kg.
+   *
+   * The server derives the name and category from the catalog rather than
+   * trusting a client-supplied exercise object, which is the boundary's whole
+   * security stance, so only ids cross the wire.
+   */
+  const addExercisesToDayCmd = useCallback(
+    async (dayIndex: number, exerciseIds: string[]): Promise<boolean> => {
+      if (!programState || exerciseIds.length === 0) return false;
+      const commandId = generateInstanceId();
+      const outcome = await runProgramCommand(
+        {
+          kind: "addExercises",
+          commandId,
+          dayIndex,
+          exercises: exerciseIds.map((exerciseId) => ({ exerciseId })),
+        },
+        (state) => ({
+          ...state,
+          workouts: state.workouts.map((d, i) =>
+            i === dayIndex
+              ? {
+                  ...d,
+                  exercises: [
+                    ...d.exercises,
+                    ...exerciseIds.map((exerciseId, n) => {
+                      const repUnit = repUnitForExerciseId(exerciseId);
+                      return normalizeExercise({
+                        name: getExerciseById(exerciseId)?.name ?? exerciseId,
+                        exerciseId,
+                        // Mirror the reducer's deterministic ids so the
+                        // optimistic rows and the refetched ones are the same
+                        // rows — otherwise React remounts every added item.
+                        instanceId: `cmd-${commandId}-${n}`,
+                        sets: 3,
+                        reps: repUnit === "seconds" ? 30 : 10,
+                        weight: 0,
+                        ...(repUnit !== undefined ? { repUnit } : {}),
+                      });
+                    }),
+                  ],
+                }
+              : d
+          ),
+        })
+      );
+      if (outcome === "rejected") {
+        toast.error("Couldn't add that. Refreshing.");
+        await refetchProgramState();
+      }
+      return outcome !== "rejected";
+    },
+    [programState, runProgramCommand, refetchProgramState]
   );
 
   /** PROGRAM-DELOAD-01 — apply/revert the deload week via the server
@@ -2538,6 +2663,8 @@ export function useProgram() {
     regenerateProgram,
     saveProgram,
     reorderDayExercises,
+    removeExerciseFromDay,
+    addExercisesToDayCmd,
     markManualComplete,
     unmarkManualComplete,
     skipRunDay,

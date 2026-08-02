@@ -142,6 +142,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     regenerateProgram,
     saveProgram,
     reorderDayExercises,
+    removeExerciseFromDay,
+    addExercisesToDayCmd,
     viewWeek,
     viewingHistoryIndex,
     viewedWorkouts,
@@ -439,12 +441,12 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
       .map((ex) => ex.exerciseId)
       .lastIndexOf(exerciseId);
     if (lastIdx === -1) return;
-    const updated = programState.workouts.map((d, i) =>
-      i === dayIdx
-        ? { ...d, exercises: d.exercises.filter((_, ei) => ei !== lastIdx) }
-        : d
-    );
-    await saveProgram({ ...programState, workouts: updated });
+    // P6: through the boundary. This is the remove with NO undo partner, which
+    // is what makes it migratable — the other one offers an undo that restores
+    // the exercise's history and load, and the server cannot rebuild either.
+    const instanceId = exercises[lastIdx]?.instanceId;
+    if (!instanceId) return;
+    await removeExerciseFromDay(dayIdx, instanceId);
   };
 
   const moveExercise = async (
@@ -548,21 +550,15 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     // "horizontal_push" was tagging every added exercise (including
     // pulls, legs, isolations) as a horizontal press, contaminating
     // analytics, MuscleHeatMap input, and social-post muscle groups.
-    const newExs = exercises.map((e) => {
-      const repUnit = repUnitForExerciseId(e.id);
-      return normalizeExercise({
-        name: e.name,
-        exerciseId: e.id,
-        sets: 3,
-        reps: repUnit === "seconds" ? 30 : 10,
-        weight: 0,
-        ...(repUnit !== undefined ? { repUnit } : {}),
-      });
-    });
-    const updated = programState.workouts.map((d, i) =>
-      i === dayIdx ? { ...d, exercises: [...d.exercises, ...newExs] } : d
+    // P6: through the boundary. Only IDS cross the wire — the server derives
+    // the name and category from the catalog rather than trusting a
+    // client-supplied exercise object, which is the boundary's security stance.
+    // Equivalent because both sides start an added movement UNCALIBRATED at
+    // 3x10x0; that is what separates this from `replaceExercise`.
+    await addExercisesToDayCmd(
+      dayIdx,
+      exercises.map((e) => e.id)
     );
-    await saveProgram({ ...programState, workouts: updated });
     setShowAddPicker(false);
   };
 

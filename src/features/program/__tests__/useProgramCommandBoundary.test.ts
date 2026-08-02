@@ -263,3 +263,101 @@ describe("reorderDayExercises — the migrated writer", () => {
     ]);
   });
 });
+
+/* ─── The other two writers with no new server code (P6) ─────────────────
+   `removeExercise` and `addExercises` are the only remaining Program.tsx
+   sites whose reducer already reproduces the client. The recovery differs
+   from the reorder's on purpose: a rejected reorder can be repaired by
+   writing it (which also persists the ids), whereas a rejected remove means
+   "it is already gone" — you cannot fix a stale view by forcing it, so those
+   REFETCH. ── */
+describe("removeExerciseFromDay", () => {
+  it("sends removeExercise and drops the row optimistically", async () => {
+    const hook = await mounted();
+    const before = writeLog().length;
+
+    await act(async () => {
+      await hook.result.current.removeExerciseFromDay(0, "i-b");
+    });
+
+    const sent = sendProgramCommand.mock.calls[0][0] as any;
+    expect(sent.kind).toBe("removeExercise");
+    expect(sent.exerciseInstanceId).toBe("i-b");
+    expect(writeLog().length).toBe(before);
+  });
+
+  it("REFETCHES rather than forcing a stale removal", async () => {
+    // The server said the exercise is no longer there. Rolling back to the
+    // client's pre-command view would restore a state already known to be
+    // wrong, and writing it directly would clobber whatever really happened.
+    sendProgramCommand.mockRejectedValue(
+      callableError("functions/failed-precondition")
+    );
+    const hook = await mounted();
+    const before = writeLog().length;
+
+    await act(async () => {
+      await hook.result.current.removeExerciseFromDay(0, "i-b");
+    });
+
+    // No write — the correct response to a stale view is to re-read it.
+    expect(writeLog().length).toBe(before);
+    expect(names(hook)).toEqual(["Alpha", "Bravo", "Charlie"]);
+  });
+});
+
+describe("addExercisesToDayCmd", () => {
+  it("sends only exercise IDS, never a client-built exercise", async () => {
+    // The boundary's security stance: the server derives name and category
+    // from the catalog. A client-supplied exercise object is rejected by the
+    // validator by construction, so sending one would be a latent failure.
+    const hook = await mounted();
+
+    await act(async () => {
+      await hook.result.current.addExercisesToDayCmd(0, ["bench-press"]);
+    });
+
+    const sent = sendProgramCommand.mock.calls[0][0] as any;
+    expect(sent.kind).toBe("addExercises");
+    expect(sent.exercises).toEqual([{ exerciseId: "bench-press" }]);
+  });
+
+  it("mints the SAME instanceIds the reducer will, so rows do not remount", async () => {
+    // The reducer derives `cmd-<commandId>-<n>`. If the optimistic row used a
+    // different id, the refetch would swap it for a different React key and
+    // the freshly-added row would visibly remount.
+    //
+    // Asserted while the send is still in flight. After it resolves the hook
+    // refetches, and the seeded doc never gained the exercise because the
+    // send is a mock — so the post-success state is the seed, correctly.
+    const hook = await mounted();
+    let release: (() => void) | undefined;
+    sendProgramCommand.mockImplementation(
+      () => new Promise<undefined>((r) => (release = () => r(undefined)))
+    );
+
+    let pending: Promise<boolean> | undefined;
+    await act(async () => {
+      pending = hook.result.current.addExercisesToDayCmd(0, ["bench-press"]);
+    });
+
+    const sent = sendProgramCommand.mock.calls[0][0] as any;
+    const added = (
+      hook.result.current.programState as ProgramState
+    ).workouts[0].exercises.at(-1);
+    expect(added?.instanceId).toBe(`cmd-${sent.commandId}-0`);
+
+    await act(async () => {
+      release?.();
+      await pending;
+    });
+  });
+
+  it("does nothing when given no exercises", async () => {
+    const hook = await mounted();
+    await act(async () => {
+      await hook.result.current.addExercisesToDayCmd(0, []);
+    });
+    expect(sendProgramCommand).not.toHaveBeenCalled();
+  });
+});
