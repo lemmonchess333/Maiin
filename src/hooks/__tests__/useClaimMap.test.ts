@@ -242,3 +242,97 @@ describe("useClaimMap", () => {
     expect(r2.current.today).toBe("2026-06-01");
   });
 });
+/**
+ * The 70% distance gate (PR-J-Q1 pin P2).
+ *
+ * These are the tests the file was missing. Until 2026-08-02 the planned
+ * distance was fed to `computeClaims` in KILOMETRES while `saved.distance` is
+ * METRES, so the ratio ran 1000x high and the gate never rejected anything.
+ * Nothing caught it because every fixture above either uses a templateId that
+ * is not in RUN_TEMPLATES at all (`easy-5k`, `freerun` -> planned 0 -> the
+ * distance branch is skipped) or sits far above the bar, and not one asserted
+ * a REJECTION.
+ *
+ * `long_15k` is deliberate: type "long" buckets as "easy", so no pace
+ * requirement can mask what the distance branch decides.
+ */
+describe("useClaimMap - distance threshold", () => {
+  // Sibling describe: the beforeEach above does not reach here, and without
+  // its own reset the saved runs from earlier tests stay in the store and
+  // compete for the slot through the single-claim walk.
+  beforeEach(() => {
+    resetFirestore();
+    currentUser = mockUser;
+    mockProgramState = null;
+  });
+
+  const LONG_15K_DAY = {
+    id: "rd-long",
+    date: "2026-05-26",
+    dayIndex: 2,
+    templateId: "long_15k",
+    type: "long",
+    status: "planned",
+  };
+
+  async function claimFor(
+    runDay: Record<string, unknown>,
+    distance: number
+  ): Promise<ReturnType<typeof useClaimMap>> {
+    mockProgramState = { runDays: [runDay], manualCompletions: {} };
+    const { result } = renderHook(() => useClaimMap("2026-05-26"));
+    await act(async () => {
+      seedRuns([
+        {
+          id: "saved-d",
+          data: {
+            date: "2026-05-26",
+            distance,
+            avgPace: 330,
+            createdAt: Timestamp.fromMillis(1716700000_000),
+          },
+        },
+      ]);
+      await flushSnapshots();
+    });
+    return result.current;
+  }
+
+  it("REJECTS a saved run below 70% of the planned distance", async () => {
+    // 5km against a 15km slot = 33%.
+    const r = await claimFor(LONG_15K_DAY, 5000);
+    expect(r.claimMap.get("rd-long")?.claimedSavedRunId).toBeUndefined();
+    // It is not silently dropped either - it surfaces as an extra run.
+    expect(r.unclaimedByDate.get("2026-05-26")).toHaveLength(1);
+  });
+
+  it("accepts a saved run at exactly the 70% boundary", async () => {
+    const r = await claimFor(LONG_15K_DAY, 10500);
+    expect(r.claimMap.get("rd-long")?.claimedSavedRunId).toBe("saved-d");
+  });
+
+  it("accepts a saved run above the threshold", async () => {
+    const r = await claimFor(LONG_15K_DAY, 15000);
+    expect(r.claimMap.get("rd-long")?.claimedSavedRunId).toBe("saved-d");
+  });
+
+  it("compares METRES to METRES - a 20m run cannot claim a 15K slot", async () => {
+    // The regression test for the unit bug. Under the old kilometre-valued
+    // lookup this was 20 / 15 = 1.33, comfortably over the 0.7 bar, so a
+    // twenty-metre walk completed a 15K long run. It must now be 20 / 15000.
+    const r = await claimFor(LONG_15K_DAY, 20);
+    expect(r.claimMap.get("rd-long")?.claimedSavedRunId).toBeUndefined();
+  });
+
+  it("judges a swapped day against the OVERRIDE, not the original template", async () => {
+    // Tired user swaps their 15K down to an easy 30. `easy_30` is
+    // duration-based (no targetDistanceKm), so the distance branch is skipped
+    // and a 5km run completes the day. Resolving `templateId` alone would
+    // still hold them to the 15K bar and reject it.
+    const r = await claimFor(
+      { ...LONG_15K_DAY, userOverride: "easy_30" },
+      5000
+    );
+    expect(r.claimMap.get("rd-long")?.claimedSavedRunId).toBe("saved-d");
+  });
+});

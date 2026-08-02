@@ -4547,16 +4547,18 @@ exports.onRunCreated = functions
       // `distance > 0` / `duration > 0`, which let a fat-fingered
       // "too-fast" save (e.g. 20km / 0:08, isInvalid + savedAnyway
       // both true with positive distance) bump km challenges and
-      // fastest-effort PRs. Inline equivalent of `isVolumeEligible`
-      // from src/lib/runStatsEligibility.ts (functions/ is plain
-      // JS / excluded from the TS path alias, so direct import
-      // isn't available). Missing flags default to "not flagged"
-      // so pre-PR-#480 legacy writes still progress as before.
-      const isCountable =
-        data.isInvalid !== true &&
-        data.savedAnyway !== true &&
-        (Number(data.distance) || 0) >= 50 &&
-        (Number(data.duration) || 0) >= 30;
+      // fastest-effort PRs. Missing flags default to "not flagged" so
+      // pre-PR-#480 legacy writes still progress as before.
+      //
+      // Was an inline re-implementation until 2026-08-02, under a comment
+      // claiming a direct import "isn't available" — `./lib/runEligibility`
+      // is required at the top of this file and re-exported as
+      // `_isVolumeEligibleRun`, and that module's own header already said
+      // this duplicate had been consolidated. Two copies of the declared
+      // mirror of `src/lib/runStatsEligibility.ts:isVolumeEligible`, in the
+      // one file the mirror gate deliberately exempts, is exactly the
+      // "tested copy does not prove the running copy" shape.
+      const isCountable = isVolumeEligibleRun(data);
 
       if (isCountable) {
         // SOCIAL S3 (Soc7) — advance partner-streak bonds. Gated on the
