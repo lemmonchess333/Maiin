@@ -719,10 +719,17 @@ export interface ProgramState {
    WEEKLY PRESCRIPTION
 ================================ */
 
+/**
+ * Transient — computed per call by `generateWeekPrescription`, never persisted.
+ *
+ * `intensityMultiplier` and `volumeModifier` were removed here after a grep
+ * across `src/` and `functions/` found zero readers: they were written on
+ * every call and consumed by nothing, so the advertised 2.5%/week intensity
+ * ramp was never behaviour. See `generateWeekPrescription` for why they were
+ * deleted rather than wired.
+ */
 export interface WeeklyPrescription {
   week: number;
-  intensityMultiplier: number;
-  volumeModifier: number;
   deload: boolean;
 }
 

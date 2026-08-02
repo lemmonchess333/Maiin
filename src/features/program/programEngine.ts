@@ -156,21 +156,31 @@ const MAX_HOLD_SECONDS = 60;
    WEEKLY PRESCRIPTION
 ================================ */
 
+/**
+ * The mesocycle position of a week. Every 4th week is a deload.
+ *
+ * This used to also return `intensityMultiplier` (`1 + (week % 4) * 0.025`,
+ * i.e. an advertised 2.5%/week intensity ramp) and `volumeModifier`. Both were
+ * written here and read NOWHERE — not in `src/`, not in `functions/`, not by
+ * `advanceWeek`, which branches only on `.deload`. The ramp did not exist as
+ * behaviour, so the whole "periodization" was already this one boolean; the
+ * two fields only made it look like more.
+ *
+ * Deleted rather than wired, because wiring them would change every user's
+ * prescription and none of the sources support that particular shape:
+ * Schoenfeld p.193 (systematic review of 12 studies — no clear benefit to
+ * periodizing for HYPERTROPHY; it is established for strength), p.194 (linear
+ * and undulating equivalent across a meta-analysis plus 8 primary studies),
+ * Helms p.79 ("asking 'which type of periodization is the best?' is the wrong
+ * question"). A mod-4 intensity ramp is not a finding, it is a decoration.
+ *
+ * Safe to delete outright: `WeeklyPrescription` is computed on demand at each
+ * call site and never persisted — `advanceWeek` stores only the derived
+ * `currentPhase` string — so there is no stored document carrying these
+ * fields and no sanitiser allow-list to update.
+ */
 export function generateWeekPrescription(week: number): WeeklyPrescription {
-  if (week % 4 === 0) {
-    return {
-      week,
-      intensityMultiplier: 0.85,
-      volumeModifier: 0.7,
-      deload: true,
-    };
-  }
-  return {
-    week,
-    intensityMultiplier: 1 + (week % 4) * 0.025,
-    volumeModifier: 1,
-    deload: false,
-  };
+  return { week, deload: week % 4 === 0 };
 }
 
 /**
@@ -2051,6 +2061,31 @@ function applyAdjustment(
     exercises: day.exercises.map((ex) => {
       const out: ProgramExercise = { ...ex };
       const base = ex.baseSets ?? ex.sets;
+      // Every lever below is ACCESSORY-ONLY, including the reorganise swap.
+      // Mains are the progression anchor — the same reason `add_volume` and
+      // `reduce_volume` have always been scoped this way.
+      //
+      // The swap used to sit OUTSIDE this guard, so a stalled MAIN could be
+      // re-picked and run through `swapExerciseIdentity`, which zeroes
+      // `performanceHistory`, `lastPerformance`, `consecutiveFailures` and
+      // `plateauCount`. That is an unrecoverable response to a stall: a coach
+      // does not answer a plateau by deleting the lift's training log, and the
+      // user cannot undo it. `represcribe.ts` already documented this as a
+      // live hazard and worked around it (Epley rescaling + a 3-week amnesty)
+      // rather than fixing it here.
+      //
+      // Ordered by REVERSIBILITY, an exercise swap is a costlier intervention
+      // than a deload even though it is a smaller-looking change: a deload's
+      // error cost is near zero (Schoenfeld p.200 — a 3-week break mid-
+      // programme did not interfere with adaptations; RP Ch3 P213 — deloading
+      // early is less detrimental than deloading late), whereas a swap's error
+      // cost is a destroyed history. So the cheap intervention is the one the
+      // engine is allowed to apply unattended, and the expensive one is not.
+      //
+      // A stalled MAIN is not left unhandled: `applyProgression`'s backoff
+      // still cuts its load 5% every third failure, the mesocycle deload still
+      // reaches it, and a user who genuinely wants a different main lift can
+      // swap it themselves. What is removed is the engine silently doing it.
       if (ex.isAccessory === true) {
         if (action === "add_volume") {
           out.baseSets = Math.min(ACCESSORY_RAMP_CAP, base + 1);
@@ -2061,19 +2096,20 @@ function applyAdjustment(
           out.baseSets = Math.max(ACCESSORY_ANCHOR_FLOOR, base - 1);
           out.sets = Math.max(ACCESSORY_ANCHOR_FLOOR, out.sets - 1);
         }
-      }
-      if (action === "reorganize" && (ex.plateauCount ?? 0) > 0) {
-        const swap = pickExercise(
-          ex.movementCategory,
-          Math.max(3, ex.plateauCount ?? 0),
-          ex.exerciseId,
-          experience
-        );
-        // Only clear the stall once the reorganisation actually changed the
-        // movement. Previously counts 1–2 made `pickExercise` return the same
-        // id and we still erased the evidence of the unresolved plateau.
-        if (swap.id !== ex.exerciseId) {
-          return swapExerciseIdentity(out, swap, undefined, ex);
+
+        if (action === "reorganize" && (ex.plateauCount ?? 0) > 0) {
+          const swap = pickExercise(
+            ex.movementCategory,
+            Math.max(3, ex.plateauCount ?? 0),
+            ex.exerciseId,
+            experience
+          );
+          // Only clear the stall once the reorganisation actually changed the
+          // movement. Previously counts 1–2 made `pickExercise` return the same
+          // id and we still erased the evidence of the unresolved plateau.
+          if (swap.id !== ex.exerciseId) {
+            return swapExerciseIdentity(out, swap, undefined, ex);
+          }
         }
       }
       return out;

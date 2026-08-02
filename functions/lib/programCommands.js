@@ -58,7 +58,10 @@ const { buildProgramExercise } = require("./programExerciseBuilder");
 const { estimateLiftBurn } = require("./workoutBurn");
 // Deload-transform mirror (pinned by a parity cross-test). Used by the
 // applyDeloadWeek reducer (PROGRAM-DELOAD-01).
-const { applyDeloadToWorkouts } = require("./deloadEngine");
+const {
+  applyDeloadToWorkouts,
+  prepareForDeloadWorkouts,
+} = require("./deloadEngine");
 
 const TIMED_EXERCISE_IDS = new Set([
   "plank",
@@ -964,7 +967,17 @@ function applyDeloadWeekCommand(state, profile, command, now) {
     },
     // Backlog #8: the recipe follows training age. An absent/unknown
     // experience falls back to the novice recipe — the pre-#8 behaviour.
-    workouts: applyDeloadToWorkouts(state.workouts, profile && profile.experience),
+    //
+    // `prepareForDeloadWorkouts` FIRST, exactly as the client's automatic
+    // week-4 path does (`applyDeload(prepareForDeload(workouts))`). Without
+    // it this command cut load/reps with nothing to restore from, so meso
+    // exit never undid the cut and the user stayed permanently lighter. The
+    // deloadSnapshot below does not cover that: its weekNumber guard makes it
+    // inert once the week rolls, which is precisely when the restore is due.
+    workouts: applyDeloadToWorkouts(
+      prepareForDeloadWorkouts(state.workouts),
+      profile && profile.experience
+    ),
     currentPhase: "deload",
     fatigueScore: 0,
   };

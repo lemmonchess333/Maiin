@@ -43,6 +43,16 @@ const PROGRAM_STATE_KEYS = new Set([
   "manualCompletions",
   "pendingFellBehindPrompt",
   "primaryGoal",
+  // Backlog #9 (Helms H5): the adjustment rule's second-order memory.
+  // `advanceWeek` emits it UNCONDITIONALLY (programEngine.ts, in the return
+  // literal), so every user who has ever rolled a week carries it — and
+  // without this entry `applyProgramCommand` dropped it and threw
+  // invalid-argument, meaning the "Apply deload week" button did not lose
+  // load for those users, it did nothing at all. Missing since #9 shipped;
+  // the fixture-based coverage test below could not see it, which is why
+  // `programStateKeyParity.test.js` now derives the key set from the
+  // ProgramState interface instead.
+  "plateauResponses",
   "templateId",
   "programSchemaVersion",
   // PROGRAM-DELOAD-01: pre-deload stash written by the applyDeloadWeek
