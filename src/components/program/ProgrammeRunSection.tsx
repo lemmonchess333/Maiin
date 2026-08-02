@@ -662,7 +662,7 @@ export default function ProgrammeRunSection({
     return sessionPaceDisplay(
       resolveSessionPaces(selectedTemplate.type, table, {
         raceDistanceKey: raceDistanceKeyFromKm(
-          selectedTemplate.config.targetDistance
+          selectedTemplate.config.targetDistanceKm
         ),
       })
     );
@@ -681,8 +681,8 @@ export default function ProgrammeRunSection({
   const selectedRunMeta: string[] = (() => {
     if (!selectedTemplate) return [];
     const meta: string[] = [];
-    if (selectedTemplate.config.targetDistance) {
-      meta.push(`${selectedTemplate.config.targetDistance}km`);
+    if (selectedTemplate.config.targetDistanceKm) {
+      meta.push(`${selectedTemplate.config.targetDistanceKm}km`);
     } else if (selectedTemplate.estimatedDuration) {
       meta.push(`${selectedTemplate.estimatedDuration} min`);
     }
