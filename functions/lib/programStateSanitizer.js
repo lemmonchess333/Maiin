@@ -43,6 +43,16 @@ const PROGRAM_STATE_KEYS = new Set([
   "manualCompletions",
   "pendingFellBehindPrompt",
   "primaryGoal",
+  // Backlog #9 (Helms H5): the adjustment rule's second-order memory.
+  // `advanceWeek` emits it UNCONDITIONALLY (programEngine.ts, in the return
+  // literal), so every user who has ever rolled a week carries it — and
+  // without this entry `applyProgramCommand` dropped it and threw
+  // invalid-argument, meaning the "Apply deload week" button did not lose
+  // load for those users, it did nothing at all. Missing since #9 shipped;
+  // the fixture-based coverage test below could not see it, which is why
+  // `programStateKeyParity.test.js` now derives the key set from the
+  // ProgramState interface instead.
+  "plateauResponses",
   "templateId",
   "programSchemaVersion",
   // PROGRAM-DELOAD-01: pre-deload stash written by the applyDeloadWeek
@@ -62,6 +72,21 @@ const PROGRAM_STATE_KEYS = new Set([
   //   configurePlan only warns and drops, so an unlisted key would delete
   //     the user's block on every settings save, with nothing surfaced.
   "trainingBlock",
+  // D1: the lift side's calendar anchor (Sunday week key of the week the
+  // current workouts belong to). Client-written by `advanceWeek`; listed here
+  // so the server paths that round-trip a whole programState don't strip it
+  // and strand the user's rollover.
+  "liftWeekKey",
+  // 14b: canonical muscles that got a recovery session on the last advance.
+  // One week's refractory list, not a history — see `recoveryTrigger.ts`.
+  // Unlisted, it would strand a muscle mid-re-entry AND reject the deload
+  // command outright for any user carrying one.
+  "recoveringMuscles",
+  // P6 soft delete: the single-slot stash the `restoreExercise` undo reads.
+  // Unlisted, `removeExercise` would write a key the sanitiser drops — and
+  // `applyProgramCommand` REJECTS on any dropped key, so every removal would
+  // hard-error rather than merely losing the undo.
+  "lastRemovedExercise",
 ]);
 
 // Generous ceiling well under Firestore's ~1 MiB document limit. A real

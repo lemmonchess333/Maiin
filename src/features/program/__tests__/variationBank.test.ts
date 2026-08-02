@@ -21,7 +21,12 @@ import {
   pickExercise,
   pickAccessory,
   rescaleForSwap,
+  exerciseDisplayName,
 } from "../variationBank";
+import { getExerciseById } from "@/lib/exercises";
+import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 describe("rescaleForSwap — unsafe boundaries", () => {
   it("zeros a loaded-to-bodyweight swap instead of carrying kilograms", () => {
@@ -212,13 +217,18 @@ describe("pickAccessory", () => {
   it("biases toward LENGTHENED options when the category has any (D-LIFT-2)", () => {
     // Categories with tagged lengthened accessories should ONLY return those
     // (lengthened bias), never a non-lengthened non-primary.
+    // Reads the flag from the CATALOGUE (11b) — the bank's duplicate copy is
+    // gone, and reading it here would have been a second source of truth in
+    // the very test that pins the first.
+    const isLengthened = (id: string) =>
+      getExerciseById(id)?.lengthenedBias === true;
     const withLengthened = (
       Object.keys(exerciseBank) as (keyof typeof exerciseBank)[]
-    ).filter((cat) => exerciseBank[cat].some((e) => e.lengthened));
+    ).filter((cat) => exerciseBank[cat].some((e) => isLengthened(e.id)));
     expect(withLengthened.length).toBeGreaterThan(0);
     for (const cat of withLengthened) {
       const lengthenedIds = new Set(
-        exerciseBank[cat].filter((e) => e.lengthened).map((e) => e.id)
+        exerciseBank[cat].filter((e) => isLengthened(e.id)).map((e) => e.id)
       );
       for (let i = 0; i < 25; i++) {
         expect(lengthenedIds.has(pickAccessory(cat).id)).toBe(true);
@@ -250,5 +260,98 @@ describe("pickAccessory", () => {
     /* Since we can only exclude one id, exclusion still leaves
        2 valid candidates. Just verify result is one of them. */
     expect(["overhead-extension", "tricep-dips"]).toContain(result.id);
+  });
+});
+
+/* ─── One exercise record (11b) ──────────────────────────────────────────
+   The bank used to restate `name` and the lengthened-position flag from
+   `src/lib/exercises.ts`, and every one of those duplicates had drifted:
+
+     - `chest-supported-db-row` was "Chest-Supported DB Row" here and
+       "Chest-Supported Dumbbell Row" in the catalogue — and the bank's copy
+       is what gets written into the user's programme, so the programme card
+       and the exercise guide named the same lift differently. The SERVER's
+       name mirror (`functions/lib/exerciseCatalog.js`) has been pinned to the
+       catalogue by a cross-test for some time; the client bank was the
+       unpinned third copy.
+     - Fifteen bank entries carried `lengthened: true`; ZERO catalogue rows
+       carried `lengthenedBias`. A documented field with no data and no
+       reader, so anything asking the catalogue got `false` for every lift.
+     - The bank's grouping said `tricep-dips` is `arms_triceps`;
+       `STORED_CATEGORY` said `horizontal_push`. One exercise, two movements,
+       depending on which module asked.
+
+   These pin the merge. Read them as "there is one place each of these facts
+   is written down", not as "the two copies currently agree". ── */
+describe("one exercise record (11b)", () => {
+  const allOptions = (
+    Object.keys(exerciseBank) as (keyof typeof exerciseBank)[]
+  ).flatMap((cat) => exerciseBank[cat].map((o) => ({ cat, ...o })));
+
+  it("every bank id exists in the catalogue", () => {
+    // The bank holds ids and nothing else identifying, so an id with no
+    // catalogue row is a broken reference: the user would see the raw id.
+    const orphans = allOptions
+      .filter((o) => !getExerciseById(o.id))
+      .map((o) => `${o.cat}/${o.id}`);
+    expect(orphans, orphans.join(", ")).toEqual([]);
+    expect(allOptions.length).toBeGreaterThan(40); // the scan is not empty
+  });
+
+  it("the bank's grouping agrees with STORED_CATEGORY", () => {
+    // Two tables answer "what movement is this": the bank's grouping (used to
+    // seed loads) and STORED_CATEGORY (stamped onto every ProgramExercise).
+    // They disagreed on tricep-dips. CLAUDE.md's #1 recurring mistake is the
+    // same fact derived in two places; this is the pin that makes them one.
+    const disagree = allOptions
+      .filter((o) => inferMovementCategory("", o.id) !== o.cat)
+      .map(
+        (o) =>
+          `${o.id}: bank=${o.cat} stored=${inferMovementCategory("", o.id)}`
+      );
+    expect(disagree, disagree.join("\n")).toEqual([]);
+  });
+
+  it("a bank entry cannot restate a catalogue field", () => {
+    // Structural, so this survives someone re-adding `name` by hand rather
+    // than only catching today's two fields. Parses the interface at test
+    // time (the `profileFieldRegistry` technique) and holds the key set.
+    const src = readFileSync(resolve(__dirname, "../variationBank.ts"), "utf8");
+    const body = /interface ExerciseOption \{([\s\S]*?)\n\}/.exec(src)?.[1];
+    expect(
+      body,
+      "ExerciseOption interface not found — did it get renamed?"
+    ).toBeDefined();
+    const fields = [...(body ?? "").matchAll(/^ {2}(\w+)\??:/gm)].map(
+      (m) => m[1]
+    );
+
+    // Only PROGRAMME facts belong here: how this generator uses the movement.
+    // Anything describing the MOVEMENT itself (name, muscles, equipment,
+    // lengthenedBias, instructions, difficulty) belongs to the catalogue.
+    expect(fields.sort()).toEqual(
+      ["complexity", "id", "loadFactor", "primary", "role"].sort()
+    );
+  });
+
+  it("the lengthened-position data lives in the catalogue and is not empty", () => {
+    // The half of the merge that could silently un-do itself: dropping
+    // `lengthened` from the bank without the backfill would leave
+    // `pickAccessory`'s bias reading `false` for everything, and the accessory
+    // picker would still return SOMETHING — no test would fail on emptiness
+    // alone. So assert the data is actually there.
+    const lengthened = allOptions.filter(
+      (o) => getExerciseById(o.id)?.lengthenedBias === true
+    );
+    expect(lengthened.length).toBeGreaterThanOrEqual(15);
+  });
+
+  it("picked names come from the catalogue, including the row that drifted", () => {
+    expect(exerciseDisplayName("chest-supported-db-row")).toBe(
+      "Chest-Supported Dumbbell Row"
+    );
+    // …and every picker agrees, because they all resolve through it.
+    const picked = pickExercise("horizontal_pull", 0, "chest-supported-db-row");
+    expect(picked.name).toBe(getExerciseById(picked.id)?.name);
   });
 });

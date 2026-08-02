@@ -177,13 +177,20 @@ export function applyComplexityGate<
     string,
     ReadonlyArray<{
       id: string;
-      name: string;
       primary: boolean;
       complexity?: MovementComplexity;
     }>
   >,
   /** Optional load rescaler for a swapped slot — see the call in the body. */
-  rescale?: (ex: E, toExerciseId: string) => number | undefined
+  rescale?: (ex: E, toExerciseId: string) => number | undefined,
+  /**
+   * Display name for a swapped-in id. Injected for the same reason `rescale`
+   * is — this module takes the bank as an argument precisely so it does not
+   * import it, and 11b removed the duplicated `name` from the bank entries so
+   * the catalogue is the only place a name is written down. Absent, a swapped
+   * slot keeps the name it had, which is wrong but visibly so.
+   */
+  resolveName?: (toExerciseId: string) => string
 ): D[] {
   if (allowsComplexity(experience, "advanced")) return workouts; // nothing gated
   let changed = false;
@@ -216,8 +223,17 @@ export function applyComplexityGate<
         ? rescale(ex, swap.id)
         : (ex as { weight?: number }).weight;
       return weight === undefined
-        ? { ...ex, exerciseId: swap.id, name: swap.name }
-        : { ...ex, exerciseId: swap.id, name: swap.name, weight };
+        ? {
+            ...ex,
+            exerciseId: swap.id,
+            name: resolveName?.(swap.id) ?? ex.name,
+          }
+        : {
+            ...ex,
+            exerciseId: swap.id,
+            name: resolveName?.(swap.id) ?? ex.name,
+            weight,
+          };
     });
     return { ...day, exercises };
   });

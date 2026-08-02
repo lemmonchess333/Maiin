@@ -123,15 +123,62 @@ const BODYWEIGHT_IDS: ReadonlySet<string> = new Set(
  * compound. Everything else in the bank inherited it: a beginner's Romanian
  * deadlift, hip thrust and leg curl were all handed the deadlift's 68 kg.
  */
+/**
+ * Fallback scale for an ACCESSORY the variation bank has never heard of.
+ *
+ * `BW_MULTIPLE` is calibrated on the category's compound — a squat, a bench, a
+ * row — and `loadFactorFor` is what scales an isolation down from it. An
+ * exercise absent from the bank has no factor, so it used to take the
+ * compound's multiple at full strength. That is where the template path's
+ * infamous seeds came from: an 80 kg intermediate was handed a **35 kg
+ * dumbbell lateral raise**, a **52.5 kg face pull**, and an **85 kg leg
+ * extension** and **85 kg seated calf raise** (the knee-dominant compound's
+ * own seed, unscaled).
+ *
+ * 0.3 sits at the conservative end of the real factors in the bank (which run
+ * 0.25–1.6) and matches this module's stated principle: a light start
+ * self-corrects on the first session, a heavy one costs a failed one.
+ *
+ * The gate is **absence from the bank**, not the `isAccessory` flag alone.
+ * That flag is a VOLUME role, not a load claim — `buildFullBody` legitimately
+ * uses the deadlift in an accessory slot, and a deadlift is a deadlift
+ * whatever role it plays that day. Keying on the flag alone dropped it from
+ * 100 kg to 30 kg, which the existing "the flag is a volume role, not a load
+ * claim" test caught. So both conditions must hold: the slot is assistance
+ * work AND the bank has no load metadata for it at all.
+ */
+const UNKNOWN_ACCESSORY_FACTOR = 0.3;
+
 export function startingWeightForExercise(
   exerciseId: string | undefined,
   category: MovementCategory,
-  ctx: StartingLoadContext
+  ctx: StartingLoadContext,
+  /** Whether this slot is assistance work. Templates author it directly; the
+   *  generator sets it from the builders. Absent = treat as a main. */
+  isAccessory?: boolean
 ): number {
   if (exerciseId && BODYWEIGHT_IDS.has(exerciseId)) return 0;
-  const base = startingWeightForCategory(category, ctx);
+
+  // Prefer the bank's own category over the caller's. The two disagree
+  // whenever the caller's came from name inference — `Leg Curl` infers
+  // `knee_dominant` while the bank files `seated-leg-curl` under
+  // `hip_dominant` with `loadFactor: 0.25`. Looking up the factor under the
+  // inferred category found nothing, returned the default 1, and seeded the
+  // curl at the SQUAT's 85 kg instead of 25 kg. The bank is where the load
+  // metadata lives, so it is the authority on which category to scale from.
+  const bankCategory = movementCategoryForExerciseId(exerciseId);
+  const seedCategory = bankCategory ?? category;
+  const base = startingWeightForCategory(seedCategory, ctx);
   if (base <= 0) return 0;
-  const raw = base * loadFactorFor(exerciseId, category);
+
+  // Unknown to the bank AND flagged as assistance → no load metadata exists,
+  // so scale down rather than hand it the compound's multiple.
+  const factor =
+    bankCategory === undefined && isAccessory === true
+      ? UNKNOWN_ACCESSORY_FACTOR
+      : loadFactorFor(exerciseId, seedCategory);
+
+  const raw = base * factor;
   if (raw <= 0) return 0;
   return Math.max(2.5, Math.round(raw / 2.5) * 2.5);
 }
@@ -212,7 +259,8 @@ export function seedStartingLoads(
       const seed = startingWeightForExercise(
         ex.exerciseId,
         ex.movementCategory,
-        ctx
+        ctx,
+        ex.isAccessory === true
       );
       if (seed <= 0) return ex; // bodyweight pattern — leave as-is
       return {

@@ -83,6 +83,8 @@ function functionsJsFiles(): string[] {
 
 // Mirror file → its cross-test (relative to repo root). Each must exist.
 const PINNED: Record<string, string> = {
+  "functions/lib/workoutSetRecord.js":
+    "src/features/program/__tests__/workoutSetRecord.cross.test.ts",
   "functions/performanceEngine.js":
     "src/lib/__tests__/performanceEngineParity.cross.test.ts",
   "functions/lib/perfScoring.js":
@@ -124,6 +126,19 @@ const PINNED: Record<string, string> = {
   // applyDeload (and the easierToday.deloadWeight weight rule).
   "functions/lib/deloadEngine.js":
     "src/features/program/__tests__/deloadEngine.cross.test.ts",
+  // Easing-block progression hold — the third branch of logExercise, which
+  // the server reducer lacked until the writer migrated to the boundary.
+  "functions/lib/progressionHold.js":
+    "src/features/program/__tests__/progressionHold.cross.test.ts",
+  // One-off run move — the copy inside the command transaction is the one
+  // that decides where the run is actually stored.
+  "functions/lib/runReschedule.js":
+    "src/features/program/__tests__/runReschedule.cross.test.ts",
+  // Blk2 — the goal-prescription engine a training block applies at start
+  // and un-applies at release. The server copy is the one that decides what
+  // a block actually writes.
+  "functions/lib/represcribe.js":
+    "src/features/program/__tests__/represcribe.cross.test.ts",
   // Race-template ids — data-list mirror of the race-TYPE RUN_TEMPLATES
   // entries. Same shape as spaceIds below: the server cannot import the
   // catalogue, so the list is pinned set-equal instead.

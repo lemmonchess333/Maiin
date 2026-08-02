@@ -27,6 +27,47 @@ const DELOAD_REPS_FLOOR = 3;
 const HOLD_STEP_SECONDS = 5;
 
 /**
+ * Server mirror of `programEngine.prepareForDeload`. Re-anchor sets to
+ * `baseSets` and stash each exercise's pre-deload weight and rep target so
+ * mesocycle exit can restore them (`applyWeeklyVolumeShape` max()-restores
+ * both and deletes the stash).
+ *
+ * Why the server needs this at all: the client's AUTOMATIC week-4 deload has
+ * always run `applyDeload(prepareForDeload(workouts))`, but the user-invoked
+ * `applyDeloadWeek` command called `applyDeloadToWorkouts` directly with no
+ * stash. So a user who took the app's own advice, trained the week and rolled
+ * over found nothing to restore from: the novice recipe's ×0.85 load cut and
+ * the post-novice recipe's −2 reps became PERMANENT. Sets recovered (they are
+ * re-derived from `baseSets`); load and reps did not.
+ *
+ * `prepareForDeload`'s own doc comment asserted the manual path was covered
+ * "with its undo snapshot" — that belief is why the gap existed. The snapshot
+ * guards the UNDO WINDOW only: `deloadSnapshot`'s weekNumber guard makes it
+ * inert the moment the week cursor moves, which is exactly when the restore
+ * is needed.
+ *
+ * Both stashes are unconditional w.r.t. the recipe, matching the client: only
+ * the post-novice recipe cuts reps and only the novice recipe cuts load, but a
+ * user who changes experience level mid-mesocycle must still get back
+ * whichever one was cut.
+ *
+ * @param {Array<{ exercises: Array<object> }>} workouts
+ * @returns {Array} a new array — input is never mutated.
+ */
+function prepareForDeloadWorkouts(workouts) {
+  return workouts.map((day) => ({
+    ...day,
+    exercises: day.exercises.map((ex) => {
+      const base = ex.baseSets === undefined ? ex.sets : ex.baseSets;
+      const out = { ...ex, baseSets: base, sets: base };
+      if (out.weight > 0) out.preDeloadWeight = out.weight;
+      out.preDeloadReps = out.reps;
+      return out;
+    }),
+  }));
+}
+
+/**
  * Apply the deload transform to a full week of workout days.
  *
  * @param {Array<{ exercises: Array<{ sets: number, weight: number }> }>} workouts
@@ -58,4 +99,8 @@ function applyDeloadToWorkouts(workouts, experience) {
   }));
 }
 
-module.exports = { applyDeloadToWorkouts, DELOAD_REPS_FLOOR };
+module.exports = {
+  applyDeloadToWorkouts,
+  prepareForDeloadWorkouts,
+  DELOAD_REPS_FLOOR,
+};
