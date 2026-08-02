@@ -1088,13 +1088,38 @@ describe("completeWorkoutDay (effect — calorie mirror pinned by cross-test)", 
       exerciseName: "Bench",
       category: "horizontal_push",
       caloriesBurned: 0,
+      // D2: the per-set record now carries how the set was performed and the
+      // PRESCRIPTION it was performed against, via the projection shared with
+      // the client (functions/lib/workoutSetRecord.js, pinned by
+      // workoutSetRecord.cross.test.ts).
       sets: [
-        { setNumber: 1, reps: 8, weightKg: 100 },
-        { setNumber: 2, reps: 8, weightKg: 100 },
+        {
+          setNumber: 1,
+          reps: 8,
+          weightKg: 100,
+          type: "working",
+          plannedReps: 8,
+          plannedWeightKg: 100,
+        },
+        {
+          setNumber: 2,
+          reps: 8,
+          weightKg: 100,
+          type: "working",
+          plannedReps: 8,
+          plannedWeightKg: 100,
+        },
       ],
     });
     expect(w.exercises[1].sets).toEqual([
-      { setNumber: 1, reps: 10, weightKg: 60 },
+      {
+        setNumber: 1,
+        reps: 10,
+        weightKg: 60,
+        type: "working",
+        plannedReps: 10,
+        plannedWeightKg: 60,
+      },
     ]);
   });
 
@@ -1134,11 +1159,20 @@ describe("completeWorkoutDay (effect — calorie mirror pinned by cross-test)", 
 
   it("falls back to planned data when a set log is absent", () => {
     const w = run({}, { setLogs: [] }).effects.workout;
-    // no logs → planned: bench 3 sets @ reps 8 / weight 100
+    // no logs → planned: bench 3 sets @ reps 8 / weight 100. D2: the
+    // synthesised rows are typed "working" and carry actual === planned,
+    // since there is no execution to distinguish them from.
+    const planned = {
+      reps: 8,
+      weightKg: 100,
+      type: "working",
+      plannedReps: 8,
+      plannedWeightKg: 100,
+    };
     expect(w.exercises[0].sets).toEqual([
-      { setNumber: 1, reps: 8, weightKg: 100 },
-      { setNumber: 2, reps: 8, weightKg: 100 },
-      { setNumber: 3, reps: 8, weightKg: 100 },
+      { setNumber: 1, ...planned },
+      { setNumber: 2, ...planned },
+      { setNumber: 3, ...planned },
     ]);
   });
 

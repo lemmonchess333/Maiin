@@ -81,6 +81,8 @@ function applyProgression(
     repsCompleted: actualReps,
     repsTarget: exercise.reps,
   };
+  // Mirrors PERFORMANCE_HISTORY_CAP in programEngine.ts (pinned by the
+  // applyProgression cross-test).
   const history = [...(exercise.performanceHistory || []), record].slice(-10);
 
   const updated = {

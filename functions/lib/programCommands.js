@@ -56,6 +56,9 @@ const { buildProgramExercise } = require("./programExerciseBuilder");
 // Calorie-engine mirror (pinned by a parity cross-test). Used by the
 // completeWorkoutDay effect to compute the saved workout's totalCalories.
 const { estimateLiftBurn } = require("./workoutBurn");
+// Per-set record projection mirror (pinned by a parity cross-test). Used by
+// the completeWorkoutDay effect to build the saved workout's sets.
+const { projectWorkoutSets } = require("./workoutSetRecord");
 // Deload-transform mirror (pinned by a parity cross-test). Used by the
 // applyDeloadWeek reducer (PROGRAM-DELOAD-01).
 const {
@@ -287,13 +290,31 @@ function validatePrecondition(command, out) {
 
 const PRECONDITION_KEYS = ["dayIndex", "expectedWeekNumber", "expectedDaySignature"];
 
+// D2: how a set was performed, and how hard it felt. Both are OPTIONAL so a
+// pre-D2 client keeps validating, and both are bounded like every other
+// primitive here — this validator runs under the Admin SDK and bypasses
+// Firestore rules, so an unbounded field would be a hole rather than a
+// convenience.
+const SET_LOG_TYPES = new Set(["working", "warmup", "dropset", "failure"]);
+const MAX_RPE = 10;
+
 function validateSetLog(entry, label) {
-  assertKeys(entry, label, ["weight", "reps", "completed"], []);
-  return {
+  assertKeys(entry, label, ["weight", "reps", "completed"], ["type", "rpe"]);
+  const out = {
     weight: assertFiniteNumber(entry.weight, `${label}.weight`, 0, MAX_WEIGHT),
     reps: assertBoundedInt(entry.reps, `${label}.reps`, 0, MAX_REPS),
     completed: assertBoolean(entry.completed, `${label}.completed`),
   };
+  if ("type" in entry && entry.type !== undefined) {
+    if (typeof entry.type !== "string" || !SET_LOG_TYPES.has(entry.type)) {
+      invalidCommand(`${label}.type must be a known set type.`);
+    }
+    out.type = entry.type;
+  }
+  if ("rpe" in entry && entry.rpe !== undefined) {
+    out.rpe = assertFiniteNumber(entry.rpe, `${label}.rpe`, 0, MAX_RPE);
+  }
+  return out;
 }
 
 function validateSetLogs(value) {
@@ -1201,15 +1222,19 @@ function completeWorkoutDayWithEffect(state, profile, command, now) {
       ex.lastPerformance && ex.lastPerformance.reps != null
         ? ex.lastPerformance.reps
         : ex.reps;
+    // D2: shared projection, mirroring the client's. Was a third independent
+    // copy of the same filter-then-renumber logic.
     const sets = logs
-      ? logs
-          .filter((l) => l.completed)
-          .map((l, i) => ({ setNumber: i + 1, reps: l.reps, weightKg: l.weight }))
-      : Array.from({ length: ex.sets }, (_, i) => ({
-          setNumber: i + 1,
+      ? projectWorkoutSets(logs, {
+          sets: ex.sets,
+          reps: ex.reps,
+          weightKg: ex.weight,
+        })
+      : projectWorkoutSets(undefined, {
+          sets: ex.sets,
           reps: plannedReps,
           weightKg: plannedWeight,
-        }));
+        });
     return {
       exerciseId: ex.exerciseId,
       exerciseName: ex.name,

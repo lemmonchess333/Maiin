@@ -149,6 +149,29 @@ export function prescribedRepCeiling(ex: {
 const HOLD_STEP_SECONDS = 5;
 /** Ceiling for a hold with no authored range — past this, add load instead. */
 const MAX_HOLD_SECONDS = 60;
+
+/**
+ * Per-exercise `performanceHistory` ceiling.
+ *
+ * D2: this was `.slice(-10)` here and in the server mirror, but `.slice(-20)`
+ * on `useProgram`'s block-amnesty branch — so how much history a lifter kept
+ * silently depended on whether a training block happened to be holding
+ * progression that week. Exported so the three sites share one number.
+ *
+ * NOT raised to cover the multi-week phenomena the lifting arc cares about
+ * (interference takes ~8 weeks to appear, periodisation diverges after ~6),
+ * even though 10 sessions is plainly shorter than that. The reason is
+ * document size, not principle: `advanceWeek` snapshots the WHOLE `workouts`
+ * array into `weekHistory` and keeps 8 of them, so every record here is
+ * multiplied ~9× inside one programState doc — and
+ * `programStateTooLarge` rejects the command outright past its ceiling.
+ * Raising it needs that size analysis first.
+ *
+ * It is also less urgent than it looks: the durable evidence now lives in the
+ * per-session workout documents, which are uncapped (D2). This array is a
+ * convenience cache on programState, not the record of truth.
+ */
+export const PERFORMANCE_HISTORY_CAP = 10;
 // Load step (backlog #7, H3) — the discriminator lives in movementClass.ts;
 // see that module for why `isAccessory` was the wrong one.
 
@@ -1675,7 +1698,9 @@ export function applyProgression(
     repsCompleted: actualReps,
     repsTarget: exercise.reps,
   };
-  const history = [...(exercise.performanceHistory || []), record].slice(-10);
+  const history = [...(exercise.performanceHistory || []), record].slice(
+    -PERFORMANCE_HISTORY_CAP
+  );
 
   const updated: ProgramExercise = {
     ...exercise,

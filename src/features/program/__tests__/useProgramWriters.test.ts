@@ -24,6 +24,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { generateSchedule } from "@/lib/scheduleUtils";
+import { toCompletionSetLogs } from "../warmupRamp";
 import {
   localWeekKey,
   localDateString,
@@ -2224,5 +2225,82 @@ describe("auto week-rollover for a freeform lifter (D1)", () => {
     const last = writes[writes.length - 1]?.data as ProgramState | undefined;
     // The migration seeds today; the rollover then finds nothing to do.
     expect(last?.weekNumber ?? 3).toBe(3);
+  });
+});
+
+/* ─── D2 · the per-set evidence reaches Firestore ───────────────────────
+   The unit tests above prove the projection is correct in isolation. This
+   proves the whole write path carries it, which is the thing that was broken:
+   every hop existed and worked, and the data still died at
+   `toCompletionSetLogs` one function before the batch commit.
+
+   None of this is backfillable — every workout document ever written has
+   three fields per set, and `applyProgression` overwrites the prescription
+   immediately after each session — so the value of this change is entirely in
+   the clock it starts. Nothing reads these fields yet, by design. ── */
+describe("per-set evidence survives the save (D2)", () => {
+  it("writes set type, RPE and the planned pair onto the workout doc", async () => {
+    mockProfile = structuredProfile({ runMode: "freeform" });
+    resetFirestore();
+
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    markWrites();
+
+    await act(async () => {
+      await result.current.completeWorkoutDay(0, {
+        completionId: "abcdefgh",
+        completionCommandId: "abcdefghabcdefgh",
+        durationMinutes: 45,
+        // Fed through the REAL capture boundary rather than hand-built.
+        // A hand-built payload skips `toCompletionSetLogs` — which is where
+        // the evidence was being destroyed — so the assertions below would
+        // pass against the broken build. (They did, on the first attempt;
+        // the mutation check is what caught it.) The warm-up row is here to
+        // prove the filter that must NOT change still fires.
+        setLogs: toCompletionSetLogs([
+          [
+            { weight: 40, reps: 5, completed: true, type: "warmup", rpe: 4 },
+            { weight: 100, reps: 8, completed: true, type: "working", rpe: 8 },
+            { weight: 60, reps: 12, completed: true, type: "dropset" },
+          ],
+        ]),
+      });
+    });
+
+    const workoutWrite = batchCommits()
+      .flat()
+      .find((w) => w.ref.path.includes("/workouts/"));
+
+    expect(workoutWrite).toBeDefined();
+    const ex = (
+      workoutWrite!.data!.exercises as Array<{
+        sets: Array<Record<string, unknown>>;
+        plannedSetCount?: number;
+      }>
+    )[0];
+
+    expect(ex.sets[0]).toMatchObject({
+      reps: 8,
+      weightKg: 100,
+      type: "working",
+      rpe: 8,
+    });
+    // The prescription the set was executed against — destroyed by
+    // applyProgression a moment later, so unrecoverable from any later read.
+    expect(ex.sets[0].plannedReps).toBeTypeOf("number");
+    expect(ex.sets[0].plannedWeightKg).toBeTypeOf("number");
+    // A drop set is PERSISTED (it is real work) even though D3 bars it from
+    // driving progression.
+    expect(ex.sets[1]).toMatchObject({ type: "dropset", weightKg: 60 });
+    // Planned-vs-completed set count, recorded additively.
+    expect(ex.plannedSetCount).toBeTypeOf("number");
+
+    // Session-level provenance, so a consumer can tell whose RPE this is.
+    expect(workoutWrite!.data!.rpeProvenance).toMatchObject({
+      shownByDefault: expect.any(Boolean),
+    });
   });
 });

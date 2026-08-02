@@ -83,6 +83,8 @@ function functionsJsFiles(): string[] {
 
 // Mirror file → its cross-test (relative to repo root). Each must exist.
 const PINNED: Record<string, string> = {
+  "functions/lib/workoutSetRecord.js":
+    "src/features/program/__tests__/workoutSetRecord.cross.test.ts",
   "functions/performanceEngine.js":
     "src/lib/__tests__/performanceEngineParity.cross.test.ts",
   "functions/lib/perfScoring.js":

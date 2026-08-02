@@ -45,8 +45,9 @@ import {
   generateWeekPrescription,
   applyProgression,
 } from "./programEngine";
+import { PERFORMANCE_HISTORY_CAP } from "./programEngine";
 import { loadContextFrom } from "./startingLoads";
-import { toExperience } from "./experienceModel";
+import { showsRpeByDefault, toExperience } from "./experienceModel";
 import { recoveryStateFrom } from "./adjustmentRule";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { logger } from "@/lib/logger";
@@ -59,6 +60,16 @@ export interface CompletedSetLog {
   weight: number;
   reps: number;
   completed: boolean;
+  /** D2: how the set was performed. Captured in the session UI since the set
+   *  tracker shipped, dropped at the write boundary until now. Optional at
+   *  this boundary because the projection defaults an absent/unknown value to
+   *  "working"; the real writer (`toCompletionSetLogs`) always supplies it. */
+  type?: string;
+  /** D2: Helms's 6–10 half-point scale, present only when the session
+   *  surfaced the control. Interpret via the session-level `rpeProvenance` on
+   *  the workout document — a novice's RPE is not the same instrument as an
+   *  RPE-familiar advanced lifter's (Helms p73). */
+  rpe?: number;
 }
 
 /**
@@ -105,6 +116,7 @@ import {
 } from "@/lib/dateHelpers";
 import { isInRecoveryOn } from "@/lib/runPlanResolver";
 import { CURRENT_PROGRAM_SCHEMA_VERSION } from "./programTypes";
+import { projectWorkoutSets } from "./workoutSetRecord";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 import {
   getScheduledRunStatus,
@@ -891,22 +903,29 @@ export function useProgram() {
       // otherwise from planned data (every set assumed completed).
       const exercises = day.exercises.map((ex, exIndex) => {
         const logs = sessionData.setLogs?.[exIndex];
+        // D2: the no-logs fallback keeps its historical shape — the last
+        // ATTEMPTED load and the last actual reps, which is the best guess
+        // available when a day is marked done without a live session.
         const plannedWeight = ex.lastAttemptedWeight || ex.weight;
         const plannedReps = ex.lastPerformance?.reps ?? ex.reps;
 
+        // D2: one shared projection across all three call sites (here,
+        // Routine, and the server command reducer). The planned pair recorded
+        // on each set is the PRESCRIPTION — `ex.reps` / `ex.weight` — because
+        // that is what `applyProgression` scores the actual against, and what
+        // it overwrites a moment later. The fallback branch below has no
+        // prescription to preserve, so it reuses its own planned values.
         const sets = logs
-          ? logs
-              .filter((l) => l.completed)
-              .map((l, i) => ({
-                setNumber: i + 1,
-                reps: l.reps,
-                weightKg: l.weight,
-              }))
-          : Array.from({ length: ex.sets }, (_, i) => ({
-              setNumber: i + 1,
+          ? projectWorkoutSets(logs, {
+              sets: ex.sets,
+              reps: ex.reps,
+              weightKg: ex.weight,
+            })
+          : projectWorkoutSets(undefined, {
+              sets: ex.sets,
               reps: plannedReps,
               weightKg: plannedWeight,
-            }));
+            });
 
         return {
           exerciseId: ex.exerciseId,
@@ -914,6 +933,13 @@ export function useProgram() {
           category: ex.movementCategory,
           ...(ex.repUnit !== undefined ? { repUnit: ex.repUnit } : {}),
           sets,
+          // D2: how many sets were PRESCRIBED, against `sets.length` which is
+          // how many were completed. The array stays completed-only — every
+          // downstream reader (workoutBurn's completedSetCount, the volume
+          // tallies, the PR scan) assumes that, and emitting incomplete rows
+          // would silently move calories, tonnage and PRs for every user. This
+          // recovers "planned 4, did 3" additively, with no reader moved.
+          plannedSetCount: ex.sets,
           caloriesBurned: 0,
         };
       });
@@ -991,6 +1017,19 @@ export function useProgram() {
             source: "programme",
             completionId: sessionData.completionId,
             sessionVariant: sessionData.sessionVariant,
+            // D2: session-level provenance for any per-set RPE above. Helms
+            // p139 keeps novices on %1RM rather than RPE for their first
+            // month, and p73 claims accuracy only for lifters who are
+            // advanced AND RPE-familiar AND near failure — so a future
+            // consumer must be able to tell whose number it is holding rather
+            // than calibrating on an uncalibrated beginner's guess. Recorded
+            // once per session because it cannot vary within one.
+            rpeProvenance: {
+              experience: profile?.experience,
+              shownByDefault: showsRpeByDefault(
+                toExperience(profile?.experience)
+              ),
+            },
           })
         );
         await batch.commit();
@@ -1662,7 +1701,10 @@ export function useProgram() {
               repsCompleted: actualReps,
               repsTarget: exercise.reps,
             },
-          ].slice(-20),
+            // D2: one cap across all three sites. Was 20 here and 10 in the
+            // engine, so a lifter under an active block silently kept twice
+            // the history of one who was not.
+          ].slice(-PERFORMANCE_HISTORY_CAP),
         };
       } else if (settings.autoProgression) {
         updatedExercise = applyProgression(
