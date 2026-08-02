@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { useSubscription } from "@/lib/subscription";
 import { DAILY_AI_LIMITS } from "@/lib/subscription";
 
@@ -68,7 +68,7 @@ function getTodayKey(now = new Date()): string {
 }
 
 export function useScanUsage(action: AiAction = "image_ai"): ScanUsage {
-  const { user } = useAuth();
+  const uid = useUid();
   const { isPro, isInTrial } = useSubscription();
   const [used, setUsed] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -77,7 +77,7 @@ export function useScanUsage(action: AiAction = "image_ai"): ScanUsage {
   const limit = DAILY_AI_LIMITS[tier][action];
 
   useEffect(() => {
-    if (!user) {
+    if (!uid) {
       // Defer state writes to the next microtask so this effect
       // doesn't trigger a synchronous re-render. react-hooks
       // lint enforces this; the effect runs only when `user`
@@ -90,7 +90,7 @@ export function useScanUsage(action: AiAction = "image_ai"): ScanUsage {
     }
 
     const todayKey = getTodayKey();
-    const ref = doc(db, "scanUsage", user.uid);
+    const ref = doc(db, "scanUsage", uid);
 
     const unsub = onSnapshot(
       ref,
@@ -125,7 +125,7 @@ export function useScanUsage(action: AiAction = "image_ai"): ScanUsage {
     );
 
     return unsub;
-  }, [user, action]);
+  }, [uid, action]);
 
   return {
     used,

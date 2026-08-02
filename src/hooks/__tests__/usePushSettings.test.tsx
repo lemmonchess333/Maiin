@@ -39,6 +39,8 @@ vi.mock("@/lib/firebase", () => ({
 }));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: currentUid ? { uid: currentUid } : null }),
+  useUid: () =>
+    ({ user: currentUid ? { uid: currentUid } : null }).user?.uid ?? null,
 }));
 const setDocGuardedMock = vi.fn<(...a: unknown[]) => Promise<void>>(
   async () => {}

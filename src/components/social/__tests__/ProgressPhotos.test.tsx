@@ -21,6 +21,7 @@ import { resolve } from "node:path";
 
 vi.mock("../../../lib/auth", () => ({
   useAuth: () => ({ user: { uid: "u-self" } }),
+  useUid: () => ({ user: { uid: "u-self" } }).user?.uid ?? null,
 }));
 
 vi.mock("../../../lib/firebase", () => ({

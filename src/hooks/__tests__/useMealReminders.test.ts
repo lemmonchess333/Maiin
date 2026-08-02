@@ -35,6 +35,7 @@ vi.mock("@/lib/errorReporting", () => ({
 let mockUser: { uid: string } | null = { uid: "u1" };
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: mockUser, profile: {} }),
+  useUid: () => ({ user: mockUser, profile: {} }).user?.uid ?? null,
 }));
 
 import { useMealRemindersInternal } from "../useMealReminders";

@@ -9,6 +9,9 @@ const mockProfile = vi.hoisted(() => ({
 }));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: mockProfile.current, profile: mockProfile.current }),
+  useUid: () =>
+    ({ user: mockProfile.current, profile: mockProfile.current }).user?.uid ??
+    null,
 }));
 
 const useWorkoutsSpy = vi.hoisted(() => vi.fn(() => ({ workouts: [] })));

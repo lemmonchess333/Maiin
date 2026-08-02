@@ -1,5 +1,5 @@
 import { Flame } from "lucide-react";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { useFollowersOfMe } from "../../hooks/useFollowersOfMe";
 import { usePartnerStreak } from "@/features/partnerStreak/usePartnerStreak";
 import { THEME } from "@/lib/theme";
@@ -21,9 +21,11 @@ import { THEME } from "@/lib/theme";
  * eligibility reads, and those are the rare rows.
  */
 export default function PartnerReadyBadge({ uid }: { uid: string }) {
-  const { user } = useAuth();
+  // `uid` is the CANDIDATE row; `viewerUid` is the signed-in reader. The
+  // second clause is "and it isn't me".
+  const viewerUid = useUid();
   const { followers } = useFollowersOfMe();
-  const candidate = followers.has(uid) && user?.uid !== uid;
+  const candidate = followers.has(uid) && uid !== viewerUid;
   const { loading, mutualFollow, bond } = usePartnerStreak(
     candidate ? uid : undefined
   );

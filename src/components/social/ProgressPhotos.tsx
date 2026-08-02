@@ -10,7 +10,7 @@ import {
 } from "firebase/firestore";
 import { addDocGuarded } from "@/lib/firestoreWrite";
 import { db, storage } from "../../lib/firebase";
-import { useAuth } from "../../lib/auth";
+import { useUid } from "../../lib/auth";
 import { Camera, Lock, Plus, RotateCcw, X } from "lucide-react";
 import { Spinner } from "@/components/ui/Spinner";
 import { BottomSheet } from "@/components/ui/BottomSheet";
@@ -106,7 +106,7 @@ interface ComposerState {
  * any social surface.
  */
 export default function ProgressPhotos() {
-  const { user } = useAuth();
+  const uid = useUid();
   const [photos, setPhotos] = useState<VaultPhoto[]>([]);
   const [checkIns, setCheckIns] = useState<ProgressCheckIn[]>([]);
   const [decryptedUrls, setDecryptedUrls] = useState<Record<string, string>>(
@@ -153,23 +153,23 @@ export default function ProgressPhotos() {
   }, []);
 
   const loadPhotos = useCallback(async () => {
-    if (!user) return;
+    if (!uid) return;
     const q = query(
-      collection(db, "users", user.uid, "progressPhotos"),
+      collection(db, "users", uid, "progressPhotos"),
       orderBy("createdAt", "desc")
     );
     const snap = await getDocs(q);
     setPhotos(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as VaultPhoto));
-  }, [user]);
+  }, [uid]);
 
   const loadCheckIns = useCallback(async () => {
-    if (!user) return;
+    if (!uid) return;
     try {
-      setCheckIns(await loadProgressCheckIns(user.uid));
+      setCheckIns(await loadProgressCheckIns(uid));
     } catch (err) {
       logger.error("[Vault] check-in load failed:", err);
     }
-  }, [user]);
+  }, [uid]);
 
   useEffect(() => {
     loadPhotos();
@@ -178,10 +178,10 @@ export default function ProgressPhotos() {
 
   // Auto-decrypt the 6 most recent photos on mount
   useEffect(() => {
-    if (photos.length === 0 || !user) return;
+    if (photos.length === 0 || !uid) return;
 
     const autoDecrypt = async () => {
-      const key = await getOrDeriveKey(user.uid);
+      const key = await getOrDeriveKey(uid);
 
       for (const photo of photos.slice(0, 6)) {
         if (decryptedUrls[photo.id]) continue;
@@ -211,12 +211,12 @@ export default function ProgressPhotos() {
 
     autoDecrypt();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [photos, user]);
+  }, [photos, uid]);
 
   const decryptPhoto = useCallback(
     async (photo: VaultPhoto) => {
-      if (!user || decryptedUrls[photo.id]) return;
-      const key = await getOrDeriveKey(user.uid);
+      if (!uid || decryptedUrls[photo.id]) return;
+      const key = await getOrDeriveKey(uid);
       const storageRef = ref(storage, photo.storagePath);
       const url = await getDownloadURL(storageRef);
       const response = await fetch(url);
@@ -227,18 +227,18 @@ export default function ProgressPhotos() {
       const objectUrl = URL.createObjectURL(blob);
       setDecryptedUrls((prev) => ({ ...prev, [photo.id]: objectUrl }));
     },
-    [user, decryptedUrls, getOrDeriveKey]
+    [uid, decryptedUrls, getOrDeriveKey]
   );
 
   /** Compress → encrypt (fail-closed) → upload → write metadata doc.
    *  Returns the new photo doc id, or null on failure (error surfaced). */
   const uploadFile = useCallback(
     async (file: File): Promise<string | null> => {
-      if (!user) return null;
+      if (!uid) return null;
       setLoading(true);
       setUploadError(null);
       try {
-        logger.log("[UPLOAD] Current user:", user.uid);
+        logger.log("[UPLOAD] Current user:", uid);
         logger.log("[UPLOAD] 1. Image picked:", {
           name: file.name,
           size: file.size,
@@ -280,7 +280,7 @@ export default function ProgressPhotos() {
         let key: CryptoKey;
         logger.log("[UPLOAD] 3. Starting encryption...");
         try {
-          key = await getOrDeriveKey(user.uid);
+          key = await getOrDeriveKey(uid);
           const result = await encryptBlob(await blob.arrayBuffer(), key);
           encrypted = result.encrypted;
           iv = result.iv;
@@ -299,7 +299,7 @@ export default function ProgressPhotos() {
         // NOTE: Requires VITE_FIREBASE_STORAGE_BUCKET env var to be set (see firebase.ts)
         // Always .enc — the write path is fail-closed on encryption
         // (unencrypted .webp blobs only exist from the legacy fallback).
-        const path = `progress-photos/${user.uid}/${Date.now()}.enc`;
+        const path = `progress-photos/${uid}/${Date.now()}.enc`;
         logger.log("[UPLOAD] 5. Creating Firebase Storage reference:", path);
         try {
           await withTimeout(
@@ -319,7 +319,7 @@ export default function ProgressPhotos() {
         let docRef;
         try {
           docRef = await addDocGuarded(
-            collection(db, "users", user.uid, "progressPhotos"),
+            collection(db, "users", uid, "progressPhotos"),
             {
               storagePath: path,
               iv: Array.from(iv),
@@ -383,13 +383,13 @@ export default function ProgressPhotos() {
         if (fileInputRef.current) fileInputRef.current.value = "";
       }
     },
-    [user, loadPhotos, getOrDeriveKey]
+    [uid, loadPhotos, getOrDeriveKey]
   );
 
   /** File picked for a composer slot → upload → attach to the draft. */
   const handleUpload = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (!user || !e.target.files?.[0]) return;
+      if (!uid || !e.target.files?.[0]) return;
       const file = e.target.files[0];
       const slot = pendingSlotRef.current;
       pendingFileRef.current = file;
@@ -402,7 +402,7 @@ export default function ProgressPhotos() {
         );
       }
     },
-    [user, uploadFile]
+    [uid, uploadFile]
   );
 
   const retryUpload = useCallback(async () => {
@@ -448,7 +448,7 @@ export default function ProgressPhotos() {
   );
 
   const saveCheckIn = useCallback(async () => {
-    if (!user || !composer || savingCheckIn) return;
+    if (!uid || !composer || savingCheckIn) return;
     setSavingCheckIn(true);
     try {
       const input = {
@@ -457,8 +457,8 @@ export default function ProgressPhotos() {
         photoIds: composer.photoIds,
       };
       const ok = composer.checkInId
-        ? await updateProgressCheckIn(user.uid, composer.checkInId, input)
-        : (await createProgressCheckIn(user.uid, input)) !== null;
+        ? await updateProgressCheckIn(uid, composer.checkInId, input)
+        : (await createProgressCheckIn(uid, input)) !== null;
       if (!ok) {
         toast.error("Add at least one photo first");
         return;
@@ -472,7 +472,7 @@ export default function ProgressPhotos() {
     } finally {
       setSavingCheckIn(false);
     }
-  }, [user, composer, savingCheckIn, loadCheckIns]);
+  }, [uid, composer, savingCheckIn, loadCheckIns]);
 
   const toggleCompareSelect = useCallback((entryKey: string) => {
     setSelected((prev) =>

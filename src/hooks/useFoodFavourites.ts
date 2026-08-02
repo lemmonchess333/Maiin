@@ -11,7 +11,7 @@ import {
 } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { track as trackFoodEvent } from "@/lib/foodAnalytics";
@@ -68,7 +68,11 @@ function getTimeOfDay(hour: number): "morning" | "midday" | "evening" {
  *  combining accents, then we replace whitespace + slashes (the
  *  Firestore doc-id reserved chars) with `_`. */
 function makeKey(name: string): string {
-  return name.trim().toLowerCase().normalize("NFKC").replace(/[\s/\\]+/g, "_");
+  return name
+    .trim()
+    .toLowerCase()
+    .normalize("NFKC")
+    .replace(/[\s/\\]+/g, "_");
 }
 
 function safeNum(v: unknown): number {
@@ -76,7 +80,10 @@ function safeNum(v: unknown): number {
   return Number.isFinite(n) ? Math.max(0, n) : 0;
 }
 
-function parseFavouriteDoc(id: string, raw: Record<string, unknown>): FoodFavourite {
+function parseFavouriteDoc(
+  id: string,
+  raw: Record<string, unknown>
+): FoodFavourite {
   const tod = raw.timeOfDay;
   const timeOfDay: FoodFavourite["timeOfDay"] =
     tod === "morning" || tod === "midday" || tod === "evening" || tod === "any"
@@ -97,8 +104,12 @@ function parseFavouriteDoc(id: string, raw: Record<string, unknown>): FoodFavour
     fiber: raw.fiber == null ? undefined : safeNum(raw.fiber),
     sugar: raw.sugar == null ? undefined : safeNum(raw.sugar),
     sodium: raw.sodium == null ? undefined : safeNum(raw.sodium),
-    servingSize: typeof raw.servingSize === "string" ? raw.servingSize : "1 serving",
-    lastUsed: raw.lastUsed instanceof Timestamp ? raw.lastUsed : Timestamp.fromMillis(0),
+    servingSize:
+      typeof raw.servingSize === "string" ? raw.servingSize : "1 serving",
+    lastUsed:
+      raw.lastUsed instanceof Timestamp
+        ? raw.lastUsed
+        : Timestamp.fromMillis(0),
     useCount: safeNum(raw.useCount),
     timeOfDay,
     source,
@@ -106,7 +117,7 @@ function parseFavouriteDoc(id: string, raw: Record<string, unknown>): FoodFavour
 }
 
 export function useFoodFavourites() {
-  const { user } = useAuth();
+  const uid = useUid();
   const { isOnline } = useOnlineStatus();
   const [favourites, setFavourites] = useState<FoodFavourite[]>([]);
   const [loading, setLoading] = useState(true);
@@ -135,13 +146,16 @@ export function useFoodFavourites() {
   const initialSnapshotSeenRef = useRef(false);
 
   useEffect(() => {
-    if (!user) {
-      const reset = () => { setFavourites([]); setLoading(false); };
+    if (!uid) {
+      const reset = () => {
+        setFavourites([]);
+        setLoading(false);
+      };
       reset();
       return;
     }
 
-    const ref = collection(db, "users", user.uid, "foodFavourites");
+    const ref = collection(db, "users", uid, "foodFavourites");
     // Firestore order by useCount desc — coarse sort, cheap, single
     // index. Secondary tie-break by lastUsed desc happens client-side
     // in the snapshot handler to avoid the composite index requirement —
@@ -152,7 +166,7 @@ export function useFoodFavourites() {
       q,
       (snap) => {
         const parsed = snap.docs.map((d) =>
-          parseFavouriteDoc(d.id, d.data() as Record<string, unknown>),
+          parseFavouriteDoc(d.id, d.data() as Record<string, unknown>)
         );
         // Stable tie-break on equal useCount: most-recently used wins.
         parsed.sort((a, b) => {
@@ -199,7 +213,7 @@ export function useFoodFavourites() {
     );
 
     return unsub;
-  }, [user]);
+  }, [uid]);
 
   /** Snapshot-driven eviction. Runs when the favourites snapshot
    *  delivers >SOFT_CAP entries, debounced to merge bursts. Lives
@@ -218,7 +232,7 @@ export function useFoodFavourites() {
    *  catches up when connectivity restores and the next snapshot
    *  delivers fresh state. */
   useEffect(() => {
-    if (!user) return;
+    if (!uid) return;
     if (!isOnline) return;
     if (evictingRef.current) return;
     if (favourites.length <= SOFT_CAP) return;
@@ -235,9 +249,7 @@ export function useFoodFavourites() {
     const timer = setTimeout(async () => {
       evictingRef.current = true;
       try {
-        await deleteDoc(
-          doc(db, "users", user.uid, "foodFavourites", target.id),
-        );
+        await deleteDoc(doc(db, "users", uid, "foodFavourites", target.id));
         trackFoodEvent("food_pantry_eviction", {
           favouriteId: target.id,
           useCount: target.useCount,
@@ -251,7 +263,7 @@ export function useFoodFavourites() {
     }, EVICTION_DEBOUNCE_MS);
 
     return () => clearTimeout(timer);
-  }, [favourites, isOnline, user]);
+  }, [favourites, isOnline, uid]);
 
   /** Returns favourites filtered to time-of-day relevance, capped at
    *  `limit`. Two-tier ordering inside the cap:
@@ -269,7 +281,9 @@ export function useFoodFavourites() {
   const getTimeRelevant = useCallback(
     (hour: number, limit = 5) => {
       const tod = getTimeOfDay(hour);
-      const graduated = favourites.filter((f) => f.useCount >= GRADUATION_THRESHOLD);
+      const graduated = favourites.filter(
+        (f) => f.useCount >= GRADUATION_THRESHOLD
+      );
       const exact = graduated.filter((f) => f.timeOfDay === tod);
       const anyTime = graduated.filter((f) => f.timeOfDay === "any");
       const tiered = [...exact, ...anyTime];
@@ -295,7 +309,7 @@ export function useFoodFavourites() {
       servingSize?: string;
       source?: FoodFavourite["source"];
     }) => {
-      if (!user) return { isNew: false, count: 0 };
+      if (!uid) return { isNew: false, count: 0 };
 
       const key = makeKey(meal.name);
       if (!key) return { isNew: false, count: 0 };
@@ -314,7 +328,7 @@ export function useFoodFavourites() {
         return { isNew: false, count: 0 };
       }
 
-      const docRef = doc(db, "users", user.uid, "foodFavourites", key);
+      const docRef = doc(db, "users", uid, "foodFavourites", key);
       const existing = favourites.find((f) => f.id === key);
       const previousCount = existing?.useCount ?? 0;
       const predictedCount = previousCount + 1;
@@ -384,21 +398,21 @@ export function useFoodFavourites() {
         count: predictedCount,
       };
     },
-    [user, favourites]
+    [uid, favourites]
   );
 
   const removeFavourite = useCallback(
     async (id: string): Promise<boolean> => {
-      if (!user) return false;
+      if (!uid) return false;
       try {
-        await deleteDoc(doc(db, "users", user.uid, "foodFavourites", id));
+        await deleteDoc(doc(db, "users", uid, "foodFavourites", id));
         return true;
       } catch (err) {
         logger.error("[useFoodFavourites] removeFavourite failed", err);
         return false;
       }
     },
-    [user]
+    [uid]
   );
 
   /** Undo handler — restores a previously-removed favourite to its
@@ -409,10 +423,10 @@ export function useFoodFavourites() {
    *  useCount/lastUsed/timeOfDay/source intact. */
   const restoreFavourite = useCallback(
     async (favourite: FoodFavourite): Promise<boolean> => {
-      if (!user) return false;
+      if (!uid) return false;
       try {
         await setDocGuarded(
-          doc(db, "users", user.uid, "foodFavourites", favourite.id),
+          doc(db, "users", uid, "foodFavourites", favourite.id),
           {
             name: favourite.name,
             calories: favourite.calories,
@@ -428,7 +442,7 @@ export function useFoodFavourites() {
             timeOfDay: favourite.timeOfDay,
             source: favourite.source,
           },
-          { merge: false },
+          { merge: false }
         );
         return true;
       } catch (err) {
@@ -436,7 +450,7 @@ export function useFoodFavourites() {
         return false;
       }
     },
-    [user]
+    [uid]
   );
 
   return {
