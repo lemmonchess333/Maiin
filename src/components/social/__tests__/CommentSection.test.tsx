@@ -8,6 +8,9 @@ const mockGetComments = vi.fn();
 
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: { uid: "u1" }, profile: { displayName: "Alex" } }),
+  useUid: () =>
+    ({ user: { uid: "u1" }, profile: { displayName: "Alex" } }).user?.uid ??
+    null,
 }));
 vi.mock("@/lib/socialApi", () => ({
   getComments: (...a: unknown[]) => mockGetComments(...a),

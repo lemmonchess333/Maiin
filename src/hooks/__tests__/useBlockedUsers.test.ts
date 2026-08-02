@@ -21,6 +21,7 @@ vi.mock("../../lib/socialApi", () => ({
 let currentAuthUser: { uid: string } | null = { uid: "user1" };
 vi.mock("../../lib/auth", () => ({
   useAuth: () => ({ user: currentAuthUser }),
+  useUid: () => ({ user: currentAuthUser }).user?.uid ?? null,
 }));
 
 vi.mock("../../lib/errorReporting", () => ({

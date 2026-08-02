@@ -22,7 +22,7 @@ import {
   getDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { localDateString } from "@/lib/dateHelpers";
 import { SPACE_DEFS, type SpaceDef } from "./spaceDefs";
 import {
@@ -55,21 +55,21 @@ export function useSpacesDirectory(includeRaces = false) {
         : INTEREST_DEFS,
     [includeRaces, overrides]
   );
-  const { user } = useAuth();
+  const uid = useUid();
   const [entries, setEntries] = useState<SpaceDirectoryEntry[]>(() =>
     defs.map((def) => ({ def, memberCount: null, joined: false }))
   );
   const [nonce, setNonce] = useState(0);
 
   useEffect(() => {
-    if (!user) return;
+    if (!uid) return;
     let cancelled = false;
     (async () => {
       const loaded = await Promise.all(
         defs.map(async (def): Promise<SpaceDirectoryEntry> => {
           const [countRes, memberRes] = await Promise.allSettled([
             getCountFromServer(collection(db, "spaces", def.id, "members")),
-            getDoc(doc(db, "spaces", def.id, "members", user.uid)),
+            getDoc(doc(db, "spaces", def.id, "members", uid)),
           ]);
           return {
             def,
@@ -87,7 +87,7 @@ export function useSpacesDirectory(includeRaces = false) {
     return () => {
       cancelled = true;
     };
-  }, [user, nonce, defs]);
+  }, [uid, nonce, defs]);
 
   const refresh = useCallback(() => setNonce((n) => n + 1), []);
   return { entries, refresh };

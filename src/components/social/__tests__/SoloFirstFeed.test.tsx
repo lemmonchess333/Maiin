@@ -8,6 +8,7 @@ const mockUseWorkouts = vi.fn();
 
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ profile: { displayName: "Alex" } }),
+  useUid: () => null,
 }));
 vi.mock("@/features/challenges/useChallenges", () => ({
   useChallenges: () => mockUseChallenges(),

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import {
   scheduleNotification,
   cancelNotification,
@@ -60,18 +60,18 @@ function computeNextOccurrence(timeHHMM: string): Date | null {
  * RemindersProvider.tsx which reads this hook's output from context.
  */
 export function useMealRemindersInternal() {
-  const { user } = useAuth();
+  const uid = useUid();
   const [reminders, setReminders] = useState<MealReminders>(DEFAULT_REMINDERS);
   const [loading, setLoading] = useState(true);
 
   // Load from Firestore
   useEffect(() => {
-    if (!user) {
+    if (!uid) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: clear loading when signed out
       setLoading(false);
       return;
     }
-    const ref = doc(db, "users", user.uid, "settings", "mealReminders");
+    const ref = doc(db, "users", uid, "settings", "mealReminders");
     getDoc(ref)
       .then((snap) => {
         if (snap.exists()) {
@@ -86,7 +86,7 @@ export function useMealRemindersInternal() {
         logger.error("[MealReminders] load failed", err);
         setLoading(false);
       });
-  }, [user]);
+  }, [uid]);
 
   // Save to Firestore. Errors are reported via captureError (Firestore
   // writes are CRITICAL_KEYWORDS-tagged so they persist to users/{uid}/errors)
@@ -94,10 +94,10 @@ export function useMealRemindersInternal() {
   // background write failure shouldn't crash the toggle flow.
   const updateReminders = useCallback(
     async (updates: Partial<MealReminders>) => {
-      if (!user) return;
+      if (!uid) return;
       const updated = { ...reminders, ...updates };
       setReminders(updated);
-      const ref = doc(db, "users", user.uid, "settings", "mealReminders");
+      const ref = doc(db, "users", uid, "settings", "mealReminders");
       try {
         await setDocGuarded(ref, updated);
       } catch (err) {
@@ -111,7 +111,7 @@ export function useMealRemindersInternal() {
         );
       }
     },
-    [user, reminders]
+    [uid, reminders]
   );
 
   // Schedule / reschedule the next occurrence of each enabled meal reminder

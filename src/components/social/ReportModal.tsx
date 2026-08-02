@@ -23,7 +23,7 @@ import {
   reportContent,
   type ReportCategory,
 } from "../../lib/socialApi";
-import { useAuth } from "../../lib/auth";
+import { useUid } from "../../lib/auth";
 import { useHiddenActivities } from "@/hooks/useHiddenActivities";
 import { toast } from "@/lib/toast";
 import { Flag, Check } from "lucide-react";
@@ -100,7 +100,7 @@ export default function ReportModal({
   targetAuthorUid,
   onClose,
 }: Props) {
-  const { user } = useAuth();
+  const uid = useUid();
   const { hide } = useHiddenActivities();
 
   const [category, setCategory] = useState<ReportCategory | null>(null);
@@ -123,17 +123,17 @@ export default function ReportModal({
   // Block requires knowing the author uid. Hide that checkbox if we
   // don't know who to block (e.g. legacy callsite that hasn't passed
   // targetAuthorUid through yet).
-  const blockAvailable = !!targetAuthorUid && targetAuthorUid !== user?.uid;
+  const blockAvailable = !!targetAuthorUid && targetAuthorUid !== uid;
 
   async function handleSubmit() {
-    if (!user || !category) return;
+    if (!uid || !category) return;
     setSending(true);
     try {
       // Run the three actions independently so a failure in one
       // doesn't block the others. Block takes precedence (heaviest);
       // Report queues to admin; Hide is local-only.
       if (doBlock && blockAvailable && targetAuthorUid) {
-        await blockUser(user.uid, targetAuthorUid);
+        await blockUser(uid, targetAuthorUid);
       }
       if (doReport) {
         // Packet 14: callable-only; the server resolves the target author.

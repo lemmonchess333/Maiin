@@ -39,6 +39,7 @@ const subscriptionMock = vi.fn<() => { isPro: boolean; isInTrial: boolean }>(
 
 vi.mock("@/lib/auth", () => ({
   useAuth: () => authMock(),
+  useUid: () => authMock().user?.uid ?? null,
 }));
 vi.mock("@/lib/firebase", () => ({ db: {}, functions: {} }));
 vi.mock("@/lib/subscription", async () => {

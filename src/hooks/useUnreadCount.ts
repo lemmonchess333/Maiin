@@ -9,7 +9,7 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import {
   socialPreferenceKey,
   purgeLegacySocialKey,
@@ -41,15 +41,13 @@ const UNREAD_CAP = 50;
  *    account's count.
  */
 export function useUnreadCount() {
-  const { user } = useAuth();
+  const uid = useUid();
   const [count, setCount] = useState(0);
   const [capped, setCapped] = useState(false);
   const [error, setError] = useState(false);
   // Bumped on every (re)subscribe so a stale snapshot/error callback from
   // a torn-down listener can't commit the previous account's state.
   const genRef = useRef(0);
-
-  const uid = user?.uid;
 
   useEffect(() => {
     if (!uid) return;

@@ -21,7 +21,7 @@
  * Each is a small follow-up.
  */
 import { useCallback, useEffect, useState } from "react";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { isAdminUid } from "@/lib/adminAuth";
 import { functions } from "@/lib/firebase";
 import { httpsCallable } from "firebase/functions";
@@ -90,12 +90,12 @@ function targetPreview(report: Report): string {
 }
 
 export default function AdminModeration() {
-  const { user } = useAuth();
+  const uid = useUid();
   const [reports, setReports] = useState<Report[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busyReportId, setBusyReportId] = useState<string | null>(null);
 
-  const isAdmin = isAdminUid(user?.uid);
+  const isAdmin = isAdminUid(uid);
 
   const fetchReports = useCallback(async () => {
     setError(null);
@@ -157,7 +157,7 @@ export default function AdminModeration() {
     }
   };
 
-  if (!user) {
+  if (!uid) {
     return (
       <div className="px-4 py-8 max-w-md mx-auto">
         <h1 className="text-xl font-bold mb-2">Moderation</h1>

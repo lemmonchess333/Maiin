@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { getSuggestedPeople, type SuggestedPerson } from "@/lib/socialApi";
 import { logger } from "@/lib/logger";
 
@@ -23,16 +23,16 @@ export function useSuggestedPeople(
    *  highest-priority, context-labelled candidates. */
   joinedSpaceIds?: string[]
 ) {
-  const { user } = useAuth();
+  const uid = useUid();
   const [people, setPeople] = useState<SuggestedPerson[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const load = useCallback(async () => {
-    if (!user) return;
+    if (!uid) return;
     setLoading(true);
     try {
-      const list = await getSuggestedPeople(user.uid, {
+      const list = await getSuggestedPeople(uid, {
         limitCount: 10,
         blockedUsers,
         joinedSpaceIds,
@@ -47,7 +47,7 @@ export function useSuggestedPeople(
     // `blockedUsers` is a Set — reference-identity stable across renders
     // when coming from `useBlockedUsers`, safe to depend on directly.
     // joinedSpaceIds arrives as a memoised array from the caller.
-  }, [user, blockedUsers, joinedSpaceIds]);
+  }, [uid, blockedUsers, joinedSpaceIds]);
 
   useEffect(() => {
     // When the hook goes inactive, drop the cached list so the UI

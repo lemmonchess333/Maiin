@@ -24,7 +24,7 @@
  * store without setState-in-effect anti-patterns.
  */
 import { useCallback, useSyncExternalStore } from "react";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 
 function storageKey(uid: string): string {
   return `tropos.hiddenActivities.${uid}`;
@@ -46,7 +46,10 @@ function readSet(uid: string | null): Set<string> {
 function writeSet(uid: string, set: Set<string>): void {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(storageKey(uid), JSON.stringify(Array.from(set)));
+    window.localStorage.setItem(
+      storageKey(uid),
+      JSON.stringify(Array.from(set))
+    );
   } catch {
     // Quota or disabled — swallow.
   }
@@ -69,7 +72,11 @@ function getSnapshot(uid: string | null): Set<string> {
   const fresh = readSet(uid);
   const cached = snapshotCache.get(uid);
   // Compare by content: same size + same members => return cached.
-  if (cached && cached.size === fresh.size && [...fresh].every((id) => cached.has(id))) {
+  if (
+    cached &&
+    cached.size === fresh.size &&
+    [...fresh].every((id) => cached.has(id))
+  ) {
     return cached;
   }
   snapshotCache.set(uid, fresh);
@@ -100,13 +107,12 @@ export interface UseHiddenActivitiesResult {
 }
 
 export function useHiddenActivities(): UseHiddenActivitiesResult {
-  const { user } = useAuth();
-  const uid = user?.uid ?? null;
+  const uid = useUid();
 
   const hidden = useSyncExternalStore(
     useCallback((cb) => subscribe(uid, cb), [uid]),
     useCallback(() => getSnapshot(uid), [uid]),
-    () => EMPTY_SET,
+    () => EMPTY_SET
   );
 
   const hide = useCallback(
@@ -119,7 +125,7 @@ export function useHiddenActivities(): UseHiddenActivitiesResult {
       snapshotCache.delete(uid);
       writeSet(uid, next);
     },
-    [uid],
+    [uid]
   );
 
   const unhide = useCallback(
@@ -132,7 +138,7 @@ export function useHiddenActivities(): UseHiddenActivitiesResult {
       snapshotCache.delete(uid);
       writeSet(uid, next);
     },
-    [uid],
+    [uid]
   );
 
   return { hidden, hide, unhide };

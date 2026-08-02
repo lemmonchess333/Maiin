@@ -14,7 +14,7 @@ import {
 } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth";
+import { useUid } from "@/lib/auth";
 import { toast } from "@/lib/toast";
 import { logger } from "@/lib/logger";
 import { THEME } from "@/lib/theme";
@@ -83,7 +83,7 @@ export function getTimeRemaining(endDate: Timestamp | Date): string {
 }
 
 export function useChallenges() {
-  const { user } = useAuth();
+  const uid = useUid();
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   /* Finale window (social features pass, 2026-07): challenges that ended
      within the last 7 days. The active list drops ended challenges, which
@@ -111,7 +111,7 @@ export function useChallenges() {
 
        The dep on `user` is the uid object reference; AuthProvider holds it
        stable for the session so this doesn't re-run gratuitously. */
-    if (!user) return;
+    if (!uid) return;
 
     const timeout = setTimeout(() => setLoading(false), 3000);
     const unsub = onSnapshot(
@@ -149,7 +149,7 @@ export function useChallenges() {
       clearTimeout(timeout);
       unsub();
     };
-  }, [user]);
+  }, [uid]);
 
   /* Extracted so pull-to-refresh can re-run it on demand (SOC-P1d): the
      challenge DOCS are a live subscription above, but per-user progress
@@ -158,16 +158,16 @@ export function useChallenges() {
      the challenge list itself changed. */
   const loadMyProgress = useCallback(async () => {
     const tracked = [...challenges, ...endedChallenges];
-    if (!user || tracked.length === 0) return;
+    if (!uid || tracked.length === 0) return;
     const prog: Record<string, ChallengeParticipant> = {};
     for (const ch of tracked) {
       const snap = await getDoc(
-        doc(db, "challenges", ch.id, "participants", user.uid)
+        doc(db, "challenges", ch.id, "participants", uid)
       );
       if (snap.exists()) prog[ch.id] = snap.data() as ChallengeParticipant;
     }
     setMyProgress(prog);
-  }, [user, challenges, endedChallenges]);
+  }, [uid, challenges, endedChallenges]);
 
   useEffect(() => {
     void loadMyProgress();
@@ -216,14 +216,14 @@ export function useChallenges() {
 
   const joinChallenge = useCallback(
     async (challengeId: string) => {
-      if (!user) return;
+      if (!uid) return;
       try {
         const participantRef = doc(
           db,
           "challenges",
           challengeId,
           "participants",
-          user.uid
+          uid
         );
         // Already a participant (double-tap, stale UI state)? Re-creating
         // would be an UPDATE in rules terms — rejected by the server-owned
@@ -242,7 +242,7 @@ export function useChallenges() {
           }));
           return;
         }
-        const profileSnap = await getDoc(doc(db, "users", user.uid));
+        const profileSnap = await getDoc(doc(db, "users", uid));
         const name = profileSnap.exists()
           ? profileSnap.data().displayName || "Athlete"
           : "Athlete";
@@ -275,15 +275,15 @@ export function useChallenges() {
         toast.error("Couldn't join the challenge. Try again.");
       }
     },
-    [user]
+    [uid]
   );
 
   const leaveChallenge = useCallback(
     async (challengeId: string) => {
-      if (!user) return;
+      if (!uid) return;
       try {
         await deleteDoc(
-          doc(db, "challenges", challengeId, "participants", user.uid)
+          doc(db, "challenges", challengeId, "participants", uid)
         );
         // participantCount recomputed server-side by the participant-delete
         // trigger (see joinChallenge note).
@@ -297,7 +297,7 @@ export function useChallenges() {
         toast.error("Couldn't leave the challenge. Try again.");
       }
     },
-    [user]
+    [uid]
   );
 
   /* 2026-06-07 audit (HIGH): challenge progress is SERVER-OWNED.

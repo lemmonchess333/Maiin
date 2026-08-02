@@ -1,8 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import { collection, limit, onSnapshot, orderBy, query } from "firebase/firestore";
+import {
+  collection,
+  limit,
+  onSnapshot,
+  orderBy,
+  query,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth";
-import type { PerformanceSignals, PerformanceWeekDoc } from "@/lib/performanceTypes";
+import { useUid } from "@/lib/auth";
+import type {
+  PerformanceSignals,
+  PerformanceWeekDoc,
+} from "@/lib/performanceTypes";
 import { captureError } from "@/lib/errorReporting";
 
 function sortAsc(a: PerformanceWeekDoc, b: PerformanceWeekDoc) {
@@ -10,25 +19,30 @@ function sortAsc(a: PerformanceWeekDoc, b: PerformanceWeekDoc) {
 }
 
 export function usePerformanceWeeks(maxWeeks: number = 12) {
-  const { user } = useAuth();
+  const uid = useUid();
   const [weeks, setWeeks] = useState<PerformanceWeekDoc[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) {
-      const reset = () => { setWeeks([]); setLoading(false); };
+    if (!uid) {
+      const reset = () => {
+        setWeeks([]);
+        setLoading(false);
+      };
       reset();
       return;
     }
 
-    const ref = collection(db, "users", user.uid, "performance");
+    const ref = collection(db, "users", uid, "performance");
     const q = query(ref, orderBy("weekKey", "desc"), limit(maxWeeks));
 
     const unsub = onSnapshot(
       q,
       (snap) => {
         const docs = snap.docs
-          .map((d) => normalisePerformanceDoc(d.id, d.data() as Record<string, unknown>))
+          .map((d) =>
+            normalisePerformanceDoc(d.id, d.data() as Record<string, unknown>)
+          )
           .sort(sortAsc);
 
         setWeeks(docs);
@@ -41,9 +55,12 @@ export function usePerformanceWeeks(maxWeeks: number = 12) {
     );
 
     return unsub;
-  }, [user, maxWeeks]);
+  }, [uid, maxWeeks]);
 
-  const currentWeek = useMemo(() => (weeks.length ? weeks[weeks.length - 1] : null), [weeks]);
+  const currentWeek = useMemo(
+    () => (weeks.length ? weeks[weeks.length - 1] : null),
+    [weeks]
+  );
 
   return { weeks, currentWeek, loading };
 }
@@ -104,10 +121,7 @@ const DEFAULT_SIGNALS: PerformanceSignals = {
  */
 const _missingSignalsReported = new Set<string>();
 
-function normaliseSignals(
-  weekKey: string,
-  raw: unknown,
-): PerformanceSignals {
+function normaliseSignals(weekKey: string, raw: unknown): PerformanceSignals {
   if (raw && typeof raw === "object") {
     const s = raw as Partial<PerformanceSignals>;
     return {
@@ -128,27 +142,28 @@ function normaliseSignals(
   // in-memory buffer for dev visibility.
   if (!_missingSignalsReported.has(weekKey)) {
     _missingSignalsReported.add(weekKey);
-    captureError(
-      new Error("perf-doc-missing-signals"),
-      "error",
-      { weekKey, fingerprint: `perf-doc-missing-signals:${weekKey}` },
-    );
+    captureError(new Error("perf-doc-missing-signals"), "error", {
+      weekKey,
+      fingerprint: `perf-doc-missing-signals:${weekKey}`,
+    });
   }
   return { ...DEFAULT_SIGNALS };
 }
 
 export function normalisePerformanceDoc(
   docId: string,
-  data: Record<string, unknown>,
+  data: Record<string, unknown>
 ): PerformanceWeekDoc {
-  const weekKey: string = typeof data.weekKey === "string" ? data.weekKey : docId;
-  const breakdown =
-    (data.breakdown as PerformanceWeekDoc["breakdown"] | undefined) ?? {
-      liftLoadScore: safeNum(data.liftLoadScore),
-      runLoadScore: safeNum(data.runLoadScore),
-      recoveryScore: safeNum(data.recoveryScore),
-      adherenceScore: safeNum(data.adherenceScore),
-    };
+  const weekKey: string =
+    typeof data.weekKey === "string" ? data.weekKey : docId;
+  const breakdown = (data.breakdown as
+    | PerformanceWeekDoc["breakdown"]
+    | undefined) ?? {
+    liftLoadScore: safeNum(data.liftLoadScore),
+    runLoadScore: safeNum(data.runLoadScore),
+    recoveryScore: safeNum(data.recoveryScore),
+    adherenceScore: safeNum(data.adherenceScore),
+  };
   /* PR 7b follow-up — multipliers defensive default. Pre-PI1a docs
      (and any future schema drift) may not include this field;
      PerformanceTab reads `m.liftProgression` / `m.runVolume` /
@@ -158,12 +173,13 @@ export function normalisePerformanceDoc(
      individual fields with safeNum so render is always defensive.
      Multipliers default to 1.0 (no-effect) since their tooltip copy
      reads them as ratios above/below baseline. */
-  const multipliers =
-    (data.multipliers as PerformanceWeekDoc["multipliers"] | undefined) ?? {
-      liftProgression: safeNum(data.liftProgression) || 1,
-      runVolume: safeNum(data.runVolume) || 1,
-      runPaceAdjustmentPct: safeNum(data.runPaceAdjustmentPct),
-    };
+  const multipliers = (data.multipliers as
+    | PerformanceWeekDoc["multipliers"]
+    | undefined) ?? {
+    liftProgression: safeNum(data.liftProgression) || 1,
+    runVolume: safeNum(data.runVolume) || 1,
+    runPaceAdjustmentPct: safeNum(data.runPaceAdjustmentPct),
+  };
   const signals = normaliseSignals(weekKey, data.signals);
   return {
     ...data,
