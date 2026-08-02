@@ -248,6 +248,30 @@ struck. This document supersedes the pack for the lifting arc.
 > command kind at all, because `replaceProgramme` is a private server
 > transition by construction.
 
+> **STATUS 2026-08-02h — two more writers migrated; `Program.tsx` is down to
+> its last two.** `removeExercise` (the site with no undo partner) and
+> `addExercises` both needed NO new server code: the remove reducer is a pure
+> removal by `instanceId`, and the add reducer's own comment says it matches
+> "the client add default (3×10×0)", which it does. That is exactly what
+> separates `addExercises` from `replaceExercise` — both sides start an ADDED
+> movement uncalibrated, while only the client calibrates a REPLACED one.
+>
+> The two that remain are the ones with real blockers: `replaceExercise` (load
+> calibration) and the remove/undo pair.
+>
+> **A rejected command has more than one right recovery, and choosing one
+> globally would be wrong.** A rejected reorder is repaired by writing it — the
+> direct write also persists the instanceIds, so it self-heals. A rejected
+> REMOVE means "it is already gone": rolling back restores a view already known
+> to be stale, and writing it clobbers whatever really happened, so it
+> refetches. That is why `runProgramCommand` returns applied/queued/rejected
+> and leaves recovery to the caller.
+>
+> One detail worth keeping when the next writer copies this: the optimistic ADD
+> mints the same deterministic `cmd-<commandId>-<n>` ids the reducer will. A
+> fresh client id would be swapped for a different React key on the refetch,
+> visibly remounting the row the user just added.
+
 > - **11b's headline value was not the data entry.** §5 frames it as "150
 >   exercises × ~6 fields of domain-judgement data entry with no lead-time
 >   pressure". The merge itself found three live drifts first: a name the
