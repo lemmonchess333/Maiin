@@ -1,13 +1,21 @@
 /**
  * PR-J chunk B3a — useClaimMap hook tests.
  *
- * The hook is mostly plumbing — the heavy lifting (date window,
- * quality bucket, single-claim walk) lives in `computeClaims` and
- * is exhaustively covered by:
- *   - functions/__tests__/scheduledRunCompletion.test.js (29 tests)
- *   - src/lib/__tests__/scheduledRunCompletion.cross.test.ts (parity)
+ * The heavy lifting (date window, quality bucket, single-claim walk) lives in
+ * `computeClaims`. This header used to say that logic was "exhaustively
+ * covered by" `functions/__tests__/scheduledRunCompletion.test.js` (29 tests)
+ * and `src/lib/__tests__/scheduledRunCompletion.cross.test.ts` — but BOTH were
+ * deleted in #1733 along with the JS port they pinned (see the rationale in
+ * `src/lib/scheduledRunCompletion.ts`). Nothing replaced them, so this file is
+ * now the ONLY coverage of the completion predicate.
  *
- * So this file pins ONLY hook-level behaviour:
+ * That stale pointer had teeth: it told anyone extending these tests that the
+ * distance and bucket branches were already covered elsewhere, which is a good
+ * part of why the 70% gate went 1000x wrong (kilometres over metres) with a
+ * green suite until #1834. If you add a branch to `computeClaims`, it gets its
+ * test HERE.
+ *
+ * Beyond that predicate, this file pins hook-level behaviour:
  *   - subscription lifecycle (no user → empty, user → onSnapshot)
  *   - downstream wiring: snapshot rows reach computeClaims
  *   - Q3 P90: unclaimedByDate shares the same memo / excludes
@@ -240,5 +248,173 @@ describe("useClaimMap", () => {
 
     const { result: r2 } = renderHook(() => useClaimMap("2026-06-01"));
     expect(r2.current.today).toBe("2026-06-01");
+  });
+});
+/**
+ * The 70% distance gate (PR-J-Q1 pin P2).
+ *
+ * These are the tests the file was missing. Until 2026-08-02 the planned
+ * distance was fed to `computeClaims` in KILOMETRES while `saved.distance` is
+ * METRES, so the ratio ran 1000x high and the gate never rejected anything.
+ * Nothing caught it because every fixture above either uses a templateId that
+ * is not in RUN_TEMPLATES at all (`easy-5k`, `freerun` -> planned 0 -> the
+ * distance branch is skipped) or sits far above the bar, and not one asserted
+ * a REJECTION.
+ *
+ * `long_15k` is deliberate: type "long" buckets as "easy", so no pace
+ * requirement can mask what the distance branch decides.
+ */
+describe("useClaimMap - distance threshold", () => {
+  // Sibling describe: the beforeEach above does not reach here, and without
+  // its own reset the saved runs from earlier tests stay in the store and
+  // compete for the slot through the single-claim walk.
+  beforeEach(() => {
+    resetFirestore();
+    currentUser = mockUser;
+    mockProgramState = null;
+  });
+
+  const LONG_15K_DAY = {
+    id: "rd-long",
+    date: "2026-05-26",
+    dayIndex: 2,
+    templateId: "long_15k",
+    type: "long",
+    status: "planned",
+  };
+
+  async function claimFor(
+    runDay: Record<string, unknown>,
+    distance: number
+  ): Promise<ReturnType<typeof useClaimMap>> {
+    mockProgramState = { runDays: [runDay], manualCompletions: {} };
+    const { result } = renderHook(() => useClaimMap("2026-05-26"));
+    await act(async () => {
+      seedRuns([
+        {
+          id: "saved-d",
+          data: {
+            date: "2026-05-26",
+            distance,
+            avgPace: 330,
+            createdAt: Timestamp.fromMillis(1716700000_000),
+          },
+        },
+      ]);
+      await flushSnapshots();
+    });
+    return result.current;
+  }
+
+  it("REJECTS a saved run below 70% of the planned distance", async () => {
+    // 5km against a 15km slot = 33%.
+    const r = await claimFor(LONG_15K_DAY, 5000);
+    expect(r.claimMap.get("rd-long")?.claimedSavedRunId).toBeUndefined();
+    // It is not silently dropped either - it surfaces as an extra run.
+    expect(r.unclaimedByDate.get("2026-05-26")).toHaveLength(1);
+  });
+
+  it("accepts a saved run at exactly the 70% boundary", async () => {
+    const r = await claimFor(LONG_15K_DAY, 10500);
+    expect(r.claimMap.get("rd-long")?.claimedSavedRunId).toBe("saved-d");
+  });
+
+  it("accepts a saved run above the threshold", async () => {
+    const r = await claimFor(LONG_15K_DAY, 15000);
+    expect(r.claimMap.get("rd-long")?.claimedSavedRunId).toBe("saved-d");
+  });
+
+  it("compares METRES to METRES - a 20m run cannot claim a 15K slot", async () => {
+    // The regression test for the unit bug. Under the old kilometre-valued
+    // lookup this was 20 / 15 = 1.33, comfortably over the 0.7 bar, so a
+    // twenty-metre walk completed a 15K long run. It must now be 20 / 15000.
+    const r = await claimFor(LONG_15K_DAY, 20);
+    expect(r.claimMap.get("rd-long")?.claimedSavedRunId).toBeUndefined();
+  });
+
+  it("judges a swapped day against the OVERRIDE, not the original template", async () => {
+    // Tired user swaps their 15K down to an easy 30. `easy_30` is
+    // duration-based (no targetDistanceKm), so the distance branch is skipped
+    // and a 5km run completes the day. Resolving `templateId` alone would
+    // still hold them to the 15K bar and reject it.
+    const r = await claimFor(
+      { ...LONG_15K_DAY, userOverride: "easy_30" },
+      5000
+    );
+    expect(r.claimMap.get("rd-long")?.claimedSavedRunId).toBe("saved-d");
+  });
+});
+/**
+ * The quality-bucket half of the same "which session is this day?" question.
+ *
+ * `tempo_20` and `easy_30` are deliberate: neither carries a
+ * `targetDistanceKm`, so planned distance is 0 and the distance branch is
+ * skipped entirely — whatever these assert is the BUCKET's doing.
+ */
+describe("useClaimMap - quality bucket honours userOverride", () => {
+  beforeEach(() => {
+    resetFirestore();
+    currentUser = mockUser;
+    mockProgramState = null;
+  });
+
+  async function claimWith(
+    runDay: Record<string, unknown>,
+    avgPace: number
+  ): Promise<ReturnType<typeof useClaimMap>> {
+    mockProgramState = { runDays: [runDay], manualCompletions: {} };
+    const { result } = renderHook(() => useClaimMap("2026-05-26"));
+    await act(async () => {
+      seedRuns([
+        {
+          id: "saved-b",
+          data: {
+            date: "2026-05-26",
+            distance: 6000,
+            avgPace,
+            createdAt: Timestamp.fromMillis(1716700000_000),
+          },
+        },
+      ]);
+      await flushSnapshots();
+    });
+    return result.current;
+  }
+
+  const EASY_PACE = 330; // 5:30/km — reads as "easy"
+
+  it("an easy day swapped UP to a tempo is not completed by an easy run", async () => {
+    // Reading `templateId` alone would bucket this as easy and complete it.
+    const r = await claimWith(
+      {
+        id: "rd-up",
+        date: "2026-05-26",
+        dayIndex: 2,
+        templateId: "easy_30",
+        userOverride: "tempo_20",
+        type: "easy",
+        status: "planned",
+      },
+      EASY_PACE
+    );
+    expect(r.claimMap.get("rd-up")?.claimedSavedRunId).toBeUndefined();
+  });
+
+  it("a tempo day swapped DOWN to easy IS completed by an easy run", async () => {
+    // The user removed the quality requirement; holding them to the tempo's
+    // pace bar would be judging a session they chose not to do.
+    const r = await claimWith(
+      {
+        id: "rd-down",
+        date: "2026-05-26",
+        dayIndex: 2,
+        templateId: "tempo_20",
+        userOverride: "easy_30",
+        type: "tempo",
+        status: "planned",
+      },
+      EASY_PACE
+    );
+    expect(r.claimMap.get("rd-down")?.claimedSavedRunId).toBe("saved-b");
   });
 });

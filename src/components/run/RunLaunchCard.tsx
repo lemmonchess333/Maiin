@@ -89,7 +89,7 @@ export default function RunLaunchCard({
   const distanceKm =
     target?.type === "distance" && target.value
       ? target.value / 1000
-      : (workout.config.targetDistance ?? null);
+      : (workout.config.targetDistanceKm ?? null);
   const timeMin =
     target?.type === "time" && target.value
       ? Math.round(target.value / 60)

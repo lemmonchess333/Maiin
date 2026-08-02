@@ -97,7 +97,7 @@ export function compactRunLabel(
       // trailing metre unit so it fits the rail tile alongside "5×1K".
       return (template.name.split(" ")[0] ?? "Intervals").replace(/m$/, "");
     case "long": {
-      const km = template.config.targetDistance;
+      const km = template.config.targetDistanceKm;
       return km ? `${km}K` : "Long";
     }
     case "race":

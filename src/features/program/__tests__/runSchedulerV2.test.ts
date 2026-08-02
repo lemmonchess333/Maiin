@@ -569,7 +569,7 @@ describe("clampPlanWeek — 0-based currentWeek into regenerated bounds", () => 
 // We compute the race-day from the final week of the plan
 // (weeks[totalWeeks - 1] in V2's output), find the entry with
 // type "race", and check templateId + the corresponding
-// RUN_TEMPLATES.config.targetDistance.
+// RUN_TEMPLATES.config.targetDistanceKm.
 
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 
@@ -619,14 +619,16 @@ describe("PR-0a — race template selection by distance", () => {
       // Template exists in RUN_TEMPLATES and is authored in km.
       const tmpl = RUN_TEMPLATES.find((t) => t.id === c.expectedTemplate);
       expect(tmpl).toBeDefined();
-      expect(tmpl!.config.targetDistance).toBe(c.expectedKm);
+      expect(tmpl!.config.targetDistanceKm).toBe(c.expectedKm);
 
       // Sanity: km × 1000 === the metres value the prefill bridge
       // should emit downstream. Pinning both halves of the chain
       // here means a future template-authoring change in km would
       // be caught against the prefill assertions in
       // runPlanMetadata.test.ts.
-      expect((tmpl!.config.targetDistance ?? 0) * 1000).toBe(c.expectedMeters);
+      expect((tmpl!.config.targetDistanceKm ?? 0) * 1000).toBe(
+        c.expectedMeters
+      );
     });
   }
 });

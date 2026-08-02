@@ -12,8 +12,6 @@
  *     doesn't undo a navigation.
  *   - iOS: no back affordance (no hardware back; WKWebView swipe-back-nav off by
  *     default) → neither interceptor fires; overlays dismiss via backdrop/X.
- *
- * See `scratchpad/spec-back-dismiss.md`.
  */
 import { useCallback, useEffect, useMemo, useRef, type ReactNode } from "react";
 import { isNativePlatform } from "./platform";
