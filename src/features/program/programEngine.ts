@@ -28,6 +28,7 @@ import {
 import {
   balanceWeeklyVolume,
   balancePushPull,
+  reconcileToLandmarks,
   volumeLandmark,
 } from "./volumeModel";
 import {
@@ -1836,11 +1837,23 @@ export function generateProgram(
   workouts = capRepeatedLifts(workouts, experience, (ex, to) =>
     swapExerciseIdentity(ex, to, loadCtx)
   );
+  // ADR-0010's staged condition, landed with the SECONDARY_SET_WEIGHT 1:1
+  // flip. The volume passes run reconcile → balance → reconcile:
+  //   1. shrink what the builders over-authored (the ceilings' authority);
+  //   2. the add-only balancers top up under-floor muscles — including the
+  //      secondary credit the first pass's cuts drained — inside the freed
+  //      session budget;
+  //   3. a second reconcile polices anything the adds re-inflated (at 1:1 an
+  //      add credits every secondary too). Measured 2026-08-03: running the
+  //      reconciler only before the balancers left re-inflation standing,
+  //      only after left 44 under-floor readings the balancer never saw.
+  workouts = reconcileToLandmarks(workouts, volumeLandmark(primaryGoal));
   // D-LIFT-1 (active): nudge under-dosed muscles up toward the goal volume
   // landmark by growing their accessories (add-only, mains untouched).
   workouts = balanceWeeklyVolume(workouts, volumeLandmark(primaryGoal));
   // D-LIFT-3: keep weekly pull volume ≥ push (shoulder-health balance).
   workouts = balancePushPull(workouts, volumeLandmark(primaryGoal));
+  workouts = reconcileToLandmarks(workouts, volumeLandmark(primaryGoal));
   // D-LIFT-5: seed bodyweight-relative cold-start loads on never-trained lifts
   // (no-op without a load context, or for lifts with logged history). Runs
   // last so it also calibrates whatever the caps above re-pointed.

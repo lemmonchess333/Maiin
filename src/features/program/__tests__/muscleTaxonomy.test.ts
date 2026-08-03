@@ -101,8 +101,15 @@ describe("muscle taxonomy — label coverage", () => {
   });
 });
 
-describe("muscle taxonomy — the roll-up is exact", () => {
-  it("every canonical group equals the sum of its fine parts", () => {
+describe("muscle taxonomy — the roll-up is bounded by its fine parts", () => {
+  it("every canonical group ≤ the sum of its fine parts, less only the intra-exercise dedupe", () => {
+    // Exact equality was this test's pin until the ADR-0010 dedupe: summing
+    // fine credits DOUBLE-COUNTED any exercise whose primary and a secondary
+    // roll up to the same canonical bucket (a barbell row booked 1.5 Back
+    // sets per physical set). The canonical view now counts a set once per
+    // muscle at the strongest relationship, so it may only be LESS than the
+    // fine sum — never more (that would be invented volume) — and the exact
+    // per-exercise rule is pinned in volumeModel.test.ts's dedupe block.
     const week = everyExerciseWeek();
     const canonical = new Map(
       weeklyVolumeByMuscle(week).map((v) => [v.muscle, v.sets])
@@ -120,8 +127,17 @@ describe("muscle taxonomy — the roll-up is exact", () => {
     }
 
     for (const m of CANONICAL_MUSCLE_ORDER) {
-      expect(rolled.get(m) ?? 0, `${m} roll-up`).toBe(canonical.get(m) ?? 0);
+      expect(canonical.get(m) ?? 0, `${m} roll-up`).toBeLessThanOrEqual(
+        rolled.get(m) ?? 0
+      );
     }
+    // The dedupe is real over the every-exercise week: at least one bucket
+    // must differ, or the guard above is vacuous and the double-count could
+    // silently return as an "exact" roll-up.
+    const anyDeduped = CANONICAL_MUSCLE_ORDER.some(
+      (m) => (canonical.get(m) ?? 0) < (rolled.get(m) ?? 0)
+    );
+    expect(anyDeduped).toBe(true);
     // …over a week that actually produced volume in every group.
     expect(canonical.size).toBe(CANONICAL_MUSCLE_ORDER.length);
   });

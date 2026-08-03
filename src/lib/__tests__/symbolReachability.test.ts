@@ -174,6 +174,16 @@ const KNOWN_ORPHAN_EXPORTS = [
   // is its own error log string.
   "src/lib/offlineQueue.ts:safeSave",
 
+  // Staged seam with a named consumer (2026-08-03): the 13a fine-muscle
+  // volume view. Its production consumer — per-head landmarks for the
+  // Shoulders/Core buckets — is the taxonomy split the ADR-0010 status
+  // addendum re-stages the currency flip on. It lost its only in-module
+  // caller when the canonical tally stopped summing fine credits (the
+  // intra-exercise dedupe); the muscleTaxonomy roll-up invariant still
+  // exercises it, and the staleness guard below evicts this entry the
+  // moment the taxonomy work wires it up.
+  "src/features/program/volumeModel.ts:weeklyVolumeByFineMuscle",
+
   // ── native-injection seams (staged; CLAUDE.md's documented pattern) ──
   // Web ships the real path, native calls the setter from its boot path
   // once the Capacitor plugin lands. CLAUDE.md names the appCheck split as
