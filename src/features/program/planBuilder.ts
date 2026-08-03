@@ -54,7 +54,11 @@ import {
 } from "./programTypes";
 import { generateSchedule, type ScheduleDay } from "@/lib/scheduleUtils";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
-import { generateProgram, expectedDayCount } from "./programEngine";
+import {
+  generateProgram,
+  expectedDayCount,
+  goalProfileFor,
+} from "./programEngine";
 import {
   loadContextFrom,
   seedStartingLoads,
@@ -308,7 +312,18 @@ function buildLiftProgram(input: PlanBuilderInput): {
   // generateProgram's cold-start seeding. Run the idempotent seeder across
   // the final shape so both generated and preserved plans are calibrated.
   const workouts = loadCtx
-    ? seedStartingLoads(equipmentSafe, loadCtx)
+    ? seedStartingLoads(
+        equipmentSafe,
+        loadCtx,
+        // Must carry the SAME rep anchor generateProgram used, or this pass
+        // silently undoes it: this seeder runs last and is the one that
+        // decides the final weight for every buildPlan path, including the
+        // preserve branch that never reaches generateProgram at all. Omitting
+        // it here made a `running` plan render 4-6 reps at the unchanged
+        // 8-rep weight — the exact "tested copy vs running copy" shape, with
+        // both copies in the same feature directory.
+        goalProfileFor(input.primaryGoal).mainReps
+      )
     : equipmentSafe;
   return { splitType: base.splitType, workouts };
 }

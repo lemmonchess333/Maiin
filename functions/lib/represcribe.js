@@ -72,11 +72,17 @@ const GOAL_PROFILES = Object.freeze({
     volumeMultiplier: 1.0,
     mainProgression: "double",
   },
+  // Same mains as `general`. A deficit is a phase to preserve strength
+  // through, not a reason to train light — Fleck & Kraemer p.179 ("intensity
+  // maintained, volume and frequency reduced"), and strength is load-specific
+  // (Schoenfeld 2017). See the client row for the full reasoning, including
+  // what the evidence does NOT say. Must move with the client: this is the
+  // copy that writes a training block's prescription.
   fat_loss: {
-    mainReps: 12,
-    mainRepsMax: 15,
-    accessoryReps: 15,
-    accessoryRepsMax: 20,
+    mainReps: 8,
+    mainRepsMax: 12,
+    accessoryReps: 12,
+    accessoryRepsMax: 15,
     volumeMultiplier: 1.0,
     mainProgression: "linear",
   },
@@ -88,11 +94,17 @@ const GOAL_PROFILES = Object.freeze({
     volumeMultiplier: 1.0,
     mainProgression: "double",
   },
+  // Heavy + brief. See the client row's comment for the evidence
+  // (Llanos-Lagos et al. 2024: submaximal load, 40-79% 1RM, did not improve
+  // running economy; >=80% did). This is the copy that actually WRITES a
+  // training block's prescription — startTrainingBlock / releaseTrainingBlock
+  // both go through it — so it must move in the same commit as the client or
+  // a runner is shown one target and written another.
   running: {
-    mainReps: 8,
-    mainRepsMax: 12,
-    accessoryReps: 12,
-    accessoryRepsMax: 15,
+    mainReps: 4,
+    mainRepsMax: 6,
+    accessoryReps: 10,
+    accessoryRepsMax: 12,
     volumeMultiplier: 0.85,
     mainProgression: "linear",
   },
