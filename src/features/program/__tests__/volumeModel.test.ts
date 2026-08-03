@@ -1,14 +1,16 @@
 import { describe, it, expect } from "vitest";
 import {
   weeklyVolumeByMuscle,
+  weeklyVolumeByJudgementMuscle,
   volumeLandmark,
+  judgementLandmark,
   classifyVolume,
   classifyVolumeDose,
   SECONDARY_SET_WEIGHT,
   balanceWeeklyVolume,
   balancePushPull,
   reconcileToLandmarks,
-  primaryCanonicalForExercise,
+  primaryJudgementForExercise,
   toCanonical,
 } from "../volumeModel";
 import { generateProgram } from "../programEngine";
@@ -47,15 +49,17 @@ function day(
 }
 
 describe("weeklyVolumeByMuscle", () => {
-  it("counts primary 1.0 and each secondary 0.5 (fractional volume)", () => {
-    // bench-press: Pectorals (primary) + Triceps, Front Delts (secondary)
+  it("counts primary 1.0 and each secondary 1.0 (the literature's 1:1)", () => {
+    // bench-press: Pectorals (primary) + Triceps, Front Delts (secondary).
+    // 1:1 since the taxonomy split (ADR-0010's flip): the meta-analyses the
+    // bands come from counted indirect sets undiscounted.
     const v = weeklyVolumeByMuscle([
       day([ex({ exerciseId: "bench-press", sets: 4 })]),
     ]);
     const get = (m: string) => v.find((x) => x.muscle === m)?.sets;
     expect(get("Chest")).toBe(4); // primary 4 × 1.0
-    expect(get("Triceps")).toBe(2); // secondary 4 × 0.5
-    expect(get("Shoulders")).toBe(2); // Front Delts → Shoulders, 4 × 0.5
+    expect(get("Triceps")).toBe(4); // secondary 4 × 1.0
+    expect(get("Shoulders")).toBe(4); // Front Delts → Shoulders, 4 × 1.0
   });
 
   it("sums across days and exercises", () => {
@@ -194,14 +198,14 @@ describe("balanceWeeklyVolume (D-LIFT-1 active)", () => {
     // violating both landmarks at once (Back = 39 against a high of 20 while
     // hamstrings sat at 11 against a low of 12).
     //
-    // A hip thrust is Glutes-primary with Hamstrings secondary (0.5/set), so
-    // topping up under-dosed glutes also spends hamstring volume — and here
-    // the hamstrings are already at the ceiling.
+    // A hip thrust is Glutes-primary with Hamstrings secondary (1.0/set at
+    // 1:1), so topping up under-dosed glutes also spends hamstring volume —
+    // and here the hamstrings are already past the ceiling.
     const atCeiling = () =>
       ex({
         exerciseId: "seated-leg-curl", // Hamstrings 1.0/set
         movementCategory: "hip_dominant",
-        sets: 19, // with the hip thrust's 0.5/set this puts Hamstrings AT 20
+        sets: 19, // with the hip thrust's 1.0/set this puts Hamstrings over 20
         isAccessory: false, // a main, so the balancer can't grow it
       });
     const out = balanceWeeklyVolume(
@@ -388,14 +392,13 @@ describe("volume currency (13a, ADR-0010)", () => {
     expect(v.find((x) => x.muscle === "Chest")?.sets).toBe(4); // primary is always 1.0
   });
 
-  it("is still 0.5 — the flip is staged, and staged on a condition", () => {
-    // ADR-0010: 1:1 is the correct currency and the bands assume it, but
-    // flipping before the day builders consult the landmarks doubles the
-    // per-muscle readings over a ceiling (180/825 -> 364/825 across the
-    // 90-config sweep). When the builders become landmark-aware, flip this AND
-    // re-baseline D-VOL's ratchet in planSweep.golden.test.ts in the same
-    // commit — those bounds are denominated in this currency.
-    expect(SECONDARY_SET_WEIGHT).toBe(0.5);
+  it("is 1.0 — the flip landed with the judgement layer, as ADR-0010 staged", () => {
+    // The condition was landmark-aware generation. The reconciler alone was
+    // measured insufficient (canonical Shoulders/Core mispriced 1:1 credit);
+    // per-group judgement bands closed that, and the flip landed with them.
+    // D-VOL's ratchet is denominated in the judged 1:1 unit — flipping this
+    // back re-inflates nothing silently: the currency tests above fail.
+    expect(SECONDARY_SET_WEIGHT).toBe(1.0);
   });
 });
 
@@ -492,8 +495,8 @@ describe("muscle attribution (P1)", () => {
     const week = [day([ex({ exerciseId: "zercher-squat", sets: 4 })])];
     const tally = weeklyVolumeByMuscle(week);
     const quads = tally.find((t) => t.muscle === "Quads");
-    expect(quads?.sets).toBe(2); // 4 sets × 0.5 secondary credit
-    expect(tally.find((t) => t.muscle === "Glutes")?.sets).toBe(2);
+    expect(quads?.sets).toBe(4); // 4 sets × 1.0 secondary credit (1:1)
+    expect(tally.find((t) => t.muscle === "Glutes")?.sets).toBe(4);
   });
 
   it("cardio still books nothing, whatever its secondaries claim", () => {
@@ -617,21 +620,22 @@ describe("reconcileToLandmarks", () => {
 });
 
 describe("generateProgram honours the ceilings (reconciler wiring)", () => {
-  it("any muscle still over its ceiling has every primary slot at floor", () => {
-    // The reconciler's contract: overage may remain ONLY where the builders
-    // cannot reach it (all primary slots floor-bound). A single over-ceiling
-    // muscle with a cuttable primary slot means the pass isn't wired in.
+  it("any JUDGEMENT group still over its ceiling has every primary slot at floor", () => {
+    // The reconciler's contract, in the unit it actually enforces: overage
+    // may remain ONLY where the builders cannot reach it (all primary slots
+    // floor-bound). A single over-ceiling group with a cuttable primary slot
+    // means the pass isn't wired in.
     for (const goal of ["hypertrophy", "strength"] as const) {
       for (const days of [4, 5, 6]) {
         const { workouts } = generateProgram("recomp", days, undefined, goal);
-        const lm2 = volumeLandmark(goal);
-        for (const mv of weeklyVolumeByMuscle(workouts)) {
+        for (const mv of weeklyVolumeByJudgementMuscle(workouts)) {
+          const lm2 = judgementLandmark(goal, mv.muscle);
           if (mv.sets <= lm2.high) continue;
           const cuttable = workouts
             .flatMap((d) => d.exercises)
             .filter(
               (e) =>
-                primaryCanonicalForExercise(e) === mv.muscle &&
+                primaryJudgementForExercise(e) === mv.muscle &&
                 (e.sets ?? 0) > (e.isAccessory === true ? 2 : 3)
             );
           expect(
@@ -641,5 +645,120 @@ describe("generateProgram honours the ceilings (reconciler wiring)", () => {
         }
       }
     }
+  });
+});
+
+// ── Judgement layer (taxonomy split — ADR-0010 second addendum) ─────────
+
+describe("judgement layer — per-head classification", () => {
+  it("splits a press and a pull that the canonical bucket lumped", () => {
+    // OHP (Deltoids primary — generic label) on a push movement judges as
+    // FRONT delts (Schoenfeld pp.186-187: the press trains the anterior
+    // head); pull-ups' shoulder credit judges as REAR delts. The canonical
+    // view files both under one "Shoulders".
+    const week = [
+      day([
+        ex({
+          exerciseId: "overhead-press",
+          movementCategory: "vertical_push",
+          sets: 4,
+        }),
+        ex({
+          exerciseId: "pull-ups",
+          movementCategory: "vertical_pull",
+          sets: 3,
+        }),
+      ]),
+    ];
+    const judged = new Map(
+      weeklyVolumeByJudgementMuscle(week).map((v) => [v.muscle, v.sets])
+    );
+    expect(judged.get("FrontDelts")).toBe(4);
+    // pull-ups: Back primary (→ Lats), Shoulders secondary → RearDelts 1.0
+    expect(judged.get("RearDelts")).toBe(3);
+    expect(judged.get("Lats")).toBe(3);
+    expect(judged.get("SideDelts")).toBeUndefined();
+  });
+
+  it("a squat books ZERO ab sets — direct core work only (RP counting)", () => {
+    const week = [
+      day([
+        ex({
+          exerciseId: "squat",
+          movementCategory: "knee_dominant",
+          sets: 5,
+        }),
+        ex({
+          exerciseId: "cable-crunch",
+          movementCategory: "core",
+          sets: 2,
+          isAccessory: true,
+        }),
+      ]),
+    ];
+    const judged = new Map(
+      weeklyVolumeByJudgementMuscle(week).map((v) => [v.muscle, v.sets])
+    );
+    // The squat's "Core" secondary is stabilisation, not ab training; only
+    // the crunch counts. (The DB lists Core as a secondary on 38 compounds —
+    // counting them read Core as 22-39 weekly sets on two crunch slots.)
+    expect(judged.get("Abs")).toBe(2);
+  });
+
+  it("a row still counts once toward its region (dedupe holds at this layer)", () => {
+    // barbell-row: Lats primary + Lower Back secondary — different judgement
+    // groups now (Lats / LowerBack), so BOTH earn credit; but a lift whose
+    // primary and secondary land in the SAME group must count once.
+    const week = [
+      day([
+        ex({
+          exerciseId: "standing-calf-raise",
+          movementCategory: "knee_dominant",
+          sets: 4,
+        }),
+      ]),
+    ];
+    // Calves primary (Gastrocnemius) + Soleus secondary → one Calves group.
+    expect(
+      weeklyVolumeByJudgementMuscle(week).find((v) => v.muscle === "Calves")
+        ?.sets
+    ).toBe(4);
+  });
+
+  it("judgementLandmark: kept groups delegate; split groups scale by goal", () => {
+    // Kept group — byte-identical to the generic band.
+    expect(judgementLandmark("hypertrophy", "Quads")).toEqual(
+      volumeLandmark("hypertrophy")
+    );
+    // Split group at the hypertrophy anchor — the authored prior, verbatim.
+    expect(judgementLandmark("hypertrophy", "SideDelts")).toEqual({
+      mv: 0,
+      low: 8,
+      high: 26,
+    });
+    // Goal scaling: strength generic high is 14 vs hypertrophy's 20, so the
+    // side-delt ceiling scales 26 × 14/20 ≈ 18. A zero floor stays zero at
+    // every goal — front delts can never read "below target".
+    expect(judgementLandmark("strength", "SideDelts").high).toBe(18);
+    expect(judgementLandmark("strength", "FrontDelts").low).toBe(0);
+    expect(judgementLandmark("fat_loss", "FrontDelts").low).toBe(0);
+  });
+
+  it("generic delt credit follows the movement (push→front, pull→rear)", () => {
+    // A custom (non-DB) vertical push attributes DeltsUnspecified via the
+    // category fallback; the judgement layer must land it on FrontDelts.
+    const week = [
+      day([
+        ex({
+          exerciseId: "my-custom-press",
+          movementCategory: "vertical_push",
+          sets: 3,
+        }),
+      ]),
+    ];
+    expect(
+      weeklyVolumeByJudgementMuscle(week).find((v) => v.muscle === "FrontDelts")
+        ?.sets
+    ).toBe(3);
   });
 });
