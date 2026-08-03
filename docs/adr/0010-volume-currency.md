@@ -147,3 +147,41 @@ and the D-VOL ratchet bounds tightened rather than re-baselined. The rise in
 low readings (153 → 193) is substantially the dedupe revealing volume that
 double-counting had been inflating into-band, plus reconciler cascades at
 2–3 day counts where every band is unreachable anyway.
+
+## Status addendum — 2026-08-03 (later): the flip LANDED, with the judgement layer
+
+The taxonomy split closed the gap the first addendum identified. Volume is
+now CLASSIFIED on a 14-group judgement layer (`JudgementMuscle`) with
+per-group bands (`judgementLandmark`): the delt heads are judged separately
+(press-inclusive FrontDelts per Schoenfeld pp.186–187; direct-work
+SideDelts/RearDelts per RP's per-muscle table), Back is judged as
+Lats / UpperBack / LowerBack, Abs counts DIRECT core work only (RP's
+counting convention — a squat books no ab sets), and Glutes gained a
+hinge-inclusive band (RP MRV 25+, because every hip extension trains them).
+The canonical ten remain the display roll-up; the balancers, the reconciler,
+the WeeklyVolumeCard statuses and the D-VOL ratchet all run on the judged
+layer.
+
+With that in place, `SECONDARY_SET_WEIGHT` flipped to **1.0**. Measured on
+the 75-config sweep, judged readings:
+
+|                             | high        | low         | worst reading    |
+| --------------------------- | ----------- | ----------- | ---------------- |
+| status quo (canonical, 0.5) | 180 of 750  | 153 of 750  | 185% of ceiling  |
+| **judged, 1:1 (landed)**    | 180 of 1015 | 151 of 1015 | <150% of ceiling |
+
+Same absolute count on a 35% larger reading set — the over-ceiling RATE
+falls 24.0% → 17.7%, under-floor 20.4% → 14.9%, and severity collapses:
+nothing reads above 150% of its ceiling, where the canonical model's worst
+ran 185% (Back 37 vs 20, itself partly the intra-exercise double-count).
+Remaining highs are mild and concentrated in secondary-fed groups (Triceps,
+Hamstrings, Biceps, Chest) at the compressed strength/fat-loss scalings,
+where the reconciler's floors bind — visible in the re-baselined ratchet,
+not silent.
+
+Two band corrections were made during measurement and are the only tuning
+this landed with, both currency-consistency fixes of the same kind the ADR
+itself makes: FrontDelts' band was re-authored press-inclusive (a
+direct-raise band against a press-counting tally repeated the original
+mismatch), and Glutes gained the hinge-inclusive band above. No band was
+adjusted to absorb a residual the sources do not explain.

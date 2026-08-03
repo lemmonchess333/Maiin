@@ -39,7 +39,10 @@
 import { describe, it, expect } from "vitest";
 
 import { buildPlan } from "../planBuilder";
-import { weeklyVolumeByMuscle, volumeLandmark } from "../volumeModel";
+import {
+  weeklyVolumeByJudgementMuscle,
+  judgementLandmark,
+} from "../volumeModel";
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import type { PlanBuilderInput } from "../planBuilder";
 import type { PrimaryGoal } from "../programTypes";
@@ -84,8 +87,9 @@ interface ConfigSummary {
   days: string[];
   /** `exerciseId × sets × reps @ weight`, per day. The prescription itself. */
   prescription: string[];
-  /** Weekly sets per canonical muscle, and how each reads against the goal's
-   *  landmark band. This is the tally the whole volume model rests on. */
+  /** Weekly sets per JUDGEMENT group, each read against its own per-group
+   *  goal band (taxonomy split). This is the tally the balancers and the
+   *  reconciler act on. */
   volume: Record<string, string>;
 }
 
@@ -95,13 +99,16 @@ function summarise(
   goal: PrimaryGoal
 ): ConfigSummary {
   const { programState } = buildPlan(input(liftDays, equipment, goal));
-  const band = volumeLandmark(goal);
-  const tally = weeklyVolumeByMuscle(programState.workouts);
+  // Judgement groups with per-group bands (taxonomy split) — the same
+  // classification the balancers and reconciler act on, so the ratchet
+  // below counts the violations the engine can actually see.
+  const tally = weeklyVolumeByJudgementMuscle(programState.workouts);
 
   const volume: Record<string, string> = {};
   for (const { muscle, sets } of [...tally].sort((a, b) =>
     a.muscle.localeCompare(b.muscle)
   )) {
+    const band = judgementLandmark(goal, muscle);
     const status = sets < band.low ? "LOW" : sets > band.high ? "HIGH" : "ok";
     volume[muscle] = `${sets} (${status})`;
   }
@@ -184,24 +191,33 @@ describe("KNOWN_DEFECTS — asserted so the snapshot is not read as approval", (
      actuals, so the numbers can only go down. Tighten them whenever they
      improve; the test fails the moment a change makes it worse.
 
-     These bounds are denominated in the CURRENT volume currency (indirect sets
-     at 0.5). ADR-0010 settles that the literature's 1:1 is correct; its
-     2026-08-03 status addendum records why the flip is RE-STAGED on the
-     taxonomy split — with `reconcileToLandmarks` landed, 1:1 still measured
-     292/750 readings over a ceiling vs 180 at 0.5, because the canonical
-     Shoulders/Core buckets absorb every press/pull/compound as secondaries
-     and no shrink pass can reconcile a mispriced bucket. When the flip
-     lands, RE-BASELINE these two bounds in the same commit. A re-baseline is
-     not a ratchet regression; the numbers are in a different unit.
+     These bounds are denominated in the JUDGEMENT-layer unit as of the
+     2026-08-03 taxonomy split: indirect sets at the literature's 1:1
+     (ADR-0010's flip, landed with per-group bands), classified per
+     JudgementMuscle against judgementLandmark. Earlier bounds in this file
+     were canonical-ten 0.5-currency numbers and are NOT comparable.
 
-     2026-08-03 — reconciler + intra-exercise dedupe landed:
-       high 53 -> 42 configs (a genuine tightening: per-muscle readings over
-       a ceiling fell 180 -> 74, the unrecoverable direction);
-       low 60 -> 68 configs (a RE-BASELINE, not a regression: the dedupe
-       stopped rows/deadlifts booking 1.5 canonical Back sets per physical
-       set, and volume that double-counting had inflated into-band now
-       honestly reads low — measured with the reconciler disabled, the
-       dedupe alone accounts for all but 2 of the new low readings). */
+     History, so the units are never conflated:
+       (canonical, 0.5)  53 over / 60 under  — pre-reconciler
+       (canonical, 0.5)  42 over / 68 under  — reconciler + intra-exercise
+                                               dedupe (high tightened, low
+                                               re-baselined for the dedupe)
+       (judged, 1:1)     50 over / 68 under  — taxonomy split + currency
+                                               flip. Not a regression from
+                                               42: different unit, 14 groups
+                                               per config instead of 10, and
+                                               severity COLLAPSED — the
+                                               worst reading is now <150% of
+                                               its ceiling, where the
+                                               canonical worst ran 185%
+                                               (Back 37 vs 20). Remaining
+                                               overs are mild and sit in
+                                               secondary-fed groups at the
+                                               compressed strength/fat-loss
+                                               scalings, where the
+                                               reconciler's floors bind.
+     Tighten whenever they improve; the test fails the moment a change makes
+     either worse in the CURRENT unit. */
   it("D-VOL: landmark violations are ratcheted and must only shrink", () => {
     const high = SWEEP.filter((s) =>
       Object.values(s.volume).some((v) => v.includes("HIGH"))
@@ -211,7 +227,7 @@ describe("KNOWN_DEFECTS — asserted so the snapshot is not read as approval", (
     ).length;
 
     expect(high, `${high} configs over a landmark ceiling`).toBeLessThanOrEqual(
-      42
+      50
     );
     expect(low, `${low} configs under a landmark floor`).toBeLessThanOrEqual(
       68
