@@ -71,19 +71,32 @@ const TEMPLATE_BY_ID = new Map(RUN_TEMPLATES.map((t) => [t.id, t]));
  * the feature depends on.
  */
 const SCHEDULER_EMITS = [
-  "easy_30", // both schedulers, multiple branches
-  "tempo_20", // structured week (quality slot, even weeks) + race plan build phase
-  "5x1k", // structured week (intervals, odd weeks, w%4<2) + race plan build phase
+  // Easy runs are a ladder in race plans (ramped) and fixed easy_30 in the
+  // structured week.
+  "easy_30",
+  "easy_40",
+  "easy_50",
+  // Quality ladders, chosen per WEEK by `qualityTemplateId`. The structured
+  // week still emits the base rungs only (tempo_20 / 5x1k / 8x400).
+  "tempo_20",
+  "tempo_30",
+  "tempo_40",
+  "4x1k",
+  "5x1k",
+  "6x1k",
   "8x400", // structured week (intervals, odd weeks, w%4>=2) + race plan taper phase
   // Race-plan long runs, chosen per WEEK by the ramp (longRunKmForWeek →
   // longTierForKm), not once per plan. Which tiers a given plan reaches
   // depends on its distance and volume knob; `longRunProgression.test.ts`
-  // pins the ladder set-equal to the long-typed templates.
+  // pins reachability against the registry, and records that long_30k is
+  // deliberately excluded by the 150-minute cap.
+  "long_6k",
+  "long_8k",
   "long_10k",
+  "long_12k",
   "long_15k",
   "long_20k",
   "long_25k",
-  "long_30k",
   "5k_race", // race plan, race week
 ] as const;
 

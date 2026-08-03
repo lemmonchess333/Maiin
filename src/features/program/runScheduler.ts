@@ -349,6 +349,81 @@ const EASY_RUN_TIERS: ReadonlyArray<{ id: string; minutes: number }> = [
 const EASY_BASE_MINUTES = 30;
 const EASY_PEAK_MINUTES = 50;
 
+/**
+ * Quality sessions progress by VOLUME, and their peak is event-specific.
+ *
+ * The last flat axis in the plan. Measured before this: `tempo_20` and `5x1k`
+ * alternated unchanged for 15 consecutive build weeks on every distance, so a
+ * marathoner and a 5K runner did the identical quality session for the whole
+ * block and neither one's got harder.
+ *
+ * What ramps is volume, never pace. Interval and threshold paces are defined
+ * by physiology — `runPaces.ts` derives them from VDOT — so a block develops
+ * how MUCH of that pace you can hold, not how fast the pace is. Daniels,
+ * Pfitzinger and Hansons all progress quality this way.
+ *
+ * Event specificity lives in the THRESHOLD ceiling: a 5K racer has no use for
+ * a 40-minute tempo (their whole race is ~20 minutes), a marathoner does.
+ * That axis carries the distinction on its own, so the interval ladder tops
+ * out at 6 reps for everyone — Pfitzinger prescribes 5-6×1000m VO2max work in
+ * marathon blocks too.
+ *
+ * A first pass keyed the interval peak to distance as well (marathon 5, 5K
+ * 6). Measuring it showed marathon intervals then sat at 4 reps for the ENTIRE
+ * block, because a base of 4 and a peak of 5 only crosses the 5-rep rung on
+ * the final ramp week — which lands on a tempo. That is the flat-axis defect
+ * this function exists to remove, reintroduced for one distance, so the
+ * specificity moved entirely to the tempo ceiling where it is unambiguous.
+ *
+ * Deliberately NOT implemented: Daniels' caps expressed as a percentage of
+ * weekly mileage (T ≤ 10%, I ≤ 8%). Applying them here would mean converting
+ * quality MINUTES into a share of weekly MINUTES, and tempo/interval pace is
+ * faster than easy pace, so the conversion needs a pace exchange rate the
+ * scheduler does not have. Inventing one would be exactly the "invented
+ * precision that downstream handoffs then treat as data" the v8 evaluation
+ * refuses. Keying the ceiling to the race distance gets the same protection
+ * — a 5K plan never sees a 40-minute tempo — without the fabricated constant.
+ */
+const TEMPO_TIERS: ReadonlyArray<{ id: string; workMinutes: number }> = [
+  { id: "tempo_20", workMinutes: 20 },
+  { id: "tempo_30", workMinutes: 30 },
+  { id: "tempo_40", workMinutes: 40 },
+];
+const INTERVAL_TIERS: ReadonlyArray<{ id: string; reps: number }> = [
+  { id: "4x1k", reps: 4 },
+  { id: "5x1k", reps: 5 },
+  { id: "6x1k", reps: 6 },
+];
+const QUALITY_BASE = { tempoWorkMinutes: 20, intervalReps: 4 };
+/**
+ * Fraction of the ramp after which quality volume is at peak and HELD.
+ *
+ * 0.7 rather than a rounder 0.8 for a measured reason: quality alternates by
+ * week parity AND every 4th week is a cutback, so the weeks eligible to sit
+ * at peak are roughly a quarter of the tail. At 0.8 the marathon reached its
+ * top interval session exactly ONCE.
+ *
+ * The long run peaks on exactly one week, which is fine — it is a single
+ * landmark session. Quality is not: you want several exposures at the peak
+ * session before racing, and one is a test rather than a stimulus.
+ *
+ * It is also what makes the top rung reachable at all. Quality alternates
+ * tempo/intervals by week parity, so a ramp that only touches peak on its
+ * final week reaches it for whichever flavour that week happens to be, and
+ * the other flavour's top tier is never emitted. Measured: `6x1k` was dead on
+ * every distance until this existed.
+ */
+const QUALITY_PEAK_AT = 0.7;
+const QUALITY_PEAK_BY_DISTANCE: Record<
+  "5k" | "10k" | "half" | "marathon",
+  { tempoWorkMinutes: number; intervalReps: number }
+> = {
+  "5k": { tempoWorkMinutes: 20, intervalReps: 6 },
+  "10k": { tempoWorkMinutes: 30, intervalReps: 6 },
+  half: { tempoWorkMinutes: 40, intervalReps: 6 },
+  marathon: { tempoWorkMinutes: 40, intervalReps: 6 },
+};
+
 /** Every 4th week is a cutback — the long run steps back rather than up. */
 const CUTBACK_EVERY = 4;
 /** How much a cutback week takes off the ramped distance. */
@@ -521,6 +596,49 @@ export function easyTierForMinutes(minutes: number): string {
   for (const tier of EASY_RUN_TIERS) {
     if (tier.minutes <= minutes) chosen = tier;
   }
+  return chosen.id;
+}
+
+/**
+ * Resolve the quality session for a week: which flavour, at what volume.
+ *
+ * Ramps on the same `rampShape` as everything else, so a cutback week eases
+ * the quality session too rather than leaving it as the one thing that never
+ * backs off. `gentler` holds quality at the base rung — the knob already
+ * drops interval sessions entirely and halves the frequency, and letting the
+ * surviving sessions also grow would work against that.
+ */
+export function qualityTemplateId(input: {
+  flavour: "tempo" | "intervals";
+  weekIndex: number;
+  totalWeeks: number;
+  taperWeeks: number;
+  distance: "5k" | "10k" | "half" | "marathon";
+  difficulty: RunDifficultyPreset;
+}): string {
+  const tiers = input.flavour === "tempo" ? TEMPO_TIERS : INTERVAL_TIERS;
+  const sizeOf = (t: (typeof tiers)[number]) =>
+    "workMinutes" in t ? t.workMinutes : t.reps;
+  const base =
+    input.flavour === "tempo"
+      ? QUALITY_BASE.tempoWorkMinutes
+      : QUALITY_BASE.intervalReps;
+  const peakCfg = QUALITY_PEAK_BY_DISTANCE[input.distance];
+  const peak =
+    input.flavour === "tempo" ? peakCfg.tempoWorkMinutes : peakCfg.intervalReps;
+
+  const shape = rampShape(input);
+  let target = base;
+  if (shape && peak > base && input.difficulty !== "gentler") {
+    const progress = Math.min(1, shape.progress / QUALITY_PEAK_AT);
+    const ramped = base + (peak - base) * progress;
+    target = shape.isCutback
+      ? Math.max(base, ramped * CUTBACK_FRACTION)
+      : ramped;
+  }
+
+  let chosen = tiers[0];
+  for (const tier of tiers) if (sizeOf(tier) <= target) chosen = tier;
   return chosen.id;
 }
 
@@ -905,7 +1023,14 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
             : w % 2 === 0
               ? "tempo"
               : "intervals";
-          const qualityId = qualityType === "tempo" ? "tempo_20" : "5x1k";
+          const qualityId = qualityTemplateId({
+            flavour: qualityType,
+            weekIndex: w,
+            totalWeeks,
+            taperWeeks: TAPER_WEEKS_BY_DISTANCE[input.raceGoal.distance],
+            distance: input.raceGoal.distance,
+            difficulty: tuning.difficulty,
+          });
           week.push(
             buildRunDayV2({
               dayIndex: remaining[0],
@@ -922,7 +1047,14 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
             week.push(
               buildRunDayV2({
                 dayIndex: remaining[1],
-                templateId: secondType === "tempo" ? "tempo_20" : "5x1k",
+                templateId: qualityTemplateId({
+                  flavour: secondType,
+                  weekIndex: w,
+                  totalWeeks,
+                  taperWeeks: TAPER_WEEKS_BY_DISTANCE[input.raceGoal.distance],
+                  distance: input.raceGoal.distance,
+                  difficulty: tuning.difficulty,
+                }),
                 type: secondType,
                 weekStart,
               })
