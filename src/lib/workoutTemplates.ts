@@ -29,6 +29,27 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     estimatedDuration: 30,
     config: {},
   },
+  // Easy runs are a LADDER, not a fixed 30 minutes. A race plan whose only
+  // progressing session is the long run pushes the whole weekly increase into
+  // one day; see the `EASY_RUN_TIERS` note in runScheduler.ts.
+  {
+    id: "easy_40",
+    name: "Easy 40",
+    type: "easy",
+    icon: "person-standing",
+    description: "Conversational pace — steady aerobic",
+    estimatedDuration: 40,
+    config: {},
+  },
+  {
+    id: "easy_50",
+    name: "Easy 50",
+    type: "easy",
+    icon: "person-standing",
+    description: "Conversational pace — aerobic base",
+    estimatedDuration: 50,
+    config: {},
+  },
   {
     id: "tempo_20",
     name: "20 Min Tempo",
@@ -72,6 +93,27 @@ export const RUN_TEMPLATES: RunTemplate[] = [
       },
     },
   },
+  // The bottom of the long-run ladder. Without these a 5K plan (4→8 km) and a
+  // 10K plan (6→12 km) sat entirely at or below the old 10 km first rung, so
+  // their long run never progressed across the whole block.
+  {
+    id: "long_6k",
+    name: "Long 6K",
+    type: "long",
+    icon: "route",
+    description: "Easy effort, time on feet",
+    estimatedDuration: 35,
+    config: { targetDistanceKm: 6 },
+  },
+  {
+    id: "long_8k",
+    name: "Long 8K",
+    type: "long",
+    icon: "route",
+    description: "Easy effort, time on feet",
+    estimatedDuration: 45,
+    config: { targetDistanceKm: 8 },
+  },
   {
     id: "long_10k",
     name: "Long 10K",
@@ -82,6 +124,15 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     config: { targetDistanceKm: 10 },
   },
   {
+    id: "long_12k",
+    name: "Long 12K",
+    type: "long",
+    icon: "route",
+    description: "Easy-to-moderate effort, time on feet",
+    estimatedDuration: 65,
+    config: { targetDistanceKm: 12 },
+  },
+  {
     id: "long_15k",
     name: "Long 15K",
     type: "long",
@@ -89,6 +140,33 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     description: "Steady, controlled effort",
     estimatedDuration: 80,
     config: { targetDistanceKm: 15 },
+  },
+  {
+    id: "long_20k",
+    name: "Long 20K",
+    type: "long",
+    icon: "route",
+    description: "Extended aerobic effort — half-marathon specific",
+    estimatedDuration: 110,
+    config: { targetDistanceKm: 20 },
+  },
+  {
+    id: "long_25k",
+    name: "Long 25K",
+    type: "long",
+    icon: "route",
+    description: "Long aerobic effort — marathon build",
+    estimatedDuration: 140,
+    config: { targetDistanceKm: 25 },
+  },
+  {
+    id: "long_30k",
+    name: "Long 30K",
+    type: "long",
+    icon: "route",
+    description: "Peak marathon long run — time on feet",
+    estimatedDuration: 170,
+    config: { targetDistanceKm: 30 },
   },
   {
     id: "5k_race",

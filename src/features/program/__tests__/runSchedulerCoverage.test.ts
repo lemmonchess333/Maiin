@@ -75,8 +75,15 @@ const SCHEDULER_EMITS = [
   "tempo_20", // structured week (quality slot, even weeks) + race plan build phase
   "5x1k", // structured week (intervals, odd weeks, w%4<2) + race plan build phase
   "8x400", // structured week (intervals, odd weeks, w%4>=2) + race plan taper phase
-  "long_10k", // race plan, peakLongKm < 15
-  "long_15k", // race plan, peakLongKm >= 15
+  // Race-plan long runs, chosen per WEEK by the ramp (longRunKmForWeek →
+  // longTierForKm), not once per plan. Which tiers a given plan reaches
+  // depends on its distance and volume knob; `longRunProgression.test.ts`
+  // pins the ladder set-equal to the long-typed templates.
+  "long_10k",
+  "long_15k",
+  "long_20k",
+  "long_25k",
+  "long_30k",
   "5k_race", // race plan, race week
 ] as const;
 
@@ -168,7 +175,7 @@ describe("RUN_TEMPLATES coverage — dynamic sweep over scheduleStructuredWeekV2
 describe("RUN_TEMPLATES coverage — dynamic sweep over generateRacePlanV2", () => {
   // Race plans take a target date. Use a date far enough out to hit
   // every phase (base / build / taper / race) in a single plan, and
-  // sample across distances to surface long_10k vs long_15k branches.
+  // sample across distances so the long-run ramp reaches its upper tiers.
   const TODAY = "2026-07-05";
   /** V2 takes local "YYYY-MM-DD", not an ISO instant. */
   function futureDate(daysAhead: number): string {
