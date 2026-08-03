@@ -2581,4 +2581,65 @@ suite("firestore.rules — partnerBonds (SOCIAL S3)", () => {
       );
     });
   });
+
+  // ── Packets 17+19 lockdown — push device tokens are server-only ──
+  // Re-cut 2026-08-03 from stale PR #1635 (whose branch would have
+  // REVERTED later allow-list fixes; only this lock was still wanted).
+  // The client's push registration goes through claimPushDeviceToken /
+  // releasePushDeviceToken; no client code reads or writes these paths
+  // (pushNotifications.ts). An owner-readable device list would leak
+  // token bindings, so even the OWNER is denied.
+  describe("push device tokens + claim ledger are server-only", () => {
+    it("the owner cannot write their own device-token doc", async () => {
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(
+        setDoc(doc(ownerDb, "users", OWNER_UID, "devices", "token-hash-a"), {
+          token: "fcm-token",
+          createdAt: 1,
+        })
+      );
+    });
+
+    it("the owner cannot read their own device-token doc", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(
+          doc(ctx.firestore(), "users", OWNER_UID, "devices", "token-hash-a"),
+          { token: "fcm-token" }
+        );
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(
+        getDoc(doc(ownerDb, "users", OWNER_UID, "devices", "token-hash-a"))
+      );
+    });
+
+    it("the owner cannot delete a device-token doc (revocation is the callable's)", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(
+          doc(ctx.firestore(), "users", OWNER_UID, "devices", "token-hash-b"),
+          { token: "fcm-token" }
+        );
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(
+        deleteDoc(doc(ownerDb, "users", OWNER_UID, "devices", "token-hash-b"))
+      );
+    });
+
+    it("fcmTokenClaims is unreadable and unwritable, even for the token's owner", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), "fcmTokenClaims", "token-hash-a"), {
+          ownerUid: OWNER_UID,
+          status: "claimed",
+        });
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(getDoc(doc(ownerDb, "fcmTokenClaims", "token-hash-a")));
+      await assertFails(
+        setDoc(doc(ownerDb, "fcmTokenClaims", "token-hash-a"), {
+          ownerUid: OTHER_UID,
+        })
+      );
+    });
+  });
 });

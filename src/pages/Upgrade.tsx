@@ -52,6 +52,7 @@ import { useAuth } from "@/lib/auth";
 import { track } from "@/lib/paywallAnalytics";
 import { THEME } from "@/lib/theme";
 import { Spinner } from "@/components/ui/Spinner";
+import { PaywallLegalLinks } from "@/components/paywall/PaywallLegalLinks";
 
 export default function Upgrade() {
   const navigate = useNavigate();
@@ -86,6 +87,21 @@ export default function Upgrade() {
   const { loading, error, startCheckout } = useProCheckout();
 
   const platform: "web" | "ios" = isNativeIOS() ? "ios" : "web";
+
+  // Restore purchases is iOS-only (Guideline 3.1.2 parity with ProModal —
+  // same handler shape; `restorePurchases()` on web returns an error, so
+  // the button below is gated to native rather than rendering a dead link).
+  const handleRestore = async () => {
+    track("restore_purchases_clicked", { source: "upgrade_page", platform });
+    const { restorePurchases } = await import("@/lib/purchaseProvider");
+    const result = await restorePurchases();
+    const { toast } = await import("sonner");
+    if (result.success) {
+      toast.success("Purchases restored");
+    } else if (result.error) {
+      toast.error(result.error);
+    }
+  };
 
   // Paywall view event — once per page load. Trial users count too;
   // they're a meaningful conversion target.
@@ -540,6 +556,19 @@ export default function Upgrade() {
           <p className="text-xs text-muted-foreground text-center">
             {getRenewalDisclosure(selectedPlan, platform)}
           </p>
+
+          {platform === "ios" ? (
+            <button
+              type="button"
+              onClick={handleRestore}
+              disabled={loading}
+              className="block mx-auto text-caption text-muted-foreground underline underline-offset-2 disabled:opacity-50"
+            >
+              Restore purchases
+            </button>
+          ) : null}
+
+          <PaywallLegalLinks />
 
           {/* Inline price-summary fallback for users who scrolled past
               the plan cards on a small viewport. */}
