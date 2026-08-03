@@ -110,3 +110,40 @@ sweep makes the diff reviewable, and D-VOL's ratchet in
   convention_ for attributing one set to several muscles, not a fatigue model,
   and the v8 evaluation's refusal to build a `fatigueCost` / SFR scalar stands
   unchanged.
+
+## Status addendum — 2026-08-03: the staged condition landed and proved insufficient; flip re-staged on the taxonomy split
+
+`reconcileToLandmarks` (shrink-only, primary-slot, floor-bound: accessories 2,
+mains 3) now runs in `generateProgram` around the add-only balancers —
+reconcile → balance → reconcile — which is this ADR's staged condition. The
+same change fixed an intra-exercise double-count the flip measurement
+surfaced: an exercise whose primary and a secondary roll up to the SAME
+canonical bucket (barbell row: Lats + Lower Back → Back) booked 1.5 canonical
+sets per physical set at 0.5 and would book 2.0 at 1:1. The canonical tally
+now counts a set once per canonical muscle at the exercise's strongest
+relationship. The fine view is unchanged.
+
+Measured across the 75-config sweep (readings over ceiling / under floor):
+
+|                                      | high | low |
+| ------------------------------------ | ---- | --- |
+| status quo (0.5, summed roll-up)     | 180  | 153 |
+| 1:1 + reconciler + dedupe            | 292  | 87  |
+| **0.5 + reconciler + dedupe (kept)** | 74   | 193 |
+
+The flip still cannot land net-positive: at 1:1 the canonical Shoulders
+bucket absorbs every press AND every pull as full sets (measured at 6d: 8
+primary + 27 secondary weekly sets against a ceiling of 20) and Core absorbs
+every compound. No shrink pass can reconcile those buckets without starving
+the primaries that feed them — the buckets themselves are mispriced, and the
+fix is per-head landmarks (front/side/rear delts; direct-ab counting), i.e.
+the taxonomy split this repo already stages as 13a's successor.
+
+**The flip is therefore re-staged: it lands with the taxonomy split's
+per-head landmarks, not with the reconciler alone.** What shipped now is the
+reconciler and the dedupe at 0.5 — the high-direction readings fell 180 → 74
+(the unrecoverable failure direction, per this ADR's own cost asymmetry),
+and the D-VOL ratchet bounds tightened rather than re-baselined. The rise in
+low readings (153 → 193) is substantially the dedupe revealing volume that
+double-counting had been inflating into-band, plus reconciler cascades at
+2–3 day counts where every band is unreachable anyway.

@@ -121,9 +121,19 @@ export interface FineMuscleVolume {
 
 /**
  * What one set of an exercise contributes to a muscle it trains INDIRECTLY —
- * a secondary rather than the target. See `docs/adr/0010-volume-currency.md`
- * for why this is 0.5 today, why the literature's convention is 1.0, and the
- * measurement that decided to stage the change rather than take it here.
+ * a secondary rather than the target.
+ *
+ * ADR-0010 settles that the literature's 1:1 is the correct currency and
+ * staged the flip on landmark-aware builders. That condition landed
+ * (`reconcileToLandmarks`) — and the 2026-08-03 measurement showed it is
+ * NOT sufficient: at 1:1 the canonical Shoulders bucket absorbs every press
+ * AND every pull (8 primary + 27 secondary weekly sets at 6 days) and Core
+ * absorbs every compound, so even a floor-bound reconciler leaves 292/750
+ * readings over a ceiling vs 180 at 0.5 — the flip alone still ships worse
+ * advice, exactly what the ADR forbade. Those two buckets need per-head
+ * landmarks (front/side/rear delts; direct-ab counting), which is the
+ * taxonomy split. THE FLIP IS RE-STAGED ON THAT — see the ADR's status
+ * addendum for the numbers.
  *
  * The primary is always 1.0; there is no constant for it because a convention
  * in which the target muscle earns anything else does not exist.
@@ -131,9 +141,12 @@ export interface FineMuscleVolume {
 export const SECONDARY_SET_WEIGHT = 0.5;
 
 /**
- * The one attribution pass. `weeklyVolumeByMuscle` is a roll-up of this, so
- * there is a single place a week is read and the two views cannot disagree
- * about what it contains.
+ * The FINE-layer attribution pass. Since the intra-exercise dedupe this is
+ * no longer the substrate `weeklyVolumeByMuscle` sums — the canonical view
+ * applies its own per-exercise strongest-relationship rule (see its doc) —
+ * but both read the SAME DB fields under the same skip rules, and the
+ * dedupe regression test pins the one place they are allowed to differ:
+ * an exercise whose primary and secondary roll up to one canonical bucket.
  */
 function fineTally(workouts: WorkoutDay[]): Map<FineMuscle, number> {
   const tally = new Map<FineMuscle, number>();
@@ -208,16 +221,60 @@ export function weeklyVolumeByFineMuscle(
  * are excluded (no stimulus); completed/planned days count. Returns only
  * muscles with non-zero volume, in CANONICAL_MUSCLE_ORDER.
  *
- * A roll-up of `weeklyVolumeByFineMuscle` since 13a. It sums that view's
- * UNROUNDED sets and rounds once, here — rounding each part first and adding
- * the results is a different number, and this one has to stay bit-identical to
- * what the app published before the taxonomy split.
+ * NOT a plain sum of `weeklyVolumeByFineMuscle` since the 1:1 flip
+ * (ADR-0010): a set counts ONCE toward a canonical muscle, at the strongest
+ * relationship the exercise has with it. Summing fine credits double-counted
+ * whenever an exercise's primary and a secondary rolled up to the SAME
+ * canonical bucket — a barbell row (Lats primary, Lower Back secondary)
+ * booked 2.0 Back sets per physical set at 1:1, and the 2026-08-03
+ * measurement showed exactly that shape driving Back to 46 vs a ceiling of
+ * 20 at 6 days: 14 of those sets were rows and deadlifts counted twice.
+ * The literature's convention this module cites counts a row as one set for
+ * the back. The FINE view is untouched — lats and lower back are different
+ * muscles, and crediting both is the fine layer's whole point.
  */
 export function weeklyVolumeByMuscle(workouts: WorkoutDay[]): MuscleVolume[] {
   const tally = new Map<CanonicalMuscle, number>();
-  for (const { sets, canonical } of weeklyVolumeByFineMuscle(workouts)) {
-    if (!canonical) continue;
-    tally.set(canonical, (tally.get(canonical) ?? 0) + sets);
+  const add = (m: CanonicalMuscle | null, n: number) => {
+    if (!m) return;
+    tally.set(m, (tally.get(m) ?? 0) + n);
+  };
+
+  for (const day of workouts) {
+    if (day.skipped) continue;
+    for (const ex of day.exercises) {
+      const sets = ex.sets ?? 0;
+      if (sets <= 0) continue;
+      const dbEx: Exercise | undefined = getExerciseById(ex.exerciseId);
+      if (!dbEx) {
+        // Custom exercise — attribute by movement category, same as fineTally.
+        const fine = CATEGORY_TO_FINE[ex.movementCategory] ?? null;
+        add(fine ? fineToCanonical(fine) : null, sets);
+        continue;
+      }
+      if (dbEx.category === "Cardio") continue;
+
+      // Strongest relationship per canonical muscle: primary → 1.0,
+      // secondaries-only → SECONDARY_SET_WEIGHT (once, however many fine
+      // secondaries roll up to the same bucket).
+      const weightByCanonical = new Map<CanonicalMuscle, number>();
+      const primaryFine = toFine(dbEx.muscleGroup);
+      const primaryCanonical = primaryFine
+        ? fineToCanonical(primaryFine)
+        : null;
+      if (primaryCanonical) weightByCanonical.set(primaryCanonical, 1);
+      for (const sec of dbEx.secondaryMuscles ?? []) {
+        const fine = toFine(sec);
+        const canonical = fine ? fineToCanonical(fine) : null;
+        if (!canonical) continue;
+        if (!weightByCanonical.has(canonical)) {
+          weightByCanonical.set(canonical, SECONDARY_SET_WEIGHT);
+        }
+      }
+      for (const [muscle, weight] of weightByCanonical) {
+        add(muscle, sets * weight);
+      }
+    }
   }
 
   return CANONICAL_MUSCLE_ORDER.filter((m) => (tally.get(m) ?? 0) > 0).map(
@@ -329,6 +386,106 @@ export function classifyVolume(
 const ACCESSORY_SET_CAP = 5;
 /** Safety bound on auto-added sets per muscle per week. */
 const MAX_ADDED_SETS_PER_MUSCLE = 6;
+
+/**
+ * Floors the landmark reconciler may cut a slot down to. Accessories share
+ * the balancers' 2-set floor; a MAIN keeps at least 3 working sets — the
+ * progression anchor still needs enough exposures to progress on, and 3 is
+ * the lowest main-set prescription anywhere in the corpus's worked examples.
+ */
+const RECONCILE_ACCESSORY_FLOOR = 2;
+const RECONCILE_MAIN_FLOOR = 3;
+
+/** The slot's PRIMARY canonical muscle as the TALLY sees it — delegates to
+ *  `primaryCanonicalForExercise` plus the tally's Cardio exclusion, so the
+ *  reconciler can never cut a slot the tally attributes differently (a
+ *  treadmill naming "Legs" must not be cut to fix Quads). */
+function primaryCanonicalMuscle(ex: ProgramExercise): CanonicalMuscle | null {
+  const dbEx: Exercise | undefined = getExerciseById(ex.exerciseId);
+  if (dbEx?.category === "Cardio") return null;
+  return primaryCanonicalForExercise(ex);
+}
+
+/**
+ * Landmark reconciliation (ADR-0010's staged condition): shrink the authored
+ * week until no muscle the builders can reach sits above its volume ceiling.
+ *
+ * Why this exists: the day builders hard-code slot counts, the balancers are
+ * ADD-only, and at the literature's 1:1 counting the authored weeks run to
+ * 230% of a ceiling (measured: Back 46 vs 20 at 6d hypertrophy). Over-MRV
+ * volume is the unrecoverable failure — RP Ch3: above MRV the added work
+ * costs recovery and returns nothing — so the generator must not author it.
+ *
+ * Contract, chosen for the smallest defensible blast radius:
+ *   - SHRINK-ONLY, sets only. Never deletes a slot, never reorders, never
+ *     touches identity — positional accessory carry and findExisting stay
+ *     valid, and no user-visible exercise disappears.
+ *   - Only slots whose PRIMARY muscle is over the ceiling are cut. A slot is
+ *     never punished for its secondary credit (cutting bench because
+ *     Shoulders read high would starve Chest); secondaries drain anyway as
+ *     their over-authored primaries shrink, which at 1:1 is exactly the
+ *     cascade that does most of the work.
+ *   - Accessories cut before mains (floor 2 before a main drops below its
+ *     authored count; mains floor 3), largest slot first, then day/slot
+ *     order — fully deterministic, one set per step, tally recomputed every
+ *     step so cross-muscle cascades are always current.
+ *   - Muscles whose overage the builders cannot reach (all primary slots at
+ *     floor) are left over the ceiling and REPORTED by the D-VOL ratchet —
+ *     an honest residual, not a silent one. Session budget only ever frees
+ *     up, and the add-only balancer runs after this pass, so under-floor
+ *     muscles are topped back up from the freed budget within the ceilings.
+ */
+export function reconcileToLandmarks(
+  workouts: WorkoutDay[],
+  landmark: VolumeLandmark
+): WorkoutDay[] {
+  const days = workouts.map((d) => ({
+    ...d,
+    exercises: d.exercises.map((e) => ({ ...e })),
+  }));
+  const floorFor = (ex: ProgramExercise) =>
+    ex.isAccessory === true ? RECONCILE_ACCESSORY_FLOOR : RECONCILE_MAIN_FLOOR;
+
+  // One set moves per iteration; the bound is generous (a week tops out
+  // around 120 authored sets) and exists so a logic bug can't spin forever.
+  for (let guard = 0; guard < 500; guard += 1) {
+    const tally = new Map(
+      weeklyVolumeByMuscle(days).map((v) => [v.muscle, v.sets])
+    );
+    const over = [...tally.entries()]
+      .filter(([, sets]) => sets > landmark.high)
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+
+    let cutMade = false;
+    for (const [muscle] of over) {
+      const candidates: Array<{ di: number; ei: number; ex: ProgramExercise }> =
+        [];
+      days.forEach((d, di) => {
+        if (d.skipped) return; // fineTally skips these — stay consistent
+        d.exercises.forEach((ex, ei) => {
+          if ((ex.sets ?? 0) <= floorFor(ex)) return;
+          if (primaryCanonicalMuscle(ex) !== muscle) return;
+          candidates.push({ di, ei, ex });
+        });
+      });
+      if (candidates.length === 0) continue; // unreachable overage — next muscle
+      candidates.sort(
+        (a, b) =>
+          Number(b.ex.isAccessory === true) -
+            Number(a.ex.isAccessory === true) ||
+          (b.ex.sets ?? 0) - (a.ex.sets ?? 0) ||
+          a.di - b.di ||
+          a.ei - b.ei
+      );
+      const target = candidates[0];
+      days[target.di].exercises[target.ei].sets = (target.ex.sets ?? 0) - 1;
+      cutMade = true;
+      break; // recompute the tally before choosing the next cut
+    }
+    if (!cutMade) break; // in-band, or every remaining overage is floor-bound
+  }
+  return days;
+}
 
 /**
  * Working sets one session may contain before the balancers stop adding to it.

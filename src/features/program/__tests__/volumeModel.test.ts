@@ -7,8 +7,11 @@ import {
   SECONDARY_SET_WEIGHT,
   balanceWeeklyVolume,
   balancePushPull,
+  reconcileToLandmarks,
+  primaryCanonicalForExercise,
   toCanonical,
 } from "../volumeModel";
+import { generateProgram } from "../programEngine";
 import type { ProgramExercise, WorkoutDay } from "../programTypes";
 
 function ex(overrides: Partial<ProgramExercise>): ProgramExercise {
@@ -498,5 +501,145 @@ describe("muscle attribution (P1)", () => {
     // secondaries and must NOT contribute resistance volume.
     const week = [day([ex({ exerciseId: "treadmill", sets: 3 })])];
     expect(weeklyVolumeByMuscle(week)).toEqual([]);
+  });
+});
+
+// ── Intra-exercise canonical dedupe + landmark reconciliation (ADR-0010
+//    status addendum, 2026-08-03) ──────────────────────────────────────
+
+describe("canonical tally counts a set once per muscle (intra-exercise dedupe)", () => {
+  it("a barbell row books 1.0 Back sets per set, not 1.5", () => {
+    // Lats (primary) and Lower Back (secondary) both roll up to canonical
+    // Back. Summing fine credits booked 1 + 0.5 per physical set — the
+    // shape that drove Back to 37-46 weekly "sets" at 5-6 days. The
+    // literature counts a row as ONE set for the back.
+    const week = [day([ex({ exerciseId: "barbell-row", sets: 4 })])];
+    const back = weeklyVolumeByMuscle(week).find((t) => t.muscle === "Back");
+    expect(back?.sets).toBe(4);
+  });
+
+  it("cross-muscle secondaries still earn their weight (bench → triceps)", () => {
+    // The dedupe is per-CANONICAL-bucket only; ordinary secondary credit
+    // into a DIFFERENT muscle is untouched.
+    const week = [day([ex({ exerciseId: "bench-press", sets: 4 })])];
+    const tally = weeklyVolumeByMuscle(week);
+    expect(tally.find((t) => t.muscle === "Chest")?.sets).toBe(4);
+    expect(tally.find((t) => t.muscle === "Triceps")?.sets).toBe(
+      4 * SECONDARY_SET_WEIGHT
+    );
+  });
+});
+
+describe("reconcileToLandmarks", () => {
+  const lm = { mv: 4, low: 8, high: 14 }; // strength band — literal, not derived
+
+  it("shrinks an over-authored week down to the ceiling", () => {
+    // 3 bench slots × 6 sets = 18 Chest sets vs high 14 — cut to ≤14.
+    const week = [
+      day([
+        ex({ exerciseId: "bench-press", sets: 6, instanceId: "a" }),
+        ex({ exerciseId: "incline-bench", sets: 6, instanceId: "b" }),
+        ex({
+          exerciseId: "cable-fly",
+          sets: 6,
+          instanceId: "c",
+          isAccessory: true,
+        }),
+      ]),
+    ];
+    const out = reconcileToLandmarks(week, lm);
+    const chest = weeklyVolumeByMuscle(out).find((t) => t.muscle === "Chest");
+    expect(chest?.sets).toBeLessThanOrEqual(14);
+    // Shrink-only, structure preserved: same slots, same order, same ids.
+    expect(out[0].exercises.map((e) => e.exerciseId)).toEqual([
+      "bench-press",
+      "incline-bench",
+      "cable-fly",
+    ]);
+    // …and the ORDER of cuts is pinned: 4 sets must come off, the accessory
+    // absorbs all of them down to its floor, the mains are untouched.
+    expect(out[0].exercises.map((e) => e.sets)).toEqual([6, 6, 2]);
+  });
+
+  it("cuts accessories before mains, and respects both floors", () => {
+    // Massive overage that floors everything: accessory must land on 2,
+    // mains on 3 — never below.
+    const week = [
+      day([
+        ex({ exerciseId: "bench-press", sets: 8, instanceId: "a" }),
+        ex({ exerciseId: "incline-bench", sets: 8, instanceId: "b" }),
+        ex({
+          exerciseId: "cable-fly",
+          sets: 8,
+          instanceId: "c",
+          isAccessory: true,
+        }),
+      ]),
+    ];
+    const out = reconcileToLandmarks(week, { mv: 2, low: 4, high: 6 });
+    const [main1, main2, acc] = out[0].exercises;
+    expect(acc.sets).toBe(2); // accessory floor
+    expect(main1.sets).toBe(3); // main floor
+    expect(main2.sets).toBe(3);
+  });
+
+  it("leaves an in-band week byte-identical in shape", () => {
+    const week = [
+      day([ex({ exerciseId: "bench-press", sets: 4, instanceId: "a" })]),
+    ];
+    const out = reconcileToLandmarks(week, lm);
+    expect(out[0].exercises[0].sets).toBe(4);
+  });
+
+  it("never cuts a slot on a skipped day (the tally doesn't count it)", () => {
+    const week = [
+      day([ex({ exerciseId: "bench-press", sets: 6, instanceId: "a" })], {
+        skipped: true,
+      }),
+      day([ex({ exerciseId: "incline-bench", sets: 6, instanceId: "b" })]),
+    ];
+    const out = reconcileToLandmarks(week, { mv: 2, low: 4, high: 5 });
+    expect(out[0].exercises[0].sets).toBe(6); // skipped day untouched
+    expect(out[1].exercises[0].sets).toBe(5); // active day carries the cut
+  });
+
+  it("is deterministic", () => {
+    const week = [
+      day([
+        ex({ exerciseId: "bench-press", sets: 6, instanceId: "a" }),
+        ex({ exerciseId: "incline-bench", sets: 6, instanceId: "b" }),
+      ]),
+    ];
+    expect(reconcileToLandmarks(week, lm)).toEqual(
+      reconcileToLandmarks(week, lm)
+    );
+  });
+});
+
+describe("generateProgram honours the ceilings (reconciler wiring)", () => {
+  it("any muscle still over its ceiling has every primary slot at floor", () => {
+    // The reconciler's contract: overage may remain ONLY where the builders
+    // cannot reach it (all primary slots floor-bound). A single over-ceiling
+    // muscle with a cuttable primary slot means the pass isn't wired in.
+    for (const goal of ["hypertrophy", "strength"] as const) {
+      for (const days of [4, 5, 6]) {
+        const { workouts } = generateProgram("recomp", days, undefined, goal);
+        const lm2 = volumeLandmark(goal);
+        for (const mv of weeklyVolumeByMuscle(workouts)) {
+          if (mv.sets <= lm2.high) continue;
+          const cuttable = workouts
+            .flatMap((d) => d.exercises)
+            .filter(
+              (e) =>
+                primaryCanonicalForExercise(e) === mv.muscle &&
+                (e.sets ?? 0) > (e.isAccessory === true ? 2 : 3)
+            );
+          expect(
+            cuttable.map((c) => `${c.exerciseId}×${c.sets}`),
+            `${goal}/${days}d ${mv.muscle}=${mv.sets} over ${lm2.high} with cuttable slots`
+          ).toEqual([]);
+        }
+      }
+    }
   });
 });
