@@ -786,6 +786,48 @@ export interface RacePlanV2Input {
    *  (the tested-copy-vs-running-copy drift class). Derive via
    *  `runTuningFromProfile(profile)`. */
   tuning?: RunTuning;
+  /**
+   * The block's ORIGINAL length in weeks, carried from when the plan was
+   * created (`programState.runPlan.totalWeeks`).
+   *
+   * ── Why this exists ────────────────────────────────────────────────────
+   *
+   * Without it the generator has no way to know how far through a block the
+   * runner is, because it derives everything from `currentDate` → race date,
+   * i.e. weeks REMAINING. Every caller then persists `weeks[0]`
+   * (`useProgram.ts`, `planBuilder.ts`, `raceRunDaysReconcile.ts` — grep
+   * `.weeks[`, there are no others), and the plan is regenerated on each
+   * weekly rollover with a shorter horizon. So the runner sat at "week 0 of
+   * a fresh block" forever.
+   *
+   * That was not a subtle degradation. Measured on a 26-week marathon plan by
+   * simulating the real rollover — regenerate weekly, take `weeks[0]`:
+   *
+   *     26w out … 5w out   155 min   easy_30 ×3 + long_12k   (22 identical weeks)
+   *      4w out … 2w out   120 min   easy_30 ×4
+   *
+   * No tempo, no intervals, no long run past 12 km, then a marathon. The
+   * ramp the generator produces — long_12k→long_25k, tempo_20→tempo_40,
+   * 4x1k→6x1k, peaking at 281 min — lived entirely in `weeks[1..n]`, which
+   * nothing read. `getPhaseForWeek(0, T, d)` is structurally always "base":
+   * `preTaperWeeks = max(1, …) >= 1`, so `0 < preTaperWeeks * 0.4` holds for
+   * every plan longer than `taperWeeks + 1`.
+   *
+   * ── What it changes ────────────────────────────────────────────────────
+   *
+   * Given the block length, the position is `blockWeeks - weeksRemaining` —
+   * derived from the RACE DATE rather than from a counter, so a runner who
+   * ignores the app for a month resyncs instead of drifting. `compressed`
+   * and `belowFloor` also become properties of the BLOCK rather than of the
+   * days left, which is what they were always meant to mean: a 26-week plan
+   * four weeks from race day is in its taper, not "compressed".
+   *
+   * Omitted (or shorter than the weeks remaining, which can only mean a
+   * stale or corrupt carry) → falls back to the old behaviour exactly:
+   * position 0 of a block as long as the time left. That keeps every
+   * existing caller and test byte-identical, which is why this is additive.
+   */
+  planTotalWeeks?: number;
 }
 
 export interface RacePlanV2Output {
@@ -824,13 +866,33 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     (target.getTime() - weekStartDate.getTime()) / (7 * 86400000)
   );
   const totalWeeks = raceWeekOffset <= 0 ? 1 : Math.max(naturalWeeks, 2);
-  const compressed = totalWeeks < config.minWeeks;
+
+  // `totalWeeks` is weeks REMAINING. The block may be longer — see
+  // `planTotalWeeks`. A carry shorter than the time left is stale or corrupt,
+  // so it is ignored rather than trusted.
+  const blockWeeks =
+    input.planTotalWeeks != null &&
+    Number.isFinite(input.planTotalWeeks) &&
+    input.planTotalWeeks >= totalWeeks
+      ? input.planTotalWeeks
+      : totalWeeks;
+  /** How many weeks of the block are already behind the runner. 0 when the
+   *  plan is fresh, which is what makes the fallback byte-identical. */
+  const startIndex = blockWeeks - totalWeeks;
+
+  // Both of these describe the BLOCK, not the days left. Deriving them from
+  // weeks-remaining meant every plan became "compressed" in its final weeks —
+  // which is why a real marathon taper had ZERO quality: the taper branch is
+  // gated on `!compressed`, so the one session Bosquet et al. (2007) say must
+  // survive a taper (intensity maintained, volume cut) was the one thing
+  // dropped. Reading the block length fixes that as a consequence.
+  const compressed = blockWeeks < config.minWeeks;
   // Run9 phase-3 (Slice B): below the taper-safe floor (= taperWeeks + 1),
   // compressing is no longer safe — the week content flips to "finish-safely"
   // (all easy, no quality, the long run capped at baseLongKm so there are no
   // week-over-week jumps). belowFloor implies compressed by construction
   // (floor <= minWeeks for every distance).
-  const belowFloor = totalWeeks < getRaceFloorWeeks(input.raceGoal.distance);
+  const belowFloor = blockWeeks < getRaceFloorWeeks(input.raceGoal.distance);
 
   const runEligibleSlots = input.weekSchedule
     .filter((d) => d.type === "run" || d.type === "both")
@@ -854,10 +916,15 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     (target.getTime() - finalWeekStart.getTime()) / 86400000
   );
 
-  for (let w = 0; w < totalWeeks; w++) {
-    const phase = getPhaseForWeek(w, totalWeeks, input.raceGoal.distance);
-    // Each week's start advances by 7 days from week 0
-    const weekStart = addLocalDays(weekStartDate, w * 7);
+  // `offset` walks the CALENDAR (weeks[0] is always this week, so the dates
+  // and the race placement are unchanged); `w` is the runner's position in
+  // the BLOCK, which is what phase and every ramp are computed from. They
+  // coincide exactly when startIndex is 0, i.e. on a fresh plan.
+  for (let offset = 0; offset < totalWeeks; offset++) {
+    const w = startIndex + offset;
+    const phase = getPhaseForWeek(w, blockWeeks, input.raceGoal.distance);
+    // Each week's start advances by 7 days from the current week
+    const weekStart = addLocalDays(weekStartDate, offset * 7);
     const week: ScheduledRunDay[] = [];
 
     const longSlot = pickLongRunSlot(runEligibleSlots, input.weekSchedule);
@@ -873,7 +940,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
         : easyTierForMinutes(
             easyRunMinutesForWeek({
               weekIndex: w,
-              totalWeeks,
+              totalWeeks: blockWeeks,
               taperWeeks: TAPER_WEEKS_BY_DISTANCE[input.raceGoal.distance],
               volume: tuning.volume,
             })
@@ -936,7 +1003,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
           // dependency instead of silently making this the only guard.
           templateId: pickLongTemplateId({
             weekIndex: w,
-            totalWeeks,
+            totalWeeks: blockWeeks,
             phase,
             baseLongKm: config.baseLongKm,
             peakLongKm: config.baseLongKm,
@@ -967,7 +1034,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
         dayIndex: longSlot,
         templateId: pickLongTemplateId({
           weekIndex: w,
-          totalWeeks,
+          totalWeeks: blockWeeks,
           phase,
           baseLongKm: config.baseLongKm,
           peakLongKm: config.peakLongKm,
@@ -1026,7 +1093,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
           const qualityId = qualityTemplateId({
             flavour: qualityType,
             weekIndex: w,
-            totalWeeks,
+            totalWeeks: blockWeeks,
             taperWeeks: TAPER_WEEKS_BY_DISTANCE[input.raceGoal.distance],
             distance: input.raceGoal.distance,
             difficulty: tuning.difficulty,
@@ -1050,7 +1117,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
                 templateId: qualityTemplateId({
                   flavour: secondType,
                   weekIndex: w,
-                  totalWeeks,
+                  totalWeeks: blockWeeks,
                   taperWeeks: TAPER_WEEKS_BY_DISTANCE[input.raceGoal.distance],
                   distance: input.raceGoal.distance,
                   difficulty: tuning.difficulty,
