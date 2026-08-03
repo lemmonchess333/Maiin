@@ -17,6 +17,7 @@ import {
   exerciseBank,
   exerciseDisplayName,
   CATALOGUE_PINNED_ACCESSORY_IDS,
+  rescaleForSwap,
 } from "./variationBank";
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import {
@@ -506,6 +507,14 @@ function swapExerciseIdentity(
     plateauCount: 0,
     performanceHistory: [],
     lastPerformance: null,
+    // A one-shot swap IS a calibration (properly rescaled above), so the
+    // rotation anchor moves with it — future rotations scale from this
+    // identity/weight pair, not from whatever preceded the swap.
+    ...(calibrated.weight > 0
+      ? {
+          rotationAnchor: { exerciseId: to.id, weight: calibrated.weight },
+        }
+      : {}),
   };
 }
 
@@ -1262,34 +1271,59 @@ export function rotateUntrainedAccessories(
         experience
       );
       if (next.id === ex.exerciseId) return ex; // no alternative available
+      // Load: scale from the ROTATION ANCHOR when the slot carries one AND
+      // its lineage is intact — the current weight is exactly what the
+      // anchor implies for the current identity. Anchored scaling is what
+      // naive rescaling could never be: every rotation computes from the
+      // same fixed pair, so repeated rotation cannot compound (the measured
+      // 50 → 30 → 12.5 decay came from scaling each rotation against the
+      // PREVIOUS rotation's already-scaled output).
+      //
+      // The lineage check is what keeps a USER'S number safe: a manually
+      // edited weight on an untrained slot diverges from the anchor, and
+      // snapping it back to an anchor-derived value would silently discard
+      // the user's calibration. Diverged (and legacy no-anchor) slots keep
+      // the old deliberate carry-the-weight behaviour — a mis-scaled load
+      // beats a discarded one, and the next seedStartingLoads on a
+      // regenerate re-derives everything. Guarded by "never compounds
+      // across mesocycles" and "ramps accessories …" in
+      // programEngine.test.ts, plus the anchored-rotation block that pins
+      // the new path.
+      const anchor = ex.rotationAnchor;
+      const impliedCurrent = anchor
+        ? anchor.exerciseId === ex.exerciseId
+          ? anchor.weight
+          : rescaleForSwap(
+              anchor.weight,
+              anchor.exerciseId,
+              ex.exerciseId,
+              ex.movementCategory
+            )
+        : 0;
+      const lineageIntact =
+        anchor !== undefined &&
+        impliedCurrent > 0 &&
+        impliedCurrent === (ex.weight ?? 0);
+      const anchored =
+        anchor !== undefined && lineageIntact
+          ? rescaleForSwap(
+              anchor.weight,
+              anchor.exerciseId,
+              next.id,
+              ex.movementCategory
+            )
+          : 0;
       return {
         ...ex,
         exerciseId: next.id,
         name: next.name,
-        // NOT rescaled, deliberately — and this is the one swap site where
-        // that is the right call.
-        //
-        // Rescaling by the load-factor ratio is correct for a ONE-SHOT swap
-        // (equipment, injury, the complexity gate), which is why those three
-        // do it. This path is different: it re-fires at EVERY mesocycle
-        // boundary, so the scale compounds against a weight that is itself
-        // already scaled, and it does not round-trip with the deload
-        // store/restore. Measured over two mesocycles: 50 kg -> 30 -> 12.5.
-        // A silently shrinking load is worse than a mis-scaled one.
-        //
-        // Fixing it properly needs an anchor the slot does not currently
-        // carry (its ORIGINAL seed, so each rotation scales from that rather
-        // than from the last rotation's output). Recorded as open rather than
-        // bodged — see the backlog. The blast radius is bounded: rotation
-        // only touches UNTRAINED accessories, so no logged progress is at
-        // stake, and the next `seedStartingLoads` on a regenerate re-derives
-        // the number anyway.
-        //
-        // Guarded by "never compounds across mesocycles" and "ramps
-        // accessories …" in programEngine.test.ts — both fail if a rescale is
-        // re-added here. (A purpose-written test was tried and deleted: it
-        // passed with the rescale restored, i.e. it proved nothing. The
-        // existing pair already does the job.)
+        ...(anchored > 0
+          ? {
+              weight: anchored,
+              lastSuccessfulWeight: anchored,
+              lastAttemptedWeight: anchored,
+            }
+          : {}),
         lastPerformance: null,
         consecutiveFailures: 0,
         plateauCount: 0,
@@ -1494,6 +1528,10 @@ function carryExistingAccessories(
         plateauCount: prev.plateauCount,
         performanceHistory: prev.performanceHistory,
         lastPerformance: prev.lastPerformance,
+        // The anchor travels with the load lineage it describes.
+        ...(prev.rotationAnchor !== undefined
+          ? { rotationAnchor: prev.rotationAnchor }
+          : {}),
       };
     }),
   }));
