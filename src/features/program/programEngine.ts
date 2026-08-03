@@ -83,11 +83,40 @@ const GOAL_PROFILES: Record<PrimaryGoal, GoalProfile> = {
     volumeMultiplier: 1.0,
     mainProgression: "double",
   },
+  /**
+   * A deficit is a phase to PRESERVE through, not a reason to train light.
+   *
+   * This row used to read 12-15 / 15-20 — the "high reps to get lean" idea,
+   * and it inverts the principle the project's own corpus states. Fleck &
+   * Kraemer p.179, quoted in `lifting-v8-evaluation.md` §3.12: "To maintain
+   * strength gains the INTENSITY should be maintained, but the volume and
+   * frequency of training can be reduced." The old row did the reverse — it
+   * dropped intensity and held volume at 1.0.
+   *
+   * Being precise about what the evidence does and does not say, because the
+   * obvious framing overstates it:
+   *
+   *   - Schoenfeld et al. 2017 (JSCR meta): hypertrophy is SIMILAR across
+   *     load ranges when sets are taken near failure. So 12-15 was never
+   *     wrong for holding muscle, and calling it a myth outright would be.
+   *   - The same meta: maximal strength significantly favours HEAVY loads.
+   *     Strength is load-specific, and a cut is exactly when you are trying
+   *     not to lose it.
+   *   - Roth et al. 2023 (Scand J Med Sci Sports): resistance-training VOLUME
+   *     does not influence lean-mass preservation during energy restriction.
+   *     Which is why the volume half of this is deliberately untouched — see
+   *     `goalVolumeMultiplier` below.
+   *
+   * So: same mains as `general` (8-12), and the accessories come with them.
+   * Nothing here is a fat-loss-specific stimulus, because there is no such
+   * thing — the deficit does the fat loss, the training protects what is
+   * under it.
+   */
   fat_loss: {
-    mainReps: 12,
-    mainRepsMax: 15,
-    accessoryReps: 15,
-    accessoryRepsMax: 20,
+    mainReps: 8,
+    mainRepsMax: 12,
+    accessoryReps: 12,
+    accessoryRepsMax: 15,
     volumeMultiplier: 1.0,
     mainProgression: "linear",
   },
@@ -99,13 +128,46 @@ const GOAL_PROFILES: Record<PrimaryGoal, GoalProfile> = {
     volumeMultiplier: 1.0,
     mainProgression: "double",
   },
-  // running-goal users still lift to support their running — matches the
-  // fullBodyBeginner prescription: moderate reps, lower volume.
+  /**
+   * A runner lifts HEAVY and briefly. The mains are a strength prescription;
+   * the low `volumeMultiplier` is what keeps it from competing with the run
+   * training.
+   *
+   * This row used to read 8-12 with the note "matches the fullBodyBeginner
+   * prescription: moderate reps, lower volume" — a justification taken from a
+   * template rather than from the outcome a runner lifts for. The evidence
+   * runs the other way, and it is specific about the band:
+   *
+   *   Llanos-Lagos et al. 2024 (Sports Medicine 54:1801-1833) — a systematic
+   *   review + meta-analysis of strength methods in middle- and long-distance
+   *   runners. High load is defined as >=80% 1RM, submaximal as 40-79%. High
+   *   load improved running economy across 8.64-17.85 km/h and time-trial
+   *   performance; SUBMAXIMAL LOAD DID NOT IMPROVE RUNNING ECONOMY AT ALL,
+   *   and neither did isometric work. Combining high load with plyometrics
+   *   was better still.
+   *
+   * 8-12 reps is roughly 70-80% 1RM — the submaximal band the meta found
+   * ineffective for the one adaptation a runner is chasing. 4-6 is ~85-90%.
+   *
+   * Undulation keeps the whole week inside the band rather than straddling
+   * it: `repDeltaForRole` shifts heavy days -2 (clamped at the rep floor of
+   * 3, so 3-5 ~= 87-93%) and pump days +2 (6-8 ~= 80-85%). Both ends clear
+   * 80%, which the old 8-12 band did not.
+   *
+   * `mainProgression` stays "linear" deliberately: the linear arm adds load
+   * at `actualReps >= reps + 2`, which at a 4-rep target is exactly the top
+   * of the 4-6 band. The rep range is the trigger, not decoration.
+   *
+   * NOTE the load half is what actually delivers this — see
+   * `startingLoads.repScaledSeed`. Fewer reps at an unchanged weight is a
+   * strictly easier session, so this row on its own would have inverted its
+   * own rationale.
+   */
   running: {
-    mainReps: 8,
-    mainRepsMax: 12,
-    accessoryReps: 12,
-    accessoryRepsMax: 15,
+    mainReps: 4,
+    mainRepsMax: 6,
+    accessoryReps: 10,
+    accessoryRepsMax: 12,
     volumeMultiplier: 0.85,
     mainProgression: "linear",
   },
@@ -1680,7 +1742,8 @@ export function generateProgram(
   // D-LIFT-5: seed bodyweight-relative cold-start loads on never-trained lifts
   // (no-op without a load context, or for lifts with logged history). Runs
   // last so it also calibrates whatever the caps above re-pointed.
-  if (loadCtx) workouts = seedStartingLoads(workouts, loadCtx);
+  if (loadCtx)
+    workouts = seedStartingLoads(workouts, loadCtx, profile.mainReps);
 
   // Backlog #5: stamp the steady-state volume anchor AFTER balancing and
   // seeding — advanceWeek derives each week's sets from baseSets.
