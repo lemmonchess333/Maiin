@@ -122,7 +122,11 @@ describe("beginner plans never prescribe a bodyweight-floor pull", () => {
 });
 
 describe("beginner core at home/minimal is floor-appropriate", () => {
-  it("dead bug replaces the cable crunch — never the hanging leg raise", () => {
+  it("the floor crunch replaces the cable crunch — never the hanging leg raise", () => {
+    // The crunch specifically (operator review): recognisable to every
+    // novice AND loadable over time (dumbbell at the chest — both home
+    // tiers guarantee dumbbells), the same virtue as the cable crunch it
+    // stands in for. Dead bug was rejected on recognisability.
     for (const equipment of ["home_gym", "minimal"]) {
       const { programState } = buildPlan(
         input(3, equipment, "hypertrophy", "beginner")
@@ -132,7 +136,7 @@ describe("beginner core at home/minimal is floor-appropriate", () => {
         ids,
         `${equipment}: hanging leg raise prescribed to a beginner`
       ).not.toContain("leg-raise");
-      expect(ids, `${equipment}: no core slot survived`).toContain("dead-bug");
+      expect(ids, `${equipment}: no core slot survived`).toContain("crunches");
     }
   });
 

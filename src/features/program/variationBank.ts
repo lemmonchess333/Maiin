@@ -516,12 +516,19 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     // option: with the hanging leg raise tagged technical, the pool's other
     // non-primaries are all technical (and pallof needs a cable anyway), so
     // without this the filter's ungated fallback handed the novice the
-    // hanging raise regardless. Appended LAST — full-gym picks unchanged.
+    // hanging raise regardless. The floor crunch specifically (operator
+    // review, 2026-08-03): it is the one core movement every novice already
+    // recognises, and it stays LOADABLE over time — hold a dumbbell at the
+    // chest, and both home tiers guarantee dumbbells — so the slot keeps a
+    // progression path, same virtue as the cable crunch it substitutes.
+    // (Dead bug was tried first and rejected on recognisability: most
+    // novices don't know the movement without looking it up.)
+    // Appended LAST — full-gym picks unchanged.
     {
-      id: "dead-bug",
+      id: "crunches",
       loadFactor: 0,
       primary: false,
-      role: "technique",
+      role: "size",
     },
   ],
 };
