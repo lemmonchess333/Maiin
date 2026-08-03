@@ -1040,7 +1040,12 @@ describe("weekly volume shape (backlog #5 + deload-decay fix)", () => {
     st.workouts.forEach((d, di) =>
       d.exercises.forEach((ex, ei) => {
         const b = base[di][ei];
-        expect(ex.sets).toBe(ex.isAccessory === true ? Math.max(1, b - 1) : b);
+        // The week-1 dip shares the 2-set accessory floor with every other
+        // volume pass — pre-fix this pinned Math.max(1, …) and the 8-week
+        // simulation showed 1-set curl slots at each meso restart.
+        expect(ex.sets).toBe(
+          ex.isAccessory === true ? Math.max(Math.min(b, 2), b - 1) : b
+        );
         expect(ex.weight).toBe(50); // load restored, cut not permanent
         expect("preDeloadWeight" in ex).toBe(false);
       })

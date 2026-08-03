@@ -2377,9 +2377,16 @@ function applyWeeklyVolumeShape(
         delete out.preDeloadReps;
       }
       if (ex.isAccessory === true) {
+        // Week-1 dip floors at the shared 2-set accessory floor, not 1 —
+        // every sibling pass (reconciler, deload cut, fatigue shave,
+        // ACCESSORY_ANCHOR_FLOOR) holds 2 as the minimum meaningful
+        // prescription, and the 2026-08-03 8-week simulation showed this
+        // one pass emitting 1-set curl slots at each meso restart. The
+        // inner min() keeps the rule non-growing for any degenerate
+        // sub-floor base from the wild.
         out.sets =
           weekInMeso === 1
-            ? Math.max(1, base - 1)
+            ? Math.max(Math.min(base, ACCESSORY_ANCHOR_FLOOR), base - 1)
             : weekInMeso === 3
               ? Math.min(ACCESSORY_RAMP_CAP, base + 1)
               : base;
