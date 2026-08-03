@@ -345,6 +345,14 @@ export interface UserProfileOnboarding {
   ageRange?: "16-24" | "25-34" | "35-44" | "45-54" | "55+";
   primaryGoal?: "hypertrophy" | "strength" | "fat_loss" | "general" | "running";
   experience?: "beginner" | "intermediate" | "advanced";
+  /**
+   * Experience auto-detection: the suggestion the user last dismissed, so a
+   * declined level change isn't re-offered on every Programme visit.
+   * `signature` is `experienceDetection.suggestionSignature` output; a NEW
+   * suggestion (different direction) still shows. Written via updateProfile
+   * only — never sent through the onboarding/configure callables.
+   */
+  experienceSuggestionDismissed?: { signature: string; at: number };
   daysPerWeek?: 2 | 3 | 4 | 5 | 6;
   equipment?: "full_gym" | "home_gym" | "minimal";
   preferredSplit?: PreferredSplit;

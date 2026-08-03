@@ -150,7 +150,10 @@ service cloud.firestore {
         // rejected ("Couldn't save your settings"). Both gates now agree.
         'goalWeightKg', 'weeklyRateKg',
         'createdAt', 'updatedAt', 'photoURL', 'lastActiveAt',
-        'gender', 'ageRange', 'primaryGoal', 'experience', 'daysPerWeek',
+        'gender', 'ageRange', 'primaryGoal', 'experience',
+        // Experience auto-detection: dismissed-suggestion marker, client-only.
+        'experienceSuggestionDismissed',
+        'daysPerWeek',
         'equipment', 'preferredSplit', 'runFrequency', 'injuries', 'crewId',
         'adjustCaloriesForTraining',
         // D16 personal "why" — free-text motivation captured at onboarding and
