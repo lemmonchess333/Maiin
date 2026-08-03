@@ -17,6 +17,7 @@ import ProgrammeWeekSelector from "@/components/program/ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "@/components/program/ProgrammeWeekSelector";
 import SessionCommandCard from "@/components/program/SessionCommandCard";
 import TrainingBlockCard from "@/components/program/TrainingBlockCard";
+import ExperienceSuggestionCard from "@/components/program/ExperienceSuggestionCard";
 import { blockOfferBlockedByRace } from "@/features/program/represcribe";
 import { THEME } from "@/lib/theme";
 import WeekPhaseRow from "@/components/program/WeekPhaseRow";
@@ -1020,6 +1021,13 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               />
             </div>
           </TrackProgrammeSectionView>
+
+          {/* Experience auto-detection: evidence-triggered level suggestion.
+                Renders null almost always — only when ≥2 main-lift histories
+                contradict the stored level, and never after a dismissal.
+                Spacing lives INSIDE the card so the null render leaves no
+                phantom gap. */}
+          <ExperienceSuggestionCard workouts={programState?.workouts} />
 
           {/* Single Lift day-selector (ADR-0002 split-ordered rotation).
                 The duplicate "this week" HybridWeekRail that used to sit

@@ -128,6 +128,11 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   },
   { field: "equipment", sanitized: true },
   { field: "experience", sanitized: true },
+  // Experience auto-detection: last dismissed suggestion, so a declined
+  // level change isn't re-nagged on every visit (cross-device, hence
+  // profile not localStorage). Direct-write-only — the detection surface
+  // writes it via updateProfile; onboarding/configurePlan never send it.
+  { field: "experienceSuggestionDismissed", sanitized: false },
   { field: "gender", sanitized: true },
   { field: "goal", sanitized: true },
   { field: "goalWeightKg", sanitized: true },
