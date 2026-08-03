@@ -886,7 +886,11 @@ describe("splitRationale", () => {
   it("explains the frequency logic for the headline cases", () => {
     expect(splitRationale(3)).toMatch(/full-body/i);
     expect(splitRationale(3)).toMatch(/3×|3x|week/i);
-    expect(splitRationale(2)).toMatch(/upper.*lower/i);
+    // 2-day is full-body (chooseSplit agrees) — the rationale must say so,
+    // and must NOT claim the old upper/lower story, whose "about twice a
+    // week" was measurably false (1×/muscle — the 2026-08-03 audit).
+    expect(splitRationale(2)).toMatch(/full-body/i);
+    expect(splitRationale(2)).not.toMatch(/upper/i);
     expect(splitRationale(6)).toMatch(/push\/pull\/legs|twice/i);
   });
 
@@ -2374,5 +2378,114 @@ describe("anchored rotation", () => {
       rotationAnchor: { exerciseId: "db-bench", weight: 20 },
     });
     expect(out.rotationAnchor).toEqual({ exerciseId: "db-bench", weight: 20 });
+  });
+});
+
+// ── Coach-read audit pins (2026-08-03) ──────────────────
+// The audit read every goal × day-count programme as a training programme
+// (split, lifts, frequency, intensity) against the frequency and volume
+// literature the engine already cites. Three defects were confirmed and
+// fixed; these tests pin the PROPERTIES, not the prose, so reverting any
+// one of them fails loudly rather than silently degrading the programmes.
+describe("coach-read audit pins (2026-08-03)", () => {
+  const GOALS = [
+    "hypertrophy",
+    "strength",
+    "fat_loss",
+    "general",
+    "running",
+  ] as const;
+
+  // 2-day trained every muscle ONCE a week (upper/lower pair) while the
+  // user-facing rationale claimed "about twice". Full-body A/B is what the
+  // 2-day literature actually prescribes — and what chooseSplit's own
+  // 3-day comment argues (Schoenfeld 2016, frequency at matched volume).
+  it("a 2-day week is full-body: every trained muscle is touched on BOTH days", async () => {
+    const { weeklyVolumeByJudgementMuscle } = await import("../volumeModel");
+    for (const goal of GOALS) {
+      const { splitType, workouts } = generateProgram(
+        "recomp",
+        2,
+        undefined,
+        goal
+      );
+      expect(splitType).toBe("full_body");
+      expect(workouts).toHaveLength(2);
+
+      const weekly = weeklyVolumeByJudgementMuscle(workouts);
+      const perDay = workouts.map(
+        (d) =>
+          new Set(
+            weeklyVolumeByJudgementMuscle([d]).map((r) => r.muscle as string)
+          )
+      );
+      // Abs legitimately sits on one day (day A's core slot; mv 0). Every
+      // other trained muscle must appear in BOTH sessions — the entire
+      // point of the split flip.
+      for (const { muscle } of weekly) {
+        if (muscle === "Abs") continue;
+        const days = perDay.filter((s) => s.has(muscle)).length;
+        expect(days, `${goal}: ${muscle} trained on ${days}/2 days`).toBe(2);
+      }
+    }
+  });
+
+  it("the 2-day rationale no longer claims a frequency the split doesn't deliver", () => {
+    expect(splitRationale(2)).toMatch(/full-body/i);
+  });
+
+  // Side delts measured ZERO direct sets across all 25 goal × day-count
+  // programmes: presses credit the front delt, the bank has no raise
+  // pattern, and the balancer is add-only with no slot to grow — the exact
+  // no-slot failure the calf slots fixed. Every 4d+ plan now carries at
+  // least one pinned lateral-raise slot (the hand-authored templates always
+  // did).
+  it("every 4d/5d/6d plan prescribes direct side-delt work", async () => {
+    const { weeklyVolumeByJudgementMuscle } = await import("../volumeModel");
+    for (const goal of GOALS) {
+      for (const days of [4, 5, 6]) {
+        const { workouts } = generateProgram("recomp", days, undefined, goal);
+        const raises = workouts
+          .flatMap((d) => d.exercises)
+          .filter((e) => e.exerciseId === "lateral-raise");
+        expect(
+          raises.length,
+          `${goal} × ${days}d has no lateral-raise slot`
+        ).toBeGreaterThan(0);
+        const sideDelts = weeklyVolumeByJudgementMuscle(workouts).find(
+          (r) => (r.muscle as string) === "SideDelts"
+        );
+        expect(
+          sideDelts?.sets ?? 0,
+          `${goal} × ${days}d side-delt volume`
+        ).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  // The raise is categorised vertical_push; without the pin, meso rotation
+  // would swap it into a shoulder press and the slot's purpose vanishes.
+  it("lateral-raise is rotation-pinned", async () => {
+    const { CATALOGUE_PINNED_ACCESSORY_IDS } = await import("../variationBank");
+    expect(CATALOGUE_PINNED_ACCESSORY_IDS.has("lateral-raise")).toBe(true);
+  });
+
+  // Calves are the one judgement group nothing credits secondarily, so the
+  // generic big-muscle floor (12 at hypertrophy) flagged every real 8-10
+  // set calf prescription sub-MEV. The band is RP's calf table, not a
+  // discount — and a 2-day week must still clear its maintenance floor.
+  it("calf landmark is direct-work priced and 2-day clears maintenance", async () => {
+    const { judgementLandmark, weeklyVolumeByJudgementMuscle } =
+      await import("../volumeModel");
+    expect(judgementLandmark("hypertrophy", "Calves")).toEqual({
+      mv: 6,
+      low: 8,
+      high: 20,
+    });
+    const { workouts } = generateProgram("recomp", 2, undefined, "hypertrophy");
+    const calves = weeklyVolumeByJudgementMuscle(workouts).find(
+      (r) => (r.muscle as string) === "Calves"
+    );
+    expect(calves?.sets ?? 0).toBeGreaterThanOrEqual(6);
   });
 });
