@@ -181,11 +181,11 @@ const FALLBACK: MovementCategory = "core";
  *
  * A name is not an identifier. This table is, and every entry is reviewable
  * in one place rather than emergent from rule ordering. Pinned exhaustively
- * by `exerciseMovementCategory.test.ts` so all 151 assignments are explicit,
+ * by `exerciseMovementCategory.test.ts` so all 152 assignments are explicit,
  * and mirrored in `functions/lib/exerciseMovementCategory.js`.
  *
  * Two deliberate non-corrections, so they are not read as oversights:
- *   - the four calf raises stay `knee_dominant`. There is no calves category
+ *   - the five calf raises stay `knee_dominant`. There is no calves category
  *     in this nine-value taxonomy; adding one is the taxonomy split (13a).
  *   - Cardio and Full Body conditioning stay `core`. Same reason — there is
  *     no "not a resistance pattern" value. They are already excluded from the
@@ -313,6 +313,7 @@ const STORED_CATEGORY: Record<string, MovementCategory> = {
   "side-plank": "core",
   "single-arm-cable-pushdown": "arms_triceps",
   "single-arm-lat-pulldown": "vertical_pull",
+  "single-leg-calf-raise": "knee_dominant",
   "sissy-squat": "knee_dominant",
   "ski-erg": "core",
   "skull-crushers": "arms_triceps",

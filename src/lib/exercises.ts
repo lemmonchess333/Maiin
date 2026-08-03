@@ -1772,6 +1772,22 @@ export const EXERCISES: Exercise[] = [
     ],
   },
   {
+    id: "single-leg-calf-raise",
+    name: "Single-Leg Calf Raise",
+    category: "Legs",
+    muscleGroup: "Calves",
+    secondaryMuscles: ["Soleus"],
+    equipment: "Bodyweight",
+    caloriesPerMinute: 4,
+    instructions: [
+      "Stand on one foot on a step's edge, ball of the foot planted, heel hanging free.",
+      "Hold a wall or rail for balance only — don't pull yourself up with it.",
+      "Rise as high onto your toes as possible, pausing at the top squeeze.",
+      "Lower slowly until your heel drops below the step for a full stretch.",
+    ],
+    tip: "Rushing the negative. The slow lower into the deep stretch is where single-leg work earns its keep — three seconds down, every rep.",
+  },
+  {
     id: "hip-thrust",
     name: "Hip Thrust",
     category: "Legs",

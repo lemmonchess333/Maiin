@@ -160,7 +160,21 @@ function applyProgression(
   if (exercise.progressionType === "double") {
     if (completed) {
       const rangeMax = exercise.repRangeMax;
-      if (!isBodyweight && rangeMax != null && rangeMax > resetReps) {
+      if (isBodyweight && rangeMax != null && rangeMax > resetReps) {
+        // Range-aware BODYWEIGHT progression — mirror of the client branch
+        // (2026-08-03); see programEngine.ts for the emulation that found the
+        // freeze. Climb on exact-target success; prompt add-load at the top
+        // of the range; timed holds keep the 5-second bump step.
+        if (rpeOk) {
+          if (isTimed) {
+            bumpBodyweightReps();
+          } else if (actualReps >= rangeMax) {
+            updated.notes = `Hitting ${rangeMax}+ reps — add load (weighted vest / band) to keep progressing.`;
+          } else {
+            updated.reps = Math.min(rangeMax, actualReps + 1);
+          }
+        }
+      } else if (!isBodyweight && rangeMax != null && rangeMax > resetReps) {
         // Range-aware double progression (P1) — mirror of the client branch;
         // see programEngine.ts for the full rationale.
         if (rpeOk) {
@@ -198,7 +212,20 @@ function applyProgression(
   } else {
     if (completed) {
       if (isBodyweight) {
-        if (actualReps >= exercise.reps + 2 && rpeOk) {
+        const rangeMax = exercise.repRangeMax;
+        if (rangeMax != null && rangeMax > resetReps) {
+          // Range-aware bodyweight climb on the linear path — mirror of the
+          // client branch (2026-08-03).
+          if (rpeOk) {
+            if (isTimed) {
+              bumpBodyweightReps();
+            } else if (actualReps >= rangeMax) {
+              updated.notes = `Hitting ${rangeMax}+ reps — add load (weighted vest / band) to keep progressing.`;
+            } else {
+              updated.reps = Math.min(rangeMax, actualReps + 1);
+            }
+          }
+        } else if (actualReps >= exercise.reps + 2 && rpeOk) {
           bumpBodyweightReps();
         }
       } else if (microloading && rpeOk) {

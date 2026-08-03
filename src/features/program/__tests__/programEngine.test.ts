@@ -239,6 +239,131 @@ describe("applyProgression — bodyweight rep cap", () => {
   });
 });
 
+// ── Bodyweight range-aware climb ────────────────
+//
+// The range-aware double-progression arm (P1) was gated `!isBodyweight`, so a
+// bodyweight main with an authored range fell through to the legacy
+// +2-overshoot arm — and a compliant user who logs exactly the prescribed
+// reps never overshoots. Measured by a 13-week emulation before the fix:
+// pull-ups sat frozen at 4×6 the whole time while every loaded lift climbed.
+// These pin the fix on BOTH progression types (the linear path had the same
+// hole for running-goal 4-6 mains).
+
+describe("applyProgression — bodyweight range-aware climb", () => {
+  it("climbs on EXACT-target compliance when a range is authored (double)", () => {
+    const ex = makeBodyweightExercise({
+      reps: 6,
+      baseReps: 6,
+      repRangeMax: 10,
+    });
+    // Logged exactly the prescribed 6 — no overshoot. Pre-fix: frozen at 6.
+    const out = applyProgression(ex, 6, 0, "recomp", false, 8);
+    expect(out.reps).toBe(7);
+    expect(out.weight).toBe(0); // never invents load for a bodyweight move
+  });
+
+  it("prompts adding load at the top of the range instead of adding weight (double)", () => {
+    const ex = makeBodyweightExercise({
+      reps: 10,
+      baseReps: 6,
+      repRangeMax: 10,
+    });
+    const out = applyProgression(ex, 10, 0, "recomp", false, 8);
+    expect(out.reps).toBe(10); // holds at the ceiling — no reset-to-base
+    expect(out.weight).toBe(0);
+    expect(out.notes).toMatch(/10\+ reps.*add load/i);
+  });
+
+  it("climbs on exact-target compliance on the LINEAR path too (running 4-6 mains)", () => {
+    const ex = makeBodyweightExercise({
+      progressionType: "linear",
+      reps: 4,
+      baseReps: 4,
+      repRangeMax: 6,
+    });
+    const mid = applyProgression(ex, 4, 0, "recomp", true, 8);
+    expect(mid.reps).toBe(5);
+    const top = applyProgression(
+      makeBodyweightExercise({
+        progressionType: "linear",
+        reps: 6,
+        baseReps: 4,
+        repRangeMax: 6,
+      }),
+      6,
+      0,
+      "recomp",
+      true,
+      8
+    );
+    expect(top.reps).toBe(6);
+    expect(top.notes).toMatch(/6\+ reps.*add load/i);
+  });
+
+  it("RPE ≥ 9.5 holds the climb without recording a failure", () => {
+    const ex = makeBodyweightExercise({
+      reps: 6,
+      baseReps: 6,
+      repRangeMax: 10,
+    });
+    const out = applyProgression(ex, 6, 0, "recomp", false, 10);
+    expect(out.reps).toBe(6); // held
+    expect(out.consecutiveFailures).toBe(0); // success, not failure
+  });
+
+  it("timed holds keep the 5-second step and cap at the authored ceiling", () => {
+    const hold = makeBodyweightExercise({
+      exerciseId: "plank",
+      name: "Plank",
+      movementCategory: "core",
+      reps: 40,
+      baseReps: 40,
+      repRangeMax: 60,
+      repUnit: "seconds",
+    });
+    const stepped = applyProgression(hold, 40, 0, "recomp", false, 8);
+    expect(stepped.reps).toBe(45); // +5s, not +1
+    const atTop = applyProgression(
+      makeBodyweightExercise({
+        exerciseId: "plank",
+        name: "Plank",
+        movementCategory: "core",
+        reps: 60,
+        baseReps: 40,
+        repRangeMax: 60,
+        repUnit: "seconds",
+      }),
+      60,
+      0,
+      "recomp",
+      false,
+      8
+    );
+    expect(atTop.reps).toBe(60);
+    expect(atTop.notes).toMatch(/add load/i);
+  });
+
+  it("13-week compliant emulation: the target climbs 6→10 then prompts — never freezes", () => {
+    let ex = makeBodyweightExercise({
+      reps: 6,
+      baseReps: 6,
+      repRangeMax: 10,
+    });
+    const trajectory: number[] = [];
+    for (let week = 1; week <= 13; week++) {
+      // The compliant user logs exactly what the card prescribes.
+      ex = applyProgression(ex, ex.reps, 0, "lean bulk", true, 8);
+      trajectory.push(ex.reps);
+    }
+    // Climb phase: one rep per week to the top of the range…
+    expect(trajectory.slice(0, 4)).toEqual([7, 8, 9, 10]);
+    // …then stable at the ceiling with the add-load prompt, not a freeze at 6.
+    expect(trajectory[12]).toBe(10);
+    expect(ex.notes).toMatch(/add load/i);
+    expect(ex.weight).toBe(0);
+  });
+});
+
 // ── Day dedupe (D-LIFT-12) ──────────────────────
 
 describe("dedupeDayExercises", () => {
@@ -806,11 +931,39 @@ describe("day roles (backlog #3)", () => {
     expect(heavyMains).toContain(3);
   });
 
-  it("pump day sits +2 over the moderate twin (2-day week, day B vs 3-day day B... via 3-day pump day C)", () => {
+  it("pump day sits +2 over the base — except the hinge main", () => {
+    // 6-day week: days 3-5 carry the pump role. Day 3 (Pull — Row Focus)
+    // has a non-hinge main, which takes the +2.
+    const six = generateProgram("recomp", 6, undefined, "hypertrophy");
+    expect(Math.max(...mainRepsOf(six.workouts[3]))).toBeGreaterThanOrEqual(10);
+  });
+
+  it("pump +2 never reaches a hip-dominant main (no high-rep heavy hinge)", () => {
+    // Day C of the 3-day week (Posterior Focus) is the pump day and its only
+    // main is the deadlift. Pre-exemption it was prescribed at base+2 — the
+    // 4×10 heavy hinge the corpus warns against. It must open at base.
     const three = generateProgram("recomp", 3, undefined, "hypertrophy");
-    // Day C is pump: every exercise ≥ its own baseReps and mains ≥ base+2
-    const pumpMains = mainRepsOf(three.workouts[2]);
-    expect(Math.max(...pumpMains)).toBeGreaterThanOrEqual(10);
+    const dayC = three.workouts[2];
+    const hinges = dayC.exercises.filter(
+      (e) => e.movementCategory === "hip_dominant" && e.isAccessory !== true
+    );
+    expect(hinges.length).toBeGreaterThanOrEqual(1);
+    hinges.forEach((e) => expect(e.reps).toBe(8)); // hypertrophy base, not 10
+    // …while the rest of the day still undulates (+2 with the accessory
+    // floor), so the exemption is surgical, not a dead pump day. The 6-day
+    // week's Legs — Deadlift day pins the same pair in one session.
+    const profile = goalProfileFor("hypertrophy");
+    const legsB = generateProgram("recomp", 6, undefined, "hypertrophy")
+      .workouts[5];
+    const hingeMain = legsB.exercises.find(
+      (e) => e.movementCategory === "hip_dominant" && e.isAccessory !== true
+    );
+    const kneeMain = legsB.exercises.find(
+      (e) => e.movementCategory === "knee_dominant" && e.isAccessory !== true
+    );
+    expect(hingeMain?.reps).toBe(profile.mainReps); // exempt — no +2
+    // LegsB authors its knee main at the accessory rep tier; +2 applies.
+    expect(kneeMain?.reps).toBe(profile.accessoryReps + 2);
   });
 });
 
@@ -1288,6 +1441,42 @@ describe("adjustment rule application (backlog #9)", () => {
     expect(out.plateauResponses).toBe(1);
   });
 
+  it("the strained cut is a STRICT set decrease in a plain training week", () => {
+    // The assertion above (`sets <= baseSets`) is satisfied even if
+    // reduce_volume were a no-op: week 2's ramp puts accessories exactly AT
+    // base. This pins the cut itself — the landing week (2) is not a deload
+    // and not a ramp-down, so any set below base can only have come from
+    // applyAdjustment's reduce_volume arm.
+    const st = stall(makeState(), 4);
+    const out = advanceWeek(st, "beginner", "strained");
+    expect(out.weekNumber).toBe(2);
+    expect(out.currentPhase).not.toBe("deload");
+    let cuttable = 0;
+    out.workouts.forEach((d) =>
+      d.exercises
+        .filter((e) => e.isAccessory === true)
+        .forEach((ex) => {
+          const base = ex.baseSets ?? 0;
+          if (base > 2) {
+            // above ACCESSORY_ANCHOR_FLOOR — the cut must actually land
+            cuttable += 1;
+            expect(ex.sets).toBe(base - 1);
+          } else {
+            expect(ex.sets).toBe(base); // floored — never cut below 2
+          }
+        })
+    );
+    // Anti-vacuous guard: the fixture must contain accessories the cut can
+    // reach, or the strict assertions above never execute.
+    expect(cuttable).toBeGreaterThan(0);
+    // Mains are the progression anchor — never touched by the volume arms.
+    out.workouts.forEach((d) =>
+      d.exercises
+        .filter((e) => e.isAccessory !== true)
+        .forEach((ex) => expect(ex.sets).toBe(ex.baseSets ?? ex.sets))
+    );
+  });
+
   it("a SECOND strained stall reorganizes instead of cutting again", () => {
     let st = stall(makeState(), 4);
     st = advanceWeek(st, "beginner", "strained"); // cut #1
@@ -1544,7 +1733,10 @@ describe("overlap caps in generateProgram (backlog #10)", () => {
     // Deterministic across runs — the cap adds nothing and removes nothing.
     expect(totalSets(3)).toBe(totalSets(3));
     const { workouts } = generateProgram("recomp", 3, undefined, "hypertrophy");
-    workouts.forEach((d) => expect(d.exercises).toHaveLength(5));
+    // Days A and C carry the named calf slot on top of the five built ones.
+    workouts.forEach((d, i) =>
+      expect(d.exercises).toHaveLength(i === 1 ? 5 : 6)
+    );
   });
 
   it("the replacement obeys its day role (it used to escape it)", () => {
