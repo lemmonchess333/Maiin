@@ -4,10 +4,10 @@ import type { HybridGuidance } from "@/lib/hybridGuidance";
 /**
  * Hybrid loop — the cross-discipline "today" card. Connects yesterday's
  * training to today's plan + fuel, the one-app differentiator made visible.
- * Calm by design: a single readiness line + the fuel rationale, accent-tinted
- * by readiness. Renders nothing when there's no guidance (data still loading).
+ * Calm by design: a single guidance line + the fuel rationale, accent-tinted
+ * by tone. Renders nothing when there's no guidance (data still loading).
  */
-const ACCENT: Record<HybridGuidance["readiness"], string> = {
+const ACCENT: Record<HybridGuidance["tone"], string> = {
   fresh: THEME.success,
   steady: THEME.brand,
   ease: THEME.warning,
@@ -19,7 +19,7 @@ export default function TodayGuidanceCard({
   guidance: HybridGuidance | null;
 }) {
   if (!guidance) return null;
-  const accent = ACCENT[guidance.readiness];
+  const accent = ACCENT[guidance.tone];
   return (
     <div className="rounded-2xl bg-card p-4 shadow-card flex gap-3">
       <div
