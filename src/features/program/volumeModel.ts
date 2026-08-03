@@ -622,11 +622,11 @@ export function weeklyVolumeByJudgementMuscle(
 /**
  * Hypertrophy-anchor bands for the judgement groups the canonical ten could
  * not price. The split groups' numbers are DECLARED PRIORS anchored to RP's
- * published per-muscle landmark table; the seven kept groups delegate to
+ * published per-muscle landmark table; the remaining kept groups delegate to
  * `volumeLandmark` so their numbers stay checkable against Schoenfeld
  * pp.183–184 exactly as before.
  *
- *   FrontDelts {0, 0, 14} — pressing is front-delt training (Schoenfeld
+ *   FrontDelts {0, 0, 22} — pressing is front-delt training (Schoenfeld
  *     pp.186–187), so there is no direct-work floor at all: low = 0 means
  *     this group can never read under-dosed, only over. RP's table carries
  *     MV 0 / MEV 0 for anyone with pressing volume.
@@ -640,6 +640,9 @@ export function weeklyVolumeByJudgementMuscle(
  *   Abs {0, 4, 16} — direct work only (see judgementCreditsFor); RP MEV in
  *     the 0–6 band for lifters doing compounds, MRV well above the ceiling
  *     any generated plan authors.
+ *   Calves {6, 8, 20} — direct work only (no secondary credit exists); RP
+ *     MV ~6 / MEV 8 / MRV ~20. The generic low of 12 over-flagged every
+ *     real calf prescription.
  *
  * Goal scaling mirrors `volumeLandmark`'s own shape: each goal's bands are
  * the hypertrophy anchor scaled by that goal's generic-band ratios, so the
@@ -666,6 +669,14 @@ const JUDGEMENT_HYPERTROPHY_BANDS: Partial<
   // trained by everything. The generic ceiling of 20 read normal leg weeks
   // as violations (55/75 configs at 1:1).
   Glutes: { mv: 3, low: 10, high: 25 },
+  // DIRECT-ONLY, the opposite condition from the two press/hinge-inclusive
+  // entries: nothing in the catalogue credits calves secondarily, so this
+  // tally is pure raise work. The generic low of 12 prices a big
+  // compound-fed group; RP's calf table sits at MV ~6 / MEV 8 / MRV ~20,
+  // and against the generic band the 2026-08-03 coach-read audit showed
+  // every hypertrophy plan's real 8–10 direct calf sets flagged sub-MEV.
+  // Per-muscle pricing, not a discount.
+  Calves: { mv: 6, low: 8, high: 20 },
 };
 
 export function judgementLandmark(
@@ -674,7 +685,7 @@ export function judgementLandmark(
 ): VolumeLandmark {
   const generic = volumeLandmark(primaryGoal);
   const anchor = JUDGEMENT_HYPERTROPHY_BANDS[muscle];
-  if (!anchor) return generic; // the seven kept groups
+  if (!anchor) return generic; // the kept groups (Chest, Triceps, Biceps, Quads, Hamstrings)
   const hyp = volumeLandmark("hypertrophy");
   const scale = (n: number, num: number, den: number) =>
     n === 0 ? 0 : Math.max(1, Math.round((n * num) / den));
