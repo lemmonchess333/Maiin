@@ -4,6 +4,11 @@
  * computed by the module under test), and the failure modes the module's
  * header claims to handle each get a test that fails if the handling is
  * removed:
+ *   - a FLAT window alone is a deload candidate, NOT phase exhaustion —
+ *     promotion demands honest misses AND a survived reset (Rippetoe's
+ *     2–3-resets protocol, the v2 gates)
+ *   - a stall during a cut is expected physiology — suppressed
+ *   - the programme must be ≥6 weeks old, the window inside 21–84 days
  *   - double-progression rep climbs must read as progress (e1RM, not load)
  *   - a one-week deload dip must not fake a stall (max-of-halves)
  *   - bodyweight/failed records carry no load signal
@@ -18,6 +23,8 @@ import {
   MIN_AGREEING_LIFTS,
   MIN_RECORDS_PER_LIFT,
   MIN_SPAN_DAYS,
+  MAX_SPAN_DAYS,
+  MIN_PROGRAM_WEEKS,
 } from "../experienceDetection";
 import type {
   PerformanceRecord,
@@ -78,6 +85,21 @@ const FLAT = weekly(Array.from({ length: 6 }, () => ({ weight: 60, reps: 8 })));
 const CLIMB = weekly(
   Array.from({ length: 6 }, (_, i) => ({ weight: 60 + i * 2.5, reps: 8 }))
 );
+// The REAL phase-exhaustion shape (Rippetoe): honest misses, a ~4.2% reset,
+// a rebuild that only reaches the old ceiling, another miss. Weekly reps
+// are ACTUAL completions; the target is 8 throughout (repsTarget below).
+// e1RMs: 76, 72, 72, 72.8, 76, 74 — flat by max-of-halves (76 vs 76), three
+// sessions under target, and the dip's rebuild never beat the pre-dip high.
+const STALL_WITH_RESET: PerformanceRecord[] = weekly([
+  { weight: 60, reps: 8 },
+  { weight: 60, reps: 6 },
+  { weight: 60, reps: 6 },
+  { weight: 57.5, reps: 8 }, // the reset (60 → 57.5)
+  { weight: 60, reps: 8 }, // rebuilt…
+  { weight: 60, reps: 7 }, // …to the same ceiling, and missed again
+]).map((r) => ({ ...r, repsTarget: 8 }));
+/** Context that satisfies the programme-level gates. */
+const MATURE = { weekNumber: 8, nutritionGoal: "recomp" };
 
 describe("data floors", () => {
   it("cold start (no history) → null", () => {
@@ -115,18 +137,43 @@ describe("data floors", () => {
     expect(MIN_AGREEING_LIFTS).toBe(2);
     expect(
       detectExperienceSuggestion(
-        week(main("bench-press", FLAT), main("squat", CLIMB)),
-        "beginner"
+        week(main("bench-press", STALL_WITH_RESET), main("squat", CLIMB)),
+        "beginner",
+        MATURE
+      )
+    ).toBeNull();
+  });
+
+  it("six sessions scattered over four months are inconsistency, not a ceiling", () => {
+    // Same exhaustion shape, but one session every ~3 weeks: span 110 days
+    // > MAX_SPAN_DAYS. Detraining between sessions explains the flat line.
+    expect(MAX_SPAN_DAYS).toBe(84);
+    const scattered = STALL_WITH_RESET.map((r, i) => {
+      const d = new Date(2026, 0, 5 + i * 22);
+      return {
+        ...r,
+        date: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`,
+      };
+    });
+    expect(
+      detectExperienceSuggestion(
+        week(main("bench-press", scattered), main("squat", scattered)),
+        "beginner",
+        MATURE
       )
     ).toBeNull();
   });
 });
 
 describe("beginner → intermediate (linear progress exhausted)", () => {
-  it("two flat mains over 5 weeks suggest intermediate, with evidence", () => {
+  it("fires ONLY on the full exhaustion shape: flat + misses + survived reset", () => {
     const out = detectExperienceSuggestion(
-      week(main("bench-press", FLAT), main("squat", FLAT)),
-      "beginner"
+      week(
+        main("bench-press", STALL_WITH_RESET),
+        main("squat", STALL_WITH_RESET)
+      ),
+      "beginner",
+      MATURE
     );
     expect(out).not.toBeNull();
     expect(out?.to).toBe("intermediate");
@@ -137,6 +184,95 @@ describe("beginner → intermediate (linear progress exhausted)", () => {
     ]);
     expect(out?.evidence[0].sessions).toBe(6);
     expect(out?.evidence[0].spanDays).toBe(35);
+    // The evidence carries what the card must be able to SHOW: real misses
+    // and a reset that failed to restart progress.
+    expect(out?.evidence[0].failedSessions).toBe(3);
+    expect(out?.evidence[0].resetSurvived).toBe(true);
+  });
+
+  it("a flat ALL-HITS window is a deload candidate, NOT a promotion", () => {
+    // The objection this v2 exists for: "you haven't progressed" can just
+    // mean "you need a deload". A dead-flat window with every rep target
+    // hit and no reset in evidence has ruled nothing out — the engines
+    // advance a compliant lifter automatically, so this shape is the
+    // engine holding, or fatigue. Silence.
+    expect(
+      detectExperienceSuggestion(
+        week(main("bench-press", FLAT), main("squat", FLAT)),
+        "beginner",
+        MATURE
+      )
+    ).toBeNull();
+  });
+
+  it("a reset dip followed by all-HIT sessions is not exhaustion — no honest misses", () => {
+    // The calendar deload's own shape: load dips, then every target is hit
+    // (RPE holds keep the number flat). The rebuild never exceeding the old
+    // high makes the dip read as "survived" — but with zero misses the
+    // lifter never actually failed anything, so nothing was exhausted.
+    const dipAllHits = weekly([
+      { weight: 60, reps: 8 },
+      { weight: 60, reps: 8 },
+      { weight: 57.5, reps: 8 }, // deload week
+      { weight: 60, reps: 8 },
+      { weight: 60, reps: 8 },
+      { weight: 60, reps: 8 },
+    ]);
+    expect(
+      detectExperienceSuggestion(
+        week(main("bench-press", dipAllHits), main("squat", dipAllHits)),
+        "beginner",
+        MATURE
+      )
+    ).toBeNull();
+  });
+
+  it("misses WITHOUT a reset are still not exhaustion — reset must be tried first", () => {
+    // Grinding and missing, but no back-off ever happened: Rippetoe's
+    // protocol says reset ~10% and rebuild BEFORE concluding the phase is
+    // over. The engine's own backoff will produce the dip; until it does,
+    // this is a plateau being worked, not a graduation.
+    const missesNoReset = STALL_WITH_RESET.map((r) => ({
+      ...r,
+      weight: 60, // flatten the dip away
+    }));
+    expect(
+      detectExperienceSuggestion(
+        week(main("bench-press", missesNoReset), main("squat", missesNoReset)),
+        "beginner",
+        MATURE
+      )
+    ).toBeNull();
+  });
+
+  it("a stall during a CUT is expected physiology — suppressed", () => {
+    expect(
+      detectExperienceSuggestion(
+        week(
+          main("bench-press", STALL_WITH_RESET),
+          main("squat", STALL_WITH_RESET)
+        ),
+        "beginner",
+        { weekNumber: 8, nutritionGoal: "cut" }
+      )
+    ).toBeNull();
+  });
+
+  it("programme maturity gates promotion: young or unknown tenure → null", () => {
+    expect(MIN_PROGRAM_WEEKS).toBe(6);
+    const days = week(
+      main("bench-press", STALL_WITH_RESET),
+      main("squat", STALL_WITH_RESET)
+    );
+    // Younger than one full mesocycle + deload:
+    expect(
+      detectExperienceSuggestion(days, "beginner", {
+        weekNumber: 4,
+        nutritionGoal: "recomp",
+      })
+    ).toBeNull();
+    // Unprovable tenure fails SAFE:
+    expect(detectExperienceSuggestion(days, "beginner")).toBeNull();
   });
 
   it("a double-progression rep climb is PROGRESS, not a stall", () => {
@@ -216,22 +352,27 @@ describe("beginner → intermediate (linear progress exhausted)", () => {
     expect(
       detectExperienceSuggestion(
         week(
-          main("lat-pulldown", FLAT, { isAccessory: true }),
-          main("cable-fly", FLAT, { isAccessory: true }),
+          main("lat-pulldown", STALL_WITH_RESET, { isAccessory: true }),
+          main("cable-fly", STALL_WITH_RESET, { isAccessory: true }),
           main("bench-press", CLIMB)
         ),
-        "beginner"
+        "beginner",
+        MATURE
       )
     ).toBeNull();
   });
 
   it("a lift with two weekly slots qualifies through EITHER slot", () => {
-    // Slot 1 flat, slot 2 too short — the stalled slot must win the merge.
+    // Slot 1 too short, slot 2 carries the evidence — the stalled slot
+    // must win the merge.
     const days: WorkoutDay[] = [
-      ...week(main("bench-press", FLAT.slice(0, 3)), main("squat", FLAT)),
-      ...week(main("bench-press", FLAT)),
+      ...week(
+        main("bench-press", STALL_WITH_RESET.slice(0, 3)),
+        main("squat", STALL_WITH_RESET)
+      ),
+      ...week(main("bench-press", STALL_WITH_RESET)),
     ];
-    const out = detectExperienceSuggestion(days, "beginner");
+    const out = detectExperienceSuggestion(days, "beginner", MATURE);
     expect(out?.to).toBe("intermediate");
   });
 });
@@ -296,13 +437,18 @@ describe("boundaries the module promises", () => {
     expect(
       detectExperienceSuggestion(
         week(main("bench-press", CLIMB), main("squat", CLIMB)),
-        "advanced"
+        "advanced",
+        MATURE
       )
     ).toBeNull();
     expect(
       detectExperienceSuggestion(
-        week(main("bench-press", FLAT), main("squat", FLAT)),
-        "advanced"
+        week(
+          main("bench-press", STALL_WITH_RESET),
+          main("squat", STALL_WITH_RESET)
+        ),
+        "advanced",
+        MATURE
       )
     ).toBeNull();
   });
@@ -319,8 +465,12 @@ describe("boundaries the module promises", () => {
 
   it("suggestionSignature is stable per (to, reason)", () => {
     const a = detectExperienceSuggestion(
-      week(main("bench-press", FLAT), main("squat", FLAT)),
-      "beginner"
+      week(
+        main("bench-press", STALL_WITH_RESET),
+        main("squat", STALL_WITH_RESET)
+      ),
+      "beginner",
+      MATURE
     );
     expect(a && suggestionSignature(a)).toBe(
       "intermediate:linear_progress_exhausted"
