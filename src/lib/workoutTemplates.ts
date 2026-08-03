@@ -50,6 +50,12 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     estimatedDuration: 50,
     config: {},
   },
+  // Threshold ladder. Quality work progresses by VOLUME at a fixed pace —
+  // the pace is defined by physiology (VDOT), so what a block develops is how
+  // long you can hold it. Pfitzinger ramps the marathon LT run from ~20 to
+  // ~40 minutes across a block; Daniels caps a single continuous T run at
+  // ~20 min and reaches longer totals via cruise intervals, which is why 40
+  // is the ceiling rather than a way-station.
   {
     id: "tempo_20",
     name: "20 Min Tempo",
@@ -58,6 +64,42 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     description: "5 min warmup → 20 min tempo → 5 min cooldown",
     estimatedDuration: 30,
     config: { targetPace: 270 },
+  },
+  {
+    id: "tempo_30",
+    name: "30 Min Tempo",
+    type: "tempo",
+    icon: "zap",
+    description: "10 min warmup → 30 min tempo → 5 min cooldown",
+    estimatedDuration: 45,
+    config: { targetPace: 270 },
+  },
+  {
+    id: "tempo_40",
+    name: "40 Min Tempo",
+    type: "tempo",
+    icon: "zap",
+    description: "10 min warmup → 2×20 min tempo, 3 min float → 5 min cooldown",
+    estimatedDuration: 58,
+    config: { targetPace: 270 },
+  },
+  // Interval ladder. Same principle: reps grow, the rep pace does not.
+  {
+    id: "4x1k",
+    name: "4×1K Intervals",
+    type: "intervals",
+    icon: "refresh-cw",
+    description: "4 reps of 1km hard with 90s rest",
+    estimatedDuration: 29,
+    config: {
+      intervals: {
+        reps: 4,
+        workDistance: 1000,
+        restDuration: 90,
+        warmupDuration: 300,
+        cooldownDuration: 300,
+      },
+    },
   },
   {
     id: "5x1k",
@@ -69,6 +111,23 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     config: {
       intervals: {
         reps: 5,
+        workDistance: 1000,
+        restDuration: 90,
+        warmupDuration: 300,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "6x1k",
+    name: "6×1K Intervals",
+    type: "intervals",
+    icon: "refresh-cw",
+    description: "6 reps of 1km hard with 90s rest",
+    estimatedDuration: 41,
+    config: {
+      intervals: {
+        reps: 6,
         workDistance: 1000,
         restDuration: 90,
         warmupDuration: 300,
