@@ -49,6 +49,7 @@ import { X, Sparkles, Utensils } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Spinner } from "@/components/ui/Spinner";
+import { PaywallLegalLinks } from "@/components/paywall/PaywallLegalLinks";
 
 /**
  * Feature-specific blurred-preview cards. Keyed by `ProFeatureKey`
@@ -439,6 +440,8 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
             Restore purchases
           </button>
         ) : null}
+
+        <PaywallLegalLinks />
       </div>
     </BottomSheet>
   );
