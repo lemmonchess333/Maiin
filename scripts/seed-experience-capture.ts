@@ -50,22 +50,29 @@ async function ensureUser(): Promise<string> {
   }
 }
 
-/** Six weekly flat sessions ending recently — the classifier's stall shape.
- *  Dates are relative to today so the capture never goes stale. */
-function flatHistory(): Array<{
+/** The v2 exhaustion shape ending recently — honest misses, a ~4% reset,
+ *  a rebuild that only reached the old ceiling (the classifier's own
+ *  fixture). Dates relative to today so the capture never goes stale. */
+function stalledHistory(): Array<{
   date: string;
   weight: number;
   repsCompleted: number;
   repsTarget: number;
 }> {
-  const out = [];
-  for (let i = 5; i >= 0; i--) {
+  const sessions = [
+    { weight: 60, repsCompleted: 8 },
+    { weight: 60, repsCompleted: 6 },
+    { weight: 60, repsCompleted: 6 },
+    { weight: 57.5, repsCompleted: 8 }, // the reset
+    { weight: 60, repsCompleted: 8 },
+    { weight: 60, repsCompleted: 7 },
+  ];
+  return sessions.map((sess, idx) => {
     const d = new Date();
-    d.setDate(d.getDate() - i * 7);
+    d.setDate(d.getDate() - (5 - idx) * 7);
     const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    out.push({ date, weight: 60, repsCompleted: 8, repsTarget: 8 });
-  }
-  return out;
+    return { date, ...sess, repsTarget: 8 };
+  });
 }
 
 function main(
@@ -89,7 +96,7 @@ function main(
     lastAttemptedWeight: 60,
     consecutiveFailures: 0,
     plateauCount: 0,
-    performanceHistory: flatHistory(),
+    performanceHistory: stalledHistory(),
     lastPerformance: null,
     isAccessory: false,
   };
@@ -174,7 +181,7 @@ async function run() {
     });
 
   console.log(
-    `[seed-experience] ${uid}: beginner profile + 2-day programme with 6 stalled weekly sessions on bench & squat.`
+    `[seed-experience] ${uid}: beginner profile + 2-day programme; mains carry the v2 exhaustion shape (misses + survived reset).`
   );
 }
 

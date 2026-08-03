@@ -1023,11 +1023,17 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           </TrackProgrammeSectionView>
 
           {/* Experience auto-detection: evidence-triggered level suggestion.
-                Renders null almost always — only when ≥2 main-lift histories
-                contradict the stored level, and never after a dismissal.
-                Spacing lives INSIDE the card so the null render leaves no
-                phantom gap. */}
-          <ExperienceSuggestionCard workouts={programState?.workouts} />
+                Renders null almost always — only when the v2 exhaustion
+                criteria hold (misses + survived reset, mature programme,
+                not cutting), and never after a dismissal. Spacing lives
+                INSIDE the card so the null render leaves no phantom gap. */}
+          <ExperienceSuggestionCard
+            workouts={programState?.workouts}
+            context={{
+              weekNumber: programState?.weekNumber,
+              nutritionGoal: programState?.goal,
+            }}
+          />
 
           {/* Single Lift day-selector (ADR-0002 split-ordered rotation).
                 The duplicate "this week" HybridWeekRail that used to sit
