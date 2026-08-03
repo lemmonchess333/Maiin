@@ -329,7 +329,14 @@ export function chooseSplit(weeklyTarget: number): SplitType {
   // fills the 7th weekday as active rest / mobility.
   const clamped = Math.min(6, weeklyTarget);
   if (clamped === 1) return "full_body";
-  if (clamped === 2) return "upper_lower";
+  // 2-day is full-body for the same frequency reason as 3-day below — an
+  // upper/lower pair trains every muscle ONCE a week (the 2026-08-03
+  // coach-read audit measured it: 1×/week for all 13 judgement groups
+  // except upper back), which is the exact 1×-vs-2× gap Schoenfeld 2016
+  // found inferior at matched volume. Every reference 2-day prescription
+  // (full-body A/B — Starting Strength, Helms' pyramid, RP's minimums) is
+  // full-body; upper/lower only reaches 2×/muscle from 4 days up.
+  if (clamped === 2) return "full_body";
   // 3-day full-body beats 3-day PPL for hypertrophy (2× weekly frequency
   // > 1×, Schoenfeld 2016 at matched volume). Pre-W1a the procedural
   // engine returned "ppl" here, silently contradicting the 3-day
@@ -371,7 +378,7 @@ export function splitRationale(weeklyLiftDays: number): string {
     case 1:
       return "One day a week is full-body so you still train everything.";
     case 2:
-      return "Two days splits upper / lower — each trained about twice a week.";
+      return "Two days runs full-body twice — every muscle hit both sessions instead of once a week.";
     case 3:
       return "Three days stays full-body: every muscle 3× a week beats a 3-way split at the same volume.";
     case 4:
@@ -736,7 +743,25 @@ function buildFullBody(
     ],
   };
 
-  if (count === 2) return [dayA, dayB];
+  if (count === 2) {
+    // A 2-day week never sees day C's seated raise, leaving calves one
+    // ~3-set slot — under even the calf-specific maintenance floor. Give
+    // day B the soleus-biased partner directly, at the 3-base the
+    // upper/lower builders use: the balancer can't top this week up later
+    // (both sessions run at the session-size guard). Appended LAST
+    // (positions above feed findExisting); only for count 2, so the 3-day
+    // rotation keeps its A-standing / C-seated split unchanged.
+    return [
+      dayA,
+      {
+        ...dayB,
+        exercises: [
+          ...dayB.exercises,
+          makeNamedAccessory("seated-calf-raise", round(3 * vm), 15, 30),
+        ],
+      },
+    ];
+  }
 
   // 3 days — add a posterior-emphasis day to complete the rotation
   const dayC: WorkoutDay = {
@@ -917,9 +942,13 @@ function buildUpperLower(
           findExisting(2, 1)
         ),
         makeAccessory("horizontal_push", round(3 * vm), acc, 30, "bench-press"),
+        // Arm isolation runs at the 2-base here, not the 3-base day A uses:
+        // this day funds the lateral-raise slot below inside the 18-set
+        // session budget (generatorAudit pins it), and arms already take
+        // their heavier dose on Upper A.
         makeExercise(
           "arms_biceps",
-          round(3 * vm),
+          round(2 * vm),
           12,
           10,
           "double",
@@ -928,13 +957,21 @@ function buildUpperLower(
         ),
         makeExercise(
           "arms_triceps",
-          round(3 * vm),
+          round(2 * vm),
           12,
           12,
           "double",
           findExisting(2, 4),
           true
         ),
+        // Direct side-delt work (named slot — see makeNamedAccessory). The
+        // 2026-08-03 coach-read audit measured 0 side-delt sets across every
+        // goal × day-count: presses credit the FRONT delt, the bank has no
+        // raise pattern, and `balanceWeeklyVolume` is add-only — the same
+        // no-slot-to-grow failure the calf slots fixed. The hand-authored
+        // templates already prescribe this on every shoulder day. Appended
+        // last so the findExisting positions above stay valid.
+        makeNamedAccessory("lateral-raise", round(3 * vm), 12, 8),
       ],
     },
     {
@@ -1020,6 +1057,10 @@ function buildPPL(
           10,
           "rope-tricep-pushdown"
         ),
+        // Direct side-delt slot (see the Upper — Shoulders & Arms note):
+        // 2 base sets here, 3 on the shoulder-focus push day; a 5-day week
+        // (which slices PPL to this one push day) still gets direct work.
+        makeNamedAccessory("lateral-raise", round(2 * vm), 12, 8),
       ],
     },
     {
@@ -1121,6 +1162,8 @@ function buildPPL(
           findExisting(3, 3),
           true
         ),
+        // Direct side-delt slot (see the Upper — Shoulders & Arms note).
+        makeNamedAccessory("lateral-raise", round(3 * vm), 12, 8),
       ],
     },
     {
