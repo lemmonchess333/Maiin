@@ -30,6 +30,7 @@
     "seed:e2e": "tsx scripts/seed-e2e-user.ts",
     "seed:rich": "tsx scripts/seed-rich-user.ts",
     "seed:circles": "tsx scripts/seed-circles-capture.ts",
+    "seed:experience": "tsx scripts/seed-experience-capture.ts",
     "backfill:streak-mirror": "tsx scripts/backfill-streak-mirror.ts",
     "prepare": "husky",
     "doctor": "npx react-doctor@latest"
