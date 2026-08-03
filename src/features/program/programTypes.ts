@@ -171,6 +171,16 @@ export interface ProgramExercise {
    * their experience level mid-mesocycle must still get their reps back.
    */
   preDeloadReps?: number;
+  /**
+   * The calibration this slot's load lineage descends from — the exercise
+   * identity and weight at the last CALIBRATED assignment (cold-start seed,
+   * or a one-shot rescaled swap). Mesocycle rotation scales the next
+   * variation's load from HERE rather than from the previous rotation's
+   * output, which is what makes repeated rotation non-compounding (the
+   * documented 50 → 30 → 12.5 decay). Absent on legacy slots, which keep
+   * the old carry-the-weight rotation behaviour.
+   */
+  rotationAnchor?: { exerciseId: string; weight: number };
   /** Unit for `reps` / `repRangeMax`. Absent = repetitions. */
   repUnit?: RepUnit;
   /**
@@ -854,6 +864,9 @@ export function normalizeExercise(
     ...(ex.repUnit !== undefined ? { repUnit: ex.repUnit } : {}),
     ...(ex.restSeconds !== undefined ? { restSeconds: ex.restSeconds } : {}),
     ...(ex.isAccessory !== undefined ? { isAccessory: ex.isAccessory } : {}),
+    ...(ex.rotationAnchor !== undefined
+      ? { rotationAnchor: ex.rotationAnchor }
+      : {}),
     weight: ex.weight ?? 0,
     progressionType: ex.progressionType ?? "linear",
     lastSuccessfulWeight: ex.lastSuccessfulWeight ?? ex.weight ?? 0,
