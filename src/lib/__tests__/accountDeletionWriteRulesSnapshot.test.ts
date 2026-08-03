@@ -62,7 +62,6 @@ const PROTECTED_PATHS = [
   "match /users/{uid}/bodyweightLogs/{doc}",
   "match /users/{uid}/programState/{doc}",
   "match /users/{uid}/streaks/{doc}",
-  "match /users/{uid}/devices/{token}",
   "match /users/{uid}/shoes/{shoeId}",
   "match /users/{uid}/logs/{date}",
   "match /users/{uid}/stats/{doc}",
@@ -147,6 +146,13 @@ const EXPLICITLY_EXEMPT = [
  * match block.
  */
 const INFRASTRUCTURE_AND_READ_ONLY = [
+  // Push packets 17+19 (rules lock re-cut 2026-08-03 from stale #1635):
+  // device tokens + the claim ledger are fully client-locked
+  // (`allow read, write: if false`). Registration/revocation are the
+  // claimPushDeviceToken / releasePushDeviceToken callables (actor-locked
+  // for deletion); senders + the executor sweep use the Admin SDK.
+  "match /users/{uid}/devices/{tokenHash}",
+  "match /fcmTokenClaims/{tokenHash}",
   // SOC-P2c — space-post likes. Client READ only ("did I like this");
   // ALL writes are server-only via toggleSpacePostLikeCallable, whose
   // deletion actor-lock (assertCallableActorNotDeleting) covers the
@@ -325,7 +331,7 @@ describe("write-rules snapshot — drift detection", () => {
 });
 
 describe("Blocker E — path-count reconciliation", () => {
-  it("authoritative count is 38 (crews retirement removed /groups/{crewId})", () => {
+  it("authoritative count is 37 (push lock removed /users/{uid}/devices)", () => {
     // History: Chunk 2 prose said "22"; Chunk 2.C reconciled to 27.
     // 2026-05-26 audit PR 2 moved /groups/{crewId}/members/{userId}
     // to server-only (write `if false`), dropping the count to 26.
@@ -358,6 +364,10 @@ describe("Blocker E — path-count reconciliation", () => {
     // entirely, removing its client-writable rules, → 38.
     // Counting methodology unchanged: one `match /PATH {` block with
     // at least one client-write rule.
-    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(38);
+    // Push packets 17+19 rules lock (2026-08-03, re-cut of stale #1635)
+    // client-locked /users/{uid}/devices — writable surface gone, moved to
+    // INFRASTRUCTURE_AND_READ_ONLY alongside the new /fcmTokenClaims
+    // explicit-deny block, → 37.
+    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(37);
   });
 });

@@ -57,12 +57,14 @@ const PROTECTED_PATHS: ProtectedPath[] = [
   { pathPattern: "match /users/{uid}/bodyweightLogs/{doc}", sides: ["owner"] },
   { pathPattern: "match /users/{uid}/programState/{doc}", sides: ["owner"] },
   { pathPattern: "match /users/{uid}/streaks/{doc}", sides: ["owner"] },
-  {
-    pathPattern: "match /users/{uid}/devices/{token}",
-    sides: ["owner"],
-    notes:
-      "FCM device tokens (push #961) — owner writes via registerDeviceToken, deletes on sign-out; senders read via Admin SDK",
-  },
+  // Push packets 17+19 (rules lock re-cut 2026-08-03 from stale #1635):
+  // /users/{uid}/devices/{tokenHash} is now fully client-locked
+  // (`allow read, write: if false`) — registration/revocation go through
+  // the claimPushDeviceToken / releasePushDeviceToken callables, whose
+  // actor-lock covers the deletion freeze this list polices. No
+  // client-writable rule remains, so it leaves PROTECTED_PATHS (the
+  // crews-retirement precedent). The executor's devices sweep is Admin
+  // SDK and unaffected.
   { pathPattern: "match /users/{uid}/shoes/{shoeId}", sides: ["owner"] },
   { pathPattern: "match /users/{uid}/logs/{date}", sides: ["owner"] },
   { pathPattern: "match /users/{uid}/stats/{doc}", sides: ["owner"] },
@@ -313,7 +315,7 @@ describe("static rules coverage — every protected path has the write-freeze", 
     expect(block).toMatch(/allow read,\s*write:\s*if\s+false/);
   });
 
-  it("PROTECTED_PATHS list matches the canonical count (31 paths — crews retirement removed /groups/{crewId})", () => {
+  it("PROTECTED_PATHS list matches the canonical count (30 paths — push lock removed /users/{uid}/devices)", () => {
     // Was 27 pre-PR-2; /groups/{crewId}/members/{userId} moved to
     // server-only (→26); push #961 added /users/{uid}/devices/{token} (→27);
     // SOCIAL S3 added /partnerBonds/{bondId} (→28); saved-routes library
@@ -322,10 +324,13 @@ describe("static rules coverage — every protected path has the write-freeze", 
     // (2026-07-12) moved /activities/{activityId} + challenge
     // /participants/{uid} out of EXPLICITLY_EXEMPT into the fully-frozen
     // set; crews retirement (2026-07-20) removed /groups/{crewId}
-    // (client-locked, no freeze surface remains) (→31). This list is a
+    // (client-locked, no freeze surface remains) (→31); push packets
+    // 17+19 rules lock (2026-08-03, re-cut of #1635) removed
+    // /users/{uid}/devices — client-locked like crews, freeze moved into
+    // the callables' actor-lock (→30). This list is a
     // curated freeze-verification SUBSET; the
     // full drift inventory (with its own count) lives in
     // accountDeletionWriteRulesSnapshot.test.ts.
-    expect(PROTECTED_PATHS.length).toBe(31);
+    expect(PROTECTED_PATHS.length).toBe(30);
   });
 });

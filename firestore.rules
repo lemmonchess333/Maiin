@@ -263,14 +263,30 @@ service cloud.firestore {
       allow read: if isOwner(uid);
       allow write: if isOwnerAndNotDeleting(uid);
     }
-    /* FCM device tokens (push arc #961) — the client writes
-       users/{uid}/devices/{token} via registerDeviceToken and deletes it
-       on sign-out (delete-on-signout privacy invariant). The server
-       senders read these via the Admin SDK, which bypasses these rules.
-       Owner-only; write-frozen during account deletion like its siblings. */
-    match /users/{uid}/devices/{token} {
-      allow read: if isOwner(uid);
-      allow write: if isOwnerAndNotDeleting(uid);
+    /* FCM device tokens — SERVER-ONLY since the packets-17+19 migration
+       (#1630, Rules lock PR-E; re-cut 2026-08-03 from stale PR #1635).
+       The client registers/revokes exclusively through the
+       claimPushDeviceToken / releasePushDeviceToken callables
+       (pushNotifications.ts: "The client NO LONGER writes
+       users/{uid}/devices directly"); senders and the deletion executor
+       use the Admin SDK, which bypasses these rules. Locking the path
+       closes the token-forgery surface (a client writing another token
+       into its own device list) and makes the callable fences
+       authoritative. The old owner-read is dropped too — no client code
+       reads these docs (verified: the only getDoc in pushNotifications.ts
+       is settings/push), and a readable list would leak token bindings. */
+    match /users/{uid}/devices/{tokenHash} {
+      allow read, write: if false;
+    }
+    /* Push-token claim ledger (packets 17+19) — the server-owned source
+       of truth for token ownership (claim status, binding, revocation
+       history, send leases). Written only by the callables + senders via
+       the Admin SDK. Already default-deny by absence; the explicit block
+       records the decision so a future match block can't be added
+       "helpfully" without tripping over this one. A readable claim would
+       leak which account owns a device token. */
+    match /fcmTokenClaims/{tokenHash} {
+      allow read, write: if false;
     }
     /* Performance data — written ONLY by Cloud Functions
        (computeAndWritePerformanceForUser in functions/index.js writes
