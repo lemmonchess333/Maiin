@@ -185,12 +185,23 @@ describe("KNOWN_DEFECTS — asserted so the snapshot is not read as approval", (
      improve; the test fails the moment a change makes it worse.
 
      These bounds are denominated in the CURRENT volume currency (indirect sets
-     at 0.5). ADR-0010 settles that the literature's 1:1 is correct and stages
-     the flip to land with the landmark-aware builders — measured here: 1:1
-     alone takes per-muscle readings over a ceiling from 180/825 to 364/825
-     while under-floor goes 263 -> 147. When the flip lands, RE-BASELINE these
-     two bounds in the same commit. A re-baseline is not a ratchet regression;
-     the numbers are in a different unit. */
+     at 0.5). ADR-0010 settles that the literature's 1:1 is correct; its
+     2026-08-03 status addendum records why the flip is RE-STAGED on the
+     taxonomy split — with `reconcileToLandmarks` landed, 1:1 still measured
+     292/750 readings over a ceiling vs 180 at 0.5, because the canonical
+     Shoulders/Core buckets absorb every press/pull/compound as secondaries
+     and no shrink pass can reconcile a mispriced bucket. When the flip
+     lands, RE-BASELINE these two bounds in the same commit. A re-baseline is
+     not a ratchet regression; the numbers are in a different unit.
+
+     2026-08-03 — reconciler + intra-exercise dedupe landed:
+       high 53 -> 42 configs (a genuine tightening: per-muscle readings over
+       a ceiling fell 180 -> 74, the unrecoverable direction);
+       low 60 -> 68 configs (a RE-BASELINE, not a regression: the dedupe
+       stopped rows/deadlifts booking 1.5 canonical Back sets per physical
+       set, and volume that double-counting had inflated into-band now
+       honestly reads low — measured with the reconciler disabled, the
+       dedupe alone accounts for all but 2 of the new low readings). */
   it("D-VOL: landmark violations are ratcheted and must only shrink", () => {
     const high = SWEEP.filter((s) =>
       Object.values(s.volume).some((v) => v.includes("HIGH"))
@@ -200,10 +211,10 @@ describe("KNOWN_DEFECTS — asserted so the snapshot is not read as approval", (
     ).length;
 
     expect(high, `${high} configs over a landmark ceiling`).toBeLessThanOrEqual(
-      53
+      42
     );
     expect(low, `${low} configs under a landmark floor`).toBeLessThanOrEqual(
-      60
+      68
     );
 
     // …and it is genuinely not solved, so the ratchet is never read as a pass.
