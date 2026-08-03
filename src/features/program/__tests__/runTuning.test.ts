@@ -22,6 +22,7 @@ import {
   type RunTuning,
 } from "../runScheduler";
 import { buildPlan } from "../planBuilder";
+import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { generateSchedule } from "@/lib/scheduleUtils";
 import {
   localDateString,
@@ -61,6 +62,27 @@ function plan(args: {
 const allDays = (p: { weeks: { templateId: string; type: string }[][] }) =>
   p.weeks.flat();
 
+/** The distinct long-run tiers a plan actually prescribes, ascending km. */
+function longTiersUsed(p: {
+  weeks: { templateId: string; type: string }[][];
+}): number[] {
+  const km = new Set<number>();
+  for (const d of allDays(p)) {
+    const t = RUN_TEMPLATES.find((x) => x.id === d.templateId);
+    if (t?.type === "long" && t.config.targetDistanceKm)
+      km.add(t.config.targetDistanceKm);
+  }
+  return [...km].sort((a, b) => a - b);
+}
+
+/** Longest long run the plan prescribes, in km (0 if it prescribes none). */
+function peakLongKmOf(p: {
+  weeks: { templateId: string; type: string }[][];
+}): number {
+  const tiers = longTiersUsed(p);
+  return tiers.length === 0 ? 0 : tiers[tiers.length - 1];
+}
+
 describe("Pgm6 — default equivalence (invariant 1)", () => {
   const DISTANCES = ["5k", "10k", "half", "marathon"] as const;
   const HORIZONS = [10, 30, 60, 120];
@@ -81,15 +103,36 @@ describe("Pgm6 — default equivalence (invariant 1)", () => {
 });
 
 describe("Pgm6 — volume knob", () => {
-  it("lighter caps every long run at the 10K tier (marathon, healthy plan)", () => {
-    const p = plan({
+  it("lighter lowers the marathon ceiling without flattening the ramp", () => {
+    // The knob used to clamp every distance to the 10K tier, which made a
+    // "lighter" marathon and a "lighter" half byte-identical — the same
+    // defect the progressive long run exists to fix. It now scales the
+    // distance's OWN peak, so the plan stays race-relative.
+    const lighter = plan({
       distance: "marathon",
       daysAhead: 120,
       tuning: { volume: "lighter", difficulty: "standard" },
     });
-    expect(allDays(p).some((d) => d.templateId === "long_15k")).toBe(false);
-    // Still a real plan — long runs exist, just smaller.
-    expect(allDays(p).some((d) => d.templateId === "long_10k")).toBe(true);
+    const standard = plan({ distance: "marathon", daysAhead: 120 });
+    expect(peakLongKmOf(lighter)).toBeLessThan(peakLongKmOf(standard));
+    // Still a real progression, not a flat line at base.
+    expect(longTiersUsed(lighter).length).toBeGreaterThan(1);
+  });
+
+  it("lighter keeps the half and the marathon distinguishable", () => {
+    // The regression guard for the old absolute clamp: under `lighter` both
+    // distances collapsed onto long_10k for every week of the plan.
+    const half = plan({
+      distance: "half",
+      daysAhead: 120,
+      tuning: { volume: "lighter", difficulty: "standard" },
+    });
+    const marathon = plan({
+      distance: "marathon",
+      daysAhead: 120,
+      tuning: { volume: "lighter", difficulty: "standard" },
+    });
+    expect(peakLongKmOf(marathon)).toBeGreaterThan(peakLongKmOf(half));
   });
 
   it("bigger unlocks the 15K tier for a 10K plan (standard keeps it at 10K)", () => {
