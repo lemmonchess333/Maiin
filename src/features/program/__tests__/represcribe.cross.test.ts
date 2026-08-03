@@ -129,6 +129,26 @@ function week(days: number): WorkoutDay[] {
         baseReps: 45,
         weight: 0,
       }),
+      // Hinge MAIN: the pump day's +2 exempts it (undulationDeltaFor) — a
+      // day-count sweep puts this slot under every role, so a mirror that
+      // drops the exemption fails parity here rather than shipping a
+      // server-side 4×10 deadlift.
+      exercise({
+        instanceId: `hinge-${i}`,
+        exerciseId: "deadlift",
+        movementCategory: "hip_dominant",
+        weight: 100,
+      }),
+      // …and a hinge ACCESSORY, which must still undulate.
+      exercise({
+        instanceId: `hinge-acc-${i}`,
+        exerciseId: "romanian-deadlift",
+        movementCategory: "hip_dominant",
+        isAccessory: true,
+        reps: 12,
+        baseReps: 12,
+        weight: 60,
+      }),
     ],
   })) as unknown as WorkoutDay[];
 }

@@ -496,10 +496,18 @@ describe("a swapped slot is re-calibrated, not carried", () => {
       for (const ex of d.exercises) {
         if ((ex.performanceHistory?.length ?? 0) > 0) continue;
         if ((ex.weight ?? 0) <= 0) continue;
+        // Mirror the seeder's own call shape — the accessory flag and rep
+        // target change the answer for slots the bank has no metadata for
+        // (the catalogue-pinned calf raises are the first such slots to
+        // appear in GENERATED plans; rep-blind/flag-blind `want` was only
+        // ever right while every generated id was a bank id).
         const want = startingWeightForExercise(
           ex.exerciseId,
           ex.movementCategory,
-          CTX
+          CTX,
+          ex.isAccessory,
+          ex.reps,
+          ex.repUnit
         );
         if (want > 0 && Math.abs(want - ex.weight) > tolerance) {
           out.push(`${ex.name}@${ex.weight} (want ~${want})`);

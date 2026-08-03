@@ -5,7 +5,12 @@ import type { WorkoutDay, ProgramExercise } from "./programTypes";
 import { EXERCISES, getExerciseById } from "@/lib/exercises";
 import { findSafeSubstitute } from "./injurySubstitutions";
 import { allowsComplexity, type Experience } from "./experienceModel";
-import { exerciseBank, exerciseDisplayName } from "./variationBank";
+import {
+  exerciseBank,
+  exerciseDisplayName,
+  CATALOGUE_PINNED_ACCESSORY_IDS,
+  PINNED_EQUIPMENT_FALLBACK,
+} from "./variationBank";
 import {
   weightAfterExerciseSwap,
   type StartingLoadContext,
@@ -482,6 +487,33 @@ export function applyEquipmentFilterToWorkouts(
     const usedIds = new Set(day.exercises.map((e) => e.exerciseId));
     const exercises: ProgramExercise[] = day.exercises.map((ex) => {
       if (isAvailable(ex.exerciseId)) return { ...ex };
+      // Catalogue-pinned slots (direct calf work): their bank category pool
+      // is squat-pattern lifts, so the generic swap below would replace the
+      // programme's only calf coverage with a fourth quad slot — and, by
+      // draining the pool, push LATER slots onto technical variations a
+      // beginner shouldn't get (measured: home_gym/2d handed a beginner a
+      // Bulgarian split squat). These re-point to their own bodyweight
+      // fallback instead, so a calf raise stays a calf raise at every
+      // equipment tier. Falls through to the generic swap only if the
+      // fallback is itself unusable, keeping the equipment promise absolute.
+      const pinnedFallback = PINNED_EQUIPMENT_FALLBACK[ex.exerciseId];
+      if (
+        CATALOGUE_PINNED_ACCESSORY_IDS.has(ex.exerciseId) &&
+        pinnedFallback &&
+        isAvailable(pinnedFallback) &&
+        !usedIds.has(pinnedFallback) &&
+        !isInjuryContra(pinnedFallback)
+      ) {
+        usedIds.delete(ex.exerciseId);
+        usedIds.add(pinnedFallback);
+        return replaceExercise(
+          ex,
+          pinnedFallback,
+          exerciseDisplayName(pinnedFallback),
+          loadCtx,
+          `Swapped from ${ex.name} — not available with your equipment.`
+        );
+      }
 
       const options = exerciseBank[ex.movementCategory] ?? [];
       // NOT complexity-gated, and that is a measured decision rather than an
