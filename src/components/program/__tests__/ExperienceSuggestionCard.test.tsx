@@ -26,18 +26,30 @@ afterEach(() => {
   mockUpdateProfile.mockClear();
 });
 
-/** Six weekly flat sessions — the classifier's stall evidence. */
-function flatHistory(): PerformanceRecord[] {
-  return Array.from({ length: 6 }, (_, i) => {
+/** The v2 exhaustion shape: honest misses, a ~4% reset, a rebuild that
+ *  only reached the old ceiling. Mirrors the classifier's own fixture. */
+function stalledHistory(): PerformanceRecord[] {
+  const entries = [
+    { weight: 60, repsCompleted: 8 },
+    { weight: 60, repsCompleted: 6 },
+    { weight: 60, repsCompleted: 6 },
+    { weight: 57.5, repsCompleted: 8 }, // the reset
+    { weight: 60, repsCompleted: 8 },
+    { weight: 60, repsCompleted: 7 },
+  ];
+  return entries.map((e, i) => {
     const d = new Date(2026, 0, 5 + i * 7);
     return {
       date: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`,
-      weight: 60,
-      repsCompleted: 8,
+      weight: e.weight,
+      repsCompleted: e.repsCompleted,
       repsTarget: 8,
     };
   });
 }
+
+/** Programme context that satisfies the maturity + deficit gates. */
+const MATURE = { weekNumber: 8, nutritionGoal: "recomp" };
 
 function stalledWeek(): WorkoutDay[] {
   const main = (exerciseId: string, name: string) =>
@@ -55,7 +67,7 @@ function stalledWeek(): WorkoutDay[] {
       lastAttemptedWeight: 60,
       consecutiveFailures: 0,
       plateauCount: 0,
-      performanceHistory: flatHistory(),
+      performanceHistory: stalledHistory(),
       lastPerformance: null,
     }) as unknown as WorkoutDay["exercises"][number];
   return [
@@ -78,7 +90,9 @@ function renderCard(
       <Routes>
         <Route
           path="/program"
-          element={<ExperienceSuggestionCard workouts={workouts} />}
+          element={
+            <ExperienceSuggestionCard workouts={workouts} context={MATURE} />
+          }
         />
         <Route
           path="/settings/lift-plan"
@@ -95,12 +109,32 @@ describe("ExperienceSuggestionCard", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("surfaces the stall evidence for a stored beginner, naming the lifts", () => {
+  it("surfaces the evidence for a stored beginner — lifts, sessions, e1RM", () => {
     renderCard(stalledWeek(), { experience: "beginner" });
     expect(
       screen.getByText(/Ready for intermediate programming/i)
     ).toBeInTheDocument();
-    expect(screen.getByText(/Bench Press and Squat/i)).toBeInTheDocument();
+    // Per-lift evidence rows: the answer to "what's this based on?" lives
+    // ON the card, with the classifier's own numbers.
+    expect(screen.getByText("Bench Press")).toBeInTheDocument();
+    expect(screen.getByText("Squat")).toBeInTheDocument();
+    expect(screen.getAllByText(/6 sessions · 5 wks · e1RM \+0%/)).toHaveLength(
+      2
+    );
+    // The criteria statement — including that advanced is never automatic.
+    expect(
+      screen.getByText(/Advanced is never suggested automatically/i)
+    ).toBeInTheDocument();
+  });
+
+  it("the deload counter-explanation is ruled out IN the copy", () => {
+    renderCard(stalledWeek(), { experience: "beginner" });
+    expect(
+      screen.getByText(/not just a week that needed to be easy/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/missed reps AND a load reset/i)
+    ).toBeInTheDocument();
   });
 
   it("a dismissed signature stays dismissed", () => {
