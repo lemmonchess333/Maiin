@@ -568,6 +568,12 @@ export const CATALOGUE_PINNED_ACCESSORY_IDS: ReadonlySet<string> = new Set([
   "standing-calf-raise",
   "seated-calf-raise",
   "single-leg-calf-raise",
+  // Side-delt slot: categorised vertical_push, so unpinned rotation would
+  // swap a lateral raise into a shoulder press and the slot's whole reason
+  // to exist (direct side-delt volume) would silently vanish. Dumbbell
+  // exercise — available at every equipment tier, so no
+  // PINNED_EQUIPMENT_FALLBACK entry is needed.
+  "lateral-raise",
 ]);
 
 /**
