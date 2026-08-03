@@ -92,6 +92,30 @@ export function allowsComplexity(
 }
 
 /**
+ * May this lifter be OFFERED this bank option? Complexity plus the beginner
+ * bodyweight-floor rule, as one predicate so the gate and the equipment
+ * filter cannot disagree about it.
+ *
+ * The floor rule (2026-08-03 beginner coach-read): a movement whose minimum
+ * effective load is the lifter's whole bodyweight (`bodyweightFloor` on the
+ * bank option — pull-ups, chin-ups) is not a beginner prescription, PRIMARY
+ * OR NOT. The primary exemption's rationale is load scalability ("a
+ * beginner's squat is a barbell squat" — starting from the empty bar), and a
+ * pull-up has no empty-bar equivalent: the audit found every beginner plan
+ * anchoring pull days on 8-15-rep pull-up sets the median novice cannot
+ * perform once. Intermediate and advanced lifters are unaffected.
+ */
+export function offerableTo(
+  experience: Experience | undefined,
+  option: { complexity?: MovementComplexity; bodyweightFloor?: boolean }
+): boolean {
+  if (toExperience(experience) === "beginner" && option.bodyweightFloor) {
+    return false;
+  }
+  return allowsComplexity(experience, option.complexity);
+}
+
+/**
  * Does this lifter's week vary its rep targets day to day (backlog #3, N9's
  * daily undulation)?
  *
@@ -158,9 +182,12 @@ export function toExperience(value: string | undefined): Experience {
  * bank has an alternative, no slot is above the lifter's level. It is a bias,
  * not an invariant.
  *
- * The category PRIMARY is never re-pointed. It is the lift the programme is
- * built around, the progression anchor, and the one the form content covers
- * most thoroughly — a beginner's squat is a barbell squat.
+ * The category PRIMARY is never re-pointed — with ONE exception. The
+ * exemption exists because a primary scales to any load (a beginner's squat
+ * is a barbell squat, starting from the empty bar), and a `bodyweightFloor`
+ * primary (the pull-up) is exactly where that reasoning fails: its minimum
+ * load is the lifter's whole bodyweight. For beginners those slots re-point
+ * like any variation — see `offerableTo`.
  */
 export function applyComplexityGate<
   E extends {
@@ -179,6 +206,7 @@ export function applyComplexityGate<
       id: string;
       primary: boolean;
       complexity?: MovementComplexity;
+      bodyweightFloor?: boolean;
     }>
   >,
   /** Optional load rescaler for a swapped slot — see the call in the body. */
@@ -199,14 +227,21 @@ export function applyComplexityGate<
     const exercises = day.exercises.map((ex) => {
       const options = bank[ex.movementCategory] ?? [];
       const self = options.find((o) => o.id === ex.exerciseId);
-      if (!self || self.primary) return ex; // primaries and unknowns stand
-      if (allowsComplexity(experience, self.complexity)) return ex;
+      if (!self) return ex; // unknowns stand
+      // A primary's COMPLEXITY never gates it (a beginner's squat is a
+      // barbell squat) — only the bodyweight-floor rule can re-point a
+      // primary, and only for beginners (see the header). Variations get
+      // the full offerability predicate.
+      const selfStands = self.primary
+        ? !(toExperience(experience) === "beginner" && self.bodyweightFloor)
+        : offerableTo(experience, self);
+      if (selfStands) return ex;
       const swap = options.find(
         (o) =>
           !o.primary &&
           o.id !== ex.exerciseId &&
           !idsInDay.has(o.id) &&
-          allowsComplexity(experience, o.complexity)
+          offerableTo(experience, o)
       );
       // Nothing simple enough left in the category that isn't already in the
       // day — keep what is there. A slot the lifter can at least attempt

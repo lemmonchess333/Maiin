@@ -4,7 +4,7 @@ import { PROGRAM_TEMPLATES } from "./templates";
 import type { WorkoutDay, ProgramExercise } from "./programTypes";
 import { EXERCISES, getExerciseById } from "@/lib/exercises";
 import { findSafeSubstitute } from "./injurySubstitutions";
-import { allowsComplexity, type Experience } from "./experienceModel";
+import { offerableTo, toExperience, type Experience } from "./experienceModel";
 import {
   exerciseBank,
   exerciseDisplayName,
@@ -540,10 +540,41 @@ export function applyEquipmentFilterToWorkouts(
         !usedIds.has(o.id) &&
         isAvailable(o.id) &&
         !isInjuryContra(o.id);
-      const pick =
-        options.find(
-          (o) => eligible(o) && allowsComplexity(experience, o.complexity)
-        ) ?? options.find(eligible);
+      // Preferred pick honours `offerableTo` (complexity + the beginner
+      // bodyweight-floor rule): without the floor half, a beginner at
+      // home/minimal whose gated lat pulldown lost its cable would be handed
+      // straight back the pull-up the gate just removed.
+      let pick =
+        options.find((o) => eligible(o) && offerableTo(experience, o)) ??
+        undefined;
+      // Beginner vertical-pull coverage floor: at home/minimal every
+      // offerable option is a cable (pulldowns), so nothing survives the
+      // equipment check and the ungated fallback below would restore the
+      // pull-up. The honest coaching answer at that tier is the inverted
+      // row — bodyweight, difficulty scaled by foot position, THE reference
+      // novice pull regression. It is a horizontal_pull by category (which
+      // is why it cannot live in the vertical_pull pool), so it re-points
+      // here the same way the pinned calf fallback does, and the slot's
+      // category follows the movement honestly.
+      if (
+        !pick &&
+        ex.movementCategory === "vertical_pull" &&
+        toExperience(experience ?? "intermediate") === "beginner" &&
+        isAvailable("inverted-row") &&
+        !usedIds.has("inverted-row") &&
+        !isInjuryContra("inverted-row")
+      ) {
+        usedIds.delete(ex.exerciseId);
+        usedIds.add("inverted-row");
+        return replaceExercise(
+          ex,
+          "inverted-row",
+          exerciseDisplayName("inverted-row"),
+          loadCtx,
+          `Swapped from ${ex.name} — not available with your equipment.`
+        );
+      }
+      pick = pick ?? options.find(eligible);
       if (pick) {
         usedIds.delete(ex.exerciseId);
         usedIds.add(pick.id);
