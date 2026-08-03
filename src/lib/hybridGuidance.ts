@@ -26,9 +26,12 @@ export interface YesterdayTraining {
 }
 
 export interface HybridGuidance {
-  /** How fresh today is, for the caller's accent colour. */
-  readiness: "fresh" | "steady" | "ease";
-  /** Cross-discipline readiness sentence. */
+  /** HYBRID-GUIDANCE-01: a display TONE for the caller's accent colour —
+   *  NOT a physical-readiness claim. Renamed from `readiness` because it
+   *  drives colour, not a measured recovery state (Tropos doesn't measure
+   *  sleep, HRV, or physical freshness). */
+  tone: "fresh" | "steady" | "ease";
+  /** Cross-discipline guidance sentence. */
   line: string;
   /** Why today's macros lean the way they do (narrates, never changes). */
   fuelLine: string;
@@ -86,7 +89,7 @@ export function resolveHybridGuidance(
 
   if (todayType === "rest") {
     return {
-      readiness: "fresh",
+      tone: "fresh",
       line: "Rest day — let yesterday's training settle in.",
       fuelLine,
     };
@@ -99,7 +102,7 @@ export function resolveHybridGuidance(
   // code (the "Two hard sessions" line could never render).
   if (y.hardLift && y.hardRun) {
     return {
-      readiness: "ease",
+      tone: "ease",
       line: "Two hard sessions yesterday — ease in or keep it short.",
       fuelLine,
     };
@@ -108,26 +111,33 @@ export function resolveHybridGuidance(
   // discipline you're about to train today.
   if (y.hardLift && (todayType === "run" || todayType === "both")) {
     return {
-      readiness: "ease",
+      tone: "ease",
       line: "Hard lift yesterday — keep today's run easy.",
       fuelLine,
     };
   }
   if (y.hardRun && (todayType === "lift" || todayType === "both")) {
     return {
-      readiness: "ease",
+      tone: "ease",
       line: "Long run yesterday — legs may feel heavy under the bar.",
       fuelLine,
     };
   }
 
-  // Nothing logged yesterday → fresh.
+  // HYBRID-GUIDANCE-01: nothing logged yesterday is the ABSENCE of data,
+  // not proof of freshness — the user may have trained off-app or be
+  // tired. Stay neutral (steady tone) and defer to how they feel rather
+  // than claiming "Fresh legs".
   if (!y.anyLift && !y.anyRun) {
-    return { readiness: "fresh", line: "Fresh legs today.", fuelLine };
+    return {
+      tone: "steady",
+      line: "Nothing logged yesterday — train to how you feel.",
+      fuelLine,
+    };
   }
 
   return {
-    readiness: "steady",
+    tone: "steady",
     line: "Yesterday's work is in the bank — train steady today.",
     fuelLine,
   };

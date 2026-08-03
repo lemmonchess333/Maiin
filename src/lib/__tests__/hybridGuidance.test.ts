@@ -25,7 +25,7 @@ describe("fuelLineFor", () => {
 describe("resolveHybridGuidance", () => {
   it("rest day → fresh, recovery framing", () => {
     const g = resolveHybridGuidance("rest", { ...NONE, anyLift: true });
-    expect(g.readiness).toBe("fresh");
+    expect(g.tone).toBe("fresh");
     expect(g.line).toMatch(/rest day/i);
   });
 
@@ -35,7 +35,7 @@ describe("resolveHybridGuidance", () => {
       anyLift: true,
       hardLift: true,
     });
-    expect(g.readiness).toBe("ease");
+    expect(g.tone).toBe("ease");
     expect(g.line).toMatch(/run easy/i);
   });
 
@@ -45,7 +45,7 @@ describe("resolveHybridGuidance", () => {
       anyRun: true,
       hardRun: true,
     });
-    expect(g.readiness).toBe("ease");
+    expect(g.tone).toBe("ease");
     expect(g.line).toMatch(/heavy under the bar/i);
   });
 
@@ -61,18 +61,22 @@ describe("resolveHybridGuidance", () => {
     };
     for (const todayType of ["lift", "run", "both"] as const) {
       const g = resolveHybridGuidance(todayType, both);
-      expect(g.readiness).toBe("ease");
+      expect(g.tone).toBe("ease");
       expect(g.line).toMatch(/two hard sessions/i);
     }
   });
 
-  it("nothing yesterday → fresh", () => {
-    expect(resolveHybridGuidance("lift", NONE).readiness).toBe("fresh");
+  it("HYBRID-GUIDANCE-01: nothing logged yesterday → neutral (never 'fresh legs')", () => {
+    // No data is the ABSENCE of a signal, not proof of freshness.
+    const g = resolveHybridGuidance("lift", NONE);
+    expect(g.tone).toBe("steady");
+    expect(g.line).not.toMatch(/fresh legs/i);
+    expect(g.line).toMatch(/how you feel/i);
   });
 
   it("an easy session yesterday → steady (not ease, not fresh)", () => {
     const g = resolveHybridGuidance("run", { ...NONE, anyRun: true });
-    expect(g.readiness).toBe("steady");
+    expect(g.tone).toBe("steady");
   });
 
   it("a hard lift yesterday but a lift day today does NOT force ease (same discipline)", () => {
@@ -83,7 +87,7 @@ describe("resolveHybridGuidance", () => {
       anyLift: true,
       hardLift: true,
     });
-    expect(g.readiness).toBe("steady");
+    expect(g.tone).toBe("steady");
   });
 
   it("always carries a fuel line matching the day type", () => {
