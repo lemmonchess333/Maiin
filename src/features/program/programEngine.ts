@@ -16,7 +16,9 @@ import {
   pickAccessory,
   exerciseBank,
   exerciseDisplayName,
+  CATALOGUE_PINNED_ACCESSORY_IDS,
 } from "./variationBank";
+import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import {
   applyRecoverySession,
   escalatesToWholeBody,
@@ -540,6 +542,52 @@ function makeAccessory(
   };
 }
 
+/**
+ * An accessory slot pinned to a SPECIFIC catalogue exercise rather than drawn
+ * from the variation bank's category rotation.
+ *
+ * Exists for muscles the bank cannot reach: the bank groups by movement
+ * pattern, and calves have no pattern of their own (the four calf raises are
+ * decreed `knee_dominant` in exerciseMovementCategory.ts, but putting them in
+ * that bank pool would offer a calf raise as a SQUAT swap). Measured before
+ * this helper existed: every goal × day-count combination produced 0 direct
+ * calf sets — below maintenance volume everywhere, i.e. the generated
+ * programmes were literally atrophying calves by RP's own landmark model,
+ * because `balanceWeeklyVolume` is add-only and had no calf slot to grow.
+ *
+ * State carry across regenerates is positional, same as every accessory —
+ * `carryExistingAccessories` matches on (dayIndex, exIndex, category), so
+ * these slots must be appended at stable positions (the END of a day).
+ */
+function makeNamedAccessory(
+  exerciseId: string,
+  sets: number,
+  reps: number,
+  weight: number
+): ProgramExercise {
+  return {
+    name: exerciseDisplayName(exerciseId),
+    exerciseId,
+    instanceId: generateInstanceId(),
+    movementCategory: inferMovementCategory(
+      exerciseDisplayName(exerciseId),
+      exerciseId
+    ),
+    sets,
+    reps,
+    baseReps: reps,
+    weight,
+    progressionType: "double",
+    lastSuccessfulWeight: weight,
+    lastAttemptedWeight: weight,
+    consecutiveFailures: 0,
+    plateauCount: 0,
+    performanceHistory: [],
+    lastPerformance: null,
+    isAccessory: true,
+  };
+}
+
 /* ================================
    SPLIT TEMPLATES
 ================================ */
@@ -618,6 +666,10 @@ function buildFullBody(
         findExisting(0, 4),
         true
       ),
+      // Direct calf work — the bank has no calves category, so this is a
+      // named slot (see makeNamedAccessory). Appended LAST: positions of the
+      // slots above feed findExisting and must not shift.
+      makeNamedAccessory("standing-calf-raise", round(2 * vm), 12, 40),
     ],
   };
 
@@ -726,6 +778,9 @@ function buildFullBody(
         findExisting(2, 4),
         true
       ),
+      // Soleus-biased partner to day A's standing raise (bent knee shifts
+      // the load — same split the hand-authored templates use).
+      makeNamedAccessory("seated-calf-raise", round(2 * vm), 15, 30),
     ],
   };
 
@@ -825,6 +880,9 @@ function buildUpperLower(
           findExisting(1, 3),
           true
         ),
+        // Direct calf work (named slot — see makeNamedAccessory). Appended
+        // last so the findExisting positions above stay valid.
+        makeNamedAccessory("standing-calf-raise", round(3 * vm), 12, 40),
       ],
     },
     {
@@ -893,6 +951,9 @@ function buildUpperLower(
           findExisting(3, 3),
           true
         ),
+        // Seated (soleus-biased) on the deadlift day, standing on the squat
+        // day — the same standing/seated split the templates author.
+        makeNamedAccessory("seated-calf-raise", round(3 * vm), 15, 30),
       ],
     },
   ];
@@ -1021,6 +1082,9 @@ function buildPPL(
           findExisting(2, 3),
           true
         ),
+        // Direct calf work (named slot — see makeNamedAccessory). Appended
+        // last so the findExisting positions above stay valid.
+        makeNamedAccessory("standing-calf-raise", round(3 * vm), 12, 40),
       ],
     },
     {
@@ -1117,7 +1181,12 @@ function buildLegsB(
       ),
       // Accessories in reversed order with different rep ranges
       makeAccessory("hip_dominant", round(3 * vm), 10, 40, "deadlift"),
-      makeAccessory("knee_dominant", round(3 * vm), 10, 40, "squat"),
+      // One set traded to the calf slot below: at 6d the audit measured
+      // quads OVER the volume ceiling and calves below maintenance, and
+      // this day was already at the 18-set session budget — the swap moves
+      // a set from the surplus muscle to the deficient one instead of
+      // growing the session.
+      makeAccessory("knee_dominant", round(2 * vm), 10, 40, "squat"),
       makeExercise(
         "core",
         round(3 * vm),
@@ -1127,6 +1196,8 @@ function buildLegsB(
         findExisting(4),
         true
       ),
+      // Seated pairs with Legs A's standing raise (see makeNamedAccessory).
+      makeNamedAccessory("seated-calf-raise", round(2 * vm), 15, 30),
     ],
   };
 }
@@ -1180,6 +1251,10 @@ export function rotateUntrainedAccessories(
     exercises: day.exercises.map((ex) => {
       if (!ex.isAccessory) return ex; // mains never rotate
       if ((ex.performanceHistory?.length ?? 0) > 0) return ex; // trained → keep
+      // Catalogue-pinned slots (direct calf work) have no pool to rotate
+      // within — their category pool is squat-pattern lifts, and rotating
+      // into it deletes the programme's only calf coverage.
+      if (CATALOGUE_PINNED_ACCESSORY_IDS.has(ex.exerciseId)) return ex;
       const next = pickAccessory(
         ex.movementCategory,
         ex.exerciseId,
@@ -1255,6 +1330,33 @@ export function repDeltaForRole(role: DayRole): number {
   return role === "heavy" ? -2 : role === "pump" ? 2 : 0;
 }
 
+/**
+ * Per-EXERCISE undulation delta: the pump day's +2 does not apply to a
+ * hip-dominant MAIN. A heavy hinge is the one movement class the corpus
+ * consistently warns against prescribing high-rep as a session baseline —
+ * form decays under fatigue with the spine loaded, so a 4×10 deadlift was
+ * the audit's flagged output (6d Legs — Deadlift Focus lands the pump
+ * role). The heavy day's −2 still applies (a 4-6 rep hinge is exactly what
+ * heavy days are for), hinge ACCESSORIES still undulate (an RDL or
+ * back-extension at 12 is normal), and the double-progression range climb
+ * is untouched — that climb is earned over weeks and resets on a load
+ * step, which is different from opening the session at +2.
+ */
+export function undulationDeltaFor(
+  ex: { movementCategory?: string; isAccessory?: boolean },
+  role: DayRole
+): number {
+  const delta = repDeltaForRole(role);
+  if (
+    delta > 0 &&
+    ex.movementCategory === "hip_dominant" &&
+    ex.isAccessory !== true
+  ) {
+    return 0;
+  }
+  return delta;
+}
+
 /** Lowest rep target a shifted day may fall to, by session role. */
 export function repFloorFor(ex: { isAccessory?: boolean }): number {
   return ex.isAccessory === true ? 6 : 3;
@@ -1323,10 +1425,10 @@ function applyDayRoles(
   return workouts.map((day, i) => {
     const role = roles[i];
     if (role === "moderate") return day;
-    const delta = repDeltaForRole(role);
     return {
       ...day,
       exercises: day.exercises.map((ex) => {
+        const delta = undulationDeltaFor(ex, role);
         const reps = Math.min(
           prescribedRepCeiling(ex),
           Math.max(repFloorFor(ex), ex.reps + delta)
@@ -1887,7 +1989,32 @@ export function applyProgression(
   if (exercise.progressionType === "double") {
     if (completed) {
       const rangeMax = exercise.repRangeMax;
-      if (!isBodyweight && rangeMax != null && rangeMax > resetReps) {
+      if (isBodyweight && rangeMax != null && rangeMax > resetReps) {
+        // Range-aware BODYWEIGHT progression. This branch did not exist:
+        // the range-aware arm below was gated `!isBodyweight`, so a
+        // bodyweight main fell through to the legacy +2-overshoot arm —
+        // the exact "target itself never moved" defect P1's comment says
+        // it fixed, left in place for the one movement class with no load
+        // dial. Measured before the fix by a 13-week compliant-user
+        // emulation: pull-ups sat frozen at 4×6 the entire time while
+        // every loaded lift climbed.
+        //
+        // Same climb contract as the weighted arm (next target = one past
+        // what was done, capped at the range; RPE >= threshold holds), but
+        // the top of the range prompts ADDING LOAD instead of silently
+        // adding weight the movement doesn't have. Timed holds keep their
+        // 5-second step via bumpBodyweightReps — a +1 target move means
+        // one second, which is noise, not progression.
+        if (rpeOk) {
+          if (isTimed) {
+            bumpBodyweightReps();
+          } else if (actualReps >= rangeMax) {
+            updated.notes = `Hitting ${rangeMax}+ reps — add load (weighted vest / band) to keep progressing.`;
+          } else {
+            updated.reps = Math.min(rangeMax, actualReps + 1);
+          }
+        }
+      } else if (!isBodyweight && rangeMax != null && rangeMax > resetReps) {
         // Range-aware double progression (P1, training-book backlog): the
         // rep TARGET climbs through [baseReps, repRangeMax] as targets are
         // completed; load rises only once the top of the range is reached,
@@ -1938,8 +2065,23 @@ export function applyProgression(
   } else {
     if (completed) {
       if (isBodyweight) {
-        // Bodyweight linear: increase rep target when exceeding by 2 (capped)
-        if (actualReps >= exercise.reps + 2 && rpeOk) {
+        const rangeMax = exercise.repRangeMax;
+        if (rangeMax != null && rangeMax > resetReps) {
+          // Range-aware bodyweight climb on the LINEAR path too — a
+          // running-goal pull-up main (4-6, linear) was frozen for a
+          // compliant user exactly like the double-path case above.
+          // Same contract; timed holds keep the 5-second step.
+          if (rpeOk) {
+            if (isTimed) {
+              bumpBodyweightReps();
+            } else if (actualReps >= rangeMax) {
+              updated.notes = `Hitting ${rangeMax}+ reps — add load (weighted vest / band) to keep progressing.`;
+            } else {
+              updated.reps = Math.min(rangeMax, actualReps + 1);
+            }
+          }
+        } else if (actualReps >= exercise.reps + 2 && rpeOk) {
+          // Legacy: no authored range — climb on a 2-rep overshoot (capped)
           bumpBodyweightReps();
         }
       } else if (microloading && rpeOk) {

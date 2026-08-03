@@ -243,6 +243,7 @@ const STORED_CATEGORY = {
   "side-plank": "core",
   "single-arm-cable-pushdown": "arms_triceps",
   "single-arm-lat-pulldown": "vertical_pull",
+  "single-leg-calf-raise": "knee_dominant",
   "sissy-squat": "knee_dominant",
   "ski-erg": "core",
   "skull-crushers": "arms_triceps",

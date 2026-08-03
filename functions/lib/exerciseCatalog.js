@@ -133,6 +133,7 @@ const EXERCISE_NAME_BY_ID = Object.freeze({
   "rowing-machine": "Rowing Machine",
   "russian-twist": "Russian Twist",
   "seated-calf-raise": "Seated Calf Raise",
+  "single-leg-calf-raise": "Single-Leg Calf Raise",
   "seated-leg-curl": "Seated Leg Curl",
   "seated-row": "Seated Cable Row",
   "shoulder-press-machine": "Shoulder Press Machine",

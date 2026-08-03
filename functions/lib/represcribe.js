@@ -145,6 +145,25 @@ function repDeltaForRole(role) {
   return role === "heavy" ? -2 : role === "pump" ? 2 : 0;
 }
 
+/**
+ * Mirror of programEngine.ts undulationDeltaFor: the pump day's +2 does not
+ * apply to a hip-dominant MAIN — a high-rep heavy hinge as a session
+ * baseline is the movement class the corpus warns against. Heavy −2 still
+ * applies; hinge accessories still undulate.
+ */
+function undulationDeltaFor(ex, role) {
+  const delta = repDeltaForRole(role);
+  if (
+    delta > 0 &&
+    ex &&
+    ex.movementCategory === "hip_dominant" &&
+    ex.isAccessory !== true
+  ) {
+    return 0;
+  }
+  return delta;
+}
+
 /** Mirror of programEngine.ts repFloorFor. */
 function repFloorFor(ex) {
   return ex && ex.isAccessory === true ? 6 : 3;
@@ -218,7 +237,9 @@ function represcribeWorkouts(workouts, goal, experience) {
       const isAccessory = ex.isAccessory === true;
       const tierReps = isAccessory ? profile.accessoryReps : profile.mainReps;
       const span = isAccessory ? accessorySpan : mainSpan;
-      const delta = undulates ? repDeltaForRole(roles[dayIndex]) : 0;
+      // Per-exercise, not per-day: the pump +2 exempts hip-dominant mains
+      // (high-rep heavy hinge — see undulationDeltaFor).
+      const delta = undulates ? undulationDeltaFor(ex, roles[dayIndex]) : 0;
 
       const reps = Math.min(
         prescribedRepCeiling(ex),
@@ -265,5 +286,6 @@ module.exports = {
   represcribeWorkouts,
   scaleLoadForReps,
   toExperience,
+  undulationDeltaFor,
   usesUndulation,
 };
