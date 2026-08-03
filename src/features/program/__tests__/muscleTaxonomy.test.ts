@@ -222,3 +222,31 @@ describe("muscle taxonomy — the unresolvable residue (11b's work-list)", () =>
     ).toBeLessThanOrEqual(0.642);
   });
 });
+
+describe("attribution consistency — the loaded hinge hold credits Traps", () => {
+  // The rule is the HOLD, not the lift name: any hip hinge where the hands
+  // carry the load places the same isometric demand on the traps, so the
+  // conventional deadlift crediting Traps while the RDL/sumo did not was an
+  // inconsistency, not a judgement call. It was also load-bearing: at
+  // home/minimal the deadlift swaps to the DB RDL, and the missing credit
+  // read UpperBack as UNDER-MAINTENANCE on every minimal-tier plan
+  // (2026-08-03 tier coach-read) — six judged sets vanishing in the swap
+  // rather than in the training. Leg curls and back extensions are hinges
+  // with NO hand-held load, and correctly stay out.
+  it("every hand-loaded hinge lists Traps; unloaded hinges do not", () => {
+    const sec = (id: string) =>
+      EXERCISES.find((e) => e.id === id)?.secondaryMuscles ?? [];
+    for (const id of [
+      "deadlift",
+      "trap-bar-deadlift",
+      "romanian-deadlift",
+      "db-rdl",
+      "sumo-deadlift",
+    ]) {
+      expect(sec(id), `${id} is a loaded hold`).toContain("Traps");
+    }
+    for (const id of ["seated-leg-curl", "back-extension", "glute-bridge"]) {
+      expect(sec(id), `${id} carries no hand load`).not.toContain("Traps");
+    }
+  });
+});

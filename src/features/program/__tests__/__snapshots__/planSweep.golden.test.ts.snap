@@ -149,6 +149,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Quads": "3 (LOW)",
       "RearDelts": "5 (ok)",
       "Triceps": "3 (LOW)",
+      "UpperBack": "3 (LOW)",
     },
   },
   {
@@ -173,6 +174,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Quads": "3 (LOW)",
       "RearDelts": "5 (LOW)",
       "Triceps": "3 (LOW)",
+      "UpperBack": "3 (LOW)",
     },
   },
   {
@@ -197,6 +199,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Quads": "3 (LOW)",
       "RearDelts": "4 (ok)",
       "Triceps": "3 (LOW)",
+      "UpperBack": "3 (LOW)",
     },
   },
   {
@@ -221,6 +224,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Quads": "3 (LOW)",
       "RearDelts": "5 (ok)",
       "Triceps": "3 (LOW)",
+      "UpperBack": "3 (LOW)",
     },
   },
   {
@@ -245,6 +249,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Quads": "3 (LOW)",
       "RearDelts": "4 (ok)",
       "Triceps": "3 (LOW)",
+      "UpperBack": "3 (LOW)",
     },
   },
   {
@@ -269,6 +274,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Quads": "3 (LOW)",
       "RearDelts": "5 (ok)",
       "Triceps": "3 (LOW)",
+      "UpperBack": "3 (LOW)",
     },
   },
   {
@@ -293,6 +299,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Quads": "3 (LOW)",
       "RearDelts": "5 (LOW)",
       "Triceps": "3 (LOW)",
+      "UpperBack": "3 (LOW)",
     },
   },
   {
@@ -317,6 +324,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Quads": "3 (LOW)",
       "RearDelts": "4 (ok)",
       "Triceps": "3 (LOW)",
+      "UpperBack": "3 (LOW)",
     },
   },
   {
@@ -341,6 +349,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Quads": "3 (LOW)",
       "RearDelts": "5 (ok)",
       "Triceps": "3 (LOW)",
+      "UpperBack": "3 (LOW)",
     },
   },
   {
@@ -365,6 +374,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Quads": "3 (LOW)",
       "RearDelts": "4 (ok)",
       "Triceps": "3 (LOW)",
+      "UpperBack": "3 (LOW)",
     },
   },
   {
@@ -526,7 +536,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Quads": "7 (LOW)",
       "RearDelts": "6 (ok)",
       "Triceps": "6 (LOW)",
-      "UpperBack": "3 (LOW)",
+      "UpperBack": "9 (ok)",
     },
   },
   {
@@ -553,7 +563,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Quads": "6 (LOW)",
       "RearDelts": "8 (ok)",
       "Triceps": "6 (LOW)",
-      "UpperBack": "4 (LOW)",
+      "UpperBack": "10 (ok)",
     },
   },
   {
@@ -580,7 +590,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Quads": "6 (ok)",
       "RearDelts": "6 (ok)",
       "Triceps": "6 (ok)",
-      "UpperBack": "3 (LOW)",
+      "UpperBack": "9 (ok)",
     },
   },
   {
@@ -607,7 +617,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Quads": "7 (LOW)",
       "RearDelts": "6 (ok)",
       "Triceps": "6 (LOW)",
-      "UpperBack": "3 (LOW)",
+      "UpperBack": "9 (ok)",
     },
   },
   {
@@ -634,7 +644,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Quads": "6 (ok)",
       "RearDelts": "6 (ok)",
       "Triceps": "6 (ok)",
-      "UpperBack": "3 (LOW)",
+      "UpperBack": "9 (ok)",
     },
   },
   {
@@ -661,7 +671,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Quads": "7 (LOW)",
       "RearDelts": "6 (ok)",
       "Triceps": "6 (LOW)",
-      "UpperBack": "3 (LOW)",
+      "UpperBack": "9 (ok)",
     },
   },
   {
@@ -688,7 +698,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Quads": "6 (LOW)",
       "RearDelts": "8 (ok)",
       "Triceps": "6 (LOW)",
-      "UpperBack": "4 (LOW)",
+      "UpperBack": "10 (ok)",
     },
   },
   {
@@ -715,7 +725,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Quads": "6 (ok)",
       "RearDelts": "6 (ok)",
       "Triceps": "6 (ok)",
-      "UpperBack": "3 (LOW)",
+      "UpperBack": "9 (ok)",
     },
   },
   {
@@ -742,7 +752,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Quads": "7 (LOW)",
       "RearDelts": "6 (ok)",
       "Triceps": "6 (LOW)",
-      "UpperBack": "3 (LOW)",
+      "UpperBack": "9 (ok)",
     },
   },
   {
@@ -769,7 +779,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Quads": "6 (ok)",
       "RearDelts": "6 (ok)",
       "Triceps": "6 (ok)",
-      "UpperBack": "3 (LOW)",
+      "UpperBack": "9 (ok)",
     },
   },
   {
@@ -943,7 +953,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Quads": "9 (ok)",
       "RearDelts": "9 (ok)",
       "Triceps": "9 (ok)",
-      "UpperBack": "3 (LOW)",
+      "UpperBack": "11 (ok)",
     },
   },
   {
@@ -972,7 +982,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Quads": "11 (LOW)",
       "RearDelts": "9 (ok)",
       "Triceps": "11 (LOW)",
-      "UpperBack": "3 (LOW)",
+      "UpperBack": "12 (ok)",
     },
   },
   {
@@ -1001,7 +1011,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Quads": "9 (ok)",
       "RearDelts": "9 (ok)",
       "Triceps": "9 (ok)",
-      "UpperBack": "3 (LOW)",
+      "UpperBack": "11 (ok)",
     },
   },
   {
@@ -1030,7 +1040,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Quads": "9 (ok)",
       "RearDelts": "9 (ok)",
       "Triceps": "9 (ok)",
-      "UpperBack": "3 (LOW)",
+      "UpperBack": "12 (ok)",
     },
   },
   {
@@ -1059,7 +1069,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Quads": "9 (ok)",
       "RearDelts": "9 (ok)",
       "Triceps": "9 (ok)",
-      "UpperBack": "3 (LOW)",
+      "UpperBack": "11 (ok)",
     },
   },
   {
@@ -1088,7 +1098,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Quads": "9 (ok)",
       "RearDelts": "9 (ok)",
       "Triceps": "9 (ok)",
-      "UpperBack": "3 (LOW)",
+      "UpperBack": "11 (ok)",
     },
   },
   {
@@ -1117,7 +1127,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Quads": "11 (LOW)",
       "RearDelts": "9 (ok)",
       "Triceps": "11 (LOW)",
-      "UpperBack": "3 (LOW)",
+      "UpperBack": "12 (ok)",
     },
   },
   {
@@ -1146,7 +1156,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Quads": "9 (ok)",
       "RearDelts": "9 (ok)",
       "Triceps": "9 (ok)",
-      "UpperBack": "3 (LOW)",
+      "UpperBack": "11 (ok)",
     },
   },
   {
@@ -1175,7 +1185,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Quads": "9 (ok)",
       "RearDelts": "9 (ok)",
       "Triceps": "9 (ok)",
-      "UpperBack": "3 (LOW)",
+      "UpperBack": "12 (ok)",
     },
   },
   {
@@ -1204,7 +1214,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Quads": "9 (ok)",
       "RearDelts": "9 (ok)",
       "Triceps": "9 (ok)",
-      "UpperBack": "3 (LOW)",
+      "UpperBack": "11 (ok)",
     },
   },
   {
@@ -1396,7 +1406,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "RearDelts": "8 (ok)",
       "SideDelts": "7 (ok)",
       "Triceps": "18 (HIGH)",
-      "UpperBack": "7 (ok)",
+      "UpperBack": "14 (HIGH)",
     },
   },
   {
@@ -1428,7 +1438,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "RearDelts": "8 (ok)",
       "SideDelts": "8 (ok)",
       "Triceps": "19 (ok)",
-      "UpperBack": "7 (LOW)",
+      "UpperBack": "15 (ok)",
     },
   },
   {
@@ -1460,7 +1470,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "RearDelts": "8 (ok)",
       "SideDelts": "7 (ok)",
       "Triceps": "18 (HIGH)",
-      "UpperBack": "7 (ok)",
+      "UpperBack": "14 (HIGH)",
     },
   },
   {
@@ -1492,7 +1502,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "RearDelts": "8 (ok)",
       "SideDelts": "7 (ok)",
       "Triceps": "18 (HIGH)",
-      "UpperBack": "7 (ok)",
+      "UpperBack": "15 (HIGH)",
     },
   },
   {
@@ -1524,7 +1534,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "RearDelts": "6 (ok)",
       "SideDelts": "8 (ok)",
       "Triceps": "16 (HIGH)",
-      "UpperBack": "7 (ok)",
+      "UpperBack": "13 (ok)",
     },
   },
   {
@@ -1556,7 +1566,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "RearDelts": "8 (ok)",
       "SideDelts": "7 (ok)",
       "Triceps": "18 (HIGH)",
-      "UpperBack": "7 (ok)",
+      "UpperBack": "14 (HIGH)",
     },
   },
   {
@@ -1588,7 +1598,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "RearDelts": "8 (ok)",
       "SideDelts": "8 (ok)",
       "Triceps": "19 (ok)",
-      "UpperBack": "7 (LOW)",
+      "UpperBack": "15 (ok)",
     },
   },
   {
@@ -1620,7 +1630,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "RearDelts": "8 (ok)",
       "SideDelts": "7 (ok)",
       "Triceps": "18 (HIGH)",
-      "UpperBack": "7 (ok)",
+      "UpperBack": "14 (HIGH)",
     },
   },
   {
@@ -1652,7 +1662,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "RearDelts": "8 (ok)",
       "SideDelts": "7 (ok)",
       "Triceps": "18 (HIGH)",
-      "UpperBack": "7 (ok)",
+      "UpperBack": "15 (HIGH)",
     },
   },
   {
@@ -1684,7 +1694,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "RearDelts": "6 (ok)",
       "SideDelts": "8 (ok)",
       "Triceps": "16 (HIGH)",
-      "UpperBack": "7 (ok)",
+      "UpperBack": "13 (ok)",
     },
   },
   {
@@ -1888,7 +1898,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "RearDelts": "11 (ok)",
       "SideDelts": "6 (ok)",
       "Triceps": "20 (HIGH)",
-      "UpperBack": "9 (ok)",
+      "UpperBack": "16 (HIGH)",
     },
   },
   {
@@ -1922,7 +1932,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "RearDelts": "11 (ok)",
       "SideDelts": "7 (LOW)",
       "Triceps": "23 (HIGH)",
-      "UpperBack": "10 (ok)",
+      "UpperBack": "18 (ok)",
     },
   },
   {
@@ -1956,7 +1966,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "RearDelts": "11 (ok)",
       "SideDelts": "6 (ok)",
       "Triceps": "20 (HIGH)",
-      "UpperBack": "9 (ok)",
+      "UpperBack": "16 (HIGH)",
     },
   },
   {
@@ -1990,7 +2000,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "RearDelts": "11 (ok)",
       "SideDelts": "6 (ok)",
       "Triceps": "20 (HIGH)",
-      "UpperBack": "9 (ok)",
+      "UpperBack": "17 (HIGH)",
     },
   },
   {
@@ -2024,7 +2034,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "RearDelts": "9 (ok)",
       "SideDelts": "6 (ok)",
       "Triceps": "20 (HIGH)",
-      "UpperBack": "8 (ok)",
+      "UpperBack": "14 (HIGH)",
     },
   },
   {
@@ -2058,7 +2068,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "RearDelts": "11 (ok)",
       "SideDelts": "6 (ok)",
       "Triceps": "20 (HIGH)",
-      "UpperBack": "9 (ok)",
+      "UpperBack": "16 (HIGH)",
     },
   },
   {
@@ -2092,7 +2102,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "RearDelts": "11 (ok)",
       "SideDelts": "7 (LOW)",
       "Triceps": "23 (HIGH)",
-      "UpperBack": "10 (ok)",
+      "UpperBack": "18 (ok)",
     },
   },
   {
@@ -2126,7 +2136,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "RearDelts": "11 (ok)",
       "SideDelts": "6 (ok)",
       "Triceps": "20 (HIGH)",
-      "UpperBack": "9 (ok)",
+      "UpperBack": "16 (HIGH)",
     },
   },
   {
@@ -2160,7 +2170,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "RearDelts": "11 (ok)",
       "SideDelts": "6 (ok)",
       "Triceps": "20 (HIGH)",
-      "UpperBack": "9 (ok)",
+      "UpperBack": "17 (HIGH)",
     },
   },
   {
@@ -2194,7 +2204,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "RearDelts": "9 (ok)",
       "SideDelts": "6 (ok)",
       "Triceps": "20 (HIGH)",
-      "UpperBack": "8 (ok)",
+      "UpperBack": "14 (HIGH)",
     },
   },
   {
@@ -2410,7 +2420,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "RearDelts": "13 (ok)",
       "SideDelts": "9 (ok)",
       "Triceps": "21 (HIGH)",
-      "UpperBack": "13 (ok)",
+      "UpperBack": "20 (HIGH)",
     },
   },
   {
@@ -2446,7 +2456,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "RearDelts": "16 (ok)",
       "SideDelts": "9 (ok)",
       "Triceps": "24 (HIGH)",
-      "UpperBack": "14 (ok)",
+      "UpperBack": "22 (HIGH)",
     },
   },
   {
@@ -2482,7 +2492,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "RearDelts": "13 (ok)",
       "SideDelts": "9 (ok)",
       "Triceps": "21 (HIGH)",
-      "UpperBack": "13 (ok)",
+      "UpperBack": "20 (HIGH)",
     },
   },
   {
@@ -2518,7 +2528,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "RearDelts": "14 (ok)",
       "SideDelts": "9 (ok)",
       "Triceps": "22 (HIGH)",
-      "UpperBack": "14 (ok)",
+      "UpperBack": "22 (HIGH)",
     },
   },
   {
@@ -2554,7 +2564,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "RearDelts": "13 (ok)",
       "SideDelts": "9 (ok)",
       "Triceps": "21 (HIGH)",
-      "UpperBack": "13 (ok)",
+      "UpperBack": "19 (HIGH)",
     },
   },
   {
@@ -2590,7 +2600,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "RearDelts": "13 (ok)",
       "SideDelts": "9 (ok)",
       "Triceps": "21 (HIGH)",
-      "UpperBack": "13 (ok)",
+      "UpperBack": "20 (HIGH)",
     },
   },
   {
@@ -2626,7 +2636,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "RearDelts": "16 (ok)",
       "SideDelts": "9 (ok)",
       "Triceps": "24 (HIGH)",
-      "UpperBack": "14 (ok)",
+      "UpperBack": "22 (HIGH)",
     },
   },
   {
@@ -2662,7 +2672,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "RearDelts": "13 (ok)",
       "SideDelts": "9 (ok)",
       "Triceps": "21 (HIGH)",
-      "UpperBack": "13 (ok)",
+      "UpperBack": "20 (HIGH)",
     },
   },
   {
@@ -2698,7 +2708,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "RearDelts": "14 (ok)",
       "SideDelts": "9 (ok)",
       "Triceps": "22 (HIGH)",
-      "UpperBack": "14 (ok)",
+      "UpperBack": "22 (HIGH)",
     },
   },
   {
@@ -2734,7 +2744,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "RearDelts": "13 (ok)",
       "SideDelts": "9 (ok)",
       "Triceps": "21 (HIGH)",
-      "UpperBack": "13 (ok)",
+      "UpperBack": "19 (HIGH)",
     },
   },
 ]

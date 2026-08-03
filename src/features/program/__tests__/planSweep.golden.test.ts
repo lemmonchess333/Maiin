@@ -225,6 +225,15 @@ describe("KNOWN_DEFECTS — asserted so the snapshot is not read as approval", (
                                                All 13 fewer unders are real
                                                volume/pricing corrections,
                                                not counting changes.
+       (judged, 1:1)     50 over / 47 under  — 2026-08-03 tier coach-read:
+                                               the RDL family gains the same
+                                               isometric Traps credit the
+                                               conventional deadlift always
+                                               had (the loaded-hold rule,
+                                               muscleTaxonomy.test.ts), so
+                                               home/minimal UpperBack stops
+                                               reading UNDER for volume the
+                                               swap never removed.
      Tighten whenever they improve; the test fails the moment a change makes
      either worse in the CURRENT unit. */
   it("D-VOL: landmark violations are ratcheted and must only shrink", () => {
@@ -239,7 +248,7 @@ describe("KNOWN_DEFECTS — asserted so the snapshot is not read as approval", (
       50
     );
     expect(low, `${low} configs under a landmark floor`).toBeLessThanOrEqual(
-      55
+      47
     );
 
     // …and it is genuinely not solved, so the ratchet is never read as a pass.
