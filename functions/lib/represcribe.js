@@ -88,11 +88,17 @@ const GOAL_PROFILES = Object.freeze({
     volumeMultiplier: 1.0,
     mainProgression: "double",
   },
+  // Heavy + brief. See the client row's comment for the evidence
+  // (Llanos-Lagos et al. 2024: submaximal load, 40-79% 1RM, did not improve
+  // running economy; >=80% did). This is the copy that actually WRITES a
+  // training block's prescription — startTrainingBlock / releaseTrainingBlock
+  // both go through it — so it must move in the same commit as the client or
+  // a runner is shown one target and written another.
   running: {
-    mainReps: 8,
-    mainRepsMax: 12,
-    accessoryReps: 12,
-    accessoryRepsMax: 15,
+    mainReps: 4,
+    mainRepsMax: 6,
+    accessoryReps: 10,
+    accessoryRepsMax: 12,
     volumeMultiplier: 0.85,
     mainProgression: "linear",
   },
