@@ -1274,6 +1274,25 @@ const homeDumbbellUL: ProgramTemplate = {
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 12. FAT LOSS CIRCUIT — 4 days, fat loss, full gym
+//
+// The five BARBELL COMPOUNDS here (squat, bench, row, overhead press,
+// deadlift) sit at 8-12, matching `GOAL_PROFILES.fat_loss`. They read 12-15
+// (deadlift 10-12) until 2026-08-03, which was a THIRD copy of the fat-loss
+// rep prescription — after `programEngine.GOAL_PROFILES` and its mirror in
+// `functions/lib/represcribe.js` — and the one a 4-day full-gym user actually
+// receives, because `templateConversion.parseTemplateReps` stamps the
+// template's own strings and `buildPlan`'s preserve branch never rebuilds
+// them. Changing the profile table alone left that user on the old numbers
+// permanently, with nothing comparing the two.
+//
+// The reasoning is the profile row's: a deficit is when strength is at risk,
+// and strength is load-specific (Schoenfeld et al. 2017). Hypertrophy is not
+// the issue — it is similar across load ranges near failure — so this is
+// about what a cut threatens, not about high reps being useless.
+//
+// The ISOLATIONS deliberately keep 15-20. The template's character is its
+// density — four full-body days, short rests, high work rate — not high reps
+// on the barbell lifts, and that character is what the name refers to.
 // ═══════════════════════════════════════════════════════════════════════════
 const fatLossCircuit: ProgramTemplate = {
   id: "fat-loss-circuit",
@@ -1294,17 +1313,17 @@ const fatLossCircuit: ProgramTemplate = {
           name: "Full Body Circuit A",
           type: "lift",
           exercises: [
-            ex("Barbell Squat", "squat", 3, "12-15", 45, {
+            ex("Barbell Squat", "squat", 3, "8-12", 45, {
               alt: ["Bulgarian Split Squat", "Hip Thrust"],
               contra: ["knee"],
             }),
-            ex("Bench Press", "bench-press", 3, "12-15", 45, {
+            ex("Bench Press", "bench-press", 3, "8-12", 45, {
               contra: ["wrist"],
             }),
-            ex("Barbell Row", "barbell-row", 3, "12-15", 45, {
+            ex("Barbell Row", "barbell-row", 3, "8-12", 45, {
               contra: ["lower_back"],
             }),
-            ex("Overhead Press", "overhead-press", 3, "12-15", 45, {
+            ex("Overhead Press", "overhead-press", 3, "8-12", 45, {
               alt: ["Lateral Raise"],
               contra: ["shoulder", "wrist"],
             }),
@@ -1316,7 +1335,7 @@ const fatLossCircuit: ProgramTemplate = {
           name: "Full Body Circuit B",
           type: "lift",
           exercises: [
-            ex("Deadlift", "deadlift", 3, "10-12", 60, {
+            ex("Deadlift", "deadlift", 3, "8-12", 60, {
               contra: ["lower_back"],
             }),
             ex("Dumbbell Bench Press", "db-bench", 3, "12-15", 45),
