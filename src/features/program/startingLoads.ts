@@ -149,13 +149,79 @@ const BODYWEIGHT_IDS: ReadonlySet<string> = new Set(
  */
 const UNKNOWN_ACCESSORY_FACTOR = 0.3;
 
+/**
+ * The rep target `BW_MULTIPLE` is calibrated against — see the module header,
+ * "conservative working weights for the goal rep range (~8 reps)".
+ */
+const SEED_REP_ANCHOR = 8;
+
+/**
+ * How far the rep-aware seed is allowed to move the table's figure.
+ *
+ * The anchor assumption is approximate, so compounding it with an unbounded
+ * Epley term would let an odd rep value produce a seed the table never
+ * intended. ±25% covers the whole prescribed range in practice (4 reps is
+ * +11.8%, 15 reps is −15.6%) and makes a garbage input harmless.
+ */
+const SEED_REP_SCALE_MIN = 0.75;
+const SEED_REP_SCALE_MAX = 1.25;
+
+/**
+ * Scale a seeded working weight from the ~8-rep anchor to the rep target the
+ * slot is actually prescribed at.
+ *
+ * ── Why this exists ──────────────────────────────────────────────────────
+ *
+ * The seed was entirely rep-blind: `startingWeightForExercise` took no rep
+ * argument, so a 5-rep `strength` main, an 8-rep `hypertrophy` main and a
+ * 12-rep `fat_loss` main were all seeded at the same weight. The rep number
+ * was a label with no effect on the load, which meant a goal's prescribed
+ * INTENSITY was not delivered by anything.
+ *
+ * That is not a cosmetic gap. It is the reason a rep-range change cannot, on
+ * its own, make training heavier: `represcribe.scaleLoadForReps` deliberately
+ * refuses to raise load when reps fall (`toReps <= fromReps` returns the
+ * weight unchanged — the right call there, because silently adding weight to
+ * an existing prescription is unsafe), and the generator carries an existing
+ * weight verbatim on regenerate. So without this, prescribing fewer reps
+ * hands the user a strictly EASIER session.
+ *
+ * Uses the same Epley form as `scaleLoadForReps`, so the two agree about what
+ * a rep change is worth. This is a COLD-START seed, not a rescale of earned
+ * load, which is why raising is legitimate here and not there: there is no
+ * prior performance to preserve, and the table is explicitly conservative.
+ *
+ * Timed work is excluded outright — a 45-second plank is not 45 reps, and
+ * running the ratio on it would read as a 5.6x rep target.
+ */
+export function repScaledSeed(
+  weight: number,
+  targetReps: number | undefined,
+  repUnit?: string
+): number {
+  if (repUnit === "seconds") return weight;
+  if (!Number.isFinite(targetReps) || (targetReps ?? 0) <= 0) return weight;
+  const ratio = (1 + SEED_REP_ANCHOR / 30) / (1 + (targetReps as number) / 30);
+  const clamped = Math.min(
+    SEED_REP_SCALE_MAX,
+    Math.max(SEED_REP_SCALE_MIN, ratio)
+  );
+  return weight * clamped;
+}
+
 export function startingWeightForExercise(
   exerciseId: string | undefined,
   category: MovementCategory,
   ctx: StartingLoadContext,
   /** Whether this slot is assistance work. Templates author it directly; the
    *  generator sets it from the builders. Absent = treat as a main. */
-  isAccessory?: boolean
+  isAccessory?: boolean,
+  /** The rep target this slot is prescribed at. Omitted → the ~8-rep anchor,
+   *  i.e. the historical rep-blind behaviour, so existing callers are
+   *  byte-identical. */
+  targetReps?: number,
+  /** `"seconds"` for timed holds, which are excluded from rep scaling. */
+  repUnit?: string
 ): number {
   if (exerciseId && BODYWEIGHT_IDS.has(exerciseId)) return 0;
 
@@ -178,7 +244,7 @@ export function startingWeightForExercise(
       ? UNKNOWN_ACCESSORY_FACTOR
       : loadFactorFor(exerciseId, seedCategory);
 
-  const raw = base * factor;
+  const raw = repScaledSeed(base * factor, targetReps, repUnit);
   if (raw <= 0) return 0;
   return Math.max(2.5, Math.round(raw / 2.5) * 2.5);
 }
@@ -192,7 +258,10 @@ export function startingWeightForExercise(
  * remain explicitly uncalibrated at 0 kg.
  */
 export function weightAfterExerciseSwap(
-  ex: Pick<ProgramExercise, "weight" | "exerciseId" | "movementCategory">,
+  ex: Pick<
+    ProgramExercise,
+    "weight" | "exerciseId" | "movementCategory" | "reps" | "repUnit"
+  >,
   toExerciseId: string,
   ctx?: StartingLoadContext
 ): { weight: number; movementCategory: MovementCategory } {
@@ -214,7 +283,18 @@ export function weightAfterExerciseSwap(
   const weight =
     scaled > 0 || !ctx
       ? scaled
-      : startingWeightForExercise(toExerciseId, targetCategory, ctx);
+      : startingWeightForExercise(
+          toExerciseId,
+          targetCategory,
+          ctx,
+          undefined,
+          // A cross-category swap re-seeds from scratch, and the slot keeps
+          // its rep target — so the fresh seed has to answer to it too.
+          // Leaving this path rep-blind would put the same number on two
+          // paths with different meanings, which is how they drift.
+          ex.reps,
+          ex.repUnit
+        );
   return { weight, movementCategory: targetCategory };
 }
 
@@ -249,7 +329,11 @@ export function weightAfterExerciseSwap(
  */
 export function seedStartingLoads(
   workouts: WorkoutDay[],
-  ctx: StartingLoadContext
+  ctx: StartingLoadContext,
+  /** The goal profile's MAIN rep target, so the seed reflects the intensity
+   *  the programme prescribes. Omitted → the historical ~8-rep anchor, i.e.
+   *  byte-identical to the rep-blind behaviour. */
+  repAnchor?: number
 ): WorkoutDay[] {
   return workouts.map((day) => ({
     ...day,
@@ -260,7 +344,28 @@ export function seedStartingLoads(
         ex.exerciseId,
         ex.movementCategory,
         ctx,
-        ex.isAccessory === true
+        ex.isAccessory === true,
+        // One anchor for the whole PROGRAMME — not `ex.reps`, and not a
+        // per-slot main/accessory split.
+        //
+        // Two things force this. Seeding runs after `applyDayRoles`, so
+        // `ex.reps` is the undulated per-DAY target (heavy -2, pump +2) with
+        // `baseReps` overwritten to match; and some builders prescribe
+        // accessory reps on slots they do not flag `isAccessory`, so
+        // `bench-press` is a main on one hypertrophy/3d day and an accessory
+        // on another. Either input gives the same lift two different loads in
+        // one week, which `generatorAudit`'s "prescribes ONE load per lift
+        // across the week" catches — rightly, since a lifter has one working
+        // weight per lift and the rep target is what makes a day hard or easy.
+        //
+        // The mains carry the goal's intensity claim (and are what the
+        // running-economy evidence is about), so they set the anchor and
+        // accessories inherit it. That over-loads a high-rep accessory
+        // slightly on a low-rep goal — ~12% at a 4-rep anchor — which the
+        // table's deliberate conservatism absorbs, and which the progression
+        // engine corrects within a session or two either way.
+        repAnchor,
+        ex.repUnit
       );
       if (seed <= 0) return ex; // bodyweight pattern — leave as-is
       return {
