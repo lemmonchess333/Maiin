@@ -384,8 +384,63 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     expect(lastWrite.runDays).toBeDefined();
     expect(lastWrite.runDays!.length).toBeGreaterThan(0);
     lastWrite.runDays!.forEach(expectV2Shape);
-    // Compressed flag survives the refresh (V2 always re-derives;
-    // a 3-weeks-out 10K stays compressed).
+    // `compressed` describes the BLOCK, not the days left in it.
+    //
+    // This assertion used to read `.toBe(true)` with the comment "a 3-weeks-out
+    // 10K stays compressed" — which encoded the defect: compression was derived
+    // from weeks REMAINING, so every plan became "compressed" as its race
+    // approached. The fixture carries `totalWeeks: 6` and 10K's `minWeeks` is
+    // 6, so this runner declared a full-length block and is three weeks into
+    // it. That is not a compressed plan.
+    //
+    // The distinction is not cosmetic: the taper branch is gated on
+    // `!compressed`, so under the old reading a real 10K taper lost its quality
+    // session — the one thing Bosquet et al. (2007) say a taper must keep.
+    expect(lastWrite.runPlan!.compressed).toBe(false);
+  });
+
+  it("race-prep refresh keeps compressed TRUE for a genuinely short block", async () => {
+    // The paired negative for the assertion above: flipping that expectation
+    // without this one would pass for the wrong reason — `false` is also what
+    // you get if the flag stopped being written at all.
+    const threeWeeksOut = new Date();
+    threeWeeksOut.setDate(threeWeeksOut.getDate() + 21);
+    const targetDate = threeWeeksOut.toISOString().split("T")[0];
+    mockProfile = raceProfile(targetDate);
+    seedProgram({
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, microloading: true },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [],
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: mockProfile.raceGoal,
+        // Declared 3 weeks out and never longer — 10K minWeeks is 6, so the
+        // BLOCK itself is short. This one really is compressed.
+        totalWeeks: 3,
+        currentWeek: 0,
+      },
+    } as ProgramState);
+
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    markWrites();
+
+    await act(async () => {
+      await result.current.refreshRunSchedule();
+    });
+
+    const lastWrite = setDocCalls()[setDocCalls().length - 1]
+      .data as ProgramState;
     expect(lastWrite.runPlan!.compressed).toBe(true);
   });
 

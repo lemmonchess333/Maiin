@@ -240,6 +240,15 @@ function regenerateRacePlan({
     currentDate,
     weekStart,
     tuning,
+    // The block's original length, so the generator emits the week for where
+    // the runner actually IS rather than week 0 of a fresh block. Without it
+    // `weeks[0]` — the only week any caller persists — is always a base week,
+    // and
+    // the ramp lives in `weeks[1..n]` where nothing reads it. See the
+    // `planTotalWeeks` doc comment in runScheduler.ts for the measurement.
+    // Absent on fresh-creation sites, which is the correct fallback: a new
+    // plan genuinely is at position 0.
+    planTotalWeeks: carry?.totalWeeks,
   });
   let runDays = v2.weeks[0] ?? [];
   let carriedManualCompletions: Record<string, ManualCompletion> | undefined;
