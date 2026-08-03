@@ -38,7 +38,7 @@ import {
   assignDayRoles,
   goalProfileFor,
   prescribedRepCeiling,
-  repDeltaForRole,
+  undulationDeltaFor,
   repFloorFor,
   repRangeMaxFor,
 } from "./programEngine";
@@ -127,7 +127,9 @@ export function represcribeWorkouts(
       const isAccessory = ex.isAccessory === true;
       const tierReps = isAccessory ? profile.accessoryReps : profile.mainReps;
       const span = isAccessory ? accessorySpan : mainSpan;
-      const delta = undulates ? repDeltaForRole(roles[dayIndex]) : 0;
+      // Per-exercise, not per-day: the pump +2 exempts hip-dominant mains
+      // (high-rep heavy hinge — see undulationDeltaFor).
+      const delta = undulates ? undulationDeltaFor(ex, roles[dayIndex]) : 0;
 
       const reps = Math.min(
         prescribedRepCeiling(ex),

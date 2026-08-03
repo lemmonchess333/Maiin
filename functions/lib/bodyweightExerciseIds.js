@@ -46,6 +46,7 @@ const BODYWEIGHT_EXERCISE_IDS = Object.freeze([
   "push-ups",
   "russian-twist",
   "side-plank",
+  "single-leg-calf-raise",
   "sissy-squat",
   "superman-hold",
   "toe-touches",

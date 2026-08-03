@@ -544,6 +544,44 @@ export function rescaleForSwap(
   return Math.max(2.5, Math.round((weight * (to / from)) / 2.5) * 2.5);
 }
 
+/**
+ * Generator slots pinned to a CATALOGUE exercise the bank's category pools
+ * do not contain — currently the two calf raises the leg-day builders author
+ * directly (`makeNamedAccessory`), because calves have no movement category
+ * of their own and putting them in the `knee_dominant` pool would offer a
+ * calf raise as a squat swap.
+ *
+ * Every pass that reasons "re-point this slot within its bank category" must
+ * skip these ids: the category pool is squat-pattern lifts, so any re-point
+ * silently converts the programme's only direct calf work into a fourth quad
+ * slot. Measured before the guard existed: `rotateUntrainedAccessories`
+ * rotated the calf slot into `squat` at the first mesocycle restart, and the
+ * equipment filter's swap did the same for home-gym users (cascading a
+ * complexity violation as it drained the category pool).
+ *
+ * Deliberately NOT a general "skip anything outside the bank" rule: template
+ * imports carry many non-bank ids whose equipment swaps are load-bearing
+ * (the 2026-07-28 462-slot audit), and their meso rotation is long-standing
+ * behaviour. Only ids listed here opt out.
+ */
+export const CATALOGUE_PINNED_ACCESSORY_IDS: ReadonlySet<string> = new Set([
+  "standing-calf-raise",
+  "seated-calf-raise",
+  "single-leg-calf-raise",
+]);
+
+/**
+ * Equipment fallback for pinned slots: when the user's equipment tier can't
+ * provide the machine, the slot re-points HERE — a calf raise stays a calf
+ * raise — instead of taking the generic within-category swap (which would
+ * hand the slot to a squat variation). Bodyweight, so it is available at
+ * every tier; `rescaleForSwap` correctly returns 0 (uncalibrated) for it.
+ */
+export const PINNED_EQUIPMENT_FALLBACK: Readonly<Record<string, string>> = {
+  "standing-calf-raise": "single-leg-calf-raise",
+  "seated-calf-raise": "single-leg-calf-raise",
+};
+
 /** The bank category that owns an exercise id, if it is a bank movement. */
 export function movementCategoryForExerciseId(
   exerciseId: string | undefined
