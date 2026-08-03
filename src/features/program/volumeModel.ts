@@ -7,20 +7,21 @@
  * the weekly hard-set tally per canonical muscle group from a generated week,
  * and classifies each against a goal-driven landmark band. Pure + mirror-ready.
  *
- * Counting convention (fractional/indirect volume, the MASS/RP standard):
+ * Counting convention: the literature's 1:1 (ADR-0010, flip landed with the
+ * taxonomy split) —
  *   - a set counts 1.0 toward the exercise's PRIMARY muscle group
- *   - and `SECONDARY_SET_WEIGHT` toward each SECONDARY group it trains
+ *   - and `SECONDARY_SET_WEIGHT` (1.0) toward each SECONDARY group it trains
+ *   - once per muscle per exercise (strongest relationship; no intra-exercise
+ *     double-count), and secondary "Core" credit only from core work
  * Exercises with no muscle attribution (Cardio / "Full Body" conditioning, or
  * too-coarse labels) are excluded — this is a *resistance* volume view.
  *
- * That convention DISAGREES with the bands it is judged against: the goal bands
- * came from meta-analyses that counted 1:1. `docs/adr/0010-volume-currency.md`
- * settles the currency in favour of 1:1 and records why the flip is staged to
- * land with landmark-aware builders rather than before them — measured, not
- * assumed: flipping alone doubles the per-muscle readings over a ceiling.
- *
- * The muscle taxonomy itself lives in `muscleTaxonomy.ts` (13a): attribution
- * runs on a 27-member fine layer and these ten groups are a roll-up of it.
+ * Three layers since the taxonomy split:
+ *   - FINE (muscleTaxonomy.ts, 27 members) — attribution substrate;
+ *   - CANONICAL ten — the DISPLAY roll-up the app has always published;
+ *   - JUDGEMENT (14 groups) — what classification, the balancers and the
+ *     reconciler run on, with per-group bands (`judgementLandmark`). The
+ *     canonical Shoulders/Back/Core buckets are judged on their parts.
  *
  * It both SURFACES the tally (WeeklyVolumeCard) and DRIVES selection:
  * `balanceWeeklyVolume` nudges under-dosed muscles toward the landmark low by
@@ -101,7 +102,8 @@ export function canonicalMusclesForDbExercise(dbEx: Exercise): {
 
 export interface MuscleVolume {
   muscle: CanonicalMuscle;
-  /** Weekly hard sets (primary 1.0 + secondary 0.5), rounded to 0.5. */
+  /** Weekly hard sets (primary 1.0 + secondary `SECONDARY_SET_WEIGHT`,
+   *  counted once per muscle per exercise), rounded to 0.5. */
   sets: number;
 }
 
@@ -123,22 +125,18 @@ export interface FineMuscleVolume {
  * What one set of an exercise contributes to a muscle it trains INDIRECTLY —
  * a secondary rather than the target.
  *
- * ADR-0010 settles that the literature's 1:1 is the correct currency and
- * staged the flip on landmark-aware builders. That condition landed
- * (`reconcileToLandmarks`) — and the 2026-08-03 measurement showed it is
- * NOT sufficient: at 1:1 the canonical Shoulders bucket absorbs every press
- * AND every pull (8 primary + 27 secondary weekly sets at 6 days) and Core
- * absorbs every compound, so even a floor-bound reconciler leaves 292/750
- * readings over a ceiling vs 180 at 0.5 — the flip alone still ships worse
- * advice, exactly what the ADR forbade. Those two buckets need per-head
- * landmarks (front/side/rear delts; direct-ab counting), which is the
- * taxonomy split. THE FLIP IS RE-STAGED ON THAT — see the ADR's status
- * addendum for the numbers.
+ * 1.0 — the literature's convention, landed with the judgement layer as
+ * ADR-0010's second status addendum records. The reconciler alone was
+ * measured insufficient (the canonical Shoulders/Core buckets mispriced 1:1
+ * cross-exercise credit at 292/750 readings over-ceiling); judging volume
+ * per head with per-group bands closed exactly that, and the flip landed in
+ * the same change. The D-VOL ratchet is denominated in this judged 1:1
+ * unit.
  *
  * The primary is always 1.0; there is no constant for it because a convention
  * in which the target muscle earns anything else does not exist.
  */
-export const SECONDARY_SET_WEIGHT = 0.5;
+export const SECONDARY_SET_WEIGHT = 1.0;
 
 /**
  * The FINE-layer attribution pass. Since the intra-exercise dedupe this is
@@ -282,6 +280,166 @@ export function weeklyVolumeByMuscle(workouts: WorkoutDay[]): MuscleVolume[] {
   );
 }
 
+/* ================================
+   JUDGEMENT LAYER (taxonomy split)
+================================ */
+
+/**
+ * The groups weekly volume is JUDGED on — landmark classification, balancer
+ * targets and reconciler ceilings. The canonical ten stay the DISPLAY layer.
+ *
+ * Why a third layer (ADR-0010 status addendum): the canonical Shoulders
+ * bucket averages a lateral raise and a rear-delt flye into one number the
+ * module's own comments call incoherent, and at the literature's 1:1
+ * counting it absorbs every press AND every pull — 8 primary + 27 secondary
+ * weekly sets at 6 days against one ceiling of 20. No reconciliation can fix
+ * a mispriced bucket. Schoenfeld pp.186–187 is the direct source for the
+ * delt split (the press trains "the anterior head … the middle and
+ * posterior heads are substantially less active"); the v8 evaluation §3.9
+ * names the Back lumping (lats / upper back / erectors do not share a
+ * stimulus); and RP's counting convention for abs (direct work only — a
+ * squat does not book ab sets) is the Core rule.
+ *
+ * Seven groups pass through unchanged; Shoulders, Back and Core are judged
+ * on their parts:
+ */
+export type JudgementMuscle =
+  | "Chest"
+  | "FrontDelts"
+  | "SideDelts"
+  | "RearDelts"
+  | "Lats"
+  | "UpperBack"
+  | "LowerBack"
+  | "Biceps"
+  | "Triceps"
+  | "Quads"
+  | "Hamstrings"
+  | "Glutes"
+  | "Calves"
+  | "Abs";
+
+export const JUDGEMENT_MUSCLE_ORDER: JudgementMuscle[] = [
+  "Chest",
+  "FrontDelts",
+  "SideDelts",
+  "RearDelts",
+  "Triceps",
+  "Lats",
+  "UpperBack",
+  "LowerBack",
+  "Biceps",
+  "Quads",
+  "Hamstrings",
+  "Glutes",
+  "Calves",
+  "Abs",
+];
+
+/** Which canonical (display) group a judgement group reports under. */
+export const JUDGEMENT_TO_CANONICAL: Record<JudgementMuscle, CanonicalMuscle> =
+  {
+    Chest: "Chest",
+    FrontDelts: "Shoulders",
+    SideDelts: "Shoulders",
+    RearDelts: "Shoulders",
+    Lats: "Back",
+    UpperBack: "Back",
+    LowerBack: "Back",
+    Biceps: "Biceps",
+    Triceps: "Triceps",
+    Quads: "Quads",
+    Hamstrings: "Hamstrings",
+    Glutes: "Glutes",
+    Calves: "Calves",
+    Abs: "Core",
+  };
+
+/**
+ * Fine → judgement, with the exercise's MOVEMENT disambiguating the
+ * `*Unspecified` buckets the data cannot resolve:
+ *
+ *   - `DeltsUnspecified` on a PUSH movement is the anterior head doing the
+ *     pressing (Schoenfeld pp.186–187); on a PULL it is the posterior head.
+ *     The nine generic "Deltoids" primaries in the DB are all presses, so
+ *     this lands them exactly where the citation puts them. Anything
+ *     neither pushing nor pulling defaults to SideDelts — the only head
+ *     trained by the isolation movements that carry generic labels.
+ *   - `BackUnspecified` follows the movement the same way: vertical pulls
+ *     are lat work, horizontal pulls mid-back, hinges erectors.
+ *   - `RotatorCuff` judges with RearDelts: its two DB occurrences are
+ *     external-rotation prehab counted with the rear-delt pool it trains
+ *     alongside.
+ *   - `Traps` judge as UpperBack (the shrug/row pool), `Obliques` and
+ *     `CoreUnspecified` as Abs — one direct-core group.
+ */
+export function fineToJudgement(
+  fine: FineMuscle | null,
+  movementCategory?: string
+): JudgementMuscle | null {
+  if (!fine) return null;
+  switch (fine) {
+    case "UpperChest":
+    case "LowerChest":
+    case "ChestUnspecified":
+      return "Chest";
+    case "FrontDelts":
+      return "FrontDelts";
+    case "SideDelts":
+      return "SideDelts";
+    case "RearDelts":
+    case "RotatorCuff":
+      return "RearDelts";
+    case "DeltsUnspecified":
+      if (
+        movementCategory === "horizontal_push" ||
+        movementCategory === "vertical_push"
+      ) {
+        return "FrontDelts";
+      }
+      if (
+        movementCategory === "horizontal_pull" ||
+        movementCategory === "vertical_pull"
+      ) {
+        return "RearDelts";
+      }
+      return "SideDelts";
+    case "Lats":
+      return "Lats";
+    case "UpperBack":
+    case "Traps":
+      return "UpperBack";
+    case "LowerBack":
+      return "LowerBack";
+    case "BackUnspecified":
+      if (movementCategory === "vertical_pull") return "Lats";
+      if (movementCategory === "hip_dominant") return "LowerBack";
+      return "UpperBack";
+    case "Biceps":
+      return "Biceps";
+    case "Triceps":
+      return "Triceps";
+    case "Quads":
+      return "Quads";
+    case "Hamstrings":
+    case "PosteriorChainUnspecified":
+      return "Hamstrings";
+    case "Glutes":
+    case "Adductors":
+      return "Glutes";
+    case "Gastrocnemius":
+    case "Soleus":
+      return "Calves";
+    case "Abs":
+    case "Obliques":
+    case "CoreUnspecified":
+      return "Abs";
+    case "Forearms":
+    case "HipFlexors":
+      return null;
+  }
+}
+
 export interface VolumeLandmark {
   /**
    * Maintenance volume — the least that RETAINS the muscle. Below it the
@@ -382,6 +540,151 @@ export function classifyVolume(
   return dose === "below_maintenance" || dose === "junk" ? "low" : dose;
 }
 
+/**
+ * Per-exercise judgement credits — the strongest-relationship rule at the
+ * judgement layer, plus the one sourced counting exception:
+ *
+ * SECONDARY credit into Abs is dropped unless the exercise IS core work
+ * (primary judges as Abs). The DB lists "Core" as a secondary on 38
+ * compounds — squats, deadlifts, presses, pull-ups — and RP's counting
+ * convention is explicit that stabilisation is not ab-training volume: ab
+ * volume is DIRECT ab work. Counting it made canonical Core read 22–39
+ * weekly "sets" on plans containing two crunch slots, which is how the
+ * 2026-08-03 flip measurement found it. This is applying the sources'
+ * counting rule, not inventing an exchange rate (same class as the Cardio
+ * exclusion above it).
+ */
+function judgementCreditsFor(
+  ex: ProgramExercise
+): Map<JudgementMuscle, number> | null {
+  const credits = new Map<JudgementMuscle, number>();
+  const dbEx: Exercise | undefined = getExerciseById(ex.exerciseId);
+  if (!dbEx) {
+    const fine = CATEGORY_TO_FINE[ex.movementCategory] ?? null;
+    const jm = fineToJudgement(fine, ex.movementCategory);
+    if (jm) credits.set(jm, 1);
+    return credits;
+  }
+  if (dbEx.category === "Cardio") return null;
+
+  const primary = fineToJudgement(
+    toFine(dbEx.muscleGroup),
+    ex.movementCategory
+  );
+  if (primary) credits.set(primary, 1);
+  for (const sec of dbEx.secondaryMuscles ?? []) {
+    const jm = fineToJudgement(toFine(sec), ex.movementCategory);
+    if (!jm) continue;
+    if (jm === "Abs" && primary !== "Abs") continue; // direct-work counting
+    if (!credits.has(jm)) credits.set(jm, SECONDARY_SET_WEIGHT);
+  }
+  return credits;
+}
+
+/** The judgement group an exercise's sets count 1.0 toward (balancer and
+ *  reconciler targeting), or null when unattributable (cardio/whole-body). */
+export function primaryJudgementForExercise(
+  ex: ProgramExercise
+): JudgementMuscle | null {
+  const dbEx: Exercise | undefined = getExerciseById(ex.exerciseId);
+  if (!dbEx) {
+    return fineToJudgement(
+      CATEGORY_TO_FINE[ex.movementCategory] ?? null,
+      ex.movementCategory
+    );
+  }
+  if (dbEx.category === "Cardio") return null;
+  return fineToJudgement(toFine(dbEx.muscleGroup), ex.movementCategory);
+}
+
+/** Weekly sets per JUDGEMENT group — the tally classification runs on. */
+export function weeklyVolumeByJudgementMuscle(
+  workouts: WorkoutDay[]
+): Array<{ muscle: JudgementMuscle; sets: number }> {
+  const tally = new Map<JudgementMuscle, number>();
+  for (const day of workouts) {
+    if (day.skipped) continue;
+    for (const ex of day.exercises) {
+      const sets = ex.sets ?? 0;
+      if (sets <= 0) continue;
+      const credits = judgementCreditsFor(ex);
+      if (!credits) continue;
+      for (const [muscle, weight] of credits) {
+        tally.set(muscle, (tally.get(muscle) ?? 0) + sets * weight);
+      }
+    }
+  }
+  return JUDGEMENT_MUSCLE_ORDER.filter((m) => (tally.get(m) ?? 0) > 0).map(
+    (m) => ({ muscle: m, sets: Math.round((tally.get(m) ?? 0) * 2) / 2 })
+  );
+}
+
+/**
+ * Hypertrophy-anchor bands for the judgement groups the canonical ten could
+ * not price. The split groups' numbers are DECLARED PRIORS anchored to RP's
+ * published per-muscle landmark table; the seven kept groups delegate to
+ * `volumeLandmark` so their numbers stay checkable against Schoenfeld
+ * pp.183–184 exactly as before.
+ *
+ *   FrontDelts {0, 0, 14} — pressing is front-delt training (Schoenfeld
+ *     pp.186–187), so there is no direct-work floor at all: low = 0 means
+ *     this group can never read under-dosed, only over. RP's table carries
+ *     MV 0 / MEV 0 for anyone with pressing volume.
+ *   SideDelts {0, 8, 26} — grows only from direct work; RP MEV 8, MRV 25+.
+ *   RearDelts {0, 6, 26} — pulls contribute; RP MEV 6 with pulling volume.
+ *   Lats / UpperBack {4, 8, 18} each — a region split of RP's whole-back
+ *     10/25; the halves are priors, the whole stays comparable.
+ *   LowerBack {0, 2, 10} — the erectors are isometrically loaded by every
+ *     hinge and squat; direct extension work is small and fatigue-expensive,
+ *     so the ceiling is deliberately low.
+ *   Abs {0, 4, 16} — direct work only (see judgementCreditsFor); RP MEV in
+ *     the 0–6 band for lifters doing compounds, MRV well above the ceiling
+ *     any generated plan authors.
+ *
+ * Goal scaling mirrors `volumeLandmark`'s own shape: each goal's bands are
+ * the hypertrophy anchor scaled by that goal's generic-band ratios, so the
+ * two ladders cannot drift apart in spirit. mv of 0 stays 0 at every goal.
+ */
+const JUDGEMENT_HYPERTROPHY_BANDS: Partial<
+  Record<JudgementMuscle, VolumeLandmark>
+> = {
+  // PRESS-INCLUSIVE, because the tally counts presses toward this head
+  // (Schoenfeld pp.186–187). A band authored from RP's direct-raise table
+  // (MRV ~14) against a press-counting tally would repeat the exact
+  // currency mismatch this layer exists to end — measured: normal 5-6 day
+  // pressing weeks tally 15–17 front-delt sets and are not overtraining.
+  // 22 ≈ the chest ceiling plus overhead work, the realistic press budget.
+  FrontDelts: { mv: 0, low: 0, high: 22 },
+  SideDelts: { mv: 0, low: 8, high: 26 },
+  RearDelts: { mv: 0, low: 6, high: 26 },
+  Lats: { mv: 4, low: 8, high: 18 },
+  UpperBack: { mv: 4, low: 8, high: 18 },
+  LowerBack: { mv: 0, low: 2, high: 10 },
+  Abs: { mv: 0, low: 4, high: 16 },
+  // HINGE-INCLUSIVE for the same reason: every squat, deadlift and RDL
+  // credits the glutes, which is why RP's glute MRV sits at 25+ — they are
+  // trained by everything. The generic ceiling of 20 read normal leg weeks
+  // as violations (55/75 configs at 1:1).
+  Glutes: { mv: 3, low: 10, high: 25 },
+};
+
+export function judgementLandmark(
+  primaryGoal: string | undefined,
+  muscle: JudgementMuscle
+): VolumeLandmark {
+  const generic = volumeLandmark(primaryGoal);
+  const anchor = JUDGEMENT_HYPERTROPHY_BANDS[muscle];
+  if (!anchor) return generic; // the seven kept groups
+  const hyp = volumeLandmark("hypertrophy");
+  const scale = (n: number, num: number, den: number) =>
+    n === 0 ? 0 : Math.max(1, Math.round((n * num) / den));
+  return {
+    mv: scale(anchor.mv, generic.mv, hyp.mv),
+    low: scale(anchor.low, generic.low, hyp.low),
+    high: scale(anchor.high, generic.high, hyp.high),
+  };
+}
+
 /** Don't push any single accessory beyond this many sets. */
 const ACCESSORY_SET_CAP = 5;
 /** Safety bound on auto-added sets per muscle per week. */
@@ -396,14 +699,20 @@ const MAX_ADDED_SETS_PER_MUSCLE = 6;
 const RECONCILE_ACCESSORY_FLOOR = 2;
 const RECONCILE_MAIN_FLOOR = 3;
 
-/** The slot's PRIMARY canonical muscle as the TALLY sees it — delegates to
- *  `primaryCanonicalForExercise` plus the tally's Cardio exclusion, so the
- *  reconciler can never cut a slot the tally attributes differently (a
- *  treadmill naming "Legs" must not be cut to fix Quads). */
-function primaryCanonicalMuscle(ex: ProgramExercise): CanonicalMuscle | null {
-  const dbEx: Exercise | undefined = getExerciseById(ex.exerciseId);
-  if (dbEx?.category === "Cardio") return null;
-  return primaryCanonicalForExercise(ex);
+/**
+ * Resolve the per-group landmark from either call shape: a single band
+ * applied to every group (the pre-judgement signature, kept so tests and
+ * any external caller with one band keep working), or a per-group resolver
+ * (what `generateProgram` passes — `judgementLandmark(goal, m)`).
+ */
+type LandmarkFor =
+  | VolumeLandmark
+  | ((muscle: JudgementMuscle) => VolumeLandmark);
+function resolveLandmark(
+  landmarkFor: LandmarkFor,
+  muscle: JudgementMuscle
+): VolumeLandmark {
+  return typeof landmarkFor === "function" ? landmarkFor(muscle) : landmarkFor;
 }
 
 /**
@@ -437,7 +746,7 @@ function primaryCanonicalMuscle(ex: ProgramExercise): CanonicalMuscle | null {
  */
 export function reconcileToLandmarks(
   workouts: WorkoutDay[],
-  landmark: VolumeLandmark
+  landmarkFor: LandmarkFor
 ): WorkoutDay[] {
   const days = workouts.map((d) => ({
     ...d,
@@ -449,22 +758,25 @@ export function reconcileToLandmarks(
   // One set moves per iteration; the bound is generous (a week tops out
   // around 120 authored sets) and exists so a logic bug can't spin forever.
   for (let guard = 0; guard < 500; guard += 1) {
-    const tally = new Map(
-      weeklyVolumeByMuscle(days).map((v) => [v.muscle, v.sets])
-    );
-    const over = [...tally.entries()]
-      .filter(([, sets]) => sets > landmark.high)
-      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    const over = weeklyVolumeByJudgementMuscle(days)
+      .map((v) => ({
+        muscle: v.muscle,
+        overshoot: v.sets - resolveLandmark(landmarkFor, v.muscle).high,
+      }))
+      .filter((v) => v.overshoot > 0)
+      .sort(
+        (a, b) => b.overshoot - a.overshoot || a.muscle.localeCompare(b.muscle)
+      );
 
     let cutMade = false;
-    for (const [muscle] of over) {
+    for (const { muscle } of over) {
       const candidates: Array<{ di: number; ei: number; ex: ProgramExercise }> =
         [];
       days.forEach((d, di) => {
-        if (d.skipped) return; // fineTally skips these — stay consistent
+        if (d.skipped) return; // the tally skips these — stay consistent
         d.exercises.forEach((ex, ei) => {
           if ((ex.sets ?? 0) <= floorFor(ex)) return;
-          if (primaryCanonicalMuscle(ex) !== muscle) return;
+          if (primaryJudgementForExercise(ex) !== muscle) return;
           candidates.push({ di, ei, ex });
         });
       });
@@ -552,16 +864,18 @@ function overshootsSession(
 function overshootsCeiling(
   days: WorkoutDay[],
   exercise: ProgramExercise,
-  landmark: VolumeLandmark
+  landmarkFor: LandmarkFor
 ): boolean {
   const before = new Map(
-    weeklyVolumeByMuscle(days).map((v) => [v.muscle, v.sets])
+    weeklyVolumeByJudgementMuscle(days).map((v) => [v.muscle, v.sets])
   );
   exercise.sets += 1;
-  const after = weeklyVolumeByMuscle(days);
+  const after = weeklyVolumeByJudgementMuscle(days);
   exercise.sets -= 1;
   return after.some(
-    (v) => v.sets > landmark.high && v.sets > (before.get(v.muscle) ?? 0)
+    (v) =>
+      v.sets > resolveLandmark(landmarkFor, v.muscle).high &&
+      v.sets > (before.get(v.muscle) ?? 0)
   );
 }
 
@@ -585,33 +899,32 @@ function overshootsCeiling(
  */
 export function balanceWeeklyVolume(
   workouts: WorkoutDay[],
-  landmark: VolumeLandmark
+  landmarkFor: LandmarkFor
 ): WorkoutDay[] {
   const days = workouts.map((d) => ({
     ...d,
     exercises: d.exercises.map((e) => ({ ...e })),
   }));
 
-  const volumeOf = (muscle: CanonicalMuscle): number =>
-    weeklyVolumeByMuscle(days).find((v) => v.muscle === muscle)?.sets ?? 0;
+  const volumeOf = (muscle: JudgementMuscle): number =>
+    weeklyVolumeByJudgementMuscle(days).find((v) => v.muscle === muscle)
+      ?.sets ?? 0;
 
-  for (const muscle of CANONICAL_MUSCLE_ORDER) {
-    if (volumeOf(muscle) >= landmark.low) continue;
+  for (const muscle of JUDGEMENT_MUSCLE_ORDER) {
+    const low = resolveLandmark(landmarkFor, muscle).low;
+    if (volumeOf(muscle) >= low) continue;
 
     // Accessories (on non-skipped days) whose primary is this muscle.
     const candidates = days
       .filter((d) => !d.skipped)
       .flatMap((d) => d.exercises)
       .filter(
-        (e) => e.isAccessory && primaryCanonicalForExercise(e) === muscle
+        (e) => e.isAccessory && primaryJudgementForExercise(e) === muscle
       );
     if (candidates.length === 0) continue;
 
     let added = 0;
-    while (
-      volumeOf(muscle) < landmark.low &&
-      added < MAX_ADDED_SETS_PER_MUSCLE
-    ) {
+    while (volumeOf(muscle) < low && added < MAX_ADDED_SETS_PER_MUSCLE) {
       // Grow the lowest-set addable accessory first (keeps volume even), and
       // skip any whose growth would tip a different muscle over its ceiling.
       const target = candidates
@@ -619,7 +932,8 @@ export function balanceWeeklyVolume(
         .sort((a, b) => a.sets - b.sets)
         .find(
           (e) =>
-            !overshootsCeiling(days, e, landmark) && !overshootsSession(days, e)
+            !overshootsCeiling(days, e, landmarkFor) &&
+            !overshootsSession(days, e)
         );
       if (!target) break; // all capped, or every add overshoots elsewhere
       target.sets += 1;
@@ -678,7 +992,7 @@ function categorySetTotals(workouts: WorkoutDay[]): {
  */
 export function balancePushPull(
   workouts: WorkoutDay[],
-  landmark?: VolumeLandmark
+  landmark?: LandmarkFor
 ): WorkoutDay[] {
   const days = workouts.map((d) => ({
     ...d,

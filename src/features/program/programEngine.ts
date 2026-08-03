@@ -28,8 +28,8 @@ import {
 import {
   balanceWeeklyVolume,
   balancePushPull,
+  judgementLandmark,
   reconcileToLandmarks,
-  volumeLandmark,
 } from "./volumeModel";
 import {
   seedStartingLoads,
@@ -1847,13 +1847,21 @@ export function generateProgram(
   //      add credits every secondary too). Measured 2026-08-03: running the
   //      reconciler only before the balancers left re-inflation standing,
   //      only after left 44 under-floor readings the balancer never saw.
-  workouts = reconcileToLandmarks(workouts, volumeLandmark(primaryGoal));
+  workouts = reconcileToLandmarks(workouts, (m) =>
+    judgementLandmark(primaryGoal, m)
+  );
   // D-LIFT-1 (active): nudge under-dosed muscles up toward the goal volume
   // landmark by growing their accessories (add-only, mains untouched).
-  workouts = balanceWeeklyVolume(workouts, volumeLandmark(primaryGoal));
+  workouts = balanceWeeklyVolume(workouts, (m) =>
+    judgementLandmark(primaryGoal, m)
+  );
   // D-LIFT-3: keep weekly pull volume ≥ push (shoulder-health balance).
-  workouts = balancePushPull(workouts, volumeLandmark(primaryGoal));
-  workouts = reconcileToLandmarks(workouts, volumeLandmark(primaryGoal));
+  workouts = balancePushPull(workouts, (m) =>
+    judgementLandmark(primaryGoal, m)
+  );
+  workouts = reconcileToLandmarks(workouts, (m) =>
+    judgementLandmark(primaryGoal, m)
+  );
   // D-LIFT-5: seed bodyweight-relative cold-start loads on never-trained lifts
   // (no-op without a load context, or for lifts with logged history). Runs
   // last so it also calibrates whatever the caps above re-pointed.
