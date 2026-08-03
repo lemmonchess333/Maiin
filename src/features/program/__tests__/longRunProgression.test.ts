@@ -30,8 +30,10 @@ import { describe, it, expect } from "vitest";
 
 import {
   generateRacePlanV2,
+  easyRunMinutesForWeek,
   longRunKmForWeek,
   longTierForKm,
+  LONG_RUN_MAX_MINUTES,
   TAPER_WEEKS_BY_DISTANCE,
   getRaceFloorWeeks,
   type RunVolumePreset,
@@ -78,6 +80,34 @@ const LONG_KM_BY_ID = new Map(
     t.config.targetDistanceKm ?? 0,
   ])
 );
+const LONG_MIN_BY_ID = new Map(
+  RUN_TEMPLATES.filter((t) => t.type === "long").map((t) => [
+    t.id,
+    t.estimatedDuration,
+  ])
+);
+const MIN_BY_ID = new Map(
+  RUN_TEMPLATES.map((t) => [t.id, t.estimatedDuration])
+);
+
+/** Total prescribed minutes per week. */
+function minutesPerWeek(p: { weeks: { templateId: string }[][] }): number[] {
+  return p.weeks.map((wk) =>
+    wk.reduce((s, d) => s + (MIN_BY_ID.get(d.templateId) ?? 0), 0)
+  );
+}
+
+/** The long run's share of its own week's minutes, per week. */
+function longSharePerWeek(p: { weeks: { templateId: string }[][] }): number[] {
+  const totals = minutesPerWeek(p);
+  return p.weeks.map((wk, i) => {
+    const long = wk.reduce(
+      (max, d) => Math.max(max, LONG_MIN_BY_ID.get(d.templateId) ?? 0),
+      0
+    );
+    return totals[i] === 0 ? 0 : long / totals[i];
+  });
+}
 
 /** Per-week longest prescribed long run in km; 0 for weeks with none
  *  (taper and race weeks drop the long run to an easy run by design). */
@@ -90,23 +120,52 @@ function longKmPerWeek(p: { weeks: { templateId: string }[][] }): number[] {
   );
 }
 
-describe("LONG_RUN_TIERS ↔ RUN_TEMPLATES", () => {
-  it("the tier ladder is set-equal to the long-typed templates", () => {
-    // The scheduler keeps its own ordered ladder rather than deriving it, so
-    // a template added to the registry without a tier (or a tier pointing at
-    // a template that was renamed away) is invisible until a plan emits an
-    // id the prefill can't resolve.
-    const emitted = new Set<string>();
-    for (const distance of DISTANCES) {
-      for (const daysAhead of [60, 120, 200, 300]) {
-        for (const volume of ["lighter", "standard", "bigger"] as const) {
-          for (const d of plan({ distance, daysAhead, volume }).weeks.flat()) {
-            if (LONG_KM_BY_ID.has(d.templateId)) emitted.add(d.templateId);
-          }
+/** Every long template a plan can emit, across the whole input space. */
+function emittedLongIds(): Set<string> {
+  const emitted = new Set<string>();
+  for (const distance of DISTANCES) {
+    for (const daysAhead of [60, 120, 200, 300]) {
+      for (const volume of ["lighter", "standard", "bigger"] as const) {
+        for (const d of plan({ distance, daysAhead, volume }).weeks.flat()) {
+          if (LONG_KM_BY_ID.has(d.templateId)) emitted.add(d.templateId);
         }
       }
     }
-    expect(emitted).toEqual(new Set(LONG_KM_BY_ID.keys()));
+  }
+  return emitted;
+}
+
+describe("LONG_RUN_TIERS ↔ RUN_TEMPLATES", () => {
+  it("every long template under the time cap is reachable by some plan", () => {
+    // The scheduler keeps its own ordered ladder rather than deriving it, so
+    // a template added to the registry without a tier (or a tier pointing at
+    // a template that was renamed away) is invisible until a plan emits an
+    // id the prefill can't resolve. A rung nothing can reach is the same
+    // dead data as the `peakLongKm: 32` this module was written to fix.
+    const reachable = new Set(
+      [...LONG_MIN_BY_ID.entries()]
+        .filter(([, min]) => min <= LONG_RUN_MAX_MINUTES)
+        .map(([id]) => id)
+    );
+    expect(emittedLongIds()).toEqual(reachable);
+  });
+
+  it("long_30k is excluded BY THE TIME CAP, not by accident", () => {
+    // Daniels caps the long run at 150 minutes; long_30k is 170. It stays in
+    // the registry so a user can choose it in the day sheet, but the
+    // scheduler must never prescribe it. Pin both halves — that it exists,
+    // and that it is over the cap — so raising LONG_RUN_MAX_MINUTES is a
+    // deliberate act with a failing test attached rather than a silent
+    // widening of what gets auto-prescribed.
+    expect(LONG_MIN_BY_ID.get("long_30k")).toBeGreaterThan(
+      LONG_RUN_MAX_MINUTES
+    );
+    expect(emittedLongIds().has("long_30k")).toBe(false);
+    for (const id of emittedLongIds()) {
+      expect(LONG_MIN_BY_ID.get(id), id).toBeLessThanOrEqual(
+        LONG_RUN_MAX_MINUTES
+      );
+    }
   });
 
   it("longTierForKm never prescribes MORE than asked, and floors at the shortest tier", () => {
@@ -130,14 +189,15 @@ describe("the long run progresses toward the race", () => {
     ) as Record<(typeof DISTANCES)[number], number>;
 
     // Strictly ordered by race demand. Pre-fix, half === marathon === 15
-    // and 5k === 10k === 10, so two of these three comparisons failed.
-    expect(peaks["5k"]).toBeLessThanOrEqual(peaks["10k"]);
+    // and 5k === 10k === 10, so ALL THREE of these comparisons failed.
+    expect(peaks["5k"]).toBeLessThan(peaks["10k"]);
     expect(peaks["10k"]).toBeLessThan(peaks.half);
     expect(peaks.half).toBeLessThan(peaks.marathon);
-    // And the marathon peak is a credible fraction of the race, not a third
-    // of it. 30km against 42.2km sits inside the Hansons(~26)-Pfitzinger(~32)
-    // bracket; 15km did not.
-    expect(peaks.marathon / 42.2).toBeGreaterThan(0.6);
+    // And the marathon peak is a credible fraction of the race rather than a
+    // third of it. 25km/42.2km ≈ 0.59 — essentially Hansons' deliberately
+    // conservative ~26km ceiling, which is where the 150-minute time cap
+    // lands. 15km (0.36) was not defensible under any methodology.
+    expect(peaks.marathon / 42.2).toBeGreaterThan(0.55);
   });
 
   it("the ramp actually ramps — a long marathon block uses several tiers", () => {
@@ -226,6 +286,113 @@ describe("the long run progresses toward the race", () => {
         ).toBeLessThanOrEqual(atPeak);
       }
       expect(atPeak).toBeCloseTo(32, 5);
+    }
+  });
+});
+
+describe("the WEEK progresses, not just the long run", () => {
+  it("a 10K plan is no longer 27 identical weeks", () => {
+    // The measurement that prompted this: with a ladder starting at 10 km and
+    // a fixed easy_30, every 10K week was `easy_30 ×3 + long_10k` = 145 min,
+    // for 27 weeks. Both halves had to change — a finer ladder at the bottom
+    // AND an easy run that ramps.
+    const weekly = minutesPerWeek(plan({ distance: "10k", daysAhead: 200 }));
+    expect(new Set(weekly).size).toBeGreaterThan(3);
+    const longs = longKmPerWeek(plan({ distance: "10k", daysAhead: 200 }));
+    expect(new Set(longs.filter((k) => k > 0)).size).toBeGreaterThan(1);
+  });
+
+  it("a 5K plan progresses too — the ladder floor no longer swallows it", () => {
+    const longs = longKmPerWeek(plan({ distance: "5k", daysAhead: 200 }));
+    expect(new Set(longs.filter((k) => k > 0)).size).toBeGreaterThan(1);
+  });
+
+  it("the long run stops being most of the week", () => {
+    // Pre-fix the peak marathon week was 260 min of which the long run was
+    // 170 — 65% of weekly volume in one session, which no methodology
+    // programmes.
+    //
+    // Measured now, on a 4-run week: marathon peaks at 56%, half at 45%, 10K
+    // at 33%, 5K at 28%. Daniels' rule is 25-30%, so the short races are
+    // inside it and the marathon is not. Be honest about that rather than
+    // asserting a number the code doesn't hit: a 25 km long run IS half the
+    // week when the other three runs are 40-50 minutes, and the fix for that
+    // is more run days — the user's `weekSchedule` to give, not the
+    // scheduler's to invent. What the scheduler owes is that the share stops
+    // GROWING with distance beyond the point of absurdity, which is what
+    // these bounds hold.
+    const shares = Object.fromEntries(
+      DISTANCES.map((d) => [
+        d,
+        Math.max(...longSharePerWeek(plan({ distance: d, daysAhead: 200 }))),
+      ])
+    ) as Record<(typeof DISTANCES)[number], number>;
+    expect(shares["5k"]).toBeLessThan(0.35);
+    expect(shares["10k"]).toBeLessThan(0.4);
+    expect(shares.half).toBeLessThan(0.5);
+    expect(shares.marathon).toBeLessThan(0.6);
+  });
+
+  it("the EASY runs themselves progress, not just total volume", () => {
+    // Written first as `peak weekly minutes > 1.5x the first week`, which
+    // passed with the easy runs pinned at 30 forever — the long run alone
+    // moves total volume that far. Mutation-testing caught it. The claim in
+    // the name is about the easy runs, so assert that: more than one easy
+    // tier is prescribed, and the longest of them exceeds the base.
+    const easyMinutes = new Set<number>();
+    for (const d of plan({
+      distance: "marathon",
+      daysAhead: 200,
+    }).weeks.flat()) {
+      const t = RUN_TEMPLATES.find((x) => x.id === d.templateId);
+      if (t?.type === "easy") easyMinutes.add(t.estimatedDuration);
+    }
+    expect(easyMinutes.size).toBeGreaterThan(1);
+    expect(Math.max(...easyMinutes)).toBeGreaterThan(Math.min(...easyMinutes));
+  });
+
+  it("total weekly volume rises across a block", () => {
+    const weekly = minutesPerWeek(
+      plan({ distance: "marathon", daysAhead: 200 })
+    );
+    // Ignore the taper/race tail; compare the first ramp week to the peak.
+    const first = weekly[0];
+    const peak = Math.max(...weekly.slice(0, weekly.length - 4));
+    expect(peak).toBeGreaterThan(first * 1.5);
+  });
+
+  it("easy runs ramp on the SAME cutbacks as the long run", () => {
+    // A cutback that only steps the long run back is a redistribution, not a
+    // cutback. Both must dip in the same week.
+    const args = { totalWeeks: 24, taperWeeks: 3, volume: "standard" as const };
+    for (let w = 1; w < 18; w++) {
+      const easyDown =
+        easyRunMinutesForWeek({ ...args, weekIndex: w }) <
+        easyRunMinutesForWeek({ ...args, weekIndex: w - 1 });
+      const longDown =
+        longRunKmForWeek({
+          ...args,
+          weekIndex: w,
+          baseLongKm: 14,
+          peakLongKm: 32,
+        }) <
+        longRunKmForWeek({
+          ...args,
+          weekIndex: w - 1,
+          baseLongKm: 14,
+          peakLongKm: 32,
+        });
+      expect(easyDown, `week ${w}`).toBe(longDown);
+    }
+  });
+
+  it("the taper cuts easy volume back to base rather than carrying the peak in", () => {
+    const p = plan({ distance: "marathon", daysAhead: 200 });
+    const weekly = minutesPerWeek(p);
+    const peak = Math.max(...weekly.slice(0, weekly.length - 4));
+    // The last three non-race weeks are the taper.
+    for (const wk of weekly.slice(weekly.length - 4, weekly.length - 1)) {
+      expect(wk).toBeLessThan(peak * 0.6);
     }
   });
 });

@@ -288,16 +288,66 @@ export function runTuningFromProfile(profile: {
  * The long-run tiers available to the scheduler, ascending.
  *
  * Kept as a local ladder rather than derived from RUN_TEMPLATES so the
- * scheduler's choice is explicit and ordered; pinned set-equal to the
- * `type: "long"` templates by `longRunProgression.test.ts`.
+ * scheduler's choice is explicit and ordered; `minutes` mirrors each
+ * template's `estimatedDuration` and both are pinned against the registry by
+ * `longRunProgression.test.ts`.
+ *
+ * The bottom of the ladder matters as much as the top. A ladder starting at
+ * 10 km made every 5K and 10K plan flat — their whole base→peak span
+ * (4→8 km and 6→12 km) sat at or below the first rung, so a 10K trainee got
+ * the identical week 27 times. Measured, not inferred.
  */
-const LONG_RUN_TIERS: ReadonlyArray<{ id: string; km: number }> = [
-  { id: "long_10k", km: 10 },
-  { id: "long_15k", km: 15 },
-  { id: "long_20k", km: 20 },
-  { id: "long_25k", km: 25 },
-  { id: "long_30k", km: 30 },
+const LONG_RUN_TIERS: ReadonlyArray<{
+  id: string;
+  km: number;
+  minutes: number;
+}> = [
+  { id: "long_6k", km: 6, minutes: 35 },
+  { id: "long_8k", km: 8, minutes: 45 },
+  { id: "long_10k", km: 10, minutes: 55 },
+  { id: "long_12k", km: 12, minutes: 65 },
+  { id: "long_15k", km: 15, minutes: 80 },
+  { id: "long_20k", km: 20, minutes: 110 },
+  { id: "long_25k", km: 25, minutes: 140 },
+  { id: "long_30k", km: 30, minutes: 170 },
 ];
+
+/**
+ * Daniels' explicit ceiling: a long run is capped at the LESSER of 150
+ * minutes and ~25-30% of weekly volume. The time half is the one a scheduler
+ * can enforce without knowing the athlete's pace, and it is what stops the
+ * marathon ramp handing a 4-day-a-week runner a 170-minute session.
+ *
+ * `long_30k` therefore stays in the registry — a user can pick it in the day
+ * sheet — but the scheduler never prescribes it. That exclusion is asserted,
+ * so raising this cap is a decision someone has to make deliberately.
+ *
+ * The share half of Daniels' rule is NOT enforced here, and it is worth being
+ * honest about why: at peak the long run is still ~48% of a 4-run week, well
+ * over the textbook 25-30%. That gap is a property of running four times a
+ * week, not of this ladder — closing it needs more weekly volume, which is
+ * the user's `weekSchedule` to give, not the scheduler's to invent. Hansons
+ * makes exactly this argument for its own ~26 km cap.
+ */
+export const LONG_RUN_MAX_MINUTES = 150;
+
+/**
+ * Easy runs are a ladder too, ramped on the same progress as the long run.
+ *
+ * Before this they were a fixed `easy_30` for every week of every plan, so
+ * the ENTIRE weekly progression was carried by one session. Measured on a
+ * 27-week marathon plan: weekly volume went 145 → 260 min while three of the
+ * four runs never changed, putting 65% of peak volume in a single day. No
+ * methodology programmes that; they raise weekly volume and keep the long run
+ * a bounded fraction of it.
+ */
+const EASY_RUN_TIERS: ReadonlyArray<{ id: string; minutes: number }> = [
+  { id: "easy_30", minutes: 30 },
+  { id: "easy_40", minutes: 40 },
+  { id: "easy_50", minutes: 50 },
+];
+const EASY_BASE_MINUTES = 30;
+const EASY_PEAK_MINUTES = 50;
 
 /** Every 4th week is a cutback — the long run steps back rather than up. */
 const CUTBACK_EVERY = 4;
@@ -329,6 +379,31 @@ function effectivePeakKm(peakLongKm: number, volume: RunVolumePreset): number {
     return Math.min(peakLongKm * BIGGER_PEAK_FACTOR, ceiling);
   }
   return peakLongKm;
+}
+
+/**
+ * Where a week sits in the pre-taper ramp: `progress` in [0,1] and whether
+ * it is a cutback. Returns null when the plan has no room to ramp at all
+ * (the whole thing is taper + race), which every caller reads as "hold at
+ * base".
+ *
+ * Shared so the long run and the easy runs move TOGETHER — a cutback week
+ * that only steps the long run back isn't a cutback, it's a redistribution.
+ */
+function rampShape(input: {
+  weekIndex: number;
+  totalWeeks: number;
+  taperWeeks: number;
+}): { progress: number; isCutback: boolean } | null {
+  const lastRampWeek = Math.max(0, input.totalWeeks - 1 - input.taperWeeks - 1);
+  if (lastRampWeek === 0) return null;
+  const clamped = Math.min(Math.max(0, input.weekIndex), lastRampWeek);
+  return {
+    progress: clamped / lastRampWeek,
+    isCutback:
+      (input.weekIndex + 1) % CUTBACK_EVERY === 0 &&
+      input.weekIndex !== lastRampWeek,
+  };
 }
 
 /**
@@ -385,28 +460,66 @@ export function longRunKmForWeek(input: {
   const peak = effectivePeakKm(input.peakLongKm, volume);
   if (peak <= baseLongKm) return baseLongKm;
 
-  // Pre-taper window: [0, lastRampWeek]. The final race week and the taper
-  // weeks before it are the caller's business.
-  const lastRampWeek = Math.max(0, totalWeeks - 1 - taperWeeks - 1);
-  if (lastRampWeek === 0) return baseLongKm;
+  // Pre-taper window: the final race week and the taper weeks before it are
+  // the caller's business.
+  const shape = rampShape({ weekIndex, totalWeeks, taperWeeks });
+  if (!shape) return baseLongKm;
 
-  const clamped = Math.min(Math.max(0, weekIndex), lastRampWeek);
-  const progress = clamped / lastRampWeek;
-  const ramped = baseLongKm + (peak - baseLongKm) * progress;
-
+  const ramped = baseLongKm + (peak - baseLongKm) * shape.progress;
   // Cutback every 4th week — but never on the final ramp week, which is the
   // peak the whole block builds toward.
-  const isCutback =
-    (weekIndex + 1) % CUTBACK_EVERY === 0 && weekIndex !== lastRampWeek;
-  return isCutback ? Math.max(baseLongKm, ramped * CUTBACK_FRACTION) : ramped;
+  return shape.isCutback
+    ? Math.max(baseLongKm, ramped * CUTBACK_FRACTION)
+    : ramped;
+}
+
+/**
+ * Target easy-run duration for a given week, in minutes.
+ *
+ * Same ramp and the same cutbacks as the long run, so weekly volume rises as
+ * a whole rather than being concentrated in one session. Taper, race and
+ * below-floor weeks don't call this — they stay at the base 30, which is the
+ * volume cut those weeks are for.
+ */
+export function easyRunMinutesForWeek(input: {
+  weekIndex: number;
+  totalWeeks: number;
+  taperWeeks: number;
+  volume: RunVolumePreset;
+}): number {
+  const shape = rampShape(input);
+  if (!shape) return EASY_BASE_MINUTES;
+  const peak =
+    input.volume === "lighter"
+      ? EASY_BASE_MINUTES +
+        (EASY_PEAK_MINUTES - EASY_BASE_MINUTES) * LIGHTER_PEAK_FACTOR
+      : EASY_PEAK_MINUTES;
+  const ramped =
+    EASY_BASE_MINUTES + (peak - EASY_BASE_MINUTES) * shape.progress;
+  return shape.isCutback
+    ? Math.max(EASY_BASE_MINUTES, ramped * CUTBACK_FRACTION)
+    : ramped;
 }
 
 /** Snap a target distance to the nearest tier at or below it, with the
- *  shortest tier as the floor. Never prescribes MORE than asked for. */
+ *  shortest tier as the floor. Never prescribes MORE than asked for, and
+ *  never a session over the `LONG_RUN_MAX_MINUTES` time ceiling. */
 export function longTierForKm(km: number): string {
-  let chosen = LONG_RUN_TIERS[0];
-  for (const tier of LONG_RUN_TIERS) {
+  const eligible = LONG_RUN_TIERS.filter(
+    (t) => t.minutes <= LONG_RUN_MAX_MINUTES
+  );
+  let chosen = eligible[0];
+  for (const tier of eligible) {
     if (tier.km <= km) chosen = tier;
+  }
+  return chosen.id;
+}
+
+/** Snap a target duration to the nearest easy tier at or below it. */
+export function easyTierForMinutes(minutes: number): string {
+  let chosen = EASY_RUN_TIERS[0];
+  for (const tier of EASY_RUN_TIERS) {
+    if (tier.minutes <= minutes) chosen = tier;
   }
   return chosen.id;
 }
@@ -632,6 +745,22 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     const longSlot = pickLongRunSlot(runEligibleSlots, input.weekSchedule);
     const remaining = runEligibleSlots.filter((d) => d !== longSlot);
 
+    // Easy runs ramp with the long run in base/build. Taper, race and
+    // below-floor weeks deliberately stay at the base duration — cutting easy
+    // volume IS what those weeks are for, and re-raising it would undo the
+    // taper.
+    const easyId =
+      belowFloor || phase === "taper" || phase === "race"
+        ? "easy_30"
+        : easyTierForMinutes(
+            easyRunMinutesForWeek({
+              weekIndex: w,
+              totalWeeks,
+              taperWeeks: TAPER_WEEKS_BY_DISTANCE[input.raceGoal.distance],
+              volume: tuning.volume,
+            })
+          );
+
     // RUN-M2: race week is identical whether or not the plan is belowFloor —
     // the race on `targetDate` (so `date === raceGoal.targetDate`) plus easy
     // shakeouts on the user's OTHER run-eligible days. The race day is placed
@@ -759,7 +888,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
           week.push(
             buildRunDayV2({
               dayIndex: d,
-              templateId: "easy_30",
+              templateId: easyId,
               type: "easy",
               weekStart,
             })
@@ -803,7 +932,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
             week.push(
               buildRunDayV2({
                 dayIndex: d,
-                templateId: "easy_30",
+                templateId: easyId,
                 type: "easy",
                 weekStart,
               })
@@ -815,7 +944,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
             week.push(
               buildRunDayV2({
                 dayIndex: d,
-                templateId: "easy_30",
+                templateId: easyId,
                 type: "easy",
                 weekStart,
               })
@@ -840,7 +969,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
             week.push(
               buildRunDayV2({
                 dayIndex: d,
-                templateId: "easy_30",
+                templateId: easyId,
                 type: "easy",
                 weekStart,
               })
@@ -851,7 +980,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
             week.push(
               buildRunDayV2({
                 dayIndex: d,
-                templateId: "easy_30",
+                templateId: easyId,
                 type: "easy",
                 weekStart,
               })
@@ -865,7 +994,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
           week.push(
             buildRunDayV2({
               dayIndex: d,
-              templateId: "easy_30",
+              templateId: easyId,
               type: "easy",
               weekStart,
             })
