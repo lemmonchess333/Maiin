@@ -14,7 +14,9 @@ import {
   splitRationale,
   isCycleEndWeek,
 } from "../programEngine";
-import { exerciseBank } from "../variationBank";
+import { exerciseBank, rescaleForSwap } from "../variationBank";
+import { seedStartingLoads } from "../startingLoads";
+import { normalizeExercise } from "../programTypes";
 import { EXERCISES, isBodyweightExerciseId } from "@/lib/exercises";
 import { deloadWeight } from "../easierToday";
 import { PROGRAMME_PLATEAU_MIN } from "../adjustmentRule";
@@ -2241,5 +2243,136 @@ describe("no lift is prescribed more than twice a week", () => {
       d.exercises.some((e) => e.movementCategory === "knee_dominant")
     );
     expect(kneeDays).toHaveLength(3);
+  });
+});
+
+// ── Anchored rotation (rotation load re-anchoring) ─────────────────────
+//
+// rotateUntrainedAccessories deliberately did NOT rescale, because naive
+// rescaling compounded across mesocycles (the measured 50 → 30 → 12.5
+// decay) — the module comment recorded the proper fix as "an anchor the
+// slot does not currently carry". The slot carries it now
+// (`rotationAnchor`, stamped by seedStartingLoads and refreshed by
+// calibrated swaps), and rotation scales from that FIXED pair — so the
+// scale can never compound — but only while the lineage is intact
+// (current weight === what the anchor implies). A diverged weight is a
+// user's own calibration and keeps the legacy carry behaviour.
+
+describe("anchored rotation", () => {
+  const anchoredAccessory = (over: Partial<ProgramExercise> = {}) =>
+    makeTestExercise({
+      exerciseId: "db-bench",
+      name: "Dumbbell Bench Press",
+      movementCategory: "horizontal_push",
+      isAccessory: true,
+      // 25 kg deliberately: the horizontal_push rotation cycles db-bench →
+      // incline-db-press → db-bench, and at 25 the anchor path restores
+      // exactly 25 on the return while chain-scaling (the compounding bug)
+      // drifts to 27.5 — double-rounding makes the two paths distinguishable
+      // here, which is what lets the mutation test bite.
+      weight: 25,
+      rotationAnchor: { exerciseId: "db-bench", weight: 25 },
+      performanceHistory: [],
+      ...over,
+    });
+
+  const rotate = (ex: ProgramExercise) =>
+    rotateUntrainedAccessories(
+      [
+        {
+          dayName: "D",
+          dayType: "upper",
+          completed: false,
+          exercises: [ex],
+        } as WorkoutDay,
+      ],
+      "advanced"
+    )[0].exercises[0];
+
+  it("an intact lineage rotates onto a properly SCALED load", () => {
+    const out = rotate(anchoredAccessory());
+    expect(out.exerciseId).not.toBe("db-bench"); // it did rotate
+    // The load moved with the movement — the legacy behaviour carried
+    // 25 kg onto whatever came next.
+    expect(out.weight).not.toBe(25);
+    // …and it is exactly the anchor-implied load for the new identity,
+    // pinned against an independent computation from the FIXED anchor.
+    expect(out.weight).toBe(
+      rescaleForSwap(25, "db-bench", out.exerciseId, "horizontal_push")
+    );
+    // The anchor itself is untouched — the next rotation scales from the
+    // same pair, which is the whole non-compounding guarantee.
+    expect(out.rotationAnchor).toEqual({
+      exerciseId: "db-bench",
+      weight: 25,
+    });
+  });
+
+  it("a second rotation still scales from the ORIGINAL anchor — no round-trip drift", () => {
+    const first = rotate(anchoredAccessory());
+    const second = rotate(first);
+    expect(second.exerciseId).not.toBe(first.exerciseId);
+    // The pool cycles back to db-bench, and the anchor restores EXACTLY the
+    // anchor weight. Chain-scaling (each rotation from the previous one's
+    // rounded output) lands on 27.5 here — the measured compounding decay's
+    // mechanism, caught at its first divergence.
+    expect(second.exerciseId).toBe("db-bench");
+    expect(second.weight).toBe(25);
+    expect(second.rotationAnchor).toEqual({
+      exerciseId: "db-bench",
+      weight: 25,
+    });
+  });
+
+  it("a user-edited weight (diverged lineage) is NEVER snapped away", () => {
+    // The user set 77.5 on an untrained slot; the stale anchor says 17.5.
+    // Rotation must keep the user's number (legacy carry), not re-derive
+    // from an anchor the user has overridden.
+    const out = rotate(anchoredAccessory({ weight: 77.5 }));
+    expect(out.exerciseId).not.toBe("db-bench");
+    expect(out.weight).toBe(77.5);
+  });
+
+  it("legacy slots without an anchor keep the carry behaviour", () => {
+    const legacy = anchoredAccessory();
+    delete (legacy as Partial<ProgramExercise>).rotationAnchor;
+    const out = rotate(legacy);
+    expect(out.weight).toBe(25);
+  });
+
+  it("seedStartingLoads stamps the anchor on every seeded slot", () => {
+    const seeded = seedStartingLoads(
+      [
+        {
+          dayName: "D",
+          dayType: "upper",
+          completed: false,
+          exercises: [
+            makeTestExercise({
+              exerciseId: "bench-press",
+              weight: 0,
+              lastSuccessfulWeight: 0,
+              lastAttemptedWeight: 0,
+              performanceHistory: [],
+            }),
+          ],
+        } as WorkoutDay,
+      ],
+      { bodyweightKg: 80, experience: "beginner", sex: "male" }
+    )[0].exercises[0];
+    expect(seeded.weight).toBeGreaterThan(0);
+    expect(seeded.rotationAnchor).toEqual({
+      exerciseId: "bench-press",
+      weight: seeded.weight,
+    });
+  });
+
+  it("normalizeExercise carries the anchor (field-enumerating read path)", () => {
+    const out = normalizeExercise({
+      name: "X",
+      exerciseId: "db-bench",
+      rotationAnchor: { exerciseId: "db-bench", weight: 20 },
+    });
+    expect(out.rotationAnchor).toEqual({ exerciseId: "db-bench", weight: 20 });
   });
 });

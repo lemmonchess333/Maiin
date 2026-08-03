@@ -373,6 +373,10 @@ export function seedStartingLoads(
         weight: seed,
         lastSuccessfulWeight: seed,
         lastAttemptedWeight: seed,
+        // The rotation anchor: meso rotation scales future variations of
+        // this slot from THIS calibration, never from a prior rotation's
+        // output — the fix for the documented compounding decay.
+        rotationAnchor: { exerciseId: ex.exerciseId, weight: seed },
       };
     }),
   }));
