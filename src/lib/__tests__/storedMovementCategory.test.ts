@@ -1,5 +1,5 @@
 /**
- * Stored movement category — all 151 catalogue exercises, pinned explicitly.
+ * Stored movement category — all 152 catalogue exercises, pinned explicitly.
  *
  * Name-string inference got 27 of them wrong, and the errors were not evenly
  * distributed noise: 38 exercises fell through every keyword rule into the
@@ -30,7 +30,7 @@ describe("stored movement category", () => {
       uncovered,
       `not in STORED_CATEGORY: ${uncovered.join(", ")}`
     ).toEqual([]);
-    expect(EXERCISES.length).toBe(151);
+    expect(EXERCISES.length).toBe(152);
   });
 
   it("rear-delt work is PULL, not push (the balancePushPull corruption)", () => {
