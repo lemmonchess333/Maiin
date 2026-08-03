@@ -72,11 +72,17 @@ const GOAL_PROFILES = Object.freeze({
     volumeMultiplier: 1.0,
     mainProgression: "double",
   },
+  // Same mains as `general`. A deficit is a phase to preserve strength
+  // through, not a reason to train light — Fleck & Kraemer p.179 ("intensity
+  // maintained, volume and frequency reduced"), and strength is load-specific
+  // (Schoenfeld 2017). See the client row for the full reasoning, including
+  // what the evidence does NOT say. Must move with the client: this is the
+  // copy that writes a training block's prescription.
   fat_loss: {
-    mainReps: 12,
-    mainRepsMax: 15,
-    accessoryReps: 15,
-    accessoryRepsMax: 20,
+    mainReps: 8,
+    mainRepsMax: 12,
+    accessoryReps: 12,
+    accessoryRepsMax: 15,
     volumeMultiplier: 1.0,
     mainProgression: "linear",
   },

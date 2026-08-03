@@ -73,16 +73,25 @@ function seedFor(primaryGoal: PrimaryGoal, exerciseId: string): number {
 
 describe("the seed answers to the rep target", () => {
   it("fewer prescribed reps means a heavier cold-start load", () => {
-    // The whole point. `running` mains are 4-6, `hypertrophy` 8-12,
-    // `fat_loss` 12-15 — so the seeded bar weight must be ordered the other
-    // way round. Pre-fix all three were identical.
+    // The whole point: `running` mains are 4-6 and `strength` 5-7, against
+    // `hypertrophy`'s 8-12 — so the seeded bar weight must be ordered the
+    // other way round. Pre-fix all three were identical.
+    //
+    // This originally read running > hypertrophy > fat_loss, which stopped
+    // being a valid ordering the moment fat_loss moved onto the 8-rep anchor
+    // alongside hypertrophy and general. No goal prescribes ABOVE the anchor
+    // any more, so the lighter-for-more-reps direction is now only
+    // demonstrable through the pure function — see `repScaledSeed` below.
     const bench = {
       running: seedFor("running", "bench-press"),
+      strength: seedFor("strength", "bench-press"),
       hypertrophy: seedFor("hypertrophy", "bench-press"),
       fat_loss: seedFor("fat_loss", "bench-press"),
     };
-    expect(bench.running).toBeGreaterThan(bench.hypertrophy);
-    expect(bench.hypertrophy).toBeGreaterThan(bench.fat_loss);
+    expect(bench.running).toBeGreaterThan(bench.strength);
+    expect(bench.strength).toBeGreaterThan(bench.hypertrophy);
+    // Equal, and for a reason worth stating: both sit on the anchor.
+    expect(bench.fat_loss).toBe(bench.hypertrophy);
   });
 
   it("strength was already mis-seeded, and is fixed by the same change", () => {

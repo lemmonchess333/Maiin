@@ -83,11 +83,40 @@ const GOAL_PROFILES: Record<PrimaryGoal, GoalProfile> = {
     volumeMultiplier: 1.0,
     mainProgression: "double",
   },
+  /**
+   * A deficit is a phase to PRESERVE through, not a reason to train light.
+   *
+   * This row used to read 12-15 / 15-20 — the "high reps to get lean" idea,
+   * and it inverts the principle the project's own corpus states. Fleck &
+   * Kraemer p.179, quoted in `lifting-v8-evaluation.md` §3.12: "To maintain
+   * strength gains the INTENSITY should be maintained, but the volume and
+   * frequency of training can be reduced." The old row did the reverse — it
+   * dropped intensity and held volume at 1.0.
+   *
+   * Being precise about what the evidence does and does not say, because the
+   * obvious framing overstates it:
+   *
+   *   - Schoenfeld et al. 2017 (JSCR meta): hypertrophy is SIMILAR across
+   *     load ranges when sets are taken near failure. So 12-15 was never
+   *     wrong for holding muscle, and calling it a myth outright would be.
+   *   - The same meta: maximal strength significantly favours HEAVY loads.
+   *     Strength is load-specific, and a cut is exactly when you are trying
+   *     not to lose it.
+   *   - Roth et al. 2023 (Scand J Med Sci Sports): resistance-training VOLUME
+   *     does not influence lean-mass preservation during energy restriction.
+   *     Which is why the volume half of this is deliberately untouched — see
+   *     `goalVolumeMultiplier` below.
+   *
+   * So: same mains as `general` (8-12), and the accessories come with them.
+   * Nothing here is a fat-loss-specific stimulus, because there is no such
+   * thing — the deficit does the fat loss, the training protects what is
+   * under it.
+   */
   fat_loss: {
-    mainReps: 12,
-    mainRepsMax: 15,
-    accessoryReps: 15,
-    accessoryRepsMax: 20,
+    mainReps: 8,
+    mainRepsMax: 12,
+    accessoryReps: 12,
+    accessoryRepsMax: 15,
     volumeMultiplier: 1.0,
     mainProgression: "linear",
   },
