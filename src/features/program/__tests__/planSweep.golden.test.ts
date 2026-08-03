@@ -216,6 +216,15 @@ describe("KNOWN_DEFECTS — asserted so the snapshot is not read as approval", (
                                                compressed strength/fat-loss
                                                scalings, where the
                                                reconciler's floors bind.
+       (judged, 1:1)     50 over / 55 under  — 2026-08-03 coach-read fixes:
+                                               2-day flips to full-body
+                                               (2×/muscle frequency), direct
+                                               side-delt slots on shoulder-
+                                               focus days, calf-specific
+                                               band (direct-only pricing).
+                                               All 13 fewer unders are real
+                                               volume/pricing corrections,
+                                               not counting changes.
      Tighten whenever they improve; the test fails the moment a change makes
      either worse in the CURRENT unit. */
   it("D-VOL: landmark violations are ratcheted and must only shrink", () => {
@@ -230,7 +239,7 @@ describe("KNOWN_DEFECTS — asserted so the snapshot is not read as approval", (
       50
     );
     expect(low, `${low} configs under a landmark floor`).toBeLessThanOrEqual(
-      68
+      55
     );
 
     // …and it is genuinely not solved, so the ratchet is never read as a pass.
