@@ -21,6 +21,7 @@ import {
   getFirestore,
   connectFirestoreEmulator,
   collection,
+  deleteDoc,
   getDocs,
 } from "firebase/firestore";
 import {
@@ -50,7 +51,9 @@ interface BodyweightRow {
  * rerouted to the emulator. The app is torn down in `finally` so parallel
  * reads don't collide on the default app name.
  */
-async function readBodyweightLogs(): Promise<BodyweightRow[]> {
+async function withBodyweightLogs<T>(
+  fn: (snap: Awaited<ReturnType<typeof getDocs>>) => T | Promise<T>
+): Promise<T> {
   const app = initializeApp(
     { apiKey: "emulator-dummy-key", projectId: "demo-tropos" },
     `verify-bodyweight-${process.hrtime.bigint()}`
@@ -67,16 +70,40 @@ async function readBodyweightLogs(): Promise<BodyweightRow[]> {
     );
     const dbc = getFirestore(app);
     connectFirestoreEmulator(dbc, "127.0.0.1", 8080);
-    const snap = await getDocs(
-      collection(dbc, "users", cred.user.uid, "bodyweightLogs")
+    return await fn(
+      await getDocs(collection(dbc, "users", cred.user.uid, "bodyweightLogs"))
     );
-    return snap.docs.map((d) => ({
-      id: d.id,
-      weight: d.data().weight as number,
-    }));
   } finally {
     await deleteApp(app);
   }
+}
+
+async function readBodyweightLogs(): Promise<BodyweightRow[]> {
+  return withBodyweightLogs((snap) =>
+    snap.docs.map((d) => ({ id: d.id, weight: d.data().weight as number }))
+  );
+}
+
+/**
+ * Empty the collection before each attempt.
+ *
+ * Without this, one failure poisons every retry: the leftover row makes the
+ * FIRST assertion (`afterFirst` has length 1) fail too, so Playwright's
+ * retries can never recover and a transient blip is reported as a hard red.
+ * That is exactly what happened on the 2026-08-03 00:00 UTC run — the real
+ * fault was a midnight straddle lasting seconds, but all three attempts
+ * failed and only the first one failed for the actual reason.
+ */
+async function clearBodyweightLogs(): Promise<void> {
+  await withBodyweightLogs(async (snap) => {
+    await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)));
+  });
+}
+
+/** The browser's LOCAL calendar day, in the same `YYYY-MM-DD` shape the
+ *  app uses for the doc id. */
+function localDay(page: Page): Promise<string> {
+  return page.evaluate(() => new Date().toLocaleDateString("en-CA"));
 }
 
 async function logWeight(page: Page, value: string): Promise<void> {
@@ -100,6 +127,7 @@ test.describe("P1 bodyweight upsert — one row per local day", () => {
   );
 
   test.beforeEach(async ({ page }) => {
+    await clearBodyweightLogs();
     // The emulator warning banner intercepts pointer events over the
     // bottom-right of the viewport, which can block the Save button. Hide
     // it before the app paints.
@@ -125,17 +153,46 @@ test.describe("P1 bodyweight upsert — one row per local day", () => {
 
     // First weigh-in → exactly one date-keyed row.
     await logWeight(page, "80.4");
+    const dayOfFirst = await localDay(page);
     const afterFirst = await readBodyweightLogs();
     expect(afterFirst).toHaveLength(1);
     const firstId = afterFirst[0].id;
     const firstWeight = afterFirst[0].weight;
 
-    // Correction on the same local day → still ONE row (the upsert contract),
-    // same doc id, updated value.
     await logWeight(page, "80.1");
+    const dayOfSecond = await localDay(page);
     const afterSecond = await readBodyweightLogs();
-    expect(afterSecond).toHaveLength(1);
-    expect(afterSecond[0].id).toBe(firstId);
-    expect(afterSecond[0].weight).not.toBe(firstWeight);
+
+    // The doc id IS the local date — that is the whole contract. Before PR
+    // #1605 each weigh-in wrote an auto-id doc, so this is the assertion the
+    // regression would break, and it holds regardless of when the run
+    // happens.
+    for (const row of afterSecond)
+      expect(row.id).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+
+    if (dayOfSecond === dayOfFirst) {
+      // The case being guarded: same local day → still ONE row, same doc id,
+      // updated value.
+      expect(afterSecond).toHaveLength(1);
+      expect(afterSecond[0].id).toBe(firstId);
+      expect(afterSecond[0].weight).not.toBe(firstWeight);
+    } else {
+      // The run straddled local midnight. Two rows is then CORRECT — the
+      // premise "same local day" simply did not hold, and asserting one row
+      // would be testing the clock, not the upsert. Still check the useful
+      // half: one row per day, each keyed by its own date.
+      //
+      // Kept as a branch rather than a skip so a genuine append regression at
+      // 00:00 is still caught; a skip would make the suite blind for a minute
+      // each day.
+      expect(afterSecond).toHaveLength(2);
+      expect(afterSecond.map((r) => r.id).sort()).toEqual(
+        [dayOfFirst, dayOfSecond].sort()
+      );
+    }
+
+    // Either way, the LATEST value must live under the day it was logged on.
+    const latest = afterSecond.find((r) => r.id === dayOfSecond);
+    expect(latest?.weight).toBe(80.1);
   });
 });
