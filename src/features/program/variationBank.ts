@@ -91,6 +91,19 @@ interface ExerciseOption {
    * built around and the one the form content covers most thoroughly.
    */
   complexity?: MovementComplexity;
+  /**
+   * The movement's MINIMUM effective load is the lifter's whole bodyweight —
+   * it cannot be scaled down for someone who can't yet lift it (a pull-up has
+   * no empty-bar equivalent). For BEGINNERS this overrides even the primary
+   * exemption above: the exemption's own rationale is that a primary scales to
+   * any load ("a beginner's squat is a barbell squat" — with an empty bar),
+   * and a bodyweight-floor movement is precisely where that rationale fails.
+   * The 2026-08-03 beginner coach-read measured the cost: every beginner plan
+   * prescribed 8-15-rep pull-up sets, which the median novice cannot perform
+   * at all — where every reference novice programme prescribes the pulldown
+   * or row regression. Ignored for intermediate/advanced.
+   */
+  bodyweightFloor?: boolean;
 }
 
 export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
@@ -233,7 +246,7 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     },
   ],
   vertical_pull: [
-    { id: "pull-ups", primary: true },
+    { id: "pull-ups", primary: true, bodyweightFloor: true },
     {
       id: "lat-pulldown",
       loadFactor: 0.6,
@@ -245,6 +258,7 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
       loadFactor: 0,
       primary: false,
       role: "size",
+      bodyweightFloor: true,
     },
     {
       id: "single-arm-lat-pulldown",
@@ -252,6 +266,17 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
       loadFactor: 0.25,
       primary: false,
       role: "technique",
+    },
+    // Appended for the beginner floor gate (see `bodyweightFloor`): when a
+    // beginner's pull day already holds the lat pulldown, the gate needs a
+    // second scalable vertical pull to land on or the un-performable pull-up
+    // stays. Appended LAST so full-gym non-gated picks are unchanged (same
+    // measured rule as the HOME/MINIMAL block below).
+    {
+      id: "straight-arm-pulldown",
+      loadFactor: 0.3,
+      primary: false,
+      role: "size",
     },
   ],
   knee_dominant: [
@@ -455,7 +480,13 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
   core: [
     { id: "cable-crunch", primary: true },
     {
+      // "leg-raise" is the HANGING leg raise (the catalogue name says so).
+      // Tagged technical (2026-08-03 beginner coach-read): a dead hang with
+      // pelvic control is a genuine skill+capacity cost, and the equipment
+      // filter was handing it to home/minimal BEGINNERS as the first
+      // available cable-crunch substitute. Intermediates keep it.
       id: "leg-raise",
+      complexity: "technical",
       loadFactor: 0,
       primary: false,
       role: "size",
@@ -480,6 +511,17 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
       loadFactor: 0.3,
       primary: false,
       role: "size",
+    },
+    // Appended so a BEGINNER at home/minimal has a simple bodyweight core
+    // option: with the hanging leg raise tagged technical, the pool's other
+    // non-primaries are all technical (and pallof needs a cable anyway), so
+    // without this the filter's ungated fallback handed the novice the
+    // hanging raise regardless. Appended LAST — full-gym picks unchanged.
+    {
+      id: "dead-bug",
+      loadFactor: 0,
+      primary: false,
+      role: "technique",
     },
   ],
 };

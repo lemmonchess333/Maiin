@@ -329,8 +329,18 @@ describe("one exercise record (11b)", () => {
     // Only PROGRAMME facts belong here: how this generator uses the movement.
     // Anything describing the MOVEMENT itself (name, muscles, equipment,
     // lengthenedBias, instructions, difficulty) belongs to the catalogue.
+    // `bodyweightFloor` is a prescription-gating fact like `complexity` —
+    // whether THIS generator may offer the movement to a beginner — not a
+    // movement description, so it lives here (2026-08-03 beginner audit).
     expect(fields.sort()).toEqual(
-      ["complexity", "id", "loadFactor", "primary", "role"].sort()
+      [
+        "bodyweightFloor",
+        "complexity",
+        "id",
+        "loadFactor",
+        "primary",
+        "role",
+      ].sort()
     );
   });
 
