@@ -92,6 +92,15 @@ export interface Workout {
   durationMinutes: number;
   notes: string;
   createdAt: Timestamp;
+  /** The `activities` doc this session was posted as, if it was posted.
+   *
+   *  Sharing is reachable from two places now — the post-save composer and
+   *  `/workout/:id` — and both call `postActivity`, which `addDoc`s a fresh
+   *  activity every time. Without a marker on the workout, sharing the same
+   *  session from both would put two posts in the feed for one workout.
+   *  Written best-effort after the post lands; a failed write can only cause
+   *  a duplicate post, never a lost workout. */
+  sharedActivityId?: string;
 }
 
 /** Total kg lifted in a session, derived from its sets. saveWorkout computes
