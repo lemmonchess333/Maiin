@@ -353,6 +353,11 @@ function buildRunPlan(
     }
     const racePlan = generateRacePlanV2({
       weekSchedule,
+      /* Run15 — plan CREATION, so "none" is the right answer and not a
+         placeholder: a plan being built for the first time is not a re-entry.
+         A returning runner reaches the generator through the rollover or the
+         realign, both of which resolve the real class. */
+      recentLayoff: "none",
       raceGoal: input.raceGoal,
       weeklyRunDays: input.weeklyRunDays,
       currentDate: input.currentDate,

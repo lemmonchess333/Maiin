@@ -6,6 +6,7 @@
 
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 import type { ScheduledRunDay, RunPlan } from "./programTypes";
+import type { LayoffClass } from "./layoffDetection";
 import { HARD_RUN_TYPES } from "./programTypes";
 import {
   generateScheduledRunId,
@@ -778,6 +779,20 @@ export interface RacePlanV2Input {
   currentDate: string;
   /** Local "YYYY-MM-DD" Sunday of week 0. */
   weekStart: string;
+  /**
+   * How long the runner has actually been away (Run15).
+   *
+   * REQUIRED, deliberately — not optional-with-a-default. Every other input
+   * here describes the race or a static preference, so before this the
+   * generator could not tell ten weeks of training from zero and handed a
+   * returning runner mid-block volume (measured: a 25 km long run in week one
+   * back after ten weeks off). Making it required means a new call site is a
+   * COMPILE error rather than a silent regression to the mid-block plan —
+   * which is the failure mode `RunTuning`'s own doc warns about, enforced by
+   * tsc instead of by discipline. Sites with no run data pass "none"
+   * explicitly, so the assumption is recorded where it is made.
+   */
+  recentLayoff: LayoffClass;
   /** Pgm6 knobs. Optional and defaulting to `standard`/`standard`
    *  (byte-identical to pre-Pgm6 output) so legacy callers and
    *  profiles without the fields change nothing — but EVERY live
@@ -893,6 +908,8 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   // week-over-week jumps). belowFloor implies compressed by construction
   // (floor <= minWeeks for every distance).
   const belowFloor = blockWeeks < getRaceFloorWeeks(input.raceGoal.distance);
+  /* Run15 — see `recentLayoff` on the input. */
+  const detrained = input.recentLayoff === "detrained";
 
   const runEligibleSlots = input.weekSchedule
     .filter((d) => d.type === "run" || d.type === "both")
@@ -1037,7 +1054,15 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
           totalWeeks: blockWeeks,
           phase,
           baseLongKm: config.baseLongKm,
-          peakLongKm: config.peakLongKm,
+          /* Run15 — a detrained runner ramps toward BASE, not peak.
+             Deliberately not the `belowFloor` branch above: that one forces
+             every non-race week into taper phase, where `pickLongTemplateId`
+             short-circuits to a literal `easy_30` and no long run happens at
+             all. Fine as a 2-3 week bridge; wrong for someone with six weeks
+             of runway, who needs a long run that PROGRESSES within a safe
+             ceiling. Capping peak at base keeps the existing ramp machinery
+             and simply lowers what it climbs toward. */
+          peakLongKm: detrained ? config.baseLongKm : config.peakLongKm,
           taperWeeks: TAPER_WEEKS_BY_DISTANCE[input.raceGoal.distance],
           volume: tuning.volume,
         }),
@@ -1063,6 +1088,19 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
       // rule stays keyed on compression alone.
       const skipQualityEntirely =
         compressed && totalWeeks < config.minWeeks / 2;
+      /* Run15 — a returning runner gets no hard sessions at all. Intensity is
+         simultaneously the least effective way to rebuild an aerobic base and
+         the most likely to injure: tempo work in the first six weeks of a
+         programme is associated with HIGHER injury rates, which is exactly
+         what this generator used to emit (a `tempo_40` in week one back).
+
+         This gates BOTH the build branch and the taper branch. Taper is not an
+         exception: its session exists to SHARPEN an established base, and a
+         runner three weeks off the road has no base for it to sharpen. Gating
+         only `build` was measurably not enough — a detrained marathoner with a
+         short horizon spends every week in taper, so the build gate never
+         fires and they were handed `8x400` in weeks 2-3 regardless. */
+      const detrainedSkipsQuality = detrained;
       const hardCapApplies = compressed || gentler;
       const allowSecondQuality = tuning.difficulty === "harder" && !compressed;
 
@@ -1081,7 +1119,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
         );
       } else if (phase === "build") {
         const allowQuality = !hardCapApplies || w % 2 === 0;
-        if (allowQuality && !skipQualityEntirely) {
+        if (allowQuality && !skipQualityEntirely && !detrainedSkipsQuality) {
           // 1 quality + rest easy (or all easy if compressed and
           // the long run already consumed the week's quality budget).
           // Gentler forces the quality to tempo — no intervals.
@@ -1153,9 +1191,10 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
       } else if (phase === "taper") {
         // Taper: 1 short quality + easy. Compressed plans skip the
         // taper quality entirely (already low volume); gentler drops
-        // it too (freshness over sharpening). Harder does NOT add
+        // it too (freshness over sharpening); a detrained runner drops
+        // it because there is no base to sharpen. Harder does NOT add
         // taper work — taper is about arriving fresh.
-        if (!compressed && !gentler) {
+        if (!compressed && !gentler && !detrainedSkipsQuality) {
           week.push(
             buildRunDayV2({
               dayIndex: remaining[0],

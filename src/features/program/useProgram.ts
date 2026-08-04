@@ -29,6 +29,8 @@ import { isProgressionHeld, represcribeWorkouts } from "./represcribe";
 import { blockWeekOf } from "./trainingBlock";
 import { normalizeProgramState, transitionStatus } from "./programTypes";
 import { resolveRecoveryExit } from "./runModeResolution";
+import { fetchRecentLayoff } from "./fetchRecentLayoff";
+import type { LayoffClass } from "./layoffDetection";
 import { workoutDayPrecondition } from "./programCommandPrecondition";
 import {
   migrateProgramState,
@@ -181,6 +183,7 @@ function makeRunPlanRecord(
  */
 function regenerateRacePlan({
   raceGoal,
+  recentLayoff,
   weekSchedule,
   weeklyRunDays,
   currentDate,
@@ -203,6 +206,11 @@ function regenerateRacePlan({
    *  tuned plan back to standard. Derive via
    *  `runTuningFromProfile(profile)`. */
   tuning: RunTuning;
+  /** Run15 — how long the runner has been away. Required for the same reason
+   *  it is required on `RacePlanV2Input`: a regen site that forgets it would
+   *  silently rebuild a returning runner's week at mid-block volume, and a
+   *  compile error is a better guard than a convention. */
+  recentLayoff: LayoffClass;
   carry?: {
     currentWeek?: number;
     totalWeeks?: number;
@@ -240,6 +248,7 @@ function regenerateRacePlan({
     currentDate,
     weekStart,
     tuning,
+    recentLayoff,
     // The block's original length, so the generator emits the week for where
     // the runner actually IS rather than week 0 of a fresh block. Without it
     // `weeks[0]` — the only week any caller persists — is always a base week,
@@ -316,6 +325,31 @@ export function useProgram() {
   const { currentWeek: perfWeek } = usePerformanceWeeks(1);
   const recovery = recoveryStateFrom(perfWeek?.signals);
   const [programState, setProgramState] = useState<ProgramState | null>(null);
+  /**
+   * Run15 — how long the runner has been away, resolved once per session and
+   * consumed by every race-plan regen below.
+   *
+   * Held as state rather than fetched per regen because all seven regen sites
+   * need the same answer and several are synchronous user actions. Seeded
+   * "none", which is the pre-Run15 behaviour: a regen that fires before the
+   * read lands rebuilds exactly as it always did, and the next one is
+   * correct. Failing toward the old behaviour is the safe direction — the
+   * opposite seed would drop a trained runner into a re-entry week on every
+   * cold start.
+   *
+   * Stored WITH the uid it was read for, and matched rather than reset on
+   * change. On an account switch the effect refires, but the old value would
+   * still be readable until the new read lands — long enough for a
+   * regeneration to hand user B user A's layoff. Pairing the two makes that
+   * structurally impossible instead of merely unlikely, which is the shape
+   * CLAUDE.md's account-switch rule asks for.
+   */
+  const [layoffRead, setLayoffRead] = useState<{
+    uid: string | null;
+    cls: LayoffClass;
+  }>({ uid: null, cls: "none" });
+  const recentLayoff: LayoffClass =
+    layoffRead.uid && layoffRead.uid === user?.uid ? layoffRead.cls : "none";
   const [loading, setLoading] = useState(true);
   const [viewingHistoryIndex, setViewingHistoryIndex] = useState<number | null>(
     null
@@ -480,6 +514,7 @@ export function useProgram() {
           const runTarget = getWeeklyRunTarget(profile) || 3;
           const weekStart = localWeekKey();
           const { runDays, runPlan } = regenerateRacePlan({
+            recentLayoff,
             tuning: runTuningFromProfile(profile),
             raceGoal: profile.raceGoal,
             weekSchedule,
@@ -535,6 +570,7 @@ export function useProgram() {
           const runTarget = getWeeklyRunTarget(profile) || 3;
           const weekStart = localWeekKey();
           ({ runDays, runPlan } = regenerateRacePlan({
+            recentLayoff,
             tuning: runTuningFromProfile(profile),
             raceGoal: profile.raceGoal,
             weekSchedule,
@@ -831,6 +867,7 @@ export function useProgram() {
         nextWeekCurrentDate <= profile.raceGoal.targetDate
       ) {
         const r = regenerateRacePlan({
+          recentLayoff,
           tuning: runTuningFromProfile(profile),
           raceGoal: profile.raceGoal,
           weekSchedule,
@@ -902,6 +939,24 @@ export function useProgram() {
    * in the current week"): the archive says what actually happened, so the
    * adherence-sensitive readers downstream are not fed a lie.
    */
+  /* Resolve the layoff once the user is known. Bounded one-shot read — see
+     `fetchRecentLayoff` for why this is not a subscription (useClaimMap, the
+     existing runs subscriber, calls useProgram, so this hook cannot consume
+     it). Race-prep only: a freeform runner has no plan for a layoff to
+     reshape, so the read is not worth making for them. */
+  useEffect(() => {
+    if (!user?.uid) return;
+    if (!profile?.runMode || profile.runMode === "freeform") return;
+    let cancelled = false;
+    const uid = user.uid;
+    void fetchRecentLayoff(uid, localDateString(new Date())).then((cls) => {
+      if (!cancelled) setLayoffRead({ uid, cls });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.uid, profile?.runMode]);
+
   useEffect(() => {
     if (!programState || !profile) return;
 
@@ -1382,6 +1437,7 @@ export function useProgram() {
         nextWeekCurrentDate <= profile.raceGoal.targetDate
       ) {
         const r = regenerateRacePlan({
+          recentLayoff,
           tuning: runTuningFromProfile(profile),
           raceGoal: profile.raceGoal,
           weekSchedule,
@@ -2147,6 +2203,7 @@ export function useProgram() {
         const weekStart = localWeekKey();
         if (profile.runMode === "race_prep" && profile.raceGoal) {
           ({ runDays, runPlan } = regenerateRacePlan({
+            recentLayoff,
             tuning: runTuningFromProfile(profile),
             raceGoal: profile.raceGoal,
             weekSchedule: effectiveSchedule,
@@ -2285,6 +2342,7 @@ export function useProgram() {
         // passed) and we're re-rendering race_prep, drop phase
         // and recoveryEndDate.
         ({ runDays, runPlan } = regenerateRacePlan({
+          recentLayoff,
           tuning: overrides?.tuning ?? runTuningFromProfile(profile),
           raceGoal: profile.raceGoal,
           weekSchedule,
@@ -3004,6 +3062,7 @@ export function useProgram() {
     }
     const prevRunPlan = programState.runPlan;
     const { runDays, runPlan, manualCompletions } = regenerateRacePlan({
+      recentLayoff,
       tuning: runTuningFromProfile(profile),
       raceGoal: profile.raceGoal,
       weekSchedule: profile.weekSchedule ?? [],

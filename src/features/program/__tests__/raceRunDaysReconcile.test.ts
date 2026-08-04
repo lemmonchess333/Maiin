@@ -33,6 +33,7 @@ function freshWeekFor(
 ) {
   const weekStart = localWeekKey(new Date(`${todayKey}T12:00:00`));
   return generateRacePlanV2({
+    recentLayoff: "none",
     weekSchedule: SCHEDULE,
     raceGoal: { distance, targetDate: raceDate },
     weeklyRunDays: 3,

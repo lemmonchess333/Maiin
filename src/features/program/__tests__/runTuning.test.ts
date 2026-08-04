@@ -47,6 +47,7 @@ function plan(args: {
   tuning?: RunTuning;
 }) {
   return generateRacePlanV2({
+    recentLayoff: "none",
     weekSchedule: generateSchedule(args.liftDays ?? 2, args.runDays ?? 3),
     raceGoal: {
       distance: args.distance,

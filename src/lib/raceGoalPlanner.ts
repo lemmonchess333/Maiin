@@ -151,6 +151,13 @@ export function getRaceGoalPlannerState(
   const weekSchedule = generateSchedule(liftDays, weeklyRunDays);
   const weekStart = localWeekKey(now);
   const plan = generateRacePlanV2({
+    /* Run15 — this is the date-picker PREVIEW, which answers "is there time
+       for this race?", a question about the calendar rather than about the
+       runner. Threading a layoff here would make the preview disagree with
+       the plan the user gets on save only when they are ALSO detrained, which
+       is the confusing half of the truth. The re-entry decision belongs to
+       the realign flow, where it can be explained. */
+    recentLayoff: "none",
     weekSchedule,
     raceGoal: { distance, targetDate },
     weeklyRunDays,
