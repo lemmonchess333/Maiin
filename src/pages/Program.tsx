@@ -26,6 +26,7 @@ import ExpressSessionSheet from "@/components/program/ExpressSessionSheet";
 import {
   buildExpressSession,
   draftScopeForVariant,
+  estimateSessionMinutes,
   type SessionVariant,
 } from "@/features/program/expressSession";
 import {
@@ -697,8 +698,11 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
 
   // Session metadata
   const exerciseCount = selectedWorkout?.exercises.length ?? 0;
-  const estimatedMinutes = Math.round(
-    (selectedWorkout?.exercises.reduce((s, ex) => s + ex.sets, 0) ?? 0) * 2.5
+  // Was an inline copy of the old sets x 2.5 formula. A second copy of a
+  // shared rule is the drift this repo keeps paying for — and it would now
+  // disagree with the chooser sheet on the same screen.
+  const estimatedMinutes = estimateSessionMinutes(
+    selectedWorkout?.exercises ?? []
   );
   const totalVolume =
     selectedWorkout?.exercises.reduce(
