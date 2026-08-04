@@ -42,7 +42,11 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import ShareCardSheet from "@/components/share/ShareCardSheet";
 import CircleShareSheet from "@/components/social/CircleShareSheet";
 import WorkoutFeedShareSheet from "@/components/workout/WorkoutFeedShareSheet";
-import { workoutTonnageKg, type Workout } from "@/hooks/useWorkouts";
+import {
+  workoutTonnageKg,
+  workoutTitle,
+  type Workout,
+} from "@/hooks/useWorkouts";
 
 /** One stat in the primary row. Mirrors RunDetail's StatPill. */
 function StatPill({
@@ -152,10 +156,7 @@ export default function WorkoutDetail() {
   const exercises = workout.exercises ?? [];
   const totalSets = exercises.reduce((n, ex) => n + workingSets(ex).length, 0);
 
-  // `notes` carries the session's identity for programme saves
-  // ("Push — Chest Focus — Programme Week 3"); the leading segment is the
-  // day name. Freeform/manual saves may have neither.
-  const title = workout.notes?.split(" — ")[0]?.trim() || "Workout";
+  const title = workoutTitle(workout);
 
   const dateObj = workout.createdAt?.toDate?.() ?? new Date(workout.date);
   const dateStr = dateObj.toLocaleDateString("en-GB", {

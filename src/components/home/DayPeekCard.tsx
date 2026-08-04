@@ -24,6 +24,7 @@ import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
 import { cn } from "@/lib/utils";
 import { IconButton } from "@/components/ui/IconButton";
 import ExtrasExpandSheet from "@/components/program/ExtrasExpandSheet";
+import { workoutTitle } from "@/hooks/useWorkouts";
 
 /** Q5 P71 cap — DayPeekCard mirrors RunWeekStrip; up to 2 extras
  *  shown inline before an overflow "+N more" tap-through. */
@@ -105,6 +106,9 @@ export default function DayPeekCard({
      *  Optional because callers historically passed a projection; a row
      *  without one simply isn't tappable. */
     id?: string;
+    /** Session identity, used to label a day's rows when it holds more than
+     *  one saved workout. Titled through the shared `workoutTitle`. */
+    notes?: string;
     exercises?: { sets?: { weightKg?: number; reps?: number }[] }[];
     durationMinutes?: number;
   }[];
@@ -166,6 +170,9 @@ export default function DayPeekCard({
     });
   });
   const hasW = workouts.length > 0;
+  /** More than one saved session on this date — each gets its own named row
+   *  instead of the ambiguous "N sessions" collapse. */
+  const multiSession = workouts.length > 1;
   const hasM = dailyTotals.mealCount > 0;
   const hasRun = resolved.run.runDay !== null;
   // Cal-A: surface the PLANNED session by name so tapping a day tells
@@ -236,17 +243,42 @@ export default function DayPeekCard({
             )}
           {hasW || hasM || hasRun || hasExtras || plannedLiftName ? (
             <div className="space-y-1 text-xs">
-              {(plannedLiftName || hasW) && (
+              {/* Several sessions on one day get one row EACH, mirroring how
+                  the run extras below render per-run rather than collapsing.
+                  The old "N sessions" line had no honest single destination,
+                  so it wasn't tappable at all — but the answer to "which one?"
+                  is to stop asking the question, not to leave both unreachable.
+                  Each row is named and goes to its own workout. */}
+              {multiSession
+                ? workouts.map((w, i) => (
+                    <LiftRowShell
+                      key={w.id ?? i}
+                      workoutId={w.id ?? null}
+                      label={workoutTitle(w)}
+                    >
+                      <Dumbbell className="size-3.5 shrink-0 text-lifting" />
+                      <span className="text-foreground truncate">
+                        {workoutTitle(w)}
+                        {(w.durationMinutes ?? 0) > 0 && (
+                          <span className="text-muted-foreground font-mono tabular-nums">
+                            {" · "}
+                            {w.durationMinutes} min
+                          </span>
+                        )}
+                      </span>
+                    </LiftRowShell>
+                  ))
+                : null}
+              {(plannedLiftName || hasW) && !multiSession && (
                 /* Tap-through to the saved session, matching the run rows
                    below (which have navigated to /run/:runId since Q5).
                    Lifts had no detail route until 2026-08-04, so this row
                    was informational-only — the asymmetry was the reason,
                    not a design choice.
 
-                   Gated on EXACTLY one saved workout: with several the row
-                   collapses them into one line ("N sessions"), so there is
-                   no honest single destination. Those days stay as they
-                   were rather than silently picking one. */
+                   Still not a button when the day is PLANNED with nothing
+                   saved: there is no record to open yet, and an affordance
+                   that does nothing is worse than none. */
                 <LiftRowShell
                   workoutId={
                     workouts.length === 1 ? (workouts[0].id ?? null) : null
