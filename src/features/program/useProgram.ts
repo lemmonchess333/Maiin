@@ -7,7 +7,7 @@ import {
   deleteField,
   writeBatch,
 } from "firebase/firestore";
-import { setDocGuarded } from "@/lib/firestoreWrite";
+import { setDocGuarded, updateDocGuarded } from "@/lib/firestoreWrite";
 import { stripUndefined } from "@/lib/firestoreGuards";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
@@ -1193,7 +1193,19 @@ export function useProgram() {
             }),
           };
           try {
-            await postActivity(payload);
+            const activityId = await postActivity(payload);
+            // Mark the workout as posted so `/workout/:id` shows "Shared to
+            // your feed" instead of offering to post it a second time —
+            // `postActivity` addDocs a fresh activity every call, so without
+            // this one session could land twice in the feed. Best-effort:
+            // a failed marker costs a possible duplicate, never the post.
+            try {
+              await updateDocGuarded(workoutRef, {
+                sharedActivityId: activityId,
+              });
+            } catch (markErr) {
+              logger.warn("[Program] shared marker write failed:", markErr);
+            }
           } catch (socialErr) {
             // Network failures (offline, transient) — queue and let
             // ShareComposerSheet's drain effect retry on reconnect.
