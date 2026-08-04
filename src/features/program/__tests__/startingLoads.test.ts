@@ -202,6 +202,95 @@ describe("seedStartingLoads", () => {
     expect(out[0].exercises[0].weight).toBe(35);
   });
 
+  // The permanently-uncalibrated trap (2026-08-04). "Has history" was the
+  // whole calibration test, so a slot that reached the user at 0 kg got
+  // logged at 0 kg and then could never be repaired: history was non-empty,
+  // so this pass skipped it forever. The operator's live plan showed the
+  // endgame — a Barbell Curl and an Overhead Press prescribed at 0 kg, a
+  // session totalling "0kg VOLUME", and a plateau modal reporting "you've
+  // been at 0kg for 3 sessions". Zeroes in history are the sentinel repeated
+  // back, not evidence of calibration.
+  it("repairs a lift whose history is all zeroes — history alone isn't calibration", () => {
+    const out = seedStartingLoads(
+      [
+        day([
+          ex({
+            movementCategory: "knee_dominant",
+            weight: 0,
+            lastSuccessfulWeight: 0,
+            lastAttemptedWeight: 0,
+            performanceHistory: [
+              {
+                date: "2026-08-01",
+                weight: 0,
+                repsCompleted: 8,
+                repsTarget: 8,
+              },
+              {
+                date: "2026-08-02",
+                weight: 0,
+                repsCompleted: 8,
+                repsTarget: 8,
+              },
+            ],
+          }),
+        ]),
+      ],
+      ctx()
+    );
+    expect(out[0].exercises[0].weight).toBe(55);
+  });
+
+  it("never re-seeds a lift whose history carried real load", () => {
+    // The counter-pin: the repair must not reach a calibrated lift, or it
+    // would overwrite a user's actual working weight on every regenerate.
+    const out = seedStartingLoads(
+      [
+        day([
+          ex({
+            movementCategory: "knee_dominant",
+            weight: 0,
+            lastSuccessfulWeight: 0,
+            lastAttemptedWeight: 0,
+            performanceHistory: [
+              {
+                date: "2026-08-01",
+                weight: 90,
+                repsCompleted: 5,
+                repsTarget: 5,
+              },
+            ],
+          }),
+        ]),
+      ],
+      ctx()
+    );
+    expect(out[0].exercises[0].weight).toBe(0);
+  });
+
+  it("never re-seeds a lift that currently carries load", () => {
+    const out = seedStartingLoads(
+      [
+        day([
+          ex({
+            movementCategory: "knee_dominant",
+            weight: 100,
+            performanceHistory: [
+              {
+                date: "2026-08-01",
+                weight: 0,
+                repsCompleted: 8,
+                repsTarget: 8,
+              },
+            ],
+          }),
+        ]),
+      ],
+      ctx()
+    );
+    expect(out[0].exercises[0].weight).toBe(100);
+  });
+
   it("reweights untrained MAIN lifts to the bodyweight-relative seed", () => {
     const out = seedStartingLoads(
       [day([ex({ movementCategory: "knee_dominant", weight: 80 })])],
