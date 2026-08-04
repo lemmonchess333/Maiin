@@ -40,7 +40,10 @@ const day = (exercises: ProgramExercise[], dayName = "Upper"): WorkoutDay => ({
   dayName,
   dayType: "lift",
   exercises,
-  completed: false,
+  // Trained. These fixtures describe a lifter mid-stall (`plateauCount: 2`),
+  // a state only reachable by actually training, and `advanceWeek` only rolls
+  // the block — and only runs the adjustment rule — for a week that happened.
+  completed: true,
 });
 
 describe("scaleLoadForReps", () => {
