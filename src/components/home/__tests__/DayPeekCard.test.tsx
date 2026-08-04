@@ -643,3 +643,83 @@ describe("DayPeekCard — Q5 extras rows (chunk B3g)", () => {
     ).toBeInTheDocument();
   });
 });
+
+/**
+ * The lift row's tap-through to `/workout/:id`.
+ *
+ * Runs have navigated from this card to `/run/:runId` since Q5; lifts had
+ * nowhere to go, because no lift detail route existed. That asymmetry — not
+ * a design choice — is why the lift row was informational only, and it made
+ * a saved session unreachable from Home.
+ *
+ * The rows are gated on there being ONE honest destination. A day showing a
+ * planned lift with nothing saved has no record to open, and a day whose
+ * several saved sessions collapse into "N sessions" has no single one — a
+ * button in either case is an affordance that does nothing.
+ */
+describe("DayPeekCard — lift row tap-through", () => {
+  const LIFT_WEEK = makeSchedule([
+    "rest",
+    "rest",
+    "lift",
+    "rest",
+    "rest",
+    "rest",
+    "rest",
+  ]);
+
+  function savedWorkout(id: string) {
+    return {
+      id,
+      durationMinutes: 52,
+      exercises: [{ sets: [{ weightKg: 60, reps: 8 }] }],
+    };
+  }
+
+  function renderWithWorkouts(workouts: ReturnType<typeof savedWorkout>[]) {
+    const tueKey = dayOfThisWeek(2);
+    render(
+      <DayPeekCard
+        dateKey={tueKey}
+        profile={makeProfile(LIFT_WEEK)}
+        programState={makeProgramState([])}
+        claimMap={emptyClaimMap}
+        extras={emptyExtras}
+        workouts={workouts}
+        dailyTotals={emptyTotals()}
+        onClose={vi.fn()}
+      />
+    );
+  }
+
+  beforeEach(() => {
+    navigateMock.mockClear();
+  });
+
+  it("navigates to the saved workout when the day has exactly one", () => {
+    renderWithWorkouts([savedWorkout("programme-abc123")]);
+
+    fireEvent.click(screen.getByRole("button", { name: /open .* details/i }));
+
+    expect(navigateMock).toHaveBeenCalledWith("/workout/programme-abc123");
+  });
+
+  it("is NOT a button when several sessions collapse into one row", () => {
+    // The row reads "2 sessions" — picking one of them silently would send
+    // the user to a workout they didn't ask for.
+    renderWithWorkouts([savedWorkout("w-1"), savedWorkout("w-2")]);
+
+    expect(
+      screen.queryByRole("button", { name: /open .* details/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it("is NOT a button for a planned lift with nothing saved", () => {
+    // There is no record to open yet.
+    renderWithWorkouts([]);
+
+    expect(
+      screen.queryByRole("button", { name: /open .* details/i })
+    ).not.toBeInTheDocument();
+  });
+});

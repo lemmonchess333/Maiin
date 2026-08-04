@@ -102,3 +102,43 @@ describe("SessionCompleteScreen — header stats agree with each other", () => {
     expect(screen.getByText("Legs — Deadlift Focus")).toBeInTheDocument();
   });
 });
+
+/**
+ * No share affordance on this screen — the phantom-post regression pin.
+ *
+ * Until 2026-08-04 this screen carried "Share Workout" (image card) and
+ * "Share to Circle". Both fired BEFORE the save, because "Save Workout" is a
+ * separate button — so "Share to Circle" → "Close without saving" published
+ * a `session_completed` event for a session that was never written. Sharing
+ * moved to `/workout/:id`, where the record exists first and that sequence
+ * is impossible.
+ *
+ * This asserts absence, which is normally a weak test. It earns its place
+ * because the thing it forbids is a defect that already shipped once, and
+ * the natural instinct when adding a feature here is to put a share button
+ * back on the celebration screen.
+ */
+describe("SessionCompleteScreen — sharing lives on the saved record", () => {
+  const twoWorking = [
+    [
+      { reps: 12, weight: 10, completed: true, type: "working" },
+      { reps: 12, weight: 10, completed: true, type: "working" },
+    ],
+  ];
+
+  it("offers no way to share a session that has not been saved yet", () => {
+    renderScreen(twoWorking);
+
+    expect(screen.queryByRole("button", { name: /share/i })).toBeNull();
+    expect(screen.queryByText(/share to circle/i)).toBeNull();
+  });
+
+  it("still offers exactly Save and Close", () => {
+    renderScreen(twoWorking);
+
+    expect(screen.getByRole("button", { name: /save workout/i })).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: /close without saving/i })
+    ).toBeTruthy();
+  });
+});
