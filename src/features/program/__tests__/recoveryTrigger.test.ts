@@ -71,7 +71,12 @@ const day = (exercises: ProgramExercise[], over: Partial<WorkoutDay> = {}) =>
   ({
     dayName: "D",
     dayType: "upper",
-    completed: false,
+    // Trained, because these fixtures carry a logged `performanceHistory` —
+    // the MRV signal only exists because the user did the work. `advanceWeek`
+    // withholds a deload from a week with no completed session, so a fixture
+    // asserting an escalated deload has to represent a week that happened.
+    // (`over` still lets a test say otherwise.)
+    completed: true,
     exercises,
     ...over,
   }) as WorkoutDay;
