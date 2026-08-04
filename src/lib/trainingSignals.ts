@@ -110,20 +110,33 @@ export function trainingSignalsForNutrition(
   if (maxDayVolume <= 0) return ZERO;
 
   // isDeload: reconcile the two authorities.
-  //  - currentPhase === "deload" is the engine's MATERIALIZED state (set on
-  //    deload weeks at programEngine.ts ~1104).
+  //  - currentPhase is the engine's MATERIALIZED state — what this week's plan
+  //    ACTUALLY is, written by `advanceWeek` as "deload" or "progression".
   //  - generateWeekPrescription(weekNumber).deload is the deterministic RULE
-  //    (every 4th week).
-  // They normally agree. When they don't — e.g. an onboarding doc still on
-  // currentPhase "base" while weekNumber has advanced into a deload week, or
-  // vice-versa — treat EITHER as deload. Easing protein is the safe direction;
-  // a stale currentPhase shouldn't suppress a deserved ease.
+  //    for deriving the NEXT week, every 4th.
+  //
+  // The rule is not a description of the current week, and since 2026-08-04
+  // the two can legitimately disagree: `advanceWeek` holds `weekNumber` on a
+  // week the user did not train, so someone who rolled into a deload week and
+  // then missed it sits at weekNumber 4 with a full-volume plan and
+  // currentPhase "progression". A bare OR read that as a deload and eased
+  // their macros while they trained a normal week.
+  //
+  // So the materialized phase WINS whenever the engine wrote it. The fallback
+  // survives for the case the OR was actually protecting: a pre-engine
+  // document — onboarding writes `currentPhase: "base"` — whose weekNumber has
+  // advanced into a deload week with no materialized phase to consult. There,
+  // easing is still the safe direction.
+  const ENGINE_PHASES = new Set(["deload", "progression"]);
+  const phaseIsMaterialized = ENGINE_PHASES.has(program.currentPhase ?? "");
   const phaseDeload = program.currentPhase === "deload";
   const prescriptionDeload =
     typeof program.weekNumber === "number"
       ? generateWeekPrescription(program.weekNumber).deload
       : false;
-  const isDeload = phaseDeload || prescriptionDeload;
+  const isDeload = phaseIsMaterialized
+    ? phaseDeload
+    : phaseDeload || prescriptionDeload;
 
   // Deload overrides the goal-derived phase: it eases protein (PHASE_PROTEIN
   // deload = 1.8) and drops the strength carb bump. Otherwise the user's
