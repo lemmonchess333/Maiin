@@ -1304,16 +1304,29 @@ export function useProgram() {
 
     // Backlog #8: the deload recipe follows training age (Helms H4).
     // Backlog #9: plus the joint plateau x recovery adjustment rule.
-    // D1: stamp the CURRENT calendar week, not the next one. The anchor means
-    // "which calendar week these workouts belong to", and a user finishing
-    // early is still inside this one — so the automatic rollover stays quiet
-    // until the calendar genuinely moves on, instead of firing again days
-    // later on top of the advance the user just asked for.
+    // D1 (revised 2026-08-04): stamp the NEXT calendar week, so a manual
+    // advance BUYS a week rather than borrowing the rest of this one.
+    //
+    // The original stamped `localWeekKey()` — the current week — reasoning
+    // that a user finishing early is still inside it. But the rollover fires
+    // on `anchor < localWeekKey()`, so the current-week anchor is already
+    // stale by the next Sunday: advance on Wednesday and the automatic
+    // rollover fires four days later, on top of the advance the user just
+    // asked for. The new week got four days instead of seven, and for anyone
+    // who habitually finishes early the whole periodization compresses —
+    // deloads arriving every ~2 calendar weeks instead of every 4th
+    // programme week, which is a training defect, not a display one.
+    //
+    // Anchoring to the next week key means the automatic rollover stays
+    // quiet through that week and fires the Sunday after, so the week the
+    // user just advanced into is never silently cut short. If they finish
+    // early again they simply advance again — which is the whole point of
+    // the button.
     const advanced = advanceWeek(
       programState,
       profile?.experience,
       recovery,
-      localWeekKey()
+      localWeekKey(addLocalDays(new Date(), 7))
     );
 
     // Refresh run days for new week. PR-0b-ii: V2 writers + next-
