@@ -124,22 +124,26 @@ export function clearShareDefault(uid: string, type: ShareType): void {
   writeAlways(uid, type, null);
 }
 
+/** Sets the saved default WITHOUT going through the composer sheet.
+ *
+ *  The sheet was the only writer until 2026-08-04, which made the setting
+ *  reachable in exactly one direction: you could arrive at a default by
+ *  finishing a session and ticking a box, and Settings could only take it
+ *  away again. A user who wanted "never share my workouts" had to finish a
+ *  workout to say so. Settings owns both directions now. */
+export function setShareDefault(
+  uid: string,
+  type: ShareType,
+  value: ShareVisibility | "never"
+): void {
+  writeAlways(uid, type, value);
+}
+
 /** Reads the saved "Always do this" preference, or null if the user has
  *  never ticked it for this type. Settings renders it so the choice is
  *  visible and reversible. */
 export function getShareDefault(uid: string, type: ShareType): AlwaysPref {
   return readAlways(uid, type);
-}
-
-/** Test-only: seed a saved default without driving the whole sheet flow.
- *  Exists so tests don't hard-code the localStorage key format, which is
- *  private to this module (and uid-scoped — see `prefKey`). */
-export function __setShareDefault(
-  uid: string,
-  type: ShareType,
-  value: AlwaysPref
-): void {
-  writeAlways(uid, type, value);
 }
 
 // ── compose / resolve ────────────────────────────────────────────
