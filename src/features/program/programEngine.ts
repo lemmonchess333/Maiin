@@ -2506,13 +2506,48 @@ export function advanceWeek(
    */
   nextWeekKey?: string
 ): ProgramState {
-  // Cap at 52 weeks (1 year) then recycle — the 4-week periodization cycle
-  // continues via modulo, but the number stays meaningful for UI display
-  const nextWeek = state.weekNumber >= 52 ? 1 : state.weekNumber + 1;
+  /* Did the week being rolled OUT of actually happen?
+     `liftWeekKey` tracks where the user is in TIME; `weekNumber` tracks where
+     they are in the TRAINING BLOCK. Those are different things, and conflating
+     them is what put a returning lifter on the hardest week of the mesocycle.
+     See the block comment on `weekWasTrained` below for the measurement. */
+  const weekWasTrained = state.workouts.some((day) => day.completed);
+
+  /* Cap at 52 weeks (1 year) then recycle — the 4-week periodization cycle
+     continues via modulo, but the number stays meaningful for UI display.
+
+     An untrained week HOLDS the number. A mesocycle accumulates training, so a
+     week with no session accumulated nothing and did not move the user through
+     the block. Measured before the change: a lifter on week 3 who disappears
+     for 12 weeks came back at week 15 → `weekInMeso` 3 → accessories at
+     base+1 (4,4,3,4 against a base of 3,3,2,3). Their first session back was
+     the TOP of the volume ramp, which is exactly backwards for someone
+     returning from a layoff — and it is the same root confusion as the
+     untrained-deload bug, just pointing the other way.
+
+     Holding it means a returning user resumes at the position they left, with
+     the volume shape they left, which is what "resume your programme" should
+     mean. The calendar anchor still advances every iteration, so the rollover
+     loop still terminates and nobody is stuck re-rolling the same week. */
+  const nextWeek = !weekWasTrained
+    ? state.weekNumber
+    : state.weekNumber >= 52
+      ? 1
+      : state.weekNumber + 1;
   const prescription = generateWeekPrescription(nextWeek);
 
-  const snapshot = { weekNumber: state.weekNumber, workouts: state.workouts };
-  const history = [...(state.weekHistory ?? []), snapshot].slice(-8);
+  /* Archive only weeks that happened. `weekHistory` is capped at 8, so
+     archiving absent weeks would let a 12-week catch-up evict every real
+     week the user trained and replace it with eight copies of an empty one —
+     an archive that says nothing happened for two months is not the "honest
+     record" the unattended-days trade-off was defending; that reasoning is
+     about a week the user was PRESENT for and left unfinished. */
+  const history = weekWasTrained
+    ? [
+        ...(state.weekHistory ?? []),
+        { weekNumber: state.weekNumber, workouts: state.workouts },
+      ].slice(-8)
+    : (state.weekHistory ?? []);
 
   // Reset BOTH completed and skipped for the new week. Carrying
   // `skipped: true` forward meant a user who skipped Day 3 last week
@@ -2597,9 +2632,10 @@ export function advanceWeek(
      deloading early beats deloading late) everywhere that bias is meaningful.
 
      Note this withholds the RECIPE only. The rollover itself is untouched:
-     the week number still advances, `weekHistory` still archives, and the
-     normal weekly reshape still runs. Nobody gets stuck. */
-  const weekWasTrained = state.workouts.some((day) => day.completed);
+     the calendar anchor still advances and the normal weekly reshape still
+     runs, so nobody gets stuck. (`weekWasTrained` is computed at the top of
+     this function, where it also decides whether the week number and the
+     history archive move.) */
   const applyDeloadThisWeek =
     (prescription.deload || escalateWholeBody) && weekWasTrained;
 
