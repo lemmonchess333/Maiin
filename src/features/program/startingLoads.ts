@@ -338,8 +338,24 @@ export function seedStartingLoads(
   return workouts.map((day) => ({
     ...day,
     exercises: day.exercises.map((ex: ProgramExercise) => {
-      const untrained = (ex.performanceHistory?.length ?? 0) === 0;
-      if (!untrained) return ex;
+      // "Has history" was the whole calibration test, and it let an
+      // UNCALIBRATED lift become permanently uncalibrated: a slot that
+      // reaches the user at 0 kg gets logged at 0 kg, history is now
+      // non-empty, and this pass refuses to touch it ever again. The
+      // operator's own plan showed the endgame — a Barbell Curl and an
+      // Overhead Press prescribed at 0 kg, a session totalling "0kg VOLUME",
+      // and a plateau modal reporting "you've been at 0kg for 3 sessions".
+      //
+      // History only proves calibration if some of it carried LOAD. Zeroes
+      // are the sentinel repeated back, not evidence. Bodyweight movements
+      // need no exception here: `startingWeightForExercise` returns 0 for
+      // them and the `seed <= 0` guard below already leaves them alone.
+      if ((ex.performanceHistory?.length ?? 0) > 0) {
+        const carriedLoad =
+          (ex.weight ?? 0) > 0 ||
+          (ex.performanceHistory ?? []).some((r) => (r.weight ?? 0) > 0);
+        if (carriedLoad) return ex; // genuinely calibrated — never touch it
+      }
       const seed = startingWeightForExercise(
         ex.exerciseId,
         ex.movementCategory,

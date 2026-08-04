@@ -314,6 +314,48 @@ describe("body (trend + projection reuse + hide-the-number)", () => {
 describe("buildWeekPulse (Rev1 PR2)", () => {
   const CURRENT = "2026-06-28"; // Sunday-start current week
 
+  // The completion screens mount this card BEFORE dispatching their save, and
+  // the lift screen unmounts as soon as the save resolves — so a user who had
+  // just finished the week's first session was shown "0 of 6 lifts", and it
+  // never corrected. `pendingLifts` is how the caller counts that session.
+  it("counts a finished-but-unsaved session via pendingLifts", () => {
+    const p = buildWeekPulse({
+      weekKey: CURRENT,
+      workouts: [],
+      runs: [],
+      plannedLifts: 6,
+      plannedRuns: null,
+      streak: 0,
+      pendingLifts: 1,
+    });
+    expect(p?.lifts).toEqual({ done: 1, planned: 6 });
+  });
+
+  it("adds pendingLifts to already-saved sessions rather than replacing them", () => {
+    const p = buildWeekPulse({
+      weekKey: CURRENT,
+      workouts: [{ date: "2026-06-29" }, { date: "2026-07-01" }],
+      runs: [],
+      plannedLifts: 6,
+      plannedRuns: null,
+      streak: 0,
+      pendingLifts: 1,
+    });
+    expect(p?.lifts).toEqual({ done: 3, planned: 6 });
+  });
+
+  it("omitting pendingLifts is unchanged behaviour", () => {
+    const p = buildWeekPulse({
+      weekKey: CURRENT,
+      workouts: [{ date: "2026-06-29" }],
+      runs: [],
+      plannedLifts: 6,
+      plannedRuns: null,
+      streak: 0,
+    });
+    expect(p?.lifts).toEqual({ done: 1, planned: 6 });
+  });
+
   it("returns both lanes with planned comparisons when plans exist", () => {
     const p = buildWeekPulse({
       weekKey: CURRENT,
