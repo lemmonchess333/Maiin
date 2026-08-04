@@ -7,6 +7,7 @@ import {
   weeklyVolumeByJudgementMuscle,
   judgementLandmark,
   classifyVolume,
+  JUDGEMENT_MUSCLE_ORDER,
   type JudgementMuscle,
   type VolumeStatus,
 } from "@/features/program/volumeModel";
@@ -71,15 +72,26 @@ export default function WeeklyVolumeCard({
   const volume = weeklyVolumeByJudgementMuscle(workouts);
   if (volume.length === 0) return null;
 
-  const rows = volume.map(({ muscle, sets }) => {
+  /* Zero-volume groups are the ones that MOST need saying, and they were the
+     only ones the card could not say. `weeklyVolumeByJudgementMuscle` returns
+     only groups with sets > 0, so a plan containing no direct side-delt or
+     calf work rendered twelve rows instead of fourteen and the absence read
+     as nothing at all — no row, no warning, no number. That is exactly
+     backwards: 4 sets shows as "below target" while 0 sets is invisible.
+     (Found 2026-08-04 on the operator's own live plan, which carries zero of
+     both because its slots predate the generator gaining them — an existing
+     plan takes planBuilder's preserve branch and never receives generator
+     improvements.)
+
+     Only groups with a real floor are surfaced at zero: front delts carry
+     low = 0 because pressing covers them, so a "0 · on target" row there
+     would be noise rather than a finding. */
+  const tallied = new Map(volume.map((v) => [v.muscle, v.sets]));
+  const rows = JUDGEMENT_MUSCLE_ORDER.map((muscle) => {
+    const sets = tallied.get(muscle) ?? 0;
     const landmark = judgementLandmark(primaryGoal, muscle);
-    return {
-      muscle,
-      sets,
-      landmark,
-      status: classifyVolume(sets, landmark),
-    };
-  });
+    return { muscle, sets, landmark, status: classifyVolume(sets, landmark) };
+  }).filter(({ sets, landmark }) => sets > 0 || landmark.low > 0);
   // A group whose band has no floor (front delts: pressing covers it) can
   // never be "below target", so the count stays meaningful per group.
   const lowCount = rows.filter(({ status }) => status === "low").length;

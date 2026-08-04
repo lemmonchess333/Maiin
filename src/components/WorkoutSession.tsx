@@ -65,6 +65,10 @@ import Tooltip from "@/components/ui/Tooltip";
 import PlateCalculatorSheet from "@/components/workout/PlateCalculatorSheet";
 import { validateSet } from "@/lib/setValidation";
 import { getExerciseById } from "@/lib/exercises";
+import {
+  detectStall,
+  type LoggedWorkout,
+} from "@/features/program/stallDetection";
 import { platesPerSide } from "@/lib/plateCalculator";
 import {
   useWorkoutDraft,
@@ -598,6 +602,8 @@ export default function WorkoutSession({
   const [stallExercise, setStallExercise] = useState<{
     name: string;
     weight: number;
+    /** Bodyweight lifts stall on REPS, so the modal must not say "at 0kg". */
+    isBodyweight: boolean;
   } | null>(null);
 
   // Undo last set. PR E: extended with optional PR-context so undo
@@ -1021,7 +1027,7 @@ export default function WorkoutSession({
       const snap = await getDocs(
         query(workoutsRef, orderBy("date", "desc"), limit(20))
       );
-      const history = snap.docs.map((d) => d.data());
+      const history = snap.docs.map((d) => d.data()) as LoggedWorkout[];
 
       for (const ex of day.exercises) {
         // Check localStorage cooldown
@@ -1030,37 +1036,15 @@ export default function WorkoutSession({
         if (lastPopup && Date.now() - Number(lastPopup) < 3 * 7 * 86400000)
           continue; // 3 weeks cooldown
 
-        const lastThree = history
-          .filter((w) =>
-            (w.exercises || []).some(
-              (e: { exerciseName: string }) => e.exerciseName === ex.name
-            )
-          )
-          .slice(0, 3);
-
-        if (lastThree.length < 3) continue;
-
-        const weights = lastThree.map((w) => {
-          const found = (w.exercises || []).find(
-            (e: { exerciseName: string }) => e.exerciseName === ex.name
-          );
-          return (
-            found?.sets
-              ?.map((s: { weightKg?: number }) => s.weightKg)
-              .join(",") || ""
-          );
-        });
-
-        if (
-          weights[0] &&
-          weights[0] === weights[1] &&
-          weights[1] === weights[2]
-        ) {
-          const w =
-            lastThree[0].exercises.find(
-              (e: { exerciseName: string }) => e.exerciseName === ex.name
-            )?.sets?.[0]?.weightKg || 0;
-          setStallExercise({ name: ex.name, weight: w });
+        // The predicate lives in `stallDetection.ts` — pure, and therefore
+        // testable. Inline here it fired on the uncalibrated 0 kg sentinel and
+        // nothing could catch it: this component has no test file.
+        const stall = detectStall(
+          { name: ex.name, exerciseId: ex.exerciseId },
+          history
+        );
+        if (stall) {
+          setStallExercise(stall);
           break;
         }
       }
@@ -1175,7 +1159,6 @@ export default function WorkoutSession({
       <>
         <SessionCompleteScreen
           dayName={day.dayName}
-          dayType={day.dayType}
           exercises={day.exercises}
           setLogs={setLogs}
           firedPRs={firedPRs}
@@ -1807,18 +1790,31 @@ export default function WorkoutSession({
             document.body
           )}
 
-        {/* Undo last set */}
+        {/* Undo last set. Deliberately NOT the warning register: `--warning`
+            resolves to amber in dark and to within one RGB unit of the
+            nutrition/food identity orange in light, so painting undo with it
+            put a food colour on a lifting surface AND told the user something
+            had gone wrong. Undoing a mis-tapped set is a benign low-emphasis
+            action — `secondary` per the Button-variant table, routed through
+            the primitive so it inherits the 44px floor, the focus ring and the
+            0.97 press instead of hand-rolling them. */}
         <AnimatePresence>
           {lastCompleted && (
-            <motion.button
+            <motion.div
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
-              onClick={handleUndo}
-              className="mx-auto flex items-center gap-1.5 min-h-11 px-4 rounded-xl text-xs font-medium bg-warning/15 text-warning active:scale-95"
+              className="mx-auto"
             >
-              <RotateCcw className="size-3.5" /> Undo last set
-            </motion.button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleUndo}
+                leftIcon={<RotateCcw className="size-3.5" />}
+              >
+                Undo last set
+              </Button>
+            </motion.div>
           )}
         </AnimatePresence>
 

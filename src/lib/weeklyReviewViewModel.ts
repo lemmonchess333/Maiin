@@ -53,7 +53,6 @@ export function inWeek(date: string, weekKey: string): boolean {
   return date >= start && date <= end;
 }
 
-
 /** "22–28 Jun" / "28 Jun – 4 Jul" — explicit range label (Rev1: the header
  *  always names its window, killing "my fresh Sunday run isn't in it"). */
 export function formatWeekRange(start: string, end: string): string {
@@ -193,15 +192,27 @@ export function buildWeekPulse(args: {
   plannedLifts: number | null;
   plannedRuns: number | null;
   streak: number;
+  /**
+   * Sessions finished but NOT yet persisted, counted into `done`.
+   *
+   * The completion screens mount this card BEFORE dispatching their save —
+   * and the lift screen unmounts as soon as the save resolves, so no
+   * post-save refetch can ever be seen there. Without this the card told a
+   * user who had just finished their first session of the week "0 of 6
+   * lifts", which reads as though the session did not count.
+   */
+  pendingLifts?: number;
 }): WeekPulse | null {
   const workouts = args.workouts.filter((w) => inWeek(w.date, args.weekKey));
   const eligibleRuns = args.runs.filter(
     (r) => r.eligible && inWeek(r.date, args.weekKey)
   );
 
+  const pendingLifts = Math.max(0, args.pendingLifts ?? 0);
+  const liftsDone = workouts.length + pendingLifts;
   const lifts =
-    workouts.length > 0 || args.plannedLifts !== null
-      ? { done: workouts.length, planned: args.plannedLifts }
+    liftsDone > 0 || args.plannedLifts !== null
+      ? { done: liftsDone, planned: args.plannedLifts }
       : null;
   const runs =
     eligibleRuns.length > 0 || args.plannedRuns !== null
@@ -246,9 +257,7 @@ export function verdictFor(args: {
 
 /* ── Assembly ─────────────────────────────────────────────────── */
 
-export function buildWeeklyReview(
-  data: WeeklyReviewData
-): WeeklyReview | null {
+export function buildWeeklyReview(data: WeeklyReviewData): WeeklyReview | null {
   const { weekKey } = data;
   const range = weekBounds(weekKey);
 
@@ -316,9 +325,7 @@ export function buildWeeklyReview(
       ? {
           done: workouts.length,
           planned: data.plannedLifts,
-          tonnageKg: Math.round(
-            workouts.reduce((s, w) => s + w.tonnageKg, 0)
-          ),
+          tonnageKg: Math.round(workouts.reduce((s, w) => s + w.tonnageKg, 0)),
         }
       : null;
   const runLane =
@@ -358,9 +365,7 @@ export function buildWeeklyReview(
     const upToWeekEnd = weighInsAsc.filter((w) => w.date <= range.end);
     const series = calculateEMA(upToWeekEnd);
     const last = series[series.length - 1];
-    const beforeWeek = [...series]
-      .reverse()
-      .find((p) => p.date < range.start);
+    const beforeWeek = [...series].reverse().find((p) => p.date < range.start);
     const baseline = beforeWeek ?? series[0];
     const deltaKg = Math.round((last.trend - baseline.trend) * 10) / 10;
     const direction =
