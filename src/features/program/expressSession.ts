@@ -96,12 +96,54 @@ export interface ExpressPlan {
   trim: ExpressTrim;
 }
 
+/**
+ * Time a session will actually take, in minutes.
+ *
+ * The previous model was `totalWorkingSets × 2.5` and nothing else. It
+ * omitted three real costs, which is why the operator reported sessions
+ * estimated at ~20 minutes running an hour or more:
+ *
+ *   - WARM-UP SETS. `warmupRamp` generates 1-3 ramp sets for every loaded
+ *     exercise and the logger shows them as "W" rows, so the user performs
+ *     them — but the estimate counted none of them.
+ *   - REST. 2.5 min/set is a blend that only holds at one rest length. A
+ *     lift prescribing `restSeconds: 180` costs nearly twice a lift resting
+ *     60s, and the model could not tell them apart.
+ *   - SETUP. Walking to the rack, loading plates, adjusting a machine.
+ *     Small per exercise, but it is per EXERCISE, so a 6-lift day pays it
+ *     six times.
+ *
+ * Constants come from what the app itself prescribes, not from invented
+ * numbers: the logger's own rest default and rest options, and the ramp
+ * `warmupRamp` actually emits.
+ */
+
+/** Executing one working set — the reps themselves, plus racking. */
+const WORK_SECONDS_PER_SET = 45;
+/** Rest when the exercise prescribes none — the logger's own default. */
+const DEFAULT_REST_SECONDS = 90;
+/** A warm-up set is light and briefly rested; it is not free. */
+const WARMUP_SECONDS_PER_SET = 60;
+/** Getting to the equipment and setting it up, once per exercise. */
+const SETUP_SECONDS_PER_EXERCISE = 90;
+
 export function estimateSessionMinutes(
-  exercises: ReadonlyArray<Pick<ProgramExercise, "sets">>
+  exercises: ReadonlyArray<
+    Pick<ProgramExercise, "sets"> &
+      Partial<Pick<ProgramExercise, "restSeconds" | "weight" | "exerciseId">>
+  >
 ): number {
-  return Math.round(
-    exercises.reduce((s, ex) => s + ex.sets, 0) * MINUTES_PER_SET
-  );
+  const seconds = exercises.reduce((total, ex) => {
+    const rest = ex.restSeconds ?? DEFAULT_REST_SECONDS;
+    const working = ex.sets * (WORK_SECONDS_PER_SET + rest);
+    // Loaded lifts ramp; bodyweight and uncalibrated ones do not (the same
+    // condition `warmupRamp` itself applies). Counted as a flat 2 rather
+    // than by calling warmupRamp, so this stays a pure function of the
+    // prescription and does not need the catalogue.
+    const warmup = (ex.weight ?? 0) > 0 ? 2 * WARMUP_SECONDS_PER_SET : 0;
+    return total + SETUP_SECONDS_PER_EXERCISE + warmup + working;
+  }, 0);
+  return Math.round(seconds / 60);
 }
 
 function isAccessoryExercise(ex: ProgramExercise): boolean {
@@ -135,6 +177,18 @@ export function buildExpressSession(
   if (variant === "full") return finish();
 
   const budget = EXPRESS_BUDGET_MINUTES[variant];
+  // DELIBERATE SEAM, not drift: the trim loop measures the budget in WORKING
+  // SETS at the historical 2.5 min/set blend, while `estimatedMinutes`
+  // reports the rest-aware wall-clock. They are allowed to disagree because
+  // they answer different questions — "how much should I cut?" versus "how
+  // long will this take?" — and unifying them is a PRODUCT decision, not a
+  // refactor: measured 2026-08-04, an express30 priced at true wall-clock
+  // drops 3 of 5 exercises where it used to drop 2, because 30 real minutes
+  // is only ~10 working sets once rest is counted. That may well be the right
+  // answer (a 30-minute session genuinely is short) but it changes what the
+  // feature does, so it needs deciding rather than falling out of an estimate
+  // fix. Until then the budget stays on the set-count basis it was tuned for
+  // and the label tells the truth.
   const totalSets = () => items.reduce((s, it) => s + it.ex.sets, 0);
   const overBudget = () => totalSets() * MINUTES_PER_SET > budget;
 

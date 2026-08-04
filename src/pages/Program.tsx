@@ -4,7 +4,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useProgram } from "@/features/program/useProgram";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import { useAuth } from "@/lib/auth";
-import { useSubscription } from "@/lib/subscription";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import ProgrammeRunSection from "@/components/program/ProgrammeRunSection";
@@ -26,6 +25,7 @@ import ExpressSessionSheet from "@/components/program/ExpressSessionSheet";
 import {
   buildExpressSession,
   draftScopeForVariant,
+  estimateSessionMinutes,
   type SessionVariant,
 } from "@/features/program/expressSession";
 import {
@@ -108,8 +108,7 @@ import { runHeaderLine } from "@/lib/runHeaderLine";
  */
 
 export default function Program() {
-  const { isPro } = useSubscription();
-  return <ProgramInner phaseLocked={!isPro} />;
+  return <ProgramInner />;
 }
 
 function formatVolume(kg: number): string {
@@ -122,7 +121,7 @@ function formatVolume(kg: number): string {
   return `${Math.round(kg)}kg`;
 }
 
-function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
+function ProgramInner() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const {
@@ -697,8 +696,11 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
 
   // Session metadata
   const exerciseCount = selectedWorkout?.exercises.length ?? 0;
-  const estimatedMinutes = Math.round(
-    (selectedWorkout?.exercises.reduce((s, ex) => s + ex.sets, 0) ?? 0) * 2.5
+  // Was an inline copy of the old sets x 2.5 formula. A second copy of a
+  // shared rule is the drift this repo keeps paying for — and it would now
+  // disagree with the chooser sheet on the same screen.
+  const estimatedMinutes = estimateSessionMinutes(
+    selectedWorkout?.exercises ?? []
   );
   const totalVolume =
     selectedWorkout?.exercises.reduce(
@@ -1055,21 +1057,25 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
       )}
 
       {/* ── Advance Week (all complete, current week) — lift tab only. */}
-      {activeTab === "lift" &&
-        allComplete &&
-        !isViewingHistory &&
-        !phaseLocked && (
-          <div className="pt-4 pb-2">
-            <Button
-              fullWidth
-              onClick={handleAdvanceWeek}
-              disabled={advancing}
-              leftIcon={<FastForward className="size-4" />}
-            >
-              {advancing ? "Advancing..." : "Advance to Next Week"}
-            </Button>
-          </div>
-        )}
+      {/* Free, deliberately (owner call 2026-08-04). This was the last
+          surviving `phaseLocked` gate, and gating it was the wrong trade: it
+          is not a premium capability, it is the only way to tell the app you
+          finished your week early. Without it a user who trains six days by
+          Wednesday has no forward affordance at all and waits for Sunday —
+          and the operator's own trial had expired, so THE single production
+          user could never advance manually. */}
+      {activeTab === "lift" && allComplete && !isViewingHistory && (
+        <div className="pt-4 pb-2">
+          <Button
+            fullWidth
+            onClick={handleAdvanceWeek}
+            disabled={advancing}
+            leftIcon={<FastForward className="size-4" />}
+          >
+            {advancing ? "Advancing..." : "Advance to Next Week"}
+          </Button>
+        </div>
+      )}
 
       {/* ── RUN tab — ProgrammeRunSection (PR-4). The section owns
             every state (freeform hero / structured next-run /

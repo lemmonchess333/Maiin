@@ -76,7 +76,14 @@ export default function SessionCompleteScreen({
       ? `${(totalVolume / 1000).toFixed(1)}k`
       : `${Math.round(totalVolume)}`;
 
-  const totalSetsCompleted = setLogs.flat().filter((s) => s.completed).length;
+  // WORKING sets only. This was the one header stat that did not exclude
+  // warm-ups, so it counted the auto-generated ramp that VOLUME and the
+  // per-exercise "n/m sets" rows both correctly leave out — a session showing
+  // "Cable Crunch 2/2 sets" and 240kg reported SETS 4. Three numbers, one
+  // session, two different definitions of a set.
+  const totalSetsCompleted = setLogs
+    .flat()
+    .filter((s) => s.completed && s.type !== "warmup").length;
 
   const prDetails = Array.from(firedPRs.entries()).flatMap(([name, buckets]) =>
     buckets.map((bucket) => ({ name, label: repBucketLabel(bucket) }))

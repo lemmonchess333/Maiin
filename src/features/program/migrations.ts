@@ -30,14 +30,20 @@
 
 import type {
   LegacyScheduledRunStatus,
+  ProgramExercise,
   ProgramState,
   ScheduledRunDay,
   ScheduledRunStatus,
+  WorkoutDay,
 } from "./programTypes";
 import {
   CURRENT_PROGRAM_SCHEMA_VERSION,
   CURRENT_WEEKSCHEDULE_VERSION,
+  generateInstanceId,
 } from "./programTypes";
+import { primaryJudgementForExercise } from "./volumeModel";
+import { exerciseDisplayName } from "./variationBank";
+import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import { generateSchedule, isValidWeekSchedule } from "@/lib/scheduleUtils";
 import {
   generateScheduledRunId,
@@ -48,6 +54,179 @@ import {
 } from "@/lib/dateHelpers";
 import { isScheduledRunCompleted } from "@/lib/scheduledRunStatus";
 import { repUnitForExerciseId } from "./repUnits";
+
+/**
+ * A MAIN lift's minimum set anchor — mirrors volumeModel's
+ * RECONCILE_MAIN_FLOOR, which states the reasoning: the progression anchor
+ * needs enough exposures to progress on, and 3 is the lowest main-set
+ * prescription anywhere in the corpus.
+ */
+const MAIN_SET_ANCHOR_FLOOR = 3;
+
+/**
+ * One-time coverage backfill (schema v3, 2026-08-04).
+ *
+ * The generator gained pinned lateral-raise and calf slots earlier today, but
+ * an EXISTING plan takes planBuilder's preserve branch and never receives
+ * generator improvements — so the operator's live week-11 programme carries
+ * zero direct side-delt and zero direct calf work, and would have carried it
+ * forever. The weekly volume card was changed to SAY so rather than hide it,
+ * which is the right default; this is the repair the owner then asked for.
+ *
+ * Version-gated, and that gating is the whole design. It runs exactly once
+ * per document, so it fixes plans built before the slots existed WITHOUT
+ * becoming a pass that re-adds an exercise every time someone deletes it. A
+ * user who removes their calf raises after this migration keeps them removed
+ * — which is precisely the objection that made a silent, always-on backfill
+ * the wrong answer.
+ *
+ * Coverage is judged with `primaryJudgementForExercise`, the same attribution
+ * the volume card uses, so the backfill and the card can never disagree about
+ * whether a group is trained. Slots are APPENDED (never inserted), because
+ * accessory state carry is positional — `carryExistingAccessories` matches on
+ * (dayIndex, exIndex, category), so inserting mid-day would shift every later
+ * slot onto the wrong lift.
+ */
+function backfillMissingCoverage(workouts: WorkoutDay[]): WorkoutDay[] {
+  const trained = (muscle: string): boolean =>
+    workouts.some((d) =>
+      d.exercises.some(
+        (ex) => (ex.sets ?? 0) > 0 && primaryJudgementForExercise(ex) === muscle
+      )
+    );
+
+  const named = (
+    exerciseId: string,
+    sets: number,
+    reps: number,
+    weight: number
+  ): ProgramExercise => ({
+    name: exerciseDisplayName(exerciseId),
+    exerciseId,
+    instanceId: generateInstanceId(),
+    movementCategory: inferMovementCategory(
+      exerciseDisplayName(exerciseId),
+      exerciseId
+    ),
+    sets,
+    reps,
+    baseReps: reps,
+    baseSets: sets,
+    weight,
+    progressionType: "double",
+    lastSuccessfulWeight: weight,
+    lastAttemptedWeight: weight,
+    consecutiveFailures: 0,
+    plateauCount: 0,
+    performanceHistory: [],
+    lastPerformance: null,
+    isAccessory: true,
+  });
+
+  // Which days can host what: calves belong on a day that already trains
+  // legs, side delts on a day that already presses overhead. Falling back to
+  // "any day" would put a calf raise on a pull day, which is worse than the
+  // gap it repairs.
+  const legDays: number[] = [];
+  const pressDays: number[] = [];
+  workouts.forEach((d, i) => {
+    const cats = d.exercises.map((e) => e.movementCategory);
+    if (cats.includes("knee_dominant") || cats.includes("hip_dominant")) {
+      legDays.push(i);
+    }
+    if (cats.includes("vertical_push")) pressDays.push(i);
+  });
+
+  const additions = new Map<number, ProgramExercise[]>();
+  const add = (dayIdx: number, ex: ProgramExercise) => {
+    const list = additions.get(dayIdx) ?? [];
+    list.push(ex);
+    additions.set(dayIdx, list);
+  };
+
+  if (!trained("Calves") && legDays.length > 0) {
+    // Standing first (gastrocnemius), seated on a second leg day if the week
+    // has one — the same standing/seated split the builders author.
+    add(legDays[0], named("standing-calf-raise", 3, 12, 40));
+    if (legDays.length > 1) {
+      add(legDays[1], named("seated-calf-raise", 3, 15, 30));
+    }
+  }
+
+  if (!trained("SideDelts") && pressDays.length > 0) {
+    add(pressDays[0], named("lateral-raise", 3, 12, 8));
+  }
+
+  if (additions.size === 0) return workouts;
+
+  return workouts.map((day, i) => {
+    const extra = additions.get(i);
+    return extra ? { ...day, exercises: [...day.exercises, ...extra] } : day;
+  });
+}
+
+/**
+ * Repair the permanent decay left by the pre-2026-07-28 deload.
+ *
+ * The old `applyDeload` cut `sets: max(2, sets - 1)` AND `weight: weight *
+ * 0.85` on every 4th week, wrote the result straight to stored state, and had
+ * nothing to restore either from — no `baseSets` anchor, no
+ * `preDeloadWeight` stash. So each mesocycle permanently shrank the plan on
+ * both axes, and the damage compounded.
+ *
+ * Replayed over a week-11 user it reproduces the operator's screenshots
+ * exactly: Barbell Row 4x60kg -> (wk4) 3x50kg -> (wk8) 2x42.5kg, and Cable
+ * Crunch 3x15kg -> 2x12.5kg -> 2x10kg. Reps are untouched by that recipe,
+ * which is why 8 and 15 survived. The user never changed what they put on the
+ * bar — "Last: 60 kg x 12" — only the app's number decayed underneath them.
+ *
+ * `fa19724a` fixed the engine forward-only. Worse, its lazy anchor
+ * (`ex.baseSets ?? ex.sets`) then CAPTURED the already-decayed value as the
+ * permanent anchor, so `applyWeeklyVolumeShape` now re-pins the shrunken
+ * number every week. Without this pass the damage is not merely unrepaired,
+ * it is cemented.
+ *
+ * The repair is deliberately conservative and idempotent:
+ *
+ *   LOAD — restored to `lastSuccessfulWeight`, which is the honest handle:
+ *     `applyProgression` writes it from the weight the user ACTUALLY lifted,
+ *     and `applyDeload` spreads `...ex` so it was never cut. `Math.max` means
+ *     this can only ever raise a load, never lower one, and re-running is a
+ *     no-op. If a user genuinely trains lighter now, their successes have
+ *     already moved `lastSuccessfulWeight` down with them, so nothing is
+ *     forced back up.
+ *
+ *   SETS — only MAINS, and only up to the main floor. The true original set
+ *     count is NOT recoverable from programState (nothing stored it before
+ *     the anchor existed), so this does not pretend to restore it: it lifts
+ *     mains off the deload floor of 2 to the codebase's own stated minimum of
+ *     3 and stamps that as `baseSets` so the lazy fallback can never
+ *     re-capture a decayed value. Accessories legitimately sit at 2, so they
+ *     keep whatever anchor they have. A full return to the generator's
+ *     prescription needs a regenerate, which is the user's call.
+ */
+function repairDeloadDecay(ex: ProgramExercise): ProgramExercise {
+  const anchor = ex.baseSets ?? ex.sets;
+  const isMain = ex.isAccessory !== true;
+  const repairedAnchor = isMain
+    ? Math.max(anchor, MAIN_SET_ANCHOR_FLOOR)
+    : anchor;
+  const repairedWeight = Math.max(ex.weight ?? 0, ex.lastSuccessfulWeight ?? 0);
+
+  const anchorMoved = repairedAnchor !== anchor;
+  const weightMoved = repairedWeight !== (ex.weight ?? 0);
+  const anchorMissing = ex.baseSets === undefined;
+  if (!anchorMoved && !weightMoved && !anchorMissing) return ex;
+
+  return {
+    ...ex,
+    weight: repairedWeight,
+    baseSets: repairedAnchor,
+    // Raise the CURRENT week too when the anchor moved, so the repair is
+    // visible now rather than after the next rollover recomputes from it.
+    sets: anchorMoved ? Math.max(ex.sets, repairedAnchor) : ex.sets,
+  };
+}
 
 // PR-0b-iii: COMPLETED_STATUSES + isScheduledRunCompleted moved to
 // `src/lib/scheduledRunStatus.ts` so every consumer shares one
@@ -200,17 +379,33 @@ export function migrateProgramState(
   const migratedWorkouts = state.workouts.map((day) => {
     let dayChanged = false;
     const exercises = day.exercises.map((exercise) => {
-      if (exercise.repUnit !== undefined) return exercise;
-      const repUnit = repUnitForExerciseId(exercise.exerciseId);
-      if (!repUnit) return exercise;
-      workoutsChanged = true;
-      dayChanged = true;
-      return { ...exercise, repUnit };
+      let next = exercise;
+
+      if (next.repUnit === undefined) {
+        const repUnit = repUnitForExerciseId(next.exerciseId);
+        if (repUnit) next = { ...next, repUnit };
+      }
+
+      next = repairDeloadDecay(next);
+
+      if (next !== exercise) {
+        workoutsChanged = true;
+        dayChanged = true;
+      }
+      return next;
     });
     return dayChanged ? { ...day, exercises } : day;
   });
   const versionChanged =
     state.programSchemaVersion !== CURRENT_PROGRAM_SCHEMA_VERSION;
+
+  // Coverage backfill — v3, one-shot. Gated on the version rather than on
+  // "is the group missing", so it repairs plans predating the slots without
+  // ever fighting a user who deletes them later.
+  const backfilled = versionChanged
+    ? backfillMissingCoverage(migratedWorkouts)
+    : migratedWorkouts;
+  const coverageChanged = backfilled !== migratedWorkouts;
 
   // D1: seed the lift-week anchor to the CURRENT week, never to the epoch.
   //
@@ -229,6 +424,7 @@ export function migrateProgramState(
   if (
     !runDaysChanged &&
     !workoutsChanged &&
+    !coverageChanged &&
     !versionChanged &&
     !liftWeekKeyChanged
   ) {
@@ -238,7 +434,7 @@ export function migrateProgramState(
   return {
     ...state,
     runDays: migratedRunDays,
-    ...(workoutsChanged ? { workouts: migratedWorkouts } : {}),
+    ...(workoutsChanged || coverageChanged ? { workouts: backfilled } : {}),
     ...(liftWeekKeyChanged ? { liftWeekKey: normalizedWeekStart } : {}),
     programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
   };

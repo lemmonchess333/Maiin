@@ -1325,6 +1325,16 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
 
     const lastWrite = setDocCalls()[setDocCalls().length - 1]
       .data as ProgramState;
+    // A manual advance anchors to NEXT week, so it BUYS a week rather than
+    // borrowing the rest of this one. The rollover fires on
+    // `anchor < localWeekKey()`, so the old current-week stamp was already
+    // stale by the next Sunday: advancing on a Wednesday triggered the
+    // automatic rollover four days later, on top of the advance the user
+    // just asked for. For anyone who habitually finishes early that
+    // compressed periodization — deloads every ~2 calendar weeks instead of
+    // every 4th programme week.
+    expect(lastWrite.liftWeekKey! > localWeekKey()).toBe(true);
+
     // Recovery preserved across the week advance.
     expect(lastWrite.runPlan?.phase).toBe("recovery");
     expect(lastWrite.runPlan?.recoveryEndDate).toBe(future);
