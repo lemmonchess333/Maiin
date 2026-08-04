@@ -79,7 +79,6 @@ import {
 import { logger } from "@/lib/logger";
 import { useScrollEdges } from "@/hooks/useScrollEdges";
 import SessionCompleteScreen from "@/components/workout/SessionCompleteScreen";
-import CircleShareSheet from "@/components/social/CircleShareSheet";
 import RestTimerRing from "@/components/workout/RestTimerRing";
 import StallModal from "@/components/workout/StallModal";
 import { BottomSheet } from "@/components/ui/BottomSheet";
@@ -267,7 +266,6 @@ export default function WorkoutSession({
   // CIRCLE-SESSION-01 — explicit Circle share from the completion
   // screen. The sheet mounts ONLY while open so its Circle reads
   // never fire unless the user taps "Share to Circle".
-  const [circleShareOpen, setCircleShareOpen] = useState(false);
   const [currentExIndex, setCurrentExIndex] = useState(
     initialDraft?.currentExIndex ?? 0
   );
@@ -1204,18 +1202,7 @@ export default function WorkoutSession({
           completing={completing}
           onFinish={handleFinish}
           onClose={onClose}
-          onShareToCircle={user ? () => setCircleShareOpen(true) : undefined}
         />
-        {/* CIRCLE-SESSION-01 — lazily mounted so the Goal Space reads
-            only fire when the user explicitly enters the share flow.
-            A programme session is always planned — no further gating. */}
-        {user && circleShareOpen && (
-          <CircleShareSheet
-            open
-            onOpenChange={setCircleShareOpen}
-            uid={user.uid}
-          />
-        )}
         {stallExercise && (
           <StallModal
             exercise={stallExercise}
