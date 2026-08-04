@@ -668,9 +668,10 @@ describe("DayPeekCard — lift row tap-through", () => {
     "rest",
   ]);
 
-  function savedWorkout(id: string) {
+  function savedWorkout(id: string, notes?: string) {
     return {
       id,
+      ...(notes ? { notes } : {}),
       durationMinutes: 52,
       exercises: [{ sets: [{ weightKg: 60, reps: 8 }] }],
     };
@@ -704,14 +705,30 @@ describe("DayPeekCard — lift row tap-through", () => {
     expect(navigateMock).toHaveBeenCalledWith("/workout/programme-abc123");
   });
 
-  it("is NOT a button when several sessions collapse into one row", () => {
-    // The row reads "2 sessions" — picking one of them silently would send
-    // the user to a workout they didn't ask for.
+  it("gives each session its own named row when a day holds several", () => {
+    // The old "2 sessions" collapse had no honest single destination, so it
+    // wasn't tappable at all — which left BOTH workouts unreachable from
+    // Home. One row each answers "which one?" instead of asking it.
+    renderWithWorkouts([
+      savedWorkout("w-1", "Push — Chest Focus — Programme Week 3"),
+      savedWorkout("w-2", "Arms — Pump"),
+    ]);
+
+    expect(screen.getByText("Push")).toBeInTheDocument();
+    expect(screen.getByText("Arms")).toBeInTheDocument();
+    expect(screen.queryByText(/2 sessions/i)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /open arms details/i }));
+    expect(navigateMock).toHaveBeenCalledWith("/workout/w-2");
+  });
+
+  it("titles an untitled session rather than rendering an empty row", () => {
+    // Freeform saves can carry no `notes` at all.
     renderWithWorkouts([savedWorkout("w-1"), savedWorkout("w-2")]);
 
     expect(
-      screen.queryByRole("button", { name: /open .* details/i })
-    ).not.toBeInTheDocument();
+      screen.getAllByRole("button", { name: /open workout details/i })
+    ).toHaveLength(2);
   });
 
   it("is NOT a button for a planned lift with nothing saved", () => {

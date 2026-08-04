@@ -103,6 +103,25 @@ export interface Workout {
   sharedActivityId?: string;
 }
 
+/**
+ * The session's display name.
+ *
+ * `notes` carries the identity for programme and routine saves — e.g.
+ * "Push — Chest Focus — Programme Week 3" — where the leading segment is the
+ * day name. Freeform saves may have neither, hence the fallback.
+ *
+ * Shared rather than inlined because two surfaces title the same document:
+ * `/workout/:id` and Home's day card. Two copies of a string split is exactly
+ * the kind of duplication that drifts silently — one surface would start
+ * showing the full note while the other showed the prefix, for one workout.
+ */
+export function workoutTitle(workout: { notes?: string }): string {
+  // `notes` is typed required on `Workout`, but legacy docs and the projected
+  // shapes callers pass (Home's day card) can omit it — hence optional here
+  // rather than `Pick<Workout, "notes">`, which would reject them.
+  return workout.notes?.split(" — ")[0]?.trim() || "Workout";
+}
+
 /** Total kg lifted in a session, derived from its sets. saveWorkout computes
  *  this for the burn formula but does NOT persist it, so consumers derive it
  *  from `exercises` (correct for every doc, old and new). */
