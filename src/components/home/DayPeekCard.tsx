@@ -29,6 +29,47 @@ import ExtrasExpandSheet from "@/components/program/ExtrasExpandSheet";
  *  shown inline before an overflow "+N more" tap-through. */
 const EXTRAS_VISIBLE_CAP = 2;
 
+/**
+ * The lift summary row — a button when it has somewhere to go, a plain row
+ * when it doesn't.
+ *
+ * Both shapes are needed. A day can show this row for a PLANNED lift with
+ * nothing saved yet (there's no record to open), and for several saved
+ * sessions collapsed into one line (no single honest destination). Rendering
+ * a button in those cases would be an affordance that does nothing, which is
+ * worse than no affordance — so the element type follows the destination
+ * rather than the row always being pressable.
+ */
+function LiftRowShell({
+  workoutId,
+  label,
+  children,
+}: {
+  workoutId: string | null;
+  label?: string;
+  children: React.ReactNode;
+}) {
+  const navigate = useNavigate();
+  if (!workoutId) {
+    return <div className="flex items-center gap-1.5">{children}</div>;
+  }
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        // The whole card is itself a tap target (expand/collapse) — without
+        // this the row's navigation and the card's toggle both fire.
+        e.stopPropagation();
+        navigate(`/workout/${workoutId}`);
+      }}
+      aria-label={`Open ${label ?? "workout"} details`}
+      className="flex items-center gap-1.5 w-full text-left rounded-md -mx-1 px-1 py-0.5 active:scale-[0.98] transition-transform"
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function DayPeekCard({
   dateKey,
   profile,
@@ -60,6 +101,10 @@ export default function DayPeekCard({
    *  `useClaimMap().unclaimedByDate.get(dateKey)` in Home. */
   extras: SavedRunDoc[];
   workouts: {
+    /** Firestore doc id — the /workout/:id destination for the lift row.
+     *  Optional because callers historically passed a projection; a row
+     *  without one simply isn't tappable. */
+    id?: string;
     exercises?: { sets?: { weightKg?: number; reps?: number }[] }[];
     durationMinutes?: number;
   }[];
@@ -192,7 +237,22 @@ export default function DayPeekCard({
           {hasW || hasM || hasRun || hasExtras || plannedLiftName ? (
             <div className="space-y-1 text-xs">
               {(plannedLiftName || hasW) && (
-                <div className="flex items-center gap-1.5">
+                /* Tap-through to the saved session, matching the run rows
+                   below (which have navigated to /run/:runId since Q5).
+                   Lifts had no detail route until 2026-08-04, so this row
+                   was informational-only — the asymmetry was the reason,
+                   not a design choice.
+
+                   Gated on EXACTLY one saved workout: with several the row
+                   collapses them into one line ("N sessions"), so there is
+                   no honest single destination. Those days stay as they
+                   were rather than silently picking one. */
+                <LiftRowShell
+                  workoutId={
+                    workouts.length === 1 ? (workouts[0].id ?? null) : null
+                  }
+                  label={plannedLiftName ?? undefined}
+                >
                   <Dumbbell className="size-3.5 shrink-0 text-lifting" />
                   <span className="text-foreground">
                     {/* Cal-A: the lift's actual name (e.g. "Push — Chest
@@ -222,7 +282,7 @@ export default function DayPeekCard({
                       </span>
                     )}
                   </span>
-                </div>
+                </LiftRowShell>
               )}
               {hasM && (
                 <div className="flex items-center gap-1.5">

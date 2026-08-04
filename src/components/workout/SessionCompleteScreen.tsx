@@ -1,11 +1,10 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { THEME } from "@/lib/theme";
-import { Trophy, Clock, Dumbbell, Target, Zap, Share2 } from "lucide-react";
+import { Trophy, Clock, Dumbbell, Target, Zap } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { motion } from "framer-motion";
 import { useAuth } from "@/lib/auth";
 import { repBucketLabel, type RepBucket } from "@/lib/prTracking";
-import ShareCardSheet from "@/components/share/ShareCardSheet";
 import { getVolumeComparison } from "@/lib/funComparisons";
 import { usePostCompletionKudos } from "@/hooks/usePostCompletionKudos";
 import PostCompletionKudos from "@/components/social/PostCompletionKudos";
@@ -34,14 +33,23 @@ interface SessionCompleteScreenProps {
   completing: boolean;
   onFinish: () => void;
   onClose: () => void;
-  /** CIRCLE-SESSION-01 — optional explicit summary-only Circle share.
-   *  When present, a secondary "Share to Circle" action renders in
-   *  the action stack; the parent owns the sheet (lazily mounted so
-   *  no Circle reads fire unless the user taps it). Never auto-posts;
-   *  only the `session_completed` event ever leaves the device. */
-  onShareToCircle?: () => void;
 }
 
+/**
+ * NOTE ON SHARING (2026-08-04). This screen used to carry two share
+ * controls — "Share Workout" (image card) and "Share to Circle" — and both
+ * fired BEFORE the save, because "Save Workout" is a separate button. So
+ * "Share to Circle" → "Close without saving" published a `session_completed`
+ * event for a session with no record behind it.
+ *
+ * Both moved to `/workout/:id`, where the record already exists and the
+ * phantom post is structurally impossible. That also ended sharing's
+ * one-shot lifetime: this screen unmounts on save, so anything anchored to
+ * it could only ever be done in that one moment.
+ *
+ * Keep this screen to Save and Close. A new share affordance here would
+ * re-create both problems.
+ */
 export default function SessionCompleteScreen({
   dayName,
   exercises,
@@ -52,14 +60,12 @@ export default function SessionCompleteScreen({
   completing,
   onFinish,
   onClose,
-  onShareToCircle,
 }: SessionCompleteScreenProps) {
   const { profile } = useAuth();
   const kudos = usePostCompletionKudos({
     uid: profile?.uid,
     fromName: profile?.displayName,
   });
-  const [showShareCard, setShowShareCard] = useState(false);
 
   const durationDisplay =
     sessionDurationMinutes >= 60
@@ -359,24 +365,6 @@ export default function SessionCompleteScreen({
 
           <button
             type="button"
-            onClick={() => setShowShareCard(true)}
-            className="w-full py-3 rounded-xl border border-border/50 text-foreground font-medium text-sm active:scale-[0.97] flex items-center justify-center gap-2"
-          >
-            <Share2 className="size-4" />
-            Share Workout
-          </button>
-
-          {onShareToCircle && (
-            /* CIRCLE-SESSION-01 — explicit, secondary, never blocking
-               the Finish flow. Summary-only: the sheet publishes just
-               "completed a session", never numbers. */
-            <Button variant="secondary" fullWidth onClick={onShareToCircle}>
-              Share to Circle
-            </Button>
-          )}
-
-          <button
-            type="button"
             onClick={onClose}
             className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
           >
@@ -384,28 +372,6 @@ export default function SessionCompleteScreen({
           </button>
         </motion.div>
       </div>
-
-      {/* S1 share-card system — opened AFTER the celebration screen (this
-          screen only renders once the session is complete), never stacked
-          over the celebration sequence. */}
-      <ShareCardSheet
-        open={showShareCard}
-        onOpenChange={setShowShareCard}
-        data={{
-          template: "lift",
-          handle: profile?.displayName || "Athlete",
-          date: new Date().toLocaleDateString("en-GB", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-          }),
-          totalVolumeKg: totalVolume,
-          exerciseCount: exerciseSummary.length,
-          durationSec: sessionDurationMinutes * 60,
-          prCount,
-          prExercise: prDetails[0]?.name,
-        }}
-      />
     </motion.div>
   );
 }

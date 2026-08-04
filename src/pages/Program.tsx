@@ -208,6 +208,48 @@ function ProgramInner() {
     });
     return true;
   }, [applyDeloadWeek, revertDeloadWeek]);
+
+  /**
+   * `completeWorkoutDay`, plus the only route back to what you just saved.
+   *
+   * The completion screen unmounts on save and drops you here on /program.
+   * Before `/workout/:id` existed there was nowhere to go, so nothing was
+   * offered; now the session is a record, and a toast action is the same
+   * shape `Routine` already uses for "View PRs" — no auto-navigation, which
+   * neither this surface nor RunSummary does.
+   *
+   * `completeWorkoutDay` returns `{ workoutId }`; it is typed
+   * `Promise<unknown>` through the WorkoutSession prop, so narrow rather
+   * than cast. A missing id just means no action on the toast.
+   */
+  const completeWithViewToast = useCallback(
+    async (
+      dayIndex: number,
+      sessionData: Parameters<typeof completeWorkoutDay>[1]
+    ) => {
+      const result = await completeWorkoutDay(dayIndex, sessionData);
+      const workoutId =
+        result &&
+        typeof result === "object" &&
+        typeof (result as { workoutId?: unknown }).workoutId === "string"
+          ? (result as { workoutId: string }).workoutId
+          : null;
+      toast.success(
+        "Workout saved",
+        workoutId
+          ? {
+              action: {
+                label: "View",
+                onClick: () => navigate(`/workout/${workoutId}`),
+              },
+            }
+          : undefined
+      );
+      return result;
+    },
+    [completeWorkoutDay, navigate]
+  );
+
   const runsTarget = getWeeklyRunTarget(profile);
   // PR-2: weekly layout editor sheet. Mounted conditionally — when
   // closed the body unmounts and the inner useProgrammeScheduleEditor
@@ -1819,12 +1861,12 @@ function ProgramInner() {
                       plan.sourceIndexes.forEach((srcIdx, i) => {
                         aligned[srcIdx] = sd.setLogs[i] ?? [];
                       });
-                      return completeWorkoutDay(di, {
+                      return completeWithViewToast(di, {
                         ...sd,
                         setLogs: aligned,
                       });
                     }
-                  : completeWorkoutDay
+                  : completeWithViewToast
               }
               onClose={() => {
                 setSessionDayIndex(null);

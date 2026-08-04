@@ -91,6 +91,7 @@ const Program = lazyRetry(() => import("@/pages/Program"));
 const Run = lazyRetry(() => import("@/pages/Run"));
 const RunSummary = lazyRetry(() => import("@/pages/RunSummary"));
 const RunDetail = lazyRetry(() => import("@/pages/RunDetail"));
+const WorkoutDetail = lazyRetry(() => import("@/pages/WorkoutDetail"));
 const Space = lazyRetry(() => import("@/pages/Space"));
 const Social = lazyRetry(() => import("@/pages/Social"));
 const Routine = lazyRetry(() => import("@/pages/Routine"));
@@ -664,6 +665,20 @@ function AppRoutes() {
                         element={
                           <RouteErrorBoundary>
                             <RunDetail />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      {/* The lift peer of /run/:runId. Lifts had no detail
+                          surface at all until this landed — History is
+                          aggregates only and its per-entry list was removed
+                          by product call (2026-07-04), which left saved
+                          sessions unviewable and unshareable after the
+                          completion screen unmounted. */}
+                      <Route
+                        path="/workout/:workoutId"
+                        element={
+                          <RouteErrorBoundary>
+                            <WorkoutDetail />
                           </RouteErrorBoundary>
                         }
                       />
