@@ -77,6 +77,7 @@ function walkSeason(args: {
     d.setDate(d.getDate() - weeksOut * 7);
     const currentDate = localDateString(d);
     const plan = generateRacePlanV2({
+      recentLayoff: "none",
       weekSchedule: generateSchedule(2, runDays),
       raceGoal: { distance, targetDate: RACE_DATE },
       weeklyRunDays: runDays,
@@ -195,6 +196,7 @@ describe("the fallback is exactly the old behaviour", () => {
       weeklyRunDays: 4,
       currentDate,
       weekStart: localWeekKey(parseLocalDate(currentDate)),
+      recentLayoff: "none" as const,
     };
     const fresh = generateRacePlanV2(args);
     const carried = generateRacePlanV2({
@@ -217,10 +219,14 @@ describe("the fallback is exactly the old behaviour", () => {
       weeklyRunDays: 4,
       currentDate,
       weekStart: localWeekKey(parseLocalDate(currentDate)),
+      recentLayoff: "none" as const,
     };
-    expect(generateRacePlanV2({ ...args, planTotalWeeks: 3 }).weeks).toEqual(
-      generateRacePlanV2(args).weeks
-    );
+    expect(
+      generateRacePlanV2({
+        ...args,
+        planTotalWeeks: 3,
+      }).weeks
+    ).toEqual(generateRacePlanV2(args).weeks);
   });
 });
 
