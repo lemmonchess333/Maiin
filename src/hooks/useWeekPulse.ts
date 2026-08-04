@@ -1,9 +1,18 @@
 /**
  * Data layer for the WeekPulseCard (Rev1 PR2) — the CURRENT week's
  * training progress, fetched once on mount of a completion screen.
- * Both callers render after their session doc is saved, so the fresh
- * session is included in the counts. Returns null while loading (the
- * card simply doesn't render — completion screens must never jank).
+ * Returns null while loading (the card simply doesn't render —
+ * completion screens must never jank).
+ *
+ * `pendingLifts` counts a session the caller has FINISHED but not yet
+ * saved. The header used to claim "both callers render after their session
+ * doc is saved, so the fresh session is included" — that was false in both
+ * directions: the lift screen renders under `sessionComplete`, which is a
+ * pure setState, while the save is dispatched later by the "Save Workout"
+ * button on that same screen. So the card fetched BEFORE the write, and
+ * since the screen unmounts on save success, the excluding number was the
+ * only one the user ever saw ("0 of 6 lifts" straight after finishing one).
+ * There is no refetch path to lean on — hence an explicit argument.
  */
 import { useEffect, useState } from "react";
 import {
@@ -28,7 +37,7 @@ import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import { resolveRunPlanSurface } from "@/lib/runProgrammeViewModel";
 import { logger } from "@/lib/logger";
 
-export function useWeekPulse(): WeekPulse | null {
+export function useWeekPulse(pendingLifts = 0): WeekPulse | null {
   const { user, profile } = useAuth();
   const { currentStreak } = useStreaks();
   const [pulse, setPulse] = useState<WeekPulse | null>(null);
@@ -107,6 +116,7 @@ export function useWeekPulse(): WeekPulse | null {
             plannedLifts: liftDays > 0 ? liftDays : null,
             plannedRuns,
             streak: currentStreak,
+            pendingLifts,
           })
         );
       } catch (err) {
@@ -118,8 +128,10 @@ export function useWeekPulse(): WeekPulse | null {
       cancelled = true;
     };
     // Snapshot on mount; streak/profile churn shouldn't refetch mid-screen.
+    // `pendingLifts` is a render-time addend rather than a fetch input, so it
+    // deliberately does not retrigger the query.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.uid]);
+  }, [user?.uid, pendingLifts]);
 
   return pulse;
 }
