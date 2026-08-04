@@ -86,6 +86,33 @@ describe("RaceCockpitCard", () => {
     expect(screen.getByText(/Compressed plan/i)).toBeInTheDocument();
   });
 
+  /**
+   * A below-floor plan ALWAYS also has `compressed: true`, so before
+   * 2026-08-04 it fell into the compressed branch and permanently told the
+   * user that "interval work is trimmed and the long-run progression
+   * shortened". It has no long-run progression to shorten — measured, a
+   * marathon 3 weeks out emits `easy_30` x3 in every non-race week. The
+   * honest wording existed only in the transient realign toast.
+   *
+   * Both halves are asserted deliberately: the compressed sentence must be
+   * ABSENT, not merely joined by a second one, or the card would say two
+   * contradictory things at once.
+   */
+  it("says finish-safely, NOT compressed, when the plan is below the floor", () => {
+    renderCard({ compressed: true, belowFloor: true });
+    expect(screen.getByText(/Finish-safely plan/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Compressed plan/i)).not.toBeInTheDocument();
+  });
+
+  it("promises no hard sessions, matching the realign toast", () => {
+    // The transient message and the persistent one have to agree — a user
+    // who realigns is told "all easy runs, no hard sessions", and the card
+    // is what they see every day afterwards.
+    renderCard({ compressed: true, belowFloor: true });
+    expect(screen.getByText(/no hard sessions/i)).toBeInTheDocument();
+    expect(screen.getByText(/finish strong, not to PR/i)).toBeInTheDocument();
+  });
+
   it("calls onEdit when the edit affordance is tapped", () => {
     const onEdit = vi.fn();
     renderCard({ onEdit });

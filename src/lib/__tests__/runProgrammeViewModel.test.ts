@@ -127,6 +127,44 @@ describe("buildRaceCockpitViewModel", () => {
     expect(vm.daysToRace).toBe(0);
     expect(vm.compressed).toBe(true);
   });
+
+  /**
+   * `belowFloor` never reached the cockpit until 2026-08-04, so a
+   * finish-safely plan sat under the COMPRESSED copy — which promises
+   * "interval work trimmed and the long-run progression shortened". A
+   * below-floor plan has no long-run progression: measured, a marathon 3
+   * weeks out emits `easy_30` x3 in every non-race week. The card described
+   * training the plan did not contain, permanently, while the honest wording
+   * existed only in the transient realign toast.
+   */
+  it("carries belowFloor so the card can say something different", () => {
+    const vm = buildRaceCockpitViewModel({
+      raceGoal: { distance: "marathon", targetDate: "2026-06-20" },
+      currentWeek: 0,
+      totalWeeks: 3,
+      compressed: true,
+      belowFloor: true,
+      todayKey: "2026-05-30",
+    })!;
+    // Both, not either: belowFloor IMPLIES compressed, and a consumer that
+    // switched on compressed alone is exactly what produced the wrong copy.
+    expect(vm.compressed).toBe(true);
+    expect(vm.belowFloor).toBe(true);
+  });
+
+  it("defaults belowFloor to false when the caller does not know", () => {
+    // A caller that omits it cannot claim the plan is below the floor. The
+    // degenerate answer is the safe one — show the compressed copy, not the
+    // finish-safely one.
+    const vm = buildRaceCockpitViewModel({
+      raceGoal: { distance: "half", targetDate: "2026-06-20" },
+      currentWeek: 1,
+      totalWeeks: 8,
+      compressed: true,
+      todayKey: "2026-05-30",
+    })!;
+    expect(vm.belowFloor).toBe(false);
+  });
 });
 
 // ── buildHybridWeekItems ──────────────────────────────────────────
@@ -281,8 +319,6 @@ describe("hasHybridInterference (scheduler's 'UI can flag it' note, wired)", () 
     expect(hasHybridInterference({ hasLift: false, runType: "long" })).toBe(
       false
     );
-    expect(hasHybridInterference({ hasLift: true, runType: null })).toBe(
-      false
-    );
+    expect(hasHybridInterference({ hasLift: true, runType: null })).toBe(false);
   });
 });
