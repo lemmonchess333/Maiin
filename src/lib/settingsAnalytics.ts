@@ -43,6 +43,11 @@ export type SettingsToggle =
    *  toggles, whose profile fields nothing ever read (#1416 moved
    *  auto-posting to the share composer's saved default). */
   | "share_default_cleared"
+  /** The other direction — a default PICKED in Settings rather than in the
+   *  post-session sheet. Sends `"{type}:{visibility}"` (e.g.
+   *  `"workout:never"`) because the choice is only meaningful paired with
+   *  the type it applies to; `share_default_cleared` needs no visibility. */
+  | "share_default_set"
   | "weekly_summary_email"
   | "default_visibility"
   | "weight_unit"
