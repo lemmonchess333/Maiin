@@ -27,6 +27,29 @@ import type {
   WorkoutDay,
 } from "../programTypes";
 
+/**
+ * Mark the week as actually trained before rolling out of it.
+ *
+ * `advanceWeek` only applies a deload to a week that has a completed
+ * session — a week nobody trained accumulated no fatigue to dissipate, and
+ * cutting its sets/loads hands a returning user a reduced plan. So a fixture
+ * that wants to observe the deload has to represent a week the user trained.
+ *
+ * Every generated fixture here starts with `completed: false` on every day,
+ * which is correct for a freshly-built week and wrong for one being rolled
+ * out of after four weeks of training. The flag was simply unread before, so
+ * the mesocycle tests were exercising real mechanisms against a precondition
+ * production cannot produce. `advanceWeek` resets the flag for the new week,
+ * so a multi-week chain re-marks between each step — which is what a real
+ * user's weeks look like.
+ */
+function trained<T extends { workouts: WorkoutDay[] }>(state: T): T {
+  return {
+    ...state,
+    workouts: state.workouts.map((d) => ({ ...d, completed: true })),
+  };
+}
+
 function makeTestExercise(
   overrides: Partial<ProgramExercise> = {}
 ): ProgramExercise {
@@ -1017,18 +1040,18 @@ describe("weekly volume shape (backlog #5 + deload-decay fix)", () => {
   it("ramps accessories base−1 / base / base+1 across the meso, mains hold", () => {
     let st = makeState();
     const base = st.workouts.map((d) => d.exercises.map((e) => e.sets));
-    st = advanceWeek(st); // week 2 (mid)
+    st = advanceWeek(trained(st)); // week 2 (mid)
     st.workouts.forEach((d, di) =>
       d.exercises.forEach((ex, ei) => expect(ex.sets).toBe(base[di][ei]))
     );
-    st = advanceWeek(st); // week 3 (top)
+    st = advanceWeek(trained(st)); // week 3 (top)
     st.workouts.forEach((d, di) =>
       d.exercises.forEach((ex, ei) => {
         const b = base[di][ei];
         expect(ex.sets).toBe(ex.isAccessory === true ? Math.min(5, b + 1) : b);
       })
     );
-    st = advanceWeek(st); // week 4 — deload cuts from the ANCHOR, not week 3
+    st = advanceWeek(trained(st)); // week 4 — deload cuts from the ANCHOR, not week 3
     st.workouts.forEach((d, di) =>
       d.exercises.forEach((ex, ei) => {
         expect(ex.sets).toBe(Math.max(2, base[di][ei] - 1));
@@ -1036,7 +1059,7 @@ describe("weekly volume shape (backlog #5 + deload-decay fix)", () => {
         expect(ex.preDeloadWeight).toBe(50);
       })
     );
-    st = advanceWeek(st); // week 5 — meso restart
+    st = advanceWeek(trained(st)); // week 5 — meso restart
     st.workouts.forEach((d, di) =>
       d.exercises.forEach((ex, ei) => {
         const b = base[di][ei];
@@ -1094,7 +1117,7 @@ describe("weekly volume shape (backlog #5 + deload-decay fix)", () => {
       })),
     };
     const live = setsGrid(st);
-    st = advanceWeek(st); // week 2 (mid) — anchor stamps, sets unchanged
+    st = advanceWeek(trained(st)); // week 2 (mid) — anchor stamps, sets unchanged
     st.workouts.forEach((d, di) =>
       d.exercises.forEach((ex, ei) => {
         expect(ex.baseSets).toBe(live[di][ei]);
@@ -1330,9 +1353,9 @@ describe("deload by training age (backlog #8)", () => {
     const start = repsGrid(st);
 
     for (let meso = 0; meso < 2; meso += 1) {
-      st = advanceWeek(st, "intermediate"); // w2
-      st = advanceWeek(st, "intermediate"); // w3
-      st = advanceWeek(st, "intermediate"); // w4 — deload, reps cut
+      st = advanceWeek(trained(st), "intermediate"); // w2
+      st = advanceWeek(trained(st), "intermediate"); // w3
+      st = advanceWeek(trained(st), "intermediate"); // w4 — deload, reps cut
       st.workouts.forEach((d, di) =>
         d.exercises.forEach((ex, ei) => {
           expect(ex.reps).toBe(Math.max(3, start[di][ei] - 2));
@@ -1417,6 +1440,10 @@ describe("adjustment rule application (backlog #9)", () => {
     s.workouts.map((d) =>
       d.exercises.filter((e) => e.isAccessory === true).map((e) => e.baseSets)
     );
+
+  /** Prescribed sets across the whole week — what a deload visibly cuts. */
+  const setsOf = (s: ProgramState) =>
+    s.workouts.map((d) => d.exercises.map((e) => e.sets));
 
   it("holds — and touches nothing — when recovery is unknown", () => {
     const st = stall(makeState(), 4);
@@ -1554,9 +1581,76 @@ describe("adjustment rule application (backlog #9)", () => {
   it("never adjusts on a deload week — the deload IS the light week", () => {
     const st = stall(makeState(3), 4); // advancing lands on week 4
     const before = anchors(st);
-    const out = advanceWeek(st, "beginner", "recovered");
+    const out = advanceWeek(trained(st), "beginner", "recovered");
     expect(out.currentPhase).toBe("deload");
     expect(anchors(out)).toEqual(before); // no add_volume stacked on it
+  });
+
+  /**
+   * A deload dissipates ACCUMULATED fatigue, so a week with no completed
+   * session has nothing to dissipate. This ran unguarded until 2026-08-04:
+   * `advanceWeek` branched on the calendar prescription alone, so an
+   * untrained week 3→4 produced a deload byte-identical to a fully-trained
+   * one. The calendar rollover fires unattended on app open and catches up
+   * as many as 12 weeks, so someone back from a month away was rolled
+   * through several deloads of a plan they had never touched — handed a
+   * REDUCED week at the moment they most needed their plan intact.
+   *
+   * The pair is the point: same fixture, same week boundary, only the
+   * completion flag differs. Asserting the untrained case alone would pass
+   * against an engine that had stopped deloading altogether.
+   */
+  describe("a deload needs a week that was actually trained", () => {
+    it("withholds the deload when no session was completed", () => {
+      const st = makeState(3); // advancing lands on week 4
+      const before = setsOf(st);
+
+      const out = advanceWeek(st, "intermediate", "recovered");
+
+      expect(out.weekNumber).toBe(4);
+      // Not labelled a deload either — the phase drives the UI and
+      // WorkoutSession's deload mode, so a "deload" over an uncut plan
+      // would be the app announcing something that did not happen.
+      expect(out.currentPhase).toBe("progression");
+      expect(setsOf(out)).toEqual(before);
+    });
+
+    it("still deloads the same week when a session WAS completed", () => {
+      const st = makeState(3);
+      const before = setsOf(st);
+
+      const out = advanceWeek(trained(st), "intermediate", "recovered");
+
+      expect(out.currentPhase).toBe("deload");
+      expect(setsOf(out)).not.toEqual(before);
+    });
+
+    it("one completed day is enough — adherence is not a dose", () => {
+      // The engine biases toward firing (RP Ch3 P213: deloading early beats
+      // deloading late). The gate removes only the degenerate zero case; it
+      // is not a partial-credit threshold.
+      const st = makeState(3);
+      const partial = {
+        ...st,
+        workouts: st.workouts.map((d, i) =>
+          i === 0 ? { ...d, completed: true } : d
+        ),
+      };
+
+      expect(
+        advanceWeek(partial, "intermediate", "recovered").currentPhase
+      ).toBe("deload");
+    });
+
+    it("rolls the week forward regardless — nobody gets stuck", () => {
+      // The gate withholds the RECIPE, not the rollover. A lapsed user still
+      // advances weeks and still archives history; they just keep their plan.
+      let st = makeState(1);
+      for (let i = 0; i < 5; i += 1) st = advanceWeek(st, "intermediate");
+
+      expect(st.weekNumber).toBe(6);
+      expect(st.weekHistory?.length).toBe(5);
+    });
   });
 
   it("leaves mains alone under every action", () => {

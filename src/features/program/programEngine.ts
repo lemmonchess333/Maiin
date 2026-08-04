@@ -2574,7 +2574,36 @@ export function advanceWeek(
     recoveryMuscles.length > 0 &&
     escalatesToWholeBody(recoveryMuscles, trained);
 
-  if (prescription.deload || escalateWholeBody) {
+  /* A deload dissipates ACCUMULATED fatigue. A week with no completed session
+     accumulated none, so there is nothing to dissipate — and running the
+     recipe anyway is not merely a no-op, it hands the user a REDUCED week
+     (sets re-anchored down, loads and reps cut) at the exact moment they are
+     returning to training and need their plan intact.
+
+     This was live: `advanceWeek` branched on `prescription.deload` alone, so
+     an untrained week 3→4 produced a deload IDENTICAL to a fully-trained
+     one — measured, not inferred (sets 3→2, reps 8→6 on both). The calendar
+     rollover runs unattended on open, and its catch-up loop iterates up to 12
+     weeks, so a user back from a month away rolled through multiple deloads
+     of a plan they had never touched. Per CLAUDE.md, lapsed-and-returning is
+     a real user segment, not an edge case.
+
+     Both arms are gated, not just the calendar one: `liftAtMrv` reads
+     `performanceHistory`, which does not decay while a user is away, so a
+     regression streak recorded before a break could otherwise escalate a
+     whole-body deload for someone who has not trained since. Gating can only
+     ever WITHHOLD a deload on a week nobody trained; it can never cause one,
+     so it preserves 14b's deliberate bias toward firing (RP Ch3 P213 —
+     deloading early beats deloading late) everywhere that bias is meaningful.
+
+     Note this withholds the RECIPE only. The rollover itself is untouched:
+     the week number still advances, `weekHistory` still archives, and the
+     normal weekly reshape still runs. Nobody gets stuck. */
+  const weekWasTrained = state.workouts.some((day) => day.completed);
+  const applyDeloadThisWeek =
+    (prescription.deload || escalateWholeBody) && weekWasTrained;
+
+  if (applyDeloadThisWeek) {
     // A deload week IS the light week — don't stack an adjustment on top of
     // it. The rule's bookkeeping below still runs, so a stall that spans a
     // deload is remembered rather than silently forgiven.
@@ -2621,12 +2650,18 @@ export function advanceWeek(
   return {
     ...state,
     weekNumber: nextWeek,
-    currentPhase: prescription.deload ? "deload" : "progression",
+    // Both of these key off the RESOLVED flag, not the raw prescription.
+    // Keying the phase off `prescription.deload` would label a week "deload"
+    // that carries an ordinary prescription — the UI would announce a deload
+    // (and `WorkoutSession` would run in deload mode) over a plan nothing cut.
+    // Two fields deciding "was this a deload?" by two different tests is how
+    // the copies drift apart.
+    currentPhase: applyDeloadThisWeek ? "deload" : "progression",
     workouts,
     weekHistory: history,
     // A deload clears accumulated acute fatigue; otherwise persist the computed
     // value so the field is meaningful + observable (no longer dead).
-    fatigueScore: prescription.deload ? 0 : fatigue,
+    fatigueScore: applyDeloadThisWeek ? 0 : fatigue,
     plateauResponses,
     // Blk2: monotone, so amnesty runs out on its own.
     ...(state.trainingBlock
