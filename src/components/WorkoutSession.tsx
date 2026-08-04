@@ -65,6 +65,7 @@ import Tooltip from "@/components/ui/Tooltip";
 import PlateCalculatorSheet from "@/components/workout/PlateCalculatorSheet";
 import { validateSet } from "@/lib/setValidation";
 import { getExerciseById } from "@/lib/exercises";
+import { clampExerciseIndex } from "@/features/program/sessionCursor";
 import {
   detectStall,
   type LoggedWorkout,
@@ -642,7 +643,18 @@ export default function WorkoutSession({
   } | null>(null);
   const undoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const currentExercise = day.exercises[currentExIndex];
+  // The cursor can outrun the list: `currentExIndex` is component state while
+  // `day.exercises` is a prop that can shrink under an open session (a
+  // re-trimmed express/easier plan, a removed slot, a snapshot from another
+  // device). Reading past the end yields an undefined exercise, which renders
+  // as a nameless "Set 1 of 0" and then throws on the first
+  // `currentExercise.name` — the 09:16 pair of screenshots on 2026-08-04.
+  const safeExIndex = clampExerciseIndex(currentExIndex, day.exercises.length);
+  useEffect(() => {
+    if (safeExIndex !== currentExIndex) setCurrentExIndex(safeExIndex);
+  }, [safeExIndex, currentExIndex]);
+
+  const currentExercise = day.exercises[safeExIndex];
 
   // #985 — barbell plate breakdown for the prescribed weight. Read-only hint;
   // barbell-only (dumbbell/machine lifts don't load plates). Standard plates;
@@ -1167,6 +1179,16 @@ export default function WorkoutSession({
     clearDraft();
     setShowResumePrompt(false);
   };
+
+  // A day with no exercises cannot be logged, and every render path below
+  // dereferences `currentExercise`. Clamping cannot save this case — there is
+  // no valid index into an empty list — so bail to the caller rather than
+  // throw the whole /program route into the error boundary. Placed AFTER every
+  // hook: this file's own header warns that gated early returns flipping
+  // between renders are the classic cause of React error #310.
+  if (day.exercises.length === 0) {
+    return null;
+  }
 
   // Session complete screen
   if (sessionComplete) {

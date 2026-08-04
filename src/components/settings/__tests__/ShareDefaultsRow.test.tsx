@@ -1,25 +1,34 @@
 /**
- * ShareDefaultsRow — the way back out of "Always do this".
+ * ShareDefaultsRow — the only place a share default can be CHOSEN.
  *
  * The share composer short-circuits `compose()` once a default is saved, so
- * without this row the choice is a ONE-WAY DOOR: pick "never" and the
- * prompt never returns; pick "public" and every session auto-posts. That
- * failure is invisible — the app keeps working, it just stops asking — so
- * the tests here are about what the user can still reach:
+ * this preference decides whether the app asks at all. It used to be
+ * writable in one direction only: the post-session sheet could set it, this
+ * row could only clear it, and the row rendered nothing at all until a
+ * default existed. So a user who wanted "never share my workouts" had to
+ * finish a workout to say so, and there was no setting to find in the
+ * meantime.
  *
- *   - a saved default is NAMED (a row that showed "Runs" with no verdict
- *     wouldn't tell the user what they'd chosen), and
- *   - resetting it actually clears the stored preference, which is the
- *     thing `compose()` reads. Asserting the button disappears would pass
- *     against a row that only updated its own state.
+ * The tests are about what the user can reach:
+ *   - the control EXISTS before any default does (a row that hides itself
+ *     until the sheet has run is not a setting), and
+ *   - each choice writes the value `compose()` actually reads. Asserting
+ *     the selected segment alone would pass against a component that only
+ *     updated its own state.
  *
  * Per-type independence matters because the defaults are stored per type —
- * clearing runs must leave workouts alone.
+ * changing runs must leave workouts alone.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup, fireEvent } from "@testing-library/react";
+import {
+  render,
+  screen,
+  cleanup,
+  fireEvent,
+  within,
+} from "@testing-library/react";
 import ShareDefaultsRow from "../ShareDefaultsRow";
-import { __setShareDefault, getShareDefault } from "@/lib/shareComposer";
+import { setShareDefault, getShareDefault } from "@/lib/shareComposer";
 
 vi.mock("@/lib/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
@@ -27,82 +36,110 @@ vi.mock("@/lib/toast", () => ({
 
 const UID = "u1";
 
+/** The segmented control for one share type. Scoping by its radiogroup
+ *  keeps "the runs control" and "the workouts control" distinguishable —
+ *  both render the same four option labels. */
+function group(noun: string) {
+  return screen.getByRole("radiogroup", {
+    name: new RegExp(`default sharing for ${noun}`, "i"),
+  });
+}
+
+function pick(noun: string, option: string) {
+  fireEvent.click(
+    within(group(noun)).getByRole("radio", {
+      name: new RegExp(`^${option}$`, "i"),
+    })
+  );
+}
+
+function selected(noun: string): string | null {
+  const checked = within(group(noun))
+    .getAllByRole("radio")
+    .find((el) => el.getAttribute("aria-checked") === "true");
+  return checked?.textContent ?? null;
+}
+
 beforeEach(() => {
   localStorage.clear();
 });
 afterEach(cleanup);
 
 describe("ShareDefaultsRow", () => {
-  it("renders NOTHING when no default has been saved", () => {
-    // There is no "off" state to explain — only a choice to undo.
-    const { container } = render(<ShareDefaultsRow uid={UID} />);
-    expect(container).toBeEmptyDOMElement();
+  it("offers the control BEFORE any default exists", () => {
+    // The whole point of the row. Pre-2026-08-04 it returned null here, so
+    // the setting could only be found after the post-session sheet had run.
+    render(<ShareDefaultsRow uid={UID} />);
+
+    expect(screen.getByText("Runs")).toBeTruthy();
+    expect(screen.getByText("Workouts")).toBeTruthy();
+    expect(selected("runs")).toBe("Ask");
+    expect(selected("workouts")).toBe("Ask");
   });
 
   it("renders nothing when signed out", () => {
-    __setShareDefault(UID, "run", "public");
+    setShareDefault(UID, "run", "public");
     const { container } = render(<ShareDefaultsRow uid={null} />);
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("names what the saved default actually does", () => {
-    // "Runs" alone wouldn't tell the user which choice they're undoing.
-    __setShareDefault(UID, "run", "never");
-    render(<ShareDefaultsRow uid={UID} />);
-
-    expect(screen.getByText("Runs")).toBeTruthy();
-    expect(screen.getByText("Never shared")).toBeTruthy();
-  });
-
   it.each([
-    ["public", "Always shared publicly"],
-    ["followers", "Always shared with followers"],
+    ["public", "Shared publicly automatically"],
+    ["followers", "Shared with your followers automatically"],
     ["never", "Never shared"],
-  ] as const)("describes a %s default", (pref, copy) => {
-    __setShareDefault(UID, "workout", pref);
+  ] as const)("reflects and describes a stored %s default", (pref, copy) => {
+    setShareDefault(UID, "workout", pref);
     render(<ShareDefaultsRow uid={UID} />);
+
+    expect(selected("workouts")).toBe(
+      pref === "never" ? "Never" : pref === "public" ? "Public" : "Followers"
+    );
+    // "Public" as a segment label doesn't say public WHAT, or when.
     expect(screen.getByText(copy)).toBeTruthy();
   });
 
-  it("only lists types that HAVE a saved default", () => {
-    __setShareDefault(UID, "run", "public");
+  it.each([
+    ["Never", "never"],
+    ["Public", "public"],
+    ["Followers", "followers"],
+  ] as const)("WRITES %s as the value compose() reads", (label, stored) => {
     render(<ShareDefaultsRow uid={UID} />);
 
-    expect(screen.getByText("Runs")).toBeTruthy();
-    expect(screen.queryByText("Workouts")).toBeNull();
+    pick("workouts", label);
+
+    expect(getShareDefault(UID, "workout")).toBe(stored);
   });
 
-  it("CLEARS the stored preference — the value compose() reads", () => {
-    // Asserting only that the row disappears would pass against a
-    // component that updated its own state and wrote nothing.
-    __setShareDefault(UID, "run", "public");
+  it("CLEARS the stored preference when Ask is picked", () => {
+    // "Ask" is the absence of a default, not a fourth stored value —
+    // `compose()` only short-circuits on a stored preference, so storing
+    // "ask" would silence the sheet forever.
+    setShareDefault(UID, "run", "public");
     render(<ShareDefaultsRow uid={UID} />);
 
-    fireEvent.click(screen.getByRole("button", { name: /ask again/i }));
+    pick("runs", "Ask");
 
     expect(getShareDefault(UID, "run")).toBeNull();
-    expect(screen.queryByText("Runs")).toBeNull();
+    expect(selected("runs")).toBe("Ask");
   });
 
-  it("clears ONE type without touching the other", () => {
-    __setShareDefault(UID, "run", "public");
-    __setShareDefault(UID, "workout", "never");
+  it("changes ONE type without touching the other", () => {
+    setShareDefault(UID, "run", "public");
+    setShareDefault(UID, "workout", "never");
     render(<ShareDefaultsRow uid={UID} />);
 
-    const buttons = screen.getAllByRole("button", { name: /ask again/i });
-    expect(buttons).toHaveLength(2);
-    fireEvent.click(buttons[0]); // runs is listed first
+    pick("runs", "Ask");
 
     expect(getShareDefault(UID, "run")).toBeNull();
     expect(getShareDefault(UID, "workout")).toBe("never");
-    expect(screen.getByText("Workouts")).toBeTruthy();
+    expect(selected("workouts")).toBe("Never");
   });
 
   it("reads the preference for THIS uid only", () => {
     // Shared-device uid scoping (audit F9): another account's saved
     // default must not surface here.
-    __setShareDefault("someone-else", "run", "public");
-    const { container } = render(<ShareDefaultsRow uid={UID} />);
-    expect(container).toBeEmptyDOMElement();
+    setShareDefault("someone-else", "run", "public");
+    render(<ShareDefaultsRow uid={UID} />);
+    expect(selected("runs")).toBe("Ask");
   });
 });
