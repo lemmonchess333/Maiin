@@ -589,3 +589,260 @@ describe("migrateProgramState — liftWeekKey backfill (D1)", () => {
     expect(out.liftWeekKey! >= "2026-03-08").toBe(true);
   });
 });
+
+/* ─── Pre-2026-07-28 deload decay repair ─────────────────────────── */
+
+/**
+ * The old `applyDeload` cut sets −1 (floor 2) AND load ×0.85 every 4th week,
+ * wrote it straight to stored state, and had nothing to restore from. Each
+ * mesocycle shrank the plan permanently on both axes.
+ *
+ * Replaying it over a week-11 user reproduces the operator's screenshots
+ * exactly, which is what identified it: Barbell Row 4×60kg → (wk4) 3×50kg →
+ * (wk8) 2×42.5kg; Cable Crunch 3×15kg → 2×12.5kg → 2×10kg. The engine fix
+ * (fa19724a) was forward-only AND its lazy `baseSets ?? sets` anchor then
+ * captured the decayed value permanently — so without this repair the damage
+ * is not merely unfixed, it is cemented.
+ */
+describe("migrateProgramState — deload decay repair", () => {
+  const decayedExercise = (
+    overrides: Record<string, unknown> = {}
+  ): Record<string, unknown> => ({
+    name: "Barbell Row",
+    exerciseId: "barbell-row",
+    instanceId: "i-row",
+    movementCategory: "horizontal_pull",
+    sets: 2,
+    reps: 8,
+    baseReps: 8,
+    repUnit: "reps",
+    weight: 42.5,
+    progressionType: "double",
+    // The honest handle: applyProgression writes this from the weight the
+    // user ACTUALLY lifted, and applyDeload never touched it.
+    lastSuccessfulWeight: 60,
+    lastAttemptedWeight: 60,
+    consecutiveFailures: 0,
+    plateauCount: 0,
+    performanceHistory: [],
+    lastPerformance: null,
+    ...overrides,
+  });
+
+  const stateWith = (ex: Record<string, unknown>) =>
+    makeLegacyProgramState({
+      workouts: [
+        {
+          dayName: "Pull — Row Focus",
+          dayType: "pull",
+          completed: false,
+          exercises: [ex],
+        },
+      ],
+    } as unknown as Partial<ProgramState>);
+
+  it("restores a decayed load to what the user actually lifted", () => {
+    const out = migrateProgramState(stateWith(decayedExercise()), "2026-08-04");
+    expect(out.workouts[0].exercises[0].weight).toBe(60);
+  });
+
+  it("lifts a decayed MAIN off the deload floor and anchors it", () => {
+    const out = migrateProgramState(stateWith(decayedExercise()), "2026-08-04");
+    const ex = out.workouts[0].exercises[0];
+    expect(ex.baseSets).toBe(3);
+    // Raised for the CURRENT week too, so the repair is visible immediately
+    // rather than after the next rollover recomputes from the anchor.
+    expect(ex.sets).toBe(3);
+  });
+
+  it("leaves ACCESSORIES at their legitimate 2-set floor", () => {
+    const out = migrateProgramState(
+      stateWith(decayedExercise({ isAccessory: true, sets: 2 })),
+      "2026-08-04"
+    );
+    const ex = out.workouts[0].exercises[0];
+    expect(ex.sets).toBe(2);
+    expect(ex.baseSets).toBe(2);
+  });
+
+  it("never LOWERS a load — the repair is a max, not an assignment", () => {
+    // A user who progressed past their last logged success keeps the higher
+    // prescription; this pass must not drag them back down to history.
+    const out = migrateProgramState(
+      stateWith(decayedExercise({ weight: 65, sets: 4, baseSets: 4 })),
+      "2026-08-04"
+    );
+    const ex = out.workouts[0].exercises[0];
+    expect(ex.weight).toBe(65);
+    expect(ex.sets).toBe(4);
+  });
+
+  it("is idempotent — a repaired document is returned by reference", () => {
+    const once = migrateProgramState(
+      stateWith(decayedExercise()),
+      "2026-08-04"
+    );
+    const twice = migrateProgramState(once, "2026-08-04");
+    expect(twice).toBe(once);
+  });
+
+  it("does not invent a load for a bodyweight/uncalibrated slot", () => {
+    const out = migrateProgramState(
+      stateWith(
+        decayedExercise({
+          exerciseId: "pull-ups",
+          weight: 0,
+          lastSuccessfulWeight: 0,
+        })
+      ),
+      "2026-08-04"
+    );
+    expect(out.workouts[0].exercises[0].weight).toBe(0);
+  });
+});
+
+/* ─── v3 one-time coverage backfill ──────────────────────────────── */
+
+/**
+ * Plans generated before the lateral-raise and calf slots existed never
+ * receive them: an existing plan takes planBuilder's preserve branch. The
+ * operator's live week-11 programme carried zero direct side-delt and zero
+ * direct calf work and would have carried it forever.
+ *
+ * The gating is the design. Version-gated means it runs ONCE per document,
+ * so it repairs old plans without becoming a pass that re-adds an exercise
+ * every time someone deletes one.
+ */
+describe("migrateProgramState — v3 coverage backfill", () => {
+  const lift = (
+    exerciseId: string,
+    movementCategory: string
+  ): Record<string, unknown> => ({
+    name: exerciseId,
+    exerciseId,
+    instanceId: `i-${exerciseId}`,
+    movementCategory,
+    sets: 3,
+    reps: 8,
+    baseReps: 8,
+    baseSets: 3,
+    repUnit: "reps",
+    weight: 60,
+    progressionType: "double",
+    lastSuccessfulWeight: 60,
+    lastAttemptedWeight: 60,
+    consecutiveFailures: 0,
+    plateauCount: 0,
+    performanceHistory: [],
+    lastPerformance: null,
+  });
+
+  /** A legs day + a press day, with NO calf and NO side-delt work. */
+  const uncoveredPlan = (schemaVersion?: number) =>
+    makeLegacyProgramState({
+      ...(schemaVersion === undefined
+        ? {}
+        : { programSchemaVersion: schemaVersion }),
+      workouts: [
+        {
+          dayName: "Legs",
+          dayType: "legs",
+          completed: false,
+          exercises: [lift("squat", "knee_dominant")],
+        },
+        {
+          dayName: "Push",
+          dayType: "push",
+          completed: false,
+          exercises: [lift("overhead-press", "vertical_push")],
+        },
+      ],
+    } as unknown as Partial<ProgramState>);
+
+  const idsIn = (s: ProgramState) =>
+    s.workouts.flatMap((d) => d.exercises.map((e) => e.exerciseId));
+
+  it("adds the missing calf and side-delt slots to an old plan", () => {
+    const out = migrateProgramState(uncoveredPlan(1), "2026-08-04");
+    const ids = idsIn(out);
+    expect(ids).toContain("standing-calf-raise");
+    expect(ids).toContain("lateral-raise");
+  });
+
+  it("puts each slot on a day that already trains that pattern", () => {
+    const out = migrateProgramState(uncoveredPlan(1), "2026-08-04");
+    // Calves onto the LEGS day, lateral raise onto the PRESS day — a calf
+    // raise landing on a pull day would be worse than the gap it repairs.
+    expect(out.workouts[0].exercises.map((e) => e.exerciseId)).toContain(
+      "standing-calf-raise"
+    );
+    expect(out.workouts[1].exercises.map((e) => e.exerciseId)).toContain(
+      "lateral-raise"
+    );
+  });
+
+  it("appends rather than inserts — positional accessory carry depends on it", () => {
+    const out = migrateProgramState(uncoveredPlan(1), "2026-08-04");
+    expect(out.workouts[0].exercises[0].exerciseId).toBe("squat");
+    expect(out.workouts[1].exercises[0].exerciseId).toBe("overhead-press");
+  });
+
+  it("runs ONCE — a re-migrated plan is not backfilled again", () => {
+    const once = migrateProgramState(uncoveredPlan(1), "2026-08-04");
+    const twice = migrateProgramState(once, "2026-08-04");
+    // Reference-equal: the second pass finds nothing to do at all.
+    expect(twice).toBe(once);
+    expect(
+      idsIn(twice).filter((id) => id === "standing-calf-raise")
+    ).toHaveLength(1);
+  });
+
+  it("does NOT re-add a slot the user deleted after migrating", () => {
+    // The objection that made an always-on backfill wrong. Post-migration
+    // the document is already at the current version, so removing the calf
+    // raise sticks.
+    const migrated = migrateProgramState(uncoveredPlan(1), "2026-08-04");
+    const pruned = {
+      ...migrated,
+      workouts: migrated.workouts.map((d) => ({
+        ...d,
+        exercises: d.exercises.filter(
+          (e) => !e.exerciseId.includes("calf-raise")
+        ),
+      })),
+    } as ProgramState;
+    const again = migrateProgramState(pruned, "2026-08-04");
+    expect(idsIn(again)).not.toContain("standing-calf-raise");
+  });
+
+  it("leaves a plan that already trains both groups alone", () => {
+    const covered = makeLegacyProgramState({
+      programSchemaVersion: 1,
+      workouts: [
+        {
+          dayName: "Legs",
+          dayType: "legs",
+          completed: false,
+          exercises: [
+            lift("squat", "knee_dominant"),
+            lift("standing-calf-raise", "knee_dominant"),
+          ],
+        },
+        {
+          dayName: "Push",
+          dayType: "push",
+          completed: false,
+          exercises: [
+            lift("overhead-press", "vertical_push"),
+            lift("lateral-raise", "vertical_push"),
+          ],
+        },
+      ],
+    } as unknown as Partial<ProgramState>);
+    const out = migrateProgramState(covered, "2026-08-04");
+    expect(
+      idsIn(out).filter((id) => id === "standing-calf-raise")
+    ).toHaveLength(1);
+    expect(idsIn(out).filter((id) => id === "lateral-raise")).toHaveLength(1);
+  });
+});

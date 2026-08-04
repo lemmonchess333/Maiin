@@ -598,6 +598,24 @@ export default function WorkoutSession({
   const [completing, setCompleting] = useState(false);
   const [sessionDurationMinutes, setSessionDurationMinutes] = useState(0);
 
+  /**
+   * End the session — stamp its duration, THEN show the complete screen.
+   *
+   * These two were separate statements and only the auto-complete-on-last-set
+   * path performed both; the green "Finish Workout" button flipped
+   * `sessionComplete` alone, so duration kept its `useState(0)` initial and
+   * the completion screen read "0m". That 0 does not stay cosmetic: it is
+   * sent in the save payload, where `useProgram` substitutes a fabricated
+   * `completedSetCount * 3`, which then feeds the calorie estimate and the
+   * training-load series. One entry point makes the pair un-droppable.
+   */
+  const completeSession = useCallback(() => {
+    setSessionDurationMinutes(
+      Math.round((Date.now() - sessionStartRef.current) / 60000)
+    );
+    setSessionComplete(true);
+  }, []);
+
   // Stall detection
   const [stallExercise, setStallExercise] = useState<{
     name: string;
@@ -951,10 +969,7 @@ export default function WorkoutSession({
       }
 
       if (isLastExercise) {
-        setSessionDurationMinutes(
-          Math.round((Date.now() - sessionStartRef.current) / 60000)
-        );
-        setSessionComplete(true);
+        completeSession();
       } else {
         // Move to next exercise
         setCurrentExIndex((prev) => prev + 1);
@@ -1874,7 +1889,7 @@ export default function WorkoutSession({
               return (
                 <button
                   type="button"
-                  onClick={() => setSessionComplete(true)}
+                  onClick={completeSession}
                   className="w-full py-3.5 rounded-xl bg-success text-success-foreground font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
                 >
                   <Trophy className="size-4" /> Finish Workout

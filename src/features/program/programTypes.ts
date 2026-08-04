@@ -287,7 +287,10 @@ export interface DeloadSnapshot {
    migrations.ts) gate on these values to populate missing fields
    without regenerating plans. */
 export const CURRENT_WEEKSCHEDULE_VERSION = 1 as const;
-export const CURRENT_PROGRAM_SCHEMA_VERSION = 2 as const;
+// v3 (2026-08-04): one-time coverage backfill for plans generated before the
+// lateral-raise and calf slots existed. Version-gated precisely so it runs
+// ONCE — a user who deletes those slots afterwards keeps them deleted.
+export const CURRENT_PROGRAM_SCHEMA_VERSION = 3 as const;
 
 /* ================================
    SCHEDULED RUN

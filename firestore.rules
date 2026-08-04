@@ -1374,13 +1374,24 @@ service cloud.firestore {
     // errorReporting.persistToFirestore writes critical errors (network,
     // component, payment/auth/subscription keyword matches) here. Without
     // this rule, writes silently fail against the default-deny and the
-    // error log never materialises. Create-only from the client so a
-    // compromised session can't rewrite its own history; reads are
-    // reserved for Admin-SDK support tooling.
+    // error log never materialises.
+    //
+    // READ was `false`, "reserved for Admin-SDK support tooling" — but
+    // `src/pages/Diagnostics.tsx` queries this exact collection to show the
+    // user their own recent crashes, so it always rendered "none logged"
+    // while the crashes sat in Firestore. Two parts of the app contradicting
+    // each other, and the half that lost was the one built to make a crash
+    // diagnosable. Found 2026-08-04 chasing a "Something went wrong" on the
+    // Train route: the evidence existed and the app could not read it.
+    //
+    // Owner-read is not a weakening. These are the user's OWN crash reports;
+    // the create-only stance exists so a compromised session cannot rewrite
+    // its history, and update/delete stay denied for exactly that reason.
     // ========================================
     match /users/{uid}/errors/{doc} {
       allow create: if isOwnerAndNotDeleting(uid);
-      allow read, update, delete: if false;
+      allow read: if isOwner(uid);
+      allow update, delete: if false;
     }
 
     // ========================================
