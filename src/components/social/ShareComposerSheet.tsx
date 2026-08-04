@@ -122,6 +122,18 @@ export default function ShareComposerSheet() {
       open={state.open}
       onOpenChange={dismiss}
       title={TITLE[state.type]}
+      // Lifted above the default sheet stack. This is an APP-LEVEL sheet
+      // (mounted once in App.tsx) that is opened from inside full-screen
+      // route overlays — most visibly the post-save prompt, which fires while
+      // `SessionCompleteScreen` is still mounted at `fixed inset-0 z-50` and
+      // OPAQUE. At the defaults the scrim (z-40) was painted over by that
+      // screen and the content (z-50) tied with it, winning on DOM order
+      // alone: the sheet floated on an undimmed, full-brightness screen with
+      // no layering cue at all. That is the "it looks weird" in the operator's
+      // report — the sheet did not read as a layer because it was not being
+      // drawn as one.
+      overlayClassName="z-[60]"
+      className="z-[70]"
     >
       <div className="px-5 pb-5 pt-3 space-y-4">
         {/* Activity preview */}

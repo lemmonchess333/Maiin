@@ -2589,6 +2589,59 @@ suite("firestore.rules — partnerBonds (SOCIAL S3)", () => {
   // releasePushDeviceToken; no client code reads or writes these paths
   // (pushNotifications.ts). An owner-readable device list would leak
   // token bindings, so even the OWNER is denied.
+  describe("a user can read their OWN crash reports (/diagnostics)", () => {
+    // `errorReporting.persistToFirestore` writes here and
+    // `src/pages/Diagnostics.tsx` reads here — but read was denied, so the
+    // page built to surface a crash always rendered "none logged" while the
+    // crash sat in Firestore. Found chasing a real "Something went wrong" on
+    // the Train route: the evidence existed and the app could not read it.
+    it("the owner can read their own error doc", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), "users", OWNER_UID, "errors", "e1"), {
+          message: "boom",
+          createdAt: 1,
+        });
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertSucceeds(
+        getDoc(doc(ownerDb, "users", OWNER_UID, "errors", "e1"))
+      );
+    });
+
+    it("another user cannot read it", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), "users", OWNER_UID, "errors", "e2"), {
+          message: "boom",
+          createdAt: 1,
+        });
+      });
+      const otherDb = env.authenticatedContext(OTHER_UID).firestore();
+      await assertFails(
+        getDoc(doc(otherDb, "users", OWNER_UID, "errors", "e2"))
+      );
+    });
+
+    it("the owner still cannot rewrite or delete their crash history", async () => {
+      // The create-only stance is what stops a compromised session editing
+      // its own trail; owner-READ does not weaken it.
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), "users", OWNER_UID, "errors", "e3"), {
+          message: "boom",
+          createdAt: 1,
+        });
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(
+        setDoc(doc(ownerDb, "users", OWNER_UID, "errors", "e3"), {
+          message: "rewritten",
+        })
+      );
+      await assertFails(
+        deleteDoc(doc(ownerDb, "users", OWNER_UID, "errors", "e3"))
+      );
+    });
+  });
+
   describe("push device tokens + claim ledger are server-only", () => {
     it("the owner cannot write their own device-token doc", async () => {
       const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
