@@ -104,9 +104,28 @@ describe("trainingSignalsForNutrition — isDeload reconciliation", () => {
     expect(sig.isDeload).toBe(true);
   });
 
-  it("prescription deload (week %4) but currentPhase stale 'progression' → still deload", () => {
+  it("a MATERIALIZED 'progression' on a %4 week wins over the rule", () => {
+    // This case used to assert the opposite, on the premise that
+    // `progression` at a %4 week could only be a stale document — true while
+    // `advanceWeek` wrote the phase straight from the calendar prescription.
+    //
+    // It is now a legitimate produced state: since 2026-08-04 an untrained
+    // week HOLDS its number, so a user who rolled into week 8's deload and
+    // then missed that week sits at weekNumber 8 with a restored full-volume
+    // plan and currentPhase "progression". Reading the rule instead of the
+    // materialized phase eased their macros while they trained a normal week.
     const sig = trainingSignalsForNutrition(
       LIFT_ONLY({ currentPhase: "progression", weekNumber: 8 }).program
+    );
+    expect(sig.isDeload).toBe(false);
+  });
+
+  it("falls back to the rule when no phase was ever materialized", () => {
+    // The case the union was actually protecting: onboarding writes
+    // `currentPhase: "base"`, which the engine never produces, so there is no
+    // materialized answer to trust. Easing stays the safe direction there.
+    const sig = trainingSignalsForNutrition(
+      LIFT_ONLY({ currentPhase: "base", weekNumber: 8 }).program
     );
     expect(sig.isDeload).toBe(true);
   });
