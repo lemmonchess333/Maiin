@@ -30,6 +30,7 @@
 
 import type {
   LegacyScheduledRunStatus,
+  ProgramExercise,
   ProgramState,
   ScheduledRunDay,
   ScheduledRunStatus,
@@ -48,6 +49,77 @@ import {
 } from "@/lib/dateHelpers";
 import { isScheduledRunCompleted } from "@/lib/scheduledRunStatus";
 import { repUnitForExerciseId } from "./repUnits";
+
+/**
+ * A MAIN lift's minimum set anchor — mirrors volumeModel's
+ * RECONCILE_MAIN_FLOOR, which states the reasoning: the progression anchor
+ * needs enough exposures to progress on, and 3 is the lowest main-set
+ * prescription anywhere in the corpus.
+ */
+const MAIN_SET_ANCHOR_FLOOR = 3;
+
+/**
+ * Repair the permanent decay left by the pre-2026-07-28 deload.
+ *
+ * The old `applyDeload` cut `sets: max(2, sets - 1)` AND `weight: weight *
+ * 0.85` on every 4th week, wrote the result straight to stored state, and had
+ * nothing to restore either from — no `baseSets` anchor, no
+ * `preDeloadWeight` stash. So each mesocycle permanently shrank the plan on
+ * both axes, and the damage compounded.
+ *
+ * Replayed over a week-11 user it reproduces the operator's screenshots
+ * exactly: Barbell Row 4x60kg -> (wk4) 3x50kg -> (wk8) 2x42.5kg, and Cable
+ * Crunch 3x15kg -> 2x12.5kg -> 2x10kg. Reps are untouched by that recipe,
+ * which is why 8 and 15 survived. The user never changed what they put on the
+ * bar — "Last: 60 kg x 12" — only the app's number decayed underneath them.
+ *
+ * `fa19724a` fixed the engine forward-only. Worse, its lazy anchor
+ * (`ex.baseSets ?? ex.sets`) then CAPTURED the already-decayed value as the
+ * permanent anchor, so `applyWeeklyVolumeShape` now re-pins the shrunken
+ * number every week. Without this pass the damage is not merely unrepaired,
+ * it is cemented.
+ *
+ * The repair is deliberately conservative and idempotent:
+ *
+ *   LOAD — restored to `lastSuccessfulWeight`, which is the honest handle:
+ *     `applyProgression` writes it from the weight the user ACTUALLY lifted,
+ *     and `applyDeload` spreads `...ex` so it was never cut. `Math.max` means
+ *     this can only ever raise a load, never lower one, and re-running is a
+ *     no-op. If a user genuinely trains lighter now, their successes have
+ *     already moved `lastSuccessfulWeight` down with them, so nothing is
+ *     forced back up.
+ *
+ *   SETS — only MAINS, and only up to the main floor. The true original set
+ *     count is NOT recoverable from programState (nothing stored it before
+ *     the anchor existed), so this does not pretend to restore it: it lifts
+ *     mains off the deload floor of 2 to the codebase's own stated minimum of
+ *     3 and stamps that as `baseSets` so the lazy fallback can never
+ *     re-capture a decayed value. Accessories legitimately sit at 2, so they
+ *     keep whatever anchor they have. A full return to the generator's
+ *     prescription needs a regenerate, which is the user's call.
+ */
+function repairDeloadDecay(ex: ProgramExercise): ProgramExercise {
+  const anchor = ex.baseSets ?? ex.sets;
+  const isMain = ex.isAccessory !== true;
+  const repairedAnchor = isMain
+    ? Math.max(anchor, MAIN_SET_ANCHOR_FLOOR)
+    : anchor;
+  const repairedWeight = Math.max(ex.weight ?? 0, ex.lastSuccessfulWeight ?? 0);
+
+  const anchorMoved = repairedAnchor !== anchor;
+  const weightMoved = repairedWeight !== (ex.weight ?? 0);
+  const anchorMissing = ex.baseSets === undefined;
+  if (!anchorMoved && !weightMoved && !anchorMissing) return ex;
+
+  return {
+    ...ex,
+    weight: repairedWeight,
+    baseSets: repairedAnchor,
+    // Raise the CURRENT week too when the anchor moved, so the repair is
+    // visible now rather than after the next rollover recomputes from it.
+    sets: anchorMoved ? Math.max(ex.sets, repairedAnchor) : ex.sets,
+  };
+}
 
 // PR-0b-iii: COMPLETED_STATUSES + isScheduledRunCompleted moved to
 // `src/lib/scheduledRunStatus.ts` so every consumer shares one
@@ -200,12 +272,20 @@ export function migrateProgramState(
   const migratedWorkouts = state.workouts.map((day) => {
     let dayChanged = false;
     const exercises = day.exercises.map((exercise) => {
-      if (exercise.repUnit !== undefined) return exercise;
-      const repUnit = repUnitForExerciseId(exercise.exerciseId);
-      if (!repUnit) return exercise;
-      workoutsChanged = true;
-      dayChanged = true;
-      return { ...exercise, repUnit };
+      let next = exercise;
+
+      if (next.repUnit === undefined) {
+        const repUnit = repUnitForExerciseId(next.exerciseId);
+        if (repUnit) next = { ...next, repUnit };
+      }
+
+      next = repairDeloadDecay(next);
+
+      if (next !== exercise) {
+        workoutsChanged = true;
+        dayChanged = true;
+      }
+      return next;
     });
     return dayChanged ? { ...day, exercises } : day;
   });
