@@ -32,10 +32,13 @@ import { useAuth } from "./auth";
 //   - `useScanUsage.ts` — `isUnlimited = isPro || isInTrial`
 //     drives the AI-scan ceiling. Post-F1b uses daily windows +
 //     per-action counters (DAILY_AI_LIMITS below).
-//   - `Program.tsx` — `!isPro` derives `phaseLocked` which now gates
-//     ONLY the "Advance to Next Week" button. Pgm4 made programme
-//     editing free (the unified /settings/training editor), so the
-//     old Configure / Settings / Reset gate was removed.
+//   - `Program.tsx` — NO LONGER GATED (2026-08-04). `phaseLocked` and
+//     its `useSubscription` call are gone: the last thing it held was
+//     the "Advance to Next Week" button, and gating that was the wrong
+//     trade. It is not a premium capability, it is the only way to tell
+//     the app you finished your week early — without it a user who
+//     trains six days by Wednesday has no forward affordance and waits
+//     for Sunday. (Pgm4 had already made programme editing free.)
 //
 // Display pricing lives in `src/lib/proPlans.ts` — the single
 // source of truth that ProModal, Upgrade.tsx, and AdaptiveSummary
