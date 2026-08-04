@@ -50,6 +50,7 @@ describe("RUN-M2 — race runDay date === targetDate (normal plans)", () => {
       it(`${distance} · race +${dow}d → race day is on targetDate`, () => {
         for (const weekSchedule of SCHEDULES) {
           const plan = generateRacePlanV2({
+            recentLayoff: "none",
             weekSchedule,
             raceGoal: { distance, targetDate },
             weeklyRunDays: 3,
@@ -74,6 +75,7 @@ describe("RUN-M2 — race runDay date === targetDate (belowFloor plans)", () => 
       it(`${distance} · belowFloor race +${dow}d → race day is on targetDate`, () => {
         for (const weekSchedule of SCHEDULES) {
           const plan = generateRacePlanV2({
+            recentLayoff: "none",
             weekSchedule,
             raceGoal: { distance, targetDate },
             weeklyRunDays: 3,
@@ -91,6 +93,7 @@ describe("RUN-M2 — race week keeps exactly one race + no double-booking", () =
   it("one race day on targetDate; nothing shares its slot", () => {
     const targetDate = addDays(weekStart, 6 * 7 + 3); // 10k, mid-week race
     const plan = generateRacePlanV2({
+      recentLayoff: "none",
       weekSchedule: generateSchedule(2, 3),
       raceGoal: { distance: "10k", targetDate },
       weeklyRunDays: 3,

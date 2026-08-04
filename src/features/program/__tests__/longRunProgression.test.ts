@@ -62,6 +62,7 @@ function plan(args: {
   volume?: RunVolumePreset;
 }) {
   return generateRacePlanV2({
+    recentLayoff: "none",
     weekSchedule: generateSchedule(2, 4),
     raceGoal: {
       distance: args.distance,
