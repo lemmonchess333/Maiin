@@ -382,3 +382,152 @@ suite("users/{uid}/public/profile — the other two value gates", () => {
     );
   });
 });
+
+/**
+ * `raceGoal` value gate.
+ *
+ * `allowedUserFields()` gates key NAMES, so before this rule the field could
+ * hold any map at all — `raceGoal: { anything: ... }` was a legal client
+ * write. `raceGoal.distance` indexes RACE_CONFIGS in the run scheduler and
+ * both server sweeps read the same map, so an unknown distance resolves to
+ * `undefined` and throws.
+ *
+ * No legitimate client path writes this field today (configurePlan and the
+ * skipRecoveryEarly command both land server-side via the Admin SDK), which
+ * is exactly why it needs a test: nothing in the app exercises the rule, so
+ * without these it would be a comment. Each rejection is paired with the
+ * nearest ACCEPTED shape, so a gate that refused everything — including the
+ * writes the app really makes — could not pass.
+ */
+suite("users/{uid} — raceGoal value gate", () => {
+  const UID = "rg1";
+  const VALID = { distance: "marathon", targetDate: "2026-11-01" };
+
+  async function write(patch: Record<string, unknown>) {
+    await seedProfile(UID);
+    const db = env.authenticatedContext(UID).firestore();
+    return setDoc(doc(db, `users/${UID}`), patch, { merge: true });
+  }
+
+  it("accepts the real shapes, including both optional fields", async () => {
+    await assertSucceeds(write({ raceGoal: VALID }));
+    await assertSucceeds(
+      write({ raceGoal: { ...VALID, eventName: "London Marathon 2026" } })
+    );
+    await assertSucceeds(
+      write({
+        raceGoal: { ...VALID, eventSpaceId: "london-marathon" },
+      })
+    );
+    for (const distance of ["5k", "10k", "half", "marathon"]) {
+      await assertSucceeds(write({ raceGoal: { ...VALID, distance } }));
+    }
+  });
+
+  it("accepts null — the explicit clear on a freeform switch", async () => {
+    // Run9 3a-ii: `null` is how a recovery exit drops a finished race. A gate
+    // that refused it would strand every returning user's old goal.
+    await assertSucceeds(write({ raceGoal: null }));
+  });
+
+  it("refuses an arbitrary map — the shape the gate exists for", async () => {
+    await assertFails(write({ raceGoal: { anything: "goes" } }));
+    await assertFails(write({ raceGoal: {} }));
+  });
+
+  it("refuses an unknown distance", async () => {
+    // The crash case: RACE_CONFIGS['ultra'] is undefined in the scheduler and
+    // in dailyRaceReconciliationSweep.
+    await assertFails(write({ raceGoal: { ...VALID, distance: "ultra" } }));
+    await assertFails(write({ raceGoal: { ...VALID, distance: "5K" } }));
+    await assertFails(write({ raceGoal: { ...VALID, distance: 5 } }));
+  });
+
+  it("refuses a targetDate that is not a local YYYY-MM-DD", async () => {
+    // Length alone is not enough — the whole plan is derived by parsing this.
+    for (const targetDate of [
+      "01/11/2026",
+      "2026-11-01T00:00:00Z",
+      "not-a-date",
+      "20261101",
+      "",
+      20261101,
+    ]) {
+      await assertFails(write({ raceGoal: { ...VALID, targetDate } }));
+    }
+  });
+
+  it("refuses a missing required field", async () => {
+    await assertFails(write({ raceGoal: { distance: "marathon" } }));
+    await assertFails(write({ raceGoal: { targetDate: "2026-11-01" } }));
+  });
+
+  it("refuses an extra key, so the map cannot silently grow", async () => {
+    await assertFails(
+      write({ raceGoal: { ...VALID, goalTimeSeconds: 10800 } })
+    );
+  });
+
+  it("refuses an over-long eventName and a non-string one", async () => {
+    await assertSucceeds(
+      write({ raceGoal: { ...VALID, eventName: "x".repeat(60) } })
+    );
+    await assertFails(
+      write({ raceGoal: { ...VALID, eventName: "x".repeat(61) } })
+    );
+    await assertFails(write({ raceGoal: { ...VALID, eventName: 7 } }));
+  });
+
+  it("refuses an eventSpaceId outside the known-space vocabulary", async () => {
+    // Same closed vocabulary as the trainingForSpaceId gate — the id is a
+    // real cross-surface link, not free text.
+    await assertFails(
+      write({ raceGoal: { ...VALID, eventSpaceId: "not-a-space" } })
+    );
+    await assertFails(write({ raceGoal: { ...VALID, eventSpaceId: 1 } }));
+  });
+
+  it("does not block unrelated writes for a user whose stored goal is bad", async () => {
+    // The ungated window let malformed values land. Gating the full post-write
+    // document would lock those users out of their own settings forever —
+    // punishing them for a value written under the old rule. Writes are
+    // gated; stored history is not.
+    await seedProfile(UID);
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), `users/${UID}`),
+        { raceGoal: { anything: "goes" } },
+        { merge: true }
+      );
+    });
+    const db = env.authenticatedContext(UID).firestore();
+    await assertSucceeds(
+      setDoc(doc(db, `users/${UID}`), { darkMode: false }, { merge: true })
+    );
+    // …but they still cannot write a NEW bad value.
+    await assertFails(
+      setDoc(
+        doc(db, `users/${UID}`),
+        { raceGoal: { other: "junk" } },
+        { merge: true }
+      )
+    );
+  });
+
+  it("gates create as well as update", async () => {
+    const db = env.authenticatedContext("rg2").firestore();
+    await assertFails(
+      setDoc(doc(db, "users/rg2"), {
+        ...signupProfile("rg2"),
+        raceGoal: { anything: "goes" },
+      })
+    );
+    const ok = env.authenticatedContext("rg3").firestore();
+    await assertSucceeds(
+      setDoc(doc(ok, "users/rg3"), {
+        ...signupProfile("rg3"),
+        raceGoal: VALID,
+      })
+    );
+  });
+});
