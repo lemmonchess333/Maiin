@@ -1027,10 +1027,24 @@ exports.applyProgramCommand = functions
     await accountDeletionLocks.assertCallableActorNotDeleting(firestore, uid);
 
     try {
-      // Validate the client intent up front (maps ProgramCommandError below).
-      const command = programCommands.assertClientProgramCommand(
-        data && data.command
-      );
+      // The callable payload IS the command — every shipped client sends it
+      // bare (`programCommandClient.ts`: `call(command)`), matching the
+      // sibling callables (configurePlan destructures straight off `data`).
+      //
+      // This read was `data && data.command` from the day the boundary landed
+      // (314f9c61), so `data.command` was ALWAYS undefined and every programme
+      // command failed `invalid-argument` — 100% of them, for every user. It
+      // stayed invisible because the only original caller swallowed the
+      // failure; #127ac38 then routed ~30 writers through here with real
+      // toasts, which is what surfaced it as "Couldn't save that set."
+      //
+      // The `.command` wrapper is still tolerated so an in-flight request or a
+      // localStorage-queued outbox entry of either shape lands. Disambiguation
+      // is safe: `assertKeys` rejects unknown keys, so a legitimate bare
+      // command can never itself carry a `command` property.
+      const payload =
+        data && typeof data === "object" && data.command ? data.command : data;
+      const command = programCommands.assertClientProgramCommand(payload);
 
       // Computed once (not inside the transaction) so a contention retry
       // re-applies the SAME timestamp — the receipt, updatedAt, and any
