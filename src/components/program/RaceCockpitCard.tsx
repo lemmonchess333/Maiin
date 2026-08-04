@@ -43,6 +43,9 @@ interface RaceCockpitCardProps {
   phaseLabel: string | null;
   inTaper: boolean;
   compressed: boolean;
+  /** Finish-safely plan — implies `compressed` but gets its own copy, since
+   *  a below-floor plan has no long-run progression to shorten. */
+  belowFloor?: boolean;
   /** raceGoal.eventSpaceId (races plan PR4) — when it resolves to a
    *  known race space, the card offers a quiet "Race community" link.
    *  Manual goals lack the binding and render no row. */
@@ -60,6 +63,7 @@ export default function RaceCockpitCard({
   phaseLabel,
   inTaper,
   compressed,
+  belowFloor = false,
   raceSpaceId,
   onEdit,
 }: RaceCockpitCardProps) {
@@ -202,12 +206,26 @@ export default function RaceCockpitCard({
         </SectionLabel>
       )}
 
-      {compressed && (
+      {/* belowFloor is checked FIRST: it implies `compressed`, but the two
+          say different things. A below-floor plan has no long-run
+          progression to shorten — every non-race week is easy running — so
+          the compressed copy below would describe training it does not
+          contain. Wording matches the realign toast (`realignCopy.ts`) so the
+          transient message and the persistent one agree. */}
+      {belowFloor ? (
         <p className="text-xs text-muted-foreground">
-          Compressed plan — your target date is sooner than the ideal build for
-          this distance, so interval work is trimmed and the long-run
-          progression shortened to keep it safe.
+          Finish-safely plan — there aren&apos;t enough weeks to train safely
+          for this distance, so every session is easy running with no hard
+          sessions. Aim to finish strong, not to PR.
         </p>
+      ) : (
+        compressed && (
+          <p className="text-xs text-muted-foreground">
+            Compressed plan — your target date is sooner than the ideal build
+            for this distance, so interval work is trimmed and the long-run
+            progression shortened to keep it safe.
+          </p>
+        )
       )}
     </section>
   );

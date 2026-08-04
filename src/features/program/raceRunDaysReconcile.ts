@@ -101,6 +101,14 @@ export function areRaceRunDaysStale(args: RaceRunDaysStaleArgs): boolean {
   // "race in base week 1" signature).
   const fresh = generateRacePlanV2({
     weekSchedule,
+    /* Run15 — this generation is a COMPARISON probe (does the stored week
+       agree with a fresh one about race-template presence?), not a plan the
+       user receives. It must use the same layoff the stored plan was built
+       under, and the only value that is always true of both is "none";
+       anything else would manufacture drift for every detrained runner and
+       trigger a spurious reconcile. Layoff does not affect race-week
+       placement, which is what this probe reads. */
+    recentLayoff: "none",
     raceGoal: {
       distance: raceGoal.distance as RaceDistance,
       targetDate: raceGoal.targetDate,
@@ -131,6 +139,9 @@ export function honestRaceWeekIndex(args: {
   const { raceGoal, todayKey } = args;
   const fresh = generateRacePlanV2({
     // weekSchedule/weeklyRunDays don't affect totalWeeks; pass minimal.
+    // Layoff does not either — it changes week CONTENT, and this reads only
+    // the count — so "none" here is arithmetic, not a policy choice.
+    recentLayoff: "none",
     weekSchedule: [],
     raceGoal: {
       distance: raceGoal.distance as RaceDistance,

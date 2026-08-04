@@ -81,7 +81,11 @@ import { validateDisplayName } from "@/lib/displayName";
 type Gender = "male" | "female" | "unspecified";
 type AgeRange = "under-16" | "16-24" | "25-34" | "35-44" | "45-54" | "55+";
 type PrimaryGoal =
-  "hypertrophy" | "strength" | "fat_loss" | "general" | "running";
+  | "hypertrophy"
+  | "strength"
+  | "fat_loss"
+  | "general"
+  | "running";
 // Experience / Equipment / RunMode / RaceDistance are imported from the
 // single-source measure vocabularies (D3) — no longer re-declared here.
 type DaysPerWeek = 2 | 3 | 4 | 5 | 6;
@@ -630,7 +634,14 @@ export default function Onboarding() {
         // never a dangling race_prep with no raceGoal. Single source of
         // truth for the branch is resolveOnboardingRunMode.
         runMode: effectiveRunMode,
-        ...(effectiveRunMode === "race_prep" && raceTargetDate
+        /* `min` on the input constrains the picker, not a typed or
+           programmatically-set value, so the persist refuses a past date as
+           well. A race_prep user with no usable date lands on the freeform
+           substrate exactly as #975 intended for the no-date case — never a
+           dangling raceGoal pointing backwards. */
+        ...(effectiveRunMode === "race_prep" &&
+        raceTargetDate &&
+        raceTargetDate >= localDateString(new Date())
           ? { raceGoal: { distance: raceDistance, targetDate: raceTargetDate } }
           : {}),
         injuries: injuriesForSave,
@@ -719,7 +730,14 @@ export default function Onboarding() {
         preferredSplit,
         runMode: effectiveRunMode,
         weeklyRunDays: effectiveRunDays,
-        ...(effectiveRunMode === "race_prep" && raceTargetDate
+        /* `min` on the input constrains the picker, not a typed or
+           programmatically-set value, so the persist refuses a past date as
+           well. A race_prep user with no usable date lands on the freeform
+           substrate exactly as #975 intended for the no-date case — never a
+           dangling raceGoal pointing backwards. */
+        ...(effectiveRunMode === "race_prep" &&
+        raceTargetDate &&
+        raceTargetDate >= localDateString(new Date())
           ? { raceGoal: { distance: raceDistance, targetDate: raceTargetDate } }
           : {}),
         equipment,
@@ -1281,6 +1299,14 @@ export default function Onboarding() {
                         <input
                           type="date"
                           aria-label="Race target date"
+                          /* A race cannot be in the past. Without this the
+                             picker happily offered last year, and nothing
+                             downstream rejected it — the guard existed only
+                             on the run-plan editor, not on the path a NEW
+                             user takes. The save below refuses a past date
+                             too, since `min` only constrains the picker and
+                             a typed value bypasses it. */
+                          min={localDateString(new Date())}
                           value={raceTargetDate}
                           onChange={(e) => setRaceTargetDate(e.target.value)}
                           className="w-full px-3 py-2.5 rounded-xl text-sm outline-none bg-muted text-foreground border border-border focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-transparent [color-scheme:light_dark]"

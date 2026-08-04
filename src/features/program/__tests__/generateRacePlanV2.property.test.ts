@@ -57,6 +57,7 @@ describe("generateRacePlanV2 timing-flag consistency (property-based)", () => {
       const weekSchedule = generateSchedule(liftDays, weeklyRunDays);
 
       const plan = generateRacePlanV2({
+        recentLayoff: "none",
         weekSchedule,
         raceGoal: { distance, targetDate: targetDate(daysAhead) },
         weeklyRunDays,

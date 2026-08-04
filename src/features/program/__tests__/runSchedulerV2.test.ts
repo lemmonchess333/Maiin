@@ -206,6 +206,7 @@ describe("scheduleStructuredWeekV2 · long-run placement", () => {
 
 describe("generateRacePlanV2", () => {
   const standardInput: RacePlanV2Input = {
+    recentLayoff: "none",
     weekSchedule: generateSchedule(3, 3),
     raceGoal: { distance: "10k", targetDate: "2026-08-10" }, // ~13 weeks from May 10
     weeklyRunDays: 3,
@@ -495,6 +496,7 @@ describe("generateRacePlanV2 · clashesWithLift flag", () => {
   it("flags the hard run when it's forced onto a both-day, but never the easy run", () => {
     // Healthy marathon → week 0 is base/build, so the long run is type 'long'.
     const plan = generateRacePlanV2({
+      recentLayoff: "none",
       ...baseInputC,
       weekSchedule: allBoth,
       raceGoal: { distance: "marathon", targetDate: "2026-09-20" }, // ~19 weeks
@@ -521,6 +523,7 @@ describe("generateRacePlanV2 · clashesWithLift flag", () => {
       { day: 6, type: "rest" },
     ];
     const plan = generateRacePlanV2({
+      recentLayoff: "none",
       ...baseInputC,
       weekSchedule: withRunOnly,
       raceGoal: { distance: "marathon", targetDate: "2026-09-20" },
@@ -604,6 +607,7 @@ describe("PR-0a — race template selection by distance", () => {
   for (const c of cases) {
     it(`${c.distance} race plan schedules a ${c.expectedTemplate} on race day`, () => {
       const plan = generateRacePlanV2({
+        recentLayoff: "none",
         weekSchedule: generateSchedule(3, 3),
         raceGoal: { distance: c.distance, targetDate: "2026-12-12" },
         weeklyRunDays: 3,
