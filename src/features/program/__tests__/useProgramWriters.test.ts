@@ -1538,8 +1538,12 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
           | undefined;
         // After rollover, runDays[0].weekKey should match current week
         expect(lastWrite?.runDays?.[0]?.weekKey).not.toBe(twoWeeksAgoSunday);
-        // weekHistory should have entries from the archived weeks
-        expect(lastWrite?.weekHistory?.length ?? 0).toBeGreaterThan(0);
+        // The run week is what this test is about. It deliberately does NOT
+        // assert a lift-side archive: this fixture has `workouts: []`, so
+        // there are no lift weeks to archive, and `advanceWeek` only archives
+        // weeks that were trained. The old unconditional archive made an
+        // empty-plan user look like they had lift history.
+        expect(lastWrite?.runDays?.[0]?.weekKey).toBe(localWeekKey());
       },
       { timeout: 2000 }
     );
@@ -2343,10 +2347,18 @@ describe("auto week-rollover for a freeform lifter (D1)", () => {
     );
 
     const last = setDocCalls()[setDocCalls().length - 1].data as ProgramState;
-    // Three weeks stale → three rollovers, 3 → 6.
-    expect(last.weekNumber).toBe(6);
-    // …and the unattended day is archived rather than silently marked done.
-    expect(last.weekHistory?.length).toBeGreaterThan(0);
+    // Three weeks stale → three CALENDAR rollovers, and the anchor above
+    // confirms all three ran. The BLOCK moves once: only the first of those
+    // weeks had a completed session (`advanceWeek` clears the flags for each
+    // new week), so 3 → 4 and then it holds.
+    //
+    // That is the point of the test as named — an incomplete day does not
+    // BLOCK the rollover — and it is the fix for a returning lifter landing
+    // on the top of the volume ramp. See ADR-0002: lifts are split-ordered,
+    // not calendar-pinned.
+    expect(last.weekNumber).toBe(4);
+    // …and the week that WAS trained is archived rather than silently dropped.
+    expect(last.weekHistory?.length).toBe(1);
   });
 
   it("does nothing when the anchor is already the current week", async () => {
