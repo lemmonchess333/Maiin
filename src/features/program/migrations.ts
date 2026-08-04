@@ -34,11 +34,16 @@ import type {
   ProgramState,
   ScheduledRunDay,
   ScheduledRunStatus,
+  WorkoutDay,
 } from "./programTypes";
 import {
   CURRENT_PROGRAM_SCHEMA_VERSION,
   CURRENT_WEEKSCHEDULE_VERSION,
+  generateInstanceId,
 } from "./programTypes";
+import { primaryJudgementForExercise } from "./volumeModel";
+import { exerciseDisplayName } from "./variationBank";
+import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import { generateSchedule, isValidWeekSchedule } from "@/lib/scheduleUtils";
 import {
   generateScheduledRunId,
@@ -57,6 +62,108 @@ import { repUnitForExerciseId } from "./repUnits";
  * prescription anywhere in the corpus.
  */
 const MAIN_SET_ANCHOR_FLOOR = 3;
+
+/**
+ * One-time coverage backfill (schema v3, 2026-08-04).
+ *
+ * The generator gained pinned lateral-raise and calf slots earlier today, but
+ * an EXISTING plan takes planBuilder's preserve branch and never receives
+ * generator improvements — so the operator's live week-11 programme carries
+ * zero direct side-delt and zero direct calf work, and would have carried it
+ * forever. The weekly volume card was changed to SAY so rather than hide it,
+ * which is the right default; this is the repair the owner then asked for.
+ *
+ * Version-gated, and that gating is the whole design. It runs exactly once
+ * per document, so it fixes plans built before the slots existed WITHOUT
+ * becoming a pass that re-adds an exercise every time someone deletes it. A
+ * user who removes their calf raises after this migration keeps them removed
+ * — which is precisely the objection that made a silent, always-on backfill
+ * the wrong answer.
+ *
+ * Coverage is judged with `primaryJudgementForExercise`, the same attribution
+ * the volume card uses, so the backfill and the card can never disagree about
+ * whether a group is trained. Slots are APPENDED (never inserted), because
+ * accessory state carry is positional — `carryExistingAccessories` matches on
+ * (dayIndex, exIndex, category), so inserting mid-day would shift every later
+ * slot onto the wrong lift.
+ */
+function backfillMissingCoverage(workouts: WorkoutDay[]): WorkoutDay[] {
+  const trained = (muscle: string): boolean =>
+    workouts.some((d) =>
+      d.exercises.some(
+        (ex) => (ex.sets ?? 0) > 0 && primaryJudgementForExercise(ex) === muscle
+      )
+    );
+
+  const named = (
+    exerciseId: string,
+    sets: number,
+    reps: number,
+    weight: number
+  ): ProgramExercise => ({
+    name: exerciseDisplayName(exerciseId),
+    exerciseId,
+    instanceId: generateInstanceId(),
+    movementCategory: inferMovementCategory(
+      exerciseDisplayName(exerciseId),
+      exerciseId
+    ),
+    sets,
+    reps,
+    baseReps: reps,
+    baseSets: sets,
+    weight,
+    progressionType: "double",
+    lastSuccessfulWeight: weight,
+    lastAttemptedWeight: weight,
+    consecutiveFailures: 0,
+    plateauCount: 0,
+    performanceHistory: [],
+    lastPerformance: null,
+    isAccessory: true,
+  });
+
+  // Which days can host what: calves belong on a day that already trains
+  // legs, side delts on a day that already presses overhead. Falling back to
+  // "any day" would put a calf raise on a pull day, which is worse than the
+  // gap it repairs.
+  const legDays: number[] = [];
+  const pressDays: number[] = [];
+  workouts.forEach((d, i) => {
+    const cats = d.exercises.map((e) => e.movementCategory);
+    if (cats.includes("knee_dominant") || cats.includes("hip_dominant")) {
+      legDays.push(i);
+    }
+    if (cats.includes("vertical_push")) pressDays.push(i);
+  });
+
+  const additions = new Map<number, ProgramExercise[]>();
+  const add = (dayIdx: number, ex: ProgramExercise) => {
+    const list = additions.get(dayIdx) ?? [];
+    list.push(ex);
+    additions.set(dayIdx, list);
+  };
+
+  if (!trained("Calves") && legDays.length > 0) {
+    // Standing first (gastrocnemius), seated on a second leg day if the week
+    // has one — the same standing/seated split the builders author.
+    add(legDays[0], named("standing-calf-raise", 3, 12, 40));
+    if (legDays.length > 1) {
+      add(legDays[1], named("seated-calf-raise", 3, 15, 30));
+    }
+  }
+
+  if (!trained("SideDelts") && pressDays.length > 0) {
+    add(pressDays[0], named("lateral-raise", 3, 12, 8));
+  }
+
+  if (additions.size === 0) return workouts;
+
+  return workouts.map((day, i) => {
+    const extra = additions.get(i);
+    return extra ? { ...day, exercises: [...day.exercises, ...extra] } : day;
+  });
+}
 
 /**
  * Repair the permanent decay left by the pre-2026-07-28 deload.
@@ -292,6 +399,14 @@ export function migrateProgramState(
   const versionChanged =
     state.programSchemaVersion !== CURRENT_PROGRAM_SCHEMA_VERSION;
 
+  // Coverage backfill — v3, one-shot. Gated on the version rather than on
+  // "is the group missing", so it repairs plans predating the slots without
+  // ever fighting a user who deletes them later.
+  const backfilled = versionChanged
+    ? backfillMissingCoverage(migratedWorkouts)
+    : migratedWorkouts;
+  const coverageChanged = backfilled !== migratedWorkouts;
+
   // D1: seed the lift-week anchor to the CURRENT week, never to the epoch.
   //
   // Every document written before D1 lacks `liftWeekKey`, and the rollover
@@ -309,6 +424,7 @@ export function migrateProgramState(
   if (
     !runDaysChanged &&
     !workoutsChanged &&
+    !coverageChanged &&
     !versionChanged &&
     !liftWeekKeyChanged
   ) {
@@ -318,7 +434,7 @@ export function migrateProgramState(
   return {
     ...state,
     runDays: migratedRunDays,
-    ...(workoutsChanged ? { workouts: migratedWorkouts } : {}),
+    ...(workoutsChanged || coverageChanged ? { workouts: backfilled } : {}),
     ...(liftWeekKeyChanged ? { liftWeekKey: normalizedWeekStart } : {}),
     programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
   };
