@@ -299,6 +299,11 @@ export default function ProgrammeRunSection({
   );
   const raceGoal = resolvedRunPlan.raceGoal ?? undefined;
   const raceCompressed = !!programState?.runPlan?.compressed;
+  /* `belowFloor` is persisted on runPlan (programTypes.ts) and was already
+     read by the realign path, but never reached the cockpit — so a
+     finish-safely plan sat under the COMPRESSED copy, which promises a
+     shortened long-run progression it does not have. */
+  const raceBelowFloor = !!programState?.runPlan?.belowFloor;
   // Memoised: `programState?.runDays ?? []` produces a fresh array
   // reference on every render when the field is undefined, which
   // would invalidate the downstream useMemo deps.
@@ -490,6 +495,7 @@ export default function ProgrammeRunSection({
         currentWeek: programState?.runPlan?.currentWeek,
         totalWeeks: programState?.runPlan?.totalWeeks,
         compressed: raceCompressed,
+        belowFloor: raceBelowFloor,
         todayKey: todayKeyDerivation,
       }),
     [

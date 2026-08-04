@@ -208,6 +208,7 @@ describe("RUN_TEMPLATES coverage — dynamic sweep over generateRacePlanV2", () 
         for (let lift = 0; lift <= 5; lift++) {
           for (let run = 1; run <= 5; run++) {
             const plan = generateRacePlanV2({
+              recentLayoff: "none",
               weekSchedule: weekSchedule(lift, run),
               raceGoal: { distance, targetDate: futureDate(ahead) },
               weeklyRunDays: run,
@@ -236,6 +237,7 @@ describe("RUN_TEMPLATES coverage — dynamic sweep over generateRacePlanV2", () 
     for (const distance of DISTANCES) {
       for (const ahead of DAYS_AHEAD) {
         const plan = generateRacePlanV2({
+          recentLayoff: "none",
           weekSchedule: weekSchedule(3, 3),
           raceGoal: { distance, targetDate: futureDate(ahead) },
           weeklyRunDays: 3,
