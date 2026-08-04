@@ -83,6 +83,72 @@ service cloud.firestore {
       return isOwner(uid) && !isWriteFrozen(uid);
     }
 
+    /* raceGoal value gate — the shape the app actually consumes.
+       `allowedUserFields()` gates key NAMES only, so before this the field
+       could hold any map at all: `raceGoal: { anything: <...> }` was a legal
+       client write. That matters because `raceGoal.distance` indexes
+       RACE_CONFIGS in the run scheduler and both server sweeps
+       (dailyRaceReconciliationSweep, raceDayCompletion) read the same map —
+       an unknown distance resolves to `undefined` and throws.
+
+       DEFENCE IN DEPTH, not a fix for a live path. Every legitimate write of
+       this field today goes through a Cloud Function — `configurePlan` for
+       the editor, the `skipRecoveryEarly` command for the recovery exit —
+       and those run the Admin SDK (rules bypassed) after
+       functions/profileSanitizer.js has already validated the same shape.
+       What this closes is the direct-SDK path available to any authenticated
+       user against their own document. Blast radius there was self-inflicted
+       and contained (sweepActiveUsers isolates per-uid), which is why this is
+       a small gate rather than a migration.
+
+       Kept as a value gate rather than dropping `raceGoal` from
+       `allowedUserFields()`: removal would close the hole outright, but a
+       field absent from that list fails as a SILENT permission-denied, and
+       this repo has shipped that bug at least three times (hideWeightNumber,
+       timezone, goalWeightKg — each rejected every save until spotted). A
+       gate keeps a future client writer working as long as it writes the
+       real shape. Mirrors the `trainingForSpaceId` gate below, and the
+       vocabulary mirrors profileSanitizer.js's `raceGoal` cleaner. */
+    function raceGoalValid() {
+      let g = request.resource.data.raceGoal;
+      return !('raceGoal' in request.resource.data)
+        // Run9 3a-ii: `null` is the explicit "no race" value that clears a
+        // prior goal on a freeform switch / recovery exit. Must stay legal.
+        || g == null
+        || (
+          g is map
+          && g.keys().hasAll(['distance', 'targetDate'])
+          && g.keys().hasOnly(['distance', 'targetDate', 'eventName', 'eventSpaceId'])
+          && g.distance in ['5k', '10k', 'half', 'marathon']
+          // Local "YYYY-MM-DD". Pinned by pattern, not just length: the whole
+          // race plan is derived from parsing this, and a 10-character
+          // non-date is the same crash as a bad distance.
+          && g.targetDate is string
+          && g.targetDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+          && (
+            !('eventName' in g)
+            || (g.eventName is string && g.eventName.size() <= 60)
+          )
+          && (
+            !('eventSpaceId' in g)
+            || (g.eventSpaceId is string && isKnownSpaceId(g.eventSpaceId))
+          )
+        );
+    }
+
+    /* Validate only when the field is actually CHANGING.
+       On update `request.resource.data` is the full post-write document, so
+       gating it unconditionally would let a pre-existing malformed raceGoal —
+       exactly what the ungated window allowed — block every unrelated profile
+       write that user ever makes again. Locking someone out of their own
+       settings to punish a bad value written under the old rule is a worse
+       outcome than the value. Writes are gated; stored history is not. */
+    function raceGoalUnchangedOrValid() {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['raceGoal'])
+        || raceGoalValid();
+    }
+
     function subscriptionFieldsUnchanged() {
       let protectedFields = [
         'subscriptionTier', 'stripeCustomerId', 'stripeSubscriptionId', 'trialExpiresAt',
@@ -198,11 +264,13 @@ service cloud.firestore {
         && !isWriteFrozen(uid)
         && request.resource.data.keys().hasOnly(allowedUserFields())
         && request.resource.data.subscriptionTier == 'free'
-        && billingFieldsUnsetOnCreate();
+        && billingFieldsUnsetOnCreate()
+        && raceGoalValid();
       allow update: if isOwner(uid)
         && !isWriteFrozen(uid)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowedUserFields())
-        && subscriptionFieldsUnchanged();
+        && subscriptionFieldsUnchanged()
+        && raceGoalUnchangedOrValid();
       // Freeze delete too: the deletion executor uses the Admin SDK (which
       // bypasses rules), so a client-side self-delete during the freeze /
       // tombstone window is never the executor and should be blocked.
