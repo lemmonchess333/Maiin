@@ -24,7 +24,6 @@ interface SetLog {
 
 interface SessionCompleteScreenProps {
   dayName: string;
-  dayType: string;
   exercises: ProgramExercise[];
   setLogs: SetLog[][];
   firedPRs: Map<string, RepBucket[]>;
@@ -45,7 +44,6 @@ interface SessionCompleteScreenProps {
 
 export default function SessionCompleteScreen({
   dayName,
-  dayType,
   exercises,
   setLogs,
   firedPRs,
@@ -147,9 +145,7 @@ export default function SessionCompleteScreen({
           <h2 className="text-2xl font-bold text-foreground">
             Workout Complete
           </h2>
-          <p className="text-sm text-muted-foreground">
-            {dayName} · {dayType}
-          </p>
+          <p className="text-sm text-muted-foreground">{dayName}</p>
           {sessionVariant === "easier_today" ? (
             <p className="text-xs text-muted-foreground">
               Easier today — you showed up and kept it honest. The plan stays
@@ -329,7 +325,11 @@ export default function SessionCompleteScreen({
             also trained today; once/day; fully dismissible. */}
         {/* Rev1 PR2 — what this session did to your week. Renders null
             until its one fetch resolves; no jank on the celebration. */}
-        <WeekPulseCard />
+        {/* This screen renders BEFORE its own save is dispatched (the
+            "Save Workout" button below does it) and unmounts the moment the
+            save resolves — so the just-finished session has to be counted
+            explicitly or the user reads "0 of 6 lifts" right after doing one. */}
+        <WeekPulseCard pendingLifts={1} />
 
         <PostCompletionKudos
           candidate={kudos.candidate}

@@ -4,7 +4,7 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 
 interface StallModalProps {
-  exercise: { name: string; weight: number };
+  exercise: { name: string; weight: number; isBodyweight?: boolean };
   onClose: () => void;
 }
 
@@ -23,18 +23,24 @@ interface StallModalProps {
  */
 export default function StallModal({ exercise, onClose }: StallModalProps) {
   const { profile, updateProfile } = useAuth();
+  // Adaptive is only ON while there is no manual override, so a user who
+  // already has one loses nothing here and shouldn't be warned.
+  const adaptiveOn = !profile?.customCalorieTarget;
 
   const handleAdjust = async () => {
     if (profile) {
-      const current = profile.customCalorieTarget || profile.targetCalories || 2200;
-      const result = await updateProfile({ customCalorieTarget: current + 150 });
+      const current =
+        profile.customCalorieTarget || profile.targetCalories || 2200;
+      const result = await updateProfile({
+        customCalorieTarget: current + 150,
+      });
       // Success toast only fires when the write landed — without this
       // gate the modal cheerfully reported "increased by 150" even
       // when the Firestore write failed, and stamped the localStorage
       // suppression key so the user couldn't retry from this surface.
       // updateProfile already toasts on failure with its own copy.
       if (!result.ok) return;
-      toast.success('Calorie target increased by 150');
+      toast.success("Calorie target increased by 150");
     }
     localStorage.setItem(`tropos_stall_${exercise.name}`, String(Date.now()));
     onClose();
@@ -50,7 +56,20 @@ export default function StallModal({ exercise, onClose }: StallModalProps) {
       open
       onClose={handleDismiss}
       title="Plateau detected"
-      description={`You've been at ${exercise.weight}kg on ${exercise.name} for 3 sessions. A small calorie increase (~150 cal/day) could help you break through.`}
+      description={
+        // A bodyweight lift stalls on REPS — saying "at 0kg" there would be
+        // both meaningless and, on the uncalibrated case this modal used to
+        // fire on, actively wrong.
+        (exercise.isBodyweight
+          ? `${exercise.name} has held the same reps for 3 sessions.`
+          : `You've been at ${exercise.weight}kg on ${exercise.name} for 3 sessions.`) +
+        ` A small calorie increase (~150 cal/day) could help you break through.` +
+        // Naming the real consequence: this writes a MANUAL calorie override,
+        // and a manual override is what switches adaptive calories off.
+        (adaptiveOn
+          ? " This sets a manual target, which turns off adaptive calories until you reset it in Settings."
+          : "")
+      }
       size="sm"
     >
       <div className="flex gap-3 pt-1">

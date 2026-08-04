@@ -10,8 +10,13 @@ import { THEME } from "@/lib/theme";
  * recomputes async after a save — an instant "+3 PI" would be a guess).
  * Renders nothing while loading or when there's nothing to say.
  */
-export default function WeekPulseCard() {
-  const pulse = useWeekPulse();
+export default function WeekPulseCard({
+  /** Finished-but-unsaved sessions to count into this week (see useWeekPulse). */
+  pendingLifts = 0,
+}: {
+  pendingLifts?: number;
+} = {}) {
+  const pulse = useWeekPulse(pendingLifts);
   if (!pulse) return null;
 
   return (
