@@ -192,35 +192,42 @@ export default function ShareComposerSheet() {
           </p>
         )}
 
-        {/* Visibility actions */}
+        {/* Visibility actions — three EQUAL rows, deliberately (operator,
+            2026-08-05: the primary/tile/ghost ladder "just looks weird").
+            This is a privacy choice the sheet remembers as a default, and
+            none of the three answers is recommended over the others — a
+            filled purple "Share to followers" was the UI nudging the user
+            toward publishing training data, which is the one outcome the
+            remember-toggle comment above says must never happen without an
+            explicit choice. Same variant, same size, same alignment;
+            the icons carry the difference. */}
         <div className="space-y-2">
           <Button
             fullWidth
+            variant="secondary"
             onClick={() => choose("followers")}
             disabled={captionIsProfane}
             leftIcon={<Users className="size-4 shrink-0" aria-hidden="true" />}
           >
             Share to followers
           </Button>
-          <button
-            type="button"
+          <Button
+            fullWidth
+            variant="secondary"
             onClick={() => choose("public")}
             disabled={captionIsProfane}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-muted text-foreground active:scale-[0.98] transition-transform disabled:opacity-50 disabled:active:scale-100"
+            leftIcon={<Globe className="size-4 shrink-0" aria-hidden="true" />}
           >
-            <Globe className="size-4 shrink-0" aria-hidden="true" />
-            <span className="text-sm font-semibold">Make public</span>
-          </button>
-          <button
-            type="button"
+            Make public
+          </Button>
+          <Button
+            fullWidth
+            variant="secondary"
             onClick={skip}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-muted-foreground active:scale-[0.98] transition-transform"
+            leftIcon={<EyeOff className="size-4 shrink-0" aria-hidden="true" />}
           >
-            <EyeOff className="size-4 shrink-0" aria-hidden="true" />
-            <span className="text-sm font-medium">
-              Don&apos;t share this one
-            </span>
-          </button>
+            Don&apos;t share this one
+          </Button>
         </div>
 
         {/* Remember toggle */}
