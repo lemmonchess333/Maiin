@@ -331,7 +331,15 @@ export default function TrainingBlockCard({
         title="Start a training block"
         description="Your programme follows the block for as long as it runs."
       >
-        <div className="space-y-4 pb-2">
+        {/* Scrollable body + pinned footer. The sheet content was taller
+            than the 85vh cap with no internal scroll, so the consequence
+            line and the Start CTA — the two things GsPb1's "never a silent
+            rewrite" depends on being SEEN — rendered below the fold
+            (operator screenshot, 2026-08-05). The footer now sits outside
+            the scroll area so both are visible at every scroll position;
+            the focus rows are single-line so the common path (no Pace
+            disclosure) fits without scrolling at all. */}
+        <div className="flex-1 min-h-0 overflow-y-auto px-4 pt-3 space-y-4">
           <div className="space-y-2">
             <SectionLabel>Focus</SectionLabel>
             <div className="space-y-2">
@@ -345,27 +353,26 @@ export default function TrainingBlockCard({
                     setFocus(g);
                   }}
                   className={cn(
-                    "w-full min-h-[44px] p-3 rounded-xl text-left transition-colors active:scale-[0.97]",
+                    "w-full min-h-[44px] px-3 rounded-xl flex items-center justify-between gap-3 transition-colors active:scale-[0.97]",
                     focus === g
                       ? "bg-primary/10 border border-primary/40"
                       : "bg-muted border border-transparent"
                   )}
                 >
-                  <p className="text-sm font-semibold text-foreground">
+                  <span className="text-sm font-semibold text-foreground text-left">
                     {focusLabel(g)}
                     {g === currentFocus && (
                       <span className="ml-2 text-xs font-normal text-muted-foreground">
                         Your focus now
                       </span>
                     )}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Main lifts at{" "}
+                  </span>
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">
                     <span className="font-mono tabular-nums">
                       {focusRepSummary(g)}
                     </span>{" "}
-                    reps.
-                  </p>
+                    reps
+                  </span>
                 </button>
               ))}
             </div>
@@ -438,12 +445,14 @@ export default function TrainingBlockCard({
               </div>
             </div>
           )}
+        </div>
 
-          {/* The consequence line IS the confirmation — no modal, because
-              every block is reversible and a second tap to confirm what the
-              sentence already said is friction, not safety. */}
+        {/* Pinned footer — the consequence line IS the confirmation (no
+            modal: every block is reversible, and a second tap to confirm
+            what the sentence already said is friction, not safety), which
+            is exactly why it must never scroll out of view. */}
+        <div className="px-4 pt-3 pb-2 border-t border-border/30 space-y-3">
           <p className="text-xs text-muted-foreground">{consequence}</p>
-
           <Button
             className="w-full"
             loading={busy}
@@ -462,7 +471,7 @@ export default function TrainingBlockCard({
         description="Your current training block"
       >
         {block && (
-          <div className="space-y-4 pb-2">
+          <div className="flex-1 min-h-0 overflow-y-auto px-4 pt-3 space-y-4 pb-2">
             <div>
               <p className="text-sm text-foreground">
                 <span className="font-mono tabular-nums">
@@ -554,7 +563,7 @@ export default function TrainingBlockCard({
             <Spinner />
           </div>
         ) : (
-          <div className="space-y-4 pb-2">
+          <div className="flex-1 min-h-0 overflow-y-auto px-4 pt-3 space-y-4 pb-2">
             <p className="text-sm text-foreground">{review.verdict}</p>
             <p className="text-xs text-muted-foreground">
               <span className="font-mono tabular-nums">
