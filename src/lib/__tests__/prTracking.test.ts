@@ -7,6 +7,7 @@ import {
   buildVolumeBest,
   checkVolumePR,
   exerciseSessionVolume,
+  bumpSessionCounts,
 } from "../prTracking";
 import type { RepBucket } from "../prTracking";
 
@@ -294,5 +295,49 @@ describe("session-volume PR", () => {
     expect(checkVolumePR("Bench", 0, {}, counts)).toBe(false);
     expect(checkVolumePR("Curl", 500, {}, counts)).toBe(false); // < 3 sessions
     expect(checkVolumePR("Bench", 100, {}, counts)).toBe(true); // no prior best
+  });
+});
+
+describe("bumpSessionCounts — the counts must grow or the celebrations never fire", () => {
+  it("increments each trained exercise once, starting new ones at 1", () => {
+    const next = bumpSessionCounts({ Bench: 3 }, ["Bench", "Squat"]);
+    expect(next).toEqual({ Bench: 4, Squat: 1 });
+  });
+
+  it("counts a duplicated name once and leaves untrained exercises alone", () => {
+    const next = bumpSessionCounts({ Bench: 2, Row: 5 }, ["Bench", "Bench"]);
+    expect(next).toEqual({ Bench: 3, Row: 5 });
+  });
+
+  it("does not mutate its input", () => {
+    const counts = { Bench: 1 };
+    bumpSessionCounts(counts, ["Bench"]);
+    expect(counts).toEqual({ Bench: 1 });
+  });
+
+  it("THE DEFECT: a persisted-then-frozen count locks the PR gate forever; bumped counts open it on session 4", () => {
+    // Probe-measured (2026-08-05): WorkoutSession persisted the loaded
+    // counts back verbatim, so a user whose stats doc was created on
+    // session 1 sat at {Bench: 1} through ten sessions of monotonically
+    // heavier lifting — checkSetPR null on every single one.
+    let frozen: Record<string, number> = { Bench: 1 };
+    let bumped: Record<string, number> = { Bench: 1 };
+    const prMap = {};
+    let frozenPRs = 0;
+    let bumpedPRs = 0;
+    for (let session = 2; session <= 10; session++) {
+      const weight = 80 + session * 2.5;
+      if (checkSetPR("Bench", weight, 5, prMap, frozen)) frozenPRs++;
+      if (checkSetPR("Bench", weight, 5, prMap, bumped)) bumpedPRs++;
+      // The frozen path is what shipped: load → (no increment) → persist.
+      frozen = { ...frozen };
+      bumped = bumpSessionCounts(bumped, ["Bench"]);
+    }
+    expect(frozenPRs).toBe(0); // ten sessions, zero celebrations — the bug
+    // Bumped: the count reaches 3 after session 3's bump, so the gate is
+    // open from session 4 onward — sessions 4-10, seven of them. The >= 3
+    // floor itself is deliberate — no confetti on a first attempt — and
+    // stays intact.
+    expect(bumpedPRs).toBe(7);
   });
 });
