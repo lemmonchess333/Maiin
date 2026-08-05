@@ -11,11 +11,14 @@
  * `isAdaptiveActive` are the pure steps it composes (kept exported so each step
  * stays independently table-testable).
  *
- * Locked invariants (Nutr2):
- * - Precedence: manual override > learned (Pro/trial + ready) > formula.
+ * Locked invariants (Nutr2, stale-hold amendment 2026-08-05):
+ * - Precedence: manual override > learned (Pro/trial + ready-or-held) > formula.
  * - Free users never see learned and never see the warmup ("no tease").
  * - The learned number moves at most ±150 kcal per rolling 7 days, seeded from
- *   the formula target so the formula→learned handoff never jumps.
+ *   the formula target so the formula→learned handoff never jumps — and once
+ *   learned, an un-ready gate HOLDS the last applied value rather than
+ *   reverting to formula (see the stale-hold branch), so the cap's no-jump
+ *   guarantee survives a logging lapse in both directions.
  */
 
 import { estimateAdaptiveTDEE, computeWarmupProgress } from "./adaptiveTdee";
@@ -308,6 +311,51 @@ export function resolveAdaptiveTarget(
   }
 
   const result = estimateAdaptiveTDEE({ intakeByDay, weighIns });
+
+  /* Stale-hold (2026-08-05): once learned, an un-ready gate stops UPDATES —
+     it does not evaporate the estimate.
+
+     The gate reads a trailing 21-day window, so a user who stops weighing
+     (the higher-friction habit dies first; they are often still logging
+     every meal) slides under `minWeighIns` and — without this branch —
+     their target snapped from the learned value back to the formula
+     OVERNIGHT. Measured on the probe journey: 2919 → 2500 (−419 kcal) six
+     days after the last weigh-in, then 36 days of formula (the gate needs
+     a fresh 14-day span to re-clear), then 2500 → 2928 back up in one day.
+     The ±150/week cap exists precisely so this number never moves like
+     that, and the gate was bypassing it in both directions.
+
+     So: hold the last APPLIED value while the gate is down. The estimate
+     goes stale rather than wrong — the fresh window corrects it at the
+     capped rate once the gate re-clears, and the hold is what makes that
+     correction continuous (re-engage steps from the held value, not from
+     a formula the user was never actually eating to). MacroFactor — the
+     reference app the Nutr2 lock itself validated against — holds
+     expenditure through logging gaps the same way.
+
+     What this deliberately does NOT change: the cold-start. A user with no
+     prior learned value (`capPrev == null`) still gets the formula until
+     the gate first clears — the lock's early-water-weight conservatism is
+     about NEW estimates, and this branch never manufactures one. The
+     warmup bar + the locked "keep logging to keep personalizing" stall
+     nudge still render (showWarmup stays on the un-ready path), so the
+     hold is visible as "stale", never silently passed off as fresh. */
+  if (!result.ready && capPrev) {
+    const liveFraction = computeWarmupProgress(result).fraction;
+    return {
+      view: {
+        active: true,
+        ready: false,
+        source: "learned",
+        value: capPrev.lastApplied,
+        showWarmup: loaded,
+        warmupFraction: Math.max(latched, liveFraction),
+        stalled: loaded && liveFraction + 0.001 < latched,
+      },
+      capState: capPrev,
+      capChanged: false,
+    };
+  }
 
   // Apply the weekly rate cap once the gate is ready (seeded from formula on
   // first engage → no jump).
