@@ -233,19 +233,37 @@ export function buildExpressSession(
 }
 
 /**
- * Which variants are worth OFFERING for this day. Only budgets that
- * actually change the session are surfaced — a day that already fits
- * in 30 minutes gets `["full"]`, and the chooser sheet is skipped
- * entirely (the primary action stays one tap when there's nothing to
- * choose).
+ * Which variants are worth OFFERING for this day. Only budgets whose
+ * TRIM actually changes the session are surfaced.
+ *
+ * The gate asks the builder, not the clock. It used to compare the
+ * rest-aware wall-clock estimate against the budget, but the trim loop
+ * measures in working sets at 2.5 min/set (the deliberate seam
+ * documented in `buildExpressSession`) — so a 17-set day could read
+ * 56 wall-clock minutes, clear the 45 gate, and then trim NOTHING,
+ * producing a "45 min · no changes needed" row in the chooser. A row
+ * that admits it does nothing is noise (operator screenshot,
+ * 2026-08-05). Building the trim to decide the offer makes the gate
+ * agree with the outcome by construction, whichever side of the seam
+ * a future product decision lands on.
+ *
+ * Two identical trims collapse to the tighter budget: if the same cut
+ * satisfies both 45 and 30, offering it twice under two labels is the
+ * same choice dressed as two.
  */
 export function expressChoices(
   day: WorkoutDay
 ): Array<"full" | ExpressVariant> {
-  const est = estimateSessionMinutes(day.exercises);
+  const changes = (t: ExpressTrim) =>
+    t.droppedExercises.length > 0 || t.reducedSets.length > 0;
+  const key = (t: ExpressTrim) => JSON.stringify(t);
+
+  const t45 = buildExpressSession(day, "express45").trim;
+  const t30 = buildExpressSession(day, "express30").trim;
+
   const choices: Array<"full" | ExpressVariant> = ["full"];
-  if (est > EXPRESS_BUDGET_MINUTES.express45) choices.push("express45");
-  if (est > EXPRESS_BUDGET_MINUTES.express30) choices.push("express30");
+  if (changes(t45) && key(t45) !== key(t30)) choices.push("express45");
+  if (changes(t30)) choices.push("express30");
   return choices;
 }
 

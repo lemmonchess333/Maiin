@@ -1,11 +1,21 @@
 /**
- * Pre-session chooser (PROGRAM-FLEX-01 + PROGRAM-ADAPT-01).
+ * Session chooser (PROGRAM-FLEX-01 + PROGRAM-ADAPT-01).
  *
- * Opens on "Begin Workout" for every programme day: Full is always the
- * visually-primary choice; time-budgeted Express options appear only
- * when trimming would actually change the session; and "Easier today"
- * (PROGRAM-ADAPT-01) is ALWAYS offered — a reduced execution of the
- * same session for rough days, never a default and never auto-applied.
+ * Opened ON DEMAND from the "Short on time?" link under the session
+ * card — NOT on "Begin Workout", which starts the full session
+ * directly (operator, 2026-08-05: the every-tap interstitial was "too
+ * much choice"; Hevy / Strong / Fitbod all start on tap, and the
+ * CLAUDE.md reference bar for interrupting wasn't met). A menu the
+ * user asked for can afford its full option list; a menu that
+ * intercepts cannot. Full stays the visually-primary choice;
+ * time-budgeted Express options appear only when trimming would
+ * actually change the session (the gate asks the builder — see
+ * `expressChoices`); and "Easier today" (PROGRAM-ADAPT-01) is ALWAYS
+ * offered — a reduced execution of the same session for rough days,
+ * never a default and never auto-applied. When its recommendation
+ * signal fires, the session card also surfaces a direct "Go easier
+ * today" row, so the recommendation no longer depends on this sheet
+ * being opened.
  *
  * Each option shows what it costs ("2 accessories trimmed", "one set
  * less per lift, lighter loads") so the choice is informed, not magic.
