@@ -46,6 +46,7 @@ import { useStreaks } from "@/features/streaks/useStreaks";
 import { toast } from "@/lib/toast";
 import {
   buildPRMap,
+  bumpSessionCounts,
   checkSetPR,
   repBucketLabel,
   buildVolumeBest,
@@ -425,8 +426,18 @@ export default function WorkoutSession({
         return updated;
       });
 
-      // Load persisted PR map, or build from history if not available
-      let prMapLoaded = false;
+      // Load persisted PR map, or build from history if not available.
+      // `map` and `sessionCounts` are tracked SEPARATELY: a legacy doc that
+      // carries a map but predates sessionCounts used to fall into the
+      // rebuild branch below, which REPLACED the persisted map with a
+      // 50-workout-window rebuild — and a window that misses the user's
+      // real best fires a false "PR!" for a lift WORSE than one they've
+      // already logged (probe-measured 2026-08-05: 90×1 celebrated against
+      // a window best of 85 while the persisted map held 100). The
+      // persisted map only ever ratchets, so when it exists it wins;
+      // the rebuild then fills in only what's missing.
+      let mapLoaded = false;
+      let countsLoaded = false;
       let volumeBestLoaded = false;
       try {
         const { doc: fbDoc, getDoc: fbGetDoc } =
@@ -436,10 +447,13 @@ export default function WorkoutSession({
         );
         if (prMapDoc.exists()) {
           const data = prMapDoc.data();
-          setPrMap(data.map as PRMap);
+          if (data.map) {
+            setPrMap(data.map as PRMap);
+            mapLoaded = true;
+          }
           if (data.sessionCounts) {
             setSessionCounts(data.sessionCounts as Record<string, number>);
-            prMapLoaded = true;
+            countsLoaded = true;
           }
           if (data.volumeBest) {
             setVolumeBest(data.volumeBest as VolumeBestMap);
@@ -450,8 +464,9 @@ export default function WorkoutSession({
         // Fall through to rebuild from history
       }
 
-      if (!prMapLoaded) {
-        // Fall back to building from last 50 workouts
+      if (!mapLoaded || !countsLoaded) {
+        // Fall back to building from last 50 workouts — only the pieces
+        // that are actually missing.
         const history = snap.docs.map((d) => {
           const data = d.data();
           return {
@@ -470,20 +485,22 @@ export default function WorkoutSession({
             ),
           };
         });
-        setPrMap(buildPRMap(history));
+        if (!mapLoaded) setPrMap(buildPRMap(history));
 
-        // Count sessions per exercise for 3-session minimum filter
-        const counts: Record<string, number> = {};
-        for (const w of history) {
-          const seen = new Set<string>();
-          for (const ex of w.exercises) {
-            if (!seen.has(ex.exerciseName)) {
-              counts[ex.exerciseName] = (counts[ex.exerciseName] || 0) + 1;
-              seen.add(ex.exerciseName);
+        if (!countsLoaded) {
+          // Count sessions per exercise for 3-session minimum filter
+          const counts: Record<string, number> = {};
+          for (const w of history) {
+            const seen = new Set<string>();
+            for (const ex of w.exercises) {
+              if (!seen.has(ex.exerciseName)) {
+                counts[ex.exerciseName] = (counts[ex.exerciseName] || 0) + 1;
+                seen.add(ex.exerciseName);
+              }
             }
           }
+          setSessionCounts(counts);
         }
-        setSessionCounts(counts);
       }
 
       if (!volumeBestLoaded) {
@@ -1117,13 +1134,29 @@ export default function WorkoutSession({
               finalVolumeBest[name] = { volume: vol, date: volDate };
             }
           });
+          // THIS session counts toward the 3-session minimum. The counts
+          // were loaded, never incremented, and persisted back verbatim —
+          // so they froze at their first-persist values and the PR gate
+          // never opened for anyone whose doc predated their third session
+          // (see bumpSessionCounts). Only exercises with a completed
+          // working set count: an all-skipped exercise wasn't trained.
+          const finalSessionCounts = bumpSessionCounts(
+            sessionCounts,
+            setLogs.flatMap((exSets, exIdx) => {
+              const name = day.exercises[exIdx]?.name;
+              if (!name) return [];
+              return exSets.some((s2) => s2.completed && s2.type !== "warmup")
+                ? [name]
+                : [];
+            })
+          );
           const { doc: fbDoc } = await import("firebase/firestore");
           const { Timestamp } = await import("firebase/firestore");
           await setDocGuarded(
             fbDoc(db, "users", user.uid, "stats", "prMap"),
             {
               map: prMap,
-              sessionCounts,
+              sessionCounts: finalSessionCounts,
               volumeBest: finalVolumeBest,
               updatedAt: Timestamp.now(),
             },
