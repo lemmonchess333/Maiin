@@ -256,33 +256,50 @@ describe("buildExpressSession — trimming policy", () => {
   });
 });
 
-describe("expressChoices — only offer budgets that change something", () => {
-  it("short day (≤30 min) offers full only — chooser is skipped", () => {
-    const d = day([ex("Bench Press", 4, false), ex("Row", 4, false)]); // 20 min
+describe("expressChoices — only offer budgets whose trim changes something", () => {
+  it("short day offers full only — chooser is skipped", () => {
+    const d = day([ex("Bench Press", 4, false), ex("Row", 4, false)]); // 8 sets
     expect(expressChoices(d)).toEqual(["full"]);
   });
 
-  it("a day over BOTH budgets offers both", () => {
-    // Under the rest-aware estimate this 17-set day is 56 min, so it now
-    // exceeds the 45 budget as well as the 30 — and both are genuinely
-    // offered. Previously it read 43 min and express45 was suppressed as
-    // "wouldn't change anything", which was only true of the old blend.
-    expect(expressChoices(typicalPushDay())).toEqual([
-      "full",
-      "express45",
-      "express30",
-    ]);
+  it("never offers a variant whose trim is empty", () => {
+    // THE SCREENSHOT ROW (operator, 2026-08-05). This 17-set day reads
+    // ~56 min on the rest-aware wall clock, so the old estimate-based
+    // gate offered express45 — but 17 sets is UNDER the 45 budget's
+    // 18-set allowance, so its trim was empty and the sheet rendered
+    // "45 min · no changes needed": an option that admits it does
+    // nothing. The gate must ask the builder, not the clock.
+    const d = typicalPushDay(); // 17 sets
+    const offered = expressChoices(d);
+    expect(offered).toEqual(["full", "express30"]);
+    for (const v of offered) {
+      if (v === "full") continue;
+      const { trim } = buildExpressSession(d, v);
+      expect(
+        trim.droppedExercises.length + trim.reducedSets.length,
+        `${v} offered with an empty trim`
+      ).toBeGreaterThan(0);
+    }
   });
 
-  it("long day (>45) offers all three", () => {
+  it("a day over BOTH set budgets offers both, each with a real trim", () => {
     const d = day([
       ex("Squat", 5, false),
       ex("RDL", 5, false),
       ex("Leg Press", 4, true),
       ex("Leg Curl", 4, true),
       ex("Calf Raise", 4, true),
-    ]); // 22 sets = 55 min
+    ]); // 22 sets — over 18 (45-budget) and over 12 (30-budget)
     expect(expressChoices(d)).toEqual(["full", "express45", "express30"]);
+    const t45 = buildExpressSession(d, "express45").trim;
+    const t30 = buildExpressSession(d, "express30").trim;
+    expect(
+      t45.droppedExercises.length + t45.reducedSets.length
+    ).toBeGreaterThan(0);
+    // …and the two offers are genuinely DIFFERENT sessions — identical
+    // trims collapse to the tighter budget, so the same cut is never
+    // dressed up as two choices.
+    expect(JSON.stringify(t45)).not.toBe(JSON.stringify(t30));
   });
 });
 

@@ -34,6 +34,7 @@ import {
   pickLighterDay,
   isLowerBodyDay,
   recoveringTargetMuscles,
+  summarizeEasier,
 } from "@/features/program/easierToday";
 import {
   computeMuscleRecovery,
@@ -369,38 +370,6 @@ function ProgramInner() {
   );
   const [sessionVariant, setSessionVariant] = useState<SessionVariant>("full");
 
-  // PROGRAM-ADAPT-01 — inputs for the "Easier today" recommendation.
-  // All from EXISTING data sources: recentWorkouts is the page's own
-  // subscription, perfWeek already feeds the deload banner, and
-  // useRunningStats is a bounded one-shot read (2 days covers
-  // "yesterday"). The decision itself is pure (easierToday.ts) and
-  // yields ONE factual reason — never a readiness score, and never the
-  // performance recoveryScore.
-  const { runs: recentRuns } = useRunningStats(2);
-  const easierRecommendationForChooser = useMemo(() => {
-    if (expressChooserDay === null) return null;
-    const day = programState?.workouts[expressChooserDay];
-    if (!day) return null;
-    const yKey = localDateString(addLocalDays(new Date(), -1));
-    const hardRunYesterday = recentRuns.some(
-      (r) =>
-        !r.isInvalid &&
-        !r.savedAnyway &&
-        localDateString(new Date(r.completedAt)) === yKey &&
-        isHardRun(r)
-    );
-    const entries = computeMuscleRecovery(
-      hitsFromWorkoutDocs(recentWorkouts),
-      localDateString()
-    );
-    return easierTodayRecommendation({
-      hardRunYesterday,
-      lowerBodyDay: isLowerBodyDay(day),
-      recoveringMuscles: recoveringTargetMuscles(day, entries),
-      deloadRecommended: !!perfWeek?.flags?.deloadRecommended,
-    });
-  }, [expressChooserDay, programState, recentRuns, recentWorkouts, perfWeek]);
-
   // Skip confirmation
   const [showSkipConfirm, setShowSkipConfirm] = useState(false);
   const [skipTargetDay, setSkipTargetDay] = useState<number | null>(null);
@@ -636,6 +605,51 @@ function ProgramInner() {
     }
     return programState.workouts.findIndex((d) => !d.completed && !d.skipped);
   }, [programState, viewingHistoryIndex]);
+
+  // PROGRAM-ADAPT-01 — inputs for the "Easier today" recommendation.
+  // All from EXISTING data sources: recentWorkouts is the page's own
+  // subscription, perfWeek already feeds the deload banner, and
+  // useRunningStats is a bounded one-shot read (2 days covers
+  // "yesterday"). The decision itself is pure (easierToday.ts) and
+  // yields ONE factual reason — never a readiness score, and never the
+  // performance recoveryScore.
+  const { runs: recentRuns } = useRunningStats(2);
+  // Computed for the CURSOR day (not just an open chooser): since the
+  // 2026-08-05 de-interception the recommendation renders as a quiet row on
+  // the session card itself, which exists before any sheet is open. The
+  // chooser day still wins while the sheet is up — it is only ever opened
+  // for the cursor day, so the two agree by construction.
+  const easierRecommendation = useMemo(() => {
+    const dayIdx = expressChooserDay ?? todayIndex;
+    if (dayIdx === null || dayIdx < 0) return null;
+    const day = programState?.workouts[dayIdx];
+    if (!day) return null;
+    const yKey = localDateString(addLocalDays(new Date(), -1));
+    const hardRunYesterday = recentRuns.some(
+      (r) =>
+        !r.isInvalid &&
+        !r.savedAnyway &&
+        localDateString(new Date(r.completedAt)) === yKey &&
+        isHardRun(r)
+    );
+    const entries = computeMuscleRecovery(
+      hitsFromWorkoutDocs(recentWorkouts),
+      localDateString()
+    );
+    return easierTodayRecommendation({
+      hardRunYesterday,
+      lowerBodyDay: isLowerBodyDay(day),
+      recoveringMuscles: recoveringTargetMuscles(day, entries),
+      deloadRecommended: !!perfWeek?.flags?.deloadRecommended,
+    });
+  }, [
+    expressChooserDay,
+    todayIndex,
+    programState,
+    recentRuns,
+    recentWorkouts,
+    perfWeek,
+  ]);
 
   // Auto-select on week change (not on individual completion). Skips the reset
   // on the FIRST run when the URL pinned a day (back-navigation restore) — only
@@ -1242,16 +1256,53 @@ function ProgramInner() {
                           status === "today" && !selectedWorkout.completed
                             ? () => {
                                 haptic("light");
-                                // The chooser always opens now:
-                                // "Easier today" (PROGRAM-ADAPT-01) is
-                                // offered on every programme day, so
-                                // there is always a real choice even
-                                // when no time budget would trim.
-                                setExpressChooserDay(idx);
+                                // Begin means begin (operator, 2026-08-05:
+                                // the every-tap chooser was "too much
+                                // choice"). Hevy / Strong / Fitbod all start
+                                // on tap — the CLAUDE.md reference bar for
+                                // surfacing an interstitial isn't met. The
+                                // honest versions stay one tap away: the
+                                // "Short on time?" link opens the chooser,
+                                // and a signal-backed easier day surfaces as
+                                // its own row below, so PROGRAM-ADAPT-01's
+                                // never-auto-applied offer survives without
+                                // taxing every session start.
+                                setSessionVariant("full");
+                                setSessionDayIndex(idx);
                               }
                             : undefined
                         }
                       />
+
+                      {/* PROGRAM-ADAPT-01, post-de-interception home: the
+                          recommendation is VISIBLE before any tap, instead of
+                          hiding inside an interstitial everyone paid for.
+                          Rendered only when a real signal fired; tapping
+                          starts the reduced session directly — the row names
+                          exactly what it does. */}
+                      {status === "today" &&
+                        !selectedWorkout.completed &&
+                        easierRecommendation?.recommended && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              haptic("light");
+                              setSessionVariant("easier_today");
+                              setSessionDayIndex(idx);
+                            }}
+                            className="w-full min-h-[44px] p-3 rounded-xl bg-muted text-left active:scale-[0.97] transition-transform"
+                          >
+                            <p className="text-sm font-semibold text-foreground">
+                              Go easier today ·{" "}
+                              {summarizeEasier(
+                                buildEasierSession(selectedWorkout)
+                              )}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Recommended — {easierRecommendation.reason}
+                            </p>
+                          </button>
+                        )}
 
                       {/* Secondary action: skip this session — mirrors the
                           Run card's "Start free run instead" link. Offered on
@@ -1263,6 +1314,24 @@ function ProgramInner() {
                       {(status === "today" || status === "upcoming") &&
                         !isViewingHistory && (
                           <div className="flex items-center justify-center">
+                            {/* The chooser's new home (2026-08-05): the
+                                time-budget / easier / lighter-day menu is a
+                                menu you ASK for, not an interception. Only on
+                                the startable day — express variants execute
+                                today's session. */}
+                            {status === "today" &&
+                              !selectedWorkout.completed && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    haptic("light");
+                                    setExpressChooserDay(idx);
+                                  }}
+                                  className="min-h-[44px] px-4 inline-flex items-center justify-center text-sm font-medium text-muted-foreground active:scale-[0.97] transition-transform"
+                                >
+                                  Short on time?
+                                </button>
+                              )}
                             <button
                               type="button"
                               onClick={() => {
@@ -1750,7 +1819,7 @@ function ProgramInner() {
             ? (programState.workouts[expressChooserDay] ?? null)
             : null
         }
-        easierRecommendation={easierRecommendationForChooser}
+        easierRecommendation={easierRecommendation}
         lighterDay={
           expressChooserDay !== null
             ? pickLighterDay(programState.workouts, expressChooserDay)
