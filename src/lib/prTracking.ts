@@ -86,6 +86,39 @@ export function buildPRMap(
   return map;
 }
 
+/**
+ * Advance the per-exercise session counts after a completed session.
+ *
+ * THE COUNTS MUST GROW OR THE CELEBRATIONS NEVER FIRE. `checkSetPR` /
+ * `checkVolumePR` gate on `sessionCounts[name] >= 3` — a deliberate
+ * "you've done this at least 3 times before" floor so a first attempt
+ * doesn't spray confetti. WorkoutSession loaded the persisted counts,
+ * never incremented them, and persisted the identical object back — so
+ * once the stats doc existed, a new user froze at counts ≤ 2 and the
+ * gate NEVER opened: no set-PR, no volume-PR, for anyone whose doc was
+ * created before their third session, permanently. (Probe-measured
+ * 2026-08-05: ten sessions of monotonically heavier bench, checkSetPR
+ * null on every one, doc still `{Bench: 1}` at the end.) Any exercise
+ * adopted after the doc existed froze at 0 the same way. The only path
+ * that ever grew counts was the legacy rebuild-from-history, which is
+ * skipped precisely when the doc exists.
+ *
+ * Pure and non-mutating; counts only ever go UP here (the floor of the
+ * merge is the persisted value, so a partial history can't shrink
+ * anyone's standing). Frozen production docs self-heal: three sessions
+ * after this ships, the gate opens — no migration.
+ */
+export function bumpSessionCounts(
+  counts: Record<string, number>,
+  trainedExerciseNames: readonly string[]
+): Record<string, number> {
+  const next = { ...counts };
+  for (const name of new Set(trainedExerciseNames)) {
+    next[name] = (next[name] || 0) + 1;
+  }
+  return next;
+}
+
 export function checkSetPR(
   exerciseName: string,
   weight: number,
