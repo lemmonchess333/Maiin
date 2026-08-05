@@ -305,3 +305,123 @@ describe("resolveAdaptiveTarget — NUTR-L5 minimum-calorie floor", () => {
     expect(view.value).toBe(1200); // floored raw (1200), NOT 1250 − 150 = 1100
   });
 });
+
+describe("resolveAdaptiveTarget — stale-hold across a logging lapse", () => {
+  // Once learned, an un-ready gate stops UPDATES — it must not evaporate the
+  // estimate. Measured before the fix (probe journey, 2026-08-05): a user
+  // still logging every meal, six days after their last weigh-in, snapped
+  // 2919 → 2500 overnight; 36 days of formula; then 2500 → 2928 back up in
+  // one day. The ±150/week cap exists so this number never moves like that.
+  const held: CapState = {
+    lastApplied: 2919,
+    lastAppliedAt: "2026-04-20T12:00:00.000Z",
+  };
+
+  it("holds the learned value when the gate un-clears, without re-persisting", () => {
+    const { view, capState, capChanged } = resolveAdaptiveTarget({
+      ...baseInput,
+      capPrev: held, // learned once…
+      // …window now empty: full lapse.
+    });
+    expect(view.source).toBe("learned");
+    expect(view.value).toBe(2919);
+    // Honest about staleness: the gate is down and the warmup/stall
+    // machinery stays live — the hold is visible, never passed off as fresh.
+    expect(view.ready).toBe(false);
+    expect(view.showWarmup).toBe(true);
+    expect(capChanged).toBe(false);
+    expect(capState).toBe(held);
+  });
+
+  it("holds for the screenshot-shape user: still logging meals, scale stopped", () => {
+    // The higher-friction habit dies first. Intake window is FULL; only the
+    // weigh-ins slid under the gate — this user is doing 90% of the work and
+    // was the one being punished with a −419 kcal overnight snap.
+    const { intakeByDay } = fullWindow();
+    const { view } = resolveAdaptiveTarget({
+      ...baseInput,
+      capPrev: held,
+      intakeByDay,
+      weighIns: [
+        { dateKey: "2026-05-01", weightKg: 80 },
+        { dateKey: "2026-05-03", weightKg: 80 },
+      ], // 2 < minWeighIns
+    });
+    expect(view.source).toBe("learned");
+    expect(view.value).toBe(2919);
+  });
+
+  it("never manufactures an estimate: cold-start (no capPrev) still gets formula", () => {
+    // The Nutr2 lock's early-water-weight conservatism is about NEW
+    // estimates. The hold only preserves one that already cleared the gate.
+    const { view } = resolveAdaptiveTarget({ ...baseInput });
+    expect(view.source).toBe("formula");
+    expect(view.value).toBe(2200);
+    expect(view.showWarmup).toBe(true);
+  });
+
+  it("re-engages by stepping FROM the held value, not from formula", () => {
+    // Return after a lapse: fresh window says maintenance 2350, held value
+    // 2919. One capped step down (2919 − 150 = 2769) — continuous with what
+    // the user was actually eating to, converging at the locked rate. The
+    // pre-fix path went via formula 2200 and then jumped BACK up — two
+    // discontinuities the cap never sanctioned.
+    const { view, capChanged } = resolveAdaptiveTarget({
+      ...baseInput,
+      ...fullWindow(),
+      capPrev: held,
+    });
+    expect(view.source).toBe("learned");
+    expect(view.value).toBe(2769);
+    expect(capChanged).toBe(true);
+  });
+
+  it("a manual override set during a hold still wins", () => {
+    // The precedence ladder is unchanged — the hold sits below explicit
+    // user intent, same as the live learned value does.
+    const { view } = resolveAdaptiveTarget({
+      ...baseInput,
+      capPrev: held,
+      isManualOverride: true,
+    });
+    expect(view.source).toBe("formula");
+    expect(view.value).toBe(2200);
+    expect(view.showWarmup).toBe(false);
+  });
+
+  it("a downgraded (free) user with a leftover capPrev never sees the held value", () => {
+    // "Free users never see learned" (Q4 lock A) survives the hold.
+    const { view } = resolveAdaptiveTarget({
+      ...baseInput,
+      capPrev: held,
+      isPro: false,
+    });
+    expect(view.source).toBe("formula");
+    expect(view.showWarmup).toBe(false);
+  });
+
+  it("suppresses the warmup indicator until the first read resolves, but still holds", () => {
+    // Mirrors the below-the-gate loading rule: no flash of "personalizing"
+    // before data arrives — but the VALUE never regresses to formula while
+    // we wait, or every cold app-open during a lapse would flash 2200.
+    const { view } = resolveAdaptiveTarget({
+      ...baseInput,
+      capPrev: held,
+      loaded: false,
+    });
+    expect(view.value).toBe(2919);
+    expect(view.showWarmup).toBe(false);
+  });
+
+  it("the locked stall nudge still fires during a hold", () => {
+    // "Keep logging meals + weigh-ins to keep personalizing" — the lapse is
+    // exactly when that copy earns its place.
+    const { view } = resolveAdaptiveTarget({
+      ...baseInput,
+      capPrev: held,
+      latched: 0.9, // live fraction is 0 on an empty window
+    });
+    expect(view.stalled).toBe(true);
+    expect(view.warmupFraction).toBe(0.9);
+  });
+});
