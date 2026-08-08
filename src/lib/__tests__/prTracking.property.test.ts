@@ -85,7 +85,11 @@ describe("buildPRMap records the true max (property)", () => {
         for (const ex of w.exercises) {
           expected[ex.exerciseName] ??= {};
           for (const s of ex.sets) {
-            if (s.weightKg <= 0) continue; // mirror the engine's skip guard
+            // Mirror the engine's skip guard: BOTH fields must be real and
+            // positive. reps joined the guard 2026-08-08 — a zero-rep set is
+            // not a lift, and phantom records minted from malformed legacy
+            // sets were suppressing real PRs (probe sweep, verifier-confirmed).
+            if (s.weightKg <= 0 || s.reps <= 0) continue;
             const b = getRepBucket(s.reps);
             expected[ex.exerciseName][b] = Math.max(
               expected[ex.exerciseName][b] ?? 0,

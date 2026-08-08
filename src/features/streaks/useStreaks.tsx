@@ -42,9 +42,14 @@ export interface StreakData {
    * WINDOWED, not lifetime (D13). Recomputed each load as the size of the
    * active-date set built from the recent-window subscriptions (≤400 workout /
    * 400 run / 500 meal docs), so it saturates around ~400 distinct days — a
-   * 2-year daily user does NOT see 730 here. `currentStreak` / `longestStreak`
-   * stay accurate (any realistic streak ≤ ~380d fits the window; `longestStreak`
-   * is also persisted monotonically), but this count is genuinely capped.
+   * 2-year daily user does NOT see 730 here. NOTE the window is DOC-bounded,
+   * and meals are several docs per day, so the meal horizon is
+   * ~500/mealsPerDay days (~167 at three meals a day) — this count saturates
+   * EARLIER for meal-driven users. `currentStreak` survives the window via
+   * the persisted anchor (`computeStreakSpanAnchored` — the stored
+   * {count, lastActiveDate} pair certifies days that aged out);
+   * `longestStreak` is persisted monotonically. This count alone is
+   * genuinely capped.
    *
    * HONESTY CONTRACT: any UI that renders this MUST label it as recent/windowed
    * ("active days", "active days · last 400") — NEVER "total" or "lifetime"
@@ -65,10 +70,17 @@ const DEFAULT_STREAKS: StreakData = {
 };
 
 // ── Subscription window sizes ────────────────────────────────────────────
-// 400-day workout/run window and 500-doc meal window assume no user has a
-// real active-day streak longer than ~380 days. A user with 1000+ historical
-// docs only has their most recent N read — enough to compute any realistic
-// streak with headroom for the 365-day badge. totalActiveDays is therefore
+// DOC-bounded, not day-bounded — and meals are the one source with several
+// documents per day, so the 500-doc meal window covers only ~500/mealsPerDay
+// DAYS (~167 at three meals a day). This comment used to claim "any
+// realistic streak fits the window", which was true only at ≤1.37 meals/day:
+// the windowed recompute truncated a meal-driven streak at the horizon and
+// PERSISTED the truncation back, freezing the display while the user kept
+// logging (probe sweep 2026-08-05, verifier-confirmed). Long streaks now
+// survive via the persisted anchor instead of via window size
+// (computeStreakSpanAnchored) — which is why these limits do NOT need to
+// grow: the window only has to cover the days since the streak state was
+// last persisted, plus grace. totalActiveDays remains
 // windowed, not truly lifetime (D13 — the saturation is a DELIBERATE accepted
 // limit, documented on the StreakData.totalActiveDays field; any consumer that
 // displays it must label it as windowed, never "total/lifetime"). The honest
@@ -254,13 +266,32 @@ export interface StreakSpan {
 }
 
 /**
+ * The persisted streak state, used to extend the walk past the read window.
+ *
+ * `streak` days ending at `lastActiveDate` were CERTIFIED by an earlier
+ * computation over data that has since aged out of the subscriptions. The
+ * walk stops there and credits the count instead of needing the documents.
+ */
+export interface StreakAnchor {
+  streak: number;
+  lastActiveDate: string;
+}
+
+/**
  * Walk the streak once and return both the length and the grace days it
  * bridged. `computeCurrentStreak` is the thin number-only wrapper over this.
+ *
+ * `anchor` (optional) is what makes long streaks computable from a bounded
+ * window — see `computeStreakSpanAnchored`, which is the entry point that
+ * also guards against a stale-LOW anchor. When the walk reaches the
+ * anchor's `lastActiveDate` unbroken, it credits the anchored count and
+ * stops; a chain that breaks before reaching it ignores the anchor.
  */
 // eslint-disable-next-line react-refresh/only-export-components
 export function computeStreakSpan(
   activeDates: Set<string>,
-  now: Date = new Date()
+  now: Date = new Date(),
+  anchor?: StreakAnchor
 ): StreakSpan {
   if (activeDates.size === 0) return { streak: 0, bridgedDates: [] };
 
@@ -287,7 +318,17 @@ export function computeStreakSpan(
 
   const cursor = new Date(endDate);
   while (true) {
-    if (activeDates.has(format(cursor, "yyyy-MM-dd"))) {
+    const cursorKey = format(cursor, "yyyy-MM-dd");
+    if (activeDates.has(cursorKey)) {
+      // Anchor day reached with the chain unbroken: everything older is
+      // already certified — credit the anchored count (which includes this
+      // day) and stop. This is what lets a 300-day streak survive a meal
+      // window that only covers ~167 days of documents.
+      if (anchor && cursorKey === anchor.lastActiveDate) {
+        streak += pendingGrace + anchor.streak;
+        if (pendingBridged.length > 0) bridged.push(...pendingBridged);
+        return { streak, bridgedDates: bridged };
+      }
       // An active day confirms any pending grace bridge before it.
       streak += pendingGrace + 1;
       pendingGrace = 0;
@@ -307,6 +348,48 @@ export function computeStreakSpan(
   }
   // Any unconfirmed pending grace (trailing gap into pre-history) is dropped.
   return { streak, bridgedDates: bridged };
+}
+
+/**
+ * The anchored entry point: the better of the anchored and pure walks.
+ *
+ * WHY THIS EXISTS (probe sweep 2026-08-05, verifier-confirmed): the live
+ * recompute is windowed, and meals are the one source with several DOCUMENTS
+ * per day — so the 500-doc meal window covers only ~500/mealsPerDay DAYS
+ * (~167 at three meals a day). The recompute then OVERWROTE the persisted
+ * `currentStreak` with the truncated value on every visit: a meal-driven
+ * streak froze at ~167 while the user kept logging daily, and the 365-day
+ * badge was unreachable for any ≥2-meals/day logger. `longestStreak` already
+ * ratchets against the stored value; `currentStreak` needed the same
+ * courtesy, done properly — the stored pair {count, lastActiveDate} is a
+ * certificate for the days that have aged out of the window.
+ *
+ * Taking the MAX of the two walks is what makes a stale-LOW anchor harmless:
+ * both results are true lower bounds of the real streak (the pure walk
+ * proves what the window can see; the anchored walk extends past it), so
+ * the larger one is always the better bound. A broken chain ignores the
+ * anchor by construction — the walk returns before reaching it — so the
+ * anchor can never resurrect a genuinely dead streak. Garbage anchors
+ * (non-finite count, malformed date, a date the active set doesn't attest)
+ * fall back to the pure walk.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function computeStreakSpanAnchored(
+  activeDates: Set<string>,
+  anchor: StreakAnchor | null | undefined,
+  now: Date = new Date()
+): StreakSpan {
+  const pure = computeStreakSpan(activeDates, now);
+  if (!anchor) return pure;
+  if (!Number.isFinite(anchor.streak) || anchor.streak <= 0) return pure;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(anchor.lastActiveDate)) return pure;
+  // Early-out, not a guard: the walk credits the anchor only on a day the
+  // active set already attests (the branch lives inside the has() check),
+  // so an unattested anchor can never alter the result — skipping the
+  // second walk here just saves the work of proving that.
+  if (!activeDates.has(anchor.lastActiveDate)) return pure;
+  const anchored = computeStreakSpan(activeDates, now, anchor);
+  return anchored.streak >= pure.streak ? anchored : pure;
 }
 
 // ── Internal hook (single instance — lives inside <StreaksProvider>) ────
@@ -595,7 +678,19 @@ function useStreaksInternal() {
         };
       }
       const set = computeActiveDateSet(workouts, runs, meals);
-      const span = computeStreakSpan(set);
+      // Anchored on the persisted {currentStreak, lastActiveDate} pair, so a
+      // streak longer than the read window survives the recompute instead of
+      // being truncated to what the window can see and then PERSISTED back
+      // (the freeze the probe sweep measured at ~167 days for a 3-meals/day
+      // logger). streakData is sanitized on read (finite-or-0), and the
+      // anchored walk ignores anchors the active set can't attest. The
+      // recompute is a fixed point of its own persist — re-running with the
+      // just-written anchor returns the same number — so this cannot
+      // oscillate with the subscription.
+      const span = computeStreakSpanAnchored(set, {
+        streak: streakData.currentStreak,
+        lastActiveDate: streakData.lastActiveDate,
+      });
       return {
         activeDateSet: set,
         currentStreak: span.streak,
@@ -603,7 +698,14 @@ function useStreaksInternal() {
         totalActiveDays: set.size,
         bridgedDates: span.bridgedDates,
       };
-    }, [allLoaded, workouts, runs, meals]);
+    }, [
+      allLoaded,
+      workouts,
+      runs,
+      meals,
+      streakData.currentStreak,
+      streakData.lastActiveDate,
+    ]);
 
   const longestStreak = Math.max(currentStreak, streakData.longestStreak);
 
