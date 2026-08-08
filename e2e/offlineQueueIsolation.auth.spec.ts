@@ -281,6 +281,22 @@ test.describe("offline-queue uid isolation across an account switch", () => {
   );
 
   test.beforeEach(async ({ page }) => {
+    // Diagnostic breadcrumbs for CI triage: Firestore emulator traffic
+    // and app console errors land in the Playwright stdout, so a
+    // failure shows whether the SDK's Write channel was ever opened.
+    page.on("request", (r) => {
+      if (r.url().includes(":8080/google.firestore"))
+        console.log(`[fs-req] ${r.method()} ${r.url().slice(0, 140)}`);
+    });
+    page.on("requestfailed", (r) => {
+      console.log(
+        `[req-failed] ${r.method()} ${r.url().slice(0, 140)} :: ${r.failure()?.errorText}`
+      );
+    });
+    page.on("console", (m) => {
+      if (m.type() === "error" || m.type() === "warning")
+        console.log(`[console-${m.type()}] ${m.text().slice(0, 200)}`);
+    });
     await page.addInitScript(() => {
       // Pre-dismiss first-use coachmarks so no floating tooltip sits
       // over the nav/gear taps this journey makes (home capture rig

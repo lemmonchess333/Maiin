@@ -143,7 +143,19 @@ self.addEventListener("fetch", (event) => {
     url.hostname.includes("identitytoolkit") ||
     url.hostname.includes("openfoodfacts.org") ||
     url.hostname.includes("stripe.com") ||
-    url.hostname.includes("generativelanguage")
+    url.hostname.includes("generativelanguage") ||
+    // Firebase EMULATOR suite (auth 9099 / firestore 8080 / storage
+    // 9199): a loopback origin that is NOT the app's own origin. The
+    // production skip-list above matches production hostnames only, so
+    // emulator traffic used to fall through to the network-first branch
+    // below — whose cache.put(clone) never resolves on a Firestore
+    // WebChannel long-poll (an infinite stream), pinning that
+    // connection until Chrome's 6-per-origin pool is exhausted and
+    // every later emulator request hangs. Surfaced by the two-account
+    // offline-queue E2E, the first spec to drive one browser context
+    // through enough page sessions to drain the pool.
+    (url.origin !== self.location.origin &&
+      (url.hostname === "127.0.0.1" || url.hostname === "localhost"))
   ) {
     return;
   }
