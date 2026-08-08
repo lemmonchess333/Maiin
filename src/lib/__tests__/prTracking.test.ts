@@ -341,3 +341,60 @@ describe("bumpSessionCounts — the counts must grow or the celebrations never f
     expect(bumpedPRs).toBe(7);
   });
 });
+
+describe("buildPRMap — malformed legacy sets mint no phantom records", () => {
+  // Probe sweep 2026-08-05, verifier-confirmed: `undefined <= 0` is false,
+  // so a set missing weightKg passed the guard and recorded
+  // {weight: undefined} — and every later REAL set failed both
+  // `weight > undefined` and the tiebreak, blocking the bucket forever.
+  // getRepBucket(undefined) returns "10rm", filing real weights under a
+  // phantom bucket the same way.
+  const legacyDay = (sets: { weightKg?: number; reps?: number }[]) => [
+    {
+      date: "2025-01-01",
+      exercises: [
+        {
+          exerciseName: "Bench",
+          sets: sets as { weightKg: number; reps: number }[],
+        },
+      ],
+    },
+  ];
+
+  it("a set with zero or missing reps records nothing", () => {
+    const map = buildPRMap(legacyDay([{ weightKg: 120, reps: 0 }]));
+    expect(Object.values(map.Bench).every((b) => b === null)).toBe(true);
+    const map2 = buildPRMap(legacyDay([{ weightKg: 100 }]));
+    expect(Object.values(map2.Bench).every((b) => b === null)).toBe(true);
+  });
+
+  it("a set with missing or non-finite weight records nothing", () => {
+    const map = buildPRMap(legacyDay([{ reps: 5 }]));
+    expect(Object.values(map.Bench).every((b) => b === null)).toBe(true);
+    const map2 = buildPRMap(legacyDay([{ weightKg: NaN, reps: 5 }]));
+    expect(Object.values(map2.Bench).every((b) => b === null)).toBe(true);
+  });
+
+  it("THE SUPPRESSION, healed: a real PR is no longer blocked by a phantom", () => {
+    // Pre-fix: the {120, reps:0} phantom filed under 1rm suppressed the
+    // real 110×1 forever. With the guard, the real set IS the record.
+    const map = buildPRMap([
+      ...legacyDay([{ weightKg: 120, reps: 0 }]),
+      {
+        date: "2025-06-01",
+        exercises: [
+          {
+            exerciseName: "Bench",
+            sets: [{ weightKg: 110, reps: 1 }],
+          },
+        ],
+      },
+    ]);
+    expect(map.Bench["1rm"]).toEqual({
+      weight: 110,
+      reps: 1,
+      date: "2025-06-01",
+    });
+    expect(checkSetPR("Bench", 112.5, 1, map, { Bench: 10 })).toBe("1rm");
+  });
+});
