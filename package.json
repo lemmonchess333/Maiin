@@ -33,7 +33,8 @@
     "seed:experience": "tsx scripts/seed-experience-capture.ts",
     "backfill:streak-mirror": "tsx scripts/backfill-streak-mirror.ts",
     "prepare": "husky",
-    "doctor": "npx react-doctor@latest"
+    "doctor": "npx react-doctor@latest",
+    "seed:fellbehind": "vite-node scripts/seed-fellbehind-capture.ts"
   },
   "dependencies": {
     "@capacitor-community/background-geolocation": "^1.2.26",
