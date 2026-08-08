@@ -970,8 +970,8 @@ Affects: `src/pages/Social.tsx` (renders `SoloFirstFeed` for cold-start users), 
 
 - [x] **Light + dark capture of the solo state.** Re-read 2026-08-08 against the current surface and filmed (`solo-feed.screens.capture.spec.ts`, fresh signup-form account = 0 follows): the CURRENT stack is PartnerStreak hero → challenge slot → Spaces-for-you rail → Share-your-training → spaces empty-state hexagon (the original row's "Crews unlock…" row died with crews, #1700). Asserted before shooting: no "Your feed is empty" copy, and the cold-start Share card shows NO create button. Both frames eyeballed.
 - [x] **Challenge slot before rollover.** Covered by the same capture, structurally: the rig's emulator has no challenge docs at all (no rollover cron runs there), and the slot collapses cleanly — no broken/empty card between the hero and the share card, both frames.
-- [ ] **Sub-tab default interaction.** A new user's feed sub-tab defaults to Explore (`n>0?following:explore`). Confirm the solo stack still leads (it's sub-tab-agnostic) and that switching to Following shows the stack, not the empty "Your feed is empty" prompt.
-- [ ] **Share cold-start vs preloaded — the PRELOADED half.** The cold-start half (prompt, no button) is asserted by the capture above. Still manual: after logging a workout, the card offers "Create a share card" and opens the sheet preloaded with that session's volume/exercise count.
+- [x] **Sub-tab default interaction.** Automated in the same spec's second test: switching the feed source to Following keeps the solo stack leading (the 0-follow gate outranks the source selection) and never shows "Your feed is empty".
+- [x] **Share cold-start vs preloaded.** Both halves automated: the cold-start assertion above, and the preloaded half via a REST-seeded workout — after reload the card offers "Create a share card" and the composer opens preloaded (filmed: 3×8×60 kg renders as 1.4t total volume). The stat labels are invariant uppercase by design ("1 EXERCISES" is the stat-label convention, not a plural bug).
 
 ### Backlog audit 2026-08-02 — what a skeptical pass found
 
