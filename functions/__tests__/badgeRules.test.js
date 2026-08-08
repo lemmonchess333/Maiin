@@ -2,8 +2,10 @@
  * functions/lib/badgeRules.js — pure server-side milestone-badge rules.
  *
  * PARITY: these ids mirror the client catalogue (src/features/streaks/badges.ts
- * BADGE_DEFINITIONS) since functions/ can't import the TS. The id-set test
- * below is the tripwire if the running milestones drift apart.
+ * BADGE_DEFINITIONS). The REAL tripwire is the client-side cross-test
+ * (src/features/streaks/__tests__/badgeCatalogueParity.cross.test.ts), which
+ * loads THIS module via createRequire and pins every server-awardable id into
+ * the catalogue — the id-set literals below only pin this side's spelling.
  */
 import { describe, it, expect } from "vitest";
 import {
