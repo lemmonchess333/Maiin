@@ -54,6 +54,9 @@ import { setDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
 import { useClaimMap } from "@/hooks/useClaimMap";
+import { weighInProfileMirror } from "@/lib/bodyweightLogs";
+import { goalReachedOffer } from "@/lib/goalWeightPlan";
+import GoalReachedSheet from "@/components/home/GoalReachedSheet";
 import { localDateString, localWeekKey } from "@/lib/dateHelpers";
 import { calcDailyBurn } from "@/utils/dailyBurn";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
@@ -433,6 +436,19 @@ export default function Home() {
         },
         { merge: true }
       );
+      // Mirror the fresh weigh-in onto profile.weightKg — the anchor
+      // calculateTDEE / getAdjustedTargets / resolveGoalWeightPlan all
+      // read, which this flow previously left stale for months (see
+      // weighInProfileMirror). Best-effort AFTER the canonical log row
+      // lands: a failed mirror must not fail the weigh-in, and the next
+      // weigh-in retries it. throwOnError so the generic "couldn't save
+      // your settings" toast doesn't fire over a successful weigh-in.
+      const mirror = weighInProfileMirror(profile?.weightKg, storeW);
+      if (mirror) {
+        updateProfile(mirror, { throwOnError: true }).catch((e) =>
+          logger.warn("[Home] weight mirror to profile failed", e)
+        );
+      }
       const disp =
         weightUnit === "lbs"
           ? (storeW * 2.20462).toFixed(1)
@@ -521,6 +537,28 @@ export default function Home() {
     suppressedBy: ["fell-behind"],
     dropWhenMissed: true,
     onDrop: dismissNewBadge,
+  });
+
+  // Goal-reached prompt (probe sweep 2026-08-05): the nutrition direction
+  // used to be re-resolved only inside a Settings edit, so a cutter who
+  // arrived kept the full deficit indefinitely. The weigh-in→profile mirror
+  // keeps profile.weightKg fresh, which is what makes this condition
+  // reliable enough to evaluate on every Home visit. Asked once per goal
+  // VALUE (uid-scoped): the deadband wobbles, and a re-firing prompt is a
+  // nag — changing the goal in Settings re-arms the ask.
+  const goalOffer = useMemo(
+    () => (profile ? goalReachedOffer(profile) : null),
+    [profile]
+  );
+  const { dismissed: goalReachedDismissed, dismiss: dismissGoalReached } =
+    useDismissOnce(
+      `tropos-goal-reached:${user?.uid ?? "anon"}:${goalOffer?.goalWeightKg ?? 0}`
+    );
+  const goalReachedSurface = useSurface({
+    id: "goal-reached",
+    priority: 25,
+    eligible: !!goalOffer && !goalReachedDismissed,
+    suppressedBy: ["fell-behind", "trial-expired"],
   });
 
   // #995 tier-3 education lane (≤1 inline card at a time). The first-run
@@ -1464,6 +1502,20 @@ export default function Home() {
           moveRunDay={moveRunDay}
         />
       </Suspense>
+
+      {goalOffer && profile && user && (
+        <GoalReachedSheet
+          open={goalReachedSurface.active}
+          offer={goalOffer}
+          profile={profile}
+          uid={user.uid}
+          updateProfile={updateProfile}
+          onResolved={() => {
+            dismissGoalReached();
+            goalReachedSurface.dismiss();
+          }}
+        />
+      )}
 
       {fellBehindPrompt && (
         <FellBehindSheet
