@@ -24,7 +24,13 @@ function basePrompt() {
   };
 }
 
-function setup({ raceModeActive = true }: { raceModeActive?: boolean } = {}) {
+function setup({
+  raceModeActive = true,
+  recentLayoff = "none",
+}: {
+  raceModeActive?: boolean;
+  recentLayoff?: "none" | "gap" | "detrained";
+} = {}) {
   const dismissFellBehindPrompt = vi.fn(async () => {});
   const realignRacePlan = vi.fn(async () => {});
   const onRaceMoved = vi.fn();
@@ -38,6 +44,7 @@ function setup({ raceModeActive = true }: { raceModeActive?: boolean } = {}) {
       realignRacePlan={realignRacePlan}
       onRaceMoved={onRaceMoved}
       raceModeActive={raceModeActive}
+      recentLayoff={recentLayoff}
     />
   );
   return {
@@ -133,6 +140,7 @@ describe("FellBehindSheet", () => {
         realignRacePlan={realignRacePlan}
         onRaceMoved={onRaceMoved}
         raceModeActive={true}
+        recentLayoff="none"
       />
     );
     const skipBtn = screen.getByRole("button", { name: /Not now/i });
@@ -144,5 +152,69 @@ describe("FellBehindSheet", () => {
     // Other buttons are disabled — a second click on Realign shouldn't fire.
     fireEvent.click(screen.getByRole("button", { name: /Realign my plan/i }));
     expect(realignRacePlan).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Run15 packet — the detrained register (voice call made 2026-08-08).
+ *
+ * A 3+ week layoff is not a scheduling miss, so the sheet drops the
+ * missed-runs scoreboard for a welcome-back register and relabels the
+ * primary to match what realign will actually produce (the generator's
+ * detrained branch: easy running first, long run rebuilt gradually —
+ * `recentLayoff` is threaded through every regen site). The ACTION is
+ * pinned identical: same realignRacePlan writer, only the words change.
+ */
+describe("FellBehindSheet — detrained register", () => {
+  it("swaps the scoreboard for the welcome-back register and relabels the primary", () => {
+    setup({ recentLayoff: "detrained" });
+    expect(screen.getAllByText(/Welcome back/i).length).toBeGreaterThan(0);
+    // The missed-runs ledger must NOT render for a returning runner.
+    expect(screen.queryByText(/1 of 4 runs/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\(25%\)/)).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/It's been a while between runs/i)
+    ).toBeInTheDocument();
+    // The body promises exactly what the detrained regen branch produces.
+    expect(
+      screen.getByText(/ease you back in — easy running first/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Rebuild my plan/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Realign my plan/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it("Rebuild fires the SAME realign writer — the copy changes, the action doesn't", async () => {
+    const { realignRacePlan, onClose } = setup({ recentLayoff: "detrained" });
+    fireEvent.click(screen.getByRole("button", { name: /Rebuild my plan/i }));
+    await waitFor(() => {
+      expect(realignRacePlan).toHaveBeenCalled();
+      expect(onClose).toHaveBeenCalled();
+    });
+  });
+
+  it("non-race detrained users get the ease-back line, not the static-target line", () => {
+    setup({ recentLayoff: "detrained", raceModeActive: false });
+    expect(
+      screen.getByText(/a couple of short, easy runs is the win/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Your weekly target stays the same/i)
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Rebuild my plan/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it("a short gap keeps the standard register — only detrained flips the voice", () => {
+    setup({ recentLayoff: "gap" });
+    expect(screen.getByText(/1 of 4 runs/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Realign my plan/i })
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Welcome back/i)).not.toBeInTheDocument();
   });
 });

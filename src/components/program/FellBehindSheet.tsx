@@ -29,6 +29,7 @@
 import { Footprints } from "lucide-react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { ChoiceSheet, type Choice } from "@/components/ui/ChoiceSheet";
+import type { LayoffClass } from "@/features/program/layoffDetection";
 
 interface FellBehindSheetProps {
   open: boolean;
@@ -55,6 +56,17 @@ interface FellBehindSheetProps {
    *  When false, the realign / race-moved actions are hidden — only the
    *  dismiss path applies (e.g. structured-mode users). */
   raceModeActive: boolean;
+  /** Run15 packet — the layoff class from useProgram (the SAME value the
+   *  regen sites consume, so the copy below never promises a rebuild the
+   *  generator wouldn't produce). At `detrained` the sheet drops the
+   *  missed-runs ledger for a welcome-back register: a 3+ week layoff is
+   *  not a scheduling miss, and "1 of 4 runs (25%)" reads as a scoreboard
+   *  of failure to someone coming back. The ACTION is unchanged — realign
+   *  already regenerates through the detrained branch (easy running first,
+   *  the long run rebuilt gradually) because `recentLayoff` is threaded
+   *  through every regen site; this prop only makes the words match what
+   *  the button will actually do. */
+  recentLayoff: LayoffClass;
 }
 
 export default function FellBehindSheet({
@@ -65,16 +77,18 @@ export default function FellBehindSheet({
   realignRacePlan,
   onRaceMoved,
   raceModeActive,
+  recentLayoff,
 }: FellBehindSheetProps) {
   const percent = Math.round(prompt.completedRatio * 100);
+  const detrained = recentLayoff === "detrained";
 
   const choices: Choice[] = [
     ...(raceModeActive
       ? [
           {
             id: "realign",
-            label: "Realign my plan",
-            pendingLabel: "Realigning…",
+            label: detrained ? "Rebuild my plan" : "Realign my plan",
+            pendingLabel: detrained ? "Rebuilding…" : "Realigning…",
             variant: "primary" as const,
             onSelect: realignRacePlan,
           },
@@ -99,7 +113,7 @@ export default function FellBehindSheet({
     <ChoiceSheet
       open={open}
       onClose={onClose}
-      title="Last week didn't go to plan"
+      title={detrained ? "Welcome back" : "Last week didn't go to plan"}
       description="Pick how you want to adjust"
       hideHeader
       choices={choices}
@@ -110,17 +124,25 @@ export default function FellBehindSheet({
           <Footprints className="size-5 text-running" />
         </div>
         <div>
-          <SectionLabel>Last week</SectionLabel>
+          <SectionLabel>
+            {detrained ? "Welcome back" : "Last week"}
+          </SectionLabel>
           <p className="text-base font-semibold text-foreground mt-0.5">
-            {prompt.realRunCount} of {prompt.weeklyTarget} runs ({percent}%)
+            {detrained
+              ? "It's been a while between runs"
+              : `${prompt.realRunCount} of ${prompt.weeklyTarget} runs (${percent}%)`}
           </p>
         </div>
       </div>
 
       <p className="text-sm text-muted-foreground">
-        {raceModeActive
-          ? "Want to adjust the plan to match where you are now?"
-          : "Your weekly target stays the same."}
+        {detrained
+          ? raceModeActive
+            ? "Your plan will ease you back in — easy running first, with the long run rebuilt gradually. Your race goal stays."
+            : "Ease back in — a couple of short, easy runs is the win this week."
+          : raceModeActive
+            ? "Want to adjust the plan to match where you are now?"
+            : "Your weekly target stays the same."}
       </p>
     </ChoiceSheet>
   );
