@@ -4,6 +4,7 @@ import {
   useChallenges,
   useAutoJoinChallenge,
   getTimeRemaining,
+  soonestEndingChallenge,
 } from "./useChallenges";
 import { getWeeklyAccountability } from "./weeklyAccountability";
 import { ChallengeCard } from "./ChallengeCard";
@@ -139,15 +140,13 @@ export function ChallengeList({
     (c) => c.id !== weeklyCh?.id && c.id !== collectiveCh?.id
   );
   /* Soonest-ending available challenge keeps the time pressure visible
-     on the collapsed row ("5 days left" was a real join driver). */
-  const soonestAvailable =
-    otherAvailable.length > 0
-      ? getTimeRemaining(
-          otherAvailable.reduce((a, b) =>
-            a.endDate.toDate() <= b.endDate.toDate() ? a : b
-          ).endDate
-        )
-      : null;
+     on the collapsed row ("5 days left" was a real join driver).
+     Null-safe: the active list keeps docs with no endDate, and the old
+     inline reduce crashed the whole section on one of them. */
+  const soonestChallenge = soonestEndingChallenge(otherAvailable);
+  const soonestAvailable = soonestChallenge
+    ? getTimeRemaining(soonestChallenge.endDate)
+    : null;
 
   if (loading) {
     return (
