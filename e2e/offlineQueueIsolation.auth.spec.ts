@@ -38,10 +38,13 @@
  * ever issued again), so every later server ack hangs — B's saves sat
  * pending behind latency-compensated UI for >25s across two runs and a
  * page reload (the cache is `persistentLocalCache`, so a reload doesn't
- * clear SDK state either). With the override, the emulator stays
- * reachable throughout — the meal doc itself lands server-side even
- * during A's "offline" window, which is fine: the QUEUED write is the
- * daily log, and every assertion targets `users/{uid}/logs`. What this
+ * clear SDK state either). The override keeps offline fidelity anyway:
+ * the Firestore SDK's own connectivity monitor listens for the same
+ * browser offline event, so it parks live writes locally exactly as
+ * under real airplane mode (A's meal write pends and only drains when A
+ * next signs in online) — but because the emulator was never actually
+ * unreachable, the SDK's write stream comes back cleanly afterwards.
+ * Every queue assertion targets `users/{uid}/logs`. What this
  * deliberately does not exercise is Chromium's disconnected network
  * stack — that stays a real-device (airplane-mode) concern.
  *
@@ -98,6 +101,31 @@ async function uidByEmail(email: string): Promise<string> {
   const localId = userInfo?.find((u) => u.email === email)?.localId;
   if (!localId) throw new Error(`user ${email} not found in auth emulator`);
   return localId;
+}
+
+/** Wait until the signup's own profile write has landed server-side.
+ *  `writeNewProfileDocs` commits the FULL default profile from the
+ *  browser as a non-merge batch (including `onboardingComplete: false`)
+ *  concurrently with the onboarding screen rendering — patching before
+ *  it lands loses the race, because the batch then clobbers the patch
+ *  and the account stays stuck in onboarding (observed live). Poll for
+ *  `athleteType`, a field only that batch writes. */
+async function awaitSignupProfileDoc(uid: string): Promise<void> {
+  const deadline = Date.now() + 20_000;
+  for (;;) {
+    const res = await fetch(
+      `http://${FS_HOST}/v1/projects/demo-tropos/databases/(default)/documents/users/${uid}`,
+      { headers: { Authorization: "Bearer owner" } }
+    );
+    if (res.ok) {
+      const body = (await res.json()) as RestDoc;
+      if (body.fields?.athleteType) return;
+    }
+    if (Date.now() > deadline) {
+      throw new Error(`signup profile doc for ${uid} never landed`);
+    }
+    await new Promise((r) => setTimeout(r, 500));
+  }
 }
 
 /** Mark the account onboarding-complete via the Firestore emulator's
@@ -187,6 +215,7 @@ async function mintOnboardedAccount(
     .waitFor({ state: "visible", timeout: 30_000 });
 
   const uid = await uidByEmail(email);
+  await awaitSignupProfileDoc(uid);
   await completeOnboardingDirect(uid, displayName);
 
   // Reload into the full shell straight onto the account page, then use
@@ -220,18 +249,29 @@ async function signInFromLoginScreen(page: Page, email: string): Promise<void> {
 }
 
 /** Log "2 eggs, toast" through the NL composer (free tier → local
- *  parse, fully deterministic) and wait for the save toast. The meal
- *  write itself always completes here — the network is genuinely up
- *  even inside the "offline" window (see header) — so the toast is a
- *  positive completion anchor in both phases. */
-async function logMealViaComposer(page: Page): Promise<void> {
+ *  parse, fully deterministic). Online, the save-ack toast is the
+ *  completion anchor. Offline it can never fire — the dispatched
+ *  offline event also parks the Firestore SDK's own network layer, so
+ *  the meal write pends exactly as under real airplane mode — and the
+ *  latency-compensated diary row is the signal that the save path ran
+ *  (which is what fires the queued daily-log write). */
+async function logMealViaComposer(
+  page: Page,
+  opts: { expectAck: boolean }
+): Promise<void> {
   const composer = page.getByLabel("What did you eat");
   await composer.waitFor({ state: "visible", timeout: 20_000 });
   await composer.fill("2 eggs, toast");
   await page.getByRole("button", { name: "Log meal" }).click();
-  await expect(page.getByText(/2 items logged/i)).toBeVisible({
-    timeout: 15_000,
-  });
+  if (opts.expectAck) {
+    await expect(page.getByText(/2 items logged/i)).toBeVisible({
+      timeout: 15_000,
+    });
+  } else {
+    await expect(page.getByText(/eggs/i).first()).toBeVisible({
+      timeout: 15_000,
+    });
+  }
 }
 
 test.describe("offline-queue uid isolation across an account switch", () => {
@@ -284,7 +324,7 @@ test.describe("offline-queue uid isolation across an account switch", () => {
       .waitFor({ state: "visible", timeout: 20_000 });
     await goOffline(page);
 
-    await logMealViaComposer(page);
+    await logMealViaComposer(page, { expectAck: false });
 
     // The daily-log write queued under A's uid instead of writing live.
     await expect
@@ -297,6 +337,10 @@ test.describe("offline-queue uid isolation across an account switch", () => {
     expect(queuedDocId).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     // …and nothing landed in A's logs collection server-side.
     expect(await listLogDocs(uidA)).toHaveLength(0);
+    // The user-facing offline banner counts the queued change.
+    await expect(page.getByText(/1 change saved locally/i)).toBeVisible({
+      timeout: 10_000,
+    });
 
     // ── Phase 2: still "offline", sign out via the app's own UI.
     // Client-side navigation (Food → Home → gear → Account) keeps the
@@ -321,7 +365,7 @@ test.describe("offline-queue uid isolation across an account switch", () => {
     // Positive anchor that B's session is fully wired: B logs a meal,
     // B's OWN daily-log write goes through live (no queue involved).
     await page.goto("food");
-    await logMealViaComposer(page);
+    await logMealViaComposer(page, { expectAck: true });
     await expect
       .poll(async () => (await listLogDocs(uidB)).length, { timeout: 15_000 })
       .toBe(1);
