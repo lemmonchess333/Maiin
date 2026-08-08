@@ -227,8 +227,57 @@ function buildCurrentChallenges(now = new Date()) {
   ];
 }
 
+/**
+ * The defs that should exist RIGHT NOW plus the ones the next UTC day needs
+ * — deduped by id (identical away from period boundaries).
+ *
+ * WHY A DAY OF LOOKAHEAD (probe sweep 2026-08-05, verifier-confirmed HIGH):
+ * activity is credited by its LOCAL calendar day against these UTC windows,
+ * and a UTC-positive user enters the new period hours before UTC does — an
+ * NZ runner's local Aug 1 morning run carries date "2026-08-01" while it is
+ * still Jul 31 in UTC. The August doc did not exist yet (this rollover runs
+ * daily at 00:05 UTC), so `syncChallengeProgress` had nothing to credit and
+ * the run was silently dropped from every challenge. Materialising the next
+ * period's docs a day early closes that hole for every timezone (the
+ * furthest, UTC+14, enters the new period 14h before UTC; the 00:05 UTC run
+ * the day before is ~24h ahead).
+ *
+ * Crediting INTO the early docs stays fail-closed by the existing window
+ * predicate: `challengeContainsActivityDate` accepts only activity days
+ * inside [startDate, endDate), so a Jul 31 activity can never credit the
+ * pre-materialised August challenge. The CLIENT hides not-yet-started
+ * challenges via its own local-day window (useChallenges), so the early doc
+ * never renders as a second live challenge.
+ */
+function buildUpcomingChallenges(now = new Date()) {
+  const tomorrow = new Date(now.getTime() + 24 * 3600 * 1000);
+  const byId = new Map();
+  for (const def of [
+    ...buildCurrentChallenges(now),
+    ...buildCurrentChallenges(tomorrow),
+  ]) {
+    if (!byId.has(def.id)) byId.set(def.id, def);
+  }
+  return [...byId.values()];
+}
+
+/**
+ * Challenges every user is auto-enrolled into (SOC-P1a / Soc8): the weekly
+ * "Weekly Warrior" and the global monthly hybrid. The client auto-joins
+ * these on surface mount; the server may therefore create the participant
+ * doc on a user's FIRST QUALIFYING ACTIVITY of the period without waiting
+ * for the client — same end state, just not racing the user's first
+ * app-open of the period. Opt-in challenges (seasonal, fastest-5k,
+ * group-goal) are NEVER server-joined: joining those is a user choice.
+ */
+function isAutoEnrolChallengeId(id) {
+  return /^(weekly|global-monthly)-\d{4}-\d{2}-\d{2}$/.test(String(id));
+}
+
 module.exports = {
   buildCurrentChallenges,
+  buildUpcomingChallenges,
+  isAutoEnrolChallengeId,
   // exported for targeted tests
   weekStartUTC,
   monthStartUTC,

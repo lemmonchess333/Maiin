@@ -2412,7 +2412,13 @@ exports.rolloverChallenges = functions
   .onRun(async () => {
     try {
       console.log("rolloverChallenges: starting");
-      const defs = challengeDefs.buildCurrentChallenges(new Date());
+      // Current period + one UTC day of lookahead: a UTC-positive user's
+      // local new-period activity lands hours before the UTC boundary, and
+      // the doc must already exist for syncChallengeProgress to credit it.
+      // The window predicate keeps early docs inert until their day arrives;
+      // the client hides not-yet-started challenges by local day. See
+      // buildUpcomingChallenges for the full seam.
+      const defs = challengeDefs.buildUpcomingChallenges(new Date());
       let created = 0;
       for (const def of defs) {
         try {
@@ -4089,9 +4095,35 @@ async function syncChallengeProgress(
         .collection("participants")
         .doc(uid);
       // Fast-path skip for non-participants (avoids opening a transaction
-      // for every challenge the user isn't in).
+      // for every challenge the user isn't in) — EXCEPT the auto-enrol
+      // challenges (weekly + global monthly). Every user is enrolled in
+      // those by design; the client just does it on surface mount, which
+      // races the first activity of a new period (probe-measured: an NZ
+      // user's local Aug 1 morning run arrived before any app surface had
+      // auto-joined August, so the progress was silently dropped). For
+      // auto-enrol ids the server creates the participant doc on first
+      // qualifying activity instead — same end state as the client join,
+      // no race. Opt-in challenges keep the hard skip: joining is a user
+      // choice there.
+      const autoEnrol = challengeDefs.isAutoEnrolChallengeId(doc.id);
       const participantSnap = await participantRef.get();
-      if (!participantSnap.exists) continue;
+      if (!participantSnap.exists && !autoEnrol) continue;
+
+      // Display fields for a server-side first join, read OUTSIDE the
+      // transaction (leaderboard cosmetics, not consistency-critical) and
+      // shaped exactly like the client's joinChallenge write.
+      let joinFields = null;
+      if (!participantSnap.exists) {
+        const profileSnap = await db.collection("users").doc(uid).get();
+        const profile = profileSnap.exists ? profileSnap.data() : {};
+        joinFields = {
+          joinedAt: admin.firestore.Timestamp.now(),
+          displayName: (profile && profile.displayName) || "Athlete",
+          ...(profile && profile.photoURL
+            ? { photoURL: profile.photoURL }
+            : {}),
+        };
+      }
 
       // Marker doc keyed by the driving activity id. When absent we can't
       // guard idempotently — fall back to a deterministic key so a missing
@@ -4111,9 +4143,11 @@ async function syncChallengeProgress(
           tx.get(participantRef),
           tx.get(markerRef),
         ]);
-        if (!snap.exists) return;
+        // A participant doc that appeared between the fast-path read and
+        // the tx read (client join racing us) is fine — the tx read wins.
+        if (!snap.exists && !joinFields) return;
         if (marker.exists) return; // already applied this activity — idempotent no-op
-        const current = snap.data().currentValue || 0;
+        const current = snap.exists ? snap.data().currentValue || 0 : 0;
         const newValue = current + incrementBy;
         const tierAchieved = challengeTiers.resolveTier(
           newValue,
@@ -4122,7 +4156,16 @@ async function syncChallengeProgress(
         );
         tx.set(
           participantRef,
-          { currentValue: newValue, tierAchieved },
+          {
+            currentValue: newValue,
+            tierAchieved,
+            // First-activity server join (auto-enrol only): the same doc
+            // shape the client's joinChallenge writes, so the leaderboard
+            // renders identically whichever side created it. merge:true —
+            // if the client's join landed after our fast-path read, these
+            // fields are already present and identical in kind.
+            ...(joinFields && !snap.exists ? joinFields : {}),
+          },
           { merge: true }
         );
         tx.set(markerRef, {
