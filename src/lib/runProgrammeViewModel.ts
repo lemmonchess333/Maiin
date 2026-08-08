@@ -1,7 +1,7 @@
 /**
  * Run programme view model — pure, testable derivation for the
  * Programme Run cockpit primitives (RaceCockpitCard, SessionCommandCard,
- * HybridWeekRail).
+ * ProgrammeWeekSelector / DayActionSheet).
  *
  * Locked model (Run9a): freeform is the always-on substrate and a RACE
  * GOAL is the only active "plan" overlay. There is NO user-facing
@@ -16,27 +16,12 @@
  * the local date keys in so the output is deterministic and unit-testable.
  */
 
-import { RUN_TEMPLATES, type RunTemplate } from "@/lib/workoutTemplates";
-import { DAY_LABELS_SHORT } from "@/lib/scheduleUtils";
-import {
-  resolveTrainingDayForDate,
-  type LiftSlotStatus,
-} from "@/lib/trainingResolver";
-import {
-  getCompletionKind,
-  type ClaimState,
-} from "@/lib/scheduledRunCompletion";
+import type { RunTemplate } from "@/lib/workoutTemplates";
 import {
   getRacePhaseLabel,
   isCurrentWeekInTaper,
 } from "@/features/program/runScheduler";
-import {
-  addLocalDays,
-  localDateString,
-  parseLocalDate,
-} from "@/lib/dateHelpers";
-import type { UserProfile } from "@/lib/auth";
-import type { ProgramState } from "@/features/program/programTypes";
+import { parseLocalDate } from "@/lib/dateHelpers";
 
 // R4: the surface resolver + its types now live in `runPlanResolver`, which
 // reconciles the profile↔programState race-goal drift. The old copy here gated
@@ -70,7 +55,7 @@ export function raceDistanceLabel(distance: string): string {
 }
 
 /**
- * Compact run label for the HybridWeekRail tile. Full names truncate
+ * Compact run label for the week-selector day cell. Full names truncate
  * badly in a 7-column grid, so each template collapses to a short,
  * glanceable token. The full name still appears in the DayCommandSheet.
  *
@@ -107,8 +92,6 @@ export function compactRunLabel(
   }
 }
 
-/** Compact lift label — strip the qualifier after an em/en dash or middot
- *  ("Push — Chest Focus" → "Push") and cap length so it fits a tile. */
 /**
  * Hybrid interference (2026-07 audit quick-fix): the run scheduler already
  * prefers non-Both slots for the hardest run, but accepts the pairing when
@@ -128,21 +111,6 @@ export function hasHybridInterference(args: {
     args.runType === "intervals" ||
     args.runType === "long"
   );
-}
-
-export function compactLiftLabel(dayName: string | null | undefined): string {
-  if (!dayName) return "Lift";
-  const head = dayName.split(/[—–·-]/)[0]?.trim() || dayName.trim();
-  return head.length > 8 ? `${head.slice(0, 7)}…` : head;
-}
-
-function templateForRunDay(
-  templateId: string | undefined,
-  userOverride: string | undefined
-): RunTemplate | null {
-  const id = userOverride || templateId;
-  if (!id) return null;
-  return RUN_TEMPLATES.find((t) => t.id === id) ?? null;
 }
 
 export interface RaceCockpitViewModel {
@@ -238,125 +206,4 @@ export function buildRaceCockpitViewModel(args: {
     compressed,
     belowFloor,
   };
-}
-
-export type HybridRunStatus =
-  | "planned"
-  | "done"
-  | "manual"
-  | "skipped"
-  | "race_no_show";
-export type HybridLiftStatus = "planned" | "done" | "skipped";
-
-export interface HybridWeekRailItem {
-  dateKey: string;
-  dayIndex: number;
-  dayLabel: string;
-  isToday: boolean;
-  run?: {
-    title: string;
-    shortLabel: string;
-    status: HybridRunStatus;
-    isRace: boolean;
-  };
-  lift?: {
-    title: string;
-    shortLabel: string;
-    status: HybridLiftStatus;
-  };
-}
-
-function mapLiftStatus(status: LiftSlotStatus): HybridLiftStatus {
-  if (status === "completed") return "done";
-  if (status === "skipped") return "skipped";
-  return "planned";
-}
-
-/**
- * Build the 7-day hybrid rail items (run lane + lift lane per day).
- *
- * Anchored on `anchorWeekKey` (the week the runDays were generated for,
- * or today's week for a lift-only week) so it doesn't drift past
- * midnight. Reuses `resolveTrainingDayForDate` — the same source of
- * truth Home and the DayCommandSheet use — so the rail agrees with every
- * other surface about what's scheduled.
- *
- * Crucially this does NOT invent runs for freeform users: the run lane is
- * populated only from `programState.runDays`, which is empty for freeform.
- */
-export function buildHybridWeekItems(args: {
-  profile: UserProfile | null;
-  programState: ProgramState | null;
-  claimMap: Map<string, ClaimState>;
-  currentWeekKey: string;
-  todayKey: string;
-  anchorWeekKey: string;
-}): HybridWeekRailItem[] {
-  const {
-    profile,
-    programState,
-    claimMap,
-    currentWeekKey,
-    todayKey,
-    anchorWeekKey,
-  } = args;
-  const weekStart = parseLocalDate(anchorWeekKey);
-
-  return Array.from({ length: 7 }, (_unused, dayIndex) => {
-    const date = addLocalDays(weekStart, dayIndex);
-    const dateKey = localDateString(date);
-    const resolved = resolveTrainingDayForDate({
-      dateKey,
-      profile,
-      programState,
-      currentWeekKey,
-      claimMap,
-    });
-
-    const item: HybridWeekRailItem = {
-      dateKey,
-      dayIndex,
-      dayLabel: DAY_LABELS_SHORT[dayIndex],
-      isToday: dateKey === todayKey,
-    };
-
-    const runDay = resolved.run.runDay;
-    if (runDay) {
-      const template = templateForRunDay(
-        runDay.templateId,
-        runDay.userOverride
-      );
-      const isRace = template?.type === "race";
-      let status: HybridRunStatus;
-      if (resolved.run.isCompleted) {
-        const kind = runDay.id
-          ? getCompletionKind(runDay.id, claimMap)
-          : "real";
-        status = kind === "manual" ? "manual" : "done";
-      } else if (resolved.run.status === "skipped") {
-        status = "skipped";
-      } else if (resolved.run.status === "race_no_show") {
-        status = "race_no_show";
-      } else {
-        status = "planned";
-      }
-      item.run = {
-        title: template?.name ?? "Run",
-        shortLabel: compactRunLabel(template),
-        status,
-        isRace,
-      };
-    }
-
-    const liftWorkout = resolved.lift.workout;
-    if (liftWorkout && resolved.lift.index !== null) {
-      item.lift = {
-        title: liftWorkout.dayName || "Lift",
-        shortLabel: compactLiftLabel(liftWorkout.dayName),
-        status: mapLiftStatus(resolved.lift.status),
-      };
-    }
-
-    return item;
-  });
 }
