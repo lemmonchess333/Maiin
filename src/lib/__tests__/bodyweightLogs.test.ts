@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { collapseBodyweightLogs } from "../bodyweightLogs";
+import {
+  collapseBodyweightLogs,
+  weighInProfileMirror,
+} from "../bodyweightLogs";
 
 describe("collapseBodyweightLogs", () => {
   it("returns one newest date-keyed manual row per local day", () => {
@@ -106,5 +109,37 @@ describe("collapseBodyweightLogs", () => {
       "2026-07-11",
       "2026-07-10",
     ]);
+  });
+});
+
+describe("weighInProfileMirror — the weigh-in updates the anchor everyone reads", () => {
+  // profile.weightKg feeds calculateTDEE, getAdjustedTargets' protein/fat
+  // scaling, and resolveGoalWeightPlan's direction. The daily weigh-in flow
+  // wrote bodyweightLogs only, so the anchor went stale for months —
+  // probe-measured: a 90→78kg cut ran +26g/day protein and a 186 kcal/day
+  // target overshoot against the 90 that no longer existed.
+  it("returns a rounded patch when the weight genuinely moved", () => {
+    expect(weighInProfileMirror(90, 78.04)).toEqual({ weightKg: 78 });
+    expect(weighInProfileMirror(undefined, 82.55)).toEqual({ weightKg: 82.6 });
+    expect(weighInProfileMirror(null, 70)).toEqual({ weightKg: 70 });
+  });
+
+  it("returns null when nothing meaningful changed — no wasted write", () => {
+    expect(weighInProfileMirror(78, 78)).toBeNull();
+    expect(weighInProfileMirror(78, 78.04)).toBeNull(); // rounds to 78
+    expect(weighInProfileMirror(78.1, 78.1)).toBeNull();
+  });
+
+  it("never mirrors garbage", () => {
+    expect(weighInProfileMirror(78, 0)).toBeNull();
+    expect(weighInProfileMirror(78, -5)).toBeNull();
+    expect(weighInProfileMirror(78, Number.NaN)).toBeNull();
+    expect(weighInProfileMirror(78, Number.POSITIVE_INFINITY)).toBeNull();
+  });
+
+  it("a legacy weightKg of 0 does not block the first real mirror", () => {
+    // 0 is exactly the stored-garbage case the input guards now prevent —
+    // the mirror is one of the paths that heals it.
+    expect(weighInProfileMirror(0, 78)).toEqual({ weightKg: 78 });
   });
 });
