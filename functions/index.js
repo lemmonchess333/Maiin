@@ -2808,9 +2808,19 @@ async function maybeSendStreakNudge(uid, now) {
   const activeDateKeys = activeDateKeysFromLogs(
     {
       workouts: workoutsSnap.docs.map((d) => ({ date: d.data().date })),
+      // Eligibility fields ride along so activeDates can apply the same
+      // isVolumeEligibleRun gate the client applies at its snapshot
+      // boundary — a junk run must not read as an active day.
       runs: runsSnap.docs.map((d) => {
-        const c = d.data().completedAt;
-        return { completedAtMs: c && c.toMillis ? c.toMillis() : NaN };
+        const data = d.data();
+        const c = data.completedAt;
+        return {
+          completedAtMs: c && c.toMillis ? c.toMillis() : NaN,
+          isInvalid: data.isInvalid,
+          savedAnyway: data.savedAnyway,
+          distance: data.distance,
+          duration: data.duration,
+        };
       }),
       meals: mealsSnap.docs.map((d) => ({
         date: d.data().date,
