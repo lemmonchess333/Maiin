@@ -9,10 +9,13 @@
 import { describe, it, expect } from "vitest";
 import {
   buildCurrentChallenges,
+  buildUpcomingChallenges,
+  isAutoEnrolChallengeId,
   seasonFor,
   seasonStartUTC,
   seasonEndUTC,
 } from "../lib/challengeDefs";
+import { challengeContainsActivityDate } from "../lib/challengeActivityWindow";
 
 // 2026-06-01 is a Monday (UTC); June is in the Summer season window.
 const MON_JUN_1 = new Date(Date.UTC(2026, 5, 1, 12, 0, 0));
@@ -173,5 +176,75 @@ describe("seasonStartUTC / seasonEndUTC", () => {
     expect(seasonStartUTC(at(2026, 0)).getTime()).toBe(Date.UTC(2025, 11, 1)); // Dec 1 2025
     expect(seasonEndUTC(at(2026, 0)).getTime()).toBe(Date.UTC(2026, 2, 1)); // Mar 1 2026
     expect(seasonStartUTC(at(2026, 1)).getTime()).toBe(Date.UTC(2025, 11, 1)); // Feb → still Dec 1 2025
+  });
+});
+
+describe("buildUpcomingChallenges — one UTC day of lookahead", () => {
+  // Probe sweep 2026-08-05 (verified HIGH): a UTC-positive user's local
+  // new-period activity carries a date the outgoing period's window refuses,
+  // hours before the new period's docs existed. The rollover now
+  // materialises the next day's defs too, so the doc is there before any
+  // timezone's local boundary (UTC+14 leads UTC by 14h; the 00:05 UTC run
+  // the day before is ~24h ahead).
+
+  it("mid-period: identical to the current set", () => {
+    const now = new Date("2026-07-15T00:05:00Z");
+    expect(
+      buildUpcomingChallenges(now)
+        .map((d) => d.id)
+        .sort()
+    ).toEqual(
+      buildCurrentChallenges(now)
+        .map((d) => d.id)
+        .sort()
+    );
+  });
+
+  it("period eve: includes the NEXT period's docs alongside the current ones", () => {
+    const eve = new Date("2026-07-31T00:05:00Z");
+    const ids = buildUpcomingChallenges(eve).map((d) => d.id);
+    // Outgoing month still present…
+    expect(ids).toContain("monthly-2026-07-01");
+    expect(ids).toContain("global-monthly-2026-07-01");
+    // …and the incoming month is materialised a day early.
+    expect(ids).toContain("monthly-2026-08-01");
+    expect(ids).toContain("global-monthly-2026-08-01");
+    expect(ids).toContain("fastest-5k-2026-08-01");
+    // Deduped: no id twice.
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("week eve (Sunday): next week's weekly is materialised early", () => {
+    const sunday = new Date("2026-07-26T00:05:00Z"); // Monday is 07-27
+    const ids = buildUpcomingChallenges(sunday).map((d) => d.id);
+    expect(ids).toContain("weekly-2026-07-20");
+    expect(ids).toContain("weekly-2026-07-27");
+  });
+
+  it("an early doc can NEVER be credited before its day arrives", () => {
+    // The lookahead is safe precisely because the window predicate is
+    // fail-closed: the last day of July cannot credit August's early doc.
+    const eve = new Date("2026-07-31T00:05:00Z");
+    const august = buildUpcomingChallenges(eve).find(
+      (d) => d.id === "global-monthly-2026-08-01"
+    );
+    expect(challengeContainsActivityDate(august, "2026-07-31")).toBe(false);
+    expect(challengeContainsActivityDate(august, "2026-08-01")).toBe(true);
+  });
+});
+
+describe("isAutoEnrolChallengeId — server join-on-first-activity is scoped", () => {
+  it("weekly + global monthly are auto-enrol", () => {
+    expect(isAutoEnrolChallengeId("weekly-2026-07-27")).toBe(true);
+    expect(isAutoEnrolChallengeId("global-monthly-2026-08-01")).toBe(true);
+  });
+
+  it("opt-in challenges are never server-joined — joining is a user choice", () => {
+    expect(isAutoEnrolChallengeId("monthly-2026-08-01")).toBe(false);
+    expect(isAutoEnrolChallengeId("seasonal-2026-06-01")).toBe(false);
+    expect(isAutoEnrolChallengeId("fastest-5k-2026-08-01")).toBe(false);
+    expect(isAutoEnrolChallengeId("group-goal-2026-08-01")).toBe(false);
+    expect(isAutoEnrolChallengeId("")).toBe(false);
+    expect(isAutoEnrolChallengeId(null)).toBe(false);
   });
 });
