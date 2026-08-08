@@ -127,6 +127,11 @@ const {
   sourceActivityDateKey,
   challengeContainsActivityDate,
 } = require("./lib/challengeActivityWindow");
+// Source-doc → challenge-increment mapping, shared by the live activity
+// triggers and the join-time backfill so the crediting VALUES have one
+// source of truth (the backfill replays history through the same apply
+// path the triggers use).
+const challengeBackfill = require("./lib/challengeBackfill");
 // Account deletion logic. Extracted so the call-ordering invariant
 // (Firestore + Storage before Auth-user delete; pre-W1f had the
 // inverse, leaving orphans) is unit-testable with stub handles —
@@ -4059,6 +4064,110 @@ async function accrueLifetimeStat(uid, kind, incrementBy, sourceId) {
   await awardMilestoneBadges(uid, lifetimeMilestoneBadges(kind, newTotal));
 }
 
+/**
+ * Apply one SUM-metric increment to ONE challenge. Extracted from the
+ * syncChallengeProgress loop so the join-time backfill can replay a
+ * historical source against exactly the challenge being joined, through
+ * the SAME window check, auto-enrol logic, transaction and idempotency
+ * marker as the live path — one apply path, two callers.
+ */
+async function applyChallengeProgressIncrement(
+  challengeDocId,
+  challenge,
+  uid,
+  metric,
+  incrementBy,
+  sourceId,
+  activityDateKey
+) {
+  if (challenge.metric !== metric) return;
+  // Credit this challenge only if the SOURCE ACTIVITY DAY is inside its
+  // half-open [startDate, endDate) window — not delivery/execution time.
+  if (!challengeContainsActivityDate(challenge, activityDateKey)) return;
+
+  // Check if user is a participant
+  const participantRef = db
+    .collection("challenges")
+    .doc(challengeDocId)
+    .collection("participants")
+    .doc(uid);
+  // Fast-path skip for non-participants (avoids opening a transaction
+  // for every challenge the user isn't in) — EXCEPT the auto-enrol
+  // challenges (weekly + global monthly). Every user is enrolled in
+  // those by design; the client just does it on surface mount, which
+  // races the first activity of a new period (probe-measured: an NZ
+  // user's local Aug 1 morning run arrived before any app surface had
+  // auto-joined August, so the progress was silently dropped). For
+  // auto-enrol ids the server creates the participant doc on first
+  // qualifying activity instead — same end state as the client join,
+  // no race. Opt-in challenges keep the hard skip: joining is a user
+  // choice there.
+  const autoEnrol = challengeDefs.isAutoEnrolChallengeId(challengeDocId);
+  const participantSnap = await participantRef.get();
+  if (!participantSnap.exists && !autoEnrol) return;
+
+  // Display fields for a server-side first join, read OUTSIDE the
+  // transaction (leaderboard cosmetics, not consistency-critical) and
+  // shaped exactly like the client's joinChallenge write.
+  let joinFields = null;
+  if (!participantSnap.exists) {
+    const profileSnap = await db.collection("users").doc(uid).get();
+    const profile = profileSnap.exists ? profileSnap.data() : {};
+    joinFields = {
+      joinedAt: admin.firestore.Timestamp.now(),
+      displayName: (profile && profile.displayName) || "Athlete",
+      ...(profile && profile.photoURL ? { photoURL: profile.photoURL } : {}),
+    };
+  }
+
+  // Marker doc keyed by the driving activity id. When absent we can't
+  // guard idempotently — fall back to a deterministic key so a missing
+  // sourceId never silently disables the transaction.
+  const markerRef = participantRef
+    .collection("applied")
+    .doc(sourceId || `${metric}_legacy_nosrc`);
+
+  // Read-modify-write inside a transaction: (a) two near-simultaneous
+  // triggers otherwise read the same currentValue and the second write
+  // clobbers the first (lost update); (b) a redelivered onCreate would
+  // double-count. The marker read guards (b); the transaction guards (a).
+  const tiers = challenge.tiers || {};
+  await db.runTransaction(async (tx) => {
+    // All reads before any writes (Firestore transaction rule).
+    const [snap, marker] = await Promise.all([
+      tx.get(participantRef),
+      tx.get(markerRef),
+    ]);
+    // A participant doc that appeared between the fast-path read and
+    // the tx read (client join racing us) is fine — the tx read wins.
+    if (!snap.exists && !joinFields) return;
+    if (marker.exists) return; // already applied this activity — idempotent no-op
+    const current = snap.exists ? snap.data().currentValue || 0 : 0;
+    const newValue = current + incrementBy;
+    const tierAchieved = challengeTiers.resolveTier(newValue, tiers, metric);
+    tx.set(
+      participantRef,
+      {
+        currentValue: newValue,
+        tierAchieved,
+        // First-activity server join (auto-enrol only): the same doc
+        // shape the client's joinChallenge writes, so the leaderboard
+        // renders identically whichever side created it. merge:true —
+        // if the client's join landed after our fast-path read, these
+        // fields are already present and identical in kind.
+        ...(joinFields && !snap.exists ? joinFields : {}),
+      },
+      { merge: true }
+    );
+    tx.set(markerRef, {
+      metric,
+      incrementBy,
+      activityDateKey,
+      appliedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  });
+}
+
 async function syncChallengeProgress(
   uid,
   metric,
@@ -4082,99 +4191,15 @@ async function syncChallengeProgress(
     const challengesSnap = await db.collection("challenges").get();
 
     for (const doc of challengesSnap.docs) {
-      const challenge = doc.data();
-      if (challenge.metric !== metric) continue;
-      // Credit this challenge only if the SOURCE ACTIVITY DAY is inside its
-      // half-open [startDate, endDate) window — not delivery/execution time.
-      if (!challengeContainsActivityDate(challenge, activityDateKey)) continue;
-
-      // Check if user is a participant
-      const participantRef = db
-        .collection("challenges")
-        .doc(doc.id)
-        .collection("participants")
-        .doc(uid);
-      // Fast-path skip for non-participants (avoids opening a transaction
-      // for every challenge the user isn't in) — EXCEPT the auto-enrol
-      // challenges (weekly + global monthly). Every user is enrolled in
-      // those by design; the client just does it on surface mount, which
-      // races the first activity of a new period (probe-measured: an NZ
-      // user's local Aug 1 morning run arrived before any app surface had
-      // auto-joined August, so the progress was silently dropped). For
-      // auto-enrol ids the server creates the participant doc on first
-      // qualifying activity instead — same end state as the client join,
-      // no race. Opt-in challenges keep the hard skip: joining is a user
-      // choice there.
-      const autoEnrol = challengeDefs.isAutoEnrolChallengeId(doc.id);
-      const participantSnap = await participantRef.get();
-      if (!participantSnap.exists && !autoEnrol) continue;
-
-      // Display fields for a server-side first join, read OUTSIDE the
-      // transaction (leaderboard cosmetics, not consistency-critical) and
-      // shaped exactly like the client's joinChallenge write.
-      let joinFields = null;
-      if (!participantSnap.exists) {
-        const profileSnap = await db.collection("users").doc(uid).get();
-        const profile = profileSnap.exists ? profileSnap.data() : {};
-        joinFields = {
-          joinedAt: admin.firestore.Timestamp.now(),
-          displayName: (profile && profile.displayName) || "Athlete",
-          ...(profile && profile.photoURL
-            ? { photoURL: profile.photoURL }
-            : {}),
-        };
-      }
-
-      // Marker doc keyed by the driving activity id. When absent we can't
-      // guard idempotently — fall back to a deterministic key so a missing
-      // sourceId never silently disables the transaction.
-      const markerRef = participantRef
-        .collection("applied")
-        .doc(sourceId || `${metric}_legacy_nosrc`);
-
-      // Read-modify-write inside a transaction: (a) two near-simultaneous
-      // triggers otherwise read the same currentValue and the second write
-      // clobbers the first (lost update); (b) a redelivered onCreate would
-      // double-count. The marker read guards (b); the transaction guards (a).
-      const tiers = challenge.tiers || {};
-      await db.runTransaction(async (tx) => {
-        // All reads before any writes (Firestore transaction rule).
-        const [snap, marker] = await Promise.all([
-          tx.get(participantRef),
-          tx.get(markerRef),
-        ]);
-        // A participant doc that appeared between the fast-path read and
-        // the tx read (client join racing us) is fine — the tx read wins.
-        if (!snap.exists && !joinFields) return;
-        if (marker.exists) return; // already applied this activity — idempotent no-op
-        const current = snap.exists ? snap.data().currentValue || 0 : 0;
-        const newValue = current + incrementBy;
-        const tierAchieved = challengeTiers.resolveTier(
-          newValue,
-          tiers,
-          metric
-        );
-        tx.set(
-          participantRef,
-          {
-            currentValue: newValue,
-            tierAchieved,
-            // First-activity server join (auto-enrol only): the same doc
-            // shape the client's joinChallenge writes, so the leaderboard
-            // renders identically whichever side created it. merge:true —
-            // if the client's join landed after our fast-path read, these
-            // fields are already present and identical in kind.
-            ...(joinFields && !snap.exists ? joinFields : {}),
-          },
-          { merge: true }
-        );
-        tx.set(markerRef, {
-          metric,
-          incrementBy,
-          activityDateKey,
-          appliedAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
-      });
+      await applyChallengeProgressIncrement(
+        doc.id,
+        doc.data(),
+        uid,
+        metric,
+        incrementBy,
+        sourceId,
+        activityDateKey
+      );
     }
   } catch (err) {
     console.error(
@@ -4220,73 +4245,218 @@ async function syncFastestEffortProgress(
       .get();
 
     for (const doc of challengesSnap.docs) {
-      const challenge = doc.data();
-      // Same [start, end) window predicate as the SUM path.
-      if (!challengeContainsActivityDate(challenge, activityDateKey)) continue;
-
-      const target = challenge.targetDistance || 0;
-      if (target <= 0) continue;
-      if (runDistanceMeters < target) continue; // run didn't reach target
-
-      const participantRef = db
-        .collection("challenges")
-        .doc(doc.id)
-        .collection("participants")
-        .doc(uid);
-      // Fast-path skip for non-participants (avoids opening a transaction for
-      // every fastest_effort challenge the user isn't in).
-      const participantSnap = await participantRef.get();
-      if (!participantSnap.exists) continue;
-
-      // Idempotency marker keyed by the driving run id — same scheme as
-      // syncChallengeProgress. Falls back to a deterministic key so a missing
-      // sourceId never silently disables the guard.
-      const markerRef = participantRef
-        .collection("applied")
-        .doc(sourceId || "fastest_effort_legacy_nosrc");
-
-      const tiers = challenge.tiers || {};
-      const runSeconds = Math.round(runDurationSeconds);
-
-      // Read-modify-write inside a transaction, mirroring the SUM path: (a) two
-      // concurrent qualifying runs (e.g. a batch device import) otherwise read
-      // the same currentValue and the slower write clobbers the faster — a lost
-      // PR; (b) a redelivered onRunCreated re-applies. MIN is only self-safe for
-      // the SAME time, so the concurrency race is real — the transaction guards
-      // (a), the marker guards (b). Pre-fix this did a bare get + set.
-      await db.runTransaction(async (tx) => {
-        const [snap, marker] = await Promise.all([
-          tx.get(participantRef),
-          tx.get(markerRef),
-        ]);
-        if (!snap.exists) return;
-        if (marker.exists) return; // already applied this run — idempotent no-op
-        const existingBest = snap.data().currentValue || 0;
-        // 0 = no best yet, so first qualifying run always wins; else keep faster.
-        const newBest =
-          existingBest === 0 ? runSeconds : Math.min(existingBest, runSeconds);
-        // fastest_effort tiers are time thresholds: lower is better; a newBest
-        // of 0 means "no qualifying effort yet" (resolveTier guards >0).
-        const tierAchieved = challengeTiers.resolveTier(
-          newBest,
-          tiers,
-          "fastest_effort"
-        );
-        tx.set(
-          participantRef,
-          { currentValue: newBest, tierAchieved },
-          { merge: true }
-        );
-        tx.set(markerRef, {
-          metric: "fastest_effort",
-          runSeconds,
-          activityDateKey,
-          appliedAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
-      });
+      await applyFastestEffortToChallenge(
+        doc.id,
+        doc.data(),
+        uid,
+        runDistanceMeters,
+        runDurationSeconds,
+        sourceId,
+        activityDateKey
+      );
     }
   } catch (err) {
     console.error(`syncFastestEffortProgress: error for ${uid}:`, err.message);
+  }
+}
+
+/**
+ * Apply one qualifying run to ONE fastest_effort challenge. Extracted from
+ * the syncFastestEffortProgress loop for the same reason as the SUM-path
+ * extraction: the join-time backfill replays historical runs against the
+ * joined challenge through the identical target-distance gate, MIN
+ * transaction and idempotency marker.
+ */
+async function applyFastestEffortToChallenge(
+  challengeDocId,
+  challenge,
+  uid,
+  runDistanceMeters,
+  runDurationSeconds,
+  sourceId,
+  activityDateKey
+) {
+  // Same [start, end) window predicate as the SUM path.
+  if (!challengeContainsActivityDate(challenge, activityDateKey)) return;
+
+  const target = challenge.targetDistance || 0;
+  if (target <= 0) return;
+  if (runDistanceMeters < target) return; // run didn't reach target
+
+  const participantRef = db
+    .collection("challenges")
+    .doc(challengeDocId)
+    .collection("participants")
+    .doc(uid);
+  // Fast-path skip for non-participants (avoids opening a transaction for
+  // every fastest_effort challenge the user isn't in).
+  const participantSnap = await participantRef.get();
+  if (!participantSnap.exists) return;
+
+  // Idempotency marker keyed by the driving run id — same scheme as
+  // syncChallengeProgress. Falls back to a deterministic key so a missing
+  // sourceId never silently disables the guard.
+  const markerRef = participantRef
+    .collection("applied")
+    .doc(sourceId || "fastest_effort_legacy_nosrc");
+
+  const tiers = challenge.tiers || {};
+  const runSeconds = Math.round(runDurationSeconds);
+
+  // Read-modify-write inside a transaction, mirroring the SUM path: (a) two
+  // concurrent qualifying runs (e.g. a batch device import) otherwise read
+  // the same currentValue and the slower write clobbers the faster — a lost
+  // PR; (b) a redelivered onRunCreated re-applies. MIN is only self-safe for
+  // the SAME time, so the concurrency race is real — the transaction guards
+  // (a), the marker guards (b). Pre-fix this did a bare get + set.
+  await db.runTransaction(async (tx) => {
+    const [snap, marker] = await Promise.all([
+      tx.get(participantRef),
+      tx.get(markerRef),
+    ]);
+    if (!snap.exists) return;
+    if (marker.exists) return; // already applied this run — idempotent no-op
+    const existingBest = snap.data().currentValue || 0;
+    // 0 = no best yet, so first qualifying run always wins; else keep faster.
+    const newBest =
+      existingBest === 0 ? runSeconds : Math.min(existingBest, runSeconds);
+    // fastest_effort tiers are time thresholds: lower is better; a newBest
+    // of 0 means "no qualifying effort yet" (resolveTier guards >0).
+    const tierAchieved = challengeTiers.resolveTier(
+      newBest,
+      tiers,
+      "fastest_effort"
+    );
+    tx.set(
+      participantRef,
+      { currentValue: newBest, tierAchieved },
+      { merge: true }
+    );
+    tx.set(markerRef, {
+      metric: "fastest_effort",
+      runSeconds,
+      activityDateKey,
+      appliedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  });
+}
+
+/**
+ * Join-time backfill: when a participant doc is created, credit every
+ * in-window source activity the user already has — through the SAME apply
+ * helpers, eligibility gate and idempotency markers as the live triggers.
+ *
+ * Probe sweep 2026-08-05 (third finding, verified 2026-08-08): joining
+ * mid-period credited nothing retroactively — a user who joined Fastest 5K
+ * on day 20 got zero credit for their day-5 run, forever, and the card
+ * read "no qualifying run yet". Reference behaviour (Strava) credits all
+ * in-window activity on join.
+ *
+ * Safety properties, all inherited rather than re-implemented:
+ *   • A source already credited live has an applied/{sourceId} marker →
+ *     replay is a transactional no-op (no double count).
+ *   • Trigger redelivery (at-least-once) replays the whole backfill; every
+ *     apply is marker-guarded, so it converges.
+ *   • Runs pass the SAME isVolumeEligibleRun gate as the live trigger —
+ *     isInvalid / savedAnyway / sub-threshold runs never credit.
+ *   • The window predicate is re-checked per source by the apply helpers
+ *     (fail closed); the query range is only a bound. Legacy docs with no
+ *     `date` field fall outside the range query and are skipped — the
+ *     live path fail-closes on those too.
+ *   • Scoped to the ONE challenge being joined: ended or unrelated
+ *     challenges are never touched, so concluded leaderboards can't be
+ *     rewritten by a later join elsewhere.
+ */
+async function backfillChallengeProgressForParticipant(challengeId, uid) {
+  try {
+    if (
+      !(await accountDeletionLocks.shouldSystemWriteProceed(
+        db,
+        uid,
+        "challengeJoinBackfill"
+      ))
+    ) {
+      return;
+    }
+
+    const chSnap = await db.collection("challenges").doc(challengeId).get();
+    if (!chSnap.exists) return;
+    const challenge = chSnap.data() || {};
+    const metric = challenge.metric;
+    const window = challengeBackfill.backfillQueryWindow(challenge);
+    if (!metric || !window) return; // fail closed on malformed defs
+
+    if (challengeBackfill.metricNeedsWorkouts(metric)) {
+      const workoutsSnap = await db
+        .collection("users")
+        .doc(uid)
+        .collection("workouts")
+        .where("date", ">=", window.startKey)
+        .where("date", "<", window.endKey)
+        .get();
+      for (const d of workoutsSnap.docs) {
+        const data = d.data() || {};
+        const dayKey = sourceActivityDateKey(data);
+        if (!dayKey) continue;
+        for (const inc of challengeBackfill.workoutChallengeIncrements(data)) {
+          if (inc.metric !== metric) continue;
+          await applyChallengeProgressIncrement(
+            challengeId,
+            challenge,
+            uid,
+            inc.metric,
+            inc.value,
+            d.id,
+            dayKey
+          );
+        }
+      }
+    }
+
+    if (challengeBackfill.metricNeedsRuns(metric)) {
+      const runsSnap = await db
+        .collection("users")
+        .doc(uid)
+        .collection("runs")
+        .where("date", ">=", window.startKey)
+        .where("date", "<", window.endKey)
+        .get();
+      for (const d of runsSnap.docs) {
+        const data = d.data() || {};
+        if (!isVolumeEligibleRun(data)) continue;
+        const dayKey = sourceActivityDateKey(data);
+        if (!dayKey) continue;
+        for (const inc of challengeBackfill.runChallengeIncrements(data)) {
+          if (inc.metric !== metric) continue;
+          if (inc.metric === "fastest_effort") {
+            await applyFastestEffortToChallenge(
+              challengeId,
+              challenge,
+              uid,
+              inc.meters,
+              inc.seconds,
+              d.id,
+              dayKey
+            );
+          } else {
+            await applyChallengeProgressIncrement(
+              challengeId,
+              challenge,
+              uid,
+              inc.metric,
+              inc.value,
+              d.id,
+              dayKey
+            );
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error(
+      `backfillChallengeProgress: error for ${uid}/${challengeId}:`,
+      err.message
+    );
   }
 }
 
@@ -4397,6 +4567,14 @@ exports.onChallengeParticipantCreated = functions
       context.params.challengeId,
       context.timestamp
     );
+    // Mid-period join backfill: credit the user's existing in-window
+    // activity so joining on day 20 doesn't erase days 1–19. Idempotent
+    // (per-source applied markers), so redelivery and live-sync races
+    // converge; a no-history user is a no-op.
+    await backfillChallengeProgressForParticipant(
+      context.params.challengeId,
+      context.params.uid
+    );
     return null;
   });
 
@@ -4457,14 +4635,20 @@ exports.onWorkoutCreated = functions
           { merge: true }
         );
 
-      // Auto-progress workout_count challenges (idempotent on workoutId)
-      await syncChallengeProgress(
-        uid,
-        "workout_count",
-        1,
-        workoutId,
-        activityDateKey
-      );
+      // Auto-progress challenge metrics this workout feeds: workout_count
+      // always; total_volume + the hybrid_score volume term (kg×0.1,
+      // SOCIAL S4 Soc8) when volume data is available. The increment
+      // mapping lives in lib/challengeBackfill so the join-time backfill
+      // credits history with the SAME values (idempotent on workoutId).
+      for (const inc of challengeBackfill.workoutChallengeIncrements(data)) {
+        await syncChallengeProgress(
+          uid,
+          inc.metric,
+          inc.value,
+          workoutId,
+          activityDateKey
+        );
+      }
 
       // Plate-Club weight badges (plate_club / two_plate / three_plate) — the
       // heaviest compound set in THIS workout. Single-doc determinable, so
@@ -4475,27 +4659,7 @@ exports.onWorkoutCreated = functions
         liftWeightMilestoneBadges(data.exercises)
       );
 
-      // Auto-progress total_volume challenges (if volume data available)
       if (data.totalVolume) {
-        await syncChallengeProgress(
-          uid,
-          "total_volume",
-          data.totalVolume,
-          workoutId,
-          activityDateKey
-        );
-        // SOCIAL S4 (Soc8) — hybrid_score = km×100 + kg×0.1. A workout
-        // contributes its volume term (kg×0.1). SUM-based, idempotent on
-        // workoutId — same path as the metrics above. Feeds the global
-        // monthly hybrid challenge AND the existing Autumn Push seasonal
-        // (which declared hybrid_score but had no sync until now).
-        await syncChallengeProgress(
-          uid,
-          "hybrid_score",
-          Math.round(data.totalVolume * 0.1),
-          workoutId,
-          activityDateKey
-        );
         // Lifetime-aggregate badge: tonnage_100 (move 100 tonnes total).
         // Maintains the cumulative volume counter idempotently (per-workout
         // marker) and awards the badge once the lifetime total crosses 100 t.
@@ -4645,43 +4809,31 @@ exports.onRunCreated = functions
         // (the enclosing block) so isInvalid / savedAnyway runs don't inflate.
         await accrueLifetimeStat(uid, "run", runMeters, runId);
 
-        // Auto-progress km-based challenges
-        const distanceKm =
-          data.distanceKm || (data.distance ? data.distance / 1000 : 0);
-        if (distanceKm > 0) {
-          await syncChallengeProgress(
-            uid,
-            "total_km",
-            Math.round(distanceKm * 100) / 100,
-            runId,
-            activityDateKey
-          );
-          // SOCIAL S4 (Soc8) — hybrid_score = km×100 + kg×0.1. A run
-          // contributes its distance term (km×100). SUM-based, idempotent
-          // on runId. Feeds the global monthly hybrid challenge + Autumn
-          // Push seasonal. Gated by isCountable (no isInvalid/savedAnyway).
-          await syncChallengeProgress(
-            uid,
-            "hybrid_score",
-            Math.round(distanceKm * 100),
-            runId,
-            activityDateKey
-          );
-        }
-
-        // PR 5: fastest_effort uses MIN-update semantics, separate
-        // sync path. Pass distance in metres + duration in seconds;
-        // the helper gates on runDistance >= challenge.targetDistance.
-        const runDistanceMeters = data.distance || distanceKm * 1000 || 0;
-        const runDurationSeconds = data.duration || 0;
-        if (runDistanceMeters > 0 && runDurationSeconds > 0) {
-          await syncFastestEffortProgress(
-            uid,
-            runDistanceMeters,
-            runDurationSeconds,
-            runId,
-            activityDateKey
-          );
+        // Auto-progress the challenge metrics this run feeds: total_km +
+        // the hybrid_score distance term (km×100, SOCIAL S4 Soc8), and
+        // fastest_effort (MIN-update semantics, separate sync path with a
+        // targetDistance gate). The increment mapping lives in
+        // lib/challengeBackfill so the join-time backfill credits history
+        // with the SAME values — all gated by isCountable (the enclosing
+        // block), idempotent on runId.
+        for (const inc of challengeBackfill.runChallengeIncrements(data)) {
+          if (inc.metric === "fastest_effort") {
+            await syncFastestEffortProgress(
+              uid,
+              inc.meters,
+              inc.seconds,
+              runId,
+              activityDateKey
+            );
+          } else {
+            await syncChallengeProgress(
+              uid,
+              inc.metric,
+              inc.value,
+              runId,
+              activityDateKey
+            );
+          }
         }
       } else {
         console.log(
