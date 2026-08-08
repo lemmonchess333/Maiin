@@ -143,7 +143,36 @@ export function getTimeRemaining(
   const days = Math.floor(ms / 86400000);
   if (days > 1) return `${days} days left`;
   const hours = Math.floor(ms / 3600000);
-  return `${hours}h left`;
+  if (hours >= 1) return `${hours}h left`;
+  // Final hour: floor-to-hours read "0h left" for the whole last hour
+  // (probe sweep 2026-08-05, verified) — count minutes instead, never
+  // dropping below "1m left" while the challenge is still live.
+  const minutes = Math.max(1, Math.floor(ms / 60000));
+  return `${minutes}m left`;
+}
+
+/**
+ * The soonest-ending challenge of a list, by each challenge's LOCAL end
+ * instant — null-safe. The previous inline reduce dereferenced
+ * `endDate.toDate()` unguarded, but the active list deliberately KEEPS
+ * docs with no endDate (lenient for malformed defs), so one malformed doc
+ * crashed the whole challenge section (probe sweep 2026-08-05, verified).
+ * Docs with no resolvable end simply don't compete for "soonest".
+ */
+export function soonestEndingChallenge<
+  T extends { endDate?: Timestamp | Date },
+>(list: readonly T[]): T | null {
+  let best: T | null = null;
+  let bestMs = Infinity;
+  for (const c of list) {
+    const endMs = challengeLocalEndMs(c.endDate);
+    if (endMs === null) continue;
+    if (endMs < bestMs) {
+      best = c;
+      bestMs = endMs;
+    }
+  }
+  return best;
 }
 
 export function useChallenges() {
