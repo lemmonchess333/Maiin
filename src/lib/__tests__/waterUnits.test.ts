@@ -82,3 +82,20 @@ describe("WATER_PRESETS", () => {
     expect(WATER_PRESETS.map((p) => p.ml)).toEqual([250, 500, 750]);
   });
 });
+
+describe("resolveTargetMl — corrupt values fall to the default, never to 0", () => {
+  // Probe sweep 2026-08-05: Infinity passed `typeof === "number" && > 0`,
+  // then clampMl collapsed it to 0 — short-circuiting the documented 2 L
+  // fallback and zeroing the wave (waterProgress(x, 0) is 0). The sibling
+  // resolveConsumedMl already checked finiteness; this was the asymmetry.
+  it("non-finite targetMl falls through to the 2 L default", () => {
+    expect(resolveTargetMl({ targetMl: Infinity })).toBe(2000);
+    expect(resolveTargetMl({ targetMl: -Infinity })).toBe(2000);
+    expect(resolveTargetMl({ targetMl: NaN })).toBe(2000);
+  });
+
+  it("non-finite legacy glasses fall through too", () => {
+    expect(resolveTargetMl({ targetWaterGlasses: Infinity })).toBe(2000);
+    expect(resolveTargetMl({ targetGlasses: NaN })).toBe(2000);
+  });
+});

@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { format } from "date-fns";
-import { computeCurrentStreak, computeStreakSpan } from "../useStreaks";
+import {
+  computeCurrentStreak,
+  computeStreakSpan,
+  computeStreakSpanAnchored,
+} from "../useStreaks";
 
 // Pinned "now" — mid-May is well clear of any DST transition in either
 // hemisphere, so calendar-day offsets are stable in the test timezone.
@@ -132,5 +136,101 @@ describe("backfill rescue mechanism (Tier B) — simulation property", () => {
     // last active offset 4: yesterday + day-2 + day-3 missed → grace can't
     // span two consecutive misses, so backfill yields a trivial streak
     expect(withYesterday(4, 5, 6)).toBeLessThan(3);
+  });
+});
+
+describe("computeStreakSpanAnchored — long streaks survive a bounded window", () => {
+  // Probe sweep 2026-08-05, verifier-confirmed: the meal window is
+  // DOC-bounded (500 docs ≈ 167 days at 3 meals/day), and the windowed
+  // recompute persisted its own truncation back — a meal-driven streak froze
+  // at ~167 while the user kept logging daily, and the 365-day badge was
+  // unreachable for any ≥2-meals/day logger. The persisted
+  // {count, lastActiveDate} pair is the fix: a certificate for the days that
+  // aged out of the window.
+  const NOW = new Date("2026-08-05T12:00:00");
+  const key = (daysAgo: number) =>
+    format(new Date(NOW.getTime() - daysAgo * 86_400_000), "yyyy-MM-dd");
+  /** An unbroken active set covering today .. daysAgo. */
+  const activeBack = (daysAgo: number) =>
+    new Set(Array.from({ length: daysAgo + 1 }, (_, i) => key(i)));
+
+  it("THE FREEZE, healed: a 300-day streak survives a 30-day window", () => {
+    // Window shows 31 unbroken days; the anchor certifies 270 more ending at
+    // the window's oldest visible day. Pure walk: 31. Anchored: 300.
+    const set = activeBack(30);
+    const anchor = { streak: 270, lastActiveDate: key(30) };
+    expect(computeStreakSpanAnchored(set, anchor, NOW).streak).toBe(300);
+    // …and the day after another log, it advances by one (fixed-point + 1).
+    const TOMORROW = new Date(NOW.getTime() + 86_400_000);
+    const setTomorrow = new Set([
+      ...activeBack(30),
+      format(TOMORROW, "yyyy-MM-dd"),
+    ]);
+    expect(
+      computeStreakSpanAnchored(
+        setTomorrow,
+        { streak: 300, lastActiveDate: key(0) },
+        TOMORROW
+      ).streak
+    ).toBe(301);
+  });
+
+  it("the recompute is a fixed point of its own persist", () => {
+    // Re-running with the anchor the recompute just wrote must return the
+    // same number, or the memo↔subscription pair would oscillate.
+    const set = activeBack(10);
+    const first = computeStreakSpanAnchored(
+      set,
+      { streak: 200, lastActiveDate: key(10) },
+      NOW
+    ).streak;
+    expect(first).toBe(210);
+    expect(
+      computeStreakSpanAnchored(
+        set,
+        { streak: first, lastActiveDate: key(0) },
+        NOW
+      ).streak
+    ).toBe(210);
+  });
+
+  it("a broken chain ignores the anchor — no resurrection", () => {
+    // Active today+yesterday, then a 5-day hole, then the anchor day. The
+    // walk breaks before reaching it (grace can't bridge consecutive
+    // misses), so the certified 200 stays dead.
+    const set = new Set([key(0), key(1), key(7)]);
+    const anchor = { streak: 200, lastActiveDate: key(7) };
+    expect(computeStreakSpanAnchored(set, anchor, NOW).streak).toBe(2);
+  });
+
+  it("a stale-LOW anchor never truncates what the window can prove", () => {
+    // The window shows 31 unbroken days but the anchor (written mid-freeze)
+    // says only 5 ended three days ago. Anchored walk would stop early at
+    // day 3 with 3 + 5 = 8; the pure walk proves 31. Max wins.
+    const set = activeBack(30);
+    const anchor = { streak: 5, lastActiveDate: key(3) };
+    expect(computeStreakSpanAnchored(set, anchor, NOW).streak).toBe(31);
+  });
+
+  it("grace still bridges on the way to the anchor", () => {
+    // Today..day4 active, day5 missed (bridgeable), day6 = anchor day.
+    const set = new Set([key(0), key(1), key(2), key(3), key(4), key(6)]);
+    const anchor = { streak: 100, lastActiveDate: key(6) };
+    const span = computeStreakSpanAnchored(set, anchor, NOW);
+    expect(span.streak).toBe(106); // 5 walked + 1 bridged + 100 certified
+    expect(span.bridgedDates).toContain(key(5));
+  });
+
+  it("garbage anchors fall back to the pure walk", () => {
+    const set = activeBack(3);
+    for (const anchor of [
+      null,
+      { streak: 0, lastActiveDate: key(3) },
+      { streak: Number.NaN, lastActiveDate: key(3) },
+      { streak: 50, lastActiveDate: "not-a-date" },
+      { streak: 50, lastActiveDate: key(20) }, // not in the active set
+    ]) {
+      expect(computeStreakSpanAnchored(set, anchor, NOW).streak).toBe(4);
+    }
   });
 });
