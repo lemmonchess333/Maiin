@@ -7,23 +7,14 @@ import { describe, it, expect } from "vitest";
 import {
   raceDistanceLabel,
   compactRunLabel,
-  compactLiftLabel,
   buildRaceCockpitViewModel,
-  buildHybridWeekItems,
   resolveRunPlanSurface,
   hasHybridInterference,
 } from "@/lib/runProgrammeViewModel";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
-import type { UserProfile } from "@/lib/auth";
-import type {
-  ProgramState,
-  ScheduledRunDay,
-  WorkoutDay,
-} from "@/features/program/programTypes";
-import type { ClaimState } from "@/lib/scheduledRunCompletion";
+import type { ProgramState } from "@/features/program/programTypes";
 
 const tmpl = (id: string) => RUN_TEMPLATES.find((t) => t.id === id)!;
-const emptyClaims = new Map<string, ClaimState>();
 
 describe("raceDistanceLabel", () => {
   it("renders readable labels, not MARATHON machine text", () => {
@@ -49,18 +40,6 @@ describe("compactRunLabel", () => {
   });
   it("falls back to 'Run' when no template", () => {
     expect(compactRunLabel(null)).toBe("Run");
-  });
-});
-
-describe("compactLiftLabel", () => {
-  it("strips the qualifier after a dash/middot", () => {
-    expect(compactLiftLabel("Push — Chest Focus")).toBe("Push");
-    expect(compactLiftLabel("Pull · Back")).toBe("Pull");
-    expect(compactLiftLabel("Legs")).toBe("Legs");
-  });
-  it("truncates very long heads and handles empty", () => {
-    expect(compactLiftLabel("Upperbodyday")).toBe("Upperbo…");
-    expect(compactLiftLabel(undefined)).toBe("Lift");
   });
 });
 
@@ -164,141 +143,6 @@ describe("buildRaceCockpitViewModel", () => {
       todayKey: "2026-05-30",
     })!;
     expect(vm.belowFloor).toBe(false);
-  });
-});
-
-// ── buildHybridWeekItems ──────────────────────────────────────────
-function makeProfile(
-  schedule: { day: number; type: "lift" | "run" | "both" | "rest" }[]
-): UserProfile {
-  return {
-    uid: "u",
-    displayName: "T",
-    email: "t@e.com",
-    weekSchedule: schedule,
-  } as UserProfile;
-}
-
-function makeRunDay(o: Partial<ScheduledRunDay>): ScheduledRunDay {
-  return {
-    id: "rd",
-    dayIndex: 1,
-    templateId: "easy_30",
-    type: "easy",
-    completed: false,
-    status: "planned",
-    date: "2026-05-11",
-    weekKey: "2026-05-10",
-    ...o,
-  };
-}
-
-function makeWorkout(o: Partial<WorkoutDay> = {}): WorkoutDay {
-  return {
-    dayName: "Push — Chest",
-    dayType: "lift",
-    exercises: [],
-    completed: false,
-    ...o,
-  };
-}
-
-function makeProgram(
-  runDays: ScheduledRunDay[],
-  workouts: WorkoutDay[]
-): ProgramState {
-  return {
-    goal: "recomp",
-    currentPhase: "base",
-    weekNumber: 1,
-    splitType: "ppl",
-    workouts,
-    fatigueScore: 0,
-    updatedAt: 0,
-    settings: { autoProgression: true, microloading: true },
-    weekHistory: [],
-    programSchemaVersion: 2,
-    runDays,
-  } as ProgramState;
-}
-
-describe("buildHybridWeekItems", () => {
-  it("renders BOTH a run lane and a lift lane on a combined day", () => {
-    // Monday (dayIndex 1) is a "both" day: a long run + a lift.
-    const schedule = Array.from({ length: 7 }, (_, i) => ({
-      day: i,
-      type: i === 1 ? ("both" as const) : ("rest" as const),
-    }));
-    const items = buildHybridWeekItems({
-      profile: makeProfile(schedule),
-      programState: makeProgram(
-        [
-          makeRunDay({
-            dayIndex: 1,
-            templateId: "long_15k",
-            date: "2026-05-11",
-          }),
-        ],
-        [makeWorkout({ dayName: "Push — Chest" })]
-      ),
-      claimMap: emptyClaims,
-      currentWeekKey: "2026-05-10",
-      todayKey: "2026-05-11",
-      anchorWeekKey: "2026-05-10",
-    });
-    const monday = items[1];
-    expect(monday.run).toBeDefined();
-    expect(monday.lift).toBeDefined();
-    // Compact labels, NOT the full truncated names.
-    expect(monday.run!.shortLabel).toBe("15K");
-    expect(monday.run!.title).toBe("Long 15K");
-    expect(monday.lift!.shortLabel).toBe("Push");
-    expect(monday.isToday).toBe(true);
-  });
-
-  it("does NOT invent runs for a freeform lifter (no runDays) but keeps lift lanes", () => {
-    const schedule = Array.from({ length: 7 }, (_, i) => ({
-      day: i,
-      type: i === 1 ? ("lift" as const) : ("rest" as const),
-    }));
-    const items = buildHybridWeekItems({
-      profile: makeProfile(schedule),
-      programState: makeProgram([], [makeWorkout({ dayName: "Legs" })]),
-      claimMap: emptyClaims,
-      currentWeekKey: "2026-05-10",
-      todayKey: "2026-05-11",
-      anchorWeekKey: "2026-05-10",
-    });
-    expect(items.every((d) => d.run === undefined)).toBe(true);
-    expect(items[1].lift?.shortLabel).toBe("Legs");
-  });
-
-  it("maps a race-day runDay to a race lane flagged isRace", () => {
-    const schedule = Array.from({ length: 7 }, (_, i) => ({
-      day: i,
-      type: i === 1 ? ("run" as const) : ("rest" as const),
-    }));
-    const items = buildHybridWeekItems({
-      profile: makeProfile(schedule),
-      programState: makeProgram(
-        [
-          makeRunDay({
-            dayIndex: 1,
-            templateId: "marathon_race",
-            date: "2026-05-11",
-            status: "race_no_show",
-          }),
-        ],
-        []
-      ),
-      claimMap: emptyClaims,
-      currentWeekKey: "2026-05-10",
-      todayKey: "2026-05-11",
-      anchorWeekKey: "2026-05-10",
-    });
-    expect(items[1].run?.isRace).toBe(true);
-    expect(items[1].run?.shortLabel).toBe("Race");
-    expect(items[1].run?.status).toBe("race_no_show");
   });
 });
 
