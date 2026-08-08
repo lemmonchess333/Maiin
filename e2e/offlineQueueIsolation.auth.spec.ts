@@ -225,11 +225,40 @@ async function mintOnboardedAccount(
   return uid;
 }
 
+/** A fresh account's FIRST logged activity earns a badge, and the
+ *  BadgeEarnedModal celebration (fixed inset-0 z-50, mounted by the
+ *  authed-root streaks provider over whatever page is showing)
+ *  swallows pointer events until dismissed — CI caught it intercepting
+ *  the Settings-gear tap for 35 straight actionability retries while
+ *  local runs happened to win the race. Dismiss it the way a user
+ *  does: backdrop taps crack the seal, one more dismisses. Bounded and
+ *  best-effort — when no celebration is pending this costs one short
+ *  probe. */
+async function dismissBadgeCelebration(
+  page: Page,
+  probeMs: number
+): Promise<void> {
+  const dialog = page.getByRole("dialog", { name: /badge/i });
+  try {
+    await dialog.waitFor({ state: "visible", timeout: probeMs });
+  } catch {
+    return; // no celebration pending
+  }
+  for (let i = 0; i < 10 && (await dialog.isVisible()); i++) {
+    await page.mouse.click(8, 300);
+    await page.waitForTimeout(350);
+  }
+  await expect(dialog).not.toBeVisible();
+}
+
 /** Click the app's Sign Out (rendered on /settings/account) and wait
  *  for the Login screen. */
 async function signOutViaUI(page: Page): Promise<void> {
   const signOut = page.getByRole("button", { name: "Sign Out" });
   await signOut.waitFor({ state: "visible", timeout: 20_000 });
+  // The badge celebration can mount late over this page too (both
+  // accounts log their first activity in this journey).
+  await dismissBadgeCelebration(page, 1_000);
   await signOut.click();
   await page
     .locator("#login-email")
@@ -358,11 +387,16 @@ test.describe("offline-queue uid isolation across an account switch", () => {
       timeout: 10_000,
     });
 
+    // A's first activity just landed — give its badge celebration time
+    // to mount and clear it before the click-through navigation below.
+    await dismissBadgeCelebration(page, 4_000);
+
     // ── Phase 2: still "offline", sign out via the app's own UI.
     // Client-side navigation (Food → Home → gear → Account) keeps the
     // page session, and with it the navigator override, alive until the
     // sign-out lands — so no flush can fire under A on the way out.
     await page.getByRole("link", { name: /^Home/ }).click();
+    await dismissBadgeCelebration(page, 1_000);
     await page.getByLabel("Settings").click({ timeout: 20_000 });
     await page
       .getByRole("button", { name: /sign out, delete account/i })
