@@ -408,27 +408,66 @@ test.describe("offline-queue uid isolation across an account switch", () => {
 
     // ── Phase 3: B signs in on the same device (fresh page session, so
     // navigator.onLine is genuinely true again). B's sign-in runs the
-    // AppRoutes mount flush with A's entry present.
+    // AppRoutes mount flush with A's entry present. "A's entry is still
+    // queued" is a NEGATIVE claim, and a negative under a timer proves
+    // nothing (the CLAUDE.md waitFor rule) — so anchor it: seed a
+    // second queued entry tagged with B's uid, exactly the shape the
+    // app itself queues, before B signs in. The same flush pass must
+    // consume B's entry and skip A's — when B's doc lands server-side,
+    // the scan provably ran to completion over both entries.
+    const anchorDate = new Date(Date.now() - 86_400_000).toLocaleDateString(
+      "en-CA"
+    );
+    await page.evaluate(
+      ([key, uid, date]) => {
+        const queue = JSON.parse(
+          localStorage.getItem(key) ?? "[]"
+        ) as unknown[];
+        queue.push({
+          id: crypto.randomUUID(),
+          uid,
+          collectionPath: `users/${uid}/logs`,
+          docId: date,
+          merge: true,
+          data: { date, workouts: 0, meals: 1, hasPR: false, notes: "" },
+          timestamp: Date.now(),
+        });
+        localStorage.setItem(key, JSON.stringify(queue));
+      },
+      [QUEUE_KEY, uidB, anchorDate] as const
+    );
+
     await page.goto("/");
     await signInFromLoginScreen(page, emailB);
 
-    // Positive anchor that B's session is fully wired: B logs a meal,
-    // B's OWN daily-log write goes through live (no queue involved).
+    // B's mount flush consumed B's entry — with flush provenance…
+    await expect
+      .poll(
+        async () =>
+          (await listLogDocs(uidB)).some(
+            (d) =>
+              d.name.endsWith(`/logs/${anchorDate}`) &&
+              d.fields?._offlineCreatedAt !== undefined
+          ),
+        { timeout: 20_000 }
+      )
+      .toBe(true);
+    // …so the queue settling at exactly A's entry is the SAME pass
+    // keeping it, not a timer hoping nothing happened.
+    await expect
+      .poll(async () => await readQueue(page), { timeout: 10_000 })
+      .toHaveLength(1);
+    const [keptDuringB] = await readQueue(page);
+    expect(keptDuringB.uid).toBe(uidA);
+    expect(await listLogDocs(uidA)).toHaveLength(0);
+
+    // B's live writes flow normally too (the online branch, no queue):
+    // log a meal, see it ack and land beside the flushed anchor doc.
     await page.goto("food");
     await logMealViaComposer(page, { expectAck: true });
     await expect
       .poll(async () => (await listLogDocs(uidB)).length, { timeout: 15_000 })
-      .toBe(1);
-
-    // Force one more flush pass under B (the same 'online' listener the
-    // real reconnect path uses), then hold the line: A's entry is still
-    // queued, still tagged A, and nothing has landed in A's collection.
-    await page.evaluate(() => window.dispatchEvent(new Event("online")));
-    await page.waitForTimeout(1_500);
-    const queueDuringB = await readQueue(page);
-    expect(queueDuringB).toHaveLength(1);
-    expect(queueDuringB[0].uid).toBe(uidA);
-    expect(await listLogDocs(uidA)).toHaveLength(0);
+      .toBe(2);
 
     // ── Phase 4: B signs out, A returns; the queue flushes under A.
     await page.goto("settings/account");
