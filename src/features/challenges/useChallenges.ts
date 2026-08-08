@@ -23,6 +23,7 @@ import {
   isTierAchieved,
   type ChallengeTier,
 } from "./challengeTiers";
+import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 
 // Re-exported so existing importers (ChallengeCard, tests) keep one import site.
 // The tier logic lives in ./challengeTiers (mirrored server-side).
@@ -72,9 +73,72 @@ export interface ChallengeParticipant {
   uid?: string;
 }
 
-export function getTimeRemaining(endDate: Timestamp | Date): string {
-  const end = endDate instanceof Date ? endDate : endDate.toDate();
-  const ms = end.getTime() - Date.now();
+/* ── Local-day challenge window (mirror of the server's crediting rule) ──
+ *
+ * The server credits an activity by its LOCAL calendar day against the
+ * challenge's UTC [startDate, endDate) window, as day-key strings
+ * (functions/lib/challengeActivityWindow.js — fail-closed, pinned). The
+ * client used to gate "active" and the countdown on the UTC INSTANT
+ * instead, and the two disagree by up to a day at period boundaries: an NZ
+ * user at local Aug 1 09:00 saw July's card promise "3h left" while the
+ * server was already refusing to credit July with their Aug-1-dated runs —
+ * and a UTC-negative user saw "Ended" while their Jul-31-dated runs still
+ * credited fine (probe sweep 2026-08-05, verifier-confirmed HIGH).
+ *
+ * These helpers make the card's promise and the server's crediting the SAME
+ * predicate: a challenge is active for you exactly while an activity logged
+ * TODAY (your local day) would credit it, and it "ends" at YOUR local
+ * midnight of the end day. A cross-test pins this equal to the server
+ * predicate on shared fixtures (challengeWindowParity.cross.test.ts).
+ * This is also what keeps the rollover's one-day-early materialisation
+ * invisible: a not-yet-started challenge fails `startKey <= today` and
+ * never renders as a second live card.
+ */
+
+/** UTC day key of a boundary instant (the timestamp IS the UTC-midnight
+ *  boundary marker, so UTC extraction — never local — recovers the key). */
+export function boundaryDayKey(
+  value: Timestamp | Date | undefined | null
+): string | null {
+  const d =
+    value instanceof Date
+      ? value
+      : value && typeof value.toDate === "function"
+        ? value.toDate()
+        : null;
+  if (!d || !Number.isFinite(d.getTime())) return null;
+  return d.toISOString().slice(0, 10);
+}
+
+/** Would an activity logged on `localDayKey` credit this challenge?
+ *  Identical semantics to the server's challengeContainsActivityDate. */
+export function isChallengeActiveOnDay(
+  c: { startDate?: Timestamp | Date; endDate?: Timestamp | Date },
+  localDayKey: string
+): boolean {
+  const startKey = boundaryDayKey(c.startDate);
+  const endKey = boundaryDayKey(c.endDate);
+  if (!startKey || !endKey || startKey >= endKey) return false;
+  return startKey <= localDayKey && localDayKey < endKey;
+}
+
+/** The instant this challenge ends FOR THIS DEVICE: local midnight of the
+ *  end day — the moment a newly logged activity stops crediting it. */
+export function challengeLocalEndMs(
+  endDate: Timestamp | Date | undefined | null
+): number | null {
+  const endKey = boundaryDayKey(endDate);
+  if (!endKey) return null;
+  return parseLocalDate(endKey).getTime();
+}
+
+export function getTimeRemaining(
+  endDate: Timestamp | Date,
+  now: number = Date.now()
+): string {
+  const endMs = challengeLocalEndMs(endDate);
+  if (endMs === null) return "";
+  const ms = endMs - now;
   if (ms <= 0) return "Ended";
   const days = Math.floor(ms / 86400000);
   if (days > 1) return `${days} days left`;
@@ -119,20 +183,26 @@ export function useChallenges() {
       (snap) => {
         clearTimeout(timeout);
         const now = new Date();
+        const todayKey = localDateString(now);
         const all = snap.docs.map(
           (d) => ({ id: d.id, ...d.data() }) as Challenge
         );
-        const active = all.filter((c) => {
-          const end = c.endDate?.toDate?.();
-          return end ? end > now : true;
-        });
+        // Active = an activity logged TODAY (local day) would credit it —
+        // the server's own predicate, so the card never promises counting
+        // the server will refuse, and the rollover's one-day-early docs
+        // stay hidden until their day arrives locally. Docs with no dates
+        // are kept in the active list, matching the old lenient behaviour
+        // for malformed defs.
+        const active = all.filter((c) =>
+          c.endDate ? isChallengeActiveOnDay(c, todayKey) : true
+        );
         const FINALE_WINDOW_MS = 7 * 86_400_000;
         const ended = all.filter((c) => {
-          const end = c.endDate?.toDate?.();
+          const endMs = challengeLocalEndMs(c.endDate);
           return (
-            !!end &&
-            end <= now &&
-            end.getTime() > now.getTime() - FINALE_WINDOW_MS
+            endMs !== null &&
+            endMs <= now.getTime() &&
+            endMs > now.getTime() - FINALE_WINDOW_MS
           );
         });
         setChallenges(active);
