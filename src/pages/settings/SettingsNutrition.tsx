@@ -23,7 +23,13 @@ import NutritionSection from "@/components/settings/NutritionSection";
 
 export default function SettingsNutrition() {
   const { user, profile, updateProfile } = useAuth();
-  const currentKg = profile?.weightKg ?? 70;
+  // `|| 70`, not `?? 70`: a legacy weightKg of 0 must read as the same
+  // fallback every other consumer uses (phaseNutrition's `|| 70`), or the
+  // pipeline splits — TDEE computes protein from 0 kg while the daily
+  // targets rebase to 70, and goal direction reads "gain" against any
+  // real goal weight. The input guards now block NEW zeros; this keeps
+  // stored ones from disagreeing across surfaces.
+  const currentKg = profile?.weightKg || 70;
 
   const [age, setAge] = useState(profile?.age ?? 25);
   const [activityLevel, setActivityLevel] = useState<ActivityLevel>(
