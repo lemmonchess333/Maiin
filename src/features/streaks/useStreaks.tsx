@@ -166,8 +166,13 @@ function toIsoString(value: unknown): string {
  * Build the set of active dates (YYYY-MM-DD) from workouts, runs, and meals.
  * A date counts as active if ANY of the three sources contributes it.
  * Meals must have at least one item to count (guards against draft/empty docs).
+ *
+ * Exported for the parity cross-test only: the server re-derives this set
+ * (functions/lib/activeDates.js) for the streak-nudge cron, and
+ * activeDatesParity.cross.test.ts pins the two equal on shared fixtures.
  */
-function computeActiveDateSet(
+// eslint-disable-next-line react-refresh/only-export-components
+export function computeActiveDateSet(
   workouts: WorkoutRow[],
   runs: RunRow[],
   meals: MealRow[]
