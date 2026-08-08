@@ -91,6 +91,20 @@ export default function ProfileInfoSection({
             onBlur={async () => {
               const prev = profile.weightKg ?? 70;
               if (weightKg === prev) return;
+              // A cleared field blurs as Number("") = 0, and 0 splits the
+              // pipeline downstream: calculateTDEE stores a 0g protein
+              // target while getAdjustedTargets silently rebases to 70kg —
+              // two consumers disagreeing about the same field. Reject
+              // out-of-range instead of writing it; same 20-350 gate as
+              // the Home weigh-in sheet.
+              if (
+                !Number.isFinite(weightKg) ||
+                weightKg < 20 ||
+                weightKg > 350
+              ) {
+                setWeightKg(prev);
+                return;
+              }
               const result = await updateProfile({ weightKg });
               if (!result.ok) setWeightKg(prev);
             }}
@@ -115,6 +129,17 @@ export default function ProfileInfoSection({
             onBlur={async () => {
               const prev = profile.heightCm ?? 170;
               if (heightCm === prev) return;
+              // Same cleared-field guard as weight above; bounds match
+              // profileSanitizer.js's heightCm range so the client and the
+              // Cloud-Function write path agree on what's plausible.
+              if (
+                !Number.isFinite(heightCm) ||
+                heightCm < 120 ||
+                heightCm > 230
+              ) {
+                setHeightCm(prev);
+                return;
+              }
               const result = await updateProfile({ heightCm });
               if (!result.ok) setHeightCm(prev);
             }}

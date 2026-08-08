@@ -126,3 +126,72 @@ describe("ProfileInfoSection — D16 training why", () => {
     expect(updateProfile).toHaveBeenCalledWith({ trainingWhy: "" });
   });
 });
+
+describe("ProfileInfoSection — cleared-field guards on weight/height blur", () => {
+  // A cleared number input blurs as Number("") = 0, and 0 used to be
+  // WRITTEN: firestore.rules bounds field names, not values, so the
+  // profile carried weightKg: 0 and the nutrition pipeline split —
+  // calculateTDEE stored a 0g protein target while getAdjustedTargets
+  // silently rebased to 70kg. The blur now rejects out-of-range values
+  // and restores the previous one instead of persisting garbage.
+  function renderWithValues(weightKg: number, heightCm: number) {
+    const updateProfile = vi.fn(
+      async () => ({ ok: true }) as UpdateProfileResult
+    );
+    const setWeightKg = vi.fn();
+    const setHeightCm = vi.fn();
+    const profile = makeProfile();
+    render(
+      <ProfileInfoSection
+        profile={profile}
+        name="Test"
+        setName={vi.fn()}
+        weightKg={weightKg}
+        setWeightKg={setWeightKg}
+        heightCm={heightCm}
+        setHeightCm={setHeightCm}
+        updateProfile={updateProfile}
+        inline
+      />
+    );
+    return { updateProfile, setWeightKg, setHeightCm };
+  }
+
+  it("rejects a cleared (0) weight: no write, value restored", async () => {
+    const { updateProfile, setWeightKg } = renderWithValues(0, 175);
+    fireEvent.blur(screen.getByLabelText(/weight/i));
+    await Promise.resolve();
+    expect(updateProfile).not.toHaveBeenCalled();
+    expect(setWeightKg).toHaveBeenCalledWith(75); // profile.weightKg
+  });
+
+  it("rejects an implausible weight (>350), restores previous", async () => {
+    const { updateProfile, setWeightKg } = renderWithValues(999, 175);
+    fireEvent.blur(screen.getByLabelText(/weight/i));
+    await Promise.resolve();
+    expect(updateProfile).not.toHaveBeenCalled();
+    expect(setWeightKg).toHaveBeenCalledWith(75);
+  });
+
+  it("still writes a plausible changed weight", async () => {
+    const { updateProfile } = renderWithValues(82, 175);
+    fireEvent.blur(screen.getByLabelText(/weight/i));
+    await Promise.resolve();
+    expect(updateProfile).toHaveBeenCalledWith({ weightKg: 82 });
+  });
+
+  it("rejects a cleared (0) height: no write, value restored", async () => {
+    const { updateProfile, setHeightCm } = renderWithValues(75, 0);
+    fireEvent.blur(screen.getByLabelText(/height/i));
+    await Promise.resolve();
+    expect(updateProfile).not.toHaveBeenCalled();
+    expect(setHeightCm).toHaveBeenCalledWith(175); // profile.heightCm
+  });
+
+  it("still writes a plausible changed height", async () => {
+    const { updateProfile } = renderWithValues(75, 180);
+    fireEvent.blur(screen.getByLabelText(/height/i));
+    await Promise.resolve();
+    expect(updateProfile).toHaveBeenCalledWith({ heightCm: 180 });
+  });
+});

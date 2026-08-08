@@ -119,3 +119,40 @@ export function collapseBodyweightLogs(
     .map((row) => ({ date: row.date as string, weight: row.weight as number }))
     .sort((a, b) => b.date.localeCompare(a.date));
 }
+
+/**
+ * The profile patch a fresh weigh-in should carry, or null for no write.
+ *
+ * `profile.weightKg` is the anchor every nutrition consumer reads —
+ * `calculateTDEE`'s BMR, `getAdjustedTargets`' protein/fat scaling, and
+ * `resolveGoalWeightPlan`'s direction — and until 2026-08-05 its ONLY
+ * writer was the Settings → Profile edit. The advertised daily flow
+ * ("Log daily weight from Home") wrote `bodyweightLogs` and left the
+ * profile scalar to go stale for months. Probe-measured on a 90 → 78 kg
+ * cut with daily weigh-ins: +26 g/day protein and a 186 kcal/day target
+ * overshoot, both anchored to the 90 that no longer existed — and the
+ * goal-crossed direction check read "lose" against the same stale 90
+ * even after the user passed their goal. This is CLAUDE.md's
+ * persist-every-mirrored-field rule: the consumers read a different
+ * location from the one the write path updated.
+ *
+ * Sub-0.05 kg deltas return null — re-logging the same weight should not
+ * burn a profile write. One decimal, matching what the profile edit
+ * surface displays. ADR-0007's point-in-time hold is untouched: that is
+ * about HISTORICAL budget recomputes; this keeps the forward-looking
+ * anchor honest.
+ */
+export function weighInProfileMirror(
+  prevProfileKg: number | null | undefined,
+  loggedKg: number
+): { weightKg: number } | null {
+  if (!Number.isFinite(loggedKg) || loggedKg <= 0) return null;
+  const rounded = Math.round(loggedKg * 10) / 10;
+  if (
+    typeof prevProfileKg === "number" &&
+    Math.abs(prevProfileKg - rounded) < 0.05
+  ) {
+    return null;
+  }
+  return { weightKg: rounded };
+}
