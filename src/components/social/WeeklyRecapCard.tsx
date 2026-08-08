@@ -149,8 +149,8 @@ function WeeklyRecapContent() {
       </div>
 
       {/* Day rail (Social uplift v2) — the week as seven sport-coded
-          dots (coral = run, purple = lift, split = both), echoing the
-          HybridWeekRail's colour grammar in one glanceable row. The
+          dots (coral = run, purple = lift, split = both), the Programme
+          week primitives' colour grammar in one glanceable row. The
           hard 50/50 split on a double day is data encoding, not a
           decorative gradient. */}
       <div

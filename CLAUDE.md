@@ -427,11 +427,18 @@ Primitives (all in `src/components/program/`, fed by the pure view model in
   pills + a single primary Start action (its own control, NOT the whole
   card) + an overflow that opens the day sheet. Temporal eyebrow ("Up next"
   / "Due today" / "Tomorrow" / "Pending") — never "Next · Pending".
-- **`HybridWeekRail`** — week-at-a-glance with a coral RUN lane + a purple
-  LIFT lane per day tile. A combined day shows both lanes natively. Compact
-  lane labels (30m / 15K / 5×1K / Push); full names live in the day sheet.
-  Preserves the Q5 extras pills + coachmark. Shown whenever the week has any
-  content — including freeform lifters (lift week + logged-run extras).
+- **`ProgrammeWeekSelector`** — the one day-navigation primitive per tab
+  (`2b4e07b8`, "competing navigators" unification): circular sport-coloured
+  day cells (purple lift / coral run) in the Home WeekStrip visual language,
+  a real selected-key controller driving the content beneath it. Lift tab =
+  split-ordered rotation cursor; Run tab = date-pinned 7-day selector
+  (ADR-0002's dual ontology, per tab). Extras (logged runs that claimed no
+  slot) surface as day-cell indicators here and in full in `DayActionSheet`
+  via `unclaimedByDate`. Its predecessor **`HybridWeekRail`** (two-lane
+  week-at-a-glance) was superseded by that unification and sat orphaned —
+  rendered by nothing, tests green — until deleted on 2026-08-08; its
+  `extras-pill-v1` coachmark went with it (the capture rigs' pre-dismissals
+  of that key are now inert).
 - **`DayActionSheet`** — per-day command sheet (run + lift blocks of equal
   visual weight). Race-day detection is by template **type** (`type ===
 "race"`), never `templateId === "race"` (race ids are `5k_race` …
