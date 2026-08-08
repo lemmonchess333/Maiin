@@ -112,14 +112,28 @@ function TierMarker({
   tier,
   value,
   max,
+  metric,
   achieved,
 }: {
   tier: ChallengeTier;
   value: number;
   max: number;
+  metric: string;
   achieved: boolean;
 }) {
-  const pct = Math.min((value / max) * 100, 100);
+  /* fastest_effort is lower-is-better: gold is the SMALLEST threshold and
+     `max` (= tiers.gold) is below every other tier, so the higher-is-better
+     `value / max` put bronze at 140% and silver at 120% — clamped, all
+     three markers and labels overprinted at left:100% (probe-measured on
+     the production Fastest 5K tiers, 2026-08-08). The bar FILL got its
+     lower-is-better branch (`maxTier / currentValue`) in an earlier pass;
+     the markers were the oversight. `max / value` is the same scale as
+     that fill, so the fill edge crosses each marker exactly at its
+     threshold: bronze 71.4%, silver 83.3%, gold 100%. */
+  const pct =
+    metric === "fastest_effort"
+      ? Math.min((max / Math.max(value, 1)) * 100, 100)
+      : Math.min((value / max) * 100, 100);
   /* The unachieved fallback used to be a hardcoded
      `rgba(255,255,255,0.2)` which rendered invisibly on the white
      light-mode card surface (white on white). Switching the
@@ -140,7 +154,7 @@ function TierMarker({
         className={`text-xs mt-0.5 font-medium font-mono tabular-nums ${achieved ? "" : "text-muted-foreground/60"}`}
         style={achieved ? { color: TIER_COLORS[tier] } : undefined}
       >
-        {value}
+        {formatChallengeValue(metric, value)}
       </span>
     </div>
   );
@@ -482,6 +496,7 @@ export function ChallengeCard({
                   tier="bronze"
                   value={challenge.tiers.bronze}
                   max={maxTier}
+                  metric={challenge.metric}
                   achieved={isTierAchieved(
                     currentValue,
                     challenge.tiers.bronze,
@@ -492,6 +507,7 @@ export function ChallengeCard({
                   tier="silver"
                   value={challenge.tiers.silver}
                   max={maxTier}
+                  metric={challenge.metric}
                   achieved={isTierAchieved(
                     currentValue,
                     challenge.tiers.silver,
@@ -502,6 +518,7 @@ export function ChallengeCard({
                   tier="gold"
                   value={challenge.tiers.gold}
                   max={maxTier}
+                  metric={challenge.metric}
                   achieved={isTierAchieved(
                     currentValue,
                     challenge.tiers.gold,

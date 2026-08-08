@@ -62,7 +62,22 @@ export function buildPRMap(
     for (const ex of w.exercises) {
       if (!map[ex.exerciseName]) map[ex.exerciseName] = { ...EMPTY_BUCKETS };
       for (const set of ex.sets) {
-        if (set.weightKg <= 0) continue;
+        // Malformed legacy sets mint PHANTOM records that then suppress real
+        // PRs forever (probe sweep 2026-08-05, verifier-confirmed):
+        // `undefined <= 0` is false, so a set missing weightKg passed this
+        // guard and recorded {weight: undefined} — every later real set
+        // fails both `weight > undefined` and the tiebreak, blocking the
+        // bucket permanently. And getRepBucket(undefined) returns "10rm"
+        // (all <= comparisons false), filing a real weight under a phantom
+        // bucket. A record needs BOTH fields real and positive.
+        if (
+          !Number.isFinite(set.weightKg) ||
+          set.weightKg <= 0 ||
+          !Number.isFinite(set.reps) ||
+          set.reps <= 0
+        ) {
+          continue;
+        }
         const bucket = getRepBucket(set.reps);
         const current = map[ex.exerciseName][bucket];
         // Same tiebreak as checkSetPR: heavier weight, OR same weight with

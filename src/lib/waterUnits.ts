@@ -72,7 +72,17 @@ export function resolveTargetMl(raw: {
   targetGlasses?: unknown;
   targetWaterGlasses?: unknown;
 }): number {
-  if (typeof raw.targetMl === "number" && raw.targetMl > 0) {
+  // Number.isFinite, not just typeof: Infinity passes `typeof === "number"
+  // && > 0`, then clampMl collapses it to 0 — short-circuiting the
+  // documented 2 L fallback and zeroing the target (waterProgress(x, 0) is
+  // 0, so the wave never fills). The sibling resolveConsumedMl already
+  // checks finiteness; this was the asymmetric half (probe sweep
+  // 2026-08-05, verifier-confirmed).
+  if (
+    typeof raw.targetMl === "number" &&
+    Number.isFinite(raw.targetMl) &&
+    raw.targetMl > 0
+  ) {
     return clampMl(raw.targetMl);
   }
   const legacyGlasses =
@@ -80,7 +90,11 @@ export function resolveTargetMl(raw: {
     (typeof raw.targetWaterGlasses === "number"
       ? raw.targetWaterGlasses
       : undefined);
-  if (typeof legacyGlasses === "number" && legacyGlasses > 0) {
+  if (
+    typeof legacyGlasses === "number" &&
+    Number.isFinite(legacyGlasses) &&
+    legacyGlasses > 0
+  ) {
     return clampMl(legacyGlasses * GLASS_ML);
   }
   return DEFAULT_TARGET_ML;
