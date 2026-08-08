@@ -13,9 +13,8 @@ import { doc, getDoc } from "firebase/firestore";
 import { useAuth } from "@/lib/auth";
 import { db } from "@/lib/firebase";
 import { setDocGuarded } from "@/lib/firestoreWrite";
-import { calculateTDEE } from "@/lib/tdee";
 import type { ActivityLevel, FitnessGoal } from "@/lib/tdee";
-import { resolveGoalWeightPlan } from "@/lib/goalWeightPlan";
+import { buildGoalWeightPersistPayload } from "@/lib/goalWeightPlan";
 import { logger } from "@/lib/logger";
 import { resolveProgramGoalMirror } from "./resolveProgramGoalMirror";
 import SettingsSection from "@/components/settings/SettingsSection";
@@ -46,39 +45,25 @@ export default function SettingsNutrition() {
     Math.abs(profile?.weeklyRateKg ?? 0) || 0.5
   );
 
-  // Target weight + rate → direction → fitnessGoal + daily calorie offset.
-  const goalPlan = useMemo(
+  // Target weight + rate → direction → fitnessGoal + calorie targets +
+  // the exact profile patch to persist. ONE recipe, shared with the Home
+  // goal-reached prompt (buildGoalWeightPersistPayload) — extracted so the
+  // two surfaces cannot drift on what a goal change persists. The
+  // rate-derived deficit/surplus OWNS the target (NUTR-M2); the age /
+  // activityLevel edited in this session override the stored profile copy.
+  const {
+    payload,
+    plan: goalPlan,
+    tdee,
+  } = useMemo(
     () =>
-      resolveGoalWeightPlan({
+      buildGoalWeightPersistPayload({
+        profile: { ...profile, age, activityLevel },
         currentKg,
         targetKg: goalWeightKg,
         rateKgPerWeek: weeklyRateKg,
       }),
-    [currentKg, goalWeightKg, weeklyRateKg]
-  );
-
-  const tdee = useMemo(
-    () =>
-      calculateTDEE(
-        currentKg,
-        profile?.heightCm ?? 170,
-        age,
-        activityLevel,
-        goalPlan.fitnessGoal,
-        profile?.sex ?? "male",
-        // explicitOffset — the rate-derived deficit/surplus OWNS the target,
-        // replacing the crude per-goal band (NUTR-M2 fix).
-        goalPlan.dailyOffset
-      ),
-    [
-      currentKg,
-      profile?.heightCm,
-      age,
-      activityLevel,
-      goalPlan.fitnessGoal,
-      goalPlan.dailyOffset,
-      profile?.sex,
-    ]
+    [profile, age, activityLevel, currentKg, goalWeightKg, weeklyRateKg]
   );
 
   // Reactive persistence — auto-save derived values when inputs change. The
@@ -90,22 +75,10 @@ export default function SettingsNutrition() {
       hasMounted.current = true;
       return;
     }
-    updateProfile({
-      goalWeightKg,
-      // Persist the SIGNED rate (0 when maintaining) so downstream readers
-      // (adaptive-TDEE offset, onboarding parity) see the true direction.
-      weeklyRateKg: goalPlan.effectiveRateKgPerWeek,
-      program: {
-        goal: goalPlan.fitnessGoal,
-        startWeight: profile?.program?.startWeight ?? currentKg,
-        currentPhase: profile?.program?.currentPhase ?? "base",
-      },
-      tdeeBase: tdee.targetCalories,
-      targetCalories: profile?.customCalorieTarget || tdee.targetCalories,
-      targetProtein: tdee.protein,
-      targetCarbs: tdee.carbs,
-      targetFat: tdee.fat,
-    });
+    // The whole patch comes from the shared builder — signed rate, carried
+    // program fields, custom-override precedence and all. See
+    // buildGoalWeightPersistPayload for the derivation rules.
+    updateProfile(payload);
 
     // Mirror the derived nutrition phase into programState.goal in the same
     // logical operation (see resolveProgramGoalMirror above). Without this the
