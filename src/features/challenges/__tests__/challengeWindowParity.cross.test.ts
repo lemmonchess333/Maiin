@@ -20,6 +20,7 @@ import {
   isChallengeActiveOnDay,
   challengeLocalEndMs,
   getTimeRemaining,
+  soonestEndingChallenge,
 } from "../useChallenges";
 import { parseLocalDate } from "@/lib/dateHelpers";
 
@@ -113,5 +114,35 @@ describe("the boundary journeys the seam used to break", () => {
     expect(getTimeRemaining(JULY.endDate, endMs - 5 * 86400_000)).toBe(
       "5 days left"
     );
+  });
+
+  it("the final hour counts down in minutes — never the '0h left' shelf", () => {
+    // Probe sweep 2026-08-05 (verified): floor-to-hours read "0h left"
+    // for the entire last hour of every challenge. Minutes take over
+    // under one hour, and the floor is "1m left" while still live.
+    const endMs = challengeLocalEndMs(JULY.endDate)!;
+    expect(getTimeRemaining(JULY.endDate, endMs - 45 * 60_000)).toBe(
+      "45m left"
+    );
+    expect(getTimeRemaining(JULY.endDate, endMs - 60 * 60_000)).toBe("1h left");
+    expect(getTimeRemaining(JULY.endDate, endMs - 30_000)).toBe("1m left");
+    expect(getTimeRemaining(JULY.endDate, endMs - 1)).toBe("1m left");
+  });
+});
+
+describe("soonestEndingChallenge — null-safe soonest pick", () => {
+  it("survives a malformed doc with no endDate and still picks the soonest real one", () => {
+    // The active list deliberately KEEPS docs with no endDate (lenient
+    // for malformed defs), and ChallengeList's old inline reduce crashed
+    // on `undefined.toDate()` for exactly that input (probe sweep
+    // 2026-08-05, verified) — one malformed def took down the whole
+    // challenge section.
+    const malformed = {} as { endDate?: Date };
+    expect(soonestEndingChallenge([malformed, AUGUST, JULY])).toBe(JULY);
+  });
+
+  it("returns null when nothing has a resolvable end", () => {
+    expect(soonestEndingChallenge([])).toBeNull();
+    expect(soonestEndingChallenge([{} as { endDate?: Date }])).toBeNull();
   });
 });
