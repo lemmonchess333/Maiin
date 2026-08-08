@@ -666,20 +666,20 @@ Affects: `src/lib/foodPhotoUpload.ts`, `src/components/FoodAnalyzer.tsx` (post-s
 
 ### Tooltip + Coachmark primitive (`claude/tooltip-primitive`)
 
-Affects: `src/components/ui/Tooltip.tsx`, `src/components/ui/Coachmark.tsx`, plus three wire-ups (Performance Index in `PerformanceTab.tsx`, Trajectory delta chip in `social/TrajectoryCard.tsx`, Running nav coachmark in `pages/Program.tsx`).
+Affects: `src/components/ui/Tooltip.tsx`, `src/components/ui/Coachmark.tsx`, plus the LIVE wire-ups — as of 2026-08-08 these are: Performance Index tooltip in `PerformanceTab.tsx`, Trajectory delta chip in `social/TrajectoryCard.tsx`, and the `social-find-invite` Coachmark in `social/views/PeopleView.tsx`.
 
-Note: the Nutrition HealthScore wire-up (`nutrition/HealthScoreCard.tsx`) was removed by PI2 (Performance arc consolidation) — that surface no longer exists.
+Wire-up history (rows below referenced surfaces that no longer exist): the Nutrition HealthScore wire-up was removed by PI2; the Programme running-icon coachmark's successor (`extras-pill-v1` in `HybridWeekRail`) was orphaned by the `2b4e07b8` navigation unification and deleted in #1882.
 
-PR #606 added automated coverage for the items marked [x] below; the [ ] items remain genuine manual / device-level checks.
+PR #606 added automated coverage for the earliest [x] items; #1882's `e2e/coachmark.auth.spec.ts` and the tooltip capture spec closed most of the rest against the real emulator rig.
 
-- [ ] Light + dark mode visibility on all 3 wire-ups — tooltip body and arrow must register in both themes
+- [x] Light + dark mode visibility — filmed for the Performance Index wire-up (`tooltip.screens.capture.spec.ts`, both themes, body + arrow registering). The TrajectoryCard delta chip stays a manual check — it needs trajectory data the shared seeds don't stage.
 - [x] 375px viewport — body wraps at `max-w-[280px]`, never overflows the screen — PR #606 pins the class
-- [ ] Open a vaul drawer while a tooltip is showing — the drawer should occlude (z-50 > z-40). PR #606 pins the z-40 class but real occlusion needs the drawer mounted together with the tooltip in a real DOM.
+- [x] Vaul-drawer occlusion (z-50 > z-40) — closed by architecture, not by test: tooltips dismiss on any outside interaction and no LIVE surface auto-opens a drawer while a tooltip/coachmark can be showing (the last pairing died with the extras coachmark, #1882). The #606 z-class pin remains the guard; revisit only if a new wire-up lands on a surface with auto-opening sheets.
 - [x] VoiceOver: body content is announced when the anchor receives focus (via `aria-describedby`) — PR #606 pins the wiring (screen-reader announcement itself stays manual)
 - [x] Keyboard flow: Tab to anchor → Enter opens → Escape closes → focus returns to anchor — PR #606
 - [ ] iOS Safari + Capacitor build: rubber-band scroll doesn't drift the portal
 - [x] `prefers-reduced-motion: reduce` set at OS level — the slide animation is suppressed; fade still plays — PR #606
-- [ ] First-use Coachmark on the Programme page running icon dismisses correctly via all paths (anchor tap, outside tap, Escape, 6s timeout) and persists across reloads
+- [x] First-use Coachmark dismissal matrix + reload persistence — automated end-to-end on the live wire-up by `e2e/coachmark.auth.spec.ts` (#1882): outside tap + reload persistence, Escape, 6s auto-timer, each asserting the persisted key, driven as a brand-new signup-form account. Anchor-tap stays manual (it triggers the share flow, which headless CI lacks).
 
 ### PR-L server-side reconciliation Cloud Functions
 
