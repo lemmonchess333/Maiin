@@ -45,6 +45,7 @@ import {
   type ScheduleDay,
 } from "@/lib/scheduleUtils";
 import { localDateString } from "@/lib/dateHelpers";
+import { getRaceGoalPlannerState } from "@/lib/raceGoalPlanner";
 import { resolveOnboardingRunMode } from "@/lib/onboardingRunMode";
 import {
   loadOnboardingDraft,
@@ -1313,11 +1314,62 @@ export default function Onboarding() {
                         />
                         {/* #975: date is optional — no date completes on the
                             freeform substrate and the Race Goal Planner on the
-                            Programme page is the richer place to set one. */}
-                        <p className="text-xs mt-1.5 text-muted-foreground">
-                          No date yet? You can set a race goal later from the
-                          Programme page.
-                        </p>
+                            Programme page is the richer place to set one.
+
+                            Run15 voice call (2026-08-08): once a date IS
+                            chosen, say what the runway means — the SAME
+                            engine-derived status the Settings planner shows,
+                            so a marathon picked 5 weeks out is told about the
+                            compressed/finish-safely plan HERE, not after
+                            onboarding commits it. Healthy dates stay silent
+                            (calm over noise); a typed past date gets the
+                            invalid line instead of the silent raceGoal drop
+                            the save path performs. */}
+                        {raceTargetDate ? (
+                          (() => {
+                            const state = getRaceGoalPlannerState({
+                              distance: raceDistance,
+                              targetDate: raceTargetDate,
+                              currentDate: localDateString(new Date()),
+                              liftDays: daysPerWeek,
+                              weeklyRunDays,
+                            });
+                            if (state.status === "invalid") {
+                              return (
+                                <p
+                                  className="text-xs mt-1.5 text-destructive"
+                                  role="alert"
+                                >
+                                  {state.statusDescription} Or set the race
+                                  later from the Programme page.
+                                </p>
+                              );
+                            }
+                            if (
+                              state.status === "compressed" ||
+                              state.status === "below-floor"
+                            ) {
+                              return (
+                                <p
+                                  className="text-xs mt-1.5 text-muted-foreground"
+                                  role="status"
+                                >
+                                  <span className="font-mono tabular-nums font-medium text-foreground">
+                                    {state.weeksOut}
+                                  </span>{" "}
+                                  {state.weeksOut === 1 ? "week" : "weeks"} out
+                                  — {state.statusDescription}
+                                </p>
+                              );
+                            }
+                            return null;
+                          })()
+                        ) : (
+                          <p className="text-xs mt-1.5 text-muted-foreground">
+                            No date yet? You can set a race goal later from the
+                            Programme page.
+                          </p>
+                        )}
                       </div>
                     </div>
                   )}

@@ -3145,6 +3145,10 @@ export function useProgram() {
     applyDeloadWeek,
     revertDeloadWeek,
     realignRacePlan,
+    /** Run15 packet — exposed so the FellBehindSheet copy can match the
+     *  plan realign will actually produce (the SAME uid-paired value every
+     *  regen site consumes; never a second read). */
+    recentLayoff,
     viewWeek,
     viewingHistoryIndex,
     viewedWorkouts,

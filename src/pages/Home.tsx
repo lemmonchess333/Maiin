@@ -134,6 +134,7 @@ export default function Home() {
     moveRunDay,
     dismissFellBehindPrompt,
     realignRacePlan,
+    recentLayoff,
   } = useProgram();
   const weeklyDayMap = useWeeklyDayMap();
   const navigate = useNavigate();
@@ -1551,6 +1552,7 @@ export default function Home() {
           raceModeActive={
             profile?.runMode === "race_prep" && !!profile.raceGoal
           }
+          recentLayoff={recentLayoff}
         />
       )}
 
