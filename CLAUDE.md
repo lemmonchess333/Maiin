@@ -968,11 +968,10 @@ Affects: `functions/lib/challengeDefs.js` (new `global-monthly-*` hybrid definit
 
 Affects: `src/pages/Social.tsx` (renders `SoloFirstFeed` for cold-start users), new `src/components/social/SoloFirstFeed.tsx` + `src/features/partnerStreak/PartnerStreakHero.tsx`. The state 100% of launch users see — must look DESIGNED, not gated.
 
-- [ ] **Light + dark capture of the solo state.** (SUPERSEDED 2026-07-25 — crews were retired in #1700; re-read this row against Circles/Spaces before running it.)
-- [ ] _(original)_ As a fresh user (0 follows, 0 crew), open Social → Feed. Confirm the curated stack renders top-to-bottom — PartnerStreak hero → June Hybrid Hero challenge card → Share-your-training → "Crews unlock…" hexagon row — with NO empty-feed copy or skeleton beneath it, in both themes.
+- [x] **Light + dark capture of the solo state.** Re-read 2026-08-08 against the current surface and filmed (`solo-feed.screens.capture.spec.ts`, fresh signup-form account = 0 follows): the CURRENT stack is PartnerStreak hero → challenge slot → Spaces-for-you rail → Share-your-training → spaces empty-state hexagon (the original row's "Crews unlock…" row died with crews, #1700). Asserted before shooting: no "Your feed is empty" copy, and the cold-start Share card shows NO create button. Both frames eyeballed.
+- [x] **Challenge slot before rollover.** Covered by the same capture, structurally: the rig's emulator has no challenge docs at all (no rollover cron runs there), and the slot collapses cleanly — no broken/empty card between the hero and the share card, both frames.
 - [ ] **Sub-tab default interaction.** A new user's feed sub-tab defaults to Explore (`n>0?following:explore`). Confirm the solo stack still leads (it's sub-tab-agnostic) and that switching to Following shows the stack, not the empty "Your feed is empty" prompt.
-- [ ] **Challenge slot before rollover.** In the ~5-min window before the daily `rolloverChallenges` first materialises `global-monthly-*`, confirm the challenge slot simply collapses (no broken/empty card).
-- [ ] **Share cold-start vs preloaded.** With nothing logged, the Share card shows the prompt and NO button. After logging a workout, it offers "Create a share card" and opens the sheet preloaded with that session's volume/exercise count.
+- [ ] **Share cold-start vs preloaded — the PRELOADED half.** The cold-start half (prompt, no button) is asserted by the capture above. Still manual: after logging a workout, the card offers "Create a share card" and opens the sheet preloaded with that session's volume/exercise count.
 
 ### Backlog audit 2026-08-02 — what a skeptical pass found
 
