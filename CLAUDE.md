@@ -895,7 +895,25 @@ months.
 
 Affects: `src/lib/offlineQueue.ts`, `src/lib/shareComposer.ts`.
 
-- [ ] Two-account device test. Sign in as A, go offline, log a workout. Sign out, sign in as B (same device). Confirm A's queued workout does NOT appear under B's account, and that `localStorage['tropos_offline_queue']` still contains the entry tagged `uid: <A>`. Sign back in as A, return online — confirm the queue flushes under A's auth.
+- [x] Two-account device test — automated end-to-end by
+      `e2e/offlineQueueIsolation.auth.spec.ts` against the real emulator rig:
+      A logs while offline (queue entry tagged `uid: <A>`), signs out while
+      still offline via the app's own Sign Out (queue survives), B signs in
+      on the same context, B's flush pass leaves A's entry queued and
+      `users/A/logs` empty, then A returns and the flush lands the exact
+      queued docId with `_offlineCreatedAt` (flush-only provenance) and
+      empties the queue. Two findings recorded in the spec header: (1) no
+      WORKOUT surface routes through the offline queue — programme completion
+      is a `writeBatch` (offline it rides the Firestore SDK's own
+      pending-mutation queue + session draft) and `useWorkouts.saveWorkout`
+      is a pinned orphan — so the vehicle is the Food page's daily-log write
+      (`saveLog` → `safeMerge`), the one queue-routed UI journey; the
+      uid-isolation contract is collection-agnostic. (2) "Offline" is driven
+      by overriding `navigator.onLine` — the app's own gate on both enqueue
+      and flush — because Playwright's `context.setOffline` permanently
+      wedges the Firestore SDK's WebChannel WRITE stream in the emulator rig
+      (Listen recovers, Write never re-establishes). Real airplane-mode
+      remains a device check, but the queue contract itself is pinned here.
 - [ ] Same flow for the share composer queue (`tropos.share.queue`) — queue an offline share as A, switch to B, confirm no posts appear in B's feed; return to A, confirm A's post finally lands.
 - [x] Legacy pre-deploy items dropped on first read — covered by
       `offlineQueue.test.ts` ("drops legacy items missing a uid field"), which
