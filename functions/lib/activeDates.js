@@ -13,14 +13,29 @@
  * persisted, so the streak-nudge cron has no stored field to read — it
  * re-derives from the last couple of days of logs (the cron bounds the query).
  *
- * Pure: plain rows (runs as epoch ms) + tz in, local date keys out.
+ * Runs pass the SAME volume-eligibility gate the client applies at its
+ * snapshot boundary (isVolumeEligible ≡ isVolumeEligibleRun, pinned by
+ * runEligibility.cross.test.ts). Pre-fix this module counted EVERY run doc,
+ * so a saved-anyway 0:02 junk record made today look active server-side —
+ * and the streak nudge silently skipped exactly the user whose real streak
+ * (which the client refuses to credit for that run) was about to break.
+ *
+ * Pure: plain rows (runs as epoch ms + eligibility fields) + tz in, local
+ * date keys out.
  */
 const { localDateKeyInTz } = require("./streakNudge");
+const { isVolumeEligibleRun } = require("./runEligibility");
 
 /**
  * @param {{
  *   workouts?: { date?: string }[],
- *   runs?: { completedAtMs?: number }[],
+ *   runs?: {
+ *     completedAtMs?: number,
+ *     isInvalid?: boolean,
+ *     savedAnyway?: boolean,
+ *     distance?: number,
+ *     duration?: number,
+ *   }[],
  *   meals?: { date?: string, items?: unknown[] }[],
  * }} logs
  * @param {string | null | undefined} timezone
@@ -34,6 +49,7 @@ function activeDateKeysFromLogs(logs, timezone) {
     if (typeof w.date === "string" && w.date) set.add(w.date);
   }
   for (const r of runs) {
+    if (!isVolumeEligibleRun(r)) continue;
     if (typeof r.completedAtMs !== "number" || !Number.isFinite(r.completedAtMs)) {
       continue;
     }

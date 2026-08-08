@@ -54,8 +54,15 @@ const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../../..");
 
 // Strong mirror-declaring phrases a future author is likely to write.
+// Widened 2026-08-08: "mirror of" alone missed two real declarations that
+// authors phrased differently — badgeRules' "these ids mirror the client
+// catalogue" and activeDates' "Mirrors the client's computeActiveDateSet"
+// (the latter had ALSO drifted on run eligibility by the time it was
+// found). The added alternatives target client-mirroring language
+// specifically; bare "mirrors the X pattern" style references stay
+// unflagged on purpose.
 const MIRROR_RE =
-  /mirror of|in lockstep|keep .{0,24}in lockstep|MUST return identical|identical output|parity seam/i;
+  /mirror of|mirrors? the client|ids mirror the|to mirror `|in lockstep|keep .{0,24}in lockstep|MUST return identical|identical output|parity seam/i;
 
 // Escape hatches. `@unwired` requires a reason after the colon.
 //
@@ -152,6 +159,20 @@ const PINNED: Record<string, string> = {
   // the client schema contract (goalSpaceTypes.ts).
   "functions/lib/goalSpaceCheckIn.js":
     "src/features/goalSpace/__tests__/weeklyFocus.cross.test.ts",
+  // Milestone-badge award ids/thresholds mirror the client catalogue's
+  // ids + description prose (BADGE_DEFINITIONS renders ONLY known ids —
+  // an unknown award is silently invisible).
+  "functions/lib/badgeRules.js":
+    "src/features/streaks/__tests__/badgeCatalogueParity.cross.test.ts",
+  // Streak-nudge active-date derivation mirrors the client's
+  // computeActiveDateSet (incl. the run-eligibility boundary — the half
+  // that had already drifted when this pin was added).
+  "functions/lib/activeDates.js":
+    "src/features/streaks/__tests__/activeDatesParity.cross.test.ts",
+  // Weekly-run-target resolution inside fellBehindRatio mirrors
+  // getWeeklyRunTarget's ??-semantics (explicit 0 authoritative).
+  "functions/lib/fellBehindWeek.js":
+    "src/lib/__tests__/weeklyRunTargetParity.cross.test.ts",
 };
 
 // Flagged by the heuristic but NOT a TS↔JS equality mirror — reason each.
@@ -171,6 +192,10 @@ const NOT_EQUALITY_MIRROR: Record<string, string> = {
     "(actualTemplateId, date-scoped ANY); client asks 'is this slot complete?' over a " +
     "NORMALISED SavedRunLike via the claim map. Different question, different shape — " +
     "an equality pin would be wrong, and pinning them is what produced the dead port.",
+  "functions/lib/coachPrompts.js":
+    "'mirrors the client SpacePostDoc' is a doc-SHAPE note, not a computable equality " +
+    "(prompt content is server-owned); the space-id membership half is pinned via " +
+    "spaceDefs.test.ts's three-way set equality.",
 };
 
 /* ── Reachability ─────────────────────────────────────────────────── */
