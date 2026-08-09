@@ -51,7 +51,10 @@ import {
 } from "../lib/runResumeStorage";
 import { useAudioCues } from "../hooks/useAudioCues";
 import { useSessionPlayer } from "../hooks/useSessionPlayer";
-import { segmentsFromIntervals } from "../lib/runSegments";
+import {
+  segmentsFromGuided,
+  segmentsFromIntervals,
+} from "../lib/runSegments";
 import { sessionCompleteCue } from "../lib/runCueCopy";
 import IntervalStepShell from "../components/run/IntervalStepShell";
 import TreadmillMode from "../components/run/TreadmillMode";
@@ -63,7 +66,6 @@ import GhostDeltaChip from "../components/run/GhostDeltaChip";
 import RouteSetupSection from "../components/run/RouteSetupSection";
 import type { SavedRouteSource } from "../lib/savedRoutes";
 import GuidedRunOverlay from "../components/run/GuidedRunOverlay";
-import { useGuidedRun } from "../hooks/useGuidedRun";
 import { useHeartRate } from "../hooks/useHeartRate";
 import { THEME } from "../lib/theme";
 import { RUN_TEMPLATES } from "../lib/workoutTemplates";
@@ -416,13 +418,6 @@ export default function Run() {
     enabled: phase === "active",
   });
 
-  const guidedRun = useGuidedRun(
-    runConfig?.activityType === "guided"
-      ? (runConfig.guidedWorkout ?? null)
-      : null,
-    phase === "active"
-  );
-
   const audioCues = useAudioCues(
     runConfig?.audioCues ?? true,
     runConfig?.audioCueFrequency ?? "every_km",
@@ -436,7 +431,13 @@ export default function Run() {
   // hand-built interval session. Guided runs keep their own player (and
   // overlay) this slice.
   const sessionSegments = useMemo(() => {
-    if (!runConfig || runConfig.activityType === "guided") return null;
+    if (!runConfig) return null;
+    // STRUCT-SESS-03: guided workouts are segments like everything else.
+    if (runConfig.activityType === "guided") {
+      return runConfig.guidedWorkout
+        ? segmentsFromGuided(runConfig.guidedWorkout)
+        : null;
+    }
     if (runConfig.segments?.length) return runConfig.segments;
     if (runConfig.activityType === "intervals" && runConfig.intervals) {
       return segmentsFromIntervals(runConfig.intervals);
@@ -1521,15 +1522,8 @@ export default function Run() {
               );
             })()}
 
-            {runConfig?.activityType === "guided" && (
-              <GuidedRunOverlay
-                currentSegment={guidedRun.currentSegment}
-                nextSegment={guidedRun.nextSegment}
-                timeRemaining={guidedRun.timeRemaining}
-                segmentProgress={guidedRun.segmentProgress}
-                totalProgress={guidedRun.totalProgress}
-                isComplete={guidedRun.isComplete}
-              />
+            {runConfig?.activityType === "guided" && sessionSegments && (
+              <GuidedRunOverlay player={player} />
             )}
 
             <RunBottomSheet
@@ -1565,13 +1559,13 @@ export default function Run() {
               }}
               isInvalid={isInvalid}
               intervalDisplay={
-                sessionSegments ? (
+                sessionSegments && runConfig?.activityType !== "guided" ? (
                   <IntervalStepShell
                     player={player}
                     band={intervalBand}
                     onSkip={() => {
                       haptic();
-                      player.skip(gps.distance);
+                      player.skip(timer.elapsed, gps.distance);
                     }}
                   />
                 ) : undefined

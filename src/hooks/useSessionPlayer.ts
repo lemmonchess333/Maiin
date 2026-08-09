@@ -16,14 +16,21 @@ import type { SessionSegment } from "@/lib/runSegments";
  *  - `start()` is IDEMPOTENT from anywhere but idle — the Run page's start
  *    effect re-fires on every render of an active run, and pre-guard each
  *    re-fire silently reset a live workout to its first step.
- *  - the hook is PUSHED ticks (`tick(elapsed, totalDistance)`) from the
- *    page's timer/GPS loop; it owns only the per-segment clock/odometer.
- *    Pause-correctness rides the caller's loop exactly as before.
- *  - `skip(totalDistance)` forces the advance `tick` would take — one
- *    shared advance path now, nothing to keep mirrored.
+ *  - the hook is PUSHED ticks (`tick(totalElapsed, totalDistance)`) from
+ *    the page's timer/GPS loop; it owns only the per-segment clock and
+ *    odometer.
+ *  - `skip(totalElapsed, totalDistance)` forces the advance `tick` would
+ *    take — one shared advance path, nothing to keep mirrored.
  *  - distance-based segments complete on metres covered; duration-based on
  *    seconds elapsed. A non-positive target advances immediately (bounded
  *    walk), so a degenerate zero-length segment can never wedge a run.
+ *
+ * STRUCT-SESS-03 change vs the old machine: the per-segment clock anchors
+ * on the PUSHED `totalElapsed` (the page timer, which is pause-corrected)
+ * instead of `Date.now()`. The old interval machine ran on wall clock, so
+ * pausing mid-rep silently burned the rep; the old guided hook carried its
+ * own private pause accounting to avoid exactly that. One anchor now makes
+ * every structured session pause-correct by construction.
  */
 
 export interface SessionPlayerState {
@@ -41,7 +48,7 @@ export interface SessionPlayer {
   isComplete: boolean;
   start: () => void;
   tick: (totalElapsed: number, totalDistance: number) => void;
-  skip: (totalDistance: number) => void;
+  skip: (totalElapsed: number, totalDistance: number) => void;
 }
 
 const IDLE: SessionPlayerState = {
@@ -66,7 +73,7 @@ export function useSessionPlayer(
   const segs = useMemo(() => segments ?? [], [segments]);
   const [state, setState] = useState<SessionPlayerState>(IDLE);
 
-  const phaseStartTime = useRef(0);
+  const phaseStartElapsed = useRef(0);
   const phaseStartDistance = useRef(0);
   // Live-index mirror so start() stays idempotent without joining the
   // state into its deps (same pattern the old hook documented).
@@ -78,15 +85,21 @@ export function useSessionPlayer(
   const start = useCallback(() => {
     if (segs.length === 0) return;
     if (indexRef.current !== -1) return;
-    phaseStartTime.current = Date.now();
+    // The page starts the session at timer zero; the first tick's elapsed
+    // re-anchors implicitly through advance() on every later segment.
+    phaseStartElapsed.current = 0;
     phaseStartDistance.current = 0;
     setState({ index: 0, phaseElapsed: 0, phaseDistanceCovered: 0 });
   }, [segs.length]);
 
   const advance = useCallback(
-    (prev: SessionPlayerState, totalDistance: number): SessionPlayerState => {
+    (
+      prev: SessionPlayerState,
+      totalElapsed: number,
+      totalDistance: number
+    ): SessionPlayerState => {
       let index = prev.index + 1;
-      phaseStartTime.current = Date.now();
+      phaseStartElapsed.current = totalElapsed;
       phaseStartDistance.current = totalDistance;
       // Bounded walk past degenerate zero-target segments.
       while (index < segs.length && targetMet(segs[index], 0, 0)) {
@@ -98,16 +111,16 @@ export function useSessionPlayer(
   );
 
   const tick = useCallback(
-    (_totalElapsed: number, totalDistance: number) => {
+    (totalElapsed: number, totalDistance: number) => {
       if (segs.length === 0) return;
       setState((prev) => {
         if (prev.index < 0 || prev.index >= segs.length) return prev;
-        const phaseElapsed = (Date.now() - phaseStartTime.current) / 1000;
+        const phaseElapsed = totalElapsed - phaseStartElapsed.current;
         const phaseDistanceCovered =
           totalDistance - phaseStartDistance.current;
         const seg = segs[prev.index];
         if (targetMet(seg, phaseElapsed, phaseDistanceCovered)) {
-          return advance(prev, totalDistance);
+          return advance(prev, totalElapsed, totalDistance);
         }
         return { ...prev, phaseElapsed, phaseDistanceCovered };
       });
@@ -116,11 +129,11 @@ export function useSessionPlayer(
   );
 
   const skip = useCallback(
-    (totalDistance: number) => {
+    (totalElapsed: number, totalDistance: number) => {
       if (segs.length === 0) return;
       setState((prev) => {
         if (prev.index < 0 || prev.index >= segs.length) return prev;
-        return advance(prev, totalDistance);
+        return advance(prev, totalElapsed, totalDistance);
       });
     },
     [segs, advance]

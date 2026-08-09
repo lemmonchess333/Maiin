@@ -11,7 +11,7 @@
  *  - degenerate zero-target segments can never wedge a run;
  *  - completion is terminal.
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useSessionPlayer } from "../useSessionPlayer";
 import {
@@ -21,14 +21,8 @@ import {
   type SessionSegment,
 } from "@/lib/runSegments";
 
-beforeEach(() => {
-  vi.useFakeTimers();
-});
-afterEach(() => {
-  vi.useRealTimers();
-});
-
-const advanceClock = (s: number) => vi.advanceTimersByTime(s * 1000);
+// STRUCT-SESS-03: the player anchors on the PUSHED pause-corrected
+// elapsed, so tests drive time by passing it — no fake timers.
 
 describe("useSessionPlayer", () => {
   const intervalSegs = segmentsFromIntervals({
@@ -46,7 +40,6 @@ describe("useSessionPlayer", () => {
     // Progress into the session, then re-fire start (as the Run page does
     // on every render of an active run).
     act(() => {
-      advanceClock(301);
       result.current.tick(301, 0);
     });
     expect(result.current.state.index).toBe(1);
@@ -59,19 +52,16 @@ describe("useSessionPlayer", () => {
     act(() => result.current.start());
     // Warmup (300s duration): time passes, distance irrelevant.
     act(() => {
-      advanceClock(301);
       result.current.tick(301, 500);
     });
     expect(result.current.current?.type).toBe("hard");
     // Work rep 1 (400m distance): time alone does NOT advance it…
     act(() => {
-      advanceClock(500);
       result.current.tick(801, 700); // only 200m into the rep
     });
     expect(result.current.current?.type).toBe("hard");
     // …metres do.
     act(() => {
-      advanceClock(1);
       result.current.tick(802, 950); // 450m into the rep
     });
     expect(result.current.current?.type).toBe("recovery");
@@ -84,10 +74,11 @@ describe("useSessionPlayer", () => {
     );
     const { result } = renderHook(() => useSessionPlayer(segs));
     act(() => result.current.start());
+    let elapsed = 0;
     const walk = (s: number) =>
       act(() => {
-        advanceClock(s + 1);
-        result.current.tick(0, 0);
+        elapsed += s + 1;
+        result.current.tick(elapsed, 0);
       });
     expect(result.current.current?.type).toBe("warmup");
     walk(600);
@@ -110,7 +101,7 @@ describe("useSessionPlayer", () => {
     expect(result.current.current?.type).toBe("easy");
     // Skip through: easy → stride 1 → walk → stride 2 → walk → complete.
     for (let i = 0; i < segs.length; i++) {
-      act(() => result.current.skip(0));
+      act(() => result.current.skip(0, 0));
     }
     expect(result.current.isComplete).toBe(true);
   });
@@ -118,12 +109,11 @@ describe("useSessionPlayer", () => {
   it("skip forces the advance tick would take, resetting the phase clock", () => {
     const { result } = renderHook(() => useSessionPlayer(intervalSegs));
     act(() => result.current.start());
-    act(() => result.current.skip(100)); // skip warmup
+    act(() => result.current.skip(50, 100)); // skip warmup at t=50s, 100m
     expect(result.current.current?.type).toBe("hard");
     // The phase odometer re-anchored at 100m: 350m total = 250m into the rep.
     act(() => {
-      advanceClock(10);
-      result.current.tick(10, 350);
+      result.current.tick(60, 350);
     });
     expect(result.current.current?.type).toBe("hard");
     expect(
@@ -149,11 +139,35 @@ describe("useSessionPlayer", () => {
     const { result } = renderHook(() => useSessionPlayer(segs));
     act(() => result.current.start());
     act(() => {
-      advanceClock(1);
       result.current.tick(1, 0);
     });
     // The zero-length segment was walked past, not stuck on.
     expect(result.current.current?.type).toBe("cooldown");
+  });
+
+  it("STRUCT-SESS-03: pause-correct — the phase clock follows the pushed timer, not wall clock", () => {
+    // The old interval machine anchored on Date.now(), so pausing mid-rep
+    // silently burned the rep; the old guided hook carried private pause
+    // accounting to avoid exactly that. The player anchors on the pushed
+    // (pause-corrected) elapsed: a pause — however long in wall time —
+    // freezes the phase clock because the timer freezes.
+    const segs = segmentsFromTempo({
+      warmupSec: 300,
+      workSecs: [600],
+      cooldownSec: 300,
+    });
+    const { result } = renderHook(() => useSessionPlayer(segs));
+    act(() => result.current.start());
+    act(() => result.current.tick(100, 0));
+    expect(result.current.state.phaseElapsed).toBe(100);
+    // Paused: the page pushes the SAME elapsed on resume, regardless of
+    // how much wall time passed.
+    act(() => result.current.tick(100, 0));
+    expect(result.current.state.phaseElapsed).toBe(100);
+    expect(result.current.current?.type).toBe("warmup");
+    // Resume and cross the threshold on TIMER time.
+    act(() => result.current.tick(301, 0));
+    expect(result.current.current?.type).toBe("moderate");
   });
 
   it("no segments → inert player", () => {
