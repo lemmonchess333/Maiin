@@ -368,7 +368,13 @@ export default function Onboarding() {
   const [runFrequency, setRunFrequency] = useState<RunFrequency>(
     draft?.runFrequency ?? "occasional"
   );
-  const [runMode, setRunMode] = useState<RunMode>(draft?.runMode ?? "freeform");
+  // RUN-EV-01: "structured" is no longer offered; a legacy draft carrying
+  // it re-opens on Freeform (the same resolution runtime applies anyway).
+  const [runMode, setRunMode] = useState<RunMode>(
+    draft?.runMode && draft.runMode !== "structured"
+      ? draft.runMode
+      : "freeform"
+  );
   const [weeklyRunDays, setWeeklyRunDays] = useState(draft?.weeklyRunDays ?? 2);
   const [raceDistance, setRaceDistance] = useState<RaceDistance>(
     draft?.raceDistance ?? "10k"
@@ -1171,16 +1177,20 @@ export default function Onboarding() {
                     How should we schedule your runs?
                   </p>
                   <div className="space-y-2">
+                    {/* RUN-EV-01 (owner decision 2026-08-09): the
+                        "Structured" chip is gone. Runtime resolution has
+                        only two live states (Run9a: freeform substrate +
+                        race overlay) and silently coerced a structured
+                        selection to freeform, deleting its plan/days — a
+                        chip promising a mode that cannot survive
+                        onboarding. Legacy profiles carrying
+                        runMode "structured" keep resolving to freeform
+                        (onboardingRunMode passes them through unchanged). */}
                     {[
                       {
                         id: "freeform" as RunMode,
                         label: "Freeform",
                         desc: "Run whenever you want, no auto-scheduling",
-                      },
-                      {
-                        id: "structured" as RunMode,
-                        label: "Structured",
-                        desc: "Auto-assign run types to your run days",
                       },
                       {
                         id: "race_prep" as RunMode,

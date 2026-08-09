@@ -45,7 +45,7 @@ describe("getRaceGoalPlannerState", () => {
     const s = getRaceGoalPlannerState({ ...base, targetDate: TODAY });
     expect(s.status).not.toBe("invalid");
     expect(s.daysOut).toBe(0);
-    // Marathon with ~0 weeks is below the floor → finish-safely.
+    // Marathon with ~0 weeks is below the floor → mostly-easy.
     expect(s.status).toBe("below-floor");
   });
 
@@ -74,15 +74,15 @@ describe("getRaceGoalPlannerState", () => {
   });
 
   // ── State E — below floor / finish safely ──────────────────────────
-  it("State E: marathon 3 weeks out → below-floor, Save finish-safely plan", () => {
+  it("State E: marathon 3 weeks out → below-floor, Save mostly-easy plan", () => {
     const s = getRaceGoalPlannerState({ ...base, targetDate: "2026-06-22" });
     expect(s.daysOut).toBe(21);
     expect(s.weeksOut).toBe(3);
     expect(s.status).toBe("below-floor");
     expect(s.belowFloor).toBe(true);
-    expect(s.ctaLabel).toBe("Save finish-safely plan");
+    expect(s.ctaLabel).toBe("Save mostly-easy plan");
     expect(s.statusTitle).toBe("Very tight");
-    expect(s.statusDescription).toContain("finish-safely");
+    expect(s.statusDescription).toContain("mostly-easy");
   });
 
   // ── Distance-awareness: same window, different status by distance ──

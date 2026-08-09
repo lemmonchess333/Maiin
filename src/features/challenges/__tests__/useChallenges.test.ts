@@ -52,21 +52,41 @@ describe("resolveTier (fastest_effort)", () => {
 });
 
 describe("getTimeRemaining", () => {
-  it('returns "Ended" for past dates', () => {
-    const pastDate = new Date(Date.now() - 100000);
-    expect(getTimeRemaining(pastDate)).toBe("Ended");
+  /* Challenge ends snap to LOCAL MIDNIGHT of the end day
+     (challengeLocalEndMs), so the previous wall-clock-relative inputs
+     made these tests time-of-day-dependent: run in the last hour
+     before UTC midnight, "now + 12h" crossed into tomorrow — whose
+     local-midnight boundary was under an hour away — and read
+     "54m left" (CI, 2026-08-08 23:06Z). The "Ended" case was likewise
+     wrong for any timezone west of UTC in the evening. Pin `now`
+     against an explicitly constructed boundary instead. The end-date
+     VALUE uses local noon so its UTC day-key resolves to the intended
+     day in any test timezone with |offset| < 12h (the suite's usual
+     noon trick). */
+  const endDate = new Date(2026, 0, 15, 12, 0, 0); // day-key 2026-01-15
+  const endBoundary = new Date(2026, 0, 15, 0, 0, 0).getTime();
+
+  it('returns "Ended" at and after the local end boundary', () => {
+    expect(getTimeRemaining(endDate, endBoundary)).toBe("Ended");
+    expect(getTimeRemaining(endDate, endBoundary + 100_000)).toBe("Ended");
   });
 
-  it("returns days for future dates > 1 day", () => {
-    const futureDate = new Date(Date.now() + 3 * 86400000);
-    const result = getTimeRemaining(futureDate);
-    expect(result).toMatch(/^\d+ days left$/);
+  it("returns days when more than a day remains", () => {
+    expect(getTimeRemaining(endDate, endBoundary - 3 * 86_400_000)).toBe(
+      "3 days left"
+    );
   });
 
-  it("returns hours for future dates < 1 day", () => {
-    const futureDate = new Date(Date.now() + 12 * 3600000);
-    const result = getTimeRemaining(futureDate);
-    expect(result).toMatch(/^\d+h left$/);
+  it("returns hours inside the final day", () => {
+    expect(getTimeRemaining(endDate, endBoundary - 12 * 3_600_000)).toBe(
+      "12h left"
+    );
+  });
+
+  it("returns minutes inside the final hour", () => {
+    expect(getTimeRemaining(endDate, endBoundary - 54 * 60_000)).toBe(
+      "54m left"
+    );
   });
 });
 

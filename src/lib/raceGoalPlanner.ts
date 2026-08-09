@@ -194,8 +194,13 @@ export function getRaceGoalPlannerState(
     ctaLabel = "Save compressed plan";
   } else {
     statusTitle = "Very tight";
-    statusDescription = `Too soon for a full ${lower} build. Tropos can create a finish-safely plan — mostly easy running, no hard sessions.`;
-    ctaLabel = "Save finish-safely plan";
+    /* RUN-EV-05 (owner decision 2026-08-09): the below-floor label is
+       "mostly-easy plan" — it names what the plan contains. The old
+       "finish-safely" label implied a safety promise the product cannot
+       make (the internal `finish_safely` state keys are unchanged;
+       renaming persisted vocabulary buys no user value). */
+    statusDescription = `Too soon for a full ${lower} build. Tropos can create a mostly-easy plan — easy running only, no hard sessions.`;
+    ctaLabel = "Save mostly-easy plan";
   }
 
   return {

@@ -28,6 +28,7 @@ import {
   liftAtMrv,
   musclesAtMrv,
   recoveryTargets,
+  revertRecoverySession,
   underperformingStreak,
 } from "../recoveryTrigger";
 import type {
@@ -282,6 +283,66 @@ describe("applyRecoverySession — RP Ch3 P202, two-factor direction", () => {
     expect(out[0].exercises[0].sets).toBe(4);
     applyRecoverySession(input, ["Chest"]);
     expect(input[0].exercises[0].sets).toBe(4);
+  });
+});
+
+describe("revertRecoverySession — the LIFT-EV-05 one-tap undo", () => {
+  it("restores sets and reps from the stash, at the same weight", () => {
+    const [cut] = applyRecoverySession(
+      [day([ex({ sets: 4, reps: 8, weight: 100 })])],
+      ["Chest"]
+    );
+    const [out] = revertRecoverySession([cut], ["Chest"]);
+    expect(out.exercises[0]).toMatchObject({ sets: 4, reps: 8, weight: 100 });
+  });
+
+  it("drops the preDeloadReps stash so next week's restore has nothing to re-apply", () => {
+    const [cut] = applyRecoverySession(
+      [day([ex({ sets: 4, reps: 8 })])],
+      ["Chest"]
+    );
+    const [out] = revertRecoverySession([cut], ["Chest"]);
+    expect(out.exercises[0].preDeloadReps).toBeUndefined();
+    // baseSets stays — it is the standing anchor, not reduction residue.
+    expect(out.exercises[0].baseSets).toBe(4);
+  });
+
+  it("leaves exercises the reduction never touched by reference", () => {
+    // An untouched muscle carries no stash — restoring it from baseSets
+    // would overwrite whatever fatigue/adjustment legitimately set.
+    const untouched = ex({
+      exerciseId: "barbell-row",
+      movementCategory: "horizontal_pull",
+      sets: 3,
+      reps: 8,
+    });
+    const [cut] = applyRecoverySession(
+      [day([ex({ sets: 4, reps: 8 }), untouched])],
+      ["Chest"]
+    );
+    const [out] = revertRecoverySession([cut], ["Chest", "Back"]);
+    expect(out.exercises[0].sets).toBe(4); // Chest restored
+    expect(out.exercises[1]).toBe(cut.exercises[1]); // Back untouched
+  });
+
+  it("is idempotent — a second undo changes nothing", () => {
+    const [cut] = applyRecoverySession(
+      [day([ex({ sets: 4, reps: 8 })])],
+      ["Chest"]
+    );
+    const [once] = revertRecoverySession([cut], ["Chest"]);
+    const [twice] = revertRecoverySession([once], ["Chest"]);
+    expect(twice.exercises[0]).toEqual(once.exercises[0]);
+  });
+
+  it("does not mutate its input", () => {
+    const [cut] = applyRecoverySession(
+      [day([ex({ sets: 4, reps: 8 })])],
+      ["Chest"]
+    );
+    revertRecoverySession([cut], ["Chest"]);
+    expect(cut.exercises[0].sets).toBe(2);
+    expect(cut.exercises[0].preDeloadReps).toBe(8);
   });
 });
 
