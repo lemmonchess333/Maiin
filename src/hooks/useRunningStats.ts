@@ -34,8 +34,10 @@ export interface RunSummaryItem {
   relativeEffort: "easier" | "matched" | "harder" | null;
   /** A6: persisted pace-verdict tone. null when the session had no
    *  judgeable target (freeform / custom / pre-A6 runs). Read by the
-   *  adaptive-intensity trigger + post-ease bounce check. */
-  paceVerdictTone: "on" | "fast" | "easy-too-fast" | "slow" | null;
+   *  adaptive-intensity trigger + post-ease bounce check. Optional so
+   *  existing item builders (tests, fixtures) stay assignable — the
+   *  mapper below always sets it. */
+  paceVerdictTone?: "on" | "fast" | "easy-too-fast" | "slow" | null;
   routePreview?: { lat: number; lon: number }[];
   /* Validity metadata persisted by PR #480. Carried on the item so
      downstream UI (Recent Runs badges) can render transparency
