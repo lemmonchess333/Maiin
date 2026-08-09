@@ -23,6 +23,7 @@ import {
 } from "../lib/gps";
 import { getDistanceTargetMeters } from "../lib/runConfigUnits";
 import {
+  paceTableFromFitness,
   prescriptivePaceTableFromFitness,
   resolveSessionPaces,
 } from "../lib/runPaces";
@@ -501,6 +502,19 @@ export default function Run() {
       // Adaptive Paces: personalize the prescribed pace from the user's
       // fitness benchmark. null (no benchmark) → template defaults.
       paceTable: prescriptivePaceTableFromFitness(profile?.runFitness ?? null),
+      // A2: the user's own goal time turns into training (race-pace long
+      // run blocks, goal-pace tempo) — gating lives in the pure helper.
+      raceTarget: profile?.raceGoal?.targetTimeS
+        ? {
+            distance: profile.raceGoal.distance,
+            targetTimeS: profile.raceGoal.targetTimeS,
+            // Feasibility gate reads the FULL fitness (the verdict's tier,
+            // deliberately not the consent-gated prescriptive table) — see
+            // the field doc in runPlanMetadata.
+            currentVdot:
+              paceTableFromFitness(profile?.runFitness ?? null)?.vdot ?? null,
+          }
+        : null,
     });
     // Missing URL template — surface the developer signal here,
     // not in the pure helper. The helper falls back to freeform
@@ -545,6 +559,7 @@ export default function Run() {
     urlType,
     urlScheduledRunId,
     profile?.runFitness,
+    profile?.raceGoal,
   ]);
 
   // Phase B3: restore-on-mount. Reads the persisted snapshot exactly
