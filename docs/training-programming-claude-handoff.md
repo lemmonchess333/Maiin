@@ -183,14 +183,16 @@ Batch 2 — RATIFIED 2026-08-09 (owner explicitly delegated the choice:
 5. RUN-EV-06 — ceiling and floor retained, labelled Tropos heuristics
    at the constant (RESOLVED in PR #1886).
 6. LIFT-EV-05 — automatic protective reductions kept, surfaced in a
-   banner with honest non-MRV copy and one-tap undo (implementation
-   owed — its own feature PR).
+   banner with honest non-MRV copy and one-tap undo (RESOLVED later
+   same session, PR #1886 — see the lift ledger STATUS).
 7. RUN-EV-08 — two-tier benchmark policy: measurements auto-update
    with visible provenance and reversal; prescription-feeding changes
-   keep explicit acceptance (implementation owed — its own PR).
+   keep explicit acceptance (RESOLVED later same session, PR #1886 —
+   see the running ledger STATUS).
 8. LIFT-EV-06 — same-frequency goal change offers a visible
    keep-or-represcribe choice reusing the training-block transform
-   (implementation owed — its own PR).
+   (RESOLVED later same session, PR #1886 — see the lift ledger
+   STATUS).
 
 Deferred with reason (not decision-ready): LIFT-EV-04 and RUN-EV-07
 (boundary/concurrency ownership — need their own audit sessions before

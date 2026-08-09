@@ -345,6 +345,30 @@ represcribe choice reusing the existing training-block transform;
 never silently automatic in either direction. Neither is shipped;
 each is a bounded feature PR with its own design surface.
 
+STATUS 2026-08-09, later same session — BOTH SHIPPED (PR #1886).
+LIFT-EV-05 RESOLVED: `RecoveryReductionBanner` (Program page, next to
+the deload banner) names the halved muscles with factual trigger/change
+copy and no physiology claims; `revertRecoverySession` is the pure
+inverse (restores sets/reps from the stash, drops `preDeloadReps`);
+`undoRecoveryReduction` persists it via the standing ADR-0011
+document-write path. Reversal semantics as decided: `recoveringMuscles`
+is KEPT on undo, so the refractory guard holds and the trigger cannot
+re-fire for the same muscles next rollover. Known residue, deliberate:
+the whole-body escalation still writes no discriminator — it remains
+indistinguishable from a calendar deload in state, and the deload
+banner covers its visibility; adding a marker field was judged not
+worth the sanitizer/type surface until someone needs the attribution.
+LIFT-EV-06 RESOLVED: `focusChangedSameFrequency` in ProgrammeSettings
+gates a two-action confirm ("Save and update sessions" via
+`represcribeWorkouts`, or "Save, keep current sessions"); neither is
+default. Undo semantics as specified: the transform is invertible by
+re-application, so changing the focus back re-offers the choice in the
+opposite direction — no snapshot kept. Note the client-side seam adds
+a prescription-writing path through `configurePlan` (the legacy
+full-document exception); if the command boundary ever closes over
+configurePlan, this belongs in a `represcribeFocus` command reusing
+the existing `functions/lib/represcribe.js` mirror.
+
 | ID / state                        | Issue                                                                                                                                                                                                                        | Required outcome                                                                                                                                                                                                                  |
 | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | LIFT-EV-01 — P1, ready correction | Timed-hold repeated failure is still repetition-shaped in the client and server progression mirrors. First trace: programEngine, progressionEngine, and their cross/engine tests.                                            | Define a seconds-specific decrement and floor; test linear and double paths, range caps/floors, history, labels, and client/server parity.                                                                                        |

@@ -280,6 +280,24 @@ change that feeds a prescription keeps explicit acceptance. No code
 shipped yet; the implementing session must trace the automatic fitness
 derivation and pace-insight acceptance paths and test the policy.
 
+STATUS 2026-08-09, later same session — SHIPPED (PR #1886). The tier
+split is by CONSEQUENCE at the fan-out: `prescriptivePaceTableFromFitness`
+returns null while `runFitness.pendingConfirmation` is true, and the six
+prescription call sites (Run.tsx ×3, RunSetupModal, ProgrammeRunSection,
+DayActionSheet) now use it — an unaccepted auto-derived benchmark leaves
+session targets on template paces. Measurement surfaces (predictions,
+the settings pace grid, the RunSummary verdict) keep the full table.
+The silent auto-derive now writes provenance (`sourceRunId`/`sourceRunAt`
+from the winning run) plus `pendingConfirmation: true`; acceptance paths
+(the pace-insight accept, the new "Use for pace targets" callout in
+RunFitnessSection, manual entry) write the flag as LITERAL false —
+Firestore merge writes deep-merge maps, so omission would leave a stale
+true. Reversal: "Remove" clears `runFitness` to null (template-pace
+fallback). Sanitizer subfields allow-listed boolean-strict. Legacy
+derived benchmarks without the flag stay prescriptive (confirmed by
+default) — yanking existing users' paces retroactively was not part of
+the decision.
+
 | ID / state                                    | Issue                                                                                                                                                                                                                                                                                                              | Required outcome                                                                                                                                                                                                                                                    |
 | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | RUN-EV-01 — P0, owner decision                | Onboarding still offers Structured while runtime resolution turns it into freeform and deletes its plan/days. First trace: Onboarding, onboarding run-mode resolution, useProgram, and Run9 migration tests.                                                                                                       | Decide once: remove or explicitly resolve Structured before plan creation, or restore a supported lifecycle. A selection must survive onboarding, hydration, and display without silent plan deletion.                                                              |

@@ -44,6 +44,7 @@ import {
   applyProgression,
 } from "./programEngine";
 import { PERFORMANCE_HISTORY_CAP } from "./programEngine";
+import { revertRecoverySession } from "./recoveryTrigger";
 import { loadContextFrom, weightAfterExerciseSwap } from "./startingLoads";
 import { showsRpeByDefault, toExperience } from "./experienceModel";
 import { recoveryStateFrom } from "./adjustmentRule";
@@ -3043,6 +3044,35 @@ export function useProgram() {
     [sendDeloadCommand]
   );
 
+  /**
+   * LIFT-EV-05 one-tap undo: restore the undiminished prescription after
+   * the rollover's automatic recovery reduction halved sets/reps for
+   * `recoveringMuscles` (RecoveryReductionBanner's CTA).
+   *
+   * A document write, not a command — consistent with ADR-0011's standing
+   * document-write sites: the reduction itself was written by the client
+   * rollover through `saveProgram`, so its inverse takes the same path.
+   * `recoveringMuscles` is deliberately KEPT: it is the refractory guard,
+   * and clearing it would re-arm the trigger for the same muscles on the
+   * very next rollover (see `revertRecoverySession`).
+   */
+  const undoRecoveryReduction = useCallback(async (): Promise<boolean> => {
+    if (!programState?.recoveringMuscles?.length) return false;
+    const restored: ProgramState = {
+      ...programState,
+      workouts: revertRecoverySession(
+        programState.workouts,
+        programState.recoveringMuscles
+      ),
+    };
+    try {
+      await saveProgram(restored);
+      return true;
+    } catch {
+      return false;
+    }
+  }, [programState, saveProgram]);
+
   /** Run9 phase-3 (Slice DE) — re-anchor the race plan to today, keeping the
    *  race date. Regenerates from today so the weeks-to-race delta (shrinking
    *  as time passes) drives the generator: a tight gap yields `compressed`,
@@ -3158,6 +3188,7 @@ export function useProgram() {
     keepTrainingBlockFocus,
     applyDeloadWeek,
     revertDeloadWeek,
+    undoRecoveryReduction,
     realignRacePlan,
     /** Run15 packet — exposed so the FellBehindSheet copy can match the
      *  plan realign will actually produce (the SAME uid-paired value every
