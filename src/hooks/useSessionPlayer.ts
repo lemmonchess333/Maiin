@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import type { SessionSegment } from "@/lib/runSegments";
 
 /**
@@ -60,7 +60,10 @@ function targetMet(seg: SessionSegment, elapsed: number, dist: number): boolean 
 export function useSessionPlayer(
   segments: SessionSegment[] | null | undefined
 ): SessionPlayer {
-  const segs = segments ?? [];
+  // Stable identity for the empty fallback — `?? []` would mint a new
+  // array every render and churn every callback below on the hot in-run
+  // path.
+  const segs = useMemo(() => segments ?? [], [segments]);
   const [state, setState] = useState<SessionPlayerState>(IDLE);
 
   const phaseStartTime = useRef(0);
