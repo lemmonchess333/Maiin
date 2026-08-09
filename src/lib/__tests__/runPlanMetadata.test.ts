@@ -1206,3 +1206,185 @@ describe("Adaptive Paces — interval work-pace personalization", () => {
     expect(prefill.intervals?.workPace).toBeUndefined();
   });
 });
+
+describe("A2 — the goal time turns into training", () => {
+  // Half plan, 10 weeks: taperWeeks(half)=2 → race=w9, taper=w7-8,
+  // base=w0-2, build=w3-6 (getPhaseForWeek).
+  const halfPlan = (currentWeek: number): RunPlan => ({
+    mode: "race_prep",
+    raceGoal: { distance: "half", targetDate: farFutureDate(70) },
+    totalWeeks: 10,
+    currentWeek,
+  });
+  // 1:45:30 half → 6330 / 21.0975 ≈ 300.04 s/km goal pace.
+  const halfTarget = { distance: "half" as const, targetTimeS: 6330 };
+
+  it("build-phase long run ≥12K closes with a pinned race-pace block", () => {
+    const { prefill } = computePlanMetadata({
+      profileRunMode: "race_prep",
+      todayDayIndex: MONDAY,
+      runPlan: halfPlan(5),
+      runDays: [makeRunDay(MONDAY, "long_15k", "long")],
+      urlTemplateId: null,
+      urlType: null,
+      raceTarget: halfTarget,
+    });
+    // Target stays the distance contract (metres) — segments ADD structure.
+    expect(prefill.target).toEqual({ type: "distance", value: 15000 });
+    const segs = prefill.segments!;
+    expect(segs.map((s) => s.type)).toEqual(["easy", "moderate"]);
+    // 15K → 5K block; distance conserved.
+    expect(segs[0].target).toEqual({ kind: "distance", meters: 10000 });
+    expect(segs[1].target).toEqual({ kind: "distance", meters: 5000 });
+    expect(segs[1].paceTarget).toBeCloseTo(300.04, 1);
+    expect(segs[1].pacePinned).toBe(true);
+    expect(segs[1].eyebrow).toBe("RACE PACE");
+  });
+
+  it("base-phase long run stays a plain unstructured long", () => {
+    const { prefill } = computePlanMetadata({
+      profileRunMode: "race_prep",
+      todayDayIndex: MONDAY,
+      runPlan: halfPlan(1),
+      runDays: [makeRunDay(MONDAY, "long_15k", "long")],
+      urlTemplateId: null,
+      urlType: null,
+      raceTarget: halfTarget,
+    });
+    expect(prefill.segments).toBeUndefined();
+  });
+
+  it("taper-phase long run stays easy; taper tempo runs at goal pace", () => {
+    const long = computePlanMetadata({
+      profileRunMode: "race_prep",
+      todayDayIndex: MONDAY,
+      runPlan: halfPlan(7),
+      runDays: [makeRunDay(MONDAY, "long_12k", "long")],
+      urlTemplateId: null,
+      urlType: null,
+      raceTarget: halfTarget,
+    });
+    expect(long.prefill.segments).toBeUndefined();
+
+    const tempo = computePlanMetadata({
+      profileRunMode: "race_prep",
+      todayDayIndex: MONDAY,
+      runPlan: halfPlan(7),
+      runDays: [makeRunDay(MONDAY, "tempo_20", "tempo")],
+      urlTemplateId: null,
+      urlType: null,
+      raceTarget: halfTarget,
+    });
+    expect(tempo.prefill.target).toEqual({ type: "pace", value: 300 });
+    const block = tempo.prefill.segments!.find((s) => s.type === "moderate")!;
+    expect(block.pacePinned).toBe(true);
+    expect(block.cue).toMatch(/goal race pace/i);
+  });
+
+  it("build-phase goal-pace tempo overrides the benchmark threshold", () => {
+    const fastTable = paceTableFromFitness({
+      benchmark: { distanceM: 5000, timeS: 20 * 60 },
+      vdot: null,
+    });
+    const { prefill } = computePlanMetadata({
+      profileRunMode: "race_prep",
+      todayDayIndex: MONDAY,
+      runPlan: halfPlan(4),
+      runDays: [makeRunDay(MONDAY, "tempo_20", "tempo")],
+      urlTemplateId: null,
+      urlType: null,
+      paceTable: fastTable,
+      raceTarget: halfTarget,
+    });
+    // The goal pace (300) wins over the threshold the table would resolve —
+    // during build/taper the session's job is race rhythm.
+    expect(prefill.target).toEqual({ type: "pace", value: 300 });
+  });
+
+  it("a 5k/10k goal never enriches — goal pace belongs in intervals there", () => {
+    const fivekPlan: RunPlan = {
+      mode: "race_prep",
+      raceGoal: { distance: "5k", targetDate: farFutureDate(40) },
+      totalWeeks: 6,
+      currentWeek: 3,
+    };
+    const long = computePlanMetadata({
+      profileRunMode: "race_prep",
+      todayDayIndex: MONDAY,
+      runPlan: fivekPlan,
+      runDays: [makeRunDay(MONDAY, "long_12k", "long")],
+      urlTemplateId: null,
+      urlType: null,
+      raceTarget: { distance: "5k", targetTimeS: 1200 },
+    });
+    expect(long.prefill.segments).toBeUndefined();
+
+    const tempo = computePlanMetadata({
+      profileRunMode: "race_prep",
+      todayDayIndex: MONDAY,
+      runPlan: fivekPlan,
+      runDays: [makeRunDay(MONDAY, "tempo_20", "tempo")],
+      urlTemplateId: null,
+      urlType: null,
+      raceTarget: { distance: "5k", targetTimeS: 1200 },
+    });
+    // Falls back to the template's hardcoded tempo pace, not 5K goal pace.
+    expect(tempo.prefill.target).toEqual({ type: "pace", value: 270 });
+  });
+
+  it("no target time → the pre-A2 prefill, unchanged", () => {
+    const { prefill } = computePlanMetadata({
+      profileRunMode: "race_prep",
+      todayDayIndex: MONDAY,
+      runPlan: halfPlan(5),
+      runDays: [makeRunDay(MONDAY, "long_15k", "long")],
+      urlTemplateId: null,
+      urlType: null,
+      // no raceTarget
+    });
+    expect(prefill.segments).toBeUndefined();
+    expect(prefill.target).toEqual({ type: "distance", value: 15000 });
+  });
+
+  it("build-phase long run under 12K carries no block", () => {
+    const { prefill } = computePlanMetadata({
+      profileRunMode: "race_prep",
+      todayDayIndex: MONDAY,
+      runPlan: halfPlan(5),
+      runDays: [makeRunDay(MONDAY, "long_10k", "long")],
+      urlTemplateId: null,
+      urlType: null,
+      raceTarget: halfTarget,
+    });
+    expect(prefill.segments).toBeUndefined();
+  });
+
+  it("recovery phase suppresses all goal-pace enrichment", () => {
+    const { prefill } = computePlanMetadata({
+      profileRunMode: "race_prep",
+      todayDayIndex: MONDAY,
+      runPlan: { ...halfPlan(5), phase: "recovery" },
+      runDays: [makeRunDay(MONDAY, "tempo_20", "tempo")],
+      urlTemplateId: null,
+      urlType: null,
+      raceTarget: halfTarget,
+    });
+    expect(prefill.target).toEqual({ type: "pace", value: 270 });
+  });
+
+  it("the URL-template path enriches the same as today_plan", () => {
+    const { prefill } = computePlanMetadata({
+      profileRunMode: "race_prep",
+      todayDayIndex: MONDAY,
+      runPlan: halfPlan(5),
+      runDays: [],
+      urlTemplateId: "long_20k",
+      urlType: null,
+      raceTarget: halfTarget,
+    });
+    const segs = prefill.segments!;
+    // 20K → 7K block (round(20/3)).
+    expect(segs[1].target).toEqual({ kind: "distance", meters: 7000 });
+    expect(segs[0].target).toEqual({ kind: "distance", meters: 13000 });
+  });
+});
