@@ -16,10 +16,14 @@ import { Feather, X } from "lucide-react";
 import { THEME } from "@/lib/theme";
 
 interface Props {
-  /** How many of the recent rated runs were "harder". */
-  harderCount: number;
-  /** The recent rated-run count inspected (the denominator). */
-  ratedCount: number;
+  /** A6: which signal fired — user-authored effort ratings (Run14) or
+   *  measured pace-verdict misses. Drives the evidence line only; the
+   *  offer + actions are identical. */
+  trigger: "harder_ratings" | "pace_misses";
+  /** Numerator — "harder" ratings or "slow" verdicts, per trigger. */
+  count: number;
+  /** Denominator — recent rated runs or judged tempo sessions. */
+  total: number;
   /** Open AdjustWeekSheet on the easier-week preview. */
   onEase: () => void;
   /** Dismiss for the rest of this week. */
@@ -27,8 +31,9 @@ interface Props {
 }
 
 export default function EaseWeekNudgeCard({
-  harderCount,
-  ratedCount,
+  trigger,
+  count,
+  total,
   onEase,
   onDismiss,
 }: Props) {
@@ -55,10 +60,21 @@ export default function EaseWeekNudgeCard({
           Take this week easier?
         </p>
         <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
-          You rated{" "}
-          <span className="font-mono tabular-nums">{harderCount}</span> of your
-          last <span className="font-mono tabular-nums">{ratedCount}</span> runs
-          harder than expected. Ease this week&apos;s quality runs — you decide.
+          {trigger === "harder_ratings" ? (
+            <>
+              You rated <span className="font-mono tabular-nums">{count}</span>{" "}
+              of your last <span className="font-mono tabular-nums">{total}</span>{" "}
+              runs harder than expected. Ease this week&apos;s quality runs —
+              you decide.
+            </>
+          ) : (
+            <>
+              <span className="font-mono tabular-nums">{count}</span> of your
+              last <span className="font-mono tabular-nums">{total}</span> tempo
+              sessions ran outside their pace window. Ease this week&apos;s
+              quality runs — you decide.
+            </>
+          )}
         </p>
         <button
           type="button"

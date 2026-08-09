@@ -13,6 +13,9 @@
 
 const LAST_SHOWN_PREFIX = "tropos:easeNudge:lastShown";
 const DISMISSED_PREFIX = "tropos:easeNudge:dismissedWeek";
+/** A6: the Sunday weekKey the athlete APPLIED an easier week in — read
+ *  by the post-ease bounce check the following week. */
+const EASED_PREFIX = "tropos:easeNudge:easedWeek";
 
 function lastShownKey(uid: string): string {
   return `${LAST_SHOWN_PREFIX}:${uid}`;
@@ -54,6 +57,29 @@ export function setDismissedWeekKey(uid: string, weekKey: string): void {
   if (typeof localStorage === "undefined" || !uid) return;
   try {
     localStorage.setItem(dismissedKey(uid), weekKey);
+  } catch {
+    /* best-effort */
+  }
+}
+
+function easedKey(uid: string): string {
+  return `${EASED_PREFIX}:${uid}`;
+}
+
+/** A6: the Sunday weekKey an easier week was applied in, or null. */
+export function getEasedWeekKey(uid: string): string | null {
+  if (typeof localStorage === "undefined" || !uid) return null;
+  try {
+    return localStorage.getItem(easedKey(uid));
+  } catch {
+    return null;
+  }
+}
+
+export function setEasedWeekKey(uid: string, weekKey: string): void {
+  if (typeof localStorage === "undefined" || !uid) return;
+  try {
+    localStorage.setItem(easedKey(uid), weekKey);
   } catch {
     /* best-effort */
   }

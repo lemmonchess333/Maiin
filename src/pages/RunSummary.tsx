@@ -905,6 +905,12 @@ export default function RunSummary() {
       // as isInvalid/invalidReason below. Backward-compatible: legacy runs
       // simply lack the field.
       relativeEffort,
+      // A6: persist the verdict TONE so the adaptive-intensity trigger can
+      // read miss history from stored runs (the display line recomputes
+      // live above; the tone is the durable signal). null when the session
+      // had no judgeable target — same null-not-absent convention as
+      // relativeEffort so the field shape doesn't bifurcate.
+      paceVerdictTone: paceVerdict?.tone ?? null,
       visibility: "followers" as const,
       type: "run",
       activityType: runConfig?.activityType || "freerun",
