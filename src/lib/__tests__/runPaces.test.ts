@@ -10,6 +10,7 @@ import {
   resolvePaceInsight,
   raceDistanceKeyFromKm,
   predictedRaceTimesFromFitness,
+  prescriptivePaceTableFromFitness,
 } from "../runPaces";
 
 describe("vdotFromRace", () => {
@@ -170,6 +171,66 @@ describe("deriveBenchmarkFromRuns", () => {
       deriveBenchmarkFromRuns([{ distanceM: 800, durationS: 200 }])
     ).toBeNull();
     expect(deriveBenchmarkFromRuns([])).toBeNull();
+  });
+
+  it("echoes the WINNING run's provenance (RUN-EV-08)", () => {
+    const best = deriveBenchmarkFromRuns([
+      {
+        distanceM: 5000,
+        durationS: 1500,
+        id: "run-slow",
+        completedAt: new Date("2026-08-01T08:00:00Z"),
+      },
+      {
+        distanceM: 5000,
+        durationS: 1200,
+        id: "run-fast",
+        completedAt: new Date("2026-08-03T08:00:00Z"),
+      },
+    ]);
+    expect(best).toMatchObject({
+      distanceM: 5000,
+      timeS: 1200,
+      sourceRunId: "run-fast",
+      sourceRunAt: "2026-08-03T08:00:00.000Z",
+    });
+  });
+});
+
+describe("prescriptivePaceTableFromFitness — RUN-EV-08 two-tier consent", () => {
+  const derived = {
+    benchmark: { distanceM: 5000, timeS: 1200 },
+    vdot: null,
+  };
+
+  it("an unconfirmed auto-derived benchmark yields NO prescription table", () => {
+    expect(
+      prescriptivePaceTableFromFitness({
+        ...derived,
+        pendingConfirmation: true,
+      })
+    ).toBeNull();
+    // …while the measurement table still resolves for the same fitness.
+    expect(
+      paceTableFromFitness({ ...derived, pendingConfirmation: true })
+    ).not.toBeNull();
+  });
+
+  it("a confirmed (or non-flagged) benchmark prescribes identically to the measurement table", () => {
+    expect(
+      prescriptivePaceTableFromFitness({
+        ...derived,
+        pendingConfirmation: false,
+      })
+    ).toEqual(paceTableFromFitness(derived));
+    expect(prescriptivePaceTableFromFitness(derived)).toEqual(
+      paceTableFromFitness(derived)
+    );
+  });
+
+  it("null/absent fitness stays null", () => {
+    expect(prescriptivePaceTableFromFitness(null)).toBeNull();
+    expect(prescriptivePaceTableFromFitness(undefined)).toBeNull();
   });
 });
 
