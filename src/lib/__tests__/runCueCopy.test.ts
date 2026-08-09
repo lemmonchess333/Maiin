@@ -11,7 +11,7 @@ import {
   halfwayCue,
   final500Cue,
   pbCue,
-  phaseCue,
+  sessionCompleteCue,
 } from "../runCueCopy";
 
 describe("splitCue", () => {
@@ -57,11 +57,9 @@ describe("other cues", () => {
   });
 
   it("phase cues cover the interval lifecycle; unknown phase → null", () => {
-    expect(phaseCue("warmup")).toContain("Warming up");
-    expect(phaseCue("work", 2, 5)).toBe("Rep 2 of 5. Push on!");
-    expect(phaseCue("rest")).toContain("Recovery");
-    expect(phaseCue("cooldown")).toContain("Cooling down");
-    expect(phaseCue("complete")).toContain("Session complete");
-    expect(phaseCue("nonsense")).toBeNull();
+    // STRUCT-SESS-02: per-segment cue copy moved onto the segments
+    // themselves (runSegments builders, pinned in runSegments.test); only
+    // the terminal line lives here.
+    expect(sessionCompleteCue()).toContain("Session complete");
   });
 });

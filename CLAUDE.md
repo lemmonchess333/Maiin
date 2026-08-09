@@ -179,7 +179,7 @@ run-surface feature modules.
 `useFirestore`, `useMeals`, `useWorkouts`, `useWaterLog`, `useShoes`, `useFoodFavourites`
 
 **Running & GPS:**
-`useGPS`, `useRunTimer`, `useRunningStats`, `useGuidedRun`, `useIntervalWorkout`, `usePrivacyZones`, `useAudioCues`, `useWakeLock`
+`useGPS`, `useRunTimer`, `useRunningStats`, `useSessionPlayer`, `usePrivacyZones`, `useAudioCues`, `useWakeLock`
 
 **Social:**
 `useSocialFeed`, `useDiscoverFeed`, `useUnreadCount`, `useBlockedUsers`
