@@ -40,6 +40,7 @@ import {
   type WeatherData,
 } from "@/lib/weather";
 import { paceMinSec } from "@/lib/runLabels";
+import { heatPaceAdjustment, heatAdjustmentLine } from "@/lib/heatAdjustment";
 import ShoeSelector from "./ShoeSelector";
 import GuidedRunPicker from "./GuidedRunPicker";
 import SessionStructureView from "./SessionStructureView";
@@ -488,6 +489,24 @@ export default function RunSetupModal({
               >
                 {getRunningTip(weather, config.activityType)}
               </motion.p>
+              {/* B2 (heat half): the equal-effort pace equivalent for
+                  today's conditions — display + explanation only, the
+                  prescription is stated as unchanged. Quiet in cool
+                  weather (the helper returns null). */}
+              {(() => {
+                const adj = heatPaceAdjustment(weather);
+                if (!adj) return null;
+                return (
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {heatAdjustmentLine(
+                      adj,
+                      config.target?.type === "pace"
+                        ? config.target.value
+                        : undefined
+                    )}
+                  </p>
+                );
+              })()}
             </div>
           </motion.div>
         )}
