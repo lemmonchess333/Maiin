@@ -49,25 +49,22 @@
  * stack — that stays a real-device (airplane-mode) concern.
  *
  * The SHARE queue (`tropos.share.queue`, PR #820's second row) rides
- * the same journey, drain-side: two pending shares — one per account,
- * the exact shape the app enqueues — are seeded before B signs in.
- * B's drain (ShareComposerSheet's [isOnline, uid] effect → drainQueue →
- * postActivity) must post B's share and leave A's queued with no
- * A-authored activity doc existing; A's return drains A's share and
- * empties the queue. Seeding stands in for the enqueue UI because the
- * enqueue is unreachable from EVERY journey under real offline — filed
- * as issue #1887. All three call sites sit behind an awaited Firestore
- * write that PARKS offline (the SDK durably queues the mutation and
- * resolves only on server ack; it never rejects for connectivity):
- * RunSummary's correctly pre-gated `else { enqueueShare }` is behind
- * the awaited run-doc addDoc, and the workout paths (useProgram /
- * Routine) park at batch.commit / postActivity, whose catch-branch
- * enqueues additionally can't fire because a parked addDoc never
- * throws. No share decision is silently lost — the paths that can't
- * enqueue also can't complete their save offline — but the queue is
- * drain-only machinery until #1887 lands. The uid-isolation contract
- * lives in drainQueue, which this drives end-to-end; once #1887 makes
- * the enqueue reachable, the RunSummary journey belongs in this spec.
+ * the same journey, and since the #1887 fix (this PR) the ENQUEUE half
+ * is driven for real: still offline, A saves a synthetic finished run
+ * through the actual RunSummary journey (the page hydrates from router
+ * navigation state — no GPS involved), shares it to followers, and the
+ * pre-gated offline branch queues the post with the once-unreachable
+ * "Post queued" toast asserted. Before #1887, every enqueueShare site
+ * sat behind an awaited Firestore write that PARKS offline (the SDK
+ * durably queues the mutation and acks only on reconnect; it never
+ * rejects for connectivity), so the share queue was drain-only
+ * machinery — the fix pre-gates those saves on navigator.onLine and
+ * proceeds on the durable local commit. B's pending share is seeded
+ * (the exact PendingShare shape) as the drain-completion anchor: B's
+ * drain (ShareComposerSheet's [isOnline, uid] effect → drainQueue →
+ * postActivity) must post B's share and leave A's REAL entry queued
+ * with no A-authored activity doc existing; A's return drains A's
+ * share under A's auth and empties the queue.
  *
  * Fixture: two brand-new accounts minted through the real signup form,
  * `onboardingComplete` patched via the emulator's rules-free REST
@@ -437,6 +434,62 @@ test.describe("offline-queue uid isolation across an account switch", () => {
     // to mount and clear it before the click-through navigation below.
     await dismissBadgeCelebration(page, 4_000);
 
+    // ── Phase 1b (#1887): the REAL share enqueue, via the run-save
+    // journey. RunSummary hydrates from router navigation state, so
+    // push a synthetic finished run client-side (5km / 30min — well
+    // above the invalid-run thresholds; no GPS points needed) — the
+    // page session, and with it the navigator override, survives.
+    await page.evaluate(() => {
+      const runData = {
+        points: [],
+        distance: 5000,
+        elapsed: 1800,
+        splits: [],
+        elevationGain: 0,
+      };
+      history.pushState(
+        { usr: runData, key: "e2e-run", idx: (history.state?.idx ?? 0) + 1 },
+        "",
+        "/Maiin/run-summary"
+      );
+      window.dispatchEvent(
+        new PopStateEvent("popstate", { state: history.state })
+      );
+    });
+    await page
+      .getByRole("button", { name: "Save Run" })
+      .click({ timeout: 20_000 });
+    // Pre-#1887 this await parked forever offline; now the save
+    // confirms on the durable local commit and the composer opens.
+    await expect(page.getByText("Run saved")).toBeVisible({
+      timeout: 15_000,
+    });
+    await page
+      .getByRole("button", { name: "Share to followers" })
+      .click({ timeout: 15_000 });
+    // The once-unreachable queued-post toast, now reachable:
+    await expect(page.getByText(/Post queued/i)).toBeVisible({
+      timeout: 10_000,
+    });
+    const sharesAfterEnqueue = await readShareQueue(page);
+    expect(sharesAfterEnqueue).toHaveLength(1);
+    expect(sharesAfterEnqueue[0].uid).toBe(uidA);
+    // Nothing posted anywhere — the share is parked, not published.
+    expect(await activitiesByAuthor(uidA)).toBe(0);
+
+    // Back to Food (client-side), clearing the post-session prompts a
+    // first run can raise: a fresh badge celebration and the streak
+    // reminder priming modal ("No thanks" is its once-ever decline).
+    await page.goBack();
+    await dismissBadgeCelebration(page, 2_000);
+    try {
+      await page
+        .getByRole("button", { name: "No thanks" })
+        .click({ timeout: 2_000 });
+    } catch {
+      /* priming modal didn't fire — coordinator gating varies */
+    }
+
     // ── Phase 2: still "offline", sign out via the app's own UI.
     // Client-side navigation (Food → Home → gear → Account) keeps the
     // page session, and with it the navigator override, alive until the
@@ -449,8 +502,20 @@ test.describe("offline-queue uid isolation across an account switch", () => {
       .click({ timeout: 20_000 });
     await signOutViaUI(page);
 
-    // Sign-out must not clear the queue.
-    expect(await readQueue(page)).toHaveLength(1);
+    // Sign-out must clear neither queue. The write queue may hold MORE
+    // than one entry by now — remounting /food offline (the goBack from
+    // the run summary) re-fires the daily-log effect, which queues the
+    // same date-keyed merge write again. Real behavior, and convergent:
+    // duplicates target one docId and merge idempotently on flush. What
+    // matters here is that every entry is A's daily-log write.
+    const queueAtSignOut = await readQueue(page);
+    expect(queueAtSignOut.length).toBeGreaterThanOrEqual(1);
+    for (const entry of queueAtSignOut) {
+      expect(entry.uid).toBe(uidA);
+      expect(entry.collectionPath).toBe(`users/${uidA}/logs`);
+      expect(entry.docId).toBe(queuedDocId);
+    }
+    expect(await readShareQueue(page)).toHaveLength(1);
 
     // ── Phase 3: B signs in on the same device (fresh page session, so
     // navigator.onLine is genuinely true again). B's sign-in runs the
@@ -483,19 +548,21 @@ test.describe("offline-queue uid isolation across an account switch", () => {
       [QUEUE_KEY, uidB, anchorDate] as const
     );
 
-    // SHARE queue (PR #820's second row), drain-side: seed one pending
-    // share per account — the exact PendingShare shape enqueueShare
-    // writes, payload matching the app's workout-share (see header for
-    // why the enqueue UI can't be driven). A's queued first, like the
-    // real chronology.
+    // SHARE queue: A's entry is REAL (enqueued by the run-save journey
+    // in phase 1b). Append a seeded entry for B — the exact
+    // PendingShare shape enqueueShare writes — as the drain-completion
+    // anchor: the same drain pass that posts B's must keep A's.
     await page.evaluate(
-      ([key, a, b]) => {
-        const share = (uid: string, authorName: string) => ({
+      ([key, b]) => {
+        const queue = JSON.parse(
+          localStorage.getItem(key) ?? "[]"
+        ) as unknown[];
+        queue.push({
           id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-          uid,
+          uid: b,
           payload: {
-            authorId: uid,
-            authorName,
+            authorId: b,
+            authorName: "Offline User B",
             type: "workout",
             visibility: "followers",
             workoutName: "Queued Session",
@@ -507,15 +574,9 @@ test.describe("offline-queue uid isolation across an account switch", () => {
           },
           queuedAt: Date.now(),
         });
-        localStorage.setItem(
-          key,
-          JSON.stringify([
-            share(a, "Offline User A"),
-            share(b, "Offline User B"),
-          ])
-        );
+        localStorage.setItem(key, JSON.stringify(queue));
       },
-      [SHARE_QUEUE_KEY, uidA, uidB] as const
+      [SHARE_QUEUE_KEY, uidB] as const
     );
 
     await page.goto("/");
@@ -533,13 +594,14 @@ test.describe("offline-queue uid isolation across an account switch", () => {
         { timeout: 20_000 }
       )
       .toBe(true);
-    // …so the queue settling at exactly A's entry is the SAME pass
-    // keeping it, not a timer hoping nothing happened.
+    // …so the queue settling back to exactly A's entries is the SAME
+    // pass keeping them, not a timer hoping nothing happened.
     await expect
       .poll(async () => await readQueue(page), { timeout: 10_000 })
-      .toHaveLength(1);
-    const [keptDuringB] = await readQueue(page);
-    expect(keptDuringB.uid).toBe(uidA);
+      .toHaveLength(queueAtSignOut.length);
+    for (const kept of await readQueue(page)) {
+      expect(kept.uid).toBe(uidA);
+    }
     expect(await listLogDocs(uidA)).toHaveLength(0);
 
     // Share drain, same doctrine: B's pending share posts (the drain

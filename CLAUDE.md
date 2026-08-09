@@ -919,17 +919,20 @@ Affects: `src/lib/offlineQueue.ts`, `src/lib/shareComposer.ts`.
       accounts (the exact `PendingShare` shape `enqueueShare` writes), B's
       drain posts B's share while keeping A's queued with zero A-authored
       `activities` docs, A's return posts A's share and empties the queue.
-      The enqueue UI stays un-driven because the enqueue is UNREACHABLE
-      from every journey under real offline — issue #1887. All three
-      `enqueueShare` sites sit behind an awaited Firestore write that parks
-      offline (never rejects), including RunSummary's correctly pre-gated
-      branch (behind the awaited run-doc save); the workout paths'
-      catch-branch enqueues additionally can't fire because a parked
-      `addDoc` never throws. No share decision is silently lost (those
-      saves can't complete offline either), but the queue is drain-only
-      machinery until #1887 lands — at which point the RunSummary enqueue
-      journey belongs in this spec, and the device airplane-mode check
-      becomes #1887's verification, not a residue of this row.
+      The ENQUEUE half is driven for real too, via the run-save journey
+      (RunSummary hydrates from router state — no GPS rig needed): still
+      offline, A saves a synthetic run, shares it, and the pre-gated
+      offline branch queues the post with the "Post queued" toast
+      asserted. That path only became reachable with the #1887 fix (same
+      PR): every `enqueueShare` site used to sit behind an awaited
+      Firestore write that parks offline (never rejects) — the saves are
+      now pre-gated on `navigator.onLine` and proceed on the durable
+      IndexedDB commit, which also un-hangs offline run/workout saving
+      itself. Residue: a real-device airplane-mode pass of the run-save
+      journey, plus one behavior the spec deliberately tolerates — each
+      offline remount of /food re-queues the same date-keyed daily-log
+      merge write (duplicates converge on one doc; queue counts inflate
+      until flush).
 - [x] Legacy pre-deploy items dropped on first read — covered by
       `offlineQueue.test.ts` ("drops legacy items missing a uid field"), which
       seeds one untagged and one tagged entry and asserts the untagged one is
