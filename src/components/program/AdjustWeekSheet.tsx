@@ -287,7 +287,7 @@ export default function AdjustWeekSheet({
               {step.timing === "compressible" &&
                 "The remaining time is tight, so the re-planned block will be compressed toward your race date."}
               {step.timing === "below-floor" &&
-                "There isn't enough time left for a full build — the plan will switch to a finish-safely shape (all easy running, no big jumps)."}
+                "There isn't enough time left for a full build — the plan will switch to a mostly-easy shape (all easy running, no big jumps)."}
             </p>
             <div className="flex gap-2 pt-1">
               <Button

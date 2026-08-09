@@ -20,6 +20,7 @@ import {
 
 import { useSubscription } from "@/lib/subscription";
 import { useProgram } from "@/features/program/useProgram";
+import { primaryGoalLabel } from "@/features/program/programEngine";
 import { getExerciseById } from "@/lib/exercises";
 import { useWeeklyDayMap } from "@/hooks/useFirestore";
 import { BadgeEarnedModal } from "@/features/streaks/BadgeEarnedModal";
@@ -710,10 +711,17 @@ export default function Home() {
             </h1>
             {programState && (
               <span className="text-xs font-medium text-muted-foreground mt-0.5">
+                {/* LIFT-EV-02 (owner decision 2026-08-09): the phase label
+                    derives from the PRIMARY GOAL, with the deload lifecycle
+                    state overriding — the raw currentPhase string told every
+                    fresh plan "Hypertrophy phase" regardless of goal, and
+                    "progression phase" thereafter. */}
                 {"Week " +
                   programState.weekNumber +
                   " · " +
-                  programState.currentPhase +
+                  (programState.currentPhase === "deload"
+                    ? "Deload"
+                    : primaryGoalLabel(programState.primaryGoal)) +
                   " phase"}
               </span>
             )}
