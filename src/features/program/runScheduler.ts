@@ -324,11 +324,15 @@ const LONG_RUN_TIERS: ReadonlyArray<{
  * so raising this cap is a decision someone has to make deliberately.
  *
  * The share half of Daniels' rule is NOT enforced here, and it is worth being
- * honest about why: at peak the long run is still ~48% of a 4-run week, well
- * over the textbook 25-30%. That gap is a property of running four times a
- * week, not of this ladder — closing it needs more weekly volume, which is
- * the user's `weekSchedule` to give, not the scheduler's to invent. Hansons
- * makes exactly this argument for its own ~26 km cap.
+ * honest about why. (The previous version of this note said "~48% of a 4-run
+ * week" — measured, that was the FIVE-day figure; four days peaked at 55%.)
+ * The medium-long run (RUN-EV-11, see MEDIUM_LONG_PEAK_MINUTES) now raises
+ * the midweek denominator, which brings a marathon 4-day peak to ~50% and
+ * 5-day to ~44% — better, still over the textbook 25-30%. The remaining gap
+ * is a property of running three-to-four times a week, not of this ladder —
+ * closing it fully needs more run days, which is the user's `weekSchedule`
+ * to give, not the scheduler's to invent. Hansons makes exactly this
+ * argument for its own ~26 km cap.
  */
 export const LONG_RUN_MAX_MINUTES = 150;
 
@@ -346,9 +350,44 @@ const EASY_RUN_TIERS: ReadonlyArray<{ id: string; minutes: number }> = [
   { id: "easy_30", minutes: 30 },
   { id: "easy_40", minutes: 40 },
   { id: "easy_50", minutes: 50 },
+  // Medium-long rungs (RUN-EV-11) — reachable only via the designated
+  // medium-long slot below; ordinary easy runs still peak at 50.
+  { id: "easy_60", minutes: 60 },
+  { id: "easy_75", minutes: 75 },
+  { id: "easy_90", minutes: 90 },
 ];
 const EASY_BASE_MINUTES = 30;
 const EASY_PEAK_MINUTES = 50;
+
+/**
+ * RUN-EV-11 (2026-08-09) — the medium-long run: ONE easy slot per base/build
+ * week ramps to a DISTANCE-AWARE peak instead of the flat 50-minute easy
+ * ceiling.
+ *
+ * Why: measured across every distance × schedule, the flat easy axis made
+ * Daniels' share rule (long run ≤ ~25-30% of weekly volume) structurally
+ * unsatisfiable for half/marathon — a marathon plan's 140-minute peak long
+ * run was 53-65% of a 3-4-day week in EVERY week, because the rest of the
+ * week could not grow past 50-minute runs. Every source that caps the long
+ * run pairs the cap with real weekly volume underneath it: Pfitzinger's
+ * midweek medium-long run (the signature of Advanced Marathoning) is the
+ * named mechanism, and Hansons' 16-mile cap only makes sense beside its
+ * six-day midweek volume. Enforcing a share CAP instead would shorten the
+ * long run — the one response none of those sources would pick.
+ *
+ * The peaks are deliberately modest against the sources (Pfitzinger's MLR
+ * is 12-16 mi ≈ 85-115 min): this is still a recreational, lift-hybrid
+ * plan. 5K needs no separate session — its peak equals the easy ceiling,
+ * so the medium-long slot degenerates to a plain easy run there. Like the
+ * ceiling above, these are TROPOS HEURISTICS (RUN-EV-06 register), not
+ * source-derived safety rules.
+ */
+const MEDIUM_LONG_PEAK_MINUTES: Record<"5k" | "10k" | "half" | "marathon", number> = {
+  "5k": 50,
+  "10k": 60,
+  half: 75,
+  marathon: 90,
+};
 
 /**
  * Quality sessions progress by VOLUME, and their peak is event-specific.
@@ -570,6 +609,34 @@ export function easyRunMinutesForWeek(input: {
       ? EASY_BASE_MINUTES +
         (EASY_PEAK_MINUTES - EASY_BASE_MINUTES) * LIGHTER_PEAK_FACTOR
       : EASY_PEAK_MINUTES;
+  const ramped =
+    EASY_BASE_MINUTES + (peak - EASY_BASE_MINUTES) * shape.progress;
+  return shape.isCutback
+    ? Math.max(EASY_BASE_MINUTES, ramped * CUTBACK_FRACTION)
+    : ramped;
+}
+
+/**
+ * The week's medium-long duration (RUN-EV-11). Same ramp shape, cutback
+ * handling and `lighter` scaling as the plain easy ramp — only the peak is
+ * distance-aware. Returns the plain easy duration when the distance's peak
+ * IS the easy ceiling (5K), so callers can assign it unconditionally.
+ */
+export function mediumLongMinutesForWeek(input: {
+  weekIndex: number;
+  totalWeeks: number;
+  taperWeeks: number;
+  volume: RunVolumePreset;
+  distance: "5k" | "10k" | "half" | "marathon";
+}): number {
+  const shape = rampShape(input);
+  if (!shape) return EASY_BASE_MINUTES;
+  const fullPeak = MEDIUM_LONG_PEAK_MINUTES[input.distance];
+  const peak =
+    input.volume === "lighter"
+      ? EASY_BASE_MINUTES +
+        (fullPeak - EASY_BASE_MINUTES) * LIGHTER_PEAK_FACTOR
+      : fullPeak;
   const ramped =
     EASY_BASE_MINUTES + (peak - EASY_BASE_MINUTES) * shape.progress;
   return shape.isCutback
@@ -962,6 +1029,27 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
               volume: tuning.volume,
             })
           );
+    // RUN-EV-11: ONE easy slot per base/build week is the medium-long run,
+    // with a distance-aware ceiling (see MEDIUM_LONG_PEAK_MINUTES). Taper,
+    // race and below-floor weeks keep every run short — that cut is the
+    // point of those weeks — and a detrained returner gets no medium-long
+    // for the same reason they get no quality: no base to load. 5K plans
+    // degenerate to the plain easy tier (peak == easy ceiling).
+    const midLongId =
+      belowFloor ||
+      phase === "taper" ||
+      phase === "race" ||
+      input.recentLayoff === "detrained"
+        ? easyId
+        : easyTierForMinutes(
+            mediumLongMinutesForWeek({
+              weekIndex: w,
+              totalWeeks: blockWeeks,
+              taperWeeks: TAPER_WEEKS_BY_DISTANCE[input.raceGoal.distance],
+              volume: tuning.volume,
+              distance: input.raceGoal.distance,
+            })
+          );
 
     // RUN-M2: race week is identical whether or not the plan is belowFloor —
     // the race on `targetDate` (so `date === raceGoal.targetDate`) plus easy
@@ -1106,12 +1194,13 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
 
       if (phase === "base") {
         // Base: all easy (compressed plans extend base proportionally
-        // since there's no time for a real build phase)
-        remaining.forEach((d) =>
+        // since there's no time for a real build phase). The first slot
+        // carries the medium-long (RUN-EV-11).
+        remaining.forEach((d, i) =>
           week.push(
             buildRunDayV2({
               dayIndex: d,
-              templateId: easyId,
+              templateId: i === 0 ? midLongId : easyId,
               type: "easy",
               weekStart,
             })
@@ -1165,23 +1254,25 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
               })
             );
           }
-          remaining.slice(secondQualityHere ? 2 : 1).forEach((d) =>
+          remaining.slice(secondQualityHere ? 2 : 1).forEach((d, i) =>
             week.push(
               buildRunDayV2({
                 dayIndex: d,
-                templateId: easyId,
+                // RUN-EV-11: the first easy slot is the medium-long.
+                templateId: i === 0 ? midLongId : easyId,
                 type: "easy",
                 weekStart,
               })
             )
           );
         } else {
-          // Skip quality this week — all easy
-          remaining.forEach((d) =>
+          // Skip quality this week — all easy; first slot carries the
+          // medium-long (RUN-EV-11).
+          remaining.forEach((d, i) =>
             week.push(
               buildRunDayV2({
                 dayIndex: d,
-                templateId: easyId,
+                templateId: i === 0 ? midLongId : easyId,
                 type: "easy",
                 weekStart,
               })

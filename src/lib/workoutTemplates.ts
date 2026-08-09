@@ -50,6 +50,39 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     estimatedDuration: 50,
     config: {},
   },
+  // Medium-long tiers (RUN-EV-11, 2026-08-09) — Pfitzinger's midweek
+  // medium-long run, the mechanism that lets half/marathon weeks carry
+  // enough volume for the long run to be a sane SHARE of the week
+  // (Daniels' 25-30% assumption). Still type "easy": the pace guidance
+  // is the easy band; only the duration is bigger. One per week at most,
+  // assigned by the scheduler; also user-pickable like any easy tier.
+  {
+    id: "easy_60",
+    name: "Easy 60",
+    type: "easy",
+    icon: "person-standing",
+    description: "Conversational pace — steady aerobic volume",
+    estimatedDuration: 60,
+    config: {},
+  },
+  {
+    id: "easy_75",
+    name: "Medium-long 75",
+    type: "easy",
+    icon: "person-standing",
+    description: "Easy pace, longer midweek run — aerobic depth",
+    estimatedDuration: 75,
+    config: {},
+  },
+  {
+    id: "easy_90",
+    name: "Medium-long 90",
+    type: "easy",
+    icon: "person-standing",
+    description: "Easy pace, longest midweek run — marathon aerobic depth",
+    estimatedDuration: 90,
+    config: {},
+  },
   // Threshold ladder. Quality work progresses by VOLUME at a fixed pace —
   // the pace is defined by physiology (VDOT), so what a block develops is how
   // long you can hold it. Pfitzinger ramps the marathon LT run from ~20 to
