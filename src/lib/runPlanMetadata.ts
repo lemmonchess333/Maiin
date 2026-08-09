@@ -20,6 +20,12 @@
 import { RUN_TEMPLATES, type RunTemplate } from "./workoutTemplates";
 import { localDateString } from "./dateHelpers";
 import { resolveSessionPaces, type PaceTable } from "./runPaces";
+import {
+  segmentsFromEasyWithStrides,
+  segmentsFromIntervals,
+  segmentsFromTempo,
+  type SessionSegment,
+} from "./runSegments";
 import type { ScheduledRunDay, RunPlan } from "@/features/program/runScheduler";
 import {
   getScheduledRunStatus,
@@ -109,6 +115,9 @@ export interface RunPlanPrefill {
     warmupDuration?: number;
     cooldownDuration?: number;
   };
+  /** STRUCT-SESS-01: the session's canonical structure (runSegments.ts).
+   *  Absent = unstructured (plain easy/long/race). */
+  segments?: SessionSegment[];
 }
 
 // ─── Default / freeform shape ───────────────────────────────────────
@@ -689,6 +698,22 @@ function templateToPrefill(
     prefill.intervals = workPace
       ? { ...tmpl.config.intervals, workPace }
       : tmpl.config.intervals;
+  }
+  // STRUCT-SESS-01: canonical segments ride the same prefill. Intervals
+  // derive from the (personalized) interval config; tempo from the promoted
+  // structure with the resolved target pace; strides from the easy variant.
+  if (prefill.intervals) {
+    prefill.segments = segmentsFromIntervals(prefill.intervals);
+  } else if (tmpl.config.tempo) {
+    prefill.segments = segmentsFromTempo(
+      tmpl.config.tempo,
+      prefill.target?.type === "pace" ? prefill.target.value : undefined
+    );
+  } else if (tmpl.config.strides) {
+    prefill.segments = segmentsFromEasyWithStrides(
+      tmpl.estimatedDuration,
+      tmpl.config.strides
+    );
   }
   return prefill;
 }

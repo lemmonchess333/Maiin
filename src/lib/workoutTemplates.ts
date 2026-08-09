@@ -17,9 +17,19 @@ export interface RunTemplate {
       cooldownDuration?: number;
     };
     /** WAVE1-STRIDES: relaxed-fast accelerations closing an easy run
-     *  (Daniels). Inert to the players until the structured-session
-     *  work lands; the description carries the instruction meanwhile. */
+     *  (Daniels). The pre-run structure preview renders these
+     *  (runSegments.ts); the in-run players adopt them in the
+     *  follow-up slice. */
     strides?: { reps: number; workSeconds: number };
+    /** STRUCT-SESS-01: the tempo session's real structure — previously
+     *  PROSE in the description that nothing implemented. Segment sums
+     *  must equal estimatedDuration (pinned in runSegments tests). */
+    tempo?: {
+      warmupSec: number;
+      workSecs: number[];
+      floatSec?: number;
+      cooldownSec: number;
+    };
   };
 }
 
@@ -134,7 +144,10 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     icon: "zap",
     description: "5 min warmup → 20 min tempo → 5 min cooldown",
     estimatedDuration: 30,
-    config: { targetPace: 270 },
+    config: {
+      targetPace: 270,
+      tempo: { warmupSec: 300, workSecs: [1200], cooldownSec: 300 },
+    },
   },
   {
     id: "tempo_30",
@@ -143,7 +156,10 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     icon: "zap",
     description: "10 min warmup → 30 min tempo → 5 min cooldown",
     estimatedDuration: 45,
-    config: { targetPace: 270 },
+    config: {
+      targetPace: 270,
+      tempo: { warmupSec: 600, workSecs: [1800], cooldownSec: 300 },
+    },
   },
   {
     id: "tempo_40",
@@ -152,7 +168,15 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     icon: "zap",
     description: "10 min warmup → 2×20 min tempo, 3 min float → 5 min cooldown",
     estimatedDuration: 58,
-    config: { targetPace: 270 },
+    config: {
+      targetPace: 270,
+      tempo: {
+        warmupSec: 600,
+        workSecs: [1200, 1200],
+        floatSec: 180,
+        cooldownSec: 300,
+      },
+    },
   },
   // Interval ladder. Same principle: reps grow, the rep pace does not.
   {

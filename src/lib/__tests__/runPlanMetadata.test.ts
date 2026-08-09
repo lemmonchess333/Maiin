@@ -113,6 +113,53 @@ describe("computePlanMetadata — programme today_plan", () => {
     expect(prefill.target).toEqual({ type: "distance", value: 10000 });
   });
 
+  it("STRUCT-SESS-01: tempo and strides prefills carry canonical segments", () => {
+    // Tempo: the promoted structure rides the prefill, with the resolved
+    // target pace on the work blocks.
+    const tempoDay = [makeRunDay(MONDAY, "tempo_20", "tempo")];
+    const tempo = computePlanMetadata({
+      profileRunMode: "race_prep",
+      todayDayIndex: MONDAY,
+      runPlan: racePlan,
+      runDays: tempoDay,
+      urlTemplateId: null,
+      urlType: null,
+    });
+    const tempoSegs = tempo.prefill.segments!;
+    expect(tempoSegs.map((seg) => seg.type)).toEqual([
+      "warmup",
+      "moderate",
+      "cooldown",
+    ]);
+    expect(tempoSegs[1].paceTarget).toBe(tempo.prefill.target?.value);
+
+    // Strides: the easy variant decomposes into easy + stride/walk pairs.
+    const strideDay = [makeRunDay(MONDAY, "easy_40_strides", "easy")];
+    const strides = computePlanMetadata({
+      profileRunMode: "race_prep",
+      todayDayIndex: MONDAY,
+      runPlan: racePlan,
+      runDays: strideDay,
+      urlTemplateId: null,
+      urlType: null,
+    });
+    const strideSegs = strides.prefill.segments!;
+    expect(strideSegs[0].type).toBe("easy");
+    expect(strideSegs.filter((seg) => seg.type === "hard")).toHaveLength(4);
+
+    // Plain easy: NO segments — unstructured stays unstructured.
+    const plainDay = [makeRunDay(MONDAY, "easy_30", "easy")];
+    const plain = computePlanMetadata({
+      profileRunMode: "race_prep",
+      todayDayIndex: MONDAY,
+      runPlan: racePlan,
+      runDays: plainDay,
+      urlTemplateId: null,
+      urlType: null,
+    });
+    expect(plain.prefill.segments).toBeUndefined();
+  });
+
   it("structured user gets prefill with a structured-mode strip", () => {
     const days = [makeRunDay(TUESDAY, "tempo_20", "tempo")];
     const { metadata, prefill } = computePlanMetadata({

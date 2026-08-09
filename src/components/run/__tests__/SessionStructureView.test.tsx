@@ -1,63 +1,65 @@
 /**
- * PR-setup: SessionStructureView contract.
+ * STRUCT-SESS-01: SessionStructureView contract, over the canonical
+ * `SessionSegment[]` (runSegments.ts).
  *
  * Pinned here:
- *   - intervals with warmup + cooldown render 3 blocks (Warm-up,
- *     main reps line, Cool-down) in order.
- *   - intervals without warmup/cooldown render only the main line.
- *   - main line includes reps × distance and the pace suffix when
- *     workPace is set; omits the pace suffix when not set.
- *   - guided workout renders one block per segment with the segment
- *     label and the formatted duration in minutes.
+ *   - the component is a single map over segments — one block per
+ *     segment, in order, colored by segment type;
+ *   - interval sessions render per-rep rows (the row count IS the
+ *     honest preview), with the pace suffix when workPace is set;
+ *   - guided workouts render label + duration + instruction;
+ *   - empty segments render nothing.
  */
 import { describe, it, expect } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import { afterEach } from "vitest";
 import SessionStructureView from "../SessionStructureView";
+import {
+  segmentsFromGuided,
+  segmentsFromIntervals,
+} from "@/lib/runSegments";
 import type { GuidedRunWorkout } from "@/lib/guidedRun";
 
 afterEach(() => cleanup());
 
 describe("SessionStructureView — intervals", () => {
-  it("renders warmup + main + cooldown blocks with pace suffix", () => {
+  it("renders warmup, per-rep work/recovery rows, and cooldown in order", () => {
     render(
       <SessionStructureView
-        kind="intervals"
-        intervals={{
+        segments={segmentsFromIntervals({
           reps: 5,
           workDistance: 1000,
           workPace: 270,
           restDuration: 90,
           warmupDuration: 600,
           cooldownDuration: 300,
-        }}
+        })}
       />
     );
     expect(screen.getByText("Warm-up")).toBeInTheDocument();
-    expect(screen.getByText("10 min easy")).toBeInTheDocument();
-    expect(screen.getByText("5 × 1K @ 4:30/km")).toBeInTheDocument();
-    expect(
-      screen.getByText("1m 30s recovery between reps")
-    ).toBeInTheDocument();
+    expect(screen.getByText("10 min · Easy jogging")).toBeInTheDocument();
+    // Per-rep rows: 5 work rows with the pace suffix, 4 recoveries.
+    expect(screen.getAllByText("1K @ 4:30/km")).toHaveLength(5);
+    expect(screen.getByText(/Rep 1 of 5/)).toBeInTheDocument();
+    expect(screen.getAllByText("Recover")).toHaveLength(4);
     expect(screen.getByText("Cool-down")).toBeInTheDocument();
-    expect(screen.getByText("5 min easy")).toBeInTheDocument();
+    expect(screen.getByText("5 min · Easy jogging")).toBeInTheDocument();
   });
 
   it("omits warmup + cooldown when not set, and pace when missing", () => {
     render(
       <SessionStructureView
-        kind="intervals"
-        intervals={{
+        segments={segmentsFromIntervals({
           reps: 4,
           workDistance: 400,
           restDuration: 60,
-        }}
+        })}
       />
     );
     expect(screen.queryByText("Warm-up")).not.toBeInTheDocument();
     expect(screen.queryByText("Cool-down")).not.toBeInTheDocument();
-    expect(screen.getByText("4 × 400m")).toBeInTheDocument();
-    expect(screen.getByText("1m recovery between reps")).toBeInTheDocument();
+    expect(screen.getAllByText("400m")).toHaveLength(4);
+    expect(screen.getAllByText("Recover")).toHaveLength(3);
   });
 });
 
@@ -91,7 +93,7 @@ describe("SessionStructureView — guided", () => {
         },
       ],
     };
-    render(<SessionStructureView kind="guided" workout={workout} />);
+    render(<SessionStructureView segments={segmentsFromGuided(workout)} />);
     expect(screen.getByText("Warm Up")).toBeInTheDocument();
     expect(screen.getByText("5 min · Easy jog")).toBeInTheDocument();
     expect(screen.getByText("Easy Run")).toBeInTheDocument();
@@ -100,5 +102,10 @@ describe("SessionStructureView — guided", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Cool Down")).toBeInTheDocument();
     expect(screen.getByText("5 min · Walk to finish")).toBeInTheDocument();
+  });
+
+  it("renders nothing for empty segments", () => {
+    const { container } = render(<SessionStructureView segments={[]} />);
+    expect(container.firstChild).toBeNull();
   });
 });
