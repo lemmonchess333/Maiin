@@ -369,6 +369,15 @@ full-document exception); if the command boundary ever closes over
 configurePlan, this belongs in a `represcribeFocus` command reusing
 the existing `functions/lib/represcribe.js` mirror.
 
+STATUS 2026-08-09, merge-cascade close-out (PR #1888, merged to main):
+LIFT-EV-01 RESOLVED — all four consecutiveFailures decrement sites
+(double/linear × bodyweight/weighted, client programEngine + server
+progressionEngine mirror) gained the seconds branch: bodyweight timed
+holds shorten by HOLD_STEP_SECONDS to a named MIN_HOLD_SECONDS floor
+(10s); weighted holds deliberately keep cutting load at held duration.
+Client and server changed in one commit; the ~124k-case
+applyProgression cross test enforces the mirror.
+
 | ID / state                        | Issue                                                                                                                                                                                                                        | Required outcome                                                                                                                                                                                                                  |
 | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | LIFT-EV-01 — P1, ready correction | Timed-hold repeated failure is still repetition-shaped in the client and server progression mirrors. First trace: programEngine, progressionEngine, and their cross/engine tests.                                            | Define a seconds-specific decrement and floor; test linear and double paths, range caps/floors, history, labels, and client/server parity.                                                                                        |
