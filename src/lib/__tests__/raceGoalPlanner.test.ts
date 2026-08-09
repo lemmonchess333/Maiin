@@ -177,6 +177,10 @@ describe("raceTargetVerdict — A2 feasibility (display register)", () => {
     const line = at(1130).line;
     expect(line).toMatch(/Tropos estimate, not a promise/);
     expect(line).not.toMatch(/guarantee|will run|safe/i);
+    // A2 feasibility gate: ONLY the long_shot line carries the pace-hold
+    // note (the enrichment gate declines the goal pace on the same band).
+    expect(at(1090).line).toMatch(/paces stay on your current fitness/i);
+    expect(at(1130).line).not.toMatch(/paces stay on your current fitness/i);
   });
 
   it("goal pace is the target spread over the distance", () => {

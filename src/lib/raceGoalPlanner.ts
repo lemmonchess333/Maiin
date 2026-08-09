@@ -31,7 +31,9 @@ import {
 import { raceDistanceLabel } from "./runProgrammeViewModel";
 import {
   paceTableFromFitness,
+  raceTargetBand,
   vdotFromRace,
+  type RaceTargetBand,
   type RunFitnessInput,
 } from "./runPaces";
 import { paceMinSec } from "./runLabels";
@@ -241,8 +243,8 @@ export function getRaceGoalPlannerState(
  * planner then simply says nothing.
  */
 export interface RaceTargetVerdict {
-  /** "on_track" | "within_reach" | "stretch" | "long_shot" */
-  band: "on_track" | "within_reach" | "stretch" | "long_shot";
+  /** Banded on the shared scale in runPaces (`raceTargetBand`). */
+  band: RaceTargetBand;
   /** Goal pace, s/km — the target time spread over the distance. */
   goalPaceS: number;
   targetVdot: number;
@@ -273,22 +275,22 @@ export function raceTargetVerdict(input: {
   const currentVdot = table.vdot;
   const goalPaceS = targetTimeS / (meters / 1000);
   const gap = targetVdot - currentVdot;
-  let band: RaceTargetVerdict["band"];
-  let phrase: string;
-  if (gap <= 0) {
-    band = "on_track";
-    phrase = "your recent running already implies this shape";
-  } else if (gap <= 2) {
-    band = "within_reach";
-    phrase = "within reach of your recent running";
-  } else if (gap <= 4) {
-    band = "stretch";
-    phrase = "a stretch beyond your recent running";
-  } else {
-    band = "long_shot";
-    phrase = "well beyond what your recent running implies";
-  }
-  const line = `Goal pace ${paceMinSec(Math.round(goalPaceS))}/km · ${phrase} (target fitness ${targetVdot.toFixed(1)} vs current ${currentVdot.toFixed(1)} — a Tropos estimate, not a promise).`;
+  const band = raceTargetBand(gap);
+  const phrase: Record<RaceTargetBand, string> = {
+    on_track: "your recent running already implies this shape",
+    within_reach: "within reach of your recent running",
+    stretch: "a stretch beyond your recent running",
+    long_shot: "well beyond what your recent running implies",
+  };
+  // A2 feasibility gate: on long_shot the prefill declines to prescribe
+  // the goal pace (resolveRaceEnrichment gates on the SAME band scale),
+  // so the verdict says so — the one honest line explaining why sessions
+  // keep their fitness-derived paces.
+  const holdNote =
+    band === "long_shot"
+      ? " Training paces stay on your current fitness until the gap closes."
+      : "";
+  const line = `Goal pace ${paceMinSec(Math.round(goalPaceS))}/km · ${phrase[band]} (target fitness ${targetVdot.toFixed(1)} vs current ${currentVdot.toFixed(1)} — a Tropos estimate, not a promise).${holdNote}`;
   return {
     band,
     goalPaceS,

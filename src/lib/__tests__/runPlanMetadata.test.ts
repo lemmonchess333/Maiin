@@ -10,6 +10,7 @@
  */
 import { describe, it, expect } from "vitest";
 import { paceTableFromFitness } from "../runPaces";
+import { raceTargetVerdict } from "../raceGoalPlanner";
 import {
   computePlanMetadata,
   finalisePlanMetadata,
@@ -1386,5 +1387,84 @@ describe("A2 — the goal time turns into training", () => {
     // 20K → 7K block (round(20/3)).
     expect(segs[1].target).toEqual({ kind: "distance", meters: 7000 });
     expect(segs[0].target).toEqual({ kind: "distance", meters: 13000 });
+  });
+});
+
+describe("A2 — the long-shot feasibility gate", () => {
+  // 20:00 5K benchmark ≈ VDOT 49.8; the FULL table's vdot is what Run.tsx
+  // feeds as currentVdot.
+  const fitness = { benchmark: { distanceM: 5000, timeS: 1200 }, vdot: null };
+  const currentVdot = paceTableFromFitness(fitness)!.vdot;
+  const halfPlan: RunPlan = {
+    mode: "race_prep",
+    raceGoal: { distance: "half", targetDate: farFutureDate(70) },
+    totalWeeks: 10,
+    currentWeek: 5, // build
+  };
+  const buildLong = [makeRunDay(MONDAY, "long_15k", "long")];
+  const buildTempo = [makeRunDay(MONDAY, "tempo_20", "tempo")];
+  const compute = (
+    runDays: ScheduledRunDay[],
+    targetTimeS: number,
+    vdot: number | null
+  ) =>
+    computePlanMetadata({
+      profileRunMode: "race_prep",
+      todayDayIndex: MONDAY,
+      runPlan: halfPlan,
+      runDays,
+      urlTemplateId: null,
+      urlType: null,
+      raceTarget: { distance: "half", targetTimeS, currentVdot: vdot },
+    });
+
+  it("a long-shot goal is never prescribed — sessions keep fitness paces", () => {
+    // 1:20 half for a 20:00-5K runner. The ORACLE for "this fixture is a
+    // long shot" is the verdict itself (its bands are pinned against
+    // literals elsewhere) — not the gate's own math, so this is not a
+    // tautology.
+    const LONG_SHOT_HALF = 80 * 60;
+    expect(
+      raceTargetVerdict({
+        distance: "half",
+        targetTimeS: LONG_SHOT_HALF,
+        runFitness: fitness,
+      })!.band
+    ).toBe("long_shot");
+
+    const long = compute(buildLong, LONG_SHOT_HALF, currentVdot);
+    expect(long.prefill.segments).toBeUndefined();
+    const tempo = compute(buildTempo, LONG_SHOT_HALF, currentVdot);
+    // Threshold pace from the template fallback path, NOT 1:20-half pace
+    // (~227 s/km).
+    expect(tempo.prefill.target?.value).not.toBe(227);
+    const block = tempo.prefill.segments!.find((s) => s.type === "moderate")!;
+    expect(block.pacePinned).toBeUndefined();
+  });
+
+  it("an achievable goal still enriches (oracle-checked not long_shot)", () => {
+    // 1:35 half (~4:30/km) is at/near what the benchmark already implies.
+    const FAIR_HALF = 95 * 60;
+    expect(
+      raceTargetVerdict({
+        distance: "half",
+        targetTimeS: FAIR_HALF,
+        runFitness: fitness,
+      })!.band
+    ).not.toBe("long_shot");
+
+    const long = compute(buildLong, FAIR_HALF, currentVdot);
+    expect(long.prefill.segments!.map((s) => s.type)).toEqual([
+      "easy",
+      "moderate",
+    ]);
+  });
+
+  it("with no benchmark there is nothing to judge against — the goal stands", () => {
+    const long = compute(buildLong, 80 * 60, null);
+    expect(long.prefill.segments!.map((s) => s.type)).toEqual([
+      "easy",
+      "moderate",
+    ]);
   });
 });

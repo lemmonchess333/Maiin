@@ -19,7 +19,12 @@
 
 import { RUN_TEMPLATES, type RunTemplate } from "./workoutTemplates";
 import { localDateString } from "./dateHelpers";
-import { resolveSessionPaces, type PaceTable } from "./runPaces";
+import {
+  raceTargetBand,
+  resolveSessionPaces,
+  vdotFromRace,
+  type PaceTable,
+} from "./runPaces";
 import {
   racePaceBlockKm,
   segmentsFromEasyWithStrides,
@@ -242,6 +247,18 @@ export interface ComputePlanInputs {
   raceTarget?: {
     distance: "5k" | "10k" | "half" | "marathon";
     targetTimeS: number;
+    /**
+     * A2 feasibility gate — the runner's current VDOT from the FULL
+     * fitness read (`paceTableFromFitness(...)?.vdot`), the same tier the
+     * verdict surface uses, so the verdict's "long shot" and this gate's
+     * "decline the pace" can never disagree for the same user. When the
+     * gap lands `long_shot` on the shared band scale, enrichment is
+     * withheld entirely (Daniels: train from current fitness, not
+     * aspiration — Garmin Coach refuses such targets outright). Null /
+     * absent = no benchmark = nothing to judge the goal against, so the
+     * goal pace stands (Runna's cold-start behaviour).
+     */
+    currentVdot?: number | null;
   } | null;
   /**
    * P0-6: `?scheduledRunId=` URL param value, if present. When set,
@@ -722,6 +739,19 @@ function resolveRaceEnrichment(
     plan.totalWeeks <= 0
   ) {
     return null;
+  }
+  // Feasibility gate (see the `currentVdot` doc above): a long-shot goal
+  // must not set training paces. Sessions fall back to their
+  // fitness-derived / template paces; the verdict line in the race-plan
+  // editor tells the user this is happening.
+  if (typeof target.currentVdot === "number" && target.currentVdot > 0) {
+    const targetVdot = vdotFromRace(
+      RACE_GOAL_KM[target.distance] * 1000,
+      target.targetTimeS
+    );
+    if (raceTargetBand(targetVdot - target.currentVdot) === "long_shot") {
+      return null;
+    }
   }
   return {
     distance: target.distance,

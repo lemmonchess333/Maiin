@@ -23,6 +23,7 @@ import {
 } from "../lib/gps";
 import { getDistanceTargetMeters } from "../lib/runConfigUnits";
 import {
+  paceTableFromFitness,
   prescriptivePaceTableFromFitness,
   resolveSessionPaces,
 } from "../lib/runPaces";
@@ -507,6 +508,11 @@ export default function Run() {
         ? {
             distance: profile.raceGoal.distance,
             targetTimeS: profile.raceGoal.targetTimeS,
+            // Feasibility gate reads the FULL fitness (the verdict's tier,
+            // deliberately not the consent-gated prescriptive table) — see
+            // the field doc in runPlanMetadata.
+            currentVdot:
+              paceTableFromFitness(profile?.runFitness ?? null)?.vdot ?? null,
           }
         : null,
     });
