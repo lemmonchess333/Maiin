@@ -71,6 +71,12 @@ const ALLOWED: Record<string, string> = {
     "deleted in #1733, cited as history",
   // Superseded surface, cited as the thing that was replaced.
   "src/lib/healthScore.ts": "superseded surface, cited as history",
+  // Synthetic hashed-asset URL inside serviceWorkerContract.test.ts's
+  // executed-SW fixture — it must LOOK like a Vite asset to route into
+  // the cache-first branch, and deliberately names no real file (a real
+  // hash would rot on every build).
+  "4173/Maiin/assets/index-abc123.js":
+    "synthetic fixture URL in the executed-SW test, names no real file",
 };
 
 function sourceFiles(dir: string, out: string[] = []): string[] {
