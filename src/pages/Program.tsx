@@ -96,6 +96,7 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { track as trackProgrammeEvent } from "@/lib/programmeAnalytics";
 import TrackProgrammeSectionView from "@/components/program/TrackProgrammeSectionView";
 import DeloadBanner from "@/components/program/DeloadBanner";
+import RecoveryReductionBanner from "@/components/program/RecoveryReductionBanner";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { resolveRunPlan } from "@/lib/runPlanResolver";
 import { runHeaderLine } from "@/lib/runHeaderLine";
@@ -156,6 +157,7 @@ function ProgramInner() {
     dismissFellBehindPrompt,
     applyDeloadWeek,
     revertDeloadWeek,
+    undoRecoveryReduction,
     startTrainingBlock,
     releaseTrainingBlock,
     keepTrainingBlockFocus,
@@ -1063,7 +1065,26 @@ function ProgramInner() {
               visible={!!perfWeek?.flags?.deloadRecommended}
               weekKey={`w${displayWeekNumber}`}
               deloadActive={programState.currentPhase === "deload"}
+              experience={profile?.experience}
               onApply={handleApplyDeload}
+            />
+          </TrackProgrammeSectionView>
+
+          {/* LIFT-EV-05: the rollover's automatic recovery reduction
+              (sets/reps halved for regressing muscles) was invisible —
+              this surfaces it with honest copy and a one-tap restore.
+              Week-level signal, same placement rationale as the deload
+              banner above. */}
+          <TrackProgrammeSectionView section="recovery_banner">
+            <RecoveryReductionBanner
+              muscles={programState.recoveringMuscles ?? []}
+              weekKey={`w${displayWeekNumber}`}
+              onUndo={async () => {
+                const ok = await undoRecoveryReduction();
+                if (ok) toast.success("Full volume restored for this week");
+                else toast.error("Couldn't restore volume. Try again.");
+                return ok;
+              }}
             />
           </TrackProgrammeSectionView>
 

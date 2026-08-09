@@ -100,7 +100,7 @@ import { useClaimMap } from "@/hooks/useClaimMap";
 import { haptic } from "@/lib/haptic";
 import { resolveDayPagerDelta } from "@/lib/dayPagerSwipe";
 import {
-  paceTableFromFitness,
+  prescriptivePaceTableFromFitness,
   resolveSessionPaces,
   raceDistanceKeyFromKm,
 } from "@/lib/runPaces";
@@ -663,7 +663,7 @@ export default function ProgrammeRunSection({
   // benchmark (the run then shows distance/type only, as before).
   const selectedPaceLabel: string | null = (() => {
     if (!selectedTemplate) return null;
-    const table = paceTableFromFitness(profile.runFitness ?? null);
+    const table = prescriptivePaceTableFromFitness(profile.runFitness ?? null);
     if (!table) return null;
     return sessionPaceDisplay(
       resolveSessionPaces(selectedTemplate.type, table, {

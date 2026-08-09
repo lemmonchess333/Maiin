@@ -2,13 +2,13 @@ import { describe, it, expect } from "vitest";
 import { realignResultMessage } from "../realignCopy";
 
 describe("realignResultMessage", () => {
-  it("below-floor → the fixed honest finish-safely line (names the risk, no PR promise)", () => {
+  it("below-floor → the fixed honest mostly-easy line (names the risk, no PR promise)", () => {
     const msg = realignResultMessage({
       timing: "below-floor",
       distance: "marathon",
       totalWeeks: 3,
     });
-    expect(msg).toMatch(/finish-safely/i);
+    expect(msg).toMatch(/mostly-easy/i);
     expect(msg).toMatch(/all easy/i);
     expect(msg).toMatch(/marathon/);
     expect(msg).toMatch(/not to PR/i); // honest: finish, don't expect a PR
@@ -41,7 +41,11 @@ describe("realignResultMessage", () => {
       realignResultMessage({ timing: "healthy", distance: "5k", totalWeeks: 4 })
     ).toMatch(/5K/);
     expect(
-      realignResultMessage({ timing: "healthy", distance: "half", totalWeeks: 8 })
+      realignResultMessage({
+        timing: "healthy",
+        distance: "half",
+        totalWeeks: 8,
+      })
     ).toMatch(/half marathon/);
   });
 });
