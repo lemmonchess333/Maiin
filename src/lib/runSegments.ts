@@ -41,6 +41,13 @@ export interface SessionSegment {
   paceTarget?: number;
   rep?: number;
   totalReps?: number;
+  /** The effort half of the label without any pace suffix ("1K",
+   *  "20 min tempo") — lets the in-run shell re-suffix with the live
+   *  personalized BAND (#18's band-first display rule). */
+  effort?: string;
+  /** STRUCT-SESS-02: the spoken line announced when this segment starts.
+   *  Authored by the builders (they own the copy); absent = silent. */
+  cue?: string;
 }
 
 export interface IntervalShape {
@@ -93,6 +100,7 @@ export function segmentsFromIntervals(
       label: "Warm-up",
       instruction: "Easy jogging",
       target: { kind: "duration", seconds: shape.warmupDuration },
+      cue: "Warming up. Keep it easy and conversational.",
     });
   }
   const pace = shape.workPace ? ` @ ${paceMinSec(shape.workPace)}/km` : "";
@@ -107,6 +115,8 @@ export function segmentsFromIntervals(
       ...(shape.workPace ? { paceTarget: shape.workPace } : {}),
       rep,
       totalReps: shape.reps,
+      effort: workLabel(shape),
+      cue: `Rep ${rep} of ${shape.reps}. Push on!`,
     });
     if (rep < shape.reps) {
       out.push({
@@ -116,6 +126,7 @@ export function segmentsFromIntervals(
         target: { kind: "duration", seconds: shape.restDuration },
         rep,
         totalReps: shape.reps,
+        cue: "Recovery. Shake it out — nice easy jog.",
       });
     }
   }
@@ -125,6 +136,7 @@ export function segmentsFromIntervals(
       label: "Cool-down",
       instruction: "Easy jogging",
       target: { kind: "duration", seconds: shape.cooldownDuration },
+      cue: "Cooling down. Nice and easy from here.",
     });
   }
   return out;
@@ -140,6 +152,7 @@ export function segmentsFromTempo(
     label: "Warm-up",
     instruction: "Easy jogging",
     target: { kind: "duration", seconds: shape.warmupSec },
+    cue: "Warming up. Keep it easy and conversational.",
   });
   const pace = paceTarget ? ` @ ${paceMinSec(paceTarget)}/km` : "";
   shape.workSecs.forEach((seconds, i) => {
@@ -149,6 +162,7 @@ export function segmentsFromTempo(
         label: "Float",
         instruction: `${min(shape.floatSec)} min easy between tempo blocks`,
         target: { kind: "duration", seconds: shape.floatSec },
+        cue: "Float. Easy running until the next block.",
       });
     }
     out.push({
@@ -160,6 +174,11 @@ export function segmentsFromTempo(
       ...(shape.workSecs.length > 1
         ? { rep: i + 1, totalReps: shape.workSecs.length }
         : {}),
+      effort: `${min(seconds)} min tempo`,
+      cue:
+        shape.workSecs.length > 1
+          ? `Tempo block ${i + 1} of ${shape.workSecs.length}. Comfortably hard — settle into the rhythm.`
+          : "Tempo. Comfortably hard — settle into the rhythm.",
     });
   });
   out.push({
@@ -167,6 +186,7 @@ export function segmentsFromTempo(
     label: "Cool-down",
     instruction: "Easy jogging",
     target: { kind: "duration", seconds: shape.cooldownSec },
+    cue: "Cooling down. Nice and easy from here.",
   });
   return out;
 }
@@ -189,6 +209,7 @@ export function segmentsFromEasyWithStrides(
       label: `Easy ${min(easySec)} min`,
       instruction: "Conversational pace",
       target: { kind: "duration", seconds: easySec },
+      cue: "Easy running. Conversational pace — strides at the end.",
     },
   ];
   for (let rep = 1; rep <= strides.reps; rep++) {
@@ -199,6 +220,8 @@ export function segmentsFromEasyWithStrides(
       target: { kind: "duration", seconds: strides.workSeconds },
       rep,
       totalReps: strides.reps,
+      effort: `Stride ${rep} of ${strides.reps}`,
+      cue: `Stride ${rep} of ${strides.reps}. Relaxed and fast.`,
     });
     out.push({
       type: "recovery",
@@ -207,6 +230,7 @@ export function segmentsFromEasyWithStrides(
       target: { kind: "duration", seconds: STRIDE_RECOVERY_SECONDS },
       rep,
       totalReps: strides.reps,
+      cue: "Walk it back. Full recovery.",
     });
   }
   return out;
@@ -220,6 +244,7 @@ export function segmentsFromGuided(
     label: seg.label,
     instruction: seg.instruction,
     target: { kind: "duration", seconds: seg.durationSeconds },
+    cue: `${seg.label}. ${seg.instruction}`,
   }));
 }
 

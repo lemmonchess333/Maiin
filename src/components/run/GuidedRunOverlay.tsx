@@ -1,31 +1,28 @@
 import { getSegmentColor } from "@/lib/guidedRun";
+import { segmentsDurationSeconds } from "@/lib/runSegments";
+import type { SessionPlayer } from "@/hooks/useSessionPlayer";
 import { THEME } from "@/lib/theme";
-import type { RunSegment } from "@/lib/guidedRun";
 
-interface Props {
-  currentSegment: RunSegment | null;
-  nextSegment: RunSegment | null;
-  timeRemaining: number;
-  segmentProgress: number;
-  totalProgress: number;
-  isComplete: boolean;
-}
+/**
+ * STRUCT-SESS-03: the guided overlay now consumes the ONE session player
+ * (`useSessionPlayer`) instead of the deleted `useGuidedRun` — same visual,
+ * one structure engine. Guided segments are all duration-based, so the
+ * whole-session progress bar derives from the duration sums.
+ */
 
 function formatTime(secs: number): string {
-  const m = Math.floor(secs / 60);
-  const s = secs % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
+  const s = Math.max(0, Math.round(secs));
+  const m = Math.floor(s / 60);
+  return `${m}:${(s % 60).toString().padStart(2, "0")}`;
 }
 
 export default function GuidedRunOverlay({
-  currentSegment,
-  nextSegment,
-  timeRemaining,
-  segmentProgress,
-  totalProgress,
-  isComplete,
-}: Props) {
-  if (!currentSegment && !isComplete) return null;
+  player,
+}: {
+  player: SessionPlayer;
+}) {
+  const { segments, state, current, next, isComplete } = player;
+  if (!current && !isComplete) return null;
 
   if (isComplete) {
     return (
@@ -44,9 +41,19 @@ export default function GuidedRunOverlay({
     );
   }
 
-  const segColor = currentSegment
-    ? getSegmentColor(currentSegment.type)
-    : THEME.brand;
+  const segColor = current ? getSegmentColor(current.type) : THEME.brand;
+  const segTarget =
+    current?.target.kind === "duration" ? current.target.seconds : 0;
+  const timeRemaining = Math.max(0, segTarget - state.phaseElapsed);
+  const segmentProgress =
+    segTarget > 0 ? Math.min(1, state.phaseElapsed / segTarget) : 0;
+  const totalSec = segmentsDurationSeconds(segments);
+  const doneSec =
+    segmentsDurationSeconds(segments.slice(0, Math.max(0, state.index))) +
+    state.phaseElapsed;
+  const totalProgress = totalSec > 0 ? Math.min(1, doneSec / totalSec) : 0;
+  const nextTarget =
+    next?.target.kind === "duration" ? next.target.seconds : 0;
 
   return (
     <div
@@ -80,7 +87,7 @@ export default function GuidedRunOverlay({
               style={{ background: segColor }}
             />
             <span className="text-sm font-bold text-white">
-              {currentSegment?.label}
+              {current?.label}
             </span>
           </div>
           <span className="text-2xl font-extrabold font-mono tabular-nums text-white">
@@ -89,7 +96,7 @@ export default function GuidedRunOverlay({
         </div>
 
         {/* Instruction */}
-        <p className="text-xs text-white/70">{currentSegment?.instruction}</p>
+        <p className="text-xs text-white/70">{current?.instruction}</p>
 
         {/* Segment progress bar */}
         <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
@@ -100,13 +107,11 @@ export default function GuidedRunOverlay({
         </div>
 
         {/* Up next */}
-        {nextSegment && (
+        {next && (
           <p className="text-xs text-white/50">
             Up next:{" "}
-            <span className="text-white/70 font-medium">
-              {nextSegment.label}
-            </span>{" "}
-            — {formatTime(nextSegment.durationSeconds)}
+            <span className="text-white/70 font-medium">{next.label}</span> —{" "}
+            {formatTime(nextTarget)}
           </p>
         )}
       </div>
