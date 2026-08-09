@@ -166,4 +166,43 @@ describe("DeloadBanner", () => {
     ).toBeNull();
     expect(screen.queryByLabelText(/Dismiss deload banner/i)).toBeNull();
   });
+
+  /* Active copy must describe the recipe the deload actually applied
+     (backlog #8 tier split, mirrored client + server): beginner/unknown
+     cuts a set AND load; intermediate/advanced cuts a set and targets at
+     HELD load. The old fixed "lighter weights" sentence was false for
+     every post-novice user (evidence-handoff LIFT-EV-03). Both matrices
+     assert the WRONG tier's sentence absent, not just the right one
+     present — the copy must never say two contradictory things. */
+  it.each(["beginner", undefined] as const)(
+    "active copy for %s promises lighter weights (the novice recipe cuts load)",
+    (experience) => {
+      render(
+        <DeloadBanner
+          visible
+          weekKey="w20"
+          deloadActive
+          experience={experience}
+        />
+      );
+      expect(screen.getByText(/lighter weights/i)).toBeInTheDocument();
+      expect(screen.queryByText(/at the same weights/i)).toBeNull();
+    }
+  );
+
+  it.each(["intermediate", "advanced"] as const)(
+    "active copy for %s says same weights, lower volume (the post-novice recipe holds load)",
+    (experience) => {
+      render(
+        <DeloadBanner
+          visible
+          weekKey="w21"
+          deloadActive
+          experience={experience}
+        />
+      );
+      expect(screen.getByText(/at the same weights/i)).toBeInTheDocument();
+      expect(screen.queryByText(/lighter weights/i)).toBeNull();
+    }
+  );
 });

@@ -1063,6 +1063,7 @@ function ProgramInner() {
               visible={!!perfWeek?.flags?.deloadRecommended}
               weekKey={`w${displayWeekNumber}`}
               deloadActive={programState.currentPhase === "deload"}
+              experience={profile?.experience}
               onApply={handleApplyDeload}
             />
           </TrackProgrammeSectionView>

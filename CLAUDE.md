@@ -1094,6 +1094,15 @@ Single-context. `CONTEXT.md` at repo root (seed; fill with domain
 vocabulary as it crystallises); ADRs in `docs/adr/`. See
 `docs/agents/domain.md`.
 
+Training-programming evidence handoffs (integrated 2026-08-09): start at
+`docs/training-programming-claude-handoff.md`, which indexes the lifting
+and running evidence syntheses and their open-issue ledgers
+(`LIFT-EV-xx` / `RUN-EV-xx` — deliberately distinct from the plan file's
+retention-audit `RUN-0x` and programme-audit `LIFT-0x` vocabularies).
+Read the relevant handoff before any lift/run programming change; its
+ledger rows without a dated STATUS note have not been re-verified since
+2026-08-07.
+
 Read the relevant ADR before re-deciding something it already settled —
 an audit that re-derives a locked decision is wasted effort even when it
 lands in the same place (the plan-file lock rule, applied to ADRs):
