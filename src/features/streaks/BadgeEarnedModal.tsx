@@ -409,20 +409,21 @@ function BadgeEarnedContent({
                     ))}
                   </g>
                 </svg>
-                {/* Centre lock + prompt + tap-progress dots ("Keep tapping…"
-                    gave no sense of how close the break was — the dots do). */}
+                {/* Centre lock + tap-progress dots. The prompt TEXT moved
+                    OUT of the hexagon (device QA 2026-08-09): "Tap to break
+                    the seal" at its narrowest fit ran wider than the hex's
+                    mid-band and overflowed its slanted edges. The seal face
+                    keeps only what fits — lock + dots — and the words sit
+                    below the stage where they have the card's full width. */}
                 <span
-                  className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 font-semibold pointer-events-none"
+                  className="absolute inset-0 flex flex-col items-center justify-center gap-2 font-semibold pointer-events-none"
                   style={{ color: "#fff" }}
                 >
                   <Lock
-                    className="size-6"
+                    className="size-7"
                     style={{ opacity: 0.9 }}
                     aria-hidden="true"
                   />
-                  <span className="text-xs" style={{ color: tier }}>
-                    {stage === 0 ? "Tap to break the seal" : "Keep tapping…"}
-                  </span>
                   {tapsNeeded > 1 && (
                     <span
                       className="flex items-center gap-1.5"
@@ -494,6 +495,22 @@ function BadgeEarnedContent({
             )
           )}
         </div>
+
+        {/* Pre-reveal prompt — below the seal, full card width (it used to
+            live inside the hexagon and overflow its edges). Keyed so the
+            stage change gets a soft cross-fade. */}
+        {!revealed && (
+          <motion.p
+            key={`prompt-${stage === 0 ? "start" : "more"}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.25 }}
+            className="relative z-10 text-sm font-semibold"
+            style={{ color: tier }}
+          >
+            {stage === 0 ? "Tap to break the seal" : "Keep tapping…"}
+          </motion.p>
+        )}
 
         {/* Copy — fades up only after the reveal so the moment leads. */}
         <AnimatePresence>
