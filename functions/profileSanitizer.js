@@ -313,6 +313,15 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
     if (source !== undefined) out.source = source;
     const updatedAt = cleanString(v.updatedAt, 40);
     if (updatedAt !== undefined) out.updatedAt = updatedAt;
+    // RUN-EV-08: provenance + two-tier consent flag on auto-derived
+    // benchmarks. Booleans pass through only as literal booleans.
+    const sourceRunId = cleanString(v.sourceRunId, 64);
+    if (sourceRunId !== undefined) out.sourceRunId = sourceRunId;
+    const sourceRunAt = cleanString(v.sourceRunAt, 40);
+    if (sourceRunAt !== undefined) out.sourceRunAt = sourceRunAt;
+    if (typeof v.pendingConfirmation === "boolean") {
+      out.pendingConfirmation = v.pendingConfirmation;
+    }
     return Object.keys(out).length > 0 ? out : undefined;
   },
 

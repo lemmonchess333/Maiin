@@ -48,7 +48,7 @@ import { cn } from "@/lib/utils";
 import { RUN_TEMPLATES, isScheduledRaceRunDay } from "@/lib/workoutTemplates";
 import { sessionPaceDisplay } from "@/lib/runLabels";
 import {
-  paceTableFromFitness,
+  prescriptivePaceTableFromFitness,
   resolveSessionPaces,
   raceDistanceKeyFromKm,
 } from "@/lib/runPaces";
@@ -197,7 +197,7 @@ export default function DayActionSheet({
   // only for race pace). Null when there's no benchmark.
   const selectedRunPace: string | null = (() => {
     if (!selectedRunTemplate) return null;
-    const table = paceTableFromFitness(profile?.runFitness ?? null);
+    const table = prescriptivePaceTableFromFitness(profile?.runFitness ?? null);
     if (!table) return null;
     return sessionPaceDisplay(
       resolveSessionPaces(selectedRunTemplate.type, table, {

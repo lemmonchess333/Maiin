@@ -31,8 +31,10 @@ export function realignResultMessage(input: {
   const dist = DISTANCE_LABEL[input.distance];
   switch (input.timing) {
     case "below-floor":
-      // Fixed honest finish-safely message (locked 2026-05-29).
-      return `Not enough weeks to train safely for your ${dist} — switched to a finish-safely plan: all easy runs, no hard sessions. Aim to finish strong, not to PR.`;
+      // Fixed honest below-floor message (locked 2026-05-29; label renamed
+      // "mostly-easy" per RUN-EV-05 owner decision 2026-08-09 — the old
+      // "finish-safely"/"train safely" phrasing implied a safety promise).
+      return `Not enough weeks for a full ${dist} build — switched to a mostly-easy plan: all easy runs, no hard sessions. Aim to finish strong, not to PR.`;
     case "compressible":
       return `Plan realigned — ${input.totalWeeks} weeks to your ${dist}. It's a tighter build, so expect fewer easy weeks.`;
     case "healthy":

@@ -214,9 +214,9 @@ export default function RaceCockpitCard({
           transient message and the persistent one agree. */}
       {belowFloor ? (
         <p className="text-xs text-muted-foreground">
-          Finish-safely plan — there aren&apos;t enough weeks to train safely
-          for this distance, so every session is easy running with no hard
-          sessions. Aim to finish strong, not to PR.
+          Mostly-easy plan — there aren&apos;t enough weeks for a full build at
+          this distance, so every session is easy running with no hard sessions.
+          Aim to finish strong, not to PR.
         </p>
       ) : (
         compressed && (
