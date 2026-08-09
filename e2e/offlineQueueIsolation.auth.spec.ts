@@ -54,16 +54,20 @@
  * B's drain (ShareComposerSheet's [isOnline, uid] effect → drainQueue →
  * postActivity) must post B's share and leave A's queued with no
  * A-authored activity doc existing; A's return drains A's share and
- * empties the queue. Seeding stands in for the enqueue UI deliberately:
- * the only live pre-gated enqueue path is RunSummary's (needs a full
- * GPS-run rig), while the workout paths (useProgram / Routine) can
- * never reach their catch-branch enqueue under real offline — the
- * preceding save (or postActivity itself) PARKS on the Firestore SDK's
- * pending-mutation queue rather than throwing, so `catch { if
- * (!navigator.onLine) enqueueShare }` is vestigial there. The workout
- * paths also can't complete offline at all, so no share decision is
- * lost — the uid-isolation contract lives in drainQueue, which this
- * drives end-to-end.
+ * empties the queue. Seeding stands in for the enqueue UI because the
+ * enqueue is unreachable from EVERY journey under real offline — filed
+ * as issue #1887. All three call sites sit behind an awaited Firestore
+ * write that PARKS offline (the SDK durably queues the mutation and
+ * resolves only on server ack; it never rejects for connectivity):
+ * RunSummary's correctly pre-gated `else { enqueueShare }` is behind
+ * the awaited run-doc addDoc, and the workout paths (useProgram /
+ * Routine) park at batch.commit / postActivity, whose catch-branch
+ * enqueues additionally can't fire because a parked addDoc never
+ * throws. No share decision is silently lost — the paths that can't
+ * enqueue also can't complete their save offline — but the queue is
+ * drain-only machinery until #1887 lands. The uid-isolation contract
+ * lives in drainQueue, which this drives end-to-end; once #1887 makes
+ * the enqueue reachable, the RunSummary journey belongs in this spec.
  *
  * Fixture: two brand-new accounts minted through the real signup form,
  * `onboardingComplete` patched via the emulator's rules-free REST
