@@ -254,6 +254,57 @@ describe("RunPlanSettings", () => {
     expect(payload.programState.runDays ?? []).toHaveLength(0);
   });
 
+  it("A2: a goal time rides the raceGoal and shows the feasibility register", async () => {
+    // Confirmed benchmark → the verdict line renders as the user types.
+    const profile = {
+      ...baseProfile,
+      runFitness: {
+        benchmark: { distanceM: 5000, timeS: 1200 },
+        vdot: 49.8,
+        source: "manual",
+        updatedAt: "2026-08-01T00:00:00.000Z",
+      },
+    } as unknown as UserProfile;
+    renderPage(profile);
+    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
+    fireEvent.change(date, { target: { value: "2027-01-01" } });
+    const time = screen.getByLabelText(/Goal time \(optional\)/i);
+    fireEvent.change(time, { target: { value: "19:30" } });
+
+    // Honest register, on screen.
+    expect(
+      await screen.findByText(/Tropos estimate, not a promise/i)
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Save .*plan/i })
+    );
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    expect(sentPayload().profileUpdates.raceGoal).toMatchObject({
+      targetTimeS: 19 * 60 + 30,
+    });
+  });
+
+  it("A2: a malformed goal time blocks the save with a hint; empty stays absent", async () => {
+    renderPage(baseProfile);
+    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
+    fireEvent.change(date, { target: { value: "2027-01-01" } });
+    const time = screen.getByLabelText(/Goal time \(optional\)/i);
+    fireEvent.change(time, { target: { value: "abc" } });
+    expect(screen.getByText(/Enter a time like/i)).toBeInTheDocument();
+    // Clear it — save proceeds and the key is OMITTED.
+    fireEvent.change(time, { target: { value: "" } });
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Save .*plan/i })
+    );
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    expect(
+      "targetTimeS" in sentPayload().profileUpdates.raceGoal!
+    ).toBe(false);
+  });
+
   it("Door 1: a valid deep-link seeds race prep and saves the eventSpaceId binding", async () => {
     const race = firstUpcomingRace();
     renderPage(

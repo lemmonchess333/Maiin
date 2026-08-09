@@ -254,6 +254,9 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
       // pinned space-id list — an unknown id is dropped, so the field can
       // only ever point at a space the deletion sweep + rules know about.
       eventSpaceId: (d) => cleanEnum(d, SPACE_IDS),
+      // A2: goal finish time in seconds — 10 minutes to 12 hours covers
+      // every supported distance at any honest pace.
+      targetTimeS: (d) => cleanNumber(d, { min: 600, max: 43200 }),
     }),
 
   injuries: cleanInjuries,

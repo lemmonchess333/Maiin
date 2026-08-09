@@ -48,6 +48,14 @@ export interface SessionSegment {
   /** STRUCT-SESS-02: the spoken line announced when this segment starts.
    *  Authored by the builders (they own the copy); absent = silent. */
   cue?: string;
+  /** A2: builder-authored eyebrow label for the in-run shell (e.g.
+   *  "RACE PACE"). Absent = the shell derives one from type/rep. */
+  eyebrow?: string;
+  /** A2: true when this segment's `paceTarget` IS the prescription (the
+   *  user's own goal pace) — the shell must NOT re-suffix it with the
+   *  fitness-derived band (#18's band-first rule applies to template
+   *  paces that a benchmark supersedes, not to a user-declared goal). */
+  pacePinned?: boolean;
 }
 
 export interface IntervalShape {
@@ -144,7 +152,13 @@ export function segmentsFromIntervals(
 
 export function segmentsFromTempo(
   shape: TempoShape,
-  paceTarget?: number
+  paceTarget?: number,
+  opts?: {
+    /** A2: the paceTarget is the user's GOAL race pace (half/marathon
+     *  race prep), not a fitness-derived threshold — cues say so and
+     *  the pace is pinned against band re-suffixing. */
+    atGoalPace?: boolean;
+  }
 ): SessionSegment[] {
   const out: SessionSegment[] = [];
   out.push({
@@ -165,18 +179,29 @@ export function segmentsFromTempo(
         cue: "Float. Easy running until the next block.",
       });
     }
+    const atGoal = opts?.atGoalPace && paceTarget;
     out.push({
       type: "moderate",
-      label: `${min(seconds)} min tempo${pace}`,
-      instruction: "Comfortably hard — hold the rhythm",
+      label: atGoal
+        ? `${min(seconds)} min @ goal pace${pace}`
+        : `${min(seconds)} min tempo${pace}`,
+      instruction: atGoal
+        ? "Your goal race pace — hold the rhythm"
+        : "Comfortably hard — hold the rhythm",
       target: { kind: "duration", seconds },
       ...(paceTarget ? { paceTarget } : {}),
+      ...(atGoal ? { pacePinned: true } : {}),
       ...(shape.workSecs.length > 1
         ? { rep: i + 1, totalReps: shape.workSecs.length }
         : {}),
-      effort: `${min(seconds)} min tempo`,
-      cue:
-        shape.workSecs.length > 1
+      effort: atGoal
+        ? `${min(seconds)} min @ goal pace`
+        : `${min(seconds)} min tempo`,
+      cue: atGoal
+        ? shape.workSecs.length > 1
+          ? `Block ${i + 1} of ${shape.workSecs.length} at goal race pace. Settle into your race rhythm.`
+          : "Goal race pace. Settle into your race rhythm."
+        : shape.workSecs.length > 1
           ? `Tempo block ${i + 1} of ${shape.workSecs.length}. Comfortably hard — settle into the rhythm.`
           : "Tempo. Comfortably hard — settle into the rhythm.",
     });
@@ -234,6 +259,62 @@ export function segmentsFromEasyWithStrides(
     });
   }
   return out;
+}
+
+/**
+ * A2 — race-pace block sizing for a build-phase long run (Pfitzinger's
+ * marathon/half-marathon-pace long runs). One third of the run at goal
+ * pace, whole kilometres, floored at 3K and capped per distance so the
+ * dose stays conservative relative to the book prescriptions (Pfitzinger
+ * runs up to ~16K at MP inside a 29K run; we stop well short of that).
+ */
+export function racePaceBlockKm(
+  totalKm: number,
+  distance: "half" | "marathon"
+): number {
+  const cap = distance === "marathon" ? 12 : 8;
+  return Math.min(cap, Math.max(3, Math.round(totalKm / 3)));
+}
+
+/**
+ * A2 — a long run finishing at goal race pace: easy majority, then the
+ * final block at the user's own goal pace (finish-fast, per Pfitzinger's
+ * race-pace long runs). Both segments are DISTANCE-based, so the player
+ * walks them on GPS metres. Distance is conserved: the two segments sum
+ * to exactly `totalKm` (pinned in tests).
+ *
+ * The goal pace is user-declared (raceGoal.targetTimeS), not derived
+ * from a benchmark — so the RUN-EV-08 consent gate does not apply, and
+ * the pace is `pacePinned` so the in-run shell never re-suffixes it
+ * with the fitness band.
+ */
+export function segmentsFromLongWithRacePace(
+  totalKm: number,
+  blockKm: number,
+  goalPaceS: number
+): SessionSegment[] {
+  const easyKm = Math.max(0, totalKm - blockKm);
+  const paceLabel = paceMinSec(Math.round(goalPaceS));
+  return [
+    {
+      type: "easy",
+      label: `Easy ${easyKm}K`,
+      instruction: "Conversational pace — race pace comes at the end",
+      target: { kind: "distance", meters: Math.round(easyKm * 1000) },
+      cue: "Easy running. Settle in — the race-pace block comes at the end.",
+    },
+    {
+      type: "moderate",
+      label: `${blockKm}K @ ${paceLabel}/km`,
+      instruction: "Your goal race pace — strong to the finish",
+      target: { kind: "distance", meters: Math.round(blockKm * 1000) },
+      paceTarget: goalPaceS,
+      pacePinned: true,
+      effort: `${blockKm}K @ goal pace`,
+      eyebrow: "RACE PACE",
+      cue: `Race-pace block. ${blockKm} kilometres at your goal pace — strong to the finish.`,
+    },
+  ];
 }
 
 export function segmentsFromGuided(

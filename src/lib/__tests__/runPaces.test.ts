@@ -11,6 +11,7 @@ import {
   raceDistanceKeyFromKm,
   predictedRaceTimesFromFitness,
   prescriptivePaceTableFromFitness,
+  raceTargetBand,
 } from "../runPaces";
 
 describe("vdotFromRace", () => {
@@ -367,5 +368,19 @@ describe("predictedRaceTimesFromFitness (Analytics race predictions)", () => {
       vdot: 60, // stale/fast cache — must not distort the Riegel reference
     };
     expect(predictedRaceTimesFromFitness(withBoth)!["5k"]).toBe(1500);
+  });
+});
+
+describe("raceTargetBand — the shared goal-gap scale", () => {
+  it("pins the band boundaries against literals", () => {
+    // Shared by the feasibility verdict (display) and the goal-pace
+    // enrichment gate (prescription) — these literals are the contract.
+    expect(raceTargetBand(-3)).toBe("on_track");
+    expect(raceTargetBand(0)).toBe("on_track");
+    expect(raceTargetBand(0.1)).toBe("within_reach");
+    expect(raceTargetBand(2)).toBe("within_reach");
+    expect(raceTargetBand(2.1)).toBe("stretch");
+    expect(raceTargetBand(4)).toBe("stretch");
+    expect(raceTargetBand(4.1)).toBe("long_shot");
   });
 });

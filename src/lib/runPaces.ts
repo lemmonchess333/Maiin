@@ -106,6 +106,26 @@ export function vdotFromRace(distanceM: number, timeS: number): number {
   return vo2 / pct;
 }
 
+/**
+ * A2 — the ONE band scale for "goal VDOT vs current VDOT" gaps. Shared by
+ * the feasibility verdict (raceGoalPlanner, display) and the goal-pace
+ * enrichment gate (runPlanMetadata, prescription) so the surface that
+ * TELLS the user "long shot" and the surface that declines to prescribe
+ * that pace can never disagree on where the boundary sits.
+ */
+export type RaceTargetBand =
+  | "on_track"
+  | "within_reach"
+  | "stretch"
+  | "long_shot";
+
+export function raceTargetBand(gapVdot: number): RaceTargetBand {
+  if (gapVdot <= 0) return "on_track";
+  if (gapVdot <= 2) return "within_reach";
+  if (gapVdot <= 4) return "stretch";
+  return "long_shot";
+}
+
 /** sec/km to run at a given fraction of VO2max for this VDOT. */
 function paceForPctVo2max(vdot: number, pct: number): number {
   const targetVo2 = vdot * pct;

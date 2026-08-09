@@ -135,6 +135,10 @@ export interface PlanBuilderInput {
     targetDate: string;
     /** Optional user-entered event name, ≤60 chars. */
     eventName?: string;
+    /** A2: optional goal finish time, seconds. Passed through to the
+     *  profile; the scheduler does not consume it yet (goal-pace
+     *  sessions are the follow-up slice). */
+    targetTimeS?: number;
   };
 
   /** Pgm6 tuning knobs (volume preset + difficulty). Optional —
