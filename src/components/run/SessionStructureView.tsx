@@ -1,42 +1,24 @@
-import { getSegmentColor, type GuidedRunWorkout } from "@/lib/guidedRun";
+import { getSegmentColor } from "@/lib/guidedRun";
+import {
+  segmentTargetLabel,
+  segmentsDurationSeconds,
+  type SessionSegment,
+} from "@/lib/runSegments";
 import SectionLabel from "@/components/ui/SectionLabel";
-import { paceMinSec } from "@/lib/runLabels";
 
-interface IntervalSpec {
-  reps: number;
-  workDistance?: number;
-  workDuration?: number;
-  workPace?: number;
-  restDuration: number;
-  warmupDuration?: number;
-  cooldownDuration?: number;
-}
-
-type Props =
-  | { kind: "intervals"; intervals: IntervalSpec }
-  | { kind: "guided"; workout: GuidedRunWorkout };
-
-function formatMinutes(seconds: number): string {
-  const m = Math.round(seconds / 60);
-  return `${m} min`;
-}
-
-function formatRest(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`;
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return s === 0 ? `${m}m` : `${m}m ${s}s`;
-}
-
-function formatWorkLabel(spec: IntervalSpec): string {
-  if (spec.workDistance && spec.workDistance >= 1000) {
-    return `${(spec.workDistance / 1000).toFixed(spec.workDistance % 1000 === 0 ? 0 : 1)}K`;
-  }
-  if (spec.workDistance) return `${spec.workDistance}m`;
-  if (spec.workDuration) return formatMinutes(spec.workDuration);
-  return "interval";
-}
-
+/**
+ * STRUCT-SESS-01: ONE renderer over the canonical `SessionSegment[]`.
+ *
+ * The previous version was a discriminated union over two structural
+ * models (a local interval spec + the guided workout), with two separate
+ * render branches assembling the same <Block> primitive. The canonical
+ * segment list (runSegments.ts) collapses it to a single map — and gives
+ * tempo and strided-easy sessions a structure preview for the first time
+ * (their structure used to be prose in the template description).
+ *
+ * Long interval sessions render each rep as its own row deliberately —
+ * the row count IS the honest preview of the session's shape.
+ */
 function Block({
   color,
   label,
@@ -62,53 +44,33 @@ function Block({
   );
 }
 
-export default function SessionStructureView(props: Props) {
-  if (props.kind === "intervals") {
-    const s = props.intervals;
-    const workLabel = formatWorkLabel(s);
-    const paceLabel = s.workPace ? ` @ ${paceMinSec(s.workPace)}/km` : "";
-    const mainLabel = `${s.reps} × ${workLabel}${paceLabel}`;
-    const mainDetail = `${formatRest(s.restDuration)} recovery between reps`;
-
-    return (
-      <div className="p-4 rounded-xl border border-border bg-card space-y-3">
-        <SectionLabel as="h3">Session structure</SectionLabel>
-        <div className="space-y-3">
-          {s.warmupDuration ? (
-            <Block
-              color={getSegmentColor("warmup")}
-              label="Warm-up"
-              detail={`${formatMinutes(s.warmupDuration)} easy`}
-            />
-          ) : null}
-          <Block
-            color={getSegmentColor("hard")}
-            label={mainLabel}
-            detail={mainDetail}
-          />
-          {s.cooldownDuration ? (
-            <Block
-              color={getSegmentColor("cooldown")}
-              label="Cool-down"
-              detail={`${formatMinutes(s.cooldownDuration)} easy`}
-            />
-          ) : null}
-        </div>
-      </div>
-    );
-  }
-
-  const segments = props.workout.segments;
+export default function SessionStructureView({
+  segments,
+}: {
+  segments: SessionSegment[];
+}) {
+  if (segments.length === 0) return null;
+  // Total line only when every segment is time-based — with distance reps
+  // in the mix a seconds sum would silently undercount the session.
+  const allTimed = segments.every((s) => s.target.kind === "duration");
+  const totalSec = segmentsDurationSeconds(segments);
   return (
     <div className="p-4 rounded-xl border border-border bg-card space-y-3">
-      <SectionLabel as="h3">Session structure</SectionLabel>
+      <div className="flex items-baseline justify-between">
+        <SectionLabel as="h3">Session structure</SectionLabel>
+        {allTimed && totalSec > 0 && (
+          <span className="text-xs text-muted-foreground font-mono tabular-nums">
+            {Math.round(totalSec / 60)} min
+          </span>
+        )}
+      </div>
       <div className="space-y-3">
         {segments.map((seg, idx) => (
           <Block
             key={`${seg.type}-${idx}`}
             color={getSegmentColor(seg.type)}
             label={seg.label}
-            detail={`${formatMinutes(seg.durationSeconds)} · ${seg.instruction}`}
+            detail={`${segmentTargetLabel(seg.target)} \u00b7 ${seg.instruction}`}
           />
         ))}
       </div>
