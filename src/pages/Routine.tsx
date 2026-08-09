@@ -190,7 +190,7 @@ export default function Routine() {
       // ── CORE write. Propagate a failure so WorkoutSession keeps the
       // completed session mounted, retains the draft, and re-enables Save.
       try {
-        await setDocGuarded(workoutRef, {
+        const workoutWrite = setDocGuarded(workoutRef, {
           date: today,
           exercises,
           totalCalories,
@@ -202,6 +202,17 @@ export default function Routine() {
           routineId: routine.id,
           routineName: routine.name,
         });
+        if (navigator.onLine) {
+          await workoutWrite;
+        } else {
+          // #1887 — offline, the ack arrives only on reconnect; awaiting
+          // it parked the chain (session hang, share enqueue below
+          // unreachable). The write is durably queued in IndexedDB —
+          // proceed, and log a post-reconnect rejection.
+          void workoutWrite.catch((err) =>
+            logger.error("[Routine] queued offline write failed:", err)
+          );
+        }
       } catch (err) {
         logger.error("[Routine] completion write failed:", err);
         toast.error("Couldn't save workout. Try again.");
@@ -251,26 +262,28 @@ export default function Routine() {
               };
             }),
           };
-          try {
-            const activityId = await postActivity(payload);
-            // Same dedupe marker the programme path writes — `/workout/:id`
-            // reads it so a session already in the feed isn't offered up a
-            // second time. Best-effort; a failed marker risks a duplicate
-            // post, never the post itself.
+          if (typeof navigator !== "undefined" && navigator.onLine === false) {
+            /* #1887 — pre-gate, not a catch: a parked postActivity never
+               throws offline, so the old catch-only branch could not
+               fire. Queue up-front; ShareComposerSheet's drain effect
+               replays it on reconnect. */
+            enqueueShare(user.uid, payload);
+            showQueuedToast();
+          } else {
             try {
-              await updateDocGuarded(workoutRef, {
-                sharedActivityId: activityId,
-              });
-            } catch (markErr) {
-              logger.warn("[Routine] shared marker write failed:", markErr);
-            }
-          } catch (socialErr) {
-            const isOffline =
-              typeof navigator !== "undefined" && navigator.onLine === false;
-            if (isOffline) {
-              enqueueShare(user.uid, payload);
-              showQueuedToast();
-            } else {
+              const activityId = await postActivity(payload);
+              // Same dedupe marker the programme path writes — `/workout/:id`
+              // reads it so a session already in the feed isn't offered up a
+              // second time. Best-effort; a failed marker risks a duplicate
+              // post, never the post itself.
+              try {
+                await updateDocGuarded(workoutRef, {
+                  sharedActivityId: activityId,
+                });
+              } catch (markErr) {
+                logger.warn("[Routine] shared marker write failed:", markErr);
+              }
+            } catch (socialErr) {
               logger.warn("Routine post failed:", socialErr);
             }
           }

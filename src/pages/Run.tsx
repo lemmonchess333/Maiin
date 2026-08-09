@@ -22,7 +22,10 @@ import {
   type GPSPoint,
 } from "../lib/gps";
 import { getDistanceTargetMeters } from "../lib/runConfigUnits";
-import { paceTableFromFitness, resolveSessionPaces } from "../lib/runPaces";
+import {
+  prescriptivePaceTableFromFitness,
+  resolveSessionPaces,
+} from "../lib/runPaces";
 import {
   getScheduledRunStatus,
   isScheduledRunStartable,
@@ -438,7 +441,7 @@ export default function Run() {
   // undefined (no benchmark) → the shell falls back to the config workPace.
   const intervalBand = useMemo(() => {
     if (runConfig?.activityType !== "intervals") return undefined;
-    const table = paceTableFromFitness(profile?.runFitness ?? null);
+    const table = prescriptivePaceTableFromFitness(profile?.runFitness ?? null);
     return table ? resolveSessionPaces("intervals", table).band : undefined;
   }, [runConfig?.activityType, profile?.runFitness]);
 
@@ -481,7 +484,7 @@ export default function Run() {
       urlScheduledRunId,
       // Adaptive Paces: personalize the prescribed pace from the user's
       // fitness benchmark. null (no benchmark) → template defaults.
-      paceTable: paceTableFromFitness(profile?.runFitness ?? null),
+      paceTable: prescriptivePaceTableFromFitness(profile?.runFitness ?? null),
     });
     // Missing URL template — surface the developer signal here,
     // not in the pure helper. The helper falls back to freeform
@@ -570,7 +573,7 @@ export default function Run() {
   // template, ?type=) gets the tile picker. Route import, interrupted-run
   // resume, and Customize / More options fall back to the full modal.
   const paceTable = useMemo(
-    () => paceTableFromFitness(profile?.runFitness ?? null),
+    () => prescriptivePaceTableFromFitness(profile?.runFitness ?? null),
     [profile?.runFitness]
   );
   // RUN-04: the tile picker's "Repeat <type>" recognition row — non-null when

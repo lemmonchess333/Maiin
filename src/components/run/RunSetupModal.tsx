@@ -32,7 +32,7 @@ import { Toggle } from "@/components/ui/Toggle";
 import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
-import { paceTableFromFitness } from "@/lib/runPaces";
+import { prescriptivePaceTableFromFitness } from "@/lib/runPaces";
 import {
   getCurrentWeather,
   getWeatherIcon,
@@ -214,7 +214,7 @@ export default function RunSetupModal({
   // personalize the prescription when picking a run type in the ad-hoc
   // launcher (the programme path personalizes via templateToPrefill).
   const paceTable = useMemo(
-    () => paceTableFromFitness(profile?.runFitness ?? null),
+    () => prescriptivePaceTableFromFitness(profile?.runFitness ?? null),
     [profile?.runFitness]
   );
   const [config, setConfig] = useState<RunConfig>({

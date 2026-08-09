@@ -540,10 +540,18 @@ export function buildPlan(input: PlanBuilderInput): PlanBuilderOutput {
 
   const programState: ProgramState = {
     goal: input.nutritionPhase,
+    /* LIFT-EV-02 (owner decision 2026-08-09): a fresh plan opens in
+       "progression" — the engine's own lifecycle vocabulary (rollover
+       writes "progression"/"deload", programEngine ~line 2695) — instead
+       of the historical "Hypertrophy" literal, which falsely labelled
+       every non-hypertrophy plan's first week. Stimulus labels now come
+       from primaryGoal at the display layer (Home) and from
+       trainingSignals for nutrition; currentPhase encodes lifecycle
+       only. */
     currentPhase:
       input.preserveHistory && input.existingState
         ? input.existingState.currentPhase
-        : "Hypertrophy",
+        : "progression",
     weekNumber:
       input.preserveHistory && input.existingState
         ? input.existingState.weekNumber

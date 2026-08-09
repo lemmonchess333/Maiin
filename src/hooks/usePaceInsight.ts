@@ -113,6 +113,8 @@ export function usePaceInsightFromRuns(
       .map((run) => ({
         distanceM: run.distance,
         durationS: run.duration,
+        id: run.id,
+        completedAt: run.completedAt,
       }));
 
     const next = resolvePaceInsight(runFitness, eligible);
@@ -135,7 +137,8 @@ export function usePaceInsightFromRuns(
   const accept = useCallback(async (): Promise<PaceInsightAcceptResult> => {
     if (!insight || !user) return "failure";
     const writeUid = user.uid;
-    const { distanceM, timeS } = insight.suggestedBenchmark;
+    const { distanceM, timeS, sourceRunId, sourceRunAt } =
+      insight.suggestedBenchmark;
     const vdot = vdotFromRace(distanceM, timeS);
 
     try {
@@ -148,6 +151,12 @@ export function usePaceInsightFromRuns(
             vdot: Math.round(vdot * 10) / 10,
             source: "derived",
             updatedAt: new Date().toISOString(),
+            // RUN-EV-08: this path IS the explicit acceptance — the flag is
+            // written as literal false (not omitted; merge writes deep-merge
+            // maps, so omission would leave a stale pending true).
+            pendingConfirmation: false,
+            ...(sourceRunId ? { sourceRunId } : {}),
+            ...(sourceRunAt ? { sourceRunAt } : {}),
           },
         },
         { throwOnError: true }

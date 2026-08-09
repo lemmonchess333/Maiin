@@ -44,6 +44,7 @@ import {
   applyProgression,
 } from "./programEngine";
 import { PERFORMANCE_HISTORY_CAP } from "./programEngine";
+import { revertRecoverySession } from "./recoveryTrigger";
 import { loadContextFrom, weightAfterExerciseSwap } from "./startingLoads";
 import { showsRpeByDefault, toExperience } from "./experienceModel";
 import { recoveryStateFrom } from "./adjustmentRule";
@@ -1191,8 +1192,24 @@ export function useProgram() {
             },
           })
         );
-        await batch.commit();
-        // Local programme state changes only after BOTH docs commit.
+        if (navigator.onLine) {
+          await batch.commit();
+        } else {
+          /* #1887 — offline, commit() acks only on reconnect, so
+             awaiting it parked the whole completion chain: the session
+             UI hung on Finish and the share composer (whose offline
+             branch below queues the post) was unreachable. The batch is
+             queued durably in IndexedDB either way and stays atomic;
+             proceed on the local commit and log a post-reconnect
+             rejection, mirroring the offline queue's trade-off. */
+          void batch
+            .commit()
+            .catch((err) =>
+              logger.error("[Program] queued offline completion failed:", err)
+            );
+        }
+        // Local programme state changes only after BOTH docs commit
+        // (offline: after both are durably queued as one atomic batch).
         setProgramState(updated);
       } catch (error) {
         logger.error("[Program] completion batch failed:", error);
@@ -1258,31 +1275,29 @@ export function useProgram() {
               };
             }),
           };
-          try {
-            const activityId = await postActivity(payload);
-            // Mark the workout as posted so `/workout/:id` shows "Shared to
-            // your feed" instead of offering to post it a second time —
-            // `postActivity` addDocs a fresh activity every call, so without
-            // this one session could land twice in the feed. Best-effort:
-            // a failed marker costs a possible duplicate, never the post.
+          if (typeof navigator !== "undefined" && navigator.onLine === false) {
+            /* #1887 — pre-gate, not a catch: a parked postActivity never
+               throws offline, so the old catch-only branch could not
+               fire. Queue up-front and let ShareComposerSheet's drain
+               effect replay it on reconnect. */
+            enqueueShare(user.uid, payload);
+            showQueuedToast();
+          } else {
             try {
-              await updateDocGuarded(workoutRef, {
-                sharedActivityId: activityId,
-              });
-            } catch (markErr) {
-              logger.warn("[Program] shared marker write failed:", markErr);
-            }
-          } catch (socialErr) {
-            // Network failures (offline, transient) — queue and let
-            // ShareComposerSheet's drain effect retry on reconnect.
-            // Auth/identity errors still surface as a warning since
-            // those won't recover by retrying.
-            const isNetwork =
-              typeof navigator !== "undefined" && navigator.onLine === false;
-            if (isNetwork) {
-              enqueueShare(user.uid, payload);
-              showQueuedToast();
-            } else {
+              const activityId = await postActivity(payload);
+              // Mark the workout as posted so `/workout/:id` shows "Shared to
+              // your feed" instead of offering to post it a second time —
+              // `postActivity` addDocs a fresh activity every call, so without
+              // this one session could land twice in the feed. Best-effort:
+              // a failed marker costs a possible duplicate, never the post.
+              try {
+                await updateDocGuarded(workoutRef, {
+                  sharedActivityId: activityId,
+                });
+              } catch (markErr) {
+                logger.warn("[Program] shared marker write failed:", markErr);
+              }
+            } catch (socialErr) {
               logger.warn("Failed to post workout to feed:", socialErr);
             }
           }
@@ -3040,6 +3055,35 @@ export function useProgram() {
     [sendDeloadCommand]
   );
 
+  /**
+   * LIFT-EV-05 one-tap undo: restore the undiminished prescription after
+   * the rollover's automatic recovery reduction halved sets/reps for
+   * `recoveringMuscles` (RecoveryReductionBanner's CTA).
+   *
+   * A document write, not a command — consistent with ADR-0011's standing
+   * document-write sites: the reduction itself was written by the client
+   * rollover through `saveProgram`, so its inverse takes the same path.
+   * `recoveringMuscles` is deliberately KEPT: it is the refractory guard,
+   * and clearing it would re-arm the trigger for the same muscles on the
+   * very next rollover (see `revertRecoverySession`).
+   */
+  const undoRecoveryReduction = useCallback(async (): Promise<boolean> => {
+    if (!programState?.recoveringMuscles?.length) return false;
+    const restored: ProgramState = {
+      ...programState,
+      workouts: revertRecoverySession(
+        programState.workouts,
+        programState.recoveringMuscles
+      ),
+    };
+    try {
+      await saveProgram(restored);
+      return true;
+    } catch {
+      return false;
+    }
+  }, [programState, saveProgram]);
+
   /** Run9 phase-3 (Slice DE) — re-anchor the race plan to today, keeping the
    *  race date. Regenerates from today so the weeks-to-race delta (shrinking
    *  as time passes) drives the generator: a tight gap yields `compressed`,
@@ -3155,6 +3199,7 @@ export function useProgram() {
     keepTrainingBlockFocus,
     applyDeloadWeek,
     revertDeloadWeek,
+    undoRecoveryReduction,
     realignRacePlan,
     /** Run15 packet — exposed so the FellBehindSheet copy can match the
      *  plan realign will actually produce (the SAME uid-paired value every
