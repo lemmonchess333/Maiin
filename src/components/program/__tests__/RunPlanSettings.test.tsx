@@ -4,40 +4,71 @@ import { MemoryRouter } from "react-router-dom";
 import RunPlanSettings from "../RunPlanSettings";
 import { upcomingRaceSpaceDefs } from "@/features/spaces/spaceDefs";
 import { localDateString } from "@/lib/dateHelpers";
+import { generateSchedule } from "@/lib/scheduleUtils";
 import type { UserProfile } from "@/lib/auth";
 
 /**
- * Run-Split contract: the dedicated run-plan editor saves RUNNING ONLY.
- * A commit must go through the run writers (updateProfile with a
- * raceGoal/runMode patch + refreshRunSchedule) and must NOT invoke any
- * whole-programme rebuild — that's the whole point of splitting it out.
+ * Run-Split contract, rebuilt for RUN-EV-02 (owner decision, P0): the
+ * dedicated run-plan editor saves through ONE current-draft buildPlan
+ * computation and ONE atomic configurePlan commit. These tests read the
+ * callable payload — profileUpdates + programState + weekSchedule land
+ * together or not at all — so they pin the coherence the old two-write
+ * path could not: targets, schedule slots, plan rows and the goal all
+ * derive from the same draft.
  *
- * Races plan PR3 adds the two doors: the ?distance&date&eventName&spaceId
- * deep-link (Door 1) and the catalogue picker (Door 2), both writing the
- * same raceGoal + eventSpaceId patch.
+ * Races plan PR3's two doors (deep-link + catalogue picker) still write
+ * the same raceGoal + eventSpaceId — now inside profileUpdates.
  */
+
+const configureSpy = vi.fn(async (..._args: unknown[]) => ({ data: {} }));
+vi.mock("firebase/functions", () => ({
+  httpsCallable: () => configureSpy,
+}));
+vi.mock("@/lib/firebase", () => ({
+  functions: {},
+  db: {},
+  auth: {},
+  storage: {},
+}));
 
 const baseProfile = {
   runMode: "freeform",
   weeklyWorkoutsTarget: 4,
+  primaryGoal: "hypertrophy",
+  experience: "intermediate",
+  equipment: "full_gym",
+  injuries: [],
   weekSchedule: [],
+  program: { goal: "recomp" },
 } as unknown as UserProfile;
 
 function renderPage(profile: UserProfile, path = "/settings/run-plan") {
-  const updateProfile = vi.fn().mockResolvedValue({ ok: true });
-  const refreshRunSchedule = vi.fn().mockResolvedValue(undefined);
+  const refreshProfile = vi.fn().mockResolvedValue(undefined);
   const onOpenFullSettings = vi.fn();
   render(
     <MemoryRouter initialEntries={[path]}>
       <RunPlanSettings
         profile={profile}
-        updateProfile={updateProfile}
-        refreshRunSchedule={refreshRunSchedule}
+        programState={null}
+        refreshProfile={refreshProfile}
         onOpenFullSettings={onOpenFullSettings}
       />
     </MemoryRouter>
   );
-  return { updateProfile, refreshRunSchedule, onOpenFullSettings };
+  return { refreshProfile, onOpenFullSettings };
+}
+
+type ConfigurePayload = {
+  profileUpdates: Record<string, unknown> & {
+    raceGoal?: Record<string, unknown> | null;
+  };
+  programState: { runDays?: { date: string }[]; runPlan?: unknown };
+  weekSchedule: { day: number; type: string }[];
+};
+
+function sentPayload(): ConfigurePayload {
+  expect(configureSpy).toHaveBeenCalledTimes(1);
+  return configureSpy.mock.calls[0][0] as ConfigurePayload;
 }
 
 /** First upcoming catalogue race — read from config so the test never
@@ -49,12 +80,14 @@ function firstUpcomingRace() {
 }
 
 describe("RunPlanSettings", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    configureSpy.mockClear();
+  });
 
   it("shows only run controls — no lift/nutrition/equipment fields", () => {
     renderPage(baseProfile);
     expect(screen.getByText("Run mode")).toBeInTheDocument();
-    // None of the full-editor groups leak in.
     expect(screen.queryByText(/Nutrition phase/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Equipment access/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Lift days/i)).not.toBeInTheDocument();
@@ -68,28 +101,86 @@ describe("RunPlanSettings", () => {
     expect(screen.getByText(/Run days \/ week/i)).toBeInTheDocument();
   });
 
-  it("saving a race goal writes the run patch + refreshes the schedule", async () => {
-    const { updateProfile, refreshRunSchedule } = renderPage(baseProfile);
+  it("saving a race goal commits ONE atomic payload with mode, goal and plan together", async () => {
+    const { refreshProfile } = renderPage(baseProfile);
     fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
-    // Pick a valid far-future date via the date input.
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
     fireEvent.change(date, { target: { value: "2027-01-01" } });
 
     const save = await screen.findByRole("button", { name: /Save .*plan/i });
     fireEvent.click(save);
 
-    await waitFor(() => expect(updateProfile).toHaveBeenCalledTimes(1));
-    const patch = updateProfile.mock.calls[0][0];
-    // Run-only patch: materializes runMode + raceGoal, no plan/workouts rebuild.
-    expect(patch.runMode).toBe("race_prep");
-    expect(patch.raceGoal).toMatchObject({ targetDate: "2027-01-01" });
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = sentPayload();
+    expect(payload.profileUpdates.runMode).toBe("race_prep");
+    expect(payload.profileUpdates.raceGoal).toMatchObject({
+      targetDate: "2027-01-01",
+    });
     // Blank event name → the key is OMITTED (never undefined/empty string).
-    expect("eventName" in patch.raceGoal).toBe(false);
-    expect(refreshRunSchedule).toHaveBeenCalled();
+    expect("eventName" in payload.profileUpdates.raceGoal!).toBe(false);
+    // The plan itself travels in the same call — no second write to lose.
+    expect(payload.programState.runDays?.length ?? 0).toBeGreaterThan(0);
+    expect(payload.weekSchedule).toHaveLength(7);
+    await waitFor(() => expect(refreshProfile).toHaveBeenCalledTimes(1));
   });
 
-  it("RACE-EVENT-IDENTITY-01: saving with an event name includes it in the raceGoal patch", async () => {
-    const { updateProfile } = renderPage(baseProfile);
+  it("RUN-EV-02: a 2→4 run-day change moves slots, rows and targets TOGETHER", async () => {
+    // Saved baseline says 2 run days; the draft raises it to 4.
+    const profile = {
+      ...baseProfile,
+      weeklyRunDaysTarget: 2,
+      weeklyRunsTarget: 2,
+    } as unknown as UserProfile;
+    renderPage(profile);
+    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
+    fireEvent.change(date, { target: { value: "2027-01-01" } });
+    // 2 → 4 via the stepper.
+    const plus = screen.getByRole("button", { name: /Increase run days/i });
+    fireEvent.click(plus);
+    fireEvent.click(plus);
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Save .*plan/i })
+    );
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = sentPayload();
+
+    // The adherence denominator…
+    expect(payload.profileUpdates.weeklyRunDaysTarget).toBe(4);
+    expect(payload.profileUpdates.weeklyRunsTarget).toBe(4);
+    // …the actual schedule slots…
+    const runSlots = payload.weekSchedule.filter(
+      (d) => d.type === "run" || d.type === "both"
+    ).length;
+    expect(runSlots).toBe(4);
+    // …and the materialized first week's rows — four distinct dates, from
+    // the same derivation. Pre-fix the schedule kept the profile's stale
+    // slots and the plan emitted 2 rows against a target of 4.
+    const firstWeekDates = new Set(
+      (payload.programState.runDays ?? []).slice(0, 4).map((r) => r.date)
+    );
+    expect(firstWeekDates.size).toBe(4);
+  });
+
+  it("RUN-EV-02: preview ≡ commit — the committed weekSchedule IS the planner's derivation", async () => {
+    renderPage(baseProfile);
+    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
+    fireEvent.change(date, { target: { value: "2027-01-01" } });
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Save .*plan/i })
+    );
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    // raceGoalPlanner previews from generateSchedule(liftDays, runDays);
+    // the commit must be byte-equal to that same derivation — not the
+    // stored profile.weekSchedule the old path passed (draft default: 3
+    // run days, saved liftDays 4).
+    expect(sentPayload().weekSchedule).toEqual(generateSchedule(4, 3));
+  });
+
+  it("RACE-EVENT-IDENTITY-01: saving with an event name includes it in the raceGoal", async () => {
+    renderPage(baseProfile);
     fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
 
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
@@ -100,12 +191,11 @@ describe("RunPlanSettings", () => {
     // Trailing whitespace pins the .trim() on save.
     fireEvent.change(name, { target: { value: "  London Marathon 2027  " } });
 
-    const save = await screen.findByRole("button", { name: /Save .*plan/i });
-    fireEvent.click(save);
-
-    await waitFor(() => expect(updateProfile).toHaveBeenCalledTimes(1));
-    const patch = updateProfile.mock.calls[0][0];
-    expect(patch.raceGoal).toEqual({
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Save .*plan/i })
+    );
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    expect(sentPayload().profileUpdates.raceGoal).toEqual({
       distance: "10k",
       targetDate: "2027-01-01",
       eventName: "London Marathon 2027",
@@ -113,33 +203,26 @@ describe("RunPlanSettings", () => {
   });
 
   it("D14: shows the Pgm6 tuning knobs in race prep and persists them on save", async () => {
-    const { updateProfile, refreshRunSchedule } = renderPage(baseProfile);
+    renderPage(baseProfile);
     fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
 
-    // Both knobs render (race-prep only).
     expect(screen.getByText("Long-run volume")).toBeInTheDocument();
     expect(screen.getByText("Intensity")).toBeInTheDocument();
 
-    // Pick a valid date + non-default knobs.
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
     fireEvent.change(date, { target: { value: "2027-01-01" } });
     fireEvent.click(screen.getByRole("radio", { name: "Lighter" }));
     fireEvent.click(screen.getByRole("radio", { name: "Gentler" }));
 
-    const save = await screen.findByRole("button", { name: /Save .*plan/i });
-    fireEvent.click(save);
-
-    await waitFor(() => expect(updateProfile).toHaveBeenCalledTimes(1));
-    const patch = updateProfile.mock.calls[0][0];
-    // Knobs persist alongside the goal (4-gate profile fields).
-    expect(patch.runVolume).toBe("lighter");
-    expect(patch.runDifficulty).toBe("gentler");
-    // And thread through the refresh explicitly (stale-closure guard).
-    expect(refreshRunSchedule).toHaveBeenCalledWith(
-      expect.objectContaining({
-        tuning: { volume: "lighter", difficulty: "gentler" },
-      })
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Save .*plan/i })
     );
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = sentPayload();
+    // Knobs persist in the SAME payload the plan derives from — the
+    // profile copy and the generated plan cannot disagree.
+    expect(payload.profileUpdates.runVolume).toBe("lighter");
+    expect(payload.profileUpdates.runDifficulty).toBe("gentler");
   });
 
   it("D14: knobs hidden in freeform (nothing scheduled to tune)", () => {
@@ -148,31 +231,38 @@ describe("RunPlanSettings", () => {
     expect(screen.queryByText("Intensity")).not.toBeInTheDocument();
   });
 
-  it("switching to freeform clears the race goal (runMode + null goal)", async () => {
+  it("switching to freeform clears the goal AND zeroes the run targets atomically", async () => {
     const raceProfile = {
       ...baseProfile,
       runMode: "race_prep",
+      weeklyRunDaysTarget: 3,
+      weeklyRunsTarget: 3,
       raceGoal: { distance: "marathon", targetDate: "2027-01-01" },
     } as unknown as UserProfile;
-    const { updateProfile } = renderPage(raceProfile);
+    renderPage(raceProfile);
     fireEvent.click(screen.getByRole("radio", { name: /Freeform/i }));
     fireEvent.click(await screen.findByRole("button", { name: /Save/i }));
-    await waitFor(() => expect(updateProfile).toHaveBeenCalledTimes(1));
-    const patch = updateProfile.mock.calls[0][0];
-    expect(patch.runMode).toBe("freeform");
-    expect(patch.raceGoal).toBeNull();
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = sentPayload();
+    expect(payload.profileUpdates.runMode).toBe("freeform");
+    // Explicit null — the CF sanitizer preserves it; the old path cleared
+    // the goal but left targets and the stale plan untouched.
+    expect(payload.profileUpdates.raceGoal).toBeNull();
+    expect(payload.profileUpdates.weeklyRunDaysTarget).toBe(0);
+    expect(payload.profileUpdates.weeklyRunsTarget).toBe(0);
+    // The stale runDays clear in the SAME commit.
+    expect(payload.programState.runDays ?? []).toHaveLength(0);
   });
 
   it("Door 1: a valid deep-link seeds race prep and saves the eventSpaceId binding", async () => {
     const race = firstUpcomingRace();
-    const { updateProfile } = renderPage(
+    renderPage(
       baseProfile,
       `/settings/run-plan?distance=${race.event!.distance}&date=${
         race.event!.dateKey
       }&eventName=${encodeURIComponent(race.name)}&spaceId=${race.id}`
     );
 
-    // Draft is seeded: race prep active, fields prefilled, save offered.
     expect(screen.getByRole("radio", { name: /Race prep/i })).toHaveAttribute(
       "aria-checked",
       "true"
@@ -187,9 +277,8 @@ describe("RunPlanSettings", () => {
     fireEvent.click(
       await screen.findByRole("button", { name: /Save .*plan/i })
     );
-    await waitFor(() => expect(updateProfile).toHaveBeenCalledTimes(1));
-    const patch = updateProfile.mock.calls[0][0];
-    expect(patch.raceGoal).toEqual({
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    expect(sentPayload().profileUpdates.raceGoal).toEqual({
       distance: race.event!.distance,
       targetDate: race.event!.dateKey,
       eventName: race.name,
@@ -202,7 +291,6 @@ describe("RunPlanSettings", () => {
       baseProfile,
       "/settings/run-plan?distance=half&date=2020-01-01&spaceId=the-big-half"
     );
-    // Still the saved freeform baseline — no half-seeded draft.
     expect(screen.getByRole("radio", { name: /Freeform/i })).toHaveAttribute(
       "aria-checked",
       "true"
@@ -211,7 +299,7 @@ describe("RunPlanSettings", () => {
 
   it("Door 2: picking a catalogue race prefills the draft and saves the binding", async () => {
     const race = firstUpcomingRace();
-    const { updateProfile } = renderPage(baseProfile);
+    renderPage(baseProfile);
     fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
 
     fireEvent.click(
@@ -231,15 +319,15 @@ describe("RunPlanSettings", () => {
     fireEvent.click(
       await screen.findByRole("button", { name: /Save .*plan/i })
     );
-    await waitFor(() => expect(updateProfile).toHaveBeenCalledTimes(1));
-    const patch = updateProfile.mock.calls[0][0];
-    expect(patch.raceGoal.eventSpaceId).toBe(race.id);
-    expect(patch.raceGoal.targetDate).toBe(race.event!.dateKey);
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const goal = sentPayload().profileUpdates.raceGoal!;
+    expect(goal.eventSpaceId).toBe(race.id);
+    expect(goal.targetDate).toBe(race.event!.dateKey);
   });
 
   it("a manual date edit after picking clears the eventSpaceId binding", async () => {
     const race = firstUpcomingRace();
-    const { updateProfile } = renderPage(baseProfile);
+    renderPage(baseProfile);
     fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
     fireEvent.click(
       screen.getByRole("button", { name: /Choose an upcoming race/i })
@@ -248,16 +336,15 @@ describe("RunPlanSettings", () => {
       screen.getByRole("option", { name: new RegExp(race.name) })
     );
 
-    // The goal is no longer that event once the date moves.
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
     fireEvent.change(date, { target: { value: "2028-01-01" } });
 
     fireEvent.click(
       await screen.findByRole("button", { name: /Save .*plan/i })
     );
-    await waitFor(() => expect(updateProfile).toHaveBeenCalledTimes(1));
-    const patch = updateProfile.mock.calls[0][0];
-    expect("eventSpaceId" in patch.raceGoal).toBe(false);
-    expect(patch.raceGoal.targetDate).toBe("2028-01-01");
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const goal = sentPayload().profileUpdates.raceGoal!;
+    expect("eventSpaceId" in goal).toBe(false);
+    expect(goal.targetDate).toBe("2028-01-01");
   });
 });

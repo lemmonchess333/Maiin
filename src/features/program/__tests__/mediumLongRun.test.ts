@@ -127,6 +127,7 @@ describe("the medium-long in generated plans", () => {
     }
   });
 
+<<<<<<< HEAD
   it("WAVE1-STRIDES: exactly one strides day per base/build week, on a plain easy slot", () => {
     const p = plan("marathon", 20, 5); // 5 run days → long + quality + MLR + 2 easy
     const race = p.weeks.length - 1;
@@ -162,6 +163,8 @@ describe("the medium-long in generated plans", () => {
     expect(minutes("easy_50_strides")).toBe(50);
   });
 
+=======
+>>>>>>> origin/main
   it("SHARE REGRESSION PIN: marathon 4-day long-run share materially improves", () => {
     // Pre-change: 55% peak share, 53% in the longest-run week. Post-change,
     // measured: ~50% peak (the binding week is a CUTBACK week, where the

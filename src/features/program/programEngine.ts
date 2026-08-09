@@ -226,6 +226,10 @@ export function prescribedRepCeiling(ex: {
 const HOLD_STEP_SECONDS = 5;
 /** Ceiling for a hold with no authored range — past this, add load instead. */
 const MAX_HOLD_SECONDS = 60;
+/** Floor for any hold reduction (failure deload or mesocycle deload) — below
+ *  ~10s the movement stops being a hold. LIFT-EV-01 named what was a magic
+ *  literal in the deload path. */
+const MIN_HOLD_SECONDS = 10;
 
 /**
  * Per-exercise `performanceHistory` ceiling.
@@ -2155,9 +2159,17 @@ export function applyProgression(
 
       if (updated.consecutiveFailures >= 3) {
         if (isBodyweight) {
-          // Bodyweight deload: reduce rep target (minimum 4)
-          updated.reps = Math.max(4, exercise.reps - 1);
+          // Bodyweight deload. LIFT-EV-01: a timed hold shortens by the hold
+          // step to the hold floor — the rep-shaped `reps - 1` walked a plank
+          // down one SECOND at a time toward a 4-second floor. Rep movements
+          // keep the reduce-target rule (minimum 4).
+          updated.reps = isTimed
+            ? Math.max(MIN_HOLD_SECONDS, exercise.reps - HOLD_STEP_SECONDS)
+            : Math.max(4, exercise.reps - 1);
         } else {
+          // Weighted (incl. weighted holds): cut the LOAD, hold the duration —
+          // for a timed hold the load is the adjustable axis (LIFT-EV-01,
+          // deliberate).
           updated.weight = Math.round(exercise.weight * 0.95 * 2) / 2;
         }
         updated.consecutiveFailures = 0;
@@ -2202,7 +2214,11 @@ export function applyProgression(
       updated.consecutiveFailures = (exercise.consecutiveFailures || 0) + 1;
       if (updated.consecutiveFailures >= 3) {
         if (isBodyweight) {
-          updated.reps = Math.max(4, exercise.reps - 1);
+          // LIFT-EV-01: seconds-specific decrement for timed holds (see the
+          // double-progression branch above).
+          updated.reps = isTimed
+            ? Math.max(MIN_HOLD_SECONDS, exercise.reps - HOLD_STEP_SECONDS)
+            : Math.max(4, exercise.reps - 1);
         } else {
           updated.weight = Math.max(0, exercise.weight - 1);
         }
@@ -2295,7 +2311,7 @@ export function applyDeload(
           sets,
           reps:
             ex.repUnit === "seconds"
-              ? Math.max(10, ex.reps - HOLD_STEP_SECONDS)
+              ? Math.max(MIN_HOLD_SECONDS, ex.reps - HOLD_STEP_SECONDS)
               : Math.max(DELOAD_REPS_FLOOR, ex.reps - 2),
         };
       }

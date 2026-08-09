@@ -2133,6 +2133,32 @@ describe("timed holds (backlog #7 time axis)", () => {
     expect(out.reps).toBe(60);
   });
 
+  it("repeated failure shortens the hold by the 5s step, not by '1 rep' (LIFT-EV-01)", () => {
+    // Pre-fix this was `reps - 1`: a 30s plank "deloaded" to 29s, walking
+    // one second at a time toward the rep floor of 4 — a 4-second plank.
+    const out = applyProgression(
+      plank({ consecutiveFailures: 2 }),
+      20,
+      0,
+      "recomp",
+      false
+    );
+    expect(out.reps).toBe(25); // 30 − HOLD_STEP_SECONDS, not 29
+    expect(out.consecutiveFailures).toBe(0);
+    expect(out.plateauCount).toBe(1);
+  });
+
+  it("the failure deload floors at 10 seconds, matching the mesocycle deload floor", () => {
+    const out = applyProgression(
+      plank({ reps: 12, baseReps: 12, consecutiveFailures: 2 }),
+      5,
+      0,
+      "recomp",
+      false
+    );
+    expect(out.reps).toBe(10);
+  });
+
   it("leaves ordinary bodyweight reps alone", () => {
     // The rep path must be untouched: a pull-up still steps by 1 and still
     // uses the 20-rep cap.
