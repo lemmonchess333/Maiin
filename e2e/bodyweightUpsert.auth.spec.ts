@@ -115,9 +115,17 @@ async function logWeight(page: Page, value: string): Promise<void> {
   await input.waitFor({ state: "visible", timeout: 10_000 });
   await input.fill(value);
   await page.getByRole("button", { name: "Save weight" }).click();
-  // Let the guarded Firestore write + sheet-close settle before the next
-  // action / read. The write is fire-and-forget from the UI's perspective.
-  await page.waitForTimeout(1500);
+  // The write is fire-and-forget from the UI's perspective, so anchor
+  // on the sheet closing and then on the value being readable back from
+  // the emulator. This replaces a fixed 1.5s wait, which lost the race
+  // under parallel-suite load (2026-08-08 sweep: afterFirst read found
+  // 0 docs) — a timer is not an anchor.
+  await input.waitFor({ state: "hidden", timeout: 10_000 });
+  await expect
+    .poll(async () => (await readBodyweightLogs()).map((r) => r.weight), {
+      timeout: 15_000,
+    })
+    .toContain(Number(value));
 }
 
 test.describe("P1 bodyweight upsert — one row per local day", () => {

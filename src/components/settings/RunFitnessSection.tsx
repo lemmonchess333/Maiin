@@ -60,6 +60,39 @@ export default function RunFitnessSection({
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  const [confirming, setConfirming] = useState(false);
+
+  /** RUN-EV-08 explicit acceptance: keep the derived benchmark, flip it to
+   *  confirmed so prescriptions may use it. Full-object write — the
+   *  optimistic local patch replaces the field wholesale, so a partial
+   *  nested write would blank the benchmark until the next hydration. */
+  async function handleConfirmDerived() {
+    if (!fitness || confirming) return;
+    setConfirming(true);
+    try {
+      await updateProfile(
+        { runFitness: { ...fitness, pendingConfirmation: false } },
+        { throwOnError: true }
+      );
+      haptic("success");
+    } catch {
+      setError("Couldn't save — check your connection and try again.");
+    } finally {
+      setConfirming(false);
+    }
+  }
+
+  /** RUN-EV-08 reversal: clear the auto-derived benchmark entirely —
+   *  everything falls back to template paces, as if it never fired. */
+  async function handleRemoveDerived() {
+    haptic("light");
+    try {
+      await updateProfile({ runFitness: null }, { throwOnError: true });
+    } catch {
+      setError("Couldn't remove — check your connection and try again.");
+    }
+  }
+
   async function handleSave() {
     const seconds = parseRaceTimeToSeconds(timeStr);
     if (seconds === null) {
@@ -82,6 +115,9 @@ export default function RunFitnessSection({
             vdot: Math.round(vdot * 10) / 10,
             source: "manual",
             updatedAt: new Date().toISOString(),
+            // RUN-EV-08: a manual entry is consented by definition; literal
+            // false so a prior pending auto-derive can't survive the merge.
+            pendingConfirmation: false,
           },
         },
         { throwOnError: true }
@@ -119,7 +155,9 @@ export default function RunFitnessSection({
                 <p className="text-xs text-muted-foreground">
                   From your{" "}
                   {fitness?.source === "derived"
-                    ? "recent runs"
+                    ? fitness?.sourceRunAt
+                      ? `run on ${new Date(fitness.sourceRunAt).toLocaleDateString(undefined, { day: "numeric", month: "short" })}`
+                      : "recent runs"
                     : "recent race"}{" "}
                   · VDOT{" "}
                   <span className="font-mono tabular-nums">
@@ -139,6 +177,36 @@ export default function RunFitnessSection({
                 {editing ? "Cancel" : "Update"}
               </Button>
             </div>
+
+            {/* RUN-EV-08 two-tier consent: an auto-derived benchmark lands
+                pending — it already informs predictions and this grid, but
+                session pace targets stay on template paces until the user
+                explicitly accepts it here (or removes it). */}
+            {fitness?.pendingConfirmation && (
+              <div className="rounded-lg bg-muted/60 p-3 space-y-2">
+                <p className="text-xs text-muted-foreground leading-snug">
+                  Set automatically from your recent running. It shapes
+                  predictions now — accept it to also drive your session pace
+                  targets, or remove it to stay on standard paces.
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    loading={confirming}
+                    onClick={() => void handleConfirmDerived()}
+                  >
+                    Use for pace targets
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => void handleRemoveDerived()}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {/* Paces grid */}
             <div className="grid grid-cols-2 gap-2">

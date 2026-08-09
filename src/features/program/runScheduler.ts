@@ -333,6 +333,14 @@ const LONG_RUN_TIERS: ReadonlyArray<{
  * closing it fully needs more run days, which is the user's `weekSchedule`
  * to give, not the scheduler's to invent. Hansons makes exactly this
  * argument for its own ~26 km cap.
+ *
+ * RUN-EV-06 (owner decision 2026-08-09): this ceiling, the 6 km lowest
+ * long-run tier, and the re-entry 5K behavior are RETAINED as **Tropos
+ * heuristics** — sensible defaults the product chose, not source-derived
+ * safety rules and not safety guarantees. The Daniels citation above
+ * covers the 150-minute half only; the ladder rungs and floors are ours.
+ * Any surface explaining these to users must present them as the plan's
+ * defaults, never as a medical or safety claim.
  */
 export const LONG_RUN_MAX_MINUTES = 150;
 

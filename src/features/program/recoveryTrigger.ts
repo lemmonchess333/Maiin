@@ -256,6 +256,50 @@ export function applyRecoverySession(
 }
 
 /**
+ * Inverse of `applyRecoverySession` — the LIFT-EV-05 one-tap undo (owner
+ * decision 2026-08-09: automatic protective reductions stay, but they are
+ * surfaced and reversible).
+ *
+ * Restores the undiminished prescription for exercises in `muscles`:
+ * `sets ← baseSets`, `reps ← preDeloadReps`, and drops the `preDeloadReps`
+ * stash so next week's `applyWeeklyVolumeShape` restore has nothing left to
+ * re-apply. Only exercises actually carrying the stash are touched — an
+ * exercise the reduction never reached is returned by reference.
+ *
+ * Reversal semantics (deliberate): the caller KEEPS `recoveringMuscles`
+ * populated. The refractory subtraction in `recoveryTargets` then still
+ * holds, so undoing the cut does not re-arm the trigger for the same
+ * muscles on the very next rollover — undo means "not this week", not
+ * "never detect again".
+ *
+ * Pure; returns a new array with untouched days shared by reference.
+ */
+export function revertRecoverySession(
+  workouts: readonly WorkoutDay[],
+  muscles: readonly CanonicalMuscle[]
+): WorkoutDay[] {
+  if (muscles.length === 0) return [...workouts];
+  const target = new Set(muscles);
+  return workouts.map((day) => {
+    if (day.skipped) return day;
+    let touched = false;
+    const exercises = day.exercises.map((ex) => {
+      const muscle = primaryCanonicalForExercise(ex);
+      if (!muscle || !target.has(muscle)) return ex;
+      if (ex.preDeloadReps === undefined) return ex;
+      touched = true;
+      const { preDeloadReps, ...rest } = ex;
+      return {
+        ...rest,
+        sets: ex.baseSets ?? ex.sets,
+        reps: preDeloadReps,
+      };
+    });
+    return touched ? { ...day, exercises } : day;
+  });
+}
+
+/**
  * The muscles that should get a recovery session this week: those showing the
  * MRV signal, minus any still re-entering from last week's.
  *

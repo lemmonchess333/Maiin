@@ -3,12 +3,13 @@ import { useLocation, useNavigate } from "react-router-dom";
 import WeekPulseCard from "@/components/WeekPulseCard";
 import {
   collection,
+  doc,
   getDocs,
   orderBy,
   query,
   Timestamp,
 } from "firebase/firestore";
-import { addDocGuarded } from "@/lib/firestoreWrite";
+import { addDocGuarded, setDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "../lib/firebase";
 import { localDateString, localWeekKey } from "../lib/dateHelpers";
 import { spaceDef } from "@/features/spaces/spaceDefs";
@@ -959,11 +960,28 @@ export default function RunSummary() {
       // back via History). Without the id, every remount fires the
       // prompt again — annoying nag for a user who already decided
       // "Leave open".
-      const savedDocRef = await addDocGuarded(
-        collection(db, "users", user.uid, "runs"),
-        runData
-      );
-      setSavedRunId(savedDocRef.id);
+      const runsCol = collection(db, "users", user.uid, "runs");
+      let savedId: string;
+      if (navigator.onLine) {
+        const savedDocRef = await addDocGuarded(runsCol, runData);
+        savedId = savedDocRef.id;
+      } else {
+        /* #1887 — offline, the SDK durably queues the mutation in
+           IndexedDB and acks only on reconnect, so awaiting here parked
+           this entire chain forever: no confirmation, no share composer
+           (whose offline branch below queues the post), no saved state.
+           Mint the id client-side, start the write without awaiting the
+           ack, and proceed — the local mutation is applied immediately
+           and syncs on reconnect, the same durability the online path
+           has after its ack. A post-reconnect rejection (rules) is
+           logged, mirroring the offline queue's accepted trade-off. */
+        const offlineRef = doc(runsCol);
+        void setDocGuarded(offlineRef, runData).catch((err) =>
+          logger.error("[RunSave] queued offline write failed:", err)
+        );
+        savedId = offlineRef.id;
+      }
+      setSavedRunId(savedId);
 
       /* Hist5d Stress 19 / PR 7b — return-link toast closes the
          PRs-tab cold-start loop. Only fires on saves that could
@@ -1073,17 +1091,24 @@ export default function RunSummary() {
 
       // Update shoe mileage against whichever shoe was resolved above.
       if (effectiveShoeId) {
-        const alert = await updateMileage(effectiveShoeId, distance / 1000);
-        if (alert === "replace") {
-          toast.error(
-            "Time for new shoes! This pair has exceeded its recommended mileage.",
-            { duration: 5000 }
-          );
-        } else if (alert === "warning") {
-          toast.warning(
-            "Your shoes are at 85% of their recommended mileage. Start looking for a replacement!",
-            { duration: 5000 }
-          );
+        if (navigator.onLine) {
+          const alert = await updateMileage(effectiveShoeId, distance / 1000);
+          if (alert === "replace") {
+            toast.error(
+              "Time for new shoes! This pair has exceeded its recommended mileage.",
+              { duration: 5000 }
+            );
+          } else if (alert === "warning") {
+            toast.warning(
+              "Your shoes are at 85% of their recommended mileage. Start looking for a replacement!",
+              { duration: 5000 }
+            );
+          }
+        } else {
+          // #1887 — the mileage write would park the save chain offline
+          // too. Fire it into the SDK's durable queue; the wear alerts
+          // wait for an online run (they're advisory, not per-run).
+          void updateMileage(effectiveShoeId, distance / 1000).catch(() => {});
         }
       }
 

@@ -63,6 +63,10 @@ import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import BaseSectionLabel from "@/components/ui/SectionLabel";
 import { logger } from "@/lib/logger";
 import { buildPlan } from "@/features/program/planBuilder";
+import {
+  focusRepSummary,
+  represcribeWorkouts,
+} from "@/features/program/represcribe";
 import { runTuningFromProfile } from "@/features/program/runScheduler";
 import {
   chooseSplit,
@@ -489,6 +493,19 @@ export default function ProgrammeSettings({
   // lift-days change re-derives the skeleton. The confirm copy must name the
   // customization reset for a day-count change, and reassure otherwise.
   const liftDaysChanged = liftDays !== saved.liftDays;
+  // LIFT-EV-06 (owner decision 2026-08-09): a permanent goal change at the
+  // SAME frequency used to be silent — buildPlan's preserve branch keeps the
+  // workouts verbatim, so only the label moved. The confirm dialog now offers
+  // a visible keep-or-represcribe choice (reusing the training-block
+  // transform). The choice only exists when the preserve branch would run:
+  // a day-count or experience change already forces a rebuild, and an active
+  // block owns the focus.
+  const focusChangedSameFrequency =
+    primaryGoal !== saved.primaryGoal &&
+    !liftDaysChanged &&
+    experience === saved.experience &&
+    !activeBlockFocus &&
+    (programState?.workouts?.length ?? 0) > 0;
 
   const effectiveRunDays =
     saved.runMode === "freeform" ? 0 : saved.weeklyRunDays;
@@ -545,7 +562,14 @@ export default function ProgrammeSettings({
     });
   }
 
-  async function applyRebuild() {
+  /**
+   * `represcribe` is the LIFT-EV-06 choice: re-aim the preserved workouts'
+   * rep targets at the new focus via the same transform training blocks use.
+   * Undo semantics (deliberate, documented in the handoff ledger): the
+   * transform is invertible by re-application — changing the focus back
+   * re-offers the choice in the opposite direction, so no snapshot is kept.
+   */
+  async function applyRebuild(represcribe = false) {
     if (saving) return;
     setConfirmRebuild(false);
     setSaving(true);
@@ -595,6 +619,18 @@ export default function ProgrammeSettings({
         existingState: programState ?? undefined,
         preserveHistory: true,
       });
+
+      // LIFT-EV-06: the user chose "update my sessions" — apply the block
+      // transform to the preserved workouts before they travel. buildPlan's
+      // preserve branch has handed back the verbatim prescription, so this
+      // lands on exactly the input the training-block writers see.
+      if (represcribe && focusChangedSameFrequency) {
+        plan.programState.workouts = represcribeWorkouts(
+          plan.programState.workouts,
+          primaryGoal,
+          experience
+        );
+      }
 
       const configurePlanCallable = httpsCallable(functions, "configurePlan");
       await configurePlanCallable({
@@ -1051,10 +1087,12 @@ export default function ProgrammeSettings({
                   <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                     {confirmReset
                       ? "We'll rebuild your programme from scratch with your current settings. You'll start fresh at Week 1 — past week summaries clear. Your logged workouts and runs stay in History."
-                      : programmePreservationNote({
-                          liftDaysChanged,
-                          weekNumber: programState?.weekNumber,
-                        })}
+                      : focusChangedSameFrequency
+                        ? `New focus: ${labelFor(FOCUS_OPTIONS, primaryGoal)}. Update your sessions to re-aim working sets at ${focusRepSummary(primaryGoal)} reps — weights adjust down where a target rises, and your exercises, sets, history and week number stay. Or keep your current sessions and change the focus only.`
+                        : programmePreservationNote({
+                            liftDaysChanged,
+                            weekNumber: programState?.weekNumber,
+                          })}
                   </p>
                 </div>
               </div>
@@ -1086,24 +1124,53 @@ export default function ProgrammeSettings({
                   </ul>
                 </div>
               )}
-              <div className="flex gap-2 pt-1">
-                <Button
-                  variant="secondary"
-                  className="flex-1"
-                  onClick={() => {
-                    setConfirmRebuild(false);
-                    setConfirmReset(false);
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="flex-1"
-                  onClick={confirmReset ? applyReset : applyRebuild}
-                >
-                  {confirmReset ? "Reset" : "Save"}
-                </Button>
-              </div>
+              {!confirmReset && focusChangedSameFrequency ? (
+                /* LIFT-EV-06: the keep-or-represcribe choice. Two explicit
+                   saves — neither outcome is the silent default. */
+                <div className="space-y-2 pt-1">
+                  <Button fullWidth onClick={() => void applyRebuild(true)}>
+                    Save and update sessions
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    fullWidth
+                    onClick={() => void applyRebuild(false)}
+                  >
+                    Save, keep current sessions
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    fullWidth
+                    onClick={() => {
+                      setConfirmRebuild(false);
+                      setConfirmReset(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-2 pt-1">
+                  <Button
+                    variant="secondary"
+                    className="flex-1"
+                    onClick={() => {
+                      setConfirmRebuild(false);
+                      setConfirmReset(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    className="flex-1"
+                    onClick={
+                      confirmReset ? applyReset : () => void applyRebuild(false)
+                    }
+                  >
+                    {confirmReset ? "Reset" : "Save"}
+                  </Button>
+                </div>
+              )}
             </motion.div>
           </>
         )}

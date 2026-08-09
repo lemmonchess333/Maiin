@@ -42,6 +42,12 @@ export interface PaceTable {
 export interface RunFitnessInput {
   benchmark: { distanceM: number; timeS: number } | null;
   vdot: number | null;
+  /** RUN-EV-08 two-tier consent (owner decision 2026-08-09): true while an
+   *  AUTO-derived benchmark awaits the user's explicit acceptance. A pending
+   *  benchmark informs measurement surfaces (predictions, the fitness
+   *  section) but must NOT change a prescription — use
+   *  `prescriptivePaceTableFromFitness` at prescription call sites. */
+  pendingConfirmation?: boolean;
 }
 
 const RACE_DISTANCES_M: Record<RaceDistanceKey, number> = {
@@ -207,6 +213,23 @@ export function paceTableFromFitness(
   };
 }
 
+/**
+ * RUN-EV-08: the pace table for PRESCRIPTION consumers — anything that
+ * writes a target pace into a run config, a plan prefill, or a scheduled
+ * session. Identical to `paceTableFromFitness` except an unconfirmed
+ * auto-derived benchmark yields null, so callers fall back to template
+ * paces exactly as if no benchmark existed. Measurement consumers
+ * (predictions, the settings pace grid, the post-run verdict) keep
+ * reading `paceTableFromFitness` — the two-tier split is by consequence,
+ * not by field.
+ */
+export function prescriptivePaceTableFromFitness(
+  fitness: RunFitnessInput | null | undefined
+): PaceTable | null {
+  if (fitness?.pendingConfirmation) return null;
+  return paceTableFromFitness(fitness);
+}
+
 /** Shared vdot resolution: stored vdot wins, else derive from the benchmark;
  *  null when neither is usable. `benchmark` is echoed back only when valid. */
 function resolveFitnessVdot(fitness: RunFitnessInput | null | undefined): {
@@ -358,7 +381,12 @@ export function raceDistanceKeyFromKm(
 export interface PaceInsight {
   currentVdot: number;
   suggestedVdot: number;
-  suggestedBenchmark: { distanceM: number; timeS: number };
+  suggestedBenchmark: {
+    distanceM: number;
+    timeS: number;
+    sourceRunId?: string;
+    sourceRunAt?: string;
+  };
   direction: "faster" | "slower";
 }
 
@@ -400,9 +428,27 @@ export function resolvePaceInsight(
  * nothing qualifies → warmup / template fallback.
  */
 export function deriveBenchmarkFromRuns(
-  runs: { distanceM: number; durationS: number }[]
-): { distanceM: number; timeS: number } | null {
-  let best: { distanceM: number; timeS: number } | null = null;
+  runs: {
+    distanceM: number;
+    durationS: number;
+    /** RUN-EV-08 provenance: the winning run's id/date are echoed back so
+     *  the write site can record WHICH run set the benchmark. Optional —
+     *  callers without ids get the pre-provenance behaviour. */
+    id?: string;
+    completedAt?: Date;
+  }[]
+): {
+  distanceM: number;
+  timeS: number;
+  sourceRunId?: string;
+  sourceRunAt?: string;
+} | null {
+  let best: {
+    distanceM: number;
+    timeS: number;
+    sourceRunId?: string;
+    sourceRunAt?: string;
+  } | null = null;
   let bestVdot = 0;
   for (const r of runs) {
     if (
@@ -416,7 +462,12 @@ export function deriveBenchmarkFromRuns(
     const v = vdotFromRace(r.distanceM, r.durationS);
     if (v > bestVdot) {
       bestVdot = v;
-      best = { distanceM: r.distanceM, timeS: r.durationS };
+      best = {
+        distanceM: r.distanceM,
+        timeS: r.durationS,
+        ...(r.id ? { sourceRunId: r.id } : {}),
+        ...(r.completedAt ? { sourceRunAt: r.completedAt.toISOString() } : {}),
+      };
     }
   }
   return best;
