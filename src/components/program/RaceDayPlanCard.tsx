@@ -21,6 +21,7 @@ import {
   raceTimeLabel,
   type RaceDistance,
 } from "@/lib/raceDayPlan";
+import { sessionFuelingLine } from "@/lib/fueling";
 import type { RunFitnessInput } from "@/lib/runPaces";
 
 export default function RaceDayPlanCard({
@@ -115,6 +116,14 @@ export default function RaceDayPlanCard({
       <p className="text-xs text-muted-foreground leading-relaxed">
         {vm.note}
       </p>
+
+      {/* A8: consensus in-race fueling guidance, scaled to the plan time.
+          Silent for short races (the helper nulls under ~75 min). */}
+      {sessionFuelingLine(vm.planTimeS / 60) && (
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          {sessionFuelingLine(vm.planTimeS / 60)}
+        </p>
+      )}
     </section>
   );
 }

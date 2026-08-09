@@ -28,6 +28,9 @@ describe("RaceDayPlanCard", () => {
     expect(screen.getByText("The goal that always counts")).toBeInTheDocument();
     expect(screen.getByText("20 km")).toBeInTheDocument();
     expect(screen.getByText(/negative split/i)).toBeInTheDocument();
+    // A8: a 90-min half plan clears the fueling threshold — the consensus
+    // carbs-per-hour line renders.
+    expect(screen.getByText(/carbs per hour/i)).toBeInTheDocument();
   });
 
   it("nulls outside taper/race and without any time to pace from", () => {
