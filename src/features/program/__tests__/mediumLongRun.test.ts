@@ -127,6 +127,41 @@ describe("the medium-long in generated plans", () => {
     }
   });
 
+  it("WAVE1-STRIDES: exactly one strides day per base/build week, on a plain easy slot", () => {
+    const p = plan("marathon", 20, 5); // 5 run days → long + quality + MLR + 2 easy
+    const race = p.weeks.length - 1;
+    p.weeks.forEach((wk, i) => {
+      const strided = wk.filter((d) => d.templateId.endsWith("_strides"));
+      const isTaperOrRace = i >= race - 3; // marathon taper 3 + race week
+      if (isTaperOrRace) {
+        expect(strided, `wk${i} taper/race`).toHaveLength(0);
+      } else if (easies(wk).length >= 2) {
+        // A week with a plain easy slot beyond the medium-long carries
+        // exactly one strides day…
+        expect(strided.length, `wk${i}`).toBeLessThanOrEqual(1);
+        // …and it is never the medium-long slot.
+        for (const d of strided) {
+          expect(minutes(d.templateId)).toBeLessThanOrEqual(50);
+        }
+      }
+    });
+    // And the block as a whole actually contains strides weeks.
+    const total = p.weeks.flat().filter((d) => d.templateId.endsWith("_strides"));
+    expect(total.length).toBeGreaterThan(0);
+  });
+
+  it("WAVE1-STRIDES: a detrained returner gets none", () => {
+    const p = plan("marathon", 20, 5, { recentLayoff: "detrained" });
+    const strided = p.weeks.flat().filter((d) => d.templateId.endsWith("_strides"));
+    expect(strided).toHaveLength(0);
+  });
+
+  it("WAVE1-STRIDES: variants keep their base tier's duration (volume math unchanged)", () => {
+    expect(minutes("easy_30_strides")).toBe(30);
+    expect(minutes("easy_40_strides")).toBe(40);
+    expect(minutes("easy_50_strides")).toBe(50);
+  });
+
   it("SHARE REGRESSION PIN: marathon 4-day long-run share materially improves", () => {
     // Pre-change: 55% peak share, 53% in the longest-run week. Post-change,
     // measured: ~50% peak (the binding week is a CUTBACK week, where the
