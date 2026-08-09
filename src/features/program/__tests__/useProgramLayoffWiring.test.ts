@@ -321,20 +321,78 @@ describe("a layoff never crosses an account switch", () => {
     // wearing a race-condition's clothes.
     expect(heldSightings).toBeGreaterThan(0);
 
-    // B built a plan while their own layoff was still unknown…
+    // B's FIRST plan still materializes while their layoff is unknown (the
+    // load effect is not gated — week 0 is base-shaped either way)…
     await waitFor(() =>
       expect(persistedRunDays("userB").length).toBeGreaterThan(0)
     );
     await ageIntoMidBlock("userB", 9);
     rerender();
+    // RUN-EV-03 changed the mid-block contract here: the ROLLOVER now WAITS
+    // for B's own read instead of proceeding with the uid-paired seed. Keep
+    // the window open long enough to prove it stayed shut…
     await pumpHolding("users/userB/runs");
-
-    // …and it is the NORMAL plan. "none" is the seed; A's "detrained" is not
-    // visible to B at any point.
-    expect(hardCount(persistedRunDays("userB"))).toBeGreaterThan(0);
-    expect(longestKm(persistedRunDays("userB"))).toBeGreaterThan(14);
-
     releaseAllReads();
     resumeReads();
+    rerender();
+
+    // …then the advance runs with B's OWN resolved class ("trained
+    // yesterday") and it is the NORMAL plan. A's "detrained" is not visible
+    // to B at any point — before the gate via uid-pairing, after it because
+    // the write waits for B's read.
+    await waitFor(() =>
+      expect(hardCount(persistedRunDays("userB"))).toBeGreaterThan(0)
+    );
+    expect(longestKm(persistedRunDays("userB"))).toBeGreaterThan(14);
+  });
+});
+
+describe("RUN-EV-03 — the layoff read is a declared regeneration dependency", () => {
+  it("a returning runner's rollover WAITS for the read, then converges to re-entry", async () => {
+    // The production sequence the old suite never constructed: an EXISTING
+    // stale plan, a cold mount (cache paints in ms, the layoff read is on
+    // the wire), no manual refresh, no profile edit. Pre-fix the rollover
+    // fired with the placeholder "none", persisted a full build week, and
+    // the weekKey guard made it permanent for the week.
+    seedRunHistory("userA", 70); // detrained
+    const first = renderHook(() => useProgram());
+    await waitFor(() =>
+      expect(persistedRunDays("userA").length).toBeGreaterThan(0)
+    );
+    first.unmount();
+    await ageIntoMidBlock("userA", 9);
+
+    // Cold mount with ONLY the layoff read held open.
+    deferReads();
+    renderHook(() => useProgram());
+    const heldSightings = await pumpHolding("users/userA/runs");
+    // The window genuinely existed…
+    expect(heldSightings).toBeGreaterThan(0);
+    // …and NOTHING was written from the placeholder class: the stale week
+    // is still the persisted week.
+    expect(
+      (
+        readDoc(`users/userA/programState/current`) as {
+          runPlan?: { currentWeek?: number };
+        }
+      )?.runPlan?.currentWeek
+    ).toBe(9);
+
+    // The read lands → the effect re-runs (layoffRead is a dep now) → the
+    // rollover advances with the REAL class.
+    releaseAllReads();
+    resumeReads();
+    await waitFor(() =>
+      expect(
+        (
+          readDoc(`users/userA/programState/current`) as {
+            runPlan?: { currentWeek?: number };
+          }
+        )?.runPlan?.currentWeek
+      ).toBeGreaterThan(9)
+    );
+    const week = persistedRunDays("userA");
+    expect(hardCount(week)).toBe(0);
+    expect(longestKm(week)).toBeLessThanOrEqual(14);
   });
 });

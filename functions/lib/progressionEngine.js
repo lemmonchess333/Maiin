@@ -31,6 +31,8 @@ const MAX_BODYWEIGHT_REPS = 20;
 // Backlog #7's time axis (N2) — mirror of the client constants.
 const HOLD_STEP_SECONDS = 5;
 const MAX_HOLD_SECONDS = 60;
+// LIFT-EV-01: floor for any hold reduction — mirror of the client constant.
+const MIN_HOLD_SECONDS = 10;
 // Backlog #7 (H3) — mirror of src/features/program/movementClass.ts. The
 // step keys on the MOVEMENT and its load, not on `isAccessory`; see that
 // module for why the flag (a volume role, filled from the non-primary pool
@@ -201,7 +203,11 @@ function applyProgression(
 
       if (updated.consecutiveFailures >= 3) {
         if (isBodyweight) {
-          updated.reps = Math.max(4, exercise.reps - 1);
+          // LIFT-EV-01 mirror: timed holds shorten by the hold step to the
+          // hold floor; rep movements keep the reduce-target rule.
+          updated.reps = isTimed
+            ? Math.max(MIN_HOLD_SECONDS, exercise.reps - HOLD_STEP_SECONDS)
+            : Math.max(4, exercise.reps - 1);
         } else {
           updated.weight = Math.round(exercise.weight * 0.95 * 2) / 2;
         }
@@ -244,7 +250,10 @@ function applyProgression(
       updated.consecutiveFailures = (exercise.consecutiveFailures || 0) + 1;
       if (updated.consecutiveFailures >= 3) {
         if (isBodyweight) {
-          updated.reps = Math.max(4, exercise.reps - 1);
+          // LIFT-EV-01 mirror (see the double branch above).
+          updated.reps = isTimed
+            ? Math.max(MIN_HOLD_SECONDS, exercise.reps - HOLD_STEP_SECONDS)
+            : Math.max(4, exercise.reps - 1);
         } else {
           updated.weight = Math.max(0, exercise.weight - 1);
         }

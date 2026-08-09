@@ -25,9 +25,8 @@ import { track as trackProgram } from "@/lib/programAnalytics";
 
 export default function SettingsRunPlan() {
   const navigate = useNavigate();
-  const { profile, updateProfile } = useAuth();
-  const { programState, refreshRunSchedule, overrideRunDay, realignRacePlan } =
-    useProgram();
+  const { profile, refreshProfile } = useAuth();
+  const { programState, overrideRunDay, realignRacePlan } = useProgram();
   const [adjustOpen, setAdjustOpen] = useState(false);
 
   if (!profile) {
@@ -95,8 +94,8 @@ export default function SettingsRunPlan() {
 
       <RunPlanSettings
         profile={profile}
-        updateProfile={updateProfile}
-        refreshRunSchedule={refreshRunSchedule}
+        programState={programState}
+        refreshProfile={refreshProfile}
         onOpenFullSettings={() => navigate("/settings/training")}
       />
 
