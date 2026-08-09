@@ -42,7 +42,11 @@ import { THEME } from "@/lib/theme";
 import BaseSectionLabel from "@/components/ui/SectionLabel";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import RaceGoalPlanner from "@/components/program/RaceGoalPlanner";
-import { getRaceGoalPlannerState } from "@/lib/raceGoalPlanner";
+import {
+  getRaceGoalPlannerState,
+  raceTargetVerdict,
+} from "@/lib/raceGoalPlanner";
+import { parseRaceTimeToSeconds } from "@/lib/runPaces";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import { buildPlan } from "@/features/program/planBuilder";
 import { getNutritionPhase } from "@/lib/nutritionPhase";
@@ -114,6 +118,17 @@ interface RunPlanSettingsProps {
   onOpenFullSettings: () => void;
 }
 
+/** Seconds → the string the goal-time input round-trips ("24:30",
+ *  "3:59:00"). */
+function formatRaceTime(totalS: number): string {
+  const h = Math.floor(totalS / 3600);
+  const m = Math.floor((totalS % 3600) / 60);
+  const sec = Math.round(totalS % 60);
+  if (h > 0)
+    return `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+  return `${m}:${String(sec).padStart(2, "0")}`;
+}
+
 const MODE_OPTIONS: { id: RunMode; label: string; desc: string }[] = [
   {
     id: "freeform",
@@ -143,6 +158,7 @@ export default function RunPlanSettings({
       raceDistance: (profile.raceGoal?.distance as RaceDistance) ?? "10k",
       raceTargetDate: profile.raceGoal?.targetDate ?? "",
       raceEventName: profile.raceGoal?.eventName ?? "",
+      raceTargetTimeS: profile.raceGoal?.targetTimeS ?? 0,
       raceEventSpaceId: profile.raceGoal?.eventSpaceId ?? "",
       // Pgm6 knobs — missing → standard (same lazy default the engine uses).
       runVolume: runTuningFromProfile(profile).volume,
@@ -174,6 +190,15 @@ export default function RunPlanSettings({
   const [raceEventName, setRaceEventName] = useState<string>(
     deepLink?.eventName ?? saved.raceEventName
   );
+  // A2: optional goal finish time, drafted as the string the user types
+  // ("3:59:00" / "22:30") and parsed on the fly. Empty = no goal time.
+  const [raceTimeStr, setRaceTimeStr] = useState<string>(
+    saved.raceTargetTimeS ? formatRaceTime(saved.raceTargetTimeS) : ""
+  );
+  const raceTimeParsed = raceTimeStr.trim()
+    ? parseRaceTimeToSeconds(raceTimeStr.trim())
+    : null;
+  const raceTimeInvalid = raceTimeStr.trim() !== "" && raceTimeParsed === null;
   /** The catalogue binding (Q4). Cleared by any manual distance/date
    *  edit — the goal is then no longer that event. */
   const [raceEventSpaceId, setRaceEventSpaceId] = useState<string>(
@@ -220,6 +245,7 @@ export default function RunPlanSettings({
       (raceDistance !== saved.raceDistance ||
         raceTargetDate !== saved.raceTargetDate ||
         raceEventName.trim() !== saved.raceEventName ||
+        (raceTimeParsed ?? 0) !== saved.raceTargetTimeS ||
         raceEventSpaceId !== saved.raceEventSpaceId ||
         weeklyRunDays !== saved.weeklyRunDays ||
         runVolume !== saved.runVolume ||
@@ -255,7 +281,7 @@ export default function RunPlanSettings({
 
   // ── Save (RUN-EV-02: one draft computation, one atomic commit) ──────
   async function handleSave(): Promise<void> {
-    if (saving || !dirty || raceDateInvalid) return;
+    if (saving || !dirty || raceDateInvalid || raceTimeInvalid) return;
     setSaving(true);
     try {
       // Everything derives from the CURRENT DRAFT in one buildPlan call:
@@ -288,6 +314,7 @@ export default function RunPlanSettings({
                 ...(raceEventName.trim()
                   ? { eventName: raceEventName.trim() }
                   : {}),
+                ...(raceTimeParsed ? { targetTimeS: raceTimeParsed } : {}),
               },
             }
           : {}),
@@ -416,6 +443,56 @@ export default function RunPlanSettings({
           selectedEventSpaceId={raceEventSpaceId}
           onPickRace={handlePickRace}
         />
+      )}
+
+      {/* ── A2: goal time (optional) + feasibility verdict ───────────── */}
+      {runMode === "race_prep" && (
+        <div className="rounded-2xl bg-card border border-border/40 px-3.5 py-3 space-y-2">
+          <label
+            htmlFor="ps-race-time"
+            className="text-sm font-medium text-foreground"
+          >
+            Goal time (optional)
+          </label>
+          <input
+            id="ps-race-time"
+            type="text"
+            inputMode="numeric"
+            value={raceTimeStr}
+            onChange={(e) => setRaceTimeStr(e.target.value)}
+            placeholder={
+              raceDistance === "marathon" || raceDistance === "half"
+                ? "e.g. 3:59:00"
+                : "e.g. 24:30"
+            }
+            className="w-full min-h-[44px] rounded-xl border border-border bg-background px-3 text-sm font-mono tabular-nums"
+          />
+          {raceTimeInvalid && (
+            <p className="text-xs text-destructive">
+              Enter a time like 24:30, or 3:59:00 for longer races.
+            </p>
+          )}
+          {(() => {
+            const verdict = raceTargetVerdict({
+              distance: raceDistance,
+              targetTimeS: raceTimeParsed ?? undefined,
+              runFitness: profile.runFitness ?? null,
+            });
+            if (!verdict) {
+              return raceTimeParsed && !profile.runFitness ? (
+                <p className="text-xs text-muted-foreground leading-snug">
+                  Set your running fitness in Settings to see how this goal
+                  compares with your recent running.
+                </p>
+              ) : null;
+            }
+            return (
+              <p className="text-xs text-muted-foreground leading-snug">
+                {verdict.line}
+              </p>
+            );
+          })()}
+        </div>
       )}
 
       {/* ── Run days / week (race prep only — freeform has no schedule) ── */}

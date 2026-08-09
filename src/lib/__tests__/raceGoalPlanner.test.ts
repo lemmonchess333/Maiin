@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   getRaceGoalPlannerState,
+  raceTargetVerdict,
   type RaceGoalPlannerInput,
 } from "../raceGoalPlanner";
 
@@ -149,5 +150,41 @@ describe("getRaceGoalPlannerState", () => {
     });
     expect(s.recommendedRunDays).toBeGreaterThan(0);
     expect(s.recommendedRunDays).toBeLessThanOrEqual(7);
+  });
+});
+
+describe("raceTargetVerdict — A2 feasibility (display register)", () => {
+  // A 20:00 5K benchmark ≈ VDOT 49.8.
+  const fitness = { benchmark: { distanceM: 5000, timeS: 1200 }, vdot: null };
+
+  it("null without a target time or without a benchmark", () => {
+    expect(
+      raceTargetVerdict({ distance: "5k", targetTimeS: undefined, runFitness: fitness })
+    ).toBeNull();
+    expect(
+      raceTargetVerdict({ distance: "5k", targetTimeS: 1200, runFitness: null })
+    ).toBeNull();
+  });
+
+  it("bands order with the gap, and the line stays in the honest register", () => {
+    const at = (timeS: number) =>
+      raceTargetVerdict({ distance: "5k", targetTimeS: timeS, runFitness: fitness })!;
+    // Gaps measured against the real VDOT curve (current = 49.8):
+    expect(at(1260).band).toBe("on_track"); // 21:00 → gap −2.8
+    expect(at(1170).band).toBe("within_reach"); // 19:30 → gap +1.5
+    expect(at(1130).band).toBe("stretch"); // 18:50 → gap +3.6
+    expect(at(1090).band).toBe("long_shot"); // 18:10 → gap +5.9
+    const line = at(1130).line;
+    expect(line).toMatch(/Tropos estimate, not a promise/);
+    expect(line).not.toMatch(/guarantee|will run|safe/i);
+  });
+
+  it("goal pace is the target spread over the distance", () => {
+    const v = raceTargetVerdict({
+      distance: "10k",
+      targetTimeS: 3000, // 50:00 → 5:00/km
+      runFitness: fitness,
+    })!;
+    expect(Math.round(v.goalPaceS)).toBe(300);
   });
 });

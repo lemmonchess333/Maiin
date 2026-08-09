@@ -29,6 +29,12 @@ import {
   type RunTuning,
 } from "@/features/program/runScheduler";
 import { raceDistanceLabel } from "./runProgrammeViewModel";
+import {
+  paceTableFromFitness,
+  vdotFromRace,
+  type RunFitnessInput,
+} from "./runPaces";
+import { paceMinSec } from "./runLabels";
 
 export type RaceDistance = "5k" | "10k" | "half" | "marathon";
 
@@ -220,5 +226,74 @@ export function getRaceGoalPlannerState(
     statusTitle,
     statusDescription,
     ctaLabel,
+  };
+}
+
+/**
+ * A2 — the goal-time feasibility verdict. Pure, display-register only.
+ *
+ * Compares the VDOT the TARGET implies against the VDOT the runner's
+ * benchmark implies. Measurement surface → reads the full fitness (the
+ * RUN-EV-08 consent gate applies to prescriptions, not to telling the
+ * user where they stand). No promises, no physiology claims: the bands
+ * are labelled Tropos heuristics, and no verdict is a guarantee either
+ * way. Null when there is no target time or no usable benchmark — the
+ * planner then simply says nothing.
+ */
+export interface RaceTargetVerdict {
+  /** "on_track" | "within_reach" | "stretch" | "long_shot" */
+  band: "on_track" | "within_reach" | "stretch" | "long_shot";
+  /** Goal pace, s/km — the target time spread over the distance. */
+  goalPaceS: number;
+  targetVdot: number;
+  currentVdot: number;
+  /** One honest sentence for the planner preview. */
+  line: string;
+}
+
+const DISTANCE_METERS: Record<RaceDistance, number> = {
+  "5k": 5000,
+  "10k": 10000,
+  half: 21097.5,
+  marathon: 42195,
+};
+
+export function raceTargetVerdict(input: {
+  distance: RaceDistance;
+  targetTimeS: number | undefined;
+  runFitness: RunFitnessInput | null | undefined;
+}): RaceTargetVerdict | null {
+  const { distance, targetTimeS, runFitness } = input;
+  if (!targetTimeS || targetTimeS <= 0) return null;
+  const meters = DISTANCE_METERS[distance];
+  const targetVdot = vdotFromRace(meters, targetTimeS);
+  if (targetVdot <= 0) return null;
+  const table = paceTableFromFitness(runFitness ?? null);
+  if (!table) return null;
+  const currentVdot = table.vdot;
+  const goalPaceS = targetTimeS / (meters / 1000);
+  const gap = targetVdot - currentVdot;
+  let band: RaceTargetVerdict["band"];
+  let phrase: string;
+  if (gap <= 0) {
+    band = "on_track";
+    phrase = "your recent running already implies this shape";
+  } else if (gap <= 2) {
+    band = "within_reach";
+    phrase = "within reach of your recent running";
+  } else if (gap <= 4) {
+    band = "stretch";
+    phrase = "a stretch beyond your recent running";
+  } else {
+    band = "long_shot";
+    phrase = "well beyond what your recent running implies";
+  }
+  const line = `Goal pace ${paceMinSec(Math.round(goalPaceS))}/km · ${phrase} (target fitness ${targetVdot.toFixed(1)} vs current ${currentVdot.toFixed(1)} — a Tropos estimate, not a promise).`;
+  return {
+    band,
+    goalPaceS,
+    targetVdot: Math.round(targetVdot * 10) / 10,
+    currentVdot,
+    line,
   };
 }
