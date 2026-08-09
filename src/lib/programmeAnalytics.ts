@@ -16,7 +16,9 @@ export type ProgrammeEvent =
   | "programme_section_viewed"
   | "programme_day_tapped"
   | "programme_deload_banner_viewed"
-  | "programme_deload_banner_action";
+  | "programme_deload_banner_action"
+  | "programme_recovery_banner_viewed"
+  | "programme_recovery_banner_action";
 
 /** Lazy-loaded / below-fold sections worth instrumenting. */
 export type ProgrammeSection =
@@ -24,12 +26,14 @@ export type ProgrammeSection =
   | "day_stepper"
   | "session_card"
   | "deload_banner"
+  | "recovery_banner"
   | "race_goal_card"
   | "run_plan";
 
 /** Pgm3 deload banner has two terminal user actions; pin the
- *  alternatives explicitly so the event union is self-documenting. */
-export type ProgrammeDeloadAction = "applied" | "dismissed" | "undo";
+ *  alternatives explicitly so the event union is self-documenting.
+ *  "undone" is the LIFT-EV-05 recovery banner's restore action. */
+export type ProgrammeDeloadAction = "applied" | "dismissed" | "undo" | "undone";
 
 export interface ProgrammeEventMetadata {
   /** programme_section_viewed: which section first crossed into

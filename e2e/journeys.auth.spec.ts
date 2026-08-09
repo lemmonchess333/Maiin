@@ -49,6 +49,14 @@ import {
   EXPECTED_FIRESTORE_HOST,
 } from "./helpers/emulator";
 
+// Sandbox rigs provide a system chromium instead of the Playwright-
+// managed download — same escape hatch every other auth spec carries.
+test.use({
+  ...(process.env.PW_CHROMIUM
+    ? { launchOptions: { executablePath: process.env.PW_CHROMIUM } }
+    : {}),
+});
+
 test.describe("core user journeys", () => {
   test.skip(
     !emulatorActive,
@@ -132,7 +140,7 @@ test.describe("core user journeys", () => {
     // callable, which this emulator set doesn't provide.
     await expect(
       page.getByRole("button", {
-        name: /Save race plan|Save compressed plan|Save finish-safely plan/,
+        name: /Save race plan|Save compressed plan|Save mostly-easy plan/,
       })
     ).toBeEnabled({ timeout: 10_000 });
   });

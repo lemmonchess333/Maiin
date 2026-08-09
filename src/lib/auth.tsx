@@ -329,6 +329,15 @@ export interface UserProfileRunning {
     vdot: number | null;
     source: "race" | "manual" | "estimate" | "derived";
     updatedAt: string;
+    /** RUN-EV-08 provenance: the run that set an auto-derived benchmark. */
+    sourceRunId?: string;
+    sourceRunAt?: string;
+    /** RUN-EV-08 two-tier consent: true while an auto-derived benchmark
+     *  awaits explicit acceptance — measurement surfaces use it,
+     *  prescriptions don't (`prescriptivePaceTableFromFitness`). Cleared
+     *  EXPLICITLY (`false`) on accept/manual save — Firestore merge writes
+     *  deep-merge maps, so omitting the key would leave a stale `true`. */
+    pendingConfirmation?: boolean;
   } | null;
   /**
    * Max heart rate (bpm) — the single INPUT for HR-zone math (see

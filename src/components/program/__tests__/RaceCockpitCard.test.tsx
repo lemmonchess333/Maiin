@@ -98,9 +98,9 @@ describe("RaceCockpitCard", () => {
    * ABSENT, not merely joined by a second one, or the card would say two
    * contradictory things at once.
    */
-  it("says finish-safely, NOT compressed, when the plan is below the floor", () => {
+  it("says mostly-easy, NOT compressed, when the plan is below the floor", () => {
     renderCard({ compressed: true, belowFloor: true });
-    expect(screen.getByText(/Finish-safely plan/i)).toBeInTheDocument();
+    expect(screen.getByText(/Mostly-easy plan/i)).toBeInTheDocument();
     expect(screen.queryByText(/Compressed plan/i)).not.toBeInTheDocument();
   });
 

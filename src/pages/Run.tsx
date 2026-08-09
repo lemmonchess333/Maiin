@@ -22,7 +22,10 @@ import {
   type GPSPoint,
 } from "../lib/gps";
 import { getDistanceTargetMeters } from "../lib/runConfigUnits";
-import { paceTableFromFitness, resolveSessionPaces } from "../lib/runPaces";
+import {
+  prescriptivePaceTableFromFitness,
+  resolveSessionPaces,
+} from "../lib/runPaces";
 import {
   getScheduledRunStatus,
   isScheduledRunStartable,
@@ -450,9 +453,11 @@ export default function Run() {
   // band-first display rule, now for intervals AND tempo. undefined (no
   // benchmark) → the shell falls back to the segment's built label.
   const intervalBand = useMemo(() => {
+    // Union of STRUCT-SESS-02 (band for intervals AND tempo) and RUN-EV-08
+    // (prescription sites read the consent-gated table).
     const type = runConfig?.activityType;
     if (type !== "intervals" && type !== "tempo") return undefined;
-    const table = paceTableFromFitness(profile?.runFitness ?? null);
+    const table = prescriptivePaceTableFromFitness(profile?.runFitness ?? null);
     return table ? resolveSessionPaces(type, table).band : undefined;
   }, [runConfig?.activityType, profile?.runFitness]);
 
@@ -495,7 +500,7 @@ export default function Run() {
       urlScheduledRunId,
       // Adaptive Paces: personalize the prescribed pace from the user's
       // fitness benchmark. null (no benchmark) → template defaults.
-      paceTable: paceTableFromFitness(profile?.runFitness ?? null),
+      paceTable: prescriptivePaceTableFromFitness(profile?.runFitness ?? null),
     });
     // Missing URL template — surface the developer signal here,
     // not in the pure helper. The helper falls back to freeform
@@ -584,7 +589,7 @@ export default function Run() {
   // template, ?type=) gets the tile picker. Route import, interrupted-run
   // resume, and Customize / More options fall back to the full modal.
   const paceTable = useMemo(
-    () => paceTableFromFitness(profile?.runFitness ?? null),
+    () => prescriptivePaceTableFromFitness(profile?.runFitness ?? null),
     [profile?.runFitness]
   );
   // RUN-04: the tile picker's "Repeat <type>" recognition row — non-null when

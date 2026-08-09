@@ -895,8 +895,44 @@ months.
 
 Affects: `src/lib/offlineQueue.ts`, `src/lib/shareComposer.ts`.
 
-- [ ] Two-account device test. Sign in as A, go offline, log a workout. Sign out, sign in as B (same device). Confirm A's queued workout does NOT appear under B's account, and that `localStorage['tropos_offline_queue']` still contains the entry tagged `uid: <A>`. Sign back in as A, return online — confirm the queue flushes under A's auth.
-- [ ] Same flow for the share composer queue (`tropos.share.queue`) — queue an offline share as A, switch to B, confirm no posts appear in B's feed; return to A, confirm A's post finally lands.
+- [x] Two-account device test — automated end-to-end by
+      `e2e/offlineQueueIsolation.auth.spec.ts` against the real emulator rig:
+      A logs while offline (queue entry tagged `uid: <A>`), signs out while
+      still offline via the app's own Sign Out (queue survives), B signs in
+      on the same context, B's flush pass leaves A's entry queued and
+      `users/A/logs` empty, then A returns and the flush lands the exact
+      queued docId with `_offlineCreatedAt` (flush-only provenance) and
+      empties the queue. Two findings recorded in the spec header: (1) no
+      WORKOUT surface routes through the offline queue — programme completion
+      is a `writeBatch` (offline it rides the Firestore SDK's own
+      pending-mutation queue + session draft) and `useWorkouts.saveWorkout`
+      is a pinned orphan — so the vehicle is the Food page's daily-log write
+      (`saveLog` → `safeMerge`), the one queue-routed UI journey; the
+      uid-isolation contract is collection-agnostic. (2) "Offline" is driven
+      by overriding `navigator.onLine` — the app's own gate on both enqueue
+      and flush — because Playwright's `context.setOffline` permanently
+      wedges the Firestore SDK's WebChannel WRITE stream in the emulator rig
+      (Listen recovers, Write never re-establishes). Real airplane-mode
+      remains a device check, but the queue contract itself is pinned here.
+- [x] Same flow for the share composer queue (`tropos.share.queue`) —
+      drain-side automated in the same spec: pending shares seeded for BOTH
+      accounts (the exact `PendingShare` shape `enqueueShare` writes), B's
+      drain posts B's share while keeping A's queued with zero A-authored
+      `activities` docs, A's return posts A's share and empties the queue.
+      The ENQUEUE half is driven for real too, via the run-save journey
+      (RunSummary hydrates from router state — no GPS rig needed): still
+      offline, A saves a synthetic run, shares it, and the pre-gated
+      offline branch queues the post with the "Post queued" toast
+      asserted. That path only became reachable with the #1887 fix (same
+      PR): every `enqueueShare` site used to sit behind an awaited
+      Firestore write that parks offline (never rejects) — the saves are
+      now pre-gated on `navigator.onLine` and proceed on the durable
+      IndexedDB commit, which also un-hangs offline run/workout saving
+      itself. Residue: a real-device airplane-mode pass of the run-save
+      journey, plus one behavior the spec deliberately tolerates — each
+      offline remount of /food re-queues the same date-keyed daily-log
+      merge write (duplicates converge on one doc; queue counts inflate
+      until flush).
 - [x] Legacy pre-deploy items dropped on first read — covered by
       `offlineQueue.test.ts` ("drops legacy items missing a uid field"), which
       seeds one untagged and one tagged entry and asserts the untagged one is
@@ -1057,6 +1093,15 @@ auto-created on first `/triage` use if absent on GitHub. See
 Single-context. `CONTEXT.md` at repo root (seed; fill with domain
 vocabulary as it crystallises); ADRs in `docs/adr/`. See
 `docs/agents/domain.md`.
+
+Training-programming evidence handoffs (integrated 2026-08-09): start at
+`docs/training-programming-claude-handoff.md`, which indexes the lifting
+and running evidence syntheses and their open-issue ledgers
+(`LIFT-EV-xx` / `RUN-EV-xx` — deliberately distinct from the plan file's
+retention-audit `RUN-0x` and programme-audit `LIFT-0x` vocabularies).
+Read the relevant handoff before any lift/run programming change; its
+ledger rows without a dated STATUS note have not been re-verified since
+2026-08-07.
 
 Read the relevant ADR before re-deciding something it already settled —
 an audit that re-derives a locked decision is wasted effort even when it
