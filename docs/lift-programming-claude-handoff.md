@@ -334,6 +334,17 @@ cold-start seeding only; it must never expand into sex-based
 programming and is superseded the moment any real capacity signal
 exists for the user. Full unit suite green after both changes.
 
+STATUS 2026-08-09 (second batch, owner delegated the choice):
+LIFT-EV-05 DECIDED, implementation owed — automatic protective
+reductions stay, but they must be SURFACED: a banner (DeloadBanner
+pattern) with honest copy that does not cite MRV/landmark science the
+engine doesn't implement, plus a one-tap undo restoring the
+undiminished prescription. LIFT-EV-06 DECIDED, implementation owed —
+a same-frequency primary-goal change offers a visible keep-or-
+represcribe choice reusing the existing training-block transform;
+never silently automatic in either direction. Neither is shipped;
+each is a bounded feature PR with its own design surface.
+
 | ID / state                        | Issue                                                                                                                                                                                                                        | Required outcome                                                                                                                                                                                                                  |
 | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | LIFT-EV-01 — P1, ready correction | Timed-hold repeated failure is still repetition-shaped in the client and server progression mirrors. First trace: programEngine, progressionEngine, and their cross/engine tests.                                            | Define a seconds-specific decrement and floor; test linear and double paths, range caps/floors, history, labels, and client/server parity.                                                                                        |

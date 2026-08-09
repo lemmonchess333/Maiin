@@ -269,6 +269,17 @@ CTA, cockpit card, realign toast, Adjust-week preview), and the
 state keys are deliberately unchanged (persisted vocabulary, no user
 value in renaming). Full unit suite green after both changes.
 
+STATUS 2026-08-09 (second batch, owner delegated the choice): RUN-EV-06
+DECIDED and RESOLVED — the 150-minute ceiling and 6 km lowest tier are
+retained, explicitly labelled Tropos heuristics (not source-derived
+safety rules) at the constant in `runScheduler.ts`; the Daniels
+citation covers the time half only. RUN-EV-08 DECIDED, implementation
+owed — two-tier by consequence: measurement-only benchmarks may
+auto-update with visible provenance and a reversal path; any benchmark
+change that feeds a prescription keeps explicit acceptance. No code
+shipped yet; the implementing session must trace the automatic fitness
+derivation and pace-insight acceptance paths and test the policy.
+
 | ID / state                                    | Issue                                                                                                                                                                                                                                                                                                              | Required outcome                                                                                                                                                                                                                                                    |
 | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | RUN-EV-01 — P0, owner decision                | Onboarding still offers Structured while runtime resolution turns it into freeform and deletes its plan/days. First trace: Onboarding, onboarding run-mode resolution, useProgram, and Run9 migration tests.                                                                                                       | Decide once: remove or explicitly resolve Structured before plan creation, or restore a supported lifecycle. A selection must survive onboarding, hydration, and display without silent plan deletion.                                                              |

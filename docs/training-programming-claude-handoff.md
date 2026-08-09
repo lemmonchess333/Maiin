@@ -177,21 +177,20 @@ Ratified (implemented in PR #1886; details in each ledger's STATUS notes):
    cold-start seeding only, never expanded into sex-based programming,
    superseded by any real capacity signal.
 
-PROPOSED, NOT RATIFIED (recommendations put to the owner, twice
-unanswered — a future session must obtain an explicit yes/no before
-acting; none of these is a lock):
+Batch 2 — RATIFIED 2026-08-09 (owner explicitly delegated the choice:
+"you choose"; the recommendations stand as decisions):
 
-- LIFT-EV-05 recovery posture → recommend automatic protective
-  reductions kept, surfaced in a banner with honest non-MRV copy and
-  one-tap undo (the DeloadBanner pattern).
-- RUN-EV-08 benchmark policy → recommend two-tier by consequence:
-  measurements auto-update with visible provenance and reversal;
-  anything touching a prescription keeps explicit acceptance.
-- LIFT-EV-06 goal change → recommend a visible keep-or-represcribe
-  choice on a same-frequency primary-goal change, reusing the
-  training-block transform; never automatic.
-- RUN-EV-06 dose heuristics → recommend keeping the 150-minute long-run
-  ceiling and 6 km floor, explicitly labelled Tropos heuristics.
+5. RUN-EV-06 — ceiling and floor retained, labelled Tropos heuristics
+   at the constant (RESOLVED in PR #1886).
+6. LIFT-EV-05 — automatic protective reductions kept, surfaced in a
+   banner with honest non-MRV copy and one-tap undo (implementation
+   owed — its own feature PR).
+7. RUN-EV-08 — two-tier benchmark policy: measurements auto-update
+   with visible provenance and reversal; prescription-feeding changes
+   keep explicit acceptance (implementation owed — its own PR).
+8. LIFT-EV-06 — same-frequency goal change offers a visible
+   keep-or-represcribe choice reusing the training-block transform
+   (implementation owed — its own PR).
 
 Deferred with reason (not decision-ready): LIFT-EV-04 and RUN-EV-07
 (boundary/concurrency ownership — need their own audit sessions before
