@@ -118,6 +118,8 @@ import {
 import { planEasierWeek } from "@/lib/adjustWeek";
 import { track as trackProgram } from "@/lib/programAnalytics";
 import RaceCockpitCard from "./RaceCockpitCard";
+import RaceDayPlanCard from "./RaceDayPlanCard";
+import type { RaceDistance } from "@/lib/raceDayPlan";
 import SessionCommandCard from "./SessionCommandCard";
 import ProgrammeWeekSelector from "./ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "./ProgrammeWeekSelector";
@@ -503,6 +505,7 @@ export default function ProgrammeRunSection({
       programState?.runPlan?.currentWeek,
       programState?.runPlan?.totalWeeks,
       raceCompressed,
+      raceBelowFloor,
       todayKeyDerivation,
     ]
   );
@@ -1458,6 +1461,25 @@ export default function ProgrammeRunSection({
                   haptic();
                   navigate("/settings/run-plan");
                 }}
+              />
+            )}
+
+          {/* A7 — race execution card: A/B/C goals + negative-split table.
+              Self-gates to taper + race week (raceDayPlanVisible) and to
+              having at least one time to pace from (goal or benchmark).
+              `targetTimeS` reads the PROFILE copy — the canonical store for
+              the goal time (runPlan.raceGoal is the schedule's snapshot and
+              doesn't carry it). */}
+          {currentMode === "race_prep" &&
+            raceGoal &&
+            !raceElapsed &&
+            raceCockpitVM && (
+              <RaceDayPlanCard
+                distance={raceGoal.distance as RaceDistance}
+                targetTimeS={profile.raceGoal?.targetTimeS ?? null}
+                runFitness={profile.runFitness ?? null}
+                currentWeek={programState?.runPlan?.currentWeek ?? null}
+                totalWeeks={programState?.runPlan?.totalWeeks ?? null}
               />
             )}
 
