@@ -164,6 +164,43 @@ Do not commit supplied books, extracted text, or temporary analysis artefacts.
 When publishing these handoffs, stage the named Markdown files explicitly,
 not `git add .`; the existing `tmp/` folder is outside their scope.
 
+## Owner-decision session — 2026-08-09
+
+Ratified (implemented in PR #1886; details in each ledger's STATUS notes):
+
+1. RUN-EV-01 — Structured removed from onboarding; two-state surface stands.
+2. RUN-EV-05 — below-floor label renamed "mostly-easy plan" everywhere
+   user-visible; internal state keys unchanged.
+3. LIFT-EV-02 — phase copy derives from primary goal (deload overrides);
+   `currentPhase` initializes to the engine's own "progression".
+4. LIFT-EV-07 — sex-based 0.75 starting-load factor retained and FENCED:
+   cold-start seeding only, never expanded into sex-based programming,
+   superseded by any real capacity signal.
+
+PROPOSED, NOT RATIFIED (recommendations put to the owner, twice
+unanswered — a future session must obtain an explicit yes/no before
+acting; none of these is a lock):
+
+- LIFT-EV-05 recovery posture → recommend automatic protective
+  reductions kept, surfaced in a banner with honest non-MRV copy and
+  one-tap undo (the DeloadBanner pattern).
+- RUN-EV-08 benchmark policy → recommend two-tier by consequence:
+  measurements auto-update with visible provenance and reversal;
+  anything touching a prescription keeps explicit acceptance.
+- LIFT-EV-06 goal change → recommend a visible keep-or-represcribe
+  choice on a same-frequency primary-goal change, reusing the
+  training-block transform; never automatic.
+- RUN-EV-06 dose heuristics → recommend keeping the 150-minute long-run
+  ceiling and 6 km floor, explicitly labelled Tropos heuristics.
+
+Deferred with reason (not decision-ready): LIFT-EV-04 and RUN-EV-07
+(boundary/concurrency ownership — need their own audit sessions before
+options can even be framed); RUN-EV-02 remainder (atomic
+schedule/preview commit — needs a trace); RUN-EV-04 and lift Q5/Q6
+(exposure modelling, volume review, run/lift priority inputs — need
+real user data that pre-launch Tropos does not have); run Q7 (no new
+plan taxonomy while the two-state lock stands).
+
 ## Working standard
 
 Use books and research to ask better questions and make an explainable plan,

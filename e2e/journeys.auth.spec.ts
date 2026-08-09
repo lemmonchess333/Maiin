@@ -140,7 +140,7 @@ test.describe("core user journeys", () => {
     // callable, which this emulator set doesn't provide.
     await expect(
       page.getByRole("button", {
-        name: /Save race plan|Save compressed plan|Save finish-safely plan/,
+        name: /Save race plan|Save compressed plan|Save mostly-easy plan/,
       })
     ).toBeEnabled({ timeout: 10_000 });
   });

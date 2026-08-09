@@ -320,6 +320,20 @@ functions-touching PR). LIFT-EV-07 CONFIRMED present —
 documented in-file; the owner decision remains open. LIFT-EV-01, -04,
 -05, -06, -08 were NOT re-verified in this pass — trace before acting.
 
+STATUS 2026-08-09, owner-decision session (PR #1886): LIFT-EV-02
+DECIDED and RESOLVED — the phase label derives from the primary goal.
+Implementation honors the engine's real vocabulary: `planBuilder` now
+initializes `currentPhase: "progression"` (the value rollover already
+writes; "Hypertrophy" only ever survived week 1), and Home's header
+renders `primaryGoalLabel(primaryGoal)` with the deload lifecycle state
+overriding — a strength plan can no longer read "Hypertrophy phase" in
+any week. LIFT-EV-07 DECIDED — RETAIN AND FENCE: the 0.75 female
+starting-load factor stays (removing it would RAISE first-session seed
+loads for female users — a safety regression), bounded in writing to
+cold-start seeding only; it must never expand into sex-based
+programming and is superseded the moment any real capacity signal
+exists for the user. Full unit suite green after both changes.
+
 | ID / state                        | Issue                                                                                                                                                                                                                        | Required outcome                                                                                                                                                                                                                  |
 | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | LIFT-EV-01 — P1, ready correction | Timed-hold repeated failure is still repetition-shaped in the client and server progression mirrors. First trace: programEngine, progressionEngine, and their cross/engine tests.                                            | Define a seconds-specific decrement and floor; test linear and double paths, range caps/floors, history, labels, and client/server parity.                                                                                        |

@@ -256,6 +256,19 @@ but this row's atomic goal/schedule/preview-commit concern was NOT
 re-verified. RUN-EV-03, -04, -06 through -10 were NOT re-verified in
 this pass — trace before acting.
 
+STATUS 2026-08-09, owner-decision session (PR #1886): RUN-EV-01
+DECIDED and RESOLVED — the "Structured" chip is REMOVED from
+onboarding; the surface matches the Run9a two-state lock (freeform +
+race prep). Legacy profiles and drafts carrying runMode "structured"
+keep resolving to freeform exactly as before (onboardingRunMode's
+pass-through and its tests are unchanged); a legacy draft re-opens on
+Freeform. RUN-EV-05 DECIDED and RESOLVED — the below-floor label is
+"mostly-easy plan" across every user-visible surface (planner status +
+CTA, cockpit card, realign toast, Adjust-week preview), and the
+"train safely" phrasing went with it; the internal `finish_safely`
+state keys are deliberately unchanged (persisted vocabulary, no user
+value in renaming). Full unit suite green after both changes.
+
 | ID / state                                    | Issue                                                                                                                                                                                                                                                                                                              | Required outcome                                                                                                                                                                                                                                                    |
 | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | RUN-EV-01 — P0, owner decision                | Onboarding still offers Structured while runtime resolution turns it into freeform and deletes its plan/days. First trace: Onboarding, onboarding run-mode resolution, useProgram, and Run9 migration tests.                                                                                                       | Decide once: remove or explicitly resolve Structured before plan creation, or restore a supported lifecycle. A selection must survive onboarding, hydration, and display without silent plan deletion.                                                              |
