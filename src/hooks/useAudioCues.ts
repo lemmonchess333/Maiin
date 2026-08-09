@@ -8,7 +8,6 @@ import {
   halfwayCue,
   final500Cue,
   pbCue,
-  phaseCue,
   type SplitComparison,
 } from "@/lib/runCueCopy";
 
@@ -200,14 +199,6 @@ export function useAudioCues(
     [enabled, speak]
   );
 
-  const announcePhase = useCallback(
-    (phase: string, rep?: number, totalReps?: number) => {
-      if (!enabled) return;
-      const text = phaseCue(phase, rep, totalReps);
-      if (text) speak(text);
-    },
-    [enabled, speak]
-  );
 
   const reset = useCallback(() => {
     lastDistanceCue.current = 0;
@@ -227,7 +218,6 @@ export function useAudioCues(
     checkHalfway,
     checkFinal500,
     announcePB,
-    announcePhase,
     reset,
   };
 }
