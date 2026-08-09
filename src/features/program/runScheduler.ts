@@ -67,7 +67,7 @@ export const TAPER_WEEKS_BY_DISTANCE: Record<
   marathon: 3,
 };
 
-function getPhaseForWeek(
+export function getPhaseForWeek(
   weekIndex: number,
   totalWeeks: number,
   distance: "5k" | "10k" | "half" | "marathon"
@@ -658,6 +658,30 @@ export function longTierForKm(km: number): string {
   return chosen.id;
 }
 
+/**
+ * WAVE1-STRIDES: the strides variant of a plain easy tier. Daniels
+ * prescribes strides (4-6 x ~20s relaxed-fast, full recovery) 2-3x/week on
+ * easy days in every plan; Tropos schedules ONE strides day per base/build
+ * week — deliberately conservative, and a Tropos scheduling heuristic
+ * (RUN-EV-06 register), not a source-derived dose. Strides replace a few
+ * minutes of easy jogging rather than extending the session, so the
+ * variant's duration equals its base tier and the week's volume math is
+ * unchanged. Non-plain ids (medium-long rungs, anything else) pass through
+ * untouched.
+ */
+export function stridesVariantOf(easyId: string): string {
+  switch (easyId) {
+    case "easy_30":
+      return "easy_30_strides";
+    case "easy_40":
+      return "easy_40_strides";
+    case "easy_50":
+      return "easy_50_strides";
+    default:
+      return easyId;
+  }
+}
+
 /** Snap a target duration to the nearest easy tier at or below it. */
 export function easyTierForMinutes(minutes: number): string {
   let chosen = EASY_RUN_TIERS[0];
@@ -1195,12 +1219,18 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
       if (phase === "base") {
         // Base: all easy (compressed plans extend base proportionally
         // since there's no time for a real build phase). The first slot
-        // carries the medium-long (RUN-EV-11).
+        // carries the medium-long (RUN-EV-11); the second gains strides
+        // (WAVE1-STRIDES) — a detrained returner gets neither.
         remaining.forEach((d, i) =>
           week.push(
             buildRunDayV2({
               dayIndex: d,
-              templateId: i === 0 ? midLongId : easyId,
+              templateId:
+                i === 0
+                  ? midLongId
+                  : i === 1 && input.recentLayoff !== "detrained"
+                    ? stridesVariantOf(easyId)
+                    : easyId,
               type: "easy",
               weekStart,
             })
@@ -1258,8 +1288,14 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
             week.push(
               buildRunDayV2({
                 dayIndex: d,
-                // RUN-EV-11: the first easy slot is the medium-long.
-                templateId: i === 0 ? midLongId : easyId,
+                // RUN-EV-11: first easy slot is the medium-long;
+                // WAVE1-STRIDES: the next plain easy gains strides.
+                templateId:
+                  i === 0
+                    ? midLongId
+                    : i === 1 && input.recentLayoff !== "detrained"
+                      ? stridesVariantOf(easyId)
+                      : easyId,
                 type: "easy",
                 weekStart,
               })
@@ -1267,12 +1303,18 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
           );
         } else {
           // Skip quality this week — all easy; first slot carries the
-          // medium-long (RUN-EV-11).
+          // medium-long (RUN-EV-11), the second gains strides
+          // (WAVE1-STRIDES).
           remaining.forEach((d, i) =>
             week.push(
               buildRunDayV2({
                 dayIndex: d,
-                templateId: i === 0 ? midLongId : easyId,
+                templateId:
+                  i === 0
+                    ? midLongId
+                    : i === 1 && input.recentLayoff !== "detrained"
+                      ? stridesVariantOf(easyId)
+                      : easyId,
                 type: "easy",
                 weekStart,
               })

@@ -16,6 +16,10 @@ export interface RunTemplate {
       warmupDuration?: number;
       cooldownDuration?: number;
     };
+    /** WAVE1-STRIDES: relaxed-fast accelerations closing an easy run
+     *  (Daniels). Inert to the players until the structured-session
+     *  work lands; the description carries the instruction meanwhile. */
+    strides?: { reps: number; workSeconds: number };
   };
 }
 
@@ -49,6 +53,40 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     description: "Conversational pace — aerobic base",
     estimatedDuration: 50,
     config: {},
+  },
+  // Strides variants (WAVE1-STRIDES) — an easy run closing with 4 x 20s
+  // relaxed-fast accelerations, full walk-back recovery (Daniels: leg
+  // speed + economy at negligible load; NOT a hard session). Duration
+  // equals the base tier: strides replace a few minutes of jogging.
+  {
+    id: "easy_30_strides",
+    name: "Easy 30 + strides",
+    type: "easy",
+    icon: "person-standing",
+    description:
+      "Conversational pace; finish with 4 \u00d7 20s strides \u2014 relaxed fast, walk back between",
+    estimatedDuration: 30,
+    config: { strides: { reps: 4, workSeconds: 20 } },
+  },
+  {
+    id: "easy_40_strides",
+    name: "Easy 40 + strides",
+    type: "easy",
+    icon: "person-standing",
+    description:
+      "Conversational pace; finish with 4 \u00d7 20s strides \u2014 relaxed fast, walk back between",
+    estimatedDuration: 40,
+    config: { strides: { reps: 4, workSeconds: 20 } },
+  },
+  {
+    id: "easy_50_strides",
+    name: "Easy 50 + strides",
+    type: "easy",
+    icon: "person-standing",
+    description:
+      "Conversational pace; finish with 4 \u00d7 20s strides \u2014 relaxed fast, walk back between",
+    estimatedDuration: 50,
+    config: { strides: { reps: 4, workSeconds: 20 } },
   },
   // Medium-long tiers (RUN-EV-11, 2026-08-09) — Pfitzinger's midweek
   // medium-long run, the mechanism that lets half/marathon weeks carry

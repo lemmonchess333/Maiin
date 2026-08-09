@@ -46,6 +46,7 @@ import {
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { RUN_TEMPLATES, isScheduledRaceRunDay } from "@/lib/workoutTemplates";
+import { runSessionExplainer } from "@/lib/runSessionExplainer";
 import { sessionPaceDisplay } from "@/lib/runLabels";
 import {
   paceTableFromFitness,
@@ -225,6 +226,25 @@ export default function DayActionSheet({
     if (!band) return null;
     return `Z${band.zone} · ${band.minBpm}–${band.maxBpm} bpm`;
   })();
+  // WAVE1-EXPLAIN (roadmap A5): one honest "why this session" sentence,
+  // derived from the plan's REAL phase — null for freeform/extras, and the
+  // line simply doesn't render.
+  const selectedRunWhy: string | null = (() => {
+    if (!selectedRunTemplate || !run.runDay) return null;
+    const rp = programState?.runPlan;
+    return runSessionExplainer({
+      type: selectedRunTemplate.type,
+      templateId: selectedRunTemplate.id,
+      currentWeek: rp?.currentWeek,
+      totalWeeks: rp?.totalWeeks,
+      distance: (rp?.raceGoal?.distance ?? profile?.raceGoal?.distance) as
+        | "5k"
+        | "10k"
+        | "half"
+        | "marathon"
+        | undefined,
+    });
+  })();
   // Race-day detection by TEMPLATE TYPE, not by `templateId === "race"`.
   // Race templates have ids like `5k_race` / `marathon_race` (never the
   // literal "race"), so the old string-equality check was always false —
@@ -330,6 +350,11 @@ export default function DayActionSheet({
                 {selectedRunTemplate?.description && (
                   <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                     {selectedRunTemplate.description}
+                  </p>
+                )}
+                {selectedRunWhy && (
+                  <p className="text-xs text-muted-foreground/90 mt-1.5 leading-snug">
+                    {selectedRunWhy}
                   </p>
                 )}
                 {(selectedRunMeta || selectedRunHr) && (
