@@ -298,6 +298,19 @@ derived benchmarks without the flag stay prescriptive (confirmed by
 default) — yanking existing users' paces retroactively was not part of
 the decision.
 
+STATUS 2026-08-09, merge-cascade close-out (PR #1888, merged to main):
+RUN-EV-02 RESOLVED — RunPlanSettings saves are ONE buildPlan from the
+current draft + ONE atomic configurePlan batch; preview ≡ commit by
+construction (both derive from generateSchedule); freeform saves clear
+goal, targets and plan together (the CF sanitizer now preserves an
+explicit raceGoal: null). The trace found the live bug was worse than
+the row said: a first freeform→race_prep save early-returned in a stale
+closure and wrote NO plan while toasting success. RUN-EV-03 RESOLVED —
+the run-side auto-rollover awaits the layoff read for the current uid
+(the read never rejects) and re-runs when it lands; recentLayoff is
+declared in every regen dependency array. Regression constructs the
+real cache-paint-vs-network race and is mutation-checked.
+
 | ID / state                                    | Issue                                                                                                                                                                                                                                                                                                              | Required outcome                                                                                                                                                                                                                                                    |
 | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | RUN-EV-01 — P0, owner decision                | Onboarding still offers Structured while runtime resolution turns it into freeform and deletes its plan/days. First trace: Onboarding, onboarding run-mode resolution, useProgram, and Run9 migration tests.                                                                                                       | Decide once: remove or explicitly resolve Structured before plan creation, or restore a supported lifecycle. A selection must survive onboarding, hydration, and display without silent plan deletion.                                                              |

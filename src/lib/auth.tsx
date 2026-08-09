@@ -301,6 +301,10 @@ export interface UserProfileRunning {
     targetDate: string;
     /** Optional user-entered event name, ≤60 chars (e.g. "London Marathon 2026"). */
     eventName?: string;
+    /** A2 (roadmap): optional goal finish time, seconds. Drives the
+     *  feasibility verdict and goal-pace surfaces; absent = train by
+     *  fitness alone (the pre-A2 behaviour). */
+    targetTimeS?: number;
     /** Optional race-space link (races plan Q4) — present only when the
      *  goal was set from the race catalogue; manual goals lack it. */
     eventSpaceId?: string;
