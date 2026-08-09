@@ -59,6 +59,35 @@ async function uidByEmail(email: string): Promise<string> {
   return localId;
 }
 
+/** Wait for the signup's own profile write to land before patching.
+ *  `writeNewProfileDocs` commits the FULL default profile from the
+ *  browser as a non-merge batch (including `onboardingComplete: false`)
+ *  concurrently with the onboarding screen rendering — patching before
+ *  it lands loses the race, because the batch then clobbers the patch
+ *  and the account stays stuck in onboarding (found live in the
+ *  offline-queue spec, which shares this minting fixture; the batch
+ *  can also lag when parallel specs load the emulator). Poll for
+ *  `athleteType`, a field only that batch writes. */
+async function awaitSignupProfileDoc(uid: string): Promise<void> {
+  const deadline = Date.now() + 20_000;
+  for (;;) {
+    const res = await fetch(
+      `http://${FS_HOST}/v1/projects/demo-tropos/databases/(default)/documents/users/${uid}`,
+      { headers: { Authorization: "Bearer owner" } }
+    );
+    if (res.ok) {
+      const body = (await res.json()) as {
+        fields?: Record<string, unknown>;
+      };
+      if (body.fields?.athleteType) return;
+    }
+    if (Date.now() > deadline) {
+      throw new Error(`signup profile doc for ${uid} never landed`);
+    }
+    await new Promise((r) => setTimeout(r, 500));
+  }
+}
+
 /** Mark the account onboarding-complete via the Firestore emulator's
  *  rules-free REST surface, so the app routes to the full shell. */
 async function completeOnboardingDirect(uid: string): Promise<void> {
@@ -102,7 +131,9 @@ async function openPeopleAsFreshUser(page: Page): Promise<void> {
     .getByRole("button", { name: /build muscle/i })
     .waitFor({ state: "visible", timeout: 30_000 });
 
-  await completeOnboardingDirect(await uidByEmail(email));
+  const uid = await uidByEmail(email);
+  await awaitSignupProfileDoc(uid);
+  await completeOnboardingDirect(uid);
 
   await page.goto("social");
   await page

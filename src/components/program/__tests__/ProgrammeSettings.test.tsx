@@ -55,7 +55,8 @@ const programState = {
 
 function setup(
   profileOverrides: Partial<UserProfile> = {},
-  variant: "full" | "lift" = "full"
+  variant: "full" | "lift" = "full",
+  stateOverride?: ProgramState
 ) {
   const updateSettings = vi.fn();
   const regenerateProgram = vi.fn();
@@ -66,7 +67,7 @@ function setup(
       <ProgrammeSettings
         variant={variant}
         profile={makeProfile(profileOverrides)}
-        programState={programState}
+        programState={stateOverride ?? programState}
         updateSettings={updateSettings}
         regenerateProgram={regenerateProgram}
         refreshProfile={refreshProfile}
@@ -310,11 +311,130 @@ describe("ProgrammeSettings — save disclosure reflects structure-preservation 
 
   it("a content-only change reassures that workouts are kept", () => {
     setup();
-    fireEvent.click(screen.getByText("Get stronger")); // goal change, same lift days
+    // Equipment is the content-only driver here: post-LIFT-EV-06 a GOAL
+    // change with a real prescription shows the keep-or-represcribe choice
+    // instead (its own describe below).
+    fireEvent.click(screen.getByText("Home gym"));
     fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
     expect(screen.getByText(/keep your current workouts/i)).toBeInTheDocument();
     expect(
       screen.queryByText(/rebuilds your weekly structure/i)
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("ProgrammeSettings — keep-or-represcribe on a same-frequency goal change (LIFT-EV-06)", () => {
+  // A real 4-day prescription, so buildPlan's preserve branch runs and the
+  // choice exists. Minimal exercises carrying the fields represcribe touches.
+  const liftEx = (id: string, category: string) => ({
+    name: id,
+    exerciseId: id,
+    movementCategory: category,
+    sets: 3,
+    baseSets: 3,
+    reps: 10,
+    baseReps: 10,
+    repRangeMax: 12,
+    weight: 60,
+    progressionType: "double",
+    lastSuccessfulWeight: 60,
+    lastAttemptedWeight: 60,
+    consecutiveFailures: 0,
+    plateauCount: 0,
+    performanceHistory: [],
+    lastPerformance: null,
+  });
+  const liftState = {
+    settings: { autoProgression: true, microloading: true },
+    splitType: "upper_lower",
+    weekNumber: 5,
+    currentPhase: "progression",
+    goal: "recomp",
+    workouts: [
+      {
+        dayName: "Upper A",
+        dayType: "upper",
+        exercises: [liftEx("bench-press", "horizontal_push")],
+      },
+      {
+        dayName: "Lower A",
+        dayType: "lower",
+        exercises: [liftEx("back-squat", "squat")],
+      },
+      {
+        dayName: "Upper B",
+        dayType: "upper",
+        exercises: [liftEx("overhead-press", "vertical_push")],
+      },
+      {
+        dayName: "Lower B",
+        dayType: "lower",
+        exercises: [liftEx("deadlift", "hinge")],
+      },
+    ],
+  } as unknown as ProgramState;
+
+  it("offers the choice with honest consequence copy, no silent default", () => {
+    setup({}, "full", liftState);
+    fireEvent.click(screen.getByText("Get stronger"));
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    // Both explicit saves, plus cancel — the single "Save" is gone.
+    expect(
+      screen.getByRole("button", { name: /save and update sessions/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /save, keep current sessions/i })
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^save$/i })).toBeNull();
+    // Consequence copy names the new focus and its rep target.
+    expect(screen.getByText(/New focus: Get stronger/i)).toBeInTheDocument();
+  });
+
+  it("'update sessions' sends the represcribed workouts through configurePlan", async () => {
+    const { represcribeWorkouts } =
+      await import("@/features/program/represcribe");
+    setup({}, "full", liftState);
+    fireEvent.click(screen.getByText("Get stronger"));
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /save and update sessions/i })
+    );
+    await vi.waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = configureSpy.mock.calls[0][0] as {
+      programState: { workouts: unknown };
+      profileUpdates: Record<string, unknown>;
+    };
+    expect(payload.profileUpdates.primaryGoal).toBe("strength");
+    // Exactly the training-block transform, applied to the preserved week.
+    expect(payload.programState.workouts).toEqual(
+      represcribeWorkouts(liftState.workouts, "strength", "intermediate")
+    );
+  });
+
+  it("'keep current sessions' sends the workouts verbatim", async () => {
+    setup({}, "full", liftState);
+    fireEvent.click(screen.getByText("Get stronger"));
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /save, keep current sessions/i })
+    );
+    await vi.waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = configureSpy.mock.calls[0][0] as {
+      programState: { workouts: unknown };
+      profileUpdates: Record<string, unknown>;
+    };
+    expect(payload.profileUpdates.primaryGoal).toBe("strength");
+    expect(payload.programState.workouts).toEqual(liftState.workouts);
+  });
+
+  it("no choice when lift days change too — the rebuild arm owns that", () => {
+    setup({}, "full", liftState);
+    fireEvent.click(screen.getByText("Get stronger"));
+    fireEvent.click(screen.getByRole("radio", { name: "5" }));
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    expect(
+      screen.queryByRole("button", { name: /save and update sessions/i })
+    ).toBeNull();
+    expect(screen.getByRole("button", { name: /^save$/i })).toBeInTheDocument();
   });
 });

@@ -25,8 +25,18 @@ const MIN_RUNS = 3;
  *  too few eligible runs). Extracted for unit testing. */
 export function resolveAutoDeriveBenchmark(
   hasFitness: boolean,
-  eligible: { distanceM: number; durationS: number }[]
-): { distanceM: number; timeS: number } | null {
+  eligible: {
+    distanceM: number;
+    durationS: number;
+    id?: string;
+    completedAt?: Date;
+  }[]
+): {
+  distanceM: number;
+  timeS: number;
+  sourceRunId?: string;
+  sourceRunAt?: string;
+} | null {
   if (hasFitness) return null;
   if (eligible.length < MIN_RUNS) return null;
   return deriveBenchmarkFromRuns(eligible);
@@ -44,19 +54,34 @@ export function useRunFitnessAutoDerive(): void {
 
     const eligible = runs
       .filter((r) => isPaceEligible(r))
-      .map((r) => ({ distanceM: r.distance, durationS: r.duration }));
+      .map((r) => ({
+        distanceM: r.distance,
+        durationS: r.duration,
+        id: r.id,
+        completedAt: r.completedAt,
+      }));
 
-    const benchmark = resolveAutoDeriveBenchmark(false, eligible);
-    if (!benchmark) return;
+    const derived = resolveAutoDeriveBenchmark(false, eligible);
+    if (!derived) return;
 
     firedRef.current = true;
+    const { sourceRunId, sourceRunAt, ...benchmark } = derived;
     const vdot = vdotFromRace(benchmark.distanceM, benchmark.timeS);
+    // RUN-EV-08 two-tier consent (owner decision 2026-08-09): the silent
+    // derive now carries provenance (which run set it) and lands PENDING —
+    // measurement surfaces use it immediately; prescriptions (pace targets,
+    // prefills) stay on template paces until the user accepts it in
+    // Settings → Run fitness. `prescriptivePaceTableFromFitness` enforces
+    // the split.
     void updateProfile({
       runFitness: {
         benchmark,
         vdot: Math.round(vdot * 10) / 10,
         source: "derived",
         updatedAt: new Date().toISOString(),
+        pendingConfirmation: true,
+        ...(sourceRunId ? { sourceRunId } : {}),
+        ...(sourceRunAt ? { sourceRunAt } : {}),
       },
     }).catch((e) => logger.error("[useRunFitnessAutoDerive] failed", e));
   }, [profile, runs, loading, updateProfile]);
