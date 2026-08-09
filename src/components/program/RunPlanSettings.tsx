@@ -10,17 +10,25 @@
  * split running into its own section.
  *
  * This screen edits ONLY the running plan — mode (Freeform / Race prep),
- * race goal + runway, run days/week — and saves through the run-only writer
- * path (`setRaceGoalPatch` + `refreshRunSchedule`), so committing a run
- * change never regenerates the user's lifting. The full programme editor
- * stays one tap away via the footer link (and Settings).
+ * race goal + runway, run days/week. RUN-EV-02 (owner decision, P0): the
+ * save is ONE current-draft computation (`buildPlan`, threading the lift
+ * slice unchanged from the saved profile with `preserveHistory: true`, so
+ * committing a run change never regenerates the user's lifting) and ONE
+ * atomic commit (the `configurePlan` callable's single batch over profile +
+ * programState). The previous path made two sequential writes
+ * (`setRaceGoalPatch` + `refreshRunSchedule`) and read `runMode`/`raceGoal`
+ * from a stale closure — a first freeform→race_prep save early-returned and
+ * wrote NO plan while toasting success, and `weeklyRunDaysTarget` could
+ * diverge from the actual schedule slots. The full programme editor stays
+ * one tap away via the footer link (and Settings).
  *
- * Save model mirrors the run slice of ProgrammeSettings/TrainingSection:
- * fields are a DRAFT; a single Save action commits. Race prep needs an
+ * Save model mirrors ProgrammeSettings: fields are a DRAFT; a single Save
+ * action commits through buildPlan + configurePlan. Race prep needs an
  * explicit commit (you're picking a date), and the RaceGoalPlanner CTA
- * carries the honest runway label (Save race plan / compressed / finish-
- * safely). The writers are copied verbatim from the proven TrainingSection
- * handlers — same setRaceGoalPatch + refreshRunSchedule pattern.
+ * carries the honest runway label (Save race plan / compressed /
+ * mostly-easy). Preview ≡ commit: the planner preview and buildPlan derive
+ * the week from the same `generateSchedule(liftDays, weeklyRunDays)`
+ * derivation, so what the runway preview shows is what the save writes.
  */
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -35,23 +43,24 @@ import BaseSectionLabel from "@/components/ui/SectionLabel";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import RaceGoalPlanner from "@/components/program/RaceGoalPlanner";
 import { getRaceGoalPlannerState } from "@/lib/raceGoalPlanner";
-import { setRaceGoalPatch } from "@/features/program/runModeResolution";
-import {
-  getWeeklyRunTarget,
-  runTargetWriteFields,
-  type ScheduleDay,
-} from "@/lib/scheduleUtils";
+import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
+import { buildPlan } from "@/features/program/planBuilder";
+import { getNutritionPhase } from "@/lib/nutritionPhase";
+import { httpsCallable } from "firebase/functions";
+import { functions } from "@/lib/firebase";
 import { localDateString } from "@/lib/dateHelpers";
 import { spaceDef, type SpaceDef } from "@/features/spaces/spaceDefs";
 import {
   upcomingResolvedRaceDefs,
   useRaceEventOverrides,
 } from "@/features/spaces/raceEventOverrides";
-import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
-import type { RaceDistance } from "@/features/program/programTypes";
+import type { UserProfile } from "@/lib/auth";
+import type {
+  ProgramState,
+  RaceDistance,
+} from "@/features/program/programTypes";
 import {
   runTuningFromProfile,
-  type RunTuning,
   type RunVolumePreset,
   type RunDifficultyPreset,
 } from "@/features/program/runScheduler";
@@ -92,23 +101,15 @@ function parseRaceDeepLink(params: URLSearchParams): RaceDeepLink | null {
   };
 }
 
-interface RefreshRunScheduleOverrides {
-  weekSchedule?: ScheduleDay[];
-  weeklyRunDaysTarget?: number;
-  /** Pgm6 knobs — threaded explicitly so the refresh never reads the
-   *  pre-save profile values from a stale closure. */
-  tuning?: RunTuning;
-}
-
 interface RunPlanSettingsProps {
   profile: UserProfile;
-  updateProfile: (
-    data: Partial<UserProfile>,
-    opts?: { allowProtected?: boolean; throwOnError?: boolean }
-  ) => Promise<UpdateProfileResult>;
-  refreshRunSchedule: (
-    overrides?: RefreshRunScheduleOverrides
-  ) => Promise<void>;
+  /** Current programme state — threaded so buildPlan can preserve the
+   *  lift prescription (`preserveHistory: true`) through a run-only save. */
+  programState: ProgramState | null;
+  /** Re-hydrate the authoritative profile after the configurePlan batch
+   *  (the callable writes via Admin SDK, outside updateProfile's
+   *  optimistic local state). */
+  refreshProfile: () => Promise<void>;
   /** Deep-link to the full programme editor (goal/nutrition/lift/…). */
   onOpenFullSettings: () => void;
 }
@@ -128,8 +129,8 @@ const MODE_OPTIONS: { id: RunMode; label: string; desc: string }[] = [
 
 export default function RunPlanSettings({
   profile,
-  updateProfile,
-  refreshRunSchedule,
+  programState,
+  refreshProfile,
   onOpenFullSettings,
 }: RunPlanSettingsProps) {
   // ── Saved baseline (the dirty-check reference) ──────────────────────
@@ -252,56 +253,82 @@ export default function RunPlanSettings({
     setRaceEventSpaceId(def.id);
   }
 
-  // ── Save (run-only — never rebuilds lifting) ────────────────────────
+  // ── Save (RUN-EV-02: one draft computation, one atomic commit) ──────
   async function handleSave(): Promise<void> {
     if (saving || !dirty || raceDateInvalid) return;
     setSaving(true);
     try {
+      // Everything derives from the CURRENT DRAFT in one buildPlan call:
+      // effective weekSchedule (the same generateSchedule(liftDays,
+      // weeklyRunDays) derivation the planner preview uses), run targets,
+      // goal, mode, tuning, runDays and plan — so none of them can
+      // disagree. The lift slice threads unchanged from the saved profile
+      // with preserveHistory: true (run edits never rebuild lifting).
+      const plan = buildPlan({
+        primaryGoal: profile.primaryGoal ?? "general",
+        nutritionPhase: getNutritionPhase(profile),
+        experience: profile.experience ?? "beginner",
+        previousExperience: profile.experience ?? "beginner",
+        bodyweightKg: profile.weightKg,
+        sex: profile.sex,
+        liftDays: profile.weeklyWorkoutsTarget ?? 0,
+        preferredSplit:
+          !profile.preferredSplit || profile.preferredSplit === "auto"
+            ? "full_body"
+            : profile.preferredSplit,
+        runMode,
+        weeklyRunDays,
+        runTuning: { volume: runVolume, difficulty: runDifficulty },
+        ...(runMode === "race_prep"
+          ? {
+              raceGoal: {
+                distance: raceDistance,
+                targetDate: raceTargetDate,
+                // Optional free-text; blank → key omitted (never undefined).
+                ...(raceEventName.trim()
+                  ? { eventName: raceEventName.trim() }
+                  : {}),
+              },
+            }
+          : {}),
+        equipment: profile.equipment ?? "full_gym",
+        injuries: profile.injuries ?? [],
+        currentDate: localDateString(new Date()),
+        existingState: programState ?? undefined,
+        preserveHistory: true,
+      });
+
       if (runMode === "race_prep") {
-        // Materialize raceGoal → runMode in one patch, and persist the run
-        // target so getWeeklyRunTarget agrees with the schedule we refresh.
-        await updateProfile(
-          {
-            ...(setRaceGoalPatch({
-              distance: raceDistance,
-              targetDate: raceTargetDate,
-              // Optional free-text; blank → key omitted (never undefined).
-              eventName: raceEventName.trim() || undefined,
-              // Catalogue binding (Q4) — only present when the goal came
-              // from a race space / the picker.
-              eventSpaceId: raceEventSpaceId || undefined,
-            }) as Partial<UserProfile>),
-            ...runTargetWriteFields(weeklyRunDays),
-            // Pgm6 knobs persist alongside the goal so the profile copy
-            // and the regenerated plan can never disagree.
-            runVolume,
-            runDifficulty,
-          },
-          { throwOnError: true }
-        );
-        try {
-          await refreshRunSchedule({
-            weekSchedule: profile.weekSchedule,
-            weeklyRunDaysTarget: weeklyRunDays,
-            tuning: { volume: runVolume, difficulty: runDifficulty },
-          });
-        } catch (e) {
-          logger.warn("[RunPlanSettings] race refresh failed once, retry", e);
-          await refreshRunSchedule({
-            weekSchedule: profile.weekSchedule,
-            weeklyRunDaysTarget: weeklyRunDays,
-            tuning: { volume: runVolume, difficulty: runDifficulty },
-          });
+        if (raceEventSpaceId && plan.profileUpdates.raceGoal) {
+          // buildPlan's raceGoal input carries no catalogue binding (Q4) —
+          // re-attach it so a picker-sourced goal keeps its space link.
+          plan.profileUpdates.raceGoal = {
+            ...plan.profileUpdates.raceGoal,
+            eventSpaceId: raceEventSpaceId,
+          };
         }
-        toast.success("Race plan saved", { id: "run-plan" });
       } else {
-        // Freeform: clear the goal + flip runMode. refreshRunSchedule
-        // early-returns for freeform, so the updateProfile is the whole save.
-        await updateProfile(setRaceGoalPatch(null) as Partial<UserProfile>, {
-          throwOnError: true,
-        });
-        toast.success("Switched to freeform running", { id: "run-plan" });
+        // buildPlan omits raceGoal on freeform; clear it explicitly — the
+        // CF sanitizer preserves a literal null (RUN-EV-02).
+        plan.profileUpdates.raceGoal = null;
       }
+
+      // ONE atomic commit: configurePlan batches the profile merge and the
+      // programState set together (functions/index.js). The old two-write
+      // path could land the goal and lose the plan.
+      const configurePlanCallable = httpsCallable(functions, "configurePlan");
+      await configurePlanCallable({
+        profileUpdates: plan.profileUpdates,
+        programState: plan.programState,
+        weekSchedule: plan.weekSchedule,
+      });
+      await refreshProfile();
+      toast.success(
+        runMode === "race_prep"
+          ? "Race plan saved"
+          : "Switched to freeform running",
+        { id: "run-plan" }
+      );
     } catch (e) {
       logger.error("[RunPlanSettings] save failed", e);
       toast.error("Couldn't save your run plan. Please try again.", {
