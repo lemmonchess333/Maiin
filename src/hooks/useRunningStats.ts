@@ -32,6 +32,10 @@ export interface RunSummaryItem {
   /** Post-run effort check-in (#1523). null when skipped. Read by the
    *  Run14 ease-week nudge (harder-streak trigger). */
   relativeEffort: "easier" | "matched" | "harder" | null;
+  /** A6: persisted pace-verdict tone. null when the session had no
+   *  judgeable target (freeform / custom / pre-A6 runs). Read by the
+   *  adaptive-intensity trigger + post-ease bounce check. */
+  paceVerdictTone: "on" | "fast" | "easy-too-fast" | "slow" | null;
   routePreview?: { lat: number; lon: number }[];
   /* Validity metadata persisted by PR #480. Carried on the item so
      downstream UI (Recent Runs badges) can render transparency
@@ -173,6 +177,13 @@ export function useRunningStats(days: number = 30) {
               data.relativeEffort === "matched" ||
               data.relativeEffort === "harder"
                 ? data.relativeEffort
+                : null,
+            paceVerdictTone:
+              data.paceVerdictTone === "on" ||
+              data.paceVerdictTone === "fast" ||
+              data.paceVerdictTone === "easy-too-fast" ||
+              data.paceVerdictTone === "slow"
+                ? data.paceVerdictTone
                 : null,
             isInvalid: data.isInvalid === true,
             savedAnyway: data.savedAnyway === true,
