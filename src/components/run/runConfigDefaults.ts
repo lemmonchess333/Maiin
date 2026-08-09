@@ -16,6 +16,7 @@
 
 import type { ActivityType } from "@/types/run";
 import type { GuidedRunWorkout } from "@/lib/guidedRun";
+import type { SessionSegment } from "@/lib/runSegments";
 import {
   freeformPlanMetadata,
   type RunPlanMetadata,
@@ -106,6 +107,11 @@ export interface RunConfig {
     cooldownDuration?: number;
   };
   guidedWorkout?: GuidedRunWorkout;
+  /** STRUCT-SESS-01: canonical session structure (runSegments.ts) — set by
+   *  the plan prefill for intervals/tempo/strides sessions; drives the
+   *  pre-run structure preview. The in-run players adopt it in the
+   *  follow-up slice. */
+  segments?: SessionSegment[];
   shoeId?: string;
   /**
    * Plan-adherence metadata block, Phase B1. Snapshot of the programme

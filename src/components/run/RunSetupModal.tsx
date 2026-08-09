@@ -43,6 +43,10 @@ import { paceMinSec } from "@/lib/runLabels";
 import ShoeSelector from "./ShoeSelector";
 import GuidedRunPicker from "./GuidedRunPicker";
 import SessionStructureView from "./SessionStructureView";
+import {
+  segmentsFromGuided,
+  segmentsFromIntervals,
+} from "@/lib/runSegments";
 import type { GuidedRunWorkout } from "@/lib/guidedRun";
 import type { ActivityType } from "@/types/run";
 import { requiresManualDistance } from "@/lib/runGuards";
@@ -494,6 +498,15 @@ export default function RunSetupModal({
           onSelect={(id) => updateConfig({ shoeId: id })}
         />
 
+        {/* STRUCT-SESS-01: prefilled structure for non-interval, non-guided
+            sessions (tempo warmup/blocks/cooldown, easy + strides). The
+            interval and guided branches below own their own previews. */}
+        {config.activityType !== "intervals" &&
+          config.activityType !== "guided" &&
+          (config.segments?.length ?? 0) > 0 && (
+            <SessionStructureView segments={config.segments!} />
+          )}
+
         {/* Interval config — only shown for intervals */}
         <AnimatePresence>
           {config.activityType === "intervals" && (
@@ -504,8 +517,7 @@ export default function RunSetupModal({
               className="overflow-hidden space-y-2"
             >
               <SessionStructureView
-                kind="intervals"
-                intervals={intervalConfig}
+                segments={segmentsFromIntervals(intervalConfig)}
               />
               <button
                 type="button"
@@ -637,7 +649,9 @@ export default function RunSetupModal({
                 }}
               />
               {selectedGuided && (
-                <SessionStructureView kind="guided" workout={selectedGuided} />
+                <SessionStructureView
+                  segments={segmentsFromGuided(selectedGuided)}
+                />
               )}
             </motion.div>
           )}
