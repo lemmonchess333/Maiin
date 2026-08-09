@@ -47,15 +47,24 @@ function countdownLabel(remainingS: number): string {
 }
 
 /** The prescription line: band-first when the runner has a personalized
- *  band and the segment declares its bare effort; else the built label. */
+ *  band and the segment declares its bare effort; else the built label.
+ *  A2: `pacePinned` segments keep their built label — their pace IS the
+ *  prescription (the user's own goal pace), not a template default the
+ *  fitness band should supersede. */
 function headlineFor(seg: SessionSegment, band?: [number, number]): string {
-  if (band && seg.effort && (seg.type === "hard" || seg.type === "moderate")) {
+  if (
+    band &&
+    seg.effort &&
+    !seg.pacePinned &&
+    (seg.type === "hard" || seg.type === "moderate")
+  ) {
     return `${seg.effort} at ${paceBandLabel(band)}`;
   }
   return seg.label;
 }
 
 function eyebrowFor(seg: SessionSegment): string {
+  if (seg.eyebrow) return seg.eyebrow;
   if (seg.type === "hard" && seg.rep && seg.totalReps) {
     return `REP ${seg.rep}/${seg.totalReps}`;
   }
