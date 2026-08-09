@@ -136,3 +136,102 @@ function parseLocal(dateKey: string): Date {
 function round1(n: number): number {
   return Math.round(n * 10) / 10;
 }
+
+/* ================================
+   B1 — LOAD GUARDRAILS (advisory)
+   ================================
+
+   Elite-practice monitoring translated honestly (roadmap B1): ramp-rate
+   via the classic rolling-mean acute:chronic ratio, Foster monotony /
+   strain, and ONE advisory line at most — in the banner register, with
+   the thresholds labelled as Tropos heuristics. Never a red
+   "injury-risk" score (the non-features list bars readiness theater).
+
+   Design decisions, so they don't get re-derived:
+   - ACWR uses ROLLING MEANS (7-day acute / 28-day chronic over the
+     daily loads), not the curve's EWMAs. A single planned long run
+     barely moves a 7-day mean when the 28-day base also contains long
+     runs, so steady training reads ~1.0–1.2; the EWMA point-ratio
+     spikes past 1.3 on every big Saturday, which would make the
+     advisory nag on exactly the sessions the plan prescribes.
+   - Only the HIGH side fires. A low ratio (<0.8) is what a taper or a
+     recovery week deliberately produces — flagging it as "detraining"
+     would contradict the plan's own instruction to ease off. The ratio
+     itself is exposed for any surface that wants to display it.
+   - The spike threshold sits at 1.4, deliberately above the ~1.3
+     rule-of-thumb band edge, so normal week-to-week structure clears it
+     and only a genuine ramp fires.
+   - Cold-start guard (design-for-the-user-base): under 28 days of
+     history or a near-zero chronic base, every ratio is meaningless —
+     everything reads null and no advisory fires. */
+
+export const ACWR_ACUTE_DAYS = 7;
+export const ACWR_CHRONIC_DAYS = 28;
+export const ACWR_SPIKE_THRESHOLD = 1.4;
+/** Foster: monotony = mean/SD of the trailing week's daily loads;
+ *  ≥ 2.0 is the classic "too same-y" line. */
+export const MONOTONY_THRESHOLD = 2.0;
+/** Monotony only matters on a real training week — a quiet week of
+ *  near-identical small loads is not a pattern worth flagging. */
+export const MONOTONY_MIN_WEEK_LOAD = 150;
+/** Chronic base floor (effort-minutes/day) below which ratios are
+ *  cold-start noise. */
+export const MIN_CHRONIC_DAILY_LOAD = 5;
+
+export interface LoadGuardrails {
+  /** 7-day / 28-day rolling-mean load ratio; null on cold start. */
+  acwr: number | null;
+  /** Foster monotony over the trailing 7 days; null on a quiet week. */
+  monotony: number | null;
+  /** Foster strain = weekly load × monotony; null when monotony is. */
+  strain: number | null;
+  /** At most ONE advisory (spike outranks monotony); null = quiet. */
+  advisory: { kind: "ramp_spike" | "high_monotony"; line: string } | null;
+}
+
+export function evaluateLoadGuardrails(points: LoadPoint[]): LoadGuardrails {
+  const week = points.slice(-ACWR_ACUTE_DAYS);
+  const weekLoads = week.map((p) => p.load);
+  const weekLoad = weekLoads.reduce((a, b) => a + b, 0);
+
+  // ── ACWR ──────────────────────────────────────────────────────────
+  let acwr: number | null = null;
+  if (points.length >= ACWR_CHRONIC_DAYS) {
+    const chronic = points.slice(-ACWR_CHRONIC_DAYS);
+    const chronicMean =
+      chronic.reduce((a, p) => a + p.load, 0) / chronic.length;
+    const acuteMean = weekLoad / week.length;
+    if (chronicMean >= MIN_CHRONIC_DAILY_LOAD) {
+      acwr = Math.round((acuteMean / chronicMean) * 100) / 100;
+    }
+  }
+
+  // ── Foster monotony / strain ──────────────────────────────────────
+  let monotony: number | null = null;
+  let strain: number | null = null;
+  if (week.length === ACWR_ACUTE_DAYS && weekLoad >= MONOTONY_MIN_WEEK_LOAD) {
+    const mean = weekLoad / week.length;
+    const sd = Math.sqrt(
+      weekLoads.reduce((a, l) => a + (l - mean) ** 2, 0) / week.length
+    );
+    // Seven identical days → SD 0 → the ratio is "maximal", not NaN.
+    monotony = sd < 1e-6 ? 9.9 : Math.min(9.9, round1(mean / sd));
+    strain = Math.round(weekLoad * monotony);
+  }
+
+  // ── The one advisory line ─────────────────────────────────────────
+  let advisory: LoadGuardrails["advisory"] = null;
+  if (acwr != null && acwr > ACWR_SPIKE_THRESHOLD) {
+    advisory = {
+      kind: "ramp_spike",
+      line: `The last 7 days carry ~${Math.round((acwr - 1) * 100)}% more load than your 4-week base — a sharper ramp than most training structures intend (a Tropos heuristic).`,
+    };
+  } else if (monotony != null && monotony >= MONOTONY_THRESHOLD) {
+    advisory = {
+      kind: "high_monotony",
+      line: "Most days this week landed near-identical load — hard days hard and easy days easy usually carries better (a Tropos heuristic).",
+    };
+  }
+
+  return { acwr, monotony, strain, advisory };
+}
