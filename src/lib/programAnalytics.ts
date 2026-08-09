@@ -34,6 +34,11 @@ export interface ProgramEventMetadata {
   /** ease_week_nudge_shown: the evidence surfaced in the card. */
   harderCount?: number;
   ratedCount?: number;
+  /** A6: which nudge signal fired (user-authored vs measured), and the
+   *  trigger-agnostic evidence counts. */
+  trigger?: "harder_ratings" | "pace_misses" | null;
+  count?: number;
+  total?: number;
 }
 
 export function track(

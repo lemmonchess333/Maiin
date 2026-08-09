@@ -57,6 +57,10 @@ interface AdjustWeekSheetProps {
    *  nudge already established the intent). Omitted for the normal
    *  "Adjust this week" entry, which still opens on the chooser. */
   initialIntent?: Intent;
+  /** A6: fired after an easier-week apply COMMITS (never on realign or
+   *  cancel). The parent records the eased weekKey so the post-ease
+   *  bounce check can read next week's quality session against it. */
+  onEasedApplied?: () => void;
 }
 
 const INTENTS: Array<{ id: Intent; label: string; hint: string }> = [
@@ -85,6 +89,7 @@ export default function AdjustWeekSheet({
   overrideRunDay,
   realignRacePlan,
   initialIntent,
+  onEasedApplied,
 }: AdjustWeekSheetProps) {
   const [step, setStep] = useState<Step>({ kind: "intent" });
   const [applying, setApplying] = useState(false);
@@ -140,6 +145,7 @@ export default function AdjustWeekSheet({
     setApplying(true);
     try {
       for (const s of swaps) overrideRunDay(s.key, s.toTemplateId);
+      onEasedApplied?.();
       track("adjust_week_applied", {
         intent,
         action: "easier_week",
