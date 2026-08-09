@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   evaluateEaseWeekNudge,
+  evaluatePostEaseBounce,
+  PACE_WINDOW_DAYS,
   type EaseWeekNudgeInput,
   type EaseWeekNudgeRun,
   WINDOW_DAYS,
@@ -47,6 +49,7 @@ describe("evaluateEaseWeekNudge — trigger", () => {
     );
     expect(res).toEqual({
       show: true,
+      trigger: "harder_ratings",
       harderCount: 2,
       ratedCount: 3,
       windowDays: WINDOW_DAYS,
@@ -194,5 +197,168 @@ describe("evaluateEaseWeekNudge — scope + suppression", () => {
         base({ lastShownAt: "2026-06-28", runs: triggering })
       ).show
     ).toBe(true);
+  });
+});
+
+/* ── A6: the pace-miss trigger + post-ease bounce ─────────────────── */
+
+describe("A6 — pace-miss trigger", () => {
+  const tempo = (
+    date: string,
+    tone: "on" | "fast" | "slow" | null
+  ): EaseWeekNudgeRun => ({
+    date,
+    relativeEffort: null,
+    activityType: "tempo",
+    paceVerdictTone: tone,
+  });
+  const base = (runs: EaseWeekNudgeRun[]): EaseWeekNudgeInput => ({
+    isRacePrep: true,
+    runs,
+    today: TODAY,
+    phaseSuppressed: false,
+    weekAlreadyEased: false,
+    fellBehindPending: false,
+    dismissedWeekKey: null,
+    lastShownAt: null,
+  });
+
+  it("2 slow of the last 3 judged tempo sessions fires the pace trigger", () => {
+    const res = evaluateEaseWeekNudge(
+      base([
+        tempo("2026-07-10", "slow"),
+        tempo("2026-07-03", "slow"),
+        tempo("2026-06-26", "on"),
+      ])
+    );
+    expect(res).toEqual({
+      show: true,
+      trigger: "pace_misses",
+      slowCount: 2,
+      judgedCount: 3,
+      windowDays: PACE_WINDOW_DAYS,
+    });
+  });
+
+  it("on-target and fast verdicts keep it quiet; unjudged runs never count", () => {
+    expect(
+      evaluateEaseWeekNudge(
+        base([
+          tempo("2026-07-10", "on"),
+          tempo("2026-07-03", "slow"),
+          tempo("2026-06-26", "fast"),
+        ])
+      ).show
+    ).toBe(false);
+    // Verdicts on non-tempo runs are not an intensity signal.
+    expect(
+      evaluateEaseWeekNudge(
+        base([
+          {
+            date: "2026-07-10",
+            relativeEffort: null,
+            activityType: "easy",
+            paceVerdictTone: "slow",
+          },
+          {
+            date: "2026-07-03",
+            relativeEffort: null,
+            activityType: "long",
+            paceVerdictTone: "slow",
+          },
+        ])
+      ).show
+    ).toBe(false);
+  });
+
+  it("only the most recent 3 judged sessions are inspected", () => {
+    // Two old slows pushed out of the window by three recent on-targets.
+    const res = evaluateEaseWeekNudge(
+      base([
+        tempo("2026-07-11", "on"),
+        tempo("2026-07-08", "on"),
+        tempo("2026-07-04", "on"),
+        tempo("2026-06-28", "slow"),
+        tempo("2026-06-21", "slow"),
+      ])
+    );
+    expect(res.show).toBe(false);
+  });
+
+  it("the user-authored harder trigger outranks the measured one", () => {
+    const res = evaluateEaseWeekNudge(
+      base([
+        { ...tempo("2026-07-10", "slow"), relativeEffort: "harder" },
+        { ...tempo("2026-07-08", "slow"), relativeEffort: "harder" },
+        tempo("2026-07-03", "slow"),
+      ])
+    );
+    expect(res.show && res.trigger).toBe("harder_ratings");
+  });
+
+  it("suppressions gate the pace trigger exactly like the effort one", () => {
+    const runs = [tempo("2026-07-10", "slow"), tempo("2026-07-03", "slow")];
+    expect(
+      evaluateEaseWeekNudge({ ...base(runs), phaseSuppressed: true }).show
+    ).toBe(false);
+    expect(
+      evaluateEaseWeekNudge({ ...base(runs), isRacePrep: false }).show
+    ).toBe(false);
+  });
+});
+
+describe("A6 — evaluatePostEaseBounce", () => {
+  // TODAY = 2026-07-12 (a Sunday) → current week 2026-07-12, last week
+  // 2026-07-05.
+  const LAST_WEEK = "2026-07-05";
+  const tempoRun = (
+    date: string,
+    tone: "on" | "fast" | "slow"
+  ): EaseWeekNudgeRun => ({
+    date,
+    relativeEffort: null,
+    activityType: "tempo",
+    paceVerdictTone: tone,
+  });
+
+  it("null without an eased week, or when the eased week wasn't last week", () => {
+    expect(
+      evaluatePostEaseBounce({ easedWeekKey: null, today: TODAY, runs: [] })
+    ).toBeNull();
+    expect(
+      evaluatePostEaseBounce({
+        easedWeekKey: "2026-06-28", // two weeks back — read expired
+        today: TODAY,
+        runs: [tempoRun("2026-07-12", "on")],
+      })
+    ).toBeNull();
+  });
+
+  it("null until a judged tempo lands in the current week", () => {
+    expect(
+      evaluatePostEaseBounce({
+        easedWeekKey: LAST_WEEK,
+        today: TODAY,
+        runs: [tempoRun("2026-07-08", "slow")], // last week's run, not this week's
+      })
+    ).toBeNull();
+  });
+
+  it("reads the LATEST judged tempo of the current week", () => {
+    // TODAY is the Sunday that STARTS week 2026-07-12.
+    expect(
+      evaluatePostEaseBounce({
+        easedWeekKey: LAST_WEEK,
+        today: TODAY,
+        runs: [tempoRun("2026-07-12", "on")],
+      })
+    ).toBe("recovered");
+    expect(
+      evaluatePostEaseBounce({
+        easedWeekKey: LAST_WEEK,
+        today: TODAY,
+        runs: [tempoRun("2026-07-12", "slow")],
+      })
+    ).toBe("still_missing");
   });
 });
