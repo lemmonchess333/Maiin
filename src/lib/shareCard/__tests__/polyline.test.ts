@@ -87,10 +87,32 @@ describe("clipRouteEnds (privacy trim)", () => {
     expect(clipped[clipped.length - 1]).not.toEqual(line[line.length - 1]);
   });
 
-  it("never collapses a short route to nothing — returns it whole", () => {
-    const shortRoute = straightLine(4); // a few metres total
+  it("caps the trim proportionally — a short route keeps its shape", () => {
+    // The 2026-08-09 device regression: a ~440 m run with a bend. The old
+    // clip removed 200 m from EACH end (~90% of the track), leaving a
+    // straight ~40 m sliver — the share card drew a straight line for a
+    // visibly bendy route. The proportional cap (10% per end) must keep
+    // the corner.
+    const bendy: GPSPoint[] = [];
+    for (let i = 0; i < 22; i++) bendy.push(pt(51.5, -0.1 + i * 0.0002)); // ~300m E
+    for (let i = 1; i < 11; i++) {
+      bendy.push(pt(51.5 + i * 0.0002, -0.1 + 21 * 0.0002)); // ~140m N
+    }
+    const clipped = clipRouteEnds(bendy, DEFAULT_CLIP_METERS);
+    // Most of the track survives…
+    expect(clipped.length).toBeGreaterThan(bendy.length * 0.6);
+    // …including the corner, so the simplified path is NOT a straight line.
+    const { pointCount } = buildRoutePath(bendy, { clip: true });
+    expect(pointCount).toBeGreaterThanOrEqual(3);
+  });
+
+  it("never collapses a tiny route to nothing", () => {
+    const shortRoute = straightLine(4); // ~40 m total
     const clipped = clipRouteEnds(shortRoute, DEFAULT_CLIP_METERS);
-    expect(clipped).toEqual(shortRoute);
+    // Proportional trim may shave the endpoint-adjacent points, but at
+    // least a drawable 2-point core always survives.
+    expect(clipped.length).toBeGreaterThanOrEqual(2);
+    for (const p of clipped) expect(shortRoute).toContainEqual(p);
   });
 
   it("passes through tracks under 3 points", () => {

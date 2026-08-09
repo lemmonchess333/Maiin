@@ -483,15 +483,32 @@ function RunTemplate({
         gap: 48 * scale,
       }}
     >
-      {/* Abstract route polyline (default visual; empty → omitted) */}
+      {/* Abstract route polyline (default visual; empty → omitted).
+          The svg is ABSOLUTE inside a relative flex box, deliberately: a
+          percentage-sized svg with a viewBox contributes its intrinsic
+          1000px height to flex sizing in WebKit, which inflated the route
+          box until the square card's stats overflowed the canvas (the
+          hero number rendered half-cropped on a real device, 2026-08-09).
+          Absolute positioning takes the svg out of intrinsic sizing, so
+          the route always fits whatever space the stats leave over — in
+          both formats and both engines. */}
       {data.routePath && (
         <div
-          style={{ flex: data.format === "story" ? 1 : 0.6, display: "flex" }}
+          style={{
+            flex: data.format === "story" ? 1 : 0.6,
+            position: "relative",
+            minHeight: 140 * scale,
+          }}
         >
           <svg
             viewBox="0 0 1000 1000"
             preserveAspectRatio="xMidYMid meet"
-            style={{ width: "100%", height: "100%" }}
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+            }}
             aria-hidden
           >
             <path
