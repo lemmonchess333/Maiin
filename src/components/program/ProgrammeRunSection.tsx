@@ -108,12 +108,17 @@ import { targetZoneForRun, maxHrFromAge } from "@/lib/hrZones";
 import DayActionSheet from "./DayActionSheet";
 import AdjustWeekSheet from "./AdjustWeekSheet";
 import EaseWeekNudgeCard from "./EaseWeekNudgeCard";
-import { evaluateEaseWeekNudge } from "@/lib/easeWeekNudge";
+import {
+  evaluateEaseWeekNudge,
+  evaluatePostEaseBounce,
+} from "@/lib/easeWeekNudge";
 import {
   getLastShownAt,
   setLastShownAt,
   getDismissedWeekKey,
   setDismissedWeekKey,
+  getEasedWeekKey,
+  setEasedWeekKey,
 } from "@/lib/easeWeekNudgeMarkers";
 import { planEasierWeek } from "@/lib/adjustWeek";
 import { track as trackProgram } from "@/lib/programAnalytics";
@@ -522,6 +527,10 @@ export default function ProgrammeRunSection({
         runs: runs.map((r) => ({
           date: localDateString(r.completedAt),
           relativeEffort: r.relativeEffort,
+          // A6: the measured second trigger — persisted verdict tones on
+          // tempo sessions.
+          activityType: r.activityType,
+          paceVerdictTone: r.paceVerdictTone,
         })),
         today: todayKeyDerivation,
         // Never tell a tapering / racing / recovering runner to ease more.
@@ -553,8 +562,19 @@ export default function ProgrammeRunSection({
     ]
   );
   const easeNudgeVisible = easeNudge.show && !easeNudgeDismissed;
-  const easeNudgeHarder = easeNudge.show ? easeNudge.harderCount : 0;
-  const easeNudgeRated = easeNudge.show ? easeNudge.ratedCount : 0;
+  // A6: trigger-aware counts — the card copy branches on which signal
+  // fired (user-authored ratings vs measured pace misses).
+  const easeNudgeTrigger = easeNudge.show ? easeNudge.trigger : null;
+  const easeNudgeCount = !easeNudge.show
+    ? 0
+    : easeNudge.trigger === "harder_ratings"
+      ? easeNudge.harderCount
+      : easeNudge.slowCount;
+  const easeNudgeTotal = !easeNudge.show
+    ? 0
+    : easeNudge.trigger === "harder_ratings"
+      ? easeNudge.ratedCount
+      : easeNudge.judgedCount;
   // Record the 14-day cooldown + fire analytics the first render the card
   // is visible. The pure module treats "shown today" as still-showable
   // (sinceShown === 0), so writing the marker here never self-suppresses.
@@ -562,16 +582,36 @@ export default function ProgrammeRunSection({
     if (!easeNudgeVisible) return;
     setLastShownAt(profile.uid, todayKeyDerivation);
     trackProgram("ease_week_nudge_shown", {
-      harderCount: easeNudgeHarder,
-      ratedCount: easeNudgeRated,
+      trigger: easeNudgeTrigger,
+      count: easeNudgeCount,
+      total: easeNudgeTotal,
     });
   }, [
     easeNudgeVisible,
     profile.uid,
     todayKeyDerivation,
-    easeNudgeHarder,
-    easeNudgeRated,
+    easeNudgeTrigger,
+    easeNudgeCount,
+    easeNudgeTotal,
   ]);
+
+  // A6: the post-ease bounce read — the week AFTER an applied easier
+  // week, one factual line on whether the quality came back. Pure,
+  // informational only; renders nothing in every other week.
+  const postEaseBounce = useMemo(
+    () =>
+      evaluatePostEaseBounce({
+        easedWeekKey: getEasedWeekKey(profile.uid),
+        today: todayKeyDerivation,
+        runs: runs.map((r) => ({
+          date: localDateString(r.completedAt),
+          relativeEffort: r.relativeEffort,
+          activityType: r.activityType,
+          paceVerdictTone: r.paceVerdictTone,
+        })),
+      }),
+    [profile.uid, todayKeyDerivation, runs]
+  );
 
   // ── Run-week selector (date-pinned, ADR-0002) ──────────────────────
   // A rolling 7-day window anchored on today, resolved through the same
@@ -1491,10 +1531,22 @@ export default function ProgrammeRunSection({
           {/* Run14: the ease-week nudge sits just above the standing
               Adjust entry (same neighbourhood). It has already run all
               its scope + suppression rules in the pure module. */}
-          {easeNudgeVisible && (
+          {/* A6: the post-ease bounce line — one factual sentence the week
+              after an applied easier week. Informational, no actions; the
+              nudge machinery stays independently available. */}
+          {postEaseBounce && (
+            <p className="text-xs text-muted-foreground px-1">
+              {postEaseBounce === "recovered"
+                ? "Back inside the pace window after the easier week — the plan resumes as scheduled."
+                : "Still outside the pace window after the easier week — worth keeping this week gentle too. You decide."}
+            </p>
+          )}
+
+          {easeNudgeVisible && easeNudgeTrigger && (
             <EaseWeekNudgeCard
-              harderCount={easeNudgeHarder}
-              ratedCount={easeNudgeRated}
+              trigger={easeNudgeTrigger}
+              count={easeNudgeCount}
+              total={easeNudgeTotal}
               onEase={() => {
                 haptic();
                 trackProgram("ease_week_nudge_applied");
@@ -1608,6 +1660,11 @@ export default function ProgrammeRunSection({
             const result = await realignRacePlan();
             return result;
           }}
+          // A6: record the eased week so next week's bounce check can
+          // read this week's quality session against it.
+          onEasedApplied={() =>
+            setEasedWeekKey(profile.uid, thisWeekKeyForDismissal)
+          }
         />
       )}
     </section>
