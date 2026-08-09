@@ -50,7 +50,9 @@ import {
   type StoredRun,
 } from "../lib/runResumeStorage";
 import { useAudioCues } from "../hooks/useAudioCues";
-import { useIntervalWorkout } from "../hooks/useIntervalWorkout";
+import { useSessionPlayer } from "../hooks/useSessionPlayer";
+import { segmentsFromIntervals } from "../lib/runSegments";
+import { sessionCompleteCue } from "../lib/runCueCopy";
 import IntervalStepShell from "../components/run/IntervalStepShell";
 import TreadmillMode from "../components/run/TreadmillMode";
 import PaceZoneBar from "../components/run/PaceZoneBar";
@@ -429,17 +431,28 @@ export default function Run() {
       voiceRate: runConfig?.voiceRate ?? 0.9,
     }
   );
-  const intervals = useIntervalWorkout(
-    runConfig?.activityType === "intervals" ? runConfig.intervals : undefined
-  );
-  const intervalPhaseRef = useRef("idle");
-  // Adaptive Paces: the interval work BAND for the step shell's headline
-  // ("1K at 5:05\u20135:12 /km") — #18's band-first display rule, now in-run.
-  // undefined (no benchmark) → the shell falls back to the config workPace.
+  // STRUCT-SESS-02: ONE structure source for the in-run player — the
+  // canonical segments from the plan prefill, or derived on the spot for a
+  // hand-built interval session. Guided runs keep their own player (and
+  // overlay) this slice.
+  const sessionSegments = useMemo(() => {
+    if (!runConfig || runConfig.activityType === "guided") return null;
+    if (runConfig.segments?.length) return runConfig.segments;
+    if (runConfig.activityType === "intervals" && runConfig.intervals) {
+      return segmentsFromIntervals(runConfig.intervals);
+    }
+    return null;
+  }, [runConfig]);
+  const player = useSessionPlayer(sessionSegments);
+  const segmentIndexRef = useRef(-1);
+  // Adaptive Paces: the work BAND for the step shell's headline — #18's
+  // band-first display rule, now for intervals AND tempo. undefined (no
+  // benchmark) → the shell falls back to the segment's built label.
   const intervalBand = useMemo(() => {
-    if (runConfig?.activityType !== "intervals") return undefined;
+    const type = runConfig?.activityType;
+    if (type !== "intervals" && type !== "tempo") return undefined;
     const table = paceTableFromFitness(profile?.runFitness ?? null);
-    return table ? resolveSessionPaces("intervals", table).band : undefined;
+    return table ? resolveSessionPaces(type, table).band : undefined;
   }, [runConfig?.activityType, profile?.runFitness]);
 
   // ─── Phase B1: programme prefill + context strip ─────────────────
@@ -889,28 +902,31 @@ export default function Run() {
   }, []);
 
   useEffect(() => {
-    if (phase === "active" && runConfig?.activityType === "intervals")
-      intervals.start();
-  }, [phase, runConfig?.activityType, intervals]);
+    if (phase === "active" && sessionSegments) player.start();
+  }, [phase, sessionSegments, player]);
 
   useEffect(() => {
-    if (phase === "active" && runConfig?.activityType === "intervals")
-      intervals.tick(timer.elapsed, gps.distance);
-  }, [timer.elapsed, gps.distance, phase, runConfig?.activityType, intervals]);
+    if (phase === "active" && sessionSegments)
+      player.tick(timer.elapsed, gps.distance);
+  }, [timer.elapsed, gps.distance, phase, sessionSegments, player]);
 
+  // STRUCT-SESS-02: the segment announces itself — cue copy is authored by
+  // the builders alongside the labels, so tempo blocks and strides speak
+  // without any player-side vocabulary switch. Haptic on effort changes.
   useEffect(() => {
-    if (runConfig?.activityType !== "intervals") return;
-    if (intervals.state.phase !== intervalPhaseRef.current) {
-      intervalPhaseRef.current = intervals.state.phase;
-      audioCues.announcePhase(
-        intervals.state.phase,
-        intervals.state.currentRep,
-        intervals.state.totalReps
-      );
-      if (intervals.state.phase === "work" || intervals.state.phase === "rest")
-        haptic("medium");
+    if (!sessionSegments) return;
+    if (player.state.index === segmentIndexRef.current) return;
+    segmentIndexRef.current = player.state.index;
+    if (player.isComplete) {
+      audioCues.speak(sessionCompleteCue());
+      haptic("medium");
+      return;
     }
-  }, [intervals.state, audioCues, runConfig?.activityType]);
+    const seg = player.current;
+    if (!seg) return;
+    if (seg.cue) audioCues.speak(seg.cue);
+    if (seg.type === "hard" || seg.type === "recovery") haptic("medium");
+  }, [player.state.index, player, sessionSegments, audioCues]);
 
   const finishRun = (distanceOverride?: number) => {
     timer.pause();
@@ -1549,15 +1565,13 @@ export default function Run() {
               }}
               isInvalid={isInvalid}
               intervalDisplay={
-                runConfig?.activityType === "intervals" &&
-                runConfig.intervals ? (
+                sessionSegments ? (
                   <IntervalStepShell
-                    state={intervals.state}
-                    config={runConfig.intervals}
+                    player={player}
                     band={intervalBand}
                     onSkip={() => {
                       haptic();
-                      intervals.skip(gps.distance);
+                      player.skip(gps.distance);
                     }}
                   />
                 ) : undefined
