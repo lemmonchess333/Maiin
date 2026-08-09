@@ -26,6 +26,15 @@ const M_PER_DEG = (Math.PI / 180) * 6371000;
 
 /** Default privacy trim, in metres, applied to each end of the track. */
 export const DEFAULT_CLIP_METERS = 200;
+/** Cap on the privacy trim as a fraction of the track PER END. Without
+ *  this, a short run is destroyed: a 440 m run minus 200 m off each end
+ *  leaves a ~40 m sliver that renders as a straight line (found on a
+ *  real device, 2026-08-09 — the share card showed a straight stroke for
+ *  a visibly bendy route). 10% per end keeps the route's shape while
+ *  still blurring where it started and finished; the polyline is an
+ *  abstract normalised stroke with no coordinates, so the clip is
+ *  shape-privacy, not location-privacy. */
+export const MAX_CLIP_FRACTION_PER_END = 0.1;
 /** Default Douglas–Peucker tolerance, in metres. */
 export const DEFAULT_SIMPLIFY_TOLERANCE_M = 8;
 
@@ -122,6 +131,24 @@ export function clipRouteEnds(
 ): GPSPoint[] {
   if (points.length < 3 || trimMeters <= 0) return points.slice();
 
+  // Proportional cap: never let the trim consume more than 10% of the
+  // track per end (see MAX_CLIP_FRACTION_PER_END). Short runs keep their
+  // shape; long runs still lose the full default 200 m.
+  let total = 0;
+  for (let i = 1; i < points.length; i++) {
+    total += haversine(
+      points[i - 1].lat,
+      points[i - 1].lon,
+      points[i].lat,
+      points[i].lon
+    );
+  }
+  const effectiveTrim = Math.min(
+    trimMeters,
+    total * MAX_CLIP_FRACTION_PER_END
+  );
+  if (effectiveTrim <= 0) return points.slice();
+
   let acc = 0;
   let startIdx = 0;
   for (let i = 1; i < points.length; i++) {
@@ -131,7 +158,7 @@ export function clipRouteEnds(
       points[i].lat,
       points[i].lon
     );
-    if (acc >= trimMeters) {
+    if (acc >= effectiveTrim) {
       startIdx = i;
       break;
     }
@@ -146,7 +173,7 @@ export function clipRouteEnds(
       points[i - 1].lat,
       points[i - 1].lon
     );
-    if (accEnd >= trimMeters) {
+    if (accEnd >= effectiveTrim) {
       endIdx = i - 1;
       break;
     }
