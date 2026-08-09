@@ -177,7 +177,13 @@ export interface PlanBuilderOutput {
     weeklyRunDaysTarget: number;
     weeklyRunsTarget: number; // legacy field — keep in sync
     runMode: RunMode;
-    raceGoal?: PlanBuilderInput["raceGoal"];
+    /** Explicit null = clear the goal (freeform save via configurePlan —
+     *  RUN-EV-02; the CF sanitizer preserves a literal null). The optional
+     *  eventSpaceId is the catalogue binding a caller may re-attach —
+     *  buildPlan itself never sets it. */
+    raceGoal?:
+      | (PlanBuilderInput["raceGoal"] & { eventSpaceId?: string })
+      | null;
     primaryGoal: PrimaryGoal;
     // Pgm4: persist the plan-shaping inputs so the stored profile matches
     // the generated plan. Pre-Pgm4 these were only writable via the

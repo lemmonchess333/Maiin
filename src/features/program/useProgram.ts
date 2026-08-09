@@ -794,6 +794,17 @@ export function useProgram() {
   useEffect(() => {
     if (!programState || !profile) return;
     if (!profile.runMode || profile.runMode === "freeform") return;
+    // RUN-EV-03: the layoff classification is a REGENERATION DEPENDENCY.
+    // The plan paints from the IndexedDB cache in ~ms while
+    // fetchRecentLayoff needs the network, so pre-fix this effect rolled a
+    // returning runner's stale week forward with recentLayoff "none" —
+    // writing a full build week (quality + ramping long run) — and the
+    // weekKey guard below then made the wrong week permanent for up to 7
+    // days. Wait for the read to resolve for THIS uid (it never rejects —
+    // every failure path settles as "none"), and re-run when it lands via
+    // the layoffRead dep. Same pattern as the lift rollover's
+    // wait-for-migration early-return.
+    if (user && layoffRead.uid !== user.uid) return;
 
     const runDayWeekKey = programState.runDays?.[0]?.weekKey;
     if (!runDayWeekKey) return;
@@ -911,7 +922,7 @@ export function useProgram() {
       .catch((err) => {
         logger.warn("[auto-rollover] save failed", err);
       });
-  }, [programState, profile, saveProgram, recovery]);
+  }, [programState, profile, saveProgram, recovery, layoffRead, recentLayoff, user]);
 
   /**
    * D1 — calendar week rollover for the LIFT side.
@@ -1467,7 +1478,7 @@ export function useProgram() {
     } else {
       toast.success(`Week ${advanced.weekNumber} started`);
     }
-  }, [programState, profile, saveProgram, recovery]);
+  }, [programState, profile, saveProgram, recovery, recentLayoff]);
 
   // P0-6: Mark a run day as completed.
   //
@@ -2267,7 +2278,7 @@ export function useProgram() {
       setViewingHistoryIndex(null);
       toast.success("Program regenerated");
     },
-    [profile, programState, saveProgram, updateProfile]
+    [profile, programState, saveProgram, updateProfile, recentLayoff]
   );
 
   // Refresh run schedule without resetting program (called when
@@ -2377,7 +2388,7 @@ export function useProgram() {
 
       await saveProgram({ ...programState, runDays, runPlan });
     },
-    [programState, profile, saveProgram]
+    [programState, profile, saveProgram, recentLayoff]
   );
 
   // PR-C: skip-recovery-early writer. Atomic phase clear + mode
@@ -3091,7 +3102,7 @@ export function useProgram() {
     );
     await saveProgram(next);
     return { timing, totalWeeks: runPlan.totalWeeks ?? 0 };
-  }, [programState, profile, saveProgram]);
+  }, [programState, profile, saveProgram, recentLayoff]);
 
   // Week navigation
   const viewWeek = useCallback((historyIndex: number | null) => {
