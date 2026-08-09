@@ -93,24 +93,9 @@ export function pbCue(effortLabel: string): string {
   return `New personal best for ${effortLabel}. That's brilliant running.`;
 }
 
-/** Interval-phase cues (warmup / work / rest / cooldown / complete). */
-export function phaseCue(
-  phase: string,
-  rep?: number,
-  totalReps?: number
-): string | null {
-  switch (phase) {
-    case "warmup":
-      return "Warming up. Keep it easy and conversational.";
-    case "work":
-      return `Rep ${rep} of ${totalReps}. Push on!`;
-    case "rest":
-      return "Recovery. Shake it out — nice easy jog.";
-    case "cooldown":
-      return "Cooling down. Nice and easy from here.";
-    case "complete":
-      return "Session complete. Great work today.";
-    default:
-      return null;
-  }
+/** STRUCT-SESS-02: per-segment cue copy now lives ON the segments
+ *  (runSegments.ts builders author it with the labels); only the terminal
+ *  line stays here — it belongs to the session, not to any segment. */
+export function sessionCompleteCue(): string {
+  return "Session complete. Great work today.";
 }
