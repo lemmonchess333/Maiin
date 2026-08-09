@@ -11,7 +11,7 @@ import { Activity } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { CHART_GRID_PROPS, CHART_AXIS_TICK } from "./chartStyles";
 import ChartAreaGradient from "./ChartAreaGradient";
-import type { LoadPoint } from "@/lib/trainingLoad";
+import { evaluateLoadGuardrails, type LoadPoint } from "@/lib/trainingLoad";
 import { Skeleton } from "@/components/LoadingSkeleton";
 import EmptyState from "@/components/ui/EmptyState";
 
@@ -62,6 +62,8 @@ export default function TrainingLoadCard({
 
   const last = points[points.length - 1];
   const formPositive = last.form >= 0;
+  // B1 guardrails — pure evaluation over the same points the chart draws.
+  const guardrails = evaluateLoadGuardrails(points);
 
   // Sparse x labels: ~5 ticks across the window.
   const tickEvery = Math.max(1, Math.floor(points.length / 5));
@@ -165,6 +167,20 @@ export default function TrainingLoadCard({
         <span style={{ color: THEME.brand }}>lifts</span>). Positive form =
         fresh; deep negative = time to ease off.
       </p>
+
+      {/* B1 — the one advisory line, quiet unless a guardrail fires.
+          Warning register (THEME.warning), never a red risk score. */}
+      {guardrails.advisory && (
+        <p
+          className="text-xs mt-2 rounded-lg px-3 py-2 leading-relaxed"
+          style={{
+            color: THEME.warning,
+            background: `${THEME.warning}14`,
+          }}
+        >
+          {guardrails.advisory.line}
+        </p>
+      )}
     </div>
   );
 }
