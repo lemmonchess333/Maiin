@@ -48,6 +48,23 @@
  * deliberately does not exercise is Chromium's disconnected network
  * stack — that stays a real-device (airplane-mode) concern.
  *
+ * The SHARE queue (`tropos.share.queue`, PR #820's second row) rides
+ * the same journey, drain-side: two pending shares — one per account,
+ * the exact shape the app enqueues — are seeded before B signs in.
+ * B's drain (ShareComposerSheet's [isOnline, uid] effect → drainQueue →
+ * postActivity) must post B's share and leave A's queued with no
+ * A-authored activity doc existing; A's return drains A's share and
+ * empties the queue. Seeding stands in for the enqueue UI deliberately:
+ * the only live pre-gated enqueue path is RunSummary's (needs a full
+ * GPS-run rig), while the workout paths (useProgram / Routine) can
+ * never reach their catch-branch enqueue under real offline — the
+ * preceding save (or postActivity itself) PARKS on the Firestore SDK's
+ * pending-mutation queue rather than throwing, so `catch { if
+ * (!navigator.onLine) enqueueShare }` is vestigial there. The workout
+ * paths also can't complete offline at all, so no share decision is
+ * lost — the uid-isolation contract lives in drainQueue, which this
+ * drives end-to-end.
+ *
  * Fixture: two brand-new accounts minted through the real signup form,
  * `onboardingComplete` patched via the emulator's rules-free REST
  * surface (the coachmark-spec pattern) — no dependency on the shared
@@ -60,6 +77,7 @@ const AUTH_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
 const FS_HOST = process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080";
 const PASSWORD = "test-password-123";
 const QUEUE_KEY = "tropos_offline_queue";
+const SHARE_QUEUE_KEY = "tropos.share.queue";
 
 interface QueueEntry {
   uid: string;
@@ -175,6 +193,30 @@ function readQueue(page: Page): Promise<QueueEntry[]> {
     (key) => JSON.parse(localStorage.getItem(key) ?? "[]") as never[],
     QUEUE_KEY
   );
+}
+
+function readShareQueue(page: Page): Promise<QueueEntry[]> {
+  return page.evaluate(
+    (key) => JSON.parse(localStorage.getItem(key) ?? "[]") as never[],
+    SHARE_QUEUE_KEY
+  );
+}
+
+/** Count `activities` docs authored by `uid`, straight from the
+ *  emulator. The collection is shared across parallel spec runs, so
+ *  always filter by this run's own (fresh) uids. */
+async function activitiesByAuthor(uid: string): Promise<number> {
+  const res = await fetch(
+    `http://${FS_HOST}/v1/projects/demo-tropos/databases/(default)/documents/activities?pageSize=300`,
+    { headers: { Authorization: "Bearer owner" } }
+  );
+  if (!res.ok) {
+    throw new Error(`firestore emulator list failed: ${await res.text()}`);
+  }
+  const body = (await res.json()) as { documents?: RestDoc[] };
+  return (body.documents ?? []).filter(
+    (d) => (d.fields?.authorId as { stringValue?: string })?.stringValue === uid
+  ).length;
 }
 
 /** Flip the app's own offline gate: navigator.onLine reads false and
@@ -437,6 +479,41 @@ test.describe("offline-queue uid isolation across an account switch", () => {
       [QUEUE_KEY, uidB, anchorDate] as const
     );
 
+    // SHARE queue (PR #820's second row), drain-side: seed one pending
+    // share per account — the exact PendingShare shape enqueueShare
+    // writes, payload matching the app's workout-share (see header for
+    // why the enqueue UI can't be driven). A's queued first, like the
+    // real chronology.
+    await page.evaluate(
+      ([key, a, b]) => {
+        const share = (uid: string, authorName: string) => ({
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          uid,
+          payload: {
+            authorId: uid,
+            authorName,
+            type: "workout",
+            visibility: "followers",
+            workoutName: "Queued Session",
+            activityTitle: "Queued Session",
+            exerciseCount: 1,
+            totalVolume: 100,
+            duration: 600,
+            muscleGroups: [],
+          },
+          queuedAt: Date.now(),
+        });
+        localStorage.setItem(
+          key,
+          JSON.stringify([
+            share(a, "Offline User A"),
+            share(b, "Offline User B"),
+          ])
+        );
+      },
+      [SHARE_QUEUE_KEY, uidA, uidB] as const
+    );
+
     await page.goto("/");
     await signInFromLoginScreen(page, emailB);
 
@@ -460,6 +537,20 @@ test.describe("offline-queue uid isolation across an account switch", () => {
     const [keptDuringB] = await readQueue(page);
     expect(keptDuringB.uid).toBe(uidA);
     expect(await listLogDocs(uidA)).toHaveLength(0);
+
+    // Share drain, same doctrine: B's pending share posts (the drain
+    // pass provably completed)…
+    await expect
+      .poll(async () => await activitiesByAuthor(uidB), { timeout: 20_000 })
+      .toBe(1);
+    // …while that same pass kept A's share queued, and no A-authored
+    // activity exists anywhere.
+    await expect
+      .poll(async () => await readShareQueue(page), { timeout: 10_000 })
+      .toHaveLength(1);
+    const [keptShare] = await readShareQueue(page);
+    expect(keptShare.uid).toBe(uidA);
+    expect(await activitiesByAuthor(uidA)).toBe(0);
 
     // B's live writes flow normally too (the online branch, no queue):
     // log a meal, see it ack and land beside the flushed anchor doc.
@@ -489,6 +580,15 @@ test.describe("offline-queue uid isolation across an account switch", () => {
     // The flush consumed A's entry.
     await expect
       .poll(async () => await readQueue(page), { timeout: 10_000 })
+      .toHaveLength(0);
+
+    // A's return also drains A's pending share — the post lands under
+    // A's auth and the share queue empties.
+    await expect
+      .poll(async () => await activitiesByAuthor(uidA), { timeout: 20_000 })
+      .toBe(1);
+    await expect
+      .poll(async () => await readShareQueue(page), { timeout: 10_000 })
       .toHaveLength(0);
   });
 });

@@ -914,7 +914,19 @@ Affects: `src/lib/offlineQueue.ts`, `src/lib/shareComposer.ts`.
       wedges the Firestore SDK's WebChannel WRITE stream in the emulator rig
       (Listen recovers, Write never re-establishes). Real airplane-mode
       remains a device check, but the queue contract itself is pinned here.
-- [ ] Same flow for the share composer queue (`tropos.share.queue`) — queue an offline share as A, switch to B, confirm no posts appear in B's feed; return to A, confirm A's post finally lands.
+- [x] Same flow for the share composer queue (`tropos.share.queue`) —
+      drain-side automated in the same spec: pending shares seeded for BOTH
+      accounts (the exact `PendingShare` shape `enqueueShare` writes), B's
+      drain posts B's share while keeping A's queued with zero A-authored
+      `activities` docs, A's return posts A's share and empties the queue.
+      The enqueue UI stays un-driven, with the reason recorded in the spec
+      header: RunSummary's pre-gated path (the one reachable offline
+      enqueue) needs a full GPS-run rig, and the workout paths' catch-branch
+      enqueues are vestigial — a parked Firestore `addDoc` never throws, so
+      `catch { if (!navigator.onLine) enqueueShare }` cannot fire, and the
+      workout save itself parks before compose anyway (no share decision is
+      ever lost). Real device airplane-mode enqueue via a run remains the
+      manual residue.
 - [x] Legacy pre-deploy items dropped on first read — covered by
       `offlineQueue.test.ts` ("drops legacy items missing a uid field"), which
       seeds one untagged and one tagged entry and asserts the untagged one is
