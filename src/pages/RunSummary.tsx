@@ -355,7 +355,7 @@ function InvalidRunReview({
             <button
               type="button"
               onClick={onDiscard}
-              className="w-full py-2.5 rounded-xl text-sm font-medium bg-destructive/10 text-destructive border border-destructive/20"
+              className="w-full py-2.5 rounded-xl text-sm font-medium bg-destructive/10 text-destructive-strong border border-destructive/20"
             >
               Discard
             </button>
@@ -1270,9 +1270,9 @@ export default function RunSummary() {
                 border: "1px solid rgba(245,158,11,0.25)",
               }}
             >
-              <WifiOff size={20} className="text-warning" />
+              <WifiOff size={20} className="text-warning-strong" />
               <div>
-                <p className="font-medium text-warning text-xs">
+                <p className="font-medium text-warning-strong text-xs">
                   You're offline
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -1291,9 +1291,9 @@ export default function RunSummary() {
                 border: "1px solid rgba(52,211,153,0.25)",
               }}
             >
-              <CheckCircle size={20} className="text-success" />
+              <CheckCircle size={20} className="text-success-strong" />
               <div>
-                <p className="font-medium text-success text-xs">
+                <p className="font-medium text-success-strong text-xs">
                   {isOnline
                     ? "Run saved"
                     : "Saved locally — will sync when online"}
@@ -1549,7 +1549,7 @@ export default function RunSummary() {
                   `--success` is theme-aware (5.07:1 light / 9.33:1 dark) while
                   the static THEME.success (#4DB872) this used measured
                   2.50:1 on the light card. */}
-              <p className="text-lg font-bold font-mono tabular-nums text-success">
+              <p className="text-lg font-bold font-mono tabular-nums text-success-strong">
                 {calories}
               </p>
               <p className="text-xs text-muted-foreground">calories</p>
@@ -1716,9 +1716,9 @@ export default function RunSummary() {
                   );
                   const color =
                     s.paceSeconds === fastest
-                      ? "text-success"
+                      ? "text-success-strong"
                       : s.paceSeconds === slowest
-                        ? "text-destructive"
+                        ? "text-destructive-strong"
                         : "text-muted-foreground";
                   return (
                     <div
@@ -1942,7 +1942,7 @@ export default function RunSummary() {
               <button
                 type="button"
                 onClick={handleDiscard}
-                className="w-full py-2 text-sm text-destructive"
+                className="w-full py-2 text-sm text-destructive-strong"
               >
                 Discard
               </button>

@@ -468,7 +468,7 @@ export default function RunPlanSettings({
             className="w-full min-h-[44px] rounded-xl border border-border bg-background px-3 text-sm font-mono tabular-nums"
           />
           {raceTimeInvalid && (
-            <p className="text-xs text-destructive">
+            <p className="text-xs text-destructive-strong">
               Enter a time like 24:30, or 3:59:00 for longer races.
             </p>
           )}

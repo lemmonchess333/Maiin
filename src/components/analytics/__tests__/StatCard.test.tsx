@@ -5,7 +5,7 @@ import StatCard from "../StatCard";
 /* Pins the delta-chip sentiment → token-class mapping. The chip colour
  * is the running copy of the trend-sentiment rule (up-good vs down-good
  * vs neutral); a regression here is invisible in tsc/lint, so it's
- * pinned explicitly. Tokens: good → text-success, bad → text-destructive,
+ * pinned explicitly. Tokens: good → text-success-strong, bad → text-destructive-strong,
  * neutral/no-delta → text-muted-foreground. */
 describe("StatCard delta sentiment colour", () => {
   function deltaEl() {
@@ -21,7 +21,7 @@ describe("StatCard delta sentiment colour", () => {
         delta={{ value: "20%", positive: true }}
       />
     );
-    expect(deltaEl()).toHaveClass("text-success");
+    expect(deltaEl()).toHaveClass("text-success-strong");
   });
 
   it("decrease on an up-good metric is destructive-coloured", () => {
@@ -33,7 +33,7 @@ describe("StatCard delta sentiment colour", () => {
         delta={{ value: "20%", positive: false }}
       />
     );
-    expect(deltaEl()).toHaveClass("text-destructive");
+    expect(deltaEl()).toHaveClass("text-destructive-strong");
   });
 
   it("decrease on a down-good metric (e.g. weight on a cut) is success-coloured", () => {
@@ -45,7 +45,7 @@ describe("StatCard delta sentiment colour", () => {
         delta={{ value: "2%", positive: false }}
       />
     );
-    expect(deltaEl()).toHaveClass("text-success");
+    expect(deltaEl()).toHaveClass("text-success-strong");
   });
 
   it("neutral direction greys the chip regardless of sign", () => {

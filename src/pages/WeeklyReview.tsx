@@ -122,7 +122,7 @@ export default function WeeklyReview() {
                     <span
                       className={`ml-auto text-xs font-semibold font-mono tabular-nums px-2 py-0.5 rounded-full ${
                         review.headline.delta >= 0
-                          ? "text-success bg-success/10"
+                          ? "text-success-strong bg-success/10"
                           : "text-muted-foreground bg-muted"
                       }`}
                     >
@@ -201,7 +201,7 @@ export default function WeeklyReview() {
                 )}
                 {review.training.prsHit !== null &&
                   review.training.prsHit > 0 && (
-                    <div className="flex items-center gap-2 text-xs font-semibold text-success">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-success-strong">
                       <Trophy className="size-3.5" aria-hidden="true" />
                       <span className="font-mono tabular-nums">
                         {review.training.prsHit}

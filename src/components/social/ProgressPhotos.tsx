@@ -579,7 +579,7 @@ export default function ProgressPhotos() {
           className="flex items-start gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/20"
           role="alert"
         >
-          <p className="text-xs text-destructive flex-1 leading-relaxed break-words">
+          <p className="text-xs text-destructive-strong flex-1 leading-relaxed break-words">
             {uploadError}
           </p>
           {pendingFileRef.current && (
@@ -587,7 +587,7 @@ export default function ProgressPhotos() {
               type="button"
               onClick={retryUpload}
               aria-label="Retry photo upload"
-              className="flex items-center gap-1 text-xs font-medium text-destructive shrink-0"
+              className="flex items-center gap-1 text-xs font-medium text-destructive-strong shrink-0"
             >
               <RotateCcw size={12} />
               Retry
@@ -597,7 +597,7 @@ export default function ProgressPhotos() {
             type="button"
             onClick={dismissError}
             aria-label="Dismiss error"
-            className="p-0.5 text-destructive/70 hover:text-destructive shrink-0"
+            className="p-0.5 text-destructive-strong/70 hover:text-destructive-strong shrink-0"
           >
             <X size={14} />
           </button>
@@ -754,7 +754,7 @@ export default function ProgressPhotos() {
                 className="flex items-start gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/20"
                 role="alert"
               >
-                <p className="text-xs text-destructive flex-1 leading-relaxed break-words">
+                <p className="text-xs text-destructive-strong flex-1 leading-relaxed break-words">
                   {uploadError}
                 </p>
                 {pendingFileRef.current && (
@@ -762,7 +762,7 @@ export default function ProgressPhotos() {
                     type="button"
                     onClick={retryUpload}
                     aria-label="Retry photo upload"
-                    className="flex items-center gap-1 text-xs font-medium text-destructive shrink-0"
+                    className="flex items-center gap-1 text-xs font-medium text-destructive-strong shrink-0"
                   >
                     <RotateCcw size={12} />
                     Retry
@@ -772,7 +772,7 @@ export default function ProgressPhotos() {
                   type="button"
                   onClick={dismissError}
                   aria-label="Dismiss error"
-                  className="p-0.5 text-destructive/70 hover:text-destructive shrink-0"
+                  className="p-0.5 text-destructive-strong/70 hover:text-destructive-strong shrink-0"
                 >
                   <X size={14} />
                 </button>

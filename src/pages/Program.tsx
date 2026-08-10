@@ -1769,7 +1769,7 @@ function ProgramInner() {
                   removeExFromDay(contextMenu.dayIndex, contextMenu.exIndex);
                   setContextMenu(null);
                 }}
-                className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-destructive hover:bg-muted transition-colors border-b border-border/30"
+                className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-destructive-strong hover:bg-muted transition-colors border-b border-border/30"
               >
                 <Trash2 className="size-4" /> Remove Exercise
               </button>

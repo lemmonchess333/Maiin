@@ -357,7 +357,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
                       {plan.label}
                     </p>
                     {plan.savingsLabel ? (
-                      <p className="text-xs font-medium text-success mt-0.5">
+                      <p className="text-xs font-medium text-success-strong mt-0.5">
                         {plan.savingsLabel}
                       </p>
                     ) : (
@@ -392,7 +392,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
         {error ? (
           <p
             role="alert"
-            className="text-xs text-destructive bg-destructive/10 rounded-lg px-3 py-2"
+            className="text-xs text-destructive-strong bg-destructive/10 rounded-lg px-3 py-2"
           >
             {error}
           </p>

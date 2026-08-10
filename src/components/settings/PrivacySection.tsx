@@ -341,7 +341,7 @@ export default function PrivacySection({
                         );
                         toast.success(`Unblocked ${bu.displayName}`);
                       }}
-                      className="px-2.5 py-1 rounded-lg text-xs font-medium bg-muted text-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                      className="px-2.5 py-1 rounded-lg text-xs font-medium bg-muted text-foreground hover:bg-destructive/10 hover:text-destructive-strong transition-colors"
                     >
                       Unblock
                     </button>

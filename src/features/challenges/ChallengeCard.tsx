@@ -646,7 +646,7 @@ export function ChallengeCard({
             type="button"
             onClick={handleLeave}
             disabled={busy === "leaving"}
-            className="flex items-center gap-1 min-h-[44px] text-xs text-muted-foreground hover:text-destructive transition-colors mx-auto disabled:opacity-60"
+            className="flex items-center gap-1 min-h-[44px] text-xs text-muted-foreground hover:text-destructive-strong transition-colors mx-auto disabled:opacity-60"
           >
             <LogOut className="size-3" />
             {busy === "leaving" ? "Leaving…" : "Leave Challenge"}

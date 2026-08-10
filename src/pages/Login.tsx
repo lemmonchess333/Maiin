@@ -211,7 +211,7 @@ export default function Login() {
           {accountDeleted && (
             <div
               role="status"
-              className="p-3 rounded-xl bg-success/10 border border-success/20 text-success text-sm font-medium"
+              className="p-3 rounded-xl bg-success/10 border border-success/20 text-success-strong text-sm font-medium"
             >
               Your account and all data have been deleted.
             </div>
@@ -220,7 +220,7 @@ export default function Login() {
             <div
               id="login-error"
               role="alert"
-              className="flex items-start gap-2.5 p-3 rounded-xl bg-destructive-bg border border-destructive/15 text-destructive text-sm font-medium"
+              className="flex items-start gap-2.5 p-3 rounded-xl bg-destructive-bg border border-destructive/15 text-destructive-strong text-sm font-medium"
             >
               <AlertCircle
                 className="size-4 shrink-0 mt-0.5"
