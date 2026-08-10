@@ -256,7 +256,7 @@ export default function SpacePostCard({
                           setShowMenu(false);
                           setShowDeleteConfirm(true);
                         }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-muted transition-colors"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive-strong hover:bg-muted transition-colors"
                       >
                         <Trash2 className="size-4" />
                         Delete post
@@ -282,7 +282,7 @@ export default function SpacePostCard({
                             setShowMenu(false);
                             setShowBlockConfirm(true);
                           }}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-muted transition-colors"
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive-strong hover:bg-muted transition-colors"
                         >
                           <Ban className="size-4" />
                           Block user

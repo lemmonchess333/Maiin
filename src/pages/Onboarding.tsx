@@ -1347,7 +1347,7 @@ export default function Onboarding() {
                             if (state.status === "invalid") {
                               return (
                                 <p
-                                  className="text-xs mt-1.5 text-destructive"
+                                  className="text-xs mt-1.5 text-destructive-strong"
                                   role="alert"
                                 >
                                   {state.statusDescription} Or set the race
@@ -1536,14 +1536,14 @@ export default function Onboarding() {
                   />
                 ))}
                 {ageRange === "under-16" && (
-                  <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+                  <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive-strong text-sm">
                     <div className="flex items-center gap-2 mb-1">
                       <AlertTriangle className="size-4 shrink-0" />
                       <span className="font-medium">
                         Age requirement not met
                       </span>
                     </div>
-                    <p className="text-xs text-destructive/80">
+                    <p className="text-xs text-destructive-strong">
                       Tropos is only available for users aged 16 and over.
                       Please check back when you meet the age requirement.
                     </p>

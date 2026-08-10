@@ -316,7 +316,7 @@ export default function RunDetail() {
             <div className="flex items-start gap-2.5 p-3 rounded-xl bg-warning-bg border border-warning/15">
               <AlertTriangle
                 size={16}
-                className="mt-0.5 shrink-0 text-warning"
+                className="mt-0.5 shrink-0 text-warning-strong"
                 aria-hidden="true"
               />
               <div className="space-y-0.5">

@@ -366,7 +366,7 @@ export default function AccountSection({
               setShowDeleteModal(true);
             }
           }}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-destructive/30 text-destructive text-sm hover:bg-destructive/10 transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-destructive/30 text-destructive-strong text-sm hover:bg-destructive/10 transition-colors"
         >
           <Trash2 className="size-4" /> Delete Account
         </button>
@@ -400,7 +400,7 @@ export default function AccountSection({
               setShowAppleWarning(false);
               setShowDeleteModal(true);
             }}
-            className="w-full px-4 py-2.5 rounded-xl border border-destructive/30 text-destructive text-sm hover:bg-destructive/10 transition-colors"
+            className="w-full px-4 py-2.5 rounded-xl border border-destructive/30 text-destructive-strong text-sm hover:bg-destructive/10 transition-colors"
           >
             Delete anyway
           </button>
@@ -427,7 +427,7 @@ export default function AccountSection({
           {(modalState.phase === "confirm" ||
             modalState.phase === "deleting") && (
             <>
-              <h3 className="text-base font-semibold text-destructive">
+              <h3 className="text-base font-semibold text-destructive-strong">
                 Delete Account
               </h3>
               <p className="text-sm text-muted-foreground">
@@ -436,7 +436,7 @@ export default function AccountSection({
                 action cannot be undone.
               </p>
               <p className="text-sm text-foreground font-medium">
-                Type <span className="text-destructive font-bold">DELETE</span>{" "}
+                Type <span className="text-destructive-strong font-bold">DELETE</span>{" "}
                 to confirm:
               </p>
               <input
@@ -506,7 +506,7 @@ export default function AccountSection({
               </p>
 
               {reauthError && (
-                <p className="text-sm text-destructive">{reauthError}</p>
+                <p className="text-sm text-destructive-strong">{reauthError}</p>
               )}
 
               {showPasswordInput && (
@@ -564,7 +564,7 @@ export default function AccountSection({
           {/* ── Phase: retrying (post-reauth, deletion in flight) */}
           {modalState.phase === "retrying" && (
             <>
-              <h3 className="text-base font-semibold text-destructive">
+              <h3 className="text-base font-semibold text-destructive-strong">
                 Deleting account…
               </h3>
               <p className="text-sm text-muted-foreground">

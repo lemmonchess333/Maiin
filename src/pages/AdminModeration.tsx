@@ -193,7 +193,7 @@ export default function AdminModeration() {
       </header>
 
       {error && (
-        <div role="alert" className="text-sm text-destructive font-medium">
+        <div role="alert" className="text-sm text-destructive-strong font-medium">
           {error}
         </div>
       )}

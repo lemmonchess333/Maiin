@@ -86,9 +86,11 @@
      guardrail. Theme-aware like --success. */
   --color-teal: hsl(var(--teal));
   --color-success: hsl(var(--success));
+  --color-success-strong: hsl(var(--success-strong));
   --color-success-foreground: hsl(var(--success-foreground));
   --color-success-bg: hsl(var(--success-bg));
   --color-warning: hsl(var(--warning));
+  --color-warning-strong: hsl(var(--warning-strong));
   --color-warning-foreground: hsl(var(--warning-foreground));
   --color-warning-bg: hsl(var(--warning-bg));
   /* Achievement accent — contrast-safe gold for PR stars / trophies /
@@ -96,6 +98,7 @@
      `tier.gold` (#FFD700) used on medals, which fails AA as text.
      Definitions in :root + .dark below. */
   --color-achievement: hsl(var(--achievement));
+  --color-achievement-strong: hsl(var(--achievement-strong));
   --color-achievement-bg: hsl(var(--achievement-bg));
   /* DS2 redesign — premium radius CURVE. Base bumped 8→10px and the card
      tiers widened (xl 12→16, 2xl 16→22) so cards read modern/soft while
@@ -164,7 +167,7 @@
      --lifting is the literal brand purple (#7B72E9) and is deliberately
      NOT --primary (246 88% 70%, hand-tuned for white-text AA). */
   --running: 348 57% 61%; /* #D4637A coral */
-  --running-strong: 348 57% 45%; /* #B4314C — worst case 4.51:1 (12% tint over background) */
+  --running-strong: 348 57% 43%; /* #AC2F48 — worst case 4.53:1 (18% tint over background) */
   --lifting-strong: 245 73% 59%; /* #574AE3 — worst case 4.51:1 (12% tint over background) */
   --lifting: 245 73% 68%; /* #7B72E9 purple */
   /* Nutrition domain colour. `--nutrition` is the FIXED warm-orange
@@ -187,7 +190,7 @@
      `--destructive` is 3.52:1 on a destructive/10 chip over the page
      background — under the 4.5:1 floor for the button labels
      `destructive-tinted` renders. Hue + saturation unchanged. */
-  --destructive-strong: 0 72% 43%; /* #BD1F1F — worst case 4.58:1 */
+  --destructive-strong: 0 72% 39%; /* #AB1C1C — worst case 4.55:1 (20% tint over background) */
   /* Media stage — fixed dark in BOTH themes (see @theme note). */
   --stage: 240 4% 7%;
   --muted: 240 6% 97.5%; /* DS2: near-white raised tile (was 95.9% ≈ page) */
@@ -215,14 +218,23 @@
   --success: 142 72% 29%;
   --success-foreground: 0 0% 98%;
   --success-bg: 138 76% 97%;
+  /* AA text step — the identity is 3.79:1 on a `bg-success/10` chip over
+     the page canvas. Hue + saturation unchanged. */
+  --success-strong: 142 72% 26%; /* #137236 */
   --warning: 26 90% 37%;
   --warning-foreground: 0 0% 98%;
   --warning-bg: 48 100% 96%;
+  --warning-strong: 26 90% 33%; /* #A04A08 — identity is 3.76:1 on a /10 chip */
   /* Achievement accent — light mode. A deep gold that clears WCAG AA for
      the PR count / trophy text on a white card and still reads as a gold
      star fill. */
   --achievement: 40 90% 35%;
   --achievement-bg: 45 100% 95%;
+  /* The gold identity is the WORST of the semantic set as small text:
+     2.91:1 on the `bg-achievement/15` PR badge over the page canvas, and
+     4.04:1 even on a plain card. Icons and the large PR numeral stay on
+     the identity; the badge label and the "new PR" line move here. */
+  --achievement-strong: 40 90% 26.5%; /* #805807 */
   /* Food calorie hero — dark photo-wash scrim. The ambient food photo
      behind the calorie ring renders in DARK MODE ONLY (see FoodHeroCard),
      so this scrim is a single dark value — no light variant / no theme
@@ -267,7 +279,7 @@
   --primary-strong: 243 55% 60%;
   /* Sport-identity colours — IDENTICAL to :root (fixed sport colour). */
   --running: 348 57% 61%; /* #D4637A coral */
-  --running-strong: 348 57% 69%; /* #DD8395 — worst case 4.56:1 (12% tint over muted) */
+  --running-strong: 348 57% 71%; /* #DF8B9C — worst case 4.52:1 (18% tint over muted) */
   --lifting-strong: 245 73% 75.5%; /* #9B93EE — worst case 4.60:1 (12% tint over muted) */
   --lifting: 245 73% 68%; /* #7B72E9 purple */
   /* Media stage — IDENTICAL to :root (fixed dark surface). */
@@ -280,7 +292,7 @@
   --nutrition-fill: 26 91% 37%; /* #B45309 amber-700 — 5.02:1 under white */
   --nutrition-strong: 25 65% 58.5%; /* #DA8A50 — worst case 4.50:1 (chip over muted) */
   /* Dark pairing for --destructive-strong — lighter, not darker. */
-  --destructive-strong: 0 84% 69.5%; /* #F37070 — worst case 4.55:1 */
+  --destructive-strong: 0 84% 73%; /* #F48080 — worst case 4.58:1 (20% tint over muted) */
   --muted: 240 3% 17%;
   --muted-foreground: 240 4% 64%;
   --border: 240 3% 18%;
@@ -322,13 +334,23 @@
   --success: 142 69% 58%;
   --success-foreground: 240 10% 3.9%;
   --success-bg: 142 38% 14%;
+  /* The three -strong text steps below are IDENTICAL to their identities
+     here, and that is the honest answer rather than a copy-paste slip: a
+     bright accent on a near-black card already clears AA comfortably
+     (success 6.64:1, warning 5.58:1, achievement 6.23:1 at their worst
+     tint). The token still exists in both themes so call sites can name
+     the text step once instead of branching on the theme — which is
+     exactly what `useMacroPalette` does in JS (`text = accent` in dark). */
+  --success-strong: 142 69% 58%;
   --warning: 38 92% 50%;
   --warning-foreground: 240 10% 3.9%;
   --warning-bg: 38 45% 15%;
+  --warning-strong: 38 92% 50%;
   /* Achievement accent — dark mode. Brighter gold for luminance on dark
      cards. */
   --achievement: 45 92% 58%;
   --achievement-bg: 42 50% 14%;
+  --achievement-strong: 45 92% 58%;
 }
 
 /* Default border colour. Must live in @layer base so explicit

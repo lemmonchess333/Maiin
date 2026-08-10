@@ -263,7 +263,7 @@ export default function RaceGoalPlanner({
       )}
 
       {state.status === "invalid" && (
-        <p className="text-xs text-destructive" role="alert">
+        <p className="text-xs text-destructive-strong" role="alert">
           {state.statusDescription}
         </p>
       )}

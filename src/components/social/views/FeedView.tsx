@@ -577,13 +577,13 @@ export default function FeedView({
                 className="flex items-center justify-between p-3 rounded-xl bg-destructive/10 border border-destructive/20"
                 aria-live="polite"
               >
-                <p className="text-xs text-destructive">
+                <p className="text-xs text-destructive-strong">
                   {followingFeed.error}
                 </p>
                 <button
                   type="button"
                   onClick={followingFeed.refresh}
-                  className="text-xs font-medium text-destructive underline ml-2 shrink-0"
+                  className="text-xs font-medium text-destructive-strong underline ml-2 shrink-0"
                 >
                   Retry
                 </button>
@@ -606,13 +606,13 @@ export default function FeedView({
                   className="flex items-center justify-between p-3 rounded-xl bg-destructive/10 border border-destructive/20"
                   aria-live="polite"
                 >
-                  <p className="text-xs text-destructive">
+                  <p className="text-xs text-destructive-strong">
                     Couldn't load the community feed. Check your connection.
                   </p>
                   <button
                     type="button"
                     onClick={exploreFeed.refresh}
-                    className="text-xs font-medium text-destructive underline ml-2 shrink-0"
+                    className="text-xs font-medium text-destructive-strong underline ml-2 shrink-0"
                   >
                     Retry
                   </button>
