@@ -8,12 +8,21 @@ import SettingsSection from "@/components/settings/SettingsSection";
 import NotificationsSection from "@/components/settings/NotificationsSection";
 
 export default function SettingsNotifications() {
-  const { reminders: mealReminders, updateReminders: updateMealReminders } = useMealReminders();
-  const { reminders: workoutReminders, updateReminders: updateWorkoutReminders } = useWorkoutReminders();
-  const { prefs: streakReminder, updatePrefs: updateStreakReminder } = useStreakReminder();
+  const { reminders: mealReminders, updateReminders: updateMealReminders } =
+    useMealReminders();
+  const {
+    reminders: workoutReminders,
+    updateReminders: updateWorkoutReminders,
+  } = useWorkoutReminders();
+  const { prefs: streakReminder, updatePrefs: updateStreakReminder } =
+    useStreakReminder();
 
   return (
-    <SettingsSection title="Notifications" subtitle="Meal, workout & streak reminders">
+    <SettingsSection
+      title="Notifications"
+      subtitle="Meal, workout & streak reminders"
+      section="notifications"
+    >
       <NotificationsSection
         inline
         mealReminders={mealReminders}

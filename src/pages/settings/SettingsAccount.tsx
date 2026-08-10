@@ -4,6 +4,7 @@ import SettingsSection from "@/components/settings/SettingsSection";
 import AccountSection from "@/components/settings/AccountSection";
 import SecuritySection from "@/components/settings/SecuritySection";
 import DataExportSection from "@/components/settings/DataExportSection";
+import TrackSettingsSectionView from "@/components/settings/TrackSettingsSectionView";
 
 export default function SettingsAccount() {
   const { user, signOut } = useAuth();
@@ -12,6 +13,7 @@ export default function SettingsAccount() {
     <SettingsSection
       title="Account"
       subtitle="Sign-in, data export, delete account"
+      section="account"
     >
       <SecuritySection inline user={user} />
       {/*
@@ -25,7 +27,9 @@ export default function SettingsAccount() {
         and putting it after would make the export easy to miss for the
         one user who most needs it.
       */}
-      <DataExportSection user={user} />
+      <TrackSettingsSectionView section="data_storage">
+        <DataExportSection user={user} />
+      </TrackSettingsSectionView>
       <AccountSection inline user={user} signOut={signOut} />
     </SettingsSection>
   );

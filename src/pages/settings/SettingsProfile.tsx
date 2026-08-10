@@ -17,7 +17,11 @@ export default function SettingsProfile() {
   if (!profile) return <SettingsSection title="Profile" />;
 
   return (
-    <SettingsSection title="Profile" subtitle="Name, photo, body metrics">
+    <SettingsSection
+      title="Profile"
+      subtitle="Name, photo, body metrics"
+      section="profile_info"
+    >
       <ProfileInfoSection
         inline
         profile={profile}

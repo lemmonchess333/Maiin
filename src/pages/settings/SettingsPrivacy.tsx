@@ -20,6 +20,7 @@ export default function SettingsPrivacy() {
     <SettingsSection
       title="Social & Privacy"
       subtitle="Visibility, auto-post, GPS zones"
+      section="privacy"
     >
       <PrivacySection
         inline

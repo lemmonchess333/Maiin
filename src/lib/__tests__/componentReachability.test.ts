@@ -83,12 +83,7 @@ const CONSUMER_ROOTS = ["src", "e2e"];
  * rendered, which is the thing this exists to catch while it is still one
  * commit old rather than ten of them later.
  */
-const KNOWN_ORPHAN_COMPONENTS: { path: string; why: string }[] = [
-  {
-    path: "src/components/settings/TrackSettingsSectionView.tsx",
-    why: "silent-off — wraps a Settings section to emit settings_section_viewed. Nothing wraps anything, so the event has never fired and the dashboard's zero looks like data.",
-  },
-];
+const KNOWN_ORPHAN_COMPONENTS: { path: string; why: string }[] = [];
 
 const PINNED = new Set(KNOWN_ORPHAN_COMPONENTS.map((o) => o.path));
 
