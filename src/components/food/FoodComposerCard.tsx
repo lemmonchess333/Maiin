@@ -322,7 +322,7 @@ function FoodComposerCard({
                     // in the audit (REPORT.md). The meal-section + button
                     // mirrors this exact treatment so the same state reads
                     // as ONE colour everywhere on the Food page.
-                    "border-transparent text-white bg-nutrition"
+                    "border-transparent text-white bg-nutrition-fill"
                   : "border-border/80 text-muted-foreground bg-card hover:bg-muted/60"
               )}
               aria-pressed={selected}

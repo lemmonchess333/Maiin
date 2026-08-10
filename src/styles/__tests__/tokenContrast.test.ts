@@ -288,20 +288,20 @@ const BUTTON_VARIANTS = [
 ] as const;
 
 /**
- * `sport` is the one variant held BELOW the normal-text bar, and it is
- * recorded here rather than waved through.
+ * No variant is held below the AA bar any more.
  *
- * `bg-running text-white` measures 3.58:1 in both themes. That is the
- * fixed coral identity under white — the number cannot move without
- * moving the running brand colour, which CLAUDE.md explicitly protects
- * ("Keep the existing colour scheme … should not be changed") and which
- * is an owner decision, not a test's. Pinning it at its MEASURED value
- * means the gap is visible and cannot silently widen; it is not an
- * endorsement. Fixing it properly means either a darker coral fill for
- * filled CTAs (a `--running-fill` step, the shape `--nutrition-fill`
- * takes) or accepting large-text-only use.
+ * `sport` was, for about an hour: `bg-running text-white` measures
+ * 3.58:1, and the exception said the number could not move without
+ * moving the running brand colour. That framing was wrong — the FILL can
+ * move while the identity stays put, which is exactly what
+ * `--primary-strong` has always done for purple and `--nutrition-fill`
+ * now does for orange. `--running-fill` and `--lifting-fill` closed it.
+ *
+ * The map is kept, empty, on purpose: it is the honest place to record a
+ * future exception, and an empty one is a stronger statement than a
+ * deleted one.
  */
-const KNOWN_BELOW_AA: Record<string, number> = { sport: 3.55 };
+const KNOWN_BELOW_AA: Record<string, number> = {};
 
 function tokenRgb(
   block: string,
@@ -371,13 +371,38 @@ describe("Button variants — the label clears AA on its own surface", () => {
     }
   });
 
-  it("the sport gap is recorded at its real size, not rounded away", () => {
-    /* If someone fixes `sport`, this fails and the exception must be
-       deleted — the entry can't outlive the problem it documents. */
-    const light = lightBlock();
-    const ratio = contrast([1, 1, 1], hslToRgb(...readHsl(light, "running")));
-    expect(ratio).toBeLessThan(AA_NORMAL);
-    expect(ratio).toBeGreaterThanOrEqual(AA_LARGE);
+  /**
+   * The fill steps, measured under white. These are the OTHER direction
+   * from `-strong`: a `-strong` step must be legible ON a surface, a
+   * `-fill` step must be legible UNDER white type, so the two move
+   * opposite ways in dark mode and cannot be one token.
+   */
+  it.each(["running", "lifting", "nutrition"] as const)(
+    "--%s-fill carries white text at AA",
+    (token) => {
+      for (const theme of ["light", "dark"] as const) {
+        const block = theme === "light" ? lightBlock() : darkBlock();
+        const fill = hslToRgb(...readHsl(block, `${token}-fill`));
+        const ratio = contrast([1, 1, 1], fill);
+        expect(
+          ratio,
+          `white on --${token}-fill is ${ratio.toFixed(2)}:1 (${theme})`
+        ).toBeGreaterThanOrEqual(AA_NORMAL);
+      }
+    }
+  );
+
+  it("the bare identities still FAIL under white — which is why -fill exists", () => {
+    /* If an identity ever clears 4.5:1 under white on its own, the fill
+       step is redundant and this test says so out loud rather than
+       leaving a token nobody can justify. */
+    for (const token of ["running", "lifting", "nutrition"] as const) {
+      const identity = hslToRgb(...readHsl(lightBlock(), token));
+      expect(
+        contrast([1, 1, 1], identity),
+        `--${token} now clears AA under white; --${token}-fill may be redundant`
+      ).toBeLessThan(AA_NORMAL);
+    }
   });
 });
 

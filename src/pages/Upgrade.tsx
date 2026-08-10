@@ -459,7 +459,7 @@ export default function Upgrade() {
                   )}
                 >
                   {plan.topBadge ? (
-                    <span className="absolute -top-2.5 left-4 text-caption px-2 py-0.5 rounded-full bg-primary text-primary-foreground font-semibold uppercase tracking-wider">
+                    <span className="absolute -top-2.5 left-4 text-caption px-2 py-0.5 rounded-full bg-primary-strong text-primary-foreground font-semibold uppercase tracking-wider">
                       {plan.topBadge}
                     </span>
                   ) : null}

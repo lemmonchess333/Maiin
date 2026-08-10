@@ -126,7 +126,7 @@ export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
             onClick={() => setActiveTab(t.key)}
             className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
               activeTab === t.key
-                ? "bg-primary text-primary-foreground"
+                ? "bg-primary-strong text-primary-foreground"
                 : "bg-muted text-muted-foreground"
             }`}
           >

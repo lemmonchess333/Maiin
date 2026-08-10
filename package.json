@@ -34,7 +34,7 @@
     "backfill:streak-mirror": "tsx scripts/backfill-streak-mirror.ts",
     "prepare": "husky",
     "doctor": "npx react-doctor@latest",
-    "seed:fellbehind": "vite-node scripts/seed-fellbehind-capture.ts"
+    "seed:fellbehind": "tsx --tsconfig tsconfig.app.json scripts/seed-fellbehind-capture.ts"
   },
   "dependencies": {
     "@capacitor-community/background-geolocation": "^1.2.26",

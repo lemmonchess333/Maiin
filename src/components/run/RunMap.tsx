@@ -536,7 +536,7 @@ export default function RunMap({
             onClick={toggleHeadingUp}
             className={
               headingUp
-                ? "bg-running text-white shadow-sm"
+                ? "bg-running-fill text-white shadow-sm"
                 : "border border-border bg-card/85 text-foreground shadow-sm backdrop-blur"
             }
           />
@@ -545,7 +545,7 @@ export default function RunMap({
               aria-label="Recenter map on your location"
               icon={<LocateFixed />}
               onClick={recenter}
-              className="bg-running text-white shadow-sm"
+              className="bg-running-fill text-white shadow-sm"
             />
           )}
         </div>

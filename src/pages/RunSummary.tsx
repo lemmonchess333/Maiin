@@ -124,7 +124,7 @@ function RetryBanner({
       <button
         type="button"
         onClick={onRetry}
-        className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-running"
+        className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-running-fill"
       >
         Retry
       </button>
@@ -1811,7 +1811,7 @@ export default function RunSummary() {
                 type="button"
                 onClick={handleSave}
                 disabled={saveStatus === "saving"}
-                className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97] disabled:opacity-90 bg-running text-white"
+                className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97] disabled:opacity-90 bg-running-fill text-white"
               >
                 {saveStatus === "saving" ? "Saving…" : "Save Run"}
               </button>

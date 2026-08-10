@@ -173,7 +173,7 @@ export default function SpaceCommentSheet({
               onClick={send}
               disabled={sending || !text.trim()}
               icon={<Send className="size-4" />}
-              className="bg-primary text-primary-foreground"
+              className="bg-primary-strong text-primary-foreground"
             />
           </div>
         )}
