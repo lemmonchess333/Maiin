@@ -121,7 +121,7 @@ export default function RunResumePrompt({
           <button
             type="button"
             onClick={onResume}
-            className="w-full py-3.5 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform bg-running text-white"
+            className="w-full py-3.5 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform bg-running-fill text-white"
           >
             <Play size={16} aria-hidden="true" />
             Resume run

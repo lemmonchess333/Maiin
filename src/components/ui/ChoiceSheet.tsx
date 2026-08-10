@@ -56,7 +56,7 @@ interface ChoiceSheetProps {
 }
 
 const VARIANT_CLASSES: Record<ChoiceVariant, string> = {
-  primary: "bg-primary text-primary-foreground text-sm font-semibold",
+  primary: "bg-primary-strong text-primary-foreground text-sm font-semibold",
   secondary:
     "bg-card border border-border text-foreground text-sm font-semibold",
   ghost: "text-muted-foreground hover:text-foreground text-sm font-medium",

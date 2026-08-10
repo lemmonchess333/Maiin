@@ -37,12 +37,20 @@
      saturation (57%) so the identity is untouched; only lightness moves,
      in whichever direction the theme needs. */
   --color-running-strong: hsl(var(--running-strong));
+  /* The OTHER direction: the step that goes UNDER white text on a filled
+     coral CTA. The identity is 3.58:1 with white on it — the whole reason
+     `primary` uses --primary-strong rather than --primary. Fixed in both
+     themes, like --nutrition-fill: white-on-fill contrast does not depend
+     on the surface behind the button. */
+  --color-running-fill: hsl(var(--running-fill));
   /* AA text step for purple, the lifting identity — same shape and same
      reason as --running-strong. `--lifting` measures 3.87:1 on the light
      card, 3.65:1 on light muted and 3.70:1 on dark muted, all under the
      4.5:1 AA floor for the small text 11 sites use it for (worse again on
      a `bg-lifting/10` chip). Hue and saturation unchanged; lightness only. */
   --color-lifting-strong: hsl(var(--lifting-strong));
+  /* White-text fill step for purple — 3.87:1 on the bare identity. */
+  --color-lifting-fill: hsl(var(--lifting-fill));
   --color-lifting: hsl(var(--lifting));
   /* Nutrition domain colour — warm orange (#D9884E), the food/calorie/
      macro identity. `--nutrition` is the identity tint value (bg-nutrition,
@@ -168,7 +176,9 @@
      NOT --primary (246 88% 70%, hand-tuned for white-text AA). */
   --running: 348 57% 61%; /* #D4637A coral */
   --running-strong: 348 57% 43%; /* #AC2F48 — worst case 4.53:1 (18% tint over background) */
+  --running-fill: 348 57% 54%; /* #CD4762 — 4.51:1 under white */
   --lifting-strong: 245 73% 59%; /* #574AE3 — worst case 4.51:1 (12% tint over background) */
+  --lifting-fill: 245 73% 64.5%; /* #6D62E7 — 4.60:1 under white */
   --lifting: 245 73% 68%; /* #7B72E9 purple */
   /* Nutrition domain colour. `--nutrition` is the FIXED warm-orange
      identity (same in light + dark, like running/lifting) and drives every
@@ -280,7 +290,10 @@
   /* Sport-identity colours — IDENTICAL to :root (fixed sport colour). */
   --running: 348 57% 61%; /* #D4637A coral */
   --running-strong: 348 57% 71%; /* #DF8B9C — worst case 4.52:1 (18% tint over muted) */
+  /* IDENTICAL to :root — a fill under white text is theme-independent. */
+  --running-fill: 348 57% 54%; /* #CD4762 — 4.51:1 under white */
   --lifting-strong: 245 73% 75.5%; /* #9B93EE — worst case 4.60:1 (12% tint over muted) */
+  --lifting-fill: 245 73% 64.5%; /* #6D62E7 — 4.60:1 under white */
   --lifting: 245 73% 68%; /* #7B72E9 purple */
   /* Media stage — IDENTICAL to :root (fixed dark surface). */
   --stage: 240 4% 7%;

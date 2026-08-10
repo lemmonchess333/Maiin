@@ -619,7 +619,7 @@ export default function RunPlanSettings({
               "w-full py-3.5 rounded-2xl text-sm font-bold transition-all active:scale-[0.98]",
               !dirty || raceDateInvalid || saving
                 ? "bg-muted text-muted-foreground opacity-60"
-                : "bg-running text-white"
+                : "bg-running-fill text-white"
             )}
           >
             {saveLabel}

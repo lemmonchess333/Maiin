@@ -1039,7 +1039,7 @@ export default function ProgrammeSettings({
               "w-full py-3.5 rounded-2xl text-sm font-bold transition-all active:scale-[0.98]",
               !dirty || saving
                 ? "bg-muted text-muted-foreground opacity-60"
-                : "bg-primary text-primary-foreground"
+                : "bg-primary-strong text-primary-foreground"
             )}
           >
             {saving ? "Saving…" : "Save changes"}

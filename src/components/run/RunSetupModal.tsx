@@ -1214,7 +1214,7 @@ export default function RunSetupModal({
               // (THEME.running) — matches the Programme Run section's
               // Next · Pending Start button + Pgm3 Start CTA discipline.
               // The pulse animation stays via btn-start-run-pulse.
-              className="btn-start-run-pulse w-full py-5 rounded-2xl text-white font-semibold text-lg active:scale-[0.97] disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed bg-running"
+              className="btn-start-run-pulse w-full py-5 rounded-2xl text-white font-semibold text-lg active:scale-[0.97] disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed bg-running-fill"
             >
               <Icon className="inline size-5 mr-1" /> Start {selected.name}
             </button>

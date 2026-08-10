@@ -1075,7 +1075,7 @@ export default function FoodAnalyzer({
                   "flex-1 py-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 active:scale-[0.98]",
                   saved
                     ? "bg-green-500 text-white"
-                    : "bg-primary text-primary-foreground hover:opacity-90",
+                    : "bg-primary-strong text-primary-foreground hover:opacity-90",
                   (saving || allRemoved) && "opacity-50 cursor-not-allowed"
                 )}
               >

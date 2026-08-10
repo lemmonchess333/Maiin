@@ -286,7 +286,7 @@ export default function ExercisePicker({
                   className={cn(
                     "h-10 px-4 rounded-full text-small whitespace-nowrap transition-colors shrink-0",
                     selectedCategory === cat
-                      ? "font-semibold text-white bg-primary"
+                      ? "font-semibold text-white bg-primary-strong"
                       : "font-medium bg-muted text-muted-foreground"
                   )}
                 >

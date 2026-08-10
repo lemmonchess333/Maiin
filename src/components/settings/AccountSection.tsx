@@ -390,7 +390,7 @@ export default function AccountSection({
             onClick={() => {
               window.open(APPLE_MANAGE_SUBSCRIPTIONS_URL, "_blank");
             }}
-            className="w-full px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+            className="w-full px-4 py-2.5 rounded-xl bg-primary-strong text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
           >
             Open subscription settings
           </button>
@@ -532,7 +532,7 @@ export default function AccountSection({
                       inReauthFlight ||
                       (p === "password" && password.length === 0)
                     }
-                    className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="w-full py-2.5 rounded-xl bg-primary-strong text-primary-foreground text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {inReauthFlight && modalState.provider === p ? (
                       <>
