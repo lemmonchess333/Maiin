@@ -1043,7 +1043,7 @@ export default function ProgrammeRunSection({
             <button
               type="button"
               onClick={handleSkipRecoveryEarly}
-              className="inline-flex items-center gap-0.5 text-xs font-semibold motion-safe:active:scale-95 text-running"
+              className="inline-flex items-center gap-0.5 text-xs font-semibold motion-safe:active:scale-95 text-running-strong"
             >
               Skip recovery early &rsaquo;
             </button>
@@ -1093,7 +1093,7 @@ export default function ProgrammeRunSection({
               <Footprints className="size-5 text-running" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold mb-0.5 text-running">
+              <p className="text-xs font-semibold mb-0.5 text-running-strong">
                 Start a run
               </p>
               <p className="text-sm font-bold text-foreground">
@@ -1221,7 +1221,7 @@ export default function ProgrammeRunSection({
                   <Trophy className="size-5 text-running" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold mb-0.5 text-running">
+                  <p className="text-xs font-semibold mb-0.5 text-running-strong">
                     Set a race goal
                   </p>
                   <p className="text-sm font-bold text-foreground">
@@ -1274,7 +1274,7 @@ export default function ProgrammeRunSection({
               <Trophy className="size-5 text-running" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold mb-0.5 text-running">
+              <p className="text-xs font-semibold mb-0.5 text-running-strong">
                 Race day
               </p>
               <p className="text-sm font-bold text-foreground">
@@ -1333,7 +1333,7 @@ export default function ProgrammeRunSection({
               <Footprints className="size-5 text-running" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold mb-0.5 text-running">
+              <p className="text-xs font-semibold mb-0.5 text-running-strong">
                 Did you race?
               </p>
               <p className="text-sm font-bold text-foreground">

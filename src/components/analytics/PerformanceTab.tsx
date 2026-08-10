@@ -10,6 +10,7 @@ import { getPlainLanguageSummary } from "@/lib/performanceSummary";
 import {
   resolveLoadBand,
   resolveDeloadRecommended,
+  isEstablishingBaseline,
 } from "@/lib/performanceDocFields";
 import { ChevronDown, Flame, Dumbbell, Footprints, Info } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -234,12 +235,20 @@ export default function PerformanceTab() {
      at overreach. `resolveLoadBand` is total and shared with the Home hero
      + PI chart so the three surfaces cannot disagree again. */
   const loadBand = resolveLoadBand(currentWeek);
-  // Cold-start gate: with fewer than 4 weekly docs the load band and the
-  // "vs baseline" framing aren't meaningful yet (the baseline is derived
-  // from prior weeks). Mirror the Home hero's lifetimeWeeks<4 "establishing
-  // baseline" treatment so the two surfaces don't disagree — suppress the
-  // confident verdict, band, and delta until the baseline is established.
-  const establishing = weeks.length < 4;
+  // Cold-start gate: until the baseline is established the load band and
+  // the "vs baseline" framing aren't meaningful (the baseline is derived
+  // from prior weeks), so the confident verdict, band and delta are all
+  // suppressed.
+  /* Shared predicate (performanceDocFields). This was `weeks.length < 4`
+     under a comment claiming it mirrored the Home hero's lifetimeWeeks<4
+     gate — it didn't, and the two surfaces split on the
+     lapsed-and-returning athlete: high lifetime depth, almost nothing in
+     the recent window. Home said confident, Analytics said establishing,
+     about the same week. */
+  const establishing = isEstablishingBaseline({
+    weeksAvailable: weeks.length,
+    lifetimeWeeks: currentWeek.signals?.lifetimeWeeks,
+  });
   const { headline, body } = getPlainLanguageSummary(
     pi,
     loadBand,
@@ -491,7 +500,7 @@ export default function PerformanceTab() {
                       <div className="p-4 rounded-2xl bg-running/8">
                         <div className="flex items-center gap-2 mb-2">
                           <Footprints className="size-4 text-running" />
-                          <h3 className="text-sm font-semibold text-running">
+                          <h3 className="text-sm font-semibold text-running-strong">
                             Running Suggestions
                           </h3>
                         </div>

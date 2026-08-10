@@ -94,6 +94,11 @@ const TOKEN_BARS = [
   { token: "teal", min: AA_NORMAL, use: "semantic, any size" },
   { token: "success", min: AA_NORMAL, use: "semantic, any size" },
   { token: "running", min: AA_LARGE, use: "fixed identity, large text only" },
+  {
+    token: "running-strong",
+    min: AA_NORMAL,
+    use: "the AA step for small coral text",
+  },
 ] as const;
 
 describe("token contrast — text tokens on the card surface", () => {
@@ -117,6 +122,32 @@ describe("token contrast — text tokens on the card surface", () => {
       ratio,
       `--${token} is ${ratio.toFixed(2)}:1 on the dark card (needs ${min}:1)`
     ).toBeGreaterThanOrEqual(min);
+  });
+
+  /**
+   * Sport-tinted chips (`bg-running/10` + `text-running-strong`) are a
+   * standard pattern here, and the tint LOWERS the effective contrast on
+   * both themes — the plain-card check alone would miss it. Composite the
+   * 10% tint over the card and re-measure.
+   */
+  it.each([
+    ["light", () => lightBlock()],
+    ["dark", () => darkBlock()],
+  ])("coral small text clears AA on a running/10 chip (%s)", (_theme, get) => {
+    const block = get();
+    const card = hslToRgb(...readHsl(block, "card"));
+    const tint = hslToRgb(...readHsl(block, "running"));
+    const chip = card.map((c, i) => 0.1 * tint[i] + 0.9 * c) as [
+      number,
+      number,
+      number,
+    ];
+    const fg = hslToRgb(...readHsl(block, "running-strong"));
+    const ratio = contrast(fg, chip);
+    expect(
+      ratio,
+      `--running-strong is ${ratio.toFixed(2)}:1 on a running/10 chip`
+    ).toBeGreaterThanOrEqual(AA_NORMAL);
   });
 
   it("teal and success are THEME-AWARE, not one fixed value", () => {

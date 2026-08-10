@@ -368,7 +368,7 @@ export default function RunDetail() {
             <button
               type="button"
               onClick={handleShare}
-              className="inline-flex items-center gap-1.5 px-3 min-h-[44px] rounded-xl text-xs font-medium active:scale-[0.97] transition-transform bg-running/8 text-running"
+              className="inline-flex items-center gap-1.5 px-3 min-h-[44px] rounded-xl text-xs font-medium active:scale-[0.97] transition-transform bg-running/8 text-running-strong"
             >
               ↗ Share
             </button>
