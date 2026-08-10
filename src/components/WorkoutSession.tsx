@@ -4,9 +4,9 @@ import {
   useRef,
   useCallback,
   useMemo,
-  lazy,
   Suspense,
 } from "react";
+import { lazyRetry } from "@/lib/lazyRetry";
 import {
   showsRpeByDefault,
   toExperience,
@@ -87,7 +87,7 @@ import { IconButton } from "@/components/ui/IconButton";
 import { Spinner } from "@/components/ui/Spinner";
 // Form guide is heavy (react-body-highlighter) — lazy-load so it only hydrates
 // when the user opens the "How to" sheet mid-workout (D-LIFT-14).
-const ExerciseFormContent = lazy(
+const ExerciseFormContent = lazyRetry(
   () => import("@/components/ExerciseFormContent")
 );
 const lazyConfetti = () => import("canvas-confetti").then((m) => m.default);

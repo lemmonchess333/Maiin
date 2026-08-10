@@ -1,4 +1,5 @@
-import { lazy, Suspense, useId, useState } from "react";
+import { Suspense, useId, useState } from "react";
+import { lazyRetry } from "@/lib/lazyRetry";
 import { Trash2, Share2, Route } from "lucide-react";
 import type { GPSPoint } from "@/lib/gps";
 import { routeTotalDistance } from "@/lib/gps";
@@ -15,7 +16,7 @@ import RoutePreviewSheet from "./RoutePreviewSheet";
 
 // Lazy: the planner owns its own MapLibre instance — keep the maplibre chunk
 // out of the run-setup path until the user actually opens the builder.
-const RoutePlannerSheet = lazy(() => import("./RoutePlannerSheet"));
+const RoutePlannerSheet = lazyRetry(() => import("./RoutePlannerSheet"));
 
 interface RouteSetupSectionProps {
   targetRoute: GPSPoint[] | null;

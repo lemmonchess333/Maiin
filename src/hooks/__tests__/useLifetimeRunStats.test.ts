@@ -96,14 +96,32 @@ describe("useLifetimeRunStats", () => {
     expect(unfiredFailures()).toHaveLength(1); // never attempted
   });
 
-  it("leaves totals at zero when the read fails", async () => {
+  it("leaves totals at zero when the read fails, and SAYS the read failed", async () => {
+    // The zeros alone were the whole contract until 2026-08-10, and they
+    // are not enough: `runCount: 0` is also what a user who has never run
+    // returns. History's Tier-1 suppression reads that zero and removes
+    // the Running section, so a failed read presented as "you don't run"
+    // and deleted the only surface that could have said otherwise.
     seedFirestore({ "users/u1/runs/r1": run(5000) });
     failNextFirestore("getDocs", { path: "users/u1/runs" });
     const { result } = renderHook(() => useLifetimeRunStats());
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     expect(result.current.runCount).toBe(0);
+    expect(result.current.failed).toBe(true);
     expect(unfiredFailures()).toEqual([]); // and it really did fire
+  });
+
+  it("does NOT claim failure for a genuinely empty collection", async () => {
+    // The control. Without it, `failed` could be hardcoded true and every
+    // assertion above would still pass — and the UI would show a scary
+    // "couldn't load your runs" to every new user on day one, which is
+    // the opposite error and just as bad.
+    const { result } = renderHook(() => useLifetimeRunStats());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.runCount).toBe(0);
+    expect(result.current.failed).toBe(false);
   });
 
   it("stops loading when signed out", async () => {

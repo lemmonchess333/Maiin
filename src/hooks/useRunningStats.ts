@@ -98,6 +98,9 @@ export function useRunningStats(days: number = 30) {
   const [weeklyData, setWeeklyData] = useState<RunningWeekData[]>([]);
   const [runs, setRuns] = useState<RunSummaryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  /** See the note on the catch below — a failed read used to be
+   *  indistinguishable from an empty one. */
+  const [failed, setFailed] = useState(false);
   // Hist4: refresh trigger for pull-to-refresh. Incrementing the
   // tick forces the load effect below to re-run via the dep array.
   // Public surface is the `refresh()` callback below.
@@ -206,15 +209,24 @@ export function useRunningStats(days: number = 30) {
 
         if (cancelled) return;
         loadedUidRef.current = uid;
+        setFailed(false);
         setWeeklyData(aggregateWeeklyData(runList));
         setRuns(runList);
       } catch (error) {
         // A failed read must settle to a retryable state, not load forever
         // (and never leave the promise rejection unhandled).
+        //
+        // But settling to `runs: []` also made failure look exactly like
+        // success-with-no-runs, and History's Tier-1 auto-hide reads an
+        // empty list as "this user doesn't run" and removes the section.
+        // The failure was therefore doubly invisible: no error surface,
+        // and the surface that WOULD have shown one deleted itself.
+        // `failed` lets the caller tell the two apart.
         if (cancelled) return;
         loadedUidRef.current = uid;
         setRuns([]);
         setWeeklyData([]);
+        setFailed(true);
         logger.error("[useRunningStats] Failed to load runs", error);
       } finally {
         if (!cancelled) setLoading(false);
@@ -231,6 +243,10 @@ export function useRunningStats(days: number = 30) {
     weeklyData,
     runs,
     loading,
+    /** True when the last read threw. Distinguishes "we couldn't load
+     *  your runs" from "you have no runs" — the two are otherwise the
+     *  same `runs: []`. */
+    failed,
     /** Hist4: re-runs the underlying getDocs query. Used by the
      *  History page's pull-to-refresh gesture; the other History
      *  data sources (useWorkouts, useMeals) are onSnapshot listeners
