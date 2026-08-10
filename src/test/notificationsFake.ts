@@ -52,6 +52,14 @@ export class NotificationsFake {
    * not contaminate each other".
    */
   private epoch = 0;
+  /**
+   * Which generation each id was written in. Purely diagnostic: when a
+   * leak DOES happen, the failure can say whether the write came from the
+   * current test or a previous one, instead of leaving the next person to
+   * re-derive it from an id list. Cheap, and it turns a "CI-only, can't
+   * reproduce" report into a one-line answer.
+   */
+  private writeEpochs = new Map<number, number>();
 
   reset(): void {
     this.schedule.clear();
@@ -64,6 +72,7 @@ export class NotificationsFake {
     this.scheduleGate = null;
     this.openGate = null;
     this.epoch += 1;
+    this.writeEpochs.clear();
   }
 
   // ── the surface the hooks call ───────────────────────────────────
@@ -82,6 +91,7 @@ export class NotificationsFake {
 
   async schedule_(payload: NotificationPayload): Promise<boolean> {
     const startedIn = this.epoch;
+    this.writeEpochs.set(payload.id, this.epoch);
     // Park BEFORE any state change, so a deferred pass is suspended
     // exactly where a real in-flight OS call would be.
     if (this.scheduleGate) await this.scheduleGate;
@@ -129,6 +139,16 @@ export class NotificationsFake {
 
   ids(): number[] {
     return this.all().map((p) => p.id);
+  }
+
+  /** Current generation, and the generation each scheduled id came from. */
+  provenance(): { epoch: number; byId: Record<number, number> } {
+    return {
+      epoch: this.epoch,
+      byId: Object.fromEntries(
+        this.ids().map((id) => [id, this.writeEpochs.get(id) ?? -1])
+      ),
+    };
   }
 
   setPermission(state: NotificationPermissionState): void {

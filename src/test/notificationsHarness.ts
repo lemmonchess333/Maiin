@@ -33,6 +33,20 @@ export function scheduledIds(): number[] {
   return notificationsFake.ids();
 }
 
+/**
+ * Which generation (reset-to-reset window) each scheduled id was written
+ * in, plus the current one. Use it in a failure message when a schedule
+ * contains something it shouldn't: an id whose generation is BELOW the
+ * current one came from a previous test, which is a leak rather than a
+ * bug in the code under test.
+ */
+export function scheduleProvenance(): {
+  epoch: number;
+  byId: Record<number, number>;
+} {
+  return notificationsFake.provenance();
+}
+
 /** Every scheduled payload, ordered by id. */
 export function scheduled(): NotificationPayload[] {
   return notificationsFake.all();
