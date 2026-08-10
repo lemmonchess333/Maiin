@@ -244,7 +244,7 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
         </div>
       )}
       {showPrChip && (
-        <span className="absolute top-3 right-4 inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-achievement/15 text-achievement">
+        <span className="absolute top-3 right-4 inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-achievement/15 text-achievement-strong">
           <Star className="size-3.5 fill-achievement" />
           {prCount} PR{prCount === 1 ? "" : "s"}
         </span>
@@ -618,7 +618,7 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
         {(feedItem.prHit || activity?.prHit) && (
           <div className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3 bg-achievement/10 border border-achievement/20">
             <Trophy className="size-4 text-achievement shrink-0" />
-            <p className="text-xs font-medium text-achievement">
+            <p className="text-xs font-medium text-achievement-strong">
               New PR:{" "}
               {feedItem.prExercise || activity?.prExercise || "Personal Record"}{" "}
               {feedItem.prWeight || activity?.prWeight
@@ -893,7 +893,7 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
                   setShowMenu(false);
                   setShowBlockConfirm(true);
                 }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-muted transition-colors"
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive-strong hover:bg-muted transition-colors"
               >
                 <Ban className="size-4" />
                 Block user

@@ -187,7 +187,7 @@ export default function ShareComposerSheet() {
           )}
         </div>
         {captionIsProfane && (
-          <p role="alert" className="text-xs text-destructive font-medium px-1">
+          <p role="alert" className="text-xs text-destructive-strong font-medium px-1">
             Please remove objectionable language before sharing.
           </p>
         )}

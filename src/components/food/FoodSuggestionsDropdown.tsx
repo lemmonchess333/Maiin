@@ -362,8 +362,8 @@ function FoodSuggestionsDropdown({
                       // OFF omitted a serving_size, so the macros above are
                       // per-100g and the ServingSizeDrawer will ask on select.
                       // Surface the reason inline so the follow-up isn't a
-                      // surprise. text-warning = "needs your input", tokenized.
-                      <span className="text-xs text-warning font-medium">
+                      // surprise. text-warning-strong = "needs your input", tokenized.
+                      <span className="text-xs text-warning-strong font-medium">
                         serving size needed
                       </span>
                     ) : (

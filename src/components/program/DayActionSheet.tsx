@@ -319,7 +319,7 @@ export default function DayActionSheet({
             it calmly). Warning register per the design rules, one line,
             no action required. */}
         {interference && (
-          <p className="flex items-start gap-2 text-xs text-warning leading-relaxed px-1">
+          <p className="flex items-start gap-2 text-xs text-warning-strong leading-relaxed px-1">
             <TriangleAlert
               className="size-3.5 mt-0.5 shrink-0"
               aria-hidden="true"
@@ -557,7 +557,7 @@ export default function DayActionSheet({
                             );
                             onClose();
                           }}
-                          className="w-full py-3 rounded-xl text-sm font-bold bg-destructive/10 text-destructive active:scale-[0.97] transition-transform"
+                          className="w-full py-3 rounded-xl text-sm font-bold bg-destructive/10 text-destructive-strong active:scale-[0.97] transition-transform"
                         >
                           DNF — Started but didn&apos;t finish
                         </button>
@@ -569,7 +569,7 @@ export default function DayActionSheet({
                             );
                             onClose();
                           }}
-                          className="w-full py-3 rounded-xl text-sm font-bold bg-destructive/10 text-destructive active:scale-[0.97] transition-transform"
+                          className="w-full py-3 rounded-xl text-sm font-bold bg-destructive/10 text-destructive-strong active:scale-[0.97] transition-transform"
                         >
                           DNS — Didn&apos;t start
                         </button>
@@ -584,7 +584,7 @@ export default function DayActionSheet({
                           );
                           onClose();
                         }}
-                        className="w-full py-3 rounded-xl text-sm font-bold bg-destructive/10 text-destructive active:scale-[0.97] transition-transform"
+                        className="w-full py-3 rounded-xl text-sm font-bold bg-destructive/10 text-destructive-strong active:scale-[0.97] transition-transform"
                       >
                         Skip this run
                       </button>
@@ -744,7 +744,7 @@ export default function DayActionSheet({
                 }}
                 className={cn(
                   "w-full py-3 rounded-xl text-sm font-bold",
-                  "bg-destructive/10 text-destructive active:scale-[0.97] transition-transform"
+                  "bg-destructive/10 text-destructive-strong active:scale-[0.97] transition-transform"
                 )}
               >
                 Skip this lift

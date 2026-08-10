@@ -1493,7 +1493,7 @@ export default function History() {
                   appears — below that, the user already understands they
                   haven't logged much. */}
                     {nutrition.adherence < 50 && nutrition.daysLogged >= 5 && (
-                      <p className="text-caption text-warning -mt-1 italic">
+                      <p className="text-caption text-warning-strong -mt-1 italic">
                         Averages below are based on too few logged days to be
                         reliable.
                       </p>

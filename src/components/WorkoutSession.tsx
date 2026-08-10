@@ -1728,7 +1728,7 @@ export default function WorkoutSession({
                               animate={{ scale: 1 }}
                               transition={{ duration: 0.15 }}
                             >
-                              <Check className="size-5 text-success" />
+                              <Check className="size-5 text-success-strong" />
                             </motion.div>
                           ) : (
                             <button

@@ -242,8 +242,8 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
             className="p-4 rounded-2xl bg-destructive/10 border border-destructive/20 space-y-3"
           >
             <div className="flex items-center gap-2">
-              <AlertCircle className="size-4 text-destructive" />
-              <p className="text-sm text-destructive">{error}</p>
+              <AlertCircle className="size-4 text-destructive-strong" />
+              <p className="text-sm text-destructive-strong">{error}</p>
             </div>
             <button
               type="button"

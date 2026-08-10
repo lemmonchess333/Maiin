@@ -94,8 +94,8 @@ function DemoCard({ id }: { id: string }) {
         <span
           className={`text-micro font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${
             productionEnabled
-              ? "bg-success/10 text-success"
-              : "bg-warning/10 text-warning"
+              ? "bg-success/10 text-success-strong"
+              : "bg-warning/10 text-warning-strong"
           }`}
         >
           {productionEnabled ? "production" : "gated"}

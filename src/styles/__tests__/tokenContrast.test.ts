@@ -23,7 +23,7 @@
  * both sizes, so they are held to the stricter 4.5:1.
  */
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import { readFileSync, globSync } from "node:fs";
 import { resolve } from "node:path";
 
 const CSS = readFileSync(resolve(process.cwd(), "src/index.css"), "utf8");
@@ -89,16 +89,34 @@ const AA_LARGE = 3;
 const TINT_SURFACES = ["card", "muted", "background"] as const;
 
 /**
- * The tint strengths the app actually paints behind identity text.
+ * The tint strengths the app actually paints, READ OUT OF THE SOURCE.
  *
- * `0` is the untinted case (a `SectionLabel` sitting straight on a card).
- * The rest are the `/<alpha>` modifiers in use: `/6` on the Banner and
- * SessionCommandCard surfaces, `/10` on chips and tinted buttons, `/12` on
- * the RunSetupModal chip. `/12` is the worst and was the one nobody
- * measured — it is where both sport steps sat at 4.41–4.49:1 after being
- * tuned against `/10` alone.
+ * This was a hardcoded `[0, 0.06, 0.1, 0.12]` for about an hour, and it
+ * was already wrong when it was written: `bg-running/18` and
+ * `bg-destructive/20` both exist and neither was in the list. That is the
+ * same failure the design-system tokens keep having — a copy of a fact
+ * that drifts from the fact. Scanning for `bg-<token>/<n>` cannot drift,
+ * and it means a designer who introduces a stronger tint automatically
+ * gets the contrast question asked.
+ *
+ * `0` is always included: the untinted case (a `SectionLabel` sitting
+ * straight on a card) is the most common one of all. Alphas above 25% are
+ * excluded — those are near-solid fills that carry `-foreground` text, not
+ * an identity text step.
  */
-const TINT_ALPHAS = [0, 0.06, 0.1, 0.12] as const;
+const SRC = globSync("src/**/*.{ts,tsx}", { cwd: process.cwd() })
+  .filter((f) => !f.includes("__tests__"))
+  .map((f) => readFileSync(resolve(process.cwd(), f), "utf8"))
+  .join("\n");
+
+function tintAlphas(token: string): number[] {
+  const found = new Set<number>([0]);
+  for (const m of SRC.matchAll(new RegExp(`bg-${token}/(\\d+)`, "g"))) {
+    const a = Number(m[1]) / 100;
+    if (a <= 0.25) found.add(a);
+  }
+  return [...found].sort((a, b) => a - b);
+}
 
 /**
  * Each token is held to the bar its ACTUAL USE requires — a single
@@ -133,27 +151,33 @@ const TOKEN_BARS = [
 ] as const;
 
 describe("token contrast — text tokens on the card surface", () => {
-  it.each(TOKEN_BARS)("--$token clears its bar on the LIGHT card", ({ token, min }) => {
-    const block = lightBlock();
-    const fg = hslToRgb(...readHsl(block, token));
-    const bg = hslToRgb(...readHsl(block, "card"));
-    const ratio = contrast(fg, bg);
-    expect(
-      ratio,
-      `--${token} is ${ratio.toFixed(2)}:1 on the light card (needs ${min}:1)`
-    ).toBeGreaterThanOrEqual(min);
-  });
+  it.each(TOKEN_BARS)(
+    "--$token clears its bar on the LIGHT card",
+    ({ token, min }) => {
+      const block = lightBlock();
+      const fg = hslToRgb(...readHsl(block, token));
+      const bg = hslToRgb(...readHsl(block, "card"));
+      const ratio = contrast(fg, bg);
+      expect(
+        ratio,
+        `--${token} is ${ratio.toFixed(2)}:1 on the light card (needs ${min}:1)`
+      ).toBeGreaterThanOrEqual(min);
+    }
+  );
 
-  it.each(TOKEN_BARS)("--$token clears its bar on the DARK card", ({ token, min }) => {
-    const dark = darkBlock();
-    const fg = hslToRgb(...readHsl(dark, token));
-    const bg = hslToRgb(...readHsl(dark, "card"));
-    const ratio = contrast(fg, bg);
-    expect(
-      ratio,
-      `--${token} is ${ratio.toFixed(2)}:1 on the dark card (needs ${min}:1)`
-    ).toBeGreaterThanOrEqual(min);
-  });
+  it.each(TOKEN_BARS)(
+    "--$token clears its bar on the DARK card",
+    ({ token, min }) => {
+      const dark = darkBlock();
+      const fg = hslToRgb(...readHsl(dark, token));
+      const bg = hslToRgb(...readHsl(dark, "card"));
+      const ratio = contrast(fg, bg);
+      expect(
+        ratio,
+        `--${token} is ${ratio.toFixed(2)}:1 on the dark card (needs ${min}:1)`
+      ).toBeGreaterThanOrEqual(min);
+    }
+  );
 
   /**
    * Sport-tinted chips (`bg-running/10` + `text-running-strong`) are a
@@ -167,38 +191,60 @@ describe("token contrast — text tokens on the card surface", () => {
      is the page canvas, which is darker still in light mode — that one
      failed BOTH sport steps at 4.16 / 4.18:1 and is why they were retuned
      on 2026-08-10. See TINT_SURFACES for why the canvas counts. */
-  it.each([
-    ["light", "running"],
-    ["dark", "running"],
-    ["light", "lifting"],
-    ["dark", "lifting"],
-  ] as const)("%s: small %s text clears AA on its /10 chip", (theme, sport) => {
-    const block = theme === "light" ? lightBlock() : darkBlock();
-    const tint = hslToRgb(...readHsl(block, sport));
-    const fg = hslToRgb(...readHsl(block, `${sport}-strong`));
-    for (const surface of TINT_SURFACES) {
-      const bg = hslToRgb(...readHsl(block, surface));
-      for (const alpha of TINT_ALPHAS) {
-        const chip = bg.map((c, i) => alpha * tint[i] + (1 - alpha) * c) as [
-          number,
-          number,
-          number,
-        ];
-        const ratio = contrast(fg, chip);
-        expect(
-          ratio,
-          `--${sport}-strong is ${ratio.toFixed(2)}:1 on a ${sport}/${alpha * 100} tint over --${surface} (${theme})`
-        ).toBeGreaterThanOrEqual(AA_NORMAL);
+  /* Every identity that has an AA text step, on both themes, over every
+     surface x every tint strength the source actually paints. The token
+     list is derived from the CSS itself, so a new `--x-strong` is measured
+     the moment it is defined. */
+  const STEPPED = [
+    "running",
+    "lifting",
+    "nutrition",
+    "destructive",
+    "success",
+    "warning",
+    "achievement",
+  ] as const;
+
+  it.each(
+    STEPPED.flatMap((token) =>
+      (["light", "dark"] as const).map((theme) => ({ token, theme }))
+    )
+  )(
+    "$token-strong clears AA on every $theme tint it can sit on",
+    ({ token, theme }) => {
+      const block = theme === "light" ? lightBlock() : darkBlock();
+      const tint = hslToRgb(...readHsl(block, token));
+      const fg = hslToRgb(...readHsl(block, `${token}-strong`));
+      const alphas = tintAlphas(token);
+      for (const surface of TINT_SURFACES) {
+        const bg = hslToRgb(...readHsl(block, surface));
+        for (const alpha of alphas) {
+          const chip = bg.map((c, i) => alpha * tint[i] + (1 - alpha) * c) as [
+            number,
+            number,
+            number,
+          ];
+          const ratio = contrast(fg, chip);
+          expect(
+            ratio,
+            `--${token}-strong is ${ratio.toFixed(2)}:1 on a ${token}/${alpha * 100} tint over --${surface} (${theme})`
+          ).toBeGreaterThanOrEqual(AA_NORMAL);
+        }
       }
     }
-  });
+  );
 
   it("teal and success are THEME-AWARE, not one fixed value", () => {
     /* The defect was theme-blindness, not a bad hue: a single value cannot
        clear AA on both a white and a near-black card. A future edit that
        collapses these back to one value across both blocks reintroduces
        exactly that, so the difference itself is the contract. */
-    for (const token of ["teal", "success", "running-strong", "lifting-strong"] as const) {
+    for (const token of [
+      "teal",
+      "success",
+      "running-strong",
+      "lifting-strong",
+    ] as const) {
       expect(
         readHsl(lightBlock(), token),
         `--${token} must differ between themes`

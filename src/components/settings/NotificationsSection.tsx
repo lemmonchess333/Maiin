@@ -202,7 +202,7 @@ export default function NotificationsSection({
           role="alert"
           className="flex items-start gap-3 p-3 rounded-lg border border-warning/15 bg-warning-bg"
         >
-          <AlertTriangle className="size-4 mt-[2px] shrink-0 text-warning" />
+          <AlertTriangle className="size-4 mt-[2px] shrink-0 text-warning-strong" />
           <div className="space-y-1">
             <p className="text-sm font-medium text-foreground">
               Notifications are blocked

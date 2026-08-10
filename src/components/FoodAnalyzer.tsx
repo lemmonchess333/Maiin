@@ -680,7 +680,7 @@ export default function FoodAnalyzer({
 
       {showError && !activeResult && (
         <div className="bg-destructive/10 rounded-xl p-4 space-y-2">
-          <p className="text-sm text-destructive">
+          <p className="text-sm text-destructive-strong">
             Couldn't identify food. Try manual entry.
           </p>
           <div className="flex gap-3">
@@ -688,7 +688,7 @@ export default function FoodAnalyzer({
               type="button"
               onClick={handleResetAll}
               aria-label="Try food analysis again"
-              className="text-sm text-destructive font-medium flex items-center gap-1"
+              className="text-sm text-destructive-strong font-medium flex items-center gap-1"
             >
               <RotateCcw className="size-3.5" /> Try again
             </button>
@@ -775,7 +775,7 @@ export default function FoodAnalyzer({
                 doesn't block. */}
             {activeResult.confidence === "low" && (
               <div
-                className="sticky top-0 z-10 -mx-1 px-3 py-2.5 rounded-xl border border-warning/30 bg-warning-bg text-warning flex items-start gap-2"
+                className="sticky top-0 z-10 -mx-1 px-3 py-2.5 rounded-xl border border-warning/30 bg-warning-bg text-warning-strong flex items-start gap-2"
                 role="status"
               >
                 <span aria-hidden="true">⚠</span>

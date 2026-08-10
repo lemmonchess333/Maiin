@@ -58,7 +58,7 @@ export function ErrorState({
         className="size-12 rounded-2xl flex items-center justify-center mx-auto bg-destructive/10"
         aria-hidden="true"
       >
-        <span className="text-destructive inline-flex">
+        <span className="text-destructive-strong inline-flex">
           {icon ?? <AlertTriangle className="size-5" />}
         </span>
       </div>
