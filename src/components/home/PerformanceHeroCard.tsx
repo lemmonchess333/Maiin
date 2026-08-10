@@ -9,6 +9,7 @@ import { getCardColour } from "@/lib/performanceColour";
 import {
   resolveLoadBand,
   resolveDeloadRecommended,
+  isEstablishingBaseline,
 } from "@/lib/performanceDocFields";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
@@ -173,8 +174,12 @@ export default function PerformanceHeroCard({
   const { hue, glowIntensity } = getCardColour(pi, loadBand, deloadRecommended);
   const line = getLine(verb.state, currentWeek.signals);
 
-  const lowConfidence =
-    weeksAvailable < 2 || currentWeek.signals.lifetimeWeeks < 4;
+  // Same shared predicate Analytics uses — this surface's existing rule,
+  // now expressed once so the two can't drift.
+  const lowConfidence = isEstablishingBaseline({
+    weeksAvailable,
+    lifetimeWeeks: currentWeek.signals?.lifetimeWeeks,
+  });
 
   const delta = previousWeek
     ? Math.round(
