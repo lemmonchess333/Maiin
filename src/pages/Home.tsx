@@ -85,13 +85,16 @@ import { useSnoozeDismiss } from "@/hooks/useSnoozeDismiss";
 
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { getVerbState } from "@/lib/performanceLine";
-import type { LoadBand } from "@/lib/performanceTypes";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import { getNutritionPhase } from "@/lib/nutritionPhase";
 import TrackSectionView from "@/components/home/TrackSectionView";
 import ContextualTipBanner from "@/components/home/ContextualTipBanner";
 import { IconButton } from "@/components/ui/IconButton";
 import { recalibrationCheckIn } from "@/lib/recalibrationCheckIn";
+import {
+  resolveLoadBand,
+  resolveDeloadRecommended,
+} from "@/lib/performanceDocFields";
 
 const ProModal = lazy(() => import("@/components/ProModal"));
 
@@ -326,11 +329,15 @@ export default function Home() {
   // derivation as the hero (getVerb → getVerbState mapping).
   const guidanceSuppressed = (() => {
     if (!perfWeek) return false;
-    const loadBand = (perfWeek.labels?.loadBand ??
-      perfWeek.loadBand) as LoadBand;
+    // Both reads go through the resolvers. This expression previously
+    // preferred `labels.loadBand` and `flags.deloadRecommended` — the two
+    // nested maps NO writer emits — so the band fell through to a raw
+    // unvalidated cast and the deload flag was permanently false. The
+    // suppression therefore never fired in the deload case it exists for,
+    // which is the one case where a second voice contradicts the hero.
     const verb = getVerbState(
-      loadBand,
-      perfWeek.flags?.deloadRecommended ?? false
+      resolveLoadBand(perfWeek),
+      resolveDeloadRecommended(perfWeek)
     );
     return verb === "recovering" || verb === "backing-off";
   })();

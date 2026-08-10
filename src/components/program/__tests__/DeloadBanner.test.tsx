@@ -205,4 +205,17 @@ describe("DeloadBanner", () => {
       expect(screen.queryByText(/lighter weights/i)).toBeNull();
     }
   );
+
+  it("an ACTIVE deload confirms even when nothing recommends one", () => {
+    /**
+     * The automatic week-4 deload sets `programState.currentPhase ===
+     * "deload"` server-side without the week's performance doc
+     * recommending anything. Before 2026-08-10 the gate was
+     * `visible && (…)`, so the active confirmation was a strict SUBSET of
+     * the recommendation and those users saw nothing at all — not the
+     * banner, not the tier-split copy LIFT-EV-03 wrote for them.
+     */
+    render(<DeloadBanner visible={false} weekKey="w4" deloadActive />);
+    expect(screen.getByText(/deload week active/i)).toBeTruthy();
+  });
 });
