@@ -535,14 +535,47 @@ export class FirestoreFake {
   }
 
   /**
-   * Settle held writes WITHOUT applying them, for `reset`. Releasing
-   * would repopulate the store `reset` is about to clear; dropping them
-   * would leave a test awaiting a promise that never settles, which
-   * fails as a suite timeout instead of a usable message.
+   * Settle held writes for `reset` by REJECTING them.
+   *
+   * All three options here are wrong in different ways, so the reasoning
+   * matters:
+   *
+   *   - RELEASING repopulates the store `reset` is about to clear.
+   *   - DROPPING leaves a test awaiting a promise that never settles,
+   *     which fails as a suite timeout instead of a usable message.
+   *   - RESOLVING (what this did first) is the subtle one, and it
+   *     recreates exactly the leak class this fake exists to expose. The
+   *     abandoned caller resumes during the NEXT test and carries on with
+   *     the rest of its work — issuing its remaining writes into the
+   *     freshly-cleared store. That test then fails on a `writeLog()` /
+   *     `allPaths()` / `readDoc()` assertion naming a document it never
+   *     wrote, with the failure reported against the innocent test rather
+   *     than the one that leaked. CI-only, unreproducible locally: the
+   *     same shape that cost the reminder suites two speculative fixes
+   *     and 56 diagnostic runs.
+   *
+   * Rejecting propagates into the abandoned caller and stops it AT the
+   * await, so it cannot go on to write. If nothing was handling that
+   * promise the rejection surfaces as an unhandled rejection — which is
+   * the correct outcome: it is loud, and it names the test that left a
+   * write in flight instead of the one that inherits the mess.
+   *
+   * A test that legitimately holds writes should release them
+   * (`releaseAllWrites()`) or fail them (`rejectWrite()`) before it ends.
    */
   private settleDeferredWrites(): void {
     const held = this.deferredWrites.splice(0, this.deferredWrites.length);
-    for (const entry of held) entry.resolve();
+    for (const entry of held) {
+      entry.reject(
+        new FakeFirestoreError(
+          "aborted",
+          `[firestoreFake] the write to ${entry.path} was still held when ` +
+            `reset() ran. Release (releaseAllWrites) or fail (rejectWrite) ` +
+            `held writes before the test ends — a write left in flight ` +
+            `resumes inside the NEXT test.`
+        )
+      );
+    }
   }
 
   /**
