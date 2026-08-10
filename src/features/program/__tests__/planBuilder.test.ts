@@ -548,6 +548,27 @@ describe("buildPlan · structure-preserving regeneration (Pgm5 Q2)", () => {
     expect(edited.programState.primaryGoal).toBe("strength");
   });
 
+  // Blk2 / H2. The block owns programState.primaryGoal and must NEVER
+  // reach the profile: `buildProfileUpdates` writes input.primaryGoal
+  // unconditionally, so passing the block's focus in meant one injury edit
+  // during a block overwrote the user's STANDING focus. After release the
+  // two copies diverged permanently and the next block captured the wrong
+  // goalBefore. The two halves are pinned together here because that is
+  // exactly where they part company.
+  it("pins programState to the block's focus while leaving the PROFILE on the standing one", () => {
+    const first = buildPlan(makeInput({ liftDays: 4 }));
+    const out = buildPlan(
+      makeInput({
+        liftDays: 4,
+        primaryGoal: "hypertrophy", // the user's standing focus
+        existingState: { ...first.programState, trainingBlock: activeBlock },
+        preserveHistory: true,
+      })
+    );
+    expect(out.programState.primaryGoal).toBe("strength"); // block focus
+    expect(out.profileUpdates.primaryGoal).toBe("hypertrophy"); // standing
+  });
+
   it("does not invent a block on a fresh plan, or carry one without preserveHistory", () => {
     expect(
       buildPlan(makeInput({ liftDays: 4 })).programState.trainingBlock

@@ -88,7 +88,11 @@ export default function SettingsLiftPlan() {
           refreshProfile={refreshProfile}
           onOpenWeeklyLayout={() => setEditLayoutOpen(true)}
           prefillGoal={prefillGoal ?? undefined}
-          activeBlockFocus={programState?.trainingBlock?.focus}
+          activeBlockFocus={
+            programState?.trainingBlock?.owned
+              ? programState.trainingBlock.focus
+              : undefined
+          }
         />
       </SettingsSection>
 
