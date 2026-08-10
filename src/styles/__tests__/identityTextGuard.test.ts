@@ -65,8 +65,13 @@ const IDENTITY = [
  * trophies, and the four orange food icons.
  */
 const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
-  running: 54,
-  lifting: 25,
+  // 2026-08-10: running 54 → 53, lifting 25 → 23. Not a contrast pass —
+  // four components that nothing rendered were deleted (PaceChart,
+  // HybridBalanceCard, BarcodeScanner, CommentSection), and their bare
+  // uses went with them. Locked in per the ratchet's own rule that a
+  // count may fall freely.
+  running: 53,
+  lifting: 23,
   nutrition: 4,
   destructive: 0,
   success: 0,
