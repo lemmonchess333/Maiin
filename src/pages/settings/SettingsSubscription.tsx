@@ -11,6 +11,8 @@ import { Crown, ChevronRight } from "lucide-react";
 import { useSubscription } from "@/lib/subscription";
 import { haptic } from "@/lib/haptic";
 import SettingsSection from "@/components/settings/SettingsSection";
+import AiUsageSection from "@/components/settings/AiUsageSection";
+import TrackSettingsSectionView from "@/components/settings/TrackSettingsSectionView";
 
 export default function SettingsSubscription() {
   const navigate = useNavigate();
@@ -24,7 +26,11 @@ export default function SettingsSubscription() {
         : "Free — Upgrade for full access";
 
   return (
-    <SettingsSection title="Subscription" subtitle="Plan, billing">
+    <SettingsSection
+      title="Subscription"
+      subtitle="Plan, billing, AI usage"
+      section="subscription"
+    >
       <button
         type="button"
         onClick={() => {
@@ -48,6 +54,27 @@ export default function SettingsSubscription() {
         </div>
         <ChevronRight className="size-4 text-muted-foreground" />
       </button>
+      {/*
+        F1b lock pin #6 — the daily AI-usage pill. It was built, tested,
+        and reached by nothing (#1921), so a locked decision never shipped.
+
+        Here rather than its own hub row: the pill reports how much of the
+        Pro scan quota is left and routes free users to /upgrade, so it
+        reads as part of the plan rather than a topic of its own. The
+        `ai_usage` member of `SettingsSection` (settingsAnalytics.ts) keeps
+        it addressable as its own analytics section either way — that union
+        having a member with no page anywhere is what made this findable.
+      */}
+      {/*
+        Its own analytics section even though it lives inside this page:
+        `ai_usage` is a member of the closed `SettingsSection` union, and
+        that union having a member no page reported is what made the
+        orphan findable in the first place. Wrapped individually rather
+        than folded into `subscription` so the two stay separable.
+      */}
+      <TrackSettingsSectionView section="ai_usage">
+        <AiUsageSection />
+      </TrackSettingsSectionView>
     </SettingsSection>
   );
 }
