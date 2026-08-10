@@ -613,7 +613,7 @@ export default function TrainingBlockCard({
                             ~{formatOneRepMaxRange(a.endE1rm!)}
                           </span>
                           {gain > 0 && (
-                            <span className="ml-1.5 font-mono tabular-nums text-success">
+                            <span className="ml-1.5 font-mono tabular-nums text-success-strong">
                               +{gain} kg
                             </span>
                           )}

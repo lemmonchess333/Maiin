@@ -129,7 +129,7 @@ export default function SavedRoutinesSection() {
                 }}
                 disabled={deletingId === routine.id}
                 aria-label={`Remove ${routine.name}`}
-                className="p-2 -m-2 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
+                className="p-2 -m-2 text-muted-foreground hover:text-destructive-strong transition-colors disabled:opacity-50"
               >
                 <Trash2 className="size-4" />
               </button>

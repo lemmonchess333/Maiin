@@ -33,7 +33,7 @@ export default function ProgrammeSettingsGroup({
         <h2
           className={cn(
             "text-body font-bold leading-tight",
-            tone === "danger" ? "text-destructive" : "text-foreground"
+            tone === "danger" ? "text-destructive-strong" : "text-foreground"
           )}
         >
           {title}

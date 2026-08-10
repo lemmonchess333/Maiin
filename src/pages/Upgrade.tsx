@@ -231,7 +231,7 @@ export default function Upgrade() {
             statusBanner.kind === "cancelled" &&
               "bg-muted text-muted-foreground",
             statusBanner.kind === "error" &&
-              "bg-destructive/10 text-destructive"
+              "bg-destructive/10 text-destructive-strong"
           )}
         >
           {statusBanner.kind === "success" && (
@@ -480,7 +480,7 @@ export default function Upgrade() {
                         {plan.label}
                       </p>
                       {plan.savingsLabel ? (
-                        <p className="text-xs font-medium text-success">
+                        <p className="text-xs font-medium text-success-strong">
                           {plan.savingsLabel}
                         </p>
                       ) : (
@@ -511,7 +511,7 @@ export default function Upgrade() {
           {error ? (
             <p
               role="alert"
-              className="text-xs text-destructive bg-destructive/10 rounded-lg px-3 py-2"
+              className="text-xs text-destructive-strong bg-destructive/10 rounded-lg px-3 py-2"
             >
               {error}
             </p>

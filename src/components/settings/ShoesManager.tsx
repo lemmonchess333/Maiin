@@ -112,7 +112,7 @@ export default function ShoesManager() {
   if (error)
     return (
       <div className="text-center py-4">
-        <p className="text-xs text-destructive">Failed to load shoes</p>
+        <p className="text-xs text-destructive-strong">Failed to load shoes</p>
         <p className="text-xs text-muted-foreground mt-1">
           Please try again later
         </p>
@@ -302,7 +302,7 @@ export default function ShoesManager() {
               <button
                 type="button"
                 onClick={() => retireShoe(shoe.id)}
-                className="size-11 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive transition-colors"
+                className="size-11 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive-strong transition-colors"
                 title="Retire shoe"
               >
                 <Archive className="size-4" />

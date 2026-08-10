@@ -166,7 +166,7 @@ export default function SecuritySection({
                 </p>
               </div>
               {user.emailVerified ? (
-                <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold text-success">
+                <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold text-success-strong">
                   <CheckCircle2 className="size-3.5" aria-hidden="true" />
                   Verified
                 </span>
@@ -260,7 +260,7 @@ export default function SecuritySection({
             className={INPUT_CLASS}
           />
           {formError && (
-            <p className="text-sm text-destructive" role="alert">
+            <p className="text-sm text-destructive-strong" role="alert">
               {formError}
             </p>
           )}
@@ -310,7 +310,7 @@ export default function SecuritySection({
             className={INPUT_CLASS}
           />
           {formError && (
-            <p className="text-sm text-destructive" role="alert">
+            <p className="text-sm text-destructive-strong" role="alert">
               {formError}
             </p>
           )}

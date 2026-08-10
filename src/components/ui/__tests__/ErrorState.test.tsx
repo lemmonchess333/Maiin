@@ -85,8 +85,8 @@ describe("ErrorState — destructive accent", () => {
 
   it("the default icon glyph inherits destructive colour", () => {
     const { container } = render(<ErrorState title="X" />);
-    // The wrapping span around the icon carries text-destructive.
-    const colourWrap = container.querySelector(".text-destructive");
+    // The wrapping span around the icon carries text-destructive-strong.
+    const colourWrap = container.querySelector(".text-destructive-strong");
     expect(colourWrap).toBeTruthy();
   });
 });

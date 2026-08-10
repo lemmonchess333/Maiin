@@ -92,8 +92,8 @@ export default function TrainingLoadCard({
         <span
           className={`text-xs font-semibold px-2 py-0.5 rounded-full font-mono tabular-nums ${
             formPositive
-              ? "bg-success/10 text-success"
-              : "bg-destructive/10 text-destructive"
+              ? "bg-success/10 text-success-strong"
+              : "bg-destructive/10 text-destructive-strong"
           }`}
         >
           Form {formPositive ? "+" : ""}

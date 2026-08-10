@@ -176,7 +176,7 @@ export default function ReportModal({
       labelledBy="report-modal-title"
     >
       <div className="flex items-center gap-2 pr-6">
-        <Flag className="size-4 text-destructive" aria-hidden="true" />
+        <Flag className="size-4 text-destructive-strong" aria-hidden="true" />
         <h3
           id="report-modal-title"
           className="text-base font-semibold text-foreground"

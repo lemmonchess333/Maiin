@@ -416,7 +416,7 @@ export default function Space() {
               type="button"
               onClick={leave}
               disabled={busy}
-              className="w-full min-h-[44px] text-xs font-medium text-muted-foreground hover:text-destructive transition-colors disabled:opacity-60"
+              className="w-full min-h-[44px] text-xs font-medium text-muted-foreground hover:text-destructive-strong transition-colors disabled:opacity-60"
             >
               Leave space
             </button>

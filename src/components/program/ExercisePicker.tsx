@@ -232,7 +232,7 @@ export default function ExercisePicker({
                       <button
                         type="button"
                         onClick={confirmDiscard}
-                        className="px-3 py-1.5 text-xs font-medium text-destructive bg-destructive/10 rounded-lg"
+                        className="px-3 py-1.5 text-xs font-medium text-destructive-strong bg-destructive/10 rounded-lg"
                       >
                         Discard
                       </button>
