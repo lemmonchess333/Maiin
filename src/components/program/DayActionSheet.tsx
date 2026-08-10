@@ -47,6 +47,7 @@ import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { RUN_TEMPLATES, isScheduledRaceRunDay } from "@/lib/workoutTemplates";
 import { runSessionExplainer } from "@/lib/runSessionExplainer";
+import { sessionFuelingLine } from "@/lib/fueling";
 import { sessionPaceDisplay } from "@/lib/runLabels";
 import {
   prescriptivePaceTableFromFitness,
@@ -357,6 +358,16 @@ export default function DayActionSheet({
                     {selectedRunWhy}
                   </p>
                 )}
+                {/* A8: consensus fueling guidance for 75-min+ sessions —
+                    one line, same register as the explainer above. */}
+                {selectedRunTemplate &&
+                  sessionFuelingLine(selectedRunTemplate.estimatedDuration) && (
+                    <p className="text-xs text-muted-foreground/90 mt-1.5 leading-snug">
+                      {sessionFuelingLine(
+                        selectedRunTemplate.estimatedDuration
+                      )}
+                    </p>
+                  )}
                 {(selectedRunMeta || selectedRunHr) && (
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {selectedRunMeta && (
