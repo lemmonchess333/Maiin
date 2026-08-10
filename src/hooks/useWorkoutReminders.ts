@@ -175,7 +175,7 @@ export function useWorkoutRemindersInternal() {
         await cancelNotification(id);
       }
 
-      if (cancelled || !reminders.enabled) return;
+      if (cancelled) return;
 
       const schedule = profile?.weekSchedule as
         | ReadonlyArray<{ day: number; type: string }>
