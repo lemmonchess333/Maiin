@@ -1,4 +1,5 @@
-import { useMemo, useState, lazy, Suspense, useCallback } from "react";
+import { useMemo, useState, Suspense, useCallback } from "react";
+import { lazyRetry } from "@/lib/lazyRetry";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ChevronLeft, Trophy, Search, Dumbbell } from "lucide-react";
@@ -13,10 +14,10 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { localDateString } from "@/lib/dateHelpers";
 import { isTimedExerciseId } from "@/features/program/repUnits";
 
-const ExerciseProgressChart = lazy(
+const ExerciseProgressChart = lazyRetry(
   () => import("@/components/analytics/ExerciseProgressChart")
 );
-const ExerciseFormContent = lazy(
+const ExerciseFormContent = lazyRetry(
   () => import("@/components/ExerciseFormContent")
 );
 

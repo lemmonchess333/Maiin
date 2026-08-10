@@ -30,7 +30,23 @@ function pctSigned(x: number) {
 }
 
 // Semicircle gauge for the Performance Index
-function PIGauge({ score }: { score: number }) {
+function PIGauge({
+  score,
+  establishing,
+}: {
+  score: number;
+  /**
+   * Suppresses the band VERDICT while the baseline is still forming.
+   *
+   * The band was derived from the score alone, so a first-week 81 printed
+   * a confident "Peak" directly above copy reading "Establishing your
+   * baseline — your weekly read sharpens after about 4 weeks." Both on
+   * screen at once, contradicting each other. The score is a real number
+   * and stays; what it is NOT yet is a verdict, and the word was the part
+   * claiming otherwise.
+   */
+  establishing?: boolean;
+}) {
   const clamped = Math.max(0, Math.min(100, score));
   const RADIUS = 70;
   const CX = 90;
@@ -39,8 +55,11 @@ function PIGauge({ score }: { score: number }) {
   const progress = clamped / 100;
   const dashOffset = arcLength * (1 - progress);
 
-  const color =
-    clamped >= 80
+  // Colour is a verdict too — a confident green on a first-week score
+  // says "peak" as loudly as the word did.
+  const color = establishing
+    ? THEME.brand
+    : clamped >= 80
       ? THEME.success
       : clamped >= 60
         ? THEME.teal
@@ -48,8 +67,9 @@ function PIGauge({ score }: { score: number }) {
           ? THEME.warning
           : THEME.running;
 
-  const band =
-    clamped >= 80
+  const band = establishing
+    ? "Early read"
+    : clamped >= 80
       ? "Peak"
       : clamped >= 60
         ? "Building"
@@ -197,6 +217,34 @@ function ScoreBar({
    so the copy contract can be tested in isolation + reused
    anywhere PI is surfaced (Home hero, future deep-link cards). */
 
+/**
+ * Display label for a load band.
+ *
+ * `LoadBand` is a lowercase enum (`deload | low | moderate | high |
+ * overreach`) and this card rendered it RAW, so the Analytics screen
+ * showed users the literal token "overreach". The enum is a wire value;
+ * this is the only place it is shown to a person, so the mapping lives
+ * here rather than becoming a shared vocabulary nothing else needs.
+ */
+function loadBandLabel(band: string): string {
+  switch (band) {
+    case "deload":
+      return "Deload";
+    case "low":
+      return "Low";
+    case "moderate":
+      return "Moderate";
+    case "high":
+      return "High";
+    case "overreach":
+      return "Overreaching";
+    default:
+      // An unrecognised band is a data problem, not a display one — show
+      // it rather than inventing a label that hides the drift.
+      return band;
+  }
+}
+
 export default function PerformanceTab() {
   const { weeks, currentWeek, loading } = usePerformanceWeeks(12);
   const [showTechnical, setShowTechnical] = useState(false);
@@ -246,7 +294,7 @@ export default function PerformanceTab() {
      the recent window. Home said confident, Analytics said establishing,
      about the same week. */
   const establishing = isEstablishingBaseline({
-    weeksAvailable: weeks.length,
+    docsAvailable: weeks.length,
     lifetimeWeeks: currentWeek.signals?.lifetimeWeeks,
   });
   const { headline, body } = getPlainLanguageSummary(
@@ -306,7 +354,10 @@ export default function PerformanceTab() {
           fold so the progress check is the first thing on the tab. The
           duplicate "{pi} /100" line is gone — the gauge owns the number. */}
       <div className="p-4 rounded-2xl border border-border/50 bg-card">
-        <PIGauge score={currentWeek.performanceIndex} />
+        <PIGauge
+          score={currentWeek.performanceIndex}
+          establishing={establishing}
+        />
         <div className="mt-3 text-center space-y-1.5">
           <div className="flex items-center justify-center gap-2">
             <h3 className="text-base font-bold" style={{ color: summaryColor }}>
@@ -429,7 +480,13 @@ export default function PerformanceTab() {
                   label="Load Band"
                   /* Was `labels?.loadBand || "—"`, so this card rendered a
                      literal em-dash for every user. Same canonical read. */
-                  value={establishing ? "Establishing" : loadBand}
+                  value={
+                    establishing ? "Establishing" : loadBandLabel(loadBand)
+                  }
+                  /* A word, not a number — see StatCard's `valueKind`.
+                     At the numeral treatment "Establishing" ran off the
+                     card and rendered as "Establishin". */
+                  valueKind="text"
                   unit=""
                   accentColor={THEME.brand}
                 />
@@ -450,26 +507,48 @@ export default function PerformanceTab() {
                 <h3 className="text-sm font-semibold text-foreground mb-2">
                   This Week Adjustments
                 </h3>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>
-                    Lifting progression:{" "}
-                    <span className="text-foreground font-medium">
-                      {pctSigned(m.liftProgression - 1)}
-                    </span>
-                  </li>
-                  <li>
-                    Run volume:{" "}
-                    <span className="text-foreground font-medium">
-                      {pctSigned(m.runVolume - 1)}
-                    </span>
-                  </li>
-                  <li>
-                    Run pace adjustment:{" "}
-                    <span className="text-foreground font-medium">
-                      {pctSigned(m.runPaceAdjustmentPct)}
-                    </span>
-                  </li>
-                </ul>
+                {/*
+                  Every figure here is a RATIO AGAINST BASELINE
+                  (`liftProgression = safeRatio(thisWeekTonnage,
+                  baselineTonnage)`), so while the baseline is still
+                  forming they divide by a number that does not mean
+                  anything yet. That is how the card came to read
+                  "Lifting progression: +324%" — arithmetically correct,
+                  a 4.24x ratio against a one-session baseline, and
+                  nonsense as a statement about the user's training.
+
+                  Same root cause as the gauge's "Peak" above: a figure
+                  derived from an unestablished baseline presented as a
+                  finding. Suppressed rather than clamped, because a
+                  capped number is still a claim.
+                */}
+                {establishing ? (
+                  <p className="text-sm text-muted-foreground">
+                    Week-on-week adjustments start once your baseline settles —
+                    there is nothing meaningful to compare against yet.
+                  </p>
+                ) : (
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>
+                      Lifting progression:{" "}
+                      <span className="text-foreground font-medium">
+                        {pctSigned(m.liftProgression - 1)}
+                      </span>
+                    </li>
+                    <li>
+                      Run volume:{" "}
+                      <span className="text-foreground font-medium">
+                        {pctSigned(m.runVolume - 1)}
+                      </span>
+                    </li>
+                    <li>
+                      Run pace adjustment:{" "}
+                      <span className="text-foreground font-medium">
+                        {pctSigned(m.runPaceAdjustmentPct)}
+                      </span>
+                    </li>
+                  </ul>
+                )}
               </div>
 
               {/* Plan adjustments from engine */}

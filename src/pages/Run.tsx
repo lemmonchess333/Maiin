@@ -18,6 +18,7 @@ import {
   calculateSplits,
   haversine,
   paceAsNumber,
+  rollingPaceSeconds,
   totalElevationGain,
   type GPSPoint,
 } from "../lib/gps";
@@ -55,10 +56,7 @@ import {
 } from "../lib/runResumeStorage";
 import { useAudioCues } from "../hooks/useAudioCues";
 import { useSessionPlayer } from "../hooks/useSessionPlayer";
-import {
-  segmentsFromGuided,
-  segmentsFromIntervals,
-} from "../lib/runSegments";
+import { segmentsFromGuided, segmentsFromIntervals } from "../lib/runSegments";
 import { sessionCompleteCue } from "../lib/runCueCopy";
 import IntervalStepShell from "../components/run/IntervalStepShell";
 import TreadmillMode from "../components/run/TreadmillMode";
@@ -837,15 +835,27 @@ export default function Run() {
     audioCues.checkDistanceCue(gps.distance, pace);
     audioCues.checkTimeCue(timer.elapsed, gps.distance);
 
-    // Pace zone alerts for tempo/interval runs
+    // Pace zone alerts for tempo/interval runs.
+    //
+    // Reads the ROLLING pace, not `(elapsed / distance)`. The whole-run
+    // average is dragged permanently slow by a warm-up, so it sits past
+    // the ±15s/km threshold for the rest of the session and the alert
+    // repeats every 30 seconds from a small pool while the runner is
+    // actually on pace — the loudest version of the "same sentence over
+    // and over" report. gps.ts has said the average "lags badly mid-run"
+    // since rollingPace was written; only the live display used it.
+    //
+    // `null` means the window has too little data to judge, and we say
+    // nothing rather than falling back to the average.
     if (runConfig?.target?.type === "pace" && runConfig.target.value) {
-      const currentPaceSec =
-        gps.distance > 0 ? (timer.elapsed / gps.distance) * 1000 : 0;
-      audioCues.checkPaceAlert(
-        currentPaceSec,
-        runConfig.target.value,
-        timer.elapsed
-      );
+      const currentPaceSec = rollingPaceSeconds(gps.points, 30);
+      if (currentPaceSec !== null) {
+        audioCues.checkPaceAlert(
+          currentPaceSec,
+          runConfig.target.value,
+          timer.elapsed
+        );
+      }
     }
 
     // Halfway and final 500m for distance targets.

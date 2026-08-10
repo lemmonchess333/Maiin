@@ -118,6 +118,48 @@ describe("useRunningStats — account switch", () => {
     expect(logError).toHaveBeenCalledTimes(1);
   });
 
+  it("a rejected read is DISTINGUISHABLE from an empty one", async () => {
+    // `runs: []` is the same value both ways, and History's Tier-1
+    // suppression turns it into "this user has never run" — so a failed
+    // read used to delete the Running section rather than report itself.
+    // The log line above is not a substitute: users don't read consoles.
+    failNextFirestore("getDocs", { path: A_RUNS });
+    const { result } = renderHook(() => useRunningStats(30));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.failed).toBe(true);
+  });
+
+  it("a successful read does NOT claim failure — including an empty one", async () => {
+    // Two controls in one. Without the empty case, `failed` could be
+    // pinned to "did we get zero rows" and still pass, which would show
+    // an error to every user who has not run yet.
+    const { result } = renderHook(() => useRunningStats(30));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.runs).toHaveLength(1);
+    expect(result.current.failed).toBe(false);
+
+    resetFirestore();
+    const empty = renderHook(() => useRunningStats(30));
+    await waitFor(() => expect(empty.result.current.loading).toBe(false));
+    expect(empty.result.current.runs).toEqual([]);
+    expect(empty.result.current.failed).toBe(false);
+  });
+
+  it("a successful retry clears the failure", async () => {
+    // Otherwise the "Try again" button would leave the error card up
+    // forever and read as broken even once the read recovered.
+    failNextFirestore("getDocs", { path: A_RUNS });
+    const { result } = renderHook(() => useRunningStats(30));
+    await waitFor(() => expect(result.current.failed).toBe(true));
+
+    await act(async () => {
+      result.current.refresh();
+    });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.failed).toBe(false);
+    expect(result.current.runs).toHaveLength(1);
+  });
+
   it("unmount cancels the outstanding resolution (no state update)", async () => {
     deferReads();
     const { result, unmount } = renderHook(() => useRunningStats(30));

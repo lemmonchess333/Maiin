@@ -1,4 +1,5 @@
-import { useMemo, useEffect, useRef, useCallback, lazy, Suspense } from "react";
+import { useMemo, useEffect, useRef, useCallback, Suspense } from "react";
+import { lazyRetry } from "@/lib/lazyRetry";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useMeals } from "@/hooks/useMeals";
@@ -13,6 +14,7 @@ import { EXERCISES } from "@/lib/exercises";
 import TimeRangePills from "@/components/analytics/TimeRangePills";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import SectionLabel from "@/components/ui/SectionLabel";
+import { Button } from "@/components/ui/Button";
 import EmptyState from "@/components/ui/EmptyState";
 import PeriodOverview from "@/components/analytics/PeriodOverview";
 import StatCard from "@/components/analytics/StatCard";
@@ -54,17 +56,19 @@ import {
   RECOVERY_LOOKBACK_DAYS,
 } from "@/lib/muscleRecovery";
 
-const VolumeChart = lazy(() => import("@/components/analytics/VolumeChart"));
-const MuscleHeatMap = lazy(
+const VolumeChart = lazyRetry(
+  () => import("@/components/analytics/VolumeChart")
+);
+const MuscleHeatMap = lazyRetry(
   () => import("@/components/analytics/MuscleHeatMap")
 );
-const MacroDistribution = lazy(
+const MacroDistribution = lazyRetry(
   () => import("@/components/analytics/MacroDistribution")
 );
-const RunningHistorySection = lazy(
+const RunningHistorySection = lazyRetry(
   () => import("@/components/run/RunningHistorySection")
 );
-const ShoeMileageSection = lazy(
+const ShoeMileageSection = lazyRetry(
   () => import("@/components/run/ShoeMileageSection")
 );
 /* Hist5b pin 3 — PerformanceTab is now lazy-loaded INSIDE
@@ -72,19 +76,19 @@ const ShoeMileageSection = lazy(
    rendered as a top-level tab. The dedicated `performance` tab was
    removed; deep-links to /history#performance route to the section
    anchor inside Analytics. */
-const PerformanceSection = lazy(
+const PerformanceSection = lazyRetry(
   () => import("@/components/analytics/PerformanceSection")
 );
-const PRsTab = lazy(() => import("@/components/analytics/PRsTab"));
-const BadgeGrid = lazy(() =>
+const PRsTab = lazyRetry(() => import("@/components/analytics/PRsTab"));
+const BadgeGrid = lazyRetry(() =>
   import("@/features/streaks/BadgeGrid").then((m) => ({ default: m.BadgeGrid }))
 );
-const TrendWeight = lazy(() =>
+const TrendWeight = lazyRetry(() =>
   import("@/components/progress/TrendWeight").then((m) => ({
     default: m.TrendWeight,
   }))
 );
-const CalorieBalanceChart = lazy(
+const CalorieBalanceChart = lazyRetry(
   () => import("@/components/progress/CalorieBalanceChart")
 );
 
@@ -361,6 +365,7 @@ export default function History() {
     weeklyData,
     runs,
     loading: runsLoading,
+    failed: runsError,
     refresh: refreshRuns,
   } = useRunningStats(rangeDays);
   // Lifetime totals below need EVERY workout, not just the newest 50.
@@ -373,6 +378,24 @@ export default function History() {
   const { meals, loading: mealsLoading } = useMeals();
   const lifetimeRuns = useLifetimeRunStats();
   const { profile } = useAuth();
+  /**
+   * The cross-cutting gate. Only the surfaces that genuinely SPAN all
+   * three disciplines may use it — PeriodOverview sums runs + lifts +
+   * nutrition into one row, and the cold-start decision needs to know
+   * that all three came back empty.
+   *
+   * The per-sport sections below each gate on their OWN hook instead.
+   * They used to share this flag, which meant the slowest of the three
+   * held every section: a user whose meals query was slow (it pages 400
+   * docs) sat looking at skeletons under "Running" and "Lifting" whose
+   * data had already arrived. Worse as a failure mode than as a
+   * slowdown — one listener that never settles blanks the entire tab
+   * with no partial content and no recovery affordance, which is what
+   * "analytics doesn't load" looks like from the outside.
+   *
+   * Splitting them means a stuck discipline costs you that discipline,
+   * not the page.
+   */
   const dataLoading = runsLoading || workoutsLoading || mealsLoading;
 
   // Hist4 perf telemetry. renderStartRef takes its timestamp from the
@@ -1068,7 +1091,17 @@ export default function History() {
      applies when the user is on Analytics (it never applied to
      dedicated sport tabs even before — those got dropped, not
      re-routed). */
-  const showRunningSection = runningHasLifetime || runningHasWindow;
+  /**
+   * A failed runs read produces `runs: []` and `lifetimeRuns.runCount: 0`
+   * — byte-identical to a user who has never run. Tier-1 suppression then
+   * removes the Running section entirely, so the ONE surface that could
+   * have told the user something went wrong is the surface that deletes
+   * itself. Keeping the section visible on failure is what makes the
+   * error reportable at all.
+   */
+  const runsFailed = runsError || lifetimeRuns.failed;
+  const showRunningSection =
+    runningHasLifetime || runningHasWindow || runsFailed;
   const showLiftingSection = liftingHasLifetime || liftingHasWindow;
   const showNutritionSection = nutritionHasLifetime || nutritionHasWindow;
 
@@ -1247,10 +1280,32 @@ export default function History() {
                 <SectionLabel className="mt-6 mb-2 text-running-strong">
                   Running
                 </SectionLabel>
-                {dataLoading ? (
+                {runsLoading ? (
                   <div className="grid grid-cols-2 gap-2">
                     <Skeleton className="h-24 w-full rounded-xl" />
                     <Skeleton className="h-24 w-full rounded-xl" />
+                  </div>
+                ) : runsFailed ? (
+                  /* Ordered BEFORE the empty branches deliberately: a
+                     failed read arrives as `runs: []`, so any empty-state
+                     check above this would claim the user has never run.
+                     Retry re-issues the same one-shot getDocs — the read
+                     is idempotent, and the usual cause (a transient
+                     network or a wedged stream) clears on a second go. */
+                  <div className="p-4 rounded-2xl bg-card space-y-2 card-shadow">
+                    <p className="text-sm font-semibold text-foreground">
+                      Couldn&apos;t load your runs
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Your runs are safe — this was a problem reading them, not
+                      a problem with your data.
+                    </p>
+                    <Button
+                      variant="sport-tinted"
+                      onClick={() => refreshRuns()}
+                    >
+                      Try again
+                    </Button>
                   </div>
                 ) : renderRunningEmptyNote ? (
                   <>
@@ -1309,7 +1364,7 @@ export default function History() {
                 <SectionLabel className="mt-6 mb-2 text-lifting-strong">
                   Lifting
                 </SectionLabel>
-                {dataLoading ? (
+                {workoutsLoading ? (
                   <div className="space-y-2">
                     <div className="grid grid-cols-2 gap-2">
                       <Skeleton className="h-24 w-full rounded-xl" />
@@ -1393,7 +1448,7 @@ export default function History() {
                 >
                   Nutrition
                 </SectionLabel>
-                {dataLoading ? (
+                {mealsLoading ? (
                   <div className="space-y-2">
                     <div className="grid grid-cols-2 gap-2">
                       <Skeleton className="h-24 w-full rounded-xl" />

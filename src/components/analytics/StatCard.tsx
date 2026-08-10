@@ -17,6 +17,24 @@ type Direction = "up-good" | "down-good" | "neutral";
 interface StatCardProps {
   label: string;
   value: string;
+  /**
+   * What KIND of thing `value` is. Default "number".
+   *
+   * This card is a numeral primitive — 30px extrabold Archivo, tabular
+   * figures, `whitespace-nowrap` — and that treatment is right for "47"
+   * and wrong for a word. The Load Band card passes "Establishing", which
+   * at 30px extrabold is far wider than a half-width grid cell, so it ran
+   * off the card and the user saw "Establishin". The comment above the
+   * value span claimed the layout "gives every realistic value enough
+   * room without truncation"; that was true of every realistic NUMBER.
+   *
+   * "text" drops the numeral treatment rather than shrinking it: mono +
+   * tabular-nums exist to align digits and do nothing for letters, and
+   * CLAUDE.md scopes that treatment to numeric displays. It also allows
+   * wrapping, because a word that does not fit should go to a second line
+   * rather than be silently cut in half.
+   */
+  valueKind?: "number" | "text";
   unit?: string;
   delta?: { value: string; positive: boolean } | null;
   /** Sentiment direction for the delta chip. Defaults to "up-good". */
@@ -31,6 +49,7 @@ interface StatCardProps {
 export default function StatCard({
   label,
   value,
+  valueKind = "number",
   unit,
   delta,
   direction = "up-good",
@@ -74,7 +93,13 @@ export default function StatCard({
           sparkline below as a thin full-width band gives every realistic
           value enough room without truncation. */}
       <div className="flex items-baseline gap-1">
-        <span className="text-3xl font-extrabold font-mono tabular-nums text-foreground leading-none whitespace-nowrap">
+        <span
+          className={
+            valueKind === "text"
+              ? "text-xl font-bold text-foreground leading-tight break-words"
+              : "text-3xl font-extrabold font-mono tabular-nums text-foreground leading-none whitespace-nowrap"
+          }
+        >
           {value}
         </span>
         {unit && <span className="text-xs text-muted-foreground">{unit}</span>}

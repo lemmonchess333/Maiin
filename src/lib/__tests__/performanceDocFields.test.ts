@@ -13,6 +13,7 @@ import {
   resolveLoadBand,
   resolveDeloadRecommended,
   isEstablishingBaseline,
+  MAX_LIFETIME_WEEKS,
 } from "../performanceDocFields";
 import { computeLoadBand } from "../performanceEngine";
 
@@ -45,7 +46,10 @@ describe("resolveLoadBand — mirror parity with the writers", () => {
 describe("resolveLoadBand — fallbacks", () => {
   it("falls back to the legacy labels mirror when only it is present", () => {
     expect(
-      resolveLoadBand({ performanceIndex: 50, labels: { loadBand: "overreach" } })
+      resolveLoadBand({
+        performanceIndex: 50,
+        labels: { loadBand: "overreach" },
+      })
     ).toBe("overreach");
   });
 
@@ -74,7 +78,9 @@ describe("resolveLoadBand — fallbacks", () => {
     expect(resolveLoadBand({ performanceIndex: 77, loadBand: "banana" })).toBe(
       "high"
     );
-    expect(resolveLoadBand({ performanceIndex: 77, loadBand: "" })).toBe("high");
+    expect(resolveLoadBand({ performanceIndex: 77, loadBand: "" })).toBe(
+      "high"
+    );
   });
 
   it("tolerates legacy casing", () => {
@@ -138,43 +144,80 @@ describe("resolveDeloadRecommended — the same drift, second field", () => {
 });
 
 describe("isEstablishingBaseline — one gate for Home and Analytics", () => {
+  /**
+   * Every `lifetimeWeeks` below is in 0..MAX_LIFETIME_WEEKS, because that
+   * is the entire set the writer can produce.
+   *
+   * This block used to assert the confident path with `lifetimeWeeks: 52`
+   * and `30`. Neither is reachable: the server sets the field to
+   * `baselineAgg.activeWeeks`, a Set of 7-day bucket indices inside a
+   * 28-day window. So the tests described a user who cannot exist, and
+   * the only production route to `false` was a perfect 4 — which is why
+   * a perfect-attendance gate passed review as "fewer than four weeks of
+   * history". Same failure as PR #1775's `templateId === "race"`: the
+   * accept path was fiction and only the rejections were honest.
+   */
+  it("the writer cannot exceed MAX_LIFETIME_WEEKS — the pin that keeps these fixtures real", () => {
+    // Derived from the range, not restated: if the baseline window ever
+    // widens, this is the line that has to be revisited first.
+    expect(MAX_LIFETIME_WEEKS).toBe(4);
+    for (let w = 0; w <= MAX_LIFETIME_WEEKS; w += 1) {
+      expect(
+        isEstablishingBaseline({ docsAvailable: 12, lifetimeWeeks: w })
+      ).toBe(w < 3);
+    }
+  });
+
   it("the lapsed-and-returning athlete reads as establishing", () => {
-    /* The divergence this predicate closes. A year of history, six months
-       off, two weeks back: lifetime depth is high but the recent window is
-       nearly empty. Analytics' old `weeks.length < 4` said establishing;
-       Home's lifetimeWeeks<4 said confident. CLAUDE.md names this segment
-       explicitly ("lapsed-and-returning users ... a real user segment").
-       The baseline is derived from PRIOR weeks, so a year-old baseline
-       must not license a confident read of week two back. */
-    expect(
-      isEstablishingBaseline({ weeksAvailable: 1, lifetimeWeeks: 52 })
-    ).toBe(true);
+    /* The divergence this predicate closes. Six months off, two weeks
+       back: the baseline window holds two active weeks, so the read is
+       still forming. CLAUDE.md names this segment explicitly. Note the
+       fixture now uses 2 rather than 52 — a returning athlete's DEPTH
+       does not survive in this field at all, which is precisely why the
+       recent window is the thing being measured. */
+    expect(isEstablishingBaseline({ docsAvailable: 1, lifetimeWeeks: 2 })).toBe(
+      true
+    );
   });
 
   it("a genuinely established athlete reads confident", () => {
     expect(
-      isEstablishingBaseline({ weeksAvailable: 12, lifetimeWeeks: 30 })
+      isEstablishingBaseline({ docsAvailable: 12, lifetimeWeeks: 4 })
     ).toBe(false);
   });
 
-  it("needs BOTH recent presence and lifetime depth", () => {
-    // Plenty of recent weeks, but the engine has barely seen this user.
+  it("ONE missed week does not brand a regular a beginner", () => {
+    /* The reported defect. At the old `< 4` this returned true — and kept
+       returning true forever, because the window always rolls. A rest
+       week, a holiday, or a week of flu permanently pinned the user to
+       "Establishing your baseline" and suppressed every figure on the
+       tab. Three of four active weeks is a real baseline. */
     expect(
-      isEstablishingBaseline({ weeksAvailable: 8, lifetimeWeeks: 3 })
-    ).toBe(true);
-    // Deep history, but only one week delivered.
-    expect(
-      isEstablishingBaseline({ weeksAvailable: 1, lifetimeWeeks: 30 })
-    ).toBe(true);
+      isEstablishingBaseline({ docsAvailable: 12, lifetimeWeeks: 3 })
+    ).toBe(false);
   });
 
-  it("boundaries: 2 weeks available and 4 lifetime weeks are the thresholds", () => {
-    expect(
-      isEstablishingBaseline({ weeksAvailable: 2, lifetimeWeeks: 4 })
-    ).toBe(false);
-    expect(
-      isEstablishingBaseline({ weeksAvailable: 2, lifetimeWeeks: 3 })
-    ).toBe(true);
+  it("needs BOTH recent presence and baseline depth", () => {
+    // Plenty of docs, but the baseline window is nearly empty.
+    expect(isEstablishingBaseline({ docsAvailable: 8, lifetimeWeeks: 1 })).toBe(
+      true
+    );
+    // Full baseline, but the engine has only ever computed once.
+    expect(isEstablishingBaseline({ docsAvailable: 1, lifetimeWeeks: 4 })).toBe(
+      true
+    );
+  });
+
+  it("boundaries: 2 docs and 3 active baseline weeks are the thresholds", () => {
+    expect(isEstablishingBaseline({ docsAvailable: 2, lifetimeWeeks: 3 })).toBe(
+      false
+    );
+    expect(isEstablishingBaseline({ docsAvailable: 2, lifetimeWeeks: 2 })).toBe(
+      true
+    );
+    expect(isEstablishingBaseline({ docsAvailable: 1, lifetimeWeeks: 3 })).toBe(
+      true
+    );
   });
 
   it("a missing lifetimeWeeks reads as establishing, not confident", () => {
@@ -182,7 +225,7 @@ describe("isEstablishingBaseline — one gate for Home and Analytics", () => {
        lifetimeWeeks to 0. Erring toward "still learning" is the honest
        direction and matches what Home already shipped. */
     expect(
-      isEstablishingBaseline({ weeksAvailable: 12, lifetimeWeeks: undefined })
+      isEstablishingBaseline({ docsAvailable: 12, lifetimeWeeks: undefined })
     ).toBe(true);
   });
 });

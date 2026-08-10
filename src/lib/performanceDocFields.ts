@@ -152,10 +152,52 @@ export function resolveLoadBand(
  * reports those docs via `perf-doc-missing-signals`.
  */
 export function isEstablishingBaseline(input: {
-  /** Weekly docs actually delivered by the snapshot. */
-  weeksAvailable: number;
-  /** `signals.lifetimeWeeks` — distinct compute-weeks the engine has seen. */
+  /**
+   * Performance docs delivered by the snapshot — DAYS, not weeks.
+   *
+   * The parameter was called `weeksAvailable` and documented as "weekly
+   * docs" until 2026-08-10. Since PI1a the doc id and `weekKey` field are
+   * both the COMPUTE DATE with no Sunday alignment
+   * (`functions/performanceEngine.js`: `weekKey: computeKey, //
+   * semantics shifted PI1a`), and two crons write one per day. So
+   * `usePerformanceWeeks(12)` returns the last twelve DAYS.
+   *
+   * The threshold stays at 2 because what it usefully guards is "has the
+   * engine produced anything at all yet" — doc count is not a clean
+   * proxy for elapsed time in either direction, since
+   * `dailyPerformanceRefresh` only runs for recently-active users. The
+   * depth judgement belongs to `lifetimeWeeks` below.
+   */
+  docsAvailable: number;
+  /**
+   * `signals.lifetimeWeeks` — active weeks inside the 28-day BASELINE
+   * window, so its range is 0..4 and nothing else is reachable.
+   *
+   * That ceiling is the bug this signature documents. The gate was
+   * `< 4`, which reads as "fewer than four weeks of history" and is
+   * actually "did NOT train in every one of the last four weeks" — a
+   * perfect-attendance test at maximum strictness. One rest week, one
+   * holiday, or one bout of flu per month left a user permanently on
+   * "Establishing your baseline", however long they had used the app.
+   * CLAUDE.md names those exact segments (vacation gaps, illness gaps,
+   * light trainers, lapsed-and-returning) as real rather than rare.
+   *
+   * It went unnoticed because the tests asserted the confident path with
+   * `lifetimeWeeks: 52` and `30` — values the only writer cannot emit.
+   * The accept path was fiction; in production `false` required exactly
+   * 4. Same shape as PR #1775's `templateId === "race"`.
+   */
   lifetimeWeeks: number | undefined;
 }): boolean {
-  return input.weeksAvailable < 2 || (input.lifetimeWeeks ?? 0) < 4;
+  // 3-of-4 active baseline weeks. Tolerates a single missed week per
+  // month — the common, healthy case — while still reading a returning
+  // athlete's second week back (activeWeeks 2) as establishing, which is
+  // the divergence this predicate was created to close.
+  return input.docsAvailable < 2 || (input.lifetimeWeeks ?? 0) < 3;
 }
+
+/** The maximum `signals.lifetimeWeeks` the engine can emit: the baseline
+ *  window is 28 days, so there are only four week buckets to be active
+ *  in. Exported so tests can assert against the real range instead of
+ *  inventing one. */
+export const MAX_LIFETIME_WEEKS = 4;
