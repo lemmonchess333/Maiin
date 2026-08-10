@@ -560,7 +560,7 @@ or touching a CTA button, route it through `Button` with the variant above.
 ### Component Architecture
 
 - **Pages:** src/pages/ — route-level, lazy-loaded
-- **Home screen built from:** WeekStrip → DayPeekCard → StackedCTACards (action pills + health/water/weight/steps) → TodayEnergy → HybridBalanceCard → InsightStrip
+- **Home screen built from:** WeekStrip → DayPeekCard → PerformanceHeroCard → StackedCTACards (action pills + health/water/weight/steps) → TodayEnergy → TodayGuidanceCard. This line named `HybridBalanceCard` until 2026-08-10; that component rendered NOWHERE, and had been superseded by `PerformanceHeroCard` / `TodayGuidanceCard` taking over the "how is my week going" role. Its only mention anywhere in the repo was this sentence — which is exactly why `componentReachability` strips comments before matching, and why a prose reference must never be what keeps a component looking alive.
 - **Icons:** lucide-react (individual imports only)
 - **Toasts:** sonner
 - **Charts:** Recharts (bar charts, line charts in History)

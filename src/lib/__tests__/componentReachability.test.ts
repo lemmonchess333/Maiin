@@ -85,16 +85,8 @@ const CONSUMER_ROOTS = ["src", "e2e"];
  */
 const KNOWN_ORPHAN_COMPONENTS: { path: string; why: string }[] = [
   {
-    path: "src/components/nutrition/BarcodeScanner.tsx",
-    why: "superseded — the live scanner is FoodCameraModal (its own @zxing/browser import) + FoodAnalyzer's OpenFoodFacts lookup. Zero references anywhere, including tests.",
-  },
-  {
     path: "src/components/home/NextBadgeCard.tsx",
     why: "unwired — a goal-gradient retention card (Kivetz 2006; Nunes & Drèze 2006) that renders nowhere. Only mention is a comment in useHomeData.",
-  },
-  {
-    path: "src/components/home/HybridBalanceCard.tsx",
-    why: "unwired — CLAUDE.md's documented Home composition names it (WeekStrip → DayPeekCard → StackedCTACards → TodayEnergy → HybridBalanceCard → InsightStrip), so the docs describe a screen that does not exist.",
   },
   {
     path: "src/components/settings/HeartRateZonesSection.tsx",
@@ -115,14 +107,6 @@ const KNOWN_ORPHAN_COMPONENTS: { path: string; why: string }[] = [
   {
     path: "src/components/settings/TrackSettingsSectionView.tsx",
     why: "silent-off — wraps a Settings section to emit settings_section_viewed. Nothing wraps anything, so the event has never fired and the dashboard's zero looks like data.",
-  },
-  {
-    path: "src/components/social/CommentSection.tsx",
-    why: "unwired — reached only by its own spec, which asserts a visibility-DENIAL property. A security test passing against code no user can reach.",
-  },
-  {
-    path: "src/components/analytics/PaceChart.tsx",
-    why: "unwired — no header giving a reason, which per the symbolReachability doctrine IS the finding: write the reason down or delete it.",
   },
 ];
 
