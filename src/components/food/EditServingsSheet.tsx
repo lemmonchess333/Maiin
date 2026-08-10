@@ -285,7 +285,7 @@ function EditServingsSheet({
                   className={cn(
                     "px-3 py-1 rounded-full text-micro font-semibold transition-colors active:scale-[0.97]",
                     isPicked
-                      ? "bg-primary text-primary-foreground"
+                      ? "bg-primary-strong text-primary-foreground"
                       : "bg-muted text-muted-foreground"
                   )}
                 >
@@ -460,7 +460,7 @@ function EditServingsSheet({
               "flex-1 py-3 rounded-xl text-sm font-semibold active:scale-[0.98]",
               unchanged || saving
                 ? "bg-muted text-muted-foreground"
-                : "bg-primary text-primary-foreground"
+                : "bg-primary-strong text-primary-foreground"
             )}
           >
             {saving ? "Saving…" : "Save"}

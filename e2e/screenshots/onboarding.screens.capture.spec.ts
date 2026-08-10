@@ -6,7 +6,7 @@
  * cold-start states are among the most-seen in the app). This walks the
  * real flow as a brand-new account and shoots each step light + dark,
  * including the race-runway advisory (Run15 voice packet): a marathon
- * dated a few weeks out must show the engine's finish-safely/compressed
+ * dated a few weeks out must show the engine's mostly-easy/compressed
  * line at DATE ENTRY, not after onboarding commits the plan.
  *
  * A fresh account is minted through the real signup form on every run
@@ -120,7 +120,7 @@ test.describe("onboarding screenshots", () => {
     await tap(page, /full/i);
 
     // The Run15 advisory: a marathon two weeks out is under the taper
-    // floor → the ENGINE's finish-safely line must appear at date entry.
+    // floor → the ENGINE's mostly-easy line must appear at date entry.
     // (The status is the engine's own belowFloor boolean, not raw
     // weeks-vs-floor arithmetic — 25 days still reads as compressed.)
     const soon = new Date(Date.now() + 14 * 86_400_000)
@@ -128,12 +128,19 @@ test.describe("onboarding screenshots", () => {
       .slice(0, 10);
     const dateInput = page.getByLabel(/race target date/i);
     await dateInput.fill(soon);
-    await expect(page.getByText(/finish-safely/i)).toBeVisible({
+    // "mostly-easy plan", NOT "finish-safely". RUN-EV-05 (owner decision,
+    // 2026-08-09) renamed the below-floor label the day after this spec was
+    // written: "finish-safely implied a safety promise the product cannot
+    // make". The internal `finish_safely` state keys are unchanged, which is
+    // why the phrase still appears in comments and persisted vocabulary —
+    // but it is no longer USER-VISIBLE copy, so this locator matched
+    // nothing. See raceGoalPlanner.ts's statusDescription.
+    await expect(page.getByText(/mostly-easy plan/i)).toBeVisible({
       timeout: 5000,
     });
-    // The 3-line finish-safely copy sits at the step's bottom edge —
-    // scroll it fully clear of the footer row before shooting.
-    await page.getByText(/finish-safely/i).scrollIntoViewIfNeeded();
+    // The 3-line advisory sits at the step's bottom edge — scroll it fully
+    // clear of the footer row before shooting.
+    await page.getByText(/mostly-easy plan/i).scrollIntoViewIfNeeded();
     await page.waitForTimeout(200);
     await shootBoth(page, "onboarding-3-race-advisory-tight");
 

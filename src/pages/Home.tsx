@@ -812,7 +812,7 @@ export default function Home() {
               </>
             )}
           </span>
-          <span className="text-caption font-semibold text-primary-foreground bg-primary rounded-full px-2.5 py-1 shrink-0">
+          <span className="text-caption font-semibold text-primary-foreground bg-primary-strong rounded-full px-2.5 py-1 shrink-0">
             Subscribe
           </span>
         </button>
@@ -838,7 +838,7 @@ export default function Home() {
             <span className="text-xs font-medium text-foreground flex-1 text-pretty">
               Upgrade to Pro
             </span>
-            <span className="text-caption font-semibold text-primary-foreground bg-primary rounded-full px-2.5 py-1 shrink-0">
+            <span className="text-caption font-semibold text-primary-foreground bg-primary-strong rounded-full px-2.5 py-1 shrink-0">
               See plans
             </span>
           </button>
@@ -1622,7 +1622,7 @@ export default function Home() {
                     updateProfile({ trialExpiryPromptShown: true });
                     navigate("/upgrade");
                   }}
-                  className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-opacity"
+                  className="flex-1 py-2.5 rounded-xl bg-primary-strong text-primary-foreground text-sm font-bold hover:opacity-90 transition-opacity"
                 >
                   Upgrade
                 </button>

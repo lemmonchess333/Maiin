@@ -62,11 +62,17 @@ test.describe("easier today screenshots", () => {
     await page
       .getByRole("navigation", { name: /main navigation/i })
       .waitFor({ state: "visible", timeout: 20000 });
+    // The chooser opens from "Short on time?", NOT from Begin Workout.
+    // This spec waited on Begin Workout until 2026-08-10, which stopped
+    // being that path on 2026-08-05 ("begin means begin" — the every-tap
+    // interstitial was removed as too much choice; see the header comment
+    // in ExpressSessionSheet.tsx). Nobody noticed because the whole
+    // capture job was aborting earlier, at the seed step.
     await page
-      .getByRole("button", { name: /begin workout/i })
+      .getByRole("button", { name: /short on time/i })
       .waitFor({ state: "visible", timeout: 15000 });
     await page
-      .getByRole("button", { name: /begin workout/i })
+      .getByRole("button", { name: /short on time/i })
       .click({ timeout: 4000 });
     await page
       .getByRole("button", { name: /easier today/i })

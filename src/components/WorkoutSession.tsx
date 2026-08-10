@@ -1360,7 +1360,7 @@ export default function WorkoutSession({
                   done
                     ? "bg-success text-success-foreground font-medium"
                     : active
-                      ? "bg-primary text-primary-foreground font-bold"
+                      ? "bg-primary-strong text-primary-foreground font-bold"
                       : "bg-muted text-muted-foreground"
                 )}
               >
@@ -1760,7 +1760,7 @@ export default function WorkoutSession({
                               className={cn(
                                 "min-h-11 px-2.5 rounded text-xs font-mono tabular-nums transition-colors",
                                 set.rpe === rpe
-                                  ? "bg-primary text-primary-foreground"
+                                  ? "bg-primary-strong text-primary-foreground"
                                   : "bg-muted text-muted-foreground hover:text-foreground"
                               )}
                             >
@@ -1946,7 +1946,7 @@ export default function WorkoutSession({
                     setCurrentExIndex((prev) => prev + 1);
                     setCurrentSetIndex(0);
                   }}
-                  className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+                  className="w-full py-3.5 rounded-xl bg-primary-strong text-primary-foreground font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
                 >
                   <Play className="size-4" /> Next Exercise →
                 </button>
@@ -1960,7 +1960,7 @@ export default function WorkoutSession({
                   !currentSets[currentSetIndex] ||
                   currentSets[currentSetIndex]?.completed
                 }
-                className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
+                className="w-full py-3.5 rounded-xl bg-primary-strong text-primary-foreground font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
               >
                 <Check className="size-4" /> Complete Set {currentSetIndex + 1}
               </button>
