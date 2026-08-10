@@ -183,23 +183,38 @@ export default function MacroColumn({
       onClick={onTap}
       className="flex-1 flex flex-col items-center text-center bg-transparent border-0 p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-lg"
     >
-      {/* Icon — pops on log, and once its goal is met it sits inside a
-          soft macro-colour halo (a calm, lasting "hit it" mark). The halo
-          is a static state, so it shows under reduced-motion too. */}
+      {/* Icon — pops on log, and sits in a macro-tinted disc that BRIGHTENS
+          when the goal is met.
+
+          The disc used to render only at goal, and the absence read as a
+          missing element rather than an unmet goal: on a real screen with
+          protein and fat met and carbs short, two icons had a circle and
+          the wheat did not, which was reported as the wheat icon being
+          broken. Nothing on the tile said the circle meant anything, so
+          "one of these is drawn differently" was the only available
+          reading.
+
+          Always rendering it turns the signal from presence/absence into
+          intensity — a difference the eye reads as a state of the same
+          thing, not a different thing. It also lands the tile on the
+          design system's icon-in-a-tinted-container pattern, which every
+          other icon tile in the app already uses. The resting 0.08 matches
+          the documented ~10% icon-background tint; 0.18 is the "hit it"
+          mark and stays clearly brighter.
+
+          Both states are static, so reduced-motion gets them too. */}
       <motion.span
         className="relative inline-flex items-center justify-center"
         style={{ scale: iconScale }}
       >
-        {goalReached && (
-          <motion.span
-            className="absolute -inset-1.5 rounded-full"
-            style={{ background: color }}
-            initial={{ opacity: reduce ? 0.16 : 0 }}
-            animate={{ opacity: 0.16 }}
-            transition={{ duration: reduce ? 0 : 0.3 }}
-            aria-hidden="true"
-          />
-        )}
+        <motion.span
+          className="absolute -inset-1.5 rounded-full"
+          style={{ background: color }}
+          initial={{ opacity: goalReached && !reduce ? 0 : goalReached ? 0.18 : 0.08 }}
+          animate={{ opacity: goalReached ? 0.18 : 0.08 }}
+          transition={{ duration: reduce ? 0 : 0.3 }}
+          aria-hidden="true"
+        />
         <Icon
           className="relative size-6"
           style={{ color }}

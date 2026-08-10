@@ -12,6 +12,7 @@ import type { DailyBurn } from "@/utils/dailyBurn";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 import MacroRing from "@/components/home/MacroRing";
 import BreakdownRow from "@/components/home/BreakdownRow";
+import { usePersistedToggle } from "@/hooks/usePersistedToggle";
 
 export default function TodayEnergy({
   calories,
@@ -23,6 +24,7 @@ export default function TodayEnergy({
   totalLifetimeMeals = 0,
   daysSinceLastMeal = Infinity,
   mealsLoading = false,
+  uid,
   postWorkoutNudge,
   nutritionInsight,
 }: {
@@ -35,6 +37,8 @@ export default function TodayEnergy({
   totalLifetimeMeals?: number;
   daysSinceLastMeal?: number;
   mealsLoading?: boolean;
+  /** Scopes the remembered expand state per account (shared-device rule). */
+  uid?: string | null;
   postWorkoutNudge?: {
     type: "lift" | "run" | "both";
     proteinRemaining: number;
@@ -45,7 +49,22 @@ export default function TodayEnergy({
     message: string;
   } | null;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  /**
+   * Remembered, not reset every visit.
+   *
+   * This was plain `useState(false)`, so the card re-collapsed on every
+   * arrival at Home and a user who wanted the macro breakdown re-opened
+   * it each time. The closed DEFAULT is deliberate and unchanged (Wave3
+   * E1 keeps the Home scroll calm by moving the three macro hues into
+   * the breakdown) — what changes is that opening it now counts as a
+   * choice. Anyone who never taps sees exactly what they saw before.
+   *
+   * uid-scoped per CLAUDE.md's shared-device rule: a layout preference
+   * must not follow one account into another's session.
+   */
+  const { value: expanded, toggle: toggleExpanded } = usePersistedToggle(
+    `tropos-today-energy-expanded:${uid ?? "anon"}`
+  );
   // cal.ai-style tap-to-flip: macro rings show consumed by default,
   // tap toggles to "left" (target − consumed, clamped at 0). Lives
   // at the parent so all three rings stay in sync.
@@ -87,10 +106,9 @@ export default function TodayEnergy({
         type="button"
         onClick={function () {
           haptic();
-          setExpanded(function (e) {
-            return !e;
-          });
+          toggleExpanded();
         }}
+        aria-expanded={expanded}
         className="w-full text-left px-4 pt-4 pb-3 border-b border-border/30"
         style={{
           background:
