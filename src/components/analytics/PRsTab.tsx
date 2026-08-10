@@ -101,7 +101,7 @@ function LiftPRRow({ pr }: { pr: LiftPR }) {
       </div>
       <div className="text-right flex-shrink-0 ml-3 flex items-center gap-2">
         <div>
-          <p className="text-sm font-bold font-mono tabular-nums text-lifting">
+          <p className="text-sm font-bold font-mono tabular-nums text-lifting-strong">
             {isBW && pr.weight === 0 ? (
               "BW"
             ) : isBW && pr.weight > 0 ? (
@@ -172,7 +172,7 @@ function LiftPRList({
             <button
               type="button"
               onClick={() => setExpanded(true)}
-              className="w-full px-4 py-3 text-xs font-medium border-t border-border/20 active:bg-muted/40 transition-colors text-lifting"
+              className="w-full px-4 py-3 text-xs font-medium border-t border-border/20 active:bg-muted/40 transition-colors text-lifting-strong"
             >
               Show all ({prs.length})
             </button>

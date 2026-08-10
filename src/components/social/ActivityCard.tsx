@@ -402,7 +402,7 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
                 {labels.map((label) => (
                   <span
                     key={label}
-                    className="text-xs px-2 py-0.5 rounded-full font-medium bg-lifting/8 text-lifting"
+                    className="text-xs px-2 py-0.5 rounded-full font-medium bg-lifting/8 text-lifting-strong"
                   >
                     {label}
                   </span>

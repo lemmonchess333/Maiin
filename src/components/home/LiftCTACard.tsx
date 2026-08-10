@@ -50,7 +50,7 @@ export default function LiftCTACard({
           <Dumbbell className="size-5 text-lifting" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold mb-0.5 text-lifting">
+          <p className="text-xs font-semibold mb-0.5 text-lifting-strong">
             {isFirst ? "Your first workout" : "Today · Lift day"}
           </p>
           <p className="text-sm font-bold text-foreground truncate">
