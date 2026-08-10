@@ -24,7 +24,11 @@
  * a UI constraint, not a schema one (history keeps past blocks).
  */
 
-import type { BlockPace, PrimaryGoal } from "./programTypes";
+import type {
+  ActiveTrainingBlock,
+  BlockPace,
+  PrimaryGoal,
+} from "./programTypes";
 
 export type BlockPreset =
   | "strength_foundation"
@@ -178,15 +182,74 @@ export const PACE_OPTIONS: ReadonlyArray<{
   {
     value: "lighter",
     label: "Lighter",
-    description: "Shorter sessions — accessory work trimmed.",
+    description: "The short session is offered first, when there is one.",
   },
   {
     value: "easing",
     label: "Easing back in",
     description:
-      "Shorter sessions, and your weights hold steady for the first two weeks.",
+      "Short session first where there is one, and your weights hold for two weeks.",
   },
 ];
+
+/**
+ * Map a pre-Blk2 block into the live shape, for a user who had one open
+ * when Blk2 shipped.
+ *
+ * Without this the block simply DISAPPEARS: the archive doc still says
+ * `status: "active"`, but `programState.trainingBlock` is absent, so the
+ * Lift tab offers "Start a training block" as though they never had one.
+ *
+ * `owned: false` is the whole point of the field. A legacy block was a
+ * narrative wrapper — it never represcribed anything — so it must not have
+ * a prescription applied on adoption, nor released on exit. It runs out
+ * its window and ends the way it always would have.
+ *
+ * The two "habit" presets DO become a pace, because that is what they
+ * always were: Consistency Reset promised "showing up is the whole goal"
+ * and Return to Training promised "ease back in", and neither did anything
+ * before. Pace governs how a session is OFFERED, not what it prescribes,
+ * so applying it to an unowned block is consistent with `owned: false`.
+ */
+export function paceFromLegacyPreset(
+  preset: BlockPreset | undefined
+): BlockPace {
+  switch (preset) {
+    case "consistency_reset":
+      return "lighter";
+    case "return_to_training":
+      return "easing";
+    default:
+      return "full";
+  }
+}
+
+/**
+ * Build the live block from a legacy archive row. `currentFocus` is used
+ * for BOTH `focus` and `goalBefore` — the block never changed the focus,
+ * so there is nothing to restore that is not already in force, and making
+ * them equal means a release is a no-op by construction.
+ */
+export function legacyToActiveBlock(
+  legacy: TrainingBlock,
+  currentFocus: PrimaryGoal
+): ActiveTrainingBlock {
+  return {
+    id: legacy.id,
+    owned: false,
+    focus: currentFocus,
+    goalBefore: currentFocus,
+    pace: paceFromLegacyPreset(legacy.preset),
+    durationWeeks: legacy.durationWeeks,
+    startDate: legacy.startDate,
+    amnestyWeeksLeft: 0,
+    weeklyLiftTarget: legacy.weeklyLiftTarget,
+    anchorExerciseIds: legacy.anchorExerciseIds,
+    why: legacy.why,
+    createdAt: legacy.createdAt,
+    schemaVersion: 1,
+  };
+}
 
 /** Where a user's training blocks live. The ONLY place the collection
  *  name is written — `useTrainingBlock` reads the list and writes
