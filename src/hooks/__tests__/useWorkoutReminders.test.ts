@@ -243,53 +243,52 @@ describe("reacting to changes", () => {
   });
 });
 
-describe("a pass that loses its race writes nothing", () => {
+describe("the last reschedule pass wins", () => {
   /**
-   * The reschedule pass has up to 14 await points — 7 cancels, then up to
-   * 7 schedules. `cancelled` used to be checked ONCE, between the two
-   * loops, which only proves the effect was live when scheduling STARTED.
-   * Everything after the first schedule could still land, and by then a
-   * newer pass has already run its own cancels, so the stale pass
-   * re-creates exactly what was just cancelled.
+   * The user-facing property, and the one the original bug broke: a
+   * superseded pass must never overwrite the intent that replaced it.
    *
-   * On a device that is reminders firing after the user switched them
-   * off. In CI it showed up as this file failing with
-   * [2002, 2003, 2004, 2006, 2007] — the five non-rest days of an EARLIER
-   * test's schedule, landing in a store `beforeEach` had already reset.
+   * Each pass is cancel-all-seven then schedule-what-applies, so the last
+   * pass holds the truth — but only if passes cannot interleave.
+   * Unserialised, a pass suspended on an await resumes AFTER the newer
+   * pass has run its cancels and writes over them: the user switches
+   * reminders off and they come back.
    *
-   * The pass is parked mid-flight with `deferSchedules()` so the unmount
-   * happens while it is genuinely in the scheduling loop. Asserting an
-   * empty schedule after a plain unmount would be satisfied at t=0 and
-   * prove nothing.
+   * `deferSchedules()` parks the first pass exactly where a real
+   * in-flight OS call would be, so the second pass is provably issued
+   * while the first is mid-write. That is the interleaving the chain has
+   * to prevent, and a plain unmount-then-assert could not create it.
    */
-  it("stops scheduling as soon as the effect is torn down", async () => {
+  it("a toggle-off issued mid-write is not overwritten by the pass it replaced", async () => {
     seedFirestore({ [PATH]: ON });
     deferSchedules();
 
-    const { result, unmount } = renderHook(() => useWorkoutRemindersInternal());
+    const { result } = renderHook(() => useWorkoutRemindersInternal());
     await waitFor(() => expect(result.current.loading).toBe(false));
-
-    // Anchor on a POSITIVE: wait until the pass has cleared its seven
-    // cancels and is parked on its first schedule. Without this the test
-    // could unmount before the effect ran at all, and pass for the wrong
-    // reason.
     await waitFor(() => expect(result.current.reminders.enabled).toBe(true));
 
-    unmount();
-    releaseSchedules();
-    // Drain the microtask queue the parked pass resumes on.
+    // The enabled pass is now parked on its first schedule call. Turn
+    // reminders OFF while it is suspended.
     await act(async () => {
-      await Promise.resolve();
-      await Promise.resolve();
+      await result.current.updateReminders({ enabled: false });
+    });
+
+    releaseSchedules();
+    // Drained, then asserted SYNCHRONOUSLY. `await waitFor(() =>
+    // expect(scheduledIds()).toEqual([]))` here passes on its first poll,
+    // before the parked pass has resumed — the negative-assertion trap
+    // CLAUDE.md documents, and it made this test pass with the chain
+    // removed. Give the stale write every chance to land, then check.
+    await act(async () => {
+      for (let i = 0; i < 5; i += 1) await Promise.resolve();
     });
 
     expect(scheduledIds()).toEqual([]);
   });
 
-  it("the same pass DOES schedule when it is not torn down", async () => {
-    /* The control. Without it, the assertion above is satisfied by any
-       hook that never schedules at all — including one broken so badly
-       it does nothing. */
+  it("the same pass DOES schedule when nothing supersedes it", async () => {
+    /* The control. Without it the assertion above is satisfied by a hook
+       broken badly enough to schedule nothing at all. */
     seedFirestore({ [PATH]: ON });
     deferSchedules();
 
@@ -301,5 +300,42 @@ describe("a pass that loses its race writes nothing", () => {
     await waitFor(() =>
       expect(scheduledIds()).toEqual([ID(1), ID(2), ID(3), ID(5), ID(6)])
     );
+  });
+
+  it("a torn-down pass stops after the call already in flight", async () => {
+    /**
+     * The honest limit of what teardown can promise. A promise already
+     * dispatched cannot be recalled, so the schedule call the pass is
+     * suspended inside WILL land — at most one id. What must not happen
+     * is the remaining days landing behind it.
+     *
+     * #1911 tried to assert zero by having the stale pass cancel its own
+     * write. That did produce zero here, and broke the case above: the
+     * cancel could delete an id the newer pass had legitimately
+     * rescheduled. CI caught it losing exactly one of five. Asserting the
+     * reachable contract is better than engineering a worse race to make
+     * a rounder number true.
+     */
+    seedFirestore({ [PATH]: ON });
+    deferSchedules();
+
+    const { result, unmount } = renderHook(() => useWorkoutRemindersInternal());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() => expect(result.current.reminders.enabled).toBe(true));
+
+    unmount();
+    releaseSchedules();
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    const landed = scheduledIds();
+    expect(landed.length).toBeLessThanOrEqual(1);
+    // The four days behind the in-flight one must never appear.
+    expect(landed).not.toContain(ID(2));
+    expect(landed).not.toContain(ID(3));
+    expect(landed).not.toContain(ID(5));
+    expect(landed).not.toContain(ID(6));
   });
 });

@@ -245,3 +245,71 @@ describe("useReviewEligibility", () => {
     await waitFor(() => expect(result.current.eligibility).toBe("none"));
   });
 });
+
+describe("the load band is RESOLVED, not read raw", () => {
+  /**
+   * Weekly Review is the fourth surface to read this field, and it was
+   * the last one still reading it raw. Home, the Analytics tab and the PI
+   * chart all go through `resolveLoadBand`; this hook did
+   * `typeof perfData.loadBand === "string" ? … : null` — beside a comment
+   * that called the read canonical, because the DELOAD half next to it
+   * had been moved to the resolver and the band had not.
+   *
+   * Both cases below are chosen so the verdict can ONLY come from the
+   * resolver: the delta is deliberately inside the +-5 dead zone, so a
+   * null or unmatched band falls through to "Steady week."
+   */
+  it("derives the band from PI when the doc never stored one", async () => {
+    seedFirestore({
+      "users/u1/workouts/w1": lift("2026-07-06", 100, 5),
+      // No loadBand field at all — a pre-PI1a doc.
+      "users/u1/performance/2026-07-05": { performanceIndex: 88 },
+      "users/u1/performance/2026-06-28": { performanceIndex: 86 },
+    });
+
+    const { result } = renderHook(() => useWeeklyReview());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    // computeLoadBand(88) === "overreach" — the same pure function every
+    // writer used to produce the stored value, so deriving reproduces it.
+    expect(result.current.review!.headline!.verdict).toBe(
+      "A big week. Keep an eye on recovery going into this one."
+    );
+  });
+
+  it("tolerates a stored band whose case differs", async () => {
+    seedFirestore({
+      "users/u1/workouts/w1": lift("2026-07-06", 100, 5),
+      "users/u1/performance/2026-07-05": {
+        performanceIndex: 88,
+        loadBand: "Overreach",
+      },
+      "users/u1/performance/2026-06-28": { performanceIndex: 86 },
+    });
+
+    const { result } = renderHook(() => useWeeklyReview());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    // The raw read passed "Overreach" straight through, where it matched
+    // none of the lowercase comparisons and read as an unbanded week.
+    expect(result.current.review!.headline!.verdict).toBe(
+      "A big week. Keep an eye on recovery going into this one."
+    );
+  });
+
+  it("a band-less week with a flat delta really does fall through", async () => {
+    /* The control: proves the two assertions above are discriminating,
+       not just restating the default. PI 60 derives to "moderate", which
+       verdictFor has no copy for, so the delta path is correct here. */
+    seedFirestore({
+      "users/u1/workouts/w1": lift("2026-07-06", 100, 5),
+      "users/u1/performance/2026-07-05": { performanceIndex: 60 },
+      "users/u1/performance/2026-06-28": { performanceIndex: 58 },
+    });
+
+    const { result } = renderHook(() => useWeeklyReview());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.review!.headline!.verdict).toBe("Steady week.");
+  });
+});

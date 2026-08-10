@@ -40,6 +40,18 @@ export class NotificationsFake {
   /** When set, every schedule attempt parks here until released. */
   private scheduleGate: Promise<void> | null = null;
   private openGate: (() => void) | null = null;
+  /**
+   * Bumped by `reset()`. A write that parked on the gate captures the
+   * epoch it started in and is DISCARDED if reset has happened since.
+   *
+   * Without this, a pass suspended at the end of one test resumes during
+   * the next one and writes into a store `beforeEach` just cleared —
+   * which is precisely how the useWorkoutReminders flake presented, and
+   * it is a property of the harness, not of the hook. Leaving it to the
+   * hook to avoid conflates "the app must not do this" with "tests must
+   * not contaminate each other".
+   */
+  private epoch = 0;
 
   reset(): void {
     this.schedule.clear();
@@ -51,6 +63,7 @@ export class NotificationsFake {
     this.openGate?.();
     this.scheduleGate = null;
     this.openGate = null;
+    this.epoch += 1;
   }
 
   // ── the surface the hooks call ───────────────────────────────────
@@ -68,9 +81,12 @@ export class NotificationsFake {
   }
 
   async schedule_(payload: NotificationPayload): Promise<boolean> {
+    const startedIn = this.epoch;
     // Park BEFORE any state change, so a deferred pass is suspended
     // exactly where a real in-flight OS call would be.
     if (this.scheduleGate) await this.scheduleGate;
+    // A pass that spanned a reset belongs to a finished test.
+    if (this.epoch !== startedIn) return false;
     // Denied permission is a soft failure in the real module too: it
     // returns false rather than throwing, and nothing is scheduled.
     if (this.permission !== "granted") return false;
