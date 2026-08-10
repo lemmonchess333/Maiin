@@ -185,7 +185,10 @@ export async function setDoc(
   opts?: { merge?: boolean }
 ): Promise<void> {
   firestoreFake.failIfArmed("setDoc", ref.path);
-  firestoreFake.setDoc(ref, data, opts);
+  // Lands now unless the test is holding writes — see `deferWrites`.
+  return firestoreFake.maybeDeferWrite(ref.path, () =>
+    firestoreFake.setDoc(ref, data, opts)
+  );
 }
 
 export async function addDoc(
@@ -193,9 +196,13 @@ export async function addDoc(
   data: Record<string, unknown>
 ): Promise<DocRef> {
   firestoreFake.failIfArmed("addDoc", ref.path);
+  // The id is minted at ISSUE time even when the write is held, so the
+  // returned ref is the same one the caller would have got online.
   const id = firestoreFake.nextId();
   const docRef: DocRef = { __kind: "doc", path: `${ref.path}/${id}`, id };
-  firestoreFake.setDoc(docRef, data);
+  await firestoreFake.maybeDeferWrite(docRef.path, () =>
+    firestoreFake.setDoc(docRef, data)
+  );
   return docRef;
 }
 
@@ -204,12 +211,19 @@ export async function updateDoc(
   data: Record<string, unknown>
 ): Promise<void> {
   firestoreFake.failIfArmed("updateDoc", ref.path);
-  firestoreFake.updateDoc(ref, data);
+  // Held writes carry their throw too: `updateDoc` on a missing document
+  // rejects on release rather than at issue, which is the shape the real
+  // SDK gives an in-flight write that turns out to be invalid.
+  return firestoreFake.maybeDeferWrite(ref.path, () =>
+    firestoreFake.updateDoc(ref, data)
+  );
 }
 
 export async function deleteDoc(ref: DocRef): Promise<void> {
   firestoreFake.failIfArmed("deleteDoc", ref.path);
-  firestoreFake.deleteDoc(ref);
+  return firestoreFake.maybeDeferWrite(ref.path, () =>
+    firestoreFake.deleteDoc(ref)
+  );
 }
 
 /**

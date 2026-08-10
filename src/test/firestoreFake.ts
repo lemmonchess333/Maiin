@@ -264,6 +264,9 @@ export class FirestoreFake {
     [];
 
   reset(): void {
+    // Settle held writes before the clears — see `settleDeferredWrites`.
+    this.settleDeferredWrites();
+    this.deferringWrites = false;
     this.docs.clear();
     this.cached.clear();
     this.listeners.clear();
@@ -420,6 +423,159 @@ export class FirestoreFake {
     return new Promise<T>((resolve, reject) => {
       this.deferred.push({ path, resolve: () => resolve(value), reject });
     });
+  }
+
+  /* ── deferred writes ── */
+
+  /**
+   * Hold WRITES open, the dual of `deferReads`.
+   *
+   * Reads could be held since the account-switch work; writes could not,
+   * so nothing could test what happens to state that a write is in the
+   * middle of. That is a whole class of bug on its own: any read-modify-
+   * write whose read happens before an await and whose write happens
+   * after is stale by however long the round trip took, and anything the
+   * user did in that window is overwritten. The offline queue's flush is
+   * exactly this shape, and the window is as long as the queue takes to
+   * drain.
+   *
+   * A held write has NOT landed: the store is untouched and `writeLog()`
+   * shows nothing until it is released. That is the honest model of a
+   * request in flight, and it is what lets a test distinguish "issued"
+   * from "committed" — `pendingWrites` is the former, the log the latter.
+   *
+   *   deferWrites();
+   *   const flushing = flushQueue(db, uid);   // suspends mid-write
+   *   queueWrite(uid, ...);                   // user logs during the flush
+   *   releaseAllWrites();
+   *   await flushing;                         // the new item must survive
+   */
+  private deferringWrites = false;
+  private deferredWrites: {
+    path: string;
+    apply: () => void;
+    resolve: () => void;
+    reject: (err: unknown) => void;
+  }[] = [];
+
+  /** Hold every subsequent single-document write until released. */
+  deferWrites(): void {
+    this.deferringWrites = true;
+  }
+
+  /** Stop holding NEW writes. Already-held ones stay held. */
+  resumeWrites(): void {
+    this.deferringWrites = false;
+  }
+
+  /** Paths of the writes currently held, in the order they were issued. */
+  get pendingWrites(): readonly string[] {
+    return this.deferredWrites.map((d) => d.path);
+  }
+
+  /**
+   * Land one held write by position in issue order (default: the oldest).
+   * Returns false when there is nothing at that index, so a test can't
+   * silently assert against an interleaving that never happened.
+   *
+   * A write whose effect throws (`updateDoc` on a missing document) is
+   * delivered as a rejection rather than escaping here, because that is
+   * what the real SDK surface does with it.
+   */
+  releaseWrite(index = 0): boolean {
+    const entry = this.deferredWrites[index];
+    if (!entry) return false;
+    this.deferredWrites.splice(index, 1);
+    try {
+      entry.apply();
+      entry.resolve();
+    } catch (e) {
+      entry.reject(e);
+    }
+    return true;
+  }
+
+  /**
+   * Fail one held write instead of landing it, by position in issue
+   * order. The store is left untouched — a rejected write did not happen.
+   *
+   * `failNextFirestore` cannot express this: it fires at ISSUE time, so
+   * the write rejects before it is ever in flight. The bug shapes that
+   * need this one are the late failures — a write that was accepted into
+   * flight and only THEN failed, with the caller having already moved on.
+   */
+  rejectWrite(index = 0, code = "unavailable"): boolean {
+    const entry = this.deferredWrites[index];
+    if (!entry) return false;
+    this.deferredWrites.splice(index, 1);
+    entry.reject(new FakeFirestoreError(code));
+    return true;
+  }
+
+  /** Land everything still held, oldest first. */
+  releaseAllWrites(): void {
+    while (this.releaseWrite()) {
+      /* drain */
+    }
+  }
+
+  /**
+   * Wrap a write so it lands only when released. Called by the SDK
+   * surface. When not deferring the effect runs immediately, so the
+   * default behaviour is unchanged.
+   */
+  maybeDeferWrite(path: string, apply: () => void): Promise<void> {
+    if (!this.deferringWrites) {
+      apply();
+      return Promise.resolve();
+    }
+    return new Promise<void>((resolve, reject) => {
+      this.deferredWrites.push({ path, apply, resolve, reject });
+    });
+  }
+
+  /**
+   * Settle held writes for `reset` by REJECTING them.
+   *
+   * All three options here are wrong in different ways, so the reasoning
+   * matters:
+   *
+   *   - RELEASING repopulates the store `reset` is about to clear.
+   *   - DROPPING leaves a test awaiting a promise that never settles,
+   *     which fails as a suite timeout instead of a usable message.
+   *   - RESOLVING (what this did first) is the subtle one, and it
+   *     recreates exactly the leak class this fake exists to expose. The
+   *     abandoned caller resumes during the NEXT test and carries on with
+   *     the rest of its work — issuing its remaining writes into the
+   *     freshly-cleared store. That test then fails on a `writeLog()` /
+   *     `allPaths()` / `readDoc()` assertion naming a document it never
+   *     wrote, with the failure reported against the innocent test rather
+   *     than the one that leaked. CI-only, unreproducible locally: the
+   *     same shape that cost the reminder suites two speculative fixes
+   *     and 56 diagnostic runs.
+   *
+   * Rejecting propagates into the abandoned caller and stops it AT the
+   * await, so it cannot go on to write. If nothing was handling that
+   * promise the rejection surfaces as an unhandled rejection — which is
+   * the correct outcome: it is loud, and it names the test that left a
+   * write in flight instead of the one that inherits the mess.
+   *
+   * A test that legitimately holds writes should release them
+   * (`releaseAllWrites()`) or fail them (`rejectWrite()`) before it ends.
+   */
+  private settleDeferredWrites(): void {
+    const held = this.deferredWrites.splice(0, this.deferredWrites.length);
+    for (const entry of held) {
+      entry.reject(
+        new FakeFirestoreError(
+          "aborted",
+          `[firestoreFake] the write to ${entry.path} was still held when ` +
+            `reset() ran. Release (releaseAllWrites) or fail (rejectWrite) ` +
+            `held writes before the test ends — a write left in flight ` +
+            `resumes inside the NEXT test.`
+        )
+      );
+    }
   }
 
   /**
