@@ -28,13 +28,34 @@ const spacesCleanup = require("./lib/spacesCleanup");
 const deletedAccountsTombstone = require("./lib/deletedAccountsTombstone");
 const pushTokenOwnership = require("./lib/pushTokenOwnership");
 
+/**
+ * Every subcollection under users/{uid}.
+ *
+ * A Firestore document delete does NOT cascade, so anything absent here
+ * survives the account it belonged to — permanently, and invisibly,
+ * because the executor reports success either way.
+ *
+ * This list was hand-maintained and had drifted badly by 2026-08-10: it
+ * swept five names that never existed as collections (`weights`, `water`,
+ * `bodyweight`, `favorites`, `preferences` — the first three are CSV
+ * export keys and analytics card labels, not paths) while MISSING
+ * thirteen real ones, including `privacyZones`, which stores the GPS
+ * privacy zones a user draws around their home and workplace.
+ *
+ * The names below are now checked against the ones the app actually
+ * writes — see `accountDeletionSubcollections.test.js`, which derives the
+ * real set from src/ and functions/ and fails when this list omits one.
+ * A hand-kept list of path strings is precisely the kind of copy that
+ * rots, and the old drift guard could not catch it: it iterated THIS
+ * constant and asserted each entry was queried, so it could only detect a
+ * broken loop, never a missing collection.
+ */
 const USER_SUBCOLLECTIONS = Object.freeze([
   "meals",
   "workouts",
   "runs",
-  "weights",
-  "water",
-  "bodyweight",
+  "bodyweightLogs",
+  "waterLog",
   "progressPhotos",
   // Progress Vault check-ins (users/{uid}/progressCheckins, BODY-VAULT-01).
   // Owner-only date/note groupings that REFERENCE progressPhotos ids —
@@ -42,43 +63,48 @@ const USER_SUBCOLLECTIONS = Object.freeze([
   // orphan on account deletion (the photo docs + Storage blobs are already
   // swept via progressPhotos above and the storage prefix sweep).
   "progressCheckins",
-  "favorites",
-  "preferences",
+  "foodFavourites",
   // Saved routes (users/{uid}/savedRoutes) — follow-a-route library. Enumerated
   // here so a user's saved routes don't orphan when the account is deleted.
   "savedRoutes",
+  "savedRoutines",
+  "shoes",
+  // GPS privacy zones — the circles a user draws around home and work so
+  // routes are trimmed before sharing. The most sensitive thing in the
+  // tree, and it was orphaning on every deletion.
+  "privacyZones",
   // FCM device tokens (push #961). The executor enumerates rather than
   // recursing, and deleting users/{uid} does NOT cascade to its
   // subcollections — without this, device-token docs orphan under a
   // deleted user. Sign-out deletes the current device's token, but the
   // freeze blocks that during deletion and other devices aren't covered.
+  // Server-owned now: the client stopped writing it directly (see
+  // src/lib/pushNotifications.ts), so it appears in no client path.
   "devices",
   // Lifetime-aggregate counters + per-source idempotency markers (server-
   // owned badge state — century_km / tonnage_100). Same enumerate-not-recurse
   // reason as above: these docs orphan under a deleted user without an entry.
   "lifetime",
-  // Per-day macro-target snapshots (users/{uid}/dailyNutrition/{date}) backing
-  // the target-dependent nutrition badges. Enumerate-not-recurse, so without
-  // this entry a user's daily snapshots orphan on account deletion.
   "dailyNutrition",
-  // Weekly Momentum Check-ins (users/{uid}/checkins/{weekKey}, CHECKIN-01).
-  // Owner-only private reflections — enumerate-not-recurse, so without this
-  // entry a user's check-in answers orphan on account deletion.
   "checkins",
-  // Training Blocks (users/{uid}/trainingBlocks/{blockId}, PROGRAM-BLOCK-01).
-  // Owner-only private block layer — enumerate-not-recurse, so without this
-  // entry a user's blocks orphan on account deletion.
   "trainingBlocks",
-  // Private goal Journeys (users/{uid}/journeys, GOALS-CORE-01).
-  // Membership/event/counter cleanup happens FIRST in the dedicated
-  // goal_spaces step (lib/goalSpaceCleanup enumerates memberships from
-  // these docs, so it must run before this sweep deletes them); this
-  // entry then catches any journey the cleanup skipped.
   "journeys",
-  // Weekly nutrition-consistency commitments
-  // (users/{uid}/nutritionCommitments, NUTR-CONSISTENCY-01).
-  // Enumerate-not-recurse, same as checkins.
   "nutritionCommitments",
+  // Weekly performance docs — PI, load band, deload flag, signals.
+  "performance",
+  // The programme itself (users/{uid}/programState/current) plus every
+  // settings doc: reminders, run plan, notification prefs.
+  "programState",
+  "settings",
+  "streaks",
+  // The cross-user-readable projection. `public/profile` is ALSO deleted
+  // explicitly further down; sweeping the whole subcollection supersedes
+  // that and covers any sibling doc added later.
+  "public",
+  // Client-reported errors and diagnostic logs — user-generated content
+  // under the user's own tree, so erasure has to include them.
+  "errors",
+  "logs",
 ]);
 
 // `kudos` is excluded — author-keyed top-level docs are handled by
@@ -446,6 +472,17 @@ async function deleteAccount({
     // block the rest of the flow.
     await firestore
       .doc(`users/${uid}/public/profile`)
+      .delete()
+      .catch(() => {});
+
+    // 4b. Top-level collections keyed BY uid rather than nested under it,
+    // so the users/{uid} sweep above cannot reach them. `scanUsage/{uid}`
+    // holds the AI food-scan quota counter (see functions/lib/aiScanQuota
+    // .js) and was orphaning on every deletion. `rateLimits` is already
+    // covered by its own range sweep. Same `.catch(() => {})` reasoning as
+    // the profile delete: a user who never scanned has no doc.
+    await firestore
+      .doc(`scanUsage/${uid}`)
       .delete()
       .catch(() => {});
 
