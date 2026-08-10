@@ -19,6 +19,7 @@ import {
 } from "./chartStyles";
 import ChartAreaGradient from "./ChartAreaGradient";
 import { formatDayMonth } from "@/utils/formatters";
+import { resolveLoadBand } from "@/lib/performanceDocFields";
 
 interface Props {
   weeks: PerformanceWeekDoc[];
@@ -31,7 +32,7 @@ export default function PerformanceIndexChart({ weeks }: Props) {
     liftLoad: d.breakdown.liftLoadScore,
     runLoad: d.breakdown.runLoadScore,
     recovery: d.breakdown.recoveryScore,
-    band: d.labels?.loadBand || d.loadBand,
+    band: resolveLoadBand(d),
   }));
 
   if (data.length === 0) return null;

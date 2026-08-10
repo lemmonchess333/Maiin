@@ -6,6 +6,10 @@ import { useCountUp } from "@/hooks/useCountUp";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import { getCardColour } from "@/lib/performanceColour";
+import {
+  resolveLoadBand,
+  resolveDeloadRecommended,
+} from "@/lib/performanceDocFields";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
   getVerb,
@@ -13,7 +17,7 @@ import {
   EMPTY_STATE_LINE,
   type VerbState,
 } from "@/lib/performanceLine";
-import type { LoadBand, PerformanceWeekDoc } from "@/lib/performanceTypes";
+import type { PerformanceWeekDoc } from "@/lib/performanceTypes";
 
 interface PerformanceHeroCardProps {
   /** Most recent week's perf doc, or null when no rollup exists yet. */
@@ -158,9 +162,13 @@ export default function PerformanceHeroCard({
      difference is the delta chip (hidden when low-confidence) and
      the line text (getLine handles sparse-data variants via
      signals.lifetimeWeeks / daysSinceLastTraining). */
-  const loadBand = (currentWeek.labels?.loadBand ??
-    currentWeek.loadBand) as LoadBand;
-  const deloadRecommended = currentWeek.flags?.deloadRecommended ?? false;
+  // Shared canonical read (see performanceDocFields.ts) — this surface was
+  // already correct; routing it through the resolver is what keeps it and
+  // Analytics from drifting apart again.
+  const loadBand = resolveLoadBand(currentWeek);
+  /* Was `flags?.deloadRecommended ?? false` — a map no writer emits, so
+     the deload verb + amber card state never fired for anyone. */
+  const deloadRecommended = resolveDeloadRecommended(currentWeek);
   const verb = getVerb(loadBand, deloadRecommended);
   const { hue, glowIntensity } = getCardColour(pi, loadBand, deloadRecommended);
   const line = getLine(verb.state, currentWeek.signals);
