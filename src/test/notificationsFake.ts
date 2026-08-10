@@ -53,6 +53,24 @@ export class NotificationsFake {
    */
   private epoch = 0;
   /**
+   * Activity counters, for `settleNotifications`.
+   *
+   * The reschedule effects are async passes with up to fourteen await
+   * points, so "has this test's work finished?" is not answerable by
+   * looking at the schedule — an empty schedule is equally consistent
+   * with "done" and "hasn't got there yet". Draining a FIXED number of
+   * microtask turns and hoping was the previous answer, and a fixed
+   * number is a guess about someone else's control flow.
+   *
+   * `inFlight` counts calls currently suspended; `totalCalls` only ever
+   * rises. Quiescence is both together: nothing suspended, and nothing
+   * new started across a drain. That is checkable rather than assumed,
+   * and when it does NOT hold the harness can say so instead of leaving
+   * a pass to surface in whichever test runs next.
+   */
+  private inFlight = 0;
+  private totalCalls = 0;
+  /**
    * Which generation each id was written in. Purely diagnostic: when a
    * leak DOES happen, the failure can say whether the write came from the
    * current test or a previous one, instead of leaving the next person to
@@ -90,29 +108,46 @@ export class NotificationsFake {
   }
 
   async schedule_(payload: NotificationPayload): Promise<boolean> {
-    const startedIn = this.epoch;
-    this.writeEpochs.set(payload.id, this.epoch);
-    // Park BEFORE any state change, so a deferred pass is suspended
-    // exactly where a real in-flight OS call would be.
-    if (this.scheduleGate) await this.scheduleGate;
-    // A pass that spanned a reset belongs to a finished test.
-    if (this.epoch !== startedIn) return false;
-    // Denied permission is a soft failure in the real module too: it
-    // returns false rather than throwing, and nothing is scheduled.
-    if (this.permission !== "granted") return false;
-    if (this.failAll || this.failIds.has(payload.id)) {
-      this.failIds.delete(payload.id);
-      return false;
+    this.inFlight += 1;
+    this.totalCalls += 1;
+    try {
+      const startedIn = this.epoch;
+      this.writeEpochs.set(payload.id, this.epoch);
+      // Park BEFORE any state change, so a deferred pass is suspended
+      // exactly where a real in-flight OS call would be.
+      if (this.scheduleGate) await this.scheduleGate;
+      // A pass that spanned a reset belongs to a finished test.
+      //
+      // Note what this does NOT cover, because the comment on `epoch`
+      // used to imply otherwise: with no gate installed there is no
+      // suspension point above, so `startedIn` is always the current
+      // epoch and this check cannot fire. It guards the DEFERRED case
+      // only. Cross-test leakage in the ordinary case is prevented by
+      // `settleNotifications` in the harness — by making sure no pass is
+      // still running when a test ends, rather than by catching one that
+      // is.
+      if (this.epoch !== startedIn) return false;
+      // Denied permission is a soft failure in the real module too: it
+      // returns false rather than throwing, and nothing is scheduled.
+      if (this.permission !== "granted") return false;
+      if (this.failAll || this.failIds.has(payload.id)) {
+        this.failIds.delete(payload.id);
+        return false;
+      }
+      this.schedule.set(payload.id, { ...payload });
+      return true;
+    } finally {
+      this.inFlight -= 1;
     }
-    this.schedule.set(payload.id, { ...payload });
-    return true;
   }
 
   async cancel(id: number): Promise<void> {
+    this.totalCalls += 1;
     this.schedule.delete(id);
   }
 
   async cancelAll(): Promise<void> {
+    this.totalCalls += 1;
     this.schedule.clear();
   }
 
@@ -139,6 +174,16 @@ export class NotificationsFake {
 
   ids(): number[] {
     return this.all().map((p) => p.id);
+  }
+
+  /** Calls currently suspended, and the monotonic total ever issued. */
+  activity(): { inFlight: number; totalCalls: number } {
+    return { inFlight: this.inFlight, totalCalls: this.totalCalls };
+  }
+
+  /** True while a `deferSchedules` gate is holding passes. */
+  get gated(): boolean {
+    return this.scheduleGate !== null;
   }
 
   /** Current generation, and the generation each scheduled id came from. */
