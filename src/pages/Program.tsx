@@ -100,6 +100,7 @@ import RecoveryReductionBanner from "@/components/program/RecoveryReductionBanne
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { resolveRunPlan } from "@/lib/runPlanResolver";
 import { runHeaderLine } from "@/lib/runHeaderLine";
+import { resolveDeloadRecommended } from "@/lib/performanceDocFields";
 
 /**
  * IMPORTANT:
@@ -642,7 +643,7 @@ function ProgramInner() {
       hardRunYesterday,
       lowerBodyDay: isLowerBodyDay(day),
       recoveringMuscles: recoveringTargetMuscles(day, entries),
-      deloadRecommended: !!perfWeek?.flags?.deloadRecommended,
+      deloadRecommended: resolveDeloadRecommended(perfWeek),
     });
   }, [
     expressChooserDay,
@@ -1062,7 +1063,7 @@ function ProgramInner() {
                 reopens on a new week if the signal still applies. */}
           <TrackProgrammeSectionView section="deload_banner">
             <DeloadBanner
-              visible={!!perfWeek?.flags?.deloadRecommended}
+              visible={resolveDeloadRecommended(perfWeek)}
               weekKey={`w${displayWeekNumber}`}
               deloadActive={programState.currentPhase === "deload"}
               experience={profile?.experience}
