@@ -1532,10 +1532,12 @@ export default function RunSummary() {
               <p className="text-xs text-muted-foreground mt-0.5">time</p>
             </div>
             <div className="p-3 rounded-xl bg-card text-center card-shadow">
-              <p
-                className="text-2xl font-bold font-mono tabular-nums"
-                style={{ color: THEME.teal }}
-              >
+              {/* Tokenised (was `style={{ color: THEME.teal }}`). The JS THEME
+                  constants are STATIC, so an inline hex cannot respond to the
+                  theme: #52A3BD measured 2.86:1 on the light card, under the
+                  3:1 WCAG AA floor for large text. `text-teal` resolves the
+                  theme-aware token (5.68:1 light / 6.08:1 dark). */}
+              <p className="text-2xl font-bold font-mono tabular-nums text-teal">
                 {avgPace}
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">/km pace</p>
@@ -1543,10 +1545,11 @@ export default function RunSummary() {
           </div>
           <div className="grid grid-cols-2 gap-3 px-4 mb-4">
             <div className="p-3 rounded-xl bg-card text-center card-shadow">
-              <p
-                className="text-lg font-bold font-mono tabular-nums"
-                style={{ color: THEME.success }}
-              >
+              {/* Same fix, and here the correct token ALREADY existed:
+                  `--success` is theme-aware (5.07:1 light / 9.33:1 dark) while
+                  the static THEME.success (#4DB872) this used measured
+                  2.50:1 on the light card. */}
+              <p className="text-lg font-bold font-mono tabular-nums text-success">
                 {calories}
               </p>
               <p className="text-xs text-muted-foreground">calories</p>
