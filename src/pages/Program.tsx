@@ -17,7 +17,10 @@ import type { ProgrammeWeekSelectorCell } from "@/components/program/ProgrammeWe
 import SessionCommandCard from "@/components/program/SessionCommandCard";
 import TrainingBlockCard from "@/components/program/TrainingBlockCard";
 import ExperienceSuggestionCard from "@/components/program/ExperienceSuggestionCard";
-import { blockOfferBlockedByRace } from "@/features/program/represcribe";
+import {
+  blockOfferBlockedByRace,
+  blockPrefersShorterSessions,
+} from "@/features/program/represcribe";
 import { THEME } from "@/lib/theme";
 import WeekPhaseRow from "@/components/program/WeekPhaseRow";
 import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
@@ -160,6 +163,7 @@ function ProgramInner() {
     revertDeloadWeek,
     undoRecoveryReduction,
     startTrainingBlock,
+    adoptLegacyTrainingBlock,
     releaseTrainingBlock,
     keepTrainingBlockFocus,
   } = useProgram();
@@ -1238,6 +1242,7 @@ function ProgramInner() {
                             today: localDateString(),
                           })}
                           onStart={startTrainingBlock}
+                          onAdoptLegacy={adoptLegacyTrainingBlock}
                           onRelease={releaseTrainingBlock}
                           onKeepFocus={keepTrainingBlockFocus}
                         />
@@ -1697,7 +1702,13 @@ function ProgramInner() {
       {activeTab === "lift" && (
         <WeeklyVolumeCard
           workouts={displayWorkouts}
-          primaryGoal={profile?.primaryGoal}
+          // Blk2 / M4: the programState copy, which is what a block owns
+          // and what balanceWeeklyVolume already targets. Reading the
+          // profile copy painted a "Get stronger" block's week against the
+          // PRE-block band — "below target · 12-20/week" for volume the
+          // block deliberately chose, under a header reading
+          // "Built for Strength".
+          primaryGoal={programState.primaryGoal ?? profile?.primaryGoal}
         />
       )}
 
@@ -1847,6 +1858,9 @@ function ProgramInner() {
             ? pickLighterDay(programState.workouts, expressChooserDay)
             : null
         }
+        blockPrefersShorter={blockPrefersShorterSessions(
+          programState.trainingBlock
+        )}
         onSwapToDay={(index) => {
           setExpressChooserDay(null);
           setSessionVariant("full");

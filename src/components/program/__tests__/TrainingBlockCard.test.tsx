@@ -24,10 +24,12 @@ vi.mock("react-router-dom", async (importOriginal) => {
 });
 
 const archiveBlockMock = vi.fn(async (_block: unknown) => true);
+/** Archive rows the hook reports — set per test for the adoption cases. */
+const archiveRows: { current: unknown[] } = { current: [] };
 vi.mock("@/features/program/useTrainingBlock", () => ({
   useTrainingBlock: () => ({
     loading: false,
-    blocks: [],
+    blocks: archiveRows.current,
     archiveBlock: (block: unknown) => archiveBlockMock(block),
     loadReviewWorkouts: vi.fn(async () => []),
   }),
@@ -41,6 +43,7 @@ import { blockEndDate } from "@/features/program/trainingBlock";
 const onStart = vi.fn(async (_input: unknown) => true);
 const onRelease = vi.fn(async () => true);
 const onKeepFocus = vi.fn(async () => true);
+const onAdoptLegacy = vi.fn(async (_legacy: unknown) => true);
 
 function localToday(): string {
   const n = new Date();
@@ -81,6 +84,7 @@ function renderCard(
         mainCompoundIds={[]}
         trainingWhy=""
         onStart={onStart}
+        onAdoptLegacy={onAdoptLegacy}
         onRelease={onRelease}
         onKeepFocus={onKeepFocus}
         {...over}
@@ -91,6 +95,60 @@ function renderCard(
 
 beforeEach(() => {
   vi.clearAllMocks();
+  archiveRows.current = [];
+});
+
+describe("TrainingBlockCard (Blk2) — legacy adoption", () => {
+  // Blk2 moved the active block onto programState. A user who had one open
+  // when it shipped has an archive row saying status:"active" and no live
+  // block, so without adoption this card offers "Start a training block" to
+  // someone who already has one running — their block silently vanished.
+  const legacyRow = (over: Record<string, unknown> = {}) => ({
+    id: "2026-07-06-strength_foundation",
+    preset: "strength_foundation",
+    title: "Strength Foundation",
+    startDate: localToday(),
+    durationWeeks: 8,
+    weeklyLiftTarget: 3,
+    anchorExerciseIds: [],
+    why: "",
+    status: "active",
+    createdAt: 42,
+    ...over,
+  });
+
+  it("adopts an open legacy block exactly once", async () => {
+    archiveRows.current = [legacyRow()];
+    renderCard({ block: undefined });
+    await waitFor(() => expect(onAdoptLegacy).toHaveBeenCalledTimes(1));
+    expect((onAdoptLegacy.mock.calls[0][0] as { id: string }).id).toBe(
+      "2026-07-06-strength_foundation"
+    );
+  });
+
+  it("does not adopt when a live block already exists", async () => {
+    archiveRows.current = [legacyRow()];
+    renderCard({ block: activeBlock() });
+    await waitFor(() => expect(screen.getByText(/Get stronger/)).toBeVisible());
+    expect(onAdoptLegacy).not.toHaveBeenCalled();
+  });
+
+  it("does not resurrect a legacy block whose window has already elapsed", async () => {
+    // An elapsed block is history. Adopting it would re-open something the
+    // user finished weeks ago.
+    archiveRows.current = [legacyRow({ startDate: "2020-01-06" })];
+    renderCard({ block: undefined });
+    await waitFor(() =>
+      expect(screen.getByText("Start a training block")).toBeVisible()
+    );
+    expect(onAdoptLegacy).not.toHaveBeenCalled();
+  });
+
+  it("does not adopt for a run-only athlete", async () => {
+    archiveRows.current = [legacyRow()];
+    renderCard({ block: undefined, liftDaysPerWeek: 0 });
+    await waitFor(() => expect(onAdoptLegacy).not.toHaveBeenCalled());
+  });
 });
 
 describe("TrainingBlockCard (Blk2) — the create moment", () => {

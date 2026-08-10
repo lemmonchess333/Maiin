@@ -575,10 +575,22 @@ export default function ProgrammeSettings({
     setSaving(true);
     try {
       const plan = buildPlan({
-        // Blk2: a block owns the focus, so it wins over the draft. buildPlan
-        // pins this again from the carried block, but threading it here
-        // keeps the payload honest rather than relying on a downstream fix.
-        primaryGoal: activeBlockFocus ?? primaryGoal,
+        // Blk2 / H2. Pass the STANDING focus, never the block's.
+        //
+        // This read `activeBlockFocus ?? primaryGoal`, which looked like it
+        // was keeping programState honest — but `buildProfileUpdates` writes
+        // `primaryGoal: input.primaryGoal` into the PROFILE unconditionally,
+        // so one injury edit during a block overwrote the user's standing
+        // focus with the block's. After release the two copies diverged
+        // permanently, and the next block captured the wrong `goalBefore`,
+        // compounding it. It also falsified the invariant useProgram states
+        // in writing: the profile holds the STANDING focus and the block
+        // never writes it.
+        //
+        // Nothing is lost by dropping it: `buildPlan` already pins
+        // `programState.primaryGoal` from the carried block, so ownership
+        // needs no profile write at all.
+        primaryGoal,
         nutritionPhase,
         experience,
         // Without this a level change is invisible to the builder — it
