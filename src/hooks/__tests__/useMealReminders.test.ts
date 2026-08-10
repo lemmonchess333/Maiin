@@ -49,6 +49,8 @@ import {
   scheduledIds,
   scheduledAt,
   setNotificationPermission,
+  deferSchedules,
+  releaseSchedules,
 } from "@/test/notificationsHarness";
 
 const BREAKFAST = 1001;
@@ -223,5 +225,53 @@ describe("settings persistence", () => {
     const { result } = renderHook(() => useMealRemindersInternal());
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(scheduledIds()).toEqual([]);
+  });
+});
+
+describe("a pass that loses its race writes nothing", () => {
+  /**
+   * The meal half of the same fix as useWorkoutReminders — pinned here
+   * rather than assumed from there. The two hooks are copies of one
+   * shape, and CLAUDE.md's first recurring-mistake rule is that the
+   * tested copy does not prove the running copy: when the workout guard
+   * was mutated away, only the workout test failed, and this hook would
+   * have kept the bug with a green suite.
+   *
+   * The pass is parked mid-flight so teardown lands while a schedule call
+   * is genuinely out. Asserting an empty schedule after a plain unmount
+   * would be satisfied at t=0 and prove nothing.
+   */
+  it("stops scheduling as soon as the effect is torn down", async () => {
+    seedFirestore({ [PATH]: ALL_ON });
+    deferSchedules();
+
+    const { result, unmount } = renderHook(() => useMealRemindersInternal());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() => expect(result.current.reminders.enabled).toBe(true));
+
+    unmount();
+    releaseSchedules();
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(scheduledIds()).toEqual([]);
+  });
+
+  it("the same pass DOES schedule when it is not torn down", async () => {
+    /* The control — without it the assertion above is satisfied by a hook
+       broken badly enough to schedule nothing at all. */
+    seedFirestore({ [PATH]: ALL_ON });
+    deferSchedules();
+
+    const { result } = renderHook(() => useMealRemindersInternal());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() => expect(result.current.reminders.enabled).toBe(true));
+
+    releaseSchedules();
+    await waitFor(() =>
+      expect(scheduledIds()).toEqual([BREAKFAST, LUNCH, DINNER])
+    );
   });
 });
