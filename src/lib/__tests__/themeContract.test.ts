@@ -219,12 +219,13 @@ describe("Nutrition domain-colour token contract — --nutrition / --nutrition-s
   const rootBlock = block(":root");
   const darkBlock = block(".dark");
 
-  it("@theme exposes --color-nutrition and --color-nutrition-strong", () => {
+  it("@theme exposes --color-nutrition, --color-nutrition-fill and --color-nutrition-strong", () => {
     expect(themeBlock).toMatch(/--color-nutrition\s*:/);
+    expect(themeBlock).toMatch(/--color-nutrition-fill\s*:/);
     expect(themeBlock).toMatch(/--color-nutrition-strong\s*:/);
   });
 
-  for (const name of ["--nutrition", "--nutrition-strong"]) {
+  for (const name of ["--nutrition", "--nutrition-fill", "--nutrition-strong"]) {
     it(`:root defines ${name}`, () => {
       expect(rootBlock).toMatch(
         new RegExp(`${name.replace(/-/g, "\\-")}\\s*:`)
@@ -237,17 +238,46 @@ describe("Nutrition domain-colour token contract — --nutrition / --nutrition-s
     });
   }
 
+  const valueOf = (block: string, name: string) =>
+    new RegExp(`${name.replace(/-/g, "\\-")}\\s*:\\s*([^;]+);`)
+      .exec(block)?.[1]
+      .trim();
+
   // Fixed domain identity — orange is the SAME in light + dark, like the
   // sport colours. A future agent must not silently theme-split it.
-  for (const name of ["--nutrition", "--nutrition-strong"]) {
+  //
+  // `--nutrition-fill` joins it: it sits UNDER white text, so it has to
+  // stay dark on both themes; there is no theme in which a light fill is
+  // correct for white type.
+  for (const name of ["--nutrition", "--nutrition-fill"]) {
     it(`${name} is identical in :root and .dark (fixed domain colour)`, () => {
-      const re = new RegExp(`${name.replace(/-/g, "\\-")}\\s*:\\s*([^;]+);`);
-      const r = re.exec(rootBlock)?.[1].trim();
-      const d = re.exec(darkBlock)?.[1].trim();
+      const r = valueOf(rootBlock, name);
       expect(r).toBeTruthy();
-      expect(d).toBe(r);
+      expect(valueOf(darkBlock, name)).toBe(r);
     });
   }
+
+  /**
+   * `--nutrition-strong` is the OPPOSITE contract, and it used to be in
+   * the fixed list above by mistake.
+   *
+   * It is the AA step for orange TEXT ON a light tint, so its requirement
+   * inverts with the surface: dark orange on a white card, light orange on
+   * a near-black one. Holding it fixed pinned the light-mode value into
+   * dark mode, where `bg-nutrition/10 text-nutrition-strong` measured
+   * 2.44:1 — below even the 3:1 non-text floor. The app's own
+   * `useMacroPalette` already switched orange text back to the identity in
+   * dark mode (`text = accent`), so the token and the hook disagreed about
+   * the same question.
+   *
+   * The difference between the two blocks IS the contract now: collapsing
+   * them back to one value reintroduces the bug.
+   */
+  it("--nutrition-strong is THEME-AWARE (it is a text step, not a fill)", () => {
+    const r = valueOf(rootBlock, "--nutrition-strong");
+    expect(r).toBeTruthy();
+    expect(valueOf(darkBlock, "--nutrition-strong")).not.toBe(r);
+  });
 });
 
 describe("Sprint 0 theme contract — tokens.css bridges legacy --ds-* to semantic variables", () => {

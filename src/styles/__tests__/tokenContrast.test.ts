@@ -76,6 +76,19 @@ const AA_NORMAL = 4.5;
 const AA_LARGE = 3;
 
 /**
+ * The surfaces a tinted control can actually sit on.
+ *
+ * `--background` is the one that keeps getting forgotten, and it is the
+ * WORST case in light mode (93% vs the card's 100%). It is not
+ * hypothetical: `RunDetail.tsx` and `RunSummary.tsx` render
+ * `variant="sport-tinted"` buttons as direct children of the page stack,
+ * as siblings of `bg-card` blocks rather than inside one. Checking only
+ * card + muted is what let `--running-strong` (4.16:1) and
+ * `--lifting-strong` (4.18:1) ship believing they cleared AA.
+ */
+const TINT_SURFACES = ["card", "muted", "background"] as const;
+
+/**
  * Each token is held to the bar its ACTUAL USE requires — a single
  * blanket rule would be dishonest here:
  *
@@ -136,10 +149,12 @@ describe("token contrast — text tokens on the card surface", () => {
    * both themes — the plain-card check alone would miss it. Composite the
    * 10% tint over the card and re-measure.
    */
-  /* Both sport identities, on both themes, over BOTH surfaces a tinted
-     chip can sit on. `--card` alone is not enough: `--muted` is the darker
-     raised tile, and it was the muted surface that failed first for
-     purple (3.70:1 in dark). */
+  /* Both sport identities, on both themes, over EVERY surface a tinted
+     chip can sit on. `--card` alone is not enough: `--muted` is the raised
+     tile (it failed first for purple, 3.70:1 in dark) and `--background`
+     is the page canvas, which is darker still in light mode — that one
+     failed BOTH sport steps at 4.16 / 4.18:1 and is why they were retuned
+     on 2026-08-10. See TINT_SURFACES for why the canvas counts. */
   it.each([
     ["light", "running"],
     ["dark", "running"],
@@ -149,7 +164,7 @@ describe("token contrast — text tokens on the card surface", () => {
     const block = theme === "light" ? lightBlock() : darkBlock();
     const tint = hslToRgb(...readHsl(block, sport));
     const fg = hslToRgb(...readHsl(block, `${sport}-strong`));
-    for (const surface of ["card", "muted"] as const) {
+    for (const surface of TINT_SURFACES) {
       const bg = hslToRgb(...readHsl(block, surface));
       const chip = bg.map((c, i) => 0.1 * tint[i] + 0.9 * c) as [
         number,
@@ -175,6 +190,134 @@ describe("token contrast — text tokens on the card surface", () => {
         `--${token} must differ between themes`
       ).not.toEqual(readHsl(darkBlock(), token));
     }
+  });
+});
+
+/**
+ * Every Button variant's own label, measured from the classes it SHIPS.
+ *
+ * The block above pins tokens. This one pins the pairing, and it reads the
+ * pairing out of `buttonClasses()` rather than a table copied beside it —
+ * so a new variant, or a foreground swapped on an existing one, is
+ * measured automatically instead of quietly escaping the suite. (The
+ * hand-copied-table version of this check is what CLAUDE.md calls "the
+ * tested copy does not prove the running copy".)
+ *
+ * What it found on 2026-08-10, when the tinted variants were first
+ * measured as TEXT rather than as icons — worst case across the three
+ * surfaces, both themes:
+ *
+ *   sport-tinted        2.74:1   text-running     → --running-strong
+ *   destructive-tinted  3.44:1   text-destructive → --destructive-strong
+ *   nutrition-tinted    2.44:1   dark mode, fill value used as text
+ *
+ * All three render `text-sm`/`text-xs` labels, so 4.5:1 is the bar, not
+ * the 3:1 non-text bar an icon-only reading would have applied.
+ */
+const BUTTON_VARIANTS = [
+  "primary",
+  "secondary",
+  "destructive",
+  "destructive-tinted",
+  "ghost",
+  "outline",
+  "sport",
+  "sport-tinted",
+  "nutrition",
+  "nutrition-tinted",
+] as const;
+
+/**
+ * `sport` is the one variant held BELOW the normal-text bar, and it is
+ * recorded here rather than waved through.
+ *
+ * `bg-running text-white` measures 3.58:1 in both themes. That is the
+ * fixed coral identity under white — the number cannot move without
+ * moving the running brand colour, which CLAUDE.md explicitly protects
+ * ("Keep the existing colour scheme … should not be changed") and which
+ * is an owner decision, not a test's. Pinning it at its MEASURED value
+ * means the gap is visible and cannot silently widen; it is not an
+ * endorsement. Fixing it properly means either a darker coral fill for
+ * filled CTAs (a `--running-fill` step, the shape `--nutrition-fill`
+ * takes) or accepting large-text-only use.
+ */
+const KNOWN_BELOW_AA: Record<string, number> = { sport: 3.55 };
+
+function tokenRgb(
+  block: string,
+  name: string
+): [number, number, number] | null {
+  if (name === "white") return [1, 1, 1];
+  try {
+    return hslToRgb(...readHsl(block, name));
+  } catch {
+    return null;
+  }
+}
+
+describe("Button variants — the label clears AA on its own surface", () => {
+  it.each(
+    BUTTON_VARIANTS.flatMap((variant) =>
+      (["light", "dark"] as const).map((theme) => ({ variant, theme }))
+    )
+  )("$variant ($theme)", async ({ variant, theme }) => {
+    const { buttonClasses } = await import("@/components/ui/buttonClasses");
+    const classes = buttonClasses({ variant }).split(/\s+/);
+    const block = theme === "light" ? lightBlock() : darkBlock();
+
+    // `text-sm` / `text-xs` / `text-base` are FONT SIZES sharing the
+    // `text-` prefix. Excluding them by name is deliberate: matching the
+    // first `text-` would silently read the size class the day someone
+    // reorders `cn()`'s arguments.
+    const SIZE_WORDS = new Set(["xs", "sm", "base", "lg", "xl"]);
+    const fgClass = classes.find(
+      (c) => c.startsWith("text-") && !SIZE_WORDS.has(c.slice("text-".length))
+    );
+    expect(fgClass, `${variant} has no text-colour class`).toBeTruthy();
+    const fg = tokenRgb(block, fgClass!.slice("text-".length));
+    expect(fg, `${variant}: ${fgClass} is not a colour token`).toBeTruthy();
+
+    const bgClass = classes.find((c) => c.startsWith("bg-"));
+    expect(bgClass, `${variant} has no bg- class`).toBeTruthy();
+    const [bgName, alpha] = bgClass!.slice("bg-".length).split("/");
+
+    // `bg-transparent` (ghost, outline) inherits whatever it sits on, so
+    // it is measured against every surface exactly like a tint at 0%.
+    const tint = bgName === "transparent" ? null : tokenRgb(block, bgName);
+    const mix = bgName === "transparent" ? 0 : alpha ? Number(alpha) / 100 : 1;
+    expect(
+      tint || bgName === "transparent",
+      `${variant}: ${bgClass} is not a colour token`
+    ).toBeTruthy();
+
+    const min = KNOWN_BELOW_AA[variant] ?? AA_NORMAL;
+    // A filled variant (mix === 1) has ONE background; a tint or a
+    // transparent fill takes the colour of whatever is behind it.
+    const surfaces = mix === 1 ? (["card"] as const) : TINT_SURFACES;
+    for (const surface of surfaces) {
+      const base = hslToRgb(...readHsl(block, surface));
+      const bg = (
+        mix === 1
+          ? tint!
+          : base.map((c, i) => mix * (tint ? tint[i] : c) + (1 - mix) * c)
+      ) as [number, number, number];
+      const ratio = contrast(fg!, bg);
+      expect(
+        ratio,
+        `${variant} (${theme}): ${fgClass} on ${bgClass}${
+          mix === 1 ? "" : ` over --${surface}`
+        } is ${ratio.toFixed(2)}:1, needs ${min}:1`
+      ).toBeGreaterThanOrEqual(min);
+    }
+  });
+
+  it("the sport gap is recorded at its real size, not rounded away", () => {
+    /* If someone fixes `sport`, this fails and the exception must be
+       deleted — the entry can't outlive the problem it documents. */
+    const light = lightBlock();
+    const ratio = contrast([1, 1, 1], hslToRgb(...readHsl(light, "running")));
+    expect(ratio).toBeLessThan(AA_NORMAL);
+    expect(ratio).toBeGreaterThanOrEqual(AA_LARGE);
   });
 });
 
