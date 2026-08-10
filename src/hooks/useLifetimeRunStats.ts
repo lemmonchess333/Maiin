@@ -31,6 +31,15 @@ export function useLifetimeRunStats(options?: { enabled?: boolean }) {
     totalDistanceM: 0,
   });
   const [loading, setLoading] = useState(true);
+  /**
+   * A read that FAILED is not a user with no runs, and until this existed
+   * the two were the same observable state: the catch below logged and
+   * left `runCount` at 0, which is the exact value that makes History's
+   * Tier-1 auto-hide drop the whole Running section. The user saw their
+   * running analytics silently disappear, with the only evidence in a
+   * console the app doesn't show them.
+   */
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     if (!uid || !enabled) {
@@ -42,6 +51,7 @@ export function useLifetimeRunStats(options?: { enabled?: boolean }) {
       try {
         const snap = await getDocs(collection(db, "users", uid, "runs"));
         if (cancelled) return;
+        setFailed(false);
         let total = 0;
         let count = 0;
         snap.docs.forEach((d) => {
@@ -53,6 +63,7 @@ export function useLifetimeRunStats(options?: { enabled?: boolean }) {
         setStats({ runCount: count, totalDistanceM: total });
       } catch (err) {
         logger.error("useLifetimeRunStats error:", err);
+        if (!cancelled) setFailed(true);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -62,5 +73,5 @@ export function useLifetimeRunStats(options?: { enabled?: boolean }) {
     };
   }, [uid, enabled]);
 
-  return { ...stats, loading };
+  return { ...stats, loading, failed };
 }

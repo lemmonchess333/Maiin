@@ -25,6 +25,12 @@
  */
 import type { GuidedRunWorkout, SegmentType } from "./guidedRun";
 import { paceMinSec } from "./runLabels";
+import {
+  intervalRepCue,
+  intervalRecoveryCue,
+  strideRepCue,
+  floatCue,
+} from "./runCueCopy";
 
 export type SegmentTarget =
   | { kind: "duration"; seconds: number }
@@ -98,9 +104,7 @@ function workLabel(shape: IntervalShape): string {
   return "interval";
 }
 
-export function segmentsFromIntervals(
-  shape: IntervalShape
-): SessionSegment[] {
+export function segmentsFromIntervals(shape: IntervalShape): SessionSegment[] {
   const out: SessionSegment[] = [];
   if (shape.warmupDuration) {
     out.push({
@@ -124,7 +128,7 @@ export function segmentsFromIntervals(
       rep,
       totalReps: shape.reps,
       effort: workLabel(shape),
-      cue: `Rep ${rep} of ${shape.reps}. Push on!`,
+      cue: intervalRepCue(rep, shape.reps, rep),
     });
     if (rep < shape.reps) {
       out.push({
@@ -134,7 +138,7 @@ export function segmentsFromIntervals(
         target: { kind: "duration", seconds: shape.restDuration },
         rep,
         totalReps: shape.reps,
-        cue: "Recovery. Shake it out — nice easy jog.",
+        cue: intervalRecoveryCue(rep, shape.reps, rep),
       });
     }
   }
@@ -176,7 +180,7 @@ export function segmentsFromTempo(
         label: "Float",
         instruction: `${min(shape.floatSec)} min easy between tempo blocks`,
         target: { kind: "duration", seconds: shape.floatSec },
-        cue: "Float. Easy running until the next block.",
+        cue: floatCue(i),
       });
     }
     const atGoal = opts?.atGoalPace && paceTarget;
@@ -246,7 +250,7 @@ export function segmentsFromEasyWithStrides(
       rep,
       totalReps: strides.reps,
       effort: `Stride ${rep} of ${strides.reps}`,
-      cue: `Stride ${rep} of ${strides.reps}. Relaxed and fast.`,
+      cue: strideRepCue(rep, strides.reps, rep),
     });
     out.push({
       type: "recovery",

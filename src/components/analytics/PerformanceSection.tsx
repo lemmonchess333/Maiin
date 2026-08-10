@@ -1,4 +1,5 @@
-import { useEffect, useRef, lazy, Suspense } from "react";
+import { useEffect, useRef, Suspense } from "react";
+import { lazyRetry } from "@/lib/lazyRetry";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Activity } from "lucide-react";
 import { THEME } from "@/lib/theme";
@@ -22,7 +23,7 @@ import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
    PerformanceTab stays lazy-loaded (heavier chart machinery) behind a
    Suspense skeleton so it doesn't block Analytics's first paint. */
 
-const PerformanceTab = lazy(
+const PerformanceTab = lazyRetry(
   () => import("@/components/analytics/PerformanceTab")
 );
 

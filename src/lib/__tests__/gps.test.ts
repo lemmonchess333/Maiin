@@ -8,6 +8,7 @@ import {
   isValidReading,
   calculatePace,
   rollingPace,
+  rollingPaceSeconds,
   paceAsNumber,
   calculateSplits,
   totalElevationGain,
@@ -714,6 +715,65 @@ describe("rollingPace", () => {
     const a = pointAt(0, 0);
     const b = pointAt(0.001, 100); // 100s later, well outside a 30s window
     expect(rollingPace([a, b], 30)).toBe("--:--");
+  });
+
+  describe("rollingPaceSeconds — the number behind the label", () => {
+    it("returns null, never a number, when there is nothing to judge", () => {
+      /* The audio pace alert branches on this. `0` would read as an
+         absurdly fast pace and fire an "ahead of target" alert from a
+         standing start; the previous call-site expression did exactly
+         that (`distance > 0 ? … : 0`). */
+      expect(rollingPaceSeconds([])).toBeNull();
+      expect(rollingPaceSeconds([pointAt(0, 0)])).toBeNull();
+      const a = pointAt(0, 0);
+      const b = pointAt(0.0000089, 30); // ~1m — under the distance floor
+      expect(rollingPaceSeconds([a, b], 30)).toBeNull();
+    });
+
+    it("agrees with the formatted rollingPace", () => {
+      // One implementation, two shapes — this is what stops them drifting.
+      const a = pointAt(0, 0);
+      const b = pointAt(0.0008983, 30); // ~100m in 30s → 300 s/km
+      expect(rollingPaceSeconds([a, b], 30)).toBeCloseTo(300, 0);
+      expect(rollingPace([a, b], 30)).toBe("5:00");
+    });
+
+    it("a warm-up does not poison the reading — the pace-alert defect", () => {
+      /* The scenario the alert kept getting wrong. Ten minutes of 7:00/km
+         warm-up, then on-target 5:00/km work.
+
+         Whole-run average after one on-pace minute is still ~6:50/km —
+         past the alert's 15 s/km threshold against a 300 s/km target, and
+         it stays past it for most of the session, so the runner is told
+         they are behind every 30 seconds while running exactly on pace.
+         The rolling window reports the work, which is the thing being
+         judged. */
+      const points: GPSPoint[] = [];
+      let lat = 0;
+      let t = 0;
+      // Warm-up: 100m per 42s = 7:00/km, for 10 minutes.
+      for (let i = 0; i < 14; i += 1) {
+        points.push(pointAt(lat, t));
+        lat += 0.0008983;
+        t += 42;
+      }
+      // Work: 100m per 30s = 5:00/km, for one minute.
+      for (let i = 0; i < 2; i += 1) {
+        points.push(pointAt(lat, t));
+        lat += 0.0008983;
+        t += 30;
+      }
+      points.push(pointAt(lat, t));
+
+      const totalM = 111320 * lat;
+      const wholeRunAvg = (t / totalM) * 1000;
+      const rolling = rollingPaceSeconds(points, 30)!;
+
+      // The average is far enough off target to trip a 15 s/km alert…
+      expect(Math.abs(wholeRunAvg - 300)).toBeGreaterThan(15);
+      // …while the rolling read is on target and would not.
+      expect(Math.abs(rolling - 300)).toBeLessThanOrEqual(15);
+    });
   });
 });
 
