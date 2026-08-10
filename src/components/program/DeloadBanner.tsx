@@ -98,10 +98,20 @@ export default function DeloadBanner({
   const viewedFiredRef = useRef(false);
   const [applying, setApplying] = useState(false);
 
-  // An applied deload overrides a previous dismissal — the state
-  // changed materially, and the "active" confirmation is the only
-  // surface telling the user their week is eased.
-  const shouldRender = visible && (!dismissed || deloadActive);
+  // An ACTIVE deload renders unconditionally: it overrides a previous
+  // dismissal (the state changed materially) AND it does not need
+  // `visible`, because "your week is already eased" is worth saying
+  // whether or not this week's performance doc also RECOMMENDS a deload.
+  //
+  // It used to read `visible && (!dismissed || deloadActive)`, which made
+  // the active confirmation a strict subset of the recommendation. The
+  // automatic week-4 deload sets `programState.currentPhase === "deload"`
+  // server-side without any deload RECOMMENDATION, so those users saw
+  // nothing — no confirmation, and none of the tier-split copy LIFT-EV-03
+  // added for them. Found by an adversarial verifier reviewing the fix
+  // for the caller's dead `flags.deloadRecommended` read: repairing that
+  // read alone would have left this half still dark.
+  const shouldRender = (visible && !dismissed) || deloadActive;
 
   const handleApply = async () => {
     if (!onApply || applying) return;
