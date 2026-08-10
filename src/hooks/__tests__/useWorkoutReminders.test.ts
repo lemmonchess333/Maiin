@@ -20,7 +20,7 @@
  * ahead?") is meaningless without knowing what day it is.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { renderHook, waitFor, act } from "@testing-library/react";
+import { renderHook, waitFor, act, cleanup } from "@testing-library/react";
 
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {}, functions: {} }));
@@ -46,7 +46,33 @@ import {
   setNotificationPermission,
   deferSchedules,
   releaseSchedules,
+  scheduleProvenance,
 } from "@/test/notificationsHarness";
+
+/**
+ * Assert an EMPTY schedule the honest way.
+ *
+ * `await waitFor(() => expect(scheduledIds()).toEqual([]))` is satisfied
+ * on its first poll by the initial state — CLAUDE.md's negative-assertion
+ * trap — so it passes at t=0 and cannot see a write that lands later. It
+ * is also, for the same reason, the shape that goes red when a previous
+ * test's pass leaks in. Drain first, then assert once.
+ *
+ * On failure it reports each id's generation. An id whose generation is
+ * BELOW the current one was written by an earlier test, which is a
+ * harness leak, not a bug in the hook — a distinction that cost this file
+ * two speculative fixes before the provenance existed to make it obvious.
+ */
+async function expectNothingScheduled(): Promise<void> {
+  await act(async () => {
+    for (let i = 0; i < 10; i += 1) await Promise.resolve();
+  });
+  const { epoch, byId } = scheduleProvenance();
+  expect(
+    scheduledIds(),
+    `current generation ${epoch}; ids by generation ${JSON.stringify(byId)}`
+  ).toEqual([]);
+}
 
 const PATH = "users/u1/settings/workoutReminders";
 /** Id 2001 + dayOfWeek, Sunday = 0. */
@@ -78,8 +104,35 @@ beforeEach(() => {
   mockProfile = { weekSchedule: SCHEDULE };
 });
 
-afterEach(() => {
+afterEach(async () => {
+  /**
+   * Unmount and SETTLE before the next test's `beforeEach` clears the
+   * schedule — the hygiene that was missing.
+   *
+   * The reschedule effect is an async pass with up to 14 await points.
+   * When a test ends with one in flight, that pass keeps resolving into
+   * whatever the fake holds next. RTL's auto-cleanup unmounts (which sets
+   * the pass's `cancelled`), but unmounting does not WAIT for the pass to
+   * observe it, and the shared `setup.ts` drain bails while fake timers
+   * are installed — which they are here, for `Date`. So the window
+   * between "unmounted" and "actually stopped" stayed open across the
+   * test boundary.
+   *
+   * That window is why this file failed only on CI: a slower machine is
+   * likelier to still be inside the pass when the next test starts. It
+   * did not reproduce locally across 11 runs, including with the fake's
+   * operations artificially slowed.
+   *
+   * Draining here closes it by construction rather than by timing. Real
+   * timers are restored FIRST so the drain can actually advance, then
+   * cleanup runs, then the microtask queue is flushed so every cancelled
+   * pass reaches its next guard and returns.
+   */
   vi.useRealTimers();
+  cleanup();
+  await act(async () => {
+    for (let i = 0; i < 10; i += 1) await Promise.resolve();
+  });
 });
 
 describe("which days get reminded", () => {
@@ -121,7 +174,7 @@ describe("which days get reminded", () => {
     seedFirestore({ [PATH]: { ...ON, enabled: false } });
     const { result } = renderHook(() => useWorkoutRemindersInternal());
     await waitFor(() => expect(result.current.loading).toBe(false));
-    await waitFor(() => expect(scheduledIds()).toEqual([]));
+    await expectNothingScheduled();
   });
 
   it("schedules nothing when permission is denied", async () => {
@@ -129,7 +182,7 @@ describe("which days get reminded", () => {
     seedFirestore({ [PATH]: ON });
     const { result } = renderHook(() => useWorkoutRemindersInternal());
     await waitFor(() => expect(result.current.loading).toBe(false));
-    await waitFor(() => expect(scheduledIds()).toEqual([]));
+    await expectNothingScheduled();
   });
 });
 
@@ -184,7 +237,7 @@ describe("anchor date", () => {
     seedFirestore({ [PATH]: { enabled: true, time: "7am" } });
     const { result } = renderHook(() => useWorkoutRemindersInternal());
     await waitFor(() => expect(result.current.loading).toBe(false));
-    await waitFor(() => expect(scheduledIds()).toEqual([]));
+    await expectNothingScheduled();
   });
 });
 
@@ -232,14 +285,14 @@ describe("reacting to changes", () => {
     const { result } = renderHook(() => useWorkoutRemindersInternal());
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.reminders.enabled).toBe(false);
-    await waitFor(() => expect(scheduledIds()).toEqual([]));
+    await expectNothingScheduled();
   });
 
   it("stops loading and schedules nothing when signed out", async () => {
     mockUser = null;
     const { result } = renderHook(() => useWorkoutRemindersInternal());
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(scheduledIds()).toEqual([]);
+    await expectNothingScheduled();
   });
 });
 
