@@ -119,9 +119,17 @@ export function useMealRemindersInternal() {
     let cancelled = false;
 
     const rescheduleAll = async () => {
-      await cancelNotification(MEAL_NOTIFICATION_IDS.breakfast);
-      await cancelNotification(MEAL_NOTIFICATION_IDS.lunch);
-      await cancelNotification(MEAL_NOTIFICATION_IDS.dinner);
+      // Loop rather than three straight-line calls so the teardown bail
+      // has somewhere to live. Like the workout hook, this bail saves
+      // WORK, not correctness — cancels are idempotent.
+      for (const id of [
+        MEAL_NOTIFICATION_IDS.breakfast,
+        MEAL_NOTIFICATION_IDS.lunch,
+        MEAL_NOTIFICATION_IDS.dinner,
+      ]) {
+        if (cancelled) return;
+        await cancelNotification(id);
+      }
 
       if (cancelled || !reminders.enabled) return;
 
@@ -143,8 +151,9 @@ export function useMealRemindersInternal() {
         if (!config.enabled) continue;
         const nextAt = computeNextOccurrence(config.time);
         if (!nextAt) continue;
+        const id = MEAL_NOTIFICATION_IDS[key];
         await scheduleNotification({
-          id: MEAL_NOTIFICATION_IDS[key],
+          id,
           title,
           body: "Quick log keeps your day accurate.",
           scheduleAt: nextAt,
@@ -155,6 +164,14 @@ export function useMealRemindersInternal() {
           // disable / time-edit cases.
           repeats: true,
         });
+        // Same guard, same reason as useWorkoutReminders.ts (which carries
+        // the full account): the in-flight call cannot be cancelled, so if
+        // teardown landed while it was out, this write resurrects a
+        // reminder the newer pass already cancelled. Undo it and stop.
+        if (cancelled) {
+          await cancelNotification(id);
+          return;
+        }
       }
     };
 

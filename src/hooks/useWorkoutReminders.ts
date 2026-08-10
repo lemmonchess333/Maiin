@@ -148,7 +148,16 @@ export function useWorkoutRemindersInternal() {
     const rescheduleWorkout = async () => {
       // Cancel ALL 7 weekday IDs every pass — handles schedule edits
       // (a day flipping from lift to rest) and the disable toggle.
+      //
+      // The `cancelled` bail here is a WORK saver, not a correctness
+      // guard, and is labelled as such deliberately: cancels are
+      // idempotent, so running them after teardown cannot produce a wrong
+      // end state. It just stops seven sequential async calls for an
+      // effect nobody is listening to. No test pins it, and none should
+      // pretend to — the load-bearing guard is the one after the schedule
+      // await below.
       for (const id of WORKOUT_NOTIFICATION_IDS) {
+        if (cancelled) return;
         await cancelNotification(id);
       }
 
@@ -166,8 +175,9 @@ export function useWorkoutRemindersInternal() {
         if (!isWorkoutDay(day, schedule)) continue;
         const at = computeNextWeekdayOccurrence(reminders.time, day);
         if (!at) continue;
+        const id = WORKOUT_NOTIFICATION_IDS[day];
         await scheduleNotification({
-          id: WORKOUT_NOTIFICATION_IDS[day],
+          id,
           title: "Time to train",
           body: "Your session is ready when you are.",
           scheduleAt: at,
@@ -177,6 +187,35 @@ export function useWorkoutRemindersInternal() {
           repeats: true,
           repeatEvery: "week",
         });
+        // The load-bearing guard, and it has to be AFTER the await.
+        //
+        // A promise already in flight cannot be cancelled, so a check
+        // before this call could not have stopped it. If teardown landed
+        // while the call was out, the newer pass has already run its own
+        // cancels — which means this write RESURRECTS a reminder the user
+        // just turned off. Undo it and stop; every later iteration would
+        // do the same thing.
+        //
+        // Found 2026-08-10 from a CI-only flake: the "schedules NOTHING
+        // while the toggle is off" test failed with [2002, 2003, 2004,
+        // 2006, 2007] — the five non-rest days of a PREVIOUS test's
+        // schedule, landing in a store `beforeEach` had already reset. An
+        // unmounted hook was still writing. On a device that is not a test
+        // artifact; it is reminders firing after the user switched them
+        // off, or on a day they just marked rest.
+        //
+        // A `cancelled` check at the TOP of this loop was written first
+        // and then removed: with this guard in place the pass returns
+        // after its first schedule anyway, and nothing between the
+        // pre-loop check and the first await can change `cancelled`
+        // (isWorkoutDay and computeNextWeekdayOccurrence are sync). It
+        // read as load-bearing, no test could pin it, and a mutation that
+        // deleted it still passed. Redundant code with an authoritative
+        // comment is worse than no code.
+        if (cancelled) {
+          await cancelNotification(id);
+          return;
+        }
       }
     };
 

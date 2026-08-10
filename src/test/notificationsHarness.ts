@@ -56,6 +56,22 @@ export function setNotificationPermission(
   notificationsFake.setPermission(state);
 }
 
+/**
+ * Park every subsequent schedule attempt until `releaseSchedules()`.
+ * Mirrors `deferReads()` in the Firestore harness, and exists for the
+ * same reason: an assertion that something did NOT happen is only worth
+ * anything if the write it forbids was actually in flight when you made
+ * it.
+ */
+export function deferSchedules(): void {
+  notificationsFake.deferSchedules();
+}
+
+/** Let parked schedule attempts proceed. */
+export function releaseSchedules(): void {
+  notificationsFake.releaseSchedules();
+}
+
 /** Fail the next schedule attempt — for one id, or all of them. */
 export function failNextSchedule(id?: number): void {
   notificationsFake.failNextSchedule(id);

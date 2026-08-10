@@ -37,12 +37,20 @@ export class NotificationsFake {
   /** Ids whose next schedule attempt should fail (one shot each). */
   private failIds = new Set<number>();
   private failAll = false;
+  /** When set, every schedule attempt parks here until released. */
+  private scheduleGate: Promise<void> | null = null;
+  private openGate: (() => void) | null = null;
 
   reset(): void {
     this.schedule.clear();
     this.permission = "granted";
     this.failIds.clear();
     this.failAll = false;
+    // Release any parked schedule so a test that forgets to can't hang
+    // the NEXT one on a promise nobody holds a handle to.
+    this.openGate?.();
+    this.scheduleGate = null;
+    this.openGate = null;
   }
 
   // ── the surface the hooks call ───────────────────────────────────
@@ -60,6 +68,9 @@ export class NotificationsFake {
   }
 
   async schedule_(payload: NotificationPayload): Promise<boolean> {
+    // Park BEFORE any state change, so a deferred pass is suspended
+    // exactly where a real in-flight OS call would be.
+    if (this.scheduleGate) await this.scheduleGate;
     // Denied permission is a soft failure in the real module too: it
     // returns false rather than throwing, and nothing is scheduled.
     if (this.permission !== "granted") return false;
@@ -106,6 +117,31 @@ export class NotificationsFake {
 
   setPermission(state: NotificationPermissionState): void {
     this.permission = state;
+  }
+
+  /**
+   * Hold every subsequent schedule attempt mid-flight, the shape
+   * `firestoreFake.deferReads()` takes for reads.
+   *
+   * This is what makes a stale-pass test honest. Without it the only way
+   * to ask "does an unmounted hook still schedule?" is to unmount and
+   * then assert the schedule is empty — which is satisfied at t=0 by the
+   * initial state and proves nothing (the negative-assertion trap in
+   * CLAUDE.md). Parking the pass INSIDE its loop, unmounting, and only
+   * then releasing puts the write after the unmount, where it either
+   * lands or doesn't.
+   */
+  deferSchedules(): void {
+    this.scheduleGate = new Promise((resolve) => {
+      this.openGate = resolve;
+    });
+  }
+
+  /** Let the parked schedule attempts proceed. */
+  releaseSchedules(): void {
+    this.openGate?.();
+    this.scheduleGate = null;
+    this.openGate = null;
   }
 
   /** Make the next schedule attempt fail — for a single id, or all. */
