@@ -359,7 +359,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
             <button
               type="button"
               onClick={() => setShowInstructions(!showInstructions)}
-              className="flex items-center gap-1 mt-3 min-h-[44px] text-body font-medium text-lifting"
+              className="flex items-center gap-1 mt-3 min-h-[44px] text-body font-medium text-lifting-strong"
             >
               {showInstructions ? (
                 <>

@@ -164,8 +164,8 @@
      --lifting is the literal brand purple (#7B72E9) and is deliberately
      NOT --primary (246 88% 70%, hand-tuned for white-text AA). */
   --running: 348 57% 61%; /* #D4637A coral */
-  --running-strong: 348 57% 45.5%; /* #B6324C — worst case 4.53:1 (chip over background) */
-  --lifting-strong: 245 73% 59%; /* #574AE3 — worst case 4.60:1 (chip over background) */
+  --running-strong: 348 57% 45%; /* #B4314C — worst case 4.51:1 (12% tint over background) */
+  --lifting-strong: 245 73% 59%; /* #574AE3 — worst case 4.51:1 (12% tint over background) */
   --lifting: 245 73% 68%; /* #7B72E9 purple */
   /* Nutrition domain colour. `--nutrition` is the FIXED warm-orange
      identity (same in light + dark, like running/lifting) and drives every
@@ -267,8 +267,8 @@
   --primary-strong: 243 55% 60%;
   /* Sport-identity colours — IDENTICAL to :root (fixed sport colour). */
   --running: 348 57% 61%; /* #D4637A coral */
-  --running-strong: 348 57% 68%; /* #DC7F91 — worst case 4.52:1 (chip over muted) */
-  --lifting-strong: 245 73% 75%; /* #9891EE — worst case 4.60:1 (chip over muted) */
+  --running-strong: 348 57% 69%; /* #DD8395 — worst case 4.56:1 (12% tint over muted) */
+  --lifting-strong: 245 73% 75.5%; /* #9B93EE — worst case 4.60:1 (12% tint over muted) */
   --lifting: 245 73% 68%; /* #7B72E9 purple */
   /* Media stage — IDENTICAL to :root (fixed dark surface). */
   --stage: 240 4% 7%;
