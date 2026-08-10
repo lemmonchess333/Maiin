@@ -50,3 +50,9 @@ public/exercise-demos/_preview.html
 # graphify output — generated knowledge graph (rebuildable via /graphify .);
 # untracked so a build never trips the closeout stop-hook. Remove to commit it.
 graphify-out/
+
+# Ad-hoc agent worktrees created INSIDE the repo (mutation checks, parallel
+# verification). `.claude/worktrees/` above covers the managed ones; these are
+# named per-task (wt-mut, wt-flush, ...) and a `git add -A` will happily commit
+# one as an embedded git repository. That happened, so this is not theoretical.
+/wt-*/
