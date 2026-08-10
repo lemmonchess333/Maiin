@@ -19,7 +19,7 @@
  * The clock is fixed because "next occurrence" is entirely relative to it.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { renderHook, waitFor, act } from "@testing-library/react";
+import { renderHook, waitFor, act, cleanup } from "@testing-library/react";
 
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {}, functions: {} }));
@@ -51,7 +51,25 @@ import {
   setNotificationPermission,
   deferSchedules,
   releaseSchedules,
+  scheduleProvenance,
 } from "@/test/notificationsHarness";
+
+/**
+ * Drain, then assert an empty schedule once. See
+ * useWorkoutReminders.test.ts for why `waitFor` is the wrong tool for a
+ * negative assertion, and what the generation numbers in the failure
+ * message mean.
+ */
+async function expectNothingScheduled(): Promise<void> {
+  await act(async () => {
+    for (let i = 0; i < 10; i += 1) await Promise.resolve();
+  });
+  const { epoch, byId } = scheduleProvenance();
+  expect(
+    scheduledIds(),
+    `current generation ${epoch}; ids by generation ${JSON.stringify(byId)}`
+  ).toEqual([]);
+}
 
 const BREAKFAST = 1001;
 const LUNCH = 1002;
@@ -77,8 +95,35 @@ beforeEach(() => {
   mockUser = { uid: "u1" };
 });
 
-afterEach(() => {
+afterEach(async () => {
+  /**
+   * Unmount and SETTLE before the next test's `beforeEach` clears the
+   * schedule — the hygiene that was missing.
+   *
+   * The reschedule effect is an async pass with up to 14 await points.
+   * When a test ends with one in flight, that pass keeps resolving into
+   * whatever the fake holds next. RTL's auto-cleanup unmounts (which sets
+   * the pass's `cancelled`), but unmounting does not WAIT for the pass to
+   * observe it, and the shared `setup.ts` drain bails while fake timers
+   * are installed — which they are here, for `Date`. So the window
+   * between "unmounted" and "actually stopped" stayed open across the
+   * test boundary.
+   *
+   * That window is why this file failed only on CI: a slower machine is
+   * likelier to still be inside the pass when the next test starts. It
+   * did not reproduce locally across 11 runs, including with the fake's
+   * operations artificially slowed.
+   *
+   * Draining here closes it by construction rather than by timing. Real
+   * timers are restored FIRST so the drain can actually advance, then
+   * cleanup runs, then the microtask queue is flushed so every cancelled
+   * pass reaches its next guard and returns.
+   */
   vi.useRealTimers();
+  cleanup();
+  await act(async () => {
+    for (let i = 0; i < 10; i += 1) await Promise.resolve();
+  });
 });
 
 describe("scheduling", () => {
@@ -97,7 +142,7 @@ describe("scheduling", () => {
     seedFirestore({ [PATH]: { ...ALL_ON, enabled: false } });
     const { result } = renderHook(() => useMealRemindersInternal());
     await waitFor(() => expect(result.current.loading).toBe(false));
-    await waitFor(() => expect(scheduledIds()).toEqual([]));
+    await expectNothingScheduled();
   });
 
   it("leaves NO residue for a disabled meal", async () => {
@@ -170,7 +215,7 @@ describe("permission", () => {
     seedFirestore({ [PATH]: ALL_ON });
     const { result } = renderHook(() => useMealRemindersInternal());
     await waitFor(() => expect(result.current.loading).toBe(false));
-    await waitFor(() => expect(scheduledIds()).toEqual([]));
+    await expectNothingScheduled();
   });
 });
 
@@ -217,14 +262,14 @@ describe("settings persistence", () => {
     // Default is master-OFF — a new user must not be opted in to
     // notifications they never asked for.
     expect(result.current.reminders.enabled).toBe(false);
-    await waitFor(() => expect(scheduledIds()).toEqual([]));
+    await expectNothingScheduled();
   });
 
   it("stops loading and schedules nothing when signed out", async () => {
     mockUser = null;
     const { result } = renderHook(() => useMealRemindersInternal());
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(scheduledIds()).toEqual([]);
+    await expectNothingScheduled();
   });
 });
 
@@ -254,7 +299,7 @@ describe("the last reschedule pass wins", () => {
       for (let i = 0; i < 5; i += 1) await Promise.resolve();
     });
 
-    expect(scheduledIds()).toEqual([]);
+    await expectNothingScheduled();
   });
 
   it("the same pass DOES schedule when nothing supersedes it", async () => {
