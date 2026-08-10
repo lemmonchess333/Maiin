@@ -11,6 +11,10 @@ import {
   failNextFirestore,
   unfiredFailures,
   writeLog,
+  deferWrites,
+  resumeWrites,
+  pendingWrites,
+  releaseAllWrites,
 } from "@/test/firestoreHarness";
 
 vi.mock("firebase/firestore");
@@ -132,6 +136,150 @@ describe("offlineQueue", () => {
     expect(getQueueLength()).toBe(1);
     expect(getQueueLength(UID_B)).toBe(1);
     expect(getQueueLength(UID_A)).toBe(0);
+  });
+
+  /**
+   * The flush is a read-modify-write across a network round trip, and
+   * `queueWrite` is a synchronous localStorage write — so anything the
+   * user logs while the queue is draining lands in the middle of it.
+   *
+   * `deferWrites` is what makes that expressible: it holds the flush
+   * suspended exactly where a real in-flight write would be, so the
+   * interleaving is constructed rather than raced for. Without it the
+   * test would depend on the mock's microtask depth, which is not a
+   * property anyone should be pinning.
+   */
+  describe("a write queued DURING a flush", () => {
+    it("survives the flush that was already in progress", async () => {
+      queueWrite(UID_A, "users/abc/meals", { name: "chicken" }, "meal-1");
+
+      deferWrites();
+      const mockDb = {} as Parameters<typeof flushQueue>[0];
+      const flushing = flushQueue(mockDb, UID_A);
+      // Prove the flush really is suspended mid-write before continuing —
+      // otherwise this test could assert an interleaving that never
+      // happened and pass for the wrong reason.
+      await vi.waitFor(() =>
+        expect(pendingWrites()).toEqual(["users/abc/meals/meal-1"])
+      );
+
+      // The user logs something while the queue is draining.
+      queueWrite(UID_A, "users/abc/meals", { name: "rice" }, "meal-2");
+
+      resumeWrites();
+      releaseAllWrites();
+      expect(await flushing).toBe(1);
+
+      // meal-1 flushed and retired; meal-2 must still be queued. It was
+      // silently destroyed before the flush subtracted rather than
+      // overwriting.
+      expect(getQueueLength(UID_A)).toBe(1);
+      const stored = JSON.parse(
+        localStorage.getItem("tropos_offline_queue") || "[]"
+      );
+      expect(stored.map((q: { docId: string }) => q.docId)).toEqual(["meal-2"]);
+    });
+
+    it("is flushed by the NEXT flush, not stranded", async () => {
+      // The queue surviving is only half of it — a survivor nothing ever
+      // drains is a leak with extra steps.
+      queueWrite(UID_A, "users/abc/meals", { name: "chicken" }, "meal-1");
+
+      deferWrites();
+      const mockDb = {} as Parameters<typeof flushQueue>[0];
+      const flushing = flushQueue(mockDb, UID_A);
+      await vi.waitFor(() => expect(pendingWrites()).toHaveLength(1));
+      queueWrite(UID_A, "users/abc/meals", { name: "rice" }, "meal-2");
+      resumeWrites();
+      releaseAllWrites();
+      await flushing;
+
+      expect(await flushQueue(mockDb, UID_A)).toBe(1);
+      expect(getQueueLength(UID_A)).toBe(0);
+      expect(writeLog().map((w) => w.path)).toContain(
+        "users/abc/meals/meal-2"
+      );
+    });
+
+    it("leaves a failed item queued without stranding a mid-flush write", async () => {
+      // Both preservation paths at once: the old code carried failures
+      // forward in an explicit `remaining` list, and subtracting has to
+      // keep them by never removing them.
+      queueWrite(UID_A, "users/abc/meals", { name: "chicken" }, "meal-1");
+      queueWrite(UID_A, "users/abc/meals", { name: "will-fail" }, "meal-2");
+      failNextFirestore("setDoc", { path: "users/abc/meals/meal-2" });
+
+      deferWrites();
+      const mockDb = {} as Parameters<typeof flushQueue>[0];
+      const flushing = flushQueue(mockDb, UID_A);
+      await vi.waitFor(() =>
+        expect(pendingWrites()).toEqual(["users/abc/meals/meal-1"])
+      );
+      queueWrite(UID_A, "users/abc/meals", { name: "rice" }, "meal-3");
+
+      resumeWrites();
+      releaseAllWrites();
+      // meal-1 landed, meal-2 rejected at issue.
+      expect(await flushing).toBe(1);
+
+      expect(unfiredFailures()).toEqual([]);
+      const stored = JSON.parse(
+        localStorage.getItem("tropos_offline_queue") || "[]"
+      );
+      expect(stored.map((q: { docId: string }) => q.docId).sort()).toEqual([
+        "meal-2",
+        "meal-3",
+      ]);
+    });
+
+    it("does not resurrect another user's item it never touched", async () => {
+      queueWrite(UID_A, "users/abc/meals", { name: "chicken" }, "meal-1");
+      queueWrite(UID_B, "users/bcd/meals", { name: "tofu" }, "meal-b");
+
+      const mockDb = {} as Parameters<typeof flushQueue>[0];
+      expect(await flushQueue(mockDb, UID_A)).toBe(1);
+      expect(getQueueLength(UID_A)).toBe(0);
+      expect(getQueueLength(UID_B)).toBe(1);
+    });
+  });
+
+  /**
+   * `AppRoutes` calls `flushQueue` on BOTH the auth-user change and the
+   * `online` event, and signing in while already online fires the two
+   * within a tick — so overlapping flushes are the ordinary case.
+   */
+  describe("overlapping flushes", () => {
+    it("replays each queued item exactly once", async () => {
+      queueWrite(UID_A, "users/abc/meals", { name: "chicken" }, "meal-1");
+      queueWrite(UID_A, "users/abc/meals", { name: "rice" }, "meal-2");
+
+      const mockDb = {} as Parameters<typeof flushQueue>[0];
+      const [first, second] = await Promise.all([
+        flushQueue(mockDb, UID_A),
+        flushQueue(mockDb, UID_A),
+      ]);
+
+      // The second waits, re-reads, and finds nothing left to do.
+      expect(first + second).toBe(2);
+      expect(getQueueLength(UID_A)).toBe(0);
+      // Two items, two writes — not four. Unserialised, both flushes
+      // replay the same snapshot.
+      expect(writeLog()).toHaveLength(2);
+    });
+
+    it("keeps running after a flush whose write rejects", async () => {
+      // A rejected pass must not break the chain for every later one.
+      queueWrite(UID_A, "users/abc/meals", { name: "will-fail" }, "meal-1");
+      failNextFirestore("setDoc", { path: "users/abc/meals/meal-1" });
+
+      const mockDb = {} as Parameters<typeof flushQueue>[0];
+      expect(await flushQueue(mockDb, UID_A)).toBe(0);
+      expect(unfiredFailures()).toEqual([]);
+
+      // Same item, no failure armed this time.
+      expect(await flushQueue(mockDb, UID_A)).toBe(1);
+      expect(getQueueLength(UID_A)).toBe(0);
+    });
   });
 
   it("drops legacy items missing a uid field", () => {

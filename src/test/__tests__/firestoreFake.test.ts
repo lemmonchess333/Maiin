@@ -37,6 +37,10 @@ import {
   writeLog,
   failNextFirestore,
   unfiredFailures,
+  deferWrites,
+  pendingWrites,
+  releaseWrite,
+  rejectWrite,
 } from "../firestoreHarness";
 
 const db = {} as never;
@@ -276,5 +280,100 @@ describe("harness guardrails", () => {
     expect(() => seedFirestore({ "users/u1/meals": { a: 1 } })).toThrow(
       /COLLECTION path/
     );
+  });
+});
+
+/**
+ * Deferred WRITES — the dual of `deferReads`, and the teardown contract
+ * that keeps a held write from leaking into the next test.
+ *
+ * Tested here rather than only through `offlineQueue.test.ts` for the
+ * reason `deferredReads.test.ts` gives: a subtly wrong ordering primitive
+ * makes every suite built on it lie in the same direction, and they would
+ * all still be green.
+ */
+describe("deferred writes", () => {
+  beforeEach(() => resetFirestore());
+
+  it("holds the write: nothing lands and the log stays empty until release", async () => {
+    deferWrites();
+    const pending = setDoc(doc({} as never, "users", "u1"), { a: 1 });
+
+    // "Issued" and "committed" are different states, and this is the
+    // distinction the whole primitive exists to express.
+    expect(pendingWrites()).toEqual(["users/u1"]);
+    expect(readDoc("users/u1")).toBeUndefined();
+    expect(writeLog()).toHaveLength(0);
+
+    expect(releaseWrite()).toBe(true);
+    await pending;
+    expect(readDoc("users/u1")).toEqual({ a: 1 });
+    expect(writeLog()).toHaveLength(1);
+  });
+
+  it("rejectWrite leaves the store untouched", async () => {
+    // A write accepted into flight that only THEN failed — the shape
+    // `failNextFirestore` structurally cannot produce, because it fires
+    // at issue time.
+    deferWrites();
+    const pending = setDoc(doc({} as never, "users", "u2"), { a: 1 });
+    expect(rejectWrite()).toBe(true);
+    await expect(pending).rejects.toMatchObject({ code: "unavailable" });
+    expect(readDoc("users/u2")).toBeUndefined();
+  });
+
+  it("release/reject return false when nothing is held", () => {
+    // So a test cannot claim an interleaving that never happened.
+    expect(releaseWrite()).toBe(false);
+    expect(rejectWrite()).toBe(false);
+  });
+
+  it("is a pass-through when not deferring", async () => {
+    // The default path for all 500+ suites — it must be byte-identical
+    // to the pre-defer behaviour.
+    await setDoc(doc({} as never, "users", "u3"), { a: 1 });
+    expect(pendingWrites()).toEqual([]);
+    expect(readDoc("users/u3")).toEqual({ a: 1 });
+  });
+
+  it("reset REJECTS a write left in flight, rather than resolving it", async () => {
+    // The load-bearing one. Resolving would let the abandoned caller
+    // resume inside the NEXT test and write into the store that test
+    // just cleared — the failure would then be reported against the
+    // innocent test. Rejecting stops the caller at its await.
+    deferWrites();
+    const abandoned = setDoc(doc({} as never, "users", "u4"), { a: 1 });
+    const caught = abandoned.then(
+      () => "resolved",
+      (e) => (e as { code?: string }).code
+    );
+
+    resetFirestore();
+
+    expect(await caught).toBe("aborted");
+    expect(readDoc("users/u4")).toBeUndefined();
+    expect(pendingWrites()).toEqual([]);
+  });
+
+  it("a caller abandoned mid-sequence cannot write into the next test", async () => {
+    // The leak itself, end to end: a multi-write pass suspended on its
+    // first write must not continue through the rest after a reset.
+    deferWrites();
+    const pass = (async () => {
+      for (const id of ["a", "b", "c"]) {
+        await setDoc(doc({} as never, "leak", id), { n: 1 });
+      }
+    })();
+    const settled = pass.then(
+      () => "finished",
+      () => "stopped"
+    );
+
+    resetFirestore();
+
+    expect(await settled).toBe("stopped");
+    // Nothing from the abandoned pass reached the clean store.
+    expect(allPaths().filter((p) => p.startsWith("leak/"))).toEqual([]);
+    expect(writeLog()).toHaveLength(0);
   });
 });
