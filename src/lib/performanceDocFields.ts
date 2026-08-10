@@ -119,3 +119,43 @@ export function resolveLoadBand(
     )
   );
 }
+
+/**
+ * "Is the weekly read still establishing a baseline?" — one predicate, so
+ * Home and Analytics can't disagree about it.
+ *
+ * They did (2026-08-10, the third Home-vs-Analytics divergence in this
+ * doc after `labels.loadBand` and `flags.deloadRecommended`). Analytics
+ * gated on `weeks.length < 4` — the count of docs inside its 12-week
+ * fetch — under a comment that claimed it "mirrors the Home hero's
+ * lifetimeWeeks<4 treatment". It didn't: Home gates on
+ * `weeksAvailable < 2 || signals.lifetimeWeeks < 4`.
+ *
+ * The two measure different things, and split on a real user segment:
+ * a LAPSED-AND-RETURNING athlete (a year of history, six months off, two
+ * weeks back) has a high `lifetimeWeeks` but almost nothing in the recent
+ * window — so Home showed a confident verdict while Analytics said
+ * "Establishing your baseline", about the same week.
+ *
+ * This keeps the CONSERVATIVE reading, which is Home's shipped behaviour
+ * and the semantically honest one: the verdict leans on a baseline
+ * derived from PRIOR weeks, so it needs both a recent presence to compare
+ * against and enough lifetime depth for that baseline to mean anything.
+ * A returning athlete's year-old baseline should not license a confident
+ * read of their second week back.
+ *
+ * Note the legacy consequence, deliberately accepted: pre-PI1a docs carry
+ * no `signals`, so `normaliseSignals` defaults `lifetimeWeeks` to 0 and
+ * those weeks read as establishing. That is the conservative direction
+ * (an honest "still learning" instead of a confident wrong verdict), it
+ * is what Home already does today, and `normaliseSignals` separately
+ * reports those docs via `perf-doc-missing-signals`.
+ */
+export function isEstablishingBaseline(input: {
+  /** Weekly docs actually delivered by the snapshot. */
+  weeksAvailable: number;
+  /** `signals.lifetimeWeeks` — distinct compute-weeks the engine has seen. */
+  lifetimeWeeks: number | undefined;
+}): boolean {
+  return input.weeksAvailable < 2 || (input.lifetimeWeeks ?? 0) < 4;
+}

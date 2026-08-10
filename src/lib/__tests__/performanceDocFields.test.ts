@@ -12,6 +12,7 @@ import { describe, it, expect } from "vitest";
 import {
   resolveLoadBand,
   resolveDeloadRecommended,
+  isEstablishingBaseline,
 } from "../performanceDocFields";
 import { computeLoadBand } from "../performanceEngine";
 
@@ -133,5 +134,55 @@ describe("resolveDeloadRecommended — the same drift, second field", () => {
     expect(resolveDeloadRecommended({})).toBe(false);
     expect(resolveDeloadRecommended(null)).toBe(false);
     expect(resolveDeloadRecommended(undefined)).toBe(false);
+  });
+});
+
+describe("isEstablishingBaseline — one gate for Home and Analytics", () => {
+  it("the lapsed-and-returning athlete reads as establishing", () => {
+    /* The divergence this predicate closes. A year of history, six months
+       off, two weeks back: lifetime depth is high but the recent window is
+       nearly empty. Analytics' old `weeks.length < 4` said establishing;
+       Home's lifetimeWeeks<4 said confident. CLAUDE.md names this segment
+       explicitly ("lapsed-and-returning users ... a real user segment").
+       The baseline is derived from PRIOR weeks, so a year-old baseline
+       must not license a confident read of week two back. */
+    expect(
+      isEstablishingBaseline({ weeksAvailable: 1, lifetimeWeeks: 52 })
+    ).toBe(true);
+  });
+
+  it("a genuinely established athlete reads confident", () => {
+    expect(
+      isEstablishingBaseline({ weeksAvailable: 12, lifetimeWeeks: 30 })
+    ).toBe(false);
+  });
+
+  it("needs BOTH recent presence and lifetime depth", () => {
+    // Plenty of recent weeks, but the engine has barely seen this user.
+    expect(
+      isEstablishingBaseline({ weeksAvailable: 8, lifetimeWeeks: 3 })
+    ).toBe(true);
+    // Deep history, but only one week delivered.
+    expect(
+      isEstablishingBaseline({ weeksAvailable: 1, lifetimeWeeks: 30 })
+    ).toBe(true);
+  });
+
+  it("boundaries: 2 weeks available and 4 lifetime weeks are the thresholds", () => {
+    expect(
+      isEstablishingBaseline({ weeksAvailable: 2, lifetimeWeeks: 4 })
+    ).toBe(false);
+    expect(
+      isEstablishingBaseline({ weeksAvailable: 2, lifetimeWeeks: 3 })
+    ).toBe(true);
+  });
+
+  it("a missing lifetimeWeeks reads as establishing, not confident", () => {
+    /* Legacy pre-PI1a docs carry no `signals`; normaliseSignals defaults
+       lifetimeWeeks to 0. Erring toward "still learning" is the honest
+       direction and matches what Home already shipped. */
+    expect(
+      isEstablishingBaseline({ weeksAvailable: 12, lifetimeWeeks: undefined })
+    ).toBe(true);
   });
 });
