@@ -301,7 +301,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
                 {demo.primaryMuscles.map((m) => (
                   <span
                     key={m}
-                    className="inline-flex items-center whitespace-nowrap h-6 px-2.5 rounded-xl text-small font-medium bg-lifting/8 text-lifting"
+                    className="inline-flex items-center whitespace-nowrap h-6 px-2.5 rounded-xl text-small font-medium bg-lifting/8 text-lifting-strong"
                   >
                     {m}
                   </span>
@@ -345,7 +345,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
               <div key={i} className="flex gap-2.5">
                 <span
                   aria-hidden="true"
-                  className="mt-0.5 size-5 shrink-0 rounded-full bg-lifting/10 text-lifting text-xs font-bold font-mono tabular-nums flex items-center justify-center"
+                  className="mt-0.5 size-5 shrink-0 rounded-full bg-lifting/10 text-lifting-strong text-xs font-bold font-mono tabular-nums flex items-center justify-center"
                 >
                   {i + 1}
                 </span>

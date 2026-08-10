@@ -328,7 +328,7 @@ export default function ExerciseHistory() {
           </h1>
           {exercise && (
             <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-caption font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lifting/9 text-lifting">
+              <span className="text-caption font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lifting/9 text-lifting-strong">
                 {exercise.muscleGroup}
               </span>
               <span className="text-xs text-muted-foreground">

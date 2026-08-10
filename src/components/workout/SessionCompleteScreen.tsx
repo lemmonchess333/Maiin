@@ -319,7 +319,7 @@ export default function SessionCompleteScreen({
                   <p className="text-sm text-foreground truncate">{ex.name}</p>
                 </div>
                 <div className="text-right shrink-0 ml-3">
-                  <p className="text-sm font-mono tabular-nums font-semibold text-lifting">
+                  <p className="text-sm font-mono tabular-nums font-semibold text-lifting-strong">
                     {ex.bestWeight > 0
                       ? `${ex.bestWeight} kg × ${ex.bestReps}`
                       : `${ex.bestReps} reps`}
