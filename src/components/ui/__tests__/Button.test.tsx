@@ -87,12 +87,16 @@ describe("Button — variants", () => {
     expect(btn.style.backgroundColor).toBe("");
   });
 
-  it("sport-tinted variant uses a coral tint surface + coral text", () => {
+  it("sport-tinted variant uses a coral tint surface + the AA coral text step", () => {
     render(<Button variant="sport-tinted">Skip recovery</Button>);
     const btn = screen.getByRole("button") as HTMLButtonElement;
-    // 10% (1A hex ≈ 10%) coral tint surface + full-saturation coral text.
+    // 10% (1A hex ≈ 10%) coral tint surface + --running-strong text.
     expect(btn.className).toContain("bg-running/10");
-    expect(btn.className).toContain("text-running");
+    expect(btn.className).toContain("text-running-strong");
+    // Asserted as a whole class, not a substring: `toContain("text-running")`
+    // is satisfied by BOTH tokens, so it kept passing while the label sat
+    // at 2.74:1 on the identity coral.
+    expect(btn.className.split(/\s+/)).not.toContain("text-running");
   });
 
   it("caller-supplied style is applied to the button", () => {

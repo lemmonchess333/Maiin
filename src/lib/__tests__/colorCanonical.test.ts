@@ -132,13 +132,34 @@ describe("colour canonical layer — index.css HSL ↔ canonical hex (tolerance)
     ).toBeLessThanOrEqual(1);
   });
 
-  it("--nutrition-strong is within 1 channel of the -strong text hex", () => {
+  /* Amber-700 (#B45309) is the anchor this hex has always been; on
+     2026-08-10 it moved from `--nutrition-strong` to `--nutrition-fill`
+     when those two roles were split. The VALUE did not change — only the
+     token that holds it — so the anchor is re-pointed rather than
+     loosened. `MACROS_TEXT_LIGHT.nutrition` is still the same hex because
+     it too is a light-surface value; it is a text colour on a white card,
+     which happens to want the same amber the fill wants under white. */
+  it("--nutrition-fill is within 1 channel of the amber-700 anchor", () => {
     expect(
       channelDelta(
-        cssHslVarHex(indexCss, "--nutrition-strong"),
+        cssHslVarHex(indexCss, "--nutrition-fill"),
         MACROS_TEXT_LIGHT.nutrition
       )
     ).toBeLessThanOrEqual(1);
+  });
+
+  /* The text step is now DARKER than the fill in light mode — one shade
+     past amber-700 — because it has to survive a 10% tint over the page
+     canvas (93% lightness), not a white card. Pinned as an inequality so
+     the intent survives a retune. */
+  it("--nutrition-strong is darker than --nutrition-fill in light mode", () => {
+    const strong = /--nutrition-strong:\s*[\d.]+\s+[\d.]+%\s+([\d.]+)%/.exec(
+      indexCss
+    );
+    const fill = /--nutrition-fill:\s*[\d.]+\s+[\d.]+%\s+([\d.]+)%/.exec(
+      indexCss
+    );
+    expect(Number(strong?.[1])).toBeLessThan(Number(fill?.[1]));
   });
 
   it("--primary-strong is within 1 channel of brandStrong", () => {
