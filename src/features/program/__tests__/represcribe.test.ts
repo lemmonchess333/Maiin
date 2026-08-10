@@ -1,15 +1,18 @@
 import { describe, it, expect } from "vitest";
 import {
   blockConsequence,
+  blockPrefersShorterSessions,
   blockOfferBlockedByRace,
   represcribeWorkouts,
   scaleLoadForReps,
   isProgressionHeld,
   BLOCK_AMNESTY_WEEKS,
 } from "../represcribe";
-import { generateProgram, advanceWeek } from "../programEngine";
+import { generateProgram, advanceWeek, goalProfileFor } from "../programEngine";
+import { FOCUS_ORDER } from "../trainingBlock";
 import type {
   ActiveTrainingBlock,
+  PrimaryGoal,
   ProgramExercise,
   ProgramState,
   WorkoutDay,
@@ -526,7 +529,7 @@ describe("blockConsequence — the copy that carries GsPb1", () => {
     expect(of("easing")).toMatch(/hold steady for the first two weeks/i);
     expect(of("lighter")).not.toMatch(/hold steady/i);
     expect(of("full")).not.toMatch(/hold steady/i);
-    expect(of("lighter")).toMatch(/30 minutes/);
+    expect(of("lighter")).toMatch(/short session/i);
   });
 
   it("combines a focus change with an easing pace", () => {
@@ -538,7 +541,7 @@ describe("blockConsequence — the copy that carries GsPb1", () => {
       focusLabel: label,
     });
     expect(s).toContain("sets of 5-7");
-    expect(s).toMatch(/30 minutes/);
+    expect(s).toMatch(/short session/i);
     expect(s).toMatch(/hold steady/i);
   });
 });
@@ -590,5 +593,154 @@ describe("blockOfferBlockedByRace", () => {
       })
     ).toBe(false);
     expect(blockOfferBlockedByRace({ today: "2026-08-01" })).toBe(false);
+  });
+});
+
+describe("blockPrefersShorterSessions", () => {
+  // This shipped missing, and the copy shipped anyway: PACE_OPTIONS and
+  // blockConsequence both promised shorter sessions while nothing read
+  // `pace` at all. A promise with no mechanism is worse than no promise.
+  const b = (pace: "full" | "lighter" | "easing") =>
+    ({ pace }) as Pick<ActiveTrainingBlock, "pace">;
+
+  it("is true for both non-full paces and false otherwise", () => {
+    expect(blockPrefersShorterSessions(b("lighter"))).toBe(true);
+    expect(blockPrefersShorterSessions(b("easing"))).toBe(true);
+    expect(blockPrefersShorterSessions(b("full"))).toBe(false);
+    expect(blockPrefersShorterSessions(undefined)).toBe(false);
+  });
+});
+
+describe("blockConsequence — copy matches the mechanism", () => {
+  const label = () => "Build muscle";
+
+  // The specific defect: the copy said "trimmed to about 30 minutes",
+  // which claimed the session WAS shortened. What actually happens is the
+  // short option is offered first and the full one stays one tap away.
+  // The sentence has to describe a promotion, not a trim.
+  it("describes a promotion, never a forced trim", () => {
+    for (const pace of ["lighter", "easing"] as const) {
+      const s = blockConsequence({
+        focus: "hypertrophy",
+        currentFocus: "hypertrophy",
+        pace,
+        durationWeeks: 8,
+        focusLabel: label,
+      });
+      expect(s).toMatch(/short session/i);
+      expect(s).not.toMatch(/trimmed to/i);
+      expect(s).not.toMatch(/30 minutes/);
+    }
+  });
+
+  it("still promises nothing at all for a full same-focus block", () => {
+    const s = blockConsequence({
+      focus: "hypertrophy",
+      currentFocus: "hypertrophy",
+      pace: "full",
+      durationWeeks: 8,
+      focusLabel: label,
+    });
+    expect(s).toMatch(/Nothing about your sessions changes/i);
+    expect(s).not.toMatch(/short session/i);
+  });
+});
+
+describe("blockConsequence — the load claim tracks scaleLoadForReps", () => {
+  const label = () => "x";
+  const say = (focus: PrimaryGoal, currentFocus: PrimaryGoal) =>
+    blockConsequence({
+      focus,
+      currentFocus,
+      pace: "full",
+      durationWeeks: 8,
+      focusLabel: label,
+    });
+
+  // The copy said "the weights come down a little" for EVERY focus change.
+  // scaleLoadForReps only reduces a load when the rep target goes UP, so it
+  // was false for most of the ordered pairs — including the pair the picker
+  // puts first.
+  //
+  // The pairs are DERIVED from the profiles, not listed. The listed version
+  // rotted: this block used to cite "hypertrophy 8 → fat_loss 12" as a pair
+  // that rises, and fat_loss later moved to 8-12 — the same mains as general
+  // — when the deficit row was rewritten around Fleck & Kraemer's
+  // maintain-intensity-cut-volume finding. The pair stopped rising, and the
+  // anchor went on asserting copy the model no longer produces.
+  const orderedPairs = FOCUS_ORDER.flatMap((from) =>
+    FOCUS_ORDER.filter((to) => to !== from).map(
+      (to) => [from, to] as [PrimaryGoal, PrimaryGoal]
+    )
+  );
+  const rises = orderedPairs.filter(
+    ([from, to]) => goalProfileFor(to).mainReps > goalProfileFor(from).mainReps
+  );
+  const holds = orderedPairs.filter(
+    ([from, to]) => goalProfileFor(to).mainReps <= goalProfileFor(from).mainReps
+  );
+
+  // Without this the agreement test below is vacuous in one direction: a
+  // profile table where NO pair raises the target (or where every pair does)
+  // is satisfied by copy that never varies at all.
+  it("has focus pairs on both sides of the claim", () => {
+    expect(rises.length).toBeGreaterThan(0);
+    expect(holds.length).toBeGreaterThan(0);
+  });
+
+  it("promises no weight change when the rep target does not rise", () => {
+    for (const [from, to] of holds) {
+      expect(say(to, from), `${from} -> ${to}`).toMatch(/same weights/i);
+      expect(say(to, from), `${from} -> ${to}`).not.toMatch(/come down/i);
+    }
+  });
+
+  it("still promises the drop when the target genuinely rises", () => {
+    for (const [from, to] of rises) {
+      expect(say(to, from), `${from} -> ${to}`).toMatch(/come down a little/i);
+    }
+  });
+
+  it("agrees with scaleLoadForReps on every ordered focus pair", () => {
+    for (const [from, to] of orderedPairs) {
+      const moved =
+        scaleLoadForReps(
+          100,
+          goalProfileFor(from).mainReps,
+          goalProfileFor(to).mainReps
+        ) < 100;
+      const claims = /come down a little/i.test(say(to, from));
+      expect(claims, `${from} -> ${to}`).toBe(moved);
+    }
+  });
+});
+
+describe("blockConsequence — L2, the lead and tail must not contradict", () => {
+  const label = () => "x";
+  it("drops 'same exercises, same days' once a trim is being promoted", () => {
+    for (const pace of ["lighter", "easing"] as const) {
+      const s = blockConsequence({
+        focus: "strength",
+        currentFocus: "hypertrophy",
+        pace,
+        durationWeeks: 8,
+        focusLabel: label,
+      });
+      // The lead promotes the short session, which drops accessories and
+      // cuts sets — so the tail cannot also claim the day is unchanged.
+      expect(s).toMatch(/short session/i);
+      expect(s).not.toMatch(/same exercises, same days/i);
+    }
+  });
+
+  it("keeps it at pace full, where the day really is unchanged", () => {
+    const s = blockConsequence({
+      focus: "strength",
+      currentFocus: "hypertrophy",
+      pace: "full",
+      durationWeeks: 8,
+      focusLabel: label,
+    });
+    expect(s).toMatch(/same exercises, same days/i);
   });
 });

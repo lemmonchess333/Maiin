@@ -28,6 +28,51 @@ export function resetNotifications(): void {
   notificationsFake.reset();
 }
 
+/**
+ * Wait until no reschedule pass is still running. Call in `afterEach`,
+ * AFTER `cleanup()` and with real timers restored.
+ *
+ * The reschedule effects are async passes with up to fourteen await
+ * points. When a test ends with one in flight it keeps resolving into
+ * whatever the fake holds NEXT — so a pass belonging to a finished test
+ * writes into the test after it, and the failure surfaces somewhere it
+ * did not originate. RTL's cleanup unmounts (which sets the pass's
+ * `cancelled`), but unmounting does not WAIT for the pass to observe it.
+ *
+ * The previous answer here was to drain a fixed ten microtask turns.
+ * That is a guess about someone else's control flow, and a guess is what
+ * a leak needs: it is right until a pass is one turn longer than the
+ * guess, and then it is silently wrong. This waits for a checkable
+ * condition instead — nothing suspended, and nothing new started across
+ * a full drain — and THROWS if that never holds, so a pass that will not
+ * stop is reported against the test that owns it rather than the one
+ * that happens to run next.
+ *
+ * A `deferSchedules` gate is released first: a gate-parked pass cannot be
+ * drained by microtasks at all, and leaving it to the next test's
+ * `resetNotifications` is precisely the cross-test coupling this exists
+ * to remove.
+ */
+export async function settleNotifications(): Promise<void> {
+  if (notificationsFake.gated) notificationsFake.releaseSchedules();
+
+  for (let round = 0; round < 50; round += 1) {
+    const before = notificationsFake.activity();
+    // Generous relative to the ~14 awaits a single pass takes, so a
+    // quiet round means quiet, not merely slower than the drain.
+    for (let i = 0; i < 25; i += 1) await Promise.resolve();
+    const after = notificationsFake.activity();
+    if (after.inFlight === 0 && after.totalCalls === before.totalCalls) return;
+  }
+
+  const { inFlight, totalCalls } = notificationsFake.activity();
+  throw new Error(
+    `[notificationsHarness] a reschedule pass never settled — ` +
+      `inFlight=${inFlight}, totalCalls=${totalCalls}. A pass that is ` +
+      `still running at teardown writes into the NEXT test.`
+  );
+}
+
 /** Ids currently scheduled, ascending — the cheapest whole-state assertion. */
 export function scheduledIds(): number[] {
   return notificationsFake.ids();

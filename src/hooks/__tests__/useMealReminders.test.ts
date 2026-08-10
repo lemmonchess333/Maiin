@@ -52,6 +52,7 @@ import {
   deferSchedules,
   releaseSchedules,
   scheduleProvenance,
+  settleNotifications,
 } from "@/test/notificationsHarness";
 
 /**
@@ -62,7 +63,7 @@ import {
  */
 async function expectNothingScheduled(): Promise<void> {
   await act(async () => {
-    for (let i = 0; i < 10; i += 1) await Promise.resolve();
+    await settleNotifications();
   });
   const { epoch, byId } = scheduleProvenance();
   expect(
@@ -111,18 +112,22 @@ afterEach(async () => {
    *
    * That window is why this file failed only on CI: a slower machine is
    * likelier to still be inside the pass when the next test starts. It
-   * did not reproduce locally across 11 runs, including with the fake's
-   * operations artificially slowed.
+   * has never reproduced locally — 56 runs across three strategies,
+   * including artificially slowed fake operations and shuffled test
+   * order.
    *
-   * Draining here closes it by construction rather than by timing. Real
-   * timers are restored FIRST so the drain can actually advance, then
-   * cleanup runs, then the microtask queue is flushed so every cancelled
-   * pass reaches its next guard and returns.
+   * This drained a FIXED ten microtask turns, which is a guess about
+   * the hook's control flow, and it is wrong the moment a pass runs one
+   * turn longer than the guess. `settleNotifications` waits for a
+   * checkable condition instead — nothing suspended, nothing new
+   * started across a drain — and throws if that never holds. Real
+   * timers are restored FIRST so the drain can advance, then cleanup
+   * sets each pass's `cancelled`, then we wait for them to observe it.
    */
   vi.useRealTimers();
   cleanup();
   await act(async () => {
-    for (let i = 0; i < 10; i += 1) await Promise.resolve();
+    await settleNotifications();
   });
 });
 
@@ -296,7 +301,7 @@ describe("the last reschedule pass wins", () => {
     // Drained, then asserted synchronously — under waitFor this passes on
     // the first poll, before the parked pass resumes.
     await act(async () => {
-      for (let i = 0; i < 5; i += 1) await Promise.resolve();
+      await settleNotifications();
     });
 
     await expectNothingScheduled();
@@ -332,7 +337,7 @@ describe("the last reschedule pass wins", () => {
     unmount();
     releaseSchedules();
     await act(async () => {
-      for (let i = 0; i < 5; i += 1) await Promise.resolve();
+      await settleNotifications();
     });
 
     const landed = scheduledIds();

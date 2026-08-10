@@ -16,6 +16,8 @@ import {
   makeBlockId,
   blockDocPath,
   parseTrainingBlock,
+  paceFromLegacyPreset,
+  legacyToActiveBlock,
 } from "../trainingBlock";
 
 const block = { startDate: "2026-07-06", durationWeeks: 8 as const };
@@ -173,5 +175,55 @@ describe("parseTrainingBlock", () => {
     expect(parseTrainingBlock({ ...valid, preset: "bulk" })).toBeNull();
     expect(parseTrainingBlock({ ...valid, startDate: "6 July" })).toBeNull();
     expect(parseTrainingBlock({ ...valid, status: "paused" })).toBeNull();
+  });
+});
+
+describe("legacy block adoption (Blk2)", () => {
+  const legacy = {
+    id: "2026-07-06-strength_foundation",
+    preset: "strength_foundation" as const,
+    title: "Strength Foundation",
+    startDate: "2026-07-06",
+    durationWeeks: 8 as const,
+    weeklyLiftTarget: 3,
+    anchorExerciseIds: ["squat"],
+    why: "rugby",
+    status: "active" as const,
+    createdAt: 42,
+  };
+
+  // The two "habit" presets were never a focus — they were a PACE, which
+  // is precisely why presetProgrammeGoal returned null for them. Adoption
+  // is where they finally get to mean something.
+  it("maps the habit presets onto a pace and everything else to full", () => {
+    expect(paceFromLegacyPreset("consistency_reset")).toBe("lighter");
+    expect(paceFromLegacyPreset("return_to_training")).toBe("easing");
+    expect(paceFromLegacyPreset("strength_foundation")).toBe("full");
+    expect(paceFromLegacyPreset("muscle_building")).toBe("full");
+    expect(paceFromLegacyPreset("hybrid_support")).toBe("full");
+    expect(paceFromLegacyPreset(undefined)).toBe("full");
+  });
+
+  // owned:false is the whole reason the field exists. A legacy block never
+  // represcribed anything, so adopting it must not apply a prescription —
+  // nor release one when it ends.
+  it("adopts as UNOWNED, with focus and goalBefore both the current focus", () => {
+    const live = legacyToActiveBlock(legacy, "hypertrophy");
+    expect(live.owned).toBe(false);
+    expect(live.focus).toBe("hypertrophy");
+    // Equal to focus, so a release is a no-op by construction.
+    expect(live.goalBefore).toBe("hypertrophy");
+    expect(live.amnestyWeeksLeft).toBe(0);
+  });
+
+  it("carries the block's own identity and window unchanged", () => {
+    const live = legacyToActiveBlock(legacy, "strength");
+    expect(live.id).toBe(legacy.id);
+    expect(live.startDate).toBe("2026-07-06");
+    expect(live.durationWeeks).toBe(8);
+    expect(live.weeklyLiftTarget).toBe(3);
+    expect(live.anchorExerciseIds).toEqual(["squat"]);
+    expect(live.why).toBe("rugby");
+    expect(live.createdAt).toBe(42);
   });
 });

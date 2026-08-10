@@ -26,7 +26,11 @@ import type {
   ScheduledRunStatus,
 } from "./programTypes";
 import { isProgressionHeld, represcribeWorkouts } from "./represcribe";
-import { blockWeekOf } from "./trainingBlock";
+import {
+  blockWeekOf,
+  legacyToActiveBlock,
+  type TrainingBlock,
+} from "./trainingBlock";
 import { normalizeProgramState, transitionStatus } from "./programTypes";
 import { resolveRecoveryExit } from "./runModeResolution";
 import { fetchRecentLayoff } from "./fetchRecentLayoff";
@@ -2265,6 +2269,21 @@ export function useProgram() {
           microloading: true,
         },
         weekHistory: [],
+        // Blk2 / H1. `saveProgram` is a no-merge full replace and this
+        // literal spreads nothing from `programState`, so an unnamed field
+        // is DELETED. Without this line a lift-day change from the weekly
+        // layout sheet — an ordinary two-tap edit, not a reset — destroys
+        // the active block while leaving its rep prescription and focus in
+        // force, with no `goalBefore` left to release to.
+        //
+        // `planBuilder.ts` carries the block through the SAME hazard and
+        // says so in a comment; the fix was never carried to this sibling
+        // path. Regenerating under a block is coherent because the engine
+        // re-authors from `primaryGoal`, which during a block IS the
+        // block's focus — so the rebuild is already in the block's terms.
+        ...(programState?.trainingBlock
+          ? { trainingBlock: programState.trainingBlock }
+          : {}),
         // PR-0b-ii: explicit schema version on regenerate so the
         // freshly-rebuilt state matches the current contract. Pre-
         // PR-0b-ii this was inherited from the prior doc (or
@@ -3045,6 +3064,34 @@ export function useProgram() {
     return true;
   }, [programState, runProgramCommand, refetchProgramState]);
 
+  /**
+   * Adopt a pre-Blk2 block that was still open when Blk2 shipped.
+   *
+   * Idempotent by construction: gated on there being no live block, so a
+   * second call after the first write is a no-op. Writes `owned: false`,
+   * which is what stops the adopted block ever represcribing anything —
+   * on adoption or on release.
+   */
+  const adoptLegacyTrainingBlock = useCallback(
+    async (legacy: TrainingBlock): Promise<boolean> => {
+      if (!programState || programState.trainingBlock) return false;
+      if (programState.workouts.length === 0) return false;
+      try {
+        await saveProgram({
+          ...programState,
+          trainingBlock: legacyToActiveBlock(
+            legacy,
+            programState.primaryGoal ?? profile?.primaryGoal ?? "general"
+          ),
+        });
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [programState, profile, saveProgram]
+  );
+
   const applyDeloadWeek = useCallback(
     () => sendDeloadCommand("applyDeloadWeek"),
     [sendDeloadCommand]
@@ -3195,6 +3242,7 @@ export function useProgram() {
     skipRecoveryEarly,
     dismissFellBehindPrompt,
     startTrainingBlock,
+    adoptLegacyTrainingBlock,
     releaseTrainingBlock,
     keepTrainingBlockFocus,
     applyDeloadWeek,
