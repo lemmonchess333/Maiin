@@ -221,3 +221,64 @@ export function rejectRead(index = 0, code = "unavailable"): boolean {
 export function releaseAllReads(): void {
   firestoreFake.releaseAllReads();
 }
+
+/* ── deferred writes ───────────────────────────────────────────────── */
+
+/**
+ * Hold every subsequent single-document write open, the dual of
+ * `deferReads`. A held write has NOT landed — the store is untouched and
+ * `writeLog()` stays empty until it is released.
+ *
+ * For read-modify-write races: anything the code snapshots BEFORE an
+ * await is stale by the length of the round trip, and whatever happened
+ * in that window gets overwritten when the write-back lands. Nothing
+ * throws, nothing logs — the user's action simply disappears.
+ *
+ *   deferWrites();
+ *   const flushing = flushQueue(db, uid);  // suspends mid-write
+ *   queueWrite(uid, ...);                  // user logs during the flush
+ *   releaseAllWrites();
+ *   await flushing;                        // the new item must survive
+ *
+ * Batch and transaction writes are NOT deferrable — they call the store
+ * directly rather than going through the SDK surface.
+ */
+export function deferWrites(): void {
+  firestoreFake.deferWrites();
+}
+
+/** Stop holding NEW writes. Already-held ones stay held. */
+export function resumeWrites(): void {
+  firestoreFake.resumeWrites();
+}
+
+/** Paths of the writes currently held, in the order they were issued. */
+export function pendingWrites(): readonly string[] {
+  return firestoreFake.pendingWrites;
+}
+
+/**
+ * Land one held write by position in issue order (default: oldest).
+ * Returns false if nothing is at that index — assert on it, so a test
+ * can't claim an interleaving that never happened.
+ */
+export function releaseWrite(index = 0): boolean {
+  return firestoreFake.releaseWrite(index);
+}
+
+/**
+ * Fail one held write instead of landing it (default: oldest); the store
+ * is left untouched. Returns false if nothing is at that index.
+ *
+ * `failNextFirestore` cannot do this: it fires at ISSUE time, so the
+ * write rejects before it is ever in flight. Use this for a write that
+ * was accepted and only THEN failed, with the caller already moved on.
+ */
+export function rejectWrite(index = 0, code = "unavailable"): boolean {
+  return firestoreFake.rejectWrite(index, code);
+}
+
+/** Land everything still held, oldest first. */
+export function releaseAllWrites(): void {
+  firestoreFake.releaseAllWrites();
+}
