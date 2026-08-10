@@ -85,10 +85,6 @@ const CONSUMER_ROOTS = ["src", "e2e"];
  */
 const KNOWN_ORPHAN_COMPONENTS: { path: string; why: string }[] = [
   {
-    path: "src/components/home/NextBadgeCard.tsx",
-    why: "unwired — a goal-gradient retention card (Kivetz 2006; Nunes & Drèze 2006) that renders nowhere. Only mention is a comment in useHomeData.",
-  },
-  {
     path: "src/components/settings/TrackSettingsSectionView.tsx",
     why: "silent-off — wraps a Settings section to emit settings_section_viewed. Nothing wraps anything, so the event has never fired and the dashboard's zero looks like data.",
   },
