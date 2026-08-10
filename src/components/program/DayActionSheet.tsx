@@ -376,7 +376,7 @@ export default function DayActionSheet({
                       </span>
                     )}
                     {selectedRunHr && (
-                      <span className="inline-flex rounded-full bg-running/10 px-2.5 py-1 text-caption font-semibold text-running font-mono tabular-nums">
+                      <span className="inline-flex rounded-full bg-running/10 px-2.5 py-1 text-caption font-semibold text-running-strong font-mono tabular-nums">
                         {selectedRunHr}
                       </span>
                     )}

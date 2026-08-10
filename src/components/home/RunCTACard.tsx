@@ -92,7 +92,7 @@ export default function RunCTACard({
           <RunIconComp className="size-5 text-running" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold mb-0.5 text-running">
+          <p className="text-xs font-semibold mb-0.5 text-running-strong">
             {isFirst ? "Your first run" : "Today · Run day"}
           </p>
           <div className="flex items-baseline gap-2">
@@ -100,7 +100,7 @@ export default function RunCTACard({
               {runLabel}
             </p>
             {runKeyMetric && (
-              <span className="text-sm font-bold font-mono tabular-nums text-running">
+              <span className="text-sm font-bold font-mono tabular-nums text-running-strong">
                 {runKeyMetric}
               </span>
             )}
