@@ -480,7 +480,7 @@ export default function PerformanceTab() {
                       <div className="p-4 rounded-2xl bg-lifting/8">
                         <div className="flex items-center gap-2 mb-2">
                           <Dumbbell className="size-4 text-lifting" />
-                          <h3 className="text-sm font-semibold text-lifting">
+                          <h3 className="text-sm font-semibold text-lifting-strong">
                             Lifting Suggestions
                           </h3>
                         </div>

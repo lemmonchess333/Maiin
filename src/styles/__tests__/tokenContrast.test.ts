@@ -99,6 +99,12 @@ const TOKEN_BARS = [
     min: AA_NORMAL,
     use: "the AA step for small coral text",
   },
+  { token: "lifting", min: AA_LARGE, use: "fixed identity, large text only" },
+  {
+    token: "lifting-strong",
+    min: AA_NORMAL,
+    use: "the AA step for small purple text",
+  },
 ] as const;
 
 describe("token contrast — text tokens on the card surface", () => {
@@ -130,24 +136,32 @@ describe("token contrast — text tokens on the card surface", () => {
    * both themes — the plain-card check alone would miss it. Composite the
    * 10% tint over the card and re-measure.
    */
+  /* Both sport identities, on both themes, over BOTH surfaces a tinted
+     chip can sit on. `--card` alone is not enough: `--muted` is the darker
+     raised tile, and it was the muted surface that failed first for
+     purple (3.70:1 in dark). */
   it.each([
-    ["light", () => lightBlock()],
-    ["dark", () => darkBlock()],
-  ])("coral small text clears AA on a running/10 chip (%s)", (_theme, get) => {
-    const block = get();
-    const card = hslToRgb(...readHsl(block, "card"));
-    const tint = hslToRgb(...readHsl(block, "running"));
-    const chip = card.map((c, i) => 0.1 * tint[i] + 0.9 * c) as [
-      number,
-      number,
-      number,
-    ];
-    const fg = hslToRgb(...readHsl(block, "running-strong"));
-    const ratio = contrast(fg, chip);
-    expect(
-      ratio,
-      `--running-strong is ${ratio.toFixed(2)}:1 on a running/10 chip`
-    ).toBeGreaterThanOrEqual(AA_NORMAL);
+    ["light", "running"],
+    ["dark", "running"],
+    ["light", "lifting"],
+    ["dark", "lifting"],
+  ] as const)("%s: small %s text clears AA on its /10 chip", (theme, sport) => {
+    const block = theme === "light" ? lightBlock() : darkBlock();
+    const tint = hslToRgb(...readHsl(block, sport));
+    const fg = hslToRgb(...readHsl(block, `${sport}-strong`));
+    for (const surface of ["card", "muted"] as const) {
+      const bg = hslToRgb(...readHsl(block, surface));
+      const chip = bg.map((c, i) => 0.1 * tint[i] + 0.9 * c) as [
+        number,
+        number,
+        number,
+      ];
+      const ratio = contrast(fg, chip);
+      expect(
+        ratio,
+        `--${sport}-strong is ${ratio.toFixed(2)}:1 on a ${sport}/10 chip over --${surface} (${theme})`
+      ).toBeGreaterThanOrEqual(AA_NORMAL);
+    }
   });
 
   it("teal and success are THEME-AWARE, not one fixed value", () => {
@@ -155,7 +169,7 @@ describe("token contrast — text tokens on the card surface", () => {
        clear AA on both a white and a near-black card. A future edit that
        collapses these back to one value across both blocks reintroduces
        exactly that, so the difference itself is the contract. */
-    for (const token of ["teal", "success"] as const) {
+    for (const token of ["teal", "success", "running-strong", "lifting-strong"] as const) {
       expect(
         readHsl(lightBlock(), token),
         `--${token} must differ between themes`
