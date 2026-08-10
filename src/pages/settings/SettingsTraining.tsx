@@ -46,6 +46,7 @@ export default function SettingsTraining() {
       <SettingsSection
         title="Programme settings"
         subtitle="Goal, nutrition, lifting, running, equipment, injuries"
+        section="training"
       >
         <ProgrammeSettings
           profile={profile}

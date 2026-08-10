@@ -3,6 +3,8 @@ import { useAuth } from "@/lib/auth";
 import SettingsSection from "@/components/settings/SettingsSection";
 import AccountSection from "@/components/settings/AccountSection";
 import SecuritySection from "@/components/settings/SecuritySection";
+import DataExportSection from "@/components/settings/DataExportSection";
+import TrackSettingsSectionView from "@/components/settings/TrackSettingsSectionView";
 
 export default function SettingsAccount() {
   const { user, signOut } = useAuth();
@@ -11,8 +13,23 @@ export default function SettingsAccount() {
     <SettingsSection
       title="Account"
       subtitle="Sign-in, data export, delete account"
+      section="account"
     >
       <SecuritySection inline user={user} />
+      {/*
+        This page's subtitle has promised "data export" since Set1.2 while
+        rendering nothing that exports anything — `DataExportSection` was
+        built over `src/lib/export.ts` and reached by nothing (#1921). The
+        page advertised the feature, so it is also where it belongs.
+
+        Above the destructive block deliberately: taking your data with
+        you is the thing you may want to do BEFORE deleting the account,
+        and putting it after would make the export easy to miss for the
+        one user who most needs it.
+      */}
+      <TrackSettingsSectionView section="data_storage">
+        <DataExportSection user={user} />
+      </TrackSettingsSectionView>
       <AccountSection inline user={user} signOut={signOut} />
     </SettingsSection>
   );

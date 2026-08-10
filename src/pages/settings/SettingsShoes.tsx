@@ -4,7 +4,11 @@ import ShoesSection from "@/components/settings/ShoesSection";
 
 export default function SettingsShoes() {
   return (
-    <SettingsSection title="My Shoes" subtitle="Track mileage, get replacement alerts">
+    <SettingsSection
+      title="My Shoes"
+      subtitle="Track mileage, get replacement alerts"
+      section="shoes"
+    >
       <ShoesSection inline />
     </SettingsSection>
   );

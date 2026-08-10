@@ -116,6 +116,7 @@ export default function SettingsNutrition() {
     <SettingsSection
       title="Nutrition"
       subtitle="Goal weight, calorie targets, activity level"
+      section="nutrition"
     >
       <NutritionSection
         inline
