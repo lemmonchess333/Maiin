@@ -199,7 +199,7 @@ export default function RaceCockpitCard({
       )}
 
       {inTaper && (
-        <SectionLabel tier="section" className="text-running">
+        <SectionLabel tier="section" className="text-running-strong">
           Taper week
           {" · "}
           race in {daysToRace} {daysToRace === 1 ? "day" : "days"}

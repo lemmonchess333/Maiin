@@ -36,7 +36,7 @@ export default function PhaseRail({ activePhase, className }: PhaseRailProps) {
           key={label}
           className={cn(
             "text-center",
-            label === activePhase && "font-bold text-foreground text-running"
+            label === activePhase && "font-bold text-foreground text-running-strong"
           )}
         >
           {label}

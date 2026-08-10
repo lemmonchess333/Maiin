@@ -261,7 +261,7 @@ export default function PRsTab({
           Indoor (only when user has treadmill / manual runs). */}
       {hasAnyLifetimeRun && (
         <section aria-label="Running personal records" className="space-y-3">
-          <SectionLabel className="text-running">Running</SectionLabel>
+          <SectionLabel className="text-running-strong">Running</SectionLabel>
           <PRCard
             title="Running PRs"
             subtitle="All-time · outdoor GPS only"
@@ -294,7 +294,7 @@ export default function PRsTab({
           a confusing empty recent-window). */}
       {hasAnyLifetimeWorkout && (
         <section aria-label="Lifting personal records" className="space-y-3">
-          <SectionLabel className="text-lifting">Lifting</SectionLabel>
+          <SectionLabel className="text-lifting-strong">Lifting</SectionLabel>
           <LiftPRList
             prs={lifetimePRs}
             title="Lift PRs"

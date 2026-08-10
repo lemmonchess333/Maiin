@@ -275,7 +275,7 @@ export default function RaceGoalPlanner({
             <p className="text-base font-bold tabular-nums font-mono text-foreground">
               {outLabel(state)}
             </p>
-            <SectionLabel className="text-running">
+            <SectionLabel className="text-running-strong">
               {state.statusTitle}
             </SectionLabel>
           </div>
