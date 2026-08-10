@@ -97,22 +97,6 @@ const KNOWN_ORPHAN_COMPONENTS: { path: string; why: string }[] = [
     why: "unwired — CLAUDE.md's documented Home composition names it (WeekStrip → DayPeekCard → StackedCTACards → TodayEnergy → HybridBalanceCard → InsightStrip), so the docs describe a screen that does not exist.",
   },
   {
-    path: "src/components/settings/HeartRateZonesSection.tsx",
-    why: "half-staged — the ONLY writer of profile.maxHeartRate, which DayActionSheet, ProgrammeRunSection and useHeartRate all read. Unrendered means the field is unenterable and all three fall back to the Tanaka age estimate forever.",
-  },
-  {
-    path: "src/components/settings/RunFitnessSection.tsx",
-    why: "unwired — and PaceInsightCard's own header claims it as a consumer ('Used both in Settings (RunFitnessSection) and post-run (RunSummary)'), so that prose is false. Has a test suite.",
-  },
-  {
-    path: "src/components/settings/AiUsageSection.tsx",
-    why: "unwired — F1b lock pin #6, the Settings daily-usage pill. A locked decision whose implementation never reached a page. Has a test suite.",
-  },
-  {
-    path: "src/components/settings/DataExportSection.tsx",
-    why: "unwired — the CSV export UI over src/lib/export.ts. Data export is a user right, so 'unreachable' here is a different weight of problem from a dead chart.",
-  },
-  {
     path: "src/components/settings/TrackSettingsSectionView.tsx",
     why: "silent-off — wraps a Settings section to emit settings_section_viewed. Nothing wraps anything, so the event has never fired and the dashboard's zero looks like data.",
   },
