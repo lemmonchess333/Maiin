@@ -19,11 +19,33 @@ import { ChevronLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { ReactNode } from "react";
 import { haptic } from "@/lib/haptic";
+import TrackSettingsSectionView from "./TrackSettingsSectionView";
+import type { SettingsSection as SettingsSectionId } from "@/lib/settingsAnalytics";
 
 interface SettingsSectionProps {
   title: string;
   /** Optional one-line description rendered under the title. */
   subtitle?: string;
+  /**
+   * Analytics id. When given, emits `settings_section_viewed` once, the
+   * first time the content crosses into view.
+   *
+   * Threaded HERE rather than at each page's JSX because this component is
+   * already the one chrome every nested settings page renders — so the
+   * wrapper goes in once and each page adds a prop, instead of twelve
+   * near-identical hand-wrapped edits that can silently disagree.
+   *
+   * NOTE the semantics shifted with the Set1.2 nested IA and the dashboard
+   * should be read accordingly. `TrackSettingsSectionView` was built when
+   * Settings was ONE page and sections scrolled past; now each section IS a
+   * page, so the event means "opened this settings page" rather than
+   * "scrolled past this section". That is the more useful of the two, and
+   * it is worth stating because the event name no longer says it.
+   *
+   * Optional so the defensive empty-chrome states (rendered while a profile
+   * is still loading) don't fire a view for a page that showed nothing.
+   */
+  section?: SettingsSectionId;
   /** Optional. Empty when the consumer is rendering a defensive
    *  empty-chrome state (e.g. while the profile is still loading). */
   children?: ReactNode;
@@ -32,6 +54,7 @@ interface SettingsSectionProps {
 export default function SettingsSection({
   title,
   subtitle,
+  section,
   children,
 }: SettingsSectionProps) {
   const navigate = useNavigate();
@@ -60,7 +83,15 @@ export default function SettingsSection({
         ) : null}
       </header>
 
-      <div className="space-y-4">{children}</div>
+      <div className="space-y-4">
+        {section ? (
+          <TrackSettingsSectionView section={section}>
+            {children}
+          </TrackSettingsSectionView>
+        ) : (
+          children
+        )}
+      </div>
     </div>
   );
 }

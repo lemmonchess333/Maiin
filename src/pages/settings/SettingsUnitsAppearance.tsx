@@ -8,7 +8,7 @@ export default function SettingsUnitsAppearance() {
 
   async function toggleUnit(
     key: "preferredWeightUnit" | "preferredHeightUnit",
-    current: string,
+    current: string
   ): Promise<void> {
     if (key === "preferredWeightUnit") {
       await updateProfile({
@@ -44,8 +44,18 @@ export default function SettingsUnitsAppearance() {
   if (!profile) return <SettingsSection title="Units & Appearance" />;
 
   return (
-    <SettingsSection title="Units & Appearance" subtitle="Weight, height, dark mode">
-      <UnitsAppearanceSection inline profile={profile} toggleUnit={toggleUnit} toggleDark={toggleDark} toggleHideWeightNumber={toggleHideWeightNumber} />
+    <SettingsSection
+      title="Units & Appearance"
+      subtitle="Weight, height, dark mode"
+      section="units_appearance"
+    >
+      <UnitsAppearanceSection
+        inline
+        profile={profile}
+        toggleUnit={toggleUnit}
+        toggleDark={toggleDark}
+        toggleHideWeightNumber={toggleHideWeightNumber}
+      />
     </SettingsSection>
   );
 }

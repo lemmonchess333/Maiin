@@ -18,6 +18,8 @@ import { useAuth } from "@/lib/auth";
 import { useProgram } from "@/features/program/useProgram";
 import SettingsSection from "@/components/settings/SettingsSection";
 import RunPlanSettings from "@/components/program/RunPlanSettings";
+import RunFitnessSection from "@/components/settings/RunFitnessSection";
+import HeartRateZonesSection from "@/components/settings/HeartRateZonesSection";
 import AdjustWeekSheet from "@/components/program/AdjustWeekSheet";
 import { localDateString } from "@/lib/dateHelpers";
 import { resolveRunPlan } from "@/lib/runPlanResolver";
@@ -25,7 +27,7 @@ import { track as trackProgram } from "@/lib/programAnalytics";
 
 export default function SettingsRunPlan() {
   const navigate = useNavigate();
-  const { profile, refreshProfile } = useAuth();
+  const { profile, updateProfile, refreshProfile } = useAuth();
   const { programState, overrideRunDay, realignRacePlan } = useProgram();
   const [adjustOpen, setAdjustOpen] = useState(false);
 
@@ -72,7 +74,7 @@ export default function SettingsRunPlan() {
   return (
     <SettingsSection
       title="Run plan"
-      subtitle="Mode, race goal and run days — just your running"
+      subtitle="Mode, race goal, run days, fitness and heart-rate zones"
     >
       {canAdjust && (
         <button
@@ -98,6 +100,23 @@ export default function SettingsRunPlan() {
         refreshProfile={refreshProfile}
         onOpenFullSettings={() => navigate("/settings/training")}
       />
+
+      {/*
+        The two running-FITNESS inputs, below the plan they feed.
+        Both shipped built and rendered by nothing (#1921), which for
+        `HeartRateZonesSection` meant `profile.maxHeartRate` had three
+        readers — DayActionSheet, ProgrammeRunSection, useHeartRate — and
+        no way for a user to set it, so every one of them fell back to the
+        Tanaka age estimate permanently. `RunFitnessSection` was claimed
+        in writing by `PaceInsightCard`'s own header ("Used both in
+        Settings (RunFitnessSection) and post-run (RunSummary)").
+
+        Here rather than /settings/training because this page is the
+        running-only destination and both are running physiology; the
+        full programme editor stays one tap away above.
+      */}
+      <RunFitnessSection profile={profile} updateProfile={updateProfile} />
+      <HeartRateZonesSection updateProfile={updateProfile} />
 
       {canAdjust && raceGoal && (
         <AdjustWeekSheet
