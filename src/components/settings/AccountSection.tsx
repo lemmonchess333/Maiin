@@ -2,14 +2,11 @@ import { useReducer, useState } from "react";
 import { motion } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 import { Download, LogOut, Trash2 } from "lucide-react";
+import DataExportSection from "./DataExportSection";
+import TrackSettingsSectionView from "./TrackSettingsSectionView";
 import { toast } from "@/lib/toast";
 import { logger } from "@/lib/logger";
-import {
-  exportWorkoutsCSV,
-  exportMealsCSV,
-  exportBodyweightCSV,
-  downloadCSV,
-} from "@/lib/export";
+import {} from "@/lib/export";
 import { deleteAccount } from "@/lib/socialApi";
 import { discardDeletedAccountPushState } from "@/lib/pushNotifications";
 import {
@@ -95,7 +92,6 @@ export default function AccountSection({
   // they cancel via App Store settings.
   const hasAppleSubscription = !!profile?.appleOriginalTransactionId;
   const [showAppleWarning, setShowAppleWarning] = useState(false);
-  const [exporting, setExporting] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [password, setPassword] = useState("");
@@ -303,45 +299,25 @@ export default function AccountSection({
         title="Data & Account"
         subtitle="Export, sign out"
       >
-        <div className="space-y-2">
-          {[
-            { label: "Export Workouts (CSV)", key: "workouts" },
-            { label: "Export Meals (CSV)", key: "meals" },
-            { label: "Export Bodyweight (CSV)", key: "bodyweight" },
-          ].map(({ label, key }) => (
-            <button
-              type="button"
-              key={key}
-              disabled={exporting !== null}
-              onClick={async () => {
-                if (!user) return;
-                setExporting(key);
-                try {
-                  let csv: string;
-                  if (key === "workouts")
-                    csv = await exportWorkoutsCSV(user.uid);
-                  else if (key === "meals")
-                    csv = await exportMealsCSV(user.uid);
-                  else csv = await exportBodyweightCSV(user.uid);
-                  downloadCSV(
-                    csv,
-                    `tropos-${key}-${new Date().toISOString().split("T")[0]}.csv`
-                  );
-                  toast.success(
-                    `${key.charAt(0).toUpperCase() + key.slice(1)} exported!`
-                  );
-                } catch (err) {
-                  toast.error("Couldn't export your data. Please try again.");
-                  logger.error(err);
-                }
-                setExporting(null);
-              }}
-              className="w-full p-3 rounded-xl bg-card border border-border text-sm text-left hover:bg-muted transition-colors disabled:opacity-50"
-            >
-              {exporting === key ? "Exporting..." : label}
-            </button>
-          ))}
-        </div>
+        {/*
+          The extracted component, not a second inline copy.
+
+          This block used to be ~40 lines of export buttons duplicated
+          verbatim in DataExportSection — which is why that component read
+          as an orphan: it was the EXTRACTED version, never adopted, while
+          the copy that shipped stayed here. #1923 mistook it for an
+          unwired feature and rendered it on the page as well, so the
+          Account screen showed six export rows. Caught by a screenshot,
+          not by a test: both copies work perfectly in isolation.
+
+          Pointing at the component keeps one implementation and gives it
+          the tests DataExportSection.test.tsx already has (uid binding,
+          per-button routing, failure toast, signed-out no-op) — none of
+          which covered this copy while it was the live one.
+        */}
+        <TrackSettingsSectionView section="data_storage">
+          <DataExportSection user={user} />
+        </TrackSettingsSectionView>
 
         <motion.button
           whileTap={{ scale: 0.98 }}
@@ -436,7 +412,10 @@ export default function AccountSection({
                 action cannot be undone.
               </p>
               <p className="text-sm text-foreground font-medium">
-                Type <span className="text-destructive-strong font-bold">DELETE</span>{" "}
+                Type{" "}
+                <span className="text-destructive-strong font-bold">
+                  DELETE
+                </span>{" "}
                 to confirm:
               </p>
               <input
