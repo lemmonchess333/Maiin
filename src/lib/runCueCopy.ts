@@ -55,13 +55,29 @@ export function timeCue(minutes: number, km: number): string {
   return `${minutes} minutes in. ${km.toFixed(1)} kilometres covered.`;
 }
 
+/**
+ * These fire on a 30-second cooldown for as long as the deviation holds,
+ * so a long tempo can trigger them dozens of times. Two entries each made
+ * that a metronome — the same two sentences alternating for most of an
+ * hour. (The other half of that problem was the caller feeding in the
+ * whole-run average, so the deviation never cleared; see
+ * `rollingPaceSeconds` in gps.ts.)
+ */
 const BEHIND = [
   "You've drifted a little behind target — lift it gently.",
   "A touch slow just now. Ease back up to pace.",
+  "Slightly off target pace. Pick the effort up a fraction.",
+  "A little behind. Nothing dramatic — just lift the rhythm.",
+  "Pace has eased off. Bring it back when you're ready.",
+  "Just under target. Lengthen the stride a touch.",
 ];
 const AHEAD = [
   "You're ahead of target — back off a touch and save it for later.",
   "Quicker than planned. Relax the pace a little.",
+  "That's faster than target. Ease off and bank the energy.",
+  "Ahead of pace. Settle back — there's a way to go yet.",
+  "Running hot. Take the foot off a fraction.",
+  "Quicker than needed. Let the pace come back to you.",
 ];
 
 export function paceAlertCue(
@@ -138,11 +154,31 @@ const REP_OPENING = [
   "Find the effort, don't fight it.",
   "Ease in. Plenty of work still to come.",
 ];
+/**
+ * Deep enough that a whole session's middle reps get their own line.
+ *
+ * The first version had four entries, which on an 8×400 gave reps 3 and 7
+ * the identical clause "Keep the shoulders easy." — the same defect this
+ * module is fixing, at reduced scale. It survived the test because
+ * `Set(cues).size === n` counts the REP NUMBER, so a repeated clause still
+ * reads as a unique string. That is precisely the tautology the header
+ * below warns about for the old copy; writing the warning did not stop me
+ * from reproducing it one layer down.
+ *
+ * Nine entries covers reps 2..9 without repetition. Longer sessions do
+ * cycle, which is fine and is what the tests assert — the rule is
+ * "no repeat within a normal session", not "infinite vocabulary".
+ */
 const REP_MIDDLE = [
   "Hold the effort.",
   "Same effort as the last one.",
   "Strong and relaxed.",
   "Keep the shoulders easy.",
+  "Smooth breathing, steady turnover.",
+  "Settle in — this is the pace.",
+  "Relax the hands and jaw.",
+  "Stay tall, drive from the hips.",
+  "Right where you should be.",
 ];
 const REP_FINAL = [
   "Last one. Everything you've got left.",
@@ -199,11 +235,16 @@ export function intervalRecoveryCue(
   return pick(RECOVERY, variant);
 }
 
+/** Same sizing reason as REP_MIDDLE — strides come in 4-8, and four
+ *  entries put the same clause on stride 1 and stride 5. */
 const STRIDE = [
   "Relaxed and fast.",
   "Quick feet, easy face.",
   "Smooth and light — not a sprint.",
   "Fast but loose.",
+  "Let the legs turn over.",
+  "Tall and springy.",
+  "Effortless speed — no straining.",
 ];
 
 /** `Stride 4 of 6. Quick feet, easy face.` */

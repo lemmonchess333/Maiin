@@ -274,14 +274,45 @@ export function rollingPace(
   points: GPSPoint[],
   windowSeconds: number = 30
 ): string {
-  if (points.length < 2) return "--:--";
+  const secsPerKm = rollingPaceSeconds(points, windowSeconds);
+  if (secsPerKm === null) return "--:--";
+  const mins = Math.floor(secsPerKm / 60);
+  const secs = Math.floor(secsPerKm % 60);
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
+
+/**
+ * The same rolling-window pace as {@link rollingPace}, in seconds per
+ * kilometre, or `null` when the window holds too little data.
+ *
+ * Extracted because the audio pace alert needs the number, and was
+ * computing `(elapsed / distance) * 1000` at its call site instead — the
+ * WHOLE-RUN average, the exact quantity the comment above says "lags
+ * badly mid-run". On any session with a warm-up that average is dragged
+ * permanently slow, so once the alert's ±15s/km threshold is crossed it
+ * stays crossed: the app tells the runner they are behind target every
+ * 30 seconds for the rest of the session, from a two-line pool, while
+ * the live display beside it shows them on pace. That is the loudest
+ * possible place to be wrong, and it is a large part of what "the same
+ * sentence over and over" sounds like on a tempo run.
+ *
+ * `null` rather than 0 is deliberate: the caller must be able to tell
+ * "no reading yet" from "a real reading", and stay silent for the
+ * former. Returning the misleading average as a fallback would put the
+ * bug straight back.
+ */
+export function rollingPaceSeconds(
+  points: GPSPoint[],
+  windowSeconds: number = 30
+): number | null {
+  if (points.length < 2) return null;
   const now = points[points.length - 1].timestamp;
   const windowMs = windowSeconds * 1000;
   /* Find the first point within the rolling window. Points are kept
      in chronological order by useGPS so a linear scan from the start
      is fine; the array is also bounded by the run duration. */
   const startIdx = points.findIndex((p) => now - p.timestamp <= windowMs);
-  if (startIdx === -1 || startIdx === points.length - 1) return "--:--";
+  if (startIdx === -1 || startIdx === points.length - 1) return null;
 
   let dist = 0;
   for (let i = startIdx + 1; i < points.length; i++) {
@@ -294,12 +325,9 @@ export function rollingPace(
   }
   const elapsedSec = (now - points[startIdx].timestamp) / 1000;
 
-  if (dist < 10 || elapsedSec < 5) return "--:--";
+  if (dist < 10 || elapsedSec < 5) return null;
 
-  const paceSecsPerKm = (elapsedSec / dist) * 1000;
-  const mins = Math.floor(paceSecsPerKm / 60);
-  const secs = Math.floor(paceSecsPerKm % 60);
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
+  return (elapsedSec / dist) * 1000;
 }
 
 export function paceAsNumber(

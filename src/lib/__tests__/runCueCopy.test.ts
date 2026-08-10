@@ -54,6 +54,27 @@ describe("other cues", () => {
     expect(paceAlertCue("ahead", 0).toLowerCase()).toContain("ahead");
   });
 
+  it("pace alerts survive a long tempo without becoming a metronome", () => {
+    // These fire on a 30s cooldown for as long as the deviation holds, so
+    // a 40-minute tempo can trigger them ~40 times. With two entries that
+    // was the same pair alternating for most of an hour — the repetition
+    // complaint in its loudest form. Six gives a long session real
+    // variety; the assertion is on the DISTINCT COUNT over a realistic
+    // firing sequence, not on the pool literal, so growing or reordering
+    // the pool doesn't break it but shrinking it does.
+    for (const dir of ["behind", "ahead"] as const) {
+      const heard = Array.from({ length: 40 }, (_, i) => paceAlertCue(dir, i));
+      expect(
+        new Set(heard).size,
+        `${dir}: only ${new Set(heard).size} distinct lines across 40 alerts`
+      ).toBeGreaterThanOrEqual(6);
+      // And never twice running.
+      for (let i = 1; i < heard.length; i += 1) {
+        expect(heard[i], `${dir} alert ${i + 1}`).not.toBe(heard[i - 1]);
+      }
+    }
+  });
+
   it("halfway / final-500 / PB are non-empty and warm", () => {
     expect(halfwayCue(0).toLowerCase()).toContain("halfway");
     expect(final500Cue(0).toLowerCase()).toContain("five hundred");
@@ -96,22 +117,51 @@ describe("interval cue vocabulary — no wallpaper", () => {
     return { work, rest };
   }
 
-  it("varies the COACHING, not just the rep number", () => {
-    // Deliberately strips the "Rep 3 of 5." head before comparing.
+  /**
+   * Everything the runner hears MINUS the numbers.
+   *
+   * Both the "Rep 3 of 8." head and the " 4 to go after this." tally are
+   * stripped, because both move on their own and can make an identical
+   * coaching clause look like a distinct string.
+   */
+  function clause(cue: string): string {
+    return cue
+      .replace(/^Rep \d+ of \d+\.\s*/, "")
+      .replace(/^\d+ to go after this\.\s*/, "")
+      .trim();
+  }
+
+  it("never repeats a coaching CLAUSE within a normal session", () => {
+    // The assertion that was missing, and it caught a live bug.
     //
-    // Asserting the whole strings are distinct looked like the right test
-    // and was almost worthless: the OLD copy was `Rep N of 5. Push on!`,
-    // which is string-unique for every rep purely because the number
-    // moves. It passed against the exact defect being fixed — confirmed
-    // by mutation, not assumed. What the runner actually hears repeating
-    // is everything after the count, so that is what gets compared.
-    for (const n of [3, 5, 6, 8]) {
+    // The first version of this test compared whole strings and asserted
+    // only `> 1` distinct. Both were satisfied by copy that gave reps 3
+    // and 7 of an 8×400 the identical clause "Keep the shoulders easy." —
+    // the very defect being fixed, one layer down, hidden by exactly the
+    // rep-number tautology the header above warns about. Writing the
+    // warning did not stop me reproducing it.
+    //
+    // Capped at 10 because the pools are finite by design: beyond a
+    // normal session length cycling is correct behaviour, and the
+    // back-to-back rule below is what governs there.
+    for (let n = 3; n <= 10; n += 1) {
       const { work } = session(n);
-      const coaching = work.map((c) => c.replace(/^Rep \d+ of \d+\.\s*/, ""));
+      const clauses = work.map(clause);
       expect(
-        new Set(coaching).size,
-        `only ${new Set(coaching).size} distinct coaching lines across ${n} reps: ${JSON.stringify(coaching)}`
-      ).toBeGreaterThan(1);
+        new Set(clauses).size,
+        `${n} reps produced ${new Set(clauses).size} distinct clauses: ${JSON.stringify(clauses)}`
+      ).toBe(n);
+    }
+  });
+
+  it("never repeats a coaching clause back-to-back, at any length", () => {
+    // Holds where the no-repeat rule above stops. A 20-rep session may
+    // reuse a line; it may not use the same one twice running.
+    for (const n of [12, 16, 20]) {
+      const clauses = session(n).work.map(clause);
+      for (let i = 1; i < clauses.length; i += 1) {
+        expect(clauses[i], `${n} reps, rep ${i + 1}`).not.toBe(clauses[i - 1]);
+      }
     }
   });
 
@@ -175,9 +225,21 @@ describe("interval cue vocabulary — no wallpaper", () => {
   });
 
   it("varies strides and floats too, and names the last stride", () => {
-    const strides = [1, 2, 3, 4, 5, 6].map((r) => strideRepCue(r, 6, r));
-    expect(new Set(strides).size).toBe(6);
-    expect(strides[5]).toMatch(/last/i);
+    // Clause-level, same reason as the reps: `Set(strides).size === 6` was
+    // passing on the stride NUMBER while strides 1 and 5 shared a line.
+    for (const n of [4, 6, 8]) {
+      const strides = Array.from({ length: n }, (_, i) =>
+        strideRepCue(i + 1, n, i + 1)
+      );
+      const clauses = strides.map((s) =>
+        s.replace(/^Stride \d+ of \d+\.\s*/, "")
+      );
+      expect(
+        new Set(clauses).size,
+        `${n} strides: ${JSON.stringify(clauses)}`
+      ).toBe(n);
+      expect(strides[n - 1]).toMatch(/last/i);
+    }
     const floats = [0, 1, 2].map((i) => floatCue(i));
     expect(new Set(floats).size).toBe(3);
   });
