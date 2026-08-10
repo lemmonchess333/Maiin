@@ -55,7 +55,7 @@ export default function PlateCalculatorSheet({
             {breakdown.perSide.map(({ plateKg, count }) => (
               <span
                 key={plateKg}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-lifting/10 px-3 py-2 text-sm font-semibold text-lifting"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-lifting/10 px-3 py-2 text-sm font-semibold text-lifting-strong"
               >
                 <span className="font-mono tabular-nums">
                   {count} × {plateKg}

@@ -36,6 +36,12 @@
      saturation (57%) so the identity is untouched; only lightness moves,
      in whichever direction the theme needs. */
   --color-running-strong: hsl(var(--running-strong));
+  /* AA text step for purple, the lifting identity — same shape and same
+     reason as --running-strong. `--lifting` measures 3.87:1 on the light
+     card, 3.65:1 on light muted and 3.70:1 on dark muted, all under the
+     4.5:1 AA floor for the small text 11 sites use it for (worse again on
+     a `bg-lifting/10` chip). Hue and saturation unchanged; lightness only. */
+  --color-lifting-strong: hsl(var(--lifting-strong));
   --color-lifting: hsl(var(--lifting));
   /* Nutrition domain colour — warm orange (#D9884E), the food/calorie/
      macro identity. `--nutrition` is the identity tint value (bg-nutrition,
@@ -153,7 +159,8 @@
      --lifting is the literal brand purple (#7B72E9) and is deliberately
      NOT --primary (246 88% 70%, hand-tuned for white-text AA). */
   --running: 348 57% 61%; /* #D4637A coral */
-  --running-strong: 348 57% 50%; /* #C83754 — 5.08:1 card / 4.54:1 chip */
+  --running-strong: 348 57% 48%; /* #C03551 — worst case 4.60:1 (chip over muted) */
+  --lifting-strong: 245 73% 61%; /* #5F53E4 — worst case 4.62:1 (chip over muted) */
   --lifting: 245 73% 68%; /* #7B72E9 purple */
   /* Nutrition domain colour — fixed warm-orange identity (same in light +
      dark, like running/lifting). --nutrition is the tint/identity value;
@@ -239,7 +246,8 @@
   --primary-strong: 243 55% 60%;
   /* Sport-identity colours — IDENTICAL to :root (fixed sport colour). */
   --running: 348 57% 61%; /* #D4637A coral */
-  --running-strong: 348 57% 65%; /* #D97387 — 5.23:1 card / 4.63:1 chip */
+  --running-strong: 348 57% 68%; /* #DC7F91 — worst case 4.52:1 (chip over muted) */
+  --lifting-strong: 245 73% 75%; /* #9891EE — worst case 4.60:1 (chip over muted) */
   --lifting: 245 73% 68%; /* #7B72E9 purple */
   /* Media stage — IDENTICAL to :root (fixed dark surface). */
   --stage: 240 4% 7%;
