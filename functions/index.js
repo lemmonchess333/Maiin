@@ -132,6 +132,7 @@ const {
 // source of truth (the backfill replays history through the same apply
 // path the triggers use).
 const challengeBackfill = require("./lib/challengeBackfill");
+const challengeMarkers = require("./lib/challengeMarkers");
 // Account deletion logic. Extracted so the call-ordering invariant
 // (Firestore + Storage before Auth-user delete; pre-W1f had the
 // inverse, leaving orphans) is unit-testable with stub handles —
@@ -4130,27 +4131,37 @@ async function applyChallengeProgressIncrement(
     };
   }
 
-  // Marker doc keyed by the driving activity id. When absent we can't
-  // guard idempotently — fall back to a deterministic key so a missing
-  // sourceId never silently disables the transaction.
-  const markerRef = participantRef
-    .collection("applied")
-    .doc(sourceId || `${metric}_legacy_nosrc`);
-
   // Read-modify-write inside a transaction: (a) two near-simultaneous
   // triggers otherwise read the same currentValue and the second write
   // clobbers the first (lost update); (b) a redelivered onCreate would
   // double-count. The marker read guards (b); the transaction guards (a).
   const tiers = challenge.tiers || {};
   await db.runTransaction(async (tx) => {
-    // All reads before any writes (Firestore transaction rule).
-    const [snap, marker] = await Promise.all([
-      tx.get(participantRef),
-      tx.get(markerRef),
-    ]);
+    // All reads before any writes (Firestore transaction rule). The two
+    // reads are SEQUENTIAL rather than a Promise.all because the marker's
+    // path depends on the participant's `joinedAt` — see below. Both
+    // still precede every write, which is what the rule requires.
+    const snap = await tx.get(participantRef);
     // A participant doc that appeared between the fast-path read and
     // the tx read (client join racing us) is fine — the tx read wins.
     if (!snap.exists && !joinFields) return;
+
+    // Marker keyed by (membership, driving activity id). The membership
+    // half is what makes leaving and re-joining a clean slate: a
+    // participant delete does not cascade to this subcollection, so
+    // without it the join-time backfill replays every source straight
+    // into a surviving marker and the re-joined user stays at zero
+    // forever. See functions/lib/challengeMarkers.js.
+    const markerRef = participantRef
+      .collection("applied")
+      .doc(
+        challengeMarkers.markerDocId(
+          snap.exists ? snap.data().joinedAt : joinFields.joinedAt,
+          sourceId,
+          `${metric}_legacy_nosrc`
+        )
+      );
+    const marker = await tx.get(markerRef);
     if (marker.exists) return; // already applied this activity — idempotent no-op
     const current = snap.exists ? snap.data().currentValue || 0 : 0;
     const newValue = current + incrementBy;
@@ -4303,13 +4314,6 @@ async function applyFastestEffortToChallenge(
   const participantSnap = await participantRef.get();
   if (!participantSnap.exists) return;
 
-  // Idempotency marker keyed by the driving run id — same scheme as
-  // syncChallengeProgress. Falls back to a deterministic key so a missing
-  // sourceId never silently disables the guard.
-  const markerRef = participantRef
-    .collection("applied")
-    .doc(sourceId || "fastest_effort_legacy_nosrc");
-
   const tiers = challenge.tiers || {};
   const runSeconds = Math.round(runDurationSeconds);
 
@@ -4320,11 +4324,25 @@ async function applyFastestEffortToChallenge(
   // the SAME time, so the concurrency race is real — the transaction guards
   // (a), the marker guards (b). Pre-fix this did a bare get + set.
   await db.runTransaction(async (tx) => {
-    const [snap, marker] = await Promise.all([
-      tx.get(participantRef),
-      tx.get(markerRef),
-    ]);
+    // Sequential reads, both before any write: the marker's path depends
+    // on this participant's `joinedAt` — same membership-namespacing as
+    // the SUM path, for the same reason (a re-join must not inherit the
+    // previous membership's markers and stay stuck at its old best).
+    const snap = await tx.get(participantRef);
     if (!snap.exists) return;
+    // Idempotency marker keyed by (membership, driving run id). Falls
+    // back to a deterministic source key so a missing sourceId never
+    // silently disables the guard.
+    const markerRef = participantRef
+      .collection("applied")
+      .doc(
+        challengeMarkers.markerDocId(
+          snap.data().joinedAt,
+          sourceId,
+          "fastest_effort_legacy_nosrc"
+        )
+      );
+    const marker = await tx.get(markerRef);
     if (marker.exists) return; // already applied this run — idempotent no-op
     const existingBest = snap.data().currentValue || 0;
     // 0 = no best yet, so first qualifying run always wins; else keep faster.
