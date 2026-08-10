@@ -174,9 +174,9 @@ function SegmentedControl<T extends string | number>({
                 ? cn(
                     "bg-card shadow-sm",
                     tone === "running"
-                      ? "text-running"
+                      ? "text-running-strong"
                       : tone === "lifting"
-                        ? "text-lifting"
+                        ? "text-lifting-strong"
                         : "text-foreground"
                   )
                 : // Unselected: transparent on the shared track (fill), or

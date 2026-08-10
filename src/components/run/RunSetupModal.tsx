@@ -63,7 +63,7 @@ function presetChipClass(selected: boolean): string {
   return cn(
     "min-h-11 px-4 rounded-full text-xs font-medium border transition-colors active:scale-[0.97]",
     selected
-      ? "bg-running/12 text-running border-running/30"
+      ? "bg-running/12 text-running-strong border-running/30"
       : "bg-muted text-muted-foreground border-border/50"
   );
 }
