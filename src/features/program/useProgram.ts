@@ -25,15 +25,10 @@ import type {
   ScheduledRunDay,
   ScheduledRunStatus,
 } from "./programTypes";
-import {
-  BLOCK_AMNESTY_WEEKS,
-  isProgressionHeld,
-  represcribeWorkouts,
-} from "./represcribe";
+import { isProgressionHeld, represcribeWorkouts } from "./represcribe";
 import {
   blockWeekOf,
   legacyToActiveBlock,
-  makeBlockId,
   type TrainingBlock,
 } from "./trainingBlock";
 import { normalizeProgramState, transitionStatus } from "./programTypes";
@@ -2274,21 +2269,6 @@ export function useProgram() {
           microloading: true,
         },
         weekHistory: [],
-        // Blk2 / H1. `saveProgram` is a no-merge full replace and this
-        // literal spreads nothing from `programState`, so an unnamed field
-        // is DELETED. Without this line a lift-day change from the weekly
-        // layout sheet — an ordinary two-tap edit, not a reset — destroys
-        // the active block while leaving its rep prescription and focus in
-        // force, with no `goalBefore` left to release to.
-        //
-        // `planBuilder.ts` carries the block through the SAME hazard and
-        // says so in a comment; the fix was never carried to this sibling
-        // path. Regenerating under a block is coherent because the engine
-        // re-authors from `primaryGoal`, which during a block IS the
-        // block's focus — so the rebuild is already in the block's terms.
-        ...(programState?.trainingBlock
-          ? { trainingBlock: programState.trainingBlock }
-          : {}),
         // Blk2 / H1. `saveProgram` is a no-merge full replace and this
         // literal spreads nothing from `programState`, so an unnamed field
         // is DELETED. Without this line a lift-day change from the weekly

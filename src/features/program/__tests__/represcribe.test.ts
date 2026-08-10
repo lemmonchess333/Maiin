@@ -9,6 +9,7 @@ import {
   BLOCK_AMNESTY_WEEKS,
 } from "../represcribe";
 import { generateProgram, advanceWeek, goalProfileFor } from "../programEngine";
+import { FOCUS_ORDER } from "../trainingBlock";
 import type {
   ActiveTrainingBlock,
   PrimaryGoal,
@@ -657,43 +658,59 @@ describe("blockConsequence — the load claim tracks scaleLoadForReps", () => {
     });
 
   // The copy said "the weights come down a little" for EVERY focus change.
-  // scaleLoadForReps only reduces a load when the rep target goes UP, so
-  // that was false for 13 of the 20 ordered pairs — including the pair the
-  // picker puts first.
+  // scaleLoadForReps only reduces a load when the rep target goes UP, so it
+  // was false for most of the ordered pairs — including the pair the picker
+  // puts first.
+  //
+  // The pairs are DERIVED from the profiles, not listed. The listed version
+  // rotted: this block used to cite "hypertrophy 8 → fat_loss 12" as a pair
+  // that rises, and fat_loss later moved to 8-12 — the same mains as general
+  // — when the deficit row was rewritten around Fleck & Kraemer's
+  // maintain-intensity-cut-volume finding. The pair stopped rising, and the
+  // anchor went on asserting copy the model no longer produces.
+  const orderedPairs = FOCUS_ORDER.flatMap((from) =>
+    FOCUS_ORDER.filter((to) => to !== from).map(
+      (to) => [from, to] as [PrimaryGoal, PrimaryGoal]
+    )
+  );
+  const rises = orderedPairs.filter(
+    ([from, to]) => goalProfileFor(to).mainReps > goalProfileFor(from).mainReps
+  );
+  const holds = orderedPairs.filter(
+    ([from, to]) => goalProfileFor(to).mainReps <= goalProfileFor(from).mainReps
+  );
+
+  // Without this the agreement test below is vacuous in one direction: a
+  // profile table where NO pair raises the target (or where every pair does)
+  // is satisfied by copy that never varies at all.
+  it("has focus pairs on both sides of the claim", () => {
+    expect(rises.length).toBeGreaterThan(0);
+    expect(holds.length).toBeGreaterThan(0);
+  });
+
   it("promises no weight change when the rep target does not rise", () => {
-    // hypertrophy 8 → strength 5: fewer reps, load held.
-    expect(say("strength", "hypertrophy")).toMatch(/same weights/i);
-    expect(say("strength", "hypertrophy")).not.toMatch(/come down/i);
-    // equal-rep pair (both mainReps 8).
-    expect(say("general", "hypertrophy")).toMatch(/same weights/i);
+    for (const [from, to] of holds) {
+      expect(say(to, from), `${from} -> ${to}`).toMatch(/same weights/i);
+      expect(say(to, from), `${from} -> ${to}`).not.toMatch(/come down/i);
+    }
   });
 
   it("still promises the drop when the target genuinely rises", () => {
-    // strength 5 → hypertrophy 8, and hypertrophy 8 → fat_loss 12.
-    expect(say("hypertrophy", "strength")).toMatch(/come down a little/i);
-    expect(say("fat_loss", "hypertrophy")).toMatch(/come down a little/i);
+    for (const [from, to] of rises) {
+      expect(say(to, from), `${from} -> ${to}`).toMatch(/come down a little/i);
+    }
   });
 
   it("agrees with scaleLoadForReps on every ordered focus pair", () => {
-    const all: PrimaryGoal[] = [
-      "hypertrophy",
-      "strength",
-      "fat_loss",
-      "general",
-      "running",
-    ];
-    for (const from of all) {
-      for (const to of all) {
-        if (from === to) continue;
-        const moved =
-          scaleLoadForReps(
-            100,
-            goalProfileFor(from).mainReps,
-            goalProfileFor(to).mainReps
-          ) < 100;
-        const claims = /come down a little/i.test(say(to, from));
-        expect(claims, `${from} -> ${to}`).toBe(moved);
-      }
+    for (const [from, to] of orderedPairs) {
+      const moved =
+        scaleLoadForReps(
+          100,
+          goalProfileFor(from).mainReps,
+          goalProfileFor(to).mainReps
+        ) < 100;
+      const claims = /come down a little/i.test(say(to, from));
+      expect(claims, `${from} -> ${to}`).toBe(moved);
     }
   });
 });
