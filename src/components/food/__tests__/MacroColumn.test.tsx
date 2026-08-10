@@ -83,4 +83,67 @@ describe("MacroColumn — tap contract", () => {
     );
     expect(screen.getByText(/protein goal reached/i)).toBeInTheDocument();
   });
+
+  /**
+   * The icon is a bare glyph in EVERY state — no disc behind it, ever.
+   *
+   * This has been wrong in both directions, which is why it is pinned
+   * rather than left to the eye:
+   *
+   *   1. The disc originally rendered only once the goal was met. With
+   *      protein and fat met and carbs short, two icons had a circle and
+   *      the wheat had none — reported as the wheat icon being broken.
+   *      Nothing said the circle meant anything, so "one of these is
+   *      drawn differently" was the only reading available.
+   *   2. The first fix rendered it always, moving the signal to
+   *      intensity. That removed the misreading, and the operator's call
+   *      on seeing it was that the tiles read cleaner with no disc at
+   *      all — which answers the same problem more completely, since
+   *      three identical tiles cannot be misread whatever the numbers do.
+   *
+   * The goal state is still carried, so this costs no information: the
+   * sr-only announcement (asserted above), the progress bar, the
+   * "X / Yg" line, and LEFT mode's "over" label.
+   *
+   * Both directions are covered — met AND unmet — because a regression
+   * that reintroduces the disc would most likely do it on one branch,
+   * which is exactly how the original asymmetry arose.
+   */
+  it("renders NO disc behind the icon, goal met or not", () => {
+    function discOf(container: HTMLElement) {
+      return container.querySelector<HTMLElement>(
+        'span[aria-hidden="true"].rounded-full'
+      );
+    }
+
+    const under = render(
+      <MacroColumn
+        macroKey="carbs"
+        Icon={Beef}
+        consumed={53}
+        target={504}
+        label="Carbs"
+        color="#D9884E"
+        mode="eaten"
+      />
+    );
+    expect(screen.queryByText(/carbs goal reached/i)).toBeNull();
+    expect(discOf(under.container)).toBeNull();
+    under.unmount();
+
+    const over = render(
+      <MacroColumn
+        macroKey="carbs"
+        Icon={Beef}
+        consumed={520}
+        target={504}
+        label="Carbs"
+        color="#D9884E"
+        mode="eaten"
+      />
+    );
+    // Goal IS met — announced to screen readers, and still no disc.
+    expect(screen.getByText(/carbs goal reached/i)).toBeInTheDocument();
+    expect(discOf(over.container)).toBeNull();
+  });
 });

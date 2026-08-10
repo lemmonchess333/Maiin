@@ -183,23 +183,34 @@ export default function MacroColumn({
       onClick={onTap}
       className="flex-1 flex flex-col items-center text-center bg-transparent border-0 p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-lg"
     >
-      {/* Icon — pops on log, and once its goal is met it sits inside a
-          soft macro-colour halo (a calm, lasting "hit it" mark). The halo
-          is a static state, so it shows under reduced-motion too. */}
+      {/* Icon — a bare glyph in every state. No disc behind it.
+          Deliberate, and it has been wrong in both directions:
+
+          It USED to render a macro-tinted disc only once the goal was
+          met. On a real screen with protein and fat met and carbs short,
+          two icons had a circle and the wheat had none, and that was
+          reported as the wheat icon being broken. Nothing on the tile
+          said the circle meant anything, so "one of these is drawn
+          differently" was the only reading available.
+
+          The first fix rendered the disc ALWAYS and moved the signal to
+          intensity, which removed the misreading. The operator's call on
+          seeing it was that the tiles are cleaner with no disc at all —
+          and that answers the same problem more completely: with no disc
+          in any state, all three tiles are identical whatever the
+          numbers do, so there is nothing left to misread.
+
+          Nothing is lost by dropping it, because the halo was never the
+          only goal signal: the progress bar fills and overshoots, the
+          tertiary "X / Yg" line shows the ratio, LEFT mode's label flips
+          to "over", and the sr-only announcement below still tells
+          screen readers. Only the decorative mark is gone.
+
+          Keep the scale pop — that is per-log feedback, not a state. */}
       <motion.span
         className="relative inline-flex items-center justify-center"
         style={{ scale: iconScale }}
       >
-        {goalReached && (
-          <motion.span
-            className="absolute -inset-1.5 rounded-full"
-            style={{ background: color }}
-            initial={{ opacity: reduce ? 0.16 : 0 }}
-            animate={{ opacity: 0.16 }}
-            transition={{ duration: reduce ? 0 : 0.3 }}
-            aria-hidden="true"
-          />
-        )}
         <Icon
           className="relative size-6"
           style={{ color }}
