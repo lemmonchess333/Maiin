@@ -7,6 +7,7 @@
  */
 import { describe, it, expect } from "vitest";
 import { getPlainLanguageSummary } from "../performanceSummary";
+import { computeLoadBand } from "../performanceEngine";
 
 describe("getPlainLanguageSummary — establishing baseline (cold-start)", () => {
   it("overrides headline + body when establishing, ignoring pi/band", () => {
@@ -101,26 +102,43 @@ describe("getPlainLanguageSummary — body by load band", () => {
     );
   });
 
-  it("unknown band falls through to the low-load message", () => {
-    /* The else-branch acts as the default. */
-    expect(getPlainLanguageSummary(50, "deload", null).body).toContain(
-      "Low training load"
-    );
+  it("'deload' gets its OWN message, not the low-load one", () => {
+    /* Pre-fix `deload` fell into the catch-all low-load branch, which
+       ends "…or increase intensity" — wrong advice during planned
+       recovery. The engine can't distinguish a planned deload from
+       inactivity, so the copy covers both without prescribing. */
+    const body = getPlainLanguageSummary(20, "deload", null).body;
+    expect(body).toContain("Very light week");
+    expect(body).not.toContain("Low training load");
   });
 
-  it("undefined band falls through to the low-load message", () => {
-    expect(getPlainLanguageSummary(50, undefined, null).body).toContain(
-      "Low training load"
-    );
-  });
+  /* The two tests that used to live here — "unknown band falls through to
+     the low-load message" and "undefined band falls through…" — PINNED THE
+     BUG. They documented the catch-all else-branch as intended behaviour,
+     which is why the Analytics call site could read a field nothing writes
+     (`labels?.loadBand`) for its whole life without a single test failing.
+     The band parameter is now the closed `LoadBand` type resolved by
+     `resolveLoadBand`, so "no band" is unrepresentable here; validation and
+     case-tolerance are pinned in performanceDocFields.test.ts instead. */
 
-  it("band matching is case-insensitive (loadBand is normalised lowercase)", () => {
-    expect(getPlainLanguageSummary(50, "Overreach", null).body).toContain(
-      "pushing hard"
-    );
-    expect(getPlainLanguageSummary(50, "HIGH", null).body).toContain(
-      "High training load"
-    );
+  it("headline and body never contradict, across the whole PI range", () => {
+    /* The device report that surfaced the bug showed "Solid week — keep the
+       cadence" over "Low training load… increase intensity" on the SAME
+       card. Because the band is a pure function of PI, the pairing is
+       deterministic — walk the range and assert the two halves agree. */
+    for (let pi = 0; pi <= 100; pi++) {
+      const band = computeLoadBand(pi);
+      const { headline, body } = getPlainLanguageSummary(pi, band, null);
+      // A week the headline calls Strong/Solid must never be described as
+      // low or very light load.
+      if (/Strong week|Solid week/.test(headline)) {
+        expect(body, `PI ${pi}`).not.toMatch(/Low training load|Very light/);
+      }
+      // A week the headline calls Light must never be described as high.
+      if (/Light week/.test(headline)) {
+        expect(body, `PI ${pi}`).not.toMatch(/High training load|pushing hard/);
+      }
+    }
   });
 });
 

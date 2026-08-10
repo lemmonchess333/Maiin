@@ -16,7 +16,10 @@ const DISMISSED_STORAGE_PREFIX = "tropos-pgm-deload-dismissed";
 
 interface DeloadBannerProps {
   /** When false the banner is hidden regardless of dismissal state.
-   *  Drive this from `currentWeek.flags?.deloadRecommended`. */
+   *  Drive this from `resolveDeloadRecommended(currentWeek)`
+   *  (@/lib/performanceDocFields) — NOT from `flags?.deloadRecommended`,
+   *  which no writer emits and which kept this banner dark for every
+   *  user until 2026-08-09. */
   visible: boolean;
   /** Stable identifier for the active week (e.g. ISO week-key like
    *  "2026-W21"). Dismissal is keyed against this so a new week

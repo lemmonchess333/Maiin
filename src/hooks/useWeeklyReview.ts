@@ -36,6 +36,7 @@ import { buildPRMap, checkSetPR } from "@/lib/prTracking";
 import { fetchBodyweightLogs } from "@/lib/api";
 import { resolveRunPlanSurface } from "@/lib/runProgrammeViewModel";
 import { logger } from "@/lib/logger";
+import { resolveDeloadRecommended } from "@/lib/performanceDocFields";
 
 /** Sunday key of the last COMPLETED week (the reviewed week). */
 export function reviewedWeekKey(now: Date = new Date()): string {
@@ -340,11 +341,11 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
                   typeof perfData.loadBand === "string"
                     ? perfData.loadBand
                     : null,
-                deloadRecommended: Boolean(
-                  (perfData.flags as Record<string, unknown> | undefined)
-                    ?.deloadRecommended ??
-                    (perfData.signals as Record<string, unknown> | undefined)
-                      ?.deloadFlag
+                // Canonical read. This site survived the mirror drift only
+                // because it fell back to `signals.deloadFlag`; the resolver
+                // reads the top-level field the writers actually emit.
+                deloadRecommended: resolveDeloadRecommended(
+                  perfData as Parameters<typeof resolveDeloadRecommended>[0]
                 ),
               }
             : null;
