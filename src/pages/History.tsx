@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useMeals } from "@/hooks/useMeals";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { useStallWatch } from "@/hooks/useStallWatch";
 import { useRunningStats } from "@/hooks/useRunningStats";
 import { useWorkouts, workoutTonnageKg } from "@/hooks/useWorkouts";
 import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
@@ -166,6 +167,20 @@ function FilterPills({
    contract (null on non-finite / non-positive previous / sub-1%
    noise) can be reused by other "vs previous period" surfaces and
    tested in isolation. */
+
+/**
+ * "runs", "runs and meals", "runs, workouts and meals".
+ *
+ * The stall notice names the stuck source because that is what makes a
+ * recurrence diagnosable — but the user reads this sentence, so it has
+ * to be a sentence. `useStallWatch` returns sorted internal keys, which
+ * happen to be readable here; anything less obvious would need a label
+ * map rather than being printed raw.
+ */
+function formatSourceList(sources: string[]): string {
+  if (sources.length <= 1) return sources[0] ?? "data";
+  return `${sources.slice(0, -1).join(", ")} and ${sources[sources.length - 1]}`;
+}
 
 export default function History() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -397,6 +412,18 @@ export default function History() {
    * not the page.
    */
   const dataLoading = runsLoading || workoutsLoading || mealsLoading;
+
+  /* Names whichever reads are still outstanding after 15s. Purely
+     diagnostic — it never cancels or fakes a result, because a slow read
+     on a bad connection is a wait, not a fault. See useStallWatch. */
+  const stalledSources = useStallWatch(
+    {
+      runs: runsLoading,
+      workouts: workoutsLoading,
+      meals: mealsLoading,
+    },
+    15_000
+  );
 
   // Hist4 perf telemetry. renderStartRef takes its timestamp from the
   // post-mount effect (rather than lazy useState which would trip
@@ -1232,6 +1259,41 @@ export default function History() {
                   <Skeleton className="h-20 w-full rounded-xl" />
                   <Skeleton className="h-20 w-full rounded-xl" />
                 </div>
+              </div>
+            )}
+
+            {/*
+              Skeletons that never resolve were the shape of the original
+              "analytics doesn't load" report, and the shape nothing could
+              observe: a Firestore listener that neither fires nor errors
+              logs nothing, and `navigator.onLine` stays true because the
+              network is fine — it's the SDK stream that's dead. So the
+              user waited forever and there was no evidence afterwards.
+
+              This says so out loud after 15s and names the source, which
+              is also what makes a second report diagnosable. Reload
+              rather than retry: two of the three are onSnapshot
+              subscriptions with no re-subscribe handle from here, and
+              remounting the page genuinely re-establishes them.
+            */}
+            {filter === "analytics" && stalledSources.length > 0 && (
+              <div
+                role="status"
+                className="p-4 rounded-2xl bg-card space-y-2 card-shadow"
+              >
+                <p className="text-sm font-semibold text-foreground">
+                  Still loading your {formatSourceList(stalledSources)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  This is taking longer than it should. Your data is safe — the
+                  connection to it has stalled.
+                </p>
+                <Button
+                  variant="secondary"
+                  onClick={() => window.location.reload()}
+                >
+                  Reload
+                </Button>
               </div>
             )}
 
