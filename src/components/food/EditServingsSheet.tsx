@@ -479,7 +479,7 @@ function EditServingsSheet({
               onDelete();
             }}
             disabled={saving}
-            className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium text-destructive active:scale-[0.98] disabled:opacity-60"
+            className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium text-destructive-strong active:scale-[0.98] disabled:opacity-60"
           >
             <Trash2 className="size-4" aria-hidden="true" />
             Delete

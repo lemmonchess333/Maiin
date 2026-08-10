@@ -39,17 +39,40 @@ import { readFileSync, globSync } from "node:fs";
 import { resolve } from "node:path";
 
 /** Identity tokens that have an AA text step to redirect to. */
-const IDENTITY = ["running", "lifting"] as const;
+const IDENTITY = [
+  "running",
+  "lifting",
+  "nutrition",
+  "destructive",
+  "success",
+  "warning",
+  "achievement",
+] as const;
 
 /**
- * Bare identity-colour uses outside tests, as of 2026-08-10 — after the
- * small-text sites were moved to the `-strong` steps.
+ * Bare identity-colour uses outside tests, per token, as of 2026-08-10 —
+ * after the small-text sites were moved to the `-strong` steps.
  *
- * This number may go DOWN freely. It may only go up with a reason: the new
- * use must be an icon or text at 24px+ (or 18.66px+ bold). If it is
- * smaller than that, use `text-running-strong` / `text-lifting-strong`.
+ * A count may go DOWN freely. It may only go UP with a reason: the new use
+ * must be an icon (3:1 non-text bar) or text at 24px+ / 18.66px+ bold
+ * (3:1 large-text bar). Anything smaller needs `text-<token>-strong`.
+ *
+ * The FOUR ZEROES are the valuable rows. `destructive`, `success` and
+ * `warning` are now used exclusively through their `-strong` steps, so any
+ * reappearance of the bare token is unambiguously a regression rather than
+ * a judgement call. The remaining counts are icons and large numerals:
+ * coral and purple headline stat numbers all over the app, gold stars and
+ * trophies, and the four orange food icons.
  */
-const EXPECTED_BARE_USES = 79;
+const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
+  running: 54,
+  lifting: 25,
+  nutrition: 4,
+  destructive: 0,
+  success: 0,
+  warning: 0,
+  achievement: 5,
+};
 
 function sourceFiles(): string[] {
   return globSync("src/**/*.{ts,tsx}", { cwd: process.cwd() })
@@ -57,7 +80,7 @@ function sourceFiles(): string[] {
     .map((f) => resolve(process.cwd(), f));
 }
 
-function bareUses(): string[] {
+function bareUses(token: string): string[] {
   const found: string[] = [];
   const files = sourceFiles();
   // Guard the guard: a glob that silently matched nothing would make every
@@ -68,16 +91,12 @@ function bareUses(): string[] {
     readFileSync(file, "utf8")
       .split("\n")
       .forEach((line, i) => {
-        for (const id of IDENTITY) {
-          const re = new RegExp(`text-${id}(?!-strong)\\b`, "g");
-          const hits = line.match(re);
-          if (hits) {
-            for (let n = 0; n < hits.length; n += 1) {
-              found.push(
-                `${file.replace(process.cwd() + "/", "")}:${i + 1}  ${line.trim()}`
-              );
-            }
-          }
+        const hits = line.match(new RegExp(`text-${token}(?!-)\\b`, "g"));
+        if (!hits) return;
+        for (let n = 0; n < hits.length; n += 1) {
+          found.push(
+            `${file.replace(process.cwd() + "/", "")}:${i + 1}  ${line.trim()}`
+          );
         }
       });
   }
@@ -85,14 +104,15 @@ function bareUses(): string[] {
 }
 
 describe("identity colour usage is pinned", () => {
-  it(`has exactly ${EXPECTED_BARE_USES} bare text-running / text-lifting uses`, () => {
-    const uses = bareUses();
+  it.each(IDENTITY)("text-%s has the pinned number of bare uses", (token) => {
+    const expected = EXPECTED_BARE_USES[token];
+    const uses = bareUses(token);
     expect(
       uses.length,
-      uses.length > EXPECTED_BARE_USES
-        ? `A new bare identity colour appeared. If it is small text (under 24px, or under 18.66px bold) use text-running-strong / text-lifting-strong instead — the identity is 3.20:1 / 3.45:1 on a card. If it is an icon or a large numeral it is fine; raise EXPECTED_BARE_USES.\n${uses.slice(EXPECTED_BARE_USES).join("\n")}`
-        : `Bare uses dropped to ${uses.length} — lower EXPECTED_BARE_USES to lock the gain in.`
-    ).toBe(EXPECTED_BARE_USES);
+      uses.length > expected
+        ? `A new bare text-${token} appeared. If it is small text (under 24px, or under 18.66px bold) use text-${token}-strong instead — the identity is under 4.5:1 on a card. If it is an icon or a large numeral it is fine; raise the count.\n${uses.slice(expected).join("\n")}`
+        : `Bare text-${token} dropped to ${uses.length} — lower the pinned count to lock the gain in.`
+    ).toBe(expected);
   });
 
   it("the -strong steps this redirects to actually exist", () => {
@@ -100,7 +120,9 @@ describe("identity colour usage is pinned", () => {
        a dead end, so the destination is asserted alongside the rule. */
     const css = readFileSync(resolve(process.cwd(), "src/index.css"), "utf8");
     for (const id of IDENTITY) {
-      expect(css).toMatch(new RegExp(`--${id}-strong:`));
+      expect(css, `--${id}-strong is missing`).toMatch(
+        new RegExp(`--${id}-strong:`)
+      );
     }
   });
 });

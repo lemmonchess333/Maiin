@@ -307,7 +307,7 @@ export default function CommentSheet({
                     type="button"
                     onClick={() => handleDelete(c.id)}
                     disabled={deletingId === c.id}
-                    className="size-11 inline-flex items-center justify-center text-muted-foreground/60 hover:text-destructive active:text-destructive transition-colors shrink-0"
+                    className="size-11 inline-flex items-center justify-center text-muted-foreground/60 hover:text-destructive-strong active:text-destructive-strong transition-colors shrink-0"
                     aria-label="Delete comment"
                   >
                     <Trash2 className="size-3.5" />

@@ -51,7 +51,7 @@ export default function SkipConfirmSheet({
           <button
             type="button"
             onClick={onConfirm}
-            className="w-full py-3 rounded-xl text-sm font-semibold bg-destructive/10 text-destructive active:scale-[0.97] transition-transform"
+            className="w-full py-3 rounded-xl text-sm font-semibold bg-destructive/10 text-destructive-strong active:scale-[0.97] transition-transform"
           >
             Skip
           </button>

@@ -34,7 +34,7 @@ function MileagePill({ shoe }: { shoe: Shoe }) {
       </div>
       {pct >= 85 && (
         <p
-          className={`text-xs ${pct >= 100 ? "text-destructive" : "text-warning"}`}
+          className={`text-xs ${pct >= 100 ? "text-destructive-strong" : "text-warning-strong"}`}
         >
           {pct >= 100
             ? "Time to replace"

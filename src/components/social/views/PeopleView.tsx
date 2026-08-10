@@ -208,7 +208,7 @@ export default function PeopleView({
             aria-label="Your account is restricted. Contact support."
             className="p-3 rounded-xl bg-destructive/10 border border-destructive/20"
           >
-            <p className="text-xs text-destructive">
+            <p className="text-xs text-destructive-strong">
               Your account is restricted · Contact support
             </p>
           </div>
@@ -339,11 +339,11 @@ export default function PeopleView({
               className="flex items-center justify-between p-3 rounded-xl bg-destructive/10 border border-destructive/20"
               aria-live="polite"
             >
-              <p className="text-xs text-destructive">{searchError}</p>
+              <p className="text-xs text-destructive-strong">{searchError}</p>
               <button
                 type="button"
                 onClick={() => handleSearch()}
-                className="text-xs font-medium text-destructive underline ml-2 shrink-0"
+                className="text-xs font-medium text-destructive-strong underline ml-2 shrink-0"
               >
                 Retry
               </button>

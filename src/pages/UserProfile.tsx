@@ -418,7 +418,7 @@ export default function UserProfile() {
                         setShowMenu(false);
                         setShowBlockConfirm(true);
                       }}
-                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-destructive-strong hover:bg-destructive/10 transition-colors"
                     >
                       <Ban className="size-4" />
                       Block user
