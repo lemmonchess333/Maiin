@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
@@ -138,6 +138,28 @@ export function useWorkoutRemindersInternal() {
     [user, reminders]
   );
 
+  /**
+   * Serialises reschedule passes for this hook instance.
+   *
+   * Every pass is cancel-all-seven then schedule-what-applies, so the
+   * LAST pass to run holds the truth — but only if passes cannot
+   * interleave. Unserialised, a stale pass suspended on an await resumes
+   * after a newer pass has already run its cancels and writes, and then
+   * writes over it: the user toggles reminders off, or edits a day to
+   * rest, and the old intent wins.
+   *
+   * Chaining is the whole fix. It also makes each pass's leading
+   * cancel-all the reliable cleanup it was always meant to be, because a
+   * newer pass now provably starts after the older one has finished.
+   *
+   * The first attempt at this (#1911) instead had a stale pass CANCEL the
+   * notification it had just written. That fixed the leak and introduced
+   * a worse race: the cancel could land on an id the newer pass had
+   * already legitimately rescheduled, deleting a live reminder. CI caught
+   * it — the control test lost exactly one id out of five.
+   */
+  const passChain = useRef<Promise<void>>(Promise.resolve());
+
   // Schedule / reschedule reminders. One weekly-repeating notification
   // per non-rest weekday so the user gets honest reminders that respect
   // their training schedule and keep firing without the app needing
@@ -148,14 +170,6 @@ export function useWorkoutRemindersInternal() {
     const rescheduleWorkout = async () => {
       // Cancel ALL 7 weekday IDs every pass — handles schedule edits
       // (a day flipping from lift to rest) and the disable toggle.
-      //
-      // The `cancelled` bail here is a WORK saver, not a correctness
-      // guard, and is labelled as such deliberately: cancels are
-      // idempotent, so running them after teardown cannot produce a wrong
-      // end state. It just stops seven sequential async calls for an
-      // effect nobody is listening to. No test pins it, and none should
-      // pretend to — the load-bearing guard is the one after the schedule
-      // await below.
       for (const id of WORKOUT_NOTIFICATION_IDS) {
         if (cancelled) return;
         await cancelNotification(id);
@@ -172,12 +186,18 @@ export function useWorkoutRemindersInternal() {
       // (0=Sunday … 6=Saturday). Each gets a stable ID 2001+day so
       // toggling a day off cleanly cancels just that day.
       for (let day = 0; day < 7; day++) {
+        // Checked every iteration. Not redundant: with the chain in
+        // place this pass can be superseded at ANY of its await points,
+        // and stopping early is what keeps a stale intent from writing
+        // the remaining days. It cannot un-write the call already in
+        // flight — nothing can — but the next pass's cancel-all clears
+        // that one, which is exactly why the chain has to exist.
+        if (cancelled) return;
         if (!isWorkoutDay(day, schedule)) continue;
         const at = computeNextWeekdayOccurrence(reminders.time, day);
         if (!at) continue;
-        const id = WORKOUT_NOTIFICATION_IDS[day];
         await scheduleNotification({
-          id,
+          id: WORKOUT_NOTIFICATION_IDS[day],
           title: "Time to train",
           body: "Your session is ready when you are.",
           scheduleAt: at,
@@ -187,39 +207,14 @@ export function useWorkoutRemindersInternal() {
           repeats: true,
           repeatEvery: "week",
         });
-        // The load-bearing guard, and it has to be AFTER the await.
-        //
-        // A promise already in flight cannot be cancelled, so a check
-        // before this call could not have stopped it. If teardown landed
-        // while the call was out, the newer pass has already run its own
-        // cancels — which means this write RESURRECTS a reminder the user
-        // just turned off. Undo it and stop; every later iteration would
-        // do the same thing.
-        //
-        // Found 2026-08-10 from a CI-only flake: the "schedules NOTHING
-        // while the toggle is off" test failed with [2002, 2003, 2004,
-        // 2006, 2007] — the five non-rest days of a PREVIOUS test's
-        // schedule, landing in a store `beforeEach` had already reset. An
-        // unmounted hook was still writing. On a device that is not a test
-        // artifact; it is reminders firing after the user switched them
-        // off, or on a day they just marked rest.
-        //
-        // A `cancelled` check at the TOP of this loop was written first
-        // and then removed: with this guard in place the pass returns
-        // after its first schedule anyway, and nothing between the
-        // pre-loop check and the first await can change `cancelled`
-        // (isWorkoutDay and computeNextWeekdayOccurrence are sync). It
-        // read as load-bearing, no test could pin it, and a mutation that
-        // deleted it still passed. Redundant code with an authoritative
-        // comment is worse than no code.
-        if (cancelled) {
-          await cancelNotification(id);
-          return;
-        }
       }
     };
 
-    rescheduleWorkout();
+    // A rejected pass must not break the chain for every later one.
+    passChain.current = passChain.current.then(
+      rescheduleWorkout,
+      rescheduleWorkout
+    );
 
     return () => {
       cancelled = true;

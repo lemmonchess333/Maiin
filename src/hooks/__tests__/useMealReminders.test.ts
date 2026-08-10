@@ -228,38 +228,36 @@ describe("settings persistence", () => {
   });
 });
 
-describe("a pass that loses its race writes nothing", () => {
+describe("the last reschedule pass wins", () => {
   /**
-   * The meal half of the same fix as useWorkoutReminders — pinned here
-   * rather than assumed from there. The two hooks are copies of one
-   * shape, and CLAUDE.md's first recurring-mistake rule is that the
-   * tested copy does not prove the running copy: when the workout guard
-   * was mutated away, only the workout test failed, and this hook would
-   * have kept the bug with a green suite.
-   *
-   * The pass is parked mid-flight so teardown lands while a schedule call
-   * is genuinely out. Asserting an empty schedule after a plain unmount
-   * would be satisfied at t=0 and prove nothing.
+   * The meal half, pinned here rather than inherited from the workout
+   * hook. CLAUDE.md's first recurring-mistake rule is that the tested
+   * copy does not prove the running copy — and it held: when the workout
+   * hook's chain was mutated away, only the workout test failed.
    */
-  it("stops scheduling as soon as the effect is torn down", async () => {
+  it("a toggle-off issued mid-write is not overwritten by the pass it replaced", async () => {
     seedFirestore({ [PATH]: ALL_ON });
     deferSchedules();
 
-    const { result, unmount } = renderHook(() => useMealRemindersInternal());
+    const { result } = renderHook(() => useMealRemindersInternal());
     await waitFor(() => expect(result.current.loading).toBe(false));
     await waitFor(() => expect(result.current.reminders.enabled).toBe(true));
 
-    unmount();
-    releaseSchedules();
     await act(async () => {
-      await Promise.resolve();
-      await Promise.resolve();
+      await result.current.updateReminders({ enabled: false });
+    });
+
+    releaseSchedules();
+    // Drained, then asserted synchronously — under waitFor this passes on
+    // the first poll, before the parked pass resumes.
+    await act(async () => {
+      for (let i = 0; i < 5; i += 1) await Promise.resolve();
     });
 
     expect(scheduledIds()).toEqual([]);
   });
 
-  it("the same pass DOES schedule when it is not torn down", async () => {
+  it("the same pass DOES schedule when nothing supersedes it", async () => {
     /* The control — without it the assertion above is satisfied by a hook
        broken badly enough to schedule nothing at all. */
     seedFirestore({ [PATH]: ALL_ON });
@@ -273,5 +271,28 @@ describe("a pass that loses its race writes nothing", () => {
     await waitFor(() =>
       expect(scheduledIds()).toEqual([BREAKFAST, LUNCH, DINNER])
     );
+  });
+
+  it("a torn-down pass stops after the call already in flight", async () => {
+    /* At most the one dispatched call lands; the meals behind it never
+       do. See useWorkoutReminders.test.ts for why zero is not the
+       reachable contract. */
+    seedFirestore({ [PATH]: ALL_ON });
+    deferSchedules();
+
+    const { result, unmount } = renderHook(() => useMealRemindersInternal());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() => expect(result.current.reminders.enabled).toBe(true));
+
+    unmount();
+    releaseSchedules();
+    await act(async () => {
+      for (let i = 0; i < 5; i += 1) await Promise.resolve();
+    });
+
+    const landed = scheduledIds();
+    expect(landed.length).toBeLessThanOrEqual(1);
+    expect(landed).not.toContain(LUNCH);
+    expect(landed).not.toContain(DINNER);
   });
 });
