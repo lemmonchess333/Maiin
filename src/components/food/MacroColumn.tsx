@@ -183,38 +183,34 @@ export default function MacroColumn({
       onClick={onTap}
       className="flex-1 flex flex-col items-center text-center bg-transparent border-0 p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-lg"
     >
-      {/* Icon — pops on log, and sits in a macro-tinted disc that BRIGHTENS
-          when the goal is met.
+      {/* Icon — a bare glyph in every state. No disc behind it.
+          Deliberate, and it has been wrong in both directions:
 
-          The disc used to render only at goal, and the absence read as a
-          missing element rather than an unmet goal: on a real screen with
-          protein and fat met and carbs short, two icons had a circle and
-          the wheat did not, which was reported as the wheat icon being
-          broken. Nothing on the tile said the circle meant anything, so
-          "one of these is drawn differently" was the only available
-          reading.
+          It USED to render a macro-tinted disc only once the goal was
+          met. On a real screen with protein and fat met and carbs short,
+          two icons had a circle and the wheat had none, and that was
+          reported as the wheat icon being broken. Nothing on the tile
+          said the circle meant anything, so "one of these is drawn
+          differently" was the only reading available.
 
-          Always rendering it turns the signal from presence/absence into
-          intensity — a difference the eye reads as a state of the same
-          thing, not a different thing. It also lands the tile on the
-          design system's icon-in-a-tinted-container pattern, which every
-          other icon tile in the app already uses. The resting 0.08 matches
-          the documented ~10% icon-background tint; 0.18 is the "hit it"
-          mark and stays clearly brighter.
+          The first fix rendered the disc ALWAYS and moved the signal to
+          intensity, which removed the misreading. The operator's call on
+          seeing it was that the tiles are cleaner with no disc at all —
+          and that answers the same problem more completely: with no disc
+          in any state, all three tiles are identical whatever the
+          numbers do, so there is nothing left to misread.
 
-          Both states are static, so reduced-motion gets them too. */}
+          Nothing is lost by dropping it, because the halo was never the
+          only goal signal: the progress bar fills and overshoots, the
+          tertiary "X / Yg" line shows the ratio, LEFT mode's label flips
+          to "over", and the sr-only announcement below still tells
+          screen readers. Only the decorative mark is gone.
+
+          Keep the scale pop — that is per-log feedback, not a state. */}
       <motion.span
         className="relative inline-flex items-center justify-center"
         style={{ scale: iconScale }}
       >
-        <motion.span
-          className="absolute -inset-1.5 rounded-full"
-          style={{ background: color }}
-          initial={{ opacity: goalReached && !reduce ? 0 : goalReached ? 0.18 : 0.08 }}
-          animate={{ opacity: goalReached ? 0.18 : 0.08 }}
-          transition={{ duration: reduce ? 0 : 0.3 }}
-          aria-hidden="true"
-        />
         <Icon
           className="relative size-6"
           style={{ color }}
