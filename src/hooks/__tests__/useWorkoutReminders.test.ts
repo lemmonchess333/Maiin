@@ -47,6 +47,7 @@ import {
   deferSchedules,
   releaseSchedules,
   scheduleProvenance,
+  settleNotifications,
 } from "@/test/notificationsHarness";
 
 /**
@@ -58,14 +59,17 @@ import {
  * is also, for the same reason, the shape that goes red when a previous
  * test's pass leaks in. Drain first, then assert once.
  *
- * On failure it reports each id's generation. An id whose generation is
- * BELOW the current one was written by an earlier test, which is a
- * harness leak, not a bug in the hook — a distinction that cost this file
- * two speculative fixes before the provenance existed to make it obvious.
+ * On failure it reports each id's generation, which narrows where a
+ * write came from. Read it knowing its limit: the generation is stamped
+ * when `schedule_` is CALLED, so a leaked pass that resumes during this
+ * test is stamped with THIS generation, not the one it belongs to. A
+ * below-current generation proves a leak; a current one does not rule
+ * one out. Keeping no pass alive across a test boundary is
+ * `settleNotifications`' job, not this message's.
  */
 async function expectNothingScheduled(): Promise<void> {
   await act(async () => {
-    for (let i = 0; i < 10; i += 1) await Promise.resolve();
+    await settleNotifications();
   });
   const { epoch, byId } = scheduleProvenance();
   expect(
@@ -120,18 +124,23 @@ afterEach(async () => {
    *
    * That window is why this file failed only on CI: a slower machine is
    * likelier to still be inside the pass when the next test starts. It
-   * did not reproduce locally across 11 runs, including with the fake's
-   * operations artificially slowed.
+   * has never reproduced locally — 56 runs across three strategies,
+   * including artificially slowed fake operations and shuffled test
+   * order.
    *
-   * Draining here closes it by construction rather than by timing. Real
-   * timers are restored FIRST so the drain can actually advance, then
-   * cleanup runs, then the microtask queue is flushed so every cancelled
-   * pass reaches its next guard and returns.
+   * This drained a FIXED ten microtask turns, which is a guess about the
+   * hook's control flow, and it is wrong the moment a pass runs one turn
+   * longer than the guess. `settleNotifications` waits for a checkable
+   * condition instead — nothing suspended, nothing new started across a
+   * drain — and throws if that never holds, so a pass that will not stop
+   * is reported against the test that owns it. Real timers are restored
+   * FIRST so the drain can advance, then cleanup sets each pass's
+   * `cancelled`, then we wait for them to actually observe it.
    */
   vi.useRealTimers();
   cleanup();
   await act(async () => {
-    for (let i = 0; i < 10; i += 1) await Promise.resolve();
+    await settleNotifications();
   });
 });
 
@@ -333,7 +342,7 @@ describe("the last reschedule pass wins", () => {
     // CLAUDE.md documents, and it made this test pass with the chain
     // removed. Give the stale write every chance to land, then check.
     await act(async () => {
-      for (let i = 0; i < 5; i += 1) await Promise.resolve();
+      await settleNotifications();
     });
 
     expect(scheduledIds()).toEqual([]);
