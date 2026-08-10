@@ -16,6 +16,8 @@
  * Analytics would be visibly inconsistent to the user).
  */
 
+import type { LoadBand } from "./performanceTypes";
+
 export interface PerformanceSummary {
   headline: string;
   body: string;
@@ -23,7 +25,17 @@ export interface PerformanceSummary {
 
 export function getPlainLanguageSummary(
   pi: number,
-  loadBand: string | undefined,
+  /**
+   * The RESOLVED band — callers pass `resolveLoadBand(doc)`, which is
+   * total (see performanceDocFields.ts). It used to accept a raw
+   * `string | undefined` read straight off the doc, and the else-branch
+   * below turned every miss into a confident "Low training load" claim.
+   * The Analytics call site read a field nothing writes, so EVERY user
+   * got the low-load message forever — including at `overreach`, where
+   * the guidance is the exact opposite. Typing it closed is what stops a
+   * missing value from silently becoming a wrong claim again.
+   */
+  loadBand: LoadBand,
   delta: number | null,
   /**
    * Cold-start gate. When the user has too few weeks of history, the PI's
@@ -51,15 +63,32 @@ export function getPlainLanguageSummary(
           ? "Moderate load — room to push or hold"
           : "Light week — focus on recovery or ramp up";
 
-  const band = (loadBand ?? "").toLowerCase();
-  let body =
-    band === "overreach"
-      ? "You're pushing hard — recovery matters. Consider a lighter session."
-      : band === "high"
-        ? "High training load. Keep nutrition and sleep on point."
-        : band === "moderate"
-          ? "Balanced load. Push or hold from here."
-          : "Low training load. Good time to recover or increase intensity.";
+  // Exhaustive over the five real bands — no catch-all. `deload` used to
+  // fall into the low-load message; it now says its own thing, because
+  // "increase intensity" is wrong advice during planned recovery and the
+  // engine can't tell a planned deload from simple inactivity.
+  let body: string;
+  switch (loadBand) {
+    case "overreach":
+      body = "You're pushing hard — recovery matters. Consider a lighter session.";
+      break;
+    case "high":
+      body = "High training load. Keep nutrition and sleep on point.";
+      break;
+    case "moderate":
+      // Deliberately NOT an echo of the "room to push or hold" headline
+      // this band pairs with at PI 45-59 — a repeated sentence spends
+      // attention without adding information.
+      body = "Balanced load. This is the sustainable middle of your range.";
+      break;
+    case "low":
+      body = "Low training load. Good time to recover or increase intensity.";
+      break;
+    case "deload":
+      body =
+        "Very light week. If that was planned recovery you're on track — otherwise an easy session is the way back in.";
+      break;
+  }
 
   if (delta !== null && Math.abs(delta) > 5) {
     body +=

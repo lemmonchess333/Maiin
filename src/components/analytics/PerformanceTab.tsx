@@ -7,6 +7,10 @@ import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { getPlainLanguageSummary } from "@/lib/performanceSummary";
+import {
+  resolveLoadBand,
+  resolveDeloadRecommended,
+} from "@/lib/performanceDocFields";
 import { ChevronDown, Flame, Dumbbell, Footprints, Info } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import UITooltip from "@/components/ui/Tooltip";
@@ -224,7 +228,12 @@ export default function PerformanceTab() {
   const m = currentWeek.multipliers;
 
   const pi = Math.round(currentWeek.performanceIndex);
-  const loadBand = currentWeek.labels?.loadBand;
+  /* Canonical read (2026-08-09 fix). This was `currentWeek.labels?.loadBand`
+     — a field NO writer emits — so it resolved undefined on every doc and
+     the summary's old catch-all told every user "Low training load", even
+     at overreach. `resolveLoadBand` is total and shared with the Home hero
+     + PI chart so the three surfaces cannot disagree again. */
+  const loadBand = resolveLoadBand(currentWeek);
   // Cold-start gate: with fewer than 4 weekly docs the load band and the
   // "vs baseline" framing aren't meaningful yet (the baseline is derived
   // from prior weeks). Mirror the Home hero's lifetimeWeeks<4 "establishing
@@ -256,7 +265,9 @@ export default function PerformanceTab() {
   return (
     <div className="space-y-4">
       {/* Deload banner */}
-      {currentWeek.flags?.deloadRecommended && (
+      {/* Was `flags?.deloadRecommended` — never written, so this banner
+          had never rendered for any user. */}
+      {resolveDeloadRecommended(currentWeek) && (
         <div
           className="p-4 rounded-2xl flex items-start gap-3"
           style={{ background: THEME.warning + "14" }}
@@ -407,11 +418,9 @@ export default function PerformanceTab() {
               <div className="grid grid-cols-2 gap-3">
                 <StatCard
                   label="Load Band"
-                  value={
-                    establishing
-                      ? "Establishing"
-                      : currentWeek.labels?.loadBand || "—"
-                  }
+                  /* Was `labels?.loadBand || "—"`, so this card rendered a
+                     literal em-dash for every user. Same canonical read. */
+                  value={establishing ? "Establishing" : loadBand}
                   unit=""
                   accentColor={THEME.brand}
                 />
