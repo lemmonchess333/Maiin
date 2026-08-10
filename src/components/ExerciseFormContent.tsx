@@ -126,7 +126,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
       {/* Metadata tags */}
       <div className="flex items-center gap-2">
         {demo.category && (
-          <span className="inline-flex items-center justify-center whitespace-nowrap h-7 px-3 rounded-full text-small font-semibold text-white bg-lifting">
+          <span className="inline-flex items-center justify-center whitespace-nowrap h-7 px-3 rounded-full text-small font-semibold text-white bg-lifting-fill">
             {demo.category}
           </span>
         )}

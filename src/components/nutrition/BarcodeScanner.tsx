@@ -210,7 +210,7 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
                   }
                 }}
                 disabled={!manualBarcode.trim()}
-                className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50"
+                className="px-4 py-2.5 rounded-xl bg-primary-strong text-primary-foreground text-sm font-medium disabled:opacity-50"
               >
                 Look up
               </button>

@@ -41,7 +41,7 @@ describe("SectionEmptyCTA", () => {
   it("the CTA wears the requested variant + the 44px md floor", () => {
     renderRow();
     const link = screen.getByRole("link", { name: "Start Run" });
-    expect(link).toHaveClass("bg-running"); // sport variant fill
+    expect(link).toHaveClass("bg-running-fill"); // sport variant fill step
     expect(link).toHaveClass("min-h-[44px]"); // touch-target floor
     expect(link).toHaveClass("shrink-0"); // never squashed by long copy
   });

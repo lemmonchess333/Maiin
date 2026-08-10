@@ -259,7 +259,7 @@ class ErrorBoundary extends Component<
                 });
                 window.location.reload();
               }}
-              className="w-full px-6 py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm"
+              className="w-full px-6 py-3 rounded-xl bg-primary-strong text-primary-foreground font-medium text-sm"
             >
               Reload App
             </button>

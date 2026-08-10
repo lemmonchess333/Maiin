@@ -67,7 +67,11 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
     "bg-destructive/10 text-destructive-strong hover:bg-destructive/20",
   ghost: "bg-transparent text-foreground hover:bg-muted",
   outline: "bg-transparent text-foreground border border-border hover:bg-muted",
-  sport: "bg-running text-white",
+  // Filled coral CTA. The fill is --running-fill, NOT the bare identity:
+  // white on #D4637A is 3.58:1, the same reason `primary` fills with
+  // --primary-strong rather than --primary. The identity itself is
+  // untouched — it still drives every tint.
+  sport: "bg-running-fill text-white",
   // 10% coral tint surface + the AA coral TEXT step — pairs with the
   // standard destructive variant for sport-discipline actions that aren't
   // genuinely destructive. The tint is the identity coral; the label is
