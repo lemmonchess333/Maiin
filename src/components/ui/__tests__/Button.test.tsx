@@ -78,11 +78,15 @@ describe("Button — variants", () => {
   // the red `destructive` variant which stays for genuinely destructive
   // flows). DS1b: both now resolve via the --running token, so they carry
   // bg-running / bg-running/10 classes rather than inline style.
-  it("sport variant fills with the running coral via the bg-running token", () => {
+  it("sport variant fills with the AA coral FILL step, not the identity", () => {
     render(<Button variant="sport">Start</Button>);
     const btn = screen.getByRole("button") as HTMLButtonElement;
-    expect(btn.className).toContain("bg-running");
+    expect(btn.className).toContain("bg-running-fill");
     expect(btn.className).toContain("text-white");
+    // Whole-class, not substring: `toContain("bg-running")` is satisfied by
+    // BOTH tokens, so it kept passing while white sat on the identity at
+    // 3.58:1. Same trap as the sport-tinted assertion below.
+    expect(btn.className.split(/\s+/)).not.toContain("bg-running");
     // No inline colour — the token class drives the fill now.
     expect(btn.style.backgroundColor).toBe("");
   });

@@ -73,10 +73,10 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
     "bg-destructive/10 text-destructive-strong hover:bg-destructive/20",
   ghost: "bg-transparent text-foreground hover:bg-muted",
   outline: "bg-transparent text-foreground border border-border hover:bg-muted",
-  sport: "bg-running text-white",
-  // Mirrors Button.tsx — sport variants resolve via the --running token
-  // (DS1b): bg-running fill, bg-running/10 the 10% coral tint, and the
-  // --running-strong text step on the tint so the icon clears contrast.
+  sport: "bg-running-fill text-white",
+  // Mirrors Button.tsx — the sport variants resolve via three coral
+  // tokens: --running-fill under white, --running/10 as the tint, and
+  // --running-strong as the icon colour ON that tint.
   "sport-tinted": "bg-running/10 text-running-strong",
   // Mirrors Button.tsx — nutrition variants resolve via --nutrition /
   // --nutrition-fill / --nutrition-strong. Filled uses the fill step

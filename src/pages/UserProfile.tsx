@@ -536,7 +536,7 @@ export default function UserProfile() {
             <div className="flex justify-center gap-3 pt-1">
               <Link
                 to="/program"
-                className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold"
+                className="px-4 py-2 rounded-xl bg-primary-strong text-primary-foreground text-xs font-semibold"
               >
                 Log a workout
               </Link>

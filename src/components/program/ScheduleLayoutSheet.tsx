@@ -251,7 +251,7 @@ function ScheduleLayoutSheetBody({
             type="button"
             whileTap={{ scale: 0.97 }}
             onClick={handleApply}
-            className="flex-1 py-3 rounded-xl text-sm font-bold bg-primary text-primary-foreground transition-all"
+            className="flex-1 py-3 rounded-xl text-sm font-bold bg-primary-strong text-primary-foreground transition-all"
           >
             Apply changes
           </motion.button>
