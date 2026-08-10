@@ -30,9 +30,10 @@
   --color-running: hsl(var(--running));
   /* AA text step for coral, in the shape of --primary-strong /
      --nutrition-strong. The identity `--running` is 3.58:1 on the light
-     card and 3.20:1 on a `bg-running/10` chip — fine for the large
-     numerals it headlines, under the 4.5:1 AA floor for the small text
-     (text-xs / text-caption) that 18 sites use it for. Same hue (348) and
+     card and 2.74:1 on a `bg-running/10` chip over the page canvas —
+     fine for the large numerals it headlines, under the 4.5:1 AA floor
+     for the small text (text-xs / text-caption) that 18 sites and the
+     `sport-tinted` button label use it for. Same hue (348) and
      saturation (57%) so the identity is untouched; only lightness moves,
      in whichever direction the theme needs. */
   --color-running-strong: hsl(var(--running-strong));
@@ -45,16 +46,19 @@
   --color-lifting: hsl(var(--lifting));
   /* Nutrition domain colour — warm orange (#D9884E), the food/calorie/
      macro identity. `--nutrition` is the identity tint value (bg-nutrition,
-     bg-nutrition/10); `--nutrition-strong` (#B45309 amber-700, ~4.95:1) is
-     the AA-clearing step for white text on a filled surface and for the
-     nutrition text colour on a light tint — mirrors --primary /
-     --primary-strong. Closes the last domain-colour gap: running, lifting,
+     bg-nutrition/10); `--nutrition-fill` (#B45309 amber-700) is the step
+     that goes UNDER white text on a filled surface — mirrors --primary /
+     --primary-strong; `--nutrition-strong` is the theme-aware step for
+     orange TEXT ON a tint. Those last two were one token until
+     2026-08-10 and they pull in opposite directions on a dark surface.
+     Closes the last domain-colour gap: running, lifting,
      and the semantic statuses all have tokens; nutrition was the only
      documented sport/domain colour without one, which is what kept leaking
      one-off hex orange past the hex guardrail. NOT a mandate to recolour
      Food CTAs — reserved (via the `nutrition` / `nutrition-tinted` Button
      variants) for genuinely nutrition-primary surfaces. */
   --color-nutrition: hsl(var(--nutrition));
+  --color-nutrition-fill: hsl(var(--nutrition-fill));
   --color-nutrition-strong: hsl(var(--nutrition-strong));
   /* Media stage — the FIXED dark surface exercise demos render on in
      both themes (a video-player convention: the muscle-map art's facet
@@ -71,6 +75,7 @@
      Variable definitions live in :root + .dark below; bridged to
      legacy --ds-success / --ds-warning / --ds-error in tokens.css. */
   --color-destructive: hsl(var(--destructive));
+  --color-destructive-strong: hsl(var(--destructive-strong));
   --color-destructive-foreground: hsl(var(--destructive-foreground));
   --color-destructive-bg: hsl(var(--destructive-bg));
   /* Hydration/teal domain colour. Had NO token — it existed only as the
@@ -159,14 +164,30 @@
      --lifting is the literal brand purple (#7B72E9) and is deliberately
      NOT --primary (246 88% 70%, hand-tuned for white-text AA). */
   --running: 348 57% 61%; /* #D4637A coral */
-  --running-strong: 348 57% 48%; /* #C03551 — worst case 4.60:1 (chip over muted) */
-  --lifting-strong: 245 73% 61%; /* #5F53E4 — worst case 4.62:1 (chip over muted) */
+  --running-strong: 348 57% 45.5%; /* #B6324C — worst case 4.53:1 (chip over background) */
+  --lifting-strong: 245 73% 59%; /* #574AE3 — worst case 4.60:1 (chip over background) */
   --lifting: 245 73% 68%; /* #7B72E9 purple */
-  /* Nutrition domain colour — fixed warm-orange identity (same in light +
-     dark, like running/lifting). --nutrition is the tint/identity value;
-     --nutrition-strong is the AA white-text fill step. */
+  /* Nutrition domain colour. `--nutrition` is the FIXED warm-orange
+     identity (same in light + dark, like running/lifting) and drives every
+     tint and fill. The other two are contrast steps with OPPOSITE
+     requirements, which is why they are separate tokens:
+       --nutrition-fill    sits UNDER white text, so it must stay dark in
+                           both themes (fixed, amber-700).
+       --nutrition-strong  sits ON a light tint AS text, so it must follow
+                           the theme — dark in light mode, light in dark.
+     They were one token until 2026-08-10, which forced the light-mode fill
+     value to serve as dark-mode text: 2.44:1 on a nutrition/10 chip over
+     the dark muted tile. The app's own `useMacroPalette` had the right
+     answer all along (`text = accent` in dark, i.e. the identity orange);
+     the CSS token contradicted it. */
   --nutrition: 25 65% 58%; /* #D9884E warm orange */
-  --nutrition-strong: 26 91% 37%; /* #B45309 amber-700, AA on white */
+  --nutrition-fill: 26 91% 37%; /* #B45309 amber-700 — 5.02:1 under white */
+  --nutrition-strong: 26 91% 34%; /* #A64C08 — worst case 4.50:1 (chip over background) */
+  /* AA text step for red, same shape as the sport steps. The identity
+     `--destructive` is 3.52:1 on a destructive/10 chip over the page
+     background — under the 4.5:1 floor for the button labels
+     `destructive-tinted` renders. Hue + saturation unchanged. */
+  --destructive-strong: 0 72% 43%; /* #BD1F1F — worst case 4.58:1 */
   /* Media stage — fixed dark in BOTH themes (see @theme note). */
   --stage: 240 4% 7%;
   --muted: 240 6% 97.5%; /* DS2: near-white raised tile (was 95.9% ≈ page) */
@@ -251,9 +272,15 @@
   --lifting: 245 73% 68%; /* #7B72E9 purple */
   /* Media stage — IDENTICAL to :root (fixed dark surface). */
   --stage: 240 4% 7%;
-  /* Nutrition — IDENTICAL to :root (fixed domain colour). */
+  /* Nutrition — the identity and the white-text fill step are IDENTICAL to
+     :root (both fixed). Only the TEXT step follows the theme: on a dark
+     surface the AA-clearing orange is the light one, which lands back on
+     the identity itself (58% vs 58.5%). */
   --nutrition: 25 65% 58%; /* #D9884E warm orange */
-  --nutrition-strong: 26 91% 37%; /* #B45309 amber-700 */
+  --nutrition-fill: 26 91% 37%; /* #B45309 amber-700 — 5.02:1 under white */
+  --nutrition-strong: 25 65% 58.5%; /* #DA8A50 — worst case 4.50:1 (chip over muted) */
+  /* Dark pairing for --destructive-strong — lighter, not darker. */
+  --destructive-strong: 0 84% 69.5%; /* #F37070 — worst case 4.55:1 */
   --muted: 240 3% 17%;
   --muted-foreground: 240 4% 64%;
   --border: 240 3% 18%;

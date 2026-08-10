@@ -70,16 +70,18 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   destructive:
     "bg-destructive text-destructive-foreground hover:bg-destructive/90",
   "destructive-tinted":
-    "bg-destructive/10 text-destructive hover:bg-destructive/20",
+    "bg-destructive/10 text-destructive-strong hover:bg-destructive/20",
   ghost: "bg-transparent text-foreground hover:bg-muted",
   outline: "bg-transparent text-foreground border border-border hover:bg-muted",
   sport: "bg-running text-white",
   // Mirrors Button.tsx — sport variants resolve via the --running token
-  // (DS1b): bg-running fill, bg-running/10 the 10% coral tint.
-  "sport-tinted": "bg-running/10 text-running",
+  // (DS1b): bg-running fill, bg-running/10 the 10% coral tint, and the
+  // --running-strong text step on the tint so the icon clears contrast.
+  "sport-tinted": "bg-running/10 text-running-strong",
   // Mirrors Button.tsx — nutrition variants resolve via --nutrition /
-  // --nutrition-strong. Filled uses the AA -strong step for white text.
-  nutrition: "bg-nutrition-strong text-white",
+  // --nutrition-fill / --nutrition-strong. Filled uses the fill step
+  // under white; the tint carries the theme-aware text step.
+  nutrition: "bg-nutrition-fill text-white",
   "nutrition-tinted": "bg-nutrition/10 text-nutrition-strong",
 };
 

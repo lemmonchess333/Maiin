@@ -58,23 +58,29 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   secondary: "bg-muted text-foreground hover:bg-muted/80",
   destructive:
     "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-  // 10% red tint + full-saturation red text — soft "danger zone" actions
-  // that are gated by a confirm step, so a filled red would over-escalate.
+  // 10% red tint + the AA red TEXT step — soft "danger zone" actions that
+  // are gated by a confirm step, so a filled red would over-escalate.
+  // The label reads at the identity `--destructive` only down to 3.52:1 on
+  // a tint over the page background; `--destructive-strong` is the same
+  // hue at the lightness AA needs. The TINT stays the identity.
   "destructive-tinted":
-    "bg-destructive/10 text-destructive hover:bg-destructive/20",
+    "bg-destructive/10 text-destructive-strong hover:bg-destructive/20",
   ghost: "bg-transparent text-foreground hover:bg-muted",
   outline: "bg-transparent text-foreground border border-border hover:bg-muted",
   sport: "bg-running text-white",
-  // 10% coral tint surface + full-saturation coral text — pairs with
-  // the standard destructive variant for sport-discipline actions
-  // that aren't genuinely destructive.
-  "sport-tinted": "bg-running/10 text-running",
-  // Nutrition domain CTA — filled uses the AA-clearing -strong step
-  // (#B45309) for white text, mirroring how `primary` uses
-  // -strong; the identity orange (#D9884E) is too light for white
-  // text. The tinted surface is the identity orange at 10%, with the
-  // -strong step as the AA-clearing text colour.
-  nutrition: "bg-nutrition-strong text-white",
+  // 10% coral tint surface + the AA coral TEXT step — pairs with the
+  // standard destructive variant for sport-discipline actions that aren't
+  // genuinely destructive. The tint is the identity coral; the label is
+  // `--running-strong`, because the identity itself only reaches 2.74:1
+  // on that tint over the page background (RunDetail / RunSummary render
+  // these buttons directly on the canvas, not inside a card).
+  "sport-tinted": "bg-running/10 text-running-strong",
+  // Nutrition domain CTA. Filled uses `--nutrition-fill` (#B45309) under
+  // white text, mirroring how `primary` uses `--primary-strong`; the
+  // identity orange (#D9884E) is too light for white text. The tinted
+  // surface is the identity orange at 10%, with the theme-aware
+  // `--nutrition-strong` text step on top.
+  nutrition: "bg-nutrition-fill text-white",
   "nutrition-tinted": "bg-nutrition/10 text-nutrition-strong",
 };
 
