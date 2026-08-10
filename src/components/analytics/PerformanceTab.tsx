@@ -294,7 +294,7 @@ export default function PerformanceTab() {
      the recent window. Home said confident, Analytics said establishing,
      about the same week. */
   const establishing = isEstablishingBaseline({
-    weeksAvailable: weeks.length,
+    docsAvailable: weeks.length,
     lifetimeWeeks: currentWeek.signals?.lifetimeWeeks,
   });
   const { headline, body } = getPlainLanguageSummary(
