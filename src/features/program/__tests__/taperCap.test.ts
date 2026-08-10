@@ -6,7 +6,11 @@
  * lights up only inside the taper window.
  */
 import { describe, it, expect } from "vitest";
-import { getRacePhaseLabel, isCurrentWeekInTaper } from "../runScheduler";
+import {
+  getRacePhaseLabel,
+  isCurrentWeekInTaper,
+  isCurrentWeekInRaceWindDown,
+} from "../runScheduler";
 
 /* The internal getPhaseForWeek is not exported; we exercise it
    indirectly through the public getRacePhaseLabel + isCurrentWeekInTaper.
@@ -97,5 +101,51 @@ describe("PR-K Q9d — isCurrentWeekInTaper predicate", () => {
     expect(isCurrentWeekInTaper(undefined, 16, "marathon")).toBe(false);
     expect(isCurrentWeekInTaper(14, undefined, "marathon")).toBe(false);
     expect(isCurrentWeekInTaper(14, 16, undefined)).toBe(false);
+  });
+});
+
+/**
+ * P1d pin 2 — the guard the deload-suggest banner reads.
+ *
+ * "Is load already being deliberately cut?" is a different question from
+ * "which phase is this", and race week answers yes to the first and no to
+ * the second — which is why this is its own predicate rather than a reuse
+ * of `isCurrentWeekInTaper`.
+ *
+ * Derived from `getPhaseForWeek` rather than `runPlan.phase`: that field is
+ * typed `"recovery"` and no writer ever sets "taper", so the lock's literal
+ * wording would have produced a guard that never fired (PR #1775's
+ * `templateId === "race"` shape).
+ */
+describe("isCurrentWeekInRaceWindDown — the deload-suggest guard", () => {
+  it("covers BOTH taper and race week", () => {
+    // The taper cases, same as the predicate above...
+    expect(isCurrentWeekInRaceWindDown(14, 16, "marathon")).toBe(true);
+    expect(isCurrentWeekInRaceWindDown(6, 8, "5k")).toBe(true);
+    // ...plus the one it deliberately diverges on. Proposing a lifting
+    // deload in race week is the advice the pin exists to prevent, one
+    // week later.
+    expect(isCurrentWeekInRaceWindDown(15, 16, "marathon")).toBe(true);
+    expect(isCurrentWeekInTaper(15, 16, "marathon")).toBe(false);
+  });
+
+  it("stays false through base and build — the banner must still fire there", () => {
+    // The other half of the contract. A guard that returned true too
+    // often would silently disable deload suggestions for every race-prep
+    // runner, which is a worse failure than the double-deload it prevents.
+    expect(isCurrentWeekInRaceWindDown(0, 16, "marathon")).toBe(false);
+    expect(isCurrentWeekInRaceWindDown(6, 16, "marathon")).toBe(false);
+    expect(isCurrentWeekInRaceWindDown(11, 16, "marathon")).toBe(false);
+  });
+
+  it("is false for anyone without a race plan", () => {
+    // Freeform runners and lift-only users have no currentWeek/totalWeeks/
+    // distance. They must keep the unguarded behaviour exactly.
+    expect(isCurrentWeekInRaceWindDown(undefined, 16, "marathon")).toBe(false);
+    expect(isCurrentWeekInRaceWindDown(14, undefined, "marathon")).toBe(false);
+    expect(isCurrentWeekInRaceWindDown(14, 16, undefined)).toBe(false);
+    expect(isCurrentWeekInRaceWindDown(undefined, undefined, undefined)).toBe(
+      false
+    );
   });
 });
