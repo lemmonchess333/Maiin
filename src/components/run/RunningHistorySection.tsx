@@ -80,7 +80,7 @@ export default function RunningHistorySection() {
           return (
             <div className="grid grid-cols-3 gap-2">
               <div className="p-3 rounded-xl bg-card border border-border text-center">
-                <p className="text-lg font-bold font-mono tabular-nums text-running">
+                <p className="text-lg font-bold font-mono tabular-nums text-running-strong">
                   {(volume.reduce((s, r) => s + r.distance, 0) / 1000).toFixed(
                     1
                   )}
@@ -94,7 +94,7 @@ export default function RunningHistorySection() {
                 <p className="text-xs text-muted-foreground">total runs</p>
               </div>
               <div className="p-3 rounded-xl bg-card border border-border text-center">
-                <p className="text-lg font-bold font-mono tabular-nums text-running">
+                <p className="text-lg font-bold font-mono tabular-nums text-running-strong">
                   {paceMinSec(bestPace)}
                 </p>
                 <p className="text-xs text-muted-foreground">best pace</p>

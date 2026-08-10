@@ -1244,7 +1244,7 @@ export default function History() {
 
             {showRunningSection && filter === "analytics" && (
               <section id="analytics-running" aria-label="Running analytics">
-                <SectionLabel className="mt-6 mb-2 text-running">
+                <SectionLabel className="mt-6 mb-2 text-running-strong">
                   Running
                 </SectionLabel>
                 {dataLoading ? (
@@ -1306,7 +1306,7 @@ export default function History() {
 
             {showLiftingSection && filter === "analytics" && (
               <section id="analytics-lifting" aria-label="Lifting analytics">
-                <SectionLabel className="mt-6 mb-2 text-lifting">
+                <SectionLabel className="mt-6 mb-2 text-lifting-strong">
                   Lifting
                 </SectionLabel>
                 {dataLoading ? (

@@ -52,7 +52,7 @@ export default function SessionCommandCard({
     ? "bg-running/6 border-running/19"
     : "bg-lifting/6 border-lifting/19";
   const tileClass = isRun ? "bg-running/12" : "bg-lifting/12";
-  const accentText = isRun ? "text-running" : "text-lifting";
+  const accentText = isRun ? "text-running-strong" : "text-lifting-strong";
   // DS2: sport-hue ambient halo — the cohesion twin of the Performance /
   // Food hero halos, in the session's sport colour. A soft directional glow
   // from the icon corner layered over the flat tint for depth (functional

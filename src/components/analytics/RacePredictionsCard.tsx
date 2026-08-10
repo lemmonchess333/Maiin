@@ -109,7 +109,7 @@ export default function RacePredictionsCard() {
             while clearing the 44px touch floor for the only tap target */}
         <Link
           to="/settings/training"
-          className="underline underline-offset-2 text-running inline-block px-2 py-3 -mx-2 -my-3"
+          className="underline underline-offset-2 text-running-strong inline-block px-2 py-3 -mx-2 -my-3"
         >
           Update
         </Link>

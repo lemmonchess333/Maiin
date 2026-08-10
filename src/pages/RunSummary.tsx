@@ -116,7 +116,7 @@ function RetryBanner({
         aria-hidden="true"
       />
       <div className="flex-1 text-xs text-foreground/80">
-        <p className="font-medium text-running">Couldn&apos;t save your run</p>
+        <p className="font-medium text-running-strong">Couldn&apos;t save your run</p>
         <p className="mt-0.5 text-muted-foreground">
           {error || "We couldn't save this run."}
         </p>

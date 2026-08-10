@@ -89,6 +89,18 @@ const AA_LARGE = 3;
 const TINT_SURFACES = ["card", "muted", "background"] as const;
 
 /**
+ * The tint strengths the app actually paints behind identity text.
+ *
+ * `0` is the untinted case (a `SectionLabel` sitting straight on a card).
+ * The rest are the `/<alpha>` modifiers in use: `/6` on the Banner and
+ * SessionCommandCard surfaces, `/10` on chips and tinted buttons, `/12` on
+ * the RunSetupModal chip. `/12` is the worst and was the one nobody
+ * measured — it is where both sport steps sat at 4.41–4.49:1 after being
+ * tuned against `/10` alone.
+ */
+const TINT_ALPHAS = [0, 0.06, 0.1, 0.12] as const;
+
+/**
  * Each token is held to the bar its ACTUAL USE requires — a single
  * blanket rule would be dishonest here:
  *
@@ -166,16 +178,18 @@ describe("token contrast — text tokens on the card surface", () => {
     const fg = hslToRgb(...readHsl(block, `${sport}-strong`));
     for (const surface of TINT_SURFACES) {
       const bg = hslToRgb(...readHsl(block, surface));
-      const chip = bg.map((c, i) => 0.1 * tint[i] + 0.9 * c) as [
-        number,
-        number,
-        number,
-      ];
-      const ratio = contrast(fg, chip);
-      expect(
-        ratio,
-        `--${sport}-strong is ${ratio.toFixed(2)}:1 on a ${sport}/10 chip over --${surface} (${theme})`
-      ).toBeGreaterThanOrEqual(AA_NORMAL);
+      for (const alpha of TINT_ALPHAS) {
+        const chip = bg.map((c, i) => alpha * tint[i] + (1 - alpha) * c) as [
+          number,
+          number,
+          number,
+        ];
+        const ratio = contrast(fg, chip);
+        expect(
+          ratio,
+          `--${sport}-strong is ${ratio.toFixed(2)}:1 on a ${sport}/${alpha * 100} tint over --${surface} (${theme})`
+        ).toBeGreaterThanOrEqual(AA_NORMAL);
+      }
     }
   });
 
