@@ -209,6 +209,28 @@ function localMidnight(date: string): number {
   return new Date(y, (m ?? 1) - 1, d ?? 1).getTime();
 }
 
+/**
+ * Whether the block's pace should put the SHORT session in front.
+ *
+ * This is the other half of what "lighter" and "easing back in" promise,
+ * and it shipped missing: the pace was stored, the copy said "shorter
+ * sessions", and nothing anywhere read it — so the words described
+ * behaviour the app did not have. Copy that overstates is worse than a
+ * feature that is absent, and the create sheet's whole claim to honesty
+ * rests on the consequence line being literally true.
+ *
+ * A PROMOTION, never a lock. The pre-session chooser still lists every
+ * variant and the full session is still one tap; the block only changes
+ * which one is offered first. Forcing it would take a choice away from
+ * someone who feels good today, and the pace is a statement about the
+ * next few weeks rather than about this morning.
+ */
+export function blockPrefersShorterSessions(
+  block: Pick<ActiveTrainingBlock, "pace"> | undefined
+): boolean {
+  return !!block && block.pace !== "full";
+}
+
 /** Weeks an "easing back in" block holds load before resuming progression. */
 export const EASING_HOLD_WEEKS = 2;
 
@@ -244,18 +266,41 @@ export function blockConsequence(input: {
 }): string {
   const { focus, currentFocus, pace, durationWeeks, focusLabel } = input;
   const weeks = `${durationWeeks} weeks`;
-  const trimmed = "trimmed to about 30 minutes";
+  const trimmed = "starting from the short session";
   const hold = "Your weights hold steady for the first two weeks.";
 
   if (focus !== currentFocus) {
     const lead =
       `Your main lifts move to sets of ${focusRepSummary(focus)} for ${weeks}` +
       (pace === "full" ? "." : `, ${trimmed}.`);
+    // The load only moves when the rep target goes UP — `scaleLoadForReps`
+    // holds the weight for a move to FEWER reps, deliberately, because
+    // climbing is the progression engine's job. Base mainReps are strength
+    // 5, hypertrophy/general/running 8, fat_loss 12, so of the twenty
+    // ordered focus pairs only SEVEN raise the target. The old copy claimed
+    // "the weights come down a little" for all of them — including
+    // Build muscle → Get stronger, the first two entries in the picker and
+    // the likeliest change anyone makes.
+    const loadDrops =
+      goalProfileFor(focus).mainReps > goalProfileFor(currentFocus).mainReps;
     const tail =
       pace === "easing"
         ? ` ${hold}`
-        : " Same exercises, same days — the weights come down a little to" +
-          " match the new target, then climb again.";
+        : // "Same exercises, same days" is only true at pace `full`. Once
+          // the short session is promoted, the trim drops accessories and
+          // cuts sets — so the lead would promote a trim and the tail deny
+          // one, in the same sentence pair.
+          pace !== "full"
+          ? loadDrops
+            ? " The weights come down a little to match the new target," +
+              " then climb again."
+            : " Your weights stay where they are — only what you're aiming" +
+              " for changes."
+          : loadDrops
+            ? " Same exercises, same days — the weights come down a little to" +
+              " match the new target, then climb again."
+            : " Same exercises, same days, same weights — only what you're" +
+              " aiming for changes.";
     return lead + tail;
   }
 
@@ -266,9 +311,9 @@ export function blockConsequence(input: {
     return `Nothing about your sessions changes — the block just gives ${weeks} of ${kept} a shape and a finish line.`;
   }
   if (pace === "lighter") {
-    return `Same sessions, ${trimmed} for ${weeks}.`;
+    return `Same prescription for ${weeks}, ${trimmed} each time — the full one is always a tap away.`;
   }
-  return `Same sessions, ${trimmed}. ${hold}`;
+  return `Same prescription, ${trimmed} each time. ${hold}`;
 }
 
 /**
