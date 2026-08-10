@@ -202,11 +202,31 @@ export default function DayPeekCard({
       transition={{ duration: 0.2 }}
       className="overflow-hidden"
     >
+      {/*
+        Padding, hierarchy and a tie back to the strip.
+
+        This card was `py-1.5` — 6px — where every other card in the app
+        uses 12-16px, and its three tiers of information (the date, the
+        day-type pill, the session rows) were all `text-xs`, so nothing
+        told the eye what to read first. Reported simply as "it looks
+        bad", which it did: squeezed against its own edges and flat.
+
+        `py-3` matches the documented compact-card padding, and the date
+        steps up to `text-sm` so there is one clear heading above the
+        rows. The caret is the other half: the card appears below a week
+        strip you just tapped, and nothing connected the two — it read as
+        an unrelated box that showed up. Pointing at the row it came from
+        makes the relationship obvious without a word of copy.
+      */}
       <div className="pt-1 pb-0.5 px-1">
-        <div className="rounded-2xl bg-card px-3 py-1.5 space-y-1">
+        <div
+          aria-hidden="true"
+          className="mx-auto size-2.5 rotate-45 rounded-[2px] bg-card -mb-1.5"
+        />
+        <div className="relative rounded-2xl bg-card px-3 py-3 space-y-2 card-shadow">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-foreground">
+              <span className="text-sm font-semibold text-foreground">
                 {dayLabel}
               </span>
               <span
@@ -224,23 +244,6 @@ export default function DayPeekCard({
               icon={<X />}
             />
           </div>
-          {/* PR-1: secondary "Manage" CTA. Only rendered when the
-              day has a matched lift or runDay AND a parent supplied
-              onManage. Home remains glance-first: this is the only
-              affordance that exposes day-level actions; the summary
-              rows above stay informational. */}
-          {onManage &&
-            (resolved.run.runDay !== null ||
-              resolved.lift.workout !== null) && (
-              <button
-                type="button"
-                onClick={() => onManage(dateKey)}
-                className="inline-flex items-center gap-1 text-xs font-medium text-primary px-2 py-1 -ml-2 min-h-[44px] rounded-md active:scale-[0.97]"
-              >
-                <Settings2 className="size-3" />
-                Manage day
-              </button>
-            )}
           {hasW || hasM || hasRun || hasExtras || plannedLiftName ? (
             <div className="space-y-1 text-xs">
               {/* Several sessions on one day get one row EACH, mirroring how
@@ -408,8 +411,37 @@ export default function DayPeekCard({
               )}
             </div>
           ) : (
-            <p className="text-xs text-muted-foreground">No activity logged</p>
+            <p className="text-xs text-muted-foreground italic">
+              No activity logged
+            </p>
           )}
+          {/* PR-1: secondary "Manage" CTA. Only rendered when the
+              day has a matched lift or runDay AND a parent supplied
+              onManage. Home remains glance-first: this is the only
+              affordance that exposes day-level actions; the summary
+              rows above stay informational.
+
+              Sits BELOW the sessions, not between them and the heading.
+              Above, it put a verb where the eye expects the day's
+              content — you read "Wed 12 Aug / Manage day / Legs — Squat
+              Focus" — and it claimed a full 44px row while rendering as
+              the smallest text on the card. Content first, action last
+              is both the conventional card order and the one that stops
+              a 44px touch target reading as an accident. */}
+          {onManage &&
+            (resolved.run.runDay !== null ||
+              resolved.lift.workout !== null) && (
+              <div className="pt-1 border-t border-border/40">
+                <button
+                  type="button"
+                  onClick={() => onManage(dateKey)}
+                  className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-primary px-2 min-h-[44px] rounded-lg active:scale-[0.97]"
+                >
+                  <Settings2 className="size-3.5" />
+                  Manage day
+                </button>
+              </div>
+            )}
         </div>
       </div>
       <ExtrasExpandSheet

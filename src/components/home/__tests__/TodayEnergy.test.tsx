@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
@@ -49,6 +49,21 @@ vi.mock("@/components/home/BreakdownRow", function () {
 });
 
 import TodayEnergy from "../TodayEnergy";
+
+/**
+ * The expand state is PERSISTED now (usePersistedToggle), so a test that
+ * opens the card writes that choice to localStorage and every later test
+ * in this file inherits an already-expanded card.
+ *
+ * That is the feature working — the card is supposed to remember — but
+ * jsdom keeps one localStorage for the whole file, so without this the
+ * "collapsed summary" tests silently start asserting against the
+ * expanded body. It surfaced as `Unable to find "P 0g · C 0g · F 0g
+ * left"` on a test that never touched the toggle.
+ */
+beforeEach(() => {
+  window.localStorage.clear();
+});
 
 const burn: any = {
   phase: null,
@@ -139,6 +154,42 @@ describe("TodayEnergy — collapsed macro summary vs expanded rings (Wave3 E1)",
     expect(screen.getAllByTestId("macro-ring")).toHaveLength(3);
     // summary line hides once expanded (rings carry the detail)
     expect(screen.queryByText(/P 80g · C 164g · F 32g left/)).toBeNull();
+  });
+
+  it("REMEMBERS an expand across a remount, per account", function () {
+    /* The reported friction. `expanded` was plain useState, so the card
+       re-collapsed on every arrival at Home and anyone who wanted the
+       macro breakdown re-opened it every single visit.
+
+       Asserted at the CARD, not just the hook: usePersistedToggle has
+       its own unit tests, and they would all pass while this component
+       still called useState — the wiring is the part that regressed.
+
+       The closed default is untouched (Wave3 E1); what is pinned here is
+       that a tap counts as a choice, and that the choice is uid-scoped so
+       a shared device doesn't carry one account's layout into another. */
+    const props = {
+      calories: 1450,
+      protein: 80,
+      carbs: 56,
+      fat: 38,
+      totalLifetimeMeals: 420,
+      uid: "user-A",
+    };
+    const first = renderAt(props);
+    expect(screen.queryByTestId("macro-ring")).toBeNull();
+    fireEvent.click(screen.getByText("Today's Energy"));
+    expect(screen.getAllByTestId("macro-ring")).toHaveLength(3);
+    first.unmount();
+
+    // Same account returns → still open, with no second tap.
+    const second = renderAt(props);
+    expect(screen.getAllByTestId("macro-ring")).toHaveLength(3);
+    second.unmount();
+
+    // A different account on the same device → their own default.
+    renderAt({ ...props, uid: "user-B" });
+    expect(screen.queryByTestId("macro-ring")).toBeNull();
   });
 
   it("grams-remaining never goes negative (clamped at 0)", function () {

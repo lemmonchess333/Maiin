@@ -1233,6 +1233,7 @@ export default function Home() {
                   targets={effectiveTargets}
                   totalLifetimeMeals={totalLifetimeMeals}
                   mealsLoading={mealsLoading}
+                  uid={user?.uid ?? null}
                 />
               </SectionErrorBoundary>
             </TrackSectionView>
