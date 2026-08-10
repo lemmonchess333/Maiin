@@ -36,7 +36,10 @@ import { buildPRMap, checkSetPR } from "@/lib/prTracking";
 import { fetchBodyweightLogs } from "@/lib/api";
 import { resolveRunPlanSurface } from "@/lib/runProgrammeViewModel";
 import { logger } from "@/lib/logger";
-import { resolveDeloadRecommended } from "@/lib/performanceDocFields";
+import {
+  resolveDeloadRecommended,
+  resolveLoadBand,
+} from "@/lib/performanceDocFields";
 
 /** Sunday key of the last COMPLETED week (the reviewed week). */
 export function reviewedWeekKey(now: Date = new Date()): string {
@@ -134,9 +137,7 @@ async function probeHasDoc(
   end: string | null
 ): Promise<boolean> {
   const parts = [
-    end === null
-      ? where("date", "<", start)
-      : where("date", ">=", start),
+    end === null ? where("date", "<", start) : where("date", ">=", start),
   ];
   if (end !== null) parts.push(where("date", "<=", end));
   const snap = await getDocs(
@@ -305,8 +306,7 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
           .filter((r) => typeof r.date === "string")
           .map((r) => ({
             date: r.date as string,
-            distanceMeters:
-              typeof r.distance === "number" ? r.distance : 0,
+            distanceMeters: typeof r.distance === "number" ? r.distance : 0,
             eligible: isVolumeEligible(
               r as Parameters<typeof isVolumeEligible>[0]
             ),
@@ -337,13 +337,28 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
           perfData && typeof perfData.performanceIndex === "number"
             ? {
                 pi: perfData.performanceIndex,
-                loadBand:
-                  typeof perfData.loadBand === "string"
-                    ? perfData.loadBand
-                    : null,
-                // Canonical read. This site survived the mirror drift only
-                // because it fell back to `signals.deloadFlag`; the resolver
-                // reads the top-level field the writers actually emit.
+                // Canonical read, BOTH fields. The deload half was moved to
+                // the resolver on 2026-08-09; the band beside it kept its
+                // raw `typeof === "string"` read, under a comment that said
+                // "canonical" and made the pair look finished. Half a fix
+                // reads worse than none, because it stops anyone looking.
+                //
+                // Three things the raw read got wrong, all of which end as
+                // Weekly Review disagreeing with Home about the same week:
+                //   - no derivation. `resolveLoadBand` is TOTAL — it falls
+                //     back to `computeLoadBand(pi)`, the same pure function
+                //     every writer used to produce the stored value. The
+                //     raw read yields null on a doc that predates the
+                //     field, and `verdictFor` then drops to delta copy
+                //     ("Steady week.") while Home says "Backing off".
+                //   - no validation. "Overreach" or a renamed enum passes
+                //     `typeof === "string"` and then matches none of the
+                //     `=== "overreach"` comparisons, so it silently reads
+                //     as an unbanded week rather than being rejected.
+                //   - no `labels.loadBand` legacy fallback.
+                loadBand: resolveLoadBand(
+                  perfData as Parameters<typeof resolveLoadBand>[0]
+                ),
                 deloadRecommended: resolveDeloadRecommended(
                   perfData as Parameters<typeof resolveDeloadRecommended>[0]
                 ),
