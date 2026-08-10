@@ -19,6 +19,7 @@ import {
   type DayIntensity,
 } from "@/lib/dayIntensity";
 import { resolveTaper } from "@/lib/taperNutrition";
+import { applyEveFuelFloor, eveOfLongRun } from "@/lib/fueling";
 import { trainingSignalsForNutrition } from "@/lib/trainingSignals";
 import { useSubscription } from "@/lib/subscription";
 import { buildCaption, type DailyTargetsCaption } from "@/lib/captionBuilder";
@@ -372,10 +373,18 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
       program: programForNutrition,
       weekSchedule: realWeekSchedule,
     });
+    // A8: the eve of a long run fuels a day early — a REST/EASY day before
+    // a ≥75-min long run floors to MODERATE (glycogen for a morning long
+    // run is filled the day before; the classifier only reads the day's
+    // own plan). Same Pro gate as every macro move, via macroIntensity.
+    const eve = profile
+      ? eveOfLongRun(localDateString(targetDate), programForNutrition ?? null)
+      : null;
+    const fueledIntensity = applyEveFuelFloor(intensity, eve);
     // MACRO-MOVEMENT GATE: the fat↔carb shift applies only for Pro/trial. Free
     // users compute the split as REST (flat baseline) — the day's real
     // `intensity` still drives the descriptive LABEL below, just not the macros.
-    const macroIntensity: DayIntensity = isPro ? intensity : "REST";
+    const macroIntensity: DayIntensity = isPro ? fueledIntensity : "REST";
     const planned = computePlannedTargets(
       profile,
       targetDate,
@@ -483,7 +492,7 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
     const proteinDeltaG = Math.max(0, protein - restSplit.protein);
     const trainingFuel: TrainingFuelAdjustment = {
       intensity,
-      eligible: intensity !== "REST" || taper !== null,
+      eligible: intensity !== "REST" || taper !== null || eve !== null,
       applied: carbDeltaG > 0 || fatDeltaG > 0 || proteinDeltaG > 0,
       carbDeltaG,
       fatDeltaG,
@@ -493,15 +502,19 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
     // Descriptive day LABEL (the conversion hook) — derived from the REAL day
     // for ALL users, never from the gated macro split. NEVER asserts a macro
     // change. "" on a plain rest day so the Food hero suppresses it. Priority:
-    // race week → deload week → training-intensity label.
+    // race week → deload week → eve-of-long-run → training-intensity label.
+    // The eve label only claims the quiet days (REST/EASY) — a day with its
+    // own hard training keeps its own label.
     const signals = trainingSignalsForNutrition(programForNutrition);
     const annotation = taper
       ? taper.annotation
       : signals.isDeload
         ? "Deload week"
-        : intensity === "REST"
-          ? ""
-          : describeDayIntensity(intensity);
+        : eve && (intensity === "REST" || intensity === "EASY")
+          ? `${eve.templateName} tomorrow — fuel up today`
+          : intensity === "REST"
+            ? ""
+            : describeDayIntensity(intensity);
 
     return {
       baseTarget: planned.baseTarget,
