@@ -44,6 +44,8 @@ import {
   scheduledIds,
   scheduledAt,
   setNotificationPermission,
+  deferSchedules,
+  releaseSchedules,
 } from "@/test/notificationsHarness";
 
 const PATH = "users/u1/settings/workoutReminders";
@@ -238,5 +240,66 @@ describe("reacting to changes", () => {
     const { result } = renderHook(() => useWorkoutRemindersInternal());
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(scheduledIds()).toEqual([]);
+  });
+});
+
+describe("a pass that loses its race writes nothing", () => {
+  /**
+   * The reschedule pass has up to 14 await points — 7 cancels, then up to
+   * 7 schedules. `cancelled` used to be checked ONCE, between the two
+   * loops, which only proves the effect was live when scheduling STARTED.
+   * Everything after the first schedule could still land, and by then a
+   * newer pass has already run its own cancels, so the stale pass
+   * re-creates exactly what was just cancelled.
+   *
+   * On a device that is reminders firing after the user switched them
+   * off. In CI it showed up as this file failing with
+   * [2002, 2003, 2004, 2006, 2007] — the five non-rest days of an EARLIER
+   * test's schedule, landing in a store `beforeEach` had already reset.
+   *
+   * The pass is parked mid-flight with `deferSchedules()` so the unmount
+   * happens while it is genuinely in the scheduling loop. Asserting an
+   * empty schedule after a plain unmount would be satisfied at t=0 and
+   * prove nothing.
+   */
+  it("stops scheduling as soon as the effect is torn down", async () => {
+    seedFirestore({ [PATH]: ON });
+    deferSchedules();
+
+    const { result, unmount } = renderHook(() => useWorkoutRemindersInternal());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    // Anchor on a POSITIVE: wait until the pass has cleared its seven
+    // cancels and is parked on its first schedule. Without this the test
+    // could unmount before the effect ran at all, and pass for the wrong
+    // reason.
+    await waitFor(() => expect(result.current.reminders.enabled).toBe(true));
+
+    unmount();
+    releaseSchedules();
+    // Drain the microtask queue the parked pass resumes on.
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(scheduledIds()).toEqual([]);
+  });
+
+  it("the same pass DOES schedule when it is not torn down", async () => {
+    /* The control. Without it, the assertion above is satisfied by any
+       hook that never schedules at all — including one broken so badly
+       it does nothing. */
+    seedFirestore({ [PATH]: ON });
+    deferSchedules();
+
+    const { result } = renderHook(() => useWorkoutRemindersInternal());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() => expect(result.current.reminders.enabled).toBe(true));
+
+    releaseSchedules();
+    await waitFor(() =>
+      expect(scheduledIds()).toEqual([ID(1), ID(2), ID(3), ID(5), ID(6)])
+    );
   });
 });
