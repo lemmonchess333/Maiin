@@ -121,23 +121,43 @@ export function getQueueLength(uid?: string): number {
 }
 
 /**
+ * Serialises flushes. `AppRoutes` calls `flushQueue` on BOTH the auth-user
+ * change and the `online` event, and signing in while already online fires
+ * the two within a tick of each other — so two flushes overlapping is the
+ * ordinary case, not a corner one. Overlapped, they each replay the same
+ * items (a wasted duplicate round trip, idempotent only because every
+ * current caller mints a docId) and each finish by rewriting the queue.
+ *
+ * Chained, the second waits, re-reads, and finds the first's work already
+ * retired. A rejected flush must not break the chain for every later one,
+ * so both arms continue it.
+ */
+let flushChain: Promise<unknown> = Promise.resolve();
+
+/**
  * Flush queued writes for `uid`. Items belonging to other uids are
  * left in the queue for the next time that user signs back in.
  * Returns the count successfully flushed.
  */
-export async function flushQueue(db: Firestore, uid: string): Promise<number> {
+export function flushQueue(db: Firestore, uid: string): Promise<number> {
+  const run = () => flushQueueOnce(db, uid);
+  const result = flushChain.then(run, run);
+  // Swallow only for the CHAIN's copy — the returned promise still
+  // rejects for the caller.
+  flushChain = result.catch(() => {});
+  return result;
+}
+
+async function flushQueueOnce(db: Firestore, uid: string): Promise<number> {
   const queue = getQueue();
   if (queue.length === 0) return 0;
 
   let flushed = 0;
-  const remaining: QueuedWrite[] = [];
+  const landed = new Set<string>();
 
   for (const item of queue) {
-    if (item.uid !== uid) {
-      // Not our user's item — preserve in queue for later.
-      remaining.push(item);
-      continue;
-    }
+    // Not our user's item — leave it for the next time that user signs in.
+    if (item.uid !== uid) continue;
     try {
       const payload = { ...item.data, _offlineCreatedAt: item.timestamp };
       if (item.docId) {
@@ -146,6 +166,7 @@ export async function flushQueue(db: Firestore, uid: string): Promise<number> {
       } else {
         await addDoc(collection(db, item.collectionPath), payload);
       }
+      landed.add(item.id);
       flushed++;
     } catch (e) {
       captureError(
@@ -153,11 +174,28 @@ export async function flushQueue(db: Firestore, uid: string): Promise<number> {
         "network",
         { collectionPath: item.collectionPath, docId: item.docId }
       );
-      remaining.push(item);
     }
   }
 
-  saveQueue(remaining);
+  // Re-read and SUBTRACT, rather than writing back the snapshot taken
+  // before the loop.
+  //
+  // Every iteration above awaits a network round trip, and `queueWrite`
+  // runs synchronously against localStorage — so a write queued while a
+  // flush is in flight is already persisted by the time the loop ends.
+  // Writing back a list derived from the pre-loop snapshot deleted it,
+  // silently and permanently: the user came back online, opened the app,
+  // logged a meal during the flush, and the meal was gone. The window is
+  // as long as the queue takes to drain, which on a slow reconnect is
+  // exactly when the user is most likely to be logging.
+  //
+  // Subtracting the ids that landed is right for the same reason it is
+  // safe: items that FAILED, items belonging to another uid, and items
+  // queued mid-flush were all never removed to begin with, so they need
+  // no explicit preservation and cannot be resurrected by a stale copy.
+  if (landed.size > 0) {
+    saveQueue(getQueue().filter((item) => !landed.has(item.id)));
+  }
   return flushed;
 }
 
