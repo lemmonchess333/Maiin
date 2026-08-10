@@ -13,6 +13,7 @@
  */
 import { describe, it, expect, beforeAll, beforeEach } from "vitest";
 import { createRequire } from "node:module";
+import { markerDocId } from "../../lib/challengeMarkers";
 
 const require = createRequire(import.meta.url);
 
@@ -192,14 +193,24 @@ suite("challenge activity-window — onWorkoutCreated", () => {
     await onWorkoutCreated.run(snap, context);
     await onWorkoutCreated.run(snap, context);
     expect(await participantValue("july-wc")).toBe(1);
-    // Marker carries the activity day.
+    // Marker carries the activity day. Its id is derived rather than the
+    // bare "w-dup" this used to hardcode: marker keys are namespaced by
+    // membership so that leaving and re-joining starts a clean slate (see
+    // lib/challengeMarkers.js). The behaviour under test here — redelivery
+    // credits exactly once — is asserted above and is unaffected.
     const marker = await db
       .collection("challenges")
       .doc("july-wc")
       .collection("participants")
       .doc(UID)
       .collection("applied")
-      .doc("w-dup")
+      .doc(
+        markerDocId(
+          new Date("2026-07-01T00:00:00Z"), // the seeded joinedAt
+          "w-dup",
+          "unused"
+        )
+      )
       .get();
     expect(marker.exists).toBe(true);
     expect(marker.data().activityDateKey).toBe("2026-07-05");
