@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
+import { useState, useEffect, useRef, useMemo, Suspense } from "react";
+import { lazyRetry } from "@/lib/lazyRetry";
 import { useSearchParams } from "react-router-dom";
 import { useDailyLogs } from "@/hooks/useFirestore";
 import { useUid } from "@/lib/auth";
@@ -13,7 +14,7 @@ const itemVariant = {
   hidden: { opacity: 0, y: 12 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
 };
-const ManualFoodLogger = lazy(() =>
+const ManualFoodLogger = lazyRetry(() =>
   import("@/components/ManualFoodLogger").then((m) => ({
     default: m.ManualFoodLogger,
   }))
@@ -27,8 +28,8 @@ import { parseFoodText, getFoodSuggestions } from "@/lib/nlFoodParser";
 import type { ParsedFood, FoodSuggestion } from "@/lib/nlFoodParser";
 import { RotateCcw, X } from "lucide-react";
 import IconButton from "@/components/ui/IconButton";
-const FoodAnalyzer = lazy(() => import("@/components/FoodAnalyzer"));
-const ProModal = lazy(() => import("@/components/ProModal"));
+const FoodAnalyzer = lazyRetry(() => import("@/components/FoodAnalyzer"));
+const ProModal = lazyRetry(() => import("@/components/ProModal"));
 import { ServingSizeDrawer } from "@/components/nutrition/ServingSizeDrawer";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Button } from "@/components/ui/Button";

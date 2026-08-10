@@ -177,7 +177,7 @@ export default function PerformanceHeroCard({
   // Same shared predicate Analytics uses — this surface's existing rule,
   // now expressed once so the two can't drift.
   const lowConfidence = isEstablishingBaseline({
-    weeksAvailable,
+    docsAvailable: weeksAvailable,
     lifetimeWeeks: currentWeek.signals?.lifetimeWeeks,
   });
 

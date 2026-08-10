@@ -511,6 +511,38 @@ describe("computeSignals", () => {
     ).toBe(0);
   });
 
+  it("lifetimeWeeks CANNOT exceed 4 — the ceiling the client gate depends on", () => {
+    /* The name says "lifetime" and the field is anything but: activeWeeks
+       is a Set of 7-day bucket indices computed INSIDE the 28-day baseline
+       window, so 4 is the maximum a user can ever reach — a decade of
+       training and a perfect month score the same.
+
+       Pinned HERE, against the running aggregator, rather than restated as
+       a constant on the client: ADR-0008, reachability over prose. The
+       client's `isEstablishingBaseline` treats 3 as "established", and that
+       threshold is only defensible while the ceiling is 4. If the baseline
+       window ever widens, this test fails first and points at the gate.
+
+       It is also the test that would have caught the original defect. The
+       client suite asserted the confident path with `lifetimeWeeks: 52` and
+       `30`; nothing anywhere connected those fixtures to what the writer
+       can emit, so a perfect-attendance gate read as "fewer than four weeks
+       of history" for months. */
+    const { aggregateWindow, baselineWindow, BASELINE_DAYS } = _internal;
+    expect(BASELINE_DAYS).toBe(28);
+
+    const { start, end } = baselineWindow("2026-05-19");
+    // A session on EVERY day of the window — the most active a user can be.
+    const workouts = [];
+    for (let i = 0; i < BASELINE_DAYS + 7; i += 1) {
+      const d = new Date(start.getTime() + i * 86400000);
+      workouts.push({ date: d.toISOString().slice(0, 10), exercises: [] });
+    }
+    const agg = aggregateWindow(start, end, workouts, [], [], []);
+    expect(agg.activeWeeks).toBeLessThanOrEqual(4);
+    expect(agg.activeWeeks).toBe(4);
+  });
+
   it("daysSinceLastTraining uses most recent of workout/run", () => {
     // computeKey = 2026-05-19; lastWorkout = 2026-05-18 (1 day ago)
     // lastRun = 2026-05-17 (2 days ago); min = 1

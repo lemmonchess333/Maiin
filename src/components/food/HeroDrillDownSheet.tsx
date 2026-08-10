@@ -1,4 +1,5 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { lazyRetry } from "@/lib/lazyRetry";
 import { Lock } from "lucide-react";
 import BottomSheet from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
@@ -14,7 +15,7 @@ import { clampPct } from "@/lib/percentageHelpers";
 import { resolveMicroTargets, type MicroKind } from "@/lib/microTargets";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 
-const ProModal = lazy(() => import("@/components/ProModal"));
+const ProModal = lazyRetry(() => import("@/components/ProModal"));
 
 interface DailyTotals {
   calories: number;

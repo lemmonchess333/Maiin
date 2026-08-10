@@ -4,9 +4,9 @@ import {
   useMemo,
   useCallback,
   useRef,
-  lazy,
   Suspense,
 } from "react";
+import { lazyRetry } from "@/lib/lazyRetry";
 import { useAuth } from "@/lib/auth";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { useMeals } from "@/hooks/useMeals";
@@ -79,29 +79,22 @@ import WeightStepsTiles from "@/components/home/WeightStepsTiles";
 
 import TodayEnergy from "@/components/home/TodayEnergy";
 import WeeklyReviewEntry from "@/components/home/WeeklyReviewEntry";
-import TodayGuidanceCard from "@/components/home/TodayGuidanceCard";
-import { useHybridGuidance } from "@/hooks/useHybridGuidance";
 import { useSnoozeDismiss } from "@/hooks/useSnoozeDismiss";
 
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
-import { getVerbState } from "@/lib/performanceLine";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import { getNutritionPhase } from "@/lib/nutritionPhase";
 import TrackSectionView from "@/components/home/TrackSectionView";
 import ContextualTipBanner from "@/components/home/ContextualTipBanner";
 import { IconButton } from "@/components/ui/IconButton";
 import { recalibrationCheckIn } from "@/lib/recalibrationCheckIn";
-import {
-  resolveLoadBand,
-  resolveDeloadRecommended,
-} from "@/lib/performanceDocFields";
 
-const ProModal = lazy(() => import("@/components/ProModal"));
+const ProModal = lazyRetry(() => import("@/components/ProModal"));
 
 /* Home2d-pin-1: DayActionSheet lazy-loads on Home (closed on mount, so it
    hydrates on demand instead of shipping in Home's initial chunk).
    Mirrors the App.tsx route-level lazy() pattern. */
-const DayActionSheet = lazy(
+const DayActionSheet = lazyRetry(
   () => import("@/components/program/DayActionSheet")
 );
 
@@ -114,11 +107,7 @@ export default function Home() {
     `tropos-pro-strip-snooze:${user?.uid ?? "anon"}`,
     30
   );
-  const {
-    workouts,
-    getWorkoutsForDate,
-    loading: workoutsLoading,
-  } = useWorkouts();
+  const { workouts, getWorkoutsForDate } = useWorkouts();
   const { meals, loading: mealsLoading, getDailyTotals } = useMeals();
 
   const effectiveTargets = useEffectiveTargets();
@@ -231,11 +220,6 @@ export default function Home() {
   // Threads Home's OWN workouts subscription in — the hook previously
   // opened a duplicate onSnapshot on users/{uid}/workouts just to read
   // yesterday (PROGRAM-ADAPT-01 reliability fix).
-  const hybridGuidance = useHybridGuidance(
-    todayType,
-    workouts,
-    workoutsLoading
-  );
   const streakDisplay = useCountUp(streak, {
     sessionKey: "streak",
     duration: 0.5,
@@ -321,26 +305,10 @@ export default function Home() {
     loading: perfLoading,
   } = usePerformanceWeeks(4);
 
-  // home-declutter 3a — one-voice arbiter. The guidance slot yields
-  // when the Performance hero's verb is an ease-off state (recovering /
-  // backing-off): the hero already carries that message, and a second
-  // voice saying "fresh legs, carbs higher" under "Recovering" was the
-  // exact contradiction the declutter grill flagged. Same verb
-  // derivation as the hero (getVerb → getVerbState mapping).
-  const guidanceSuppressed = (() => {
-    if (!perfWeek) return false;
-    // Both reads go through the resolvers. This expression previously
-    // preferred `labels.loadBand` and `flags.deloadRecommended` — the two
-    // nested maps NO writer emits — so the band fell through to a raw
-    // unvalidated cast and the deload flag was permanently false. The
-    // suppression therefore never fired in the deload case it exists for,
-    // which is the one case where a second voice contradicts the hero.
-    const verb = getVerbState(
-      resolveLoadBand(perfWeek),
-      resolveDeloadRecommended(perfWeek)
-    );
-    return verb === "recovering" || verb === "backing-off";
-  })();
+  // The "one voice per screen" arbiter that used to live here went with
+  // the guidance slot it arbitrated (removed 2026-08-10, operator call:
+  // "remove today section it's bad"). The Performance hero is now the
+  // only voice in this position, so there is nothing left to suppress.
   const perfPrevWeek =
     perfWeeks.length >= 2 ? perfWeeks[perfWeeks.length - 2] : null;
 
@@ -1270,23 +1238,6 @@ export default function Home() {
             </TrackSectionView>
           </motion.div>
         </section>
-
-        {/* home-declutter 3a — the ONE guidance slot, arbitrated: when the
-            Performance hero above is already saying ease off (recovering /
-            backing-off verb), this slot stays empty rather than adding a
-            second, contradictory voice ("Fresh legs" under "Recovering"). */}
-        {hybridGuidance && !guidanceSuppressed && (
-          <motion.div
-            variants={{
-              hidden: { opacity: 0, y: 12 },
-              visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-            }}
-          >
-            <SectionErrorBoundary sectionName="today-guidance">
-              <TodayGuidanceCard guidance={hybridGuidance} />
-            </SectionErrorBoundary>
-          </motion.div>
-        )}
 
         {/* Vitals pyramid (home-declutter revision, operator call):
             the energy card sits full-width above; water + weight share
