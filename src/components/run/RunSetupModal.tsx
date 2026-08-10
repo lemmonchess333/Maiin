@@ -1294,7 +1294,7 @@ export default function RunSetupModal({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <p
-                            className={`text-sm font-bold ${isActive ? "text-running" : "text-foreground"}`}
+                            className={`text-sm font-bold ${isActive ? "text-running-strong" : "text-foreground"}`}
                           >
                             {at.name}
                           </p>
@@ -1308,7 +1308,7 @@ export default function RunSetupModal({
                         {(() => {
                           const pace = chooserPaceFor(at.type);
                           return pace ? (
-                            <p className="text-xs font-mono tabular-nums text-running mt-0.5">
+                            <p className="text-xs font-mono tabular-nums text-running-strong mt-0.5">
                               {pace}
                             </p>
                           ) : null;

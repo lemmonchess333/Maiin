@@ -80,7 +80,7 @@ export default function RouteSetupSection({
     return (
       <>
         <div className="flex items-center justify-between gap-2 rounded-xl bg-running/8 px-3 py-2">
-          <span className="text-sm font-medium text-running">
+          <span className="text-sm font-medium text-running-strong">
             Following a route ·{" "}
             <span className="font-mono tabular-nums">
               {km(routeTotalDistance(targetRoute))}
@@ -90,7 +90,7 @@ export default function RouteSetupSection({
             <button
               type="button"
               onClick={openSave}
-              className="min-h-[44px] px-2 text-xs font-semibold text-running"
+              className="min-h-[44px] px-2 text-xs font-semibold text-running-strong"
             >
               Save
             </button>
