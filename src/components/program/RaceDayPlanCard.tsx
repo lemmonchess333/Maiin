@@ -47,7 +47,7 @@ export default function RaceDayPlanCard({
       className="rounded-2xl bg-card border border-border p-4 space-y-4 card-shadow"
     >
       <div className="space-y-1">
-        <div className="inline-flex items-center gap-1.5 text-caption font-bold uppercase tracking-wider text-running">
+        <div className="inline-flex items-center gap-1.5 text-caption font-bold uppercase tracking-wider text-running-strong">
           <Timer className="size-3.5" aria-hidden="true" />
           Race-day plan
         </div>
@@ -68,7 +68,7 @@ export default function RaceDayPlanCard({
         {vm.goals.map((g) => (
           <div key={g.tier} className="flex items-center gap-3">
             <span
-              className="size-6 rounded-md flex items-center justify-center shrink-0 bg-running/10 text-running text-xs font-bold"
+              className="size-6 rounded-md flex items-center justify-center shrink-0 bg-running/10 text-running-strong text-xs font-bold"
               aria-hidden="true"
             >
               {g.tier}

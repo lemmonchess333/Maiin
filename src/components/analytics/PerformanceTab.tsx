@@ -491,7 +491,7 @@ export default function PerformanceTab() {
                       <div className="p-4 rounded-2xl bg-running/8">
                         <div className="flex items-center gap-2 mb-2">
                           <Footprints className="size-4 text-running" />
-                          <h3 className="text-sm font-semibold text-running">
+                          <h3 className="text-sm font-semibold text-running-strong">
                             Running Suggestions
                           </h3>
                         </div>
