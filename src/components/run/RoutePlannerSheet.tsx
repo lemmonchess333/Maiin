@@ -333,7 +333,7 @@ export default function RoutePlannerSheet({
               Tap the map to drop points along your route.
             </p>
           </div>
-          <p className="shrink-0 font-mono text-lg font-extrabold tabular-nums text-running">
+          <p className="shrink-0 font-mono text-lg font-extrabold tabular-nums text-running-strong">
             {km(distanceM)}
           </p>
         </div>

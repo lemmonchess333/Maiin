@@ -91,7 +91,7 @@ const VARIANT_STYLES: Record<BannerVariant, VariantStyle> = {
     // coral 6% surface + ~19% border (was `${THEME.running}0F` / `30`),
     // now the --running token (DS1b). Theme-invariant coral identity.
     surfaceClass: "bg-running/6 border-running/19",
-    accentClass: "text-running",
+    accentClass: "text-running-strong",
     role: "status",
     DefaultIcon: Info,
   },
