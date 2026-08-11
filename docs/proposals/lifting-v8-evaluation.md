@@ -1466,10 +1466,16 @@ saveProgramSites.test.ts` enumerates each remaining site with its owning
 writer and the reason it has not migrated; a new whole-document writer, or a
 migrated one, fails it. Do not re-state a number in prose here — the three
 that existed (ADR-0011's "remaining 8", this row's "13", and reality's 9)
-disagreed with each other. The test also records that ADR-0011's reasoning
-covers seven of them: `adoptLegacyTrainingBlock` and `undoRecoveryReduction`
-are neither engine-routed nor the deliberate fallback, and are marked
-`unaccounted` rather than folded into a category that does not describe them.
+disagreed with each other. The test also records how each site maps onto
+ADR-0011's reasoning. Seven are covered: the six it enumerates, plus
+`undoRecoveryReduction`, which reaches the SAME measured blocker through a
+helper the ADR does not name (`revertRecoverySession` needs
+`primaryCanonicalForExercise` -> `volumeModel` -> per-exercise muscle
+attributions, and `functions/` has none). One is the deliberate
+`reorderDayExercises` fallback. That leaves `adoptLegacyTrainingBlock`, which
+is genuinely outside the account — it calls only the pure `legacyToActiveBlock`
+mapper, so nothing blocks it; it is a one-time pre-Blk2 backfill that never
+moved.
 
 STATUS 2026-08-02. Recorded because three separate sessions have now
 re-derived this same triage from scratch. The `saveProgram` sites that remain

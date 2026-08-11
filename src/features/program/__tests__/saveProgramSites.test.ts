@@ -26,12 +26,24 @@
  * ADR-0011 settled that, and its "do not finish P6 as a tidiness
  * exercise" applies here too. The value is that the list is now checked.
  *
- * Two entries are worth calling out because ADR-0011's reasoning does not
- * reach them. Its account is "six route through advanceWeek or the run
- * scheduler" plus the deliberate `reorderDayExercises` fallback — seven.
- * `adoptLegacyTrainingBlock` and `undoRecoveryReduction` are neither, and
- * are marked as such below rather than being quietly folded into a
- * category that does not describe them.
+ * ONE entry is worth calling out because ADR-0011's reasoning does not
+ * reach it. Its account is "six route through advanceWeek or the run
+ * scheduler" plus the deliberate `reorderDayExercises` fallback.
+ * `adoptLegacyTrainingBlock` is neither: it calls only `legacyToActiveBlock`,
+ * a pure mapper, so nothing blocks it — it is a one-time backfill for
+ * pre-Blk2 blocks that simply never moved. Marked `unaccounted` rather
+ * than folded into a category that does not describe it.
+ *
+ * `undoRecoveryReduction` was marked that way too on the first pass, and
+ * that was WRONG — checked rather than assumed, and the check overturned
+ * it. It calls `revertRecoverySession`, which needs
+ * `primaryCanonicalForExercise` -> `volumeModel` -> per-exercise muscle
+ * attributions; `functions/` has no muscle data of any kind. That is
+ * exactly the dependency ADR-0011 measured for `musclesAtMrv`, reached
+ * through a helper the ADR did not happen to name. So the ADR's REASONING
+ * covers it even though its enumeration does not, and recording it as an
+ * unexplained gap would have sent the next reader hunting for a decision
+ * nobody failed to make.
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
@@ -89,8 +101,8 @@ const EXPECTED_WRITERS: ReadonlyArray<{
   },
   {
     owner: "undoRecoveryReduction",
-    category: "unaccounted",
-    why: "NOT covered by ADR-0011's reasoning. Re-derives nothing and touches only workouts; it reads programState from a React closure and writes the whole document back, so a command landing in between is clobbered",
+    category: "week-engine",
+    why: "engine-blocked through a helper ADR-0011 does not enumerate but whose blocker it measured: revertRecoverySession -> primaryCanonicalForExercise -> volumeModel -> per-exercise muscle attributions, and functions/ has NO muscle data of any kind",
   },
   {
     owner: "realignRacePlan",
@@ -148,18 +160,21 @@ describe("programme document writers outside the command boundary", () => {
     expect(saveProgramSites().filter((s) => s.owner === "unknown")).toEqual([]);
   });
 
-  it("matches ADR-0011's account for all but two, which are marked", () => {
-    /* The ADR explains six week-engine/whole-plan sites plus one
-       deliberate fallback. Two are outside that account. Pinning the
-       SHAPE of the discrepancy rather than hiding it means the next
+  it("matches ADR-0011's reasoning for all but one, which is marked", () => {
+    /* Seven are covered by the ADR's reasoning — six it enumerates plus
+       `undoRecoveryReduction`, which reaches the same measured
+       muscle-attribution blocker through a helper it does not name. One
+       deliberate fallback. One genuinely outside the account.
+
+       Pinning the SHAPE of that gap rather than hiding it means the next
        person to open the ADR knows before they start that it does not
-       describe everything — which is the thing three previous sessions
-       each had to work out for themselves. */
+       enumerate everything — the thing three previous sessions each had
+       to work out for themselves. */
     const byCategory = (c: string) =>
       EXPECTED_WRITERS.filter((w) => w.category === c).length;
-    expect(byCategory("week-engine") + byCategory("whole-plan")).toBe(6);
+    expect(byCategory("week-engine") + byCategory("whole-plan")).toBe(7);
     expect(byCategory("deliberate")).toBe(1);
-    expect(byCategory("unaccounted")).toBe(2);
+    expect(byCategory("unaccounted")).toBe(1);
   });
 
   it("gives every writer a reason", () => {
