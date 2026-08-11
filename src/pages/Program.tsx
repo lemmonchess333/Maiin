@@ -102,6 +102,7 @@ import DeloadBanner from "@/components/program/DeloadBanner";
 import RecoveryReductionBanner from "@/components/program/RecoveryReductionBanner";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { resolveRunPlan } from "@/lib/runPlanResolver";
+import { shouldSuggestDeload } from "@/lib/deloadSuggestVisibility";
 import { runHeaderLine } from "@/lib/runHeaderLine";
 import { resolveDeloadRecommended } from "@/lib/performanceDocFields";
 
@@ -853,6 +854,31 @@ function ProgramInner() {
     programState,
     localDateString(new Date())
   );
+  /**
+   * P1d pin 2 — race-taper exclusivity for the deload-suggest banner.
+   *
+   * The Performance Index can recommend a deload for a runner who is
+   * already tapering into a race, and the banner had no guard: it offered
+   * "Apply deload week" on top of a taper that is itself a planned load
+   * cut. The lock's words are "taper IS the deload; no double-deload".
+   *
+   * The decision lives in `shouldSuggestDeload` rather than inline here,
+   * following this file's own runHeaderLine precedent — the bug was a
+   * missing term in a render expression, which is exactly what no test
+   * can reach while it stays one.
+   */
+  const showDeloadSuggest = shouldSuggestDeload({
+    deloadRecommended: resolveDeloadRecommended(perfWeek),
+    currentWeek: programState?.runPlan?.currentWeek,
+    totalWeeks: programState?.runPlan?.totalWeeks,
+    distance: resolvedRunPlan.raceGoal?.distance as
+      | "5k"
+      | "10k"
+      | "half"
+      | "marathon"
+      | undefined,
+  });
+
   const programRunHeaderLine = runHeaderLine({
     runMode: profile?.runMode ?? "freeform",
     raceGoal: resolvedRunPlan.raceGoal,
@@ -1067,7 +1093,7 @@ function ProgramInner() {
                 reopens on a new week if the signal still applies. */}
           <TrackProgrammeSectionView section="deload_banner">
             <DeloadBanner
-              visible={resolveDeloadRecommended(perfWeek)}
+              visible={showDeloadSuggest}
               weekKey={`w${displayWeekNumber}`}
               deloadActive={programState.currentPhase === "deload"}
               experience={profile?.experience}
