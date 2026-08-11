@@ -57,6 +57,83 @@ export interface TDEEResult {
   proteinUncapped: number;
 }
 
+/** The macro fields of a TDEE result — the split alone, without the energy
+ *  arithmetic that produced the target. */
+export type MacroSplit = Pick<
+  TDEEResult,
+  "protein" | "carbs" | "fat" | "proteinCapped" | "proteinUncapped"
+>;
+
+/**
+ * Split a calorie target into grams.
+ *
+ * Exported because the target is not always the formula's: a manual
+ * `customCalorieTarget` replaces it, and the split has to be recomputed
+ * against the number actually in force. Persisting the formula's grams
+ * beside an overridden calorie figure is how the profile ended up storing
+ * 1400 kcal alongside a triple summing to 2209.
+ *
+ * The arithmetic is the SAME one `getAdjustedTargets` uses for a rest day
+ * with no tier shift, in the same order, so the stored triple and the one
+ * the Food page renders are the same numbers.
+ *
+ * History, because the near-miss is instructive. NUTR-M3 dropped a 50g carb
+ * floor from this split for exactly that reason and left a comment claiming
+ * it now reconciled — "protein*4 + carbs*4 + fat*9 === targetCalories". It
+ * did not. Flooring carbs at 0 stops the balancing macro going NEGATIVE; it
+ * does nothing about protein and fat together overrunning the budget, which
+ * is the state an aggressive cut actually produces. On the worst body the
+ * pace picker can reach (110 kg, sedentary, "Fast") the stored split summed
+ * to 1283 kcal against a 1267 kcal target, stored 35 g of fat against a 66 g
+ * essential floor, and stored 242 g of protein where the app displayed 168 g.
+ *
+ * The protein gap was not cosmetic: profile.targetProtein is what the
+ * performance engine's adherence factor scores avgDailyProtein against
+ * (perfScoring computeAdherenceScore), so a user who ate exactly what the
+ * Food page asked scored 77 instead of 100 on that factor — penalised for
+ * complying with their own plan.
+ */
+export function splitMacrosForTarget(
+  targetCalories: number,
+  weightKg: number,
+  proteinMultiplier: number
+): MacroSplit {
+  const essentialFatG = Math.round(ESSENTIAL_FAT_FLOOR_PER_KG * weightKg);
+  const fat = Math.max(
+    Math.round((FAT_CALORIE_FRACTION * targetCalories) / 9),
+    essentialFatG
+  );
+
+  // Protein anchored to bodyweight, capped so protein + fat fit the budget.
+  // The cap is a reduction only — it can never prescribe more than the goal
+  // multiplier asks for.
+  const proteinUncapped = Math.round(proteinMultiplier * weightKg);
+  let protein = proteinUncapped;
+  let proteinCapped = false;
+  const proteinRoomCals = targetCalories - fat * 9;
+  if (protein * 4 > proteinRoomCals) {
+    protein = Math.max(0, Math.floor(proteinRoomCals / 4));
+    proteinCapped = true;
+  }
+
+  // Carbs are the balancing remainder, floored at 0. Derived from fat GRAMS
+  // rather than the pre-rounding fat calories — the display splitter rounds
+  // to grams first, and computing from the unrounded figure here put the two
+  // copies a gram or two apart on ordinary profiles too.
+  const carbs = Math.max(
+    0,
+    Math.round((targetCalories - protein * 4 - fat * 9) / 4)
+  );
+
+  return { protein, carbs, fat, proteinCapped, proteinUncapped };
+}
+
+/** The protein multiplier a goal implies, for callers that split a target
+ *  outside `calculateTDEE`. */
+export function proteinMultiplierForGoal(goal: FitnessGoal): number {
+  return GOAL_PROTEIN[goal] ?? DEFAULT_PROTEIN_MULTIPLIER;
+}
+
 /**
  * Calculate BMR using Mifflin-St Jeor equation.
  * Male:   10 × weight(kg) + 6.25 × height(cm) − 5 × age + 5
@@ -87,60 +164,26 @@ export function calculateTDEE(
     explicitOffset !== undefined
       ? explicitOffset
       : (GOAL_CALORIE_OFFSET[goal] ?? 0);
-  const proteinMultiplier = GOAL_PROTEIN[goal] ?? DEFAULT_PROTEIN_MULTIPLIER;
-
   // NUTR-L5 safety floor: a deficit can never push the target below
   // min(tdee, MIN_TARGET_CALORIES). The reported `deficit` is the EFFECTIVE
   // offset after flooring, so UI that renders "±N cal" stays honest when the
   // requested rate couldn't be applied in full.
+  //
+  // The floor guards the RATE-derived path only. A manual
+  // `customCalorieTarget` replaces this target downstream and is bounded by
+  // the profile sanitizer alone (0..10000), so it can sit below 1200. That is
+  // the user's own number and is left as they set it; what the split below now
+  // guarantees is that whatever the target, the grams reconcile to it and a
+  // capped protein figure is reported rather than applied in silence.
   const targetCalories = floorTargetCalories(tdee + requestedOffset, tdee);
   const deficit = targetCalories - tdee;
 
-  // Macro split — the SAME arithmetic getAdjustedTargets uses for a rest day
-  // with no tier shift, in the same order, so the stored triple and the one
-  // the Food page renders are the same numbers.
-  //
-  // History, because the near-miss is instructive. NUTR-M3 dropped a 50g carb
-  // floor here for exactly this reason and left a comment claiming the split
-  // now reconciled — "protein*4 + carbs*4 + fat*9 === targetCalories". It did
-  // not. Flooring carbs at 0 stops the balancing macro going NEGATIVE; it does
-  // nothing about protein and fat together overrunning the budget, which is
-  // the state an aggressive cut actually produces. On the worst body the pace
-  // picker can reach (110 kg, sedentary, "Fast") the stored split summed to
-  // 1283 kcal against a 1267 kcal target, stored 35 g of fat against a 66 g
-  // essential floor, and stored 242 g of protein where the app displayed 168 g.
-  //
-  // The protein gap was not cosmetic: profile.targetProtein is what the
-  // performance engine's adherence factor scores avgDailyProtein against
-  // (perfScoring computeAdherenceScore), so a user who ate exactly what the
-  // Food page asked scored 77 instead of 100 on that factor — penalised for
-  // complying with their own plan.
-  const essentialFatG = Math.round(ESSENTIAL_FAT_FLOOR_PER_KG * weightKg);
-  const fat = Math.max(
-    Math.round((FAT_CALORIE_FRACTION * targetCalories) / 9),
-    essentialFatG
-  );
-
-  // Protein anchored to bodyweight, capped so protein + fat fit the budget.
-  // The cap is a reduction only — it can never prescribe more than the goal
-  // multiplier asks for.
-  const proteinUncapped = Math.round(proteinMultiplier * weightKg);
-  let protein = proteinUncapped;
-  let proteinCapped = false;
-  const proteinRoomCals = targetCalories - fat * 9;
-  if (protein * 4 > proteinRoomCals) {
-    protein = Math.max(0, Math.floor(proteinRoomCals / 4));
-    proteinCapped = true;
-  }
-
-  // Carbs are the balancing remainder, floored at 0. Derived from fat GRAMS
-  // rather than the pre-rounding fat calories — the display splitter rounds
-  // to grams first, and computing from the unrounded figure here put the two
-  // copies a gram or two apart on ordinary profiles too.
-  const carbs = Math.max(
-    0,
-    Math.round((targetCalories - protein * 4 - fat * 9) / 4)
-  );
+  const { protein, carbs, fat, proteinCapped, proteinUncapped } =
+    splitMacrosForTarget(
+      targetCalories,
+      weightKg,
+      proteinMultiplierForGoal(goal)
+    );
 
   return {
     bmr,
