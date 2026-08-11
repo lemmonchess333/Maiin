@@ -23,16 +23,26 @@ import {
 // ── Helpers ──────────────────────────────────
 
 function makePoint(overrides: Partial<GPSPoint> = {}): GPSPoint {
-  return {
+  const base = {
     lat: 51.5074,
     lon: -0.1278,
     altitude: 10,
     accuracy: 5,
     speed: 3,
     timestamp: Date.now(),
-    rawLat: 51.5074,
-    rawLon: -0.1278,
     ...overrides,
+  };
+  return {
+    ...base,
+    /* Raw defaults to the (possibly overridden) smoothed pair rather than to a
+       fixed literal. `useGPS.makePoint` derives both from one fix, so a point
+       whose lat/lon and rawLat/rawLon disagree by hundreds of metres is not a
+       state production can reach — and `isValidReading` now measures from the
+       RAW pair, so a stale literal here would fabricate a teleport. An explicit
+       rawLat/rawLon override still wins, for the tests that want the two to
+       differ on purpose. */
+    rawLat: overrides.rawLat ?? base.lat,
+    rawLon: overrides.rawLon ?? base.lon,
   };
 }
 
