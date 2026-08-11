@@ -1,51 +1,58 @@
 /**
- * The deload recommendation cannot tell "overreaching" from "progressing".
+ * A deload is recommended on the TRANSITION into overreach, not on the state.
  *
- * `shouldRecommendDeload`'s second branch is
+ * `shouldRecommendDeload`'s sustained branch asks for two consecutive weeks at
+ * PI ≥ 85 — a reasonable thing to catch. Under a rolling-baseline PI it is also
+ * what steady improvement looks like, because sustained growth HOLDS the
+ * acute:chronic ratio above the line rather than crossing it once (measured in
+ * `performanceIndexOverTime.test.ts`).
  *
- *     currentPI >= 85 && previousWeekPI >= 85
+ * So before the transition guard, the trigger had a cliff — and above it, it
+ * never stopped:
  *
- * — two consecutive weeks running hot, which is a reasonable thing to catch.
- * Under a rolling-baseline PI it is also what steady improvement looks like,
- * because sustained growth HOLDS the acute:chronic ratio above the line rather
- * than crossing it once (measured in `performanceIndexOverTime.test.ts`).
+ *   weekly growth   weeks recommending a deload, of 26
+ *                   before          after
+ *   0%                0               0
+ *   2.0%              0               0
+ *   2.6%              0               0
+ *   2.8%             25               1
+ *   5.0%             25               1
+ *   8.0%             25               1
  *
- * So the trigger has a cliff, and it is a sharp one:
+ * Two tenths of a percentage point used to separate "never suggests a deload"
+ * from "suggests one every week, indefinitely", and it never cleared on its own:
+ * the athlete was not overreaching in any transient sense, they were improving
+ * at a steady rate, and the condition was re-satisfied every week for as long as
+ * they kept it up.
  *
- *   weekly growth in training load   weeks recommending a deload (of 26)
- *   0%                                0
- *   2.0%                              0
- *   2.6%                              0
- *   2.8%                             25   ← every week from the second onward
- *   5.0%                             25
- *   8.0%                             25
+ * That is user-facing. `DeloadBanner` renders off `resolveDeloadRecommended`,
+ * carries an Apply CTA that really does cut the week's volume, and its dismissal
+ * is scoped per-week — so the affected athlete got the banner again every week
+ * and dismissed it every week.
  *
- * Two tenths of a percentage point separates "never suggests a deload" from
- * "suggests one every week, indefinitely". Above the cliff it never clears on
- * its own: the athlete is not overreaching in any transient sense, they are
- * improving at a steady rate, and the condition is re-satisfied every week for
- * as long as they keep it up.
+ * The guard now takes a third reading, `weekBeforePreviousPI`, and stays quiet
+ * when the athlete was ALREADY in the band. Recommending the same action every
+ * week while nothing has changed is a notification defect whichever way the
+ * underlying training question is answered — so this deliberately changes WHEN
+ * the existing recommendation fires and not WHAT counts as overreach. The
+ * thresholds are untouched.
  *
- * This is user-facing, not internal. `DeloadBanner` renders off
- * `resolveDeloadRecommended`, carries an Apply CTA that really does cut the
- * week's volume, and its dismissal is scoped per-week — so the affected user
- * gets the banner again every week and dismisses it every week. Applying it
- * would drop the ratio, clear the flag, and let the cycle restart.
+ * What still fires, asserted below so the guard is not mistaken for a mute:
  *
- * Whether 2.8%/week of tonnage growth is "a lot" is exactly the question, and
- * it is a training-policy one: for a novice adding load every session it is
- * ordinary, and CLAUDE.md's design-for-the-user-base rule says the cold-start
- * segment is the one to design for. Nothing is changed here — fixing it means
- * deciding how the trigger should distinguish acceleration from a sustained
- * level, which `docs/training-programming-claude-handoff.md` bars deciding in
- * a test file.
+ *   - a genuine spike from a steady baseline;
+ *   - the same spike a second week running;
+ *   - a RE-escalation after the athlete came back down — the edge re-arms.
  *
- * Companion to `deloadTriggerReachability.test.ts`, which measured the OTHER
- * two branches over 345,600 realistic weeks (recovery 13,242 hits, sustained
- * 33,973, adherence 0). This one asks what the sustained branch does to a
- * single user over time rather than how often it fires across a population.
+ * Absent third reading (legacy caller, or a user with only two weeks of
+ * history) reads as "not yet in the band", so a cold-start athlete's first
+ * crossing is as loud as it ever was.
  *
  * ADR-0008: driven through `functions/lib/perfScoring.js`, the running copy.
+ * `functions/performanceEngine.js` reads the perf docs at −1 and −2 windows to
+ * supply both, and this harness threads both the same way — an earlier version
+ * passed only the previous week, which left the new parameter permanently
+ * undefined and made every assertion here describe the pre-fix behaviour while
+ * appearing to exercise the new one.
  */
 import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";
@@ -56,7 +63,8 @@ const { scorePerformance } = require("../../../functions/lib/perfScoring") as {
     agg: Record<string, unknown>,
     bl: Record<string, unknown>,
     profile: Record<string, unknown>,
-    previousWeekPI?: number
+    previousWeekPI?: number,
+    weekBeforePreviousPI?: number
   ) => { performanceIndex: number; deloadRecommended: boolean };
 };
 
@@ -97,19 +105,30 @@ const baselineFrom = (levels: number[]) => {
   };
 };
 
-/** 26 weeks of compounding growth; returns each week's (PI, deload) pair. */
+/**
+ * 26 weeks of compounding growth; returns each week's (PI, deload) pair.
+ *
+ * Threads BOTH prior PIs, exactly as `functions/performanceEngine.js` now does
+ * — it reads the perf docs at −1 and −2 windows. An earlier version of this
+ * harness passed only the previous week, which left the transition-edge
+ * parameter permanently undefined and made every assertion below describe the
+ * pre-fix behaviour while appearing to exercise the new one.
+ */
 function run(growthPerWeek: number) {
   const level = (w: number) => Math.pow(1 + growthPerWeek, w);
   const out: { week: number; pi: number; deload: boolean }[] = [];
   let prev: number | undefined;
+  let prev2: number | undefined;
   for (let w = 4; w < 30; w++) {
     const s = scorePerformance(
       weekAgg(level(w)),
       baselineFrom([w - 4, w - 3, w - 2, w - 1].map(level)),
       PROFILE,
-      prev
+      prev,
+      prev2
     );
     out.push({ week: w, pi: s.performanceIndex, deload: s.deloadRecommended });
+    prev2 = prev;
     prev = s.performanceIndex;
   }
   return out;
@@ -117,14 +136,14 @@ function run(growthPerWeek: number) {
 
 const deloadWeeks = (growth: number) => run(growth).filter((r) => r.deload).length;
 
-describe("deload trigger — steady progression reads as sustained overreach", () => {
+describe("deload trigger — steady progression is told once, not weekly", () => {
   it.each([
     { growth: 0, weeks: 0 },
     { growth: 0.02, weeks: 0 },
     { growth: 0.026, weeks: 0 },
-    { growth: 0.028, weeks: 25 },
-    { growth: 0.05, weeks: 25 },
-    { growth: 0.08, weeks: 25 },
+    { growth: 0.028, weeks: 1 },
+    { growth: 0.05, weeks: 1 },
+    { growth: 0.08, weeks: 1 },
   ])(
     "$growth per week → a deload recommended in $weeks of 26 weeks",
     ({ growth, weeks }) => {
@@ -132,26 +151,24 @@ describe("deload trigger — steady progression reads as sustained overreach", (
     }
   );
 
-  it("flips on a two-tenths-of-a-percent difference in progression", () => {
-    /* The cliff itself, stated as the pair. Nothing about the athlete changes
-       qualitatively between these two — one is improving very slightly faster
-       than the other, and only one of them is told to back off, every week. */
-    expect(deloadWeeks(0.026)).toBe(0);
-    expect(deloadWeeks(0.028)).toBe(25);
-    expect(run(0.026)[0].pi).toBe(84);
-    expect(run(0.028)[0].pi).toBe(85); // the branch's threshold, exactly
+  it("still marks the crossing, then goes quiet", () => {
+    /* The athlete is not silenced — they are told once, when they enter the
+       band, and not again while they simply stay there. */
+    const rows = run(0.05);
+    /* Week 5 is the earliest possible: the branch needs two readings, and week
+       4 is the first scored week in this harness, so week 5 is the first with a
+       previous. A real user mid-streak when this shipped has BOTH prior docs
+       and is suppressed immediately — no retroactive burst on deploy. */
+    expect(rows.filter((r) => r.deload).map((r) => r.week)).toEqual([5]);
+    // Every week of the streak is the SAME state; only the first is announced.
+    for (const r of rows.slice(1)) expect(r.pi, `week ${r.week}`).toBe(88);
   });
 
-  it("never clears on its own once above the cliff", () => {
-    /* Not a transient warning that resolves. Week 5 and week 29 are the same
-       state: the athlete is progressing steadily and the condition is
-       re-satisfied every week for as long as they keep going. */
-    const rows = run(0.05);
-    expect(rows[0].deload).toBe(false); // week 4 — no previous week yet
-    for (const r of rows.slice(1)) {
-      expect(r.deload, `week ${r.week}`).toBe(true);
-      expect(r.pi, `week ${r.week}`).toBe(88);
-    }
+  it("the 2.6 / 2.8% cliff is still where the band starts", () => {
+    /* Unchanged: the fix moved the notification, not the threshold. */
+    expect(run(0.026)[0].pi).toBe(84);
+    expect(run(0.028)[0].pi).toBe(85); // the branch's threshold, exactly
+    expect(deloadWeeks(0.026)).toBe(0);
   });
 
   it("needs the previous week too — a single hot week does not fire it", () => {
@@ -188,5 +205,56 @@ describe("deload trigger — steady progression reads as sustained overreach", (
     const s = scorePerformance(weekAgg(1.5), shallow, PROFILE, 100);
     expect(s.performanceIndex).toBe(100);
     expect(s.deloadRecommended).toBe(false);
+  });
+
+  it("re-arms after the athlete comes back down", () => {
+    /* The property that separates a transition guard from a mute. A spike, a
+       recovery, then a SECOND spike must be announced again — otherwise one
+       overreach in January would silence the rest of the year. */
+    const spike = () => baselineFrom([1, 1, 1, 1]);
+    // In the band, already announced → quiet.
+    expect(
+      scorePerformance(weekAgg(1.5), spike(), PROFILE, 100, 100)
+        .deloadRecommended
+    ).toBe(false);
+    // Came back down: two ordinary weeks.
+    expect(
+      scorePerformance(weekAgg(1.0), spike(), PROFILE, 100, 100)
+        .deloadRecommended
+    ).toBe(false);
+    // Escalates again from a settled baseline → announced.
+    expect(
+      scorePerformance(weekAgg(1.5), spike(), PROFILE, 100, 82)
+        .deloadRecommended
+    ).toBe(true);
+  });
+
+  it("leaves the other two branches alone", () => {
+    /* Only the sustained branch takes the transition guard. Poor recovery and
+       poor adherence are states worth repeating — an athlete who is still not
+       recovering has not stopped needing to hear it — so they are untouched
+       even with both prior readings in the band. */
+    /* Reaching the recovery branch needs PI >= 80 AND recovery < 45 at the
+       same time, which takes a HIGH load alongside the poor recovery — a big
+       weight swing, no meal logging, and a session count over the 8 that trips
+       the overtraining penalty. Tanking recovery alone drags the PI under 80
+       and misses the branch entirely. */
+    const poorRecovery = {
+      ...weekAgg(1.5),
+      liftSessions: 6,
+      runSessions: 4,
+      bwCurrent7dAvg: 80,
+      bwPrevious7dAvg: 83.5,
+      mealDaysLogged: 0,
+    };
+    const r = scorePerformance(
+      poorRecovery,
+      baselineFrom([1, 1, 1, 1]),
+      PROFILE,
+      100,
+      100
+    );
+    expect(r.performanceIndex).toBeGreaterThanOrEqual(80);
+    expect(r.deloadRecommended).toBe(true);
   });
 });

@@ -11,6 +11,7 @@
  * pattern in helpers.test.js).
  */
 import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
@@ -606,5 +607,43 @@ describe("shouldRecommendDeload — sustained-overreach threshold reconciled to 
   });
   it("does not fire from a single high week alone (no previous, decent recovery/adherence)", () => {
     expect(shouldRecommendDeload(88, 70, 70, null)).toBe(false);
+  });
+});
+
+/* ── The deload transition guard's WIRING ────────────────────────────────
+ *
+ * `shouldRecommendDeload` fires on the transition into overreach, which needs
+ * a THIRD reading (`weekBeforePreviousPI`) to tell "just crossed" from "has
+ * been here for weeks". The guard itself is unit-tested from both sides in
+ * src/lib/__tests__/deloadNagLoop.test.ts — but that drives `scorePerformance`
+ * directly, so it cannot see whether the Cloud Function actually SUPPLIES the
+ * third reading.
+ *
+ * That gap is not hypothetical: deleting the argument from the call site here
+ * leaves every one of those twelve tests green, because the parameter simply
+ * goes undefined and the guard falls back to its pre-fix behaviour — a steady
+ * improver silently returns to a weekly deload banner.
+ *
+ * A source-level pin rather than an integration test, deliberately: the read
+ * chain needs Firestore, and what can be lost here is a single argument. Same
+ * technique as triggerMetadata.test.js.
+ */
+describe("computeAndWritePerformance — supplies both prior PIs", () => {
+  const SOURCE = readFileSync(
+    new URL("../performanceEngine.js", import.meta.url),
+    "utf8"
+  );
+
+  it("reads the perf doc two windows back", () => {
+    expect(SOURCE).toMatch(/dateKeyMinusN\(computeKey,\s*WINDOW_DAYS\s*\*\s*2\)/);
+    expect(SOURCE).toContain("weekBeforePreviousPI = prev2Doc.data().performanceIndex");
+  });
+
+  it("passes it to the scorer alongside the previous PI", () => {
+    /* Both, in order — the guard reads its 4th and 5th parameters positionally,
+       so dropping either one changes which reading lands where. */
+    expect(SOURCE).toMatch(
+      /previousComputePI,\s*\n\s*weekBeforePreviousPI\s*\n\s*\);/
+    );
   });
 });

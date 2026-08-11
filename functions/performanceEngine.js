@@ -559,6 +559,14 @@ async function computeAndWritePerformanceForUser(uid, computeKeyOverride) {
     // separation" comparison; using 1 day back would compare against a window
     // that shares 6/7 days with the current one, weakening the signal.
     let previousComputePI = null;
+    /* And the one before THAT. `shouldRecommendDeload`'s sustained branch fires
+       on the TRANSITION into overreach rather than on the state, so it needs a
+       third reading to tell "just crossed" from "has been here for weeks".
+       Without it a steadily-improving athlete draws the same recommendation
+       every week forever — the PI is a ratio to a rolling baseline, so growth
+       HOLDS it above the line instead of crossing once (deloadNagLoop.test.ts).
+       Null is safe: it reads as "not yet in the band". */
+    let weekBeforePreviousPI = null;
     try {
       const prevKey = dateKeyMinusN(computeKey, WINDOW_DAYS);
       const prevDoc = await db
@@ -568,6 +576,17 @@ async function computeAndWritePerformanceForUser(uid, computeKeyOverride) {
         .doc(prevKey)
         .get();
       if (prevDoc.exists) previousComputePI = prevDoc.data().performanceIndex;
+
+      const prev2Key = dateKeyMinusN(computeKey, WINDOW_DAYS * 2);
+      const prev2Doc = await db
+        .collection("users")
+        .doc(uid)
+        .collection("performance")
+        .doc(prev2Key)
+        .get();
+      if (prev2Doc.exists) {
+        weekBeforePreviousPI = prev2Doc.data().performanceIndex;
+      }
     } catch (_) {
       /* no previous doc, that's fine */
     }
@@ -585,7 +604,8 @@ async function computeAndWritePerformanceForUser(uid, computeKeyOverride) {
         targetCalories: profile.targetCalories,
         targetProtein: profile.targetProtein,
       },
-      previousComputePI
+      previousComputePI,
+      weekBeforePreviousPI
     );
 
     const {
