@@ -198,7 +198,7 @@ function commonProps() {
     // RUN-EASE-01: the easier week is one command now, not N per-day
     // overrides. Resolves to how many runs the server actually changed.
     applyEaseWeek: vi.fn(async () => 0),
-    revertEaseWeek: vi.fn(async () => true),
+    revertEaseWeek: vi.fn(async () => ({ ok: true })),
     // PR-J Q2 chunk B2: completeRunDay deleted; replaced by
     // markManualComplete which writes to manualCompletions.
     markManualComplete: vi.fn(async () => {}),
