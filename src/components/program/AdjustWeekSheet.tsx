@@ -74,8 +74,11 @@ interface AdjustWeekSheetProps {
   applyEaseWeek: (
     swaps: ReadonlyArray<{ key: string | number; toTemplateId: string }>
   ) => Promise<number | null>;
-  /** Restore the pre-ease week from that server snapshot. */
-  revertEaseWeek: () => Promise<boolean>;
+  /** Restore the pre-ease week from that server snapshot. Resolves with the
+   *  server's own sentence when it REFUSES — the ordering rule declines with
+   *  "Undo the deload week first, then the easier week.", which is the one
+   *  piece of information that makes the refusal actionable. */
+  revertEaseWeek: () => Promise<{ ok: boolean; message?: string }>;
   /**
    * Whether an easier week is currently applied AND still undoable — i.e.
    * the server holds a snapshot for the week the athlete is in. Drives the
@@ -208,14 +211,16 @@ export default function AdjustWeekSheet({
   const undoEase = async () => {
     if (undoing) return;
     setUndoing(true);
-    const ok = await revertEaseWeek();
+    const { ok, message } = await revertEaseWeek();
     setUndoing(false);
     track("adjust_week_applied", {
       intent: "not_100",
       action: "easier_week_undone",
     });
     if (!ok) {
-      toast.error("Couldn't undo the easier week.");
+      // The server's sentence when it gave one — a refusal that names the
+      // next step beats a generic failure that leaves the athlete stuck.
+      toast.error(message || "Couldn't undo the easier week.");
       return;
     }
     clearEasedWeekKey(uid);
