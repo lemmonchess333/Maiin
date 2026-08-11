@@ -31,6 +31,16 @@ interface DeloadBannerProps {
    *  CTA for a calm "active" confirmation so the user is never offered
    *  an Apply that the server would reject as already-deloaded. */
   deloadActive?: boolean;
+  /**
+   * How many of this week's runs the deload stepped down a rung
+   * (`deloadRunSwapCount`). Appended to the ACTIVE copy so the sentence
+   * describes everything the reduction changed, not just the lift half.
+   *
+   * Zero for the AUTOMATIC week-4 deload, which is lift-only — and that
+   * is the point: the same component then tells the truth about whichever
+   * deload the athlete is in, instead of one sentence covering both.
+   */
+  runsEased?: number;
   /** Training age, straight from `profile.experience`. Drives the
    *  ACTIVE-state copy so it describes the recipe the deload actually
    *  applied (backlog #8's tier split — see deloadEngine): beginner or
@@ -79,6 +89,7 @@ export default function DeloadBanner({
   visible,
   weekKey,
   deloadActive = false,
+  runsEased,
   experience,
   onApply,
 }: DeloadBannerProps) {
@@ -90,6 +101,12 @@ export default function DeloadBanner({
   const { dismissed, dismiss } = useDismissOnce(
     `${DISMISSED_STORAGE_PREFIX}:${weekKey}`
   );
+  /* The run half, named. Empty when the deload did not touch the runs —
+     which is the automatic week-4 case, and silence is then correct. */
+  const runsEasedClause =
+    runsEased && runsEased > 0
+      ? ` ${runsEased === 1 ? "One run is" : `${runsEased} runs are`} a step shorter too.`
+      : "";
   const prefersReducedMotion = useReducedMotion();
   // viewedFiredRef ensures the viewed event fires at most once per
   // mount-visible cycle. If the week changes or the flag re-trips
@@ -194,9 +211,11 @@ export default function DeloadBanner({
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
                   {deloadActive
-                    ? deloadHoldsLoad
-                      ? "This week's volume is eased — one set fewer and slightly lower targets, at the same weights. Push again next week."
-                      : "This week's loads are eased — lighter weights, one set fewer. Push again next week."
+                    ? `${
+                        deloadHoldsLoad
+                          ? "This week's volume is eased — one set fewer and slightly lower targets, at the same weights."
+                          : "This week's loads are eased — lighter weights, one set fewer."
+                      }${runsEasedClause} Push again next week.`
                     : "Your training load has been high with signs of reduced recovery. A lighter week can help you come back stronger."}
                 </p>
               </div>
