@@ -10,6 +10,9 @@ import NutritionSection from "../NutritionSection";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 import type { ActivityLevel } from "@/lib/tdee";
 import type { GoalWeightPlan } from "@/lib/goalWeightPlan";
+import { calculateTDEE } from "@/lib/tdee";
+import { offsetFromWeeklyRate } from "@/lib/macroConstants";
+import type { TDEEResult } from "@/lib/tdee";
 
 afterEach(() => cleanup());
 
@@ -20,7 +23,19 @@ const goalPlan: GoalWeightPlan = {
   effectiveRateKgPerWeek: 0.5,
 } as GoalWeightPlan;
 
-function renderSection(weeklyRateKg = 0.5) {
+const DEFAULT_TDEE: TDEEResult = {
+  bmr: 1600,
+  tdee: 2400,
+  targetCalories: 2950,
+  protein: 135,
+  carbs: 462,
+  fat: 88,
+  deficit: 0,
+  proteinCapped: false,
+  proteinUncapped: 135,
+};
+
+function renderSection(weeklyRateKg = 0.5, tdee: TDEEResult = DEFAULT_TDEE) {
   const setWeeklyRateKg = vi.fn();
   render(
     <NutritionSection
@@ -37,15 +52,7 @@ function renderSection(weeklyRateKg = 0.5) {
       weeklyRateKg={weeklyRateKg}
       setWeeklyRateKg={setWeeklyRateKg}
       goalPlan={goalPlan}
-      tdee={{
-        bmr: 1600,
-        tdee: 2400,
-        targetCalories: 2950,
-        protein: 135,
-        carbs: 462,
-        fat: 88,
-        deficit: 0,
-      }}
+      tdee={tdee}
       updateProfile={vi.fn(async () => ({ ok: true }) as UpdateProfileResult)}
       inline
     />
@@ -75,5 +82,61 @@ describe("NutritionSection — Weekly pace uses SegmentedControl", () => {
     const { setWeeklyRateKg } = renderSection(0.5);
     fireEvent.click(screen.getByRole("radio", { name: /Fast/ }));
     expect(setWeeklyRateKg).toHaveBeenCalledWith(0.75);
+  });
+});
+
+/**
+ * The pace picker can hand out a target too small to hold bodyweight protein
+ * alongside the essential fat floor, in which case protein is set to what
+ * fits. Before this notice the macro triple was the only trace, and a 168 g
+ * figure where the plan intends 242 g reads as a plan choice rather than a
+ * shortfall.
+ *
+ * Both tdee fixtures here come from the real `calculateTDEE` rather than
+ * hand-written flags, so the notice is pinned to a state the app can actually
+ * produce — if the pace options, the calorie floor or the protein cap move
+ * such that no reachable body trips it, the first test fails on its own
+ * precondition instead of passing against a staged prop.
+ */
+const HEAVY_FAST_CUT = calculateTDEE(
+  110,
+  180,
+  65,
+  "sedentary",
+  "cut",
+  "female",
+  offsetFromWeeklyRate(-0.75)
+);
+
+const ORDINARY_CUT = calculateTDEE(
+  75,
+  185,
+  40,
+  "moderate",
+  "cut",
+  "male",
+  offsetFromWeeklyRate(-0.5)
+);
+
+describe("NutritionSection — capped-protein notice", () => {
+  it("says so when the chosen pace cannot hold the plan's protein", () => {
+    // Precondition, asserted rather than assumed: this body really is capped,
+    // and its target cleared the 1200 safety floor rather than being clamped.
+    expect(HEAVY_FAST_CUT.proteinCapped).toBe(true);
+    expect(HEAVY_FAST_CUT.targetCalories).toBeGreaterThan(1200);
+
+    renderSection(0.75, HEAVY_FAST_CUT);
+    const notice = screen.getByText(/A slower pace holds protein/);
+    // Both numbers are present: what fits, and what the plan wanted.
+    expect(notice.textContent).toContain(String(HEAVY_FAST_CUT.protein));
+    expect(notice.textContent).toContain(
+      String(HEAVY_FAST_CUT.proteinUncapped)
+    );
+  });
+
+  it("stays silent on a pace that fits", () => {
+    expect(ORDINARY_CUT.proteinCapped).toBe(false);
+    renderSection(0.5, ORDINARY_CUT);
+    expect(screen.queryByText(/A slower pace holds protein/)).toBeNull();
   });
 });

@@ -11,8 +11,9 @@ import {
   Target,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { THEME } from "@/lib/theme";
 import { ACTIVITY_LABELS } from "@/lib/tdee";
-import type { ActivityLevel } from "@/lib/tdee";
+import type { ActivityLevel, TDEEResult } from "@/lib/tdee";
 import type { GoalWeightPlan } from "@/lib/goalWeightPlan";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import AccordionSection from "@/components/AccordionSection";
@@ -35,15 +36,10 @@ interface NutritionSectionProps {
   weeklyRateKg: number;
   setWeeklyRateKg: (v: number) => void;
   goalPlan: GoalWeightPlan;
-  tdee: {
-    bmr: number;
-    tdee: number;
-    targetCalories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-    deficit: number;
-  };
+  /** The engine's own result type rather than a hand-copied shape — the
+   *  inline duplicate here silently omitted every field added to TDEEResult
+   *  after it was written. */
+  tdee: TDEEResult;
   updateProfile: (
     data: Partial<UserProfile>,
     opts?: { allowProtected?: boolean }
@@ -380,6 +376,29 @@ export default function NutritionSection({
               <p className="text-xs text-muted-foreground">fat</p>
             </motion.div>
           </div>
+
+          {/* The pace picker can produce a target too small to hold bodyweight
+              protein alongside the essential fat floor, in which case protein
+              is set to what fits. That happens silently on heavy bodies at the
+              "Fast" pace, and the grams above are the only place it shows —
+              a 168 g figure where the plan intends 242 g reads as a plan
+              choice rather than a shortfall. Say it, at the point the pace is
+              chosen. */}
+          {tdee.proteinCapped && (
+            <p
+              className="text-caption leading-snug pt-2"
+              style={{ color: THEME.warning }}
+            >
+              This pace leaves room for{" "}
+              <span className="font-mono tabular-nums">{tdee.protein} g</span>{" "}
+              protein, not the{" "}
+              <span className="font-mono tabular-nums">
+                {tdee.proteinUncapped} g
+              </span>{" "}
+              your plan aims for — essential fat has to fit too. A slower pace
+              holds protein.
+            </p>
+          )}
 
           {/* Custom calorie override */}
           <div className="mt-3 pt-3 border-t border-border/50">

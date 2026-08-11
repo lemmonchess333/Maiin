@@ -14,23 +14,37 @@
  * ("periodization is intentionally inert there"). What nobody had was the size
  * of "there".
  *
- * Measured 2026-08-11 over 55,200 profiles built by the app's OWN pipeline —
+ * Measured 2026-08-11 over 64,400 profiles built by the app's OWN pipeline —
  * `calculateTDEE` (Mifflin-St Jeor, real activity multipliers, the 1200 kcal
  * safety floor) across sex × age × height × weight (BMI 18-35) × activity ×
  * goal-rate — then `getAdjustedTargets` for each of the four tiers:
  *
- *   EASY fat === MODERATE fat      70.5%   ← structural, see below
- *   MODERATE fat === HARD fat      21.9%
- *   all four tiers identical       21.9%
+ *   EASY fat === MODERATE fat      62.3%   ← structural, see below
+ *   MODERATE fat === HARD fat      16.1%
+ *   all four tiers identical       16.1%
  *
  * and it lands almost entirely on people in a deficit:
  *
- *   cut  −1.0 kg/wk    73.1% get identical macros every day
- *   cut  −0.5 kg/wk    36.1%     (the default cut band)
- *   cut  −0.25 kg/wk   17.4%
+ *   cut  −0.75 kg/wk   54.5% get identical macros every day  ("Fast")
+ *   cut  −0.5  kg/wk   36.1%                                 ("Steady", default)
+ *   cut  −0.25 kg/wk   17.4%                                 ("Relaxed")
  *   recomp              4.4%
  *   lean bulk +0.25     0.2%
  *   lean bulk +0.5      0.0%
+ *
+ * CORRECTION 2026-08-11, same day: the first version of this file swept a
+ * −1.0 kg/wk cut and called its rate list "the real UI range". That rate is
+ * not offered — the pace control has three options, 0.25 / 0.5 / 0.75 — and
+ * the ±2.0 the profile sanitizer accepts is a schema bound, not a user-facing
+ * one. Because the collapse rises monotonically with deficit depth, the
+ * unreachable seventh of the population was also the worst-affected slice, so
+ * every headline here was overstated: "all four tiers identical" read 21.9%
+ * and is 16.1%; the deepest-cut row read 73.1% for a rate nobody can pick and
+ * is 54.5% for the one they can. The finding survives the correction — this
+ * is still a feature that half-disappears for aggressive cutters — but the
+ * numbers a future retune would be argued from were wrong, which is the whole
+ * point of measuring instead of asserting. Reading the control settles it in
+ * one grep; assuming the schema bound is the UI bound does not.
  *
  * Two separate things are in that table and they have different causes.
  *
@@ -38,7 +52,7 @@
  * one floor (0.8 g/kg), so they can only differ when the room to shift exceeds
  * EASY's own 100 kcal — i.e. `baselineFat − 0.8·weight > 100/9 g`. Below that
  * both bottom out on the same floor and the 150 kcal between their shifts
- * means nothing. Seven users in ten sit below it.
+ * means nothing. Six users in ten sit below it.
  *
  * **The full collapse is about deficits**, and its direction is worth stating:
  * the fuel periodisation works for people gaining or maintaining and largely
@@ -49,12 +63,12 @@
  * like the knobs of this feature, and mostly they are not the binding
  * constraint — the floors are:
  *
- *   EASY's own 100 kcal decides the answer for   29.5% of profiles
- *   MODERATE's 250                                7.4%
- *   HARD's 450                                    3.4%
+ *   EASY's own 100 kcal decides the answer for   37.7% of profiles
+ *   MODERATE's 250                               13.2%
+ *   HARD's 450                                    7.6%
  *
  * So the biggest shift in the system is the one that least often does
- * anything: for 96.6% of users the essential fat floor is reached before
+ * anything: for 92.4% of users the essential fat floor is reached before
  * HARD's 450 kcal is spent, and its value is irrelevant to them. This is not
  * incidental — it was found by mutation, when changing HARD 450 → 300 left
  * every measurement in this file untouched, and it is now pinned below rather
@@ -64,7 +78,7 @@
  * `docs/training-programming-claude-handoff.md` bars inferring one from here.
  * These tests exist so that decision is made against a number, and against
  * the right number — someone retuning this feature by moving HARD's shift
- * would, for all but 3.4% of users, be moving nothing at all.
+ * would, for all but 7.6% of users, be moving nothing at all.
  *
  * Scope note: the shift is Pro-gated (`useEffectiveTargets` computes free users
  * as REST), so this describes what a paying user gets. The day LABEL is
@@ -93,14 +107,30 @@ const ACTIVITIES: ActivityLevel[] = [
   "active",
   "very_active",
 ];
-/** Goal + the weekly rate the user picks for it, spanning the real UI range. */
+/**
+ * Goal + the weekly rate the user picks for it.
+ *
+ * These are the rates the app OFFERS, read off the control rather than
+ * assumed: NutritionSection's "Weekly pace" SegmentedControl has exactly
+ * three options — 0.25 "Relaxed", 0.5 "Steady", 0.75 "Fast" — signed by the
+ * goal-weight direction, plus 0 for maintain.
+ *
+ * This list previously carried -1.0 and described itself as spanning "the
+ * real UI range". It did not: the profile SANITIZER accepts ±2.0, and that
+ * schema bound had been mistaken for a user-facing one. The error was not
+ * cosmetic — a seventh of the population sat at a rate nobody can select, and
+ * because the collapse rises monotonically with deficit depth, that seventh
+ * was the worst-affected slice. Every headline number below was inflated by
+ * it. Corrected 2026-08-11; the figures in the header are the reachable ones.
+ */
 const GOAL_RATES: [FitnessGoal, number][] = [
-  ["cut", -1.0],
+  ["cut", -0.75],
   ["cut", -0.5],
   ["cut", -0.25],
   ["recomp", 0],
   ["lean bulk", 0.25],
   ["lean bulk", 0.5],
+  ["lean bulk", 0.75],
 ];
 
 function profileFor(
@@ -179,7 +209,7 @@ const flat = (r: Row) => new Set(r.fats).size === 1;
 
 describe("fuel tiers — how often the shift shifts anything", () => {
   it("the population is the app's own, and large enough to mean something", () => {
-    expect(ROWS).toHaveLength(55200);
+    expect(ROWS).toHaveLength(64400);
   });
 
   it("EASY and MODERATE give the same fat for most users", () => {
@@ -187,12 +217,12 @@ describe("fuel tiers — how often the shift shifts anything", () => {
        shifts on paper; for seven users in ten it separates nothing, because
        both land on the shared 0.8 g/kg floor. */
     const same = ROWS.filter((r) => r.fats[1] === r.fats[2]).length;
-    expect(same).toBe(38934);
-    expect(same / ROWS.length).toBeGreaterThan(0.7);
+    expect(same).toBe(40105);
+    expect(same / ROWS.length).toBeGreaterThan(0.6);
   });
 
   it("one user in five gets identical macros on every day type", () => {
-    expect(ROWS.filter(flat).length).toBe(12062);
+    expect(ROWS.filter(flat).length).toBe(10352);
   });
 
   it("the collapse lands on people cutting, not people gaining", () => {
@@ -202,7 +232,7 @@ describe("fuel tiers — how often the shift shifts anything", () => {
     };
     // Ordered, not just individually bounded: the deeper the deficit the more
     // of the periodisation disappears, monotonically.
-    const deepCut = rateOf(-1.0);
+    const deepCut = rateOf(-0.75);
     const stdCut = rateOf(-0.5);
     const lightCut = rateOf(-0.25);
     const recomp = rateOf(0);
@@ -212,21 +242,26 @@ describe("fuel tiers — how often the shift shifts anything", () => {
     expect(lightCut).toBeGreaterThan(recomp);
     expect(recomp).toBeGreaterThan(bulk);
 
-    expect((deepCut * 100).toFixed(1)).toBe("73.1");
-    expect((stdCut * 100).toFixed(1)).toBe("36.1"); // the DEFAULT cut band
+    expect((deepCut * 100).toFixed(1)).toBe("54.5"); // "Fast", the deepest offered
+    expect((stdCut * 100).toFixed(1)).toBe("36.1"); // "Steady", the DEFAULT
     expect((bulk * 100).toFixed(1)).toBe("0.0");
   });
 
   it("the aggressive flag is reachable but rare", () => {
     /* Protein at bodyweight plus the essential fat floor overrunning the whole
-       budget. It needs a heavy user on a deep cut — real, but 1.5% of the
-       population, so it is an edge the UI must handle rather than a state the
-       average user meets. It is also sensitive to the protein multiplier: a
-       cut pins 2.2 g/kg, and a fixture that forgets to set `program.goal`
-       silently measures "recomp" at 2.0 and undercounts this by a third. */
+       budget. It needs a heavy body on the "Fast" pace — real, but under 1% of
+       the population, so it is an edge the UI must handle rather than a state
+       the average user meets. It is also sensitive to the protein multiplier:
+       a cut pins 2.2 g/kg, and a fixture that forgets to set `program.goal`
+       silently measures "recomp" at 2.0 and undercounts this by a third.
+
+       What it costs the affected user is measured in
+       storedVsDisplayedMacros.test.ts — median 18 g of protein below plan,
+       p90 46 g, max 74 g — and is now stated on the pace picker itself
+       rather than left to be inferred from the grams. */
     const agg = ROWS.filter((r) => r.aggressive).length;
-    expect(agg).toBe(1318);
-    expect((( agg / ROWS.length) * 100).toFixed(1)).toBe("2.4");
+    expect(agg).toBe(536);
+    expect(((agg / ROWS.length) * 100).toFixed(2)).toBe("0.83");
   });
 });
 
@@ -271,7 +306,7 @@ describe("fuel tiers — the mechanism, stated so the numbers aren't a black box
     /* Which of the two terms in `min(desiredCut, baselineFat − floor)` decides
        the answer, counted across the population. This is the test that closes
        the hole mutation-testing found: without it, HARD's 450 could be changed
-       to anything and nothing in this file would notice, because for 96.6% of
+       to anything and nothing in this file would notice, because for 92.4% of
        users the floor is reached first.
 
        Recomputed here from the constants rather than read out of the engine,
@@ -291,15 +326,15 @@ describe("fuel tiers — the mechanism, stated so the numbers aren't a black box
     const moderate = bindingCount("MODERATE", DAILY_FAT_FLOOR_PER_KG);
     const hard = bindingCount("HARD", ESSENTIAL_FAT_FLOOR_PER_KG);
 
-    expect(easy).toBe(16266); // 29.5%
-    expect(moderate).toBe(4076); //  7.4%
-    expect(hard).toBe(1861); //  3.4%
+    expect(easy).toBe(24295); // 37.7%
+    expect(moderate).toBe(8501); // 13.2%
+    expect(hard).toBe(4899); //  7.6%
 
     // The ordering is the statement: the LARGER the authored shift, the LESS
     // often it is what actually decides the day's fat.
     expect(easy).toBeGreaterThan(moderate);
     expect(moderate).toBeGreaterThan(hard);
-    expect(hard / ROWS.length).toBeLessThan(0.05);
+    expect(hard / ROWS.length).toBeLessThan(0.1);
   });
 
   it("HARD's shift does bind — but only well above the collapse zone", () => {
