@@ -163,7 +163,7 @@ function backfilledExercises(): ProgramExercise[] {
   const migrated = migrateProgramState(docMissingCoverage(), "2026-08-09");
   return migrated.workouts
     .flatMap((d) => d.exercises)
-    .filter((e) => !["a", "b"].includes(e.instanceId));
+    .filter((e) => !["a", "b"].includes(e.instanceId ?? ""));
 }
 
 describe("range-less double progression — the v3 coverage backfill", () => {
