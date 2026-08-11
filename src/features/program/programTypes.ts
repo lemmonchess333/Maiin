@@ -274,6 +274,29 @@ export interface DeloadSnapshot {
   appliedAt: number;
 }
 
+/**
+ * RUN-EASE-01: pre-ease stash written by the server `applyEaseWeek`
+ * command and consumed (removed) by `revertEaseWeek`.
+ *
+ * Runs only — an easier week never touches the lift side, which is the
+ * whole reason it is a separate stash from `DeloadSnapshot` rather than a
+ * field on it.
+ *
+ * Week-scoped for a stronger reason than the deload's. `runDays` are
+ * regenerated wholesale at every rollover, so an easier week already
+ * expires by itself: next Monday the plan returns at full prescription.
+ * The `weekNumber` guard therefore retires the snapshot at exactly the
+ * moment the week it could restore stops existing — which is also why
+ * there is no per-day `preEase…` field. That shape belongs to
+ * `preDeloadWeight`, where lift weights DO carry forward and a cut has to
+ * be explicitly given back.
+ */
+export interface EaseSnapshot {
+  weekNumber: number;
+  runDays: ScheduledRunDay[];
+  appliedAt: number;
+}
+
 /* ================================
    PROGRAM STATE
 ================================ */
@@ -727,6 +750,14 @@ export interface ProgramState {
    * keep in lockstep.
    */
   deloadSnapshot?: DeloadSnapshot;
+  /**
+   * RUN-EASE-01: present only between a user-applied easier week and its
+   * undo (or the next week rollover, after which the weekNumber guard
+   * makes it inert and the regenerated runDays make it moot). Server-
+   * written by the applyEaseWeek command; also allow-listed in
+   * functions/lib/programStateSanitizer.js — keep in lockstep.
+   */
+  easeSnapshot?: EaseSnapshot;
   /**
    * D1: local week key (Sunday, `localWeekKey()`) of the week the current
    * `workouts` were generated for. The LIFT side's calendar anchor.

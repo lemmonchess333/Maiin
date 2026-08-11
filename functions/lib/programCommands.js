@@ -127,6 +127,8 @@ const CLIENT_COMMAND_KINDS = Object.freeze([
   "overrideRunDay",
   "applyDeloadWeek",
   "revertDeloadWeek",
+  "applyEaseWeek",
+  "revertEaseWeek",
   "restoreExercise",
   "clearNextWorkout",
   "restoreWorkoutDay",
@@ -159,8 +161,9 @@ const SESSION_VARIANTS = new Set(["express45", "express30"]);
 // these; the point is to deny unbounded/poisonous payloads, not to police
 // business rules (the reducer does that against real state).
 const MAX_ID_LEN = 256; // exercise/instance/run-day/template identifiers
-// A deload can only touch this week's scheduled runs. Seven is already
-// every day of the week; the cap is a payload bound, not a training rule.
+// A deload — or an easier week — can only touch this week's scheduled runs.
+// Seven is already every day of the week; the cap is a payload bound, not a
+// training rule.
 const MAX_DELOAD_RUN_SWAPS = 7;
 const MAX_COMPLETION_ID_LEN = 128;
 const MIN_COMPLETION_ID_LEN = 8;
@@ -865,25 +868,7 @@ const KIND_VALIDATORS = {
     // catalogue. What the server DOES enforce is everything that matters
     // for integrity: the day exists, it is editable, and it is not a race.
     if ("runSwaps" in command) {
-      if (!Array.isArray(command.runSwaps)) {
-        invalidCommand("applyDeloadWeek.runSwaps must be an array.");
-      }
-      if (command.runSwaps.length > MAX_DELOAD_RUN_SWAPS) {
-        invalidCommand("applyDeloadWeek.runSwaps has too many entries.");
-      }
-      out.runSwaps = command.runSwaps.map((swap, i) => {
-        const label = `runSwaps[${i}]`;
-        if (!isPlainObject(swap)) invalidCommand(`${label} must be an object.`);
-        assertKeys(swap, label, ["runDayId", "templateId"], []);
-        return {
-          runDayId: assertString(swap.runDayId, `${label}.runDayId`, MAX_ID_LEN),
-          templateId: assertString(
-            swap.templateId,
-            `${label}.templateId`,
-            MAX_ID_LEN
-          ),
-        };
-      });
+      out.runSwaps = assertRunSwaps(command.runSwaps, "applyDeloadWeek");
     }
   },
 
@@ -901,7 +886,93 @@ const KIND_VALIDATORS = {
       MAX_WEEK_NUMBER
     );
   },
+
+  // RUN-EASE-01 — the easier week, as ONE command.
+  //
+  // It was N sequential `overrideRunDay` calls, which had no atomicity (a
+  // half-eased week was a reachable state) and, worse, no route back: that
+  // reducer overwrites `templateId` as well as `userOverride`, so once the
+  // swaps landed nothing on the day remembered what it had been. The only
+  // record lived in a React array, and died with the 8-second toast holding
+  // it.
+  //
+  // `runSwaps` is REQUIRED here, unlike on applyDeloadWeek where an older
+  // client legitimately sends none. An easier week with no swaps is not a
+  // weaker version of the command, it is a no-op that would still write a
+  // snapshot and light up an Undo affordance for a week nothing happened
+  // to — so the reducer refuses an empty array outright.
+  applyEaseWeek(command, out) {
+    assertKeys(
+      command,
+      "applyEaseWeek",
+      ["kind", "commandId", "expectedWeekNumber", "runSwaps"],
+      []
+    );
+    out.expectedWeekNumber = assertBoundedInt(
+      command.expectedWeekNumber,
+      "expectedWeekNumber",
+      1,
+      MAX_WEEK_NUMBER
+    );
+    out.runSwaps = assertRunSwaps(command.runSwaps, "applyEaseWeek");
+    if (out.runSwaps.length === 0) {
+      invalidCommand("applyEaseWeek.runSwaps must not be empty.");
+    }
+  },
+
+  revertEaseWeek(command, out) {
+    assertKeys(
+      command,
+      "revertEaseWeek",
+      ["kind", "commandId", "expectedWeekNumber"],
+      []
+    );
+    out.expectedWeekNumber = assertBoundedInt(
+      command.expectedWeekNumber,
+      "expectedWeekNumber",
+      1,
+      MAX_WEEK_NUMBER
+    );
+  },
 };
+
+/**
+ * Shape-check a client-computed run-swap list.
+ *
+ * Shared by the deload and easier-week commands because the payload is the
+ * same question in both: which scheduled day becomes which template. The
+ * client computes it in both cases for the same reason — the ladders and
+ * the template catalogue live in `RUN_TEMPLATES`, which this side CANNOT
+ * import (`raceTemplateIds.js` says so in as many words), and mirroring a
+ * 28-entry catalogue here to avoid one payload field would be exactly the
+ * drift this repo punishes most. The same division already governs
+ * `overrideRunDay`.
+ *
+ * So this validates SHAPE only. Everything that matters for integrity — the
+ * day exists, it is editable, it is not a race — is enforced by
+ * `applyDeloadRunSwaps` against real state.
+ */
+function assertRunSwaps(value, kind) {
+  if (!Array.isArray(value)) {
+    invalidCommand(`${kind}.runSwaps must be an array.`);
+  }
+  if (value.length > MAX_DELOAD_RUN_SWAPS) {
+    invalidCommand(`${kind}.runSwaps has too many entries.`);
+  }
+  return value.map((swap, i) => {
+    const label = `runSwaps[${i}]`;
+    if (!isPlainObject(swap)) invalidCommand(`${label} must be an object.`);
+    assertKeys(swap, label, ["runDayId", "templateId"], []);
+    return {
+      runDayId: assertString(swap.runDayId, `${label}.runDayId`, MAX_ID_LEN),
+      templateId: assertString(
+        swap.templateId,
+        `${label}.templateId`,
+        MAX_ID_LEN
+      ),
+    };
+  });
+}
 
 /**
  * Validate a client-supplied programme command. Returns a fresh, minimal
@@ -1684,6 +1755,104 @@ function revertDeloadWeekCommand(state, command) {
   return next;
 }
 
+// ---------------------------------------------------------------------------
+// RUN-EASE-01 — the easier week (apply / revert).
+//
+// Same swap mechanism as the deload's run half, deliberately: both answer
+// "step these scheduled days down to these templates", and `applyDeloadRunSwaps`
+// is the one place that knows how (skip races, skip days that are no longer
+// editable, write templateId and userOverride together).
+//
+// What differs is the snapshot's LIFETIME, and it is the whole reason this
+// pair exists. `runDays` are regenerated wholesale at every week rollover
+// (useProgram's auto-rollover: `advanced.runDays = r.runDays`), so an easier
+// week is already self-limiting — next Monday the plan returns at full
+// prescription whatever the athlete does. A week-scoped snapshot with the
+// same `weekNumber` guard as `deloadSnapshot` therefore expires at exactly
+// the moment the thing it could restore stops existing. There is no
+// per-day `preEase…` stash and there should not be one: that is the shape
+// `preDeloadWeight` needs because lift weights DO carry forward and a cut
+// must be explicitly given back.
+// ---------------------------------------------------------------------------
+
+function applyEaseWeekCommand(state, command, now) {
+  requireWeekCursor(state, command);
+  // Semantic idempotency, mirroring applyDeloadWeek's already-deloaded
+  // guard. Without it a second Apply (new commandId, so the receipt dedupe
+  // does not catch it) would step the same runs down a SECOND rung and
+  // overwrite the snapshot with the once-eased state — leaving the athlete
+  // two rungs down and able to undo only one of them.
+  //
+  // Scoped to THIS week, not to mere presence: a snapshot left behind by a
+  // previous week is inert (revert's own weekNumber guard refuses it), and
+  // treating it as "already eased" would lock the athlete out of easing the
+  // week they are actually in. It is overwritten below.
+  if (
+    isPlainObject(state.easeSnapshot) &&
+    state.easeSnapshot.weekNumber === state.weekNumber
+  ) {
+    failedPrecondition("You've already made this week easier.");
+  }
+  // A user with no run plan at all (lift-only, or freeform — where runDays
+  // is []) has nothing to ease. Checked before the swap so the crash path
+  // is a refusal: applyDeloadRunSwaps passes a non-array straight through,
+  // and the identity scan below would throw on it.
+  if (!Array.isArray(state.runDays) || state.runDays.length === 0) {
+    failedPrecondition("There are no scheduled runs this week.");
+  }
+  const runDays = applyDeloadRunSwaps(state, command.runSwaps);
+  // Did anything actually change? Not a reference check on the array —
+  // `applyDeloadRunSwaps` maps, so it returns a fresh array even when it
+  // refused every swap. It returns the ORIGINAL element object for a day it
+  // left alone and a fresh one for a day it rewrote, so per-element identity
+  // is the precise signal.
+  //
+  // The case is reachable: a client planning against a cached week can send
+  // swaps for days that have since been completed, skipped or turned into a
+  // race. Writing a snapshot then would light up an Undo for a week nothing
+  // happened to.
+  if (!runDays.some((rd, i) => rd !== state.runDays[i])) {
+    failedPrecondition("None of those runs can be changed now.");
+  }
+  return {
+    ...state,
+    runDays,
+    easeSnapshot: {
+      weekNumber: state.weekNumber,
+      // The only route back — see applyDeloadRunSwaps' note. Includes any
+      // swap the ATHLETE made before easing, which undo must restore rather
+      // than clear.
+      runDays: state.runDays,
+      appliedAt: now,
+    },
+  };
+}
+
+function revertEaseWeekCommand(state, command) {
+  requireWeekCursor(state, command);
+  const snap = state.easeSnapshot;
+  if (
+    !isPlainObject(snap) ||
+    snap.weekNumber !== state.weekNumber ||
+    !Array.isArray(snap.runDays)
+  ) {
+    failedPrecondition("There is no easier week to undo.");
+  }
+  // LIFO, enforced rather than assumed. A deload applied AFTER the ease took
+  // its own snapshot OF the eased week, so restoring the pre-ease runs first
+  // would strand the deload's snapshot pointing at a week that no longer
+  // exists — undoing it afterwards would then re-apply the ease. Refusing
+  // here costs the athlete one extra tap and keeps both undos truthful; the
+  // ease undo becomes available again the moment the deload is reverted.
+  if (state.currentPhase === "deload") {
+    failedPrecondition("Undo the deload week first, then the easier week.");
+  }
+  const next = { ...state, runDays: snap.runDays };
+  // tx.set replaces the whole doc, so omitting the key deletes it.
+  delete next.easeSnapshot;
+  return next;
+}
+
 function logExercise(state, command, now) {
   const day = requireWorkoutDay(state, command);
   const idx = day.exercises.findIndex(
@@ -2128,6 +2297,12 @@ function applyProgramCommand({ state, profile, command, now }) {
       break;
     case "revertDeloadWeek":
       next = revertDeloadWeekCommand(current, validated);
+      break;
+    case "applyEaseWeek":
+      next = applyEaseWeekCommand(current, validated, now);
+      break;
+    case "revertEaseWeek":
+      next = revertEaseWeekCommand(current, validated);
       break;
     default:
       invalidCommand(`Unsupported programme command "${validated.kind}".`);

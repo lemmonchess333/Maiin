@@ -28,7 +28,8 @@ import { track as trackProgram } from "@/lib/programAnalytics";
 export default function SettingsRunPlan() {
   const navigate = useNavigate();
   const { profile, updateProfile, refreshProfile } = useAuth();
-  const { programState, overrideRunDay, realignRacePlan } = useProgram();
+  const { programState, applyEaseWeek, revertEaseWeek, realignRacePlan } =
+    useProgram();
   const [adjustOpen, setAdjustOpen] = useState(false);
 
   if (!profile) {
@@ -127,7 +128,12 @@ export default function SettingsRunPlan() {
             distance: raceGoal.distance as "5k" | "10k" | "half" | "marathon",
             targetDate: raceGoal.targetDate,
           }}
-          overrideRunDay={overrideRunDay}
+          applyEaseWeek={applyEaseWeek}
+          revertEaseWeek={revertEaseWeek}
+          easedThisWeek={
+            programState?.easeSnapshot != null &&
+            programState.easeSnapshot.weekNumber === programState.weekNumber
+          }
           realignRacePlan={realignRacePlan}
         />
       )}

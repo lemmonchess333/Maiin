@@ -8,9 +8,15 @@
  * Locked v1 shape — a THIN composition over existing writers, zero new
  * scheduler math:
  *   - intent chips are LANGUAGE + TELEMETRY only; they resolve to exactly two
- *     mutations: an easier week (per-day quality→easy swaps via
- *     overrideRunDay, previewed day-by-day) or a re-plan from today (the
- *     existing realignRacePlan, previewed via classifyRaceTiming copy)
+ *     mutations: an easier week (quality→easy swaps, previewed day-by-day)
+ *     or a re-plan from today (the existing realignRacePlan, previewed via
+ *     classifyRaceTiming copy)
+ *
+ * RUN-EASE-01 moved the easier week off N per-day `overrideRunDay` calls
+ * onto one `applyEaseWeek` command. The composition is still thin, but a
+ * half-eased week is no longer reachable and — the point — the server
+ * snapshots the pre-ease runs, so Undo is a row on this sheet for the rest
+ * of the week rather than an 8-second toast holding the only copy.
  *   - every change is PREVIEWED and applied only on an explicit tap
  *   - the race date is NEVER changed here
  *   - not a medical feature: copy is scheduling control, no diagnoses
@@ -48,18 +54,30 @@ interface AdjustWeekSheetProps {
     distance: "5k" | "10k" | "half" | "marathon";
     targetDate: string;
   };
-  /** Existing per-day writer ("changes this day only"). */
   /**
-   * Declared `=> void` until 2026-08-11, which is how the missing `await`
-   * below survived: the real function is async and reports whether the
-   * swap landed, but a `void` return makes forgetting to await it
-   * type-correct. Typing the truth is what makes the caller's mistake a
-   * compile error instead of a toast that lies.
+   * Apply the whole easier week as ONE command; resolves to the number of
+   * runs the SERVER actually changed, or null if it failed.
+   *
+   * Was a per-day `overrideRunDay` loop, declared `=> void` — which is how
+   * a missing `await` survived here, since a void return makes forgetting
+   * to await type-correct. Two things changed with it: the week is now
+   * atomic (a half-eased week is no longer reachable), and the server
+   * stashes the pre-ease runs so Undo outlives the toast that used to hold
+   * the only copy.
    */
-  overrideRunDay: (
-    idOrDayIndex: string | number,
-    templateId: string
-  ) => Promise<boolean>;
+  applyEaseWeek: (
+    swaps: ReadonlyArray<{ key: string | number; toTemplateId: string }>
+  ) => Promise<number | null>;
+  /** Restore the pre-ease week from that server snapshot. */
+  revertEaseWeek: () => Promise<boolean>;
+  /**
+   * Whether an easier week is currently applied AND still undoable — i.e.
+   * the server holds a snapshot for the week the athlete is in. Drives the
+   * persistent Undo row, which is the whole point: the 8-second toast only
+   * ever caught the immediate mistake, and an athlete who felt better on
+   * Tuesday had no way back at all.
+   */
+  easedThisWeek?: boolean;
   /** Existing re-anchor writer (keeps the race date). */
   realignRacePlan: () => Promise<{ timing: RaceTiming; totalWeeks: number }>;
   /** Run14: when the sheet is opened FROM the ease-week nudge, skip the
@@ -71,6 +89,10 @@ interface AdjustWeekSheetProps {
    *  cancel). The parent records the eased weekKey so the post-ease
    *  bounce check can read next week's quality session against it. */
   onEasedApplied?: () => void;
+  /** A6's other half: fired after an undo COMMITS, so the parent can
+   *  forget that weekKey. Without it the bounce line would report a
+   *  recovery from a reduction the athlete cancelled. */
+  onEaseUndone?: () => void;
 }
 
 const INTENTS: Array<{ id: Intent; label: string; hint: string }> = [
@@ -96,13 +118,17 @@ export default function AdjustWeekSheet({
   onClose,
   runDays,
   raceGoal,
-  overrideRunDay,
+  applyEaseWeek,
+  revertEaseWeek,
+  easedThisWeek = false,
   realignRacePlan,
   initialIntent,
   onEasedApplied,
+  onEaseUndone,
 }: AdjustWeekSheetProps) {
   const [step, setStep] = useState<Step>({ kind: "intent" });
   const [applying, setApplying] = useState(false);
+  const [undoing, setUndoing] = useState(false);
 
   const todayKey = localDateString();
   const swaps = useMemo(
@@ -151,67 +177,67 @@ export default function AdjustWeekSheet({
   };
 
   /**
-   * Put back exactly the runs that were eased.
+   * Put the week back.
    *
-   * Re-applies each swap in reverse (`toTemplateId` → `fromTemplateId`)
-   * through the same command, so the restore is subject to the same
-   * guards: a race is still refused, and a day completed in the meantime
-   * is no longer editable and is simply skipped rather than rewritten.
+   * Restores the server's pre-ease snapshot wholesale rather than replaying
+   * each swap in reverse. That is the difference between an undo that works
+   * for eight seconds and one that works all week: the reverse-replay
+   * version could only ever restore what THIS component still had in
+   * memory, so it died with the toast holding it — and it also restored the
+   * days one at a time, which meant a failure halfway through left a week
+   * that was neither eased nor whole.
    *
-   * Reports honestly for the same reason the apply does — a partial
-   * restore that claimed a full one would be the failure this whole
-   * change exists to remove.
+   * It also restores a swap the ATHLETE made before easing, which
+   * reverse-replay could not: the snapshot is the week as it stood, not a
+   * list of the changes we made to it.
    */
-  const undoEase = async (landed: EasySwap[]) => {
-    let restored = 0;
-    for (const s of landed) {
-      if (await overrideRunDay(s.key, s.fromTemplateId)) restored += 1;
-    }
+  const undoEase = async () => {
+    if (undoing) return;
+    setUndoing(true);
+    const ok = await revertEaseWeek();
+    setUndoing(false);
     track("adjust_week_applied", {
       intent: "not_100",
       action: "easier_week_undone",
-      swapCount: restored,
     });
-    if (restored === 0) {
+    if (!ok) {
       toast.error("Couldn't undo the easier week.");
       return;
     }
-    toast.success(
-      restored === landed.length
-        ? "Easier week undone — this week is back to plan."
-        : `${restored} of ${landed.length} runs put back.`
-    );
+    onEaseUndone?.();
+    toast.success("Easier week undone — this week is back to plan.");
+    close(false);
   };
 
   const applyEasier = async (intent: Intent) => {
     if (applying) return;
     setApplying(true);
     try {
-      /* AWAITED, and the count comes from what actually landed.
+      /* ONE command, and the count is the SERVER's answer.
 
-         This was `for (const s of swaps) overrideRunDay(...)` with no
-         await: N promises fired into the void, the enclosing try/catch
-         unable to see any of them, and "3 runs eased to easy runs this
-         week." shown before a single write had returned. A rejected swap
-         surfaced its own "Couldn't change that run" toast a moment
-         later, so the athlete got both messages and no way to tell which
-         was true.
+         Two shapes preceded this. First `for (const s of swaps)
+         overrideRunDay(...)` with no await — N promises into the void,
+         the enclosing try/catch blind to all of them, "3 runs eased"
+         shown before a single write returned. Then the awaited version,
+         honest about its count but still N transactions, so a half-eased
+         week remained reachable and the only record of the originals was
+         a React array that lived as long as a toast.
 
-         Sequential rather than Promise.all: each command re-reads
-         programState, and a rejection triggers a refetch, so firing them
-         concurrently races that refresh against the commands still in
-         flight. A week is at most seven runs. */
-      /* The swaps that LANDED are kept, not just counted, because they
-         are the only record of what each run used to be: the server's
-         overrideRunDay reducer overwrites `templateId` as well as
-         `userOverride`, so once applied, nothing on the day remembers
-         its previous template. */
-      const landed: EasySwap[] = [];
-      for (const s of swaps) {
-        if (await overrideRunDay(s.key, s.toTemplateId)) landed.push(s);
+         Now the whole week is one transaction that snapshots what it
+         replaced. `landed` comes back from the refetched document rather
+         than the request, because the server silently skips a day that
+         has since been completed, skipped, or turned into a race. */
+      const landed = await applyEaseWeek(swaps);
+      if (landed === null) {
+        toast.error("Couldn't adjust the week. Please try again.");
+        setApplying(false);
+        return;
       }
-      if (landed.length === 0) {
-        // overrideRunDay has already said why, per failure.
+      if (landed === 0) {
+        // The server refuses an ease that would change nothing, so this is
+        // the belt to that braces — say something rather than close on a
+        // silent no-op.
+        toast.error("None of this week's runs can be changed now.");
         setApplying(false);
         return;
       }
@@ -219,21 +245,20 @@ export default function AdjustWeekSheet({
       track("adjust_week_applied", {
         intent,
         action: "easier_week",
-        swapCount: landed.length,
+        swapCount: landed,
       });
       /* An easier week is a REDUCTION, and the evidence handoff asks that
-         reducing work "give a bounded path back". There was none: the
-         originals are destroyed on write, so an athlete who tapped this
-         by mistake could not restore their week or even see what it had
-         been. Same 8s undo affordance the deload uses (Program.tsx), for
-         the same reason and in the same shape. */
+         reducing work "give a bounded path back". The toast is the fast
+         path for the immediate mistake; the durable one is the Undo row
+         on this sheet, which stands for the rest of the week because the
+         snapshot lives on the document rather than in this component. */
       toast.success(
-        landed.length === 1
+        landed === 1
           ? "1 run eased to an easy run this week."
-          : `${landed.length} runs eased to easy runs this week.`,
+          : `${landed} runs eased to easy runs this week.`,
         {
           duration: 8000,
-          action: { label: "Undo", onClick: () => void undoEase(landed) },
+          action: { label: "Undo", onClick: () => void undoEase() },
         }
       );
       close(false);
@@ -277,6 +302,42 @@ export default function AdjustWeekSheet({
       <div className="px-4 pb-6 pt-3 space-y-2">
         {step.kind === "intent" && (
           <>
+            {/* The durable path back.
+
+                An easier week used to be undoable for eight seconds and
+                then never again — the toast held the only record of what
+                the runs had been. The snapshot now lives on the document,
+                so this row stands for the rest of the week and is the
+                first thing an athlete sees on the surface they eased from.
+
+                Rendered ABOVE the intents on purpose: once a week is
+                already eased, "make it easier" is rarely what someone came
+                back for, and the row also answers "did that actually
+                apply?" without making them count their runs. */}
+            {easedThisWeek && (
+              <div className="rounded-xl bg-running/[0.08] px-4 py-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Feather
+                    className="size-4 text-running shrink-0"
+                    aria-hidden="true"
+                  />
+                  <span className="text-sm font-semibold text-foreground">
+                    This week is already eased
+                  </span>
+                </div>
+                <p className="text-micro text-muted-foreground">
+                  Feeling better? Put this week's runs back the way they were.
+                </p>
+                <Button
+                  variant="sport-tinted"
+                  fullWidth
+                  loading={undoing}
+                  onClick={() => void undoEase()}
+                >
+                  Undo easier week
+                </Button>
+              </div>
+            )}
             {INTENTS.map((i) => (
               <button
                 key={i.id}

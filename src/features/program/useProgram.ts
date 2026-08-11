@@ -665,16 +665,26 @@ export function useProgram() {
    * applied more than the client modelled, so re-deriving the result locally is
    * the tested-copy-vs-running-copy mistake. Extracted once three callers
    * wanted it — success, a rejected remove/add, and the deload command.
+   *
+   * Returns what it read (undefined when there was nothing to read) so a
+   * caller that must ACT on the server's result can do so without waiting a
+   * render for `programState` to catch up. `applyEaseWeek` needs it to count
+   * how many runs the server actually changed; every other caller ignores
+   * the value and just wants the state refreshed.
    */
-  const refetchProgramState = useCallback(async () => {
-    if (!user) return;
+  const refetchProgramState = useCallback(async (): Promise<
+    ProgramState | undefined
+  > => {
+    if (!user) return undefined;
     const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
     const snap = await getDoc(ref);
-    if (!snap.exists()) return;
+    if (!snap.exists()) return undefined;
     const normalized = normalizeProgramState(snap.data() as ProgramState, {
       primaryGoal: profile?.primaryGoal,
     });
-    setProgramState(migrateProgramState(normalized, localWeekKey()));
+    const migrated = migrateProgramState(normalized, localWeekKey());
+    setProgramState(migrated);
+    return migrated;
   }, [user, profile]);
 
   /**
@@ -2957,6 +2967,96 @@ export function useProgram() {
     [user, profile, programState]
   );
 
+  /**
+   * RUN-EASE-01 — apply the easier week as ONE command, and report how many
+   * runs it actually changed.
+   *
+   * This was N sequential `overrideRunDay` calls from AdjustWeekSheet. Two
+   * problems, both fixed by making it one command: a half-eased week was a
+   * reachable state, and there was no route back after the 8-second toast,
+   * because that reducer overwrites `templateId` as well as `userOverride`
+   * — the client's in-memory list was the only surviving record of what
+   * each day had been. `applyEaseWeek` snapshots the pre-ease `runDays`
+   * server-side instead, so Undo survives a reload, a sign-out, and a
+   * second device.
+   *
+   * The count is DERIVED from the refetched document rather than assumed
+   * from the payload, because the server silently skips a day that has
+   * become a race, been completed, or been skipped since the client planned
+   * against its cached week. Counting the request would overstate exactly
+   * when the athlete is least able to check.
+   *
+   * Returns the number of runs eased, or null if the command failed (the
+   * caller has nothing truthful to say in that case).
+   */
+  const applyEaseWeek = useCallback(
+    async (
+      swaps: ReadonlyArray<{ key: string | number; toTemplateId: string }>
+    ): Promise<number | null> => {
+      if (!user || !programState || swaps.length === 0) return null;
+      const before = programState.runDays ?? [];
+      const command = {
+        kind: "applyEaseWeek" as const,
+        commandId: generateInstanceId(),
+        expectedWeekNumber: programState.weekNumber,
+        runSwaps: swaps.map((s) => ({
+          runDayId: String(s.key),
+          templateId: s.toTemplateId,
+        })),
+      };
+      try {
+        await sendProgramCommand(command);
+        const next = await refetchProgramState();
+        const after = next?.runDays ?? before;
+        // A day counts as eased when its template now matches what we asked
+        // for AND it did not already. `runDayId` is the id when present and
+        // the dayIndex otherwise — the same key `applyDeloadRunSwaps` builds
+        // its map from, so the two sides agree on identity.
+        const byKey = new Map(
+          after.map((rd) => [rd.id != null ? String(rd.id) : String(rd.dayIndex), rd])
+        );
+        const wasByKey = new Map(
+          before.map((rd) => [rd.id != null ? String(rd.id) : String(rd.dayIndex), rd])
+        );
+        let landed = 0;
+        for (const s of command.runSwaps) {
+          const now = byKey.get(s.runDayId);
+          const was = wasByKey.get(s.runDayId);
+          if (now?.templateId === s.templateId && was?.templateId !== s.templateId) {
+            landed += 1;
+          }
+        }
+        return landed;
+      } catch (err) {
+        // Deliberately NOT queued for replay, unlike the deload commands.
+        // An easier week is planned against the week the athlete is looking
+        // at; replaying it after a rollover would step down a week they
+        // never asked about, and the server's week-cursor guard would only
+        // catch that once the week number had actually moved.
+        logger.error("[useProgram] applyEaseWeek failed", err);
+        return null;
+      }
+    },
+    [user, programState, refetchProgramState]
+  );
+
+  /** RUN-EASE-01 — restore the pre-ease week from the server snapshot. */
+  const revertEaseWeek = useCallback(async (): Promise<boolean> => {
+    if (!user || !programState) return false;
+    try {
+      await sendProgramCommand({
+        kind: "revertEaseWeek" as const,
+        commandId: generateInstanceId(),
+        expectedWeekNumber: programState.weekNumber,
+      });
+      await refetchProgramState();
+      return true;
+    } catch (err) {
+      logger.error("[useProgram] revertEaseWeek failed", err);
+      return false;
+    }
+  }, [user, programState, refetchProgramState]);
+
   /* ─── Training blocks (Blk2) ─────────────────────────────────────
      A block owns the lift prescription for its duration. Start and
      release are ONE `saveProgram` each, because the block, the focus and
@@ -3281,6 +3381,8 @@ export function useProgram() {
     keepTrainingBlockFocus,
     applyDeloadWeek,
     revertDeloadWeek,
+    applyEaseWeek,
+    revertEaseWeek,
     undoRecoveryReduction,
     realignRacePlan,
     /** Run15 packet — exposed so the FellBehindSheet copy can match the

@@ -117,6 +117,7 @@ import {
   setLastShownAt,
   getDismissedWeekKey,
   setDismissedWeekKey,
+  clearEasedWeekKey,
   getEasedWeekKey,
   setEasedWeekKey,
 } from "@/lib/easeWeekNudgeMarkers";
@@ -162,6 +163,12 @@ interface ProgrammeRunSectionProps {
     idOrDayIndex: string | number,
     templateId: string
   ) => Promise<boolean>;
+  /** RUN-EASE-01: the whole easier week as one command (resolves to the
+   *  number of runs the server actually changed), and its undo. */
+  applyEaseWeek: (
+    swaps: ReadonlyArray<{ key: string | number; toTemplateId: string }>
+  ) => Promise<number | null>;
+  revertEaseWeek: () => Promise<boolean>;
   /** PR-J Q2 chunk B2: replaces completeRunDay. Writes the
    *  manualCompletions map; derivation surfaces ✅. */
   markManualComplete: (runDayId: string) => Promise<void>;
@@ -195,6 +202,8 @@ export default function ProgrammeRunSection({
   programState,
   runsTarget,
   overrideRunDay,
+  applyEaseWeek,
+  revertEaseWeek,
   markManualComplete,
   skipRunDay,
   skipWorkoutDay,
@@ -1660,7 +1669,16 @@ export default function ProgrammeRunSection({
             distance: raceGoal.distance as "5k" | "10k" | "half" | "marathon",
             targetDate: raceGoal.targetDate,
           }}
-          overrideRunDay={overrideRunDay}
+          applyEaseWeek={applyEaseWeek}
+          revertEaseWeek={revertEaseWeek}
+          // The snapshot's own week guard is the truth about whether Undo
+          // will work, so the affordance is gated on the same comparison the
+          // server makes rather than on mere presence — a snapshot stranded
+          // by a rollover would otherwise offer an Undo that always refuses.
+          easedThisWeek={
+            programState?.easeSnapshot != null &&
+            programState.easeSnapshot.weekNumber === programState.weekNumber
+          }
           realignRacePlan={async () => {
             const result = await realignRacePlan();
             return result;
@@ -1670,6 +1688,9 @@ export default function ProgrammeRunSection({
           onEasedApplied={() =>
             setEasedWeekKey(profile.uid, thisWeekKeyForDismissal)
           }
+          // A6 symmetry: an undone week must not be read for a bounce next
+          // week. It never was one, so there is nothing to recover from.
+          onEaseUndone={() => clearEasedWeekKey(profile.uid)}
         />
       )}
     </section>
