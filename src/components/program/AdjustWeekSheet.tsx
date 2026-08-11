@@ -150,6 +150,39 @@ export default function AdjustWeekSheet({
     setStep({ kind: "preview-easier", intent, swaps });
   };
 
+  /**
+   * Put back exactly the runs that were eased.
+   *
+   * Re-applies each swap in reverse (`toTemplateId` → `fromTemplateId`)
+   * through the same command, so the restore is subject to the same
+   * guards: a race is still refused, and a day completed in the meantime
+   * is no longer editable and is simply skipped rather than rewritten.
+   *
+   * Reports honestly for the same reason the apply does — a partial
+   * restore that claimed a full one would be the failure this whole
+   * change exists to remove.
+   */
+  const undoEase = async (landed: EasySwap[]) => {
+    let restored = 0;
+    for (const s of landed) {
+      if (await overrideRunDay(s.key, s.fromTemplateId)) restored += 1;
+    }
+    track("adjust_week_applied", {
+      intent: "not_100",
+      action: "easier_week_undone",
+      swapCount: restored,
+    });
+    if (restored === 0) {
+      toast.error("Couldn't undo the easier week.");
+      return;
+    }
+    toast.success(
+      restored === landed.length
+        ? "Easier week undone — this week is back to plan."
+        : `${restored} of ${landed.length} runs put back.`
+    );
+  };
+
   const applyEasier = async (intent: Intent) => {
     if (applying) return;
     setApplying(true);
@@ -168,11 +201,16 @@ export default function AdjustWeekSheet({
          programState, and a rejection triggers a refetch, so firing them
          concurrently races that refresh against the commands still in
          flight. A week is at most seven runs. */
-      let applied = 0;
+      /* The swaps that LANDED are kept, not just counted, because they
+         are the only record of what each run used to be: the server's
+         overrideRunDay reducer overwrites `templateId` as well as
+         `userOverride`, so once applied, nothing on the day remembers
+         its previous template. */
+      const landed: EasySwap[] = [];
       for (const s of swaps) {
-        if (await overrideRunDay(s.key, s.toTemplateId)) applied += 1;
+        if (await overrideRunDay(s.key, s.toTemplateId)) landed.push(s);
       }
-      if (applied === 0) {
+      if (landed.length === 0) {
         // overrideRunDay has already said why, per failure.
         setApplying(false);
         return;
@@ -181,12 +219,22 @@ export default function AdjustWeekSheet({
       track("adjust_week_applied", {
         intent,
         action: "easier_week",
-        swapCount: applied,
+        swapCount: landed.length,
       });
+      /* An easier week is a REDUCTION, and the evidence handoff asks that
+         reducing work "give a bounded path back". There was none: the
+         originals are destroyed on write, so an athlete who tapped this
+         by mistake could not restore their week or even see what it had
+         been. Same 8s undo affordance the deload uses (Program.tsx), for
+         the same reason and in the same shape. */
       toast.success(
-        applied === 1
+        landed.length === 1
           ? "1 run eased to an easy run this week."
-          : `${applied} runs eased to easy runs this week.`
+          : `${landed.length} runs eased to easy runs this week.`,
+        {
+          duration: 8000,
+          action: { label: "Undo", onClick: () => void undoEase(landed) },
+        }
       );
       close(false);
     } catch (err) {
