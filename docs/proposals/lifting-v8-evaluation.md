@@ -1460,10 +1460,21 @@ hand-maintained data mirrors on an actively-edited catalogue. Read ADR-0011
 before treating the outstanding count as work to be picked up; the per-site
 detail below stays accurate and is what that ADR summarises.
 
+STATUS 2026-08-11 — the count is now PINNED BY A TEST, because it had
+drifted in every place it was written down. `src/features/program/__tests__/
+saveProgramSites.test.ts` enumerates each remaining site with its owning
+writer and the reason it has not migrated; a new whole-document writer, or a
+migrated one, fails it. Do not re-state a number in prose here — the three
+that existed (ADR-0011's "remaining 8", this row's "13", and reality's 9)
+disagreed with each other. The test also records that ADR-0011's reasoning
+covers seven of them: `adoptLegacyTrainingBlock` and `undoRecoveryReduction`
+are neither engine-routed nor the deliberate fallback, and are marked
+`unaccounted` rather than folded into a category that does not describe them.
+
 STATUS 2026-08-02. Recorded because three separate sessions have now
-re-derived this same triage from scratch. 13 `saveProgram` sites remain, all
-in `useProgram.ts`. They are NOT one kind of work, and the split matters more
-than the count.
+re-derived this same triage from scratch. The `saveProgram` sites that remain
+are all in `useProgram.ts`. They are NOT one kind of work, and the split
+matters more than the count.
 
 **Deliberately staying a document write (1 site).** `reorderDayExercises`'
 rejection fallback. A legacy document whose `instanceId`s were never persisted
