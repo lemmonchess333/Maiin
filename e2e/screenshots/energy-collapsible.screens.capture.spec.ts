@@ -10,6 +10,7 @@
 import { test, type Page } from "@playwright/test";
 import { signInAsTestUser } from "../helpers/auth";
 import { emulatorActive } from "../helpers/emulator";
+import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
 
 test.use({
   viewport: { width: 393, height: 852 },
@@ -25,15 +26,8 @@ test.describe("energy collapsible card", () => {
   );
 
   test.beforeEach(async ({ page }) => {
+    await suppressCoachmarks(page);
     await page.addInitScript(() => {
-      const BASE = "tropos-coach-marks-dismissed";
-      for (const k of [BASE, `${BASE}:extras-pill-v1`]) {
-        try {
-          window.localStorage.setItem(k, "1");
-        } catch {
-          /* storage unavailable */
-        }
-      }
       document.addEventListener("DOMContentLoaded", () => {
         const style = document.createElement("style");
         style.textContent =
