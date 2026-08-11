@@ -655,7 +655,22 @@ const AuthContext = createContext<AuthContextType | null>(null);
  * to be distinguishable from it — hence the `undefined` default and the throw
  * in `useUid`, mirroring `useAuth`'s guard.
  */
-const AuthUidContext = createContext<string | null | undefined>(undefined);
+/**
+ * Exported ONLY so tests can supply a uid without standing up the whole
+ * `AuthProvider` (which needs Firebase). Application code should use
+ * `useUid()` / `useUidForStorageKey()` — reading the context directly
+ * skips the "must be within AuthProvider" guard that makes a missing
+ * provider a loud error rather than a silent `undefined`.
+ *
+ * It is exported rather than the tests mocking the hooks, because a mocked
+ * hook pins a stub agreeing with itself: the uid-scoping tests need the
+ * REAL wiring from context to storage key, which is precisely what was
+ * broken.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export const AuthUidContext = createContext<string | null | undefined>(
+  undefined
+);
 
 // Static field lists used by updateProfile. Module-scoped (not in-component)
 // so they have a stable identity and don't need to appear in the
@@ -1309,4 +1324,33 @@ export function useUid() {
   if (uid === undefined)
     throw new Error("useUid must be used within AuthProvider");
   return uid;
+}
+
+/**
+ * A uid-shaped segment for a per-device STORAGE KEY — never for a query.
+ *
+ * Returns the signed-in uid, or `"anon"` for both "signed out" and "no
+ * AuthProvider". The tolerance is the point and it is narrow: the callers
+ * are leaf UI primitives (`useDismissOnce`, `useCoachMarks`) that render in
+ * isolation in tests, and a banner must not crash a page because its
+ * dismissal key had nowhere to look. Conflating signed-out with
+ * no-provider is safe HERE because both mean the same thing to a storage
+ * key — "not a known account" — and a signed-out dismissal correctly stops
+ * applying the moment someone signs in.
+ *
+ * Do NOT reach for this when you need to know WHO the user is. `"anon"` is
+ * a bucket name, not an identity; use `useUid()`, which throws rather than
+ * inventing one.
+ *
+ * Why it exists: CLAUDE.md's recurring-mistake list requires per-device
+ * persisted state to be scoped by uid so it cannot leak across an account
+ * switch on a shared device (the offline + share queues were fixed for
+ * this in #820). Dismissal keys were left to the CALLER to scope, and six
+ * of the nine call sites didn't — so on a shared device the second account
+ * inherited the first's dismissed banners, tips and coach marks, including
+ * the whole welcome checklist.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useUidForStorageKey(): string {
+  return use(AuthUidContext) ?? "anon";
 }

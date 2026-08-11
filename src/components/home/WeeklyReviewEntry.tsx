@@ -16,7 +16,7 @@ export default function WeeklyReviewEntry() {
   const navigate = useNavigate();
   const uid = useUid();
   const { eligibility, weekKey } = useReviewEligibility();
-  const { dismissed } = useDismissOnce(reviewViewedKey(uid ?? "anon", weekKey));
+  const { dismissed } = useDismissOnce(reviewViewedKey(weekKey));
 
   if (!uid || dismissed || eligibility !== "eligible") return null;
 
