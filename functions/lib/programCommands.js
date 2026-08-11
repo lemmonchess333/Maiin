@@ -1725,6 +1725,49 @@ function applyDeloadWeekCommand(state, profile, command, now) {
   };
 }
 
+/**
+ * Are the two reductions stacked with `kind` on the OUTSIDE?
+ *
+ * A deload and an easier week each snapshot `runDays` as it stood when
+ * they were applied, so the pair only unwinds correctly in reverse order
+ * of application. Undo the inner one first and the outer snapshot is left
+ * pointing at a week that no longer exists — reverting it afterwards
+ * silently re-applies the reduction the athlete just removed.
+ *
+ * That is not hypothetical. The first version of this guard hard-coded
+ * "the deload is always outer" (`currentPhase === "deload"`), which is
+ * true only when the deload came first. Applied in the other order —
+ * deload, then still-not-right, then ease — it REFUSED the correct LIFO
+ * undo and forced the athlete down the broken path: undoing the deload
+ * restored the original runs, and undoing the ease then put the deloaded
+ * ones back. Both reductions removed, still deloaded.
+ *
+ * `appliedAt` is on both snapshots already, so the real ordering is
+ * available and neither has to be assumed outer. Equal timestamps (same
+ * millisecond) fall through as "not blocked": indistinguishable, and
+ * refusing both undos would be worse than allowing either.
+ *
+ * Both are scoped to THIS week — a snapshot stranded by a rollover is
+ * inert and must not gate anything.
+ */
+function mostRecentReductionIs(state, kind) {
+  const ease = state.easeSnapshot;
+  const deload = state.deloadSnapshot;
+  if (!isPlainObject(ease) || !isPlainObject(deload)) return false;
+  if (
+    ease.weekNumber !== state.weekNumber ||
+    deload.weekNumber !== state.weekNumber
+  ) {
+    return false;
+  }
+  if (typeof ease.appliedAt !== "number" || typeof deload.appliedAt !== "number") {
+    return false;
+  }
+  return kind === "deload"
+    ? deload.appliedAt > ease.appliedAt
+    : ease.appliedAt > deload.appliedAt;
+}
+
 function revertDeloadWeekCommand(state, command) {
   requireWeekCursor(state, command);
   const snap = state.deloadSnapshot;
@@ -1734,6 +1777,13 @@ function revertDeloadWeekCommand(state, command) {
     !Array.isArray(snap.workouts)
   ) {
     failedPrecondition("There is no deload to undo for this week.");
+  }
+  // The other half of the ordering rule. This side had NO guard at all,
+  // which is why the broken sequence was reachable: with the ease applied
+  // more recently, reverting the deload here was allowed and destroyed the
+  // week the ease snapshot described.
+  if (mostRecentReductionIs(state, "ease")) {
+    failedPrecondition("Undo the easier week first, then the deload week.");
   }
   // tx.set replaces the whole doc, so omitting the key deletes it.
   const next = {
@@ -1838,13 +1888,7 @@ function revertEaseWeekCommand(state, command) {
   ) {
     failedPrecondition("There is no easier week to undo.");
   }
-  // LIFO, enforced rather than assumed. A deload applied AFTER the ease took
-  // its own snapshot OF the eased week, so restoring the pre-ease runs first
-  // would strand the deload's snapshot pointing at a week that no longer
-  // exists — undoing it afterwards would then re-apply the ease. Refusing
-  // here costs the athlete one extra tap and keeps both undos truthful; the
-  // ease undo becomes available again the moment the deload is reverted.
-  if (state.currentPhase === "deload") {
+  if (mostRecentReductionIs(state, "deload")) {
     failedPrecondition("Undo the deload week first, then the easier week.");
   }
   const next = { ...state, runDays: snap.runDays };
