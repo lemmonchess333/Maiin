@@ -164,6 +164,39 @@ export function isCurrentWeekInTaper(
   return getPhaseForWeek(currentWeek, totalWeeks, distance) === "taper";
 }
 
+/**
+ * Is the current week part of the race WIND-DOWN — taper or race week?
+ *
+ * Distinct from {@link isCurrentWeekInTaper} on purpose: that one answers
+ * "which phase is this" for labelling, and race week is genuinely not the
+ * taper. This one answers "is load already being deliberately cut", which
+ * is the question a second load-cutting feature has to ask before it acts,
+ * and both phases answer yes.
+ *
+ * Exists for the deload-suggest guard. The P1d lock pins "deload-suggest
+ * banner suppressed when the plan is tapering — taper IS the deload; no
+ * double-deload", and race week is the deepest part of that same wind-down:
+ * proposing a lifting deload in race week is the advice the pin exists to
+ * prevent, one week later.
+ *
+ * The lock words that pin as `programState.runPlan.phase === 'taper'`, and
+ * that field CANNOT hold "taper" — `RunPlan.phase` is typed `"recovery"`
+ * and nothing writes anything else. Implemented literally, the guard would
+ * have compared against a value no writer produces and never fired: the
+ * same shape as PR #1775's `templateId === "race"`, which read as covered
+ * for months while the accept path was fiction. Phase is DERIVED per week
+ * by `getPhaseForWeek`, so that is what the guard reads.
+ */
+export function isCurrentWeekInRaceWindDown(
+  currentWeek: number | undefined,
+  totalWeeks: number | undefined,
+  distance: "5k" | "10k" | "half" | "marathon" | undefined
+): boolean {
+  if (currentWeek == null || totalWeeks == null || !distance) return false;
+  const phase = getPhaseForWeek(currentWeek, totalWeeks, distance);
+  return phase === "taper" || phase === "race";
+}
+
 /* ═══════════════════════════════════════════════════════════════
    P0-3 · v2 SCHEDULER API · spec v7
    ═══════════════════════════════════════════════════════════════
