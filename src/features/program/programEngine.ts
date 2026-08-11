@@ -222,6 +222,60 @@ export function prescribedRepCeiling(ex: {
     ? MAX_PRESCRIBED_BODYWEIGHT_REPS
     : MAX_PRESCRIBED_REPS;
 }
+
+/**
+ * The rep ceiling a range-LESS double progression already implies.
+ *
+ * `repRangeMax` is stamped by generation's final pass, so a freshly generated
+ * plan always has one. Several LIVE writers do not, and each was checked
+ * rather than assumed: the v3 coverage backfill in `migrations.ts` appends
+ * calf raises and a lateral raise as `progressionType: "double"` with no
+ * range; `templateExToProgEx` leaves per-side forms ("10/leg" — 15 of the
+ * 245 authored template exercises) range-less; and every document generated
+ * before backlog #7 carries range-less mains.
+ *
+ * All of them took the legacy arm in `applyProgression`, which fires only
+ * when the lifter SPONTANEOUSLY exceeds the prescription by two — so the
+ * target itself never moved, and a lifter who does exactly what the app asks
+ * for is frozen. Measured over 12 sessions driven from those real writers: a
+ * migration-added calf raise sat at 3×12@40 kg the entire time while a ranged
+ * accessory beside it took three load steps.
+ *
+ * The ceiling returned here is NOT new policy — it is the one the legacy arm
+ * already acts on, made explicit so the TARGET can climb toward it:
+ *
+ *   weighted   — `resetReps + 2`, the overshoot at which the legacy arm steps
+ *                the load and resets the target;
+ *   bodyweight — `MAX_BODYWEIGHT_REPS`, the ceiling `bumpBodyweightReps`
+ *                already falls back to when no range is authored.
+ *
+ * On the WEIGHTED arm that makes the fallback exactly behaviour-preserving
+ * for a lifter who does overshoot by two — same load step, same reset —
+ * and the only change is that a compliant lifter is now ASKED for the next
+ * rep instead of having to volunteer it. The BODYWEIGHT arm is not identical
+ * and shouldn't be: an overshoot to 10 used to set the next target to 9
+ * (current + 1), and now sets it to 11, because the range-aware bodyweight
+ * contract is "one past what was actually done". A range-less pull-up now
+ * behaves like a ranged one instead of like a different feature.
+ *
+ * Anchored on `resetReps`, never on the live `reps`: a ceiling derived from a
+ * target that is itself climbing would never terminate.
+ *
+ * Seconds are excluded deliberately. A hold climbs in 5-second steps toward
+ * `MAX_HOLD_SECONDS`, so `resetReps + 2` would mean two seconds — the same
+ * rep-shaped reasoning LIFT-EV-01 took out of the hold deload. Holds keep
+ * today's behaviour until the time axis is looked at on its own terms.
+ */
+function impliedDoubleRangeMax(
+  resetReps: number,
+  isBodyweight: boolean,
+  isTimed: boolean
+): number | undefined {
+  if (isTimed) return undefined;
+  const ceiling = isBodyweight ? MAX_BODYWEIGHT_REPS : resetReps + 2;
+  return ceiling > resetReps ? ceiling : undefined;
+}
+
 /** Timed holds climb in 5-second steps (N2's time axis). */
 const HOLD_STEP_SECONDS = 5;
 /** Ceiling for a hold with no authored range — past this, add load instead. */
@@ -2094,7 +2148,12 @@ export function applyProgression(
 
   if (exercise.progressionType === "double") {
     if (completed) {
-      const rangeMax = exercise.repRangeMax;
+      // Authored ceiling, or the one the legacy arm below already implies —
+      // see `impliedDoubleRangeMax`. Without the fallback a range-less double
+      // never progresses at all for a lifter who hits the prescription.
+      const rangeMax =
+        exercise.repRangeMax ??
+        impliedDoubleRangeMax(resetReps, isBodyweight, isTimed);
       if (isBodyweight && rangeMax != null && rangeMax > resetReps) {
         // Range-aware BODYWEIGHT progression. This branch did not exist:
         // the range-aware arm below was gated `!isBodyweight`, so a

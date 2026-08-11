@@ -156,19 +156,26 @@ describe("applyProgression — double progression", () => {
 // ── Bodyweight Progression ──────────────────────
 
 describe("applyProgression — bodyweight exercises", () => {
-  it("progresses via rep increase when hitting ceiling", () => {
+  /* These two used to pin the legacy range-less arm: the target moved only
+     when the lifter SPONTANEOUSLY overshot by two, and then only to
+     current + 1. `impliedDoubleRangeMax` retired that arm for rep movements
+     (see rangelessDoubleProgression.test.ts for the writers that produce
+     range-less doubles and the 12-session freeze it caused), so a range-less
+     pull-up now follows the same contract a ranged one always did: next
+     target is one past what was actually DONE, ceiling MAX_BODYWEIGHT_REPS. */
+  it("sets the next target one past what was done", () => {
     const ex = makeBodyweightExercise({ reps: 8 });
-    // Hit 10 reps (8+2 = ceiling)
     const result = applyProgression(ex, 10, 0, "recomp", false);
     expect(result.weight).toBe(0); // stays bodyweight
-    expect(result.reps).toBe(9); // rep target increased by 1
+    expect(result.reps).toBe(11);
   });
 
-  it("does not progress when below rep ceiling", () => {
+  it("progresses on an exact-target session, not only on an overshoot", () => {
     const ex = makeBodyweightExercise({ reps: 8 });
-    const result = applyProgression(ex, 9, 0, "recomp", false);
-    expect(result.weight).toBe(0);
-    expect(result.reps).toBe(8); // no change
+    expect(applyProgression(ex, 8, 0, "recomp", false).reps).toBe(9);
+    const overOne = applyProgression(ex, 9, 0, "recomp", false);
+    expect(overOne.weight).toBe(0);
+    expect(overOne.reps).toBe(10);
   });
 
   it("deloads by reducing rep target on consecutive failures", () => {
@@ -251,8 +258,10 @@ describe("applyProgression — bodyweight rep cap", () => {
 
   it("still increments below the cap", () => {
     const ex = makeBodyweightExercise({ reps: 12 });
+    // One past what was DONE (14), not one past the target — the range-aware
+    // contract now applies to range-less bodyweight lifts too.
     const out = applyProgression(ex, 14, 0, "recomp", false);
-    expect(out.reps).toBe(13);
+    expect(out.reps).toBe(15);
     expect(out.notes).toBeUndefined();
   });
 
@@ -2160,10 +2169,12 @@ describe("timed holds (backlog #7 time axis)", () => {
   });
 
   it("leaves ordinary bodyweight reps alone", () => {
-    // The rep path must be untouched: a pull-up still steps by 1 and still
-    // uses the 20-rep cap.
+    // The rep path must be untouched BY THE TIME AXIS: a pull-up still climbs
+    // in single reps (never the 5-second hold step) and still uses the 20-rep
+    // cap. The step is from what was done, not from the target — see the
+    // range-less double contract above.
     const pullup = makeBodyweightExercise({ reps: 8 });
-    expect(applyProgression(pullup, 10, 0, "recomp", false).reps).toBe(9);
+    expect(applyProgression(pullup, 10, 0, "recomp", false).reps).toBe(11);
     const capped = makeBodyweightExercise({ reps: 20 });
     const out = applyProgression(capped, 22, 0, "recomp", false);
     expect(out.reps).toBe(20);
