@@ -220,10 +220,35 @@ export default function RaceCockpitCard({
         </p>
       ) : (
         compressed && (
+          /* RUN-EV-05: this line used to end "…the long-run progression
+             shortened to keep it safe", which was wrong twice.
+
+             The safety promise is the one the ledger asked to remove, and it
+             WAS removed — from `realignCopy.ts`'s below-floor message in the
+             2026-08-09 pass ("the old finish-safely / train-safely phrasing
+             implied a safety promise") and from the below-floor branch above.
+             This branch was missed, so the product went on promising safety in
+             the one place it stayed persistent rather than transient.
+
+             And the description was backwards. In the compressed-but-
+             above-floor band the long-run progression is not shortened — it is
+             the STEEPEST in the system, because the same build is packed into
+             fewer weeks. Measured in racePlanSafetySweep.test.ts: a six-week
+             marathon steps 12 km → 25 km in one week (+108%), a five-week half
+             10 km → 20 km, against 25-33% steps with down weeks in a
+             full-length plan.
+
+             Whether that ramp should be capped is NOT settled here — RUN-EV-06
+             holds the scheduler's long-run dose heuristics as an owner
+             decision, and the handoff explicitly bars importing a universal
+             10% rule as a default algorithm. So the dose is untouched and only
+             the sentence describing it is corrected. Register matches
+             realignCopy's "compressible" case ("a tighter build"). */
           <p className="text-xs text-muted-foreground">
             Compressed plan — your target date is sooner than the ideal build
             for this distance, so interval work is trimmed and the long-run
-            progression shortened to keep it safe.
+            build is packed into fewer weeks. Expect bigger jumps between long
+            runs than a full-length plan would use.
           </p>
         )
       )}
