@@ -31,6 +31,13 @@
  *   2. The COPY is wrong. `getVerbState("moderate", false)` is "cruising",
  *      rendered "Steady" on the Home hero, and Analytics shows "Moderate".
  *      A 110 km week is not steady.
+ *      STATUS 2026-08-11 — half-fixed, and only the half that was a lie.
+ *      The VERB still reads "Steady" (that follows the band, and the band
+ *      is the scoring question below). The supporting LINE now names the
+ *      running: `getLine`'s cruising branch consults the same
+ *      run/liftAheadOfBaseline signals the sharpening branch always had,
+ *      which a single-discipline week could never reach. Pinned by "but
+ *      the supporting LINE names the running" below.
  *   3. No deload is ever offered. Both live triggers need PI ≥ 80 (see
  *      deloadTriggerReachability.test.ts); the ceiling here is 68 on a
  *      recomp goal and 58 on a lean bulk. A user in a peak block — the
@@ -54,8 +61,13 @@
 import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";
 import { scorePerformance as scoreTs } from "../performanceEngine";
-import { getVerbState } from "../performanceLine";
-import type { WeeklyAggregates, Baseline, LoadBand } from "../performanceTypes";
+import { getVerbState, getLine } from "../performanceLine";
+import type {
+  WeeklyAggregates,
+  Baseline,
+  LoadBand,
+  PerformanceSignals,
+} from "../performanceTypes";
 
 /* Both copies, with the SERVER first: it is the authoritative one — the
    weekly rollup persists the PI users see, and CONTEXT.md records that the
@@ -154,6 +166,104 @@ describe.each(ENGINES)(
       expect(
         getVerbState(scored.loadBand as LoadBand, scored.deloadRecommended)
       ).toBe("cruising");
+    });
+
+    it("but the supporting LINE names the running (LIFT-EV-10 copy half)", () => {
+      /* The band above is the ceiling and stays. What was fixed is what the
+         card SAYS underneath it: the run-volume line lived only in the
+         `sharpening` branch, which a single-discipline week cannot reach, so
+         a 110 km week was described as "Holding a steady rhythm".
+
+         Composition, not hand-fed constants — each link is real or pinned
+         elsewhere:
+           runVolume            ← this scorePerformance call (authoritative)
+           runVolume → signal   ← computeSignals' >1.05 threshold, pinned in
+                                  functions/__tests__/performanceEngine.test.js
+                                  ("runAheadOfBaseline only fires above 5%")
+           signal → line        ← the assertion below */
+      const scored = scorePerformance(
+        week({ lifts: 0, runs: 6, km: 110 }),
+        BASELINE,
+        PROFILE
+      );
+      // 110 km against a 25 km baseline — the biggest fact about the week.
+      expect(scored.runVolume).toBeCloseTo(4.4, 3);
+
+      const signals: PerformanceSignals = {
+        bothLoadsStrong: false,
+        liftAheadOfBaseline: 0,
+        runAheadOfBaseline:
+          scored.runVolume > 1.05 ? scored.runVolume - 1 : 0,
+        recoveryWeak: false,
+        adherenceWeak: false,
+        deloadFlag: scored.deloadRecommended,
+        lifetimeWeeks: BASELINE.weeksUsed,
+        daysSinceLastTraining: 0,
+      };
+
+      const state = getVerbState(
+        scored.loadBand as LoadBand,
+        scored.deloadRecommended
+      );
+      expect(state).toBe("cruising");
+      expect(getLine(state, signals)).toBe("Run volume 340% up");
+      // The regression this guards, stated as the string it used to be.
+      expect(getLine(state, signals)).not.toBe("Holding a steady rhythm");
+    });
+
+    it("a lift-only week gets the lifting line, symmetrically", () => {
+      const scored = scorePerformance(
+        week({ lifts: 5, runs: 0, tonnage: 40000 }),
+        BASELINE,
+        PROFILE
+      );
+      const signals: PerformanceSignals = {
+        bothLoadsStrong: false,
+        liftAheadOfBaseline:
+          scored.liftProgression > 1.05 ? scored.liftProgression - 1 : 0,
+        runAheadOfBaseline: 0,
+        recoveryWeak: false,
+        adherenceWeak: false,
+        deloadFlag: scored.deloadRecommended,
+        lifetimeWeeks: BASELINE.weeksUsed,
+        daysSinceLastTraining: 0,
+      };
+      const state = getVerbState(
+        scored.loadBand as LoadBand,
+        scored.deloadRecommended
+      );
+      expect(state).toBe("cruising");
+      expect(getLine(state, signals)).toMatch(/^Lifting load \d+% above baseline$/);
+    });
+
+    it("a week only slightly above baseline still reads as steady", () => {
+      /* Guards the guard: the new branches must not fire on every cruising
+         week, or the generic line becomes unreachable and "Steady" stops
+         meaning anything. 28 km against a 25 km baseline is 12% up — real,
+         but under the 20% the run line requires — and the lifting is inside
+         computeSignals' 5% noise floor. Both derived from the engine, so if
+         a threshold moves this test moves with it. */
+      const scored = scorePerformance(
+        week({ lifts: 3, runs: 3, km: 28, tonnage: 12500 }),
+        BASELINE,
+        PROFILE
+      );
+      const signals: PerformanceSignals = {
+        bothLoadsStrong: false,
+        liftAheadOfBaseline:
+          scored.liftProgression > 1.05 ? scored.liftProgression - 1 : 0,
+        runAheadOfBaseline:
+          scored.runVolume > 1.05 ? scored.runVolume - 1 : 0,
+        recoveryWeak: false,
+        adherenceWeak: false,
+        deloadFlag: false,
+        lifetimeWeeks: 4,
+        daysSinceLastTraining: 0,
+      };
+      expect(signals.runAheadOfBaseline).toBeGreaterThan(0);
+      expect(signals.runAheadOfBaseline).toBeLessThan(0.2);
+      expect(signals.liftAheadOfBaseline).toBeLessThan(0.15);
+      expect(getLine("cruising", signals)).toBe("Holding a steady rhythm");
     });
 
     it("can never recommend a deload, at any volume", () => {
