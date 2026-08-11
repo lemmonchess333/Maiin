@@ -157,7 +157,11 @@ describe("AdjustWeekSheet — applying an easier week reports the truth", () => 
     const { toast } = await import("@/lib/toast");
     await vi.waitFor(() =>
       expect(toast.success).toHaveBeenCalledWith(
-        "1 run eased to an easy run this week."
+        "1 run eased to an easy run this week.",
+        // And the reduction carries its path back — see the undo tests.
+        expect.objectContaining({
+          action: expect.objectContaining({ label: "Undo" }),
+        })
       )
     );
   });
@@ -171,6 +175,119 @@ describe("AdjustWeekSheet — applying an easier week reports the truth", () => 
 
     await vi.waitFor(() => expect(overrideRunDay).toHaveBeenCalledTimes(2));
     const { toast } = await import("@/lib/toast");
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * The path back.
+ *
+ * An easier week is a REDUCTION, and the evidence handoff requires that
+ * reducing work "give a bounded path back". There was none: the server's
+ * overrideRunDay reducer overwrites `templateId` as well as
+ * `userOverride`, so once applied nothing on the day remembers what it
+ * was — an athlete who tapped this by mistake could not restore their
+ * week or even see what it had been.
+ *
+ * The client holds the only record (the `from` side of each swap), which
+ * is why undo re-applies them in reverse rather than reading state back.
+ */
+describe("AdjustWeekSheet — undoing an easier week", () => {
+  const runDays = [
+    {
+      id: "rd-1",
+      dayIndex: 2,
+      templateId: "tempo_40",
+      type: "tempo",
+      status: "planned",
+      date: "2999-01-02",
+    },
+    {
+      id: "rd-2",
+      dayIndex: 4,
+      templateId: "6x1k",
+      type: "intervals",
+      status: "planned",
+      date: "2999-01-04",
+    },
+  ] as never;
+
+  async function applyThenGetUndo(
+    overrideRunDay: (
+      idOrDayIndex: string | number,
+      templateId: string
+    ) => Promise<boolean>
+  ) {
+    render(
+      <AdjustWeekSheet
+        open
+        onClose={vi.fn()}
+        runDays={runDays}
+        raceGoal={{ distance: "marathon", targetDate: "2999-10-17" }}
+        overrideRunDay={overrideRunDay}
+        realignRacePlan={vi.fn()}
+      />
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /I need easier running/ })
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Ease this week/ }));
+    const { toast } = await import("@/lib/toast");
+    await vi.waitFor(() => expect(toast.success).toHaveBeenCalled());
+    const opts = (toast.success as ReturnType<typeof vi.fn>).mock.calls[0][1];
+    return opts.action.onClick as () => void;
+  }
+
+  it("puts each run back to the template it came FROM", async () => {
+    const calls: [string | number, string][] = [];
+    const overrideRunDay = vi.fn(
+      async (k: string | number, t: string) => {
+        calls.push([k, t]);
+        return true;
+      }
+    );
+    const undo = await applyThenGetUndo(overrideRunDay);
+    calls.length = 0;
+
+    undo();
+    await vi.waitFor(() => expect(calls).toHaveLength(2));
+    // The originals, not easy_30 — restoring to the ease destination
+    // would be a no-op wearing an undo's clothes.
+    expect(calls).toEqual([
+      ["rd-1", "tempo_40"],
+      ["rd-2", "6x1k"],
+    ]);
+  });
+
+  it("only offers to put back the runs that actually changed", async () => {
+    // The second swap was rejected, so it was never eased and must not be
+    // "restored" — that would overwrite a day the athlete still owns.
+    const overrideRunDay = vi
+      .fn()
+      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce(false);
+    const undo = await applyThenGetUndo(overrideRunDay);
+    overrideRunDay.mockClear();
+    overrideRunDay.mockResolvedValue(true);
+
+    undo();
+    await vi.waitFor(() => expect(overrideRunDay).toHaveBeenCalledTimes(1));
+    expect(overrideRunDay).toHaveBeenCalledWith("rd-1", "tempo_40");
+  });
+
+  it("says so when the restore itself fails", async () => {
+    const overrideRunDay = vi.fn().mockResolvedValue(true);
+    const undo = await applyThenGetUndo(overrideRunDay);
+    const { toast } = await import("@/lib/toast");
+    (toast.success as ReturnType<typeof vi.fn>).mockClear();
+    overrideRunDay.mockResolvedValue(false);
+
+    undo();
+    await vi.waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "Couldn't undo the easier week."
+      )
+    );
     expect(toast.success).not.toHaveBeenCalled();
   });
 });

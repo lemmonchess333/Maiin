@@ -25,8 +25,11 @@ export type ProgramEvent =
 export interface ProgramEventMetadata {
   /** adjust_week_intent_selected/applied: which intent chip. */
   intent?: "not_100" | "crowded" | "easier";
-  /** adjust_week_applied: which mutation ran. */
-  action?: "easier_week" | "realign";
+  /** adjust_week_applied: which mutation ran. `easier_week_undone` is the
+   *  8s toast undo, tracked as its own action so a high undo rate reads
+   *  as "the suggestion was wrong" instead of being indistinguishable
+   *  from the applied count it would otherwise inflate. */
+  action?: "easier_week" | "realign" | "easier_week_undone";
   /** adjust_week_applied (easier_week): number of days swapped. */
   swapCount?: number;
   /** adjust_week_opened: which entry point. */
