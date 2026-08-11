@@ -647,3 +647,37 @@ describe("computeAndWritePerformance — supplies both prior PIs", () => {
     );
   });
 });
+
+describe("computeAndWritePerformance — scores against the target the user saw", () => {
+  /* The precedence itself is pinned, and cross-checked against the client
+     copy, in src/lib/__tests__/adaptiveTargetMirror.cross.test.ts. What that
+     cannot see is whether this file actually CALLS it — and a resolution
+     computed and then not passed through is exactly the shape that ships
+     silently, since every existing test here would stay green.
+
+     Source-level because the compute path needs the Admin SDK; the same
+     approach the prior-PI wiring above uses. */
+  const SOURCE = readFileSync(
+    new URL("../performanceEngine.js", import.meta.url),
+    "utf8"
+  );
+
+  it("resolves the scoring target from the profile and its effective tier", () => {
+    expect(SOURCE).toContain('require("./lib/calorieTargetResolution")');
+    expect(SOURCE).toMatch(
+      /resolveScoringCalorieTarget\(\s*\n?\s*profile,\s*\n?\s*computeEffectiveTier\(profile\)/
+    );
+  });
+
+  it("passes the RESOLVED target to the scorer, not the raw profile field", () => {
+    expect(SOURCE).toMatch(/targetCalories:\s*scoringCalories,/);
+    expect(SOURCE).not.toMatch(/targetCalories:\s*profile\.targetCalories,/);
+  });
+
+  it("falls back to null rather than a guess when no target resolves", () => {
+    // computeAdherenceScore reads a falsy target as "drop the calorie factor".
+    expect(SOURCE).toMatch(
+      /scoringCalories\s*=\s*resolvedTarget\s*\?\s*resolvedTarget\.value\s*:\s*null/
+    );
+  });
+});
