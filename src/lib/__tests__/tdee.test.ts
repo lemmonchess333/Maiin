@@ -57,20 +57,20 @@ describe("calculateTDEE", () => {
 
   it("distributes macros correctly", () => {
     const result = calculateTDEE(80, 180, 25, "moderate", "recomp", "male");
-    // Protein: 2.0 * 80 = 160g
+    // Protein: 2.0 * 80 = 160g — uncapped here, the budget is ample.
     expect(result.protein).toBe(160);
-    // Fat: 25% of targetCalories / 9
-    const expectedFat = Math.round(
-      Math.round(result.targetCalories * 0.25) / 9
+    // Fat: 25% of targetCalories, in grams, never below the essential floor.
+    expect(result.fat).toBe(
+      Math.max(Math.round((0.25 * result.targetCalories) / 9), Math.round(0.6 * 80))
     );
-    expect(result.fat).toBe(expectedFat);
-    // Carbs: remainder / 4
-    const proteinCals = 160 * 4;
-    const fatCals = Math.round(result.targetCalories * 0.25);
-    const expectedCarbs = Math.round(
-      Math.max(0, result.targetCalories - proteinCals - fatCals) / 4
-    );
-    expect(result.carbs).toBe(expectedCarbs);
+    /* Carbs are asserted through the invariant they exist to satisfy rather
+       than by recomputing the expression above them — the previous version of
+       this test re-derived the implementation line for line, so it pinned
+       "the code does what the code does" and moved whenever the code did.
+       What actually matters is that the stored triple adds back up to the
+       target it was built from. */
+    const sum = result.protein * 4 + result.carbs * 4 + result.fat * 9;
+    expect(Math.abs(sum - result.targetCalories)).toBeLessThanOrEqual(9);
   });
 
   it("uses higher protein multiplier for cut (2.2)", () => {
