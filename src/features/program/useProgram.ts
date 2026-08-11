@@ -321,6 +321,21 @@ interface RefreshRunScheduleOverrides {
   tuning?: RunTuning;
 }
 
+/**
+ * Firebase prefixes a callable's message with its code, e.g.
+ * "FirebaseError: failed-precondition: Undo the deload week first." Only
+ * the sentence is fit to show a user.
+ */
+function stripCallablePrefix(message: string): string {
+  const cleaned = message.replace(/^FirebaseError:\s*/i, "");
+  const marker = cleaned.indexOf("failed-precondition:");
+  return (
+    marker >= 0
+      ? cleaned.slice(marker + "failed-precondition:".length)
+      : cleaned
+  ).trim();
+}
+
 export function useProgram() {
   const { user, profile, updateProfile, refreshProfile } = useAuth();
   // Backlog #9 (H5): the recovery half of the adjustment rule. A limit-1
@@ -3041,8 +3056,11 @@ export function useProgram() {
   );
 
   /** RUN-EASE-01 — restore the pre-ease week from the server snapshot. */
-  const revertEaseWeek = useCallback(async (): Promise<boolean> => {
-    if (!user || !programState) return false;
+  const revertEaseWeek = useCallback(async (): Promise<{
+    ok: boolean;
+    message?: string;
+  }> => {
+    if (!user || !programState) return { ok: false };
     try {
       await sendProgramCommand({
         kind: "revertEaseWeek" as const,
@@ -3050,10 +3068,28 @@ export function useProgram() {
         expectedWeekNumber: programState.weekNumber,
       });
       await refetchProgramState();
-      return true;
+      return { ok: true };
     } catch (err) {
       logger.error("[useProgram] revertEaseWeek failed", err);
-      return false;
+      /* Hand the server's own sentence back, when it wrote one.
+         `failed-precondition` here is not a fault — it is the ordering
+         rule declining a step and saying which one to take instead
+         ("Undo the deload week first, then the easier week."). Reporting
+         that as a generic "couldn't undo" would hide the one piece of
+         information that makes the refusal actionable, which is the same
+         dishonest-copy failure the rest of this feature exists to remove.
+         Every other failure keeps the caller's generic message. */
+      const code = (err as { code?: string } | null)?.code;
+      const message = (err as { message?: string } | null)?.message;
+      if (
+        typeof code === "string" &&
+        code.endsWith("failed-precondition") &&
+        typeof message === "string" &&
+        message.trim().length > 0
+      ) {
+        return { ok: false, message: stripCallablePrefix(message) };
+      }
+      return { ok: false };
     }
   }, [user, programState, refetchProgramState]);
 

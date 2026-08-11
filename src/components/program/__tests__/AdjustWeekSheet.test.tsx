@@ -41,7 +41,7 @@ function setup() {
       runDays={[]}
       raceGoal={{ distance: "marathon", targetDate: "2026-10-17" }}
       applyEaseWeek={applyEaseWeek}
-      revertEaseWeek={vi.fn(async () => true)}
+      revertEaseWeek={vi.fn(async () => ({ ok: true }))}
       uid={UID}
       realignRacePlan={realignRacePlan}
     />
@@ -101,7 +101,7 @@ function openEaser(props: {
   applyEaseWeek?: (
     swaps: ReadonlyArray<{ key: string | number; toTemplateId: string }>
   ) => Promise<number | null>;
-  revertEaseWeek?: () => Promise<boolean>;
+  revertEaseWeek?: () => Promise<{ ok: boolean; message?: string }>;
   easedThisWeek?: boolean;
 }) {
   render(
@@ -111,7 +111,7 @@ function openEaser(props: {
       runDays={RUN_DAYS}
       raceGoal={{ distance: "marathon", targetDate: "2999-10-17" }}
       applyEaseWeek={props.applyEaseWeek ?? vi.fn(async () => 2)}
-      revertEaseWeek={props.revertEaseWeek ?? vi.fn(async () => true)}
+      revertEaseWeek={props.revertEaseWeek ?? vi.fn(async () => ({ ok: true }))}
       easedThisWeek={props.easedThisWeek}
       uid={UID}
       realignRacePlan={vi.fn()}
@@ -249,7 +249,7 @@ describe("AdjustWeekSheet — undoing an easier week", () => {
   });
 
   it("restores the week through the server snapshot", async () => {
-    const revertEaseWeek = vi.fn(async () => true);
+    const revertEaseWeek = vi.fn(async () => ({ ok: true }));
     openEaser({ easedThisWeek: true, revertEaseWeek });
 
     fireEvent.click(screen.getByRole("button", { name: /Undo easier week/ }));
@@ -264,7 +264,7 @@ describe("AdjustWeekSheet — undoing an easier week", () => {
   });
 
   it("says so when the restore fails", async () => {
-    const revertEaseWeek = vi.fn(async () => false);
+    const revertEaseWeek = vi.fn(async () => ({ ok: false }));
     openEaser({ easedThisWeek: true, revertEaseWeek });
 
     fireEvent.click(screen.getByRole("button", { name: /Undo easier week/ }));
@@ -312,7 +312,7 @@ describe("AdjustWeekSheet — undoing an easier week", () => {
     setEasedWeekKey(UID, localWeekKey(new Date()));
     openEaser({
       easedThisWeek: true,
-      revertEaseWeek: vi.fn(async () => false),
+      revertEaseWeek: vi.fn(async () => ({ ok: false })),
     });
     fireEvent.click(screen.getByRole("button", { name: /Undo easier week/ }));
     const { toast } = await import("@/lib/toast");
@@ -320,16 +320,50 @@ describe("AdjustWeekSheet — undoing an easier week", () => {
     expect(getEasedWeekKey(UID)).toBe(localWeekKey(new Date()));
 
     cleanup();
-    openEaser({ easedThisWeek: true, revertEaseWeek: vi.fn(async () => true) });
+    openEaser({
+      easedThisWeek: true,
+      revertEaseWeek: vi.fn(async () => ({ ok: true })),
+    });
     fireEvent.click(screen.getByRole("button", { name: /Undo easier week/ }));
     await vi.waitFor(() => expect(getEasedWeekKey(UID)).toBeNull());
+  });
+
+  it("shows the server's sentence when the undo is REFUSED, not a generic error", async () => {
+    /* The ordering rule declines with a next step ("Undo the deload week
+       first…"). Reporting that as "Couldn't undo the easier week" would hide
+       the only information that makes the refusal actionable — the same
+       dishonest-copy failure this whole feature exists to remove. */
+    const revertEaseWeek = vi.fn(async () => ({
+      ok: false,
+      message: "Undo the deload week first, then the easier week.",
+    }));
+    openEaser({ easedThisWeek: true, revertEaseWeek });
+    fireEvent.click(screen.getByRole("button", { name: /Undo easier week/ }));
+
+    const { toast } = await import("@/lib/toast");
+    await vi.waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "Undo the deload week first, then the easier week."
+      )
+    );
+  });
+
+  it("falls back to the generic error when the server gave no sentence", async () => {
+    const revertEaseWeek = vi.fn(async () => ({ ok: false }));
+    openEaser({ easedThisWeek: true, revertEaseWeek });
+    fireEvent.click(screen.getByRole("button", { name: /Undo easier week/ }));
+
+    const { toast } = await import("@/lib/toast");
+    await vi.waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith("Couldn't undo the easier week.")
+    );
   });
 
   it("the toast's Undo takes the same route as the row", async () => {
     // Both affordances must land on the snapshot restore. The toast one
     // previously replayed swaps in reverse from memory, which is why it
     // could not survive a reload — pinning them to one path is the point.
-    const revertEaseWeek = vi.fn(async () => true);
+    const revertEaseWeek = vi.fn(async () => ({ ok: true }));
     openEaser({ revertEaseWeek });
     fireEvent.click(
       screen.getByRole("button", { name: /I need easier running/ })

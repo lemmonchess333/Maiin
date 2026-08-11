@@ -2882,18 +2882,24 @@ describe("easier week commands (RUN-EASE-01)", () => {
     expectHttps(() => apply(undoCmd(), withRuns([planned()])), "failed-precondition");
   });
 
-  it("refuses an undo while the week is deloaded, so the two unwind in order", () => {
-    // A deload applied AFTER the ease snapshotted the EASED week. Undoing
-    // the ease first would strand that snapshot pointing at a week that no
-    // longer exists, and reverting the deload afterwards would silently
-    // re-apply the ease. One extra tap keeps both undos truthful.
+  it("a deload PHASE alone does not gate the ease undo", () => {
+    /* This asserted the opposite until 2026-08-11, gating on
+       `currentPhase === "deload"`. Two things were wrong with that.
+
+       A phase label is not a reduction to unwind — without a
+       `deloadSnapshot` there is nothing the ease undo could disorder, so
+       refusing was pure cost. And the real ordering rule is which
+       reduction was applied MORE RECENTLY, which the phase cannot say;
+       reading it as "the deload is always outer" steered the
+       deload-then-ease sequence into re-applying the deload after the
+       athlete had removed it. See the unwind-order describe block. */
     const { state } = apply(easeCmd(), withRuns([planned()]));
-    expectHttps(
-      () => apply(undoCmd(), { ...state, currentPhase: "deload" }),
-      "failed-precondition"
-    );
-    // And it becomes available again once the deload is reverted.
-    const { state: undone } = apply(undoCmd(), state);
+    const { state: undone } = applyProgramCommand({
+      state: { ...state, currentPhase: "deload" },
+      profile: {},
+      command: undoCmd(),
+      now: NOW,
+    });
     expect(undone.runDays[0].templateId).toBe("tempo_40");
   });
 
@@ -2940,5 +2946,288 @@ describe("easier week commands (RUN-EASE-01)", () => {
     apply(easeCmd(), input);
     expect(input.runDays[0].templateId).toBe("tempo_40");
     expect("easeSnapshot" in input).toBe(false);
+  });
+});
+
+/**
+ * A deload and an easier week stack — and must unwind in reverse order.
+ *
+ * Both snapshot `runDays` as it stood when they were applied, so they only
+ * compose if the most recent one is removed first. The first version of the
+ * guard hard-coded "the deload is always outer" (`currentPhase === "deload"`),
+ * which holds only when the deload came first.
+ *
+ * In the other order it was actively harmful rather than merely wrong. Deload
+ * on Monday, still not right on Wednesday, ease the rest of the week — then:
+ *
+ *   undo the ease   -> REFUSED ("undo the deload first")
+ *   undo the deload -> runs restored to the ORIGINAL. Correct so far.
+ *   undo the ease   -> runs set to the DELOADED ones, from a snapshot of a
+ *                      week that no longer existed.
+ *
+ * Both reductions removed, and the athlete is still deloaded — steered there
+ * by the guard that was supposed to prevent exactly this.
+ *
+ * The fix compares `appliedAt`, which both snapshots already carried, so
+ * neither reduction has to be assumed outer.
+ */
+describe("deload + easier week unwind in reverse order (RUN-EASE-01)", () => {
+  const runDay = (over) => ({
+    id: "run-1",
+    dayIndex: 2,
+    templateId: "long_20k",
+    type: "long",
+    status: "planned",
+    completed: false,
+    ...over,
+  });
+  const withRuns = () => {
+    const s = baseState();
+    s.runDays = [
+      runDay(),
+      runDay({ id: "run-2", dayIndex: 4, templateId: "tempo_40", type: "tempo" }),
+    ];
+    return s;
+  };
+  const at = (state, command, now) =>
+    applyProgramCommand({ state, profile: {}, command, now });
+
+  const DELOAD_SWAPS = [
+    { runDayId: "run-1", templateId: "long_15k" },
+    { runDayId: "run-2", templateId: "tempo_30" },
+  ];
+  const EASE_SWAPS = [
+    { runDayId: "run-1", templateId: "easy_30" },
+    { runDayId: "run-2", templateId: "easy_30" },
+  ];
+  const templates = (s) => s.runDays.map((r) => r.templateId);
+
+  const deloadCmd = (id) => ({
+    kind: "applyDeloadWeek",
+    commandId: id,
+    expectedWeekNumber: 5,
+    runSwaps: DELOAD_SWAPS,
+  });
+  const easeCmd = (id) => ({
+    kind: "applyEaseWeek",
+    commandId: id,
+    expectedWeekNumber: 5,
+    runSwaps: EASE_SWAPS,
+  });
+  const undoDeload = (id) => ({
+    kind: "revertDeloadWeek",
+    commandId: id,
+    expectedWeekNumber: 5,
+  });
+  const undoEase = (id) => ({
+    kind: "revertEaseWeek",
+    commandId: id,
+    expectedWeekNumber: 5,
+  });
+
+  it("deload THEN ease: undoing both restores the ORIGINAL week", () => {
+    // The sequence that was broken. Timestamps are distinct because the two
+    // actions happen on different days.
+    let s = at(withRuns(), deloadCmd("cmd_d0123456789abc"), 1000).state;
+    s = at(s, easeCmd("cmd_e0123456789abc"), 2000).state;
+    expect(templates(s)).toEqual(["easy_30", "easy_30"]);
+
+    // The ease was applied last, so its undo is the one that must be allowed.
+    s = at(s, undoEase("cmd_ue123456789abc"), 3000).state;
+    expect(templates(s)).toEqual(["long_15k", "tempo_30"]);
+    expect(s.currentPhase).toBe("deload");
+
+    s = at(s, undoDeload("cmd_ud123456789abc"), 4000).state;
+    expect(templates(s)).toEqual(["long_20k", "tempo_40"]);
+    expect(s.currentPhase).toBe("progression");
+  });
+
+  it("deload THEN ease: reverting the deload out of order is refused", () => {
+    // This is the assertion the old code could not make, because reverting
+    // the deload here had no guard at all — it was allowed, and it destroyed
+    // the week the ease snapshot described.
+    let s = at(withRuns(), deloadCmd("cmd_d1123456789abc"), 1000).state;
+    s = at(s, easeCmd("cmd_e1123456789abc"), 2000).state;
+    expectHttps(
+      () => at(s, undoDeload("cmd_ud223456789abc"), 3000),
+      "failed-precondition"
+    );
+  });
+
+  it("ease THEN deload: undoing both restores the ORIGINAL week", () => {
+    // The order the original guard was written for. It must keep working.
+    let s = at(withRuns(), easeCmd("cmd_e2123456789abc"), 1000).state;
+    s = at(s, deloadCmd("cmd_d2123456789abc"), 2000).state;
+
+    s = at(s, undoDeload("cmd_ud323456789abc"), 3000).state;
+    expect(templates(s)).toEqual(["easy_30", "easy_30"]);
+
+    s = at(s, undoEase("cmd_ue323456789abc"), 4000).state;
+    expect(templates(s)).toEqual(["long_20k", "tempo_40"]);
+  });
+
+  it("ease THEN deload: undoing the ease out of order is refused", () => {
+    let s = at(withRuns(), easeCmd("cmd_e3123456789abc"), 1000).state;
+    s = at(s, deloadCmd("cmd_d3123456789abc"), 2000).state;
+    expectHttps(
+      () => at(s, undoEase("cmd_ue423456789abc"), 3000),
+      "failed-precondition"
+    );
+  });
+
+  it("either undo alone is unaffected when only one reduction is applied", () => {
+    // Guards the guard: the ordering rule must not gate the ordinary
+    // single-reduction case, which is what almost every user does.
+    let eased = at(withRuns(), easeCmd("cmd_e4123456789abc"), 1000).state;
+    expect(
+      templates(at(eased, undoEase("cmd_ue523456789abc"), 2000).state)
+    ).toEqual(["long_20k", "tempo_40"]);
+
+    let deloaded = at(withRuns(), deloadCmd("cmd_d4123456789abc"), 1000).state;
+    expect(
+      templates(at(deloaded, undoDeload("cmd_ud523456789abc"), 2000).state)
+    ).toEqual(["long_20k", "tempo_40"]);
+  });
+
+  it("a snapshot stranded by a rollover does not gate the other undo", () => {
+    /* An inert snapshot from a previous week must not order anything.
+
+       The stale one has to be the NEWER of the two for this to test
+       anything: if it were older the comparison would decline to gate
+       whatever the weekNumber said, and the test would pass without
+       touching the scoping at all. (It was written that way first, and
+       deleting the weekNumber check still passed.) */
+    let s = at(withRuns(), deloadCmd("cmd_d5123456789abc"), 1000).state;
+    s = at(s, easeCmd("cmd_e5123456789abc"), 2000).state;
+    // Now stamp the (newer) ease snapshot as belonging to last week.
+    const rolled = {
+      ...s,
+      easeSnapshot: { ...s.easeSnapshot, weekNumber: 4 },
+    };
+    // Without the scoping this refuses, citing a week the athlete has left.
+    const reverted = at(rolled, undoDeload("cmd_ud623456789abc"), 3000).state;
+    expect(templates(reverted)).toEqual(["long_20k", "tempo_40"]);
+  });
+});
+
+/**
+ * An undo must not overwrite a day the athlete has since acted on.
+ *
+ * `applyDeloadRunSwaps` already refuses to touch a day that is no longer
+ * editable. The restore did not — it rewrote `runDays` wholesale from the
+ * snapshot — so the two halves of the same feature disagreed:
+ *
+ *   apply on a skipped day  ->  left alone
+ *   undo after a skip       ->  skipped silently becomes planned
+ *
+ * Latent while the only undo was an 8-second toast. Real once the ease
+ * undo became durable (#1933): it stands all week, which is ample time to
+ * skip or run one of the eased sessions before changing your mind about
+ * the rest.
+ */
+describe("undo preserves decisions made after the reduction", () => {
+  const runDay = (over) => ({
+    id: "run-1",
+    dayIndex: 2,
+    templateId: "tempo_40",
+    type: "tempo",
+    status: "planned",
+    completed: false,
+    date: "2999-01-02",
+    ...over,
+  });
+  const withRuns = () => {
+    const s = baseState();
+    s.runDays = [
+      runDay(),
+      runDay({
+        id: "run-2",
+        dayIndex: 4,
+        templateId: "6x1k",
+        type: "intervals",
+        date: "2999-01-04",
+      }),
+    ];
+    return s;
+  };
+  const at = (state, command, now) =>
+    applyProgramCommand({ state, profile: {}, command, now });
+  const EASE = [
+    { runDayId: "run-1", templateId: "easy_30" },
+    { runDayId: "run-2", templateId: "easy_30" },
+  ];
+
+  it("a run skipped after the ease stays skipped through the undo", () => {
+    let s = at(
+      withRuns(),
+      { kind: "applyEaseWeek", commandId: "cmd_e6123456789abc", expectedWeekNumber: 5, runSwaps: EASE },
+      1000
+    ).state;
+    s = at(
+      s,
+      { kind: "transitionRunDay", commandId: "cmd_sk123456789abc", runDayId: "run-1", to: "skipped" },
+      2000
+    ).state;
+    expect(s.runDays[0].status).toBe("skipped");
+
+    s = at(
+      s,
+      { kind: "revertEaseWeek", commandId: "cmd_ue723456789abc", expectedWeekNumber: 5 },
+      3000
+    ).state;
+
+    // The athlete's skip survives, and the day keeps the template they
+    // skipped rather than being rewritten to the pre-ease one.
+    expect(s.runDays[0].status).toBe("skipped");
+    expect(s.runDays[0].templateId).toBe("easy_30");
+    // The day they did NOT act on is restored normally.
+    expect(s.runDays[1].templateId).toBe("6x1k");
+    expect(s.runDays[1].status).toBe("planned");
+  });
+
+  it("the same holds for the deload undo", () => {
+    let s = at(
+      withRuns(),
+      {
+        kind: "applyDeloadWeek",
+        commandId: "cmd_d6123456789abc",
+        expectedWeekNumber: 5,
+        runSwaps: [
+          { runDayId: "run-1", templateId: "tempo_30" },
+          { runDayId: "run-2", templateId: "5x1k" },
+        ],
+      },
+      1000
+    ).state;
+    s = at(
+      s,
+      { kind: "transitionRunDay", commandId: "cmd_sk223456789abc", runDayId: "run-1", to: "skipped" },
+      2000
+    ).state;
+
+    s = at(
+      s,
+      { kind: "revertDeloadWeek", commandId: "cmd_ud723456789abc", expectedWeekNumber: 5 },
+      3000
+    ).state;
+    expect(s.runDays[0].status).toBe("skipped");
+    expect(s.runDays[0].templateId).toBe("tempo_30");
+    expect(s.runDays[1].templateId).toBe("6x1k");
+  });
+
+  it("an untouched week is still restored in full", () => {
+    // Guards the guard: the editability check must not stop the ordinary
+    // undo, which is what almost every use of it is.
+    let s = at(
+      withRuns(),
+      { kind: "applyEaseWeek", commandId: "cmd_e7123456789abc", expectedWeekNumber: 5, runSwaps: EASE },
+      1000
+    ).state;
+    s = at(
+      s,
+      { kind: "revertEaseWeek", commandId: "cmd_ue823456789abc", expectedWeekNumber: 5 },
+      2000
+    ).state;
+    expect(s.runDays.map((r) => r.templateId)).toEqual(["tempo_40", "6x1k"]);
   });
 });
