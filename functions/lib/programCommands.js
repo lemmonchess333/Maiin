@@ -1725,6 +1725,49 @@ function applyDeloadWeekCommand(state, profile, command, now) {
   };
 }
 
+/**
+ * Are the two reductions stacked with `kind` on the OUTSIDE?
+ *
+ * A deload and an easier week each snapshot `runDays` as it stood when
+ * they were applied, so the pair only unwinds correctly in reverse order
+ * of application. Undo the inner one first and the outer snapshot is left
+ * pointing at a week that no longer exists — reverting it afterwards
+ * silently re-applies the reduction the athlete just removed.
+ *
+ * That is not hypothetical. The first version of this guard hard-coded
+ * "the deload is always outer" (`currentPhase === "deload"`), which is
+ * true only when the deload came first. Applied in the other order —
+ * deload, then still-not-right, then ease — it REFUSED the correct LIFO
+ * undo and forced the athlete down the broken path: undoing the deload
+ * restored the original runs, and undoing the ease then put the deloaded
+ * ones back. Both reductions removed, still deloaded.
+ *
+ * `appliedAt` is on both snapshots already, so the real ordering is
+ * available and neither has to be assumed outer. Equal timestamps (same
+ * millisecond) fall through as "not blocked": indistinguishable, and
+ * refusing both undos would be worse than allowing either.
+ *
+ * Both are scoped to THIS week — a snapshot stranded by a rollover is
+ * inert and must not gate anything.
+ */
+function mostRecentReductionIs(state, kind) {
+  const ease = state.easeSnapshot;
+  const deload = state.deloadSnapshot;
+  if (!isPlainObject(ease) || !isPlainObject(deload)) return false;
+  if (
+    ease.weekNumber !== state.weekNumber ||
+    deload.weekNumber !== state.weekNumber
+  ) {
+    return false;
+  }
+  if (typeof ease.appliedAt !== "number" || typeof deload.appliedAt !== "number") {
+    return false;
+  }
+  return kind === "deload"
+    ? deload.appliedAt > ease.appliedAt
+    : ease.appliedAt > deload.appliedAt;
+}
+
 function revertDeloadWeekCommand(state, command) {
   requireWeekCursor(state, command);
   const snap = state.deloadSnapshot;
@@ -1734,6 +1777,13 @@ function revertDeloadWeekCommand(state, command) {
     !Array.isArray(snap.workouts)
   ) {
     failedPrecondition("There is no deload to undo for this week.");
+  }
+  // The other half of the ordering rule. This side had NO guard at all,
+  // which is why the broken sequence was reachable: with the ease applied
+  // more recently, reverting the deload here was allowed and destroyed the
+  // week the ease snapshot described.
+  if (mostRecentReductionIs(state, "ease")) {
+    failedPrecondition("Undo the easier week first, then the deload week.");
   }
   // tx.set replaces the whole doc, so omitting the key deletes it.
   const next = {
@@ -1749,7 +1799,7 @@ function revertDeloadWeekCommand(state, command) {
   // half shipped still reverts its lift side cleanly instead of wiping
   // runDays to undefined.
   if (Array.isArray(snap.runDays)) {
-    next.runDays = snap.runDays;
+    next.runDays = restoreRunDays(state.runDays, snap.runDays);
   }
   delete next.deloadSnapshot;
   return next;
@@ -1774,6 +1824,45 @@ function revertDeloadWeekCommand(state, command) {
 // `preDeloadWeight` needs because lift weights DO carry forward and a cut
 // must be explicitly given back.
 // ---------------------------------------------------------------------------
+
+/**
+ * Put the week back WITHOUT overwriting days the athlete has since acted on.
+ *
+ * `applyDeloadRunSwaps` already refuses to touch a day that is no longer
+ * editable — a completed run, a skipped one, a race no-show. The restore
+ * did not, and rewrote `runDays` wholesale from the snapshot, so the two
+ * halves of the same feature used opposite rules:
+ *
+ *   apply on a skipped day  ->  left alone            (correct)
+ *   undo after a skip       ->  skipped becomes planned   (the skip erased)
+ *
+ * That matters more since the ease undo became durable: it is available
+ * all week, so there is real time in which the athlete skips or runs one
+ * of the eased sessions before changing their mind about the rest. The
+ * evidence handoff puts "completion truth" among the things that stay the
+ * default through a change, and a skip is a decision of the same kind.
+ *
+ * Editability is the only signal used, deliberately. A day the athlete
+ * hand-swapped while it was still planned is NOT distinguishable from one
+ * the reduction swapped — both carry `userOverride` — so that case keeps
+ * the existing behaviour (the undo wins) rather than being guessed at.
+ */
+function restoreRunDays(current, snapshot) {
+  if (!Array.isArray(current)) return snapshot;
+  const key = (rd) => (rd.id != null ? String(rd.id) : String(rd.dayIndex));
+  const was = new Map(
+    snapshot.filter(isPlainObject).map((rd) => [key(rd), rd])
+  );
+  return current.map((rd) => {
+    if (!isPlainObject(rd)) return rd;
+    const before = was.get(key(rd));
+    if (before === undefined) return rd;
+    // The athlete has moved this day on since. Their decision outranks the
+    // undo, exactly as it outranks the apply.
+    if (!isScheduledRunEditable(getScheduledRunStatus(rd))) return rd;
+    return before;
+  });
+}
 
 function applyEaseWeekCommand(state, command, now) {
   requireWeekCursor(state, command);
@@ -1838,16 +1927,10 @@ function revertEaseWeekCommand(state, command) {
   ) {
     failedPrecondition("There is no easier week to undo.");
   }
-  // LIFO, enforced rather than assumed. A deload applied AFTER the ease took
-  // its own snapshot OF the eased week, so restoring the pre-ease runs first
-  // would strand the deload's snapshot pointing at a week that no longer
-  // exists — undoing it afterwards would then re-apply the ease. Refusing
-  // here costs the athlete one extra tap and keeps both undos truthful; the
-  // ease undo becomes available again the moment the deload is reverted.
-  if (state.currentPhase === "deload") {
+  if (mostRecentReductionIs(state, "deload")) {
     failedPrecondition("Undo the deload week first, then the easier week.");
   }
-  const next = { ...state, runDays: snap.runDays };
+  const next = { ...state, runDays: restoreRunDays(state.runDays, snap.runDays) };
   // tx.set replaces the whole doc, so omitting the key deletes it.
   delete next.easeSnapshot;
   return next;

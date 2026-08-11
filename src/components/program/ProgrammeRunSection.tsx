@@ -166,7 +166,7 @@ interface ProgrammeRunSectionProps {
   applyEaseWeek: (
     swaps: ReadonlyArray<{ key: string | number; toTemplateId: string }>
   ) => Promise<number | null>;
-  revertEaseWeek: () => Promise<boolean>;
+  revertEaseWeek: () => Promise<{ ok: boolean; message?: string }>;
   /** PR-J Q2 chunk B2: replaces completeRunDay. Writes the
    *  manualCompletions map; derivation surfaces ✅. */
   markManualComplete: (runDayId: string) => Promise<void>;
