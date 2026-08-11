@@ -1799,7 +1799,7 @@ function revertDeloadWeekCommand(state, command) {
   // half shipped still reverts its lift side cleanly instead of wiping
   // runDays to undefined.
   if (Array.isArray(snap.runDays)) {
-    next.runDays = snap.runDays;
+    next.runDays = restoreRunDays(state.runDays, snap.runDays);
   }
   delete next.deloadSnapshot;
   return next;
@@ -1824,6 +1824,45 @@ function revertDeloadWeekCommand(state, command) {
 // `preDeloadWeight` needs because lift weights DO carry forward and a cut
 // must be explicitly given back.
 // ---------------------------------------------------------------------------
+
+/**
+ * Put the week back WITHOUT overwriting days the athlete has since acted on.
+ *
+ * `applyDeloadRunSwaps` already refuses to touch a day that is no longer
+ * editable — a completed run, a skipped one, a race no-show. The restore
+ * did not, and rewrote `runDays` wholesale from the snapshot, so the two
+ * halves of the same feature used opposite rules:
+ *
+ *   apply on a skipped day  ->  left alone            (correct)
+ *   undo after a skip       ->  skipped becomes planned   (the skip erased)
+ *
+ * That matters more since the ease undo became durable: it is available
+ * all week, so there is real time in which the athlete skips or runs one
+ * of the eased sessions before changing their mind about the rest. The
+ * evidence handoff puts "completion truth" among the things that stay the
+ * default through a change, and a skip is a decision of the same kind.
+ *
+ * Editability is the only signal used, deliberately. A day the athlete
+ * hand-swapped while it was still planned is NOT distinguishable from one
+ * the reduction swapped — both carry `userOverride` — so that case keeps
+ * the existing behaviour (the undo wins) rather than being guessed at.
+ */
+function restoreRunDays(current, snapshot) {
+  if (!Array.isArray(current)) return snapshot;
+  const key = (rd) => (rd.id != null ? String(rd.id) : String(rd.dayIndex));
+  const was = new Map(
+    snapshot.filter(isPlainObject).map((rd) => [key(rd), rd])
+  );
+  return current.map((rd) => {
+    if (!isPlainObject(rd)) return rd;
+    const before = was.get(key(rd));
+    if (before === undefined) return rd;
+    // The athlete has moved this day on since. Their decision outranks the
+    // undo, exactly as it outranks the apply.
+    if (!isScheduledRunEditable(getScheduledRunStatus(rd))) return rd;
+    return before;
+  });
+}
 
 function applyEaseWeekCommand(state, command, now) {
   requireWeekCursor(state, command);
@@ -1891,7 +1930,7 @@ function revertEaseWeekCommand(state, command) {
   if (mostRecentReductionIs(state, "deload")) {
     failedPrecondition("Undo the deload week first, then the easier week.");
   }
-  const next = { ...state, runDays: snap.runDays };
+  const next = { ...state, runDays: restoreRunDays(state.runDays, snap.runDays) };
   // tx.set replaces the whole doc, so omitting the key deletes it.
   delete next.easeSnapshot;
   return next;

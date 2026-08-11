@@ -3109,3 +3109,125 @@ describe("deload + easier week unwind in reverse order (RUN-EASE-01)", () => {
     expect(templates(reverted)).toEqual(["long_20k", "tempo_40"]);
   });
 });
+
+/**
+ * An undo must not overwrite a day the athlete has since acted on.
+ *
+ * `applyDeloadRunSwaps` already refuses to touch a day that is no longer
+ * editable. The restore did not — it rewrote `runDays` wholesale from the
+ * snapshot — so the two halves of the same feature disagreed:
+ *
+ *   apply on a skipped day  ->  left alone
+ *   undo after a skip       ->  skipped silently becomes planned
+ *
+ * Latent while the only undo was an 8-second toast. Real once the ease
+ * undo became durable (#1933): it stands all week, which is ample time to
+ * skip or run one of the eased sessions before changing your mind about
+ * the rest.
+ */
+describe("undo preserves decisions made after the reduction", () => {
+  const runDay = (over) => ({
+    id: "run-1",
+    dayIndex: 2,
+    templateId: "tempo_40",
+    type: "tempo",
+    status: "planned",
+    completed: false,
+    date: "2999-01-02",
+    ...over,
+  });
+  const withRuns = () => {
+    const s = baseState();
+    s.runDays = [
+      runDay(),
+      runDay({
+        id: "run-2",
+        dayIndex: 4,
+        templateId: "6x1k",
+        type: "intervals",
+        date: "2999-01-04",
+      }),
+    ];
+    return s;
+  };
+  const at = (state, command, now) =>
+    applyProgramCommand({ state, profile: {}, command, now });
+  const EASE = [
+    { runDayId: "run-1", templateId: "easy_30" },
+    { runDayId: "run-2", templateId: "easy_30" },
+  ];
+
+  it("a run skipped after the ease stays skipped through the undo", () => {
+    let s = at(
+      withRuns(),
+      { kind: "applyEaseWeek", commandId: "cmd_e6123456789abc", expectedWeekNumber: 5, runSwaps: EASE },
+      1000
+    ).state;
+    s = at(
+      s,
+      { kind: "transitionRunDay", commandId: "cmd_sk123456789abc", runDayId: "run-1", to: "skipped" },
+      2000
+    ).state;
+    expect(s.runDays[0].status).toBe("skipped");
+
+    s = at(
+      s,
+      { kind: "revertEaseWeek", commandId: "cmd_ue723456789abc", expectedWeekNumber: 5 },
+      3000
+    ).state;
+
+    // The athlete's skip survives, and the day keeps the template they
+    // skipped rather than being rewritten to the pre-ease one.
+    expect(s.runDays[0].status).toBe("skipped");
+    expect(s.runDays[0].templateId).toBe("easy_30");
+    // The day they did NOT act on is restored normally.
+    expect(s.runDays[1].templateId).toBe("6x1k");
+    expect(s.runDays[1].status).toBe("planned");
+  });
+
+  it("the same holds for the deload undo", () => {
+    let s = at(
+      withRuns(),
+      {
+        kind: "applyDeloadWeek",
+        commandId: "cmd_d6123456789abc",
+        expectedWeekNumber: 5,
+        runSwaps: [
+          { runDayId: "run-1", templateId: "tempo_30" },
+          { runDayId: "run-2", templateId: "5x1k" },
+        ],
+      },
+      1000
+    ).state;
+    s = at(
+      s,
+      { kind: "transitionRunDay", commandId: "cmd_sk223456789abc", runDayId: "run-1", to: "skipped" },
+      2000
+    ).state;
+
+    s = at(
+      s,
+      { kind: "revertDeloadWeek", commandId: "cmd_ud723456789abc", expectedWeekNumber: 5 },
+      3000
+    ).state;
+    expect(s.runDays[0].status).toBe("skipped");
+    expect(s.runDays[0].templateId).toBe("tempo_30");
+    expect(s.runDays[1].templateId).toBe("6x1k");
+  });
+
+  it("an untouched week is still restored in full", () => {
+    // Guards the guard: the editability check must not stop the ordinary
+    // undo, which is what almost every use of it is.
+    let s = at(
+      withRuns(),
+      { kind: "applyEaseWeek", commandId: "cmd_e7123456789abc", expectedWeekNumber: 5, runSwaps: EASE },
+      1000
+    ).state;
+    s = at(
+      s,
+      { kind: "revertEaseWeek", commandId: "cmd_ue823456789abc", expectedWeekNumber: 5 },
+      2000
+    ).state;
+    expect(s.runDays.map((r) => r.templateId)).toEqual(["tempo_40", "6x1k"]);
+  });
+});
