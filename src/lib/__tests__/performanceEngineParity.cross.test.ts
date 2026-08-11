@@ -180,7 +180,18 @@ const fixtures: Fixture[] = [
     prevPI: 90,
   },
   {
-    name: "high load + poor adherence (deload via adherence path)",
+    /* Named "deload via adherence path" until 2026-08-11. It never took
+       that path: it scores PI 60, and the branch needs PI ≥ 70. The name
+       asserted a coverage the fixture did not provide — the same shape as
+       PR #1775's `templateId === "race"` accept-path fixture.
+
+       No honest fixture replaces it, because the branch is not reachable
+       from realistic aggregates at all. See deloadTriggerReachability
+       .test.ts, which measures that rather than restating it. What this
+       fixture DOES exercise is worth keeping: heavy tonnage in one
+       session with a big calorie deficit, which is a genuine parity case
+       for the goal-aware calorie tolerance. */
+    name: "heavy single session on a big calorie deficit",
     agg: makeAgg({
       liftTonnage: 20000,
       liftHardSets: 60,
