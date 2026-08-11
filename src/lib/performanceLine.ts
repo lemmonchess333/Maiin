@@ -99,6 +99,27 @@ export function getLine(state: VerbState, signals: PerformanceSignals): string {
 
     case "cruising":
       if (signals.adherenceWeak) return "Fewer sessions than usual";
+      /* LIFT-EV-10, copy half. A week containing only ONE discipline caps the
+         composite load score at 68 (recomp) — `computeLiftLoadScore` returns 0
+         for zero sessions and the halves are weighted 0.5/0.5 — so a marathon
+         peak-block week lands HERE rather than in "sharpening", whatever was
+         actually run. Measured: 70 km and 110 km of running with no lifting
+         both score 68 (`singleDisciplineWeek.test.ts`).
+
+         The engine already computes `runAheadOfBaseline` and
+         `liftAheadOfBaseline`; the lines that say them just lived in a band
+         these weeks cannot reach, so a 110 km week was described as "holding a
+         steady rhythm". Consulting the same signals here is what stops the
+         card being silent about the biggest thing in the week.
+
+         The SCORE is deliberately untouched — see the note at the bottom of
+         this file. This makes the words honest, not the number different. */
+      if (signals.runAheadOfBaseline > 0.2) {
+        return `Run volume ${Math.round(signals.runAheadOfBaseline * 100)}% up`;
+      }
+      if (signals.liftAheadOfBaseline > 0.15) {
+        return `Lifting load ${Math.round(signals.liftAheadOfBaseline * 100)}% above baseline`;
+      }
       return "Holding a steady rhythm";
 
     case "building":
@@ -117,3 +138,31 @@ export function getLine(state: VerbState, signals: PerformanceSignals): string {
 /** Empty-state line (no perf doc yet — pre-first-log). */
 export const EMPTY_STATE_LINE =
   "Your Performance will appear after your first logged session";
+
+/* ─────────────────────────────────────────────
+   LIFT-EV-10 — what this file does NOT fix
+
+   The ledger row names a second option: renormalise the load weighting onto
+   the trained discipline when the other has zero sessions. That is left
+   undone, deliberately, and the reasoning belongs next to the code rather
+   than only in a PR.
+
+   The scoring behaviour is defensible on its own terms. `bl.liftTonnage` is a
+   mean over the athlete's own active weeks, so a week that drops lifting
+   genuinely carries less composite load than their normal week, and the PI is
+   a load score. Renormalising would make it answer a different question —
+   "how hard was the training you DID do" — for every user, and would raise the
+   score of every athlete who skips a discipline. That is a product decision
+   with no user signal behind it, and the row records it as an owner decision
+   for exactly that reason.
+
+   What was NOT defensible was the copy. "Holding a steady rhythm" is not a
+   description of a 110 km week by any reading, and the app already had the
+   number that says otherwise.
+
+   Still open, and unaddressed here: with the ceiling at 68 (recomp) / 58
+   (lean bulk) and both live deload triggers gating on PI >= 80, a
+   single-discipline week can never be offered a deload. Fixing that needs the
+   trigger to read discipline-specific load rather than the composite, which is
+   a design decision, not a copy one.
+   ───────────────────────────────────────────── */
