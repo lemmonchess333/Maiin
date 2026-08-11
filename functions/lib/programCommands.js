@@ -159,6 +159,9 @@ const SESSION_VARIANTS = new Set(["express45", "express30"]);
 // these; the point is to deny unbounded/poisonous payloads, not to police
 // business rules (the reducer does that against real state).
 const MAX_ID_LEN = 256; // exercise/instance/run-day/template identifiers
+// A deload can only touch this week's scheduled runs. Seven is already
+// every day of the week; the cap is a payload bound, not a training rule.
+const MAX_DELOAD_RUN_SWAPS = 7;
 const MAX_COMPLETION_ID_LEN = 128;
 const MIN_COMPLETION_ID_LEN = 8;
 const MAX_SIGNATURE_LEN = 4000;
@@ -839,7 +842,7 @@ const KIND_VALIDATORS = {
       command,
       "applyDeloadWeek",
       ["kind", "commandId", "expectedWeekNumber"],
-      []
+      ["runSwaps"]
     );
     out.expectedWeekNumber = assertBoundedInt(
       command.expectedWeekNumber,
@@ -847,6 +850,41 @@ const KIND_VALIDATORS = {
       1,
       MAX_WEEK_NUMBER
     );
+    // The run half of the deload, computed client-side.
+    //
+    // OPTIONAL on purpose, twice over. An older client that predates the
+    // run half keeps working (lift-only deload, exactly as before), and a
+    // lift-only user simply has no runs to send.
+    //
+    // The client computes it because the ladders live in RUN_TEMPLATES,
+    // which this side CANNOT import — `raceTemplateIds.js` says so in as
+    // many words, and mirroring a 28-entry template catalogue here to
+    // avoid one payload field would be the drift this repo punishes most.
+    // The same division already governs `overrideRunDay`, which likewise
+    // takes a client-supplied templateId this side cannot check against a
+    // catalogue. What the server DOES enforce is everything that matters
+    // for integrity: the day exists, it is editable, and it is not a race.
+    if ("runSwaps" in command) {
+      if (!Array.isArray(command.runSwaps)) {
+        invalidCommand("applyDeloadWeek.runSwaps must be an array.");
+      }
+      if (command.runSwaps.length > MAX_DELOAD_RUN_SWAPS) {
+        invalidCommand("applyDeloadWeek.runSwaps has too many entries.");
+      }
+      out.runSwaps = command.runSwaps.map((swap, i) => {
+        const label = `runSwaps[${i}]`;
+        if (!isPlainObject(swap)) invalidCommand(`${label} must be an object.`);
+        assertKeys(swap, label, ["runDayId", "templateId"], []);
+        return {
+          runDayId: assertString(swap.runDayId, `${label}.runDayId`, MAX_ID_LEN),
+          templateId: assertString(
+            swap.templateId,
+            `${label}.templateId`,
+            MAX_ID_LEN
+          ),
+        };
+      });
+    }
   },
 
   revertDeloadWeek(command, out) {
@@ -1540,6 +1578,39 @@ function requireWeekCursor(state, command) {
   }
 }
 
+/**
+ * Apply the run half: each swap steps one scheduled run down a rung.
+ *
+ * Writes `templateId` AND `userOverride` together, matching what
+ * `overrideRunDay` already does — the pair is how a swapped day reads as
+ * swapped everywhere downstream, and splitting them here would make a
+ * deloaded day render differently from a hand-swapped one.
+ *
+ * Because that overwrites `templateId`, the ORIGINAL is not recoverable
+ * from the day itself. The runDays snapshot taken by the caller is the
+ * only route back, which is why it is unconditional there.
+ *
+ * Refusals are silent-by-skip rather than throwing: a deload is a
+ * week-level action and one stale day should not cost the user the whole
+ * thing. The two guards mirror `overrideRunDay`'s exactly — a race can
+ * never be swapped, and a day that is no longer editable is a fact
+ * rather than a prescription.
+ */
+function applyDeloadRunSwaps(state, runSwaps) {
+  if (!Array.isArray(runSwaps) || runSwaps.length === 0) return state.runDays;
+  if (!Array.isArray(state.runDays)) return state.runDays;
+  const byId = new Map(runSwaps.map((s) => [s.runDayId, s.templateId]));
+  return state.runDays.map((rd) => {
+    if (!isPlainObject(rd)) return rd;
+    const key = rd.id != null ? String(rd.id) : String(rd.dayIndex);
+    const templateId = byId.get(key);
+    if (templateId === undefined) return rd;
+    if (isRaceRunDay(rd)) return rd;
+    if (!isScheduledRunEditable(getScheduledRunStatus(rd))) return rd;
+    return { ...rd, templateId, userOverride: templateId };
+  });
+}
+
 function applyDeloadWeekCommand(state, profile, command, now) {
   requireWeekCursor(state, command);
   if (state.currentPhase === "deload") {
@@ -1550,10 +1621,21 @@ function applyDeloadWeekCommand(state, profile, command, now) {
     deloadSnapshot: {
       weekNumber: state.weekNumber,
       workouts: state.workouts,
+      // The run half's only route back. `applyDeloadRunSwaps` overwrites
+      // `templateId` as well as `userOverride`, so nothing on the day
+      // remembers what it was — including a swap the ATHLETE made before
+      // the deload, which undo must restore rather than clear.
+      //
+      // Stored unconditionally, even for a lift-only user: a snapshot
+      // that exists only sometimes is a second shape for revert to
+      // branch on, and `runDays` is ~1 KB beside the workouts array this
+      // object already carries (ceiling is 900 KB).
+      runDays: state.runDays,
       currentPhase: state.currentPhase,
       fatigueScore: state.fatigueScore,
       appliedAt: now,
     },
+    runDays: applyDeloadRunSwaps(state, command.runSwaps),
     // Backlog #8: the recipe follows training age. An absent/unknown
     // experience falls back to the novice recipe — the pre-#8 behaviour.
     //
@@ -1589,6 +1671,15 @@ function revertDeloadWeekCommand(state, command) {
     currentPhase: snap.currentPhase,
     fatigueScore: snap.fatigueScore,
   };
+  // Undo means undo. Restoring sets while leaving the runs stepped down
+  // would tell the user they were back to normal while a third of their
+  // week stayed reduced — worse than offering no undo, because they stop
+  // looking. Guarded on presence so a snapshot written before the run
+  // half shipped still reverts its lift side cleanly instead of wiping
+  // runDays to undefined.
+  if (Array.isArray(snap.runDays)) {
+    next.runDays = snap.runDays;
+  }
   delete next.deloadSnapshot;
   return next;
 }
