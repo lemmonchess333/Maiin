@@ -528,9 +528,7 @@ export default function Home() {
     [profile]
   );
   const { dismissed: goalReachedDismissed, dismiss: dismissGoalReached } =
-    useDismissOnce(
-      `tropos-goal-reached:${user?.uid ?? "anon"}:${goalOffer?.goalWeightKg ?? 0}`
-    );
+    useDismissOnce(`tropos-goal-reached:${goalOffer?.goalWeightKg ?? 0}`);
   const goalReachedSurface = useSurface({
     id: "goal-reached",
     priority: 25,

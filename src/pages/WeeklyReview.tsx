@@ -45,9 +45,7 @@ export default function WeeklyReview() {
   const trainingWhy = profile?.trainingWhy?.trim();
 
   // Opening the page IS the "viewed" event — it retires the Home entry.
-  const { dismiss } = useDismissOnce(
-    reviewViewedKey(user?.uid ?? "anon", weekKey)
-  );
+  const { dismiss } = useDismissOnce(reviewViewedKey(weekKey));
   useEffect(() => {
     dismiss();
     // eslint-disable-next-line react-hooks/exhaustive-deps

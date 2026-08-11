@@ -15,6 +15,7 @@
 import { test, type Page } from "@playwright/test";
 import { signInAsTestUser } from "../helpers/auth";
 import { emulatorActive } from "../helpers/emulator";
+import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
 
 test.use({
   viewport: { width: 393, height: 852 },
@@ -35,19 +36,8 @@ test.describe("crews retirement screenshots", () => {
   );
 
   test.beforeEach(async ({ page }) => {
+    await suppressCoachmarks(page);
     await page.addInitScript(() => {
-      const BASE = "tropos-coach-marks-dismissed";
-      for (const k of [
-        BASE,
-        `${BASE}:social-find-invite`,
-        `${BASE}:extras-pill-v1`,
-      ]) {
-        try {
-          window.localStorage.setItem(k, "1");
-        } catch {
-          /* storage unavailable — capture just shows the coachmark */
-        }
-      }
       document.addEventListener("DOMContentLoaded", () => {
         const style = document.createElement("style");
         style.textContent =

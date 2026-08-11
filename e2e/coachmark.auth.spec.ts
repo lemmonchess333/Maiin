@@ -25,7 +25,13 @@ import { emulatorActive } from "./helpers/emulator";
 
 const AUTH_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
 const FS_HOST = process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080";
-const KEY = "tropos-coach-marks-dismissed:social-find-invite";
+/* The mark's own segment. The FULL key is `<uid>:${MARK_KEY}` — dismissals
+   are scoped per account so one person's dismissed coach marks can't
+   silence another's on a shared device (localStorage is per-device). The
+   uid half is asserted explicitly below rather than globbed, because the
+   scoping is the property worth pinning: a regression that dropped the
+   prefix would still "persist a dismissal", just everyone's. */
+const MARK_KEY = "tropos-coach-marks-dismissed:social-find-invite";
 const MARK_TEXT = /Share your profile link to get started/i;
 
 test.use({
@@ -113,8 +119,9 @@ async function completeOnboardingDirect(uid: string): Promise<void> {
 }
 
 /** Mint a fresh signed-in account (0 follows, clean localStorage) and
- *  open Social → People with the coachmark showing. */
-async function openPeopleAsFreshUser(page: Page): Promise<void> {
+ *  open Social → People with the coachmark showing. Returns the new uid,
+ *  which the dismissal key is scoped by. */
+async function openPeopleAsFreshUser(page: Page): Promise<string> {
   const email = `coachmark-${Date.now()}-${Math.floor(Math.random() * 1e6)}@tropos.test`;
   await page.goto("/");
   await page.waitForLoadState("networkidle");
@@ -140,12 +147,24 @@ async function openPeopleAsFreshUser(page: Page): Promise<void> {
     .getByRole("button", { name: /find people/i })
     .click({ timeout: 25_000 });
   await expect(page.getByText(MARK_TEXT)).toBeVisible({ timeout: 20_000 });
+  return uid;
 }
 
-async function dismissalPersisted(page: Page): Promise<void> {
+async function dismissalPersisted(page: Page, uid: string): Promise<void> {
   expect(
-    await page.evaluate((key) => window.localStorage.getItem(key), KEY)
+    await page.evaluate(
+      (key) => window.localStorage.getItem(key),
+      `${uid}:${MARK_KEY}`
+    )
   ).toBeTruthy();
+  // And NOT under the unscoped or signed-out key — either would mean the
+  // dismissal is shared with every other account on this device.
+  expect(
+    await page.evaluate(
+      (keys) => keys.map((k) => window.localStorage.getItem(k)),
+      [MARK_KEY, `anon:${MARK_KEY}`]
+    )
+  ).toEqual([null, null]);
 }
 
 test.describe("social-find-invite coachmark first-use contract", () => {
@@ -158,12 +177,12 @@ test.describe("social-find-invite coachmark first-use contract", () => {
     page,
   }) => {
     test.setTimeout(180_000);
-    await openPeopleAsFreshUser(page);
+    const uid = await openPeopleAsFreshUser(page);
 
     // Tap well away from both the coachmark and its anchor.
     await page.mouse.click(8, 300);
     await expect(page.getByText(MARK_TEXT)).not.toBeVisible({ timeout: 5000 });
-    await dismissalPersisted(page);
+    await dismissalPersisted(page, uid);
 
     // Full reload → reopen People → still gone.
     await page.reload();
@@ -179,20 +198,20 @@ test.describe("social-find-invite coachmark first-use contract", () => {
 
   test("Escape dismisses", async ({ page }) => {
     test.setTimeout(180_000);
-    await openPeopleAsFreshUser(page);
+    const uid = await openPeopleAsFreshUser(page);
     await page.keyboard.press("Escape");
     await expect(page.getByText(MARK_TEXT)).not.toBeVisible({ timeout: 5000 });
-    await dismissalPersisted(page);
+    await dismissalPersisted(page, uid);
   });
 
   test("auto-dismisses after the 6s timer", async ({ page }) => {
     test.setTimeout(180_000);
-    await openPeopleAsFreshUser(page);
+    const uid = await openPeopleAsFreshUser(page);
     // Default autoDismissMs is 6000 — allow slack, and assert the key
     // was written by the TIMER (no interaction happened).
     await expect(page.getByText(MARK_TEXT)).not.toBeVisible({
       timeout: 8000,
     });
-    await dismissalPersisted(page);
+    await dismissalPersisted(page, uid);
   });
 });
