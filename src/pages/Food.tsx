@@ -23,6 +23,7 @@ import { useMeals, type Meal } from "@/hooks/useMeals";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { collection, Timestamp } from "firebase/firestore";
 import { addDocGuarded } from "@/lib/firestoreWrite";
+import { duplicatedServingPayload } from "@/lib/servingEdit";
 import { db } from "@/lib/firebase";
 import { parseFoodText, getFoodSuggestions } from "@/lib/nlFoodParser";
 import type { ParsedFood, FoodSuggestion } from "@/lib/nlFoodParser";
@@ -1034,20 +1035,27 @@ export default function Food() {
            always step the count back down (which routes through
            the decrement branch with its own undo window) or
            swipe-delete an extra entry. */
+        /* `source` is the PRE-EDIT snapshot: editingGroup.meals is captured
+           when the sheet opens and never refreshed, so cloning it verbatim
+           carried none of the rename / slot / macro change that the editMeal
+           fan-out above had just applied to its siblings. A 200 → 300 kcal
+           edit made alongside a 2 → 4 serving step produced 300, 300, 200,
+           200; a rename produced new docs under the OLD name, which group as
+           a separate row. duplicatedServingPayload applies the same changes
+           to the duplicate. */
         const source = groupMeals[groupMeals.length - 1];
         const adds = targetCount - currentCount;
+        const duplicate = duplicatedServingPayload(source, {
+          targetMeal,
+          targetName,
+          targetMacros,
+        });
         for (let i = 0; i < adds; i++) {
           await addDocGuarded(collection(db, "users", uid, "meals"), {
             date: selectedDate,
-            foodName: source.foodName,
-            items: source.items ?? [],
-            totalCalories: safeNum(source.totalCalories),
-            totalProtein: safeNum(source.totalProtein),
-            totalCarbs: safeNum(source.totalCarbs),
-            totalFat: safeNum(source.totalFat),
+            ...duplicate,
             confidence: "duplicate",
             createdAt: Timestamp.now(),
-            ...(source.meal ? { meal: source.meal } : {}),
           });
         }
         setEditingGroup(null);
