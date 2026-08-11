@@ -583,6 +583,10 @@ describe("every declared client kind round-trips", () => {
         "moveRunDay",
         "startTrainingBlock",
         "releaseTrainingBlock",
+        // RUN-EASE-01: the easier week, moved off N per-day overrideRunDay
+        // calls onto one atomic command that snapshots what it replaced.
+        "applyEaseWeek",
+        "revertEaseWeek",
       ])
     );
   });
@@ -2687,5 +2691,254 @@ describe("deload week commands (PROGRAM-DELOAD-01)", () => {
     });
     expect(input.currentPhase).toBe("progression");
     expect("deloadSnapshot" in input).toBe(false);
+  });
+});
+
+/**
+ * RUN-EASE-01 — the easier week as one command, with a route back.
+ *
+ * The easier week used to be N sequential `overrideRunDay` calls from the
+ * sheet. Two consequences, both fixed here: a half-eased week was a
+ * reachable state, and there was no undo after the 8-second toast — that
+ * reducer overwrites `templateId` as well as `userOverride`, so once the
+ * swaps landed nothing on the day remembered what it had been, and the
+ * only surviving record was a React array in a component.
+ *
+ * The snapshot's LIFETIME is the design, not an implementation detail.
+ * `runDays` are regenerated wholesale at every week rollover, so an easier
+ * week already expires by itself — the `weekNumber` guard retires the
+ * snapshot at exactly the moment the week it could restore stops existing.
+ * That is why there is no per-day `preEase…` field: that shape belongs to
+ * `preDeloadWeight`, where lift weights DO carry forward.
+ */
+describe("easier week commands (RUN-EASE-01)", () => {
+  const planned = (over) => ({
+    id: "run-1",
+    dayIndex: 2,
+    templateId: "tempo_40",
+    type: "tempo",
+    status: "planned",
+    completed: false,
+    ...over,
+  });
+  const withRuns = (runDays, over) => {
+    const s = baseState();
+    s.runDays = runDays;
+    return { ...s, ...over };
+  };
+  const easeCmd = (overrides) => ({
+    kind: "applyEaseWeek",
+    commandId: CMD,
+    expectedWeekNumber: 5,
+    runSwaps: [{ runDayId: "run-1", templateId: "tempo_30" }],
+    ...overrides,
+  });
+  const undoCmd = (overrides) => ({
+    kind: "revertEaseWeek",
+    commandId: CMD,
+    expectedWeekNumber: 5,
+    ...overrides,
+  });
+
+  it("steps the named runs down, writing templateId AND userOverride", () => {
+    const { state } = apply(easeCmd(), withRuns([planned()]));
+    expect(state.runDays[0]).toMatchObject({
+      templateId: "tempo_30",
+      userOverride: "tempo_30",
+    });
+  });
+
+  it("snapshots the pre-ease week so undo can restore it", () => {
+    const before = [planned()];
+    const { state } = apply(easeCmd(), withRuns(before));
+    expect(state.easeSnapshot).toMatchObject({ weekNumber: 5, appliedAt: NOW });
+    expect(state.easeSnapshot.runDays).toEqual(before);
+
+    const { state: undone } = apply(undoCmd(), state);
+    expect(undone.runDays).toEqual(before);
+    expect(undone.runDays[0].templateId).toBe("tempo_40");
+    // Consumed, so a second undo has nothing to restore.
+    expect("easeSnapshot" in undone).toBe(false);
+  });
+
+  it("undo restores the athlete's OWN prior override, not a cleared field", () => {
+    // The day was already swapped by the user before they eased the week.
+    // Nothing on the day remembers that choice — only the snapshot does,
+    // so replaying the swaps in reverse (what the client used to do) could
+    // never have got this right.
+    const before = [planned({ templateId: "6x1k", userOverride: "6x1k", type: "intervals" })];
+    const { state } = apply(
+      easeCmd({ runSwaps: [{ runDayId: "run-1", templateId: "5x1k" }] }),
+      withRuns(before)
+    );
+    expect(state.runDays[0].templateId).toBe("5x1k");
+
+    const { state: undone } = apply(undoCmd(), state);
+    expect(undone.runDays[0]).toMatchObject({
+      templateId: "6x1k",
+      userOverride: "6x1k",
+    });
+  });
+
+  it("never touches the lift side", () => {
+    // The whole reason this is its own stash rather than a field on
+    // deloadSnapshot: an easier week is a RUN adjustment.
+    const before = baseState();
+    const { state } = apply(easeCmd(), withRuns([planned()]));
+    expect(state.workouts).toEqual(before.workouts);
+    expect(state.currentPhase).toBe(before.currentPhase);
+    expect(state.fatigueScore).toBe(before.fatigueScore);
+  });
+
+  it("REFUSES to swap a race, and refuses the week if that was all there was", () => {
+    // Race identity is immutable (RUN-RACE-GUARD-01). With nothing else to
+    // change, the command must fail rather than write a snapshot that
+    // lights up an Undo for a week nothing happened to.
+    expectHttps(
+      () =>
+        apply(
+          easeCmd({ runSwaps: [{ runDayId: "run-1", templateId: "tempo_30" }] }),
+          withRuns([planned({ type: "race", templateId: "marathon_race" })])
+        ),
+      "failed-precondition"
+    );
+  });
+
+  it("skips a day that is no longer editable without losing the rest", () => {
+    const { state } = apply(
+      easeCmd({
+        runSwaps: [
+          { runDayId: "run-1", templateId: "tempo_30" },
+          { runDayId: "run-2", templateId: "5x1k" },
+        ],
+      }),
+      withRuns([
+        planned({ status: "completed_exact" }),
+        planned({ id: "run-2", templateId: "6x1k", type: "intervals" }),
+      ])
+    );
+    expect(state.runDays[0].templateId).toBe("tempo_40");
+    expect(state.runDays[1].templateId).toBe("5x1k");
+  });
+
+  it("refuses when every named day has moved on", () => {
+    // Reachable: the client plans against a cached week, and the days it
+    // names can have been completed since. `applyDeloadRunSwaps` maps, so
+    // it returns a FRESH array even having refused everything — a
+    // reference check would miss this entirely.
+    expectHttps(
+      () =>
+        apply(easeCmd(), withRuns([planned({ status: "completed_exact" })])),
+      "failed-precondition"
+    );
+  });
+
+  it("refuses a second ease of the same week", () => {
+    // A new commandId dodges the receipt dedupe, so without this guard the
+    // runs would step down a SECOND rung and the snapshot would be
+    // overwritten with the once-eased state — two rungs down, one undo.
+    const { state } = apply(easeCmd(), withRuns([planned()]));
+    expectHttps(
+      () =>
+        applyProgramCommand({
+          state,
+          profile: {},
+          command: easeCmd({
+            commandId: "cmd_second0123456789",
+            runSwaps: [{ runDayId: "run-1", templateId: "tempo_20" }],
+          }),
+          now: NOW,
+        }),
+      "failed-precondition"
+    );
+  });
+
+  it("a snapshot stranded by a rollover does not block easing the NEW week", () => {
+    // The guard is scoped to this week, not to mere presence. Getting this
+    // wrong locks the athlete out of easing the week they are actually in,
+    // for as long as the stale stash sits there.
+    const { state } = apply(easeCmd(), withRuns([planned()]));
+    const rolled = { ...state, weekNumber: 6, runDays: [planned()] };
+    const { state: eased } = applyProgramCommand({
+      state: rolled,
+      profile: {},
+      command: easeCmd({ commandId: "cmd_nextweek012345", expectedWeekNumber: 6 }),
+      now: NOW,
+    });
+    expect(eased.runDays[0].templateId).toBe("tempo_30");
+    expect(eased.easeSnapshot.weekNumber).toBe(6);
+  });
+
+  it("a snapshot stranded by a rollover cannot be undone", () => {
+    const { state } = apply(easeCmd(), withRuns([planned()]));
+    const rolled = { ...state, weekNumber: 6 };
+    expectHttps(
+      () => apply(undoCmd({ expectedWeekNumber: 6 }), rolled),
+      "failed-precondition"
+    );
+  });
+
+  it("refuses an undo when nothing was eased", () => {
+    expectHttps(() => apply(undoCmd(), withRuns([planned()])), "failed-precondition");
+  });
+
+  it("refuses an undo while the week is deloaded, so the two unwind in order", () => {
+    // A deload applied AFTER the ease snapshotted the EASED week. Undoing
+    // the ease first would strand that snapshot pointing at a week that no
+    // longer exists, and reverting the deload afterwards would silently
+    // re-apply the ease. One extra tap keeps both undos truthful.
+    const { state } = apply(easeCmd(), withRuns([planned()]));
+    expectHttps(
+      () => apply(undoCmd(), { ...state, currentPhase: "deload" }),
+      "failed-precondition"
+    );
+    // And it becomes available again once the deload is reverted.
+    const { state: undone } = apply(undoCmd(), state);
+    expect(undone.runDays[0].templateId).toBe("tempo_40");
+  });
+
+  it("refuses a user with no scheduled runs", () => {
+    // Lift-only and freeform users both land here. Checked before the swap
+    // so the failure is a refusal rather than a crash on a non-array.
+    expectHttps(() => apply(easeCmd(), withRuns([])), "failed-precondition");
+    const noRuns = baseState();
+    delete noRuns.runDays;
+    expectHttps(() => apply(easeCmd(), noRuns), "failed-precondition");
+  });
+
+  it("rejects an empty or oversized swap list at the validator", () => {
+    // Empty is not a weaker ease, it is a no-op that would still write a
+    // snapshot and offer an Undo.
+    expectHttps(
+      () => apply(easeCmd({ runSwaps: [] }), withRuns([planned()])),
+      "invalid-argument"
+    );
+    expectHttps(
+      () =>
+        apply(
+          easeCmd({
+            runSwaps: Array.from({ length: 8 }, (_, i) => ({
+              runDayId: `run-${i}`,
+              templateId: "easy_30",
+            })),
+          }),
+          withRuns([planned()])
+        ),
+      "invalid-argument"
+    );
+  });
+
+  it("holds the week cursor, like every other week-level command", () => {
+    expectHttps(
+      () => apply(easeCmd({ expectedWeekNumber: 4 }), withRuns([planned()])),
+      "failed-precondition"
+    );
+  });
+
+  it("does not mutate the input state", () => {
+    const input = withRuns([planned()]);
+    apply(easeCmd(), input);
+    expect(input.runDays[0].templateId).toBe("tempo_40");
+    expect("easeSnapshot" in input).toBe(false);
   });
 });
