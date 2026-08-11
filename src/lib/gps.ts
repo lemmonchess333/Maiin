@@ -231,9 +231,32 @@ export function isValidReading(
     elapsedSeconds !== undefined && elapsedSeconds < 15 ? 50 : 35;
   if (coords.accuracy > maxAccuracy) return false;
 
+  /* Compare RAW to RAW. `lastPoint.lat/lon` are the Kalman OUTPUT (see
+     useGPS.makePoint, which keeps the unfiltered pair in rawLat/rawLon), and
+     the filter lags a moving runner — so measuring against it put the filter's
+     lag inside a check that is supposed to be about the athlete:
+
+         lag          ≈ (1 − k)/k × step
+         impliedSpeed = (lag + step) / dt = trueSpeed / k
+
+     which made the 12 m/s limit an effective cap of 12 × k. Because k falls as
+     `accuracy` worsens, the gate tightened exactly when fixes got noisier, and
+     a rejection is self-perpetuating (`lastPoint` only advances on an accepted
+     fix, so the frozen reference falls further behind). Measured on a
+     NOISE-FREE 3 m/s runner: 99% of distance recorded at 6 m accuracy, 2% at
+     7 m — a one-metre cliff, and rate-invariant, so a slower fix rate did not
+     help. `gpsSpeedGateLag.test.ts` has the full derivation and table.
+
+     Raw-to-raw measures the step the device actually moved. A genuine teleport
+     still trips the limit (12 m/s is 43 km/h, faster than any sprint); normal
+     running no longer does, at any accuracy the outer gate admits.
+
+     The `dist < 1` duplicate check moves with it deliberately: "has the device
+     moved since the last fix" is a question about physical positions, and the
+     smoothed point is not a place the device was ever at. */
   const dist = haversine(
-    lastPoint.lat,
-    lastPoint.lon,
+    lastPoint.rawLat,
+    lastPoint.rawLon,
     coords.latitude,
     coords.longitude
   );
