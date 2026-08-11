@@ -87,6 +87,42 @@ describe("RaceCockpitCard", () => {
   });
 
   /**
+   * RUN-EV-05, applied to the site the 2026-08-09 pass missed.
+   *
+   * That pass removed the safety promise from `realignCopy.ts`'s below-floor
+   * message ("the old finish-safely / train-safely phrasing implied a safety
+   * promise") and from this card's below-floor branch. The COMPRESSED branch
+   * kept saying "…the long-run progression shortened to keep it safe" — so the
+   * product went on promising safety in the one place the message is permanent
+   * rather than transient.
+   *
+   * The sentence was also backwards. In the compressed-but-above-floor band
+   * the long-run progression is the STEEPEST in the system, not shortened:
+   * racePlanSafetySweep.test.ts measures a six-week marathon stepping
+   * 12 km → 25 km in one week (+108%) against 25-33% steps in a full build.
+   *
+   * Nothing pinned the old string, which is how the site was missed. These two
+   * assertions are the guard: the claim must be honest, and no compressed-plan
+   * copy may promise safety.
+   */
+  it("does not promise safety, in either compressed state", () => {
+    for (const belowFloor of [false, true]) {
+      const { unmount } = renderCard({ compressed: true, belowFloor });
+      const body = document.body.textContent ?? "";
+      expect(body, `belowFloor=${belowFloor}`).not.toMatch(/keep it safe/i);
+      expect(body, `belowFloor=${belowFloor}`).not.toMatch(/safely/i);
+      unmount();
+    }
+  });
+
+  it("says the long-run build is PACKED IN, not shortened", () => {
+    renderCard({ compressed: true });
+    expect(screen.getByText(/packed into fewer weeks/i)).toBeInTheDocument();
+    expect(screen.getByText(/bigger jumps between long runs/i)).toBeInTheDocument();
+    expect(document.body.textContent ?? "").not.toMatch(/progression shortened/i);
+  });
+
+  /**
    * A below-floor plan ALWAYS also has `compressed: true`, so before
    * 2026-08-04 it fell into the compressed branch and permanently told the
    * user that "interval work is trimmed and the long-run progression
