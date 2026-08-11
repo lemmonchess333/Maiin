@@ -1460,10 +1460,27 @@ hand-maintained data mirrors on an actively-edited catalogue. Read ADR-0011
 before treating the outstanding count as work to be picked up; the per-site
 detail below stays accurate and is what that ADR summarises.
 
+STATUS 2026-08-11 — the count is now PINNED BY A TEST, because it had
+drifted in every place it was written down. `src/features/program/__tests__/
+saveProgramSites.test.ts` enumerates each remaining site with its owning
+writer and the reason it has not migrated; a new whole-document writer, or a
+migrated one, fails it. Do not re-state a number in prose here — the three
+that existed (ADR-0011's "remaining 8", this row's "13", and reality's 9)
+disagreed with each other. The test also records how each site maps onto
+ADR-0011's reasoning. Seven are covered: the six it enumerates, plus
+`undoRecoveryReduction`, which reaches the SAME measured blocker through a
+helper the ADR does not name (`revertRecoverySession` needs
+`primaryCanonicalForExercise` -> `volumeModel` -> per-exercise muscle
+attributions, and `functions/` has none). One is the deliberate
+`reorderDayExercises` fallback. That leaves `adoptLegacyTrainingBlock`, which
+is genuinely outside the account — it calls only the pure `legacyToActiveBlock`
+mapper, so nothing blocks it; it is a one-time pre-Blk2 backfill that never
+moved.
+
 STATUS 2026-08-02. Recorded because three separate sessions have now
-re-derived this same triage from scratch. 13 `saveProgram` sites remain, all
-in `useProgram.ts`. They are NOT one kind of work, and the split matters more
-than the count.
+re-derived this same triage from scratch. The `saveProgram` sites that remain
+are all in `useProgram.ts`. They are NOT one kind of work, and the split
+matters more than the count.
 
 **Deliberately staying a document write (1 site).** `reorderDayExercises`'
 rejection fallback. A legacy document whose `instanceId`s were never persisted
