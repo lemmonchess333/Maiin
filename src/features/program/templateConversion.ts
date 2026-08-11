@@ -66,6 +66,19 @@ export function parseTemplateReps(reps: string): {
   // Per-side forms ("10/leg", "20/side") stay plain reps: ten reps per leg
   // logged as ten reps is a defensible simplification, and unlike a duration
   // the NUMBER is already in the right unit.
+  //
+  // The RANGE inside one, though, was being thrown away. "8-10/leg" fell past
+  // the numeric-range branch above (the `/leg` suffix breaks its anchor) and
+  // came out as a bare 8 with no ceiling — the author wrote a range and the
+  // conversion deleted it. That simplification is about the unit, not about
+  // the range, so parse the range and keep the same per-side treatment of the
+  // numbers themselves.
+  const sideRange = /^(\d+)\s*-\s*(\d+)\s*\/\s*\w+$/.exec(trimmed);
+  if (sideRange) {
+    const lo = parseInt(sideRange[1], 10);
+    const hi = parseInt(sideRange[2], 10);
+    return hi > lo ? { reps: lo, repRangeMax: hi } : { reps: lo };
+  }
   return { reps: parseInt(trimmed, 10) || 8 };
 }
 
