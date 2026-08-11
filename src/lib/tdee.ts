@@ -44,6 +44,17 @@ export interface TDEEResult {
   carbs: number;
   fat: number;
   deficit: number;
+  /**
+   * The calorie target could not fit bodyweight protein alongside the
+   * essential fat floor, so `protein` is what fits rather than what the goal
+   * multiplier asked for. The same condition `getAdjustedTargets` reports as
+   * `aggressive` — reported here too, because the two splitters now share the
+   * arithmetic and a cap the user is never told about is a target that lies.
+   */
+  proteinCapped: boolean;
+  /** What the goal multiplier asked for, before any cap. Equals `protein`
+   *  unless `proteinCapped`. */
+  proteinUncapped: number;
 }
 
 /**
@@ -113,10 +124,13 @@ export function calculateTDEE(
   // Protein anchored to bodyweight, capped so protein + fat fit the budget.
   // The cap is a reduction only — it can never prescribe more than the goal
   // multiplier asks for.
-  let protein = Math.round(proteinMultiplier * weightKg);
+  const proteinUncapped = Math.round(proteinMultiplier * weightKg);
+  let protein = proteinUncapped;
+  let proteinCapped = false;
   const proteinRoomCals = targetCalories - fat * 9;
   if (protein * 4 > proteinRoomCals) {
     protein = Math.max(0, Math.floor(proteinRoomCals / 4));
+    proteinCapped = true;
   }
 
   // Carbs are the balancing remainder, floored at 0. Derived from fat GRAMS
@@ -136,5 +150,7 @@ export function calculateTDEE(
     carbs,
     fat,
     deficit,
+    proteinCapped,
+    proteinUncapped,
   };
 }
