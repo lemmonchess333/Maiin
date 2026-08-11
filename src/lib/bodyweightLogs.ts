@@ -1,3 +1,9 @@
+import {
+  splitMacrosForTarget,
+  proteinMultiplierForGoal,
+  type FitnessGoal,
+} from "./tdee";
+
 export interface BodyweightLog {
   date: string;
   weight: number;
@@ -155,4 +161,82 @@ export function weighInProfileMirror(
     return null;
   }
   return { weightKg: rounded };
+}
+
+/** The profile slice the weigh-in patch reads. Structural, so tests and
+ *  callers pass plain objects. */
+export interface WeighInProfileInputs {
+  weightKg?: number | null;
+  targetCalories?: number | null;
+  program?: { goal?: string };
+}
+
+export interface WeighInProfilePatch {
+  weightKg: number;
+  targetProtein: number;
+  targetCarbs: number;
+  targetFat: number;
+}
+
+/**
+ * The COMPLETE profile patch a fresh weigh-in should carry.
+ *
+ * `weighInProfileMirror` above fixed the anchor; this fixes what the anchor
+ * feeds. Two of the three stored macros are functions of bodyweight —
+ * protein is `multiplier × kg` outright, and the essential-fat floor is
+ * `0.6 × kg`, with carbs balancing whatever those leave — so a weigh-in
+ * changes them by definition. Nothing recomputed them: `targetProtein` is
+ * written only by onboarding, the Settings → Nutrition reactive effect, and
+ * the goal-reached prompt, none of which a weigh-in triggers. A user
+ * following the advertised daily-weigh-in flow and never reopening Settings
+ * kept the macros of the body they had at signup.
+ *
+ * Measured on a 90 → 78 kg cut with the calorie target held: stored protein
+ * stays 198 g while the Food page shows 172 g — so Home's post-workout
+ * "Ng protein for recovery" nudge, which reads the stored scalar, asks for
+ * 26 g more than the Food page does on the same day. That disagreement is
+ * the real defect; the adherence effect is milder, because the scorer's
+ * protein rule is `ratio >= 0.9 → 100` and a 12 kg cut only reaches 0.87
+ * (96 instead of 100). Reported at its true size rather than inflated —
+ * but two screens quoting different targets needs no tolerance analysis to
+ * be wrong.
+ *
+ * The CALORIE target is deliberately not recomputed. Protein and fat are
+ * defined per kilogram, so following the weight is arithmetic; the calorie
+ * target is a training decision (as you shrink, the same absolute intake is
+ * a smaller deficit — the plateau the adaptive-TDEE layer exists to answer)
+ * and silently re-cutting it on every weigh-in would be a policy change made
+ * by a mirror function. The split is therefore recomputed AT the existing
+ * target, which is exactly what `getAdjustedTargets` renders.
+ *
+ * Returns null on no meaningful weight change (delegating that gate) or when
+ * the profile carries no calorie target to split.
+ */
+export function weighInProfilePatch(
+  profile: WeighInProfileInputs | null | undefined,
+  loggedKg: number
+): WeighInProfilePatch | { weightKg: number } | null {
+  const mirror = weighInProfileMirror(profile?.weightKg, loggedKg);
+  if (!mirror) return null;
+
+  const targetCalories = profile?.targetCalories;
+  if (typeof targetCalories !== "number" || !Number.isFinite(targetCalories)) {
+    // No stored target to split — the anchor still gets fixed, which is
+    // strictly better than skipping the write entirely.
+    return mirror;
+  }
+
+  const split = splitMacrosForTarget(
+    targetCalories,
+    mirror.weightKg,
+    proteinMultiplierForGoal(
+      (profile?.program?.goal as FitnessGoal) ?? "recomp"
+    )
+  );
+  return {
+    ...mirror,
+    targetProtein: split.protein,
+    targetCarbs: split.carbs,
+    targetFat: split.fat,
+  };
 }
