@@ -60,6 +60,12 @@ const PROGRAM_STATE_KEYS = new Set([
   // this entry the transaction's own sanitizer would strip the snapshot
   // it just wrote and undo would always fail.
   "deloadSnapshot",
+  // RUN-EASE-01: the same stash for the easier week, written by
+  // applyEaseWeek and consumed by revertEaseWeek. Same failure mode as
+  // deloadSnapshot without the entry — the transaction would strip the
+  // snapshot it had just written, so Undo would always report that there
+  // was nothing to undo.
+  "easeSnapshot",
   // PROGRAM-BLOCK-02: the active training block, which owns the lift
   // prescription for its duration (plan-file row Blk2). Client-written and
   // never read by a function — this entry exists so the two server paths

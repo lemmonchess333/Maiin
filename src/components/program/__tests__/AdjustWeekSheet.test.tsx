@@ -10,18 +10,26 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import AdjustWeekSheet from "../AdjustWeekSheet";
+import {
+  getEasedWeekKey,
+  setEasedWeekKey,
+} from "@/lib/easeWeekNudgeMarkers";
+import { localWeekKey } from "@/lib/dateHelpers";
 
 vi.mock("@/lib/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
+const UID = "athlete-1";
+
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  window.localStorage.clear();
 });
 
 function setup() {
-  const overrideRunDay = vi.fn();
+  const applyEaseWeek = vi.fn(async () => 0);
   const realignRacePlan = vi.fn().mockResolvedValue({
     timing: "healthy" as const,
     totalWeeks: 15,
@@ -32,11 +40,13 @@ function setup() {
       onClose={vi.fn()}
       runDays={[]}
       raceGoal={{ distance: "marathon", targetDate: "2026-10-17" }}
-      overrideRunDay={overrideRunDay}
+      applyEaseWeek={applyEaseWeek}
+      revertEaseWeek={vi.fn(async () => true)}
+      uid={UID}
       realignRacePlan={realignRacePlan}
     />
   );
-  return { overrideRunDay, realignRacePlan };
+  return { applyEaseWeek, realignRacePlan };
 }
 
 describe("AdjustWeekSheet — intent list", () => {
@@ -68,97 +78,97 @@ describe("AdjustWeekSheet — intent list", () => {
   });
 });
 
+const RUN_DAYS = [
+  {
+    id: "rd-1",
+    dayIndex: 2,
+    templateId: "tempo_40",
+    type: "tempo",
+    status: "planned",
+    date: "2999-01-02",
+  },
+  {
+    id: "rd-2",
+    dayIndex: 4,
+    templateId: "6x1k",
+    type: "intervals",
+    status: "planned",
+    date: "2999-01-04",
+  },
+] as never;
+
+function openEaser(props: {
+  applyEaseWeek?: (
+    swaps: ReadonlyArray<{ key: string | number; toTemplateId: string }>
+  ) => Promise<number | null>;
+  revertEaseWeek?: () => Promise<boolean>;
+  easedThisWeek?: boolean;
+}) {
+  render(
+    <AdjustWeekSheet
+      open
+      onClose={vi.fn()}
+      runDays={RUN_DAYS}
+      raceGoal={{ distance: "marathon", targetDate: "2999-10-17" }}
+      applyEaseWeek={props.applyEaseWeek ?? vi.fn(async () => 2)}
+      revertEaseWeek={props.revertEaseWeek ?? vi.fn(async () => true)}
+      easedThisWeek={props.easedThisWeek}
+      uid={UID}
+      realignRacePlan={vi.fn()}
+    />
+  );
+}
+
 /**
- * Applying an easier week must AWAIT the swaps and report what landed.
+ * Applying an easier week is ONE command, and the count is the server's.
  *
- * The apply loop was `for (const s of swaps) overrideRunDay(...)` with no
- * await. N promises went into the void, the enclosing try/catch could not
- * see any of them, and "3 runs eased to easy runs this week." rendered
- * before a single write had returned. A rejected swap then surfaced its
- * own "Couldn't change that run" toast a beat later, so the athlete got
- * both messages and no way to know which was true.
+ * Two shapes preceded this. First an unawaited `for (const s of swaps)
+ * overrideRunDay(...)` — N promises into the void, "3 runs eased to easy
+ * runs this week." rendered before a single write returned, and a rejected
+ * swap surfacing its own error a beat later so the athlete got both
+ * messages and no way to know which was true. Then the awaited loop: the
+ * count became honest, but a half-eased week was still reachable and the
+ * originals still lived only in a React array.
  *
- * The prop was typed `=> void`, which is precisely what made forgetting
- * the await type-correct. That type is now the truth, so the compiler
- * catches the next one; these tests cover what the compiler cannot — the
- * count in the copy, and staying silent when nothing applied.
+ * What these pin now is that the copy reports what the SERVER changed
+ * rather than what was asked for — the two differ whenever a day has been
+ * completed, skipped, or turned into a race since the week was planned
+ * against a cached copy.
  */
 describe("AdjustWeekSheet — applying an easier week reports the truth", () => {
-  const runDays = [
-    {
-      id: "rd-1",
-      dayIndex: 2,
-      templateId: "tempo_40",
-      type: "tempo",
-      status: "planned",
-      date: "2999-01-02",
-    },
-    {
-      id: "rd-2",
-      dayIndex: 4,
-      templateId: "6x1k",
-      type: "intervals",
-      status: "planned",
-      date: "2999-01-04",
-    },
-  ] as never;
-
-  function open(
-    overrideRunDay: (
-      idOrDayIndex: string | number,
-      templateId: string
-    ) => Promise<boolean>
-  ) {
-    render(
-      <AdjustWeekSheet
-        open
-        onClose={vi.fn()}
-        runDays={runDays}
-        raceGoal={{ distance: "marathon", targetDate: "2999-10-17" }}
-        overrideRunDay={overrideRunDay}
-        realignRacePlan={vi.fn()}
-      />
-    );
+  function tapEase() {
     fireEvent.click(
       screen.getByRole("button", { name: /I need easier running/ })
     );
+    fireEvent.click(screen.getByRole("button", { name: /Ease this week/ }));
   }
 
-  it("awaits every swap before claiming success", async () => {
-    // Resolution is deferred so an unawaited loop would reach the toast
-    // with both calls still pending — exactly the shipped bug.
-    const resolvers: ((v: boolean) => void)[] = [];
-    const overrideRunDay = vi.fn(
-      () => new Promise<boolean>((res) => resolvers.push(res))
-    );
-    open(overrideRunDay);
-    fireEvent.click(screen.getByRole("button", { name: /Ease this week/ }));
+  it("sends every planned swap as a single command", async () => {
+    const applyEaseWeek = vi.fn(async () => 2);
+    openEaser({ applyEaseWeek });
+    tapEase();
 
-    await vi.waitFor(() => expect(overrideRunDay).toHaveBeenCalledTimes(1));
-    // Sequential: the second swap must not start until the first settles.
-    expect(overrideRunDay).toHaveBeenCalledTimes(1);
-    resolvers[0](true);
-    await vi.waitFor(() => expect(overrideRunDay).toHaveBeenCalledTimes(2));
-    resolvers[1](true);
+    await vi.waitFor(() => expect(applyEaseWeek).toHaveBeenCalledTimes(1));
+    // One transaction for the week, not one per day: a partially-eased
+    // week is what atomicity is here to make unreachable.
+    expect(applyEaseWeek).toHaveBeenCalledWith([
+      expect.objectContaining({ key: "rd-1" }),
+      expect.objectContaining({ key: "rd-2" }),
+    ]);
   });
 
-  it("counts what actually landed, not what was attempted", async () => {
-    const overrideRunDay = vi
-      .fn()
-      .mockResolvedValueOnce(true)
-      .mockResolvedValueOnce(false);
-    open(overrideRunDay);
-    fireEvent.click(screen.getByRole("button", { name: /Ease this week/ }));
+  it("reports the server's count, not the number requested", async () => {
+    // Two swaps sent, the server changed one (the other day moved on).
+    const applyEaseWeek = vi.fn(async () => 1);
+    openEaser({ applyEaseWeek });
+    tapEase();
 
-    // Two attempted, one landed → the copy must say one, and singular.
-    await vi.waitFor(() =>
-      expect(overrideRunDay).toHaveBeenCalledTimes(2)
-    );
     const { toast } = await import("@/lib/toast");
     await vi.waitFor(() =>
       expect(toast.success).toHaveBeenCalledWith(
         "1 run eased to an easy run this week.",
-        // And the reduction carries its path back — see the undo tests.
+        // The fast path back is still offered — see the undo tests for the
+        // durable one.
         expect.objectContaining({
           action: expect.objectContaining({ label: "Undo" }),
         })
@@ -166,128 +176,171 @@ describe("AdjustWeekSheet — applying an easier week reports the truth", () => 
     );
   });
 
-  it("says nothing when every swap failed", async () => {
-    // overrideRunDay has already explained each failure. A success toast
-    // here would directly contradict the errors beside it.
-    const overrideRunDay = vi.fn().mockResolvedValue(false);
-    open(overrideRunDay);
-    fireEvent.click(screen.getByRole("button", { name: /Ease this week/ }));
+  it("waits for the command before claiming anything", async () => {
+    // Deferred so an unawaited call would reach the toast with the command
+    // still in flight — the shape of the original bug.
+    let resolve!: (v: number) => void;
+    const applyEaseWeek = vi.fn(
+      () => new Promise<number>((res) => (resolve = res))
+    );
+    openEaser({ applyEaseWeek });
+    tapEase();
 
-    await vi.waitFor(() => expect(overrideRunDay).toHaveBeenCalledTimes(2));
+    await vi.waitFor(() => expect(applyEaseWeek).toHaveBeenCalled());
     const { toast } = await import("@/lib/toast");
+    expect(toast.success).not.toHaveBeenCalled();
+    resolve(2);
+    await vi.waitFor(() => expect(toast.success).toHaveBeenCalled());
+  });
+
+  it("says so — and claims nothing — when the command fails", async () => {
+    const applyEaseWeek = vi.fn(async () => null);
+    openEaser({ applyEaseWeek });
+    tapEase();
+
+    const { toast } = await import("@/lib/toast");
+    await vi.waitFor(() => expect(toast.error).toHaveBeenCalled());
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  it("does not report success when the server changed nothing", async () => {
+    // The server refuses an ease that would change nothing, so a 0 here
+    // means a stale week rather than a silent success.
+    const applyEaseWeek = vi.fn(async () => 0);
+    openEaser({ applyEaseWeek });
+    tapEase();
+
+    const { toast } = await import("@/lib/toast");
+    await vi.waitFor(() => expect(toast.error).toHaveBeenCalled());
     expect(toast.success).not.toHaveBeenCalled();
   });
 });
 
 /**
- * The path back.
+ * The path back — and how long it lasts.
  *
  * An easier week is a REDUCTION, and the evidence handoff requires that
- * reducing work "give a bounded path back". There was none: the server's
- * overrideRunDay reducer overwrites `templateId` as well as
- * `userOverride`, so once applied nothing on the day remembers what it
- * was — an athlete who tapped this by mistake could not restore their
- * week or even see what it had been.
+ * reducing work "give a bounded path back". The first version of that was
+ * an 8-second toast holding a React array, because the server's
+ * `overrideRunDay` reducer overwrites `templateId` as well as
+ * `userOverride` and nothing on the day remembered what it had been. So an
+ * athlete who felt better on Tuesday had no route back at all.
  *
- * The client holds the only record (the `from` side of each swap), which
- * is why undo re-applies them in reverse rather than reading state back.
+ * The snapshot now lives on the programme document, which is what lets the
+ * sheet offer Undo for the whole week. These pin the affordance and its
+ * gate: it must appear when — and only when — a snapshot exists for the
+ * week the athlete is actually in.
  */
 describe("AdjustWeekSheet — undoing an easier week", () => {
-  const runDays = [
-    {
-      id: "rd-1",
-      dayIndex: 2,
-      templateId: "tempo_40",
-      type: "tempo",
-      status: "planned",
-      date: "2999-01-02",
-    },
-    {
-      id: "rd-2",
-      dayIndex: 4,
-      templateId: "6x1k",
-      type: "intervals",
-      status: "planned",
-      date: "2999-01-04",
-    },
-  ] as never;
+  it("offers a durable Undo when this week is already eased", () => {
+    openEaser({ easedThisWeek: true });
+    expect(
+      screen.getByRole("button", { name: /Undo easier week/ })
+    ).toBeInTheDocument();
+    expect(screen.getByText(/This week is already eased/)).toBeInTheDocument();
+  });
 
-  async function applyThenGetUndo(
-    overrideRunDay: (
-      idOrDayIndex: string | number,
-      templateId: string
-    ) => Promise<boolean>
-  ) {
-    render(
-      <AdjustWeekSheet
-        open
-        onClose={vi.fn()}
-        runDays={runDays}
-        raceGoal={{ distance: "marathon", targetDate: "2999-10-17" }}
-        overrideRunDay={overrideRunDay}
-        realignRacePlan={vi.fn()}
-      />
+  it("offers nothing when this week has not been eased", () => {
+    // The gate matters more than the affordance: an Undo shown for a week
+    // with no snapshot is a button whose only outcome is a refusal.
+    openEaser({ easedThisWeek: false });
+    expect(screen.queryByRole("button", { name: /Undo easier week/ })).toBeNull();
+    expect(screen.queryByText(/already eased/)).toBeNull();
+  });
+
+  it("restores the week through the server snapshot", async () => {
+    const revertEaseWeek = vi.fn(async () => true);
+    openEaser({ easedThisWeek: true, revertEaseWeek });
+
+    fireEvent.click(screen.getByRole("button", { name: /Undo easier week/ }));
+    await vi.waitFor(() => expect(revertEaseWeek).toHaveBeenCalledTimes(1));
+
+    const { toast } = await import("@/lib/toast");
+    await vi.waitFor(() =>
+      expect(toast.success).toHaveBeenCalledWith(
+        "Easier week undone — this week is back to plan."
+      )
     );
+  });
+
+  it("says so when the restore fails", async () => {
+    const revertEaseWeek = vi.fn(async () => false);
+    openEaser({ easedThisWeek: true, revertEaseWeek });
+
+    fireEvent.click(screen.getByRole("button", { name: /Undo easier week/ }));
+    const { toast } = await import("@/lib/toast");
+    await vi.waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith("Couldn't undo the easier week.")
+    );
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  it("records the eased week only once the ease COMMITS", async () => {
+    /* A6 keeps a marker for the week an ease was applied in, so the
+       following week can ask "did the quality come back?".
+
+       The sheet writes it itself. It used to be an optional callback from
+       the caller, and the sheet's other mount (SettingsRunPlan) passed
+       none — so easing from Settings recorded nothing and the bounce line
+       never appeared for those users at all. */
+    openEaser({ applyEaseWeek: vi.fn(async () => null) });
     fireEvent.click(
       screen.getByRole("button", { name: /I need easier running/ })
     );
     fireEvent.click(screen.getByRole("button", { name: /Ease this week/ }));
     const { toast } = await import("@/lib/toast");
+    await vi.waitFor(() => expect(toast.error).toHaveBeenCalled());
+    expect(getEasedWeekKey(UID)).toBeNull();
+
+    cleanup();
+    openEaser({ applyEaseWeek: vi.fn(async () => 2) });
+    fireEvent.click(
+      screen.getByRole("button", { name: /I need easier running/ })
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Ease this week/ }));
+    await vi.waitFor(() =>
+      expect(getEasedWeekKey(UID)).toBe(localWeekKey(new Date()))
+    );
+  });
+
+  it("forgets the eased week on undo, but only once the restore lands", async () => {
+    /* Left standing through an undo, the marker makes next week's bounce
+       line report recovering from a reduction the athlete cancelled and
+       never ran. Gated on success for the same reason the success toast
+       is: a failed restore leaves the week eased, so the marker is still
+       true. */
+    setEasedWeekKey(UID, localWeekKey(new Date()));
+    openEaser({
+      easedThisWeek: true,
+      revertEaseWeek: vi.fn(async () => false),
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Undo easier week/ }));
+    const { toast } = await import("@/lib/toast");
+    await vi.waitFor(() => expect(toast.error).toHaveBeenCalled());
+    expect(getEasedWeekKey(UID)).toBe(localWeekKey(new Date()));
+
+    cleanup();
+    openEaser({ easedThisWeek: true, revertEaseWeek: vi.fn(async () => true) });
+    fireEvent.click(screen.getByRole("button", { name: /Undo easier week/ }));
+    await vi.waitFor(() => expect(getEasedWeekKey(UID)).toBeNull());
+  });
+
+  it("the toast's Undo takes the same route as the row", async () => {
+    // Both affordances must land on the snapshot restore. The toast one
+    // previously replayed swaps in reverse from memory, which is why it
+    // could not survive a reload — pinning them to one path is the point.
+    const revertEaseWeek = vi.fn(async () => true);
+    openEaser({ revertEaseWeek });
+    fireEvent.click(
+      screen.getByRole("button", { name: /I need easier running/ })
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Ease this week/ }));
+
+    const { toast } = await import("@/lib/toast");
     await vi.waitFor(() => expect(toast.success).toHaveBeenCalled());
     const opts = (toast.success as ReturnType<typeof vi.fn>).mock.calls[0][1];
-    return opts.action.onClick as () => void;
-  }
+    (opts.action.onClick as () => void)();
 
-  it("puts each run back to the template it came FROM", async () => {
-    const calls: [string | number, string][] = [];
-    const overrideRunDay = vi.fn(
-      async (k: string | number, t: string) => {
-        calls.push([k, t]);
-        return true;
-      }
-    );
-    const undo = await applyThenGetUndo(overrideRunDay);
-    calls.length = 0;
-
-    undo();
-    await vi.waitFor(() => expect(calls).toHaveLength(2));
-    // The originals, not easy_30 — restoring to the ease destination
-    // would be a no-op wearing an undo's clothes.
-    expect(calls).toEqual([
-      ["rd-1", "tempo_40"],
-      ["rd-2", "6x1k"],
-    ]);
-  });
-
-  it("only offers to put back the runs that actually changed", async () => {
-    // The second swap was rejected, so it was never eased and must not be
-    // "restored" — that would overwrite a day the athlete still owns.
-    const overrideRunDay = vi
-      .fn()
-      .mockResolvedValueOnce(true)
-      .mockResolvedValueOnce(false);
-    const undo = await applyThenGetUndo(overrideRunDay);
-    overrideRunDay.mockClear();
-    overrideRunDay.mockResolvedValue(true);
-
-    undo();
-    await vi.waitFor(() => expect(overrideRunDay).toHaveBeenCalledTimes(1));
-    expect(overrideRunDay).toHaveBeenCalledWith("rd-1", "tempo_40");
-  });
-
-  it("says so when the restore itself fails", async () => {
-    const overrideRunDay = vi.fn().mockResolvedValue(true);
-    const undo = await applyThenGetUndo(overrideRunDay);
-    const { toast } = await import("@/lib/toast");
-    (toast.success as ReturnType<typeof vi.fn>).mockClear();
-    overrideRunDay.mockResolvedValue(false);
-
-    undo();
-    await vi.waitFor(() =>
-      expect(toast.error).toHaveBeenCalledWith(
-        "Couldn't undo the easier week."
-      )
-    );
-    expect(toast.success).not.toHaveBeenCalled();
+    await vi.waitFor(() => expect(revertEaseWeek).toHaveBeenCalledTimes(1));
   });
 });
