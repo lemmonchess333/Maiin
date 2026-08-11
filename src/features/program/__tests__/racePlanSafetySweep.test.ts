@@ -110,8 +110,8 @@ function plan(o: {
 const longRuns = (weeks: { templateId: string }[][]) =>
   weeks.map((w) => Math.max(0, ...w.map((r) => longKmOf(r.templateId))));
 
-describe("race plans — runs scheduled after race day", () => {
-  it("happens in a stable ~28% of plans, across every distance", () => {
+describe("race plans — nothing is scheduled after race day", () => {
+  it("holds across every distance, race date and weekday", () => {
     let total = 0;
     let withRunsAfter = 0;
     const perDistance = new Map<string, { n: number; bad: number }>();
@@ -137,33 +137,56 @@ describe("race plans — runs scheduled after race day", () => {
     }
 
     expect(total).toBe(5824);
-    expect(withRunsAfter).toBe(1652);
-    // Identical across distances — it is a calendar property, not a
-    // distance-specific rule, which is exactly why the marathon case is
-    // unguarded.
+    /* Was 1652 (28.4%), and identically 413 per distance — a calendar
+       property, not a distance rule, which is why the marathon case was
+       unguarded. The race week now keeps only the shakeouts BEFORE race day. */
+    expect(withRunsAfter).toBe(0);
     for (const [distance, d] of perDistance) {
-      expect(d.bad, distance).toBe(413);
+      expect(d.bad, distance).toBe(0);
     }
   });
 
-  it("puts three runs in the 72 hours after a Sunday marathon", () => {
+  it("leaves a Sunday marathon week with the race and nothing after it", () => {
     /* The concrete worst case, and the modal one — most road races are on a
-       Sunday, and a Sun/Mon/Tue/Wed schedule is an ordinary four-day week. */
+       Sunday, and a Sun/Mon/Tue/Wed schedule is an ordinary four-day week.
+       This used to emit easy_30 on 12th, 13th and 14th January: three runs in
+       the 72 hours after a marathon. */
     const { out, raceDate } = plan({ distance: "marathon", weeksOut: 1 });
     const week = out.weeks[out.weeks.length - 1];
     const race = week.find((r) => r.type === "race")!;
     expect(race.date).toBe(raceDate);
     expect(race.dayIndex).toBe(0);
 
-    const after = week.filter((r) => r.type !== "race" && r.date! > raceDate);
-    expect(after.map((r) => r.date)).toEqual([
+    expect(week.filter((r) => r.type !== "race" && r.date! > raceDate)).toEqual(
+      []
+    );
+    // Race day at slot 0 means there is no room for a shakeout before it.
+    expect(week).toHaveLength(1);
+  });
+
+  it("still schedules the shakeouts that fall BEFORE race day", () => {
+    /* The other side, so the filter is not mistaken for "delete the race
+       week". A midweek race keeps the run-eligible days that precede it. */
+    const { out, raceDate } = plan({
+      distance: "half",
+      daysOut: 10, // a Wednesday race, with Sun/Mon/Tue run days before it
+      runDays: 4,
+    });
+    const week = out.weeks[out.weeks.length - 1];
+    const race = week.find((r) => r.type === "race")!;
+    expect(race.date).toBe(raceDate);
+    /* The EXACT set, not merely a non-empty one: a Wednesday race on a
+       Sun/Mon/Tue/Wed schedule keeps all three preceding days. Asserting only
+       "some remain" lets an over-tight filter through — checked by mutating
+       the bound to `< raceDayIndex - 1`, which silently drops the day before
+       the race and passed a length-only assertion. */
+    const before = week.filter((r) => r.type !== "race");
+    expect(before.map((r) => r.date)).toEqual([
+      "2026-01-11",
       "2026-01-12",
       "2026-01-13",
-      "2026-01-14",
     ]);
-    expect(new Set(after.map((r) => r.templateId))).toEqual(
-      new Set(["easy_30"])
-    );
+    expect(race.dayIndex).toBe(3);
   });
 
   it("does not happen when the race is the last scheduled day of its week", () => {
