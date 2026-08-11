@@ -2480,6 +2480,163 @@ describe("deload week commands (PROGRAM-DELOAD-01)", () => {
     expect(state.deloadSnapshot.workouts).toEqual(baseState().workouts);
   });
 
+  /**
+   * The run half (P1d pin 1, rebuilt).
+   *
+   * The lock words this as "reduce long run volume by 25%", but the
+   * running evidence handoff's non-adoptions forbid "a universal taper
+   * duration/percentage". So the client steps each run down one rung on
+   * its own template ladder and sends the result; this side applies it
+   * under the same guards `overrideRunDay` uses.
+   *
+   * `runSwaps` is OPTIONAL — an older client, or a lift-only user, sends
+   * none and gets exactly the previous behaviour.
+   */
+  describe("run half — runSwaps", () => {
+    const withRuns = (runDays) => {
+      const s = baseState();
+      s.runDays = runDays;
+      return s;
+    };
+    const planned = (over) => ({
+      id: "run-1",
+      dayIndex: 2,
+      templateId: "long_20k",
+      type: "long",
+      status: "planned",
+      completed: false,
+      ...over,
+    });
+
+    it("steps the named runs down, writing templateId AND userOverride", () => {
+      // Both fields, matching overrideRunDay — a deloaded day must read as
+      // swapped everywhere downstream, exactly like a hand-swapped one.
+      const { state } = apply(
+        applyCmd({ runSwaps: [{ runDayId: "run-1", templateId: "long_15k" }] }),
+        withRuns([planned()])
+      );
+      expect(state.runDays[0]).toMatchObject({
+        templateId: "long_15k",
+        userOverride: "long_15k",
+      });
+    });
+
+    it("snapshots runDays so undo restores them", () => {
+      const before = [planned()];
+      const { state } = apply(
+        applyCmd({ runSwaps: [{ runDayId: "run-1", templateId: "long_15k" }] }),
+        withRuns(before)
+      );
+      expect(state.deloadSnapshot.runDays).toEqual(before);
+
+      const { state: reverted } = apply(revertCmd(), state);
+      expect(reverted.runDays).toEqual(before);
+      expect(reverted.runDays[0].templateId).toBe("long_20k");
+    });
+
+    it("undo restores the athlete's OWN prior override, not a cleared field", () => {
+      // The day was already swapped by the user before the deload. Because
+      // the reducer overwrites templateId, nothing on the day remembers
+      // that choice — only the snapshot does. Clearing instead of
+      // restoring would silently discard a user decision.
+      const before = [planned({ templateId: "tempo_40", userOverride: "tempo_40", type: "tempo" })];
+      const { state } = apply(
+        applyCmd({ runSwaps: [{ runDayId: "run-1", templateId: "tempo_30" }] }),
+        withRuns(before)
+      );
+      expect(state.runDays[0].templateId).toBe("tempo_30");
+
+      const { state: reverted } = apply(revertCmd(), state);
+      expect(reverted.runDays[0]).toMatchObject({
+        templateId: "tempo_40",
+        userOverride: "tempo_40",
+      });
+    });
+
+    it("REFUSES to swap a race, without failing the whole deload", () => {
+      // Race identity is immutable (RUN-RACE-GUARD-01). One bad entry must
+      // not cost the user the lift half of a week-level action, so the
+      // refusal is a skip rather than a throw.
+      const { state } = apply(
+        applyCmd({
+          runSwaps: [
+            { runDayId: "run-1", templateId: "easy_30" },
+            { runDayId: "run-2", templateId: "tempo_20" },
+          ],
+        }),
+        withRuns([
+          planned({ id: "run-1", templateId: "marathon_race", type: "race" }),
+          planned({ id: "run-2", templateId: "tempo_30", type: "tempo" }),
+        ])
+      );
+      expect(state.runDays[0].templateId).toBe("marathon_race");
+      expect(state.runDays[0].userOverride).toBeUndefined();
+      // ...and the rest of the week still applied.
+      expect(state.runDays[1].templateId).toBe("tempo_20");
+      expect(state.currentPhase).toBe("deload");
+    });
+
+    it("skips days that are no longer editable", () => {
+      const { state } = apply(
+        applyCmd({ runSwaps: [{ runDayId: "run-1", templateId: "long_15k" }] }),
+        withRuns([planned({ status: "completed_exact" })])
+      );
+      expect(state.runDays[0].templateId).toBe("long_20k");
+    });
+
+    it("ignores a swap naming a run day that no longer exists", () => {
+      const { state } = apply(
+        applyCmd({ runSwaps: [{ runDayId: "ghost", templateId: "long_15k" }] }),
+        withRuns([planned()])
+      );
+      expect(state.runDays[0].templateId).toBe("long_20k");
+      expect(state.currentPhase).toBe("deload");
+    });
+
+    it("omitting runSwaps leaves runs untouched — the old-client path", () => {
+      const before = [planned()];
+      const { state } = apply(applyCmd(), withRuns(before));
+      expect(state.runDays).toEqual(before);
+      // The lift half still ran.
+      expect(state.currentPhase).toBe("deload");
+      expect(state.workouts[0].exercises[0].sets).toBe(2);
+    });
+
+    it("reverts cleanly from a snapshot written before the run half shipped", () => {
+      // Backward compatibility for a deload applied by the previous
+      // version: its snapshot has no runDays, and revert must restore the
+      // lift side rather than wiping runDays to undefined.
+      const { state } = apply(applyCmd(), withRuns([planned()]));
+      delete state.deloadSnapshot.runDays;
+      const { state: reverted } = apply(revertCmd(), state);
+      expect(Array.isArray(reverted.runDays)).toBe(true);
+      expect(reverted.currentPhase).toBe("progression");
+    });
+
+    it("rejects a malformed or oversized runSwaps payload", () => {
+      expectHttps(
+        () => apply(applyCmd({ runSwaps: "nope" })),
+        "invalid-argument"
+      );
+      expectHttps(
+        () => apply(applyCmd({ runSwaps: [{ runDayId: "run-1" }] })),
+        "invalid-argument"
+      );
+      expectHttps(
+        () =>
+          apply(
+            applyCmd({
+              runSwaps: Array.from({ length: 8 }, (_, i) => ({
+                runDayId: `r${i}`,
+                templateId: "easy_30",
+              })),
+            })
+          ),
+        "invalid-argument"
+      );
+    });
+  });
+
   it("rejects a second apply — no ×0.85² compounding", () => {
     const { state } = apply(applyCmd());
     expectHttps(() => apply(applyCmd(), state), "failed-precondition");
