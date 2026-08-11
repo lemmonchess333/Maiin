@@ -84,3 +84,23 @@ export function setEasedWeekKey(uid: string, weekKey: string): void {
     /* best-effort */
   }
 }
+
+/**
+ * RUN-EASE-01: forget the eased week, because it was undone.
+ *
+ * The marker exists to let `evaluatePostEaseBounce` ask "did the quality
+ * come back?" the week AFTER an easier week. Left standing through an undo
+ * it makes that question dishonest — the app would report a recovery, or a
+ * failure to recover, from a reduction the athlete cancelled and never
+ * ran. Undo only became reachable beyond an 8-second toast when the
+ * snapshot moved server-side, which is what turned this from a
+ * theoretical case into a routine one.
+ */
+export function clearEasedWeekKey(uid: string): void {
+  if (typeof localStorage === "undefined" || !uid) return;
+  try {
+    localStorage.removeItem(easedKey(uid));
+  } catch {
+    /* best-effort */
+  }
+}

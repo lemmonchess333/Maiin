@@ -151,6 +151,8 @@ function ProgramInner() {
     viewedWorkouts,
     viewedWeekNumber,
     overrideRunDay,
+    applyEaseWeek,
+    revertEaseWeek,
     markManualComplete,
     skipRunDay,
     restoreRunDay,
@@ -1202,6 +1204,8 @@ function ProgramInner() {
             programState={programState}
             runsTarget={runsTarget}
             overrideRunDay={overrideRunDay}
+            applyEaseWeek={applyEaseWeek}
+            revertEaseWeek={revertEaseWeek}
             markManualComplete={markManualComplete}
             skipRunDay={skipRunDay}
             skipWorkoutDay={skipWorkoutDay}
