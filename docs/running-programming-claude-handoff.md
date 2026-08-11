@@ -311,6 +311,18 @@ the run-side auto-rollover awaits the layoff read for the current uid
 declared in every regen dependency array. Regression constructs the
 real cache-paint-vs-network race and is mutation-checked.
 
+> **Two run-relevant issues are ledgered on the LIFT side.** The Performance
+> Index is hybrid — run load is half its `loadScore` — and the deload it
+> recommends now has a run half (#1930), but neither appears anywhere in this
+> document. Before changing run load, run volume scoring, or anything the
+> deload touches, read `LIFT-EV-09` (a deload trigger measured unreachable —
+> 0 hits in 345,600 realistic weeks) and `LIFT-EV-10` (a running-only week
+> caps the PI at 68, so 110 km reads "Steady" and can never be offered a
+> deload) in `docs/lift-programming-claude-handoff.md`. They are filed there
+> because the deload is a lift-side concept; the evidence is at least as much
+> about running. Cross-referenced rather than duplicated — two copies of a
+> finding drift, and this repo has the scars.
+
 | ID / state                                    | Issue                                                                                                                                                                                                                                                                                                              | Required outcome                                                                                                                                                                                                                                                    |
 | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | RUN-EV-01 — P0, owner decision                | Onboarding still offers Structured while runtime resolution turns it into freeform and deletes its plan/days. First trace: Onboarding, onboarding run-mode resolution, useProgram, and Run9 migration tests.                                                                                                       | Decide once: remove or explicitly resolve Structured before plan creation, or restore a supported lifecycle. A selection must survive onboarding, hydration, and display without silent plan deletion.                                                              |
