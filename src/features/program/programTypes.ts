@@ -269,6 +269,20 @@ export interface WeekSnapshot {
 export interface DeloadSnapshot {
   weekNumber: number;
   workouts: WorkoutDay[];
+  /**
+   * The pre-deload run week. Written unconditionally by `applyDeloadWeek`
+   * since the deload grew a run half (#1930) — it is the only record of
+   * what each day was, because the swap overwrites `templateId` as well as
+   * `userOverride`.
+   *
+   * Optional because a snapshot taken before that shipped has no such
+   * field, and the server's revert guards on `Array.isArray` for exactly
+   * that reason. Undeclared here until 2026-08-11: the server wrote it and
+   * the type did not admit it existed, so any client that wanted to read
+   * it — such as the banner copy describing what the deload changed —
+   * could not do so without a cast.
+   */
+  runDays?: ScheduledRunDay[];
   currentPhase: string;
   fatigueScore: number;
   appliedAt: number;
