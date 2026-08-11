@@ -1,5 +1,7 @@
 import {
   calculateTDEE,
+  splitMacrosForTarget,
+  proteinMultiplierForGoal,
   type ActivityLevel,
   type FitnessGoal,
   type TDEEResult,
@@ -143,8 +145,16 @@ export function buildGoalWeightPersistPayload(args: {
 }): {
   payload: GoalWeightPersistPayload;
   plan: GoalWeightPlan;
-  /** The full TDEE computation, for display surfaces (bmr / deficit etc.). */
+  /** The full TDEE computation, for display surfaces (bmr / deficit etc.),
+   *  resolved against the target actually IN FORCE — a manual
+   *  `customCalorieTarget` replaces the formula target here, and the macro
+   *  split follows it. This is what `payload` persists, so a display surface
+   *  reading it cannot disagree with what was stored. */
   tdee: TDEEResult;
+  /** The pre-override formula result, for the rare caller that needs the
+   *  baseline rather than the effective target. Identical to `tdee` when no
+   *  override is set. */
+  formulaTdee: TDEEResult;
 } {
   const { profile, currentKg, targetKg, rateKgPerWeek } = args;
   const plan = resolveGoalWeightPlan({
@@ -161,9 +171,39 @@ export function buildGoalWeightPersistPayload(args: {
     profile.sex ?? "male",
     plan.dailyOffset
   );
+  /* A manual `customCalorieTarget` replaces the formula target, and the macro
+     split has to follow it. It did not: `targetCalories` took the override
+     while the grams stayed the formula's, so a user who pinned 1400 kcal had
+     a profile storing 1400 alongside a triple summing to 2209 — 58% over —
+     and Settings rendered the formula's 2209 as "Daily target" under a line
+     reading "Manual target — you set this". Three surfaces, two numbers, and
+     the one the user typed was on none of them.
+
+     `effectiveTdee` is the same result recomputed at whatever target is
+     actually in force, and is `tdee` itself when there is no override. `bmr`
+     and `tdee` (maintenance) stay formula facts; `deficit` is restated
+     against maintenance so it keeps meaning what it says. `tdeeBase` stays
+     the FORMULA target deliberately — the adaptive engine treats it as the
+     pre-override baseline. */
+  const effectiveCalories = profile.customCalorieTarget || tdee.targetCalories;
+  const effectiveTdee: TDEEResult =
+    effectiveCalories === tdee.targetCalories
+      ? tdee
+      : {
+          ...tdee,
+          targetCalories: effectiveCalories,
+          deficit: effectiveCalories - tdee.tdee,
+          ...splitMacrosForTarget(
+            effectiveCalories,
+            currentKg,
+            proteinMultiplierForGoal(plan.fitnessGoal)
+          ),
+        };
+
   return {
     plan,
-    tdee,
+    tdee: effectiveTdee,
+    formulaTdee: tdee,
     payload: {
       goalWeightKg: targetKg,
       weeklyRateKg: plan.effectiveRateKgPerWeek,
@@ -173,10 +213,10 @@ export function buildGoalWeightPersistPayload(args: {
         currentPhase: profile.program?.currentPhase ?? "base",
       },
       tdeeBase: tdee.targetCalories,
-      targetCalories: profile.customCalorieTarget || tdee.targetCalories,
-      targetProtein: tdee.protein,
-      targetCarbs: tdee.carbs,
-      targetFat: tdee.fat,
+      targetCalories: effectiveTdee.targetCalories,
+      targetProtein: effectiveTdee.protein,
+      targetCarbs: effectiveTdee.carbs,
+      targetFat: effectiveTdee.fat,
     },
   };
 }
