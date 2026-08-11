@@ -238,12 +238,37 @@ export function shouldRecommendDeload(
   currentPI: number,
   recoveryScore: number,
   adherenceScore: number,
-  previousWeekPI?: number
+  previousWeekPI?: number,
+  weekBeforePreviousPI?: number
 ): boolean {
   // PI ≥ 80 with poor recovery
   if (currentPI >= 80 && recoveryScore < 45) return true;
-  // Sustained high load (two weeks in a row ≥ 85 — overreach territory)
-  if (currentPI >= 85 && previousWeekPI != null && previousWeekPI >= 85)
+  /* Sustained high load — two weeks in a row ≥ 85, which is overreach
+     territory. Fires on the TRANSITION into that state, not on the state.
+     `weekBeforePreviousPI` is the third reading, and if it was already ≥ 85
+     the athlete has been here for a while and has been told.
+
+     Why the edge matters: the PI is a ratio to a rolling baseline, so steady
+     improvement HOLDS it above the line rather than crossing it once. Anyone
+     progressing faster than ~2.7%/week sits at 85+ permanently — measured in
+     deloadNagLoop.test.ts, where a 2.8%/week athlete drew a recommendation in
+     25 weeks out of 26, every week, forever. Recommending the same action
+     every week while nothing has changed is a notification defect whichever
+     way the underlying training question is answered.
+
+     Genuine overreach still gets caught, and re-arms: a spike to 90 from a
+     steady 82 fires, and a return to 80 followed by another spike fires again.
+     Only the flat continuation is suppressed.
+
+     Absent (legacy caller, or no third week of history yet) reads as "not yet
+     in the band", so the behaviour is exactly as before — which is what keeps
+     a cold-start user's first crossing loud. */
+  if (
+    currentPI >= 85 &&
+    previousWeekPI != null &&
+    previousWeekPI >= 85 &&
+    !(weekBeforePreviousPI != null && weekBeforePreviousPI >= 85)
+  )
     return true;
   // High load with poor adherence (burning out)
   if (currentPI >= 70 && adherenceScore < 50) return true;
@@ -415,7 +440,11 @@ export function scorePerformance(
   agg: WeeklyAggregates,
   bl: Baseline,
   profile: PerformanceProfile,
-  previousWeekPI?: number
+  previousWeekPI?: number,
+  /** The PI two computes back — see `shouldRecommendDeload`'s sustained
+   *  branch, which fires on the transition into overreach rather than on the
+   *  state. Optional: absent reads as "not yet in the band". */
+  weekBeforePreviousPI?: number
 ): ScoredPerformance {
   const liftLoadScore = computeLiftLoadScore(agg, bl);
   const runLoadScore = computeRunLoadScore(agg, bl);
@@ -455,7 +484,13 @@ export function scorePerformance(
   // Don't recommend deload when baseline is insufficient — score is unreliable
   const deloadRecommended =
     bl.weeksUsed >= 3
-      ? shouldRecommendDeload(pi, recoveryScore, adherenceScore, previousWeekPI)
+      ? shouldRecommendDeload(
+          pi,
+          recoveryScore,
+          adherenceScore,
+          previousWeekPI,
+          weekBeforePreviousPI
+        )
       : false;
 
   const partial = {
@@ -483,10 +518,17 @@ export function computePerformanceIndex(
   currentWeek: WeeklyAggregates,
   priorWeeks: WeeklyAggregates[],
   profile: PerformanceProfile,
-  previousWeekPI?: number
+  previousWeekPI?: number,
+  weekBeforePreviousPI?: number
 ): PerformanceDoc {
   const bl = computeBaseline(priorWeeks);
-  const scored = scorePerformance(currentWeek, bl, profile, previousWeekPI);
+  const scored = scorePerformance(
+    currentWeek,
+    bl,
+    profile,
+    previousWeekPI,
+    weekBeforePreviousPI
+  );
   const confidence = computeConfidence(currentWeek, bl);
 
   return {

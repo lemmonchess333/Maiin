@@ -150,9 +150,28 @@ function computeLoadBand(pi) {
 
 // ── Deload recommendation ────────────────────
 
-function shouldRecommendDeload(currentPI, recoveryScore, adherenceScore, previousWeekPI) {
+function shouldRecommendDeload(
+  currentPI,
+  recoveryScore,
+  adherenceScore,
+  previousWeekPI,
+  weekBeforePreviousPI
+) {
   if (currentPI >= 80 && recoveryScore < 45) return true;
-  if (currentPI >= 85 && previousWeekPI != null && previousWeekPI >= 85) return true;
+  /* Sustained high load, fired on the TRANSITION into overreach rather than on
+     the state — mirror of the client copy; see performanceEngine.ts for the
+     full reasoning and deloadNagLoop.test.ts for the measurement (a 2.8%/week
+     athlete drew a recommendation 25 weeks out of 26 before this).
+
+     Absent `weekBeforePreviousPI` reads as "not yet in the band", so legacy
+     callers behave exactly as before. */
+  if (
+    currentPI >= 85 &&
+    previousWeekPI != null &&
+    previousWeekPI >= 85 &&
+    !(weekBeforePreviousPI != null && weekBeforePreviousPI >= 85)
+  )
+    return true;
   if (currentPI >= 70 && adherenceScore < 50) return true;
   return false;
 }
@@ -251,7 +270,7 @@ function generatePlanAdjustments(doc) {
  * @param {object} profile  { goal?, weeklyWorkoutsTarget?, targetCalories?, targetProtein? }
  * @param {number} [previousWeekPI]
  */
-function scorePerformance(agg, bl, profile, previousWeekPI) {
+function scorePerformance(agg, bl, profile, previousWeekPI, weekBeforePreviousPI) {
   const goal = profile.goal;
 
   const targetWorkouts =
@@ -292,7 +311,13 @@ function scorePerformance(agg, bl, profile, previousWeekPI) {
   const loadBand = computeLoadBand(pi);
   const deloadRecommended =
     bl.weeksUsed >= 3
-      ? shouldRecommendDeload(pi, recoveryScore, adherenceScore, previousWeekPI)
+      ? shouldRecommendDeload(
+          pi,
+          recoveryScore,
+          adherenceScore,
+          previousWeekPI,
+          weekBeforePreviousPI
+        )
       : false;
 
   const partial = {
