@@ -117,9 +117,7 @@ import {
   setLastShownAt,
   getDismissedWeekKey,
   setDismissedWeekKey,
-  clearEasedWeekKey,
   getEasedWeekKey,
-  setEasedWeekKey,
 } from "@/lib/easeWeekNudgeMarkers";
 import { planEasierWeek } from "@/lib/adjustWeek";
 import { track as trackProgram } from "@/lib/programAnalytics";
@@ -1683,14 +1681,11 @@ export default function ProgrammeRunSection({
             const result = await realignRacePlan();
             return result;
           }}
-          // A6: record the eased week so next week's bounce check can
-          // read this week's quality session against it.
-          onEasedApplied={() =>
-            setEasedWeekKey(profile.uid, thisWeekKeyForDismissal)
-          }
-          // A6 symmetry: an undone week must not be read for a bounce next
-          // week. It never was one, so there is nothing to recover from.
-          onEaseUndone={() => clearEasedWeekKey(profile.uid)}
+          // A6's eased-week marker is the sheet's own job now. It was a
+          // callback from here, and the sheet's OTHER mount (SettingsRunPlan)
+          // never passed one — so easing from Settings produced no bounce
+          // line, and undoing from there left this mount's marker standing.
+          uid={profile.uid}
         />
       )}
     </section>

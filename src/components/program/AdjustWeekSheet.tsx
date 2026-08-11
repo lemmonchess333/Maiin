@@ -11,18 +11,20 @@
  *     mutations: an easier week (quality→easy swaps, previewed day-by-day)
  *     or a re-plan from today (the existing realignRacePlan, previewed via
  *     classifyRaceTiming copy)
+ *   - every change is PREVIEWED and applied only on an explicit tap
+ *   - the race date is NEVER changed here
+ *   - not a medical feature: copy is scheduling control, no diagnoses
  *
  * RUN-EASE-01 moved the easier week off N per-day `overrideRunDay` calls
  * onto one `applyEaseWeek` command. The composition is still thin, but a
  * half-eased week is no longer reachable and — the point — the server
  * snapshots the pre-ease runs, so Undo is a row on this sheet for the rest
  * of the week rather than an 8-second toast holding the only copy.
- *   - every change is PREVIEWED and applied only on an explicit tap
- *   - the race date is NEVER changed here
- *   - not a medical feature: copy is scheduling control, no diagnoses
  *
  * Mounted by ProgrammeRunSection (cockpit entry) and SettingsRunPlan; both
  * gate on race_prep + not-recovery + not-elapsed before rendering the entry.
+ * Both mounts matter — the A6 eased-week marker used to be a caller's job
+ * and the Settings one never did it, which is why this sheet now owns it.
  */
 import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, CalendarClock, Feather } from "lucide-react";
@@ -30,7 +32,11 @@ import BottomSheet from "@/components/ui/BottomSheet";
 import Button from "@/components/ui/Button";
 import { toast } from "@/lib/toast";
 import { logger } from "@/lib/logger";
-import { localDateString } from "@/lib/dateHelpers";
+import { localDateString, localWeekKey } from "@/lib/dateHelpers";
+import {
+  clearEasedWeekKey,
+  setEasedWeekKey,
+} from "@/lib/easeWeekNudgeMarkers";
 import { planEasierWeek, type EasySwap } from "@/lib/adjustWeek";
 import { track } from "@/lib/programAnalytics";
 import {
@@ -85,14 +91,23 @@ interface AdjustWeekSheetProps {
    *  nudge already established the intent). Omitted for the normal
    *  "Adjust this week" entry, which still opens on the chooser. */
   initialIntent?: Intent;
-  /** A6: fired after an easier-week apply COMMITS (never on realign or
-   *  cancel). The parent records the eased weekKey so the post-ease
-   *  bounce check can read next week's quality session against it. */
-  onEasedApplied?: () => void;
-  /** A6's other half: fired after an undo COMMITS, so the parent can
-   *  forget that weekKey. Without it the bounce line would report a
-   *  recovery from a reduction the athlete cancelled. */
-  onEaseUndone?: () => void;
+  /**
+   * Whose week this is. Required, and used ONLY for the A6 eased-week
+   * marker the sheet maintains itself.
+   *
+   * It was a pair of optional `onEasedApplied` / `onEaseUndone` callbacks,
+   * and the optionality did exactly what optionality does: this sheet is
+   * mounted from two places, and the Settings one passed neither. So an
+   * ease applied from Settings recorded no marker and never produced the
+   * following week's bounce line, while an undo from Settings left a
+   * marker set from the cockpit standing — the app would report recovering
+   * from a reduction that had been restored.
+   *
+   * Owning the marker here is the same lesson as typing `overrideRunDay`
+   * `=> Promise<boolean>` instead of `=> void`: the fix for a caller that
+   * can forget is to stop asking it to remember.
+   */
+  uid: string;
 }
 
 const INTENTS: Array<{ id: Intent; label: string; hint: string }> = [
@@ -123,8 +138,7 @@ export default function AdjustWeekSheet({
   easedThisWeek = false,
   realignRacePlan,
   initialIntent,
-  onEasedApplied,
-  onEaseUndone,
+  uid,
 }: AdjustWeekSheetProps) {
   const [step, setStep] = useState<Step>({ kind: "intent" });
   const [applying, setApplying] = useState(false);
@@ -204,7 +218,7 @@ export default function AdjustWeekSheet({
       toast.error("Couldn't undo the easier week.");
       return;
     }
-    onEaseUndone?.();
+    clearEasedWeekKey(uid);
     toast.success("Easier week undone — this week is back to plan.");
     close(false);
   };
@@ -241,7 +255,10 @@ export default function AdjustWeekSheet({
         setApplying(false);
         return;
       }
-      onEasedApplied?.();
+      // A6: record the week so next week's bounce check can read this
+      // week's quality against it. Written only once the command has
+      // COMMITTED, so a failed ease never leaves a marker behind.
+      setEasedWeekKey(uid, localWeekKey(new Date()));
       track("adjust_week_applied", {
         intent,
         action: "easier_week",

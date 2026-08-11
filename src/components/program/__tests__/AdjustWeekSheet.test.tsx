@@ -10,14 +10,22 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import AdjustWeekSheet from "../AdjustWeekSheet";
+import {
+  getEasedWeekKey,
+  setEasedWeekKey,
+} from "@/lib/easeWeekNudgeMarkers";
+import { localWeekKey } from "@/lib/dateHelpers";
 
 vi.mock("@/lib/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
+const UID = "athlete-1";
+
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  window.localStorage.clear();
 });
 
 function setup() {
@@ -34,6 +42,7 @@ function setup() {
       raceGoal={{ distance: "marathon", targetDate: "2026-10-17" }}
       applyEaseWeek={applyEaseWeek}
       revertEaseWeek={vi.fn(async () => true)}
+      uid={UID}
       realignRacePlan={realignRacePlan}
     />
   );
@@ -94,8 +103,6 @@ function openEaser(props: {
   ) => Promise<number | null>;
   revertEaseWeek?: () => Promise<boolean>;
   easedThisWeek?: boolean;
-  onEasedApplied?: () => void;
-  onEaseUndone?: () => void;
 }) {
   render(
     <AdjustWeekSheet
@@ -106,8 +113,7 @@ function openEaser(props: {
       applyEaseWeek={props.applyEaseWeek ?? vi.fn(async () => 2)}
       revertEaseWeek={props.revertEaseWeek ?? vi.fn(async () => true)}
       easedThisWeek={props.easedThisWeek}
-      onEasedApplied={props.onEasedApplied}
-      onEaseUndone={props.onEaseUndone}
+      uid={UID}
       realignRacePlan={vi.fn()}
     />
   );
@@ -269,32 +275,54 @@ describe("AdjustWeekSheet — undoing an easier week", () => {
     expect(toast.success).not.toHaveBeenCalled();
   });
 
-  it("tells the parent to forget the eased week, but only once it lands", async () => {
+  it("records the eased week only once the ease COMMITS", async () => {
     /* A6 keeps a marker for the week an ease was applied in, so the
-       following week can ask "did the quality come back?". Left standing
-       through an undo, that question is asked about a reduction the
-       athlete cancelled and never ran — the app would report recovering
-       from a week it never had. The apply/undo pair has to be symmetric.
+       following week can ask "did the quality come back?".
 
-       Gated on success for the same reason the success toast is: a failed
-       restore leaves the week eased, so the marker is still true. */
-    const onEaseUndone = vi.fn();
-    const revertEaseWeek = vi.fn(async () => false);
-    openEaser({ easedThisWeek: true, revertEaseWeek, onEaseUndone });
-
-    fireEvent.click(screen.getByRole("button", { name: /Undo easier week/ }));
-    await vi.waitFor(() => expect(revertEaseWeek).toHaveBeenCalled());
-    expect(onEaseUndone).not.toHaveBeenCalled();
+       The sheet writes it itself. It used to be an optional callback from
+       the caller, and the sheet's other mount (SettingsRunPlan) passed
+       none — so easing from Settings recorded nothing and the bounce line
+       never appeared for those users at all. */
+    openEaser({ applyEaseWeek: vi.fn(async () => null) });
+    fireEvent.click(
+      screen.getByRole("button", { name: /I need easier running/ })
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Ease this week/ }));
+    const { toast } = await import("@/lib/toast");
+    await vi.waitFor(() => expect(toast.error).toHaveBeenCalled());
+    expect(getEasedWeekKey(UID)).toBeNull();
 
     cleanup();
-    const onUndone2 = vi.fn();
+    openEaser({ applyEaseWeek: vi.fn(async () => 2) });
+    fireEvent.click(
+      screen.getByRole("button", { name: /I need easier running/ })
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Ease this week/ }));
+    await vi.waitFor(() =>
+      expect(getEasedWeekKey(UID)).toBe(localWeekKey(new Date()))
+    );
+  });
+
+  it("forgets the eased week on undo, but only once the restore lands", async () => {
+    /* Left standing through an undo, the marker makes next week's bounce
+       line report recovering from a reduction the athlete cancelled and
+       never ran. Gated on success for the same reason the success toast
+       is: a failed restore leaves the week eased, so the marker is still
+       true. */
+    setEasedWeekKey(UID, localWeekKey(new Date()));
     openEaser({
       easedThisWeek: true,
-      revertEaseWeek: vi.fn(async () => true),
-      onEaseUndone: onUndone2,
+      revertEaseWeek: vi.fn(async () => false),
     });
     fireEvent.click(screen.getByRole("button", { name: /Undo easier week/ }));
-    await vi.waitFor(() => expect(onUndone2).toHaveBeenCalledTimes(1));
+    const { toast } = await import("@/lib/toast");
+    await vi.waitFor(() => expect(toast.error).toHaveBeenCalled());
+    expect(getEasedWeekKey(UID)).toBe(localWeekKey(new Date()));
+
+    cleanup();
+    openEaser({ easedThisWeek: true, revertEaseWeek: vi.fn(async () => true) });
+    fireEvent.click(screen.getByRole("button", { name: /Undo easier week/ }));
+    await vi.waitFor(() => expect(getEasedWeekKey(UID)).toBeNull());
   });
 
   it("the toast's Undo takes the same route as the row", async () => {

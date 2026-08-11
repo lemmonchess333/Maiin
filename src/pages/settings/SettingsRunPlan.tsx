@@ -135,6 +135,7 @@ export default function SettingsRunPlan() {
             programState.easeSnapshot.weekNumber === programState.weekNumber
           }
           realignRacePlan={realignRacePlan}
+          uid={profile.uid}
         />
       )}
     </SettingsSection>
