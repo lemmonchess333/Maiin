@@ -219,3 +219,89 @@ describe("DeloadBanner", () => {
     expect(screen.getByText(/deload week active/i)).toBeTruthy();
   });
 });
+
+/**
+ * The active copy must name the RUN half too.
+ *
+ * Since the deload grew a run half (#1930) the confirmation described
+ * only the lift recipe, while the athlete's Tuesday tempo had quietly
+ * become a shorter one. The applied rule requires a reduction to "state
+ * whether sets, reps, load, exercise stress, or schedule changed"; a run
+ * swap changes exercise stress.
+ *
+ * Same shape as LIFT-EV-03, already resolved once for the lift recipe —
+ * the run half reintroduced it on a new axis.
+ *
+ * The count is zero for the AUTOMATIC week-4 deload, which goes through
+ * `advanceWeek` and never touches runDays. Silence is correct there, so
+ * the same component ends up truthful about whichever deload the athlete
+ * is actually in.
+ */
+describe("DeloadBanner — the active copy names the run half", () => {
+  it("adds the run clause when the deload stepped runs down", () => {
+    render(
+      <DeloadBanner
+        visible
+        weekKey="w30"
+        deloadActive
+        runsEased={3}
+        experience="intermediate"
+      />
+    );
+    expect(screen.getByText(/3 runs are a step shorter too/i)).toBeInTheDocument();
+    // and the lift half is still described
+    expect(screen.getByText(/at the same weights/i)).toBeInTheDocument();
+  });
+
+  it("says ONE run, singular", () => {
+    render(
+      <DeloadBanner
+        visible
+        weekKey="w31"
+        deloadActive
+        runsEased={1}
+        experience="beginner"
+      />
+    );
+    expect(screen.getByText(/One run is a step shorter too/i)).toBeInTheDocument();
+  });
+
+  it("stays silent for a lift-only deload", () => {
+    /* The automatic week-4 path. Mentioning runs here would be the
+       mirror-image lie of the one this fixes. */
+    render(
+      <DeloadBanner
+        visible
+        weekKey="w32"
+        deloadActive
+        runsEased={0}
+        experience="intermediate"
+      />
+    );
+    expect(screen.queryByText(/step shorter/i)).toBeNull();
+    expect(screen.getByText(/at the same weights/i)).toBeInTheDocument();
+  });
+
+  it("stays silent when the count is not supplied at all", () => {
+    // Every other DeloadBanner call site omits the prop; none of them
+    // should start claiming a run change.
+    render(
+      <DeloadBanner visible weekKey="w33" deloadActive experience="advanced" />
+    );
+    expect(screen.queryByText(/step shorter/i)).toBeNull();
+  });
+
+  it("never appears on the RECOMMENDATION state", () => {
+    // Nothing has been applied yet, so there is no run change to report.
+    render(
+      <DeloadBanner
+        visible
+        weekKey="w34"
+        runsEased={3}
+        experience="intermediate"
+        onApply={async () => true}
+      />
+    );
+    expect(screen.queryByText(/step shorter/i)).toBeNull();
+  });
+});

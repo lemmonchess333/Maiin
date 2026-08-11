@@ -105,6 +105,7 @@ import { resolveRunPlan } from "@/lib/runPlanResolver";
 import { shouldSuggestDeload } from "@/lib/deloadSuggestVisibility";
 import { runHeaderLine } from "@/lib/runHeaderLine";
 import { resolveDeloadRecommended } from "@/lib/performanceDocFields";
+import { deloadRunSwapCount } from "@/lib/deloadChangeSummary";
 
 /**
  * IMPORTANT:
@@ -1098,6 +1099,9 @@ function ProgramInner() {
               visible={showDeloadSuggest}
               weekKey={`w${displayWeekNumber}`}
               deloadActive={programState.currentPhase === "deload"}
+              // The run half of the deload, named in the copy. Derived from
+              // the snapshot rather than stored — see deloadChangeSummary.
+              runsEased={deloadRunSwapCount(programState)}
               experience={profile?.experience}
               onApply={handleApplyDeload}
             />
