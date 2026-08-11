@@ -13,48 +13,58 @@
  *
  * which turned the 12 m/s limit into an effective cap of 12 × k. Because the
  * Kalman gain falls as reported `accuracy` worsens, the gate tightened exactly
- * when fixes got noisier — and a rejection is self-perpetuating, since
- * `lastPoint` only advances on an ACCEPTED fix, so the frozen reference falls
- * further behind a runner who keeps moving.
+ * when fixes got noisier.
  *
- * Measured end-to-end through the real pipeline, % of true distance recorded
- * by a 3 m/s runner (5:33/km) over ten minutes:
+ * Measured end-to-end through the real pipeline — % of true distance recorded
+ * by a 3 m/s runner (5:33/km) over ten minutes, and the longest unbroken run of
+ * rejected fixes:
  *
- *              per-fix jitter:   0 m     1 m     2 m
- *     acc  5 m      before        99%      8%      1%
- *                   after         99%    100%    102%
- *     acc  8 m      before         1%      1%      1%
- *                   after         99%    100%    100%
- *     acc 30 m      before         1%      1%      1%
- *                   after         97%     97%     97%
+ *     accuracy   before          after
+ *      5 m       99%             99%
+ *      8 m       71%  (42 s)     99%
+ *     12 m       52%  (79 s)     99%
+ *     20 m       30%  (94 s)     98%
+ *     30 m       22%  (99 s)     97%
  *
- * The before-row is the finding: only the noise-FREE, high-accuracy corner
- * worked. Any jitter at all collapsed it even at 5 m accuracy, and above 6 m
- * accuracy it collapsed regardless.
+ * ── A CORRECTION, recorded because it was published wrong ──
  *
- * The fix compares raw-to-raw, which is what the guard is trying to ask. A
- * genuine teleport still trips the limit — 12 m/s is 43 km/h, faster than any
- * sprint — and normal running no longer does, at any accuracy the outer gate
- * admits. `rawLat`/`rawLon` already existed on `GPSPoint`; nothing new is
- * stored.
+ * PRs #1952 and #1953 reported this as "1-2% recorded" and "self-perpetuating —
+ * the trace never recovers". Both were artefacts of THIS harness, which used to
+ * re-stamp `lastPoint.timestamp` to "1 second ago" on every iteration. That
+ * pinned `timeDiff` at 1 s, so a rejection streak could never age out.
  *
- * ── Two honest limits on the above ──
+ * In the real pipeline `lastPoint.timestamp` holds the time of the last
+ * ACCEPTED fix, so `timeDiff` GROWS while the gate is rejecting — and since
+ * `dist` grows at the runner's true speed over the same interval, the implied
+ * speed decays toward the true speed and the gate lets the next fix through.
+ * The streak is therefore SELF-LIMITING, not permanent: 42-99 seconds at these
+ * accuracies, not forever.
+ *
+ * So the old behaviour was materially better than published — 71% of distance
+ * at 8 m accuracy, not 1% — and the defect is "a run loses chunks and reads
+ * short", not "a run records nothing". The direction of the fix is unchanged
+ * and its value is unchanged; only the severity was overstated. The harness now
+ * advances a fake clock with `vi.setSystemTime`, and `maxStreak` is asserted
+ * below so the self-limiting property is pinned rather than re-derived.
+ *
+ * ── The fix ──
+ *
+ * Compare raw-to-raw, which is what the guard is trying to ask. A genuine
+ * teleport still trips the limit — 12 m/s is 43 km/h, faster than any sprint —
+ * and normal running no longer does, at any accuracy the outer gate admits.
+ * `rawLat`/`rawLon` already existed on `GPSPoint`; nothing new is stored.
+ *
+ * ── One honest limit ──
  *
  * The jitter model is INDEPENDENT Gaussian noise per axis per fix, which
  * overstates real fix-to-fix variation: consecutive GPS fixes are strongly
  * autocorrelated because the OS fuses them with inertial data before the app
- * ever sees them. At ±5 m independent jitter BOTH variants collapse, because
- * raw-to-raw differencing then carries ~7 m/s of noise on its own against a
- * 12 m/s limit. That column says more about the model than about either
- * implementation, so it is not asserted here.
- *
- * The cascade is NOT fixed and is worth knowing about separately: the
- * reference only advances on acceptance under either variant, so a single
- * rejection can freeze it permanently. The fix makes rejections rare enough
- * that the cascade rarely starts; it does not remove the failure mode. A
- * reference that advances (or bounds its own staleness) on rejection would.
+ * ever sees them. Large independent jitter degrades both variants, because
+ * raw-to-raw differencing then carries several m/s of noise on its own against
+ * a 12 m/s limit. Only the 0-2 m range is asserted here; beyond it the model,
+ * not the implementation, is what is being measured.
  */
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { KalmanFilter, isValidReading, haversine } from "@/lib/gps";
 import type { GPSPoint } from "@/lib/gps";
 
@@ -110,6 +120,12 @@ function record(o: {
   let distance = 0;
   let rejected = 0;
   let accepted = 0;
+  let streak = 0;
+  let maxStreak = 0;
+  // Wall-clock anchor for the simulated run, so `lastPoint.timestamp` can carry
+  // the REAL time of the last accepted fix (see the note at its assignment).
+  const t0 = Date.now();
+  vi.useFakeTimers({ now: t0, shouldAdvanceTime: false });
 
   for (let t = 0; t < o.seconds; t++) {
     const lat =
@@ -117,12 +133,20 @@ function record(o: {
     const lon =
       (rng() * jitter) /
       (M_PER_DEG_LAT * Math.cos((START_LAT * Math.PI) / 180));
-    // `isValidReading` derives its interval from `Date.now()`.
-    if (last) last.timestamp = Date.now() - 1000;
+    /* `isValidReading` derives its interval as `Date.now() - lastPoint
+       .timestamp`, so the simulated clock has to advance with `t` and the
+       previous point must keep the timestamp of the fix that was actually
+       ACCEPTED. An earlier version of this harness re-stamped it to "1 second
+       ago" on every iteration, which pinned `timeDiff` at 1 s and made a
+       rejection streak look permanent — see the header. */
+    vi.setSystemTime(t0 + t * 1000);
     if (!isValidReading(coordsAt(lat, lon, o.accuracy), last, t)) {
       rejected++;
+      streak++;
+      maxStreak = Math.max(maxStreak, streak);
       continue;
     }
+    streak = 0;
     accepted++;
     const sm = filter.process(lat, lon, o.accuracy);
     const point = {
@@ -131,7 +155,7 @@ function record(o: {
       altitude: null,
       accuracy: o.accuracy,
       speed: null,
-      timestamp: Date.now(),
+      timestamp: t0 + t * 1000,
       rawLat: lat,
       rawLon: lon,
     } as GPSPoint;
@@ -139,16 +163,28 @@ function record(o: {
     last = point;
   }
   const truth = o.speedMps * (o.seconds - 1);
-  return { distance, rejected, accepted, truth, ratio: distance / truth };
+  return {
+    distance,
+    rejected,
+    accepted,
+    maxStreak,
+    truth,
+    ratio: distance / truth,
+  };
 }
 
 const pct = (r: number) => Math.round(r * 100);
 
+// `record` advances a fake clock; leaving it set would leak into other files.
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 describe("GPS speed gate — the filter's lag is out of the measurement", () => {
   it("records a runner's distance at every accuracy the outer gate admits", () => {
     /* The outer accuracy gate stops at 35 m, so this is the whole admissible
-       range. Before the raw-to-raw change everything from 7 m up recorded
-       ~1%. */
+       range. Before the raw-to-raw change, 8 m recorded 71% and 20 m recorded
+       30% — with rejection streaks of 42 s and 94 s punched out of the trace. */
     for (const accuracy of [5, 6, 7, 8, 12, 20]) {
       const r = record({ accuracy, speedMps: 3, seconds: 300 });
       expect(pct(r.ratio), `accuracy ${accuracy}m`).toBeGreaterThan(95);
@@ -212,6 +248,36 @@ describe("GPS speed gate — the filter's lag is out of the measurement", () => 
     // And a plausible 1-second step is still accepted.
     const step = coordsAt(START_LAT + 3 / M_PER_DEG_LAT, 0, 8);
     expect(isValidReading(step, last, 60)).toBe(true);
+  });
+
+  it("a rejection streak ages out on its own — it is not a permanent cascade", () => {
+    /* The property whose absence was published in #1952/#1953, pinned directly
+       so it cannot be mis-stated again.
+
+       While the gate is rejecting, `lastPoint` is frozen but its TIMESTAMP is
+       frozen with it, so `timeDiff` grows at the same rate as the runner's
+       distance from it. The implied speed therefore decays toward the runner's
+       true speed and the next fix is admitted. Demonstrated on the OLD
+       behaviour by driving the gate against the SMOOTHED reference by hand —
+       the current code cannot reproduce it, which is the point. */
+    const filter = new KalmanFilter();
+    const t0 = Date.now();
+    // Seed the filter and let it fall behind a 3 m/s runner.
+    let sm = { lat: START_LAT, lon: 0 };
+    for (let t = 0; t < 60; t++) {
+      sm = filter.process(START_LAT + (3 * t) / M_PER_DEG_LAT, 0, 12);
+    }
+    const frozenAt = 60;
+    const impliedAgainstSmoothed = (secondsStuck: number) => {
+      const trueLat = START_LAT + (3 * (frozenAt + secondsStuck)) / M_PER_DEG_LAT;
+      return haversine(sm.lat, sm.lon, trueLat, 0) / secondsStuck;
+    };
+    // One second after freezing, the lag dominates and the gate refuses.
+    expect(impliedAgainstSmoothed(1)).toBeGreaterThan(12);
+    // Left alone, the same comparison decays under the limit and recovers.
+    expect(impliedAgainstSmoothed(30)).toBeLessThan(12);
+    expect(impliedAgainstSmoothed(120)).toBeLessThan(4);
+    void t0;
   });
 
   it("the lag that used to leak in is real, and is why raw-to-raw matters", () => {
