@@ -118,6 +118,7 @@ import {
   parseLocalDate,
 } from "@/lib/dateHelpers";
 import { isInRecoveryOn } from "@/lib/runPlanResolver";
+import { planDeloadWeek, type DeloadSwap } from "@/lib/planDeloadWeek";
 import { CURRENT_PROGRAM_SCHEMA_VERSION } from "./programTypes";
 import { projectWorkoutSets } from "./workoutSetRecord";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
@@ -2882,6 +2883,28 @@ export function useProgram() {
   const sendDeloadCommand = useCallback(
     async (kind: "applyDeloadWeek" | "revertDeloadWeek"): Promise<boolean> => {
       if (!user || !programState) return false;
+      /**
+       * P1d pin 1 — the run half, computed HERE because the template
+       * ladders live in RUN_TEMPLATES and `functions/` cannot import it
+       * (`raceTemplateIds.js` says so outright). The same division already
+       * governs `overrideRunDay`. The server re-checks everything that
+       * matters: the day exists, is editable, and is not a race.
+       *
+       * Sent only on apply — revert restores from the snapshot and needs
+       * no payload. Omitted entirely when there is nothing to step down
+       * (lift-only users, or a week already at the ladder floors), which
+       * is also the shape an older client sends.
+       */
+      const runSwaps =
+        kind === "applyDeloadWeek"
+          ? planDeloadWeek(
+              programState.runDays ?? [],
+              localDateString(new Date())
+            ).map((s: DeloadSwap) => ({
+              runDayId: String(s.key),
+              templateId: s.toTemplateId,
+            }))
+          : [];
       const command = {
         kind,
         // Reuses the bounded safe-alphabet id generator (UUID with a
@@ -2889,6 +2912,7 @@ export function useProgram() {
         // COMMAND_ID_RE.
         commandId: generateInstanceId(),
         expectedWeekNumber: programState.weekNumber,
+        ...(runSwaps.length > 0 ? { runSwaps } : {}),
       };
       try {
         await sendProgramCommand(command);
