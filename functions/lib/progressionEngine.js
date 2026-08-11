@@ -46,6 +46,24 @@ function usesMicroplateStep(category, weight) {
   return SINGLE_JOINT_CATEGORIES.has(category) || weight < HEAVY_LOAD_KG;
 }
 
+/**
+ * The rep ceiling a range-LESS double progression already implies — mirror of
+ * `impliedDoubleRangeMax` in programEngine.ts; see there for the writers that
+ * produce range-less doubles (the v3 coverage backfill, per-side template
+ * forms, pre-backlog-#7 documents) and for the 12-session emulation showing
+ * those exercises frozen.
+ *
+ * Not new policy: `resetReps + 2` is the overshoot the legacy arm already
+ * steps the load at, and `MAX_BODYWEIGHT_REPS` is what `bumpBodyweightReps`
+ * already falls back to. Seconds are excluded — a hold's step is 5 seconds,
+ * not 1, so a rep-shaped ceiling means nothing to it.
+ */
+function impliedDoubleRangeMax(resetReps, isBodyweight, isTimed) {
+  if (isTimed) return undefined;
+  const ceiling = isBodyweight ? MAX_BODYWEIGHT_REPS : resetReps + 2;
+  return ceiling > resetReps ? ceiling : undefined;
+}
+
 function goalWeightBonus(goal) {
   return goal === "lean bulk" ? 1.25 : 0;
 }
@@ -161,7 +179,13 @@ function applyProgression(
 
   if (exercise.progressionType === "double") {
     if (completed) {
-      const rangeMax = exercise.repRangeMax;
+      // Authored ceiling, or the one the legacy arm below already implies.
+      // Mirror of the client branch — without the fallback a range-less
+      // double never progresses for a lifter who hits the prescription.
+      const rangeMax =
+        exercise.repRangeMax == null
+          ? impliedDoubleRangeMax(resetReps, isBodyweight, isTimed)
+          : exercise.repRangeMax;
       if (isBodyweight && rangeMax != null && rangeMax > resetReps) {
         // Range-aware BODYWEIGHT progression — mirror of the client branch
         // (2026-08-03); see programEngine.ts for the emulation that found the
