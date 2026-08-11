@@ -1131,8 +1131,30 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
           weekStart,
         })
       );
+      /* Shakeouts BEFORE the race only. A slot after race day is not a
+         shakeout — it is the training week bleeding past the event the plan
+         exists to reach, and for a marathon it landed three easy runs in the
+         72 hours after the finish.
+
+         `<` rather than `!==` is the whole change. It bites exactly when race
+         day is not the last run-eligible day of its week, which was 28.4% of
+         generated plans (racePlanSafetySweep.test.ts) — every distance
+         equally, since it is a calendar property. A Sunday race on a
+         Sun/Mon/Tue/Wed schedule was the worst case, and Sunday is when most
+         road races are held.
+
+         Nothing downstream was clearing them: `scheduleRecoveryWeekV2`
+         replaces the runDays of the week AFTER the race (useProgram's rollover
+         branch), so the race week's own tail survived. The plan already
+         commits to recovery from the following week via
+         `recoveryWeeksForDistance` — this stops it contradicting itself in the
+         days immediately after.
+
+         The normal case is untouched: when the race falls after the week's run
+         days it carries the `dayIndex: 7` sentinel, every slot 0-6 is `< 7`,
+         and the full shakeout set is kept. */
       runEligibleSlots
-        .filter((d) => d !== raceDayIndex)
+        .filter((d) => d < raceDayIndex)
         .forEach((d) =>
           week.push(
             buildRunDayV2({
