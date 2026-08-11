@@ -29,7 +29,13 @@ vi.mock("@/hooks/useWeeklyReview", () => ({
     review: mockReview,
     weekKey: "2026-W27",
   }),
-  reviewViewedKey: (uid: string, week: string) => `${uid}:${week}`,
+  /* Signature must match the real one. It lost its `uid` argument when
+     dismissal keys moved to being uid-scoped by `useDismissOnce` itself,
+     and this mock kept the old two-arg shape — silently, because
+     `useDismissOnce` is mocked below and never looks at the key. A mock
+     that outlives the API it stands in for is the same rot as a comment
+     that does. */
+  reviewViewedKey: (weekKey: string) => `tropos-review-viewed:${weekKey}`,
 }));
 
 vi.mock("@/hooks/useDismissOnce", () => ({
