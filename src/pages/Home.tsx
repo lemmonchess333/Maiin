@@ -55,7 +55,7 @@ import { setDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
 import { useClaimMap } from "@/hooks/useClaimMap";
-import { weighInProfileMirror } from "@/lib/bodyweightLogs";
+import { weighInProfilePatch } from "@/lib/bodyweightLogs";
 import { goalReachedOffer } from "@/lib/goalWeightPlan";
 import GoalReachedSheet from "@/components/home/GoalReachedSheet";
 import { localDateString, localWeekKey } from "@/lib/dateHelpers";
@@ -415,12 +415,13 @@ export default function Home() {
       );
       // Mirror the fresh weigh-in onto profile.weightKg — the anchor
       // calculateTDEE / getAdjustedTargets / resolveGoalWeightPlan all
-      // read, which this flow previously left stale for months (see
-      // weighInProfileMirror). Best-effort AFTER the canonical log row
+      // read, which this flow previously left stale for months — AND onto
+      // the two stored macros that are functions of it (see
+      // weighInProfilePatch). Best-effort AFTER the canonical log row
       // lands: a failed mirror must not fail the weigh-in, and the next
       // weigh-in retries it. throwOnError so the generic "couldn't save
       // your settings" toast doesn't fire over a successful weigh-in.
-      const mirror = weighInProfileMirror(profile?.weightKg, storeW);
+      const mirror = weighInProfilePatch(profile, storeW);
       if (mirror) {
         updateProfile(mirror, { throwOnError: true }).catch((e) =>
           logger.warn("[Home] weight mirror to profile failed", e)
