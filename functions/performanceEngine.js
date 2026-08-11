@@ -26,6 +26,15 @@ const perfScoring = require("./lib/perfScoring");
 // (isVolumeEligible); keep all three in lockstep when the rule changes.
 const { isVolumeEligibleRun } = require("./lib/runEligibility");
 
+// Which calorie target adherence is scored against. Not always
+// profile.targetCalories — see the module header: for a Pro user whose
+// adaptive-TDEE layer has engaged, the app shows the learned value and
+// targetCalories deliberately never moves.
+const {
+  resolveScoringCalorieTarget,
+} = require("./lib/calorieTargetResolution");
+const { computeEffectiveTier } = require("./helpers");
+
 const db = admin.firestore();
 
 // ── Constants ────────────────────────────────
@@ -591,6 +600,18 @@ async function computeAndWritePerformanceForUser(uid, computeKeyOverride) {
       /* no previous doc, that's fine */
     }
 
+    /* Score adherence against the target the USER was actually shown. A Pro
+       user on the learned target is scored against `adaptiveCapState
+       .lastApplied`; everyone else against `profile.targetCalories`. Null
+       when the profile carries no target at all, which computeAdherenceScore
+       already reads as "drop the calorie factor" rather than scoring against
+       a guess. */
+    const resolvedTarget = resolveScoringCalorieTarget(
+      profile,
+      computeEffectiveTier(profile)
+    );
+    const scoringCalories = resolvedTarget ? resolvedTarget.value : null;
+
     // Score — delegate to the shared, goal-aware post-baseline scorer (the
     // parity seam, pinned to the client copy). profile.goal drives the four
     // goal-aware branches; the <3-week baseline-sufficiency deload gate lives
@@ -601,7 +622,7 @@ async function computeAndWritePerformanceForUser(uid, computeKeyOverride) {
       {
         goal: profile.goal,
         weeklyWorkoutsTarget: profile.weeklyWorkoutsTarget,
-        targetCalories: profile.targetCalories,
+        targetCalories: scoringCalories,
         targetProtein: profile.targetProtein,
       },
       previousComputePI,

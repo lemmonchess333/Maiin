@@ -958,6 +958,42 @@ Affects: `functions/index.js` `stripeWebhook` handler, `stripeEvents/{event.id}`
 - [ ] Post-deploy, on the next real Stripe webhook delivery, confirm the `stripeEvents/<event.id>` doc has a `claimedAt` field (new) AND a `processedAt` field (existing). Pre-fix only `processedAt` was set.
 - [ ] If a webhook handler crashes mid-process (force via stripe-cli test event), confirm the `stripeEvents/<event.id>` doc is DELETED so Stripe's retry can re-attempt. Pre-fix the partial claim would persist and the retry would silently skip.
 
+### Adherence scored against the learned calorie target
+
+Affects: `functions/performanceEngine.js`, new
+`functions/lib/calorieTargetResolution.js`. Deploys via
+`deploy-functions.yml`.
+
+The adherence factor scored `profile.targetCalories`, which for a Pro user on
+an engaged adaptive-TDEE target is not the number the app shows — the learned
+value lives in `adaptiveCapState.lastApplied` and `targetCalories`
+deliberately never moves (the estimator reads it as its own anchor). The step
+cap is 150 kcal per 7-day window with no cumulative bound, so the two drift
+apart indefinitely; a compliant Pro cutter four windows in scored 45.5 on the
+calorie factor instead of 100. The server now resolves the target through the
+same precedence the client uses.
+
+- [ ] **Deployed-source spot-check (do first).** Console →
+      `weeklyPerformanceRollup` and `dailyPerformanceRefresh` source contains
+      `require("./lib/calorieTargetResolution")`. A `.js` change, so the
+      bundle-hash dedup should not bite — verify anyway (CI-green is
+      necessary-not-sufficient).
+- [ ] **A Pro user on a learned target scores against it.** Spot-check a user
+      whose `adaptiveCapState.lastAppliedAt` is real (not the epoch anchor)
+      and whose `lastApplied` differs from `targetCalories` by >10%: after the
+      next rollup their `adherenceScore` should reflect intake measured
+      against `lastApplied`. Pre-fix, eating the displayed target read as a
+      miss.
+- [ ] **Free and manual-override users are unchanged.** The overwhelming
+      majority. A free user (or one with `customCalorieTarget` set) must still
+      score against `targetCalories` even when a stale `adaptiveCapState`
+      survives on their profile from a lapsed Pro period.
+- [ ] **Residue, not yet fixed:** `targetProtein` is still the stored
+      bodyweight figure. It agrees with the adaptive split except when the
+      learned target moves DOWN far enough to trigger the protein cap — a
+      narrower case than the calorie gap, and left rather than half-mirroring
+      the macro splitter into `functions/`.
+
 ### Partner-streak server persist (SOCIAL S3 Soc7, PR5a)
 
 Affects: `functions/index.js` (`onWorkoutCreated` / `onRunCreated` now call `applyPartnerActivity`), new `functions/lib/partnerStreakEngine.js` + `functions/lib/partnerStreakPersist.js`. Deploys via `deploy-functions.yml`. The server is now the SOLE writer of `partnerBonds` streak state.
