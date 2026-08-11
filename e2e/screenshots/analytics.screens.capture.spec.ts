@@ -18,6 +18,7 @@
  */
 import { test, expect, type Page } from "@playwright/test";
 import { emulatorActive } from "../helpers/emulator";
+import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
 
 const AUTH_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
 const FS_HOST = process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080";
@@ -153,12 +154,8 @@ test.describe("analytics tab screenshots", () => {
   );
 
   test.beforeEach(async ({ page }) => {
+    await suppressCoachmarks(page);
     await page.addInitScript(() => {
-      try {
-        window.localStorage.setItem("tropos-coach-marks-dismissed", "1");
-      } catch {
-        /* storage unavailable */
-      }
       document.addEventListener("DOMContentLoaded", () => {
         const style = document.createElement("style");
         style.textContent =

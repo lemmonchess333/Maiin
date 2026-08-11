@@ -47,8 +47,11 @@ export function reviewedWeekKey(now: Date = new Date()): string {
 }
 
 /** localStorage key for the Home entry's viewed state (useDismissOnce). */
-export function reviewViewedKey(uid: string, weekKey: string): string {
-  return `tropos-review-viewed:${uid}:${weekKey}`;
+/* No uid segment: `useDismissOnce` prefixes one, and it is the only
+   consumer. Both surfaces that share this key (the Home entry reads it,
+   the review page writes it) go through that hook, so they stay in step. */
+export function reviewViewedKey(weekKey: string): string {
+  return `tropos-review-viewed:${weekKey}`;
 }
 
 /* Matches useUserPRMap's bound — ~3 months of heavy logging. The PR

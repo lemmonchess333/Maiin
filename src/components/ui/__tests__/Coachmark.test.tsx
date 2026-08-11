@@ -17,7 +17,11 @@ import Coachmark from "../Coachmark";
  * animation interact badly under jsdom. A short autoDismissMs + waitFor
  * is more reliable. */
 
-const STORAGE_KEY = "tropos-coach-marks-dismissed:test-coachmark-v1";
+/* `anon:` is the signed-out bucket — this renders without an AuthProvider,
+   which `useUidForStorageKey` treats the same way. The prefix is what keeps
+   one account's dismissed coach marks from silencing another's on a shared
+   device; see useCoachMarks.test.tsx for the isolation cases. */
+const STORAGE_KEY = "anon:tropos-coach-marks-dismissed:test-coachmark-v1";
 
 describe("Coachmark", () => {
   beforeEach(() => {
