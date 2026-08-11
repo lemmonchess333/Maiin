@@ -156,7 +156,12 @@ interface ProgrammeRunSectionProps {
    *  target is 0 (malformed plan). Freeform users see the hero
    *  regardless. */
   runsTarget: number;
-  overrideRunDay: (idOrDayIndex: string | number, templateId: string) => void;
+  /** Async and outcome-reporting — see AdjustWeekSheet's note on why the
+   *  old `=> void` shape is what let a missing await through. */
+  overrideRunDay: (
+    idOrDayIndex: string | number,
+    templateId: string
+  ) => Promise<boolean>;
   /** PR-J Q2 chunk B2: replaces completeRunDay. Writes the
    *  manualCompletions map; derivation surfaces ✅. */
   markManualComplete: (runDayId: string) => Promise<void>;

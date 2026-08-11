@@ -1936,8 +1936,16 @@ export function useProgram() {
   // dayIndex fallback stays for legacy callers (Programme Run tab
   // row select, Week-tab template select) that still pass dow.
   const overrideRunDay = useCallback(
-    async (idOrDayIndex: string | number, templateId: string) => {
-      if (!programState?.runDays) return;
+    /* Returns whether the swap actually landed. AdjustWeekSheet applies a
+       whole week of these at once and has to tell the athlete the truth
+       about how many took — it used to fire them unawaited and claim
+       success unconditionally. DayActionSheet ignores the value; a
+       single swap already reports itself through the UI. */
+    async (
+      idOrDayIndex: string | number,
+      templateId: string
+    ): Promise<boolean> => {
+      if (!programState?.runDays) return false;
       const target =
         typeof idOrDayIndex === "string"
           ? programState.runDays.find((rd) => rd.id === idOrDayIndex)
@@ -1946,7 +1954,7 @@ export function useProgram() {
         logger.warn(
           `[overrideRunDay] no runDay matched ${typeof idOrDayIndex === "string" ? "id" : "dayIndex"}=${idOrDayIndex}; skipping`
         );
-        return;
+        return false;
       }
       // RUN-RACE-GUARD-01: a scheduled race's identity is immutable.
       // Swapping its template to an easy run (then completing it as an
@@ -1956,7 +1964,7 @@ export function useProgram() {
         logger.warn(
           `[overrideRunDay] refusing to swap a scheduled race (id=${target.id ?? target.dayIndex}); race identity is immutable`
         );
-        return;
+        return false;
       }
 
       // PR-0b-iii: editability gate via the central helper.
@@ -1969,14 +1977,14 @@ export function useProgram() {
         logger.warn(
           `[overrideRunDay] refusing to swap template on non-editable runDay (status="${status}", id=${target.id ?? target.dayIndex}); use Configure Plan to rebuild instead`
         );
-        return;
+        return false;
       }
 
       if (!target.id) {
         logger.warn(
           `[overrideRunDay] runDay at dayIndex=${target.dayIndex} has no stable id; skipping`
         );
-        return;
+        return false;
       }
 
       // Match against the resolved target's id — the dayIndex fallback that
@@ -2003,8 +2011,10 @@ export function useProgram() {
       if (outcome === "rejected") {
         toast.error("Couldn't change that run. Refreshing.");
         await refetchProgramState();
+        return false;
       }
       // No success toast — the schedule UI shows the new run-day state.
+      return true;
     },
     [programState, runProgramCommand, refetchProgramState]
   );

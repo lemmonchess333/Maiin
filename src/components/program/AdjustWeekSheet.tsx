@@ -49,7 +49,17 @@ interface AdjustWeekSheetProps {
     targetDate: string;
   };
   /** Existing per-day writer ("changes this day only"). */
-  overrideRunDay: (idOrDayIndex: string | number, templateId: string) => void;
+  /**
+   * Declared `=> void` until 2026-08-11, which is how the missing `await`
+   * below survived: the real function is async and reports whether the
+   * swap landed, but a `void` return makes forgetting to await it
+   * type-correct. Typing the truth is what makes the caller's mistake a
+   * compile error instead of a toast that lies.
+   */
+  overrideRunDay: (
+    idOrDayIndex: string | number,
+    templateId: string
+  ) => Promise<boolean>;
   /** Existing re-anchor writer (keeps the race date). */
   realignRacePlan: () => Promise<{ timing: RaceTiming; totalWeeks: number }>;
   /** Run14: when the sheet is opened FROM the ease-week nudge, skip the
@@ -144,17 +154,39 @@ export default function AdjustWeekSheet({
     if (applying) return;
     setApplying(true);
     try {
-      for (const s of swaps) overrideRunDay(s.key, s.toTemplateId);
+      /* AWAITED, and the count comes from what actually landed.
+
+         This was `for (const s of swaps) overrideRunDay(...)` with no
+         await: N promises fired into the void, the enclosing try/catch
+         unable to see any of them, and "3 runs eased to easy runs this
+         week." shown before a single write had returned. A rejected swap
+         surfaced its own "Couldn't change that run" toast a moment
+         later, so the athlete got both messages and no way to tell which
+         was true.
+
+         Sequential rather than Promise.all: each command re-reads
+         programState, and a rejection triggers a refetch, so firing them
+         concurrently races that refresh against the commands still in
+         flight. A week is at most seven runs. */
+      let applied = 0;
+      for (const s of swaps) {
+        if (await overrideRunDay(s.key, s.toTemplateId)) applied += 1;
+      }
+      if (applied === 0) {
+        // overrideRunDay has already said why, per failure.
+        setApplying(false);
+        return;
+      }
       onEasedApplied?.();
       track("adjust_week_applied", {
         intent,
         action: "easier_week",
-        swapCount: swaps.length,
+        swapCount: applied,
       });
       toast.success(
-        swaps.length === 1
+        applied === 1
           ? "1 run eased to an easy run this week."
-          : `${swaps.length} runs eased to easy runs this week.`
+          : `${applied} runs eased to easy runs this week.`
       );
       close(false);
     } catch (err) {
