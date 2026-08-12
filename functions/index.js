@@ -134,6 +134,8 @@ const {
 // path the triggers use).
 const challengeBackfill = require("./lib/challengeBackfill");
 const challengeMarkers = require("./lib/challengeMarkers");
+const lifetimeAccrual = require("./lib/lifetimeAccrual");
+const activityReversal = require("./lib/activityReversal");
 // Account deletion logic. Extracted so the call-ordering invariant
 // (Firestore + Storage before Auth-user delete; pre-W1f had the
 // inverse, leaving orphans) is unit-testable with stub handles —
@@ -4064,6 +4066,15 @@ async function accrueLifetimeStat(uid, kind, incrementBy, sourceId) {
       tx.set(markerRef, {
         kind,
         sourceId,
+        // The amount this marker applied. Read back by the delete-side
+        // reversal (lib/activityReversal), which would otherwise have to
+        // re-derive it from the deleted document — and a document with a
+        // deterministic id can be OVERWRITTEN after the accrual (a resumed
+        // programme Finish reuses `programme-{completionId}`), so the
+        // re-derivation and the applied figure are not always the same
+        // number. The challenge marker has recorded its `incrementBy` all
+        // along; this is the lifetime marker catching up.
+        appliedValue: inc,
         appliedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
       return updated;
@@ -4688,12 +4699,20 @@ exports.onWorkoutCreated = functions
         liftWeightMilestoneBadges(data.exercises)
       );
 
-      if (data.totalVolume) {
-        // Lifetime-aggregate badge: tonnage_100 (move 100 tonnes total).
-        // Maintains the cumulative volume counter idempotently (per-workout
-        // marker) and awards the badge once the lifetime total crosses 100 t.
-        await accrueLifetimeStat(uid, "lift", data.totalVolume, workoutId);
-      }
+      // Lifetime-aggregate badge: tonnage_100 (move 100 tonnes total).
+      // Maintains the cumulative volume counter idempotently (per-workout
+      // marker) and awards the badge once the lifetime total crosses 100 t.
+      // The amount comes from lib/lifetimeAccrual so the delete-side
+      // reversal can derive it through the SAME function rather than a
+      // copy (ADR-0012). accrueLifetimeStat itself returns early on a
+      // non-positive amount, so the old `if (data.totalVolume)` gate is
+      // redundant rather than load-bearing.
+      await accrueLifetimeStat(
+        uid,
+        "lift",
+        lifetimeAccrual.liftVolumeKgFor(data),
+        workoutId
+      );
 
       // SOCIAL S3 (Soc7) — advance partner-streak bonds. BEFORE the
       // rolling-window / cooldown early-returns below so a workout always
@@ -4826,8 +4845,11 @@ exports.onRunCreated = functions
         // awarded here off the full run doc — gated by the same isCountable
         // eligibility as challenges, idempotent + transactional inside the
         // helper. distance is metres on the doc; fall back to distanceKm.
-        const runMeters =
-          Number(data.distance) || (Number(data.distanceKm) || 0) * 1000;
+        // Via lib/lifetimeAccrual (an exact transcription of the
+        // expression that used to be inline here) so the delete-side
+        // reversal derives the same figure through the same function
+        // rather than restating it — ADR-0012's load-bearing constraint.
+        const runMeters = lifetimeAccrual.runMetersFor(data);
         await awardMilestoneBadges(
           uid,
           runMilestoneBadges(runMeters, Number(data.duration) || 0)
@@ -4915,6 +4937,120 @@ exports.onRunCreated = functions
     } catch (err) {
       console.error("onRunCreated: fatal error:", {
         uid,
+        message: err.message,
+        stack: err.stack,
+      });
+    }
+    return null;
+  });
+
+// ── 5b) Triggers: reverse the accumulators when a session is deleted ──
+//
+// ADR-0012. Until these existed there was no delete affordance for a
+// workout or a run anywhere in the app — `useWorkouts.deleteWorkout` was
+// written and wired to nothing, and runs had no delete function at all —
+// because `onWorkoutCreated` / `onRunCreated` are onCreate ONLY and the
+// state they write is guarded by markers that outlive the source
+// document. Deleting the source fired nothing: the log shrank and the
+// derived values did not. A delete button in front of that is worse than
+// no button, because the damage is silent and the user has been told the
+// record is gone.
+//
+// What is and is not reversed, and why, is documented on
+// lib/activityReversal. In short: challenge progress and lifetime totals
+// are reversed; the Performance Index needs nothing (it is a projection
+// and self-heals on the next recompute); partner streaks, milestone
+// badges and `fastest_effort` bests are deliberately left standing as
+// history rather than accumulators.
+//
+// THE GUARD IS NOT OPTIONAL. The account-deletion executor sweeps
+// `workouts` and `runs`, so these fire once per document during every
+// account deletion — for a user whose accumulators are being erased in
+// the same run. Beyond the fan-out, a reversal racing that sweep could
+// RE-CREATE a `lifetime/totals` document the executor had already
+// removed, which defeats erasure rather than merely making it untidy.
+//
+// The guarded behaviour differs from the create side. There,
+// `shouldSystemWriteProceed` failing triggers a COMPENSATING DELETE of
+// the just-written source doc. Here there is nothing to compensate — the
+// document is already gone and the accumulators are being erased anyway —
+// so the correct behaviour is a plain no-op.
+
+exports.onWorkoutDeleted = functions
+  .runWith(TRIGGER_CAP)
+  .firestore.document("users/{uid}/workouts/{workoutId}")
+  .onDelete(async (snap, context) => {
+    const { uid, workoutId } = context.params;
+    if (
+      !(await accountDeletionLocks.shouldSystemWriteProceed(
+        db,
+        uid,
+        "onWorkoutDeleted"
+      ))
+    ) {
+      return null;
+    }
+    try {
+      const data = snap.data() || {};
+      await activityReversal.reverseChallengeProgressForSource(
+        db,
+        uid,
+        workoutId
+      );
+      await activityReversal.reverseLifetimeStat(
+        db,
+        uid,
+        "lift",
+        workoutId,
+        lifetimeAccrual.liftVolumeKgFor(data)
+      );
+      console.log(`onWorkoutDeleted: reversed ${workoutId} for ${uid}`);
+    } catch (err) {
+      console.error("onWorkoutDeleted: fatal error:", {
+        uid,
+        workoutId,
+        message: err.message,
+        stack: err.stack,
+      });
+    }
+    return null;
+  });
+
+exports.onRunDeleted = functions
+  .runWith(TRIGGER_CAP)
+  .firestore.document("users/{uid}/runs/{runId}")
+  .onDelete(async (snap, context) => {
+    const { uid, runId } = context.params;
+    if (
+      !(await accountDeletionLocks.shouldSystemWriteProceed(
+        db,
+        uid,
+        "onRunDeleted"
+      ))
+    ) {
+      return null;
+    }
+    try {
+      const data = snap.data() || {};
+      // No isVolumeEligibleRun re-check here, unlike the create side. An
+      // ineligible run never credited, so it has no markers and every
+      // reversal below is already a no-op for it. The marker is the
+      // record of what happened; re-deriving that judgement from flags
+      // that may since have been edited would be a second opinion where a
+      // fact is available.
+      await activityReversal.reverseChallengeProgressForSource(db, uid, runId);
+      await activityReversal.reverseLifetimeStat(
+        db,
+        uid,
+        "run",
+        runId,
+        lifetimeAccrual.runMetersFor(data)
+      );
+      console.log(`onRunDeleted: reversed ${runId} for ${uid}`);
+    } catch (err) {
+      console.error("onRunDeleted: fatal error:", {
+        uid,
+        runId,
         message: err.message,
         stack: err.stack,
       });
