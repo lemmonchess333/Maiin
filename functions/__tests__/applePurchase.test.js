@@ -713,3 +713,144 @@ describe("applySubscriptionToUser — uniqueness guard", () => {
     expect(lookupWrite.data.uid).toBe(UID);
   });
 });
+
+/**
+ * Re-applying the SAME verified transaction must leave identical state.
+ *
+ * This is not a tidiness property — it is the load-bearing assumption under
+ * `appleIAPWebhook`'s dedup, which is a plain get-then-set: it reads
+ * `appleNotifications/{uuid}` at the top and only writes the record AFTER
+ * `applySubscriptionToUser` returns. Two concurrent re-deliveries of one
+ * notification both see `exists: false` and both process.
+ *
+ * That is the exact shape `stripeWebhook`'s comment identifies as the bug it
+ * was fixed for — so on a straight reading the Apple path looks unhardened,
+ * and the obvious "fix" is to copy Stripe's transactional claim. Doing that
+ * would make things WORSE here: Stripe claims first and deletes the claim if
+ * the handler throws, and without that compensating delete an Apple
+ * notification whose processing crashed after the claim would be skipped by
+ * every retry and lost for good.
+ *
+ * Apple's ordering is deliberate in the other direction — nothing is recorded
+ * until processing succeeded, so a crash re-delivers. What makes the
+ * concurrency window safe is not the dedup at all: it is that the work being
+ * repeated has no accumulating effect. `applySubscriptionToUser` runs one
+ * transaction whose only writes are `txn.set(..., { merge: true })` of values
+ * derived from the signed transaction, so the second application computes the
+ * same bytes as the first.
+ *
+ * The tests below pin that, because it is an argument about code that can
+ * quietly stop being true. A single `FieldValue.increment` added to either
+ * write — a purchase counter, an audit array — would turn a duplicate
+ * delivery into a real double-count, and nothing in the webhook would notice.
+ */
+describe("applySubscriptionToUser — safe to apply twice", () => {
+  /** Stateful stub: writes land in a store the next read sees. The stub in
+   *  this file's other tests reads a fixed `existing`, so it cannot express
+   *  "run it again against what the first run wrote". */
+  function makeStatefulStub() {
+    const store = { users: {}, appleSubscriptions: {} };
+    const writeLog = [];
+    const refFor = (col, id) => ({ __col: col, __id: id });
+
+    const firestore = {
+      collection: (name) => ({ doc: (id) => refFor(name, id) }),
+      runTransaction: async (cb) => {
+        const txn = {
+          get: async (ref) => {
+            const doc = store[ref.__col] && store[ref.__col][ref.__id];
+            return { exists: doc !== undefined, data: () => ({ ...doc }) };
+          },
+          set: (ref, data, options) => {
+            writeLog.push({ col: ref.__col, id: ref.__id, data, options });
+            const bucket = (store[ref.__col] = store[ref.__col] || {});
+            bucket[ref.__id] =
+              options && options.merge
+                ? { ...(bucket[ref.__id] || {}), ...data }
+                : { ...data };
+            return txn;
+          },
+        };
+        return cb(txn);
+      },
+    };
+    return { firestore, store, writeLog };
+  }
+
+  /** Fixed sentinel so two runs produce comparable timestamps — otherwise
+   *  the state diff would trip on `updatedAt` alone and prove nothing. */
+  const serverTimestamp = () => "TS";
+
+  async function applyOnce(firestore) {
+    return applySubscriptionToUser({
+      firestore,
+      verifyTransaction: async () => makeValidTx(),
+      signedTransactionInfo: "x",
+      uid: UID,
+      serverTimestamp,
+    });
+  }
+
+  it("leaves byte-identical state on the second application", async () => {
+    const { firestore, store, writeLog } = makeStatefulStub();
+
+    await applyOnce(firestore);
+    const afterFirst = JSON.parse(JSON.stringify(store));
+    const writesAfterFirst = writeLog.length;
+
+    await applyOnce(firestore);
+
+    expect(store).toEqual(afterFirst);
+    // The second run really did write — if it had short-circuited, the state
+    // equality above would hold for a reason that says nothing about
+    // idempotency. (The stale-guard is strict-greater, so an equal
+    // expiresDate writes through; that is asserted elsewhere in this file.)
+    expect(writeLog.length).toBeGreaterThan(writesAfterFirst);
+  });
+
+  it("grants Pro exactly once, not twice over", async () => {
+    // The state-equality assertion is only as strong as the state being
+    // meaningful. Pin the actual entitlement so a stub that silently stored
+    // nothing could not pass.
+    const { firestore, store } = makeStatefulStub();
+
+    await applyOnce(firestore);
+    await applyOnce(firestore);
+
+    expect(store.users[UID].subscriptionTier).toBe("pro");
+    expect(store.users[UID].appleOriginalTransactionId).toBe(
+      makeValidTx().originalTransactionId
+    );
+    expect(store.appleSubscriptions[makeValidTx().originalTransactionId].uid).toBe(
+      UID
+    );
+  });
+
+  it("writes no accumulating field values", async () => {
+    /* The regression this really guards. A merge-set stub cannot MODEL
+       `FieldValue.increment` — it would store the sentinel object and the
+       two runs would still compare equal — so state equality alone would
+       miss exactly the change that breaks the webhook's safety argument.
+       Every written value must therefore be a plain scalar or the injected
+       timestamp; an opaque object is the shape every accumulating sentinel
+       takes. */
+    const { firestore, writeLog } = makeStatefulStub();
+    await applyOnce(firestore);
+
+    expect(writeLog.length).toBeGreaterThan(0);
+    for (const { col, id, data } of writeLog) {
+      for (const [field, value] of Object.entries(data)) {
+        const ok =
+          value === null ||
+          value === "TS" ||
+          ["string", "number", "boolean"].includes(typeof value);
+        expect(
+          ok,
+          `${col}/${id}.${field} is ${JSON.stringify(
+            value
+          )} — a non-scalar write here may accumulate across re-deliveries, which appleIAPWebhook's get-then-set dedup cannot prevent`
+        ).toBe(true);
+      }
+    }
+  });
+});
