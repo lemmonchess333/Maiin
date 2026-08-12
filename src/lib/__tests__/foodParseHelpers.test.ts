@@ -55,6 +55,36 @@ describe("parseServingGrams", () => {
     expect(parseServingGrams("0.5g")).toBe(0.5);
   });
 
+  it("parses DECIMAL COMMAS — Open Food Facts is French-origin", () => {
+    /* The dot cases above were the only decimals covered, and the
+       dot-only pattern did not fail closed on a comma: it matched the
+       FRACTIONAL digits as the whole serving. Every one of these read 5
+       before the fix, so the error was 2.5x under, 6.5x under and 10x
+       OVER respectively — wrong in both directions, which is why nothing
+       downstream could have sanity-checked it. */
+    expect(parseServingGrams("12,5 g")).toBe(12.5);
+    expect(parseServingGrams("32,5 g")).toBe(32.5);
+    expect(parseServingGrams("0,5 g")).toBe(0.5);
+  });
+
+  it("parses a comma decimal inside a longer serving string", () => {
+    // The shape OFF actually stores: a portion description with the
+    // grams in parentheses or trailing.
+    expect(parseServingGrams("1 biscuit 12,5 g")).toBe(12.5);
+    expect(parseServingGrams("1 barre (32,5 g)")).toBe(32.5);
+  });
+
+  it("does not treat a comma THOUSANDS separator as a fraction", () => {
+    // "1,000 g" is a kilogram written the other way round. Reading it as
+    // 1.0 g would be a 1000x error in the opposite direction to the bug
+    // being fixed, so it is worth stating which reading this takes: the
+    // fractional one, matching the database's own locale. A thousands
+    // separator in a SERVING size is not a real OFF value — servings are
+    // grams, not kilograms — and the alternative (guessing by digit
+    // count) would reintroduce ambiguity for "1,500 g".
+    expect(parseServingGrams("1,000 g")).toBe(1);
+  });
+
   it("tolerates whitespace between number and unit", () => {
     expect(parseServingGrams("30 g")).toBe(30);
     expect(parseServingGrams("100  g")).toBe(100);
