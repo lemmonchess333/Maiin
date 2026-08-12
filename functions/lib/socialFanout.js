@@ -39,6 +39,8 @@
  *   + compensating delete (matches the `onWorkoutCreated` pattern).
  */
 
+const blockGuard = require("./blockGuard");
+
 function formatDuration(seconds) {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
@@ -257,6 +259,24 @@ async function createNotification({
     );
   }
   if (fromUid === toUid) return { skipped: true };
+
+  /* BLOCK BACKSTOP. The interaction callables refuse a blocked kudos or
+     comment outright, but they are not the only writers here — space post
+     likes and comments, follows and circle events all reach this function
+     too, and each new surface is another chance to forget the check.
+
+     Guarding at the single point every notification passes through makes the
+     rule true by construction rather than by remembering, and the
+     notification is the part that actually matters: a suppressed feed row is
+     recoverable on read, a delivered push is not.
+
+     Silent skip, not a throw. A blocked notification is not a failure of the
+     interaction the caller was performing — the like still counted — and
+     raising here would turn a moderation rule into an error path every caller
+     would have to handle. */
+  if (await blockGuard.isBlockedBetween(firestore, toUid, fromUid)) {
+    return { skipped: true, blocked: true };
+  }
 
   if (!data || !VALID_NOTIFICATION_TYPES.includes(data.type)) {
     throw new Error(
