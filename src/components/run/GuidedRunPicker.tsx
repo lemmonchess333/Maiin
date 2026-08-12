@@ -24,6 +24,20 @@ export default function GuidedRunPicker({ selected, onSelect }: Props) {
             <button
               type="button"
               key={w.id}
+              /* Selection here was conveyed by COLOUR ALONE — a tinted
+                 background, a tinted border, a glow ring and a coloured
+                 title, and nothing else. No icon, no text, no aria state,
+                 so a screen-reader user could not tell which guided run
+                 they had picked.
+
+                 `aria-pressed` rather than `role="radio"`: this is a
+                 single-select group of buttons, exactly like the Home
+                 week strip, and radio semantics carry a roving-tabindex
+                 and arrow-key contract that `SegmentedControl` already
+                 owns properly. Half-building a second radiogroup here is
+                 the inconsistency that component's header exists to
+                 complain about. */
+              aria-pressed={isSelected}
               onClick={() => onSelect(w)}
               className={cn(
                 "w-full p-3.5 rounded-xl text-left transition-all active:scale-[0.98] border-2",
