@@ -61,8 +61,17 @@ const repoRoot = resolve(here, "../../..");
 // found). The added alternatives target client-mirroring language
 // specifically; bare "mirrors the X pattern" style references stay
 // unflagged on purpose.
+//
+// The `mirrors? src/...` alternative was added after the plainest phrasing of
+// all turned out to be invisible: `functions/profanityFilter.js` opens
+// "Mirrors src/lib/profanityFilter.ts exactly: same library, same predicate
+// semantics" and matched NOTHING above — `mirrors? the client` wants the word
+// "client", and this author named the path instead. A module can hardly
+// declare itself a mirror more clearly, and the gate walked past it. Naming
+// the counterpart by PATH is the more precise habit, so it was the better
+// phrasing being punished.
 const MIRROR_RE =
-  /mirror of|mirrors? the client|ids mirror the|to mirror `|in lockstep|keep .{0,24}in lockstep|MUST return identical|identical output|parity seam/i;
+  /mirror of|mirrors? the client|ids mirror the|to mirror `|in lockstep|keep .{0,24}in lockstep|MUST return identical|identical output|parity seam|mirrors?\s+(the\s+)?[`"]?src\/[\w./-]+/i;
 
 // Escape hatches. `@unwired` requires a reason after the colon.
 //
@@ -100,6 +109,11 @@ const PINNED: Record<string, string> = {
     "src/lib/__tests__/runModeResolution.cross.test.ts",
   "functions/lib/runEligibility.js":
     "src/lib/__tests__/runEligibility.cross.test.ts",
+  // Moderation predicate. BOTH copies run — the client for composer feedback,
+  // the server as the trust boundary a curl request cannot bypass — so per
+  // this file's own rule that is a cross-test, not an exemption.
+  "functions/profanityFilter.js":
+    "src/lib/__tests__/profanityFilterMirror.cross.test.ts",
   "functions/lib/nutritionPhase.js":
     "src/lib/__tests__/nutritionPhaseMirror.cross.test.ts",
   "functions/lib/validatePlanPayload.js":
@@ -185,6 +199,11 @@ const NOT_EQUALITY_MIRROR: Record<string, string> = {
     "consolidated server-owned definitions; no client copy to drift against",
   "functions/lib/programStateSanitizer.js":
     "server-only payload sanitiser, not a mirror of a client function",
+  "functions/lib/pushConsent.js":
+    "the client copy is deliberately SHAPE-only (types + defaults); the predicate " +
+    "was deleted there on purpose after the tested copy turned out to be the dead " +
+    "one. Both headers say so at length. Only one copy runs, so an equality pin " +
+    "has nothing to pin — see the module header for the full reasoning.",
   "functions/lib/streakNudge.js":
     "server-only; its header states 'no TS↔JS port to keep in lockstep'",
   "functions/index.js":
@@ -274,6 +293,29 @@ describe("mirror cross-test gate", () => {
   it("found the known mirror surface (sanity — heuristic still matches)", () => {
     // If this drops to ~0 the regex silently stopped matching; keep it honest.
     expect(flagged.length).toBeGreaterThanOrEqual(6);
+  });
+
+  it("recognises each phrasing authors have actually used", () => {
+    /* A positive control on the DETECTOR, which the count above is too loose
+       to provide. A gate cannot find its own blind spot by construction: when
+       `MIRROR_RE` misses a file, that file simply is not flagged, nothing is
+       unclassified, and everything stays green — which is exactly how
+       `functions/profanityFilter.js` sat unpinned while opening with "Mirrors
+       src/lib/profanityFilter.ts exactly". Narrowing the regex now fails HERE
+       instead of passing silently.
+
+       One entry per distinct phrasing, not per file. Adding a file only
+       belongs here when it declares a mirror in a way none of these already
+       covers. */
+    const PHRASINGS: [string, string][] = [
+      ["functions/profanityFilter.js", "Mirrors <path> — names the counterpart by path"],
+      ["functions/lib/perfScoring.js", "parity seam / client-mirroring prose"],
+      ["functions/lib/runEligibility.js", "declared mirror of a client predicate"],
+    ];
+    const missed = PHRASINGS.filter(([f]) => !flagged.includes(f)).map(
+      ([f, why]) => `${f} (${why})`
+    );
+    expect(missed).toEqual([]);
   });
 
   it("every mirror-declaring functions module is PINNED or consciously classified", () => {
