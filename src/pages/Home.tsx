@@ -252,7 +252,15 @@ export default function Home() {
     lastWeightInfo,
     weightTrend,
     setLastWeightInfo,
-  } = useHomeData(user, profile, workouts, weightUnit);
+  } = useHomeData(
+    user,
+    profile,
+    workouts,
+    weightUnit,
+    // HOME-TARGET-01, protein half: the post-workout nudge must quote the
+    // same target the macro rings on this screen show.
+    effectiveTargets?.protein ?? null
+  );
 
   // Daily burn for Today's Energy card.
   // Workout burn reads through `effectiveTargets.actualLiftBurn` (sums
