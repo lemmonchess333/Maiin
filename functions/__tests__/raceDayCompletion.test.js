@@ -92,35 +92,78 @@ describe("isStrictRaceRun", () => {
     expect(isStrictRaceRun(rawRun({ distance: 9000 }), 10000)).toBe(false);
   });
 
-  it("reads actualTemplateId — NOT templateId (raw docs have no templateId)", () => {
+  it("accepts an UNTEMPLATED run that went the distance", () => {
+    /* The 2026-08-12 fix. `actualTemplateId` is only written when the run
+       was launched from the scheduled slot (`freeformPlanMetadata` writes
+       null), so tapping Start Run on the start line saved the marathon
+       untemplated — and requiring the tag recorded a `race_no_show` for a
+       race the user had just run, costing them the race goal 14 days
+       later. ≥95% of the planned distance on the race date is the
+       stronger evidence, and it is present exactly when the tag is not. */
     expect(
       isStrictRaceRun(
-        { templateId: "race", distance: 10000, actualTemplateId: undefined },
+        rawRun({ actualTemplateId: null, distance: 42195 }),
+        42195
+      )
+    ).toBe(true);
+    expect(
+      isStrictRaceRun(
+        rawRun({ actualTemplateId: undefined, distance: 9600 }),
+        10000
+      )
+    ).toBe(true);
+  });
+
+  it("still refuses an untemplated run that did NOT go the distance", () => {
+    /* Guards the guard: the tag was dropped, the distance bar was not.
+       Without this, "untemplated ⇒ accepted" would pass the test above. */
+    expect(
+      isStrictRaceRun(
+        rawRun({ actualTemplateId: null, distance: 9499 }),
         10000
       )
     ).toBe(false);
+  });
+
+  it("does not care WHICH template a distance-clearing run carries", () => {
+    /* Follows from the above and is worth stating: an easy_30 tag on a
+       full-distance run on race day is someone who raced with the wrong
+       template selected, not someone who skipped. */
     expect(
-      isStrictRaceRun(rawRun({ actualTemplateId: "easy_30" }), 10000)
+      isStrictRaceRun(rawRun({ actualTemplateId: "easy_30" }), 42195)
+    ).toBe(true);
+  });
+
+  it("requires the template tag when there is no planned distance", () => {
+    /* The zero-planned branch is where the tag still carries the whole
+       decision — nothing else distinguishes a race from a jog — so all
+       three id properties are pinned HERE rather than against a
+       distance-clearing run, where they would pass for the wrong reason.
+
+       Reads `actualTemplateId`, never a plain `templateId`: raw docs have
+       no such field, which is half of why the predicate shipped
+       always-false. */
+    expect(
+      isStrictRaceRun(
+        { templateId: "5k_race", distance: 10000, actualTemplateId: undefined },
+        0
+      )
     ).toBe(false);
-  });
+    expect(isStrictRaceRun(rawRun({ actualTemplateId: "easy_30" }), 0)).toBe(
+      false
+    );
 
-  it("accepts EVERY race-type id, not one hard-coded distance", () => {
-    // The bug was a single impossible literal. Enumerating the real ids
-    // makes "which values count" explicit, so adding a race template
-    // cannot quietly go unrecognised on the server.
+    // Every race-type id counts, so adding a race template cannot quietly
+    // go unrecognised on the server.
     for (const id of RACE_TEMPLATE_IDS) {
-      expect(
-        isStrictRaceRun(rawRun({ actualTemplateId: id }), 10000),
-        `id ${id}`
-      ).toBe(true);
+      expect(isStrictRaceRun(rawRun({ actualTemplateId: id }), 0), `id ${id}`)
+        .toBe(true);
     }
-  });
 
-  it('REJECTS the literal "race" — production never writes it', () => {
-    // Pinned as a rejection, not merely absent. This exact value was the
-    // sole accept fixture for months; if it starts being accepted again,
-    // the id mirror has been bypassed.
-    expect(isStrictRaceRun(rawRun({ actualTemplateId: "race" }), 10000)).toBe(
+    // …and the literal "race" is pinned as a REJECTION, not merely absent.
+    // It was the sole accept fixture for months; if it starts being
+    // accepted again, the id mirror has been bypassed.
+    expect(isStrictRaceRun(rawRun({ actualTemplateId: "race" }), 0)).toBe(
       false
     );
   });
@@ -171,7 +214,11 @@ describe("hasStrictRaceMatch", () => {
         [
           rawRun({ distance: 9000 }), // short
           rawRun({ isInvalid: true }), // flagged
-          rawRun({ actualTemplateId: "tempo_20" }), // wrong template
+          rawRun({ distance: "10000" }), // distance is not a number
+          // A tempo tag on a SHORT run: the tag alone no longer decides
+          // (see isStrictRaceRun above), so the distance has to fail too
+          // for this entry to be a rejection at all.
+          rawRun({ actualTemplateId: "tempo_20", distance: 4000 }),
         ],
         10000
       )

@@ -121,13 +121,28 @@ describe("_decideRecoveryEntry — gate-by-gate negative cases", () => {
     expect(result.write).toBe(false);
   });
 
-  it("does not write when the saved run's actualTemplateId is not a race template", () => {
+  it("does not write when the saved run is short of the ≥95% bar", () => {
+    /* This gate used to be the TEMPLATE — but `actualTemplateId` is only
+       written when the run was launched from the scheduled slot, so a
+       race started freeform never entered recovery and the sweep then
+       recorded a no-show for it. The distance bar is what carries the
+       decision now (2026-08-12); pinned here so the gate stays live. */
     const result = _decideRecoveryEntry(
       profile(),
       programState(),
-      savedRun({ actualTemplateId: "tempo_20" })
+      savedRun({ distance: 9000 }) // 90% of a 10K
     );
     expect(result.write).toBe(false);
+  });
+
+  it("DOES write for a full-distance race started outside the plan", () => {
+    // The case the template gate was silently refusing.
+    const result = _decideRecoveryEntry(
+      profile(),
+      programState(),
+      savedRun({ actualTemplateId: null })
+    );
+    expect(result.write).toBe(true);
   });
 
   it("does not write when the saved run is flagged isInvalid (junk save)", () => {
