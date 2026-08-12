@@ -17,6 +17,11 @@ import { ACTIVITY_LABELS } from "@/lib/tdee";
 import type { ActivityLevel, TDEEResult } from "@/lib/tdee";
 import type { GoalWeightPlan } from "@/lib/goalWeightPlan";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import { Button } from "@/components/ui/Button";
+import {
+  resolveTargetDrift,
+  shouldShowTargetDrift,
+} from "@/lib/targetDrift";
 import AccordionSection from "@/components/AccordionSection";
 import { useMacroPalette } from "@/hooks/useMacroPalette";
 import {
@@ -45,6 +50,11 @@ interface NutritionSectionProps {
     data: Partial<UserProfile>,
     opts?: { allowProtected?: boolean }
   ) => Promise<UpdateProfileResult>;
+  /** Re-persist the freshly-computed targets for today's body. Supplied by
+   *  SettingsNutrition, which owns the goal-weight persist recipe — the same
+   *  payload its reactive save writes, so a recalculation and an edit cannot
+   *  drift apart. */
+  onRecalculate?: () => void;
   inline?: boolean;
 }
 
@@ -62,6 +72,7 @@ export default function NutritionSection({
   goalPlan,
   tdee,
   updateProfile,
+  onRecalculate,
   inline = false,
 }: NutritionSectionProps) {
   const [showTDEE, setShowTDEE] = useState(false);
@@ -72,6 +83,29 @@ export default function NutritionSection({
   const { text: macroText } = useMacroPalette();
 
   const calorieTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  /* The stored target was set from the body the user had at the time;
+     `tdee.tdee` is maintenance for the body they have now. A cut therefore
+     decays into a slower cut while the plan keeps naming the original pace —
+     measured at a third slower after 12 kg. Adaptive TDEE answers this, but
+     it is Pro-gated, so for a free user nothing closes the gap and nothing
+     mentions it. Surfaced, never silently applied: the recalculation is the
+     user's tap. */
+  const adaptiveStatus = adaptiveCalorieStatus(profile);
+  const drift = resolveTargetDrift(
+    profile?.targetCalories,
+    tdee.tdee,
+    profile?.weeklyRateKg
+  );
+  const showDrift =
+    !!onRecalculate &&
+    shouldShowTargetDrift({
+      drift,
+      isManualOverride: adaptiveStatus.kind === "manual",
+      isAdaptiveEngaged: adaptiveStatus.kind === "adapting",
+    });
+  const paceLabel = (kgPerWeek: number) =>
+    `${kgPerWeek > 0 ? "+" : ""}${kgPerWeek.toFixed(2)} kg/wk`;
 
   return (
     <AccordionSection
@@ -327,8 +361,37 @@ export default function NutritionSection({
             {/* D6 — is this target engine-adapted, manual, or formula? So the
                 user can tell what's learning vs what they own. */}
             <p className="text-caption text-muted-foreground leading-snug pt-1">
-              {adaptiveCalorieStatusLabel(adaptiveCalorieStatus(profile))}
+              {adaptiveCalorieStatusLabel(adaptiveStatus)}
             </p>
+            {showDrift && drift && (
+              <div className="pt-2 space-y-2">
+                <p
+                  className="text-caption leading-snug"
+                  style={{ color: THEME.warning }}
+                >
+                  Your body has changed since this target was set, so it now
+                  works out at{" "}
+                  <span className="font-mono tabular-nums">
+                    {paceLabel(drift.effectiveRateKgPerWeek)}
+                  </span>
+                  , not the{" "}
+                  <span className="font-mono tabular-nums">
+                    {paceLabel(drift.intendedRateKgPerWeek)}
+                  </span>{" "}
+                  you picked.
+                </p>
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  onClick={() => {
+                    haptic("medium");
+                    onRecalculate?.();
+                  }}
+                >
+                  Recalculate for {currentKg.toFixed(1)} kg
+                </Button>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center justify-between pt-1">

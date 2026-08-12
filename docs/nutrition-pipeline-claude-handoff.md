@@ -77,13 +77,23 @@ scratch is wasted effort; changing them is a product call, not a cleanup.
   target below 1200 is reachable by typing one. That is the user's own number.
   What IS now guaranteed is that the grams reconcile to it and a capped
   protein figure is reported rather than applied in silence.
+  STATUS 2026-08-12 — owner-decided: warn, don't clamp. The field now names the
+  floor and says why very low targets are awkward; the number is still the
+  user's.
 - **The calorie target on a weigh-in.** Protein and fat follow bodyweight by
   arithmetic; the calorie target is a training decision — as you shrink, the
   same intake is a smaller deficit, which is the plateau the adaptive-TDEE
   layer exists to answer. A mirror function silently re-cutting calories on
   every weigh-in would make that decision by accident.
+  STATUS 2026-08-12 — owner-decided: SURFACE it, don't apply it. The target is
+  still never moved silently. `resolveTargetDrift` compares the held target
+  against today's maintenance and Settings names both paces ("works out at
+  −0.33 kg/wk, not the −0.50 you picked") with a one-tap recalculation that
+  fires the shared persist recipe. Suppressed for manual-override and engaged-
+  adaptive users, who already have an answer.
 - **`targetProtein` under an adaptive target.** Still the stored bodyweight
-  figure. It agrees with the adaptive split except when the learned target
+  figure. STATUS 2026-08-12 — owner-decided: LEAVE, deliberately. Re-decide
+  only if adaptive starts moving targets down materially. It agrees with the adaptive split except when the learned target
   moves DOWN far enough to trigger the protein cap — narrower than the calorie
   gap, and not worth half-mirroring the macro splitter into `functions/`.
 
