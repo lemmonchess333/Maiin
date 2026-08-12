@@ -361,7 +361,12 @@ export default function NutritionSection({
             {/* D6 — is this target engine-adapted, manual, or formula? So the
                 user can tell what's learning vs what they own. */}
             <p className="text-caption text-muted-foreground leading-snug pt-1">
-              {adaptiveCalorieStatusLabel(adaptiveStatus)}
+              {adaptiveCalorieStatusLabel(
+                adaptiveStatus,
+                // The learned value, so the line can't claim the formula
+                // figure above it is the adapted one.
+                profile?.adaptiveCapState?.lastApplied
+              )}
             </p>
             {showDrift && drift && (
               <div className="pt-2 space-y-2">
