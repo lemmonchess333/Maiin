@@ -70,8 +70,17 @@ const repoRoot = resolve(here, "../../..");
 // declare itself a mirror more clearly, and the gate walked past it. Naming
 // the counterpart by PATH is the more precise habit, so it was the better
 // phrasing being punished.
+// The `src/` alternative was then loosened from "immediately follows
+// `mirrors`" to "follows within a short span", because the plainest English
+// sentence still slipped through: `functions/adminAuth.js` says "the
+// client-side mirror in src/lib/adminAuth.ts". One word — "in" — between the
+// noun and the path, and the previous form saw nothing. That is the FOURTH
+// distinct phrasing to escape this detector, and the shape of the misses is
+// consistent: each one names its counterpart more precisely than the phrasings
+// that were caught. The span is capped and stops at a full stop so it cannot
+// run across sentences into an unrelated path mention.
 const MIRROR_RE =
-  /mirror of|mirrors? the client|ids mirror the|to mirror `|in lockstep|keep .{0,24}in lockstep|MUST return identical|identical output|parity seam|mirrors?\s+(the\s+)?[`"]?src\/[\w./-]+/i;
+  /mirror of|mirrors? the client|ids mirror the|to mirror `|in lockstep|keep .{0,24}in lockstep|MUST return identical|identical output|parity seam|mirrors?\b[^.\n]{0,40}?\bsrc\/[\w./-]+/i;
 
 // Escape hatches. `@unwired` requires a reason after the colon.
 //
@@ -116,6 +125,13 @@ const PINNED: Record<string, string> = {
     "src/lib/__tests__/profanityFilterMirror.cross.test.ts",
   "functions/lib/nutritionPhase.js":
     "src/lib/__tests__/nutritionPhaseMirror.cross.test.ts",
+  // Admin allowlist. BOTH copies run — the server as the trust boundary on
+  // every moderation callable, the client to decide whether the moderation
+  // link renders — so a cross-test, not an exemption. The two read different
+  // env vars, so the test drives both from one string and compares the
+  // parse + membership semantics that were hand-written twice.
+  "functions/adminAuth.js":
+    "src/lib/__tests__/adminAuthMirror.cross.test.ts",
   "functions/lib/validatePlanPayload.js":
     "src/features/program/__tests__/validatePlanPayload.cross.test.ts",
   "functions/lib/challengeTiers.js":
@@ -311,6 +327,10 @@ describe("mirror cross-test gate", () => {
       ["functions/profanityFilter.js", "Mirrors <path> — names the counterpart by path"],
       ["functions/lib/perfScoring.js", "parity seam / client-mirroring prose"],
       ["functions/lib/runEligibility.js", "declared mirror of a client predicate"],
+      [
+        "functions/adminAuth.js",
+        "plain English — \"the client-side mirror in <path>\", noun and path separated",
+      ],
     ];
     const missed = PHRASINGS.filter(([f]) => !flagged.includes(f)).map(
       ([f, why]) => `${f} (${why})`

@@ -49,6 +49,28 @@
 const BATCH_SIZE = 450;
 
 /**
+ * Yield `feeds/{recipient}/items/{activityId}` refs in BATCH_SIZE chunks
+ * without materialising the full recipients × activities product.
+ *
+ * A generator rather than a helper returning an array, because the whole
+ * point is that no caller ever holds more than one chunk.
+ */
+function* crossProductBatches(firestore, recipientIds, activityIds) {
+  let slice = [];
+  for (const rid of recipientIds) {
+    const items = firestore.collection("feeds").doc(rid).collection("items");
+    for (const aid of activityIds) {
+      slice.push(items.doc(aid));
+      if (slice.length === BATCH_SIZE) {
+        yield slice;
+        slice = [];
+      }
+    }
+  }
+  if (slice.length > 0) yield slice;
+}
+
+/**
  * Delete every fan-out copy of `uid`'s activities from recipient feeds.
  *
  * MUST run before the executor deletes `followers/{uid}/users` (step 2) and
@@ -98,17 +120,18 @@ async function removeFanoutCopiesForUser({ firestore, uid, logger }) {
   result.activities = activityIds.length;
   if (activityIds.length === 0 || recipientIds.length === 0) return result;
 
-  const refs = [];
-  for (const rid of recipientIds) {
-    for (const aid of activityIds) {
-      refs.push(
-        firestore.collection("feeds").doc(rid).collection("items").doc(aid)
-      );
-    }
-  }
-
-  for (let i = 0; i < refs.length; i += BATCH_SIZE) {
-    const slice = refs.slice(i, i + BATCH_SIZE);
+  // Built one batch at a time rather than as a whole materialised array.
+  // The cross product is recipients × activities, so it is the one quantity
+  // here that grows multiplicatively: 500 followers × 1,000 activities is
+  // half a million DocumentReference objects, comfortably enough to exhaust
+  // a 256MB function on a single power user. Only BATCH_SIZE refs are ever
+  // live at once now, so peak memory is flat in both dimensions and the
+  // sweep is bounded by time rather than heap.
+  for (const slice of crossProductBatches(
+    firestore,
+    recipientIds,
+    activityIds
+  )) {
     try {
       const batch = firestore.batch();
       slice.forEach((r) => batch.delete(r));
@@ -136,4 +159,4 @@ async function removeFanoutCopiesForUser({ firestore, uid, logger }) {
   return result;
 }
 
-module.exports = { removeFanoutCopiesForUser, BATCH_SIZE };
+module.exports = { removeFanoutCopiesForUser, crossProductBatches, BATCH_SIZE };
