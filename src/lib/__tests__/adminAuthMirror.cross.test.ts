@@ -38,11 +38,39 @@
  * codebase keeps having to unlearn.
  */
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { createRequire } from "node:module";
+import Module, { createRequire } from "node:module";
 import { isAdminUid as clientIsAdmin } from "@/lib/adminAuth";
 
 const require = createRequire(import.meta.url);
+
+/* `functions/adminAuth.js` requires `firebase-functions/v1`, which lives in
+   `functions/node_modules`. The unit CI job installs only the ROOT tree, so a
+   plain require of the server copy fails there with "Cannot find module" —
+   green locally, red in CI, which is how this was found.
+
+   The sibling mirror tests do not hit this because their server copies have no
+   functions-tree dependency: `profanityFilter.js` needs `leo-profanity`, which
+   the root package.json also declares, so Node's upward walk finds it.
+
+   Stubbing the one specifier beats the alternatives. Installing the functions
+   tree in the unit job is a lot of CI for one test, and skipping when the
+   module will not load would make this vacuous in the only place it has to
+   run. The stub is `HttpsError` alone, used exclusively by
+   `assertAdminCallable`; neither function under test touches the module. If a
+   future change made `isAdminUid` depend on firebase-functions the stub could
+   hide it — but that would also mean the client copy could no longer mirror
+   it, and the equality assertions below are what would fail. */
+type Loader = (this: unknown, request: string, ...rest: unknown[]) => unknown;
+const loaderHost = Module as unknown as { _load: Loader };
+const realLoad = loaderHost._load;
+loaderHost._load = function (request, ...rest) {
+  if (request === "firebase-functions/v1") {
+    return { https: { HttpsError: class extends Error {} } };
+  }
+  return realLoad.call(this, request, ...rest);
+};
 const server = require("../../../functions/adminAuth.js");
+loaderHost._load = realLoad;
 
 /** Set the allowlist on BOTH sides from one string, so every assertion below
  *  compares two parsers over identical input. */
