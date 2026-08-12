@@ -626,7 +626,13 @@ have no delete path at all, not even a function. So a phone-in-pocket accidental
 long "run" inflates lifetime stats, PI, challenges, streaks and the leaderboard
 permanently.
 
-- [ ] **Decide the delete story before building the button.** `onWorkoutCreated` /
+- [x] **Decided 2026-08-12 — ADR-0012.** Reverse the two accumulators on
+      `onDelete` by re-deriving from the deleted snapshot (calling the accrual
+      function itself, never a copy); let PI self-heal via recompute; do NOT
+      reverse partner streaks, which are day-granular history. Server ships and
+      is verified before any delete affordance. Implementation still owed —
+      what follows is the original framing that led there.
+- [ ] **Build it in that order.** `onWorkoutCreated` /
       `onRunCreated` are `onCreate` ONLY — there is no `onDelete`. Challenge progress
       is guarded by a persistent `participants/{uid}/applied/{sourceId}` marker and
       lifetime totals by `users/{uid}/lifetime/applied_<kind>_<sourceId>`. So a naive
@@ -1275,6 +1281,7 @@ lands in the same place (the plan-file lock rule, applied to ADRs):
 | 0009 | One Firestore test fake; injecting the `db` handle buys nothing                    |
 | 0010 | Volume currency — 1:1 is correct; the flip waits on landmark-aware builders        |
 | 0011 | Programme command boundary stops at the week engine — 8 sites stay document writes |
+| 0012 | Deleting a logged session reverses accumulators, not history                      |
 
 ## Dynamic workflows & `ultracode` (when to escalate)
 
