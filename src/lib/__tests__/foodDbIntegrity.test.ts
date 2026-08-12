@@ -29,6 +29,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
+import { parseFoodText } from "@/lib/nlFoodParser";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SOURCE = readFileSync(resolve(HERE, "../nlFoodParser.ts"), "utf8");
@@ -170,8 +171,49 @@ describe("FOOD_DB — macros reconcile with calories", () => {
 });
 
 describe("FOOD_DB — portions are scalable where a portion means anything", () => {
-  const hasMassOrVolume = (serving: string) =>
-    /\d+\s*(g|ml)\b/i.test(serving) || /\(\s*\d+\s*(g|ml)\s*\)/i.test(serving);
+  /* Ask the PARSER, by running it — not a lookalike regex.
+   *
+   * This predicate used to be its own pattern, and it was looser than the
+   * thing it claimed to certify: it accepted "1 medium (118 g)",
+   * "1 cup (240 ml)" and "1 slice, 30g", none of which the parser can read
+   * (it wants the count in parentheses with no space before the unit). A row
+   * added in any of those perfectly natural shapes would have passed here and
+   * then silently returned ONE SERVING's macros for every mass the user
+   * typed — the exact failure this test exists to prevent. No current row is
+   * affected; the gap was latent.
+   *
+   * Rather than re-implement the rule more accurately, this now drives
+   * `parseFoodText` and asks the question behaviourally: does DOUBLING the
+   * typed amount double the calories? An unscalable row falls back to
+   * one-serving macros for both probes, so the two come out equal and it is
+   * caught. Both a mass and a volume probe are tried, so the check needs no
+   * knowledge of which unit a row uses — and a wrong guess would fail
+   * loudly rather than certify silently.
+   */
+  /* A 20x spread, not 2x, because integer rounding defeats a small ratio on
+     low-calorie rows: tea is 2 kcal per 240 ml cup, so 200 ml -> 2 and
+     400 ml -> 3, which is real scaling that a "did it double?" check reads
+     as failure. Against 100 vs 2000 the same row goes 1 -> 17. A strict
+     increase is then the honest assertion — an unscalable row returns the
+     identical one-serving macros for both probes. */
+  const scalesWithAmount = (name: string): boolean =>
+    (["g", "ml"] as const).some((unit) => {
+      const small = parseFoodText(`100${unit} ${name}`)[0];
+      const large = parseFoodText(`2000${unit} ${name}`)[0];
+      if (!small || !large) return false;
+      return large.calories > small.calories;
+    });
+
+  /* Exempt ONLY rows that are zero-calorie per serving, and only because the
+     fallback is provably harmless there rather than merely small: the
+     one-serving macros are 0, so scaling them by any amount is still 0. The
+     check cannot measure such a row and there is nothing to measure.
+     `creatine` (0 kcal, "1 scoop (5g)") is the whole list today. */
+  const isZeroCalorie = (name: string): boolean =>
+    (parseFoodText(`100g ${name}`)[0]?.calories ?? 0) === 0;
+
+  const hasMassOrVolume = (_serving: string, name: string) =>
+    scalesWithAmount(name) || isZeroCalorie(name);
 
   it("every non-composite row carries a gram or millilitre count", () => {
     /* This is what `parseServingGrams` scales "200g chicken" against. A row
@@ -179,7 +221,7 @@ describe("FOOD_DB — portions are scalable where a portion means anything", () 
        types — the parser documents that fallback, and this keeps it confined
        to the rows where it is the right answer. */
     const unscalable = ROWS.filter(
-      (r) => !COMPOSITE_SERVINGS.has(r.name) && !hasMassOrVolume(r.serving)
+      (r) => !COMPOSITE_SERVINGS.has(r.name) && !hasMassOrVolume(r.serving, r.name)
     );
     expect(unscalable.map((r) => `${r.name} → "${r.serving}"`)).toEqual([]);
   });
@@ -189,7 +231,7 @@ describe("FOOD_DB — portions are scalable where a portion means anything", () 
        it should leave the list rather than sit there granting an exemption it
        no longer needs. */
     const stillComposite = ROWS.filter(
-      (r) => COMPOSITE_SERVINGS.has(r.name) && !hasMassOrVolume(r.serving)
+      (r) => COMPOSITE_SERVINGS.has(r.name) && !hasMassOrVolume(r.serving, r.name)
     );
     expect(stillComposite).toHaveLength(COMPOSITE_SERVINGS.size);
     // 91% of the table is mass- or volume-scalable.
