@@ -16,6 +16,7 @@ import { createRequire } from "node:module";
 const require_ = createRequire(import.meta.url);
 const {
   removeFanoutCopiesForUser,
+  crossProductBatches,
   BATCH_SIZE,
 } = require_("../lib/feedFanoutCleanup.js");
 
@@ -261,5 +262,101 @@ describe("the residue this approach knowingly leaves", () => {
 
     expect(firestore.deletedPaths).toContain("feeds/still-following/items/act-1");
     expect(firestore.deletedPaths).not.toContain("feeds/ex-follower/items/act-1");
+  });
+});
+
+describe("crossProductBatches — the sweep never materialises the product", () => {
+  /* Recipients × activities is the one quantity here that grows
+     multiplicatively, and this runs inside an irreversible cascade where an
+     OOM leaves a half-deleted account. 500 followers × 1,000 activities is
+     half a million DocumentReference objects — enough to exhaust a 256MB
+     function on one power user.
+
+     The first version of this module built that array up front. Every test in
+     the file above passes either way, which is exactly why these exist: they
+     assert the property directly rather than through the outcome. */
+
+  /** Counts ref construction so laziness is observable. */
+  function countingFirestore() {
+    const counter = { refs: 0 };
+    return {
+      counter,
+      collection: () => ({
+        doc: () => ({
+          collection: () => ({
+            doc: (leafId) => {
+              counter.refs += 1;
+              return { path: leafId };
+            },
+          }),
+        }),
+      }),
+    };
+  }
+
+  const ids = (n, p) => Array.from({ length: n }, (_, i) => `${p}-${i}`);
+
+  it("builds only the first chunk before yielding it", () => {
+    // THE mutation-sensitive assertion. A materialising implementation
+    // constructs all 4,000 refs before the caller sees anything; this one
+    // constructs BATCH_SIZE.
+    const { counter, ...firestore } = countingFirestore();
+    const gen = crossProductBatches(firestore, ids(4, "fan"), ids(1000, "act"));
+
+    const first = gen.next().value;
+
+    expect(first).toHaveLength(BATCH_SIZE);
+    expect(counter.refs).toBe(BATCH_SIZE);
+  });
+
+  it("never holds more than BATCH_SIZE at once, across the whole walk", () => {
+    const { counter, ...firestore } = countingFirestore();
+    const gen = crossProductBatches(firestore, ids(3, "fan"), ids(700, "act"));
+
+    let chunks = 0;
+    let seen = 0;
+    for (const chunk of gen) {
+      chunks += 1;
+      seen += chunk.length;
+      expect(chunk.length).toBeLessThanOrEqual(BATCH_SIZE);
+      // Refs constructed so far never runs ahead of what has been handed out.
+      expect(counter.refs).toBe(seen);
+    }
+    expect(seen).toBe(3 * 700);
+    expect(chunks).toBe(Math.ceil((3 * 700) / BATCH_SIZE));
+  });
+
+  it("chunks across the recipient boundary rather than per recipient", () => {
+    /* A per-recipient implementation would also keep memory flat and pass the
+       assertions above, but it would emit one undersized batch per follower —
+       for a user with 800 followers and 3 activities that is 800 round trips
+       instead of 6. The batching is a cost property, not only a memory one. */
+    const firestore = {
+      collection: () => ({
+        doc: (rid) => ({
+          collection: () => ({ doc: (aid) => ({ path: `${rid}/${aid}` }) }),
+        }),
+      }),
+    };
+    const chunks = [
+      ...crossProductBatches(firestore, ids(4, "fan"), ids(200, "act")),
+    ];
+
+    expect(chunks).toHaveLength(Math.ceil(800 / BATCH_SIZE));
+    // The first chunk spans more than one recipient, which is the whole claim.
+    const recipientsInFirst = new Set(
+      chunks[0].map((r) => r.path.split("/")[0])
+    );
+    expect(recipientsInFirst.size).toBeGreaterThan(1);
+  });
+
+  it("yields nothing when either side is empty", () => {
+    const firestore = {
+      collection: () => ({
+        doc: () => ({ collection: () => ({ doc: () => ({}) }) }),
+      }),
+    };
+    expect([...crossProductBatches(firestore, [], ["a"])]).toEqual([]);
+    expect([...crossProductBatches(firestore, ["r"], [])]).toEqual([]);
   });
 });
