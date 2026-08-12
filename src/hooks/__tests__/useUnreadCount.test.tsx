@@ -31,6 +31,15 @@ vi.mock("@/lib/auth", () => ({
     null,
 }));
 
+const blockedSet = vi.hoisted(() => ({ current: new Set<string>() }));
+const hiddenSet = vi.hoisted(() => ({ current: new Set<string>() }));
+vi.mock("../useBlockedUsers", () => ({
+  useBlockedUsers: () => ({ blocked: blockedSet.current }),
+}));
+vi.mock("../useHiddenActivities", () => ({
+  useHiddenActivities: () => ({ hidden: hiddenSet.current }),
+}));
+
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {} }));
 
@@ -48,9 +57,10 @@ const NOW = new Date("2026-07-15T12:00:00Z");
 const SEEN_KEY = socialPreferenceKey("me", "unread-last-seen");
 
 /** Hours before NOW, as a stored feed item. */
-function item(hoursAgo: number, authorId: string) {
+function item(hoursAgo: number, authorId: string, activityId = "act") {
   return {
     authorId,
+    activityId,
     createdAt: Timestamp.fromDate(
       new Date(NOW.getTime() - hoursAgo * 3600_000)
     ),
@@ -70,6 +80,8 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(NOW);
   authUid.current = "me";
+  blockedSet.current = new Set();
+  hiddenSet.current = new Set();
   window.localStorage.clear();
 });
 
@@ -186,5 +198,56 @@ describe("useUnreadCount — failure and scoping", () => {
     );
     renderHook(() => useUnreadCount());
     expect(window.localStorage.getItem("tropos-social-last-seen")).toBeNull();
+  });
+});
+
+/**
+ * The badge's job is to count what the FEED will render. `useSocialFeed`
+ * drops blocked authors and user-hidden activities before rendering; the
+ * badge counted them, so a user who blocked someone still got badged by
+ * their posts, opened Social, and found nothing new.
+ */
+describe("useUnreadCount — counts what the feed will actually show", () => {
+  it("ignores items from a blocked author", () => {
+    seedItems({
+      a: item(1, "friend"),
+      b: item(1, "blocked-one"),
+      c: item(1, "blocked-one"),
+    });
+    blockedSet.current = new Set(["blocked-one"]);
+    const { result } = renderHook(() => useUnreadCount());
+    return waitFor(() => expect(result.current.count).toBe(1));
+  });
+
+  it("ignores an activity the user hid from their feed", () => {
+    /* Keyed by activityId, not feed-item id — fan-out can produce several
+       feed items for one activity, and hiding it hides all of them. */
+    seedItems({
+      a: item(1, "friend", "act-visible"),
+      b: item(1, "friend", "act-hidden"),
+      c: item(1, "other", "act-hidden"),
+    });
+    hiddenSet.current = new Set(["act-hidden"]);
+    const { result } = renderHook(() => useUnreadCount());
+    return waitFor(() => expect(result.current.count).toBe(1));
+  });
+
+  it("still excludes the user's own activity", () => {
+    // The pre-existing rule must survive the new filtering.
+    seedItems({ a: item(1, "me"), b: item(1, "friend") });
+    const { result } = renderHook(() => useUnreadCount());
+    return waitFor(() => expect(result.current.count).toBe(1));
+  });
+
+  it("counts everything when nothing is suppressed", () => {
+    /* Guards the guard: filters that dropped everything would satisfy the
+       assertions above and leave the badge permanently at zero. */
+    seedItems({
+      a: item(1, "friend", "act-1"),
+      b: item(1, "other", "act-2"),
+      c: item(2, "third", "act-3"),
+    });
+    const { result } = renderHook(() => useUnreadCount());
+    return waitFor(() => expect(result.current.count).toBe(3));
   });
 });

@@ -14,6 +14,8 @@ import {
   socialPreferenceKey,
   purgeLegacySocialKey,
 } from "@/lib/socialPreferenceKeys";
+import { useBlockedUsers } from "./useBlockedUsers";
+import { useHiddenActivities } from "./useHiddenActivities";
 
 // Cap the unread-counter subscription so this hook can't fan out to
 // the user's whole feed. The badge UI only renders "N" up to a max
@@ -42,6 +44,9 @@ const UNREAD_CAP = 50;
  */
 export function useUnreadCount() {
   const uid = useUid();
+  // Same suppression the feed applies, so the badge and the screen agree.
+  const { blocked } = useBlockedUsers();
+  const { hidden } = useHiddenActivities();
   const [count, setCount] = useState(0);
   const [capped, setCapped] = useState(false);
   const [error, setError] = useState(false);
@@ -80,9 +85,27 @@ export function useUnreadCount() {
       q,
       (snap) => {
         if (!isCurrent()) return;
-        // Exclude the user's own activity (fan-out writes to the author's
-        // own feed too) — a badge should signal OTHERS' activity.
-        const newItems = snap.docs.filter((d) => d.data().authorId !== uid);
+        /* The badge must count what the FEED will render, not what the
+           collection holds. `useSocialFeed` drops blocked authors and
+           user-hidden activities before rendering; counting them here meant
+           a user who blocked someone still got badged by their posts, opened
+           Social, and found nothing new — the count and the screen
+           disagreeing about the same feed.
+
+           `highlightsOnly` is deliberately NOT applied. It is a VIEW toggle,
+           not a "don't show me this" action: a user browsing highlights still
+           wants to know real activity arrived, and counting only highlights
+           would under-report it. Blocking and hiding are explicit suppression;
+           a view filter is not. */
+        const newItems = snap.docs.filter((d) => {
+          const data = d.data();
+          // Exclude the user's own activity (fan-out writes to the author's
+          // own feed too) — a badge should signal OTHERS' activity.
+          if (data.authorId === uid) return false;
+          if (blocked.has(data.authorId as string)) return false;
+          if (hidden.has(data.activityId as string)) return false;
+          return true;
+        });
         setError(false);
         setCapped(newItems.length > UNREAD_CAP);
         setCount(Math.min(newItems.length, UNREAD_CAP));
@@ -97,7 +120,7 @@ export function useUnreadCount() {
     );
 
     return unsub;
-  }, [uid]);
+  }, [uid, blocked, hidden]);
 
   const markSeen = () => {
     if (!uid) return;
