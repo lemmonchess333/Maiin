@@ -42,6 +42,7 @@ const {
 const { utcDateString, parseUtcDate } = require("./lib/dateUtils");
 const { resolveRecoveryExit } = require("./lib/runModeResolution");
 const { isVolumeEligibleRun } = require("./lib/runEligibility");
+const blockGuard = require("./lib/blockGuard");
 const {
   runMilestoneBadges,
   lifetimeMilestoneBadges,
@@ -5722,6 +5723,27 @@ exports.toggleKudosCallable = functions
         "Too many kudos updates. Slow down."
       );
     }
+    /* Blocking is enforced HERE, before any write. It used to be client-side
+       suppression only: the callable wrote the counter, the sub-doc and the
+       notification, and the recipient's app then hid the feed row while the
+       tray row and the push had already landed. A notification is exactly the
+       part a suppression-on-read model cannot take back. See lib/blockGuard. */
+    const activitySnap = await admin
+      .firestore()
+      .collection("activities")
+      .doc(activityId)
+      .get();
+    if (
+      activitySnap.exists &&
+      (await blockGuard.isBlockedBetween(
+        admin.firestore(),
+        activitySnap.data().authorId,
+        context.auth.uid
+      ))
+    ) {
+      throw blockGuard.blockedError(functions);
+    }
+
     try {
       const result = await socialCounters.toggleKudos({
         firestore: admin.firestore(),
@@ -6102,6 +6124,23 @@ exports.addCommentCallable = functions
         "Too many comments. Slow down."
       );
     }
+    // Same block enforcement as kudos — a comment is at least as intrusive.
+    const commentActivitySnap = await admin
+      .firestore()
+      .collection("activities")
+      .doc(activityId)
+      .get();
+    if (
+      commentActivitySnap.exists &&
+      (await blockGuard.isBlockedBetween(
+        admin.firestore(),
+        commentActivitySnap.data().authorId,
+        context.auth.uid
+      ))
+    ) {
+      throw blockGuard.blockedError(functions);
+    }
+
     try {
       const result = await socialCounters.addComment({
         firestore: admin.firestore(),
