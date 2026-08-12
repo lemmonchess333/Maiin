@@ -25,6 +25,7 @@ const perfScoring = require("./lib/perfScoring");
 // runtime. The TS source of truth is src/lib/runStatsEligibility.ts
 // (isVolumeEligible); keep all three in lockstep when the rule changes.
 const { isVolumeEligibleRun } = require("./lib/runEligibility");
+const { getNutritionPhase } = require("./lib/nutritionPhase");
 
 // Which calorie target adherence is scored against. Not always
 // profile.targetCalories — see the module header: for a Pro user whose
@@ -634,14 +635,24 @@ async function computeAndWritePerformanceForUser(uid, computeKeyOverride) {
     const scoringCalories = resolvedTarget ? resolvedTarget.value : null;
 
     // Score — delegate to the shared, goal-aware post-baseline scorer (the
-    // parity seam, pinned to the client copy). profile.goal drives the four
-    // goal-aware branches; the <3-week baseline-sufficiency deload gate lives
-    // inside scorePerformance too.
+    // parity seam, pinned to the client copy). The goal drives five
+    // behaviours inside it (recovery bodyweight thresholds, adherence calorie
+    // tolerance, the default workouts target, and the lift/run load
+    // weighting); the <3-week baseline-sufficiency deload gate lives inside
+    // scorePerformance too.
+    //
+    // Read through getNutritionPhase, NOT `profile.goal`. This line passed
+    // the top-level field for its whole life, and nothing has ever written
+    // it — the phase lives on `profile.program.goal` (Onboarding and
+    // buildGoalWeightPersistPayload both write it there). So every user was
+    // scored on the unknown branch, on the only copy that runs in production.
+    // See lib/nutritionPhase.js for why the parity cross-test could not
+    // catch this.
     const scored = perfScoring.scorePerformance(
       currentAgg,
       bl,
       {
-        goal: profile.goal,
+        goal: getNutritionPhase(profile),
         weeklyWorkoutsTarget: profile.weeklyWorkoutsTarget,
         targetCalories: scoringCalories,
         targetProtein: profile.targetProtein,
