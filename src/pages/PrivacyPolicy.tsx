@@ -22,7 +22,7 @@ export default function PrivacyPolicy() {
             Privacy Policy
           </h1>
           <p className="text-xs text-muted-foreground mt-1">
-            Last updated: May 2026
+            Last updated: August 2026
           </p>
         </div>
 
@@ -77,8 +77,9 @@ export default function PrivacyPolicy() {
                   Progress Photos (optional):
                 </strong>{" "}
                 If you choose to add progress photos, they are encrypted on your
-                device with AES-GCM before they are uploaded, so they are stored
-                only in encrypted form.
+                device with AES-GCM before they are uploaded, so they are never
+                stored as plain image files. See &ldquo;How we protect your
+                data&rdquo; below for what that does and does not mean.
               </li>
             </ul>
           </section>
@@ -109,8 +110,17 @@ export default function PrivacyPolicy() {
             </p>
             <p>
               <strong className="text-foreground">Progress photos</strong> are
-              additionally encrypted on your device (AES-GCM) before upload, so
-              the image content is not readable in storage.
+              additionally encrypted on your device (AES-GCM-256) before upload,
+              so they are never stored as plain image files &mdash; anyone
+              browsing raw storage sees ciphertext rather than pictures.
+            </p>
+            <p>
+              To be precise about what that protects: this is{" "}
+              <strong className="text-foreground">not</strong> end-to-end
+              encryption. The encryption key is derived from your account
+              identifier rather than from a password only you know, so Tropos is
+              technically able to decrypt your progress photos. We would rather
+              state that plainly than imply a protection we do not provide.
             </p>
           </section>
 

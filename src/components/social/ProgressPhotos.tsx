@@ -32,6 +32,33 @@ import {
   type VaultPhoto,
 } from "@/lib/progressVault";
 
+/**
+ * Photo encryption key.
+ *
+ * READ THIS BEFORE DESCRIBING THIS FEATURE ANYWHERE. What it provides is
+ * encryption AT REST against casual exposure: raw storage holds ciphertext,
+ * not JPEGs. What it does NOT provide is confidentiality from whoever holds
+ * the bucket, and the Privacy Policy now says so in those words.
+ *
+ * The key is derived from the uid with a fixed suffix and a fixed salt.
+ * Every one of those inputs is public — the uid IS the storage path
+ * (`progress-photos/{uid}/…`), and the suffix, the salt and this function
+ * all ship in the client bundle. So anyone who can read the ciphertext can
+ * derive the key.
+ *
+ * The 100k PBKDF2 iterations do not change that, which is worth saying
+ * because the number reads as reassuring: iteration count hardens a
+ * LOW-ENTROPY SECRET against brute force. There is no secret here, so it
+ * costs an attacker one derivation rather than a search.
+ *
+ * This was documented as "client-side AES-GCM, verified" on the launch
+ * checklist for a while, because the check confirmed the ALGORITHM and
+ * never asked whether the key was secret. Real end-to-end encryption needs
+ * a key the server never sees — a user passphrase, or a device-held key
+ * with sync — and both trade away recoverability: forget the passphrase and
+ * the photos are gone. That is a product decision, tracked in
+ * `docs/LAUNCH_TODO.md`, not something to change quietly here.
+ */
 async function getEncryptionKey(uid: string): Promise<CryptoKey> {
   const enc = new TextEncoder();
   const keyMaterial = await crypto.subtle.importKey(

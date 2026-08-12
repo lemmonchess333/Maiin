@@ -589,6 +589,14 @@ before being written into the legal text:
     the consumers to accept segments.
 - ⚠️ Progress photo encryption (client-side AES-GCM) — Privacy §1 + §3
   (verified against `ProgressPhotos.tsx` `crypto.subtle` AES-GCM-256)
+  - **CLAIM CORRECTED 2026-08-12.** Privacy §1 and §3 now say the photos are
+    never stored as plain image files, and state explicitly that this is NOT
+    end-to-end encryption because the key derives from the account identifier
+    rather than a password only the user knows. `getEncryptionKey` carries the
+    same explanation, so the next reader cannot re-derive the old confidence
+    from the algorithm name. Policy date bumped to August 2026. What REMAINS
+    open is the product question — whether to build real end-to-end
+    encryption — not the accuracy of what users are told.
   - **LAUNCH GATE, raised 2026-08-12.** The mechanism is real; the
     CONSEQUENCE the policy states is not. Privacy §3 says photos are
     "encrypted on your device (AES-GCM) before upload, **so the image
