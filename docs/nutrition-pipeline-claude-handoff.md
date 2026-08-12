@@ -72,6 +72,12 @@ scratch is wasted effort; changing them is a product call, not a cleanup.
   discipline for a week — a training-policy change with no user signal behind
   it. The COPY was fixed instead (#1959); the reasoning is in a footer block
   in `src/lib/performanceLine.ts`.
+  STATUS 2026-08-12 — owner-decided, and the middle path was taken. The SCORE
+  still is not renormalised, for the reason above. What changed is the
+  QUESTION: the deload trigger now reads `deloadIndex`, which takes the load
+  half from the discipline actually trained when exactly one was, so a peak-
+  block athlete can be offered a deload. The displayed PI, its saturation, and
+  its "Steady" verb are all unchanged by design.
 - **The sub-1200 manual override.** `floorTargetCalories` guards the
   rate-derived path only; the sanitizer bounds the override at 0..10000, so a
   target below 1200 is reachable by typing one. That is the user's own number.
