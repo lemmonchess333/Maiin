@@ -447,10 +447,14 @@ describe("useHomeData", { timeout: 5000 }, () => {
         )
       );
 
+      // Anchored on the VALUE, like its sibling above. Waiting for the nudge
+      // to merely EXIST returns at t=0 — the nudge is set by an effect keyed
+      // on today's workouts, so it is non-null before the meal query
+      // resolves and `dailyProt` is still 0. The un-loaded reading is 190,
+      // which is what CI caught.
       await waitFor(() =>
-        expect(result.current.postWorkoutNudge).not.toBeNull()
+        expect(result.current.postWorkoutNudge?.proteinRemaining).toBe(150)
       );
-      expect(result.current.postWorkoutNudge?.proteinRemaining).toBe(150);
     });
   });
 
