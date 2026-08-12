@@ -636,7 +636,25 @@ describe("computeAndWritePerformance — supplies both prior PIs", () => {
 
   it("reads the perf doc two windows back", () => {
     expect(SOURCE).toMatch(/dateKeyMinusN\(computeKey,\s*WINDOW_DAYS\s*\*\s*2\)/);
-    expect(SOURCE).toContain("weekBeforePreviousPI = prev2Doc.data().performanceIndex");
+    expect(SOURCE).toContain("weekBeforePreviousPI = priorDeloadIndex(prev2Doc.data())");
+  });
+
+  it("reads BOTH priors in the units the deload trigger asks in", () => {
+    /* The trigger's current reading is now `deloadIndex`, which differs from
+       `performanceIndex` on a single-discipline week. Reading the priors as
+       raw `performanceIndex` would compare a renormalised current against
+       composite history — a silent unit mix, and the kind that reads fine.
+       `priorDeloadIndex` falls back to `performanceIndex` for docs written
+       before the field existed, so the transition is behaviour-preserving. */
+    expect(SOURCE).toContain("previousComputePI = priorDeloadIndex(prevDoc.data())");
+    expect(SOURCE).not.toMatch(/=\s*prevDoc\.data\(\)\.performanceIndex/);
+    expect(SOURCE).not.toMatch(/=\s*prev2Doc\.data\(\)\.performanceIndex/);
+  });
+
+  it("persists deloadIndex so next week can compare like with like", () => {
+    // Computed and then not written would leave the fallback permanently
+    // engaged — correct-looking, and exactly the pre-fix behaviour.
+    expect(SOURCE).toMatch(/const perfDoc = \{[\s\S]{0,400}?deloadIndex,/);
   });
 
   it("passes it to the scorer alongside the previous PI", () => {

@@ -78,6 +78,13 @@ export interface PerformanceDoc {
   // Performance Index (0–100)
   performanceIndex: number;
 
+  /** The index the DELOAD question is asked against. Equals
+   *  `performanceIndex` except on a single-discipline week, where the load
+   *  half is taken from the discipline actually trained rather than the
+   *  diluted composite — see `deloadLoadScore`. Absent on docs written
+   *  before 2026-08-12; readers fall back to `performanceIndex`. */
+  deloadIndex?: number;
+
   // Sub-scores (0–100 each)
   liftLoadScore: number;
   runLoadScore: number;
