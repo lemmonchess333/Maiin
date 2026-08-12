@@ -437,17 +437,15 @@ async function isRateLimited(uid, action, maxCalls, windowMs) {
   );
 }
 
-// ══════════════════════════════════════════════
-// MONTHLY SCAN QUOTA — per-user, Firestore-backed
-// ══════════════════════════════════════════════
-
-const SCAN_LIMITS = { free: 10, pro: 300 };
+// The MONTHLY SCAN QUOTA block stood here: a `SCAN_LIMITS` table, a
+// `checkMonthlyQuota` wrapper, and their test exports. All of it was dead —
+// superseded by the daily per-action quota in `lib/aiScanQuota.js` (F1b),
+// which is what the AI endpoints actually call. See that module's header:
+// it reads the old `{ count, month }` shape as zero precisely because this
+// one stopped running.
 
 /** Delegates to helpers.computeEffectiveTier — see helpers.js for docs. */
 const _computeEffectiveTier = helpers.computeEffectiveTier;
-
-/** Delegates to helpers.currentMonthCount — see helpers.js for docs. */
-const _currentMonthCount = helpers.currentMonthCount;
 
 /** Delegates to helpers.safeOriginForLog — origin-only redaction so
  *  structured logs never capture raw client-supplied URLs. */
@@ -478,11 +476,6 @@ const safeOriginForLog = helpers.safeOriginForLog;
  * @param {string} uid - User ID
  * @returns {Promise<{allowed: boolean, remaining: number, limit: number, error?: string}>}
  */
-/** Delegates to rateLimiter.checkMonthlyQuota — see rateLimiter.js for docs. */
-async function checkMonthlyQuota(uid) {
-  return rateLimiter.checkMonthlyQuota(admin.firestore(), uid);
-}
-
 // Pure helpers exported for unit-testability. Not part of the public
 // Cloud Functions API; the underscore prefix marks them as
 // implementation detail. When a functions/ test runner is wired
@@ -492,8 +485,6 @@ async function checkMonthlyQuota(uid) {
 exports._shouldApplyParticipantCount = _shouldApplyParticipantCount;
 exports._pruneOldTimestamps = _pruneOldTimestamps;
 exports._computeEffectiveTier = _computeEffectiveTier;
-exports._currentMonthCount = _currentMonthCount;
-exports._SCAN_LIMITS = SCAN_LIMITS;
 
 /**
  * Verifies a Firebase ID token from an Authorization header.
