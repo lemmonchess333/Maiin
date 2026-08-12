@@ -216,3 +216,123 @@ describe("NutritionSection — sub-floor override notice", () => {
     }
   });
 });
+
+/**
+ * A held calorie target decays into a slower plan as the body changes, while
+ * the app keeps naming the original pace. Adaptive TDEE answers this but is
+ * Pro-gated, so a free user gets nothing.
+ *
+ * Owner decision 2026-08-12: surface it, offer a recalculation, never move
+ * the number silently. These drive the REAL detector rather than a stubbed
+ * flag, so the notice is pinned to a state the app can actually produce.
+ */
+describe("NutritionSection — target drift notice", () => {
+  /** Maintenance for the body in DEFAULT_TDEE's fixture. */
+  const MAINTENANCE = 2875;
+  /** Target set at 90 kg for −0.5 kg/wk, now held at 78 kg. */
+  const HELD = 2325;
+
+  const driftedTdee = { ...DEFAULT_TDEE, tdee: 2689 };
+
+  function renderDrift(over: Partial<UserProfile>, onRecalculate = vi.fn()) {
+    render(
+      <NutritionSection
+        profile={
+          {
+            uid: "u-1",
+            displayName: "T",
+            email: "t@e.com",
+            targetCalories: HELD,
+            weeklyRateKg: -0.5,
+            ...over,
+          } as UserProfile
+        }
+        age={35}
+        setAge={vi.fn()}
+        activityLevel={"moderate" as ActivityLevel}
+        setActivityLevel={vi.fn()}
+        currentKg={78}
+        goalWeightKg={75}
+        setGoalWeightKg={vi.fn()}
+        weeklyRateKg={0.5}
+        setWeeklyRateKg={vi.fn()}
+        goalPlan={goalPlan}
+        tdee={driftedTdee}
+        updateProfile={vi.fn(async () => ({ ok: true }) as UpdateProfileResult)}
+        onRecalculate={onRecalculate}
+        inline
+      />
+    );
+    return { onRecalculate };
+  }
+
+  it("names both paces — the real one and the chosen one", () => {
+    renderDrift({});
+    const notice = screen.getByText(/Your body has changed since this target/);
+    expect(notice.textContent).toContain("-0.33 kg/wk"); // what it now is
+    expect(notice.textContent).toContain("-0.50 kg/wk"); // what was picked
+  });
+
+  it("offers a recalculation that fires the owner's persist recipe", () => {
+    /* The button must not write targets itself — SettingsNutrition owns the
+       payload, so a recalculation and an ordinary edit cannot drift apart. */
+    const { onRecalculate } = renderDrift({});
+    fireEvent.click(screen.getByRole("button", { name: /Recalculate for 78/ }));
+    expect(onRecalculate).toHaveBeenCalledTimes(1);
+  });
+
+  it("says nothing to a user who pinned their own number", () => {
+    cleanup();
+    renderDrift({ customCalorieTarget: 1900 });
+    expect(
+      screen.queryByText(/Your body has changed since this target/)
+    ).toBeNull();
+  });
+
+  it("says nothing while an adaptive target is already tracking", () => {
+    cleanup();
+    renderDrift({
+      adaptiveCapState: {
+        lastApplied: 2500,
+        lastAppliedAt: "2026-08-04T00:00:00.000Z",
+      },
+    } as Partial<UserProfile>);
+    expect(
+      screen.queryByText(/Your body has changed since this target/)
+    ).toBeNull();
+  });
+
+  it("says nothing when the target still matches the body", () => {
+    cleanup();
+    render(
+      <NutritionSection
+        profile={
+          {
+            uid: "u-1",
+            displayName: "T",
+            email: "t@e.com",
+            targetCalories: HELD,
+            weeklyRateKg: -0.5,
+          } as UserProfile
+        }
+        age={35}
+        setAge={vi.fn()}
+        activityLevel={"moderate" as ActivityLevel}
+        setActivityLevel={vi.fn()}
+        currentKg={90}
+        goalWeightKg={75}
+        setGoalWeightKg={vi.fn()}
+        weeklyRateKg={0.5}
+        setWeeklyRateKg={vi.fn()}
+        goalPlan={goalPlan}
+        tdee={{ ...DEFAULT_TDEE, tdee: MAINTENANCE }}
+        updateProfile={vi.fn(async () => ({ ok: true }) as UpdateProfileResult)}
+        onRecalculate={vi.fn()}
+        inline
+      />
+    );
+    expect(
+      screen.queryByText(/Your body has changed since this target/)
+    ).toBeNull();
+  });
+});

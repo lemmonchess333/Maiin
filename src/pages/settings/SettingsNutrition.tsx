@@ -133,6 +133,7 @@ export default function SettingsNutrition() {
         goalPlan={goalPlan}
         tdee={tdee}
         updateProfile={updateProfile}
+      onRecalculate={() => updateProfile(payload)}
       />
     </SettingsSection>
   );
