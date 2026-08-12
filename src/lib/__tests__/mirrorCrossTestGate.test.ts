@@ -100,6 +100,8 @@ const PINNED: Record<string, string> = {
     "src/lib/__tests__/runModeResolution.cross.test.ts",
   "functions/lib/runEligibility.js":
     "src/lib/__tests__/runEligibility.cross.test.ts",
+  "functions/lib/nutritionPhase.js":
+    "src/lib/__tests__/nutritionPhaseMirror.cross.test.ts",
   "functions/lib/validatePlanPayload.js":
     "src/features/program/__tests__/validatePlanPayload.cross.test.ts",
   "functions/lib/challengeTiers.js":

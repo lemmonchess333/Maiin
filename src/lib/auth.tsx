@@ -127,6 +127,18 @@ export interface UserProfileFitness {
    */
   longestStreak: number;
   lastLogDate: string | null;
+  /**
+   * VESTIGIAL — declared, allowed through the profile sanitizer, and written
+   * by NOTHING. The nutrition phase lives on `program.goal`; read it through
+   * `getNutritionPhase` (src/lib/nutritionPhase.ts), never from here.
+   *
+   * Kept typed rather than deleted because the sanitizer allow-list would
+   * silently drop the field for any document that somehow carries one, and
+   * because the shape is what a reader sees. It stays documented because its
+   * plausibility is what caused the bug: `functions/performanceEngine.js`
+   * passed `profile.goal` into the goal-aware PI scorer for its whole life,
+   * so every user was scored on the unknown branch.
+   */
   goal?: string;
   age?: number;
   sex?: "male" | "female";
