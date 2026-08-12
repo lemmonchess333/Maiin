@@ -144,3 +144,83 @@ This does not change the decision; it is a precondition the decision
 assumed and did not state. It also means the reversal cannot be verified
 by "delete a workout and watch the counter drop" alone — the account
 deletion path needs its own test asserting the reversal does NOT run.
+
+## Amendment 2026-08-12 (b) — what writing it found
+
+Appended, not folded in, for the same reason as the first amendment: the
+record should show which parts of the original reasoning survived contact
+with the code. Three did not.
+
+**The challenge marker DOES record the amount it applied.** The decision
+above rests on "Neither marker records the amount it applied … So a
+reversal cannot read back what was added — it has to re-derive it. That
+is the fact that makes this an architecture decision rather than a
+ticket." Half of it is wrong. `applyChallengeProgressIncrement` writes
+`{ metric, incrementBy, activityDateKey, appliedAt }` — `incrementBy` has
+been on every challenge marker all along. Only the LIFETIME marker
+(`{ kind, sourceId, appliedAt }`) is amountless.
+
+So the challenge reversal reads the applied figure back and never
+re-derives anything, which is strictly stronger than the "call the same
+function, not a copy" constraint it would otherwise be held to: exact even
+if the increment formula changes between the accrual and the delete, and
+exact even if the source document changed underneath it.
+
+**Re-derivation is available but not always correct**, which is a
+different problem from the one the decision anticipated. It assumed
+re-derivation is exact "while the two agree" — i.e. that the only risk is
+formula drift. The other input can drift too. Session ids are
+deterministic (`programme-{completionId}`, `routine-{completionId}`), so a
+resumed programme Finish re-`set`s the SAME workout document. That
+overwrite is not a create, so it accrues nothing: the counter holds the
+first figure while the document now shows the second, and a reversal
+derived from the deleted snapshot subtracts the wrong number.
+
+The alternative the decision rejected — "Store the delta on the marker
+now, reverse later" — is therefore adopted for the lifetime marker, on
+exactly the terms the decision set for it. It was rejected as a FIRST STEP
+because it would have shipped a field nothing reads; it ships here with
+its reader in the same change. `accrueLifetimeStat` now stamps
+`appliedValue`, and the reversal prefers it.
+
+Residue, stated rather than hidden: every lifetime marker written before
+this takes the re-derivation path, so an overwritten pre-existing session
+reverses by its latest figure rather than its applied one. Bounded, and
+the alternative is a backfill over data with no way to recover the applied
+amount.
+
+The derivation itself moved to `functions/lib/lifetimeAccrual.js` and both
+sides call it. Note that the constraint the decision names as
+load-bearing — "the reversal MUST call the same function that computed the
+accrual" — was not satisfiable when it was written: there was no such
+function, only inline expressions in the two trigger bodies. Extracting
+them is what made the constraint real rather than aspirational.
+
+**`fastest_effort` cannot be reversed, and is not a fourth accumulator.**
+The decision treats "challenge progress" as one uniform thing. It is two.
+The SUM metrics (`workout_count`, `total_volume`, `total_km`,
+`hybrid_score`) decrement cleanly. `fastest_effort` applies through a
+separate MIN path, and its marker records the run's own time — never the
+best it displaced. Nothing on the delete side knows what to restore;
+recovering it would mean re-scanning the user's whole run history against
+the challenge's target distance, which is a rebuild, not a reversal.
+
+So it joins partner streaks on the "history, not an accumulator" side of
+the line, and for a stronger reason than the streak has: the streak COULD
+be recomputed and is deliberately not; this one has no information to
+recompute from. Its marker is still deleted, because MIN is idempotent for
+the same run — a re-log re-applies the same time and lands on the same
+best, whereas a surviving marker would deny a genuine re-log forever.
+
+**Milestone badges are not revoked either**, which the decision does not
+mention at all. `awardMilestoneBadges` fires off lifetime totals and off
+single-session thresholds (plate club, run distances). A badge is an
+achievement that was genuinely reached; un-awarding it on a mis-log delete
+is the same category error as breaking a streak. The lifetime total
+dropping back below a threshold is harmless — the award is idempotent via
+`earnedAt`, so a later re-crossing is a no-op rather than a duplicate.
+
+That makes the final tally four kinds of thing, not three: reverse
+(challenge SUM metrics, lifetime totals), recompute (Performance Index),
+and leave standing as history (partner streaks, `fastest_effort` bests,
+milestone badges).
