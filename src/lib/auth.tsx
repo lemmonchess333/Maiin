@@ -229,13 +229,30 @@ export interface UserProfileNutrition {
   targetProtein?: number;
   targetCarbs?: number;
   targetFat?: number;
-  customCalorieTarget?: number;
+
+  /**
+   * PENDING REMOVAL — no longer written, no longer read.
+   *
+   * Onboarding was its only writer and History's nutrition StatCards its
+   * only reader, and the goal-weight recipe never updated it. So it froze
+   * the onboarding-day plan and History rendered that as "target N" forever,
+   * drifting further with every goal change, weigh-in and adaptive retune.
+   * History now reads the same effective targets as Home and Food.
+   *
+   * The field itself is deliberately NOT deleted yet. It appears in three
+   * allow-lists that a parity gate keeps in lockstep — the registry,
+   * `firestore.rules`, and `functions/profileSanitizer.js` — and removing it
+   * from the rules is a deploy that would REJECT the onboarding write of any
+   * client still running the old bundle. Drop it once no shipped client
+   * writes it.
+   */
   macroTargets?: {
     calories: number;
     protein: number;
     carbs: number;
     fat: number;
   };
+  customCalorieTarget?: number;
   targetFiber?: number;
   targetSugar?: number;
   targetSodium?: number;

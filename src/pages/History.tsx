@@ -9,6 +9,7 @@ import { useRunningStats } from "@/hooks/useRunningStats";
 import { useWorkouts, workoutTonnageKg } from "@/hooks/useWorkouts";
 import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
 import { useAuth } from "@/lib/auth";
+import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { THEME } from "@/lib/theme";
 import { buildDelta } from "@/lib/deltaFormat";
 import { EXERCISES } from "@/lib/exercises";
@@ -477,7 +478,26 @@ export default function History() {
   const goal = profile?.program?.goal;
   const calorieDirection: "up-good" | "down-good" | "neutral" =
     goal === "cut" ? "down-good" : goal === "lean bulk" ? "up-good" : "neutral";
-  const macroTargets = profile?.macroTargets;
+  /* The nutrition StatCards' "target N" reference line.
+   *
+   * This read `profile.macroTargets` — a field written ONCE, by Onboarding,
+   * and by nothing since. The goal-weight recipe
+   * (`buildGoalWeightPersistPayload`) writes `targetCalories` and the three
+   * gram fields but not this one, and neither does the weigh-in patch. So a
+   * user who onboarded at maintenance and later set a goal weight kept
+   * seeing their onboarding-day plan here — "target 2,650 kcal" against a
+   * plan that had been 2,100 for months, widening with every goal change,
+   * weigh-in and adaptive retune.
+   *
+   * Reads the same effective targets Home and Food render, so the number on
+   * this page cannot disagree with the number on those. */
+  const effectiveTargets = useEffectiveTargets();
+  const macroTargets = {
+    calories: effectiveTargets.finalTarget,
+    protein: effectiveTargets.protein,
+    carbs: effectiveTargets.carbs,
+    fat: effectiveTargets.fat,
+  };
 
   // Lifetime totals — all-time aggregates shown only on the "All" tab,
   // pinned at the very bottom as a quiet "you've come this far" footer.
