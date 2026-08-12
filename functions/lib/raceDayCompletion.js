@@ -89,14 +89,35 @@ function recoveryWeeksFor(distanceKey) {
  *
  *   1. not `isInvalid` / `savedAnyway` — a "Save anyway" on a borked
  *      GPS trace the user explicitly flagged must never clear a no-show;
- *   2. `actualTemplateId` is a RACE-TYPE template id — `5k_race` …
- *      `marathon_race`, resolved through the pinned `raceTemplateIds`
- *      mirror. It compared against the literal "race" until 2026-07-26,
- *      which no doc satisfies; see that module for the full account;
- *   3. `distance` is a number;
- *   4. `plannedDistanceMeters <= 0` → unconfigured goal accepts any
- *      race-templated run (Q1 P29 fallback);
- *   5. distance ≥ ratio × planned.
+ *   2. `distance` is a number;
+ *   3. `plannedDistanceMeters <= 0` → nothing to measure against, so the
+ *      race-type `actualTemplateId` is the only evidence left and IS
+ *      required (Q1 P29 fallback). Resolved through the pinned
+ *      `raceTemplateIds` mirror — it compared against the literal "race"
+ *      until 2026-07-26, which no doc satisfies; see that module;
+ *   4. otherwise distance ≥ ratio × planned.
+ *
+ * EVIDENCE, NOT CEREMONY (2026-08-12). Gates 2 and 4 used to be `AND`ed:
+ * a run had to be race-templated *and* clear the distance bar. But
+ * `actualTemplateId` is only written when the run was launched from the
+ * scheduled slot — `freeformPlanMetadata` writes null — so a user who
+ * tapped Start Run on the start line saved their marathon untemplated,
+ * `isStrictRaceRun` returned false, and `dailyRaceReconciliationSweep`
+ * recorded a `race_no_show` for a race they had just run. No recovery
+ * entry, and at `NO_SHOW_EXIT_GRACE_DAYS = 14` the L4 auto-exit strips
+ * `raceGoal` outright — the race goal is lost for having opened the app
+ * the wrong way.
+ *
+ * The tag and the distance are two forms of the same evidence, and
+ * requiring both meant requiring the one that is absent exactly when it
+ * matters. ≥95% of the planned distance ON the race date is the stronger
+ * of the two, so it now stands alone. The tag still carries the
+ * zero-planned branch, where there is no distance to reason from.
+ *
+ * This is the server counterpart of the client fix in
+ * `src/lib/scheduledRunCompletion.ts`; the two remain a deliberate
+ * non-mirror (95% here vs 70% there — the server writes a recovery block
+ * off this answer, the client only draws a tick).
  *
  * UNIFICATION NOTE: the two inline copies this replaces disagreed on
  * exactly one input — race-templated run with a NON-numeric `distance`
@@ -113,13 +134,16 @@ function isStrictRaceRun(savedRun, plannedDistanceMeters) {
   if (savedRun.isInvalid === true || savedRun.savedAnyway === true) {
     return false;
   }
-  // By TYPE, via the pinned id mirror — NOT `=== "race"`, which no doc
-  // ever satisfies (real ids are `5k_race` … `marathon_race`). That
-  // comparison made this predicate always false, so every completed race
-  // read as a no-show and the recovery entry never fired.
-  if (!isRaceTemplateId(savedRun.actualTemplateId)) return false;
   if (typeof savedRun.distance !== "number") return false;
-  if (!plannedDistanceMeters || plannedDistanceMeters <= 0) return true;
+  if (!plannedDistanceMeters || plannedDistanceMeters <= 0) {
+    // No planned distance to measure against, so the template tag is the
+    // only evidence this was a race at all. By TYPE, via the pinned id
+    // mirror — NOT `=== "race"`, which no doc ever satisfies (real ids
+    // are `5k_race` … `marathon_race`). That comparison made this
+    // predicate always false, so every completed race read as a no-show
+    // and the recovery entry never fired.
+    return isRaceTemplateId(savedRun.actualTemplateId);
+  }
   return savedRun.distance / plannedDistanceMeters >= RACE_STRICT_DISTANCE_RATIO;
 }
 
