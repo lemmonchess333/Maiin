@@ -148,6 +148,8 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   },
   { field: "lastLogDate", sanitized: true },
   { field: "longestStreak", sanitized: true },
+  // Pending removal — see the UserProfile declaration. Kept in every
+  // allow-list until no shipped client writes it.
   { field: "macroTargets", sanitized: true },
   { field: "maxHeartRate", sanitized: true },
   { field: "onboardingComplete", sanitized: false },
