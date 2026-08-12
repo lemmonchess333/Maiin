@@ -39,15 +39,42 @@ export function adaptiveCalorieStatus(
   return { kind: "formula" };
 }
 
-/** One-line human label for the status. */
-export function adaptiveCalorieStatusLabel(s: AdaptiveCalorieStatus): string {
+/**
+ * One-line human label for the status.
+ *
+ * `appliedTarget` is the LEARNED value (`adaptiveCapState.lastApplied`) — the
+ * number Home and Food actually show. Pass it wherever the label sits beneath
+ * a FORMULA figure, which is the case on Settings → Nutrition: that screen is
+ * the plan editor, so the calories and the macro split beside them are both
+ * the pre-adaptive baseline, deliberately.
+ *
+ * Without it the "adapting" copy read "Adapting — retuned 3d ago from your
+ * real intake + weight" directly under 2500 while every other surface showed
+ * 2919. The line asserted the number above it was the adapted one; it never
+ * was. Naming both is the honest fix and leaves the editor's own figures
+ * internally consistent — swapping the headline to the learned value would
+ * strand the macro row, which is split at the baseline.
+ *
+ * Omitted (or non-finite), the copy stays as it was, so callers that already
+ * render the learned number are unaffected.
+ */
+export function adaptiveCalorieStatusLabel(
+  s: AdaptiveCalorieStatus,
+  appliedTarget?: number | null
+): string {
   switch (s.kind) {
     case "manual":
       return "Manual target — you set this; adaptive learning is paused.";
-    case "adapting":
-      return s.retunedDaysAgo === 0
-        ? "Adapting — retuned today from your real intake + weight."
-        : `Adapting — retuned ${s.retunedDaysAgo}d ago from your real intake + weight.`;
+    case "adapting": {
+      const when =
+        s.retunedDaysAgo === 0 ? "today" : `${s.retunedDaysAgo}d ago`;
+      const base = `Adapting — retuned ${when} from your real intake + weight.`;
+      return typeof appliedTarget === "number" && Number.isFinite(appliedTarget)
+        ? `${base} This is your baseline; today's target is ${Math.round(
+            appliedTarget
+          ).toLocaleString()} cal.`
+        : base;
+    }
     case "formula":
       return "Formula estimate — adapts to your real expenditure once you track for a while.";
   }

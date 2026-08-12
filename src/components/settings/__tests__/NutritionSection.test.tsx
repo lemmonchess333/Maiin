@@ -4,6 +4,9 @@
  * the old bespoke purple-outline pills — and that picking a pace writes the
  * rate. Render-level (jsdom), no Firebase emulator.
  */
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import NutritionSection from "../NutritionSection";
@@ -334,5 +337,32 @@ describe("NutritionSection — target drift notice", () => {
     expect(
       screen.queryByText(/Your body has changed since this target/)
     ).toBeNull();
+  });
+});
+
+describe("the adapting status line is wired to the learned target", () => {
+  /* A reachability check, and it exists because a mutation found the gap:
+     `adaptiveCalorieStatusLabel`'s second parameter is OPTIONAL, so deleting
+     the argument at this call site compiles cleanly, every unit test of the
+     label keeps passing, and the line silently goes back to claiming the
+     formula figure above it is the adapted one.
+
+     Asserted against the source rather than a render because the branch only
+     appears for a profile whose adaptive layer has engaged — which needs
+     `adaptiveCapState.lastAppliedAt` seeded past the warmup gate, a fixture
+     this file's harness does not build. The wire-up is the thing that broke;
+     this is what holds it. */
+  const src = readFileSync(
+    resolve(
+      dirname(fileURLToPath(import.meta.url)),
+      "../NutritionSection.tsx"
+    ),
+    "utf8"
+  ).replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ");
+
+  it("passes adaptiveCapState.lastApplied into the label", () => {
+    expect(src).toMatch(
+      /adaptiveCalorieStatusLabel\([\s\S]{0,200}?adaptiveCapState\?\.lastApplied/
+    );
   });
 });
