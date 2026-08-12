@@ -44,9 +44,22 @@ async function isBlockedBetween(db, ownerUid, actorUid) {
   if (ownerUid === actorUid) return false;
 
   try {
+    /* collection()/doc() chains rather than a top-level doc(path): that is
+       the idiom the rest of functions/ uses, and the one the test fakes
+       implement. A path-form read threw against those fakes, and because this
+       fails closed the result was every notification silently skipped — a
+       reminder that a fail-closed guard turns an access-pattern mismatch into
+       an outage rather than an error. */
+    const blockDoc = (blocker, blocked) =>
+      db
+        .collection("blocks")
+        .doc(blocker)
+        .collection("users")
+        .doc(blocked)
+        .get();
     const [ownerBlockedActor, actorBlockedOwner] = await Promise.all([
-      db.doc(`blocks/${ownerUid}/users/${actorUid}`).get(),
-      db.doc(`blocks/${actorUid}/users/${ownerUid}`).get(),
+      blockDoc(ownerUid, actorUid),
+      blockDoc(actorUid, ownerUid),
     ]);
     return ownerBlockedActor.exists || actorBlockedOwner.exists;
   } catch (_) {

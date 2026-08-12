@@ -20,15 +20,24 @@ const { isBlockedBetween, blockedError } = require("../lib/blockGuard");
 /** Minimal Firestore stand-in: a set of existing doc paths. */
 function dbWith(paths, opts = {}) {
   const set = new Set(paths);
+  /* Mirrors the collection()/doc() chain the guard uses — which is the idiom
+     the rest of functions/ uses and the one the other test fakes implement. */
   return {
-    doc: (path) => ({
-      get: async () => {
-        if (opts.throwOn && opts.throwOn === path) {
-          throw new Error("unavailable");
-        }
-        if (opts.throwAll) throw new Error("unavailable");
-        return { exists: set.has(path) };
-      },
+    collection: (c) => ({
+      doc: (blocker) => ({
+        collection: (c2) => ({
+          doc: (blocked) => {
+            const path = `${c}/${blocker}/${c2}/${blocked}`;
+            return {
+              get: async () => {
+                if (opts.throwOn === path) throw new Error("unavailable");
+                if (opts.throwAll) throw new Error("unavailable");
+                return { exists: set.has(path) };
+              },
+            };
+          },
+        }),
+      }),
     }),
   };
 }

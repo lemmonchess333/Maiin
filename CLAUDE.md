@@ -980,10 +980,13 @@ guard refuses in BOTH directions and fails CLOSED on a read error.
       between them: kudos and comment still work. This is the regression to
       watch — a guard that refused everything would look identical in the logs
       to one that works.
-- [ ] **Residue, not fixed here:** other surfaces still create notifications
-      without a block check (space post likes/comments, follows,
-      circle events). They were left rather than half-covered; the guard is
-      shared and ready for them.
+- [ ] **Every other surface is covered by a backstop inside
+      `createNotification`** — space post likes/comments, follows and circle
+      events all pass through it, so a blocked notification is skipped
+      wherever it originates. The underlying write (the like itself) still
+      lands for those surfaces; only the notification is suppressed. Spot-check
+      one: with A blocking B, have B like A's space post — the like counts, A
+      gets NO tray row and NO push.
 
 ### Deload offered on discipline-specific load (single-discipline weeks)
 
