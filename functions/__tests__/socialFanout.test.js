@@ -41,6 +41,15 @@ function makeFirestoreStub({ initial = {}, collections = {} } = {}) {
         writes.push({ op: "set", path, data });
         state[path] = data;
       }),
+      /* Doc reads. Added when createNotification gained its block backstop:
+         without a `get`, the guard's lookup threw, and because that guard
+         fails CLOSED every notification in this suite was silently skipped.
+         Seed `blocks/{blocker}/users/{blocked}` via `initial` to model a
+         block. */
+      get: vi.fn(async () => ({
+        exists: Object.prototype.hasOwnProperty.call(state, path),
+        data: () => state[path],
+      })),
     };
   }
   function makeCollection(path) {
@@ -623,5 +632,67 @@ describe("SOC-P2g space-post engagement notifications", () => {
           `notification will be silently dropped in production.`
       ).toContain(type);
     }
+  });
+});
+
+describe("createNotification — block backstop", () => {
+  /* The interaction callables refuse a blocked kudos or comment outright, but
+     they are not the only writers here: space post likes and comments,
+     follows and circle events all reach createNotification too, and each new
+     surface is another chance to forget the check. Guarding at the single
+     point every notification passes through makes the rule true by
+     construction rather than by remembering. */
+  const serverTimestamp = () => "TS";
+
+  it("skips a notification to someone who blocked the sender", async () => {
+    const firestore = makeFirestoreStub({
+      initial: { "blocks/recipient/users/sender": { at: 1 } },
+    });
+    const { createNotification } = require("../lib/socialFanout");
+    const res = await createNotification({
+      firestore,
+      fromUid: "sender",
+      toUid: "recipient",
+      data: { type: "kudos", activityId: "a1" },
+      serverTimestamp,
+    });
+    expect(res).toEqual({ skipped: true, blocked: true });
+    // The point of the backstop: nothing was written.
+    expect(firestore._writes).toHaveLength(0);
+  });
+
+  it("skips when the SENDER blocked the recipient", async () => {
+    const firestore = makeFirestoreStub({
+      initial: { "blocks/sender/users/recipient": { at: 1 } },
+    });
+    const { createNotification } = require("../lib/socialFanout");
+    const res = await createNotification({
+      firestore,
+      fromUid: "sender",
+      toUid: "recipient",
+      data: { type: "comment", activityId: "a1" },
+      serverTimestamp,
+    });
+    expect(res.blocked).toBe(true);
+    expect(firestore._writes).toHaveLength(0);
+  });
+
+  it("still delivers when there is no block", async () => {
+    /* Guards the guard: a backstop that skipped everything would satisfy both
+       assertions above and silently disable all notifications — which is
+       exactly what happened to this suite while the guard's read was
+       throwing. */
+    const firestore = makeFirestoreStub();
+    const { createNotification } = require("../lib/socialFanout");
+    const res = await createNotification({
+      firestore,
+      fromUid: "sender",
+      toUid: "recipient",
+      data: { type: "kudos", activityId: "a1" },
+      serverTimestamp,
+    });
+    expect(res.blocked).toBeUndefined();
+    expect(res.notificationId).toBeTruthy();
+    expect(firestore._writes).toHaveLength(1);
   });
 });
