@@ -102,3 +102,45 @@ because it ships a field nothing reads, on the same day this codebase deleted
 two of those. It is the right fallback if re-derivation ever becomes
 unavailable, and the constraint above says so — but it is not a reason to write
 the field ahead of the need.
+
+## Amendment 2026-08-12 — the reversal must not fire during account deletion
+
+Appended rather than folded into the decision above, so the record shows
+what the first pass missed.
+
+The account-deletion executor sweeps `workouts` and `runs` (they are in
+`USER_SUBCOLLECTIONS`), and it sweeps `lifetime` — the counters AND their
+per-source markers — in the same run. So an `onDelete` trigger on those
+collections fires once per document during every account deletion, for a
+user whose accumulators are being erased alongside them.
+
+Two consequences, the second serious:
+
+1. **Fan-out.** A user with several hundred logged sessions produces that
+   many trigger invocations, each opening a transaction, against
+   `TRIGGER_CAP`. Deletion is already the slowest operation in the system.
+
+2. **Resurrection.** `accrueLifetimeStat` writes `lifetime/totals` with
+   `{ merge: true }`, so a reversal racing the sweep can RE-CREATE a
+   document the executor has already deleted, leaving orphaned counters
+   under a deleted user. That is the precise failure the swept-collection
+   list exists to prevent, and it defeats erasure rather than merely
+   making it untidy.
+
+So: **both `onDelete` triggers MUST run the system-writer guard first**,
+exactly as `onWorkoutCreated` already does —
+`accountDeletionLocks.shouldSystemWriteProceed(...)`, whose own module
+header names "onWorkout/onRunCreated triggers" as the case it exists for
+and requires the check immediately before each write commit, not only at
+function entry.
+
+The guarded behaviour differs from the create side. `onWorkoutCreated`
+performs a COMPENSATING DELETE when the guard fails — it removes the doc
+that triggered it. On delete there is nothing to compensate: the document
+is already gone, and the accumulators are being erased by the sweep. The
+correct behaviour is a plain no-op.
+
+This does not change the decision; it is a precondition the decision
+assumed and did not state. It also means the reversal cannot be verified
+by "delete a workout and watch the counter drop" alone — the account
+deletion path needs its own test asserting the reversal does NOT run.
