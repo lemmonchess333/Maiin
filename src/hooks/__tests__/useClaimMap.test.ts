@@ -139,6 +139,106 @@ describe("useClaimMap", () => {
     );
   });
 
+  /**
+   * The same race, run WITHOUT launching it from the scheduled slot.
+   *
+   * The test above proves the short-circuit fires when the saved doc
+   * carries a race `actualTemplateId` — but that field is only set when
+   * the run went through the plan. `freeformPlanMetadata` writes
+   * `actualTemplateId: null`, so a user who taps Start Run on the start
+   * line saves a run with no template at all. That is the obvious
+   * race-morning behaviour, and it used to fall straight through to the
+   * pace bar.
+   *
+   * The bar is 270 s/km. A 42.2 km finish at 5:30/km — a good club
+   * marathon — read as "easy" and left race day blank; only a
+   * sub-4:30/km amateur was unaffected, which inverts who the leniency
+   * was written for. The date and the full distance were both already
+   * matched.
+   *
+   * Deliberately driven through the hook's REAL deps (`RUN_TEMPLATES`,
+   * the 270 s/km bucket, the metres distance map) rather than injected
+   * ones, because the bug was in what production wires up, not in the
+   * predicate's own arithmetic.
+   */
+  it("completes race day on an UNTEMPLATED run — a real marathon finish", async () => {
+    mockProgramState = {
+      runDays: [
+        {
+          id: "rd-marathon",
+          date: "2026-05-26",
+          dayIndex: 2,
+          templateId: "marathon_race",
+          type: "race",
+          status: "planned",
+        },
+      ],
+    };
+    const { result } = renderHook(() => useClaimMap("2026-05-26"));
+    await act(async () => {
+      seedRuns([
+        {
+          id: "run-marathon",
+          data: {
+            date: "2026-05-26",
+            distance: 42200,
+            duration: 13926,
+            avgPace: 330, // 5:30/km — "easy" bucket
+            // No actualTemplateId / plannedTemplateId: freeform start.
+            completedAt: { seconds: 1780000000 },
+          },
+        },
+      ]);
+      await flushSnapshots();
+    });
+
+    expect(result.current.claimMap.get("rd-marathon")?.claimedSavedRunId).toBe(
+      "run-marathon"
+    );
+  });
+
+  /**
+   * …and the leniency stops at the race slot's own distance gate, so
+   * "race day completes on anything" is not what shipped. A 10 km
+   * shakeout on marathon morning is 24% of the planned distance and
+   * claims nothing — without this, the fix above would read as
+   * "untemplated run + race day ⇒ complete".
+   */
+  it("does NOT complete race day on a short shakeout", async () => {
+    mockProgramState = {
+      runDays: [
+        {
+          id: "rd-marathon",
+          date: "2026-05-26",
+          dayIndex: 2,
+          templateId: "marathon_race",
+          type: "race",
+          status: "planned",
+        },
+      ],
+    };
+    const { result } = renderHook(() => useClaimMap("2026-05-26"));
+    await act(async () => {
+      seedRuns([
+        {
+          id: "run-shakeout",
+          data: {
+            date: "2026-05-26",
+            distance: 10000,
+            duration: 3300,
+            avgPace: 330,
+            completedAt: { seconds: 1780000000 },
+          },
+        },
+      ]);
+      await flushSnapshots();
+    });
+
+    expect(
+      result.current.claimMap.get("rd-marathon")?.claimedSavedRunId
+    ).toBeUndefined();
+  });
+
   it("returns empty result and skips subscription when there is no user", () => {
     currentUser = null;
     const { result } = renderHook(() => useClaimMap("2026-05-26"));
