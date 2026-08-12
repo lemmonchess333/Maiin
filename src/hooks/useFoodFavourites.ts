@@ -121,14 +121,6 @@ export function useFoodFavourites() {
   const { isOnline } = useOnlineStatus();
   const [favourites, setFavourites] = useState<FoodFavourite[]>([]);
   const [loading, setLoading] = useState(true);
-  /** Increments whenever a favourite crosses the graduation
-   *  threshold (previousCount < 2 → newCount >= 2). Consumers
-   *  effect on this to trigger one-shot UI (first-graduation
-   *  coachmark). The "< 2 → >= 2" inequality catches multi-
-   *  increment jumps (offline sync delivering useCount 1 → 3 in a
-   *  single snapshot) where a strict `=== 2` check would miss the
-   *  transition. */
-  const [graduationToken, setGraduationToken] = useState(0);
   /** Re-entrancy guard for eviction. The snapshot can re-fire while
    *  a deleteDoc is in flight — without the guard, the effect would
    *  pick the same target (still present in the cached snapshot) and
@@ -177,8 +169,19 @@ export function useFoodFavourites() {
         // Graduation detection: diff current vs previous snapshot
         // for `< 2 → >= 2` transitions. Skipped on the initial
         // snapshot so prior-session high-useCount items don't all
-        // fire on first load. Emits analytics + bumps the token
-        // for consumer-side coachmark trigger.
+        // fire on first load. The inequality (rather than `=== 2`)
+        // catches multi-increment jumps — offline sync can deliver
+        // useCount 1 → 3 in a single snapshot.
+        //
+        // Emits analytics ONLY. This block also incremented a
+        // `graduationToken` for "consumer-side coachmark trigger"
+        // until 2026-08-12; no consumer ever existed, and no such
+        // coachmark was ever specced — no design, no reserved key,
+        // nothing in the plan file. The rest of graduation shipped
+        // and works without it (this event, the funnel splits, the
+        // useCount>=2 filtering). Deleted rather than annotated:
+        // it was speculative state re-rendering every consumer of
+        // this hook to drive UI nobody had designed.
         if (initialSnapshotSeenRef.current) {
           for (const fav of parsed) {
             const prev = previousByIdRef.current.get(fav.id);
@@ -190,7 +193,6 @@ export function useFoodFavourites() {
                 useCount: fav.useCount,
                 source: fav.source,
               });
-              setGraduationToken((t) => t + 1);
             }
           }
         } else {
@@ -456,7 +458,6 @@ export function useFoodFavourites() {
   return {
     favourites,
     loading,
-    graduationToken,
     getTimeRelevant,
     addFavourite,
     removeFavourite,
