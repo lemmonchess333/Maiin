@@ -640,7 +640,7 @@
       "lockNeeded": "referenced-uid",
       "hasNestedSubcollections": false,
       "schemaAuditNote": "Audited functions/index.js + src/lib/socialApi.ts:616-630 — notification fields stored: type, fromUserId, fromName (denormalised displayName of actor), activityId, message (template string containing fromName). Only fromUserId is a UID field; targetUserId is the parent path key (cleaned via notificationsOwn). No other UID fields (no actorUid/recipientUid/entityOwnerUid/embedded snapshot).",
-      "reason": "Notifications this user generated for others (kudos given, comments made, follow notifications). Same pathFilter discipline as feedFanout. Deleted rather than anonymised — notifications are ephemeral signals; partial anonymisation (clear fromUserId + fromName + edit message string) preserves no useful thread context.",
+      "reason": "Notifications this user generated for others (kudos given, comments made, follow notifications). STILL OPEN, but unlike the entries above its declared strategy is VALID: createNotification writes `fromUserId`, and a collectionGroup field query on `items` works — verified against the emulator in firestore.collectionGroup.test.ts, which also shows the cross-tree spill into feeds/ and comments/ that pathFilter exists to discriminate. Two caveats before implementing: the emulator answers index-free, so production index availability must be confirmed separately (green in the emulator is necessary, not sufficient — the standing deploy rule); and ANONYMOUS notifications omit fromUserId entirely, so a field query cannot reach them, by design, since they carry no uid to erase.",
       "testCoverageKey": "smoke::notificationsFromMe",
       "testCoverageStatus": "planned"
     },
@@ -697,7 +697,7 @@
       "lockNeeded": "callable-actor",
       "hasNestedSubcollections": false,
       "feasibilityNote": "collectionGroup + documentId/__name__ equality on the leaf is supported in Firestore since 2023 (`where(FieldPath.documentId(), '==', uid)`). pathFilter feeds/*/users uses segment-aware matcher to prevent matching following/{uid}/users or followers/{uid}/users which share the 'users' subcollection name. Fallback option if collectionGroup-docId proves unreliable in emulator: redundant blockedUid field added to blocks doc body (backfill required).",
-      "reason": "Other users who blocked this account — doc id equals deleted user's uid. Low harm but tidies references.",
+      "reason": "Other users who blocked this account — doc id equals the deleted user's uid. STILL OPEN, same mechanism as kudosByMe: The strategy this entry declares is NOT a query Firestore accepts: a collectionGroup documentId comparison requires a FULL document path (\"'uid' is not [valid] because it has an odd number of segments\"), which is exactly what you lack when the question is 'where does this uid appear'. Proven against the emulator by firestore.collectionGroup.test.ts, which was written in Chunk 2 to answer this and never ran until 2026-08-12. and the doc carries no uid field, only the path. The parent set is every user who blocked you, which is not enumerable. Closing it needs a `uid` field at the write site (src/lib/socialApi blockUser) plus a backfill. Genuinely low harm — the surviving doc is a bare id under someone else's tree and the uid is tombstoned — which is why it is last in the queue, not because it is hard to see.",
       "testCoverageKey": "smoke::blocksReverse",
       "testCoverageStatus": "planned"
     },
@@ -717,7 +717,7 @@
       "lockNeeded": "callable-actor",
       "hasNestedSubcollections": false,
       "feasibilityNote": "Same collectionGroup-by-docId pattern as blocksReverse. Counter decrement is idempotent per designConstants.counterIdempotence: transaction reads member doc, deletes it if present + decrements memberCount; if member doc missing (retry), does NOT decrement. memberCount clamped at 0.",
-      "reason": "Crew/group memberships keyed by uid as doc id, with denormalised displayName. Must also decrement memberCount on the parent group doc in a transaction.",
+      "reason": "Crew/group memberships keyed by uid as doc id. DEAD ENTRY as of the 2026-07-20 crews retirement: `groups/` has zero read or write sites left in src/ or functions/ and setCrewMembershipCallable is gone, so no live code produces this data. Separately, The strategy this entry declares is NOT a query Firestore accepts: a collectionGroup documentId comparison requires a FULL document path (\"'uid' is not [valid] because it has an odd number of segments\"), which is exactly what you lack when the question is 'where does this uid appear'. Proven against the emulator by firestore.collectionGroup.test.ts, which was written in Chunk 2 to answer this and never ran until 2026-08-12. Left in `included` rather than moved to `excluded` because `excluded` means a deliberate retention, which this is not — it is a collection that stopped existing. Any residual legacy docs would need a one-off backfill, not an executor step.",
       "testCoverageKey": "smoke::crewMemberships",
       "testCoverageStatus": "planned"
     },
@@ -733,13 +733,13 @@
       "containsPersonalData": true,
       "piiCategory": "uid",
       "recordPurpose": "userContent",
-      "strategy": "deleteCollectionGroupInBatches",
+      "strategy": "deleteKnownDocIfExists",
       "lockNeeded": "callable-actor",
       "hasNestedSubcollections": false,
       "feasibilityNote": "Same pattern as crewMemberships. participantCount decrement idempotent per designConstants.counterIdempotence.",
-      "reason": "Challenge participations keyed by uid as doc id with denormalised progress. Decrement participantCount on parent challenge in a transaction.",
-      "testCoverageKey": "smoke::challengeParticipations",
-      "testCoverageStatus": "planned"
+      "reason": "Challenge participations keyed by uid as doc id with denormalised progress. IMPLEMENTED by functions/lib/challengeParticipationCleanup.js as executor step 0e, by known doc ref rather than the collectionGroup query this entry used to declare. The strategy this entry declares is NOT a query Firestore accepts: a collectionGroup documentId comparison requires a FULL document path (\"'uid' is not [valid] because it has an odd number of segments\"), which is exactly what you lack when the question is 'where does this uid appear'. Proven against the emulator by firestore.collectionGroup.test.ts, which was written in Chunk 2 to answer this and never ran until 2026-08-12. This entry is reachable anyway because `challenges` is a BOUNDED top-level collection — rolloverChallenges mints a fixed handful per period — so the parents can be enumerated (.select(), ids only) and participants/{uid} addressed by name. kudosByMe and blocksReverse have no such bound and are therefore still open. participantCount is deliberately not adjusted here: deleting the participant doc fires onChallengeParticipantDeleted, which recomputes from an aggregate under an observation-time guard — strictly better than the decrement this entry used to ask for.",
+      "testCoverageKey": "unit::accountDeletion.challengeParticipations",
+      "testCoverageStatus": "implemented"
     },
     {
       "key": "kudosByMe",
@@ -757,7 +757,7 @@
       "lockNeeded": "callable-actor",
       "hasNestedSubcollections": false,
       "feasibilityNote": "Identical pattern to blocksReverse. CollectionGroup('users') needs pathFilter to avoid matching following/followers/blocks subcollections (same name). Existing kudos docs lack a userId field; cleanup relies on Firestore __name__ collectionGroup filter. Fallback if __name__ collectionGroup proves unreliable: backfill add userId field to all kudos docs via one-off script + new write sites.",
-      "reason": "Kudos this user gave on others' activities — doc id equals uid. CollectionGroup pathFilter prevents same-name subcollection collision.",
+      "reason": "Kudos this user gave on others' activities — doc id equals uid. STILL OPEN, and not for want of an index. The strategy this entry declares is NOT a query Firestore accepts: a collectionGroup documentId comparison requires a FULL document path (\"'uid' is not [valid] because it has an odd number of segments\"), which is exactly what you lack when the question is 'where does this uid appear'. Proven against the emulator by firestore.collectionGroup.test.ts, which was written in Chunk 2 to answer this and never ran until 2026-08-12. Nor is a field query available: socialCounters.toggleKudos writes the doc as `{ createdAt }` only, so the uid exists solely in the path. The parent, kudos/{activityId}, is every activity in the app — unbounded, so the enumerate-the-parents approach used for challengeParticipations does not transfer. Closing this needs a `uid` field added at the write site plus a backfill of existing docs, after which collectionGroupByField works. Note firestore.rules leaves the kudos write-freeze off, and that exemption was justified in accountDeletionWriteRulesSnapshot by this sweep existing; the note there has been corrected.",
       "testCoverageKey": "smoke::kudosByMe",
       "testCoverageStatus": "planned"
     },
@@ -845,9 +845,9 @@
       "lockNeeded": "callable-actor",
       "hasNestedSubcollections": false,
       "feasibilityNote": "Implemented via journey enumeration (users/{uid}/journeys doc ids == spaceIds), NOT a collectionGroup query — every server-created membership writes a journey pointer, so the user's own subcollection is the authoritative membership index. Reuses the live leaveGoalSpace transaction (idempotent: member-doc-missing retry does not decrement; count clamped >= 0).",
-      "reason": "Goal Space (Circle) memberships keyed by uid as doc id, with denormalised displayName/photoURL. Executor step goal_spaces (lib/goalSpaceCleanup).",
-      "testCoverageKey": "smoke::goalSpaces::memberships",
-      "testCoverageStatus": "planned",
+      "reason": "Goal Space (Circle) memberships keyed by uid as doc id, with denormalised displayName/photoURL. ALREADY IMPLEMENTED by executor step 0b (lib/goalSpaceCleanup) — it enumerates from users/{uid}/journeys, the membership index, and performs a real leave per space (member doc + journey deleted, memberCount decremented, space deactivated when the owner leaves). Recorded as implemented on 2026-08-12; it had read as outstanding since Chunk 1 purely because nothing carried its coverage key. The declared collectionGroupByDocId shape would not have worked regardless. The strategy this entry declares is NOT a query Firestore accepts: a collectionGroup documentId comparison requires a FULL document path (\"'uid' is not [valid] because it has an odd number of segments\"), which is exactly what you lack when the question is 'where does this uid appear'. Proven against the emulator by firestore.collectionGroup.test.ts, which was written in Chunk 2 to answer this and never ran until 2026-08-12.",
+      "testCoverageKey": "unit::accountDeletion.goalSpaceMemberships",
+      "testCoverageStatus": "implemented",
       "unitCoverageNote": "functions/__tests__/goalSpaceCleanup.test.js covers member removal, counter decrement, owner deactivation, vanished-space tolerance and failure isolation."
     },
     {
@@ -865,9 +865,9 @@
       "lockNeeded": "callable-actor",
       "hasNestedSubcollections": false,
       "feasibilityNote": "Cleaned per-space during the goal_spaces step for every CURRENT membership (subcollection where-query on the event `uid` field, no collection-group index needed). Known edge: events authored in a circle the user LEFT before deletion keep their frozen display snapshot — same posture as comments authored on others' activities (commentsAuthoredByMe, excluded).",
-      "reason": "Summary events (check-ins, milestones, support requests) authored by the user inside their circles.",
-      "testCoverageKey": "smoke::goalSpaces::events",
-      "testCoverageStatus": "planned"
+      "reason": "Summary events (check-ins, milestones, support requests) authored by the user inside their circles. ALREADY IMPLEMENTED by executor step 0b (lib/goalSpaceCleanup), which deletes the user's authored events per space and additionally sweeps their uid out of other members' check-in supporterIds arrays. Recorded as implemented on 2026-08-12 for the same reason as goalSpaceMemberships.",
+      "testCoverageKey": "unit::accountDeletion.goalSpaceEvents",
+      "testCoverageStatus": "implemented"
     },
     {
       "key": "spaceMemberships",

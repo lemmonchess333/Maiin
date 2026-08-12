@@ -28,6 +28,7 @@ const spacesCleanup = require("./lib/spacesCleanup");
 const deletedAccountsTombstone = require("./lib/deletedAccountsTombstone");
 const pushTokenOwnership = require("./lib/pushTokenOwnership");
 const feedFanoutCleanup = require("./lib/feedFanoutCleanup");
+const challengeParticipationCleanup = require("./lib/challengeParticipationCleanup");
 
 /**
  * Every subcollection under users/{uid}.
@@ -365,6 +366,22 @@ async function deleteAccount({
     // own tree carrying the author's name, photo URL and session summary.
     stage = "feed_fanout";
     await feedFanoutCleanup.removeFanoutCopiesForUser({
+      firestore,
+      uid,
+      logger,
+    });
+
+    // 0e. Challenge participations (inventory `challengeParticipations`) —
+    // `challenges/{id}/participants/{uid}`, uid-keyed but nested under a
+    // parent that is not this user, so neither the users/{uid} sweep nor the
+    // top-level uid-keyed sweep reaches them.
+    //
+    // Order-independent (it reads `challenges`, which nothing else here
+    // touches), but placed with the other cross-user sweeps. Deleting each
+    // participant doc fires onChallengeParticipantDeleted, which recomputes
+    // participantCount from an aggregate.
+    stage = "challenge_participations";
+    await challengeParticipationCleanup.removeChallengeParticipationsForUser({
       firestore,
       uid,
       logger,
