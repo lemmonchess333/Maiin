@@ -183,8 +183,22 @@ export function buildGoalWeightPersistPayload(args: {
      actually in force, and is `tdee` itself when there is no override. `bmr`
      and `tdee` (maintenance) stay formula facts; `deficit` is restated
      against maintenance so it keeps meaning what it says. `tdeeBase` stays
-     the FORMULA target deliberately — the adaptive engine treats it as the
-     pre-override baseline. */
+     the FORMULA target, and is WRITTEN BUT NEVER READ.
+
+     This comment used to say "the adaptive engine treats it as the
+     pre-override baseline". It does not. `useAdaptiveTdee` reads
+     `profile.targetCalories` for that role — see its own line, "Formula
+     target = the stored base (already customCalorieTarget || formula)".
+     Nothing in `src/` or `functions/` performs a property access on
+     `tdeeBase`; the same is true of `aiCalorieAdjustment`, written once by
+     Onboarding.
+
+     Left in place rather than deleted, on the same terms as `macroTargets`:
+     the field sits in three allow-lists a parity gate keeps in lockstep, and
+     dropping it from `firestore.rules` is a deploy that would reject the
+     write of any client still running the old bundle. The claim is what
+     needed fixing — it would have sent someone changing the adaptive engine
+     looking for a consumer that was never there. */
   const effectiveCalories = profile.customCalorieTarget || tdee.targetCalories;
   const effectiveTdee: TDEEResult =
     effectiveCalories === tdee.targetCalories
