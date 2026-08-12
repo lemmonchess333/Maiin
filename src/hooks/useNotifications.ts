@@ -9,6 +9,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUid } from "@/lib/auth";
+import { useBlockedUsers } from "./useBlockedUsers";
 
 /**
  * In-app reader for social notifications (kudos / comment / follow /
@@ -115,7 +116,9 @@ function readLastSeenMs(uid: string | undefined): number {
 
 export function useNotifications() {
   const uid = useUid();
-  const [items, setItems] = useState<NotificationItem[]>([]);
+  // Same suppression the feed and the unread badge apply.
+  const { blocked } = useBlockedUsers();
+  const [rawItems, setItems] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
   // NOTIFICATION-TRUST-01: a failed read is a DISTINCT state, not an
   // empty tray — the sheet renders "Notifications unavailable" + retry
@@ -155,12 +158,13 @@ export function useNotifications() {
           const data = d.data() as Record<string, unknown>;
           const type = data.type;
           if (typeof type !== "string" || !VALID_TYPES.has(type)) return;
+          const from =
+            typeof data.fromUserId === "string" ? data.fromUserId : "";
           const ts = data.createdAt as Timestamp | undefined;
           next.push({
             id: d.id,
             type: type as NotificationType,
-            fromUserId:
-              typeof data.fromUserId === "string" ? data.fromUserId : "",
+            fromUserId: from,
             fromName:
               typeof data.fromName === "string" ? data.fromName : undefined,
             activityId:
@@ -191,6 +195,25 @@ export function useNotifications() {
 
   // An unavailable read has no countable rows — don't surface a stale
   // unread badge over an error.
+  /* Blocking in Tropos is a CLIENT-side suppression — nothing on the server
+     or in firestore.rules stops a blocked user interacting, so their kudos and
+     comments still create notification docs. The feed and the unread badge
+     already drop them on read; the tray did not, so blocking someone left them
+     able to put rows in your tray and deep-link you to their profile — the one
+     place a user most expects a block to hold.
+
+     Filtered HERE rather than inside the snapshot handler, deliberately: the
+     query does not depend on the block list, and `useBlockedUsers` returns
+     `cache.get(uid) ?? new Set()` — a NEW Set every render until the list
+     settles. Putting it in the subscription's deps is a resubscribe loop.
+
+     This does NOT make blocking server-enforced; that is a larger change and
+     is deliberately not attempted here. */
+  const items = useMemo(
+    () => rawItems.filter((n) => !n.fromUserId || !blocked.has(n.fromUserId)),
+    [rawItems, blocked]
+  );
+
   const unreadCount = useMemo(
     () => (error ? 0 : countUnread(items, lastSeenMs)),
     [items, lastSeenMs, error]
