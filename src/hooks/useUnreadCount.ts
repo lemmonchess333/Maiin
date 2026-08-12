@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
   collection,
   limit,
@@ -47,8 +47,9 @@ export function useUnreadCount() {
   // Same suppression the feed applies, so the badge and the screen agree.
   const { blocked } = useBlockedUsers();
   const { hidden } = useHiddenActivities();
-  const [count, setCount] = useState(0);
-  const [capped, setCapped] = useState(false);
+  const [rows, setRows] = useState<
+    { authorId: string; activityId: string }[]
+  >([]);
   const [error, setError] = useState(false);
   // Bumped on every (re)subscribe so a stale snapshot/error callback from
   // a torn-down listener can't commit the previous account's state.
@@ -85,42 +86,58 @@ export function useUnreadCount() {
       q,
       (snap) => {
         if (!isCurrent()) return;
-        /* The badge must count what the FEED will render, not what the
-           collection holds. `useSocialFeed` drops blocked authors and
-           user-hidden activities before rendering; counting them here meant
-           a user who blocked someone still got badged by their posts, opened
-           Social, and found nothing new — the count and the screen
-           disagreeing about the same feed.
-
-           `highlightsOnly` is deliberately NOT applied. It is a VIEW toggle,
-           not a "don't show me this" action: a user browsing highlights still
-           wants to know real activity arrived, and counting only highlights
-           would under-report it. Blocking and hiding are explicit suppression;
-           a view filter is not. */
-        const newItems = snap.docs.filter((d) => {
-          const data = d.data();
-          // Exclude the user's own activity (fan-out writes to the author's
-          // own feed too) — a badge should signal OTHERS' activity.
-          if (data.authorId === uid) return false;
-          if (blocked.has(data.authorId as string)) return false;
-          if (hidden.has(data.activityId as string)) return false;
-          return true;
-        });
+        /* Store the raw rows and let the suppression happen in a memo below.
+           The QUERY does not depend on the block/hide lists, and putting those
+           Sets in this effect's deps is a resubscribe loop: `useBlockedUsers`
+           returns `cache.get(uid) ?? new Set()`, so before the block list has
+           settled — cold start, and every test — that is a NEW Set every
+           render. Keep the listener keyed on `uid` alone. */
+        setRows(
+          snap.docs.map((d) => {
+            const data = d.data();
+            return {
+              authorId: typeof data.authorId === "string" ? data.authorId : "",
+              activityId:
+                typeof data.activityId === "string" ? data.activityId : "",
+            };
+          })
+        );
         setError(false);
-        setCapped(newItems.length > UNREAD_CAP);
-        setCount(Math.min(newItems.length, UNREAD_CAP));
       },
       () => {
         if (!isCurrent()) return;
-        // Honest error state — do NOT reset count to 0 (that would read
-        // as "all caught up"). Keep the last known good value and flag
-        // the error; the badge can choose to hide over an error.
+        // Honest error state — do NOT reset to 0 (that would read as "all
+        // caught up"). Keep the last known good rows and flag the error.
         setError(true);
       }
     );
 
     return unsub;
-  }, [uid, blocked, hidden]);
+  }, [uid]);
+
+  /* The badge counts what the FEED will render, not what the collection
+     holds. `useSocialFeed` drops blocked authors and user-hidden activities
+     before rendering; counting them meant a user who blocked someone still
+     got badged by their posts, opened Social and found nothing new.
+
+     `highlightsOnly` is deliberately NOT applied: it is a VIEW toggle, not a
+     "don't show me this" action. A user browsing highlights still wants to
+     know real activity arrived. Blocking and hiding are explicit suppression;
+     a view filter is not. */
+  const visible = useMemo(
+    () =>
+      rows.filter((r) => {
+        // Exclude the user's own activity (fan-out writes to the author's own
+        // feed too) — a badge should signal OTHERS' activity.
+        if (!uid || r.authorId === uid) return false;
+        if (blocked.has(r.authorId)) return false;
+        if (hidden.has(r.activityId)) return false;
+        return true;
+      }).length,
+    [rows, uid, blocked, hidden]
+  );
+  const count = Math.min(visible, UNREAD_CAP);
+  const capped = visible > UNREAD_CAP;
 
   const markSeen = () => {
     if (!uid) return;
@@ -132,8 +149,9 @@ export function useUnreadCount() {
     } catch {
       /* private mode — in-memory clear below still hides the badge */
     }
-    setCount(0);
-    setCapped(false);
+    // Clear the in-memory rows so the badge hides immediately; the next
+    // snapshot re-queries from the new last-seen instant.
+    setRows([]);
   };
 
   return { count, markSeen, capped, error };
