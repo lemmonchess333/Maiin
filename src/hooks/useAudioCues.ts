@@ -7,7 +7,6 @@ import {
   paceAlertCue,
   halfwayCue,
   final500Cue,
-  pbCue,
   type SplitComparison,
 } from "@/lib/runCueCopy";
 
@@ -220,15 +219,20 @@ export function useAudioCues(
     [enabled, speak]
   );
 
-  /** PB alert — call when a new personal best is detected */
-  const announcePB = useCallback(
-    (effortLabel: string) => {
-      if (!enabled) return;
-      speak(pbCue(effortLabel));
-    },
-    [enabled, speak]
-  );
+  /* `announcePB` (and its `pbCue` copy) lived here with ZERO callers and
+     no data source to have fed one: `prTracking.ts` is lifting-only (rep
+     buckets, 1RM), and `calculatePaceTrend` judges a COMPLETED run's
+     average against ≥8 comparable finished runs — there is no
+     per-distance best-effort table an in-progress split could be compared
+     against. Deleted 2026-08-12 rather than annotated, per the rule in
+     `mirrorCrossTestGate`: anything genuinely orphaned should be deleted.
 
+     Not a seam someone left, either. PB recognition IS on the roadmap —
+     as a POST-run visual (`program-run-mockups-v7.html`'s gold "PB" pill)
+     — and the plan file's P2d declined personal-best comparison outright
+     as "easily demoralising" for users returning from injury. A mid-run
+     audio announcement is on no roadmap; git history holds the copy if
+     that ever changes. */
 
   const reset = useCallback(() => {
     lastDistanceCue.current = 0;
@@ -249,7 +253,6 @@ export function useAudioCues(
     checkPaceAlert,
     checkHalfway,
     checkFinal500,
-    announcePB,
     reset,
   };
 }
