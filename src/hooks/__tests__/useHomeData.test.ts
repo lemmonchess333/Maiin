@@ -407,12 +407,15 @@ describe("useHomeData", { timeout: 5000 }, () => {
         )
       );
 
+      // Anchored on the VALUE, not on the nudge existing. The nudge is set
+      // by an effect keyed on today's workouts, so it goes non-null on the
+      // first render — before the meal query resolves. Waiting for non-null
+      // and then asserting returned at t=0 with dailyProt still 0, which
+      // made this pass or fail on timing. 176 - 40; the un-loaded value is
+      // 176, so this cannot be satisfied before the meals land.
       await waitFor(() =>
-        expect(result.current.postWorkoutNudge).not.toBeNull()
+        expect(result.current.postWorkoutNudge?.proteinRemaining).toBe(136)
       );
-      // 176 - 40. Pre-fix this was 120 (160 - 40), so the nudge asked for
-      // 16 g less than the rings beside it.
-      expect(result.current.postWorkoutNudge?.proteinRemaining).toBe(136);
     });
 
     it("falls back to the stored target while the effective one resolves", async () => {
