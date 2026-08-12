@@ -27,6 +27,7 @@ const goalSpaceCleanup = require("./lib/goalSpaceCleanup");
 const spacesCleanup = require("./lib/spacesCleanup");
 const deletedAccountsTombstone = require("./lib/deletedAccountsTombstone");
 const pushTokenOwnership = require("./lib/pushTokenOwnership");
+const feedFanoutCleanup = require("./lib/feedFanoutCleanup");
 
 /**
  * Every subcollection under users/{uid}.
@@ -353,6 +354,21 @@ async function deleteAccount({
     // is left intact rather than erased under the new owner.
     stage = "fcm_token_claims";
     await pushTokenOwnership.removeClaimsForDeletedUser({ firestore, uid });
+
+    // 0d. Fan-out copies of this user's activities sitting in OTHER users'
+    // feeds (inventory `feedFanout`). MUST run before steps 2 and 3, which
+    // delete its two inputs — `followers/{uid}/users` and the activities
+    // themselves. Same ordering constraint as 0b.
+    //
+    // Not covered by anything else: step 2 sweeps `feeds/{uid}/items`, the
+    // user's own feed, and each follower's copy is a separate doc in their
+    // own tree carrying the author's name, photo URL and session summary.
+    stage = "feed_fanout";
+    await feedFanoutCleanup.removeFanoutCopiesForUser({
+      firestore,
+      uid,
+      logger,
+    });
 
     // 1. User's own subcollections
     stage = "user_subcollections";

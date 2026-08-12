@@ -72,7 +72,19 @@ function observedSubcollections() {
   expect(files.length).toBeGreaterThan(200);
 
   for (const file of files) {
-    const src = readFileSync(resolve(ROOT, file), "utf8");
+    // `followers/{uid}/users`, `following/{uid}/users` and `blocks/{uid}/users`
+    // are subcollections literally NAMED "users". The admin-SDK pattern below
+    // keys off `collection("users")` and would read the next `.collection(...)`
+    // within its window as a child of the user document — which is how a read
+    // of `followers/{uid}/users` immediately followed by a top-level
+    // `collection("activities")` gets reported as a missing user
+    // subcollection. Rename the nested form so only a ROOT users collection
+    // can anchor a match; a genuine `users/{uid}/users` does not exist, and
+    // would be caught by the template-path pattern regardless.
+    const src = readFileSync(resolve(ROOT, file), "utf8").replace(
+      /\.doc\(([^)]*)\)(\s*)\.collection\(\s*["']users["']\s*\)/g,
+      '.doc($1)$2.collection("__nested_users__")'
+    );
     const patterns = [
       // client SDK: collection(db, "users", uid, "NAME") / doc(db, …)
       /(?:collection|doc)\(\s*db\s*,\s*"users"\s*,\s*[^,]+,\s*"([A-Za-z]\w*)"/g,
