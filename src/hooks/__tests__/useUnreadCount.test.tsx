@@ -49,8 +49,19 @@ import {
   seedFirestore,
   resetFirestore,
   failNextFirestore,
+  readsAt,
 } from "@/test/firestoreHarness";
 import { Timestamp } from "firebase/firestore";
+
+/* Subscriptions established against the feed. The harness logs every read it
+   serves, including each `onSnapshot` attach, so a listener that tears down
+   and re-attaches shows up as extra entries here. (An earlier draft counted
+   `onSnapshot.mock.calls` — the harness exports plain functions rather than
+   `vi.fn()`s deliberately, so that counter was always 0 and the guard proved
+   nothing. It now asserts it is non-zero before comparing.) */
+function feedReads(): number {
+  return readsAt(FEED).length;
+}
 
 const FEED = "feeds/me/items";
 const NOW = new Date("2026-07-15T12:00:00Z");
@@ -249,5 +260,48 @@ describe("useUnreadCount — counts what the feed will actually show", () => {
     });
     const { result } = renderHook(() => useUnreadCount());
     return waitFor(() => expect(result.current.count).toBe(3));
+  });
+});
+
+/**
+ * The regression this file did not previously have any defence against.
+ *
+ * `useBlockedUsers` returns `cache.get(uid) ?? new Set()` — so until the block
+ * list has settled (cold start, and every test) it hands back a NEW Set on
+ * every render. Putting that Set in the subscription effect's dependency array
+ * makes the hook tear down and re-establish its Firestore listener forever.
+ *
+ * It is not a subtle performance smell: it is an unbounded onSnapshot churn
+ * loop against the user's feed, and the first version of the blocked/hidden
+ * filtering shipped with exactly that. Nothing here failed — the counts were
+ * all still correct — so it took a hung test run to notice.
+ *
+ * The fix keeps the listener keyed on `uid` alone and applies suppression in a
+ * memo. These assert that arrangement directly.
+ */
+describe("useUnreadCount — the listener does not depend on the suppression sets", () => {
+  it("subscribes once for a stable uid, however often it re-renders", () => {
+    seedItems({ a: item(1, "friend") });
+    const { result, rerender } = renderHook(() => useUnreadCount());
+    const before = feedReads();
+    expect(before).toBeGreaterThan(0); // the counter must actually count
+    for (let i = 0; i < 12; i++) rerender();
+    expect(feedReads()).toBe(before);
+    expect(result.current.count).toBe(1);
+  });
+
+  it("still reacts when the block list changes, without resubscribing", () => {
+    /* The memo must recompute even though the listener does not restart —
+       otherwise the loop is fixed by making the feature stop working. */
+    seedItems({ a: item(1, "friend"), b: item(1, "later-blocked") });
+    const { result, rerender } = renderHook(() => useUnreadCount());
+    const before = feedReads();
+    expect(before).toBeGreaterThan(0);
+
+    blockedSet.current = new Set(["later-blocked"]);
+    rerender();
+
+    expect(result.current.count).toBe(1);
+    expect(feedReads()).toBe(before);
   });
 });
