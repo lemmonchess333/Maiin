@@ -958,6 +958,33 @@ Affects: `functions/index.js` `stripeWebhook` handler, `stripeEvents/{event.id}`
 - [ ] Post-deploy, on the next real Stripe webhook delivery, confirm the `stripeEvents/<event.id>` doc has a `claimedAt` field (new) AND a `processedAt` field (existing). Pre-fix only `processedAt` was set.
 - [ ] If a webhook handler crashes mid-process (force via stripe-cli test event), confirm the `stripeEvents/<event.id>` doc is DELETED so Stripe's retry can re-attempt. Pre-fix the partial claim would persist and the retry would silently skip.
 
+### Blocking is now server-enforced (kudos + comments)
+
+Affects: `functions/index.js` (`toggleKudosCallable`, `addCommentCallable`),
+new `functions/lib/blockGuard.js`. Deploys via `deploy-functions.yml`.
+
+Blocking was CLIENT-side suppression only — `blocks/{blocker}/users/{target}`
+was written and read by the client and nothing in `functions/` or
+`firestore.rules` consulted it. A blocked user could still kudos and comment;
+the callable wrote the counter, sub-doc AND notification, and the recipient's
+app then hid the feed row while the tray row and push had already landed. The
+guard refuses in BOTH directions and fails CLOSED on a read error.
+
+- [ ] **Deployed-source spot-check (do first).** Console →
+      `toggleKudosCallable` and `addCommentCallable` source contains
+      `require("./lib/blockGuard")`.
+- [ ] **A blocked user is refused.** With two test accounts: A blocks B, then
+      B kudos A's activity. Expect `permission-denied` client-side, NO kudos
+      counter change, and NO tray row for A. Repeat for a comment.
+- [ ] **Ordinary interaction is unaffected.** Two accounts with no block
+      between them: kudos and comment still work. This is the regression to
+      watch — a guard that refused everything would look identical in the logs
+      to one that works.
+- [ ] **Residue, not fixed here:** other surfaces still create notifications
+      without a block check (space post likes/comments, follows,
+      circle events). They were left rather than half-covered; the guard is
+      shared and ready for them.
+
 ### Deload offered on discipline-specific load (single-discipline weeks)
 
 Affects: `functions/lib/perfScoring.js`, `functions/performanceEngine.js`,
