@@ -3147,6 +3147,12 @@ exports.hourlyStreakNudge = functions
 // sweep's _runDailyRaceReconciliationForUser convention).
 exports._maybeSendStreakNudge = maybeSendStreakNudge;
 exports._maybeSendBadgeNudge = maybeSendBadgeNudge;
+// Exported for the cold-start badge test, which must reach this function
+// WITHOUT going through a trigger. Driven through onRunCreated instead, the
+// deletion-guard assertion is satisfied by the TRIGGER's entry guard and
+// says nothing about this one — a mutation deleting the guard below left
+// that test green.
+exports._awardMilestoneBadges = awardMilestoneBadges;
 exports._maybeSendWeeklyRecap = maybeSendWeeklyRecap;
 
 // Push #961 / #965 — on-demand test push (the device tracer). Sends a generic
@@ -3957,18 +3963,54 @@ exports._maybeWriteRecoveryEntryForRun = _maybeWriteRecoveryEntryForRun;
  * string to match the client (`new Date().toISOString()`); the client hydrates
  * the rest of each badge from BADGE_DEFINITIONS by id on load.
  *
- * No streak doc yet ⇒ skip (don't create a partial doc); the client
- * materialises + reconciles it on next load.
+ * A MISSING streak doc is created rather than skipped. This used to return
+ * early, under the belief — stated in this comment — that "the client
+ * materialises + reconciles it on next load". The client does no such thing
+ * for these badges: `badgeEarning.ts:badgesToAward` never evaluates
+ * `first_5k`, `10k_club`, `plate_club` or any other single-session
+ * milestone, because they are server-owned precisely BECAUSE the client's
+ * snapshots are windowed (the reason stated at the top of this comment).
+ * There was nothing to reconcile, and every one of these three call sites
+ * is inside an `onCreate` trigger, so nothing ever retried.
+ *
+ * That made it a cold-start bug with no recovery, on the app's welcome
+ * moment. Nothing on the server creates `streaks/data` — this function is
+ * its only server-side writer and it bailed before writing — and the
+ * client only creates it when the streak CHANGES (`useStreaks` explicitly
+ * skips the write when the computed streak already equals the stored one,
+ * and for a brand-new user both are 0). So on a user's first ever logged
+ * session the doc does not exist yet, and the client's creating write
+ * races the trigger. First run ≥5 km ⇒ `first_5k`; first workout with a
+ * 60 kg compound set ⇒ `plate_club`. Routine, and silently lost.
+ *
+ * A partial doc is safe to create: `useStreaks` spreads DEFAULT_STREAKS
+ * over whatever it reads and coerces non-finite numerics to 0, and every
+ * write here is `merge: true`, so the client's later write fills the rest
+ * in rather than colliding.
+ *
+ * The deletion guard below is load-bearing BECAUSE of that change. While
+ * this function could only ever update an existing document it had no way
+ * to resurrect one; now that it can create, it can re-create a doc the
+ * account-deletion executor has already swept. Same failure ADR-0012's
+ * first amendment describes for the lifetime counters.
  */
 async function awardMilestoneBadges(uid, ids) {
   if (!Array.isArray(ids) || ids.length === 0) return;
+  if (
+    !(await accountDeletionLocks.shouldSystemWriteProceed(
+      db,
+      uid,
+      "awardMilestoneBadges"
+    ))
+  ) {
+    return;
+  }
   const ref = db.doc(`users/${uid}/streaks/data`);
   const publicRef = db.doc(`users/${uid}/public/profile`);
   try {
     await db.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
-      if (!snap.exists) return;
-      const stored = snap.data().badges;
+      const stored = snap.exists ? snap.data().badges : null;
       const badges = Array.isArray(stored) ? stored.slice() : [];
       const nowIso = new Date().toISOString();
       let changed = false;
