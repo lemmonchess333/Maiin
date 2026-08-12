@@ -28,7 +28,12 @@
    `docs/adr/0011-command-boundary-scope.md`.
 3. Read the full [lifting handoff](lift-programming-claude-handoff.md).
 4. Read the full [running handoff](running-programming-claude-handoff.md).
-5. Inspect the actual target branch, current state/migrations, and the
+5. For anything touching calorie targets or macros, read the
+   [nutrition-pipeline handoff](nutrition-pipeline-claude-handoff.md)
+   (`NUTR-EV-xx`). Added 2026-08-11; it documents a bug FAMILY — a target
+   moved and its derived values did not — that recurred four times in one
+   pipeline, and records which parts were deliberately left undone.
+6. Inspect the actual target branch, current state/migrations, and the
    relevant tests before proposing or making a change.
 
 The handoffs were re-audited against fetched remote `origin/main`
