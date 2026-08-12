@@ -52,16 +52,6 @@ function computeEffectiveTier(userData, now = new Date()) {
   return "free";
 }
 
-/**
- * Current usage count after accounting for month rollover.
- * Returns 0 when the stored month differs from `currentMonth`
- * (rollover) or when usage is missing entirely (first scan in
- * a new month / new user).
- */
-function currentMonthCount(usageData, currentMonth) {
-  if (!usageData || usageData.month !== currentMonth) return 0;
-  return Number(usageData.count) || 0;
-}
 
 /**
  * Build the Stripe price allowlist from environment variables.
@@ -319,7 +309,6 @@ function buildStripeReturnUrl(path, outcome) {
 module.exports = {
   pruneOldTimestamps,
   computeEffectiveTier,
-  currentMonthCount,
   getStripePriceAllowlist,
   isAllowedStripeReturnUrl,
   getAllowedStripeReturnUrlOrigins,
