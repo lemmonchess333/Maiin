@@ -1027,3 +1027,106 @@ describe("deleteAccount — deletedAccounts tombstone", () => {
     expect(stubs.ledgerStore.doc.status).toBe("completed");
   });
 });
+
+describe("deleteAccount — feed fan-out erasure (step 0d)", () => {
+  /* The sweep's two inputs are `followers/{uid}/users` and the activities
+     authored by uid — both of which LATER steps delete. So the wiring is only
+     correct if it runs before them, and getting that wrong is silent: the
+     sweep would read two empty sets, delete nothing, and log a clean
+     `swept` line with zero counts. Nothing else in the cascade would
+     notice.
+
+     `feedFanoutCleanup` is spied rather than exercised here so the ordering
+     is asserted against the executor's own reads. The deletes themselves are
+     covered in feedFanoutCleanup.test.js. */
+  const feedFanoutCleanup = require("../lib/feedFanoutCleanup");
+
+  /** Records the args of each sweep call into `received` — read AFTER
+   *  mockRestore, which clears `spy.mock.calls`. */
+  function spyOnSweep(calls, received = []) {
+    const spy = vi
+      .spyOn(feedFanoutCleanup, "removeFanoutCopiesForUser")
+      .mockImplementation(async (args) => {
+        received.push(args);
+        calls.push("feedFanout.sweep");
+        calls.push(`feedFanout.uid(${args && args.uid})`);
+        return { recipients: 0, activities: 0, deleted: 0, failedBatches: 0 };
+      });
+    return spy;
+  }
+
+  it("runs the sweep, with the uid being deleted", async () => {
+    const stubs = makeStubs();
+    const received = [];
+    const spy = spyOnSweep(stubs.calls, received);
+    try {
+      await deleteAccount({ ...stubs, uid: TEST_UID });
+    } finally {
+      spy.mockRestore();
+    }
+
+    expect(stubs.calls).toContain("feedFanout.sweep");
+    expect(stubs.calls).toContain(`feedFanout.uid(${TEST_UID})`);
+    // The real firestore handle, not a fresh one — the sweep has to see the
+    // same data the rest of the cascade is deleting.
+    expect(received).toHaveLength(1);
+    expect(received[0].firestore).toBe(stubs.firestore);
+  });
+
+  it("runs BEFORE the followers list it reads is deleted", async () => {
+    const stubs = makeStubs();
+    const spy = spyOnSweep(stubs.calls);
+    try {
+      await deleteAccount({ ...stubs, uid: TEST_UID });
+    } finally {
+      spy.mockRestore();
+    }
+
+    const sweepIdx = stubs.calls.indexOf("feedFanout.sweep");
+    const followersIdx = stubs.calls.indexOf(
+      `firestore.followers.${TEST_UID}.users.get`
+    );
+    // Both asserted present first: indexOf returns -1 for a missing entry,
+    // and -1 < n is true, so the ordering check alone would pass if the
+    // sweep were deleted outright.
+    expect(sweepIdx).toBeGreaterThanOrEqual(0);
+    expect(followersIdx).toBeGreaterThanOrEqual(0);
+    expect(sweepIdx).toBeLessThan(followersIdx);
+  });
+
+  it("runs BEFORE the activities it reads are deleted", async () => {
+    const stubs = makeStubs();
+    const spy = spyOnSweep(stubs.calls);
+    try {
+      await deleteAccount({ ...stubs, uid: TEST_UID });
+    } finally {
+      spy.mockRestore();
+    }
+
+    const sweepIdx = stubs.calls.indexOf("feedFanout.sweep");
+    const activitiesIdx = stubs.calls.indexOf(
+      `firestore.activities.where.authorId.==.${TEST_UID}.get`
+    );
+    expect(sweepIdx).toBeGreaterThanOrEqual(0);
+    expect(activitiesIdx).toBeGreaterThanOrEqual(0);
+    expect(sweepIdx).toBeLessThan(activitiesIdx);
+  });
+
+  it("still runs the sweep before auth.deleteUser", async () => {
+    // The cascade's bedrock invariant applied to the new step: it is a
+    // Firestore write, so it belongs on the credentials-intact side.
+    const stubs = makeStubs();
+    const spy = spyOnSweep(stubs.calls);
+    try {
+      await deleteAccount({ ...stubs, uid: TEST_UID });
+    } finally {
+      spy.mockRestore();
+    }
+
+    const sweepIdx = stubs.calls.indexOf("feedFanout.sweep");
+    const authIdx = stubs.calls.indexOf(`auth.deleteUser(${TEST_UID})`);
+    expect(sweepIdx).toBeGreaterThanOrEqual(0);
+    expect(authIdx).toBeGreaterThanOrEqual(0);
+    expect(sweepIdx).toBeLessThan(authIdx);
+  });
+});

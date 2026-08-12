@@ -125,7 +125,7 @@ const EXPLICITLY_EXEMPT = [
   {
     path: "match /kudos/{activityId}/users/{userId}",
     reason:
-      "Cross-user write — kudos giver is request.auth.uid. Freeze would require !isDeleting(userId), but kudos creation rate is high and the Chunk 3 executor sweeps kudosByMe via collectionGroup. Same race-cleanup posture as activities.",
+      "Cross-user write — kudos giver is request.auth.uid. Freeze would require !isDeleting(userId), but kudos creation rate is high. NOTE (2026-08-12): this exemption used to be justified by 'the Chunk 3 executor sweeps kudosByMe via collectionGroup'. It does not — accountDeletion.js makes zero collectionGroup calls, and firestore.indexes.json declares zero COLLECTION_GROUP indexes, so kudosByMe (and the other reverse-index entries in the inventory) are declared but unimplemented. The exemption still stands on the rate argument alone; it is recorded here rather than silently corrected because a rules decision resting on a cleanup path that does not exist is the thing worth seeing.",
   },
   {
     path: "match /comments/{activityId}/items/{commentId}",
