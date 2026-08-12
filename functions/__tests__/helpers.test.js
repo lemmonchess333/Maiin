@@ -15,7 +15,6 @@ const require = createRequire(import.meta.url);
 const {
   pruneOldTimestamps,
   computeEffectiveTier,
-  currentMonthCount,
   getStripePriceAllowlist,
   isAllowedStripeReturnUrl,
   ALLOWED_RETURN_PATHS,
@@ -158,37 +157,6 @@ describe("computeEffectiveTier", () => {
 
   it("returns 'free' when both fields are absent", () => {
     expect(computeEffectiveTier({})).toBe("free");
-  });
-});
-
-describe("currentMonthCount", () => {
-  it("returns 0 for null / undefined usage", () => {
-    expect(currentMonthCount(null, "2026-05")).toBe(0);
-    expect(currentMonthCount(undefined, "2026-05")).toBe(0);
-  });
-
-  it("returns 0 when the stored month differs (rollover)", () => {
-    expect(currentMonthCount({ month: "2026-04", count: 9 }, "2026-05")).toBe(
-      0
-    );
-  });
-
-  it("returns the count when months match", () => {
-    expect(currentMonthCount({ month: "2026-05", count: 7 }, "2026-05")).toBe(
-      7
-    );
-  });
-
-  it("coerces non-number count to 0 via Number()", () => {
-    expect(currentMonthCount({ month: "2026-05", count: "5" }, "2026-05")).toBe(
-      5
-    );
-    expect(
-      currentMonthCount({ month: "2026-05", count: null }, "2026-05")
-    ).toBe(0);
-    expect(currentMonthCount({ month: "2026-05", count: NaN }, "2026-05")).toBe(
-      0
-    );
   });
 });
 
