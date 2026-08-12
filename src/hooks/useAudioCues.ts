@@ -23,6 +23,16 @@ const DEFAULT_CUE_CONFIG: AudioCueConfig = {
   voiceRate: 0.9,
 };
 
+/** "M:SS", matching `calculatePace`'s format so the spoken pace reads the
+ *  same as the on-screen one. `--:--` for an unmeasurable split (a paused
+ *  or zero-length segment) — `splitCue` still announces the distance. */
+function formatPaceSeconds(paceSecPerKm: number): string {
+  if (!Number.isFinite(paceSecPerKm) || paceSecPerKm <= 0) return "--:--";
+  const mins = Math.floor(paceSecPerKm / 60);
+  const secs = Math.floor(paceSecPerKm % 60);
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
+
 export function useAudioCues(
   enabled: boolean,
   frequency: CueFrequency,
@@ -31,6 +41,10 @@ export function useAudioCues(
   const lastDistanceCue = useRef(0);
   const lastTimeCue = useRef(0);
   const splitPaces = useRef<number[]>([]); // sec/km per split for comparison
+  // Cumulative distance + elapsed at the last announced marker, so each
+  // split's pace is measured over that split rather than the whole run.
+  const lastMarkDistance = useRef(0);
+  const lastMarkElapsed = useRef(0);
   const primed = useRef(false);
   // Rotates the phrasing-variation pools in runCueCopy so back-to-back cues
   // don't repeat verbatim (deterministic — no Math.random).
@@ -87,7 +101,7 @@ export function useAudioCues(
   );
 
   const checkDistanceCue = useCallback(
-    (distance: number, pace: string) => {
+    (distance: number, elapsed: number) => {
       if (!enabled || frequency === "off" || frequency === "every_5min") return;
       const threshold = frequency === "every_500m" ? 500 : 1000;
       const currentMark = Math.floor(distance / threshold);
@@ -95,14 +109,28 @@ export function useAudioCues(
 
       lastDistanceCue.current = currentMark;
 
-      // Parse pace string "M:SS" → seconds
-      const parts = pace.split(":");
-      const mins = parseInt(parts[0]);
-      const secs = parseInt(parts[1]);
+      /* The pace for THIS split, measured between the previous marker and
+         this one — not the whole-run average.
+
+         The cue used to be handed `calculatePace(gps.distance, elapsed)`,
+         which is cumulative, and then said "Pace 5:44 per kilometre" and
+         "That split was quicker" about it. Both claims were wrong, and the
+         second was wrong in a way that got worse the longer you ran:
+         consecutive cumulative averages differ by roughly (split − average)
+         / N, so a kilometre a full minute off pace moves the average by 12s
+         at km 5 and 6s at km 10 — under the ±10s threshold. From about
+         halfway, the cue said "Right on rhythm" to a runner who was fading.
+
+         gps.ts already carries this lesson for the pace ALERT — "the
+         whole-run average is dragged permanently slow by a warm-up… lags
+         badly mid-run" — and `rollingPaceSeconds` was added to fix it
+         there. The split cue was left on the average. */
+      const segMeters = distance - lastMarkDistance.current;
+      const segSeconds = elapsed - lastMarkElapsed.current;
       const currentPaceSec =
-        parts.length === 2 && !isNaN(mins) && !isNaN(secs)
-          ? mins * 60 + secs
-          : 0;
+        segMeters > 0 && segSeconds > 0 ? segSeconds / (segMeters / 1000) : 0;
+      lastMarkDistance.current = distance;
+      lastMarkElapsed.current = elapsed;
 
       // Split comparison (copy lives in runCueCopy — warm + varied)
       let comparison: SplitComparison = null;
@@ -123,7 +151,9 @@ export function useAudioCues(
 
       cueVariant.current += 1;
       const km = frequency === "every_500m" ? currentMark * 0.5 : currentMark;
-      speak(splitCue(km, pace, comparison, cueVariant.current));
+      speak(
+        splitCue(km, formatPaceSeconds(currentPaceSec), comparison, cueVariant.current)
+      );
     },
     [enabled, frequency, speak]
   );
@@ -204,6 +234,8 @@ export function useAudioCues(
     lastDistanceCue.current = 0;
     lastTimeCue.current = 0;
     splitPaces.current = [];
+    lastMarkDistance.current = 0;
+    lastMarkElapsed.current = 0;
     halfwayAnnounced.current = false;
     final500Announced.current = false;
     paceAlertCooldown.current = 0;

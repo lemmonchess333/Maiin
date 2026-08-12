@@ -14,7 +14,6 @@ import { useRunTimer } from "../hooks/useRunTimer";
 import { useWakeLock } from "../hooks/useWakeLock";
 import { useRunVisibility } from "../hooks/useRunVisibility";
 import {
-  calculatePace,
   calculateSplits,
   haversine,
   paceAsNumber,
@@ -831,8 +830,12 @@ export default function Run() {
 
   useEffect(() => {
     if (phase !== "active") return;
-    const pace = calculatePace(gps.distance, timer.elapsed);
-    audioCues.checkDistanceCue(gps.distance, pace);
+    /* Cumulative distance + elapsed, NOT a pace: the hook measures each
+       split between markers itself. It used to be handed
+       `calculatePace(gps.distance, timer.elapsed)` — the whole-run average
+       — and then announced it as that kilometre's pace. Same mistake the
+       pace alert below already documents, on the other cue. */
+    audioCues.checkDistanceCue(gps.distance, timer.elapsed);
     audioCues.checkTimeCue(timer.elapsed, gps.distance);
 
     // Pace zone alerts for tempo/interval runs.
