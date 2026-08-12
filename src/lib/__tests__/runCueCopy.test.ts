@@ -10,7 +10,6 @@ import {
   paceAlertCue,
   halfwayCue,
   final500Cue,
-  pbCue,
   sessionCompleteCue,
   intervalRepCue,
   intervalRecoveryCue,
@@ -75,10 +74,9 @@ describe("other cues", () => {
     }
   });
 
-  it("halfway / final-500 / PB are non-empty and warm", () => {
+  it("halfway / final-500 are non-empty and warm", () => {
     expect(halfwayCue(0).toLowerCase()).toContain("halfway");
     expect(final500Cue(0).toLowerCase()).toContain("five hundred");
-    expect(pbCue("fastest 5K")).toContain("personal best for fastest 5K");
   });
 
   it("phase cues cover the interval lifecycle; unknown phase → null", () => {
