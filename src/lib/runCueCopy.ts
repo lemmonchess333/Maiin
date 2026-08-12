@@ -105,10 +105,6 @@ export function final500Cue(variant: number): string {
   return pick(FINAL_500, variant);
 }
 
-export function pbCue(effortLabel: string): string {
-  return `New personal best for ${effortLabel}. That's brilliant running.`;
-}
-
 /** STRUCT-SESS-02: per-segment cue copy now lives ON the segments
  *  (runSegments.ts builders author it with the labels); only the terminal
  *  line stays here — it belongs to the session, not to any segment. */
