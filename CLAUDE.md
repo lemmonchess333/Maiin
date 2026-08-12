@@ -638,17 +638,15 @@ permanently.
       so. Don't wire the UI first.
 - [ ] Runs need the `deleteRun` half written regardless of which option wins.
 
-**The food-favourite graduation coachmark was never built.** `useFoodFavourites`
-returns `graduationToken`, whose own doc says consumers "effect on this to trigger
-one-shot UI (first-graduation coachmark)". Nothing consumes it, and no such
-coachmark key exists anywhere. The rest of graduation DID ship — the
-`food_pantry_graduated` analytics event, the funnel splits by entry path, the
-useCount>=2 filtering in `Food.tsx`. This is the `@unwired:` category from
-`mirrorCrossTestGate`'s taxonomy (debt, not design), one level below where that
-gate can see.
-
-- [ ] Build the coachmark, or drop `graduationToken` and its suite. It has been
-      carrying a promise nothing keeps.
+**The food-favourite graduation coachmark was never built.** RESOLVED
+2026-08-12 — `graduationToken` deleted. It was speculative state, not a
+deliberate seam: no coachmark was ever specced (no design, no reserved key,
+nothing in the plan file), and the rest of graduation ships and works without
+it — the `food_pantry_graduated` event, the funnel splits by entry path, the
+useCount>=2 filtering in `Food.tsx` all remain. The detection block that fed
+it stays; only the state and its return entry went, so the analytics are
+untouched. Deleted rather than annotated, per `mirrorCrossTestGate`'s rule
+about code nobody calls and nobody intends to call.
 
 **Gate gap that hid all of the above.** `mirrorCrossTestGate` sees a dead MODULE;
 `symbolReachability` sees a dead EXPORT inside a live module. Neither sees a dead
