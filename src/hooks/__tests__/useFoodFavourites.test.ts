@@ -504,11 +504,10 @@ describe("useFoodFavourites", () => {
         makeDoc({ id: "a", useCount: 5 }),
         makeDoc({ id: "b", useCount: 3 }),
       ]);
-      const { result } = renderHook(() => useFoodFavourites());
+      renderHook(() => useFoodFavourites());
       await act(async () => {
         await flushSnapshots();
       });
-      expect(result.current.graduationToken).toBe(0);
       const evs = trackedEvents.filter(
         (e) => e.event === "food_pantry_graduated"
       );
@@ -516,30 +515,40 @@ describe("useFoodFavourites", () => {
     });
 
     it("fires on the < 2 → >= 2 transition between snapshots", async () => {
-      const { result } = renderHook(() => useFoodFavourites());
+      renderHook(() => useFoodFavourites());
       await act(async () => {
         pumpSnapshot([makeDoc({ id: "a", useCount: 1 })]);
       });
-      expect(result.current.graduationToken).toBe(0);
+      // Nothing has graduated yet — pinned so the assertion below
+      // cannot pass on an event fired by the FIRST snapshot.
+      expect(
+        trackedEvents.filter((e) => e.event === "food_pantry_graduated")
+      ).toHaveLength(0);
       // Second snapshot reflects the graduation.
       await act(async () => {
         pumpSnapshot([makeDoc({ id: "a", useCount: 2 })]);
       });
-      expect(result.current.graduationToken).toBe(1);
       const ev = trackedEvents.find((e) => e.event === "food_pantry_graduated");
       expect(ev?.metadata.favouriteId).toBe("a");
       expect(ev?.metadata.useCount).toBe(2);
     });
 
     it("catches multi-increment jumps (1 → 3 via offline sync)", async () => {
-      const { result } = renderHook(() => useFoodFavourites());
+      renderHook(() => useFoodFavourites());
       await act(async () => {
         pumpSnapshot([makeDoc({ id: "a", useCount: 1 })]);
       });
       await act(async () => {
         pumpSnapshot([makeDoc({ id: "a", useCount: 3 })]);
       });
-      expect(result.current.graduationToken).toBe(1);
+      /* Asserted on the EVENT since the token went (2026-08-12). This
+         test previously checked only the token, so dropping that line
+         without this would have left it asserting nothing at all. */
+      const evs = trackedEvents.filter(
+        (e) => e.event === "food_pantry_graduated"
+      );
+      expect(evs).toHaveLength(1);
+      expect(evs[0].metadata.useCount).toBe(3);
     });
 
     it("includes the originating source on the graduation event", async () => {
