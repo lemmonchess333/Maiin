@@ -161,7 +161,7 @@ function seededCircle({
 const silent = { warn: () => {} };
 
 describe("cleanupGoalSpacesForUser", () => {
-  it("member deletion: authored events gone, others kept, count decremented", async () => {
+  it("member deletion: authored events gone, others kept, count decremented (unit::accountDeletion.goalSpaceMemberships, unit::accountDeletion.goalSpaceEvents)", async () => {
     const db = makeFirestore({
       ...seededCircle({ members: ["owner", "u2"] }),
       "goalSpaces/s1/events/e1": {
