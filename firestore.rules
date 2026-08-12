@@ -83,6 +83,29 @@ service cloud.firestore {
       return isOwner(uid) && !isWriteFrozen(uid);
     }
 
+    /* Is there a block in EITHER direction between these two users?
+
+       Blocking severs the follow edges at block time (`blockUser` deletes all
+       four docs), but nothing stopped the blocked user simply FOLLOWING
+       AGAIN: the follow write is a direct client write, and these rules
+       allowed any authenticated user to create `followers/{anyone}/users/
+       {self}`. The fan-out reads `followers/{author}`, so a re-follow put the
+       author's activities straight back into the blocked user's feed.
+
+       That made blocking bypassable by the blocked party, which is the one
+       thing it must not be — client-side feed filtering does not help here,
+       because the blocked user's own filter list does not contain the person
+       who blocked THEM.
+
+       Both directions are refused: you cannot follow someone who blocked you,
+       and you cannot follow someone you blocked (unblock first). Two
+       `exists()` reads per follow write — well inside the per-request budget,
+       and follows are rare. */
+    function blockExistsBetween(a, b) {
+      return exists(/databases/$(database)/documents/blocks/$(a)/users/$(b))
+        || exists(/databases/$(database)/documents/blocks/$(b)/users/$(a));
+    }
+
     /* raceGoal value gate — the shape the app actually consumes.
        `allowedUserFields()` gates key NAMES only, so before this the field
        could hold any map at all: `raceGoal: { anything: <...> }` was a legal
@@ -1171,8 +1194,13 @@ service cloud.firestore {
       // Owner (uid) is the user managing their own follow list;
       // targetUid is the user being followed/unfollowed — both must
       // be writable.
-      allow create, delete: if isOwnerAndNotDeleting(uid)
+      // Delete stays unconditional — unfollowing must ALWAYS work, including
+      // unwinding an edge that predates a block.
+      allow delete: if isOwnerAndNotDeleting(uid)
         && !isWriteFrozen(targetUid);
+      allow create: if isOwnerAndNotDeleting(uid)
+        && !isWriteFrozen(targetUid)
+        && !blockExistsBetween(uid, targetUid);
     }
 
     match /followers/{uid}/users/{followerUid} {
@@ -1180,10 +1208,15 @@ service cloud.firestore {
       // Follower doc is written by the person doing the following.
       // R1A-Deletion: writer (followerUid) and recipient (uid) both
       // must be writable.
-      allow create, delete: if request.auth != null
+      allow delete: if request.auth != null
         && request.auth.uid == followerUid
         && !isWriteFrozen(followerUid)
         && !isWriteFrozen(uid);
+      allow create: if request.auth != null
+        && request.auth.uid == followerUid
+        && !isWriteFrozen(followerUid)
+        && !isWriteFrozen(uid)
+        && !blockExistsBetween(uid, followerUid);
     }
 
     // ========================================
