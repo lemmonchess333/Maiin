@@ -569,9 +569,24 @@ before being written into the legal text:
 - ✅ AI food analysis is an estimate, not medical advice — Privacy §8,
   Terms §7
 - ✅ GPS routes, privacy zones, public-feed defaults — Privacy §1
-  (privacy zones via `applyPrivacyZones`, verified) + §4 (explicit
-  sharing, per-post visibility, nothing auto-published — verified
-  against `ShareComposerSheet`)
+  (privacy zones via `applyPrivacyZones`) + §4 (explicit sharing,
+  per-post visibility, nothing auto-published — verified against
+  `ShareComposerSheet`)
+  - **CORRECTED 2026-08-12.** This line read "verified" for the privacy-zone
+    half and should not have. `applyPrivacyZones` trimmed inward from the
+    start and inward from the end only, breaking at the first point outside
+    a zone, so any crossing in the MIDDLE of a route survived — an
+    out-and-back past your own front door, or a loop starting elsewhere that
+    passes home halfway, published the exact home coordinates. The tests
+    covered start-trim, end-trim and the empty cases; no fixture ever
+    crossed a zone mid-route, which is how both the code and this line
+    stayed wrong. Interior crossings are removed now, with a jittered margin
+    either side so the surviving endpoints do not sit on the zone circle.
+    Residual, stated rather than implied: the route is returned as one
+    array, so an interior removal leaves the polyline drawing a straight
+    chord across the zone. That reveals the route passed through the area,
+    not the path inside it or where it stopped. Rendering a true gap needs
+    the consumers to accept segments.
 - ✅ Progress photo encryption (client-side AES-GCM) — Privacy §1 + §3
   (verified against `ProgressPhotos.tsx` `crypto.subtle` AES-GCM-256)
 - ✅ Subscription auto-renew / cancellation — Terms §4
