@@ -302,3 +302,66 @@ export function buildMaintenancePayload(
     rateKgPerWeek: 0,
   }).payload;
 }
+
+/**
+ * The payload for setting a MANUAL calorie override outside the goal-weight
+ * recipe — currently the plateau nudge in `StallModal`.
+ *
+ * It lives here, next to `buildGoalWeightPersistPayload`, because it applies
+ * that function's hard-won rule and must not drift from it. That rule is
+ * written out at the `effectiveTdee` block above: a manual
+ * `customCalorieTarget` replaces the formula target AND THE MACRO SPLIT HAS
+ * TO FOLLOW IT. The comment there records what happens otherwise — "a user
+ * who pinned 1400 kcal had a profile storing 1400 alongside a triple summing
+ * to 2209 — 58% over".
+ *
+ * StallModal reintroduced exactly that by writing `customCalorieTarget`
+ * alone. Nothing derives the mirrors from it: `updateProfile` persists the
+ * patch verbatim, and the only site that mirrors an override into
+ * `targetCalories` + the grams is the goal-weight recipe, reachable only
+ * from Settings → Nutrition and the Home goal-reached prompt. So the modal's
+ * write left `targetCalories` and all three macro targets on their previous
+ * values, and — because a manual override is what switches adaptive calories
+ * OFF — dropped the displayed target back to the stale
+ * `profile.targetCalories`. A user on an engaged adaptive target of 2919
+ * tapped "+150" and watched their target become 2500, under a toast reading
+ * "Calorie target increased by 150".
+ *
+ * `useAdaptiveTdee` states the invariant this restores, at the line that
+ * reads the field: "Formula target = the stored base (already
+ * customCalorieTarget || formula)". That is only true while every writer of
+ * an override also writes the mirror.
+ *
+ * The macro split is recomputed at the new target through the same
+ * `splitMacrosForTarget` + `proteinMultiplierForGoal` pair the recipe uses,
+ * so the grams agree with the calories by construction rather than by
+ * anyone remembering to update them.
+ */
+export function buildCalorieOverridePayload(args: {
+  profile: GoalWeightProfileInputs;
+  /** The manual target to pin, in kcal. Rounded and floored at 0. */
+  overrideCalories: number;
+}): {
+  customCalorieTarget: number;
+  targetCalories: number;
+  targetProtein: number;
+  targetCarbs: number;
+  targetFat: number;
+} {
+  const { profile, overrideCalories } = args;
+  const calories = Math.max(0, Math.round(overrideCalories));
+  const weightKg = profile.weightKg ?? 70;
+  const goal = (profile.program?.goal as FitnessGoal) ?? "recomp";
+  const macros = splitMacrosForTarget(
+    calories,
+    weightKg,
+    proteinMultiplierForGoal(goal)
+  );
+  return {
+    customCalorieTarget: calories,
+    targetCalories: calories,
+    targetProtein: macros.protein,
+    targetCarbs: macros.carbs,
+    targetFat: macros.fat,
+  };
+}

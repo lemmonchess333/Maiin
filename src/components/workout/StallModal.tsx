@@ -1,4 +1,6 @@
 import { useAuth } from "@/lib/auth";
+import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
+import { buildCalorieOverridePayload } from "@/lib/goalWeightPlan";
 import { toast } from "@/lib/toast";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
@@ -26,14 +28,25 @@ export default function StallModal({ exercise, onClose }: StallModalProps) {
   // Adaptive is only ON while there is no manual override, so a user who
   // already has one loses nothing here and shouldn't be warned.
   const adaptiveOn = !profile?.customCalorieTarget;
+  // The number the user is actually LOOKING AT on Home and Food, which is
+  // what "+150" has to mean. `profile.targetCalories` is the formula anchor
+  // and deliberately never moves once the adaptive layer engages, so basing
+  // the bump on it silently reset a Pro user to a stale figure — a target of
+  // 2919 became 2500 under a toast reading "increased by 150".
+  const { finalTarget } = useEffectiveTargets();
 
   const handleAdjust = async () => {
     if (profile) {
-      const current =
-        profile.customCalorieTarget || profile.targetCalories || 2200;
-      const result = await updateProfile({
-        customCalorieTarget: current + 150,
-      });
+      // Through the shared recipe, so `targetCalories` and all three macro
+      // targets follow the override. Writing `customCalorieTarget` alone
+      // leaves every mirror stale — the exact failure documented on
+      // buildGoalWeightPersistPayload's effectiveTdee block.
+      const result = await updateProfile(
+        buildCalorieOverridePayload({
+          profile,
+          overrideCalories: finalTarget + 150,
+        })
+      );
       // Success toast only fires when the write landed — without this
       // gate the modal cheerfully reported "increased by 150" even
       // when the Firestore write failed, and stamped the localStorage
