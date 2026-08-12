@@ -668,12 +668,6 @@ export default function Onboarding() {
         targetProtein: tdee.protein,
         targetCarbs: tdee.carbs,
         targetFat: tdee.fat,
-        macroTargets: {
-          calories: tdee.targetCalories,
-          protein: tdee.protein,
-          carbs: tdee.carbs,
-          fat: tdee.fat,
-        },
         program: {
           // Nutrition phase comes from the goal-weight plan (target weight
           // owns direction), not goalToFitnessGoal(primaryGoal).
