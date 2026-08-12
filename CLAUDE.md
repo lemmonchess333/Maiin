@@ -612,6 +612,71 @@ or touching a CTA button, route it through `Button` with the variant above.
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+### Nutrition/TDEE sweep 2026-08-12 — one finding left, and the shape of the rest
+
+Five defects shipped from one sweep of the calorie/macro path (#1994-#1998).
+Four shared a single shape, worth naming because it is not the mirror-parity
+rule and keeps being mistaken for it: **a number computed in one place and
+DISPLAYED from another**. Not two copies of a formula drifting — one correct
+value, and a reader pointed at a different, staler field.
+
+  Home's protein nudge      quoted `profile.targetProtein` beneath rings
+                            showing `useEffectiveTargets().protein` — 16-32 g
+                            apart, on the same card.
+  History's target line     quoted an onboarding-day snapshot nothing had
+                            updated since.
+  Settings' "Adapting"      printed the formula figure under a line saying the
+                            number was adapted.
+  The PI scorer             was handed `profile.goal`, a field nothing writes.
+
+In every case the codebase had ALREADY solved it for the neighbouring field
+and the fix was pointing the stray reader at the existing source.
+HOME-TARGET-01 ("one target everywhere") did exactly this for calories and
+missed protein; `calorieTargetResolution.js` did it server-side for the
+scoring target. When you find one of these, check the siblings — the fix is
+usually a one-line repoint, and the miss is usually a field that was added
+after the sweep that fixed its neighbours.
+
+**RESOLVED — `goalCalorieOffset` trusted the sign of `weeklyRateKg`.**
+`useAdaptiveTdee` read the field raw; its sibling `goalReachedOffer` has
+cross-checked the sign against `program.goal` since NUTR-M2, because
+pre-NUTR-M2 profiles stored the rate UNSIGNED. A legacy cutter therefore got
+a +550 kcal SURPLUS where -550 was intended, walked up 150/week by
+`applyWeeklyCap` — slow enough to look like the engine working.
+
+Shipped as `attestedWeeklyRateKg`, called by both consumers. The open
+question ("do unsigned-rate profiles exist in production?") was NOT the
+blocker it looked like: the check is a no-op for every correctly-signed
+profile, so the cost of being wrong about their existence is zero one way
+and a silent surplus the other. When a defence is free for the healthy case,
+the prevalence question is not worth answering first.
+
+**The stored/displayed protein split stays — and holds by ONE DECIMAL PLACE.**
+Stored `targetProtein` splits by GOAL; the displayed daily target splits by
+lift PHASE. Consolidating them needs either a server-side phase mirror or an
+obligation to rewrite the profile on every phase change, both larger than
+the gap they close. Declined.
+
+That is only safe because the PI protein factor is `ratio >= 0.9 ? 100 :
+ratio * 111` — so over-eating is never penalised — and across every
+reachable (goal, phase) pair the shown/stored ratio bottoms out at EXACTLY
+0.90. Zero margin. `PHASE_PROTEIN.race_prep` is 1.6 and would give 0.8, i.e.
+88.8 points for eating exactly what the app asked; it is unreachable only
+because `LiftPhase` has no such member.
+
+Nothing was holding that. It is now pinned by
+`proteinTargetDivergence.test.ts`, with the multiplier tables asserted as
+literals. Before changing ANY protein multiplier, or adding a phase to
+`LiftPhase`, read that file — the invariant is not local to either table.
+
+**Deploy verification owed for the three `functions/` changes** (#1991 delete
+triggers, #1993 cold-start badges, #1994 PI goal wiring). CI-green is
+necessary-not-sufficient per the standing dedup gotcha; all three are `.js`
+changes so dedup should not bite, but the Console spot-check is the only
+proof. Neither #1993 nor #1994 repairs history: badges already dropped stay
+dropped (the trigger is `onCreate`), and stored PIs are rewritten only for
+the current week by the next rollup.
+
 ### Unwired seams — half-built features that read as shipped (2026-08-12)
 
 Found while adjudicating the orphaned hook-return properties behind PRs
