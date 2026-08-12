@@ -619,30 +619,43 @@ Found while adjudicating the orphaned hook-return properties behind PRs
 the code exists, so a reader assumes the feature does. Neither is dead code —
 deleting either would destroy the half that IS built.
 
-**A user cannot delete a mis-logged workout or run.** Meals are deletable
-(`deleteMeal` is wired into `Food.tsx` at two call sites). `useWorkouts.deleteWorkout`
-exists and is the ONLY code path that deletes a workout — wired to nothing. Runs
-have no delete path at all, not even a function. So a phone-in-pocket accidental
-long "run" inflates lifetime stats, PI, challenges, streaks and the leaderboard
-permanently.
+**A user cannot delete a mis-logged workout or run.** RESOLVED
+2026-08-12 — built end to end, server first, per ADR-0012 and its two
+amendments.
 
-- [x] **Decided 2026-08-12 — ADR-0012.** Reverse the two accumulators on
-      `onDelete` by re-deriving from the deleted snapshot (calling the accrual
-      function itself, never a copy); let PI self-heal via recompute; do NOT
-      reverse partner streaks, which are day-granular history. Server ships and
-      is verified before any delete affordance. Implementation still owed —
-      what follows is the original framing that led there.
-- [ ] **Build it in that order.** `onWorkoutCreated` /
-      `onRunCreated` are `onCreate` ONLY — there is no `onDelete`. Challenge progress
-      is guarded by a persistent `participants/{uid}/applied/{sourceId}` marker and
-      lifetime totals by `users/{uid}/lifetime/applied_<kind>_<sourceId>`. So a naive
-      delete fires no trigger and leaves challenge `currentValue`, lifetime totals and
-      partner-streak state overstated forever — the log shrinks, the derived counters
-      don't. Same desync class as the NUTR-EV nutrition family. Options worth weighing:
-      an `onDelete` trigger that reverses the marked contribution; a short edit/undo
-      window (delete only while nothing has consumed it); or accepting drift and saying
-      so. Don't wire the UI first.
-- [ ] Runs need the `deleteRun` half written regardless of which option wins.
+Server: `onWorkoutDeleted` / `onRunDeleted` reverse challenge progress and
+lifetime totals. Client: `lib/sessionDelete` + `DeleteSessionAction`, wired
+into `/workout/:id` and `/run/:runId`. `useWorkouts.deleteWorkout` is gone —
+it was the unwired duplicate of a now-wired path, and keeping both is what
+`hookSurfaceReachability` exists to catch.
+
+Three things the original framing above got wrong, all of them the kind that
+only surfaces once you write the code — the amendments carry the detail:
+
+- The challenge marker DOES record its `incrementBy`. The plan to "re-derive
+  from the deleted snapshot" was built on the premise that neither marker
+  carries a delta; only the lifetime one doesn't.
+- Re-derivation is not always correct even when it is available. Session ids
+  are deterministic, so a resumed programme Finish re-`set`s the same workout
+  doc — an overwrite that accrues nothing, leaving the counter and the
+  document disagreeing. The lifetime marker now stamps `appliedValue`.
+- `fastest_effort` cannot be reversed at all (MIN semantics, and its marker
+  records the run's time rather than the best it displaced). It joins partner
+  streaks — and milestone badges, which the ADR never mentioned — on the
+  "history, not an accumulator" side.
+
+- [ ] **Deploy verification.** Confirm `onWorkoutDeleted` / `onRunDeleted`
+      appear in the Console function list and that `onWorkoutCreated`'s
+      deployed source contains `appliedValue`. Then delete a real session on
+      device and watch a joined challenge's `currentValue` drop by that
+      session's contribution.
+- [ ] **A shared run's feed post is unreachable from the run.** Workouts carry
+      `sharedActivityId`, so deleting one removes its post; the run share path
+      (`ShareComposerSheet` → `postActivity`) writes no marker back, so a
+      shared run's post survives the run. The confirmation copy says so rather
+      than pretending otherwise — closing it means writing the marker on the
+      run side first. Related: nothing in the app deletes a feed post on its
+      own, for any post.
 
 **The food-favourite graduation coachmark was never built.** RESOLVED
 2026-08-12 — `graduationToken` deleted. It was speculative state, not a
@@ -663,9 +676,13 @@ the house pattern of each orphan instance producing a new gate — but it needs 
 five classified first, and `useWorkouts.saveWorkout` is already a documented pinned
 orphan, so the list is genuinely mixed.
 
-- [ ] Classify the remaining five (`useEffectiveTargets.baseTarget` / `isRunDay`,
-      `useFoodFavourites.graduationToken`, `useWorkouts.saveWorkout` / `deleteWorkout`),
-      then add the returned-property pass.
+- [x] RESOLVED 2026-08-12. The gate shipped as
+      `src/lib/__tests__/hookSurfaceReachability.test.ts`, and the five
+      classified out: `graduationToken` deleted as speculative state,
+      `deleteWorkout` deleted once its real path landed, `saveWorkout` stays a
+      documented pinned orphan, and `baseTarget` / `isRunDay` stay pinned as
+      documented fields of an exported interface three components take as a
+      prop type.
 
 ### Cost & margin operator setup (unit economics)
 

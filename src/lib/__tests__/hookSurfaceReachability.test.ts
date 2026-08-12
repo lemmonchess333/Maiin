@@ -78,15 +78,6 @@ const PINNED_HOOK_PROPERTIES = [
   // Deliberate, and not mine to reverse.
   "src/hooks/useWorkouts.ts:saveWorkout",
 
-  // UNWIRED, not dead — and the distinction matters, because deleting it
-  // would remove the only code path that deletes a workout. There is no
-  // delete affordance for workouts or runs anywhere in the app (meals have
-  // one). Wiring it needs a decision first: `onWorkoutCreated` /
-  // `onRunCreated` are onCreate ONLY, and challenge + lifetime progress sit
-  // behind persistent `applied/{sourceId}` markers, so a naive delete
-  // leaves those counters overstated forever. Backlog row: "Unwired seams".
-  "src/hooks/useWorkouts.ts:deleteWorkout",
-
   // Written, never read — but they are documented fields of the exported
   // `EffectiveTargets` interface that three components take as a prop type,
   // and `baseTarget` is referenced throughout that module's prose as the
