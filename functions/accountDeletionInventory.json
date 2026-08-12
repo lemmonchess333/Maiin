@@ -618,12 +618,12 @@
       "containsPersonalData": true,
       "piiCategory": "userContent",
       "recordPurpose": "userContent",
-      "strategy": "deleteCollectionGroupInBatches",
+      "strategy": "deleteKnownDocIfExists",
       "lockNeeded": "referenced-uid",
       "hasNestedSubcollections": false,
-      "reason": "Fan-out copies of this user's posts denormalised into other users' feed subcollections. Path filter feeds/*/items uses segment-aware matcher (functions/lib/pathFilterMatcher.js) — substring matches like admin/feeds_archive/x/items are explicitly rejected.",
-      "testCoverageKey": "smoke::feedFanout",
-      "testCoverageStatus": "planned"
+      "reason": "Fan-out copies of this user's posts denormalised into other users' feed subcollections — each carries the author's name, photo URL and session summary, so erasure has to reach them. IMPLEMENTED by functions/lib/feedFanoutCleanup.js as executor step 0d, by known doc ref rather than the collectionGroup query this entry's type describes: fan-out doc ids ARE the activity id, so recipients (followers/{uid}/users) x authored activities addresses every copy without querying across trees. Same shape as goalSpaceMemberships, which is also a collectionGroup type served by an index-driven strategy. The collectionGroup form is deferred because firestore.indexes.json declares zero COLLECTION_GROUP indexes, so the query would throw until one is added and built. Path filter feeds/*/items stays the documented scope, checked by the segment-aware matcher (functions/lib/pathFilterMatcher.js) — substring matches like admin/feeds_archive/x/items are explicitly rejected. KNOWN RESIDUE: unfollowUser deletes only the two edge docs, so a copy in the feed of someone who has since unfollowed is not in the recipient set and survives; closing that needs the collectionGroup sweep above.",
+      "testCoverageKey": "unit::accountDeletion.feedFanout",
+      "testCoverageStatus": "implemented"
     },
     {
       "key": "notificationsFromMe",

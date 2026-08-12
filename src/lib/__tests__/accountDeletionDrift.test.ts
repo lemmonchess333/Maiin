@@ -465,9 +465,23 @@ describe("accountDeletionDrift — every detected user-keyed write is classified
  * "implemented" — but it guards against the silent overclaim.
  */
 describe("testCoverageStatus=implemented entries map to real test files", () => {
-  const testRoot = resolve(repoRoot, "src/lib/__tests__");
-  const testFiles = walk(testRoot).filter(
-    (f) => f.endsWith(".test.ts") || f.endsWith(".test.tsx"),
+  /* Both test roots. The header above anticipated this — "or, in future,
+     functions/__tests__/ when that test directory exists" — and it does now,
+     with the executor's own unit tests in it. Scanning only the client half
+     meant an entry covered by a real functions test still had to be recorded
+     as `planned`, which is the same overclaim this guard exists to prevent,
+     pointed the other way. */
+  const testRoots = [
+    resolve(repoRoot, "src/lib/__tests__"),
+    resolve(repoRoot, "functions/__tests__"),
+  ];
+  const testFiles = testRoots.flatMap((root) =>
+    walk(root).filter(
+      (f) =>
+        f.endsWith(".test.ts") ||
+        f.endsWith(".test.tsx") ||
+        f.endsWith(".test.js"),
+    ),
   );
   // Read every test file once. The check is a substring match — cheap.
   const allTestSources = testFiles
@@ -495,6 +509,16 @@ describe("testCoverageStatus=implemented entries map to real test files", () => 
     // still executes the scan, so a regression that breaks the
     // file-walker surfaces here.
     expect(testFiles.length).toBeGreaterThan(0);
+    // Per root, not just in total: one root silently walking to nothing
+    // would let every key in it read as uncovered, and a `planned` entry
+    // that is actually covered fails in the quiet direction — nobody
+    // investigates a backlog row that looks outstanding.
+    for (const root of testRoots) {
+      expect(
+        testFiles.some((f) => f.startsWith(root)),
+        `no test files found under ${root} — the coverage scan is half-blind`
+      ).toBe(true);
+    }
   });
 
   it("every implemented entry has its testCoverageKey present in a test file", () => {
