@@ -19,7 +19,6 @@ import {
   getExercisesByCategory,
   getExerciseById,
   isBodyweightExerciseId,
-  estimateCalories,
 } from "../exercises";
 
 describe("getExercisesByCategory", () => {
@@ -78,47 +77,6 @@ describe("isBodyweightExerciseId", () => {
 
   it("returns false for an unknown id", () => {
     expect(isBodyweightExerciseId("not-a-real-id")).toBe(false);
-  });
-});
-
-describe("estimateCalories", () => {
-  it("returns 0 for an unknown exerciseId", () => {
-    /* Defensive: caller might pass a stale id; we'd rather show 0
-       than throw or guess. */
-    expect(estimateCalories("not-a-real-id", 3, 10, 60)).toBe(0);
-  });
-
-  it("returns a positive estimate for a known weighted exercise", () => {
-    /* The formula multiplies caloriesPerMinute × minutes ×
-       weightMultiplier (1 + weightKg/100 × 0.3). We don't pin the
-       exact value (table tweaks would force test updates) — just
-       that the estimate is positive and scales sensibly with the
-       inputs. */
-    const result = estimateCalories("bench-press", 3, 10, 60);
-    expect(result).toBeGreaterThan(0);
-  });
-
-  it("scales up with more sets", () => {
-    const fewer = estimateCalories("bench-press", 2, 10, 60);
-    const more = estimateCalories("bench-press", 5, 10, 60);
-    expect(more).toBeGreaterThan(fewer);
-  });
-
-  it("scales up with more reps", () => {
-    const fewer = estimateCalories("bench-press", 3, 5, 60);
-    const more = estimateCalories("bench-press", 3, 15, 60);
-    expect(more).toBeGreaterThan(fewer);
-  });
-
-  it("scales up with heavier weight (via weightMultiplier)", () => {
-    const lighter = estimateCalories("bench-press", 3, 10, 40);
-    const heavier = estimateCalories("bench-press", 3, 10, 120);
-    expect(heavier).toBeGreaterThan(lighter);
-  });
-
-  it("returns a rounded integer (Math.round)", () => {
-    const result = estimateCalories("bench-press", 3, 10, 60);
-    expect(Number.isInteger(result)).toBe(true);
   });
 });
 

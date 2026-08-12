@@ -13,7 +13,6 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
-import { estimateCalories } from "@/lib/exercises";
 import { estimateLiftBurn } from "@/lib/workoutBurn";
 import { logger } from "@/lib/logger";
 import { safeMerge } from "@/lib/offlineQueue";
@@ -291,23 +290,11 @@ export function useWorkouts(options: UseWorkoutsOptions = {}) {
     [workouts]
   );
 
-  const calculateExerciseCalories = useCallback(
-    (exerciseId: string, sets: WorkoutSet[], userWeightKg: number): number => {
-      let total = 0;
-      sets.forEach((s) => {
-        total += estimateCalories(exerciseId, 1, s.reps, userWeightKg);
-      });
-      return total;
-    },
-    []
-  );
-
   return {
     workouts,
     loading,
     saveWorkout,
     deleteWorkout,
     getWorkoutsForDate,
-    calculateExerciseCalories,
   };
 }
