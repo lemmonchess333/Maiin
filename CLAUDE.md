@@ -612,6 +612,57 @@ or touching a CTA button, route it through `Button` with the variant above.
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+### Unwired seams — half-built features that read as shipped (2026-08-12)
+
+Found while adjudicating the orphaned hook-return properties behind PRs
+#1980/#1981. Recording them because both are the shape that stays invisible:
+the code exists, so a reader assumes the feature does. Neither is dead code —
+deleting either would destroy the half that IS built.
+
+**A user cannot delete a mis-logged workout or run.** Meals are deletable
+(`deleteMeal` is wired into `Food.tsx` at two call sites). `useWorkouts.deleteWorkout`
+exists and is the ONLY code path that deletes a workout — wired to nothing. Runs
+have no delete path at all, not even a function. So a phone-in-pocket accidental
+long "run" inflates lifetime stats, PI, challenges, streaks and the leaderboard
+permanently.
+
+- [ ] **Decide the delete story before building the button.** `onWorkoutCreated` /
+      `onRunCreated` are `onCreate` ONLY — there is no `onDelete`. Challenge progress
+      is guarded by a persistent `participants/{uid}/applied/{sourceId}` marker and
+      lifetime totals by `users/{uid}/lifetime/applied_<kind>_<sourceId>`. So a naive
+      delete fires no trigger and leaves challenge `currentValue`, lifetime totals and
+      partner-streak state overstated forever — the log shrinks, the derived counters
+      don't. Same desync class as the NUTR-EV nutrition family. Options worth weighing:
+      an `onDelete` trigger that reverses the marked contribution; a short edit/undo
+      window (delete only while nothing has consumed it); or accepting drift and saying
+      so. Don't wire the UI first.
+- [ ] Runs need the `deleteRun` half written regardless of which option wins.
+
+**The food-favourite graduation coachmark was never built.** `useFoodFavourites`
+returns `graduationToken`, whose own doc says consumers "effect on this to trigger
+one-shot UI (first-graduation coachmark)". Nothing consumes it, and no such
+coachmark key exists anywhere. The rest of graduation DID ship — the
+`food_pantry_graduated` analytics event, the funnel splits by entry path, the
+useCount>=2 filtering in `Food.tsx`. This is the `@unwired:` category from
+`mirrorCrossTestGate`'s taxonomy (debt, not design), one level below where that
+gate can see.
+
+- [ ] Build the coachmark, or drop `graduationToken` and its suite. It has been
+      carrying a promise nothing keeps.
+
+**Gate gap that hid all of the above.** `mirrorCrossTestGate` sees a dead MODULE;
+`symbolReachability` sees a dead EXPORT inside a live module. Neither sees a dead
+PROPERTY on a live hook's return object. A scan of the 134 such properties across
+70 hook files found the set; after #1980/#1981 five remain, and the three above are
+judgement calls rather than deletions. Extending the gate is tractable and matches
+the house pattern of each orphan instance producing a new gate — but it needs those
+five classified first, and `useWorkouts.saveWorkout` is already a documented pinned
+orphan, so the list is genuinely mixed.
+
+- [ ] Classify the remaining five (`useEffectiveTargets.baseTarget` / `isRunDay`,
+      `useFoodFavourites.graduationToken`, `useWorkouts.saveWorkout` / `deleteWorkout`),
+      then add the returned-property pass.
+
 ### Cost & margin operator setup (unit economics)
 
 Modelled 2026-07-05. Apple's cut dwarfs all infra: at £3.99/mo, Apple takes £1.20 (30%) or £0.60 (15% Small Business Program); combined Gemini + Firebase + storage + ORS run ~15–20p/Pro user/mo (Gemini Flash food scan ≈ ½p; only Pro users hit the AI gate). ORS routing is ~free at ~5k users (occasional route-plans, ~2–5 calls each, under the 2,500/day free tier); on quota-exceed it degrades to the existing straight-line planner (no lockout), and true scale = self-host ORS on a ~£25/mo VM (fixed, not per-request). `maxInstances` caps are already in every Cloud Function (runaway-cost guard).
