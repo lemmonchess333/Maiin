@@ -1130,3 +1130,59 @@ describe("deleteAccount — feed fan-out erasure (step 0d)", () => {
     expect(sweepIdx).toBeLessThan(authIdx);
   });
 });
+
+describe("deleteAccount — challenge participations (step 0e)", () => {
+  /* `challenges/{id}/participants/{uid}` is uid-keyed but nested under a
+     parent that is not this user, so neither the users/{uid} sweep nor the
+     top-level uid-keyed sweep reaches it. The wiring is what makes that
+     coverage real; the deletes themselves are covered in
+     challengeParticipationCleanup.test.js. */
+  const challengeParticipationCleanup = require("../lib/challengeParticipationCleanup");
+
+  function spyOnSweep(calls, received = []) {
+    return vi
+      .spyOn(challengeParticipationCleanup, "removeChallengeParticipationsForUser")
+      .mockImplementation(async (args) => {
+        received.push(args);
+        calls.push("challengeParticipations.sweep");
+        return { challenges: 0, deleted: 0, failedBatches: 0 };
+      });
+  }
+
+  it("runs the sweep with the uid being deleted", async () => {
+    const stubs = makeStubs();
+    const received = [];
+    const spy = spyOnSweep(stubs.calls, received);
+    try {
+      await deleteAccount({ ...stubs, uid: TEST_UID });
+    } finally {
+      spy.mockRestore();
+    }
+
+    expect(stubs.calls).toContain("challengeParticipations.sweep");
+    expect(received).toHaveLength(1);
+    expect(received[0].uid).toBe(TEST_UID);
+    expect(received[0].firestore).toBe(stubs.firestore);
+  });
+
+  it("runs before auth.deleteUser", async () => {
+    // It is a Firestore write, so it belongs on the credentials-intact side
+    // of the cascade's bedrock invariant.
+    const stubs = makeStubs();
+    const spy = spyOnSweep(stubs.calls);
+    try {
+      await deleteAccount({ ...stubs, uid: TEST_UID });
+    } finally {
+      spy.mockRestore();
+    }
+
+    const sweepIdx = stubs.calls.indexOf("challengeParticipations.sweep");
+    const authIdx = stubs.calls.indexOf(`auth.deleteUser(${TEST_UID})`);
+    // Presence asserted first: indexOf returns -1 when missing, and -1 < n
+    // is true, so the ordering check alone would pass if the sweep were
+    // deleted outright.
+    expect(sweepIdx).toBeGreaterThanOrEqual(0);
+    expect(authIdx).toBeGreaterThanOrEqual(0);
+    expect(sweepIdx).toBeLessThan(authIdx);
+  });
+});
