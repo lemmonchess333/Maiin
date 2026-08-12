@@ -1132,7 +1132,9 @@ vocabulary as it crystallises); ADRs in `docs/adr/`. See
 
 Training-programming evidence handoffs (integrated 2026-08-09): start at
 `docs/training-programming-claude-handoff.md`, which indexes the lifting
-and running evidence syntheses and their open-issue ledgers
+and running evidence syntheses, the nutrition-pipeline handoff
+(`docs/nutrition-pipeline-claude-handoff.md`, `NUTR-EV-xx`, added
+2026-08-11), and their open-issue ledgers
 (`LIFT-EV-xx` / `RUN-EV-xx` — deliberately distinct from the plan file's
 retention-audit `RUN-0x` and programme-audit `LIFT-0x` vocabularies).
 Read the relevant handoff before any lift/run programming change; its
