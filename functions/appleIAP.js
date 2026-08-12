@@ -331,6 +331,34 @@ exports.appleIAPWebhook = functions
       // Apple retries notifications on 5xx; without dedup a re-delivery
       // re-runs applySubscriptionToUser. The verified outer payload's
       // notificationUUID is a stable per-delivery identifier.
+      //
+      // WHY THIS IS A GET-THEN-SET AND stripeWebhook IS NOT. Read side by
+      // side the two look inconsistent — stripeWebhook claims its event id
+      // inside a transaction and its comment says this exact shape "was the
+      // bug". Copying that here would be a regression, not a fix, and the
+      // difference is in what each handler does on failure.
+      //
+      // Stripe claims first and DELETES the claim if the handler throws, so
+      // a crash is recoverable. Apple's record is written only after
+      // processing succeeds — the same protection, arranged the other way
+      // round, and a transactional claim without Stripe's compensating
+      // delete would make a notification that crashed mid-processing
+      // invisible to every retry.
+      //
+      // The remaining window — two concurrent re-deliveries of one uuid,
+      // both reading exists:false — is safe because the repeated work has no
+      // accumulating effect. applySubscriptionToUser runs a single
+      // transaction whose only writes are `txn.set(..., { merge: true })` of
+      // values derived from the signed transaction, so applying it twice
+      // computes the same bytes. Its conflict branch self-disarms too: the
+      // displaced-Stripe cancel is gated on the PREVIOUS source being
+      // "stripe", which the first application has already overwritten.
+      //
+      // That argument is about code that can quietly stop being true, so it
+      // is pinned rather than asserted — see "applySubscriptionToUser —
+      // safe to apply twice" in __tests__/applePurchase.test.js. One
+      // FieldValue.increment added to either write turns a duplicate
+      // delivery into a real double-count, and nothing here would notice.
       if (notificationUUID) {
         const notifRef = admin
           .firestore()
