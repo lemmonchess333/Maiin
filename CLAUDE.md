@@ -612,6 +612,59 @@ or touching a CTA button, route it through `Button` with the variant above.
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+### Nutrition/TDEE sweep 2026-08-12 — one finding left, and the shape of the rest
+
+Five defects shipped from one sweep of the calorie/macro path (#1994-#1998).
+Four shared a single shape, worth naming because it is not the mirror-parity
+rule and keeps being mistaken for it: **a number computed in one place and
+DISPLAYED from another**. Not two copies of a formula drifting — one correct
+value, and a reader pointed at a different, staler field.
+
+  Home's protein nudge      quoted `profile.targetProtein` beneath rings
+                            showing `useEffectiveTargets().protein` — 16-32 g
+                            apart, on the same card.
+  History's target line     quoted an onboarding-day snapshot nothing had
+                            updated since.
+  Settings' "Adapting"      printed the formula figure under a line saying the
+                            number was adapted.
+  The PI scorer             was handed `profile.goal`, a field nothing writes.
+
+In every case the codebase had ALREADY solved it for the neighbouring field
+and the fix was pointing the stray reader at the existing source.
+HOME-TARGET-01 ("one target everywhere") did exactly this for calories and
+missed protein; `calorieTargetResolution.js` did it server-side for the
+scoring target. When you find one of these, check the siblings — the fix is
+usually a one-line repoint, and the miss is usually a field that was added
+after the sweep that fixed its neighbours.
+
+**Still open — `goalCalorieOffset` trusts the sign of `weeklyRateKg`.**
+`useAdaptiveTdee.ts` reads `profile.weeklyRateKg` and feeds it straight to
+`offsetFromWeeklyRate`. Its sibling consumer `goalReachedOffer`
+(`goalWeightPlan.ts`) explicitly does NOT: it documents that pre-NUTR-M2
+profiles stored the rate UNSIGNED and cross-checks the sign against
+`program.goal` before believing it.
+
+For a legacy cutter with `weeklyRateKg: +0.5` and `program.goal: "cut"`, the
+intended offset is -550 and the computed one is +550. `applyWeeklyCap` then
+walks the target up 150/week from the formula figure, so the surplus arrives
+slowly enough to look like the adaptive feature working correctly.
+
+- [ ] Decide whether unsigned-rate profiles actually exist in production. The
+      mechanism is certain; the exposure is not, and it is checkable only
+      against real data. If they do, mirror `goalReachedOffer`'s sign check
+      into `goalCalorieOffset` — do NOT re-derive it, the rule is already
+      written once. If they don't, delete `goalReachedOffer`'s defence too and
+      say so, rather than leaving two consumers disagreeing about whether the
+      field can be trusted.
+
+**Deploy verification owed for the three `functions/` changes** (#1991 delete
+triggers, #1993 cold-start badges, #1994 PI goal wiring). CI-green is
+necessary-not-sufficient per the standing dedup gotcha; all three are `.js`
+changes so dedup should not bite, but the Console spot-check is the only
+proof. Neither #1993 nor #1994 repairs history: badges already dropped stay
+dropped (the trigger is `onCreate`), and stored PIs are rewritten only for
+the current week by the next rollup.
+
 ### Unwired seams — half-built features that read as shipped (2026-08-12)
 
 Found while adjudicating the orphaned hook-return properties behind PRs
