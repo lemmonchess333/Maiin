@@ -296,3 +296,164 @@ describe("WeekStrip — runDay status precedence (spec gate #11, resolver-aware)
     expect(rhombuses.length).toBeGreaterThan(0);
   });
 });
+
+/**
+ * Accessible name + selection state.
+ *
+ * The strip renders four distinct training signals — a purple dot for a
+ * lift, a coral rhombus for a planned run, a check for a completed one, a
+ * faded rhombus for a skipped one — and, before this, none of them reached
+ * the accessible name. What did reach it was "(activity logged)", derived
+ * from `dayMap`, which counts MEALS: `Food.tsx` is the only writer of
+ * `users/{uid}/logs` and it writes `workouts: 0` unconditionally.
+ *
+ * So the one signal with no visual counterpart was announced in place of
+ * every signal that had one. A screen-reader user heard nothing for a day
+ * they had trained, and "activity logged" for a day they had only eaten.
+ *
+ * Selection was worse than undescribed: the strip is a 7-way selector and
+ * the chosen day was conveyed by fill colour alone, with no `aria-pressed`
+ * and no textual equivalent — unusable rather than merely terse.
+ */
+describe("WeekStrip — accessible name and selection state", () => {
+  const DOW = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+
+  /** Render a strip whose EVERY day carries `type`, so today's cell (always
+   *  first in the rolling window) is the one under test. */
+  function renderAllDays(
+    type: ScheduleDay["type"],
+    opts: {
+      runDays?: ScheduledRunDay[];
+      claimMap?: Map<string, ClaimState>;
+      dayMap?: Map<
+        string,
+        { workouts: number; meals: number; caloriesHit: boolean }
+      >;
+      selectedDate?: string | null;
+    } = {}
+  ) {
+    const profile = makeProfile(makeSchedule(DOW.map(() => type)));
+    return render(
+      <WeekStrip
+        dayMap={opts.dayMap ?? new Map()}
+        profile={profile}
+        programState={makeProgramState(opts.runDays ?? [])}
+        claimMap={opts.claimMap ?? emptyClaimMap}
+        selectedDate={opts.selectedDate ?? null}
+        onDayTap={vi.fn()}
+      />
+    );
+  }
+
+  /** Today's cell — the resolver anchors the rolling window at today, so
+   *  it is always the first button. */
+  const todayCell = (container: HTMLElement) =>
+    container.querySelectorAll("button")[0];
+
+  it("names a rest day, a lift day and a run day", () => {
+    for (const [type, expected] of [
+      ["rest", /rest day/i],
+      ["lift", /lift day/i],
+      ["run", /run day/i],
+    ] as const) {
+      const { container, unmount } = renderAllDays(type);
+      expect(
+        todayCell(container).getAttribute("aria-label"),
+        `scheduleType ${type}`
+      ).toMatch(expected);
+      unmount();
+    }
+  });
+
+  it("names both disciplines on a combined day", () => {
+    const { container } = renderAllDays("both");
+    const label = todayCell(container).getAttribute("aria-label") ?? "";
+    expect(label).toMatch(/lift/i);
+    expect(label).toMatch(/run/i);
+  });
+
+  it("says a run was completed, not merely that one was planned", () => {
+    /* This is the pairing that matters: the check and the rhombus are
+       different marks on screen, and before this they produced the SAME
+       accessible name. */
+    const today = new Date();
+    const runDay = makeRunDay({
+      dayIndex: today.getDay(),
+      date: localDateString(today),
+      weekKey: localWeekKey(today),
+    });
+    const planned = renderAllDays("run", { runDays: [runDay] });
+    expect(todayCell(planned.container).getAttribute("aria-label")).not.toMatch(
+      /completed/i
+    );
+    planned.unmount();
+
+    const done = renderAllDays("run", {
+      runDays: [runDay],
+      claimMap: claimMapWith([[runDay.id!, { manualCompleted: true }]]),
+    });
+    expect(todayCell(done.container).getAttribute("aria-label")).toMatch(
+      /completed/i
+    );
+  });
+
+  it("says a run was skipped", () => {
+    const today = new Date();
+    const runDay = makeRunDay({
+      dayIndex: today.getDay(),
+      date: localDateString(today),
+      weekKey: localWeekKey(today),
+      status: "skipped",
+    });
+    const { container } = renderAllDays("run", { runDays: [runDay] });
+    expect(todayCell(container).getAttribute("aria-label")).toMatch(/skipped/i);
+  });
+
+  it("exposes which day is selected", () => {
+    /* The gap that made the strip unusable rather than merely terse.
+       Asserted as a pair so "always pressed" cannot pass. */
+    const todayKey = localDateString(new Date());
+    const selected = renderAllDays("rest", { selectedDate: todayKey });
+    expect(todayCell(selected.container).getAttribute("aria-pressed")).toBe(
+      "true"
+    );
+    selected.unmount();
+
+    const unselected = renderAllDays("rest", { selectedDate: null });
+    expect(todayCell(unselected.container).getAttribute("aria-pressed")).toBe(
+      "false"
+    );
+  });
+
+  it("calls the meal count food, and only when meals were logged", () => {
+    /* `dayMap` is meals. Announcing it as "activity" claimed something the
+       collection does not carry — `workouts` is hardcoded 0 by its only
+       writer — right next to the training state it was displacing. */
+    const todayKey = localDateString(new Date());
+    const withFood = renderAllDays("rest", {
+      dayMap: new Map([
+        [todayKey, { workouts: 0, meals: 3, caloriesHit: false }],
+      ]),
+    });
+    const fedLabel = todayCell(withFood.container).getAttribute("aria-label");
+    expect(fedLabel).toMatch(/food logged/i);
+    expect(fedLabel).not.toMatch(/activity logged/i);
+    withFood.unmount();
+
+    const without = renderAllDays("rest");
+    expect(todayCell(without.container).getAttribute("aria-label")).not.toMatch(
+      /food logged/i
+    );
+  });
+
+  it("still leads with the date, and marks today", () => {
+    // The parts that already worked must survive the rewrite.
+    const { container } = renderAllDays("rest");
+    const label = todayCell(container).getAttribute("aria-label") ?? "";
+    expect(label).toMatch(/^[A-Z][a-z]+day, [A-Z][a-z]+ \d{1,2}/);
+    expect(label).toMatch(/\(today\)/);
+    // …and a day that is not today does not claim to be.
+    const other = container.querySelectorAll("button")[3];
+    expect(other.getAttribute("aria-label")).not.toMatch(/\(today\)/);
+  });
+});
