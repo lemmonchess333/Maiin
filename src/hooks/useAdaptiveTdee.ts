@@ -18,6 +18,7 @@ import {
 } from "@/lib/macroConstants";
 import { isAdaptiveExcludedDate, isAdaptiveFrozen } from "@/lib/taperNutrition";
 import type { UserProfile } from "@/lib/auth";
+import { attestedWeeklyRateKg } from "@/lib/goalWeightPlan";
 
 /**
  * The goal calorie offset baked into the stored formula target (mirrors
@@ -27,8 +28,18 @@ import type { UserProfile } from "@/lib/auth";
  * (C-NUTRITION) instead of drifting to bare maintenance.
  */
 function goalCalorieOffset(profile: UserProfile | null): number {
-  const rate = profile?.weeklyRateKg;
-  if (typeof rate === "number" && rate !== 0) return offsetFromWeeklyRate(rate);
+  // Through `attestedWeeklyRateKg`, not the raw field. Pre-NUTR-M2 profiles
+  // stored the rate UNSIGNED, so a legacy cutter reads +0.5 and this returned
+  // a +550 SURPLUS where -550 was intended — then `applyWeeklyCap` walked the
+  // target up 150/week, slow enough to look like the engine working. The
+  // sibling consumer `goalReachedOffer` has defended against exactly this
+  // since NUTR-M2; the rule is shared rather than restated.
+  //
+  // An unattested rate falls through to the goal BAND, which is
+  // phase-correct by construction (cut -500) rather than merely
+  // sign-corrected — and the next Settings save re-signs the field anyway.
+  const rate = attestedWeeklyRateKg(profile);
+  if (rate !== null) return offsetFromWeeklyRate(rate);
   const goal = getNutritionPhase(profile);
   return GOAL_CALORIE_OFFSET[goal] ?? 0;
 }

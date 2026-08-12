@@ -221,6 +221,46 @@ export function buildGoalWeightPersistPayload(args: {
   };
 }
 
+/**
+ * The stored weekly rate, but ONLY when its sign is attested by the phase.
+ *
+ * Pre-NUTR-M2 profiles stored `weeklyRateKg` UNSIGNED (always positive), so a
+ * legacy cutter reads `+0.5`. Sign alone calls them a bulker. `program.goal`
+ * carries the phase the same save wrote, so the two together are checkable:
+ * when they disagree — or when the phase is recomp, which should carry no
+ * rate at all — the data is ambiguous legacy state and the rate cannot be
+ * trusted for direction.
+ *
+ * Extracted because two consumers read this field and only one defended it.
+ * `goalReachedOffer` has carried this rule since NUTR-M2; `goalCalorieOffset`
+ * in `useAdaptiveTdee` passed the raw value straight to
+ * `offsetFromWeeklyRate`, so a legacy cutter got a +550 kcal SURPLUS where
+ * -550 was intended. `applyWeeklyCap` then walks the target up 150/week from
+ * the formula figure, which is slow enough to look like the adaptive engine
+ * working rather than a sign error.
+ *
+ * Returns null for absent / zero / non-finite rates too, so callers get one
+ * "can I trust this?" question instead of four.
+ */
+export function attestedWeeklyRateKg(
+  profile:
+    | {
+        weeklyRateKg?: number | null;
+        program?: { goal?: string } | null;
+      }
+    | null
+    | undefined
+): number | null {
+  const rate = profile?.weeklyRateKg ?? 0;
+  if (!Number.isFinite(rate) || rate === 0) return null;
+  const phase = profile?.program?.goal;
+  const phaseDirection =
+    phase === "cut" ? "lose" : phase === "lean bulk" ? "gain" : null;
+  if (phaseDirection === null) return null;
+  const rateDirection = rate < 0 ? "lose" : "gain";
+  return phaseDirection === rateDirection ? rate : null;
+}
+
 export interface GoalReachedOffer {
   /** The direction the user was travelling when they arrived. */
   storedDirection: "lose" | "gain";
@@ -255,24 +295,15 @@ export function goalReachedOffer(
 ): GoalReachedOffer | null {
   const currentKg = profile.weightKg ?? 0;
   const goalKg = profile.goalWeightKg ?? 0;
-  const rate = profile.weeklyRateKg ?? 0;
   if (currentKg <= 0 || goalKg <= 0) return null;
-  if (!Number.isFinite(rate) || rate === 0) return null;
 
-  // The stored direction must be attested by BOTH signals when both exist.
-  // Pre-NUTR-M2 profiles stored the rate UNSIGNED (always positive), so a
-  // legacy cutter reads rate=+0.5 — sign alone would call them a bulker and
-  // fire this prompt mid-cut. `program.goal` carries the phase the same
-  // save wrote; when the two disagree (or the phase says recomp), the data
-  // is ambiguous legacy state and the honest move is silence — the prompt's
-  // failure direction is "never nag wrongly", and the next Settings save
-  // re-signs the rate anyway.
-  const rateDirection: "lose" | "gain" = rate < 0 ? "lose" : "gain";
-  const phase = profile.program?.goal;
-  const phaseDirection =
-    phase === "cut" ? "lose" : phase === "lean bulk" ? "gain" : null;
-  if (phaseDirection === null || phaseDirection !== rateDirection) return null;
-  const storedDirection = rateDirection;
+  // The stored direction must be attested by BOTH signals — see
+  // `attestedWeeklyRateKg`, which is where this rule now lives. Ambiguous
+  // legacy state means silence here: the prompt's failure direction is
+  // "never nag wrongly", and the next Settings save re-signs the rate.
+  const rate = attestedWeeklyRateKg(profile);
+  if (rate === null) return null;
+  const storedDirection: "lose" | "gain" = rate < 0 ? "lose" : "gain";
 
   const nowDirection = directionForTarget(currentKg, goalKg);
   if (nowDirection === storedDirection) return null; // still travelling
