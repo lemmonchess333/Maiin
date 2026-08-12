@@ -1085,6 +1085,85 @@ suite("firestore.rules — R1A write-freeze (active deletion)", () => {
       })
     );
   });
+
+  /* Blocking severs the follow edges at block time (`blockUser` deletes all
+     four docs) — but nothing stopped the blocked user simply FOLLOWING AGAIN.
+     The follow write is a direct client write, and these rules allowed any
+     authenticated user to create `followers/{anyone}/users/{self}`. Fan-out
+     reads `followers/{author}`, so a re-follow put the author's activities
+     straight back into the blocked user's feed.
+
+     That made blocking bypassable BY THE BLOCKED PARTY, which is the one
+     thing it must not be. Client-side feed filtering cannot help here: the
+     blocked user's own filter list does not contain the person who blocked
+     THEM. */
+  async function seedBlock(blocker: string, blocked: string) {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "blocks", blocker, "users", blocked), {
+        blockedAt: serverTimestamp(),
+      });
+    });
+  }
+
+  it("a blocked user CANNOT re-follow the person who blocked them", async () => {
+    await seedBlock(OWNER_UID, OTHER_UID);
+    const blockedDb = env.authenticatedContext(OTHER_UID).firestore();
+    await assertFails(
+      setDoc(doc(blockedDb, "following", OTHER_UID, "users", OWNER_UID), {
+        createdAt: serverTimestamp(),
+      })
+    );
+    // The followers doc is the one that drives fan-out.
+    await assertFails(
+      setDoc(doc(blockedDb, "followers", OWNER_UID, "users", OTHER_UID), {
+        createdAt: serverTimestamp(),
+      })
+    );
+  });
+
+  it("a blocker cannot follow the person they blocked either", async () => {
+    // Otherwise the block is a one-way mirror. Unblock first.
+    await seedBlock(OWNER_UID, OTHER_UID);
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
+      setDoc(doc(ownerDb, "following", OWNER_UID, "users", OTHER_UID), {
+        createdAt: serverTimestamp(),
+      })
+    );
+  });
+
+  it("an ordinary follow between unblocked users still works", async () => {
+    /* Guards the guard. A rule that denied every follow would satisfy both
+       assertions above and silently break the entire social graph. */
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      setDoc(doc(ownerDb, "following", OWNER_UID, "users", OTHER_UID), {
+        createdAt: serverTimestamp(),
+      })
+    );
+    await assertSucceeds(
+      setDoc(doc(ownerDb, "followers", OTHER_UID, "users", OWNER_UID), {
+        createdAt: serverTimestamp(),
+      })
+    );
+  });
+
+  it("UNfollowing still works across a block", async () => {
+    /* Delete stays unconditional on purpose: a user must always be able to
+       unwind an edge that predates the block, or blocking someone you follow
+       leaves you unable to stop following them. */
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), "following", OWNER_UID, "users", OTHER_UID),
+        { createdAt: serverTimestamp() }
+      );
+    });
+    await seedBlock(OWNER_UID, OTHER_UID);
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      deleteDoc(doc(ownerDb, "following", OWNER_UID, "users", OTHER_UID))
+    );
+  });
 });
 
 /**
