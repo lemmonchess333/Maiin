@@ -42,6 +42,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import ShareCardSheet from "@/components/share/ShareCardSheet";
 import CircleShareSheet from "@/components/social/CircleShareSheet";
 import WorkoutFeedShareSheet from "@/components/workout/WorkoutFeedShareSheet";
+import DeleteSessionAction from "@/components/session/DeleteSessionAction";
 import {
   workoutTonnageKg,
   workoutTitle,
@@ -301,6 +302,17 @@ export default function WorkoutDetail() {
             </Button>
           )}
         </div>
+
+        {/* ADR-0012. Last on the page and behind a confirm: a records
+            correction for a mis-log, not a primary action. */}
+        {user && workoutId && (
+          <DeleteSessionAction
+            uid={user.uid}
+            kind="workout"
+            id={workoutId}
+            sharedActivityId={sharedActivityId}
+          />
+        )}
       </div>
 
       <ShareCardSheet

@@ -3,8 +3,6 @@ import { parseISO } from "date-fns";
 import { localDateString } from "@/lib/dateHelpers";
 import {
   collection,
-  deleteDoc,
-  doc,
   query,
   orderBy,
   onSnapshot,
@@ -275,13 +273,14 @@ export function useWorkouts(options: UseWorkoutsOptions = {}) {
     [user, profile?.weightKg]
   );
 
-  const deleteWorkout = useCallback(
-    async (workoutId: string) => {
-      if (!user) return;
-      await deleteDoc(doc(db, "users", user.uid, "workouts", workoutId));
-    },
-    [user]
-  );
+  /* `deleteWorkout` was here, unwired, from before ADR-0012 — the only
+     code path that deleted a workout, and deliberately connected to
+     nothing because the server had no reversal. The real path now lives in
+     `lib/sessionDelete` and is called from `/workout/:id`, which does not
+     mount this hook (it deep-links to a single session and would 404 on
+     anything older than the newest 50 this list holds). Keeping a second
+     delete path here would be an unwired duplicate of a wired one — which
+     is what `hookSurfaceReachability` exists to catch. */
 
   const getWorkoutsForDate = useCallback(
     (date: string) => {
@@ -294,7 +293,6 @@ export function useWorkouts(options: UseWorkoutsOptions = {}) {
     workouts,
     loading,
     saveWorkout,
-    deleteWorkout,
     getWorkoutsForDate,
   };
 }

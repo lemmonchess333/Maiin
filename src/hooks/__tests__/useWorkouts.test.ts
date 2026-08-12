@@ -292,23 +292,11 @@ describe("saveWorkout", () => {
   });
 });
 
-describe("deleteWorkout", () => {
-  it("removes the document and the row disappears from the live list", async () => {
-    seedFirestore({
-      "users/u1/workouts/a": session("2026-07-01"),
-      "users/u1/workouts/b": session("2026-07-02"),
-    });
-    const { result } = renderHook(() => useWorkouts());
-    await waitFor(() => expect(result.current.workouts).toHaveLength(2));
-
-    await act(async () => {
-      await result.current.deleteWorkout("a");
-    });
-    await flushSnapshots();
-
-    expect(result.current.workouts.map((w) => w.id)).toEqual(["b"]);
-  });
-});
+/* The `deleteWorkout` suite was here. The hook method it exercised is
+   gone: ADR-0012's delete path lives in `lib/sessionDelete` and is called
+   from `/workout/:id`, which deliberately does not mount this hook. Its
+   coverage moved to `src/lib/__tests__/sessionDelete.test.ts` and
+   `src/components/session/__tests__/DeleteSessionAction.test.tsx`. */
 
 describe("getWorkoutsForDate", () => {
   it("returns every session logged on that local day", async () => {
