@@ -64,7 +64,27 @@ export function useHomeData(
   user: { uid: string } | null,
   profile: UserProfile | null,
   workouts: Workout[],
-  weightUnit: "kg" | "lbs"
+  weightUnit: "kg" | "lbs",
+  /**
+   * The DAY's protein target — `useEffectiveTargets().protein`, the number
+   * the macro rings on this same screen show. Passed in rather than read
+   * here so Home's single `useEffectiveTargets()` instance is reused; a
+   * second call would mean a second set of Firestore subscriptions.
+   *
+   * HOME-TARGET-01 ("one target everywhere") already did this for calories
+   * — see the `dailyBurn` memo in Home.tsx, and the note above it recording
+   * that `useHomeData` used to re-derive the burn inline under a "should
+   * match Food's useEffectiveTargets" comment, deleted as a drift hazard.
+   * Protein was missed, and it drifts for the same reason but by a
+   * different mechanism: the STORED `targetProtein` is split with
+   * `proteinMultiplierForGoal` (goal only), while the displayed target uses
+   * `dayProteinMultiplier` (lift PHASE first, goal as fallback). Those agree
+   * only when the goal is "cut", where both pin 2.2. A recomp user on a
+   * strength phase at 80 kg stores 160 g and is shown 176 g; a lean-bulk
+   * user stores 144 g and is shown 160 g. The nudge rendered the stored
+   * figure directly beneath rings showing the other one.
+   */
+  effectiveProtein?: number | null
 ) {
   const [state, setState] = useState<HomeDataState>({
     dailyCal: 0,
@@ -325,7 +345,10 @@ export function useHomeData(
       const type: PostWorkoutNudge["type"] =
         hasLift && hasRun ? "both" : hasRun ? "run" : "lift";
 
-      const targetProtein = profile?.targetProtein || 160;
+      // Same target the rings show, falling back to the stored baseline
+      // only while the effective targets resolve.
+      const targetProtein =
+        effectiveProtein || profile?.targetProtein || 160;
       // Round — dailyProt is a float sum of per-meal protein, so the raw
       // subtraction surfaces FP noise (e.g. 6.300000000000011g) straight
       // into the "Post-lift — Ng protein for recovery" nudge copy.
@@ -335,7 +358,7 @@ export function useHomeData(
 
       setPostWorkoutNudge({ type, proteinRemaining });
     },
-    [workouts, profile?.targetProtein, state.dailyProt]
+    [workouts, profile?.targetProtein, effectiveProtein, state.dailyProt]
   );
 
   const setLastWeightInfo = function (info: WeightInfo | null) {

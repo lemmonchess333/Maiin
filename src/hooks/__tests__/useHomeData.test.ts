@@ -368,4 +368,87 @@ describe("useHomeData", { timeout: 5000 }, () => {
       expect(result.current.lastWeightInfo).toEqual(newWeight);
     });
   });
+
+  describe("post-workout protein nudge — one target everywhere", () => {
+    /* HOME-TARGET-01 did this for calories and missed protein. The nudge
+       renders directly beneath the macro rings, which show
+       `useEffectiveTargets().protein`, and it was quoting the STORED
+       `profile.targetProtein` instead.
+    
+       Those two are split by different multipliers and only agree when the
+       goal is "cut": the stored figure uses `proteinMultiplierForGoal`
+       (goal only), the displayed one `dayProteinMultiplier` (lift PHASE
+       first). A recomp user on a strength phase stores 160 g and is shown
+       176 g; a lean-bulk user stores 144 g and is shown 160 g. */
+    const workoutToday = [
+      {
+        id: "w-today",
+        date: TODAY_KEY,
+        exercises: [{ category: "push", exerciseId: "bench-press", sets: [] }],
+      },
+    ] as unknown as Parameters<typeof useHomeData>[2];
+
+    it("quotes the DAY's protein target, not the stored baseline", async () => {
+      seedFirestore({
+        [`${MEALS}/today`]: {
+          date: TODAY_KEY,
+          totalCalories: 500,
+          totalProtein: 40,
+        },
+      });
+
+      const { result } = renderHook(() =>
+        useHomeData(
+          { uid: "u1" },
+          makeProfile({ targetProtein: 160 }),
+          workoutToday,
+          "kg",
+          176 // what the rings on the same screen show
+        )
+      );
+
+      await waitFor(() =>
+        expect(result.current.postWorkoutNudge).not.toBeNull()
+      );
+      // 176 - 40. Pre-fix this was 120 (160 - 40), so the nudge asked for
+      // 16 g less than the rings beside it.
+      expect(result.current.postWorkoutNudge?.proteinRemaining).toBe(136);
+    });
+
+    it("falls back to the stored target while the effective one resolves", async () => {
+      // The paired control. `useEffectiveTargets` returns its defaults on the
+      // first render, so the nudge must stay sensible rather than blank or
+      // zero — and without this test a fix that simply ignored the stored
+      // value would pass the one above.
+      //
+      // 190, deliberately NOT 160. The first version used 160, which is also
+      // the hardcoded last-resort default, so "falls back to the stored
+      // value" and "falls back to the constant" produced the same number and
+      // the test could not tell them apart — a mutation dropping the stored
+      // fallback entirely still passed.
+      seedFirestore({
+        [`${MEALS}/today`]: {
+          date: TODAY_KEY,
+          totalCalories: 500,
+          totalProtein: 40,
+        },
+      });
+
+      const { result } = renderHook(() =>
+        useHomeData(
+          { uid: "u1" },
+          makeProfile({ targetProtein: 190 }),
+          workoutToday,
+          "kg",
+          null
+        )
+      );
+
+      await waitFor(() =>
+        expect(result.current.postWorkoutNudge).not.toBeNull()
+      );
+      expect(result.current.postWorkoutNudge?.proteinRemaining).toBe(150);
+    });
+  });
+
 });
