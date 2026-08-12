@@ -122,22 +122,39 @@ function distanceAndBucketOk(
   }
 
   if (bucket === "quality") {
-    /* Q1 P4 short-circuit: race day completes on a race-templated run
-       regardless of pace bucket. You can run your race as a pacer, on a
-       bad day, or as a fun run — it is still the race, and gating it on
-       pace is how a genuine race day gets left incomplete.
+    /* Q1 P4 short-circuit: race day completes regardless of pace bucket.
+       You can run your race as a pacer, on a bad day, or as a fun run —
+       it is still the race, and gating it on pace is how a genuine race
+       day gets left incomplete.
 
        Was UNREACHABLE until 2026-07-26: it compared BOTH operands to the
        literal "race". `runDay.templateId` is a RUN_TEMPLATES id (`5k_race`
        … `marathon_race`) and `saved.templateId` was undefined for every
        real run, because the useClaimMap adapter read a plain `templateId`
        that saved-run docs do not carry. Detection is by template TYPE via
-       the injected predicate now, on both sides. */
+       the injected predicate now.
+
+       Then it was reachable but still WRONG for most real races, because
+       it also required the SAVED run to be race-templated. `actualTemplateId`
+       is only set when the run was launched from the scheduled slot
+       (`freeformPlanMetadata` writes null), so anyone who taps Start Run on
+       the start line — the obvious race-morning behaviour — saved a run with
+       no template. That fell through to the pace bar, which is 270 s/km:
+       a 42.2 km finish on the right date at 5:30/km read as "easy" and left
+       race day blank. Only a sub-4:30/km amateur was unaffected, which
+       inverts who the leniency was written for.
+
+       The runDay side alone is the right test. The distance gate above has
+       already run, and every race template carries a `targetDistanceKm`
+       (5 / 10 / 21.1 / 42.2), so reaching here at all means ≥70% of the race
+       distance on the race date — a far stronger signal than a template tag,
+       and one that is present exactly when the tag is not. Dropping the
+       conjunct only ever ADDS claims, and only inside a race day that
+       already cleared distance. */
     const isRaceTemplate = deps && deps.isRaceTemplate;
     if (
       isRaceTemplate &&
-      isRaceTemplate(runDay.userOverride || runDay.templateId) &&
-      isRaceTemplate(saved.templateId)
+      isRaceTemplate(runDay.userOverride || runDay.templateId)
     ) {
       return true;
     }
