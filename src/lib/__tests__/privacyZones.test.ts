@@ -76,3 +76,105 @@ describe("applyPrivacyZones", () => {
     expect(result).toEqual(points);
   });
 });
+
+/**
+ * Interior crossings — the case that was never tested and never worked.
+ *
+ * `applyPrivacyZones` used to trim inward from each end and `break` at the
+ * first point outside a zone, so any crossing in the MIDDLE of a route
+ * survived. An out-and-back past your own front door, or a loop starting at
+ * the park that passes home halfway, published the exact home coordinates.
+ *
+ * Every fixture above starts or ends inside the zone; none crosses one
+ * mid-route. That is why the gap survived, and why `LAUNCH_TODO.md` carried
+ * privacy zones as "verified".
+ *
+ * `Math.random` is pinned to 0 by the suite's `beforeEach`, so the jitter
+ * margin is 0 and these assert the removal itself rather than the padding.
+ */
+describe("applyPrivacyZones — interior crossings", () => {
+  beforeEach(() => {
+    vi.spyOn(Math, "random").mockReturnValue(0);
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("removes a zone crossing in the middle of a route", () => {
+    const points = [
+      outsidePoint1,
+      outsidePoint2,
+      insidePoint1, // home, mid-route
+      insidePoint2, // home, mid-route
+      outsidePoint3,
+    ];
+    const result = applyPrivacyZones(points, [londonZone]);
+    expect(result).toEqual([outsidePoint1, outsidePoint2, outsidePoint3]);
+    // Stated as its own assertion because it is the actual privacy claim.
+    expect(result).not.toContain(insidePoint1);
+    expect(result).not.toContain(insidePoint2);
+  });
+
+  it("removes several separate crossings in one route", () => {
+    // A loop that passes home twice — common on a two-lap route.
+    const points = [
+      outsidePoint1,
+      insidePoint1,
+      outsidePoint2,
+      insidePoint2,
+      outsidePoint3,
+    ];
+    const result = applyPrivacyZones(points, [londonZone]);
+    expect(result).toEqual([outsidePoint1, outsidePoint2, outsidePoint3]);
+  });
+
+  it("still keeps a route that never enters a zone untouched", () => {
+    /* Guards the guard: "drop everything" would satisfy every assertion
+       above. The identity check also pins that a zone-free route is not
+       needlessly copied. */
+    const points = [outsidePoint1, outsidePoint2, outsidePoint3];
+    expect(applyPrivacyZones(points, [londonZone])).toBe(points);
+  });
+
+  it("returns nothing when the whole route is inside a zone", () => {
+    const points = [insidePoint1, insidePoint2];
+    expect(applyPrivacyZones(points, [londonZone])).toEqual([]);
+  });
+
+  it("honours every configured zone, not just the first", () => {
+    // Two homes / home + work. A second zone was never exercised.
+    const workZone: PrivacyZone = {
+      id: "work",
+      name: "Work",
+      lat: 51.55,
+      lon: -0.1,
+      radiusMeters: 200,
+    };
+    const points = [outsidePoint2, insidePoint1, outsidePoint1, outsidePoint3];
+    const result = applyPrivacyZones(points, [londonZone, workZone]);
+    // outsidePoint1 sits at the centre of workZone.
+    expect(result).toEqual([outsidePoint2, outsidePoint3]);
+  });
+});
+
+describe("applyPrivacyZones — cut jitter", () => {
+  it("drops extra points around a crossing so cuts miss the zone edge", () => {
+    /* The surviving endpoints must not sit exactly on the zone circle: an
+       observer who has them can fit a circle and recover its centre, which
+       is the house. With Math.random() at its maximum the margin is a full
+       10% of the run either side, so more than the in-zone points go. */
+    vi.spyOn(Math, "random").mockReturnValue(0.999);
+    const inZone = Array.from({ length: 10 }, (_, i) =>
+      makePoint(51.5074 + i * 0.00001, -0.1278, 2000 + i)
+    );
+    const points = [outsidePoint1, outsidePoint2, ...inZone, outsidePoint3];
+    const result = applyPrivacyZones(points, [londonZone]);
+    /* 13 points in total, so variation is ceil(13 * 0.1) = 2 and the margin
+       is 1 either side: the 10 in-zone points plus one neighbour each way. */
+    expect(result.length).toBe(1);
+    expect(result).not.toContain(outsidePoint2); // the neighbour before
+    expect(result).not.toContain(outsidePoint3); // the neighbour after
+    for (const p of inZone) expect(result).not.toContain(p);
+    vi.restoreAllMocks();
+  });
+});
