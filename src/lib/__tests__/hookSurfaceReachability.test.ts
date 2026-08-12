@@ -87,13 +87,6 @@ const PINNED_HOOK_PROPERTIES = [
   // leaves those counters overstated forever. Backlog row: "Unwired seams".
   "src/hooks/useWorkouts.ts:deleteWorkout",
 
-  // UNWIRED: its own doc says consumers "effect on this to trigger one-shot
-  // UI (first-graduation coachmark)". The coachmark was never built — no
-  // such key exists — though the rest of graduation shipped (the
-  // food_pantry_graduated event, funnel splits, useCount>=2 filtering).
-  // Debt with a reason, per mirrorCrossTestGate's `@unwired:` category.
-  "src/hooks/useFoodFavourites.ts:graduationToken",
-
   // Written, never read — but they are documented fields of the exported
   // `EffectiveTargets` interface that three components take as a prop type,
   // and `baseTarget` is referenced throughout that module's prose as the
