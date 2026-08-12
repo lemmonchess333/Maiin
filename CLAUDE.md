@@ -958,6 +958,31 @@ Affects: `functions/index.js` `stripeWebhook` handler, `stripeEvents/{event.id}`
 - [ ] Post-deploy, on the next real Stripe webhook delivery, confirm the `stripeEvents/<event.id>` doc has a `claimedAt` field (new) AND a `processedAt` field (existing). Pre-fix only `processedAt` was set.
 - [ ] If a webhook handler crashes mid-process (force via stripe-cli test event), confirm the `stripeEvents/<event.id>` doc is DELETED so Stripe's retry can re-attempt. Pre-fix the partial claim would persist and the retry would silently skip.
 
+### Deload offered on discipline-specific load (single-discipline weeks)
+
+Affects: `functions/lib/perfScoring.js`, `functions/performanceEngine.js`,
+`src/lib/performanceEngine.ts`. Deploys via `deploy-functions.yml`. New
+persisted field `performance/{date}.deloadIndex`.
+
+A week with only ONE discipline capped the composite PI at 68 (recomp) / 58
+(lean bulk), and every deload trigger gates at 80+ — so a marathon peak-block
+athlete could never be offered a deload, by construction. The deload question
+is now asked against `deloadIndex`, which takes the load half from the
+discipline actually trained when exactly one was. The DISPLAYED PI is
+deliberately unchanged.
+
+- [ ] **Deployed-source spot-check (do first).** Console →
+      `weeklyPerformanceRollup` source contains `deloadLoadScore` and
+      `priorDeloadIndex`.
+- [ ] **New docs carry the field.** After the next rollup, a perf doc has
+      `deloadIndex`. For a both-disciplines week it must EQUAL
+      `performanceIndex`; only a single-discipline week may differ.
+- [ ] **No new nag.** The sustained trigger compares against the prior two
+      weeks' `deloadIndex`, falling back to `performanceIndex` on legacy docs.
+      Watch a single-discipline user for 2-3 weeks: a deload should be offered
+      on the transition, NOT every week. (The #1955 nag-loop defect, on the
+      other trigger, is the failure mode to watch for.)
+
 ### Adherence scored against the learned calorie target
 
 Affects: `functions/performanceEngine.js`, new

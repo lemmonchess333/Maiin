@@ -234,6 +234,41 @@ export function computeLoadBand(pi: number): PerformanceDoc["loadBand"] {
 
 // ── Deload recommendation ────────────────────
 
+/**
+ * The load figure the DELOAD question should be asked against.
+ *
+ * `loadScore` weights the two disciplines and treats an untrained one as
+ * zero, which is right for a composite "how much did you train" score: a
+ * week at half your usual breadth genuinely carries less total load.
+ *
+ * It is wrong for "should you back off". A marathon peak-block week with no
+ * lifting caps the composite at 68 (recomp) / 58 (lean bulk), and every
+ * deload trigger gates at 80 or above — so the athlete carrying the most
+ * load in the app could never be offered a deload, by construction rather
+ * than by circumstance. Measured in singleDisciplineWeek.test.ts: 40 km and
+ * 220 km both scored under 80 with a 95 prior week.
+ *
+ * When exactly ONE discipline was trained, this asks the question against
+ * that discipline's own load instead of the diluted composite. When both (or
+ * neither) were trained it IS `loadScore`, so nothing changes for the
+ * overwhelming majority of weeks.
+ *
+ * The PI itself is deliberately untouched — the displayed score keeps meaning
+ * "load against your own baseline", which is what it has always meant.
+ */
+export function deloadLoadScore(
+  agg: Pick<WeeklyAggregates, "liftSessions" | "runSessions">,
+  liftLoadScore: number,
+  runLoadScore: number,
+  compositeLoadScore: number
+): number {
+  const hasLift = agg.liftSessions > 0;
+  const hasRun = agg.runSessions > 0;
+  if (hasLift === hasRun) return compositeLoadScore;
+  return hasLift ? liftLoadScore : runLoadScore;
+}
+
+
 export function shouldRecommendDeload(
   currentPI: number,
   recoveryScore: number,
@@ -414,6 +449,7 @@ export interface PerformanceProfile {
 export type ScoredPerformance = Pick<
   PerformanceDoc,
   | "performanceIndex"
+  | "deloadIndex"
   | "liftLoadScore"
   | "runLoadScore"
   | "recoveryScore"
@@ -478,6 +514,13 @@ export function scorePerformance(
       PI_WEIGHTS.adherence * adherenceScore
   );
 
+  const deloadIndex = clamp(
+    PI_WEIGHTS.load *
+      deloadLoadScore(agg, liftLoadScore, runLoadScore, loadScore) +
+      PI_WEIGHTS.recovery * recoveryScore +
+      PI_WEIGHTS.adherence * adherenceScore
+  );
+
   const liftProgression = safeRatio(agg.liftTonnage, bl.liftTonnage);
   const runVolume = safeRatio(agg.runKm, bl.runKm);
   const loadBand = computeLoadBand(pi);
@@ -485,7 +528,7 @@ export function scorePerformance(
   const deloadRecommended =
     bl.weeksUsed >= 3
       ? shouldRecommendDeload(
-          pi,
+          deloadIndex,
           recoveryScore,
           adherenceScore,
           previousWeekPI,
@@ -495,6 +538,7 @@ export function scorePerformance(
 
   const partial = {
     performanceIndex: pi,
+    deloadIndex,
     liftLoadScore,
     runLoadScore,
     recoveryScore,

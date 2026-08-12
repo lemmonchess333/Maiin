@@ -505,6 +505,27 @@ function computeSignals({
   };
 }
 
+/**
+ * The prior week's reading, in the SAME units the deload trigger now asks in.
+ *
+ * `shouldRecommendDeload`'s sustained branch compares the current reading
+ * against the two before it. The current one is now `deloadIndex` — which
+ * differs from `performanceIndex` only on a single-discipline week — so the
+ * priors have to be read in those units too, or the comparison silently
+ * mixes a renormalised current against composite history.
+ *
+ * Docs written before this field exists fall back to `performanceIndex`,
+ * which is exactly what they used to be compared against. So the transition
+ * is behaviour-preserving for every existing user and self-corrects as new
+ * docs land.
+ */
+function priorDeloadIndex(data) {
+  if (!data) return null;
+  return typeof data.deloadIndex === "number"
+    ? data.deloadIndex
+    : data.performanceIndex;
+}
+
 // ── Main compute + write ─────────────────────
 
 /**
@@ -584,7 +605,7 @@ async function computeAndWritePerformanceForUser(uid, computeKeyOverride) {
         .collection("performance")
         .doc(prevKey)
         .get();
-      if (prevDoc.exists) previousComputePI = prevDoc.data().performanceIndex;
+      if (prevDoc.exists) previousComputePI = priorDeloadIndex(prevDoc.data());
 
       const prev2Key = dateKeyMinusN(computeKey, WINDOW_DAYS * 2);
       const prev2Doc = await db
@@ -594,7 +615,7 @@ async function computeAndWritePerformanceForUser(uid, computeKeyOverride) {
         .doc(prev2Key)
         .get();
       if (prev2Doc.exists) {
-        weekBeforePreviousPI = prev2Doc.data().performanceIndex;
+        weekBeforePreviousPI = priorDeloadIndex(prev2Doc.data());
       }
     } catch (_) {
       /* no previous doc, that's fine */
@@ -631,6 +652,7 @@ async function computeAndWritePerformanceForUser(uid, computeKeyOverride) {
 
     const {
       performanceIndex: pi,
+      deloadIndex,
       liftLoadScore,
       runLoadScore,
       recoveryScore,
@@ -664,6 +686,9 @@ async function computeAndWritePerformanceForUser(uid, computeKeyOverride) {
       weekKey: computeKey, // semantics shifted PI1a — "compute date" not "week-start"
       computedAt: new Date().toISOString(),
       performanceIndex: pi,
+      // Same units the deload trigger asks in, so next week's sustained-branch
+      // comparison is like-for-like rather than renormalised-vs-composite.
+      deloadIndex,
       liftLoadScore,
       runLoadScore,
       recoveryScore,

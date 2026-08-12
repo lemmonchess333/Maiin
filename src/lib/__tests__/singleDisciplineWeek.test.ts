@@ -42,6 +42,14 @@
  *      deloadTriggerReachability.test.ts); the ceiling here is 68 on a
  *      recomp goal and 58 on a lean bulk. A user in a peak block — the
  *      person most likely to need one — is structurally excluded.
+ *      STATUS 2026-08-12 — FIXED, and the only one of the three that was.
+ *      The deload question is now asked against `deloadIndex`, which takes
+ *      the load half from the discipline actually trained when exactly one
+ *      was. Consequences 1 and 2 are unchanged BY DESIGN: the PI still
+ *      saturates and still reads "Steady", because the displayed score keeps
+ *      meaning "load against your own baseline" and renormalising it would
+ *      raise the PI of every user who skips a discipline for a week. Only
+ *      the question changed, not the number.
  *
  * Note the engine uses OPPOSITE conventions for missing data in its two
  * halves. Load treats an absent discipline as zero (worst case).
@@ -266,21 +274,84 @@ describe.each(ENGINES)(
       expect(getLine("cruising", signals)).toBe("Holding a steady rhythm");
     });
 
-    it("can never recommend a deload, at any volume", () => {
-      /* Both live triggers gate on PI ≥ 80. The ceiling is 68 here, so the
-         gate is unreachable by construction rather than by circumstance —
-         no amount of running gets there. Swept to make that concrete
-         rather than asserted at one point. */
-      for (const km of [40, 70, 110, 160, 220]) {
+    it("CAN now be offered a deload, which it never could before", () => {
+      /* The fix. Every deload trigger gates at 80+, and a single-discipline
+         week caps the composite at 68 — so the athlete carrying the most load
+         in the app was excluded by construction, not by circumstance. The
+         deload question is now asked against `deloadIndex`, which takes the
+         load half from the discipline actually trained.
+
+         Swept rather than asserted at one point, because the old behaviour was
+         "no amount of running gets there". */
+      for (const km of [70, 110, 160, 220]) {
         const scored = scorePerformance(
           week({ lifts: 0, runs: 6, km }),
           BASELINE,
           PROFILE,
-          95 // a very high previous week, to arm the sustained trigger too
+          95 // a very high previous week, arming the sustained trigger
         );
-        expect(scored.performanceIndex).toBeLessThan(80);
-        expect(scored.deloadRecommended).toBe(false);
+        expect(scored.deloadRecommended).toBe(true);
       }
+    });
+
+    it("without leaving the displayed score any different", () => {
+      /* The boundary of the change, and the reason it is safe: the PI still
+         means "load against your own baseline". Only the question asked of it
+         changed. */
+      const scored = scorePerformance(
+        week({ lifts: 0, runs: 6, km: 110 }),
+        BASELINE,
+        PROFILE,
+        95
+      );
+      expect(scored.performanceIndex).toBe(68);
+      expect(scored.loadBand).toBe("moderate");
+      expect(scored.deloadIndex).toBe(100);
+    });
+
+    it("still says no when nothing has armed a trigger", () => {
+      /* Guards the guard. A renormalised index that recommended a deload for
+         every big single-discipline week would just be a new nag — the defect
+         #1955 fixed on the other trigger. Good recovery, good adherence and no
+         prior overreach must stay silent however much was run. */
+      const scored = scorePerformance(
+        week({ lifts: 0, runs: 6, km: 110 }),
+        BASELINE,
+        PROFILE
+      );
+      expect(scored.recoveryScore).toBeGreaterThanOrEqual(80);
+      expect(scored.deloadRecommended).toBe(false);
+    });
+
+    it("changes nothing for a week that trained both, or neither", () => {
+      /* The renormalisation applies ONLY when exactly one discipline has
+         sessions. For everyone else `deloadIndex` IS the PI, so this is a
+         no-op for the overwhelming majority of weeks — asserted as the
+         equality rather than left to the reader. */
+      const both = scorePerformance(
+        week({ lifts: 4, runs: 6, km: 110, tonnage: 24000 }),
+        BASELINE,
+        PROFILE
+      );
+      expect(both.deloadIndex).toBe(both.performanceIndex);
+
+      /* Deliberately LOPSIDED: heavy lifting, token running. A composite
+         weights those together; `max(lift, run)` would not. The symmetric
+         fixture above cannot tell the two apart — both disciplines max out,
+         so every candidate formula agrees — and a mutation replacing the
+         both-trained branch with a max() slipped through it. */
+      const lopsided = scorePerformance(
+        week({ lifts: 5, runs: 1, km: 4, tonnage: 40000 }),
+        BASELINE,
+        PROFILE
+      );
+      expect(lopsided.liftLoadScore).toBeGreaterThan(
+        lopsided.runLoadScore + 30
+      );
+      expect(lopsided.deloadIndex).toBe(lopsided.performanceIndex);
+
+      const neither = scorePerformance(week({ lifts: 0, runs: 0 }), BASELINE, PROFILE);
+      expect(neither.deloadIndex).toBe(neither.performanceIndex);
     });
 
     it("the SAME running with lifting alongside clears the gate easily", () => {
