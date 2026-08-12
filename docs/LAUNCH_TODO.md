@@ -564,10 +564,26 @@ a release checklist, an incident runbook, and project conventions.
 
 `src/pages/PrivacyPolicy.tsx` and `src/pages/TermsOfService.tsx` now
 cover every item below. Each claim was verified against the actual code
-before being written into the legal text:
+before being written into the legal text.
+
+**RE-AUDITED 2026-08-12, and two of the five did not hold.** Both failed the
+same way: the original check confirmed the MECHANISM the sentence names and
+never asked whether the PROPERTY the sentence promises followed from it.
+"Uses AES-GCM-256" is a mechanism; "not readable in storage" is a property,
+and the second does not follow from the first when the key is public. Same
+for privacy zones: `applyPrivacyZones` existed and ran, and did not do what
+§1 said it did.
+
+When re-checking a claim here, state what you checked. The three that hold
+below now say so, and that is the difference between a tick and a tick worth
+trusting:
 
 - ✅ AI food analysis is an estimate, not medical advice — Privacy §8,
   Terms §7
+  - Re-checked 2026-08-12 against the PROPERTY (does the user actually see
+    it, not merely does the policy say it): `FoodAnalyzer.tsx` surfaces
+    "AI estimate — review carefully" and "AI estimate — adjust portions
+    before logging" on the result surface, before the log is committed.
 - ✅ GPS routes, privacy zones, public-feed defaults — Privacy §1
   (privacy zones via `applyPrivacyZones`) + §4 (explicit sharing,
   per-post visibility, nothing auto-published — verified against
@@ -629,7 +645,20 @@ before being written into the legal text:
     - Whichever wins, the app should not ship claiming "not readable in
       storage" while the key is a function of a public identifier.
 - ✅ Subscription auto-renew / cancellation — Terms §4
+  - Re-checked 2026-08-12. Accurate for the shipping path: Terms says manage
+    or cancel "through your device settings or the App Store", which is what
+    the native branch does. Two things to keep honest rather than defects
+    today — §4 lists "web" among the platforms you may have subscribed
+    through, and web Stripe checkout is still reachable pre-launch, so IF a
+    web subscription ever exists the "device settings or the App Store"
+    instruction is wrong for it and the web Manage button calls a callable
+    that was deliberately never built. Both are covered by the existing
+    "Stripe stays DORMANT — web storefront steer at launch" gate; closing
+    that gate closes this.
 - ✅ Social content moderation + reporting — Terms §5 (acceptable use),
+      re-checked 2026-08-12 end to end rather than by presence of the word:
+      `ReportModal.tsx` → `socialApi.createReport` → the `createReport`
+      callable in `functions/index.js`. The path exists and connects.
   §6 (UGC removal), §9 (termination)
 - ✅ Data export / deletion rights — Privacy §5, §6 (GDPR), Terms §9
 
