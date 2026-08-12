@@ -587,8 +587,39 @@ before being written into the legal text:
     chord across the zone. That reveals the route passed through the area,
     not the path inside it or where it stopped. Rendering a true gap needs
     the consumers to accept segments.
-- ✅ Progress photo encryption (client-side AES-GCM) — Privacy §1 + §3
+- ⚠️ Progress photo encryption (client-side AES-GCM) — Privacy §1 + §3
   (verified against `ProgressPhotos.tsx` `crypto.subtle` AES-GCM-256)
+  - **LAUNCH GATE, raised 2026-08-12.** The mechanism is real; the
+    CONSEQUENCE the policy states is not. Privacy §3 says photos are
+    "encrypted on your device (AES-GCM) before upload, **so the image
+    content is not readable in storage**", and §1 says they are "stored only
+    in encrypted form". The first clause of each is true. The "not readable
+    in storage" conclusion is not.
+    - What IS true: `encryptBlob` uses AES-GCM-256 with a fresh 12-byte
+      random IV per photo. Storage holds ciphertext. No IV reuse.
+    - What is NOT: `getEncryptionKey` derives the key from
+      `uid + "_tropos_photos_v1"` with the fixed salt `"tropos-salt"`.
+      Every input is public — the uid is literally the storage path
+      (`progress-photos/{uid}/…`), and the suffix, the salt and the
+      derivation all ship in the client bundle. So anyone who can read the
+      ciphertext can derive the key. This is obfuscation at rest, not
+      confidentiality from whoever holds the bucket.
+    - The 100k PBKDF2 iterations do not close the gap. Iteration count
+      hardens a LOW-ENTROPY SECRET against brute force; here there is no
+      secret to protect, so it costs an attacker one derivation.
+    - This was marked "verified" because the check confirmed AES-GCM-256 was
+      used. That is the mechanism. Nobody asked whether the key was secret,
+      which is the property the sentence promises — the same shape as the
+      privacy-zone line corrected above.
+    - Not fixed here, because every fix is a decision rather than a repair:
+      (a) reword §1/§3 to claim encryption at rest without implying we
+      cannot read it — smallest, and legal text is not mine to edit;
+      (b) derive from a user-held passphrase for real end-to-end
+      confidentiality, accepting that a forgotten passphrase means the
+      photos are unrecoverable and that multi-device needs key sync;
+      (c) accept and state the limitation plainly in the policy.
+    - Whichever wins, the app should not ship claiming "not readable in
+      storage" while the key is a function of a public identifier.
 - ✅ Subscription auto-renew / cancellation — Terms §4
 - ✅ Social content moderation + reporting — Terms §5 (acceptable use),
   §6 (UGC removal), §9 (termination)
