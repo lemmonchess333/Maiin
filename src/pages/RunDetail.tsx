@@ -29,6 +29,7 @@ import PaceLegend from "../components/run/PaceLegend";
 import SplitsBarChart from "../components/analytics/SplitsBarChart";
 import ElevationProfile from "../components/analytics/ElevationProfile";
 import ShareCardSheet from "@/components/share/ShareCardSheet";
+import DeleteSessionAction from "@/components/session/DeleteSessionAction";
 import { Spinner } from "../components/ui/Spinner";
 
 const ACTIVITY_LABELS: Record<string, string> = {
@@ -473,6 +474,13 @@ export default function RunDetail() {
         {/* Elevation profile */}
         {run.points?.length > 0 && (
           <ElevationProfile points={run.points} accentColor={THEME.running} />
+        )}
+
+        {/* ADR-0012. Last on the page and behind a confirm: a records
+            correction for a mis-log, not a primary action. A phone-in-
+            pocket accidental "run" is the case this exists for. */}
+        {user && runId && (
+          <DeleteSessionAction uid={user.uid} kind="run" id={runId} />
         )}
       </div>
 
