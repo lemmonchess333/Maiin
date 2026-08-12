@@ -2635,18 +2635,3 @@ export function isBodyweightExerciseId(
   return getExerciseById(exerciseId)?.equipment === "Bodyweight";
 }
 
-export function estimateCalories(
-  exerciseId: string,
-  sets: number,
-  reps: number,
-  weightKg: number
-): number {
-  const exercise = getExerciseById(exerciseId);
-  if (!exercise) return 0;
-  const minutesPerSet = (reps * 3) / 60 + 1;
-  const totalMinutes = minutesPerSet * sets;
-  const weightMultiplier = 1 + (weightKg / 100) * 0.3;
-  return Math.round(
-    exercise.caloriesPerMinute * totalMinutes * weightMultiplier
-  );
-}
