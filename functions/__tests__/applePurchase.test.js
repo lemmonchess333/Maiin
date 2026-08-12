@@ -781,15 +781,51 @@ describe("applySubscriptionToUser — safe to apply twice", () => {
    *  the state diff would trip on `updatedAt` alone and prove nothing. */
   const serverTimestamp = () => "TS";
 
+  /* ONE transaction object, built once and reused. `makeValidTx()` derives
+     expiresDate from `new Date()` at call time, so calling it per
+     application handed the two runs expiry stamps a millisecond apart
+     whenever they straddled a tick — and the state comparison below failed
+     on exactly that one digit. It passed locally and on the PR that
+     introduced it because both runs happened to land in the same
+     millisecond; CI eventually caught it.
+
+     Reusing one object is also what the property actually claims. "Safe to
+     apply twice" is about the SAME verified transaction being replayed,
+     which is what an Apple re-delivery is; two transactions that differ by a
+     millisecond are a renewal, not a duplicate. */
+  const FIXED_TX = makeValidTx();
+
+  /** Every transaction actually handed to the helper, so the reuse can be
+   *  asserted rather than left to a comment. */
+  const served = [];
+
   async function applyOnce(firestore) {
     return applySubscriptionToUser({
       firestore,
-      verifyTransaction: async () => makeValidTx(),
+      verifyTransaction: async () => {
+        served.push(FIXED_TX);
+        return FIXED_TX;
+      },
       signedTransactionInfo: "x",
       uid: UID,
       serverTimestamp,
     });
   }
+
+  it("replays ONE transaction, not two near-identical ones", async () => {
+    /* The deterministic guard on the fix above. Without it the only sentinel
+       is the state comparison, which fails just when the two runs straddle a
+       millisecond tick — a flaky guard passes most of the time, which is the
+       worst kind. Object identity cannot drift. */
+    served.length = 0;
+    const { firestore } = makeStatefulStub();
+    await applyOnce(firestore);
+    await applyOnce(firestore);
+
+    expect(served).toHaveLength(2);
+    expect(served[0]).toBe(served[1]);
+    expect(served[0].expiresDate).toBe(FIXED_TX.expiresDate);
+  });
 
   it("leaves byte-identical state on the second application", async () => {
     const { firestore, store, writeLog } = makeStatefulStub();
@@ -819,9 +855,9 @@ describe("applySubscriptionToUser — safe to apply twice", () => {
 
     expect(store.users[UID].subscriptionTier).toBe("pro");
     expect(store.users[UID].appleOriginalTransactionId).toBe(
-      makeValidTx().originalTransactionId
+      FIXED_TX.originalTransactionId
     );
-    expect(store.appleSubscriptions[makeValidTx().originalTransactionId].uid).toBe(
+    expect(store.appleSubscriptions[FIXED_TX.originalTransactionId].uid).toBe(
       UID
     );
   });
