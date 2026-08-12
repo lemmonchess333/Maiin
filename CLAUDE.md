@@ -637,25 +637,37 @@ scoring target. When you find one of these, check the siblings — the fix is
 usually a one-line repoint, and the miss is usually a field that was added
 after the sweep that fixed its neighbours.
 
-**Still open — `goalCalorieOffset` trusts the sign of `weeklyRateKg`.**
-`useAdaptiveTdee.ts` reads `profile.weeklyRateKg` and feeds it straight to
-`offsetFromWeeklyRate`. Its sibling consumer `goalReachedOffer`
-(`goalWeightPlan.ts`) explicitly does NOT: it documents that pre-NUTR-M2
-profiles stored the rate UNSIGNED and cross-checks the sign against
-`program.goal` before believing it.
+**RESOLVED — `goalCalorieOffset` trusted the sign of `weeklyRateKg`.**
+`useAdaptiveTdee` read the field raw; its sibling `goalReachedOffer` has
+cross-checked the sign against `program.goal` since NUTR-M2, because
+pre-NUTR-M2 profiles stored the rate UNSIGNED. A legacy cutter therefore got
+a +550 kcal SURPLUS where -550 was intended, walked up 150/week by
+`applyWeeklyCap` — slow enough to look like the engine working.
 
-For a legacy cutter with `weeklyRateKg: +0.5` and `program.goal: "cut"`, the
-intended offset is -550 and the computed one is +550. `applyWeeklyCap` then
-walks the target up 150/week from the formula figure, so the surplus arrives
-slowly enough to look like the adaptive feature working correctly.
+Shipped as `attestedWeeklyRateKg`, called by both consumers. The open
+question ("do unsigned-rate profiles exist in production?") was NOT the
+blocker it looked like: the check is a no-op for every correctly-signed
+profile, so the cost of being wrong about their existence is zero one way
+and a silent surplus the other. When a defence is free for the healthy case,
+the prevalence question is not worth answering first.
 
-- [ ] Decide whether unsigned-rate profiles actually exist in production. The
-      mechanism is certain; the exposure is not, and it is checkable only
-      against real data. If they do, mirror `goalReachedOffer`'s sign check
-      into `goalCalorieOffset` — do NOT re-derive it, the rule is already
-      written once. If they don't, delete `goalReachedOffer`'s defence too and
-      say so, rather than leaving two consumers disagreeing about whether the
-      field can be trusted.
+**The stored/displayed protein split stays — and holds by ONE DECIMAL PLACE.**
+Stored `targetProtein` splits by GOAL; the displayed daily target splits by
+lift PHASE. Consolidating them needs either a server-side phase mirror or an
+obligation to rewrite the profile on every phase change, both larger than
+the gap they close. Declined.
+
+That is only safe because the PI protein factor is `ratio >= 0.9 ? 100 :
+ratio * 111` — so over-eating is never penalised — and across every
+reachable (goal, phase) pair the shown/stored ratio bottoms out at EXACTLY
+0.90. Zero margin. `PHASE_PROTEIN.race_prep` is 1.6 and would give 0.8, i.e.
+88.8 points for eating exactly what the app asked; it is unreachable only
+because `LiftPhase` has no such member.
+
+Nothing was holding that. It is now pinned by
+`proteinTargetDivergence.test.ts`, with the multiplier tables asserted as
+literals. Before changing ANY protein multiplier, or adding a phase to
+`LiftPhase`, read that file — the invariant is not local to either table.
 
 **Deploy verification owed for the three `functions/` changes** (#1991 delete
 triggers, #1993 cold-start badges, #1994 PI goal wiring). CI-green is
