@@ -11,7 +11,10 @@ import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 import type { ActivityLevel } from "@/lib/tdee";
 import type { GoalWeightPlan } from "@/lib/goalWeightPlan";
 import { calculateTDEE } from "@/lib/tdee";
-import { offsetFromWeeklyRate } from "@/lib/macroConstants";
+import {
+  offsetFromWeeklyRate,
+  MIN_TARGET_CALORIES,
+} from "@/lib/macroConstants";
 import type { TDEEResult } from "@/lib/tdee";
 
 afterEach(() => cleanup());
@@ -138,5 +141,78 @@ describe("NutritionSection — capped-protein notice", () => {
     expect(ORDINARY_CUT.proteinCapped).toBe(false);
     renderSection(0.5, ORDINARY_CUT);
     expect(screen.queryByText(/A slower pace holds protein/)).toBeNull();
+  });
+});
+
+/**
+ * The manual override can be set below the 1200 kcal floor the app enforces
+ * on the rate-derived path — `floorTargetCalories` guards that path only, and
+ * the field is bounded by the profile sanitizer alone (0..10000).
+ *
+ * Owner decision 2026-08-12: warn, don't clamp. It is the user's own number,
+ * and blocking it just pushes them to lower their goal weight instead. But the
+ * app enforcing a floor higher up the same screen while saying nothing here is
+ * the dishonest option.
+ */
+describe("NutritionSection — sub-floor override notice", () => {
+  const withOverride = (customCalorieTarget?: number) =>
+    ({
+      uid: "u-1",
+      displayName: "T",
+      email: "t@e.com",
+      customCalorieTarget,
+    }) as UserProfile;
+
+  it("warns when the typed target is under the floor", () => {
+    render(
+      <NutritionSection
+        profile={withOverride(900)}
+        age={25}
+        setAge={vi.fn()}
+        activityLevel={"moderate" as ActivityLevel}
+        setActivityLevel={vi.fn()}
+        currentKg={75}
+        goalWeightKg={70}
+        setGoalWeightKg={vi.fn()}
+        weeklyRateKg={0.5}
+        setWeeklyRateKg={vi.fn()}
+        goalPlan={goalPlan}
+        tdee={DEFAULT_TDEE}
+        updateProfile={vi.fn(async () => ({ ok: true }) as UpdateProfileResult)}
+        inline
+      />
+    );
+    const notice = screen.getByText(/cal floor Tropos uses everywhere else/);
+    // Names the actual constant, not a hardcoded string that could drift.
+    expect(notice.textContent).toContain(String(MIN_TARGET_CALORIES));
+  });
+
+  it("stays silent at or above the floor, and when no override is set", () => {
+    for (const target of [MIN_TARGET_CALORIES, 2000, undefined]) {
+      cleanup();
+      render(
+        <NutritionSection
+          profile={withOverride(target)}
+          age={25}
+          setAge={vi.fn()}
+          activityLevel={"moderate" as ActivityLevel}
+          setActivityLevel={vi.fn()}
+          currentKg={75}
+          goalWeightKg={70}
+          setGoalWeightKg={vi.fn()}
+          weeklyRateKg={0.5}
+          setWeeklyRateKg={vi.fn()}
+          goalPlan={goalPlan}
+          tdee={DEFAULT_TDEE}
+          updateProfile={vi.fn(
+            async () => ({ ok: true }) as UpdateProfileResult
+          )}
+          inline
+        />
+      );
+      expect(
+        screen.queryByText(/cal floor Tropos uses everywhere else/)
+      ).toBeNull();
+    }
   });
 });

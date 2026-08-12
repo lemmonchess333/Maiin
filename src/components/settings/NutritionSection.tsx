@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
+import { MIN_TARGET_CALORIES } from "@/lib/macroConstants";
 import { ACTIVITY_LABELS } from "@/lib/tdee";
 import type { ActivityLevel, TDEEResult } from "@/lib/tdee";
 import type { GoalWeightPlan } from "@/lib/goalWeightPlan";
@@ -438,6 +439,30 @@ export default function NutritionSection({
               placeholder={String(tdee.targetCalories)}
               className="w-full px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
             />
+            {/* The rate-derived path is floored at MIN_TARGET_CALORIES; this
+                field is not — it is bounded only by the profile sanitizer
+                (0..10000), so a target below the floor is reachable by typing
+                one. Owner decision 2026-08-12: warn, don't clamp. It is the
+                user's own number, and blocking it just pushes them to lower
+                their goal weight instead — but the app enforcing a floor three
+                centimetres up the same screen and saying nothing here is the
+                dishonest option. */}
+            {typeof profile?.customCalorieTarget === "number" &&
+              profile.customCalorieTarget > 0 &&
+              profile.customCalorieTarget < MIN_TARGET_CALORIES && (
+                <p
+                  className="text-caption leading-snug mt-2"
+                  style={{ color: THEME.warning }}
+                >
+                  Below the{" "}
+                  <span className="font-mono tabular-nums">
+                    {MIN_TARGET_CALORIES}
+                  </span>{" "}
+                  cal floor Tropos uses everywhere else. Your plan will keep
+                  this figure — very low targets make protein and essential fat
+                  hard to fit.
+                </p>
+              )}
           </div>
         </div>
       </div>
