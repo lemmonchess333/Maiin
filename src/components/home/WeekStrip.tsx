@@ -8,6 +8,35 @@ import { resolveTrainingWindow } from "@/lib/trainingResolver";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
 import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 
+/**
+ * What the day's dots say, in words.
+ *
+ * The strip renders a purple dot for a lift day, a coral rhombus for a
+ * planned run, a coral check for a completed one, and a faded rhombus for a
+ * skipped one — none of which reached the accessible name. The label said
+ * "(activity logged)" instead, which came from `dayMap` and is food: the one
+ * signal in this component with NO visual counterpart, announced in place of
+ * every signal that has one. A screen-reader user heard nothing for a day
+ * they had trained, and "activity logged" for a day they had only eaten.
+ */
+function trainingLabel(day: {
+  sType: string;
+  runCompleted: boolean;
+  runSkipped: boolean;
+}): string {
+  const hasLift = day.sType === "lift" || day.sType === "both";
+  const hasRun = day.sType === "run" || day.sType === "both";
+  if (!hasLift && !hasRun) return "rest day";
+  const run = day.runCompleted
+    ? "completed run"
+    : day.runSkipped
+      ? "skipped run"
+      : "run day";
+  if (hasLift && hasRun) return `lift and ${run}`;
+  if (hasLift) return "lift day";
+  return run;
+}
+
 export default function WeekStrip({
   dayMap,
   profile,
@@ -101,9 +130,19 @@ export default function WeekStrip({
             onClick={function () {
               onDayTap(day.key);
             }}
+            /* The strip is a 7-way selector whose selection was conveyed by
+               fill colour alone — nothing in the accessible tree said which
+               day was chosen. `aria-pressed` is the state; there is no
+               textual equivalent to add to the label, and adding one would
+               double-announce against it. */
+            aria-pressed={day.isSelected}
             aria-label={
               format(day.date, "EEEE, MMMM d") +
-              (day.hasActivity ? " (activity logged)" : "") +
+              ", " +
+              trainingLabel(day) +
+              // Kept, but named for what it is: `dayMap` counts meals, and
+              // Food.tsx is the only writer of the collection it comes from.
+              (day.hasActivity ? " (food logged)" : "") +
               (day.isToday ? " (today)" : "")
             }
             className="flex flex-col items-center gap-1 active:scale-[0.95] min-w-[44px] min-h-[44px] justify-center"
