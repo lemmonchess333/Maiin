@@ -95,12 +95,28 @@ describe("_hasStrictRaceMatch", () => {
     expect(_hasStrictRaceMatch([], 10000)).toBe(false);
   });
 
-  it("returns false when no saved run has a race-TYPE actualTemplateId", () => {
+  it("returns TRUE for a full-distance run whatever template it carries", () => {
+    /* Changed 2026-08-12, and the change is the point of the sweep: the
+       tag used to be required, but `actualTemplateId` is only written
+       when the run was launched from the scheduled slot. A user who
+       tapped Start Run on the start line therefore had their race read
+       as a no-show, and lost the race goal 14 days later. Distance on
+       the race date is the evidence that survives. */
     expect(
       _hasStrictRaceMatch(
         [{ actualTemplateId: "tempo_20", distance: 10000 }],
         10000
       )
+    ).toBe(true);
+    expect(
+      _hasStrictRaceMatch([{ actualTemplateId: null, distance: 10000 }], 10000)
+    ).toBe(true);
+  });
+
+  it("returns false for an untemplated run that is short of the bar", () => {
+    // Keeps the test above from meaning "untemplated ⇒ raced".
+    expect(
+      _hasStrictRaceMatch([{ actualTemplateId: null, distance: 9000 }], 10000)
     ).toBe(false);
   });
 

@@ -831,6 +831,19 @@ Affects: `functions/lib/raceDayCompletion.js`, new `functions/lib/raceTemplateId
 
   Decide whether to backfill. With one pre-launch user this is likely a manual repair rather than a migration, but it is a real user-visible residue of the original bug, not a deploy failure — don't read a clean sweep log as "nobody was affected".
 
+### Race started outside the plan — the second half of the same bug
+
+Affects: `functions/lib/raceDayCompletion.js` (`isStrictRaceRun`), reached from `dailyRaceReconciliationSweep` and `onRunCreated`. Client counterpart shipped separately in `src/lib/scheduledRunCompletion.ts`.
+
+PR #1775 (above) fixed `isStrictRaceRun` comparing `actualTemplateId` to the literal `"race"`. It did not fix the conjunct that comparison sat in: the predicate still required the tag AND the ≥95% distance. But `actualTemplateId` is only written when the run was launched from the scheduled slot — `freeformPlanMetadata` writes `null` — so **a user who taps Start Run on the start line saves their race untemplated**, which is ordinary race-morning behaviour rather than an edge case.
+
+For those users the post-#1775 behaviour was the pre-#1775 behaviour: no recovery entry, a `race_no_show` written by the sweep, and at `NO_SHOW_EXIT_GRACE_DAYS = 14` the L4 auto-exit strips `raceGoal` entirely. The tag and the distance are two forms of the same evidence; requiring both meant requiring the one that is absent exactly when it matters. Distance now stands alone, and the tag still carries the zero-planned branch where there is nothing to measure.
+
+- [ ] **Deployed-source spot-check (do this first).** Console → `dailyRaceReconciliationSweep/source` and `onRunCreated/source`: `isStrictRaceRun` should read `typeof savedRun.distance !== "number"` BEFORE any `isRaceTemplateId` call, and the `isRaceTemplateId` call should sit inside the `plannedDistanceMeters <= 0` branch. `.js` change so the bundle-hash dedup shouldn't bite — verify anyway.
+- [ ] **An untemplated race clears the no-show.** On a race-prep test account, log a run on the race date at ≥95% of the planned distance WITHOUT starting it from the scheduled slot. `onRunCreated` logs should include `recovery-entry written for {uid}`; `programState.runPlan.phase` flips to `"recovery"`. Pre-fix this never happened for a freeform start.
+- [ ] **The distance bar is still live.** Same account, a run at ~90% of planned on race date must NOT enter recovery and must still read as a no-show — the fix removed the tag gate, not the ≥95% one.
+- [ ] **Same backfill question as #1775, now wider.** That row's 14-day point of no return applies to this population too, and it is the larger one: pre-fix, only races launched from the slot were ever recognised. Any user whose race passed >14 days before this deploys has silently lost their race goal and must re-declare it. A clean sweep log is not evidence nobody was affected.
+
 ### PR-L bugfix verification (PR #815)
 
 Affects: `functions/index.js`, `src/pages/RunSummary.tsx`. Eight verified bugs in the PR-L arc fixed; the production-impact ones below need post-deploy spot-checks because the bugs were silently-broken-not-loud.
