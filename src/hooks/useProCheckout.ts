@@ -74,7 +74,6 @@ export interface UseProCheckoutResult {
     plan: PlanId,
     options?: StartCheckoutOptions
   ) => Promise<void>;
-  clearError: () => void;
   /** True when the auth context has no user — callers can flip the
    *  CTA label to "Sign in to start Pro" rather than rendering a
    *  disabled button with no explanation. */
@@ -170,13 +169,10 @@ export function useProCheckout(): UseProCheckoutResult {
     [loading, user, location.pathname]
   );
 
-  const clearError = useCallback(() => setError(null), []);
-
   return {
     loading,
     error,
     startCheckout,
-    clearError,
     requiresSignIn: !user,
   };
 }
