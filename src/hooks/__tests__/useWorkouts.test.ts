@@ -99,6 +99,54 @@ describe("workoutTonnageKg", () => {
       })
     ).toBe(830);
   });
+
+  /* The guards are the whole reason this helper exists, and until now only
+     its happy path was pinned — so a share card re-deriving the loop inline
+     looked equivalent. Two did: WorkoutFeedShareSheet called the helper,
+     SoloFirstFeed hand-rolled `set.reps * set.weightKg` over
+     `latest.exercises`. Same numbers on clean data, and on a legacy doc the
+     hand-rolled one printed "NaN kg" or threw. */
+  it("tolerates a set with a missing weight or reps instead of going NaN", () => {
+    const total = workoutTonnageKg({
+      exercises: [
+        {
+          exerciseId: "a",
+          exerciseName: "A",
+          category: "c",
+          caloriesBurned: 0,
+          sets: [
+            { setNumber: 1, reps: 5, weightKg: 100 },
+            // Legacy rows: each would poison the whole sum unguarded.
+            { setNumber: 2, reps: 3 },
+            { setNumber: 3, weightKg: 60 },
+          ] as unknown as Parameters<typeof workoutTonnageKg>[0]["exercises"][0]["sets"],
+        },
+      ],
+    });
+    expect(Number.isNaN(total)).toBe(false);
+    expect(total).toBe(500);
+  });
+
+  it("tolerates a workout with no exercises, and an exercise with no sets", () => {
+    // `.reduce` on undefined THROWS — for SoloFirstFeed that was a render
+    // crash inside a useMemo on the cold-start social surface, not a wrong
+    // number.
+    expect(
+      workoutTonnageKg({} as Parameters<typeof workoutTonnageKg>[0])
+    ).toBe(0);
+    expect(
+      workoutTonnageKg({
+        exercises: [
+          {
+            exerciseId: "a",
+            exerciseName: "A",
+            category: "c",
+            caloriesBurned: 0,
+          },
+        ] as unknown as Parameters<typeof workoutTonnageKg>[0]["exercises"],
+      })
+    ).toBe(0);
+  });
 });
 
 describe("subscription", () => {
