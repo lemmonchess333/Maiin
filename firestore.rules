@@ -1249,12 +1249,29 @@ service cloud.firestore {
           && request.auth.uid in resource.data.members;
       }
       allow read: if bondMember();
+      // The whole INITIAL state is pinned, not just `streak`. `update` is
+      // server-only (below), so create is the one client-reachable moment —
+      // and `applyPartnerActivity` reads `lastSharedDay`, `lastActive` and
+      // `freezeWeek` straight off the document and feeds them to the engine.
+      // Pinning `streak == 0` alone left the rest forgeable: a bond created
+      // with a partner's `lastActive` already set to today makes the very
+      // next real session register as a SHARED day that never happened, and
+      // a pre-filled `freezeWeek` hands out streak freezes. `hasOnly` keeps
+      // the shape from silently growing a field the engine would then trust
+      // — the same guard the public-profile projection uses.
       allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly([
+             'members', 'streak', 'lastSharedDay', 'lastActive',
+             'freezeWeek', 'createdAt'
+           ])
         && request.resource.data.members is list
         && request.resource.data.members.size() == 2
         && request.resource.data.members[0] != request.resource.data.members[1]
         && request.auth.uid in request.resource.data.members
         && request.resource.data.streak == 0
+        && request.resource.data.lastSharedDay == null
+        && request.resource.data.lastActive.size() == 0
+        && request.resource.data.freezeWeek.size() == 0
         && !isWriteFrozen(request.resource.data.members[0])
         && !isWriteFrozen(request.resource.data.members[1]);
       // Soc7: streak state is server-written (Admin SDK). No client update.

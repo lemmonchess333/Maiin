@@ -114,7 +114,12 @@ export async function createBond(me: string, partner: string): Promise<string> {
   if (!canAddPartner(mine.length)) throw new Error("Partner limit reached");
 
   // Sorted members so the stored order matches the id derivation. Cold
-  // state (streak 0) — the rules reject any forged head-start.
+  // state — the rules pin the WHOLE initial shape, not just `streak`:
+  // `hasOnly` on the field set plus null/empty pins on lastSharedDay,
+  // lastActive and freezeWeek. They only pinned `streak == 0` until
+  // firestore.partnerBonds.rules.test.ts went looking, which left a forged
+  // partner head-start in `lastActive` accepted — and `applyPartnerActivity`
+  // reads that field straight off the doc.
   const members = [me, partner].sort() as [string, string];
   await setDocGuarded(doc(db, "partnerBonds", id), {
     members,
