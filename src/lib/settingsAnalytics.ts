@@ -51,7 +51,15 @@ export type SettingsToggle =
   | "weekly_summary_email"
   | "default_visibility"
   | "weight_unit"
-  | "distance_unit"
+  /** HEIGHT (cm ↔ ft). It emitted `distance_unit` from the day it was
+   *  written, which was harmless only while nothing else could claim that
+   *  name. A real run-distance toggle now can, and the two would have been
+   *  indistinguishable in one stream — so height says height. */
+  | "height_unit"
+  /** RUN distance + pace (km ↔ mi). Named `run_` rather than taking the
+   *  old `distance_unit` key so a dashboard reading historical events
+   *  cannot silently mix the height toggle's rows in with these. */
+  | "run_distance_unit"
   | "theme"
   | "hide_weight_number"
   | "meal_reminders"

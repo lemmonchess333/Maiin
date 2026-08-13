@@ -7,16 +7,26 @@ export default function SettingsUnitsAppearance() {
   const { profile, updateProfile } = useAuth();
 
   async function toggleUnit(
-    key: "preferredWeightUnit" | "preferredHeightUnit",
+    key:
+      | "preferredWeightUnit"
+      | "preferredHeightUnit"
+      | "preferredDistanceUnit",
     current: string
   ): Promise<void> {
     if (key === "preferredWeightUnit") {
       await updateProfile({
         preferredWeightUnit: current === "kg" ? "lbs" : "kg",
       });
-    } else {
+    } else if (key === "preferredHeightUnit") {
       await updateProfile({
         preferredHeightUnit: current === "cm" ? "ft" : "cm",
+      });
+    } else {
+      /* Display-only, like its two siblings: every run stays stored in
+         metres and seconds per kilometre, so this flips back and forth
+         with no migration and no stored document rewritten. */
+      await updateProfile({
+        preferredDistanceUnit: current === "km" ? "mi" : "km",
       });
     }
   }
@@ -46,7 +56,7 @@ export default function SettingsUnitsAppearance() {
   return (
     <SettingsSection
       title="Units & Appearance"
-      subtitle="Weight, height, dark mode"
+      subtitle="Weight, distance, height, dark mode"
       section="units_appearance"
     >
       <UnitsAppearanceSection
