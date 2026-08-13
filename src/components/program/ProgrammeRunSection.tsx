@@ -318,10 +318,11 @@ export default function ProgrammeRunSection({
   );
   const raceGoal = resolvedRunPlan.raceGoal ?? undefined;
   const raceCompressed = !!programState?.runPlan?.compressed;
-  /* `belowFloor` is persisted on runPlan (programTypes.ts) and was already
-     read by the realign path, but never reached the cockpit — so a
-     finish-safely plan sat under the COMPRESSED copy, which promises a
-     shortened long-run progression it does not have. */
+  /* `belowFloor` is persisted on runPlan (programTypes.ts). This read was
+     added to carry it to the cockpit — but the JSX prop was never passed, so
+     until 2026-08-13 the value stopped here and every below-floor plan still
+     rendered the COMPRESSED copy, which describes interval work and a
+     long-run build that a finish-safely plan does not have. */
   const raceBelowFloor = !!programState?.runPlan?.belowFloor;
   // Memoised: `programState?.runDays ?? []` produces a fresh array
   // reference on every render when the field is undefined, which
@@ -1505,6 +1506,14 @@ export default function ProgrammeRunSection({
                 phaseLabel={raceCockpitVM.phaseLabel}
                 inTaper={raceCockpitVM.inTaper}
                 compressed={raceCockpitVM.compressed}
+                /* belowFloor implies compressed but must be surfaced
+                   separately — the compressed copy describes interval work
+                   trimmed and a long-run progression shortened, and a
+                   below-floor plan has neither. The view model has carried
+                   this since it was added for exactly that reason; only this
+                   hop was missing, so the card fell through to the compressed
+                   branch and described training the plan does not contain. */
+                belowFloor={raceCockpitVM.belowFloor}
                 /* PR4 cross-link — the PROFILE copy is canonical for the
                    catalogue binding (runPlan.raceGoal is the schedule's
                    snapshot and doesn't carry it). */

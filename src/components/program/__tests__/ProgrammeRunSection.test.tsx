@@ -1142,3 +1142,75 @@ describe("ProgrammeRunSection — #975 Set a race goal entry", () => {
     expect(screen.queryByText(/Set a race goal/i)).not.toBeInTheDocument();
   });
 });
+
+describe("ProgrammeRunSection — below-floor race plans describe themselves honestly", () => {
+  /* `belowFloor` is computed by planBuilder, carried through
+     runProgrammeViewModel, and handled by RaceCockpitCard with its own copy.
+     Only the last hop was missing — the section never passed the prop — so
+     the card fell through to the `compressed` branch, which promises
+     "interval work trimmed and the long-run progression shortened". A
+     below-floor plan has neither: it is easy running in every non-race week.
+     The view model's own comment describes this failure, in the past tense,
+     while it was still live.
+
+     RaceCockpitCard.test.tsx covers the copy thoroughly — by passing
+     `belowFloor` directly. That is the same shape as the route planner's
+     `initialCenter`: a component verified in a configuration production
+     never produced. So this asserts through the SECTION, where the wiring
+     is, rather than through the card. */
+
+  /** A marathon three weeks out cannot fit a taper-safe build — the
+   *  below-floor case the view model cites from measurement. The flag is
+   *  PERSISTED on runPlan by the planner rather than re-derived here, so the
+   *  fixture sets it the way a real below-floor plan is stored. */
+  function threeWeeksOut(): string {
+    const d = new Date();
+    d.setDate(d.getDate() + 21);
+    return localDateString(d);
+  }
+
+  it("says mostly-easy, not 'long-run progression shortened'", () => {
+    const targetDate = threeWeeksOut();
+    const programState = makeProgramState([makeRunDay()], {
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "marathon", targetDate },
+        totalWeeks: 3,
+        currentWeek: 0,
+        compressed: true,
+        belowFloor: true,
+      },
+    });
+    renderSection(raceProps("marathon", targetDate), programState);
+
+    const body = document.body.textContent ?? "";
+    expect(body).toMatch(/mostly-easy plan/i);
+    // The compressed copy must NOT also appear. It says "interval work is
+    // trimmed and the long-run build is packed into fewer weeks" — a
+    // below-floor plan has no intervals to trim and no long-run build, so
+    // that sentence describes training this plan does not contain.
+    expect(body).not.toMatch(/compressed plan/i);
+  });
+
+  it("still uses the compressed copy for a compressed-but-above-floor plan", () => {
+    /* The control. Passing `belowFloor` as a constant `true` would satisfy
+       the assertion above while breaking every other race plan's copy. A
+       10K twelve weeks out is a full build: neither branch should fire. */
+    const programState = makeProgramState([makeRunDay()], {
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: "2027-07-16" },
+        totalWeeks: 12,
+        currentWeek: 0,
+        compressed: true,
+      },
+    });
+    renderSection(raceProps("10k", "2027-07-16"), programState);
+
+    const body = document.body.textContent ?? "";
+    expect(body).not.toMatch(/mostly-easy plan/i);
+    // And the compressed plan still gets ITS explanation — passing
+    // `belowFloor` as a constant true would silence this one.
+    expect(body).toMatch(/compressed plan/i);
+  });
+});
