@@ -3,7 +3,7 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUid } from "@/lib/auth";
 import { logger } from "@/lib/logger";
-import { isVolumeEligible } from "@/lib/runStatsEligibility";
+import { sumLifetimeRunTotals } from "@/lib/runStatsEligibility";
 
 export interface LifetimeRunStats {
   runCount: number;
@@ -52,15 +52,7 @@ export function useLifetimeRunStats(options?: { enabled?: boolean }) {
         const snap = await getDocs(collection(db, "users", uid, "runs"));
         if (cancelled) return;
         setFailed(false);
-        let total = 0;
-        let count = 0;
-        snap.docs.forEach((d) => {
-          const data = d.data() as { distance?: number; isInvalid?: boolean };
-          if (!isVolumeEligible(data)) return;
-          total += data.distance ?? 0;
-          count += 1;
-        });
-        setStats({ runCount: count, totalDistanceM: total });
+        setStats(sumLifetimeRunTotals(snap.docs.map((d) => d.data())));
       } catch (err) {
         logger.error("useLifetimeRunStats error:", err);
         if (!cancelled) setFailed(true);

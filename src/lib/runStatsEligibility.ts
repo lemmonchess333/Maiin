@@ -102,3 +102,37 @@ export function isPaceTrendEligible(run: RunPaceTrendInput): boolean {
   }
   return true;
 }
+
+/** Lifetime run totals — count and metres, eligible runs only. */
+export interface LifetimeRunTotals {
+  runCount: number;
+  totalDistanceM: number;
+}
+
+/**
+ * Sum a user's whole `runs` collection into lifetime totals.
+ *
+ * Consolidated because the rule was hand-written twice and drifted.
+ * `useLifetimeRunStats` (History's "Lifetime totals" footer) gated on
+ * {@link isVolumeEligible}; the own-profile totals on `UserProfile` did not,
+ * under a comment claiming to mirror it. So the SAME user's km and session
+ * count differed between the two screens, and the profile was the inflated
+ * one: a saved-anyway "too fast" 20 km / 0:08 misclick — the exact case
+ * `isVolumeEligible` exists to reject, and which `useHomeData` cites by name
+ * for the day's calorie tile — added 20 km to the profile and 0 to History.
+ *
+ * Both callers now share this. Anything that shows a lifetime run total
+ * should too, rather than re-deriving the loop.
+ */
+export function sumLifetimeRunTotals(
+  runs: Iterable<RunRecord>
+): LifetimeRunTotals {
+  let runCount = 0;
+  let totalDistanceM = 0;
+  for (const run of runs) {
+    if (!isVolumeEligible(run)) continue;
+    runCount += 1;
+    totalDistanceM += run.distance ?? 0;
+  }
+  return { runCount, totalDistanceM };
+}
