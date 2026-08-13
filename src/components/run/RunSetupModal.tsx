@@ -40,6 +40,8 @@ import {
   type WeatherData,
 } from "@/lib/weather";
 import { paceMinSec } from "@/lib/runLabels";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { paceUnitLabel } from "@/lib/distanceUnits";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { heatPaceAdjustment, heatAdjustmentLine } from "@/lib/heatAdjustment";
 import ShoeSelector from "./ShoeSelector";
@@ -216,6 +218,7 @@ export default function RunSetupModal({
   programContext,
 }: RunSetupModalProps) {
   const { user, profile } = useAuth();
+  const unit = useDistanceUnit();
   // Adaptive Paces: the user's pace table (null when no benchmark). Used to
   // personalize the prescription when picking a run type in the ad-hoc
   // launcher (the programme path personalizes via templateToPrefill).
@@ -262,7 +265,7 @@ export default function RunSetupModal({
     pacePatchForTypePure(type, paceTable, config.intervals ?? intervalConfig);
 
   const chooserPaceFor = (type: ActivityType): string | null =>
-    chooserPaceForPure(type, paceTable);
+    chooserPaceForPure(type, paceTable, unit);
 
   /* Pre-flight target validation. Catches the case where the user
      types a sub-threshold distance / duration / pace and taps Start
@@ -510,6 +513,7 @@ export default function RunSetupModal({
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {heatAdjustmentLine(
                       adj,
+                      unit,
                       config.target?.type === "pace"
                         ? config.target.value
                         : undefined
@@ -957,7 +961,8 @@ export default function RunSetupModal({
                               }
                               className={presetChipClass(active)}
                             >
-                              {paceMinSec(s)}/km
+                              {paceMinSec(s, unit)}
+                              {paceUnitLabel(unit)}
                             </button>
                           );
                         })}
@@ -992,7 +997,7 @@ export default function RunSetupModal({
                            preset value rather than the stale one
                            from first mount. */
                             key={`pace-${currentValueS}`}
-                            defaultValue={paceMinSec(currentValueS || 330)}
+                            defaultValue={paceMinSec(currentValueS || 330, unit)}
                             onChange={(e) => {
                               const [m, s] = e.target.value
                                 .split(":")

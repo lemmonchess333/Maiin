@@ -154,6 +154,7 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   { field: "maxHeartRate", sanitized: true },
   { field: "onboardingComplete", sanitized: false },
   { field: "photoURL", sanitized: true },
+  { field: "preferredDistanceUnit", sanitized: true },
   { field: "preferredHeightUnit", sanitized: true },
   { field: "preferredSplit", sanitized: true },
   { field: "preferredWeightUnit", sanitized: true },

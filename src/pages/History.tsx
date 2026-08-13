@@ -26,6 +26,7 @@ import TrainingLoadCard from "@/components/analytics/TrainingLoadCard";
 import { useTrainingLoadSeries } from "@/hooks/useTrainingLoadSeries";
 import { isPaceEligible } from "@/lib/runStatsEligibility";
 import { paceMinSec } from "@/lib/runLabels";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { requiresManualDistance } from "@/lib/runGuards";
 import { Footprints, Trophy, UtensilsCrossed, LineChart } from "lucide-react";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
@@ -394,6 +395,7 @@ export default function History() {
   const { meals, loading: mealsLoading } = useMeals();
   const lifetimeRuns = useLifetimeRunStats();
   const { profile } = useAuth();
+  const unit = useDistanceUnit();
   /**
    * The cross-cutting gate. Only the surfaces that genuinely SPAN all
    * three disciplines may use it — PeriodOverview sums runs + lifts +
@@ -653,13 +655,13 @@ export default function History() {
       }> = [
         {
           label: "Fastest 1K",
-          value: best1k ? paceMinSec(best1k.avgPace) : "--",
+          value: best1k ? paceMinSec(best1k.avgPace, unit) : "--",
           date: best1k ? fmtDate(best1k.completedAt) : "",
           isNew: best1k ? best1k.completedAt >= sevenDaysAgo : false,
         },
         {
           label: "Fastest 5K",
-          value: best5k ? paceMinSec(best5k.avgPace) : "--",
+          value: best5k ? paceMinSec(best5k.avgPace, unit) : "--",
           date: best5k ? fmtDate(best5k.completedAt) : "",
           isNew: best5k ? best5k.completedAt >= sevenDaysAgo : false,
         },
@@ -1422,7 +1424,7 @@ export default function History() {
                       />
                       <StatCard
                         label="Avg Pace"
-                        value={paceMinSec(runningTotals.avgPace)}
+                        value={paceMinSec(runningTotals.avgPace, unit)}
                         unit="/km"
                         direction="down-good"
                         sparklineData={runningTotals.paceSparkline}

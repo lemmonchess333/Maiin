@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import type { SessionPlayer } from "@/hooks/useSessionPlayer";
 import type { SessionSegment } from "@/lib/runSegments";
 import { paceBandLabel } from "@/lib/runLabels";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import type { DistanceUnit } from "@/lib/distanceUnits";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { THEME } from "@/lib/theme";
 
@@ -51,14 +53,18 @@ function countdownLabel(remainingS: number): string {
  *  A2: `pacePinned` segments keep their built label — their pace IS the
  *  prescription (the user's own goal pace), not a template default the
  *  fitness band should supersede. */
-function headlineFor(seg: SessionSegment, band?: [number, number]): string {
+function headlineFor(
+  seg: SessionSegment,
+  unit: DistanceUnit,
+  band?: [number, number]
+): string {
   if (
     band &&
     seg.effort &&
     !seg.pacePinned &&
     (seg.type === "hard" || seg.type === "moderate")
   ) {
-    return `${seg.effort} at ${paceBandLabel(band)}`;
+    return `${seg.effort} at ${paceBandLabel(band, unit)}`;
   }
   return seg.label;
 }
@@ -86,6 +92,7 @@ export default function IntervalStepShell({
   band?: [number, number];
   onSkip: () => void;
 }) {
+  const unit = useDistanceUnit();
   const reduce = useReducedMotion();
   const { segments, state, current, next, isComplete } = player;
   const idx = state.index;
@@ -98,7 +105,7 @@ export default function IntervalStepShell({
     const prev = prevIdxRef.current;
     prevIdxRef.current = idx;
     if (idx > prev && prev >= 0 && prev < segments.length && !reduce) {
-      setFlash(headlineFor(segments[prev], band));
+      setFlash(headlineFor(segments[prev], unit, band));
       const t = setTimeout(() => setFlash(null), 2200);
       return () => clearTimeout(t);
     }
@@ -195,7 +202,7 @@ export default function IntervalStepShell({
 
         {/* The prescription IS the headline — white for maximum contrast. */}
         <p className="text-lg font-extrabold leading-tight text-white">
-          {headlineFor(current, band)}
+          {headlineFor(current, unit, band)}
         </p>
 
         <div className="flex items-center justify-between gap-3 pt-0.5">
@@ -204,7 +211,7 @@ export default function IntervalStepShell({
               <>
                 Up next:{" "}
                 <span className="text-white/70 font-medium">
-                  {headlineFor(next, band)}
+                  {headlineFor(next, unit, band)}
                 </span>
               </>
             ) : (

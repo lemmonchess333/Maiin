@@ -37,6 +37,7 @@ import {
   type RunFitnessInput,
 } from "./runPaces";
 import { paceMinSec } from "./runLabels";
+import { paceUnitLabel, type DistanceUnit } from "./distanceUnits";
 
 export type RaceDistance = "5k" | "10k" | "half" | "marathon";
 
@@ -264,8 +265,12 @@ export function raceTargetVerdict(input: {
   distance: RaceDistance;
   targetTimeS: number | undefined;
   runFitness: RunFitnessInput | null | undefined;
+  /** Display unit for the goal pace quoted in `line`. The feasibility BAND
+   *  is computed from VDOT and is unit-free — a goal does not become more
+   *  achievable because it is read in miles. */
+  unit: DistanceUnit;
 }): RaceTargetVerdict | null {
-  const { distance, targetTimeS, runFitness } = input;
+  const { distance, targetTimeS, runFitness, unit } = input;
   if (!targetTimeS || targetTimeS <= 0) return null;
   const meters = DISTANCE_METERS[distance];
   const targetVdot = vdotFromRace(meters, targetTimeS);
@@ -290,7 +295,7 @@ export function raceTargetVerdict(input: {
     band === "long_shot"
       ? " Training paces stay on your current fitness until the gap closes."
       : "";
-  const line = `Goal pace ${paceMinSec(Math.round(goalPaceS))}/km · ${phrase[band]} (target fitness ${targetVdot.toFixed(1)} vs current ${currentVdot.toFixed(1)} — a Tropos estimate, not a promise).${holdNote}`;
+  const line = `Goal pace ${paceMinSec(Math.round(goalPaceS), unit)}${paceUnitLabel(unit)} · ${phrase[band]} (target fitness ${targetVdot.toFixed(1)} vs current ${currentVdot.toFixed(1)} — a Tropos estimate, not a promise).${holdNote}`;
   return {
     band,
     goalPaceS,

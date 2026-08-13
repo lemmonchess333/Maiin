@@ -30,6 +30,7 @@ import { BottomSheet } from "@/components/ui/BottomSheet";
 import { cn } from "@/lib/utils";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { paceLabel, durationLabel, distanceLabel } from "@/lib/runLabels";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import type { SavedRunDoc } from "@/hooks/useClaimMap";
 
 interface ExtrasExpandSheetProps {
@@ -122,9 +123,10 @@ function ExtraRunListItem({
   extra: SavedRunDoc;
   onTap: () => void;
 }) {
+  const unit = useDistanceUnit();
   const distanceText =
     typeof extra.distance === "number" && extra.distance > 0
-      ? distanceLabel(extra.distance)
+      ? distanceLabel(extra.distance, unit)
       : "—";
   const bucketText =
     typeof extra.type === "string" && extra.type.length > 0
@@ -132,7 +134,7 @@ function ExtraRunListItem({
       : "run";
   const paceText =
     typeof extra.avgPace === "number" && extra.avgPace > 0
-      ? paceLabel(extra.avgPace)
+      ? paceLabel(extra.avgPace, unit)
       : null;
   const durationText =
     typeof extra.duration === "number" && extra.duration > 0

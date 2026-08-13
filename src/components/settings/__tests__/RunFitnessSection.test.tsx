@@ -4,6 +4,17 @@ import { MemoryRouter } from "react-router-dom";
 import RunFitnessSection from "../RunFitnessSection";
 import type { UserProfile } from "@/lib/auth";
 
+/* These components read the display unit, which resolves from the auth
+   profile — and `useAuth` throws outside an AuthProvider, which none of
+   these render inside. Mocking the one-export hook rather than `@/lib/auth`
+   keeps the blast radius at one symbol: a bare factory mock of `auth` would
+   leave its other exports undefined and fail at some unrelated call site.
+   Metric is the app default, so the existing assertions are unaffected. */
+vi.mock("@/hooks/useDistanceUnit", () => ({
+  useDistanceUnit: () => "km" as const,
+}));
+
+
 // Pace Insights pulls in auth/subscription/running-stats hooks; this render
 // test covers RunFitnessSection's own UI, so stub the insight hook (its logic
 // is unit-tested via resolvePaceInsight).

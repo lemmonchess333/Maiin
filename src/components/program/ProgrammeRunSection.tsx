@@ -84,6 +84,7 @@ import {
   distanceLabel,
   sessionPaceDisplay,
 } from "@/lib/runLabels";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import {
   getScheduledRunStatus,
   isScheduledRunStartable,
@@ -254,6 +255,7 @@ export default function ProgrammeRunSection({
   // "set a race goal" key meant the second account on a shared phone never
   // saw that prompt at all.
   const storageUid = useUidForStorageKey();
+  const unit = useDistanceUnit();
   const { runs, weeklyData, loading: runsLoading } = useRunningStats(30);
   // PR-J Q3 chunk B3b — single source of truth for derived
   // completion. Subscribes to users/{uid}/runs + reads
@@ -732,7 +734,8 @@ export default function ProgrammeRunSection({
         raceDistanceKey: raceDistanceKeyFromKm(
           selectedTemplate.config.targetDistanceKm
         ),
-      })
+      }),
+      unit
     );
   })();
   // Target HR zone for the selected session — the HR companion to the pace
@@ -1174,7 +1177,7 @@ export default function ProgrammeRunSection({
                     <span className="text-foreground">Last run</span>
                     {" · "}
                     <span className="font-mono tabular-nums">
-                      {distanceLabel(lastRun.distance)}
+                      {distanceLabel(lastRun.distance, unit)}
                     </span>
                     {" · "}
                     <span className="font-mono tabular-nums">
@@ -1184,7 +1187,7 @@ export default function ProgrammeRunSection({
                       <>
                         {" · "}
                         <span className="font-mono tabular-nums">
-                          {paceLabel(lastRun.avgPace)}
+                          {paceLabel(lastRun.avgPace, unit)}
                         </span>
                       </>
                     )}
@@ -1211,7 +1214,7 @@ export default function ProgrammeRunSection({
                       <>
                         {" · "}
                         <span className="font-mono tabular-nums">
-                          {paceLabel(thisWeek.avgPace)}
+                          {paceLabel(thisWeek.avgPace, unit)}
                         </span>{" "}
                         avg
                       </>

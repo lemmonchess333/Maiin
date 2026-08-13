@@ -61,6 +61,8 @@ import {
 } from "../lib/runPaces";
 import { resolvePaceVerdict } from "../lib/paceVerdict";
 import { paceMinSec } from "../lib/runLabels";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { paceUnitLabel } from "@/lib/distanceUnits";
 import { useRunningStats } from "../hooks/useRunningStats";
 import { getWeeklyRunTarget } from "../lib/scheduleUtils";
 import { isVolumeEligible, isPaceEligible } from "../lib/runStatsEligibility";
@@ -383,6 +385,7 @@ export default function RunSummary() {
   const { state } = useLocation() as { state: RunData };
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  const unit = useDistanceUnit();
   const { zones: privacyZones } = usePrivacyZones();
   const { isOnline } = useOnlineStatus();
   const { updateMileage, defaultShoe } = useShoes();
@@ -723,6 +726,7 @@ export default function RunSummary() {
       // Band-aware verdict (Runna teardown #2): anywhere inside the session's
       // pace window is on-target, and the copy speaks the range.
       targetBandS: paces.band,
+      unit,
     });
   })();
 
@@ -745,7 +749,9 @@ export default function RunSummary() {
               ? `${Math.round(iv.workDuration / 60)} min`
               : null;
       if (!distLabel) return null;
-      const paceLabel = iv.workPace ? ` @ ${paceMinSec(iv.workPace)}/km` : "";
+      const paceLabel = iv.workPace
+        ? ` @ ${paceMinSec(iv.workPace, unit)}${paceUnitLabel(unit)}`
+        : "";
       return {
         kind: "intervals" as const,
         value: `${iv.reps} × ${distLabel}${paceLabel}`,
