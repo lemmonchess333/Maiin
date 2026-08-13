@@ -26,6 +26,7 @@
  */
 
 const { instantToDateKey } = require("./challengeActivityWindow");
+const { workoutVolumeKg } = require("./workoutVolume");
 
 /** Metrics fed by workout docs / run docs. hybrid_score draws from both. */
 const WORKOUT_METRICS = ["workout_count", "total_volume", "hybrid_score"];
@@ -60,7 +61,12 @@ function backfillQueryWindow(challenge) {
  */
 function workoutChallengeIncrements(data) {
   const out = [{ metric: "workout_count", value: 1 }];
-  const volume = data && data.totalVolume;
+  /* Was `data.totalVolume` directly, which no workout doc carried — so
+     this branch never ran and lifts credited nothing to total_volume or
+     the hybrid score. `workoutVolumeKg` reads the field when present and
+     derives it from the sets when not, which also credits the history
+     the join-time backfill replays. */
+  const volume = workoutVolumeKg(data);
   if (volume) {
     out.push({ metric: "total_volume", value: volume });
     out.push({ metric: "hybrid_score", value: Math.round(volume * 0.1) });
