@@ -9,6 +9,7 @@ import {
   projectGoalDate,
 } from "@/utils/weightTrend";
 import { THEME } from "@/lib/theme";
+import { parseLocalDate } from "@/lib/dateHelpers";
 import {
   computeDataConfidence,
   T3_PROJECTION_MIN_POINTS,
@@ -63,7 +64,7 @@ export function TrendWeight() {
   // Single entry: show simple display instead of chart
   if (data.length === 1) {
     const entry = entries[0];
-    const d = new Date(entry.date);
+    const d = parseLocalDate(entry.date);
     return (
       <div className="p-4 rounded-2xl bg-card text-center py-6 space-y-2">
         <SectionLabel>Weight Trend</SectionLabel>
@@ -273,7 +274,7 @@ export function TrendWeight() {
                 if (relevant.length === 0) return null;
 
                 const label = props.label
-                  ? new Date(String(props.label)).toLocaleDateString("en-GB", {
+                  ? parseLocalDate(String(props.label)).toLocaleDateString("en-GB", {
                       day: "numeric",
                       month: "short",
                       year: "numeric",
