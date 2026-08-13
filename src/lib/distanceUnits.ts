@@ -66,6 +66,26 @@ export function shortDistanceIn(metres: number, unit: DistanceUnit): number {
   return unit === "mi" ? metres / METRES_PER_FOOT : metres;
 }
 
+/**
+ * Elevation in the reader's unit — metres, or feet for an imperial reader.
+ *
+ * Shares `METRES_PER_FOOT` with the near-distance helpers rather than
+ * defining a second constant: a foot is a foot whether it is measuring
+ * along the ground or up a hill, and one definition is one place to be
+ * wrong. Kept separate from `shortDistanceIn` only because the two round
+ * differently — a climb is quoted to the foot, a distance-to-go to the
+ * nearest ten.
+ */
+export function elevationIn(metres: number, unit: DistanceUnit): number {
+  if (!Number.isFinite(metres)) return 0;
+  return unit === "mi" ? metres / METRES_PER_FOOT : metres;
+}
+
+/** Elevation suffix — `m` / `ft`. */
+export function elevationUnitLabel(unit: DistanceUnit): string {
+  return unit === "mi" ? "ft" : "m";
+}
+
 /** Short-distance suffix — `m` / `ft`. */
 export function shortDistanceUnitLabel(unit: DistanceUnit): string {
   return unit === "mi" ? "ft" : "m";
@@ -171,6 +191,22 @@ export const SPLIT_LAP_IS_METRIC = 1000;
  * user's number goes IN rather than only coming out, and both land with
  * the Settings toggle.
  */
+/**
+ * The share card renders metric, and that is the last unconverted surface.
+ *
+ * Not an oversight and not a formatting gap: `ShareCardData` carries
+ * `distanceKm`, a `pace` STRING and `splits` as `{ km, pace }` — every
+ * value pre-baked per kilometre by whichever page built it. Converting the
+ * card means changing that shape to metres and seconds and updating each
+ * producer, which is a real change rather than a label swap.
+ *
+ * There is also a product question underneath it that the in-app surfaces
+ * do not have: a share card is an IMAGE other people look at, so "the
+ * reader's unit" is ambiguous in a way it never is inside the app. The
+ * sharer's unit is the likely answer, but it is a decision, not a default.
+ */
+export const SHARE_CARD_IS_METRIC: DistanceUnit = "km";
+
 export const PRESET_DISTANCES_ARE_KM = "km";
 
 /** Short distance suffix — `km` / `mi`. */

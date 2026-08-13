@@ -12,6 +12,7 @@ import { toast } from "@/lib/toast";
 import RunMap from "./RunMapLazy";
 import { distanceLabel } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { elevationLabel } from "@/lib/runLabels";
 
 interface RoutePreviewSheetProps {
   open: boolean;
@@ -131,7 +132,7 @@ export default function RoutePreviewSheet({
           />
           <Stat
             icon={<Mountain className="size-4" />}
-            value={`${elev} m`}
+            value={elevationLabel(elev, unit)}
             label="Elev gain"
           />
           <Stat

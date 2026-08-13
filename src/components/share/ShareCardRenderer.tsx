@@ -1,4 +1,8 @@
 import type { CSSProperties, Ref } from "react";
+import {
+  elevationUnitLabel,
+  SHARE_CARD_IS_METRIC,
+} from "@/lib/distanceUnits";
 
 /**
  * ShareCardRenderer (SOCIAL S1, PR2) — the pixel-perfect, offscreen DOM
@@ -551,7 +555,10 @@ function RunTemplate({
           )}
           {show("elevation") && data.elevationM != null && (
             <Stat
-              value={`${Math.round(data.elevationM)}m`}
+              /* Metric — see SHARE_CARD_IS_METRIC. The whole card's data
+                 shape is pre-baked per kilometre, so converting one stat
+                 would make it disagree with the four beside it. */
+              value={`${Math.round(data.elevationM)}${elevationUnitLabel(SHARE_CARD_IS_METRIC)}`}
               label="elev"
               scale={scale}
             />

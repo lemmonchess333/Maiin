@@ -107,13 +107,3 @@ export function gradeAdjustedPace(
   };
 }
 
-/**
- * "M:SS" per-km formatting, same floor convention as `calculatePace` in
- * lib/gps.ts so the GAP line reads like every other pace in the app.
- */
-export function formatSecondsPerKm(secondsPerKm: number): string {
-  if (!Number.isFinite(secondsPerKm) || secondsPerKm <= 0) return "--:--";
-  const mins = Math.floor(secondsPerKm / 60);
-  const secs = Math.floor(secondsPerKm % 60);
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
-}

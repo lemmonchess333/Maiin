@@ -92,8 +92,8 @@ import {
   type SaveStatus,
 } from "../lib/runGuards";
 import { getDistanceComparison } from "@/lib/funComparisons";
+import { elevationLabel } from "@/lib/runLabels";
 import {
-  formatSecondsPerKm,
   gradeAdjustedPace,
 } from "../lib/gradeAdjustedPace";
 
@@ -1571,7 +1571,7 @@ export default function RunSummary() {
             </div>
             <div className="p-3 rounded-xl bg-card text-center card-shadow">
               <p className="text-lg font-bold font-mono tabular-nums text-foreground">
-                {elevationGain}m
+                {elevationLabel(elevationGain, unit)}
               </p>
               <p className="text-xs text-muted-foreground">elevation gain</p>
             </div>
@@ -1583,9 +1583,9 @@ export default function RunSummary() {
             <p className="px-4 -mt-2 mb-4 text-center text-xs text-muted-foreground">
               Grade-adjusted pace{" "}
               <span className="font-mono tabular-nums font-semibold text-foreground">
-                {formatSecondsPerKm(gap.gapSecondsPerKm)}
+                {paceMinSec(gap.gapSecondsPerKm, unit)}
               </span>
-              /km — flat-equivalent for this climb
+              {paceUnitLabel(unit)} — flat-equivalent for this climb
             </p>
           )}
 
