@@ -42,6 +42,7 @@ import {
 import { toast } from "@/lib/toast";
 import { motion } from "framer-motion";
 import { THEME } from "../lib/theme";
+import { sumLifetimeRunTotals } from "../lib/runStatsEligibility";
 import Avatar from "../components/Avatar";
 import ReportModal from "../components/social/ReportModal";
 import ProgressPhotos from "../components/social/ProgressPhotos";
@@ -281,12 +282,17 @@ export default function UserProfile() {
           getDocs(collection(db, "users", uid, "workouts")),
         ])
           .then(([runSnap, woSnap]) => {
-            let totalKm = 0;
-            runSnap.forEach((d) => {
-              const dist = (d.data() as { distance?: number }).distance;
-              if (typeof dist === "number") totalKm += dist / 1000;
+            // Through the shared summer, so this can't drift from History's
+            // "Lifetime totals" again — it used to sum every run doc
+            // ungated, which counted invalid / saved-anyway runs the other
+            // surface excludes.
+            const { runCount, totalDistanceM } = sumLifetimeRunTotals(
+              runSnap.docs.map((d) => d.data())
+            );
+            setStats({
+              totalKm: totalDistanceM / 1000,
+              totalSessions: runCount + woSnap.size,
             });
-            setStats({ totalKm, totalSessions: runSnap.size + woSnap.size });
           })
           .catch((err) => {
             logger.warn("UserProfile: own lifetime stats read failed:", err);
