@@ -22,6 +22,17 @@
  * is what makes the fix retroactive. Without the fallback every workout
  * logged before the writer change stays uncredited forever — including
  * through the join-time backfill, which replays historical docs.
+ *
+ * The derivation must mirror the WRITER's tonnage rule, not merely look
+ * like it. Both writers — `useProgram.completeWorkoutDay` and the server
+ * command reducer — reduce with `repUnit === "seconds" ? 0 : …`, because
+ * a timed hold's `reps` is a DURATION. `weighted-plank` is a real catalog
+ * exercise carrying both a load and a `repUnit` of seconds, so a naive
+ * `weightKg × reps` reads a 20 kg / 60 s hold as 1,200 kg of tonnage that
+ * the writer itself scores as nothing. That gap only shows on the
+ * derivation path, which is exactly the path that replays history — so it
+ * would have written inflated numbers into permanent challenge totals
+ * while every post-fix doc, carrying the stated field, stayed correct.
  */
 function workoutVolumeKg(data) {
   const stated = Number(data && data.totalVolume);
@@ -30,6 +41,7 @@ function workoutVolumeKg(data) {
   if (!Array.isArray(exercises)) return 0;
   let total = 0;
   for (const ex of exercises) {
+    if (ex && ex.repUnit === "seconds") continue;
     const sets = (ex && ex.sets) || [];
     if (!Array.isArray(sets)) continue;
     for (const set of sets) {

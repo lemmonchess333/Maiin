@@ -127,6 +127,56 @@ describe("workoutTonnageKg", () => {
     expect(total).toBe(500);
   });
 
+  /* The rule the writers apply and this copy did not. `weighted-plank` is a
+     real catalog exercise carrying an external load AND `repUnit: "seconds"`,
+     so its `reps` is a duration — a 20 kg / 60 s hold is not 1,200 kg lifted.
+     Both writers exclude it from the tonnage they persist as `totalVolume`;
+     this helper counted it, so History, WorkoutDetail, the weekly recap, the
+     share sheet and the space post all read higher than the session totals
+     they were summarising. */
+  it("excludes a timed hold, load and all", () => {
+    const withHold = workoutTonnageKg({
+      exercises: [
+        {
+          exerciseId: "bench-press",
+          exerciseName: "Bench",
+          category: "c",
+          caloriesBurned: 0,
+          sets: [{ setNumber: 1, reps: 5, weightKg: 100 }],
+        },
+        {
+          exerciseId: "weighted-plank",
+          exerciseName: "Weighted Plank",
+          category: "core",
+          repUnit: "seconds",
+          caloriesBurned: 0,
+          sets: [{ setNumber: 1, reps: 60, weightKg: 20 }],
+        },
+      ],
+    });
+    expect(withHold).toBe(500);
+  });
+
+  it("still counts an exercise explicitly marked as reps", () => {
+    /* The type admits `repUnit: "reps"`, so a truthiness check would drop
+       an ordinary exercise — an exclusion that over-fires costs exactly
+       what the omission did. */
+    expect(
+      workoutTonnageKg({
+        exercises: [
+          {
+            exerciseId: "a",
+            exerciseName: "A",
+            category: "c",
+            repUnit: "reps",
+            caloriesBurned: 0,
+            sets: [{ setNumber: 1, reps: 5, weightKg: 100 }],
+          },
+        ],
+      })
+    ).toBe(500);
+  });
+
   it("tolerates a workout with no exercises, and an exercise with no sets", () => {
     // `.reduce` on undefined THROWS — for SoloFirstFeed that was a render
     // crash inside a useMemo on the cold-start social surface, not a wrong
