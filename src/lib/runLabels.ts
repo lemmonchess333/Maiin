@@ -1,3 +1,11 @@
+import {
+  type DistanceUnit,
+  distanceIn,
+  paceIn,
+  distanceUnitLabel,
+  paceUnitLabel,
+} from "./distanceUnits";
+
 /**
  * Pure label helpers for run display surfaces.
  *
@@ -5,6 +13,18 @@
  * the same labels stay consistent across Run.tsx, RunSummary,
  * ProgrammeRunSection, History, etc. Previously each consumer
  * had its own inline copy — minor format drift was inevitable.
+ *
+ * UNITS. Everything arriving here is METRIC — distances in metres, paces in
+ * seconds per kilometre — because that is how Tropos stores them and that
+ * does not change. These helpers convert at the moment of DISPLAY, per the
+ * user's `preferredDistanceUnit`. `distanceUnits.ts` explains why pace
+ * converts the opposite way to distance.
+ *
+ * The `unit` argument is REQUIRED, deliberately. An optional one defaulting
+ * to `"km"` would let a call site silently stay metric for a miles user, and
+ * this codebase has been bitten by that exact shape more than once — a prop
+ * declared, defaulted, and passed by nobody (`initialCenter`, `belowFloor`).
+ * Required means the compiler enumerates the call sites rather than me.
  */
 
 /**
@@ -14,11 +34,20 @@
  * where the unit is implied by context). Returns `"--:--"` for
  * missing / non-positive pace to keep the column-width stable in
  * tabular UIs.
+ *
+ * ROUND THE TOTAL, THEN SPLIT. Flooring the minutes while rounding the
+ * seconds separately lets the two disagree: 59.6s becomes `0:60`. That was
+ * unreachable while every pace was a whole number of seconds per km, and
+ * miles conversion makes it reachable — 298 s/km (4:58/km, an ordinary
+ * pace) is 479.58 s/mi and rendered as `7:60/mi`. Five paces between
+ * 2:30/km and 15:00/km did. `finishTimeLabel` below already had the
+ * correct shape; this now matches it.
  */
-export function paceMinSec(paceSec: number): string {
+export function paceMinSec(paceSec: number, unit: DistanceUnit): string {
   if (!paceSec || paceSec <= 0) return "--:--";
-  const m = Math.floor(paceSec / 60);
-  const s = Math.round(paceSec % 60);
+  const total = Math.round(paceIn(paceSec, unit));
+  const m = Math.floor(total / 60);
+  const s = total % 60;
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
@@ -27,11 +56,9 @@ export function paceMinSec(paceSec: number): string {
  * em-dash placeholder when pace is missing or non-positive (a
  * stationary or zero-distance leg shouldn't display "0:00/km").
  */
-export function paceLabel(paceSec: number): string {
+export function paceLabel(paceSec: number, unit: DistanceUnit): string {
   if (!paceSec || paceSec <= 0) return "—";
-  const m = Math.floor(paceSec / 60);
-  const s = Math.round(paceSec % 60);
-  return `${m}:${String(s).padStart(2, "0")}/km`;
+  return `${paceMinSec(paceSec, unit)}${paceUnitLabel(unit)}`;
 }
 
 /**
@@ -54,8 +81,11 @@ export function durationLabel(durationSec: number): string {
  * Format a pace band as the coaching range Runna popularised —
  * `5:25–5:45 /km`. Bands are [fast, slow] sec/km (the runPaces contract).
  */
-export function paceBandLabel(band: [number, number]): string {
-  return `${paceMinSec(band[0])}–${paceMinSec(band[1])} /km`;
+export function paceBandLabel(
+  band: [number, number],
+  unit: DistanceUnit
+): string {
+  return `${paceMinSec(band[0], unit)}–${paceMinSec(band[1], unit)} ${paceUnitLabel(unit)}`;
 }
 
 /**
@@ -66,14 +96,19 @@ export function paceBandLabel(band: [number, number]): string {
  * target/work pace as the fallback (race paces have no band). Null when
  * nothing applies, so callers can omit the pill entirely.
  */
-export function sessionPaceDisplay(paces: {
-  targetPace?: number;
-  workPace?: number;
-  band?: [number, number];
-}): string | null {
-  if (paces.band) return paceBandLabel(paces.band);
-  if (paces.targetPace) return `${paceMinSec(paces.targetPace)} /km`;
-  if (paces.workPace) return `${paceMinSec(paces.workPace)} /km`;
+export function sessionPaceDisplay(
+  paces: {
+    targetPace?: number;
+    workPace?: number;
+    band?: [number, number];
+  },
+  unit: DistanceUnit
+): string | null {
+  if (paces.band) return paceBandLabel(paces.band, unit);
+  if (paces.targetPace)
+    return `${paceMinSec(paces.targetPace, unit)} ${paceUnitLabel(unit)}`;
+  if (paces.workPace)
+    return `${paceMinSec(paces.workPace, unit)} ${paceUnitLabel(unit)}`;
   return null;
 }
 
@@ -98,9 +133,12 @@ export function finishTimeLabel(timeS: number): string {
  * Format a distance (metres) as `K.k km`, with the em-dash
  * placeholder for missing / zero / negative values.
  */
-export function distanceLabel(distanceM: number): string {
+export function distanceLabel(
+  distanceM: number,
+  unit: DistanceUnit
+): string {
   if (!distanceM || distanceM <= 0) return "—";
-  return `${(distanceM / 1000).toFixed(1)} km`;
+  return `${distanceIn(distanceM, unit).toFixed(1)} ${distanceUnitLabel(unit)}`;
 }
 
 /**

@@ -198,6 +198,11 @@ export interface UserProfileSubscription {
 export interface UserProfilePreferences {
   preferredWeightUnit: "kg" | "lbs";
   preferredHeightUnit: "cm" | "ft";
+  /** Display unit for run distance and pace. Storage stays metric always
+   *  — see src/lib/distanceUnits.ts. Elevation is NOT covered yet (feet
+   *  arrives with the surfaces that show it), which is one of the reasons
+   *  no Settings toggle exposes this field so far. */
+  preferredDistanceUnit: "km" | "mi";
   darkMode: boolean;
   /** #984 "Hide the number" anti-anxiety mode. When true, the raw
    *  body-weight figure is suppressed app-wide (home WeightStepsTiles
@@ -528,6 +533,7 @@ function createDefaultProfile(
     weeklyMealsTarget: 10,
     preferredWeightUnit: "kg",
     preferredHeightUnit: "cm",
+    preferredDistanceUnit: "km",
     // Dark is the app default — new profiles start dark unless the user
     // later picks light in Settings (see public/init.js for the pre-React
     // boot default that mirrors this).
@@ -578,6 +584,9 @@ function hydrateProfile(
       (data.preferredWeightUnit as UserProfile["preferredWeightUnit"]) ?? "kg",
     preferredHeightUnit:
       (data.preferredHeightUnit as UserProfile["preferredHeightUnit"]) ?? "cm",
+    preferredDistanceUnit:
+      (data.preferredDistanceUnit as UserProfile["preferredDistanceUnit"]) ??
+      "km",
     // Default the theme to dark when the field is absent (legacy/partial
     // docs). Only an explicit stored `false` keeps a user on light.
     darkMode: (data.darkMode as boolean) ?? true,

@@ -8,6 +8,17 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import RunTilePicker from "../RunTilePicker";
 
+/* These components read the display unit, which resolves from the auth
+   profile — and `useAuth` throws outside an AuthProvider, which none of
+   these render inside. Mocking the one-export hook rather than `@/lib/auth`
+   keeps the blast radius at one symbol: a bare factory mock of `auth` would
+   leave its other exports undefined and fail at some unrelated call site.
+   Metric is the app default, so the existing assertions are unaffected. */
+vi.mock("@/hooks/useDistanceUnit", () => ({
+  useDistanceUnit: () => "km" as const,
+}));
+
+
 vi.mock("../ShoeSelector", () => ({
   default: () => <div data-testid="shoe" />,
 }));

@@ -45,7 +45,7 @@ describe("heatPaceAdjustment", () => {
     // 38°C / 80% → T+DP ≈ 194°F.
     const extreme = heatPaceAdjustment({ temperature: 38, humidity: 80 })!;
     expect(extreme.effortOnly).toBe(true);
-    expect(heatAdjustmentLine(extreme)).toMatch(/run by effort/i);
+    expect(heatAdjustmentLine(extreme, "km")).toMatch(/run by effort/i);
   });
 });
 
@@ -57,25 +57,36 @@ describe("heatAdjustedPaceS + the display line", () => {
   });
 
   it("with a prescribed pace, shows the concrete equivalent AND that the plan is unchanged", () => {
-    const line = heatAdjustmentLine(warm, 300);
+    const line = heatAdjustmentLine(warm, "km", 300);
     expect(line).toContain("5:00/km");
     expect(line).toContain("5:09/km");
     expect(line).toMatch(/paces are unchanged/i);
     expect(line).toMatch(/published heat curves/i);
   });
 
+  it("quotes the equivalent in the reader's unit", () => {
+    /* The heat ADJUSTMENT is a percentage, so it is unit-free; only the
+       two quoted paces convert. 5:00/km is 8:03/mi and its 3%-slower
+       equivalent 5:09/km is 8:17/mi. */
+    const line = heatAdjustmentLine(warm, "mi", 300);
+    expect(line).toContain("8:03/mi");
+    expect(line).toContain("8:17/mi");
+    expect(line).not.toMatch(/\/km/);
+  });
+
   it("without a pace, stays generic but still honest", () => {
-    const line = heatAdjustmentLine(warm);
+    const line = heatAdjustmentLine(warm, "km");
     expect(line).toMatch(/~3% slower/);
     expect(line).toMatch(/paces are unchanged/i);
   });
 
   it("register ban-list on every line variant", () => {
     for (const line of [
-      heatAdjustmentLine(warm),
-      heatAdjustmentLine(warm, 300),
+      heatAdjustmentLine(warm, "km"),
+      heatAdjustmentLine(warm, "km", 300),
       heatAdjustmentLine(
-        heatPaceAdjustment({ temperature: 38, humidity: 80 })!
+        heatPaceAdjustment({ temperature: 38, humidity: 80 })!,
+        "km"
       ),
     ]) {
       expect(line).not.toMatch(/injur|risk|danger|guarantee|will you|promise/i);

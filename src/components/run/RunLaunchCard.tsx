@@ -27,6 +27,8 @@ import Button from "@/components/ui/Button";
 import IconButton from "@/components/ui/IconButton";
 import ShoeSelector from "./ShoeSelector";
 import { paceMinSec } from "@/lib/runLabels";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { paceUnitLabel } from "@/lib/distanceUnits";
 import type { RunTemplate } from "@/lib/workoutTemplates";
 import type { RunConfig } from "./runConfigDefaults";
 import type { ProgramContextStrip } from "./RunSetupModal";
@@ -82,6 +84,7 @@ export default function RunLaunchCard({
   onCustomize,
   onBack,
 }: RunLaunchCardProps) {
+  const unit = useDistanceUnit();
   const Icon = RUN_ICON_MAP[workout.icon] ?? Footprints;
 
   const target = prefill.target;
@@ -96,7 +99,7 @@ export default function RunLaunchCard({
       : null;
   const paceLabel =
     target?.type === "pace" && target.value
-      ? `${paceMinSec(target.value)}/km`
+      ? `${paceMinSec(target.value, unit)}${paceUnitLabel(unit)}`
       : null;
   const intervals = intervalSummary(prefill.intervals);
 

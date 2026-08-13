@@ -159,16 +159,16 @@ describe("raceTargetVerdict — A2 feasibility (display register)", () => {
 
   it("null without a target time or without a benchmark", () => {
     expect(
-      raceTargetVerdict({ distance: "5k", targetTimeS: undefined, runFitness: fitness })
+      raceTargetVerdict({ unit: "km", distance: "5k", targetTimeS: undefined, runFitness: fitness })
     ).toBeNull();
     expect(
-      raceTargetVerdict({ distance: "5k", targetTimeS: 1200, runFitness: null })
+      raceTargetVerdict({ unit: "km", distance: "5k", targetTimeS: 1200, runFitness: null })
     ).toBeNull();
   });
 
   it("bands order with the gap, and the line stays in the honest register", () => {
     const at = (timeS: number) =>
-      raceTargetVerdict({ distance: "5k", targetTimeS: timeS, runFitness: fitness })!;
+      raceTargetVerdict({ unit: "km", distance: "5k", targetTimeS: timeS, runFitness: fitness })!;
     // Gaps measured against the real VDOT curve (current = 49.8):
     expect(at(1260).band).toBe("on_track"); // 21:00 → gap −2.8
     expect(at(1170).band).toBe("within_reach"); // 19:30 → gap +1.5
@@ -183,8 +183,22 @@ describe("raceTargetVerdict — A2 feasibility (display register)", () => {
     expect(at(1130).line).not.toMatch(/paces stay on your current fitness/i);
   });
 
+  it("the band is unit-free; only the quoted goal pace converts", () => {
+    /* Feasibility comes from VDOT, so a goal cannot become more
+       achievable by being read in miles. 50:00 for 10K is 5:00/km =
+       8:03/mi. */
+    const args = { distance: "10k" as const, targetTimeS: 3000, runFitness: fitness };
+    const km = raceTargetVerdict({ ...args, unit: "km" })!;
+    const mi = raceTargetVerdict({ ...args, unit: "mi" })!;
+    expect(mi.band).toBe(km.band);
+    expect(mi.goalPaceS).toBe(km.goalPaceS); // stored value stays sec/km
+    expect(km.line).toContain("Goal pace 5:00/km");
+    expect(mi.line).toContain("Goal pace 8:03/mi");
+  });
+
   it("goal pace is the target spread over the distance", () => {
     const v = raceTargetVerdict({
+      unit: "km",
       distance: "10k",
       targetTimeS: 3000, // 50:00 → 5:00/km
       runFitness: fitness,

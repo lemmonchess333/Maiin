@@ -188,6 +188,7 @@ service cloud.firestore {
       return [
         'uid', 'displayName', 'email', 'athleteType', 'weightKg', 'heightCm',
         'weeklyWorkoutsTarget', 'weeklyMealsTarget', 'preferredWeightUnit',
+        'preferredDistanceUnit',
         'preferredHeightUnit', 'darkMode', 'onboardingComplete', 'trialExpiresAt',
         'subscriptionTier', 'stripeCustomerId', 'stripeSubscriptionId',
         'currentStreak', 'longestStreak', 'lastLogDate', 'program', 'tdeeBase',
