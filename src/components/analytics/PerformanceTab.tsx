@@ -363,7 +363,12 @@ export default function PerformanceTab() {
             <h3 className="text-base font-bold" style={{ color: summaryColor }}>
               {headline}
             </h3>
-            {delta !== null && !establishing && (
+            {/* A ZERO delta is not a gain. It rendered as a green "+0 pts",
+                which reads as progress when the week actually held level —
+                and green is the app's success register everywhere else. An
+                unchanged week says nothing rather than saying nothing
+                positively; the headline already carries the verdict. */}
+            {delta !== null && delta !== 0 && !establishing && (
               // DS1b: stays inline — the chip mixes THEME.success (a status
               // colour with no guaranteed --success equality) with running, so
               // a class swap would risk shifting the positive-delta colour.
