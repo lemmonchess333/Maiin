@@ -23,6 +23,9 @@ import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ profile: { targetCalories: 2000 } }),
   useUid: () => null,
+  // The celebration key is uid-scoped (localStorage is per-device); this
+  // suite is about display, so a fixed uid is enough.
+  useUidForStorageKey: () => "u-test",
 }));
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));

@@ -42,6 +42,8 @@ import {
 } from "@/features/program/sessionSetPolicy";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
+import { useUidForStorageKey } from "@/lib/auth";
+import { stallCooldownKey } from "@/features/program/stallDetection";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import { toast } from "@/lib/toast";
 import {
@@ -224,6 +226,7 @@ export default function WorkoutSession({
   onClose,
 }: Props) {
   const { user, profile } = useAuth();
+  const storageUid = useUidForStorageKey();
   const { awardEventBadge } = useStreaks();
   // LIFT-01: bind the draft to this exact session — scope + epoch +
   // day metadata + executable exercise layout. setLogs/exerciseNotes
@@ -1073,7 +1076,7 @@ export default function WorkoutSession({
 
       for (const ex of day.exercises) {
         // Check localStorage cooldown
-        const cooldownKey = `tropos_stall_${ex.name}`;
+        const cooldownKey = stallCooldownKey(storageUid, ex.name);
         const lastPopup = localStorage.getItem(cooldownKey);
         if (lastPopup && Date.now() - Number(lastPopup) < 3 * 7 * 86400000)
           continue; // 3 weeks cooldown
@@ -1093,7 +1096,7 @@ export default function WorkoutSession({
     };
 
     checkStalls();
-  }, [sessionComplete, user?.uid, day.exercises]);
+  }, [sessionComplete, user?.uid, storageUid, day.exercises]);
 
   const handleFinish = async () => {
     if (completing) return;

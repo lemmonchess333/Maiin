@@ -11,7 +11,7 @@ import {
 import { Avocado } from "@/components/icons/Avocado";
 import { THEME } from "@/lib/theme";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
-import { useAuth } from "@/lib/auth";
+import { useAuth, useUidForStorageKey } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
 import {
   allMacrosHit,
@@ -47,7 +47,12 @@ interface FoodHeroCardProps {
 }
 
 const MODE_STORAGE_KEY = "tropos.food.calorieRingMode";
-const CELEBRATED_STORAGE_KEY = "tropos.food.celebratedDate";
+/* The ring MODE stays flat on purpose: "left vs eaten" is a display
+   preference of this DEVICE, not a fact about an account. The celebrated
+   DATE is the opposite — it records that a particular user hit their targets
+   today, so an unscoped key let one account's celebration swallow the
+   other's on a shared phone. */
+const CELEBRATED_KEY_BASE = "tropos.food.celebratedDate";
 
 // All log-moment animations share this duration so they finish in sync.
 const LOG_MOMENT_MS = 600;
@@ -80,6 +85,7 @@ export default function FoodHeroCard({
      to one line. If a second consumer ever needs it, promote to
      the hook. */
   const { profile } = useAuth();
+  const celebratedKey = `${useUidForStorageKey()}:${CELEBRATED_KEY_BASE}`;
   const targetsAreDefault = !profile?.targetCalories;
 
   // Single shared display mode for the whole hero — the calorie ring AND
@@ -158,7 +164,7 @@ export default function FoodHeroCard({
     if (isToday) {
       const celebrated = (() => {
         try {
-          return window.localStorage.getItem(CELEBRATED_STORAGE_KEY);
+          return window.localStorage.getItem(celebratedKey);
         } catch {
           return null;
         }
@@ -170,7 +176,7 @@ export default function FoodHeroCard({
       ) {
         shouldCelebrate = true;
         try {
-          window.localStorage.setItem(CELEBRATED_STORAGE_KEY, todayKey);
+          window.localStorage.setItem(celebratedKey, todayKey);
         } catch {
           // ignore
         }
@@ -219,6 +225,7 @@ export default function FoodHeroCard({
     dailyTargets.carbs,
     dailyTargets.fat,
     isToday,
+      celebratedKey,
   ]);
 
   // Build the top-left caption. Suppressed on rest days.
