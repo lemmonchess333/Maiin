@@ -7,8 +7,9 @@ import {
   Cell,
 } from "recharts";
 import type { Split } from "../../lib/gps";
-import { paceLabel } from "../../lib/runLabels";
-import { SPLITS_ARE_PER_KM } from "@/lib/distanceUnits";
+import { paceLabel, paceMinSec } from "../../lib/runLabels";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { distanceUnitLabel, type DistanceUnit } from "@/lib/distanceUnits";
 import { THEME } from "@/lib/theme";
 import { CHART_AXIS_TICK } from "./chartStyles";
 
@@ -16,17 +17,28 @@ interface SplitsBarChartProps {
   splits: Split[];
   avgPaceSeconds: number;
   accentColor?: string;
+  /**
+   * The unit these ROWS are cut on, which is not always the reader's.
+   *
+   * A saved run stores kilometre laps, and a run with no GPS trace
+   * (treadmill, manual) can only ever offer those — so an imperial reader
+   * looking at one gets kilometre rows, labelled as such rather than
+   * silently relabelled. Where the trace exists the caller recomputes mile
+   * laps and passes "mi".
+   *
+   * The PACES are unaffected either way: a pace is a rate, so it converts
+   * to the reader's unit independently of how long the lap was.
+   */
+  lapUnit: DistanceUnit;
 }
 
 export default function SplitsBarChart({
   splits,
   avgPaceSeconds,
   accentColor = THEME.teal,
+  lapUnit,
 }: SplitsBarChartProps) {
-  /* This whole card is per-KILOMETRE and stays metric for now — see
-     SPLITS_ARE_PER_KM. Converting only the average above a column of km
-     splits (whose labels are baked strings in the saved run) would be
-     worse than either consistent answer. */
+  const unit = useDistanceUnit();
   if (splits.length === 0) return null;
 
   const maxPace = Math.max(...splits.map((s) => s.paceSeconds));
@@ -34,7 +46,10 @@ export default function SplitsBarChart({
     km: `${s.km}`,
     pace: s.paceSeconds,
     invertedPace: maxPace - s.paceSeconds + 60,
-    paceLabel: s.pace,
+    /* From `paceSeconds` (always sec/km) rather than the `pace` STRING the
+       split carries: that string is baked per-kilometre at save time and
+       cannot be converted, which is exactly why it isn't read here. */
+    paceLabel: paceMinSec(s.paceSeconds, unit),
     isFast: s.paceSeconds < avgPaceSeconds * 0.97,
     isSlow: s.paceSeconds > avgPaceSeconds * 1.03,
   }));
@@ -42,9 +57,12 @@ export default function SplitsBarChart({
   return (
     <div className="p-4 rounded-2xl bg-card">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-foreground">Splits</h3>
+        <h3 className="text-sm font-semibold text-foreground">
+          Splits
+          {lapUnit === unit ? "" : ` (per ${distanceUnitLabel(lapUnit)})`}
+        </h3>
         <p className="text-xs font-mono tabular-nums text-muted-foreground">
-          avg {paceLabel(avgPaceSeconds, SPLITS_ARE_PER_KM)}
+          avg {paceLabel(avgPaceSeconds, unit)}
         </p>
       </div>
 

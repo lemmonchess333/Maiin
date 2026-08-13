@@ -134,22 +134,27 @@ export function paceIn(secPerKm: number, unit: DistanceUnit): number {
 export const GENERATION_TIME_UNIT: DistanceUnit = "km";
 
 /**
- * Splits are per-KILOMETRE data, not a formatting choice — so the splits
- * surfaces stay metric until that changes, and say so with this name.
+ * The lap a run's splits are cut on, in metres.
  *
- * `calculateSplits` cuts on 1000 m boundaries and `Run.tsx` PERSISTS the
- * result on the saved run as `{ km, pace }`, with the pace already
- * formatted into a string. So a miles reader can't be served by converting
- * a label: the rows themselves are the wrong length, and the stored ones
- * carry baked metric text. Doing it properly means a lap-length parameter
- * on `calculateSplits` plus recomputing from `run.points` at display —
- * real work, and its own change.
- *
- * Converting only the average pace above a column of kilometre rows would
- * have been worse than either consistent answer, which is why this exists
- * rather than a partial conversion.
+ * Splits were the one surface a label swap could not fix — the ROWS are a
+ * different length per unit — so `calculateSplits` takes this rather than
+ * a formatter taking a unit. A saved run still stores kilometre splits;
+ * `SPLIT_LAP_IS_METRIC` marks that write, and an imperial reader gets mile
+ * laps recomputed from the trace at display.
  */
-export const SPLITS_ARE_PER_KM: DistanceUnit = "km";
+export function lapMetresFor(unit: DistanceUnit): number {
+  return unit === "mi" ? METRES_PER_MILE : 1000;
+}
+
+/**
+ * The lap a run is SAVED with, which stays metric like every other stored
+ * quantity here. The persisted rows are a record, not a display: an
+ * imperial reader's mile laps are recomputed from `run.points`, so nothing
+ * about a stored run changes when the preference flips — and a run with no
+ * trace at all (treadmill, manual) keeps its kilometre rows, honestly
+ * labelled as such.
+ */
+export const SPLIT_LAP_IS_METRIC = 1000;
 
 /**
  * The distance PRESET chips in run setup are round kilometres, and the

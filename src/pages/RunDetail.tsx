@@ -33,6 +33,7 @@ import DeleteSessionAction from "@/components/session/DeleteSessionAction";
 import { Spinner } from "../components/ui/Spinner";
 import { distanceLabel, distanceLabel2 } from "@/lib/runLabels";
 import { distanceUnitLabel } from "@/lib/distanceUnits";
+import { splitsForDisplay } from "@/lib/gps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 
 const ACTIVITY_LABELS: Record<string, string> = {
@@ -143,7 +144,14 @@ export default function RunDetail() {
   // the tile explains the actual reason: no GPS trace at all (treadmill /
   // "track without GPS" manual runs), a run under 1 km (no km boundary
   // crossed), or GPS present but no split data recorded.
-  const splitCount = run.splits?.length ?? 0;
+  /* Mile laps are a different CUT of the run, recomputed from the trace —
+     see splitsForDisplay for the no-trace fallback. */
+  const { splits: displaySplits, lapUnit } = splitsForDisplay(
+    unit,
+    run.points,
+    run.splits
+  );
+  const splitCount = displaySplits.length;
   const hasGpsTrace = (run.points?.length ?? 0) > 1;
 
   /* Run13 item 4 — grade-adjusted pace, DISPLAY-ONLY. Outdoor GPS runs
@@ -467,11 +475,12 @@ export default function RunDetail() {
         )}
 
         {/* Splits chart */}
-        {run.splits?.length > 0 && (
+        {displaySplits.length > 0 && (
           <SplitsBarChart
-            splits={run.splits}
+            splits={displaySplits}
             avgPaceSeconds={avgPace}
             accentColor={THEME.teal}
+            lapUnit={lapUnit}
           />
         )}
 

@@ -96,6 +96,7 @@ import {
 import { haptic } from "../lib/haptic";
 import { formatRaceDistance } from "../lib/runLabels";
 import { toast } from "../lib/toast";
+import { SPLIT_LAP_IS_METRIC } from "@/lib/distanceUnits";
 
 /* haptic moved to the shared `../lib/haptic` implementation in
    W1f, which routes through the Capacitor Haptics plugin on the
@@ -1004,7 +1005,11 @@ export default function Run() {
         points,
         distance: finalDistance,
         elapsed: timer.elapsed,
-        splits: calculateSplits(points),
+        /* The stored record stays metric like every other saved quantity —
+           an imperial reader's mile laps are recomputed from the trace at
+           display (splitsForDisplay), so flipping the preference never
+           rewrites a run. */
+        splits: calculateSplits(points, SPLIT_LAP_IS_METRIC),
         elevationGain: totalElevationGain(points),
         runConfig,
         intervalData:
