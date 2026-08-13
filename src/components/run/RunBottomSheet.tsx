@@ -30,6 +30,7 @@ import { type ZoneNumber } from "../../lib/hrZones";
 import { RunControlButton } from "@/components/ui/RunControlButton";
 import HoldToFinishButton from "./HoldToFinishButton";
 import { Dialog } from "@/components/ui/Dialog";
+import { elevationLabel } from "@/lib/runLabels";
 
 // HR zone → colour ramp (cool→hot), all THEME tokens (no hex literals).
 // Z1 recovery teal · Z2 easy green · Z3 aerobic amber · Z4 threshold orange ·
@@ -548,7 +549,7 @@ export default function RunBottomSheet({
                     fontFamily: "var(--font-mono)",
                   }}
                 >
-                  {elevation}m
+                  {elevationLabel(elevation, unit)}
                 </p>
                 <p
                   style={{

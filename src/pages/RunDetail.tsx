@@ -21,7 +21,6 @@ import { useAuth } from "../lib/auth";
 import { THEME } from "../lib/theme";
 import { isOutdoorGpsRun } from "../lib/runGuards";
 import {
-  formatSecondsPerKm,
   gradeAdjustedPace,
 } from "../lib/gradeAdjustedPace";
 import RunMap from "../components/run/RunMapLazy";
@@ -31,10 +30,15 @@ import ElevationProfile from "../components/analytics/ElevationProfile";
 import ShareCardSheet from "@/components/share/ShareCardSheet";
 import DeleteSessionAction from "@/components/session/DeleteSessionAction";
 import { Spinner } from "../components/ui/Spinner";
-import { distanceLabel, distanceLabel2 } from "@/lib/runLabels";
-import { distanceUnitLabel } from "@/lib/distanceUnits";
+import {
+  distanceLabel,
+  distanceLabel2,
+  paceMinSec,
+} from "@/lib/runLabels";
+import { distanceUnitLabel, paceUnitLabel } from "@/lib/distanceUnits";
 import { splitsForDisplay } from "@/lib/gps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { elevationLabel } from "@/lib/runLabels";
 
 const ACTIVITY_LABELS: Record<string, string> = {
   freerun: "Free Run",
@@ -438,7 +442,7 @@ export default function RunDetail() {
         <div className="grid grid-cols-2 gap-2">
           <div className="p-3 rounded-xl bg-card text-center card-shadow">
             <p className="text-lg font-bold font-mono tabular-nums text-foreground">
-              {run.elevationGain ?? 0}m
+              {elevationLabel(run.elevationGain ?? 0, unit)}
             </p>
             <p className="text-xs uppercase tracking-widest text-muted-foreground mt-0.5">
               Elevation Gain
@@ -468,9 +472,9 @@ export default function RunDetail() {
           <p className="text-center text-xs text-muted-foreground">
             Grade-adjusted pace{" "}
             <span className="font-mono tabular-nums font-semibold text-foreground">
-              {formatSecondsPerKm(gap.gapSecondsPerKm)}
+              {paceMinSec(gap.gapSecondsPerKm, unit)}
             </span>
-            /km — flat-equivalent for this climb
+            {paceUnitLabel(unit)} — flat-equivalent for this climb
           </p>
         )}
 

@@ -46,6 +46,7 @@ import { IconButton } from "../ui/IconButton";
 import { distanceValue, paceMinSec } from "@/lib/runLabels";
 import { distanceUnitLabel, paceUnitLabel } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { elevationLabel } from "@/lib/runLabels";
 
 function formatDur(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -293,7 +294,7 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
               <Mountain className="size-4 text-muted-foreground mt-1" />
               <div>
                 <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
-                  {activity.elevationGain}m
+                  {elevationLabel(activity.elevationGain ?? 0, unit)}
                 </p>
                 <SectionLabel className="mt-0.5">elev</SectionLabel>
               </div>
@@ -598,7 +599,7 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
                     <Mountain className="size-4 text-muted-foreground mt-1" />
                     <div>
                       <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
-                        {activity.elevationGain}m
+                        {elevationLabel(activity.elevationGain ?? 0, unit)}
                       </p>
                       <SectionLabel className="mt-0.5">elev</SectionLabel>
                     </div>

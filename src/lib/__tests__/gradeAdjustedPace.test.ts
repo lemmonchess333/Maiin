@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   MATERIAL_CLIMB_GAIN_PER_KM,
   MIN_DISTANCE_METERS,
-  formatSecondsPerKm,
   gradeAdjustedPace,
 } from "../gradeAdjustedPace";
+import { paceMinSec } from "../runLabels";
 
 describe("gradeAdjustedPace", () => {
   const hilly10k = {
@@ -128,16 +128,31 @@ describe("gradeAdjustedPace", () => {
   });
 });
 
-describe("formatSecondsPerKm", () => {
-  it("formats with the app's floor convention", () => {
-    expect(formatSecondsPerKm(286.75)).toBe("4:46");
-    expect(formatSecondsPerKm(300)).toBe("5:00");
-    expect(formatSecondsPerKm(359.999)).toBe("5:59");
+describe("the grade-adjusted pace is formatted by paceMinSec now", () => {
+  /* `formatSecondsPerKm` was a third copy of the M:SS formatter, hardcoded
+     per-KILOMETRE, and it had exactly two consumers — both components that
+     already hold the reader's unit. It was deleted rather than given a unit
+     parameter, because `paceMinSec` already is that function. These replace
+     its tests so the coverage does not vanish with the export.
+
+     ONE BEHAVIOUR CHANGED, deliberately: the old formatter FLOORED the
+     seconds, so 286.75 s/km read 4:46. `paceMinSec` rounds the total (the
+     fix that stopped miles conversion printing "7:60"), so the same input
+     now reads 4:47 — a second closer to the truth, on a line that is
+     already labelled an estimate. */
+  it("formats a grade-adjusted pace in the reader's unit", () => {
+    expect(paceMinSec(300, "km")).toBe("5:00");
+    expect(paceMinSec(300, "mi")).toBe("8:03");
   });
 
-  it("falls back to placeholder on unusable input", () => {
-    expect(formatSecondsPerKm(0)).toBe("--:--");
-    expect(formatSecondsPerKm(-10)).toBe("--:--");
-    expect(formatSecondsPerKm(NaN)).toBe("--:--");
+  it("rounds rather than floors — the one difference from the old helper", () => {
+    expect(paceMinSec(286.75, "km")).toBe("4:47"); // was 4:46 when floored
+    expect(paceMinSec(359.999, "km")).toBe("6:00"); // was 5:59
+  });
+
+  it("keeps the placeholder on unusable input", () => {
+    expect(paceMinSec(0, "km")).toBe("--:--");
+    expect(paceMinSec(-10, "km")).toBe("--:--");
+    expect(paceMinSec(NaN, "km")).toBe("--:--");
   });
 });

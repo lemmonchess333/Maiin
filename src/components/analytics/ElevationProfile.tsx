@@ -10,6 +10,8 @@ import type { GPSPoint } from "../../lib/gps";
 import { THEME } from "@/lib/theme";
 import { CHART_GRID_PROPS } from "./chartStyles";
 import ChartAreaGradient from "./ChartAreaGradient";
+import { elevationLabel } from "@/lib/runLabels";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 
 interface ElevationProfileProps {
   points: GPSPoint[];
@@ -20,6 +22,7 @@ export default function ElevationProfile({
   points,
   accentColor = THEME.running,
 }: ElevationProfileProps) {
+  const unit = useDistanceUnit();
   // Filter FIRST, then derive the decimation stride from the filtered
   // length — the old stride came off the unfiltered array while the
   // modulo ran over the filtered one, skewing the sample. Min/max (the
@@ -49,7 +52,8 @@ export default function ElevationProfile({
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-foreground">Elevation</h3>
         <p className="text-xs font-mono tabular-nums text-muted-foreground">
-          {minAlt}m – {maxAlt}m
+          {elevationLabel(minAlt, unit, false)} –{" "}
+          {elevationLabel(maxAlt, unit)}
         </p>
       </div>
 
