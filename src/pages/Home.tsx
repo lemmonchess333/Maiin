@@ -8,6 +8,7 @@ import {
 } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { useAuth } from "@/lib/auth";
+import { useUidForStorageKey } from "@/lib/auth";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { useMeals } from "@/hooks/useMeals";
 import { useHomeData } from "@/hooks/useHomeData";
@@ -100,6 +101,7 @@ const DayActionSheet = lazyRetry(
 
 export default function Home() {
   const { user, profile, updateProfile } = useAuth();
+  const storageUid = useUidForStorageKey();
   // home-declutter 6b — uid-scoped monthly snooze for the post-trial
   // upgrade strip (shared-device rule: one account's snooze must not
   // hide the funnel for the next).
@@ -570,10 +572,13 @@ export default function Home() {
   // Discoverability latch: the tiny "Tap a day to see details" hint under
   // the week strip disappears as soon as the user taps any day once (the
   // affordance has been used, no need to keep advertising). Persisted to
-  // localStorage so the hint doesn't re-appear on every session.
+  // localStorage so the hint doesn't re-appear on every session — uid-scoped,
+  // because localStorage is per-DEVICE and an unscoped hint is one the second
+  // account on a shared phone never sees.
+  const dayTapSeenKey = `${storageUid}:home-day-tap-seen`;
   const [showDayTapHint, setShowDayTapHint] = useState<boolean>(() => {
     try {
-      return localStorage.getItem("home-day-tap-seen") !== "1";
+      return localStorage.getItem(dayTapSeenKey) !== "1";
     } catch {
       return true;
     }
@@ -582,7 +587,7 @@ export default function Home() {
   const sessionsRef = useRef<HTMLDivElement>(null);
   const handleDayTap = useCallback(function (dk: string) {
     try {
-      localStorage.setItem("home-day-tap-seen", "1");
+      localStorage.setItem(dayTapSeenKey, "1");
     } catch {
       /* private mode — hint will re-show, minor */
     }
@@ -600,7 +605,7 @@ export default function Home() {
     setPeekDate(function (p) {
       return p === dk ? null : dk;
     });
-  }, []);
+  }, [dayTapSeenKey]);
   const closePeek = useCallback(function () {
     setPeekDate(null);
   }, []);
