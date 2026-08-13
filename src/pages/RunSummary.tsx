@@ -61,8 +61,9 @@ import {
 } from "../lib/runPaces";
 import { resolvePaceVerdict } from "../lib/paceVerdict";
 import { paceMinSec, distanceLabel2 } from "../lib/runLabels";
+import { splitsForDisplay } from "../lib/gps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
-import { paceUnitLabel } from "@/lib/distanceUnits";
+import { paceUnitLabel, distanceUnitLabel } from "@/lib/distanceUnits";
 import { useRunningStats } from "../hooks/useRunningStats";
 import { getWeeklyRunTarget } from "../lib/scheduleUtils";
 import { isVolumeEligible, isPaceEligible } from "../lib/runStatsEligibility";
@@ -635,6 +636,14 @@ export default function RunSummary() {
      touching each call site. */
   const distance = editedDistanceMeters ?? originalDistance;
   const points = applyPrivacyZones(rawPoints, privacyZones);
+  /* Mile laps are recomputed from the trace rather than converted — a mile
+     split is a different CUT of the run. Privacy-zone trimming happens
+     first, so the rows match the map the user is looking at. */
+  const { splits: displaySplits, lapUnit } = splitsForDisplay(
+    unit,
+    points,
+    splits
+  );
   const avgPace = calculatePace(distance, elapsed);
   const calories = estimateRunCalories(distance, profile?.weightKg || 70);
   const avgPaceSeconds =
@@ -1703,22 +1712,23 @@ export default function RunSummary() {
           )}
 
           {/* Splits bar chart */}
-          {splits.length > 0 && (
+          {displaySplits.length > 0 && (
             <div className="px-4 mb-4">
               <SplitsBarChart
-                splits={splits}
+                splits={displaySplits}
                 avgPaceSeconds={avgPaceSeconds}
                 accentColor={THEME.teal}
+                lapUnit={lapUnit}
               />
 
               {/* Per-km split list */}
               <div className="mt-3 space-y-1">
-                {splits.map((s, i) => {
+                {displaySplits.map((s, i) => {
                   const fastest = Math.min(
-                    ...splits.map((sp) => sp.paceSeconds)
+                    ...displaySplits.map((sp) => sp.paceSeconds)
                   );
                   const slowest = Math.max(
-                    ...splits.map((sp) => sp.paceSeconds)
+                    ...displaySplits.map((sp) => sp.paceSeconds)
                   );
                   const color =
                     s.paceSeconds === fastest
@@ -1731,11 +1741,14 @@ export default function RunSummary() {
                       key={i}
                       className="flex items-center justify-between text-xs px-1"
                     >
-                      <span className="text-muted-foreground">km {s.km}</span>
+                      <span className="text-muted-foreground">
+                        {distanceUnitLabel(lapUnit)} {s.km}
+                      </span>
                       <span
                         className={`font-mono tabular-nums font-medium ${color}`}
                       >
-                        {s.pace}/km
+                        {paceMinSec(s.paceSeconds, unit)}
+                        {paceUnitLabel(unit)}
                       </span>
                     </div>
                   );
@@ -1745,11 +1758,8 @@ export default function RunSummary() {
                     Average
                   </span>
                   <span className="font-mono tabular-nums font-semibold text-foreground">
-                    {Math.floor(avgPaceSeconds / 60)}:
-                    {(Math.floor(avgPaceSeconds) % 60)
-                      .toString()
-                      .padStart(2, "0")}
-                    /km
+                    {paceMinSec(avgPaceSeconds, unit)}
+                    {paceUnitLabel(unit)}
                   </span>
                 </div>
               </div>
