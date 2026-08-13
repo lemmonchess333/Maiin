@@ -181,3 +181,93 @@ describe("useGPS — watchPosition watchdog (iOS Safari/PWA fallback)", () => {
     expect(result.current.error).toBe("denied");
   });
 });
+
+describe("useGPS — lastFixAt tracks RECEPTION, not movement", () => {
+  /* The device bug, 2026-08-13. `lastFixAt` used to be stamped only when a
+     fix was accepted into the trail, and `isValidReading` rejects any fix
+     within 1m of the previous one — a correct jitter filter, without which
+     stationary GPS noise would accumulate phantom distance.
+
+     The consequence: standing still froze `lastFixAt`, and after 8s the run
+     screen said "GPS recovering · last fix Ns ago" and never stopped, while
+     the accuracy chip read ±6m with full green bars. The tell in the
+     screenshots was that the reported age ran exactly `elapsed + 3s` — the
+     age of the first fix, never replaced.
+
+     Waiting at a crossing, stretching before the first step, or pausing to
+     look at the phone are all normal, and all produced a permanent
+     "your GPS is broken" claim on a device with a perfect lock. */
+
+  beforeEach(() => {
+    h.watchOnFix = null;
+    h.getCurrentImpl = null;
+    Object.defineProperty(navigator, "geolocation", {
+      value: {},
+      configurable: true,
+    });
+  });
+
+  it("advances while stationary, when every fix is a sub-metre duplicate", async () => {
+    h.getCurrentImpl = () => {};
+    const { result } = renderHook(() => useGPS());
+    act(() => result.current.start());
+
+    // First fix anchors the trail.
+    act(() => h.watchOnFix?.(geoPos(51.5, -0.12)));
+    const firstFixAt = result.current.lastFixAt;
+    expect(firstFixAt).not.toBeNull();
+    const pointsAfterFirst = result.current.points.length;
+
+    // Stand still. Each subsequent fix lands well inside the 1m duplicate
+    // gate, so none is recorded — 1e-6° of latitude is about 0.11m.
+    await new Promise((r) => setTimeout(r, 12));
+    act(() => h.watchOnFix?.(geoPos(51.500001, -0.12)));
+    act(() => h.watchOnFix?.(geoPos(51.5000005, -0.1200005)));
+
+    // Reception is current...
+    expect(result.current.lastFixAt).toBeGreaterThan(firstFixAt as number);
+    // ...and the jitter filter still did its job: no phantom points, no
+    // phantom distance. Fixing the banner must not cost us that.
+    expect(result.current.points.length).toBe(pointsAfterFirst);
+    expect(result.current.distance).toBe(0);
+  });
+
+  it("advances even on a fix too coarse to record", async () => {
+    // Quality is the accuracy chip's job. A poor fix still proves the
+    // receiver is alive, which is the only thing this field claims.
+    h.getCurrentImpl = () => {};
+    const { result } = renderHook(() => useGPS());
+    act(() => result.current.start());
+    act(() => h.watchOnFix?.(geoPos(51.5, -0.12)));
+    const firstFixAt = result.current.lastFixAt as number;
+
+    await new Promise((r) => setTimeout(r, 12));
+    act(() => h.watchOnFix?.(geoPos(51.5006, -0.12, 120)));
+
+    expect(result.current.lastFixAt).toBeGreaterThan(firstFixAt);
+  });
+
+  it("does NOT advance when no fix arrives — the banner must still work", () => {
+    /* The control, and the reason the other two are not enough: stamping
+       unconditionally somewhere that always runs would satisfy them while
+       making the GPS-loss banner permanently silent. Real loss means the
+       callback stops being invoked, and nothing may move the field then. */
+    h.getCurrentImpl = () => {};
+    const { result } = renderHook(() => useGPS());
+    act(() => result.current.start());
+    act(() => h.watchOnFix?.(geoPos(51.5, -0.12)));
+    const at = result.current.lastFixAt as number;
+
+    // No further fixes delivered.
+    expect(result.current.lastFixAt).toBe(at);
+  });
+
+  it("is null before the first fix of a session", () => {
+    // `Run.tsx` returns early on null so the banner cannot fire during
+    // acquisition, when "Acquiring GPS" is the correct message.
+    h.getCurrentImpl = () => {};
+    const { result } = renderHook(() => useGPS());
+    act(() => result.current.start());
+    expect(result.current.lastFixAt).toBeNull();
+  });
+});
