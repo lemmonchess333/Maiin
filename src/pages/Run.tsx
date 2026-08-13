@@ -1542,11 +1542,17 @@ export default function Run() {
               )}
 
               {(() => {
-              /* GPS-loss banner. isValidReading() drops poor fixes
-               silently — the accuracy reading can keep showing the
-               last value even when no real fixes are landing. We
-               surface "GPS recovering" when the gap since the last
-               *valid* fix exceeds 8s during an active run.
+              /* GPS-loss banner: no fix has ARRIVED for 8s during an
+               active run.
+               
+               It reads `lastFixAt`, which until 2026-08-13 meant "the
+               last fix we recorded into the trail" — a different
+               question. `isValidReading` rejects fixes within 1m of the
+               previous one, so standing still froze the field and this
+               banner latched on and stayed for the rest of the run,
+               beside an accuracy chip reading ±6m. `lastFixAt` is now
+               stamped on arrival, so this asks about reception and the
+               1m jitter filter goes on doing its own job.
                timer.elapsed re-renders this component every second
                so the comparison stays current without a separate
                interval. The treadmill case is already excluded by
