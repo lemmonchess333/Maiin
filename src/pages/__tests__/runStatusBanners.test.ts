@@ -49,9 +49,32 @@ describe("run screen — status banners share one stack", () => {
   it("keeps exactly one top-anchored overlay stack", () => {
     // The positive control. If the stack were deleted rather than the
     // offsets, the assertion above would pass while the banners vanished.
-    const anchors = run.match(/absolute top-3 left-1\/2 z-50 flex/g) || [];
+    const anchors = run.match(/absolute inset-x-0 top-3 z-50 flex/g) || [];
     expect(anchors).toHaveLength(1);
     expect(run).toMatch(/flex-col items-center gap-1\.5/);
+  });
+
+  it("gives the stack full width, not half", () => {
+    /* `left-1/2` centres visually via a transform but leaves the box only
+       half the container to lay out in, so at 375px a pill capped at
+       ~187px and "GPS recovering · last fix 47s ago" wrapped to two lines.
+       Two lines is then tall enough for the expanded sheet to clip — which
+       looked like a separate bug and was the same one. */
+    expect(run).not.toMatch(/absolute[^"]*\bleft-1\/2\b[^"]*flex-col/);
+    expect(run).toMatch(/absolute inset-x-0 top-3/);
+  });
+
+  it("keeps every banner on one line", () => {
+    // The height of this stack is what decides whether the sheet clips it,
+    // and the text is dynamic (the age counts up), so the guard is on the
+    // wrap rather than on any particular string length.
+    // Whole className, not a fragment: the utility order is not fixed, and
+    // a regex anchored mid-string silently missed `whitespace-nowrap`
+    // sitting before `rounded-full` when this was first written.
+    const pills =
+      run.match(/className="[^"]*bg-(?:warning|destructive)-bg[^"]*"/g) || [];
+    expect(pills.length).toBe(3);
+    for (const cls of pills) expect(cls).toContain("whitespace-nowrap");
   });
 
   it("still renders all three banners", () => {

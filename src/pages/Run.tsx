@@ -1496,10 +1496,21 @@ export default function Run() {
                 a new banner added later inherits the same behaviour instead
                 of needing its own free vertical slot.
 
+                WIDTH, added 2026-08-13. This was `left-1/2` with a
+                `-translate-x-1/2`, which centres the box visually but does
+                NOT give it room: with `left: 50%` and no `right`, the
+                available LAYOUT width is half the container, so at 375px a
+                pill could not exceed ~187px. "GPS recovering · last fix 47s
+                ago" needs more than that, so it wrapped to two lines — and
+                two lines is tall enough for the expanded bottom sheet to
+                clip the stack, which read as a second, separate bug. One
+                cause, both symptoms. `inset-x-0` + `items-center` centres
+                the same way while letting each pill size to its content.
+
                 Clear of the left GPS indicator + the tempo/interval
                 PaceZoneBar at top-10. When following a route the route
                 guidance supersedes the generic back-to-start aid. */}
-            <div className="absolute top-3 left-1/2 z-50 flex -translate-x-1/2 flex-col items-center gap-1.5">
+            <div className="absolute inset-x-0 top-3 z-50 flex flex-col items-center gap-1.5 px-4">
               {targetRoute ? (
                 <>
                   <RouteFollowChip
@@ -1521,7 +1532,7 @@ export default function Run() {
 
               {autoPaused && (
                 <div
-                  className="rounded-full bg-warning-bg px-3 py-2 text-center"
+                  className="max-w-full whitespace-nowrap rounded-full bg-warning-bg px-3 py-2 text-center"
                   role="status"
                   aria-live="polite"
                 >
@@ -1533,7 +1544,7 @@ export default function Run() {
 
               {bgGapBanner && (
                 <div
-                  className="rounded-full bg-warning-bg px-4 py-2 text-center motion-safe:animate-pulse"
+                  className="max-w-full whitespace-nowrap rounded-full bg-warning-bg px-4 py-2 text-center motion-safe:animate-pulse"
                   role="status"
                   aria-live="polite"
                 >
@@ -1573,7 +1584,7 @@ export default function Run() {
               if (gapSeconds < 8) return null;
               return (
                 <div
-                  className="rounded-full bg-destructive-bg px-4 py-2 text-center motion-safe:animate-pulse"
+                  className="max-w-full whitespace-nowrap rounded-full bg-destructive-bg px-4 py-2 text-center motion-safe:animate-pulse"
                   role="status"
                   aria-live="polite"
                 >
