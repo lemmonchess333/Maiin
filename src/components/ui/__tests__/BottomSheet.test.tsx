@@ -101,3 +101,81 @@ describe("BottomSheet — hideHeader", () => {
     expect(screen.getByText("body")).toBeTruthy();
   });
 });
+
+/**
+ * Keyboard avoidance.
+ *
+ * The sheet is `fixed bottom-0`, so a soft keyboard covers its foot. The
+ * first fix reserved the overlap as `paddingBottom` — which grows a
+ * bottom-anchored element UPWARD, leaving its foot exactly where it was
+ * (behind the keyboard) while displacing the content off the top. On the
+ * Start-a-circle form that stranded the CTA at the very top of the screen
+ * with a keyboard-sized void beneath it, filmed on iOS Safari.
+ *
+ * Moving the ANCHOR is the fix, so these assert the anchor and explicitly
+ * reject the padding — jsdom can't show the visual result, but it can hold
+ * the mechanism.
+ */
+describe("BottomSheet — keyboard avoidance", () => {
+  function withKeyboard(overlapPx: number) {
+    Object.defineProperty(window, "visualViewport", {
+      configurable: true,
+      value: {
+        height: window.innerHeight - overlapPx,
+        offsetTop: 0,
+        addEventListener: () => {},
+        removeEventListener: () => {},
+      },
+    });
+  }
+
+  afterEach(() => {
+    Object.defineProperty(window, "visualViewport", {
+      configurable: true,
+      value: undefined,
+    });
+  });
+
+  function sheetEl(): HTMLElement {
+    // vaul's Content is the element carrying the sheet's own classes.
+    const el = document.querySelector<HTMLElement>(".fixed.bottom-0");
+    if (!el) throw new Error("sheet content not found");
+    return el;
+  }
+
+  it("lifts its ANCHOR by the keyboard overlap, not its padding", () => {
+    withKeyboard(300);
+    render(
+      <BottomSheet open onOpenChange={() => {}} title="Name it">
+        <input aria-label="Circle name" />
+      </BottomSheet>
+    );
+    const el = sheetEl();
+    expect(el.style.bottom).toBe("300px");
+    /* The regression this replaces. Padding would move the content up
+       while leaving the sheet's foot behind the keyboard — and would also
+       make the box taller, which is what pushed the CTA off-screen. */
+    expect(el.style.paddingBottom).toBe("");
+  });
+
+  it("caps its height against the shrunken viewport so it can't run off the top", () => {
+    withKeyboard(300);
+    render(
+      <BottomSheet open onOpenChange={() => {}} title="Name it">
+        <input aria-label="Circle name" />
+      </BottomSheet>
+    );
+    expect(sheetEl().style.maxHeight).toContain("300px");
+  });
+
+  it("stays flush to the bottom when no keyboard is open", () => {
+    render(
+      <BottomSheet open onOpenChange={() => {}} title="Name it">
+        <input aria-label="Circle name" />
+      </BottomSheet>
+    );
+    const el = sheetEl();
+    expect(el.style.bottom).toBe("");
+    expect(el.style.maxHeight).toBe("");
+  });
+});

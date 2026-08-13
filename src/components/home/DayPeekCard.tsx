@@ -139,14 +139,40 @@ export default function DayPeekCard({
     currentWeekKey: localWeekKey(new Date()),
     claimMap,
   });
-  const st = resolved.scheduleType;
   const dayLabel = format(parseLocalDate(dateKey), "EEE d MMM");
+  /* The badge describes the day's WEEKDAY PATTERN (`profile.weekSchedule`),
+     while the rows below it come from the resolved plan — the actual
+     `runDays` for this date and the rotation's lift slot. Those are
+     different sources and they disagree: a deload week can drop the run
+     while Tuesday is still typed "both", and the card then promises
+     "Lift + Run day" above a card containing only a lift.
+     Naming what is actually there keeps the badge honest. It deliberately
+     reads DOWN (both → lift) and never up: the pattern is the plan's
+     intent, so a run that exists but the pattern didn't predict still
+     deserves saying. */
+  const st = resolved.scheduleType;
+  /* RUNS come from the resolved plan, LIFTS from the weekday pattern —
+     which is the split each source is actually authoritative for
+     (ADR-0002). Runs are date-pinned, so `runDays` is the only thing that
+     knows whether this date has one. Lifts are split-ordered, so the
+     pattern is the right source for "is this a lift day"; keying it on the
+     loaded `workouts[liftIndex]` instead would collapse every day to
+     "Rest day" for as long as programState is still loading. */
+  const scheduledRun = resolved.run.runDay !== null;
+  const patternLift = st === "lift" || st === "both";
+  const shownType: "lift" | "run" | "both" | "rest" = scheduledRun
+    ? patternLift
+      ? "both"
+      : "run"
+    : patternLift
+      ? "lift"
+      : "rest";
   const typeLabel =
-    st === "lift"
+    shownType === "lift"
       ? "Lift day"
-      : st === "run"
+      : shownType === "run"
         ? "Run day"
-        : st === "both"
+        : shownType === "both"
           ? "Lift + Run day"
           : "Rest day";
   // DS1b: typeColor stays inline — the rest-day branch is THEME.text.muted
@@ -154,11 +180,11 @@ export default function DayPeekCard({
   // lift/run/both sport branches ride along inline rather than risk the rest
   // pill shifting.
   const typeColor =
-    st === "lift"
+    shownType === "lift"
       ? THEME.lifting
-      : st === "run"
+      : shownType === "run"
         ? THEME.running
-        : st === "both"
+        : shownType === "both"
           ? THEME.lifting
           : THEME.text.muted;
   let tonnage = 0;

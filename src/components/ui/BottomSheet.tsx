@@ -80,10 +80,24 @@ export function BottomSheet({
   useBackDismiss(open, () => {
     if (dismissible) onOpenChange(false);
   });
-  // Lift the sheet's content above the on-screen keyboard: a soft keyboard
-  // covers this bottom-anchored sheet, hiding any input pinned near its foot.
-  // Reserving the keyboard's overlap as bottom padding pushes the content up.
-  // (web + Android via visualViewport; iOS-native keyboard is a follow-up.)
+  /**
+   * Lift the sheet clear of the on-screen keyboard.
+   *
+   * This used to reserve the overlap as `paddingBottom`, which grows a
+   * `bottom-0` element UPWARD — the sheet got taller by the keyboard's
+   * height while its foot stayed pinned behind the keyboard. On a sheet
+   * whose content already fills most of the height (the Start-a-circle
+   * form: template chips, a name field, helper line, CTA) the result was
+   * the content displaced off the top of the screen with the CTA stranded
+   * at the very top edge and a keyboard-sized void beneath it. Filmed on
+   * iOS Safari.
+   *
+   * Moving the sheet's ANCHOR instead keeps its height unchanged and puts
+   * its foot exactly on top of the keyboard, which is what the padding was
+   * trying to approximate. `maxHeight` is capped against the shrunken
+   * visual viewport too, so a tall sheet scrolls internally rather than
+   * running off the top.
+   */
   const keyboardInset = useKeyboardInset();
   return (
     <Drawer.Root
@@ -109,7 +123,12 @@ export function BottomSheet({
             className
           )}
           style={
-            keyboardInset > 0 ? { paddingBottom: keyboardInset } : undefined
+            keyboardInset > 0
+              ? {
+                  bottom: keyboardInset,
+                  maxHeight: `calc(100dvh - ${keyboardInset}px)`,
+                }
+              : undefined
           }
         >
           {hideHeader ? (

@@ -141,6 +141,23 @@ function TierMarker({
      the bronze/silver/gold tick marks effectively disappeared on
      light mode — the markers should always be visible, just dim
      until they're achieved. */
+  /* The label is centred on its threshold, so a marker at either extreme
+     hangs half its text past the bar. Gold sits at exactly 100% by
+     construction (it IS `max`), so "15,000" was clipped at the screen edge
+     on every tiered challenge — the August Hybrid Hero card renders
+     "15,00" and then the viewport.
+     Only the LABEL moves: the dot has to stay centred on its threshold,
+     because its whole job is marking where the fill edge crosses. */
+  const EDGE = 6; // % within which a label would overhang the bar
+  /* The wrapper is centred on the threshold, so the label already sits half
+     its own width either side of it. At the right edge it must move LEFT by
+     that half (ending ON the tick); at the left edge, right by the same. */
+  const labelShift =
+    pct >= 100 - EDGE
+      ? "-translate-x-1/2"
+      : pct <= EDGE
+        ? "translate-x-1/2"
+        : "";
   return (
     <div
       className="absolute top-0 -translate-x-1/2 flex flex-col items-center"
@@ -151,7 +168,7 @@ function TierMarker({
         style={achieved ? { backgroundColor: TIER_COLORS[tier] } : undefined}
       />
       <span
-        className={`text-xs mt-0.5 font-medium font-mono tabular-nums ${achieved ? "" : "text-muted-foreground/60"}`}
+        className={`text-xs mt-0.5 font-medium font-mono tabular-nums whitespace-nowrap ${labelShift} ${achieved ? "" : "text-muted-foreground/60"}`}
         style={achieved ? { color: TIER_COLORS[tier] } : undefined}
       >
         {formatChallengeValue(metric, value)}
