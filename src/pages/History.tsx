@@ -25,7 +25,12 @@ import RacePredictionsCard from "@/components/analytics/RacePredictionsCard";
 import TrainingLoadCard from "@/components/analytics/TrainingLoadCard";
 import { useTrainingLoadSeries } from "@/hooks/useTrainingLoadSeries";
 import { isPaceEligible } from "@/lib/runStatsEligibility";
-import { paceMinSec } from "@/lib/runLabels";
+import { paceMinSec, distanceLabel } from "@/lib/runLabels";
+import {
+  distanceIn,
+  distanceUnitLabel,
+  paceUnitLabel,
+} from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { requiresManualDistance } from "@/lib/runGuards";
 import { Footprints, Trophy, UtensilsCrossed, LineChart } from "lucide-react";
@@ -669,7 +674,7 @@ export default function History() {
       if (includeLongest) {
         cards.push({
           label: "Longest Run",
-          value: longest ? (longest.distance / 1000).toFixed(1) + " km" : "--",
+          value: longest ? distanceLabel(longest.distance, unit) : "--",
           date: longest ? fmtDate(longest.completedAt) : "",
           isNew: longest ? longest.completedAt >= sevenDaysAgo : false,
         });
@@ -1416,8 +1421,10 @@ export default function History() {
                     <div className="grid grid-cols-2 gap-2 mt-2">
                       <StatCard
                         label={`${periodLabel} Distance`}
-                        value={formatDistance(runningTotals.runDistance)}
-                        unit="km"
+                        value={formatDistance(
+                          distanceIn(runningTotals.runDistance * 1000, unit)
+                        )}
+                        unit={distanceUnitLabel(unit)}
                         direction="up-good"
                         sparklineData={runningTotals.distanceSparkline}
                         accentColor={THEME.running}
@@ -1425,7 +1432,7 @@ export default function History() {
                       <StatCard
                         label="Avg Pace"
                         value={paceMinSec(runningTotals.avgPace, unit)}
-                        unit="/km"
+                        unit={paceUnitLabel(unit)}
                         direction="down-good"
                         sparklineData={runningTotals.paceSparkline}
                         accentColor={THEME.running}
