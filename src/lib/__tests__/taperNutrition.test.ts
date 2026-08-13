@@ -37,6 +37,53 @@ describe("resolveTaper — calorie override", () => {
     expect(t!.annotation).toContain("Taper");
   });
 
+  /**
+   * NUTR-L5, on the path that skipped it.
+   *
+   * `calculateTDEE` and the adaptive learned path both run
+   * `floorTargetCalories`, each under a comment saying a deficit "can never"
+   * push the target below `min(maintenance, 1200)`. The taper is the THIRD
+   * writer of the day's target and multiplied straight through — so it
+   * could, and the user it reached is a plausible one rather than a corner
+   * case: a small-framed cutter (maintenance ~1600, cut band −550 → 1050)
+   * is clamped by the rate-derived floor to exactly 1200, and 1200 is
+   * precisely where a further 10% bites.
+   */
+  it("never taper-cuts below the 1200 safety floor", () => {
+    const atFloor = 1200;
+    // Day 4 of a 14-day window — near the deepest cut, where an unfloored
+    // taper landed at 1080.
+    const t = resolveTaper(TODAY, raceProfile(4), atFloor)!;
+    expect(t.phase).toBe("taper");
+    expect(t.taperedCalories).toBe(atFloor);
+  });
+
+  it("floors across the WHOLE taper window, not just the deep end", () => {
+    // The cut ramps 5%→10%, so a single day proves little on its own.
+    for (let d = 0; d <= 14; d++) {
+      const t = resolveTaper(TODAY, raceProfile(d), 1200);
+      if (!t || t.carbLoad) continue;
+      expect(t.taperedCalories, `day ${d}`).toBeGreaterThanOrEqual(1200);
+    }
+  });
+
+  it("still contracts normally well above the floor", () => {
+    // The control: flooring must not flatten the taper for everyone else,
+    // which is what a floor applied against the wrong reference would do.
+    const t = resolveTaper(TODAY, raceProfile(4), BASE)!;
+    expect(t.taperedCalories).toBeLessThan(BASE);
+  });
+
+  it("cannot RAISE a target that already sits below the floor", () => {
+    /* A `customCalorieTarget` the user set themselves — `tdee.ts` says in
+       writing it leaves those alone. The floor is min(base, 1200), so the
+       taper holds at their number rather than reducing further, and never
+       pushes them UP to 1200 (which would be the app overriding an explicit
+       choice in the other direction). */
+    const t = resolveTaper(TODAY, raceProfile(4), 1000)!;
+    expect(t.taperedCalories).toBe(1000);
+  });
+
   it("contracts MORE as the race approaches (volume drop is proportional)", () => {
     const early = resolveTaper(TODAY, raceProfile(13), BASE)!.taperedCalories;
     const late = resolveTaper(TODAY, raceProfile(4), BASE)!.taperedCalories;

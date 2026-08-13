@@ -13,6 +13,7 @@
  * taper intake don't poison the learned maintenance estimate.
  */
 import { parseLocalDate, localDateString } from "./dateHelpers";
+import { floorTargetCalories } from "./macroConstants";
 import { TAPER_WEEKS_BY_DISTANCE } from "@/features/program/runScheduler";
 import type { UserProfile } from "./auth";
 
@@ -112,7 +113,28 @@ export function resolveTaper(
   const cut = TAPER_CUT_MIN + (TAPER_CUT_MAX - TAPER_CUT_MIN) * p;
   return {
     phase: "taper",
-    taperedCalories: Math.round(baseCalories * (1 - cut)),
+    /* Floored. The taper is the THIRD writer of the day's calorie target —
+       `calculateTDEE` and the adaptive learned path are the other two, and
+       both run `floorTargetCalories`, each under a comment saying a deficit
+       "can never" push the target below `min(maintenance, 1200)`. This one
+       multiplied straight through, so it could: a user the rate-derived
+       floor had already clamped TO 1200 (small frame, cut band — maintenance
+       ~1600 less a 550 deficit is 1050 before flooring) came out of the
+       deepest taper week at 1080.
+
+       Floored against `baseCalories` rather than maintenance because that is
+       what this function is given, and it yields the same number wherever it
+       matters: the pre-taper target is itself already floored, so for anyone
+       at or above 1200 this clamps at exactly 1200. Below it — a
+       `customCalorieTarget` the user set themselves, which `tdee.ts`
+       deliberately leaves alone — the taper simply doesn't reduce further,
+       which is the conservative reading of the same rule. It can never
+       raise: the floor is `min(baseCalories, 1200) <= baseCalories`, and the
+       tapered value is below `baseCalories` by construction. */
+    taperedCalories: floorTargetCalories(
+      Math.round(baseCalories * (1 - cut)),
+      baseCalories
+    ),
     carbLoad: false,
     annotation: "Taper week",
   };
