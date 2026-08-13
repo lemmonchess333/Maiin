@@ -126,23 +126,23 @@ function GPSIndicator({
   if (pointCount === 0 || signalQuality === "searching") {
     return (
       <div className="flex items-center gap-2">
-        <div className="size-2 rounded-full bg-yellow-400 animate-pulse" />
-        <span className="text-xs text-yellow-400/80">Acquiring GPS...</span>
+        <div className="size-2 rounded-full bg-warning motion-safe:animate-pulse" />
+        <span className="text-xs text-warning-strong/90">Acquiring GPS...</span>
       </div>
     );
   }
   const color =
     signalQuality === "strong" || signalQuality === "good"
-      ? "bg-green-400"
+      ? "bg-success"
       : signalQuality === "fair"
-        ? "bg-yellow-400"
-        : "bg-red-400";
+        ? "bg-warning"
+        : "bg-destructive";
   const text =
     signalQuality === "weak"
-      ? "text-red-400/80"
+      ? "text-destructive-strong/90"
       : signalQuality === "fair"
-        ? "text-yellow-400/80"
-        : "text-green-400/80";
+        ? "text-warning-strong/90"
+        : "text-success-strong/90";
   return (
     <div className="flex items-center gap-2">
       <div className="flex items-end gap-0.5 h-3">
@@ -1104,7 +1104,7 @@ export default function Run() {
               <path d="M4 12h16M12 4v16" />
             </svg>
           </div>
-          <p className="text-white/40 text-xs animate-pulse">
+          <p className="text-white/40 text-xs motion-safe:animate-pulse">
             Double-tap to unlock
           </p>
         </div>
@@ -1343,12 +1343,12 @@ export default function Run() {
                   : "Getting accurate signal..."}
               </p>
               {gps.permissionState === "denied" ? (
-                <p className="text-xs text-red-400 mt-2 text-center max-w-[280px]">
+                <p className="text-xs text-destructive-strong mt-2 text-center max-w-[280px]">
                   Location is turned off for Tropos. Turn it on in your phone's
                   Settings, then come back and start again.
                 </p>
               ) : gps.error ? (
-                <p className="text-xs text-red-400 mt-2 text-center max-w-[280px]">
+                <p className="text-xs text-destructive-strong mt-2 text-center max-w-[280px]">
                   Can't get a GPS signal right now. Move outside, or track
                   without GPS below.
                 </p>
@@ -1399,7 +1399,7 @@ export default function Run() {
           className="h-full flex items-center justify-center text-white"
           style={{ backgroundColor: THEME.bg }}
         >
-          <span className="text-9xl font-bold animate-pulse">
+          <span className="text-9xl font-bold motion-safe:animate-pulse">
             {countdown || "GO!"}
           </span>
         </div>
@@ -1480,9 +1480,25 @@ export default function Run() {
               className="absolute inset-0"
             />
 
-            {/* Top-centre nav aid (clear of the left GPS indicator + the
-                tempo/interval PaceZoneBar at top-10). When following a route the
-                route guidance supersedes the generic back-to-start aid. */}
+            {/* Top-centre nav aid + run status banners, in ONE flow stack.
+                Each of these used to be its own absolutely-positioned element
+                at a hand-picked `top-*`, which collided in two ways on a real
+                device: `autoPaused` and `bgGapBanner` shared `top-20`, so any
+                overlap of the two rendered them on top of each other; and the
+                GPS-recovering pill sat at `top-32`, far enough down that it
+                landed over the bottom sheet's elapsed-time readout and made
+                the primary number of the whole screen unreadable (device QA,
+                2026-08-12).
+
+                Stacking them removes both classes of bug rather than moving
+                one magic offset to another: the group grows downward from a
+                single anchor, stays inside the map strip above the sheet, and
+                a new banner added later inherits the same behaviour instead
+                of needing its own free vertical slot.
+
+                Clear of the left GPS indicator + the tempo/interval
+                PaceZoneBar at top-10. When following a route the route
+                guidance supersedes the generic back-to-start aid. */}
             <div className="absolute top-3 left-1/2 z-50 flex -translate-x-1/2 flex-col items-center gap-1.5">
               {targetRoute ? (
                 <>
@@ -1502,23 +1518,30 @@ export default function Run() {
                   currentPoint={gps.currentPoint}
                 />
               )}
-            </div>
 
-            {autoPaused && (
-              <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 text-center py-2 px-3 rounded-full bg-yellow-500/20">
-                <p className="text-xs text-yellow-300">
-                  Auto-paused · start moving to resume
-                </p>
-              </div>
-            )}
+              {autoPaused && (
+                <div
+                  className="rounded-full bg-warning-bg px-3 py-2 text-center"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <p className="text-xs text-warning-strong">
+                    Auto-paused · start moving to resume
+                  </p>
+                </div>
+              )}
 
-            {bgGapBanner && (
-              <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 text-center py-2 px-4 rounded-full bg-orange-500/20 animate-pulse">
-                <p className="text-xs text-orange-300">{bgGapBanner}</p>
-              </div>
-            )}
+              {bgGapBanner && (
+                <div
+                  className="rounded-full bg-warning-bg px-4 py-2 text-center motion-safe:animate-pulse"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <p className="text-xs text-warning-strong">{bgGapBanner}</p>
+                </div>
+              )}
 
-            {(() => {
+              {(() => {
               /* GPS-loss banner. isValidReading() drops poor fixes
                silently — the accuracy reading can keep showing the
                last value even when no real fixes are landing. We
@@ -1544,16 +1567,17 @@ export default function Run() {
               if (gapSeconds < 8) return null;
               return (
                 <div
-                  className="absolute top-32 left-1/2 -translate-x-1/2 z-50 text-center py-2 px-4 rounded-full bg-red-500/20 animate-pulse"
+                  className="rounded-full bg-destructive-bg px-4 py-2 text-center motion-safe:animate-pulse"
                   role="status"
                   aria-live="polite"
                 >
-                  <p className="text-xs text-red-300">
+                  <p className="text-xs text-destructive-strong">
                     GPS recovering · last fix {Math.round(gapSeconds)}s ago
                   </p>
                 </div>
               );
-            })()}
+              })()}
+            </div>
 
             {runConfig?.activityType === "guided" && sessionSegments && (
               <GuidedRunOverlay player={player} />

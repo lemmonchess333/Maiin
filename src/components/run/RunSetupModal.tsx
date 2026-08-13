@@ -480,15 +480,24 @@ export default function RunSetupModal({
                   · {weather.description}
                 </span>
               </p>
-              <motion.p
-                key={config.activityType}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.2 }}
-                className="text-xs text-muted-foreground"
-              >
-                {getRunningTip(weather, config.activityType)}
-              </motion.p>
+              {(() => {
+                // Null when conditions warrant no advice — the card then
+                // shows its headline and (if it fires) the heat check, with
+                // no filler line restating the temperature between them.
+                const tip = getRunningTip(weather, config.activityType);
+                if (!tip) return null;
+                return (
+                  <motion.p
+                    key={config.activityType}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.2 }}
+                    className="text-xs text-muted-foreground"
+                  >
+                    {tip}
+                  </motion.p>
+                );
+              })()}
               {/* B2 (heat half): the equal-effort pace equivalent for
                   today's conditions — display + explanation only, the
                   prescription is stated as unchanged. Quiet in cool
