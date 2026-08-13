@@ -1202,6 +1202,13 @@ export function useProgram() {
             exercises,
             totalCalories,
             durationMinutes: effectiveDurationMin,
+            /* The field every SERVER consumer of a workout doc reads —
+               `workoutChallengeIncrements` (total_volume + the hybrid
+               score's kg term) and `liftVolumeKgFor` (lifetime volume).
+               It was computed here for the social activity post and never
+               written onto the workout itself, so all three credited zero
+               for every lift ever logged. */
+            totalVolume: tonnage,
             notes: `${day.dayName} — Programme Week ${programState.weekNumber}`,
             createdAt: Timestamp.now(),
             source: "programme",

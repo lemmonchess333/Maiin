@@ -1,5 +1,7 @@
 "use strict";
 
+const { workoutVolumeKg } = require("./workoutVolume");
+
 /**
  * The ONE mapping from a source activity doc to the lifetime total it
  * contributes — shared by the accrual side (`onWorkoutCreated` /
@@ -31,7 +33,10 @@
 
 /** Lift tonnage (kg) a workout doc contributes to `lifetime.liftVolumeKg`. */
 function liftVolumeKgFor(data) {
-  return Number(data && data.totalVolume) || 0;
+  /* Same omission as the challenge path: `totalVolume` was absent from
+     every workout doc, so lifetime lift volume never moved and any
+     volume-gated badge could never award. */
+  return workoutVolumeKg(data);
 }
 
 /**

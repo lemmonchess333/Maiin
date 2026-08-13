@@ -195,6 +195,10 @@ export default function Routine() {
           exercises,
           totalCalories,
           durationMinutes: effectiveDurationMin,
+          /* Same omission as the programme path: every server consumer of
+             a workout doc reads `totalVolume`, and it was only ever
+             written onto the social activity post. */
+          totalVolume: tonnage,
           notes: `Routine: ${routine.name} (saved from ${routine.sourceAuthorName})`,
           createdAt: Timestamp.now(),
           source: "routine",
