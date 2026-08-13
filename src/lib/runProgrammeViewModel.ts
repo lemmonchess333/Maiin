@@ -135,11 +135,23 @@ export interface RaceCockpitViewModel {
   /** The plan fell below the taper-safe floor, so its weeks are the
    *  finish-safely shape — all easy, no hard sessions. `belowFloor` implies
    *  `compressed`, but the two must be surfaced DIFFERENTLY: the compressed
-   *  copy promises "interval work trimmed and the long-run progression
-   *  shortened", and a below-floor plan has no long-run progression at all
-   *  (measured 2026-08-04: a marathon 3 weeks out emits `easy_30` x3 in every
-   *  non-race week). Carrying only `compressed` to the cockpit meant that
-   *  plan permanently described training it does not contain. */
+   *  copy says "interval work is trimmed and the long-run build is packed
+   *  into fewer weeks", and a below-floor plan has neither intervals nor a
+   *  long-run build (measured 2026-08-04: a marathon 3 weeks out emits
+   *  `easy_30` x3 in every non-race week). Carrying only `compressed` to the
+   *  cockpit means that plan describes training it does not contain.
+   *
+   *  STATUS 2026-08-13 — this comment, and the matching one at the section's
+   *  read site, were both written in the past tense while the bug was still
+   *  live: the field reached the section but was never passed to
+   *  RaceCockpitCard, so the card fell through to the compressed branch for
+   *  every below-floor plan. Now wired, and pinned by a section-level test
+   *  rather than a card-level one (the card's own suite passes the prop
+   *  directly, which is what let the gap survive).
+   *
+   *  The quoted copy above was also stale: it cited "the long-run
+   *  progression shortened", wording RUN-EV-05 replaced because it described
+   *  the compressed band backwards. Requoted from the live string. */
   belowFloor: boolean;
 }
 
