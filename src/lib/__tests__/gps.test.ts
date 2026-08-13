@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { paceMinSec } from "../runLabels";
+import { METRES_PER_MILE } from "../distanceUnits";
 import {
   haversine,
   bearing,
@@ -11,6 +12,7 @@ import {
   rollingPaceSeconds,
   paceAsNumber,
   calculateSplits,
+  splitsForDisplay,
   totalElevationGain,
   totalDistance,
   estimateRunCalories,
@@ -492,6 +494,77 @@ describe("calculateSplits", () => {
     // Each km ≈ 100s (300s over ~3km); generous tolerance for haversine.
     expect(splits[0].time).toBeGreaterThan(50);
     expect(splits[0].time).toBeLessThan(150);
+  });
+});
+
+describe("calculateSplits — the lap, and splitsForDisplay", () => {
+  /* ~5 km due north at a steady 5:00/km. 0.0089983° lat ≈ 1000 m, so five
+     of those is ~5 km; 300 s per km keeps the pace exactly 5:00 whichever
+     way the run is cut. */
+  const baseTime = 1_700_000_000_000;
+  const points: GPSPoint[] = Array.from({ length: 51 }, (_, i) =>
+    makePoint({
+      lat: 51.5 + i * 0.00089983, // ~100 m steps
+      lon: -0.1,
+      altitude: 10,
+      timestamp: baseTime + i * 30000, // 30 s per 100 m = 5:00/km
+    })
+  );
+
+  it("cuts on the lap it is given — miles are FEWER, longer rows", () => {
+    const km = calculateSplits(points, 1000);
+    const mi = calculateSplits(points, METRES_PER_MILE);
+    expect(km.length).toBe(5);
+    expect(mi.length).toBe(3); // 5 km is 3.1 miles
+    // A mile lap takes ~1.61× as long to cover at the same pace.
+    expect(mi[0].time / km[0].time).toBeCloseTo(1.609, 1);
+  });
+
+  it("paceSeconds stays SECONDS PER KM whichever lap is used", () => {
+    /* The property that lets the display convert. `paceAsNumber`
+       normalises to 1000 m, so the same 5:00/km effort reads 300 from both
+       cuts — if a mile lap reported ~483 instead, every downstream
+       comparison (fastest split, colour banding, avg) would be against a
+       different scale depending on the reader's preference. */
+    const km = calculateSplits(points, 1000);
+    const mi = calculateSplits(points, METRES_PER_MILE);
+    expect(km[0].paceSeconds).toBeCloseTo(300, 0);
+    expect(mi[0].paceSeconds).toBeCloseTo(300, 0);
+  });
+
+  it("the lap ordinal counts laps, not kilometres", () => {
+    const mi = calculateSplits(points, METRES_PER_MILE);
+    expect(mi.map((s) => s.km)).toEqual([1, 2, 3]);
+  });
+
+  it("splitsForDisplay recomputes mile laps, and says so", () => {
+    const stored = calculateSplits(points, 1000);
+    const metric = splitsForDisplay("km", points, stored);
+    expect(metric.lapUnit).toBe("km");
+    expect(metric.splits).toBe(stored); // untouched — no needless recompute
+
+    const imperial = splitsForDisplay("mi", points, stored);
+    expect(imperial.lapUnit).toBe("mi");
+    expect(imperial.splits.length).toBe(3);
+  });
+
+  it("falls back to the stored kilometre rows when there is no trace", () => {
+    /* A treadmill or manual run has no points to recut, and there is no
+       honest way to turn kilometre rows into mile ones. It must report
+       lapUnit "km" so the chart labels what it actually shows rather than
+       relabelling rows nobody recut. */
+    const stored = calculateSplits(points, 1000);
+    const noTrace = splitsForDisplay("mi", [], stored);
+    expect(noTrace.lapUnit).toBe("km");
+    expect(noTrace.splits).toBe(stored);
+    expect(splitsForDisplay("mi", null, stored).lapUnit).toBe("km");
+    // A single point is not a trace either.
+    expect(splitsForDisplay("mi", [points[0]], stored).lapUnit).toBe("km");
+  });
+
+  it("survives a missing stored array", () => {
+    expect(splitsForDisplay("km", points, null).splits).toEqual([]);
+    expect(splitsForDisplay("km", points, undefined).splits).toEqual([]);
   });
 });
 

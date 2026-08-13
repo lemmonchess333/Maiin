@@ -1,3 +1,4 @@
+import { METRES_PER_MILE, type DistanceUnit } from "./distanceUnits";
 import { estimateRunBurn } from "./workoutBurn";
 
 export function haversine(
@@ -353,13 +354,31 @@ export function paceAsNumber(
   return (timeSeconds / distanceMeters) * 1000;
 }
 
-export function calculateSplits(points: GPSPoint[]): Split[] {
+/**
+ * Per-lap splits from a GPS trace.
+ *
+ * `lapMetres` is the boundary the run is cut on — 1000 for a metric
+ * reader, `METRES_PER_MILE` for an imperial one. Splits are the one run
+ * surface where the unit is not a formatting choice: the ROWS themselves
+ * are a different length, so a label swap cannot serve both readers.
+ *
+ * `paceSeconds` stays SECONDS PER KILOMETRE whichever lap is used, because
+ * `paceAsNumber` normalises to 1000 m. That is what keeps the storage
+ * convention intact and lets `paceMinSec` convert at display: a lap's pace
+ * is a rate, so it converts independently of how long the lap was. Only
+ * `km` — the lap ORDINAL, named for the metric case it was written in —
+ * counts in laps.
+ */
+export function calculateSplits(
+  points: GPSPoint[],
+  lapMetres: number = 1000
+): Split[] {
   if (points.length < 2) return [];
   const splits: Split[] = [];
   let accDistance = 0;
   let splitStartTime = points[0].timestamp;
   let splitStartIdx = 0;
-  let currentKm = 1;
+  let currentKm = 1; // lap ordinal, not necessarily a kilometre
 
   for (let i = 1; i < points.length; i++) {
     const segStart = accDistance;
@@ -372,15 +391,15 @@ export function calculateSplits(points: GPSPoint[]): Split[] {
     accDistance += segDist;
     const segStartTime = points[i - 1].timestamp;
     const segEndTime = points[i].timestamp;
-    // A single GPS segment can cross multiple km thresholds (signal drop +
+    // A single GPS segment can cross multiple lap thresholds (signal drop +
     // reappear with a multi-km jump). Distribute THIS segment's time
     // proportionally across each km boundary it crosses — interpolate the
     // timestamp at which each boundary was reached. The previous code credited
     // the whole segment time to the first km and then set splitStartTime to
     // points[i].timestamp, so the 2nd+ boundaries in the same segment computed
     // splitTime = 0 → bogus "1km in 0:00" (0:00/km pace) splits.
-    while (accDistance >= currentKm * 1000) {
-      const boundary = currentKm * 1000;
+    while (accDistance >= currentKm * lapMetres) {
+      const boundary = currentKm * lapMetres;
       const frac =
         segDist > 0
           ? Math.min(1, Math.max(0, (boundary - segStart) / segDist))
@@ -399,8 +418,8 @@ export function calculateSplits(points: GPSPoint[]): Split[] {
       splits.push({
         km: currentKm,
         time: splitTime,
-        pace: calculatePace(1000, splitTime),
-        paceSeconds: paceAsNumber(1000, splitTime),
+        pace: calculatePace(lapMetres, splitTime),
+        paceSeconds: paceAsNumber(lapMetres, splitTime),
         elevationGain: Math.round(elevGain),
         elevationLoss: Math.round(elevLoss),
       });
@@ -411,6 +430,33 @@ export function calculateSplits(points: GPSPoint[]): Split[] {
   }
 
   return splits;
+}
+
+/**
+ * The splits to SHOW, and which unit their rows are actually in.
+ *
+ * Two callers need this and must agree, because the interesting case is the
+ * fallback rather than the happy path. A metric reader reads the stored
+ * kilometre rows. An imperial reader gets mile rows recomputed from the
+ * trace — but a run with no trace (treadmill, manual, an old record) has
+ * only the stored kilometre rows to offer, and there is no honest way to
+ * turn those into miles. So it returns the rows AND their unit, and the
+ * chart says "per km" when the two differ instead of relabelling rows it
+ * did not recut.
+ *
+ * Recomputing rather than converting is the whole point: a mile split is a
+ * different CUT of the run, not the same number in another unit.
+ */
+export function splitsForDisplay(
+  unit: DistanceUnit,
+  points: GPSPoint[] | null | undefined,
+  storedSplits: Split[] | null | undefined
+): { splits: Split[]; lapUnit: DistanceUnit } {
+  const stored = storedSplits ?? [];
+  if (unit !== "mi") return { splits: stored, lapUnit: "km" };
+  const trace = points ?? [];
+  if (trace.length < 2) return { splits: stored, lapUnit: "km" };
+  return { splits: calculateSplits(trace, METRES_PER_MILE), lapUnit: "mi" };
 }
 
 export function totalElevationGain(points: GPSPoint[]): number {
