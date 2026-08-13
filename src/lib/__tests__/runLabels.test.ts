@@ -28,6 +28,7 @@ import {
   distanceValue,
   distanceLabel2,
   nearDistanceLabel,
+  elevationLabel,
 } from "../runLabels";
 
 describe("paceLabel", () => {
@@ -180,6 +181,31 @@ describe("distanceValue / distanceLabel2 / nearDistanceLabel", () => {
 
   it("nearDistanceLabel omits the phrase when there isn't one", () => {
     expect(nearDistanceLabel(350, "km")).toBe("350 m");
+  });
+});
+
+describe("elevationLabel", () => {
+  it("is metres for a metric reader and FEET for an imperial one", () => {
+    /* 120 m is 393.7 ft. Elevation converts like a distance — divide — not
+       like a pace; a hill is not taller because you measure it in feet. */
+    expect(elevationLabel(120, "km")).toBe("120m");
+    expect(elevationLabel(120, "mi")).toBe("394ft");
+  });
+
+  it("rounds AFTER converting, so metres stay the stored whole number", () => {
+    expect(elevationLabel(120.4, "km")).toBe("120m");
+    expect(elevationLabel(1, "mi")).toBe("3ft");
+  });
+
+  it("renders a flat run as zero, not a placeholder", () => {
+    /* Zero climb is information — the run was flat. An em-dash would read
+       as "we don't know", which is a different claim. */
+    expect(elevationLabel(0, "km")).toBe("0m");
+    expect(elevationLabel(0, "mi")).toBe("0ft");
+  });
+
+  it("can omit the suffix for callers that render it separately", () => {
+    expect(elevationLabel(120, "mi", false)).toBe("394");
   });
 });
 
