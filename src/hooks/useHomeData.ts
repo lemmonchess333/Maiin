@@ -16,6 +16,7 @@ import type { UserProfile } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { sumMealTotals, type MealTotalsInput } from "@/lib/mealTotals";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
+import { estimateRunCalories } from "@/lib/gps";
 import { calcWeightTrend } from "@/utils/weightTrend";
 import {
   collapseBodyweightLogs,
@@ -199,8 +200,7 @@ export function useHomeData(
             results[1].value.docs.forEach(function (d) {
               const data = d.data();
               if (!isVolumeEligible(data)) return;
-              const distKm = (data.distance || 0) / 1000;
-              rCals += Math.round(weightKg * distKm * 1.036);
+              rCals += estimateRunCalories(data.distance || 0, weightKg);
               // Newest countable finish — the nudge's only evidence a run
               // happened. Same eligibility gate as the calorie tally, so a
               // saved-anyway misclick can't trigger a refuel prompt either.
