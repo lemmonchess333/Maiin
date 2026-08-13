@@ -29,7 +29,7 @@ describe("segmentsFromIntervals", () => {
       restDuration: 90,
       warmupDuration: 600,
       cooldownDuration: 300,
-    });
+    }, "km");
     expect(segs.map((s) => s.type)).toEqual([
       "warmup",
       "hard",
@@ -52,7 +52,7 @@ describe("segmentsFromIntervals", () => {
       workDistance: 400,
       workPace: 250,
       restDuration: 60,
-    });
+    }, "km");
     expect(segs[0].label).toMatch(/@ 4:10\/km/);
     expect(segs[0].paceTarget).toBe(250);
   });
@@ -63,7 +63,7 @@ describe("segmentsFromTempo — the promoted prose", () => {
     const tempos = RUN_TEMPLATES.filter((t) => t.config.tempo);
     expect(tempos.length).toBeGreaterThanOrEqual(3);
     for (const t of tempos) {
-      const segs = segmentsFromTempo(t.config.tempo!);
+      const segs = segmentsFromTempo(t.config.tempo!, "km");
       expect(
         segmentsDurationSeconds(segs),
         `${t.id} structure must equal its stated duration`
@@ -73,7 +73,7 @@ describe("segmentsFromTempo — the promoted prose", () => {
 
   it("tempo_40 renders the 2-block float structure the description promised", () => {
     const t = RUN_TEMPLATES.find((x) => x.id === "tempo_40")!;
-    const segs = segmentsFromTempo(t.config.tempo!, 270);
+    const segs = segmentsFromTempo(t.config.tempo!, "km", 270);
     expect(segs.map((s) => s.type)).toEqual([
       "warmup",
       "moderate",
@@ -89,7 +89,7 @@ describe("segmentsFromTempo — the promoted prose", () => {
 
   it("single-block tempo carries no rep counters", () => {
     const t = RUN_TEMPLATES.find((x) => x.id === "tempo_20")!;
-    const segs = segmentsFromTempo(t.config.tempo!);
+    const segs = segmentsFromTempo(t.config.tempo!, "km");
     const work = segs.find((s) => s.type === "moderate")!;
     expect(work.rep).toBeUndefined();
   });
@@ -124,7 +124,7 @@ describe("segmentsFromEasyWithStrides", () => {
 describe("A2 — segmentsFromTempo at goal pace", () => {
   it("pins the pace, renames the effort, and keeps duration conservation", () => {
     const t = RUN_TEMPLATES.find((x) => x.id === "tempo_40")!;
-    const segs = segmentsFromTempo(t.config.tempo!, 300, { atGoalPace: true });
+    const segs = segmentsFromTempo(t.config.tempo!, "km", 300, { atGoalPace: true });
     // Same shape and the same total — goal pace changes the register,
     // never the dose.
     expect(segmentsDurationSeconds(segs)).toBe(t.estimatedDuration * 60);
@@ -142,7 +142,7 @@ describe("A2 — segmentsFromTempo at goal pace", () => {
 
   it("without the flag, blocks stay tempo-registered and unpinned", () => {
     const t = RUN_TEMPLATES.find((x) => x.id === "tempo_20")!;
-    const segs = segmentsFromTempo(t.config.tempo!, 270);
+    const segs = segmentsFromTempo(t.config.tempo!, "km", 270);
     const work = segs.find((s) => s.type === "moderate")!;
     expect(work.pacePinned).toBeUndefined();
     expect(work.label).toContain("min tempo");
@@ -165,7 +165,7 @@ describe("A2 — racePaceBlockKm", () => {
 
 describe("A2 — segmentsFromLongWithRacePace", () => {
   it("conserves the total distance exactly across easy + race-pace block", () => {
-    const segs = segmentsFromLongWithRacePace(15, 5, 300);
+    const segs = segmentsFromLongWithRacePace(15, 5, 300, "km");
     const meters = segs.reduce(
       (a, s) => a + (s.target.kind === "distance" ? s.target.meters : 0),
       0
@@ -175,13 +175,20 @@ describe("A2 — segmentsFromLongWithRacePace", () => {
   });
 
   it("the block carries the pinned goal pace and the RACE PACE eyebrow", () => {
-    const segs = segmentsFromLongWithRacePace(20, 7, 285);
+    const segs = segmentsFromLongWithRacePace(20, 7, 285, "km");
     const block = segs[1];
     expect(block.target).toEqual({ kind: "distance", meters: 7000 });
     expect(block.paceTarget).toBe(285);
     expect(block.pacePinned).toBe(true);
     expect(block.eyebrow).toBe("RACE PACE");
-    expect(block.label).toBe("7K @ 4:45/km");
+    expect(block.label).toBe("7 km @ 4:45/km");
+    /* Same session read in miles: the block is the same DISTANCE, so its
+       metre target is untouched — only the label and the pace convert.
+       (7 km is 4.3 mi; 4:45/km is 7:39/mi.) */
+    const mi = segmentsFromLongWithRacePace(20, 7, 285, "mi");
+    const miBlock = mi.find((x) => x.type === "moderate")!;
+    expect(miBlock.label).toBe("4.3 mi @ 7:39/mi");
+    expect(miBlock.target).toEqual(block.target);
     expect(block.cue).toMatch(/race-pace block/i);
     // The easy lead-in tells the runner what's coming.
     expect(segs[0].cue).toMatch(/race-pace block comes at the end/i);

@@ -89,6 +89,7 @@ describe("computePlanMetadata — programme today_plan", () => {
     // Mon: long_10k.
     const days = [makeRunDay(MONDAY, "long_10k", "long")];
     const { metadata, prefill } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: MONDAY,
       runPlan: racePlan,
@@ -119,6 +120,7 @@ describe("computePlanMetadata — programme today_plan", () => {
     // target pace on the work blocks.
     const tempoDay = [makeRunDay(MONDAY, "tempo_20", "tempo")];
     const tempo = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: MONDAY,
       runPlan: racePlan,
@@ -137,6 +139,7 @@ describe("computePlanMetadata — programme today_plan", () => {
     // Strides: the easy variant decomposes into easy + stride/walk pairs.
     const strideDay = [makeRunDay(MONDAY, "easy_40_strides", "easy")];
     const strides = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: MONDAY,
       runPlan: racePlan,
@@ -151,6 +154,7 @@ describe("computePlanMetadata — programme today_plan", () => {
     // Plain easy: NO segments — unstructured stays unstructured.
     const plainDay = [makeRunDay(MONDAY, "easy_30", "easy")];
     const plain = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: MONDAY,
       runPlan: racePlan,
@@ -164,6 +168,7 @@ describe("computePlanMetadata — programme today_plan", () => {
   it("structured user gets prefill with a structured-mode strip", () => {
     const days = [makeRunDay(TUESDAY, "tempo_20", "tempo")];
     const { metadata, prefill } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "structured",
       todayDayIndex: TUESDAY,
       runPlan: structuredPlan,
@@ -181,6 +186,7 @@ describe("computePlanMetadata — programme today_plan", () => {
   it("userOverride wins over the scheduled templateId", () => {
     const days = [makeRunDay(MONDAY, "long_10k", "long", false, "tempo_20")];
     const { metadata, prefill } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: MONDAY,
       runPlan: racePlan,
@@ -200,6 +206,7 @@ describe("computePlanMetadata — programme rest_day", () => {
   it("returns rest_day metadata when today has no matching runDay", () => {
     const days = [makeRunDay(MONDAY, "long_10k", "long")];
     const { metadata, prefill } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: WEDNESDAY, // not Monday
       runPlan: racePlan,
@@ -222,6 +229,7 @@ describe("computePlanMetadata — programme completed_day", () => {
   it("returns completed_day metadata when today's planned run is done", () => {
     const days = [makeRunDay(MONDAY, "long_10k", "long", /*completed*/ true)];
     const { metadata, prefill } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: MONDAY,
       runPlan: racePlan,
@@ -243,6 +251,7 @@ describe("computePlanMetadata — URL ?template= override", () => {
   it("URL template wins absolutely over programme prefill", () => {
     const days = [makeRunDay(MONDAY, "long_10k", "long")];
     const { metadata, prefill } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: MONDAY,
       runPlan: racePlan,
@@ -264,6 +273,7 @@ describe("computePlanMetadata — URL ?template= override", () => {
   it("URL template with no planned day today → plannedTemplateId stays null", () => {
     const days = [makeRunDay(TUESDAY, "tempo_20", "tempo")];
     const { metadata } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: WEDNESDAY,
       runPlan: racePlan,
@@ -281,6 +291,7 @@ describe("computePlanMetadata — URL ?template= override", () => {
   // Scenario 13: ?template=foo&type=bar — template wins.
   it("?template= beats ?type= when both are present", () => {
     const { metadata, prefill } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "freeform",
       todayDayIndex: MONDAY,
       runPlan: undefined,
@@ -295,6 +306,7 @@ describe("computePlanMetadata — URL ?template= override", () => {
 
   it("missing URL template ID falls through to freeform (no fake fallback)", () => {
     const { metadata, prefill } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "freeform",
       todayDayIndex: MONDAY,
       runPlan: undefined,
@@ -314,6 +326,7 @@ describe("computePlanMetadata — URL ?type= override", () => {
   it("?type= overrides programme but actualTemplateId stays null", () => {
     const days = [makeRunDay(MONDAY, "long_10k", "long")];
     const { metadata, prefill } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: MONDAY,
       runPlan: racePlan,
@@ -334,6 +347,7 @@ describe("computePlanMetadata — freeform", () => {
   // Scenario 10: freeform user, no plan strip, existing behaviour.
   it("returns freeform metadata for a freeform user with no URL", () => {
     const { metadata, prefill } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "freeform",
       todayDayIndex: MONDAY,
       runPlan: undefined,
@@ -349,6 +363,7 @@ describe("computePlanMetadata — freeform", () => {
 
   it("undefined profileRunMode defaults to freeform", () => {
     const { metadata } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: undefined,
       todayDayIndex: MONDAY,
       runPlan: undefined,
@@ -372,6 +387,7 @@ describe("computePlanMetadata — race-prep elapsed", () => {
     };
     const days = [makeRunDay(MONDAY, "long_10k", "long")];
     const { metadata, prefill } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: MONDAY,
       runPlan: elapsedPlan,
@@ -394,6 +410,7 @@ describe("computePlanMetadata — race-prep elapsed", () => {
     };
     const days = [makeRunDay(MONDAY, "long_10k", "long")];
     const { metadata } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: MONDAY,
       runPlan: elapsedPlan,
@@ -411,6 +428,7 @@ describe("computePlanMetadata — missing template in registry", () => {
   it("missing programme templateId returns freeform metadata, no prefill", () => {
     const days = [makeRunDay(MONDAY, "does_not_exist", "long")];
     const { metadata, prefill } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: MONDAY,
       runPlan: racePlan,
@@ -683,6 +701,7 @@ describe("computePlanMetadata — ?scheduledRunId=<id> URL pin", () => {
       }),
     ];
     const { metadata } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "structured",
       todayDayIndex: MONDAY,
       runPlan: structuredPlan,
@@ -713,6 +732,7 @@ describe("computePlanMetadata — ?scheduledRunId=<id> URL pin", () => {
       }),
     ];
     const { metadata, prefill } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: WEDNESDAY,
       runPlan: racePlan,
@@ -740,6 +760,7 @@ describe("computePlanMetadata — ?scheduledRunId=<id> URL pin", () => {
       }),
     ];
     const { metadata } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "structured",
       todayDayIndex: MONDAY,
       runPlan: structuredPlan,
@@ -766,6 +787,7 @@ describe("computePlanMetadata — ?scheduledRunId=<id> URL pin", () => {
       }),
     ];
     const { metadata } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "structured",
       todayDayIndex: MONDAY,
       runPlan: structuredPlan,
@@ -797,6 +819,7 @@ describe("computePlanMetadata — ?scheduledRunId=<id> URL pin", () => {
       }),
     ];
     const { metadata } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "structured",
       todayDayIndex: WEDNESDAY,
       runPlan: structuredPlan,
@@ -838,6 +861,7 @@ describe("spec v7 #8 — scheduledRunId completes only that scheduled run", () =
       }),
     ];
     const { metadata } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "structured",
       todayDayIndex: WEDNESDAY,
       runPlan: structuredPlan,
@@ -876,6 +900,7 @@ describe("spec v7 #8 — scheduledRunId completes only that scheduled run", () =
       }),
     ];
     const { metadata } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "structured",
       todayDayIndex: MONDAY,
       runPlan: structuredPlan,
@@ -911,6 +936,7 @@ describe("spec v7 #9 — ?template= fallback never completes the WRONG scheduled
       }),
     ];
     const { metadata } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "structured",
       todayDayIndex: TUESDAY,
       runPlan: structuredPlan,
@@ -951,6 +977,7 @@ describe("spec v7 #9 — ?template= fallback never completes the WRONG scheduled
       }),
     ];
     const { metadata } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: TUESDAY,
       runPlan: racePlan,
@@ -988,6 +1015,7 @@ describe("PR-0a — prefill distance unit (metres)", () => {
     const type = templateId.startsWith("long_") ? "long" : "race";
     const days = [makeRunDay(MONDAY, templateId, type)];
     const { prefill } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: MONDAY,
       runPlan: racePlan,
@@ -1132,6 +1160,7 @@ describe("Adaptive Paces — prescribed pace personalization", () => {
 
   it("personalizes a tempo target pace from the user's pace table", () => {
     const { prefill } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: 1,
       runPlan: undefined,
@@ -1149,6 +1178,7 @@ describe("Adaptive Paces — prescribed pace personalization", () => {
 
   it("falls back to the template's hardcoded pace with no pace table", () => {
     const { prefill } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: 1,
       runPlan: undefined,
@@ -1162,6 +1192,7 @@ describe("Adaptive Paces — prescribed pace personalization", () => {
 
   it("leaves distance-based templates (long/race) untouched by personalization", () => {
     const { prefill } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: 1,
       runPlan: undefined,
@@ -1182,6 +1213,7 @@ describe("Adaptive Paces — interval work-pace personalization", () => {
 
   it("personalizes interval work pace from the pace table", () => {
     const { prefill } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: 1,
       runPlan: undefined,
@@ -1196,6 +1228,7 @@ describe("Adaptive Paces — interval work-pace personalization", () => {
 
   it("leaves interval work pace undefined with no pace table", () => {
     const { prefill } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: 1,
       runPlan: undefined,
@@ -1222,6 +1255,7 @@ describe("A2 — the goal time turns into training", () => {
 
   it("build-phase long run ≥12K closes with a pinned race-pace block", () => {
     const { prefill } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: MONDAY,
       runPlan: halfPlan(5),
@@ -1244,6 +1278,7 @@ describe("A2 — the goal time turns into training", () => {
 
   it("base-phase long run stays a plain unstructured long", () => {
     const { prefill } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: MONDAY,
       runPlan: halfPlan(1),
@@ -1257,6 +1292,7 @@ describe("A2 — the goal time turns into training", () => {
 
   it("taper-phase long run stays easy; taper tempo runs at goal pace", () => {
     const long = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: MONDAY,
       runPlan: halfPlan(7),
@@ -1268,6 +1304,7 @@ describe("A2 — the goal time turns into training", () => {
     expect(long.prefill.segments).toBeUndefined();
 
     const tempo = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: MONDAY,
       runPlan: halfPlan(7),
@@ -1288,6 +1325,7 @@ describe("A2 — the goal time turns into training", () => {
       vdot: null,
     });
     const { prefill } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: MONDAY,
       runPlan: halfPlan(4),
@@ -1310,6 +1348,7 @@ describe("A2 — the goal time turns into training", () => {
       currentWeek: 3,
     };
     const long = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: MONDAY,
       runPlan: fivekPlan,
@@ -1321,6 +1360,7 @@ describe("A2 — the goal time turns into training", () => {
     expect(long.prefill.segments).toBeUndefined();
 
     const tempo = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: MONDAY,
       runPlan: fivekPlan,
@@ -1335,6 +1375,7 @@ describe("A2 — the goal time turns into training", () => {
 
   it("no target time → the pre-A2 prefill, unchanged", () => {
     const { prefill } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: MONDAY,
       runPlan: halfPlan(5),
@@ -1349,6 +1390,7 @@ describe("A2 — the goal time turns into training", () => {
 
   it("build-phase long run under 12K carries no block", () => {
     const { prefill } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: MONDAY,
       runPlan: halfPlan(5),
@@ -1362,6 +1404,7 @@ describe("A2 — the goal time turns into training", () => {
 
   it("recovery phase suppresses all goal-pace enrichment", () => {
     const { prefill } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: MONDAY,
       runPlan: { ...halfPlan(5), phase: "recovery" },
@@ -1375,6 +1418,7 @@ describe("A2 — the goal time turns into training", () => {
 
   it("the URL-template path enriches the same as today_plan", () => {
     const { prefill } = computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: MONDAY,
       runPlan: halfPlan(5),
@@ -1409,6 +1453,7 @@ describe("A2 — the long-shot feasibility gate", () => {
     vdot: number | null
   ) =>
     computePlanMetadata({
+      displayUnit: "km",
       profileRunMode: "race_prep",
       todayDayIndex: MONDAY,
       runPlan: halfPlan,

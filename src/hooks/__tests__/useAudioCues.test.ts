@@ -62,6 +62,17 @@ afterEach(() => {
 
 import { useAudioCues } from "../useAudioCues";
 
+/* The cue hook now speaks in the listener's unit, which resolves from the
+   auth profile — and `useAuth` throws outside an AuthProvider, which this
+   suite doesn't render. Mocked to metric so every existing assertion about
+   kilometre markers and "per kilometre" phrasing still describes what the
+   hook is being asked to do; the miles behaviour is pinned in
+   runCueCopy.test.ts against the pure copy functions. */
+vi.mock("@/hooks/useDistanceUnit", () => ({
+  useDistanceUnit: () => "km" as const,
+}));
+
+
 function mountCues(frequency: "every_km" | "every_500m" = "every_km") {
   return renderHook(() => useAudioCues(true, frequency));
 }

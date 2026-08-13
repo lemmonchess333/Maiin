@@ -21,9 +21,8 @@
  *
  * The allow-list is for genuine non-display uses. It is not a place to park
  * a surface you did not want to convert: if a surface should stay metric,
- * say so with `PRESET_DISTANCES_ARE_KM` / `SPLIT_LAP_IS_METRIC` /
- * `GENERATION_TIME_UNIT` at the point of use, which reads as a decision
- * rather than an omission.
+ * say so with `SPLIT_LAP_IS_METRIC` / `SHARE_CARD_IS_METRIC` at the point
+ * of use, which reads as a decision rather than an omission.
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync, globSync } from "node:fs";
@@ -120,8 +119,8 @@ describe("run distances are formatted through runLabels, not inline", () => {
         `distanceValue / nearDistanceLabel from src/lib/runLabels.ts — they ` +
         `take the unit as a REQUIRED argument, so a miles reader can't be ` +
         `silently left on km. If a surface must stay metric, mark it at the ` +
-        `point of use with PRESET_DISTANCES_ARE_KM, SPLIT_LAP_IS_METRIC ` +
-        `or GENERATION_TIME_UNIT:\n  ` +
+        `point of use with SPLIT_LAP_IS_METRIC or ` +
+        `SHARE_CARD_IS_METRIC:\n  ` +
         hits.join("\n  ")
     ).toEqual([]);
   });

@@ -33,7 +33,7 @@ describe("SessionStructureView — intervals", () => {
           restDuration: 90,
           warmupDuration: 600,
           cooldownDuration: 300,
-        })}
+        }, "km")}
       />
     );
     expect(screen.getByText("Warm-up")).toBeInTheDocument();
@@ -53,7 +53,7 @@ describe("SessionStructureView — intervals", () => {
           reps: 4,
           workDistance: 400,
           restDuration: 60,
-        })}
+        }, "km")}
       />
     );
     expect(screen.queryByText("Warm-up")).not.toBeInTheDocument();

@@ -143,32 +143,6 @@ export function paceIn(secPerKm: number, unit: DistanceUnit): number {
 
 
 /**
- * The unit for strings baked at plan-GENERATION time, not at render.
- *
- * ONE module still needs this: `runSegments.ts`, which bakes pace into
- * segment LABELS and spoken CUES while a plan is generated. Those strings
- * are produced far from any profile — `runPlanMetadata.ts` calls the same
- * builders to fill `prefill.segments` — and, being audio, they also need
- * the spoken noun ("kilometre") to move with the number, which is a copy
- * change rather than a formatting one. The fix is for segments to carry
- * NUMBERS and format at render; that is its own change.
- *
- * This list was longer, and four of its five entries were wrong. Checking
- * each module's CALL SITES rather than trusting the classification showed
- * `paceVerdict`, `heatAdjustment`, `chooserPaceFor` and `raceTargetVerdict`
- * are each reached from exactly one component that already had the unit in
- * scope, so they take it as a parameter now. Only measure a boundary from
- * where the code is actually called.
- *
- * The remaining case is explicitly metric via this name rather than a bare
- * `"km"`, so finishing it is one grep. A miles user would see converted
- * values everywhere the display layer reaches and metric inside a running
- * session's segment labels — which is why no Settings toggle exposes the
- * preference yet.
- */
-export const GENERATION_TIME_UNIT: DistanceUnit = "km";
-
-/**
  * The lap a run's splits are cut on, in metres.
  *
  * Splits were the one surface a label swap could not fix — the ROWS are a
@@ -190,6 +164,19 @@ export function lapMetresFor(unit: DistanceUnit): number {
  * labelled as such.
  */
 export const SPLIT_LAP_IS_METRIC = 1000;
+
+/**
+ * How far from the finish the "final stretch" cue fires, and what it is
+ * called out loud.
+ *
+ * A trigger DISTANCE, not a label — the same class of decision as the
+ * preset chips. 500 m is "the last half kilometre" to a metric runner;
+ * converting it gives 0.31 miles, which is not a landmark anyone runs to.
+ * The imperial equivalent is the quarter mile, which is one.
+ */
+export function finalStretchM(unit: DistanceUnit): number {
+  return unit === "mi" ? METRES_PER_MILE / 4 : 500;
+}
 
 /**
  * Shoe replacement thresholds, in the KILOMETRES the shoe doc stores.
@@ -252,6 +239,24 @@ export const DISTANCE_TARGET_MAX_M = 100000;
 /** Short distance suffix — `km` / `mi`. */
 export function distanceUnitLabel(unit: DistanceUnit): string {
   return unit === "mi" ? "mi" : "km";
+}
+
+/**
+ * The SPOKEN unit noun — "kilometre" / "mile", pluralised.
+ *
+ * Audio is the one surface where converting the number is not enough. A
+ * text label can say "mi" beside a figure; a voice has to say the word, and
+ * "three point one kilometres" spoken over a mile figure is worse than
+ * either consistent answer — the runner hears a unit that contradicts the
+ * watch on their wrist.
+ *
+ * Written out in full rather than abbreviated because the whole cue module
+ * is written for the EAR: TTS engines mangle "km", and "per K" is not what
+ * a coach says.
+ */
+export function spokenDistanceUnit(unit: DistanceUnit, count: number): string {
+  const noun = unit === "mi" ? "mile" : "kilometre";
+  return count === 1 ? noun : `${noun}s`;
 }
 
 /** Pace suffix — `/km` / `/mi`. */
