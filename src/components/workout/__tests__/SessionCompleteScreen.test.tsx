@@ -48,11 +48,14 @@ function exercise(name: string, sets: number): ProgramExercise {
   } as unknown as ProgramExercise;
 }
 
-function renderScreen(setLogs: Array<Array<Record<string, unknown>>>) {
+function renderScreen(
+  setLogs: Array<Array<Record<string, unknown>>>,
+  exercises: ProgramExercise[] = [exercise("Cable Crunch", 2)]
+) {
   return render(
     <SessionCompleteScreen
       dayName="Legs — Deadlift Focus"
-      exercises={[exercise("Cable Crunch", 2)]}
+      exercises={exercises}
       setLogs={setLogs as never}
       firedPRs={new Map()}
       sessionDurationMinutes={24}
@@ -91,6 +94,52 @@ describe("SessionCompleteScreen — header stats agree with each other", () => {
       ],
     ]);
     expect(screen.getByText("1/2 sets")).toBeInTheDocument();
+  });
+
+  it("VOLUME excludes a timed hold, and agrees with what gets saved", () => {
+    /* A hold's `reps` is a DURATION, so weight × reps is not a weight
+       moved. Every writer excludes timed exercises from the `totalVolume`
+       it persists — but this stat FLATTENED `setLogs`, throwing away the
+       exercise each set belonged to, and `repUnit` lives on the exercise.
+       So the headline the user reads on finishing and the figure saved
+       moments later disagreed by the whole hold: 240 vs "1.4k" here. */
+    const plank = {
+      ...exercise("Weighted Plank", 1),
+      exerciseId: "weighted-plank",
+      repUnit: "seconds",
+    } as unknown as ProgramExercise;
+
+    renderScreen(
+      [
+        [
+          { reps: 12, weight: 10, completed: true, type: "working" },
+          { reps: 12, weight: 10, completed: true, type: "working" },
+        ],
+        [{ reps: 60, weight: 20, completed: true, type: "working" }],
+      ],
+      [exercise("Cable Crunch", 2), plank]
+    );
+
+    expect(screen.getByText("240")).toBeInTheDocument();
+    expect(screen.queryByText("1.4k")).toBeNull();
+    // The hold still happened: it counts toward SETS (3) and is listed.
+    expect(screen.getByText("Weighted Plank")).toBeInTheDocument();
+  });
+
+  it("still counts a loaded exercise that is not timed", () => {
+    /* The guard keys on repUnit, and the type admits "reps" as an
+       explicit value — so a truthiness check would drop ordinary work.
+       An exclusion that over-fires costs what the omission did. */
+    const repsMarked = {
+      ...exercise("Cable Row", 1),
+      repUnit: "reps",
+    } as unknown as ProgramExercise;
+
+    renderScreen(
+      [[{ reps: 10, weight: 50, completed: true, type: "working" }]],
+      [repsMarked]
+    );
+    expect(screen.getByText("500")).toBeInTheDocument();
   });
 
   it("renders the day name without the raw dayType suffix", () => {
