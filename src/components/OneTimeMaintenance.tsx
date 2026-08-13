@@ -18,6 +18,11 @@ import { logger } from "@/lib/logger";
  *     no UI, fails silently — if the call breaks, the next session
  *     retries automatically because the flag is only set on success.
  *
+ *   liftVolumeRecredit.v1 — replays lift history through the volume
+ *     metrics that credited zero while `totalVolume` was missing from
+ *     the workout doc. Unlike the other two this is PAGED, so it also
+ *     persists a resume cursor; see the block below.
+ *
  * Mounted once in App.tsx alongside ShareComposerSheet.
  *
  * No UI surface intentional: users shouldn't have to learn about
@@ -77,6 +82,111 @@ export default function OneTimeMaintenance() {
         // Most likely cause is the user being offline — no point
         // burning a slot on a transient failure.
         logger.warn("[OneTimeMaintenance] muscleGroupsBackfill skipped", err);
+      }
+    };
+
+    /* liftVolumeRecredit.v1 — re-credits the lift volume that was never
+       counted.
+
+       `totalVolume` was computed client-side and written only onto the
+       social activity post, never onto `users/{uid}/workouts/{id}`, so
+       every server consumer read zero: the `total_volume` challenge
+       metric, the hybrid score's kg term, and lifetime lift volume. The
+       writers and consumers are fixed, but existing totals stay wrong
+       until something replays the history — and that replay is a live-data
+       action nobody was going to run by hand.
+
+       Safe to replay because both guards failed OPEN rather than recording
+       a false success (the callable's own header sets this out), so the
+       markers it writes are the FIRST for these metrics; a second pass
+       finds them and no-ops.
+
+       PAGED, and the cursor is persisted. The callable scans one bounded
+       page per invocation to stay inside its timeout, and a page-full
+       response carries the id to resume from. The cursor is written to
+       localStorage after every page so a session that ends mid-drain
+       resumes where it stopped rather than restarting — without that, a
+       history longer than MAX_PAGES could never finish, only re-do its
+       first pages forever. */
+    const RECREDIT_FLAG = `${uid}:tropos.liftVolumeRecredited.v1`;
+    const RECREDIT_CURSOR = `${uid}:tropos.liftVolumeRecredit.cursor.v1`;
+    /* A bound, not a budget: the loop normally ends on `truncated: false`.
+       This only stops a runaway if the callable ever stopped advancing —
+       which is exactly how the pre-#2048 version behaved, since it ignored
+       the cursor and returned `truncated: true` forever. */
+    const MAX_PAGES = 20;
+    const runRecredit = async () => {
+      try {
+        if (localStorage.getItem(RECREDIT_FLAG)) return;
+      } catch {
+        return;
+      }
+      try {
+        const fns = getFunctions();
+        const fn = httpsCallable<
+          { startAfter?: string },
+          {
+            ok: boolean;
+            scanned: number;
+            withVolume: number;
+            lifetimeKg: number;
+            truncated: boolean;
+            cursor: string | null;
+          }
+        >(fns, "recreditMyLiftVolume");
+
+        let cursor: string | null = null;
+        try {
+          cursor = localStorage.getItem(RECREDIT_CURSOR);
+        } catch {
+          /* no stored cursor — start from the first page */
+        }
+
+        for (let page = 0; page < MAX_PAGES; page++) {
+          const r = await fn(cursor ? { startAfter: cursor } : {});
+          if (cancelled) return;
+          if (!r.data?.ok) return;
+          cursor = r.data.cursor;
+          if (!r.data.truncated) {
+            try {
+              localStorage.setItem(RECREDIT_FLAG, "1");
+              localStorage.removeItem(RECREDIT_CURSOR);
+            } catch {
+              /* Flag unwritable: the replay ran, we just can't record it.
+                 Next session re-runs and the markers make it a no-op. */
+            }
+            return;
+          }
+          /* Truncated, but the server gave nothing to resume from — so
+             asking again would re-request the identical page. That is not
+             hypothetical: the client and the Cloud Functions deploy run in
+             PARALLEL, and a functions deploy can silently not land at all
+             (the bundle-hash dedup this repo documents), so a new client
+             talking to the pre-#2048 callable is a real and possibly
+             long-lived state. Measured, it spent the full page bound on
+             identical empty-payload calls every sign-in. Stop instead: the
+             flag stays unset, so it retries — and succeeds — once the
+             function catches up. */
+          if (!cursor) {
+            logger.warn(
+              "[OneTimeMaintenance] liftVolumeRecredit: truncated with no cursor — server predates paging; retrying next session"
+            );
+            return;
+          }
+          try {
+            localStorage.setItem(RECREDIT_CURSOR, cursor);
+          } catch {
+            /* Cursor unwritable: this drain still completes in-memory; only
+               a mid-drain interruption would restart from the beginning. */
+          }
+        }
+        logger.warn(
+          "[OneTimeMaintenance] liftVolumeRecredit hit the page bound; resuming next session"
+        );
+      } catch (err) {
+        // No flag set, so the next session retries. Offline is the usual
+        // cause and the persisted cursor means a retry resumes.
+        logger.warn("[OneTimeMaintenance] liftVolumeRecredit skipped", err);
       }
     };
 
@@ -155,6 +265,7 @@ export default function OneTimeMaintenance() {
       firedRef.current = true;
       void run();
       void runLowerBackfill();
+      void runRecredit();
     }, DEBOUNCE_MS);
 
     return () => {

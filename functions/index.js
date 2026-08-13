@@ -196,11 +196,20 @@ if (process.env.FUNCTIONS_EMULATOR !== "true") {
 const DEFAULT_HTTP_CAP = { maxInstances: 100 };
 const ADMIN_HTTP_CAP = { maxInstances: 10 };
 
-/* Bound on the one-shot lift-volume re-credit's history scan. 500 keeps a
-   single invocation inside the callable timeout; a longer history simply
-   re-runs, and the response says `truncated` rather than reporting a
-   partial pass as complete. */
-const RECREDIT_WORKOUT_LIMIT = 500;
+/* PAGE size for the one-shot lift-volume re-credit's history scan. 500 keeps
+   a single invocation inside the callable timeout; a longer history is
+   covered by re-calling with the returned `cursor`.
+
+   It was a bare `.limit()` with no ordering and no cursor, above a comment
+   claiming "a longer history simply re-runs". That was false, and provably
+   so: an unordered Firestore query is document-ID ascending, deterministic,
+   and repeatable — so every re-run scanned the IDENTICAL first 500 docs and
+   the rest of the history was unreachable no matter how many times it ran.
+   Workout ids are `programme-<completionId>` / `routine-<completionId>`, so
+   that subset is not even the oldest 500; it is an arbitrary slice. The
+   idempotency markers made the re-runs safe, which is exactly what made the
+   dead end quiet. */
+const RECREDIT_PAGE_SIZE = 500;
 const TRIGGER_CAP = { maxInstances: 50 };
 
 // ══════════════════════════════════════════════
@@ -5321,10 +5330,19 @@ exports.backfillMyActivityCategories = functions
  *
  * Idempotent by construction: a SECOND run finds the markers this one
  * wrote and no-ops. Self-service (credits the caller only), following
- * `backfillMyActivityCategories` — a one-shot fix, not a feature, so it
- * has no UI:
+ * `backfillMyActivityCategories` — a one-shot fix, not a feature. It is
+ * driven from `OneTimeMaintenance`, which pages it to completion:
  *
- *   await httpsCallable(fns, "recreditMyLiftVolume")();
+ *   let cursor;
+ *   do {
+ *     const r = await httpsCallable(fns, "recreditMyLiftVolume")({ startAfter: cursor });
+ *     cursor = r.data.cursor;
+ *   } while (r.data.truncated);
+ *
+ * PAGING IS THE CALLER'S JOB, and it has to be, because one invocation
+ * has to fit inside the callable timeout. Pass the previous response's
+ * `cursor` back as `startAfter`; a response with `truncated: false` means
+ * the history is exhausted.
  */
 exports.recreditMyLiftVolume = functions
   .runWith(DEFAULT_HTTP_CAP)
@@ -5345,12 +5363,33 @@ exports.recreditMyLiftVolume = functions
       workoutVolume.isRecreditMetric(d.data().metric)
     );
 
-    const workoutsSnap = await db
+    /* Ordered EXPLICITLY by document id, and resumable. An unordered
+       `.limit()` is document-ID ascending anyway — the point is that it is
+       also repeatable, so without a cursor every re-run re-scanned the same
+       page and a history past one page could never be reached. Stating the
+       order makes the cursor meaningful rather than relying on an implicit
+       default. */
+    const startAfter = data && data.startAfter;
+    if (startAfter !== undefined && startAfter !== null) {
+      if (
+        typeof startAfter !== "string" ||
+        !startAfter ||
+        startAfter.includes("/")
+      ) {
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          "startAfter must be a workout document id."
+        );
+      }
+    }
+    let workoutsQuery = db
       .collection("users")
       .doc(uid)
       .collection("workouts")
-      .limit(RECREDIT_WORKOUT_LIMIT)
-      .get();
+      .orderBy(admin.firestore.FieldPath.documentId())
+      .limit(RECREDIT_PAGE_SIZE);
+    if (startAfter) workoutsQuery = workoutsQuery.startAfter(startAfter);
+    const workoutsSnap = await workoutsQuery.get();
 
     let scanned = 0;
     let withVolume = 0;
@@ -5386,13 +5425,19 @@ exports.recreditMyLiftVolume = functions
       }
     }
 
+    const truncated = scanned === RECREDIT_PAGE_SIZE;
+    const cursor = workoutsSnap.docs.length
+      ? workoutsSnap.docs[workoutsSnap.docs.length - 1].id
+      : null;
+
     console.log("recreditMyLiftVolume", {
       uid,
       scanned,
       withVolume,
       lifetimeKg,
       challengeApplies,
-      truncated: scanned === RECREDIT_WORKOUT_LIMIT,
+      truncated,
+      startAfter: startAfter || null,
     });
     return {
       ok: true,
@@ -5400,9 +5445,12 @@ exports.recreditMyLiftVolume = functions
       withVolume,
       lifetimeKg,
       // Says so rather than silently covering part of the history — the
-      // "no silent caps" rule. A truncated run can simply be re-run;
-      // the markers make the second pass skip what the first credited.
-      truncated: scanned === RECREDIT_WORKOUT_LIMIT,
+      // "no silent caps" rule.
+      truncated,
+      /* The id to pass back as `startAfter` to continue. This is what makes
+         `truncated` actionable: without it the caller could see the flag and
+         still have no way to reach the next page. */
+      cursor,
     };
   });
 
