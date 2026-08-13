@@ -22,6 +22,7 @@ import {
   type DistanceUnit,
   distanceUnitLabel,
   paceUnitLabel,
+  lapMetresFor,
   METRES_PER_MILE,
 } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
@@ -83,7 +84,13 @@ const SHEET_SPRING = { type: "spring" as const, stiffness: 520, damping: 44 };
    no-op on iOS Safari — the iOS path now fires correctly. */
 
 // ── Live splits strip (last 3) ────────────────────────────────────────────────
-function SplitsStrip({ splits }: { splits: Split[] }) {
+function SplitsStrip({
+  splits,
+  unit,
+}: {
+  splits: Split[];
+  unit: DistanceUnit;
+}) {
   if (splits.length === 0) return null;
   const last3 = splits.slice(-3);
   // Best pace across all splits to determine colour
@@ -119,7 +126,7 @@ function SplitsStrip({ splits }: { splits: Split[] }) {
                 fontFamily: "var(--font-mono)",
               }}
             >
-              {s.pace}
+              {paceMinSec(s.paceSeconds, unit)}
             </p>
             <p
               style={{
@@ -128,7 +135,7 @@ function SplitsStrip({ splits }: { splits: Split[] }) {
                 marginTop: 1,
               }}
             >
-              km {s.km}
+              {distanceUnitLabel(unit)} {s.km}
             </p>
           </div>
         );
@@ -316,7 +323,13 @@ export default function RunBottomSheet({
   const livePace = livePaceS === null ? "--:--" : paceMinSec(livePaceS, unit);
   const calories = estimateRunCalories(distance, weightKg);
   const elevation = totalElevationGain(points);
-  const splits = useMemo(() => calculateSplits(points), [points]);
+  /* Live splits are cut on the READER's lap — a mile runner watching the
+     strip wants mile splits, not kilometres relabelled. The SAVED record
+     stays metric (Run.tsx uses SPLIT_LAP_IS_METRIC); this is display. */
+  const splits = useMemo(
+    () => calculateSplits(points, lapMetresFor(unit)),
+    [points, unit]
+  );
 
   return (
     <>
@@ -484,7 +497,7 @@ export default function RunBottomSheet({
               {distance > 0 && <KmProgress distance={distance} unit={unit} />}
 
               {/* Live splits (last 3) */}
-              <SplitsStrip splits={splits} />
+              <SplitsStrip splits={splits} unit={unit} />
             </div>
 
             {/* Secondary stats pill */}
