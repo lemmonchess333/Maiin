@@ -8,7 +8,7 @@ import {
 } from "recharts";
 import type { Split } from "../../lib/gps";
 import { paceLabel } from "../../lib/runLabels";
-import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { SPLITS_ARE_PER_KM } from "@/lib/distanceUnits";
 import { THEME } from "@/lib/theme";
 import { CHART_AXIS_TICK } from "./chartStyles";
 
@@ -23,7 +23,10 @@ export default function SplitsBarChart({
   avgPaceSeconds,
   accentColor = THEME.teal,
 }: SplitsBarChartProps) {
-  const unit = useDistanceUnit();
+  /* This whole card is per-KILOMETRE and stays metric for now — see
+     SPLITS_ARE_PER_KM. Converting only the average above a column of km
+     splits (whose labels are baked strings in the saved run) would be
+     worse than either consistent answer. */
   if (splits.length === 0) return null;
 
   const maxPace = Math.max(...splits.map((s) => s.paceSeconds));
@@ -41,7 +44,7 @@ export default function SplitsBarChart({
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-foreground">Splits</h3>
         <p className="text-xs font-mono tabular-nums text-muted-foreground">
-          avg {paceLabel(avgPaceSeconds, unit)}
+          avg {paceLabel(avgPaceSeconds, SPLITS_ARE_PER_KM)}
         </p>
       </div>
 

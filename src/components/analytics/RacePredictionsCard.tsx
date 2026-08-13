@@ -5,7 +5,11 @@ import {
   predictedRaceTimesFromFitness,
   type RaceDistanceKey,
 } from "@/lib/runPaces";
-import { paceMinSec, finishTimeLabel } from "@/lib/runLabels";
+import {
+  paceMinSec,
+  finishTimeLabel,
+  distanceLabel,
+} from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { paceUnitLabel } from "@/lib/distanceUnits";
 import { THEME } from "@/lib/theme";
@@ -98,7 +102,7 @@ export default function RacePredictionsCard() {
           <>
             Based on{" "}
             <span className="font-mono tabular-nums">
-              {(benchmark.distanceM / 1000).toFixed(1)} km
+              {distanceLabel(benchmark.distanceM, unit)}
             </span>{" "}
             in{" "}
             <span className="font-mono tabular-nums">

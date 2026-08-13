@@ -20,6 +20,8 @@
 
 import { Play, Plus, Trash2 } from "lucide-react";
 import { Dialog } from "@/components/ui/Dialog";
+import { distanceValue } from "@/lib/runLabels";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 
 interface Props {
   /** Stored run's accumulated seconds at write-time. */
@@ -66,7 +68,8 @@ export default function RunResumePrompt({
   onStartNew,
   onDiscard,
 }: Props) {
-  const km = (distanceMeters / 1000).toFixed(2);
+  const unit = useDistanceUnit();
+  const km = distanceValue(distanceMeters, unit, 2);
   return (
     <Dialog
       open

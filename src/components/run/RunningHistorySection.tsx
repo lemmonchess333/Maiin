@@ -13,7 +13,8 @@ import {
   isVolumeEligible,
   isPaceEligible,
 } from "../../lib/runStatsEligibility";
-import { paceMinSec } from "../../lib/runLabels";
+import { paceMinSec, distanceValue } from "../../lib/runLabels";
+import { distanceUnitLabel } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { Spinner } from "@/components/ui/Spinner";
 
@@ -83,11 +84,14 @@ export default function RunningHistorySection() {
             <div className="grid grid-cols-3 gap-2">
               <div className="p-3 rounded-xl bg-card border border-border text-center">
                 <p className="text-lg font-bold font-mono tabular-nums text-running-strong">
-                  {(volume.reduce((s, r) => s + r.distance, 0) / 1000).toFixed(
-                    1
+                  {distanceValue(
+                    volume.reduce((s, r) => s + r.distance, 0),
+                    unit
                   )}
                 </p>
-                <p className="text-xs text-muted-foreground">total km</p>
+                <p className="text-xs text-muted-foreground">
+                  total {distanceUnitLabel(unit)}
+                </p>
               </div>
               <div className="p-3 rounded-xl bg-card border border-border text-center">
                 <p className="text-lg font-bold font-mono tabular-nums">

@@ -60,7 +60,7 @@ import {
   raceDistanceKeyFromKm,
 } from "../lib/runPaces";
 import { resolvePaceVerdict } from "../lib/paceVerdict";
-import { paceMinSec } from "../lib/runLabels";
+import { paceMinSec, distanceLabel2 } from "../lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { paceUnitLabel } from "@/lib/distanceUnits";
 import { useRunningStats } from "../hooks/useRunningStats";
@@ -771,7 +771,7 @@ export default function RunSummary() {
         kind: "race" as const,
         value: timeStr,
         label:
-          distance > 0 ? `Race · ${(distance / 1000).toFixed(2)} km` : "Race",
+          distance > 0 ? `Race · ${distanceLabel2(distance, unit)}` : "Race",
       };
     }
     return null;

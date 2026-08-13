@@ -39,9 +39,13 @@ import {
   getRunningTip,
   type WeatherData,
 } from "@/lib/weather";
-import { paceMinSec } from "@/lib/runLabels";
+import { paceMinSec, distanceValue } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
-import { paceUnitLabel } from "@/lib/distanceUnits";
+import {
+  paceUnitLabel,
+  distanceUnitLabel,
+  PRESET_DISTANCES_ARE_KM,
+} from "@/lib/distanceUnits";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { heatPaceAdjustment, heatAdjustmentLine } from "@/lib/heatAdjustment";
 import ShoeSelector from "./ShoeSelector";
@@ -436,7 +440,7 @@ export default function RunSetupModal({
               manual: "Manual Run",
               guided: "Guided",
             };
-            const km = (lastRun.distanceM / 1000).toFixed(2);
+            const km = distanceValue(lastRun.distanceM, unit, 2);
             const mins = Math.floor(lastRun.durationS / 60);
             const secs = Math.floor(lastRun.durationS % 60);
             const time = `${mins}:${secs.toString().padStart(2, "0")}`;
@@ -445,7 +449,8 @@ export default function RunSetupModal({
               <div className="px-4 py-2.5 rounded-xl bg-muted/40 border border-border/50">
                 <SectionLabel>Last run</SectionLabel>
                 <p className="text-sm font-mono tabular-nums text-foreground mt-0.5">
-                  {km}km · {time} ·{" "}
+                  {km}
+                  {distanceUnitLabel(unit)} · {time} ·{" "}
                   <span className="font-sans text-muted-foreground">
                     {type}
                   </span>
@@ -770,7 +775,7 @@ export default function RunSetupModal({
                               }
                               className={presetChipClass(active)}
                             >
-                              {m / 1000} km
+                              {m / 1000} {PRESET_DISTANCES_ARE_KM}
                             </button>
                           );
                         })}

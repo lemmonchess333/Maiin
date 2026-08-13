@@ -31,6 +31,9 @@ import ElevationProfile from "../components/analytics/ElevationProfile";
 import ShareCardSheet from "@/components/share/ShareCardSheet";
 import DeleteSessionAction from "@/components/session/DeleteSessionAction";
 import { Spinner } from "../components/ui/Spinner";
+import { distanceLabel, distanceLabel2 } from "@/lib/runLabels";
+import { distanceUnitLabel } from "@/lib/distanceUnits";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 
 const ACTIVITY_LABELS: Record<string, string> = {
   freerun: "Free Run",
@@ -71,6 +74,7 @@ function StatPill({
 }
 
 export default function RunDetail() {
+  const unit = useDistanceUnit();
   const { runId } = useParams<{ runId: string }>();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
@@ -158,7 +162,7 @@ export default function RunDetail() {
   const splitsEmptyReason = !hasGpsTrace
     ? "No GPS route"
     : run.distance < 1000
-      ? "Under 1 km"
+      ? `Under ${distanceUnitLabel(unit) === "mi" ? "a mile" : "1 km"}`
       : "No splits yet";
 
   const formatTime = (secs: number): string => {
@@ -186,7 +190,7 @@ export default function RunDetail() {
   const shareThisRoute = () => {
     const label = ACTIVITY_LABELS[run.activityType] ?? "Run";
     shareRouteWithPrivacy(
-      `${label} · ${(run.distance / 1000).toFixed(1)} km`,
+      `${label} · ${distanceLabel(run.distance, unit)}`,
       run.points
     );
   };
@@ -197,7 +201,7 @@ export default function RunDetail() {
   const saveThisRoute = async () => {
     const label = ACTIVITY_LABELS[run.activityType] ?? "Run";
     const ok = await saveRoute({
-      name: `${label} · ${(run.distance / 1000).toFixed(1)} km`,
+      name: `${label} · ${distanceLabel(run.distance, unit)}`,
       points: run.points,
       source: "run",
     });
@@ -363,7 +367,7 @@ export default function RunDetail() {
                 {ACTIVITY_LABELS[run.activityType] ?? "Run"}
               </p>
               <h1 className="text-xl font-extrabold text-foreground font-mono tabular-nums">
-                {(run.distance / 1000).toFixed(2)} km
+                {distanceLabel2(run.distance, unit)}
               </h1>
             </div>
             <button
