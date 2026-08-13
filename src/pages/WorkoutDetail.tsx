@@ -35,6 +35,7 @@ import { ChevronLeft, Share2, Users, Check, Dumbbell } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
+import { parseLocalDate } from "@/lib/dateHelpers";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Spinner } from "@/components/ui/Spinner";
@@ -159,7 +160,7 @@ export default function WorkoutDetail() {
 
   const title = workoutTitle(workout);
 
-  const dateObj = workout.createdAt?.toDate?.() ?? new Date(workout.date);
+  const dateObj = workout.createdAt?.toDate?.() ?? parseLocalDate(workout.date);
   const dateStr = dateObj.toLocaleDateString("en-GB", {
     weekday: "long",
     day: "numeric",

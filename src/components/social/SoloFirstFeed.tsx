@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/Button";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { ShareCardSheet } from "@/components/share/ShareCardSheet";
 import { THEME } from "@/lib/theme";
+import { parseLocalDate } from "@/lib/dateHelpers";
 
 interface SoloFirstFeedProps {
   /** Open the People search overlay (find a partner / people). */
@@ -79,7 +80,7 @@ export default function SoloFirstFeed({
     return {
       template: "lift" as const,
       handle: profile?.displayName || "Athlete",
-      date: new Date(latest.date).toLocaleDateString("en-GB", {
+      date: parseLocalDate(latest.date).toLocaleDateString("en-GB", {
         day: "numeric",
         month: "short",
         year: "numeric",

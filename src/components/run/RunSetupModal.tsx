@@ -40,6 +40,7 @@ import {
   type WeatherData,
 } from "@/lib/weather";
 import { paceMinSec } from "@/lib/runLabels";
+import { parseLocalDate } from "@/lib/dateHelpers";
 import { heatPaceAdjustment, heatAdjustmentLine } from "@/lib/heatAdjustment";
 import ShoeSelector from "./ShoeSelector";
 import GuidedRunPicker from "./GuidedRunPicker";
@@ -177,7 +178,7 @@ function ProgramContextStripView({ ctx }: { ctx: ProgramContextStrip }) {
     case "race_prep_today":
       line1 = `Race prep · ${ctx.weekLabel} · ${ctx.distanceLabel}`;
       line2 = ctx.targetDate
-        ? `Target ${new Date(ctx.targetDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`
+        ? `Target ${parseLocalDate(ctx.targetDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`
         : null;
       break;
     case "structured_today":
