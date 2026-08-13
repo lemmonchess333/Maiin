@@ -19,6 +19,7 @@
 
 import { RUN_TEMPLATES, type RunTemplate } from "./workoutTemplates";
 import { localDateString } from "./dateHelpers";
+import type { DistanceUnit } from "./distanceUnits";
 import {
   raceTargetBand,
   resolveSessionPaces,
@@ -200,6 +201,8 @@ export function getAdherenceLabel(
 // ─── Inputs ─────────────────────────────────────────────────────────
 
 export interface ComputePlanInputs {
+  /** The reader's display unit — reaches only the segment labels + cues. */
+  displayUnit: DistanceUnit;
   /**
    * Snapshot of `profile.runMode` at Start. Drives the planMode
    * field. When undefined, falls back to 'freeform'.
@@ -376,7 +379,7 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
         planTotalWeeks,
         scheduledRunId: resolvedPlannedDay?.id ?? null,
       },
-      prefill: templateToPrefill(tmpl, inputs.paceTable, race),
+      prefill: templateToPrefill(tmpl, inputs.displayUnit, inputs.paceTable, race),
     };
   }
 
@@ -497,7 +500,12 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
           planTotalWeeks,
           scheduledRunId: todayDay.id ?? null,
         },
-        prefill: templateToPrefill(plannedTemplate, inputs.paceTable, race),
+        prefill: templateToPrefill(
+          plannedTemplate,
+          inputs.displayUnit,
+          inputs.paceTable,
+          race
+        ),
       };
     }
 
@@ -762,6 +770,12 @@ function resolveRaceEnrichment(
 
 function templateToPrefill(
   tmpl: RunTemplate,
+  /* Segment LABELS and spoken CUES are authored here, so plan generation
+     needs the reader's unit even though nothing else about the plan does.
+     The alternative — segments carrying numbers and formatting at render —
+     is the better shape, but it changes the SessionSegment contract and
+     every consumer; this keeps the unit honest without that. */
+  unit: DistanceUnit,
   paceTable?: PaceTable | null,
   race?: RaceEnrichment | null
 ): RunPlanPrefill {
@@ -834,10 +848,11 @@ function templateToPrefill(
   // structure with the resolved target pace; strides from the easy variant.
   // A2 adds the build-phase long run closing at goal race pace.
   if (prefill.intervals) {
-    prefill.segments = segmentsFromIntervals(prefill.intervals);
+    prefill.segments = segmentsFromIntervals(prefill.intervals, unit);
   } else if (tmpl.config.tempo) {
     prefill.segments = segmentsFromTempo(
       tmpl.config.tempo,
+      unit,
       prefill.target?.type === "pace" ? prefill.target.value : undefined,
       tempoAtGoal ? { atGoalPace: true } : undefined
     );
@@ -851,7 +866,8 @@ function templateToPrefill(
     prefill.segments = segmentsFromLongWithRacePace(
       km,
       racePaceBlockKm(km, longAtRacePace.distance),
-      longAtRacePace.goalPaceS
+      longAtRacePace.goalPaceS,
+      unit
     );
   }
   return prefill;

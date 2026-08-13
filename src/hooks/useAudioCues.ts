@@ -6,9 +6,12 @@ import {
   timeCue,
   paceAlertCue,
   halfwayCue,
-  final500Cue,
+  finalStretchCue,
   type SplitComparison,
 } from "@/lib/runCueCopy";
+import { paceMinSec } from "@/lib/runLabels";
+import { lapMetresFor, finalStretchM } from "@/lib/distanceUnits";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 
 type CueFrequency = "every_500m" | "every_km" | "every_5min" | "off";
 
@@ -22,21 +25,18 @@ const DEFAULT_CUE_CONFIG: AudioCueConfig = {
   voiceRate: 0.9,
 };
 
-/** "M:SS", matching `calculatePace`'s format so the spoken pace reads the
- *  same as the on-screen one. `--:--` for an unmeasurable split (a paused
- *  or zero-length segment) — `splitCue` still announces the distance. */
-function formatPaceSeconds(paceSecPerKm: number): string {
-  if (!Number.isFinite(paceSecPerKm) || paceSecPerKm <= 0) return "--:--";
-  const mins = Math.floor(paceSecPerKm / 60);
-  const secs = Math.floor(paceSecPerKm % 60);
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
-}
+/* The local `formatPaceSeconds` here was a FOURTH copy of the M:SS logic,
+   hardcoded per-kilometre. Its doc said it existed so "the spoken pace reads
+   the same as the on-screen one" — which is now an argument for using the
+   same function the screen uses, not a private twin of it. `paceMinSec`
+   keeps the `--:--` behaviour for an unmeasurable split. */
 
 export function useAudioCues(
   enabled: boolean,
   frequency: CueFrequency,
   config?: Partial<AudioCueConfig>
 ) {
+  const unit = useDistanceUnit();
   const lastDistanceCue = useRef(0);
   const lastTimeCue = useRef(0);
   const splitPaces = useRef<number[]>([]); // sec/km per split for comparison
@@ -102,7 +102,12 @@ export function useAudioCues(
   const checkDistanceCue = useCallback(
     (distance: number, elapsed: number) => {
       if (!enabled || frequency === "off" || frequency === "every_5min") return;
-      const threshold = frequency === "every_500m" ? 500 : 1000;
+      /* One lap of the LISTENER's unit — a mile runner set to "every km"
+          means every mile, and the cue counts the markers it triggered on.
+          The stored enum is unit-neutral: it says whole-unit or half-unit,
+          not which unit. */
+      const lap = lapMetresFor(unit);
+      const threshold = frequency === "every_500m" ? lap / 2 : lap;
       const currentMark = Math.floor(distance / threshold);
       if (currentMark <= lastDistanceCue.current || currentMark === 0) return;
 
@@ -126,6 +131,9 @@ export function useAudioCues(
          there. The split cue was left on the average. */
       const segMeters = distance - lastMarkDistance.current;
       const segSeconds = elapsed - lastMarkElapsed.current;
+      // Stays SECONDS PER KILOMETRE — the storage convention every pace
+      // comparison here is against; `paceMinSec` converts at the moment of
+      // speaking.
       const currentPaceSec =
         segMeters > 0 && segSeconds > 0 ? segSeconds / (segMeters / 1000) : 0;
       lastMarkDistance.current = distance;
@@ -149,12 +157,19 @@ export function useAudioCues(
       haptic([60, 40, 60]);
 
       cueVariant.current += 1;
-      const km = frequency === "every_500m" ? currentMark * 0.5 : currentMark;
+      const count =
+        frequency === "every_500m" ? currentMark * 0.5 : currentMark;
       speak(
-        splitCue(km, formatPaceSeconds(currentPaceSec), comparison, cueVariant.current)
+        splitCue(
+          count,
+          unit,
+          paceMinSec(currentPaceSec, unit),
+          comparison,
+          cueVariant.current
+        )
       );
     },
-    [enabled, frequency, speak]
+    [enabled, frequency, speak, unit]
   );
 
   const checkTimeCue = useCallback(
@@ -164,10 +179,10 @@ export function useAudioCues(
       if (currentMark > lastTimeCue.current && currentMark > 0) {
         lastTimeCue.current = currentMark;
         haptic([60, 40, 60]);
-        speak(timeCue(currentMark * 5, distance / 1000));
+        speak(timeCue(currentMark * 5, distance, unit));
       }
     },
-    [enabled, frequency, speak]
+    [enabled, frequency, speak, unit]
   );
 
   /** Pace zone alert: fires when pace deviates ±15s/km from target for >30s */
@@ -210,13 +225,14 @@ export function useAudioCues(
   const checkFinal500 = useCallback(
     (distance: number, targetDistance: number) => {
       if (!enabled || final500Announced.current || !targetDistance) return;
-      if (distance >= targetDistance - 500 && distance < targetDistance) {
+      const stretch = finalStretchM(unit);
+      if (distance >= targetDistance - stretch && distance < targetDistance) {
         final500Announced.current = true;
         cueVariant.current += 1;
-        speak(final500Cue(cueVariant.current));
+        speak(finalStretchCue(unit, cueVariant.current));
       }
     },
-    [enabled, speak]
+    [enabled, speak, unit]
   );
 
   /* `announcePB` (and its `pbCue` copy) lived here with ZERO callers and
