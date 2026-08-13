@@ -1648,35 +1648,63 @@ export default function WorkoutSession({
                           </button>
                         </div>
                         <div className="col-span-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (canFillPrev && !set.completed && prev) {
-                                haptic(10);
-                                updateSetLog(
-                                  currentExIndex,
-                                  setIdx,
-                                  "weight",
-                                  prev.weight
-                                );
-                                updateSetLog(
-                                  currentExIndex,
-                                  setIdx,
-                                  "reps",
-                                  prev.reps
-                                );
-                              }
-                            }}
-                            disabled={set.completed || !canFillPrev}
-                            className={cn(
-                              "text-small font-mono tabular-nums text-center w-full",
-                              canFillPrev && !set.completed
-                                ? "text-primary active:opacity-70"
-                                : "text-muted-foreground"
-                            )}
-                          >
-                            {prevLabel}
-                          </button>
+                          {/* PREV is a WORKING-set reference, so a warm-up row
+                              shows nothing rather than the last working set.
+                              On a 60kg squat the ramp (20 / 30 / 42.5) was
+                              each captioned "60×8" and each tappable to
+                              prefill 60 — inviting you to load your top set
+                              as your first warm-up. Device QA, 2026-08-12.
+
+                              Working rows still show ONE per-exercise figure
+                              rather than the matching set from last session.
+                              The per-set history exists (`prevWeights[name]`
+                              is an array and drives the prefill), but it
+                              cannot be aligned to a row: `onCompleteDay`
+                              receives `{ weight, reps, completed }` with no
+                              `type`, so the persisted array gives no way to
+                              tell last session's warm-ups from its working
+                              sets. Indexing into it would caption working set
+                              4 with a 20kg warm-up — a worse error than the
+                              one being fixed. Closing that needs the set type
+                              carried through the completion boundary. */}
+                          {set.type === "warmup" ? (
+                            <span
+                              className="text-small text-muted-foreground/50 text-center block w-full"
+                              aria-hidden="true"
+                            >
+                              —
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (canFillPrev && !set.completed && prev) {
+                                  haptic(10);
+                                  updateSetLog(
+                                    currentExIndex,
+                                    setIdx,
+                                    "weight",
+                                    prev.weight
+                                  );
+                                  updateSetLog(
+                                    currentExIndex,
+                                    setIdx,
+                                    "reps",
+                                    prev.reps
+                                  );
+                                }
+                              }}
+                              disabled={set.completed || !canFillPrev}
+                              className={cn(
+                                "text-small font-mono tabular-nums text-center w-full",
+                                canFillPrev && !set.completed
+                                  ? "text-primary active:opacity-70"
+                                  : "text-muted-foreground"
+                              )}
+                            >
+                              {prevLabel}
+                            </button>
+                          )}
                         </div>
                         <div className="col-span-4">
                           <input

@@ -96,7 +96,27 @@ export function getWeatherIcon(code: number): string {
   return "cloud-sun";
 }
 
-export function getRunningTip(weather: WeatherData, activityType?: string): string {
+/**
+ * An ACTIONABLE line about today's conditions, or null when there is nothing
+ * worth saying.
+ *
+ * It used to fall through to `"27°C, clear sky — enjoy your run"`, which
+ * restates the two facts the weather card already shows directly above it —
+ * the card read "27°C (feels 26°) · Clear sky" and then "27°C, clear sky —
+ * enjoy your run" (device QA, 2026-08-12). Every other branch here earns its
+ * line by telling you to do something differently; the fallback only added
+ * length.
+ *
+ * Returning null rather than a pleasantry follows `heatPaceAdjustment`, which
+ * is quiet in cool weather for the same reason. Note the two are
+ * complementary: 27°C sits below the 28°C "Warm" threshold, so on that exact
+ * day the only line with content is the heat check, and the fallback was
+ * crowding it.
+ */
+export function getRunningTip(
+  weather: WeatherData,
+  activityType?: string
+): string | null {
   const { temperature, humidity, windSpeed, weatherCode } = weather;
 
   // Rain
@@ -149,5 +169,5 @@ export function getRunningTip(weather: WeatherData, activityType?: string): stri
     return "Great conditions — perfect running weather!";
   }
 
-  return `${temperature}°C, ${weather.description.toLowerCase()} — enjoy your run`;
+  return null;
 }
