@@ -72,10 +72,28 @@ export default function SessionCompleteScreen({
       ? `${Math.floor(sessionDurationMinutes / 60)}h ${sessionDurationMinutes % 60}m`
       : `${sessionDurationMinutes}m`;
 
-  const totalVolume = setLogs
-    .flat()
-    .filter((s) => s.completed && s.type !== "warmup")
-    .reduce((sum, s) => sum + s.weight * s.reps, 0);
+  /* Timed exercises contribute no tonnage — a hold's `reps` is a
+     DURATION, so weight × reps is not a weight moved. Every writer
+     applies that rule (`repUnit === "seconds" ? 0 : …`) and so does the
+     shared `workoutTonnageKg`, but this stat could not: flattening
+     `setLogs` threw away the exercise each set belonged to, and `repUnit`
+     lives on the exercise. The association was always here — `setLogs` is
+     indexed by exercise, and `exercises` is right there — so the fix is
+     to stop discarding it.
+
+     The number is the VOLUME headline the user sees the moment they
+     finish, and moments later the writer persists a `totalVolume` that
+     DOES exclude holds. One session, two figures: a 20 kg / 60 s plank
+     put 1,200 kg between them. */
+  const totalVolume = setLogs.reduce((sum, logs, exIdx) => {
+    if (exercises[exIdx]?.repUnit === "seconds") return sum;
+    return (
+      sum +
+      logs
+        .filter((s) => s.completed && s.type !== "warmup")
+        .reduce((t, s) => t + s.weight * s.reps, 0)
+    );
+  }, 0);
 
   const totalVolumeDisplay =
     totalVolume >= 1000
