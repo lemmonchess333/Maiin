@@ -149,6 +149,11 @@ const PINNED: Record<string, string> = {
   // Packet 18 — CF bodyweight id set mirrors the catalog's Bodyweight rows.
   "functions/lib/bodyweightExerciseIds.js":
     "src/features/program/__tests__/bodyweightExerciseIds.cross.test.ts",
+  // CF timed-exercise id set mirrors src/features/program/repUnits.ts. It was
+  // a private const inside programCommands.js — which is why THIS gate never
+  // saw it, and why it drifted two ids behind the client unnoticed.
+  "functions/lib/timedExerciseIds.js":
+    "src/features/program/__tests__/timedExerciseIds.cross.test.ts",
   // Packet 18 — CF catalog id→name mirror (add/replace derive exercise names).
   "functions/lib/exerciseCatalog.js":
     "src/features/program/__tests__/exerciseCatalog.cross.test.ts",

@@ -74,6 +74,56 @@ describe("workoutVolumeKg", () => {
     expect(workoutVolumeKg(doc)).toBe(2400);
   });
 
+  it("scores a timed hold as zero, the way both writers do", () => {
+    /* The derivation has to mirror the WRITER's tonnage rule, not just
+       resemble it. `weighted-plank` is a real catalog exercise: timed
+       (`repUnit: "seconds"`, so `reps` is a DURATION) and loaded. Both
+       writers reduce it with `repUnit === "seconds" ? 0 : …`; a naive
+       weightKg × reps reads a 20 kg / 60 s hold as 1,200 kg.
+
+       This only ever showed on the DERIVATION path — post-fix docs carry
+       the stated field and were always right — and the derivation path is
+       exactly the one that replays history into permanent challenge and
+       lifetime totals. */
+    const doc = historicalWorkoutDoc();
+    doc.exercises.push({
+      exerciseName: "Weighted Plank",
+      repUnit: "seconds",
+      sets: [
+        { weightKg: 20, reps: 60 },
+        { weightKg: 20, reps: 60 },
+      ],
+    });
+    expect(workoutVolumeKg(doc)).toBe(EXPECTED_KG);
+  });
+
+  it("still counts a loaded exercise that is not timed", () => {
+    /* The guard keys on repUnit, so it must not swallow ordinary work —
+       an exclusion that over-fires costs exactly what the original bug
+       did. */
+    const doc = historicalWorkoutDoc();
+    doc.exercises.push({
+      exerciseName: "Farmer's Walk",
+      sets: [{ weightKg: 40, reps: 10 }],
+    });
+    expect(workoutVolumeKg(doc)).toBe(EXPECTED_KG + 400);
+  });
+
+  it("still counts an exercise explicitly marked as reps", () => {
+    /* Absent-repUnit is NOT enough to pin the guard's shape: the obvious
+       wrong version, `if (ex.repUnit) continue`, passes the case above
+       because undefined is falsy. The client type admits `"reps"` as a
+       real value, so the comparison must be to the literal — and that
+       mutation survived here until this case existed. */
+    const doc = historicalWorkoutDoc();
+    doc.exercises.push({
+      exerciseName: "Cable Curl",
+      repUnit: "reps",
+      sets: [{ weightKg: 30, reps: 12 }],
+    });
+    expect(workoutVolumeKg(doc)).toBe(EXPECTED_KG + 360);
+  });
+
   it("is zero for a session that moved no external load", () => {
     /* Bodyweight work is a real session with zero tonnage — it must not
        fall through to a derived guess, and must not throw. */
