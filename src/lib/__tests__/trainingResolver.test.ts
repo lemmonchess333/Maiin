@@ -669,3 +669,100 @@ describe("resolveTrainingDayForDate — PR-J Q3 chunk B3c (claimMap-derived comp
     expect(r.run.isCompleted).toBe(true);
   });
 });
+
+/**
+ * A future date must not inherit a rotation slot's completion.
+ *
+ * Device screenshot, 2026-08-13: Tue 18 Aug — five days out — read
+ * "Pull — Lat Focus ✓" on both the Home peek card and the Manage Day
+ * sheet. A lift's `completed` flag belongs to its SPLIT ROTATION slot,
+ * not to a date (ADR-0002), and `liftIndexForDayOfWeek` maps every
+ * Tuesday to the same slot. So once that slot was finished — the week
+ * before — every future Tuesday claimed to be done, and a user looking
+ * at next week saw it pre-ticked.
+ *
+ * ADR-0002 settles it rather than taste: it has calendar surfaces share
+ * `workout.completed` so completion never disagrees (about the current
+ * week reconciling with the cursor), while barring them from asserting a
+ * weekday-pinned session as authoritative. A ✓ on a date that has not
+ * arrived is exactly that assertion.
+ *
+ * Scheduling semantics are untouched: the rotation is unchanged and the
+ * Programme cursor resolves lifts through its own next-incomplete scan,
+ * not through this resolver.
+ */
+describe("resolveTrainingDayForDate — completion is not projected forward", () => {
+  const TODAY = "2026-05-18";
+  const TOMORROW = "2026-05-19";
+  const YESTERDAY = "2026-05-17";
+
+  /** Every weekday is a lift day, so any date resolves a lift slot. */
+  const liftEveryDay = makeProfile({
+    weeklyWorkoutsTarget: 7,
+    weekSchedule: Array.from({ length: 7 }, (_, day) => ({
+      day,
+      type: "lift" as const,
+    })),
+  });
+
+  const doneRotation = makeProgramState({
+    workouts: Array.from({ length: 7 }, (_, i) => ({
+      dayName: `Session ${i + 1}`,
+      exercises: [],
+      completed: true,
+    })),
+  } as unknown as Partial<ProgramState>);
+
+  function resolveOn(dateKey: string) {
+    return resolveTrainingDayForDate({
+      dateKey,
+      profile: liftEveryDay,
+      programState: doneRotation,
+      currentWeekKey: CURRENT_WEEK_KEY,
+      todayKey: TODAY,
+    });
+  }
+
+  it("a FUTURE date shows the session as planned, not completed", () => {
+    const r = resolveOn(TOMORROW);
+    expect(r.lift.status).toBe("planned");
+    expect(r.lift.isTerminal).toBe(false);
+  });
+
+  it("today still shows completion", () => {
+    /* The half ADR-0002 explicitly wants: the current week reconciles
+       with the cursor, so suppressing this would be its own bug. */
+    expect(resolveOn(TODAY).lift.status).toBe("completed");
+  });
+
+  it("the past still shows completion", () => {
+    expect(resolveOn(YESTERDAY).lift.status).toBe("completed");
+  });
+
+  it("the session itself is still named on a future day", () => {
+    /* Only the terminal STATUS is withheld. The planned session stays
+       identified (Cal-A), because "which lift is Tuesday" is the plan
+       and remains useful — it is the claim that it is already DONE that
+       the date cannot support. */
+    expect(resolveOn(TOMORROW).lift.workout).not.toBeNull();
+    expect(resolveOn(TOMORROW).lift.isStartable).toBe(true);
+  });
+
+  it("a future SKIPPED slot is not projected either", () => {
+    const skipped = makeProgramState({
+      workouts: Array.from({ length: 7 }, (_, i) => ({
+        dayName: `Session ${i + 1}`,
+        exercises: [],
+        skipped: true,
+      })),
+    } as unknown as Partial<ProgramState>);
+    const r = resolveTrainingDayForDate({
+      dateKey: TOMORROW,
+      profile: liftEveryDay,
+      programState: skipped,
+      currentWeekKey: CURRENT_WEEK_KEY,
+      todayKey: TODAY,
+    });
+    expect(r.lift.status).toBe("planned");
+  });
+});
