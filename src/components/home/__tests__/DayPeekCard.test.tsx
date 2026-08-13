@@ -751,3 +751,92 @@ describe("DayPeekCard — lift row tap-through", () => {
     ).not.toBeInTheDocument();
   });
 });
+
+/**
+ * The day-type badge must describe what the card actually contains.
+ *
+ * Device screenshot, 2026-08-13 (Week 12, deload): Tue 18 Aug carried a
+ * "Lift + Run day" badge above a card holding only a lift, and the Manage
+ * Day sheet for the same date showed only a lift too.
+ *
+ * The two came from different sources. The badge read
+ * `resolved.scheduleType` — the WEEKDAY PATTERN in `profile.weekSchedule`
+ * — while the rows read the resolved plan, whose runs are the date-pinned
+ * `runDays` (ADR-0002). A deload week drops runs from the plan without
+ * rewriting the weekday pattern, so the badge kept promising a run that
+ * the plan no longer contained.
+ */
+describe("DayPeekCard — the badge names what the card holds", () => {
+  const schedule = makeSchedule([
+    "rest",
+    "lift",
+    "both",
+    "lift",
+    "both",
+    "rest",
+    "lift",
+  ]);
+
+  it("says Lift day when the pattern says both but the plan has no run", () => {
+    /* The device case: Tuesday is typed "both", the deload week scheduled
+       no run for that date. */
+    const tueKey = dayOfThisWeek(2);
+    render(
+      <DayPeekCard
+        dateKey={tueKey}
+        profile={makeProfile(schedule)}
+        programState={makeProgramState([])}
+        claimMap={emptyClaimMap}
+        workouts={[]}
+        dailyTotals={emptyTotals()}
+        extras={[]}
+        onClose={() => {}}
+      />
+    );
+    expect(screen.queryByText("Lift + Run day")).toBeNull();
+  });
+
+  it("still says Lift + Run day when the run really is scheduled", () => {
+    /* The badge must not simply stop claiming runs — that would trade one
+       wrong answer for another. */
+    const tueKey = dayOfThisWeek(2);
+    const tueWeekKey = localWeekKey(parseLocalDate(tueKey));
+    render(
+      <DayPeekCard
+        dateKey={tueKey}
+        profile={makeProfile(schedule)}
+        programState={makeProgramState([
+          makeRunDay({ dayIndex: 2, date: tueKey, weekKey: tueWeekKey }),
+        ])}
+        claimMap={emptyClaimMap}
+        workouts={[]}
+        dailyTotals={emptyTotals()}
+        extras={[]}
+        onClose={() => {}}
+      />
+    );
+    expect(screen.getByText("Lift + Run day")).toBeInTheDocument();
+  });
+
+  it("says Run day when a run is planned on a pattern-rest day", () => {
+    /* It reads DOWN from the pattern but never ignores a real run: the
+       plan is the authority on what is scheduled, in both directions. */
+    const satKey = dayOfThisWeek(5); // "rest" in the pattern above
+    const satWeekKey = localWeekKey(parseLocalDate(satKey));
+    render(
+      <DayPeekCard
+        dateKey={satKey}
+        profile={makeProfile(schedule)}
+        programState={makeProgramState([
+          makeRunDay({ dayIndex: 5, date: satKey, weekKey: satWeekKey }),
+        ])}
+        claimMap={emptyClaimMap}
+        workouts={[]}
+        dailyTotals={emptyTotals()}
+        extras={[]}
+        onClose={() => {}}
+      />
+    );
+    expect(screen.getByText("Run day")).toBeInTheDocument();
+  });
+});
