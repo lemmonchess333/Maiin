@@ -157,8 +157,24 @@ export default function OneTimeMaintenance() {
             }
             return;
           }
+          /* Truncated, but the server gave nothing to resume from — so
+             asking again would re-request the identical page. That is not
+             hypothetical: the client and the Cloud Functions deploy run in
+             PARALLEL, and a functions deploy can silently not land at all
+             (the bundle-hash dedup this repo documents), so a new client
+             talking to the pre-#2048 callable is a real and possibly
+             long-lived state. Measured, it spent the full page bound on
+             identical empty-payload calls every sign-in. Stop instead: the
+             flag stays unset, so it retries — and succeeds — once the
+             function catches up. */
+          if (!cursor) {
+            logger.warn(
+              "[OneTimeMaintenance] liftVolumeRecredit: truncated with no cursor — server predates paging; retrying next session"
+            );
+            return;
+          }
           try {
-            if (cursor) localStorage.setItem(RECREDIT_CURSOR, cursor);
+            localStorage.setItem(RECREDIT_CURSOR, cursor);
           } catch {
             /* Cursor unwritable: this drain still completes in-memory; only
                a mid-drain interruption would restart from the beginning. */
