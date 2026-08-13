@@ -5,6 +5,7 @@ import {
   buildPRMap,
   checkSetPR,
   buildVolumeBest,
+  nextVolumeBest,
   checkVolumePR,
   exerciseSessionVolume,
   bumpSessionCounts,
@@ -285,6 +286,183 @@ describe("session-volume PR", () => {
     // 1520 (2×95×8) beats 800 even though the top set was lighter —
     // that is exactly the third axis.
     expect(best["Bench"]).toEqual({ volume: 1520, date: "2026-07-08" });
+  });
+
+  it("buildVolumeBest gives a timed hold no volume record at all", () => {
+    /* `weighted-plank` is a real catalog exercise: loaded AND measured in
+       seconds, so its `reps` is a duration. 20 kg × 60 s is not 1,200 kg
+       lifted, and "best volume" is not the axis a hold competes on — the
+       app already says so elsewhere (ExerciseHistory headlines "Longest
+       hold" and omits Volume from its metric options; the PR gate refuses
+       a volume PR for one).
+
+       This map was the last writer that hadn't been told, and unlike the
+       others it is PERSISTED, so the figure it invented outlived the
+       session that produced it. */
+    const best = buildVolumeBest([
+      {
+        date: "2026-08-10",
+        exercises: [
+          {
+            exerciseName: "Weighted Plank",
+            repUnit: "seconds",
+            sets: [
+              { weightKg: 20, reps: 60 },
+              { weightKg: 20, reps: 45 },
+            ],
+          },
+          { exerciseName: "Bench", sets: [{ weightKg: 100, reps: 8 }] },
+        ],
+      },
+    ]);
+    expect(best["Weighted Plank"]).toBeUndefined();
+    // Anchored on the positive: the sweep ran and scored the real lift,
+    // so the absence above is an exclusion rather than an empty map.
+    expect(best["Bench"]).toEqual({ volume: 800, date: "2026-08-10" });
+  });
+
+  it("buildVolumeBest still scores an exercise explicitly marked as reps", () => {
+    /* The type admits `repUnit: "reps"`, so a truthiness check would drop
+       ordinary work — an exclusion that over-fires costs what omitting it
+       did. */
+    const best = buildVolumeBest([
+      {
+        date: "2026-08-10",
+        exercises: [
+          {
+            exerciseName: "Curl",
+            repUnit: "reps",
+            sets: [{ weightKg: 30, reps: 12 }],
+          },
+        ],
+      },
+    ]);
+    expect(best["Curl"]).toEqual({ volume: 360, date: "2026-08-10" });
+  });
+
+  describe("nextVolumeBest — what actually gets persisted", () => {
+    /* This is the map written to `users/{uid}/stats/prMap.volumeBest`. It
+       lived inline in WorkoutSession, a ~1900-line component with no test
+       file, so none of the below was reachable. */
+
+    it("keeps the better of the loaded record and this session", () => {
+      const current = { Bench: { volume: 1500, date: "2026-07-01" } };
+      expect(
+        nextVolumeBest(
+          current,
+          [{ name: "Bench", sets: [{ weightKg: 100, reps: 20 }] }],
+          "2026-08-10"
+        ).Bench
+      ).toEqual({ volume: 2000, date: "2026-08-10" });
+      // A worse session leaves the record standing.
+      expect(
+        nextVolumeBest(
+          current,
+          [{ name: "Bench", sets: [{ weightKg: 100, reps: 5 }] }],
+          "2026-08-10"
+        ).Bench
+      ).toEqual({ volume: 1500, date: "2026-07-01" });
+    });
+
+    it("carries forward exercises this session did not train", () => {
+      const current = { Squat: { volume: 3000, date: "2026-07-01" } };
+      expect(
+        nextVolumeBest(
+          current,
+          [{ name: "Bench", sets: [{ weightKg: 100, reps: 8 }] }],
+          "2026-08-10"
+        ).Squat
+      ).toEqual({ volume: 3000, date: "2026-07-01" });
+    });
+
+    it("records nothing for a timed hold", () => {
+      const next = nextVolumeBest(
+        {},
+        [
+          {
+            name: "Weighted Plank",
+            repUnit: "seconds",
+            sets: [{ weightKg: 20, reps: 60 }],
+          },
+          { name: "Bench", sets: [{ weightKg: 100, reps: 8 }] },
+        ],
+        "2026-08-10"
+      );
+      expect(next["Weighted Plank"]).toBeUndefined();
+      // Positive anchor: the pass ran and scored the real lift.
+      expect(next.Bench).toEqual({ volume: 800, date: "2026-08-10" });
+    });
+
+    it("DELETES a stale hold record rather than preserving it", () => {
+      /* The behaviour that makes this a repair and not just a stop. The
+         map is carried forward by spreading the loaded copy, so a
+         weight×seconds figure written before the rule existed would
+         otherwise survive every future session untouched. */
+      const current = {
+        "Weighted Plank": { volume: 1200, date: "2026-07-01" },
+        Bench: { volume: 800, date: "2026-07-01" },
+      };
+      const next = nextVolumeBest(
+        current,
+        [
+          {
+            name: "Weighted Plank",
+            repUnit: "seconds",
+            sets: [{ weightKg: 20, reps: 60 }],
+          },
+        ],
+        "2026-08-10"
+      );
+      expect("Weighted Plank" in next).toBe(false);
+      // Only the hold's entry goes; unrelated records are untouched.
+      expect(next.Bench).toEqual({ volume: 800, date: "2026-07-01" });
+    });
+
+    it("still records an exercise explicitly marked as reps", () => {
+      // The type admits "reps", so a truthiness check would drop real work.
+      expect(
+        nextVolumeBest(
+          {},
+          [
+            {
+              name: "Curl",
+              repUnit: "reps",
+              sets: [{ weightKg: 30, reps: 12 }],
+            },
+          ],
+          "2026-08-10"
+        ).Curl
+      ).toEqual({ volume: 360, date: "2026-08-10" });
+    });
+
+    it("ignores an unnamed slot without touching the map", () => {
+      // `day.exercises[i]?.name ?? ""` at the call site can be empty.
+      const current = { Bench: { volume: 800, date: "2026-07-01" } };
+      expect(
+        nextVolumeBest(
+          current,
+          [{ name: "", sets: [{ weightKg: 100, reps: 8 }] }],
+          "2026-08-10"
+        )
+      ).toEqual(current);
+    });
+
+    it("does not mutate the map it was given", () => {
+      const current = { Bench: { volume: 800, date: "2026-07-01" } };
+      nextVolumeBest(
+        current,
+        [
+          { name: "Bench", sets: [{ weightKg: 100, reps: 20 }] },
+          {
+            name: "Weighted Plank",
+            repUnit: "seconds",
+            sets: [{ weightKg: 20, reps: 60 }],
+          },
+        ],
+        "2026-08-10"
+      );
+      expect(current).toEqual({ Bench: { volume: 800, date: "2026-07-01" } });
+    });
   });
 
   it("checkVolumePR gates on history depth, positive volume, and beating the best", () => {
