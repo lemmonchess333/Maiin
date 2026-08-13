@@ -42,6 +42,7 @@ import {
 } from "@/features/program/sessionSetPolicy";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
+import { DEFAULT_REST_SECONDS } from "@/features/program/programTypes";
 import { useUidForStorageKey } from "@/lib/auth";
 import { stallCooldownKey } from "@/features/program/stallDetection";
 import { useStreaks } from "@/features/streaks/useStreaks";
@@ -595,7 +596,7 @@ export default function WorkoutSession({
     typeof profile?.defaultRestSeconds === "number" &&
     profile.defaultRestSeconds > 0
       ? profile.defaultRestSeconds
-      : 90;
+      : DEFAULT_REST_SECONDS;
   const [restTarget, setRestTarget] = useState(profileRestDefault);
   // P1 (training-book backlog): template-derived exercises carry an authored
   // per-exercise rest (ProgramExercise.restSeconds). startRest prefers it over
