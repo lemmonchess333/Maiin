@@ -16,7 +16,13 @@ vi.mock("@/features/challenges/useChallenges", () => ({
   // the challenges feature tests; this suite cares about the stack layout.
   useAutoJoinChallenge: () => {},
 }));
-vi.mock("@/hooks/useWorkouts", () => ({
+/* `workoutTonnageKg` is the REAL implementation, deliberately: the share
+   card's volume is one of the things this suite asserts, and stubbing the
+   sum would make that assertion about the stub. `importOriginal` keeps the
+   hook mocked (it needs Firestore) while the pure helper beside it stays
+   genuine. */
+vi.mock("@/hooks/useWorkouts", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/hooks/useWorkouts")>()),
   useWorkouts: () => mockUseWorkouts(),
 }));
 vi.mock("@/features/challenges/ChallengeCard", () => ({

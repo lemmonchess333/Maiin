@@ -10,7 +10,7 @@ import PartnerStreakHero from "@/features/partnerStreak/PartnerStreakHero";
 import SpacesDirectory from "@/features/spaces/SpacesDirectory";
 import { EmptyState as HexEmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
-import { useWorkouts } from "@/hooks/useWorkouts";
+import { useWorkouts, workoutTonnageKg } from "@/hooks/useWorkouts";
 import { ShareCardSheet } from "@/components/share/ShareCardSheet";
 import { THEME } from "@/lib/theme";
 import { parseLocalDate } from "@/lib/dateHelpers";
@@ -72,11 +72,13 @@ export default function SoloFirstFeed({
   const latest = workouts[0];
   const shareData = useMemo(() => {
     if (!latest) return null;
-    const totalVolumeKg = latest.exercises.reduce(
-      (sum, ex) =>
-        sum + ex.sets.reduce((s, set) => s + set.reps * set.weightKg, 0),
-      0
-    );
+    // Through the canonical helper, not a re-derived loop. This one had
+    // none of its three guards: a legacy doc missing `exercises` THREW
+    // inside this memo, a missing `sets` likewise, and a set missing
+    // `weightKg` or `reps` made the whole total NaN — rendering "NaN kg"
+    // on a share card. The sibling share path (WorkoutFeedShareSheet)
+    // already used the helper; this is the copy that drifted.
+    const totalVolumeKg = workoutTonnageKg(latest);
     return {
       template: "lift" as const,
       handle: profile?.displayName || "Athlete",
