@@ -121,3 +121,89 @@ describe("weeklyPriceLabel", () => {
     );
   });
 });
+
+/**
+ * The two hand-written derivations the module says cannot drift.
+ *
+ * `priceValue` is documented as the reason "the maths can never drift from
+ * the display string", and `weeklyPriceLabel` as "Derived from priceValue so
+ * it can never drift from the display price". Both are true only while the
+ * number and the STRING agree — and they are two hand-written fields on the
+ * same object literal, bound by nothing. Edit `price` to "£4.99" and forget
+ * `priceValue` and every existing test here still passes, while the paywall
+ * shows £4.99 and anchors it at "≈ £0.92/wk".
+ *
+ * `savingsLabel` is the third copy of the same two numbers, and the one most
+ * likely to be left behind: it reads as marketing copy rather than as a
+ * derived figure.
+ *
+ * These are display-side only — the amount actually charged comes from the
+ * Stripe price / Apple product id in `purchaseProvider.ts`, which this
+ * module's header already flags as an operator sync step and no test can
+ * reach. That makes the display side MORE worth pinning, not less: it is the
+ * half a wrong number shows up on first.
+ */
+describe("PRO_PLANS — the derived copy cannot drift from the price", () => {
+  /** The number a user reads on the card. */
+  function displayedNumber(price: string): number {
+    const m = price.match(/([\d.]+)/);
+    expect(m, `no number in price string "${price}"`).toBeTruthy();
+    return Number(m![1]);
+  }
+
+  it("every plan's price STRING and priceValue are the same number", () => {
+    for (const plan of PRO_PLANS) {
+      expect(
+        displayedNumber(plan.price),
+        `${plan.id}: card shows ${plan.price} but priceValue is ${plan.priceValue}`
+      ).toBe(plan.priceValue);
+    }
+  });
+
+  it("every price string carries the £ the copy assumes", () => {
+    // getCheckoutCtaLabel and getInlinePriceSummary interpolate `price`
+    // raw — a bare "3.99" would render "Start Pro — 3.99/mo".
+    for (const plan of PRO_PLANS) {
+      expect(plan.price.startsWith("£"), `${plan.id}: ${plan.price}`).toBe(true);
+    }
+  });
+
+  it("periodsPerYear agrees with the billing frequency", () => {
+    // weeklyPriceLabel multiplies by this; a yearly plan with 12 would
+    // anchor the annual price twelve times too high.
+    for (const plan of PRO_PLANS) {
+      expect(plan.periodsPerYear).toBe(
+        plan.billingFrequency === "monthly" ? 12 : 1
+      );
+    }
+  });
+
+  it("the savings label matches what the two prices actually save", () => {
+    const monthly = getPlan("monthly");
+    const yearly = getPlan("yearly");
+    /* Computed from the DISPLAYED numbers, not from `priceValue`. A
+       mutation run showed why: raising the monthly price string while
+       leaving `priceValue` behind made the label wrong against what the
+       user reads (£4.99×12 vs £34.99 is 42%, not 27%) while a
+       priceValue-based check stayed happily green — it would have been
+       consistent with the stale field rather than with the card. */
+    const monthlyShown = displayedNumber(monthly.price);
+    const yearlyShown = displayedNumber(yearly.price);
+    const fullYear = monthlyShown * monthly.periodsPerYear;
+    const actual = Math.round(((fullYear - yearlyShown) / fullYear) * 100);
+    const claimed = Number(yearly.savingsLabel?.match(/(\d+)/)?.[1]);
+    expect(
+      claimed,
+      `label says "${yearly.savingsLabel}" but £${monthlyShown}×${monthly.periodsPerYear} vs £${yearlyShown} is ${actual}%`
+    ).toBe(actual);
+  });
+
+  it("the weekly anchor is computed from the displayed price", () => {
+    // Closes the loop: the label a user compares plans on is tied to the
+    // number on the card, not to a second field that may have moved.
+    for (const plan of PRO_PLANS) {
+      const perWeek = (displayedNumber(plan.price) * plan.periodsPerYear) / 52;
+      expect(weeklyPriceLabel(plan.id)).toBe(`≈ £${perWeek.toFixed(2)}/wk`);
+    }
+  });
+});
