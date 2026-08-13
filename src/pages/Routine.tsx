@@ -6,16 +6,12 @@ import { setDocGuarded, updateDocGuarded } from "@/lib/firestoreWrite";
 import { logger } from "../lib/logger";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/auth";
-import {
-  getSavedRoutine,
-  type SavedRoutine,
-  type SavedRoutineExercise,
-} from "../lib/savedRoutines";
-import { normalizeExercise } from "../features/program/programTypes";
-import type { ProgramExercise } from "../features/program/programTypes";
+import { getSavedRoutine, type SavedRoutine } from "../lib/savedRoutines";
+import { exerciseFromRoutine } from "../features/program/routineExercise";
 import { Skeleton } from "../components/LoadingSkeleton";
 import WorkoutSession from "../components/WorkoutSession";
 import { estimateLiftBurn } from "../lib/workoutBurn";
+import { workoutTonnageKg } from "../hooks/useWorkouts";
 import { projectWorkoutSets } from "@/features/program/workoutSetRecord";
 import { compose, enqueueShare, showQueuedToast } from "../lib/shareComposer";
 import { postActivity } from "../lib/socialApi";
@@ -29,28 +25,6 @@ import { toast } from "@/lib/toast";
    `routine:<id>` draftScope below means routine A's in-flight draft
    is never offered for resume inside routine B. */
 const ROUTINE_DAY_INDEX = -1;
-
-function exerciseFromRoutine(ex: SavedRoutineExercise): ProgramExercise {
-  /* The saved routine snapshot only carries `setCount / targetReps /
-     targetWeightKg` per exercise. Fill the rest of ProgramExercise's
-     surface with safe defaults — the UI uses these for progression
-     hints which don't apply to a one-off routine run, and for the
-     workout-doc write which only consumes name / exerciseId / sets /
-     reps / weight in practice. movementCategory is inferred from
-     the exercise name via normalizeExercise → inferMovementCategory;
-     the saved category flows into the workout doc and is read by
-     analytics + MuscleHeatMap, so getting it right matters. */
-  return normalizeExercise({
-    name: ex.name,
-    exerciseId:
-      ex.exerciseId || `routine-${ex.name.toLowerCase().replace(/\s+/g, "-")}`,
-    sets: Math.max(1, ex.setCount || 1),
-    reps: Math.max(1, ex.targetReps || 8),
-    weight: ex.targetWeightKg || 0,
-    lastAttemptedWeight: ex.targetWeightKg || 0,
-    lastSuccessfulWeight: ex.targetWeightKg || 0,
-  });
-}
 
 /**
  * Saved-routine workout runner (PR 4.1).
@@ -159,16 +133,26 @@ export default function Routine() {
           exerciseId: ex.exerciseId,
           exerciseName: ex.name,
           category: ex.movementCategory,
+          /* Carried onto the doc, conditionally, exactly as the programme
+             writers do. Without it the persisted session loses the unit
+             the runner just used: ExerciseHistory charts a hold on the
+             reps axis, and the server's volume derivation — which reads
+             this field to skip timed work — cannot tell it apart from
+             weight moved. */
+          ...(ex.repUnit !== undefined ? { repUnit: ex.repUnit } : {}),
           sets,
           caloriesBurned: 0,
         };
       });
 
-      const tonnage = exercises.reduce(
-        (t, ex) =>
-          t + ex.sets.reduce((s, set) => s + set.weightKg * set.reps, 0),
-        0
-      );
+      /* Was a fifth inline copy of the tonnage reduce, and an unguarded
+         one. Marking timed exercises above makes that guard load-bearing
+         for the first time — a routine's weighted plank would otherwise
+         bank 20 kg × 60 s as 1,200 kg — so rather than add a sixth
+         correct copy, this now calls the shared helper (#2045), which
+         owns the rule and is tested for it. `exercises` is already the
+         WorkoutExercise shape it takes. */
+      const tonnage = workoutTonnageKg({ exercises });
       const completedSetCount = exercises.reduce(
         (c, ex) => c + ex.sets.length,
         0
