@@ -11,13 +11,20 @@ import { THEME } from "../../lib/theme";
 import { haptic } from "../../lib/haptic";
 import { projectAndSnap } from "../../lib/sheetSnap";
 import {
-  calculatePace,
-  rollingPace,
+  rollingPaceSeconds,
   totalElevationGain,
   estimateRunCalories,
   calculateSplits,
 } from "../../lib/gps";
 import type { GPSPoint, Split } from "../../lib/gps";
+import { paceMinSec, distanceValue } from "@/lib/runLabels";
+import {
+  type DistanceUnit,
+  distanceUnitLabel,
+  paceUnitLabel,
+  METRES_PER_MILE,
+} from "@/lib/distanceUnits";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { type ZoneNumber } from "../../lib/hrZones";
 import { RunControlButton } from "@/components/ui/RunControlButton";
 import HoldToFinishButton from "./HoldToFinishButton";
@@ -131,10 +138,21 @@ function SplitsStrip({ splits }: { splits: Split[] }) {
 }
 
 // ── Current km progress bar ───────────────────────────────────────────────────
-function KmProgress({ distance }: { distance: number }) {
-  const kmDone = Math.floor(distance / 1000);
-  const progress = (distance % 1000) / 1000;
+function KmProgress({
+  distance,
+  unit,
+}: {
+  distance: number;
+  unit: DistanceUnit;
+}) {
+  /* One LAP of the reader's unit, not a hardcoded kilometre — otherwise a
+     miles reader gets a bar that fills on a boundary their distance
+     readout never shows. */
+  const lap = unit === "mi" ? METRES_PER_MILE : 1000;
+  const kmDone = Math.floor(distance / lap);
+  const progress = (distance % lap) / lap;
   const next = kmDone + 1;
+  const u = distanceUnitLabel(unit);
   return (
     <div className="flex items-center gap-2 px-1">
       <p
@@ -146,7 +164,8 @@ function KmProgress({ distance }: { distance: number }) {
           fontVariantNumeric: "tabular-nums",
         }}
       >
-        {kmDone}km
+        {kmDone}
+        {u}
       </p>
       <div
         className="flex-1 h-1 rounded-full overflow-hidden"
@@ -168,7 +187,8 @@ function KmProgress({ distance }: { distance: number }) {
           fontVariantNumeric: "tabular-nums",
         }}
       >
-        {next}km
+        {next}
+        {u}
       </p>
     </div>
   );
@@ -194,6 +214,7 @@ export default function RunBottomSheet({
 }: RunBottomSheetProps) {
   const hrColor =
     hrZone && hrZone >= 1 ? ZONE_COLOR[hrZone] : "rgba(255,255,255,0.65)";
+  const unit = useDistanceUnit();
   const [snapIdx, setSnapIdx] = useState<0 | 1 | 2>(2);
   const [showStopConfirm, setShowStopConfirm] = useState(false);
   const stopTitleId = useId();
@@ -283,14 +304,16 @@ export default function RunBottomSheet({
     }
   };
 
-  const pace = calculatePace(distance, elapsed);
+  const pace =
+    distance < 10 ? "--:--" : paceMinSec((elapsed / distance) * 1000, unit);
   /* Rolling 30s pace = "what am I doing right now" — the live signal
      runners actually want during a run. The all-time average lags
      badly once you've banked a few km, so it's demoted to a small
      "AVG" caption beneath the live pace. The post-run summary still
      records the all-time average — that's the right number for the
      historical entry. */
-  const livePace = rollingPace(points, 30);
+  const livePaceS = rollingPaceSeconds(points, 30);
+  const livePace = livePaceS === null ? "--:--" : paceMinSec(livePaceS, unit);
   const calories = estimateRunCalories(distance, weightKg);
   const elevation = totalElevationGain(points);
   const splits = useMemo(() => calculateSplits(points), [points]);
@@ -405,7 +428,7 @@ export default function RunBottomSheet({
                       lineHeight: 1,
                     }}
                   >
-                    {(distance / 1000).toFixed(2)}
+                    {distanceValue(distance, unit, 2)}
                   </p>
                   <p
                     style={{
@@ -415,7 +438,7 @@ export default function RunBottomSheet({
                       marginTop: 3,
                     }}
                   >
-                    KM
+                    {distanceUnitLabel(unit).toUpperCase()}
                   </p>
                 </div>
                 <div className="text-center">
@@ -439,7 +462,7 @@ export default function RunBottomSheet({
                       marginTop: 3,
                     }}
                   >
-                    /KM · LIVE
+                    {paceUnitLabel(unit).toUpperCase()} · LIVE
                   </p>
                   {pace !== "--:--" && pace !== livePace && (
                     <p
@@ -458,7 +481,7 @@ export default function RunBottomSheet({
               </div>
 
               {/* km progress bar */}
-              {distance > 0 && <KmProgress distance={distance} />}
+              {distance > 0 && <KmProgress distance={distance} unit={unit} />}
 
               {/* Live splits (last 3) */}
               <SplitsStrip splits={splits} />
@@ -758,7 +781,7 @@ export default function RunBottomSheet({
                   fontFamily: "var(--font-mono)",
                 }}
               >
-                {(distance / 1000).toFixed(2)}
+                {distanceValue(distance, unit, 2)}
               </p>
               <p
                 style={{
@@ -767,7 +790,7 @@ export default function RunBottomSheet({
                   letterSpacing: "0.1em",
                 }}
               >
-                KM
+                {distanceUnitLabel(unit).toUpperCase()}
               </p>
             </div>
             <div className="text-center">
@@ -789,7 +812,7 @@ export default function RunBottomSheet({
                   letterSpacing: "0.1em",
                 }}
               >
-                /KM
+                {paceUnitLabel(unit).toUpperCase()}
               </p>
             </div>
             {/* Collapsed-bar toggle stays bespoke at 48px (the primitive's
@@ -883,9 +906,9 @@ export default function RunBottomSheet({
                 className="text-2xl font-bold font-mono text-white"
                 style={{ fontVariantNumeric: "tabular-nums" }}
               >
-                {(distance / 1000).toFixed(2)}
+                {distanceValue(distance, unit, 2)}
               </p>
-              <p style={{ fontSize: 9, color: "rgba(255,255,255,0.4)" }}>KM</p>
+              <p style={{ fontSize: 9, color: "rgba(255,255,255,0.4)" }}>{distanceUnitLabel(unit).toUpperCase()}</p>
             </div>
             <div className="text-center">
               <p

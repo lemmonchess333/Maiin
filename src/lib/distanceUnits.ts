@@ -44,6 +44,34 @@ export const KM_PER_MILE = 1.609344;
 export const METRES_PER_MILE = 1609.344;
 
 /**
+ * Metres in a foot, exactly — 0.3048 m by the same 1959 agreement that
+ * fixes the mile.
+ *
+ * Feet arrive here earlier than planned, and not as a free choice. The
+ * live-run chips ("350 m to go", "back to start") switch to a small unit
+ * under a kilometre, so converting only the large branch would show a miles
+ * reader metres — the half-converted state this whole change exists to
+ * avoid. Elevation, the other foot-shaped surface, is still outstanding and
+ * can reuse this.
+ */
+export const METRES_PER_FOOT = 0.3048;
+
+/**
+ * The small-distance companion to `distanceIn`: metres for metric readers,
+ * feet for imperial. Used under the unit-switch threshold, where a decimal
+ * fraction of a mile stops being readable ("0.02 mi to go").
+ */
+export function shortDistanceIn(metres: number, unit: DistanceUnit): number {
+  if (!Number.isFinite(metres)) return 0;
+  return unit === "mi" ? metres / METRES_PER_FOOT : metres;
+}
+
+/** Short-distance suffix — `m` / `ft`. */
+export function shortDistanceUnitLabel(unit: DistanceUnit): string {
+  return unit === "mi" ? "ft" : "m";
+}
+
+/**
  * Resolve a profile's stored preference to a unit, defaulting to metric.
  *
  * Takes the raw field rather than the profile so callers with a partial
@@ -104,6 +132,41 @@ export function paceIn(secPerKm: number, unit: DistanceUnit): number {
  * preference yet.
  */
 export const GENERATION_TIME_UNIT: DistanceUnit = "km";
+
+/**
+ * Splits are per-KILOMETRE data, not a formatting choice — so the splits
+ * surfaces stay metric until that changes, and say so with this name.
+ *
+ * `calculateSplits` cuts on 1000 m boundaries and `Run.tsx` PERSISTS the
+ * result on the saved run as `{ km, pace }`, with the pace already
+ * formatted into a string. So a miles reader can't be served by converting
+ * a label: the rows themselves are the wrong length, and the stored ones
+ * carry baked metric text. Doing it properly means a lap-length parameter
+ * on `calculateSplits` plus recomputing from `run.points` at display —
+ * real work, and its own change.
+ *
+ * Converting only the average pace above a column of kilometre rows would
+ * have been worse than either consistent answer, which is why this exists
+ * rather than a partial conversion.
+ */
+export const SPLITS_ARE_PER_KM: DistanceUnit = "km";
+
+/**
+ * The distance PRESET chips in run setup are round kilometres, and the
+ * round numbers are the point — so they stay metric until someone picks
+ * the imperial set.
+ *
+ * This is a values question, not a formatting one. `distancePresetsM` holds
+ * 1000 / 5000 / 10000 m because "1, 5, 10" are the numbers a metric runner
+ * reaches for; rendering those same metres in miles gives 0.62 / 3.11 /
+ * 6.21, which is not a preset anyone wants to tap. The imperial answer is a
+ * DIFFERENT set (1, 3.1, 5, 6.2, 13.1), and choosing it is a product call.
+ *
+ * Same shape as the shoe max-distance field: both are places where the
+ * user's number goes IN rather than only coming out, and both land with
+ * the Settings toggle.
+ */
+export const PRESET_DISTANCES_ARE_KM = "km";
 
 /** Short distance suffix — `km` / `mi`. */
 export function distanceUnitLabel(unit: DistanceUnit): string {

@@ -15,6 +15,15 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import RoutePlannerSheet from "../RoutePlannerSheet";
 
+/* The planner shows its route length, so it reads the display unit — and
+   `useAuth` throws outside an AuthProvider, which this suite doesn't
+   render. Mocking the one-export hook keeps the blast radius at one
+   symbol; metric is the default, so the assertions are unaffected. */
+vi.mock("@/hooks/useDistanceUnit", () => ({
+  useDistanceUnit: () => "km" as const,
+}));
+
+
 // The road-aware layer (Run11/Mapbox) reads Pro entitlement via
 // useSubscription → useAuth, which needs AuthProvider. Mock it like the
 // other useSubscription consumers (HeroDrillDownSheet.test.tsx) — these

@@ -4,6 +4,8 @@ import { routeProgress } from "../../lib/gps";
 import type { GPSPoint } from "../../lib/gps";
 import { haptic } from "../../lib/haptic";
 import { THEME } from "../../lib/theme";
+import { nearDistanceLabel } from "../../lib/runLabels";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 
 interface RouteFollowChipProps {
   targetRoute: GPSPoint[];
@@ -13,10 +15,7 @@ interface RouteFollowChipProps {
 /** Beyond this perpendicular distance from the route line you're "off route". */
 const OFF_ROUTE_M = 35;
 
-function fmtRemaining(metres: number): string {
-  if (metres < 1000) return `${Math.round(metres / 10) * 10} m to go`;
-  return `${(metres / 1000).toFixed(1)} km to go`;
-}
+
 
 /**
  * Follow-a-route guidance for the live run. Shows distance remaining + percent
@@ -31,6 +30,7 @@ export default function RouteFollowChip({
   targetRoute,
   currentPoint,
 }: RouteFollowChipProps) {
+  const unit = useDistanceUnit();
   const p =
     currentPoint && targetRoute.length >= 2
       ? routeProgress(targetRoute, currentPoint.lat, currentPoint.lon)
@@ -54,7 +54,7 @@ export default function RouteFollowChip({
       aria-label={
         off
           ? `Off route by ${Math.round(p.offRouteMeters)} metres`
-          : `On route, ${fmtRemaining(p.remainingMeters)}, ${pct} percent complete`
+          : `On route, ${nearDistanceLabel(p.remainingMeters, unit, "to go")}, ${pct} percent complete`
       }
     >
       {off ? (
@@ -71,7 +71,7 @@ export default function RouteFollowChip({
       >
         {off
           ? `Off route · ${Math.round(p.offRouteMeters)}m`
-          : `${fmtRemaining(p.remainingMeters)} · ${pct}%`}
+          : `${nearDistanceLabel(p.remainingMeters, unit, "to go")} · ${pct}%`}
       </span>
     </div>
   );

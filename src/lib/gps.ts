@@ -283,35 +283,24 @@ export function calculatePace(
 }
 
 /**
- * Pace over the last `windowSeconds` of GPS points. Returns the same
- * "M:SS" format as `calculatePace` so the consumer can drop it into
- * the same UI slot.
+ * Pace over the last `windowSeconds` of GPS points, in seconds per
+ * kilometre, or `null` when the window holds too little data (needs
+ * ≥10 m AND ≥5 s inside the window).
  *
- * The all-time average pace `calculatePace(distance, elapsed)` lags
- * badly mid-run — once you've banked 3km at 5:00/km, a 4:00/km fourth
- * km only nudges the average. The rolling window answers "what am I
- * doing right now" instead, which is what runners actually want on
- * the live screen. The full-run average still drives the saved record.
+ * WHY A WINDOW. The all-time average `calculatePace(distance, elapsed)`
+ * lags badly mid-run — once you've banked 3 km at 5:00/km, a 4:00/km
+ * fourth km only nudges it. The rolling window answers "what am I doing
+ * right now", which is what runners want on the live screen. The full-run
+ * average still drives the saved record.
  *
- * Returns '--:--' when there's not enough data (need ≥10m AND ≥5s
- * within the window) — same convention as `calculatePace`.
- */
-export function rollingPace(
-  points: GPSPoint[],
-  windowSeconds: number = 30
-): string {
-  const secsPerKm = rollingPaceSeconds(points, windowSeconds);
-  if (secsPerKm === null) return "--:--";
-  const mins = Math.floor(secsPerKm / 60);
-  const secs = Math.floor(secsPerKm % 60);
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
-}
-
-/**
- * The same rolling-window pace as {@link rollingPace}, in seconds per
- * kilometre, or `null` when the window holds too little data.
+ * There was a `rollingPace` beside this that returned a preformatted
+ * "M:SS" string. It was deleted when the live screen started converting
+ * pace to the reader's unit: a formatter that bakes in per-KILOMETRE has
+ * nothing to offer a caller that needs per-mile, and it had exactly one
+ * consumer. Callers now take the number and pass it to `paceMinSec` with
+ * a unit.
  *
- * Extracted because the audio pace alert needs the number, and was
+ * The number form exists because the audio pace alert needs it, and was
  * computing `(elapsed / distance) * 1000` at its call site instead — the
  * WHOLE-RUN average, the exact quantity the comment above says "lags
  * badly mid-run". On any session with a warm-up that average is dragged

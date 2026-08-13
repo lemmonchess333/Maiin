@@ -25,6 +25,9 @@ import {
   paceBandLabel,
   sessionPaceDisplay,
   finishTimeLabel,
+  distanceValue,
+  distanceLabel2,
+  nearDistanceLabel,
 } from "../runLabels";
 
 describe("paceLabel", () => {
@@ -133,6 +136,50 @@ describe("distanceLabel", () => {
     expect(distanceLabel(5000, "mi")).toBe("3.1 mi");
     expect(distanceLabel(1609.344, "mi")).toBe("1.0 mi");
     expect(distanceLabel(42195, "mi")).toBe("26.2 mi");
+  });
+});
+
+describe("distanceValue / distanceLabel2 / nearDistanceLabel", () => {
+  it("distanceValue is the bare number, at the caller's precision", () => {
+    expect(distanceValue(5000, "km")).toBe("5.0");
+    expect(distanceValue(5000, "km", 2)).toBe("5.00");
+    expect(distanceValue(5000, "mi", 2)).toBe("3.11");
+  });
+
+  it("distanceValue renders zero rather than a placeholder", () => {
+    /* The opposite choice to distanceLabel, on purpose: a caller drawing
+       the unit as a separate element wants "0.00" under its "KM" caption,
+       not an em-dash that leaves the caption dangling. */
+    expect(distanceValue(0, "km", 2)).toBe("0.00");
+    expect(distanceValue(NaN, "mi", 2)).toBe("0.00");
+  });
+
+  it("distanceLabel2 keeps the em-dash guard the one-decimal form has", () => {
+    expect(distanceLabel2(5000, "km")).toBe("5.00 km");
+    expect(distanceLabel2(5000, "mi")).toBe("3.11 mi");
+    expect(distanceLabel2(0, "mi")).toBe("—");
+  });
+
+  it("nearDistanceLabel drops to metres, and to FEET for miles", () => {
+    /* Under the switch a fraction of a mile stops being readable, which is
+       the same judgement the metric code already made by falling back to
+       metres — this only gives the imperial reader the equivalent instead
+       of handing them metres. 350 m is 1148 ft, rounded to 1150. */
+    expect(nearDistanceLabel(350, "km", "to go")).toBe("350 m to go");
+    expect(nearDistanceLabel(350, "mi", "to go")).toBe("1150 ft to go");
+  });
+
+  it("nearDistanceLabel switches at the reader's OWN unit boundary", () => {
+    /* 1200 m is past a kilometre but short of a mile, so the two readers
+       are legitimately on different sides of the switch at the same
+       distance. A shared 1000 m threshold would print "3940 ft". */
+    expect(nearDistanceLabel(1200, "km", "to go")).toBe("1.2 km to go");
+    expect(nearDistanceLabel(1200, "mi", "to go")).toBe("3940 ft to go");
+    expect(nearDistanceLabel(2000, "mi", "to go")).toBe("1.2 mi to go");
+  });
+
+  it("nearDistanceLabel omits the phrase when there isn't one", () => {
+    expect(nearDistanceLabel(350, "km")).toBe("350 m");
   });
 });
 

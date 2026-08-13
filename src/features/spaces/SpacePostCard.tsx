@@ -35,12 +35,9 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { IconButton } from "@/components/ui/IconButton";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { COACH_AUTHOR_ID, type SpacePostDoc } from "./spaceTypes";
-
-function formatPace(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = Math.round(seconds % 60);
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
+import { distanceValue, paceMinSec } from "@/lib/runLabels";
+import { distanceUnitLabel, paceUnitLabel } from "@/lib/distanceUnits";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 
 export default function SpacePostCard({
   spaceId,
@@ -75,6 +72,7 @@ export default function SpacePostCard({
   commentDelta?: number;
   onOpenComments?: () => void;
 }) {
+  const unit = useDistanceUnit();
   const uid = useUid();
   const { addBlocked } = useBlockedUsers();
   /* SOC-P2b — the system Coach variant: brand-marked avatar tile +
@@ -122,17 +120,17 @@ export default function SpacePostCard({
           {(activity.distance ?? 0) > 0 && (
             <div className="absolute bottom-2.5 left-3.5">
               <p className="text-xl font-bold font-mono tabular-nums leading-none text-running">
-                {((activity.distance ?? 0) / 1000).toFixed(2)}
+                {distanceValue(activity.distance ?? 0, unit, 2)}
               </p>
-              <SectionLabel className="mt-0.5">km</SectionLabel>
+              <SectionLabel className="mt-0.5">{distanceUnitLabel(unit)}</SectionLabel>
             </div>
           )}
           {(activity.avgPace ?? 0) > 0 && (
             <div className="absolute bottom-2.5 right-3.5 text-right">
               <p className="text-sm font-bold font-mono tabular-nums leading-none text-foreground">
-                {formatPace(activity.avgPace!)}
+                {paceMinSec(activity.avgPace!, unit)}
               </p>
-              <SectionLabel className="mt-0.5">/km</SectionLabel>
+              <SectionLabel className="mt-0.5">{paceUnitLabel(unit)}</SectionLabel>
             </div>
           )}
         </div>

@@ -48,12 +48,15 @@ import ReportModal from "../components/social/ReportModal";
 import ProgressPhotos from "../components/social/ProgressPhotos";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { Spinner } from "../components/ui/Spinner";
+import { distanceLabel } from "@/lib/runLabels";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 
 export default function UserProfile() {
   const { uid } = useParams<{ uid: string }>();
   // `uid` is the profile being VIEWED (route param); `viewerUid` is the
   // signed-in reader. Most of this page compares the two.
   const viewerUid = useUid();
+  const unit = useDistanceUnit();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<{
     uid: string;
@@ -81,7 +84,7 @@ export default function UserProfile() {
     }[]
   >([]);
   const [stats, setStats] = useState<{
-    totalKm: number;
+    totalDistanceM: number;
     totalSessions: number;
   } | null>(null);
   const [badges, setBadges] = useState<EarnedBadge[]>([]);
@@ -176,13 +179,13 @@ export default function UserProfile() {
       // lifetime totals — including private/unshared sessions, and uncapped
       // (this activities query is limit(10), so summing it would undercount).
       if (!isOwnProfile) {
-        let totalKm = 0;
+        let totalDistanceM = 0;
         let totalSessions = 0;
         acts.forEach((a) => {
           totalSessions++;
-          if (a.distance) totalKm += a.distance / 1000;
+          if (a.distance) totalDistanceM += a.distance;
         });
-        setStats({ totalKm, totalSessions });
+        setStats({ totalDistanceM, totalSessions });
       }
     });
 
@@ -290,7 +293,7 @@ export default function UserProfile() {
               runSnap.docs.map((d) => d.data())
             );
             setStats({
-              totalKm: totalDistanceM / 1000,
+              totalDistanceM,
               totalSessions: runCount + woSnap.size,
             });
           })
@@ -459,7 +462,7 @@ export default function UserProfile() {
           stats && (
             <>
               <span className="flex-1 text-center py-1.5 rounded-xl bg-card text-xs font-medium text-foreground font-mono tabular-nums shadow-sm">
-                {stats.totalKm.toFixed(1)} km
+                {distanceLabel(stats.totalDistanceM, unit)}
               </span>
               <span className="flex-1 text-center py-1.5 rounded-xl bg-card text-xs font-medium text-foreground font-mono tabular-nums shadow-sm">
                 {stats.totalSessions} sessions
@@ -523,7 +526,7 @@ export default function UserProfile() {
                 type: a.type,
                 summary:
                   a.type === "run"
-                    ? `${((a.distance || 0) / 1000).toFixed(1)} km · ${a.avgPace || ""}`
+                    ? `${distanceLabel(a.distance || 0, unit)} · ${a.avgPace || ""}`
                     : `${a.exerciseCount || 0} exercises · ${a.prsHit || 0} PRs`,
                 createdAt: a.createdAt,
               } as FeedItem
