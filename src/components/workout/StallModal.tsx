@@ -1,4 +1,5 @@
-import { useAuth } from "@/lib/auth";
+import { useAuth, useUidForStorageKey } from "@/lib/auth";
+import { stallCooldownKey } from "@/features/program/stallDetection";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { buildCalorieOverridePayload } from "@/lib/goalWeightPlan";
 import { toast } from "@/lib/toast";
@@ -35,6 +36,8 @@ export default function StallModal({ exercise, onClose }: StallModalProps) {
   // 2919 became 2500 under a toast reading "increased by 150".
   const { finalTarget } = useEffectiveTargets();
 
+  const storageUid = useUidForStorageKey();
+
   const handleAdjust = async () => {
     if (profile) {
       // Through the shared recipe, so `targetCalories` and all three macro
@@ -55,12 +58,12 @@ export default function StallModal({ exercise, onClose }: StallModalProps) {
       if (!result.ok) return;
       toast.success("Calorie target increased by 150");
     }
-    localStorage.setItem(`tropos_stall_${exercise.name}`, String(Date.now()));
+    localStorage.setItem(stallCooldownKey(storageUid, exercise.name), String(Date.now()));
     onClose();
   };
 
   const handleDismiss = () => {
-    localStorage.setItem(`tropos_stall_${exercise.name}`, String(Date.now()));
+    localStorage.setItem(stallCooldownKey(storageUid, exercise.name), String(Date.now()));
     onClose();
   };
 

@@ -41,6 +41,9 @@ const profile = {
 
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ profile, updateProfile }),
+  // The stall cooldown key is uid-scoped — exercise names are global, so an
+  // unscoped key let one account's cooldown suppress another's prompt.
+  useUidForStorageKey: () => "u-test",
 }));
 vi.mock("@/lib/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
