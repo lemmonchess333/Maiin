@@ -137,10 +137,6 @@ export default function RunDetail() {
     run.duration > 0 && run.distance > 0
       ? (run.duration / run.distance) * 1000
       : 0;
-  const avgPaceStr =
-    avgPace > 0
-      ? `${Math.floor(avgPace / 60)}:${(Math.floor(avgPace) % 60).toString().padStart(2, "0")}`
-      : "--:--";
 
   // Splits are per-kilometre segments derived from the GPS trace
   // (`calculateSplits` in lib/gps.ts — needs ≥2 points and at least one full
@@ -396,7 +392,11 @@ export default function RunDetail() {
         {/* Primary stats row */}
         <div className="rounded-2xl bg-card card-shadow flex divide-x divide-border/40">
           <StatPill value={formatTime(run.duration)} label="Time" />
-          <StatPill value={avgPaceStr} label="/km Pace" color={THEME.teal} />
+          <StatPill
+            value={paceMinSec(avgPace, unit)}
+            label={`${paceUnitLabel(unit)} Pace`}
+            color={THEME.teal}
+          />
           <StatPill
             value={`${run.calories ?? 0}`}
             label="Cal"
@@ -517,11 +517,14 @@ export default function RunDetail() {
           points: run.points,
           distanceKm: run.distance / 1000,
           durationSec: run.duration,
-          pace: avgPaceStr,
+          paceSecPerKm: avgPace,
           elevationM: run.elevationGain ?? undefined,
-          splits: (run.splits ?? []).map((s: { km: number; pace: string }) => ({
-            km: s.km,
-            pace: s.pace,
+          /* The card's rows follow the same recut-not-relabel rule as the
+             chart above it — `displaySplits` is already in the sharer's
+             unit, and `paceSeconds` is sec/km either way. */
+          splits: displaySplits.map((s) => ({
+            lap: s.km,
+            paceSecPerKm: s.paceSeconds,
           })),
         }}
       />

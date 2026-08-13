@@ -1,8 +1,20 @@
 import type { CSSProperties, Ref } from "react";
 import {
-  elevationUnitLabel,
-  SHARE_CARD_IS_METRIC,
+  distanceUnitLabel,
+  paceUnitLabel,
+  spokenDistanceUnit,
+  type DistanceUnit,
 } from "@/lib/distanceUnits";
+import {
+  paceMinSec,
+  distanceValue,
+  elevationLabel,
+} from "@/lib/runLabels";
+
+/** `12.3km` — the compact no-space form this card's small stats use. */
+function distanceLabel2Compact(km: number | undefined, unit: DistanceUnit) {
+  return `${distanceValue((km ?? 0) * 1000, unit)}${distanceUnitLabel(unit)}`;
+}
 
 /**
  * ShareCardRenderer (SOCIAL S1, PR2) — the pixel-perfect, offscreen DOM
@@ -40,6 +52,17 @@ const JAKARTA =
   "'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, sans-serif";
 
 export interface ShareCardRenderData {
+  /**
+   * The SHARER's unit, not the viewer's.
+   *
+   * This is the one place in the app where "the reader's unit" is genuinely
+   * ambiguous, because a share card is an IMAGE that other people look at
+   * and the image is fixed at export. Rendering it in the sharer's unit is
+   * what every running app does and what the numbers mean to the person
+   * posting them — the alternative would be a card whose units depend on
+   * who happens to open it, which a PNG cannot do anyway.
+   */
+  unit: DistanceUnit;
   template: ShareTemplate;
   format: ShareFormat;
   background: ShareBackground;
@@ -58,9 +81,14 @@ export interface ShareCardRenderData {
   routePath?: string;
   distanceKm?: number;
   durationSec?: number;
-  pace?: string; // "5:12"
+  /** Seconds per KILOMETRE — the stored convention. Formatted at render in
+   *  `unit`, because a pre-formatted string cannot be converted. */
+  paceSecPerKm?: number;
   elevationM?: number;
-  splits?: { km: number; pace: string }[];
+  /** `lap` is the split's ORDINAL and the pace is sec/km; both render in
+   *  `unit`. Named `lap` rather than `km` because for an imperial sharer
+   *  the rows are miles. */
+  splits?: { lap: number; paceSecPerKm: number }[];
 
   // ── LIFT ──
   totalVolumeKg?: number;
@@ -440,7 +468,7 @@ function RecapTemplate({
       <div style={{ display: "flex", gap: 24 * scale }}>
         {show("runDistance") && (
           <Stat
-            value={`${(data.distanceKm ?? 0).toFixed(1)}km`}
+            value={distanceLabel2Compact(data.distanceKm, data.unit)}
             label="run"
             scale={scale}
             color={RUN_CORAL}
@@ -531,8 +559,12 @@ function RunTemplate({
       >
         {show("distance") && (
           <Hero
-            value={(data.distanceKm ?? 0).toFixed(2)}
-            label="kilometres"
+            value={distanceValue(
+              (data.distanceKm ?? 0) * 1000,
+              data.unit,
+              2
+            )}
+            label={spokenDistanceUnit(data.unit, 2)}
             color="#ffffff"
             scale={scale}
           />
@@ -540,8 +572,12 @@ function RunTemplate({
         <div style={{ display: "flex", gap: 24 * scale }}>
           {show("pace") && (
             <Stat
-              value={data.pace ?? "--:--"}
-              label="/km pace"
+              value={
+                data.paceSecPerKm
+                  ? paceMinSec(data.paceSecPerKm, data.unit)
+                  : "--:--"
+              }
+              label={`${paceUnitLabel(data.unit)} pace`}
               scale={scale}
               color={accent}
             />
@@ -555,10 +591,7 @@ function RunTemplate({
           )}
           {show("elevation") && data.elevationM != null && (
             <Stat
-              /* Metric — see SHARE_CARD_IS_METRIC. The whole card's data
-                 shape is pre-baked per kilometre, so converting one stat
-                 would make it disagree with the four beside it. */
-              value={`${Math.round(data.elevationM)}${elevationUnitLabel(SHARE_CARD_IS_METRIC)}`}
+              value={elevationLabel(data.elevationM, data.unit)}
               label="elev"
               scale={scale}
             />
@@ -575,7 +608,7 @@ function RunTemplate({
           >
             {data.splits.slice(0, 6).map((s) => (
               <span
-                key={s.km}
+                key={s.lap}
                 style={{
                   fontFamily: ARCHIVO,
                   fontVariantNumeric: "tabular-nums",
@@ -583,7 +616,9 @@ function RunTemplate({
                   color: "rgba(255,255,255,0.6)",
                 }}
               >
-                {s.km}k {s.pace}
+                {s.lap}
+                {distanceUnitLabel(data.unit)}{" "}
+                {paceMinSec(s.paceSecPerKm, data.unit)}
               </span>
             ))}
           </div>
@@ -726,8 +761,8 @@ function HybridTemplate({
         />
         {show("runDistance") && (
           <Hero
-            value={(data.distanceKm ?? 0).toFixed(1)}
-            unit="km"
+            value={distanceValue((data.distanceKm ?? 0) * 1000, data.unit)}
+            unit={distanceUnitLabel(data.unit)}
             label="ran"
             color={RUN_CORAL}
             scale={scale * 0.62}

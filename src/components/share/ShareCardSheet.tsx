@@ -21,6 +21,7 @@ import ShareCardRenderer, {
   type ShareCardRenderData,
 } from "@/components/share/ShareCardRenderer";
 import type { GPSPoint } from "@/lib/gps";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 
 /**
  * ShareCardSheet (SOCIAL S1, PR3) — the customization + export surface.
@@ -50,9 +51,11 @@ export interface ShareCardSheetData {
   points?: GPSPoint[];
   distanceKm?: number;
   durationSec?: number;
-  pace?: string;
+  /** Seconds per KILOMETRE — converted at render, in the sharer's unit. */
+  paceSecPerKm?: number;
   elevationM?: number;
-  splits?: { km: number; pace: string }[];
+  /** `lap` is the ordinal; the pace is sec/km. */
+  splits?: { lap: number; paceSecPerKm: number }[];
   // LIFT
   totalVolumeKg?: number;
   exerciseCount?: number;
@@ -112,6 +115,7 @@ export function ShareCardSheet({
   onOpenChange: (open: boolean) => void;
   data: ShareCardSheetData;
 }) {
+  const unit = useDistanceUnit();
   const [format, setFormat] = useState<ShareFormat>("story");
   const [background, setBackground] = useState<ShareBackground>("brand");
   const [hidden, setHidden] = useState<Set<string>>(new Set());
@@ -162,6 +166,9 @@ export function ShareCardSheet({
   }, [data.template, data.points]);
 
   const renderData: ShareCardRenderData = {
+    /* The SHARER's unit — the card is a fixed image, so it cannot depend
+       on who opens it. */
+    unit,
     template: data.template,
     format,
     background,
@@ -172,7 +179,7 @@ export function ShareCardSheet({
     routePath,
     distanceKm: data.distanceKm,
     durationSec: data.durationSec,
-    pace: data.pace,
+    paceSecPerKm: data.paceSecPerKm,
     elevationM: data.elevationM,
     splits: data.splits,
     totalVolumeKg: data.totalVolumeKg,
