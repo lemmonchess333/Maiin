@@ -255,6 +255,13 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: [],
   },
+  // One-shot re-credit for the lift volume that `totalVolume`'s absence
+  // from the workout doc never counted. Self-service, no secrets.
+  recreditMyLiftVolume: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
   onActivityCreated: {
     kind: "event",
     maxInstances: 50,

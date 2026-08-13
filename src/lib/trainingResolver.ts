@@ -196,8 +196,18 @@ export function resolveTrainingDayForDate(args: {
    *  passes it; transitional callers (DayActionSheet) will be
    *  wired in a follow-up chunk. */
   claimMap?: Map<string, ClaimState>;
+  /** Today's local date key. Injected so the future-day rule below is
+   *  testable without mocking the clock; defaults to the real today. */
+  todayKey?: string;
 }): ResolvedTrainingDay {
-  const { dateKey, profile, programState, currentWeekKey, claimMap } = args;
+  const {
+    dateKey,
+    profile,
+    programState,
+    currentWeekKey,
+    claimMap,
+    todayKey = localDateString(),
+  } = args;
   const dayIndex = parseLocalDate(dateKey).getDay();
 
   const schedule: ScheduleDay[] =
@@ -222,8 +232,26 @@ export function resolveTrainingDayForDate(args: {
       : null;
   let liftStatus: LiftSlotStatus = "none";
   if (workout) {
-    if (workout.completed) liftStatus = "completed";
-    else if (workout.skipped) liftStatus = "skipped";
+    /* A lift's completion belongs to its ROTATION SLOT, not to a date
+       (ADR-0002: lifts are split-ordered). Projecting it onto a FUTURE
+       weekday claimed the session was already done — a device screenshot
+       showed Tue 18 Aug reading "Pull — Lat Focus ✓" five days out,
+       because that slot had been completed the week before. Every future
+       day mapping to a finished slot said the same, so a user looking at
+       next week saw it pre-ticked.
+
+       ADR-0002 is what settles this rather than a preference: it has the
+       calendar share `workout.completed` so completion never disagrees —
+       which is about the CURRENT week reconciling with the cursor — while
+       explicitly barring a calendar surface from asserting a weekday-
+       pinned session as authoritative. A ✓ on a date that has not arrived
+       is exactly that assertion. This changes no scheduling semantics:
+       the rotation is untouched, the Programme cursor (which resolves
+       lifts by its own next-incomplete scan, not through here) is
+       untouched, and today and the past still show completion. */
+    const isFuture = dateKey > todayKey;
+    if (workout.completed) liftStatus = isFuture ? "planned" : "completed";
+    else if (workout.skipped) liftStatus = isFuture ? "planned" : "skipped";
     else liftStatus = "planned";
   }
   const lift: ResolvedLift = {
