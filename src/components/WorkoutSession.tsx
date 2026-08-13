@@ -55,6 +55,7 @@ import {
   buildVolumeBest,
   checkVolumePR,
   exerciseSessionVolume,
+  nextVolumeBest,
   type PRMap,
   type RepBucket,
   type VolumeBestMap,
@@ -518,9 +519,15 @@ export default function WorkoutSession({
             exercises: (data.exercises || []).map(
               (ex: {
                 exerciseName: string;
+                repUnit?: "reps" | "seconds";
                 sets: { weightKg: number; reps: number }[];
               }) => ({
                 exerciseName: ex.exerciseName,
+                /* Carried, because this projection is all buildVolumeBest
+                   sees. Stripping it made the timed-exercise exclusion
+                   unreachable regardless of what the helper did — the
+                   saved workout knows its unit; this copy of it did not. */
+                repUnit: ex.repUnit,
                 sets: (ex.sets || []).map((s) => ({
                   weightKg: s.weightKg || 0,
                   reps: s.reps || 0,
@@ -1125,19 +1132,20 @@ export default function WorkoutSession({
           // Backlog #2: persist volume bests derived from the FINAL set
           // logs — undo-safe (an undone set never inflates the record).
           const volDate = new Date().toISOString().split("T")[0];
-          const finalVolumeBest: VolumeBestMap = { ...volumeBest };
-          setLogs.forEach((exSets, exIdx) => {
-            const name = day.exercises[exIdx]?.name;
-            if (!name) return;
-            const vol = exerciseSessionVolume(
-              exSets
+          /* The rule (a hold has no volume) and the carry-forward live in
+             `nextVolumeBest`, where a test can reach them — this block had
+             none, in a file that has none. */
+          const finalVolumeBest: VolumeBestMap = nextVolumeBest(
+            volumeBest,
+            setLogs.map((exSets, exIdx) => ({
+              name: day.exercises[exIdx]?.name ?? "",
+              repUnit: day.exercises[exIdx]?.repUnit,
+              sets: exSets
                 .filter((s2) => s2.completed && s2.type !== "warmup")
-                .map((s2) => ({ weightKg: s2.weight, reps: s2.reps }))
-            );
-            if (vol > 0 && vol > (finalVolumeBest[name]?.volume ?? 0)) {
-              finalVolumeBest[name] = { volume: vol, date: volDate };
-            }
-          });
+                .map((s2) => ({ weightKg: s2.weight, reps: s2.reps })),
+            })),
+            volDate
+          );
           // THIS session counts toward the 3-session minimum. The counts
           // were loaded, never incremented, and persisted back verbatim —
           // so they froze at their first-persist values and the PR gate
