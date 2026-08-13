@@ -1177,6 +1177,7 @@ export default function Run() {
                 <RouteSetupSection
                   targetRoute={targetRoute}
                   routeSource={routeSource}
+                  currentPosition={gps.currentPoint}
                   onLoadRoute={(points, source) => {
                     setTargetRoute(points);
                     setRouteSource(source);

@@ -29,9 +29,16 @@ vi.mock("@/lib/subscription", () => ({
   }),
 }));
 
+/** Every `new maplibregl.Map(...)` option bag, so the OPENING VIEW can be
+ *  asserted — which is the thing that was broken and unpinned. */
+const mapOpts = vi.hoisted(() => [] as { center: [number, number]; zoom: number }[]);
+
 vi.mock("maplibre-gl/dist/maplibre-gl.css", () => ({}));
 vi.mock("maplibre-gl", () => {
   class FakeMap {
+    constructor(opts: { center: [number, number]; zoom: number }) {
+      mapOpts.push(opts);
+    }
     on() {}
     once() {}
     addSource() {}
@@ -48,7 +55,10 @@ vi.mock("maplibre-gl", () => {
   return { default: { Map: FakeMap } };
 });
 
-afterEach(() => cleanup());
+afterEach(() => {
+  cleanup();
+  mapOpts.length = 0;
+});
 
 function setup(
   overrides: Partial<React.ComponentProps<typeof RoutePlannerSheet>> = {}
@@ -88,5 +98,24 @@ describe("RoutePlannerSheet — exit affordance", () => {
     expect(
       screen.getByRole("button", { name: /Save & follow/ })
     ).toBeDisabled();
+  });
+});
+
+
+describe("RoutePlannerSheet — where the map opens", () => {
+  it("opens on the supplied position at a zoom you can draw a route at", () => {
+    setup({ initialCenter: { lat: 51.5072, lon: -0.1276 } });
+    expect(mapOpts).toHaveLength(1);
+    expect(mapOpts[0].center).toEqual([-0.1276, 51.5072]);
+    expect(mapOpts[0].zoom).toBeGreaterThanOrEqual(13);
+  });
+
+  it("falls back to the whole world only when it genuinely has no position", () => {
+    /* Documents the fallback rather than endorsing it: zoom 2 is the honest
+       "we don't know where you are" view, and the sheet fires a one-shot
+       geolocation to escape it. The bug was never this branch — it was that
+       EVERY user landed here, because no caller passed initialCenter. */
+    setup({ initialCenter: null });
+    expect(mapOpts[0].zoom).toBeLessThan(5);
   });
 });
