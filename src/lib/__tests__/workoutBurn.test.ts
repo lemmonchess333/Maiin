@@ -132,3 +132,45 @@ describe("estimateRunBurn", () => {
     expect(estimateRunBurn({ distanceKm: 5, bodyweightKg: 0 })).toBe(0);
   });
 });
+
+/**
+ * The run-burn constant lives in exactly one place.
+ *
+ * It had lived in three, each with its own tests asserting the same
+ * arithmetic: `estimateRunBurn` here, `estimateRunCalories` in `gps.ts`, and
+ * a hand-rolled `Math.round(weightKg * distKm * 1.036)` inside
+ * `useHomeData`'s calorie tile. Three copies agreeing today is not the same
+ * as one copy — a change to the coefficient would have moved two surfaces
+ * and left the third, with three green suites.
+ *
+ * `estimateRunBurn` was also on the symbol-reachability orphan list, which
+ * reads as rot until you notice WHY nothing called it: the two live surfaces
+ * had each re-derived it. Consolidating took the entry off that list.
+ *
+ * Asserted on the constant rather than by comparing the functions, because
+ * the functions now delegate — an equality test between them would be a
+ * tautology, and would still pass with a fourth copy added elsewhere.
+ */
+describe("one run-burn formula", () => {
+  it("1.036 appears exactly once in production src/", async () => {
+    const { readFileSync, globSync } = await import("node:fs");
+    const { resolve, dirname } = await import("node:path");
+    const { fileURLToPath } = await import("node:url");
+    const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
+
+    const sites: string[] = [];
+    for (const rel of globSync("src/**/*.{ts,tsx}", { cwd: repoRoot })) {
+      if (rel.includes("__tests__") || rel.includes(".test.")) continue;
+      const src = readFileSync(resolve(repoRoot, rel), "utf8");
+      src.split("\n").forEach((line, i) => {
+        if (/(?<![\d.])1\.036(?![\d])/.test(line)) sites.push(`${rel}:${i + 1}`);
+      });
+    }
+    expect(
+      [...new Set(sites.map((s) => s.split(":")[0]))],
+      `The run-burn coefficient must have ONE home (workoutBurn.ts). Call ` +
+        `estimateRunBurn — or estimateRunCalories for a distance in metres — ` +
+        `rather than repeating it. Sites found:\n  ${sites.join("\n  ")}`
+    ).toEqual(["src/lib/workoutBurn.ts"]);
+  });
+});
