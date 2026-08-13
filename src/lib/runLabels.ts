@@ -6,6 +6,8 @@ import {
   paceUnitLabel,
   shortDistanceIn,
   shortDistanceUnitLabel,
+  elevationIn,
+  elevationUnitLabel,
   METRES_PER_MILE,
 } from "./distanceUnits";
 
@@ -203,6 +205,23 @@ export function distanceLabel2(
 ): string {
   if (!distanceM || distanceM <= 0) return "—";
   return `${distanceValue(distanceM, unit, 2)} ${distanceUnitLabel(unit)}`;
+}
+
+/**
+ * A climb, rounded to a whole unit — `120 m` / `394 ft`.
+ *
+ * Rounds AFTER converting, so a metric reader still sees the stored whole
+ * metres and an imperial one gets whole feet rather than a converted
+ * decimal. Zero renders as `0`, not a placeholder: a flat run has genuinely
+ * zero climb, which is information rather than a missing value.
+ */
+export function elevationLabel(
+  metres: number,
+  unit: DistanceUnit,
+  withUnit = true
+): string {
+  const v = Math.round(elevationIn(metres, unit));
+  return withUnit ? `${v}${elevationUnitLabel(unit)}` : `${v}`;
 }
 
 /**
