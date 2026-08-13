@@ -21,11 +21,30 @@ interface GPSState {
   permissionState: PermissionState | null;
   signalQuality: GPSSignalQuality;
   /**
-   * Wall-clock ms of the last *valid* fix (the one that actually moved
-   * `distanceRef.current`). `null` until the first valid fix arrives.
-   * Consumers compare `Date.now() - lastFixAt` to detect mid-run GPS
-   * loss — `isValidReading` drops poor fixes silently so the visible
-   * accuracy reading can stay stale even when real reception is gone.
+   * Wall-clock ms of the last fix RECEIVED. `null` until the first fix of
+   * this tracking session arrives. Consumers compare
+   * `Date.now() - lastFixAt` to detect mid-run GPS loss.
+   *
+   * This used to mean "the last fix that actually moved
+   * `distanceRef.current`", which is a different question and made the
+   * GPS-loss banner fire on a runner who was simply standing still.
+   * `isValidReading` rejects any fix within 1m of the previous one — a
+   * correct jitter filter, without which stationary GPS noise would
+   * accumulate phantom distance — and a rejected fix did not stamp this
+   * field. So waiting at a crossing, stretching before the first step, or
+   * pausing to look at the phone all froze it, and after 8s the screen
+   * said "GPS recovering · last fix Ns ago" and kept saying it, while the
+   * accuracy chip sat at ±6m with full green bars because THAT is updated
+   * on every fix regardless.
+   *
+   * Reported from a device on 2026-08-13 with the tell in plain sight: the
+   * banner's age ran exactly `elapsed + 3s` in every screenshot — the age
+   * of the first fix, never replaced.
+   *
+   * Stamped once, at the top of the position handler, on every fix that
+   * arrives. "Has a fix arrived recently" is a question about reception,
+   * so it is answered by reception and nothing else; fix QUALITY is the
+   * accuracy chip's job, and whether the athlete moved is `distance`'s.
    */
   lastFixAt: number | null;
 }
@@ -166,12 +185,17 @@ export function useGPS(elapsedSeconds = 0) {
             ? Date.now() - pointsRef.current[0].timestamp
             : 0;
 
-        // Always update accuracy display even if reading is rejected
+        // Always update accuracy display even if reading is rejected —
+        // and, for the same reason, record that a fix ARRIVED. Everything
+        // below this point can decline to record the position (too coarse,
+        // implausibly fast, less than a metre of movement) without any of
+        // that being evidence about reception.
         const quality = getSignalQuality(accuracy);
         setState((s) => ({
           ...s,
           gpsAccuracy: accuracy,
           signalQuality: quality,
+          lastFixAt: Date.now(),
         }));
 
         const GOOD_FIX_M = 150;
@@ -221,7 +245,6 @@ export function useGPS(elapsedSeconds = 0) {
             distance: distanceRef.current,
             isTracking: true,
             error: null,
-            lastFixAt: point.timestamp,
           }));
           return;
         }
@@ -244,8 +267,7 @@ export function useGPS(elapsedSeconds = 0) {
               distance: 0,
               isTracking: true,
               error: null,
-              lastFixAt: point.timestamp,
-            }));
+              }));
             return;
           }
           // Still coarse — let the map follow the position, but don't record
@@ -276,7 +298,6 @@ export function useGPS(elapsedSeconds = 0) {
           distance: distanceRef.current,
           isTracking: true,
           error: null,
-          lastFixAt: point.timestamp,
         }));
       }
     };
