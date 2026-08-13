@@ -124,7 +124,17 @@ export default function ExerciseHistory() {
     for (const w of workouts) {
       const ex = w.exercises?.find((e) => e.exerciseName === decodedName);
       if (!ex || !ex.sets || ex.sets.length === 0) continue;
-      const sets = ex.sets.map((s) => ({ reps: s.reps, weightKg: s.weightKg }));
+      // Coerce at the boundary, not at each of the four uses below. A
+      // legacy set with a missing `weightKg` or `reps` otherwise poisons
+      // ALL of them at once: `volume` becomes NaN, and because NaN wins
+      // every comparison, `Math.max(maxWeight, undefined)` and the e1RM
+      // running max stay NaN for the rest of the session too. Same
+      // failure History fixed by routing tonnage through
+      // `workoutTonnageKg`'s guarded multiply.
+      const sets = ex.sets.map((s) => ({
+        reps: s.reps || 0,
+        weightKg: s.weightKg || 0,
+      }));
       const top = isTimed
         ? sets.reduce((best, set) => (set.reps > best.reps ? set : best))
         : topSetOf(sets);
