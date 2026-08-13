@@ -1,3 +1,5 @@
+import { estimateRunBurn } from "./workoutBurn";
+
 export function haversine(
   lat1: number,
   lon1: number,
@@ -21,6 +23,7 @@ function toRad(deg: number): number {
  * Initial great-circle bearing point 1 → point 2, in degrees clockwise from
  * north (0–360). Used for the back-to-start direction arrow and heading.
  */
+
 export function bearing(
   lat1: number,
   lon1: number,
@@ -527,9 +530,17 @@ ${trkpts}
 </gpx>`;
 }
 
+/**
+ * Run calorie burn for a distance in METRES — the shape every run surface
+ * has. Delegates to the canonical formula in `workoutBurn.ts` rather than
+ * repeating the constant; see that module for why it lives there.
+ */
 export function estimateRunCalories(
   distanceMeters: number,
   weightKg: number
 ): number {
-  return Math.round((distanceMeters / 1000) * weightKg * 1.036);
+  return estimateRunBurn({
+    distanceKm: distanceMeters / 1000,
+    bodyweightKg: weightKg,
+  });
 }
