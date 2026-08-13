@@ -458,4 +458,107 @@ describe("useHomeData", { timeout: 5000 }, () => {
     });
   });
 
+  describe("post-session nudge — which discipline just finished", () => {
+    /* The nudge used to classify from `exercise.category`, comparing it to
+       the literal `"cardio"`. Nothing writes that value: the catalogue
+       spells it `"Cardio"`, and the only writer of the persisted field
+       (`useProgram.onCompleteDay`) stores a MovementCategory instead — and
+       `exerciseMovementCategory.ts` maps cardio exercises to `core`. So
+       `type` was permanently `"lift"`, TodayEnergy's "Post-run — refuel"
+       copy could not render for anyone, and a run-only day produced no
+       nudge at all (the effect returned early on "no workouts today").
+
+       The old fixture passed `category: "push"` — a value from neither
+       vocabulary — so it never exercised the comparison it was sitting on.
+
+       These assert the CLASSIFICATION, which is what was broken. Each
+       fails on the pre-fix hook: run-only returned null, and both-in-one-
+       day returned "lift". */
+    const RECENT = Timestamp.fromDate(new Date(Date.now() - 10 * 60_000));
+
+    /** A countable run: clears isVolumeEligible's 50 m / 30 s floors. */
+    const countableRun = {
+      completedAt: RECENT,
+      distance: 5000,
+      duration: 1800,
+    };
+
+    const liftToday = [
+      {
+        id: "w-today",
+        date: TODAY_KEY,
+        // The value production actually stores — a MovementCategory.
+        exercises: [
+          { category: "horizontal_push", exerciseId: "bench-press", sets: [] },
+        ],
+      },
+    ] as unknown as Parameters<typeof useHomeData>[2];
+
+    function renderWith(
+      runs: Record<string, unknown>[],
+      workouts: Parameters<typeof useHomeData>[2]
+    ) {
+      seedHome([{ totalCalories: 500, totalProtein: 40 }], runs, []);
+      return renderHook(() =>
+        useHomeData({ uid: "u1" }, makeProfile(), workouts, "kg", 176)
+      );
+    }
+
+    it("a run with no workout logged reads as a run", async () => {
+      const { result } = renderWith([countableRun], []);
+      await waitFor(() =>
+        expect(result.current.postWorkoutNudge?.type).toBe("run")
+      );
+    });
+
+    it("a workout with no run still reads as a lift", async () => {
+      // The paired control: without it, a fix that always answered "run"
+      // would pass the test above.
+      const { result } = renderWith([], liftToday);
+      await waitFor(() =>
+        expect(result.current.postWorkoutNudge?.type).toBe("lift")
+      );
+    });
+
+    it("both on the same day reads as both", async () => {
+      const { result } = renderWith([countableRun], liftToday);
+      await waitFor(() =>
+        expect(result.current.postWorkoutNudge?.type).toBe("both")
+      );
+    });
+
+    it("an ineligible run does not prompt a refuel", async () => {
+      // Same gate as the calorie tally: a saved-anyway misclick must not
+      // credit burn OR trigger a refuel prompt. Anchored on the loaded
+      // state (todayRunCals settles to 0) so the null read is not just the
+      // effect's initial value — `toBeNull` alone passes at t=0.
+      const { result } = renderWith(
+        [{ ...countableRun, savedAnyway: true }],
+        []
+      );
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      expect(result.current.todayRunCals).toBe(0);
+      expect(result.current.postWorkoutNudge).toBeNull();
+    });
+
+    it("a run finished more than two hours ago has gone stale", async () => {
+      const { result } = renderWith(
+        [
+          {
+            ...countableRun,
+            completedAt: Timestamp.fromDate(
+              new Date(Date.now() - 3 * 60 * 60_000)
+            ),
+          },
+        ],
+        []
+      );
+      // Anchored on the run having actually been READ (it still counts
+      // toward today's calories) — otherwise this passes while the runs
+      // query returns nothing.
+      await waitFor(() => expect(result.current.todayRunCals).toBeGreaterThan(0));
+      expect(result.current.postWorkoutNudge).toBeNull();
+    });
+  });
+
 });
