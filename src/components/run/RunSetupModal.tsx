@@ -559,7 +559,7 @@ export default function RunSetupModal({
               className="overflow-hidden space-y-2"
             >
               <SessionStructureView
-                segments={segmentsFromIntervals(intervalConfig)}
+                segments={segmentsFromIntervals(intervalConfig, unit)}
               />
               <button
                 type="button"
