@@ -190,22 +190,6 @@ export const SHOE_MAX_DEFAULT_KM = 600;
 export const SHOE_MAX_MIN_KM = 50;
 
 /**
- * The share card renders metric, and that is the last unconverted surface.
- *
- * Not an oversight and not a formatting gap: `ShareCardData` carries
- * `distanceKm`, a `pace` STRING and `splits` as `{ km, pace }` — every
- * value pre-baked per kilometre by whichever page built it. Converting the
- * card means changing that shape to metres and seconds and updating each
- * producer, which is a real change rather than a label swap.
- *
- * There is also a product question underneath it that the in-app surfaces
- * do not have: a share card is an IMAGE other people look at, so "the
- * reader's unit" is ambiguous in a way it never is inside the app. The
- * sharer's unit is the likely answer, but it is a decision, not a default.
- */
-export const SHARE_CARD_IS_METRIC: DistanceUnit = "km";
-
-/**
  * The distance-target preset chips, in metres, for the unit the user reads.
  *
  * A values question rather than a formatting one, which is why it is a
