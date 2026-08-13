@@ -28,6 +28,14 @@
  * so a plain `npm test` still passes, and a hard failure when CI sets
  * REQUIRE_FIRESTORE_EMULATOR=1 — the same guard its sibling suites use, so
  * the skip can't quietly become the normal case.
+ *
+ * The projectId is distinct on purpose, per the convention the spaces and
+ * goalSpaces suites already document: vitest runs these files in PARALLEL
+ * workers against one emulator, so a shared projectId means one file's
+ * `clearFirestore()` wipes another's seeds mid-test. This suite first
+ * copied `firestore.profile.rules.test.ts`'s literal "demo-tropos" — which
+ * was safe only while that file was the sole occupant — and made the
+ * profile suite's seed-then-merge tests flaky.
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import {
@@ -49,12 +57,15 @@ if (process.env.REQUIRE_FIRESTORE_EMULATOR === "1" && !EMULATOR_HOST) {
 }
 const suite = EMULATOR_HOST ? describe : describe.skip;
 
+/** Distinct from every sibling suite — see the header. */
+const PROJECT_ID = "tropos-partnerbonds-rules-test";
+
 let env: RulesTestEnvironment;
 
 beforeAll(async () => {
   if (!EMULATOR_HOST) return;
   env = await initializeTestEnvironment({
-    projectId: "demo-tropos",
+    projectId: PROJECT_ID,
     firestore: {
       rules: readFileSync("firestore.rules", "utf8"),
       host: "127.0.0.1",
