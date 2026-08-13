@@ -42,6 +42,7 @@ import {
 import { toast } from "@/lib/toast";
 import { motion } from "framer-motion";
 import { THEME } from "../lib/theme";
+import { sumLifetimeRunTotals } from "../lib/runStatsEligibility";
 import Avatar from "../components/Avatar";
 import ReportModal from "../components/social/ReportModal";
 import ProgressPhotos from "../components/social/ProgressPhotos";
