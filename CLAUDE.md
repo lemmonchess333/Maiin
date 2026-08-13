@@ -333,6 +333,23 @@ These are distilled from the project's own rework history — classes of mistake
 
 ## Common Gotchas
 
+- **Typecheck with `tsc -b`, never `tsc --noEmit -p tsconfig.json`.** The
+  latter exits 0 on this repo no matter what: the root config is a solution
+  file whose work lives in its project references, so `-p` on it checks
+  nothing. `npm run build` and CI both use `tsc -b`. Measured against a real
+  missing import in `UserProfile.tsx` — `-p` exit 0, `-b` exit 2 with
+  `TS2304`. An agent that "verified types" with the `-p` form has verified
+  nothing, and CI is the only thing that will say so.
+- **Adding an import to a component breaks any suite that mocks that module
+  wholesale.** `vi.mock("@/lib/auth", () => ({ useAuth: … }))` makes every
+  OTHER export `undefined`, and the failure surfaces at the call site
+  (`No "X" export is defined on the … mock`), not at import — so it is
+  invisible to a partial local run. Either fix the mock, or make it partial
+  with `importOriginal`. Prefer `importOriginal` when the newly-imported
+  symbol is a pure helper whose real behaviour the suite asserts: stubbing it
+  turns those assertions into claims about the stub. Run the FULL unit suite
+  before pushing a change that adds a cross-module import — the touched
+  subset will not show it.
 - `react-body-highlighter` exports `Muscle` type — cast `mapMuscles()` return to `Muscle[]`
 - Recharts v3 Tooltip props: let TypeScript infer `labelFormatter`/`formatter` parameter types
 - `useRef` in strict mode requires an explicit initial value argument
