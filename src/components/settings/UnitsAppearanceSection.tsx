@@ -1,4 +1,12 @@
-import { Palette, Weight, Ruler, Moon, Sun, EyeOff } from "lucide-react";
+import {
+  Palette,
+  Weight,
+  Ruler,
+  Moon,
+  Sun,
+  EyeOff,
+  Footprints,
+} from "lucide-react";
 import AccordionSection from "@/components/AccordionSection";
 import { track as trackSettingsEvent } from "@/lib/settingsAnalytics";
 import { haptic } from "@/lib/haptic";
@@ -7,7 +15,10 @@ import type { UserProfile } from "@/lib/auth";
 interface UnitsAppearanceSectionProps {
   profile: UserProfile;
   toggleUnit: (
-    key: "preferredWeightUnit" | "preferredHeightUnit",
+    key:
+      | "preferredWeightUnit"
+      | "preferredHeightUnit"
+      | "preferredDistanceUnit",
     current: string
   ) => void;
   toggleDark: () => void;
@@ -27,7 +38,7 @@ export default function UnitsAppearanceSection({
       inline={inline}
       icon={<Palette className="size-5 text-primary" />}
       title="Units & Appearance"
-      subtitle="Weight, height, dark mode"
+      subtitle="Weight, distance, height, dark mode"
     >
       <div className="space-y-2">
         <button
@@ -53,6 +64,33 @@ export default function UnitsAppearanceSection({
           </div>
           <span className="font-medium">
             {profile.preferredWeightUnit.toUpperCase()}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            haptic("light");
+            const next = profile.preferredDistanceUnit === "km" ? "mi" : "km";
+            trackSettingsEvent("settings_toggle_changed", {
+              toggle: "run_distance_unit",
+              value: next,
+            });
+            toggleUnit("preferredDistanceUnit", profile.preferredDistanceUnit);
+          }}
+          className="w-full flex items-center justify-between p-4 rounded-xl bg-card border border-border/60 hover:bg-muted/40 active:scale-[0.97] transition-all"
+        >
+          <div className="flex items-center gap-3">
+            <Footprints className="size-5" />
+            <div className="text-left">
+              <span>Distance & pace</span>
+              <p className="text-xs text-muted-foreground">
+                Runs, splits, elevation and spoken cues
+              </p>
+            </div>
+          </div>
+          <span className="font-medium">
+            {profile.preferredDistanceUnit === "mi" ? "MILES" : "KM"}
           </span>
         </button>
 
@@ -95,8 +133,12 @@ export default function UnitsAppearanceSection({
           onClick={() => {
             haptic("light");
             const next = profile.preferredHeightUnit === "cm" ? "ft" : "cm";
+            /* Reported itself as "distance_unit" from the day it was
+               written — height is not a distance, and that name now
+               belongs to one, so the two would have been indistinguishable
+               in the same telemetry stream. */
             trackSettingsEvent("settings_toggle_changed", {
-              toggle: "distance_unit",
+              toggle: "height_unit",
               value: next,
             });
             toggleUnit("preferredHeightUnit", profile.preferredHeightUnit);
