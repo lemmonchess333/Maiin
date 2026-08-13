@@ -3,6 +3,7 @@ import {
   isVolumeEligible,
   isPaceEligible,
   isPaceTrendEligible,
+  sumLifetimeRunTotals,
   type RunRecord,
   type RunPaceTrendInput,
 } from "../runStatsEligibility";
@@ -216,5 +217,73 @@ describe("isPaceTrendEligible", () => {
     expect(isPaceTrendEligible({ ...valid, activityType: "manual" })).toBe(
       false
     );
+  });
+});
+
+/**
+ * Lifetime totals — one summer, because the rule was written twice.
+ *
+ * `useLifetimeRunStats` (History's "Lifetime totals" footer) gated on
+ * `isVolumeEligible`. The own-profile totals on `UserProfile` did NOT, under
+ * a comment claiming to mirror it. Same user, same collection, two screens,
+ * different numbers — and the profile was the inflated one. A saved-anyway
+ * "too fast" 20 km / 0:08 misclick, the exact case this module exists to
+ * reject, added 20 km and a session to the profile and nothing to History.
+ *
+ * Nothing caught it because each surface was tested (or not) on its own; no
+ * test asked whether they agreed. Both now call `sumLifetimeRunTotals`, so
+ * these assertions cover the one loop that runs on both.
+ */
+describe("sumLifetimeRunTotals", () => {
+  const eligible: RunRecord = { distance: 5000, duration: 1800 };
+
+  it("counts eligible runs and their metres", () => {
+    expect(sumLifetimeRunTotals([eligible, eligible])).toEqual({
+      runCount: 2,
+      totalDistanceM: 10000,
+    });
+  });
+
+  it("excludes the saved-anyway misclick from BOTH the count and the distance", () => {
+    // The regression in one assertion. Pre-consolidation, UserProfile's loop
+    // added this run's 20 km and its session; History's did not.
+    const misclick: RunRecord = {
+      distance: 20000,
+      duration: 480,
+      savedAnyway: true,
+    };
+    expect(sumLifetimeRunTotals([eligible, misclick])).toEqual({
+      runCount: 1,
+      totalDistanceM: 5000,
+    });
+  });
+
+  it("excludes isInvalid runs and sub-floor runs", () => {
+    const invalid: RunRecord = { distance: 8000, duration: 2400, isInvalid: true };
+    const tooShort: RunRecord = { distance: 40, duration: 60 };
+    const tooBrief: RunRecord = { distance: 5000, duration: 20 };
+    expect(
+      sumLifetimeRunTotals([eligible, invalid, tooShort, tooBrief])
+    ).toEqual({ runCount: 1, totalDistanceM: 5000 });
+  });
+
+  it("treats a missing distance as zero rather than NaN", () => {
+    // A legacy doc with a duration but no distance still counts as a
+    // session; `undefined + total` would render "NaN km" on both surfaces.
+    const noDistance: RunRecord = { distance: 100, duration: 600 };
+    const { runCount, totalDistanceM } = sumLifetimeRunTotals([
+      noDistance,
+      { ...eligible, distance: undefined } as RunRecord,
+    ]);
+    expect(runCount).toBe(1);
+    expect(Number.isFinite(totalDistanceM)).toBe(true);
+    expect(totalDistanceM).toBe(100);
+  });
+
+  it("is empty for an empty collection", () => {
+    expect(sumLifetimeRunTotals([])).toEqual({
+      runCount: 0,
+      totalDistanceM: 0,
+    });
   });
 });
