@@ -10,6 +10,8 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { toast } from "@/lib/toast";
 import RunMap from "./RunMapLazy";
+import { distanceLabel } from "@/lib/runLabels";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 
 interface RoutePreviewSheetProps {
   open: boolean;
@@ -85,6 +87,7 @@ export default function RoutePreviewSheet({
   onSave,
   darkMode,
 }: RoutePreviewSheetProps) {
+  const unit = useDistanceUnit();
   const [name, setName] = useState(defaultName);
   const [saving, setSaving] = useState(false);
   const titleId = useId();
@@ -123,7 +126,7 @@ export default function RoutePreviewSheet({
         <div className="mb-4 flex rounded-xl bg-muted/50 py-3">
           <Stat
             icon={<MapPin className="size-4" />}
-            value={`${(dist / 1000).toFixed(1)} km`}
+            value={distanceLabel(dist, unit)}
             label="Distance"
           />
           <Stat

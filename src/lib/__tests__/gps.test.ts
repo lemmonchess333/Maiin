@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { paceMinSec } from "../runLabels";
 import {
   haversine,
   bearing,
@@ -7,7 +8,6 @@ import {
   routeTimeAtDistance,
   isValidReading,
   calculatePace,
-  rollingPace,
   rollingPaceSeconds,
   paceAsNumber,
   calculateSplits,
@@ -677,7 +677,7 @@ describe("KalmanFilter", () => {
   });
 });
 
-describe("rollingPace", () => {
+describe("rollingPaceSeconds — the rolling window", () => {
   /* 1° latitude ≈ 111,320m. So 0.001° ≈ 111.32m. We synthesise points
    * with lat increments and timestamps to control distance + time
    * within the rolling window. */
@@ -691,23 +691,29 @@ describe("rollingPace", () => {
     });
   }
 
-  it("returns '--:--' for fewer than two points", () => {
-    expect(rollingPace([])).toBe("--:--");
-    expect(rollingPace([pointAt(0, 0)])).toBe("--:--");
+  /* These cases were written against a `rollingPace` string formatter that
+     was deleted when the live screen went unit-aware (a preformatted
+     per-KILOMETRE label is useless to a miles reader). The window logic
+     they cover is the same function's, so they are ported to the number
+     form rather than deleted with it — "--:--" becomes null, "5:00"
+     becomes 300. */
+  it("returns null for fewer than two points", () => {
+    expect(rollingPaceSeconds([])).toBeNull();
+    expect(rollingPaceSeconds([pointAt(0, 0)])).toBeNull();
   });
 
-  it("returns '--:--' when the rolling distance is below 10m", () => {
+  it("returns null when the rolling distance is below 10m", () => {
     /* Two points 1m apart over 30s — under the distance floor. */
     const a = pointAt(0, 0);
     const b = pointAt(0.0000089, 30); // ~1m north
-    expect(rollingPace([a, b], 30)).toBe("--:--");
+    expect(rollingPaceSeconds([a, b], 30)).toBeNull();
   });
 
   it("computes a rolling pace from points within the window", () => {
     /* Two points 100m apart, 30s apart → pace 5:00/km. */
     const a = pointAt(0, 0);
     const b = pointAt(0.0008983, 30); // ~100m north
-    expect(rollingPace([a, b], 30)).toBe("5:00");
+    expect(rollingPaceSeconds([a, b], 30)).toBeCloseTo(300, 0);
   });
 
   it("only sums points within the window — older points are ignored", () => {
@@ -716,15 +722,15 @@ describe("rollingPace", () => {
     const old = pointAt(0, 0);
     const start = pointAt(0, 40); // 20s before the latest at t=60
     const end = pointAt(0.0008983, 60);
-    expect(rollingPace([old, start, end], 30)).toBe("3:20");
+    expect(rollingPaceSeconds([old, start, end], 30)).toBeCloseTo(200, 0);
   });
 
-  it("returns '--:--' when only the latest point falls inside the window", () => {
+  it("returns null when only the latest point falls inside the window", () => {
     /* All older points outside → only the latest survives → can't
        compute pace from a single point. */
     const a = pointAt(0, 0);
     const b = pointAt(0.001, 100); // 100s later, well outside a 30s window
-    expect(rollingPace([a, b], 30)).toBe("--:--");
+    expect(rollingPaceSeconds([a, b], 30)).toBeNull();
   });
 
   describe("rollingPaceSeconds — the number behind the label", () => {
@@ -740,12 +746,18 @@ describe("rollingPace", () => {
       expect(rollingPaceSeconds([a, b], 30)).toBeNull();
     });
 
-    it("agrees with the formatted rollingPace", () => {
-      // One implementation, two shapes — this is what stops them drifting.
+    it("feeds paceMinSec, which is where the unit is applied now", () => {
+      /* Replaces an "agrees with the formatted rollingPace" pairing that
+         died with that formatter. The equivalent claim today is that the
+         number reaches the shared formatter and converts there — 300 s/km
+         reads 5:00 to a metric runner and 8:03 to an imperial one, from
+         the SAME reading. */
       const a = pointAt(0, 0);
       const b = pointAt(0.0008983, 30); // ~100m in 30s → 300 s/km
-      expect(rollingPaceSeconds([a, b], 30)).toBeCloseTo(300, 0);
-      expect(rollingPace([a, b], 30)).toBe("5:00");
+      const secs = rollingPaceSeconds([a, b], 30)!;
+      expect(secs).toBeCloseTo(300, 0);
+      expect(paceMinSec(secs, "km")).toBe("5:00");
+      expect(paceMinSec(secs, "mi")).toBe("8:03");
     });
 
     it("a warm-up does not poison the reading — the pace-alert defect", () => {

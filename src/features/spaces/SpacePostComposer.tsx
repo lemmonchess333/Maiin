@@ -34,6 +34,9 @@ import {
 } from "@/hooks/useWorkouts";
 import { useRunningStats, type RunSummaryItem } from "@/hooks/useRunningStats";
 import type { SpacePostActivitySnapshot } from "./spaceTypes";
+import { distanceLabel } from "@/lib/runLabels";
+import type { DistanceUnit } from "@/lib/distanceUnits";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 
 const TITLE_MAX = 120;
 const BODY_MAX = 4000;
@@ -82,9 +85,9 @@ function toSnapshot(a: Attachable): SpacePostActivitySnapshot {
   };
 }
 
-function attachableLabel(a: Attachable): string {
+function attachableLabel(a: Attachable, unit: DistanceUnit): string {
   if (a.kind === "run") {
-    return `${(a.run.distance / 1000).toFixed(1)} km run`;
+    return `${distanceLabel(a.run.distance, unit)} run`;
   }
   const names = a.workout.exercises
     .slice(0, 2)
@@ -110,6 +113,7 @@ export default function SpacePostComposer({
   initialTitle?: string;
 }) {
   const { user, profile } = useAuth();
+  const unit = useDistanceUnit();
   const { workouts } = useWorkouts();
   const { runs } = useRunningStats(30);
   const [title, setTitle] = useState("");
@@ -300,7 +304,7 @@ export default function SpacePostComposer({
                   />
                 )}
                 <span className="flex-1 text-sm font-medium text-foreground truncate">
-                  {attachableLabel(attached)}
+                  {attachableLabel(attached, unit)}
                 </span>
                 <button
                   type="button"
@@ -332,7 +336,7 @@ export default function SpacePostComposer({
                       />
                     )}
                     <span className="flex-1 text-sm text-foreground truncate">
-                      {attachableLabel(a)}
+                      {attachableLabel(a, unit)}
                     </span>
                   </button>
                 ))}

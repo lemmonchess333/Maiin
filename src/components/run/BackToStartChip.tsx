@@ -1,6 +1,8 @@
 import { Navigation } from "lucide-react";
 import { haversine, bearing } from "../../lib/gps";
 import type { GPSPoint } from "../../lib/gps";
+import { nearDistanceLabel } from "../../lib/runLabels";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 
 interface BackToStartChipProps {
   points: GPSPoint[];
@@ -14,10 +16,7 @@ const MIN_DISTANCE_M = 200;
  *  this the runner is effectively stationary and GPS jitter spins the arrow. */
 const MIN_HEADING_MOVE_M = 5;
 
-function formatBack(metres: number): string {
-  if (metres < 1000) return `${Math.round(metres / 10) * 10} m to start`;
-  return `${(metres / 1000).toFixed(1)} km to start`;
-}
+
 
 /**
  * "Back to start" navigation aid for the live run. Shows the straight-line
@@ -34,6 +33,9 @@ export default function BackToStartChip({
   points,
   currentPoint,
 }: BackToStartChipProps) {
+  /* Before the early return — a hook after a conditional `return null`
+     would run on some renders and not others. */
+  const unit = useDistanceUnit();
   if (!currentPoint || points.length < 2) return null;
 
   const start = points[0];
@@ -66,7 +68,7 @@ export default function BackToStartChip({
     <div
       className="flex items-center gap-1.5 rounded-full bg-black/55 px-3 py-1.5 text-xs text-white/90 backdrop-blur"
       role="status"
-      aria-label={`${formatBack(dist)}${
+      aria-label={`${nearDistanceLabel(dist, unit, "to start")}${
         relative != null ? `, bearing ${Math.round(relative)} degrees` : ""
       }`}
     >
@@ -83,7 +85,7 @@ export default function BackToStartChip({
         className="font-mono font-semibold"
         style={{ fontVariantNumeric: "tabular-nums" }}
       >
-        {formatBack(dist)}
+        {nearDistanceLabel(dist, unit, "to start")}
       </span>
     </div>
   );

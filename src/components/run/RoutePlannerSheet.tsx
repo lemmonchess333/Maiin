@@ -25,6 +25,8 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { Undo2, Trash2, LocateFixed, X } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
+import { distanceLabel2 } from "@/lib/runLabels";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { toast } from "@/lib/toast";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
@@ -67,9 +69,7 @@ interface RoutePlannerSheetProps {
   onFollow: (points: GPSPoint[]) => void;
 }
 
-function km(m: number): string {
-  return `${(m / 1000).toFixed(2)} km`;
-}
+
 
 export default function RoutePlannerSheet({
   open,
@@ -79,6 +79,7 @@ export default function RoutePlannerSheet({
   onSave,
   onFollow,
 }: RoutePlannerSheetProps) {
+  const unit = useDistanceUnit();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
@@ -292,7 +293,7 @@ export default function RoutePlannerSheet({
   };
 
   const openSave = () => {
-    setName(`Planned route · ${km(distanceM)}`);
+    setName(`Planned route · ${distanceLabel2(distanceM, unit)}`);
     setSaveOpen(true);
   };
   const confirmSave = async () => {
@@ -334,7 +335,7 @@ export default function RoutePlannerSheet({
             </p>
           </div>
           <p className="shrink-0 font-mono text-lg font-extrabold tabular-nums text-running-strong">
-            {km(distanceM)}
+            {distanceLabel2(distanceM, unit)}
           </p>
         </div>
 

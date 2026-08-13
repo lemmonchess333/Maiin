@@ -25,6 +25,8 @@ import { cn } from "@/lib/utils";
 import { IconButton } from "@/components/ui/IconButton";
 import ExtrasExpandSheet from "@/components/program/ExtrasExpandSheet";
 import { workoutTitle } from "@/hooks/useWorkouts";
+import { distanceIn, distanceUnitLabel } from "@/lib/distanceUnits";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 
 /** Q5 P71 cap — DayPeekCard mirrors RunWeekStrip; up to 2 extras
  *  shown inline before an overflow "+N more" tap-through. */
@@ -472,16 +474,15 @@ function ExtraRunRow({
   extra: SavedRunDoc;
   onTap: () => void;
 }) {
-  const distanceKm =
+  const unit = useDistanceUnit();
+  const dist =
     typeof extra.distance === "number" && extra.distance > 0
-      ? extra.distance / 1000
+      ? distanceIn(extra.distance, unit)
       : null;
   const distanceText =
-    distanceKm === null
+    dist === null
       ? "Run"
-      : Number.isInteger(distanceKm)
-        ? `${distanceKm}km`
-        : `${distanceKm.toFixed(1)}km`;
+      : `${Number.isInteger(dist) ? dist : dist.toFixed(1)}${distanceUnitLabel(unit)}`;
   const bucketText =
     typeof extra.type === "string" && extra.type.length > 0
       ? extra.type

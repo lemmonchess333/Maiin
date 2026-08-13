@@ -43,6 +43,9 @@ import RouteScene from "./RouteScene";
 import { getTimeAgo } from "../../lib/timeAgo";
 import { Spinner } from "../ui/Spinner";
 import { IconButton } from "../ui/IconButton";
+import { distanceValue, paceMinSec } from "@/lib/runLabels";
+import { distanceUnitLabel, paceUnitLabel } from "@/lib/distanceUnits";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 
 function formatDur(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -60,6 +63,9 @@ interface ActivityCardProps {
 
 function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
   const { user, profile } = useAuth();
+  /* The VIEWER's unit, not the poster's — a feed reads in the units of
+     whoever is reading it, which is what every social running app does. */
+  const unit = useDistanceUnit();
   const { addBlocked } = useBlockedUsers();
   const [liked, setLiked] = useState(feedItem.liked ?? false);
   const [kudosCount, setKudosCount] = useState(feedItem.kudosCount ?? 0);
@@ -214,9 +220,9 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
       {showDistanceOverlay && (
         <div className="absolute bottom-3 left-4">
           <p className="text-2xl font-extrabold font-mono tabular-nums leading-none text-running">
-            {((activity?.distance || 0) / 1000).toFixed(2)}
+            {distanceValue(activity?.distance || 0, unit, 2)}
           </p>
-          <SectionLabel className="mt-0.5">km</SectionLabel>
+          <SectionLabel className="mt-0.5">{distanceUnitLabel(unit)}</SectionLabel>
         </div>
       )}
     </div>
@@ -261,18 +267,18 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
           {!showDistanceOverlay && (
             <div>
               <p className="text-xl font-bold font-mono tabular-nums leading-none text-running">
-                {((activity.distance || 0) / 1000).toFixed(2)}
+                {distanceValue(activity.distance || 0, unit, 2)}
               </p>
-              <SectionLabel className="mt-0.5">km</SectionLabel>
+              <SectionLabel className="mt-0.5">{distanceUnitLabel(unit)}</SectionLabel>
             </div>
           )}
           <div>
             <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
               {typeof activity.avgPace === "number"
-                ? formatDur(activity.avgPace)
+                ? paceMinSec(activity.avgPace, unit)
                 : activity.avgPace || "--:--"}
             </p>
-            <SectionLabel className="mt-0.5">/km</SectionLabel>
+            <SectionLabel className="mt-0.5">{paceUnitLabel(unit)}</SectionLabel>
           </div>
           {activity.duration && (
             <div>
@@ -566,9 +572,9 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
                 {!showDistanceOverlay && (
                   <div>
                     <p className="text-xl font-bold font-mono tabular-nums leading-none text-running">
-                      {((activity.distance || 0) / 1000).toFixed(2)}
+                      {distanceValue(activity.distance || 0, unit, 2)}
                     </p>
-                    <SectionLabel className="mt-0.5">km</SectionLabel>
+                    <SectionLabel className="mt-0.5">{distanceUnitLabel(unit)}</SectionLabel>
                   </div>
                 )}
                 <div>
@@ -577,7 +583,7 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
                       ? formatDur(activity.avgPace)
                       : activity.avgPace || "--:--"}
                   </p>
-                  <SectionLabel className="mt-0.5">/km</SectionLabel>
+                  <SectionLabel className="mt-0.5">{paceUnitLabel(unit)}</SectionLabel>
                 </div>
                 {activity.duration && (
                   <div>

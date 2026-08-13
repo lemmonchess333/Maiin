@@ -2,6 +2,8 @@ import { THEME } from "@/lib/theme";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Footprints, Dumbbell, UtensilsCrossed } from "lucide-react";
 import { formatVolumeSub } from "@/utils/formatters";
+import { distanceLabel } from "@/lib/runLabels";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 
 interface PeriodOverviewProps {
   runCount: number;
@@ -75,6 +77,7 @@ export default function PeriodOverview({
   timeRange,
   rangeDays,
 }: PeriodOverviewProps) {
+  const unit = useDistanceUnit();
   const rangeLabel =
     timeRange === "1W"
       ? "This Week"
@@ -101,7 +104,9 @@ export default function PeriodOverview({
       icon: <Footprints className="size-4 text-running" />,
       label: "Runs",
       value: runCount,
-      sub: runDistance > 0 ? `${runDistance.toFixed(1)} km` : "—",
+      /* `runDistance` is KILOMETRES (History sums weekly km), hence the
+         ×1000 back to the metres every distance helper takes. */
+      sub: runDistance > 0 ? distanceLabel(runDistance * 1000, unit) : "—",
       color: THEME.running,
       ringVal: runCount,
       ringMax: runsTarget,

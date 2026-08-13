@@ -5,6 +5,8 @@ import type { GPSPoint } from "@/lib/gps";
 import { routeTotalDistance } from "@/lib/gps";
 import { coordsToPoints, type SavedRouteSource } from "@/lib/savedRoutes";
 import { useSavedRoutes } from "@/hooks/useSavedRoutes";
+import { distanceLabel } from "@/lib/runLabels";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { useShareRoute } from "@/hooks/useShareRoute";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/Button";
@@ -29,9 +31,7 @@ interface RouteSetupSectionProps {
   currentPosition?: { lat: number; lon: number } | null;
 }
 
-function km(metres: number): string {
-  return `${(metres / 1000).toFixed(1)} km`;
-}
+
 
 interface PreviewState {
   points: GPSPoint[];
@@ -54,6 +54,7 @@ export default function RouteSetupSection({
   currentPosition = null,
 }: RouteSetupSectionProps) {
   const { profile } = useAuth();
+  const unit = useDistanceUnit();
   const { routes, save, remove } = useSavedRoutes();
   const shareRouteWithPrivacy = useShareRoute();
   const [preview, setPreview] = useState<PreviewState | null>(null);
@@ -65,7 +66,7 @@ export default function RouteSetupSection({
 
   const openSave = () => {
     if (!targetRoute) return;
-    setName(`Route · ${km(routeTotalDistance(targetRoute))}`);
+    setName(`Route · ${distanceLabel(routeTotalDistance(targetRoute), unit)}`);
     setSaveOpen(true);
   };
 
@@ -89,7 +90,7 @@ export default function RouteSetupSection({
           <span className="text-sm font-medium text-running-strong">
             Following a route ·{" "}
             <span className="font-mono tabular-nums">
-              {km(routeTotalDistance(targetRoute))}
+              {distanceLabel(routeTotalDistance(targetRoute), unit)}
             </span>
           </span>
           <div className="flex items-center gap-1">
@@ -211,7 +212,7 @@ export default function RouteSetupSection({
                     {r.name}
                   </span>
                   <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
-                    {km(r.distanceMeters)}
+                    {distanceLabel(r.distanceMeters, unit)}
                   </span>
                 </button>
                 <IconButton

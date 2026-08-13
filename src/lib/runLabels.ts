@@ -4,6 +4,9 @@ import {
   paceIn,
   distanceUnitLabel,
   paceUnitLabel,
+  shortDistanceIn,
+  shortDistanceUnitLabel,
+  METRES_PER_MILE,
 } from "./distanceUnits";
 
 /**
@@ -139,6 +142,67 @@ export function distanceLabel(
 ): string {
   if (!distanceM || distanceM <= 0) return "—";
   return `${distanceIn(distanceM, unit).toFixed(1)} ${distanceUnitLabel(unit)}`;
+}
+
+/**
+ * The distance NUMBER alone, for surfaces that render the unit as a
+ * separate element — a stat tile with its own label row, a hero figure
+ * with the suffix in a smaller span. Pair it with `distanceUnitLabel`.
+ *
+ * `decimals` exists because the app genuinely uses both: one decimal for
+ * glanceable summaries, two for a live run and for social cards where the
+ * exact figure is the content. Zero is NOT a "no distance" sentinel here —
+ * a caller rendering a bare number wants `0.00`, not an em-dash, so the
+ * placeholder stays in `distanceLabel` where the unit implies a reading.
+ */
+export function distanceValue(
+  distanceM: number,
+  unit: DistanceUnit,
+  decimals: 1 | 2 = 1
+): string {
+  const v = distanceIn(distanceM, unit);
+  return (Number.isFinite(v) ? v : 0).toFixed(decimals);
+}
+
+/**
+ * A near distance, in the unit that stays readable at that scale: metres
+ * for a metric reader, feet for an imperial one, switching to the large
+ * unit at a kilometre / a mile.
+ *
+ * The live-run chips need this. "0.02 mi to go" is not a usable number, and
+ * the pre-existing metric code had already made the same judgement by
+ * dropping to metres under 1 km — this only gives the imperial reader the
+ * equivalent, rather than metres.
+ *
+ * `suffix` is the trailing phrase ("to go", "to start"); pass "" for the
+ * bare figure. Rounding is to 10 of whatever the small unit is, matching
+ * what the metric version already did — GPS is not accurate enough to
+ * justify a finer figure while moving.
+ */
+export function nearDistanceLabel(
+  distanceM: number,
+  unit: DistanceUnit,
+  suffix = ""
+): string {
+  const tail = suffix ? ` ${suffix}` : "";
+  const threshold = unit === "mi" ? METRES_PER_MILE : 1000;
+  if (distanceM < threshold) {
+    const v = Math.round(shortDistanceIn(distanceM, unit) / 10) * 10;
+    return `${v} ${shortDistanceUnitLabel(unit)}${tail}`;
+  }
+  return `${distanceValue(distanceM, unit, 1)} ${distanceUnitLabel(unit)}${tail}`;
+}
+
+/**
+ * `K.kk km` — the two-decimal form, for the live run screen and the social
+ * cards. Same em-dash guard as `distanceLabel`.
+ */
+export function distanceLabel2(
+  distanceM: number,
+  unit: DistanceUnit
+): string {
+  if (!distanceM || distanceM <= 0) return "—";
+  return `${distanceValue(distanceM, unit, 2)} ${distanceUnitLabel(unit)}`;
 }
 
 /**
