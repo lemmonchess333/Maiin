@@ -131,6 +131,43 @@ describe("liftVolumeRecredit drain", () => {
     expect(callable).not.toHaveBeenCalled();
   });
 
+  /**
+   * Talking to a Cloud Function that predates paging.
+   *
+   * Not a hypothetical: the Pages deploy and the functions deploy run in
+   * PARALLEL, and a functions deploy can silently fail to land at all — the
+   * bundle-hash dedup is a documented gotcha in this repo. So "new client,
+   * old callable" is a real state that can persist, and the drain has to
+   * behave in it. The old response shape has no `cursor` field at all.
+   */
+  describe("against a callable that predates paging", () => {
+    const oldShape = (truncated: boolean) => ({
+      data: { ok: true, scanned: truncated ? 500 : 12, withVolume: 3, lifetimeKg: 900, truncated },
+    });
+
+    it("still completes for a history that fits in one page", async () => {
+      /* The common case, and it works unchanged: one call, everything
+         credited, flag set. The paging fix is not a prerequisite for the
+         repair to reach a normal user. */
+      callable.mockResolvedValue(oldShape(false));
+      await mountAndSettle();
+      expect(callable).toHaveBeenCalledTimes(1);
+      expect(localStorage.getItem(FLAG)).toBe("1");
+    });
+
+    it("stops after one call instead of spending the whole page bound", async () => {
+      /* Truncated with no cursor means there is no way to advance, so
+         asking again just re-requests the identical page. Measured before
+         this guard: 20 calls per sign-in, every payload `{}`. */
+      callable.mockResolvedValue(oldShape(true));
+      await mountAndSettle();
+      expect(callable).toHaveBeenCalledTimes(1);
+      // Not done, so it retries — and will succeed once the function lands.
+      expect(localStorage.getItem(FLAG)).toBeNull();
+      expect(localStorage.getItem(CURSOR)).toBeNull();
+    });
+  });
+
   it("leaves the flag unset when the call fails, so the next session retries", async () => {
     callable.mockRejectedValue(new Error("offline"));
     await mountAndSettle();
