@@ -9,7 +9,7 @@ import {
   timeCue,
   paceAlertCue,
   halfwayCue,
-  final500Cue,
+  finalStretchCue,
   sessionCompleteCue,
   intervalRepCue,
   intervalRecoveryCue,
@@ -19,33 +19,59 @@ import {
 
 describe("splitCue", () => {
   it("speaks whole-km splits with 'per kilometre', never 'per K'", () => {
-    const cue = splitCue(3, "5:44", "steady", 0);
+    const cue = splitCue(3, "km", "5:44", "steady", 0);
     expect(cue).toContain("3 kilometres");
     expect(cue).toContain("Pace 5:44 per kilometre");
     expect(cue).not.toMatch(/per K\b/);
   });
 
   it("singular for the first kilometre; decimals for 500m mode", () => {
-    expect(splitCue(1, "6:00", null, 0)).toContain("1 kilometre.");
-    expect(splitCue(1.5, "6:00", null, 0)).toContain("1.5 kilometres");
+    expect(splitCue(1, "km", "6:00", null, 0)).toContain("1 kilometre.");
+    expect(splitCue(1.5, "km", "6:00", null, 0)).toContain("1.5 kilometres");
   });
 
   it("rotates variation by counter — consecutive same-comparison cues differ", () => {
-    const a = splitCue(2, "5:30", "faster", 1);
-    const b = splitCue(3, "5:30", "faster", 2);
+    const a = splitCue(2, "km", "5:30", "faster", 1);
+    const b = splitCue(3, "km", "5:30", "faster", 2);
     expect(a).not.toBe(b);
   });
 
   it("no comparison → plain distance + pace only", () => {
-    expect(splitCue(1, "5:30", null, 0)).toBe(
+    expect(splitCue(1, "km", "5:30", null, 0)).toBe(
       "1 kilometre. Pace 5:30 per kilometre."
     );
+  });
+
+  it("speaks MILES, and says the word — a converted number is not enough", () => {
+    /* The reason the unit reaches the copy at all. A voice saying
+       "kilometres" over a mile figure contradicts the watch on the
+       runner's wrist, so the noun has to move with the number. */
+    expect(splitCue(3, "mi", "8:03", null, 0)).toBe(
+      "3 miles. Pace 8:03 per mile."
+    );
+    expect(splitCue(1, "mi", "8:03", null, 0)).toBe(
+      "1 mile. Pace 8:03 per mile."
+    );
+    expect(splitCue(3, "mi", "8:03", null, 0)).not.toMatch(/kilometre/);
+  });
+
+  it("stays written for the EAR in both units", () => {
+    /* The module's founding rule: no abbreviation a TTS engine mangles.
+       "mi" read aloud is not a word. */
+    for (const unit of ["km", "mi"] as const) {
+      const cue = splitCue(2, unit, "8:00", "steady", 0);
+      expect(cue).not.toMatch(/\bmi\b|\bkm\b/);
+    }
   });
 });
 
 describe("other cues", () => {
   it("time cue reads minutes + kilometres", () => {
-    expect(timeCue(15, 2.8)).toBe("15 minutes in. 2.8 kilometres covered.");
+    expect(timeCue(15, 2800, "km")).toBe(
+      "15 minutes in. 2.8 kilometres covered."
+    );
+    // Takes METRES, so the conversion happens in one place.
+    expect(timeCue(15, 5000, "mi")).toBe("15 minutes in. 3.1 miles covered.");
   });
 
   it("pace alerts are direction-specific and vary by counter", () => {
@@ -74,9 +100,22 @@ describe("other cues", () => {
     }
   });
 
-  it("halfway / final-500 are non-empty and warm", () => {
+  it("halfway / final-stretch are non-empty and warm", () => {
     expect(halfwayCue(0).toLowerCase()).toContain("halfway");
-    expect(final500Cue(0).toLowerCase()).toContain("five hundred");
+    expect(finalStretchCue("km", 0).toLowerCase()).toContain("five hundred");
+  });
+
+  it("the final-stretch cue names a landmark the LISTENER is running to", () => {
+    /* Both lines name the distance out loud, so both have to move. "Last
+       half kilometre" cannot be said to someone whose watch is counting
+       down a quarter mile — and 500 m converted is 0.31 miles, which is
+       not a landmark anyone runs to. */
+    const mi = [finalStretchCue("mi", 0), finalStretchCue("mi", 1)];
+    for (const cue of mi) {
+      expect(cue.toLowerCase()).toContain("quarter");
+      expect(cue.toLowerCase()).not.toMatch(/kilometre|metres/);
+    }
+    expect(mi[0]).not.toBe(mi[1]); // still rotates
   });
 
   it("phase cues cover the interval lifecycle; unknown phase → null", () => {

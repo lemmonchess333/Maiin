@@ -25,7 +25,12 @@
  */
 import type { GuidedRunWorkout, SegmentType } from "./guidedRun";
 import { paceMinSec } from "./runLabels";
-import { GENERATION_TIME_UNIT } from "./distanceUnits";
+import {
+  distanceIn,
+  distanceUnitLabel,
+  paceUnitLabel,
+  type DistanceUnit,
+} from "./distanceUnits";
 import {
   intervalRepCue,
   intervalRecoveryCue,
@@ -105,7 +110,10 @@ function workLabel(shape: IntervalShape): string {
   return "interval";
 }
 
-export function segmentsFromIntervals(shape: IntervalShape): SessionSegment[] {
+export function segmentsFromIntervals(
+  shape: IntervalShape,
+  unit: DistanceUnit
+): SessionSegment[] {
   const out: SessionSegment[] = [];
   if (shape.warmupDuration) {
     out.push({
@@ -117,7 +125,7 @@ export function segmentsFromIntervals(shape: IntervalShape): SessionSegment[] {
     });
   }
   const pace = shape.workPace
-    ? ` @ ${paceMinSec(shape.workPace, GENERATION_TIME_UNIT)}/km`
+    ? ` @ ${paceMinSec(shape.workPace, unit)}${paceUnitLabel(unit)}`
     : "";
   for (let rep = 1; rep <= shape.reps; rep++) {
     out.push({
@@ -159,6 +167,7 @@ export function segmentsFromIntervals(shape: IntervalShape): SessionSegment[] {
 
 export function segmentsFromTempo(
   shape: TempoShape,
+  unit: DistanceUnit,
   paceTarget?: number,
   opts?: {
     /** A2: the paceTarget is the user's GOAL race pace (half/marathon
@@ -176,7 +185,7 @@ export function segmentsFromTempo(
     cue: "Warming up. Keep it easy and conversational.",
   });
   const pace = paceTarget
-    ? ` @ ${paceMinSec(paceTarget, GENERATION_TIME_UNIT)}/km`
+    ? ` @ ${paceMinSec(paceTarget, unit)}${paceUnitLabel(unit)}`
     : "";
   shape.workSecs.forEach((seconds, i) => {
     if (i > 0 && shape.floatSec) {
@@ -300,21 +309,36 @@ export function racePaceBlockKm(
 export function segmentsFromLongWithRacePace(
   totalKm: number,
   blockKm: number,
-  goalPaceS: number
+  goalPaceS: number,
+  unit: DistanceUnit
 ): SessionSegment[] {
   const easyKm = Math.max(0, totalKm - blockKm);
-  const paceLabel = paceMinSec(Math.round(goalPaceS), GENERATION_TIME_UNIT);
+  const paceLabel = paceMinSec(Math.round(goalPaceS), unit);
+  /* The block lengths are PLAN data in kilometres; only their labels move.
+     The distance TARGETS below stay in metres either way, so a converted
+     label never changes what the player actually measures. */
+  /* The old metric labels used the "7K" suffix, which has no imperial
+     analogue — "4.3M" reads as metres, or millions. Both units now name the
+     unit explicitly, and a whole number keeps its compact form ("7 km",
+     not "7.0 km"). */
+  const compact = (km: number) =>
+    distanceIn(km * 1000, unit)
+      .toFixed(1)
+      .replace(/\.0$/, "");
+  const easyLabel = compact(easyKm);
+  const blockLabel = compact(blockKm);
+  const u = distanceUnitLabel(unit);
   return [
     {
       type: "easy",
-      label: `Easy ${easyKm}K`,
+      label: `Easy ${easyLabel} ${u}`,
       instruction: "Conversational pace — race pace comes at the end",
       target: { kind: "distance", meters: Math.round(easyKm * 1000) },
       cue: "Easy running. Settle in — the race-pace block comes at the end.",
     },
     {
       type: "moderate",
-      label: `${blockKm}K @ ${paceLabel}/km`,
+      label: `${blockLabel} ${u} @ ${paceLabel}${paceUnitLabel(unit)}`,
       instruction: "Your goal race pace — strong to the finish",
       target: { kind: "distance", meters: Math.round(blockKm * 1000) },
       paceTarget: goalPaceS,

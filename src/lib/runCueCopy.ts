@@ -11,6 +11,12 @@
  * would mangle.
  */
 
+import {
+  distanceIn,
+  spokenDistanceUnit,
+  type DistanceUnit,
+} from "./distanceUnits";
+
 export type SplitComparison = "faster" | "slower" | "steady" | null;
 
 function pick(pool: string[], variant: number): string {
@@ -33,26 +39,42 @@ const STEADY = [
   "Locked in. Keep it there.",
 ];
 
-/** Distance-split cue: "3 kilometres. Pace 5:44 per kilometre. Locked in." */
+/**
+ * Distance-split cue: "3 kilometres. Pace 5:44 per kilometre. Locked in."
+ * — or "3 miles. Pace 8:03 per mile." for an imperial listener.
+ *
+ * `count` is already in the listener's unit (it counts markers the caller
+ * triggered on), and `pace` is already formatted in it. The unit reaches
+ * here only to pick the spoken NOUN, which is the part a converted number
+ * alone cannot fix: a voice saying "kilometres" over a mile figure
+ * contradicts the watch on the runner's wrist.
+ */
 export function splitCue(
-  km: number,
+  count: number,
+  unit: DistanceUnit,
   pace: string,
   comparison: SplitComparison,
   variant: number
 ): string {
-  const kmLabel = Number.isInteger(km)
-    ? `${km} kilometre${km === 1 ? "" : "s"}`
-    : `${km.toFixed(1)} kilometres`;
-  const base = `${kmLabel}. Pace ${pace} per kilometre.`;
+  const noun = spokenDistanceUnit(unit, count);
+  const countLabel = Number.isInteger(count)
+    ? `${count} ${noun}`
+    : `${count.toFixed(1)} ${spokenDistanceUnit(unit, 2)}`;
+  const base = `${countLabel}. Pace ${pace} per ${spokenDistanceUnit(unit, 1)}.`;
   if (comparison === "faster") return `${base} ${pick(FASTER, variant)}`;
   if (comparison === "slower") return `${base} ${pick(SLOWER, variant)}`;
   if (comparison === "steady") return `${base} ${pick(STEADY, variant)}`;
   return base;
 }
 
-/** Time cue (every-5-minutes mode). */
-export function timeCue(minutes: number, km: number): string {
-  return `${minutes} minutes in. ${km.toFixed(1)} kilometres covered.`;
+/** Time cue (every-5-minutes mode). Takes METRES and converts. */
+export function timeCue(
+  minutes: number,
+  distanceM: number,
+  unit: DistanceUnit
+): string {
+  const covered = distanceIn(distanceM, unit);
+  return `${minutes} minutes in. ${covered.toFixed(1)} ${spokenDistanceUnit(unit, 2)} covered.`;
 }
 
 /**
@@ -96,13 +118,25 @@ export function halfwayCue(variant: number): string {
   return pick(HALFWAY, variant);
 }
 
-const FINAL_500 = [
-  "Five hundred metres to go. Finish strong.",
-  "Last half kilometre — bring it home.",
-];
+/**
+ * The finish cue names the distance out loud, so both lines have to move
+ * with the unit — "last half kilometre" is not something you can say to
+ * someone whose watch is counting down a quarter mile.
+ */
+function finalStretchPool(unit: DistanceUnit): string[] {
+  return unit === "mi"
+    ? [
+        "Quarter of a mile to go. Finish strong.",
+        "Last quarter mile — bring it home.",
+      ]
+    : [
+        "Five hundred metres to go. Finish strong.",
+        "Last half kilometre — bring it home.",
+      ];
+}
 
-export function final500Cue(variant: number): string {
-  return pick(FINAL_500, variant);
+export function finalStretchCue(unit: DistanceUnit, variant: number): string {
+  return pick(finalStretchPool(unit), variant);
 }
 
 /** STRUCT-SESS-02: per-segment cue copy now lives ON the segments

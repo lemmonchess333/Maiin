@@ -97,6 +97,7 @@ import { haptic } from "../lib/haptic";
 import { formatRaceDistance } from "../lib/runLabels";
 import { toast } from "../lib/toast";
 import { SPLIT_LAP_IS_METRIC } from "@/lib/distanceUnits";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 
 /* haptic moved to the shared `../lib/haptic` implementation in
    W1f, which routes through the Capacitor Haptics plugin on the
@@ -261,6 +262,7 @@ function deriveStrip(
 }
 
 export default function Run() {
+  const unit = useDistanceUnit();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const location = useLocation();
@@ -442,10 +444,10 @@ export default function Run() {
     }
     if (runConfig.segments?.length) return runConfig.segments;
     if (runConfig.activityType === "intervals" && runConfig.intervals) {
-      return segmentsFromIntervals(runConfig.intervals);
+      return segmentsFromIntervals(runConfig.intervals, unit);
     }
     return null;
-  }, [runConfig]);
+  }, [runConfig, unit]);
   const player = useSessionPlayer(sessionSegments);
   const segmentIndexRef = useRef(-1);
   // Adaptive Paces: the work BAND for the step shell's headline — #18's
@@ -490,6 +492,7 @@ export default function Run() {
       };
     }
     const result = computePlanMetadata({
+      displayUnit: unit,
       profileRunMode,
       todayDayIndex: new Date().getDay(),
       runPlan: programState?.runPlan,
