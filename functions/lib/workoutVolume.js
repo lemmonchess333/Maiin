@@ -41,4 +41,21 @@ function workoutVolumeKg(data) {
   return total > 0 ? total : 0;
 }
 
-module.exports = { workoutVolumeKg };
+/**
+ * The metrics a lift-volume re-credit must replay, and the ones it must
+ * NOT.
+ *
+ * `workout_count` credited correctly all along and carries an idempotency
+ * marker for every workout, so replaying it is a guaranteed no-op — but a
+ * guaranteed no-op still costs a transaction per workout per challenge.
+ * The volume-bearing metrics are the entire gap, and they have no markers
+ * to collide with, because the metric guard in
+ * `applyChallengeProgressIncrement` returned before writing one.
+ */
+const RECREDIT_METRICS = ["total_volume", "hybrid_score"];
+
+function isRecreditMetric(metric) {
+  return RECREDIT_METRICS.includes(metric);
+}
+
+module.exports = { workoutVolumeKg, RECREDIT_METRICS, isRecreditMetric };

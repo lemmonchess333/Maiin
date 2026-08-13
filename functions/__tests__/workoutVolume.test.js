@@ -28,7 +28,7 @@
  * every workout logged before the fix.
  */
 import { describe, it, expect } from "vitest";
-import { workoutVolumeKg } from "../lib/workoutVolume";
+import { workoutVolumeKg, isRecreditMetric } from "../lib/workoutVolume";
 import { workoutChallengeIncrements } from "../lib/challengeBackfill";
 import { liftVolumeKgFor } from "../lib/lifetimeAccrual";
 
@@ -118,5 +118,49 @@ describe("the consumers credit a real workout doc", () => {
       exercises: [{ sets: [{ weightKg: 0, reps: 20 }] }],
     });
     expect(incs).toEqual([{ metric: "workout_count", value: 1 }]);
+  });
+});
+
+/**
+ * Which metrics the one-shot re-credit replays.
+ *
+ * The selection is the whole safety argument, so it is a named helper
+ * rather than an inline filter: `workout_count` credited correctly all
+ * along AND carries a marker per workout, so replaying it is a guaranteed
+ * no-op that still costs a transaction each time. The volume metrics are
+ * the entire gap, and they carry no markers to collide with because the
+ * metric guard returned before writing one.
+ */
+describe("re-credit metric selection", () => {
+  it("replays exactly the metrics the missing field starved", () => {
+    expect(isRecreditMetric("total_volume")).toBe(true);
+    expect(isRecreditMetric("hybrid_score")).toBe(true);
+  });
+
+  it("does not replay the metric that was never broken", () => {
+    /* Replaying workout_count would be safe but wasteful — and a future
+       reader should see that the exclusion is deliberate, not an
+       oversight. */
+    expect(isRecreditMetric("workout_count")).toBe(false);
+  });
+
+  it("does not replay the run-fed metrics", () => {
+    /* Runs credited correctly throughout: their doc carries `distance`.
+       A workout replay must not touch them. */
+    expect(isRecreditMetric("total_km")).toBe(false);
+    expect(isRecreditMetric("fastest_effort")).toBe(false);
+    expect(isRecreditMetric("streak_days")).toBe(false);
+  });
+
+  it("covers every volume-bearing metric a workout can produce", () => {
+    /* Ties the list to the SOURCE mapping rather than restating it: any
+       new volume metric added to `workoutChallengeIncrements` shows up
+       here as an unreplayed gap. */
+    const produced = workoutChallengeIncrements(historicalWorkoutDoc())
+      .map((i) => i.metric)
+      .filter((m) => m !== "workout_count");
+    for (const metric of produced) {
+      expect(isRecreditMetric(metric)).toBe(true);
+    }
   });
 });

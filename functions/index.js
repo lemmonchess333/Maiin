@@ -135,6 +135,7 @@ const {
 const challengeBackfill = require("./lib/challengeBackfill");
 const challengeMarkers = require("./lib/challengeMarkers");
 const lifetimeAccrual = require("./lib/lifetimeAccrual");
+const workoutVolume = require("./lib/workoutVolume");
 const activityReversal = require("./lib/activityReversal");
 // Account deletion logic. Extracted so the call-ordering invariant
 // (Firestore + Storage before Auth-user delete; pre-W1f had the
@@ -194,6 +195,12 @@ if (process.env.FUNCTIONS_EMULATOR !== "true") {
 // Re-tune at scale once real cost-per-user data is available.
 const DEFAULT_HTTP_CAP = { maxInstances: 100 };
 const ADMIN_HTTP_CAP = { maxInstances: 10 };
+
+/* Bound on the one-shot lift-volume re-credit's history scan. 500 keeps a
+   single invocation inside the callable timeout; a longer history simply
+   re-runs, and the response says `truncated` rather than reporting a
+   partial pass as complete. */
+const RECREDIT_WORKOUT_LIMIT = 500;
 const TRIGGER_CAP = { maxInstances: 50 };
 
 // ══════════════════════════════════════════════
@@ -5282,6 +5289,121 @@ exports.backfillMyActivityCategories = functions
     }
 
     return { ok: true, scanned, updated, skipped };
+  });
+
+/**
+ * One-shot re-credit for lift volume that was never counted.
+ *
+ * `totalVolume` was read by every server consumer of a workout doc and
+ * written by none of them onto `users/{uid}/workouts/{id}` — the tonnage
+ * went onto the social activity post instead. So the volume branch of
+ * `workoutChallengeIncrements` never ran and `liftVolumeKgFor` returned
+ * 0, for every lift ever logged: `total_volume`, the hybrid score's kg
+ * term, and lifetime lift volume all sat at zero. The writers and the
+ * consumers are fixed, but nothing re-credits the history.
+ *
+ * WHY A PLAIN REPLAY IS SAFE — the part worth checking before running
+ * anything against live data. Both guards failed OPEN rather than
+ * recording a false success:
+ *
+ *   - Challenges: `applyChallengeProgressIncrement` returns at
+ *     `challenge.metric !== metric` BEFORE touching the marker. A
+ *     workout only ever produced a `workout_count` increment, so no
+ *     marker was written under a `total_volume` / `hybrid_score`
+ *     challenge. Nothing blocks the replay, and the `workout_count`
+ *     challenges are untouched here anyway.
+ *   - Lifetime: `accrueLifetimeStat` returns at `inc <= 0` BEFORE
+ *     writing its marker, so a zero-volume call left no trace.
+ *
+ * Had either written a marker with the wrong value, this would need
+ * marker surgery instead — which is why it is stated rather than
+ * assumed.
+ *
+ * Idempotent by construction: a SECOND run finds the markers this one
+ * wrote and no-ops. Self-service (credits the caller only), following
+ * `backfillMyActivityCategories` — a one-shot fix, not a feature, so it
+ * has no UI:
+ *
+ *   await httpsCallable(fns, "recreditMyLiftVolume")();
+ */
+exports.recreditMyLiftVolume = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Auth required.");
+    }
+    const uid = context.auth.uid;
+
+    /* Challenges are fetched ONCE. Routing each workout through
+       `syncChallengeProgress` would re-read the whole collection per
+       workout per metric; the window check inside the apply helper then
+       skips out-of-window workouts before opening any transaction, so
+       the real transaction count is bounded by the active windows rather
+       than by history. */
+    const challengesSnap = await db.collection("challenges").get();
+    const volumeChallenges = challengesSnap.docs.filter((d) =>
+      workoutVolume.isRecreditMetric(d.data().metric)
+    );
+
+    const workoutsSnap = await db
+      .collection("users")
+      .doc(uid)
+      .collection("workouts")
+      .limit(RECREDIT_WORKOUT_LIMIT)
+      .get();
+
+    let scanned = 0;
+    let withVolume = 0;
+    let lifetimeKg = 0;
+    let challengeApplies = 0;
+
+    for (const docSnap of workoutsSnap.docs) {
+      scanned++;
+      const workout = docSnap.data();
+      const volume = workoutVolume.workoutVolumeKg(workout);
+      if (!(volume > 0)) continue;
+      withVolume++;
+      lifetimeKg += volume;
+
+      await accrueLifetimeStat(uid, "lift", volume, docSnap.id);
+
+      const activityDateKey = sourceActivityDateKey(workout);
+      if (!activityDateKey) continue;
+      for (const inc of challengeBackfill.workoutChallengeIncrements(workout)) {
+        if (!workoutVolume.isRecreditMetric(inc.metric)) continue;
+        for (const challengeDoc of volumeChallenges) {
+          await applyChallengeProgressIncrement(
+            challengeDoc.id,
+            challengeDoc.data(),
+            uid,
+            inc.metric,
+            inc.value,
+            docSnap.id,
+            activityDateKey
+          );
+          challengeApplies++;
+        }
+      }
+    }
+
+    console.log("recreditMyLiftVolume", {
+      uid,
+      scanned,
+      withVolume,
+      lifetimeKg,
+      challengeApplies,
+      truncated: scanned === RECREDIT_WORKOUT_LIMIT,
+    });
+    return {
+      ok: true,
+      scanned,
+      withVolume,
+      lifetimeKg,
+      // Says so rather than silently covering part of the history — the
+      // "no silent caps" rule. A truncated run can simply be re-run;
+      // the markers make the second pass skip what the first credited.
+      truncated: scanned === RECREDIT_WORKOUT_LIMIT,
+    };
   });
 
 // ══════════════════════════════════════════════
