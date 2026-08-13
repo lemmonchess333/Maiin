@@ -11,6 +11,17 @@ import { MemoryRouter } from "react-router-dom";
 import ExtrasExpandSheet from "../ExtrasExpandSheet";
 import type { SavedRunDoc } from "@/hooks/useClaimMap";
 
+/* These components read the display unit, which resolves from the auth
+   profile — and `useAuth` throws outside an AuthProvider, which none of
+   these render inside. Mocking the one-export hook rather than `@/lib/auth`
+   keeps the blast radius at one symbol: a bare factory mock of `auth` would
+   leave its other exports undefined and fail at some unrelated call site.
+   Metric is the app default, so the existing assertions are unaffected. */
+vi.mock("@/hooks/useDistanceUnit", () => ({
+  useDistanceUnit: () => "km" as const,
+}));
+
+
 const navigateMock = vi.fn();
 vi.mock("react-router-dom", async () => {
   const actual =

@@ -99,14 +99,25 @@ describe("pacePatchForType / chooserPaceFor", () => {
     expect(pacePatchForType("intervals", null)).toEqual({
       activityType: "intervals",
     });
-    expect(chooserPaceFor("tempo", null)).toBeNull();
+    expect(chooserPaceFor("tempo", null, "km")).toBeNull();
+  });
+
+  it("chooserPaceFor speaks the reader's unit", () => {
+    const table = paceTableFromFitness({ vdot: 50, benchmark: null });
+    expect(chooserPaceFor("easy", table, "km")).toMatch(/\/km$/);
+    expect(chooserPaceFor("easy", table, "mi")).toMatch(/\/mi$/);
+    /* And the miles band really is the slower pair of numbers, not the
+       same string with a different suffix. */
+    expect(chooserPaceFor("easy", table, "mi")).not.toBe(
+      chooserPaceFor("easy", table, "km")
+    );
   });
 
   it("chooserPaceFor returns a band for pace types, null for others", () => {
     const table = paceTableFromFitness({ vdot: 50, benchmark: null });
-    expect(chooserPaceFor("easy", table)).not.toBeNull();
-    expect(chooserPaceFor("freerun", table)).toBeNull();
-    expect(chooserPaceFor("treadmill", table)).toBeNull();
+    expect(chooserPaceFor("easy", table, "km")).not.toBeNull();
+    expect(chooserPaceFor("freerun", table, "km")).toBeNull();
+    expect(chooserPaceFor("treadmill", table, "km")).toBeNull();
   });
 });
 

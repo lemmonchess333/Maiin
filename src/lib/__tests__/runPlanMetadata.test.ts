@@ -1426,6 +1426,7 @@ describe("A2 — the long-shot feasibility gate", () => {
     const LONG_SHOT_HALF = 80 * 60;
     expect(
       raceTargetVerdict({
+        unit: "km",
         distance: "half",
         targetTimeS: LONG_SHOT_HALF,
         runFitness: fitness,
@@ -1447,6 +1448,7 @@ describe("A2 — the long-shot feasibility gate", () => {
     const FAIR_HALF = 95 * 60;
     expect(
       raceTargetVerdict({
+        unit: "km",
         distance: "half",
         targetTimeS: FAIR_HALF,
         runFitness: fitness,

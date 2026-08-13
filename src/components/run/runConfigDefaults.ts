@@ -23,6 +23,7 @@ import {
 } from "@/lib/runPlanMetadata";
 import { resolveSessionPaces, type PaceTable } from "@/lib/runPaces";
 import { sessionPaceDisplay } from "@/lib/runLabels";
+import type { DistanceUnit } from "@/lib/distanceUnits";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
 
 /** The four one-tap direct-launch types, in tile display order. Everything
@@ -290,7 +291,8 @@ export function pacePatchForType(
  */
 export function chooserPaceFor(
   type: ActivityType,
-  paceTable: PaceTable | null
+  paceTable: PaceTable | null,
+  unit: DistanceUnit
 ): string | null {
   if (!paceTable) return null;
   if (
@@ -301,7 +303,7 @@ export function chooserPaceFor(
   ) {
     return null;
   }
-  return sessionPaceDisplay(resolveSessionPaces(type, paceTable));
+  return sessionPaceDisplay(resolveSessionPaces(type, paceTable), unit);
 }
 
 /**

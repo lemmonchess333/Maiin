@@ -15,6 +15,8 @@
 import { Timer } from "lucide-react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { paceMinSec } from "@/lib/runLabels";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { paceUnitLabel } from "@/lib/distanceUnits";
 import {
   buildRaceDayPlan,
   raceDayPlanVisible,
@@ -37,6 +39,7 @@ export default function RaceDayPlanCard({
   currentWeek: number | null;
   totalWeeks: number | null;
 }) {
+  const unit = useDistanceUnit();
   if (!raceDayPlanVisible(currentWeek, totalWeeks, distance)) return null;
   const vm = buildRaceDayPlan({ distance, targetTimeS, runFitness });
   if (!vm) return null;
@@ -57,7 +60,8 @@ export default function RaceDayPlanCard({
           </span>
           {" · "}
           <span className="font-mono tabular-nums">
-            {paceMinSec(vm.avgPaceS)}/km
+            {paceMinSec(vm.avgPaceS, unit)}
+            {paceUnitLabel(unit)}
           </span>{" "}
           average
         </p>
@@ -103,7 +107,8 @@ export default function RaceDayPlanCard({
               </span>
               <span className="flex-1 border-b border-dashed border-border/60 mx-1 translate-y-[-3px]" />
               <span className="text-xs text-muted-foreground font-mono tabular-nums">
-                {paceMinSec(row.segmentPaceS)}/km
+                {paceMinSec(row.segmentPaceS, unit)}
+                {paceUnitLabel(unit)}
               </span>
               <span className="font-semibold font-mono tabular-nums text-foreground min-w-[64px] text-right">
                 {raceTimeLabel(row.cumulativeS)}

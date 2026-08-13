@@ -32,6 +32,7 @@ import {
 } from "./runConfigDefaults";
 import type { ActivityType } from "@/types/run";
 import type { PaceTable } from "@/lib/runPaces";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Footprints,
@@ -64,6 +65,7 @@ export default function RunTilePicker({
   onBack,
   repeatType = null,
 }: RunTilePickerProps) {
+  const unit = useDistanceUnit();
   const tiles = DIRECT_LAUNCH_TYPES.map(
     (type) => ACTIVITY_TYPES.find((a) => a.type === type)!
   );
@@ -71,7 +73,7 @@ export default function RunTilePicker({
     ? ACTIVITY_TYPES.find((a) => a.type === repeatType)
     : undefined;
   const repeatBand = repeatOpt
-    ? chooserPaceFor(repeatOpt.type, paceTable)
+    ? chooserPaceFor(repeatOpt.type, paceTable, unit)
     : null;
 
   return (
@@ -121,7 +123,7 @@ export default function RunTilePicker({
         <div className="grid grid-cols-2 gap-2">
           {tiles.map((opt) => {
             const Icon = ICON_MAP[opt.icon] ?? Footprints;
-            const band = chooserPaceFor(opt.type, paceTable);
+            const band = chooserPaceFor(opt.type, paceTable, unit);
             return (
               <button
                 key={opt.type}

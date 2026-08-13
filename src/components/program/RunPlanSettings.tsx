@@ -47,6 +47,7 @@ import {
   raceTargetVerdict,
 } from "@/lib/raceGoalPlanner";
 import { parseRaceTimeToSeconds } from "@/lib/runPaces";
+import { resolveDistanceUnit } from "@/lib/distanceUnits";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import { buildPlan } from "@/features/program/planBuilder";
 import { getNutritionPhase } from "@/lib/nutritionPhase";
@@ -477,6 +478,11 @@ export default function RunPlanSettings({
               distance: raceDistance,
               targetTimeS: raceTimeParsed ?? undefined,
               runFitness: profile.runFitness ?? null,
+              /* From the profile PROP rather than the auth hook: this
+                 component is handed the authoritative profile it saves
+                 against, and reading the unit from anywhere else could
+                 disagree with the one being edited. */
+              unit: resolveDistanceUnit(profile.preferredDistanceUnit),
             });
             if (!verdict) {
               return raceTimeParsed && !profile.runFitness ? (

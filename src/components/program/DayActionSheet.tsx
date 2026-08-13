@@ -49,6 +49,7 @@ import { RUN_TEMPLATES, isScheduledRaceRunDay } from "@/lib/workoutTemplates";
 import { runSessionExplainer } from "@/lib/runSessionExplainer";
 import { sessionFuelingLine } from "@/lib/fueling";
 import { sessionPaceDisplay } from "@/lib/runLabels";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import {
   prescriptivePaceTableFromFitness,
   resolveSessionPaces,
@@ -145,6 +146,7 @@ export default function DayActionSheet({
   moveRunDay,
   scope = "day",
 }: DayActionSheetProps) {
+  const unit = useDistanceUnit();
   // RUN-RESCHEDULE-01: reveal the destination-day picker inline.
   const [showMovePicker, setShowMovePicker] = useState(false);
   // The resolver is the single source of truth for what training
@@ -206,7 +208,8 @@ export default function DayActionSheet({
         raceDistanceKey: raceDistanceKeyFromKm(
           selectedRunTemplate.config.targetDistanceKm
         ),
-      })
+      }),
+      unit
     );
   })();
   const selectedRunMeta = selectedRunTemplate

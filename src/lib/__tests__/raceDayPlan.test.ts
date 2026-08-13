@@ -75,7 +75,7 @@ describe("buildRaceDayPlan — pacing source", () => {
     // 1:30 half for a 20:00-5K runner — oracle says not a long shot.
     const targetTimeS = 5400;
     expect(
-      raceTargetVerdict({ distance: "half", targetTimeS, runFitness: fitness })!
+      raceTargetVerdict({ unit: "km", distance: "half", targetTimeS, runFitness: fitness })!
         .band
     ).not.toBe("long_shot");
     const vm = buildRaceDayPlan({
@@ -95,7 +95,7 @@ describe("buildRaceDayPlan — pacing source", () => {
   it("a long-shot target is paced from fitness instead (oracle-checked)", () => {
     const targetTimeS = 80 * 60; // 1:20 half
     expect(
-      raceTargetVerdict({ distance: "half", targetTimeS, runFitness: fitness })!
+      raceTargetVerdict({ unit: "km", distance: "half", targetTimeS, runFitness: fitness })!
         .band
     ).toBe("long_shot");
     const vm = buildRaceDayPlan({
