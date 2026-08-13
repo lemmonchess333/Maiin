@@ -835,6 +835,38 @@ PR #606 added automated coverage for the earliest [x] items; #1882's `e2e/coachm
 - [x] `prefers-reduced-motion: reduce` set at OS level — the slide animation is suppressed; fade still plays — PR #606
 - [x] First-use Coachmark dismissal matrix + reload persistence — automated end-to-end on the live wire-up by `e2e/coachmark.auth.spec.ts` (#1882): outside tap + reload persistence, Escape, 6s auto-timer, each asserting the persisted key, driven as a brand-new signup-form account. Anchor-tap stays manual (it triggers the share flow, which headless CI lacks).
 
+### Bottom-sheet keyboard lift (#2040, #2044) — the one genuinely device-level claim
+
+Affects: `src/components/ui/BottomSheet.tsx`, `src/hooks/useKeyboardInset.ts`.
+
+A soft keyboard covered the sheet's CTA (surfaced from a device screenshot:
+the Start-a-circle sheet's button stranded off-screen). The fix anchors the
+sheet with `bottom: keyboardInset` rather than growing `paddingBottom`,
+which on a `bottom-0` element pushed content upward — the wrong lever.
+
+**Do not add a Chromium e2e test for this**, and don't re-derive why: the
+reasoning is recorded at the tail of `useKeyboardInset.test.ts`, measured
+rather than argued. Headless Chromium has no soft keyboard, so focusing an
+input does not shrink the visual viewport under ANY device emulation — the
+condition the hook responds to cannot be produced there at all. Such a test
+could only synthesise the divergence itself, which is what the unit tests
+already do, while reading as browser-verified.
+
+What that probe DID earn is pinned: real Chromium reports a SUB-PIXEL gap
+between `innerHeight` and `visualViewport.height` with no keyboard open
+(0.487px on iPhone 13 emulation, 0.125px on Pixel 5). `Math.round` absorbs
+it; `Math.ceil` would hand every Chrome-based device a permanent 1px inset.
+Both mutations now fail.
+
+- [ ] iOS Safari (and the Capacitor build): open the Start-a-circle sheet,
+      focus the name field, confirm the CTA sits directly above the keyboard
+      rather than off the top or behind it. Dismiss the keyboard and confirm
+      the sheet settles back with no leftover gap. This is the half no
+      automated suite in this repo can reach.
+- [ ] Same flow on a real Android device — the resize-model side of the
+      arithmetic, where a double-lift would show as the sheet jumping a
+      keyboard height too far.
+
 ### PR-L server-side reconciliation Cloud Functions
 
 Affects: `functions/index.js` — three new/extended functions shipped in #807-#811.

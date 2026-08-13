@@ -180,11 +180,26 @@ export function exerciseSessionVolume(
   );
 }
 
-/** Best single-session volume per exercise across the workout history. */
+/**
+ * Best single-session volume per exercise across the workout history.
+ *
+ * Timed exercises are EXCLUDED, not scored differently. A hold's `reps` is
+ * a duration, so weight × reps is not a weight moved — and the app already
+ * has an answer for what a hold's best session means: ExerciseHistory
+ * headlines "Longest hold" and picks its top set by duration. Volume is
+ * simply not the axis for them, which is why the metric isn't even offered
+ * there and why `isSetEligibleForStrengthPr` refuses a volume PR for one.
+ *
+ * This map is the last place that hadn't been told. It is PERSISTED
+ * (`users/{uid}/stats/prMap.volumeBest`), so an unscored hold wasn't inert
+ * — it wrote a weight×seconds figure under the name "volume" and kept it
+ * there for whatever reads the map next.
+ */
 export function buildVolumeBest(
   workouts: {
     exercises: {
       exerciseName: string;
+      repUnit?: "reps" | "seconds";
       sets: { weightKg: number; reps: number }[];
     }[];
     date: string;
@@ -193,6 +208,7 @@ export function buildVolumeBest(
   const best: VolumeBestMap = {};
   for (const w of workouts) {
     for (const ex of w.exercises) {
+      if (ex.repUnit === "seconds") continue;
       const vol = exerciseSessionVolume(ex.sets);
       if (vol > 0 && vol > (best[ex.exerciseName]?.volume ?? 0)) {
         best[ex.exerciseName] = { volume: vol, date: w.date };
@@ -200,6 +216,49 @@ export function buildVolumeBest(
     }
   }
   return best;
+}
+
+/**
+ * The volume-best map after a completed session, given the map loaded at
+ * session start.
+ *
+ * Extracted from `WorkoutSession`'s persist block, which is where the
+ * result is written to `users/{uid}/stats/prMap`. It lived inline in a
+ * ~1900-line component with no test file, so the rule below could not be
+ * exercised at all — the same reason `exerciseFromRoutine` moved out.
+ *
+ * `sets` must already be filtered to the completed, non-warm-up ones: the
+ * caller owns the session-log shape, and `exerciseSessionVolume` takes
+ * plain weight/reps pairs for the same reason.
+ *
+ * A timed exercise DELETES its entry rather than merely skipping it. The
+ * map is carried forward by spreading the loaded copy, so skipping would
+ * preserve a bogus weight×seconds figure written before this rule existed,
+ * indefinitely. Deleting lets it shed the next time the movement is
+ * actually trained.
+ */
+export function nextVolumeBest(
+  current: VolumeBestMap,
+  entries: {
+    name: string;
+    repUnit?: "reps" | "seconds";
+    sets: { weightKg: number; reps: number }[];
+  }[],
+  date: string
+): VolumeBestMap {
+  const next: VolumeBestMap = { ...current };
+  for (const entry of entries) {
+    if (!entry.name) continue;
+    if (entry.repUnit === "seconds") {
+      delete next[entry.name];
+      continue;
+    }
+    const vol = exerciseSessionVolume(entry.sets);
+    if (vol > 0 && vol > (next[entry.name]?.volume ?? 0)) {
+      next[entry.name] = { volume: vol, date };
+    }
+  }
+  return next;
 }
 
 /**
