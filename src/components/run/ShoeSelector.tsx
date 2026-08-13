@@ -1,6 +1,8 @@
 import { useShoes } from "@/hooks/useShoes";
 import { Footprints, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { storedKmLabel } from "@/lib/runLabels";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 
 interface Props {
   selectedShoeId: string | null;
@@ -8,6 +10,7 @@ interface Props {
 }
 
 export default function ShoeSelector({ selectedShoeId, onSelect }: Props) {
+  const unit = useDistanceUnit();
   const { activeShoes, defaultShoe, loading } = useShoes();
   const navigate = useNavigate();
 
@@ -54,7 +57,7 @@ export default function ShoeSelector({ selectedShoeId, onSelect }: Props) {
       >
         {activeShoes.map((shoe) => (
           <option key={shoe.id} value={shoe.id}>
-            {shoe.name} — {Math.round(shoe.totalKm)}km
+            {shoe.name} — {storedKmLabel(shoe.totalKm, unit)}
           </option>
         ))}
       </select>

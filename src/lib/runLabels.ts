@@ -208,6 +208,25 @@ export function distanceLabel2(
 }
 
 /**
+ * A stored-KILOMETRE quantity, in the reader's unit — shoe mileage and the
+ * weekly aggregates, which are the two places this app keeps kilometres
+ * rather than metres.
+ *
+ * A thin wrapper over `distanceIn` that exists to stop `× 1000` appearing
+ * at half a dozen call sites, where a missing one is a silent 1000×
+ * error that still renders as a plausible number. Rounds to whole units:
+ * shoe mileage is a wear estimate, not a measurement.
+ */
+export function storedKmLabel(
+  km: number,
+  unit: DistanceUnit,
+  withUnit = true
+): string {
+  const v = Math.round(distanceIn((km || 0) * 1000, unit));
+  return withUnit ? `${v} ${distanceUnitLabel(unit)}` : `${v}`;
+}
+
+/**
  * A climb, rounded to a whole unit — `120 m` / `394 ft`.
  *
  * Rounds AFTER converting, so a metric reader still sees the stored whole

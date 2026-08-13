@@ -44,7 +44,11 @@ import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import {
   paceUnitLabel,
   distanceUnitLabel,
-  PRESET_DISTANCES_ARE_KM,
+  distancePresetsM,
+  distanceToMetres,
+  distanceIn,
+  DISTANCE_TARGET_MIN_M,
+  DISTANCE_TARGET_MAX_M,
 } from "@/lib/distanceUnits";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { heatPaceAdjustment, heatAdjustmentLine } from "@/lib/heatAdjustment";
@@ -753,16 +757,16 @@ export default function RunSetupModal({
                  Validation from runTargetValidation.ts still
                  applies — clicking a preset writes a valid value;
                  typing 0.005 in Custom still blocks Start. */
-                  const distancePresetsM = [1000, 3000, 5000, 10000];
+                  const presets = distancePresetsM(unit);
                   const currentValueM = config.target.value ?? 0;
-                  const isCustom = !distancePresetsM.includes(currentValueM);
+                  const isCustom = !presets.includes(currentValueM);
                   return (
                     <div>
                       <p className="text-xs text-muted-foreground mb-2">
                         Distance
                       </p>
                       <div className="flex flex-wrap gap-2 mb-3">
-                        {distancePresetsM.map((m) => {
+                        {presets.map((m) => {
                           const active = currentValueM === m;
                           return (
                             <button
@@ -775,7 +779,8 @@ export default function RunSetupModal({
                               }
                               className={presetChipClass(active)}
                             >
-                              {m / 1000} {PRESET_DISTANCES_ARE_KM}
+                              {distanceValue(m, unit).replace(/\.0$/, "")}{" "}
+                              {distanceUnitLabel(unit)}
                             </button>
                           );
                         })}
@@ -798,37 +803,56 @@ export default function RunSetupModal({
                             htmlFor="target-distance"
                             className="text-xs text-muted-foreground"
                           >
-                            Distance (km)
+                            Distance ({distanceUnitLabel(unit)})
                           </label>
                           <input
                             id="target-distance"
                             type="number"
                             step="0.5"
-                            min="0.5"
-                            max="100"
+                            /* The BOUNDS are absolute metres, shown
+                               converted — an imperial reader must not get a
+                               160 km ceiling because "100" is round in
+                               their box. */
+                            min={distanceIn(
+                              DISTANCE_TARGET_MIN_M,
+                              unit
+                            ).toFixed(2)}
+                            max={distanceIn(
+                              DISTANCE_TARGET_MAX_M,
+                              unit
+                            ).toFixed(2)}
                             value={
                               config.target.value
-                                ? config.target.value / 1000
-                                : 5
+                                ? distanceValue(config.target.value, unit)
+                                : distanceValue(5000, unit)
                             }
                             onChange={(e) =>
                               updateConfig({
                                 target: {
                                   type: "distance",
-                                  value: Number(e.target.value) * 1000,
+                                  value: distanceToMetres(
+                                    Number(e.target.value),
+                                    unit
+                                  ),
                                 },
                               })
                             }
                             onBlur={(e) => {
-                              const km = Number(e.target.value);
-                              const clamped = Number.isFinite(km)
-                                ? Math.max(0.5, Math.min(100, km))
-                                : 5;
-                              if (clamped !== km) {
+                              const typed = distanceToMetres(
+                                Number(e.target.value),
+                                unit
+                              );
+                              const clamped = Number.isFinite(typed)
+                                ? Math.max(
+                                    DISTANCE_TARGET_MIN_M,
+                                    Math.min(DISTANCE_TARGET_MAX_M, typed)
+                                  )
+                                : 5000;
+                              if (clamped !== typed) {
                                 updateConfig({
                                   target: {
                                     type: "distance",
-                                    value: clamped * 1000,
+                                    value: clamped,
                                   },
                                 });
                               }

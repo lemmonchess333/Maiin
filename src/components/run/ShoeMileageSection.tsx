@@ -2,14 +2,17 @@ import { Link } from "react-router-dom";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Footprints, ChevronRight } from "lucide-react";
 import { useShoes, type Shoe } from "@/hooks/useShoes";
+import { storedKmLabel } from "@/lib/runLabels";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 
 function MileagePill({ shoe }: { shoe: Shoe }) {
+  const unit = useDistanceUnit();
   const pct = Math.min((shoe.totalKm / shoe.maxKm) * 100, 100);
   // Wear sentiment → AA-tuned status tokens (see MileageBar in ShoesManager):
   // fresh → success, mid-life → warning, overdue → destructive.
   const wearClass =
     pct < 60 ? "bg-success" : pct < 85 ? "bg-warning" : "bg-destructive";
-  const remainingKm = Math.max(0, Math.round(shoe.maxKm - shoe.totalKm));
+  const remainingKm = Math.max(0, shoe.maxKm - shoe.totalKm);
 
   return (
     <div className="space-y-1">
@@ -23,7 +26,7 @@ function MileagePill({ shoe }: { shoe: Shoe }) {
           )}
         </p>
         <p className="text-xs font-mono tabular-nums text-muted-foreground shrink-0">
-          {Math.round(shoe.totalKm)} / {shoe.maxKm} km
+          {storedKmLabel(shoe.totalKm, unit, false)} / {storedKmLabel(shoe.maxKm, unit)}
         </p>
       </div>
       <div className="h-1.5 rounded-full bg-muted overflow-hidden">
@@ -38,7 +41,7 @@ function MileagePill({ shoe }: { shoe: Shoe }) {
         >
           {pct >= 100
             ? "Time to replace"
-            : `${remainingKm} km until replacement`}
+            : `${storedKmLabel(remainingKm, unit)} until replacement`}
         </p>
       )}
     </div>
