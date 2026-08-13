@@ -23,6 +23,10 @@ interface RouteSetupSectionProps {
   routeSource: SavedRouteSource | null;
   onLoadRoute: (points: GPSPoint[], source: SavedRouteSource) => void;
   onClearRoute: () => void;
+  /** Best-known current position, forwarded to the route planner as its
+   *  opening centre. The run page pre-warms GPS on this screen, so a fix is
+   *  usually already in hand by the time the planner is opened. */
+  currentPosition?: { lat: number; lon: number } | null;
 }
 
 function km(metres: number): string {
@@ -47,6 +51,7 @@ export default function RouteSetupSection({
   routeSource,
   onLoadRoute,
   onClearRoute,
+  currentPosition = null,
 }: RouteSetupSectionProps) {
   const { profile } = useAuth();
   const { routes, save, remove } = useSavedRoutes();
@@ -239,7 +244,9 @@ export default function RouteSetupSection({
           defaultName={preview.name}
           source={preview.source}
           showSave={preview.showSave}
-          darkMode={!!profile?.darkMode}
+          /* Same default-dark reasoning as the planner below: only an
+             explicit `false` means light, and this sheet renders a map too. */
+          darkMode={profile?.darkMode !== false}
           onFollow={onLoadRoute}
           onSave={(n, points, source) => save({ name: n, points, source })}
         />
@@ -250,7 +257,12 @@ export default function RouteSetupSection({
           <RoutePlannerSheet
             open
             onClose={() => setPlannerOpen(false)}
-            darkMode={!!profile?.darkMode}
+            initialCenter={currentPosition}
+            /* Dark is the DEFAULT theme, so an unloaded profile must not read
+               as light — `!!profile?.darkMode` was false until the profile
+               arrived and could open the planner on the light basemap inside
+               a dark app. */
+            darkMode={profile?.darkMode !== false}
             onSave={(n, points) => save({ name: n, points, source: "planned" })}
             onFollow={(points) => onLoadRoute(points, "planned")}
           />
