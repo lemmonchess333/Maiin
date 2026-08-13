@@ -90,15 +90,10 @@ const {
   prepareForDeloadWorkouts,
 } = require("./deloadEngine");
 
-const TIMED_EXERCISE_IDS = new Set([
-  "plank",
-  "superman-hold",
-  "side-plank",
-  "weighted-plank",
-]);
-function repUnitForExerciseId(exerciseId) {
-  return TIMED_EXERCISE_IDS.has(exerciseId) ? "seconds" : undefined;
-}
+/* Extracted to lib/timedExerciseIds.js. It was a private four-id set here
+   while the client's list had grown to six (l-sit, farmers-carry), and
+   nothing could see the disagreement because no test could import it. */
+const { repUnitForExerciseId } = require("./timedExerciseIds");
 
 // 31-day receipt retention. Command receipts live at
 // users/{uid}/programState/current/commandReceipts/{commandId} and make a
@@ -2241,6 +2236,15 @@ function completeWorkoutDayWithEffect(state, profile, command, now) {
     date: localDateInZone(now, profile && profile.timezone),
     exercises,
     totalCalories,
+    /* The same field the client writer was missing until #2041 — every
+       server consumer of a workout doc reads it (challenge total_volume,
+       the hybrid score's kg term, lifetime lift volume). `tonnage` was
+       already computed here, and spent only on the calorie estimate. This
+       path is not yet reachable from any client, which is precisely why
+       it needed fixing now: a mirror that silently disagrees with the
+       live copy reintroduces the original bug the moment the boundary
+       moves, and the failure would again be invisible. */
+    totalVolume: tonnage,
     durationMinutes: effectiveDurationMin,
     notes: `${day.dayName} — Programme Week ${state.weekNumber}`,
     source: "programme",

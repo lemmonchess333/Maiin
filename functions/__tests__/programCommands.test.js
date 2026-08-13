@@ -1842,6 +1842,67 @@ describe("completeWorkoutDay (effect — calorie mirror pinned by cross-test)", 
     });
     expect(input.workouts[0].completed).toBe(false);
   });
+
+  /**
+   * `totalVolume` on the effect.
+   *
+   * #2041 fixed the CLIENT writer, which was the only reachable one: no
+   * client constructs `kind: "completeWorkoutDay"`, so this reducer's
+   * workout effect is currently written by nothing but these tests. That
+   * is the reason to pin it rather than a reason to skip it — the whole
+   * point of the mirror is that the boundary moves, and a mirror missing
+   * the field would restore the original bug the day it does, with the
+   * same silence (a full training week crediting zero volume).
+   */
+  it("persists the tonnage it already computed", () => {
+    // bench 100×8 + 100×8 (the third set is completed:false and filtered)
+    // + row 60×10 = 2200. Independently corroborated by the calorie test
+    // above: 210 kcal requires the <80 density band, i.e. this tonnage.
+    expect(run({ weightKg: 80 }).effects.workout.totalVolume).toBe(2200);
+  });
+
+  it("scores a timed hold as zero tonnage, load or not", () => {
+    /* `weighted-plank` carries a real external load AND repUnit
+       "seconds", so its `reps` is a DURATION. Counting weightKg × reps
+       would read a 20 kg / 60 s hold as 1,200 kg. Both writers already
+       reduce timed exercises to 0; this pins that the persisted field
+       agrees, so the volume the server states can never disagree with
+       the volume it derived. */
+    const s = completeState();
+    s.workouts[0].exercises.push({
+      name: "Weighted Plank",
+      exerciseId: "weighted-plank",
+      instanceId: "inst-c",
+      movementCategory: "core",
+      repUnit: "seconds",
+      sets: 1,
+      reps: 60,
+      weight: 20,
+    });
+    const { effects } = applyProgramCommand({
+      state: s,
+      profile: { weightKg: 80 },
+      command: {
+        kind: "completeWorkoutDay",
+        commandId: CMD,
+        // The added instance changes the day signature — the precondition
+        // is doing its job, so the fixture states the new one.
+        ...dayPre({ expectedDaySignature: "Push|inst-a|inst-b|inst-c" }),
+        completion: {
+          ...completion,
+          setLogs: [
+            ...completion.setLogs,
+            [{ weight: 20, reps: 60, completed: true }],
+          ],
+        },
+      },
+      now: Date.parse("2026-07-13T02:30:00Z"),
+    });
+    // The hold IS recorded — it just contributes no tonnage.
+    expect(effects.workout.exercises[2].repUnit).toBe("seconds");
+    expect(effects.workout.exercises[2].sets).toHaveLength(1);
+    expect(effects.workout.totalVolume).toBe(2200);
+  });
 });
 
 describe("addExercises / replaceExercise (catalog-derived, mirrors pinned by cross-tests)", () => {

@@ -119,9 +119,25 @@ export function workoutTitle(workout: { notes?: string }): string {
   return workout.notes?.split(" — ")[0]?.trim() || "Workout";
 }
 
-/** Total kg lifted in a session, derived from its sets. saveWorkout computes
- *  this for the burn formula but does NOT persist it, so consumers derive it
- *  from `exercises` (correct for every doc, old and new). */
+/** Total kg lifted in a session, derived from its sets. The writers compute
+ *  the same figure for the burn formula and persist it as `totalVolume`
+ *  (#2041); this derives it from `exercises`, which is correct for every
+ *  doc, old and new.
+ *
+ *  Timed exercises contribute NOTHING, because their `reps` is a duration
+ *  and `weightKg × reps` is not a weight moved. That rule is the writers'
+ *  — both `useProgram.completeWorkoutDay` and the server command reducer
+ *  reduce with `repUnit === "seconds" ? 0 : …` — and this copy was missing
+ *  it, so a weighted plank counted here and not there. `weighted-plank` is
+ *  a real catalog exercise, so a 20 kg / 60 s hold added 1,200 kg to every
+ *  surface below and to none of the recorded session totals.
+ *
+ *  This is the widest-read of the copies: History's volume card and chart,
+ *  WorkoutDetail, the weekly recap, the solo feed, the share sheet, and
+ *  SpacePostComposer, which MATERIALIZES the result onto a space post.
+ *
+ *  `repUnit` is compared to the literal rather than tested for truthiness
+ *  because the type admits `"reps"` as an explicit value. */
 export function workoutTonnageKg(workout: Pick<Workout, "exercises">): number {
   // Defensive `?? []`: legacy docs can miss `exercises` entirely; the
   // guarded per-set multiply already tolerates missing weight/reps, so
@@ -129,10 +145,12 @@ export function workoutTonnageKg(workout: Pick<Workout, "exercises">): number {
   return (workout.exercises ?? []).reduce(
     (t, ex) =>
       t +
-      (ex.sets ?? []).reduce(
-        (s, set) => s + (set.weightKg || 0) * (set.reps || 0),
-        0
-      ),
+      (ex?.repUnit === "seconds"
+        ? 0
+        : (ex?.sets ?? []).reduce(
+            (s, set) => s + (set.weightKg || 0) * (set.reps || 0),
+            0
+          )),
     0
   );
 }
