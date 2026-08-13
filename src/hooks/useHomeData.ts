@@ -39,6 +39,9 @@ interface PostWorkoutNudge {
   proteinRemaining: number;
 }
 
+/** How recently a session must have finished for the nudge to fire. */
+const NUDGE_WINDOW_MINUTES = 120;
+
 interface HomeDataState {
   dailyCal: number;
   dailyProt: number;
@@ -50,6 +53,10 @@ interface HomeDataState {
   dailyCarbs: number;
   dailyFat: number;
   todayRunCals: number;
+  /* Epoch ms of the most recent countable run finished today, or null.
+     Drives the "run" half of the post-workout nudge — see the effect
+     below for why a run cannot be recognised from `workouts`. */
+  lastRunAtMs: number | null;
   lastWeightInfo: WeightInfo | null;
   /* #984 — direction derived from the logged weight history (7-day
      avg vs latest), used by the home tile when "Hide the number" is
@@ -92,6 +99,7 @@ export function useHomeData(
     dailyCarbs: 0,
     dailyFat: 0,
     todayRunCals: 0,
+    lastRunAtMs: null,
     lastWeightInfo: null,
     weightTrend: null,
     loading: true,
@@ -156,6 +164,7 @@ export function useHomeData(
           let carb = 0;
           let fat = 0;
           let rCals = 0;
+          let lastRunAtMs: number | null = null;
           let weightInfo: WeightInfo | null = null;
           let weightTrend: WeightTrendDirection = null;
 
@@ -192,6 +201,12 @@ export function useHomeData(
               if (!isVolumeEligible(data)) return;
               const distKm = (data.distance || 0) / 1000;
               rCals += Math.round(weightKg * distKm * 1.036);
+              // Newest countable finish — the nudge's only evidence a run
+              // happened. Same eligibility gate as the calorie tally, so a
+              // saved-anyway misclick can't trigger a refuel prompt either.
+              const at = data.completedAt?.toMillis?.();
+              if (typeof at === "number" && (lastRunAtMs === null || at > lastRunAtMs))
+                lastRunAtMs = at;
             });
           } else {
             logger.error("[useHomeData] runs fetch failed:", results[1].reason);
@@ -292,6 +307,7 @@ export function useHomeData(
             dailyCarbs: carb,
             dailyFat: fat,
             todayRunCals: rCals,
+            lastRunAtMs,
             lastWeightInfo: weightInfo,
             weightTrend,
             loading: false,
@@ -312,36 +328,57 @@ export function useHomeData(
     useState<PostWorkoutNudge | null>(null);
   useEffect(
     function () {
+      /* Lift vs run comes from WHICH COLLECTION the session landed in, not
+         from an exercise field.
+
+         It used to read `exercise.category`, testing `=== "cardio"` for the
+         run half and `!== "cardio"` for the lift half. No document has ever
+         carried that value, from either writer: the exercise catalogue
+         spells it `"Cardio"` (capital), and the only path that actually
+         persists the field — `useProgram.onCompleteDay` — writes
+         `ex.movementCategory`, one of the nine MovementCategory values
+         (`hip_dominant`, `core`, …). `exerciseMovementCategory.ts` says so
+         outright: "Cardio and Full Body conditioning stay `core`".
+
+         So `hasRun` was false for every user on every workout, `hasLift`
+         true for every non-empty one, and the type was permanently "lift" —
+         the "Post-run — refuel" copy in TodayEnergy could not render. And a
+         run-only day showed nothing at all, because runs are not workout
+         documents: the early return on "no workouts today" fired first.
+
+         The nudge's own test fixture used `category: "push"`, a value from
+         neither vocabulary, so it never exercised the comparison. */
       const todayStr = localDateString();
+      const now = Date.now();
       const todayWorkouts = workouts.filter(function (w) {
         return w.date === todayStr;
       });
-      if (todayWorkouts.length === 0) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- clearing nudge when no workouts today
+
+      // A workout with no `createdAt` reads as just-finished (its row was
+      // written this session) — preserved from the original.
+      const liftAtMs =
+        todayWorkouts.length > 0
+          ? todayWorkouts.reduce(function (a, b) {
+              return (b.createdAt?.toMillis?.() || 0) >
+                (a.createdAt?.toMillis?.() || 0)
+                ? b
+                : a;
+            }).createdAt?.toMillis?.() || now
+          : null;
+
+      function isRecent(atMs: number | null): boolean {
+        if (atMs === null) return false;
+        return Math.round((now - atMs) / 60000) <= NUDGE_WINDOW_MINUTES;
+      }
+
+      const hasLift = isRecent(liftAtMs);
+      const hasRun = isRecent(state.lastRunAtMs);
+      if (!hasLift && !hasRun) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- clearing nudge when nothing finished recently
         setPostWorkoutNudge(null);
         return;
       }
 
-      const latest = todayWorkouts.reduce(function (a, b) {
-        return (b.createdAt?.toMillis?.() || 0) >
-          (a.createdAt?.toMillis?.() || 0)
-          ? b
-          : a;
-      });
-
-      const createdMs = latest.createdAt?.toMillis?.() || Date.now();
-      const minutesSince = Math.round((Date.now() - createdMs) / 60000);
-      if (minutesSince > 120) {
-        setPostWorkoutNudge(null);
-        return;
-      }
-
-      const hasLift = latest.exercises.some(function (e) {
-        return e.category !== "cardio";
-      });
-      const hasRun = latest.exercises.some(function (e) {
-        return e.category === "cardio";
-      });
       const type: PostWorkoutNudge["type"] =
         hasLift && hasRun ? "both" : hasRun ? "run" : "lift";
 
@@ -358,7 +395,13 @@ export function useHomeData(
 
       setPostWorkoutNudge({ type, proteinRemaining });
     },
-    [workouts, profile?.targetProtein, effectiveProtein, state.dailyProt]
+    [
+      workouts,
+      state.lastRunAtMs,
+      profile?.targetProtein,
+      effectiveProtein,
+      state.dailyProt,
+    ]
   );
 
   const setLastWeightInfo = function (info: WeightInfo | null) {
