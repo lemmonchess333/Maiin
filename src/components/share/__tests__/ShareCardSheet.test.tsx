@@ -21,13 +21,23 @@ vi.mock("@/lib/socialAnalytics", () => ({ track: (...a: unknown[]) => track(...a
 
 import { setNativeInstagramProvider } from "@/lib/shareCard/instagramShare";
 
+/* The sheet stamps the SHARER's unit onto the render data, which resolves
+   from the auth profile — and `useAuth` throws outside an AuthProvider,
+   which this suite doesn't render. Metric keeps the existing export-flow
+   assertions describing what they always did; the unit's effect on the
+   rendered card is pinned in ShareCardRenderer.test.tsx. */
+vi.mock("@/hooks/useDistanceUnit", () => ({
+  useDistanceUnit: () => "km" as const,
+}));
+
+
 const runData: ShareCardSheetData = {
   template: "run",
   handle: "Alex",
   date: "12 Jun 2026",
   distanceKm: 10.42,
   durationSec: 3245,
-  pace: "5:12",
+  paceSecPerKm: 312,
   elevationM: 84,
 };
 

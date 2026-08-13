@@ -11,6 +11,7 @@ import ShareCardRenderer, {
 afterEach(() => cleanup());
 
 const base: ShareCardRenderData = {
+  unit: "km" as const,
   template: "run",
   format: "story",
   background: "dark",
@@ -18,7 +19,7 @@ const base: ShareCardRenderData = {
   date: "12 Jun 2026",
   distanceKm: 10.42,
   durationSec: 3245,
-  pace: "5:12",
+  paceSecPerKm: 312,
   elevationM: 84,
   routePath: "M100,100L500,300L800,900",
   totalVolumeKg: 12400,
@@ -26,10 +27,46 @@ const base: ShareCardRenderData = {
   prCount: 2,
   prExercise: "Back Squat",
   splits: [
-    { km: 1, pace: "5:05" },
-    { km: 2, pace: "5:18" },
+    { lap: 1, paceSecPerKm: 305 },
+    { lap: 2, paceSecPerKm: 318 },
   ],
 };
+
+describe("ShareCardRenderer — the sharer's unit", () => {
+  /* A share card is an IMAGE, so the unit is fixed at export and cannot
+     depend on who opens it. That makes the sharer's preference the only
+     answer available — and it is the one that matches what the numbers
+     mean to the person posting them. */
+  function renderUnit(unit: "km" | "mi") {
+    const { container } = render(
+      <ShareCardRenderer data={{ ...base, unit, template: "run" }} />
+    );
+    return container.textContent ?? "";
+  }
+
+  it("renders a run card in metric", () => {
+    const text = renderUnit("km");
+    expect(text).toContain("10.42"); // 10.42 km, two decimals
+    expect(text).toContain("5:12"); // 312 s/km
+    expect(text).toContain("84m"); // climb
+  });
+
+  it("renders the same run in miles — every stat, not just the distance", () => {
+    /* The failure this guards is a PARTIAL conversion: one stat converted
+       and the four beside it left metric is worse than a fully metric
+       card, because nothing on the image says which is which. */
+    const text = renderUnit("mi");
+    expect(text).toContain("6.47"); // 10.42 km → 6.47 mi
+    expect(text).toContain("8:22"); // 312 s/km → 8:22 /mi
+    expect(text).toContain("276ft"); // 84 m → 276 ft
+    expect(text).not.toMatch(/\bkm\b/);
+  });
+
+  it("splits are laps in the sharer's unit, paced in it too", () => {
+    expect(renderUnit("km")).toContain("5:05");
+    expect(renderUnit("mi")).toContain("8:11"); // 305 s/km → 8:11 /mi
+  });
+});
 
 describe("ShareCardRenderer", () => {
   const templates: ShareTemplate[] = ["run", "lift", "hybrid"];

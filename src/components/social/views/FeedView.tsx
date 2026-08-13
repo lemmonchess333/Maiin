@@ -212,7 +212,12 @@ export default function FeedView({
             distanceKm: (a.distance ?? 0) / 1000,
             durationSec:
               typeof a.duration === "number" ? a.duration : undefined,
-            pace: typeof a.avgPace === "string" ? a.avgPace : undefined,
+            /* Only the NUMBER form can be converted — a stored pace
+               string is already-formatted metric text with no way back to
+               a value, so an imperial sharer gets no pace stat rather than
+               a mislabelled one. */
+            paceSecPerKm:
+              typeof a.avgPace === "number" ? a.avgPace : undefined,
             elevationM: a.elevationGain,
           }
         : {
