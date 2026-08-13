@@ -108,3 +108,62 @@ describe("fastest_effort tier markers", () => {
     expect(markerLeft("15,000")).toBe("100%");
   });
 });
+
+/**
+ * Edge labels must stay inside the bar.
+ *
+ * Device screenshot, 2026-08-13: the August Hybrid Hero card rendered its
+ * gold tier as "15,00" and then the screen edge. Gold sits at exactly
+ * `left: 100%` by construction — it IS `max` — and the marker wrapper is
+ * centred with `-translate-x-1/2`, so half the label always hung past the
+ * bar. Any tiered challenge whose gold label is wide enough clips.
+ *
+ * The dot must NOT move with it: its whole job is marking where the fill
+ * edge crosses its threshold, so only the text is pulled back.
+ */
+describe("tier labels at the extremes", () => {
+  function labelFor(text: string): HTMLElement {
+    const el = screen.getByText(text);
+    return el;
+  }
+
+  it("pulls the gold label back inside instead of centring it off the edge", () => {
+    // higher-is-better, so gold (15,000) lands at left:100%.
+    renderJoined(
+      makeChallenge("hybrid_score", {
+        bronze: 3000,
+        silver: 8000,
+        gold: 15000,
+      }),
+      44
+    );
+    expect(labelFor("15,000").className).toContain("-translate-x-1/2");
+  });
+
+  it("leaves a mid-bar label centred on its threshold", () => {
+    /* The pull-back is for the extremes only — a silver marker at ~53%
+       has room on both sides and should stay centred, or every label
+       would sit off-centre from its own tick. */
+    renderJoined(
+      makeChallenge("hybrid_score", {
+        bronze: 3000,
+        silver: 8000,
+        gold: 15000,
+      }),
+      44
+    );
+    expect(labelFor("8,000").className).not.toContain("translate-x");
+  });
+
+  it("keeps the label on one line so it cannot wrap instead of clipping", () => {
+    renderJoined(
+      makeChallenge("hybrid_score", {
+        bronze: 3000,
+        silver: 8000,
+        gold: 15000,
+      }),
+      44
+    );
+    expect(labelFor("15,000").className).toContain("whitespace-nowrap");
+  });
+});
