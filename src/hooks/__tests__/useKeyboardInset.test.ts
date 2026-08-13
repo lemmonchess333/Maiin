@@ -132,4 +132,73 @@ describe("useKeyboardInset — both keyboard viewport models", () => {
     const { result } = renderHook(() => useKeyboardInset());
     expect(result.current).toBe(0);
   });
+
+  /**
+   * The no-keyboard case as a real browser actually reports it.
+   *
+   * The Android/Chrome test above stubs the two viewports EQUAL, which is
+   * the idealised reading. Chromium does not do that. Measured directly,
+   * headless Chromium with an input focused reports:
+   *
+   *   desktop 1280x720      innerHeight 720   vv 720                  → 0
+   *   iPhone 13 emulation   innerHeight 1669  vv 1668.5128173828125   → 0.487
+   *   Pixel 5 emulation     innerHeight 1813  vv 1812.8753662109375   → 0.125
+   *
+   * A sub-pixel gap, with no keyboard anywhere. `Math.round` absorbs it —
+   * but incidentally, and nothing pinned that. `Math.ceil` is the natural
+   * "round up to be safe" edit, and it would give EVERY Chrome-based
+   * device a permanent 1px inset: the sheet would take the inline-style
+   * branch forever instead of `undefined`, on every mount, for a keyboard
+   * that is not open.
+   *
+   * These fixtures are the measured numbers rather than invented ones,
+   * because the whole point is that the real gap is not zero.
+   */
+  it.each([
+    ["iPhone 13 emulation", 1669, 1668.5128173828125],
+    ["Pixel 5 emulation", 1813, 1812.8753662109375],
+    ["desktop 1280x720", 720, 720],
+  ])("reports exactly 0 for %s with no keyboard", (_label, inner, vvHeight) => {
+    const originalInner = window.innerHeight;
+    try {
+      Object.defineProperty(window, "innerHeight", {
+        value: inner,
+        configurable: true,
+      });
+      stubViewport(vvHeight, 0);
+      const { result } = renderHook(() => useKeyboardInset());
+      expect(result.current).toBe(0);
+    } finally {
+      Object.defineProperty(window, "innerHeight", {
+        value: originalInner,
+        configurable: true,
+      });
+    }
+  });
 });
+
+/**
+ * WHY THERE IS NO CHROMIUM E2E TEST FOR THE KEYBOARD LIFT.
+ *
+ * Recorded here rather than in a PR body so the next person weighing it
+ * does not have to re-derive the answer — and because the first reason I
+ * gave was the weaker one.
+ *
+ * The reason I originally gave: Chromium implements the RESIZE viewport
+ * model, so a test there exercises semantics that were never broken and
+ * could pass while iOS Safari still failed.
+ *
+ * The actual, stronger reason, measured: headless Chromium has NO SOFT
+ * KEYBOARD. Focusing an input does not shrink the visual viewport under
+ * any device emulation — the table above is what it reports with the
+ * caret in a field. The condition the hook responds to cannot be produced
+ * at all, on either model. Any such e2e test would have to synthesise the
+ * divergence itself, which is precisely what these unit tests do, with
+ * fewer moving parts and no browser to mislead a reader into thinking a
+ * real keyboard was involved.
+ *
+ * What the probe DID earn is the sub-pixel case above; the real numbers
+ * came from that run. The genuinely device-level claim — that the lifted
+ * sheet looks right on iOS Safari — remains a manual pass, and is listed
+ * in the pre-launch QA backlog rather than pretended away.
+ */
