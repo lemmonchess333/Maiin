@@ -126,11 +126,22 @@ export interface GroupRecovery {
 }
 
 /**
- * The analytics MuscleHeatMap legend speaks the coarser EXERCISE_CATEGORIES
- * group taxonomy (plus legacy aliases); map each legend group to its
- * canonical muscles so recovery chips can sit on the existing rows. "Full
- * Body" is deliberately absent — a single readiness state for it would be
- * dishonest.
+ * The analytics MuscleHeatMap legend speaks TWO live vocabularies, and this
+ * table has to serve both (see `analytics/muscleGroupTaxonomy.ts` for the
+ * full account): the coarser EXERCISE_CATEGORIES groups History resolves by
+ * exercise name, and the `CATEGORY_DISPLAY` translations of the
+ * MovementCategory keys a saved workout actually stores. Map each legend
+ * group to its canonical muscles so recovery chips can sit on the existing
+ * rows.
+ *
+ * The second set is NOT legacy — this comment used to say it was. Those
+ * keys are what `useProgram.onCompleteDay` writes today, and they are the
+ * only route for a CUSTOM exercise, whose name the catalogue lookup misses.
+ * Dropping those rows as historical would silently leave them without a
+ * chip; `muscleGroupTaxonomy.test.ts` now fails if any goes missing.
+ *
+ * "Full Body" is deliberately absent — a single readiness state for it
+ * would be dishonest.
  */
 const HEAT_MAP_GROUP_MUSCLES: Record<string, CanonicalMuscle[]> = {
   Chest: ["Chest"],

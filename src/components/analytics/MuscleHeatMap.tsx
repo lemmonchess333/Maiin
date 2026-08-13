@@ -3,6 +3,7 @@ import Model, { type IExerciseData } from "react-body-highlighter";
 import { THEME } from "@/lib/theme";
 import BodyMapGlow from "@/components/BodyMapGlow";
 import { getShareTier, getFrequencyForShare } from "./muscleShare";
+import { CATEGORY_DISPLAY, MUSCLE_MAP } from "./muscleGroupTaxonomy";
 import type { GroupRecovery } from "@/lib/muscleRecovery";
 
 interface MuscleData {
@@ -21,48 +22,6 @@ interface MuscleHeatMapProps {
    */
   recovery?: Record<string, GroupRecovery>;
 }
-
-/** Translate technical movementCategory keys to user-friendly names */
-const CATEGORY_DISPLAY: Record<string, string> = {
-  knee_dominant: "Quads & Glutes",
-  hip_dominant: "Hamstrings & Back",
-  horizontal_push: "Chest",
-  vertical_push: "Shoulders",
-  horizontal_pull: "Back",
-  vertical_pull: "Lats",
-  arms_biceps: "Biceps",
-  arms_triceps: "Triceps",
-  core: "Core",
-};
-
-/** Map friendly muscle group names → react-body-highlighter muscle IDs.
- *  Keyed on the EXERCISE_CATEGORIES taxonomy from src/lib/exercises.ts
- *  ("Chest" / "Back" / "Shoulders" / "Biceps" / "Triceps" / "Legs" /
- *  "Core" / "Full Body" / "Cardio") — those are the strings actually
- *  written to saved workout docs.
- *
- *  Older alias keys ("Quads & Glutes", "Hamstrings & Back", "Lats",
- *  "Calves", "Traps") are kept for backward compatibility with the
- *  legacy CATEGORY_DISPLAY translation above, in case any historical
- *  workout doc was saved against the previous movement-key taxonomy. */
-const MUSCLE_MAP: Record<string, IExerciseData["muscles"]> = {
-  // Current taxonomy (EXERCISE_CATEGORIES)
-  Chest: ["chest"],
-  Back: ["upper-back", "lower-back"],
-  Shoulders: ["front-deltoids", "back-deltoids"],
-  Biceps: ["biceps"],
-  Triceps: ["triceps"],
-  Legs: ["quadriceps", "gluteal", "hamstring", "calves"],
-  Core: ["abs", "obliques"],
-  "Full Body": ["chest", "upper-back", "quadriceps", "abs"],
-  Cardio: [],
-  // Legacy aliases via CATEGORY_DISPLAY
-  "Quads & Glutes": ["quadriceps", "gluteal"],
-  "Hamstrings & Back": ["hamstring", "upper-back", "lower-back"],
-  Lats: ["upper-back"],
-  Calves: ["calves"],
-  Traps: ["trapezius"],
-};
 
 const LOW_COLOR = THEME.liftingLight;
 const MID_COLOR = THEME.lifting;
