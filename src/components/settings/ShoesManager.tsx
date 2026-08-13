@@ -8,8 +8,18 @@ import { toast } from "@/lib/toast";
 import { searchShoes, type ShoeModel } from "@/lib/shoeDatabase";
 import { logger } from "@/lib/logger";
 import { Spinner } from "@/components/ui/Spinner";
+import { storedKmLabel } from "@/lib/runLabels";
+import {
+  distanceIn,
+  distanceToMetres,
+  distanceUnitLabel,
+  SHOE_MAX_DEFAULT_KM,
+  SHOE_MAX_MIN_KM,
+} from "@/lib/distanceUnits";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 
 function MileageBar({ shoe }: { shoe: Shoe }) {
+  const unit = useDistanceUnit();
   const pct = Math.min((shoe.totalKm / shoe.maxKm) * 100, 100);
   // Wear sentiment: fresh → success, mid-life → warning, overdue →
   // destructive. Tokenised so the bar tracks the theme's AA-tuned
@@ -21,10 +31,10 @@ function MileageBar({ shoe }: { shoe: Shoe }) {
     <div className="space-y-1">
       <div className="flex justify-between text-xs">
         <span className="text-muted-foreground font-mono tabular-nums">
-          {Math.round(shoe.totalKm)} km
+          {storedKmLabel(shoe.totalKm, unit)}
         </span>
         <span className="text-muted-foreground font-mono tabular-nums">
-          {shoe.maxKm} km
+          {storedKmLabel(shoe.maxKm, unit)}
         </span>
       </div>
       <div className="h-2 rounded-full bg-muted overflow-hidden">
@@ -38,6 +48,7 @@ function MileageBar({ shoe }: { shoe: Shoe }) {
 }
 
 export default function ShoesManager() {
+  const unit = useDistanceUnit();
   const {
     shoes,
     activeShoes,
@@ -51,7 +62,9 @@ export default function ShoesManager() {
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState("");
   const [newBrand, setNewBrand] = useState("");
-  const [newMax, setNewMax] = useState("600");
+  /* Seeded in the reader's unit — a miles user should see 373, not 600,
+     in a box labelled "mi". */
+  const [newMax, setNewMax] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [recalculating, setRecalculating] = useState(false);
 
@@ -75,7 +88,7 @@ export default function ShoesManager() {
   const handleSelectSuggestion = (shoe: ShoeModel) => {
     setNewName(shoe.name);
     setNewBrand(shoe.brand);
-    setNewMax(String(shoe.recommendedMaxKm));
+    setNewMax(storedKmLabel(shoe.recommendedMaxKm, unit, false));
     setShowSuggestions(false);
   };
 
@@ -123,10 +136,17 @@ export default function ShoesManager() {
 
   const handleAdd = async () => {
     if (!newName.trim()) return;
-    await addShoe(newName.trim(), newBrand.trim(), Number(newMax) || 600);
+    await addShoe(
+      newName.trim(),
+      newBrand.trim(),
+      /* `maxKm` is stored in kilometres, so a value typed in miles has to
+         convert on the way IN — the one place in this component where the
+         conversion runs toward storage. */
+      distanceToMetres(Number(newMax), unit) / 1000 || SHOE_MAX_DEFAULT_KM
+    );
     setNewName("");
     setNewBrand("");
-    setNewMax("600");
+    setNewMax("");
     setShowAdd(false);
     setShowSuggestions(false);
   };
@@ -239,21 +259,28 @@ export default function ShoesManager() {
                   id="shoe-max-km"
                   type="number"
                   inputMode="numeric"
-                  min={50}
+                  min={Math.round(distanceIn(SHOE_MAX_MIN_KM * 1000, unit))}
                   value={newMax}
+                  placeholder={storedKmLabel(
+                    SHOE_MAX_DEFAULT_KM,
+                    unit,
+                    false
+                  )}
                   onChange={(e) => setNewMax(e.target.value)}
                   aria-describedby="shoe-max-km-hint"
                   className="w-full px-3 py-2 pr-10 rounded-lg bg-muted border border-border text-sm"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
-                  km
+                  {distanceUnitLabel(unit)}
                 </span>
               </div>
               <Button onClick={handleAdd}>Save</Button>
             </div>
             <p id="shoe-max-km-hint" className="text-xs text-muted-foreground">
               We'll flag the shoe for replacement at this mileage. Most daily
-              trainers last 500–800 km; racing flats closer to 250.
+              trainers last {storedKmLabel(500, unit, false)}–
+              {storedKmLabel(800, unit)}; racing flats closer to{" "}
+              {storedKmLabel(250, unit, false)}.
             </p>
           </div>
         </div>
@@ -324,7 +351,7 @@ export default function ShoesManager() {
               <div>
                 <p className="text-xs text-foreground">{shoe.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {Math.round(shoe.totalKm)} km logged
+                  {storedKmLabel(shoe.totalKm, unit)} logged
                 </p>
               </div>
             </div>

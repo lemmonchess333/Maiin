@@ -16,6 +16,10 @@ import {
   METRES_PER_MILE,
   resolveDistanceUnit,
   distanceIn,
+  distanceToMetres,
+  distancePresetsM,
+  DISTANCE_TARGET_MIN_M,
+  DISTANCE_TARGET_MAX_M,
   paceIn,
   distanceUnitLabel,
   paceUnitLabel,
@@ -54,6 +58,65 @@ describe("distance", () => {
 
   it("treats non-finite input as zero rather than propagating NaN", () => {
     expect(distanceIn(NaN, "mi")).toBe(0);
+  });
+});
+
+describe("distanceToMetres — the direction that reaches storage", () => {
+  it("round-trips with distanceIn in both units", () => {
+    /* The pair has to be exact, because one is a read and the other is a
+       write: a mismatch does not show up as a wrong label, it shows up as
+       a wrong stored value that then renders correctly forever. */
+    for (const unit of ["km", "mi"] as const) {
+      for (const metres of [500, 1000, 5000, 42195]) {
+        expect(distanceToMetres(distanceIn(metres, unit), unit)).toBeCloseTo(
+          metres,
+          6
+        );
+      }
+    }
+  });
+
+  it("a typed 3.1 miles is 4989 m, not 3100", () => {
+    // The concrete failure it prevents: treating the typed number as km.
+    expect(distanceToMetres(3.1, "mi")).toBeCloseTo(4989, 0);
+    expect(distanceToMetres(3.1, "km")).toBe(3100);
+  });
+
+  it("treats unusable input as zero rather than storing NaN", () => {
+    expect(distanceToMetres(NaN, "mi")).toBe(0);
+    expect(distanceToMetres(Infinity, "km")).toBe(0);
+  });
+});
+
+describe("distancePresetsM — round numbers in the READER's unit", () => {
+  it("metric presets are the round kilometres they always were", () => {
+    expect(distancePresetsM("km")).toEqual([1000, 3000, 5000, 10000]);
+  });
+
+  it("imperial presets are round MILES, not converted kilometres", () => {
+    /* The point of the whole helper. Converting the metric set would give
+       0.62 / 1.86 / 3.11 / 6.21 miles — correct arithmetic, useless as
+       one-tap presets. */
+    const mi = distancePresetsM("mi");
+    expect(mi.map((m) => distanceIn(m, "mi"))).toEqual([1, 3, 5, 10]);
+    expect(mi[0]).toBeCloseTo(1609.344, 3);
+  });
+
+  it("both sets are in METRES, because that is what the target stores", () => {
+    for (const unit of ["km", "mi"] as const) {
+      for (const m of distancePresetsM(unit)) expect(m).toBeGreaterThan(900);
+    }
+  });
+});
+
+describe("the target bounds are absolute, not per-unit", () => {
+  it("clamps the same real distance whichever unit was typed", () => {
+    /* An imperial reader must not get a 160 km ceiling because "100" is
+       round in their box — the bound is a fact about how far someone can
+       plausibly set out to run. */
+    expect(distanceToMetres(100, "mi")).toBeGreaterThan(DISTANCE_TARGET_MAX_M);
+    expect(distanceToMetres(62, "mi")).toBeLessThan(DISTANCE_TARGET_MAX_M);
+    expect(DISTANCE_TARGET_MIN_M).toBe(500);
   });
 });
 

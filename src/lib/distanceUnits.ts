@@ -113,6 +113,21 @@ export function distanceIn(metres: number, unit: DistanceUnit): number {
 
 
 /**
+ * Metres from a value the user TYPED, in whatever unit they read in.
+ *
+ * The inverse of `distanceIn`, and the first thing here that runs toward
+ * storage rather than away from it. Everything else in this module is a
+ * display helper that must never reach a write path; this one exists
+ * precisely to reach one, so that a typed "3.1" is stored as 4989 m rather
+ * than 3100. Keeping it beside its inverse is what makes a mismatched pair
+ * obvious.
+ */
+export function distanceToMetres(value: number, unit: DistanceUnit): number {
+  if (!Number.isFinite(value)) return 0;
+  return unit === "mi" ? value * METRES_PER_MILE : value * 1000;
+}
+
+/**
  * Pace in seconds per DISPLAY unit, from seconds per kilometre.
  *
  * Multiplies for miles — see the header. A non-positive or non-finite pace
@@ -177,20 +192,16 @@ export function lapMetresFor(unit: DistanceUnit): number {
 export const SPLIT_LAP_IS_METRIC = 1000;
 
 /**
- * The distance PRESET chips in run setup are round kilometres, and the
- * round numbers are the point — so they stay metric until someone picks
- * the imperial set.
+ * Shoe replacement thresholds, in the KILOMETRES the shoe doc stores.
  *
- * This is a values question, not a formatting one. `distancePresetsM` holds
- * 1000 / 5000 / 10000 m because "1, 5, 10" are the numbers a metric runner
- * reaches for; rendering those same metres in miles gives 0.62 / 3.11 /
- * 6.21, which is not a preset anyone wants to tap. The imperial answer is a
- * DIFFERENT set (1, 3.1, 5, 6.2, 13.1), and choosing it is a product call.
- *
- * Same shape as the shoe max-distance field: both are places where the
- * user's number goes IN rather than only coming out, and both land with
- * the Settings toggle.
+ * Kept here beside the target bounds for the same reason those are: the
+ * numbers are a fact about running shoes, not about how a user reads them,
+ * so they must not drift when the display unit does. 600 km is ~373 miles;
+ * an imperial reader sees that figure, and the same shoe is flagged.
  */
+export const SHOE_MAX_DEFAULT_KM = 600;
+export const SHOE_MAX_MIN_KM = 50;
+
 /**
  * The share card renders metric, and that is the last unconverted surface.
  *
@@ -207,7 +218,36 @@ export const SPLIT_LAP_IS_METRIC = 1000;
  */
 export const SHARE_CARD_IS_METRIC: DistanceUnit = "km";
 
-export const PRESET_DISTANCES_ARE_KM = "km";
+/**
+ * The distance-target preset chips, in metres, for the unit the user reads.
+ *
+ * A values question rather than a formatting one, which is why it is a
+ * table and not a conversion. Rendering the metric set in miles gives
+ * 0.62 / 1.86 / 3.11 / 6.21 — arithmetically correct and useless, because
+ * a preset exists to be a round number you tap without thinking. The
+ * imperial set is therefore the same INTENT translated (round 1 / 3 / 5 /
+ * 10 in the reader's own unit), not the same metres relabelled.
+ *
+ * They are returned in metres because that is what the target stores; only
+ * the choice of which metres differs.
+ */
+export function distancePresetsM(unit: DistanceUnit): number[] {
+  const rounds = [1, 3, 5, 10];
+  return rounds.map((v) => distanceToMetres(v, unit));
+}
+
+/**
+ * The absolute bounds a distance target is clamped to, in metres.
+ *
+ * Deliberately NOT per-unit. The bound is a sanity check on how far someone
+ * can plausibly set out to run, and that does not change with how they
+ * read it — an imperial reader should not be able to enter a 160 km target
+ * just because "100" is a round number in their box. The input's own
+ * min/max attributes are these converted for display; the clamp itself
+ * stays in metres.
+ */
+export const DISTANCE_TARGET_MIN_M = 500;
+export const DISTANCE_TARGET_MAX_M = 100000;
 
 /** Short distance suffix — `km` / `mi`. */
 export function distanceUnitLabel(unit: DistanceUnit): string {

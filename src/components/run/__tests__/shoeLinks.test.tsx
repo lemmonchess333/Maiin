@@ -4,6 +4,15 @@ import { MemoryRouter } from "react-router-dom";
 import ShoeSelector from "../ShoeSelector";
 import ShoeMileageSection from "../ShoeMileageSection";
 
+/* Shoe mileage now reads the display unit, which resolves from the auth
+   profile — and `useAuth` throws outside an AuthProvider, which this suite
+   doesn't render. Mocking the one-export hook keeps the blast radius at one
+   symbol; metric is the default, so these link assertions are unaffected. */
+vi.mock("@/hooks/useDistanceUnit", () => ({
+  useDistanceUnit: () => "km" as const,
+}));
+
+
 /**
  * Both run-tab shoe surfaces deep-link to the FOCUSED shoes page
  * (/settings/shoes), not the generic Settings list — the "one tap to the
