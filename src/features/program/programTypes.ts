@@ -323,6 +323,22 @@ export interface EaseSnapshot {
    changes incompatibly. Read-side migrations (src/features/program/
    migrations.ts) gate on these values to populate missing fields
    without regenerating plans. */
+/**
+ * Rest-timer target for a user who has never set one, in seconds.
+ *
+ * Shared because the two ends disagreed: `WorkoutSession` fell back to 90
+ * while the Settings select initialised its shown value to 120, so an
+ * untouched profile READ "2:00" on the settings page and RESTED for 1:30 in
+ * the session. Same shape as the protein figure HOME-TARGET-01 fixed — a
+ * displayed default and a behavioural default drifting apart because each
+ * was written where it was needed.
+ *
+ * 90 rather than 120 deliberately: it is what the timer has always actually
+ * done, so this corrects the label rather than silently lengthening every
+ * user's rest.
+ */
+export const DEFAULT_REST_SECONDS = 90;
+
 export const CURRENT_WEEKSCHEDULE_VERSION = 1 as const;
 // v3 (2026-08-04): one-time coverage backfill for plans generated before the
 // lateral-raise and calf slots existed. Version-gated precisely so it runs

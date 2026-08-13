@@ -1,6 +1,7 @@
 /** SettingsWorkoutPrefs — Workout-preferences nested page (Set1.2). */
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
+import { DEFAULT_REST_SECONDS } from "@/features/program/programTypes";
 import SettingsSection from "@/components/settings/SettingsSection";
 import WorkoutPrefsSection from "@/components/settings/WorkoutPrefsSection";
 
@@ -10,7 +11,7 @@ export default function SettingsWorkoutPrefs() {
     profile?.autoRestTimer ?? true
   );
   const [defaultRestSeconds, setDefaultRestSeconds] = useState(
-    profile?.defaultRestSeconds ?? 120
+    profile?.defaultRestSeconds ?? DEFAULT_REST_SECONDS
   );
   const [audioCues, setAudioCues] = useState(profile?.audioCues ?? true);
 
