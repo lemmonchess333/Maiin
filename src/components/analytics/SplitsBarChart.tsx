@@ -8,6 +8,7 @@ import {
 } from "recharts";
 import type { Split } from "../../lib/gps";
 import { paceLabel } from "../../lib/runLabels";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { THEME } from "@/lib/theme";
 import { CHART_AXIS_TICK } from "./chartStyles";
 
@@ -22,6 +23,7 @@ export default function SplitsBarChart({
   avgPaceSeconds,
   accentColor = THEME.teal,
 }: SplitsBarChartProps) {
+  const unit = useDistanceUnit();
   if (splits.length === 0) return null;
 
   const maxPace = Math.max(...splits.map((s) => s.paceSeconds));
@@ -39,7 +41,7 @@ export default function SplitsBarChart({
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-foreground">Splits</h3>
         <p className="text-xs font-mono tabular-nums text-muted-foreground">
-          avg {paceLabel(avgPaceSeconds)}
+          avg {paceLabel(avgPaceSeconds, unit)}
         </p>
       </div>
 

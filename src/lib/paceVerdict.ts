@@ -23,6 +23,7 @@
  */
 
 import { paceLabel, paceBandLabel } from "@/lib/runLabels";
+import type { DistanceUnit } from "@/lib/distanceUnits";
 
 /** ±grace (sec/km) beyond the target/band edge that still counts on-target. */
 export const ON_TARGET_TOLERANCE_S = 10;
@@ -49,8 +50,13 @@ export function resolvePaceVerdict(args: {
   /** Optional [fast, slow] band (sec/km) — when present, judgement runs
    *  against the band edges and the copy speaks the range. */
   targetBandS?: [number, number];
+  /** Display unit for the paces quoted in the copy. The JUDGEMENT is
+   *  unit-free — it compares sec/km to sec/km — so this only reaches the
+   *  sentence, which is the point: the verdict must not change because a
+   *  user reads in miles. */
+  unit: DistanceUnit;
 }): PaceVerdict | null {
-  const { templateType, actualPaceS, targetPaceS, targetBandS } = args;
+  const { templateType, actualPaceS, targetPaceS, targetBandS, unit } = args;
   if (
     !Number.isFinite(actualPaceS) ||
     !Number.isFinite(targetPaceS) ||
@@ -69,9 +75,9 @@ export function resolvePaceVerdict(args: {
       : null;
 
   const target = band
-    ? `the ${paceBandLabel(band)} window`
-    : paceLabel(targetPaceS);
-  const actual = paceLabel(actualPaceS);
+    ? `the ${paceBandLabel(band, unit)} window`
+    : paceLabel(targetPaceS, unit);
+  const actual = paceLabel(actualPaceS, unit);
 
   // Signed distance from the acceptable zone: 0 inside, negative = faster
   // than the fast edge, positive = slower than the slow edge. A single

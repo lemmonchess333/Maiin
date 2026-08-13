@@ -4,6 +4,8 @@ import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Button } from "@/components/ui/Button";
 import { haptic } from "@/lib/haptic";
 import { paceLabel } from "@/lib/runLabels";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { paceUnitLabel } from "@/lib/distanceUnits";
 import {
   paceTableFromFitness,
   vdotFromRace,
@@ -298,6 +300,7 @@ function PaceRow({
   band?: [number, number];
   value?: number;
 }) {
+  const unit = useDistanceUnit();
   return (
     <div className="rounded-lg bg-muted/50 px-3 py-2">
       <p className="text-caption uppercase tracking-wide text-muted-foreground">
@@ -305,9 +308,9 @@ function PaceRow({
       </p>
       <p className="text-sm font-semibold font-mono tabular-nums text-foreground">
         {band
-          ? `${paceLabel(band[0])}–${paceLabel(band[1])}`
+          ? `${paceLabel(band[0], unit)}–${paceLabel(band[1], unit)}`
           : value
-            ? `${paceLabel(value)}/km`
+            ? `${paceLabel(value, unit)}${paceUnitLabel(unit)}`
             : "—"}
       </p>
     </div>

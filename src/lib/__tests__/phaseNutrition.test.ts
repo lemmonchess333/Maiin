@@ -30,6 +30,7 @@ function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
     weeklyMealsTarget: 3,
     preferredWeightUnit: "kg",
     preferredHeightUnit: "cm",
+    preferredDistanceUnit: "km",
     darkMode: false,
     onboardingComplete: true,
     trialExpiresAt: null,

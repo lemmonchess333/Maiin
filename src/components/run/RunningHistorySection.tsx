@@ -14,10 +14,12 @@ import {
   isPaceEligible,
 } from "../../lib/runStatsEligibility";
 import { paceMinSec } from "../../lib/runLabels";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { Spinner } from "@/components/ui/Spinner";
 
 export default function RunningHistorySection() {
   const { weeklyData, runs, loading } = useRunningStats(90);
+  const unit = useDistanceUnit();
 
   if (loading) {
     return (
@@ -95,7 +97,7 @@ export default function RunningHistorySection() {
               </div>
               <div className="p-3 rounded-xl bg-card border border-border text-center">
                 <p className="text-lg font-bold font-mono tabular-nums text-running-strong">
-                  {paceMinSec(bestPace)}
+                  {paceMinSec(bestPace, unit)}
                 </p>
                 <p className="text-xs text-muted-foreground">best pace</p>
               </div>

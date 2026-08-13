@@ -6,6 +6,8 @@ import {
   type RaceDistanceKey,
 } from "@/lib/runPaces";
 import { paceMinSec, finishTimeLabel } from "@/lib/runLabels";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { paceUnitLabel } from "@/lib/distanceUnits";
 import { THEME } from "@/lib/theme";
 import EmptyState from "@/components/ui/EmptyState";
 
@@ -41,6 +43,7 @@ const SOURCE_LABEL: Record<string, string> = {
 
 export default function RacePredictionsCard() {
   const { profile } = useAuth();
+  const unit = useDistanceUnit();
   const fitness = profile?.runFitness ?? null;
   const times = predictedRaceTimesFromFitness(fitness);
 
@@ -83,7 +86,8 @@ export default function RacePredictionsCard() {
               {finishTimeLabel(times[key])}
             </p>
             <p className="text-xs text-muted-foreground font-mono tabular-nums">
-              {paceMinSec(Math.round(times[key] / km))} /km
+              {paceMinSec(Math.round(times[key] / km), unit)}{" "}
+              {paceUnitLabel(unit)}
             </p>
           </div>
         ))}

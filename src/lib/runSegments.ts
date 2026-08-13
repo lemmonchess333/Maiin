@@ -25,6 +25,7 @@
  */
 import type { GuidedRunWorkout, SegmentType } from "./guidedRun";
 import { paceMinSec } from "./runLabels";
+import { GENERATION_TIME_UNIT } from "./distanceUnits";
 import {
   intervalRepCue,
   intervalRecoveryCue,
@@ -115,7 +116,9 @@ export function segmentsFromIntervals(shape: IntervalShape): SessionSegment[] {
       cue: "Warming up. Keep it easy and conversational.",
     });
   }
-  const pace = shape.workPace ? ` @ ${paceMinSec(shape.workPace)}/km` : "";
+  const pace = shape.workPace
+    ? ` @ ${paceMinSec(shape.workPace, GENERATION_TIME_UNIT)}/km`
+    : "";
   for (let rep = 1; rep <= shape.reps; rep++) {
     out.push({
       type: "hard",
@@ -172,7 +175,9 @@ export function segmentsFromTempo(
     target: { kind: "duration", seconds: shape.warmupSec },
     cue: "Warming up. Keep it easy and conversational.",
   });
-  const pace = paceTarget ? ` @ ${paceMinSec(paceTarget)}/km` : "";
+  const pace = paceTarget
+    ? ` @ ${paceMinSec(paceTarget, GENERATION_TIME_UNIT)}/km`
+    : "";
   shape.workSecs.forEach((seconds, i) => {
     if (i > 0 && shape.floatSec) {
       out.push({
@@ -298,7 +303,7 @@ export function segmentsFromLongWithRacePace(
   goalPaceS: number
 ): SessionSegment[] {
   const easyKm = Math.max(0, totalKm - blockKm);
-  const paceLabel = paceMinSec(Math.round(goalPaceS));
+  const paceLabel = paceMinSec(Math.round(goalPaceS), GENERATION_TIME_UNIT);
   return [
     {
       type: "easy",

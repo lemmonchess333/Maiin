@@ -25,6 +25,7 @@
  * Pure: no fetches, no clock — callers pass the WeatherData they have.
  */
 import { paceMinSec } from "./runLabels";
+import { paceUnitLabel, type DistanceUnit } from "./distanceUnits";
 
 /** Magnus-formula dew point, °C, from temp (°C) + relative humidity (%). */
 export function dewPointC(tempC: number, humidityPct: number): number {
@@ -92,6 +93,7 @@ export function heatAdjustedPaceS(paceS: number, adj: HeatAdjustment): number {
  */
 export function heatAdjustmentLine(
   adj: HeatAdjustment,
+  unit: DistanceUnit,
   prescribedPaceS?: number
 ): string {
   if (adj.effortOnly) {
@@ -99,7 +101,7 @@ export function heatAdjustmentLine(
   }
   const pctLabel = `~${adj.pct * 100 >= 1 ? Math.round(adj.pct * 100) : adj.pct * 100}%`;
   if (prescribedPaceS && prescribedPaceS > 0) {
-    return `In this heat, ${paceMinSec(prescribedPaceS)}/km effort runs ≈ ${paceMinSec(heatAdjustedPaceS(prescribedPaceS, adj))}/km (dew point ${adj.dewPointC}°C, published heat curves). Your plan's paces are unchanged.`;
+    return `In this heat, ${paceMinSec(prescribedPaceS, unit)}${paceUnitLabel(unit)} effort runs ≈ ${paceMinSec(heatAdjustedPaceS(prescribedPaceS, adj), unit)}${paceUnitLabel(unit)} (dew point ${adj.dewPointC}°C, published heat curves). Your plan's paces are unchanged.`;
   }
   return `Heat check: expect ${pctLabel} slower at the same effort today (dew point ${adj.dewPointC}°C, published heat curves). Your plan's paces are unchanged.`;
 }
