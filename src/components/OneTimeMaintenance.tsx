@@ -33,7 +33,15 @@ export default function OneTimeMaintenance() {
     if (!uid || firedRef.current) return;
 
     let cancelled = false;
-    const FLAG_KEY = "tropos.muscleGroupsBackfilled.v1";
+    /* Keyed by uid. Both of these gate a per-ACCOUNT migration — one
+       re-tags the caller's OWN activities, the other backfills the caller's
+       OWN public profile — but localStorage is per-DEVICE, so an unscoped
+       flag meant the FIRST account to sign in on a phone consumed the
+       migration for every account after it. The header below has always
+       said "fires once per user"; without the uid it fired once per
+       DEVICE, and the second user's data stayed un-migrated permanently
+       (the flag is only ever set, never cleared). */
+    const FLAG_KEY = `${uid}:tropos.muscleGroupsBackfilled.v1`;
 
     const run = async () => {
       try {
@@ -79,7 +87,7 @@ export default function OneTimeMaintenance() {
        the field are unfindable via case-insensitive search. Cheap:
        one read + at most one merge-write per user, gated by a
        localStorage flag. */
-    const LOWER_FLAG = "tropos.displayNameLower.backfilled.v1";
+    const LOWER_FLAG = `${uid}:tropos.displayNameLower.backfilled.v1`;
     const runLowerBackfill = async () => {
       try {
         if (localStorage.getItem(LOWER_FLAG)) return;

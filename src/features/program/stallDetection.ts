@@ -111,3 +111,17 @@ export function detectStall(
     isBodyweight,
   };
 }
+
+/**
+ * localStorage key for the 3-week "don't re-offer this stall" cooldown.
+ *
+ * Built in two places — `StallModal` writes it, `WorkoutSession` reads it —
+ * so it lives here rather than as a template literal at each end. It is also
+ * uid-scoped, which it was not: exercise names are GLOBAL ("Bench Press"),
+ * so on a shared device one account's cooldown suppressed the other's stall
+ * prompt entirely. Same class as the offline + share queues in #820, and the
+ * six dismissal sites `useDismissOnce` absorbed.
+ */
+export function stallCooldownKey(uid: string, exerciseName: string): string {
+  return `${uid}:tropos_stall_${exerciseName}`;
+}

@@ -78,6 +78,10 @@ vi.mock("@/lib/auth", () => ({
       profile: { uid: "u-1" },
       updateProfile: mockUpdateProfile,
     }).user?.uid ?? null,
+  // The three race-prompt dismissals are uid-scoped — localStorage is
+  // per-device, and the "set a race goal" key was a literal constant, so a
+  // second account on a shared phone never saw that prompt.
+  useUidForStorageKey: () => "u-1",
 }));
 
 // PR-J chunk B3b — ProgrammeRunSection now consumes useClaimMap,

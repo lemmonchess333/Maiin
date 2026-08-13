@@ -141,6 +141,7 @@ import {
   parseLocalDate,
 } from "@/lib/dateHelpers";
 import type { UserProfile } from "@/lib/auth";
+import { useUidForStorageKey } from "@/lib/auth";
 import type {
   ProgramState,
   ScheduledRunDay,
@@ -248,6 +249,11 @@ export default function ProgrammeRunSection({
   // is bounded by the hook's `where('completedAt', '>=', ...)`
   // clause; returns a `loading` flag the hero shell consumes for
   // non-blocking paint.
+  // localStorage is per-DEVICE; every dismissal below records a decision by
+  // one ACCOUNT, so each key carries the uid. Unscoped, the constant
+  // "set a race goal" key meant the second account on a shared phone never
+  // saw that prompt at all.
+  const storageUid = useUidForStorageKey();
   const { runs, weeklyData, loading: runsLoading } = useRunningStats(30);
   // PR-J Q3 chunk B3b — single source of truth for derived
   // completion. Subscribes to users/{uid}/runs + reads
@@ -271,7 +277,7 @@ export default function ProgrammeRunSection({
   // localWeekKey so each Monday rollover the banner re-surfaces if
   // the race is still elapsed.
   const thisWeekKeyForDismissal = useMemo(() => localWeekKey(new Date()), []);
-  const raceElapsedDismissKey = `tropos.dismiss.raceElapsed.${thisWeekKeyForDismissal}`;
+  const raceElapsedDismissKey = `${storageUid}:tropos.dismiss.raceElapsed.${thisWeekKeyForDismissal}`;
   // Run13 (RUN-02): the proactive Adjust-this-week sheet.
   const [adjustOpen, setAdjustOpen] = useState(false);
   // Run14: when the sheet is opened from the ease-week nudge it lands
@@ -352,7 +358,7 @@ export default function ProgrammeRunSection({
   // is a pure reader). Same once-only localStorage pattern as
   // raceElapsedDismissed; safe because race-recent only fires 1–3 days after a
   // past race, by which point a newly-set future race has remounted the page.
-  const raceRecentDismissKey = `tropos.dismiss.raceRecent.${raceGoal?.targetDate ?? "none"}`;
+  const raceRecentDismissKey = `${storageUid}:tropos.dismiss.raceRecent.${raceGoal?.targetDate ?? "none"}`;
   const [raceRecentDismissed, setRaceRecentDismissed] = useState<boolean>(
     () => {
       if (typeof window === "undefined") return false;
@@ -382,7 +388,7 @@ export default function ProgrammeRunSection({
   // via the same localStorage pattern as raceRecent; and it disappears
   // naturally once a goal IS set, because the mode flips to race_prep and
   // this whole freeform block stops rendering ("dismisses after use").
-  const SET_RACE_GOAL_DISMISS_KEY = "tropos.dismiss.setRaceGoal";
+  const SET_RACE_GOAL_DISMISS_KEY = `${storageUid}:tropos.dismiss.setRaceGoal`;
   const [setRaceGoalDismissed, setSetRaceGoalDismissed] = useState<boolean>(
     () => {
       if (typeof window === "undefined") return false;
