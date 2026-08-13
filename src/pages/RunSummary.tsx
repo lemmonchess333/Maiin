@@ -1992,9 +1992,12 @@ export default function RunSummary() {
           points,
           distanceKm: distance / 1000,
           durationSec: elapsed,
-          pace: avgPace,
+          paceSecPerKm: avgPaceSeconds,
           elevationM: elevationGain ?? undefined,
-          splits: (splits ?? []).map((s) => ({ km: s.km, pace: s.pace })),
+          splits: displaySplits.map((s) => ({
+            lap: s.km,
+            paceSecPerKm: s.paceSeconds,
+          })),
         }}
       />
 
