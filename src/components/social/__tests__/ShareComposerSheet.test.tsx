@@ -28,6 +28,7 @@ import {
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/socialApi", () => ({ postActivity: vi.fn() }));
+vi.mock("@/lib/sessionDelete", () => ({ recordSharedActivity: vi.fn() }));
 vi.mock("@/lib/auth", () => ({ useUid: () => "u1" }));
 vi.mock("@/hooks/useOnlineStatus", () => ({
   useOnlineStatus: () => ({ isOnline: true }),
@@ -144,5 +145,59 @@ describe("ShareComposerSheet", () => {
     void openSheet();
 
     expect(screen.getByText(/settings/i)).toBeTruthy();
+  });
+});
+
+
+/**
+ * The drain's marker write. Queued items carry the session they are
+ * ABOUT; after the drain posts one, it must record the activity id back
+ * onto that session — the link `deleteLoggedSession` uses to clear the
+ * post. Without this, a share made offline was permanently less
+ * deletable than the identical share made online.
+ */
+describe("drain records the share link", () => {
+  beforeEach(async () => {
+    // This suite has no global mock reset; these two are shared across
+    // its tests, so scrub them here rather than inheriting call counts.
+    const { postActivity } = await import("@/lib/socialApi");
+    const { recordSharedActivity } = await import("@/lib/sessionDelete");
+    vi.mocked(postActivity).mockClear();
+    vi.mocked(recordSharedActivity).mockClear();
+  });
+
+  it("writes the marker for a sourced item, with the posted id", async () => {
+    const { enqueueShare } = await import("@/lib/shareComposer");
+    const { postActivity } = await import("@/lib/socialApi");
+    const { recordSharedActivity } = await import("@/lib/sessionDelete");
+    vi.mocked(postActivity).mockResolvedValue("act-77");
+    enqueueShare(UID, { type: "run", runName: "Easy 5k" }, {
+      kind: "run",
+      id: "r-42",
+    });
+
+    render(<ShareComposerSheet />);
+    await act(async () => {});
+
+    expect(postActivity).toHaveBeenCalledTimes(1);
+    expect(recordSharedActivity).toHaveBeenCalledWith(
+      UID,
+      { kind: "run", id: "r-42" },
+      "act-77"
+    );
+  });
+
+  it("posts a legacy source-less item without attempting a marker", async () => {
+    const { enqueueShare } = await import("@/lib/shareComposer");
+    const { postActivity } = await import("@/lib/socialApi");
+    const { recordSharedActivity } = await import("@/lib/sessionDelete");
+    vi.mocked(postActivity).mockResolvedValue("act-78");
+    enqueueShare(UID, { type: "workout" });
+
+    render(<ShareComposerSheet />);
+    await act(async () => {});
+
+    expect(postActivity).toHaveBeenCalledTimes(1);
+    expect(recordSharedActivity).not.toHaveBeenCalled();
   });
 });

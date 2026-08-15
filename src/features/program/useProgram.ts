@@ -7,12 +7,13 @@ import {
   deleteField,
   writeBatch,
 } from "firebase/firestore";
-import { setDocGuarded, updateDocGuarded } from "@/lib/firestoreWrite";
+import { setDocGuarded } from "@/lib/firestoreWrite";
 import { stripUndefined } from "@/lib/firestoreGuards";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { postActivity } from "@/lib/socialApi";
 import { compose, enqueueShare, showQueuedToast } from "@/lib/shareComposer";
+import { recordSharedActivity } from "@/lib/sessionDelete";
 import type {
   BlockDurationWeeks,
   BlockPace,
@@ -1317,23 +1318,22 @@ export function useProgram() {
                throws offline, so the old catch-only branch could not
                fire. Queue up-front and let ShareComposerSheet's drain
                effect replay it on reconnect. */
-            enqueueShare(user.uid, payload);
+            enqueueShare(user.uid, payload, {
+              kind: "workout",
+              id: workoutId,
+            });
             showQueuedToast();
           } else {
             try {
               const activityId = await postActivity(payload);
-              // Mark the workout as posted so `/workout/:id` shows "Shared to
-              // your feed" instead of offering to post it a second time —
-              // `postActivity` addDocs a fresh activity every call, so without
-              // this one session could land twice in the feed. Best-effort:
-              // a failed marker costs a possible duplicate, never the post.
-              try {
-                await updateDocGuarded(workoutRef, {
-                  sharedActivityId: activityId,
-                });
-              } catch (markErr) {
-                logger.warn("[Program] shared marker write failed:", markErr);
-              }
+              // Dedupe + delete link (recordSharedActivity's docblock):
+              // `/workout/:id` reads it to avoid a second post, and
+              // deleting the session uses it to clear this one.
+              await recordSharedActivity(
+                user.uid,
+                { kind: "workout", id: workoutId },
+                activityId
+              );
             } catch (socialErr) {
               logger.warn("Failed to post workout to feed:", socialErr);
             }

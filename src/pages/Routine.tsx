@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
 import { doc, Timestamp } from "firebase/firestore";
-import { setDocGuarded, updateDocGuarded } from "@/lib/firestoreWrite";
+import { setDocGuarded } from "@/lib/firestoreWrite";
 import { logger } from "../lib/logger";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/auth";
@@ -14,6 +14,7 @@ import { estimateLiftBurn } from "../lib/workoutBurn";
 import { workoutTonnageKg } from "../hooks/useWorkouts";
 import { projectWorkoutSets } from "@/features/program/workoutSetRecord";
 import { compose, enqueueShare, showQueuedToast } from "../lib/shareComposer";
+import { recordSharedActivity } from "../lib/sessionDelete";
 import { postActivity } from "../lib/socialApi";
 import { toast } from "@/lib/toast";
 
@@ -255,22 +256,20 @@ export default function Routine() {
                throws offline, so the old catch-only branch could not
                fire. Queue up-front; ShareComposerSheet's drain effect
                replays it on reconnect. */
-            enqueueShare(user.uid, payload);
+            enqueueShare(user.uid, payload, {
+              kind: "workout",
+              id: workoutId,
+            });
             showQueuedToast();
           } else {
             try {
               const activityId = await postActivity(payload);
-              // Same dedupe marker the programme path writes — `/workout/:id`
-              // reads it so a session already in the feed isn't offered up a
-              // second time. Best-effort; a failed marker risks a duplicate
-              // post, never the post itself.
-              try {
-                await updateDocGuarded(workoutRef, {
-                  sharedActivityId: activityId,
-                });
-              } catch (markErr) {
-                logger.warn("[Routine] shared marker write failed:", markErr);
-              }
+              // Dedupe + delete link, via the one shared helper.
+              await recordSharedActivity(
+                user.uid,
+                { kind: "workout", id: workoutId },
+                activityId
+              );
             } catch (socialErr) {
               logger.warn("Routine post failed:", socialErr);
             }
