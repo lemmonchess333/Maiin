@@ -505,3 +505,17 @@ velocity. The deformation-aware sleeves, IK arms, and damped rhythm
 chains are all continuous in time, measured rather than assumed. Run
 the probe after any rig change; it exits non-zero on a spike. 37 unit
 pins passing; full lib suite 3,496 green this session.
+
+### Pass 28 addendum — true-card-size + effort-channel verification
+
+Two last unchecked dimensions, both clean:
+
+- **190px card size** (the size the app actually renders): squat,
+  deadlift bottom and pull-up top all stay fully legible — tints,
+  joints, hands, heels and bar all read. Every earlier review was at
+  240-480px; this closes the "does it survive the real display?"
+  question.
+- **Effort channel**: effort=0 (eccentric) renders correctly dimmer
+  (tint 0.72/0.66, soft glow) without washing out or breaking any
+  facet; effort=1 brightens as designed. The concentric "breathing"
+  contract holds at both ends.
