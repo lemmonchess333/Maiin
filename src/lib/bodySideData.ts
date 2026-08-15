@@ -507,20 +507,24 @@ export const SIDE_PIECES: SidePiece[] = [
         }),
       },
       {
+        /* The three lower rows run to y≈93 (the outline ends at 94):
+         * stopping at 88-90 left a 4-6 unit band of bare stage
+         * underlay across the waist — a black BELT cutting the side
+         * figure in half on every profile demo. */
         muscle: "abs",
-        points: band(TORSO_B, TORSO_F, 57.4, 89.5, 0.64, 1, {
+        points: band(TORSO_B, TORSO_F, 57.4, 93, 0.64, 1, {
           skewT: [1.2, -0.8],
         }),
       },
       {
         muscle: "obliques",
-        points: band(TORSO_B, TORSO_F, 58.8, 90, 0.34, 0.64, {
+        points: band(TORSO_B, TORSO_F, 58.8, 93, 0.34, 0.64, {
           skewT: [1.5, -1.5],
         }),
       },
       {
         muscle: "lower-back",
-        points: band(TORSO_B, TORSO_F, 68.8, 88.4, 0, 0.34),
+        points: band(TORSO_B, TORSO_F, 68.8, 93, 0, 0.34),
       },
     ],
   },

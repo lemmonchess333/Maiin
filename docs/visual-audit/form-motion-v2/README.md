@@ -290,3 +290,12 @@ full overhead extension, and the deltoid-to-arm fan at a 90° raise
 keeps some black in the fan region at 4× zoom — both read correctly
 at card scale, and covering them needs art surgery on the arm
 polygons, not more sleeves. 37 passing.
+
+## STATUS 2026-08-15 (fifteenth pass) — the waist belt
+
+4× sweep of the side hip region: the torso's three lower facet rows
+(abs, obliques, lower-back) stopped at y 88-90 while the torso outline
+runs to 94 — leaving a 4-6 unit band of bare stage underlay as a black
+BELT cutting the profile figure in half on every side demo. The rows
+now run to y 93, restoring the normal ~1-unit seam against the outline
+bottom. Pure band-range data; 37 passing.
