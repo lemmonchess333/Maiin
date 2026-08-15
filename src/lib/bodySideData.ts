@@ -141,13 +141,17 @@ const TORSO_B: C = [
   [90, 34.6],
   [94, 33.1],
 ];
+/* The pec is a DOME, not a dart: the old single peak sample ([47.5,
+ * 65.4] between steep neighbours) rendered as a pointed breast wedge
+ * in profile. Two near-equal samples flatten the crest. */
 const TORSO_F: C = [
   [31, 48.5],
   [33.5, 51],
   [38, 57.5],
-  [42, 63.4],
-  [47.5, 65.4],
-  [53.5, 61.8],
+  [42, 62.8],
+  [45.5, 64.8],
+  [49.5, 64.4],
+  [53.5, 62.2],
   [60, 59.2],
   [70, 59.6],
   [78, 58.2],
@@ -158,10 +162,13 @@ const TORSO_F: C = [
 /* Pelvis segment (split from the upper torso so hinges and bridges can
  * articulate at the waist): the glute mass + hip wedge, overlapping the
  * upper torso at the lumbar joint (y 86-94). */
+/* Top-rear starts a touch forward with an easing sample so the corner
+ * the hinge exposes (torso rotates further than the 0.72-damped
+ * pelvis) reads as a round glute shelf, not a beak. */
 const PELV_B: C = [
-  [86, 35.9],
-  [90, 33.8],
-  [97, 29.8],
+  [86, 37.2],
+  [89.5, 34.2],
+  [97, 30],
   [104, 29.2],
   [109, 31.8],
   [112, 36.8],
@@ -431,10 +438,9 @@ export const SIDE_PIECES: SidePiece[] = [
       [58, 1.8],
       [61, 5.5],
       [62, 9],
-      [61.2, 10.6],
-      [63, 13],
-      [61.6, 15.6],
-      [60.8, 17.2],
+      [61.4, 10.8],
+      [62.4, 13],
+      [61, 16.4],
       [60.4, 19.2],
       [56.8, 21.6],
       [50.4, 23],
@@ -456,10 +462,9 @@ export const SIDE_PIECES: SidePiece[] = [
           [57.4, 2.6],
           [60.2, 5.9],
           [61, 9],
-          [60.2, 10.7],
-          [62.2, 13.2],
-          [60.6, 15.4],
-          [59.9, 17],
+          [60.4, 10.9],
+          [61.6, 13.2],
+          [60.1, 16.2],
           [59.5, 18.8],
           [55.8, 20.9],
           [49.8, 21.7],

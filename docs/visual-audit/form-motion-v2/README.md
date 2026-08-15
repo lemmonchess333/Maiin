@@ -157,3 +157,16 @@ the obliques' own vertices (present before all of this) and read as
 iliac-crest landmarks at thumbnail. Pins: identity 85 / posterior 80
 paths; hull stroke 2.2 so the hands pin (exactly two 1.6-stroke mitts)
 stays honest. 36 passing.
+
+## STATUS 2026-08-15 (seventh pass) — side-profile art data: pec dome, glute shelf, face line
+
+Close-up sweep of the SIDE renderer (the front/back figure got passes
+5-6). Three art-data edits in `bodySideData.ts`, no renderer changes:
+
+| Finding              | Fix                                                                                                                                                |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pointed chest dart   | The pec crest was one steep rail sample; two near-equal samples make it a DOME — still the deep heroic chest, no breast wedge.                     |
+| Pelvis beak at hinge | The pelvis top-rear corner (exposed when the torso out-rotates the 0.72-damped pelvis) starts forward with an easing sample — a round glute shelf. |
+| Jagged face          | The nose/lip zigzag (4 alternating points) calmed to a soft nose + single lip line, outline and facet both.                                        |
+
+36 passing (no pin churn — pure contour data).
