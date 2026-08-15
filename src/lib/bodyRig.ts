@@ -1831,6 +1831,12 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
     const base = own ?? mirrored ?? [];
     return piece.far ? [...base, FAR_OFFSET] : base;
   };
+  /* NOTE (pass 16): front/back-style joint sleeves were tried here and
+   * removed — the side pieces' opaque stage underlays always overlap
+   * (that is their design), so an under-drawn capsule is occluded
+   * everywhere and never shows. Junction gaps in the side view are
+   * FACET-inset gaps within/between pieces; they are fixed in the
+   * bodySideData facet ranges, not with sleeves. */
   const body = SIDE_PIECES.map((piece) => {
     const ops = opsFor(piece);
     const outline = applyOps(piece.outline as Pt[], ops);

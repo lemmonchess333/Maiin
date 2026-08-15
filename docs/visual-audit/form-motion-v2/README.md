@@ -299,3 +299,26 @@ runs to 94 — leaving a 4-6 unit band of bare stage underlay as a black
 BELT cutting the profile figure in half on every side demo. The rows
 now run to y 93, restoring the normal ~1-unit seam against the outline
 bottom. Pure band-range data; 37 passing.
+
+## STATUS 2026-08-15 (sixteenth pass) — the bench decapitation, and why side sleeves don't exist
+
+Motion-readability sweep of the remaining unaudited surfaces. Two
+findings, one negative result worth keeping:
+
+- **Bench decapitation.** The head piece's face facet and neck facet
+  sat ~1.5 units apart — invisible standing, but the lying pose turned
+  the gap into a decapitation line across the throat. The neck facet
+  now TUCKS 2 units under the jaw (overlap, not adjacency — corner
+  rounding and insets eat adjacency).
+- **Side sleeves are a dead end — do not re-try.** Front/back-style
+  joint sleeves were implemented for the side view (neck, shoulder,
+  lumbar, hip) and removed in the same pass: the side pieces' opaque
+  stage underlays always overlap by design, so an under-drawn capsule
+  is occluded EVERYWHERE and never renders a visible pixel. Side
+  junction gaps are facet-inset gaps; they are fixed in bodySideData
+  facet ranges (like this pass's neck tuck and pass 15's waist belt).
+- Calf raise reviewed and left alone: the front view cannot show heel
+  lift, so the demo deliberately reads as the body rising on planted
+  feet (pose comment documents it).
+
+37 passing.

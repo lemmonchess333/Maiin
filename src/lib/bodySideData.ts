@@ -475,10 +475,13 @@ export const SIDE_PIECES: SidePiece[] = [
         ],
       },
       {
+        /* Top edge tucks under the jaw (pass 16): the old 1.5-unit gap
+         * to the face facet read fine standing, but the bench's lying
+         * pose turned it into a decapitation line. */
         muscle: "neck",
         points: [
-          [45.4, 23],
-          [52.6, 22.6],
+          [45.6, 19.4],
+          [52.4, 19],
           [53.6, 27],
           [53.2, 34.8],
           [44.6, 35.2],
