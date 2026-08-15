@@ -527,6 +527,36 @@ describe("renderBodyDemo", () => {
     }
   });
 
+  it("bodyweight-squat: bar-less variant — forward reach, no plate", () => {
+    // Owner call 2026-08-15: front/goblet/bodyweight squats must not
+    // inherit the barbell squat's back bar. The variant shares the
+    // side chain but counterbalances with a forward arm reach.
+    const d = BODY_DEMOS["bodyweight-squat"];
+    expect(d.view).toBe("side");
+    expect(d.equip).toBeUndefined();
+    for (const t of [0, 0.5, 1]) {
+      const svg = renderBodyDemo("bodyweight-squat", t);
+      expect(svg, `@${t}`).not.toBe("");
+      expect(svg.includes('r="10"'), `@${t}`).toBe(false); // no plate disc
+    }
+    // The same sink as the barbell squat (shared chain)…
+    const hip = (t: number) =>
+      applyToPoint(SIDE_ANCHORS.hip, (d.pose(t).thighL ?? []) as never[]);
+    expect(hip(1)[0]).toBeLessThan(hip(0)[0] - 20);
+    expect(hip(1)[1]).toBeGreaterThan(hip(0)[1] + 20);
+    // …with the hand sweeping FORWARD to the counterbalance reach.
+    const hand = (t: number) =>
+      applyToPoint(SIDE_ANCHORS.hand, (d.pose(t).handL ?? []) as never[]);
+    expect(hand(1)[0]).toBeGreaterThan(hand(0)[0] + 30);
+  });
+
+  it("squat family aliases: only the smith machine keeps the bar", () => {
+    expect(getBodyDemo("smith-machine-squat")).toBe(BODY_DEMOS["squat"]);
+    for (const id of ["front-squat", "goblet-squat"]) {
+      expect(getBodyDemo(id), id).toBe(BODY_DEMOS["bodyweight-squat"]);
+    }
+  });
+
   it("bench press: sole lands ON the floor with a vertical shin", () => {
     const pose = BODY_DEMOS["bench-press"].pose(1);
     const knee = applyToPoint(
@@ -559,6 +589,7 @@ describe("registry", () => {
   it("all demos are defined with tints and a concentric direction", () => {
     for (const id of [
       "squat",
+      "bodyweight-squat",
       "deadlift",
       "overhead-press",
       "barbell-curl",

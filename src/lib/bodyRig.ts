@@ -516,6 +516,41 @@ export interface BodyDemo {
 
 const lerp = (a: number, b: number, e: number) => a + (b - a) * e;
 
+/** Shared side-squat lower-body chain (barbell + bodyweight variants):
+ *  planted-ankle build exactly like the deadlift — shin about the
+ *  ankle (8° cap, heel stays visually planted), thigh about the moved
+ *  knee (hips back + down), torso about the moved hip, cervical
+ *  counter-rotation keeping the gaze near-forward. The hinge is the
+ *  variant's knob: the barbell squat leans 35° to keep the trap-riding
+ *  bar over mid-foot; the bodyweight squat stays prouder (25°) because
+ *  the forward arm reach carries the counterbalance instead. */
+function sideSquatChain(e: number, hinge: number) {
+  const shin = lerp(0, 8, e);
+  const thighRel = lerp(0, -62, e);
+  const legOps: Op[] = [
+    { kind: "rotate", deg: shin, pivot: SIDE_ANCHORS.ankle },
+  ];
+  const thighOps: Op[] = [
+    { kind: "rotate", deg: thighRel, pivot: SIDE_ANCHORS.knee },
+    ...legOps,
+  ];
+  const hipNew = applyToPoint(SIDE_ANCHORS.hip, thighOps);
+  const shift: Op = {
+    kind: "translate",
+    dx: hipNew[0] - SIDE_ANCHORS.hip[0],
+    dy: hipNew[1] - SIDE_ANCHORS.hip[1],
+  };
+  const torsoOps: Op[] = [
+    { kind: "rotate", deg: hinge, pivot: SIDE_ANCHORS.hip },
+    shift,
+  ];
+  const headOps: Op[] = [
+    { kind: "rotate", deg: -hinge * 0.6, pivot: SIDE_ANCHORS.neck },
+    ...torsoOps,
+  ];
+  return { legOps, thighOps, torsoOps, headOps };
+}
+
 export const BODY_DEMOS: Record<string, BodyDemo> = {
   squat: {
     /* Side-view back squat (owner feedback 2026-08-15: "if this is the
@@ -546,26 +581,8 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     shadowRx: 34,
     tint: { quadriceps: "primary", gluteal: "secondary", abs: "secondary" },
     pose: (e) => {
-      const shin = lerp(0, 8, e); // about the planted ankle (knee forward)
-      const thighRel = lerp(0, -62, e); // about the knee → hips back+down
       const hinge = lerp(0, 35, e); // proud chest vs the deadlift's 70°
-      const legOps: Op[] = [
-        { kind: "rotate", deg: shin, pivot: SIDE_ANCHORS.ankle },
-      ];
-      const thighOps: Op[] = [
-        { kind: "rotate", deg: thighRel, pivot: SIDE_ANCHORS.knee },
-        ...legOps,
-      ];
-      const hipNew = applyToPoint(SIDE_ANCHORS.hip, thighOps);
-      const shift: Op = {
-        kind: "translate",
-        dx: hipNew[0] - SIDE_ANCHORS.hip[0],
-        dy: hipNew[1] - SIDE_ANCHORS.hip[1],
-      };
-      const torsoOps: Op[] = [
-        { kind: "rotate", deg: hinge, pivot: SIDE_ANCHORS.hip },
-        shift,
-      ];
+      const { legOps, thighOps, torsoOps, headOps } = sideSquatChain(e, hinge);
       /* High-bar grip, FORESHORTENED. The hand sits ~6 units from the
        * shoulder, so rigid 25+29 segments can only reach it via a
        * near-total 2D fold — rendered, that fold fans the arm pieces
@@ -604,14 +621,6 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         { kind: "scaleAxis", k: kf, deg: fa, pivot: E0 },
         { kind: "translate", dx: EV[0] - E0[0], dy: EV[1] - E0[1] },
       ];
-      /* Cervical rhythm: the neck counters ~60% of the hinge so the
-       * gaze stays near-forward (the chest-up cue) instead of pitching
-       * the face into the floor — and the chin stays clear of the
-       * plate disc riding the traps below it. */
-      const headOps: Op[] = [
-        { kind: "rotate", deg: -hinge * 0.6, pivot: SIDE_ANCHORS.neck },
-        ...torsoOps,
-      ];
       return {
         head: headOps,
         torso: torsoOps,
@@ -628,6 +637,53 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     bar: (_e, pose) => {
       const b = applyToPoint(SQUAT_BAR, pose.torso ?? []);
       return [b, b];
+    },
+  },
+
+  "bodyweight-squat": {
+    /* Bar-less squat variant (owner call 2026-08-15, alias hygiene):
+     * front-squat / goblet-squat / bodyweight-squat previously aliased
+     * the barbell squat and inherited its back bar — a prop-semantics
+     * mismatch. Same side-view chain as the barbell squat, but the
+     * arms REACH FORWARD as the counterbalance (the standard
+     * bodyweight-squat depiction, and per the no-held-weights rule the
+     * honest shared read for the goblet/front-rack grips too): the
+     * reach rises toward horizontal as depth builds, which is what
+     * lets the torso stay prouder (25°) than under the bar. */
+    view: "side",
+    concentricTo: 0,
+    viewBox: "-24 -2 132 212",
+    groundY: 204,
+    shadowCx: 42,
+    shadowRx: 34,
+    tint: { quadriceps: "primary", gluteal: "secondary", abs: "secondary" },
+    pose: (e) => {
+      const hinge = lerp(0, 25, e);
+      const { legOps, thighOps, torsoOps, headOps } = sideSquatChain(e, hinge);
+      // Counterbalance reach: the whole arm sweeps forward-up about
+      // the shoulder; a constant soft elbow keeps it from reading
+      // hyper-straight. The torso hinge composes AFTER (arms ride the
+      // shoulder), so the world angle nets out just under horizontal.
+      const reach = lerp(4, 100, e);
+      const upperOps: Op[] = [
+        { kind: "rotate", deg: -reach, pivot: SIDE_ANCHORS.shoulder },
+      ];
+      const foreOps: Op[] = [
+        { kind: "rotate", deg: 12, pivot: SIDE_ANCHORS.elbow },
+        ...upperOps,
+      ];
+      return {
+        head: headOps,
+        torso: torsoOps,
+        pelvis: torsoOps,
+        thighL: thighOps,
+        thighR: thighOps,
+        shankL: legOps,
+        shankR: legOps,
+        upperArmL: [...upperOps, ...torsoOps],
+        foreArmL: [...foreOps, ...torsoOps],
+        handL: [...foreOps, ...torsoOps],
+      };
     },
   },
 
@@ -1470,9 +1526,12 @@ const DEMO_ALIASES: Record<string, string> = {
   "sumo-deadlift": "deadlift",
   "trap-bar-deadlift": "deadlift",
   "db-rdl": "romanian-deadlift",
-  "front-squat": "squat",
-  "goblet-squat": "squat",
-  "bodyweight-squat": "squat",
+  /* Squat family (owner call 2026-08-15): only the smith machine keeps
+   * the barbell model — front/goblet don't carry a back bar, so they
+   * share the bar-less variant (its forward reach is the closest
+   * honest read of both grips under the no-held-weights rule). */
+  "front-squat": "bodyweight-squat",
+  "goblet-squat": "bodyweight-squat",
   "smith-machine-squat": "squat",
   "cable-lateral-raise": "lateral-raise",
   "standing-calf-raise": "calf-raise",

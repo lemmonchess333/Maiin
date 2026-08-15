@@ -88,6 +88,33 @@
         "file": "bench-press-t100.png"
       }
     ],
+    "bodyweight-squat": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "bodyweight-squat-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "bodyweight-squat-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "bodyweight-squat-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "bodyweight-squat-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "bodyweight-squat-t100.png"
+      }
+    ],
     "calf-raise": [
       {
         "t": 0,

@@ -694,3 +694,17 @@ Pins shipped: view is "side"; ankle planted; hips back+down >20; knees
 forward; bar sinks >25 and lands within 3 of the ankle plumb line at
 depth; grip welded to the bar (<2) in every frame; camera locked.
 Motion probe: all 14 smooth. 40 passing.
+
+## STATUS 2026-08-15 (thirty-seventh pass) — bar-less squat variant (owner call)
+
+Owner resolved the pass-36 alias tension: "they need a bar-less
+variant". New `bodyweight-squat` demo on the shared side-squat chain
+(`sideSquatChain`, extracted this pass): identical planted-ankle
+depth, but the arms REACH FORWARD to horizontal as the counterbalance
+— which is what lets the torso stay prouder (25° vs the barbell's
+35°). `front-squat` and `goblet-squat` re-alias to it (the forward
+reach is the closest honest read of both grips under the
+no-held-weights rule); only `smith-machine-squat` keeps the barbell
+model. Pins: no plate disc in any frame, same hip sink as the barbell
+squat, hand sweeps forward >30, alias resolution per family. Motion
+probe: all 15 smooth. 42 passing.
