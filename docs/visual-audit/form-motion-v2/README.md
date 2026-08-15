@@ -322,3 +322,17 @@ findings, one negative result worth keeping:
   feet (pose comment documents it).
 
 37 passing.
+
+## STATUS 2026-08-15 (seventeenth pass) — arm-blade surgery at extreme flexion
+
+The art-surgery item recorded in pass 14 as "accepted" turned out to
+have a cheap safe form, because the elbow sleeves cover the joint zone
+at rest:
+
+| Fix                             | Mechanism                                                                                                                                                                                                                                                                                                                     |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Overhead triceps sliver (press) | The ANT triceps blade's elbow-end vertices pulled back ~2.5 units along the blade axis (both sides) — it no longer overshoots the joint at 170° and stops reading as a floating purple stick.                                                                                                                                 |
+| Pull-up forearm blades          | The POST forearm slivers' elbow tips pulled back likewise, and the posterior forearm-axis sleeve widened 5 → 7.5: the posterior forearm is only two thin blades, so its axis capsule carries more of the limb's mass than the anterior's. The dead-hang and top-of-rep forearm now read as ONE limb with tinted muscle bands. |
+
+At rest nothing visibly changes — the vacated elbow tips sit under the
+sleeves. 37 passing.

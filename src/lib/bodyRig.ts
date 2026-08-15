@@ -1619,8 +1619,22 @@ export function renderBodyDemo(
      * forearm and hand into a continuous limb end — together with the
      * elbow sleeve (which reaches 0.25 down the forearm) the arm's
      * axis is covered joint to fingertip. */
-    [seg(JA.elbowL, JA.handL, 0.35), "foreArmL", JA.handL, "foreArmL", 5],
-    [seg(JA.elbowR, JA.handR, 0.35), "foreArmR", JA.handR, "foreArmR", 5],
+    // The posterior forearm is only two thin blades, so its axis
+    // capsule carries more of the limb's mass than the anterior's.
+    [
+      seg(JA.elbowL, JA.handL, 0.35),
+      "foreArmL",
+      JA.handL,
+      "foreArmL",
+      view === "anterior" ? 5 : 7.5,
+    ],
+    [
+      seg(JA.elbowR, JA.handR, 0.35),
+      "foreArmR",
+      JA.handR,
+      "foreArmR",
+      view === "anterior" ? 5 : 7.5,
+    ],
   ];
   if (view === "anterior") {
     sleeveDefs.push(
