@@ -1,17 +1,17 @@
 # Plan: background GPS for run tracking (native iOS/Android)
 
-**Status:** Step 1 ✅ + Step 2's TypeScript half ✅ (retention-audit RUN-01) —
-`src/lib/nativeLocationSource.ts` ships behind the seam (`getLocationSource()`
-now returns it on native), the plugin dependency is installed, and Run.tsx's
-visibility policy + `useWakeLock` are platform-gated so the app no longer
-stops its own tracking (or counts hidden time as a gap) on native.
-**Remaining is operator-bound:** native project config (Info.plist usage
-strings + `UIBackgroundModes: location`, AndroidManifest
-`ACCESS_BACKGROUND_LOCATION` + foreground-service notification), `npx cap
-sync`, a Mac/Xcode device build, and the device test matrix below — including
-the "While Using"-only pass (the plugin exposes no permission-query API, so
-the Always-vs-While-Using nudge is designed on-device, not blind).
-**Priority:** high — until the native halves land, the run tracker only works
+**Status:** Step 1 (seam) ✅ shipped. Step 2 (native source) ✅ shipped for
+**iOS** — the TypeScript half landed first (retention-audit RUN-01:
+`src/lib/nativeLocationSource.ts` behind the seam, `getLocationSource()`
+returning it on native, Run.tsx's visibility policy + `useWakeLock`
+platform-gated), and the native config + "While Using only" UX completed it:
+`Info.plist` carries the background-location keys, and the Section 7
+grant note ships (`nativeLocationSettings.ts` + `RunBackgroundGrantNote`).
+**Android** config (manifest permissions + foreground-service notification)
+is the remaining follow-up (see below). On-device verification is still
+outstanding — it needs a Mac + Xcode build (`npx cap sync ios`, then the
+checklist + results table at the bottom).
+**Priority:** high — until the device build ships, the run tracker only works
 with the screen awake and the app foregrounded.
 
 ## Problem
@@ -59,18 +59,49 @@ a small internal "location source":
   This PR is web-safe and verifiable in the existing harness (no native behaviour
   yet).
 
-### Step 2 — add the plugin + native config + wire the native path
+### Step 2 — add the plugin + native config + wire the native path ✅ (iOS)
 
-- `npm i @capacitor-community/background-geolocation`, `npx cap sync`.
-- **iOS** (`ios/App/App/Info.plist`):
-  - `NSLocationWhenInUseUsageDescription` + `NSLocationAlwaysAndWhenInUseUsageDescription`
-    (user-facing copy: why we need background location for run tracking).
-  - `UIBackgroundModes` → include `location`.
-- **Android** (`AndroidManifest.xml`): `ACCESS_FINE_LOCATION` +
-  `ACCESS_BACKGROUND_LOCATION`; the plugin runs a foreground service with a
-  persistent notification (configure its text/icon).
-- Request permission at run start; handle "While Using" (no background grant)
-  by falling back to the web-style foreground path + a clear note.
+Shipped:
+
+- `@capacitor-community/background-geolocation` installed. The plugin ships
+  **only** TS defs + native code (no JS entry): the bridge is registered by
+  the consumer via `registerPlugin("BackgroundGeolocation")` from
+  `@capacitor/core` — do NOT `import()` the package.
+- `src/lib/nativeLocationSource.ts` implements the `LocationSource` seam over
+  the plugin, translating plugin `Location` → the real `GeolocationPosition`
+  shape and `NOT_AUTHORIZED` → `PERMISSION_DENIED (1)`. The run watcher opts
+  into background delivery (`backgroundMessage`); the pre-warm one-shot does
+  not. `getLocationSource()` returns it on `isNativePlatform()`.
+- **iOS** (`ios/App/App/Info.plist`): added
+  `NSLocationAlwaysAndWhenInUseUsageDescription` and `UIBackgroundModes →
+location` (kept the existing `NSLocationWhenInUseUsageDescription`).
+- **Wake lock is web-only** now (`src/hooks/useWakeLock.ts` early-returns on
+  native) — the plugin's OS service owns background tracking and the screen
+  should sleep.
+- **Run page no longer stops GPS when backgrounded on native**
+  (`Run.tsx` `handleHidden`/`handleVisible` gated behind `isNativePlatform()`).
+  This was essential: the pre-existing web battery-saver called `gps.stop()`
+  on hide, which would have torn down the background watcher the instant the
+  app backgrounded. The false "GPS data may have gaps" banner + route-quality
+  penalty are also web-only now (native tracks continuously).
+- **"While Using only" UX** (Section 7): `src/lib/nativeLocationSettings.ts`
+  (`shouldWarnBackgroundPause` + `openLocationSettings`) + the non-blocking
+  `RunBackgroundGrantNote`. The plugin exposes no API to read the iOS
+  authorization tier, so we infer a While-Using pause from the symptom (no
+  fresh fix during a real hidden window) on foreground return and point the
+  user at Settings → Always. The run is never blocked; tracking degrades to
+  foreground exactly as web does.
+
+**Remaining follow-up — Android** (needs Android Studio, out of scope here):
+
+- `AndroidManifest.xml`: `ACCESS_FINE_LOCATION` + `ACCESS_BACKGROUND_LOCATION`.
+- The plugin runs a foreground service with a persistent notification —
+  configure its text/icon. `backgroundTitle`/`backgroundMessage` are already
+  set by `nativeLocationSource.watch`.
+- `npx cap sync android` and repeat the device checklist on Android.
+
+Run `npx cap sync ios` on the Mac before building (installs the plugin's
+native pod into the Xcode project).
 
 ## Permission UX (ties into the existing acquiring screen)
 
@@ -101,3 +132,19 @@ run; consider a lower-power "balanced" accuracy mode for >90 min runs.
   Playwright harness covers this).
 - iOS background location review: App Store requires the usage strings to
   clearly justify "Always" location.
+
+## Device-test results (fill in on the Mac/Xcode session)
+
+Web/CI cannot exercise the native path — these are the on-device checks that
+conclusively prove Step 2. Record outcomes here.
+
+| #   | Check                                                                                                  | Result | Notes |
+| --- | ------------------------------------------------------------------------------------------------------ | ------ | ----- |
+| 1   | Outdoor run, lock screen, walk 400m+ → points keep recording; distance/pace correct on unlock          | ⬜     |       |
+| 2   | Background the app mid-run (switch apps) → tracking continues                                          | ⬜     |       |
+| 3   | Deny background (While Using only) → run tracks foregrounded, Section 7 note appears, no crash on lock | ⬜     |       |
+| 4   | End run → watcher removed (no lingering location arrow in status bar after save)                       | ⬜     |       |
+| 5   | Pre-warm on the run-setup screen still resolves a first fix quickly                                    | ⬜     |       |
+| 6   | Battery % drain over a 30-min tracked run                                                              | ⬜     |       |
+
+Legend: ⬜ not yet run · ✅ pass · ❌ fail (add a note).
