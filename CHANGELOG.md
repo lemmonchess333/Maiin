@@ -4,6 +4,20 @@ All notable user-facing changes to Tropos are documented here. The format is
 based on [Keep a Changelog](https://keepachangelog.com/), and the project
 follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Important — sync before updating
+
+- **Offline changes queued by an older version are discarded when you update.**
+  Offline logging is now scoped to the signed-in account, so on a shared
+  device one person's pending changes can no longer be uploaded under
+  someone else's account. The trade-off is one-time: anything still
+  waiting to sync from a **pre-update** version can't be safely attributed
+  to an account, so the updated app discards it rather than guess. If
+  you've logged food or sessions while offline, open the app online once
+  (so the queue flushes) before installing an update. Changes queued by
+  the updated app survive future updates normally.
+
 ## [1.2.0] — 2026-06-11
 
 Two feature arcs: **Partner Streaks** (train consistently with a friend) and a
