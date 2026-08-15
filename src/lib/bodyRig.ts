@@ -1245,10 +1245,20 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         { kind: "rotate", deg: -LEAN.deg, pivot: LEAN.pivot },
         { kind: "rotate", deg: -hinge, pivot: SIDE_ANCHORS.hip },
       ];
-      // Arms hang plumb from the hinged+leaned shoulder — the bar stays
-      // against the legs on the way down.
+      /* The bar hugs the LEGS, not the shoulder's arc: a plumb hang
+       * from the hinged shoulder swung the bar 23 units in front of
+       * the thighs at depth (measured) — the classic stiff-arm form
+       * error. The bar rides a fixed near-leg line (drifting back a
+       * touch as the hips travel back) and hangs as low as a straight
+       * arm reaches toward that line — the RDL's bar-slides-down-the-
+       * thigh signature. */
       const S = applyToPoint(SIDE_ANCHORS.shoulder, [T, LEAN]);
-      const hPre = applyToPoint([S[0] + 1.2, S[1] + 52], unpose);
+      const BAR_X = lerp(56.5, 53.5, e);
+      const armLen = SIDE_UPPER_LEN + SIDE_FORE_LEN;
+      const drop = Math.sqrt(
+        Math.max(armLen * armLen - (BAR_X - S[0]) ** 2, 100)
+      );
+      const hPre = applyToPoint([BAR_X, S[1] + drop], unpose);
       const arm = aimArm(
         {
           S: SIDE_ANCHORS.shoulder,

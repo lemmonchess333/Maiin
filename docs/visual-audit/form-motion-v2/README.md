@@ -400,3 +400,23 @@ the shoulder the folded arm hid flat against the torso, and the row's
 defining form checkpoint (elbow driving past the back line) barely
 registered. Top of pull raised to 21: the elbow now clearly clears
 the back silhouette with the bar at the lower ribs. 37 passing.
+
+## STATUS 2026-08-15 (twenty-third pass) — bar-path audit: the RDL was teaching bad form
+
+New audit dimension: bar PATHS over time (stills can't show them).
+Probed the plate centre across t for every barbell demo:
+
+| Demo     | Path (x drift)                  | Verdict                              |
+| -------- | ------------------------------- | ------------------------------------ |
+| deadlift | ±2 around x≈57, floor→lockout   | vertical, on the body — correct      |
+| row      | x constant 67.3                 | vertical — correct                   |
+| curl     | arc out-and-up around the elbow | natural for a curl — correct         |
+| RDL      | **x 48.7 → 71.6 (23 forward)**  | **bar swung in FRONT of the thighs** |
+
+The RDL's hand target hung plumb below the POSED shoulder, so the bar
+followed the shoulder's forward arc — the classic stiff-arm form
+error, animated. The target is now a bar-line constraint: fixed
+near-leg x (56.5 → 53.5, drifting back with the hips-back rule), y =
+as low as a straight arm reaches toward that line. Measured after: x
+56.5 → 53.5, y 99 → 129 — the bar slides down the thigh, the RDL
+signature. 37 passing.
