@@ -347,3 +347,14 @@ Owner on the pull-up frames: "arms misaligned, feet look weird."
 | Feet look weird | The first posterior heels were wide cubes floating below the calf taper. Reshaped: narrower (8 wide), tapered toward the ground, and overlapping the soleus from y 210 so heel and calf read as one leg.                                                                                                              |
 
 37 passing.
+
+## STATUS 2026-08-15 (nineteenth pass) — the overshoot sweep completes
+
+Pass 18's grip-overshoot fix generalized: every arm blade in both
+views was measured against its segment length, and every tip past its
+joint radius trimmed back along the blade axis — the ANT forearm's
+wrist tips (4.5 units past the fist; poked past the hand on the raise
+and press) and the POST triceps blade's elbow tip (3.7 past the
+joint; poked at dips/pull-up flexion), plus mirrors. The blade
+inventory is now fully inside the skeleton's segment radii, so no
+pose can make any blade overshoot its joint. 37 passing.
