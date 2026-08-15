@@ -87,14 +87,40 @@ describe("renderBodyDemo", () => {
     expect(postY(up)).toBe(postY(down));
   });
 
-  it("pushdown: the bar travels down to lockout", () => {
-    const lastLineY = (svg: string) => {
-      const ys = [...svg.matchAll(/<line[^>]*y1="(-?[\d.]+)"/g)];
-      return Number(ys[ys.length - 1][1]);
+  it("pushdown: the rope's knotted tail travels down to lockout", () => {
+    // The tail knob is the LAST circle in the svg (sceneFront renders
+    // after the body) — its descent is the extension arc.
+    const knobY = (svg: string) => {
+      const cs = [...svg.matchAll(/<circle[^>]*cy="(-?[\d.]+)"[^>]*r="2"/g)];
+      return Number(cs[cs.length - 1][1]);
     };
-    const start = lastLineY(renderBodyDemo("rope-tricep-pushdown", 0));
-    const end = lastLineY(renderBodyDemo("rope-tricep-pushdown", 1));
-    expect(end - start).toBeGreaterThan(15);
+    const start = knobY(renderBodyDemo("rope-tricep-pushdown", 0));
+    const end = knobY(renderBodyDemo("rope-tricep-pushdown", 1));
+    expect(end - start).toBeGreaterThan(20);
+  });
+
+  it("pushdown: elbow pinned — the upper arm never moves", () => {
+    // The repair's mechanics contract: extension happens about the
+    // elbow alone. The pose must not touch the upper-arm group.
+    const d = BODY_DEMOS["rope-tricep-pushdown"];
+    expect(d.pose(0).upperArmL).toBeUndefined();
+    expect(d.pose(1).upperArmL).toBeUndefined();
+  });
+
+  it("pushdown: draws a rope (round-capped strand + knob), not a straight bar", () => {
+    // The gate's named defect was a body-wide straight bar. The rope
+    // reads as a short round-capped strand whose knotted tail hangs
+    // past the grip, plus the cable up to the pulley.
+    const svg = renderBodyDemo("rope-tricep-pushdown", 0.5);
+    expect(svg).toContain('stroke-linecap="round"');
+    // No line anywhere near body width (the old bar spanned the hands
+    // at full rest span, ~80 units).
+    const spans = [
+      ...svg.matchAll(
+        /<line[^>]*x1="(-?[\d.]+)"[^>]*y1="(-?[\d.]+)"[^>]*x2="(-?[\d.]+)"[^>]*y2="(-?[\d.]+)"/g
+      ),
+    ].map((m) => Math.abs(Number(m[3]) - Number(m[1])));
+    for (const span of spans) expect(span).toBeLessThan(40);
   });
 
   it("unknown exercise renders nothing", () => {
@@ -123,15 +149,46 @@ describe("renderBodyDemo", () => {
     }
   });
 
-  it("misrepresenting canonicals are production-gated but review-renderable", () => {
-    // rope-tricep-pushdown draws a straight bar; barbell-curl draws no
-    // barbell. Production (getBodyDemo → Form surface) falls back; the
-    // review renderer keeps working so previews/mechanics can iterate
-    // the repair.
+  it("repaired canonicals are production-enabled again", () => {
+    // 2026-08-15: both left GATED_PENDING_REPAIR with side-view models
+    // that fix the exact defect the gate named (curl: real end-on bar,
+    // no foreshortening; pushdown: honest rope + cable). The alias
+    // VARIANTS above stay fallback — different implement/grip.
     for (const id of ["barbell-curl", "rope-tricep-pushdown"]) {
-      expect(getBodyDemo(id), id).toBeNull();
+      expect(getBodyDemo(id), id).not.toBeNull();
+      expect(getBodyDemo(id)!.view, id).toBe("side");
       expect(renderBodyDemo(id, 0.5), id).not.toBe("");
     }
+  });
+
+  it("curl: the bar rises from the thigh to the clavicle on a strict torso", () => {
+    // The plate disc is the LAST large circle group; track its centre
+    // via the plate's hub (the r matching plateR).
+    const plateY = (svg: string) => {
+      const m = [...svg.matchAll(/<circle[^>]*cy="(-?[\d.]+)"[^>]*r="10"/g)];
+      return Number(m[m.length - 1][1]);
+    };
+    const bottom = renderBodyDemo("barbell-curl", 0);
+    const top = renderBodyDemo("barbell-curl", 1);
+    // Bar starts at hand-by-thigh (~y100) and finishes at clavicle
+    // height (~y47) — a >40-unit rise.
+    expect(plateY(bottom) - plateY(top)).toBeGreaterThan(40);
+    // STRICT: no body english — the pose touches only the arm chain.
+    const d = BODY_DEMOS["barbell-curl"];
+    for (const g of Object.keys(d.pose(1))) {
+      expect(["upperArmL", "foreArmL", "handL"], g).toContain(g);
+    }
+  });
+
+  it("side arm carries both biceps and triceps facets (real muscle boundary)", () => {
+    // The triceps facet is what lets the pushdown's working-muscle
+    // emphasis render at all — pin that both facets tint independently.
+    const curl = renderBodyDemo("barbell-curl", 0.5, 1);
+    const push = renderBodyDemo("rope-tricep-pushdown", 0.5, 1);
+    const primaryCount = (svg: string) =>
+      (svg.match(/fill="#7B72E9" fill-opacity/g) ?? []).length;
+    expect(primaryCount(curl)).toBeGreaterThan(0); // biceps lit
+    expect(primaryCount(push)).toBeGreaterThan(0); // triceps lit
   });
 
   it("effort brightens the working-muscle fill", () => {
