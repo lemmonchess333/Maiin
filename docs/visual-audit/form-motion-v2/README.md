@@ -489,3 +489,19 @@ ends of the side figure are uniformly crowned: shoulder (24), femur +
 shin (26), elbow both sides + wrist (27). Verified on the elbow-heavy
 demos: curl mid-flexion, bench rack, pushdown mid-extension. 37
 passing.
+
+## STATUS 2026-08-15 (twenty-eighth pass) — temporal continuity measured; probe becomes tooling
+
+New audit dimension: TIME. Stills and mid-frames can't catch a pop —
+an IK branch flip, a sleeve width jump, a draw-order swap between two
+adjacent frames. `scripts/motion-probe.ts` (new) renders 24 frames
+per demo and pixelmatches consecutive pairs; a smooth eased rep gives
+a smooth bell of deltas peaking mid-rep, and a pop shows as an
+outlier (flagged at max > 3x median).
+
+Baseline result: **all 14 demos spike-free** — maxima 1.3-1.6x their
+medians, every one at a mid-rep step exactly where sine easing peaks
+velocity. The deformation-aware sleeves, IK arms, and damped rhythm
+chains are all continuous in time, measured rather than assumed. Run
+the probe after any rig change; it exits non-zero on a spike. 37 unit
+pins passing; full lib suite 3,496 green this session.
