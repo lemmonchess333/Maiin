@@ -643,3 +643,54 @@ mosaic's ab definition. Fixed, as channel-width OUTLIERS only:
   keep a 5.5 resting core.
 
 Motion probe: all 14 still smooth. 37 passing.
+
+## STATUS 2026-08-15 (thirty-sixth pass) — the squat goes SIDE; camera-plane audit
+
+Owner device feedback on the front squat, verbatim targets: arms "look
+like they're in two sections" · "knee caps look weird" · "the squat bar
+looks weird" · "if this is the animation squatting, it should be from a
+side angle not a front — revisit how you have done all the front and
+side angle stuff as well".
+
+**The squat is REBUILT as a side-view demo.** The front view could only
+fake depth (scaleY-compressed thighs), and all three named artifacts
+were structural consequences of that fake: hanging mosaic arms split at
+the elbow line, knee shards under compression, and a back-bar whose
+full-circle end plates floated beside the shoulders (a front view can
+only honestly show plates edge-on). The side view shows the real
+mechanism instead — deadlift's planted-ankle chain (shin 8° cap, thigh
+about the moved knee, torso about the moved hip), bottom lands the
+thigh just above parallel with the bar plumb over mid-foot (balance
+rule), cervical counter-rotation keeps the gaze forward, and the bar
+rides the TRAPS as an end-on plate (structural, not held). The grip is
+solved once at rest with BOTH arm segments foreshortened (scaleAxis) —
+the hand sits ~6 units from the shoulder in profile, so rigid segments
+could only reach it through a near-total 2D fold that rendered as a
+slat stack (first cut of this rebuild, measured and rejected); in
+reality the elbow flares out-of-plane and both segments project short.
+
+**Camera-plane audit** (the "revisit all the front and side angle
+stuff" half). The rule the motion language now states: the camera
+follows the movement's plane.
+
+| Demo                                                | Camera    | Verdict                                                                                                               |
+| --------------------------------------------------- | --------- | --------------------------------------------------------------------------------------------------------------------- |
+| squat                                               | side      | MOVED this pass (sagittal).                                                                                           |
+| deadlift, RDL, row, bench, push-ups, curl, pushdown | side      | Correct — all sagittal, all already profile.                                                                          |
+| pull-ups, lat-pulldown                              | posterior | Correct — the working back musculature and the symmetric W-flare only read from behind.                               |
+| lateral-raise                                       | anterior  | Correct BY DEFINITION — frontal-plane abduction; a side view would show nothing.                                      |
+| overhead-press                                      | anterior  | Correct — vertical bar path is symmetric; the front placard view is the reference standard. Watch elbow seams only.   |
+| dips                                                | anterior  | Kept — sagittal in reality, but the front IK read is the strongest Gate-0 sheet ("approved (rec.)"); no defect named. |
+| calf-raise                                          | anterior  | WEAKEST front holdout — the rise is "nearly imperceptible" (Gate-0). A side view would show the heel leaving the      |
+|                                                     |           | step. Deferred: plantarflexion needs the foot split from the shank piece, its own data surgery. Recommended next.     |
+
+Alias note, standing tension (not new this pass): `front-squat`,
+`goblet-squat` and `bodyweight-squat` alias the barbell squat and have
+inherited its back-bar since pass 29 — a prop-semantics mismatch the
+alias-hygiene rule would normally gate. Left for an owner call: gate
+them to the static reference, or give them a bar-less pose variant.
+
+Pins shipped: view is "side"; ankle planted; hips back+down >20; knees
+forward; bar sinks >25 and lands within 3 of the ankle plumb line at
+depth; grip welded to the bar (<2) in every frame; camera locked.
+Motion probe: all 14 smooth. 40 passing.

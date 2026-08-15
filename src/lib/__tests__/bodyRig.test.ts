@@ -31,7 +31,7 @@ describe("vendored body model", () => {
 
 describe("renderBodyDemo", () => {
   it("t=0 renders the untransformed figure (identity)", () => {
-    const svg = renderBodyDemo("squat", 0);
+    const svg = renderBodyDemo("overhead-press", 0);
     // The head's top vertex sits at y≈2.2 when nothing moved — the
     // model's y≈0 plus the static HEAD_SETTLE that seats the skull on
     // the trap line.
@@ -63,11 +63,11 @@ describe("renderBodyDemo", () => {
         svg.match(/<line[^>]*stroke="#B6BDC3"[^>]*stroke-linecap="round"/g) ??
         []
       ).length;
-    expect(count(renderBodyDemo("squat", 0))).toBe(8); // +2 wrist welds
+    expect(count(renderBodyDemo("overhead-press", 0))).toBe(8); // +2 wrist welds
     expect(count(renderBodyDemo("pull-ups", 0))).toBe(6);
-    expect(renderBodyDemo("squat", 0).includes('<circle fill="#B6BDC3"')).toBe(
-      false
-    );
+    expect(
+      renderBodyDemo("overhead-press", 0).includes('<circle fill="#B6BDC3"')
+    ).toBe(false);
   });
 
   it("squat: the body visibly sinks at the bottom", () => {
@@ -92,17 +92,19 @@ describe("renderBodyDemo", () => {
 
   it("tints exactly the declared muscles (honest fill)", () => {
     // Strip the aura layer — it repeats the primary colour by design.
-    const svg = renderBodyDemo("squat", 0).replace(
+    const svg = renderBodyDemo("overhead-press", 0).replace(
       /<g class="glow">.*?<\/g>/,
       ""
     );
     // Shaded fills tone the base hex, so identify PRIMARY facets by
     // their opacity step (0.72+0.28·effort = 1.000 at default effort;
     // secondaries land at 0.900) — the honest-fill claim is that exactly
-    // the quadriceps polygons carry the primary level.
+    // the front-deltoid polygons carry the primary level.
     const primary = (svg.match(/fill-opacity="1\.000"/g) || []).length;
-    const quadPolys = ANTERIOR.filter((p) => p.muscle === "quadriceps").length;
-    expect(primary).toBe(quadPolys); // primary tint = quadriceps only
+    const deltPolys = ANTERIOR.filter(
+      (p) => p.muscle === "front-deltoids"
+    ).length;
+    expect(primary).toBe(deltPolys); // primary tint = front deltoids only
     // Library body grey everywhere else (tone() emits lowercase hex —
     // the zero shade step reproduces BODY exactly).
     expect(svg.toLowerCase().includes("#b6bdc3")).toBe(true);
@@ -110,13 +112,13 @@ describe("renderBodyDemo", () => {
 
   it("primary muscles carry a glow aura that breathes with effort", () => {
     const glowOf = (svg: string) => svg.match(/<g class="glow">(.*?)<\/g>/)![1];
-    const soft = glowOf(renderBodyDemo("squat", 0.5, 0));
-    const hard = glowOf(renderBodyDemo("squat", 0.5, 1));
+    const soft = glowOf(renderBodyDemo("lateral-raise", 0.5, 0));
+    const hard = glowOf(renderBodyDemo("lateral-raise", 0.5, 1));
     expect(hard.length).toBeGreaterThan(0);
     const firstOpacity = (g: string) =>
       Number(g.match(/opacity="([\d.]+)"/)![1]);
     expect(firstOpacity(hard)).toBeGreaterThan(firstOpacity(soft));
-    // Two quads → two hulls × three rings.
+    // Two front deltoids → two hulls × three rings.
     expect((hard.match(/<polygon/g) || []).length).toBe(6);
   });
 
@@ -400,7 +402,12 @@ describe("renderBodyDemo", () => {
   });
 
   it("rig acceptance: camera and ground locked across an exercise", () => {
-    for (const id of ["bench-press", "barbell-row", "romanian-deadlift"]) {
+    for (const id of [
+      "bench-press",
+      "barbell-row",
+      "romanian-deadlift",
+      "squat",
+    ]) {
       const vb = (t: number) =>
         renderBodyDemo(id, t).match(/viewBox="([^"]+)"/)![1];
       expect(vb(0), id).toBe(vb(1));
@@ -465,6 +472,59 @@ describe("renderBodyDemo", () => {
       applyToPoint(SIDE_ANCHORS.hand, (pose(t).handL ?? []) as never[]);
     expect(grip(1)[1]).toBeGreaterThan(160); // below the knee line (152)
     expect(grip(0)[1]).toBeLessThan(105); // standing lockout at the thigh
+  });
+
+  it("squat: side view — hips back+down, knees forward, heels planted", () => {
+    // Owner feedback 2026-08-15: "squatting should be from a side
+    // angle, not a front". Pin the view AND the mechanism the side
+    // view exists to show.
+    expect(BODY_DEMOS["squat"].view).toBe("side");
+    const pose = (t: number) => BODY_DEMOS["squat"].pose(t);
+    // Planted ankle: never moves.
+    const ankle = (t: number) =>
+      applyToPoint(SIDE_ANCHORS.ankle, (pose(t).shankL ?? []) as never[]);
+    expect(ankle(1)[0]).toBeCloseTo(ankle(0)[0], 5);
+    expect(ankle(1)[1]).toBeCloseTo(ankle(0)[1], 5);
+    // Hips travel BACK and DOWN; knees travel FORWARD.
+    const hip = (t: number) =>
+      applyToPoint(SIDE_ANCHORS.hip, (pose(t).thighL ?? []) as never[]);
+    expect(hip(1)[0]).toBeLessThan(hip(0)[0] - 20);
+    expect(hip(1)[1]).toBeGreaterThan(hip(0)[1] + 20);
+    const knee = (t: number) =>
+      applyToPoint(SIDE_ANCHORS.knee, (pose(t).shankL ?? []) as never[]);
+    expect(knee(1)[0]).toBeGreaterThan(knee(0)[0] + 3);
+  });
+
+  it("squat: the bar rides the traps, plumb over mid-foot at depth", () => {
+    const d = BODY_DEMOS["squat"];
+    const bar = (t: number) => d.bar!(t, d.pose(t))![0];
+    // The bar travels DOWN with the torso — a real sink, not a fake.
+    expect(bar(1)[1] - bar(0)[1]).toBeGreaterThan(25);
+    // Balance rule: at the bottom the bar sits over the planted ankle
+    // (mid-foot) — the mass never drifts past the toes or heels.
+    expect(Math.abs(bar(1)[0] - SIDE_ANCHORS.ankle[0])).toBeLessThan(3);
+    // End-on plate pinned in every frame.
+    for (const t of [0, 0.5, 1]) {
+      expect(renderBodyDemo("squat", t).includes('r="10"'), `@${t}`).toBe(true);
+    }
+  });
+
+  it("squat: the grip stays welded to the bar through the whole rep", () => {
+    // Bar and arm both ride torsoOps, so registration is constant by
+    // construction — this pins that the construction holds.
+    const d = BODY_DEMOS["squat"];
+    for (const t of [0, 0.5, 1]) {
+      const pose = d.pose(t);
+      const hand = applyToPoint(
+        SIDE_ANCHORS.hand,
+        (pose.handL ?? []) as never[]
+      );
+      const bar = d.bar!(t, pose)![0];
+      expect(
+        Math.hypot(hand[0] - bar[0], hand[1] - bar[1]),
+        `@${t}`
+      ).toBeLessThan(2);
+    }
   });
 
   it("bench press: sole lands ON the floor with a vertical shin", () => {
