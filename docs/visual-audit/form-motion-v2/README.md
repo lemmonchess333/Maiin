@@ -625,3 +625,21 @@ Part-fit audit coverage is now complete across the side figure: head,
 face, neck, traps, shoulder, chest line, waist, hips/glutes, thigh,
 knee, shin, ankle, heel, toe — each either fixed this session or
 measured clean. 37 passing.
+
+## STATUS 2026-08-15 (thirty-fifth pass) — the FRONT figure's part-fit round
+
+The side figure got the magnified part-by-part audit (passes 32-34);
+this pass gives the front figure the same treatment. Verified clean:
+head + throat collar, shoulders/chest, feet on the new platform.
+Deliberately left: the waist's wide ab/oblique channels — that IS the
+mosaic's ab definition. Fixed, as channel-width OUTLIERS only:
+
+- **Groin flank band**: the obliques-to-thigh stage band ran 5-6
+  units where the mosaic's typical seam is 1.5-2.5 — the leg tops
+  (quads + abductors, both sides) rise ~2 toward the torso.
+- **Knee cluster at rest**: the deformation-aware sleeve floor (4.2)
+  was tuned on the arm blocks; the knee shards sit with wider natural
+  gaps and read fragmented at rest. Sleeves at width ≥8 (the knees)
+  keep a 5.5 resting core.
+
+Motion probe: all 14 still smooth. 37 passing.

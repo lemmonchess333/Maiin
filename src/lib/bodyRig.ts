@@ -1717,6 +1717,10 @@ export function renderBodyDemo(
       ]
     );
   }
+  // The knee cluster's shards sit with wider natural gaps than the
+  // arm blocks the global 4.2 resting floor was tuned on — knees keep
+  // a thicker core at rest.
+  const REST_FLOOR = (w: number) => (w >= 8 ? 5.5 : 4.2);
   const sleeves = sleeveDefs
     .map(([pa, ga, pb, gb, w]) => {
       const a = applyToPoint(pa, pose[ga] ?? []);
@@ -1732,7 +1736,7 @@ export function renderBodyDemo(
         b[0] - a[0] - (pb[0] - pa[0]),
         b[1] - a[1] - (pb[1] - pa[1])
       );
-      const wEff = Math.min(w, 4.2 + dv * 0.5);
+      const wEff = Math.min(w, REST_FLOOR(w) + dv * 0.5);
       return `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}" stroke="${BODY}" stroke-width="${wEff.toFixed(1)}" stroke-linecap="round"/>`;
     })
     .join("");
