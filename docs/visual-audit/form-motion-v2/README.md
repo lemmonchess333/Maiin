@@ -358,3 +358,16 @@ and press) and the POST triceps blade's elbow tip (3.7 past the
 joint; poked at dips/pull-up flexion), plus mirrors. The blade
 inventory is now fully inside the skeleton's segment radii, so no
 pose can make any blade overshoot its joint. 37 passing.
+
+## STATUS 2026-08-15 (twentieth pass) — solid arms at 45°+ elevation
+
+Owner on the press rack and raise top: arms look weird at 45° and
+above — thin slatted planks with purple bits to pick through near the
+armpit. Two root causes:
+
+| Cause                     | Fix                                                                                                                                                                                                                                                                                                              |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Humerus axis coverage gap | The shoulder capsule reached 0.4 down the humerus and the elbow capsule started at 0.75 — the 0.4-0.75 span had no core, so elevated arms split into slats around bare stage. Shoulder now reaches 0.62, elbow starts 0.58 (overlap), elbow width 6.5 → 7: the arm keeps a continuous flesh core at every angle. |
+| Armpit floaters           | The ANT triceps blades are MEDIAL strips (inner-arm), so elevation swung them into the armpit as floating purple wedges. Both blades shifted ~2 units to hug the humerus axis — inside the arm mass at any rotation.                                                                                             |
+
+37 passing.

@@ -1580,19 +1580,23 @@ export function renderBodyDemo(
     a[1] + (b[1] - a[1]) * t,
   ];
   const sleeveDefs: [Pt, GroupName, Pt, GroupName, number][] = [
+    // Elbow capsules start at 0.58 of the humerus so that, with the
+    // shoulder sleeves reaching 0.62, the upper arm's AXIS is covered
+    // shoulder to elbow — at 45°+ elevation the narrow arm blocks
+    // otherwise split into slats around a bare core (owner pass 7).
     [
-      seg(JA.shoulderL, JA.elbowL, 0.75),
+      seg(JA.shoulderL, JA.elbowL, 0.58),
       "upperArmL",
       seg(JA.elbowL, JA.handL, 0.25),
       "foreArmL",
-      6.5,
+      7,
     ],
     [
-      seg(JA.shoulderR, JA.elbowR, 0.75),
+      seg(JA.shoulderR, JA.elbowR, 0.58),
       "upperArmR",
       seg(JA.elbowR, JA.handR, 0.25),
       "foreArmR",
-      6.5,
+      7,
     ],
     /* Shoulder sleeves: the deltoid follows the humerus at a capped
      * ~40% (scapulohumeral rhythm), so at a 90° raise the cap and the
@@ -1603,14 +1607,14 @@ export function renderBodyDemo(
     [
       [JA.shoulderL[0] + 6, JA.shoulderL[1] + 2],
       "torso",
-      seg(JA.shoulderL, JA.elbowL, 0.4),
+      seg(JA.shoulderL, JA.elbowL, 0.62),
       "upperArmL",
       7,
     ],
     [
       [JA.shoulderR[0] - 6, JA.shoulderR[1] + 2],
       "torso",
-      seg(JA.shoulderR, JA.elbowR, 0.4),
+      seg(JA.shoulderR, JA.elbowR, 0.62),
       "upperArmR",
       7,
     ],
