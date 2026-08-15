@@ -81,3 +81,159 @@ export async function rcLogOut(): Promise<void> {
     logger.error("[RevenueCat] logOut failed", err);
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Slice 3 (#1099) — purchase, restore, localized prices              */
+/* ------------------------------------------------------------------ */
+
+/** Entitlement id — must match the RC dashboard entitlement created in
+ *  docs/iap/revenuecat-setup.md Part B3 (lowercase `pro`). */
+const PRO_ENTITLEMENT_ID = "pro";
+
+export interface RcPurchaseOutcome {
+  success: boolean;
+  /** True when the `pro` entitlement is active on the returned CustomerInfo —
+   *  the caller treats this, not `success` alone, as "Pro unlocked". */
+  isProActive: boolean;
+  /** True when the user dismissed Apple's purchase sheet — not an error. */
+  userCancelled?: boolean;
+  error?: string;
+}
+
+/** Best-effort cancellation detection. The RC SDK rejects a cancelled
+ *  purchase with an error carrying `userCancelled` (and a readable code on
+ *  some versions) — belt-and-braces on the message so a cancel never
+ *  surfaces as a scary failure toast. */
+function isUserCancelled(err: unknown): boolean {
+  if (typeof err === "object" && err !== null) {
+    const e = err as { userCancelled?: unknown; message?: unknown };
+    if (e.userCancelled === true) return true;
+    if (typeof e.message === "string" && /cancel/i.test(e.message)) return true;
+  }
+  return false;
+}
+
+function hasProEntitlement(customerInfo: {
+  entitlements: { active: Record<string, unknown> };
+}): boolean {
+  return customerInfo.entitlements.active[PRO_ENTITLEMENT_ID] !== undefined;
+}
+
+/**
+ * Purchase the Pro subscription for a given App Store product id (the caller
+ * owns the plan → product-id mapping; passing the id keeps this module free
+ * of a purchaseProvider import and the cycle that would create).
+ *
+ * Flow per RC docs: fetch the current Offering, find the package whose store
+ * product matches, `purchasePackage`, then read the entitlement off the
+ * returned CustomerInfo — RC has already verified the transaction with Apple
+ * by the time this resolves, so no client-side receipt handling exists here.
+ */
+export async function rcPurchase(
+  productId: string
+): Promise<RcPurchaseOutcome> {
+  if (!isRevenueCatEnabled()) {
+    return {
+      success: false,
+      isProActive: false,
+      error: "Purchases are not available in this build.",
+    };
+  }
+  try {
+    const Purchases = await loadPurchases();
+    const offerings = await Purchases.getOfferings();
+    const pkg = offerings.current?.availablePackages.find(
+      (p) => p.product.identifier === productId
+    );
+    if (!pkg) {
+      // Almost always an operator mismatch: ASC product id vs RC product vs
+      // the hardcoded APPLE_PRODUCT_IDS (setup doc warns they must be
+      // verbatim). Surface it plainly rather than a generic failure.
+      logger.error("[RevenueCat] product not in current offering", productId);
+      return {
+        success: false,
+        isProActive: false,
+        error: "This plan isn't available right now. Please try again later.",
+      };
+    }
+    const result = await Purchases.purchasePackage({ aPackage: pkg });
+    const isProActive = hasProEntitlement(result.customerInfo);
+    if (!isProActive) {
+      logger.error("[RevenueCat] purchase completed without pro entitlement");
+    }
+    return { success: isProActive, isProActive };
+  } catch (err) {
+    if (isUserCancelled(err)) {
+      return { success: false, isProActive: false, userCancelled: true };
+    }
+    logger.error("[RevenueCat] purchase failed", err);
+    return {
+      success: false,
+      isProActive: false,
+      error:
+        err instanceof Error
+          ? err.message
+          : "Purchase failed. Please try again.",
+    };
+  }
+}
+
+/** Restore prior purchases via RC (replaces the hand-rolled
+ *  original-transaction-id flow on the RC path). */
+export async function rcRestore(): Promise<RcPurchaseOutcome> {
+  if (!isRevenueCatEnabled()) {
+    return {
+      success: false,
+      isProActive: false,
+      error: "Restore is not available in this build.",
+    };
+  }
+  try {
+    const Purchases = await loadPurchases();
+    const { customerInfo } = await Purchases.restorePurchases();
+    const isProActive = hasProEntitlement(customerInfo);
+    return isProActive
+      ? { success: true, isProActive: true }
+      : {
+          success: false,
+          isProActive: false,
+          error: "No prior purchases found.",
+        };
+  } catch (err) {
+    logger.error("[RevenueCat] restore failed", err);
+    return {
+      success: false,
+      isProActive: false,
+      error:
+        err instanceof Error ? err.message : "Failed to restore purchases.",
+    };
+  }
+}
+
+/**
+ * Apple-localized display prices keyed by product id (e.g.
+ * `{"com.tropos.app.pro.monthly": "£3.99"}`) from the current Offering, or
+ * null when RC is disabled / offerings unavailable. Callers keep the
+ * hardcoded proPlans strings as the fallback so the paywall never renders
+ * priceless.
+ */
+export async function rcGetLocalizedPrices(): Promise<Record<
+  string,
+  string
+> | null> {
+  if (!isRevenueCatEnabled()) return null;
+  try {
+    const Purchases = await loadPurchases();
+    const offerings = await Purchases.getOfferings();
+    const packages = offerings.current?.availablePackages;
+    if (!packages || packages.length === 0) return null;
+    const prices: Record<string, string> = {};
+    for (const p of packages) {
+      prices[p.product.identifier] = p.product.priceString;
+    }
+    return prices;
+  } catch (err) {
+    logger.error("[RevenueCat] offerings fetch failed", err);
+    return null;
+  }
+}
