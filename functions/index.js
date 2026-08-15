@@ -4783,7 +4783,10 @@ exports.onWorkoutCreated = functions
         // handles the east-of-UTC case: a label one day ahead of the
         // server's date is a same-day session, recomputed against the
         // window ending on ITS day instead of skipped as backdated.
-        workoutComputeKey = triggerComputeKey(data.date, getWeekKey(new Date()));
+        workoutComputeKey = triggerComputeKey(
+          data.date,
+          getWeekKey(new Date())
+        );
         if (workoutComputeKey === null) {
           console.log(
             `onWorkoutCreated: skipping recompute for ${uid}, workout on ${data.date} outside rolling window`
@@ -5015,9 +5018,11 @@ exports.onRunCreated = functions
 // What is and is not reversed, and why, is documented on
 // lib/activityReversal. In short: challenge progress and lifetime totals
 // are reversed; the Performance Index needs nothing (it is a projection
-// and self-heals on the next recompute); partner streaks, milestone
-// badges and `fastest_effort` bests are deliberately left standing as
-// history rather than accumulators.
+// and self-heals on the next recompute); a `fastest_effort` best is
+// REBUILT from surviving runs when its driving run is deleted (ADR-0012
+// third amendment, lib/fastestEffortRebuild); partner streaks and
+// milestone badges are deliberately left standing as history rather
+// than accumulators.
 //
 // THE GUARD IS NOT OPTIONAL. The account-deletion executor sweeps
 // `workouts` and `runs`, so these fire once per document during every
