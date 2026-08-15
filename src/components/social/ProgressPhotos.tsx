@@ -206,11 +206,16 @@ export default function ProgressPhotos() {
   // Auto-decrypt the 6 most recent photos on mount
   useEffect(() => {
     if (photos.length === 0 || !uid) return;
+    // Cancellation guard: the loop spans several awaits, and a
+    // setState landing after unmount (route change, test teardown) is
+    // an unhandled rejection — the whole call is fire-and-forget.
+    let cancelled = false;
 
     const autoDecrypt = async () => {
       const key = await getOrDeriveKey(uid);
 
       for (const photo of photos.slice(0, 6)) {
+        if (cancelled) return;
         if (decryptedUrls[photo.id]) continue;
 
         setDecrypting((prev) => new Set(prev).add(photo.id));
@@ -221,22 +226,29 @@ export default function ProgressPhotos() {
           const encryptedBuffer = await response.arrayBuffer();
           const iv = new Uint8Array(photo.iv);
           const decrypted = await decryptBlob(encryptedBuffer, key, iv);
+          if (cancelled) return;
           const blob = new Blob([decrypted], { type: "image/webp" });
           const objectUrl = URL.createObjectURL(blob);
           setDecryptedUrls((prev) => ({ ...prev, [photo.id]: objectUrl }));
         } catch (err) {
           logger.error(`Auto-decrypt failed for photo ${photo.id}:`, err);
         } finally {
-          setDecrypting((prev) => {
-            const next = new Set(prev);
-            next.delete(photo.id);
-            return next;
-          });
+          if (!cancelled)
+            setDecrypting((prev) => {
+              const next = new Set(prev);
+              next.delete(photo.id);
+              return next;
+            });
         }
       }
     };
 
-    autoDecrypt();
+    autoDecrypt().catch((err) =>
+      logger.error("[Vault] auto-decrypt loop failed:", err)
+    );
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [photos, uid]);
 
