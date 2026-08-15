@@ -33,10 +33,30 @@ const PRIMARY = THEME.lifting; // #7B72E9
 const SECONDARY = THEME.liftingLight; // #9590E0
 const GEAR = "#4A4B52";
 const GEAR_DARK = "#35363C";
-/** The demo stage surface (--stage, #111113). Side-view pieces use it
- *  for their separation strokes, so the seams read as the stage showing
- *  through — identical language to the front/back facet gaps. */
-const STAGE = "#111113";
+/* Anatomy-figure shading (2026-08-15 owner pass: "look at anatomy
+ * textbooks — the body must read as ONE form, not blocks with black
+ * space between them"). Two conventions from figure-drawing reference:
+ * a single drawn CONTOUR around the silhouette, and muscle separation
+ * expressed as VALUE CHANGES on continuous flesh — never hard outlines
+ * on every facet, never gaps of stage showing through. Each facet takes
+ * a small deterministic lightness step (faceted sculpt shading), so
+ * musculature reads as form the way a shaded plate does. */
+const CONTOUR = "#54595F"; // figure outline (the drawn silhouette edge)
+
+/** Shift a #rrggbb colour's lightness by delta (additive per channel). */
+function tone(hex: string, delta: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  const c = (v: number) => Math.max(0, Math.min(255, v + delta));
+  const r = c(n >> 16);
+  const g = c((n >> 8) & 255);
+  const b = c(n & 255);
+  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
+}
+
+/** Facet shading steps — subtle, cycling deterministically so adjacent
+ *  facets of one muscle read as planes of a single sculpted mass. */
+const SHADE_STEPS = [-7, 3, -3, 6, 0, -5, 4] as const;
+const shadeFor = (seed: number) => SHADE_STEPS[seed % SHADE_STEPS.length];
 /** Far-side limbs in the profile rig — ~12% darker so overlaps read. */
 const BODY_FAR = "#9FA6AC";
 
@@ -1356,32 +1376,52 @@ export function renderBodyDemo(
           }
         : op
     );
-  const polys = data
-    .map((p) => {
-      let ops = pose[groupOf(view, p)] ?? [];
-      if (p.muscle === "front-deltoids" || p.muscle === "back-deltoids") {
-        ops = deltoidOps(ops);
-      }
-      const pts = applyOps(p.points as Pt[], ops);
-      const level = demo.tint[p.muscle];
-      if (level === "primary") {
-        const key = `${p.muscle}|${p.side}`;
-        primaryPts.set(key, [...(primaryPts.get(key) ?? []), ...pts]);
-      }
-      const fill =
-        level === "primary"
-          ? PRIMARY
-          : level === "secondary"
-            ? SECONDARY
-            : BODY;
-      const op = level
-        ? ` fill-opacity="${tintOpacity(level).toFixed(3)}"`
-        : "";
-      return `<polygon points="${pts
-        .map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`)
-        .join(" ")}" fill="${fill}"${op}/>`;
-    })
+  /* Two passes (anatomy-plate rework): the muscle-map polygons carry
+   * natural spacing that used to read as BLACK CHANNELS splitting the
+   * body into floating blocks. Pass one WELDS the mosaic into one
+   * continuous flesh silhouette (each polygon re-painted in BODY with a
+   * fat round-joined BODY stroke that bridges the inter-polygon gaps);
+   * pass two draws the crisp muscle fills with a thin value-change
+   * boundary line — separations DRAWN on the form, textbook-style,
+   * instead of voids through it. */
+  const transformed = data.map((p) => {
+    let ops = pose[groupOf(view, p)] ?? [];
+    if (p.muscle === "front-deltoids" || p.muscle === "back-deltoids") {
+      ops = deltoidOps(ops);
+    }
+    const pts = applyOps(p.points as Pt[], ops);
+    const level = demo.tint[p.muscle];
+    if (level === "primary") {
+      const key = `${p.muscle}|${p.side}`;
+      primaryPts.set(key, [...(primaryPts.get(key) ?? []), ...pts]);
+    }
+    return { pts, level };
+  });
+  const ptsAttr = (pts: Pt[]) =>
+    pts.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(" ");
+  const weld = transformed
+    .map(
+      ({ pts }) =>
+        `<polygon points="${ptsAttr(pts)}" fill="${BODY}" stroke="${BODY}" stroke-width="2.4" stroke-linejoin="round"/>`
+    )
     .join("");
+  const polys =
+    weld +
+    transformed
+      .map(({ pts, level }, i) => {
+        const base =
+          level === "primary"
+            ? PRIMARY
+            : level === "secondary"
+              ? SECONDARY
+              : BODY;
+        const fill = tone(base, shadeFor(i));
+        const op = level
+          ? ` fill-opacity="${tintOpacity(level).toFixed(3)}"`
+          : "";
+        return `<polygon points="${ptsAttr(pts)}" fill="${fill}"${op} stroke="${fill}" stroke-width="0.5" stroke-linejoin="round"/>`;
+      })
+      .join("");
 
   /* Working-muscle aura: nested convex-hull rings behind the figure,
    * brightening with effort. Zero SVG filters (WKWebView glow rule) —
@@ -1408,9 +1448,8 @@ export function renderBodyDemo(
     view === "anterior"
       ? ANTERIOR_FEET.map((f) => {
           const pts = applyOps(f.points, pose[f.group] ?? []);
-          return `<polygon points="${pts
-            .map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`)
-            .join(" ")}" fill="${BODY}"/>`;
+          const fill = tone(BODY, -3);
+          return `<polygon points="${ptsAttr(pts)}" fill="${BODY}" stroke="${BODY}" stroke-width="2" stroke-linejoin="round"/><polygon points="${ptsAttr(pts)}" fill="${fill}" stroke="${fill}" stroke-width="0.5" stroke-linejoin="round"/>`;
         }).join("")
       : "";
 
@@ -1592,27 +1631,31 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
           ...(primaryPts.get(f.muscle) ?? []),
           ...f.pts,
         ]);
-    // Underlay in the stage colour: shows through the facet gaps AS the
-    // gaps, and keeps overlapped pieces below fully occluded.
+    /* Anatomy-plate rework: the underlay is FLESH (was stage colour —
+     * which made every facet gap a dark channel and the body a set of
+     * floating blocks). The piece's outline is the drawn contour; the
+     * facet edges are thin value-change boundary lines on the form —
+     * exactly how a textbook plate separates muscles. Overlapping
+     * pieces stay readable through the contour line alone. */
+    const flesh = piece.far ? BODY_FAR : BODY;
     return (
-      `<polygon points="${P(outline)}" fill="${STAGE}"/>` +
+      `<polygon points="${P(outline)}" fill="${flesh}" stroke="${CONTOUR}" stroke-width="0.7" stroke-linejoin="round"/>` +
       facets
-        .map((f) => {
-          const fill =
+        .map((f, i) => {
+          const base =
             f.level === "primary"
               ? PRIMARY
               : f.level === "secondary"
                 ? SECONDARY
-                : piece.far
-                  ? BODY_FAR
-                  : BODY;
+                : flesh;
+          const fill = tone(base, shadeFor(i));
           /* Far tints render dimmed — same muscle, further away. Full
              brightness on both limbs flattens the depth the parallax
              just bought. */
           const op = f.level
             ? ` fill-opacity="${(tintOpacity(f.level) * (piece.far ? 0.55 : 1)).toFixed(3)}"`
             : "";
-          return `<polygon points="${P(f.pts)}" fill="${fill}"${op}/>`;
+          return `<polygon points="${P(f.pts)}" fill="${fill}"${op} stroke="${fill}" stroke-width="0.5" stroke-linejoin="round"/>`;
         })
         .join("")
     );

@@ -30,7 +30,9 @@ describe("renderBodyDemo", () => {
     const ys = polyYs(svg);
     expect(Math.min(...ys)).toBeLessThan(1);
     const body = svg.replace(/<g class="glow">.*?<\/g>/, "");
-    expect(body.match(/<polygon/g)!.length).toBe(35); // 33 body + 2 feet
+    // Two passes per polygon since the anatomy-shading rework: the flesh
+    // WELD (continuous silhouette) under the crisp shaded facet.
+    expect(body.match(/<polygon/g)!.length).toBe(70); // (33 body + 2 feet) × 2
   });
 
   it("squat: the body visibly sinks at the bottom", () => {
@@ -59,9 +61,13 @@ describe("renderBodyDemo", () => {
       /<g class="glow">.*?<\/g>/,
       ""
     );
-    const purples = (svg.match(/#7B72E9/g) || []).length;
+    // Shaded fills tone the base hex, so identify PRIMARY facets by
+    // their opacity step (0.72+0.28·effort = 1.000 at default effort;
+    // secondaries land at 0.900) — the honest-fill claim is that exactly
+    // the quadriceps polygons carry the primary level.
+    const primary = (svg.match(/fill-opacity="1\.000"/g) || []).length;
     const quadPolys = ANTERIOR.filter((p) => p.muscle === "quadriceps").length;
-    expect(purples).toBe(quadPolys); // primary tint = quadriceps only
+    expect(primary).toBe(quadPolys); // primary tint = quadriceps only
     expect(svg.includes("#B6BDC3")).toBe(true); // library body grey everywhere else
   });
 
@@ -208,7 +214,7 @@ describe("renderBodyDemo", () => {
     // hull would double the aura's footprint).
     const svg = renderBodyDemo("rope-tricep-pushdown", 0.5, 1);
     const opacities = [
-      ...svg.matchAll(/fill="#7B72E9" fill-opacity="([\d.]+)"/g),
+      ...svg.matchAll(/fill="#[0-9a-f]{6}" fill-opacity="([\d.]+)"/g),
     ].map((m) => Number(m[1]));
     expect(Math.min(...opacities)).toBeLessThan(Math.max(...opacities) * 0.7);
   });
@@ -231,7 +237,7 @@ describe("renderBodyDemo", () => {
     const curl = renderBodyDemo("barbell-curl", 0.5, 1);
     const push = renderBodyDemo("rope-tricep-pushdown", 0.5, 1);
     const primaryCount = (svg: string) =>
-      (svg.match(/fill="#7B72E9" fill-opacity/g) ?? []).length;
+      (svg.match(/fill="#[0-9a-f]{6}" fill-opacity/g) ?? []).length;
     expect(primaryCount(curl)).toBeGreaterThan(0); // biceps lit
     expect(primaryCount(push)).toBeGreaterThan(0); // triceps lit
   });

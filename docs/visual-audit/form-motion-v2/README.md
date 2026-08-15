@@ -86,3 +86,23 @@ Two structural changes, both from the roadmap's own defect lists:
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Bilateral side rig   | P0 "bilateral arms/hands": far arm chain added (same art, darker, painted behind the core). Far pieces MIRROR the near chain when a pose doesn't address them and take a constant back-parallax — a darker far-limb rim now reads behind the near limb in every side demo (push-ups gains its second planted arm; curl/pushdown/deadlift/bench gain depth). Far tints render dimmed; far facets stay out of the glow hull. |
 | Front-rig chain caps | Gate-0 defects "arm segment chains show visible gaps at the top frames" (lateral-raise) and "elbow-seam gaps at lockout" (press): cap growth doubled (3→6 per 180°) and WRIST caps added (the packet named them) — the raise/press chains now read connected at full span/lockout.                                                                                                                                         |
+
+## STATUS 2026-08-15 (third pass) — anatomy-figure shading (sheets regenerated)
+
+Owner art direction: the model "seems off — not lifelike, split into
+loads of sections… what's all the black space between the individual
+blocks?… look at art drawing of the human anatomy." Grounded in
+figure-drawing reference (continuous form; separations as value changes,
+never hard outlines on every facet; a single drawn contour):
+
+| Change                | What it fixes                                                                                                                                                                     |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Flesh weld pass       | Front/back demo figure: every polygon re-painted first in body tone with a fat round-joined stroke — the inter-facet BLACK CHANNELS are gone; the mosaic reads as one silhouette. |
+| Faceted value-shading | Each facet takes a small deterministic lightness step (sculpt shading) instead of a hard outline or a gap — musculature reads as form, textbook-style.                            |
+| Side flesh underlay   | Side pieces' underlay was stage-black (every seam a void); now flesh, with ONE drawn contour line per piece — the figure is a drawn body, overlaps stay legible via the contour.  |
+
+An iteration series for operator review on the open PR — nothing merges
+until the owner calls it. First rejected attempt recorded for the next
+person: outlining every facet (linework on all four sides) read as
+armour plates; the reference's own rule ("avoid outlining every muscle
+with hard edges; use value changes") is what shipped.
