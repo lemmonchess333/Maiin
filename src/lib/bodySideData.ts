@@ -280,9 +280,25 @@ const FOOT: Pt[] = [
   [40.4, 193.6],
 ];
 
+/* The foot is its OWN piece since the calf-raise side conversion —
+ * plantarflexion needs the foot to rotate about the ball while the
+ * shin stays put, which one welded piece can't do. The shank keeps a
+ * short ankle stub below the contour bottom so the two underlays
+ * overlap through the joint (the crack-free-overlap design), and the
+ * renderer makes the foot FOLLOW its shank whenever a pose doesn't
+ * address it — every other demo renders exactly as before. */
 const SHANK_OUTLINE: Pt[] = [
   ...silhouette(SHANK_B, SHANK_F).slice(0, 6),
-  // splice the foot into the silhouette bottom
+  // ankle stub: front ankle down to the foot-top line, across to the
+  // achilles — sits over the foot piece's top edge.
+  [49.8, 191],
+  [50.6, 194.2],
+  [41.6, 194.4],
+  [41.4, 193.6],
+];
+
+const FOOT_OUTLINE: Pt[] = [
+  // the ring the shank outline used to splice in
   [49.8, 191],
   [55.4, 193.4],
   [60.8, 196.8],
@@ -292,6 +308,7 @@ const SHANK_OUTLINE: Pt[] = [
   [40.2, 198.4],
   [41.4, 193.6],
 ];
+const FOOT_FACETS = [{ muscle: "foot", points: FOOT }];
 /* Facet-count discipline (device feedback 2026-07-27: "too many
  * individualized body parts"): at the card's 190px width every extra
  * seam reads as a crack in the figure, so a row split only earns its
@@ -307,7 +324,6 @@ const SHANK_FACETS = [
     muscle: "shin",
     points: band(SHANK_B, SHANK_F, 150, 191.5, 0.58, 1, { bellyL: -0.04 }),
   },
-  { muscle: "foot", points: FOOT },
 ];
 const THIGH_FACETS = [
   {
@@ -329,6 +345,13 @@ const THIGH_FACETS = [
 export const SIDE_PIECES: SidePiece[] = [
   // Far-side leg pair: same geometry, darker, painted FIRST — hidden in
   // symmetric stances, visible the moment a pose splits the legs.
+  // Feet paint before their shank so the leg tucks over the ankle.
+  {
+    group: "footR",
+    far: true,
+    outline: FOOT_OUTLINE,
+    facets: FOOT_FACETS,
+  },
   {
     group: "shankR",
     far: true,
@@ -340,6 +363,11 @@ export const SIDE_PIECES: SidePiece[] = [
     far: true,
     outline: silhouette(THIGH_B, THIGH_F),
     facets: THIGH_FACETS,
+  },
+  {
+    group: "footL",
+    outline: FOOT_OUTLINE,
+    facets: FOOT_FACETS,
   },
   {
     group: "shankL",

@@ -575,13 +575,45 @@ describe("renderBodyDemo", () => {
     expect(ankle[1] + 10).toBeLessThan(174);
   });
 
-  it("calf raise: body rises but the feet stay planted", () => {
-    const maxY = (svg: string) => Math.max(...polyYs(svg));
+  it("calf raise: side view — heel rises about a planted ball", () => {
+    // The foot/shank split's reason to exist: plantarflexion. The ball
+    // of the foot stays on the step edge while the heel swings up and
+    // the body rides the ankle's arc.
+    expect(BODY_DEMOS["calf-raise"].view).toBe("side");
+    const pose = (t: number) => BODY_DEMOS["calf-raise"].pose(t);
+    const HEEL: [number, number] = [42.2, 203];
+    const BALL: [number, number] = [58.5, 202.5];
+    const at = (p: [number, number], t: number) =>
+      applyToPoint(p, (pose(t).footL ?? []) as never[]);
+    // Ball pinned in every frame; heel travels from below the step top
+    // (the stretch) to well above it.
+    for (const t of [0, 0.5, 1]) {
+      expect(
+        Math.hypot(...([0, 1] as const).map((i) => at(BALL, t)[i] - BALL[i])),
+        `@${t}`
+      ).toBeLessThan(0.01);
+    }
+    expect(at(HEEL, 0)[1]).toBeGreaterThan(203.5); // heel-drop stretch
+    expect(at(HEEL, 0)[1] - at(HEEL, 1)[1]).toBeGreaterThan(6); // heel rose
+    // The body rises with the ankle.
     const minY = (svg: string) => Math.min(...polyYs(svg));
-    const down = renderBodyDemo("calf-raise", 0);
-    const up = renderBodyDemo("calf-raise", 1);
-    expect(minY(down) - minY(up)).toBeGreaterThan(4); // head rose
-    expect(Math.abs(maxY(down) - maxY(up))).toBeLessThan(1); // toes didn't
+    expect(
+      minY(renderBodyDemo("calf-raise", 0)) -
+        minY(renderBodyDemo("calf-raise", 1))
+    ).toBeGreaterThan(3); // head rose
+  });
+
+  it("side feet follow their shank when a pose doesn't address them", () => {
+    // The attachment default that keeps every non-calf-raise demo
+    // rendering exactly as before the foot/shank piece split: the
+    // bench's 90°-rotated legs must carry their feet along.
+    const pose = BODY_DEMOS["bench-press"].pose(1);
+    expect(pose.footL).toBeUndefined(); // bench never poses the foot…
+    const svg = renderBodyDemo("bench-press", 1);
+    // …yet no foot polygon remains at the standing foot's location
+    // (y≈191-203): the whole figure lies on the bench.
+    const ys = polyYs(svg);
+    expect(Math.max(...ys)).toBeLessThan(190);
   });
 });
 

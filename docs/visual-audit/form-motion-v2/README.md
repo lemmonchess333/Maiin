@@ -708,3 +708,28 @@ no-held-weights rule); only `smith-machine-squat` keeps the barbell
 model. Pins: no plate disc in any frame, same hip sink as the barbell
 squat, hand sweeps forward >30, alias resolution per family. Motion
 probe: all 15 smooth. 42 passing.
+
+## STATUS 2026-08-15 (thirty-eighth pass) — calf raise goes SIDE; the foot gets its own joint
+
+The camera-audit follow-up (pass 36 named it the weakest front
+holdout): the front calf raise's rise was "nearly imperceptible"
+(Gate-0) because a frontal figure cannot show plantarflexion. Two
+changes:
+
+- **Foot/shank piece split.** The profile foot was welded into the
+  shank piece; it is now its own piece (`footL`/`footR` groups, far
+  pair included), with the shank keeping an ankle stub so the two
+  underlays overlap through the joint. The renderer gives feet an
+  ATTACHMENT DEFAULT — an unaddressed foot rides its shank — so every
+  other demo renders exactly as before (pinned on the bench's rotated
+  legs).
+- **Side-view calf raise.** Forefoot on a step, heel cantilevered off
+  its back edge; the foot rotates about the ball (−7° heel-drop
+  stretch → +20° top) while the shin stays vertical and the body rides
+  the ankle's arc — up and slightly forward, onto the ball. The old
+  front-only "platform" equip dies with its only user (the step is
+  scene furniture now).
+
+Pins: ball pinned in every frame, heel below the step top at the
+stretch and >6 higher at the top, head rises, bench feet still follow
+their shank. Motion probe: all 15 smooth. 43 passing.

@@ -163,6 +163,11 @@ const PULLUP_GRIP_R: Pt = [94, PULLUP_BAR_Y];
  *  hinge carries it forward to land exactly over mid-foot. */
 const SQUAT_BAR: Pt = [43.5, 41];
 
+/** Ball-of-foot pivot for the side calf raise: on the step edge, just
+ *  behind the toes ([65,199.6] tip, sole ~203). The heel ([42,203])
+ *  cantilevers off the step's back edge. */
+const CALF_BALL: Pt = [58.5, 202.5];
+
 /* Side-view arm segment lengths. */
 const SIDE_UPPER_LEN = Math.hypot(
   SIDE_ANCHORS.elbow[0] - SIDE_ANCHORS.shoulder[0],
@@ -489,7 +494,7 @@ export interface BodyDemo {
   /** STRUCTURAL equipment only (no held weights — the figure has no
    *  hands): a fixed-bar is the overhead bar the body hangs from
    *  (pull-up); a cable-bar is the machine bar + cable (pulldown). */
-  equip?: "fixed-bar" | "cable-bar" | "dip-bars" | "plate-end" | "platform";
+  equip?: "fixed-bar" | "cable-bar" | "dip-bars" | "plate-end";
   /** plate-end disc radius (default 10). The deadlift draws a
    *  full-size 45 (r=26 ≈ 45 cm on a 175 cm figure) so the bottom
    *  frame reads bar-near-the-floor. */
@@ -1137,42 +1142,55 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
   },
 
   "calf-raise": {
-    view: "anterior",
+    /* Side-view calf raise (camera-plane audit follow-up: the front
+     * view's rise was "nearly imperceptible" — Gate-0 — because a
+     * frontal figure can't show plantarflexion). Profile shows the
+     * whole story: forefoot on a step, heel hanging off the back edge,
+     * and the FOOT rotates about the ball — heel-drop stretch at the
+     * bottom, high heel at the top — while the shin stays vertical and
+     * the body rides the ankle's arc (up and slightly forward, onto
+     * the ball — the real path). This is what the foot/shank piece
+     * split exists for; every other demo's foot still follows its
+     * shank via the renderer's attachment default. */
+    view: "side",
     concentricTo: 1,
-    equip: "platform",
-    // A raised step under the feet — the thing a calf raise rises on.
-    bar: () => [
-      [12, 203],
-      [88, 203],
-    ],
-    groundY: 210,
+    viewBox: "-8 -2 116 216",
+    groundY: 209,
+    shadowCx: 54,
+    shadowRx: 24,
     tint: { calves: "primary" },
     pose: (e) => {
-      /* Heels drive the body straight up — but the FEET stay planted.
-       * The shanks stretch from the ground line (tiptoe height is real:
-       * floor→knee lengthens on plantarflexion), which lifts the knees
-       * to meet the risen thighs while the foot wedges, sitting at the
-       * bottom of the same group, barely move. Translating the shanks
-       * instead floated the feet — a levitation, not a calf raise. */
-      const rise = 6.5 * e;
-      const lift: Op[] = [{ kind: "translate", dx: 0, dy: -rise }];
-      const KNEE_TO_GROUND = 55; // knee line ~148 → ground 203
-      const stretch: Op[] = [
-        { kind: "scaleY", k: 1 + rise / KNEE_TO_GROUND, pivotY: 203 },
+      const theta = lerp(-7, 20, e); // heel-drop stretch → top
+      const footOps: Op[] = [{ kind: "rotate", deg: theta, pivot: CALF_BALL }];
+      const a = applyToPoint(SIDE_ANCHORS.ankle, footOps);
+      const ride: Op[] = [
+        {
+          kind: "translate",
+          dx: a[0] - SIDE_ANCHORS.ankle[0],
+          dy: a[1] - SIDE_ANCHORS.ankle[1],
+        },
       ];
       return {
-        head: lift,
-        torso: lift,
-        upperArmL: lift,
-        upperArmR: lift,
-        foreArmL: lift,
-        foreArmR: lift,
-        thighL: lift,
-        thighR: lift,
-        shankL: stretch,
-        shankR: stretch,
+        head: ride,
+        torso: ride,
+        pelvis: ride,
+        upperArmL: ride,
+        foreArmL: ride,
+        handL: ride,
+        thighL: ride,
+        thighR: ride,
+        shankL: ride,
+        shankR: ride,
+        footL: footOps,
+        footR: footOps,
       };
     },
+    // The step: a low block under the forefoot, heel cantilevered off
+    // its back edge; floor line below. Structural scenery.
+    scene: () =>
+      `<rect x="46" y="202.6" width="27" height="6.4" rx="1" fill="${GEAR_DARK}" stroke="#565760" stroke-width="0.8"/>` +
+      `<line x1="46" y1="202.6" x2="73" y2="202.6" stroke="${GEAR}" stroke-width="1.4"/>` +
+      `<line x1="-4" y1="209" x2="112" y2="209" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
   },
 
   "bench-press": {
@@ -1952,13 +1970,6 @@ export function renderBodyDemo(
       `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="10" fill="${GEAR_DARK}" stroke="#565760" stroke-width="1"/>` +
       `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6.4" fill="none" stroke="${GEAR}" stroke-width="1.2" opacity="0.7"/>` +
       `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.2" fill="${GEAR}"/>`;
-  } else if (ends && demo.equip === "platform") {
-    // Raised step (calf raises): a low block whose top edge the feet
-    // stand on — structural scenery, like the pull-up frame.
-    const [l, r] = ends;
-    barBehind =
-      `<rect x="${l[0].toFixed(1)}" y="${l[1].toFixed(1)}" width="${(r[0] - l[0]).toFixed(1)}" height="6" rx="1.5" fill="${GEAR_DARK}" stroke="#565760" stroke-width="0.8"/>` +
-      `<line x1="${l[0].toFixed(1)}" y1="${l[1].toFixed(1)}" x2="${r[0].toFixed(1)}" y2="${l[1].toFixed(1)}" stroke="${GEAR}" stroke-width="1.4"/>`;
   } else if (ends && demo.equip === "dip-bars") {
     // A dip STATION, not two floating lines: each upright gets a base
     // foot on the floor and a tube end-cap at the grip.
@@ -2022,12 +2033,22 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
     handR: "handL",
     thighR: "thighL",
     shankR: "shankL",
+    footR: "footL",
+  };
+  /* Attachment default: a foot that a pose doesn't address rides its
+   * shank (the pre-split behaviour, when the foot was welded into the
+   * shank piece) — only the calf raise articulates the ankle. */
+  const FOLLOW: Partial<Record<GroupName, GroupName>> = {
+    footL: "shankL",
+    footR: "shankR",
   };
   const FAR_OFFSET: Op = { kind: "translate", dx: -2.6, dy: 0 };
+  const resolveOps = (g: GroupName): Op[] | undefined =>
+    pose[g] ?? (FOLLOW[g] ? pose[FOLLOW[g]!] : undefined);
   const opsFor = (piece: (typeof SIDE_PIECES)[number]): Op[] => {
-    const own = pose[piece.group];
+    const own = resolveOps(piece.group);
     const mirrored = piece.far
-      ? pose[FAR_NEAR[piece.group] ?? piece.group]
+      ? resolveOps(FAR_NEAR[piece.group] ?? piece.group)
       : undefined;
     const base = own ?? mirrored ?? [];
     return piece.far ? [...base, FAR_OFFSET] : base;
