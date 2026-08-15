@@ -106,3 +106,18 @@ until the owner calls it. First rejected attempt recorded for the next
 person: outlining every facet (linework on all four sides) read as
 armour plates; the reference's own rule ("avoid outlining every muscle
 with hard edges; use value changes") is what shipped.
+
+## STATUS 2026-08-15 (fourth pass) — figure surgery on the four named defects
+
+Owner critique, verbatim targets: glute overhang · rectangle knees ·
+circular ball joints · missing hands.
+
+| Defect          | Fix                                                                                                                                                                                                                                                  |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Glute overhang  | Lumbopelvic rhythm in all three side hinges (deadlift, RDL, row): the pelvis rotates ~72% of the spine's hinge about the hip — full-rate rotation shelved the glutes past the back line.                                                             |
+| Rectangle knees | Every body shape now renders as a rounded-corner path (quadratic corner cuts, clamped to edge length) — knees, facets and outlines read as flesh over bone, not boxes.                                                                               |
+| Ball joints     | The joint-cap discs are DELETED. They were a gap-bridging hack that read as a mannequin's ball joints; the flesh weld + rounded shapes close what they hid. Verified against the two worst frames (raise full span, press lockout) — no gaps reopen. |
+| Missing hands   | Front/back figure gains compact rounded hand mitts riding each forearm group — on IK arms (pull-ups, dips) they land exactly on the grip because the anchor is the constraint point.                                                                 |
+
+Pins: no body-toned circles anywhere; two hands per view that MOVE with
+the arm; path-based identity/travel assertions. 35 passing.

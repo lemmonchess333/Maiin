@@ -9,9 +9,15 @@ import { ANTERIOR, POSTERIOR } from "../bodyModelData";
 import { SIDE_ANCHORS, SIDE_PIECES } from "../bodySideData";
 
 function polyYs(svg: string): number[] {
-  return [...svg.matchAll(/points="([^"]+)"/g)]
+  // Body shapes render as rounded <path> since the anatomy pass; gear
+  // may still use <polygon points>. Harvest y from both.
+  const fromPolys = [...svg.matchAll(/points="([^"]+)"/g)]
     .flatMap((m) => m[1].trim().split(" "))
     .map((pair) => Number(pair.split(",")[1]));
+  const fromPaths = [...svg.matchAll(/d="([^"]+)"/g)]
+    .flatMap((m) => [...m[1].matchAll(/[-\d.]+,([-\d.]+)/g)])
+    .map((m) => Number(m[1]));
+  return [...fromPolys, ...fromPaths];
 }
 
 describe("vendored body model", () => {
@@ -30,9 +36,9 @@ describe("renderBodyDemo", () => {
     const ys = polyYs(svg);
     expect(Math.min(...ys)).toBeLessThan(1);
     const body = svg.replace(/<g class="glow">.*?<\/g>/, "");
-    // Two passes per polygon since the anatomy-shading rework: the flesh
-    // WELD (continuous silhouette) under the crisp shaded facet.
-    expect(body.match(/<polygon/g)!.length).toBe(70); // (33 body + 2 feet) × 2
+    // Rounded <path> shapes since the anatomy pass: weld + crisp per
+    // body polygon and foot, plus weld + crisp per hand mitt.
+    expect(body.match(/<path/g)!.length).toBe(74); // (33 body + 2 feet + 2 hands) × 2
   });
 
   it("squat: the body visibly sinks at the bottom", () => {
@@ -201,7 +207,7 @@ describe("renderBodyDemo", () => {
     // the far LEGS stay static here, so the whole-set comparison only
     // passes if the far ARM moved).
     const farPolys = (svg: string) =>
-      [...svg.matchAll(/<polygon points="([^"]+)" fill="#9FA6AC"/g)]
+      [...svg.matchAll(/<path d="([^"]+)" fill="#9FA6AC"/g)]
         .map((m) => m[1])
         .join("|");
     expect(farPolys(start)).not.toBe(farPolys(end));
@@ -219,16 +225,25 @@ describe("renderBodyDemo", () => {
     expect(Math.min(...opacities)).toBeLessThan(Math.max(...opacities) * 0.7);
   });
 
-  it("front rig closes the chain: wrist caps render on articulated forearms", () => {
-    // Gate-0 ledger defect (lateral-raise/press top frames): the
-    // forearm/hand seam opened at large rotations. The wrist cap rides
-    // the forearm group's transform.
-    const svg = renderBodyDemo("lateral-raise", 1);
-    const caps = [
-      ...svg.matchAll(/<circle[^>]*r="([\d.]+)"[^>]*fill="#B6BDC3"/g),
-    ];
-    // shoulder + elbow + wrist per side = 6 caps at full abduction.
-    expect(caps.length).toBeGreaterThanOrEqual(6);
+  it("no ball-joint discs on the body; hands render and ride the arm", () => {
+    // Owner pass 2: "why are the joins circular balls? why don't the
+    // figure have hands?" The cap hack is gone — no body-toned circles
+    // anywhere (circles that remain are GEAR: plates, pulleys, rope
+    // knobs) — and each view carries two hand mitts that transform with
+    // their forearm group.
+    const raise = renderBodyDemo("lateral-raise", 1);
+    expect(raise.match(/<circle[^>]*fill="#B6BDC3"/g)).toBeNull();
+    const handPaths = (svg: string) =>
+      (svg.match(/<path[^>]*stroke-width="1.6"/g) ?? []).length;
+    // weld pass per hand carries the 1.6 stroke — two hands per view.
+    expect(handPaths(raise)).toBe(2);
+    // Hands MOVE with the arms: raised vs rest differ.
+    const rest = renderBodyDemo("lateral-raise", 0);
+    const handD = (svg: string) =>
+      [...svg.matchAll(/<path d="([^"]+)"[^>]*stroke-width="1.6"/g)]
+        .map((m) => m[1])
+        .join("|");
+    expect(handD(raise)).not.toBe(handD(rest));
   });
 
   it("side arm carries both biceps and triceps facets (real muscle boundary)", () => {

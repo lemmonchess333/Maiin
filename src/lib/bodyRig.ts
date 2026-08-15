@@ -57,6 +57,45 @@ function tone(hex: string, delta: number): string {
  *  facets of one muscle read as planes of a single sculpted mass. */
 const SHADE_STEPS = [-7, 3, -3, 6, 0, -5, 4] as const;
 const shadeFor = (seed: number) => SHADE_STEPS[seed % SHADE_STEPS.length];
+
+/**
+ * Closed path with rounded corners (owner pass 2: "why are the knees
+ * made of rectangles?"). Every hard vertex is cut with a quadratic —
+ * entry/exit points sit `r` along each edge (clamped to 40% of the
+ * shorter edge so small facets don't collapse) and the vertex becomes
+ * the control point. Polygon corners read as bone/flesh, not boxes.
+ */
+function roundedPath(pts: Pt[], r: number): string {
+  const n = pts.length;
+  if (n < 3) return "";
+  const seg: string[] = [];
+  for (let i = 0; i < n; i++) {
+    const prev = pts[(i - 1 + n) % n];
+    const cur = pts[i];
+    const next = pts[(i + 1) % n];
+    const din = Math.hypot(cur[0] - prev[0], cur[1] - prev[1]) || 1;
+    const dout = Math.hypot(next[0] - cur[0], next[1] - cur[1]) || 1;
+    const rIn = Math.min(r, din * 0.4);
+    const rOut = Math.min(r, dout * 0.4);
+    const a: Pt = [
+      cur[0] - ((cur[0] - prev[0]) / din) * rIn,
+      cur[1] - ((cur[1] - prev[1]) / din) * rIn,
+    ];
+    const b: Pt = [
+      cur[0] + ((next[0] - cur[0]) / dout) * rOut,
+      cur[1] + ((next[1] - cur[1]) / dout) * rOut,
+    ];
+    seg.push(
+      `${i === 0 ? `M${a[0].toFixed(2)},${a[1].toFixed(2)}` : `L${a[0].toFixed(2)},${a[1].toFixed(2)}`} Q${cur[0].toFixed(2)},${cur[1].toFixed(2)} ${b[0].toFixed(2)},${b[1].toFixed(2)}`
+    );
+  }
+  return seg.join(" ") + " Z";
+}
+
+/** Rounded-corner shape element. */
+function shape(pts: Pt[], r: number, fill: string, extra = ""): string {
+  return `<path d="${roundedPath(pts, r)}" fill="${fill}"${extra}/>`;
+}
 /** Far-side limbs in the profile rig — ~12% darker so overlaps read. */
 const BODY_FAR = "#9FA6AC";
 
@@ -727,6 +766,14 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       };
       const T: Op = { kind: "rotate", deg: hinge, pivot: SIDE_ANCHORS.hip };
       const torsoOps: Op[] = [T, shift];
+      /* Pelvis rotates LESS than the spine in a hinge (lumbopelvic
+       * rhythm) — full-rate rotation shelved the glutes out past the
+       * back line (owner: "why does the glutes overhang?"). ~72% keeps
+       * the glute mass tucked into the hip line while still tilting. */
+      const pelvisOps: Op[] = [
+        { kind: "rotate", deg: hinge * 0.72, pivot: SIDE_ANCHORS.hip },
+        shift,
+      ];
       /* Straight arms hang from the hinged shoulder. The x-offset
        * interpolates: standing lockout rests the bar against the FRONT
        * of the thigh (+8), the bottom pulls it back under the shoulder
@@ -758,7 +805,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       return {
         head: torsoOps,
         torso: torsoOps,
-        pelvis: torsoOps,
+        pelvis: pelvisOps,
         thighL: thighOps,
         thighR: thighOps,
         shankL: legOps,
@@ -1082,7 +1129,9 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       return {
         head: [T, LEAN],
         torso: [T, LEAN],
-        pelvis: [T, LEAN],
+        // Lumbopelvic rhythm: the pelvis tilts ~72% of the spine's hinge
+        // (full-rate shelved the glutes out past the back line).
+        pelvis: [{ kind: "rotate", deg: T.deg * 0.72, pivot: T.pivot }, LEAN],
         thighL: leg,
         thighR: leg,
         shankL: shank,
@@ -1159,7 +1208,9 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       return {
         head: [T, LEAN],
         torso: [T, LEAN],
-        pelvis: [T, LEAN],
+        // Lumbopelvic rhythm: the pelvis tilts ~72% of the spine's hinge
+        // (full-rate shelved the glutes out past the back line).
+        pelvis: [{ kind: "rotate", deg: T.deg * 0.72, pivot: T.pivot }, LEAN],
         thighL: leg,
         thighR: leg,
         shankL: shank,
@@ -1397,12 +1448,10 @@ export function renderBodyDemo(
     }
     return { pts, level };
   });
-  const ptsAttr = (pts: Pt[]) =>
-    pts.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(" ");
   const weld = transformed
     .map(
       ({ pts }) =>
-        `<polygon points="${ptsAttr(pts)}" fill="${BODY}" stroke="${BODY}" stroke-width="2.4" stroke-linejoin="round"/>`
+        `<path d="${roundedPath(pts, 1.4)}" fill="${BODY}" stroke="${BODY}" stroke-width="2.6" stroke-linejoin="round"/>`
     )
     .join("");
   const polys =
@@ -1419,7 +1468,12 @@ export function renderBodyDemo(
         const op = level
           ? ` fill-opacity="${tintOpacity(level).toFixed(3)}"`
           : "";
-        return `<polygon points="${ptsAttr(pts)}" fill="${fill}"${op} stroke="${fill}" stroke-width="0.5" stroke-linejoin="round"/>`;
+        return shape(
+          pts,
+          1.1,
+          fill,
+          `${op} stroke="${fill}" stroke-width="0.5" stroke-linejoin="round"`
+        );
       })
       .join("");
 
@@ -1444,12 +1498,52 @@ export function renderBodyDemo(
       .join("") +
     `</g>`;
 
+  /* Hands (owner pass 2: "why don't the figure have hands?"). Compact
+   * rounded mitts at the measured hand anchors, riding the forearm
+   * group's transform — on IK arms (pull-ups, dips) they land exactly
+   * on the grip because the anchor IS the constraint point. */
+  const A = demo.view === "anterior" ? ANT : POST;
+  const HAND_SHAPE: Pt[] = [
+    [-2.6, -1.4],
+    [2.6, -1.4],
+    [3.2, 1.6],
+    [1.4, 4.6],
+    [-1.8, 4.4],
+    [-3.2, 1.4],
+  ];
+  const hands = (
+    [
+      [A.handL, "foreArmL"],
+      [A.handR, "foreArmR"],
+    ] as const
+  )
+    .map(([anchor, group]) => {
+      const pts = HAND_SHAPE.map(
+        ([dx, dy]) => [anchor[0] + dx, anchor[1] + dy] as Pt
+      );
+      const posed = applyOps(pts, pose[group] ?? []);
+      const fill = tone(BODY, -4);
+      return (
+        `<path d="${roundedPath(posed, 1.6)}" fill="${BODY}" stroke="${BODY}" stroke-width="1.6" stroke-linejoin="round"/>` +
+        shape(posed, 1.6, fill)
+      );
+    })
+    .join("");
+
   const feet =
     view === "anterior"
       ? ANTERIOR_FEET.map((f) => {
           const pts = applyOps(f.points, pose[f.group] ?? []);
           const fill = tone(BODY, -3);
-          return `<polygon points="${ptsAttr(pts)}" fill="${BODY}" stroke="${BODY}" stroke-width="2" stroke-linejoin="round"/><polygon points="${ptsAttr(pts)}" fill="${fill}" stroke="${fill}" stroke-width="0.5" stroke-linejoin="round"/>`;
+          return (
+            `<path d="${roundedPath(pts, 1.4)}" fill="${BODY}" stroke="${BODY}" stroke-width="2" stroke-linejoin="round"/>` +
+            shape(
+              pts,
+              1.2,
+              fill,
+              ` stroke="${fill}" stroke-width="0.5" stroke-linejoin="round"`
+            )
+          );
         }).join("")
       : "";
 
@@ -1505,59 +1599,10 @@ export function renderBodyDemo(
     barBehind = post(ends[0]) + post(ends[1]);
   }
 
-  /* Joint caps: at big rotations a white wedge opens where a limb group
-     pulls away from its neighbour (elbow fold, shoulder at lockout).
-     A small body-grey disc at each MOVING joint, drawn behind the
-     polygons, bridges the crack — invisible everywhere else. Only
-     emitted when the joint actually articulates, so identity frames
-     keep the untouched muscle-map look (its natural facet gaps ARE the
-     style). */
-  const articulates = (ops?: Op[]) =>
-    !!ops?.some(
-      (o) =>
-        (o.kind === "rotate" && Math.abs(o.deg) > 8) || o.kind === "scaleAxis"
-    );
-  /* The wedge a joint opens grows with how far the limb rotated away
-     from its rest orientation — a fixed 3.6 disc bridged a curl but
-     left a dark pizza-slice gap at a press lockout (~170° of shoulder
-     rotation) or a raised lateral (device feedback 2026-07-27:
-     "detached sausage links"). Scale the cap with the group's total
-     rotation so big strokes get real joint coverage. */
-  const rotationOf = (ops?: Op[]) =>
-    (ops ?? []).reduce(
-      (sum, o) => sum + (o.kind === "rotate" ? Math.abs(o.deg) : 0),
-      0
-    );
-  /* Cap growth doubled 3→6/180° (Gate-0 ledger: lateral-raise and press
-   * lockout frames still opened visible chain gaps at ~70–170° — the old
-   * growth peaked at +3 while the wedge a rotated facet opens grows
-   * faster than that). Wrist caps close the forearm/hand seam the same
-   * frames exposed; the packet named them explicitly. */
-  const capR = (base: number, ops?: Op[]) =>
-    base + (6 * Math.min(rotationOf(ops), 180)) / 180;
-  const A = demo.view === "anterior" ? ANT : POST;
-  const capDefs: { pt: Pt; group: GroupName; r: number }[] = [
-    { pt: A.shoulderL, group: "upperArmL", r: 3.6 },
-    { pt: A.shoulderR, group: "upperArmR", r: 3.6 },
-    { pt: A.elbowL, group: "foreArmL", r: 2.7 },
-    { pt: A.elbowR, group: "foreArmR", r: 2.7 },
-    { pt: A.handL, group: "foreArmL", r: 2.1 },
-    { pt: A.handR, group: "foreArmR", r: 2.1 },
-  ];
-  if (demo.view === "anterior") {
-    capDefs.push(
-      { pt: ANT.kneeL, group: "thighL", r: 3 },
-      { pt: ANT.kneeR, group: "thighR", r: 3 }
-    );
-  }
-  const caps = capDefs
-    .filter((c) => articulates(pose[c.group]))
-    .map((c) => {
-      const [x, y] = applyToPoint(c.pt, pose[c.group] ?? []);
-      return `<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="${capR(c.r, pose[c.group]).toFixed(2)}" fill="${BODY}"/>`;
-    })
-    .join("");
-
+  /* Joint caps REMOVED (owner pass 2: "why are the joins circular
+   * balls?") — they were a gap-bridging hack that read as a mannequin's
+   * ball joints. The flesh weld + rounded shapes now close the seams
+   * they existed to hide. */
   // Ground shadow: breathes with how LOW the body sits — bigger/darker at
   // the bottom of a squat, smaller/lighter at a press lockout or calf-
   // raise top. Depth is e for descend-first lifts, 1−e for lift-first.
@@ -1571,8 +1616,8 @@ export function renderBodyDemo(
     shadow +
     barBehind +
     glow +
-    caps +
     polys +
+    hands +
     feet +
     barFront +
     `</svg>`
@@ -1639,7 +1684,7 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
      * pieces stay readable through the contour line alone. */
     const flesh = piece.far ? BODY_FAR : BODY;
     return (
-      `<polygon points="${P(outline)}" fill="${flesh}" stroke="${CONTOUR}" stroke-width="0.7" stroke-linejoin="round"/>` +
+      `<path d="${roundedPath(outline, 1.5)}" fill="${flesh}" stroke="${CONTOUR}" stroke-width="0.7" stroke-linejoin="round"/>` +
       facets
         .map((f, i) => {
           const base =
@@ -1655,7 +1700,12 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
           const op = f.level
             ? ` fill-opacity="${(tintOpacity(f.level) * (piece.far ? 0.55 : 1)).toFixed(3)}"`
             : "";
-          return `<polygon points="${P(f.pts)}" fill="${fill}"${op} stroke="${fill}" stroke-width="0.5" stroke-linejoin="round"/>`;
+          return shape(
+            f.pts,
+            1.1,
+            fill,
+            `${op} stroke="${fill}" stroke-width="0.5" stroke-linejoin="round"`
+          );
         })
         .join("")
     );
