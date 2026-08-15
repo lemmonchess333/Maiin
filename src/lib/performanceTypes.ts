@@ -41,7 +41,7 @@ export interface WeeklyAggregates {
   weekKey: string; // "YYYY-MM-DD" (Sunday start)
 
   // Lifting
-  liftTonnage: number;      // sum(weightKg * reps) across all sets
+  liftTonnage: number;      // session tonnage (workoutVolumeKg: stated totalVolume, else weightKg*reps excluding timed holds)
   liftHardSets: number;     // proxy: count of last-set per non-cardio exercise
   liftSessions: number;
 

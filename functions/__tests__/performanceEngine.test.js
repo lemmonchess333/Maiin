@@ -201,6 +201,52 @@ describe("aggregateWindow", () => {
     expect(agg.liftHardSets).toBe(1); // last non-cardio set
   });
 
+  it("a timed hold adds no tonnage but its last set is still a hard set", () => {
+    /* The PI was the LAST copy of the tonnage rule without the timed-hold
+       exclusion: a 20 kg / 60 s weighted plank read as 1,200 kg of weekly
+       load — inflating tonnageRatio, the load band, and the deload logic
+       off an exercise that moved no weight. Every other consumer of a
+       workout (challenges, lifetime volume, all display surfaces) already
+       excluded it.
+
+       The hard-set HALF is the boundary in the other direction: a
+       completed hold is a completed effortful set, and hard sets is a
+       count with no unit to corrupt — so it stays in. An exclusion that
+       swallowed it would misread every core-day as lighter than it was. */
+    const workouts = [
+      {
+        date: "2026-05-15",
+        exercises: [
+          { category: "lift", sets: [{ weightKg: 100, reps: 5 }] },
+          {
+            category: "core",
+            repUnit: "seconds",
+            sets: [{ weightKg: 20, reps: 60 }],
+          },
+        ],
+      },
+    ];
+    const agg = aggregateWindow(start, end, workouts, [], [], []);
+    expect(agg.liftTonnage).toBe(500);
+    expect(agg.liftHardSets).toBe(2);
+  });
+
+  it("prefers the writer's stated totalVolume over re-deriving", () => {
+    /* Post-#2041 docs carry the session tonnage the writer computed —
+       the same figure every other consumer credits. The PI reading a
+       DIFFERENT number for the same session than challenges and lifetime
+       volume is exactly the disagreement this consolidation removes. */
+    const workouts = [
+      {
+        date: "2026-05-15",
+        totalVolume: 2400,
+        exercises: [{ category: "lift", sets: [{ weightKg: 100, reps: 5 }] }],
+      },
+    ];
+    const agg = aggregateWindow(start, end, workouts, [], [], []);
+    expect(agg.liftTonnage).toBe(2400);
+  });
+
   it("excludes workouts outside the window", () => {
     const workouts = [
       {
