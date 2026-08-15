@@ -138,3 +138,22 @@ size but the IK hands genuinely reach the straight-arm ceiling (probe:
 mitts at y≈-4 against a 54-unit chain) — the read is slab width, not a
 joint fault. Pins: identity path count 75 (throat filler), posterior 71
 (spine filler), 36 passing.
+
+## STATUS 2026-08-15 (sixth pass) — group flesh hulls, pelvis shield, knees-out squat
+
+Close-up critique renders (cropped viewBox at 4× scale) exposed the
+defect class the thumbnails hid: **posed gaps scale**. The weld stroke
+bridges the map's identity spacing, but a compressed squat thigh or a
+racked arm opens black wedges far wider than any stroke.
+
+| Finding                        | Fix                                                                                                                                                                                                               |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Intra-group voids at any pose  | Each body group (except the single-poly head) lays a convex hull of its POSED points under the welds — closed at every pose while left/right limbs stay separate, so crotch and armpits keep real negative space. |
+| Groin diagonals at squat depth | Two fixes: a pelvis shield filler riding the torso (hip line tapering to the crotch point, fill-only so its corners never poke past the waist), and the flare pivot moved knee → hip.                             |
+| Backwards squat mechanics      | Knee-pivoted flare swung the thigh TOPS away from the pelvis; anatomically the femur abducts about the HIP and the knee travels. Now: knees track out, hips stay socketed, shanks chase about the planted ankle.  |
+
+Checked and left alone: the small angular points at the hip line are
+the obliques' own vertices (present before all of this) and read as
+iliac-crest landmarks at thumbnail. Pins: identity 85 / posterior 80
+paths; hull stroke 2.2 so the hands pin (exactly two 1.6-stroke mitts)
+stays honest. 36 passing.

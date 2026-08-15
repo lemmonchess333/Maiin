@@ -495,26 +495,32 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         { kind: "rotate", deg: -armOut, pivot: ANT.shoulderR },
         ...dive,
       ];
+      /* Knees track OUT, hips stay in the socket: the flare pivots at
+       * the (posed) thigh TOP, not the knee. Knee-pivoted flare swung
+       * the thigh tops away from the pelvis, opening diagonal groin
+       * voids at depth — and read backwards anatomically (in a squat
+       * the femur abducts about the hip; the knee is what travels).
+       * The shank chases the displaced knee about the planted ankle. */
       return {
         thighL: [
           { kind: "scaleY", k, pivotY: ANT.kneeL[1] },
-          { kind: "rotate", deg: -flare, pivot: ANT.kneeL },
+          { kind: "rotate", deg: flare, pivot: [ANT.kneeL[0], 92 + drop] },
         ],
         thighR: [
           { kind: "scaleY", k, pivotY: ANT.kneeR[1] },
-          { kind: "rotate", deg: flare, pivot: ANT.kneeR },
+          { kind: "rotate", deg: -flare, pivot: [ANT.kneeR[0], 92 + drop] },
         ],
         shankL: [
           {
             kind: "rotate",
-            deg: -flare * 0.5,
+            deg: -flare * 0.36,
             pivot: [ANT.kneeL[0], ANT.ankleY],
           },
         ],
         shankR: [
           {
             kind: "rotate",
-            deg: flare * 0.5,
+            deg: flare * 0.36,
             pivot: [ANT.kneeR[0], ANT.ankleY],
           },
         ],
@@ -1464,7 +1470,8 @@ export function renderBodyDemo(
    * boundary line — separations DRAWN on the form, textbook-style,
    * instead of voids through it. */
   const transformed = data.map((p) => {
-    let ops = pose[groupOf(view, p)] ?? [];
+    const g = groupOf(view, p);
+    let ops = pose[g] ?? [];
     if (p.muscle === "front-deltoids" || p.muscle === "back-deltoids") {
       ops = deltoidOps(ops);
     }
@@ -1477,8 +1484,25 @@ export function renderBodyDemo(
     // The head is the one form with no interior muscle boundaries — a
     // skull reads as an OVAL, so its corners get a much deeper rounding
     // than the muscle facets (whose crisp edges are the anatomy lines).
-    return { pts, level, r: p.muscle === "head" ? 3.2 : 1.1 };
+    return { pts, level, g, r: p.muscle === "head" ? 3.2 : 1.1 };
   });
+  /* Group flesh hulls: the weld stroke bridges the map's IDENTITY
+   * spacing, but posed gaps SCALE — a compressed squat thigh or a
+   * racked arm opens black wedges far wider than any stroke. Each
+   * body group (except the single-poly head) lays a convex hull of
+   * its posed points underneath, so intra-group voids are closed at
+   * every pose while left/right limbs stay separate — the crotch and
+   * armpit keep their real negative space. */
+  const groupPts = new Map<GroupName, Pt[]>();
+  for (const { pts, g } of transformed) {
+    if (g !== "head") groupPts.set(g, [...(groupPts.get(g) ?? []), ...pts]);
+  }
+  const hulls = [...groupPts.values()]
+    .map(
+      (pts) =>
+        `<path d="${roundedPath(convexHull(pts), 2)}" fill="${BODY}" stroke="${BODY}" stroke-width="2.2" stroke-linejoin="round"/>`
+    )
+    .join("");
   /* Gap fillers (owner pass: "what's all the black space between the
    * blocks?"): two voids in the vendored muscle map are too wide for
    * any weld stroke to bridge — the anterior THROAT (an ~11-unit V
@@ -1486,32 +1510,58 @@ export function renderBodyDemo(
    * channel between the trapezius pair. On a body both are flesh.
    * Painted first in the weld pass, riding the torso group like the
    * polys they bridge. */
-  const GAP_FILLS: Pt[][] =
+  // [points, weld-stroke width] — the pelvis shield draws fill-only
+  // (w 0): its hip-line corners sit near the silhouette edge, and the
+  // fat weld stroke pushed them outside as little fins at the waist.
+  const GAP_FILLS: [Pt[], number][] =
     view === "anterior"
       ? [
           [
-            [44.5, 24.5],
-            [55.5, 23.7],
-            [51.5, 38],
-            [48.5, 38],
+            [
+              [44.5, 24.5],
+              [55.5, 23.7],
+              [51.5, 38],
+              [48.5, 38],
+            ],
+            2.6,
+          ],
+          /* Pelvis shield: the groin triangles between the diving torso
+           * and the compressing thighs open DIAGONAL voids no
+           * intra-group hull can close (they sit between groups). A
+           * shield riding the torso spans the hip line and tapers to
+           * the crotch point, so the interface stays flesh at squat
+           * depth without filling the real between-thighs V below. */
+          [
+            [
+              [33, 87],
+              [67, 87],
+              [62, 98],
+              [50, 109],
+              [38, 98],
+            ],
+            0,
           ],
         ]
       : [
           [
-            [46.5, 20.5],
-            [53.5, 20.5],
-            [54.2, 38.3],
-            [53.3, 64.7],
-            [46.7, 64.7],
-            [45.8, 38.3],
+            [
+              [46.5, 20.5],
+              [53.5, 20.5],
+              [54.2, 38.3],
+              [53.3, 64.7],
+              [46.7, 64.7],
+              [45.8, 38.3],
+            ],
+            2.6,
           ],
         ];
   const torsoOps = pose.torso ?? [];
   const fillers = GAP_FILLS.map(
-    (pts) =>
-      `<path d="${roundedPath(applyOps(pts, torsoOps), 1.4)}" fill="${BODY}" stroke="${BODY}" stroke-width="2.6" stroke-linejoin="round"/>`
+    ([pts, w]) =>
+      `<path d="${roundedPath(applyOps(pts, torsoOps), 1.4)}" fill="${BODY}"${w > 0 ? ` stroke="${BODY}" stroke-width="${w}" stroke-linejoin="round"` : ""}/>`
   ).join("");
   const weld =
+    hulls +
     fillers +
     transformed
       .map(
