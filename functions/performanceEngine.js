@@ -124,6 +124,35 @@ function isInRollingWindow(dateStr, computeKey) {
   return dateStr >= windowStartStr && dateStr <= computeKey;
 }
 
+/**
+ * The compute key a create-trigger should recompute with for a doc dated
+ * `dateStr`, or null to skip the recompute.
+ *
+ * `todayKey` is the SERVER's UTC date; `dateStr` is the USER's local day
+ * (localDateString on the client). Those disagree for real users: east of
+ * UTC, any session logged before the local afternoon carries a label the
+ * server has not reached yet. The old gate was `isInRollingWindow(dateStr,
+ * todayKey)` alone, whose `dateStr <= computeKey` half read every such
+ * session as out-of-window — so the trigger skipped the recompute, logging
+ * prose written for BACKDATED entries, and the PI sat stale until the next
+ * day's cron. Data was never lost; freshness was, at exactly the moment a
+ * user looks (right after finishing a session).
+ *
+ * A label ONE day ahead is a legitimate same-day session (UTC+14 is the
+ * planet's maximum — a real timezone can never lead the server's date by
+ * two). For those, return the doc's OWN day: the window ending there
+ * contains the doc, and `currentWindow(todayKey)` would exclude it even if
+ * the gate passed, because its exclusive end IS the doc's midnight. Labels
+ * further ahead are a broken clock, and keeping the skip for them is the
+ * gate's protective half, unchanged.
+ */
+function triggerComputeKey(dateStr, todayKey) {
+  if (dateStr > todayKey) {
+    return dateStr === dateKeyMinusN(todayKey, -1) ? dateStr : null;
+  }
+  return isInRollingWindow(dateStr, todayKey) ? todayKey : null;
+}
+
 // ── Firestore data fetching ──────────────────
 
 /**
@@ -831,6 +860,7 @@ module.exports = {
   getComputeKey,
   getWeekKey, // legacy alias
   isInRollingWindow,
+  triggerComputeKey,
   COOLDOWN_MS,
   // Pure helpers exposed for unit testing. The scoring helpers are re-exported
   // from ./lib/perfScoring (the shared, goal-aware copy) so existing tests that

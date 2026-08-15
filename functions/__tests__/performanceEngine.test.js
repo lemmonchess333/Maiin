@@ -38,6 +38,7 @@ const {
   getComputeKey,
   getWeekKey,
   isInRollingWindow,
+  triggerComputeKey,
   _internal,
 } = require("../performanceEngine");
 
@@ -146,6 +147,87 @@ describe("isInRollingWindow", () => {
     expect(isInRollingWindow("", "2026-05-19")).toBe(false);
     expect(isInRollingWindow(null, "2026-05-19")).toBe(false);
     expect(isInRollingWindow(undefined, "2026-05-19")).toBe(false);
+  });
+});
+
+/**
+ * The trigger gate, as a decision about WHICH key to compute with — not
+ * just whether. `todayKey` is the server's UTC date; a workout's `date` is
+ * the user's LOCAL day. East of UTC those disagree every morning, and the
+ * old gate (`isInRollingWindow(date, today)` alone) read every such
+ * session as out-of-window: the trigger skipped, logging prose written for
+ * backdated entries, and the PI sat stale until the next day's cron —
+ * exactly when the user looks at it.
+ */
+describe("triggerComputeKey", () => {
+  const TODAY = "2026-08-15";
+
+  it("computes with today for an in-window past or same-day date", () => {
+    expect(triggerComputeKey("2026-08-15", TODAY)).toBe(TODAY);
+    expect(triggerComputeKey("2026-08-12", TODAY)).toBe(TODAY);
+    expect(triggerComputeKey("2026-08-09", TODAY)).toBe(TODAY); // window edge
+  });
+
+  it("still skips a backdated entry beyond the window", () => {
+    expect(triggerComputeKey("2026-08-08", TODAY)).toBeNull();
+    expect(triggerComputeKey("2026-01-01", TODAY)).toBeNull();
+  });
+
+  it("computes with the doc's OWN day when its label is one day ahead", () => {
+    /* The east-of-UTC case: a 9am Auckland session is dated 2026-08-16
+       while the server's UTC date is still the 15th. Returning TODAY here
+       would not be enough even if the gate passed — currentWindow(today)'s
+       exclusive end IS that doc's midnight, so the aggregate would skip
+       it. The key must be the doc's day so the window contains it. */
+    expect(triggerComputeKey("2026-08-16", TODAY)).toBe("2026-08-16");
+  });
+
+  it("still skips a label more than one day ahead — that is a broken clock", () => {
+    /* UTC+14 is the planet's maximum; no real timezone leads the server's
+       date by two. The protective half of the gate is unchanged. */
+    expect(triggerComputeKey("2026-08-17", TODAY)).toBeNull();
+    expect(triggerComputeKey("2027-08-15", TODAY)).toBeNull();
+  });
+
+  it("the one-day-ahead key produces a window that actually contains the doc", () => {
+    /* Ties the returned key to the aggregation rather than trusting the
+       reasoning: the whole point of returning dateStr is that the window
+       built from it counts the workout todayKey's window cannot. */
+    const key = triggerComputeKey("2026-08-16", TODAY);
+    const { start: wStart, end: wEnd } = currentWindow(key);
+    const agg = aggregateWindow(
+      wStart,
+      wEnd,
+      [
+        {
+          date: "2026-08-16",
+          exercises: [{ category: "lift", sets: [{ weightKg: 100, reps: 5 }] }],
+        },
+      ],
+      [],
+      [],
+      []
+    );
+    expect(agg.liftSessions).toBe(1);
+    expect(agg.liftTonnage).toBe(500);
+
+    // ...and the counter-fact that makes the key choice load-bearing:
+    // the same doc against TODAY's window is excluded.
+    const { start: tStart, end: tEnd } = currentWindow(TODAY);
+    const aggToday = aggregateWindow(
+      tStart,
+      tEnd,
+      [
+        {
+          date: "2026-08-16",
+          exercises: [{ category: "lift", sets: [{ weightKg: 100, reps: 5 }] }],
+        },
+      ],
+      [],
+      [],
+      []
+    );
+    expect(aggToday.liftSessions).toBe(0);
   });
 });
 
