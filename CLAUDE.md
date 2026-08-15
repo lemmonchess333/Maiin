@@ -525,7 +525,11 @@ The agent sandbox can't run a browser; CI can. Push any branch's code to
 `claude/screenshot-app` (scratch trigger branch — force-with-lease is fine)
 and `app-screenshots.yml` builds it against the emulator, captures the key
 surfaces light+dark (`e2e/screenshots/home.screens.capture.spec.ts`), and
-commits PNGs to the `app-screenshots` branch for `git fetch` + view. Visual
+commits PNGs to the `app-screenshots` branch for `git fetch` + view. Each
+run also DIFFS against the previous capture (`scripts/diff-screenshots.mjs`,
+pixelmatch): `screenshot-diff/DIFF_REPORT.md` + per-frame changed-pixel
+highlights ride the same branch and mirror into the run's step summary —
+a report, not a gate (intended change is normal here). Visual
 PRs cite before/after from this channel (the D15 lesson: no visual churn
 without screenshots). Gotchas: capture specs must be named
 `*.capture.spec.ts` (auth-emulator project); the Progress/Form switch and
@@ -637,14 +641,14 @@ rule and keeps being mistaken for it: **a number computed in one place and
 DISPLAYED from another**. Not two copies of a formula drifting — one correct
 value, and a reader pointed at a different, staler field.
 
-  Home's protein nudge      quoted `profile.targetProtein` beneath rings
-                            showing `useEffectiveTargets().protein` — 16-32 g
-                            apart, on the same card.
-  History's target line     quoted an onboarding-day snapshot nothing had
-                            updated since.
-  Settings' "Adapting"      printed the formula figure under a line saying the
-                            number was adapted.
-  The PI scorer             was handed `profile.goal`, a field nothing writes.
+Home's protein nudge quoted `profile.targetProtein` beneath rings
+showing `useEffectiveTargets().protein` — 16-32 g
+apart, on the same card.
+History's target line quoted an onboarding-day snapshot nothing had
+updated since.
+Settings' "Adapting" printed the formula figure under a line saying the
+number was adapted.
+The PI scorer was handed `profile.goal`, a field nothing writes.
 
 In every case the codebase had ALREADY solved it for the neighbouring field
 and the fix was pointing the stray reader at the existing source.
@@ -1412,7 +1416,7 @@ lands in the same place (the plan-file lock rule, applied to ADRs):
 | 0009 | One Firestore test fake; injecting the `db` handle buys nothing                    |
 | 0010 | Volume currency — 1:1 is correct; the flip waits on landmark-aware builders        |
 | 0011 | Programme command boundary stops at the week engine — 8 sites stay document writes |
-| 0012 | Deleting a logged session reverses accumulators, not history                      |
+| 0012 | Deleting a logged session reverses accumulators, not history                       |
 
 ## Dynamic workflows & `ultracode` (when to escalate)
 

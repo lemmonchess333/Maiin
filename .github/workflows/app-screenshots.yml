@@ -72,6 +72,25 @@ jobs:
           firebase emulators:exec --only auth,firestore --project demo-tropos \
             'npm run seed:e2e && npm run seed:rich && npm run seed:circles && npm run seed:experience && npm run seed:fellbehind && npm run test:e2e -- capture.spec.ts --project=auth-emulator'
 
+      - name: Diff against the previous capture
+        if: always()
+        run: |
+          if [ -z "$(ls -A screenshots 2>/dev/null)" ]; then
+            echo "no screenshots produced — skipping diff"; exit 0
+          fi
+          # Previous capture = the current app-screenshots branch content.
+          # First run (no branch yet) diffs against an empty baseline and
+          # reports every frame as added.
+          rm -rf baseline-screenshots screenshot-diff
+          if git fetch origin app-screenshots --depth 1 2>/dev/null; then
+            git worktree add --detach baseline-worktree FETCH_HEAD
+            [ -d baseline-worktree/screenshots ] && mv baseline-worktree/screenshots baseline-screenshots
+            git worktree remove --force baseline-worktree || true
+          fi
+          mkdir -p baseline-screenshots
+          node scripts/diff-screenshots.mjs baseline-screenshots screenshots screenshot-diff
+          cat screenshot-diff/DIFF_REPORT.md >> "$GITHUB_STEP_SUMMARY" || true
+
       - name: Commit screenshots to the app-screenshots branch
         if: always()
         run: |
@@ -82,5 +101,9 @@ jobs:
           git config user.email "bot@tropos.local"
           git checkout -B app-screenshots
           git add -f screenshots/
+          # The delta rides along: DIFF_REPORT.md + per-frame changed-pixel
+          # highlights, so a fetch of the branch carries the review artifact
+          # (also mirrored into the run's step summary above).
+          [ -d screenshot-diff ] && git add -f screenshot-diff/
           git commit -m "chore: app screenshots [skip ci]" || { echo "no changes"; exit 0; }
           git push -f origin app-screenshots
