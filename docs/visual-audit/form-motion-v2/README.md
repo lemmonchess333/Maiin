@@ -121,3 +121,20 @@ circular ball joints · missing hands.
 
 Pins: no body-toned circles anywhere; two hands per view that MOVE with
 the arm; path-based identity/travel assertions. 35 passing.
+
+## STATUS 2026-08-15 (fifth pass) — cervical rhythm, throat/spine fillers, oval head
+
+Self-critique loop (owner: "keep critiquing it until it's significantly
+better"), three findings fixed:
+
+| Finding               | Fix                                                                                                                                                                                                                                                                                                                                        |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Head buried in hinges | Cervical rhythm in all three side hinges (deadlift, RDL, row): the head counter-rotates ~40% of the spine hinge about the POSED neck point — the figure now looks forward-down at the bottom instead of face-planting the bar.                                                                                                             |
+| Throat / spine voids  | Two voids in the vendored muscle map are wider than any weld stroke can bridge: the anterior THROAT (an ~11-unit V below the chin) and the posterior SPINE channel between the trapezius pair. Both read as black holes punched through the chest/back. Each view now leads its weld pass with one BODY gap-filler riding the torso group. |
+| Blocky head           | The head is the one form with no interior muscle boundaries, so it takes a much deeper corner rounding (r 3.2 vs 1.1) in both passes — reads as a skull oval, not a decagon.                                                                                                                                                               |
+
+Checked and NOT changed: overhead-press lockout looks bent at thumbnail
+size but the IK hands genuinely reach the straight-arm ceiling (probe:
+mitts at y≈-4 against a 54-unit chain) — the read is slab width, not a
+joint fault. Pins: identity path count 75 (throat filler), posterior 71
+(spine filler), 36 passing.

@@ -38,7 +38,18 @@ describe("renderBodyDemo", () => {
     const body = svg.replace(/<g class="glow">.*?<\/g>/, "");
     // Rounded <path> shapes since the anatomy pass: weld + crisp per
     // body polygon and foot, plus weld + crisp per hand mitt.
-    expect(body.match(/<path/g)!.length).toBe(74); // (33 body + 2 feet + 2 hands) × 2
+    // (33 body + 2 feet + 2 hands) × 2 passes + 1 throat gap-filler
+    expect(body.match(/<path/g)!.length).toBe(75);
+  });
+
+  it("the posterior view carries its spine gap-filler too", () => {
+    const post = renderBodyDemo("pull-ups", 0).replace(
+      /<g class="glow">.*?<\/g>/,
+      ""
+    );
+    // (33 body + 2 hands) × 2 passes + 1 spine-channel filler — the
+    // posterior model has no feet shapes.
+    expect(post.match(/<path/g)!.length).toBe(71);
   });
 
   it("squat: the body visibly sinks at the bottom", () => {

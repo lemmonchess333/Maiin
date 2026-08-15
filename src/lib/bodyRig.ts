@@ -802,8 +802,16 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         hPre,
         0
       );
+      /* Cervical rhythm (same fix-class as the pelvis): the head counters
+       * ~40% of the hinge about the POSED neck point, so the gaze stays
+       * forward-down instead of burying the face in the floor. */
+      const neckPosed = applyToPoint([48, 32], torsoOps);
+      const headOps: Op[] = [
+        ...torsoOps,
+        { kind: "rotate", deg: -hinge * 0.4, pivot: neckPosed },
+      ];
       return {
-        head: torsoOps,
+        head: headOps,
         torso: torsoOps,
         pelvis: pelvisOps,
         thighL: thighOps,
@@ -1127,7 +1135,17 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         LEAN,
       ];
       return {
-        head: [T, LEAN],
+        // Cervical rhythm — the head counters ~40% of the hinge about the
+        // posed neck so the gaze stays forward, mirroring the pelvis damp.
+        head: [
+          T,
+          LEAN,
+          {
+            kind: "rotate",
+            deg: -T.deg * 0.4,
+            pivot: applyToPoint([48, 32], [T, LEAN]),
+          },
+        ],
         torso: [T, LEAN],
         // Lumbopelvic rhythm: the pelvis tilts ~72% of the spine's hinge
         // (full-rate shelved the glutes out past the back line).
@@ -1206,7 +1224,17 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         LEAN,
       ];
       return {
-        head: [T, LEAN],
+        // Cervical rhythm — the head counters ~40% of the hinge about the
+        // posed neck so the gaze stays forward, mirroring the pelvis damp.
+        head: [
+          T,
+          LEAN,
+          {
+            kind: "rotate",
+            deg: -T.deg * 0.4,
+            pivot: applyToPoint([48, 32], [T, LEAN]),
+          },
+        ],
         torso: [T, LEAN],
         // Lumbopelvic rhythm: the pelvis tilts ~72% of the spine's hinge
         // (full-rate shelved the glutes out past the back line).
@@ -1446,18 +1474,55 @@ export function renderBodyDemo(
       const key = `${p.muscle}|${p.side}`;
       primaryPts.set(key, [...(primaryPts.get(key) ?? []), ...pts]);
     }
-    return { pts, level };
+    // The head is the one form with no interior muscle boundaries — a
+    // skull reads as an OVAL, so its corners get a much deeper rounding
+    // than the muscle facets (whose crisp edges are the anatomy lines).
+    return { pts, level, r: p.muscle === "head" ? 3.2 : 1.1 };
   });
-  const weld = transformed
-    .map(
-      ({ pts }) =>
-        `<path d="${roundedPath(pts, 1.4)}" fill="${BODY}" stroke="${BODY}" stroke-width="2.6" stroke-linejoin="round"/>`
-    )
-    .join("");
+  /* Gap fillers (owner pass: "what's all the black space between the
+   * blocks?"): two voids in the vendored muscle map are too wide for
+   * any weld stroke to bridge — the anterior THROAT (an ~11-unit V
+   * between the neck pair, below the chin) and the posterior SPINE
+   * channel between the trapezius pair. On a body both are flesh.
+   * Painted first in the weld pass, riding the torso group like the
+   * polys they bridge. */
+  const GAP_FILLS: Pt[][] =
+    view === "anterior"
+      ? [
+          [
+            [44.5, 24.5],
+            [55.5, 23.7],
+            [51.5, 38],
+            [48.5, 38],
+          ],
+        ]
+      : [
+          [
+            [46.5, 20.5],
+            [53.5, 20.5],
+            [54.2, 38.3],
+            [53.3, 64.7],
+            [46.7, 64.7],
+            [45.8, 38.3],
+          ],
+        ];
+  const torsoOps = pose.torso ?? [];
+  const fillers = GAP_FILLS.map(
+    (pts) =>
+      `<path d="${roundedPath(applyOps(pts, torsoOps), 1.4)}" fill="${BODY}" stroke="${BODY}" stroke-width="2.6" stroke-linejoin="round"/>`
+  ).join("");
+  const weld =
+    fillers +
+    transformed
+      .map(
+        ({ pts, r }) =>
+          `<path d="${roundedPath(pts, Math.max(r, 1.4))}" fill="${BODY}" stroke="${BODY}" stroke-width="2.6" stroke-linejoin="round"/>`
+      )
+      .join("");
   const polys =
     weld +
     transformed
-      .map(({ pts, level }, i) => {
+      .map(({ pts, level, r }, i) => {
         const base =
           level === "primary"
             ? PRIMARY
@@ -1470,7 +1535,7 @@ export function renderBodyDemo(
           : "";
         return shape(
           pts,
-          1.1,
+          r,
           fill,
           `${op} stroke="${fill}" stroke-width="0.5" stroke-linejoin="round"`
         );
