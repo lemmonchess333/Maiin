@@ -85,6 +85,11 @@ import { logger } from "@/lib/logger";
 import { useScrollEdges } from "@/hooks/useScrollEdges";
 import SessionCompleteScreen from "@/components/workout/SessionCompleteScreen";
 import RestTimerRing from "@/components/workout/RestTimerRing";
+import {
+  restNotificationDelaySeconds,
+  scheduleRestEndNotification,
+  cancelRestEndNotification,
+} from "@/lib/restTimerNotification";
 import StallModal from "@/components/workout/StallModal";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { IconButton } from "@/components/ui/IconButton";
@@ -621,6 +626,10 @@ export default function WorkoutSession({
   const [isResting, setIsResting] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const chimeFiredRef = useRef(false);
+  // Wall-clock anchor for the current rest. The displayed seconds derive
+  // from this (not from interval ticks), so a backgrounded/locked WebView
+  // — whose timers iOS freezes — reads correct on return.
+  const restStartedAtRef = useRef(0);
   // D-LIFT-16: the Settings → "Auto-start rest timer" toggle existed but was
   // never read here — the same dead-setting class PR E fixed for
   // defaultRestSeconds. Default ON (unset/legacy profiles keep today's
@@ -722,6 +731,7 @@ export default function WorkoutSession({
             : profileRestDefault
         );
       }
+      restStartedAtRef.current = Date.now();
       setRestSeconds(0);
       setIsResting(true);
       chimeFiredRef.current = false;
@@ -733,6 +743,7 @@ export default function WorkoutSession({
   const stopRest = useCallback(() => {
     setIsResting(false);
     setRestSeconds(0);
+    void cancelRestEndNotification();
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
@@ -742,13 +753,57 @@ export default function WorkoutSession({
   useEffect(() => {
     if (isResting) {
       timerRef.current = setInterval(() => {
-        setRestSeconds((prev) => prev + 1);
+        // Derived from the wall-clock anchor, not tick-counted. iOS
+        // suspends WebView timers on screen-lock/background, so a
+        // `prev + 1` counter silently stalled for the whole hidden
+        // window — a 3-minute pocket rest read as 40 seconds on
+        // return. The first tick after resume snaps to the truth.
+        setRestSeconds(
+          Math.floor((Date.now() - restStartedAtRef.current) / 1000)
+        );
       }, 1000);
     }
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [isResting]);
+
+  // Lock-screen half of the rest timer: the OS banner exists only while
+  // the app is HIDDEN — scheduled on hide with the remaining rest,
+  // cancelled on return — so foregrounded users get the in-app chime +
+  // haptic, backgrounded users get the banner, and nobody gets both.
+  // Permission is checked, never prompted, inside
+  // scheduleRestEndNotification.
+  useEffect(() => {
+    if (!isResting) return;
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        const delay = restNotificationDelaySeconds({
+          isResting: true,
+          elapsedSeconds: Math.floor(
+            (Date.now() - restStartedAtRef.current) / 1000
+          ),
+          targetSeconds: restTarget,
+          chimeFired: chimeFiredRef.current,
+        });
+        if (delay !== null) {
+          void scheduleRestEndNotification(
+            delay,
+            day.exercises[currentExIndex]?.name
+          );
+        }
+      } else {
+        // Back before it fired → the in-app chime takes over; after it
+        // fired the cancel is a harmless no-op.
+        void cancelRestEndNotification();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      void cancelRestEndNotification();
+    };
+  }, [isResting, restTarget, day.exercises, currentExIndex]);
 
   // Auto-stop timer when it reaches target
   useEffect(() => {
