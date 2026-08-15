@@ -89,6 +89,11 @@ import {
 import { logger } from "../lib/logger";
 import { localDateString } from "../lib/dateHelpers";
 import { isNativePlatform } from "../lib/platform";
+import RunBackgroundGrantNote from "../components/run/RunBackgroundGrantNote";
+import {
+  openLocationSettings,
+  shouldWarnBackgroundPause,
+} from "../lib/nativeLocationSettings";
 import {
   runSessionReducer,
   initialRunPhase,
@@ -315,6 +320,30 @@ export default function Run() {
   const timerRef = useRef(timer);
   timerRef.current = timer;
   const [bgGapBanner, setBgGapBanner] = useState<string | null>(null);
+  // Section 7 (docs/run-background-gps.md): the native "While Using only"
+  // note. `showBgGrantNote` drives the non-blocking card in the banner
+  // stack; the persisted dismissed flag stops it re-nagging once the user
+  // has acknowledged it (the grant itself is unreadable — see
+  // nativeLocationSettings — so acknowledgement is the only exit).
+  const [showBgGrantNote, setShowBgGrantNote] = useState(false);
+  const bgGrantNoteDismissedRef = useRef<boolean>(
+    (() => {
+      try {
+        return localStorage.getItem("tropos.run.bgGrantNoteDismissed") === "1";
+      } catch {
+        return false;
+      }
+    })()
+  );
+  const dismissBgGrantNote = useCallback(() => {
+    bgGrantNoteDismissedRef.current = true;
+    setShowBgGrantNote(false);
+    try {
+      localStorage.setItem("tropos.run.bgGrantNoteDismissed", "1");
+    } catch {
+      /* private mode / storage disabled — the ref still suppresses re-show */
+    }
+  }, []);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   // Device/browser BACK during an active/paused run opens a "Leave run?"
@@ -411,6 +440,23 @@ export default function Run() {
           );
           setTimeout(() => setBgGapBanner(null), 6000);
         }
+      } else if (
+        // Section 7 (docs/run-background-gps.md): with an Always grant the
+        // native watcher records through the hidden window, so a resume
+        // where NO fresh fix arrived during a real hidden window is the
+        // symptom of a "While Using"-only grant (the plugin exposes no API
+        // to read the tier directly). Surface the non-blocking note once,
+        // pointing at Settings → Always. The run is never blocked.
+        isOutdoorGpsRun(runConfig?.activityType) &&
+        phase === "active" &&
+        !bgGrantNoteDismissedRef.current &&
+        shouldWarnBackgroundPause({
+          hiddenDurationSec: event.hiddenDuration,
+          msSinceLastFixOnResume:
+            gps.lastFixAt === null ? null : Date.now() - gps.lastFixAt,
+        })
+      ) {
+        setShowBgGrantNote(true);
       }
     },
     [timer, gps, wakeLock, runConfig?.activityType, phase]
@@ -1559,6 +1605,13 @@ export default function Run() {
                 >
                   <p className="text-xs text-warning-strong">{bgGapBanner}</p>
                 </div>
+              )}
+
+              {showBgGrantNote && (
+                <RunBackgroundGrantNote
+                  onOpenSettings={openLocationSettings}
+                  onDismiss={dismissBgGrantNote}
+                />
               )}
 
               {(() => {

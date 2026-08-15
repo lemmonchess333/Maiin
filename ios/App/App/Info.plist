@@ -51,6 +51,12 @@
 	<string>Tropos uses your camera to scan food and barcodes for faster logging.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Tropos uses your location to track runs and calculate distance.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Tropos uses your location in the background so run tracking continues while your screen is locked.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Tropos lets you attach progress photos to track visual changes over time.</string>
 </dict>
