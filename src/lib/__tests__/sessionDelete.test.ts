@@ -109,3 +109,50 @@ describe("deleteLoggedSession", () => {
     expect(allPaths()).toContain("activities/act-1");
   });
 });
+
+/**
+ * `recordSharedActivity` — the other half of the same contract: what
+ * `deleteLoggedSession` READS, every share path WRITES through this one
+ * helper. It existed as three inline copies (both workout save-composers
+ * and the share sheet) while the run path and the offline drain wrote
+ * nothing — so a shared run, or any session shared offline, stranded its
+ * post on delete: the copy said "your post stays" because the link that
+ * would let the delete clear it was never recorded.
+ */
+describe("recordSharedActivity", () => {
+  it("links a run to its post — the side that never wrote the marker", async () => {
+    const { recordSharedActivity } = await import("@/lib/sessionDelete");
+    await recordSharedActivity("u1", { kind: "run", id: "r-1" }, "act-9");
+    const write = writeLog().find(
+      (w) => w.path === "users/u1/runs/r-1" && w.op === "update"
+    );
+    expect(write).toBeTruthy();
+    expect(write?.data).toEqual({ sharedActivityId: "act-9" });
+  });
+
+  it("links a workout to its post", async () => {
+    const { recordSharedActivity } = await import("@/lib/sessionDelete");
+    await recordSharedActivity("u1", { kind: "workout", id: "w-1" }, "act-9");
+    expect(
+      writeLog().some(
+        (w) => w.path === "users/u1/workouts/w-1" && w.op === "update"
+      )
+    ).toBe(true);
+  });
+
+  it("swallows a failed marker write — the post must never cost the save", async () => {
+    /* Every caller depends on this contract: the marker rides AFTER a
+       successful post (and after a successful save), so a helper that
+       rethrew would turn a cosmetic failure into a failed share — or in
+       the drain, re-queue a post that already landed and duplicate it on
+       the next drain. */
+    const { recordSharedActivity } = await import("@/lib/sessionDelete");
+    failNextFirestore("updateDoc", { path: "users/u1/runs/r-1" });
+    await expect(
+      recordSharedActivity("u1", { kind: "run", id: "r-1" }, "act-9")
+    ).resolves.toBeUndefined();
+    // The failure DID fire and was absorbed — an unfired arm would mean
+    // this test silently exercised the happy path.
+    expect(unfiredFailures()).toEqual([]);
+  });
+});

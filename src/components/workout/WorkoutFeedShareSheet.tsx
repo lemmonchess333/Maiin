@@ -17,16 +17,14 @@
  */
 import { useState } from "react";
 import { Users, Globe } from "lucide-react";
-import { doc } from "firebase/firestore";
 
-import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/Button";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { haptic } from "@/lib/haptic";
 import { toast } from "@/lib/toast";
 import { logger } from "@/lib/logger";
-import { updateDocGuarded } from "@/lib/firestoreWrite";
+import { recordSharedActivity } from "@/lib/sessionDelete";
 import { postActivity } from "@/lib/socialApi";
 import { containsProfanity } from "@/lib/profanityFilter";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
@@ -97,13 +95,11 @@ export default function WorkoutFeedShareSheet({
       // Best-effort dedupe marker. If this write fails the post still
       // stands — the only cost is that this page keeps offering the button,
       // which is strictly better than losing the post to a failed marker.
-      try {
-        await updateDocGuarded(doc(db, "users", uid, "workouts", workout.id), {
-          sharedActivityId: activityId,
-        });
-      } catch (err) {
-        logger.error("[WorkoutDetail] shared marker write failed:", err);
-      }
+      await recordSharedActivity(
+        uid,
+        { kind: "workout", id: workout.id },
+        activityId
+      );
 
       onShared(activityId);
       onOpenChange(false);

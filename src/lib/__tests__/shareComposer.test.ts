@@ -171,6 +171,47 @@ describe("offline queue", function () {
     expect(post).not.toHaveBeenCalled();
   });
 
+  it("carries the item's source through to the drain", async function () {
+    /* The source is what lets a DRAINED post record `sharedActivityId`
+       back onto its session — the link `deleteLoggedSession` needs to
+       clear the post. Before it existed, any session shared offline
+       stranded its post on delete, while the same share made online was
+       cleanable: two different delete outcomes for one user action,
+       decided by network state the user can't see. */
+    enqueueShare(UID_A, { type: "run", runName: "Easy 5k" }, {
+      kind: "run",
+      id: "r-42",
+    });
+    const post = vi.fn().mockResolvedValue(undefined);
+    await drainQueue(UID_A, post);
+    expect(post).toHaveBeenCalledWith(
+      { type: "run", runName: "Easy 5k" },
+      { kind: "run", id: "r-42" }
+    );
+  });
+
+  it("a legacy item without a source drains with undefined, not a crash", async function () {
+    // Items queued before the field existed — and any future writer that
+    // has nothing to link — must behave exactly as pre-fix: post, no link.
+    enqueueShare(UID_A, { type: "workout" });
+    const post = vi.fn().mockResolvedValue(undefined);
+    await drainQueue(UID_A, post);
+    expect(post).toHaveBeenCalledWith({ type: "workout" }, undefined);
+  });
+
+  it("a failed post keeps its source for the retry", async function () {
+    /* Losing the source on requeue would make the RETRY succeed as a
+       link-less post — the stranded-post bug reappearing only for shares
+       that failed once, the least observable slice. */
+    enqueueShare(UID_A, { id: "a" }, { kind: "workout", id: "w-9" });
+    const failing = vi.fn().mockRejectedValue(new Error("network"));
+    await drainQueue(UID_A, failing);
+    expect(getQueueLength(UID_A)).toBe(1);
+    const retry = vi.fn().mockResolvedValue(undefined);
+    await drainQueue(UID_A, retry);
+    expect(retry).toHaveBeenCalledWith({ id: "a" }, { kind: "workout", id: "w-9" });
+  });
+
   it("drainQueue only replays items belonging to the given uid", async function () {
     enqueueShare(UID_A, { type: "workout", workoutName: "A's push day" });
     enqueueShare(UID_B, { type: "run", runName: "B's 10k" });

@@ -26,6 +26,7 @@ import {
 } from "../lib/gps";
 import { postActivity } from "../lib/socialApi";
 import { compose, enqueueShare, showQueuedToast } from "../lib/shareComposer";
+import { recordSharedActivity } from "../lib/sessionDelete";
 import type { GPSPoint, Split } from "../lib/gps";
 import type { RunConfig } from "../components/run/RunSetupModal";
 import RunMap from "../components/run/RunMapLazy";
@@ -1090,21 +1091,28 @@ export default function RunSummary() {
                     .map((p) => ({ lat: p.lat, lon: p.lon }))
                 : sharedRoutePoints.map((p) => ({ lat: p.lat, lon: p.lon })),
           };
+          const runSource = { kind: "run" as const, id: savedId };
           if (isOnline) {
             try {
-              await postActivity(payload);
+              const activityId = await postActivity(payload);
+              /* The link that lets deleting this run clear its post —
+                 without it the post is stranded (sessionDelete's
+                 asymmetry note, now closed). Workout save-composers have
+                 written their marker since the share sheet shipped; the
+                 run path never did. Best-effort inside the helper. */
+              await recordSharedActivity(user.uid, runSource, activityId);
             } catch (socialErr) {
               const lostNet =
                 typeof navigator !== "undefined" && navigator.onLine === false;
               if (lostNet) {
-                enqueueShare(user.uid, payload);
+                enqueueShare(user.uid, payload, runSource);
                 showQueuedToast();
               } else {
                 logger.warn("[RunSave] postActivity failed:", socialErr);
               }
             }
           } else {
-            enqueueShare(user.uid, payload);
+            enqueueShare(user.uid, payload, runSource);
             showQueuedToast();
           }
         }
