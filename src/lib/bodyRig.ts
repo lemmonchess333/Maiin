@@ -1665,7 +1665,19 @@ export function renderBodyDemo(
     .map(([pa, ga, pb, gb, w]) => {
       const a = applyToPoint(pa, pose[ga] ?? []);
       const b = applyToPoint(pb, pose[gb] ?? []);
-      return `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}" stroke="${BODY}" stroke-width="${w}" stroke-linecap="round"/>`;
+      /* Deformation-aware width (owner pass 8: at rest the full-width
+       * capsules showed past the tapered blocks as "a straight rod
+       * with a circle"). A capsule only exists to bridge a joint that
+       * has OPENED, so its width follows how much the span between
+       * its endpoints has changed vs rest — pure translation (squat
+       * dive, pull-up ride) leaves dv = 0 and the capsule stays a
+       * narrow core hidden beneath the muscle blocks. */
+      const dv = Math.hypot(
+        b[0] - a[0] - (pb[0] - pa[0]),
+        b[1] - a[1] - (pb[1] - pa[1])
+      );
+      const wEff = Math.min(w, 4.2 + dv * 0.5);
+      return `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}" stroke="${BODY}" stroke-width="${wEff.toFixed(1)}" stroke-linecap="round"/>`;
     })
     .join("");
 
@@ -1699,8 +1711,8 @@ export function renderBodyDemo(
    * feet") — the old mitt ran 6 units long past the wrist and read as
    * a flipper wherever the forearm pointed. */
   const HAND_SHAPE: Pt[] = [
-    [-2.2, -1],
-    [2.2, -1],
+    [-2.3, -2.4],
+    [2.3, -2.4],
     [2.7, 1.1],
     [1.2, 3],
     [-1.4, 2.9],

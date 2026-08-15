@@ -371,3 +371,22 @@ armpit. Two root causes:
 | Armpit floaters           | The ANT triceps blades are MEDIAL strips (inner-arm), so elevation swung them into the armpit as floating purple wedges. Both blades shifted ~2 units to hug the humerus axis — inside the arm mass at any rotation.                                                                                             |
 
 37 passing.
+
+## STATUS 2026-08-15 (twenty-first pass) — deformation-aware sleeves
+
+Owner on the squat rest pose: "misalignment of arms … a straight rod
+with a circle, like the underlying figure is showing over the top."
+Exactly right: the joint capsules render at full width along the bone
+line even at rest, and after the blade trims they poked past the
+tapered block tips — the round line-cap was the "circle."
+
+Fix: a capsule only exists to bridge a joint that has OPENED, so its
+width now follows the deformation of the span between its endpoints
+(|posed span − rest span|). Pure translation (squat dive, pull-up
+ride) leaves the deformation at zero and the capsule stays a narrow
+4.2-unit core hidden beneath the blocks; articulation widens it
+toward its full width. The fist also grew 1.4 units toward the wrist
+so the forearm capsule's cap hides beneath it.
+
+Both ends verified: rest arms show no rod (the owner's frame), press
+rack / raise top keep the pass-20 solid arms. 37 passing.
