@@ -1611,6 +1611,16 @@ export function renderBodyDemo(
       "upperArmR",
       7,
     ],
+    /* Forearm-axis sleeves: the fist rides the forearm group (no
+     * relative rotation), but the thin forearm blocks let the arm END
+     * dissolve into offset flakes at big raises, and the channel to
+     * the hand left the fist floating. One capsule from mid-forearm to
+     * the hand anchor (both in the forearm group) welds the outer
+     * forearm and hand into a continuous limb end — together with the
+     * elbow sleeve (which reaches 0.25 down the forearm) the arm's
+     * axis is covered joint to fingertip. */
+    [seg(JA.elbowL, JA.handL, 0.35), "foreArmL", JA.handL, "foreArmL", 5],
+    [seg(JA.elbowR, JA.handR, 0.35), "foreArmR", JA.handR, "foreArmR", 5],
   ];
   if (view === "anterior") {
     sleeveDefs.push(

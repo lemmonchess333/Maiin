@@ -63,8 +63,8 @@ describe("renderBodyDemo", () => {
         svg.match(/<line[^>]*stroke="#B6BDC3"[^>]*stroke-linecap="round"/g) ??
         []
       ).length;
-    expect(count(renderBodyDemo("squat", 0))).toBe(6);
-    expect(count(renderBodyDemo("pull-ups", 0))).toBe(4);
+    expect(count(renderBodyDemo("squat", 0))).toBe(8); // +2 wrist welds
+    expect(count(renderBodyDemo("pull-ups", 0))).toBe(6);
     expect(renderBodyDemo("squat", 0).includes('<circle fill="#B6BDC3"')).toBe(
       false
     );

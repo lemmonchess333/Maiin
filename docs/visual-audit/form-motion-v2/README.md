@@ -273,3 +273,20 @@ deltoid at rest.
 New pin: sleeve census by round-capped BODY line count (anterior 6 =
 elbow+shoulder+knee pairs; posterior 4) + the no-ball-caps assertion.
 37 passing.
+
+## STATUS 2026-08-15 (fourteenth pass) — forearm-axis sleeves; arm ends stay whole
+
+Close-up sweep: at big raises the thin forearm blocks drifted into
+offset flakes and the fist floated off the forearm tip. One capsule
+per arm from mid-forearm (0.35) to the hand anchor — both in the
+forearm group, so it is a static weld — keeps the outer forearm and
+hand a continuous limb end at every pose; with the elbow sleeve
+reaching 0.25 down the forearm, the arm's axis is covered joint to
+fingertip. Sleeve census pin: anterior 8, posterior 6.
+
+Reviewed and accepted as vendored-art limits (recorded so they are
+not re-chased): the tinted triceps sliver reads slightly offset at
+full overhead extension, and the deltoid-to-arm fan at a 90° raise
+keeps some black in the fan region at 4× zoom — both read correctly
+at card scale, and covering them needs art surgery on the arm
+polygons, not more sleeves. 37 passing.
