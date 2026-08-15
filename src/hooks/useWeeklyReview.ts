@@ -33,6 +33,7 @@ import {
 import { workoutTonnageKg } from "@/hooks/useWorkouts";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import { buildPRMap, checkSetPR } from "@/lib/prTracking";
+import { isSetEligibleForStrengthPr } from "@/features/program/sessionSetPolicy";
 import { fetchBodyweightLogs } from "@/lib/api";
 import { resolveRunPlanSurface } from "@/lib/runProgrammeViewModel";
 import { logger } from "@/lib/logger";
@@ -62,7 +63,8 @@ interface WorkoutDocLite {
   date: string;
   exercises: {
     exerciseName: string;
-    sets: { weightKg: number; reps: number }[];
+    repUnit?: "reps" | "seconds";
+    sets: { weightKg: number; reps: number; type?: string }[];
   }[];
 }
 
@@ -91,6 +93,16 @@ export function countWeekPRs(
   for (const w of chronological) {
     for (const ex of w.exercises) {
       for (const set of ex.sets) {
+        /* The gate the live session applies before celebrating a PR —
+           replayed here because this count is a CLAIM about that week's
+           sessions. Without it the recap counted PRs the sessions
+           themselves refused to fire: a warm-up that happened to beat a
+           bucket, and a hold whose longer duration read as
+           same-weight-more-reps. Absent `type` means working (pre-D2
+           docs; export.ts's documented default). */
+        if (!isSetEligibleForStrengthPr(set.type ?? "working", ex.repUnit)) {
+          continue;
+        }
         const bucket = checkSetPR(
           ex.exerciseName,
           set.weightKg,

@@ -479,12 +479,20 @@ export default function WorkoutSession({
             exercises: (data.exercises || []).map(
               (ex: {
                 exerciseName: string;
-                sets: { weightKg: number; reps: number }[];
+                repUnit?: "reps" | "seconds";
+                sets: { weightKg: number; reps: number; type?: string }[];
               }) => ({
                 exerciseName: ex.exerciseName,
+                /* Carried for the same reason the volumeBest projection
+                   carries it: buildPRMap now applies the live PR gate (no
+                   warm-ups, no holds), and a projection that strips the
+                   fields makes that gate unreachable on exactly the path
+                   that REPLACES the live-built map. */
+                repUnit: ex.repUnit,
                 sets: (ex.sets || []).map((s) => ({
                   weightKg: s.weightKg || 0,
                   reps: s.reps || 0,
+                  type: s.type,
                 })),
               })
             ),

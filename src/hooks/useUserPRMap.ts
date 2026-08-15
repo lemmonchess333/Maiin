@@ -42,7 +42,8 @@ async function fetchPRMap(uid: string): Promise<PRMap> {
           d.data() as {
             exercises: {
               exerciseName: string;
-              sets: { weightKg: number; reps: number }[];
+              repUnit?: "reps" | "seconds";
+              sets: { weightKg: number; reps: number; type?: string }[];
             }[];
             date: string;
           }

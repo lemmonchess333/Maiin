@@ -6,6 +6,7 @@
  * PR map is persisted to Firestore (users/{uid}/stats/prMap)
  * after each workout for complete history beyond the 50-session window.
  */
+import { isSetEligibleForStrengthPr } from "@/features/program/sessionSetPolicy";
 
 export type RepBucket = "1rm" | "3rm" | "5rm" | "8rm" | "10rm";
 
@@ -48,11 +49,39 @@ const EMPTY_BUCKETS: Record<RepBucket, ExercisePR | null> = {
   "10rm": null,
 };
 
+/**
+ * Rebuilds the rep-bucket PR map from workout history.
+ *
+ * Filters with the SAME predicate the live path uses
+ * (`isSetEligibleForStrengthPr`): no warm-ups, no timed holds. The live
+ * gate alone was not enough, because this rebuild REPLACES the live-built
+ * map whenever `stats/prMap` is missing or legacy — so records the live
+ * path refused to create came back on the next rebuild, and two of them
+ * were user-visible:
+ *
+ *   - A timed hold seeded rep-bucket records (a 20 kg / 60 s weighted
+ *     plank filed under "10+ Rep Max"), which the compare sheet then
+ *     displayed and the post-session persist wrote to the account. The
+ *     app has already ruled a hold is not a rep-max anywhere it had
+ *     been told (ExerciseHistory says "Longest hold"; the live PR gate
+ *     refuses one).
+ *   - A warm-up could seed a record that then SUPPRESSED a real PR: a
+ *     historical 60 kg warm-up outranks today's 55 kg working set, so
+ *     the working set fires nothing — the same phantom-suppression
+ *     class as the malformed-set guard below, reached via honest data.
+ *
+ * A set with no `type` counts as working — pre-D2 documents carry none,
+ * and that has always been the documented default (`src/lib/export.ts`).
+ * Drop sets and failure sets stay ELIGIBLE, deliberately: the predicate's
+ * own docblock distinguishes PR eligibility from progression eligibility
+ * on exactly that axis, and excluding them here would erase real records.
+ */
 export function buildPRMap(
   workouts: {
     exercises: {
       exerciseName: string;
-      sets: { weightKg: number; reps: number }[];
+      repUnit?: "reps" | "seconds";
+      sets: { weightKg: number; reps: number; type?: string }[];
     }[];
     date: string;
   }[]
@@ -60,8 +89,12 @@ export function buildPRMap(
   const map: PRMap = {};
   for (const w of workouts) {
     for (const ex of w.exercises) {
+      if (ex.repUnit === "seconds") continue;
       if (!map[ex.exerciseName]) map[ex.exerciseName] = { ...EMPTY_BUCKETS };
       for (const set of ex.sets) {
+        if (!isSetEligibleForStrengthPr(set.type ?? "working", ex.repUnit)) {
+          continue;
+        }
         // Malformed legacy sets mint PHANTOM records that then suppress real
         // PRs forever (probe sweep 2026-08-05, verifier-confirmed):
         // `undefined <= 0` is false, so a set missing weightKg passed this
