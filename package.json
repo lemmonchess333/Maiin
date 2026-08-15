@@ -63,6 +63,7 @@
     "@zxing/browser": "^0.1.5",
     "canvas-confetti": "^1.9.4",
     "capacitor-health": "^8.1.2",
+    "capacitor-live-activities": "^8.0.0",
     "clsx": "^2.1.1",
     "cordova-plugin-purchase": "^13.16.0",
     "date-fns": "^4.1.0",

@@ -99,7 +99,12 @@ import {
   initialRunPhase,
 } from "../features/run/runSessionReducer";
 import { haptic } from "../lib/haptic";
-import { formatRaceDistance } from "../lib/runLabels";
+import { formatRaceDistance, distanceLabel, paceLabel } from "../lib/runLabels";
+import {
+  startRunActivity,
+  updateRunActivity,
+  endRunActivity,
+} from "../lib/runLiveActivity";
 import { toast } from "../lib/toast";
 import { SPLIT_LAP_IS_METRIC } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
@@ -924,6 +929,49 @@ export default function Run() {
     }
   }, [gps.distance, timer.elapsed, phase, audioCues, runConfig]);
 
+  // Live Activity (lock screen / Dynamic Island) — mirrors the HUD stats
+  // for outdoor GPS runs. Same rolling-pace source as RunBottomSheet, so
+  // the lock screen can never disagree with the in-app display. The seam
+  // module is inert on web / without the plugin, start is idempotent, and
+  // updates are throttled + deduped internally — this effect just feeds
+  // it the current truth every tick.
+  useEffect(() => {
+    if (!isOutdoorGpsRun(runConfig?.activityType)) return;
+    if (phase !== "active" && phase !== "paused") return;
+    const paceS = rollingPaceSeconds(gps.points, 30);
+    const data = {
+      distance: distanceLabel(gps.distance, unit),
+      pace: paceS !== null ? paceLabel(paceS, unit) : "—",
+      elapsed: timer.formatTime(timer.elapsed),
+      label: phase === "paused" ? "Paused" : "Recording",
+    };
+    void startRunActivity(data);
+    void updateRunActivity(data);
+  }, [
+    phase,
+    timer,
+    timer.elapsed,
+    gps.distance,
+    gps.points,
+    unit,
+    runConfig?.activityType,
+  ]);
+
+  // Dismiss the Live Activity the moment the run leaves the live states
+  // (finish → summary, discard, GPS-fail exit) and on unmount — a card
+  // that outlives its run is stale UI on the lock screen. Both calls are
+  // no-ops when nothing is live.
+  useEffect(() => {
+    if (phase === "active" || phase === "paused") return;
+    void endRunActivity();
+  }, [phase]);
+  useEffect(
+    () => () => {
+      void endRunActivity();
+    },
+    []
+  );
+
   useEffect(() => {
     const eligible =
       phase === "active" &&
@@ -1615,7 +1663,7 @@ export default function Run() {
               )}
 
               {(() => {
-              /* GPS-loss banner: no fix has ARRIVED for 8s during an
+                /* GPS-loss banner: no fix has ARRIVED for 8s during an
                active run.
                
                It reads `lastFixAt`, which until 2026-08-13 meant "the
@@ -1630,31 +1678,31 @@ export default function Run() {
                so the comparison stays current without a separate
                interval. The treadmill case is already excluded by
                the parent JSX block at the start of this section. */
-              if (phase !== "active") return null;
-              if (gps.lastFixAt === null) return null; // pre-first-fix; covered by 'Acquiring GPS'
-              /* Reading the wall clock during render is flagged as
+                if (phase !== "active") return null;
+                if (gps.lastFixAt === null) return null; // pre-first-fix; covered by 'Acquiring GPS'
+                /* Reading the wall clock during render is flagged as
                impure by react-hooks/purity. The render is bounded by
                the per-second timer.elapsed re-render, so staleness is
                at most ~1s — the banner will appear / refresh on the
                next tick. The dependency on Date.now() is intentional. */
-              const now = Date.now();
-              // Phase B3: suppress for 5s after a Resume so the cold-
-              // start GPS window doesn't render a false-positive banner
-              // against the stale lastFixAt of the restored trail.
-              if (now < gapBannerSuppressUntilRef.current) return null;
-              const gapSeconds = (now - gps.lastFixAt) / 1000;
-              if (gapSeconds < 8) return null;
-              return (
-                <div
-                  className="max-w-full whitespace-nowrap rounded-full bg-destructive-bg px-4 py-2 text-center motion-safe:animate-pulse"
-                  role="status"
-                  aria-live="polite"
-                >
-                  <p className="text-xs text-destructive-strong">
-                    GPS recovering · last fix {Math.round(gapSeconds)}s ago
-                  </p>
-                </div>
-              );
+                const now = Date.now();
+                // Phase B3: suppress for 5s after a Resume so the cold-
+                // start GPS window doesn't render a false-positive banner
+                // against the stale lastFixAt of the restored trail.
+                if (now < gapBannerSuppressUntilRef.current) return null;
+                const gapSeconds = (now - gps.lastFixAt) / 1000;
+                if (gapSeconds < 8) return null;
+                return (
+                  <div
+                    className="max-w-full whitespace-nowrap rounded-full bg-destructive-bg px-4 py-2 text-center motion-safe:animate-pulse"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <p className="text-xs text-destructive-strong">
+                      GPS recovering · last fix {Math.round(gapSeconds)}s ago
+                    </p>
+                  </div>
+                );
               })()}
             </div>
 
