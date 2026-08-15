@@ -329,6 +329,69 @@ export const SIDE_PIECES: SidePiece[] = [
     outline: silhouette(THIGH_B, THIGH_F),
     facets: THIGH_FACETS,
   },
+  // Far-side arm chain: same geometry as the near arm, darker, painted
+  // BEFORE the body core so the torso occludes it — the side renderer
+  // gives far pieces a constant depth offset and mirrors the near
+  // chain's ops when a pose doesn't address them, so every side demo is
+  // bilateral by construction (roadmap P0 "bilateral arms/hands").
+  {
+    group: "foreArmR",
+    far: true,
+    outline: silhouette(FORE_B, FORE_F),
+    facets: [
+      {
+        muscle: "forearm",
+        points: band(FORE_B, FORE_F, 68.4, 99.8, 0, 1),
+      },
+    ],
+  },
+  {
+    group: "upperArmR",
+    far: true,
+    outline: silhouette(ARM_B, ARM_F),
+    facets: [
+      {
+        muscle: "front-deltoids",
+        points: band(ARM_B, ARM_F, 38, 51.8, 0, 1, { skewB: [-1.5, 1] }),
+      },
+      {
+        muscle: "biceps",
+        points: band(ARM_B, ARM_F, 53.2, 70.8, 0.52, 1, {
+          skewT: [-1.5, 1],
+          bellyL: -0.05,
+        }),
+      },
+      {
+        muscle: "triceps",
+        points: band(ARM_B, ARM_F, 54, 70, 0, 0.46, { bellyR: 0.05 }),
+      },
+    ],
+  },
+  {
+    group: "handR",
+    far: true,
+    outline: [
+      [46.8, 99.4],
+      [52.8, 99.2],
+      [54, 103.2],
+      [52.8, 107.6],
+      [48.8, 108.6],
+      [46, 104.6],
+    ],
+    facets: [
+      {
+        muscle: "hand",
+        points: [
+          [47.4, 100],
+          [52.2, 99.8],
+          [53.4, 103.2],
+          [52.2, 107],
+          [49.2, 107.9],
+          [46.8, 104.4],
+        ],
+      },
+    ],
+  },
   {
     group: "pelvis",
     outline: silhouette(PELV_B, PELV_F),
