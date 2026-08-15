@@ -589,3 +589,21 @@ Verified under articulation: deadlift bottom (cervical counter + chin),
 bench lying (neck tuck), RDL mid-hinge (no forward thigh bulge). The
 goal's named parts are all side-profile features; the front figure's
 equivalents were covered in passes 5-21. 37 passing.
+
+## STATUS 2026-08-15 (thirty-third pass) — reference-grounded: deadlift hips, neck shape, skull
+
+Owner (on the deadlift bottom): legs still too far forward of the
+bum; neck now too thin; head still weird. Grounded against drawing
+references (neck base ≈ half face height; the nape is a DESCENDING
+slope from skull to shoulder; the cervical column leans forward) and
+deadlift-form references (shins ≤8° forward; bar over midfoot; hips
+resolve between knee and shoulder):
+
+| Fix           | Detail                                                                                                                                                                                                                                          |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Deadlift hips | Thigh drop 64° → 52° (the old drop threw the glutes past x=0, doubling the bum-to-heel gap) with the torso hinge deepened 70° → 75° to recover shoulder height — the bottom now reads hips-above-knees, back near horizontal, bar on the shins. |
+| Neck          | Re-thickened toward the reference ratio and reshaped: near-vertical throat, nape flaring into the trap slope at the base, slight forward lean at the top — a neck, not a column.                                                                |
+| Skull         | Crown domed (was flat across three samples); chin softened a touch.                                                                                                                                                                             |
+
+Shin stays at the 8° cap (already reference-correct — the read was
+the hips, not the shins). Motion probe: still spike-free. 37 passing.

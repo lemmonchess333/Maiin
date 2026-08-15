@@ -812,8 +812,15 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * stays planted, at 14° it visibly lifted. The hip depth lost is
        * recovered in thighRel. */
       const shin = lerp(0, 8, e); // about the planted ankle
-      const thighRel = lerp(0, -64, e); // about the knee → hips back+down
-      const hinge = lerp(0, 70, e); // torso about the hip
+      /* Thigh drop 52° (was 64): the deeper drop threw the hips so far
+       * back the glutes crossed x=0 while the feet stayed planted —
+       * the bum-to-heel gap read ~double a real pull's and the legs
+       * looked "too far forward". The shoulder height lost by the
+       * higher hips is recovered with a deeper torso hinge (75°),
+       * which also matches reference bottom positions: hips above
+       * knees, back closer to horizontal. */
+      const thighRel = lerp(0, -52, e); // about the knee → hips back+down
+      const hinge = lerp(0, 75, e); // torso about the hip
       const legOps: Op[] = [
         { kind: "rotate", deg: shin, pivot: SIDE_ANCHORS.ankle },
       ];
