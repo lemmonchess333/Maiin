@@ -336,3 +336,14 @@ at rest:
 
 At rest nothing visibly changes — the vacated elbow tips sit under the
 sleeves. 37 passing.
+
+## STATUS 2026-08-15 (eighteenth pass) — owner critique: grip overshoot + heel shape
+
+Owner on the pull-up frames: "arms misaligned, feet look weird."
+
+| Finding         | Fix                                                                                                                                                                                                                                                                                                                   |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Arms misaligned | Not the IK — the hang is geometrically straight (61.4 vs 61.7 chain). The POST forearm blades' WRIST tips extend ~4 units past the hand anchor, so at hang angles they poked OVER the bar and skewed the whole arm read. All six overshooting tips trimmed back along the blade axis to the grip circle (both sides). |
+| Feet look weird | The first posterior heels were wide cubes floating below the calf taper. Reshaped: narrower (8 wide), tapered toward the ground, and overlapping the soleus from y 210 so heel and calf read as one leg.                                                                                                              |
+
+37 passing.

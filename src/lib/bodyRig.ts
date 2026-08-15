@@ -429,26 +429,29 @@ const ANTERIOR_FEET: { group: GroupName; points: Pt[] }[] = [
  * behind a foot is mostly heel — a compact block capping each soleus
  * tip, riding the shank group. */
 const POSTERIOR_FEET: { group: GroupName; points: Pt[] }[] = [
+  /* Owner pass 6 ("feet look weird"): the first heel blocks were wide
+   * cubes floating below the calf taper. Narrower, tapered, and
+   * overlapping the soleus higher so heel and calf read as one leg. */
   {
     group: "shankL",
     points: [
-      [25.2, 213.5],
-      [34.8, 213.5],
-      [35.8, 219.5],
-      [34.2, 223],
-      [25.8, 223],
-      [24.2, 219.5],
+      [26, 210],
+      [34, 210],
+      [35, 218],
+      [33.6, 222],
+      [26.4, 222],
+      [25, 218],
     ],
   },
   {
     group: "shankR",
     points: [
-      [65.2, 213.5],
-      [74.8, 213.5],
-      [75.8, 219.5],
-      [74.2, 223],
-      [65.8, 223],
-      [64.2, 219.5],
+      [66, 210],
+      [74, 210],
+      [75, 218],
+      [73.6, 222],
+      [66.4, 222],
+      [65, 218],
     ],
   },
 ];
