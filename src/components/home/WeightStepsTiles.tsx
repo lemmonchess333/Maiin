@@ -11,8 +11,24 @@ import {
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import { isNativePlatform } from "@/lib/platform";
+import type { StepsStatus } from "@/hooks/useSteps";
 
 export type WeightTrendDirection = "down" | "up" | "flat" | null;
+
+/**
+ * Steps tile gate. HealthKit shipped (iOS) — the tile is enabled, but only
+ * renders on the native shell (steps are impossible on web) AND when Health
+ * is actually available; `stepsStatus === "unavailable"` (web / no Health)
+ * keeps it hidden so there's never a dead affordance. See POST_LAUNCH.md
+ * "Steps tile → HealthKit / Health Connect wiring".
+ */
+const STEPS_TILE_ENABLED = true;
+
+/* The component reads the gate through this mutable holder so the flip
+   path can be exercised in tests without editing source. Flipping
+   STEPS_TILE_ENABLED above remains the one-line change that ships. */
+// eslint-disable-next-line react-refresh/only-export-components -- test-only gate seam, not a component; fast-refresh impact is nil (module already re-renders on the default export)
+export const stepsTileGate = { enabled: STEPS_TILE_ENABLED };
 
 export default function WeightStepsTiles({
   lastWeight,
@@ -21,6 +37,9 @@ export default function WeightStepsTiles({
   lastWeightDate,
   hideNumber = false,
   weightTrend = null,
+  stepsStatus = "unavailable",
+  steps = null,
+  onConnectSteps,
 }: {
   lastWeight: string | null;
   weightUnit: string;
@@ -33,6 +52,11 @@ export default function WeightStepsTiles({
   /* Trend direction derived from logged weight history. null = we
      have a weight but not enough history to call a direction. */
   weightTrend?: WeightTrendDirection;
+  /* HealthKit steps (native only). Defaults keep the tile hidden for any
+     caller that doesn't wire steps (web, isolated renders). */
+  stepsStatus?: StepsStatus;
+  steps?: number | null;
+  onConnectSteps?: () => void;
 }) {
   /* Home2c a11y pin: each tile button gets an aria-label that
      surfaces its state compactly for screen readers. Without these,
@@ -67,14 +91,23 @@ export default function WeightStepsTiles({
     : hidden
       ? `Weight ${trendPhrase?.toLowerCase()}, last logged ${lastWeightDate}. Tap to log weight.`
       : `Weight ${lastWeight} ${weightUnitDisplay}, last logged ${lastWeightDate}. Tap to log weight.`;
+  // Native-only + available-only: hide on web and when Health is unavailable
+  // so a dead affordance never ships. The mutable gate keeps the flip
+  // testable; isNativePlatform() + the status guard add the runtime rules.
+  const stepsTileEnabled =
+    stepsTileGate.enabled &&
+    isNativePlatform() &&
+    stepsStatus !== "unavailable";
 
-  // The Steps tile is a HealthKit / Health Connect placeholder: web
-  // browsers have no step data, so "Connect Health" is a dead CTA on
-  // web (POST_LAUNCH.md "Steps tile → HealthKit wiring"). Show it only
-  // on native, where the real integration will land; on web Weight goes
-  // full-width so there's no fake health-connection affordance. Keep the
-  // native placeholder until the plugin work is approved.
-  const showSteps = isNativePlatform();
+  // Connected / ambiguous both render the number (ambiguous = connected but
+  // zero/no-data, an iOS read-permission quirk we don't error on). Only
+  // `unprompted` shows the Connect affordance.
+  const stepsConnected =
+    stepsStatus === "connected" || stepsStatus === "ambiguous";
+  const stepsValue = steps ?? 0;
+  const stepsAriaLabel = stepsConnected
+    ? `${stepsValue.toLocaleString()} steps today.`
+    : "Steps not yet connected. Connect Apple Health to track steps.";
 
   return (
     /* home-declutter pyramid: this component now lives in the RIGHT
@@ -144,14 +177,17 @@ export default function WeightStepsTiles({
           </p>
         </div>
       </button>
-      {showSteps && (
+      {stepsTileEnabled && (
         <button
           type="button"
           onClick={function () {
             haptic();
             trackHomeEvent("home_card_tapped", { card: "steps" });
+            // Only the unprompted tile drives a connect; a connected tile
+            // tap is ambient (foreground refresh already keeps it current).
+            if (!stepsConnected) onConnectSteps?.();
           }}
-          aria-label="Steps not yet connected. Connect Apple Health to track steps."
+          aria-label={stepsAriaLabel}
           className="p-3 rounded-xl text-left active:scale-[0.97] bg-muted group"
         >
           <div className="flex items-center gap-2 mb-1.5">
@@ -169,19 +205,35 @@ export default function WeightStepsTiles({
               Steps
             </SectionLabel>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span
-              className="text-xs font-medium"
-              style={{ color: THEME.brand }}
-            >
-              Connect Health
-            </span>
-            <ArrowRight
-              className="size-3"
-              style={{ color: THEME.brand }}
-              aria-hidden="true"
-            />
-          </div>
+          {stepsConnected ? (
+            <>
+              <div className="flex items-baseline gap-1">
+                <p className="text-xl font-bold leading-none text-foreground font-mono tabular-nums">
+                  {stepsValue.toLocaleString()}
+                </p>
+              </div>
+              <p
+                className="text-micro mt-1"
+                style={{ color: THEME.text.muted }}
+              >
+                today
+              </p>
+            </>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <span
+                className="text-xs font-medium"
+                style={{ color: THEME.brand }}
+              >
+                Connect Health
+              </span>
+              <ArrowRight
+                className="size-3"
+                style={{ color: THEME.brand }}
+                aria-hidden="true"
+              />
+            </div>
+          )}
         </button>
       )}
     </div>

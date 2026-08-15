@@ -39,26 +39,48 @@ These subscriptions are necessary for Home's header total to reflect the MAX rul
 
 ### Steps tile → HealthKit / Health Connect wiring
 
-**Status:** Deferred until native iOS / Android builds ship.
+**Status:** iOS ✅ SHIPPED (needs on-device verification — see the device
+checklist in the PR). Android / Health Connect is the remaining follow-up.
 
-**Context:** The Home page renders a Steps tile (`src/components/home/WeightStepsTiles.tsx:29-40`) that currently shows a static "Connect Health →" affordance with an empty `onClick`. Web browsers have no access to step data — the tile is a deliberate placeholder for the post-iOS / post-Android release.
+**iOS (shipped):** the Home Steps tile shows the real daily step count from
+Apple Health via the `capacitor-health` plugin (peer `@capacitor/core >=8`).
+`STEPS_TILE_ENABLED` is `true`; the tile renders only on the native shell AND
+when Health is available (`stepsStatus !== "unavailable"`), so web still shows
+a single full-width Weight tile with no dead affordance. Three discovery
+surfaces ship together:
 
-**Plan at native ship:**
+- **Bridge** `src/lib/healthKit.ts` — `isHealthAvailable`,
+  `requestStepsReadPermission` (`READ_STEPS` only), `getTodayStepTotal`
+  (local-midnight day-aligned aggregate), `openHealthSettings`. Lazy dynamic
+  import → its own chunk, never in the web bundle; every fn guards on
+  `isNativePlatform()`.
+- **Hook** `src/hooks/useSteps.ts` — status machine (`unavailable` /
+  `unprompted` / `connected` / `ambiguous`), persists
+  `users/{uid}/settings/healthKit = { primingShown, connected }` so priming
+  never re-fires across devices; foreground refresh via the existing
+  `visibilitychange` seam.
+- **Tile** (surface A) — status-aware: Connect affordance when `unprompted`
+  (tap connects + marks `primingShown`), the Archivo step count when
+  `connected`, `0` when `ambiguous` (no error state — iOS never confirms a
+  denied READ scope).
+- **Priming modal** (surface B, `StepsPrimingModal.tsx`) — one-time on first
+  native Home foreground; either choice sets `primingShown`.
+- **Settings → Health** (surface C, `HealthSection.tsx`) — connect action +
+  the ambiguous-state hint banner pointing at Settings → Health → Data Access
+  & Devices → Tropos.
 
-1. **iOS** — add `@capacitor-community/health` (or Capacitor's recommended HealthKit bridge), request `HKQuantityTypeIdentifierStepCount` read permission, query daily step totals via `HKStatisticsQuery` with a day-aligned anchor.
-2. **Android** — Health Connect (`androidx.health.connect.client`) via the matching Capacitor plugin. Same shape: request read permission, query today's step aggregate.
-3. Wire the result into the Steps tile: replace the static "Connect Health →" with `<steps> / <target>` and a small "↑ step-count" subtext. Keep the permission-priming pattern we built for notification reminders — a one-time modal on first foreground after native install, not nagging.
-4. Persist the permission-shown flag to `users/{uid}/settings/healthKit` so the priming doesn't re-fire across devices.
-5. Add a denied-permission inline banner mirroring the one on `NotificationsSection.tsx` — same UI vocabulary.
+**HealthKit read-permission quirk:** iOS never reveals whether a READ scope
+was granted or denied; a denied read just returns zero samples. We treat a
+completed request as granted and surface connected-but-zero as _ambiguous_,
+never an invented "denied".
 
-**Until then:** the static tile is a design placeholder. Treat any "why doesn't it do anything" feedback as expected pre-iOS behaviour. If a web-only beta runs longer than a week, consider hiding the tile on web via `Capacitor.isNativePlatform()` to avoid the dead-button perception.
-
-**Files to touch at activation time:**
-
-- `src/components/home/WeightStepsTiles.tsx` — render real step count + target.
-- `src/hooks/useSteps.ts` — new, reads from the plugin.
-- `src/lib/healthKit.ts` — new, platform-specific bridge.
-- `POST_LAUNCH.md` — delete this section when shipped.
+**Remaining follow-up — Android / Health Connect (needs Android Studio):**
+`capacitor-health` also backs Health Connect. Add the `READ_STEPS` Health
+Connect permission to `AndroidManifest.xml`, handle the
+`showHealthConnectInPlayStore()` / `openHealthConnectSettings()` recovery
+paths (Health Connect app may be absent), and re-run the device checklist on
+Android. The bridge + hook are platform-neutral; only the Android permission
+manifest + the "install Health Connect" recovery UI remain.
 
 ### Font rebrand experiment
 

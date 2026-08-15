@@ -25,6 +25,7 @@ import {
   Lock,
   Footprints,
   Bell,
+  HeartPulse,
   Crown,
   HelpCircle,
   Settings as Cog,
@@ -107,6 +108,13 @@ const SECTIONS: SectionRow[] = [
     label: "Notifications",
     description: "Meal, workout, streak reminders",
     icon: Bell,
+    migrated: true,
+  },
+  {
+    slug: "health",
+    label: "Apple Health",
+    description: "Daily step count on Home",
+    icon: HeartPulse,
     migrated: true,
   },
   {

@@ -74,6 +74,8 @@ import FellBehindSheet from "@/components/program/FellBehindSheet";
 import { useSurface } from "@/components/SurfaceCoordinatorProvider";
 import { useEducationCard } from "@/components/EducationLaneProvider";
 import StackedCTACards from "@/components/home/StackedCTACards";
+import StepsPrimingModal from "@/components/home/StepsPrimingModal";
+import { useSteps } from "@/hooks/useSteps";
 import PerformanceHeroCard from "@/components/home/PerformanceHeroCard";
 import WaterCard from "@/components/home/WaterCard";
 import WeightStepsTiles from "@/components/home/WeightStepsTiles";
@@ -173,6 +175,9 @@ export default function Home() {
   const [weightSaving, setWeightSaving] = useState(false);
   const [weightSaved, setWeightSaved] = useState(false);
   const [showProModal, setShowProModal] = useState(false);
+  // HealthKit steps (native iOS only; web resolves to status "unavailable"
+  // so the tile hides and the priming modal never opens). See POST_LAUNCH.md.
+  const stepsData = useSteps();
   // Welcome checklist dismissal — persisted once-ever (audit #7). Visibility
   // is data-derived below via shouldShowWelcomeChecklist; this is only the
   // explicit "I tapped the X" signal.
@@ -1286,6 +1291,11 @@ export default function Home() {
               lastWeightDate={weightRelativeTime}
               hideNumber={profile?.hideWeightNumber}
               weightTrend={weightTrend}
+              stepsStatus={stepsData.status}
+              steps={stepsData.steps}
+              onConnectSteps={function () {
+                void stepsData.connect();
+              }}
             />
           </SectionErrorBoundary>
         </motion.div>
@@ -1540,6 +1550,17 @@ export default function Home() {
         onDismiss={() => {
           dismissNewBadge();
           badgeSurface.dismiss();
+        }}
+      />
+
+      {/* Steps priming (surface B) — native only, at most once ever. `open`
+          is derived: connecting or dismissing persists primingShown, which
+          flips this false. On web status is "unavailable" so it never opens. */}
+      <StepsPrimingModal
+        open={stepsData.status === "unprompted" && !stepsData.primingShown}
+        onConnect={stepsData.connect}
+        onDismiss={function () {
+          void stepsData.dismissPriming();
         }}
       />
 
