@@ -519,3 +519,22 @@ Two last unchecked dimensions, both clean:
   (tint 0.72/0.66, soft glow) without washing out or breaking any
   facet; effort=1 brightens as designed. The concentric "breathing"
   contract holds at both ends.
+
+## STATUS 2026-08-15 (twenty-ninth pass) — scene fidelity: back-squat bar, calf-raise step
+
+With the figure itself audited out, the next tier is SCENE fidelity —
+each demo unmistakably its exercise. Two additions inside the
+structural-equipment rule (held implements stay banned; these move
+with the BODY or not at all):
+
+- **Squat: back-squat bar.** The card says "Barbell" but the figure
+  squatted empty-handed. A bar now rests across the traps (end plates
+  clear of the arms) and RIDES THE DIVE — new equip "back-bar". Not a
+  held implement: it moves with the torso, never with the arms, which
+  is exactly what killed the old held-weight attempts.
+- **Calf raise: the step.** New equip "platform" — a low block whose
+  top edge the feet stand on, with the ground shadow moved below it.
+  A raise finally has something to rise on.
+
+Motion probe re-run with the animated bar: all 14 still spike-free.
+37 passing.

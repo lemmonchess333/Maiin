@@ -479,7 +479,13 @@ export interface BodyDemo {
   /** STRUCTURAL equipment only (no held weights — the figure has no
    *  hands): a fixed-bar is the overhead bar the body hangs from
    *  (pull-up); a cable-bar is the machine bar + cable (pulldown). */
-  equip?: "fixed-bar" | "cable-bar" | "dip-bars" | "plate-end";
+  equip?:
+    | "fixed-bar"
+    | "cable-bar"
+    | "dip-bars"
+    | "plate-end"
+    | "back-bar"
+    | "platform";
   /** plate-end disc radius (default 10). The deadlift draws a
    *  full-size 45 (r=26 ≈ 45 cm on a 175 cm figure) so the bottom
    *  frame reads bar-near-the-floor. */
@@ -510,6 +516,16 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
   squat: {
     view: "anterior",
     concentricTo: 0,
+    equip: "back-bar",
+    // The bar rests across the traps (y≈41) and rides the dive — the
+    // same drop the torso gets, recomputed here from the eased e.
+    bar: (e) => {
+      const drop = (1 - lerp(1, 0.6, e)) * (ANT.kneeL[1] - 92);
+      return [
+        [4, 41 + drop],
+        [96, 41 + drop],
+      ];
+    },
     tint: { quadriceps: "primary", abductors: "secondary", abs: "secondary" },
     pose: (e) => {
       const k = lerp(1, 0.6, e); // thigh compression about the knee line
@@ -1015,6 +1031,13 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
   "calf-raise": {
     view: "anterior",
     concentricTo: 1,
+    equip: "platform",
+    // A raised step under the feet — the thing a calf raise rises on.
+    bar: () => [
+      [12, 203],
+      [88, 203],
+    ],
+    groundY: 210,
     tint: { calves: "primary" },
     pose: (e) => {
       /* Heels drive the body straight up — but the FEET stay planted.
@@ -1807,6 +1830,26 @@ export function renderBodyDemo(
       `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="10" fill="${GEAR_DARK}" stroke="#565760" stroke-width="1"/>` +
       `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6.4" fill="none" stroke="${GEAR}" stroke-width="1.2" opacity="0.7"/>` +
       `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.2" fill="${GEAR}"/>`;
+  } else if (ends && demo.equip === "back-bar") {
+    // Back-squat bar: rests across the traps and RIDES THE TORSO — a
+    // straight bar behind the figure with an end plate each side. Not
+    // a held implement (those were removed — see the header): it moves
+    // with the body, never with the arms.
+    const [l, r] = ends;
+    const plate = ([x, y]: Pt) =>
+      `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6.5" fill="${GEAR_DARK}" stroke="#565760" stroke-width="1"/>` +
+      `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2" fill="${GEAR}"/>`;
+    barBehind =
+      `<line x1="${l[0].toFixed(1)}" y1="${l[1].toFixed(1)}" x2="${r[0].toFixed(1)}" y2="${r[1].toFixed(1)}" stroke="${GEAR}" stroke-width="3" stroke-linecap="round"/>` +
+      plate(l) +
+      plate(r);
+  } else if (ends && demo.equip === "platform") {
+    // Raised step (calf raises): a low block whose top edge the feet
+    // stand on — structural scenery, like the pull-up frame.
+    const [l, r] = ends;
+    barBehind =
+      `<rect x="${l[0].toFixed(1)}" y="${l[1].toFixed(1)}" width="${(r[0] - l[0]).toFixed(1)}" height="6" rx="1.5" fill="${GEAR_DARK}" stroke="#565760" stroke-width="0.8"/>` +
+      `<line x1="${l[0].toFixed(1)}" y1="${l[1].toFixed(1)}" x2="${r[0].toFixed(1)}" y2="${l[1].toFixed(1)}" stroke="${GEAR}" stroke-width="1.4"/>`;
   } else if (ends && demo.equip === "dip-bars") {
     // A dip STATION, not two floating lines: each upright gets a base
     // foot on the floor and a tube end-cap at the grip.
