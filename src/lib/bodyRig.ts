@@ -53,21 +53,12 @@ function tone(hex: string, delta: number): string {
   return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
 }
 
-/** Facet shading steps — cycling deterministically so adjacent facets
- *  of one muscle read as planes of a single sculpted mass. Amplitude
- *  tuned UP on owner pass 4 ("blobby, lacks definition"): the ±7 range
- *  was invisible at phone size once the flesh layer closed the gaps. */
-const SHADE_STEPS = [-12, 5, -5, 9, 0, -8, 7] as const;
+/** Facet shading steps — subtle, cycling deterministically so adjacent
+ *  facets of one muscle read as planes of a single sculpted mass. Kept
+ *  at the quiet amplitude: in the mosaic style the stage-black channels
+ *  do the separating, and louder steps read as patchwork. */
+const SHADE_STEPS = [-7, 3, -3, 6, 0, -5, 4] as const;
 const shadeFor = (seed: number) => SHADE_STEPS[seed % SHADE_STEPS.length];
-
-/** The under-flesh tone (owner pass 4): the flesh layer that closes
- *  the mosaic's voids must sit DARKER than the facets — the old black
- *  channels were doing real work as muscle separation, and a same-tone
- *  weld erased it. With the underlayer a step down, every inter-facet
- *  channel reads as a shaded crevice between muscles (the anatomy-
- *  reference rule: separations are value changes, not outlines and
- *  not voids) while the body stays one continuous form. */
-const UNDER = tone(BODY, -20);
 
 /**
  * Closed path with rounded corners (owner pass 2: "why are the knees
@@ -399,29 +390,34 @@ function scaleAboutCentroid(pts: Pt[], k: number): Pt[] {
 }
 
 /* The library figure has no feet (its chart crops at the calves, which
- * reads amputee-ish in a full-body demo). Two small in-style wedges,
- * grouped with the shanks so they inherit leg transforms. */
+ * reads amputee-ish in a full-body demo). Front-view feet (owner pass
+ * 5: "the feet look like they're on backwards"): the old wedges swept
+ * their sharp toe tip INWARD-down, reading heel-first. A front-on foot
+ * is a near-symmetric block under the ankle — narrow at the ankle,
+ * flaring evenly to a flat toe line, tipped a couple of units OUTWARD
+ * (lateral) the way a natural stance splays. Grouped with the shanks
+ * so they inherit leg transforms. */
 const ANTERIOR_FEET: { group: GroupName; points: Pt[] }[] = [
   {
     group: "shankL",
     points: [
-      [22, 195],
-      [30, 195],
-      [31, 199],
-      [27, 203],
-      [18, 203],
-      [19, 198],
+      [22, 194],
+      [29, 194],
+      [30, 199],
+      [29.5, 203],
+      [18.5, 203],
+      [18, 199.5],
     ],
   },
   {
     group: "shankR",
     points: [
-      [70, 195],
-      [78, 195],
-      [81, 198],
-      [82, 203],
-      [73, 203],
-      [69, 199],
+      [71, 194],
+      [78, 194],
+      [82, 199.5],
+      [81.5, 203],
+      [70.5, 203],
+      [70, 199],
     ],
   },
 ];
@@ -1506,128 +1502,90 @@ export function renderBodyDemo(
     // than the muscle facets (whose crisp edges are the anatomy lines).
     return { pts, level, g, r: p.muscle === "head" ? 3.2 : 1.1 };
   });
-  /* Group flesh hulls: the weld stroke bridges the map's IDENTITY
-   * spacing, but posed gaps SCALE — a compressed squat thigh or a
-   * racked arm opens black wedges far wider than any stroke. Each
-   * body group (except the single-poly head) lays a convex hull of
-   * its posed points underneath, so intra-group voids are closed at
-   * every pose while left/right limbs stay separate — the crotch and
-   * armpit keep their real negative space. */
-  const groupPts = new Map<GroupName, Pt[]>();
-  for (const { pts, g } of transformed) {
-    if (g !== "head") groupPts.set(g, [...(groupPts.get(g) ?? []), ...pts]);
-  }
-  /* Hip-socket seeds (owner pass 3: "his hip joints are not really
-   * touching"): a compressed thigh's hull tops out below the hip
-   * line, visibly detaching the leg. Each thigh hull gets its hip
-   * anchor pushed through the SAME group ops — under squat's
-   * scaleY-about-knee that point lands exactly on the dived hip
-   * line, so the hull always reaches the socket. */
-  if (view === "anterior") {
-    for (const [g, seed] of [
-      ["thighL", [ANT.kneeL[0], 92]],
-      ["thighR", [ANT.kneeR[0], 92]],
-    ] as [GroupName, Pt][]) {
-      groupPts.set(g, [
-        ...(groupPts.get(g) ?? []),
-        applyOps([seed], pose[g] ?? [])[0],
-      ]);
-    }
-  }
-  const hulls = [...groupPts.values()]
-    .map(
-      (pts) =>
-        `<path d="${roundedPath(convexHull(pts), 2)}" fill="${UNDER}" stroke="${UNDER}" stroke-width="2.2" stroke-linejoin="round"/>`
-    )
+  /* MOSAIC style (owner decision, pass 10): the vendored muscle-block
+   * look with its stage-black separation channels IS the figure's
+   * identity — the flesh weld/hull direction ("passes 5-9") read
+   * blobby next to it and is reverted. What stays from those passes is
+   * everything that didn't change the style's character: mechanics
+   * (cervical/lumbopelvic rhythm, knees-out squat, deltoid rhythm),
+   * the oval head + settle, corner rounding, hands, and subtle facet
+   * shading. Joints get SLEEVES (below) instead of the old ball caps. */
+  const polys = transformed
+    .map(({ pts, level, r }, i) => {
+      const base =
+        level === "primary"
+          ? PRIMARY
+          : level === "secondary"
+            ? SECONDARY
+            : BODY;
+      const fill = tone(base, shadeFor(i));
+      const op = level
+        ? ` fill-opacity="${tintOpacity(level).toFixed(3)}"`
+        : "";
+      return shape(
+        pts,
+        r,
+        fill,
+        `${op} stroke="${fill}" stroke-width="0.5" stroke-linejoin="round"`
+      );
+    })
     .join("");
-  /* Gap fillers (owner pass: "what's all the black space between the
-   * blocks?"): two voids in the vendored muscle map are too wide for
-   * any weld stroke to bridge — the anterior THROAT (an ~11-unit V
-   * between the neck pair, below the chin) and the posterior SPINE
-   * channel between the trapezius pair. On a body both are flesh.
-   * Painted first in the weld pass, riding the torso group like the
-   * polys they bridge. */
-  // [points, weld-stroke width] — the pelvis shield draws fill-only
-  // (w 0): its hip-line corners sit near the silhouette edge, and the
-  // fat weld stroke pushed them outside as little fins at the waist.
-  const GAP_FILLS: [Pt[], number][] =
-    view === "anterior"
-      ? [
-          [
-            [
-              [44.5, 24.5],
-              [55.5, 23.7],
-              [51.5, 38],
-              [48.5, 38],
-            ],
-            2.6,
-          ],
-          /* Pelvis shield: the groin triangles between the diving torso
-           * and the compressing thighs open DIAGONAL voids no
-           * intra-group hull can close (they sit between groups). A
-           * shield riding the torso spans the hip line and tapers to
-           * the crotch point, so the interface stays flesh at squat
-           * depth without filling the real between-thighs V below. */
-          [
-            [
-              [33, 87],
-              [67, 87],
-              [64, 100],
-              [50, 111],
-              [36, 100],
-            ],
-            0,
-          ],
-        ]
-      : [
-          [
-            [
-              [46.5, 20.5],
-              [53.5, 20.5],
-              [54.2, 38.3],
-              [53.3, 64.7],
-              [46.7, 64.7],
-              [45.8, 38.3],
-            ],
-            2.6,
-          ],
-        ];
-  const torsoOps = pose.torso ?? [];
-  const fillers = GAP_FILLS.map(
-    ([pts, w]) =>
-      `<path d="${roundedPath(applyOps(pts, torsoOps), 1.4)}" fill="${UNDER}"${w > 0 ? ` stroke="${UNDER}" stroke-width="${w}" stroke-linejoin="round"` : ""}/>`
-  ).join("");
-  const weld =
-    hulls +
-    fillers +
-    transformed
-      .map(
-        ({ pts, r }) =>
-          `<path d="${roundedPath(pts, Math.max(r, 1.4))}" fill="${UNDER}" stroke="${UNDER}" stroke-width="2.6" stroke-linejoin="round"/>`
-      )
-      .join("");
-  const polys =
-    weld +
-    transformed
-      .map(({ pts, level, r }, i) => {
-        const base =
-          level === "primary"
-            ? PRIMARY
-            : level === "secondary"
-              ? SECONDARY
-              : BODY;
-        const fill = tone(base, shadeFor(i));
-        const op = level
-          ? ` fill-opacity="${tintOpacity(level).toFixed(3)}"`
-          : "";
-        return shape(
-          pts,
-          r,
-          fill,
-          `${op} stroke="${fill}" stroke-width="0.5" stroke-linejoin="round"`
-        );
-      })
-      .join("");
+
+  /* Joint sleeves (owner pass 5: "these balls that are the circles for
+   * the joints … need to look like real arms instead"): the old ball
+   * caps bridged articulated joints but read as a mannequin. A sleeve
+   * is a round-capped stroke from a point ON the upper segment to a
+   * point ON the lower segment, each pushed through its own group's
+   * transform — so it follows the actual bend like flesh, at limb
+   * width, and hides beneath the muscle blocks except in the joint
+   * gap itself. Elbows both views; knees where the leg articulates
+   * (anterior). */
+  const JA = view === "anterior" ? ANT : POST;
+  const seg = (a: Pt, b: Pt, t: number): Pt => [
+    a[0] + (b[0] - a[0]) * t,
+    a[1] + (b[1] - a[1]) * t,
+  ];
+  const sleeveDefs: [Pt, GroupName, Pt, GroupName, number][] = [
+    [
+      seg(JA.shoulderL, JA.elbowL, 0.75),
+      "upperArmL",
+      seg(JA.elbowL, JA.handL, 0.25),
+      "foreArmL",
+      6.5,
+    ],
+    [
+      seg(JA.shoulderR, JA.elbowR, 0.75),
+      "upperArmR",
+      seg(JA.elbowR, JA.handR, 0.25),
+      "foreArmR",
+      6.5,
+    ],
+  ];
+  if (view === "anterior") {
+    sleeveDefs.push(
+      [
+        seg([ANT.kneeL[0], 96], ANT.kneeL, 0.8),
+        "thighL",
+        seg(ANT.kneeL, [ANT.kneeL[0], ANT.ankleY], 0.2),
+        "shankL",
+        8,
+      ],
+      [
+        seg([ANT.kneeR[0], 96], ANT.kneeR, 0.8),
+        "thighR",
+        seg(ANT.kneeR, [ANT.kneeR[0], ANT.ankleY], 0.2),
+        "shankR",
+        8,
+      ]
+    );
+  }
+  const sleeves = sleeveDefs
+    .map(([pa, ga, pb, gb, w]) => {
+      const a = applyToPoint(pa, pose[ga] ?? []);
+      const b = applyToPoint(pb, pose[gb] ?? []);
+      return `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}" stroke="${BODY}" stroke-width="${w}" stroke-linecap="round"/>`;
+    })
+    .join("");
 
   /* Working-muscle aura: nested convex-hull rings behind the figure,
    * brightening with effort. Zero SVG filters (WKWebView glow rule) —
@@ -1678,9 +1636,11 @@ export function renderBodyDemo(
       );
       const posed = applyOps(pts, pose[group] ?? []);
       const fill = tone(BODY, -4);
-      return (
-        `<path d="${roundedPath(posed, 1.6)}" fill="${UNDER}" stroke="${UNDER}" stroke-width="1.6" stroke-linejoin="round"/>` +
-        shape(posed, 1.6, fill)
+      return shape(
+        posed,
+        1.6,
+        fill,
+        ` stroke="${fill}" stroke-width="1.6" stroke-linejoin="round"`
       );
     })
     .join("");
@@ -1690,14 +1650,11 @@ export function renderBodyDemo(
       ? ANTERIOR_FEET.map((f) => {
           const pts = applyOps(f.points, pose[f.group] ?? []);
           const fill = tone(BODY, -3);
-          return (
-            `<path d="${roundedPath(pts, 1.4)}" fill="${UNDER}" stroke="${UNDER}" stroke-width="2" stroke-linejoin="round"/>` +
-            shape(
-              pts,
-              1.2,
-              fill,
-              ` stroke="${fill}" stroke-width="0.5" stroke-linejoin="round"`
-            )
+          return shape(
+            pts,
+            1.6,
+            fill,
+            ` stroke="${fill}" stroke-width="0.5" stroke-linejoin="round"`
           );
         }).join("")
       : "";
@@ -1754,10 +1711,6 @@ export function renderBodyDemo(
     barBehind = post(ends[0]) + post(ends[1]);
   }
 
-  /* Joint caps REMOVED (owner pass 2: "why are the joins circular
-   * balls?") — they were a gap-bridging hack that read as a mannequin's
-   * ball joints. The flesh weld + rounded shapes now close the seams
-   * they existed to hide. */
   // Ground shadow: breathes with how LOW the body sits — bigger/darker at
   // the bottom of a squat, smaller/lighter at a press lockout or calf-
   // raise top. Depth is e for descend-first lifts, 1−e for lift-first.
@@ -1771,6 +1724,7 @@ export function renderBodyDemo(
     shadow +
     barBehind +
     glow +
+    sleeves +
     polys +
     hands +
     feet +

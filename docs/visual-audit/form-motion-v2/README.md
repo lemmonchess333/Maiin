@@ -204,3 +204,31 @@ Rejected values: -14 (still faint at card size); black (that was the
 original defect). Pin updated: the honest-fill body-grey check is now
 case-insensitive (tone() emits lowercase; the uppercase literal only
 ever appeared via the old weld layer). 36 passing.
+
+## STATUS 2026-08-15 (tenth pass) — OWNER STYLE DECISION: the mosaic wins; flesh direction reverted
+
+**Read this before proposing any weld/hull/under-flesh approach again.**
+Owner, comparing the deployed mosaic against passes 5-9 on device: "It
+looks better before … the individual muscles and the definition … the
+old style is better, so we gotta go back." The flesh-layer direction
+(welds, group hulls, gap fillers, dark under-flesh — passes 5, 6, 9)
+is REVERTED for the front/back figure. The vendored muscle-block
+mosaic with its stage-black separation channels is the figure's
+identity. Do not re-litigate; improve WITHIN the mosaic.
+
+Kept from passes 5-9 (style-neutral): all mechanics (cervical +
+lumbopelvic rhythm, knees-out squat, deltoid rhythm), oval head +
+head-settle, corner rounding, compact fist hands, subtle facet
+shading, side-profile art fixes (pec dome, glute shelf, face line).
+
+New in this pass, on the two old-style defects the owner named:
+
+| Defect                  | Fix                                                                                                                                                                                                                                                                                        |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Ball joints ("circles") | JOINT SLEEVES: a round-capped stroke from a point ON the upper segment to a point ON the lower segment, each pushed through its own group's transform — follows the actual bend at limb width, hides beneath the muscle blocks except in the joint gap. Elbows both views, knees anterior. |
+| Feet "on backwards"     | Front-view feet redrawn as near-symmetric blocks under the ankle — narrow ankle edge, even flare to a flat toe line, slight lateral splay. The old wedges swept a sharp tip inward and read heel-first.                                                                                    |
+
+Pins: mosaic path counts (anterior 37, posterior 35), bar-travel probe
+matches the cable-bar stroke width so sleeve lines can't shadow it.
+36 passing. The side view keeps its current construction (unchanged
+this pass) — revisit only with owner direction.

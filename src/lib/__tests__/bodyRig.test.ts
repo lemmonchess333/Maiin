@@ -39,21 +39,18 @@ describe("renderBodyDemo", () => {
     expect(Math.min(...ys)).toBeGreaterThan(1.5);
     expect(Math.min(...ys)).toBeLessThan(3);
     const body = svg.replace(/<g class="glow">.*?<\/g>/, "");
-    // Rounded <path> shapes since the anatomy pass: weld + crisp per
-    // body polygon and foot, plus weld + crisp per hand mitt.
-    // (33 body + 2 feet + 2 hands) × 2 passes + 9 group flesh hulls
-    // + 2 gap fillers (throat, pelvis shield)
-    expect(body.match(/<path/g)!.length).toBe(85);
+    // Mosaic style (pass 10): one crisp rounded <path> per shape —
+    // 33 body polys + 2 feet + 2 hands. Joint sleeves are <line>s.
+    expect(body.match(/<path/g)!.length).toBe(37);
   });
 
-  it("the posterior view carries its spine gap-filler too", () => {
+  it("posterior renders the same single-pass mosaic (no feet shapes)", () => {
     const post = renderBodyDemo("pull-ups", 0).replace(
       /<g class="glow">.*?<\/g>/,
       ""
     );
-    // (33 body + 2 hands) × 2 passes + 9 group flesh hulls + 1
-    // spine-channel filler — the posterior model has no feet shapes.
-    expect(post.match(/<path/g)!.length).toBe(80);
+    // 33 body polys + 2 hands — the posterior model has no feet.
+    expect(post.match(/<path/g)!.length).toBe(35);
   });
 
   it("squat: the body visibly sinks at the bottom", () => {
@@ -294,9 +291,12 @@ describe("renderBodyDemo", () => {
   });
 
   it("lat pulldown: the bar travels from overhead to the chest", () => {
-    // Last <line> is the moving bar (the first is the static cable).
+    // The moving bar is the cable-bar stroke (width 2.8) — joint
+    // sleeves are also <line> elements, so match by width, not order.
     const lastLineY = (svg: string) => {
-      const ys = [...svg.matchAll(/<line[^>]*y1="(-?[\d.]+)"/g)];
+      const ys = [
+        ...svg.matchAll(/<line[^>]*y1="(-?[\d.]+)"[^>]*stroke-width="2.8"/g),
+      ];
       return Number(ys[ys.length - 1][1]);
     };
     const start = lastLineY(renderBodyDemo("lat-pulldown", 0));
