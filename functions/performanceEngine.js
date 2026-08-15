@@ -17,6 +17,16 @@ const admin = require("firebase-admin");
 // server-specific concerns: windowing, aggregation, confidence, signals, I/O.
 const perfScoring = require("./lib/perfScoring");
 
+// Session tonnage. The PI summed (weightKg || 0) * (reps || 0) over raw
+// sets — a fifth private copy of the tonnage rule, and the last one still
+// missing the timed-hold exclusion every other copy applies (a hold's
+// `reps` is a DURATION; a 20 kg / 60 s weighted plank is not 1,200 kg of
+// weekly load). workoutVolumeKg is the canonical rule: it prefers the
+// writer's stated `totalVolume` (#2041) and derives with the hold guard
+// for the history that predates it — so the PI's load figure now matches
+// what challenges, lifetime volume and every display surface credit.
+const workoutVolume = require("./lib/workoutVolume");
+
 // Volume-eligibility predicate for saved-run docs. Single shared copy in
 // functions/lib/runEligibility.js (already consumed by index.js). This file
 // previously inlined the same isInvalid / savedAnyway / distance>=50 /
@@ -277,10 +287,15 @@ function aggregateWindow(start, end, workouts, runs, meals, bodyweightLogs) {
     if (d < start || d >= end) return;
     liftSessions++;
     activeWeeks.add(Math.floor((d.getTime() - start.getTime()) / WEEK_MS));
+    liftTonnage += workoutVolume.workoutVolumeKg(w);
     (w.exercises || []).forEach((ex) => {
       const isCardio = (ex.category || "").toLowerCase() === "cardio";
       (ex.sets || []).forEach((set, idx) => {
-        liftTonnage += (set.weightKg || 0) * (set.reps || 0);
+        /* Holds stay IN the hard-set count deliberately: a completed
+           hold is a completed effortful set (the same boundary the
+           completion screen's SETS stat holds), and hard sets is a
+           count, not a weight measure — only the tonnage above had a
+           unit to corrupt. */
         if (!isCardio && idx === (ex.sets || []).length - 1) {
           liftHardSets++;
         }
