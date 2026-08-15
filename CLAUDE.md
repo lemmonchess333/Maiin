@@ -637,14 +637,14 @@ rule and keeps being mistaken for it: **a number computed in one place and
 DISPLAYED from another**. Not two copies of a formula drifting — one correct
 value, and a reader pointed at a different, staler field.
 
-  Home's protein nudge      quoted `profile.targetProtein` beneath rings
-                            showing `useEffectiveTargets().protein` — 16-32 g
-                            apart, on the same card.
-  History's target line     quoted an onboarding-day snapshot nothing had
-                            updated since.
-  Settings' "Adapting"      printed the formula figure under a line saying the
-                            number was adapted.
-  The PI scorer             was handed `profile.goal`, a field nothing writes.
+Home's protein nudge quoted `profile.targetProtein` beneath rings
+showing `useEffectiveTargets().protein` — 16-32 g
+apart, on the same card.
+History's target line quoted an onboarding-day snapshot nothing had
+updated since.
+Settings' "Adapting" printed the formula figure under a line saying the
+number was adapted.
+The PI scorer was handed `profile.goal`, a field nothing writes.
 
 In every case the codebase had ALREADY solved it for the neighbouring field
 and the fix was pointing the stray reader at the existing source.
@@ -1137,10 +1137,12 @@ Affects: `src/lib/offlineQueue.ts`, `src/lib/shareComposer.ts`.
       seeds one untagged and one tagged entry and asserts the untagged one is
       filtered out of both the global and per-uid counts. This was never a
       device check; the migration is a pure filter in `getQueue`.
-- [ ] Still owed: the **release-note line**. Users who upgrade with pending
-      queued writes lose them. That is intended and tested — but it is a
-      user-facing consequence nobody has been told about, which is a comms
-      task, not a verification one.
+- [x] Release-note line — PAID. `CHANGELOG.md` `[Unreleased]` now carries
+      "Offline changes queued by an older version are discarded when you
+      update" with the sync-before-updating guidance; fold it into the next
+      versioned entry (and the App Store "What's New") at release time. The
+      behaviour itself is intended and pinned by `offlineQueue.test.ts`
+      ("drops legacy items missing a uid field").
 
 ### Apple subscription uniqueness binding (PR #822)
 
@@ -1412,7 +1414,7 @@ lands in the same place (the plan-file lock rule, applied to ADRs):
 | 0009 | One Firestore test fake; injecting the `db` handle buys nothing                    |
 | 0010 | Volume currency — 1:1 is correct; the flip waits on landmark-aware builders        |
 | 0011 | Programme command boundary stops at the week engine — 8 sites stay document writes |
-| 0012 | Deleting a logged session reverses accumulators, not history                      |
+| 0012 | Deleting a logged session reverses accumulators, not history                       |
 
 ## Dynamic workflows & `ultracode` (when to escalate)
 
