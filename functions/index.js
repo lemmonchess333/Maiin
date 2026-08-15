@@ -2208,6 +2208,7 @@ const {
   releaseLock,
   getWeekKey,
   isInRollingWindow,
+  triggerComputeKey,
 } = require("./performanceEngine");
 
 const db = admin.firestore();
@@ -4773,13 +4774,19 @@ exports.onWorkoutCreated = functions
       );
       await applyPartnerActivity(db, uid, workoutStreakDay);
 
+      let workoutComputeKey = null;
       if (data.date) {
-        const currentKey = getWeekKey(new Date());
-        // PI1a: skip recompute when the workout falls outside the
-        // rolling 7-day window (was: outside the current Sunday-week).
-        if (!isInRollingWindow(data.date, currentKey)) {
+        // PI1a: skip recompute when the workout falls outside the rolling
+        // 7-day window. Unlike the run trigger below — whose date is
+        // derived from `completedAt` in UTC, the same frame as the gate —
+        // `data.date` is the USER'S LOCAL day, so triggerComputeKey also
+        // handles the east-of-UTC case: a label one day ahead of the
+        // server's date is a same-day session, recomputed against the
+        // window ending on ITS day instead of skipped as backdated.
+        workoutComputeKey = triggerComputeKey(data.date, getWeekKey(new Date()));
+        if (workoutComputeKey === null) {
           console.log(
-            `onWorkoutCreated: skipping recompute for ${uid}, workout on ${data.date} outside rolling window ending ${currentKey}`
+            `onWorkoutCreated: skipping recompute for ${uid}, workout on ${data.date} outside rolling window`
           );
           return null;
         }
@@ -4792,7 +4799,7 @@ exports.onWorkoutCreated = functions
       }
 
       try {
-        await computeAndWritePerformanceForUser(uid, null);
+        await computeAndWritePerformanceForUser(uid, workoutComputeKey);
         await releaseLock(uid, true);
         console.log(`onWorkoutCreated: computed performance for ${uid}`);
       } catch (err) {
