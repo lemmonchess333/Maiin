@@ -1878,12 +1878,14 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
     const base = own ?? mirrored ?? [];
     return piece.far ? [...base, FAR_OFFSET] : base;
   };
-  /* NOTE (pass 16): front/back-style joint sleeves were tried here and
-   * removed — the side pieces' opaque stage underlays always overlap
-   * (that is their design), so an under-drawn capsule is occluded
-   * everywhere and never shows. Junction gaps in the side view are
-   * FACET-inset gaps within/between pieces; they are fixed in the
-   * bodySideData facet ranges, not with sleeves. */
+  /* NOTE (pass 16; re-verified at the hip in pass 25): front/back-
+   * style joint sleeves do NOT work in the side view. The pieces'
+   * opaque stage underlays overlap every junction — measured twice,
+   * including a debug overlay at the bench's 28° hip drop, where even
+   * a 12-wide hip capsule sits fully covered. Side junction gaps are
+   * FACET-inset gaps and get fixed in bodySideData ranges (waist belt,
+   * neck tuck, knee/elbow/ankle rows, pelvis corner). Do not re-add
+   * sleeves here. */
   const body = SIDE_PIECES.map((piece) => {
     const ops = opsFor(piece);
     const outline = applyOps(piece.outline as Pt[], ops);

@@ -439,3 +439,24 @@ With pass 15 (waist belt), pass 16 (bench neck tuck) and pass 23 (RDL
 bar path), the side/lying set has now had the full junction, contour
 and mechanics treatment. Verified at full frame: bench t000-t100,
 push-ups mid-rep, RDL standing + depth, curl mid-rep. 37 passing.
+
+## STATUS 2026-08-15 (twenty-fifth pass) — pelvis corner facet; the hip-sleeve re-test
+
+Continuing the side/lying round. One real fix, one honest negative:
+
+- **Pelvis front-bottom corner facet.** That corner of the pelvis
+  piece had no facet, so its bare stage margin painted a dark wedge
+  over the hip crease whenever a pose flexed the thigh against the
+  pelvis (hinges; the bench's thigh drop). The "pelvis" facet now
+  extends to the corner, inside the outline rails.
+- **Hip sleeves re-tested and NOT kept.** Pass 16's "side sleeves are
+  a dead end" was re-challenged at the bench's 28° hip drop with a
+  debug overlay: even a 12-wide capsule sits fully covered by the
+  pieces. The pass-16 rule stands, now measured at every junction
+  including the hip — the note in renderSideDemo says so.
+- **Crop-audit lesson**: the "hip wedge" that prompted the re-test was
+  the BENCH FURNITURE edge misread at 4×. When a close-up defect
+  survives two targeted fixes unchanged, render a debug overlay
+  before a third — the overlay found the truth in one frame.
+
+37 passing.

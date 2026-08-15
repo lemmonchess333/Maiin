@@ -423,12 +423,19 @@ export const SIDE_PIECES: SidePiece[] = [
         ],
       },
       {
+        /* Extends to the piece's front-bottom corner (pass 25): that
+         * region had no facet, so its bare stage margin painted a
+         * black wedge over the hip crease whenever a pose flexed the
+         * thigh against the pelvis — worst on the bench. */
         muscle: "pelvis",
         points: [
           [49.8, 89.4],
           [55.6, 89.8],
           [52.9, 97.8],
-          [48.6, 101.8],
+          [49, 103.5],
+          [45.5, 110],
+          [43, 110.5],
+          [44.2, 103],
           [46.6, 96.4],
           [47.6, 92],
         ],
