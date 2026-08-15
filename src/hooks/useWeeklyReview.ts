@@ -31,6 +31,8 @@ import {
   type WeeklyReviewData,
 } from "@/lib/weeklyReviewViewModel";
 import { workoutTonnageKg } from "@/hooks/useWorkouts";
+import { resolveSnapshotCalorieTarget } from "@/lib/adaptiveTarget";
+import { useSubscription } from "@/lib/subscription";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import { buildPRMap, checkSetPR } from "@/lib/prTracking";
 import { isSetEligibleForStrengthPr } from "@/features/program/sessionSetPolicy";
@@ -238,6 +240,7 @@ interface UseWeeklyReviewResult {
 
 export function useWeeklyReview(): UseWeeklyReviewResult {
   const { user, profile } = useAuth();
+  const { isPro } = useSubscription();
   const weekKey = reviewedWeekKey();
   const [state, setState] = useState<UseWeeklyReviewResult>({
     loading: true,
@@ -462,10 +465,17 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
           prevPi,
           plannedLifts: liftDays > 0 ? liftDays : null,
           plannedRuns,
+          /* Resolved through the SAME precedence the PI's adherence
+             scoring uses (adaptiveTarget's snapshot resolver, the pinned
+             client copy of calorieTargetResolution.js) — not raw
+             `targetCalories`, which for an engaged adaptive-TDEE user is
+             the number the app deliberately stopped showing. This surface
+             already knows the adaptive layer exists (adaptiveRetunedInWeek
+             below); quoting the pre-adaptive target beside that would have
+             the recap contradict both the app's guidance and the PI it
+             sits next to. */
           calorieTarget:
-            typeof profile?.targetCalories === "number"
-              ? profile.targetCalories
-              : null,
+            resolveSnapshotCalorieTarget(profile, isPro)?.value ?? null,
           adaptiveRetunedInWeek: retuned,
           hideWeightNumber: Boolean(profile?.hideWeightNumber),
           established,

@@ -210,3 +210,96 @@ describe("what the drift cost, in adherence points", () => {
     expect(calScore(stored, stored, "cut")).toBe(100);
   });
 });
+
+/**
+ * The SNAPSHOT wrapper — same seam, one level up.
+ *
+ * The core precedence being pinned above was not enough by itself: the
+ * server also owns an input RECIPE (`resolveScoringCalorieTarget`) that
+ * turns a raw profile into the resolver's inputs — the marker check, the
+ * override flag, the missing-target null. The weekly review needed exactly
+ * that recipe on the client (it assembles from a profile read, not the
+ * live adaptive hook), and a hand-rolled copy in the hook would have been
+ * the drift door reopening one layer up from where it was closed.
+ *
+ * So the client grew `resolveSnapshotCalorieTarget`, and this matrix
+ * drives BOTH wrappers over the same profile shapes. Tier is the one
+ * input the runtimes spell differently (string vs boolean); the mapping
+ * is part of what is being pinned.
+ */
+import {
+  resolveSnapshotCalorieTarget,
+  hasAppliedLearnedTarget as clientHasApplied,
+} from "../adaptiveTarget";
+
+const clientOf = (tier: "free" | "pro") => tier === "pro";
+
+describe("resolveSnapshotCalorieTarget — client and server agree", () => {
+  const APPLIED = {
+    lastApplied: 2100,
+    lastAppliedAt: "2026-07-01T08:00:00.000Z",
+  };
+  const EPOCH_SEED = {
+    lastApplied: 2100,
+    lastAppliedAt: "1970-01-01T00:00:00.000Z",
+  };
+
+  const PROFILES: Array<[string, Record<string, unknown>]> = [
+    ["no target at all", {}],
+    ["formula only", { targetCalories: 2400 }],
+    ["engaged adaptive", { targetCalories: 2400, adaptiveCapState: APPLIED }],
+    [
+      "epoch seed (never applied)",
+      { targetCalories: 2400, adaptiveCapState: EPOCH_SEED },
+    ],
+    [
+      "manual override beats engaged adaptive",
+      {
+        targetCalories: 2000,
+        customCalorieTarget: 2000,
+        adaptiveCapState: APPLIED,
+      },
+    ],
+    [
+      "malformed cap state",
+      { targetCalories: 2400, adaptiveCapState: { lastApplied: "soon" } },
+    ],
+  ];
+
+  it("over every profile shape × tier", () => {
+    let checked = 0;
+    for (const [label, profile] of PROFILES) {
+      for (const tier of ["free", "pro"] as const) {
+        const js = resolveScoringCalorieTarget(profile, tier);
+        const ts = resolveSnapshotCalorieTarget(profile, clientOf(tier));
+        if (js === null) {
+          expect(ts, `${label} / ${tier}`).toBeNull();
+        } else {
+          expect(
+            { source: ts?.source, value: ts?.value },
+            `${label} / ${tier}`
+          ).toEqual({ source: js.source, value: js.value });
+        }
+        checked++;
+      }
+    }
+    expect(checked).toBe(PROFILES.length * 2);
+  });
+
+  it("the marker checks agree, including on the epoch sentinel", () => {
+    for (const cs of [
+      null,
+      undefined,
+      {},
+      APPLIED,
+      EPOCH_SEED,
+      { lastApplied: 2100 },
+      { lastApplied: NaN, lastAppliedAt: "2026-07-01T08:00:00.000Z" },
+      { lastApplied: 2100, lastAppliedAt: "not-a-date" },
+    ]) {
+      expect(clientHasApplied(cs), JSON.stringify(cs)).toBe(
+        hasAppliedLearnedTarget(cs)
+      );
+    }
+  });
+});
