@@ -571,3 +571,21 @@ causes, all fixed:
 | Pass-27's wrist dome made a second lobe beside the fist    | The forearm rails end ~1.4 shorter so the mitt CAPS the arm — one termination at the grip.                                                 |
 
 Far-limb pin updated to the new hex. 37 passing.
+
+## STATUS 2026-08-15 (thirty-second pass) — part-fit audit: hip line, neck, chin
+
+Owner: "hip positioning looks too far forward, neck looks weird, face
+looks weird — look at all individual parts and how they fit
+together." Magnified part-by-part audit of the standing profile
+confirmed all three, each with a measured cause:
+
+| Part     | Cause                                                                                                                                             | Fix                                                                                   |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Hip line | Front line ran chest 64.8 → waist ~58 → hip 56.6 then the QUADS re-bulged to 60.6 — the whole leg column read as thrust forward (anterior shift). | Quad sweep pulled to 56.8-58.6: the thigh front now continues the hip's receding arc. |
+| Neck     | A 9-unit-wide parallel column, dead vertical — a tree trunk with the trap wedge stacked separately.                                               | Narrowed ~1.2 (outline + facet), slight taper — flows skull → traps.                  |
+| Face     | From the brow the profile cut down-back in one long diagonal to a chinless jaw — a receding beak.                                                 | Chin projects (61.6), jaw corner added, nose kept subtle.                             |
+
+Verified under articulation: deadlift bottom (cervical counter + chin),
+bench lying (neck tuck), RDL mid-hinge (no forward thigh bulge). The
+goal's named parts are all side-profile features; the front figure's
+equivalents were covered in passes 5-21. 37 passing.
