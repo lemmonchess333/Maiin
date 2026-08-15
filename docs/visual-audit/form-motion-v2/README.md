@@ -460,3 +460,21 @@ Continuing the side/lying round. One real fix, one honest negative:
   before a third — the overlay found the truth in one frame.
 
 37 passing.
+
+## STATUS 2026-08-15 (twenty-sixth pass) — round knees for the side figure
+
+Owner on the bench's bent knee: "knees shouldn't be rectangles." Three
+rectangles were stacking there: the thigh's flat end cut, the shank's
+flat top cut, and the kneecap band (a quad by construction). Fixes:
+
+- Thigh bottom rails gain narrowing end samples — roundedPath crowns
+  the end as a dome instead of a flat cut (the arm-shoulder-dome
+  treatment, applied to the femur).
+- Shank top rails likewise — exposed only when the knee bends, since
+  the thigh overlaps them at rest.
+- The kneecap facet renders at r 3.2 (vs the 1.1 facet default) — a
+  PILL, not a band. Front/back knees already had sleeves + rounding;
+  this closes the class for the side view.
+
+Verified: bench bent knee at 4×, bench full frames, RDL standing +
+hinge, curl standing. 37 passing.

@@ -1928,9 +1928,12 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
           const op = f.level
             ? ` fill-opacity="${(tintOpacity(f.level) * (piece.far ? 0.55 : 1)).toFixed(3)}"`
             : "";
+          // The kneecap is the one facet that must read as a PILL,
+          // not a band — a rectangle at a bent knee looks like a box
+          // (owner pass 10).
           return shape(
             f.pts,
-            1.1,
+            f.muscle === "knees" ? 3.2 : 1.1,
             fill,
             `${op} stroke="${fill}" stroke-width="0.5" stroke-linejoin="round"`
           );
