@@ -1591,6 +1591,26 @@ export function renderBodyDemo(
       "foreArmR",
       6.5,
     ],
+    /* Shoulder sleeves: the deltoid follows the humerus at a capped
+     * ~40% (scapulohumeral rhythm), so at a 90° raise the cap and the
+     * arm fan APART and a black wedge opens inside the arm silhouette.
+     * The torso-side anchor sits just inboard of the shoulder; the
+     * arm-side anchor rides the humerus — the capsule spans whatever
+     * angle opens between them. Hidden under the deltoid at rest. */
+    [
+      [JA.shoulderL[0] + 6, JA.shoulderL[1] + 2],
+      "torso",
+      seg(JA.shoulderL, JA.elbowL, 0.4),
+      "upperArmL",
+      7,
+    ],
+    [
+      [JA.shoulderR[0] - 6, JA.shoulderR[1] + 2],
+      "torso",
+      seg(JA.shoulderR, JA.elbowR, 0.4),
+      "upperArmR",
+      7,
+    ],
   ];
   if (view === "anterior") {
     sleeveDefs.push(

@@ -258,3 +258,18 @@ icicle points — the posterior model simply had no feet. Two compact
 heel blocks now cap the soleus tips, riding the shank groups (from
 behind a foot IS mostly heel). Pin: posterior path count 37. 36
 passing.
+
+## STATUS 2026-08-15 (thirteenth pass) — shoulder sleeves complete the joint system
+
+Self-critique after the mosaic return: the shoulder was the one
+articulated joint without a sleeve. The deltoid follows the humerus at
+a capped ~40% (scapulohumeral rhythm), so at a 90° raise the cap and
+the arm fan apart and a black wedge opens INSIDE the arm silhouette
+(lateral raise, pull-up reach, press). A shoulder sleeve now spans
+from just inboard of each shoulder (torso group) to a point on the
+humerus (arm group) — filled at any raise angle, hidden under the
+deltoid at rest.
+
+New pin: sleeve census by round-capped BODY line count (anterior 6 =
+elbow+shoulder+knee pairs; posterior 4) + the no-ball-caps assertion.
+37 passing.

@@ -54,6 +54,22 @@ describe("renderBodyDemo", () => {
     expect(post.match(/<path/g)!.length).toBe(37);
   });
 
+  it("joint sleeves bridge elbows, shoulders and knees (no ball caps)", () => {
+    // A sleeve is a round-capped BODY-toned line spanning a joint —
+    // the "real arms instead of balls" mechanism. Anterior carries
+    // elbow + shoulder + knee pairs; posterior has no knee sleeves.
+    const count = (svg: string) =>
+      (
+        svg.match(/<line[^>]*stroke="#B6BDC3"[^>]*stroke-linecap="round"/g) ??
+        []
+      ).length;
+    expect(count(renderBodyDemo("squat", 0))).toBe(6);
+    expect(count(renderBodyDemo("pull-ups", 0))).toBe(4);
+    expect(renderBodyDemo("squat", 0).includes('<circle fill="#B6BDC3"')).toBe(
+      false
+    );
+  });
+
   it("squat: the body visibly sinks at the bottom", () => {
     const top = Math.min(...polyYs(renderBodyDemo("squat", 0)));
     const bottom = Math.min(...polyYs(renderBodyDemo("squat", 1)));
