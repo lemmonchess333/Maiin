@@ -478,3 +478,14 @@ flat top cut, and the kneecap band (a quad by construction). Fixes:
 
 Verified: bench bent knee at 4×, bench full frames, RDL standing +
 hinge, curl standing. 37 passing.
+
+## STATUS 2026-08-15 (twenty-seventh pass) — dome the elbow and wrist ends
+
+The knee's rectangle fix (pass 26) generalized to the arm: the upper
+arm ended in a flat cut at the elbow, the forearm began with one
+(exposed at flexion), and the forearm ended flat at the wrist. All
+three ends now carry the narrowing dome samples — the limb segment
+ends of the side figure are uniformly crowned: shoulder (24), femur +
+shin (26), elbow both sides + wrist (27). Verified on the elbow-heavy
+demos: curl mid-flexion, bench rack, pushdown mid-extension. 37
+passing.
