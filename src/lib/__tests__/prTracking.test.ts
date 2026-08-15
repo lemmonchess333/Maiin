@@ -170,6 +170,93 @@ describe("checkSetPR", () => {
   });
 });
 
+/**
+ * The rebuild applies the LIVE gate (isSetEligibleForStrengthPr).
+ *
+ * The live path refuses warm-ups and timed holds before firing or
+ * recording a PR — but this rebuild REPLACES the live-built map whenever
+ * stats/prMap is missing or legacy, so anything it admits comes back no
+ * matter what the live gate refused. Every existing fixture in this file
+ * carries sets with NO `type`, and they all assert records ARE created —
+ * which doubles as the pin that absent type means working (pre-D2 docs;
+ * export.ts's documented default).
+ */
+describe("buildPRMap applies the live PR gate", () => {
+  it("gives a timed hold no entry at all — not even an empty one", () => {
+    /* A hold's name does not belong in a rep-bucket map: a 20 kg / 60 s
+       weighted plank is not a "10+ Rep Max", and ExerciseHistory already
+       titles its records "Longest hold". The exercise-level skip (rather
+       than only the per-set predicate) is what keeps the NAME out. */
+    const map = buildPRMap([
+      {
+        date: "2026-08-10",
+        exercises: [
+          {
+            exerciseName: "Weighted Plank",
+            repUnit: "seconds",
+            sets: [{ weightKg: 20, reps: 60 }],
+          },
+          { exerciseName: "Bench", sets: [{ weightKg: 100, reps: 5 }] },
+        ],
+      },
+    ]);
+    expect("Weighted Plank" in map).toBe(false);
+    // Positive anchor: the sweep ran and recorded the real lift.
+    expect(map["Bench"]["5rm"]?.weight).toBe(100);
+  });
+
+  it("does not let a warm-up seed a record that suppresses a real PR", () => {
+    /* The consequence that makes the warm-up half matter: records don't
+       just display, they GATE checkSetPR. A historical 60 kg warm-up
+       outranking today's 55 kg working set means the working set fires
+       nothing — a real PR silently swallowed by preparation work. */
+    const map = buildPRMap([
+      {
+        date: "2026-07-01",
+        exercises: [
+          {
+            exerciseName: "Bench",
+            sets: [
+              { weightKg: 60, reps: 10, type: "warmup" },
+              { weightKg: 100, reps: 5, type: "working" },
+            ],
+          },
+        ],
+      },
+    ]);
+    expect(map["Bench"]["10rm"]).toBeNull();
+    expect(map["Bench"]["5rm"]?.weight).toBe(100);
+    // ...and the suppressed-PR scenario now fires.
+    expect(
+      checkSetPR("Bench", 55, 10, map, { Bench: 5 })
+    ).toBe("10rm");
+  });
+
+  it("still records drop sets and failure sets", () => {
+    /* The predicate's own docblock draws this line: PR eligibility admits
+       a drop set (a legitimate record on its reduced load) and a failure
+       set; PROGRESSION eligibility does not. Reaching for the progression
+       predicate here would erase real records — the near-miss the
+       sessionSetPolicy header warns about, in the other direction. */
+    const map = buildPRMap([
+      {
+        date: "2026-08-10",
+        exercises: [
+          {
+            exerciseName: "Bench",
+            sets: [
+              { weightKg: 60, reps: 12, type: "dropset" },
+              { weightKg: 100, reps: 5, type: "failure" },
+            ],
+          },
+        ],
+      },
+    ]);
+    expect(map["Bench"]["10rm"]?.weight).toBe(60);
+    expect(map["Bench"]["5rm"]?.weight).toBe(100);
+  });
+});
+
 // Training-book backlog section 3 (B1): the rebuild path must apply the same
 // same-weight-more-reps tiebreak as the live checkSetPR path — before the fix
 // a rebuild from history silently degraded such records and the user could
