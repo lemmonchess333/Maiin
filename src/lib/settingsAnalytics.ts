@@ -28,6 +28,7 @@ export type SettingsSection =
   | "privacy"
   | "shoes"
   | "notifications"
+  | "health"
   | "subscription"
   | "ai_usage"
   | "data_storage"
