@@ -390,3 +390,13 @@ so the forearm capsule's cap hides beneath it.
 
 Both ends verified: rest arms show no rod (the owner's frame), press
 rack / raise top keep the pass-20 solid arms. 37 passing.
+
+## STATUS 2026-08-15 (twenty-second pass) — the row's elbow checkpoint
+
+Mid-rep sweep after the deformation-aware sleeves (press/raise/
+pulldown/dips transition zones all verified solid): the one
+readability miss left was the row TOP — at a pull height of 26 below
+the shoulder the folded arm hid flat against the torso, and the row's
+defining form checkpoint (elbow driving past the back line) barely
+registered. Top of pull raised to 21: the elbow now clearly clears
+the back silhouette with the bar at the lower ribs. 37 passing.

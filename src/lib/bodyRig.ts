@@ -1154,7 +1154,11 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       // Bar path: a straight VERTICAL line below the shoulder joint —
       // below the knee at the bottom, lower ribs at the top with the
       // elbow driving past the torso line (IK bends it up-back).
-      const hFinal: Pt = [S[0] + 1, lerp(S[1] + 50, S[1] + 26, e)];
+      // Top of pull raised 26 → 21 below the shoulder (owner-loop
+      // pass 9): at 26 the folded arm hid against the torso and the
+      // row's defining checkpoint — the elbow driving past the back
+      // line — barely registered.
+      const hFinal: Pt = [S[0] + 1, lerp(S[1] + 50, S[1] + 21, e)];
       const hPre = applyToPoint(hFinal, unpose);
       const arm = aimArm(
         {
