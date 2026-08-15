@@ -20,6 +20,10 @@ vi.mock("@/lib/logger", () => ({
 }));
 
 let mockProfile: Record<string, unknown> | null = null;
+let mockIsPro = false;
+vi.mock("@/lib/subscription", () => ({
+  useSubscription: () => ({ isPro: mockIsPro }),
+}));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: { uid: "u1" }, profile: mockProfile }),
   useUid: () =>
@@ -55,6 +59,7 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(NOW);
   sessionStorage.clear();
+  mockIsPro = false;
   mockProfile = {
     targetCalories: 2400,
     weekSchedule: [
@@ -117,6 +122,72 @@ describe("useWeeklyReview assembly", () => {
       avgCalories: 2400,
       target: 2400,
     });
+  });
+
+  it("quotes the ADAPTIVE target for an engaged Pro user, like the PI does", async () => {
+    /* The recap's calorie line and the PI's adherence factor must name the
+       same number. `profile.targetCalories` deliberately never moves once
+       the adaptive layer engages — the estimator reads it as its own
+       anchor — so quoting it here scored a compliant Pro user against a
+       target the app stopped showing weeks earlier, right beside the
+       `retuned` chip proving this surface knows the adaptive layer
+       exists. Resolution goes through the snapshot resolver pinned to the
+       server's by adaptiveTargetMirror.cross.test.ts. */
+    mockIsPro = true;
+    mockProfile = {
+      ...mockProfile,
+      adaptiveCapState: {
+        lastApplied: 2100,
+        lastAppliedAt: "2026-07-01T08:00:00.000Z",
+      },
+    };
+    seedFirestore({
+      "users/u1/meals/m1": { date: "2026-07-06", totalCalories: 2100 },
+    });
+
+    const { result } = renderHook(() => useWeeklyReview());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.review?.nutrition).toMatchObject({ target: 2100 });
+  });
+
+  it("keeps the formula target for a FREE user with the same cap state", async () => {
+    /* The learned layer is Pro-gated; a lapsed subscription reverts the
+       shown target to formula, and the review must follow the shown one. */
+    mockIsPro = false;
+    mockProfile = {
+      ...mockProfile,
+      adaptiveCapState: {
+        lastApplied: 2100,
+        lastAppliedAt: "2026-07-01T08:00:00.000Z",
+      },
+    };
+    seedFirestore({
+      "users/u1/meals/m1": { date: "2026-07-06", totalCalories: 2100 },
+    });
+
+    const { result } = renderHook(() => useWeeklyReview());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.review?.nutrition).toMatchObject({ target: 2400 });
+  });
+
+  it("treats the epoch seed anchor as never-applied", async () => {
+    // applyWeeklyCap's first-engage seed — a Pro user mid-warmup still
+    // sees (and must be reviewed against) the formula target.
+    mockIsPro = true;
+    mockProfile = {
+      ...mockProfile,
+      adaptiveCapState: {
+        lastApplied: 2100,
+        lastAppliedAt: "1970-01-01T00:00:00.000Z",
+      },
+    };
+    seedFirestore({
+      "users/u1/meals/m1": { date: "2026-07-06", totalCalories: 2100 },
+    });
+
+    const { result } = renderHook(() => useWeeklyReview());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.review?.nutrition).toMatchObject({ target: 2400 });
   });
 
   it("ignores soft-deleted meals", async () => {
