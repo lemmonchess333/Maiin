@@ -13,6 +13,7 @@ import { Capacitor } from "@capacitor/core";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "@/lib/firebase";
 import type { PlanId } from "@/lib/proPlans";
+import { isRevenueCatEnabled, rcPurchase, rcRestore } from "@/lib/revenuecat";
 
 export type { PlanId };
 
@@ -81,7 +82,7 @@ export function isNativeIOS(): boolean {
 // WARNING: These must match the bundle ID in capacitor.config.ts (appId)
 // and the product IDs registered in App Store Connect. If you change the
 // bundle ID, update these product ID prefixes accordingly.
-const APPLE_PRODUCT_IDS: Record<PlanId, string> = {
+export const APPLE_PRODUCT_IDS: Record<PlanId, string> = {
   monthly: "com.tropos.app.pro.monthly",
   yearly: "com.tropos.app.pro.yearly",
 };
@@ -264,6 +265,42 @@ async function purchaseWithStripe(
 }
 
 /**
+ * Purchase via RevenueCat (IAP slice 3, #1099) — the Path B flow.
+ *
+ * RC verifies the transaction with Apple before purchasePackage resolves, so
+ * unlike purchaseWithAppleIAP there is no client-side receipt handling. The
+ * webhook (backend slice 3) is the entitlement source of truth; the
+ * best-effort sync callable only closes the purchase→webhook latency gap so
+ * Pro unlocks the moment the sheet dismisses.
+ */
+async function purchaseWithRevenueCat(plan: PlanId): Promise<PurchaseResult> {
+  const outcome = await rcPurchase(APPLE_PRODUCT_IDS[plan]);
+  if (outcome.userCancelled) {
+    return { success: false, error: "Purchase cancelled." };
+  }
+  if (!outcome.success) {
+    return {
+      success: false,
+      error: outcome.error ?? "Purchase failed. Please try again.",
+    };
+  }
+  await syncEntitlementBestEffort();
+  return { success: true };
+}
+
+/** Nudge the backend to pull the fresh entitlement from RC and write the
+ *  profile fields immediately. MUST never fail a successful purchase — the
+ *  webhook lands the same write within seconds regardless. */
+async function syncEntitlementBestEffort(): Promise<void> {
+  try {
+    const sync = httpsCallable(functions, "syncRevenueCatEntitlement");
+    await sync({});
+  } catch {
+    /* tolerated: webhook is the source of truth */
+  }
+}
+
+/**
  * Main purchase function — routes to the correct provider.
  *
  * Options are forwarded to Stripe (success/cancel return URLs).
@@ -278,6 +315,9 @@ export async function purchase(
   options: PurchaseOptions = {}
 ): Promise<PurchaseResult> {
   if (isNativeIOS()) {
+    if (isRevenueCatEnabled()) {
+      return purchaseWithRevenueCat(plan);
+    }
     return purchaseWithAppleIAP(plan);
   }
   return purchaseWithStripe(plan, uid, email, options);
@@ -339,6 +379,18 @@ export async function manageSubscription(uid: string): Promise<PurchaseResult> {
 export async function restorePurchases(): Promise<PurchaseResult> {
   if (!isNativeIOS()) {
     return { success: false, error: "Restore is only available on iOS." };
+  }
+
+  if (isRevenueCatEnabled()) {
+    const outcome = await rcRestore();
+    if (!outcome.success) {
+      return {
+        success: false,
+        error: outcome.error ?? "Failed to restore purchases.",
+      };
+    }
+    await syncEntitlementBestEffort();
+    return { success: true };
   }
 
   try {

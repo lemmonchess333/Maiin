@@ -37,7 +37,6 @@ import {
 } from "lucide-react";
 import { toast } from "@/lib/toast";
 import {
-  PRO_PLANS,
   DEFAULT_PLAN,
   getCheckoutCtaLabel,
   getRenewalDisclosure,
@@ -48,6 +47,7 @@ import {
 import { isNativeIOS, manageSubscription } from "@/lib/purchaseProvider";
 import { useProCheckout } from "@/hooks/useProCheckout";
 import TrialTimeline from "@/components/TrialTimeline";
+import { useProPlanPrices } from "@/hooks/useProPlanPrices";
 import { useAuth } from "@/lib/auth";
 import { track } from "@/lib/paywallAnalytics";
 import { THEME } from "@/lib/theme";
@@ -83,6 +83,9 @@ export default function Upgrade() {
 
   const [selectedPlan, setSelectedPlan] = useState<PlanId>(DEFAULT_PLAN);
   const [manageLoading, setManageLoading] = useState(false);
+  // Apple-localized prices on the RC build; hardcoded proPlans fallback
+  // elsewhere (IAP slice 3, #1099).
+  const plans = useProPlanPrices();
 
   const { loading, error, startCheckout } = useProCheckout();
 
@@ -438,7 +441,7 @@ export default function Upgrade() {
             aria-label="Choose Pro billing plan"
             className="space-y-2 pt-2"
           >
-            {PRO_PLANS.map((plan) => {
+            {plans.map((plan) => {
               const isSelected = selectedPlan === plan.id;
               return (
                 <button
