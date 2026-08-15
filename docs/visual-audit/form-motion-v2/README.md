@@ -20,22 +20,22 @@ sheets) — pending operator confirmation.** The operator confirms or
 overrides by editing this table; only an operator-confirmed
 "approved" satisfies the roadmap's Gate-0.
 
-| Demo                 | Current    | Recommended verdict | Why                                                                                                                          |
-| -------------------- | ---------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| barbell-curl         | gated      | fallback ✓          | Sheets confirm the gate: no bar; forearms foreshorten into unreadable stubs by mid-rep.                                      |
-| barbell-row          | production | provisional         | Hinge stable, bar tracks close, back tint reads; single-arm topology gap (roadmap Phase 2).                                  |
-| bench-press          | production | provisional         | Bench/torso/press read; single visible arm + end-on plate (Phase 2/4 repairs pending).                                       |
-| calf-raise           | production | provisional         | Calf tint correct; the rise is nearly imperceptible in stills — legibility is marginal at card scale.                        |
-| deadlift             | production | provisional         | Posterior sink + glute/ham tint read, but the scaleY sink is squat-like; roadmap defers to a future side model.              |
-| dips                 | production | **approved (rec.)** | Constraint-driven (fixed bars, body lowers); coherent at small scale; no visible defects across the five frames.             |
-| lat-pulldown         | production | provisional         | Bar path overhead→shoulders reads well; missing seat/thigh pads (Phase 4 furniture); final frame bar sits close to the neck. |
-| lateral-raise        | production | provisional         | Raise-to-shoulder-height envelope correct; arm segment chains show visible gaps at the top frames.                           |
-| overhead-press       | production | provisional         | Press reads; slight elbow-seam gaps at lockout frames; shoulder root still fixed (arms-only critique stands).                |
-| pull-ups             | production | **approved (rec.)** | Strongest sheet: fixed bar, hands stay on, body travel + lat/arm tint all coherent.                                          |
-| push-ups             | production | provisional         | Plank + planted contacts read; body moves as one beam (known); triceps tint can't render (side topology).                    |
-| romanian-deadlift    | production | provisional         | Hip-hinge progression + bar proximity read; whole-body-about-ankle rotation is the known Phase-4 repair.                     |
-| rope-tricep-pushdown | gated      | fallback ✓          | Sheets confirm the gate: a straight bar is drawn where the exercise (and its own instructions) demand a rope.                |
-| squat                | production | provisional         | Sink + quad tint read cleanly; conservative scaleY projection until the side lower-body model exists.                        |
+| Demo                 | Current    | Recommended verdict | Why                                                                                                                                                                                       |
+| -------------------- | ---------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| barbell-curl         | production | provisional         | REBUILT 2026-08-15: side-view strict curl, end-on bar at the hand (deadlift's plate language); the gate's two named defects (no bar, forearm foreshortening) are gone by construction.    |
+| barbell-row          | production | provisional         | Hinge stable, bar tracks close, back tint reads; single-arm topology gap (roadmap Phase 2).                                                                                               |
+| bench-press          | production | provisional         | Bench/torso/press read; single visible arm + end-on plate (Phase 2/4 repairs pending).                                                                                                    |
+| calf-raise           | production | provisional         | Calf tint correct; the rise is nearly imperceptible in stills — legibility is marginal at card scale.                                                                                     |
+| deadlift             | production | provisional         | Posterior sink + glute/ham tint read, but the scaleY sink is squat-like; roadmap defers to a future side model.                                                                           |
+| dips                 | production | **approved (rec.)** | Constraint-driven (fixed bars, body lowers); coherent at small scale; no visible defects across the five frames.                                                                          |
+| lat-pulldown         | production | provisional         | Bar path overhead→shoulders reads well; missing seat/thigh pads (Phase 4 furniture); final frame bar sits close to the neck.                                                              |
+| lateral-raise        | production | provisional         | Raise-to-shoulder-height envelope correct; arm segment chains show visible gaps at the top frames.                                                                                        |
+| overhead-press       | production | provisional         | Press reads; slight elbow-seam gaps at lockout frames; shoulder root still fixed (arms-only critique stands).                                                                             |
+| pull-ups             | production | **approved (rec.)** | Strongest sheet: fixed bar, hands stay on, body travel + lat/arm tint all coherent.                                                                                                       |
+| push-ups             | production | provisional         | Plank + planted contacts read; body moves as one beam (known); triceps tint can't render (side topology).                                                                                 |
+| romanian-deadlift    | production | provisional         | Hip-hinge progression + bar proximity read; whole-body-about-ankle rotation is the known Phase-4 repair.                                                                                  |
+| rope-tricep-pushdown | production | provisional         | REBUILT 2026-08-15: side-view pushdown — cable from high pulley to a round-capped rope whose knotted tail hangs past the grip; elbow pinned; new side triceps facet carries the emphasis. |
+| squat                | production | provisional         | Sink + quad tint read cleanly; conservative scaleY projection until the side lower-body model exists.                                                                                     |
 
 Regenerate after any rig change and re-review — a stale sheet is not
 evidence.
@@ -57,3 +57,22 @@ re-read with these deltas:
 | lateral-raise  | Stops AT parallel (72°, was above); joint caps now scale with rotation so the arm chain no longer reads as detached links.                                                                 |
 | all side demos | Facet-count discipline: arbitrary mid-length row splits merged (calves, abs, obliques, forearm) — seams now only at real muscle boundaries.                                                |
 | player         | Reps LOOP continuously (gym-placard model; supersedes the Demo1 single-rep settle + replay) and the 30fps throttle steps evenly (judder fix).                                              |
+
+## STATUS 2026-08-15 — gated-demo repairs (sheets regenerated)
+
+Owner-directed "improve the exercise demonstration animations" session.
+The two production-gated demos were rebuilt as SIDE-view models fixing
+exactly the defect the gate named, and left the gate (the 2026-07-27
+precedent: honesty repairs ship with regenerated sheets standing in for
+Gate-3; the operator confirms or reverts by re-adding the id to
+`GATED_PENDING_REPAIR` — one line).
+
+| Demo                 | Delta                                                                                                                                                     |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| barbell-curl         | REBUILT: side-view strict curl. Forearm+bar arc about the elbow entirely in-plane (no foreshortening); end-on plate at the hand; torso/hips/legs planted. |
+| rope-tricep-pushdown | REBUILT: side-view pushdown. Cable from a high pulley to a round-capped rope strand + knotted tail; elbow pinned, extension about it alone.               |
+| side arm (all)       | Upper-arm band split at the real muscle boundary into biceps (front) + triceps (back) facets, mirroring the thigh's quads/hams convention.                |
+
+Mechanics pins shipped with the rebuilds: bar rises thigh→clavicle on a
+strict torso (curl); rope tail descends >20 units, upper arm untouched,
+no line spans body width (pushdown); both arm facets tint independently.

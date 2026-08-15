@@ -475,8 +475,19 @@ export const SIDE_PIECES: SidePiece[] = [
         points: band(ARM_B, ARM_F, 38, 51.8, 0, 1, { skewB: [-1.5, 1] }),
       },
       {
+        /* Front/back split at the real muscle boundary, mirroring the
+           thigh's quadriceps/hamstring convention — the triceps facet is
+           what lets a pushdown's working-muscle emphasis render at all
+           (roadmap side-topology item "triceps facet"). */
         muscle: "biceps",
-        points: band(ARM_B, ARM_F, 53.2, 70.8, 0, 1, { skewT: [-1.5, 1] }),
+        points: band(ARM_B, ARM_F, 53.2, 70.8, 0.52, 1, {
+          skewT: [-1.5, 1],
+          bellyL: -0.05,
+        }),
+      },
+      {
+        muscle: "triceps",
+        points: band(ARM_B, ARM_F, 54, 70, 0, 0.46, { bellyR: 0.05 }),
       },
     ],
   },

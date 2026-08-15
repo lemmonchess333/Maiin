@@ -391,6 +391,11 @@ export interface BodyDemo {
   /** Free scene furniture (a bench, a floor line) drawn behind the
    *  body — raw SVG in GEAR colours. Side-view demos use this. */
   scene?: (e: number, pose: Partial<Record<GroupName, Op[]>>) => string;
+  /** Scene gear drawn OVER the body (side view only): the rope + cable a
+   *  pushdown grips works in front of the figure, exactly like the
+   *  plate-end barbell. Receives the solved pose, so attachments are
+   *  drawn FROM the hand's constraint — never floating free of it. */
+  sceneFront?: (e: number, pose: Partial<Record<GroupName, Op[]>>) => string;
   /** Ground line override (hanging demos float above a lower floor). */
   groundY?: number;
   /** Shadow centre override (lying scenes aren't centred on x=50). */
@@ -511,91 +516,82 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
   },
 
   "barbell-curl": {
-    view: "anterior",
+    /* Side-view STRICT curl (Phase-4 repair, roadmap "strict curl
+     * (two-hand bar)"). The gated front view had both defects the gate
+     * names: no bar, and ~58% forearm foreshortening at lockout. Profile
+     * dissolves both — the flexion arc lives entirely in-plane, and the
+     * bar renders end-on at the hand exactly like the deadlift's plate
+     * (both hands stack behind the near grip in profile). Torso, hips
+     * and legs stay planted: a strict curl, no body english — the honest
+     * named variant. Elbows drift a few degrees forward at the top, the
+     * one allowance every reference shows. */
+    view: "side",
+    equip: "plate-end",
+    plateR: 10,
     concentricTo: 1,
     tint: { biceps: "primary", forearm: "secondary" },
     pose: (e) => {
-      /* Front-view curl. The forearm rotates up about the elbow AND
-       * foreshortens along its own axis (scaleAxis) — at mid-rep a real
-       * curl points the forearm at the viewer, so in 2D it must read
-       * SHORT, not swung out sideways (the unforeshortened version was
-       * a chicken-wing that clipped the canvas). Foreshortening peaks
-       * when the forearm crosses horizontal; with no held weight the
-       * arc can run higher and squash less. */
-      /* 2026-07-11 joint pass: the arc now runs INWARD-up (the same
-       * rotation sense the pushdown's probe verified brings the hand
-       * across the front of the body), not outward-up — the previous
-       * direction finished hands WIDE of the elbows, a chicken-wing no
-       * bar allows. Hands now travel up the front and finish just
-       * outside the shoulders at shoulder width, exactly the
-       * bar-constrained path. Foreshortening peaks as the forearm
-       * points at the viewer (crossing the horizontal-front plane). */
-      const deg = lerp(0, 150, e);
-      const drift = lerp(0, 4, e); // elbows ease forward a touch
-      // World angle measured inward from straight-down: starts -17
-      // (rest sits 17 deg OUTSIDE vertical), crosses the viewer plane
-      // at 90, ends 133 (hand up-and-in beside the shoulder).
-      const world = deg - 17;
-      /* Foreshortening keeps DEEPENING past the mid-arc: at the top of
-       * a curl the forearm points at the viewer's shoulder, so the 2D
-       * segment reads shortest at the finish (k~0.6), not relaxed —
-       * that relaxation was what splayed the old top-frames. */
-      const rise = Math.min(Math.max(world, 0), 90);
-      const k =
-        1 -
-        0.4 * Math.sin((rise * Math.PI) / 180) -
-        (world > 90 ? ((world - 90) / 43) * 0.18 : 0);
+      const curl = lerp(0, 135, e); // elbow flexion, hanging → top
+      const drift = lerp(0, 8, e); // elbows ease forward at the top
+      const armDrift: Op[] = [
+        { kind: "rotate", deg: -drift, pivot: SIDE_ANCHORS.shoulder },
+      ];
+      const fore: Op[] = [
+        { kind: "rotate", deg: -curl, pivot: SIDE_ANCHORS.elbow },
+        ...armDrift,
+      ];
       return {
-        upperArmL: [{ kind: "rotate", deg: -drift, pivot: ANT.shoulderL }],
-        foreArmL: [
-          { kind: "rotate", deg: -deg, pivot: ANT.elbowL },
-          { kind: "scaleAxis", k, deg: -(deg - 17), pivot: ANT.elbowL },
-          { kind: "rotate", deg: -drift, pivot: ANT.shoulderL },
-        ],
-        upperArmR: [{ kind: "rotate", deg: drift, pivot: ANT.shoulderR }],
-        foreArmR: [
-          { kind: "rotate", deg, pivot: ANT.elbowR },
-          { kind: "scaleAxis", k, deg: deg - 17, pivot: ANT.elbowR },
-          { kind: "rotate", deg: drift, pivot: ANT.shoulderR },
-        ],
+        upperArmL: armDrift,
+        foreArmL: fore,
+        handL: fore,
       };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
     },
   },
 
   "rope-tricep-pushdown": {
-    view: "anterior",
-    equip: "cable-bar",
-    barInFront: true,
+    /* Side-view rope pushdown (Phase-4 repair, roadmap "rope pushdown
+     * cleanup"). The gated front view drew a straight BAR across the
+     * body — contradicting the exercise's own rope instructions (the
+     * misrepresentation the gate names). In profile the machine reads
+     * honestly: a cable drops from the high pulley to a rope whose
+     * knotted tail hangs BELOW the grip, and the forearm extends about
+     * the pinned elbow from folded-up to lockout at the thigh. The
+     * cable + rope are drawn FROM the solved hand point every frame —
+     * gear as a constraint, never independent of the body. */
+    view: "side",
     concentricTo: 1,
     tint: { triceps: "primary", forearm: "secondary" },
     pose: (e) => {
-      /* Cable pushdown: elbows pinned at the sides, forearms swing from
-       * folded-up (hands at the lower chest, angled toward the viewer —
-       * hence foreshortened) down into the plane to full extension. The
-       * foreshortening simply relaxes with extension. */
-      /* End at +25, not the old -4 (2026-07-11 joint pass): -4 returned
-       * the hands to the REST span — full body width apart — so the
-       * attachment bar drew as a body-wide line at the thighs. +25
-       * leaves the forearms ~8 deg INSIDE vertical at lockout: hands
-       * finish under the shoulders, just in front of the thighs —
-       * the reference pushdown finish. */
-      const deg = lerp(122, 25, e); // fold at the chest → locked out
-      const k = lerp(0.6, 1, e); // toward-viewer → in-plane
-      return {
-        foreArmL: [
-          { kind: "rotate", deg: -deg, pivot: ANT.elbowL },
-          { kind: "scaleAxis", k, deg: -(17 - deg), pivot: ANT.elbowL },
-        ],
-        foreArmR: [
-          { kind: "rotate", deg, pivot: ANT.elbowR },
-          { kind: "scaleAxis", k, deg: 17 - deg, pivot: ANT.elbowR },
-        ],
-      };
+      const flex = lerp(108, 10, e); // folded at the chest → lockout
+      const fore: Op[] = [
+        { kind: "rotate", deg: -flex, pivot: SIDE_ANCHORS.elbow },
+      ];
+      return { foreArmL: fore, handL: fore };
     },
-    bar: (_e, pose) => {
-      const l = applyToPoint(ANT.handL, pose.foreArmL ?? []);
-      const r = applyToPoint(ANT.handR, pose.foreArmR ?? []);
-      return [l, r];
+    sceneFront: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      /* High pulley: fixed at the top of the station, forward of the
+       * face so the cable clears the head through the whole arc. */
+      const pulley: Pt = [72, -10];
+      const dx = h[0] - pulley[0];
+      const dy = h[1] - pulley[1];
+      const len = Math.hypot(dx, dy) || 1;
+      const ux = dx / len;
+      const uy = dy / len;
+      /* Yoke where the cable meets the rope, a touch above the grip;
+       * the rope's knotted tail continues past the hand. */
+      const yoke: Pt = [h[0] - ux * 7, h[1] - uy * 7];
+      const tail: Pt = [h[0] + ux * 8, h[1] + uy * 8];
+      return (
+        `<line x1="${pulley[0]}" y1="${pulley[1]}" x2="${yoke[0].toFixed(1)}" y2="${yoke[1].toFixed(1)}" stroke="${GEAR}" stroke-width="1.1"/>` +
+        `<circle cx="${pulley[0]}" cy="${pulley[1] + 2}" r="3.2" fill="${GEAR_DARK}" stroke="#565760" stroke-width="0.8"/>` +
+        `<line x1="${yoke[0].toFixed(1)}" y1="${yoke[1].toFixed(1)}" x2="${tail[0].toFixed(1)}" y2="${tail[1].toFixed(1)}" stroke="${GEAR_DARK}" stroke-width="2.6" stroke-linecap="round"/>` +
+        `<circle cx="${tail[0].toFixed(1)}" cy="${tail[1].toFixed(1)}" r="2" fill="${GEAR}"/>`
+      );
     },
   },
 
@@ -1264,17 +1260,18 @@ export function __unlockSideDemosForPreview(): void {
 }
 
 /** Demos whose current rendering misrepresents the named exercise
- *  (Motion Rig V2 roadmap "open decision 2", owner-decided 2026-07-16):
- *  `rope-tricep-pushdown` draws a straight bar contradicting its own
- *  written rope instructions; `barbell-curl` draws no barbell and
- *  foreshortens the forearm ~58% at lockout. Gated out of PRODUCTION
- *  (the Form surface shows the honest static reference instead) but
- *  still registered so preview tooling and mechanics tests can review
- *  the repair work. Remove an id here only with an approved replacement
- *  model per the roadmap's gates. */
+ *  (Motion Rig V2 roadmap "open decision 2", owner-decided 2026-07-16).
+ *  A gated id stays registered so preview tooling and mechanics tests
+ *  can review the repair work, while production (the Form surface)
+ *  shows the honest static reference. Remove an id here only with a
+ *  replacement model that fixes the named defect, plus regenerated
+ *  contact sheets for operator review (the 2026-07-27 precedent). */
 const GATED_PENDING_REPAIR: ReadonlySet<string> = new Set([
-  "barbell-curl",
-  "rope-tricep-pushdown",
+  // 2026-08-15: barbell-curl and rope-tricep-pushdown left the gate —
+  // both rebuilt as side-view models that fix the exact defect the gate
+  // named (curl: real end-on bar, no foreshortening; pushdown: honest
+  // rope + cable instead of a straight bar). Contact sheets regenerated
+  // for the standing operator review.
 ]);
 
 /** PRODUCTION lookup — what the Form surface may mount. Applies the
@@ -1623,6 +1620,8 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
       `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(r * 0.22).toFixed(1)}" fill="${GEAR}"/>`;
   }
 
+  const sceneFront = demo.sceneFront?.(e, pose) ?? "";
+
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${demo.viewBox ?? "-8 -14 116 224"}" role="img">` +
     shadow +
@@ -1630,6 +1629,7 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
     glow +
     body +
     plate +
+    sceneFront +
     `</svg>`
   );
 }
