@@ -220,7 +220,11 @@ const SHANK_F: C = [
 ];
 
 /* Upper arm: round delt cap flowing into the bi/tri columns. */
+/* Shoulder end starts with a narrow easing sample so the silhouette
+ * crowns as a DOME — a flat 9.5-unit top edge read as a sharp diamond
+ * whenever a hinge rotated the hanging arm into view. */
 const ARM_B: C = [
+  [36.2, 44.3],
   [37.5, 42],
   [43, 40.8],
   [49, 42.2],
@@ -229,6 +233,7 @@ const ARM_B: C = [
   [71.5, 45.4],
 ];
 const ARM_F: C = [
+  [36.2, 47.8],
   [37.5, 51.5],
   [43, 52.8],
   [49, 52.4],
@@ -286,28 +291,28 @@ const SHANK_OUTLINE: Pt[] = [
 const SHANK_FACETS = [
   {
     muscle: "calves",
-    points: band(SHANK_B, SHANK_F, 151, 191, 0, 0.47, { bellyR: 0.08 }),
+    points: band(SHANK_B, SHANK_F, 151, 192, 0, 0.47, { bellyR: 0.08 }),
   },
   {
     muscle: "shin",
-    points: band(SHANK_B, SHANK_F, 150, 190, 0.58, 1, { bellyL: -0.04 }),
+    points: band(SHANK_B, SHANK_F, 150, 191.5, 0.58, 1, { bellyL: -0.04 }),
   },
   { muscle: "foot", points: FOOT },
 ];
 const THIGH_FACETS = [
   {
     muscle: "quadriceps",
-    points: band(THIGH_B, THIGH_F, 97.5, 144.5, 0.52, 1, {
+    points: band(THIGH_B, THIGH_F, 97.5, 146.5, 0.52, 1, {
       bellyL: -0.06,
     }),
   },
   {
     muscle: "hamstring",
-    points: band(THIGH_B, THIGH_F, 101, 143, 0, 0.46, { bellyR: 0.06 }),
+    points: band(THIGH_B, THIGH_F, 101, 145.5, 0, 0.46, { bellyR: 0.06 }),
   },
   {
     muscle: "knees",
-    points: band(THIGH_B, THIGH_F, 146.2, 155, 0.3, 0.92),
+    points: band(THIGH_B, THIGH_F, 144.5, 157.5, 0.14, 0.97),
   },
 ];
 
@@ -363,14 +368,14 @@ export const SIDE_PIECES: SidePiece[] = [
       },
       {
         muscle: "biceps",
-        points: band(ARM_B, ARM_F, 53.2, 70.8, 0.52, 1, {
+        points: band(ARM_B, ARM_F, 53.2, 71.3, 0.52, 1, {
           skewT: [-1.5, 1],
           bellyL: -0.05,
         }),
       },
       {
         muscle: "triceps",
-        points: band(ARM_B, ARM_F, 54, 70, 0, 0.46, { bellyR: 0.05 }),
+        points: band(ARM_B, ARM_F, 54, 71.3, 0, 0.46, { bellyR: 0.05 }),
       },
     ],
   },
@@ -555,14 +560,14 @@ export const SIDE_PIECES: SidePiece[] = [
            what lets a pushdown's working-muscle emphasis render at all
            (roadmap side-topology item "triceps facet"). */
         muscle: "biceps",
-        points: band(ARM_B, ARM_F, 53.2, 70.8, 0.52, 1, {
+        points: band(ARM_B, ARM_F, 53.2, 71.3, 0.52, 1, {
           skewT: [-1.5, 1],
           bellyL: -0.05,
         }),
       },
       {
         muscle: "triceps",
-        points: band(ARM_B, ARM_F, 54, 70, 0, 0.46, { bellyR: 0.05 }),
+        points: band(ARM_B, ARM_F, 54, 71.3, 0, 0.46, { bellyR: 0.05 }),
       },
     ],
   },

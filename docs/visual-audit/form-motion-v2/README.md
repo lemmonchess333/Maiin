@@ -420,3 +420,22 @@ near-leg x (56.5 → 53.5, drifting back with the hips-back rule), y =
 as low as a straight arm reaches toward that line. Measured after: x
 56.5 → 53.5, y 99 → 129 — the bar slides down the thigh, the RDL
 signature. 37 passing.
+
+## STATUS 2026-08-15 (twenty-fourth pass) — side & lying joint junctions
+
+Owner goal: give the side and lying angles (bench press etc.) the
+systematic treatment the front/back got. 4× joint sweep across the
+side figure standing (RDL/curl), hinged (RDL depth), and lying
+(bench, push-ups):
+
+| Junction | Was                                                                                                      | Fix                                                                                                                                                                             |
+| -------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Knee     | A floating kneepad: black bands above AND below the knee facet                                           | Thigh muscle rows extend to 146.5/145.5, the knee cap spans 144.5-157.5 at fractions 0.14-0.97 — bridges under the quads and down past the thigh outline to the emerging shank. |
+| Elbow    | Black band across the arm at the bi/tri row end (68.4-71.5 underlay margin)                              | Biceps/triceps rows run to 71.3 — the arm outline's end — in both near and far arm pieces.                                                                                      |
+| Ankle    | Gap between calf/shin rows and the foot splice                                                           | Rows extend to 192/191.5.                                                                                                                                                       |
+| Shoulder | Flat 9.5-unit top edge on the arm silhouette read as a sharp diamond when hinges rotated the hanging arm | Narrow easing samples crown it as a dome.                                                                                                                                       |
+
+With pass 15 (waist belt), pass 16 (bench neck tuck) and pass 23 (RDL
+bar path), the side/lying set has now had the full junction, contour
+and mechanics treatment. Verified at full frame: bench t000-t100,
+push-ups mid-rep, RDL standing + depth, curl mid-rep. 37 passing.
