@@ -89,7 +89,9 @@ describe("renderBodyDemo", () => {
     const primary = (svg.match(/fill-opacity="1\.000"/g) || []).length;
     const quadPolys = ANTERIOR.filter((p) => p.muscle === "quadriceps").length;
     expect(primary).toBe(quadPolys); // primary tint = quadriceps only
-    expect(svg.includes("#B6BDC3")).toBe(true); // library body grey everywhere else
+    // Library body grey everywhere else (tone() emits lowercase hex —
+    // the zero shade step reproduces BODY exactly).
+    expect(svg.toLowerCase().includes("#b6bdc3")).toBe(true);
   });
 
   it("primary muscles carry a glow aura that breathes with effort", () => {

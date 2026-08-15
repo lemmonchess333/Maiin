@@ -53,10 +53,21 @@ function tone(hex: string, delta: number): string {
   return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
 }
 
-/** Facet shading steps — subtle, cycling deterministically so adjacent
- *  facets of one muscle read as planes of a single sculpted mass. */
-const SHADE_STEPS = [-7, 3, -3, 6, 0, -5, 4] as const;
+/** Facet shading steps — cycling deterministically so adjacent facets
+ *  of one muscle read as planes of a single sculpted mass. Amplitude
+ *  tuned UP on owner pass 4 ("blobby, lacks definition"): the ±7 range
+ *  was invisible at phone size once the flesh layer closed the gaps. */
+const SHADE_STEPS = [-12, 5, -5, 9, 0, -8, 7] as const;
 const shadeFor = (seed: number) => SHADE_STEPS[seed % SHADE_STEPS.length];
+
+/** The under-flesh tone (owner pass 4): the flesh layer that closes
+ *  the mosaic's voids must sit DARKER than the facets — the old black
+ *  channels were doing real work as muscle separation, and a same-tone
+ *  weld erased it. With the underlayer a step down, every inter-facet
+ *  channel reads as a shaded crevice between muscles (the anatomy-
+ *  reference rule: separations are value changes, not outlines and
+ *  not voids) while the body stays one continuous form. */
+const UNDER = tone(BODY, -20);
 
 /**
  * Closed path with rounded corners (owner pass 2: "why are the knees
@@ -1526,7 +1537,7 @@ export function renderBodyDemo(
   const hulls = [...groupPts.values()]
     .map(
       (pts) =>
-        `<path d="${roundedPath(convexHull(pts), 2)}" fill="${BODY}" stroke="${BODY}" stroke-width="2.2" stroke-linejoin="round"/>`
+        `<path d="${roundedPath(convexHull(pts), 2)}" fill="${UNDER}" stroke="${UNDER}" stroke-width="2.2" stroke-linejoin="round"/>`
     )
     .join("");
   /* Gap fillers (owner pass: "what's all the black space between the
@@ -1584,7 +1595,7 @@ export function renderBodyDemo(
   const torsoOps = pose.torso ?? [];
   const fillers = GAP_FILLS.map(
     ([pts, w]) =>
-      `<path d="${roundedPath(applyOps(pts, torsoOps), 1.4)}" fill="${BODY}"${w > 0 ? ` stroke="${BODY}" stroke-width="${w}" stroke-linejoin="round"` : ""}/>`
+      `<path d="${roundedPath(applyOps(pts, torsoOps), 1.4)}" fill="${UNDER}"${w > 0 ? ` stroke="${UNDER}" stroke-width="${w}" stroke-linejoin="round"` : ""}/>`
   ).join("");
   const weld =
     hulls +
@@ -1592,7 +1603,7 @@ export function renderBodyDemo(
     transformed
       .map(
         ({ pts, r }) =>
-          `<path d="${roundedPath(pts, Math.max(r, 1.4))}" fill="${BODY}" stroke="${BODY}" stroke-width="2.6" stroke-linejoin="round"/>`
+          `<path d="${roundedPath(pts, Math.max(r, 1.4))}" fill="${UNDER}" stroke="${UNDER}" stroke-width="2.6" stroke-linejoin="round"/>`
       )
       .join("");
   const polys =
@@ -1668,7 +1679,7 @@ export function renderBodyDemo(
       const posed = applyOps(pts, pose[group] ?? []);
       const fill = tone(BODY, -4);
       return (
-        `<path d="${roundedPath(posed, 1.6)}" fill="${BODY}" stroke="${BODY}" stroke-width="1.6" stroke-linejoin="round"/>` +
+        `<path d="${roundedPath(posed, 1.6)}" fill="${UNDER}" stroke="${UNDER}" stroke-width="1.6" stroke-linejoin="round"/>` +
         shape(posed, 1.6, fill)
       );
     })
@@ -1680,7 +1691,7 @@ export function renderBodyDemo(
           const pts = applyOps(f.points, pose[f.group] ?? []);
           const fill = tone(BODY, -3);
           return (
-            `<path d="${roundedPath(pts, 1.4)}" fill="${BODY}" stroke="${BODY}" stroke-width="2" stroke-linejoin="round"/>` +
+            `<path d="${roundedPath(pts, 1.4)}" fill="${UNDER}" stroke="${UNDER}" stroke-width="2" stroke-linejoin="round"/>` +
             shape(
               pts,
               1.2,

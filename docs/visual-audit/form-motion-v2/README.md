@@ -186,3 +186,21 @@ a wheelie · hip joints not really touching"):
 
 Pin updated: identity head-top now asserts y≈2.2 (the settle), bounded
 both sides. 36 passing.
+
+## STATUS 2026-08-15 (ninth pass) — dark under-flesh: definition without voids
+
+Owner on pass 8: "the good thing about the one before with the black
+spaces is that it showed muscle separation, this just looks blobby now."
+Correct — the black channels were doing real work as separation, and a
+same-tone weld erased it. The fix is the middle the anatomy references
+actually draw: separations as VALUE CHANGES.
+
+| Change           | What it does                                                                                                                                                                                                                            |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UNDER tone (-20) | The entire flesh layer (group hulls, per-poly welds, gap fillers, hand/feet under-layers) drops 20 lightness steps below the facets — every inter-facet channel reads as a shaded crevice BETWEEN muscles, not a void THROUGH the body. |
+| SHADE_STEPS ±12  | Facet sculpt amplitude up from ±7 (invisible at phone size once the gaps closed) — planes of each muscle mass read again.                                                                                                               |
+
+Rejected values: -14 (still faint at card size); black (that was the
+original defect). Pin updated: the honest-fill body-grey check is now
+case-insensitive (tone() emits lowercase; the uppercase literal only
+ever appeared via the old weld layer). 36 passing.
