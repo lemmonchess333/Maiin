@@ -607,3 +607,21 @@ resolve between knee and shoulder):
 
 Shin stays at the 8° cap (already reference-correct — the read was
 the hips, not the shins). Motion probe: still spike-free. 37 passing.
+
+## STATUS 2026-08-15 (thirty-fourth pass) — part-fit sweep completes: foot heel, shoulder rims
+
+Finishing the owner's "look at all individual parts and how they fit
+together" sweep. Audited this round: glutes standing + hinged (clean
+— the pass-7/23/33 work holds), the foot, the shoulder junction:
+
+- **Foot**: the profile foot had almost no HEEL — its back edge sat
+  nearly flush with the shin line, reading as a divot where the heel
+  bump belongs, and the toe ran long and pointed. Heel now rounds
+  ~1.5 behind the shin line; toe shortened and rounded.
+- **Shoulder**: the deltoid cap's rails ease toward the chest and
+  trap, thinning the black rims that boxed the cap in.
+
+Part-fit audit coverage is now complete across the side figure: head,
+face, neck, traps, shoulder, chest line, waist, hips/glutes, thigh,
+knee, shin, ankle, heel, toe — each either fixed this session or
+measured clean. 37 passing.
