@@ -33,15 +33,17 @@ const PRIMARY = THEME.lifting; // #7B72E9
 const SECONDARY = THEME.liftingLight; // #9590E0
 const GEAR = "#4A4B52";
 const GEAR_DARK = "#35363C";
-/* Anatomy-figure shading (2026-08-15 owner pass: "look at anatomy
- * textbooks — the body must read as ONE form, not blocks with black
- * space between them"). Two conventions from figure-drawing reference:
- * a single drawn CONTOUR around the silhouette, and muscle separation
- * expressed as VALUE CHANGES on continuous flesh — never hard outlines
- * on every facet, never gaps of stage showing through. Each facet takes
- * a small deterministic lightness step (faceted sculpt shading), so
- * musculature reads as form the way a shaded plate does. */
-const CONTOUR = "#54595F"; // figure outline (the drawn silhouette edge)
+/* MOSAIC style (2026-08-15 owner decision, pass 10): distinct muscle
+ * blocks separated by dark stage channels are the figure's identity —
+ * a flesh-weld "one continuous form" direction was tried (passes 5-9)
+ * and reverted as blobby. Definition comes from the block shapes, the
+ * dark channels between them, and a small deterministic lightness step
+ * per facet (faceted sculpt shading). Joints bridge with limb-width
+ * SLEEVES, never ball caps. */
+/** Stage colour behind the demo card — the side pieces' underlay, so
+ *  facet gaps read as the same dark channels as the front/back mosaic
+ *  and overlapping pieces occlude what's behind them. */
+const STAGE = "#111113";
 
 /** Shift a #rrggbb colour's lightness by delta (additive per channel). */
 function tone(hex: string, delta: number): string {
@@ -1785,15 +1787,15 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
           ...(primaryPts.get(f.muscle) ?? []),
           ...f.pts,
         ]);
-    /* Anatomy-plate rework: the underlay is FLESH (was stage colour —
-     * which made every facet gap a dark channel and the body a set of
-     * floating blocks). The piece's outline is the drawn contour; the
-     * facet edges are thin value-change boundary lines on the form —
-     * exactly how a textbook plate separates muscles. Overlapping
-     * pieces stay readable through the contour line alone. */
+    /* Mosaic language (pass 10 owner decision): the underlay is the
+     * STAGE colour again, so every facet gap reads as the same dark
+     * separation channel the front/back muscle blocks use — one visual
+     * language across all three views. The stage underlay also keeps
+     * overlapping pieces opaque, so joints never crack under rotation
+     * (the original design this file was built around). */
     const flesh = piece.far ? BODY_FAR : BODY;
     return (
-      `<path d="${roundedPath(outline, 1.5)}" fill="${flesh}" stroke="${CONTOUR}" stroke-width="0.7" stroke-linejoin="round"/>` +
+      `<path d="${roundedPath(outline, 1.5)}" fill="${STAGE}"/>` +
       facets
         .map((f, i) => {
           const base =
@@ -1802,7 +1804,11 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
               : f.level === "secondary"
                 ? SECONDARY
                 : flesh;
-          const fill = tone(base, shadeFor(i));
+          // Far limbs render FLAT — a single darker mass reads as
+          // depth; sculpt-shading it just adds noise behind the near
+          // limb.
+          const fill =
+            piece.far && !f.level ? BODY_FAR : tone(base, shadeFor(i));
           /* Far tints render dimmed — same muscle, further away. Full
              brightness on both limbs flattens the depth the parallax
              just bought. */

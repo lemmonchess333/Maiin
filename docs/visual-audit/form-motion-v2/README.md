@@ -232,3 +232,20 @@ Pins: mosaic path counts (anterior 37, posterior 35), bar-travel probe
 matches the cable-bar stroke width so sleeve lines can't shadow it.
 36 passing. The side view keeps its current construction (unchanged
 this pass) — revisit only with owner direction.
+
+## STATUS 2026-08-15 (eleventh pass) — side view rejoins the mosaic
+
+With the front/back figure back on the mosaic (pass 10), the side view
+was the one surface still speaking the pass-2 flesh-underlay + contour
+language — a different style in the same app. Reverted to its ORIGINAL
+design: each side piece paints a STAGE-coloured underlay, so facet
+gaps read as the same dark separation channels as the front/back
+blocks, and overlapping pieces occlude cleanly under rotation (the
+purpose the stage underlay was built for). The side ART improvements
+(pec dome, glute shelf, calmed face line) are contour data and stay.
+
+Far limbs now render FLAT BODY_FAR when untinted — a single darker
+mass reads as depth; sculpt-shading it added noise behind the near
+limb (and the far-limb pin keys on the exact colour).
+
+36 passing.
