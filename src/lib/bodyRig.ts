@@ -958,6 +958,11 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
   "lat-pulldown": {
     view: "posterior",
     equip: "cable-bar",
+    scene: () =>
+      `<rect x="27" y="106" width="46" height="7" rx="2.5" fill="${GEAR_DARK}" stroke="#565760" stroke-width="0.8"/>` +
+      `<line x1="27" y1="106.6" x2="73" y2="106.6" stroke="${GEAR}" stroke-width="1.2"/>` +
+      `<line x1="50" y1="113" x2="50" y2="219" stroke="${GEAR_DARK}" stroke-width="2.6"/>` +
+      `<line x1="38" y1="219" x2="62" y2="219" stroke="${GEAR_DARK}" stroke-width="2.4" stroke-linecap="round"/>`,
     concentricTo: 1,
     viewBox: "-20 -20 140 246",
     tint: {
@@ -1139,6 +1144,13 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     },
     // Bench pad + legs + floor line, drawn behind the body.
     scene: () =>
+      /* Rack upright at the head end: side-on the pair overlaps into
+       * one post, topped with a J-hook cup facing the lifter — the
+       * thing the bar racks into. Behind the bench so the figure and
+       * bar stay in front. */
+      `<line x1="-59" y1="171" x2="-59" y2="66" stroke="${GEAR_DARK}" stroke-width="3"/>` +
+      `<line x1="-59" y1="67" x2="-51" y2="67" stroke="${GEAR_DARK}" stroke-width="2.4"/>` +
+      `<line x1="-51.6" y1="67" x2="-51.6" y2="62" stroke="${GEAR_DARK}" stroke-width="2"/>` +
       `<rect x="-64" y="109" width="136" height="7" rx="2.5" fill="${GEAR}"/>` +
       `<line x1="-50" y1="116" x2="-50" y2="170" stroke="${GEAR_DARK}" stroke-width="3.4"/>` +
       `<line x1="56" y1="116" x2="56" y2="170" stroke="${GEAR_DARK}" stroke-width="3.4"/>` +
@@ -1869,9 +1881,11 @@ export function renderBodyDemo(
   const groundY = demo.groundY ?? (demo.view === "anterior" ? 199 : 222);
   const shadow = `<ellipse cx="50" cy="${groundY}" rx="${shadowRx.toFixed(1)}" ry="2.6" fill="#000" opacity="${(0.16 + 0.1 * depth).toFixed(2)}"/>`;
 
+  const scene = demo.scene?.(e, pose) ?? "";
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${demo.viewBox ?? (demo.view === "anterior" ? "-8 -14 116 224" : "-12 -14 124 244")}" role="img">` +
     shadow +
+    scene +
     barBehind +
     glow +
     sleeves +

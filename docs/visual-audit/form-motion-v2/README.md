@@ -538,3 +538,22 @@ with the BODY or not at all):
 
 Motion probe re-run with the animated bar: all 14 still spike-free.
 37 passing.
+
+## STATUS 2026-08-15 (thirtieth pass) — scene fidelity II: pulldown seat, bench rack
+
+Continuing the scene tier (owner-directed):
+
+- **Lat pulldown: the station's seat.** The front/back renderer now
+  honours the same `scene` hook the side renderer always had. The
+  pulldown draws a seat pad flanking the hips, a centre post and a
+  base foot — the "seated at the machine" identity. (The legs keep
+  the rig's standing read: from dead-behind, a truly seated pose
+  needs thigh foreshortening this flat rig deliberately avoids — the
+  hip-level pads carry the identity instead, the same honesty class
+  as the squat's hanging arms.)
+- **Bench press: the rack.** A side-on upright at the head end (the
+  pair overlaps into one post) topped with a J-hook cup facing the
+  lifter, behind the bench so figure and bar stay in front.
+
+Scene elements are static per frame — no motion-probe impact. 37
+passing.
