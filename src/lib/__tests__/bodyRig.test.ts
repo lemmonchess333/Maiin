@@ -224,11 +224,11 @@ describe("renderBodyDemo", () => {
   });
 
   it("side rig is bilateral: far limbs render and mirror the near chain", () => {
-    // BODY_FAR (#9FA6AC) polygons are the far pieces. The pushdown's pose
+    // BODY_FAR (#8F969D) polygons are the far pieces. The pushdown's pose
     // addresses only the NEAR forearm — the far forearm must move anyway
     // (the far-follows-near rule), offset by the constant back-parallax.
     const farFill = (svg: string) =>
-      (svg.match(/fill="#9FA6AC"/g) ?? []).length;
+      (svg.match(/fill="#8F969D"/g) ?? []).length;
     const start = renderBodyDemo("rope-tricep-pushdown", 0);
     const end = renderBodyDemo("rope-tricep-pushdown", 1);
     expect(farFill(start)).toBeGreaterThan(0);
@@ -238,7 +238,7 @@ describe("renderBodyDemo", () => {
     // the far LEGS stay static here, so the whole-set comparison only
     // passes if the far ARM moved).
     const farPolys = (svg: string) =>
-      [...svg.matchAll(/<path d="([^"]+)" fill="#9FA6AC"/g)]
+      [...svg.matchAll(/<path d="([^"]+)" fill="#8F969D"/g)]
         .map((m) => m[1])
         .join("|");
     expect(farPolys(start)).not.toBe(farPolys(end));

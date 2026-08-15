@@ -557,3 +557,17 @@ Continuing the scene tier (owner-directed):
 
 Scene elements are static per frame — no motion-probe impact. 37
 passing.
+
+## STATUS 2026-08-15 (thirty-first pass) — the deadlift arm at phone zoom
+
+Owner zoomed the card-size deadlift bottom to phone-fullscreen and the
+hanging arm fell apart into "two strips with a slit". Three distinct
+causes, all fixed:
+
+| Cause                                                      | Fix                                                                                                                                        |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Far arm read as a SPLIT limb, not depth                    | BODY_FAR darkened #9FA6AC → #8F969D (9% → ~18% below BODY) — the far limb now clearly steps behind.                                        |
+| Upper-arm rim cut a diagonal slit across the elbow overlap | Bi/tri rows overshoot the piece outline by a unit (facets aren't clipped), so their fill bridges the piece-boundary seam into the forearm. |
+| Pass-27's wrist dome made a second lobe beside the fist    | The forearm rails end ~1.4 shorter so the mitt CAPS the arm — one termination at the grip.                                                 |
+
+Far-limb pin updated to the new hex. 37 passing.

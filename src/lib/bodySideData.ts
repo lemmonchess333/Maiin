@@ -254,16 +254,16 @@ const FORE_B: C = [
   [67.8, 45.2],
   [76, 45.8],
   [88, 46.6],
-  [98.5, 47.6],
-  [100.6, 48.9],
+  [97, 47.5],
+  [99.2, 48.7],
 ];
 const FORE_F: C = [
   [66, 51],
   [67.6, 52.3],
   [78, 53.6],
   [90, 53.2],
-  [98.3, 52.8],
-  [100.4, 51.6],
+  [96.8, 52.9],
+  [99, 51.7],
 ];
 
 /* ── Pieces ──────────────────────────────────────────────────────── */
@@ -378,14 +378,14 @@ export const SIDE_PIECES: SidePiece[] = [
       },
       {
         muscle: "biceps",
-        points: band(ARM_B, ARM_F, 53.2, 71.3, 0.52, 1, {
+        points: band(ARM_B, ARM_F, 53.2, 72.5, 0.52, 1, {
           skewT: [-1.5, 1],
           bellyL: -0.05,
         }),
       },
       {
         muscle: "triceps",
-        points: band(ARM_B, ARM_F, 54, 71.3, 0, 0.46, { bellyR: 0.05 }),
+        points: band(ARM_B, ARM_F, 54, 72.5, 0, 0.46, { bellyR: 0.05 }),
       },
     ],
   },
@@ -577,14 +577,14 @@ export const SIDE_PIECES: SidePiece[] = [
            what lets a pushdown's working-muscle emphasis render at all
            (roadmap side-topology item "triceps facet"). */
         muscle: "biceps",
-        points: band(ARM_B, ARM_F, 53.2, 71.3, 0.52, 1, {
+        points: band(ARM_B, ARM_F, 53.2, 72.5, 0.52, 1, {
           skewT: [-1.5, 1],
           bellyL: -0.05,
         }),
       },
       {
         muscle: "triceps",
-        points: band(ARM_B, ARM_F, 54, 71.3, 0, 0.46, { bellyR: 0.05 }),
+        points: band(ARM_B, ARM_F, 54, 72.5, 0, 0.46, { bellyR: 0.05 }),
       },
     ],
   },

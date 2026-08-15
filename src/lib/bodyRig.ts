@@ -101,7 +101,7 @@ function shape(pts: Pt[], r: number, fill: string, extra = ""): string {
   return `<path d="${roundedPath(pts, r)}" fill="${fill}"${extra}/>`;
 }
 /** Far-side limbs in the profile rig — ~12% darker so overlaps read. */
-const BODY_FAR = "#9FA6AC";
+const BODY_FAR = "#8F969D";
 
 /* ── Measured joint anchors (viewBox 0 0 100 200) ─────────────── */
 
