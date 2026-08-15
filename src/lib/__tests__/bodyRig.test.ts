@@ -44,13 +44,14 @@ describe("renderBodyDemo", () => {
     expect(body.match(/<path/g)!.length).toBe(37);
   });
 
-  it("posterior renders the same single-pass mosaic (no feet shapes)", () => {
+  it("posterior renders the same single-pass mosaic, heels included", () => {
     const post = renderBodyDemo("pull-ups", 0).replace(
       /<g class="glow">.*?<\/g>/,
       ""
     );
-    // 33 body polys + 2 hands — the posterior model has no feet.
-    expect(post.match(/<path/g)!.length).toBe(35);
+    // 33 body polys + 2 hands + 2 heel blocks (the back-view art
+    // tapers the soleus to a needle, so the heels cap the legs).
+    expect(post.match(/<path/g)!.length).toBe(37);
   });
 
   it("squat: the body visibly sinks at the bottom", () => {

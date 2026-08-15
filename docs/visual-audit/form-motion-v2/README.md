@@ -249,3 +249,12 @@ mass reads as depth; sculpt-shading it added noise behind the near
 limb (and the far-limb pin keys on the exact colour).
 
 36 passing.
+
+## STATUS 2026-08-15 (twelfth pass) — posterior heels
+
+Close-up sweep after the mosaic return: the back-view art tapers each
+soleus to a needle at y≈220, so hanging figures (pull-ups) ended in
+icicle points — the posterior model simply had no feet. Two compact
+heel blocks now cap the soleus tips, riding the shank groups (from
+behind a foot IS mostly heel). Pin: posterior path count 37. 36
+passing.

@@ -424,6 +424,35 @@ const ANTERIOR_FEET: { group: GroupName; points: Pt[] }[] = [
   },
 ];
 
+/* Posterior heels: the back-view art tapers the soleus to a NEEDLE at
+ * y≈220, so hanging figures (pull-ups) ended in icicle points. From
+ * behind a foot is mostly heel — a compact block capping each soleus
+ * tip, riding the shank group. */
+const POSTERIOR_FEET: { group: GroupName; points: Pt[] }[] = [
+  {
+    group: "shankL",
+    points: [
+      [25.2, 213.5],
+      [34.8, 213.5],
+      [35.8, 219.5],
+      [34.2, 223],
+      [25.8, 223],
+      [24.2, 219.5],
+    ],
+  },
+  {
+    group: "shankR",
+    points: [
+      [65.2, 213.5],
+      [74.8, 213.5],
+      [75.8, 219.5],
+      [74.2, 223],
+      [65.8, 223],
+      [64.2, 219.5],
+    ],
+  },
+];
+
 /* ── Exercise definitions ─────────────────────────────────────── */
 
 const easeInOutSine = (t: number) =>
@@ -1647,19 +1676,18 @@ export function renderBodyDemo(
     })
     .join("");
 
-  const feet =
-    view === "anterior"
-      ? ANTERIOR_FEET.map((f) => {
-          const pts = applyOps(f.points, pose[f.group] ?? []);
-          const fill = tone(BODY, -3);
-          return shape(
-            pts,
-            1.6,
-            fill,
-            ` stroke="${fill}" stroke-width="0.5" stroke-linejoin="round"`
-          );
-        }).join("")
-      : "";
+  const feet = (view === "anterior" ? ANTERIOR_FEET : POSTERIOR_FEET)
+    .map((f) => {
+      const pts = applyOps(f.points, pose[f.group] ?? []);
+      const fill = tone(BODY, -3);
+      return shape(
+        pts,
+        1.6,
+        fill,
+        ` stroke="${fill}" stroke-width="0.5" stroke-linejoin="round"`
+      );
+    })
+    .join("");
 
   /* Structural equipment only. Held weights were removed — see the
      header. A bare line reads as NOTHING ("is that a treadmill?"), so
