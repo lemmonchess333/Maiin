@@ -32,9 +32,12 @@ describe("vendored body model", () => {
 describe("renderBodyDemo", () => {
   it("t=0 renders the untransformed figure (identity)", () => {
     const svg = renderBodyDemo("squat", 0);
-    // The head's top vertex sits at the model's y≈0 when nothing moved.
+    // The head's top vertex sits at y≈2.2 when nothing moved — the
+    // model's y≈0 plus the static HEAD_SETTLE that seats the skull on
+    // the trap line.
     const ys = polyYs(svg);
-    expect(Math.min(...ys)).toBeLessThan(1);
+    expect(Math.min(...ys)).toBeGreaterThan(1.5);
+    expect(Math.min(...ys)).toBeLessThan(3);
     const body = svg.replace(/<g class="glow">.*?<\/g>/, "");
     // Rounded <path> shapes since the anatomy pass: weld + crisp per
     // body polygon and foot, plus weld + crisp per hand mitt.

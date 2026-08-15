@@ -170,3 +170,19 @@ Close-up sweep of the SIDE renderer (the front/back figure got passes
 | Jagged face          | The nose/lip zigzag (4 alternating points) calmed to a soft nose + single lip line, outline and facet both.                                        |
 
 36 passing (no pin churn — pure contour data).
+
+## STATUS 2026-08-15 (eighth pass) — owner phone critique: neck, hands, hip sockets
+
+Owner reviewed passes 5-7 on device, four named defects on the
+front/back figure ("neck too high · hands look like feet · looks like
+a wheelie · hip joints not really touching"):
+
+| Defect               | Fix                                                                                                                                                                                                                              |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Neck too high        | Static HEAD_SETTLE (2.2 units) seats the skull on the trap line before pose ops — kills the giraffe gap between chin and clavicle on both views.                                                                                 |
+| Hands look like feet | HAND_SHAPE cut from a 6-unit paddle to a compact fist (≈5×4) — no more flipper tips past the wrist at any forearm angle.                                                                                                         |
+| Hip joints detached  | Each anterior thigh hull is seeded with its hip anchor pushed through the SAME group ops — under squat compression it lands exactly on the dived hip line, so the hull always reaches the socket. Shield wings deepened to y100. |
+| Wheelie read         | Product of the two above (floating hips + long neck): with the legs socketed and the head seated, the squat bottom reads as a squat.                                                                                             |
+
+Pin updated: identity head-top now asserts y≈2.2 (the settle), bounded
+both sides. 36 passing.

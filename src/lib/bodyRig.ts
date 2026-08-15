@@ -1469,11 +1469,20 @@ export function renderBodyDemo(
    * pass two draws the crisp muscle fills with a thin value-change
    * boundary line — separations DRAWN on the form, textbook-style,
    * instead of voids through it. */
+  /* Owner pass 3 ("his neck is too high up"): the skull floats a
+   * couple of units above the trap line, stretching a giraffe neck
+   * between chin and clavicle. The head SETTLES onto the neck — a
+   * static drop applied before pose ops (front/back head poses are
+   * translations, so no pivot math is disturbed). */
+  const HEAD_SETTLE = 2.2;
   const transformed = data.map((p) => {
     const g = groupOf(view, p);
     let ops = pose[g] ?? [];
     if (p.muscle === "front-deltoids" || p.muscle === "back-deltoids") {
       ops = deltoidOps(ops);
+    }
+    if (p.muscle === "head") {
+      ops = [{ kind: "translate", dx: 0, dy: HEAD_SETTLE }, ...ops];
     }
     const pts = applyOps(p.points as Pt[], ops);
     const level = demo.tint[p.muscle];
@@ -1496,6 +1505,23 @@ export function renderBodyDemo(
   const groupPts = new Map<GroupName, Pt[]>();
   for (const { pts, g } of transformed) {
     if (g !== "head") groupPts.set(g, [...(groupPts.get(g) ?? []), ...pts]);
+  }
+  /* Hip-socket seeds (owner pass 3: "his hip joints are not really
+   * touching"): a compressed thigh's hull tops out below the hip
+   * line, visibly detaching the leg. Each thigh hull gets its hip
+   * anchor pushed through the SAME group ops — under squat's
+   * scaleY-about-knee that point lands exactly on the dived hip
+   * line, so the hull always reaches the socket. */
+  if (view === "anterior") {
+    for (const [g, seed] of [
+      ["thighL", [ANT.kneeL[0], 92]],
+      ["thighR", [ANT.kneeR[0], 92]],
+    ] as [GroupName, Pt][]) {
+      groupPts.set(g, [
+        ...(groupPts.get(g) ?? []),
+        applyOps([seed], pose[g] ?? [])[0],
+      ]);
+    }
   }
   const hulls = [...groupPts.values()]
     .map(
@@ -1535,9 +1561,9 @@ export function renderBodyDemo(
             [
               [33, 87],
               [67, 87],
-              [62, 98],
-              [50, 109],
-              [38, 98],
+              [64, 100],
+              [50, 111],
+              [36, 100],
             ],
             0,
           ],
@@ -1618,13 +1644,16 @@ export function renderBodyDemo(
    * group's transform — on IK arms (pull-ups, dips) they land exactly
    * on the grip because the anchor IS the constraint point. */
   const A = demo.view === "anterior" ? ANT : POST;
+  /* Compact FIST, not a paddle (owner pass 3: "his hands look like
+   * feet") — the old mitt ran 6 units long past the wrist and read as
+   * a flipper wherever the forearm pointed. */
   const HAND_SHAPE: Pt[] = [
-    [-2.6, -1.4],
-    [2.6, -1.4],
-    [3.2, 1.6],
-    [1.4, 4.6],
-    [-1.8, 4.4],
-    [-3.2, 1.4],
+    [-2.2, -1],
+    [2.2, -1],
+    [2.7, 1.1],
+    [1.2, 3],
+    [-1.4, 2.9],
+    [-2.7, 1],
   ];
   const hands = (
     [
