@@ -17,9 +17,10 @@ import { logger } from "@/lib/logger";
  *
  * What the user gets back, per ADR-0012: challenge progress and lifetime
  * totals are reversed by the trigger; the Performance Index recovers on
- * its next recompute; partner streaks, milestone badges and
- * `fastest_effort` bests stay. The confirmation copy says so rather than
- * implying a clean undo.
+ * its next recompute; a `fastest_effort` best whose driving run is
+ * deleted is REBUILT from surviving runs (third amendment); partner
+ * streaks and milestone badges stay. The confirmation copy says so
+ * rather than implying a clean undo.
  *
  * `deleteDoc` is raw on purpose. The `firestoreWrite` guards exist to
  * strip `undefined` (which Firestore rejects) and to survive offline-queue

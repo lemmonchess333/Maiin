@@ -15,10 +15,11 @@ import { deleteLoggedSession, type SessionKind } from "@/lib/sessionDelete";
  * them — the copy is the load-bearing part here, not the button. ADR-0012
  * is explicit that deleting a session can lower the user's standing in a
  * live challenge, that this is the correct behaviour for a mis-log, and
- * that "the copy should not pretend otherwise". It also leaves three
- * things standing on purpose (partner streaks, milestone badges,
- * `fastest_effort` bests), which a user reading "delete" would reasonably
- * assume are coming back.
+ * that "the copy should not pretend otherwise". It also leaves two
+ * things standing on purpose (partner streaks, milestone badges), which
+ * a user reading "delete" would reasonably assume are coming back; a
+ * `fastest_effort` best is rebuilt server-side when its driving run is
+ * the one deleted (ADR-0012, third amendment).
  *
  * Placed at the bottom of the page, low-emphasis, behind a confirmation:
  * it is a records correction for a mis-log, not a primary action, and it
@@ -82,9 +83,7 @@ export default function DeleteSessionAction({
           haptic("heavy");
           try {
             await deleteLoggedSession({ uid, kind, id, sharedActivityId });
-            toast.success(
-              `${noun === "workout" ? "Workout" : "Run"} deleted`
-            );
+            toast.success(`${noun === "workout" ? "Workout" : "Run"} deleted`);
             // Back to wherever they came from — History, Home's day card,
             // a deep link. Replacing the entry means the browser Back
             // button can't return to a detail page whose document is gone.

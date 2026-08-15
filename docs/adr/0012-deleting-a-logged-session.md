@@ -224,3 +224,31 @@ That makes the final tally four kinds of thing, not three: reverse
 (challenge SUM metrics, lifetime totals), recompute (Performance Index),
 and leave standing as history (partner streaks, `fastest_effort` bests,
 milestone badges).
+
+## Third amendment (2026-08-15) — `fastest_effort` moves from "history" to "rebuild"
+
+The second amendment classified `fastest_effort` as history because a
+REVERSAL is impossible: the marker records the run's own time, never the
+best it displaced, so the delete side has nothing to restore. That
+reasoning stands unchanged. What it accepted as a consequence does not:
+delete the mis-logged 12-minute "5K" a GPS glitch produced, and the bogus
+time kept your challenge standing forever — the one place a mis-log
+delete stayed visibly wrong.
+
+The amendment itself named the honest fix ("re-scanning the user's whole
+run history against the challenge's target distance, which is a rebuild,
+not a reversal"), and `functions/lib/fastestEffortRebuild.js` is now that
+rebuild. The reversal signals it only when the deleted run's
+marker-recorded time is at or below the standing best — a slower run
+cannot have set a MIN, so ordinary deletes cost nothing extra. The scan
+re-derives the true best from surviving runs through the SAME window,
+eligibility and target-distance gates as the live apply path and the
+join-time backfill (one source of truth), and is a pure
+recompute-and-write, so redelivery converges without a marker.
+
+The tally therefore reads: reverse (challenge SUM metrics, lifetime
+totals), recompute (Performance Index, and now `fastest_effort` when the
+driver is deleted), and leave standing as history (partner streaks,
+milestone badges — both still deliberate). The user-facing confirmation
+copy needed no change: "your standing in a live challenge can go down"
+was already the promise, and this makes it true for the fifth metric.

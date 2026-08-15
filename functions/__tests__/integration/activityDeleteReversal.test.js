@@ -50,7 +50,11 @@ const tsFromIso = (iso) => admin.firestore.Timestamp.fromDate(new Date(iso));
 const JOINED_AT = "2026-08-01T00:00:00Z";
 
 const participantRef = (challengeId) =>
-  db.collection("challenges").doc(challengeId).collection("participants").doc(UID);
+  db
+    .collection("challenges")
+    .doc(challengeId)
+    .collection("participants")
+    .doc(UID);
 
 const lifetimeTotalsRef = () =>
   db.collection("users").doc(UID).collection("lifetime").doc("totals");
@@ -84,7 +88,11 @@ async function wipeChallenge(id) {
     for (const m of markers) await m.delete().catch(() => {});
     await p.delete().catch(() => {});
   }
-  await db.collection("challenges").doc(id).delete().catch(() => {});
+  await db
+    .collection("challenges")
+    .doc(id)
+    .delete()
+    .catch(() => {});
 }
 
 async function wipe() {
@@ -92,11 +100,23 @@ async function wipe() {
     await wipeChallenge(id);
   }
   for (const sub of ["workouts", "runs", "lifetime"]) {
-    const docs = await db.collection("users").doc(UID).collection(sub).listDocuments();
+    const docs = await db
+      .collection("users")
+      .doc(UID)
+      .collection(sub)
+      .listDocuments();
     for (const d of docs) await d.delete().catch(() => {});
   }
-  await db.collection("accountDeletionRequests").doc(UID).delete().catch(() => {});
-  await db.collection("deletedAccounts").doc(UID).delete().catch(() => {});
+  await db
+    .collection("accountDeletionRequests")
+    .doc(UID)
+    .delete()
+    .catch(() => {});
+  await db
+    .collection("deletedAccounts")
+    .doc(UID)
+    .delete()
+    .catch(() => {});
 }
 
 async function seedChallenges() {
@@ -107,17 +127,28 @@ async function seedChallenges() {
   await db
     .collection("challenges")
     .doc(VOL_CHALLENGE)
-    .set({ ...window, metric: "total_volume", tiers: { bronze: 1000, silver: 5000, gold: 20000 } });
+    .set({
+      ...window,
+      metric: "total_volume",
+      tiers: { bronze: 1000, silver: 5000, gold: 20000 },
+    });
   await db
     .collection("challenges")
     .doc(KM_CHALLENGE)
-    .set({ ...window, metric: "total_km", tiers: { bronze: 5, silver: 20, gold: 50 } });
-  await db.collection("challenges").doc(FAST_CHALLENGE).set({
-    ...window,
-    metric: "fastest_effort",
-    targetDistance: 5000,
-    tiers: { bronze: 1800, silver: 1500, gold: 1200 },
-  });
+    .set({
+      ...window,
+      metric: "total_km",
+      tiers: { bronze: 5, silver: 20, gold: 50 },
+    });
+  await db
+    .collection("challenges")
+    .doc(FAST_CHALLENGE)
+    .set({
+      ...window,
+      metric: "fastest_effort",
+      targetDistance: 5000,
+      tiers: { bronze: 1800, silver: 1500, gold: 1200 },
+    });
 }
 
 async function join(challengeId) {
@@ -129,7 +160,10 @@ async function join(challengeId) {
   });
 }
 
-async function logWorkout(id, { date = "2026-08-05", totalVolume = 6000 } = {}) {
+async function logWorkout(
+  id,
+  { date = "2026-08-05", totalVolume = 6000 } = {}
+) {
   const ref = db.collection("users").doc(UID).collection("workouts").doc(id);
   await ref.set({ date, totalVolume, exercises: [] });
   const snap = await ref.get();
@@ -144,9 +178,17 @@ async function deleteWorkout(id) {
   await onWorkoutDeleted.run(snap, { params: { uid: UID, workoutId: id } });
 }
 
-async function logRun(id, { date = "2026-08-05", distance = 6000, duration = 1700 } = {}) {
+async function logRun(
+  id,
+  { date = "2026-08-05", distance = 6000, duration = 1700 } = {}
+) {
   const ref = db.collection("users").doc(UID).collection("runs").doc(id);
-  await ref.set({ date, distance, duration, completedAt: tsFromIso(`${date}T09:00:00Z`) });
+  await ref.set({
+    date,
+    distance,
+    duration,
+    completedAt: tsFromIso(`${date}T09:00:00Z`),
+  });
   const snap = await ref.get();
   await onRunCreated.run(snap, { params: { uid: UID, runId: id } });
 }
@@ -164,7 +206,9 @@ async function participant(challengeId) {
 }
 
 async function markerIds(challengeId) {
-  const docs = await participantRef(challengeId).collection("applied").listDocuments();
+  const docs = await participantRef(challengeId)
+    .collection("applied")
+    .listDocuments();
   return docs.map((d) => d.id).sort();
 }
 
@@ -237,9 +281,18 @@ suite("deleting a session reverses the accumulators", () => {
     // At-least-once delivery: the same delete arrives again. Firestore
     // gives the trigger the same snapshot, so nothing distinguishes this
     // from the first call except the marker being gone.
-    const snap = await db.collection("users").doc(UID).collection("workouts").doc("w-1").get();
-    await onWorkoutDeleted.run(snap, { params: { uid: UID, workoutId: "w-1" } });
-    await onWorkoutDeleted.run(snap, { params: { uid: UID, workoutId: "w-1" } });
+    const snap = await db
+      .collection("users")
+      .doc(UID)
+      .collection("workouts")
+      .doc("w-1")
+      .get();
+    await onWorkoutDeleted.run(snap, {
+      params: { uid: UID, workoutId: "w-1" },
+    });
+    await onWorkoutDeleted.run(snap, {
+      params: { uid: UID, workoutId: "w-1" },
+    });
 
     expect((await participant(VOL_CHALLENGE)).currentValue).toBe(4000);
     expect(await lifetime("liftVolumeKg")).toBe(4000);
@@ -299,7 +352,9 @@ suite("deleting a session reverses the accumulators", () => {
     await lifetimeMarkerRef("lift", "w-1").update({
       appliedValue: admin.firestore.FieldValue.delete(),
     });
-    expect((await lifetimeMarkerRef("lift", "w-1").get()).data().appliedValue).toBeUndefined();
+    expect(
+      (await lifetimeMarkerRef("lift", "w-1").get()).data().appliedValue
+    ).toBeUndefined();
 
     await deleteWorkout("w-1");
 
@@ -322,24 +377,59 @@ suite("deleting a session reverses the accumulators", () => {
     expect(await markerIds(KM_CHALLENGE)).toEqual([]);
   });
 
-  it("leaves a fastest_effort best standing, but clears its marker", async () => {
-    // ADR-0012's second amendment. The apply path is a MIN and the marker
-    // records the run's own time, never the best it displaced — so nothing
-    // on the delete side knows what to restore. Documented as history,
-    // like a partner streak, rather than silently half-reversed.
+  it("rebuilds a fastest_effort best from surviving runs when the driver is deleted", async () => {
+    // ADR-0012, third amendment. The best cannot be REVERSED (the marker
+    // records the run's own time, never what it displaced), so deleting
+    // the driving run triggers the rebuild the second amendment named:
+    // re-derive the true best from the runs that still exist.
     await join(FAST_CHALLENGE);
-    await logRun("r-1", { distance: 6000, duration: 1400 });
+    await logRun("r-slow", { distance: 6000, duration: 1600 });
+    await logRun("r-fast", { distance: 6000, duration: 1400 });
+    // A run below the 5000m target must count neither live nor in rebuild.
+    await logRun("r-short", { distance: 3000, duration: 900 });
     expect((await participant(FAST_CHALLENGE)).currentValue).toBe(1400);
     expect((await participant(FAST_CHALLENGE)).tierAchieved).toBe("silver");
 
-    await deleteRun("r-1");
+    await deleteRun("r-fast");
 
+    // The bogus best is gone; the surviving qualifying run's time stands.
+    expect((await participant(FAST_CHALLENGE)).currentValue).toBe(1600);
+    expect((await participant(FAST_CHALLENGE)).tierAchieved).toBe("bronze");
+    // The deleted run's marker is gone (re-log stays creditable); the
+    // surviving QUALIFYING run's marker stays consistent with the rebuilt
+    // best. r-short never minted one — the apply path's target gate
+    // returns before any marker write.
+    const remaining = await markerIds(FAST_CHALLENGE);
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0]).toContain("r-slow");
+  });
+
+  it("clears the best entirely when the only qualifying run is deleted", async () => {
+    await join(FAST_CHALLENGE);
+    await logRun("r-only", { distance: 6000, duration: 1400 });
     expect((await participant(FAST_CHALLENGE)).currentValue).toBe(1400);
-    expect((await participant(FAST_CHALLENGE)).tierAchieved).toBe("silver");
-    // The marker still goes. MIN is idempotent for the same run, so a
-    // re-log re-applies the same time and lands on the same best —
-    // whereas a surviving marker would deny a genuine re-log forever.
+
+    await deleteRun("r-only");
+
+    expect((await participant(FAST_CHALLENGE)).currentValue).toBe(0);
+    expect((await participant(FAST_CHALLENGE)).tierAchieved).toBeNull();
     expect(await markerIds(FAST_CHALLENGE)).toEqual([]);
+  });
+
+  it("skips the rebuild when the deleted run was slower than the best", async () => {
+    // A run slower than the standing best cannot have set it (MIN), so
+    // the common case costs nothing beyond the reversal. The value AND
+    // tier stay; only the deleted run's marker goes.
+    await join(FAST_CHALLENGE);
+    await logRun("r-fast", { distance: 6000, duration: 1400 });
+    await logRun("r-slow", { distance: 6000, duration: 1600 });
+    expect((await participant(FAST_CHALLENGE)).currentValue).toBe(1400);
+
+    await deleteRun("r-slow");
+
+    expect((await participant(FAST_CHALLENGE)).currentValue).toBe(1400);
+    expect((await participant(FAST_CHALLENGE)).tierAchieved).toBe("silver");
+    expect(await markerIds(FAST_CHALLENGE)).toHaveLength(1);
   });
 
   it("does not run while the account is being deleted", async () => {

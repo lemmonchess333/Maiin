@@ -29,13 +29,15 @@
  *    overwrites the same workout doc, and that overwrite accrues nothing
  *    because it is not a create).
  *
- * 2. `fastest_effort` cannot be reversed at all, and is the same class of
- *    thing as a partner streak rather than a fourth accumulator. Its apply
- *    path is a MIN, and the marker records the run's own time, never the
- *    best it displaced — so nothing here knows what the previous best was.
- *    Recovering it would mean re-scanning the user's whole run history
- *    against the challenge's target distance, which is a rebuild, not a
- *    reversal.
+ * 2. `fastest_effort` cannot be REVERSED at all — its apply path is a
+ *    MIN, and the marker records the run's own time, never the best it
+ *    displaced, so nothing here knows what the previous best was. What it
+ *    gets instead (ADR-0012, third amendment) is the REBUILD the second
+ *    amendment named: when the deleted run's recorded time could have
+ *    been driving the standing best, `lib/fastestEffortRebuild` re-derives
+ *    the true best from the runs that still exist, through the same
+ *    gates as the live apply path. A deleted run slower than the best
+ *    skips the scan entirely.
  *
  * IDEMPOTENCY. Firestore delivers at-least-once, so every reversal must
  * survive redelivery. The marker is the guard in both directions: its
@@ -53,6 +55,7 @@
 
 const challengeMarkers = require("./challengeMarkers");
 const challengeTiers = require("./challengeTiers");
+const fastestEffortRebuild = require("./fastestEffortRebuild");
 
 /**
  * Undo one source activity's SUM-metric challenge credit, everywhere it
@@ -89,7 +92,25 @@ async function reverseChallengeProgressForSource(db, uid, sourceId) {
 
   for (const doc of challengesSnap.docs) {
     try {
-      await reverseChallengeProgressInOne(db, doc.id, doc.data() || {}, uid, sourceId);
+      const outcome = await reverseChallengeProgressInOne(
+        db,
+        doc.id,
+        doc.data() || {},
+        uid,
+        sourceId
+      );
+      // Rebuild AFTER the reversal transaction commits (the scan is a
+      // query, so it cannot live inside it). Best-effort per challenge:
+      // a failed rebuild leaves the stale best it would have corrected,
+      // never anything worse, and redelivery retries it.
+      if (outcome && outcome.fastestRebuild) {
+        await fastestEffortRebuild.rebuildFastestEffortInChallenge(
+          db,
+          doc.id,
+          doc.data() || {},
+          uid
+        );
+      }
     } catch (err) {
       // One challenge failing must not strand the rest, or the user is
       // left with an arbitrary subset reversed and no way to tell which.
@@ -117,12 +138,12 @@ async function reverseChallengeProgressInOne(db, challengeDocId, challenge, uid,
 
   const tiers = challenge.tiers || {};
 
-  await db.runTransaction(async (tx) => {
+  return db.runTransaction(async (tx) => {
     // All reads before any write. Sequential rather than parallel because
     // the marker's path depends on this participant's `joinedAt` — the
     // same membership namespacing the accrual uses.
     const snap = await tx.get(participantRef);
-    if (!snap.exists) return;
+    if (!snap.exists) return null;
 
     const markerRef = participantRef.collection("applied").doc(
       challengeMarkers.markerDocId(
@@ -135,7 +156,7 @@ async function reverseChallengeProgressInOne(db, challengeDocId, challenge, uid,
       )
     );
     const marker = await tx.get(markerRef);
-    if (!marker.exists) return; // never credited here, or already reversed
+    if (!marker.exists) return null; // never credited here, or already reversed
 
     const applied = marker.data() || {};
     const isSum =
@@ -165,12 +186,23 @@ async function reverseChallengeProgressInOne(db, challengeDocId, challenge, uid,
       );
     }
 
-    // The marker goes either way — including for `fastest_effort`, whose
-    // value is left standing. Dropping it there is safe precisely because
-    // MIN is idempotent for the same run: if the user re-logs it under the
-    // same id, re-applying the same time yields the same best. Keeping it
-    // would instead deny a genuine re-log its credit forever.
+    // The marker goes either way — including for `fastest_effort`. It is
+    // safe precisely because MIN is idempotent for the same run: if the
+    // user re-logs it under the same id, re-applying the same time yields
+    // the same best. Keeping it would deny a genuine re-log its credit
+    // forever.
     tx.delete(markerRef);
+
+    // The best itself cannot be reversed here (the marker records the
+    // run's own time, not what it displaced) — signal the caller to
+    // rebuild it from surviving runs when this run could have been the
+    // driver.
+    return {
+      fastestRebuild: fastestEffortRebuild.rebuildNeeded(
+        applied,
+        snap.data().currentValue
+      ),
+    };
   });
 }
 
