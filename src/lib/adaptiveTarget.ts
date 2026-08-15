@@ -404,3 +404,68 @@ export function resolveAdaptiveTarget(
     capChanged: cap?.changed ?? false,
   };
 }
+
+/**
+ * Has a learned target actually been APPLIED to this user?
+ *
+ * Client copy of the marker check in
+ * functions/lib/calorieTargetResolution.js (`hasAppliedLearnedTarget`) —
+ * pinned to it by adaptiveTargetMirror.cross.test.ts. `adaptiveCapState`
+ * is persisted only by `applyWeeklyCap`, which runs after the warmup gate
+ * clears, so a real (non-epoch) `lastAppliedAt` is the record that the
+ * handoff happened. The epoch timestamp is the seed anchor used on first
+ * engage and means "never applied".
+ */
+export const CAP_STATE_EPOCH = "1970-01-01T00:00:00.000Z";
+
+export function hasAppliedLearnedTarget(capState: unknown): boolean {
+  if (!capState || typeof capState !== "object") return false;
+  const cs = capState as Partial<CapState>;
+  if (typeof cs.lastApplied !== "number") return false;
+  if (!Number.isFinite(cs.lastApplied)) return false;
+  const at = cs.lastAppliedAt;
+  if (typeof at !== "string" || at === CAP_STATE_EPOCH) return false;
+  return Number.isFinite(Date.parse(at));
+}
+
+/**
+ * The calorie target a POINT-IN-TIME surface should quote for this user —
+ * resolved from persisted profile fields alone, no estimator reads.
+ *
+ * Client copy of the server's `resolveScoringCalorieTarget` (same file as
+ * above), which decides what the PI scores adherence against. A snapshot
+ * surface (the weekly review) must quote the SAME number, or the recap
+ * contradicts both the app's own guidance and the PI it sits beside: a
+ * Pro user who ate exactly what the app showed them reads as off-target
+ * in their own review, by up to the unbounded cumulative adaptive drift
+ * (150 kcal per window). Live surfaces keep resolving through
+ * `useAdaptiveTdee` → `useEffectiveTargets`; this is for the ones that
+ * assemble from a profile read.
+ *
+ * Returns null when the profile carries no usable target — the review
+ * already renders that as "no target line" rather than a guess.
+ */
+export function resolveSnapshotCalorieTarget(
+  profile: {
+    targetCalories?: unknown;
+    customCalorieTarget?: unknown;
+    adaptiveCapState?: unknown;
+  } | null | undefined,
+  isPro: boolean
+): ResolvedTarget | null {
+  const formulaTarget =
+    profile && typeof profile.targetCalories === "number"
+      ? profile.targetCalories
+      : null;
+  if (formulaTarget == null) return null;
+
+  const capState = profile ? profile.adaptiveCapState : null;
+  const applied = hasAppliedLearnedTarget(capState);
+  return resolveTargetSource({
+    isPro,
+    ready: applied,
+    formulaTarget,
+    learnedApplied: applied ? (capState as CapState).lastApplied : null,
+    isManualOverride: !!(profile && profile.customCalorieTarget),
+  });
+}
