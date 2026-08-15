@@ -497,7 +497,15 @@ export default function RunDetail() {
             correction for a mis-log, not a primary action. A phone-in-
             pocket accidental "run" is the case this exists for. */}
         {user && runId && (
-          <DeleteSessionAction uid={user.uid} kind="run" id={runId} />
+          <DeleteSessionAction
+            uid={user.uid}
+            kind="run"
+            id={runId}
+            /* Runs shared since the delete-link fix carry this; older
+               shared runs read null and get the honest "post stays"
+               copy. */
+            sharedActivityId={(run?.sharedActivityId as string) ?? null}
+          />
         )}
       </div>
 

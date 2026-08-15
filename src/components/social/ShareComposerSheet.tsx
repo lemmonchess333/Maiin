@@ -6,6 +6,7 @@ import { haptic } from "@/lib/haptic";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useUid } from "@/lib/auth";
 import { postActivity } from "@/lib/socialApi";
+import { recordSharedActivity } from "@/lib/sessionDelete";
 import { containsProfanity } from "@/lib/profanityFilter";
 import {
   subscribeShareComposer,
@@ -88,8 +89,20 @@ export default function ShareComposerSheet() {
     let cancelled = false;
     void (async () => {
       try {
-        await drainQueue(uid, async (payload) => {
-          await postActivity(payload as Parameters<typeof postActivity>[0]);
+        await drainQueue(uid, async (payload, source) => {
+          const activityId = await postActivity(
+            payload as Parameters<typeof postActivity>[0]
+          );
+          /* Queued items carry their source since the delete-link fix; a
+             drained post records the same marker an online post would, so
+             an offline share is deletable later exactly like an online
+             one. Legacy items without a source drain as before and simply
+             leave no link. recordSharedActivity is best-effort inside —
+             a failed marker must NOT re-queue an already-successful post,
+             which is also why it sits after postActivity resolves. */
+          if (source) {
+            await recordSharedActivity(uid, source, activityId);
+          }
         });
         if (cancelled) return;
       } catch {

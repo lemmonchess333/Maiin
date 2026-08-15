@@ -102,9 +102,10 @@ describe("DeleteSessionAction", () => {
 
     renderAction();
     fireEvent.click(screen.getByRole("button", { name: /delete this workout/i }));
-    // Only workouts carry the link back to their post, and a run's post is
-    // unreachable from the run — so the copy must not promise a removal
-    // that cannot happen.
+    // A session with no recorded link — anything shared before
+    // `recordSharedActivity` covered its path (runs and all offline
+    // shares, pre-fix) — has an unreachable post, so the copy must not
+    // promise a removal that cannot happen.
     expect(await screen.findByRole("alertdialog")).toHaveTextContent(
       /stays on your feed/i
     );

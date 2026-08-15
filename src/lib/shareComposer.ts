@@ -22,6 +22,7 @@
  */
 
 import { toast } from "@/lib/toast";
+import type { ShareSource } from "@/lib/sessionDelete";
 
 export type ShareType = "workout" | "run";
 
@@ -207,6 +208,12 @@ export interface PendingShare {
   uid: string;
   payload: Record<string, unknown>;
   queuedAt: number;
+  /** The session this post is ABOUT, so the drain can record
+   *  `sharedActivityId` back onto it after posting — the link
+   *  `deleteLoggedSession` needs to clear the post if the session is
+   *  later deleted. Optional: items queued before it existed drain
+   *  fine and simply leave no link, same as the pre-fix behaviour. */
+  source?: ShareSource;
 }
 
 function readQueue(): PendingShare[] {
@@ -236,11 +243,18 @@ function writeQueue(items: PendingShare[]) {
 
 export function enqueueShare(
   uid: string,
-  payload: Record<string, unknown>
+  payload: Record<string, unknown>,
+  source?: ShareSource
 ): void {
   const items = readQueue();
   const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  items.push({ id, uid, payload, queuedAt: Date.now() });
+  items.push({
+    id,
+    uid,
+    payload,
+    queuedAt: Date.now(),
+    ...(source ? { source } : {}),
+  });
   writeQueue(items);
 }
 
@@ -255,7 +269,10 @@ export function getQueueLength(uid?: string): number {
  *  stay in the queue for the next drain attempt. */
 export async function drainQueue(
   uid: string,
-  post: (payload: Record<string, unknown>) => Promise<unknown>
+  post: (
+    payload: Record<string, unknown>,
+    source?: ShareSource
+  ) => Promise<unknown>
 ): Promise<void> {
   const items = readQueue();
   if (items.length === 0) return;
@@ -266,7 +283,7 @@ export async function drainQueue(
       continue;
     }
     try {
-      await post(item.payload);
+      await post(item.payload, item.source);
     } catch {
       remaining.push(item);
     }
