@@ -1489,14 +1489,21 @@ export function renderBodyDemo(
       (sum, o) => sum + (o.kind === "rotate" ? Math.abs(o.deg) : 0),
       0
     );
+  /* Cap growth doubled 3→6/180° (Gate-0 ledger: lateral-raise and press
+   * lockout frames still opened visible chain gaps at ~70–170° — the old
+   * growth peaked at +3 while the wedge a rotated facet opens grows
+   * faster than that). Wrist caps close the forearm/hand seam the same
+   * frames exposed; the packet named them explicitly. */
   const capR = (base: number, ops?: Op[]) =>
-    base + (3 * Math.min(rotationOf(ops), 180)) / 180;
+    base + (6 * Math.min(rotationOf(ops), 180)) / 180;
   const A = demo.view === "anterior" ? ANT : POST;
   const capDefs: { pt: Pt; group: GroupName; r: number }[] = [
     { pt: A.shoulderL, group: "upperArmL", r: 3.6 },
     { pt: A.shoulderR, group: "upperArmR", r: 3.6 },
     { pt: A.elbowL, group: "foreArmL", r: 2.7 },
     { pt: A.elbowR, group: "foreArmR", r: 2.7 },
+    { pt: A.handL, group: "foreArmL", r: 2.1 },
+    { pt: A.handR, group: "foreArmR", r: 2.1 },
   ];
   if (demo.view === "anterior") {
     capDefs.push(
@@ -1548,8 +1555,31 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
     pts.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(" ");
 
   const primaryPts = new Map<string, Pt[]>();
+  /* Bilateral-by-construction (roadmap P0 "bilateral arms/hands"): a far
+   * piece whose group the pose doesn't address mirrors its NEAR
+   * counterpart's ops, then every far piece takes a small constant
+   * back-parallax so a darker rim of the far limb reads behind the near
+   * one — the depth cue a true zero-offset profile can't give. A pose
+   * that DOES address a far group (the bench's split legs) keeps full
+   * control and still gets the parallax. */
+  const FAR_NEAR: Partial<Record<GroupName, GroupName>> = {
+    upperArmR: "upperArmL",
+    foreArmR: "foreArmL",
+    handR: "handL",
+    thighR: "thighL",
+    shankR: "shankL",
+  };
+  const FAR_OFFSET: Op = { kind: "translate", dx: -2.6, dy: 0 };
+  const opsFor = (piece: (typeof SIDE_PIECES)[number]): Op[] => {
+    const own = pose[piece.group];
+    const mirrored = piece.far
+      ? pose[FAR_NEAR[piece.group] ?? piece.group]
+      : undefined;
+    const base = own ?? mirrored ?? [];
+    return piece.far ? [...base, FAR_OFFSET] : base;
+  };
   const body = SIDE_PIECES.map((piece) => {
-    const ops = pose[piece.group] ?? [];
+    const ops = opsFor(piece);
     const outline = applyOps(piece.outline as Pt[], ops);
     const facets = piece.facets.map((f) => ({
       level: demo.tint[f.muscle],
@@ -1557,7 +1587,7 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
       pts: applyOps(f.points as Pt[], ops),
     }));
     for (const f of facets)
-      if (f.level === "primary")
+      if (f.level === "primary" && !piece.far)
         primaryPts.set(f.muscle, [
           ...(primaryPts.get(f.muscle) ?? []),
           ...f.pts,
@@ -1576,8 +1606,11 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
                 : piece.far
                   ? BODY_FAR
                   : BODY;
+          /* Far tints render dimmed — same muscle, further away. Full
+             brightness on both limbs flattens the depth the parallax
+             just bought. */
           const op = f.level
-            ? ` fill-opacity="${tintOpacity(f.level).toFixed(3)}"`
+            ? ` fill-opacity="${(tintOpacity(f.level) * (piece.far ? 0.55 : 1)).toFixed(3)}"`
             : "";
           return `<polygon points="${P(f.pts)}" fill="${fill}"${op}/>`;
         })

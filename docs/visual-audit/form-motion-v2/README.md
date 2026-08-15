@@ -76,3 +76,13 @@ Gate-3; the operator confirms or reverts by re-adding the id to
 Mechanics pins shipped with the rebuilds: bar rises thigh→clavicle on a
 strict torso (curl); rope tail descends >20 units, upper arm untouched,
 no line spans body width (pushdown); both arm facets tint independently.
+
+## STATUS 2026-08-15 (second pass) — body + rig depth work (sheets regenerated)
+
+Owner follow-up: "the actual body and rigging need improving still."
+Two structural changes, both from the roadmap's own defect lists:
+
+| Change               | What it fixes                                                                                                                                                                                                                                                                                                                                                                                                              |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bilateral side rig   | P0 "bilateral arms/hands": far arm chain added (same art, darker, painted behind the core). Far pieces MIRROR the near chain when a pose doesn't address them and take a constant back-parallax — a darker far-limb rim now reads behind the near limb in every side demo (push-ups gains its second planted arm; curl/pushdown/deadlift/bench gain depth). Far tints render dimmed; far facets stay out of the glow hull. |
+| Front-rig chain caps | Gate-0 defects "arm segment chains show visible gaps at the top frames" (lateral-raise) and "elbow-seam gaps at lockout" (press): cap growth doubled (3→6 per 180°) and WRIST caps added (the packet named them) — the raise/press chains now read connected at full span/lockout.                                                                                                                                         |

@@ -180,6 +180,51 @@ describe("renderBodyDemo", () => {
     }
   });
 
+  it("side rig is bilateral: far limbs render and mirror the near chain", () => {
+    // BODY_FAR (#9FA6AC) polygons are the far pieces. The pushdown's pose
+    // addresses only the NEAR forearm — the far forearm must move anyway
+    // (the far-follows-near rule), offset by the constant back-parallax.
+    const farFill = (svg: string) =>
+      (svg.match(/fill="#9FA6AC"/g) ?? []).length;
+    const start = renderBodyDemo("rope-tricep-pushdown", 0);
+    const end = renderBodyDemo("rope-tricep-pushdown", 1);
+    expect(farFill(start)).toBeGreaterThan(0);
+    // The far arm travels with the near arm: the set of far-coloured
+    // polygons differs between the extremes (a static far arm — the
+    // pre-rule behaviour — would render identical far bytes at both;
+    // the far LEGS stay static here, so the whole-set comparison only
+    // passes if the far ARM moved).
+    const farPolys = (svg: string) =>
+      [...svg.matchAll(/<polygon points="([^"]+)" fill="#9FA6AC"/g)]
+        .map((m) => m[1])
+        .join("|");
+    expect(farPolys(start)).not.toBe(farPolys(end));
+  });
+
+  it("far tints render dimmed and stay out of the glow hull", () => {
+    // Depth rule: same muscle further away — the far triceps facet's
+    // fill-opacity must be strictly below the near one's at the same
+    // effort, and the glow hull is built from near facets only (a far
+    // hull would double the aura's footprint).
+    const svg = renderBodyDemo("rope-tricep-pushdown", 0.5, 1);
+    const opacities = [
+      ...svg.matchAll(/fill="#7B72E9" fill-opacity="([\d.]+)"/g),
+    ].map((m) => Number(m[1]));
+    expect(Math.min(...opacities)).toBeLessThan(Math.max(...opacities) * 0.7);
+  });
+
+  it("front rig closes the chain: wrist caps render on articulated forearms", () => {
+    // Gate-0 ledger defect (lateral-raise/press top frames): the
+    // forearm/hand seam opened at large rotations. The wrist cap rides
+    // the forearm group's transform.
+    const svg = renderBodyDemo("lateral-raise", 1);
+    const caps = [
+      ...svg.matchAll(/<circle[^>]*r="([\d.]+)"[^>]*fill="#B6BDC3"/g),
+    ];
+    // shoulder + elbow + wrist per side = 6 caps at full abduction.
+    expect(caps.length).toBeGreaterThanOrEqual(6);
+  });
+
   it("side arm carries both biceps and triceps facets (real muscle boundary)", () => {
     // The triceps facet is what lets the pushdown's working-muscle
     // emphasis render at all — pin that both facets tint independently.

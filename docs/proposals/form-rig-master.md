@@ -42,6 +42,8 @@ packet's design content as the plan and its status content as void.
 | Bench leg/bar repair + side facet-count discipline (Phase 2-class art)                                                                              | `bodyRig.ts` / `bodySideData.ts`                  | ✅ 2026-07-27               |
 | Looping player + even 30fps throttle (supersedes Demo1 single-rep settle — owner feedback)                                                          | `ExerciseRigDemo.tsx` / `exerciseTempo.ts`        | ✅ 2026-07-27               |
 | Curl + rope-pushdown repairs — side-view rebuilds fix the gated defects; both un-gated (Phase 4 items 1–2); side triceps facet added (Phase 2 item) | `bodyRig.ts` / `bodySideData.ts` + mechanics pins | ✅ 2026-08-15               |
+| Bilateral side rig — far arm chain + far-follows-near mirroring + back-parallax + dimmed far tints (P0 "bilateral arms/hands")                      | `bodySideData.ts` / `bodyRig.ts` + pins           | ✅ 2026-08-15               |
+| Front-rig chain closure — wrist caps (packet item) + doubled rotation-scaled cap growth (raise/press gap defects)                                   | `bodyRig.ts` + pins                               | ✅ 2026-08-15               |
 | Everything else below                                                                                                                               | —                                                 | Pending                     |
 
 **Demo1 supersession note (2026-07-27).** The single bounded teaching
