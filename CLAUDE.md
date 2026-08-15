@@ -525,7 +525,11 @@ The agent sandbox can't run a browser; CI can. Push any branch's code to
 `claude/screenshot-app` (scratch trigger branch — force-with-lease is fine)
 and `app-screenshots.yml` builds it against the emulator, captures the key
 surfaces light+dark (`e2e/screenshots/home.screens.capture.spec.ts`), and
-commits PNGs to the `app-screenshots` branch for `git fetch` + view. Visual
+commits PNGs to the `app-screenshots` branch for `git fetch` + view. Each
+run also DIFFS against the previous capture (`scripts/diff-screenshots.mjs`,
+pixelmatch): `screenshot-diff/DIFF_REPORT.md` + per-frame changed-pixel
+highlights ride the same branch and mirror into the run's step summary —
+a report, not a gate (intended change is normal here). Visual
 PRs cite before/after from this channel (the D15 lesson: no visual churn
 without screenshots). Gotchas: capture specs must be named
 `*.capture.spec.ts` (auth-emulator project); the Progress/Form switch and
