@@ -127,7 +127,7 @@ export function useAudioCues(
 
          gps.ts already carries this lesson for the pace ALERT — "the
          whole-run average is dragged permanently slow by a warm-up… lags
-         badly mid-run" — and `rollingPaceSeconds` was added to fix it
+         badly mid-run" — and a windowed pace (`slidingPaceSeconds`) fixed it
          there. The split cue was left on the average. */
       const segMeters = distance - lastMarkDistance.current;
       const segSeconds = elapsed - lastMarkElapsed.current;

@@ -17,7 +17,7 @@ import {
   calculateSplits,
   haversine,
   paceAsNumber,
-  rollingPaceSeconds,
+  slidingPaceSeconds,
   totalElevationGain,
   type GPSPoint,
 } from "../lib/gps";
@@ -106,7 +106,7 @@ import {
   endRunActivity,
 } from "../lib/runLiveActivity";
 import { toast } from "../lib/toast";
-import { SPLIT_LAP_IS_METRIC } from "@/lib/distanceUnits";
+import { SPLIT_LAP_IS_METRIC, METRES_PER_MILE } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 
 /* haptic moved to the shared `../lib/haptic` implementation in
@@ -901,12 +901,24 @@ export default function Run() {
     // repeats every 30 seconds from a small pool while the runner is
     // actually on pace — the loudest version of the "same sentence over
     // and over" report. gps.ts has said the average "lags badly mid-run"
-    // since rollingPace was written; only the live display used it.
+    // since the first windowed pace was written; only the display used it.
     //
     // `null` means the window has too little data to judge, and we say
     // nothing rather than falling back to the average.
+    //
+    // The window is now DISTANCE-anchored and identical to the one the
+    // live display reads. Two reasons. A ±15s/km threshold judged against
+    // a 30-second window fires on GPS noise — the same noise that made the
+    // display read 13:14/km beside a 7:05 average — so the alert was
+    // telling runners to correct a pace they were not running. And the
+    // voice and the screen were reading DIFFERENT windows, so the app
+    // could announce "you've drifted behind target" while the number in
+    // front of the runner said they were on it. One source, one story.
     if (runConfig?.target?.type === "pace" && runConfig.target.value) {
-      const currentPaceSec = rollingPaceSeconds(gps.points, 30);
+      const currentPaceSec = slidingPaceSeconds(
+        gps.points,
+        unit === "mi" ? METRES_PER_MILE : 1000
+      );
       if (currentPaceSec !== null) {
         audioCues.checkPaceAlert(
           currentPaceSec,
@@ -930,15 +942,21 @@ export default function Run() {
   }, [gps.distance, timer.elapsed, phase, audioCues, runConfig]);
 
   // Live Activity (lock screen / Dynamic Island) — mirrors the HUD stats
-  // for outdoor GPS runs. Same rolling-pace source as RunBottomSheet, so
-  // the lock screen can never disagree with the in-app display. The seam
+  // for outdoor GPS runs. Same sliding-pace source AND the same window as
+  // RunBottomSheet, so the lock screen can never disagree with the in-app
+  // display. That claim is load-bearing and was nearly falsified when the
+  // display moved to a distance-anchored window: "same source" is only
+  // true while both the FUNCTION and its window argument match. The seam
   // module is inert on web / without the plugin, start is idempotent, and
   // updates are throttled + deduped internally — this effect just feeds
   // it the current truth every tick.
   useEffect(() => {
     if (!isOutdoorGpsRun(runConfig?.activityType)) return;
     if (phase !== "active" && phase !== "paused") return;
-    const paceS = rollingPaceSeconds(gps.points, 30);
+    const paceS = slidingPaceSeconds(
+      gps.points,
+      unit === "mi" ? METRES_PER_MILE : 1000
+    );
     const data = {
       distance: distanceLabel(gps.distance, unit),
       pace: paceS !== null ? paceLabel(paceS, unit) : "—",

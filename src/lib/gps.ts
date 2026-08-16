@@ -284,66 +284,119 @@ export function calculatePace(
 }
 
 /**
- * Pace over the last `windowSeconds` of GPS points, in seconds per
- * kilometre, or `null` when the window holds too little data (needs
- * ≥10 m AND ≥5 s inside the window).
+ * The slowest a segment is allowed to COUNT AS, in seconds per kilometre.
  *
- * WHY A WINDOW. The all-time average `calculatePace(distance, elapsed)`
- * lags badly mid-run — once you've banked 3 km at 5:00/km, a 4:00/km
- * fourth km only nudges it. The rolling window answers "what am I doing
- * right now", which is what runners want on the live screen. The full-run
- * average still drives the saved record.
+ * 20:00/km is slower than a stroll, so it never touches real running or
+ * even a walk break — but it caps what a stop can contribute. Pausing calls
+ * `gps.stop()` (Run.tsx), so a pause leaves a genuine hole in the
+ * timestamps, and a red light leaves a long silence with no displacement.
+ * Integrating either at face value would put five minutes of standing into
+ * a window meant to describe running.
  *
- * There was a `rollingPace` beside this that returned a preformatted
- * "M:SS" string. It was deleted when the live screen started converting
- * pace to the reader's unit: a formatter that bakes in per-KILOMETRE has
- * nothing to offer a caller that needs per-mile, and it had exactly one
- * consumer. Callers now take the number and pass it to `paceMinSec` with
- * a unit.
+ * A clamp rather than an exclusion. A slow shuffle still drags the number
+ * down in proportion to how slow it was; only time with no ground under it
+ * is discounted, and a dead stop contributes almost nothing because the
+ * cap scales with the distance covered. The effect is that the window
+ * reports MOVING pace over the last kilometre — which is what a runner
+ * means by "what am I running", and what the auto-pause feature already
+ * assumes elsewhere on this screen.
  *
- * The number form exists because the audio pace alert needs it, and was
- * computing `(elapsed / distance) * 1000` at its call site instead — the
- * WHOLE-RUN average, the exact quantity the comment above says "lags
- * badly mid-run". On any session with a warm-up that average is dragged
- * permanently slow, so once the alert's ±15s/km threshold is crossed it
- * stays crossed: the app tells the runner they are behind target every
- * 30 seconds for the rest of the session, from a two-line pool, while
- * the live display beside it shows them on pace. That is the loudest
- * possible place to be wrong, and it is a large part of what "the same
- * sentence over and over" sounds like on a tempo run.
- *
- * `null` rather than 0 is deliberate: the caller must be able to tell
- * "no reading yet" from "a real reading", and stay silent for the
- * former. Returning the misleading average as a fallback would put the
- * bug straight back.
+ * This is also why the alternative — comparing against the run timer's
+ * `elapsed`, which already excludes paused time — was not used: it is a
+ * scalar for the whole run and cannot say which part of a WINDOW was spent
+ * moving.
  */
-export function rollingPaceSeconds(
+const STOPPED_PACE_FLOOR_SEC_PER_KM = 1200;
+
+/**
+ * Pace over the last `windowMetres` of GROUND COVERED, in seconds per
+ * kilometre — a window anchored to distance rather than to time.
+ *
+ * REPLACES `rollingPaceSeconds`, a 30-SECOND window, which is deleted
+ * rather than kept beside this — an unused export of the noisier of two
+ * near-identical functions is an invitation to pick the wrong one.
+ *
+ * A 30-second window is short enough that a single stop dominates it.
+ * Owner, on a real run: the live slot read 13:14/km beside an average of
+ * 7:05. That reading was arithmetically correct — 37.8 m covered in those
+ * 30 seconds — and behaviourally useless; a moment later the same window
+ * fell under its `dist < 10` guard and returned `--:--`. The spike and the
+ * blank were the same defect seen twice.
+ *
+ * The old window's stated purpose survives unchanged and is worth keeping
+ * here: the all-time average `calculatePace(distance, elapsed)` lags badly
+ * mid-run — once you've banked 3 km at 5:00/km, a 4:00/km fourth km only
+ * nudges it — so a live screen needs a recent-pace reading, and the audio
+ * pace alert needs one even more (judged against the whole-run average, a
+ * warm-up drags it permanently slow, the ±15s/km threshold stays crossed,
+ * and the app tells a runner they are behind target every 30 seconds for
+ * the rest of the session). Only the WINDOW changes; the full-run average
+ * still drives the saved record.
+ *
+ * A distance-anchored window cannot do either. Over the last kilometre you
+ * cannot move from 7:05 to 13:14 at running speed, and once ~10 m have been
+ * covered the window always holds enough to divide by — including through a
+ * GPS dropout, where it simply keeps describing the last kilometre that WAS
+ * recorded instead of blanking. Degrading beats dashing out: a dead
+ * placeholder in a 46px slot reads as a crash, not as poor conditions.
+ *
+ * Before `windowMetres` has been banked the window is the whole run so far,
+ * so the value starts life equal to the run average and slides away from it
+ * — continuous from the first fix, with no boundary to jump at. That is the
+ * one thing it has over a per-split average (Strava's model), which resets
+ * every kilometre and is jumpy for the first ~100 m of each.
+ *
+ * Precedent: Apple's "Rolling Mile" is on the DEFAULT Outdoor Run view and
+ * is this exact quantity. Garmin ships no native equivalent, which is why
+ * its users install a Connect IQ "Rolling Average Pace" field.
+ *
+ * The cost is honest and worth stating: a window this wide cannot resolve
+ * anything shorter than itself, so it is the wrong instrument for 400 m
+ * reps. An interval session should scope the window to the current rep
+ * instead.
+ *
+ * Returns `null` only when under 10 m has been covered in total — i.e. the
+ * run has not started moving. `null` rather than 0 so a caller can stay
+ * silent instead of speaking a fiction.
+ */
+export function slidingPaceSeconds(
   points: GPSPoint[],
-  windowSeconds: number = 30
+  windowMetres: number = 1000
 ): number | null {
   if (points.length < 2) return null;
-  const now = points[points.length - 1].timestamp;
-  const windowMs = windowSeconds * 1000;
-  /* Find the first point within the rolling window. Points are kept
-     in chronological order by useGPS so a linear scan from the start
-     is fine; the array is also bounded by the run duration. */
-  const startIdx = points.findIndex((p) => now - p.timestamp <= windowMs);
-  if (startIdx === -1 || startIdx === points.length - 1) return null;
 
   let dist = 0;
-  for (let i = startIdx + 1; i < points.length; i++) {
-    dist += haversine(
+  let secs = 0;
+  // Walk backwards from the latest fix until the window is full or the
+  // track runs out.
+  for (let i = points.length - 1; i > 0; i--) {
+    const segM = haversine(
       points[i - 1].lat,
       points[i - 1].lon,
       points[i].lat,
       points[i].lon
     );
+    let segS = (points[i].timestamp - points[i - 1].timestamp) / 1000;
+    if (segS <= 0) continue;
+    // A stop cannot count for more than a very slow walk (see the constant).
+    segS = Math.min(segS, (segM / 1000) * STOPPED_PACE_FLOOR_SEC_PER_KM);
+
+    const remaining = windowMetres - dist;
+    if (segM >= remaining && segM > 0) {
+      // Partial segment at the window edge — take the fraction needed, so
+      // the value slides continuously instead of stepping as whole fixes
+      // fall out of the back.
+      const frac = remaining / segM;
+      dist += segM * frac;
+      secs += segS * frac;
+      break;
+    }
+    dist += segM;
+    secs += segS;
   }
-  const elapsedSec = (now - points[startIdx].timestamp) / 1000;
 
-  if (dist < 10 || elapsedSec < 5) return null;
-
-  return (elapsedSec / dist) * 1000;
+  if (dist < 10 || secs <= 0) return null;
+  return (secs / dist) * 1000;
 }
 
 export function paceAsNumber(

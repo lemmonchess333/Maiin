@@ -93,7 +93,7 @@ export function timeCue(
  * that a metronome — the same two sentences alternating for most of an
  * hour. (The other half of that problem was the caller feeding in the
  * whole-run average, so the deviation never cleared; see
- * `rollingPaceSeconds` in gps.ts.)
+ * `slidingPaceSeconds` in gps.ts.)
  */
 const BEHIND = [
   "You've drifted a little behind target — lift it gently.",

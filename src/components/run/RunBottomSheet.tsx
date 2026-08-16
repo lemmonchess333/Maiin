@@ -11,7 +11,7 @@ import { THEME } from "../../lib/theme";
 import { haptic } from "../../lib/haptic";
 import { projectAndSnap } from "../../lib/sheetSnap";
 import {
-  rollingPaceSeconds,
+  slidingPaceSeconds,
   totalElevationGain,
   estimateRunCalories,
   calculateSplits,
@@ -314,13 +314,22 @@ export default function RunBottomSheet({
 
   const pace =
     distance < 10 ? "--:--" : paceMinSec((elapsed / distance) * 1000, unit);
-  /* Rolling 30s pace = "what am I doing right now" — the live signal
-     runners actually want during a run. The all-time average lags
-     badly once you've banked a few km, so it's demoted to a small
-     "AVG" caption beneath the live pace. The post-run summary still
-     records the all-time average — that's the right number for the
-     historical entry. */
-  const livePaceS = rollingPaceSeconds(points, 30);
+  /* Recent pace over the last KILOMETRE COVERED, not the last 30 seconds.
+     The window is anchored to distance so it cannot be dominated by a
+     stop: 30 seconds was short enough that a road crossing filled it, and
+     this slot read 13:14/km next to an average of 7:05 (owner, on a real
+     run). The blank was the same defect — the same window then fell under
+     the old `dist < 10` guard and dashed out. See `slidingPaceSeconds`.
+
+     The window follows the READER's unit: a mile runner gets Apple's
+     rolling mile, not a kilometre relabelled.
+
+     The all-time average still lags badly once you've banked a few km, so
+     it stays the small caption beneath — but it is now ALWAYS shown, not
+     only when it disagrees. The post-run summary still records the
+     all-time average; that's the right number for the historical entry. */
+  const paceWindowM = unit === "mi" ? METRES_PER_MILE : 1000;
+  const livePaceS = slidingPaceSeconds(points, paceWindowM);
   const livePace = livePaceS === null ? "--:--" : paceMinSec(livePaceS, unit);
   const calories = estimateRunCalories(distance, weightKg);
   const elevation = totalElevationGain(points);
@@ -476,21 +485,34 @@ export default function RunBottomSheet({
                       marginTop: 3,
                     }}
                   >
-                    {paceUnitLabel(unit).toUpperCase()} · LIVE
+                    {/* Not "LIVE". No reference app labels a pace value
+                        that way, and the word promises instantaneity —
+                        which is exactly the property that made the number
+                        noisy. Naming the window instead ("LAST KM") is what
+                        turns a disagreement with AVG from a defect into two
+                        differently-scoped readings. */}
+                    {paceUnitLabel(unit).toUpperCase()} · LAST{" "}
+                    {distanceUnitLabel(unit).toUpperCase()}
                   </p>
-                  {pace !== "--:--" && pace !== livePace && (
-                    <p
-                      style={{
-                        fontSize: 10,
-                        color: "rgba(255,255,255,0.35)",
-                        fontVariantNumeric: "tabular-nums",
-                        fontFamily: "var(--font-mono)",
-                        marginTop: 4,
-                      }}
-                    >
-                      AVG {pace}
-                    </p>
-                  )}
+                  {/* Shown unconditionally. It used to be gated on
+                      `pace !== livePace`, so the average appeared ONLY when
+                      it contradicted the number above it and vanished when
+                      they agreed — every appearance was a contradiction
+                      event, under a 46px number that then reflowed. The
+                      average is the stable anchor that makes a recent-pace
+                      reading interpretable; it has to be always there to do
+                      that job. */}
+                  <p
+                    style={{
+                      fontSize: 10,
+                      color: "rgba(255,255,255,0.35)",
+                      fontVariantNumeric: "tabular-nums",
+                      fontFamily: "var(--font-mono)",
+                      marginTop: 4,
+                    }}
+                  >
+                    AVG {pace}
+                  </p>
                 </div>
               </div>
 
