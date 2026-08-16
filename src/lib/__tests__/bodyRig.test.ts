@@ -525,6 +525,70 @@ describe("renderBodyDemo", () => {
     }
   });
 
+  it("the push-up top is a lockout, and is not faked by the clamp", () => {
+    /* Third of the straight-end family, and the one whose knob is least
+       obvious. The top sat at 145 degrees — shoulder 52.5 from the
+       planted hand against a 55.07 arm.
+
+       The plank incline CANNOT fix it, which is the part worth keeping:
+       `PUSHUP_TILT` rotates the body about the planted HAND, and a
+       rotation about a point cannot change the distance from that point
+       to the shoulder. Swept -13 to -19 it left the reach at exactly
+       52.51 and moved only the toes. The toe-pivot rotation is the only
+       one that raises the shoulder while leaving the hand plant alone.
+
+       The reach assertion is the real content. A straight-LOOKING arm is
+       cheap: ask for more reach than the arm has and `solveElbow` clamps,
+       drawing a straight arm the geometry never earned — which is exactly
+       how the pull-up dead hang passed while over-extended. So this pins
+       the reach strictly BELOW the clamp as well as the angle above 168.
+       Both, or neither means anything. */
+    expect(sideElbow("push-ups", 0), "push-up top").toBeGreaterThan(168);
+    expect(sideElbow("push-ups", 1), "push-up bottom").toBeLessThan(90);
+
+    const pose = BODY_DEMOS["push-ups"].pose(0);
+    const S = applyToPoint(SIDE_ANCHORS.shoulder, pose.upperArmL!);
+    const H = applyToPoint(SIDE_ANCHORS.hand, pose.foreArmL!);
+    const reach = Math.hypot(S[0] - H[0], S[1] - H[1]);
+    // 0.999 is `solveElbow`'s own ceiling factor; read from source so a
+    // change to it fails here rather than quietly widening the gate.
+    const src = readFileSync(
+      resolve(dirname(fileURLToPath(import.meta.url)), "../bodyRig.ts"),
+      "utf8"
+    );
+    const ceiling = Number(
+      src.match(/const max = \(L1 \+ L2\) \* ([\d.]+);/)![1]
+    );
+    const seg = (a: [number, number], b: [number, number]) =>
+      Math.hypot(a[0] - b[0], a[1] - b[1]);
+    const armMax =
+      (seg(SIDE_ANCHORS.elbow, SIDE_ANCHORS.shoulder) +
+        seg(SIDE_ANCHORS.hand, SIDE_ANCHORS.elbow)) *
+      ceiling;
+    expect(
+      reach,
+      `reach ${reach.toFixed(2)} is sitting on the IK clamp (${armMax.toFixed(2)})`
+    ).toBeLessThan(armMax);
+
+    /* And the hand stays where it is planted, in every frame.
+       `PUSHUP_TILT` is applied by the pose and UN-applied by the inverse
+       chain that maps the plant back into standing space, so the two must
+       stay exact negatives. Nothing held that: desyncing them to -19/+13
+       left all the other assertions green while the hand slid off its
+       plant, because reach is measured between two points the same body
+       transform carries. This is the one that notices. */
+    const plant = (t: number) =>
+      applyToPoint(SIDE_ANCHORS.hand, BODY_DEMOS["push-ups"].pose(t).foreArmL!);
+    const first = plant(0);
+    for (const t of [0.25, 0.5, 0.75, 1]) {
+      expect(plant(t)[0], `hand slid in x at t=${t}`).toBeCloseTo(first[0], 3);
+      expect(plant(t)[1], `hand slid in y at t=${t}`).toBeCloseTo(first[1], 3);
+    }
+    // …and it is planted where the demo says the floor is.
+    const floor = BODY_DEMOS["push-ups"].groundY!;
+    expect(Math.abs(first[1] - floor)).toBeLessThan(3);
+  });
+
   it("pushdown: the rope's knotted tail travels down to lockout", () => {
     // The tail knob is the LAST circle in the svg (sceneFront renders
     // after the body) — its descent is the extension arc.

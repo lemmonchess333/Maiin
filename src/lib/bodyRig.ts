@@ -232,6 +232,51 @@ function hipsBack(hingeDeg: number): Extract<Op, { kind: "rotate" }> {
  * where the tilted plank's toes rest. */
 const PUSHUP_HAND: Pt = [100, 156];
 const PUSHUP_TOE: Pt = [-61.6, 155.8];
+/** Plank incline, about the planted hand. Named because the pose applies
+ *  it and the inverse chain un-applies it, and two hand-typed 13s that
+ *  must stay negatives of each other is a drift waiting to happen. */
+const PUSHUP_TILT = -13;
+/* PLANK ANGLE THAT ACTUALLY LOCKS THE ARM OUT.
+ *
+ * The top of a push-up is a straight arm, and this one sat at 145
+ * degrees — the shoulder 52.5 from the planted hand against a 55.07 arm.
+ * Same defect as the bench and the row, and hidden the same way: 2.5
+ * units of shortfall buys 30 degrees of elbow and still reads straight.
+ *
+ * Which knob had to move is not obvious and is worth recording, because
+ * the obvious one CANNOT work. `PUSHUP_TILT` rotates the body about the
+ * planted HAND, and a rotation about a point cannot change the distance
+ * from that point to the shoulder — measured, sweeping it -13 to -19
+ * left the reach at exactly 52.51 and moved only the toes. `B` pivots
+ * about the TOE, which raises the shoulder end while leaving the hand
+ * plant untouched, so it is the only one that can straighten the arm
+ * without unplanting anything.
+ *
+ * Solved rather than swept: the relation between a toe-pivot rotation
+ * and the shoulder-to-hand reach has no tidy closed form, so bisect for
+ * the angle that lands on SIDE_ARM_REACH. Deliberately just SHORT of the
+ * clamp — every base past about -0.95 pins the reach at solveElbow's
+ * ceiling, and a clamped solve draws a straight arm whether or not the
+ * geometry earns one. That is precisely how the pull-up's dead hang
+ * passed while over-extended. */
+const PUSHUP_TOP_BETA = (() => {
+  const reachAt = (beta: number) => {
+    const S = applyToPoint(SIDE_ANCHORS.shoulder, [
+      { kind: "rotate", deg: 90, pivot: [44, 100] },
+      { kind: "rotate", deg: PUSHUP_TILT, pivot: PUSHUP_HAND },
+      { kind: "rotate", deg: beta, pivot: PUSHUP_TOE },
+    ]);
+    return Math.hypot(S[0] - PUSHUP_HAND[0], S[1] - PUSHUP_HAND[1]);
+  };
+  let lo = -6; // more negative → longer reach
+  let hi = 0;
+  for (let i = 0; i < 60; i++) {
+    const mid = (lo + hi) / 2;
+    if (reachAt(mid) > SIDE_ARM_REACH) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+})();
 
 /* Muscle-aura rings — nested convex hulls at falling opacity (the
  * no-filter fake blur; see the glow block in the renderers). */
@@ -1401,14 +1446,14 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * body pivots about the TOES as the chest drops — hands stay
        * planted, elbows IK-solved toward the feet. */
       const G: Op = { kind: "rotate", deg: 90, pivot: [44, 100] };
-      const TILT: Op = { kind: "rotate", deg: -13, pivot: PUSHUP_HAND };
-      const beta = lerp(0, 9.5, e);
+      const TILT: Op = { kind: "rotate", deg: PUSHUP_TILT, pivot: PUSHUP_HAND };
+      const beta = lerp(PUSHUP_TOP_BETA, 9.5, e);
       const B: Op = { kind: "rotate", deg: beta, pivot: PUSHUP_TOE };
       const bodyOps: Op[] = [G, TILT, B];
       // Map the fixed hand plant back to standing space for the aim.
       const hPre = applyToPoint(PUSHUP_HAND, [
         { kind: "rotate", deg: -beta, pivot: PUSHUP_TOE },
-        { kind: "rotate", deg: 13, pivot: PUSHUP_HAND },
+        { kind: "rotate", deg: -PUSHUP_TILT, pivot: PUSHUP_HAND },
         { kind: "rotate", deg: -90, pivot: [44, 100] },
       ]);
       const arm = aimArm(
