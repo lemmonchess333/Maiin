@@ -924,14 +924,62 @@ describe("renderBodyDemo", () => {
           FORE * FORE -
           2 * UPPER * FORE * Math.cos((deg * Math.PI) / 180)
       );
-    const parallel = UPPER + FORE - reachAt(90);
+    /* The hands are INBOARD of the shoulders on a dip station, so the
+       drop is the difference of the two VERTICAL legs, not of the reaches
+       themselves. Ignoring the inset understates what parallel costs
+       (15.54 vs 15.64 here) — small now, and wrong by more the wider the
+       grip, which is exactly the parameter this file has just changed. */
+    const gripEnds = BODY_DEMOS["dips"].bar!(0, {})!;
+    const inset = Math.abs(24 - gripEnds[0][0]);
+    const vertical = (reach: number) =>
+      Math.sqrt(Math.max(reach * reach - inset * inset, 0));
+    const parallel = vertical(UPPER + FORE) - vertical(reachAt(90));
 
     expect(drop, `dips only descends ${drop.toFixed(1)}, short of parallel`)
       .toBeGreaterThanOrEqual(parallel);
     /* And not so deep it teaches the OTHER error: past about 80° the
        shoulder is doing work the exercise is not asking for. */
     expect(drop, `dips descends ${drop.toFixed(1)} — past a safe depth`)
-      .toBeLessThan(UPPER + FORE - reachAt(80));
+      .toBeLessThan(vertical(UPPER + FORE) - vertical(reachAt(80)));
+  });
+
+  it("dips grips at a bar's width, not at an arm span", () => {
+    /* The bars used to sit on `ANT.handL/R` — the REST hand anchors, i.e.
+       where the arms hang at the SIDES of a standing figure. That put the
+       grip at 1.72x shoulder width and the owner's read against reference
+       photography was "arms look so far apart on the dips". An arm span
+       is not a grip.
+
+       A dip station's bars sit just outside the hips. Pinned as a RATIO
+       of the figure's own shoulder span, so it survives any rescaling of
+       the model, with a band rather than a point — 1.0 is shoulder-width
+       (narrow but real) and 1.4 is as wide as a station gets before the
+       shoulder position stops being defensible. */
+    const ends = BODY_DEMOS["dips"].bar!(0, {});
+    expect(ends, "dips draws no grip line").toBeTruthy();
+    const shoulderSpan = 76 - 24;
+    const ratio = (ends![1][0] - ends![0][0]) / shoulderSpan;
+    expect(ratio, `dips grips at ${ratio.toFixed(2)}x shoulder width`)
+      .toBeGreaterThanOrEqual(1);
+    expect(ratio, `dips grips at ${ratio.toFixed(2)}x shoulder width`)
+      .toBeLessThanOrEqual(1.4);
+    // Symmetric about the figure's midline, or one arm is doing more work.
+    expect((ends![0][0] + ends![1][0]) / 2).toBeCloseTo(50, 1);
+  });
+
+  it("the dip starts from a locked-out arm", () => {
+    /* Moving the grip inboard without moving it DOWN would leave the
+       elbow bent at the top — a dip that starts mid-rep. The grip height
+       is derived from the straight-arm reach for exactly this reason, so
+       assert the top of the movement is genuinely locked out. */
+    const ends = BODY_DEMOS["dips"].bar!(0, {})!;
+    const UPPER = Math.hypot(18.8 - 24, 71.7 - 48);
+    const FORE = Math.hypot(5.1 - 18.8, 97.7 - 71.7);
+    const reach = Math.hypot(ends[0][0] - 24, ends[0][1] - 48);
+    expect(
+      reach / (UPPER + FORE),
+      `dip starts with the arm at ${((reach / (UPPER + FORE)) * 100).toFixed(0)}% of full extension`
+    ).toBeGreaterThan(0.985);
   });
 
   it("push-ups plants BOTH hands, not just the near one", () => {

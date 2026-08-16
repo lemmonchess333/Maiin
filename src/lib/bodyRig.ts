@@ -214,6 +214,25 @@ function hipsBack(hingeDeg: number): Extract<Op, { kind: "rotate" }> {
   return { kind: "rotate", deg: -lean, pivot: SIDE_ANCHORS.ankle };
 }
 
+/**
+ * Where the dip station's bars are, and therefore where the hands grip.
+ *
+ * NOT `ANT.handL/R`, which is what this was. Those are the REST hand
+ * anchors — where the arms hang at the SIDES of a standing figure — so the
+ * demo gripped at 1.72x shoulder width, and the owner's read of it against
+ * reference photography was "arms look so far apart on the dips"
+ * (2026-08-16). An arm span is not a grip; reusing the rest anchor as one
+ * is the same shape of mistake as aiming an implement at the wrist.
+ *
+ * 1.2x shoulder width (52 -> 62.4) puts the bars just outside the hips,
+ * which is what the reference images show and what a real dip station
+ * measures. The HEIGHT is derived rather than chosen: with the hands 5.2
+ * inboard of the shoulders, the arm is straight — locked out, which is
+ * where a dip starts — when the grip sits 53.40 below shoulder level.
+ */
+const DIP_GRIP_L: Pt = [18.8, 101.4];
+const DIP_GRIP_R: Pt = [81.2, 101.4];
+
 /* Push-up scene constants (final space): where the hands plant and
  * where the tilted plank's toes rest. */
 const PUSHUP_HAND: Pt = [100, 156];
@@ -1044,27 +1063,27 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * that models a form error teaches one. */
       const dy = lerp(0, 16, e);
       const L = aimArm(
-        { S: ANT.shoulderL, E: ANT.elbowL, H: ANT.handL },
+        { S: ANT.shoulderL, E: ANT.elbowL, H: DIP_GRIP_L },
         solveElbow(
           [ANT.shoulderL[0], ANT.shoulderL[1] + dy],
-          ANT.handL,
+          DIP_GRIP_L,
           ANT_UPPER_LEN,
           ANT_FORE_LEN,
           -1
         ),
-        ANT.handL,
+        DIP_GRIP_L,
         dy
       );
       const R = aimArm(
-        { S: ANT.shoulderR, E: ANT.elbowR, H: ANT.handR },
+        { S: ANT.shoulderR, E: ANT.elbowR, H: DIP_GRIP_R },
         solveElbow(
           [ANT.shoulderR[0], ANT.shoulderR[1] + dy],
-          ANT.handR,
+          DIP_GRIP_R,
           ANT_UPPER_LEN,
           ANT_FORE_LEN,
           1
         ),
-        ANT.handR,
+        DIP_GRIP_R,
         dy
       );
       const ride: Op[] = [{ kind: "translate", dx: 0, dy }];
@@ -1082,7 +1101,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       };
     },
     // Grip anchor line for the posts (the hands never move).
-    bar: () => [ANT.handL, ANT.handR],
+    bar: () => [DIP_GRIP_L, DIP_GRIP_R],
   },
 
   deadlift: {
