@@ -4,6 +4,7 @@ import {
   BODY_DEMOS,
   getBodyDemo,
   renderBodyDemo,
+  type Op,
 } from "../bodyRig";
 import { ANTERIOR, POSTERIOR } from "../bodyModelData";
 import { SIDE_ANCHORS, SIDE_PIECES } from "../bodySideData";
@@ -439,6 +440,171 @@ describe("renderBodyDemo", () => {
     // And the straight-bar deadlift must NOT have grown one.
     const dl = renderBodyDemo("deadlift", 0.5, 1);
     expect(dl).not.toMatch(/stroke-width="5.2"/);
+  });
+
+  /* ── Limb integrity ────────────────────────────────────────────────
+     Two invariants nothing measured, both about whether the figure holds
+     together as a BODY rather than as a pile of independently-posed
+     polygons. Both currently hold across every side demo; they are pinned
+     because the rig is one refactor away from breaking either.
+
+     They are not hypothetical properties. The original report that started
+     this arc was "arms still look wrong... they look like there in two
+     section" — which is what a joint gap and a stretched segment both look
+     like to a viewer, and neither had a guard. */
+
+  const JOINTS: [string, string, keyof typeof SIDE_ANCHORS][] = [
+    ["torso", "upperArmL", "shoulder"],
+    ["torso", "upperArmR", "shoulder"],
+    ["upperArmL", "foreArmL", "elbow"],
+    ["upperArmR", "foreArmR", "elbow"],
+    ["foreArmL", "handL", "hand"],
+    ["foreArmR", "handR", "hand"],
+    ["pelvis", "thighL", "hip"],
+    ["pelvis", "thighR", "hip"],
+    ["thighL", "shankL", "knee"],
+    ["thighR", "shankR", "knee"],
+    ["shankL", "footL", "ankle"],
+    ["shankR", "footR", "ankle"],
+  ];
+
+  it("every limb stays attached at its joints", () => {
+    /* A joint is one point shared by two groups. Each group carries its
+       own op chain, so the shared anchor must land in the SAME place under
+       both — otherwise the limb visibly separates.
+
+       This holds by construction while every child chain is built as
+       `[...parentOps, ownRotation]`, and that is exactly the construction
+       a convenience helper can quietly abandon: `hangingArmTo` already
+       builds an arm from an IK solve rather than from the torso chain, and
+       gets this right. The next one might not. */
+    for (const [id, d] of Object.entries(BODY_DEMOS)) {
+      if (d.view !== "side") continue;
+      for (let i = 0; i <= 10; i++) {
+        const pose = d.pose(i / 10) as Record<string, Op[] | undefined>;
+        for (const [a, b, anchor] of JOINTS) {
+          const oa = pose[a];
+          const ob = pose[b];
+          if (!oa || !ob) continue;
+          const P = SIDE_ANCHORS[anchor];
+          const A = applyToPoint(P, oa);
+          const B = applyToPoint(P, ob);
+          const gap = Math.hypot(A[0] - B[0], A[1] - B[1]);
+          expect(gap, `${id}@${i / 10} ${a}/${b} separated at ${anchor}`)
+            .toBeLessThan(0.5);
+        }
+      }
+    }
+  });
+
+  const SEGMENTS: [string, keyof typeof SIDE_ANCHORS, keyof typeof SIDE_ANCHORS][] =
+    [
+      ["upperArmL", "shoulder", "elbow"],
+      ["upperArmR", "shoulder", "elbow"],
+      ["foreArmL", "elbow", "hand"],
+      ["foreArmR", "elbow", "hand"],
+      ["thighL", "hip", "knee"],
+      ["thighR", "hip", "knee"],
+      ["shankL", "knee", "ankle"],
+      ["shankR", "knee", "ankle"],
+      ["torso", "hip", "shoulder"],
+    ];
+
+  it("foreshortening is used ONLY where it is justified", () => {
+    /* THIS TEST HAD TO BE REWRITTEN, and the first version is worth
+       recording because it looked completely convincing.
+
+       It asserted "a bone only changes length if it declares a scaleAxis
+       or scaleY". That is a TAUTOLOGY: the Op union is rotate, translate,
+       scaleY and scaleAxis, and the first two are rigid — so a group
+       without a scale op cannot change length no matter what anyone does
+       to it. The assertion could never fail, and a mutation run is what
+       said so, not a re-read.
+
+       Same shape as the `moveRunDay` refusal tests and PR #1775's accept
+       fixture, both already in CLAUDE.md: an assertion whose expected
+       value is guaranteed by the code path it is testing pins consistency,
+       not behaviour.
+
+       The real risk is the opposite one. `scaleAxis` is a CHEAT — it fakes
+       out-of-plane projection in 2D — and cheats spread. So the ratchet is
+       on WHICH bones take it: the set is pinned, and adding one is a
+       decision someone has to come back here and make on purpose.
+
+       Currently exactly two, both on the back squat's left arm and both
+       correct: a high-bar grip abducts the elbow behind the torso, so in a
+       strict side view both bones point largely away from the camera. The
+       magnitudes are computed from the target geometry (`ku`, `kf`), never
+       dialled in by eye. Every other bone in every other side demo is
+       rigid, which is what the count below locks. */
+    const foreshortened = new Set<string>();
+    for (const [id, d] of Object.entries(BODY_DEMOS)) {
+      if (d.view !== "side") continue;
+      for (const [g] of SEGMENTS) {
+        for (let i = 0; i <= 10; i++) {
+          const ops = (d.pose(i / 10) as Record<string, Op[] | undefined>)[g];
+          if (!ops) continue;
+          if (ops.some((o) => o.kind === "scaleAxis" || o.kind === "scaleY"))
+            foreshortened.add(`${id}/${g}`);
+        }
+      }
+    }
+    expect([...foreshortened].sort()).toEqual([
+      "squat/foreArmL",
+      "squat/upperArmL",
+    ]);
+  });
+
+  it("the foreshortening that IS used is a real projection, not a nudge", () => {
+    /* The paired positive. Pinning the set alone would still pass if the
+       squat's scaleAxis were reduced to k≈1 — the cheat would be declared
+       and doing nothing, and the arm would fan back into the stack of
+       slats this rebuild removed. So assert it actually shortens, hard:
+       both bones project under 60% of rest. */
+    for (const [g, a, b] of SEGMENTS) {
+      if (g !== "upperArmL" && g !== "foreArmL") continue;
+      const ops = (BODY_DEMOS["squat"].pose(0.5) as Record<string, Op[]>)[g];
+      const rest = Math.hypot(
+        SIDE_ANCHORS[a][0] - SIDE_ANCHORS[b][0],
+        SIDE_ANCHORS[a][1] - SIDE_ANCHORS[b][1]
+      );
+      const A = applyToPoint(SIDE_ANCHORS[a], ops);
+      const B = applyToPoint(SIDE_ANCHORS[b], ops);
+      const len = Math.hypot(A[0] - B[0], A[1] - B[1]);
+      expect(len / rest, `squat ${g} barely foreshortens`).toBeLessThan(0.6);
+      expect(len / rest, `squat ${g} collapsed to nothing`).toBeGreaterThan(0.3);
+    }
+  });
+
+  it("a foreshortened bone holds its projection through the rep", () => {
+    /* The other half, and the one that would actually be VISIBLE: a
+       foreshortening that changes frame to frame is a limb pumping in and
+       out of the screen while the lifter squats.
+
+       The squat solves its projection ONCE at rest and lets bar and arm
+       both ride `torsoOps`, so the grip stays registered by construction —
+       this asserts that stays true. A pose that recomputed `ku`/`kf` per
+       frame from a moving elbow would satisfy every other test in this
+       file and look wrong immediately. */
+    for (const [id, d] of Object.entries(BODY_DEMOS)) {
+      if (d.view !== "side") continue;
+      for (const [g, a, b] of SEGMENTS) {
+        const lens: number[] = [];
+        for (let i = 0; i <= 10; i++) {
+          const ops = (d.pose(i / 10) as Record<string, Op[] | undefined>)[g];
+          if (!ops) continue;
+          if (!ops.some((o) => o.kind === "scaleAxis" || o.kind === "scaleY"))
+            continue;
+          const A = applyToPoint(SIDE_ANCHORS[a], ops);
+          const B = applyToPoint(SIDE_ANCHORS[b], ops);
+          lens.push(Math.hypot(A[0] - B[0], A[1] - B[1]));
+        }
+        if (lens.length < 2) continue;
+        const spread = Math.max(...lens) - Math.min(...lens);
+        expect(spread, `${id} ${g} foreshortening breathes by ${spread.toFixed(2)}`)
+          .toBeLessThan(0.5);
+      }
+    }
   });
 
   it("a standing lift keeps its planted foot planted", () => {
