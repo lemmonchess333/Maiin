@@ -12,11 +12,10 @@ import { haptic } from "../../lib/haptic";
 import { projectAndSnap } from "../../lib/sheetSnap";
 import {
   slidingPaceSeconds,
-  totalElevationGain,
   estimateRunCalories,
   calculateSplits,
 } from "../../lib/gps";
-import type { GPSPoint, Split } from "../../lib/gps";
+import type { GPSPoint } from "../../lib/gps";
 import { paceMinSec, distanceValue } from "@/lib/runLabels";
 import {
   type DistanceUnit,
@@ -31,7 +30,6 @@ import { RunControlButton } from "@/components/ui/RunControlButton";
 import HoldToFinishButton from "./HoldToFinishButton";
 import { Check } from "lucide-react";
 import { Dialog } from "@/components/ui/Dialog";
-import { elevationLabel } from "@/lib/runLabels";
 
 // HR zone → colour ramp (cool→hot), all THEME tokens (no hex literals).
 // Z1 recovery teal · Z2 easy green · Z3 aerobic amber · Z4 threshold orange ·
@@ -98,67 +96,6 @@ const SHEET_SPRING = { type: "spring" as const, stiffness: 520, damping: 44 };
    W1f, which routes through the Capacitor Haptics plugin in the
    native shell. The old `navigator.vibrate`-only inline was a
    no-op on iOS Safari — the iOS path now fires correctly. */
-
-// ── Live splits strip (last 3) ────────────────────────────────────────────────
-function SplitsStrip({
-  splits,
-  unit,
-}: {
-  splits: Split[];
-  unit: DistanceUnit;
-}) {
-  if (splits.length === 0) return null;
-  const last3 = splits.slice(-3);
-  // Best pace across all splits to determine colour
-  const bestPace = Math.min(...splits.map((s) => s.paceSeconds));
-
-  return (
-    <div className="flex gap-2 justify-center mt-1">
-      {last3.map((s, i) => {
-        const isBest = s.paceSeconds === bestPace;
-        const isFast =
-          s.paceSeconds <
-          splits.reduce((a, b) => a + b.paceSeconds, 0) / splits.length - 5;
-        const color = isBest
-          ? THEME.teal
-          : isFast
-            ? THEME.success
-            : "rgba(255,255,255,0.5)";
-        return (
-          <div
-            key={i}
-            className="text-center px-3 py-1.5 rounded-xl"
-            style={{
-              background: "rgba(255,255,255,0.05)",
-              border: "1px solid rgba(255,255,255,0.07)",
-            }}
-          >
-            <p
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                color,
-                fontVariantNumeric: "tabular-nums",
-                fontFamily: "var(--font-mono)",
-              }}
-            >
-              {paceMinSec(s.paceSeconds, unit)}
-            </p>
-            <p
-              style={{
-                fontSize: 8,
-                color: "rgba(255,255,255,0.25)",
-                marginTop: 1,
-              }}
-            >
-              {distanceUnitLabel(unit)} {s.km}
-            </p>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 // ── Current km progress bar ───────────────────────────────────────────────────
 function KmProgress({
@@ -349,7 +286,6 @@ export default function RunBottomSheet({
   const livePaceS = slidingPaceSeconds(points, paceWindowM);
   const livePace = livePaceS === null ? "--:--" : paceMinSec(livePaceS, unit);
   const calories = estimateRunCalories(distance, weightKg);
-  const elevation = totalElevationGain(points);
   /* Live splits are cut on the READER's lap — a mile runner watching the
      strip wants mile splits, not kilometres relabelled. The SAVED record
      stays metric (Run.tsx uses SPLIT_LAP_IS_METRIC); this is display. */
@@ -357,6 +293,10 @@ export default function RunBottomSheet({
     () => calculateSplits(points, lapMetresFor(unit)),
     [points, unit]
   );
+  /* The ONE split worth carrying live. See the strip's obituary above the
+     stats pill for why the other N-1 went. */
+  const lastSplitPace =
+    splits.length > 0 ? splits[splits.length - 1].paceSeconds : null;
 
   return (
     <>
@@ -537,7 +477,6 @@ export default function RunBottomSheet({
               {distance > 0 && <KmProgress distance={distance} unit={unit} />}
 
               {/* Live splits (last 3) */}
-              <SplitsStrip splits={splits} unit={unit} />
             </div>
 
             {/* Secondary stats pill */}
@@ -571,6 +510,30 @@ export default function RunBottomSheet({
                   CAL
                 </p>
               </div>
+              {/* ── LAST KM, replacing ELEV and a SPLITS COUNT ─────────
+                  Three cuts, all for the same reason: nothing a runner does
+                  mid-run changes because of them.
+
+                  The SPLIT CHIP ROW that used to sit above this pill kept
+                  the last three finished splits on screen permanently. Its
+                  information value decays to nothing seconds after each
+                  split lands, while its screen cost grows with run length —
+                  by km 15 it is a wall. 3 of 4 reference apps do not
+                  accumulate splits live at all; Garmin fires a lap banner
+                  that CLEARS and offers exactly one persistent field,
+                  "Last Lap Pace", which is precisely this. The full table is
+                  a post-run artefact, and ours already is one.
+
+                  Safe to take away because the split is still ANNOUNCED at
+                  the moment it completes — the strongest consensus in the
+                  research, 4 of 4 apps, and `audioCues` defaults to on.
+
+                  ELEV: 0 of 4 show live elevation on a road run. Strava
+                  scopes it to trail/hike/cycling/winter explicitly. It is a
+                  review metric and the summary carries it.
+
+                  SPLITS as a COUNT: no reference app shows one anywhere,
+                  and it restated the distance readout three lines above. */}
               <div
                 style={{
                   width: 1,
@@ -588,7 +551,9 @@ export default function RunBottomSheet({
                     fontFamily: "var(--font-mono)",
                   }}
                 >
-                  {elevationLabel(elevation, unit)}
+                  {lastSplitPace === null
+                    ? "--:--"
+                    : paceMinSec(lastSplitPace, unit)}
                 </p>
                 <p
                   style={{
@@ -598,37 +563,7 @@ export default function RunBottomSheet({
                     marginTop: 2,
                   }}
                 >
-                  ELEV
-                </p>
-              </div>
-              <div
-                style={{
-                  width: 1,
-                  height: 28,
-                  background: "rgba(255,255,255,0.08)",
-                }}
-              />
-              <div className="text-center">
-                <p
-                  style={{
-                    fontSize: 18,
-                    fontWeight: 600,
-                    color: "rgba(255,255,255,0.65)",
-                    fontVariantNumeric: "tabular-nums",
-                    fontFamily: "var(--font-mono)",
-                  }}
-                >
-                  {splits.length}
-                </p>
-                <p
-                  style={{
-                    fontSize: 8,
-                    color: "rgba(255,255,255,0.25)",
-                    letterSpacing: "0.1em",
-                    marginTop: 2,
-                  }}
-                >
-                  SPLITS
+                  LAST {distanceUnitLabel(unit).toUpperCase()}
                 </p>
               </div>
 
