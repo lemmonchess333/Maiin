@@ -49,6 +49,7 @@ const INSIGHT: PaceInsight = {
   suggestedVdot: 45,
   suggestedBenchmark: { distanceM: 5000, timeS: 1200 },
   direction: "faster",
+  effort: "neutral",
 };
 const run = (): PaceInsightRun => ({
   id: "r1",

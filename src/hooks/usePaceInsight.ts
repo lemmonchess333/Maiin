@@ -8,6 +8,7 @@ import {
   resolvePaceInsight,
   vdotFromRace,
   type PaceInsight,
+  type RelativeEffort,
 } from "@/lib/runPaces";
 import { logger } from "@/lib/logger";
 
@@ -36,6 +37,9 @@ export interface PaceInsightRun {
   activityType?: string;
   isInvalid?: boolean;
   savedAnyway?: boolean;
+  /* The post-run "how did that feel?" tap. Surfaced by useRunningStats
+     already; it just had no consumer until the insight engine grew one. */
+  relativeEffort?: RelativeEffort;
 }
 
 export interface PaceInsightController {
@@ -115,6 +119,7 @@ export function usePaceInsightFromRuns(
         durationS: run.duration,
         id: run.id,
         completedAt: run.completedAt,
+        relativeEffort: run.relativeEffort ?? null,
       }));
 
     const next = resolvePaceInsight(runFitness, eligible);

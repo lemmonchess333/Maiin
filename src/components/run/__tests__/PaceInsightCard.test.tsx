@@ -28,11 +28,15 @@ vi.mock("@/lib/toast", () => ({
   },
 }));
 
-const insight = (direction: "faster" | "slower"): PaceInsight => ({
+const insight = (
+  direction: "faster" | "slower",
+  effort: PaceInsight["effort"] = "neutral"
+): PaceInsight => ({
   currentVdot: 42,
   suggestedVdot: 45,
   suggestedBenchmark: { distanceM: 5000, timeS: 1200 },
   direction,
+  effort,
 });
 
 beforeEach(() => {

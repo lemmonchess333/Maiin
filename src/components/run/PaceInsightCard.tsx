@@ -76,6 +76,19 @@ export default function PaceInsightCard({
           </span>
           ?
         </p>
+        {/* Name the runner's own contribution when it made a difference.
+            The suggestion is always LED by the times — the taps only sharpen
+            it — so this is a second line, not the headline. But without it
+            the Easier / Harder chips would still look decorative even once
+            they weren't, which is the state they spent their whole life in
+            before this shipped. */}
+        {insight.effort === "agrees" && (
+          <p className="text-xs text-muted-foreground mt-1">
+            {insight.direction === "faster"
+              ? "You've been rating these runs easier than expected, too."
+              : "You've been rating these runs harder than expected, too."}
+          </p>
+        )}
       </div>
 
       <div className="flex gap-2">

@@ -534,6 +534,17 @@ export default function RunSummary() {
             activityType: data.activityType,
             isInvalid: data.isInvalid,
             savedAnyway: data.savedAnyway,
+            /* The stored Easier / About right / Harder tap, read back so the
+               pace-insight engine can weigh it against the objective trend.
+               This screen has WRITTEN it since RUN-03 and nothing has ever
+               read it. Anything outside the three known values — a legacy
+               run, a skipped tap — is not a vote. */
+            relativeEffort:
+              data.relativeEffort === "easier" ||
+              data.relativeEffort === "matched" ||
+              data.relativeEffort === "harder"
+                ? data.relativeEffort
+                : null,
           };
         });
         if (cancelled) return;
