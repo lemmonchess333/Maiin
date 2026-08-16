@@ -1578,6 +1578,7 @@ export default function Run() {
               interactive={true}
               liveControls={true}
               distanceMarkers={true}
+              distanceUnit={unit}
               targetRoute={targetRoute ?? undefined}
               height="h-full"
               className="absolute inset-0"

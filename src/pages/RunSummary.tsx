@@ -31,6 +31,7 @@ import type { GPSPoint, Split } from "../lib/gps";
 import type { RunConfig } from "../components/run/RunSetupModal";
 import RunMap from "../components/run/RunMapLazy";
 import PaceLegend from "../components/run/PaceLegend";
+import { hasRecordingGap } from "@/lib/runPaceBands";
 import SegmentedControl from "../components/ui/SegmentedControl";
 import SplitsBarChart from "../components/analytics/SplitsBarChart";
 import ElevationProfile from "../components/analytics/ElevationProfile";
@@ -1516,12 +1517,13 @@ export default function RunSummary() {
                 currentPoint={null}
                 interactive={true}
                 distanceMarkers={true}
+                distanceUnit={unit}
                 height="h-56"
                 paceColored={true}
                 avgPaceSecPerKm={avgPaceSeconds}
                 darkMode={!!profile?.darkMode}
               />
-              <PaceLegend />
+              <PaceLegend hasGap={hasRecordingGap(points)} />
             </div>
           )}
 

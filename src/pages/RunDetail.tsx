@@ -25,6 +25,7 @@ import {
 } from "../lib/gradeAdjustedPace";
 import RunMap from "../components/run/RunMapLazy";
 import PaceLegend from "../components/run/PaceLegend";
+import { hasRecordingGap } from "@/lib/runPaceBands";
 import SplitsBarChart from "../components/analytics/SplitsBarChart";
 import ElevationProfile from "../components/analytics/ElevationProfile";
 import ShareCardSheet from "@/components/share/ShareCardSheet";
@@ -302,7 +303,9 @@ export default function RunDetail() {
           the bottom of that box and collided with the header section's
           "FREE RUN" label + Share pill at 393px (audit #3a/#3b). Only shown
           with a pace-coloured map (points > 1). */}
-      {run.points?.length > 1 && <PaceLegend />}
+      {run.points?.length > 1 && (
+        <PaceLegend hasGap={hasRecordingGap(run.points)} />
+      )}
 
       <div className="px-4 pt-4 space-y-4">
         {/* Saved-anyway notice. Surfaces only when the run was

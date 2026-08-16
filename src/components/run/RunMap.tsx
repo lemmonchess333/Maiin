@@ -4,6 +4,12 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { Plus, Minus, LocateFixed, Compass } from "lucide-react";
 import type { GPSPoint } from "../../lib/gps";
 import { THEME } from "../../lib/theme";
+import { bandForPace, smoothedSegmentPaces } from "../../lib/runPaceBands";
+import {
+  METRES_PER_MILE,
+  distanceUnitLabel,
+  type DistanceUnit,
+} from "../../lib/distanceUnits";
 import { IconButton } from "@/components/ui/IconButton";
 
 interface RunMapProps {
@@ -25,11 +31,20 @@ interface RunMapProps {
    */
   liveControls?: boolean;
   /**
-   * Numbered waypoints at each whole kilometre along the route (matches the
-   * km-based run stats). Append-only — new markers appear as the run passes
-   * each km. Skipped while replaying (replayIndex set). Off by default.
+   * Numbered waypoints at each whole distance unit along the route, matching
+   * the split table beneath it. Append-only — new markers appear as the run
+   * passes each mark. Skipped while replaying (replayIndex set). Off by
+   * default.
    */
   distanceMarkers?: boolean;
+  /**
+   * Unit the numbered waypoints count in. These used to be hardcoded to
+   * kilometres — `total / 1000` and a bare `String(km)` — so a miles reader
+   * got markers at kilometre positions sitting above a split table counting
+   * miles, with nothing on either saying which was which. Two different
+   * distances, both labelled "1".
+   */
+  distanceUnit?: DistanceUnit;
   /**
    * A route to follow, drawn as a faded "ghost" line beneath the live track.
    * Static for the run; populate once (e.g. re-running a past run's polyline).
@@ -54,6 +69,7 @@ export default function RunMap({
   replayIndex,
   liveControls = false,
   distanceMarkers = false,
+  distanceUnit = "km",
   targetRoute,
 }: RunMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -263,27 +279,12 @@ export default function RunMap({
           geometry: { type: "LineString"; coordinates: number[][] };
           properties: { color: string };
         }[] = [];
+        // Pace over a ~100 m window, not over one sample pair — and the band
+        // table shared with PaceLegend, so the line can never paint a colour
+        // the key beneath it doesn't explain. Both in `lib/runPaceBands`.
+        const paces = smoothedSegmentPaces(visiblePoints);
         for (let i = 1; i < visiblePoints.length; i++) {
-          const dist = haversineQuick(
-            visiblePoints[i - 1].lat,
-            visiblePoints[i - 1].lon,
-            visiblePoints[i].lat,
-            visiblePoints[i].lon
-          );
-          const timeDiff =
-            (visiblePoints[i].timestamp - visiblePoints[i - 1].timestamp) /
-            1000;
-          const segPace =
-            timeDiff > 0 && dist > 0
-              ? (timeDiff / dist) * 1000
-              : avgPaceSecPerKm;
-          const ratio = segPace / avgPaceSecPerKm;
-
-          let color: string;
-          if (ratio < 0.92) color = THEME.paceFast;
-          else if (ratio < 1.03) color = THEME.paceOnTarget;
-          else if (ratio < 1.1) color = THEME.warning;
-          else color = THEME.paceSlow;
+          const color = bandForPace(paces[i - 1] ?? null, avgPaceSecPerKm).color;
 
           features.push({
             type: "Feature" as const,
@@ -385,9 +386,9 @@ export default function RunMap({
           .addTo(map);
       }
 
-      // Numbered km waypoints. Append-only: figure out how many whole km the
-      // route now covers and add any markers we don't have yet (positions
-      // interpolated along the polyline). Skipped during replay.
+      // Numbered distance waypoints. Append-only: figure out how many whole
+      // units the route now covers and add any markers we don't have yet
+      // (positions interpolated along the polyline). Skipped during replay.
       if (distanceMarkers && replayIndex === undefined && visiblePoints.length > 1) {
         let total = 0;
         for (let i = 1; i < visiblePoints.length; i++) {
@@ -398,14 +399,22 @@ export default function RunMap({
             visiblePoints[i].lon
           );
         }
-        const desired = Math.floor(total / 1000);
-        for (let km = kmMarkersRef.current.length + 1; km <= desired; km++) {
-          const pos = positionAtDistance(visiblePoints, km * 1000);
+        const step = distanceUnit === "mi" ? METRES_PER_MILE : 1000;
+        const desired = Math.floor(total / step);
+        for (let n = kmMarkersRef.current.length + 1; n <= desired; n++) {
+          const pos = positionAtDistance(visiblePoints, n * step);
           if (!pos) break;
           const el = document.createElement("div");
+          // A pill, not a fixed circle, because the FIRST marker carries the
+          // unit ("1 km") and the rest are bare numbers. A map full of bare
+          // numbers is the conventional treatment and it is also what made
+          // these unreadable — asked directly what they meant, nothing on the
+          // screen answered. Naming the unit once is enough to teach the row
+          // without repeating "km" down the whole route.
           el.style.cssText =
-            "display:flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,0.75);border:1.5px solid white;color:white;font-size:10px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;";
-          el.textContent = String(km);
+            "display:flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:rgba(0,0,0,0.75);border:1.5px solid white;color:white;font-size:10px;font-weight:700;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums;";
+          el.textContent =
+            n === 1 ? `1 ${distanceUnitLabel(distanceUnit)}` : String(n);
           const marker = new maplibregl.Marker({ element: el })
             .setLngLat([pos[0], pos[1]])
             .addTo(map);
@@ -450,7 +459,18 @@ export default function RunMap({
     avgPaceSecPerKm,
     replayIndex,
     distanceMarkers,
+    distanceUnit,
   ]);
+
+  // Flipping the distance unit invalidates every waypoint already placed —
+  // they sit at kilometre positions and are labelled for kilometres. The
+  // append-only builder above only ever ADDS, so without this the markers
+  // would keep their old spacing forever and a unit change would silently
+  // leave the map disagreeing with the split table it sits above.
+  useEffect(() => {
+    for (const m of kmMarkersRef.current) m.remove();
+    kmMarkersRef.current = [];
+  }, [distanceUnit]);
 
   // Target route (static) — drawn independently of the live track so it shows
   // from the first frame, before any GPS fix has landed.
