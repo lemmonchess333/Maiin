@@ -162,10 +162,20 @@ export default function ExerciseRigDemo({
           dangerouslySetInnerHTML={{ __html: initialSvg }}
         />
       </div>
-      {/* Phase cue — the teaching half of the loop. aria-live=polite reads
-          the phase to screen-reader users without interrupting. */}
+      {/* Phase cue — the teaching half of the loop, and VISUAL ONLY.
+          It used to be an aria-live=polite region, on the reasoning
+          that it "reads the phase to screen-reader users without
+          interrupting". That reasoning misses the loop: the rep repeats
+          for as long as the sheet is open, and each rep fires four
+          phase changes (eccentric → pause → drive → lockout) inside the
+          default 3.18s timing — about one announcement per second,
+          forever. A polite region still queues, so it would monopolise
+          the speech queue and bury everything else on the surface. The
+          figure above already carries a static, complete description
+          ("<name> demonstration — looping reps"), which is what a
+          screen-reader user actually needs from a decorative loop. */}
       <p
-        aria-live="polite"
+        aria-hidden="true"
         className="mt-2 text-center text-micro uppercase tracking-wider text-muted-foreground"
       >
         {PHASE_LABEL[phase]}

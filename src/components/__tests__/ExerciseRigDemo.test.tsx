@@ -97,6 +97,27 @@ describe("ExerciseRigDemo", () => {
     expect(screen.queryByRole("button")).toBeNull();
   });
 
+  it("the looping phase cue is visual only — it never announces", () => {
+    /* The cue was an aria-live=polite region, justified as reading the
+       phase "without interrupting". But the rep LOOPS for as long as
+       the sheet is open and fires four phase changes per cycle inside
+       the default 3.18s timing — roughly one announcement per second,
+       forever. A polite region queues rather than drops, so it would
+       monopolise the speech queue and bury the rest of the surface.
+       The figure's own static label is the accessible description. */
+    reduceRef.current = false;
+    const { container } = render(
+      <ExerciseRigDemo exerciseId="squat" name="Barbell Squat" />
+    );
+    expect(container.querySelector("[aria-live]")).toBeNull();
+    const cue = screen.getByText("Set");
+    expect(cue).toHaveAttribute("aria-hidden", "true");
+    // The figure still carries a complete, static description.
+    expect(
+      screen.getByRole("img", { name: "Barbell Squat demonstration — looping reps" })
+    ).toBeInTheDocument();
+  });
+
   it("the rep loops — no settle, no Rep complete, frames keep coming", () => {
     reduceRef.current = false;
     render(<ExerciseRigDemo exerciseId="squat" name="Barbell Squat" />);

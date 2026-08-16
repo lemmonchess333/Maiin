@@ -954,3 +954,35 @@ Verified by measurement and by eye at 520px, deliberately NOT pinned: a
 from the rendered SVG ends up re-deriving the renderer's own
 composition, which pins nothing (the trap this README's 2026-08-02
 entry already names). The measurement above is the record.
+
+### Pass 42d — the looping phase cue was announcing once a second, forever
+
+Accessibility defect, found by reading the player rather than the rig.
+The phase cue under the figure was an `aria-live="polite"` region,
+justified in its own comment as reading the phase "without
+interrupting". That reasoning misses the loop:
+
+- the rep repeats for as long as the form sheet is open, and
+- each cycle fires FOUR phase changes (eccentric → pause → drive →
+  lockout) inside the default 3.18s timing.
+
+That is roughly one announcement per second, indefinitely. A polite
+region queues rather than drops, so it would monopolise the speech
+queue and bury everything else on the surface. The cue is now
+`aria-hidden` — still visible, still the teaching half of the loop —
+and the figure's existing static label ("<name> demonstration —
+looping reps") is what a screen-reader user gets, which is what a
+decorative loop should offer. Pinned and mutation-checked.
+
+Checked and deliberately NOT changed while here: the animation itself
+loops indefinitely, which WCAG 2.2.2 would normally want a pause
+control for. Three things make leaving it right — `prefers-reduced-
+motion` already swaps in a static two-up of the extremes, the motion IS
+the information (2.2.2's "essential" exception), and the replay/pause
+control was deliberately REMOVED by owner decision on 2026-07-27 ("reps
+must repeat like the demo screens on gym equipment"). Re-adding one
+would silently reverse a locked call.
+
+Also verified clean this pass, so the next audit needn't redo it: every
+demo's declared muscle highlights exist in the view that renders them —
+0 of 15 declare a tint the view cannot draw.
