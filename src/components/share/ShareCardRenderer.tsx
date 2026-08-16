@@ -25,9 +25,15 @@ function distanceLabel2Compact(km: number | undefined, unit: DistanceUnit) {
  *  - Branding is a SMALL hexagon mark in a corner + the user's handle —
  *    NEVER an oversized wordmark (this replaces the old ShareCard's giant
  *    "TROPOS" header, which violated that rule).
- *  - Closed palette: RUN = coral (#D4637A), LIFT = purple (#7B72E9),
- *    HYBRID = the purple→coral gradient (the differentiator no competitor
- *    has).
+ *  - Closed palette: LIFT = purple (#7B72E9), HYBRID/RECAP = the
+ *    purple→coral gradient (the differentiator no competitor has), and
+ *    NUTRITION = orange (#D9884E).
+ *  - RUN is the ONE deliberate break from the app's sport-coding: the card
+ *    is brand purple on a neutral ink ground, not the in-app coral. See
+ *    `SHARE_RUN_ACCENT` for why — in short, coral-on-maroon put the most
+ *    public artefact in the app squarely in Strava's and Runna's visual
+ *    territory. Coral is still the running colour EVERYWHERE inside the
+ *    app, and still appears on this card's hybrid/recap gradients.
  *
  * Everything is INLINE-STYLED on purpose: (1) html-to-image clones the
  * DOM and its CSS-variable / Tailwind-class resolution during the clone
@@ -47,6 +53,30 @@ export type ShareBackground = "brand" | "dark" | "transparent" | "photo";
 const RUN_CORAL = "#D4637A";
 const LIFT_PURPLE = "#7B72E9";
 const NUTRITION_ORANGE = "#D9884E";
+/**
+ * The RUN card's accent — brand purple, deliberately NOT the coral every
+ * running surface inside the app uses.
+ *
+ * This is the one place Tropos's sport-coding is broken on purpose, because
+ * a share card is a BRAND artefact rather than an in-app one: it is looked
+ * at by people who have never opened Tropos, in a feed full of other running
+ * apps, and its job there is to be recognisable as ours.
+ *
+ * The card it replaces was coral-on-maroon — a ground that was just a
+ * desaturated version of its own accent, so the whole image read as a single
+ * warm wash. That is the move Strava and Runna both make, which is why the
+ * owner's read of a real exported card was "just looks like a strava copy"
+ * (2026-08-16). Warm orange is the most occupied position in the category.
+ *
+ * Purple is the hue in running nobody else holds: Strava is orange, Nike is
+ * black and volt, and Garmin, adidas Running and MapMyRun are all blue. Blue
+ * was the owner's other candidate and was declined for exactly that reason —
+ * it trades one borrowed identity for another.
+ *
+ * The LIGHT brand step, not `brand` itself: this paints a 14px stroke and
+ * small stat text on a near-black ground, where #7B72E9 goes muddy.
+ */
+const SHARE_RUN_ACCENT = "#9590E0";
 const ARCHIVO = "'Archivo Variable', ui-sans-serif, system-ui, sans-serif";
 const JAKARTA =
   "'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, sans-serif";
@@ -129,7 +159,13 @@ function bgStyle(
       return {
         backgroundImage:
           template === "run"
-            ? `linear-gradient(155deg, #140a0e 0%, #21131a 55%, #301a24 100%)`
+            ? /* Near-NEUTRAL, not tinted toward the accent like the other
+                 three. The run card's old ground was a washed-out coral and
+                 that wash was the whole problem — it left purple with
+                 nothing to sit against. A neutral ink ground is also what
+                 lets the white Archivo numerals carry the card, which is
+                 the hierarchy the design guide asks for. */
+              `linear-gradient(155deg, #0b0b0f 0%, #121119 55%, #191527 100%)`
             : template === "lift"
               ? `linear-gradient(155deg, #100e1a 0%, #181428 55%, #221c38 100%)`
               : template === "nutrition"
@@ -146,7 +182,7 @@ function bgStyle(
 }
 
 function accentFor(template: ShareTemplate): string {
-  if (template === "run") return RUN_CORAL;
+  if (template === "run") return SHARE_RUN_ACCENT;
   if (template === "nutrition") return NUTRITION_ORANGE;
   return LIFT_PURPLE;
 }
