@@ -1761,7 +1761,18 @@ BODY_DEMOS["db-bench"] = {
 };
 /* Straight arms hanging from a posed shoulder to a bar at fixed x —
  * the deadlift family's arm. Returns the aimed arm ops. */
-function hangingArmTo(S: Pt, barX: number, torsoOps: Op[], hipPivot: Pt, hinge: number, shift: Op) {
+function hangingArmTo(
+  S: Pt,
+  barX: number,
+  torsoOps: Op[],
+  hipPivot: Pt,
+  hinge: number,
+  // Must be the TRANSLATE variant specifically — a bare `Op` has no
+  // dx/dy, and the root tsconfig's project references meant a plain
+  // `tsc --noEmit` checked nothing and missed it. Use `npm run
+  // typecheck` (tsc -b), which is what CI runs.
+  shift: Extract<Op, { kind: "translate" }>
+) {
   const ARM = SIDE_UPPER_LEN + SIDE_FORE_LEN;
   const dx = barX - S[0];
   const hFinal: Pt = [barX, S[1] + Math.sqrt(Math.max(ARM * ARM - dx * dx, 1))];
