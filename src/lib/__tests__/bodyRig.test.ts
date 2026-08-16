@@ -966,6 +966,7 @@ describe("renderBodyDemo", () => {
       ["barbell-row", 0],
       ["db-row", 0],
       ["barbell-curl", 0],
+      ["push-ups", 0],
     ];
     type Pt2 = [number, number];
     const angleAt = (a: Pt2, b: Pt2, c: Pt2) => {
@@ -999,13 +1000,14 @@ describe("renderBodyDemo", () => {
       ).toBeGreaterThan(165);
     }
 
-    /* KNOWN GAP, named so it is not mistaken for coverage: `push-ups`
-       belongs in this table and is not in it, because it does not pass.
-       Its top sits at a 111° elbow — the shoulder is 45.9 above the
-       planted hand against a 55.07 arm, so the plank is simply too low
-       to lock out. Fixing it means re-deriving the plank angle from the
-       arm length rather than from the toe plant, which is a larger change
-       than a bar path and gets its own pass. */
+    /* `push-ups` was listed here as a KNOWN GAP for exactly one commit —
+       its top sat at a 111° elbow. It is now in the table above. The fix
+       was not the plank angle it looked like: `TILT` rotates the body
+       about the planted HAND, and a rotation about the hand cannot change
+       the shoulder-to-hand distance by construction, so sweeping it from
+       -13° to -23° moved the elbow 111° to 113° and only lifted the toes.
+       The rotation about the TOE (`B`) raises the shoulder and leaves the
+       toe contact untouched for the same geometric reason. */
   });
 
   it("pull-ups finishes with the chin clearly over the bar", () => {
@@ -1120,8 +1122,19 @@ describe("renderBodyDemo", () => {
        The far hand is the lower of the two here because `FAR_OFFSET` is a
        body-space depth nudge, and a prone figure has been rotated 90°,
        which turns it into a vertical one. Both hands are on the floor in
-       life, so the target is that NOTHING crosses the drawn line. */
-    for (const t of [0, 0.25, 0.5, 0.75, 1]) {
+       life, so the target is that NOTHING crosses the drawn line.
+
+       SAMPLED FINELY, and that is not incidental. This ran on five points
+       (0, ¼, ½, ¾, 1) and passed against a mutant that put the plant loop
+       back to three iterations — while a fine scan of the same mutant
+       found the palm 1.69 units through the floor at t=0.18, nowhere near
+       a sampled point. The worst frame of a converging iteration is not
+       at a round fraction of the rep, so a handful of tidy samples is the
+       wrong instrument: it was the SMOOTHNESS test, on a denser grid,
+       that happened to catch that mutation. Twenty-one points now, and
+       the mutant fails here where it belongs. */
+    for (let i = 0; i <= 20; i++) {
+      const t = i / 20;
       const svg = renderBodyDemo("push-ups", t, 1).replace(
         /<g class="glow">.*?<\/g>/,
         ""

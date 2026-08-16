@@ -1797,7 +1797,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
   "push-ups": {
     view: "side",
     concentricTo: 0,
-    viewBox: "-72 84 216 84",
+    viewBox: "-72 77 216 91",
     groundY: 158.5,
     shadowCx: 20,
     shadowRx: 78,
@@ -1809,7 +1809,43 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * planted, elbows IK-solved toward the feet. */
       const G: Op = { kind: "rotate", deg: 90, pivot: [44, 100] };
       const TILT: Op = { kind: "rotate", deg: -13, pivot: PUSHUP_HAND };
-      const beta = lerp(0, 9.5, e);
+      /* THE TOP IS A LOCKOUT, and the base angle is what buys it.
+       *
+       * The press used to start at beta 0, which left the elbow at 111° —
+       * the shoulder only 53 above the floor while a straight arm needs
+       * ~64 (the palm plant holds the WRIST ~9 up so the hand lands flat).
+       * A push-up that never straightens its arms is a partial, the same
+       * defect the dip, the pull-up, the bench and the row all had.
+       *
+       * IT HAD TO BE THIS KNOB. `TILT` rotates the body about
+       * PUSHUP_HAND, and a rotation about the hand cannot change the
+       * shoulder-to-hand DISTANCE by construction — swept from -13° to
+       * -23° the elbow moved 111° to 113° and only the toes came off the
+       * floor. `B` pivots about the TOE, which raises the shoulder end
+       * AND leaves the toe contact untouched for the same reason, so it
+       * is the only rotation that can straighten the arm without
+       * unplanting anything:
+       *
+       *   base  0    -> elbow 111° top, 44° bottom  (the old value)
+       *   base -3.0  -> elbow 153° top, 63° bottom  still visibly bent
+       *   base -3.5  -> elbow 174° top, 66° bottom  straight AND smooth
+       *   base -4.0  -> elbow 176° top, 69° bottom  jerk 0.088 — FAILS
+       *   base -5.0  -> elbow 176° top, 76° bottom  jerk 0.136 — FAILS
+       *
+       * -3.5, and the ceiling is not a matter of taste. Past it the arm
+       * sits on `solveElbow`'s singularity, where the derivative blows up
+       * and the motion snaps — the smoothness guard measures it directly
+       * and rejects -4 and -5. 174° already exceeds the rig's REST elbow
+       * of 172.5°, so this is a fully straight arm; the extra two degrees
+       * buy nothing and cost the animation.
+       *
+       * These numbers were re-measured AFTER the plant loop went to ten
+       * iterations, and they moved a long way: at three iterations -3
+       * read 171° at the top, and once the palm was genuinely planted the
+       * same pose read 153°. Planting the wrist higher bends the elbow,
+       * so plant convergence and lockout are coupled and have to be tuned
+       * together rather than in sequence. */
+      const beta = lerp(-3.5, 6, e);
       const B: Op = { kind: "rotate", deg: beta, pivot: PUSHUP_TOE };
       const bodyOps: Op[] = [G, TILT, B];
       /* PLANT THE PALM, not the wrist.
@@ -1883,12 +1919,46 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       /* Iterated, because ONE pass does not converge: moving the target
          also re-solves the elbow, which rotates the hand, which moves the
          lowest point again. A single correction left the palm 1-2 units
-         through the floor and still drifting across the rep. Three passes
-         take it under 0.02 and it is a contraction, so more buys nothing. */
+         through the floor and still drifting across the rep.
+
+         TERMINATED ON THE ERROR, not on a trip count, and that change is
+         what the lockout above forced. `targetY -= error` assumes the palm
+         follows the target one-for-one. It very nearly does with a bent
+         arm — but near full extension `solveElbow`'s soft clamp absorbs
+         most of the motion, so each pass closes a smaller fraction of the
+         gap and the loop that had been fine for months went slow exactly
+         where the straightened arm put it:
+
+           3 passes  -> 1.69 through the floor at t=0.18
+           10        -> 0.40 at t=0.10   (three-iteration era's successor,
+                                          and no better in the place that
+                                          now matters)
+           40        -> 0.03
+           80        -> 0.00
+
+         Every one of those is a constant standing in for a derivative,
+         which is why each looked settled and then wasn't. A secant step
+         (probe the gain, divide by it) was tried and is WORSE — 6.2
+         through the floor — because the clamp makes the gain
+         non-monotonic, and one bad divisor throws the target far enough
+         that the remaining passes cannot walk it back. The plain step is
+         a contraction everywhere in this range and that is worth more
+         than its rate.
+
+         So: keep the contraction, stop when the palm is actually on the
+         line, and let the count be a backstop nothing normally reaches
+         (most frames exit in a handful; only the locked-out top spends
+         the budget).
+
+         Third time in this demo a constant tuned against bent-arm
+         geometry stopped working once the arm straightened. */
+      const PLANT_EPS = 0.005;
       let targetY = PUSHUP_GROUND;
       let arm = solveFor([PUSHUP_HAND[0], targetY]);
-      for (let i = 0; i < 3; i++) {
-        targetY -= palmOf(arm) - PUSHUP_GROUND;
+      for (let i = 0; i < 120; i++) {
+        const err = palmOf(arm) - PUSHUP_GROUND;
+        if (Math.abs(err) <= PLANT_EPS) break;
+        targetY -= err;
         arm = solveFor([PUSHUP_HAND[0], targetY]);
       }
       return {
