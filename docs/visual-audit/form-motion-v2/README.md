@@ -986,3 +986,49 @@ would silently reverse a locked call.
 Also verified clean this pass, so the next audit needn't redo it: every
 demo's declared muscle highlights exist in the view that renders them —
 0 of 15 declare a tint the view cannot draw.
+
+### Pass 42e — coverage, orphans, and an alias inconsistency for the owner
+
+Three registry-level checks, so the next audit doesn't re-derive them.
+
+**Coverage:** 35 of the catalog's 152 exercises (23%) resolve to a rig
+demo. The rest fall back to the static reference.
+
+**Orphans: none.** Every one of the 15 canonical demos is reachable
+from at least one catalog id — worth checking in this repo, which has a
+documented history of fully-built work sitting unreachable (the
+`HybridWeekRail` deletion). The bar-less `bodyweight-squat` added this
+session is reached by three ids (`bodyweight-squat`, `front-squat`,
+`goblet-squat`).
+
+**Demo-less ids that merely LOOK aliasable — correctly left alone.**
+`single-arm-lat-pulldown`, `barbell-upright-row`, `reverse-barbell-curl`,
+`bench-dips`, `sissy/hack/pistol/landmine/zercher-squat`,
+`seated/donkey/single-leg-calf-raise`, `handstand-push-ups`. Every one
+changes grip, support or limb count, so the locked alias-hygiene rule
+(2026-07-16) correctly excludes them.
+
+**OPEN FOR THE OWNER — a prop mismatch the same rule would exclude.**
+That rule removed `db-curl`/`hammer-curl`/`ez-bar-curl`/`cable-curl`/
+`reverse-grip-cable-pushdown` because a variant needs the canonical's
+"grip, prop, and support geometry". Five surviving aliases point at a
+demo that draws an **end-on barbell plate** while the exercise uses a
+different implement:
+
+| alias               | canonical         | mismatch                                    |
+| ------------------- | ----------------- | ------------------------------------------- |
+| `trap-bar-deadlift` | deadlift          | trap bar loads at the SIDES, not the shins  |
+| `db-bench`          | bench-press       | dumbbells, not a bar                        |
+| `db-row`            | barbell-row       | dumbbells; usually one-arm, bench-supported |
+| `t-bar-row`         | barbell-row       | different implement                         |
+| `db-rdl`            | romanian-deadlift | dumbbells, not a bar                        |
+
+(`sumo-deadlift` is a sixth, on stance rather than prop: wide stance,
+hands inside the knees.)
+
+Deliberately NOT changed. The 2026-07-16 decision enumerated exactly
+which aliases to drop and KEPT these, so removing them now would
+reverse an owner call and cost five exercises their demo — the rule's
+own remedy ("fall back to the static reference until each has its own
+prop/grip contract") is a coverage loss the owner should choose, not
+me. Flagged here with the evidence so the call can be made once.
