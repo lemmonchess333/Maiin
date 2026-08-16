@@ -1465,7 +1465,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     view: "side",
     equip: "plate-end",
     concentricTo: 1,
-    viewBox: "-64 30 186 152",
+    viewBox: "-64 24 186 158",
     groundY: 172,
     shadowCx: 40,
     shadowRx: 68,
@@ -1487,7 +1487,22 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * from the shoulder joint), lockout finishes over the upper
        * chest — the real bench J-curve, and it keeps the plate disc
        * clear of the head at every frame. */
-      const H: Pt = [S[0] + lerp(24, 50, e), S[1] + lerp(22, 8, e)];
+      /* LOCKOUT IS DERIVED. The press used to finish at 50 units of
+       * extension — 92% of the arm's 55.07 straight reach, an elbow of
+       * 134°, so the demo never locked out and animated a partial press.
+       * The arm's own geometry says where lockout is: a 168° elbow needs
+       * the hand 54.77 from the shoulder, which at this bar height is
+       * 54.77 from the shoulder.
+       *
+       * The TARGET is set past that, at 58, because `solveElbow` soft-
+       * clamps near full extension and the clamp compresses the last
+       * stretch: asking for 54.2 landed the elbow at 158°, still visibly
+       * bent. Asking for 58 lands it at ~170°. Over-asking is safe here
+       * precisely because the clamp is doing its job — and the plate
+       * follows the POSED hand (`bar` reads `pose.handL`), not the
+       * request, so the iron stops where the arm does. The clamp is why
+       * this reads as a lockout instead of snapping at the singularity. */
+      const H: Pt = [S[0] + lerp(24, 58, e), S[1] + lerp(22, 8, e)];
       const arm = aimArm(
         { S, E: SIDE_ANCHORS.elbow, H: SIDE_ANCHORS.hand },
         // out −1: the elbow tucks toward the feet/floor side, the real
@@ -1590,7 +1605,18 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       // pass 9): at 26 the folded arm hid against the torso and the
       // row's defining checkpoint — the elbow driving past the back
       // line — barely registered.
-      const hFinal: Pt = [S[0] + 1, lerp(S[1] + 50, S[1] + 21, e)];
+      /* THE STRETCH IS A STRAIGHT ARM. The bottom of a row is the bar
+         hanging at arm's length — that is what makes it the stretched
+         position. It used to sit 50 below the shoulder against a 55.07
+         straight reach (91%), leaving the elbow bent at 129° with the
+         lat never reaching full stretch: a partial from the bottom end,
+         the same defect the dip and the pull-up had from the top.
+
+         Asked at 58 rather than 55 because `solveElbow` soft-clamps near
+         full extension and compresses the last stretch; the drawn hand
+         stops where the arm does, and `bar` reads `pose.handL`, so the
+         iron follows the arm rather than the request. */
+      const hFinal: Pt = [S[0] + 1, lerp(S[1] + 58, S[1] + 21, e)];
       const hPre = applyToPoint(hFinal, unpose);
       const arm = aimArm(
         {

@@ -943,6 +943,71 @@ describe("renderBodyDemo", () => {
       .toBeLessThan(vertical(UPPER + FORE) - vertical(reachAt(80)));
   });
 
+  it("a press or a row reaches full extension at the end it should", () => {
+    /* THE PARTIAL-REP CLASS, generalised. Four demos have now been caught
+       animating a movement that never reaches its own endpoint — dips
+       stopping 8° short of parallel, the pull-up finishing with the chin
+       8 units BELOW the bar, and these two. None of them looks wrong in a
+       frame; all of them were found by measuring the movement against
+       what its form cue requires.
+
+       The table is the SPECIFICATION, not an exemption list: it says
+       which end of each lift is the straight-arm end. A press locks out
+       at the top; a row's stretch is the bottom, where the bar hangs at
+       arm's length and the lat is actually loaded.
+
+       "Straight" is the rig's own rest elbow (172.5°), not 180 — the arm
+       is drawn with a natural carry and 180 is not reachable. The floor
+       is 165, which is visibly locked without pushing `solveElbow` into
+       the singularity its soft-clamp exists to tame. */
+    const STRAIGHT_END: [string, number][] = [
+      ["bench-press", 1],
+      ["db-bench", 1],
+      ["barbell-row", 0],
+      ["db-row", 0],
+      ["barbell-curl", 0],
+    ];
+    type Pt2 = [number, number];
+    const angleAt = (a: Pt2, b: Pt2, c: Pt2) => {
+      const u = [a[0] - b[0], a[1] - b[1]];
+      const v = [c[0] - b[0], c[1] - b[1]];
+      return (
+        (Math.acos(
+          Math.max(
+            -1,
+            Math.min(
+              1,
+              (u[0] * v[0] + u[1] * v[1]) /
+                (Math.hypot(u[0], u[1]) * Math.hypot(v[0], v[1]))
+            )
+          )
+        ) *
+          180) /
+        Math.PI
+      );
+    };
+    for (const [id, end] of STRAIGHT_END) {
+      const pose = BODY_DEMOS[id].pose(end) as Record<string, Op[]>;
+      const elbow = angleAt(
+        applyToPoint(SIDE_ANCHORS.shoulder, pose.upperArmL),
+        applyToPoint(SIDE_ANCHORS.elbow, pose.foreArmL),
+        applyToPoint(SIDE_ANCHORS.hand, pose.foreArmL)
+      );
+      expect(
+        elbow,
+        `${id} finishes its straight-arm end at ${elbow.toFixed(0)}° — a partial`
+      ).toBeGreaterThan(165);
+    }
+
+    /* KNOWN GAP, named so it is not mistaken for coverage: `push-ups`
+       belongs in this table and is not in it, because it does not pass.
+       Its top sits at a 111° elbow — the shoulder is 45.9 above the
+       planted hand against a 55.07 arm, so the plank is simply too low
+       to lock out. Fixing it means re-deriving the plank angle from the
+       arm length rather than from the toe plant, which is a larger change
+       than a bar path and gets its own pass. */
+  });
+
   it("pull-ups finishes with the chin clearly over the bar", () => {
     /* The rep's definition, from the reference: "continue until your chin
        is clearly over the bar", starting from "a full hang with arms
