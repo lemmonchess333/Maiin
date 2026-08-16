@@ -924,3 +924,33 @@ bigger figure is necessarily a taller card — you cannot enlarge the
 figure inside the same box. The three tightened demos moved from
 216-234px cards to 278-316px, which is where the majority of the set
 (305-393px) already sat, so they moved TOWARD the group.
+
+### Pass 42c — far-limb depth parallax was screen-space, not body-space
+
+The side rig gives each far limb a small constant offset so a darker rim
+reads behind the near one. That offset was applied LAST, i.e. in SCREEN
+space — fine while the figure is upright, but the bench press rotates
+the whole body −90° and the push-up +90°, so their far limbs were being
+displaced along the body's LENGTH (toward the head) instead of across
+it, staggering the legs down the bench.
+
+The offset is now expressed in the figure's own space and applied
+FIRST, so the piece's transform chain rotates it. Measured far-limb
+offset at the knee:
+
+| demo              | offset          | reads as              |
+| ----------------- | --------------- | --------------------- |
+| deadlift          | (−2.41, +0.97)  | horizontal — upright  |
+| romanian-deadlift | (−2.58, −0.33)  | horizontal — upright  |
+| bench-press       | (−1.22, +2.30)  | vertical — laid down  |
+| push-ups          | (−0.37, −2.57)  | vertical — laid down  |
+
+Note the bench and push-up offsets now point in OPPOSITE screen
+directions, because those two demos rotate the body opposite ways —
+under the old screen-space version both were identically (−2.6, 0).
+
+Verified by measurement and by eye at 520px, deliberately NOT pinned: a
+2.6-unit depth cue is real but small, and every cheap way to assert it
+from the rendered SVG ends up re-deriving the renderer's own
+composition, which pins nothing (the trap this README's 2026-08-02
+entry already names). The measurement above is the record.

@@ -2270,6 +2270,16 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
     footL: "shankL",
     footR: "shankR",
   };
+  /* Depth parallax for the far limb. The offset is expressed in the
+   * figure's OWN space (toward its back, −x at rest) and applied
+   * FIRST, so the piece's own transform chain rotates it: in a demo
+   * that stands the figure up it reads as "behind", and in one that
+   * lays the whole body down it rotates with the body and still reads
+   * as behind. Applied LAST it was a screen-space nudge — which is
+   * fine while the figure is upright, but the bench press rotates the
+   * body −90° and the push-up +90°, so a −x screen nudge displaced
+   * their far limbs along the body's LENGTH (toward the head) instead
+   * of across it, staggering the legs down the bench. */
   const FAR_OFFSET: Op = { kind: "translate", dx: -2.6, dy: 0 };
   const resolveOps = (g: GroupName): Op[] | undefined =>
     pose[g] ?? (FOLLOW[g] ? pose[FOLLOW[g]!] : undefined);
@@ -2279,7 +2289,7 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
       ? resolveOps(FAR_NEAR[piece.group] ?? piece.group)
       : undefined;
     const base = own ?? mirrored ?? [];
-    return piece.far ? [...base, FAR_OFFSET] : base;
+    return piece.far ? [FAR_OFFSET, ...base] : base;
   };
   /* NOTE (pass 16; re-verified at the hip in pass 25): front/back-
    * style joint sleeves do NOT work in the side view. The pieces'
