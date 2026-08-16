@@ -202,6 +202,21 @@ const SIDE_FORE_LEN = Math.hypot(
   SIDE_ANCHORS.hand[1] - SIDE_ANCHORS.elbow[1]
 );
 
+/* Shoulder-to-hand reach of a STRAIGHT side-view arm, minus a hair.
+ *
+ * Two demos were setting this distance by eye and both landed short: the
+ * bench "locked out" at 134 degrees and the row's "dead hang" started at
+ * 130. Neither reads as wrong, because an arm 5 units short of extension
+ * looks extended -- the elbow angle is brutally sensitive to reach near
+ * full extension, which is the same singularity that makes `solveElbow`
+ * clamp. That sensitivity cuts both ways: it is why the error hid, and
+ * why the fix is a derived length rather than a bigger guess.
+ *
+ * 0.997 rather than 1.0 keeps the solve just inside the clamp. Sitting
+ * ON the clamp is what let the pull-up's hang pass while over-extended,
+ * so this stays deliberately short of it. */
+const SIDE_ARM_REACH = (SIDE_UPPER_LEN + SIDE_FORE_LEN) * 0.997;
+
 /** Balance rule (pose physics): mass stays over mid-foot, so as the
  *  torso hinges forward the hips travel BACK — implemented as the whole
  *  standing chain leaning back about the planted ankle, hips countering
@@ -1144,7 +1159,17 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * from the shoulder joint), lockout finishes over the upper
        * chest — the real bench J-curve, and it keeps the plate disc
        * clear of the head at every frame. */
-      const H: Pt = [S[0] + lerp(24, 50, e), S[1] + lerp(22, 8, e)];
+      /* LOCKOUT IS AN ARM'S LENGTH, not 50. The old endpoint put the
+       * hand 50.6 from the shoulder against a 55.07 arm, which is a
+       * 134-degree elbow -- a press that never finishes, invisible
+       * because a nearly-straight arm looks straight. The direction of
+       * the J-curve is unchanged; only its length is now derived, scaled
+       * out along the same vector to a real extension. */
+      const lockDir = Math.hypot(50, 8);
+      const H: Pt = [
+        S[0] + lerp(24, (50 / lockDir) * SIDE_ARM_REACH, e),
+        S[1] + lerp(22, (8 / lockDir) * SIDE_ARM_REACH, e),
+      ];
       const arm = aimArm(
         { S, E: SIDE_ANCHORS.elbow, H: SIDE_ANCHORS.hand },
         // out −1: the elbow tucks toward the feet/floor side, the real
@@ -1200,7 +1225,11 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     view: "side",
     equip: "plate-end",
     concentricTo: 1,
-    viewBox: "-4 38 172 174",
+    /* Top edge 30, not 38: the hinged head's crown sits at y=33 and the
+       old frame cut 5 units off it in every frame. Pre-existing — the
+       hang fix below does not move the head — but it turned up while
+       measuring the bbox and is a clipped skull, so it goes with it. */
+    viewBox: "-4 30 172 184",
     groundY: 204,
     shadowCx: 62,
     shadowRx: 40,
@@ -1228,7 +1257,14 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       // Bar path: a straight VERTICAL line below the shoulder joint —
       // below the knee at the bottom, lower ribs at the top with the
       // elbow driving past the torso line (IK bends it up-back).
-      const hFinal: Pt = [S[0] + 1, lerp(S[1] + 50, S[1] + 26, e)];
+      /* THE HANG IS AN ARM'S LENGTH. It started 50 below the shoulder
+       * against a 55.07 arm -- a 130-degree elbow, so the row began with
+       * a fifth of the pull already done and "dead hang" described
+       * nothing in the drawing. The 1-unit forward offset is what keeps
+       * the bar path just clear of the shins, so the drop is solved from
+       * the reach with that offset taken out. */
+      const hang = Math.sqrt(SIDE_ARM_REACH ** 2 - 1);
+      const hFinal: Pt = [S[0] + 1, lerp(S[1] + hang, S[1] + 26, e)];
       const hPre = applyToPoint(hFinal, unpose);
       const arm = aimArm(
         {

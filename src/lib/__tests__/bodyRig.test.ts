@@ -478,6 +478,53 @@ describe("renderBodyDemo", () => {
     expect(declared).toBeCloseTo(actual, 0);
   });
 
+  it("press and row reach a real arm's length at their straight end", () => {
+    /* Two demos set the shoulder-to-hand distance by eye and both landed
+       short of the arm: the bench "locked out" at 134 degrees and the
+       row's "dead hang" started at 130 — a fifth of the pull already done
+       before the pull. Neither looks wrong, and that is the point. Near
+       full extension the elbow angle is brutally sensitive to reach, so 5
+       units of shortfall reads as a straight arm; both are now derived
+       from SIDE_ARM_REACH rather than guessed at.
+
+       Each is asserted at BOTH ends. A lockout check alone is satisfied
+       by a demo that never leaves lockout. */
+    expect(sideElbow("bench-press", 1), "bench lockout").toBeGreaterThan(168);
+    expect(sideElbow("bench-press", 0), "bench bottom").toBeLessThan(100);
+    expect(sideElbow("barbell-row", 0), "row dead hang").toBeGreaterThan(168);
+    expect(sideElbow("barbell-row", 1), "row finish").toBeLessThan(80);
+  });
+
+  it("the bent-over row draws its whole figure inside its frame", () => {
+    /* The hinged head's crown sat 5 units above the top of the viewBox,
+       so every frame of this demo rendered a clipped skull. Pre-existing
+       and unrelated to the hang fix — it surfaced from measuring the
+       bounding box while checking that fix had not pushed anything out of
+       frame, which is the check worth keeping. */
+    const [vx, vy, vw, vh] = BODY_DEMOS["barbell-row"]
+      .viewBox!.split(" ")
+      .map(Number);
+    for (const t of [0, 0.5, 1]) {
+      const svg = renderBodyDemo("barbell-row", t).replace(
+        /<g class="glow">.*?<\/g>/,
+        ""
+      );
+      const pts = [...svg.matchAll(/points="([^"]+)"/g)].flatMap((m) =>
+        m[1]
+          .trim()
+          .split(/\s+/)
+          .map((q) => q.split(",").map(Number))
+      );
+      expect(
+        Math.min(...pts.map((p) => p[1])),
+        `top clipped at t=${t}`
+      ).toBeGreaterThanOrEqual(vy);
+      expect(Math.max(...pts.map((p) => p[1]))).toBeLessThanOrEqual(vy + vh);
+      expect(Math.min(...pts.map((p) => p[0]))).toBeGreaterThanOrEqual(vx);
+      expect(Math.max(...pts.map((p) => p[0]))).toBeLessThanOrEqual(vx + vw);
+    }
+  });
+
   it("pushdown: the rope's knotted tail travels down to lockout", () => {
     // The tail knob is the LAST circle in the svg (sceneFront renders
     // after the body) — its descent is the extension arc.
