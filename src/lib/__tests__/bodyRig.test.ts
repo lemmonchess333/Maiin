@@ -607,6 +607,81 @@ describe("renderBodyDemo", () => {
     }
   });
 
+  it("a front or back camera is only used where the movement needs one", () => {
+    /* THE CAMERA-PLANE RULE, which until now lived only in prose.
+
+       It was set by the owner mid-session, on a squat that had been built
+       as a front view: "if this is the animation squatting, it should be
+       from a side angle not a front, revisit how you have done all the
+       front and side angle stuff as well". A squat is a sagittal movement,
+       and from the front you cannot see the one thing the demo exists to
+       teach — hip depth and the path of the bar.
+
+       So: a non-side camera has to EARN itself, and the evidence is that
+       the movement actually changes the figure's silhouette WIDTH. A
+       frontal-plane movement spreads and closes; a sagittal one drawn from
+       the front just goes up and down while the outline sits still.
+
+       Measured across all five, and all five pass, which is the useful
+       part — this started as a suspicion that overhead-press and dips were
+       mis-cameraed like the squat had been, and the numbers said otherwise:
+
+         lateral-raise  73.3   arms sweep to full span
+         lat-pulldown   43.6   elbows drive down and in
+         pull-ups       29.8   same, bodyweight
+         overhead-press 21.5   elbows track IN under the bar — the form cue
+         dips           11.9   arms move against a descending torso
+
+       A front-view squat would sit near zero: the arms are fixed on the
+       bar and the stance does not change. The floor is 8, which clears
+       dips by half its margin and would not save that squat.
+
+       SCOPE, from mutation testing: this fires on an AUTHORED front-view
+       demo whose movement has no frontal content, which is the real
+       failure mode. It does NOT fire on merely flipping an existing side
+       demo's `view` flag — that produces an incoherent hybrid (side pose
+       ops driving the anterior model) whose silhouette thrashes wide
+       enough to pass. That case is caught by the foreshortening-set and
+       squat-mechanics tests instead, so it is covered; just not here. */
+    const MIN_WIDTH_CHANGE = 8;
+    for (const [id, d] of Object.entries(BODY_DEMOS)) {
+      const view = d.view ?? "anterior";
+      if (view === "side") continue;
+      const widths: number[] = [];
+      for (let i = 0; i <= 10; i++) {
+        const svg = renderBodyDemo(id, i / 10, 1).replace(
+          /<g class="glow">.*?<\/g>/,
+          ""
+        );
+        const xs = [...svg.matchAll(/points="([^"]+)"/g)]
+          .flatMap((m) => m[1].trim().split(/\s+/))
+          .map((q) => Number(q.split(",")[0]))
+          .concat(
+            [...svg.matchAll(/ d="([^"]+)"/g)].flatMap((m) =>
+              [...m[1].matchAll(/(-?[\d.]+),(-?[\d.]+)/g)].map((q) =>
+                Number(q[1])
+              )
+            )
+          )
+          .filter(Number.isFinite);
+        widths.push(Math.max(...xs) - Math.min(...xs));
+      }
+      const change = Math.max(...widths) - Math.min(...widths);
+      expect(
+        change,
+        `${id} uses a ${view} camera but its silhouette barely changes width (${change.toFixed(1)}) — is this a sagittal movement facing the wrong way?`
+      ).toBeGreaterThan(MIN_WIDTH_CHANGE);
+    }
+  });
+
+  /* KNOWN GAP, stated rather than left to be discovered: the two limb-
+     integrity tests above cover SIDE demos only. The anterior and
+     posterior rigs anchor against their own measured joint tables, which
+     are module-private, and exporting them purely for a test would be
+     changing the module to suit the test. The five front/back demos
+     therefore have camera and canvas coverage but no joint-gap or
+     bone-length coverage. */
+
   it("a standing lift keeps its planted foot planted", () => {
     /* Contact audit 2026-08-16. The squat and deadlift get this free by
        building the leg ANKLE-UP; the row and RDL built it hip-down, so
