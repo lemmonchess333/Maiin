@@ -780,3 +780,46 @@ figure never got the part-by-part audit the side (32-34) and front
 Pins updated: posterior identity path count 37→38 (the wedge),
 posterior sleeve count 6→8 (the knees). Motion probe: all 15 smooth.
 56 rig+component tests passing.
+
+## STATUS 2026-08-16 (forty-first pass) — measured alignment, rigid bars, smooth IK
+
+Owner device feedback naming three defect classes: muscles "misaligned
+like on the arms" where the underlying model overlaps the detailed
+muscle groups; "non smooth movement"; and barbell "positioning /
+patterns" — with a directive to research each movement against online
+references first. Each was MEASURED rather than eyeballed, and each
+turned out to have a single root cause.
+
+| Defect                    | Root cause (measured)                                                                                                                                                                                                                                                                     |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Arm muscles misaligned    | The joint anchors were eyeballed, not taken from the art. Against the vendored polygons' principal axis, every WRIST anchor sat ~5 units INBOARD of where the forearm mass actually ends (ANT L 5.4, ANT R 6.0, POST L 3.9, POST R 3.8) — so the grey hand mitt and its bridging sleeve   |
+|                           | were placed beside the purple muscle, and at big rotations art and anchor swung apart. Anchors are now measured from the art (elbow = midpoint of the two masses' facing ends; wrist = the forearm mass's far end).                                                                        |
+| Model showing through     | A sleeve only shows in the GAPS between muscle blocks, so a grey capsule under a TINTED muscle drew a grey stripe cutting the working muscle in half — worst on the posterior forearm, which is two thin blades with the capsule between them. Sleeves now inherit the muscle's tint.      |
+| Non-smooth movement       | The IK elbow offset is sqrt(L1² − a²) — zero with INFINITE slope at full extension — so the hard reach clamp SNAPPED the elbow wherever a demo straightens the arm. Peak elbow jerk on the pull-up: 0.298 units/step² hard vs 0.008 soft (38× smoother), peak velocity 0.459 → 0.202.     |
+| Bar not rigid             | The lat-pulldown's grip x lerped outward through the pull, stretching the drawn steel bar 13% (95.6 → 108 units) as it was pulled down. Grip width is a property of the bar, not the rep.                                                                                                 |
+| Pulldown finish + elbows  | Reference (NASM biomechanics, PowerliftingTechnique, REP): bar to the UPPER CHEST, elbows driven toward the floor "in line with the torso". The finish sat at the shoulder line; with the grip pinned, y=52 is what lands the solved elbow at (19.6, 78.9) — down and level with the torso. |
+
+Research consulted this pass: lat pulldown (torso lean 5-10°, bar to
+upper chest, elbows down/back not flared), pull-up (elbows out AND
+back, scapular retraction — our W-flare matches), back squat (bar
+vertical over midfoot, high-bar on the traps, knees forward as hips
+sit back — matches pass 36), bench press (J-curve, lower chest to over
+the shoulders — matches).
+
+Two new pins, both mutation-checked: every demo's tracked joints are
+bounded at 0.05 units/step² of jerk across 200 eased steps (reverting
+to the hard clamp fails it), and no bar changes length mid-rep. The
+jerk bound is deliberately ABSOLUTE — a pinned hand has ~zero median
+velocity, so a ratio there divides by nothing and reports nonsense
+(the first cut of this instrument reported 47,729 for a hand sitting
+still on a bar).
+
+Checked and NOT changed: the wide arm flare on front-view dips and the
+lateral raise stopping at horizontal both predate this pass and are
+correct-as-drawn (a 90°-bent arm genuinely projects its elbow ~19
+units laterally in a front view; a raise stops AT parallel). Dips
+remains the strongest argument for the calf-raise treatment — a side
+camera — but its Gate-0 sheet is the one marked approved, so it stays
+pending an owner call rather than being changed on my own initiative.
+
+Motion probe: all 15 smooth. 59 rig+component tests passing.

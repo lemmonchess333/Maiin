@@ -56,13 +56,17 @@ describe("renderBodyDemo", () => {
   });
 
   it("joint sleeves bridge elbows, shoulders and knees (no ball caps)", () => {
-    // A sleeve is a round-capped BODY-toned line spanning a joint —
-    // the "real arms instead of balls" mechanism. Anterior carries
-    // elbow + shoulder + knee pairs; posterior has no knee sleeves.
+    // A sleeve is a round-capped line spanning a joint — the "real arms
+    // instead of balls" mechanism. Both views carry elbow + shoulder +
+    // forearm-axis + knee pairs. Counted colour-agnostically: sleeves
+    // over a TINTED muscle now take that muscle's colour (below).
+    // Sleeve palette only — gear (bars, posts) also draws round-capped
+    // lines, in the GEAR greys.
     const count = (svg: string) =>
       (
-        svg.match(/<line[^>]*stroke="#B6BDC3"[^>]*stroke-linecap="round"/g) ??
-        []
+        svg.match(
+          /<line[^>]*stroke="(?:#B6BDC3|#7B72E9|#9590E0)"[^>]*stroke-linecap="round"/g
+        ) ?? []
       ).length;
     expect(count(renderBodyDemo("overhead-press", 0))).toBe(8); // +2 wrist welds
     // Posterior gained knee sleeves in the posterior part-fit round.
@@ -70,6 +74,26 @@ describe("renderBodyDemo", () => {
     expect(
       renderBodyDemo("overhead-press", 0).includes('<circle fill="#B6BDC3"')
     ).toBe(false);
+  });
+
+  it("a sleeve over a tinted muscle takes that muscle's colour", () => {
+    /* The layover defect (owner device feedback 2026-08-16: muscles
+       "misaligned like on the arms"): a sleeve only shows through the
+       gaps BETWEEN muscle blocks, so a grey capsule under a tinted
+       muscle drew a grey stripe cutting the working muscle in half —
+       worst on the posterior forearm, which is two thin blades with
+       the capsule between them. Pull-ups tint the forearm, so its
+       forearm-axis sleeves must carry the secondary purple; its
+       deltoids are untinted, so those sleeves stay body grey. */
+    const svg = renderBodyDemo("pull-ups", 0);
+    const strokes = [
+      ...svg.matchAll(/<line[^>]*stroke="(#[0-9A-Fa-f]{6})"[^>]*stroke-linecap="round"/g),
+    ].map((m) => m[1].toUpperCase());
+    expect(strokes.filter((s) => s === "#9590E0").length).toBe(2); // forearms
+    expect(strokes.filter((s) => s === "#B6BDC3").length).toBe(6); // the rest
+    // And an untinted-forearm demo keeps every sleeve grey.
+    const press = renderBodyDemo("overhead-press", 0);
+    expect(press.includes('stroke="#9590E0"')).toBe(false);
   });
 
   it("squat: the body visibly sinks at the bottom", () => {
@@ -168,6 +192,81 @@ describe("renderBodyDemo", () => {
       ),
     ].map((m) => Math.abs(Number(m[3]) - Number(m[1])));
     for (const span of spans) expect(span).toBeLessThan(40);
+  });
+
+  it("every demo moves smoothly — no joint snaps at the extremes", () => {
+    /* Owner feedback 2026-08-16 ("non smooth movement"). The two-bone
+       IK's elbow offset is sqrt(L1² − a²), which reaches zero with
+       INFINITE slope at full arm extension, so the old hard reach
+       clamp snapped the elbow the moment a hand crossed the reachable
+       boundary — exactly where these demos straighten the arm (pull-up
+       dead hang, pulldown overhead start, press lockout). Measured on
+       the pull-up elbow, the hard clamp peaked at 0.298 units/step²
+       against the soft clamp's 0.008.
+
+       This walks EVERY demo at 200 steps through the real eased clock
+       and bounds the second difference of each tracked joint. It is an
+       absolute bound, not a ratio: a pinned hand has ~zero median
+       velocity, so a ratio there divides by nothing and reports
+       nonsense. */
+    const ease = (t: number) => 0.5 - 0.5 * Math.cos(Math.PI * t);
+    const N = 200;
+    const worst: Record<string, number> = {};
+    for (const [id, d] of Object.entries(BODY_DEMOS)) {
+      const probes: [string, [number, number]][] =
+        d.view === "side"
+          ? [
+              ["handL", SIDE_ANCHORS.hand],
+              ["foreArmL", SIDE_ANCHORS.elbow],
+              ["thighL", SIDE_ANCHORS.knee],
+              ["torso", SIDE_ANCHORS.shoulder],
+            ]
+          : d.view === "anterior"
+            ? [
+                ["foreArmL", [5.1, 97.7]],
+                ["upperArmL", [18.8, 71.7]],
+                ["torso", [24, 48]],
+              ]
+            : [
+                ["foreArmL", [5.8, 103.8]],
+                ["upperArmL", [18, 78.7]],
+                ["torso", [23, 46]],
+              ];
+      let mx = 0;
+      for (const [g, anchor] of probes) {
+        const pos = Array.from({ length: N + 1 }, (_, i) =>
+          applyToPoint(
+            anchor,
+            (d.pose(ease(i / N)) as Record<string, never[]>)[g] ?? []
+          )
+        );
+        const vel = pos
+          .slice(1)
+          .map((p, i) => Math.hypot(p[0] - pos[i][0], p[1] - pos[i][1]));
+        for (let i = 1; i < vel.length; i++)
+          mx = Math.max(mx, Math.abs(vel[i] - vel[i - 1]));
+      }
+      worst[id] = mx;
+    }
+    for (const [id, mx] of Object.entries(worst)) {
+      expect(mx, `${id} jerk`).toBeLessThan(0.05);
+    }
+  });
+
+  it("bars are RIGID — a bar never changes length mid-rep", () => {
+    /* Bar-path audit 2026-08-16: the lat-pulldown's grip x lerped
+       outward through the pull, which stretched the drawn steel bar
+       13% (95.6 → 108 units) as the user pulled it down. Grip width is
+       a property of the bar, not of the rep. */
+    for (const [id, d] of Object.entries(BODY_DEMOS)) {
+      if (!d.bar) continue;
+      const widths = [0, 0.25, 0.5, 0.75, 1].map((t) => {
+        const b = d.bar!(t, d.pose(t));
+        return b ? Math.hypot(b[1][0] - b[0][0], b[1][1] - b[0][1]) : 0;
+      });
+      if (Math.max(...widths) < 0.5) continue; // end-on plate: a point
+      expect(Math.max(...widths) - Math.min(...widths), id).toBeLessThan(0.5);
+    }
   });
 
   it("unknown exercise renders nothing", () => {

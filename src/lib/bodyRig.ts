@@ -109,13 +109,25 @@ const BODY_FAR = "#8F969D";
 
 /* ── Measured joint anchors (viewBox 0 0 100 200) ─────────────── */
 
+/* Joint anchors are MEASURED FROM THE ART (2026-08-16 alignment pass),
+ * not eyeballed: each elbow is the midpoint between the upper-arm
+ * mass's lower end and the forearm mass's upper end, and each wrist is
+ * the forearm mass's far end — both taken from the vendored polygons'
+ * principal axis. The previous hand anchors sat ~5 units INBOARD of
+ * where the forearm art actually ends (measured: ANT L 5.4, ANT R 6.0,
+ * POST L 3.9, POST R 3.8), which is what put the grey hand mitt and
+ * its bridging sleeve beside the purple muscle instead of on it — and
+ * at big rotations (pull-up W-flare, pulldown) swung art and anchor
+ * apart into the "doubled, misaligned arm" the owner reported. The
+ * shoulder stays the JOINT centre inside the deltoid cap, which
+ * legitimately sits above the biceps/triceps mass. */
 const ANT = {
   shoulderL: [24, 48] as Pt,
   shoulderR: [76, 48] as Pt,
-  elbowL: [20, 71] as Pt,
-  elbowR: [80, 71] as Pt,
-  handL: [10, 100] as Pt,
-  handR: [89, 100] as Pt,
+  elbowL: [18.8, 71.7] as Pt,
+  elbowR: [80.3, 71.4] as Pt,
+  handL: [5.1, 97.7] as Pt,
+  handR: [94.7, 98.2] as Pt,
   hipY: 96,
   kneeL: [32, 148] as Pt,
   kneeR: [68, 148] as Pt,
@@ -124,10 +136,10 @@ const ANT = {
 const POST = {
   shoulderL: [23, 46] as Pt,
   shoulderR: [77, 46] as Pt,
-  elbowL: [17, 78] as Pt,
-  elbowR: [83, 78] as Pt,
-  handL: [9, 106] as Pt,
-  handR: [91, 106] as Pt,
+  elbowL: [18, 78.7] as Pt,
+  elbowR: [81.9, 79] as Pt,
+  handL: [5.8, 103.8] as Pt,
+  handR: [94.2, 103.9] as Pt,
   hipY: 100,
   // The posterior art runs past the anterior's 203 — soleus/heel reaches
   // y=220. Clipping at the anterior height amputated the lower legs.
@@ -325,13 +337,35 @@ function angleBetween(from: Pt, to: Pt): number {
 /** Elbow position for shoulder S → hand H with limb lengths L1/L2.
  *  `out` picks the bend side: +1 flares the elbow toward −x (left arm),
  *  −1 toward +x (right arm). Overlong reaches clamp to a straight arm. */
+/** C1 soft clamp: returns x until `k` short of the limit, then eases in
+ *  exponentially, asymptoting AT it. Slope is 1 on both sides of the
+ *  handover, so unlike Math.min there is no derivative step. */
+function softCap(x: number, hi: number, k: number): number {
+  return x < hi - k ? x : hi - k * Math.exp(-(x - hi + k) / k);
+}
+function softFloor(x: number, lo: number, k: number): number {
+  return x > lo + k ? x : lo + k * Math.exp((x - lo - k) / k);
+}
+
 function solveElbow(S: Pt, H: Pt, L1: number, L2: number, out: 1 | -1): Pt {
   let dx = H[0] - S[0];
   let dy = H[1] - S[1];
   let d = Math.hypot(dx, dy);
   const max = (L1 + L2) * 0.999;
   const min = Math.abs(L1 - L2) * 1.001;
-  const clamped = Math.min(Math.max(d, min), max);
+  /* SMOOTHNESS (owner feedback 2026-08-16, "non smooth movement").
+   * The elbow offset is h = sqrt(L1² − a²), which goes to zero with
+   * INFINITE slope as the reach approaches full extension — so a hard
+   * Math.min clamp made the elbow snap the instant a hand crossed the
+   * reachable boundary. Measured as frame-to-frame jerk it was
+   * catastrophic exactly where each demo straightens the arm: pull-up
+   * dead hang (ratio 47729), pulldown overhead start (122), press
+   * lockout (425); every other demo sat under 8. Easing into the limit
+   * makes the residual sqrt argument decay exponentially rather than
+   * linearly, which cancels the singularity — the arm still reads
+   * straight at the extremes, it just stops popping to get there. */
+  const K = (L1 + L2) * 0.035;
+  const clamped = softFloor(softCap(d, max, K), min, K);
   dx *= clamped / d;
   dy *= clamped / d;
   d = clamped;
@@ -1109,9 +1143,25 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     pose: (e) => {
       /* Body stays put; the bar travels from full overhead reach down to
        * the collarbone while the elbows tuck in to the sides — the same
-       * IK machinery as the pull-up with the constraints swapped. */
-      const hl: Pt = [lerp(12.2, 6, e), lerp(-14.5, 50, e)];
-      const hr: Pt = [lerp(87.8, 94, e), lerp(-14.5, 50, e)];
+       * IK machinery as the pull-up with the constraints swapped.
+       *
+       * RIGID BAR (2026-08-16 bar-path audit): the grip x is CONSTANT.
+       * It used to lerp outward (12.2→6 and 87.8→94), which stretched
+       * the drawn steel bar 13% mid-rep (95.6→108 units) — a bar that
+       * grows as you pull it. Grip width is set once, at ~1.4×
+       * shoulder width (shoulders sit at x 23/77), the standard
+       * pulldown grip.
+       *
+       * The finish is the UPPER CHEST, not the shoulder line: with the
+       * grip pinned, y=52 is what puts the solved elbow at (19.6,
+       * 78.9) — driven DOWN and level with the torso, which is the
+       * cue every reference gives ("elbows toward the floor, in line
+       * with the torso"; bar to upper chest/collarbone). The old y=50
+       * finish sat the bar at the shoulder line. */
+      const GRIP_L = 12.2;
+      const GRIP_R = 87.8;
+      const hl: Pt = [GRIP_L, lerp(-14.5, 52, e)];
+      const hr: Pt = [GRIP_R, lerp(-14.5, 52, e)];
       const L = aimArm(
         { S: POST.shoulderL, E: POST.elbowL, H: POST.handL },
         solveElbow(POST.shoulderL, hl, POST_UPPER_LEN, POST_FORE_LEN, 1),
@@ -1131,11 +1181,12 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         foreArmR: R.fore,
       };
     },
+    // Rigid: constant length, only the height travels.
     bar: (e) => {
-      const y = lerp(-14.5, 50, e);
+      const y = lerp(-14.5, 52, e);
       return [
-        [lerp(12.2, 6, e) - 10, y],
-        [lerp(87.8, 94, e) + 10, y],
+        [2.2, y],
+        [97.8, y],
       ];
     },
   },
@@ -1780,7 +1831,17 @@ export function renderBodyDemo(
     a[0] + (b[0] - a[0]) * t,
     a[1] + (b[1] - a[1]) * t,
   ];
-  const sleeveDefs: [Pt, GroupName, Pt, GroupName, number][] = [
+  /* The 6th slot names the muscle a sleeve BELONGS TO. A sleeve only
+   * shows through the gaps between muscle blocks, so when that muscle
+   * is tinted the grey capsule read as a grey stripe cutting the
+   * working muscle in half — the "muscles misaligned / model showing
+   * through" defect, most visible on the posterior forearm (two thin
+   * blades with the capsule between them) and on a raised deltoid cap
+   * (which trails the humerus by design, so the gap it opens is real).
+   * Tinted sleeves inherit the muscle's colour and opacity instead.
+   * ELBOW capsules deliberately carry no muscle: they bridge two
+   * DIFFERENT muscles, and a joint gap reading as flesh is correct. */
+  const sleeveDefs: [Pt, GroupName, Pt, GroupName, number, string?][] = [
     // Elbow capsules start at 0.58 of the humerus so that, with the
     // shoulder sleeves reaching 0.62, the upper arm's AXIS is covered
     // shoulder to elbow — at 45°+ elevation the narrow arm blocks
@@ -1811,6 +1872,7 @@ export function renderBodyDemo(
       seg(JA.shoulderL, JA.elbowL, 0.62),
       "upperArmL",
       7,
+      view === "anterior" ? "front-deltoids" : "back-deltoids",
     ],
     [
       [JA.shoulderR[0] - 6, JA.shoulderR[1] + 2],
@@ -1818,6 +1880,7 @@ export function renderBodyDemo(
       seg(JA.shoulderR, JA.elbowR, 0.62),
       "upperArmR",
       7,
+      view === "anterior" ? "front-deltoids" : "back-deltoids",
     ],
     /* Forearm-axis sleeves: the fist rides the forearm group (no
      * relative rotation), but the thin forearm blocks let the arm END
@@ -1835,6 +1898,7 @@ export function renderBodyDemo(
       JA.handL,
       "foreArmL",
       view === "anterior" ? 5 : 7.5,
+      "forearm",
     ],
     [
       seg(JA.elbowR, JA.handR, 0.35),
@@ -1842,6 +1906,7 @@ export function renderBodyDemo(
       JA.handR,
       "foreArmR",
       view === "anterior" ? 5 : 7.5,
+      "forearm",
     ],
   ];
   if (view === "anterior") {
@@ -1892,7 +1957,7 @@ export function renderBodyDemo(
   // a thicker core at rest.
   const REST_FLOOR = (w: number) => (w >= 8 ? 5.5 : 4.2);
   const sleeves = sleeveDefs
-    .map(([pa, ga, pb, gb, w]) => {
+    .map(([pa, ga, pb, gb, w, muscle]) => {
       const a = applyToPoint(pa, pose[ga] ?? []);
       const b = applyToPoint(pb, pose[gb] ?? []);
       /* Deformation-aware width (owner pass 8: at rest the full-width
@@ -1907,7 +1972,16 @@ export function renderBodyDemo(
         b[1] - a[1] - (pb[1] - pa[1])
       );
       const wEff = Math.min(w, REST_FLOOR(w) + dv * 0.5);
-      return `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}" stroke="${BODY}" stroke-width="${wEff.toFixed(1)}" stroke-linecap="round"/>`;
+      const level = muscle ? demo.tint[muscle] : undefined;
+      const stroke = level
+        ? level === "primary"
+          ? PRIMARY
+          : SECONDARY
+        : BODY;
+      const op = level
+        ? ` stroke-opacity="${tintOpacity(level).toFixed(3)}"`
+        : "";
+      return `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}" stroke="${stroke}"${op} stroke-width="${wEff.toFixed(1)}" stroke-linecap="round"/>`;
     })
     .join("");
 
