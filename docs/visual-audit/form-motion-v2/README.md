@@ -761,3 +761,22 @@ carry the reference separations (pecs/abs blocks/quad sweep), and
 reshaping vendored polygons would break identity with the Form view.
 
 Motion probe: all 15 smooth. 56 rig+component tests passing.
+
+## STATUS 2026-08-15 (fortieth pass) — the POSTERIOR figure's part-fit round
+
+Operator supplied a second reference batch (écorché front/back/side
+turnarounds) — strong back views, which exposed that the posterior
+figure never got the part-by-part audit the side (32-34) and front
+(35) views received. Measured at zoom against the plates, three fixes:
+
+| Finding                | Fix                                                                                                                                                                                                                     |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Glute→hamstring gulf   | The row gap ran 4.5-5.5 units (typical mosaic seam 1.5-2.5). Hamstring + adductor TOPS rise 2.2 toward the glutes — the pass-35 groin-band methodology, mirrored to the back.                                            |
+| Thoraco-lumbar void    | The deep V between the lower-back blades into the sacrum notch (~7 wide) is exactly where the plates show the flat FASCIA diamond + sacrum. One darker body-toned wedge rides the torso, painted UNDER the muscle blocks |
+|                        | — same missing-part precedent as feet/heels/hands; every normal seam stays a seam.                                                                                                                                       |
+| Fragmented back knees  | Posterior knees had NO sleeves (pass-5 scoped them anterior-only because posterior demos never bend knees — but the REST read needs the core, exactly the pass-35 anterior floor lesson). Both knees gain the standard    |
+|                        | rest-width sleeve.                                                                                                                                                                                                       |
+
+Pins updated: posterior identity path count 37→38 (the wedge),
+posterior sleeve count 6→8 (the knees). Motion probe: all 15 smooth.
+56 rig+component tests passing.

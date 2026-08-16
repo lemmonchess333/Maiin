@@ -471,6 +471,27 @@ const POSTERIOR_FEET: { group: GroupName; points: Pt[] }[] = [
   },
 ];
 
+/* The vendored posterior art leaves the thoraco-lumbar junction as a
+ * deep V of background between the lower-back blades, tapering into
+ * the sacrum notch between the glute tops — far wider than any mosaic
+ * seam (~7 units at the top). The anatomy plates (operator references,
+ * 2026-08-15) show exactly that region as the flat thoraco-lumbar
+ * FASCIA diamond + sacrum. Same missing-part precedent as the feet,
+ * heels and hands: one darker body-toned wedge riding the torso,
+ * painted UNDER the muscle blocks so only the void fills — every
+ * normal seam stays a seam. */
+const POSTERIOR_SACRUM: { group: GroupName; points: Pt[] } = {
+  group: "torso",
+  points: [
+    [43.5, 84],
+    [56.5, 84],
+    [55, 98],
+    [51.2, 112],
+    [48.8, 112],
+    [45, 98],
+  ],
+};
+
 /* ── Exercise definitions ─────────────────────────────────────── */
 
 const easeInOutSine = (t: number) =>
@@ -1840,6 +1861,31 @@ export function renderBodyDemo(
         8,
       ]
     );
+  } else {
+    /* Posterior knee sleeves (posterior part-fit round): the back-view
+     * knee shards sit with the same wide natural gaps the anterior
+     * knees had before pass 35 — the rest-floor core closes the
+     * fragmented read. Posterior demos never bend the knee, so these
+     * stay at the rest width for good. Knee point = the vendored
+     * posterior knee shards' centroid row. */
+    const KNEE_L: Pt = [34.3, 159.8];
+    const KNEE_R: Pt = [66.2, 159.8];
+    sleeveDefs.push(
+      [
+        seg([KNEE_L[0], POST.hipY], KNEE_L, 0.8),
+        "thighL",
+        seg(KNEE_L, [KNEE_L[0], POST.ankleY], 0.2),
+        "shankL",
+        8,
+      ],
+      [
+        seg([KNEE_R[0], POST.hipY], KNEE_R, 0.8),
+        "thighR",
+        seg(KNEE_R, [KNEE_R[0], POST.ankleY], 0.2),
+        "shankR",
+        8,
+      ]
+    );
   }
   // The knee cluster's shards sit with wider natural gaps than the
   // arm blocks the global 4.2 resting floor was tuned on — knees keep
@@ -1923,6 +1969,24 @@ export function renderBodyDemo(
     })
     .join("");
 
+  // Fascia/sacrum wedge — posterior only, painted under the blocks.
+  const sacrum =
+    view === "posterior"
+      ? (() => {
+          const pts = applyOps(
+            POSTERIOR_SACRUM.points,
+            pose[POSTERIOR_SACRUM.group] ?? []
+          );
+          const fill = tone(BODY, -4);
+          return shape(
+            pts,
+            2.4,
+            fill,
+            ` stroke="${fill}" stroke-width="0.5" stroke-linejoin="round"`
+          );
+        })()
+      : "";
+
   const feet = (view === "anterior" ? ANTERIOR_FEET : POSTERIOR_FEET)
     .map((f) => {
       const pts = applyOps(f.points, pose[f.group] ?? []);
@@ -2004,6 +2068,7 @@ export function renderBodyDemo(
     barBehind +
     glow +
     sleeves +
+    sacrum +
     polys +
     hands +
     feet +

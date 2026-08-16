@@ -50,8 +50,9 @@ describe("renderBodyDemo", () => {
       ""
     );
     // 33 body polys + 2 hands + 2 heel blocks (the back-view art
-    // tapers the soleus to a needle, so the heels cap the legs).
-    expect(post.match(/<path/g)!.length).toBe(37);
+    // tapers the soleus to a needle, so the heels cap the legs) + the
+    // fascia/sacrum wedge (posterior part-fit round).
+    expect(post.match(/<path/g)!.length).toBe(38);
   });
 
   it("joint sleeves bridge elbows, shoulders and knees (no ball caps)", () => {
@@ -64,7 +65,8 @@ describe("renderBodyDemo", () => {
         []
       ).length;
     expect(count(renderBodyDemo("overhead-press", 0))).toBe(8); // +2 wrist welds
-    expect(count(renderBodyDemo("pull-ups", 0))).toBe(6);
+    // Posterior gained knee sleeves in the posterior part-fit round.
+    expect(count(renderBodyDemo("pull-ups", 0))).toBe(8);
     expect(
       renderBodyDemo("overhead-press", 0).includes('<circle fill="#B6BDC3"')
     ).toBe(false);
