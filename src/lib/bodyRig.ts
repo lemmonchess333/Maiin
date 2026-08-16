@@ -1024,8 +1024,25 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     pose: (e) => {
       /* Hands stay ON the grips while the body drops between them —
        * same both-ends-constrained problem as the pull-up, IK-solved.
-       * The elbows flare outward as the body sinks. */
-      const dy = lerp(0, 13, e);
+       * The elbows flare outward as the body sinks.
+       *
+       * DEPTH IS DERIVED, not dialled. The standard dip cue is "descend
+       * until the upper arm is at least parallel to the floor" — an elbow
+       * at 90° or a little past. The measured anterior arm (upper 24.26,
+       * fore 29.39, straight reach 53.65) fixes the shoulder-to-hand
+       * distance at any elbow angle by the law of cosines, and the body's
+       * drop is whatever closes the difference:
+       *
+       *   elbow 98° -> drop 13.0   the old value — ~8° SHORT of parallel
+       *   elbow 90° -> drop 15.5   parallel
+       *   elbow 89° -> drop 16.0   just past, which is what "at least" asks
+       *   elbow 83° -> drop 18.9   deep, and shoulder-expensive
+       *
+       * 13 was animating a partial rep. 16 stops just past parallel and
+       * no further — the same call the lateral raise made coming down
+       * from 78 to 72 to finish AT parallel rather than above it. A demo
+       * that models a form error teaches one. */
+      const dy = lerp(0, 16, e);
       const L = aimArm(
         { S: ANT.shoulderL, E: ANT.elbowL, H: ANT.handL },
         solveElbow(

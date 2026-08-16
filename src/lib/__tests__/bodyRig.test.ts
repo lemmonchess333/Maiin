@@ -878,6 +878,62 @@ describe("renderBodyDemo", () => {
     }
   });
 
+  it("dips descends to at least parallel", () => {
+    /* The standard dip cue is "descend until the upper arm is at least
+       parallel to the floor". The demo used to stop with the elbow at
+       98° — about 8° short — so it animated a partial rep, and a demo
+       that models a form error teaches one. Same call the lateral raise
+       made when it came down from 78 to 72 to finish AT parallel rather
+       than above it.
+
+       Asserted as the DEPTH THE FORM CUE IMPLIES, not as the constant.
+       The anterior arm is upper 24.26 and fore 29.39, straight reach
+       53.65, so the law of cosines puts the shoulder-to-hand distance at
+       a 90° elbow at 38.11 — meaning the body must drop 15.54 to get
+       there. Pinning `dy === 16` would pass just as well and say
+       nothing; this fails if the arm proportions change and the drop is
+       not updated with them, which is the actual thing to protect.
+
+       Measured off the rendered figure's top edge, because the body
+       descends as a unit and that is the travel a viewer sees. */
+    const topY = (t: number) => {
+      const svg = renderBodyDemo("dips", t, 1).replace(
+        /<g class="glow">.*?<\/g>/,
+        ""
+      );
+      const ys = [...svg.matchAll(/points="([^"]+)"/g)]
+        .flatMap((m) => m[1].trim().split(/\s+/))
+        .map((q) => Number(q.split(",")[1]))
+        .concat(
+          [...svg.matchAll(/ d="([^"]+)"/g)].flatMap((m) =>
+            [...m[1].matchAll(/(-?[\d.]+),(-?[\d.]+)/g)].map((q) =>
+              Number(q[2])
+            )
+          )
+        )
+        .filter(Number.isFinite);
+      return Math.min(...ys);
+    };
+    const drop = topY(1) - topY(0);
+
+    const UPPER = Math.hypot(18.8 - 24, 71.7 - 48);
+    const FORE = Math.hypot(5.1 - 18.8, 97.7 - 71.7);
+    const reachAt = (deg: number) =>
+      Math.sqrt(
+        UPPER * UPPER +
+          FORE * FORE -
+          2 * UPPER * FORE * Math.cos((deg * Math.PI) / 180)
+      );
+    const parallel = UPPER + FORE - reachAt(90);
+
+    expect(drop, `dips only descends ${drop.toFixed(1)}, short of parallel`)
+      .toBeGreaterThanOrEqual(parallel);
+    /* And not so deep it teaches the OTHER error: past about 80° the
+       shoulder is doing work the exercise is not asking for. */
+    expect(drop, `dips descends ${drop.toFixed(1)} — past a safe depth`)
+      .toBeLessThan(UPPER + FORE - reachAt(80));
+  });
+
   it("push-ups plants BOTH hands, not just the near one", () => {
     /* Needs its own assertion because the global shadow test above cannot
        separate this case. Planting only the near hand leaves the far one
