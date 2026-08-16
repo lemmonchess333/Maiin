@@ -218,6 +218,25 @@ function hipsBack(hingeDeg: number): Extract<Op, { kind: "rotate" }> {
  * where the tilted plank's toes rest. */
 const PUSHUP_HAND: Pt = [100, 156];
 const PUSHUP_TOE: Pt = [-61.6, 155.8];
+/** The floor both the hands and the toes stand on. */
+const PUSHUP_GROUND = 158.5;
+/** The drawn hand outline, so the palm can be PLANTED rather than guessed. */
+const SIDE_HAND_OUTLINE: Pt[] = (SIDE_PIECES.find(
+  (piece) => piece.group === "handL"
+)?.outline ?? []) as Pt[];
+/**
+ * A copy of the renderer's far-limb depth parallax, needed by the push-up's
+ * plant because the FAR hand is the lower of the two once the body is prone.
+ *
+ * Duplicated rather than hoisted: the renderer's `FAR_OFFSET` is declared
+ * inside the side-render closure alongside `FAR_NEAR` and `FOLLOW`, and
+ * lifting that block out to share one constant would move three coupled
+ * pieces of render policy into module scope to serve one pose. The test
+ * pins the two equal instead, which is the cheaper half of the same
+ * guarantee — and the guarantee that actually matters, since the failure
+ * mode is them drifting apart.
+ */
+const PUSHUP_FAR_OFFSET: Op = { kind: "translate", dx: -2.6, dy: 0 };
 
 /* Muscle-aura rings — nested convex hulls at falling opacity (the
  * no-filter fake blur; see the glow block in the renderers). */
@@ -1711,28 +1730,85 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       const beta = lerp(0, 9.5, e);
       const B: Op = { kind: "rotate", deg: beta, pivot: PUSHUP_TOE };
       const bodyOps: Op[] = [G, TILT, B];
-      // Map the fixed hand plant back to standing space for the aim.
-      const hPre = applyToPoint(PUSHUP_HAND, [
+      /* PLANT THE PALM, not the wrist.
+
+         `PUSHUP_HAND` is the WRIST anchor, and the hand piece reaches 8.6
+         units past it. Prone, that overhang points at the floor — so
+         aiming the wrist at the plant line buried the entire hand 7 units
+         UNDER it, while the toes sat correctly on the line. One end of
+         the body sunk into the ground (measured, 2026-08-16 contact
+         sweep; nothing checked ground contact for a non-standing demo).
+
+         Same fix-class as `SIDE_GRIP`: the contact point is where the
+         iron or the ground actually is, never the joint above it.
+
+         MEASURED, not a constant offset. A fixed drop got the palm within
+         1.3 of the floor but let it LIFT as the chest descended (158.3 ->
+         157.2 across the rep), because the plank pivots about the toe and
+         the IK re-solves every frame — a planted hand that creeps off the
+         floor is the defect `plantFoot` exists for, one limb over. So:
+         aim once, apply the solved arm to the REAL hand outline, see
+         where its lowest drawn point landed, and re-aim by exactly that
+         error. One correction pass, the same shape `hangingArmTo` uses. */
+      const invChain: Op[] = [
         { kind: "rotate", deg: -beta, pivot: PUSHUP_TOE },
         { kind: "rotate", deg: 13, pivot: PUSHUP_HAND },
         { kind: "rotate", deg: -90, pivot: [44, 100] },
-      ]);
-      const arm = aimArm(
-        {
-          S: SIDE_ANCHORS.shoulder,
-          E: SIDE_ANCHORS.elbow,
-          H: SIDE_ANCHORS.hand,
-        },
-        solveElbow(
-          SIDE_ANCHORS.shoulder,
+      ];
+      const solveFor = (target: Pt) => {
+        const hPre = applyToPoint(target, invChain);
+        return aimArm(
+          {
+            S: SIDE_ANCHORS.shoulder,
+            E: SIDE_ANCHORS.elbow,
+            H: SIDE_ANCHORS.hand,
+          },
+          solveElbow(
+            SIDE_ANCHORS.shoulder,
+            hPre,
+            SIDE_UPPER_LEN,
+            SIDE_FORE_LEN,
+            -1
+          ),
           hPre,
-          SIDE_UPPER_LEN,
-          SIDE_FORE_LEN,
-          -1
-        ),
-        hPre,
-        0
-      );
+          0
+        );
+      };
+      /* BOTH hands, because the FAR one is the lower of the two here and
+         it is the one that crosses the drawn floor line.
+
+         The depth parallax (`FAR_OFFSET`) is expressed in the figure's
+         OWN space so it rotates with the body — correct, and deliberately
+         so: as a screen-space nudge it staggered this demo's legs along
+         the body's LENGTH. But a prone figure has been turned 90°, which
+         turns that lateral offset into a VERTICAL one, and 2 units of it
+         puts the far hand under the floor while the near hand sits
+         perfectly on it.
+
+         Both hands are on the floor in life, so the honest target is that
+         NOTHING crosses the line: plant the lowest drawn point, and let
+         the near hand ride the 2 units above it that the parallax is
+         asking for. They overlap heavily, so that stagger reads as depth
+         — which is what the offset is there to buy. */
+      const palmOf = (a: ReturnType<typeof solveFor>) =>
+        Math.max(
+          ...[[], [PUSHUP_FAR_OFFSET]].flatMap((lead) =>
+            SIDE_HAND_OUTLINE.map(
+              (q) => applyToPoint(q, [...lead, ...a.fore, ...bodyOps])[1]
+            )
+          )
+        );
+      /* Iterated, because ONE pass does not converge: moving the target
+         also re-solves the elbow, which rotates the hand, which moves the
+         lowest point again. A single correction left the palm 1-2 units
+         through the floor and still drifting across the rep. Three passes
+         take it under 0.02 and it is a contraction, so more buys nothing. */
+      let targetY = PUSHUP_GROUND;
+      let arm = solveFor([PUSHUP_HAND[0], targetY]);
+      for (let i = 0; i < 3; i++) {
+        targetY -= palmOf(arm) - PUSHUP_GROUND;
+        arm = solveFor([PUSHUP_HAND[0], targetY]);
+      }
       return {
         head: bodyOps,
         torso: bodyOps,
@@ -2469,6 +2545,17 @@ export function renderBodyDemo(
      the contact shadow was drawn 4 units UP inside the ankles — the
      figure read as floating over its own shadow (measured in the
      2026-08-16 contact audit; posterior's 222 was already right). */
+  /* NOT a three-way branch, and the reason is worth a line because I
+     added one here and it was dead code.
+
+     A sweep looked like it had found two side demos (barbell-curl,
+     rope-tricep-pushdown) drawing their shadow 18.9 units below their own
+     feet. It had not. This renderer only ever runs for anterior and
+     posterior; the side path has its own shadow line further down that
+     already defaults to 204. The sweep had reconstructed the fallback
+     rule in the probe instead of reading the rendered `<ellipse>`, so it
+     was measuring my copy of the rule rather than the rule.
+     Measure the output, not your model of the output. */
   const groundY = demo.groundY ?? (demo.view === "anterior" ? 203 : 222);
   const shadow = `<ellipse cx="50" cy="${groundY}" rx="${shadowRx.toFixed(1)}" ry="2.6" fill="#000" opacity="${(0.16 + 0.1 * depth).toFixed(2)}"/>`;
 

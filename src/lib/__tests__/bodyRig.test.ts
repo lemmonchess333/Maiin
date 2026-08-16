@@ -1,4 +1,7 @@
 import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
 import {
   applyToPoint,
   BODY_DEMOS,
@@ -803,6 +806,139 @@ describe("renderBodyDemo", () => {
         ).toBe(1);
       }
     }
+  });
+
+  it("every figure meets its own contact shadow", () => {
+    /* The shadow IS the floor: it is the only thing on the canvas telling
+       a viewer where the ground is. Two failures, both found by measuring
+       rather than looking, and both invisible in a contact sheet because
+       the frame looks deliberate:
+
+       push-ups punched its HANDS 7 units through the floor while its
+       toes sat correctly on it — one end of the body in the ground.
+
+       It also reported barbell-curl and rope-tricep-pushdown drawing
+       their shadow 18.9 units below their own feet. THAT ONE WAS NOT
+       REAL, and it is the more useful half of the story: the probe
+       reconstructed the renderer's fallback rule instead of reading the
+       rendered `<ellipse>`, and reconstructed it from the wrong one of
+       the two render paths. I wrote a fix, and a mutation test showed the
+       fix changed nothing because the branch it edited is unreachable for
+       side demos. Measure the output, not your model of the output —
+       which is why this test reads the ellipse the renderer actually
+       emitted. */
+    const HANGS_OFF_THE_FLOOR = new Set(["dips", "pull-ups"]);
+    for (const [id] of Object.entries(BODY_DEMOS)) {
+      if (HANGS_OFF_THE_FLOOR.has(id)) continue;
+      for (const t of [0, 0.5, 1]) {
+        const full = renderBodyDemo(id, t, 1);
+        const shadowY = Number(
+          full.match(/<ellipse[^>]*cy="([-\d.]+)"/)?.[1] ?? NaN
+        );
+        expect(
+          Number.isFinite(shadowY),
+          `${id} draws no contact shadow`
+        ).toBe(true);
+        const svg = full.replace(/<g class="glow">.*?<\/g>/, "");
+        const ys = [...svg.matchAll(/points="([^"]+)"/g)]
+          .flatMap((m) => m[1].trim().split(/\s+/))
+          .map((q) => Number(q.split(",")[1]))
+          .concat(
+            [...svg.matchAll(/ d="([^"]+)"/g)].flatMap((m) =>
+              [...m[1].matchAll(/(-?[\d.]+),(-?[\d.]+)/g)].map((q) =>
+                Number(q[2])
+              )
+            )
+          )
+          .filter(Number.isFinite);
+        const lowest = Math.max(...ys);
+        /* The two sides get different tolerances, each from a reason
+           rather than from a round number.
+
+           FLOAT (6): a demo may legitimately stand on something. The calf
+           raise is on a step, so its shadow belongs on the floor BELOW
+           the platform, and it floats 5.4 at the top of the rise. The
+           defect this is aimed at measured 18.9, so the margin is ample.
+
+           SINK (2.6): the shadow is an ellipse of `ry` 2.6, so anything
+           within 2.6 of its centre is still inside the drawn shadow and
+           reads as contact. Past that a limb is in the ground, which has
+           no benign reading. The deadlift family sits at 1.3-2.4 — the
+           foot's lower edge against the shadow's middle — which is
+           exactly what that allowance is for. */
+        expect(
+          shadowY - lowest,
+          `${id}@${t} floats ${(shadowY - lowest).toFixed(1)} above its shadow`
+        ).toBeLessThan(6);
+        expect(
+          lowest - shadowY,
+          `${id}@${t} sinks ${(lowest - shadowY).toFixed(1)} through its shadow`
+        ).toBeLessThan(2.6);
+      }
+    }
+  });
+
+  it("push-ups plants BOTH hands, not just the near one", () => {
+    /* Needs its own assertion because the global shadow test above cannot
+       separate this case. Planting only the near hand leaves the far one
+       2.0 units through the floor — and the deadlift family legitimately
+       sits at up to 2.4 (foot edge against shadow centre), so no single
+       tolerance distinguishes them. A mutation proved exactly that: the
+       near-hand-only version passed the global test.
+
+       The far hand is the lower of the two here because `FAR_OFFSET` is a
+       body-space depth nudge, and a prone figure has been rotated 90°,
+       which turns it into a vertical one. Both hands are on the floor in
+       life, so the target is that NOTHING crosses the drawn line. */
+    for (const t of [0, 0.25, 0.5, 0.75, 1]) {
+      const svg = renderBodyDemo("push-ups", t, 1).replace(
+        /<g class="glow">.*?<\/g>/,
+        ""
+      );
+      const ys = [...svg.matchAll(/points="([^"]+)"/g)]
+        .flatMap((m) => m[1].trim().split(/\s+/))
+        .map((q) => Number(q.split(",")[1]))
+        .concat(
+          [...svg.matchAll(/ d="([^"]+)"/g)].flatMap((m) =>
+            [...m[1].matchAll(/(-?[\d.]+),(-?[\d.]+)/g)].map((q) =>
+              Number(q[2])
+            )
+          )
+        )
+        .filter(Number.isFinite);
+      const through = Math.max(...ys) - 158.5;
+      expect(
+        through,
+        `push-ups@${t} puts a hand ${through.toFixed(2)} through the floor`
+      ).toBeLessThan(0.3);
+    }
+  });
+
+  it("the push-up's copy of the far-limb parallax matches the renderer's", () => {
+    /* `PUSHUP_FAR_OFFSET` duplicates the render closure's `FAR_OFFSET`,
+       because the push-up's palm plant has to account for the FAR hand —
+       prone, the body-space depth offset becomes a VERTICAL one and the
+       far hand is the lower of the two.
+
+       Duplicated deliberately (hoisting would drag `FAR_NEAR` and `FOLLOW`
+       into module scope to serve one pose), which makes this the exact
+       mirror-drift shape this project's first recurring-mistake rule is
+       about. So the two are pinned equal from source: if the renderer's
+       parallax changes, the plant that compensates for it fails here
+       rather than silently sinking a hand back into the floor. */
+    const rigSrc = readFileSync(
+      resolve(dirname(fileURLToPath(import.meta.url)), "../bodyRig.ts"),
+      "utf8"
+    );
+    const renderer = rigSrc.match(
+      /const FAR_OFFSET: Op = \{ kind: "translate", dx: (-?[\d.]+), dy: (-?[\d.]+) \}/
+    );
+    const pushup = rigSrc.match(
+      /const PUSHUP_FAR_OFFSET: Op = \{ kind: "translate", dx: (-?[\d.]+), dy: (-?[\d.]+) \}/
+    );
+    expect(renderer, "renderer FAR_OFFSET not found").toBeTruthy();
+    expect(pushup, "PUSHUP_FAR_OFFSET not found").toBeTruthy();
+    expect([pushup![1], pushup![2]]).toEqual([renderer![1], renderer![2]]);
   });
 
   it("a standing lift keeps its planted foot planted", () => {
