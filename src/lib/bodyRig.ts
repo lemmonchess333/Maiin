@@ -153,8 +153,44 @@ const POST_FORE_LEN = Math.hypot(
   POST.handL[1] - POST.elbowL[1]
 );
 const PULLUP_BAR_Y = -12;
-const PULLUP_GRIP_L: Pt = [6, PULLUP_BAR_Y];
-const PULLUP_GRIP_R: Pt = [94, PULLUP_BAR_Y];
+/* GRIP WIDTH IS WHAT SEPARATES TWO EXERCISES, so it is derived from the
+ * shoulders rather than typed in. These were [6] and [94] — 88.0 apart
+ * against a 54.0 shoulder span, so 1.63x shoulder width. liftmanual's
+ * standard Pull-Up page asks for hand spacing at roughly biacromial
+ * width and puts 1.5x on a SEPARATE page, the Wide Grip Pull-Up. At 1.63
+ * the demo was not a wide-ish pull-up; it was the other exercise.
+ *
+ * Same defect the dip had, from the same cause: a width nothing was
+ * holding, inherited from wherever the figure's hands happened to sit.
+ * 1.15 keeps the hands a touch outside the shoulders, which is what
+ * "roughly shoulder width" looks like on a bar, and stays clear of the
+ * wide-grip page's territory. */
+const PULLUP_GRIP_RATIO = 1.15;
+const PULLUP_HALF_SPAN =
+  ((POST.shoulderR[0] - POST.shoulderL[0]) / 2) * PULLUP_GRIP_RATIO;
+const PULLUP_CENTRE_X = (POST.shoulderL[0] + POST.shoulderR[0]) / 2;
+const PULLUP_GRIP_L: Pt = [PULLUP_CENTRE_X - PULLUP_HALF_SPAN, PULLUP_BAR_Y];
+const PULLUP_GRIP_R: Pt = [PULLUP_CENTRE_X + PULLUP_HALF_SPAN, PULLUP_BAR_Y];
+/** Body drop that puts the shoulder exactly an arm's length from the
+ *  grip — i.e. a real dead hang. See the pose for why it is solved. */
+const PULLUP_HANG_DY =
+  Math.sqrt(
+    (POST_UPPER_LEN + POST_FORE_LEN) ** 2 -
+      (POST.shoulderL[0] - PULLUP_GRIP_L[0]) ** 2
+  ) -
+  (POST.shoulderL[1] - PULLUP_BAR_Y);
+/* Lowest vertex of the posterior head polygon in the UNPOSED model —
+ * the jaw line, which is the chin in a from-behind view. Mirrored here
+ * rather than derived, because bodyRig does not otherwise read the model
+ * geometry; `pull-up chin reference` pins it against bodyModelData so it
+ * cannot drift. */
+const PULLUP_CHIN_REST_Y = 19.95;
+/** Clear air between chin and bar at the top — liftmanual wants the chin
+ *  "clearly over, not level". */
+const PULLUP_CHIN_CLEARANCE = 3;
+/** Body rise that puts the chin over the bar, rather than a round number
+ *  that happened to look high enough. */
+const PULLUP_TOP_DY = PULLUP_BAR_Y - PULLUP_CHIN_CLEARANCE - PULLUP_CHIN_REST_Y;
 
 /* Side-view arm segment lengths. */
 const SIDE_UPPER_LEN = Math.hypot(
@@ -857,9 +893,11 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     view: "posterior",
     equip: "fixed-bar",
     concentricTo: 1,
-    // Hanging scene: bar overhead, body travels ~25 units, floor just
-    // below the dangling heels at the dead hang.
-    viewBox: "-20 -24 140 254",
+    /* Hanging scene: bar overhead, floor just below the dangling heels
+       at the dead hang. The top edge is -42, not -24: solving the top of
+       the rep from the chin rather than from a round number raised the
+       head 11 units further, and the old frame cropped it. */
+    viewBox: "-20 -42 140 272",
     groundY: 226,
     tint: {
       "upper-back": "primary",
@@ -871,7 +909,22 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * while the body rises — so the elbows are IK-solved. The solution
        * naturally produces the real silhouette: straight-arm hang at the
        * bottom, wide "W" flare (elbows out at ear height) at the top. */
-      const dy = lerp(1, -24, e); // dead hang → chin over the bar
+      /* THE DEAD HANG IS SOLVED, not set to 1.
+       *
+       * liftmanual asks for both endpoints and the bottom one is "elbow
+       * ~180 in a full dead hang before the next rep starts". The old
+       * value passed that test for the wrong reason: at a 1.63x grip the
+       * hand sat 17 units lateral of the shoulder, so the reach to the
+       * bar EXCEEDED the arm and `solveElbow` clamped it to straight. The
+       * hang read as straight because the arm was over-extended, not
+       * because the body was hanging at arm's length.
+       *
+       * Narrowing the grip to shoulder width removed that lateral offset
+       * and with it the accidental clamp — the same pose measured 147
+       * degrees, a third of a pull-up already done at the "hang". So the
+       * hang distance now comes from the arm: drop the body until the
+       * shoulder is exactly an arm's length from the grip. */
+      const dy = lerp(PULLUP_HANG_DY, PULLUP_TOP_DY, e);
       const L = aimArm(
         { S: POST.shoulderL, E: POST.elbowL, H: POST.handL },
         solveElbow(
@@ -929,9 +982,23 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     pose: (e) => {
       /* Body stays put; the bar travels from full overhead reach down to
        * the collarbone while the elbows tuck in to the sides — the same
-       * IK machinery as the pull-up with the constraints swapped. */
-      const hl: Pt = [lerp(12.2, 6, e), lerp(-14.5, 50, e)];
-      const hr: Pt = [lerp(87.8, 94, e), lerp(-14.5, 50, e)];
+       * IK machinery as the pull-up with the constraints swapped.
+       *
+       * THE BAR IS RIGID. Its hands used to travel outward as it came
+       * down — x from 12.2 to 6 on the left and 87.8 to 94 on the right,
+       * so the grip spread 75.6 -> 88.0 across the rep. A lat pulldown
+       * bar is a steel bar and the hands are ON it: that is not a form
+       * fault, it is an impossible object, and it was the widening that
+       * made the elbows look like they flared rather than tucked.
+       *
+       * The x's are now constants and only y animates, which is the only
+       * degree of freedom the equipment has. Reachable throughout — at
+       * the collarbone the shoulder-to-hand distance is 11.5 against an
+       * arm that folds to 3.5 — so nothing was being bought by the
+       * spread. */
+      const hy = lerp(-14.5, 50, e);
+      const hl: Pt = [12.2, hy];
+      const hr: Pt = [87.8, hy];
       const L = aimArm(
         { S: POST.shoulderL, E: POST.elbowL, H: POST.handL },
         solveElbow(POST.shoulderL, hl, POST_UPPER_LEN, POST_FORE_LEN, 1),
@@ -952,10 +1019,11 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       };
     },
     bar: (e) => {
+      // Same rigidity as the grips above: only y moves.
       const y = lerp(-14.5, 50, e);
       return [
-        [lerp(12.2, 6, e) - 10, y],
-        [lerp(87.8, 94, e) + 10, y],
+        [12.2 - 10, y],
+        [87.8 + 10, y],
       ];
     },
   },

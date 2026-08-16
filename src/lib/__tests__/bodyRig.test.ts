@@ -38,6 +38,14 @@ function elbowAngle(
   );
 }
 
+/* Posterior anchors, mirrored from `bodyRig`'s private `POST` — same
+   deal as the anterior set above, pinned by "posterior anchors match". */
+const POST_SHOULDER_L: [number, number] = [23, 46];
+const POST_SHOULDER_R: [number, number] = [77, 46];
+const POST_ELBOW_L: [number, number] = [17, 78];
+const POST_HAND_L: [number, number] = [9, 106];
+const POST_HAND_R: [number, number] = [91, 106];
+
 /** Interior elbow angle of a SIDE-view demo at `t`, in degrees. */
 function sideElbow(id: string, t: number): number {
   const pose = BODY_DEMOS[id].pose(t);
@@ -210,6 +218,22 @@ describe("renderBodyDemo", () => {
     expect(anchor("shoulderR")).toEqual(ANT_SHOULDER_R);
     expect(anchor("elbowL")).toEqual(ANT_ELBOW_L);
     expect(anchor("handL")).toEqual(ANT_HAND_L);
+
+    // The posterior set, scoped to the POST block so the two cannot
+    // shadow each other (both declare `shoulderL`).
+    const post = src.slice(src.indexOf("const POST = {"));
+    const pAnchor = (name: string) => {
+      const m = post.match(
+        new RegExp(`${name}: \\[(-?[\\d.]+), (-?[\\d.]+)\\] as Pt`)
+      );
+      expect(m, `POST.${name} not found in bodyRig.ts`).toBeTruthy();
+      return [Number(m![1]), Number(m![2])];
+    };
+    expect(pAnchor("shoulderL")).toEqual(POST_SHOULDER_L);
+    expect(pAnchor("shoulderR")).toEqual(POST_SHOULDER_R);
+    expect(pAnchor("elbowL")).toEqual(POST_ELBOW_L);
+    expect(pAnchor("handL")).toEqual(POST_HAND_L);
+    expect(pAnchor("handR")).toEqual(POST_HAND_R);
   });
 
   it("pushdown: capped at the top, locked out at the bottom", () => {
@@ -315,6 +339,143 @@ describe("renderBodyDemo", () => {
     const top = frames[frames.length - 1];
     expect(top.elbow[1] - top.shoulder[1]).toBeGreaterThan(0);
     expect(top.elbow[1] - top.shoulder[1]).toBeLessThan(6);
+  });
+
+  it("pulldown: the bar is rigid", () => {
+    /* The grips travelled OUTWARD as the bar came down — 75.6 apart at
+       full reach, 88.0 at the collarbone. A lat pulldown bar is a steel
+       bar and the hands are on it, so that is not a form fault, it is an
+       impossible object; and the widening is what made the elbows read as
+       flaring when the pose comment says they tuck.
+
+       Nothing was being bought by it either: at the collarbone the
+       shoulder-to-hand distance is 11.5 against an arm that folds to 3.5,
+       so the reach was never the constraint.
+
+       Asserted on the DRAWN bar as well as the hands, because the two are
+       separate code paths and a bar that stretches while the hands hold
+       still is the same lie told the other way round. */
+    const demo = BODY_DEMOS["lat-pulldown"];
+    const spans = [0, 0.25, 0.5, 0.75, 1].map((t) => {
+      const pose = demo.pose(t);
+      const bar = demo.bar!(t, pose);
+      return {
+        hands: Math.abs(
+          applyToPoint(POST_HAND_L, pose.foreArmL!)[0] -
+            applyToPoint(POST_HAND_R, pose.foreArmR!)[0]
+        ),
+        bar: Math.abs(bar![1][0] - bar![0][0]),
+      };
+    });
+    for (const s of spans) {
+      expect(s.hands).toBeCloseTo(spans[0].hands, 4);
+      expect(s.bar).toBeCloseTo(spans[0].bar, 4);
+    }
+    // The positive control: it still travels, it just travels vertically.
+    const y = (t: number) => demo.bar!(t, demo.pose(t))![0][1];
+    expect(y(1) - y(0)).toBeGreaterThan(50);
+  });
+
+  it("pull-up: shoulder-width grip, real dead hang, chin over the bar", () => {
+    /* Three findings that turned out to be one.
+
+       The grip was 88.0 against a 54.0 shoulder span — 1.63x. liftmanual
+       puts roughly shoulder width on its standard Pull-Up page and 1.5x
+       on a SEPARATE page, the Wide Grip Pull-Up, so the demo was not a
+       slightly-wide pull-up, it was the other exercise. Same defect the
+       dip had and from the same cause: a width nothing was holding.
+
+       Narrowing it then EXPOSED the dead hang, which had been passing for
+       the wrong reason. At 1.63x the hand sat 17 units lateral of the
+       shoulder and the reach to the bar exceeded the arm, so `solveElbow`
+       clamped to straight — the hang looked correct because the arm was
+       over-extended. Take the offset away and the same pose measures 147
+       degrees: a third of a rep already done before the rep starts. The
+       drop is now solved so the shoulder sits exactly an arm's length
+       from the grip.
+
+       And the top never cleared the bar. liftmanual wants the chin
+       "clearly over, not level"; the bar cut through the middle of the
+       head, chin 8 units BELOW it. Solved from the head's own geometry
+       rather than raised until it looked right. */
+    const demo = BODY_DEMOS["pull-ups"];
+    const grip = demo.bar!(0, demo.pose(0))!;
+    expect(grip, "pull-ups declares no bar").toBeTruthy();
+
+    const handSpan = (t: number) => {
+      const pose = demo.pose(t);
+      return Math.abs(
+        applyToPoint(POST_HAND_L, pose.foreArmL!)[0] -
+          applyToPoint(POST_HAND_R, pose.foreArmR!)[0]
+      );
+    };
+    const ratio = handSpan(0) / (POST_SHOULDER_R[0] - POST_SHOULDER_L[0]);
+    expect(
+      ratio,
+      `pull-up grip is ${ratio.toFixed(2)}x shoulder width`
+    ).toBeLessThan(1.35);
+    expect(ratio).toBeGreaterThan(0.95);
+    /* Hands stay on the bar — the pull-up's grip is rigid too. Two
+       decimals, not four: the arms reach the bar through composed
+       rotations, which leaves ~0.002 of float noise. The defect this
+       guards was 12.4 units wide, so 0.01 is still four orders of
+       magnitude tighter than it needs to be. */
+    expect(handSpan(1)).toBeCloseTo(handSpan(0), 2);
+
+    const elbow = (t: number) => {
+      const pose = demo.pose(t);
+      return elbowAngle(
+        applyToPoint(POST_SHOULDER_L, pose.upperArmL!),
+        applyToPoint(POST_ELBOW_L, pose.foreArmL!),
+        applyToPoint(POST_HAND_L, pose.foreArmL!)
+      );
+    };
+    expect(elbow(0), "dead hang").toBeGreaterThan(170);
+    expect(elbow(1), "top of the pull").toBeLessThan(90);
+
+    // Chin over the bar: the head's lowest drawn vertex clears the bar.
+    const headPolys = POSTERIOR.filter((p) => p.muscle === "head").length;
+    const chin = (t: number) => {
+      const svg = renderBodyDemo("pull-ups", t).replace(
+        /<g class="glow">.*?<\/g>/,
+        ""
+      );
+      const polys = [...svg.matchAll(/points="([^"]+)"/g)].map((m) => m[1]);
+      return Math.max(
+        ...polys.slice(0, headPolys).flatMap((s) =>
+          s
+            .trim()
+            .split(/\s+/)
+            .map((q) => Number(q.split(",")[1]))
+        )
+      );
+    };
+    const barY = grip[0][1];
+    expect(chin(1), "chin does not clear the bar").toBeLessThan(barY);
+    // …and the bottom is still a hang, not a permanent chin-up.
+    expect(chin(0)).toBeGreaterThan(barY + 20);
+  });
+
+  it("pull-up chin reference matches the model it mirrors", () => {
+    /* `PULLUP_CHIN_REST_Y` is a measurement of the posterior head polygon
+       copied into `bodyRig`, which does not otherwise read the model
+       geometry. Same mirror-drift shape as the anterior anchors: if the
+       head art is ever redrawn, the chin solve would keep aiming at a jaw
+       line that no longer exists and the test above would still pass,
+       because it checks the DRAWN chin against the same stale target. */
+    const src = readFileSync(
+      resolve(dirname(fileURLToPath(import.meta.url)), "../bodyRig.ts"),
+      "utf8"
+    );
+    const declared = Number(
+      src.match(/const PULLUP_CHIN_REST_Y = ([\d.]+);/)![1]
+    );
+    const actual = Math.max(
+      ...POSTERIOR.filter((p) => p.muscle === "head").flatMap((p) =>
+        p.points.map((q) => q[1])
+      )
+    );
+    expect(declared).toBeCloseTo(actual, 0);
   });
 
   it("pushdown: the rope's knotted tail travels down to lockout", () => {
