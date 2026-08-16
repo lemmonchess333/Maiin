@@ -682,6 +682,129 @@ describe("renderBodyDemo", () => {
      therefore have camera and canvas coverage but no joint-gap or
      bone-length coverage. */
 
+  it("the figure renders as ONE connected body, in every view", () => {
+    /* The complaint that opened this arc, measured directly: "arms still
+       look wrong... they look like there in two section". A limb that
+       detaches does not just move wrong — the drawing stops being a body
+       and becomes a pile of parts.
+
+       Deliberately measured from RENDERED OUTPUT, not from pose ops. The
+       joint-continuity test above works on anchors and therefore only
+       covers side demos, because the anterior and posterior rigs anchor
+       against module-private tables. This one needs nothing private: it
+       takes the drawn shapes, links any two that come within `eps`, and
+       counts connected components. One body, one component. It closes the
+       gap that test had to leave open.
+
+       THE THRESHOLD IS PER VIEW, because the two rigs are built
+       differently and the measurement says so plainly:
+
+         side demos          worst gap to bridge 0.73
+         anterior/posterior  worst gap to bridge 3.37
+
+       The side pieces are constructed from contours and very nearly
+       touch. The front and back rigs are an écorché MOSAIC — separate
+       muscle shapes with dark ground between them, which is the intended
+       look and not a defect. A single threshold would either flag the art
+       or go slack on the side demos, so each view gets one sized to its
+       own construction with roughly 1.3-1.6 units of headroom.
+
+       MEASURED SENSITIVITY, not assumed: sliding a front-view forearm off
+       its elbow fails this at 5 units — a displacement the anchor test
+       above cannot see at all, because it has no anchor table for that
+       rig. On SIDE demos it is the less sensitive of the two (broad
+       overlapping muscle shapes stay in contact through a few units of
+       slide), and that is fine: there the anchor test catches 0.5. The two
+       are complementary rather than redundant, which is the only reason
+       both exist.
+
+       Getting that number cost two inert mutations first. Injecting
+       `foreArmL` at the head of a pose's returned object literal does
+       nothing when the pose declares its own `foreArmL` further down — the
+       later key wins, the mutant is a no-op, and the test "passing" looked
+       exactly like the test being weak. A mutation that does not change
+       behaviour proves nothing about the assertion; check the mutant
+       landed before concluding anything from it. */
+    const EPS: Record<string, number> = {
+      side: 2.0,
+      anterior: 5.0,
+      posterior: 5.0,
+    };
+
+    type Shape = { pts: [number, number][]; x0: number; y0: number; x1: number; y1: number };
+    const shapesOf = (svg: string): Shape[] => {
+      const raw: [number, number][][] = [];
+      for (const m of svg.matchAll(/points="([^"]+)"/g)) {
+        const pts = m[1]
+          .trim()
+          .split(/\s+/)
+          .map((q) => q.split(",").map(Number) as [number, number])
+          .filter((q) => Number.isFinite(q[0]) && Number.isFinite(q[1]));
+        if (pts.length) raw.push(pts);
+      }
+      for (const m of svg.matchAll(/ d="([^"]+)"/g)) {
+        const pts = [...m[1].matchAll(/(-?[\d.]+),(-?[\d.]+)/g)].map(
+          (q) => [Number(q[1]), Number(q[2])] as [number, number]
+        );
+        if (pts.length) raw.push(pts);
+      }
+      return raw.map((pts) => ({
+        pts,
+        x0: Math.min(...pts.map((q) => q[0])),
+        y0: Math.min(...pts.map((q) => q[1])),
+        x1: Math.max(...pts.map((q) => q[0])),
+        y1: Math.max(...pts.map((q) => q[1])),
+      }));
+    };
+
+    for (const [id, d] of Object.entries(BODY_DEMOS)) {
+      const eps = EPS[d.view ?? "anterior"];
+      for (const t of [0, 0.5, 1]) {
+        const svg = renderBodyDemo(id, t, 1).replace(
+          /<g class="glow">.*?<\/g>/,
+          ""
+        );
+        const sh = shapesOf(svg);
+        if (sh.length < 2) continue;
+        const parent = sh.map((_, i) => i);
+        const find = (i: number): number =>
+          parent[i] === i ? i : (parent[i] = find(parent[i]));
+        for (let i = 0; i < sh.length; i++) {
+          for (let j = i + 1; j < sh.length; j++) {
+            if (find(i) === find(j)) continue;
+            const a = sh[i];
+            const b = sh[j];
+            // Bounding-box reject first — without it this is O(n²·m²) and
+            // far too slow for a unit test.
+            if (
+              a.x0 - b.x1 > eps ||
+              b.x0 - a.x1 > eps ||
+              a.y0 - b.y1 > eps ||
+              b.y0 - a.y1 > eps
+            )
+              continue;
+            let touch = false;
+            for (const p of a.pts) {
+              for (const q of b.pts) {
+                if (Math.hypot(p[0] - q[0], p[1] - q[1]) <= eps) {
+                  touch = true;
+                  break;
+                }
+              }
+              if (touch) break;
+            }
+            if (touch) parent[find(i)] = find(j);
+          }
+        }
+        const parts = new Set(sh.map((_, i) => find(i))).size;
+        expect(
+          parts,
+          `${id}@${t} renders as ${parts} disconnected pieces, not one body`
+        ).toBe(1);
+      }
+    }
+  });
+
   it("a standing lift keeps its planted foot planted", () => {
     /* Contact audit 2026-08-16. The squat and deadlift get this free by
        building the leg ANKLE-UP; the row and RDL built it hip-down, so
