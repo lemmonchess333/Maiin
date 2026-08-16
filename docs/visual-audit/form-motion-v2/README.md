@@ -1032,3 +1032,55 @@ reverse an owner call and cost five exercises their demo — the rule's
 own remedy ("fall back to the static reference until each has its own
 prop/grip contract") is a coverage loss the owner should choose, not
 me. Flagged here with the evidence so the call can be made once.
+
+## STATUS 2026-08-16 (forty-third pass) — the six mis-propped variants get accurate demos
+
+Owner call on the pass-42e finding: "include them, we need them to be
+accurate." Six exercises were ALIASED onto a canonical whose demo draws
+an end-on BARBELL plate while the exercise uses another implement — a
+dumbbell bench press showed a barbell. The alias-hygiene rule's remedy
+is to drop the alias, which costs the exercise its demo; the owner
+chose accuracy instead. Each now has its own entry.
+
+Two new implements. A held implement pinned to the hand IS legitimate
+in the side view — the no-held-weights rule is a FRONT/BACK-view rule,
+where a prop always read detached because that figure has no hands.
+
+- **`db-end`** — a dumbbell whose axis points at the camera, drawn as a
+  HEXAGON. That is what a side camera sees of a lying press (the bells
+  sit left and right of the chest), and the hex dumbbell's flat faces
+  are what let a glance tell it from the barbell's round plate.
+- **`db-side`** — a dumbbell in profile (bell, handle, bell), which is
+  what a NEUTRAL grip shows: the axis runs fore-aft.
+
+| variant             | what it now does differently                                                                                                                                                                 |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `db-bench`          | Spreads bench-press; `db-end` hexagonal bell.                                                                                                                                                |
+| `db-rdl`            | Spreads romanian-deadlift; `db-side` profile dumbbell (neutral grip alongside the thighs).                                                                                                    |
+| `db-row`            | Spreads barbell-row; `db-side`. The unqualified name covers both the one-arm bench-supported and two-arm bent-over forms — the two-arm version shares this support geometry exactly, and with |
+|                     | only the near arm drawn a side camera cannot tell a one-arm row from a two-arm one, so building a bench would add geometry the view cannot distinguish.                                       |
+| `trap-bar-deadlift` | Own pose. Handles at the SIDES (arms hang plumb, not reaching to a midfoot bar), markedly more upright torso (42° vs 75°) and more knee flexion — the references' "closer to a squat than a   |
+|                     | hinge". Sleeves run fore AND aft, so a plate is drawn in FRONT of the shins and another BEHIND the calves, the pair being the signature no straight bar can produce.                          |
+| `sumo-deadlift`     | Own pose. HONEST about the camera: the wide stance and hands-inside-the-knees grip are foreshortened to nothing in profile, so they are not the signature. The trunk is — Escamilla et al.    |
+|                     | measure peak trunk 5-9° more vertical than conventional, and ours lands at exactly 7.0° (73.7° vs 80.7° from vertical) with lower hips and near-vertical shins.                              |
+| `t-bar-row`         | Own pose. One bar end is pinned to the floor, so the handle CANNOT travel the barbell row's straight vertical line — it swings on an ARC about that pivot. Torso 45° (vs 55°), and the bar    |
+|                     | runs off-frame toward an anchor ~190 units out, because a 7ft bar is ~250 rig units and the lifter straddles near the loaded end.                                                             |
+
+The variants SPREAD their canonical rather than copying its pose
+wherever the movement is genuinely the same, so a variant can never
+drift from what it is derived from — this project's #1 recurring defect
+class. Only the three that need a different POSE, not just a prop, get
+a full entry.
+
+Two things my own pins caught while building these, worth recording as
+evidence the pins work: `db-bench` failed the scale band (it inherits
+the bench's deliberately wide camera — the exemption is now STRUCTURAL,
+by camera rather than by id, so future variants are covered
+automatically), and `t-bar-row` clipped its own canvas because the 45°
+torso carries the head higher than the barbell row's. The T-bar arc
+also went in backwards first — measured, the hand travelled down-and-
+back 13 units instead of up; it now sweeps 32 units up-and-forward,
+matching the barbell row's 29-unit stroke.
+
+Demo coverage rises from 35 to 41 of the catalog's 152 exercises.
+119 tests passing; probe smooth on all 21 demos.

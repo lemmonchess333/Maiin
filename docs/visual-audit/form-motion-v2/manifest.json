@@ -157,6 +157,87 @@
         "file": "calf-raise-t100.png"
       }
     ],
+    "db-bench": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "db-bench-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "db-bench-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "db-bench-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "db-bench-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "db-bench-t100.png"
+      }
+    ],
+    "db-rdl": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "db-rdl-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "db-rdl-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "db-rdl-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "db-rdl-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "db-rdl-t100.png"
+      }
+    ],
+    "db-row": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "db-row-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "db-row-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "db-row-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "db-row-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "db-row-t100.png"
+      }
+    ],
     "deadlift": [
       {
         "t": 0,
@@ -425,6 +506,87 @@
         "t": 1,
         "effort": 0.8,
         "file": "squat-t100.png"
+      }
+    ],
+    "sumo-deadlift": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "sumo-deadlift-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "sumo-deadlift-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "sumo-deadlift-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "sumo-deadlift-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "sumo-deadlift-t100.png"
+      }
+    ],
+    "t-bar-row": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "t-bar-row-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "t-bar-row-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "t-bar-row-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "t-bar-row-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "t-bar-row-t100.png"
+      }
+    ],
+    "trap-bar-deadlift": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "trap-bar-deadlift-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "trap-bar-deadlift-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "trap-bar-deadlift-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "trap-bar-deadlift-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "trap-bar-deadlift-t100.png"
       }
     ]
   }

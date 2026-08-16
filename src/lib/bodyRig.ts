@@ -554,7 +554,21 @@ export interface BodyDemo {
   /** STRUCTURAL equipment only (no held weights — the figure has no
    *  hands): a fixed-bar is the overhead bar the body hangs from
    *  (pull-up); a cable-bar is the machine bar + cable (pulldown). */
-  equip?: "fixed-bar" | "cable-bar" | "dip-bars" | "plate-end";
+  equip?:
+    | "fixed-bar"
+    | "cable-bar"
+    | "dip-bars"
+    | "plate-end"
+    /** Dumbbell seen END-ON — its axis points at the camera, which is
+     *  what a side view of a lying press shows (the bells sit left and
+     *  right of the chest). Drawn as a HEXAGON: the hex dumbbell is the
+     *  gym's default, and against the barbell's round plate the flat
+     *  faces are what let a glance tell the two implements apart. */
+    | "db-end"
+    /** Dumbbell seen in PROFILE — its axis runs fore-aft, which is what
+     *  a NEUTRAL grip (palms facing the legs) shows from the side: two
+     *  bells with the handle between them. */
+    | "db-side";
   /** plate-end disc radius (default 10). The deadlift draws a
    *  full-size 45 (r=26 ≈ 45 cm on a 175 cm figure) so the bottom
    *  frame reads bar-near-the-floor. */
@@ -612,6 +626,41 @@ const lerp = (a: number, b: number, e: number) => a + (b - a) * e;
  *  variant's knob: the barbell squat leans 35° to keep the trap-riding
  *  bar over mid-foot; the bodyweight squat stays prouder (25°) because
  *  the forward arm reach carries the counterbalance instead. */
+function sideStanceChain(
+  e: number,
+  opts: { shin: number; thighRel: number; hinge: number; headCounter?: number }
+) {
+  const shin = lerp(0, opts.shin, e);
+  const thighRel = lerp(0, opts.thighRel, e);
+  const hinge = lerp(0, opts.hinge, e);
+  const legOps: Op[] = [
+    { kind: "rotate", deg: shin, pivot: SIDE_ANCHORS.ankle },
+  ];
+  const thighOps: Op[] = [
+    { kind: "rotate", deg: thighRel, pivot: SIDE_ANCHORS.knee },
+    ...legOps,
+  ];
+  const hipNew = applyToPoint(SIDE_ANCHORS.hip, thighOps);
+  const shift: Op = {
+    kind: "translate",
+    dx: hipNew[0] - SIDE_ANCHORS.hip[0],
+    dy: hipNew[1] - SIDE_ANCHORS.hip[1],
+  };
+  const torsoOps: Op[] = [
+    { kind: "rotate", deg: hinge, pivot: SIDE_ANCHORS.hip },
+    shift,
+  ];
+  const headOps: Op[] = [
+    {
+      kind: "rotate",
+      deg: -hinge * (opts.headCounter ?? 0.6),
+      pivot: SIDE_ANCHORS.neck,
+    },
+    ...torsoOps,
+  ];
+  return { legOps, thighOps, torsoOps, headOps };
+}
+
 function sideSquatChain(e: number, hinge: number) {
   const shin = lerp(0, 8, e);
   const thighRel = lerp(0, -62, e);
@@ -1686,6 +1735,290 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
   },
 };
 
+/* ── Implement variants ──────────────────────────────────────────
+ *
+ * Owner call 2026-08-16 ("include them, we need them to be
+ * accurate"): several exercises were ALIASED onto a canonical whose
+ * demo draws an end-on BARBELL plate while the exercise uses another
+ * implement — so a dumbbell bench press showed a barbell. Rather than
+ * drop the alias (the alias-hygiene rule's remedy, which costs the
+ * exercise its demo), each variant now gets its own entry.
+ *
+ * These SPREAD the canonical rather than copying its pose. The
+ * movement genuinely is the same — only the implement differs — and
+ * spreading means the pose can never drift from the canonical it is
+ * derived from, which is this project's #1 recurring defect class
+ * ("the tested copy does not prove the running copy"). A variant that
+ * needs a different POSE, not just a different prop, gets a real entry
+ * of its own instead. */
+BODY_DEMOS["db-bench"] = {
+  ...BODY_DEMOS["bench-press"],
+  // Pressed dumbbells sit with their axis ACROSS the body, so a side
+  // camera looks straight down the bar of each one: you see a single
+  // bell end-on, not the whole dumbbell.
+  equip: "db-end",
+  plateR: 7,
+};
+/* Straight arms hanging from a posed shoulder to a bar at fixed x —
+ * the deadlift family's arm. Returns the aimed arm ops. */
+function hangingArmTo(S: Pt, barX: number, torsoOps: Op[], hipPivot: Pt, hinge: number, shift: Op) {
+  const ARM = SIDE_UPPER_LEN + SIDE_FORE_LEN;
+  const dx = barX - S[0];
+  const hFinal: Pt = [barX, S[1] + Math.sqrt(Math.max(ARM * ARM - dx * dx, 1))];
+  const unpose: Op[] = [
+    { kind: "translate", dx: -shift.dx, dy: -shift.dy },
+    { kind: "rotate", deg: -hinge, pivot: hipPivot },
+  ];
+  const hPre = applyToPoint(hFinal, unpose);
+  const arm = aimArm(
+    { S: SIDE_ANCHORS.shoulder, E: SIDE_ANCHORS.elbow, H: SIDE_ANCHORS.hand },
+    solveElbow(SIDE_ANCHORS.shoulder, hPre, SIDE_UPPER_LEN, SIDE_FORE_LEN, -1),
+    hPre,
+    0
+  );
+  return {
+    upperArmL: [...arm.upper, ...torsoOps],
+    foreArmL: [...arm.fore, ...torsoOps],
+    handL: [...arm.fore, ...torsoOps],
+  };
+}
+
+BODY_DEMOS["sumo-deadlift"] = {
+  ...BODY_DEMOS["deadlift"],
+  /* Sumo. Be honest about what a side camera can and cannot show: the
+   * wide stance and the hands-inside-the-knees grip are almost entirely
+   * FORESHORTENED in profile, so they are not the signature here. What
+   * IS visible, and what the literature measures, is the trunk: peak
+   * trunk angle is 5-9 degrees more vertical than conventional
+   * (Escamilla et al.), with the hips starting closer to the bar. So
+   * this is the conventional chain with a more upright torso (60 vs 75)
+   * and a lower hip (deeper thigh drop), and near-vertical shins. */
+  pose: (e) => {
+    const { legOps, thighOps, torsoOps, headOps } = sideStanceChain(e, {
+      shin: 4,
+      thighRel: -64,
+      hinge: 68,
+    });
+    const S = applyToPoint(SIDE_ANCHORS.shoulder, torsoOps);
+    const hipNew = applyToPoint(SIDE_ANCHORS.hip, thighOps);
+    const shift: Op = {
+      kind: "translate",
+      dx: hipNew[0] - SIDE_ANCHORS.hip[0],
+      dy: hipNew[1] - SIDE_ANCHORS.hip[1],
+    };
+    return {
+      head: headOps,
+      torso: torsoOps,
+      pelvis: torsoOps,
+      thighL: thighOps,
+      thighR: thighOps,
+      shankL: legOps,
+      shankR: legOps,
+      ...hangingArmTo(S, MIDFOOT_X, torsoOps, SIDE_ANCHORS.hip, lerp(0, 68, e), shift),
+    };
+  },
+};
+
+BODY_DEMOS["trap-bar-deadlift"] = {
+  ...BODY_DEMOS["deadlift"],
+  /* Trap/hex bar. The lifter stands INSIDE the frame with the handles
+   * at the SIDES in a neutral grip, so the load sits on the body's own
+   * line rather than out in front of the shins — the arms hang plumb
+   * from the shoulder instead of reaching to a midfoot bar. The
+   * references are consistent that this is "closer to a squat than a
+   * hinge": more knee flexion, a markedly more upright torso, higher
+   * hips. The sleeves run fore AND aft, so a side camera sees a plate
+   * in FRONT of the shins and another BEHIND the calves at the same
+   * height — that pair is the trap bar's signature and the one thing
+   * that cannot be confused with a straight bar. */
+  equip: undefined,
+  // Content measures x -3.4..94.0 — the fore AND aft plates are what
+  // set the width here — and y -0.7..206.4. 140 wide keeps the
+  // figure at the same on-screen scale as the rest of the set.
+  viewBox: "-13 -6 140 218",
+  pose: (e) => {
+    const { legOps, thighOps, torsoOps, headOps } = sideStanceChain(e, {
+      shin: 12,
+      thighRel: -72,
+      hinge: 42,
+    });
+    const S = applyToPoint(SIDE_ANCHORS.shoulder, torsoOps);
+    const hipNew = applyToPoint(SIDE_ANCHORS.hip, thighOps);
+    const shift: Op = {
+      kind: "translate",
+      dx: hipNew[0] - SIDE_ANCHORS.hip[0],
+      dy: hipNew[1] - SIDE_ANCHORS.hip[1],
+    };
+    // Handles at the SIDE: the hand hangs plumb below the shoulder.
+    return {
+      head: headOps,
+      torso: torsoOps,
+      pelvis: torsoOps,
+      thighL: thighOps,
+      thighR: thighOps,
+      shankL: legOps,
+      shankR: legOps,
+      ...hangingArmTo(S, S[0], torsoOps, SIDE_ANCHORS.hip, lerp(0, 42, e), shift),
+    };
+  },
+  bar: (_e, pose) => {
+    const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+    return [h, h];
+  },
+  // Rear sleeve + plate, painted BEHIND the figure.
+  scene: (_e, pose) => {
+    const [x, y] = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+    const rx = x - 30;
+    return (
+      `<line x1="${rx.toFixed(1)}" y1="${y.toFixed(1)}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${GEAR}" stroke-width="2.6" stroke-linecap="round"/>` +
+      `<circle cx="${rx.toFixed(1)}" cy="${y.toFixed(1)}" r="13" fill="${GEAR_DARK}" stroke="#565760" stroke-width="1"/>` +
+      `<circle cx="${rx.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="${GEAR}"/>`
+    );
+  },
+  // Front sleeve + plate, painted OVER the figure.
+  sceneFront: (_e, pose) => {
+    const [x, y] = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+    const fx = x + 30;
+    return (
+      `<line x1="${x.toFixed(1)}" y1="${y.toFixed(1)}" x2="${fx.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${GEAR}" stroke-width="2.6" stroke-linecap="round"/>` +
+      `<circle cx="${fx.toFixed(1)}" cy="${y.toFixed(1)}" r="13" fill="${GEAR_DARK}" stroke="#565760" stroke-width="1"/>` +
+      `<circle cx="${fx.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="${GEAR}"/>`
+    );
+  },
+};
+
+/** T-bar / landmine anchor: the pinned end sits on the floor well in
+ *  FRONT of the lifter (they straddle the bar facing it). It is far
+ *  enough out that it leaves the frame — which is honest, a 7ft bar is
+ *  ~250 rig units — so the bar is drawn running off toward it. */
+const TBAR_ANCHOR: Pt = [242, 202];
+
+BODY_DEMOS["t-bar-row"] = {
+  ...BODY_DEMOS["barbell-row"],
+  /* T-bar row. The one thing that makes this NOT a barbell row: one end
+   * of the bar is pinned to the floor, so the handle cannot travel a
+   * straight vertical line — it swings on an ARC about that pivot. The
+   * references also put the torso nearer 45° than the barbell row's
+   * 55°, and say to match the torso angle to the bar angle. */
+  equip: undefined,
+  // Content measures x 31.2..112.8, y 16.3..204.2 — the 45° torso
+  // carries the head higher than the barbell row's, so the window
+  // starts at 10. Width 138 keeps the figure inside the set's scale band.
+  viewBox: "3 10 138 200",
+  pose: (e) => {
+    const HINGE = 45;
+    const KNEE = 20;
+    const LEAN = hipsBack(HINGE);
+    const T: Op = { kind: "rotate", deg: HINGE, pivot: SIDE_ANCHORS.hip };
+    const unpose: Op[] = [
+      { kind: "rotate", deg: -LEAN.deg, pivot: LEAN.pivot },
+      { kind: "rotate", deg: -HINGE, pivot: SIDE_ANCHORS.hip },
+    ];
+    const S = applyToPoint(SIDE_ANCHORS.shoulder, [T, LEAN]);
+    /* The handle rides the arc: take the dead-hang point below the
+     * shoulder as the bottom of the stroke, then SWING it about the
+     * floor anchor. Radius is fixed, so the bar cannot change length. */
+    const bottom: Pt = [S[0] + 1, S[1] + 50];
+    const R = Math.hypot(bottom[0] - TBAR_ANCHOR[0], bottom[1] - TBAR_ANCHOR[1]);
+    const a0 = Math.atan2(
+      bottom[1] - TBAR_ANCHOR[1],
+      bottom[0] - TBAR_ANCHOR[0]
+    );
+    /* + not −: the handle sits up-LEFT of the anchor, so increasing the
+     * angle sweeps it UP and slightly toward the pivot, which is the
+     * arc a landmine actually produces. (Measured the wrong way first:
+     * the hand travelled down-and-back 13 units.) 0.22 rad over the
+     * ~133-unit radius gives ~29 units of travel — matching the barbell
+     * row's stroke, so the two read as the same amount of work. The
+     * anchor sits ~190 units from the grip because a 7ft bar is ~250
+     * rig units and the lifter straddles near the loaded end — at a
+     * closer (shorter-bar) pivot the arc tips too far forward. */
+    const a = a0 + lerp(0, 0.16, e);
+    const hFinal: Pt = [
+      TBAR_ANCHOR[0] + R * Math.cos(a),
+      TBAR_ANCHOR[1] + R * Math.sin(a),
+    ];
+    const hPre = applyToPoint(hFinal, unpose);
+    const arm = aimArm(
+      { S: SIDE_ANCHORS.shoulder, E: SIDE_ANCHORS.elbow, H: SIDE_ANCHORS.hand },
+      solveElbow(SIDE_ANCHORS.shoulder, hPre, SIDE_UPPER_LEN, SIDE_FORE_LEN, -1),
+      hPre,
+      0
+    );
+    const legRaw: Op[] = [
+      { kind: "rotate", deg: KNEE, pivot: SIDE_ANCHORS.hip },
+      LEAN,
+    ];
+    const shankRaw: Op[] = [
+      { kind: "rotate", deg: -KNEE, pivot: SIDE_ANCHORS.knee },
+      { kind: "rotate", deg: KNEE, pivot: SIDE_ANCHORS.hip },
+      LEAN,
+    ];
+    const P = plantFoot(shankRaw);
+    return {
+      head: [
+        T,
+        LEAN,
+        {
+          kind: "rotate",
+          deg: -T.deg * 0.4,
+          pivot: applyToPoint([48, 32], [T, LEAN]),
+        },
+        P,
+      ],
+      torso: [T, LEAN, P],
+      pelvis: [
+        { kind: "rotate", deg: T.deg * 0.72, pivot: T.pivot },
+        LEAN,
+        P,
+      ],
+      thighL: [...legRaw, P],
+      thighR: [...legRaw, P],
+      shankL: [...shankRaw, P],
+      shankR: [...shankRaw, P],
+      upperArmL: [...arm.upper, T, LEAN, P],
+      foreArmL: [...arm.fore, T, LEAN, P],
+      handL: [...arm.fore, T, LEAN, P],
+    };
+  },
+  bar: (_e, pose) => {
+    const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+    return [h, h];
+  },
+  /* The bar itself runs from the hand out to the floor anchor, and the
+   * plates are loaded AT the hand end (they sit under the chest). Drawn
+   * in front so the loaded end reads; the shaft leaves the frame. */
+  sceneFront: (_e, pose) => {
+    const [x, y] = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+    return (
+      `<line x1="${x.toFixed(1)}" y1="${y.toFixed(1)}" x2="${TBAR_ANCHOR[0]}" y2="${TBAR_ANCHOR[1]}" stroke="${GEAR}" stroke-width="2.6" stroke-linecap="round"/>` +
+      `<circle cx="${(x + 3).toFixed(1)}" cy="${(y + 1).toFixed(1)}" r="11" fill="${GEAR_DARK}" stroke="#565760" stroke-width="1"/>` +
+      `<circle cx="${(x + 3).toFixed(1)}" cy="${(y + 1).toFixed(1)}" r="2.6" fill="${GEAR}"/>`
+    );
+  },
+};
+
+BODY_DEMOS["db-row"] = {
+  ...BODY_DEMOS["barbell-row"],
+  /* "Dumbbell Row" unqualified covers both the one-arm bench-supported
+   * and the two-arm bent-over form; the references treat the bent-over
+   * two-arm row as a standard named variant, and it is the one that
+   * shares this demo's support geometry exactly. It also happens to be
+   * the honest choice for a SIDE camera: with only the near arm drawn,
+   * a one-arm row and a two-arm row are the same silhouette, so
+   * building a bench and a supporting arm would add geometry the view
+   * cannot distinguish. The grip is NEUTRAL, so the dumbbell's axis
+   * runs fore-aft and the camera sees it in profile. */
+  equip: "db-side",
+};
+BODY_DEMOS["db-rdl"] = {
+  ...BODY_DEMOS["romanian-deadlift"],
+  // An RDL holds the dumbbells in a NEUTRAL grip alongside the thighs,
+  // so their axis runs fore-aft and the side camera sees the whole
+  // dumbbell in profile — bell, handle, bell.
+  equip: "db-side",
+};
+
 /** Sibling exercises that share a demo's motion pattern.
  *
  * Alias hygiene (Motion Rig V2 roadmap, owner-decided 2026-07-16): an
@@ -1698,9 +2031,6 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
 const DEMO_ALIASES: Record<string, string> = {
   "db-shoulder-press": "overhead-press",
   "smith-shoulder-press": "overhead-press",
-  "sumo-deadlift": "deadlift",
-  "trap-bar-deadlift": "deadlift",
-  "db-rdl": "romanian-deadlift",
   /* Squat family (owner call 2026-08-15): only the smith machine keeps
    * the barbell model — front/goblet don't carry a back bar, so they
    * share the bar-less variant (its forward reach is the closest
@@ -1713,13 +2043,10 @@ const DEMO_ALIASES: Record<string, string> = {
   "chin-ups": "pull-ups",
   "tricep-dips": "dips",
   "weighted-chest-dip": "dips",
-  "db-bench": "bench-press",
   "diamond-push-ups": "push-ups",
   "weighted-push-ups": "push-ups",
   "smith-bench-press": "bench-press",
   "pendlay-row": "barbell-row",
-  "db-row": "barbell-row",
-  "t-bar-row": "barbell-row",
 };
 
 /* Side-view demos ship since the Prompt-9 rig rebuild (canonical master
@@ -2388,6 +2715,34 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
       `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}" fill="${GEAR_DARK}" stroke="#565760" stroke-width="1"/>` +
       `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(r * 0.64).toFixed(1)}" fill="none" stroke="${GEAR}" stroke-width="1.2" opacity="0.7"/>` +
       `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(r * 0.22).toFixed(1)}" fill="${GEAR}"/>`;
+  }
+
+  /* Dumbbells. A held implement pinned to the hand is legitimate in the
+     side view (the figure HAS hands here — the no-held-weights rule is
+     a front/back-view rule, where it always read detached). */
+  if (ends && (demo.equip === "db-end" || demo.equip === "db-side")) {
+    const [x, y] = ends[0];
+    if (demo.equip === "db-end") {
+      const r = demo.plateR ?? 7;
+      const hex = Array.from({ length: 6 }, (_, i) => {
+        const a = (Math.PI / 3) * i - Math.PI / 6;
+        return `${(x + r * Math.cos(a)).toFixed(1)},${(y + r * Math.sin(a)).toFixed(1)}`;
+      }).join(" ");
+      plate =
+        `<polygon points="${hex}" fill="${GEAR_DARK}" stroke="#565760" stroke-width="1"/>` +
+        `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(r * 0.3).toFixed(1)}" fill="${GEAR}"/>`;
+    } else {
+      // Profile dumbbell: bell — handle — bell, along the facing axis.
+      const bw = 4.6; // bell width
+      const bh = 11; // bell height
+      const half = 9.2; // handle half-length (bell centres sit here)
+      const bell = (cx: number) =>
+        `<rect x="${(cx - bw / 2).toFixed(1)}" y="${(y - bh / 2).toFixed(1)}" width="${bw}" height="${bh}" rx="1.6" fill="${GEAR_DARK}" stroke="#565760" stroke-width="0.9"/>`;
+      plate =
+        `<rect x="${(x - half + 1).toFixed(1)}" y="${(y - 1.8).toFixed(1)}" width="${(half * 2 - 2).toFixed(1)}" height="3.6" rx="1.4" fill="${GEAR}"/>` +
+        bell(x - half) +
+        bell(x + half);
+    }
   }
 
   const sceneFront = demo.sceneFront?.(e, pose) ?? "";

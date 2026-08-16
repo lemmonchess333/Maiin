@@ -366,9 +366,17 @@ describe("renderBodyDemo", () => {
        tightened and legitimately render a smaller figure — a lateral
        raise at full span, a bench, and a prone push-up. */
     const WIDE = new Set(["lateral-raise", "bench-press", "push-ups"]);
+    /* Exempt STRUCTURALLY, by camera rather than by id: an implement
+       variant spreads its canonical, so it inherits that camera and is
+       exempt for exactly the same reason the canonical is. Listing ids
+       instead would need editing every time a variant is added — and
+       would fail closed, flagging a demo that is fine. */
+    const wideCameras = new Set(
+      [...WIDE].map((id) => BODY_DEMOS[id].viewBox).filter(Boolean)
+    );
     const scales: Record<string, number> = {};
     for (const [id, d] of Object.entries(BODY_DEMOS)) {
-      if (WIDE.has(id)) continue;
+      if (WIDE.has(id) || (d.viewBox && wideCameras.has(d.viewBox))) continue;
       const vw = Number(
         (
           d.viewBox ??
