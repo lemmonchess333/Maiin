@@ -73,7 +73,11 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // 2026-08-11: 53 → 54. The Feather icon on AdjustWeekSheet's "this week
   // is already eased" row — an icon, which the 4.5:1 small-text bar does
   // not apply to; its label beside it is `text-foreground`.
-  running: 54,
+  // 2026-08-16: 54 → 55. The Target icon on RunSummary's goal-time row.
+  // Icon only — the guard caught the TIME beside it in the same commit
+  // (`text-lg font-bold` is 18px, under the 18.66px bold bar), and that
+  // one moved to `text-running-strong` rather than being pinned here.
+  running: 55,
   lifting: 23,
   nutrition: 4,
   destructive: 0,

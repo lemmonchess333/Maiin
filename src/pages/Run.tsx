@@ -315,6 +315,11 @@ export default function Run() {
   const [locked, setLocked] = useState(false);
   const [countdown, setCountdown] = useState(3);
   const [autoPaused, setAutoPaused] = useState(false);
+  /* Elapsed time at the moment the distance goal was reached, held so the
+     summary can report it however much further the runner went afterwards.
+     Null until the goal fires, and null forever on a run with no distance
+     target. */
+  const [goalReachedAt, setGoalReachedAt] = useState<number | null>(null);
   const [runConfig, setRunConfig] = useState<RunConfig | null>(null);
   const [treadmillDistance, setTreadmillDistance] = useState(0);
   const [acquiringSeconds, setAcquiringSeconds] = useState(0);
@@ -938,6 +943,23 @@ export default function Run() {
     if (targetMeters > 0) {
       audioCues.checkHalfway(gps.distance, targetMeters);
       audioCues.checkFinal500(gps.distance, targetMeters);
+      /* Goal reached — announce, and KEEP RECORDING. The run does not
+         stop and the user is not asked: 4 reference apps announce and
+         continue, 0 auto-finish, 0 ask mid-run (Garmin shipped
+         auto-finish on the 310XT and reversed it — a runner who hits
+         5 km and jogs a kilometre home has run 6 km).
+
+         What makes not-stopping acceptable is capturing the goal
+         MOMENT, which is the thing a runner wanted a stop for. The
+         elapsed time at the goal is held here and saved on the run, so
+         the summary can say "5 km goal in 27:43" however long after it
+         they actually pressed finish. */
+      const goalTime = audioCues.checkGoalReached(
+        gps.distance,
+        targetMeters,
+        timer.elapsed
+      );
+      if (goalTime !== null) setGoalReachedAt(goalTime);
     }
   }, [gps.distance, timer.elapsed, phase, audioCues, runConfig]);
 
@@ -1132,6 +1154,11 @@ export default function Run() {
             ? runConfig.intervals
             : undefined,
         routeQuality,
+        /* Announce-and-continue's other half: the goal moment survives the
+           overshoot. Without this the summary could only report the total,
+           and "5 km goal in 27:43" is the number the runner set out for. */
+        goalReachedAt,
+        goalDistanceM: getDistanceTargetMeters(runConfig?.target) || undefined,
       },
     });
   };
@@ -1734,6 +1761,8 @@ export default function Run() {
               distance={currentDistance}
               points={gps.points}
               formatTime={timer.formatTime}
+              goalReachedAt={goalReachedAt}
+              goalDistanceM={getDistanceTargetMeters(runConfig?.target)}
               onPause={handlePause}
               onLock={() => setLocked(true)}
               isPaused={phase === "paused"}

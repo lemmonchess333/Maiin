@@ -213,3 +213,163 @@ describe("marker bookkeeping", () => {
     expect(spoken).toEqual([]);
   });
 });
+
+/**
+ * The distance goal is reached mid-run. The run does NOT stop — 4 of 6
+ * reference apps announce and keep recording, 0 auto-finish (Garmin shipped
+ * auto-finish on the 310XT and reversed it), and 0 ask mid-stride. So the
+ * announcement is the whole of the app's response, and it has to survive
+ * three things: firing once, not being buried by the split cue landing in
+ * the same instant, and reaching a runner with audio off.
+ */
+describe("checkGoalReached — announce and continue", () => {
+  it("announces the goal with its time, and says the run continues", () => {
+    const { result } = mountCues();
+    act(() => {
+      result.current.checkGoalReached(5000, 5000, 1663);
+    });
+    expect(spoken).toHaveLength(1);
+    expect(spoken[0]).toMatch(/^5 kilometres reached\./);
+    // Spoken as a duration, not as a time of day: "27:43" is read by TTS
+    // as "twenty-seven forty-three".
+    expect(spoken[0]).toContain("27 minutes 43");
+    // The one thing the runner cannot otherwise know.
+    expect(spoken[0]).toMatch(/keep going/i);
+  });
+
+  it("returns the goal time, billing back the overshoot", () => {
+    /* The goal fires on the first fix at or past the target, so the raw
+       elapsed is a sample late. At 5:00/km, 25m of overshoot is 7.5s —
+       visible enough to make "5 km goal in 27:50" disagree with a split
+       table that says 27:43. */
+    const { result } = mountCues();
+    let goalTime: number | null = null;
+    act(() => {
+      goalTime = result.current.checkGoalReached(5025, 5000, 1507.5);
+    });
+    expect(goalTime).toBeCloseTo(1500, 0);
+  });
+
+  it("fires once, however many fixes land past the goal", () => {
+    const { result } = mountCues();
+    act(() => {
+      result.current.checkGoalReached(5000, 5000, 1500);
+      result.current.checkGoalReached(5100, 5000, 1530);
+      result.current.checkGoalReached(6000, 5000, 1800);
+    });
+    expect(spoken).toHaveLength(1);
+  });
+
+  it("does not fire before the goal", () => {
+    const { result } = mountCues();
+    act(() => {
+      result.current.checkGoalReached(4999, 5000, 1499);
+    });
+    expect(spoken).toEqual([]);
+  });
+
+  it("does nothing when there is no distance goal", () => {
+    const { result } = mountCues();
+    let goalTime: number | null = null;
+    act(() => {
+      goalTime = result.current.checkGoalReached(5000, 0, 1500);
+    });
+    expect(spoken).toEqual([]);
+    expect(goalTime).toBeNull();
+  });
+
+  it("suppresses the split cue that lands in the same instant", () => {
+    /* A 5 km goal coincides exactly with the 5 km split. Without this the
+       runner hears "5 kilometres reached…" and then, immediately,
+       "5 kilometres. Pace 5:32 per kilometre." — the routine cue burying
+       the one that matters. */
+    const { result } = mountCues();
+    runKms(result.current, [300, 300, 300, 300]); // 4 km banked
+    spoken = [];
+    act(() => {
+      result.current.checkGoalReached(5000, 5000, 1500);
+      result.current.checkDistanceCue(5000, 1500);
+    });
+    expect(spoken).toHaveLength(1);
+    expect(spoken[0]).toMatch(/reached/);
+  });
+
+  it("only suppresses the COINCIDENT split, not the next one", () => {
+    /* The guard must not silence the rest of the run. */
+    const { result } = mountCues();
+    act(() => {
+      result.current.checkGoalReached(5000, 5000, 1500);
+      result.current.checkDistanceCue(5000, 1500);
+      result.current.checkDistanceCue(6000, 1800);
+    });
+    expect(spoken).toHaveLength(2);
+    expect(spoken[1]).toMatch(/^6 kilometres\./);
+  });
+
+  it("leaves the next split's PACE honest after a suppression", () => {
+    /* Suppressing the 5 km cue must not make the 6 km cue measure its pace
+       from the 4 km marker — that would announce a 2 km average as one
+       kilometre's split, the exact class of bug this file's header is
+       about.
+
+       The paces have to DIFFER for this to test anything. A first version
+       ran every kilometre at 5:00 and passed against a mutant that skipped
+       the re-basing entirely, because the average of two identical splits
+       is that split. So: km 5 at 4:00 and km 6 at 6:00. Re-based, the cue
+       says 6:00; measured from the 4 km marker it would say 5:00. */
+    const { result } = mountCues();
+    runKms(result.current, [300, 300, 300, 300]); // 4 km at t=1200
+    spoken = [];
+    act(() => {
+      result.current.checkGoalReached(5000, 5000, 1440); // km 5 in 4:00
+      result.current.checkDistanceCue(5000, 1440);
+      result.current.checkDistanceCue(6000, 1800); // km 6 in 6:00
+    });
+    const split = spoken.find((s) => s.startsWith("6 kilometres."));
+    expect(split).toContain("Pace 6:00 per kilometre");
+    expect(split).not.toContain("Pace 5:00 per kilometre");
+  });
+
+  it("does not suppress a split the goal does not coincide with", () => {
+    /* A 5.5 km goal sits between markers, so the 5 km and 6 km cues both
+       still belong to the runner. */
+    const { result } = mountCues();
+    runKms(result.current, [300, 300, 300, 300, 300]); // 5 km banked
+    spoken = [];
+    act(() => {
+      result.current.checkGoalReached(5500, 5500, 1650);
+      result.current.checkDistanceCue(6000, 1800);
+    });
+    expect(spoken).toHaveLength(2);
+    expect(spoken[1]).toMatch(/^6 kilometres\./);
+  });
+
+  it("still reports the goal when cues are switched off", () => {
+    /* Apple's goal cue is tone + haptic with NO speech, so the non-audio
+       channel has to be complete on its own. With cues off the hook stays
+       silent but must still return the time — that value drives the
+       on-screen chip and the saved record, neither of which is an audio
+       feature. */
+    const { result } = renderHook(() => useAudioCues(false, "every_km"));
+    let goalTime: number | null = null;
+    act(() => {
+      goalTime = result.current.checkGoalReached(5000, 5000, 1500);
+    });
+    expect(spoken).toEqual([]);
+    expect(goalTime).toBeCloseTo(1500, 0);
+  });
+
+  it("re-arms on reset, so the next run announces its own goal", () => {
+    const { result } = mountCues();
+    act(() => {
+      result.current.checkGoalReached(5000, 5000, 1500);
+    });
+    act(() => {
+      result.current.reset();
+    });
+    act(() => {
+      result.current.checkGoalReached(5000, 5000, 1500);
+    });
+    expect(spoken).toHaveLength(2);
+  });
+});

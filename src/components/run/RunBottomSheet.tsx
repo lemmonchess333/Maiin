@@ -29,6 +29,7 @@ import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { type ZoneNumber } from "../../lib/hrZones";
 import { RunControlButton } from "@/components/ui/RunControlButton";
 import HoldToFinishButton from "./HoldToFinishButton";
+import { Check } from "lucide-react";
 import { Dialog } from "@/components/ui/Dialog";
 import { elevationLabel } from "@/lib/runLabels";
 
@@ -72,6 +73,20 @@ interface RunBottomSheetProps {
    */
   bpm?: number | null;
   hrZone?: 0 | ZoneNumber | null;
+  /**
+   * Elapsed seconds at the moment the distance goal was reached, or null if
+   * there is no goal or it hasn't been hit yet.
+   *
+   * The run deliberately keeps recording past the goal (announce-and-
+   * continue — see `checkGoalReached`), which leaves the runner with no way
+   * to know it landed unless something on screen says so. The voice cue
+   * can't carry that alone: cues may be off, or there may be no headphones.
+   * Apple's goal cue is tone+haptic with no speech at all, so the non-audio
+   * channel is the one that has to be complete.
+   */
+  goalReachedAt?: number | null;
+  /** Distance target in metres — labels the goal chip. */
+  goalDistanceM?: number;
 }
 
 // Visible sheet height as fraction of viewport: compact, mid, full.
@@ -219,6 +234,8 @@ export default function RunBottomSheet({
   weightKg,
   bpm = null,
   hrZone = null,
+  goalReachedAt = null,
+  goalDistanceM,
 }: RunBottomSheetProps) {
   const hrColor =
     hrZone && hrZone >= 1 ? ZONE_COLOR[hrZone] : "rgba(255,255,255,0.65)";
@@ -654,6 +671,42 @@ export default function RunBottomSheet({
             </div>
 
             {intervalDisplay}
+
+            {/* Goal reached — the visible half of announce-and-continue.
+                Sits directly above the controls so the finish affordance
+                acquires the emphasis a mid-run modal would have forced;
+                the runner ends when they choose, and nothing interrupts
+                them if they don't. `aria-live="polite"` because this
+                appears exactly once per run, so it cannot become the
+                perpetual announcement the exercise-demo phase cue was. */}
+            {goalReachedAt !== null && (
+              <div
+                className="flex justify-center flex-shrink-0"
+                aria-live="polite"
+              >
+                <div
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+                  style={{
+                    background: `${THEME.success}1F`,
+                    border: `1px solid ${THEME.success}4D`,
+                  }}
+                >
+                  <Check size={13} strokeWidth={3} color={THEME.success} />
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: THEME.success,
+                      fontVariantNumeric: "tabular-nums",
+                      fontFamily: "var(--font-mono)",
+                    }}
+                  >
+                    {distanceValue(goalDistanceM ?? 0, unit, 2)}
+                    {distanceUnitLabel(unit)} goal · {formatTime(goalReachedAt)}
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Sprint 7: controls migrated to <RunControlButton>.
                 Each button now carries a compile-time-required
