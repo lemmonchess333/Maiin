@@ -598,16 +598,25 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     tint: { biceps: "primary", forearm: "secondary" },
     pose: (e) => {
       const curl = lerp(0, 135, e); // elbow flexion, hanging → top
-      const drift = lerp(0, 8, e); // elbows ease forward at the top
-      const armDrift: Op[] = [
-        { kind: "rotate", deg: -drift, pivot: SIDE_ANCHORS.shoulder },
-      ];
+      /* NO ELBOW DRIFT. This used to swing the whole upper arm 8 degrees
+       * forward at the top, moving the elbow 3.5 units, on the stated
+       * grounds that it is "the one allowance every reference shows".
+       *
+       * liftmanual is a reference and shows the opposite — it names elbow
+       * travel as the curl's defining error: "pin your elbows against
+       * your sides… they should not move forward or backward during the
+       * lift". So the drift was not a concession every reference makes;
+       * it was the fault the exercise is defined against, and this demo
+       * calls itself a STRICT curl three lines up, which is precisely the
+       * variant that forbids it.
+       *
+       * With the upper arm still, the elbow is a fixed point and the
+       * forearm is the only thing that rotates — which is the whole
+       * movement, stated geometrically. */
       const fore: Op[] = [
         { kind: "rotate", deg: -curl, pivot: SIDE_ANCHORS.elbow },
-        ...armDrift,
       ];
       return {
-        upperArmL: armDrift,
         foreArmL: fore,
         handL: fore,
       };
@@ -632,7 +641,21 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     concentricTo: 1,
     tint: { triceps: "primary", forearm: "secondary" },
     pose: (e) => {
-      const flex = lerp(108, 10, e); // folded at the chest → lockout
+      /* BOTH ENDS OF THE REP COME FROM THE CUE, not from taste.
+       *
+       * The side rest arm is dead straight, so the drawn elbow angle is
+       * exactly 180 - flex, which makes both of liftmanual's pushdown
+       * endpoints directly expressible:
+       *
+       *   top     elbow ~90, CAPPED — "the rope must NOT return to full
+       *           flexion near the shoulders". It was returning to 71,
+       *           which is that fault, animated as the model rep.
+       *   bottom  elbow ~180, full lockout. It stopped at 169.
+       *
+       * A pushdown that neither locks out nor stops at the cap is a
+       * partial at both ends; 2 degrees of softness at the bottom keeps
+       * the lockout from reading as a hyperextension. */
+      const flex = lerp(90, 2, e); // capped top → full lockout
       const fore: Op[] = [
         { kind: "rotate", deg: -flex, pivot: SIDE_ANCHORS.elbow },
       ];
@@ -951,15 +974,44 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       // 72, not 78: the rest arm already sits ~10° outside vertical, so
       // 78 finished ABOVE parallel — a form error the demo was teaching.
       const arm = lerp(4, 72, e);
+      /* THE SOFT BEND WAS SIGNED THE WRONG WAY, and the comment above is
+       * how it survived: it states the intent ("so the arm never reads
+       * hyper-straight"), and the code did the exact reverse. The rest
+       * arm already carries a natural 171-degree bend; rotating the
+       * forearm the wrong way about the elbow spent that bend and locked
+       * the arm out at 179, so every frame of a lateral raise was drawn
+       * with a dead-straight arm — which is liftmanual's named lateral-
+       * raise fault, and its rule is "a slight bend at the start and the
+       * SAME slight bend at the top… never drawn locked straight".
+       *
+       * Nothing caught it because nothing measured the elbow. A comment
+       * asserting a property is not the property; this one had been
+       * describing an arm the rig was not drawing.
+       *
+       * TWO CONSTRAINTS, and they want opposite signs — which is why the
+       * obvious repair is wrong too. liftmanual asks for both a slight
+       * constant bend AND "wrist y BELOW elbow y (elbow leads, hand
+       * trails)". The interior angle is 171 - BEND, so a positive bend
+       * softens the elbow; but positive also folds the forearm OUTWARD,
+       * and outward becomes UPWARD once the arm is raised laterally.
+       * Merely flipping the sign to +10 bought the 161-degree bend and
+       * put the wrist 5.9 ABOVE the elbow — trading one named fault for
+       * the other.
+       *
+       * -28 is where both hold: it reaches the same 161 degrees by
+       * bending the elbow the other way, so the forearm folds inward and
+       * the wrist finishes 13.9 BELOW the elbow. Solved against both
+       * cues, not picked. */
+      const BEND = -28;
       return {
         upperArmL: [{ kind: "rotate", deg: arm, pivot: ANT.shoulderL }],
         foreArmL: [
-          { kind: "rotate", deg: -10, pivot: ANT.elbowL },
+          { kind: "rotate", deg: BEND, pivot: ANT.elbowL },
           { kind: "rotate", deg: arm, pivot: ANT.shoulderL },
         ],
         upperArmR: [{ kind: "rotate", deg: -arm, pivot: ANT.shoulderR }],
         foreArmR: [
-          { kind: "rotate", deg: 10, pivot: ANT.elbowR },
+          { kind: "rotate", deg: -BEND, pivot: ANT.elbowR },
           { kind: "rotate", deg: -arm, pivot: ANT.shoulderR },
         ],
       };

@@ -38,6 +38,16 @@ function elbowAngle(
   );
 }
 
+/** Interior elbow angle of a SIDE-view demo at `t`, in degrees. */
+function sideElbow(id: string, t: number): number {
+  const pose = BODY_DEMOS[id].pose(t);
+  return elbowAngle(
+    applyToPoint(SIDE_ANCHORS.shoulder, pose.upperArmL ?? []),
+    applyToPoint(SIDE_ANCHORS.elbow, pose.foreArmL!),
+    applyToPoint(SIDE_ANCHORS.hand, pose.foreArmL!)
+  );
+}
+
 function polyYs(svg: string): number[] {
   return [...svg.matchAll(/points="([^"]+)"/g)]
     .flatMap((m) => m[1].trim().split(" "))
@@ -200,6 +210,111 @@ describe("renderBodyDemo", () => {
     expect(anchor("shoulderR")).toEqual(ANT_SHOULDER_R);
     expect(anchor("elbowL")).toEqual(ANT_ELBOW_L);
     expect(anchor("handL")).toEqual(ANT_HAND_L);
+  });
+
+  it("pushdown: capped at the top, locked out at the bottom", () => {
+    /* liftmanual gives this one both endpoints as numbers, and the demo
+       missed both — top 71 degrees (liftmanual: ~90, "the rope must NOT
+       return to full flexion near the shoulders", so 71 IS the fault) and
+       bottom 169 rather than a lockout. A pushdown short at both ends is
+       a partial with extra steps.
+
+       The elbow-pinned assertion is the third one and it is the headline
+       cue ("keep your upper arms completely still — only your forearms
+       should move"). It already held; it is asserted anyway, because the
+       two range fixes are exactly the kind of change that reaches for the
+       upper arm when the forearm alone will not stretch far enough. */
+    const at = (t: number) => sideElbow("rope-tricep-pushdown", t);
+    expect(at(0), "pushdown top").toBeGreaterThan(80);
+    expect(at(0), "pushdown top").toBeLessThan(100);
+    expect(at(1), "pushdown lockout").toBeGreaterThan(172);
+
+    const elbowAt = (t: number) => {
+      const pose = BODY_DEMOS["rope-tricep-pushdown"].pose(t);
+      return applyToPoint(SIDE_ANCHORS.elbow, pose.foreArmL!);
+    };
+    for (const t of [0, 0.25, 0.5, 0.75, 1]) {
+      expect(elbowAt(t)[0]).toBeCloseTo(SIDE_ANCHORS.elbow[0], 6);
+      expect(elbowAt(t)[1]).toBeCloseTo(SIDE_ANCHORS.elbow[1], 6);
+    }
+  });
+
+  it("strict curl: the elbow does not travel", () => {
+    /* The pose swung the upper arm 8 degrees forward at the top, moving
+       the elbow 3.5 units, justified in a comment as "the one allowance
+       every reference shows". liftmanual is a reference and names elbow
+       travel as the curl's defining error — "they should not move forward
+       or backward during the lift" — and the demo calls itself a STRICT
+       curl, the variant defined by forbidding exactly this.
+
+       Paired with the range check, because deleting the drift would also
+       be satisfied by deleting the curl. */
+    const elbowAt = (t: number) =>
+      applyToPoint(
+        SIDE_ANCHORS.elbow,
+        BODY_DEMOS["barbell-curl"].pose(t).foreArmL!
+      );
+    for (const t of [0, 0.25, 0.5, 0.75, 1]) {
+      expect(elbowAt(t)[0], `curl elbow x at t=${t}`).toBeCloseTo(
+        SIDE_ANCHORS.elbow[0],
+        6
+      );
+      expect(elbowAt(t)[1], `curl elbow y at t=${t}`).toBeCloseTo(
+        SIDE_ANCHORS.elbow[1],
+        6
+      );
+    }
+    expect(sideElbow("barbell-curl", 0), "curl start").toBeGreaterThan(170);
+    expect(sideElbow("barbell-curl", 1), "curl top").toBeLessThan(60);
+  });
+
+  it("lateral raise: a soft elbow that stays soft, hand trailing", () => {
+    /* Two liftmanual rules, and the demo broke one while its own comment
+       claimed to be enforcing it. The comment said "a constant soft elbow
+       bend so the arm never reads hyper-straight"; the rotation was
+       signed the wrong way, spending the rest arm's natural 171-degree
+       bend to lock the arm out at 179. Nothing measured the elbow, so a
+       comment stood in for the property for as long as it existed.
+
+       Both rules are asserted, because they pull in OPPOSITE directions
+       here — the sign that softens the elbow is the sign that lifts the
+       wrist above it, so a test for either one alone is satisfied by a
+       pose that fails the other. That is not hypothetical: it is what the
+       first attempt at this fix did. */
+    const frames = [0, 0.25, 0.5, 0.75, 1].map((t) => {
+      const pose = BODY_DEMOS["lateral-raise"].pose(t);
+      return {
+        t,
+        angle: elbowAngle(
+          applyToPoint(ANT_SHOULDER_L, pose.upperArmL!),
+          applyToPoint(ANT_ELBOW_L, pose.foreArmL!),
+          applyToPoint(ANT_HAND_L, pose.foreArmL!)
+        ),
+        elbow: applyToPoint(ANT_ELBOW_L, pose.foreArmL!),
+        hand: applyToPoint(ANT_HAND_L, pose.foreArmL!),
+        shoulder: applyToPoint(ANT_SHOULDER_L, pose.upperArmL!),
+      };
+    });
+    for (const f of frames) {
+      expect(
+        f.angle,
+        `elbow at t=${f.t} is ${f.angle.toFixed(0)}deg`
+      ).toBeLessThan(170);
+      expect(f.angle).toBeGreaterThan(150);
+      expect(
+        f.hand[1] - f.elbow[1],
+        `wrist sits above the elbow at t=${f.t}`
+      ).toBeGreaterThan(0);
+    }
+    // "the SAME slight bend" — constant, not merely present.
+    const spread =
+      Math.max(...frames.map((f) => f.angle)) -
+      Math.min(...frames.map((f) => f.angle));
+    expect(spread, "the bend is supposed to be constant").toBeLessThan(1);
+    // …and the raise still stops at parallel rather than going overhead.
+    const top = frames[frames.length - 1];
+    expect(top.elbow[1] - top.shoulder[1]).toBeGreaterThan(0);
+    expect(top.elbow[1] - top.shoulder[1]).toBeLessThan(6);
   });
 
   it("pushdown: the rope's knotted tail travels down to lockout", () => {
