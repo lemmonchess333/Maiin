@@ -28,9 +28,19 @@ const FASTER = [
   "That split was quicker. Strong.",
   "You're building speed.",
 ];
+/* These DESCRIBE the split just finished; they never instruct. That
+ * distinction has to survive being heard rather than read, and one line
+ * did not: "Bit slower — find your rhythm again." opens with a bare
+ * comparative and no subject, so the ear takes it as an instruction to
+ * slow down — the opposite of the intent (owner, on a real run, 2026-08-16:
+ * "makes it seem like you should be slowing down not speeding up").
+ * Every line now names what was slower, which is what the other two
+ * already did ("that split", "Slower split"). If a cue should ever tell
+ * the runner to CHANGE pace, that is paceAlertCue's job — it fires
+ * against a target, and a free run has no target to be wrong about. */
 const SLOWER = [
   "A touch slower that split — no drama.",
-  "Bit slower — find your rhythm again.",
+  "That one came in a bit slower — find your rhythm again.",
   "Slower split. Settle back in.",
 ];
 const STEADY = [

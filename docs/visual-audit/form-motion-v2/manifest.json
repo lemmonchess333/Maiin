@@ -535,33 +535,6 @@
         "file": "sumo-deadlift-t100.png"
       }
     ],
-    "t-bar-row": [
-      {
-        "t": 0,
-        "effort": 0.5,
-        "file": "t-bar-row-t000.png"
-      },
-      {
-        "t": 0.25,
-        "effort": 0.75,
-        "file": "t-bar-row-t025.png"
-      },
-      {
-        "t": 0.5,
-        "effort": 1,
-        "file": "t-bar-row-t050.png"
-      },
-      {
-        "t": 0.75,
-        "effort": 0.9,
-        "file": "t-bar-row-t075.png"
-      },
-      {
-        "t": 1,
-        "effort": 0.8,
-        "file": "t-bar-row-t100.png"
-      }
-    ],
     "trap-bar-deadlift": [
       {
         "t": 0,

@@ -185,6 +185,14 @@ const MIDFOOT_X = 52.9;
  *  cantilevers off the step's back edge. */
 const CALF_BALL: Pt = [58.5, 202.5];
 
+/** Where a held implement actually sits. SIDE_ANCHORS.hand is the WRIST
+ *  — the IK target, and the top edge of the hand piece — but the fist's
+ *  centre is 3.8 below it. Every side demo pinned its bar to the wrist,
+ *  so the plate hung off the joint instead of sitting IN the hand, which
+ *  at phone size reads as a bar at a wrong angle, swayed off to one side
+ *  (owner, 2026-08-16). Aim IK at the wrist; draw iron at the grip. */
+const SIDE_GRIP: Pt = [53.7, 103.8];
+
 /* Side-view arm segment lengths. */
 const SIDE_UPPER_LEN = Math.hypot(
   SIDE_ANCHORS.elbow[0] - SIDE_ANCHORS.shoulder[0],
@@ -909,7 +917,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       };
     },
     bar: (_e, pose) => {
-      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      const h = applyToPoint(SIDE_GRIP, pose.handL ?? []);
       return [h, h];
     },
   },
@@ -935,7 +943,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       return { foreArmL: fore, handL: fore };
     },
     sceneFront: (_e, pose) => {
-      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      const h = applyToPoint(SIDE_GRIP, pose.handL ?? []);
       /* High pulley: fixed at the top of the station, forward of the
        * face so the cable clears the head through the whole arc. */
       const pulley: Pt = [72, -10];
@@ -1102,33 +1110,19 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * posed). The arms are hooks — never bent — so the hand is
        * simply where a straight arm from the posed shoulder meets the
        * midfoot line, and the bar's height follows the hinge. */
+      /* Shared with the sumo and trap-bar variants — one hanging-arm
+       * implementation, so the three cannot drift apart. It aims the
+       * GRIP at the bar line (see hangingArmTo), which is what keeps
+       * the drawn plate on a dead-vertical path now that iron is drawn
+       * in the fist rather than on the wrist. */
       const S = applyToPoint(SIDE_ANCHORS.shoulder, torsoOps);
-      const ARM = SIDE_UPPER_LEN + SIDE_FORE_LEN;
-      const dxBar = MIDFOOT_X - S[0];
-      const hFinal: Pt = [
+      const armOps = hangingArmTo(
+        S,
         MIDFOOT_X,
-        S[1] + Math.sqrt(Math.max(ARM * ARM - dxBar * dxBar, 1)),
-      ];
-      const unpose: Op[] = [
-        { kind: "translate", dx: -shift.dx, dy: -shift.dy },
-        { kind: "rotate", deg: -hinge, pivot: SIDE_ANCHORS.hip },
-      ];
-      const hPre = applyToPoint(hFinal, unpose);
-      const arm = aimArm(
-        {
-          S: SIDE_ANCHORS.shoulder,
-          E: SIDE_ANCHORS.elbow,
-          H: SIDE_ANCHORS.hand,
-        },
-        solveElbow(
-          SIDE_ANCHORS.shoulder,
-          hPre,
-          SIDE_UPPER_LEN,
-          SIDE_FORE_LEN,
-          -1
-        ),
-        hPre,
-        0
+        torsoOps,
+        SIDE_ANCHORS.hip,
+        hinge,
+        shift
       );
       /* Cervical rhythm (same fix-class as the pelvis): the head counters
        * ~40% of the hinge about the POSED neck point, so the gaze stays
@@ -1146,13 +1140,11 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         thighR: thighOps,
         shankL: legOps,
         shankR: legOps,
-        upperArmL: [...arm.upper, ...torsoOps],
-        foreArmL: [...arm.fore, ...torsoOps],
-        handL: [...arm.fore, ...torsoOps],
+        ...armOps,
       };
     },
     bar: (_e, pose) => {
-      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      const h = applyToPoint(SIDE_GRIP, pose.handL ?? []);
       return [h, h];
     },
   },
@@ -1437,7 +1429,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       };
     },
     bar: (_e, pose) => {
-      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      const h = applyToPoint(SIDE_GRIP, pose.handL ?? []);
       return [h, h];
     },
     // Bench pad + legs + floor line, drawn behind the body.
@@ -1561,7 +1553,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       };
     },
     bar: (_e, pose) => {
-      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      const h = applyToPoint(SIDE_GRIP, pose.handL ?? []);
       return [h, h];
     },
   },
@@ -1672,7 +1664,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       };
     },
     bar: (_e, pose) => {
-      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      const h = applyToPoint(SIDE_GRIP, pose.handL ?? []);
       return [h, h];
     },
   },
@@ -1774,19 +1766,35 @@ function hangingArmTo(
   shift: Extract<Op, { kind: "translate" }>
 ) {
   const ARM = SIDE_UPPER_LEN + SIDE_FORE_LEN;
-  const dx = barX - S[0];
-  const hFinal: Pt = [barX, S[1] + Math.sqrt(Math.max(ARM * ARM - dx * dx, 1))];
   const unpose: Op[] = [
     { kind: "translate", dx: -shift.dx, dy: -shift.dy },
     { kind: "rotate", deg: -hinge, pivot: hipPivot },
   ];
-  const hPre = applyToPoint(hFinal, unpose);
-  const arm = aimArm(
-    { S: SIDE_ANCHORS.shoulder, E: SIDE_ANCHORS.elbow, H: SIDE_ANCHORS.hand },
-    solveElbow(SIDE_ANCHORS.shoulder, hPre, SIDE_UPPER_LEN, SIDE_FORE_LEN, -1),
-    hPre,
-    0
-  );
+  /* Aim so the GRIP lands on the bar line, not the wrist. The plate is
+   * drawn at the fist (SIDE_GRIP), which sits below the wrist and
+   * rotates with the forearm — so aiming the wrist at midfoot left the
+   * drawn bar wandering ~1.2 units through the pull. One correction
+   * pass: aim, measure where the grip actually landed, and shift the
+   * wrist target by the error. The relationship is near-linear over
+   * this range, so a single pass converges well inside a tenth of a
+   * unit and the bar path is dead vertical. */
+  const aimAt = (targetX: number) => {
+    const dx = targetX - S[0];
+    const hFinal: Pt = [
+      targetX,
+      S[1] + Math.sqrt(Math.max(ARM * ARM - dx * dx, 1)),
+    ];
+    const hPre = applyToPoint(hFinal, unpose);
+    return aimArm(
+      { S: SIDE_ANCHORS.shoulder, E: SIDE_ANCHORS.elbow, H: SIDE_ANCHORS.hand },
+      solveElbow(SIDE_ANCHORS.shoulder, hPre, SIDE_UPPER_LEN, SIDE_FORE_LEN, -1),
+      hPre,
+      0
+    );
+  };
+  const first = aimAt(barX);
+  const gripX = applyToPoint(SIDE_GRIP, [...first.fore, ...torsoOps])[0];
+  const arm = aimAt(barX + (barX - gripX));
   return {
     upperArmL: [...arm.upper, ...torsoOps],
     foreArmL: [...arm.fore, ...torsoOps],
@@ -1842,7 +1850,17 @@ BODY_DEMOS["trap-bar-deadlift"] = {
    * in FRONT of the shins and another BEHIND the calves at the same
    * height — that pair is the trap bar's signature and the one thing
    * that cannot be confused with a straight bar. */
-  equip: undefined,
+  /* ONE end-on plate, exactly like any other loaded bar. A trap bar's
+   * loading sleeves are welded at 90 degrees to its handles, so the
+   * plates sit at the lifter's LEFT and RIGHT — not fore and aft. A
+   * first cut drew a plate in front of the shins AND another behind the
+   * calves, which rendered as a barbell skewered through the figure
+   * (owner, 2026-08-16). What distinguishes a trap bar in profile is
+   * the handle POSITION — beside the hip, so the arms hang vertically
+   * and the plate overlaps the leg instead of sitting out in front of
+   * the shins — plus the markedly more upright torso. */
+  equip: "plate-end",
+  plateR: 16,
   // Content measures x -3.4..94.0 — the fore AND aft plates are what
   // set the width here — and y -0.7..206.4. 140 wide keeps the
   // figure at the same on-screen scale as the rest of the set.
@@ -1873,139 +1891,8 @@ BODY_DEMOS["trap-bar-deadlift"] = {
     };
   },
   bar: (_e, pose) => {
-    const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+    const h = applyToPoint(SIDE_GRIP, pose.handL ?? []);
     return [h, h];
-  },
-  // Rear sleeve + plate, painted BEHIND the figure.
-  scene: (_e, pose) => {
-    const [x, y] = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
-    const rx = x - 30;
-    return (
-      `<line x1="${rx.toFixed(1)}" y1="${y.toFixed(1)}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${GEAR}" stroke-width="2.6" stroke-linecap="round"/>` +
-      `<circle cx="${rx.toFixed(1)}" cy="${y.toFixed(1)}" r="13" fill="${GEAR_DARK}" stroke="#565760" stroke-width="1"/>` +
-      `<circle cx="${rx.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="${GEAR}"/>`
-    );
-  },
-  // Front sleeve + plate, painted OVER the figure.
-  sceneFront: (_e, pose) => {
-    const [x, y] = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
-    const fx = x + 30;
-    return (
-      `<line x1="${x.toFixed(1)}" y1="${y.toFixed(1)}" x2="${fx.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${GEAR}" stroke-width="2.6" stroke-linecap="round"/>` +
-      `<circle cx="${fx.toFixed(1)}" cy="${y.toFixed(1)}" r="13" fill="${GEAR_DARK}" stroke="#565760" stroke-width="1"/>` +
-      `<circle cx="${fx.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="${GEAR}"/>`
-    );
-  },
-};
-
-/** T-bar / landmine anchor: the pinned end sits on the floor well in
- *  FRONT of the lifter (they straddle the bar facing it). It is far
- *  enough out that it leaves the frame — which is honest, a 7ft bar is
- *  ~250 rig units — so the bar is drawn running off toward it. */
-const TBAR_ANCHOR: Pt = [242, 202];
-
-BODY_DEMOS["t-bar-row"] = {
-  ...BODY_DEMOS["barbell-row"],
-  /* T-bar row. The one thing that makes this NOT a barbell row: one end
-   * of the bar is pinned to the floor, so the handle cannot travel a
-   * straight vertical line — it swings on an ARC about that pivot. The
-   * references also put the torso nearer 45° than the barbell row's
-   * 55°, and say to match the torso angle to the bar angle. */
-  equip: undefined,
-  // Content measures x 31.2..112.8, y 16.3..204.2 — the 45° torso
-  // carries the head higher than the barbell row's, so the window
-  // starts at 10. Width 138 keeps the figure inside the set's scale band.
-  viewBox: "3 10 138 200",
-  pose: (e) => {
-    const HINGE = 45;
-    const KNEE = 20;
-    const LEAN = hipsBack(HINGE);
-    const T: Op = { kind: "rotate", deg: HINGE, pivot: SIDE_ANCHORS.hip };
-    const unpose: Op[] = [
-      { kind: "rotate", deg: -LEAN.deg, pivot: LEAN.pivot },
-      { kind: "rotate", deg: -HINGE, pivot: SIDE_ANCHORS.hip },
-    ];
-    const S = applyToPoint(SIDE_ANCHORS.shoulder, [T, LEAN]);
-    /* The handle rides the arc: take the dead-hang point below the
-     * shoulder as the bottom of the stroke, then SWING it about the
-     * floor anchor. Radius is fixed, so the bar cannot change length. */
-    const bottom: Pt = [S[0] + 1, S[1] + 50];
-    const R = Math.hypot(bottom[0] - TBAR_ANCHOR[0], bottom[1] - TBAR_ANCHOR[1]);
-    const a0 = Math.atan2(
-      bottom[1] - TBAR_ANCHOR[1],
-      bottom[0] - TBAR_ANCHOR[0]
-    );
-    /* + not −: the handle sits up-LEFT of the anchor, so increasing the
-     * angle sweeps it UP and slightly toward the pivot, which is the
-     * arc a landmine actually produces. (Measured the wrong way first:
-     * the hand travelled down-and-back 13 units.) 0.22 rad over the
-     * ~133-unit radius gives ~29 units of travel — matching the barbell
-     * row's stroke, so the two read as the same amount of work. The
-     * anchor sits ~190 units from the grip because a 7ft bar is ~250
-     * rig units and the lifter straddles near the loaded end — at a
-     * closer (shorter-bar) pivot the arc tips too far forward. */
-    const a = a0 + lerp(0, 0.16, e);
-    const hFinal: Pt = [
-      TBAR_ANCHOR[0] + R * Math.cos(a),
-      TBAR_ANCHOR[1] + R * Math.sin(a),
-    ];
-    const hPre = applyToPoint(hFinal, unpose);
-    const arm = aimArm(
-      { S: SIDE_ANCHORS.shoulder, E: SIDE_ANCHORS.elbow, H: SIDE_ANCHORS.hand },
-      solveElbow(SIDE_ANCHORS.shoulder, hPre, SIDE_UPPER_LEN, SIDE_FORE_LEN, -1),
-      hPre,
-      0
-    );
-    const legRaw: Op[] = [
-      { kind: "rotate", deg: KNEE, pivot: SIDE_ANCHORS.hip },
-      LEAN,
-    ];
-    const shankRaw: Op[] = [
-      { kind: "rotate", deg: -KNEE, pivot: SIDE_ANCHORS.knee },
-      { kind: "rotate", deg: KNEE, pivot: SIDE_ANCHORS.hip },
-      LEAN,
-    ];
-    const P = plantFoot(shankRaw);
-    return {
-      head: [
-        T,
-        LEAN,
-        {
-          kind: "rotate",
-          deg: -T.deg * 0.4,
-          pivot: applyToPoint([48, 32], [T, LEAN]),
-        },
-        P,
-      ],
-      torso: [T, LEAN, P],
-      pelvis: [
-        { kind: "rotate", deg: T.deg * 0.72, pivot: T.pivot },
-        LEAN,
-        P,
-      ],
-      thighL: [...legRaw, P],
-      thighR: [...legRaw, P],
-      shankL: [...shankRaw, P],
-      shankR: [...shankRaw, P],
-      upperArmL: [...arm.upper, T, LEAN, P],
-      foreArmL: [...arm.fore, T, LEAN, P],
-      handL: [...arm.fore, T, LEAN, P],
-    };
-  },
-  bar: (_e, pose) => {
-    const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
-    return [h, h];
-  },
-  /* The bar itself runs from the hand out to the floor anchor, and the
-   * plates are loaded AT the hand end (they sit under the chest). Drawn
-   * in front so the loaded end reads; the shaft leaves the frame. */
-  sceneFront: (_e, pose) => {
-    const [x, y] = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
-    return (
-      `<line x1="${x.toFixed(1)}" y1="${y.toFixed(1)}" x2="${TBAR_ANCHOR[0]}" y2="${TBAR_ANCHOR[1]}" stroke="${GEAR}" stroke-width="2.6" stroke-linecap="round"/>` +
-      `<circle cx="${(x + 3).toFixed(1)}" cy="${(y + 1).toFixed(1)}" r="11" fill="${GEAR_DARK}" stroke="#565760" stroke-width="1"/>` +
-      `<circle cx="${(x + 3).toFixed(1)}" cy="${(y + 1).toFixed(1)}" r="2.6" fill="${GEAR}"/>`
-    );
   },
 };
 

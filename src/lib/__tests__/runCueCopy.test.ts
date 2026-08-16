@@ -65,6 +65,28 @@ describe("splitCue", () => {
   });
 });
 
+  it("a split cue DESCRIBES the split — it never sounds like an instruction", () => {
+    /* Heard on a real run (owner, 2026-08-16): after a 9:28 km the voice
+       said "Bit slower — find your rhythm again", which the ear takes as
+       an instruction to slow DOWN — the opposite of the intent. These
+       cues report the split just finished; only paceAlertCue instructs,
+       and it only fires against a target.
+
+       The class-level guard: a comparison cue must NAME what was
+       faster/slower, so the comparative can never be heard as a verb
+       aimed at the runner. Anchors: "split", "that one", "than the
+       last", or a "you're"/"you've" subject. */
+    const ANCHORED = /\bsplit\b|\bthat one\b|\bthan the last\b|\byou'?re\b|\byou'?ve\b/i;
+    for (const comparison of ["faster", "slower"] as const) {
+      for (let v = 0; v < 12; v++) {
+        const cue = splitCue(3, "km", "5:44", comparison, v);
+        // Strip the factual "3 kilometres. Pace 5:44 per kilometre." head.
+        const tail = cue.slice(cue.indexOf("per kilometre.") + 14).trim();
+        expect(tail, `${comparison} variant ${v}: "${tail}"`).toMatch(ANCHORED);
+      }
+    }
+  });
+
 describe("other cues", () => {
   it("time cue reads minutes + kilometres", () => {
     expect(timeCue(15, 2800, "km")).toBe(
