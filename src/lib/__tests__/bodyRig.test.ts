@@ -320,6 +320,127 @@ describe("renderBodyDemo", () => {
     }
   });
 
+  it("no demo clips its EQUIPMENT off its own canvas either", () => {
+    /* The clipping test above reads `points=` and `d=` — polygons and
+       paths, i.e. the BODY. Every implement is drawn as `<line>`,
+       `<circle>` or `<rect>`, so none of it has ever been checked: the
+       deadlift's r=26 plate, every cable, every dip-station upright and
+       every dumbbell bell were all invisible to the guard that exists to
+       catch exactly this.
+
+       Found while adding the trap bar's frame rail, which sticks out 10
+       units past a 16-unit disc on BOTH sides and would have been the
+       widest thing in that demo with nothing watching it.
+
+       THE ONE STRUCTURAL EXEMPTION: equipment the figure hangs FROM
+       (`fixed-bar`, `cable-bar`) is anchored above the frame and is
+       supposed to meet the top edge — a pull-up bar flush with the top
+       reads as continuing up to a ceiling, which is right. So the top
+       edge is exempt for those two kinds and only those two. Exempting
+       by KIND rather than by demo id is deliberate: an id list would let
+       a new pull-up variant clip silently, and this session already had
+       one scale exemption that had to be re-derived structurally for the
+       same reason. */
+    const HANGS_FROM: string[] = ["fixed-bar", "cable-bar"];
+    for (const [id, d] of Object.entries(BODY_DEMOS)) {
+      const [vx, vy, vw, vh] = (
+        d.viewBox ??
+        (d.view === "anterior" ? "-8 -14 116 224" : "-12 -14 124 244")
+      )
+        .split(/\s+/)
+        .map(Number);
+      const topExempt = HANGS_FROM.includes(d.equip ?? "");
+      for (const t of [0, 0.25, 0.5, 0.75, 1]) {
+        const svg = renderBodyDemo(id, t, 1).replace(
+          /<g class="glow">.*?<\/g>/,
+          ""
+        );
+        const xs: number[] = [];
+        const ys: number[] = [];
+        // Strokes are centred on their geometry, so half the width spills
+        // either side — the part a naive endpoint check would miss.
+        for (const m of svg.matchAll(
+          /<line[^>]*x1="(-?[\d.]+)"[^>]*y1="(-?[\d.]+)"[^>]*x2="(-?[\d.]+)"[^>]*y2="(-?[\d.]+)"[^>]*stroke-width="(-?[\d.]+)"/g
+        )) {
+          const w = Number(m[5]) / 2;
+          xs.push(Number(m[1]) - w, Number(m[3]) + w);
+          ys.push(Number(m[2]) - w, Number(m[4]) + w);
+        }
+        for (const m of svg.matchAll(
+          /<circle[^>]*cx="(-?[\d.]+)"[^>]*cy="(-?[\d.]+)"[^>]*r="(-?[\d.]+)"/g
+        )) {
+          const [cx, cy, r] = [Number(m[1]), Number(m[2]), Number(m[3])];
+          xs.push(cx - r, cx + r);
+          ys.push(cy - r, cy + r);
+        }
+        for (const m of svg.matchAll(
+          /<rect[^>]*x="(-?[\d.]+)"[^>]*y="(-?[\d.]+)"[^>]*width="(-?[\d.]+)"[^>]*height="(-?[\d.]+)"/g
+        )) {
+          const [x, y, w, h] = [
+            Number(m[1]),
+            Number(m[2]),
+            Number(m[3]),
+            Number(m[4]),
+          ];
+          xs.push(x, x + w);
+          ys.push(y, y + h);
+        }
+        if (!xs.length) continue;
+        expect(Math.min(...xs), `${id}@${t} equipment left`).toBeGreaterThan(
+          vx - 0.5
+        );
+        expect(Math.max(...xs), `${id}@${t} equipment right`).toBeLessThan(
+          vx + vw + 0.5
+        );
+        if (!topExempt) {
+          expect(Math.min(...ys), `${id}@${t} equipment top`).toBeGreaterThan(
+            vy - 0.5
+          );
+        }
+        expect(Math.max(...ys), `${id}@${t} equipment bottom`).toBeLessThan(
+          vy + vh + 0.5
+        );
+      }
+    }
+  });
+
+  it("the trap bar is distinguishable from a straight-bar deadlift", () => {
+    /* Before the frame rail these two differed only by torso angle and
+       hand position — a viewer saw a slightly different deadlift with no
+       way to know why. The rail is the identity: you are standing INSIDE
+       the implement.
+
+       Asserted as GEOMETRY, not as the presence of a `<line>`: the rail
+       must be horizontal (a hex frame is a plan-view shape and collapses
+       to a horizontal segment in profile — a tilted one would be drawing
+       the hexagon standing on edge), and it must clear the disc on BOTH
+       sides, because a rail that only emerges forward is the collar stub
+       every other plate-end demo already has. */
+    const svg = renderBodyDemo("trap-bar-deadlift", 0.5, 1);
+    const disc = [
+      ...svg.matchAll(/<circle cx="(-?[\d.]+)" cy="(-?[\d.]+)" r="16"/g),
+    ][0];
+    expect(disc, "trap bar disc not found").toBeTruthy();
+    const [cx, cy] = [Number(disc![1]), Number(disc![2])];
+
+    const rails = [
+      ...svg.matchAll(
+        /<line x1="(-?[\d.]+)" y1="(-?[\d.]+)" x2="(-?[\d.]+)" y2="(-?[\d.]+)"[^>]*stroke-width="5.2"/g
+      ),
+    ];
+    expect(rails.length, "frame rail not drawn").toBe(1);
+    const [x1, y1, x2, y2] = rails[0].slice(1, 5).map(Number);
+
+    expect(Math.abs(y1 - y2), "rail is not horizontal").toBeLessThan(0.01);
+    expect(Math.abs(y1 - cy), "rail is off the disc centre").toBeLessThan(0.6);
+    expect(cx - Math.min(x1, x2), "rail does not clear the disc aft").toBeGreaterThan(16);
+    expect(Math.max(x1, x2) - cx, "rail does not clear the disc fore").toBeGreaterThan(16);
+
+    // And the straight-bar deadlift must NOT have grown one.
+    const dl = renderBodyDemo("deadlift", 0.5, 1);
+    expect(dl).not.toMatch(/stroke-width="5.2"/);
+  });
+
   it("a standing lift keeps its planted foot planted", () => {
     /* Contact audit 2026-08-16. The squat and deadlift get this free by
        building the leg ANKLE-UP; the row and RDL built it hip-down, so

@@ -581,6 +581,30 @@ export interface BodyDemo {
    *  full-size 45 (r=26 ≈ 45 cm on a 175 cm figure) so the bottom
    *  frame reads bar-near-the-floor. */
   plateR?: number;
+  /**
+   * TRAP-BAR FRAME, in units of bare rail visible past the disc edge on
+   * each side. Renders a horizontal member through the plate, behind it,
+   * sticking out fore AND aft.
+   *
+   * This is the ONE thing that distinguishes a trap-bar deadlift from a
+   * straight-bar one in profile. Without it the two demos differ only by
+   * torso angle and hand position — a viewer sees a slightly different
+   * deadlift and has no way to know why.
+   *
+   * WHY A STRAIGHT LINE AND NOT A HEXAGON. The hex frame is a closed loop
+   * lying in a roughly HORIZONTAL plane — you see the hexagon from ABOVE.
+   * Project a planar closed curve in a horizontal plane onto the sagittal
+   * plane and it collapses to a horizontal LINE SEGMENT the length of the
+   * frame's fore-aft depth. Drawing a 6-point polygon here would be the
+   * same error as drawing a table top as a rectangle in side elevation,
+   * and the two converging "points" are exactly the part that cannot
+   * survive the projection.
+   *
+   * Behind the disc because the frame is INBOARD of the loading sleeves —
+   * the plates hang outboard of it, between the frame and the camera.
+   * The read is "the foot is standing between the two ends of a frame".
+   */
+  frameRailReach?: number;
   /** Draw the equipment OVER the body (pushdown: the hands work in
    *  front of the torso, so a behind-the-body bar would vanish). */
   barInFront?: boolean;
@@ -1861,6 +1885,13 @@ BODY_DEMOS["trap-bar-deadlift"] = {
    * the shins — plus the markedly more upright torso. */
   equip: "plate-end",
   plateR: 16,
+  /* The frame, and the whole reason this reads as a trap bar rather than
+     as a deadlift with a tidier torso. 10 units of bare rail past the
+     disc each way — enough that the planted foot sits visibly INSIDE the
+     implement, which is the thing you are looking at when you look at a
+     hex bar from the side. See `frameRailReach` for why it is a straight
+     line and not a hexagon. */
+  frameRailReach: 10,
   // Content measures x -3.4..94.0 — the fore AND aft plates are what
   // set the width here — and y -0.7..206.4. 140 wide keeps the
   // figure at the same on-screen scale as the rest of the set.
@@ -2605,11 +2636,17 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
   if (ends && demo.equip === "plate-end") {
     const [x, y] = ends[0];
     const r = demo.plateR ?? 10;
-    // Collar + protruding bar stub behind the disc: reads as a barbell
-    // end, not a floating disc. Proportions scale with the disc.
+    const rail = demo.frameRailReach;
+    /* A trap bar gets the frame rail INSTEAD of the collar-and-stub, not
+       as well as it. The stub is a stylisation meaning "this disc is on a
+       bar"; the rail says the same thing and more, and drawing both puts
+       two different pieces of hardware on one sleeve. */
     plate =
-      `<rect x="${(x + r * 0.7).toFixed(1)}" y="${(y - 2.6).toFixed(1)}" width="5" height="5.2" rx="1.4" fill="${GEAR}"/>` +
-      `<rect x="${(x + r * 0.7 + 4.4).toFixed(1)}" y="${(y - 1.6).toFixed(1)}" width="4.6" height="3.2" rx="1" fill="${GEAR_DARK}" stroke="#565760" stroke-width="0.6"/>` +
+      (rail
+        ? `<line x1="${(x - r - rail).toFixed(1)}" y1="${y.toFixed(1)}" x2="${(x + r + rail).toFixed(1)}" y2="${y.toFixed(1)}" stroke="${GEAR_DARK}" stroke-width="5.2" stroke-linecap="round"/>` +
+          `<line x1="${(x - r - rail).toFixed(1)}" y1="${(y - 1.2).toFixed(1)}" x2="${(x + r + rail).toFixed(1)}" y2="${(y - 1.2).toFixed(1)}" stroke="#565760" stroke-width="0.9" stroke-linecap="round"/>`
+        : `<rect x="${(x + r * 0.7).toFixed(1)}" y="${(y - 2.6).toFixed(1)}" width="5" height="5.2" rx="1.4" fill="${GEAR}"/>` +
+          `<rect x="${(x + r * 0.7 + 4.4).toFixed(1)}" y="${(y - 1.6).toFixed(1)}" width="4.6" height="3.2" rx="1" fill="${GEAR_DARK}" stroke="#565760" stroke-width="0.6"/>`) +
       `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}" fill="${GEAR_DARK}" stroke="#565760" stroke-width="1"/>` +
       `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(r * 0.64).toFixed(1)}" fill="none" stroke="${GEAR}" stroke-width="1.2" opacity="0.7"/>` +
       `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(r * 0.22).toFixed(1)}" fill="${GEAR}"/>`;
