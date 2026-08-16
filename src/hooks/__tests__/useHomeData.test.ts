@@ -542,22 +542,39 @@ describe("useHomeData", { timeout: 5000 }, () => {
     });
 
     it("a run finished more than two hours ago has gone stale", async () => {
-      const { result } = renderWith(
-        [
-          {
-            ...countableRun,
-            completedAt: Timestamp.fromDate(
-              new Date(Date.now() - 3 * 60 * 60_000)
-            ),
-          },
-        ],
-        []
-      );
-      // Anchored on the run having actually been READ (it still counts
-      // toward today's calories) — otherwise this passes while the runs
-      // query returns nothing.
-      await waitFor(() => expect(result.current.todayRunCals).toBeGreaterThan(0));
-      expect(result.current.postWorkoutNudge).toBeNull();
+      /* Wall-clock trap (CI unit job, 2026-08-16 00:27Z): "3 hours
+         ago" from a just-past-midnight clock lands on YESTERDAY, so
+         the run legitimately stops counting toward today and the
+         positive anchor below reads 0. The seed's two constraints —
+         >2h stale AND same local day — are unsatisfiable before
+         02:00 local, so pin the clock to today's local noon.
+         shouldAdvanceTime keeps real timers flowing for waitFor. */
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const noon = new Date();
+      noon.setHours(12, 0, 0, 0);
+      vi.setSystemTime(noon);
+      try {
+        const { result } = renderWith(
+          [
+            {
+              ...countableRun,
+              completedAt: Timestamp.fromDate(
+                new Date(Date.now() - 3 * 60 * 60_000)
+              ),
+            },
+          ],
+          []
+        );
+        // Anchored on the run having actually been READ (it still counts
+        // toward today's calories) — otherwise this passes while the runs
+        // query returns nothing.
+        await waitFor(() =>
+          expect(result.current.todayRunCals).toBeGreaterThan(0)
+        );
+        expect(result.current.postWorkoutNudge).toBeNull();
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 
