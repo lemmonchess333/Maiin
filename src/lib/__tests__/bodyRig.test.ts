@@ -943,6 +943,68 @@ describe("renderBodyDemo", () => {
       .toBeLessThan(vertical(UPPER + FORE) - vertical(reachAt(80)));
   });
 
+  it("pull-ups finishes with the chin clearly over the bar", () => {
+    /* The rep's definition, from the reference: "continue until your chin
+       is clearly over the bar", starting from "a full hang with arms
+       completely straight."
+
+       The old travel of 24 finished with the chin 8 units BELOW the bar —
+       the demo animated a partial and called it a pull-up, the same
+       defect the dip had. Worth stating that neither was found by looking
+       at the frames: both look like a pull-up and a dip. They were found
+       by measuring the movement against what the cue requires.
+
+       Asserted against the DRAWN chin (the head polygon's lowest point)
+       and the DRAWN bar, so it cannot pass by agreeing with a constant. */
+    const demo = BODY_DEMOS["pull-ups"];
+    const headPts = (POSTERIOR as { muscle: string; points: number[][] }[])
+      .filter((poly) => poly.muscle === "head")
+      .flatMap((poly) => poly.points);
+    expect(headPts.length, "no head polygon found").toBeGreaterThan(0);
+
+    const chinAt = (t: number) => {
+      const ops =
+        (demo.pose(t) as Record<string, Op[] | undefined>)["head"] ?? [];
+      return Math.max(
+        ...headPts.map((q) => applyToPoint(q as [number, number], ops)[1])
+      );
+    };
+    const barY = demo.bar!(1, demo.pose(1))![0][1];
+
+    // Smaller y is higher on screen, so "over the bar" is chin < barY.
+    const clearance = barY - chinAt(1);
+    expect(
+      clearance,
+      `pull-up tops out with the chin ${(-clearance).toFixed(1)} BELOW the bar`
+    ).toBeGreaterThanOrEqual(2);
+
+    // …from a genuine dead hang, not from halfway up.
+    expect(
+      chinAt(0) - barY,
+      "pull-up starts too close to the bar to be a full hang"
+    ).toBeGreaterThan(25);
+  });
+
+  it("pull-ups starts from straight arms", () => {
+    /* "A full hang with arms completely straight." A rep that starts with
+       the elbow already bent is a partial from the other end, and it is
+       the failure mode that ROM changes introduce — lengthening the pull
+       is easy to do by starting higher rather than finishing higher. */
+    const demo = BODY_DEMOS["pull-ups"];
+    const UPPER = Math.hypot(18 - 23, 78.7 - 46);
+    const FORE = Math.hypot(5.8 - 18, 103.8 - 78.7);
+    const grip = demo.bar!(0, demo.pose(0))![0];
+    // The body rides a pure translate, so the shoulder at t=0 is the rest
+    // shoulder plus that offset.
+    const ride = (demo.pose(0) as Record<string, Op[]>)["torso"][0];
+    const dy = (ride as { kind: "translate"; dx: number; dy: number }).dy;
+    const reach = Math.hypot(grip[0] - 23, grip[1] - (46 + dy));
+    expect(
+      reach / (UPPER + FORE),
+      `pull-up hangs at ${((reach / (UPPER + FORE)) * 100).toFixed(0)}% of full extension`
+    ).toBeGreaterThan(0.99);
+  });
+
   it("dips grips at a bar's width, not at an arm span", () => {
     /* The bars used to sit on `ANT.handL/R` — the REST hand anchors, i.e.
        where the arms hang at the SIDES of a standing figure. That put the

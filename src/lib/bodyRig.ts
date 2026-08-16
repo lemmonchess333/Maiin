@@ -1232,9 +1232,11 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     view: "posterior",
     equip: "fixed-bar",
     concentricTo: 1,
-    // Hanging scene: bar overhead, body travels ~25 units, floor just
-    // below the dangling heels at the dead hang.
-    viewBox: "-20 -24 140 254",
+    /* Hanging scene: bar overhead, floor just below the dangling heels
+       at the dead hang. The window is 22 units taller at the TOP than it
+       was, because the body now rises far enough to put the chin over the
+       bar and the crown finishes above where the old frame ended. */
+    viewBox: "-20 -46 140 276",
     groundY: 226,
     tint: {
       "upper-back": "primary",
@@ -1246,7 +1248,25 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * while the body rises — so the elbows are IK-solved. The solution
        * naturally produces the real silhouette: straight-arm hang at the
        * bottom, wide "W" flare (elbows out at ear height) at the top. */
-      const dy = lerp(1, -24, e); // dead hang → chin over the bar
+      /* RISE IS DERIVED FROM THE STANDARD, not dialled. The rep is
+       * defined by "continue until your chin is clearly over the bar,"
+       * from "a full hang with arms completely straight" — and the old
+       * -24 did not get there: the chin finished 8 units BELOW the bar,
+       * so the demo animated a partial and called it a pull-up.
+       *
+       * The head's lowest drawn point (the chin) sits at y=20 at rest and
+       * the bar at y=-12, so the chin starts 32 below it and needs 35 of
+       * travel to finish 3 clear — about an inch at this figure's scale,
+       * which is what "clearly over" means. The posterior arm (upper
+       * 33.08, fore 27.91, straight 60.99) puts that at a 49.6° elbow,
+       * squarely inside the 40-60° a full pull-up finishes in:
+       *
+       *   rise 24 -> elbow 74°  chin 8 BELOW the bar   (the old value)
+       *   rise 30 -> elbow 60°  chin 2 below
+       *   rise 35 -> elbow 50°  chin 3 CLEAR
+       *   rise 38 -> elbow 43°  chin 6 clear, and past what most reps hit
+       */
+      const dy = lerp(1, -35, e); // dead hang → chin clearly over the bar
       const L = aimArm(
         { S: POST.shoulderL, E: POST.elbowL, H: POST.handL },
         solveElbow(
