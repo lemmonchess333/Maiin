@@ -276,6 +276,81 @@ describe("renderBodyDemo", () => {
     expect(S[0]).toBeGreaterThan(Math.max(...xs));
   });
 
+  it("no demo clips its own canvas", () => {
+    /* Framing audit 2026-08-16. Each demo locks its own camera, but
+       nothing ever checked the figure FITS in it: the barbell row was
+       slicing 13.9 units off the top of the head, and the calf raise
+       clipped the crown at the top of the rise plus its floor line on
+       the right. Both went unnoticed because the contact sheets are
+       rendered from the same viewBox that does the clipping — the
+       frame looks intentional. */
+    for (const [id, d] of Object.entries(BODY_DEMOS)) {
+      const [vx, vy, vw, vh] = (
+        d.viewBox ??
+        (d.view === "anterior" ? "-8 -14 116 224" : "-12 -14 124 244")
+      )
+        .split(/\s+/)
+        .map(Number);
+      for (const t of [0, 0.5, 1]) {
+        const svg = renderBodyDemo(id, t, 1).replace(
+          /<g class="glow">.*?<\/g>/,
+          ""
+        );
+        const ys = polyYs(svg);
+        const xs = [...svg.matchAll(/points="([^"]+)"/g)]
+          .flatMap((m) => m[1].trim().split(/\s+/))
+          .map((p) => Number(p.split(",")[0]))
+          .concat(
+            [...svg.matchAll(/ d="([^"]+)"/g)].flatMap((m) =>
+              [...m[1].matchAll(/(-?[\d.]+),(-?[\d.]+)/g)].map((p) =>
+                Number(p[1])
+              )
+            )
+          )
+          .filter(Number.isFinite);
+        expect(Math.min(...ys), `${id}@${t} top`).toBeGreaterThan(vy - 0.5);
+        expect(Math.max(...ys), `${id}@${t} bottom`).toBeLessThan(
+          vy + vh + 0.5
+        );
+        expect(Math.min(...xs), `${id}@${t} left`).toBeGreaterThan(vx - 0.5);
+        expect(Math.max(...xs), `${id}@${t} right`).toBeLessThan(
+          vx + vw + 0.5
+        );
+      }
+    }
+  });
+
+  it("a standing lift keeps its planted foot planted", () => {
+    /* Contact audit 2026-08-16. The squat and deadlift get this free by
+       building the leg ANKLE-UP; the row and RDL built it hip-down, so
+       the knee ops displaced the ankle and the balance LEAN then
+       pivoted about where the ankle USED to be. Measured: the RDL's
+       planted ankle travelled 3.0 units DOWN, through the floor. */
+    for (const id of [
+      "squat",
+      "bodyweight-squat",
+      "deadlift",
+      "romanian-deadlift",
+      "barbell-row",
+      "barbell-curl",
+      "rope-tricep-pushdown",
+    ]) {
+      const d = BODY_DEMOS[id];
+      const at = (t: number) =>
+        applyToPoint(
+          SIDE_ANCHORS.ankle,
+          (d.pose(t) as Record<string, never[]>).shankL ?? []
+        );
+      const a0 = at(0);
+      for (const t of [0.25, 0.5, 0.75, 1]) {
+        const a = at(t);
+        expect(Math.hypot(a[0] - a0[0], a[1] - a0[1]), `${id}@${t}`).toBeLessThan(0.5);
+      }
+      // …and that plant is the REST ankle, so the sole meets the floor.
+      expect(Math.hypot(a0[0] - SIDE_ANCHORS.ankle[0], a0[1] - SIDE_ANCHORS.ankle[1]), id).toBeLessThan(0.5);
+    }
+  });
+
   it("bars are RIGID — a bar never changes length mid-rep", () => {
     /* Bar-path audit 2026-08-16: the lat-pulldown's grip x lerped
        outward through the pull, which stretched the drawn steel bar

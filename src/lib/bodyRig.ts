@@ -579,6 +579,29 @@ export interface BodyDemo {
   shadowRx?: number;
 }
 
+/** PLANTED-FOOT re-registration (2026-08-16 contact audit). A standing
+ *  lift's foot is on the floor: it does not slide, and it certainly
+ *  does not sink through it. The squat and deadlift get this free by
+ *  building the leg ANKLE-UP, but the row and RDL build it hip-down —
+ *  the knee ops displace the ankle, and the balance LEAN then pivots
+ *  about where the ankle USED to be. Measured: the RDL's planted
+ *  ankle travelled 3.0 units (down, into the floor) across the rep,
+ *  and the row's whole figure sat 3.2 below the ground line.
+ *
+ *  Rather than rebuild those chains (and lose their tuned look), this
+ *  measures where the posed ankle actually landed and returns the
+ *  rigid translation that snaps it back — applied to EVERY group, so
+ *  it re-registers the whole figure about its contact point instead
+ *  of detaching the legs. */
+function plantFoot(shankOps: Op[]): Op {
+  const a = applyToPoint(SIDE_ANCHORS.ankle, shankOps);
+  return {
+    kind: "translate",
+    dx: SIDE_ANCHORS.ankle[0] - a[0],
+    dy: SIDE_ANCHORS.ankle[1] - a[1],
+  };
+}
+
 const lerp = (a: number, b: number, e: number) => a + (b - a) * e;
 
 /** Shared side-squat lower-body chain (barbell + bodyweight variants):
@@ -1251,7 +1274,10 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
      * shank via the renderer's attachment default. */
     view: "side",
     concentricTo: 1,
-    viewBox: "-8 -2 116 216",
+    // Content measures x -4..112, y -4.2..209 (the step and floor line
+    // reach wider than the body) — the old window clipped the crown of
+    // the head at the top of the rise and the floor line on the right.
+    viewBox: "-10 -8 128 224",
     groundY: 209,
     shadowCx: 54,
     shadowRx: 24,
@@ -1379,7 +1405,12 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     view: "side",
     equip: "plate-end",
     concentricTo: 1,
-    viewBox: "-4 38 172 174",
+    // Camera (2026-08-16 framing audit): the head poked 13.9 above the
+    // old top edge and was sliced off. Content measures y 24.1..203.8,
+    // so the window starts at 16. WIDTH is unchanged at 172 because
+    // width is the binding dimension when the card letterboxes — the
+    // figure keeps exactly its previous scale, it just stops clipping.
+    viewBox: "-14 16 172 196",
     groundY: 204,
     shadowCx: 62,
     shadowRx: 40,
@@ -1429,15 +1460,19 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         hPre,
         0
       );
-      const leg: Op[] = [
+      const legRaw: Op[] = [
         { kind: "rotate", deg: KNEE, pivot: SIDE_ANCHORS.hip },
         LEAN,
       ];
-      const shank: Op[] = [
+      const shankRaw: Op[] = [
         { kind: "rotate", deg: -KNEE, pivot: SIDE_ANCHORS.knee },
         { kind: "rotate", deg: KNEE, pivot: SIDE_ANCHORS.hip },
         LEAN,
       ];
+      // Foot on the floor: re-register the whole figure about it.
+      const P = plantFoot(shankRaw);
+      const leg: Op[] = [...legRaw, P];
+      const shank: Op[] = [...shankRaw, P];
       return {
         // Cervical rhythm — the head counters ~40% of the hinge about the
         // posed neck so the gaze stays forward, mirroring the pelvis damp.
@@ -1449,18 +1484,23 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
             deg: -T.deg * 0.4,
             pivot: applyToPoint([48, 32], [T, LEAN]),
           },
+          P,
         ],
-        torso: [T, LEAN],
+        torso: [T, LEAN, P],
         // Lumbopelvic rhythm: the pelvis tilts ~72% of the spine's hinge
         // (full-rate shelved the glutes out past the back line).
-        pelvis: [{ kind: "rotate", deg: T.deg * 0.72, pivot: T.pivot }, LEAN],
+        pelvis: [
+          { kind: "rotate", deg: T.deg * 0.72, pivot: T.pivot },
+          LEAN,
+          P,
+        ],
         thighL: leg,
         thighR: leg,
         shankL: shank,
         shankR: shank,
-        upperArmL: [...arm.upper, T, LEAN],
-        foreArmL: [...arm.fore, T, LEAN],
-        handL: [...arm.fore, T, LEAN],
+        upperArmL: [...arm.upper, T, LEAN, P],
+        foreArmL: [...arm.fore, T, LEAN, P],
+        handL: [...arm.fore, T, LEAN, P],
       };
     },
     bar: (_e, pose) => {
@@ -1528,15 +1568,19 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         hPre,
         0
       );
-      const leg: Op[] = [
+      const legRaw: Op[] = [
         { kind: "rotate", deg: KNEE, pivot: SIDE_ANCHORS.hip },
         LEAN,
       ];
-      const shank: Op[] = [
+      const shankRaw: Op[] = [
         { kind: "rotate", deg: -KNEE, pivot: SIDE_ANCHORS.knee },
         { kind: "rotate", deg: KNEE, pivot: SIDE_ANCHORS.hip },
         LEAN,
       ];
+      // Foot on the floor: re-register the whole figure about it.
+      const P = plantFoot(shankRaw);
+      const leg: Op[] = [...legRaw, P];
+      const shank: Op[] = [...shankRaw, P];
       return {
         // Cervical rhythm — the head counters ~40% of the hinge about the
         // posed neck so the gaze stays forward, mirroring the pelvis damp.
@@ -1548,18 +1592,23 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
             deg: -T.deg * 0.4,
             pivot: applyToPoint([48, 32], [T, LEAN]),
           },
+          P,
         ],
-        torso: [T, LEAN],
+        torso: [T, LEAN, P],
         // Lumbopelvic rhythm: the pelvis tilts ~72% of the spine's hinge
         // (full-rate shelved the glutes out past the back line).
-        pelvis: [{ kind: "rotate", deg: T.deg * 0.72, pivot: T.pivot }, LEAN],
+        pelvis: [
+          { kind: "rotate", deg: T.deg * 0.72, pivot: T.pivot },
+          LEAN,
+          P,
+        ],
         thighL: leg,
         thighR: leg,
         shankL: shank,
         shankR: shank,
-        upperArmL: [...arm.upper, T, LEAN],
-        foreArmL: [...arm.fore, T, LEAN],
-        handL: [...arm.fore, T, LEAN],
+        upperArmL: [...arm.upper, T, LEAN, P],
+        foreArmL: [...arm.fore, T, LEAN, P],
+        handL: [...arm.fore, T, LEAN, P],
       };
     },
     bar: (_e, pose) => {
@@ -2149,7 +2198,11 @@ export function renderBodyDemo(
   // raise top. Depth is e for descend-first lifts, 1−e for lift-first.
   const depth = demo.concentricTo === 0 ? e : 1 - e;
   const shadowRx = 26 + 6 * depth;
-  const groundY = demo.groundY ?? (demo.view === "anterior" ? 199 : 222);
+  /* The anterior default was 199 while ANTERIOR_FEET reach y=203, so
+     the contact shadow was drawn 4 units UP inside the ankles — the
+     figure read as floating over its own shadow (measured in the
+     2026-08-16 contact audit; posterior's 222 was already right). */
+  const groundY = demo.groundY ?? (demo.view === "anterior" ? 203 : 222);
   const shadow = `<ellipse cx="50" cy="${groundY}" rx="${shadowRx.toFixed(1)}" ry="2.6" fill="#000" opacity="${(0.16 + 0.1 * depth).toFixed(2)}"/>`;
 
   const scene = demo.scene?.(e, pose) ?? "";

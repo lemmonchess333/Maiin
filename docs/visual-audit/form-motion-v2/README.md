@@ -855,3 +855,37 @@ figure's shoulder-to-grip is 55 units where human proportions want
 those two, a floor-height bar would need the shoulder at y≈133, which
 is a squat, not a hinge. The bar finishing below the knee (pinned) is
 the honest read of a low pull at this figure's proportions.
+
+## STATUS 2026-08-16 (forty-second pass) — the contact & framing audit
+
+Continuing the "keep finding things to improve" sweep with two
+invariants nothing had ever checked. Both found real defects that had
+been shipping invisibly, and both are the same shape as the pass-41
+lesson: the thing that renders the demo is also the thing that hides
+the bug.
+
+| Invariant           | What it found                                                                                                                                                                                                                                                                          |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Figure fits canvas  | **The barbell row was slicing 13.9 units off the top of the head**, and the calf raise clipped the crown at the top of the rise plus its floor line on the right. Invisible because the contact sheets render through the SAME viewBox that does the clipping — a clipped frame just    |
+|                     | looks like a framing choice. Row now "-14 16 172 196" (width held at 172, so the figure keeps its exact previous scale), calf raise "-10 -8 128 224".                                                                                                                                  |
+| Planted foot planted| **The RDL's planted ankle travelled 3.0 units DOWN, through the floor, across the rep**, and the row's whole figure sat 3.2 below the ground line. The squat and deadlift get this free by building the leg ANKLE-UP; the row and RDL build it hip-down, so the knee ops displaced the  |
+|                     | ankle and the balance LEAN then pivoted about where the ankle used to be. New `plantFoot()` measures where the posed ankle landed and returns the rigid translation that snaps it back — applied to EVERY group, so it re-registers the whole figure about its contact point.           |
+
+Also fixed: the anterior ground line sat at y=199 while `ANTERIOR_FEET`
+reach 203, so the contact shadow was drawn four units UP inside the
+ankles and the figure read as floating over its own shadow (overhead
+press, lateral raise). Posterior's 222 was already correct.
+
+Three pins added, all mutation-checked (reverting each fix fails its
+own test): no demo clips its own canvas; every standing lift's ankle
+stays within 0.5 of the REST ankle all rep (so the sole meets the
+floor, not just "doesn't wander"); and the deadlift bar-path pin from
+41b.
+
+Measured clean and deliberately left: the deadlift's canvas carries ~57
+units of dead space on the right, so its figure renders smaller than it
+could. That is a scale-consistency question across the whole set rather
+than a defect in one demo, and worth doing as its own pass with all 15
+cameras in view at once.
+
+62 rig+component tests passing; probe smooth on all 15.
