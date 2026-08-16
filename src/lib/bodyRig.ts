@@ -614,16 +614,23 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       );
       const kf =
         Math.hypot(SQUAT_BAR[0] - EV[0], SQUAT_BAR[1] - EV[1]) / SIDE_FORE_LEN;
+      /* scaleAxis's axis is REST-VERTICAL rotated by `deg`, so each
+       * segment's rest tilt from vertical must ride along or the
+       * anchor slides off its target as the tilt grows (the forearm
+       * now carries ~10 deg forward at rest — reference-carry pass —
+       * which is what broke the bare-fa version). */
+      const tiltOf = (a: Pt, b: Pt) =>
+        (Math.atan2(b[0] - a[0], b[1] - a[1]) * 180) / Math.PI;
       const upperOps: Op[] = [
         { kind: "rotate", deg: ua, pivot: S },
-        { kind: "scaleAxis", k: ku, deg: ua, pivot: S },
+        { kind: "scaleAxis", k: ku, deg: ua - tiltOf(S, E0), pivot: S },
       ];
       // The forearm shapes about its own rest elbow, then translates so
       // its elbow end lands exactly on the foreshortened upper's tip —
       // composing the upper's scaleAxis instead would re-squash it.
       const foreOps: Op[] = [
         { kind: "rotate", deg: fa, pivot: E0 },
-        { kind: "scaleAxis", k: kf, deg: fa, pivot: E0 },
+        { kind: "scaleAxis", k: kf, deg: fa - tiltOf(E0, H0), pivot: E0 },
         { kind: "translate", dx: EV[0] - E0[0], dy: EV[1] - E0[1] },
       ];
       return {

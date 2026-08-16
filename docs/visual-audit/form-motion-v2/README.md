@@ -733,3 +733,31 @@ changes:
 Pins: ball pinned in every frame, heel below the step top at the
 stretch and >6 higher at the top, head rises, bench feet still follow
 their shank. Motion probe: all 15 smooth. 43 passing.
+
+## STATUS 2026-08-15 (thirty-ninth pass) — reference-grounded arm carry + anatomical foot
+
+Operator supplied anatomy-plate references (front/back/side muscular
+figures — Dreamstime lineart, Alamy 3D, Shutterstock muscular system)
+with "use this to help improve your front and side views". Measured
+against them, two side-figure gaps closed:
+
+| Lesson              | Change                                                                                                                                                                                                                                                                       |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Forward arm carry   | Every reference profile hangs the relaxed arm with the forearm angling ~7° FORWARD so the hand rests beside the front of the thigh — ours was a plumb line. The carry lives in the forearm contours AND the hand anchor together, so the art stays aligned with its own axis: |
+|                     | IK-aimed demos (deadlift/row/RDL/bench/push-ups/squat grip) rotate rest→target and render identically; relaxed frames (curl start, calf raise, squat family stands) gain the carry, and the pushdown lockout lands hands-in-front-of-thighs — the reference finish.          |
+| Anatomical foot     | The profile foot was a flat wedge. Now: convex instep to a tapered toe, ball contact, lifted ARCH mid-sole, heel pad, and a heel bulging back past the achilles line — visible in every standing frame, on the bench sole, and through the calf-raise arc.                    |
+
+The squat's foreshortening `scaleAxis` ops now subtract each segment's
+rest tilt from vertical (the axis convention) — the bare-`fa` version
+was ~3° off and survived only while the rest forearm was near-plumb;
+the 10° carry exposed it (grip-weld pin caught it before commit).
+
+Checked against the references and NOT changed: torso S-curve (chest
+carry, lumbar, glute shelf — passes 7/23/25/32/33 already match),
+gastroc peak height + achilles taper, knee patella bump, neck lean
+(pass 33), and the vendored FRONT mosaic's muscle-group shapes — the
+front figure IS the app's muscle-map art; its anatomy plates already
+carry the reference separations (pecs/abs blocks/quad sweep), and
+reshaping vendored polygons would break identity with the Form view.
+
+Motion probe: all 15 smooth. 56 rig+component tests passing.

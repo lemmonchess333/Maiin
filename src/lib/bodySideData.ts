@@ -248,36 +248,52 @@ const ARM_F: C = [
   [71.5, 50.5],
 ];
 
-/* Forearm: tapers toward the wrist. */
+/* Forearm: tapers toward the wrist, and CARRIES FORWARD — in every
+ * anatomy-plate profile (operator references, 2026-08-15) the relaxed
+ * arm is not a plumb line: the forearm angles ~7 deg forward from the
+ * elbow so the hand rests beside the FRONT of the thigh. The tilt
+ * lives in the art AND the hand anchor together, so the piece stays
+ * aligned with its own axis — IK-aimed demos rotate rest onto target
+ * and render exactly as before; only relaxed hanging frames gain the
+ * carry. */
 const FORE_B: C = [
   [66.2, 46.6],
   [67.8, 45.2],
-  [76, 45.8],
-  [88, 46.6],
-  [97, 47.5],
-  [99.2, 48.7],
+  [76, 47],
+  [88, 49.1],
+  [97, 50.7],
+  [99.2, 52.2],
 ];
 const FORE_F: C = [
   [66, 51],
   [67.6, 52.3],
-  [78, 53.6],
-  [90, 53.2],
-  [96.8, 52.9],
-  [99, 51.7],
+  [78, 54.8],
+  [90, 55.7],
+  [96.8, 56.1],
+  [99, 55.2],
 ];
 
 /* ── Pieces ──────────────────────────────────────────────────────── */
 
 const FOOT: Pt[] = [
+  // Anatomy-plate foot (operator references, 2026-08-15): instep
+  // sloping convexly to a tapered toe, ball contact, a lifted ARCH
+  // mid-sole, heel pad, and a heel that bulges BACK past the achilles
+  // line — replacing the flat wedge.
   [44.2, 192.6],
   [49.8, 191.6],
-  [55, 194],
-  [60.2, 197.4],
-  [63, 199.6],
-  [62.6, 202.3],
-  [42.8, 202.4],
-  [39.4, 198],
-  [40.4, 193.6],
+  [55.3, 193.8],
+  [61.2, 197.2],
+  [65.1, 200.2],
+  [65.5, 201.6],
+  [64, 202.4],
+  [56.6, 202.5],
+  [51.6, 201.4],
+  [46.7, 201.9],
+  [42.6, 202.5],
+  [40.4, 200.8],
+  [40.3, 197.6],
+  [41, 194],
 ];
 
 /* The foot is its OWN piece since the calf-raise side conversion —
@@ -298,14 +314,20 @@ const SHANK_OUTLINE: Pt[] = [
 ];
 
 const FOOT_OUTLINE: Pt[] = [
-  // the ring the shank outline used to splice in
+  // underlay ring around the FOOT facet; top edge unchanged so the
+  // shank's ankle stub still overlaps the joint
   [49.8, 191],
-  [55.4, 193.4],
-  [60.8, 196.8],
-  [65, 199.6],
-  [64.2, 202.8],
-  [42.2, 203],
-  [40.2, 198.4],
+  [55.6, 193.2],
+  [61.6, 196.6],
+  [65.8, 199.8],
+  [66.2, 201.6],
+  [64.6, 202.9],
+  [56.6, 203.1],
+  [51.6, 202],
+  [46.6, 202.5],
+  [42, 203.1],
+  [39.7, 201],
+  [39.5, 197.4],
   [41.4, 193.6],
 ];
 const FOOT_FACETS = [{ muscle: "foot", points: FOOT }];
@@ -421,23 +443,23 @@ export const SIDE_PIECES: SidePiece[] = [
     group: "handR",
     far: true,
     outline: [
-      [46.8, 99.4],
-      [52.8, 99.2],
-      [54, 103.2],
-      [52.8, 107.6],
-      [48.8, 108.6],
-      [46, 104.6],
+      [50.3, 99.4],
+      [56.3, 99.2],
+      [57.5, 103.2],
+      [56.3, 107.6],
+      [52.3, 108.6],
+      [49.5, 104.6],
     ],
     facets: [
       {
         muscle: "hand",
         points: [
-          [47.4, 100],
-          [52.2, 99.8],
-          [53.4, 103.2],
-          [52.2, 107],
-          [49.2, 107.9],
-          [46.8, 104.4],
+          [50.9, 100],
+          [55.7, 99.8],
+          [56.9, 103.2],
+          [55.7, 107],
+          [52.7, 107.9],
+          [50.3, 104.4],
         ],
       },
     ],
@@ -621,23 +643,23 @@ export const SIDE_PIECES: SidePiece[] = [
     // the wrist pivot. Rides the forearm chain in every pose.
     group: "handL",
     outline: [
-      [46.8, 99.4],
-      [52.8, 99.2],
-      [54, 103.2],
-      [52.8, 107.6],
-      [48.8, 108.6],
-      [46, 104.6],
+      [50.3, 99.4],
+      [56.3, 99.2],
+      [57.5, 103.2],
+      [56.3, 107.6],
+      [52.3, 108.6],
+      [49.5, 104.6],
     ],
     facets: [
       {
         muscle: "hand",
         points: [
-          [47.4, 100],
-          [52.2, 99.8],
-          [53.4, 103.2],
-          [52.2, 107],
-          [49.2, 107.9],
-          [46.8, 104.4],
+          [50.9, 100],
+          [55.7, 99.8],
+          [56.9, 103.2],
+          [55.7, 107],
+          [52.7, 107.9],
+          [50.3, 104.4],
         ],
       },
     ],
@@ -650,7 +672,7 @@ export const SIDE_ANCHORS = {
   lumbar: [45, 90] as Pt,
   shoulder: [47.5, 45] as Pt,
   elbow: [48.6, 70.5] as Pt,
-  hand: [50.3, 100] as Pt,
+  hand: [53.8, 100] as Pt,
   hip: [42, 100.5] as Pt,
   knee: [50, 152] as Pt,
   ankle: [46.6, 193] as Pt,
