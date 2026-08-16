@@ -889,3 +889,38 @@ than a defect in one demo, and worth doing as its own pass with all 15
 cameras in view at once.
 
 62 rig+component tests passing; probe smooth on all 15.
+
+### Pass 42 addendum — the scale audit: how big is the person?
+
+The card renders each demo's SVG into a fixed 190px-wide box with auto
+height (`ExerciseRigDemo`: `max-w-[190px]`), so **on-screen scale is
+just 190 ÷ viewBox-width**. Nothing had ever checked it, and the answer
+was that the figure's size swung 1.86× across the library — a person
+was nearly twice as big in one exercise as in another.
+
+Measured rendered figure heights before this pass: dips 359px, press
+344px, pull-ups 336px, pushdown 327px, calf 315px, curl 312px, squat
+297px … then **RDL 226px, deadlift 210px, row 198px**. Those three
+carried 75-85 units of unused canvas width, so they drew the smallest
+people in the set for no reason at all. Their cameras are now tightened
+to their measured content (deadlift `-10 -6 131 218`, row `7 18 131
+192`, RDL `4 -6 131 216`), which puts all three at 1.45 px/unit —
+inside the existing squat/calf/curl cluster.
+
+| group                          | scale before   | scale after    |
+| ------------------------------ | -------------- | -------------- |
+| upright demos (12 of 15)       | 1.02 – 1.64    | **1.36 – 1.64** |
+| inherently wide (3)            | 0.88 – 1.10    | unchanged      |
+
+The three exempt demos are not a defect and are pinned as exempt: a
+lateral raise at full arm span, a bench, and a prone push-up already
+fill 90-97% of their frame width, so they cannot be tightened and
+legitimately draw a smaller figure. Pinned: every non-exempt demo sits
+in 1.3-1.7 px/unit and the spread across them stays under 1.25×.
+
+Worth knowing for the next camera change: scale and card height are the
+same knob. Card height = 190 × vh/vw = scale × content-height, so a
+bigger figure is necessarily a taller card — you cannot enlarge the
+figure inside the same box. The three tightened demos moved from
+216-234px cards to 278-316px, which is where the majority of the set
+(305-393px) already sat, so they moved TOWARD the group.

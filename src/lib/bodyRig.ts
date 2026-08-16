@@ -973,9 +973,14 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     equip: "plate-end",
     plateR: 16,
     concentricTo: 0,
-    // Wider left margin than the RDL: the deep-hinge hips travel far
-    // enough back that the glutes cross x=0.
-    viewBox: "-18 -2 186 212",
+    /* Camera width sets on-screen scale (the card is a fixed 190px
+     * wide with auto height, so scale = 190/viewBox-width). This
+     * carried 77 units of unused width and rendered its figure 210px
+     * tall where most of the set sits at 300-360 — measurably the
+     * smallest person in the library. Tightened to the content
+     * (x 1.3..110.5) plus margin; the deep-hinge hips still clear the
+     * left edge. */
+    viewBox: "-10 -6 131 218",
     groundY: 204,
     shadowCx: 58,
     shadowRx: 44,
@@ -1410,7 +1415,10 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     // so the window starts at 16. WIDTH is unchanged at 172 because
     // width is the binding dimension when the card letterboxes — the
     // figure keeps exactly its previous scale, it just stops clipping.
-    viewBox: "-14 16 172 196",
+    // Tightened with the same scale audit as the deadlift: content is
+    // x 28.8..115.4, so 172 units of width rendered the figure at
+    // 198px — the smallest in the set.
+    viewBox: "7 18 131 192",
     groundY: 204,
     shadowCx: 62,
     shadowRx: 40,
@@ -1513,9 +1521,12 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     view: "side",
     equip: "plate-end",
     concentricTo: 0,
-    // Camera must fit BOTH extremes: standing (full height) and hinged
-    // (head reaching forward) — locked, so no framing jumps mid-rep.
-    viewBox: "-4 -2 172 212",
+    /* Camera must fit BOTH extremes: standing (full height) and hinged
+     * (head reaching forward) — locked, so no framing jumps mid-rep.
+     * Width tightened to the measured content (x 21.6..118.4) by the
+     * scale audit; it was rendering the figure 226px tall against the
+     * set's 300-360. */
+    viewBox: "4 -6 131 216",
     groundY: 204,
     shadowCx: 62,
     shadowRx: 40,

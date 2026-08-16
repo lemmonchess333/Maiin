@@ -351,6 +351,41 @@ describe("renderBodyDemo", () => {
     }
   });
 
+  it("a person is the same size across the upright demos", () => {
+    /* Scale audit 2026-08-16. The card renders the SVG into a fixed
+       190px-wide box with auto height (ExerciseRigDemo: max-w-[190px]),
+       so on-screen scale is simply 190 / viewBox-width — a camera wider
+       than it needs to be renders its figure smaller for nothing.
+       Measured, the deadlift/row/RDL carried 75-85 units of unused
+       width and drew a 198-226px person where the rest of the set drew
+       300-360px. Their cameras are now tightened to their measured
+       content.
+
+       Exempt, and NOT a defect: movements whose envelope is genuinely
+       wide already fill 90-97% of their frame, so they cannot be
+       tightened and legitimately render a smaller figure — a lateral
+       raise at full span, a bench, and a prone push-up. */
+    const WIDE = new Set(["lateral-raise", "bench-press", "push-ups"]);
+    const scales: Record<string, number> = {};
+    for (const [id, d] of Object.entries(BODY_DEMOS)) {
+      if (WIDE.has(id)) continue;
+      const vw = Number(
+        (
+          d.viewBox ??
+          (d.view === "anterior" ? "-8 -14 116 224" : "-12 -14 124 244")
+        ).split(/\s+/)[2]
+      );
+      scales[id] = 190 / vw;
+    }
+    const vals = Object.values(scales);
+    for (const [id, s] of Object.entries(scales)) {
+      expect(s, `${id} scale`).toBeGreaterThan(1.3);
+      expect(s, `${id} scale`).toBeLessThan(1.7);
+    }
+    // …and the spread across them stays tight.
+    expect(Math.max(...vals) / Math.min(...vals)).toBeLessThan(1.25);
+  });
+
   it("bars are RIGID — a bar never changes length mid-rep", () => {
     /* Bar-path audit 2026-08-16: the lat-pulldown's grip x lerped
        outward through the pull, which stretched the drawn steel bar
