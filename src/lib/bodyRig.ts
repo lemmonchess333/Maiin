@@ -175,6 +175,11 @@ const PULLUP_GRIP_R: Pt = [94, PULLUP_BAR_Y];
  *  hinge carries it forward to land exactly over mid-foot. */
 const SQUAT_BAR: Pt = [43.5, 41];
 
+/** Midfoot — the balance line every barbell reference measures a bar
+ *  path against. The profile foot runs x 40.3 (heel) to 65.5 (toe), so
+ *  its middle is ~52.9; the ankle anchor ([46.6]) is NOT midfoot. */
+const MIDFOOT_X = 52.9;
+
 /** Ball-of-foot pivot for the side calf raise: on the step edge, just
  *  behind the toes ([65,199.6] tip, sole ~203). The heel ([42,203])
  *  cantilevers off the step's back edge. */
@@ -1007,13 +1012,26 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         { kind: "rotate", deg: hinge * 0.72, pivot: SIDE_ANCHORS.hip },
         shift,
       ];
-      /* Straight arms hang from the hinged shoulder. The x-offset
-       * interpolates: standing lockout rests the bar against the FRONT
-       * of the thigh (+8), the bottom pulls it back under the shoulder
-       * blades toward mid-foot (−5, the lats-pull-the-bar-in line) so
-       * the bar never drifts out past the toes. */
+      /* Straight arms hang from the hinged shoulder to a bar pinned
+       * OVER MIDFOOT (2026-08-16 bar-path audit). The old version
+       * offset the hand from the SHOULDER, so as the torso hinged the
+       * shoulder dragged the bar forward with it — measured, the bar
+       * drifted 11.6 units forward through the pull and sat 17-20
+       * units in front of midfoot at the bottom, out past the toes.
+       * Every reference is unanimous and specific here: the bar
+       * travels a straight VERTICAL line over the middle of the foot,
+       * an inch off the shin, with the shoulders slightly in FRONT of
+       * it (which now falls out of the geometry rather than being
+       * posed). The arms are hooks — never bent — so the hand is
+       * simply where a straight arm from the posed shoulder meets the
+       * midfoot line, and the bar's height follows the hinge. */
       const S = applyToPoint(SIDE_ANCHORS.shoulder, torsoOps);
-      const hFinal: Pt = [S[0] + lerp(8, -5, e), S[1] + 54.8];
+      const ARM = SIDE_UPPER_LEN + SIDE_FORE_LEN;
+      const dxBar = MIDFOOT_X - S[0];
+      const hFinal: Pt = [
+        MIDFOOT_X,
+        S[1] + Math.sqrt(Math.max(ARM * ARM - dxBar * dxBar, 1)),
+      ];
       const unpose: Op[] = [
         { kind: "translate", dx: -shift.dx, dy: -shift.dy },
         { kind: "rotate", deg: -hinge, pivot: SIDE_ANCHORS.hip },

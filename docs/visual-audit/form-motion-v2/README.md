@@ -823,3 +823,35 @@ camera — but its Gate-0 sheet is the one marked approved, so it stays
 pending an owner call rather than being changed on my own initiative.
 
 Motion probe: all 15 smooth. 59 rig+component tests passing.
+
+### Pass 41 addendum — the bar-path audit, measured against midfoot
+
+Every barbell demo's bar was measured against MIDFOOT (x 52.9 — the
+profile foot runs heel 40.3 to toe 65.5; note the ankle anchor at 46.6
+is NOT midfoot), which is the line every lifting reference judges a bar
+path by:
+
+| Demo              | bar-vs-midfoot across the rep      | verdict                                                                 |
+| ----------------- | ---------------------------------- | ------------------------------------------------------------------------- |
+| squat             | −3.1 −4.4 −4.9 −4.2 −1.9 (drift 3) | correct — vertical over midfoot (pass 36 built it that way)              |
+| deadlift          | was 8.7→20.3 (drift 11.6)          | **FIXED** — now 6.1→6.4 (drift 0.3), dead vertical                       |
+| romanian-deadlift | 23.3→20.2 (drift 3.1)              | correct — bar hangs plumb from the shoulder, staying against the legs    |
+| barbell-row       | 38.6 constant                      | correct — a hanging bar plumb under the shoulders of a 55° hinge         |
+| barbell-curl      | drift 26.2                         | correct — a curl's arc is SUPPOSED to leave the balance line            |
+| bench-press       | drift 14.0 (the J-curve)           | correct — lying, so midfoot is not the governing line                   |
+
+The deadlift was the one real violation: the hand was offset from the
+SHOULDER, so the hinging torso dragged the bar forward — 20 units past
+midfoot at the bottom, out beyond the toes. The hand is now simply
+where a straight arm from the posed shoulder meets the midfoot line,
+which also makes "shoulders slightly in front of the bar" fall out of
+the geometry instead of being posed.
+
+**Measured and accepted, not fixed:** the deadlift's bottom frame puts
+the bar at mid-shin (plate centre y 164.6, floor 204), not on the
+floor. This is a proportion limit, not a path error — the vendored
+figure's shoulder-to-grip is 55 units where human proportions want
+~69, and the stylized plate is r=16 where a real 45 would be ~25. With
+those two, a floor-height bar would need the shoulder at y≈133, which
+is a squat, not a hinge. The bar finishing below the knee (pinned) is
+the honest read of a low pull at this figure's proportions.

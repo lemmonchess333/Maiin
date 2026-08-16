@@ -253,6 +253,29 @@ describe("renderBodyDemo", () => {
     }
   });
 
+  it("deadlift: the bar runs a straight vertical line over midfoot", () => {
+    /* Bar-path audit 2026-08-16. The hand used to be offset from the
+       SHOULDER, so the hinging torso dragged the bar forward with it:
+       measured 11.6 units of forward drift, finishing 17-20 units past
+       midfoot — out beyond the toes, un-liftable. Every reference is
+       specific and unanimous (ExRx, Stronglifts, PowerliftingTechnique,
+       Barbell Logic): a straight vertical line over the middle of the
+       foot, an inch off the shin. */
+    const d = BODY_DEMOS["deadlift"];
+    const xs = [0, 0.25, 0.5, 0.75, 1].map(
+      (t) => d.bar!(t, d.pose(t))![0][0]
+    );
+    expect(Math.max(...xs) - Math.min(...xs)).toBeLessThan(1);
+    // …and the shoulders end up slightly IN FRONT of it, which is the
+    // documented setup position (it falls out of the geometry now
+    // rather than being posed).
+    const S = applyToPoint(
+      SIDE_ANCHORS.shoulder,
+      (BODY_DEMOS["deadlift"].pose(1).torso ?? []) as never[]
+    );
+    expect(S[0]).toBeGreaterThan(Math.max(...xs));
+  });
+
   it("bars are RIGID — a bar never changes length mid-rep", () => {
     /* Bar-path audit 2026-08-16: the lat-pulldown's grip x lerped
        outward through the pull, which stretched the drawn steel bar
