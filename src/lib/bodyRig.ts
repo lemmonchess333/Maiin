@@ -78,6 +78,72 @@ const ANT_FORE_LEN = Math.hypot(
   ANT.handL[0] - ANT.elbowL[0],
   ANT.handL[1] - ANT.elbowL[1]
 );
+/* WHERE THE DIP BARS ARE, and it is not where the hands rest.
+ *
+ * Owner, on the shipped demo: "arms look so far apart on the dips".
+ * `ANT.handL/handR` are the ARMS-HANGING-RELAXED hand positions of the
+ * anterior figure — 89.6 apart against a 52.0 shoulder span, so using
+ * them as grips put the hands at 1.72x shoulder width. That is not a
+ * dip station; liftmanual's chest- and triceps-dip figures both stand on
+ * bars at roughly shoulder width with the arms near-vertical at lockout.
+ *
+ * And the width was doing more damage than it looked. With the hands
+ * pinned that far out, the IK has nowhere to put the elbows as the body
+ * sinks except further out again — the old comment cheerfully described
+ * this as "the elbows flare outward as the body sinks", which measured
+ * at 20.8 units lateral of the shoulder at the bottom. liftmanual is
+ * explicit that flare is the axis SEPARATING its two dip pages: the
+ * chest dip is "slightly flared" with a forward lean, the triceps dip
+ * keeps the elbows tucked. 20.8 units is neither.
+ *
+ * Derived, not dialled in. The grip sits where a STRAIGHT arm hanging
+ * from the shoulder reaches when the bar is 1.2x shoulder width — so
+ * lockout is a genuinely straight arm rather than a slightly bent one
+ * that happens to look straight:
+ *
+ *   half-span   = 26.0 * 1.2                      = 31.2
+ *   lateral off = 31.2 - 26.0                     =  5.2  from the shoulder
+ *   drop        = sqrt(armLen^2 - 5.2^2)          = 53.4
+ *
+ * `armLen` is ANT_UPPER_LEN + ANT_FORE_LEN, so the numbers move with
+ * the model rather than being pinned to today's art. */
+const DIP_GRIP_RATIO = 1.2;
+const DIP_HALF_SPAN =
+  ((ANT.shoulderR[0] - ANT.shoulderL[0]) / 2) * DIP_GRIP_RATIO;
+const DIP_CENTRE_X = (ANT.shoulderL[0] + ANT.shoulderR[0]) / 2;
+/** How far outside the shoulder the grip sits — 5.2 at a 1.2x bar. */
+const DIP_LATERAL = DIP_HALF_SPAN - (ANT.shoulderR[0] - ANT.shoulderL[0]) / 2;
+const DIP_GRIP_DROP = Math.sqrt(
+  (ANT_UPPER_LEN + ANT_FORE_LEN) ** 2 - DIP_LATERAL ** 2
+);
+const DIP_GRIP_L: Pt = [
+  DIP_CENTRE_X - DIP_HALF_SPAN,
+  ANT.shoulderL[1] + DIP_GRIP_DROP,
+];
+const DIP_GRIP_R: Pt = [
+  DIP_CENTRE_X + DIP_HALF_SPAN,
+  ANT.shoulderR[1] + DIP_GRIP_DROP,
+];
+
+/* HOW FAR THE BODY SINKS, from liftmanual's depth landmark rather than
+ * from taste. Both its dip pages share one: at the bottom the
+ * shoulder-to-elbow segment is roughly parallel to the floor, which with
+ * a vertical forearm is a right angle at the elbow.
+ *
+ * A right angle fixes the shoulder-to-hand distance outright —
+ * sqrt(U^2 + F^2) by Pythagoras — so the drop is the amount of sink that
+ * closes the straight-arm reach down to it. No sweep, no eyeballing:
+ *
+ *   d90 = sqrt(24.26^2 + 29.39^2) = 38.11
+ *   dy  = 53.40 - sqrt(38.11^2 - 5.2^2) = 15.65
+ *
+ * The old value was 13, which lands the elbow at 98 degrees — eight
+ * degrees shy of parallel, invisible by eye and exactly the class of
+ * partial this sweep keeps finding. */
+const DIP_BOTTOM_DROP =
+  DIP_GRIP_DROP -
+  Math.sqrt(ANT_UPPER_LEN ** 2 + ANT_FORE_LEN ** 2 - DIP_LATERAL ** 2);
+
 const POST_UPPER_LEN = Math.hypot(
   POST.elbowL[0] - POST.shoulderL[0],
   POST.elbowL[1] - POST.shoulderL[1]
@@ -611,30 +677,40 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     pose: (e) => {
       /* Hands stay ON the grips while the body drops between them —
        * same both-ends-constrained problem as the pull-up, IK-solved.
-       * The elbows flare outward as the body sinks. */
-      const dy = lerp(0, 13, e);
+       *
+       * The grips are `DIP_GRIP_L/R`, NOT `ANT.handL/handR`: see the
+       * derivation there. Reusing the relaxed-hang hand positions is
+       * what made the arms read as far apart, and it also forced the
+       * flare, because an over-wide grip leaves the IK nowhere to put
+       * the elbow but further out still.
+       *
+       * DEPTH IS A CUE, not a number chosen by eye. liftmanual's shared
+       * dip landmark is that the shoulder-to-elbow segment reaches
+       * roughly parallel to the floor at the bottom; `dy` is solved for
+       * that below rather than guessed, which is what moved it off 13. */
+      const dy = lerp(0, DIP_BOTTOM_DROP, e);
       const L = aimArm(
         { S: ANT.shoulderL, E: ANT.elbowL, H: ANT.handL },
         solveElbow(
           [ANT.shoulderL[0], ANT.shoulderL[1] + dy],
-          ANT.handL,
+          DIP_GRIP_L,
           ANT_UPPER_LEN,
           ANT_FORE_LEN,
           -1
         ),
-        ANT.handL,
+        DIP_GRIP_L,
         dy
       );
       const R = aimArm(
         { S: ANT.shoulderR, E: ANT.elbowR, H: ANT.handR },
         solveElbow(
           [ANT.shoulderR[0], ANT.shoulderR[1] + dy],
-          ANT.handR,
+          DIP_GRIP_R,
           ANT_UPPER_LEN,
           ANT_FORE_LEN,
           1
         ),
-        ANT.handR,
+        DIP_GRIP_R,
         dy
       );
       const ride: Op[] = [{ kind: "translate", dx: 0, dy }];
@@ -652,7 +728,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       };
     },
     // Grip anchor line for the posts (the hands never move).
-    bar: () => [ANT.handL, ANT.handR],
+    bar: () => [DIP_GRIP_L, DIP_GRIP_R],
   },
 
   deadlift: {

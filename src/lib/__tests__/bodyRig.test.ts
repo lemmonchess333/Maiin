@@ -1,4 +1,7 @@
 import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
 import {
   applyToPoint,
   BODY_DEMOS,
@@ -7,6 +10,33 @@ import {
 } from "../bodyRig";
 import { ANTERIOR, POSTERIOR } from "../bodyModelData";
 import { SIDE_ANCHORS, SIDE_PIECES } from "../bodySideData";
+
+/* The anterior figure's joint anchors, mirrored from `bodyRig`'s private
+   `ANT`. Duplicated deliberately — hoisting them into the export surface
+   to serve tests would widen the module's API for no runtime caller — so
+   a drift guard keeps them honest (see "anterior anchors match" below). */
+const ANT_SHOULDER_L: [number, number] = [24, 48];
+const ANT_SHOULDER_R: [number, number] = [76, 48];
+const ANT_ELBOW_L: [number, number] = [20, 71];
+const ANT_HAND_L: [number, number] = [10, 100];
+
+/** Interior angle at `b`, in degrees. */
+function elbowAngle(
+  a: [number, number],
+  b: [number, number],
+  c: [number, number]
+): number {
+  const u = [a[0] - b[0], a[1] - b[1]];
+  const v = [c[0] - b[0], c[1] - b[1]];
+  return (
+    (Math.acos(
+      (u[0] * v[0] + u[1] * v[1]) /
+        (Math.hypot(u[0], u[1]) * Math.hypot(v[0], v[1]))
+    ) *
+      180) /
+    Math.PI
+  );
+}
 
 function polyYs(svg: string): number[] {
   return [...svg.matchAll(/points="([^"]+)"/g)]
@@ -85,6 +115,91 @@ describe("renderBodyDemo", () => {
     // Post lines are static.
     const postY = (svg: string) => svg.match(/<line[^>]*y1="(-?[\d.]+)"/)![1];
     expect(postY(up)).toBe(postY(down));
+  });
+
+  it("dips: the grip is a bar, not the relaxed-hang hand position", () => {
+    /* Owner, on the shipped demo: "arms look so far apart on the dips".
+       They were: the pose used `ANT.handL/handR` as the grips, which are
+       the anterior figure's ARMS-RELAXED hand positions — 79.0 apart
+       against a 52.0 shoulder span, so 1.52x shoulder width. Nothing was
+       holding the number; it was whatever the source art happened to
+       draw, reused because it was the hand.
+
+       liftmanual's chest- and triceps-dip figures both stand on bars at
+       roughly shoulder width, so the band is 1.0-1.4 and 1.52 is out of
+       it. Asserted as a RATIO rather than a literal: the point is the
+       relationship to the shoulders, and a literal would silently stop
+       meaning anything if the figure were ever redrawn. */
+    const demo = BODY_DEMOS["dips"];
+    const bar = demo.bar!(0, demo.pose(0));
+    expect(bar, "dips declares no bar").toBeTruthy();
+    const span = Math.abs(bar![1][0] - bar![0][0]);
+    const shoulders = ANT_SHOULDER_L[0] - ANT_SHOULDER_R[0];
+    const ratio = span / Math.abs(shoulders);
+    expect(
+      ratio,
+      `dip grip is ${ratio.toFixed(2)}x shoulder width`
+    ).toBeGreaterThan(1);
+    expect(ratio).toBeLessThan(1.4);
+    // …and level, because it is one bar per side at one height.
+    expect(bar![0][1]).toBeCloseTo(bar![1][1], 6);
+  });
+
+  it("dips: the bottom reaches the upper-arm-parallel landmark", () => {
+    /* liftmanual's two dip pages disagree about lean and elbow flare and
+       agree about DEPTH: at the bottom the shoulder-to-elbow segment is
+       roughly parallel to the floor. With a vertical forearm that is a
+       right angle at the elbow, which is a number, so it is checkable.
+
+       It stopped at 99 degrees — nine short, invisible by eye, and the
+       same partial-rep shape as every other demo measured against its own
+       form cue. The drop is now solved from the landmark rather than
+       chosen: a right angle fixes the shoulder-to-hand distance at
+       sqrt(U^2 + F^2), so the sink is whatever closes the straight-arm
+       reach down to it.
+
+       Both ends asserted. Pinning only the bottom would be satisfied by a
+       demo that starts bent and never locks out. */
+    const at = (t: number) => {
+      const pose = BODY_DEMOS["dips"].pose(t);
+      return elbowAngle(
+        applyToPoint(ANT_SHOULDER_L, pose.upperArmL!),
+        applyToPoint(ANT_ELBOW_L, pose.foreArmL!),
+        applyToPoint(ANT_HAND_L, pose.foreArmL!)
+      );
+    };
+    expect(at(1), "dip bottom").toBeGreaterThan(85);
+    expect(at(1), "dip bottom").toBeLessThan(95);
+    expect(at(0), "dip lockout").toBeGreaterThan(170);
+  });
+
+  it("anterior anchors match the ones this file mirrors", () => {
+    /* The two dip tests above probe joints at hard-coded coordinates,
+       because `ANT` is private to `bodyRig`. That is a mirror, and this
+       project's first recurring-mistake rule is that a mirror nobody pins
+       drifts — the copy here would keep passing while measuring points
+       the figure no longer has, which is the worst failure mode: green,
+       and measuring nothing.
+
+       Caught for real while writing these: the values were carried over
+       from an earlier revision of the model and read [18.8, 71.7] for the
+       elbow. The probe still "worked" — it just reported a hand 5.3 units
+       off the grip it was sitting exactly on. */
+    const src = readFileSync(
+      resolve(dirname(fileURLToPath(import.meta.url)), "../bodyRig.ts"),
+      "utf8"
+    );
+    const anchor = (name: string) => {
+      const m = src.match(
+        new RegExp(`${name}: \\[(-?[\\d.]+), (-?[\\d.]+)\\] as Pt`)
+      );
+      expect(m, `ANT.${name} not found in bodyRig.ts`).toBeTruthy();
+      return [Number(m![1]), Number(m![2])];
+    };
+    expect(anchor("shoulderL")).toEqual(ANT_SHOULDER_L);
+    expect(anchor("shoulderR")).toEqual(ANT_SHOULDER_R);
+    expect(anchor("elbowL")).toEqual(ANT_ELBOW_L);
+    expect(anchor("handL")).toEqual(ANT_HAND_L);
   });
 
   it("pushdown: the rope's knotted tail travels down to lockout", () => {
