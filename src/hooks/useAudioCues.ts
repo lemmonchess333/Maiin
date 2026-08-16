@@ -7,6 +7,7 @@ import {
   paceAlertCue,
   halfwayCue,
   finalStretchCue,
+  goalReachedCue,
   type SplitComparison,
 } from "@/lib/runCueCopy";
 import { paceMinSec } from "@/lib/runLabels";
@@ -64,6 +65,7 @@ export function useAudioCues(
   }, []);
   const halfwayAnnounced = useRef(false);
   const final500Announced = useRef(false);
+  const goalAnnounced = useRef(false);
   const paceAlertCooldown = useRef(0);
 
   const cueConfig = { ...DEFAULT_CUE_CONFIG, ...config };
@@ -127,7 +129,7 @@ export function useAudioCues(
 
          gps.ts already carries this lesson for the pace ALERT — "the
          whole-run average is dragged permanently slow by a warm-up… lags
-         badly mid-run" — and `rollingPaceSeconds` was added to fix it
+         badly mid-run" — and a windowed pace (`slidingPaceSeconds`) fixed it
          there. The split cue was left on the average. */
       const segMeters = distance - lastMarkDistance.current;
       const segSeconds = elapsed - lastMarkElapsed.current;
@@ -221,6 +223,74 @@ export function useAudioCues(
     [enabled, speak]
   );
 
+  /**
+   * The distance goal is reached. Fires ONCE, and the run keeps recording.
+   *
+   * Announce-and-continue is the category convention (Apple, Garmin,
+   * adidas Running all announce and run on; Garmin shipped auto-finish on
+   * the 310XT and reversed it because "the entire activity wasn't getting
+   * recorded"). 0 of 6 reference apps auto-finish, and 0 ask mid-run.
+   *
+   * Returns the elapsed time AT the goal, corrected for overshoot, so the
+   * caller can store it — the goal moment is the thing a runner actually
+   * wanted a stop for, and capturing it is what makes not-stopping
+   * acceptable. Returns null when it didn't fire.
+   *
+   * FIRES WITHOUT AUDIO. The haptic and the return value are outside the
+   * `enabled` gate: a runner with cues off, or no headphones, must still
+   * get the moment. Apple's goal cue is tone+haptic with no speech at all,
+   * which is proof a non-verbal channel is sufficient on its own.
+   */
+  const checkGoalReached = useCallback(
+    (
+      distance: number,
+      targetDistance: number,
+      elapsed: number
+    ): number | null => {
+      if (goalAnnounced.current || !targetDistance) return null;
+      if (distance < targetDistance) return null;
+      goalAnnounced.current = true;
+
+      /* The goal fires on the first fix at or past the target, so `elapsed`
+         is up to one GPS sample late. Bill back the overshoot at the pace
+         just run — a few seconds, but this number is displayed afterwards
+         as "5 km goal in 27:43" and being visibly slower than the split
+         table would make it look wrong. */
+      const overshoot = distance - targetDistance;
+      const paceSecPerM = elapsed > 0 && distance > 0 ? elapsed / distance : 0;
+      const goalTime = Math.max(0, elapsed - overshoot * paceSecPerM);
+
+      /* A distinct haptic from the split burst (60/40/60) — the goal has to
+         be legible as a different event through a jacket pocket. */
+      haptic([120, 60, 120, 60, 220]);
+
+      /* Suppress the split cue that would otherwise land in the same
+         instant. A 5 km goal coincides exactly with the 5 km split, and
+         two announcements back to back is the routine one burying the one
+         that matters. Advancing the marker past this lap is what silences
+         it; the split's own pace accounting stays intact because
+         `checkDistanceCue` re-bases from `lastMarkDistance` regardless. */
+      const lap = lapMetresFor(unit);
+      const threshold = frequency === "every_500m" ? lap / 2 : lap;
+      const coincidentMark = Math.floor(targetDistance / threshold);
+      if (Math.abs(targetDistance - coincidentMark * threshold) < 1) {
+        lastDistanceCue.current = Math.max(
+          lastDistanceCue.current,
+          coincidentMark
+        );
+        lastMarkDistance.current = distance;
+        lastMarkElapsed.current = elapsed;
+      }
+
+      if (enabled) {
+        const count = targetDistance / lap;
+        speak(goalReachedCue(count, unit, goalTime));
+      }
+      return goalTime;
+    },
+    [enabled, frequency, speak, unit]
+  );
+
   /** Final 500m announcement */
   const checkFinal500 = useCallback(
     (distance: number, targetDistance: number) => {
@@ -258,6 +328,7 @@ export function useAudioCues(
     lastMarkElapsed.current = 0;
     halfwayAnnounced.current = false;
     final500Announced.current = false;
+    goalAnnounced.current = false;
     paceAlertCooldown.current = 0;
   }, []);
 
@@ -269,6 +340,7 @@ export function useAudioCues(
     checkPaceAlert,
     checkHalfway,
     checkFinal500,
+    checkGoalReached,
     reset,
   };
 }

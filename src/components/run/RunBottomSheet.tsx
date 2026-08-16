@@ -11,12 +11,11 @@ import { THEME } from "../../lib/theme";
 import { haptic } from "../../lib/haptic";
 import { projectAndSnap } from "../../lib/sheetSnap";
 import {
-  rollingPaceSeconds,
-  totalElevationGain,
+  slidingPaceSeconds,
   estimateRunCalories,
   calculateSplits,
 } from "../../lib/gps";
-import type { GPSPoint, Split } from "../../lib/gps";
+import type { GPSPoint } from "../../lib/gps";
 import { paceMinSec, distanceValue } from "@/lib/runLabels";
 import {
   type DistanceUnit,
@@ -29,8 +28,8 @@ import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { type ZoneNumber } from "../../lib/hrZones";
 import { RunControlButton } from "@/components/ui/RunControlButton";
 import HoldToFinishButton from "./HoldToFinishButton";
+import { Check } from "lucide-react";
 import { Dialog } from "@/components/ui/Dialog";
-import { elevationLabel } from "@/lib/runLabels";
 
 // HR zone → colour ramp (cool→hot), all THEME tokens (no hex literals).
 // Z1 recovery teal · Z2 easy green · Z3 aerobic amber · Z4 threshold orange ·
@@ -72,6 +71,20 @@ interface RunBottomSheetProps {
    */
   bpm?: number | null;
   hrZone?: 0 | ZoneNumber | null;
+  /**
+   * Elapsed seconds at the moment the distance goal was reached, or null if
+   * there is no goal or it hasn't been hit yet.
+   *
+   * The run deliberately keeps recording past the goal (announce-and-
+   * continue — see `checkGoalReached`), which leaves the runner with no way
+   * to know it landed unless something on screen says so. The voice cue
+   * can't carry that alone: cues may be off, or there may be no headphones.
+   * Apple's goal cue is tone+haptic with no speech at all, so the non-audio
+   * channel is the one that has to be complete.
+   */
+  goalReachedAt?: number | null;
+  /** Distance target in metres — labels the goal chip. */
+  goalDistanceM?: number;
 }
 
 // Visible sheet height as fraction of viewport: compact, mid, full.
@@ -83,67 +96,6 @@ const SHEET_SPRING = { type: "spring" as const, stiffness: 520, damping: 44 };
    W1f, which routes through the Capacitor Haptics plugin in the
    native shell. The old `navigator.vibrate`-only inline was a
    no-op on iOS Safari — the iOS path now fires correctly. */
-
-// ── Live splits strip (last 3) ────────────────────────────────────────────────
-function SplitsStrip({
-  splits,
-  unit,
-}: {
-  splits: Split[];
-  unit: DistanceUnit;
-}) {
-  if (splits.length === 0) return null;
-  const last3 = splits.slice(-3);
-  // Best pace across all splits to determine colour
-  const bestPace = Math.min(...splits.map((s) => s.paceSeconds));
-
-  return (
-    <div className="flex gap-2 justify-center mt-1">
-      {last3.map((s, i) => {
-        const isBest = s.paceSeconds === bestPace;
-        const isFast =
-          s.paceSeconds <
-          splits.reduce((a, b) => a + b.paceSeconds, 0) / splits.length - 5;
-        const color = isBest
-          ? THEME.teal
-          : isFast
-            ? THEME.success
-            : "rgba(255,255,255,0.5)";
-        return (
-          <div
-            key={i}
-            className="text-center px-3 py-1.5 rounded-xl"
-            style={{
-              background: "rgba(255,255,255,0.05)",
-              border: "1px solid rgba(255,255,255,0.07)",
-            }}
-          >
-            <p
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                color,
-                fontVariantNumeric: "tabular-nums",
-                fontFamily: "var(--font-mono)",
-              }}
-            >
-              {paceMinSec(s.paceSeconds, unit)}
-            </p>
-            <p
-              style={{
-                fontSize: 8,
-                color: "rgba(255,255,255,0.25)",
-                marginTop: 1,
-              }}
-            >
-              {distanceUnitLabel(unit)} {s.km}
-            </p>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 // ── Current km progress bar ───────────────────────────────────────────────────
 function KmProgress({
@@ -219,6 +171,8 @@ export default function RunBottomSheet({
   weightKg,
   bpm = null,
   hrZone = null,
+  goalReachedAt = null,
+  goalDistanceM,
 }: RunBottomSheetProps) {
   const hrColor =
     hrZone && hrZone >= 1 ? ZONE_COLOR[hrZone] : "rgba(255,255,255,0.65)";
@@ -314,16 +268,24 @@ export default function RunBottomSheet({
 
   const pace =
     distance < 10 ? "--:--" : paceMinSec((elapsed / distance) * 1000, unit);
-  /* Rolling 30s pace = "what am I doing right now" — the live signal
-     runners actually want during a run. The all-time average lags
-     badly once you've banked a few km, so it's demoted to a small
-     "AVG" caption beneath the live pace. The post-run summary still
-     records the all-time average — that's the right number for the
-     historical entry. */
-  const livePaceS = rollingPaceSeconds(points, 30);
+  /* Recent pace over the last KILOMETRE COVERED, not the last 30 seconds.
+     The window is anchored to distance so it cannot be dominated by a
+     stop: 30 seconds was short enough that a road crossing filled it, and
+     this slot read 13:14/km next to an average of 7:05 (owner, on a real
+     run). The blank was the same defect — the same window then fell under
+     the old `dist < 10` guard and dashed out. See `slidingPaceSeconds`.
+
+     The window follows the READER's unit: a mile runner gets Apple's
+     rolling mile, not a kilometre relabelled.
+
+     The all-time average still lags badly once you've banked a few km, so
+     it stays the small caption beneath — but it is now ALWAYS shown, not
+     only when it disagrees. The post-run summary still records the
+     all-time average; that's the right number for the historical entry. */
+  const paceWindowM = unit === "mi" ? METRES_PER_MILE : 1000;
+  const livePaceS = slidingPaceSeconds(points, paceWindowM);
   const livePace = livePaceS === null ? "--:--" : paceMinSec(livePaceS, unit);
   const calories = estimateRunCalories(distance, weightKg);
-  const elevation = totalElevationGain(points);
   /* Live splits are cut on the READER's lap — a mile runner watching the
      strip wants mile splits, not kilometres relabelled. The SAVED record
      stays metric (Run.tsx uses SPLIT_LAP_IS_METRIC); this is display. */
@@ -331,6 +293,10 @@ export default function RunBottomSheet({
     () => calculateSplits(points, lapMetresFor(unit)),
     [points, unit]
   );
+  /* The ONE split worth carrying live. See the strip's obituary above the
+     stats pill for why the other N-1 went. */
+  const lastSplitPace =
+    splits.length > 0 ? splits[splits.length - 1].paceSeconds : null;
 
   return (
     <>
@@ -476,21 +442,34 @@ export default function RunBottomSheet({
                       marginTop: 3,
                     }}
                   >
-                    {paceUnitLabel(unit).toUpperCase()} · LIVE
+                    {/* Not "LIVE". No reference app labels a pace value
+                        that way, and the word promises instantaneity —
+                        which is exactly the property that made the number
+                        noisy. Naming the window instead ("LAST KM") is what
+                        turns a disagreement with AVG from a defect into two
+                        differently-scoped readings. */}
+                    {paceUnitLabel(unit).toUpperCase()} · LAST{" "}
+                    {distanceUnitLabel(unit).toUpperCase()}
                   </p>
-                  {pace !== "--:--" && pace !== livePace && (
-                    <p
-                      style={{
-                        fontSize: 10,
-                        color: "rgba(255,255,255,0.35)",
-                        fontVariantNumeric: "tabular-nums",
-                        fontFamily: "var(--font-mono)",
-                        marginTop: 4,
-                      }}
-                    >
-                      AVG {pace}
-                    </p>
-                  )}
+                  {/* Shown unconditionally. It used to be gated on
+                      `pace !== livePace`, so the average appeared ONLY when
+                      it contradicted the number above it and vanished when
+                      they agreed — every appearance was a contradiction
+                      event, under a 46px number that then reflowed. The
+                      average is the stable anchor that makes a recent-pace
+                      reading interpretable; it has to be always there to do
+                      that job. */}
+                  <p
+                    style={{
+                      fontSize: 10,
+                      color: "rgba(255,255,255,0.35)",
+                      fontVariantNumeric: "tabular-nums",
+                      fontFamily: "var(--font-mono)",
+                      marginTop: 4,
+                    }}
+                  >
+                    AVG {pace}
+                  </p>
                 </div>
               </div>
 
@@ -498,7 +477,6 @@ export default function RunBottomSheet({
               {distance > 0 && <KmProgress distance={distance} unit={unit} />}
 
               {/* Live splits (last 3) */}
-              <SplitsStrip splits={splits} unit={unit} />
             </div>
 
             {/* Secondary stats pill */}
@@ -532,6 +510,30 @@ export default function RunBottomSheet({
                   CAL
                 </p>
               </div>
+              {/* ── LAST KM, replacing ELEV and a SPLITS COUNT ─────────
+                  Three cuts, all for the same reason: nothing a runner does
+                  mid-run changes because of them.
+
+                  The SPLIT CHIP ROW that used to sit above this pill kept
+                  the last three finished splits on screen permanently. Its
+                  information value decays to nothing seconds after each
+                  split lands, while its screen cost grows with run length —
+                  by km 15 it is a wall. 3 of 4 reference apps do not
+                  accumulate splits live at all; Garmin fires a lap banner
+                  that CLEARS and offers exactly one persistent field,
+                  "Last Lap Pace", which is precisely this. The full table is
+                  a post-run artefact, and ours already is one.
+
+                  Safe to take away because the split is still ANNOUNCED at
+                  the moment it completes — the strongest consensus in the
+                  research, 4 of 4 apps, and `audioCues` defaults to on.
+
+                  ELEV: 0 of 4 show live elevation on a road run. Strava
+                  scopes it to trail/hike/cycling/winter explicitly. It is a
+                  review metric and the summary carries it.
+
+                  SPLITS as a COUNT: no reference app shows one anywhere,
+                  and it restated the distance readout three lines above. */}
               <div
                 style={{
                   width: 1,
@@ -549,7 +551,9 @@ export default function RunBottomSheet({
                     fontFamily: "var(--font-mono)",
                   }}
                 >
-                  {elevationLabel(elevation, unit)}
+                  {lastSplitPace === null
+                    ? "--:--"
+                    : paceMinSec(lastSplitPace, unit)}
                 </p>
                 <p
                   style={{
@@ -559,37 +563,7 @@ export default function RunBottomSheet({
                     marginTop: 2,
                   }}
                 >
-                  ELEV
-                </p>
-              </div>
-              <div
-                style={{
-                  width: 1,
-                  height: 28,
-                  background: "rgba(255,255,255,0.08)",
-                }}
-              />
-              <div className="text-center">
-                <p
-                  style={{
-                    fontSize: 18,
-                    fontWeight: 600,
-                    color: "rgba(255,255,255,0.65)",
-                    fontVariantNumeric: "tabular-nums",
-                    fontFamily: "var(--font-mono)",
-                  }}
-                >
-                  {splits.length}
-                </p>
-                <p
-                  style={{
-                    fontSize: 8,
-                    color: "rgba(255,255,255,0.25)",
-                    letterSpacing: "0.1em",
-                    marginTop: 2,
-                  }}
-                >
-                  SPLITS
+                  LAST {distanceUnitLabel(unit).toUpperCase()}
                 </p>
               </div>
 
@@ -632,6 +606,42 @@ export default function RunBottomSheet({
             </div>
 
             {intervalDisplay}
+
+            {/* Goal reached — the visible half of announce-and-continue.
+                Sits directly above the controls so the finish affordance
+                acquires the emphasis a mid-run modal would have forced;
+                the runner ends when they choose, and nothing interrupts
+                them if they don't. `aria-live="polite"` because this
+                appears exactly once per run, so it cannot become the
+                perpetual announcement the exercise-demo phase cue was. */}
+            {goalReachedAt !== null && (
+              <div
+                className="flex justify-center flex-shrink-0"
+                aria-live="polite"
+              >
+                <div
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+                  style={{
+                    background: `${THEME.success}1F`,
+                    border: `1px solid ${THEME.success}4D`,
+                  }}
+                >
+                  <Check size={13} strokeWidth={3} color={THEME.success} />
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: THEME.success,
+                      fontVariantNumeric: "tabular-nums",
+                      fontFamily: "var(--font-mono)",
+                    }}
+                  >
+                    {distanceValue(goalDistanceM ?? 0, unit, 2)}
+                    {distanceUnitLabel(unit)} goal · {formatTime(goalReachedAt)}
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Sprint 7: controls migrated to <RunControlButton>.
                 Each button now carries a compile-time-required

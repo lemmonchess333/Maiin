@@ -17,11 +17,12 @@ import {
   calculateSplits,
   haversine,
   paceAsNumber,
-  rollingPaceSeconds,
+  slidingPaceSeconds,
   totalElevationGain,
   type GPSPoint,
 } from "../lib/gps";
 import { getDistanceTargetMeters } from "../lib/runConfigUnits";
+import { resolveRunStatus } from "../lib/runStatusBanner";
 import {
   paceTableFromFitness,
   prescriptivePaceTableFromFitness,
@@ -106,7 +107,7 @@ import {
   endRunActivity,
 } from "../lib/runLiveActivity";
 import { toast } from "../lib/toast";
-import { SPLIT_LAP_IS_METRIC } from "@/lib/distanceUnits";
+import { SPLIT_LAP_IS_METRIC, METRES_PER_MILE } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 
 /* haptic moved to the shared `../lib/haptic` implementation in
@@ -315,6 +316,11 @@ export default function Run() {
   const [locked, setLocked] = useState(false);
   const [countdown, setCountdown] = useState(3);
   const [autoPaused, setAutoPaused] = useState(false);
+  /* Elapsed time at the moment the distance goal was reached, held so the
+     summary can report it however much further the runner went afterwards.
+     Null until the goal fires, and null forever on a run with no distance
+     target. */
+  const [goalReachedAt, setGoalReachedAt] = useState<number | null>(null);
   const [runConfig, setRunConfig] = useState<RunConfig | null>(null);
   const [treadmillDistance, setTreadmillDistance] = useState(0);
   const [acquiringSeconds, setAcquiringSeconds] = useState(0);
@@ -901,12 +907,24 @@ export default function Run() {
     // repeats every 30 seconds from a small pool while the runner is
     // actually on pace — the loudest version of the "same sentence over
     // and over" report. gps.ts has said the average "lags badly mid-run"
-    // since rollingPace was written; only the live display used it.
+    // since the first windowed pace was written; only the display used it.
     //
     // `null` means the window has too little data to judge, and we say
     // nothing rather than falling back to the average.
+    //
+    // The window is now DISTANCE-anchored and identical to the one the
+    // live display reads. Two reasons. A ±15s/km threshold judged against
+    // a 30-second window fires on GPS noise — the same noise that made the
+    // display read 13:14/km beside a 7:05 average — so the alert was
+    // telling runners to correct a pace they were not running. And the
+    // voice and the screen were reading DIFFERENT windows, so the app
+    // could announce "you've drifted behind target" while the number in
+    // front of the runner said they were on it. One source, one story.
     if (runConfig?.target?.type === "pace" && runConfig.target.value) {
-      const currentPaceSec = rollingPaceSeconds(gps.points, 30);
+      const currentPaceSec = slidingPaceSeconds(
+        gps.points,
+        unit === "mi" ? METRES_PER_MILE : 1000
+      );
       if (currentPaceSec !== null) {
         audioCues.checkPaceAlert(
           currentPaceSec,
@@ -926,19 +944,42 @@ export default function Run() {
     if (targetMeters > 0) {
       audioCues.checkHalfway(gps.distance, targetMeters);
       audioCues.checkFinal500(gps.distance, targetMeters);
+      /* Goal reached — announce, and KEEP RECORDING. The run does not
+         stop and the user is not asked: 4 reference apps announce and
+         continue, 0 auto-finish, 0 ask mid-run (Garmin shipped
+         auto-finish on the 310XT and reversed it — a runner who hits
+         5 km and jogs a kilometre home has run 6 km).
+
+         What makes not-stopping acceptable is capturing the goal
+         MOMENT, which is the thing a runner wanted a stop for. The
+         elapsed time at the goal is held here and saved on the run, so
+         the summary can say "5 km goal in 27:43" however long after it
+         they actually pressed finish. */
+      const goalTime = audioCues.checkGoalReached(
+        gps.distance,
+        targetMeters,
+        timer.elapsed
+      );
+      if (goalTime !== null) setGoalReachedAt(goalTime);
     }
   }, [gps.distance, timer.elapsed, phase, audioCues, runConfig]);
 
   // Live Activity (lock screen / Dynamic Island) — mirrors the HUD stats
-  // for outdoor GPS runs. Same rolling-pace source as RunBottomSheet, so
-  // the lock screen can never disagree with the in-app display. The seam
+  // for outdoor GPS runs. Same sliding-pace source AND the same window as
+  // RunBottomSheet, so the lock screen can never disagree with the in-app
+  // display. That claim is load-bearing and was nearly falsified when the
+  // display moved to a distance-anchored window: "same source" is only
+  // true while both the FUNCTION and its window argument match. The seam
   // module is inert on web / without the plugin, start is idempotent, and
   // updates are throttled + deduped internally — this effect just feeds
   // it the current truth every tick.
   useEffect(() => {
     if (!isOutdoorGpsRun(runConfig?.activityType)) return;
     if (phase !== "active" && phase !== "paused") return;
-    const paceS = rollingPaceSeconds(gps.points, 30);
+    const paceS = slidingPaceSeconds(
+      gps.points,
+      unit === "mi" ? METRES_PER_MILE : 1000
+    );
     const data = {
       distance: distanceLabel(gps.distance, unit),
       pace: paceS !== null ? paceLabel(paceS, unit) : "—",
@@ -1114,6 +1155,11 @@ export default function Run() {
             ? runConfig.intervals
             : undefined,
         routeQuality,
+        /* Announce-and-continue's other half: the goal moment survives the
+           overshoot. Without this the summary could only report the total,
+           and "5 km goal in 27:43" is the number the runner set out for. */
+        goalReachedAt,
+        goalDistanceM: getDistanceTargetMeters(runConfig?.target) || undefined,
       },
     });
   };
@@ -1578,6 +1624,7 @@ export default function Run() {
               interactive={true}
               liveControls={true}
               distanceMarkers={true}
+              distanceUnit={unit}
               targetRoute={targetRoute ?? undefined}
               height="h-full"
               className="absolute inset-0"
@@ -1633,27 +1680,57 @@ export default function Run() {
                 />
               )}
 
-              {autoPaused && (
-                <div
-                  className="max-w-full whitespace-nowrap rounded-full bg-warning-bg px-3 py-2 text-center"
-                  role="status"
-                  aria-live="polite"
-                >
-                  <p className="text-xs text-warning-strong">
-                    Auto-paused · start moving to resume
-                  </p>
-                </div>
-              )}
+              {/* ONE status lane, priority-ordered — see lib/runStatusBanner.
+                  This block used to render four independent banners, any of
+                  which could show at once, in SOURCE order rather than by
+                  severity: the back-to-start chip sat above "your GPS is
+                  gone". Two of them pulsed simultaneously.
 
-              {bgGapBanner && (
-                <div
-                  className="max-w-full whitespace-nowrap rounded-full bg-warning-bg px-4 py-2 text-center motion-safe:animate-pulse"
-                  role="status"
-                  aria-live="polite"
-                >
-                  <p className="text-xs text-warning-strong">{bgGapBanner}</p>
-                </div>
-              )}
+                  `whitespace-nowrap` is also gone. On a 375px screen a pill
+                  that cannot wrap either overflows the viewport or clips its
+                  own message, and the background-gap copy is the longest
+                  string of the three. It now wraps to a second line inside a
+                  rounded-2xl pill instead. */}
+              {(() => {
+                /* Reading the wall clock during render is flagged as impure
+                   by react-hooks/purity. The render is bounded by the
+                   per-second `timer.elapsed` re-render, so staleness is at
+                   most ~1s — the banner appears or refreshes on the next
+                   tick. The dependency on Date.now() is intentional, and is
+                   why the resolver takes `now` as an argument rather than
+                   reading the clock itself. */
+                const status = resolveRunStatus({
+                  phase,
+                  lastFixAt: gps.lastFixAt,
+                  now: Date.now(),
+                  gpsBannerSuppressedUntil: gapBannerSuppressUntilRef.current,
+                  autoPaused,
+                  backgroundGapMessage: bgGapBanner,
+                });
+                if (!status) return null;
+                const critical = status.severity === "critical";
+                return (
+                  <div
+                    className={`max-w-full rounded-2xl px-4 py-2 text-center ${
+                      critical
+                        ? "bg-destructive-bg motion-safe:animate-pulse"
+                        : "bg-warning-bg"
+                    }`}
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <p
+                      className={`text-xs ${
+                        critical
+                          ? "text-destructive-strong"
+                          : "text-warning-strong"
+                      }`}
+                    >
+                      {status.message}
+                    </p>
+                  </div>
+                );
+              })()}
 
               {showBgGrantNote && (
                 <RunBackgroundGrantNote
@@ -1661,49 +1738,6 @@ export default function Run() {
                   onDismiss={dismissBgGrantNote}
                 />
               )}
-
-              {(() => {
-                /* GPS-loss banner: no fix has ARRIVED for 8s during an
-               active run.
-               
-               It reads `lastFixAt`, which until 2026-08-13 meant "the
-               last fix we recorded into the trail" — a different
-               question. `isValidReading` rejects fixes within 1m of the
-               previous one, so standing still froze the field and this
-               banner latched on and stayed for the rest of the run,
-               beside an accuracy chip reading ±6m. `lastFixAt` is now
-               stamped on arrival, so this asks about reception and the
-               1m jitter filter goes on doing its own job.
-               timer.elapsed re-renders this component every second
-               so the comparison stays current without a separate
-               interval. The treadmill case is already excluded by
-               the parent JSX block at the start of this section. */
-                if (phase !== "active") return null;
-                if (gps.lastFixAt === null) return null; // pre-first-fix; covered by 'Acquiring GPS'
-                /* Reading the wall clock during render is flagged as
-               impure by react-hooks/purity. The render is bounded by
-               the per-second timer.elapsed re-render, so staleness is
-               at most ~1s — the banner will appear / refresh on the
-               next tick. The dependency on Date.now() is intentional. */
-                const now = Date.now();
-                // Phase B3: suppress for 5s after a Resume so the cold-
-                // start GPS window doesn't render a false-positive banner
-                // against the stale lastFixAt of the restored trail.
-                if (now < gapBannerSuppressUntilRef.current) return null;
-                const gapSeconds = (now - gps.lastFixAt) / 1000;
-                if (gapSeconds < 8) return null;
-                return (
-                  <div
-                    className="max-w-full whitespace-nowrap rounded-full bg-destructive-bg px-4 py-2 text-center motion-safe:animate-pulse"
-                    role="status"
-                    aria-live="polite"
-                  >
-                    <p className="text-xs text-destructive-strong">
-                      GPS recovering · last fix {Math.round(gapSeconds)}s ago
-                    </p>
-                  </div>
-                );
-              })()}
             </div>
 
             {runConfig?.activityType === "guided" && sessionSegments && (
@@ -1715,6 +1749,8 @@ export default function Run() {
               distance={currentDistance}
               points={gps.points}
               formatTime={timer.formatTime}
+              goalReachedAt={goalReachedAt}
+              goalDistanceM={getDistanceTargetMeters(runConfig?.target)}
               onPause={handlePause}
               onLock={() => setLocked(true)}
               isPaused={phase === "paused"}

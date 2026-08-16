@@ -28,9 +28,19 @@ const FASTER = [
   "That split was quicker. Strong.",
   "You're building speed.",
 ];
+/* These DESCRIBE the split just finished; they never instruct. That
+ * distinction has to survive being heard rather than read, and one line
+ * did not: "Bit slower — find your rhythm again." opens with a bare
+ * comparative and no subject, so the ear takes it as an instruction to
+ * slow down — the opposite of the intent (owner, on a real run, 2026-08-16:
+ * "makes it seem like you should be slowing down not speeding up").
+ * Every line now names what was slower, which is what the other two
+ * already did ("that split", "Slower split"). If a cue should ever tell
+ * the runner to CHANGE pace, that is paceAlertCue's job — it fires
+ * against a target, and a free run has no target to be wrong about. */
 const SLOWER = [
   "A touch slower that split — no drama.",
-  "Bit slower — find your rhythm again.",
+  "That one came in a bit slower — find your rhythm again.",
   "Slower split. Settle back in.",
 ];
 const STEADY = [
@@ -83,7 +93,7 @@ export function timeCue(
  * that a metronome — the same two sentences alternating for most of an
  * hour. (The other half of that problem was the caller feeding in the
  * whole-run average, so the deviation never cleared; see
- * `rollingPaceSeconds` in gps.ts.)
+ * `slidingPaceSeconds` in gps.ts.)
  */
 const BEHIND = [
   "You've drifted a little behind target — lift it gently.",
@@ -116,6 +126,60 @@ const HALFWAY = [
 
 export function halfwayCue(variant: number): string {
   return pick(HALFWAY, variant);
+}
+
+/**
+ * Spoken elapsed time — "27 minutes 43", "1 hour 4 minutes 12".
+ *
+ * Written for the EAR, per this module's header: the display's "27:43" is
+ * read aloud by TTS engines as "twenty-seven forty-three", which is a time
+ * of day, not a duration.
+ */
+function spokenElapsed(seconds: number): string {
+  const total = Math.max(0, Math.round(seconds));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  const parts: string[] = [];
+  if (h > 0) parts.push(`${h} hour${h === 1 ? "" : "s"}`);
+  if (m > 0) parts.push(`${m} minute${m === 1 ? "" : "s"}`);
+  // Bare seconds after a minute ("27 minutes 43") — saying "43 seconds"
+  // too makes a cue meant to land in under three seconds longer than the
+  // split cue it has to stand out from.
+  if (s > 0) parts.push(m > 0 || h > 0 ? `${s}` : `${s} seconds`);
+  return parts.length > 0 ? parts.join(" ") : "0 seconds";
+}
+
+/**
+ * The distance goal is reached: "5 kilometres reached. 27 minutes 43.
+ * Keep going as long as you like."
+ *
+ * WHY IT SAYS "KEEP GOING". The run does NOT stop here, and the runner has
+ * no way to know that unless told. Announce-and-continue is what the
+ * category does — Apple ("your Apple Watch continues to collect data until
+ * you tell it to stop"), Garmin (the timer runs on past the workout-complete
+ * message), adidas Running — and 0 of 6 apps auto-finish or ask. Garmin
+ * shipped auto-finish on the 310XT and reversed it, because a runner who
+ * hits 5 km and jogs a kilometre home has run 6 km and wants all of it.
+ *
+ * One fact plus one number, under three seconds, matching the split cue's
+ * shape ("1 km completed in 5:50") while being unmistakably a different
+ * event. `count` is already in the reader's unit, like `splitCue`.
+ *
+ * The tail is fixed rather than a rotation pool: unlike a split cue, which
+ * fires every kilometre and turns into wallpaper if it repeats, this fires
+ * ONCE per run. Nothing to vary against.
+ */
+export function goalReachedCue(
+  count: number,
+  unit: DistanceUnit,
+  elapsedSeconds: number
+): string {
+  const noun = spokenDistanceUnit(unit, count);
+  const label = Number.isInteger(count)
+    ? `${count} ${noun}`
+    : `${count.toFixed(1)} ${spokenDistanceUnit(unit, 2)}`;
+  return `${label} reached. ${spokenElapsed(elapsedSeconds)}. Keep going as long as you like.`;
 }
 
 /**

@@ -12,6 +12,8 @@ import {
   predictedRaceTimesFromFitness,
   prescriptivePaceTableFromFitness,
   raceTargetBand,
+  resolveEffortAgreement,
+  type RelativeEffort,
 } from "../runPaces";
 
 describe("vdotFromRace", () => {
@@ -295,6 +297,188 @@ describe("resolvePaceInsight", () => {
       { distanceM: 5000, durationS: 1495 },
     ];
     expect(resolvePaceInsight(fitness, runs)).toBeNull();
+  });
+});
+
+/**
+ * The Easier / About right / Harder tap, finally consumed.
+ *
+ * It has been stored on every saved run since RUN-03 and read by nothing —
+ * RunSummary's own comment conceded "v1 is a stored calibration signal
+ * only". The question was whether tapping "Harder" should make future runs
+ * easier, which is what a runner reasonably expects it to mean.
+ *
+ * The answer the evidence supports is: not on its own. Of the adaptive-plan
+ * products checked, 3 of 3 collect a subjective rating and 0 route it into
+ * the scheduler; Runna's support doc says its thumbs rating goes to "Runna's
+ * coaching and product teams" and will play a direct role "in the near
+ * future" — future tense. What moves Runna's paces is an objective
+ * pace-vs-target trend the user then accepts.
+ *
+ * So the rating is a CONFIDENCE MODULATOR on that objective trend: it can
+ * lower the bar when it agrees, and refuse outright when it disagrees, but
+ * it can never originate a suggestion.
+ */
+describe("resolveEffortAgreement", () => {
+  it("pairs easier-with-faster and harder-with-slower", () => {
+    /* Not self-evident, so pinned: "faster" means recent efforts imply MORE
+       fitness, and a run that felt EASIER than expected is the subjective
+       form of that same claim. */
+    expect(resolveEffortAgreement("faster", ["easier", "easier"])).toBe(
+      "agrees"
+    );
+    expect(resolveEffortAgreement("slower", ["harder", "harder"])).toBe(
+      "agrees"
+    );
+  });
+
+  it("treats the crossed pairs as evidence disagreeing with itself", () => {
+    expect(resolveEffortAgreement("faster", ["harder", "harder"])).toBe(
+      "conflicts"
+    );
+    expect(resolveEffortAgreement("slower", ["easier", "easier"])).toBe(
+      "conflicts"
+    );
+  });
+
+  it("does not let ONE tap count as a pattern", () => {
+    /* The load-bearing guardrail: a single tap must not move a training
+       block. Both directions, so the rule cannot be half-applied. */
+    expect(resolveEffortAgreement("faster", ["easier"])).toBe("neutral");
+    expect(resolveEffortAgreement("faster", ["harder"])).toBe("neutral");
+  });
+
+  it("counts 'matched' and unrated runs for neither side", () => {
+    /* "About right" is the runner saying the session landed where it should
+       — consistent with any objective drift, so it is not a vote. null is a
+       run they never rated at all. */
+    expect(
+      resolveEffortAgreement("faster", ["matched", "matched", "matched"])
+    ).toBe("neutral");
+    expect(resolveEffortAgreement("faster", [null, null, null])).toBe(
+      "neutral"
+    );
+    expect(
+      resolveEffortAgreement("faster", ["matched", null, "easier", "easier"])
+    ).toBe("agrees");
+  });
+
+  it("needs a majority, not just a quorum", () => {
+    expect(
+      resolveEffortAgreement("faster", ["easier", "easier", "harder", "harder"])
+    ).toBe("neutral");
+    expect(
+      resolveEffortAgreement("faster", ["easier", "easier", "easier", "harder"])
+    ).toBe("agrees");
+  });
+});
+
+describe("resolvePaceInsight — effort as a confidence modulator", () => {
+  const BENCH_M = 5000;
+  const BENCH_S = 1500; // 25:00 5K
+  const fitness = {
+    benchmark: { distanceM: BENCH_M, timeS: BENCH_S },
+    vdot: null,
+  };
+  const baseVdot = vdotFromRace(BENCH_M, BENCH_S);
+
+  /**
+   * The 5K time whose VDOT sits `delta` above (or, negative, below) the
+   * stored benchmark.
+   *
+   * SOLVED, not hand-picked. The first draft of these tests eyeballed 5K
+   * times and two of them landed on the wrong side of the gate — a constant
+   * chosen by guessing what a VDOT curve does is one nobody can check, and
+   * it silently re-guesses every time a gate is retuned.
+   */
+  function timeForVdotDelta(delta: number): number {
+    let lo = 300;
+    let hi = 3600;
+    for (let i = 0; i < 60; i++) {
+      const mid = (lo + hi) / 2;
+      if (vdotFromRace(BENCH_M, mid) > baseVdot + delta) lo = mid;
+      else hi = mid;
+    }
+    return Math.round((lo + hi) / 2);
+  }
+
+  /** Three runs whose BEST effort sits `delta` VDOT off the benchmark. */
+  function runsAtDelta(delta: number, effort: RelativeEffort) {
+    return [
+      {
+        distanceM: BENCH_M,
+        durationS: timeForVdotDelta(delta),
+        relativeEffort: effort,
+      },
+      { distanceM: BENCH_M, durationS: 2400, relativeEffort: effort },
+      { distanceM: BENCH_M, durationS: 2500, relativeEffort: effort },
+    ];
+  }
+
+  it("a runner who never taps the chips gets exactly today's behaviour", () => {
+    /* The compatibility guarantee, and the reason the neutral gate stays the
+       caller's `minDeltaVdot` rather than being re-derived. */
+    const unrated = runsAtDelta(1.4, null);
+    const rated = runsAtDelta(1.4, "matched");
+    const bare = unrated.map(({ distanceM, durationS }) => ({
+      distanceM,
+      durationS,
+    }));
+    expect(resolvePaceInsight(fitness, unrated)).toEqual(
+      resolvePaceInsight(fitness, bare)
+    );
+    expect(resolvePaceInsight(fitness, rated)).toEqual(
+      resolvePaceInsight(fitness, bare)
+    );
+  });
+
+  it("agreeing taps lower the bar enough to surface a borderline trend", () => {
+    /* The user-visible payoff: 1.4 VDOT is under the default 1.5 gate and
+       over the 1.3 agreeing one, so the SAME runs produce nothing unrated
+       and a suggestion once the runner has said they felt easy. */
+    expect(resolvePaceInsight(fitness, runsAtDelta(1.4, null))).toBeNull();
+    const ins = resolvePaceInsight(fitness, runsAtDelta(1.4, "easier"));
+    expect(ins).not.toBeNull();
+    expect(ins!.direction).toBe("faster");
+    expect(ins!.effort).toBe("agrees");
+  });
+
+  it("conflicting taps refuse a suggestion the times alone would have made", () => {
+    /* Runna ships two named statuses whose only job is declining ("Variable
+       Pace Detected", "Monitoring Your Pace Data"). A recommendation is not
+       owed on every query. */
+    const runs = runsAtDelta(4, "harder");
+    const bare = runs.map(({ distanceM, durationS }) => ({
+      distanceM,
+      durationS,
+    }));
+    expect(resolvePaceInsight(fitness, bare)).not.toBeNull();
+    expect(resolvePaceInsight(fitness, runs)).toBeNull();
+  });
+
+  it("the ratings can never ORIGINATE a suggestion", () => {
+    /* The single most important property, and the owner's stated worry made
+       structurally impossible: runs sitting on the stored benchmark produce
+       nothing however emphatically they are rated, because there is no
+       objective trend for the taps to sharpen. */
+    for (const effort of ["easier", "harder", "matched"] as const) {
+      expect(resolvePaceInsight(fitness, runsAtDelta(0.2, effort))).toBeNull();
+      expect(resolvePaceInsight(fitness, runsAtDelta(-0.2, effort))).toBeNull();
+    }
+  });
+
+  it("easing off is cheaper to trigger than pushing harder", () => {
+    /* Deliberate hysteresis: paces prescribed too easy cost a little
+       stimulus, paces prescribed too hard cost an injury. Pinned as the
+       RELATIONSHIP between the gates — one delta, both directions — so it
+       survives either number being retuned. */
+    const delta = 1.2; // over the 1.1 easing gate, under the 1.3 hardening one
+    const easing = resolvePaceInsight(fitness, runsAtDelta(-delta, "harder"));
+    expect(easing).not.toBeNull();
+    expect(easing!.direction).toBe("slower");
+
+    const hardening = resolvePaceInsight(fitness, runsAtDelta(delta, "easier"));
+    expect(hardening).toBeNull();
   });
 });
 

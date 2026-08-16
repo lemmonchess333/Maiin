@@ -9,7 +9,7 @@ import {
   routeTimeAtDistance,
   isValidReading,
   calculatePace,
-  rollingPaceSeconds,
+  slidingPaceSeconds,
   paceAsNumber,
   calculateSplits,
   splitsForDisplay,
@@ -750,11 +750,12 @@ describe("KalmanFilter", () => {
   });
 });
 
-describe("rollingPaceSeconds — the rolling window", () => {
+describe("slidingPaceSeconds — the distance-anchored window", () => {
   /* 1° latitude ≈ 111,320m. So 0.001° ≈ 111.32m. We synthesise points
    * with lat increments and timestamps to control distance + time
-   * within the rolling window. */
+   * within the window. */
   const baseTs = 1_700_000_000_000;
+  const KM = 1000;
 
   function pointAt(lat: number, secondsOffset: number): GPSPoint {
     return makePoint({
@@ -764,111 +765,224 @@ describe("rollingPaceSeconds — the rolling window", () => {
     });
   }
 
-  /* These cases were written against a `rollingPace` string formatter that
-     was deleted when the live screen went unit-aware (a preformatted
-     per-KILOMETRE label is useless to a miles reader). The window logic
-     they cover is the same function's, so they are ported to the number
-     form rather than deleted with it — "--:--" becomes null, "5:00"
-     becomes 300. */
+  /** Metres north → degrees latitude. */
+  const deg = (metres: number) => metres / 111320;
+
+  /**
+   * A steady run: `metres` covered at `secPerKm`, sampled every `stepM`.
+   * Returns the points and the latitude/time cursor so legs can be chained.
+   */
+  function leg(
+    points: GPSPoint[],
+    metres: number,
+    secPerKm: number,
+    state: { lat: number; t: number },
+    stepM = 25
+  ) {
+    const steps = Math.round(metres / stepM);
+    for (let i = 0; i < steps; i++) {
+      points.push(pointAt(state.lat, state.t));
+      state.lat += deg(stepM);
+      state.t += (stepM / 1000) * secPerKm;
+    }
+    return state;
+  }
+
+  /* These cases were written against `rollingPaceSeconds`, a 30-SECOND
+     window that this replaces (and which is deleted — see gps.ts). The
+     window logic they cover still exists, so the ones that remain
+     meaningful are ported rather than deleted with it. */
   it("returns null for fewer than two points", () => {
-    expect(rollingPaceSeconds([])).toBeNull();
-    expect(rollingPaceSeconds([pointAt(0, 0)])).toBeNull();
+    expect(slidingPaceSeconds([])).toBeNull();
+    expect(slidingPaceSeconds([pointAt(0, 0)])).toBeNull();
   });
 
-  it("returns null when the rolling distance is below 10m", () => {
-    /* Two points 1m apart over 30s — under the distance floor. */
+  it("returns null when under 10m has been covered in total", () => {
+    /* Two points 1m apart — the run has not started moving. `null` rather
+       than 0 is deliberate: the audio pace alert branches on this, and 0
+       would read as an absurdly fast pace and fire an "ahead of target"
+       alert from a standing start. */
     const a = pointAt(0, 0);
-    const b = pointAt(0.0000089, 30); // ~1m north
-    expect(rollingPaceSeconds([a, b], 30)).toBeNull();
+    const b = pointAt(deg(1), 30);
+    expect(slidingPaceSeconds([a, b], KM)).toBeNull();
   });
 
-  it("computes a rolling pace from points within the window", () => {
-    /* Two points 100m apart, 30s apart → pace 5:00/km. */
+  it("computes pace from the points inside the window", () => {
+    /* 100m in 30s → 5:00/km. */
     const a = pointAt(0, 0);
-    const b = pointAt(0.0008983, 30); // ~100m north
-    expect(rollingPaceSeconds([a, b], 30)).toBeCloseTo(300, 0);
+    const b = pointAt(deg(100), 30);
+    expect(slidingPaceSeconds([a, b], KM)).toBeCloseTo(300, 0);
   });
 
-  it("only sums points within the window — older points are ignored", () => {
-    /* First point is 60s ago (outside a 30s window). Within the
-       window: two points 100m apart over 20s → pace 200s/km = 3:20/km. */
-    const old = pointAt(0, 0);
-    const start = pointAt(0, 40); // 20s before the latest at t=60
-    const end = pointAt(0.0008983, 60);
-    expect(rollingPaceSeconds([old, start, end], 30)).toBeCloseTo(200, 0);
+  it("is anchored to DISTANCE, not to time", () => {
+    /* The whole point of the change. Two legs of 1 km: the first crawled
+       at 10:00/km, the second run at 5:00/km. A 1 km window sees only the
+       second leg however long ago the first was — where a time window's
+       answer depends on how long the crawl took. */
+    const points: GPSPoint[] = [];
+    const state = { lat: 0, t: 0 };
+    leg(points, KM, 600, state);
+    leg(points, KM, 300, state);
+    points.push(pointAt(state.lat, state.t));
+
+    const pace = slidingPaceSeconds(points, KM)!;
+    const totalM = 111320 * state.lat;
+    const wholeRunAvg = (state.t / totalM) * 1000;
+
+    // The crawl is 150 s/km away from the run pace and contributes none of
+    // it. (Not `toBeCloseTo(300, 0)`: the window edge lands mid-segment and
+    // picks up a sliver of the previous leg, which is correct behaviour —
+    // demanding half-second precision would be pinning the sample spacing,
+    // not the property.)
+    expect(Math.abs(pace - 300)).toBeLessThan(3);
+    expect(Math.abs(wholeRunAvg - 300)).toBeGreaterThan(100);
   });
 
-  it("returns null when only the latest point falls inside the window", () => {
-    /* All older points outside → only the latest survives → can't
-       compute pace from a single point. */
+  it("equals the whole-run average before the window is filled", () => {
+    /* No boundary to jump at: the value is defined from the first fix and
+       slides away from the average as ground is banked. This is the one
+       property it has over a per-split average, which resets each km. */
+    const points: GPSPoint[] = [];
+    const state = { lat: 0, t: 0 };
+    leg(points, 300, 330, state);
+    points.push(pointAt(state.lat, state.t));
+
+    const totalM = 111320 * state.lat;
+    const wholeRunAvg = (state.t / totalM) * 1000;
+    expect(slidingPaceSeconds(points, KM)!).toBeCloseTo(wholeRunAvg, 0);
+  });
+
+  it("a stop cannot spike it — the 13:14-beside-7:05 defect", () => {
+    /* THE bug this function exists for. A runner holding 7:05/km stops at
+       a crossing for 30 seconds. Under the old 30-second window that stop
+       filled the whole window and the slot read 13:14/km. Here the stop
+       sits inside a kilometre of running and the reading barely moves. */
+    const points: GPSPoint[] = [];
+    const state = { lat: 0, t: 0 };
+    leg(points, KM, 425, state); // 7:05/km
+    // 30 seconds standing still, with a couple of metres of GPS jitter.
+    points.push(pointAt(state.lat, state.t));
+    state.t += 30;
+    state.lat += deg(2);
+    points.push(pointAt(state.lat, state.t));
+
+    const pace = slidingPaceSeconds(points, KM)!;
+    expect(pace).toBeGreaterThan(400);
+    expect(pace).toBeLessThan(450);
+
+    // For contrast: over the last 30 seconds alone, the runner's pace IS
+    // absurd. That number was what the screen used to show.
+    const tail = points.slice(-2);
+    const tailM = 2;
+    const tailPace = (30 / tailM) * 1000;
+    expect(tailPace).toBeGreaterThan(900);
+    expect(tail).toHaveLength(2);
+  });
+
+  it("never blanks once the run is moving — including through a dropout", () => {
+    /* The other half of the same defect. The old window returned null
+       whenever it held under 10m or under 5s, so a stop or a GPS gap
+       dashed the primary slot out to "--:--" mid-run — which reads as a
+       crash, not as poor conditions. */
+    const points: GPSPoint[] = [];
+    const state = { lat: 0, t: 0 };
+    leg(points, KM, 300, state);
+
+    // A two-minute dropout: recording resumes 400m away.
+    points.push(pointAt(state.lat, state.t));
+    state.t += 120;
+    state.lat += deg(400);
+    points.push(pointAt(state.lat, state.t));
+    expect(slidingPaceSeconds(points, KM)).not.toBeNull();
+
+    // And a long stationary tail.
+    state.t += 300;
+    points.push(pointAt(state.lat, state.t));
+    expect(slidingPaceSeconds(points, KM)).not.toBeNull();
+  });
+
+  it("a pause does not count as running", () => {
+    /* Pausing calls gps.stop() (Run.tsx), so a pause leaves a real hole in
+       the timestamps. Five minutes of it inside the window must not read
+       as five minutes of very slow running. */
+    const moving: GPSPoint[] = [];
+    const state = { lat: 0, t: 0 };
+    leg(moving, KM, 300, state);
+    moving.push(pointAt(state.lat, state.t));
+    const before = slidingPaceSeconds(moving, KM)!;
+
+    const paused = [...moving];
+    state.t += 300; // five minutes, no ground covered
+    paused.push(pointAt(state.lat, state.t));
+    const after = slidingPaceSeconds(paused, KM)!;
+
+    expect(after).toBeCloseTo(before, 0);
+  });
+
+  it("slides continuously — no step as fixes fall out of the back", () => {
+    /* The window takes a FRACTION of the segment straddling its edge.
+       Without that, the value jumps every time a whole fix drops out, which
+       on a coarse sample rate is a visible tick in the number. Feed an
+       accelerating run and assert the series has no discontinuity larger
+       than the underlying pace change justifies. */
+    const points: GPSPoint[] = [];
+    const state = { lat: 0, t: 0 };
+    leg(points, 1500, 400, state, 50);
+    leg(points, 1500, 300, state, 50);
+    points.push(pointAt(state.lat, state.t));
+
+    const series: number[] = [];
+    for (let n = 25; n <= points.length; n++) {
+      const v = slidingPaceSeconds(points.slice(0, n), KM);
+      if (v !== null) series.push(v);
+    }
+    let worst = 0;
+    for (let i = 1; i < series.length; i++) {
+      worst = Math.max(worst, Math.abs(series[i] - series[i - 1]));
+    }
+    // Each new fix adds 50m to a 1000m window, so no single step can move
+    // a 400↔300 s/km blend by more than a few seconds per km.
+    expect(worst).toBeLessThan(8);
+  });
+
+  it("a warm-up does not poison the reading — the pace-alert defect", () => {
+    /* The scenario the alert kept getting wrong. A 10-minute 7:00/km
+       warm-up, then on-target 5:00/km work.
+
+       The whole-run average stays past the alert's 15 s/km threshold for
+       most of the session, so the runner is told they are behind every 30
+       seconds while running exactly on pace. The window reports the work.
+
+       Note what this test had to change when the window moved from 30
+       seconds to 1 km: it now takes a KILOMETRE of work, not a minute, for
+       the reading to clear the warm-up. That is the honest cost of the
+       wider window and the reason an interval session should scope it to
+       the current rep instead. */
+    const points: GPSPoint[] = [];
+    const state = { lat: 0, t: 0 };
+    leg(points, 1400, 420, state); // ~10 min at 7:00/km
+    leg(points, KM, 300, state); // 1 km of work at 5:00/km
+    points.push(pointAt(state.lat, state.t));
+
+    const totalM = 111320 * state.lat;
+    const wholeRunAvg = (state.t / totalM) * 1000;
+    const sliding = slidingPaceSeconds(points, KM)!;
+
+    // The average is far enough off target to trip a 15 s/km alert…
+    expect(Math.abs(wholeRunAvg - 300)).toBeGreaterThan(15);
+    // …while the windowed read is on target and would not.
+    expect(Math.abs(sliding - 300)).toBeLessThanOrEqual(15);
+  });
+
+  it("feeds paceMinSec, which is where the unit is applied", () => {
+    /* 300 s/km reads 5:00 to a metric runner and 8:03 to an imperial one,
+       from the SAME reading. */
     const a = pointAt(0, 0);
-    const b = pointAt(0.001, 100); // 100s later, well outside a 30s window
-    expect(rollingPaceSeconds([a, b], 30)).toBeNull();
-  });
-
-  describe("rollingPaceSeconds — the number behind the label", () => {
-    it("returns null, never a number, when there is nothing to judge", () => {
-      /* The audio pace alert branches on this. `0` would read as an
-         absurdly fast pace and fire an "ahead of target" alert from a
-         standing start; the previous call-site expression did exactly
-         that (`distance > 0 ? … : 0`). */
-      expect(rollingPaceSeconds([])).toBeNull();
-      expect(rollingPaceSeconds([pointAt(0, 0)])).toBeNull();
-      const a = pointAt(0, 0);
-      const b = pointAt(0.0000089, 30); // ~1m — under the distance floor
-      expect(rollingPaceSeconds([a, b], 30)).toBeNull();
-    });
-
-    it("feeds paceMinSec, which is where the unit is applied now", () => {
-      /* Replaces an "agrees with the formatted rollingPace" pairing that
-         died with that formatter. The equivalent claim today is that the
-         number reaches the shared formatter and converts there — 300 s/km
-         reads 5:00 to a metric runner and 8:03 to an imperial one, from
-         the SAME reading. */
-      const a = pointAt(0, 0);
-      const b = pointAt(0.0008983, 30); // ~100m in 30s → 300 s/km
-      const secs = rollingPaceSeconds([a, b], 30)!;
-      expect(secs).toBeCloseTo(300, 0);
-      expect(paceMinSec(secs, "km")).toBe("5:00");
-      expect(paceMinSec(secs, "mi")).toBe("8:03");
-    });
-
-    it("a warm-up does not poison the reading — the pace-alert defect", () => {
-      /* The scenario the alert kept getting wrong. Ten minutes of 7:00/km
-         warm-up, then on-target 5:00/km work.
-
-         Whole-run average after one on-pace minute is still ~6:50/km —
-         past the alert's 15 s/km threshold against a 300 s/km target, and
-         it stays past it for most of the session, so the runner is told
-         they are behind every 30 seconds while running exactly on pace.
-         The rolling window reports the work, which is the thing being
-         judged. */
-      const points: GPSPoint[] = [];
-      let lat = 0;
-      let t = 0;
-      // Warm-up: 100m per 42s = 7:00/km, for 10 minutes.
-      for (let i = 0; i < 14; i += 1) {
-        points.push(pointAt(lat, t));
-        lat += 0.0008983;
-        t += 42;
-      }
-      // Work: 100m per 30s = 5:00/km, for one minute.
-      for (let i = 0; i < 2; i += 1) {
-        points.push(pointAt(lat, t));
-        lat += 0.0008983;
-        t += 30;
-      }
-      points.push(pointAt(lat, t));
-
-      const totalM = 111320 * lat;
-      const wholeRunAvg = (t / totalM) * 1000;
-      const rolling = rollingPaceSeconds(points, 30)!;
-
-      // The average is far enough off target to trip a 15 s/km alert…
-      expect(Math.abs(wholeRunAvg - 300)).toBeGreaterThan(15);
-      // …while the rolling read is on target and would not.
-      expect(Math.abs(rolling - 300)).toBeLessThanOrEqual(15);
-    });
+    const b = pointAt(deg(100), 30);
+    const secs = slidingPaceSeconds([a, b], KM)!;
+    expect(secs).toBeCloseTo(300, 0);
+    expect(paceMinSec(secs, "km")).toBe("5:00");
+    expect(paceMinSec(secs, "mi")).toBe("8:03");
   });
 });
 

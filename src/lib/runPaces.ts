@@ -408,11 +408,91 @@ export interface PaceInsight {
     sourceRunAt?: string;
   };
   direction: "faster" | "slower";
+  /** How the runner's own post-run ratings bore on this suggestion. */
+  effort: EffortAgreement;
 }
+
+/** The post-run "how did that feel?" tap. Stored on every saved run. */
+export type RelativeEffort = "easier" | "matched" | "harder" | null;
+
+export type EffortAgreement = "agrees" | "neutral" | "conflicts";
+
+/**
+ * At least this many RATED runs before the ratings bear on anything.
+ *
+ * One tap must not move a training block, and that is a design position
+ * rather than timidity. Across the adaptive-plan products checked, THREE of
+ * three collect a subjective post-run rating and ZERO route it into the
+ * scheduler: Runna's own support doc says its thumbs rating "is used
+ * internally by Runna's coaching and product teams", and that "in the near
+ * future" it will play a more direct role — future tense. What actually
+ * moves Runna's paces is Pace Insights, an objective pace-vs-target trend
+ * across multiple sessions that the user then accepts. TrainingPeaks routes
+ * RPE to a human coach; Garmin's Self Evaluation is journaling, and its
+ * Daily Suggested Workouts adapt from load, sleep and HRV.
+ *
+ * So the rating never TRIGGERS a change here. It sharpens, or blocks, a
+ * conclusion the objective trend has already reached on its own.
+ */
+const MIN_RATED_RUNS = 2;
+
+/**
+ * Do the runner's ratings point the same way as the objective trend?
+ *
+ * The mapping is not obvious in isolation, so state it: `direction:
+ * "faster"` means recent efforts imply MORE fitness than the stored
+ * benchmark, and a run that felt EASIER than expected is the subjective
+ * version of that same claim. Conversely "slower" pairs with "harder". The
+ * crossed pairs — running faster while it felt harder, or slower while it
+ * felt easier — are evidence disagreeing with itself.
+ *
+ * "matched" is not a vote. It is the runner saying the session landed where
+ * it should, which is consistent with any objective drift, so it counts for
+ * neither side.
+ */
+export function resolveEffortAgreement(
+  direction: "faster" | "slower",
+  efforts: RelativeEffort[]
+): EffortAgreement {
+  const agreeingTap = direction === "faster" ? "easier" : "harder";
+  const conflictingTap = direction === "faster" ? "harder" : "easier";
+
+  let agreeing = 0;
+  let conflicting = 0;
+  for (const e of efforts) {
+    if (e === agreeingTap) agreeing++;
+    else if (e === conflictingTap) conflicting++;
+  }
+
+  if (agreeing >= MIN_RATED_RUNS && agreeing > conflicting) return "agrees";
+  if (conflicting >= MIN_RATED_RUNS && conflicting > agreeing)
+    return "conflicts";
+  return "neutral";
+}
+
+/**
+ * How far the ratings may move the bar.
+ *
+ * NEUTRAL IS EXACTLY TODAY'S NUMBER, on purpose: a runner who never taps the
+ * chips must get precisely the behaviour they had before this existed, so
+ * the caller's `minDeltaVdot` is left alone and only modulated FROM.
+ *
+ * The two agreeing gates are asymmetric — easing off is cheaper to trigger
+ * than pushing harder. That is deliberate hysteresis in the direction where
+ * the errors differ in cost: paces prescribed too easy cost a little
+ * training stimulus, paces prescribed too hard cost an injury.
+ */
+const AGREEING_GATE = { faster: 1.3, slower: 1.1 } as const;
 
 export function resolvePaceInsight(
   fitness: RunFitnessInput | null | undefined,
-  recentRuns: { distanceM: number; durationS: number }[],
+  recentRuns: {
+    distanceM: number;
+    durationS: number;
+    /** The runner's own post-run read. Absent on legacy runs and on any run
+     *  they skipped the chip for — both are simply not votes. */
+    relativeEffort?: RelativeEffort;
+  }[],
   minDeltaVdot = 1.5,
   minRuns = 3
 ): PaceInsight | null {
@@ -430,13 +510,30 @@ export function resolvePaceInsight(
   if (!best) return null;
   const bestVdot = vdotFromRace(best.distanceM, best.timeS);
   if (bestVdot <= 0) return null;
-  if (Math.abs(bestVdot - currentVdot) < minDeltaVdot) return null;
+
+  const direction = bestVdot > currentVdot ? "faster" : "slower";
+  const effort = resolveEffortAgreement(
+    direction,
+    recentRuns.map((r) => r.relativeEffort ?? null)
+  );
+
+  /* The rating modulates the bar; it never clears it alone. A conflict
+     REFUSES outright rather than merely raising the bar — when the runner's
+     own read of the sessions contradicts what the times say, the honest
+     output is nothing. Runna ships two named statuses whose whole job is
+     declining for exactly this reason ("Variable Pace Detected",
+     "Monitoring Your Pace Data"); a recommendation is not owed on every
+     query. */
+  if (effort === "conflicts") return null;
+  const gate = effort === "agrees" ? AGREEING_GATE[direction] : minDeltaVdot;
+  if (Math.abs(bestVdot - currentVdot) < gate) return null;
 
   return {
     currentVdot: Math.round(currentVdot * 10) / 10,
     suggestedVdot: Math.round(bestVdot * 10) / 10,
     suggestedBenchmark: best,
-    direction: bestVdot > currentVdot ? "faster" : "slower",
+    direction,
+    effort,
   };
 }
 

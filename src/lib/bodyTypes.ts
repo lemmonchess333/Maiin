@@ -19,4 +19,6 @@ export type GroupName =
   | "thighL"
   | "thighR"
   | "shankL"
-  | "shankR";
+  | "shankR"
+  | "footL"
+  | "footR";

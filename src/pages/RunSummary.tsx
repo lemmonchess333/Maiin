@@ -31,6 +31,7 @@ import type { GPSPoint, Split } from "../lib/gps";
 import type { RunConfig } from "../components/run/RunSetupModal";
 import RunMap from "../components/run/RunMapLazy";
 import PaceLegend from "../components/run/PaceLegend";
+import { hasRecordingGap } from "@/lib/runPaceBands";
 import SegmentedControl from "../components/ui/SegmentedControl";
 import SplitsBarChart from "../components/analytics/SplitsBarChart";
 import ElevationProfile from "../components/analytics/ElevationProfile";
@@ -77,6 +78,7 @@ import {
   Trophy,
   ChevronLeft,
   AlertCircle,
+  Target,
 } from "lucide-react";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import {
@@ -381,6 +383,13 @@ interface RunData {
   // PR H (audit P1 #9): route-quality metrics computed in Run.tsx
   // at finish time. Null for non-GPS sources (treadmill / manual).
   routeQuality?: import("../lib/routeQuality").RouteQuality | null;
+  /* Elapsed seconds at the moment the distance goal was reached, and the
+     goal itself in metres. The run keeps recording past the goal
+     (announce-and-continue), so the total below is NOT the goal time —
+     these carry the number the runner actually set out for, however far
+     they went afterwards. Absent on runs with no distance target. */
+  goalReachedAt?: number | null;
+  goalDistanceM?: number;
 }
 
 export default function RunSummary() {
@@ -525,6 +534,17 @@ export default function RunSummary() {
             activityType: data.activityType,
             isInvalid: data.isInvalid,
             savedAnyway: data.savedAnyway,
+            /* The stored Easier / About right / Harder tap, read back so the
+               pace-insight engine can weigh it against the objective trend.
+               This screen has WRITTEN it since RUN-03 and nothing has ever
+               read it. Anything outside the three known values — a legacy
+               run, a skipped tap — is not a vote. */
+            relativeEffort:
+              data.relativeEffort === "easier" ||
+              data.relativeEffort === "matched" ||
+              data.relativeEffort === "harder"
+                ? data.relativeEffort
+                : null,
           };
         });
         if (cancelled) return;
@@ -637,6 +657,8 @@ export default function RunSummary() {
      touching each call site. */
   const distance = editedDistanceMeters ?? originalDistance;
   const points = applyPrivacyZones(rawPoints, privacyZones);
+  const goalReachedAt = state.goalReachedAt ?? null;
+  const goalDistanceM = state.goalDistanceM ?? null;
   /* Mile laps are recomputed from the trace rather than converted — a mile
      split is a different CUT of the run. Privacy-zone trimming happens
      first, so the rows match the map the user is looking at. */
@@ -949,6 +971,10 @@ export default function RunSummary() {
       // poor routes from pace PRs. `null` survives stripUndefined
       // and signals "no quality data" (treadmill / manual / legacy).
       routeQuality: state.routeQuality ?? null,
+      // Goal-distance time, so the record keeps it too — a run stored with
+      // only its total loses the answer to "what was my 5k?" forever.
+      goalReachedAt: state.goalReachedAt ?? null,
+      goalDistanceM: state.goalDistanceM ?? null,
       // ── Phase B1: plan-adherence metadata (top-level) ────────────
       planMode: planMetadata.planMode,
       planSource: planMetadata.planSource,
@@ -1516,12 +1542,13 @@ export default function RunSummary() {
                 currentPoint={null}
                 interactive={true}
                 distanceMarkers={true}
+                distanceUnit={unit}
                 height="h-56"
                 paceColored={true}
                 avgPaceSecPerKm={avgPaceSeconds}
                 darkMode={!!profile?.darkMode}
               />
-              <PaceLegend />
+              <PaceLegend hasGap={hasRecordingGap(points)} />
             </div>
           )}
 
@@ -1539,6 +1566,28 @@ export default function RunSummary() {
               </p>
             </div>
           )}
+
+          {/* Goal-distance time. Only when the runner carried on past the
+              goal, because that is the only case where the totals below
+              DON'T answer "what was my 5k?" — the run kept recording after
+              the target (announce-and-continue), so the total time belongs
+              to a longer distance. Shown with the overshoot named, so the
+              two numbers can't be mistaken for each other. */}
+          {goalReachedAt !== null &&
+            goalDistanceM !== null &&
+            distance > goalDistanceM + 20 && (
+              <div className="mx-4 mb-3 p-3 rounded-xl bg-card card-shadow flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Target className="w-4 h-4 text-running" />
+                  <span className="text-sm text-muted-foreground">
+                    {distanceLabel2(goalDistanceM, unit)} goal
+                  </span>
+                </div>
+                <span className="text-lg font-bold font-mono tabular-nums text-running-strong">
+                  {formatTime(goalReachedAt)}
+                </span>
+              </div>
+            )}
 
           {/* Stats */}
           <div className="grid grid-cols-3 gap-3 px-4 mb-4">

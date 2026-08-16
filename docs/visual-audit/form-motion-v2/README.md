@@ -76,3 +76,1011 @@ Gate-3; the operator confirms or reverts by re-adding the id to
 Mechanics pins shipped with the rebuilds: bar rises thigh→clavicle on a
 strict torso (curl); rope tail descends >20 units, upper arm untouched,
 no line spans body width (pushdown); both arm facets tint independently.
+
+## STATUS 2026-08-15 (second pass) — body + rig depth work (sheets regenerated)
+
+Owner follow-up: "the actual body and rigging need improving still."
+Two structural changes, both from the roadmap's own defect lists:
+
+| Change               | What it fixes                                                                                                                                                                                                                                                                                                                                                                                                              |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bilateral side rig   | P0 "bilateral arms/hands": far arm chain added (same art, darker, painted behind the core). Far pieces MIRROR the near chain when a pose doesn't address them and take a constant back-parallax — a darker far-limb rim now reads behind the near limb in every side demo (push-ups gains its second planted arm; curl/pushdown/deadlift/bench gain depth). Far tints render dimmed; far facets stay out of the glow hull. |
+| Front-rig chain caps | Gate-0 defects "arm segment chains show visible gaps at the top frames" (lateral-raise) and "elbow-seam gaps at lockout" (press): cap growth doubled (3→6 per 180°) and WRIST caps added (the packet named them) — the raise/press chains now read connected at full span/lockout.                                                                                                                                         |
+
+## STATUS 2026-08-15 (third pass) — anatomy-figure shading (sheets regenerated)
+
+Owner art direction: the model "seems off — not lifelike, split into
+loads of sections… what's all the black space between the individual
+blocks?… look at art drawing of the human anatomy." Grounded in
+figure-drawing reference (continuous form; separations as value changes,
+never hard outlines on every facet; a single drawn contour):
+
+| Change                | What it fixes                                                                                                                                                                     |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Flesh weld pass       | Front/back demo figure: every polygon re-painted first in body tone with a fat round-joined stroke — the inter-facet BLACK CHANNELS are gone; the mosaic reads as one silhouette. |
+| Faceted value-shading | Each facet takes a small deterministic lightness step (sculpt shading) instead of a hard outline or a gap — musculature reads as form, textbook-style.                            |
+| Side flesh underlay   | Side pieces' underlay was stage-black (every seam a void); now flesh, with ONE drawn contour line per piece — the figure is a drawn body, overlaps stay legible via the contour.  |
+
+An iteration series for operator review on the open PR — nothing merges
+until the owner calls it. First rejected attempt recorded for the next
+person: outlining every facet (linework on all four sides) read as
+armour plates; the reference's own rule ("avoid outlining every muscle
+with hard edges; use value changes") is what shipped.
+
+## STATUS 2026-08-15 (fourth pass) — figure surgery on the four named defects
+
+Owner critique, verbatim targets: glute overhang · rectangle knees ·
+circular ball joints · missing hands.
+
+| Defect          | Fix                                                                                                                                                                                                                                                  |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Glute overhang  | Lumbopelvic rhythm in all three side hinges (deadlift, RDL, row): the pelvis rotates ~72% of the spine's hinge about the hip — full-rate rotation shelved the glutes past the back line.                                                             |
+| Rectangle knees | Every body shape now renders as a rounded-corner path (quadratic corner cuts, clamped to edge length) — knees, facets and outlines read as flesh over bone, not boxes.                                                                               |
+| Ball joints     | The joint-cap discs are DELETED. They were a gap-bridging hack that read as a mannequin's ball joints; the flesh weld + rounded shapes close what they hid. Verified against the two worst frames (raise full span, press lockout) — no gaps reopen. |
+| Missing hands   | Front/back figure gains compact rounded hand mitts riding each forearm group — on IK arms (pull-ups, dips) they land exactly on the grip because the anchor is the constraint point.                                                                 |
+
+Pins: no body-toned circles anywhere; two hands per view that MOVE with
+the arm; path-based identity/travel assertions. 35 passing.
+
+## STATUS 2026-08-15 (fifth pass) — cervical rhythm, throat/spine fillers, oval head
+
+Self-critique loop (owner: "keep critiquing it until it's significantly
+better"), three findings fixed:
+
+| Finding               | Fix                                                                                                                                                                                                                                                                                                                                        |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Head buried in hinges | Cervical rhythm in all three side hinges (deadlift, RDL, row): the head counter-rotates ~40% of the spine hinge about the POSED neck point — the figure now looks forward-down at the bottom instead of face-planting the bar.                                                                                                             |
+| Throat / spine voids  | Two voids in the vendored muscle map are wider than any weld stroke can bridge: the anterior THROAT (an ~11-unit V below the chin) and the posterior SPINE channel between the trapezius pair. Both read as black holes punched through the chest/back. Each view now leads its weld pass with one BODY gap-filler riding the torso group. |
+| Blocky head           | The head is the one form with no interior muscle boundaries, so it takes a much deeper corner rounding (r 3.2 vs 1.1) in both passes — reads as a skull oval, not a decagon.                                                                                                                                                               |
+
+Checked and NOT changed: overhead-press lockout looks bent at thumbnail
+size but the IK hands genuinely reach the straight-arm ceiling (probe:
+mitts at y≈-4 against a 54-unit chain) — the read is slab width, not a
+joint fault. Pins: identity path count 75 (throat filler), posterior 71
+(spine filler), 36 passing.
+
+## STATUS 2026-08-15 (sixth pass) — group flesh hulls, pelvis shield, knees-out squat
+
+Close-up critique renders (cropped viewBox at 4× scale) exposed the
+defect class the thumbnails hid: **posed gaps scale**. The weld stroke
+bridges the map's identity spacing, but a compressed squat thigh or a
+racked arm opens black wedges far wider than any stroke.
+
+| Finding                        | Fix                                                                                                                                                                                                               |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Intra-group voids at any pose  | Each body group (except the single-poly head) lays a convex hull of its POSED points under the welds — closed at every pose while left/right limbs stay separate, so crotch and armpits keep real negative space. |
+| Groin diagonals at squat depth | Two fixes: a pelvis shield filler riding the torso (hip line tapering to the crotch point, fill-only so its corners never poke past the waist), and the flare pivot moved knee → hip.                             |
+| Backwards squat mechanics      | Knee-pivoted flare swung the thigh TOPS away from the pelvis; anatomically the femur abducts about the HIP and the knee travels. Now: knees track out, hips stay socketed, shanks chase about the planted ankle.  |
+
+Checked and left alone: the small angular points at the hip line are
+the obliques' own vertices (present before all of this) and read as
+iliac-crest landmarks at thumbnail. Pins: identity 85 / posterior 80
+paths; hull stroke 2.2 so the hands pin (exactly two 1.6-stroke mitts)
+stays honest. 36 passing.
+
+## STATUS 2026-08-15 (seventh pass) — side-profile art data: pec dome, glute shelf, face line
+
+Close-up sweep of the SIDE renderer (the front/back figure got passes
+5-6). Three art-data edits in `bodySideData.ts`, no renderer changes:
+
+| Finding              | Fix                                                                                                                                                |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pointed chest dart   | The pec crest was one steep rail sample; two near-equal samples make it a DOME — still the deep heroic chest, no breast wedge.                     |
+| Pelvis beak at hinge | The pelvis top-rear corner (exposed when the torso out-rotates the 0.72-damped pelvis) starts forward with an easing sample — a round glute shelf. |
+| Jagged face          | The nose/lip zigzag (4 alternating points) calmed to a soft nose + single lip line, outline and facet both.                                        |
+
+36 passing (no pin churn — pure contour data).
+
+## STATUS 2026-08-15 (eighth pass) — owner phone critique: neck, hands, hip sockets
+
+Owner reviewed passes 5-7 on device, four named defects on the
+front/back figure ("neck too high · hands look like feet · looks like
+a wheelie · hip joints not really touching"):
+
+| Defect               | Fix                                                                                                                                                                                                                              |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Neck too high        | Static HEAD_SETTLE (2.2 units) seats the skull on the trap line before pose ops — kills the giraffe gap between chin and clavicle on both views.                                                                                 |
+| Hands look like feet | HAND_SHAPE cut from a 6-unit paddle to a compact fist (≈5×4) — no more flipper tips past the wrist at any forearm angle.                                                                                                         |
+| Hip joints detached  | Each anterior thigh hull is seeded with its hip anchor pushed through the SAME group ops — under squat compression it lands exactly on the dived hip line, so the hull always reaches the socket. Shield wings deepened to y100. |
+| Wheelie read         | Product of the two above (floating hips + long neck): with the legs socketed and the head seated, the squat bottom reads as a squat.                                                                                             |
+
+Pin updated: identity head-top now asserts y≈2.2 (the settle), bounded
+both sides. 36 passing.
+
+## STATUS 2026-08-15 (ninth pass) — dark under-flesh: definition without voids
+
+Owner on pass 8: "the good thing about the one before with the black
+spaces is that it showed muscle separation, this just looks blobby now."
+Correct — the black channels were doing real work as separation, and a
+same-tone weld erased it. The fix is the middle the anatomy references
+actually draw: separations as VALUE CHANGES.
+
+| Change           | What it does                                                                                                                                                                                                                            |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UNDER tone (-20) | The entire flesh layer (group hulls, per-poly welds, gap fillers, hand/feet under-layers) drops 20 lightness steps below the facets — every inter-facet channel reads as a shaded crevice BETWEEN muscles, not a void THROUGH the body. |
+| SHADE_STEPS ±12  | Facet sculpt amplitude up from ±7 (invisible at phone size once the gaps closed) — planes of each muscle mass read again.                                                                                                               |
+
+Rejected values: -14 (still faint at card size); black (that was the
+original defect). Pin updated: the honest-fill body-grey check is now
+case-insensitive (tone() emits lowercase; the uppercase literal only
+ever appeared via the old weld layer). 36 passing.
+
+## STATUS 2026-08-15 (tenth pass) — OWNER STYLE DECISION: the mosaic wins; flesh direction reverted
+
+**Read this before proposing any weld/hull/under-flesh approach again.**
+Owner, comparing the deployed mosaic against passes 5-9 on device: "It
+looks better before … the individual muscles and the definition … the
+old style is better, so we gotta go back." The flesh-layer direction
+(welds, group hulls, gap fillers, dark under-flesh — passes 5, 6, 9)
+is REVERTED for the front/back figure. The vendored muscle-block
+mosaic with its stage-black separation channels is the figure's
+identity. Do not re-litigate; improve WITHIN the mosaic.
+
+Kept from passes 5-9 (style-neutral): all mechanics (cervical +
+lumbopelvic rhythm, knees-out squat, deltoid rhythm), oval head +
+head-settle, corner rounding, compact fist hands, subtle facet
+shading, side-profile art fixes (pec dome, glute shelf, face line).
+
+New in this pass, on the two old-style defects the owner named:
+
+| Defect                  | Fix                                                                                                                                                                                                                                                                                        |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Ball joints ("circles") | JOINT SLEEVES: a round-capped stroke from a point ON the upper segment to a point ON the lower segment, each pushed through its own group's transform — follows the actual bend at limb width, hides beneath the muscle blocks except in the joint gap. Elbows both views, knees anterior. |
+| Feet "on backwards"     | Front-view feet redrawn as near-symmetric blocks under the ankle — narrow ankle edge, even flare to a flat toe line, slight lateral splay. The old wedges swept a sharp tip inward and read heel-first.                                                                                    |
+
+Pins: mosaic path counts (anterior 37, posterior 35), bar-travel probe
+matches the cable-bar stroke width so sleeve lines can't shadow it.
+36 passing. The side view keeps its current construction (unchanged
+this pass) — revisit only with owner direction.
+
+## STATUS 2026-08-15 (eleventh pass) — side view rejoins the mosaic
+
+With the front/back figure back on the mosaic (pass 10), the side view
+was the one surface still speaking the pass-2 flesh-underlay + contour
+language — a different style in the same app. Reverted to its ORIGINAL
+design: each side piece paints a STAGE-coloured underlay, so facet
+gaps read as the same dark separation channels as the front/back
+blocks, and overlapping pieces occlude cleanly under rotation (the
+purpose the stage underlay was built for). The side ART improvements
+(pec dome, glute shelf, calmed face line) are contour data and stay.
+
+Far limbs now render FLAT BODY_FAR when untinted — a single darker
+mass reads as depth; sculpt-shading it added noise behind the near
+limb (and the far-limb pin keys on the exact colour).
+
+36 passing.
+
+## STATUS 2026-08-15 (twelfth pass) — posterior heels
+
+Close-up sweep after the mosaic return: the back-view art tapers each
+soleus to a needle at y≈220, so hanging figures (pull-ups) ended in
+icicle points — the posterior model simply had no feet. Two compact
+heel blocks now cap the soleus tips, riding the shank groups (from
+behind a foot IS mostly heel). Pin: posterior path count 37. 36
+passing.
+
+## STATUS 2026-08-15 (thirteenth pass) — shoulder sleeves complete the joint system
+
+Self-critique after the mosaic return: the shoulder was the one
+articulated joint without a sleeve. The deltoid follows the humerus at
+a capped ~40% (scapulohumeral rhythm), so at a 90° raise the cap and
+the arm fan apart and a black wedge opens INSIDE the arm silhouette
+(lateral raise, pull-up reach, press). A shoulder sleeve now spans
+from just inboard of each shoulder (torso group) to a point on the
+humerus (arm group) — filled at any raise angle, hidden under the
+deltoid at rest.
+
+New pin: sleeve census by round-capped BODY line count (anterior 6 =
+elbow+shoulder+knee pairs; posterior 4) + the no-ball-caps assertion.
+37 passing.
+
+## STATUS 2026-08-15 (fourteenth pass) — forearm-axis sleeves; arm ends stay whole
+
+Close-up sweep: at big raises the thin forearm blocks drifted into
+offset flakes and the fist floated off the forearm tip. One capsule
+per arm from mid-forearm (0.35) to the hand anchor — both in the
+forearm group, so it is a static weld — keeps the outer forearm and
+hand a continuous limb end at every pose; with the elbow sleeve
+reaching 0.25 down the forearm, the arm's axis is covered joint to
+fingertip. Sleeve census pin: anterior 8, posterior 6.
+
+Reviewed and accepted as vendored-art limits (recorded so they are
+not re-chased): the tinted triceps sliver reads slightly offset at
+full overhead extension, and the deltoid-to-arm fan at a 90° raise
+keeps some black in the fan region at 4× zoom — both read correctly
+at card scale, and covering them needs art surgery on the arm
+polygons, not more sleeves. 37 passing.
+
+## STATUS 2026-08-15 (fifteenth pass) — the waist belt
+
+4× sweep of the side hip region: the torso's three lower facet rows
+(abs, obliques, lower-back) stopped at y 88-90 while the torso outline
+runs to 94 — leaving a 4-6 unit band of bare stage underlay as a black
+BELT cutting the profile figure in half on every side demo. The rows
+now run to y 93, restoring the normal ~1-unit seam against the outline
+bottom. Pure band-range data; 37 passing.
+
+## STATUS 2026-08-15 (sixteenth pass) — the bench decapitation, and why side sleeves don't exist
+
+Motion-readability sweep of the remaining unaudited surfaces. Two
+findings, one negative result worth keeping:
+
+- **Bench decapitation.** The head piece's face facet and neck facet
+  sat ~1.5 units apart — invisible standing, but the lying pose turned
+  the gap into a decapitation line across the throat. The neck facet
+  now TUCKS 2 units under the jaw (overlap, not adjacency — corner
+  rounding and insets eat adjacency).
+- **Side sleeves are a dead end — do not re-try.** Front/back-style
+  joint sleeves were implemented for the side view (neck, shoulder,
+  lumbar, hip) and removed in the same pass: the side pieces' opaque
+  stage underlays always overlap by design, so an under-drawn capsule
+  is occluded EVERYWHERE and never renders a visible pixel. Side
+  junction gaps are facet-inset gaps; they are fixed in bodySideData
+  facet ranges (like this pass's neck tuck and pass 15's waist belt).
+- Calf raise reviewed and left alone: the front view cannot show heel
+  lift, so the demo deliberately reads as the body rising on planted
+  feet (pose comment documents it).
+
+37 passing.
+
+## STATUS 2026-08-15 (seventeenth pass) — arm-blade surgery at extreme flexion
+
+The art-surgery item recorded in pass 14 as "accepted" turned out to
+have a cheap safe form, because the elbow sleeves cover the joint zone
+at rest:
+
+| Fix                             | Mechanism                                                                                                                                                                                                                                                                                                                     |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Overhead triceps sliver (press) | The ANT triceps blade's elbow-end vertices pulled back ~2.5 units along the blade axis (both sides) — it no longer overshoots the joint at 170° and stops reading as a floating purple stick.                                                                                                                                 |
+| Pull-up forearm blades          | The POST forearm slivers' elbow tips pulled back likewise, and the posterior forearm-axis sleeve widened 5 → 7.5: the posterior forearm is only two thin blades, so its axis capsule carries more of the limb's mass than the anterior's. The dead-hang and top-of-rep forearm now read as ONE limb with tinted muscle bands. |
+
+At rest nothing visibly changes — the vacated elbow tips sit under the
+sleeves. 37 passing.
+
+## STATUS 2026-08-15 (eighteenth pass) — owner critique: grip overshoot + heel shape
+
+Owner on the pull-up frames: "arms misaligned, feet look weird."
+
+| Finding         | Fix                                                                                                                                                                                                                                                                                                                   |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Arms misaligned | Not the IK — the hang is geometrically straight (61.4 vs 61.7 chain). The POST forearm blades' WRIST tips extend ~4 units past the hand anchor, so at hang angles they poked OVER the bar and skewed the whole arm read. All six overshooting tips trimmed back along the blade axis to the grip circle (both sides). |
+| Feet look weird | The first posterior heels were wide cubes floating below the calf taper. Reshaped: narrower (8 wide), tapered toward the ground, and overlapping the soleus from y 210 so heel and calf read as one leg.                                                                                                              |
+
+37 passing.
+
+## STATUS 2026-08-15 (nineteenth pass) — the overshoot sweep completes
+
+Pass 18's grip-overshoot fix generalized: every arm blade in both
+views was measured against its segment length, and every tip past its
+joint radius trimmed back along the blade axis — the ANT forearm's
+wrist tips (4.5 units past the fist; poked past the hand on the raise
+and press) and the POST triceps blade's elbow tip (3.7 past the
+joint; poked at dips/pull-up flexion), plus mirrors. The blade
+inventory is now fully inside the skeleton's segment radii, so no
+pose can make any blade overshoot its joint. 37 passing.
+
+## STATUS 2026-08-15 (twentieth pass) — solid arms at 45°+ elevation
+
+Owner on the press rack and raise top: arms look weird at 45° and
+above — thin slatted planks with purple bits to pick through near the
+armpit. Two root causes:
+
+| Cause                     | Fix                                                                                                                                                                                                                                                                                                              |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Humerus axis coverage gap | The shoulder capsule reached 0.4 down the humerus and the elbow capsule started at 0.75 — the 0.4-0.75 span had no core, so elevated arms split into slats around bare stage. Shoulder now reaches 0.62, elbow starts 0.58 (overlap), elbow width 6.5 → 7: the arm keeps a continuous flesh core at every angle. |
+| Armpit floaters           | The ANT triceps blades are MEDIAL strips (inner-arm), so elevation swung them into the armpit as floating purple wedges. Both blades shifted ~2 units to hug the humerus axis — inside the arm mass at any rotation.                                                                                             |
+
+37 passing.
+
+## STATUS 2026-08-15 (twenty-first pass) — deformation-aware sleeves
+
+Owner on the squat rest pose: "misalignment of arms … a straight rod
+with a circle, like the underlying figure is showing over the top."
+Exactly right: the joint capsules render at full width along the bone
+line even at rest, and after the blade trims they poked past the
+tapered block tips — the round line-cap was the "circle."
+
+Fix: a capsule only exists to bridge a joint that has OPENED, so its
+width now follows the deformation of the span between its endpoints
+(|posed span − rest span|). Pure translation (squat dive, pull-up
+ride) leaves the deformation at zero and the capsule stays a narrow
+4.2-unit core hidden beneath the blocks; articulation widens it
+toward its full width. The fist also grew 1.4 units toward the wrist
+so the forearm capsule's cap hides beneath it.
+
+Both ends verified: rest arms show no rod (the owner's frame), press
+rack / raise top keep the pass-20 solid arms. 37 passing.
+
+## STATUS 2026-08-15 (twenty-second pass) — the row's elbow checkpoint
+
+Mid-rep sweep after the deformation-aware sleeves (press/raise/
+pulldown/dips transition zones all verified solid): the one
+readability miss left was the row TOP — at a pull height of 26 below
+the shoulder the folded arm hid flat against the torso, and the row's
+defining form checkpoint (elbow driving past the back line) barely
+registered. Top of pull raised to 21: the elbow now clearly clears
+the back silhouette with the bar at the lower ribs. 37 passing.
+
+## STATUS 2026-08-15 (twenty-third pass) — bar-path audit: the RDL was teaching bad form
+
+New audit dimension: bar PATHS over time (stills can't show them).
+Probed the plate centre across t for every barbell demo:
+
+| Demo     | Path (x drift)                  | Verdict                              |
+| -------- | ------------------------------- | ------------------------------------ |
+| deadlift | ±2 around x≈57, floor→lockout   | vertical, on the body — correct      |
+| row      | x constant 67.3                 | vertical — correct                   |
+| curl     | arc out-and-up around the elbow | natural for a curl — correct         |
+| RDL      | **x 48.7 → 71.6 (23 forward)**  | **bar swung in FRONT of the thighs** |
+
+The RDL's hand target hung plumb below the POSED shoulder, so the bar
+followed the shoulder's forward arc — the classic stiff-arm form
+error, animated. The target is now a bar-line constraint: fixed
+near-leg x (56.5 → 53.5, drifting back with the hips-back rule), y =
+as low as a straight arm reaches toward that line. Measured after: x
+56.5 → 53.5, y 99 → 129 — the bar slides down the thigh, the RDL
+signature. 37 passing.
+
+## STATUS 2026-08-15 (twenty-fourth pass) — side & lying joint junctions
+
+Owner goal: give the side and lying angles (bench press etc.) the
+systematic treatment the front/back got. 4× joint sweep across the
+side figure standing (RDL/curl), hinged (RDL depth), and lying
+(bench, push-ups):
+
+| Junction | Was                                                                                                      | Fix                                                                                                                                                                             |
+| -------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Knee     | A floating kneepad: black bands above AND below the knee facet                                           | Thigh muscle rows extend to 146.5/145.5, the knee cap spans 144.5-157.5 at fractions 0.14-0.97 — bridges under the quads and down past the thigh outline to the emerging shank. |
+| Elbow    | Black band across the arm at the bi/tri row end (68.4-71.5 underlay margin)                              | Biceps/triceps rows run to 71.3 — the arm outline's end — in both near and far arm pieces.                                                                                      |
+| Ankle    | Gap between calf/shin rows and the foot splice                                                           | Rows extend to 192/191.5.                                                                                                                                                       |
+| Shoulder | Flat 9.5-unit top edge on the arm silhouette read as a sharp diamond when hinges rotated the hanging arm | Narrow easing samples crown it as a dome.                                                                                                                                       |
+
+With pass 15 (waist belt), pass 16 (bench neck tuck) and pass 23 (RDL
+bar path), the side/lying set has now had the full junction, contour
+and mechanics treatment. Verified at full frame: bench t000-t100,
+push-ups mid-rep, RDL standing + depth, curl mid-rep. 37 passing.
+
+## STATUS 2026-08-15 (twenty-fifth pass) — pelvis corner facet; the hip-sleeve re-test
+
+Continuing the side/lying round. One real fix, one honest negative:
+
+- **Pelvis front-bottom corner facet.** That corner of the pelvis
+  piece had no facet, so its bare stage margin painted a dark wedge
+  over the hip crease whenever a pose flexed the thigh against the
+  pelvis (hinges; the bench's thigh drop). The "pelvis" facet now
+  extends to the corner, inside the outline rails.
+- **Hip sleeves re-tested and NOT kept.** Pass 16's "side sleeves are
+  a dead end" was re-challenged at the bench's 28° hip drop with a
+  debug overlay: even a 12-wide capsule sits fully covered by the
+  pieces. The pass-16 rule stands, now measured at every junction
+  including the hip — the note in renderSideDemo says so.
+- **Crop-audit lesson**: the "hip wedge" that prompted the re-test was
+  the BENCH FURNITURE edge misread at 4×. When a close-up defect
+  survives two targeted fixes unchanged, render a debug overlay
+  before a third — the overlay found the truth in one frame.
+
+37 passing.
+
+## STATUS 2026-08-15 (twenty-sixth pass) — round knees for the side figure
+
+Owner on the bench's bent knee: "knees shouldn't be rectangles." Three
+rectangles were stacking there: the thigh's flat end cut, the shank's
+flat top cut, and the kneecap band (a quad by construction). Fixes:
+
+- Thigh bottom rails gain narrowing end samples — roundedPath crowns
+  the end as a dome instead of a flat cut (the arm-shoulder-dome
+  treatment, applied to the femur).
+- Shank top rails likewise — exposed only when the knee bends, since
+  the thigh overlaps them at rest.
+- The kneecap facet renders at r 3.2 (vs the 1.1 facet default) — a
+  PILL, not a band. Front/back knees already had sleeves + rounding;
+  this closes the class for the side view.
+
+Verified: bench bent knee at 4×, bench full frames, RDL standing +
+hinge, curl standing. 37 passing.
+
+## STATUS 2026-08-15 (twenty-seventh pass) — dome the elbow and wrist ends
+
+The knee's rectangle fix (pass 26) generalized to the arm: the upper
+arm ended in a flat cut at the elbow, the forearm began with one
+(exposed at flexion), and the forearm ended flat at the wrist. All
+three ends now carry the narrowing dome samples — the limb segment
+ends of the side figure are uniformly crowned: shoulder (24), femur +
+shin (26), elbow both sides + wrist (27). Verified on the elbow-heavy
+demos: curl mid-flexion, bench rack, pushdown mid-extension. 37
+passing.
+
+## STATUS 2026-08-15 (twenty-eighth pass) — temporal continuity measured; probe becomes tooling
+
+New audit dimension: TIME. Stills and mid-frames can't catch a pop —
+an IK branch flip, a sleeve width jump, a draw-order swap between two
+adjacent frames. `scripts/motion-probe.ts` (new) renders 24 frames
+per demo and pixelmatches consecutive pairs; a smooth eased rep gives
+a smooth bell of deltas peaking mid-rep, and a pop shows as an
+outlier (flagged at max > 3x median).
+
+Baseline result: **all 14 demos spike-free** — maxima 1.3-1.6x their
+medians, every one at a mid-rep step exactly where sine easing peaks
+velocity. The deformation-aware sleeves, IK arms, and damped rhythm
+chains are all continuous in time, measured rather than assumed. Run
+the probe after any rig change; it exits non-zero on a spike. 37 unit
+pins passing; full lib suite 3,496 green this session.
+
+### Pass 28 addendum — true-card-size + effort-channel verification
+
+Two last unchecked dimensions, both clean:
+
+- **190px card size** (the size the app actually renders): squat,
+  deadlift bottom and pull-up top all stay fully legible — tints,
+  joints, hands, heels and bar all read. Every earlier review was at
+  240-480px; this closes the "does it survive the real display?"
+  question.
+- **Effort channel**: effort=0 (eccentric) renders correctly dimmer
+  (tint 0.72/0.66, soft glow) without washing out or breaking any
+  facet; effort=1 brightens as designed. The concentric "breathing"
+  contract holds at both ends.
+
+## STATUS 2026-08-15 (twenty-ninth pass) — scene fidelity: back-squat bar, calf-raise step
+
+With the figure itself audited out, the next tier is SCENE fidelity —
+each demo unmistakably its exercise. Two additions inside the
+structural-equipment rule (held implements stay banned; these move
+with the BODY or not at all):
+
+- **Squat: back-squat bar.** The card says "Barbell" but the figure
+  squatted empty-handed. A bar now rests across the traps (end plates
+  clear of the arms) and RIDES THE DIVE — new equip "back-bar". Not a
+  held implement: it moves with the torso, never with the arms, which
+  is exactly what killed the old held-weight attempts.
+- **Calf raise: the step.** New equip "platform" — a low block whose
+  top edge the feet stand on, with the ground shadow moved below it.
+  A raise finally has something to rise on.
+
+Motion probe re-run with the animated bar: all 14 still spike-free.
+37 passing.
+
+## STATUS 2026-08-15 (thirtieth pass) — scene fidelity II: pulldown seat, bench rack
+
+Continuing the scene tier (owner-directed):
+
+- **Lat pulldown: the station's seat.** The front/back renderer now
+  honours the same `scene` hook the side renderer always had. The
+  pulldown draws a seat pad flanking the hips, a centre post and a
+  base foot — the "seated at the machine" identity. (The legs keep
+  the rig's standing read: from dead-behind, a truly seated pose
+  needs thigh foreshortening this flat rig deliberately avoids — the
+  hip-level pads carry the identity instead, the same honesty class
+  as the squat's hanging arms.)
+- **Bench press: the rack.** A side-on upright at the head end (the
+  pair overlaps into one post) topped with a J-hook cup facing the
+  lifter, behind the bench so figure and bar stay in front.
+
+Scene elements are static per frame — no motion-probe impact. 37
+passing.
+
+## STATUS 2026-08-15 (thirty-first pass) — the deadlift arm at phone zoom
+
+Owner zoomed the card-size deadlift bottom to phone-fullscreen and the
+hanging arm fell apart into "two strips with a slit". Three distinct
+causes, all fixed:
+
+| Cause                                                      | Fix                                                                                                                                        |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Far arm read as a SPLIT limb, not depth                    | BODY_FAR darkened #9FA6AC → #8F969D (9% → ~18% below BODY) — the far limb now clearly steps behind.                                        |
+| Upper-arm rim cut a diagonal slit across the elbow overlap | Bi/tri rows overshoot the piece outline by a unit (facets aren't clipped), so their fill bridges the piece-boundary seam into the forearm. |
+| Pass-27's wrist dome made a second lobe beside the fist    | The forearm rails end ~1.4 shorter so the mitt CAPS the arm — one termination at the grip.                                                 |
+
+Far-limb pin updated to the new hex. 37 passing.
+
+## STATUS 2026-08-15 (thirty-second pass) — part-fit audit: hip line, neck, chin
+
+Owner: "hip positioning looks too far forward, neck looks weird, face
+looks weird — look at all individual parts and how they fit
+together." Magnified part-by-part audit of the standing profile
+confirmed all three, each with a measured cause:
+
+| Part     | Cause                                                                                                                                             | Fix                                                                                   |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Hip line | Front line ran chest 64.8 → waist ~58 → hip 56.6 then the QUADS re-bulged to 60.6 — the whole leg column read as thrust forward (anterior shift). | Quad sweep pulled to 56.8-58.6: the thigh front now continues the hip's receding arc. |
+| Neck     | A 9-unit-wide parallel column, dead vertical — a tree trunk with the trap wedge stacked separately.                                               | Narrowed ~1.2 (outline + facet), slight taper — flows skull → traps.                  |
+| Face     | From the brow the profile cut down-back in one long diagonal to a chinless jaw — a receding beak.                                                 | Chin projects (61.6), jaw corner added, nose kept subtle.                             |
+
+Verified under articulation: deadlift bottom (cervical counter + chin),
+bench lying (neck tuck), RDL mid-hinge (no forward thigh bulge). The
+goal's named parts are all side-profile features; the front figure's
+equivalents were covered in passes 5-21. 37 passing.
+
+## STATUS 2026-08-15 (thirty-third pass) — reference-grounded: deadlift hips, neck shape, skull
+
+Owner (on the deadlift bottom): legs still too far forward of the
+bum; neck now too thin; head still weird. Grounded against drawing
+references (neck base ≈ half face height; the nape is a DESCENDING
+slope from skull to shoulder; the cervical column leans forward) and
+deadlift-form references (shins ≤8° forward; bar over midfoot; hips
+resolve between knee and shoulder):
+
+| Fix           | Detail                                                                                                                                                                                                                                          |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Deadlift hips | Thigh drop 64° → 52° (the old drop threw the glutes past x=0, doubling the bum-to-heel gap) with the torso hinge deepened 70° → 75° to recover shoulder height — the bottom now reads hips-above-knees, back near horizontal, bar on the shins. |
+| Neck          | Re-thickened toward the reference ratio and reshaped: near-vertical throat, nape flaring into the trap slope at the base, slight forward lean at the top — a neck, not a column.                                                                |
+| Skull         | Crown domed (was flat across three samples); chin softened a touch.                                                                                                                                                                             |
+
+Shin stays at the 8° cap (already reference-correct — the read was
+the hips, not the shins). Motion probe: still spike-free. 37 passing.
+
+## STATUS 2026-08-15 (thirty-fourth pass) — part-fit sweep completes: foot heel, shoulder rims
+
+Finishing the owner's "look at all individual parts and how they fit
+together" sweep. Audited this round: glutes standing + hinged (clean
+— the pass-7/23/33 work holds), the foot, the shoulder junction:
+
+- **Foot**: the profile foot had almost no HEEL — its back edge sat
+  nearly flush with the shin line, reading as a divot where the heel
+  bump belongs, and the toe ran long and pointed. Heel now rounds
+  ~1.5 behind the shin line; toe shortened and rounded.
+- **Shoulder**: the deltoid cap's rails ease toward the chest and
+  trap, thinning the black rims that boxed the cap in.
+
+Part-fit audit coverage is now complete across the side figure: head,
+face, neck, traps, shoulder, chest line, waist, hips/glutes, thigh,
+knee, shin, ankle, heel, toe — each either fixed this session or
+measured clean. 37 passing.
+
+## STATUS 2026-08-15 (thirty-fifth pass) — the FRONT figure's part-fit round
+
+The side figure got the magnified part-by-part audit (passes 32-34);
+this pass gives the front figure the same treatment. Verified clean:
+head + throat collar, shoulders/chest, feet on the new platform.
+Deliberately left: the waist's wide ab/oblique channels — that IS the
+mosaic's ab definition. Fixed, as channel-width OUTLIERS only:
+
+- **Groin flank band**: the obliques-to-thigh stage band ran 5-6
+  units where the mosaic's typical seam is 1.5-2.5 — the leg tops
+  (quads + abductors, both sides) rise ~2 toward the torso.
+- **Knee cluster at rest**: the deformation-aware sleeve floor (4.2)
+  was tuned on the arm blocks; the knee shards sit with wider natural
+  gaps and read fragmented at rest. Sleeves at width ≥8 (the knees)
+  keep a 5.5 resting core.
+
+Motion probe: all 14 still smooth. 37 passing.
+
+## STATUS 2026-08-15 (thirty-sixth pass) — the squat goes SIDE; camera-plane audit
+
+Owner device feedback on the front squat, verbatim targets: arms "look
+like they're in two sections" · "knee caps look weird" · "the squat bar
+looks weird" · "if this is the animation squatting, it should be from a
+side angle not a front — revisit how you have done all the front and
+side angle stuff as well".
+
+**The squat is REBUILT as a side-view demo.** The front view could only
+fake depth (scaleY-compressed thighs), and all three named artifacts
+were structural consequences of that fake: hanging mosaic arms split at
+the elbow line, knee shards under compression, and a back-bar whose
+full-circle end plates floated beside the shoulders (a front view can
+only honestly show plates edge-on). The side view shows the real
+mechanism instead — deadlift's planted-ankle chain (shin 8° cap, thigh
+about the moved knee, torso about the moved hip), bottom lands the
+thigh just above parallel with the bar plumb over mid-foot (balance
+rule), cervical counter-rotation keeps the gaze forward, and the bar
+rides the TRAPS as an end-on plate (structural, not held). The grip is
+solved once at rest with BOTH arm segments foreshortened (scaleAxis) —
+the hand sits ~6 units from the shoulder in profile, so rigid segments
+could only reach it through a near-total 2D fold that rendered as a
+slat stack (first cut of this rebuild, measured and rejected); in
+reality the elbow flares out-of-plane and both segments project short.
+
+**Camera-plane audit** (the "revisit all the front and side angle
+stuff" half). The rule the motion language now states: the camera
+follows the movement's plane.
+
+| Demo                                                | Camera    | Verdict                                                                                                               |
+| --------------------------------------------------- | --------- | --------------------------------------------------------------------------------------------------------------------- |
+| squat                                               | side      | MOVED this pass (sagittal).                                                                                           |
+| deadlift, RDL, row, bench, push-ups, curl, pushdown | side      | Correct — all sagittal, all already profile.                                                                          |
+| pull-ups, lat-pulldown                              | posterior | Correct — the working back musculature and the symmetric W-flare only read from behind.                               |
+| lateral-raise                                       | anterior  | Correct BY DEFINITION — frontal-plane abduction; a side view would show nothing.                                      |
+| overhead-press                                      | anterior  | Correct — vertical bar path is symmetric; the front placard view is the reference standard. Watch elbow seams only.   |
+| dips                                                | anterior  | Kept — sagittal in reality, but the front IK read is the strongest Gate-0 sheet ("approved (rec.)"); no defect named. |
+| calf-raise                                          | anterior  | WEAKEST front holdout — the rise is "nearly imperceptible" (Gate-0). A side view would show the heel leaving the      |
+|                                                     |           | step. Deferred: plantarflexion needs the foot split from the shank piece, its own data surgery. Recommended next.     |
+
+Alias note, standing tension (not new this pass): `front-squat`,
+`goblet-squat` and `bodyweight-squat` alias the barbell squat and have
+inherited its back-bar since pass 29 — a prop-semantics mismatch the
+alias-hygiene rule would normally gate. Left for an owner call: gate
+them to the static reference, or give them a bar-less pose variant.
+
+Pins shipped: view is "side"; ankle planted; hips back+down >20; knees
+forward; bar sinks >25 and lands within 3 of the ankle plumb line at
+depth; grip welded to the bar (<2) in every frame; camera locked.
+Motion probe: all 14 smooth. 40 passing.
+
+## STATUS 2026-08-15 (thirty-seventh pass) — bar-less squat variant (owner call)
+
+Owner resolved the pass-36 alias tension: "they need a bar-less
+variant". New `bodyweight-squat` demo on the shared side-squat chain
+(`sideSquatChain`, extracted this pass): identical planted-ankle
+depth, but the arms REACH FORWARD to horizontal as the counterbalance
+— which is what lets the torso stay prouder (25° vs the barbell's
+35°). `front-squat` and `goblet-squat` re-alias to it (the forward
+reach is the closest honest read of both grips under the
+no-held-weights rule); only `smith-machine-squat` keeps the barbell
+model. Pins: no plate disc in any frame, same hip sink as the barbell
+squat, hand sweeps forward >30, alias resolution per family. Motion
+probe: all 15 smooth. 42 passing.
+
+## STATUS 2026-08-15 (thirty-eighth pass) — calf raise goes SIDE; the foot gets its own joint
+
+The camera-audit follow-up (pass 36 named it the weakest front
+holdout): the front calf raise's rise was "nearly imperceptible"
+(Gate-0) because a frontal figure cannot show plantarflexion. Two
+changes:
+
+- **Foot/shank piece split.** The profile foot was welded into the
+  shank piece; it is now its own piece (`footL`/`footR` groups, far
+  pair included), with the shank keeping an ankle stub so the two
+  underlays overlap through the joint. The renderer gives feet an
+  ATTACHMENT DEFAULT — an unaddressed foot rides its shank — so every
+  other demo renders exactly as before (pinned on the bench's rotated
+  legs).
+- **Side-view calf raise.** Forefoot on a step, heel cantilevered off
+  its back edge; the foot rotates about the ball (−7° heel-drop
+  stretch → +20° top) while the shin stays vertical and the body rides
+  the ankle's arc — up and slightly forward, onto the ball. The old
+  front-only "platform" equip dies with its only user (the step is
+  scene furniture now).
+
+Pins: ball pinned in every frame, heel below the step top at the
+stretch and >6 higher at the top, head rises, bench feet still follow
+their shank. Motion probe: all 15 smooth. 43 passing.
+
+## STATUS 2026-08-15 (thirty-ninth pass) — reference-grounded arm carry + anatomical foot
+
+Operator supplied anatomy-plate references (front/back/side muscular
+figures — Dreamstime lineart, Alamy 3D, Shutterstock muscular system)
+with "use this to help improve your front and side views". Measured
+against them, two side-figure gaps closed:
+
+| Lesson              | Change                                                                                                                                                                                                                                                                       |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Forward arm carry   | Every reference profile hangs the relaxed arm with the forearm angling ~7° FORWARD so the hand rests beside the front of the thigh — ours was a plumb line. The carry lives in the forearm contours AND the hand anchor together, so the art stays aligned with its own axis: |
+|                     | IK-aimed demos (deadlift/row/RDL/bench/push-ups/squat grip) rotate rest→target and render identically; relaxed frames (curl start, calf raise, squat family stands) gain the carry, and the pushdown lockout lands hands-in-front-of-thighs — the reference finish.          |
+| Anatomical foot     | The profile foot was a flat wedge. Now: convex instep to a tapered toe, ball contact, lifted ARCH mid-sole, heel pad, and a heel bulging back past the achilles line — visible in every standing frame, on the bench sole, and through the calf-raise arc.                    |
+
+The squat's foreshortening `scaleAxis` ops now subtract each segment's
+rest tilt from vertical (the axis convention) — the bare-`fa` version
+was ~3° off and survived only while the rest forearm was near-plumb;
+the 10° carry exposed it (grip-weld pin caught it before commit).
+
+Checked against the references and NOT changed: torso S-curve (chest
+carry, lumbar, glute shelf — passes 7/23/25/32/33 already match),
+gastroc peak height + achilles taper, knee patella bump, neck lean
+(pass 33), and the vendored FRONT mosaic's muscle-group shapes — the
+front figure IS the app's muscle-map art; its anatomy plates already
+carry the reference separations (pecs/abs blocks/quad sweep), and
+reshaping vendored polygons would break identity with the Form view.
+
+Motion probe: all 15 smooth. 56 rig+component tests passing.
+
+## STATUS 2026-08-15 (fortieth pass) — the POSTERIOR figure's part-fit round
+
+Operator supplied a second reference batch (écorché front/back/side
+turnarounds) — strong back views, which exposed that the posterior
+figure never got the part-by-part audit the side (32-34) and front
+(35) views received. Measured at zoom against the plates, three fixes:
+
+| Finding                | Fix                                                                                                                                                                                                                     |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Glute→hamstring gulf   | The row gap ran 4.5-5.5 units (typical mosaic seam 1.5-2.5). Hamstring + adductor TOPS rise 2.2 toward the glutes — the pass-35 groin-band methodology, mirrored to the back.                                            |
+| Thoraco-lumbar void    | The deep V between the lower-back blades into the sacrum notch (~7 wide) is exactly where the plates show the flat FASCIA diamond + sacrum. One darker body-toned wedge rides the torso, painted UNDER the muscle blocks |
+|                        | — same missing-part precedent as feet/heels/hands; every normal seam stays a seam.                                                                                                                                       |
+| Fragmented back knees  | Posterior knees had NO sleeves (pass-5 scoped them anterior-only because posterior demos never bend knees — but the REST read needs the core, exactly the pass-35 anterior floor lesson). Both knees gain the standard    |
+|                        | rest-width sleeve.                                                                                                                                                                                                       |
+
+Pins updated: posterior identity path count 37→38 (the wedge),
+posterior sleeve count 6→8 (the knees). Motion probe: all 15 smooth.
+56 rig+component tests passing.
+
+## STATUS 2026-08-16 (forty-first pass) — measured alignment, rigid bars, smooth IK
+
+Owner device feedback naming three defect classes: muscles "misaligned
+like on the arms" where the underlying model overlaps the detailed
+muscle groups; "non smooth movement"; and barbell "positioning /
+patterns" — with a directive to research each movement against online
+references first. Each was MEASURED rather than eyeballed, and each
+turned out to have a single root cause.
+
+| Defect                    | Root cause (measured)                                                                                                                                                                                                                                                                     |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Arm muscles misaligned    | The joint anchors were eyeballed, not taken from the art. Against the vendored polygons' principal axis, every WRIST anchor sat ~5 units INBOARD of where the forearm mass actually ends (ANT L 5.4, ANT R 6.0, POST L 3.9, POST R 3.8) — so the grey hand mitt and its bridging sleeve   |
+|                           | were placed beside the purple muscle, and at big rotations art and anchor swung apart. Anchors are now measured from the art (elbow = midpoint of the two masses' facing ends; wrist = the forearm mass's far end).                                                                        |
+| Model showing through     | A sleeve only shows in the GAPS between muscle blocks, so a grey capsule under a TINTED muscle drew a grey stripe cutting the working muscle in half — worst on the posterior forearm, which is two thin blades with the capsule between them. Sleeves now inherit the muscle's tint.      |
+| Non-smooth movement       | The IK elbow offset is sqrt(L1² − a²) — zero with INFINITE slope at full extension — so the hard reach clamp SNAPPED the elbow wherever a demo straightens the arm. Peak elbow jerk on the pull-up: 0.298 units/step² hard vs 0.008 soft (38× smoother), peak velocity 0.459 → 0.202.     |
+| Bar not rigid             | The lat-pulldown's grip x lerped outward through the pull, stretching the drawn steel bar 13% (95.6 → 108 units) as it was pulled down. Grip width is a property of the bar, not the rep.                                                                                                 |
+| Pulldown finish + elbows  | Reference (NASM biomechanics, PowerliftingTechnique, REP): bar to the UPPER CHEST, elbows driven toward the floor "in line with the torso". The finish sat at the shoulder line; with the grip pinned, y=52 is what lands the solved elbow at (19.6, 78.9) — down and level with the torso. |
+
+Research consulted this pass: lat pulldown (torso lean 5-10°, bar to
+upper chest, elbows down/back not flared), pull-up (elbows out AND
+back, scapular retraction — our W-flare matches), back squat (bar
+vertical over midfoot, high-bar on the traps, knees forward as hips
+sit back — matches pass 36), bench press (J-curve, lower chest to over
+the shoulders — matches).
+
+Two new pins, both mutation-checked: every demo's tracked joints are
+bounded at 0.05 units/step² of jerk across 200 eased steps (reverting
+to the hard clamp fails it), and no bar changes length mid-rep. The
+jerk bound is deliberately ABSOLUTE — a pinned hand has ~zero median
+velocity, so a ratio there divides by nothing and reports nonsense
+(the first cut of this instrument reported 47,729 for a hand sitting
+still on a bar).
+
+Checked and NOT changed: the wide arm flare on front-view dips and the
+lateral raise stopping at horizontal both predate this pass and are
+correct-as-drawn (a 90°-bent arm genuinely projects its elbow ~19
+units laterally in a front view; a raise stops AT parallel). Dips
+remains the strongest argument for the calf-raise treatment — a side
+camera — but its Gate-0 sheet is the one marked approved, so it stays
+pending an owner call rather than being changed on my own initiative.
+
+Motion probe: all 15 smooth. 59 rig+component tests passing.
+
+### Pass 41 addendum — the bar-path audit, measured against midfoot
+
+Every barbell demo's bar was measured against MIDFOOT (x 52.9 — the
+profile foot runs heel 40.3 to toe 65.5; note the ankle anchor at 46.6
+is NOT midfoot), which is the line every lifting reference judges a bar
+path by:
+
+| Demo              | bar-vs-midfoot across the rep      | verdict                                                                 |
+| ----------------- | ---------------------------------- | ------------------------------------------------------------------------- |
+| squat             | −3.1 −4.4 −4.9 −4.2 −1.9 (drift 3) | correct — vertical over midfoot (pass 36 built it that way)              |
+| deadlift          | was 8.7→20.3 (drift 11.6)          | **FIXED** — now 6.1→6.4 (drift 0.3), dead vertical                       |
+| romanian-deadlift | 23.3→20.2 (drift 3.1)              | correct — bar hangs plumb from the shoulder, staying against the legs    |
+| barbell-row       | 38.6 constant                      | correct — a hanging bar plumb under the shoulders of a 55° hinge         |
+| barbell-curl      | drift 26.2                         | correct — a curl's arc is SUPPOSED to leave the balance line            |
+| bench-press       | drift 14.0 (the J-curve)           | correct — lying, so midfoot is not the governing line                   |
+
+The deadlift was the one real violation: the hand was offset from the
+SHOULDER, so the hinging torso dragged the bar forward — 20 units past
+midfoot at the bottom, out beyond the toes. The hand is now simply
+where a straight arm from the posed shoulder meets the midfoot line,
+which also makes "shoulders slightly in front of the bar" fall out of
+the geometry instead of being posed.
+
+**Measured and accepted, not fixed:** the deadlift's bottom frame puts
+the bar at mid-shin (plate centre y 164.6, floor 204), not on the
+floor. This is a proportion limit, not a path error — the vendored
+figure's shoulder-to-grip is 55 units where human proportions want
+~69, and the stylized plate is r=16 where a real 45 would be ~25. With
+those two, a floor-height bar would need the shoulder at y≈133, which
+is a squat, not a hinge. The bar finishing below the knee (pinned) is
+the honest read of a low pull at this figure's proportions.
+
+## STATUS 2026-08-16 (forty-second pass) — the contact & framing audit
+
+Continuing the "keep finding things to improve" sweep with two
+invariants nothing had ever checked. Both found real defects that had
+been shipping invisibly, and both are the same shape as the pass-41
+lesson: the thing that renders the demo is also the thing that hides
+the bug.
+
+| Invariant           | What it found                                                                                                                                                                                                                                                                          |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Figure fits canvas  | **The barbell row was slicing 13.9 units off the top of the head**, and the calf raise clipped the crown at the top of the rise plus its floor line on the right. Invisible because the contact sheets render through the SAME viewBox that does the clipping — a clipped frame just    |
+|                     | looks like a framing choice. Row now "-14 16 172 196" (width held at 172, so the figure keeps its exact previous scale), calf raise "-10 -8 128 224".                                                                                                                                  |
+| Planted foot planted| **The RDL's planted ankle travelled 3.0 units DOWN, through the floor, across the rep**, and the row's whole figure sat 3.2 below the ground line. The squat and deadlift get this free by building the leg ANKLE-UP; the row and RDL build it hip-down, so the knee ops displaced the  |
+|                     | ankle and the balance LEAN then pivoted about where the ankle used to be. New `plantFoot()` measures where the posed ankle landed and returns the rigid translation that snaps it back — applied to EVERY group, so it re-registers the whole figure about its contact point.           |
+
+Also fixed: the anterior ground line sat at y=199 while `ANTERIOR_FEET`
+reach 203, so the contact shadow was drawn four units UP inside the
+ankles and the figure read as floating over its own shadow (overhead
+press, lateral raise). Posterior's 222 was already correct.
+
+Three pins added, all mutation-checked (reverting each fix fails its
+own test): no demo clips its own canvas; every standing lift's ankle
+stays within 0.5 of the REST ankle all rep (so the sole meets the
+floor, not just "doesn't wander"); and the deadlift bar-path pin from
+41b.
+
+Measured clean and deliberately left: the deadlift's canvas carries ~57
+units of dead space on the right, so its figure renders smaller than it
+could. That is a scale-consistency question across the whole set rather
+than a defect in one demo, and worth doing as its own pass with all 15
+cameras in view at once.
+
+62 rig+component tests passing; probe smooth on all 15.
+
+### Pass 42 addendum — the scale audit: how big is the person?
+
+The card renders each demo's SVG into a fixed 190px-wide box with auto
+height (`ExerciseRigDemo`: `max-w-[190px]`), so **on-screen scale is
+just 190 ÷ viewBox-width**. Nothing had ever checked it, and the answer
+was that the figure's size swung 1.86× across the library — a person
+was nearly twice as big in one exercise as in another.
+
+Measured rendered figure heights before this pass: dips 359px, press
+344px, pull-ups 336px, pushdown 327px, calf 315px, curl 312px, squat
+297px … then **RDL 226px, deadlift 210px, row 198px**. Those three
+carried 75-85 units of unused canvas width, so they drew the smallest
+people in the set for no reason at all. Their cameras are now tightened
+to their measured content (deadlift `-10 -6 131 218`, row `7 18 131
+192`, RDL `4 -6 131 216`), which puts all three at 1.45 px/unit —
+inside the existing squat/calf/curl cluster.
+
+| group                          | scale before   | scale after    |
+| ------------------------------ | -------------- | -------------- |
+| upright demos (12 of 15)       | 1.02 – 1.64    | **1.36 – 1.64** |
+| inherently wide (3)            | 0.88 – 1.10    | unchanged      |
+
+The three exempt demos are not a defect and are pinned as exempt: a
+lateral raise at full arm span, a bench, and a prone push-up already
+fill 90-97% of their frame width, so they cannot be tightened and
+legitimately draw a smaller figure. Pinned: every non-exempt demo sits
+in 1.3-1.7 px/unit and the spread across them stays under 1.25×.
+
+Worth knowing for the next camera change: scale and card height are the
+same knob. Card height = 190 × vh/vw = scale × content-height, so a
+bigger figure is necessarily a taller card — you cannot enlarge the
+figure inside the same box. The three tightened demos moved from
+216-234px cards to 278-316px, which is where the majority of the set
+(305-393px) already sat, so they moved TOWARD the group.
+
+### Pass 42c — far-limb depth parallax was screen-space, not body-space
+
+The side rig gives each far limb a small constant offset so a darker rim
+reads behind the near one. That offset was applied LAST, i.e. in SCREEN
+space — fine while the figure is upright, but the bench press rotates
+the whole body −90° and the push-up +90°, so their far limbs were being
+displaced along the body's LENGTH (toward the head) instead of across
+it, staggering the legs down the bench.
+
+The offset is now expressed in the figure's own space and applied
+FIRST, so the piece's transform chain rotates it. Measured far-limb
+offset at the knee:
+
+| demo              | offset          | reads as              |
+| ----------------- | --------------- | --------------------- |
+| deadlift          | (−2.41, +0.97)  | horizontal — upright  |
+| romanian-deadlift | (−2.58, −0.33)  | horizontal — upright  |
+| bench-press       | (−1.22, +2.30)  | vertical — laid down  |
+| push-ups          | (−0.37, −2.57)  | vertical — laid down  |
+
+Note the bench and push-up offsets now point in OPPOSITE screen
+directions, because those two demos rotate the body opposite ways —
+under the old screen-space version both were identically (−2.6, 0).
+
+Verified by measurement and by eye at 520px, deliberately NOT pinned: a
+2.6-unit depth cue is real but small, and every cheap way to assert it
+from the rendered SVG ends up re-deriving the renderer's own
+composition, which pins nothing (the trap this README's 2026-08-02
+entry already names). The measurement above is the record.
+
+### Pass 42d — the looping phase cue was announcing once a second, forever
+
+Accessibility defect, found by reading the player rather than the rig.
+The phase cue under the figure was an `aria-live="polite"` region,
+justified in its own comment as reading the phase "without
+interrupting". That reasoning misses the loop:
+
+- the rep repeats for as long as the form sheet is open, and
+- each cycle fires FOUR phase changes (eccentric → pause → drive →
+  lockout) inside the default 3.18s timing.
+
+That is roughly one announcement per second, indefinitely. A polite
+region queues rather than drops, so it would monopolise the speech
+queue and bury everything else on the surface. The cue is now
+`aria-hidden` — still visible, still the teaching half of the loop —
+and the figure's existing static label ("<name> demonstration —
+looping reps") is what a screen-reader user gets, which is what a
+decorative loop should offer. Pinned and mutation-checked.
+
+Checked and deliberately NOT changed while here: the animation itself
+loops indefinitely, which WCAG 2.2.2 would normally want a pause
+control for. Three things make leaving it right — `prefers-reduced-
+motion` already swaps in a static two-up of the extremes, the motion IS
+the information (2.2.2's "essential" exception), and the replay/pause
+control was deliberately REMOVED by owner decision on 2026-07-27 ("reps
+must repeat like the demo screens on gym equipment"). Re-adding one
+would silently reverse a locked call.
+
+Also verified clean this pass, so the next audit needn't redo it: every
+demo's declared muscle highlights exist in the view that renders them —
+0 of 15 declare a tint the view cannot draw.
+
+### Pass 42e — coverage, orphans, and an alias inconsistency for the owner
+
+Three registry-level checks, so the next audit doesn't re-derive them.
+
+**Coverage:** 35 of the catalog's 152 exercises (23%) resolve to a rig
+demo. The rest fall back to the static reference.
+
+**Orphans: none.** Every one of the 15 canonical demos is reachable
+from at least one catalog id — worth checking in this repo, which has a
+documented history of fully-built work sitting unreachable (the
+`HybridWeekRail` deletion). The bar-less `bodyweight-squat` added this
+session is reached by three ids (`bodyweight-squat`, `front-squat`,
+`goblet-squat`).
+
+**Demo-less ids that merely LOOK aliasable — correctly left alone.**
+`single-arm-lat-pulldown`, `barbell-upright-row`, `reverse-barbell-curl`,
+`bench-dips`, `sissy/hack/pistol/landmine/zercher-squat`,
+`seated/donkey/single-leg-calf-raise`, `handstand-push-ups`. Every one
+changes grip, support or limb count, so the locked alias-hygiene rule
+(2026-07-16) correctly excludes them.
+
+**OPEN FOR THE OWNER — a prop mismatch the same rule would exclude.**
+That rule removed `db-curl`/`hammer-curl`/`ez-bar-curl`/`cable-curl`/
+`reverse-grip-cable-pushdown` because a variant needs the canonical's
+"grip, prop, and support geometry". Five surviving aliases point at a
+demo that draws an **end-on barbell plate** while the exercise uses a
+different implement:
+
+| alias               | canonical         | mismatch                                    |
+| ------------------- | ----------------- | ------------------------------------------- |
+| `trap-bar-deadlift` | deadlift          | trap bar loads at the SIDES, not the shins  |
+| `db-bench`          | bench-press       | dumbbells, not a bar                        |
+| `db-row`            | barbell-row       | dumbbells; usually one-arm, bench-supported |
+| `t-bar-row`         | barbell-row       | different implement                         |
+| `db-rdl`            | romanian-deadlift | dumbbells, not a bar                        |
+
+(`sumo-deadlift` is a sixth, on stance rather than prop: wide stance,
+hands inside the knees.)
+
+Deliberately NOT changed. The 2026-07-16 decision enumerated exactly
+which aliases to drop and KEPT these, so removing them now would
+reverse an owner call and cost five exercises their demo — the rule's
+own remedy ("fall back to the static reference until each has its own
+prop/grip contract") is a coverage loss the owner should choose, not
+me. Flagged here with the evidence so the call can be made once.
+
+## STATUS 2026-08-16 (forty-third pass) — the six mis-propped variants get accurate demos
+
+Owner call on the pass-42e finding: "include them, we need them to be
+accurate." Six exercises were ALIASED onto a canonical whose demo draws
+an end-on BARBELL plate while the exercise uses another implement — a
+dumbbell bench press showed a barbell. The alias-hygiene rule's remedy
+is to drop the alias, which costs the exercise its demo; the owner
+chose accuracy instead. Each now has its own entry.
+
+Two new implements. A held implement pinned to the hand IS legitimate
+in the side view — the no-held-weights rule is a FRONT/BACK-view rule,
+where a prop always read detached because that figure has no hands.
+
+- **`db-end`** — a dumbbell whose axis points at the camera, drawn as a
+  HEXAGON. That is what a side camera sees of a lying press (the bells
+  sit left and right of the chest), and the hex dumbbell's flat faces
+  are what let a glance tell it from the barbell's round plate.
+- **`db-side`** — a dumbbell in profile (bell, handle, bell), which is
+  what a NEUTRAL grip shows: the axis runs fore-aft.
+
+| variant             | what it now does differently                                                                                                                                                                 |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `db-bench`          | Spreads bench-press; `db-end` hexagonal bell.                                                                                                                                                |
+| `db-rdl`            | Spreads romanian-deadlift; `db-side` profile dumbbell (neutral grip alongside the thighs).                                                                                                    |
+| `db-row`            | Spreads barbell-row; `db-side`. The unqualified name covers both the one-arm bench-supported and two-arm bent-over forms — the two-arm version shares this support geometry exactly, and with |
+|                     | only the near arm drawn a side camera cannot tell a one-arm row from a two-arm one, so building a bench would add geometry the view cannot distinguish.                                       |
+| `trap-bar-deadlift` | Own pose. Handles at the SIDES (arms hang plumb, not reaching to a midfoot bar), markedly more upright torso (42° vs 75°) and more knee flexion — the references' "closer to a squat than a   |
+|                     | hinge". Sleeves run fore AND aft, so a plate is drawn in FRONT of the shins and another BEHIND the calves, the pair being the signature no straight bar can produce.                          |
+| `sumo-deadlift`     | Own pose. HONEST about the camera: the wide stance and hands-inside-the-knees grip are foreshortened to nothing in profile, so they are not the signature. The trunk is — Escamilla et al.    |
+|                     | measure peak trunk 5-9° more vertical than conventional, and ours lands at exactly 7.0° (73.7° vs 80.7° from vertical) with lower hips and near-vertical shins.                              |
+| `t-bar-row`         | Own pose. One bar end is pinned to the floor, so the handle CANNOT travel the barbell row's straight vertical line — it swings on an ARC about that pivot. Torso 45° (vs 55°), and the bar    |
+|                     | runs off-frame toward an anchor ~190 units out, because a 7ft bar is ~250 rig units and the lifter straddles near the loaded end.                                                             |
+
+The variants SPREAD their canonical rather than copying its pose
+wherever the movement is genuinely the same, so a variant can never
+drift from what it is derived from — this project's #1 recurring defect
+class. Only the three that need a different POSE, not just a prop, get
+a full entry.
+
+Two things my own pins caught while building these, worth recording as
+evidence the pins work: `db-bench` failed the scale band (it inherits
+the bench's deliberately wide camera — the exemption is now STRUCTURAL,
+by camera rather than by id, so future variants are covered
+automatically), and `t-bar-row` clipped its own canvas because the 45°
+torso carries the head higher than the barbell row's. The T-bar arc
+also went in backwards first — measured, the hand travelled down-and-
+back 13 units instead of up; it now sweeps 32 units up-and-forward,
+matching the barbell row's 29-unit stroke.
+
+Demo coverage rises from 35 to 41 of the catalog's 152 exercises.
+119 tests passing; probe smooth on all 21 demos.
