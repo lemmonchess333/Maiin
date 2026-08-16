@@ -18,6 +18,15 @@
  * rather than on any single banner's offset — moving `top-32` to `top-24`
  * would have satisfied a narrower test and left the class of bug alive.
  *
+ * 2026-08-16: that fix stopped the banners OVERLAPPING and left the volume.
+ * Four could still show at once, in source order rather than by severity, so
+ * the least urgent element on the screen sat above "your GPS is gone" and two
+ * of them pulsed together. The lane is now single and priority-ordered —
+ * `lib/runStatusBanner` decides, and has its own unit tests for the ranking.
+ * The positioning assertions below still hold and are still the guard against
+ * the original class of bug; the three that pinned the stack's CONTENTS were
+ * superseded, and the note further down records what they were protecting.
+ *
  * Asserted against source. A render test would need the GPS hook, the map,
  * a live timer and a bottom sheet at a specific drag offset to reproduce a
  * collision that is fundamentally about CSS position — it would pin the
@@ -64,24 +73,72 @@ describe("run screen — status banners share one stack", () => {
     expect(run).toMatch(/absolute inset-x-0 top-3/);
   });
 
-  it("keeps every banner on one line", () => {
-    // The height of this stack is what decides whether the sheet clips it,
-    // and the text is dynamic (the age counts up), so the guard is on the
-    // wrap rather than on any particular string length.
-    // Whole className, not a fragment: the utility order is not fixed, and
-    // a regex anchored mid-string silently missed `whitespace-nowrap`
-    // sitting before `rounded-full` when this was first written.
-    const pills =
-      run.match(/className="[^"]*bg-(?:warning|destructive)-bg[^"]*"/g) || [];
-    expect(pills.length).toBe(3);
-    for (const cls of pills) expect(cls).toContain("whitespace-nowrap");
+});
+
+/* SUPERSEDED 2026-08-16 — two tests stood here and pinned the three-pill
+   stack. The lane is now single and priority-ordered
+   (`lib/runStatusBanner`), so they are REPLACED rather than deleted, and
+   what they were protecting is recorded because one of the two reasons was
+   not obvious and is still load-bearing.
+
+   "keeps every banner on one line" pinned `whitespace-nowrap`, and its
+   stated reason was HEIGHT — "the height of this stack is what decides
+   whether the sheet clips it". Nowrap kept each pill to one line so three
+   of them still fitted above the expanded bottom sheet.
+
+   That property survives by a better mechanism: at most ONE banner now
+   renders, so even wrapped to two lines the lane is shorter than three
+   nowrapped pills ever were. And nowrap becomes actively harmful once the
+   lane is single — a pill that cannot wrap clips its own message instead,
+   and the background-gap copy is the longest of the three (the owner's read
+   of it on a real device was "does this look weird?").
+
+   "still renders all three banners" guarded against fixing the collision by
+   deleting banners. That is still exactly the right guard; its target just
+   moved out of the JSX and into the resolver, so it follows it there. */
+describe("run screen — the status lane is single and complete", () => {
+  const banner = stripComments(
+    readFileSync(resolve(repoRoot, "src/lib/runStatusBanner.ts"), "utf8")
+  );
+
+  it("still says all three things — the collision was not fixed by deletion", () => {
+    expect(banner).toMatch(/Auto-paused · start moving to resume/);
+    expect(banner).toMatch(/GPS recovering · last fix/);
+    expect(banner).toMatch(/backgroundGapMessage/);
+    // …and the page feeds all three in, so the resolver is not a
+    // well-documented function nothing actually reaches.
+    expect(run).toMatch(/resolveRunStatus\(/);
+    expect(run).toMatch(/autoPaused,/);
+    expect(run).toMatch(/backgroundGapMessage: bgGapBanner/);
   });
 
-  it("still renders all three banners", () => {
-    // Guards against "fixing" the collision by removing the banners.
-    expect(run).toMatch(/Auto-paused · start moving to resume/);
-    expect(run).toMatch(/bgGapBanner/);
-    expect(run).toMatch(/GPS recovering · last fix/);
+  it("renders ONE pill, gated on the resolved status", () => {
+    /* The height guard, restated for the new mechanism: no banner may render
+       on its own condition again, which is what let four of them pile up. */
+    expect(
+      run.match(/\{(?:autoPaused|bgGapBanner) && \(/g) || [],
+      "a banner is rendering on its own condition again"
+    ).toEqual([]);
+    // One pill, two severity branches — never three separate pills.
+    expect((run.match(/bg-(?:warning|destructive)-bg/g) || []).length)
+      .toBeLessThanOrEqual(2);
+  });
+
+  it("does not reintroduce nowrap on the status pill", () => {
+    /* Extract the pill's whole className template literal and assert on IT.
+       The first version of this test used a proximity regex excluding quote
+       and backtick characters — which cannot bridge the `${...}` severity
+       interpolation sitting between the base classes and the token, so it
+       passed against a mutant that put `whitespace-nowrap` straight back.
+       A proximity match across an interpolated template literal is not a
+       match at all. */
+    const pillClass = run.match(
+      /className=\{`max-w-full[\s\S]*?`\}/
+    )?.[0];
+    expect(pillClass, "status pill className not found").toBeTruthy();
+    expect(pillClass).toContain("rounded-2xl");
+    expect(pillClass).toContain("bg-warning-bg");
+    expect(pillClass).not.toContain("whitespace-nowrap");
   });
 });
 

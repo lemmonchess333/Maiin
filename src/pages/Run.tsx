@@ -22,6 +22,7 @@ import {
   type GPSPoint,
 } from "../lib/gps";
 import { getDistanceTargetMeters } from "../lib/runConfigUnits";
+import { resolveRunStatus } from "../lib/runStatusBanner";
 import {
   paceTableFromFitness,
   prescriptivePaceTableFromFitness,
@@ -1679,27 +1680,57 @@ export default function Run() {
                 />
               )}
 
-              {autoPaused && (
-                <div
-                  className="max-w-full whitespace-nowrap rounded-full bg-warning-bg px-3 py-2 text-center"
-                  role="status"
-                  aria-live="polite"
-                >
-                  <p className="text-xs text-warning-strong">
-                    Auto-paused · start moving to resume
-                  </p>
-                </div>
-              )}
+              {/* ONE status lane, priority-ordered — see lib/runStatusBanner.
+                  This block used to render four independent banners, any of
+                  which could show at once, in SOURCE order rather than by
+                  severity: the back-to-start chip sat above "your GPS is
+                  gone". Two of them pulsed simultaneously.
 
-              {bgGapBanner && (
-                <div
-                  className="max-w-full whitespace-nowrap rounded-full bg-warning-bg px-4 py-2 text-center motion-safe:animate-pulse"
-                  role="status"
-                  aria-live="polite"
-                >
-                  <p className="text-xs text-warning-strong">{bgGapBanner}</p>
-                </div>
-              )}
+                  `whitespace-nowrap` is also gone. On a 375px screen a pill
+                  that cannot wrap either overflows the viewport or clips its
+                  own message, and the background-gap copy is the longest
+                  string of the three. It now wraps to a second line inside a
+                  rounded-2xl pill instead. */}
+              {(() => {
+                /* Reading the wall clock during render is flagged as impure
+                   by react-hooks/purity. The render is bounded by the
+                   per-second `timer.elapsed` re-render, so staleness is at
+                   most ~1s — the banner appears or refreshes on the next
+                   tick. The dependency on Date.now() is intentional, and is
+                   why the resolver takes `now` as an argument rather than
+                   reading the clock itself. */
+                const status = resolveRunStatus({
+                  phase,
+                  lastFixAt: gps.lastFixAt,
+                  now: Date.now(),
+                  gpsBannerSuppressedUntil: gapBannerSuppressUntilRef.current,
+                  autoPaused,
+                  backgroundGapMessage: bgGapBanner,
+                });
+                if (!status) return null;
+                const critical = status.severity === "critical";
+                return (
+                  <div
+                    className={`max-w-full rounded-2xl px-4 py-2 text-center ${
+                      critical
+                        ? "bg-destructive-bg motion-safe:animate-pulse"
+                        : "bg-warning-bg"
+                    }`}
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <p
+                      className={`text-xs ${
+                        critical
+                          ? "text-destructive-strong"
+                          : "text-warning-strong"
+                      }`}
+                    >
+                      {status.message}
+                    </p>
+                  </div>
+                );
+              })()}
 
               {showBgGrantNote && (
                 <RunBackgroundGrantNote
@@ -1707,49 +1738,6 @@ export default function Run() {
                   onDismiss={dismissBgGrantNote}
                 />
               )}
-
-              {(() => {
-                /* GPS-loss banner: no fix has ARRIVED for 8s during an
-               active run.
-               
-               It reads `lastFixAt`, which until 2026-08-13 meant "the
-               last fix we recorded into the trail" — a different
-               question. `isValidReading` rejects fixes within 1m of the
-               previous one, so standing still froze the field and this
-               banner latched on and stayed for the rest of the run,
-               beside an accuracy chip reading ±6m. `lastFixAt` is now
-               stamped on arrival, so this asks about reception and the
-               1m jitter filter goes on doing its own job.
-               timer.elapsed re-renders this component every second
-               so the comparison stays current without a separate
-               interval. The treadmill case is already excluded by
-               the parent JSX block at the start of this section. */
-                if (phase !== "active") return null;
-                if (gps.lastFixAt === null) return null; // pre-first-fix; covered by 'Acquiring GPS'
-                /* Reading the wall clock during render is flagged as
-               impure by react-hooks/purity. The render is bounded by
-               the per-second timer.elapsed re-render, so staleness is
-               at most ~1s — the banner will appear / refresh on the
-               next tick. The dependency on Date.now() is intentional. */
-                const now = Date.now();
-                // Phase B3: suppress for 5s after a Resume so the cold-
-                // start GPS window doesn't render a false-positive banner
-                // against the stale lastFixAt of the restored trail.
-                if (now < gapBannerSuppressUntilRef.current) return null;
-                const gapSeconds = (now - gps.lastFixAt) / 1000;
-                if (gapSeconds < 8) return null;
-                return (
-                  <div
-                    className="max-w-full whitespace-nowrap rounded-full bg-destructive-bg px-4 py-2 text-center motion-safe:animate-pulse"
-                    role="status"
-                    aria-live="polite"
-                  >
-                    <p className="text-xs text-destructive-strong">
-                      GPS recovering · last fix {Math.round(gapSeconds)}s ago
-                    </p>
-                  </div>
-                );
-              })()}
             </div>
 
             {runConfig?.activityType === "guided" && sessionSegments && (
