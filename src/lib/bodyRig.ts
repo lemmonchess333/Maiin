@@ -60,8 +60,17 @@ const ANT = {
   shoulderR: [76, 48] as Pt,
   elbowL: [20, 71] as Pt,
   elbowR: [80, 71] as Pt,
-  handL: [10, 100] as Pt,
-  handR: [89, 100] as Pt,
+  /* ON the art's wrist, not beside it. These were [10,100] / [89,100] —
+   * ~6.5 units inboard of where the forearm polygons actually end
+   * (their terminal edge spans x 0→6.9, centre 3.47, at y 101.2).
+   * Nothing had ever been DRAWN at a hand, so nothing exercised the
+   * gap; `aimArm` derives its rotation from the rest vector H−E, so an
+   * off-art H landed a phantom point on the target while the real wrist
+   * went elsewhere — and by a varying amount through a rep, which is
+   * why the art slid along bars the anchors held still. Art is
+   * symmetric (implied mirror axis 49.80 vs a figure centre of 50). */
+  handL: [3.5, 101.2] as Pt,
+  handR: [96.1, 101.2] as Pt,
   hipY: 96,
   kneeL: [32, 148] as Pt,
   kneeR: [68, 148] as Pt,
@@ -72,8 +81,10 @@ const POST = {
   shoulderR: [77, 46] as Pt,
   elbowL: [17, 78] as Pt,
   elbowR: [83, 78] as Pt,
-  handL: [9, 106] as Pt,
-  handR: [91, 106] as Pt,
+  /* Same correction, posterior art: terminal edge centre 3.40 at
+   * y 108.5 (mirror axis 50.00 exactly). Was [9,106] / [91,106]. */
+  handL: [3.4, 108.5] as Pt,
+  handR: [96.6, 108.9] as Pt,
   hipY: 100,
   // The posterior art runs past the anterior's 203 — soleus/heel reaches
   // y=220. Clipping at the anterior height amputated the lower legs.
@@ -437,8 +448,31 @@ const lerp = (a: number, b: number, e: number) => a + (b - a) * e;
  * The "hands stay ON the declared bar path" test pins exactly that.
  */
 const PRESS_GRIP = 10;
+
+/**
+ * Acromion elevation at lockout.
+ *
+ * The shoulder used to be PINNED: the point travelled 0.00 across a
+ * 55°→166° humerus swing. What the rig modelled was the deltoid CAP
+ * tilting at 40% of the humerus angle, so the scapula's ROTATION was
+ * stylised and its ELEVATION was absent — the shrug at the top of a
+ * press simply did not happen.
+ *
+ * Scapulohumeral rhythm is ~2:1 and the acromion rises ~3 cm at full
+ * overhead reach. The figure is 200 units for ~175 cm, so 1 unit ≈
+ * 0.875 cm and ~57° of scapular rotation buys ~3.2 units.
+ */
+const PRESS_RISE = 3.2;
+const pressShoulderRise = (e: number) => -PRESS_RISE * e;
+
+/* Lockout height. The shoulder rising and the arm getting longer BOTH
+ * feed this one number, which is why they had to land together: with
+ * the girdle up 3.2 and the corrected forearm at 34.41 (was 30.68), the
+ * old -5 left the elbow 43° short of straight. -10.9 puts the hand
+ * 98% of the way out — and it is physically the same statement, since
+ * shoulders that shrug finish the bar higher. */
 const pressBarPath = (e: number): [Pt, Pt] => {
-  const y = lerp(32, -5, e); // chin-height bottom → overhead lockout
+  const y = lerp(32, -10.9, e); // chin-height rack → overhead lockout
   return [
     [ANT.shoulderL[0] - PRESS_GRIP, y],
     [ANT.shoulderR[0] + PRESS_GRIP, y],
@@ -510,6 +544,9 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
 
   "overhead-press": {
     view: "anterior",
+    /* The re-fitted lockout carries the hands ~6 units higher than
+     * before, past the default canvas top of -14. */
+    viewBox: "-8 -20 116 230",
     concentricTo: 1,
     /* Drops `neck`, which the catalogue entry never claims among its
      * secondaryMuscles and which nothing justified.
@@ -539,17 +576,20 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * solve can't represent); top = lockout with a slight barbell V.
        * Same both-ends-constrained machinery as the pull-up/dips. */
       const [hl, hr] = pressBarPath(e);
+      const rise = pressShoulderRise(e);
+      const shL: Pt = [ANT.shoulderL[0], ANT.shoulderL[1] + rise];
+      const shR: Pt = [ANT.shoulderR[0], ANT.shoulderR[1] + rise];
       const L = aimArm(
         { S: ANT.shoulderL, E: ANT.elbowL, H: ANT.handL },
-        solveElbow(ANT.shoulderL, hl, ANT_UPPER_LEN, ANT_FORE_LEN, 1),
+        solveElbow(shL, hl, ANT_UPPER_LEN, ANT_FORE_LEN, 1),
         hl,
-        0
+        rise
       );
       const R = aimArm(
         { S: ANT.shoulderR, E: ANT.elbowR, H: ANT.handR },
-        solveElbow(ANT.shoulderR, hr, ANT_UPPER_LEN, ANT_FORE_LEN, -1),
+        solveElbow(shR, hr, ANT_UPPER_LEN, ANT_FORE_LEN, -1),
         hr,
-        0
+        rise
       );
       return {
         upperArmL: L.upper,
@@ -816,7 +856,11 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * while the body rises — so the elbows are IK-solved. The solution
        * naturally produces the real silhouette: straight-arm hang at the
        * bottom, wide "W" flare (elbows out at ear height) at the top. */
-      const dy = lerp(1, -24, e); // dead hang → chin over the bar
+      /* Hang depth. Was 1, which straightened a 61.68-unit arm; the
+       * corrected forearm makes it 65.95, so at 1 the dead hang kept a
+       * 43° bend — a shrugged hang, not a dead one. 5 puts the bottom
+       * frame at 99% extension. */
+      const dy = lerp(5, -24, e); // dead hang → chin over the bar
       const L = aimArm(
         { S: POST.shoulderL, E: POST.elbowL, H: POST.handL },
         solveElbow(
@@ -875,8 +919,10 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       /* Body stays put; the bar travels from full overhead reach down to
        * the collarbone while the elbows tuck in to the sides — the same
        * IK machinery as the pull-up with the constraints swapped. */
-      const hl: Pt = [lerp(12.2, 6, e), lerp(-14.5, 50, e)];
-      const hr: Pt = [lerp(87.8, 94, e), lerp(-14.5, 50, e)];
+      /* Top of the stroke re-fitted for the corrected arm: -14.5 left
+       * the fully-reached position 43° short of straight. */
+      const hl: Pt = [lerp(12.2, 6, e), lerp(-17.7, 50, e)];
+      const hr: Pt = [lerp(87.8, 94, e), lerp(-17.7, 50, e)];
       const L = aimArm(
         { S: POST.shoulderL, E: POST.elbowL, H: POST.handL },
         solveElbow(POST.shoulderL, hl, POST_UPPER_LEN, POST_FORE_LEN, 1),
@@ -897,7 +943,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       };
     },
     bar: (e) => {
-      const y = lerp(-14.5, 50, e);
+      const y = lerp(-17.7, 50, e);
       return [
         [lerp(12.2, 6, e) - 10, y],
         [lerp(87.8, 94, e) + 10, y],
@@ -919,16 +965,22 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       // 72, not 78: the rest arm already sits ~10° outside vertical, so
       // 78 finished ABOVE parallel — a form error the demo was teaching.
       const arm = lerp(4, 72, e);
+      /* The girdle rises here too, at roughly half the press's figure:
+       * abduction to parallel is ~30° of scapular rotation against the
+       * press's ~57°, so ~1.7 units of acromion travel. */
+      const lift: Op = { kind: "translate", dx: 0, dy: -1.7 * e };
       return {
-        upperArmL: [{ kind: "rotate", deg: arm, pivot: ANT.shoulderL }],
+        upperArmL: [{ kind: "rotate", deg: arm, pivot: ANT.shoulderL }, lift],
         foreArmL: [
           { kind: "rotate", deg: -10, pivot: ANT.elbowL },
           { kind: "rotate", deg: arm, pivot: ANT.shoulderL },
+          lift,
         ],
-        upperArmR: [{ kind: "rotate", deg: -arm, pivot: ANT.shoulderR }],
+        upperArmR: [{ kind: "rotate", deg: -arm, pivot: ANT.shoulderR }, lift],
         foreArmR: [
           { kind: "rotate", deg: 10, pivot: ANT.elbowR },
           { kind: "rotate", deg: -arm, pivot: ANT.shoulderR },
+          lift,
         ],
       };
     },

@@ -8,6 +8,12 @@ import {
 import { ANTERIOR, POSTERIOR } from "../bodyModelData";
 import { SIDE_ANCHORS, SIDE_PIECES } from "../bodySideData";
 
+/** The measured wrist anchors — ON the art, since 2026-08-17. They used
+ *  to be [10,100] / [9,106], ~6.5 units off the end of the forearm art,
+ *  which is why anything drawn at a hand landed beside the arm. */
+const ANT_WRIST: [number, number] = [3.5, 101.2];
+const POST_WRIST: [number, number] = [3.4, 108.5];
+
 function polyYs(svg: string): number[] {
   return [...svg.matchAll(/points="([^"]+)"/g)]
     .flatMap((m) => m[1].trim().split(" "))
@@ -328,22 +334,30 @@ describe("renderBodyDemo", () => {
    * and the bench against the elbow it actually renders. */
 
   it("overhead press: the hands stay ON the declared bar path", () => {
-    const armLen = Math.hypot(20 - 24, 71 - 48) + Math.hypot(10 - 20, 100 - 71);
+    const armLen =
+      Math.hypot(20 - 24, 71 - 48) +
+      Math.hypot(ANT_WRIST[0] - 20, ANT_WRIST[1] - 71);
     for (const t of [0, 0.5, 1]) {
       const bar = BODY_DEMOS["overhead-press"].bar!(
         t,
         BODY_DEMOS["overhead-press"].pose(t)
       )!;
       // The path itself has to be solvable — this is the guard the
-      // press did not have.
+      // press did not have. Measured from the RISEN shoulder: the
+      // girdle elevates through the drive, so a fixed [24,48] would
+      // over-state the distance the arm has to cover at lockout.
+      const sh = applyToPoint(
+        [24, 48],
+        (BODY_DEMOS["overhead-press"].pose(t).upperArmL ?? []) as never[]
+      );
       expect(
-        Math.hypot(bar[0][0] - 24, bar[0][1] - 48),
+        Math.hypot(bar[0][0] - sh[0], bar[0][1] - sh[1]),
         `path@${t}`
       ).toBeLessThan(armLen);
       // ...and the drawn hand has to actually be on it. A clamped solve
       // fails HERE and nowhere else.
       const hand = applyToPoint(
-        [10, 100],
+        ANT_WRIST,
         (BODY_DEMOS["overhead-press"].pose(t).foreArmL ?? []) as never[]
       );
       expect(
@@ -351,6 +365,99 @@ describe("renderBodyDemo", () => {
         `hand@${t}`
       ).toBeLessThan(0.2);
     }
+  });
+
+  it("the art's wrist lands ON the grip each demo declares", () => {
+    // The defect this whole change exists for. `aimArm` derives its
+    // rotation from the rest vector H−E, so an anchor sitting beside the
+    // art landed a phantom point on the target while the real wrist went
+    // ~6 units elsewhere. Nothing caught it because nothing was DRAWN at
+    // a hand. Both demos below declare their actual grip (not a bar that
+    // overhangs it), so the wrist must sit on it exactly.
+    for (const [id, wrist] of [
+      ["overhead-press", ANT_WRIST],
+      ["dips", ANT_WRIST],
+    ] as const) {
+      for (const t of [0, 0.5, 1]) {
+        const pose = BODY_DEMOS[id].pose(t);
+        const grip = BODY_DEMOS[id].bar!(t, pose)![0];
+        const w = applyToPoint(wrist, (pose.foreArmL ?? []) as never[]);
+        expect(
+          Math.hypot(w[0] - grip[0], w[1] - grip[1]),
+          `${id}@${t}`
+        ).toBeLessThan(0.2);
+      }
+    }
+  });
+
+  it("hands do NOT slide along apparatus that is bolted down", () => {
+    // The subtler half: the offset was not constant through a rep, so
+    // the art crept along bars the anchors held perfectly still. The
+    // existing "grips stay put" test misses this entirely — it checks
+    // the POST lines, which are drawn from the anchor, never the arm.
+    for (const [id, wrist] of [
+      ["pull-ups", POST_WRIST],
+      ["dips", ANT_WRIST],
+    ] as const) {
+      const at = (t: number) =>
+        applyToPoint(wrist, (BODY_DEMOS[id].pose(t).foreArmL ?? []) as never[]);
+      const drift = Math.hypot(at(1)[0] - at(0)[0], at(1)[1] - at(0)[1]);
+      expect(drift, `${id} grip drift`).toBeLessThan(0.2);
+    }
+  });
+
+  it("the shoulder girdle rises — press and raise both shrug", () => {
+    // It used to travel 0.00 across a 55°→166° humerus swing: the rig
+    // stylised the scapula's ROTATION as a deltoid tilt and modelled its
+    // ELEVATION not at all. ~2:1 scapulohumeral rhythm puts the acromion
+    // up ~3.2 units overhead and ~1.7 at a raise to parallel.
+    const shoulderAt = (id: string, t: number) =>
+      applyToPoint(
+        [24, 48],
+        (BODY_DEMOS[id].pose(t).upperArmL ?? []) as never[]
+      );
+    for (const [id, expected] of [
+      ["overhead-press", 3.2],
+      ["lateral-raise", 1.7],
+    ] as const) {
+      const rise = shoulderAt(id, 0)[1] - shoulderAt(id, 1)[1];
+      expect(rise, `${id} rise`).toBeCloseTo(expected, 1);
+      // Elevation only — the girdle must not wander sideways.
+      expect(
+        Math.abs(shoulderAt(id, 1)[0] - shoulderAt(id, 0)[0]),
+        `${id} lateral drift`
+      ).toBeLessThan(0.2);
+    }
+  });
+
+  it("IK demos reach a real extension at the end of their stroke", () => {
+    // Each of these was left 43° short of straight by the longer,
+    // corrected forearm: the press at lockout, the pull-up at the dead
+    // hang, the pulldown at full overhead reach.
+    const reach = (
+      id: string,
+      t: number,
+      S: [number, number],
+      wrist: [number, number]
+    ) => {
+      const pose = BODY_DEMOS[id].pose(t);
+      const sh = applyToPoint(S, (pose.upperArmL ?? []) as never[]);
+      const w = applyToPoint(wrist, (pose.foreArmL ?? []) as never[]);
+      return Math.hypot(w[0] - sh[0], w[1] - sh[1]);
+    };
+    const ANT_LEN =
+      Math.hypot(20 - 24, 71 - 48) + Math.hypot(3.5 - 20, 101.2 - 71);
+    const POST_LEN =
+      Math.hypot(17 - 23, 78 - 46) + Math.hypot(3.4 - 17, 108.5 - 78);
+    expect(
+      reach("overhead-press", 1, [24, 48], ANT_WRIST) / ANT_LEN
+    ).toBeGreaterThan(0.96);
+    expect(
+      reach("pull-ups", 0, [23, 46], POST_WRIST) / POST_LEN
+    ).toBeGreaterThan(0.96);
+    expect(
+      reach("lat-pulldown", 0, [23, 46], POST_WRIST) / POST_LEN
+    ).toBeGreaterThan(0.96);
   });
 
   it("bench press: the rep finishes at a real lockout", () => {
@@ -444,7 +551,7 @@ describe("renderBodyDemo", () => {
     // [10,100] (left side of the vendored anterior figure).
     const hand = (t: number) =>
       applyToPoint(
-        [10, 100],
+        ANT_WRIST,
         (BODY_DEMOS["overhead-press"].pose(t).foreArmL ?? []) as never[]
       );
     const bottom = hand(0);

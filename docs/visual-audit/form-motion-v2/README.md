@@ -159,3 +159,49 @@ already has a rule about — it would look right and be incoherent.
 
 The prop system, the rope repair and both bar-path fixes are unaffected
 and remain in place; only the hands and what hung off them came out.
+
+## STATUS 2026-08-17d — PR1: arm geometry (anchors + girdle)
+
+The prerequisite from `docs/proposals/anterior-grip-reconciliation.md`,
+built. No new features, no props — geometry only.
+
+**Hand anchors moved onto the art.** `ANT.handL/R` were [10,100] /
+[89,100]; the forearm art's terminal edge is centred at 3.47 / 96.12 at
+y 101.2. Posterior likewise. `aimArm` derives its rotation from the rest
+vector H−E, so an off-art anchor landed a phantom point on the target
+while the real wrist went ~6 units elsewhere — and by a VARYING amount,
+so the art crept along bars the anchors held still.
+
+**The shoulder girdle now moves.** It used to travel 0.00 across a
+55°→166° humerus swing: the rig stylised the scapula's rotation as a
+deltoid tilt and modelled its elevation not at all. Acromion now rises
+3.2 units at press lockout and 1.7 at a raise to parallel, per ~2:1
+scapulohumeral rhythm on a 200-unit figure.
+
+**Bar paths re-fitted**, because the longer forearm and the rising
+shoulder feed the same arithmetic:
+
+| demo           | frame      | before              | after        |
+| -------------- | ---------- | ------------------- | ------------ |
+| overhead-press | lockout    | 93% reach, 43° bend | **98%, 24°** |
+| pull-ups       | dead hang  | 93%, 43°            | **99%, 17°** |
+| lat-pulldown   | full reach | 93%, 43°            | **98%, 23°** |
+| dips           | top        | 99%, 19°            | unchanged    |
+
+The press gains a taller canvas (`-8 -20 116 230`) for the higher
+lockout. Squat and calf-raise are byte-identical — they never used a
+hand anchor.
+
+Five new pins, each mutation-checked against the defect it names: the
+wrist lands on the declared grip; hands do not slide on bolted-down
+apparatus (the old "grips stay put" test checked the POST lines, drawn
+from the anchor, and never the arm); the girdle rises by the expected
+amount without lateral drift; and the three IK demos reach ≥96% at the
+end of their stroke.
+
+Seam risk flagged in the proposal was checked at magnification: the
+existing joint caps absorb the elevation, no hole opens at the
+deltoid/torso junction. Stills only — motion is still the honest test.
+
+Next: PR2 (fists, geometry recorded in the proposal), then PR3 (press
+barbell + lateral-raise dumbbells, both props already built and tested).
