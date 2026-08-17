@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Spinner } from "@/components/ui/Spinner";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useBackDismiss } from "@/lib/backDismiss";
 import { logger } from "@/lib/logger";
 import { THEME } from "@/lib/theme";
@@ -80,6 +81,12 @@ export default function FoodCameraModal({
   const focusTrapRef = useFocusTrap<HTMLDivElement>(open);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  /* The frame being analysed. Held so the wait shows the STILL the
+     model is actually reading — a live feed that keeps moving under
+     an "Analysing…" label invites the user to re-aim a shot that has
+     already been taken. */
+  const [preview, setPreview] = useState<string | null>(null);
+  const reducedMotion = useReducedMotion();
   const streamRef = useRef<MediaStream | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -286,6 +293,7 @@ export default function FoodCameraModal({
       reader.onload = async () => {
         const dataUrl = String(reader.result || "");
         const base64 = dataUrlToBase64(dataUrl);
+        setPreview(dataUrl);
         await onCaptureBase64(base64, tab === "label" ? "label" : "food");
         setBusy(false);
       };
@@ -320,6 +328,7 @@ export default function FoodCameraModal({
       const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
       const base64 = dataUrlToBase64(dataUrl);
 
+      setPreview(dataUrl);
       await onCaptureBase64(base64, tab === "label" ? "label" : "food");
     } catch (e) {
       logger.error(e);
@@ -460,14 +469,79 @@ export default function FoodCameraModal({
           responding, which reads as a freeze, not as work in progress.
           The `loading` prop was already being passed here — it was
           only ever used to disable the shutter. */}
+      {/* Analysis in flight — the scan treatment.
+          The modal is `fixed inset-0` and opaque and stays open for the
+          WHOLE round-trip (`setCameraOpen(false)` runs only after the
+          await), so this is the entire experience of the wait.
+
+          Shows the captured STILL rather than the live feed: the shot
+          is already taken, and a moving picture under "Analysing…"
+          invites the user to re-aim it. Reticle corners + a sweep are
+          the scanner idiom, in the nutrition orange that is the food
+          domain's identity.
+
+          Motion follows the house recipe: the sweep animates TRANSFORM
+          only (never a filter or a blur radius — those stutter in
+          WKWebView), and it is the ONE ambient loop on this surface.
+          Reduced motion gets the settled state — brackets and copy, no
+          travel. */}
       {loading && (
         <div
-          className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-black/70"
+          className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-5 bg-black/80 px-8"
           role="status"
           aria-live="polite"
         >
-          <Spinner size="lg" variant="inverse" label="Analyzing food" />
-          <p className="text-sm font-medium text-white">Analyzing…</p>
+          <div className="relative w-full max-w-[260px] aspect-square">
+            {preview && (
+              <img
+                src={preview}
+                alt=""
+                className="absolute inset-0 size-full rounded-2xl object-cover opacity-70"
+              />
+            )}
+
+            {/* Reticle corners */}
+            {[
+              "top-0 left-0 border-t-2 border-l-2 rounded-tl-2xl",
+              "top-0 right-0 border-t-2 border-r-2 rounded-tr-2xl",
+              "bottom-0 left-0 border-b-2 border-l-2 rounded-bl-2xl",
+              "bottom-0 right-0 border-b-2 border-r-2 rounded-br-2xl",
+            ].map((corner) => (
+              <span
+                key={corner}
+                aria-hidden
+                className={cn("absolute size-8", corner)}
+                style={{ borderColor: THEME.semantic.nutrition }}
+              />
+            ))}
+
+            {/* Sweep */}
+            {!reducedMotion && (
+              <div className="absolute inset-0 overflow-hidden rounded-2xl">
+                <motion.div
+                  aria-hidden
+                  className="absolute inset-x-0 h-16 opacity-30"
+                  style={{
+                    background: `linear-gradient(to bottom, transparent, ${THEME.semantic.nutrition}, transparent)`,
+                  }}
+                  initial={{ y: "-100%" }}
+                  animate={{ y: "400%" }}
+                  transition={{
+                    duration: 1.6,
+                    ease: "easeInOut",
+                    repeat: Infinity,
+                  }}
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Spinner size="sm" variant="inverse" label="Analyzing food" />
+            <p className="text-sm font-medium text-white">
+              Analysing your meal…
+            </p>
+          </div>
         </div>
       )}
 

@@ -66,3 +66,47 @@ describe("FoodCameraModal — analysis in flight", () => {
     expect(screen.getByLabelText(/analyzing food/i)).toBeTruthy();
   });
 });
+
+describe("FoodCameraModal — the scan treatment", () => {
+  const reticle = (c: HTMLElement) =>
+    c.querySelectorAll('span[aria-hidden][class*="border-"]');
+
+  it("frames the wait with a scan reticle", () => {
+    const { container } = render(<FoodCameraModal {...props} loading />);
+    expect(reticle(container).length).toBe(4);
+  });
+
+  it("draws no reticle when idle", () => {
+    const { container } = render(
+      <FoodCameraModal {...props} loading={false} />
+    );
+    expect(reticle(container).length).toBe(0);
+  });
+
+  it("reduced motion gets the settled state — brackets, no sweep", () => {
+    // The house rule: `prefers-reduced-motion` always gets the settled
+    // static state, no entrance and no loop. The reticle stays (it is
+    // structure, not motion); only the travelling sweep goes.
+    const sweeps = (c: HTMLElement) =>
+      c.querySelectorAll('div[aria-hidden][class*="opacity-"]');
+
+    const moving = render(<FoodCameraModal {...props} loading />);
+    expect(sweeps(moving.container).length).toBeGreaterThan(0);
+    cleanup();
+
+    window.matchMedia = ((q: string) => ({
+      matches: q.includes("prefers-reduced-motion"),
+      media: q,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      onchange: null,
+      dispatchEvent: vi.fn(),
+    })) as unknown as typeof window.matchMedia;
+
+    const still = render(<FoodCameraModal {...props} loading />);
+    expect(sweeps(still.container).length).toBe(0);
+    expect(reticle(still.container).length).toBe(4);
+  });
+});
