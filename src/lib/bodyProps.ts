@@ -58,8 +58,6 @@ export type PropState =
   | { kind: "rigidBar"; view: "profile"; hand: Pt; plateR: number }
   /** Frontal barbell: shaft spanning both grips, a plate off each end. */
   | { kind: "rigidBar"; view: "frontal"; left: Pt; right: Pt; plateR: number }
-  /** A dumbbell in each hand, drawn end-on at the grips. */
-  | { kind: "dumbbell"; hands: Pt[]; bellR: number }
   /** Cable + rope attachment, solved from the grip and the pulley. */
   | {
       kind: "ropeAttachment";
@@ -143,29 +141,6 @@ export function frontalBarbell(left: Pt, right: Pt, plateR: number): string {
 }
 
 /**
- * A dumbbell, end-on at the grip.
- *
- * End-on is not a shortcut, it is what the camera sees. A dumbbell's
- * handle runs through the palm, roughly perpendicular to the forearm —
- * so on a front view, through the whole arc of a lateral raise, the
- * handle points into the screen and only the bell face shows. Angling
- * it to reveal both bells is the same depth cheat declined for the far
- * plate, and for the same reason. It borrows the plate's construction
- * (face, rim, hub) at a smaller radius so the two read as one family.
- */
-export function dumbbell(hands: Pt[], bellR: number): string {
-  const r = bellR;
-  return hands
-    .map(
-      ([x, y]) =>
-        `<circle cx="${n(x)}" cy="${n(y)}" r="${n(r)}" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="1"/>` +
-        `<circle cx="${n(x)}" cy="${n(y)}" r="${n(r * 0.58)}" fill="none" stroke="${GEAR}" stroke-width="1.1" opacity="0.7"/>` +
-        `<circle cx="${n(x)}" cy="${n(y)}" r="${n(r * 0.24)}" fill="${GEAR}"/>`
-    )
-    .join("");
-}
-
-/**
  * Cable + rope attachment.
  *
  * Three honesty repairs over the hand-rolled version this replaces:
@@ -244,9 +219,6 @@ export function renderProp(state: PropState): PropLayers {
             behind: "",
             front: frontalBarbell(state.left, state.right, state.plateR),
           };
-
-    case "dumbbell":
-      return { behind: "", front: dumbbell(state.hands, state.bellR) };
 
     case "ropeAttachment":
       return {
