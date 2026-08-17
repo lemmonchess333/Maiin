@@ -7,6 +7,7 @@ import {
   Image as ImageIcon,
   RefreshCw,
   CameraOff,
+  Check,
   Keyboard,
 } from "lucide-react";
 import { Spinner } from "@/components/ui/Spinner";
@@ -46,6 +47,12 @@ type Props = {
   onCaptureBase64: (base64: string, mode: CaptureMode) => Promise<void>;
   onBarcodeDetected: (raw: string) => Promise<void>;
   loading: boolean;
+  /** The completion beat: analysis has LANDED and the parent is holding
+   *  the modal open for a few hundred ms so the scan visibly resolves —
+   *  frame tightens, laser gone, "Done" — instead of hard-cutting to
+   *  the result. The reference apps all stage this moment; the hard cut
+   *  was ours alone. */
+  locked?: boolean;
   /**
    * Fired when the user taps "Type it instead" from the denied-permission
    * fallback. The parent should close the modal and focus the NL input.
@@ -82,6 +89,7 @@ export default function FoodCameraModal({
   onCaptureBase64,
   onBarcodeDetected,
   loading,
+  locked = false,
   onRequestTypedInput,
 }: Props) {
   const focusTrapRef = useFocusTrap<HTMLDivElement>(open);
@@ -396,7 +404,7 @@ export default function FoodCameraModal({
           back to the plain spinner row — a scan reticle over
           nothing, or over a STALE previous photo, would be worse
           than dull. */}
-      {loading && (
+      {(loading || locked) && (
         <div
           className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-6 bg-black/85 px-8"
           role="status"
@@ -405,9 +413,13 @@ export default function FoodCameraModal({
         >
           {preview && tab !== "barcode" ? (
             <>
-              <div
+              <motion.div
                 className="relative w-full max-w-[340px] aspect-[4/5]"
                 data-testid="scan-frame"
+                animate={
+                  reducedMotion ? undefined : { scale: locked ? 0.965 : 1 }
+                }
+                transition={{ duration: 0.28, ease: "easeOut" }}
               >
                 <img
                   src={preview}
@@ -423,17 +435,30 @@ export default function FoodCameraModal({
                   "-bottom-1 -left-1 border-b-[3px] border-l-[3px] rounded-bl-[20px]",
                   "-bottom-1 -right-1 border-b-[3px] border-r-[3px] rounded-br-[20px]",
                 ].map((corner) => (
-                  <span
+                  <motion.span
                     key={corner}
                     aria-hidden
                     data-testid="scan-corner"
                     className={cn("absolute size-8", corner)}
                     style={{ borderColor: THEME.semantic.nutrition }}
+                    initial={
+                      reducedMotion ? false : { opacity: 0, scale: 1.12 }
+                    }
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
                   />
                 ))}
 
-                {/* Laser */}
-                {!reducedMotion && (
+                {/* Laser — BOUNCES (mirror repeat) rather than
+                    restarting from the top: the reference scanners all
+                    read "still working" with a continuous sweep, and
+                    the restart pop read as a glitch. The glow is
+                    symmetric about the line so the bounce has no wrong
+                    direction, and a faint grid MESH rides in a window
+                    around the line — the "being read" region — fading
+                    out at its edges via a static mask. One mover, one
+                    loop, transform-only throughout. */}
+                {!reducedMotion && !locked && (
                   <div
                     aria-hidden
                     data-testid="scan-laser"
@@ -444,16 +469,26 @@ export default function FoodCameraModal({
                       initial={{ y: "-100%" }}
                       animate={{ y: "0%" }}
                       transition={{
-                        duration: 1.8,
+                        duration: 1.5,
                         ease: "easeInOut",
                         repeat: Infinity,
-                        repeatDelay: 0.25,
+                        repeatType: "mirror",
                       }}
                     >
                       <div
-                        className="absolute inset-x-0 bottom-[2px] h-16 opacity-35"
+                        className="absolute inset-x-0 -bottom-11 h-[88px] opacity-15"
                         style={{
-                          background: `linear-gradient(to bottom, transparent, ${THEME.semantic.nutrition})`,
+                          background: `repeating-linear-gradient(0deg, ${THEME.semantic.nutrition} 0 1px, transparent 1px 12px), repeating-linear-gradient(90deg, ${THEME.semantic.nutrition} 0 1px, transparent 1px 12px)`,
+                          maskImage:
+                            "linear-gradient(to bottom, transparent, black 35%, black 65%, transparent)",
+                          WebkitMaskImage:
+                            "linear-gradient(to bottom, transparent, black 35%, black 65%, transparent)",
+                        }}
+                      />
+                      <div
+                        className="absolute inset-x-0 -bottom-8 h-16 opacity-35"
+                        style={{
+                          background: `linear-gradient(to bottom, transparent, ${THEME.semantic.nutrition}, transparent)`,
                         }}
                       />
                       <div
@@ -466,9 +501,18 @@ export default function FoodCameraModal({
                     </motion.div>
                   </div>
                 )}
-              </div>
+              </motion.div>
               <p aria-hidden className="text-[15px] font-semibold text-white">
-                {stageLine}
+                {locked ? (
+                  <span
+                    className="inline-flex items-center gap-1.5"
+                    style={{ color: THEME.semantic.nutrition }}
+                  >
+                    <Check className="size-4" /> Done
+                  </span>
+                ) : (
+                  stageLine
+                )}
               </p>
             </>
           ) : (

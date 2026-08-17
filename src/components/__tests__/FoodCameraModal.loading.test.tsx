@@ -183,3 +183,34 @@ describe("useScanStages", () => {
     expect(result.current).toBe(SCAN_STAGES_FOOD[1]);
   });
 });
+
+describe("FoodCameraModal — the completion beat", () => {
+  it("locked resolves the scan: overlay stays, laser stops, Done shows", async () => {
+    // The parent holds `locked` for ~420ms after a usable result so the
+    // scan visibly resolves instead of hard-cutting to the result card.
+    // Loading is FALSE by then — the overlay must stay up on `locked`
+    // alone, or the beat renders nothing at all.
+    render(<FoodCameraModal {...props} loading={false} locked />);
+    await armPhoto();
+    expect(screen.getAllByTestId("scan-corner").length).toBe(4);
+    expect(screen.queryByTestId("scan-laser")).toBeNull();
+    expect(screen.getByText("Done")).toBeTruthy();
+  });
+
+  it("never claims Done while still analysing", async () => {
+    render(<FoodCameraModal {...props} loading />);
+    await armPhoto();
+    expect(screen.queryByText("Done")).toBeNull();
+    expect(screen.getByTestId("scan-laser")).toBeTruthy();
+  });
+
+  it("the laser carries the reading-mesh window", async () => {
+    render(<FoodCameraModal {...props} loading />);
+    await armPhoto();
+    expect(
+      screen
+        .getByTestId("scan-laser")
+        .innerHTML.includes("repeating-linear-gradient")
+    ).toBe(true);
+  });
+});

@@ -189,6 +189,14 @@ export default function FoodAnalyzer({
   } = useFoodAnalysis();
 
   const [cameraOpen, setCameraOpen] = useState(false);
+  /* The scan's completion beat: after a USABLE analysis lands, the
+     modal is held open ~420ms in a "locked" state (frame tightens,
+     laser gone, Done) so the scan visibly resolves instead of
+     hard-cutting to the result card. Success-with-results only —
+     failures and empty results keep their existing immediate paths —
+     and skipped entirely under reduced motion, which must never be
+     made to WAIT for theatre. */
+  const [scanLocked, setScanLocked] = useState(false);
   const [capturedBase64, setCapturedBase64] = useState<string | null>(null);
 
   const [barcodeResult, setBarcodeResult] = useState<MealResult | null>(null);
@@ -616,7 +624,14 @@ export default function FoodAnalyzer({
     setCapturedBase64(base64);
 
     try {
-      await analyzeFood(base64);
+      const data = await analyzeFood(base64);
+      const usable =
+        data && filterIdentifiableAiItems(data.items ?? []).length > 0;
+      if (usable && !reducedMotion) {
+        setScanLocked(true);
+        await new Promise((r) => setTimeout(r, 420));
+        setScanLocked(false);
+      }
       setCameraOpen(false);
     } catch (e) {
       logger.error(e);
@@ -684,6 +699,7 @@ export default function FoodAnalyzer({
         onCaptureBase64={onCaptureBase64}
         onBarcodeDetected={onBarcodeDetected}
         loading={showLoading}
+        locked={scanLocked}
         onRequestTypedInput={
           onRequestTypedInput
             ? () => {
