@@ -90,6 +90,47 @@ and the grip width has to be re-argued on its own merits (1.54×
 biacromial is still too wide for "grip just outside your shoulders").
 Bench and the other side demos are unaffected.
 
+## The shoulder girdle never moves (found 2026-08-17, owner-reported)
+
+Separate defect, same arithmetic — which is why it lands in the same PR.
+
+The shoulder anchor is PINNED. Measured across both demos that need it:
+
+| demo           | humerus swing            | shoulder point travel |
+| -------------- | ------------------------ | --------------------- |
+| overhead-press | 55° → 166° from vertical | **0.00**              |
+| lateral-raise  | 14° → 82°                | **0.00**              |
+
+What the rig models today is the DELTOID CAP tilting at 40% of the
+humerus angle (capped at 38°) about that fixed pivot — the 2026-07-11
+joint pass. So the scapula's ROTATION is stylised, and its ELEVATION is
+absent. In a real press the whole girdle shrugs up at lockout; that is
+the movement the owner spotted as missing.
+
+Scapulohumeral rhythm is ~2:1, and the acromion rises ~3 cm at full
+overhead reach. The figure is 200 units for ~175 cm, so 1 unit ≈
+0.875 cm:
+
+|                                 | scapular contribution | acromion rise  |
+| ------------------------------- | --------------------- | -------------- |
+| press lockout (~170°)           | ~57°                  | **~3.2 units** |
+| lateral raise to parallel (90°) | ~30°                  | **~1.7 units** |
+
+Against a 52-unit shoulder width that is plainly visible.
+
+The machinery already exists: `aimArm` takes a `dy` documented as "body
+carries the shoulder". The press passes `0`.
+
+**Spiking it surfaced a coupling that decides the sequencing.** Raising
+the shoulder while leaving the bar path alone just puts SLACK in the
+arm: reach drops 53.94 → 50.8 against a 54.02 arm, so the elbow bend
+goes 6.5° → ~30° and the elbows bow inward. Physically obvious in
+hindsight — if your shoulders shrug up at lockout, the bar finishes
+higher too. So elevation and lockout height must move together.
+
+Which means the hand anchor, the bar paths and the girdle are ONE piece
+of arithmetic, not three. Sequencing below is revised accordingly.
+
 ## Sequencing
 
 Deliberately three PRs, not one. Bundling them makes a single review
@@ -100,10 +141,18 @@ press moved because it gained a bar".
   fist, render magnified crops, look. This is the cheap answer to the
   question the whole plan rests on and which is still unproven — see
   Risks. Nothing ships.
-- **PR1 — anchor correction.** The four constants, the re-fitted bar
-  paths, the test updates, regenerated sheets. No new features. Valuable
-  on its own: it stops the art sliding on fixed apparatus in pull-ups
-  and dips.
+- **PR1 — arm geometry.** The four hand constants, shoulder-girdle
+  elevation, and the bar paths re-fitted against BOTH (a longer forearm
+  and a rising shoulder change the same reach arithmetic). Test updates,
+  regenerated sheets. No new features, and valuable on its own twice
+  over: it stops the art sliding on fixed apparatus in pull-ups and
+  dips, and it puts the shrug into the press and the raise.
+
+  Originally scoped as anchor-only. Merged after the shoulder spike
+  showed the two cannot be re-fitted independently — doing them in
+  separate PRs would mean fitting the bar path twice and re-reviewing
+  45 frames twice.
+
 - **PR2 — fists.** On corrected anchors, following the `ANTERIOR_FEET`
   pattern.
 - **PR3 — held props.** Overhead-press barbell, lateral-raise dumbbells.
@@ -112,14 +161,19 @@ press moved because it gained a bar".
 
 ## Risks
 
-- **The fist may still not read, and the anchor fix does not answer
-  that.** The 2026-08-17 attempt was BOTH misplaced and unproven as a
-  shape. Correcting the anchor removes the misplacement only. Wrist
-  width ~7 vs the 8-wide fist tried suggests the scale was roughly
-  right, but that is an inference, not evidence — hence the spike first.
+- ~~The fist may still not read.~~ **RESOLVED by the spike, 2026-08-17.**
+  Anchors moved onto the art, a ~7-unit fist drawn on them, magnified
+  crops rendered: the fist caps the forearm and grips the pull-up bar
+  correctly. Scale was never the problem — position was the whole of it.
+  PR2 is de-risked.
 - **Re-posing may surface further art/anchor disagreements.** The elbow
   is 1.2–1.3 off centre, which is tolerable now and may not be once
   something is drawn at the joint.
+- **Girdle elevation opens a seam at the deltoid/torso junction** — the
+  arm assembly rises and the torso does not. The spike's full-frame
+  render was acceptable, but it was one value at one frame; the elevation
+  curve needs shaping against the existing `DELTOID_FOLLOW` / 38° cap
+  rather than bolted on beside it.
 - **45 frames to re-review** (9 front/back demos × 5), all changed by a
   pose shift rather than a deliberate design change, which is the
   hardest kind of sheet to review attentively.
