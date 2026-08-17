@@ -1188,6 +1188,9 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
   "calf-raise": {
     view: "anterior",
     concentricTo: 1,
+    /* Two units taller than the anterior default so the step fits under
+       the figure without cropping it. */
+    viewBox: "-8 -14 116 226",
     tint: { calves: "primary" },
     pose: (e) => {
       /* Heels drive the body straight up — but the FEET stay planted.
@@ -1196,9 +1199,30 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * to meet the risen thighs while the foot wedges, sitting at the
        * bottom of the same group, barely move. Translating the shanks
        * instead floated the feet — a levitation, not a calf raise. */
-      const rise = 6.5 * e;
-      const lift: Op[] = [{ kind: "translate", dx: 0, dy: -rise }];
+      /* THE REP NOW STARTS BELOW THE STEP, which is the whole point of
+       * standing on one. liftmanual's standing calf raise is explicit
+       * that the bottom is a STRETCH -- the heels hang two to three
+       * inches under the platform -- and that "a heel that merely
+       * returns to platform level fails the standard". This animated
+       * flat-floor-to-tiptoe: the top half of the movement, twice.
+       *
+       * No new mechanism was needed, which is the nice part. The pose
+       * already lengthens floor-to-knee as the heel rises, about the
+       * ball line at y=203; run the same lerp negative and it SHORTENS
+       * floor-to-knee, which is exactly what dropping the heel below the
+       * ball does. One law, both directions, and the ball stays on the
+       * step either way because it is the pivot.
+       *
+       * The drop is derived from the figure rather than converted from
+       * inches: 2-3in of heel travel against a ~45cm floor-to-knee is
+       * ~12-15% of that segment, so 12% of KNEE_TO_GROUND -- 6.6 units,
+       * which lands within a rounding error of the 6.5 the raise already
+       * used. The near-symmetry is a check on the number, not a
+       * coincidence to lean on. */
       const KNEE_TO_GROUND = 55; // knee line ~148 → ground 203
+      const CALF_DROP = KNEE_TO_GROUND * 0.12;
+      const rise = lerp(-CALF_DROP, 6.5, e);
+      const lift: Op[] = [{ kind: "translate", dx: 0, dy: -rise }];
       const stretch: Op[] = [
         { kind: "scaleY", k: 1 + rise / KNEE_TO_GROUND, pivotY: 203 },
       ];
@@ -1215,6 +1239,24 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         shankR: stretch,
       };
     },
+    /* THE STEP. Its top edge is y=203 -- the same line the shank scale
+     * pivots about -- because that IS the contact: the balls of the feet
+     * rest on the platform edge and everything else moves relative to it.
+     * Drawing it anywhere else would be decoration that disagrees with
+     * the pose.
+     *
+     * Deliberately a small block and not a machine. The heels overhang
+     * BEHIND the edge, which a front view cannot show -- so what carries
+     * the stretch here is the body travelling below its standing height,
+     * not a visibly hanging heel. The step's job is to make that drop
+     * legible as a stretch rather than as a squat.
+     *
+     * Gear greys only, matching the push-up floor line and the dip posts.
+     * Inset from the foot span so it reads as a step being stood ON
+     * rather than a floor. */
+    scene: () =>
+      `<rect x="14" y="203" width="72" height="9" rx="1.5" fill="${GEAR_DARK}"/>` +
+      `<rect x="14" y="203" width="72" height="2.4" rx="1.2" fill="${GEAR}"/>`,
   },
 
   "bench-press": {
@@ -1879,6 +1921,13 @@ export function renderBodyDemo(
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${demo.viewBox ?? (demo.view === "anterior" ? "-8 -14 116 224" : "-12 -14 124 244")}" role="img">` +
     shadow +
+    /* Scene furniture, behind everything the body draws. The side path
+       has had this since it needed a bench and a floor line; the front
+       path never did, so an anterior demo had no way to stand on
+       anything -- which is why the calf raise had no step. Same hook,
+       same ordering, so a demo declaring `scene` behaves identically
+       whichever way it faces. */
+    (demo.scene?.(e, pose) ?? "") +
     barBehind +
     glow +
     caps +

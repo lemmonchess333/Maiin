@@ -631,6 +631,46 @@ describe("renderBodyDemo", () => {
     );
   });
 
+  it("calf raise: the bottom is a stretch below the step, not flat", () => {
+    /* liftmanual's standing calf raise puts the heels two to three
+       inches UNDER the platform at the bottom and says plainly that "a
+       heel that merely returns to platform level fails the standard".
+       This demo had no step at all and ran flat-floor-to-tiptoe: the top
+       half of the movement, performed twice.
+
+       Asserted on the KNEE, not on a heel. The heels overhang behind the
+       step, and a front view cannot show behind -- so what carries the
+       stretch here is the body travelling below its standing height, and
+       that is what the test has to measure. The knee is the cleanest
+       proxy: the pose lengthens and shortens floor-to-knee about the
+       ball line, so the knee IS the ankle angle.
+
+       Both directions, because the defect was a missing half. A test on
+       the top alone is satisfied by the old flat-to-tiptoe demo. */
+    const kneeY = (t: number) =>
+      applyToPoint([32, 148], BODY_DEMOS["calf-raise"].pose(t).thighL!)[1];
+    const standing = 148;
+    expect(kneeY(0), "bottom is not below standing").toBeGreaterThan(
+      standing + 3
+    );
+    expect(kneeY(1), "top is not above standing").toBeLessThan(standing - 3);
+    // …and the range is a real one, not a twitch either side of neutral.
+    expect(kneeY(0) - kneeY(1)).toBeGreaterThan(10);
+
+    /* The step is drawn, and its top edge is the line the pose pivots
+       about. A platform at any other height would be decoration
+       disagreeing with the geometry -- the balls of the feet rest on
+       that edge, which is what makes it a step rather than a floor. */
+    const svg = renderBodyDemo("calf-raise", 0);
+    const rects = svg.match(/<rect[^>]*y="([\d.]+)"[^>]*>/g) ?? [];
+    expect(rects.length, "calf raise draws no step").toBeGreaterThan(0);
+    for (const r of rects) {
+      expect(Number(r.match(/y="([\d.]+)"/)![1])).toBe(203);
+    }
+    // Behind the body, not painted over it.
+    expect(svg.indexOf("<rect")).toBeLessThan(svg.indexOf("<polygon"));
+  });
+
   it("pushdown: the rope's knotted tail travels down to lockout", () => {
     // The tail knob is the LAST circle in the svg (sceneFront renders
     // after the body) — its descent is the extension arc.
