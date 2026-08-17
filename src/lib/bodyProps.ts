@@ -58,8 +58,18 @@ export const GEAR_FAR = "#3E3F45";
 export type PropState =
   /** Profile barbell: the near sleeve end at the solved grip. */
   | { kind: "rigidBar"; view: "profile"; hand: Pt; plateR: number }
-  /** Frontal barbell: shaft spanning both grips, a plate off each end. */
-  | { kind: "rigidBar"; view: "frontal"; left: Pt; right: Pt; plateR: number }
+  /** Frontal barbell: shaft spanning both grips, a plate off each end.
+   *  `layer: "behind"` racks it behind the body — a BACK squat's bar
+   *  sits on the traps, so the torso occludes the shaft's middle and
+   *  only the ends and plates show beside the shoulders. */
+  | {
+      kind: "rigidBar";
+      view: "frontal";
+      left: Pt;
+      right: Pt;
+      plateR: number;
+      layer?: "front" | "behind";
+    }
   /** A dumbbell in each hand, end-on at the solved grips. */
   | { kind: "dumbbell"; hands: Pt[]; bellR: number }
   /** Cable + rope attachment, solved from the grip and the pulley. */
@@ -240,13 +250,15 @@ export function ropeAttachment(pulley: Pt, hand: Pt, spread: number): string {
 /** Render a prop into its two layers. Pure: same state → same SVG. */
 export function renderProp(state: PropState): PropLayers {
   switch (state.kind) {
-    case "rigidBar":
-      return state.view === "profile"
-        ? { behind: "", front: profileBarbell(state.hand, state.plateR) }
-        : {
-            behind: "",
-            front: frontalBarbell(state.left, state.right, state.plateR),
-          };
+    case "rigidBar": {
+      if (state.view === "profile") {
+        return { behind: "", front: profileBarbell(state.hand, state.plateR) };
+      }
+      const svg = frontalBarbell(state.left, state.right, state.plateR);
+      return state.layer === "behind"
+        ? { behind: svg, front: "" }
+        : { behind: "", front: svg };
+    }
 
     case "dumbbell":
       return { behind: "", front: dumbbell(state.hands, state.bellR) };

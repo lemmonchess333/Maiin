@@ -279,3 +279,36 @@ prop — the folded front-view grip was tried in July and read as broken
 polygons; its bodyweight/goblet aliases are served correctly as-is),
 and the raise's `neck` secondary tint is untouched here (same invented
 tint the press had; separate, one-line question for a review pass).
+
+## STATUS 2026-08-17g — the squat gets its bar; the July verdict was about geometry, not facets
+
+The last "draws no gear" residue closed. `squat` now back-racks a
+barbell — shaft in the BEHIND layer so the torso occludes its middle
+and the ends + plates read beside the shoulders, riding the dive
+because it sits on the body — with the hands IK'd up to wide grips at
+the canvas edges.
+
+The July note ("a folded front-view grip was tried and read as broken
+polygons across the chest") turned out to be a verdict on GRIP WIDTH,
+not on facets folding. Measured: IK to a grip near the shoulder (x=10)
+solves the left elbow ~11 units INBOARD of it — the arm folds across
+the chest, exactly what July saw. At the canvas-edge grips (x=0/100)
+the elbow lands within ~2 units of its natural hang and the forearm
+sweeps up through the free space BESIDE the torso. Both regimes are
+pinned: the wide-grip elbow position by test, the narrow-grip collapse
+by mutation.
+
+Alias honesty came with it. The moment squat gained a barbell, three
+aliases became lies — bodyweight holds nothing, goblet holds a bell at
+the chest, front squat racks on the FRONT delts. `HELD_GEAR_FREE_VARIANTS`
+strips held gear at resolution for those three (motion kept — the
+pre-bar status quo, already accepted as honest); `smith-machine-squat`
+keeps the bar. Residue, recorded not hidden: the stripped aliases now
+show the WIDE-GRIP arm pose with nothing in the hands — near-right for
+bodyweight (prisoner-style hands), weakest for goblet (hands belong at
+the chest). Per-alias arm poses are a new mechanism; if the owner wants
+goblet exact, the alias-hygiene alternative is un-aliasing it to the
+static reference.
+
+Five pins, five mutations, each caught by its own test. Only squat's
+sheets changed; every other demo re-renders byte-identical.

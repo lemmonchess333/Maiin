@@ -60,7 +60,9 @@ describe("renderBodyDemo", () => {
     // hand anchor sitting ~6.5 units off the end of the arm, so it read
     // as a rock balanced next to the limb. Pinned as: the fist's mass
     // sits ON the elbow→wrist line, and PAST the wrist, not to one side.
-    const svg = renderBodyDemo("squat", 0); // identity pose
+    // calf-raise at t=0 is the identity pose for the ARMS — the squat
+    // stopped being one when its hands went up to the bar.
+    const svg = renderBodyDemo("calf-raise", 0);
     const facets = polysNear(svg, ANT_WRIST, 11);
     expect(facets.length).toBe(2); // main mass + knuckle band
 
@@ -87,7 +89,7 @@ describe("renderBodyDemo", () => {
   it("the fist is TAPERED — narrow at the wrist, wide at the knuckles", () => {
     // A symmetric block reads as a lump; the taper is half of what makes
     // it a hand (the knuckle seam is the other half).
-    const svg = renderBodyDemo("squat", 0);
+    const svg = renderBodyDemo("calf-raise", 0);
     const [mass] = polysNear(svg, ANT_WRIST, 11);
     const byDist = [...mass].sort(
       (a, b) =>
@@ -186,6 +188,74 @@ describe("renderBodyDemo", () => {
       ].map((m) => [Number(m[1]), Number(m[2])])[0];
     expect(bellAt(0)[1] - bellAt(1)[1]).toBeGreaterThan(40); // rose
     expect(bellAt(1)[0]).toBeLessThan(bellAt(0)[0] - 25); // swung out
+  });
+
+  it("squat: a barbell rides the traps BEHIND the body", () => {
+    // First instruction: "Bar on your upper traps" — undrawn until
+    // 2026-08-17. Back-racked, so the shaft must render in the BEHIND
+    // layer (before the glow group) with the torso occluding its
+    // middle, and it must ride the dive, because it sits ON the body.
+    const shaft = (t: number) => {
+      const svg = renderBodyDemo("squat", t);
+      const m = svg.match(
+        /<line x1="(-?[\d.]+)" y1="(-?[\d.]+)" x2="(-?[\d.]+)" y2="(-?[\d.]+)"/
+      )!;
+      expect(svg.indexOf("<line"), `behind @${t}`).toBeLessThan(
+        svg.indexOf('<g class="glow"')
+      );
+      expect(
+        (svg.match(/<ellipse[^>]*stroke="#565760"/g) ?? []).length,
+        `plates @${t}`
+      ).toBe(2);
+      return m.slice(1, 5).map(Number);
+    };
+    const top = shaft(0);
+    const bottom = shaft(1);
+    // Spans past both grips (the sleeves), level.
+    const grips = BODY_DEMOS["squat"].bar!(0, BODY_DEMOS["squat"].pose(0))!;
+    expect(top[0]).toBeLessThan(grips[0][0]);
+    expect(top[2]).toBeGreaterThan(grips[1][0]);
+    expect(top[1]).toBeCloseTo(top[3], 1);
+    // Rides the dive: the drop at the bottom is ~22 units.
+    expect(bottom[1] - top[1]).toBeGreaterThan(18);
+  });
+
+  it("squat: the WIDE grip is what keeps the arm out of the chest", () => {
+    // The July failure pinned as a number. Front-view IK to a grip near
+    // the shoulder solves the elbow INBOARD — pull the grips in to x=10
+    // and the left elbow lands ~11 units inside the shoulder, folding
+    // the arm across the chest (the "broken polygons" of the July
+    // attempt). At the canvas-edge grips the elbow stays within ~2
+    // units of its natural hang.
+    for (const t of [0, 1]) {
+      const pose = BODY_DEMOS["squat"].pose(t);
+      const drop = t === 0 ? 0 : (1 - 0.6) * (148 - 92);
+      const elbow = applyToPoint([20, 71], (pose.upperArmL ?? []) as never[]);
+      expect(elbow[0], `elbow x @${t}`).toBeLessThan(24 + 1);
+      expect(Math.abs(elbow[1] - (71 + drop)), `elbow y @${t}`).toBeLessThan(4);
+    }
+  });
+
+  it("gear-incompatible squat aliases keep the motion, lose the bar", () => {
+    // The moment squat gained a back-rack barbell, three aliases became
+    // lies: bodyweight holds nothing, goblet holds a bell at the chest,
+    // front squat racks on the FRONT delts. They keep the animation and
+    // drop the gear; smith-machine-squat keeps the bar (true of it,
+    // minus the rails).
+    for (const id of ["bodyweight-squat", "goblet-squat", "front-squat"]) {
+      const svg = renderBodyDemo(id, 0.5);
+      expect(svg.includes("<line"), `${id} shaft`).toBe(false);
+      expect(
+        (svg.match(/<ellipse[^>]*stroke="#565760"/g) ?? []).length,
+        `${id} plates`
+      ).toBe(0);
+      expect(svg.match(/<polygon/g)!.length, `${id} alive`).toBeGreaterThan(35);
+      expect(getBodyDemo(id)!.equip, `${id} equip`).toBeUndefined();
+    }
+    expect(renderBodyDemo("smith-machine-squat", 0.5).includes("<line")).toBe(
+      true
+    );
+    expect(getBodyDemo("squat")!.equip).toBe("back-barbell");
   });
 
   it("squat: the body visibly sinks at the bottom", () => {

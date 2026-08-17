@@ -470,6 +470,7 @@ export interface BodyDemo {
     | "plate-end"
     | "rope"
     | "barbell"
+    | "back-barbell"
     | "dumbbell";
   /** plate-end disc radius (default 10). The deadlift draws a
    *  full-size 45 (r=26 ≈ 45 cm on a 175 cm figure) so the bottom
@@ -514,6 +515,12 @@ const lerp = (a: number, b: number, e: number) => a + (b - a) * e;
  * GRIP ≤ 10.45; widen the grip and the lockout must come down with it.
  * The "hands stay ON the declared bar path" test pins exactly that.
  */
+/* Back-squat grips: at the canvas edges, ON the trap line. Wide is not
+ * style, it is what makes the front-view grip solvable — see the squat
+ * pose comment. */
+const SQUAT_GRIP_L: Pt = [0, 45];
+const SQUAT_GRIP_R: Pt = [100, 45];
+
 const PRESS_GRIP = 10;
 
 /**
@@ -549,6 +556,16 @@ const pressBarPath = (e: number): [Pt, Pt] => {
 export const BODY_DEMOS: Record<string, BodyDemo> = {
   squat: {
     view: "anterior",
+    /* Its first instruction is "Bar on your upper traps" — and until
+     * 2026-08-17 it squatted nothing. Racked BEHIND the neck, so the
+     * torso hides the shaft's middle and the ends + plates read beside
+     * the shoulders. Aliases that carry no barbell (bodyweight, goblet,
+     * front squat) are stripped of this gear at resolution — see
+     * HELD_GEAR_FREE_VARIANTS. */
+    equip: "back-barbell",
+    plateR: 12,
+    // Wide grips put the plates outside the default canvas.
+    viewBox: "-16 -14 132 224",
     concentricTo: 0,
     tint: { quadriceps: "primary", abductors: "secondary", abs: "secondary" },
     pose: (e) => {
@@ -558,24 +575,45 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       const drop = (1 - k) * (ANT.kneeL[1] - 92);
       const flare = lerp(0, 7, e);
       const dive: Op[] = [{ kind: "translate", dx: 0, dy: drop }];
-      /* Arms ride down with the body. (A folded front-view grip was tried
-         and read as broken polygons across the chest — rigid facets can't
-         fold 150° gracefully. Hanging arms are the clean stylization.)
-         2026-07-11 joint pass: hanging arms also ABDUCT a touch with
-         depth — at the bottom the compressed thighs widened into the
-         hands and the forearms clipped INTO the quads. ~10 deg of
-         outward shoulder rotation keeps the hands clear of the thighs
-         through the whole descent (mirrors how references drift the
-         arms forward/out as the hips sink). */
-      const armOut = lerp(0, 10, e);
-      const armL: Op[] = [
-        { kind: "rotate", deg: armOut, pivot: ANT.shoulderL },
-        ...dive,
-      ];
-      const armR: Op[] = [
-        { kind: "rotate", deg: -armOut, pivot: ANT.shoulderR },
-        ...dive,
-      ];
+      /* The hands grip the bar on the traps — a WIDE grip, and the
+         width is load-bearing twice over. A folded front-view grip was
+         tried in July and read as broken polygons ACROSS THE CHEST;
+         with the grips at the canvas edges the IK puts the elbow
+         within ~2 units of its natural hang (upper arm barely moves)
+         and the forearm sweeps up through the FREE SPACE beside the
+         torso — nothing folds over the body. Narrower grips collapse
+         exactly as July found: pull the grip in to x=10 and the solved
+         elbow lands ~11 units INBOARD of the shoulder, burying the arm
+         in the chest (pinned by test). The whole assembly rides the
+         dive, since the bar sits ON the body. */
+      const hl: Pt = [SQUAT_GRIP_L[0], SQUAT_GRIP_L[1] + drop];
+      const hr: Pt = [SQUAT_GRIP_R[0], SQUAT_GRIP_R[1] + drop];
+      const L = aimArm(
+        { S: ANT.shoulderL, E: ANT.elbowL, H: ANT.handL },
+        solveElbow(
+          [ANT.shoulderL[0], ANT.shoulderL[1] + drop],
+          hl,
+          ANT_UPPER_LEN,
+          ANT_FORE_LEN,
+          1
+        ),
+        hl,
+        drop
+      );
+      const R = aimArm(
+        { S: ANT.shoulderR, E: ANT.elbowR, H: ANT.handR },
+        solveElbow(
+          [ANT.shoulderR[0], ANT.shoulderR[1] + drop],
+          hr,
+          ANT_UPPER_LEN,
+          ANT_FORE_LEN,
+          -1
+        ),
+        hr,
+        drop
+      );
+      const armL = L.upper;
+      const armR = R.upper;
       return {
         thighL: [
           { kind: "scaleY", k, pivotY: ANT.kneeL[1] },
@@ -603,10 +641,16 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         head: dive,
         upperArmL: armL,
         upperArmR: armR,
-        foreArmL: armL,
-        foreArmR: armR,
+        foreArmL: L.fore,
+        foreArmR: R.fore,
       };
     },
+    /* The solved wrists ARE the grips, so the bar can never leave the
+     * hands — and it rides the dive because the hands do. */
+    bar: (_e, pose) => [
+      applyToPoint(ANT.handL, pose.foreArmL ?? []),
+      applyToPoint(ANT.handR, pose.foreArmR ?? []),
+    ],
   },
 
   "overhead-press": {
@@ -1460,13 +1504,38 @@ const GATED_PENDING_REPAIR: ReadonlySet<string> = new Set([
   // for the standing operator review.
 ]);
 
+/** Aliases that share their canonical's MOTION but not its held gear.
+ *  The moment `squat` gained a back-rack barbell, three of its aliases
+ *  became lies: a bodyweight squat holds nothing, a goblet squat holds
+ *  a dumbbell at the chest, a front squat racks the bar on the FRONT
+ *  delts. Same movement, wrong implement — which is exactly the
+ *  alias-hygiene criterion that removed db-curl et al. on 2026-07-16.
+ *  These keep the animation and drop the gear (the pre-bar status quo,
+ *  already accepted as honest), rather than falling all the way back
+ *  to the static reference. smith-machine-squat keeps the bar: a bar
+ *  on the traps is true of it, just minus the rails. */
+const HELD_GEAR_FREE_VARIANTS: ReadonlySet<string> = new Set([
+  "bodyweight-squat",
+  "goblet-squat",
+  "front-squat",
+]);
+
+function stripHeldGear(demo: BodyDemo): BodyDemo {
+  const { equip: _equip, bar: _bar, plateR: _plateR, ...rest } = demo;
+  return rest;
+}
+
 /** PRODUCTION lookup — what the Form surface may mount. Applies the
- *  alias map, the side-demo flag, and the misrepresentation gate. */
+ *  alias map, the side-demo flag, the misrepresentation gate, and the
+ *  held-gear strip for gear-incompatible aliases. */
 export function getBodyDemo(exerciseId: string): BodyDemo | null {
   const canonical = DEMO_ALIASES[exerciseId] ?? exerciseId;
   if (GATED_PENDING_REPAIR.has(canonical)) return null;
   const demo = BODY_DEMOS[canonical] ?? null;
   if (demo && demo.view === "side" && !SIDE_DEMOS_ENABLED) return null;
+  if (demo && HELD_GEAR_FREE_VARIANTS.has(exerciseId)) {
+    return stripHeldGear(demo);
+  }
   return demo;
 }
 
@@ -1474,7 +1543,10 @@ export function getBodyDemo(exerciseId: string): BodyDemo | null {
  *  gates, so contact sheets and mechanics tests keep rendering gated
  *  demos while their repairs are iterated. */
 function resolveDemoForReview(exerciseId: string): BodyDemo | null {
-  return BODY_DEMOS[DEMO_ALIASES[exerciseId] ?? exerciseId] ?? null;
+  const demo = BODY_DEMOS[DEMO_ALIASES[exerciseId] ?? exerciseId] ?? null;
+  return demo && HELD_GEAR_FREE_VARIANTS.has(exerciseId)
+    ? stripHeldGear(demo)
+    : demo;
 }
 
 /* ── Props ────────────────────────────────────────────────────── */
@@ -1514,6 +1586,19 @@ function resolveProp(
       break;
     case "dip-bars":
       state = { kind: "dipBars", left, right, floorY: scene.floorY };
+      break;
+    case "back-barbell":
+      // Racked on the traps: the torso occludes the shaft's middle, so
+      // only the ends + plates show beside the shoulders — which is
+      // exactly what a back squat looks like from the front.
+      state = {
+        kind: "rigidBar",
+        view: "frontal",
+        left,
+        right,
+        plateR: demo.plateR ?? 10,
+        layer: "behind",
+      };
       break;
     case "barbell":
       // Frontal: the two grips ARE the bar's ends, so grip width is bar
