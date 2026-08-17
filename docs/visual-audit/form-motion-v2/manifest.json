@@ -169,6 +169,33 @@
         "file": "dips-t100.png"
       }
     ],
+    "goblet-squat": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "goblet-squat-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "goblet-squat-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "goblet-squat-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "goblet-squat-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "goblet-squat-t100.png"
+      }
+    ],
     "lat-pulldown": [
       {
         "t": 0,

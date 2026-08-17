@@ -471,7 +471,8 @@ export interface BodyDemo {
     | "rope"
     | "barbell"
     | "back-barbell"
-    | "dumbbell";
+    | "dumbbell"
+    | "goblet-bell";
   /** plate-end disc radius (default 10). The deadlift draws a
    *  full-size 45 (r=26 ≈ 45 cm on a 175 cm figure) so the bottom
    *  frame reads bar-near-the-floor. */
@@ -521,6 +522,18 @@ const lerp = (a: number, b: number, e: number) => a + (b - a) * e;
 const SQUAT_GRIP_L: Pt = [0, 45];
 const SQUAT_GRIP_R: Pt = [100, 45];
 
+/* Goblet grips: cupped together at the sternum ("hold a dumbbell
+ * vertically against your chest, elbows pinned under it"). Unlike the
+ * back squat's canvas-edge grips these sit at the MIDLINE — and the IK
+ * still keeps the elbows out of the chest, because with hands this
+ * high the elbows solve just outside-below the shoulders (the
+ * pinned-under posture). Only the FOREARMS cross the torso, which the
+ * vendored draw order supports: forearm polys paint at indices 29-32,
+ * chest at 0-1, so the crossing arm renders in front — exactly how a
+ * goblet hold looks from the front. */
+const GOBLET_GRIP_L: Pt = [46.5, 52];
+const GOBLET_GRIP_R: Pt = [53.5, 52];
+
 const PRESS_GRIP = 10;
 
 /**
@@ -553,6 +566,51 @@ const pressBarPath = (e: number): [Pt, Pt] => {
   ];
 };
 
+/* Legs + torso + dive shared by the squat-pattern demos (back squat,
+ * goblet squat). ONE copy, because the movement is identical — only
+ * the load and the arms differ — and two copies of the same motion is
+ * precisely the mirror-drift this codebase keeps paying for. */
+function squatLegsAndDive(e: number): {
+  drop: number;
+  groups: Partial<Record<GroupName, Op[]>>;
+} {
+  const k = lerp(1, 0.6, e); // thigh compression about the knee line
+  // The torso must track the moving thigh TOPS exactly (y≈92) or a
+  // waist gap opens between the obliques and the quads.
+  const drop = (1 - k) * (ANT.kneeL[1] - 92);
+  const flare = lerp(0, 7, e);
+  const dive: Op[] = [{ kind: "translate", dx: 0, dy: drop }];
+  return {
+    drop,
+    groups: {
+      thighL: [
+        { kind: "scaleY", k, pivotY: ANT.kneeL[1] },
+        { kind: "rotate", deg: -flare, pivot: ANT.kneeL },
+      ],
+      thighR: [
+        { kind: "scaleY", k, pivotY: ANT.kneeR[1] },
+        { kind: "rotate", deg: flare, pivot: ANT.kneeR },
+      ],
+      shankL: [
+        {
+          kind: "rotate",
+          deg: -flare * 0.5,
+          pivot: [ANT.kneeL[0], ANT.ankleY],
+        },
+      ],
+      shankR: [
+        {
+          kind: "rotate",
+          deg: flare * 0.5,
+          pivot: [ANT.kneeR[0], ANT.ankleY],
+        },
+      ],
+      torso: dive,
+      head: dive,
+    },
+  };
+}
+
 export const BODY_DEMOS: Record<string, BodyDemo> = {
   squat: {
     view: "anterior",
@@ -569,12 +627,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     concentricTo: 0,
     tint: { quadriceps: "primary", abductors: "secondary", abs: "secondary" },
     pose: (e) => {
-      const k = lerp(1, 0.6, e); // thigh compression about the knee line
-      // The torso must track the moving thigh TOPS exactly (y≈92) or a
-      // waist gap opens between the obliques and the quads.
-      const drop = (1 - k) * (ANT.kneeL[1] - 92);
-      const flare = lerp(0, 7, e);
-      const dive: Op[] = [{ kind: "translate", dx: 0, dy: drop }];
+      const { drop, groups } = squatLegsAndDive(e);
       /* The hands grip the bar on the traps — a WIDE grip, and the
          width is load-bearing twice over. A folded front-view grip was
          tried in July and read as broken polygons ACROSS THE CHEST;
@@ -612,41 +665,73 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         hr,
         drop
       );
-      const armL = L.upper;
-      const armR = R.upper;
       return {
-        thighL: [
-          { kind: "scaleY", k, pivotY: ANT.kneeL[1] },
-          { kind: "rotate", deg: -flare, pivot: ANT.kneeL },
-        ],
-        thighR: [
-          { kind: "scaleY", k, pivotY: ANT.kneeR[1] },
-          { kind: "rotate", deg: flare, pivot: ANT.kneeR },
-        ],
-        shankL: [
-          {
-            kind: "rotate",
-            deg: -flare * 0.5,
-            pivot: [ANT.kneeL[0], ANT.ankleY],
-          },
-        ],
-        shankR: [
-          {
-            kind: "rotate",
-            deg: flare * 0.5,
-            pivot: [ANT.kneeR[0], ANT.ankleY],
-          },
-        ],
-        torso: dive,
-        head: dive,
-        upperArmL: armL,
-        upperArmR: armR,
+        ...groups,
+        upperArmL: L.upper,
+        upperArmR: R.upper,
         foreArmL: L.fore,
         foreArmR: R.fore,
       };
     },
     /* The solved wrists ARE the grips, so the bar can never leave the
      * hands — and it rides the dive because the hands do. */
+    bar: (_e, pose) => [
+      applyToPoint(ANT.handL, pose.foreArmL ?? []),
+      applyToPoint(ANT.handR, pose.foreArmR ?? []),
+    ],
+  },
+
+  "goblet-squat": {
+    view: "anterior",
+    /* Its own demo since 2026-08-17, not an alias: the squat gained a
+     * back-rack barbell, and a goblet squat holds a DUMBBELL cupped at
+     * the sternum — same movement, different load, different arms
+     * (owner-directed). The legs come from the same squatLegsAndDive
+     * the squat uses, so the two movements cannot drift apart. */
+    equip: "goblet-bell",
+    concentricTo: 0,
+    tint: { quadriceps: "primary", abductors: "secondary", abs: "secondary" },
+    pose: (e) => {
+      const { drop, groups } = squatLegsAndDive(e);
+      /* Hands cup together at the sternum and ride the dive — the bell
+       * is "glued to your chest", per its own instructions. See the
+       * GOBLET_GRIP note for why this midline target does NOT re-create
+       * the July across-the-chest collapse: the elbows solve just
+       * outside-below the shoulders, and only the forearms cross. */
+      const hl: Pt = [GOBLET_GRIP_L[0], GOBLET_GRIP_L[1] + drop];
+      const hr: Pt = [GOBLET_GRIP_R[0], GOBLET_GRIP_R[1] + drop];
+      const L = aimArm(
+        { S: ANT.shoulderL, E: ANT.elbowL, H: ANT.handL },
+        solveElbow(
+          [ANT.shoulderL[0], ANT.shoulderL[1] + drop],
+          hl,
+          ANT_UPPER_LEN,
+          ANT_FORE_LEN,
+          -1
+        ),
+        hl,
+        drop
+      );
+      const R = aimArm(
+        { S: ANT.shoulderR, E: ANT.elbowR, H: ANT.handR },
+        solveElbow(
+          [ANT.shoulderR[0], ANT.shoulderR[1] + drop],
+          hr,
+          ANT_UPPER_LEN,
+          ANT_FORE_LEN,
+          1
+        ),
+        hr,
+        drop
+      );
+      return {
+        ...groups,
+        upperArmL: L.upper,
+        upperArmR: R.upper,
+        foreArmL: L.fore,
+        foreArmR: R.fore,
+      };
+    },
     bar: (_e, pose) => [
       applyToPoint(ANT.handL, pose.foreArmL ?? []),
       applyToPoint(ANT.handR, pose.foreArmR ?? []),
@@ -1459,7 +1544,6 @@ const DEMO_ALIASES: Record<string, string> = {
   "trap-bar-deadlift": "deadlift",
   "db-rdl": "romanian-deadlift",
   "front-squat": "squat",
-  "goblet-squat": "squat",
   "bodyweight-squat": "squat",
   "smith-machine-squat": "squat",
   "cable-lateral-raise": "lateral-raise",
@@ -1516,7 +1600,6 @@ const GATED_PENDING_REPAIR: ReadonlySet<string> = new Set([
  *  on the traps is true of it, just minus the rails. */
 const HELD_GEAR_FREE_VARIANTS: ReadonlySet<string> = new Set([
   "bodyweight-squat",
-  "goblet-squat",
   "front-squat",
 ]);
 
@@ -1611,6 +1694,14 @@ function resolveProp(
         plateR: demo.plateR ?? 10,
       };
       break;
+    case "goblet-bell": {
+      // ONE bell, held vertically at the sternum: the disc sits just
+      // above the cupped hands (they pin it from below), centred
+      // between the two grips. Rides wherever the hands ride.
+      const mid: Pt = [(left[0] + right[0]) / 2, (left[1] + right[1]) / 2 - 6];
+      state = { kind: "dumbbell", hands: [mid], bellR: 6 };
+      break;
+    }
     case "dumbbell":
       // One bell per solved grip, end-on. 5.5 sits between the fist
       // (~7 long) and the press plate (9): clearly gear, clearly

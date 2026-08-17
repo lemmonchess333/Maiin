@@ -237,12 +237,12 @@ describe("renderBodyDemo", () => {
   });
 
   it("gear-incompatible squat aliases keep the motion, lose the bar", () => {
-    // The moment squat gained a back-rack barbell, three aliases became
-    // lies: bodyweight holds nothing, goblet holds a bell at the chest,
-    // front squat racks on the FRONT delts. They keep the animation and
-    // drop the gear; smith-machine-squat keeps the bar (true of it,
-    // minus the rails).
-    for (const id of ["bodyweight-squat", "goblet-squat", "front-squat"]) {
+    // The moment squat gained a back-rack barbell, its aliases became
+    // lies: bodyweight holds nothing, front squat racks on the FRONT
+    // delts. They keep the animation and drop the gear;
+    // smith-machine-squat keeps the bar (true of it, minus the rails);
+    // goblet-squat graduated to its own demo with the bell it holds.
+    for (const id of ["bodyweight-squat", "front-squat"]) {
       const svg = renderBodyDemo(id, 0.5);
       expect(svg.includes("<line"), `${id} shaft`).toBe(false);
       expect(
@@ -256,6 +256,35 @@ describe("renderBodyDemo", () => {
       true
     );
     expect(getBodyDemo("squat")!.equip).toBe("back-barbell");
+  });
+
+  it("goblet squat: hands cup ONE bell at the sternum, riding the dive", () => {
+    for (const t of [0, 1]) {
+      const pose = BODY_DEMOS["goblet-squat"].pose(t);
+      const drop = t === 0 ? 0 : (1 - 0.6) * (148 - 92);
+      // Hands together at the chest, glued through the descent.
+      const wl = applyToPoint(ANT_WRIST, (pose.foreArmL ?? []) as never[]);
+      expect(
+        Math.hypot(wl[0] - 46.5, wl[1] - (52 + drop)),
+        `hand @${t}`
+      ).toBeLessThan(0.1);
+      // "Elbows pinned under it": below the shoulder and OUTBOARD —
+      // never solved inboard across the chest (the July collapse).
+      const el = applyToPoint([20, 71], (pose.upperArmL ?? []) as never[]);
+      expect(el[1], `elbow low @${t}`).toBeGreaterThan(60 + drop);
+      expect(el[0], `elbow out @${t}`).toBeLessThan(24 + 1);
+      // ONE bell, centred between the hands, sitting just above them.
+      const svg = renderBodyDemo("goblet-squat", t);
+      const bells = [
+        ...svg.matchAll(/<circle cx="(-?[\d.]+)" cy="(-?[\d.]+)" r="6"/g),
+      ].map((m) => [Number(m[1]), Number(m[2])]);
+      expect(bells.length, `bells @${t}`).toBe(1);
+      expect(bells[0][0]).toBeCloseTo(50, 0);
+      expect(bells[0][1]).toBeCloseTo(52 + drop - 6, 0);
+      // A goblet squat has no barbell.
+      expect(svg.includes("<line")).toBe(false);
+    }
+    expect(getBodyDemo("goblet-squat")!.equip).toBe("goblet-bell");
   });
 
   it("squat: the body visibly sinks at the bottom", () => {
@@ -395,8 +424,10 @@ describe("renderBodyDemo", () => {
   });
 
   it("aliased exercises render (renderBodyDemo is alias-aware)", () => {
-    // goblet-squat aliases squat — a direct-registry lookup would blank.
-    expect(renderBodyDemo("goblet-squat", 0.5)).not.toBe("");
+    // bodyweight-squat aliases squat — a direct-registry lookup would
+    // blank. (goblet-squat used to be the example here; it graduated to
+    // its own registry entry.)
+    expect(renderBodyDemo("bodyweight-squat", 0.5)).not.toBe("");
   });
 
   it("removed variant aliases fall back instead of borrowing motion", () => {
@@ -841,6 +872,7 @@ describe("registry", () => {
   it("all demos are defined with tints and a concentric direction", () => {
     for (const id of [
       "squat",
+      "goblet-squat",
       "deadlift",
       "overhead-press",
       "barbell-curl",

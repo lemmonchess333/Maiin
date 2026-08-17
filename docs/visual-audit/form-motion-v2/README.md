@@ -312,3 +312,35 @@ static reference.
 
 Five pins, five mutations, each caught by its own test. Only squat's
 sheets changed; every other demo re-renders byte-identical.
+
+## STATUS 2026-08-17h — goblet-squat graduates to its own demo
+
+Owner-directed follow-up to the squat bar: "hands at the chest". The
+weakest of the gear-stripped aliases is now a first-class demo — the
+15th — holding the bell it actually holds.
+
+Mechanism worth noting: the legs and dive are NOT copied. Both squats
+call the same `squatLegsAndDive`, extracted from the squat's pose, so
+the two movements cannot drift apart — the one-copy rule applied
+pre-emptively rather than after the drift.
+
+The arms are the interesting part. Midline hand targets look like the
+July across-the-chest collapse, but the IK disagrees: with the hands
+at the sternum the elbows solve just OUTSIDE-below the shoulders
+(17.4, 70.5) — the "elbows pinned under it" posture from the
+exercise's own instructions — and only the FOREARMS cross the torso,
+which the vendored draw order supports (forearm polys paint at indices
+29-32, chest at 0-1: the crossing arm renders in front). The July rule
+as now understood: the collapse is a property of where the ELBOW
+solves, not of hands being near the midline.
+
+One bell (`goblet-bell` equip → single end-on disc, r 6) centred just
+above the cupped hands, riding the dive because the hands do.
+goblet-squat leaves `DEMO_ALIASES` and `HELD_GEAR_FREE_VARIANTS`;
+bodyweight-squat and front-squat remain gear-stripped.
+
+Four pins in one test (hands at the sternum riding the dive, elbows
+low and outboard, exactly one bell above the hands, no barbell), four
+mutations each caught — including pointing the goblet hands at the
+squat's trap grips and un-riding the dive. Only goblet's sheets are
+new; every other demo re-renders byte-identical.
