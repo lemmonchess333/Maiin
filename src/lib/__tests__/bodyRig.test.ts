@@ -720,6 +720,46 @@ describe("renderBodyDemo", () => {
     }
   });
 
+  it("push-up toes reach the floor they are drawn standing on", () => {
+    /* The toes floated 1.63 units above the line at the top of the rep
+       and 1.27 at the bottom. The VARYING gap identifies the cause, the
+       same way it did for the palm: `PUSHUP_TOE` is the pivot ANCHOR and
+       the shank piece overhangs it, so the body rotates about the anchor
+       while the real contact swings, and the gap breathes.
+
+       The incline is solved against the BOTTOM frame, so that frame is
+       exact and the others carry a small residual -- a body rotating
+       about a point that is not quite the contact cannot seat every
+       frame at once, and pretending otherwise would mean a second knob
+       fighting the first. Tolerance is half a unit on a figure ~230
+       tall, which is under a rendered pixel at the sizes these draw at,
+       and still rejects the pre-fix gaps by 2.5x.
+
+       Asserted on the drawn shank OUTLINE, not on the anchor -- the
+       anchor is what was wrong. */
+    const shank = SIDE_PIECES.find((p) => p.group === "shankL")!.outline as [
+      number,
+      number,
+    ][];
+    const floor = BODY_DEMOS["push-ups"].groundY!;
+    for (const t of [0, 0.25, 0.5, 0.75, 1]) {
+      const ops = BODY_DEMOS["push-ups"].pose(t).shankL!;
+      const toe = Math.max(...shank.map((q) => applyToPoint(q, ops)[1]));
+      expect(
+        Math.abs(toe - floor),
+        `push-up toe is ${(toe - floor).toFixed(2)} off the floor at t=${t}`
+      ).toBeLessThan(0.5);
+    }
+    /* And the incline is DERIVED. It was a hand-typed -13; nothing but a
+       source check stops it reverting to one, and the toe assertion above
+       would happily pass at any incline that happened to land close. */
+    const src = readFileSync(
+      resolve(dirname(fileURLToPath(import.meta.url)), "../bodyRig.ts"),
+      "utf8"
+    );
+    expect(src).toMatch(/const PUSHUP_TILT = \(\(\) =>/);
+  });
+
   it("pushdown: the rope's knotted tail travels down to lockout", () => {
     // The tail knob is the LAST circle in the svg (sceneFront renders
     // after the body) — its descent is the extension arc.

@@ -235,7 +235,70 @@ const PUSHUP_TOE: Pt = [-61.6, 155.8];
 /** Plank incline, about the planted hand. Named because the pose applies
  *  it and the inverse chain un-applies it, and two hand-typed 13s that
  *  must stay negatives of each other is a drift waiting to happen. */
-const PUSHUP_TILT = -13;
+/** Where the push-up's palms and toes meet the world. Mirrors the demo's
+ *  own `groundY`; `push-up plants its palm` pins the two equal. */
+const PUSHUP_GROUND = 158.5;
+/** Body rotation about the toe at the BOTTOM of the rep. A literal, and
+ *  the only one left in this demo -- which is what makes it usable as the
+ *  cycle-breaking reference frame below. */
+const PUSHUP_BOTTOM_BETA = 9.5;
+
+/* PLANK INCLINE, SOLVED SO THE TOES ACTUALLY TOUCH THE FLOOR.
+ *
+ * They did not: the shank sat 1.63 units ABOVE the line at the top of the
+ * rep and 1.27 at the bottom. The varying gap is the tell, and it is the
+ * same one the palm gave -- `PUSHUP_TOE` is the pivot ANCHOR, but the
+ * shank piece overhangs it, so the anchor is not the contact point. The
+ * body rotates about the anchor, the real contact swings, and the gap
+ * breathes across the rep.
+ *
+ * THE PALM'S FIX DOES NOT TRANSFER, which is why this needed its own.
+ * `PUSHUP_HAND_OPS` measures the outline and TRANSLATES it onto the
+ * floor, which is only available because the hand carries one fixed
+ * transform. The body keeps rotating through the foot, so a translate
+ * would seat one frame and lift every other. The incline is the only
+ * knob that moves the toes without disturbing the arm -- verified by
+ * sweep: -13 to -8.5 left the shoulder-to-hand reach at exactly 54.91
+ * and the elbow at 171.1 while the toes moved 1.6 to 14.2.
+ *
+ * AND THE CYCLE IS REAL, so the order matters. `PUSHUP_TOP_BETA` is
+ * solved USING this incline, and the shank's position at the TOP frame
+ * depends on `PUSHUP_TOP_BETA` -- so solving the incline from the top
+ * frame would be circular. It is not a benign loop either: bisecting
+ * beta at inclines 0 / -5 / -13 / -19 gives -0.850508 / -0.855601 /
+ * -0.877271 / -0.905571, so beta genuinely moves with it.
+ *
+ * The cut is to solve against the BOTTOM frame instead, where beta is
+ * `PUSHUP_BOTTOM_BETA` -- a literal that depends on nothing. That breaks
+ * the cycle by construction rather than by hoping it is weak, and leaves
+ * a clean order: incline, then beta, then the hand ops that use both.
+ *
+ * Bisection over ~40 steps on a dozen-odd vertices, not a grid scan: this
+ * runs at module load in an iOS-first app's exercise-guide path, and a
+ * dense sweep here costs tens of milliseconds for a bit-identical answer. */
+const PUSHUP_TILT = (() => {
+  const shank =
+    (SIDE_PIECES.find((piece) => piece.group === "shankL")?.outline as Pt[]) ??
+    [];
+  /** Lowest drawn toe vertex at the bottom of the rep, for a given incline. */
+  const toeAt = (tilt: number) => {
+    const ops: Op[] = [
+      { kind: "rotate", deg: 90, pivot: [44, 100] },
+      { kind: "rotate", deg: tilt, pivot: PUSHUP_HAND },
+      { kind: "rotate", deg: PUSHUP_BOTTOM_BETA, pivot: PUSHUP_TOE },
+    ];
+    return Math.max(...shank.map((q) => applyToPoint(q, ops)[1]));
+  };
+  // More negative lowers the toes, so the gap is monotone across this range.
+  let lo = -30;
+  let hi = 0;
+  for (let i = 0; i < 40; i++) {
+    const mid = (lo + hi) / 2;
+    if (toeAt(mid) > PUSHUP_GROUND) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+})();
 /* PLANK ANGLE THAT ACTUALLY LOCKS THE ARM OUT.
  *
  * The top of a push-up is a straight arm, and this one sat at 145
@@ -280,7 +343,6 @@ const PUSHUP_TOP_BETA = (() => {
 
 /** Where the push-up's palms meet the world. Mirrors the demo's own
  *  `groundY`; `push-up plants its palm` pins the two equal. */
-const PUSHUP_GROUND = 158.5;
 
 /* The push-up hand's ONE transform: prone, flat, palm on the ground line.
  *
@@ -1576,7 +1638,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * planted, elbows IK-solved toward the feet. */
       const G: Op = { kind: "rotate", deg: 90, pivot: [44, 100] };
       const TILT: Op = { kind: "rotate", deg: PUSHUP_TILT, pivot: PUSHUP_HAND };
-      const beta = lerp(PUSHUP_TOP_BETA, 9.5, e);
+      const beta = lerp(PUSHUP_TOP_BETA, PUSHUP_BOTTOM_BETA, e);
       const B: Op = { kind: "rotate", deg: beta, pivot: PUSHUP_TOE };
       const bodyOps: Op[] = [G, TILT, B];
       // Map the fixed hand plant back to standing space for the aim.
