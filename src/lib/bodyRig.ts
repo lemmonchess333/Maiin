@@ -87,8 +87,44 @@ const POST_FORE_LEN = Math.hypot(
   POST.handL[1] - POST.elbowL[1]
 );
 const PULLUP_BAR_Y = -12;
-const PULLUP_GRIP_L: Pt = [6, PULLUP_BAR_Y];
-const PULLUP_GRIP_R: Pt = [94, PULLUP_BAR_Y];
+/* GRIP WIDTH IS WHAT SEPARATES TWO EXERCISES, so it is derived from the
+ * shoulders rather than typed in. These were [6] and [94] — 88.0 apart
+ * against a 54.0 shoulder span, so 1.63x shoulder width. liftmanual's
+ * standard Pull-Up page asks for hand spacing at roughly biacromial
+ * width and puts 1.5x on a SEPARATE page, the Wide Grip Pull-Up. At 1.63
+ * the demo was not a wide-ish pull-up; it was the other exercise.
+ *
+ * Same defect the dip had, from the same cause: a width nothing was
+ * holding, inherited from wherever the figure's hands happened to sit.
+ * 1.15 keeps the hands a touch outside the shoulders, which is what
+ * "roughly shoulder width" looks like on a bar, and stays clear of the
+ * wide-grip page's territory. */
+const PULLUP_GRIP_RATIO = 1.15;
+const PULLUP_HALF_SPAN =
+  ((POST.shoulderR[0] - POST.shoulderL[0]) / 2) * PULLUP_GRIP_RATIO;
+const PULLUP_CENTRE_X = (POST.shoulderL[0] + POST.shoulderR[0]) / 2;
+const PULLUP_GRIP_L: Pt = [PULLUP_CENTRE_X - PULLUP_HALF_SPAN, PULLUP_BAR_Y];
+const PULLUP_GRIP_R: Pt = [PULLUP_CENTRE_X + PULLUP_HALF_SPAN, PULLUP_BAR_Y];
+/** Body drop that puts the shoulder exactly an arm's length from the
+ *  grip — i.e. a real dead hang. See the pose for why it is solved. */
+const PULLUP_HANG_DY =
+  Math.sqrt(
+    (POST_UPPER_LEN + POST_FORE_LEN) ** 2 -
+      (POST.shoulderL[0] - PULLUP_GRIP_L[0]) ** 2
+  ) -
+  (POST.shoulderL[1] - PULLUP_BAR_Y);
+/* Lowest vertex of the posterior head polygon in the UNPOSED model —
+ * the jaw line, which is the chin in a from-behind view. Mirrored here
+ * rather than derived, because bodyRig does not otherwise read the model
+ * geometry; `pull-up chin reference` pins it against bodyModelData so it
+ * cannot drift. */
+const PULLUP_CHIN_REST_Y = 19.95;
+/** Clear air between chin and bar at the top — liftmanual wants the chin
+ *  "clearly over, not level". */
+const PULLUP_CHIN_CLEARANCE = 3;
+/** Body rise that puts the chin over the bar, rather than a round number
+ *  that happened to look high enough. */
+const PULLUP_TOP_DY = PULLUP_BAR_Y - PULLUP_CHIN_CLEARANCE - PULLUP_CHIN_REST_Y;
 
 /* Side-view arm segment lengths. */
 const SIDE_UPPER_LEN = Math.hypot(
@@ -99,6 +135,59 @@ const SIDE_FORE_LEN = Math.hypot(
   SIDE_ANCHORS.hand[0] - SIDE_ANCHORS.elbow[0],
   SIDE_ANCHORS.hand[1] - SIDE_ANCHORS.elbow[1]
 );
+
+/* Shoulder-to-hand reach of a STRAIGHT side-view arm, minus a hair.
+ *
+ * Two demos were setting this distance by eye and both landed short: the
+ * bench "locked out" at 134 degrees and the row's "dead hang" started at
+ * 130. Neither reads as wrong, because an arm 5 units short of extension
+ * looks extended -- the elbow angle is brutally sensitive to reach near
+ * full extension, which is the same singularity that makes `solveElbow`
+ * clamp. That sensitivity cuts both ways: it is why the error hid, and
+ * why the fix is a derived length rather than a bigger guess.
+ *
+ * 0.997 rather than 1.0 keeps the solve just inside the clamp. Sitting
+ * ON the clamp is what let the pull-up's hang pass while over-extended,
+ * so this stays deliberately short of it. */
+const SIDE_ARM_REACH = (SIDE_UPPER_LEN + SIDE_FORE_LEN) * 0.997;
+
+/* Where the side-view dip grips.
+ *
+ * Almost the rest hand: standing with the arm hanging straight puts it
+ * 55.07 from the shoulder, which is the ENTIRE arm -- so the identity
+ * pose is already a dip lockout, and that is what makes this demo cheap.
+ *
+ * But exactly the entire arm is exactly the wrong place to grip. The
+ * solve's ceiling is 0.999 of it, so a grip at 55.07 lands ON the clamp,
+ * and a clamped solve draws a straight arm whether the geometry earns
+ * one or not -- the failure that let the pull-up's dead hang pass for
+ * months while over-extended. It showed up here as the hand wobbling
+ * 0.05 off its own grip at the top of the rep, which is the clamp
+ * quietly refusing the reach it was asked for.
+ *
+ * So the grip drops to SIDE_ARM_REACH -- 0.997 of the arm, the constant
+ * this rig already keeps for staying off that ceiling. Six hundredths of
+ * a unit lower, and the lockout is earned instead of clamped. */
+const DIP_SIDE_GRIP: Pt = [
+  SIDE_ANCHORS.hand[0],
+  SIDE_ANCHORS.shoulder[1] +
+    Math.sqrt(
+      SIDE_ARM_REACH ** 2 -
+        (SIDE_ANCHORS.hand[0] - SIDE_ANCHORS.shoulder[0]) ** 2
+    ),
+];
+/** Sink that brings the elbow to a right angle -- liftmanual's shared dip
+ *  depth landmark, upper arm parallel to the floor. Derived, not chosen:
+ *  a right angle fixes shoulder-to-hand at sqrt(U^2 + F^2), so the drop
+ *  is whatever closes the straight-arm reach down to it. */
+const DIP_SIDE_DROP =
+  SIDE_ANCHORS.hand[1] -
+  SIDE_ANCHORS.shoulder[1] -
+  Math.sqrt(
+    SIDE_UPPER_LEN ** 2 +
+      SIDE_FORE_LEN ** 2 -
+      (SIDE_ANCHORS.hand[0] - SIDE_ANCHORS.shoulder[0]) ** 2
+  );
 
 /** Balance rule (pose physics): mass stays over mid-foot, so as the
  *  torso hinges forward the hips travel BACK — implemented as the whole
@@ -115,6 +204,152 @@ function hipsBack(hingeDeg: number): Extract<Op, { kind: "rotate" }> {
  * where the tilted plank's toes rest. */
 const PUSHUP_HAND: Pt = [100, 156];
 const PUSHUP_TOE: Pt = [-61.6, 155.8];
+/** Plank incline, about the planted hand. Named because the pose applies
+ *  it and the inverse chain un-applies it, and two hand-typed 13s that
+ *  must stay negatives of each other is a drift waiting to happen. */
+/** Where the push-up's palms and toes meet the world. Mirrors the demo's
+ *  own `groundY`; `push-up plants its palm` pins the two equal. */
+const PUSHUP_GROUND = 158.5;
+/** Body rotation about the toe at the BOTTOM of the rep. A literal, and
+ *  the only one left in this demo -- which is what makes it usable as the
+ *  cycle-breaking reference frame below. */
+const PUSHUP_BOTTOM_BETA = 9.5;
+
+/* PLANK INCLINE, SOLVED SO THE TOES ACTUALLY TOUCH THE FLOOR.
+ *
+ * They did not: the shank sat 1.63 units ABOVE the line at the top of the
+ * rep and 1.27 at the bottom. The varying gap is the tell, and it is the
+ * same one the palm gave -- `PUSHUP_TOE` is the pivot ANCHOR, but the
+ * shank piece overhangs it, so the anchor is not the contact point. The
+ * body rotates about the anchor, the real contact swings, and the gap
+ * breathes across the rep.
+ *
+ * THE PALM'S FIX DOES NOT TRANSFER, which is why this needed its own.
+ * `PUSHUP_HAND_OPS` measures the outline and TRANSLATES it onto the
+ * floor, which is only available because the hand carries one fixed
+ * transform. The body keeps rotating through the foot, so a translate
+ * would seat one frame and lift every other. The incline is the only
+ * knob that moves the toes without disturbing the arm -- verified by
+ * sweep: -13 to -8.5 left the shoulder-to-hand reach at exactly 54.91
+ * and the elbow at 171.1 while the toes moved 1.6 to 14.2.
+ *
+ * AND THE CYCLE IS REAL, so the order matters. `PUSHUP_TOP_BETA` is
+ * solved USING this incline, and the shank's position at the TOP frame
+ * depends on `PUSHUP_TOP_BETA` -- so solving the incline from the top
+ * frame would be circular. It is not a benign loop either: bisecting
+ * beta at inclines 0 / -5 / -13 / -19 gives -0.850508 / -0.855601 /
+ * -0.877271 / -0.905571, so beta genuinely moves with it.
+ *
+ * The cut is to solve against the BOTTOM frame instead, where beta is
+ * `PUSHUP_BOTTOM_BETA` -- a literal that depends on nothing. That breaks
+ * the cycle by construction rather than by hoping it is weak, and leaves
+ * a clean order: incline, then beta, then the hand ops that use both.
+ *
+ * Bisection over ~40 steps on a dozen-odd vertices, not a grid scan: this
+ * runs at module load in an iOS-first app's exercise-guide path, and a
+ * dense sweep here costs tens of milliseconds for a bit-identical answer. */
+const PUSHUP_TILT = (() => {
+  const shank =
+    (SIDE_PIECES.find((piece) => piece.group === "shankL")?.outline as Pt[]) ??
+    [];
+  /** Lowest drawn toe vertex at the bottom of the rep, for a given incline. */
+  const toeAt = (tilt: number) => {
+    const ops: Op[] = [
+      { kind: "rotate", deg: 90, pivot: [44, 100] },
+      { kind: "rotate", deg: tilt, pivot: PUSHUP_HAND },
+      { kind: "rotate", deg: PUSHUP_BOTTOM_BETA, pivot: PUSHUP_TOE },
+    ];
+    return Math.max(...shank.map((q) => applyToPoint(q, ops)[1]));
+  };
+  // More negative lowers the toes, so the gap is monotone across this range.
+  let lo = -30;
+  let hi = 0;
+  for (let i = 0; i < 40; i++) {
+    const mid = (lo + hi) / 2;
+    if (toeAt(mid) > PUSHUP_GROUND) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+})();
+/* PLANK ANGLE THAT ACTUALLY LOCKS THE ARM OUT.
+ *
+ * The top of a push-up is a straight arm, and this one sat at 145
+ * degrees — the shoulder 52.5 from the planted hand against a 55.07 arm.
+ * Same defect as the bench and the row, and hidden the same way: 2.5
+ * units of shortfall buys 30 degrees of elbow and still reads straight.
+ *
+ * Which knob had to move is not obvious and is worth recording, because
+ * the obvious one CANNOT work. `PUSHUP_TILT` rotates the body about the
+ * planted HAND, and a rotation about a point cannot change the distance
+ * from that point to the shoulder — measured, sweeping it -13 to -19
+ * left the reach at exactly 52.51 and moved only the toes. `B` pivots
+ * about the TOE, which raises the shoulder end while leaving the hand
+ * plant untouched, so it is the only one that can straighten the arm
+ * without unplanting anything.
+ *
+ * Solved rather than swept: the relation between a toe-pivot rotation
+ * and the shoulder-to-hand reach has no tidy closed form, so bisect for
+ * the angle that lands on SIDE_ARM_REACH. Deliberately just SHORT of the
+ * clamp — every base past about -0.95 pins the reach at solveElbow's
+ * ceiling, and a clamped solve draws a straight arm whether or not the
+ * geometry earns one. That is precisely how the pull-up's dead hang
+ * passed while over-extended. */
+const PUSHUP_TOP_BETA = (() => {
+  const reachAt = (beta: number) => {
+    const S = applyToPoint(SIDE_ANCHORS.shoulder, [
+      { kind: "rotate", deg: 90, pivot: [44, 100] },
+      { kind: "rotate", deg: PUSHUP_TILT, pivot: PUSHUP_HAND },
+      { kind: "rotate", deg: beta, pivot: PUSHUP_TOE },
+    ]);
+    return Math.hypot(S[0] - PUSHUP_HAND[0], S[1] - PUSHUP_HAND[1]);
+  };
+  let lo = -6; // more negative → longer reach
+  let hi = 0;
+  for (let i = 0; i < 60; i++) {
+    const mid = (lo + hi) / 2;
+    if (reachAt(mid) > SIDE_ARM_REACH) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+})();
+
+/** Where the push-up's palms meet the world. Mirrors the demo's own
+ *  `groundY`; `push-up plants its palm` pins the two equal. */
+
+/* The push-up hand's ONE transform: prone, flat, palm on the ground line.
+ *
+ * Built from the top-of-rep frame -- the arm is straight there, so the
+ * forearm axis is the honest wrist orientation -- then dropped by however
+ * far the palm's lowest vertex misses the floor. Measured off the real
+ * `handL` outline rather than the wrist anchor, because the wrist anchor
+ * is exactly what got this wrong: `PUSHUP_HAND` is the WRIST and the hand
+ * piece overhangs it, so aiming the wrist at the plant buries the palm.
+ * Same fix-class as a barbell grip -- the contact point is where the body
+ * actually meets the world, never the joint above it. */
+const PUSHUP_HAND_OPS: Op[] = (() => {
+  const bodyOps: Op[] = [
+    { kind: "rotate", deg: 90, pivot: [44, 100] },
+    { kind: "rotate", deg: PUSHUP_TILT, pivot: PUSHUP_HAND },
+    { kind: "rotate", deg: PUSHUP_TOP_BETA, pivot: PUSHUP_TOE },
+  ];
+  const hPre = applyToPoint(PUSHUP_HAND, [
+    { kind: "rotate", deg: -PUSHUP_TOP_BETA, pivot: PUSHUP_TOE },
+    { kind: "rotate", deg: -PUSHUP_TILT, pivot: PUSHUP_HAND },
+    { kind: "rotate", deg: -90, pivot: [44, 100] },
+  ]);
+  const arm = aimArm(
+    { S: SIDE_ANCHORS.shoulder, E: SIDE_ANCHORS.elbow, H: SIDE_ANCHORS.hand },
+    solveElbow(SIDE_ANCHORS.shoulder, hPre, SIDE_UPPER_LEN, SIDE_FORE_LEN, -1),
+    hPre,
+    0
+  );
+  const base: Op[] = [...arm.fore, ...bodyOps];
+  const outline =
+    (SIDE_PIECES.find((piece) => piece.group === "handL")?.outline as Pt[]) ??
+    [];
+  const lowest = Math.max(...outline.map((q) => applyToPoint(q, base)[1]));
+  return [...base, { kind: "translate", dx: 0, dy: PUSHUP_GROUND - lowest }];
+})();
 
 /* Muscle-aura rings — nested convex hulls at falling opacity (the
  * no-filter fake blur; see the glow block in the renderers). */
@@ -532,16 +767,25 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     tint: { biceps: "primary", forearm: "secondary" },
     pose: (e) => {
       const curl = lerp(0, 135, e); // elbow flexion, hanging → top
-      const drift = lerp(0, 8, e); // elbows ease forward at the top
-      const armDrift: Op[] = [
-        { kind: "rotate", deg: -drift, pivot: SIDE_ANCHORS.shoulder },
-      ];
+      /* NO ELBOW DRIFT. This used to swing the whole upper arm 8 degrees
+       * forward at the top, moving the elbow 3.5 units, on the stated
+       * grounds that it is "the one allowance every reference shows".
+       *
+       * liftmanual is a reference and shows the opposite — it names elbow
+       * travel as the curl's defining error: "pin your elbows against
+       * your sides… they should not move forward or backward during the
+       * lift". So the drift was not a concession every reference makes;
+       * it was the fault the exercise is defined against, and this demo
+       * calls itself a STRICT curl three lines up, which is precisely the
+       * variant that forbids it.
+       *
+       * With the upper arm still, the elbow is a fixed point and the
+       * forearm is the only thing that rotates — which is the whole
+       * movement, stated geometrically. */
       const fore: Op[] = [
         { kind: "rotate", deg: -curl, pivot: SIDE_ANCHORS.elbow },
-        ...armDrift,
       ];
       return {
-        upperArmL: armDrift,
         foreArmL: fore,
         handL: fore,
       };
@@ -566,7 +810,21 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     concentricTo: 1,
     tint: { triceps: "primary", forearm: "secondary" },
     pose: (e) => {
-      const flex = lerp(108, 10, e); // folded at the chest → lockout
+      /* BOTH ENDS OF THE REP COME FROM THE CUE, not from taste.
+       *
+       * The side rest arm is dead straight, so the drawn elbow angle is
+       * exactly 180 - flex, which makes both of liftmanual's pushdown
+       * endpoints directly expressible:
+       *
+       *   top     elbow ~90, CAPPED — "the rope must NOT return to full
+       *           flexion near the shoulders". It was returning to 71,
+       *           which is that fault, animated as the model rep.
+       *   bottom  elbow ~180, full lockout. It stopped at 169.
+       *
+       * A pushdown that neither locks out nor stops at the cap is a
+       * partial at both ends; 2 degrees of softness at the bottom keeps
+       * the lockout from reading as a hyperextension. */
+      const flex = lerp(90, 2, e); // capped top → full lockout
       const fore: Op[] = [
         { kind: "rotate", deg: -flex, pivot: SIDE_ANCHORS.elbow },
       ];
@@ -596,63 +854,104 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
   },
 
   dips: {
-    view: "anterior",
-    equip: "dip-bars",
+    /* SIDE VIEW, and that is the fix.
+     *
+     * This was an anterior demo, and the screenshots settled what the
+     * measurements could not: it read as a person STANDING between two
+     * posts. Legs dead straight, feet on the floor, the whole figure
+     * barely moving between the ends of the rep. A dip is a suspended
+     * movement -- body hanging, knees bent, feet clear of the ground --
+     * and the old pose's own comment claimed exactly that while the
+     * drawing said otherwise.
+     *
+     * The elbow flare that was queued as the fix here (20.3 units
+     * lateral at the bottom) was a symptom of the same thing: a dip
+     * elbow bends BACKWARD, and a front view has nowhere to put that but
+     * sideways, because `aimArm` emits rotate ops and rotations are
+     * rigid. Foreshortening it with `scaleAxis` would have bought a
+     * better-looking elbow on a demo whose primary read was still wrong.
+     * In profile the bend is native and the flare cannot exist -- one
+     * arm is drawn, so "arms look so far apart" is structurally gone.
+     *
+     * THE REST POSE IS ALREADY THE LOCKOUT, which is what makes this
+     * cheap. The side figure standing with its arm hanging straight puts
+     * the hand 55.07 from the shoulder -- exactly SIDE_UPPER_LEN +
+     * SIDE_FORE_LEN. So the top of a dip is the identity pose, and the
+     * whole rep is the body sinking while the arm IK-solves against a
+     * fixed grip. The sink is derived from liftmanual's shared dip
+     * landmark the same way the anterior version's was: upper arm
+     * parallel to the floor at the bottom is a right angle at the elbow,
+     * which fixes shoulder-to-hand at sqrt(U^2 + F^2). */
+    view: "side",
     concentricTo: 0,
-    // The body hangs on the bars the whole time — feet never touch the
-    // floor, so the scene extends below the figure.
-    viewBox: "-8 -14 116 240",
-    groundY: 222,
+    viewBox: "-14 20 150 210",
+    groundY: 214,
+    shadowCx: 52,
+    shadowRx: 30,
     tint: {
       triceps: "primary",
       chest: "secondary",
       "front-deltoids": "secondary",
     },
     pose: (e) => {
-      /* Hands stay ON the grips while the body drops between them —
-       * same both-ends-constrained problem as the pull-up, IK-solved.
-       * The elbows flare outward as the body sinks. */
-      const dy = lerp(0, 13, e);
-      const L = aimArm(
-        { S: ANT.shoulderL, E: ANT.elbowL, H: ANT.handL },
+      const dy = lerp(0, DIP_SIDE_DROP, e);
+      const ride: Op[] = [{ kind: "translate", dx: 0, dy }];
+      /* Knees bent and thighs carried back, so the figure reads as
+         hanging rather than standing. This is the half the front view
+         could not show at all: the shins fold behind the body, which in
+         profile is the silhouette that says "suspended". */
+      const thigh: Op[] = [
+        { kind: "rotate", deg: -18, pivot: SIDE_ANCHORS.hip },
+        ...ride,
+      ];
+      const shank: Op[] = [
+        { kind: "rotate", deg: -72, pivot: SIDE_ANCHORS.knee },
+        { kind: "rotate", deg: -18, pivot: SIDE_ANCHORS.hip },
+        ...ride,
+      ];
+      /* Hands stay ON the bar while the body drops -- both ends
+         constrained, so the elbow is solved, not choreographed. `out`
+         sends it BACKWARD (toward -x, behind the torso), which is the
+         tucked triceps-dip elbow liftmanual describes and the thing a
+         front view had to fake as lateral flare. */
+      const arm = aimArm(
+        {
+          S: SIDE_ANCHORS.shoulder,
+          E: SIDE_ANCHORS.elbow,
+          H: SIDE_ANCHORS.hand,
+        },
         solveElbow(
-          [ANT.shoulderL[0], ANT.shoulderL[1] + dy],
-          ANT.handL,
-          ANT_UPPER_LEN,
-          ANT_FORE_LEN,
+          [SIDE_ANCHORS.shoulder[0], SIDE_ANCHORS.shoulder[1] + dy],
+          DIP_SIDE_GRIP,
+          SIDE_UPPER_LEN,
+          SIDE_FORE_LEN,
           -1
         ),
-        ANT.handL,
+        DIP_SIDE_GRIP,
         dy
       );
-      const R = aimArm(
-        { S: ANT.shoulderR, E: ANT.elbowR, H: ANT.handR },
-        solveElbow(
-          [ANT.shoulderR[0], ANT.shoulderR[1] + dy],
-          ANT.handR,
-          ANT_UPPER_LEN,
-          ANT_FORE_LEN,
-          1
-        ),
-        ANT.handR,
-        dy
-      );
-      const ride: Op[] = [{ kind: "translate", dx: 0, dy }];
       return {
         head: ride,
         torso: ride,
-        thighL: ride,
-        thighR: ride,
-        shankL: ride,
-        shankR: ride,
-        upperArmL: L.upper,
-        foreArmL: L.fore,
-        upperArmR: R.upper,
-        foreArmR: R.fore,
+        pelvis: ride,
+        thighL: thigh,
+        thighR: thigh,
+        shankL: shank,
+        shankR: shank,
+        upperArmL: [...arm.upper],
+        foreArmL: [...arm.fore],
+        handL: [...arm.fore],
       };
     },
-    // Grip anchor line for the posts (the hands never move).
-    bar: () => [ANT.handL, ANT.handR],
+    /* Parallel bars: the grip runs toward the viewer, so in profile the
+       near bar is a horizontal rail through the hand with an upright
+       carrying it to the floor. Gear greys, matching the dip posts the
+       anterior version drew and the push-up's floor line. */
+    scene: () =>
+      `<line x1="26" y1="${DIP_SIDE_GRIP[1]}" x2="96" y2="${DIP_SIDE_GRIP[1]}" stroke="${GEAR}" stroke-width="3.4" stroke-linecap="round"/>` +
+      `<line x1="88" y1="${DIP_SIDE_GRIP[1]}" x2="88" y2="214" stroke="${GEAR_DARK}" stroke-width="3"/>` +
+      `<line x1="34" y1="${DIP_SIDE_GRIP[1]}" x2="34" y2="214" stroke="${GEAR_DARK}" stroke-width="3"/>` +
+      `<line x1="20" y1="214" x2="102" y2="214" stroke="${GEAR_DARK}" stroke-width="2.2"/>`,
   },
 
   deadlift: {
@@ -758,9 +1057,11 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     view: "posterior",
     equip: "fixed-bar",
     concentricTo: 1,
-    // Hanging scene: bar overhead, body travels ~25 units, floor just
-    // below the dangling heels at the dead hang.
-    viewBox: "-20 -24 140 254",
+    /* Hanging scene: bar overhead, floor just below the dangling heels
+       at the dead hang. The top edge is -42, not -24: solving the top of
+       the rep from the chin rather than from a round number raised the
+       head 11 units further, and the old frame cropped it. */
+    viewBox: "-20 -42 140 272",
     groundY: 226,
     tint: {
       "upper-back": "primary",
@@ -772,7 +1073,22 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * while the body rises — so the elbows are IK-solved. The solution
        * naturally produces the real silhouette: straight-arm hang at the
        * bottom, wide "W" flare (elbows out at ear height) at the top. */
-      const dy = lerp(1, -24, e); // dead hang → chin over the bar
+      /* THE DEAD HANG IS SOLVED, not set to 1.
+       *
+       * liftmanual asks for both endpoints and the bottom one is "elbow
+       * ~180 in a full dead hang before the next rep starts". The old
+       * value passed that test for the wrong reason: at a 1.63x grip the
+       * hand sat 17 units lateral of the shoulder, so the reach to the
+       * bar EXCEEDED the arm and `solveElbow` clamped it to straight. The
+       * hang read as straight because the arm was over-extended, not
+       * because the body was hanging at arm's length.
+       *
+       * Narrowing the grip to shoulder width removed that lateral offset
+       * and with it the accidental clamp — the same pose measured 147
+       * degrees, a third of a pull-up already done at the "hang". So the
+       * hang distance now comes from the arm: drop the body until the
+       * shoulder is exactly an arm's length from the grip. */
+      const dy = lerp(PULLUP_HANG_DY, PULLUP_TOP_DY, e);
       const L = aimArm(
         { S: POST.shoulderL, E: POST.elbowL, H: POST.handL },
         solveElbow(
@@ -830,9 +1146,23 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     pose: (e) => {
       /* Body stays put; the bar travels from full overhead reach down to
        * the collarbone while the elbows tuck in to the sides — the same
-       * IK machinery as the pull-up with the constraints swapped. */
-      const hl: Pt = [lerp(12.2, 6, e), lerp(-14.5, 50, e)];
-      const hr: Pt = [lerp(87.8, 94, e), lerp(-14.5, 50, e)];
+       * IK machinery as the pull-up with the constraints swapped.
+       *
+       * THE BAR IS RIGID. Its hands used to travel outward as it came
+       * down — x from 12.2 to 6 on the left and 87.8 to 94 on the right,
+       * so the grip spread 75.6 -> 88.0 across the rep. A lat pulldown
+       * bar is a steel bar and the hands are ON it: that is not a form
+       * fault, it is an impossible object, and it was the widening that
+       * made the elbows look like they flared rather than tucked.
+       *
+       * The x's are now constants and only y animates, which is the only
+       * degree of freedom the equipment has. Reachable throughout — at
+       * the collarbone the shoulder-to-hand distance is 11.5 against an
+       * arm that folds to 3.5 — so nothing was being bought by the
+       * spread. */
+      const hy = lerp(-14.5, 50, e);
+      const hl: Pt = [12.2, hy];
+      const hr: Pt = [87.8, hy];
       const L = aimArm(
         { S: POST.shoulderL, E: POST.elbowL, H: POST.handL },
         solveElbow(POST.shoulderL, hl, POST_UPPER_LEN, POST_FORE_LEN, 1),
@@ -853,10 +1183,11 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       };
     },
     bar: (e) => {
+      // Same rigidity as the grips above: only y moves.
       const y = lerp(-14.5, 50, e);
       return [
-        [lerp(12.2, 6, e) - 10, y],
-        [lerp(87.8, 94, e) + 10, y],
+        [12.2 - 10, y],
+        [87.8 + 10, y],
       ];
     },
   },
@@ -875,15 +1206,44 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       // 72, not 78: the rest arm already sits ~10° outside vertical, so
       // 78 finished ABOVE parallel — a form error the demo was teaching.
       const arm = lerp(4, 72, e);
+      /* THE SOFT BEND WAS SIGNED THE WRONG WAY, and the comment above is
+       * how it survived: it states the intent ("so the arm never reads
+       * hyper-straight"), and the code did the exact reverse. The rest
+       * arm already carries a natural 171-degree bend; rotating the
+       * forearm the wrong way about the elbow spent that bend and locked
+       * the arm out at 179, so every frame of a lateral raise was drawn
+       * with a dead-straight arm — which is liftmanual's named lateral-
+       * raise fault, and its rule is "a slight bend at the start and the
+       * SAME slight bend at the top… never drawn locked straight".
+       *
+       * Nothing caught it because nothing measured the elbow. A comment
+       * asserting a property is not the property; this one had been
+       * describing an arm the rig was not drawing.
+       *
+       * TWO CONSTRAINTS, and they want opposite signs — which is why the
+       * obvious repair is wrong too. liftmanual asks for both a slight
+       * constant bend AND "wrist y BELOW elbow y (elbow leads, hand
+       * trails)". The interior angle is 171 - BEND, so a positive bend
+       * softens the elbow; but positive also folds the forearm OUTWARD,
+       * and outward becomes UPWARD once the arm is raised laterally.
+       * Merely flipping the sign to +10 bought the 161-degree bend and
+       * put the wrist 5.9 ABOVE the elbow — trading one named fault for
+       * the other.
+       *
+       * -28 is where both hold: it reaches the same 161 degrees by
+       * bending the elbow the other way, so the forearm folds inward and
+       * the wrist finishes 13.9 BELOW the elbow. Solved against both
+       * cues, not picked. */
+      const BEND = -28;
       return {
         upperArmL: [{ kind: "rotate", deg: arm, pivot: ANT.shoulderL }],
         foreArmL: [
-          { kind: "rotate", deg: -10, pivot: ANT.elbowL },
+          { kind: "rotate", deg: BEND, pivot: ANT.elbowL },
           { kind: "rotate", deg: arm, pivot: ANT.shoulderL },
         ],
         upperArmR: [{ kind: "rotate", deg: -arm, pivot: ANT.shoulderR }],
         foreArmR: [
-          { kind: "rotate", deg: 10, pivot: ANT.elbowR },
+          { kind: "rotate", deg: -BEND, pivot: ANT.elbowR },
           { kind: "rotate", deg: -arm, pivot: ANT.shoulderR },
         ],
       };
@@ -893,6 +1253,9 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
   "calf-raise": {
     view: "anterior",
     concentricTo: 1,
+    /* Two units taller than the anterior default so the step fits under
+       the figure without cropping it. */
+    viewBox: "-8 -14 116 226",
     tint: { calves: "primary" },
     pose: (e) => {
       /* Heels drive the body straight up — but the FEET stay planted.
@@ -901,9 +1264,30 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * to meet the risen thighs while the foot wedges, sitting at the
        * bottom of the same group, barely move. Translating the shanks
        * instead floated the feet — a levitation, not a calf raise. */
-      const rise = 6.5 * e;
-      const lift: Op[] = [{ kind: "translate", dx: 0, dy: -rise }];
+      /* THE REP NOW STARTS BELOW THE STEP, which is the whole point of
+       * standing on one. liftmanual's standing calf raise is explicit
+       * that the bottom is a STRETCH -- the heels hang two to three
+       * inches under the platform -- and that "a heel that merely
+       * returns to platform level fails the standard". This animated
+       * flat-floor-to-tiptoe: the top half of the movement, twice.
+       *
+       * No new mechanism was needed, which is the nice part. The pose
+       * already lengthens floor-to-knee as the heel rises, about the
+       * ball line at y=203; run the same lerp negative and it SHORTENS
+       * floor-to-knee, which is exactly what dropping the heel below the
+       * ball does. One law, both directions, and the ball stays on the
+       * step either way because it is the pivot.
+       *
+       * The drop is derived from the figure rather than converted from
+       * inches: 2-3in of heel travel against a ~45cm floor-to-knee is
+       * ~12-15% of that segment, so 12% of KNEE_TO_GROUND -- 6.6 units,
+       * which lands within a rounding error of the 6.5 the raise already
+       * used. The near-symmetry is a check on the number, not a
+       * coincidence to lean on. */
       const KNEE_TO_GROUND = 55; // knee line ~148 → ground 203
+      const CALF_DROP = KNEE_TO_GROUND * 0.12;
+      const rise = lerp(-CALF_DROP, 6.5, e);
+      const lift: Op[] = [{ kind: "translate", dx: 0, dy: -rise }];
       const stretch: Op[] = [
         { kind: "scaleY", k: 1 + rise / KNEE_TO_GROUND, pivotY: 203 },
       ];
@@ -920,6 +1304,24 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         shankR: stretch,
       };
     },
+    /* THE STEP. Its top edge is y=203 -- the same line the shank scale
+     * pivots about -- because that IS the contact: the balls of the feet
+     * rest on the platform edge and everything else moves relative to it.
+     * Drawing it anywhere else would be decoration that disagrees with
+     * the pose.
+     *
+     * Deliberately a small block and not a machine. The heels overhang
+     * BEHIND the edge, which a front view cannot show -- so what carries
+     * the stretch here is the body travelling below its standing height,
+     * not a visibly hanging heel. The step's job is to make that drop
+     * legible as a stretch rather than as a squat.
+     *
+     * Gear greys only, matching the push-up floor line and the dip posts.
+     * Inset from the foot span so it reads as a step being stood ON
+     * rather than a floor. */
+    scene: () =>
+      `<rect x="14" y="203" width="72" height="9" rx="1.5" fill="${GEAR_DARK}"/>` +
+      `<rect x="14" y="203" width="72" height="2.4" rx="1.2" fill="${GEAR}"/>`,
   },
 
   "bench-press": {
@@ -948,7 +1350,17 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * from the shoulder joint), lockout finishes over the upper
        * chest — the real bench J-curve, and it keeps the plate disc
        * clear of the head at every frame. */
-      const H: Pt = [S[0] + lerp(24, 50, e), S[1] + lerp(22, 8, e)];
+      /* LOCKOUT IS AN ARM'S LENGTH, not 50. The old endpoint put the
+       * hand 50.6 from the shoulder against a 55.07 arm, which is a
+       * 134-degree elbow -- a press that never finishes, invisible
+       * because a nearly-straight arm looks straight. The direction of
+       * the J-curve is unchanged; only its length is now derived, scaled
+       * out along the same vector to a real extension. */
+      const lockDir = Math.hypot(50, 8);
+      const H: Pt = [
+        S[0] + lerp(24, (50 / lockDir) * SIDE_ARM_REACH, e),
+        S[1] + lerp(22, (8 / lockDir) * SIDE_ARM_REACH, e),
+      ];
       const arm = aimArm(
         { S, E: SIDE_ANCHORS.elbow, H: SIDE_ANCHORS.hand },
         // out −1: the elbow tucks toward the feet/floor side, the real
@@ -1004,7 +1416,11 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     view: "side",
     equip: "plate-end",
     concentricTo: 1,
-    viewBox: "-4 38 172 174",
+    /* Top edge 30, not 38: the hinged head's crown sits at y=33 and the
+       old frame cut 5 units off it in every frame. Pre-existing — the
+       hang fix below does not move the head — but it turned up while
+       measuring the bbox and is a clipped skull, so it goes with it. */
+    viewBox: "-4 30 172 184",
     groundY: 204,
     shadowCx: 62,
     shadowRx: 40,
@@ -1021,7 +1437,26 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * anchors) with the hinge composed LAST — same chain pattern as
        * the bench's global rotation. */
       const HINGE = 55; // constant torso incline, all frames
-      const KNEE = 20; // constant soft knees
+      /* SAME SIGN TRAP AS THE RDL, and worse. This rotates the THIGH
+       * forward about the hip while the shank keeps its rest
+       * orientation, so it SUBTRACTS knee flexion: the joint is
+       * 180 - |13.57 - knob|, peaking dead straight at 13.57. The
+       * shipped 20 therefore drew 173.57 degrees -- 6.4 past straight,
+       * on the hyperextension side -- under a comment reading "constant
+       * soft knees". The RDL had the identical bug at 15 (178.6) and was
+       * fixed first; the row was measured while verifying that fix.
+       *
+       * And it was unplanting the foot. The row's ankle sat 18.1 units
+       * from SIDE_ANCHORS.ankle -- the point `hipsBack` pivots about --
+       * against the RDL's 13.6, so the bent-over demo that leans hardest
+       * was leaning about the spot furthest from where it stood. At 0
+       * the ankle lands on the pivot exactly.
+       *
+       * 0 is derived, not chosen: the vendored figure is already drawn
+       * standing at 13.57 degrees of knee flexion, mid soft-knee band,
+       * so the correct rotation is none. "Soft knees" was always true of
+       * the ART; the knob was spending it. */
+      const KNEE = 0;
       const LEAN = hipsBack(HINGE); // balance rule: hips back
       const T: Op = { kind: "rotate", deg: HINGE, pivot: SIDE_ANCHORS.hip };
       const unpose: Op[] = [
@@ -1032,7 +1467,14 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       // Bar path: a straight VERTICAL line below the shoulder joint —
       // below the knee at the bottom, lower ribs at the top with the
       // elbow driving past the torso line (IK bends it up-back).
-      const hFinal: Pt = [S[0] + 1, lerp(S[1] + 50, S[1] + 26, e)];
+      /* THE HANG IS AN ARM'S LENGTH. It started 50 below the shoulder
+       * against a 55.07 arm -- a 130-degree elbow, so the row began with
+       * a fifth of the pull already done and "dead hang" described
+       * nothing in the drawing. The 1-unit forward offset is what keeps
+       * the bar path just clear of the shins, so the drop is solved from
+       * the reach with that offset taken out. */
+      const hang = Math.sqrt(SIDE_ARM_REACH ** 2 - 1);
+      const hFinal: Pt = [S[0] + 1, lerp(S[1] + hang, S[1] + 26, e)];
       const hPre = applyToPoint(hFinal, unpose);
       const arm = aimArm(
         {
@@ -1100,7 +1542,36 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * pre-hinge aiming pattern as the row, but here the hinge itself
        * is the animation. */
       const hinge = lerp(0, 68, e);
-      const KNEE = 15; // constant in every frame — the RDL signature
+      /* THE SOFT KNEE, AND THE SIGN THAT WAS SPENDING IT.
+       *
+       * This rotates the THIGH forward about the hip while the shank
+       * keeps its rest orientation, so it does not ADD knee flexion --
+       * it subtracts it. Measured across the knob, the joint angle is
+       * 180 - |13.57 - KNEE|:
+       *
+       *     knob      0      5     10   13.57     15     20     25
+       *     joint  166.4  171.4  176.4  180.0  178.6  173.6  168.6
+       *
+       * So the shipped 15 sat at 178.6 degrees -- a degree and a half
+       * PAST dead straight, on the far side of the peak -- under a
+       * comment reading "constant soft knees". Constant it was. Soft it
+       * was not. Same shape as the lateral raise, where a wrongly-signed
+       * rotation spent the rest arm's natural bend to lock the elbow out
+       * at 179.
+       *
+       * 0 is derived, not chosen: the vendored figure is already DRAWN
+       * standing with 13.57 degrees of knee flexion (the hip/knee/ankle
+       * anchors subtend 166.44), which is mid soft-knee band. The
+       * correct rotation is therefore none at all, and the RDL's real
+       * signature is that the knee does not CHANGE -- which the pose
+       * gets for free by applying one constant in every frame.
+       *
+       * It also re-plants the foot. The ankle had been sitting at
+       * (33.0, 193.3), 13.6 units from SIDE_ANCHORS.ankle (46.6, 193) --
+       * the point `hipsBack` pivots about -- and creeping across the rep.
+       * The figure was leaning about a spot it was not standing on. At 0
+       * the ankle lands on the pivot exactly, in every frame. */
+      const KNEE = 0;
       const LEAN = hipsBack(hinge); // balance rule: hips travel back
       const T: Op = { kind: "rotate", deg: hinge, pivot: SIDE_ANCHORS.hip };
       const unpose: Op[] = [
@@ -1169,14 +1640,14 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * body pivots about the TOES as the chest drops — hands stay
        * planted, elbows IK-solved toward the feet. */
       const G: Op = { kind: "rotate", deg: 90, pivot: [44, 100] };
-      const TILT: Op = { kind: "rotate", deg: -13, pivot: PUSHUP_HAND };
-      const beta = lerp(0, 9.5, e);
+      const TILT: Op = { kind: "rotate", deg: PUSHUP_TILT, pivot: PUSHUP_HAND };
+      const beta = lerp(PUSHUP_TOP_BETA, PUSHUP_BOTTOM_BETA, e);
       const B: Op = { kind: "rotate", deg: beta, pivot: PUSHUP_TOE };
       const bodyOps: Op[] = [G, TILT, B];
       // Map the fixed hand plant back to standing space for the aim.
       const hPre = applyToPoint(PUSHUP_HAND, [
         { kind: "rotate", deg: -beta, pivot: PUSHUP_TOE },
-        { kind: "rotate", deg: 13, pivot: PUSHUP_HAND },
+        { kind: "rotate", deg: -PUSHUP_TILT, pivot: PUSHUP_HAND },
         { kind: "rotate", deg: -90, pivot: [44, 100] },
       ]);
       const arm = aimArm(
@@ -1205,7 +1676,18 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         shankR: bodyOps,
         upperArmL: [...arm.upper, ...bodyOps],
         foreArmL: [...arm.fore, ...bodyOps],
-        handL: [...arm.fore, ...bodyOps],
+        /* THE HAND DOES NOT ROTATE. It used to ride `arm.fore`, so it
+         * swung with the forearm and drove the palm 5.8 units through the
+         * floor at the top, easing to 3.3 at the bottom -- and the
+         * VARYING depth is the tell, since a merely mis-placed plant
+         * would be off by a constant. Every other piece was clear; only
+         * `handL` crossed.
+         *
+         * A push-up hand is flat on the floor for the whole rep and it is
+         * the WRIST ANGLE that changes. So the hand takes one fixed
+         * transform. Fixed also means it cannot drift off the plant,
+         * which is the property the lockout work already pinned. */
+        handL: PUSHUP_HAND_OPS,
       };
     },
     scene: () =>
@@ -1523,6 +2005,13 @@ export function renderBodyDemo(
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${demo.viewBox ?? (demo.view === "anterior" ? "-8 -14 116 224" : "-12 -14 124 244")}" role="img">` +
     shadow +
+    /* Scene furniture, behind everything the body draws. The side path
+       has had this since it needed a bench and a floor line; the front
+       path never did, so an anterior demo had no way to stand on
+       anything -- which is why the calf raise had no step. Same hook,
+       same ordering, so a demo declaring `scene` behaves identically
+       whichever way it faces. */
+    (demo.scene?.(e, pose) ?? "") +
     barBehind +
     glow +
     caps +
