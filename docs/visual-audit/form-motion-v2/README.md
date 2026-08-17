@@ -119,3 +119,43 @@ Also retracted from the review: "the profile bar reads as a wheel". In
 a true orthographic profile a barbell IS a disc and a hub — the far
 sleeve sits directly behind the near one. Drawing it offset would be a
 depth cheat, not a legibility fix.
+
+## STATUS 2026-08-17c — hands ATTEMPTED and REVERTED; the anchor doesn't sit on the art
+
+The 2026-08-17b work above (`ANTERIOR_HANDS` / `POSTERIOR_HANDS`, the
+press barbell, lateral-raise dumbbells) was shipped and then reverted on
+sight: the fists read as pale rocks balanced beside the arms, and at
+press lockout the forearm's tapered tip spiked straight through the bar.
+
+The cause is not styling, and it is worth writing down because it will
+sink the next attempt too. **The hand anchors are not on the figure.**
+Measured against `bodyModelData`:
+
+|                         | anterior LEFT arm                         |
+| ----------------------- | ----------------------------------------- |
+| forearm art's wrist end | x ≈ **3.5** (terminal edge spans 0 → 6.9) |
+| `ANT.handL`             | x = **10**                                |
+
+That is ~6.5 units — more than a limb width — outboard of where the art
+actually ends, and the same displacement mirrors on the right
+(art ≈ 96.5 vs `ANT.handR` = 89). The declared forearm is
+`hypot(10-20, 100-71)` = 30.67; the art's real forearm, elbow (20,71) to
+wrist (3.5,100.5), is 33.8. So the anchor is both SHORT and laterally
+displaced.
+
+This was invisible for as long as nothing was drawn at a hand. It stops
+being invisible the moment anything is: a fist, a barbell, a dumbbell.
+
+Anything that draws at the anterior grip therefore needs the anchors
+reconciled with the art FIRST. That is not a tweak — `ANT_FORE_LEN` is
+derived from those anchors and feeds every anterior arm solve (press,
+lateral raise, dips) plus the posterior ones (pull-ups, pulldown), so
+moving them re-poses all of it and every contact sheet needs re-reviewing.
+
+Explicitly rejected as the fix: drawing the fist at the art's terminus
+while continuing to SOLVE the arm to the anchor. That is the
+"computed in one place, displayed from another" defect this codebase
+already has a rule about — it would look right and be incoherent.
+
+The prop system, the rope repair and both bar-path fixes are unaffected
+and remain in place; only the hands and what hung off them came out.
