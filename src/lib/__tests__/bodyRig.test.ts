@@ -36,7 +36,89 @@ describe("renderBodyDemo", () => {
     const ys = polyYs(svg);
     expect(Math.min(...ys)).toBeLessThan(1);
     const body = svg.replace(/<g class="glow">.*?<\/g>/, "");
-    expect(body.match(/<polygon/g)!.length).toBe(35); // 33 body + 2 feet
+    // 33 vendored + 2 feet + 4 fist facets (two per hand — the second
+    // is the knuckle band). The library figure ships neither feet nor
+    // hands; both are added outside the vendored array.
+    expect(body.match(/<polygon/g)!.length).toBe(39);
+  });
+
+  /** Polygons whose every vertex sits within `r` of a point. */
+  const polysNear = (svg: string, p: [number, number], r: number) =>
+    [...svg.matchAll(/<polygon points="([^"]+)"/g)]
+      .map((m) =>
+        m[1]
+          .trim()
+          .split(" ")
+          .map((pair) => pair.split(",").map(Number) as [number, number])
+      )
+      .filter((pts) =>
+        pts.every((q) => Math.hypot(q[0] - p[0], q[1] - p[1]) <= r)
+      );
+
+  it("the fist CAPS the forearm rather than floating beside it", () => {
+    // The defect that got the first attempt reverted. It was drawn at a
+    // hand anchor sitting ~6.5 units off the end of the arm, so it read
+    // as a rock balanced next to the limb. Pinned as: the fist's mass
+    // sits ON the elbow→wrist line, and PAST the wrist, not to one side.
+    const svg = renderBodyDemo("squat", 0); // identity pose
+    const facets = polysNear(svg, ANT_WRIST, 11);
+    expect(facets.length).toBe(2); // main mass + knuckle band
+
+    const elbow: [number, number] = [20, 71];
+    const ux =
+      (ANT_WRIST[0] - elbow[0]) /
+      Math.hypot(ANT_WRIST[0] - elbow[0], ANT_WRIST[1] - elbow[1]);
+    const uy =
+      (ANT_WRIST[1] - elbow[1]) /
+      Math.hypot(ANT_WRIST[0] - elbow[0], ANT_WRIST[1] - elbow[1]);
+    for (const pts of facets) {
+      const cx = pts.reduce((a, q) => a + q[0], 0) / pts.length;
+      const cy = pts.reduce((a, q) => a + q[1], 0) / pts.length;
+      const vx = cx - ANT_WRIST[0];
+      const vy = cy - ANT_WRIST[1];
+      // Along the arm: positive, i.e. beyond the wrist.
+      expect(vx * ux + vy * uy).toBeGreaterThan(0);
+      // Across the arm: essentially nothing. A fist 6 units to the side
+      // — the reverted bug — fails here by a wide margin.
+      expect(Math.abs(vx * -uy + vy * ux)).toBeLessThan(1.5);
+    }
+  });
+
+  it("the fist is TAPERED — narrow at the wrist, wide at the knuckles", () => {
+    // A symmetric block reads as a lump; the taper is half of what makes
+    // it a hand (the knuckle seam is the other half).
+    const svg = renderBodyDemo("squat", 0);
+    const [mass] = polysNear(svg, ANT_WRIST, 11);
+    const byDist = [...mass].sort(
+      (a, b) =>
+        Math.hypot(a[0] - ANT_WRIST[0], a[1] - ANT_WRIST[1]) -
+        Math.hypot(b[0] - ANT_WRIST[0], b[1] - ANT_WRIST[1])
+    );
+    const span = (p: [number, number], q: [number, number]) =>
+      Math.hypot(p[0] - q[0], p[1] - q[1]);
+    const wristEnd = span(byDist[0], byDist[1]);
+    const knuckleEnd = span(byDist[2], byDist[3]);
+    expect(knuckleEnd).toBeGreaterThan(wristEnd + 1);
+  });
+
+  it("both views carry fists, and they ride the arm solve", () => {
+    const travel = (id: string, anchor: [number, number]) => {
+      const at = (t: number) =>
+        applyToPoint(
+          anchor,
+          (BODY_DEMOS[id].pose(t).foreArmL ?? []) as never[]
+        );
+      return Math.hypot(at(1)[0] - at(0)[0], at(1)[1] - at(0)[1]);
+    };
+    expect(
+      renderBodyDemo("pull-ups", 0.5).match(/<polygon/g)!.length
+    ).toBeGreaterThan(35);
+    // Anterior + posterior hands both track their arm...
+    expect(travel("overhead-press", ANT_WRIST)).toBeGreaterThan(5);
+    expect(travel("lat-pulldown", POST_WRIST)).toBeGreaterThan(5);
+    // ...but a pull-up grips a FIXED bar: the fist must stay put while
+    // the body travels to it, or the hands slide along the bar.
+    expect(travel("pull-ups", POST_WRIST)).toBeLessThan(0.2);
   });
 
   it("squat: the body visibly sinks at the bottom", () => {

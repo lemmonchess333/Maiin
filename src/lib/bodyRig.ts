@@ -380,6 +380,68 @@ const ANTERIOR_FEET: { group: GroupName; points: Pt[] }[] = [
   },
 ];
 
+/* The library figure has no hands either — the arm chain stops at the
+ * forearm. That absence was load-bearing: held weights were built and
+ * removed on 2026-07-03 BECAUSE "the figure has no hands, so a held
+ * prop always read detached", which is why every front/back demo has
+ * shown structural equipment only. The profile rig grew a `handL`
+ * group and held gear came back there; these close the same gap for
+ * the other two cameras (operator approved 2026-08-17).
+ *
+ * A first attempt shipped and was reverted on sight: it was a
+ * symmetric hexagon at a hand anchor that sat ~6.5 units off the end
+ * of the arm, so it read as a rock balanced beside the limb. The
+ * anchors were fixed first (PR1); this is the shape, rebuilt from the
+ * operator's reference photographs of a real fist.
+ *
+ * Two facets, because the KNUCKLE LINE is what makes a fist read — the
+ * feature the dorsal reference leads with. The rig's own gap draws it,
+ * the same device the side rig uses to split the upper arm at the
+ * biceps/triceps boundary, so it costs no new visual language. And
+ * TAPERED: 5.4 units across at the wrist opening to 7.0 at the
+ * knuckles, where the hexagon was the same width at both ends.
+ *
+ * Finger detail was tried and rejected — see the proposal. At ~7 units
+ * the features land at or below the facet-gap width, so a scalloped
+ * knuckle edge reads as a serrated tear and finger columns read as
+ * bristles. A shape this size carries about ONE structural seam
+ * legibly; it is spent on the knuckles.
+ */
+function fistFacets(wrist: Pt, elbow: Pt): Pt[][] {
+  const dx = wrist[0] - elbow[0];
+  const dy = wrist[1] - elbow[1];
+  const len = Math.hypot(dx, dy) || 1;
+  const u: Pt = [dx / len, dy / len]; // down the arm
+  const q: Pt = [-u[1], u[0]]; // across it
+  /* Built on the FOREARM axis, not screen-vertical, so the fist caps
+     the limb it belongs to at every arm angle. */
+  const P = (along: number, across: number): Pt => [
+    wrist[0] + u[0] * along + q[0] * across,
+    wrist[1] + u[1] * along + q[1] * across,
+  ];
+  return [
+    // Main mass. Starts just BEHIND the wrist so it overlaps the
+    // forearm the way a fist does — invisible, both being BODY grey.
+    [P(-1.2, 2.7), P(4.4, 3.5), P(4.4, -3.5), P(-1.2, -2.7)],
+    // Knuckle band, rounded off at the far end.
+    [P(5.0, 3.5), P(6.6, 2.6), P(7.1, 0.6), P(6.6, -1.6), P(5.0, -3.5)],
+  ];
+}
+
+const handParts = (wrist: Pt, elbow: Pt, group: GroupName) =>
+  fistFacets(wrist, elbow).map((points) => ({ group, points }));
+
+/** Derived from the joint anchors rather than restated, so a future
+ *  anchor move carries the fists with it instead of stranding them. */
+const ANTERIOR_HANDS: { group: GroupName; points: Pt[] }[] = [
+  ...handParts(ANT.handL, ANT.elbowL, "foreArmL"),
+  ...handParts(ANT.handR, ANT.elbowR, "foreArmR"),
+];
+const POSTERIOR_HANDS: { group: GroupName; points: Pt[] }[] = [
+  ...handParts(POST.handL, POST.elbowL, "foreArmL"),
+  ...handParts(POST.handR, POST.elbowR, "foreArmR"),
+];
+
 /* ── Exercise definitions ─────────────────────────────────────── */
 
 const easeInOutSine = (t: number) =>
@@ -1572,15 +1634,21 @@ export function renderBodyDemo(
       .join("") +
     `</g>`;
 
-  const feet =
-    view === "anterior"
-      ? ANTERIOR_FEET.map((f) => {
-          const pts = applyOps(f.points, pose[f.group] ?? []);
-          return `<polygon points="${pts
-            .map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`)
-            .join(" ")}" fill="${BODY}"/>`;
-        }).join("")
-      : "";
+  /* Parts the vendored figure omits — feet (anterior only; the
+     posterior art already runs past the heel) and fists (both views).
+     Each rides its declared group's transform, so they inherit the arm
+     and leg solves rather than being placed independently. */
+  const extras = [
+    ...(view === "anterior" ? ANTERIOR_FEET : []),
+    ...(view === "anterior" ? ANTERIOR_HANDS : POSTERIOR_HANDS),
+  ]
+    .map((part) => {
+      const pts = applyOps(part.points, pose[part.group] ?? []);
+      return `<polygon points="${pts
+        .map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`)
+        .join(" ")}" fill="${BODY}"/>`;
+    })
+    .join("");
 
   /* Structural equipment only. Held weights were removed — see the
      header. A bare line reads as NOTHING ("is that a treadmill?"), so
@@ -1657,7 +1725,7 @@ export function renderBodyDemo(
     glow +
     caps +
     polys +
-    feet +
+    extras +
     barFront +
     `</svg>`
   );

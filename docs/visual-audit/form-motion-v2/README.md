@@ -205,3 +205,44 @@ deltoid/torso junction. Stills only — motion is still the honest test.
 
 Next: PR2 (fists, geometry recorded in the proposal), then PR3 (press
 barbell + lateral-raise dumbbells, both props already built and tested).
+
+## STATUS 2026-08-17e — PR2: the figure has hands
+
+`ANTERIOR_HANDS` / `POSTERIOR_HANDS`, on the `ANTERIOR_FEET` pattern the
+rig already used for the other part the vendored figure omits: declared
+outside the vendored array, grouped with the forearm so they inherit
+the arm solve. Derived from the joint anchors rather than restated, so a
+future anchor move carries them instead of stranding them.
+
+Second attempt. The first (2026-08-17b, reverted) failed on POSITION —
+the anchors sat ~6.5 units off the end of the arm, so the fist read as a
+rock balanced beside the limb. PR1 fixed that. This is the SHAPE,
+rebuilt from operator reference photographs after the first shape was
+also rejected:
+
+- **Tapered** — 5.4 units across at the wrist, 7.0 at the knuckles. The
+  first attempt was a symmetric hexagon, which reads as a lump.
+- **Two facets**, so the rig's own gap draws the KNUCKLE LINE — the
+  feature the dorsal reference leads with, and the same device the side
+  rig uses at the biceps/triceps boundary. No new visual language.
+- **Built on the forearm axis**, not screen-vertical, so it caps the
+  limb at every arm angle.
+
+Finger detail was tried and rejected — scalloped knuckles read as a
+serrated tear, finger columns as bristles. At ~7 units the features land
+at or below the facet-gap width. A shape this size carries about ONE
+structural seam legibly; it is spent on the knuckles. Do not re-attempt
+without changing the size or the camera.
+
+Three pins, each mutation-checked: moving the fist back to the old
+anchor fails the "caps the forearm" pin (it measures displacement ACROSS
+the arm axis, which is exactly the reverted defect); flattening the
+taper fails its own; dropping the knuckle band fails both the facet
+count and the polygon total.
+
+Verified by looking, magnified and at card scale, from the real
+renderer rather than a reproduction.
+
+Next: PR3 — the overhead-press barbell and lateral-raise dumbbells.
+Both props are already built and tested in `bodyProps.ts`; PR3 is
+wiring, not building.
