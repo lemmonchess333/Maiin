@@ -35,11 +35,12 @@ import {
   cleanup,
   act,
 } from "@testing-library/react";
-import FoodCameraModal, {
+import FoodCameraModal from "../FoodCameraModal";
+import {
   useScanStages,
   SCAN_STAGES_FOOD,
   SCAN_STAGES_LABEL,
-} from "../FoodCameraModal";
+} from "@/hooks/useScanStages";
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/backDismiss", () => ({ useBackDismiss: vi.fn() }));

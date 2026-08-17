@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
+import { useCountUp } from "@/hooks/useCountUp";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 import { cn } from "@/lib/utils";
 import { RotateCcw, Save, Check, Plus, Minus, Download, X } from "lucide-react";
@@ -152,6 +154,21 @@ async function fetchOpenFoodFacts(barcode: string): Promise<MealResult> {
  *  brief confirming flash was pure dead time (Doherty / responsiveness). */
 const SAVED_FLASH_MS = 500;
 
+/** The total-calorie figure, counting up as a result lands. Safe for a
+ *  LIVE editable value: `useCountUp` animates only its first nonzero
+ *  target — every later target (portion edits, item removals) is an
+ *  instant set(), so the display keeps tracking the numbers exactly.
+ *  Mounted inside the result card, which unmounts between analyses, so
+ *  each new scan gets its own count-up. */
+function AnimatedCalories({ value }: { value: number }) {
+  const display = useCountUp(value);
+  return (
+    <motion.span className="text-xl font-extrabold font-mono tabular-nums">
+      {display}
+    </motion.span>
+  );
+}
+
 export default function FoodAnalyzer({
   date,
   meal: targetMealCategory,
@@ -225,6 +242,16 @@ export default function FoodAnalyzer({
      network failure) — here the AI succeeded but produced
      nothing usable. */
   const aiResultIsEmpty = aiResult !== null && cleanedAiResult === null;
+
+  /* Payoff: one success tap the moment a USABLE result lands — the
+     physical counterpart of the scan completing. Keyed to the cleaned
+     result, so an analysis that found nothing identifiable (which
+     surfaces as an error card) never celebrates. The barcode path
+     already has its own feedback (toast). */
+  useEffect(() => {
+    if (cleanedAiResult) haptic("success");
+  }, [cleanedAiResult]);
+  const reducedMotion = useReducedMotion();
 
   const activeResult: MealResult | null = useMemo(() => {
     return cleanedAiResult || barcodeResult;
@@ -862,8 +889,16 @@ export default function FoodAnalyzer({
                       );
                       if (item.removed) {
                         return (
-                          <div
+                          <motion.div
                             key={`${item.name}-${i}-removed`}
+                            initial={
+                              reducedMotion ? false : { opacity: 0, y: 8 }
+                            }
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{
+                              duration: 0.25,
+                              delay: Math.min(i, 6) * 0.05,
+                            }}
                             className="flex items-center justify-between gap-2 py-1"
                           >
                             <p className="text-sm text-muted-foreground/60 line-through truncate flex-1">
@@ -878,12 +913,18 @@ export default function FoodAnalyzer({
                               <RotateCcw className="size-3" />
                               Restore
                             </button>
-                          </div>
+                          </motion.div>
                         );
                       }
                       return (
-                        <div
+                        <motion.div
                           key={`${item.name}-${i}`}
+                          initial={reducedMotion ? false : { opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{
+                            duration: 0.25,
+                            delay: Math.min(i, 6) * 0.05,
+                          }}
                           className="flex items-center gap-2"
                         >
                           <div className="min-w-0 flex-1">
@@ -939,7 +980,7 @@ export default function FoodAnalyzer({
                               <X className="size-3.5" />
                             </button>
                           )}
-                        </div>
+                        </motion.div>
                       );
                     })}
                   </div>
@@ -968,9 +1009,9 @@ export default function FoodAnalyzer({
                 <div className="rounded-xl bg-muted/30 p-3 space-y-2">
                   <div className="flex items-baseline justify-between gap-3 flex-wrap">
                     <p className="text-foreground">
-                      <span className="text-xl font-extrabold font-mono tabular-nums">
-                        {Math.round(displayTotals.calories)}
-                      </span>
+                      <AnimatedCalories
+                        value={Math.round(displayTotals.calories)}
+                      />
                       <span className="text-sm text-muted-foreground font-normal ml-1">
                         cal
                       </span>
