@@ -130,6 +130,10 @@ function DemoCard({ id }: { id: string }) {
           <button
             key={sample}
             type="button"
+            /* Stable hook for the screenshot capture, which drives every
+               card to the same frame before shooting. Dev-only page, so
+               this ships nowhere. */
+            data-testid={`form-lab-sample-${sample}`}
             onClick={() => {
               cancelAnimationFrame(rafRef.current);
               setPlaying(false);
