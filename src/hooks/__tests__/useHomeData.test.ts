@@ -542,23 +542,45 @@ describe("useHomeData", { timeout: 5000 }, () => {
     });
 
     it("a run finished more than two hours ago has gone stale", async () => {
-      const { result } = renderWith(
-        [
-          {
-            ...countableRun,
-            completedAt: Timestamp.fromDate(
-              new Date(Date.now() - 3 * 60 * 60_000)
-            ),
-          },
-        ],
-        []
-      );
-      // Anchored on the run having actually been READ (it still counts
-      // toward today's calories) — otherwise this passes while the runs
-      // query returns nothing.
-      await waitFor(() => expect(result.current.todayRunCals).toBeGreaterThan(0));
-      expect(result.current.postWorkoutNudge).toBeNull();
+      /* CLOCK FROZEN TO MIDDAY, and it has to be. The fixture is built
+         from `Date.now()`, and the anchor below requires the run to still
+         count toward TODAY — so between midnight and 02:00 local, "three
+         hours ago" landed on YESTERDAY, `todayRunCals` read 0, and the
+         whole suite failed nightly for a reason that had nothing to do
+         with staleness. Found by running the suite at 01:07.
+
+         Not fixable by moving the fixture: before 02:00 there is no
+         instant that is both more than two hours past AND today, so the
+         two facts can only coexist if the clock is pinned. Midday, and
+         pinned relative to `todayStart` rather than to a hard-coded date,
+         so it stays consistent with the module's `TODAY_KEY`.
+
+         Same local-date/day-boundary class as the recurring-mistake rule
+         about never mixing local-date and UTC in one calculation. */
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      vi.setSystemTime(new Date(todayStart.getTime() + 13 * 60 * 60_000));
+      try {
+        const { result } = renderWith(
+          [
+            {
+              ...countableRun,
+              completedAt: Timestamp.fromDate(
+                new Date(Date.now() - 3 * 60 * 60_000)
+              ),
+            },
+          ],
+          []
+        );
+        // Anchored on the run having actually been READ (it still counts
+        // toward today's calories) — otherwise this passes while the runs
+        // query returns nothing.
+        await waitFor(() =>
+          expect(result.current.todayRunCals).toBeGreaterThan(0)
+        );
+        expect(result.current.postWorkoutNudge).toBeNull();
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
-
 });
