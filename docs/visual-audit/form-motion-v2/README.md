@@ -119,3 +119,39 @@ Also retracted from the review: "the profile bar reads as a wheel". In
 a true orthographic profile a barbell IS a disc and a hub — the far
 sleeve sits directly behind the near one. Drawing it offset would be a
 depth cheat, not a legibility fix.
+
+## STATUS 2026-08-17b — the figure gets hands; press bar drawn
+
+Operator approved adding hands, which **scopes** the 2026-07-03
+"no held weights" call rather than reversing it. That decision's stated
+reason was "the figure has no hands, so a held prop always read
+detached" — true of the anterior/posterior figure, whose arm chain
+stopped at the forearm, and the reason the profile rig was the only
+camera allowed held gear (it has a real `handL`). With
+`ANTERIOR_HANDS` / `POSTERIOR_HANDS` in place the premise no longer
+holds for the other two cameras.
+
+Built as closed FISTS on the `ANTERIOR_FEET` pattern — declared outside
+the vendored array, grouped with the forearm so they inherit the arm
+solve. Flat facets at that size can only read as a mass, so an
+articulated hand was not attempted.
+
+| Demo                  | Delta                                                                                                                                                   |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| overhead-press        | Draws a real barbell at last — shaft spanning both grips, plate off each sleeve. Same path solves the arms and places the bar, so they cannot disagree. |
+| lateral-raise         | Gains end-on dumbbells. With hands, a bare fist grips visible air — worse than the stump — and this is the most-served demo id in the templates.        |
+| every front/back demo | Now ends in a fist rather than a forearm stump.                                                                                                         |
+
+Measured, not eyeballed, after the hands landed: the dips fist sits
+exactly on its grip (gap 0.0 at every frame) and the pull-up fist stays
+put on the fixed bar while the body travels, both now pinned. The
+apparent "gaps" on pull-ups (22) and the pulldown (10) are just the bar
+extending past the grips, as a bar does.
+
+**Still open — `squat` draws no bar.** Its first instruction is "bar on
+your upper traps", and it now shows fists holding nothing. Not fixed
+here because it needs a POSE change (hands up to the bar), not a prop,
+and the existing comment records that a folded front-view grip was tried
+and "read as broken polygons across the chest". Its `bodyweight-squat`
+and `goblet-squat` aliases are served correctly by the current hanging
+arms, so this is a variant-fidelity question, not a straight defect.

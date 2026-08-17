@@ -369,6 +369,76 @@ const ANTERIOR_FEET: { group: GroupName; points: Pt[] }[] = [
   },
 ];
 
+/* The library figure has no hands either — the arm chain stops at the
+ * forearm. That absence was load-bearing: held weights were built and
+ * removed on 2026-07-03 BECAUSE "the figure has no hands, so a held
+ * prop always read detached", which is why every front/back demo has
+ * shown structural equipment only, and why the overhead press pressed
+ * an invisible bar. The profile rig grew a `handL` group and held gear
+ * came back there; these close the same gap for the other two cameras
+ * (operator approved 2026-08-17).
+ *
+ * Deliberately a closed FIST, not an articulated hand: the rig is flat
+ * facets, and a shape this small can only read as a mass. Centred ON
+ * the measured hand anchor, so a bar drawn at the anchor sits inside
+ * the grip rather than floating off the wrist, and overlapping the
+ * forearm tip the way a fist does — the overlap is invisible, both
+ * being BODY grey. Grouped with the forearm, so it inherits the arm
+ * solve exactly as the feet inherit the shanks. */
+const ANTERIOR_HANDS: { group: GroupName; points: Pt[] }[] = [
+  {
+    group: "foreArmL",
+    points: [
+      [6.5, 96.5],
+      [13.5, 96.5],
+      [14, 100],
+      [12.5, 103.5],
+      [7.5, 103.5],
+      [6, 100],
+    ],
+  },
+  {
+    group: "foreArmR",
+    points: [
+      [85.5, 96.5],
+      [92.5, 96.5],
+      [93, 100],
+      [91.5, 103.5],
+      [86.5, 103.5],
+      [85, 100],
+    ],
+  },
+];
+
+/** Same fists on the back view, at the posterior hand anchors (y=106).
+ *  A figure with hands from the front and stumps from the back would be
+ *  incoherent — and the two demos that grip something hardest, pull-ups
+ *  and the pulldown, are both posterior. */
+const POSTERIOR_HANDS: { group: GroupName; points: Pt[] }[] = [
+  {
+    group: "foreArmL",
+    points: [
+      [5.5, 102.5],
+      [12.5, 102.5],
+      [13, 106],
+      [11.5, 109.5],
+      [6.5, 109.5],
+      [5, 106],
+    ],
+  },
+  {
+    group: "foreArmR",
+    points: [
+      [87.5, 102.5],
+      [94.5, 102.5],
+      [95, 106],
+      [93.5, 109.5],
+      [88.5, 109.5],
+      [87, 106],
+    ],
+  },
+];
+
 /* ── Exercise definitions ─────────────────────────────────────── */
 
 const easeInOutSine = (t: number) =>
@@ -392,7 +462,14 @@ export interface BodyDemo {
   /** STRUCTURAL equipment only (no held weights — the figure has no
    *  hands): a fixed-bar is the overhead bar the body hangs from
    *  (pull-up); a cable-bar is the machine bar + cable (pulldown). */
-  equip?: "fixed-bar" | "cable-bar" | "dip-bars" | "plate-end" | "rope";
+  equip?:
+    | "fixed-bar"
+    | "cable-bar"
+    | "dip-bars"
+    | "plate-end"
+    | "rope"
+    | "barbell"
+    | "dumbbell";
   /** plate-end disc radius (default 10). The deadlift draws a
    *  full-size 45 (r=26 ≈ 45 cm on a 175 cm figure) so the bottom
    *  frame reads bar-near-the-floor. */
@@ -510,6 +587,8 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
 
   "overhead-press": {
     view: "anterior",
+    equip: "barbell",
+    plateR: 9,
     concentricTo: 1,
     /* Drops `neck`, which the catalogue entry never claims among its
      * secondaryMuscles and which nothing justified.
@@ -558,17 +637,12 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         foreArmR: R.fore,
       };
     },
-    /* Declares the constraint the hands ride WITHOUT drawing anything —
-     * `resolveProp` renders nothing for a demo that names no `equip`.
-     *
-     * The press has no bar, and that is not an oversight to patch here:
-     * the anterior figure's arm chain ends at the forearm (there is no
-     * hand group), which is exactly why the product owner removed held
-     * weights on 2026-07-03 — "a held prop always read detached". Side
-     * demos regained held gear only because the profile rig has a real
-     * `handL` to hang it from. Declaring the path anyway costs nothing,
-     * lets the test pin the hands to it, and aims the prop at the right
-     * points if an anterior grip is ever approved. */
+    /* The bar the hands ride. Blocked until 2026-08-17 on the anterior
+     * figure having no hand to hold it — the reason held weights came
+     * out on 2026-07-03 ("a held prop always read detached"). With
+     * ANTERIOR_HANDS approved and in place the prop has a grip to sit
+     * in, and the same path that solves the arms also places the bar,
+     * so the two cannot disagree. */
     bar: (e) => pressBarPath(e),
   },
 
@@ -907,6 +981,11 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
 
   "lateral-raise": {
     view: "anterior",
+    /* With ANTERIOR_HANDS in place a bare fist grips visible air, which
+     * reads worse than the stump did — and this is the most-served demo
+     * id in the templates. End-on bells: see `dumbbell` for why a front
+     * view genuinely cannot show a dumbbell any other way. */
+    equip: "dumbbell",
     concentricTo: 1,
     // A raise at full span is nearly two arm-lengths wide — this is the
     // one movement whose envelope genuinely needs a wider canvas.
@@ -932,6 +1011,10 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         ],
       };
     },
+    bar: (_e, pose) => [
+      applyToPoint(ANT.handL, pose.foreArmL ?? []),
+      applyToPoint(ANT.handR, pose.foreArmR ?? []),
+    ],
   },
 
   "calf-raise": {
@@ -1381,6 +1464,20 @@ function resolveProp(
     case "dip-bars":
       state = { kind: "dipBars", left, right, floorY: scene.floorY };
       break;
+    case "dumbbell":
+      state = { kind: "dumbbell", hands: [left, right], bellR: 5.5 };
+      break;
+    case "barbell":
+      // Frontal: the two grips ARE the bar's ends, so grip width is bar
+      // width and the shaft cannot drift off the hands.
+      state = {
+        kind: "rigidBar",
+        view: "frontal",
+        left,
+        right,
+        plateR: demo.plateR ?? 10,
+      };
+      break;
     case "plate-end":
       // Profile: both grips stack behind one another, so the near hand
       // IS the bar's on-screen position.
@@ -1520,15 +1617,20 @@ export function renderBodyDemo(
       .join("") +
     `</g>`;
 
-  const feet =
-    view === "anterior"
-      ? ANTERIOR_FEET.map((f) => {
-          const pts = applyOps(f.points, pose[f.group] ?? []);
-          return `<polygon points="${pts
-            .map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`)
-            .join(" ")}" fill="${BODY}"/>`;
-        }).join("")
-      : "";
+  /* Parts the vendored figure doesn't ship — feet (anterior only; the
+     posterior art already runs to the heel) and fists (both views).
+     Each rides its declared group's transform. */
+  const extras = [
+    ...(view === "anterior" ? ANTERIOR_FEET : []),
+    ...(view === "anterior" ? ANTERIOR_HANDS : POSTERIOR_HANDS),
+  ]
+    .map((part) => {
+      const pts = applyOps(part.points, pose[part.group] ?? []);
+      return `<polygon points="${pts
+        .map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`)
+        .join(" ")}" fill="${BODY}"/>`;
+    })
+    .join("");
 
   /* Structural equipment only. Held weights were removed — see the
      header. A bare line reads as NOTHING ("is that a treadmill?"), so
@@ -1605,7 +1707,7 @@ export function renderBodyDemo(
     glow +
     caps +
     polys +
-    feet +
+    extras +
     barFront +
     `</svg>`
   );

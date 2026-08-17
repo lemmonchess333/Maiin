@@ -30,7 +30,68 @@ describe("renderBodyDemo", () => {
     const ys = polyYs(svg);
     expect(Math.min(...ys)).toBeLessThan(1);
     const body = svg.replace(/<g class="glow">.*?<\/g>/, "");
-    expect(body.match(/<polygon/g)!.length).toBe(35); // 33 body + 2 feet
+    // 33 vendored + 2 feet + 2 fists. The library figure ships neither
+    // feet nor hands; both are added outside the vendored array.
+    expect(body.match(/<polygon/g)!.length).toBe(37);
+  });
+
+  it("both views have fists, and they ride the forearm solve", () => {
+    // The absent hand was load-bearing: it is the stated reason held
+    // weights were removed on 2026-07-03, so the press pressed an
+    // invisible bar. A fist that does not TRACK the arm would be worse
+    // than none — that is the "read detached" failure by another route.
+    const fistTravel = (id: string, anchor: [number, number]) => {
+      const at = (t: number) =>
+        applyToPoint(
+          anchor,
+          (BODY_DEMOS[id].pose(t).foreArmL ?? []) as never[]
+        );
+      return Math.hypot(at(1)[0] - at(0)[0], at(1)[1] - at(0)[1]);
+    };
+    // Anterior: the press hand rides the bar path up.
+    expect(fistTravel("overhead-press", [10, 100])).toBeGreaterThan(5);
+    // Posterior: the pulldown hand rides the bar down to the chest.
+    expect(fistTravel("lat-pulldown", [9, 106])).toBeGreaterThan(5);
+    // ...but a pull-up grips a FIXED bar: there the fist must stay put
+    // while the body travels to it. A fist that drifted here would be
+    // hands sliding along the bar.
+    expect(fistTravel("pull-ups", [9, 106])).toBeLessThan(0.5);
+  });
+
+  it("overhead press: a real bar spans the two grips", () => {
+    // Three of this exercise's four instructions name the bar, its
+    // equipment is Barbell, and for months it drew nothing at all.
+    for (const t of [0, 0.5, 1]) {
+      const svg = renderBodyDemo("overhead-press", t);
+      const bar = BODY_DEMOS["overhead-press"].bar!(
+        t,
+        BODY_DEMOS["overhead-press"].pose(t)
+      )!;
+      const shaft = [
+        ...svg.matchAll(
+          /<line x1="(-?[\d.]+)" y1="(-?[\d.]+)" x2="(-?[\d.]+)" y2="(-?[\d.]+)"/g
+        ),
+      ].map((m) => m.slice(1, 5).map(Number))[0];
+      expect(shaft, `shaft @${t}`).toBeDefined();
+      // Spans past BOTH grips (sleeves), and sits level at their height.
+      expect(shaft[0]).toBeLessThan(bar[0][0]);
+      expect(shaft[2]).toBeGreaterThan(bar[1][0]);
+      expect(shaft[1]).toBeCloseTo(bar[0][1], 1);
+      expect(shaft[3]).toBeCloseTo(bar[1][1], 1);
+      // A plate off each sleeve. Matched on the machined-edge stroke —
+      // a bare `<ellipse` count also picks up the ground shadow.
+      expect((svg.match(/<ellipse[^>]*stroke="#565760"/g) ?? []).length).toBe(
+        2
+      );
+    }
+    // And it travels with the rep rather than sitting at a fixed height.
+    const shaftY = (t: number) =>
+      Number(
+        renderBodyDemo("overhead-press", t).match(
+          /<line[^>]*y1="(-?[\d.]+)"/
+        )![1]
+      );
+    expect(shaftY(0) - shaftY(1)).toBeGreaterThan(30);
   });
 
   it("squat: the body visibly sinks at the bottom", () => {
