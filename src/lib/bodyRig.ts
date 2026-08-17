@@ -1416,7 +1416,36 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * pre-hinge aiming pattern as the row, but here the hinge itself
        * is the animation. */
       const hinge = lerp(0, 68, e);
-      const KNEE = 15; // constant in every frame — the RDL signature
+      /* THE SOFT KNEE, AND THE SIGN THAT WAS SPENDING IT.
+       *
+       * This rotates the THIGH forward about the hip while the shank
+       * keeps its rest orientation, so it does not ADD knee flexion --
+       * it subtracts it. Measured across the knob, the joint angle is
+       * 180 - |13.57 - KNEE|:
+       *
+       *     knob      0      5     10   13.57     15     20     25
+       *     joint  166.4  171.4  176.4  180.0  178.6  173.6  168.6
+       *
+       * So the shipped 15 sat at 178.6 degrees -- a degree and a half
+       * PAST dead straight, on the far side of the peak -- under a
+       * comment reading "constant soft knees". Constant it was. Soft it
+       * was not. Same shape as the lateral raise, where a wrongly-signed
+       * rotation spent the rest arm's natural bend to lock the elbow out
+       * at 179.
+       *
+       * 0 is derived, not chosen: the vendored figure is already DRAWN
+       * standing with 13.57 degrees of knee flexion (the hip/knee/ankle
+       * anchors subtend 166.44), which is mid soft-knee band. The
+       * correct rotation is therefore none at all, and the RDL's real
+       * signature is that the knee does not CHANGE -- which the pose
+       * gets for free by applying one constant in every frame.
+       *
+       * It also re-plants the foot. The ankle had been sitting at
+       * (33.0, 193.3), 13.6 units from SIDE_ANCHORS.ankle (46.6, 193) --
+       * the point `hipsBack` pivots about -- and creeping across the rep.
+       * The figure was leaning about a spot it was not standing on. At 0
+       * the ankle lands on the pivot exactly, in every frame. */
+      const KNEE = 0;
       const LEAN = hipsBack(hinge); // balance rule: hips travel back
       const T: Op = { kind: "rotate", deg: hinge, pivot: SIDE_ANCHORS.hip };
       const unpose: Op[] = [

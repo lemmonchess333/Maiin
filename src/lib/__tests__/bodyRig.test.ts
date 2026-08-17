@@ -841,6 +841,45 @@ describe("renderBodyDemo", () => {
       return ((a - b) * 180) / Math.PI;
     };
     expect(Math.abs(kneeAngle(1) - kneeAngle(0))).toBeLessThan(0.5);
+
+    /* THE CONSTANCY CHECK ABOVE CANNOT SEE THE DEFECT IT LOOKS LIKE IT
+       COVERS, which is why the value assertion below exists.
+
+       The knee rotation is one constant applied identically in every
+       frame, so the frame-to-frame difference is ~0 for ANY value of it.
+       Swept: 0 / 5 / 15 / 25 give spreads of 1.4e-13 / 0 / 2.0e-12 /
+       1.1e-13. The test passed just as happily at the shipped 15, which
+       drew a 178.6-degree knee -- a degree and a half PAST dead straight
+       -- as it does at the correct 166.4. It was pinning that the pose
+       has no per-frame knee animation, which nothing was threatening.
+
+       That is the tautology class this project already documents, in its
+       other shape: an assertion whose subject is invariant under the bug.
+       "Soft" is a VALUE claim, so it needs a value.
+
+       The band, not the number: liftmanual asks for a soft fixed bend,
+       and the vendored figure is drawn standing at 166.44 degrees, which
+       is already inside it. Bounds are wide enough to survive a redrawn
+       leg and tight enough to reject both dead-straight and a squat.
+
+       Folded to an interior angle first. `kneeAngle` returns the raw
+       signed difference of two atan2 results, so it reports this knee as
+       -193.57 rather than 166.43. That is fine for the constancy check --
+       a constant offset cancels in a subtraction -- and useless for a
+       value one, which is a small illustration of why the two assertions
+       are not interchangeable. Left as-is rather than rewritten, so the
+       constancy check keeps measuring exactly what it always did. */
+    const interior = (t: number) => {
+      const raw = Math.abs(kneeAngle(t)) % 360;
+      return raw > 180 ? 360 - raw : raw;
+    };
+    for (const t of [0, 0.5, 1]) {
+      expect(
+        interior(t),
+        `RDL knee is ${interior(t).toFixed(1)}deg -- not a soft bend`
+      ).toBeLessThan(175);
+      expect(interior(t)).toBeGreaterThan(155);
+    }
   });
 
   it("rig acceptance: camera and ground locked across an exercise", () => {
