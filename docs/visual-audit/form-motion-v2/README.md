@@ -76,3 +76,46 @@ Gate-3; the operator confirms or reverts by re-adding the id to
 Mechanics pins shipped with the rebuilds: bar rises thigh→clavicle on a
 strict torso (curl); rope tail descends >20 units, upper arm untouched,
 no line spans body width (pushdown); both arm facets tint independently.
+
+## STATUS 2026-08-17 — typed props; sheets regenerated
+
+Owner-led review session: four demos read against reference material
+(Lift Manual illustrations + photos, supplied by the operator as
+mechanics references — NOT as art to copy, and they do not satisfy the
+roadmap's rights-cleared-reference gate, which stays open).
+
+The session's finding was a pattern rather than four defects. Every demo
+reviewed had a GEAR problem and no demo had a body problem: curl and
+bench drew a lone disc, the pushdown's rope never split, the press drew
+nothing at all. That is the roadmap's Phase-3 "typed props" arrived at
+from evidence, so props moved into `src/lib/bodyProps.ts` — a typed
+union plus one pure resolver, replacing two divergent branch chains (the
+anterior copy of `plate-end` was both stale AND unreachable, since every
+`plate-end` demo is a side demo).
+
+| Demo                 | Delta                                                                                                                                                                                                                           |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| rope-tricep-pushdown | Rope now SPLITS toward lockout (instruction 3 and the tip both promise it; one strand could not), tails hang under GRAVITY rather than colinear with the cable, and it is sized to read as rope. Strands fan off the pull axis. |
+| overhead-press       | Bar path was UNREACHABLE — hypot(14, 53) = 54.82 on a 54.02 arm — so the solve clamped and the joint caps covered it. Grip 14 → 10; span 1.54× → 1.38× biacromial. Tint drops the invented `neck`.                              |
+| bench-press          | Never locked out: hypot(50, 8) = 50.64 on a 55.07 arm, elbow 46.4° short of straight at the frame labelled lockout. Now 54.2 → 99.5% of reach, an 11.7° soft lock.                                                              |
+
+Untouched demos re-render byte-identical, which is the evidence that the
+prop consolidation changed no behaviour.
+
+Two findings from the session are deliberately NOT fixed here, both
+because they need an operator decision rather than code:
+
+- **The press has no bar.** The anterior figure has no hand, which is
+  the reason held weights were removed on 2026-07-03. The press now
+  DECLARES its bar path (tested) while drawing nothing, so the prop is
+  aimed correctly if an anterior grip is ever approved.
+- **Bench elbow tuck cannot be shown in this view.** Instruction 3, the
+  tip and the first common mistake are all about holding ~45°, which is
+  a transverse-plane angle that a true profile projects away. Every
+  reference solves it with a three-quarter camera; the rig has
+  anterior / posterior / side only.
+
+Also retracted from the review: "the profile bar reads as a wheel". In
+a true orthographic profile a barbell IS a disc and a hub — the far
+sleeve sits directly behind the near one. Drawing it offset would be a
+depth cheat, not a legibility fix.

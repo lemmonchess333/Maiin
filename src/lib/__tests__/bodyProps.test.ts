@@ -100,16 +100,22 @@ describe("ropeAttachment", () => {
 
   it("hangs the tails straight down whatever the cable is doing", () => {
     // The rope used to extend colinearly with the cable, so at the
-    // folded start the ends stuck out FORWARDS. Rope obeys gravity: the
-    // vertical drop is identical no matter where the pulley sits.
-    const drops = (pulley: Pt) =>
-      circles(ropeAttachment(pulley, HAND, 0.5))
-        .filter(([, , r]) => r === 2.4)
-        .map(([, y]) => y - HAND[1]);
-    const straightAbove = drops([60, -40]);
-    const wellForward = drops([140, -10]);
-    for (const d of [...straightAbove, ...wellForward]) {
-      expect(d).toBeCloseTo(13, 5);
+    // folded start the ends stuck out FORWARDS. Rope obeys gravity: each
+    // tail drops the same distance below the grip it hangs from, no
+    // matter where the pulley sits. Measured on the tail SEGMENT rather
+    // than from the hand — the grips fan off the pull axis, so the hand
+    // is not the thing a tail hangs from.
+    const tailDrops = (pulley: Pt) => {
+      const all = lines(ropeAttachment(pulley, HAND, 0.5));
+      // cable, then per strand: yoke→grip, grip→tail.
+      return [all[2], all[4]].map(([, y1, , y2]) => y2 - y1);
+    };
+    for (const drop of [
+      ...tailDrops([60, -40]), // pulley straight overhead
+      ...tailDrops([140, -10]), // pulley well forward
+      ...tailDrops([-20, 40]), // pulley behind and low
+    ]) {
+      expect(drop).toBeCloseTo(13, 5);
     }
   });
 

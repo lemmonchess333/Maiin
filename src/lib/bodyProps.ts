@@ -174,10 +174,16 @@ export function ropeAttachment(pulley: Pt, hand: Pt, spread: number): string {
   const sep = 1.6 + 2.2 * spread;
   const splay = 1.4 + 3.6 * spread;
   const tailLen = 13;
+  // Strands fan PERPENDICULAR to the pull axis. Offsetting them on
+  // screen-x instead put the two grips either side of a yoke that sits
+  // off-axis from the hand, so the strands crossed into an X over the
+  // thigh at lockout — a scribble, not a rope.
+  const px = -uy;
+  const py = ux;
 
   const strand = (side: -1 | 1, colour: string) => {
-    const gx = hand[0] + side * sep;
-    const gy = hand[1];
+    const gx = hand[0] + side * sep * px;
+    const gy = hand[1] + side * sep * py;
     // Tail falls from the grip: straight down (gravity), drifting out
     // with the spread.
     const tx = gx + side * splay;
@@ -192,10 +198,12 @@ export function ropeAttachment(pulley: Pt, hand: Pt, spread: number): string {
   return (
     `<line x1="${n(pulley[0])}" y1="${n(pulley[1])}" x2="${n(yoke[0])}" y2="${n(yoke[1])}" stroke="${GEAR}" stroke-width="1.1"/>` +
     `<circle cx="${n(pulley[0])}" cy="${n(pulley[1] + 2)}" r="3.2" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>` +
-    // Far strand first so the near one overlaps it.
+    // Far strand first so the near one overlaps it. The near strand
+    // takes the LIGHTER tone: it spends most of the arc over the dark
+    // stage rather than over the body, where GEAR_DARK disappeared.
     strand(-1, GEAR_FAR) +
     `<rect x="${n(yoke[0] - 2.6)}" y="${n(yoke[1] - 2)}" width="5.2" height="4" rx="1.4" fill="${GEAR}"/>` +
-    strand(1, GEAR_DARK)
+    strand(1, GEAR)
   );
 }
 

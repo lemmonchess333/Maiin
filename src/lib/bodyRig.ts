@@ -13,11 +13,19 @@
  *  - arms rotate about the measured shoulder/elbow pivots (in-plane);
  *  - squats/hinges read via vertical compression about the knee/hip lines
  *    plus body drop — the standard stylization for frontal anatomy figures;
- *  - NO held weights. Barbells/dumbbells were built and removed: the
- *    figure has no hands, so a held prop always read detached (product
- *    owner call, 2026-07-03). The movement + muscle tint carry the
- *    meaning. Only STRUCTURAL equipment survives — the bar a pull-up
- *    hangs from, the pulldown cable — drawn as thin scene lines.
+ *  - Held weights are scoped BY CAMERA, not banned. They were built and
+ *    removed on 2026-07-03 (product owner) because "the figure has no
+ *    hands, so a held prop always read detached" — which is still true
+ *    of the anterior/posterior figure, whose arm chain ends at the
+ *    forearm. The profile rig later grew a real `handL` group, and held
+ *    gear came back THERE and only there: the deadlift's plate, the
+ *    curl's bar, the pushdown's rope. Front and back views still carry
+ *    structural equipment only — the bar a pull-up hangs from, the
+ *    pulldown cable. Read that decision as scoped, not reversed; the
+ *    overhead press declares its bar path and deliberately draws no bar.
+ *
+ * Props themselves live in `bodyProps.ts` — typed state, one pure
+ * resolver, both renderers going through it.
  *
  * Everything is deterministic data → testable, theme-consistent, zero assets.
  */
@@ -503,17 +511,19 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
   "overhead-press": {
     view: "anterior",
     concentricTo: 1,
-    /* Matches the catalogue entry's own secondaryMuscles (Triceps,
-     * Upper Chest, Core). It used to light `neck` — which the catalogue
-     * never claims — while leaving the chest and abs dark, even though
-     * the brace is what BOTH the tip ("squeeze glutes and abs like a
-     * vice") and the first common mistake ("arching the lower back to
-     * muscle the bar up") are about. */
+    /* Drops `neck`, which the catalogue entry never claims among its
+     * secondaryMuscles and which nothing justified.
+     *
+     * It does NOT add the two the catalogue DOES claim — Upper Chest and
+     * Core. Tried, and rejected on the render: the anterior chest and
+     * abs polygons are large enough that lighting them turns the whole
+     * torso purple and the primary movers stop reading at all. The
+     * catalogue field says what an exercise TRAINS; a tint has to say
+     * what to look at. The brace still gets said — in the tip and the
+     * first common mistake, which is where it belongs. */
     tint: {
       "front-deltoids": "primary",
       triceps: "secondary",
-      chest: "secondary",
-      abs: "secondary",
     },
     pose: (e) => {
       /* Bar-path press (2026-07-27 owner feedback rebuild). The old

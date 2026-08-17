@@ -119,15 +119,24 @@ describe("renderBodyDemo", () => {
     // behaviour, so at the folded start they stuck out FORWARD instead
     // of dropping past the grip. Rope hangs down whatever the cable is
     // doing, so the vertical drop is constant across the whole arc.
-    const drops = [0, 0.5, 1].map((t) => {
-      const hand = applyToPoint(
-        SIDE_ANCHORS.hand,
-        BODY_DEMOS["rope-tricep-pushdown"].pose(t).handL ?? []
-      );
-      return ropeTails(t).map(([, y]) => y - hand[1]);
-    });
-    for (const frame of drops) {
-      for (const drop of frame) expect(drop).toBeCloseTo(13, 1);
+    // The cable swings through the whole arc, so a constant drop can
+    // only come from gravity. Each tail is the line ENDING at a knob.
+    for (const t of [0, 0.5, 1]) {
+      const svg = renderBodyDemo("rope-tricep-pushdown", t);
+      const segs = [
+        ...svg.matchAll(
+          /<line x1="(-?[\d.]+)" y1="(-?[\d.]+)" x2="(-?[\d.]+)" y2="(-?[\d.]+)"/g
+        ),
+      ].map((m) => m.slice(1, 5).map(Number));
+      const tails = ropeTails(t);
+      expect(tails.length).toBe(2);
+      for (const [tx, ty] of tails) {
+        const seg = segs.find(
+          ([, , x2, y2]) => Math.abs(x2 - tx) < 0.06 && Math.abs(y2 - ty) < 0.06
+        );
+        expect(seg, `tail segment @${t}`).toBeDefined();
+        expect(seg![3] - seg![1], `drop @${t}`).toBeCloseTo(13, 1);
+      }
     }
   });
 
