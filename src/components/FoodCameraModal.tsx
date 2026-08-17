@@ -17,6 +17,45 @@ import { logger } from "@/lib/logger";
 import { THEME } from "@/lib/theme";
 
 type CaptureMode = "food" | "label";
+
+/* Scan-stage copy — flavour lines for the analysis wait, rotating on a
+ * timer and HOLDING on the last (a cycle that wraps reads as the scan
+ * starting over; a sequence that settles reads as progress). They
+ * describe what the model genuinely does in one pass — never a fake
+ * progress bar, never a number we don't have yet. Two sets because a
+ * nutrition label is not a plate. */
+export const SCAN_STAGES_FOOD = [
+  "Reading your plate…",
+  "Spotting ingredients…",
+  "Sizing portions…",
+  "Counting the macros…",
+] as const;
+export const SCAN_STAGES_LABEL = [
+  "Reading the label…",
+  "Finding the serving size…",
+  "Counting the macros…",
+] as const;
+const SCAN_STAGE_MS = 1300;
+
+/** Current stage line while `active`; resets to the first line each
+ *  time a new analysis starts. Exported so the hold-on-last behaviour
+ *  is unit-testable with fake timers, without driving a camera. */
+export function useScanStages(
+  active: boolean,
+  stages: readonly string[]
+): string {
+  const [index, setIndex] = useState(0);
+  useEffect(() => {
+    if (!active) return;
+    setIndex(0);
+    const id = setInterval(
+      () => setIndex((i) => Math.min(i + 1, stages.length - 1)),
+      SCAN_STAGE_MS
+    );
+    return () => clearInterval(id);
+  }, [active, stages]);
+  return stages[Math.min(index, stages.length - 1)];
+}
 type TabMode = "food" | "barcode" | "label";
 /**
  * Camera state machine.
@@ -87,12 +126,22 @@ export default function FoodCameraModal({
      already been taken. */
   const [preview, setPreview] = useState<string | null>(null);
   const reducedMotion = useReducedMotion();
+  /* Drop the held frame when the modal closes so a later scan can never
+     flash the previous meal. (The component stays mounted across
+     open/close — `open` only gates the render.) */
+  useEffect(() => {
+    if (!open) setPreview(null);
+  }, [open]);
   const streamRef = useRef<MediaStream | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const stopZXingRef = useRef<null | (() => void)>(null);
 
   const [tab, setTab] = useState<TabMode>("food");
+  const stageLine = useScanStages(
+    loading,
+    tab === "label" ? SCAN_STAGES_LABEL : SCAN_STAGES_FOOD
+  );
   const [facing, setFacing] = useState<"environment" | "user">("environment");
   const [busy, setBusy] = useState(false);
   const [barcodeHint, setBarcodeHint] = useState<string>(
@@ -347,6 +396,127 @@ export default function FoodCameraModal({
   // instead of the camera preview. Gives the user a clear path back to
   // the happy case (upload from library or type the meal manually)
   // rather than silently closing the modal.
+  /* Hoisted because the modal has TWO returns — the camera surface and
+     the camera-blocked fallback — and the fallback still offers photo-
+     library upload. Rendering the overlay only in the main return
+     re-created the original looks-frozen bug for exactly the users
+     most likely to hit it: anyone who denied camera permission and
+     logs meals from the library every time. */
+  const analysisOverlay = (
+    <>
+      {/* Analysis in flight — the scan.
+        The modal is `fixed inset-0` and opaque and stays open for the
+        whole round-trip (`setCameraOpen(false)` runs only after the
+        await), so this IS the wait. Design decisions, in order of
+        what they fix:
+
+        - The captured photo is the HERO: near full width, full
+          brightness. It is the most delightful asset available in
+          this moment — the user's own meal — and the previous
+          treatment dimmed it to 70% inside a 260px stamp.
+        - The scanner is a thin bright LINE with a gradient trail,
+          not a soft band (a 64px smudge reads as an artefact). It
+          replaces the spinner outright: one motion on the surface,
+          per the one-ambient-loop rule. The mover is a full-height
+          layer animating its own transform from -100% to 0%, so the
+          line sweeps top → bottom whatever the stage's size.
+        - Copy rotates through honest stages and HOLDS on the last.
+          It is aria-hidden; the status div carries one stable label
+          so screen readers hear "Analyzing food" once, not a feed.
+        - Reduced motion: corners + photo + static-but-advancing
+          copy. No laser. Content change is information, not motion.
+        - Barcode lookups (and any wait with no captured frame) fall
+          back to the plain spinner row — a scan reticle over
+          nothing, or over a STALE previous photo, would be worse
+          than dull. */}
+      {loading && (
+        <div
+          className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-6 bg-black/85 px-8"
+          role="status"
+          aria-live="polite"
+          aria-label="Analyzing food"
+        >
+          {preview && tab !== "barcode" ? (
+            <>
+              <div
+                className="relative w-full max-w-[340px] aspect-[4/5]"
+                data-testid="scan-frame"
+              >
+                <img
+                  src={preview}
+                  alt=""
+                  className="absolute inset-0 size-full rounded-3xl object-cover"
+                />
+
+                {/* Reticle corners, seated just OUTSIDE the photo so
+                  they frame it instead of sinking into it. */}
+                {[
+                  "-top-1 -left-1 border-t-[3px] border-l-[3px] rounded-tl-[20px]",
+                  "-top-1 -right-1 border-t-[3px] border-r-[3px] rounded-tr-[20px]",
+                  "-bottom-1 -left-1 border-b-[3px] border-l-[3px] rounded-bl-[20px]",
+                  "-bottom-1 -right-1 border-b-[3px] border-r-[3px] rounded-br-[20px]",
+                ].map((corner) => (
+                  <span
+                    key={corner}
+                    aria-hidden
+                    data-testid="scan-corner"
+                    className={cn("absolute size-8", corner)}
+                    style={{ borderColor: THEME.semantic.nutrition }}
+                  />
+                ))}
+
+                {/* Laser */}
+                {!reducedMotion && (
+                  <div
+                    aria-hidden
+                    data-testid="scan-laser"
+                    className="absolute inset-0 overflow-hidden rounded-3xl"
+                  >
+                    <motion.div
+                      className="absolute inset-0 will-change-transform"
+                      initial={{ y: "-100%" }}
+                      animate={{ y: "0%" }}
+                      transition={{
+                        duration: 1.8,
+                        ease: "easeInOut",
+                        repeat: Infinity,
+                        repeatDelay: 0.25,
+                      }}
+                    >
+                      <div
+                        className="absolute inset-x-0 bottom-[2px] h-16 opacity-35"
+                        style={{
+                          background: `linear-gradient(to bottom, transparent, ${THEME.semantic.nutrition})`,
+                        }}
+                      />
+                      <div
+                        className="absolute inset-x-0 bottom-0 h-[2.5px] opacity-90"
+                        style={{
+                          background: THEME.semantic.nutrition,
+                          boxShadow: `0 0 12px 2px ${THEME.semantic.nutrition}`,
+                        }}
+                      />
+                    </motion.div>
+                  </div>
+                )}
+              </div>
+              <p aria-hidden className="text-[15px] font-semibold text-white">
+                {stageLine}
+              </p>
+            </>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Spinner size="sm" variant="inverse" label="Fetching nutrition" />
+              <p className="text-sm font-medium text-white">
+                Fetching nutrition…
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  );
+
   if (cameraBlocked) {
     const deniedCopy =
       cameraState === "denied"
@@ -435,6 +605,7 @@ export default function FoodCameraModal({
           onChange={onFileChange}
           className="hidden"
         />
+        {analysisOverlay}
       </div>
     );
   }
@@ -485,65 +656,7 @@ export default function FoodCameraModal({
           WKWebView), and it is the ONE ambient loop on this surface.
           Reduced motion gets the settled state — brackets and copy, no
           travel. */}
-      {loading && (
-        <div
-          className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-5 bg-black/80 px-8"
-          role="status"
-          aria-live="polite"
-        >
-          <div className="relative w-full max-w-[260px] aspect-square">
-            {preview && (
-              <img
-                src={preview}
-                alt=""
-                className="absolute inset-0 size-full rounded-2xl object-cover opacity-70"
-              />
-            )}
-
-            {/* Reticle corners */}
-            {[
-              "top-0 left-0 border-t-2 border-l-2 rounded-tl-2xl",
-              "top-0 right-0 border-t-2 border-r-2 rounded-tr-2xl",
-              "bottom-0 left-0 border-b-2 border-l-2 rounded-bl-2xl",
-              "bottom-0 right-0 border-b-2 border-r-2 rounded-br-2xl",
-            ].map((corner) => (
-              <span
-                key={corner}
-                aria-hidden
-                className={cn("absolute size-8", corner)}
-                style={{ borderColor: THEME.semantic.nutrition }}
-              />
-            ))}
-
-            {/* Sweep */}
-            {!reducedMotion && (
-              <div className="absolute inset-0 overflow-hidden rounded-2xl">
-                <motion.div
-                  aria-hidden
-                  className="absolute inset-x-0 h-16 opacity-30"
-                  style={{
-                    background: `linear-gradient(to bottom, transparent, ${THEME.semantic.nutrition}, transparent)`,
-                  }}
-                  initial={{ y: "-100%" }}
-                  animate={{ y: "400%" }}
-                  transition={{
-                    duration: 1.6,
-                    ease: "easeInOut",
-                    repeat: Infinity,
-                  }}
-                />
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Spinner size="sm" variant="inverse" label="Analyzing food" />
-            <p className="text-sm font-medium text-white">
-              Analysing your meal…
-            </p>
-          </div>
-        </div>
-      )}
+      {analysisOverlay}
 
       {/* camera */}
       <video
