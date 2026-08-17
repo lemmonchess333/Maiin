@@ -589,6 +589,48 @@ describe("renderBodyDemo", () => {
     expect(Math.abs(first[1] - floor)).toBeLessThan(3);
   });
 
+  it("push-up plants its PALM, not its wrist", () => {
+    /* The hand was the only piece crossing the drawn floor — 5.8 units
+       through it at the top, easing to 3.3 at the bottom. The VARYING
+       depth is what identifies the cause: a merely mis-placed plant is
+       off by a constant, so something had to be rotating. It was the
+       hand, riding `arm.fore` and swinging with the forearm.
+
+       A push-up hand is flat on the floor for the whole rep; the wrist
+       angle is what changes. And the plant has to be measured on the
+       hand OUTLINE, because `PUSHUP_HAND` is the wrist anchor and the
+       piece overhangs it — aiming the wrist at the floor buries the palm.
+       Same fix-class as a barbell grip: the contact point is where the
+       body meets the world, never the joint above it.
+
+       Asserted on the drawn geometry rather than an anchor, since an
+       anchor is precisely what was wrong. */
+    const outline = SIDE_PIECES.find((p) => p.group === "handL")!.outline as [
+      number,
+      number,
+    ][];
+    const floor = BODY_DEMOS["push-ups"].groundY!;
+    for (const t of [0, 0.25, 0.5, 0.75, 1]) {
+      const ops = BODY_DEMOS["push-ups"].pose(t).handL!;
+      const lowest = Math.max(...outline.map((q) => applyToPoint(q, ops)[1]));
+      expect(
+        lowest - floor,
+        `palm is ${(lowest - floor).toFixed(2)} off the floor at t=${t}`
+      ).toBeCloseTo(0, 6);
+    }
+
+    /* And the constant bodyRig seats it against is the demo's own floor.
+       They are declared separately, so nothing but this stops the plant
+       from being solved onto a line the scene does not draw. */
+    const src = readFileSync(
+      resolve(dirname(fileURLToPath(import.meta.url)), "../bodyRig.ts"),
+      "utf8"
+    );
+    expect(Number(src.match(/const PUSHUP_GROUND = ([\d.]+);/)![1])).toBe(
+      floor
+    );
+  });
+
   it("pushdown: the rope's knotted tail travels down to lockout", () => {
     // The tail knob is the LAST circle in the svg (sceneFront renders
     // after the body) — its descent is the extension arc.

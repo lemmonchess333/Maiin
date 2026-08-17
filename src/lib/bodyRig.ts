@@ -278,6 +278,45 @@ const PUSHUP_TOP_BETA = (() => {
   return (lo + hi) / 2;
 })();
 
+/** Where the push-up's palms meet the world. Mirrors the demo's own
+ *  `groundY`; `push-up plants its palm` pins the two equal. */
+const PUSHUP_GROUND = 158.5;
+
+/* The push-up hand's ONE transform: prone, flat, palm on the ground line.
+ *
+ * Built from the top-of-rep frame -- the arm is straight there, so the
+ * forearm axis is the honest wrist orientation -- then dropped by however
+ * far the palm's lowest vertex misses the floor. Measured off the real
+ * `handL` outline rather than the wrist anchor, because the wrist anchor
+ * is exactly what got this wrong: `PUSHUP_HAND` is the WRIST and the hand
+ * piece overhangs it, so aiming the wrist at the plant buries the palm.
+ * Same fix-class as a barbell grip -- the contact point is where the body
+ * actually meets the world, never the joint above it. */
+const PUSHUP_HAND_OPS: Op[] = (() => {
+  const bodyOps: Op[] = [
+    { kind: "rotate", deg: 90, pivot: [44, 100] },
+    { kind: "rotate", deg: PUSHUP_TILT, pivot: PUSHUP_HAND },
+    { kind: "rotate", deg: PUSHUP_TOP_BETA, pivot: PUSHUP_TOE },
+  ];
+  const hPre = applyToPoint(PUSHUP_HAND, [
+    { kind: "rotate", deg: -PUSHUP_TOP_BETA, pivot: PUSHUP_TOE },
+    { kind: "rotate", deg: -PUSHUP_TILT, pivot: PUSHUP_HAND },
+    { kind: "rotate", deg: -90, pivot: [44, 100] },
+  ]);
+  const arm = aimArm(
+    { S: SIDE_ANCHORS.shoulder, E: SIDE_ANCHORS.elbow, H: SIDE_ANCHORS.hand },
+    solveElbow(SIDE_ANCHORS.shoulder, hPre, SIDE_UPPER_LEN, SIDE_FORE_LEN, -1),
+    hPre,
+    0
+  );
+  const base: Op[] = [...arm.fore, ...bodyOps];
+  const outline =
+    (SIDE_PIECES.find((piece) => piece.group === "handL")?.outline as Pt[]) ??
+    [];
+  const lowest = Math.max(...outline.map((q) => applyToPoint(q, base)[1]));
+  return [...base, { kind: "translate", dx: 0, dy: PUSHUP_GROUND - lowest }];
+})();
+
 /* Muscle-aura rings — nested convex hulls at falling opacity (the
  * no-filter fake blur; see the glow block in the renderers). */
 const GLOW_RINGS: [number, number][] = [
@@ -1482,7 +1521,18 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         shankR: bodyOps,
         upperArmL: [...arm.upper, ...bodyOps],
         foreArmL: [...arm.fore, ...bodyOps],
-        handL: [...arm.fore, ...bodyOps],
+        /* THE HAND DOES NOT ROTATE. It used to ride `arm.fore`, so it
+         * swung with the forearm and drove the palm 5.8 units through the
+         * floor at the top, easing to 3.3 at the bottom -- and the
+         * VARYING depth is the tell, since a merely mis-placed plant
+         * would be off by a constant. Every other piece was clear; only
+         * `handL` crossed.
+         *
+         * A push-up hand is flat on the floor for the whole rep and it is
+         * the WRIST ANGLE that changes. So the hand takes one fixed
+         * transform. Fixed also means it cannot drift off the plant,
+         * which is the property the lockout work already pinned. */
+        handL: PUSHUP_HAND_OPS,
       };
     },
     scene: () =>
