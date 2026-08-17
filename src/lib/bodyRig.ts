@@ -13,16 +13,14 @@
  *  - arms rotate about the measured shoulder/elbow pivots (in-plane);
  *  - squats/hinges read via vertical compression about the knee/hip lines
  *    plus body drop — the standard stylization for frontal anatomy figures;
- *  - Held weights are scoped BY CAMERA, not banned. They were built and
- *    removed on 2026-07-03 (product owner) because "the figure has no
- *    hands, so a held prop always read detached" — which is still true
- *    of the anterior/posterior figure, whose arm chain ends at the
- *    forearm. The profile rig later grew a real `handL` group, and held
- *    gear came back THERE and only there: the deadlift's plate, the
- *    curl's bar, the pushdown's rope. Front and back views still carry
- *    structural equipment only — the bar a pull-up hangs from, the
- *    pulldown cable. Read that decision as scoped, not reversed; the
- *    overhead press declares its bar path and deliberately draws no bar.
+ *  - Held weights follow the HANDS. They were built and removed on
+ *    2026-07-03 (product owner) because "the figure has no hands, so a
+ *    held prop always read detached" — and that premise was tracked,
+ *    not frozen: the profile rig grew a `handL` group and held gear
+ *    returned there (deadlift plate, curl bar, pushdown rope); the
+ *    anterior/posterior figures got corrected wrist anchors and fists
+ *    on 2026-08-17, and the press barbell and lateral-raise dumbbells
+ *    followed. A view earns held gear by having a grip to put it in.
  *
  * Props themselves live in `bodyProps.ts` — typed state, one pure
  * resolver, both renderers going through it.
@@ -465,7 +463,14 @@ export interface BodyDemo {
   /** STRUCTURAL equipment only (no held weights — the figure has no
    *  hands): a fixed-bar is the overhead bar the body hangs from
    *  (pull-up); a cable-bar is the machine bar + cable (pulldown). */
-  equip?: "fixed-bar" | "cable-bar" | "dip-bars" | "plate-end" | "rope";
+  equip?:
+    | "fixed-bar"
+    | "cable-bar"
+    | "dip-bars"
+    | "plate-end"
+    | "rope"
+    | "barbell"
+    | "dumbbell";
   /** plate-end disc radius (default 10). The deadlift draws a
    *  full-size 45 (r=26 ≈ 45 cm on a 175 cm figure) so the bottom
    *  frame reads bar-near-the-floor. */
@@ -606,9 +611,14 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
 
   "overhead-press": {
     view: "anterior",
-    /* The re-fitted lockout carries the hands ~6 units higher than
-     * before, past the default canvas top of -14. */
-    viewBox: "-8 -20 116 230",
+    equip: "barbell",
+    /* Plate radius 9 on the shaft the hands ride — visibly lighter
+     * than the deadlift's full-size 16, heavier than a bell. */
+    plateR: 9,
+    /* The re-fitted lockout carries the hands ~6 units higher than the
+     * default canvas top of -14 — and the PLATES ride 9 above the
+     * grips, so the canvas tops out at -24 or lockout clips them. */
+    viewBox: "-8 -24 116 234",
     concentricTo: 1,
     /* Drops `neck`, which the catalogue entry never claims among its
      * secondaryMuscles and which nothing justified.
@@ -660,17 +670,13 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         foreArmR: R.fore,
       };
     },
-    /* Declares the constraint the hands ride WITHOUT drawing anything —
-     * `resolveProp` renders nothing for a demo that names no `equip`.
-     *
-     * The press has no bar, and that is not an oversight to patch here:
-     * the anterior figure's arm chain ends at the forearm (there is no
-     * hand group), which is exactly why the product owner removed held
-     * weights on 2026-07-03 — "a held prop always read detached". Side
-     * demos regained held gear only because the profile rig has a real
-     * `handL` to hang it from. Declaring the path anyway costs nothing,
-     * lets the test pin the hands to it, and aims the prop at the right
-     * points if an anterior grip is ever approved. */
+    /* The bar is REAL now. Its equipment is Barbell and three of its
+     * four instructions name the bar, yet for months this demo pressed
+     * nothing: held weights left the front views on 2026-07-03 because
+     * "the figure has no hands, so a held prop always read detached" —
+     * and that was true until the wrist anchors were put on the art and
+     * the fists landed (2026-08-17). One path both solves the arms and
+     * places the bar, so the two cannot disagree. */
     bar: (e) => pressBarPath(e),
   },
 
@@ -1015,10 +1021,18 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
 
   "lateral-raise": {
     view: "anterior",
+    /* With fists on the figure, a hand gripping visible air reads
+     * worse than the stump did — and this is the most-served demo id
+     * in the templates. End-on bells: see `dumbbell` in bodyProps for
+     * why a front view genuinely cannot show a dumbbell any other
+     * way. */
+    equip: "dumbbell",
     concentricTo: 1,
     // A raise at full span is nearly two arm-lengths wide — this is the
-    // one movement whose envelope genuinely needs a wider canvas.
-    viewBox: "-36 -14 172 224",
+    // one movement whose envelope genuinely needs a wider canvas, and
+    // the bells (r 5.5 past the wrists at full abduction) push it
+    // wider still.
+    viewBox: "-44 -14 188 224",
     tint: { "front-deltoids": "primary", neck: "secondary" },
     pose: (e) => {
       // Whole arm sweeps out to shoulder height (proper form stops at
@@ -1046,6 +1060,12 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         ],
       };
     },
+    /* Bells sit IN the solved fists — same ops as the forearms, so
+     * they ride the raise (and the girdle lift) by construction. */
+    bar: (_e, pose) => [
+      applyToPoint(ANT.handL, pose.foreArmL ?? []),
+      applyToPoint(ANT.handR, pose.foreArmR ?? []),
+    ],
   },
 
   "calf-raise": {
@@ -1494,6 +1514,23 @@ function resolveProp(
       break;
     case "dip-bars":
       state = { kind: "dipBars", left, right, floorY: scene.floorY };
+      break;
+    case "barbell":
+      // Frontal: the two grips ARE the bar's ends, so grip width is bar
+      // width and the shaft cannot drift off the hands.
+      state = {
+        kind: "rigidBar",
+        view: "frontal",
+        left,
+        right,
+        plateR: demo.plateR ?? 10,
+      };
+      break;
+    case "dumbbell":
+      // One bell per solved grip, end-on. 5.5 sits between the fist
+      // (~7 long) and the press plate (9): clearly gear, clearly
+      // lighter than a barbell plate.
+      state = { kind: "dumbbell", hands: [left, right], bellR: 5.5 };
       break;
     case "plate-end":
       // Profile: both grips stack behind one another, so the near hand

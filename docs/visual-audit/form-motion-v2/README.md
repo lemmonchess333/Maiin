@@ -246,3 +246,36 @@ renderer rather than a reproduction.
 Next: PR3 — the overhead-press barbell and lateral-raise dumbbells.
 Both props are already built and tested in `bodyProps.ts`; PR3 is
 wiring, not building.
+
+## STATUS 2026-08-17f — PR3: the front views hold their weights
+
+The last of the three-PR sequence from
+`docs/proposals/anterior-grip-reconciliation.md`. Wiring plus one
+rebuild:
+
+| Demo           | Delta                                                                                                                                                                                                                                                     |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| overhead-press | Draws the barbell it has always described — shaft spanning both grips, plate off each sleeve, riding `pressBarPath` so the same numbers solve the arms and place the bar. Canvas top -20 → -24: the plates ride 9 above the grips and clipped at lockout. |
+| lateral-raise  | End-on dumbbells seated IN the solved fists (same ops as the forearms, so they ride the raise and the girdle lift by construction). Canvas widened for the bells at full abduction.                                                                       |
+
+Correction to the PR2 note above: "both props already built and tested"
+was HALF true. `frontalBarbell` survived the hands revert (it predates
+it); the `dumbbell` prop did not and was rebuilt here, this time with
+its own unit tests.
+
+Five new pins, mutation-checked: un-wiring either demo's equip,
+placing the bells at the REST anchors instead of the solved arm (the
+detached-prop failure, as a number), and drawing the dumbbell behind
+the body each fail exactly their own test. Untouched demos re-render
+byte-identical.
+
+The `bodyRig.ts` header's held-weights note is updated again — it
+still said "front and back views carry structural equipment only",
+which stopped being true this PR. The rule as it now stands: a view
+earns held gear by having a grip to put it in.
+
+Residue, deliberate: `squat` still draws no bar (pose problem, not a
+prop — the folded front-view grip was tried in July and read as broken
+polygons; its bodyweight/goblet aliases are served correctly as-is),
+and the raise's `neck` secondary tint is untouched here (same invented
+tint the press had; separate, one-line question for a review pass).

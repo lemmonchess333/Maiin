@@ -1,7 +1,11 @@
 # Anterior/posterior grip reconciliation
 
-**Status:** scoped, not started. Prerequisite for any held prop on the
-front or back views (fists, the overhead-press barbell, dumbbells).
+**Status:** COMPLETE, 2026-08-17. Spike → PR1 (arm geometry) →
+PR2 (fists) → PR3 (press barbell + lateral-raise dumbbells) all shipped
+on `claude/remaining-exercises-review-n4xpzh`, each with mutation-checked
+pins and regenerated sheets. One correction to the plan's assumption:
+`frontalBarbell` survived the hands revert but the `dumbbell` prop did
+NOT — PR3 rebuilt it (with unit tests) rather than just wiring it.
 
 Written after the 2026-08-17 hands attempt was shipped and reverted on
 sight — see `docs/visual-audit/form-motion-v2/README.md` STATUS

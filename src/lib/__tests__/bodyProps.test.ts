@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  dumbbell,
   frontalBarbell,
   profileBarbell,
   renderProp,
@@ -137,6 +138,42 @@ describe("ropeAttachment", () => {
         expect(Math.abs(x2 - x1)).toBeLessThan(40);
       }
     }
+  });
+});
+
+describe("dumbbell", () => {
+  it("draws one bell per hand, centred exactly on the grip", () => {
+    const hands: Pt[] = [
+      [12.3, 80.5],
+      [87.7, 80.5],
+    ];
+    const cs = circles(dumbbell(hands, 5.5));
+    expect(cs.length).toBe(6); // face + rim + hub, per hand
+    for (const [i, [cx, cy]] of cs.entries()) {
+      const hand = hands[Math.floor(i / 3)];
+      expect(cx).toBe(hand[0]);
+      expect(cy).toBe(hand[1]);
+    }
+  });
+
+  it("scales the whole construction with the bell", () => {
+    const rs = (r: number) =>
+      circles(dumbbell([[50, 50]], r)).map(([, , rr]) => rr);
+    const small = rs(5.5);
+    const big = rs(8);
+    for (let i = 0; i < small.length; i++) {
+      expect(big[i]).toBeGreaterThan(small[i]);
+    }
+  });
+
+  it("renders as held gear — in front, nothing behind", () => {
+    const { front, behind } = renderProp({
+      kind: "dumbbell",
+      hands: [[10, 90]],
+      bellR: 5.5,
+    });
+    expect(front).not.toBe("");
+    expect(behind).toBe("");
   });
 });
 

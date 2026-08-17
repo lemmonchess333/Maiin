@@ -19,13 +19,15 @@
  * after independently animating the body"). That is why each variant
  * carries its contacts in its own state rather than a free position.
  *
- * Held weights are deliberately absent from the frontal variants. The
- * product-owner call of 2026-07-03 removed them because the anterior
- * figure has no hand — its arm chain ends at the forearm — so a held
- * prop always read detached. Side-view demos regained held gear only
- * because the profile rig has a real `handL` group to hang it from.
- * Anything frontal stays structural (a bar the body hangs from, a
- * machine's cable) until the anterior figure grows a grip.
+ * Held weights are allowed on a view only where the figure has a hand
+ * to hold them. The product-owner call of 2026-07-03 removed them from
+ * the front/back views because "the figure has no hands, so a held
+ * prop always read detached" — true then: the arm chain stopped at the
+ * forearm. The profile rig grew a `handL` group and held gear returned
+ * there first; the anterior/posterior figures grew fists on 2026-08-17
+ * (corrected wrist anchors + the two-facet fist), which is what makes
+ * the frontal barbell and dumbbells below legitimate rather than a
+ * repeat of the detached-prop failure.
  */
 
 export type Pt = [number, number];
@@ -58,6 +60,8 @@ export type PropState =
   | { kind: "rigidBar"; view: "profile"; hand: Pt; plateR: number }
   /** Frontal barbell: shaft spanning both grips, a plate off each end. */
   | { kind: "rigidBar"; view: "frontal"; left: Pt; right: Pt; plateR: number }
+  /** A dumbbell in each hand, end-on at the solved grips. */
+  | { kind: "dumbbell"; hands: Pt[]; bellR: number }
   /** Cable + rope attachment, solved from the grip and the pulley. */
   | {
       kind: "ropeAttachment";
@@ -141,6 +145,30 @@ export function frontalBarbell(left: Pt, right: Pt, plateR: number): string {
 }
 
 /**
+ * A dumbbell, end-on at each grip.
+ *
+ * End-on is what a front view actually sees, not a shortcut: with the
+ * palm down through a lateral raise the handle runs front-to-back —
+ * into the screen — so only the near bell face shows. Angling the
+ * handle to reveal both bells is the same depth cheat declined for the
+ * profile barbell's far plate. The disc borrows the plate family's
+ * construction (face, rim, hub) at a smaller radius so held gear reads
+ * as one language, and the near bell draws OVER the fist because it is
+ * nearer the camera than the fingers wrapping the handle's middle.
+ */
+export function dumbbell(hands: Pt[], bellR: number): string {
+  const r = bellR;
+  return hands
+    .map(
+      ([x, y]) =>
+        `<circle cx="${n(x)}" cy="${n(y)}" r="${n(r)}" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="1"/>` +
+        `<circle cx="${n(x)}" cy="${n(y)}" r="${n(r * 0.58)}" fill="none" stroke="${GEAR}" stroke-width="1.1" opacity="0.7"/>` +
+        `<circle cx="${n(x)}" cy="${n(y)}" r="${n(r * 0.24)}" fill="${GEAR}"/>`
+    )
+    .join("");
+}
+
+/**
  * Cable + rope attachment.
  *
  * Three honesty repairs over the hand-rolled version this replaces:
@@ -219,6 +247,9 @@ export function renderProp(state: PropState): PropLayers {
             behind: "",
             front: frontalBarbell(state.left, state.right, state.plateR),
           };
+
+    case "dumbbell":
+      return { behind: "", front: dumbbell(state.hands, state.bellR) };
 
     case "ropeAttachment":
       return {

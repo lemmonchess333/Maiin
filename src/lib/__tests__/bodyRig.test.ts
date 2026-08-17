@@ -121,6 +121,73 @@ describe("renderBodyDemo", () => {
     expect(travel("pull-ups", POST_WRIST)).toBeLessThan(0.2);
   });
 
+  it("overhead press: a REAL bar spans the two grips", () => {
+    // Its equipment is Barbell, three of its four instructions name the
+    // bar, and for months the demo pressed nothing. The shaft must span
+    // past BOTH grips (sleeves), sit level at their height, and travel
+    // with the rep.
+    for (const t of [0, 0.5, 1]) {
+      const pose = BODY_DEMOS["overhead-press"].pose(t);
+      const grips = BODY_DEMOS["overhead-press"].bar!(t, pose)!;
+      const svg = renderBodyDemo("overhead-press", t);
+      const shaft = [
+        ...svg.matchAll(
+          /<line x1="(-?[\d.]+)" y1="(-?[\d.]+)" x2="(-?[\d.]+)" y2="(-?[\d.]+)"/g
+        ),
+      ].map((m) => m.slice(1, 5).map(Number))[0];
+      expect(shaft, `shaft @${t}`).toBeDefined();
+      expect(shaft[0]).toBeLessThan(grips[0][0]);
+      expect(shaft[2]).toBeGreaterThan(grips[1][0]);
+      expect(shaft[1]).toBeCloseTo(grips[0][1], 1);
+      expect(shaft[3]).toBeCloseTo(grips[1][1], 1);
+      // A plate off each sleeve — matched on the machined-edge stroke,
+      // since a bare <ellipse count also picks up the ground shadow.
+      expect((svg.match(/<ellipse[^>]*stroke="#565760"/g) ?? []).length).toBe(
+        2
+      );
+      // Nothing clips: the whole bar stays inside the declared canvas.
+      const [, top] = (BODY_DEMOS["overhead-press"].viewBox ?? "")
+        .split(/\s+/)
+        .map(Number);
+      expect(grips[0][1] - 9 - 1).toBeGreaterThan(top);
+    }
+    const shaftY = (t: number) =>
+      Number(
+        renderBodyDemo("overhead-press", t).match(
+          /<line[^>]*y1="(-?[\d.]+)"/
+        )![1]
+      );
+    expect(shaftY(0) - shaftY(1)).toBeGreaterThan(30);
+  });
+
+  it("lateral raise: a bell sits IN each fist through the whole arc", () => {
+    // The bells are drawn from the same solved ops as the forearms, so
+    // this pin is what keeps them from ever being placed independently
+    // of the arm — the detached-prop failure, as a number.
+    for (const t of [0, 0.5, 1]) {
+      const pose = BODY_DEMOS["lateral-raise"].pose(t);
+      const svg = renderBodyDemo("lateral-raise", t);
+      const bells = [
+        ...svg.matchAll(/<circle cx="(-?[\d.]+)" cy="(-?[\d.]+)" r="5.5"/g),
+      ].map((m) => [Number(m[1]), Number(m[2])]);
+      expect(bells.length, `@${t}`).toBe(2);
+      const wristL = applyToPoint(ANT_WRIST, (pose.foreArmL ?? []) as never[]);
+      const near = bells.some(
+        ([x, y]) => Math.hypot(x - wristL[0], y - wristL[1]) < 0.1
+      );
+      expect(near, `left bell on wrist @${t}`).toBe(true);
+    }
+    // And they RIDE the raise: out past the body and up to parallel.
+    const bellAt = (t: number) =>
+      [
+        ...renderBodyDemo("lateral-raise", t).matchAll(
+          /<circle cx="(-?[\d.]+)" cy="(-?[\d.]+)" r="5.5"/g
+        ),
+      ].map((m) => [Number(m[1]), Number(m[2])])[0];
+    expect(bellAt(0)[1] - bellAt(1)[1]).toBeGreaterThan(40); // rose
+    expect(bellAt(1)[0]).toBeLessThan(bellAt(0)[0] - 25); // swung out
+  });
+
   it("squat: the body visibly sinks at the bottom", () => {
     const top = Math.min(...polyYs(renderBodyDemo("squat", 0)));
     const bottom = Math.min(...polyYs(renderBodyDemo("squat", 1)));
