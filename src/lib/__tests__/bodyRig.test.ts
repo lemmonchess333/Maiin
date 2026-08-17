@@ -87,16 +87,48 @@ describe("renderBodyDemo", () => {
     expect(postY(up)).toBe(postY(down));
   });
 
-  it("pushdown: the rope's knotted tail travels down to lockout", () => {
-    // The tail knob is the LAST circle in the svg (sceneFront renders
-    // after the body) — its descent is the extension arc.
-    const knobY = (svg: string) => {
-      const cs = [...svg.matchAll(/<circle[^>]*cy="(-?[\d.]+)"[^>]*r="2"/g)];
-      return Number(cs[cs.length - 1][1]);
+  /** Both rope tails, as [x, y] — the knobs are the only r=2.4 circles. */
+  const ropeTails = (t: number): [number, number][] =>
+    [
+      ...renderBodyDemo("rope-tricep-pushdown", t).matchAll(
+        /<circle cx="(-?[\d.]+)" cy="(-?[\d.]+)" r="2\.4"/g
+      ),
+    ].map((m) => [Number(m[1]), Number(m[2])]);
+
+  it("pushdown: the rope's knotted tails travel down to lockout", () => {
+    const startY = Math.min(...ropeTails(0).map(([, y]) => y));
+    const endY = Math.min(...ropeTails(1).map(([, y]) => y));
+    expect(endY - startY).toBeGreaterThan(20);
+  });
+
+  it("pushdown: the rope SPLITS as the arms lock out", () => {
+    // Instruction 3 ("spreading the ends apart as your arms lock out")
+    // and the tip ("split the rope apart at the bottom") both promise
+    // this. The single-strand rope that shipped before could not: it
+    // contradicted the copy printed beside it.
+    const gap = (t: number) => {
+      const xs = ropeTails(t).map(([x]) => x);
+      expect(xs.length).toBe(2); // two ends, not one strand
+      return Math.abs(xs[1] - xs[0]);
     };
-    const start = knobY(renderBodyDemo("rope-tricep-pushdown", 0));
-    const end = knobY(renderBodyDemo("rope-tricep-pushdown", 1));
-    expect(end - start).toBeGreaterThan(20);
+    expect(gap(1)).toBeGreaterThan(gap(0) * 2);
+  });
+
+  it("pushdown: the tails hang under GRAVITY, not along the cable", () => {
+    // They used to be drawn as hand + cableDirection × 8 — rigid-rod
+    // behaviour, so at the folded start they stuck out FORWARD instead
+    // of dropping past the grip. Rope hangs down whatever the cable is
+    // doing, so the vertical drop is constant across the whole arc.
+    const drops = [0, 0.5, 1].map((t) => {
+      const hand = applyToPoint(
+        SIDE_ANCHORS.hand,
+        BODY_DEMOS["rope-tricep-pushdown"].pose(t).handL ?? []
+      );
+      return ropeTails(t).map(([, y]) => y - hand[1]);
+    });
+    for (const frame of drops) {
+      for (const drop of frame) expect(drop).toBeCloseTo(13, 1);
+    }
   });
 
   it("pushdown: elbow pinned — the upper arm never moves", () => {
@@ -265,6 +297,81 @@ describe("renderBodyDemo", () => {
         expect(seg(0, a, b, g), `${id}/${g}`).toBeCloseTo(seg(0.5, a, b, g), 1);
       }
     }
+  });
+
+  /* ── Bar paths must stay inside the arm's reach ──────────────────
+   * Both press-family demos wrote their bar path as absolute offsets
+   * with no reference to how long the arm actually is, and drifted in
+   * OPPOSITE directions without anything noticing:
+   *
+   *   overhead press  asked hypot(14, 53) = 54.82 of a 54.02 arm
+   *   bench press     asked hypot(50,  8) = 50.64 of a 55.07 arm
+   *
+   * The press over-reached, so `solveElbow` clamped at 0.999 of full
+   * extension and drew the hand ~0.85 short of the bar it was holding —
+   * invisible in the rendered chain, which stays rigid either way, and
+   * papered over by the joint caps. The bench under-reached, so the
+   * frame labelled lockout kept the elbow 46° short of straight while
+   * its own instruction said "full lockout".
+   *
+   * Reach alone cannot catch the clamp (a clamped chain still measures
+   * ~99.9% extended), so the press is pinned against its DECLARED path
+   * and the bench against the elbow it actually renders. */
+
+  it("overhead press: the hands stay ON the declared bar path", () => {
+    const armLen = Math.hypot(20 - 24, 71 - 48) + Math.hypot(10 - 20, 100 - 71);
+    for (const t of [0, 0.5, 1]) {
+      const bar = BODY_DEMOS["overhead-press"].bar!(
+        t,
+        BODY_DEMOS["overhead-press"].pose(t)
+      )!;
+      // The path itself has to be solvable — this is the guard the
+      // press did not have.
+      expect(
+        Math.hypot(bar[0][0] - 24, bar[0][1] - 48),
+        `path@${t}`
+      ).toBeLessThan(armLen);
+      // ...and the drawn hand has to actually be on it. A clamped solve
+      // fails HERE and nowhere else.
+      const hand = applyToPoint(
+        [10, 100],
+        (BODY_DEMOS["overhead-press"].pose(t).foreArmL ?? []) as never[]
+      );
+      expect(
+        Math.hypot(hand[0] - bar[0][0], hand[1] - bar[0][1]),
+        `hand@${t}`
+      ).toBeLessThan(0.2);
+    }
+  });
+
+  it("bench press: the rep finishes at a real lockout", () => {
+    const armLen =
+      Math.hypot(
+        SIDE_ANCHORS.elbow[0] - SIDE_ANCHORS.shoulder[0],
+        SIDE_ANCHORS.elbow[1] - SIDE_ANCHORS.shoulder[1]
+      ) +
+      Math.hypot(
+        SIDE_ANCHORS.hand[0] - SIDE_ANCHORS.elbow[0],
+        SIDE_ANCHORS.hand[1] - SIDE_ANCHORS.elbow[1]
+      );
+    const pose = BODY_DEMOS["bench-press"].pose(1);
+    const S = applyToPoint(SIDE_ANCHORS.shoulder, pose.upperArmL ?? []);
+    const E = applyToPoint(SIDE_ANCHORS.elbow, pose.upperArmL ?? []);
+    const H = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+    // Soft lock: straight to the eye, not hyperextended, not clamped.
+    const ua = [E[0] - S[0], E[1] - S[1]];
+    const fa = [H[0] - E[0], H[1] - E[1]];
+    const bend =
+      (Math.acos(
+        (ua[0] * fa[0] + ua[1] * fa[1]) /
+          (Math.hypot(...ua) * Math.hypot(...fa))
+      ) *
+        180) /
+      Math.PI;
+    expect(bend).toBeLessThan(15);
+    expect(bend).toBeGreaterThan(2);
+    // And the path stays under the ceiling, so nothing clamps.
+    expect(Math.hypot(H[0] - S[0], H[1] - S[1])).toBeLessThan(armLen);
   });
 
   it("rig acceptance: barbell plate present and pinned for bar lifts", () => {

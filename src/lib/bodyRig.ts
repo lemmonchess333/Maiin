@@ -24,6 +24,13 @@
 
 import { ANTERIOR, POSTERIOR, type BodyPoly } from "./bodyModelData";
 import { SIDE_PIECES, SIDE_ANCHORS } from "./bodySideData";
+import {
+  GEAR,
+  GEAR_DARK,
+  renderProp,
+  type PropLayers,
+  type PropState,
+} from "./bodyProps";
 import { THEME } from "./theme";
 
 /* ── Palette (exactly what the Form view's Model renders) ─────── */
@@ -31,8 +38,6 @@ import { THEME } from "./theme";
 const BODY = "#B6BDC3"; // react-body-highlighter DEFAULT_BODY_COLOR
 const PRIMARY = THEME.lifting; // #7B72E9
 const SECONDARY = THEME.liftingLight; // #9590E0
-const GEAR = "#4A4B52";
-const GEAR_DARK = "#35363C";
 /** The demo stage surface (--stage, #111113). Side-view pieces use it
  *  for their separation strokes, so the seams read as the stage showing
  *  through — identical language to the front/back facet gaps. */
@@ -379,23 +384,19 @@ export interface BodyDemo {
   /** STRUCTURAL equipment only (no held weights — the figure has no
    *  hands): a fixed-bar is the overhead bar the body hangs from
    *  (pull-up); a cable-bar is the machine bar + cable (pulldown). */
-  equip?: "fixed-bar" | "cable-bar" | "dip-bars" | "plate-end";
+  equip?: "fixed-bar" | "cable-bar" | "dip-bars" | "plate-end" | "rope";
   /** plate-end disc radius (default 10). The deadlift draws a
    *  full-size 45 (r=26 ≈ 45 cm on a 175 cm figure) so the bottom
    *  frame reads bar-near-the-floor. */
   plateR?: number;
-  /** Draw the equipment OVER the body (pushdown: the hands work in
-   *  front of the torso, so a behind-the-body bar would vanish). */
-  barInFront?: boolean;
+  /** `rope` only: the high-pulley anchor, fixed at the station. The
+   *  cable is solved from it to the grip every frame, so the gear is
+   *  never positioned independently of the body. */
+  pulley?: Pt;
   bar?: (_e: number, pose: Partial<Record<GroupName, Op[]>>) => [Pt, Pt] | null;
   /** Free scene furniture (a bench, a floor line) drawn behind the
    *  body — raw SVG in GEAR colours. Side-view demos use this. */
   scene?: (e: number, pose: Partial<Record<GroupName, Op[]>>) => string;
-  /** Scene gear drawn OVER the body (side view only): the rope + cable a
-   *  pushdown grips works in front of the figure, exactly like the
-   *  plate-end barbell. Receives the solved pose, so attachments are
-   *  drawn FROM the hand's constraint — never floating free of it. */
-  sceneFront?: (e: number, pose: Partial<Record<GroupName, Op[]>>) => string;
   /** Ground line override (hanging demos float above a lower floor). */
   groundY?: number;
   /** Shadow centre override (lying scenes aren't centred on x=50). */
@@ -405,6 +406,36 @@ export interface BodyDemo {
 }
 
 const lerp = (a: number, b: number, e: number) => a + (b - a) * e;
+
+/**
+ * Overhead-press bar path — ONE definition, read both by the pose (which
+ * solves the arms onto it) and by `bar` (which declares where the bar
+ * is). Two copies would be precisely the mirrored-constant drift this
+ * codebase keeps paying for.
+ *
+ * `PRESS_GRIP` is the offset outside each shoulder, so `2×GRIP + 52` is
+ * the bar width. It was 14 — an 80-unit span on a 52-unit shoulder
+ * width, 1.54× biacromial, where the exercise's own instruction is
+ * "grip just outside your shoulders" and every reference locks out with
+ * the arms close beside the ears.
+ *
+ * 14 also put the top of the path OUT OF REACH: hypot(14, 53) = 54.82
+ * against a 54.02-unit arm. `solveElbow` clamps at 0.999 of extension
+ * rather than failing, so the frame still rendered — with the hand
+ * ~0.85 short of the bar it was supposed to be holding, and the
+ * divergence-scaled joint caps covering an impossible target instead of
+ * an ordinary seam. The ceiling is hypot(GRIP, 53) ≤ 54.02, i.e.
+ * GRIP ≤ 10.45; widen the grip and the lockout must come down with it.
+ * The "hands stay ON the declared bar path" test pins exactly that.
+ */
+const PRESS_GRIP = 10;
+const pressBarPath = (e: number): [Pt, Pt] => {
+  const y = lerp(32, -5, e); // chin-height bottom → overhead lockout
+  return [
+    [ANT.shoulderL[0] - PRESS_GRIP, y],
+    [ANT.shoulderR[0] + PRESS_GRIP, y],
+  ];
+};
 
 export const BODY_DEMOS: Record<string, BodyDemo> = {
   squat: {
@@ -472,10 +503,17 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
   "overhead-press": {
     view: "anterior",
     concentricTo: 1,
+    /* Matches the catalogue entry's own secondaryMuscles (Triceps,
+     * Upper Chest, Core). It used to light `neck` — which the catalogue
+     * never claims — while leaving the chest and abs dark, even though
+     * the brace is what BOTH the tip ("squeeze glutes and abs like a
+     * vice") and the first common mistake ("arching the lower back to
+     * muscle the bar up") are about. */
     tint: {
       "front-deltoids": "primary",
       triceps: "secondary",
-      neck: "secondary",
+      chest: "secondary",
+      abs: "secondary",
     },
     pose: (e) => {
       /* Bar-path press (2026-07-27 owner feedback rebuild). The old
@@ -490,10 +528,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * a clavicle-level rack folds through the DEPTH axis, which a 2D
        * solve can't represent); top = lockout with a slight barbell V.
        * Same both-ends-constrained machinery as the pull-up/dips. */
-      const GRIP = 14; // grip offset outside each shoulder (bar width)
-      const y = lerp(32, -5, e); // chin-height bottom → overhead lockout
-      const hl: Pt = [ANT.shoulderL[0] - GRIP, y];
-      const hr: Pt = [ANT.shoulderR[0] + GRIP, y];
+      const [hl, hr] = pressBarPath(e);
       const L = aimArm(
         { S: ANT.shoulderL, E: ANT.elbowL, H: ANT.handL },
         solveElbow(ANT.shoulderL, hl, ANT_UPPER_LEN, ANT_FORE_LEN, 1),
@@ -513,6 +548,18 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         foreArmR: R.fore,
       };
     },
+    /* Declares the constraint the hands ride WITHOUT drawing anything —
+     * `resolveProp` renders nothing for a demo that names no `equip`.
+     *
+     * The press has no bar, and that is not an oversight to patch here:
+     * the anterior figure's arm chain ends at the forearm (there is no
+     * hand group), which is exactly why the product owner removed held
+     * weights on 2026-07-03 — "a held prop always read detached". Side
+     * demos regained held gear only because the profile rig has a real
+     * `handL` to hang it from. Declaring the path anyway costs nothing,
+     * lets the test pin the hands to it, and aims the prop at the right
+     * points if an anterior grip is ever approved. */
+    bar: (e) => pressBarPath(e),
   },
 
   "barbell-curl": {
@@ -563,6 +610,10 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
      * cable + rope are drawn FROM the solved hand point every frame —
      * gear as a constraint, never independent of the body. */
     view: "side",
+    /* High pulley: fixed at the top of the station, forward of the face
+     * so the cable clears the head through the whole arc. */
+    equip: "rope",
+    pulley: [72, -10],
     concentricTo: 1,
     tint: { triceps: "primary", forearm: "secondary" },
     pose: (e) => {
@@ -572,26 +623,9 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       ];
       return { foreArmL: fore, handL: fore };
     },
-    sceneFront: (_e, pose) => {
+    bar: (_e, pose) => {
       const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
-      /* High pulley: fixed at the top of the station, forward of the
-       * face so the cable clears the head through the whole arc. */
-      const pulley: Pt = [72, -10];
-      const dx = h[0] - pulley[0];
-      const dy = h[1] - pulley[1];
-      const len = Math.hypot(dx, dy) || 1;
-      const ux = dx / len;
-      const uy = dy / len;
-      /* Yoke where the cable meets the rope, a touch above the grip;
-       * the rope's knotted tail continues past the hand. */
-      const yoke: Pt = [h[0] - ux * 7, h[1] - uy * 7];
-      const tail: Pt = [h[0] + ux * 8, h[1] + uy * 8];
-      return (
-        `<line x1="${pulley[0]}" y1="${pulley[1]}" x2="${yoke[0].toFixed(1)}" y2="${yoke[1].toFixed(1)}" stroke="${GEAR}" stroke-width="1.1"/>` +
-        `<circle cx="${pulley[0]}" cy="${pulley[1] + 2}" r="3.2" fill="${GEAR_DARK}" stroke="#565760" stroke-width="0.8"/>` +
-        `<line x1="${yoke[0].toFixed(1)}" y1="${yoke[1].toFixed(1)}" x2="${tail[0].toFixed(1)}" y2="${tail[1].toFixed(1)}" stroke="${GEAR_DARK}" stroke-width="2.6" stroke-linecap="round"/>` +
-        `<circle cx="${tail[0].toFixed(1)}" cy="${tail[1].toFixed(1)}" r="2" fill="${GEAR}"/>`
-      );
+      return [h, h];
     },
   },
 
@@ -948,7 +982,15 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * from the shoulder joint), lockout finishes over the upper
        * chest — the real bench J-curve, and it keeps the plate disc
        * clear of the head at every frame. */
-      const H: Pt = [S[0] + lerp(24, 50, e), S[1] + lerp(22, 8, e)];
+      /* The top of this path used to stop at hypot(50, 8) = 50.64 on a
+       * 55.07-unit arm, leaving the elbow 46° short of straight at the
+       * frame labelled lockout — while instruction 4 says "drive the bar
+       * up and slightly back over your shoulders to FULL lockout".
+       * hypot(54.2, 8) = 54.79 is 99.5% of reach, which two-bone IK
+       * renders as a ~12° soft lock: straight to the eye, not
+       * hyperextended. Same ceiling rule as the press — stay under
+       * 55.07 or the solve clamps instead of failing. */
+      const H: Pt = [S[0] + lerp(24, 54.2, e), S[1] + lerp(22, 8, e)];
       const arm = aimArm(
         { S, E: SIDE_ANCHORS.elbow, H: SIDE_ANCHORS.hand },
         // out −1: the elbow tucks toward the feet/floor side, the real
@@ -1291,6 +1333,70 @@ function resolveDemoForReview(exerciseId: string): BodyDemo | null {
   return BODY_DEMOS[DEMO_ALIASES[exerciseId] ?? exerciseId] ?? null;
 }
 
+/* ── Props ────────────────────────────────────────────────────── */
+
+/**
+ * Map a demo's declared equipment and its SOLVED contact points onto the
+ * typed prop state, then render it (see `bodyProps.ts`).
+ *
+ * Both renderers come through here, which is the point. They used to
+ * carry separate `equip` branch chains that had already drifted: the
+ * side copy of `plate-end` grew a collar, a sleeve tip and `plateR`
+ * support while the anterior copy stayed a bare r=10 disc. And since
+ * every `plate-end` demo is a side demo, the anterior copy was also
+ * unreachable — a divergent DEAD mirror of a live renderer, so nothing
+ * failed as they came apart.
+ *
+ * Empty layers when a demo declares no apparatus: most free-weight
+ * movements carry their meaning in the movement and the muscle tint.
+ */
+function resolveProp(
+  demo: BodyDemo,
+  e: number,
+  pose: Partial<Record<GroupName, Op[]>>,
+  scene: { frameY: number; floorY: number }
+): PropLayers {
+  const ends = demo.bar?.(e, pose);
+  if (!ends || !demo.equip) return { behind: "", front: "" };
+  const [left, right] = ends;
+
+  let state: PropState | null = null;
+  switch (demo.equip) {
+    case "fixed-bar":
+      state = { kind: "fixedBar", left, right, frameY: scene.frameY };
+      break;
+    case "cable-bar":
+      state = { kind: "cableBar", left, right, frameY: scene.frameY };
+      break;
+    case "dip-bars":
+      state = { kind: "dipBars", left, right, floorY: scene.floorY };
+      break;
+    case "plate-end":
+      // Profile: both grips stack behind one another, so the near hand
+      // IS the bar's on-screen position.
+      state = {
+        kind: "rigidBar",
+        view: "profile",
+        hand: left,
+        plateR: demo.plateR ?? 10,
+      };
+      break;
+    case "rope":
+      // Spread opens with the rep — the exercise's own instruction is
+      // "spreading the ends apart as your arms lock out".
+      if (demo.pulley) {
+        state = {
+          kind: "ropeAttachment",
+          pulley: demo.pulley,
+          hand: left,
+          spread: e,
+        };
+      }
+      break;
+  }
+  return state ? renderProp(state) : { behind: "", front: "" };
+}
+
 /* ── Rendering ────────────────────────────────────────────────── */
 
 /**
@@ -1423,48 +1529,10 @@ export function renderBodyDemo(
      pushdown bar draws in front (the hands work in front of the torso)
      while its cable stays behind, naturally occluded by the figure. */
   const viewTop = Number((demo.viewBox ?? "-8 -14 116 224").split(/\s+/)[1]);
-  let barBehind = "";
-  let barFront = "";
-  const ends = demo.bar?.(e, pose);
-  if (ends && demo.equip === "fixed-bar") {
-    // Ceiling-mounted pull-up bar: two stems from the frame top down to
-    // the bar, then the bar itself spanning the scene.
-    const stem = (x: number) =>
-      `<line x1="${x}" y1="${viewTop}" x2="${x}" y2="${ends[0][1]}" stroke="${GEAR_DARK}" stroke-width="2.2"/>`;
-    barBehind =
-      stem(0) +
-      stem(100) +
-      `<line x1="${ends[0][0]}" y1="${ends[0][1]}" x2="${ends[1][0]}" y2="${ends[1][1]}" stroke="${GEAR}" stroke-width="3.2" stroke-linecap="round"/>`;
-  } else if (ends && demo.equip === "cable-bar") {
-    // The machine: a pulley block at the frame top feeding the cable,
-    // then the bar across the hands.
-    const midX = (ends[0][0] + ends[1][0]) / 2;
-    const y = (ends[0][1] + ends[1][1]) / 2;
-    barBehind =
-      `<rect x="${(midX - 3.4).toFixed(1)}" y="${viewTop + 1}" width="6.8" height="6.4" rx="2" fill="${GEAR_DARK}" stroke="#565760" stroke-width="0.8"/>` +
-      `<line x1="${midX}" y1="${viewTop + 6}" x2="${midX}" y2="${y.toFixed(1)}" stroke="${GEAR_DARK}" stroke-width="1.4"/>`;
-    const bar = `<line x1="${ends[0][0].toFixed(1)}" y1="${y.toFixed(1)}" x2="${ends[1][0].toFixed(1)}" y2="${y.toFixed(1)}" stroke="${GEAR}" stroke-width="2.8" stroke-linecap="round"/>`;
-    if (demo.barInFront) barFront = bar;
-    else barBehind += bar;
-  } else if (ends && demo.equip === "plate-end") {
-    // Profile barbell: the bar runs toward the viewer, so you see its
-    // END — the near plate disc over the grip, a hub, and the bar tip.
-    // Pinned to the wrist pivot, so it travels with every rep.
-    const [x, y] = ends[0];
-    barFront =
-      `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="10" fill="${GEAR_DARK}" stroke="#565760" stroke-width="1"/>` +
-      `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6.4" fill="none" stroke="${GEAR}" stroke-width="1.2" opacity="0.7"/>` +
-      `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.2" fill="${GEAR}"/>`;
-  } else if (ends && demo.equip === "dip-bars") {
-    // A dip STATION, not two floating lines: each upright gets a base
-    // foot on the floor and a tube end-cap at the grip.
-    const floor = (demo.groundY ?? 220) - 1;
-    const post = ([x, y]: Pt) =>
-      `<line x1="${x}" y1="${y}" x2="${x}" y2="${floor}" stroke="${GEAR}" stroke-width="2.6"/>` +
-      `<line x1="${x - 7}" y1="${floor}" x2="${x + 7}" y2="${floor}" stroke="${GEAR_DARK}" stroke-width="2.4" stroke-linecap="round"/>` +
-      `<circle cx="${x}" cy="${y}" r="2.8" fill="${GEAR_DARK}" stroke="#565760" stroke-width="0.9"/>`;
-    barBehind = post(ends[0]) + post(ends[1]);
-  }
+  const { behind: barBehind, front: barFront } = resolveProp(demo, e, pose, {
+    frameY: viewTop,
+    floorY: demo.groundY ?? 220,
+  });
 
   /* Joint caps: at big rotations a white wedge opens where a limb group
      pulls away from its neighbour (elbow fold, shoulder at lockout).
@@ -1603,33 +1671,25 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
   const shadow = `<ellipse cx="${demo.shadowCx ?? 50}" cy="${demo.groundY ?? 204}" rx="${((demo.shadowRx ?? 26) + 6 * depth).toFixed(1)}" ry="2.6" fill="#000" opacity="${(0.16 + 0.1 * depth).toFixed(2)}"/>`;
   const scene = demo.scene?.(e, pose) ?? "";
 
-  // Profile barbell: bar runs toward the viewer, so its END shows — the
-  // near plate over the grip. Pinned to the wrist, travels with the rep.
-  let plate = "";
-  const ends = demo.bar?.(e, pose);
-  if (ends && demo.equip === "plate-end") {
-    const [x, y] = ends[0];
-    const r = demo.plateR ?? 10;
-    // Collar + protruding bar stub behind the disc: reads as a barbell
-    // end, not a floating disc. Proportions scale with the disc.
-    plate =
-      `<rect x="${(x + r * 0.7).toFixed(1)}" y="${(y - 2.6).toFixed(1)}" width="5" height="5.2" rx="1.4" fill="${GEAR}"/>` +
-      `<rect x="${(x + r * 0.7 + 4.4).toFixed(1)}" y="${(y - 1.6).toFixed(1)}" width="4.6" height="3.2" rx="1" fill="${GEAR_DARK}" stroke="#565760" stroke-width="0.6"/>` +
-      `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}" fill="${GEAR_DARK}" stroke="#565760" stroke-width="1"/>` +
-      `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(r * 0.64).toFixed(1)}" fill="none" stroke="${GEAR}" stroke-width="1.2" opacity="0.7"/>` +
-      `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(r * 0.22).toFixed(1)}" fill="${GEAR}"/>`;
-  }
-
-  const sceneFront = demo.sceneFront?.(e, pose) ?? "";
+  /* Held gear (profile barbell, rope) draws OVER the body — the hands
+     work in front of the torso, so a behind-the-body prop would vanish
+     into it. Machine frames stay behind. */
+  const viewTop = Number(
+    (demo.viewBox ?? "-12 -14 124 244").split(/\s+/)[1] as string
+  );
+  const prop = resolveProp(demo, e, pose, {
+    frameY: viewTop,
+    floorY: demo.groundY ?? 204,
+  });
 
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${demo.viewBox ?? "-8 -14 116 224"}" role="img">` +
     shadow +
     scene +
+    prop.behind +
     glow +
     body +
-    plate +
-    sceneFront +
+    prop.front +
     `</svg>`
   );
 }
