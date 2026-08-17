@@ -186,6 +186,21 @@ press moved because it gained a bar".
   the bar rather than wrapping it — correct for a pull-up's overhand
   grip, approximate elsewhere.
 
+  **Finger detail was tried and REJECTED — do not re-attempt without
+  changing the constraint.** Two variants, rendered against the same
+  crops: (A) the knuckle band's outer edge scalloped into four bumps,
+  (B) A plus the mass split into finger columns by seams running along
+  the arm. Both read WORSE than the plain v2. At ~7 units the features
+  land at or below the facet-gap width, so the scallop reads as a
+  serrated, torn edge rather than knuckles, and the columns read as
+  bristles — the hand becomes a paintbrush.
+
+  The budget is the finding: a 7-unit shape carries about ONE structural
+  seam legibly, and v2 spends it on the knuckle line, which is the
+  highest-value feature in the reference. More detail is not available
+  at this size — only a larger hand or a different camera would buy it,
+  and neither is on the table.
+
 - **Re-posing may surface further art/anchor disagreements.** The elbow
   is 1.2–1.3 off centre, which is tolerable now and may not be once
   something is drawn at the joint.
