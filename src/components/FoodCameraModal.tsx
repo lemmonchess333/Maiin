@@ -9,6 +9,7 @@ import {
   CameraOff,
   Keyboard,
 } from "lucide-react";
+import { Spinner } from "@/components/ui/Spinner";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useBackDismiss } from "@/lib/backDismiss";
 import { logger } from "@/lib/logger";
@@ -448,6 +449,27 @@ export default function FoodCameraModal({
           <X className="size-5" />
         </button>
       </div>
+
+      {/* Analysis in flight.
+          The modal is `fixed inset-0` and opaque, and it stays open
+          for the WHOLE round-trip — `setCameraOpen(false)` only runs
+          after `await analyzeFood`. FoodAnalyzer's "Analyzing…" row
+          renders on the page UNDERNEATH it, so until this existed the
+          user watched a live camera feed with dead buttons for several
+          seconds: the one signal was that the controls stopped
+          responding, which reads as a freeze, not as work in progress.
+          The `loading` prop was already being passed here — it was
+          only ever used to disable the shutter. */}
+      {loading && (
+        <div
+          className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-black/70"
+          role="status"
+          aria-live="polite"
+        >
+          <Spinner size="lg" variant="inverse" label="Analyzing food" />
+          <p className="text-sm font-medium text-white">Analyzing…</p>
+        </div>
+      )}
 
       {/* camera */}
       <video
