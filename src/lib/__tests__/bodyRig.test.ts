@@ -135,60 +135,82 @@ describe("renderBodyDemo", () => {
     expect(postY(up)).toBe(postY(down));
   });
 
-  it("dips: the grip is a bar, not the relaxed-hang hand position", () => {
-    /* Owner, on the shipped demo: "arms look so far apart on the dips".
-       They were: the pose used `ANT.handL/handR` as the grips, which are
-       the anterior figure's ARMS-RELAXED hand positions — 79.0 apart
-       against a 52.0 shoulder span, so 1.52x shoulder width. Nothing was
-       holding the number; it was whatever the source art happened to
-       draw, reused because it was the hand.
+  it("dips: suspended, gripping, and deep -- in profile", () => {
+    /* Owner, on the first version: "arms look so far apart on the dips".
+       That was an ANTERIOR demo, and narrowing its grip (1.52x shoulder
+       width down to a derived 1.20x) fixed the number without fixing the
+       picture. The screenshots settled it: the figure read as STANDING
+       between two posts -- legs dead straight, feet on the floor, barely
+       moving between the ends of the rep -- while the pose's own comment
+       claimed the body hung the whole time.
 
-       liftmanual's chest- and triceps-dip figures both stand on bars at
-       roughly shoulder width, so the band is 1.0-1.4 and 1.52 is out of
-       it. Asserted as a RATIO rather than a literal: the point is the
-       relationship to the shoulders, and a literal would silently stop
-       meaning anything if the figure were ever redrawn. */
+       Rebuilt in profile, which removes the whole class rather than
+       tuning it. Only one arm is drawn, so "arms too far apart" cannot
+       occur; and the elbow bends BACKWARD, which is what a dip elbow
+       does and what a front view had to fake as 20 units of lateral
+       flare, because `aimArm` emits rotate ops and rotations are rigid.
+
+       Four properties, because the old demo satisfied the depth one on
+       its own while failing every other. */
     const demo = BODY_DEMOS["dips"];
-    const bar = demo.bar!(0, demo.pose(0));
-    expect(bar, "dips declares no bar").toBeTruthy();
-    const span = Math.abs(bar![1][0] - bar![0][0]);
-    const shoulders = ANT_SHOULDER_L[0] - ANT_SHOULDER_R[0];
-    const ratio = span / Math.abs(shoulders);
-    expect(
-      ratio,
-      `dip grip is ${ratio.toFixed(2)}x shoulder width`
-    ).toBeGreaterThan(1);
-    expect(ratio).toBeLessThan(1.4);
-    // …and level, because it is one bar per side at one height.
-    expect(bar![0][1]).toBeCloseTo(bar![1][1], 6);
-  });
-
-  it("dips: the bottom reaches the upper-arm-parallel landmark", () => {
-    /* liftmanual's two dip pages disagree about lean and elbow flare and
-       agree about DEPTH: at the bottom the shoulder-to-elbow segment is
-       roughly parallel to the floor. With a vertical forearm that is a
-       right angle at the elbow, which is a number, so it is checkable.
-
-       It stopped at 99 degrees — nine short, invisible by eye, and the
-       same partial-rep shape as every other demo measured against its own
-       form cue. The drop is now solved from the landmark rather than
-       chosen: a right angle fixes the shoulder-to-hand distance at
-       sqrt(U^2 + F^2), so the sink is whatever closes the straight-arm
-       reach down to it.
-
-       Both ends asserted. Pinning only the bottom would be satisfied by a
-       demo that starts bent and never locks out. */
     const at = (t: number) => {
-      const pose = BODY_DEMOS["dips"].pose(t);
-      return elbowAngle(
-        applyToPoint(ANT_SHOULDER_L, pose.upperArmL!),
-        applyToPoint(ANT_ELBOW_L, pose.foreArmL!),
-        applyToPoint(ANT_HAND_L, pose.foreArmL!)
-      );
+      const pose = demo.pose(t);
+      const S = applyToPoint(SIDE_ANCHORS.shoulder, pose.upperArmL!);
+      const E = applyToPoint(SIDE_ANCHORS.elbow, pose.foreArmL!);
+      const H = applyToPoint(SIDE_ANCHORS.hand, pose.foreArmL!);
+      const shank = SIDE_PIECES.find((p) => p.group === "shankL")!.outline as [
+        number,
+        number,
+      ][];
+      return {
+        elbow: elbowAngle(S, E, H),
+        hand: H,
+        behind: E[0] - S[0],
+        foot: Math.max(...shank.map((q) => applyToPoint(q, pose.shankL!)[1])),
+      };
     };
-    expect(at(1), "dip bottom").toBeGreaterThan(85);
-    expect(at(1), "dip bottom").toBeLessThan(95);
-    expect(at(0), "dip lockout").toBeGreaterThan(170);
+
+    // 1. Both ends of the rep. Lockout at the top; liftmanual's shared
+    //    dip landmark -- upper arm parallel to the floor -- at the
+    //    bottom, which with a vertical forearm is a right angle.
+    expect(at(0).elbow, "dip lockout").toBeGreaterThan(170);
+    expect(at(1).elbow, "dip bottom").toBeGreaterThan(85);
+    expect(at(1).elbow, "dip bottom").toBeLessThan(95);
+
+    // 2. The hands stay ON the bar. Both ends are constrained, which is
+    //    what makes the elbow a solve rather than a choreography.
+    for (const t of [0, 0.25, 0.5, 0.75, 1]) {
+      expect(at(t).hand[0]).toBeCloseTo(at(0).hand[0], 2);
+      expect(at(t).hand[1]).toBeCloseTo(at(0).hand[1], 1);
+    }
+
+    /* 3. The elbow travels BACKWARD. The side figure faces +x, so a
+          tucked dip elbow sits at LOWER x than the shoulder -- a negative
+          E[0]-S[0]. Pinning the direction is the point, and it is not
+          theoretical: `out` has two branches, they are one character
+          apart, and the wrong one drives the elbow forward through the
+          chest while satisfying every angle assertion above. The first
+          build of this demo had it wrong, and only a direction check
+          found it. (This assertion caught a sign error in ITSELF too --
+          written first as `> 10` on the strength of a probe that
+          measured S[0]-E[0].) */
+    expect(at(1).behind, "dip elbow is not tucking backward").toBeLessThan(-10);
+
+    // 4. SUSPENDED. The defect the screenshots caught: the feet must
+    //    hang clear of the floor the scene draws, in every frame.
+    for (const t of [0, 0.5, 1]) {
+      expect(
+        demo.groundY! - at(t).foot,
+        `dip foot is on the floor at t=${t}`
+      ).toBeGreaterThan(20);
+    }
+    // …and the knees are bent, not standing straight.
+    const kneeStraight = elbowAngle(
+      applyToPoint(SIDE_ANCHORS.hip, demo.pose(0).thighL!),
+      applyToPoint(SIDE_ANCHORS.knee, demo.pose(0).thighL!),
+      applyToPoint(SIDE_ANCHORS.ankle, demo.pose(0).shankL!)
+    );
+    expect(kneeStraight, "dip legs are drawn straight").toBeLessThan(140);
   });
 
   it("anterior anchors match the ones this file mirrors", () => {

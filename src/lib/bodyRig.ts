@@ -78,72 +78,6 @@ const ANT_FORE_LEN = Math.hypot(
   ANT.handL[0] - ANT.elbowL[0],
   ANT.handL[1] - ANT.elbowL[1]
 );
-/* WHERE THE DIP BARS ARE, and it is not where the hands rest.
- *
- * Owner, on the shipped demo: "arms look so far apart on the dips".
- * `ANT.handL/handR` are the ARMS-HANGING-RELAXED hand positions of the
- * anterior figure — 89.6 apart against a 52.0 shoulder span, so using
- * them as grips put the hands at 1.72x shoulder width. That is not a
- * dip station; liftmanual's chest- and triceps-dip figures both stand on
- * bars at roughly shoulder width with the arms near-vertical at lockout.
- *
- * And the width was doing more damage than it looked. With the hands
- * pinned that far out, the IK has nowhere to put the elbows as the body
- * sinks except further out again — the old comment cheerfully described
- * this as "the elbows flare outward as the body sinks", which measured
- * at 20.8 units lateral of the shoulder at the bottom. liftmanual is
- * explicit that flare is the axis SEPARATING its two dip pages: the
- * chest dip is "slightly flared" with a forward lean, the triceps dip
- * keeps the elbows tucked. 20.8 units is neither.
- *
- * Derived, not dialled in. The grip sits where a STRAIGHT arm hanging
- * from the shoulder reaches when the bar is 1.2x shoulder width — so
- * lockout is a genuinely straight arm rather than a slightly bent one
- * that happens to look straight:
- *
- *   half-span   = 26.0 * 1.2                      = 31.2
- *   lateral off = 31.2 - 26.0                     =  5.2  from the shoulder
- *   drop        = sqrt(armLen^2 - 5.2^2)          = 53.4
- *
- * `armLen` is ANT_UPPER_LEN + ANT_FORE_LEN, so the numbers move with
- * the model rather than being pinned to today's art. */
-const DIP_GRIP_RATIO = 1.2;
-const DIP_HALF_SPAN =
-  ((ANT.shoulderR[0] - ANT.shoulderL[0]) / 2) * DIP_GRIP_RATIO;
-const DIP_CENTRE_X = (ANT.shoulderL[0] + ANT.shoulderR[0]) / 2;
-/** How far outside the shoulder the grip sits — 5.2 at a 1.2x bar. */
-const DIP_LATERAL = DIP_HALF_SPAN - (ANT.shoulderR[0] - ANT.shoulderL[0]) / 2;
-const DIP_GRIP_DROP = Math.sqrt(
-  (ANT_UPPER_LEN + ANT_FORE_LEN) ** 2 - DIP_LATERAL ** 2
-);
-const DIP_GRIP_L: Pt = [
-  DIP_CENTRE_X - DIP_HALF_SPAN,
-  ANT.shoulderL[1] + DIP_GRIP_DROP,
-];
-const DIP_GRIP_R: Pt = [
-  DIP_CENTRE_X + DIP_HALF_SPAN,
-  ANT.shoulderR[1] + DIP_GRIP_DROP,
-];
-
-/* HOW FAR THE BODY SINKS, from liftmanual's depth landmark rather than
- * from taste. Both its dip pages share one: at the bottom the
- * shoulder-to-elbow segment is roughly parallel to the floor, which with
- * a vertical forearm is a right angle at the elbow.
- *
- * A right angle fixes the shoulder-to-hand distance outright —
- * sqrt(U^2 + F^2) by Pythagoras — so the drop is the amount of sink that
- * closes the straight-arm reach down to it. No sweep, no eyeballing:
- *
- *   d90 = sqrt(24.26^2 + 29.39^2) = 38.11
- *   dy  = 53.40 - sqrt(38.11^2 - 5.2^2) = 15.65
- *
- * The old value was 13, which lands the elbow at 98 degrees — eight
- * degrees shy of parallel, invisible by eye and exactly the class of
- * partial this sweep keeps finding. */
-const DIP_BOTTOM_DROP =
-  DIP_GRIP_DROP -
-  Math.sqrt(ANT_UPPER_LEN ** 2 + ANT_FORE_LEN ** 2 - DIP_LATERAL ** 2);
-
 const POST_UPPER_LEN = Math.hypot(
   POST.elbowL[0] - POST.shoulderL[0],
   POST.elbowL[1] - POST.shoulderL[1]
@@ -216,6 +150,44 @@ const SIDE_FORE_LEN = Math.hypot(
  * ON the clamp is what let the pull-up's hang pass while over-extended,
  * so this stays deliberately short of it. */
 const SIDE_ARM_REACH = (SIDE_UPPER_LEN + SIDE_FORE_LEN) * 0.997;
+
+/* Where the side-view dip grips.
+ *
+ * Almost the rest hand: standing with the arm hanging straight puts it
+ * 55.07 from the shoulder, which is the ENTIRE arm -- so the identity
+ * pose is already a dip lockout, and that is what makes this demo cheap.
+ *
+ * But exactly the entire arm is exactly the wrong place to grip. The
+ * solve's ceiling is 0.999 of it, so a grip at 55.07 lands ON the clamp,
+ * and a clamped solve draws a straight arm whether the geometry earns
+ * one or not -- the failure that let the pull-up's dead hang pass for
+ * months while over-extended. It showed up here as the hand wobbling
+ * 0.05 off its own grip at the top of the rep, which is the clamp
+ * quietly refusing the reach it was asked for.
+ *
+ * So the grip drops to SIDE_ARM_REACH -- 0.997 of the arm, the constant
+ * this rig already keeps for staying off that ceiling. Six hundredths of
+ * a unit lower, and the lockout is earned instead of clamped. */
+const DIP_SIDE_GRIP: Pt = [
+  SIDE_ANCHORS.hand[0],
+  SIDE_ANCHORS.shoulder[1] +
+    Math.sqrt(
+      SIDE_ARM_REACH ** 2 -
+        (SIDE_ANCHORS.hand[0] - SIDE_ANCHORS.shoulder[0]) ** 2
+    ),
+];
+/** Sink that brings the elbow to a right angle -- liftmanual's shared dip
+ *  depth landmark, upper arm parallel to the floor. Derived, not chosen:
+ *  a right angle fixes shoulder-to-hand at sqrt(U^2 + F^2), so the drop
+ *  is whatever closes the straight-arm reach down to it. */
+const DIP_SIDE_DROP =
+  SIDE_ANCHORS.hand[1] -
+  SIDE_ANCHORS.shoulder[1] -
+  Math.sqrt(
+    SIDE_UPPER_LEN ** 2 +
+      SIDE_FORE_LEN ** 2 -
+      (SIDE_ANCHORS.hand[0] - SIDE_ANCHORS.shoulder[0]) ** 2
+  );
 
 /** Balance rule (pose physics): mass stays over mid-foot, so as the
  *  torso hinges forward the hips travel BACK — implemented as the whole
@@ -882,73 +854,104 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
   },
 
   dips: {
-    view: "anterior",
-    equip: "dip-bars",
+    /* SIDE VIEW, and that is the fix.
+     *
+     * This was an anterior demo, and the screenshots settled what the
+     * measurements could not: it read as a person STANDING between two
+     * posts. Legs dead straight, feet on the floor, the whole figure
+     * barely moving between the ends of the rep. A dip is a suspended
+     * movement -- body hanging, knees bent, feet clear of the ground --
+     * and the old pose's own comment claimed exactly that while the
+     * drawing said otherwise.
+     *
+     * The elbow flare that was queued as the fix here (20.3 units
+     * lateral at the bottom) was a symptom of the same thing: a dip
+     * elbow bends BACKWARD, and a front view has nowhere to put that but
+     * sideways, because `aimArm` emits rotate ops and rotations are
+     * rigid. Foreshortening it with `scaleAxis` would have bought a
+     * better-looking elbow on a demo whose primary read was still wrong.
+     * In profile the bend is native and the flare cannot exist -- one
+     * arm is drawn, so "arms look so far apart" is structurally gone.
+     *
+     * THE REST POSE IS ALREADY THE LOCKOUT, which is what makes this
+     * cheap. The side figure standing with its arm hanging straight puts
+     * the hand 55.07 from the shoulder -- exactly SIDE_UPPER_LEN +
+     * SIDE_FORE_LEN. So the top of a dip is the identity pose, and the
+     * whole rep is the body sinking while the arm IK-solves against a
+     * fixed grip. The sink is derived from liftmanual's shared dip
+     * landmark the same way the anterior version's was: upper arm
+     * parallel to the floor at the bottom is a right angle at the elbow,
+     * which fixes shoulder-to-hand at sqrt(U^2 + F^2). */
+    view: "side",
     concentricTo: 0,
-    // The body hangs on the bars the whole time — feet never touch the
-    // floor, so the scene extends below the figure.
-    viewBox: "-8 -14 116 240",
-    groundY: 222,
+    viewBox: "-14 20 150 210",
+    groundY: 214,
+    shadowCx: 52,
+    shadowRx: 30,
     tint: {
       triceps: "primary",
       chest: "secondary",
       "front-deltoids": "secondary",
     },
     pose: (e) => {
-      /* Hands stay ON the grips while the body drops between them —
-       * same both-ends-constrained problem as the pull-up, IK-solved.
-       *
-       * The grips are `DIP_GRIP_L/R`, NOT `ANT.handL/handR`: see the
-       * derivation there. Reusing the relaxed-hang hand positions is
-       * what made the arms read as far apart, and it also forced the
-       * flare, because an over-wide grip leaves the IK nowhere to put
-       * the elbow but further out still.
-       *
-       * DEPTH IS A CUE, not a number chosen by eye. liftmanual's shared
-       * dip landmark is that the shoulder-to-elbow segment reaches
-       * roughly parallel to the floor at the bottom; `dy` is solved for
-       * that below rather than guessed, which is what moved it off 13. */
-      const dy = lerp(0, DIP_BOTTOM_DROP, e);
-      const L = aimArm(
-        { S: ANT.shoulderL, E: ANT.elbowL, H: ANT.handL },
+      const dy = lerp(0, DIP_SIDE_DROP, e);
+      const ride: Op[] = [{ kind: "translate", dx: 0, dy }];
+      /* Knees bent and thighs carried back, so the figure reads as
+         hanging rather than standing. This is the half the front view
+         could not show at all: the shins fold behind the body, which in
+         profile is the silhouette that says "suspended". */
+      const thigh: Op[] = [
+        { kind: "rotate", deg: -18, pivot: SIDE_ANCHORS.hip },
+        ...ride,
+      ];
+      const shank: Op[] = [
+        { kind: "rotate", deg: -72, pivot: SIDE_ANCHORS.knee },
+        { kind: "rotate", deg: -18, pivot: SIDE_ANCHORS.hip },
+        ...ride,
+      ];
+      /* Hands stay ON the bar while the body drops -- both ends
+         constrained, so the elbow is solved, not choreographed. `out`
+         sends it BACKWARD (toward -x, behind the torso), which is the
+         tucked triceps-dip elbow liftmanual describes and the thing a
+         front view had to fake as lateral flare. */
+      const arm = aimArm(
+        {
+          S: SIDE_ANCHORS.shoulder,
+          E: SIDE_ANCHORS.elbow,
+          H: SIDE_ANCHORS.hand,
+        },
         solveElbow(
-          [ANT.shoulderL[0], ANT.shoulderL[1] + dy],
-          DIP_GRIP_L,
-          ANT_UPPER_LEN,
-          ANT_FORE_LEN,
+          [SIDE_ANCHORS.shoulder[0], SIDE_ANCHORS.shoulder[1] + dy],
+          DIP_SIDE_GRIP,
+          SIDE_UPPER_LEN,
+          SIDE_FORE_LEN,
           -1
         ),
-        DIP_GRIP_L,
+        DIP_SIDE_GRIP,
         dy
       );
-      const R = aimArm(
-        { S: ANT.shoulderR, E: ANT.elbowR, H: ANT.handR },
-        solveElbow(
-          [ANT.shoulderR[0], ANT.shoulderR[1] + dy],
-          DIP_GRIP_R,
-          ANT_UPPER_LEN,
-          ANT_FORE_LEN,
-          1
-        ),
-        DIP_GRIP_R,
-        dy
-      );
-      const ride: Op[] = [{ kind: "translate", dx: 0, dy }];
       return {
         head: ride,
         torso: ride,
-        thighL: ride,
-        thighR: ride,
-        shankL: ride,
-        shankR: ride,
-        upperArmL: L.upper,
-        foreArmL: L.fore,
-        upperArmR: R.upper,
-        foreArmR: R.fore,
+        pelvis: ride,
+        thighL: thigh,
+        thighR: thigh,
+        shankL: shank,
+        shankR: shank,
+        upperArmL: [...arm.upper],
+        foreArmL: [...arm.fore],
+        handL: [...arm.fore],
       };
     },
-    // Grip anchor line for the posts (the hands never move).
-    bar: () => [DIP_GRIP_L, DIP_GRIP_R],
+    /* Parallel bars: the grip runs toward the viewer, so in profile the
+       near bar is a horizontal rail through the hand with an upright
+       carrying it to the floor. Gear greys, matching the dip posts the
+       anterior version drew and the push-up's floor line. */
+    scene: () =>
+      `<line x1="26" y1="${DIP_SIDE_GRIP[1]}" x2="96" y2="${DIP_SIDE_GRIP[1]}" stroke="${GEAR}" stroke-width="3.4" stroke-linecap="round"/>` +
+      `<line x1="88" y1="${DIP_SIDE_GRIP[1]}" x2="88" y2="214" stroke="${GEAR_DARK}" stroke-width="3"/>` +
+      `<line x1="34" y1="${DIP_SIDE_GRIP[1]}" x2="34" y2="214" stroke="${GEAR_DARK}" stroke-width="3"/>` +
+      `<line x1="20" y1="214" x2="102" y2="214" stroke="${GEAR_DARK}" stroke-width="2.2"/>`,
   },
 
   deadlift: {
