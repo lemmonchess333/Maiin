@@ -161,11 +161,31 @@ press moved because it gained a bar".
 
 ## Risks
 
-- ~~The fist may still not read.~~ **RESOLVED by the spike, 2026-08-17.**
-  Anchors moved onto the art, a ~7-unit fist drawn on them, magnified
-  crops rendered: the fist caps the forearm and grips the pull-up bar
-  correctly. Scale was never the problem — position was the whole of it.
-  PR2 is de-risked.
+- ~~The fist may still not read.~~ **RESOLVED, 2026-08-17, in two
+  passes.** Pass one moved the anchors onto the art and drew a
+  symmetric hexagon: correctly PLACED, but still reading as a lump.
+  Owner supplied reference photographs of a real fist, dorsal and
+  palmar, and the two things the hexagon lacked were obvious from them —
+  a TAPER (wide at the knuckles, narrow at the wrist) and a KNUCKLE
+  LINE. Pass two is the geometry PR2 should start from:
+
+  ```
+  built along the FOREARM axis (u = elbow→wrist, q = across), not
+  screen-vertical, with `wrist` as the origin:
+
+    main mass   P(-1.2, ±2.7) → P(4.4, ±3.5)     (5.4 wide → 7.0 wide)
+    knuckle band P(5.0, ±3.5) → P(6.6, 2.6) → P(7.1, 0.6) → P(6.6, -1.6)
+  ```
+
+  Two facets, so the rig's own gap draws the knuckle line — the same
+  device the side rig uses to split the upper arm at the biceps/triceps
+  boundary. Verified at rest, gripping the pull-up bar, and mid-raise.
+
+  Known limits, accepted: no thumb (below the threshold where 7 units
+  can carry it), fingers not individuated, and on a bar the hand sits ON
+  the bar rather than wrapping it — correct for a pull-up's overhand
+  grip, approximate elsewhere.
+
 - **Re-posing may surface further art/anchor disagreements.** The elbow
   is 1.2–1.3 off centre, which is tolerable now and may not be once
   something is drawn at the joint.
