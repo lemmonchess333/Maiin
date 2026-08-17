@@ -1372,7 +1372,26 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * anchors) with the hinge composed LAST — same chain pattern as
        * the bench's global rotation. */
       const HINGE = 55; // constant torso incline, all frames
-      const KNEE = 20; // constant soft knees
+      /* SAME SIGN TRAP AS THE RDL, and worse. This rotates the THIGH
+       * forward about the hip while the shank keeps its rest
+       * orientation, so it SUBTRACTS knee flexion: the joint is
+       * 180 - |13.57 - knob|, peaking dead straight at 13.57. The
+       * shipped 20 therefore drew 173.57 degrees -- 6.4 past straight,
+       * on the hyperextension side -- under a comment reading "constant
+       * soft knees". The RDL had the identical bug at 15 (178.6) and was
+       * fixed first; the row was measured while verifying that fix.
+       *
+       * And it was unplanting the foot. The row's ankle sat 18.1 units
+       * from SIDE_ANCHORS.ankle -- the point `hipsBack` pivots about --
+       * against the RDL's 13.6, so the bent-over demo that leans hardest
+       * was leaning about the spot furthest from where it stood. At 0
+       * the ankle lands on the pivot exactly.
+       *
+       * 0 is derived, not chosen: the vendored figure is already drawn
+       * standing at 13.57 degrees of knee flexion, mid soft-knee band,
+       * so the correct rotation is none. "Soft knees" was always true of
+       * the ART; the knob was spending it. */
+      const KNEE = 0;
       const LEAN = hipsBack(HINGE); // balance rule: hips back
       const T: Op = { kind: "rotate", deg: HINGE, pivot: SIDE_ANCHORS.hip };
       const unpose: Op[] = [

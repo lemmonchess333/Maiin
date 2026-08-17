@@ -671,6 +671,55 @@ describe("renderBodyDemo", () => {
     expect(svg.indexOf("<rect")).toBeLessThan(svg.indexOf("<polygon"));
   });
 
+  it("both hinge demos keep a soft knee over a planted ankle", () => {
+    /* The RDL's knee sign bug turned out to be shared. Both bent-over
+       demos rotate the THIGH forward about the hip while the shank keeps
+       its rest orientation, so the knob SUBTRACTS flexion -- the joint is
+       180 - |13.57 - knob|, peaking dead straight at 13.57. The RDL
+       shipped 15 (178.6 degrees) and the row shipped 20 (173.57), both
+       PAST straight on the hyperextension side, both under a comment
+       saying "soft knees".
+
+       Written as one test over both demos on purpose. The row's copy was
+       found only because the RDL's fix prompted a look, and a per-demo
+       test would not have prompted anything -- the row had no knee
+       assertion at all. A shared invariant belongs in a shared guard.
+
+       Two properties, because the bug broke both. The joint has to be
+       genuinely soft (a VALUE claim -- a constancy check cannot see this
+       bug, since a constant knob is constant at any value). And the
+       ankle has to sit on SIDE_ANCHORS.ankle, which is the point
+       `hipsBack` leans the whole chain about: a figure pivoting about a
+       spot it is not standing on was the second half of the same defect,
+       18.1 units out on the row and 13.6 on the RDL. */
+    for (const id of ["barbell-row", "romanian-deadlift"]) {
+      const at = (t: number) => {
+        const pose = BODY_DEMOS[id].pose(t);
+        const hip = applyToPoint(SIDE_ANCHORS.hip, pose.thighL!);
+        const knee = applyToPoint(SIDE_ANCHORS.knee, pose.thighL!);
+        const ankle = applyToPoint(SIDE_ANCHORS.ankle, pose.shankL!);
+        return { joint: elbowAngle(hip, knee, ankle), ankle };
+      };
+      for (const t of [0, 0.5, 1]) {
+        const { joint, ankle } = at(t);
+        expect(
+          joint,
+          `${id} knee is ${joint.toFixed(2)}deg at t=${t} -- not a soft bend`
+        ).toBeLessThan(175);
+        expect(joint, `${id} knee at t=${t}`).toBeGreaterThan(155);
+        expect(
+          Math.hypot(
+            ankle[0] - SIDE_ANCHORS.ankle[0],
+            ankle[1] - SIDE_ANCHORS.ankle[1]
+          ),
+          `${id} pivots about a point it does not stand on at t=${t}`
+        ).toBeLessThan(0.5);
+      }
+      // Constant too -- the original property, still worth holding.
+      expect(Math.abs(at(1).joint - at(0).joint)).toBeLessThan(0.5);
+    }
+  });
+
   it("pushdown: the rope's knotted tail travels down to lockout", () => {
     // The tail knob is the LAST circle in the svg (sceneFront renders
     // after the body) — its descent is the extension arc.
