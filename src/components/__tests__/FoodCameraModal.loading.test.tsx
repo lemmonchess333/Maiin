@@ -41,6 +41,7 @@ import {
   SCAN_STAGES_FOOD,
   SCAN_STAGES_LABEL,
 } from "@/hooks/useScanStages";
+import { haptic } from "@/lib/haptic";
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/backDismiss", () => ({ useBackDismiss: vi.fn() }));
@@ -151,6 +152,36 @@ describe("FoodCameraModal — analysis in flight", () => {
     await armPhoto();
     expect(screen.getAllByTestId("scan-corner").length).toBe(4);
   });
+
+  it("the photo floods the room — ambient backdrop behind the frame", async () => {
+    // A blurred copy of the user's own photo sits behind the scan frame
+    // so the wait is lit by the meal, not parked on flat black. STATIC
+    // blur is the sanctioned recipe (BodyMapGlow: a blurred layer may
+    // exist, a filter must never animate) — the pin asserts the filter
+    // is present as an inline STYLE, i.e. set once, not driven.
+    render(<FoodCameraModal {...props} loading />);
+    await armPhoto();
+    const backdrop = screen.getByTestId("scan-backdrop");
+    const img = backdrop.querySelector("img");
+    expect(img).toBeTruthy();
+    expect(img!.style.filter).toContain("blur(");
+  });
+
+  it("no photo, no backdrop — nothing to flood the room with", () => {
+    // The barcode/no-frame fallback keeps the plain dark surface. A
+    // backdrop rendered unconditionally would flash a STALE previous
+    // meal behind barcode lookups.
+    render(<FoodCameraModal {...props} loading />);
+    expect(screen.queryByTestId("scan-backdrop")).toBeNull();
+  });
+
+  it("the library button taps back like every other control here", () => {
+    // It was the one silent button in the capture row — shutter, flip,
+    // and tabs all haptic.
+    render(<FoodCameraModal {...props} loading={false} />);
+    fireEvent.click(screen.getByLabelText("Photo library"));
+    expect(vi.mocked(haptic)).toHaveBeenCalledWith("light");
+  });
 });
 
 describe("useScanStages", () => {
@@ -195,12 +226,16 @@ describe("FoodCameraModal — the completion beat", () => {
     expect(screen.getAllByTestId("scan-corner").length).toBe(4);
     expect(screen.queryByTestId("scan-laser")).toBeNull();
     expect(screen.getByText("Done")).toBeTruthy();
+    // The check is DRAWN (motion.path), not a static glyph — the pin is
+    // on the svg path so swapping back to the lucide icon fails here.
+    expect(screen.getByTestId("scan-check")).toBeTruthy();
   });
 
   it("never claims Done while still analysing", async () => {
     render(<FoodCameraModal {...props} loading />);
     await armPhoto();
     expect(screen.queryByText("Done")).toBeNull();
+    expect(screen.queryByTestId("scan-check")).toBeNull();
     expect(screen.getByTestId("scan-laser")).toBeTruthy();
   });
 

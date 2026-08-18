@@ -7,7 +7,6 @@ import {
   Image as ImageIcon,
   RefreshCw,
   CameraOff,
-  Check,
   Keyboard,
 } from "lucide-react";
 import { Spinner } from "@/components/ui/Spinner";
@@ -406,25 +405,56 @@ export default function FoodCameraModal({
           than dull. */}
       {(loading || locked) && (
         <div
-          className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-6 bg-black/85 px-8"
+          className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-6 overflow-hidden bg-black/85 px-8"
           role="status"
           aria-live="polite"
           aria-label="Analyzing food"
         >
           {preview && tab !== "barcode" ? (
             <>
-              <motion.div
-                className="relative w-full max-w-[340px] aspect-[4/5]"
-                data-testid="scan-frame"
-                animate={
-                  reducedMotion ? undefined : { scale: locked ? 0.965 : 1 }
-                }
-                transition={{ duration: 0.28, ease: "easeOut" }}
+              {/* Ambient backdrop — the photo's own colours flood the
+                  room behind the frame, so the wait feels lit by the
+                  meal instead of parked on a black card. STATIC blur
+                  only (the BodyMapGlow recipe: a blurred layer may
+                  exist; a filter must never ANIMATE), oversized so the
+                  blur's transparent edge stays off-screen, veiled so
+                  the hero frame and the white copy keep contrast. */}
+              <div
+                aria-hidden
+                data-testid="scan-backdrop"
+                className="absolute inset-0 -z-10"
               >
                 <img
                   src={preview}
                   alt=""
-                  className="absolute inset-0 size-full rounded-3xl object-cover"
+                  className="size-full scale-125 object-cover"
+                  style={{
+                    filter: "blur(52px) brightness(0.72) saturate(1.35)",
+                  }}
+                />
+                {/* Graded veil: lightest around the frame so the ambient
+                    glow carries, darkest at the bottom third so the white
+                    stage copy keeps its contrast on bright photos. */}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/25 to-black/60" />
+              </div>
+              <motion.div
+                className="relative w-full max-w-[340px] aspect-[4/5]"
+                data-testid="scan-frame"
+                initial={reducedMotion ? false : { opacity: 0, scale: 1.045 }}
+                animate={
+                  reducedMotion
+                    ? undefined
+                    : { opacity: 1, scale: locked ? 0.965 : 1 }
+                }
+                transition={{ duration: 0.28, ease: "easeOut" }}
+              >
+                {/* Hairline ring + lift shadow seat the card against the
+                    ambient backdrop — without them a dark photo's edge
+                    dissolves into its own blurred glow. */}
+                <img
+                  src={preview}
+                  alt=""
+                  className="absolute inset-0 size-full rounded-3xl object-cover shadow-2xl shadow-black/60 ring-1 ring-white/10"
                 />
 
                 {/* Reticle corners, seated just OUTSIDE the photo so
@@ -502,18 +532,53 @@ export default function FoodCameraModal({
                   </div>
                 )}
               </motion.div>
-              <p aria-hidden className="text-[15px] font-semibold text-white">
-                {locked ? (
-                  <span
-                    className="inline-flex items-center gap-1.5"
-                    style={{ color: THEME.semantic.nutrition }}
+              {/* Stage copy. Crossfades between lines (the hard swap
+                  every 1.3s read as a glitch next to the smooth laser)
+                  using the same keyed-AnimatePresence pattern as the
+                  barcode hint, inside a fixed-height row so the swap
+                  never shifts the frame above it. On Done the check
+                  DRAWS itself — pathLength 0→1, the settle gesture the
+                  reference scanners all stage. Reduced motion swaps
+                  text instantly and gets the check pre-drawn. */}
+              <div
+                aria-hidden
+                className="relative flex h-5 items-center justify-center"
+              >
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.p
+                    key={locked ? "scan-done" : stageLine}
+                    initial={reducedMotion ? false : { opacity: 0, y: 7 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={reducedMotion ? undefined : { opacity: 0, y: -7 }}
+                    transition={{ duration: 0.18, ease: "easeOut" }}
+                    className="text-[15px] font-semibold text-white"
                   >
-                    <Check className="size-4" /> Done
-                  </span>
-                ) : (
-                  stageLine
-                )}
-              </p>
+                    {locked ? (
+                      <span
+                        className="inline-flex items-center gap-1.5"
+                        style={{ color: THEME.semantic.nutrition }}
+                      >
+                        <svg viewBox="0 0 24 24" className="size-4" fill="none">
+                          <motion.path
+                            data-testid="scan-check"
+                            d="M4.5 12.75 L9.75 18 L19.5 6.75"
+                            stroke="currentColor"
+                            strokeWidth={3.2}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            initial={reducedMotion ? false : { pathLength: 0 }}
+                            animate={{ pathLength: 1 }}
+                            transition={{ duration: 0.32, ease: "easeOut" }}
+                          />
+                        </svg>
+                        Done
+                      </span>
+                    ) : (
+                      stageLine
+                    )}
+                  </motion.p>
+                </AnimatePresence>
+              </div>
             </>
           ) : (
             <div className="flex items-center gap-2">
@@ -779,10 +844,14 @@ export default function FoodCameraModal({
 
           {/* capture row — library · shutter · flip-camera (symmetrical) */}
           <div className="flex items-center justify-between">
-            {/* Photo library */}
+            {/* Photo library — haptics like every other control on this
+                surface (it was the one silent button in the row). */}
             <button
               type="button"
-              onClick={pickFromLibrary}
+              onClick={() => {
+                haptic("light");
+                pickFromLibrary();
+              }}
               className="size-12 rounded-full bg-black/50 text-white flex items-center justify-center"
               aria-label="Photo library"
               disabled={loading || busy}
