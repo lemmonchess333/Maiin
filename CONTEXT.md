@@ -200,6 +200,76 @@ The one argument _for_ (cheap to build; chip could tailor copy) is "cheap + unpr
 
 **What would flip it:** real users + churn data showing drop-off clustering somewhere a motivational nudge could plausibly catch, _and_ the ability to A/B it. Revisit then, with data — if rebuilding, the Duolingo-light shape (one optional screen, orthogonal driver chips, sparse resurfacing) is the locked starting point, **not** the Noom-style quiz.
 
+### AI food capture, onboarding & cold-start (MacroFactor, audited 2026-08-18)
+
+Owner-supplied walkthrough, 46 screenshots, install → paywall → onboarding →
+program/goal setup → daily use → AI scan → micronutrients → goal completion.
+MacroFactor is Tropos's adaptive twin on the nutrition engine (see the Nutr1
+eat-back audit above), so it is the sharpest available comparison for the food
+surface specifically.
+
+**Their AI capture, and where Tropos differs:**
+
+- **One submission carries up to 3 photos AND a ≤500-char description.** Tropos
+  treats photo and text as separate paths (`analyzeFood` vs `analyzeFoodText`).
+  Theirs is the better shape: the description resolves exactly what a photo
+  cannot — cut of meat, cooking fat, plate diameter — and it is the natural
+  content of a "Type it instead" recovery that keeps the photo.
+- **The wait shows real work.** Skeleton rows stream per-ingredient status
+  ("Searching for 'Pastry Dough'", then Sugar, then Salt) as each database
+  lookup lands. Tropos narrates four invented stages on a 1300ms timer over a
+  single round-trip. Ours is plausible, not false — but it is not _earned_, and
+  it is the same category of thing as the fake % counter we refused in #2066.
+  See the open question below.
+- **Per-ingredient provenance.** A sparkle marks the AI-ESTIMATED ingredient
+  (`✨ Pastry Dough`); database-matched ones (Sugar, Salt) carry none. Each
+  ingredient is independently editable with its own quantity + unit.
+- **Plate/Day toggle** on the result: this meal alone vs its contribution to the
+  day. Tropos shows only the meal.
+- **Capture guidance names the privacy risk**: "Avoid including photos of other
+  people" / "Only upload content you have permission to use", alongside the
+  framing/steadiness tips, in a first-use modal.
+
+**Their funnel order (timestamps, one continuous session):** Let's Get Started
+(3-stage stepper) → Basics (~10 questions) → Goal → Program → **paywall** →
+**account creation** → consent → First 30 Days → Dashboard. Value and a
+personalised plan land BEFORE the payment ask; the account is last. Tropos's
+own web/monetisation principles below should be read against this.
+
+**Cold-start, which is the part our standing rule cares most about:**
+
+- **"FIRST 30 DAYS"** is a four-beat timeline — log daily → _Day 3_ expenditure
+  updates → _next Monday_ first check-in → _30 days_ fully calibrated. It says
+  exactly when each piece of value arrives. Tropos has no equivalent, and our
+  adaptive TDEE has the same "nothing visibly happens for days" shape.
+- **Habits are deliberately NOT streaks.** "1/7 this week" plus a 30-day dot
+  grid — informational, no flame, no loss aversion. A listed reference app
+  actively declining streak mechanics is a real signal against the Streaks
+  subsection above; it does not overturn it (Duolingo/Apple remain the streak
+  references) but it belongs in the evidence.
+
+**Smaller patterns worth taking:** visual 9-tile body-fat picker ("don't worry
+about being too precise"); "why we ask" info boxes on intrusive questions
+(weight history → "can impact your current metabolism"); the calorie floor
+exposed as a _user choice_ with an explicit caution on the aggressive option
+(Standard 1350 / Low 900); goal rate shown in two units at once (lbs AND %BW,
+weekly AND monthly); a plain-English paragraph under every computed number,
+including honest hedging on the projected end date.
+
+**Where they are ahead and it is a data problem, not a design one:**
+micronutrient depth — individual amino acids, omega-3 split ALA/DHA/EPA, added
+sugars, each bar carrying a target marker, and an explicit "No Target" where no
+recommendation exists.
+
+**Where Tropos is differentiated (do not copy these away):** they have no social
+layer, no training tracking, and no gamification. Their food log is clock-hour
+slots rather than meal categories. The hybrid loop remains the moat.
+
+**Open question, not yet decided:** whether to replace the invented scan stages
+with real streamed progress. It is not free — it requires splitting one Gemini
+call into identify → match → portion, which costs latency and quota. Recorded
+here so the next agent inherits the tension rather than re-discovering it.
+
 ---
 
 ## Visual vocabulary
