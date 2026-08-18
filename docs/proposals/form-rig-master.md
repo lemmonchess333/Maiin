@@ -29,20 +29,22 @@ packet's design content as the plan and its status content as void.
 
 ### Shipped from this roadmap so far
 
-| Increment                                                                                                                                           | Where                                             | Status                      |
-| --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- | --------------------------- |
-| Replay determinism — reset `lastDrawRef`/`effortRef` per run (Phase 5 item, packet-20 finding)                                                      | `ExerciseRigDemo.tsx` + determinism test          | ✅ this PR                  |
-| Five-sample preview + deterministic manifest (Phase 1 item)                                                                                         | `scripts/preview-rig.ts`                          | ✅ this PR                  |
-| Alias hygiene — 5 incompatible variants fall back (packet P0)                                                                                       | `bodyRig.ts` `DEMO_ALIASES` + tests               | ✅ this PR                  |
-| Misrepresentation gate — `barbell-curl` + `rope-tricep-pushdown` production-gated, review path kept                                                 | `bodyRig.ts` `GATED_PENDING_REPAIR` + tests       | ✅ this PR                  |
-| Form Motion Lab — dev-only force-render review rig (Phase 1)                                                                                        | `/dev/form-motion-lab` (#1639)                    | ✅ shipped                  |
-| Gate-0 contact sheets + status ledger (operator review pending)                                                                                     | `docs/visual-audit/form-motion-v2/`               | ✅ sheets; verdicts pending |
-| Press rebuild — IK bar-path press + divergence-scaled joint caps (Phase 4-class, owner-directed)                                                    | `bodyRig.ts` + mechanics pins                     | ✅ 2026-07-27               |
-| Deadlift rebuild — side-view planted-ankle hinge replaces posterior scaleY (Phase 4-class)                                                          | `bodyRig.ts` + mechanics pins                     | ✅ 2026-07-27               |
-| Bench leg/bar repair + side facet-count discipline (Phase 2-class art)                                                                              | `bodyRig.ts` / `bodySideData.ts`                  | ✅ 2026-07-27               |
-| Looping player + even 30fps throttle (supersedes Demo1 single-rep settle — owner feedback)                                                          | `ExerciseRigDemo.tsx` / `exerciseTempo.ts`        | ✅ 2026-07-27               |
-| Curl + rope-pushdown repairs — side-view rebuilds fix the gated defects; both un-gated (Phase 4 items 1–2); side triceps facet added (Phase 2 item) | `bodyRig.ts` / `bodySideData.ts` + mechanics pins | ✅ 2026-08-15               |
-| Everything else below                                                                                                                               | —                                                 | Pending                     |
+| Increment                                                                                                                                           | Where                                                 | Status                      |
+| --------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | --------------------------- |
+| Replay determinism — reset `lastDrawRef`/`effortRef` per run (Phase 5 item, packet-20 finding)                                                      | `ExerciseRigDemo.tsx` + determinism test              | ✅ this PR                  |
+| Five-sample preview + deterministic manifest (Phase 1 item)                                                                                         | `scripts/preview-rig.ts`                              | ✅ this PR                  |
+| Alias hygiene — 5 incompatible variants fall back (packet P0)                                                                                       | `bodyRig.ts` `DEMO_ALIASES` + tests                   | ✅ this PR                  |
+| Misrepresentation gate — `barbell-curl` + `rope-tricep-pushdown` production-gated, review path kept                                                 | `bodyRig.ts` `GATED_PENDING_REPAIR` + tests           | ✅ this PR                  |
+| Form Motion Lab — dev-only force-render review rig (Phase 1)                                                                                        | `/dev/form-motion-lab` (#1639)                        | ✅ shipped                  |
+| Gate-0 contact sheets + status ledger (operator review pending)                                                                                     | `docs/visual-audit/form-motion-v2/`                   | ✅ sheets; verdicts pending |
+| Press rebuild — IK bar-path press + divergence-scaled joint caps (Phase 4-class, owner-directed)                                                    | `bodyRig.ts` + mechanics pins                         | ✅ 2026-07-27               |
+| Deadlift rebuild — side-view planted-ankle hinge replaces posterior scaleY (Phase 4-class)                                                          | `bodyRig.ts` + mechanics pins                         | ✅ 2026-07-27               |
+| Bench leg/bar repair + side facet-count discipline (Phase 2-class art)                                                                              | `bodyRig.ts` / `bodySideData.ts`                      | ✅ 2026-07-27               |
+| Looping player + even 30fps throttle (supersedes Demo1 single-rep settle — owner feedback)                                                          | `ExerciseRigDemo.tsx` / `exerciseTempo.ts`            | ✅ 2026-07-27               |
+| Curl + rope-pushdown repairs — side-view rebuilds fix the gated defects; both un-gated (Phase 4 items 1–2); side triceps facet added (Phase 2 item) | `bodyRig.ts` / `bodySideData.ts` + mechanics pins     | ✅ 2026-08-15               |
+| Typed props (Phase 3, prop half) — `bodyProps.ts` union + pure resolver; two divergent gear branch chains consolidated, dead anterior copy removed  | `bodyProps.ts` + `bodyRig.ts` `resolveProp`           | ✅ 2026-08-17               |
+| Rope split + gravity tails; press/bench bar paths fitted to the arm (one unreachable, one never locking out)                                        | `bodyProps.ts` / `bodyRig.ts` + mutation-checked pins | ✅ 2026-08-17               |
+| Everything else below                                                                                                                               | —                                                     | Pending                     |
 
 **Demo1 supersession note (2026-07-27).** The single bounded teaching
 rep ("plays one rep, settles behind a replay control") is superseded by

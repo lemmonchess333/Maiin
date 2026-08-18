@@ -8,6 +8,12 @@ import {
 import { ANTERIOR, POSTERIOR } from "../bodyModelData";
 import { SIDE_ANCHORS, SIDE_PIECES } from "../bodySideData";
 
+/** The measured wrist anchors — ON the art, since 2026-08-17. They used
+ *  to be [10,100] / [9,106], ~6.5 units off the end of the forearm art,
+ *  which is why anything drawn at a hand landed beside the arm. */
+const ANT_WRIST: [number, number] = [3.5, 101.2];
+const POST_WRIST: [number, number] = [3.4, 108.5];
+
 function polyYs(svg: string): number[] {
   return [...svg.matchAll(/points="([^"]+)"/g)]
     .flatMap((m) => m[1].trim().split(" "))
@@ -30,7 +36,255 @@ describe("renderBodyDemo", () => {
     const ys = polyYs(svg);
     expect(Math.min(...ys)).toBeLessThan(1);
     const body = svg.replace(/<g class="glow">.*?<\/g>/, "");
-    expect(body.match(/<polygon/g)!.length).toBe(35); // 33 body + 2 feet
+    // 33 vendored + 2 feet + 4 fist facets (two per hand — the second
+    // is the knuckle band). The library figure ships neither feet nor
+    // hands; both are added outside the vendored array.
+    expect(body.match(/<polygon/g)!.length).toBe(39);
+  });
+
+  /** Polygons whose every vertex sits within `r` of a point. */
+  const polysNear = (svg: string, p: [number, number], r: number) =>
+    [...svg.matchAll(/<polygon points="([^"]+)"/g)]
+      .map((m) =>
+        m[1]
+          .trim()
+          .split(" ")
+          .map((pair) => pair.split(",").map(Number) as [number, number])
+      )
+      .filter((pts) =>
+        pts.every((q) => Math.hypot(q[0] - p[0], q[1] - p[1]) <= r)
+      );
+
+  it("the fist CAPS the forearm rather than floating beside it", () => {
+    // The defect that got the first attempt reverted. It was drawn at a
+    // hand anchor sitting ~6.5 units off the end of the arm, so it read
+    // as a rock balanced next to the limb. Pinned as: the fist's mass
+    // sits ON the elbow→wrist line, and PAST the wrist, not to one side.
+    // calf-raise at t=0 is the identity pose for the ARMS — the squat
+    // stopped being one when its hands went up to the bar.
+    const svg = renderBodyDemo("calf-raise", 0);
+    const facets = polysNear(svg, ANT_WRIST, 11);
+    expect(facets.length).toBe(2); // main mass + knuckle band
+
+    const elbow: [number, number] = [20, 71];
+    const ux =
+      (ANT_WRIST[0] - elbow[0]) /
+      Math.hypot(ANT_WRIST[0] - elbow[0], ANT_WRIST[1] - elbow[1]);
+    const uy =
+      (ANT_WRIST[1] - elbow[1]) /
+      Math.hypot(ANT_WRIST[0] - elbow[0], ANT_WRIST[1] - elbow[1]);
+    for (const pts of facets) {
+      const cx = pts.reduce((a, q) => a + q[0], 0) / pts.length;
+      const cy = pts.reduce((a, q) => a + q[1], 0) / pts.length;
+      const vx = cx - ANT_WRIST[0];
+      const vy = cy - ANT_WRIST[1];
+      // Along the arm: positive, i.e. beyond the wrist.
+      expect(vx * ux + vy * uy).toBeGreaterThan(0);
+      // Across the arm: essentially nothing. A fist 6 units to the side
+      // — the reverted bug — fails here by a wide margin.
+      expect(Math.abs(vx * -uy + vy * ux)).toBeLessThan(1.5);
+    }
+  });
+
+  it("the fist is TAPERED — narrow at the wrist, wide at the knuckles", () => {
+    // A symmetric block reads as a lump; the taper is half of what makes
+    // it a hand (the knuckle seam is the other half).
+    const svg = renderBodyDemo("calf-raise", 0);
+    const [mass] = polysNear(svg, ANT_WRIST, 11);
+    const byDist = [...mass].sort(
+      (a, b) =>
+        Math.hypot(a[0] - ANT_WRIST[0], a[1] - ANT_WRIST[1]) -
+        Math.hypot(b[0] - ANT_WRIST[0], b[1] - ANT_WRIST[1])
+    );
+    const span = (p: [number, number], q: [number, number]) =>
+      Math.hypot(p[0] - q[0], p[1] - q[1]);
+    const wristEnd = span(byDist[0], byDist[1]);
+    const knuckleEnd = span(byDist[2], byDist[3]);
+    expect(knuckleEnd).toBeGreaterThan(wristEnd + 1);
+  });
+
+  it("both views carry fists, and they ride the arm solve", () => {
+    const travel = (id: string, anchor: [number, number]) => {
+      const at = (t: number) =>
+        applyToPoint(
+          anchor,
+          (BODY_DEMOS[id].pose(t).foreArmL ?? []) as never[]
+        );
+      return Math.hypot(at(1)[0] - at(0)[0], at(1)[1] - at(0)[1]);
+    };
+    expect(
+      renderBodyDemo("pull-ups", 0.5).match(/<polygon/g)!.length
+    ).toBeGreaterThan(35);
+    // Anterior + posterior hands both track their arm...
+    expect(travel("overhead-press", ANT_WRIST)).toBeGreaterThan(5);
+    expect(travel("lat-pulldown", POST_WRIST)).toBeGreaterThan(5);
+    // ...but a pull-up grips a FIXED bar: the fist must stay put while
+    // the body travels to it, or the hands slide along the bar.
+    expect(travel("pull-ups", POST_WRIST)).toBeLessThan(0.2);
+  });
+
+  it("overhead press: a REAL bar spans the two grips", () => {
+    // Its equipment is Barbell, three of its four instructions name the
+    // bar, and for months the demo pressed nothing. The shaft must span
+    // past BOTH grips (sleeves), sit level at their height, and travel
+    // with the rep.
+    for (const t of [0, 0.5, 1]) {
+      const pose = BODY_DEMOS["overhead-press"].pose(t);
+      const grips = BODY_DEMOS["overhead-press"].bar!(t, pose)!;
+      const svg = renderBodyDemo("overhead-press", t);
+      const shaft = [
+        ...svg.matchAll(
+          /<line x1="(-?[\d.]+)" y1="(-?[\d.]+)" x2="(-?[\d.]+)" y2="(-?[\d.]+)"/g
+        ),
+      ].map((m) => m.slice(1, 5).map(Number))[0];
+      expect(shaft, `shaft @${t}`).toBeDefined();
+      expect(shaft[0]).toBeLessThan(grips[0][0]);
+      expect(shaft[2]).toBeGreaterThan(grips[1][0]);
+      expect(shaft[1]).toBeCloseTo(grips[0][1], 1);
+      expect(shaft[3]).toBeCloseTo(grips[1][1], 1);
+      // A plate off each sleeve — matched on the machined-edge stroke,
+      // since a bare <ellipse count also picks up the ground shadow.
+      expect((svg.match(/<ellipse[^>]*stroke="#565760"/g) ?? []).length).toBe(
+        2
+      );
+      // Nothing clips: the whole bar stays inside the declared canvas.
+      const [, top] = (BODY_DEMOS["overhead-press"].viewBox ?? "")
+        .split(/\s+/)
+        .map(Number);
+      expect(grips[0][1] - 9 - 1).toBeGreaterThan(top);
+    }
+    const shaftY = (t: number) =>
+      Number(
+        renderBodyDemo("overhead-press", t).match(
+          /<line[^>]*y1="(-?[\d.]+)"/
+        )![1]
+      );
+    expect(shaftY(0) - shaftY(1)).toBeGreaterThan(30);
+  });
+
+  it("lateral raise: a bell sits IN each fist through the whole arc", () => {
+    // The bells are drawn from the same solved ops as the forearms, so
+    // this pin is what keeps them from ever being placed independently
+    // of the arm — the detached-prop failure, as a number.
+    for (const t of [0, 0.5, 1]) {
+      const pose = BODY_DEMOS["lateral-raise"].pose(t);
+      const svg = renderBodyDemo("lateral-raise", t);
+      const bells = [
+        ...svg.matchAll(/<circle cx="(-?[\d.]+)" cy="(-?[\d.]+)" r="5.5"/g),
+      ].map((m) => [Number(m[1]), Number(m[2])]);
+      expect(bells.length, `@${t}`).toBe(2);
+      const wristL = applyToPoint(ANT_WRIST, (pose.foreArmL ?? []) as never[]);
+      const near = bells.some(
+        ([x, y]) => Math.hypot(x - wristL[0], y - wristL[1]) < 0.1
+      );
+      expect(near, `left bell on wrist @${t}`).toBe(true);
+    }
+    // And they RIDE the raise: out past the body and up to parallel.
+    const bellAt = (t: number) =>
+      [
+        ...renderBodyDemo("lateral-raise", t).matchAll(
+          /<circle cx="(-?[\d.]+)" cy="(-?[\d.]+)" r="5.5"/g
+        ),
+      ].map((m) => [Number(m[1]), Number(m[2])])[0];
+    expect(bellAt(0)[1] - bellAt(1)[1]).toBeGreaterThan(40); // rose
+    expect(bellAt(1)[0]).toBeLessThan(bellAt(0)[0] - 25); // swung out
+  });
+
+  it("squat: a barbell rides the traps BEHIND the body", () => {
+    // First instruction: "Bar on your upper traps" — undrawn until
+    // 2026-08-17. Back-racked, so the shaft must render in the BEHIND
+    // layer (before the glow group) with the torso occluding its
+    // middle, and it must ride the dive, because it sits ON the body.
+    const shaft = (t: number) => {
+      const svg = renderBodyDemo("squat", t);
+      const m = svg.match(
+        /<line x1="(-?[\d.]+)" y1="(-?[\d.]+)" x2="(-?[\d.]+)" y2="(-?[\d.]+)"/
+      )!;
+      expect(svg.indexOf("<line"), `behind @${t}`).toBeLessThan(
+        svg.indexOf('<g class="glow"')
+      );
+      expect(
+        (svg.match(/<ellipse[^>]*stroke="#565760"/g) ?? []).length,
+        `plates @${t}`
+      ).toBe(2);
+      return m.slice(1, 5).map(Number);
+    };
+    const top = shaft(0);
+    const bottom = shaft(1);
+    // Spans past both grips (the sleeves), level.
+    const grips = BODY_DEMOS["squat"].bar!(0, BODY_DEMOS["squat"].pose(0))!;
+    expect(top[0]).toBeLessThan(grips[0][0]);
+    expect(top[2]).toBeGreaterThan(grips[1][0]);
+    expect(top[1]).toBeCloseTo(top[3], 1);
+    // Rides the dive: the drop at the bottom is ~22 units.
+    expect(bottom[1] - top[1]).toBeGreaterThan(18);
+  });
+
+  it("squat: the WIDE grip is what keeps the arm out of the chest", () => {
+    // The July failure pinned as a number. Front-view IK to a grip near
+    // the shoulder solves the elbow INBOARD — pull the grips in to x=10
+    // and the left elbow lands ~11 units inside the shoulder, folding
+    // the arm across the chest (the "broken polygons" of the July
+    // attempt). At the canvas-edge grips the elbow stays within ~2
+    // units of its natural hang.
+    for (const t of [0, 1]) {
+      const pose = BODY_DEMOS["squat"].pose(t);
+      const drop = t === 0 ? 0 : (1 - 0.6) * (148 - 92);
+      const elbow = applyToPoint([20, 71], (pose.upperArmL ?? []) as never[]);
+      expect(elbow[0], `elbow x @${t}`).toBeLessThan(24 + 1);
+      expect(Math.abs(elbow[1] - (71 + drop)), `elbow y @${t}`).toBeLessThan(4);
+    }
+  });
+
+  it("gear-incompatible squat aliases keep the motion, lose the bar", () => {
+    // The moment squat gained a back-rack barbell, its aliases became
+    // lies: bodyweight holds nothing, front squat racks on the FRONT
+    // delts. They keep the animation and drop the gear;
+    // smith-machine-squat keeps the bar (true of it, minus the rails);
+    // goblet-squat graduated to its own demo with the bell it holds.
+    for (const id of ["bodyweight-squat", "front-squat"]) {
+      const svg = renderBodyDemo(id, 0.5);
+      expect(svg.includes("<line"), `${id} shaft`).toBe(false);
+      expect(
+        (svg.match(/<ellipse[^>]*stroke="#565760"/g) ?? []).length,
+        `${id} plates`
+      ).toBe(0);
+      expect(svg.match(/<polygon/g)!.length, `${id} alive`).toBeGreaterThan(35);
+      expect(getBodyDemo(id)!.equip, `${id} equip`).toBeUndefined();
+    }
+    expect(renderBodyDemo("smith-machine-squat", 0.5).includes("<line")).toBe(
+      true
+    );
+    expect(getBodyDemo("squat")!.equip).toBe("back-barbell");
+  });
+
+  it("goblet squat: hands cup ONE bell at the sternum, riding the dive", () => {
+    for (const t of [0, 1]) {
+      const pose = BODY_DEMOS["goblet-squat"].pose(t);
+      const drop = t === 0 ? 0 : (1 - 0.6) * (148 - 92);
+      // Hands together at the chest, glued through the descent.
+      const wl = applyToPoint(ANT_WRIST, (pose.foreArmL ?? []) as never[]);
+      expect(
+        Math.hypot(wl[0] - 46.5, wl[1] - (52 + drop)),
+        `hand @${t}`
+      ).toBeLessThan(0.1);
+      // "Elbows pinned under it": below the shoulder and OUTBOARD —
+      // never solved inboard across the chest (the July collapse).
+      const el = applyToPoint([20, 71], (pose.upperArmL ?? []) as never[]);
+      expect(el[1], `elbow low @${t}`).toBeGreaterThan(60 + drop);
+      expect(el[0], `elbow out @${t}`).toBeLessThan(24 + 1);
+      // ONE bell, centred between the hands, sitting just above them.
+      const svg = renderBodyDemo("goblet-squat", t);
+      const bells = [
+        ...svg.matchAll(/<circle cx="(-?[\d.]+)" cy="(-?[\d.]+)" r="6"/g),
+      ].map((m) => [Number(m[1]), Number(m[2])]);
+      expect(bells.length, `bells @${t}`).toBe(1);
+      expect(bells[0][0]).toBeCloseTo(50, 0);
+      expect(bells[0][1]).toBeCloseTo(52 + drop - 6, 0);
+      // A goblet squat has no barbell.
+      expect(svg.includes("<line")).toBe(false);
+    }
+    expect(getBodyDemo("goblet-squat")!.equip).toBe("goblet-bell");
   });
 
   it("squat: the body visibly sinks at the bottom", () => {
@@ -87,16 +341,57 @@ describe("renderBodyDemo", () => {
     expect(postY(up)).toBe(postY(down));
   });
 
-  it("pushdown: the rope's knotted tail travels down to lockout", () => {
-    // The tail knob is the LAST circle in the svg (sceneFront renders
-    // after the body) — its descent is the extension arc.
-    const knobY = (svg: string) => {
-      const cs = [...svg.matchAll(/<circle[^>]*cy="(-?[\d.]+)"[^>]*r="2"/g)];
-      return Number(cs[cs.length - 1][1]);
+  /** Both rope tails, as [x, y] — the knobs are the only r=2.4 circles. */
+  const ropeTails = (t: number): [number, number][] =>
+    [
+      ...renderBodyDemo("rope-tricep-pushdown", t).matchAll(
+        /<circle cx="(-?[\d.]+)" cy="(-?[\d.]+)" r="2\.4"/g
+      ),
+    ].map((m) => [Number(m[1]), Number(m[2])]);
+
+  it("pushdown: the rope's knotted tails travel down to lockout", () => {
+    const startY = Math.min(...ropeTails(0).map(([, y]) => y));
+    const endY = Math.min(...ropeTails(1).map(([, y]) => y));
+    expect(endY - startY).toBeGreaterThan(20);
+  });
+
+  it("pushdown: the rope SPLITS as the arms lock out", () => {
+    // Instruction 3 ("spreading the ends apart as your arms lock out")
+    // and the tip ("split the rope apart at the bottom") both promise
+    // this. The single-strand rope that shipped before could not: it
+    // contradicted the copy printed beside it.
+    const gap = (t: number) => {
+      const xs = ropeTails(t).map(([x]) => x);
+      expect(xs.length).toBe(2); // two ends, not one strand
+      return Math.abs(xs[1] - xs[0]);
     };
-    const start = knobY(renderBodyDemo("rope-tricep-pushdown", 0));
-    const end = knobY(renderBodyDemo("rope-tricep-pushdown", 1));
-    expect(end - start).toBeGreaterThan(20);
+    expect(gap(1)).toBeGreaterThan(gap(0) * 2);
+  });
+
+  it("pushdown: the tails hang under GRAVITY, not along the cable", () => {
+    // They used to be drawn as hand + cableDirection × 8 — rigid-rod
+    // behaviour, so at the folded start they stuck out FORWARD instead
+    // of dropping past the grip. Rope hangs down whatever the cable is
+    // doing, so the vertical drop is constant across the whole arc.
+    // The cable swings through the whole arc, so a constant drop can
+    // only come from gravity. Each tail is the line ENDING at a knob.
+    for (const t of [0, 0.5, 1]) {
+      const svg = renderBodyDemo("rope-tricep-pushdown", t);
+      const segs = [
+        ...svg.matchAll(
+          /<line x1="(-?[\d.]+)" y1="(-?[\d.]+)" x2="(-?[\d.]+)" y2="(-?[\d.]+)"/g
+        ),
+      ].map((m) => m.slice(1, 5).map(Number));
+      const tails = ropeTails(t);
+      expect(tails.length).toBe(2);
+      for (const [tx, ty] of tails) {
+        const seg = segs.find(
+          ([, , x2, y2]) => Math.abs(x2 - tx) < 0.06 && Math.abs(y2 - ty) < 0.06
+        );
+        expect(seg, `tail segment @${t}`).toBeDefined();
+        expect(seg![3] - seg![1], `drop @${t}`).toBeCloseTo(13, 1);
+      }
+    }
   });
 
   it("pushdown: elbow pinned — the upper arm never moves", () => {
@@ -129,8 +424,10 @@ describe("renderBodyDemo", () => {
   });
 
   it("aliased exercises render (renderBodyDemo is alias-aware)", () => {
-    // goblet-squat aliases squat — a direct-registry lookup would blank.
-    expect(renderBodyDemo("goblet-squat", 0.5)).not.toBe("");
+    // bodyweight-squat aliases squat — a direct-registry lookup would
+    // blank. (goblet-squat used to be the example here; it graduated to
+    // its own registry entry.)
+    expect(renderBodyDemo("bodyweight-squat", 0.5)).not.toBe("");
   });
 
   it("removed variant aliases fall back instead of borrowing motion", () => {
@@ -267,6 +564,182 @@ describe("renderBodyDemo", () => {
     }
   });
 
+  /* ── Bar paths must stay inside the arm's reach ──────────────────
+   * Both press-family demos wrote their bar path as absolute offsets
+   * with no reference to how long the arm actually is, and drifted in
+   * OPPOSITE directions without anything noticing:
+   *
+   *   overhead press  asked hypot(14, 53) = 54.82 of a 54.02 arm
+   *   bench press     asked hypot(50,  8) = 50.64 of a 55.07 arm
+   *
+   * The press over-reached, so `solveElbow` clamped at 0.999 of full
+   * extension and drew the hand ~0.85 short of the bar it was holding —
+   * invisible in the rendered chain, which stays rigid either way, and
+   * papered over by the joint caps. The bench under-reached, so the
+   * frame labelled lockout kept the elbow 46° short of straight while
+   * its own instruction said "full lockout".
+   *
+   * Reach alone cannot catch the clamp (a clamped chain still measures
+   * ~99.9% extended), so the press is pinned against its DECLARED path
+   * and the bench against the elbow it actually renders. */
+
+  it("overhead press: the hands stay ON the declared bar path", () => {
+    const armLen =
+      Math.hypot(20 - 24, 71 - 48) +
+      Math.hypot(ANT_WRIST[0] - 20, ANT_WRIST[1] - 71);
+    for (const t of [0, 0.5, 1]) {
+      const bar = BODY_DEMOS["overhead-press"].bar!(
+        t,
+        BODY_DEMOS["overhead-press"].pose(t)
+      )!;
+      // The path itself has to be solvable — this is the guard the
+      // press did not have. Measured from the RISEN shoulder: the
+      // girdle elevates through the drive, so a fixed [24,48] would
+      // over-state the distance the arm has to cover at lockout.
+      const sh = applyToPoint(
+        [24, 48],
+        (BODY_DEMOS["overhead-press"].pose(t).upperArmL ?? []) as never[]
+      );
+      expect(
+        Math.hypot(bar[0][0] - sh[0], bar[0][1] - sh[1]),
+        `path@${t}`
+      ).toBeLessThan(armLen);
+      // ...and the drawn hand has to actually be on it. A clamped solve
+      // fails HERE and nowhere else.
+      const hand = applyToPoint(
+        ANT_WRIST,
+        (BODY_DEMOS["overhead-press"].pose(t).foreArmL ?? []) as never[]
+      );
+      expect(
+        Math.hypot(hand[0] - bar[0][0], hand[1] - bar[0][1]),
+        `hand@${t}`
+      ).toBeLessThan(0.2);
+    }
+  });
+
+  it("the art's wrist lands ON the grip each demo declares", () => {
+    // The defect this whole change exists for. `aimArm` derives its
+    // rotation from the rest vector H−E, so an anchor sitting beside the
+    // art landed a phantom point on the target while the real wrist went
+    // ~6 units elsewhere. Nothing caught it because nothing was DRAWN at
+    // a hand. Both demos below declare their actual grip (not a bar that
+    // overhangs it), so the wrist must sit on it exactly.
+    for (const [id, wrist] of [
+      ["overhead-press", ANT_WRIST],
+      ["dips", ANT_WRIST],
+    ] as const) {
+      for (const t of [0, 0.5, 1]) {
+        const pose = BODY_DEMOS[id].pose(t);
+        const grip = BODY_DEMOS[id].bar!(t, pose)![0];
+        const w = applyToPoint(wrist, (pose.foreArmL ?? []) as never[]);
+        expect(
+          Math.hypot(w[0] - grip[0], w[1] - grip[1]),
+          `${id}@${t}`
+        ).toBeLessThan(0.2);
+      }
+    }
+  });
+
+  it("hands do NOT slide along apparatus that is bolted down", () => {
+    // The subtler half: the offset was not constant through a rep, so
+    // the art crept along bars the anchors held perfectly still. The
+    // existing "grips stay put" test misses this entirely — it checks
+    // the POST lines, which are drawn from the anchor, never the arm.
+    for (const [id, wrist] of [
+      ["pull-ups", POST_WRIST],
+      ["dips", ANT_WRIST],
+    ] as const) {
+      const at = (t: number) =>
+        applyToPoint(wrist, (BODY_DEMOS[id].pose(t).foreArmL ?? []) as never[]);
+      const drift = Math.hypot(at(1)[0] - at(0)[0], at(1)[1] - at(0)[1]);
+      expect(drift, `${id} grip drift`).toBeLessThan(0.2);
+    }
+  });
+
+  it("the shoulder girdle rises — press and raise both shrug", () => {
+    // It used to travel 0.00 across a 55°→166° humerus swing: the rig
+    // stylised the scapula's ROTATION as a deltoid tilt and modelled its
+    // ELEVATION not at all. ~2:1 scapulohumeral rhythm puts the acromion
+    // up ~3.2 units overhead and ~1.7 at a raise to parallel.
+    const shoulderAt = (id: string, t: number) =>
+      applyToPoint(
+        [24, 48],
+        (BODY_DEMOS[id].pose(t).upperArmL ?? []) as never[]
+      );
+    for (const [id, expected] of [
+      ["overhead-press", 3.2],
+      ["lateral-raise", 1.7],
+    ] as const) {
+      const rise = shoulderAt(id, 0)[1] - shoulderAt(id, 1)[1];
+      expect(rise, `${id} rise`).toBeCloseTo(expected, 1);
+      // Elevation only — the girdle must not wander sideways.
+      expect(
+        Math.abs(shoulderAt(id, 1)[0] - shoulderAt(id, 0)[0]),
+        `${id} lateral drift`
+      ).toBeLessThan(0.2);
+    }
+  });
+
+  it("IK demos reach a real extension at the end of their stroke", () => {
+    // Each of these was left 43° short of straight by the longer,
+    // corrected forearm: the press at lockout, the pull-up at the dead
+    // hang, the pulldown at full overhead reach.
+    const reach = (
+      id: string,
+      t: number,
+      S: [number, number],
+      wrist: [number, number]
+    ) => {
+      const pose = BODY_DEMOS[id].pose(t);
+      const sh = applyToPoint(S, (pose.upperArmL ?? []) as never[]);
+      const w = applyToPoint(wrist, (pose.foreArmL ?? []) as never[]);
+      return Math.hypot(w[0] - sh[0], w[1] - sh[1]);
+    };
+    const ANT_LEN =
+      Math.hypot(20 - 24, 71 - 48) + Math.hypot(3.5 - 20, 101.2 - 71);
+    const POST_LEN =
+      Math.hypot(17 - 23, 78 - 46) + Math.hypot(3.4 - 17, 108.5 - 78);
+    expect(
+      reach("overhead-press", 1, [24, 48], ANT_WRIST) / ANT_LEN
+    ).toBeGreaterThan(0.96);
+    expect(
+      reach("pull-ups", 0, [23, 46], POST_WRIST) / POST_LEN
+    ).toBeGreaterThan(0.96);
+    expect(
+      reach("lat-pulldown", 0, [23, 46], POST_WRIST) / POST_LEN
+    ).toBeGreaterThan(0.96);
+  });
+
+  it("bench press: the rep finishes at a real lockout", () => {
+    const armLen =
+      Math.hypot(
+        SIDE_ANCHORS.elbow[0] - SIDE_ANCHORS.shoulder[0],
+        SIDE_ANCHORS.elbow[1] - SIDE_ANCHORS.shoulder[1]
+      ) +
+      Math.hypot(
+        SIDE_ANCHORS.hand[0] - SIDE_ANCHORS.elbow[0],
+        SIDE_ANCHORS.hand[1] - SIDE_ANCHORS.elbow[1]
+      );
+    const pose = BODY_DEMOS["bench-press"].pose(1);
+    const S = applyToPoint(SIDE_ANCHORS.shoulder, pose.upperArmL ?? []);
+    const E = applyToPoint(SIDE_ANCHORS.elbow, pose.upperArmL ?? []);
+    const H = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+    // Soft lock: straight to the eye, not hyperextended, not clamped.
+    const ua = [E[0] - S[0], E[1] - S[1]];
+    const fa = [H[0] - E[0], H[1] - E[1]];
+    const bend =
+      (Math.acos(
+        (ua[0] * fa[0] + ua[1] * fa[1]) /
+          (Math.hypot(...ua) * Math.hypot(...fa))
+      ) *
+        180) /
+      Math.PI;
+    expect(bend).toBeLessThan(15);
+    expect(bend).toBeGreaterThan(2);
+    // And the path stays under the ceiling, so nothing clamps.
+    expect(Math.hypot(H[0] - S[0], H[1] - S[1])).toBeLessThan(armLen);
+  });
+
   it("rig acceptance: barbell plate present and pinned for bar lifts", () => {
     for (const id of ["bench-press", "barbell-row", "romanian-deadlift"]) {
       for (const t of [0, 0.5, 1]) {
@@ -328,7 +801,7 @@ describe("renderBodyDemo", () => {
     // [10,100] (left side of the vendored anterior figure).
     const hand = (t: number) =>
       applyToPoint(
-        [10, 100],
+        ANT_WRIST,
         (BODY_DEMOS["overhead-press"].pose(t).foreArmL ?? []) as never[]
       );
     const bottom = hand(0);
@@ -399,6 +872,7 @@ describe("registry", () => {
   it("all demos are defined with tints and a concentric direction", () => {
     for (const id of [
       "squat",
+      "goblet-squat",
       "deadlift",
       "overhead-press",
       "barbell-curl",

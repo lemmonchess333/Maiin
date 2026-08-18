@@ -6,15 +6,24 @@ import {
   X,
   Image as ImageIcon,
   RefreshCw,
+  Camera,
   CameraOff,
   Keyboard,
 } from "lucide-react";
+import { Spinner } from "@/components/ui/Spinner";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
+import {
+  SCAN_STAGES_FOOD,
+  SCAN_STAGES_LABEL,
+  useScanStages,
+} from "@/hooks/useScanStages";
 import { useBackDismiss } from "@/lib/backDismiss";
 import { logger } from "@/lib/logger";
 import { THEME } from "@/lib/theme";
 
 type CaptureMode = "food" | "label";
+
 type TabMode = "food" | "barcode" | "label";
 /**
  * Camera state machine.
@@ -32,15 +41,50 @@ type TabMode = "food" | "barcode" | "label";
  */
 type CameraState = "idle" | "granted" | "denied" | "unavailable";
 
+/**
+ * How a scan can fail. Drives the in-modal failure beat:
+ *  - `no-food`  — the AI answered but found nothing identifiable
+ *                 (a photo of the dog, the desk, your parents…)
+ *  - `error`    — the request itself failed (network, server, auth)
+ *  - `offline`  — pre-empted before the request: scanning needs a
+ *                 connection, so we say so instantly instead of
+ *                 burning the sweep on a fetch that must fail
+ */
+export type ScanFailureKind = "no-food" | "error" | "offline";
+
 type Props = {
   open: boolean;
   onClose: () => void;
   onCaptureBase64: (base64: string, mode: CaptureMode) => Promise<void>;
   onBarcodeDetected: (raw: string) => Promise<void>;
   loading: boolean;
+  /** The completion beat: analysis has LANDED and the parent is holding
+   *  the modal open for a few hundred ms so the scan visibly resolves —
+   *  frame tightens, laser gone, "Done" — instead of hard-cutting to
+   *  the result. The reference apps all stage this moment; the hard cut
+   *  was ours alone. */
+  locked?: boolean;
+  /** The failure beat: analysis ended with nothing to show. The scan
+   *  RESOLVES in place — laser stops, corners go neutral, honest copy
+   *  ("No food detected" / "Couldn't read this one" / "You're
+   *  offline") with Retake + Type-it-instead right where the user is
+   *  already looking. Pre-beat, every failure silently closed the
+   *  modal mid-sweep and dumped the user on a page-level card they
+   *  had to reorient to. The parent owns this state and clears it on
+   *  retake / close. */
+  failure?: ScanFailureKind | null;
+  /** The user-facing reason behind an "error" failure — the server's
+   *  own rate-limit / quota / auth copy, or the hook's mapped network
+   *  lines. Replaces the generic "Might be the connection" sub-line so
+   *  a rate-limited user is never told to retry a closed window. */
+  failureDetail?: string | null;
+  /** Fired by Retake in the failure state. The modal clears its held
+   *  frame (so the live feed returns); the parent clears `failure`. */
+  onScanRetry?: () => void;
   /**
-   * Fired when the user taps "Type it instead" from the denied-permission
-   * fallback. The parent should close the modal and focus the NL input.
+   * Fired when the user taps "Type it instead" — from the
+   * denied-permission fallback or the scan-failure beat. The parent
+   * should close the modal and focus the NL input.
    */
   onRequestTypedInput?: () => void;
 };
@@ -74,17 +118,37 @@ export default function FoodCameraModal({
   onCaptureBase64,
   onBarcodeDetected,
   loading,
+  locked = false,
+  failure = null,
+  failureDetail = null,
+  onScanRetry,
   onRequestTypedInput,
 }: Props) {
   const focusTrapRef = useFocusTrap<HTMLDivElement>(open);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  /* The frame being analysed. Held so the wait shows the STILL the
+     model is actually reading — a live feed that keeps moving under
+     an "Analysing…" label invites the user to re-aim a shot that has
+     already been taken. */
+  const [preview, setPreview] = useState<string | null>(null);
+  const reducedMotion = useReducedMotion();
+  /* Drop the held frame when the modal closes so a later scan can never
+     flash the previous meal. (The component stays mounted across
+     open/close — `open` only gates the render.) */
+  useEffect(() => {
+    if (!open) setPreview(null);
+  }, [open]);
   const streamRef = useRef<MediaStream | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const stopZXingRef = useRef<null | (() => void)>(null);
 
   const [tab, setTab] = useState<TabMode>("food");
+  const stageLine = useScanStages(
+    loading,
+    tab === "label" ? SCAN_STAGES_LABEL : SCAN_STAGES_FOOD
+  );
   const [facing, setFacing] = useState<"environment" | "user">("environment");
   const [busy, setBusy] = useState(false);
   const [barcodeHint, setBarcodeHint] = useState<string>(
@@ -101,6 +165,18 @@ export default function FoodCameraModal({
   useEffect(() => {
     onCloseRef.current = onClose;
   }, [onClose]);
+
+  // Same stability treatment for the barcode handler: FoodAnalyzer
+  // passes an inline function (fresh identity every parent render),
+  // and with it in the ZXing effect's deps every re-render while on
+  // the Barcode tab tore the decoder down and restarted it — including
+  // the re-render caused by the lookup's own setBarcodeLoading, which
+  // could re-detect the same code mid-lookup and double the request +
+  // error toast.
+  const onBarcodeDetectedRef = useRef(onBarcodeDetected);
+  useEffect(() => {
+    onBarcodeDetectedRef.current = onBarcodeDetected;
+  }, [onBarcodeDetected]);
 
   // Device/browser BACK closes the camera instead of leaving the Food tab —
   // the #1 back-trap. See lib/backDismiss.ts.
@@ -201,6 +277,14 @@ export default function FoodCameraModal({
       return;
     }
 
+    /* Cancellation flag mirrors the stream effect above: the async init
+       (dynamic import + decodeFromVideoElement) can resolve AFTER this
+       effect's cleanup ran — user left the Barcode tab, or the modal
+       closed — and without the flag the late-arriving decoder kept
+       scanning with nothing left to stop it until the next cleanup,
+       able to hijack a photo session with a barcode detection. */
+    let cancelled = false;
+
     const startZXing = async () => {
       try {
         const videoEl = videoRef.current;
@@ -243,11 +327,21 @@ export default function FoodCameraModal({
               // ignore
             }
             stopZXingRef.current = null;
+            if (cancelled) return;
             setBarcodeHint("Found!");
 
-            await onBarcodeDetected(text);
+            await onBarcodeDetectedRef.current(text);
           }
         );
+
+        if (cancelled) {
+          try {
+            controls.stop();
+          } catch {
+            // ignore
+          }
+          return;
+        }
 
         stopZXingRef.current = () => {
           try {
@@ -258,17 +352,18 @@ export default function FoodCameraModal({
         };
       } catch (e: unknown) {
         logger.error(e);
-        setBarcodeHint("Scanner failed — try again");
+        if (!cancelled) setBarcodeHint("Scanner failed — try again");
       }
     };
 
     void startZXing();
 
     return () => {
+      cancelled = true;
       stopZXingRef.current?.();
       stopZXingRef.current = null;
     };
-  }, [tab, open, onBarcodeDetected]);
+  }, [tab, open]);
 
   const pickFromLibrary = () => {
     fileInputRef.current?.click();
@@ -283,9 +378,21 @@ export default function FoodCameraModal({
       setBusy(true);
       const reader = new FileReader();
       reader.onload = async () => {
-        const dataUrl = String(reader.result || "");
-        const base64 = dataUrlToBase64(dataUrl);
-        await onCaptureBase64(base64, tab === "label" ? "label" : "food");
+        try {
+          const dataUrl = String(reader.result || "");
+          const base64 = dataUrlToBase64(dataUrl);
+          setPreview(dataUrl);
+          await onCaptureBase64(base64, tab === "label" ? "label" : "food");
+        } finally {
+          setBusy(false);
+        }
+      };
+      /* A read that never fires onload (file deleted between pick and
+         read, an iOS Files provider error) used to strand busy=true
+         forever — shutter greyed, library dead, no overlay showing,
+         and only close-and-reopen recovered. */
+      reader.onerror = () => {
+        logger.error(reader.error);
         setBusy(false);
       };
       reader.readAsDataURL(file);
@@ -319,6 +426,7 @@ export default function FoodCameraModal({
       const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
       const base64 = dataUrlToBase64(dataUrl);
 
+      setPreview(dataUrl);
       await onCaptureBase64(base64, tab === "label" ? "label" : "food");
     } catch (e) {
       logger.error(e);
@@ -329,14 +437,424 @@ export default function FoodCameraModal({
 
   if (!open) return null;
 
-  const disableShutter = loading || busy || tab === "barcode";
+  /* The analysis overlay is visually opaque but the camera chrome under
+     it stayed focusable and operable — a keyboard/screen-reader user
+     could Tab past the failure actions onto invisible controls and
+     fire a BLIND capture. `inert` on the under-chrome removes it from
+     both the tab order and the a11y tree while the overlay is up; the
+     top-bar X deliberately stays live (the escape hatch). */
+  const overlayUp = Boolean(loading || locked || failure);
+
+  /* Shutter also waits for a LIVE stream: in the `idle` state (stream
+     starting, or a permission prompt still unanswered) `drawImage` of
+     a stream-less video yields a black JPEG that burns a real scan on
+     a guaranteed "No food detected". */
+  const disableShutter =
+    loading || busy || tab === "barcode" || cameraState !== "granted";
   const cameraBlocked =
     cameraState === "denied" || cameraState === "unavailable";
+
+  /* Failure copy, resolved per kind AND per mode — "No food detected"
+     is the wrong sentence when the user was photographing a nutrition
+     label. Sub-lines name the next move; the buttons below make it. */
+  const failureCopy = failure
+    ? {
+        "no-food":
+          tab === "label"
+            ? {
+                title: "Couldn't read the label",
+                sub: "Try a straighter, closer shot of the nutrition panel.",
+              }
+            : {
+                title: "No food detected",
+                sub: "Try a clearer shot of the plate — or type it in.",
+              },
+        error: {
+          title: "Couldn't read this one",
+          /* The specific reason when we have one (server rate-limit /
+             quota / auth copy, the hook's mapped network lines) —
+             "wait a moment" must never render as "try again". */
+          sub:
+            failureDetail ??
+            "Might be the connection. Try again, or type it in.",
+        },
+        offline: {
+          title: "You're offline",
+          sub: "Scanning needs a connection — typing it in still works.",
+        },
+      }[failure]
+    : null;
+
+  const handleScanRetry = () => {
+    haptic("light");
+    /* Drop the held frame so the surface returns to the live feed
+       (or the blocked-branch upload fallback) ready for another go. */
+    setPreview(null);
+    onScanRetry?.();
+  };
+
+  /* The failure action row. Rendered wherever the failure beat shows —
+     with or without a held frame — so recovery never depends on which
+     branch the user came in through. The buttons follow this surface's
+     own chrome idiom (the blocked-branch fallback pair): h-12 ≥ the
+     44px floor. The PRIMARY slot goes to the action that can actually
+     succeed: normally Retake — but offline, retaking lands on the same
+     dead end, while typing works fully offline (local NL parser +
+     queue-routed write), so Type-it-instead takes the orange. */
+  const failureButtons = [
+    {
+      key: "retake",
+      icon: <Camera className="size-4" />,
+      label: cameraBlocked ? "Try another photo" : "Retake photo",
+      onClick: handleScanRetry,
+    },
+    ...(onRequestTypedInput
+      ? [
+          {
+            key: "typed",
+            icon: <Keyboard className="size-4" />,
+            label: "Type it instead",
+            onClick: () => {
+              haptic("light");
+              onRequestTypedInput();
+            },
+          },
+        ]
+      : []),
+  ];
+  if (failure === "offline" && failureButtons.length > 1)
+    failureButtons.reverse();
+
+  const failureActions = (
+    <div className="flex w-full max-w-[300px] flex-col gap-2">
+      {/* Primary fill is bg-nutrition-fill (#B45309, 5.02:1 under
+          white) — the AA step that exists precisely because the
+          identity orange (#D9884E, ~2.8:1) keeps leaking under white
+          text. The one surface where reading the button IS the way
+          out cannot be the one that fails contrast. */}
+      {failureButtons.map((b, i) => (
+        <button
+          key={b.key}
+          type="button"
+          onClick={b.onClick}
+          className={cn(
+            "w-full h-12 rounded-xl text-white font-medium text-sm flex items-center justify-center gap-2",
+            i === 0 ? "bg-nutrition-fill" : "bg-white/10"
+          )}
+        >
+          {b.icon}
+          {b.label}
+        </button>
+      ))}
+    </div>
+  );
 
   // Permission denied / camera unavailable — render a fallback surface
   // instead of the camera preview. Gives the user a clear path back to
   // the happy case (upload from library or type the meal manually)
   // rather than silently closing the modal.
+  /* Hoisted because the modal has TWO returns — the camera surface and
+     the camera-blocked fallback — and the fallback still offers photo-
+     library upload. Rendering the overlay only in the main return
+     re-created the original looks-frozen bug for exactly the users
+     most likely to hit it: anyone who denied camera permission and
+     logs meals from the library every time. */
+  const analysisOverlay = (
+    <>
+      {/* Analysis in flight — the scan.
+        The modal is `fixed inset-0` and opaque and stays open for the
+        whole round-trip (`setCameraOpen(false)` runs only after the
+        await), so this IS the wait. Design decisions, in order of
+        what they fix:
+
+        - The captured photo is the HERO: near full width, full
+          brightness. It is the most delightful asset available in
+          this moment — the user's own meal — and the previous
+          treatment dimmed it to 70% inside a 260px stamp.
+        - The scanner is a thin bright LINE with a gradient trail,
+          not a soft band (a 64px smudge reads as an artefact). It
+          replaces the spinner outright: one motion on the surface,
+          per the one-ambient-loop rule. The mover is a full-height
+          layer animating its own transform from -100% to 0%, so the
+          line sweeps top → bottom whatever the stage's size.
+        - Copy rotates through honest stages and HOLDS on the last.
+          It is aria-hidden; the status div carries one stable label
+          so screen readers hear "Analyzing food" once, not a feed.
+        - Reduced motion: corners + photo + static-but-advancing
+          copy. No laser. Content change is information, not motion.
+        - Barcode lookups (and any wait with no captured frame) fall
+          back to the plain spinner row — a scan reticle over
+          nothing, or over a STALE previous photo, would be worse
+          than dull. */}
+      {/* Persistent live regions OUTSIDE the conditional overlay — a
+          region inserted together with its label announces nothing on
+          most SR/browser pairs (live regions announce mutations after
+          the region exists), so the scan wait used to be total silence
+          for VoiceOver and the failure verdict a coin flip. These two
+          nodes are always mounted while the modal is open; their
+          CONTENT changing is the announcement contract that works.
+          Two regions rather than one role-swapped node, because a
+          role mutation on an existing node has the same registration
+          problem. The overlay div itself is now a plain visual
+          container: its failure buttons stay in the a11y tree. */}
+      <span
+        className="sr-only"
+        role="status"
+        aria-live="polite"
+        data-testid="scan-live-status"
+      >
+        {locked ? "Done" : loading ? "Analyzing food" : ""}
+      </span>
+      <span className="sr-only" role="alert" data-testid="scan-live-alert">
+        {failureCopy ? `${failureCopy.title}. ${failureCopy.sub}` : ""}
+      </span>
+      {overlayUp && (
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-6 overflow-hidden bg-black/85 px-8">
+          {preview && tab !== "barcode" ? (
+            <>
+              {/* Ambient backdrop — the photo's own colours flood the
+                  room behind the frame, so the wait feels lit by the
+                  meal instead of parked on a black card. STATIC blur
+                  only (the BodyMapGlow recipe: a blurred layer may
+                  exist; a filter must never ANIMATE), oversized so the
+                  blur's transparent edge stays off-screen, veiled so
+                  the hero frame and the white copy keep contrast. */}
+              <div
+                aria-hidden
+                data-testid="scan-backdrop"
+                className="absolute inset-0 -z-10"
+              >
+                <img
+                  src={preview}
+                  alt=""
+                  className="size-full scale-125 object-cover"
+                  style={{
+                    filter: "blur(52px) brightness(0.72) saturate(1.35)",
+                  }}
+                />
+                {/* Graded veil: lightest around the frame so the ambient
+                    glow carries, darkest at the bottom third so the white
+                    stage copy keeps its contrast on bright photos. */}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/25 to-black/60" />
+              </div>
+              <motion.div
+                className="relative w-full max-w-[340px] aspect-[4/5]"
+                data-testid="scan-frame"
+                initial={reducedMotion ? false : { opacity: 0, scale: 1.045 }}
+                animate={
+                  reducedMotion
+                    ? undefined
+                    : { opacity: 1, scale: locked ? 0.965 : 1 }
+                }
+                transition={{ duration: 0.28, ease: "easeOut" }}
+              >
+                {/* Hairline ring + lift shadow seat the card against the
+                    ambient backdrop — without them a dark photo's edge
+                    dissolves into its own blurred glow. */}
+                <img
+                  src={preview}
+                  alt=""
+                  className="absolute inset-0 size-full rounded-3xl object-cover shadow-2xl shadow-black/60 ring-1 ring-white/10"
+                />
+
+                {/* Reticle corners, seated just OUTSIDE the photo so
+                  they frame it instead of sinking into it. */}
+                {/* On failure the corners settle to NEUTRAL — the
+                    orange is the "reading" register, and holding it
+                    over "No food detected" would say two things at
+                    once. Neutral white is camera chrome, not a
+                    warning: nothing bad happened, the scan just
+                    ended. */}
+                {[
+                  "-top-1 -left-1 border-t-[3px] border-l-[3px] rounded-tl-[20px]",
+                  "-top-1 -right-1 border-t-[3px] border-r-[3px] rounded-tr-[20px]",
+                  "-bottom-1 -left-1 border-b-[3px] border-l-[3px] rounded-bl-[20px]",
+                  "-bottom-1 -right-1 border-b-[3px] border-r-[3px] rounded-br-[20px]",
+                ].map((corner) => (
+                  <motion.span
+                    key={corner}
+                    aria-hidden
+                    data-testid="scan-corner"
+                    className={cn(
+                      "absolute size-8",
+                      corner,
+                      failure && "border-white/40"
+                    )}
+                    style={
+                      failure
+                        ? undefined
+                        : { borderColor: THEME.semantic.nutrition }
+                    }
+                    initial={
+                      reducedMotion ? false : { opacity: 0, scale: 1.12 }
+                    }
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                  />
+                ))}
+
+                {/* Laser — BOUNCES (mirror repeat) rather than
+                    restarting from the top: the reference scanners all
+                    read "still working" with a continuous sweep, and
+                    the restart pop read as a glitch. The glow is
+                    symmetric about the line so the bounce has no wrong
+                    direction, and a faint grid MESH rides in a window
+                    around the line — the "being read" region — fading
+                    out at its edges via a static mask. One mover, one
+                    loop, transform-only throughout. */}
+                {!reducedMotion && !locked && !failure && (
+                  <div
+                    aria-hidden
+                    data-testid="scan-laser"
+                    className="absolute inset-0 overflow-hidden rounded-3xl"
+                  >
+                    <motion.div
+                      className="absolute inset-0 will-change-transform"
+                      initial={{ y: "-100%" }}
+                      animate={{ y: "0%" }}
+                      transition={{
+                        duration: 1.5,
+                        ease: "easeInOut",
+                        repeat: Infinity,
+                        repeatType: "mirror",
+                      }}
+                    >
+                      <div
+                        className="absolute inset-x-0 -bottom-11 h-[88px] opacity-15"
+                        style={{
+                          background: `repeating-linear-gradient(0deg, ${THEME.semantic.nutrition} 0 1px, transparent 1px 12px), repeating-linear-gradient(90deg, ${THEME.semantic.nutrition} 0 1px, transparent 1px 12px)`,
+                          maskImage:
+                            "linear-gradient(to bottom, transparent, black 35%, black 65%, transparent)",
+                          WebkitMaskImage:
+                            "linear-gradient(to bottom, transparent, black 35%, black 65%, transparent)",
+                        }}
+                      />
+                      <div
+                        className="absolute inset-x-0 -bottom-8 h-16 opacity-35"
+                        style={{
+                          background: `linear-gradient(to bottom, transparent, ${THEME.semantic.nutrition}, transparent)`,
+                        }}
+                      />
+                      <div
+                        className="absolute inset-x-0 bottom-0 h-[2.5px] opacity-90"
+                        style={{
+                          background: THEME.semantic.nutrition,
+                          boxShadow: `0 0 12px 2px ${THEME.semantic.nutrition}`,
+                        }}
+                      />
+                    </motion.div>
+                  </div>
+                )}
+              </motion.div>
+              {/* Failure content replaces the stage copy: title + next
+                  move + the action row. NOT aria-hidden (unlike the
+                  decorative stage feed) — this is the actionable
+                  state, announced via the container's role="alert".
+                  One-shot motion-safe entrance; reduced motion gets
+                  it settled. */}
+              {failure && failureCopy ? (
+                <motion.div
+                  data-testid="scan-failure"
+                  className="flex w-full flex-col items-center gap-4 text-center"
+                  initial={reducedMotion ? false : { opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.22, ease: "easeOut" }}
+                >
+                  <div className="space-y-1">
+                    <p className="text-[15px] font-semibold text-white">
+                      {failureCopy.title}
+                    </p>
+                    <p className="text-[13px] text-white/75">
+                      {failureCopy.sub}
+                    </p>
+                  </div>
+                  {failureActions}
+                </motion.div>
+              ) : (
+                /* Stage copy. Crossfades between lines (the hard swap
+                  every 1.3s read as a glitch next to the smooth laser)
+                  using the same keyed-AnimatePresence pattern as the
+                  barcode hint, inside a fixed-height row so the swap
+                  never shifts the frame above it. On Done the check
+                  DRAWS itself — pathLength 0→1, the settle gesture the
+                  reference scanners all stage. Reduced motion swaps
+                  text instantly and gets the check pre-drawn. */
+                <div
+                  aria-hidden
+                  className="relative flex h-5 items-center justify-center"
+                >
+                  <AnimatePresence mode="wait" initial={false}>
+                    <motion.p
+                      key={locked ? "scan-done" : stageLine}
+                      initial={reducedMotion ? false : { opacity: 0, y: 7 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={reducedMotion ? undefined : { opacity: 0, y: -7 }}
+                      transition={{ duration: 0.18, ease: "easeOut" }}
+                      className="text-[15px] font-semibold text-white"
+                    >
+                      {locked ? (
+                        <span
+                          className="inline-flex items-center gap-1.5"
+                          style={{ color: THEME.semantic.nutrition }}
+                        >
+                          <svg
+                            viewBox="0 0 24 24"
+                            className="size-4"
+                            fill="none"
+                          >
+                            <motion.path
+                              data-testid="scan-check"
+                              d="M4.5 12.75 L9.75 18 L19.5 6.75"
+                              stroke="currentColor"
+                              strokeWidth={3.2}
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              initial={
+                                reducedMotion ? false : { pathLength: 0 }
+                              }
+                              animate={{ pathLength: 1 }}
+                              transition={{ duration: 0.32, ease: "easeOut" }}
+                            />
+                          </svg>
+                          Done
+                        </span>
+                      ) : (
+                        stageLine
+                      )}
+                    </motion.p>
+                  </AnimatePresence>
+                </div>
+              )}
+            </>
+          ) : failure && failureCopy ? (
+            /* Failure with no held frame (defensive — the photo paths
+               always hold one). Recovery must not depend on which
+               branch the user came in through. */
+            <div
+              data-testid="scan-failure"
+              className="flex w-full flex-col items-center gap-4 text-center"
+            >
+              <div className="space-y-1">
+                <p className="text-[15px] font-semibold text-white">
+                  {failureCopy.title}
+                </p>
+                <p className="text-[13px] text-white/75">{failureCopy.sub}</p>
+              </div>
+              {failureActions}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Spinner size="sm" variant="inverse" label="Fetching nutrition" />
+              <p className="text-sm font-medium text-white">
+                Fetching nutrition…
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  );
+
   if (cameraBlocked) {
     const deniedCopy =
       cameraState === "denied"
@@ -350,7 +868,9 @@ export default function FoodCameraModal({
         aria-label="Camera unavailable"
         className="fixed inset-0 z-[60] bg-background flex flex-col"
       >
-        <div className="flex items-center justify-between p-4">
+        {/* Same escape-hatch rule as the camera return: the close X
+            stays above the z-20 analysis overlay. */}
+        <div className="relative z-30 flex items-center justify-between p-4">
           <button
             type="button"
             onClick={onClose}
@@ -360,7 +880,17 @@ export default function FoodCameraModal({
             <X className="size-5" />
           </button>
         </div>
-        <div className="flex-1 flex flex-col items-center justify-center px-6 text-center space-y-5 -mt-16">
+        {/* Inert under the overlay for the same reason the camera
+            chrome is: this branch's own recovery buttons (Upload a
+            photo / Type it instead) sit UNDER the opaque analysis
+            surface and would otherwise stay focusable and clickable
+            mid-scan — the blocked branch is exactly where library
+            upload happens, so this is the branch that hits it. */}
+        <div
+          className="flex-1 flex flex-col items-center justify-center px-6 text-center space-y-5 -mt-16"
+          inert={overlayUp || undefined}
+          data-testid="blocked-chrome"
+        >
           <div
             className="size-16 rounded-2xl flex items-center justify-center"
             style={{
@@ -396,8 +926,7 @@ export default function FoodCameraModal({
                 haptic("light");
                 fileInputRef.current?.click();
               }}
-              className="w-full h-12 rounded-xl text-white font-medium text-sm flex items-center justify-center gap-2"
-              style={{ background: THEME.semantic.nutrition }}
+              className="w-full h-12 rounded-xl bg-nutrition-fill text-white font-medium text-sm flex items-center justify-center gap-2"
             >
               <ImageIcon className="size-4" />
               Upload a photo instead
@@ -425,6 +954,7 @@ export default function FoodCameraModal({
           onChange={onFileChange}
           className="hidden"
         />
+        {analysisOverlay}
       </div>
     );
   }
@@ -437,8 +967,11 @@ export default function FoodCameraModal({
       aria-label="Food camera"
       className="fixed inset-0 z-[60] bg-black"
     >
-      {/* top bar */}
-      <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4">
+      {/* top bar — z-30 rides ABOVE the z-20 analysis overlay: the X
+          must stay tappable during a slow scan. Pre-fix it sat at
+          z-10 UNDER the overlay, so an iOS user (no hardware back,
+          no Escape key) had no way out until the request resolved. */}
+      <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between p-4">
         <button
           type="button"
           onClick={onClose}
@@ -448,6 +981,34 @@ export default function FoodCameraModal({
           <X className="size-5" />
         </button>
       </div>
+
+      {/* Analysis in flight.
+          The modal is `fixed inset-0` and opaque, and it stays open
+          for the WHOLE round-trip — `setCameraOpen(false)` only runs
+          after `await analyzeFood`. FoodAnalyzer's "Analyzing…" row
+          renders on the page UNDERNEATH it, so until this existed the
+          user watched a live camera feed with dead buttons for several
+          seconds: the one signal was that the controls stopped
+          responding, which reads as a freeze, not as work in progress.
+          The `loading` prop was already being passed here — it was
+          only ever used to disable the shutter. */}
+      {/* Analysis in flight — the scan treatment.
+          The modal is `fixed inset-0` and opaque and stays open for the
+          WHOLE round-trip (`setCameraOpen(false)` runs only after the
+          await), so this is the entire experience of the wait.
+
+          Shows the captured STILL rather than the live feed: the shot
+          is already taken, and a moving picture under "Analysing…"
+          invites the user to re-aim it. Reticle corners + a sweep are
+          the scanner idiom, in the nutrition orange that is the food
+          domain's identity.
+
+          Motion follows the house recipe: the sweep animates TRANSFORM
+          only (never a filter or a blur radius — those stutter in
+          WKWebView), and it is the ONE ambient loop on this surface.
+          Reduced motion gets the settled state — brackets and copy, no
+          travel. */}
+      {analysisOverlay}
 
       {/* camera */}
       <video
@@ -495,8 +1056,12 @@ export default function FoodCameraModal({
         )}
       </div>
 
-      {/* bottom */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 pb-8">
+      {/* bottom — inert while the overlay is up (see `overlayUp`). */}
+      <div
+        className="absolute bottom-0 left-0 right-0 p-4 pb-8"
+        inert={overlayUp || undefined}
+        data-testid="camera-chrome"
+      >
         <div className="mx-auto max-w-[520px] space-y-3">
           {/* tabs — pill/segment pattern matching app style */}
           <div className="flex gap-1.5 justify-center bg-black/30 rounded-full p-1">
@@ -559,10 +1124,14 @@ export default function FoodCameraModal({
 
           {/* capture row — library · shutter · flip-camera (symmetrical) */}
           <div className="flex items-center justify-between">
-            {/* Photo library */}
+            {/* Photo library — haptics like every other control on this
+                surface (it was the one silent button in the row). */}
             <button
               type="button"
-              onClick={pickFromLibrary}
+              onClick={() => {
+                haptic("light");
+                pickFromLibrary();
+              }}
               className="size-12 rounded-full bg-black/50 text-white flex items-center justify-center"
               aria-label="Photo library"
               disabled={loading || busy}

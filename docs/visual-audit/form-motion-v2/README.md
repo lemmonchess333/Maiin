@@ -76,3 +76,271 @@ Gate-3; the operator confirms or reverts by re-adding the id to
 Mechanics pins shipped with the rebuilds: bar rises thigh→clavicle on a
 strict torso (curl); rope tail descends >20 units, upper arm untouched,
 no line spans body width (pushdown); both arm facets tint independently.
+
+## STATUS 2026-08-17 — typed props; sheets regenerated
+
+Owner-led review session: four demos read against reference material
+(Lift Manual illustrations + photos, supplied by the operator as
+mechanics references — NOT as art to copy, and they do not satisfy the
+roadmap's rights-cleared-reference gate, which stays open).
+
+The session's finding was a pattern rather than four defects. Every demo
+reviewed had a GEAR problem and no demo had a body problem: curl and
+bench drew a lone disc, the pushdown's rope never split, the press drew
+nothing at all. That is the roadmap's Phase-3 "typed props" arrived at
+from evidence, so props moved into `src/lib/bodyProps.ts` — a typed
+union plus one pure resolver, replacing two divergent branch chains (the
+anterior copy of `plate-end` was both stale AND unreachable, since every
+`plate-end` demo is a side demo).
+
+| Demo                 | Delta                                                                                                                                                                                                                           |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| rope-tricep-pushdown | Rope now SPLITS toward lockout (instruction 3 and the tip both promise it; one strand could not), tails hang under GRAVITY rather than colinear with the cable, and it is sized to read as rope. Strands fan off the pull axis. |
+| overhead-press       | Bar path was UNREACHABLE — hypot(14, 53) = 54.82 on a 54.02 arm — so the solve clamped and the joint caps covered it. Grip 14 → 10; span 1.54× → 1.38× biacromial. Tint drops the invented `neck`.                              |
+| bench-press          | Never locked out: hypot(50, 8) = 50.64 on a 55.07 arm, elbow 46.4° short of straight at the frame labelled lockout. Now 54.2 → 99.5% of reach, an 11.7° soft lock.                                                              |
+
+Untouched demos re-render byte-identical, which is the evidence that the
+prop consolidation changed no behaviour.
+
+Two findings from the session are deliberately NOT fixed here, both
+because they need an operator decision rather than code:
+
+- **The press has no bar.** The anterior figure has no hand, which is
+  the reason held weights were removed on 2026-07-03. The press now
+  DECLARES its bar path (tested) while drawing nothing, so the prop is
+  aimed correctly if an anterior grip is ever approved.
+- **Bench elbow tuck cannot be shown in this view.** Instruction 3, the
+  tip and the first common mistake are all about holding ~45°, which is
+  a transverse-plane angle that a true profile projects away. Every
+  reference solves it with a three-quarter camera; the rig has
+  anterior / posterior / side only.
+
+Also retracted from the review: "the profile bar reads as a wheel". In
+a true orthographic profile a barbell IS a disc and a hub — the far
+sleeve sits directly behind the near one. Drawing it offset would be a
+depth cheat, not a legibility fix.
+
+## STATUS 2026-08-17c — hands ATTEMPTED and REVERTED; the anchor doesn't sit on the art
+
+The 2026-08-17b work above (`ANTERIOR_HANDS` / `POSTERIOR_HANDS`, the
+press barbell, lateral-raise dumbbells) was shipped and then reverted on
+sight: the fists read as pale rocks balanced beside the arms, and at
+press lockout the forearm's tapered tip spiked straight through the bar.
+
+The cause is not styling, and it is worth writing down because it will
+sink the next attempt too. **The hand anchors are not on the figure.**
+Measured against `bodyModelData`:
+
+|                         | anterior LEFT arm                         |
+| ----------------------- | ----------------------------------------- |
+| forearm art's wrist end | x ≈ **3.5** (terminal edge spans 0 → 6.9) |
+| `ANT.handL`             | x = **10**                                |
+
+That is ~6.5 units — more than a limb width — outboard of where the art
+actually ends, and the same displacement mirrors on the right
+(art ≈ 96.5 vs `ANT.handR` = 89). The declared forearm is
+`hypot(10-20, 100-71)` = 30.67; the art's real forearm, elbow (20,71) to
+wrist (3.5,100.5), is 33.8. So the anchor is both SHORT and laterally
+displaced.
+
+This was invisible for as long as nothing was drawn at a hand. It stops
+being invisible the moment anything is: a fist, a barbell, a dumbbell.
+
+Anything that draws at the anterior grip therefore needs the anchors
+reconciled with the art FIRST. That is not a tweak — `ANT_FORE_LEN` is
+derived from those anchors and feeds every anterior arm solve (press,
+lateral raise, dips) plus the posterior ones (pull-ups, pulldown), so
+moving them re-poses all of it and every contact sheet needs re-reviewing.
+
+Explicitly rejected as the fix: drawing the fist at the art's terminus
+while continuing to SOLVE the arm to the anchor. That is the
+"computed in one place, displayed from another" defect this codebase
+already has a rule about — it would look right and be incoherent.
+
+The prop system, the rope repair and both bar-path fixes are unaffected
+and remain in place; only the hands and what hung off them came out.
+
+## STATUS 2026-08-17d — PR1: arm geometry (anchors + girdle)
+
+The prerequisite from `docs/proposals/anterior-grip-reconciliation.md`,
+built. No new features, no props — geometry only.
+
+**Hand anchors moved onto the art.** `ANT.handL/R` were [10,100] /
+[89,100]; the forearm art's terminal edge is centred at 3.47 / 96.12 at
+y 101.2. Posterior likewise. `aimArm` derives its rotation from the rest
+vector H−E, so an off-art anchor landed a phantom point on the target
+while the real wrist went ~6 units elsewhere — and by a VARYING amount,
+so the art crept along bars the anchors held still.
+
+**The shoulder girdle now moves.** It used to travel 0.00 across a
+55°→166° humerus swing: the rig stylised the scapula's rotation as a
+deltoid tilt and modelled its elevation not at all. Acromion now rises
+3.2 units at press lockout and 1.7 at a raise to parallel, per ~2:1
+scapulohumeral rhythm on a 200-unit figure.
+
+**Bar paths re-fitted**, because the longer forearm and the rising
+shoulder feed the same arithmetic:
+
+| demo           | frame      | before              | after        |
+| -------------- | ---------- | ------------------- | ------------ |
+| overhead-press | lockout    | 93% reach, 43° bend | **98%, 24°** |
+| pull-ups       | dead hang  | 93%, 43°            | **99%, 17°** |
+| lat-pulldown   | full reach | 93%, 43°            | **98%, 23°** |
+| dips           | top        | 99%, 19°            | unchanged    |
+
+The press gains a taller canvas (`-8 -20 116 230`) for the higher
+lockout. Squat and calf-raise are byte-identical — they never used a
+hand anchor.
+
+Five new pins, each mutation-checked against the defect it names: the
+wrist lands on the declared grip; hands do not slide on bolted-down
+apparatus (the old "grips stay put" test checked the POST lines, drawn
+from the anchor, and never the arm); the girdle rises by the expected
+amount without lateral drift; and the three IK demos reach ≥96% at the
+end of their stroke.
+
+Seam risk flagged in the proposal was checked at magnification: the
+existing joint caps absorb the elevation, no hole opens at the
+deltoid/torso junction. Stills only — motion is still the honest test.
+
+Next: PR2 (fists, geometry recorded in the proposal), then PR3 (press
+barbell + lateral-raise dumbbells, both props already built and tested).
+
+## STATUS 2026-08-17e — PR2: the figure has hands
+
+`ANTERIOR_HANDS` / `POSTERIOR_HANDS`, on the `ANTERIOR_FEET` pattern the
+rig already used for the other part the vendored figure omits: declared
+outside the vendored array, grouped with the forearm so they inherit
+the arm solve. Derived from the joint anchors rather than restated, so a
+future anchor move carries them instead of stranding them.
+
+Second attempt. The first (2026-08-17b, reverted) failed on POSITION —
+the anchors sat ~6.5 units off the end of the arm, so the fist read as a
+rock balanced beside the limb. PR1 fixed that. This is the SHAPE,
+rebuilt from operator reference photographs after the first shape was
+also rejected:
+
+- **Tapered** — 5.4 units across at the wrist, 7.0 at the knuckles. The
+  first attempt was a symmetric hexagon, which reads as a lump.
+- **Two facets**, so the rig's own gap draws the KNUCKLE LINE — the
+  feature the dorsal reference leads with, and the same device the side
+  rig uses at the biceps/triceps boundary. No new visual language.
+- **Built on the forearm axis**, not screen-vertical, so it caps the
+  limb at every arm angle.
+
+Finger detail was tried and rejected — scalloped knuckles read as a
+serrated tear, finger columns as bristles. At ~7 units the features land
+at or below the facet-gap width. A shape this size carries about ONE
+structural seam legibly; it is spent on the knuckles. Do not re-attempt
+without changing the size or the camera.
+
+Three pins, each mutation-checked: moving the fist back to the old
+anchor fails the "caps the forearm" pin (it measures displacement ACROSS
+the arm axis, which is exactly the reverted defect); flattening the
+taper fails its own; dropping the knuckle band fails both the facet
+count and the polygon total.
+
+Verified by looking, magnified and at card scale, from the real
+renderer rather than a reproduction.
+
+Next: PR3 — the overhead-press barbell and lateral-raise dumbbells.
+Both props are already built and tested in `bodyProps.ts`; PR3 is
+wiring, not building.
+
+## STATUS 2026-08-17f — PR3: the front views hold their weights
+
+The last of the three-PR sequence from
+`docs/proposals/anterior-grip-reconciliation.md`. Wiring plus one
+rebuild:
+
+| Demo           | Delta                                                                                                                                                                                                                                                     |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| overhead-press | Draws the barbell it has always described — shaft spanning both grips, plate off each sleeve, riding `pressBarPath` so the same numbers solve the arms and place the bar. Canvas top -20 → -24: the plates ride 9 above the grips and clipped at lockout. |
+| lateral-raise  | End-on dumbbells seated IN the solved fists (same ops as the forearms, so they ride the raise and the girdle lift by construction). Canvas widened for the bells at full abduction.                                                                       |
+
+Correction to the PR2 note above: "both props already built and tested"
+was HALF true. `frontalBarbell` survived the hands revert (it predates
+it); the `dumbbell` prop did not and was rebuilt here, this time with
+its own unit tests.
+
+Five new pins, mutation-checked: un-wiring either demo's equip,
+placing the bells at the REST anchors instead of the solved arm (the
+detached-prop failure, as a number), and drawing the dumbbell behind
+the body each fail exactly their own test. Untouched demos re-render
+byte-identical.
+
+The `bodyRig.ts` header's held-weights note is updated again — it
+still said "front and back views carry structural equipment only",
+which stopped being true this PR. The rule as it now stands: a view
+earns held gear by having a grip to put it in.
+
+Residue, deliberate: `squat` still draws no bar (pose problem, not a
+prop — the folded front-view grip was tried in July and read as broken
+polygons; its bodyweight/goblet aliases are served correctly as-is),
+and the raise's `neck` secondary tint is untouched here (same invented
+tint the press had; separate, one-line question for a review pass).
+
+## STATUS 2026-08-17g — the squat gets its bar; the July verdict was about geometry, not facets
+
+The last "draws no gear" residue closed. `squat` now back-racks a
+barbell — shaft in the BEHIND layer so the torso occludes its middle
+and the ends + plates read beside the shoulders, riding the dive
+because it sits on the body — with the hands IK'd up to wide grips at
+the canvas edges.
+
+The July note ("a folded front-view grip was tried and read as broken
+polygons across the chest") turned out to be a verdict on GRIP WIDTH,
+not on facets folding. Measured: IK to a grip near the shoulder (x=10)
+solves the left elbow ~11 units INBOARD of it — the arm folds across
+the chest, exactly what July saw. At the canvas-edge grips (x=0/100)
+the elbow lands within ~2 units of its natural hang and the forearm
+sweeps up through the free space BESIDE the torso. Both regimes are
+pinned: the wide-grip elbow position by test, the narrow-grip collapse
+by mutation.
+
+Alias honesty came with it. The moment squat gained a barbell, three
+aliases became lies — bodyweight holds nothing, goblet holds a bell at
+the chest, front squat racks on the FRONT delts. `HELD_GEAR_FREE_VARIANTS`
+strips held gear at resolution for those three (motion kept — the
+pre-bar status quo, already accepted as honest); `smith-machine-squat`
+keeps the bar. Residue, recorded not hidden: the stripped aliases now
+show the WIDE-GRIP arm pose with nothing in the hands — near-right for
+bodyweight (prisoner-style hands), weakest for goblet (hands belong at
+the chest). Per-alias arm poses are a new mechanism; if the owner wants
+goblet exact, the alias-hygiene alternative is un-aliasing it to the
+static reference.
+
+Five pins, five mutations, each caught by its own test. Only squat's
+sheets changed; every other demo re-renders byte-identical.
+
+## STATUS 2026-08-17h — goblet-squat graduates to its own demo
+
+Owner-directed follow-up to the squat bar: "hands at the chest". The
+weakest of the gear-stripped aliases is now a first-class demo — the
+15th — holding the bell it actually holds.
+
+Mechanism worth noting: the legs and dive are NOT copied. Both squats
+call the same `squatLegsAndDive`, extracted from the squat's pose, so
+the two movements cannot drift apart — the one-copy rule applied
+pre-emptively rather than after the drift.
+
+The arms are the interesting part. Midline hand targets look like the
+July across-the-chest collapse, but the IK disagrees: with the hands
+at the sternum the elbows solve just OUTSIDE-below the shoulders
+(17.4, 70.5) — the "elbows pinned under it" posture from the
+exercise's own instructions — and only the FOREARMS cross the torso,
+which the vendored draw order supports (forearm polys paint at indices
+29-32, chest at 0-1: the crossing arm renders in front). The July rule
+as now understood: the collapse is a property of where the ELBOW
+solves, not of hands being near the midline.
+
+One bell (`goblet-bell` equip → single end-on disc, r 6) centred just
+above the cupped hands, riding the dive because the hands do.
+goblet-squat leaves `DEMO_ALIASES` and `HELD_GEAR_FREE_VARIANTS`;
+bodyweight-squat and front-squat remain gear-stripped.
+
+Four pins in one test (hands at the sternum riding the dive, elbows
+low and outboard, exactly one bell above the hands, no barbell), four
+mutations each caught — including pointing the goblet hands at the
+squat's trap grips and un-riding the dive. Only goblet's sheets are
+new; every other demo re-renders byte-identical.

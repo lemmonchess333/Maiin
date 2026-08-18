@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
+import { useCountUp } from "@/hooks/useCountUp";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 import { cn } from "@/lib/utils";
 import { RotateCcw, Save, Check, Plus, Minus, Download, X } from "lucide-react";
@@ -11,10 +13,9 @@ import { db } from "@/lib/firebase";
 import { useUid } from "@/lib/auth";
 import { safeNum, parseServingGrams, round1 } from "@/lib/foodParseHelpers";
 import { toast } from "@/lib/toast";
-import { logger } from "@/lib/logger";
 import { haptic } from "@/lib/haptic";
 import { isPhotoShareSupported, sharePhotoToLibrary } from "@/lib/sharePhoto";
-import FoodCameraModal from "./FoodCameraModal";
+import FoodCameraModal, { type ScanFailureKind } from "./FoodCameraModal";
 import MealMacroBar from "./food/MealMacroBar";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Spinner } from "@/components/ui/Spinner";
@@ -36,13 +37,10 @@ interface Props {
    * and focuses the NL text composer.
    */
   onRequestTypedInput?: () => void;
-  /* Fired from the AI photo failure toast's action button. The
-     camera modal stays open on AI errors (so a retry is a single
-     shutter tap away — original product intent), which means the
-     user can't see Food.tsx's Log manually CTA from inside the
-     scanner. The action button bridges that gap: closes the
-     scanner + opens the manual logger drawer. Optional — when not
-     provided the toast renders without an action button. */
+  /* Fired from the page-level empty-result card's "Log manually"
+     action (the landing when the user exits the scanner after a
+     failure rather than retaking). Closes the analyzer flow and
+     opens the manual logger drawer. Optional. */
   onRequestManualLog?: () => void;
   /* Daily calorie target (Nutr1: flat === baseTarget; no eat-back,
      no calorie bonus — day-type fuelling is a net-neutral macro
@@ -152,6 +150,21 @@ async function fetchOpenFoodFacts(barcode: string): Promise<MealResult> {
  *  brief confirming flash was pure dead time (Doherty / responsiveness). */
 const SAVED_FLASH_MS = 500;
 
+/** The total-calorie figure, counting up as a result lands. Safe for a
+ *  LIVE editable value: `useCountUp` animates only its first nonzero
+ *  target — every later target (portion edits, item removals) is an
+ *  instant set(), so the display keeps tracking the numbers exactly.
+ *  Mounted inside the result card, which unmounts between analyses, so
+ *  each new scan gets its own count-up. */
+function AnimatedCalories({ value }: { value: number }) {
+  const display = useCountUp(value);
+  return (
+    <motion.span className="text-xl font-extrabold font-mono tabular-nums">
+      {display}
+    </motion.span>
+  );
+}
+
 export default function FoodAnalyzer({
   date,
   meal: targetMealCategory,
@@ -172,6 +185,43 @@ export default function FoodAnalyzer({
   } = useFoodAnalysis();
 
   const [cameraOpen, setCameraOpen] = useState(false);
+  /* Ref mirror for async capture handlers: `onCaptureBase64` awaits a
+     network round-trip, and the `cameraOpen` it closed over is stale
+     by the time the await resolves. Reading the ref answers "is the
+     modal still open NOW?" — without it, an X-out during a slow scan
+     followed by a late failure would park `scanFailure` on a CLOSED
+     modal, and the next scan session would open onto a stale verdict. */
+  const cameraOpenRef = useRef(cameraOpen);
+  useEffect(() => {
+    cameraOpenRef.current = cameraOpen;
+  }, [cameraOpen]);
+  /* The scan's completion beat: after a USABLE analysis lands, the
+     modal is held open ~420ms in a "locked" state (frame tightens,
+     laser gone, Done) so the scan visibly resolves instead of
+     hard-cutting to the result card. Success-with-results only, and
+     skipped entirely under reduced motion, which must never be made
+     to WAIT for theatre. */
+  const [scanLocked, setScanLocked] = useState(false);
+  /* The scan's FAILURE beat: when analysis ends with nothing to show
+     (request failed / nothing identifiable / offline), the modal
+     stays open and resolves in place — honest copy + Retake +
+     Type-it-instead — instead of silently closing mid-sweep and
+     dumping the user on a page-level card. Cleared on retake and on
+     every path that closes the modal, so a reopen can never show a
+     stale verdict. */
+  const [scanFailure, setScanFailure] = useState<ScanFailureKind | null>(null);
+  /* The user-facing reason behind an "error" failure, straight from the
+     hook (server rate-limit / quota / auth copy, or the hook's mapped
+     network lines). Shown verbatim as the failure beat's sub-line so a
+     rate-limited user reads "wait a moment" instead of a generic
+     connection line telling them to retry a closed window. */
+  const [scanFailureDetail, setScanFailureDetail] = useState<string | null>(
+    null
+  );
+  const clearScanFailure = () => {
+    setScanFailure(null);
+    setScanFailureDetail(null);
+  };
   const [capturedBase64, setCapturedBase64] = useState<string | null>(null);
 
   const [barcodeResult, setBarcodeResult] = useState<MealResult | null>(null);
@@ -214,7 +264,15 @@ export default function FoodAnalyzer({
      they go through OFF data with user-confirmed product names. */
   const cleanedAiResult: MealResult | null = useMemo(() => {
     if (!aiResult) return null;
-    const items = filterIdentifiableAiItems((aiResult as MealResult).items);
+    /* Array.isArray belt on top of the hook's boundary assertion — a
+       malformed body reaching this render memo used to CRASH the Food
+       page (filter on undefined). The hook now rejects those shapes,
+       but a render-time guard costs nothing and a crash here takes the
+       whole page. */
+    const rawItems = (aiResult as MealResult).items;
+    const items = filterIdentifiableAiItems(
+      Array.isArray(rawItems) ? rawItems : []
+    );
     if (items.length === 0) return null;
     return { ...(aiResult as MealResult), items };
   }, [aiResult]);
@@ -225,6 +283,16 @@ export default function FoodAnalyzer({
      network failure) — here the AI succeeded but produced
      nothing usable. */
   const aiResultIsEmpty = aiResult !== null && cleanedAiResult === null;
+
+  /* Payoff: one success tap the moment a USABLE result lands — the
+     physical counterpart of the scan completing. Keyed to the cleaned
+     result, so an analysis that found nothing identifiable (which
+     surfaces as an error card) never celebrates. The barcode path
+     already has its own feedback (toast). */
+  useEffect(() => {
+    if (cleanedAiResult) haptic("success");
+  }, [cleanedAiResult]);
+  const reducedMotion = useReducedMotion();
 
   const activeResult: MealResult | null = useMemo(() => {
     return cleanedAiResult || barcodeResult;
@@ -307,6 +375,23 @@ export default function FoodAnalyzer({
         { calories: 0, protein: 0, carbs: 0, fat: 0 }
       );
     }
+    /* Single-item AI results derive totals from the item, exactly as
+       the multi-item branch does above — the model's totals fields are
+       an ordinary hallucination site ({items:[{calories:240}],
+       totalCalories:480}), and trusting them displayed one number over
+       a row saying another, then saved the disagreement. Barcode
+       results keep the totals×servings path: their totals are built
+       client-side FROM the item in fetchOpenFoodFacts, so the two
+       cannot diverge. */
+    if (!isBarcode && activeResult.items.length === 1) {
+      const only = activeResult.items[0];
+      return {
+        calories: safeNum(only.calories),
+        protein: safeNum(only.protein),
+        carbs: safeNum(only.carbs),
+        fat: safeNum(only.fat),
+      };
+    }
     const factor = isBarcode ? servings : 1;
     return {
       calories: safeNum(activeResult.totalCalories) * factor,
@@ -360,6 +445,7 @@ export default function FoodAnalyzer({
     setBarcodeLoading(false);
     setCapturedBase64(null);
     setServings(1);
+    clearScanFailure();
     resetAI();
   };
 
@@ -392,10 +478,15 @@ export default function FoodAnalyzer({
             ...item,
             portionSize:
               s !== 1 ? `${s}x ${item.portionSize}` : item.portionSize,
-            calories: Math.round(item.calories * s),
-            protein: Math.round(item.protein * s),
-            carbs: Math.round(item.carbs * s),
-            fat: Math.round(item.fat * s),
+            /* safeNum here matches the multi-item branch above: a 200
+               body whose item carries "~30g" or omits a field would
+               otherwise persist NaN into the diary doc (setDocGuarded
+               strips undefined, not NaN) and poison every downstream
+               consumer that sums item macros. */
+            calories: Math.round(safeNum(item.calories) * s),
+            protein: Math.round(safeNum(item.protein) * s),
+            carbs: Math.round(safeNum(item.carbs) * s),
+            fat: Math.round(safeNum(item.fat) * s),
           }));
 
       /* Diary row name derived from items, not from the AI's
@@ -581,38 +672,54 @@ export default function FoodAnalyzer({
   // the capture toast wording; now no toast fires (UI transitions
   // straight to the analysis result), so the parameter is unused.
   //
-  // Camera auto-closes on success so the user lands on the result card.
-  // On error we keep it open so a retry is a single shutter tap away.
+  // Every outcome resolves VISIBLY inside the modal:
+  //  - usable result  → 420ms locked beat (motion users), then close
+  //                     to the result card
+  //  - request failed → failure beat "error"
+  //  - AI answered but found nothing identifiable (a photo of the
+  //    dog / the desk / your parents) → failure beat "no-food"
+  //  - offline        → pre-empted BEFORE the request: an instant
+  //                     honest answer beats burning the sweep on a
+  //                     fetch that must fail
+  //
+  // NOTE `analyzeFood` never throws — the hook catches internally,
+  // sets its own error state, and returns null. The old try/catch +
+  // toast here was dead code, which is how every failure came to
+  // close the modal silently mid-sweep: `usable` was false, no
+  // branch handled it, and the close ran unconditionally. The page-
+  // level error/empty cards remain as the landing if the user exits
+  // the modal instead of retaking.
   const onCaptureBase64 = async (base64: string, _mode: "food" | "label") => {
     setBarcodeResult(null);
     setBarcodeError(null);
     setCapturedBase64(base64);
+    clearScanFailure();
 
-    try {
-      await analyzeFood(base64);
+    if (!navigator.onLine) {
+      setScanFailure("offline");
+      return;
+    }
+
+    const { data, errorMessage } = await analyzeFood(base64);
+    /* The user may have X-ed out during the round-trip (the escape
+       hatch exists precisely for slow scans). A late outcome must not
+       act on a closed modal: no failure parked for the next session
+       to trip over, no invisible locked beat, no redundant close. A
+       late USABLE result still reaches the page — the hook's own
+       `result` state feeds the result card independently. */
+    if (!cameraOpenRef.current) return;
+    const usable =
+      data && filterIdentifiableAiItems(data.items ?? []).length > 0;
+    if (usable) {
+      if (!reducedMotion) {
+        setScanLocked(true);
+        await new Promise((r) => setTimeout(r, 420));
+        setScanLocked(false);
+      }
       setCameraOpen(false);
-    } catch (e) {
-      logger.error(e);
-      /* Camera modal stays open on AI failure (per the original
-         "retry is a single shutter tap away" intent), which means
-         the user can't see Food.tsx's Log manually CTA. The toast
-         action bridges that — closes the scanner and opens the
-         manual logger so the user has a clear next action that
-         doesn't require finding their way back to the page. */
-      toast.error("Couldn't analyse the photo. Try again or log manually.", {
-        id: "food-ai-error",
-        ...(onRequestManualLog
-          ? {
-              action: {
-                label: "Log manually",
-                onClick: () => {
-                  setCameraOpen(false);
-                  onRequestManualLog();
-                },
-              },
-            }
-          : {}),
-      });
+    } else {
+      setScanFailureDetail(data ? null : errorMessage);
+      setScanFailure(data ? "no-food" : "error");
     }
   };
 
@@ -630,6 +737,18 @@ export default function FoodAnalyzer({
 
   const onBarcodeDetected = async (raw: string) => {
     const code = raw.replace(/\s+/g, "");
+
+    /* Same offline pre-empt as the photo path — without it, the fetch
+       rejects with TypeError and the user was toasted the literal
+       browser-internal string "Failed to fetch", the dishonest cousin
+       of the modal's "You're offline" one tab over. */
+    if (!navigator.onLine) {
+      const msg = "You're offline — barcode lookup needs a connection.";
+      setBarcodeError(msg);
+      toast.error(msg, { id: "barcode-offline" });
+      return;
+    }
+
     setBarcodeLoading(true);
     setBarcodeError(null);
     setBarcodeResult(null);
@@ -641,7 +760,14 @@ export default function FoodAnalyzer({
       setCameraOpen(false);
       toast.success("Barcode found");
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Barcode lookup failed.";
+      /* TypeError = the fetch itself failed (connection dropped
+         mid-lookup) — its message is browser-internal, never copy. */
+      const msg =
+        e instanceof TypeError
+          ? "Couldn't reach the barcode database. Check your connection."
+          : e instanceof Error
+            ? e.message
+            : "Barcode lookup failed.";
       setBarcodeError(msg);
       toast.error(msg);
     } finally {
@@ -653,13 +779,25 @@ export default function FoodAnalyzer({
     <div className="space-y-4">
       <FoodCameraModal
         open={cameraOpen}
-        onClose={() => setCameraOpen(false)}
+        onClose={() => {
+          /* Failure must not survive the modal: a reopen after an
+             X-out would otherwise show a stale verdict over a fresh
+             session. The page-level error/empty cards are the
+             landing instead. */
+          clearScanFailure();
+          setCameraOpen(false);
+        }}
         onCaptureBase64={onCaptureBase64}
         onBarcodeDetected={onBarcodeDetected}
         loading={showLoading}
+        locked={scanLocked}
+        failure={scanFailure}
+        failureDetail={scanFailureDetail}
+        onScanRetry={clearScanFailure}
         onRequestTypedInput={
           onRequestTypedInput
             ? () => {
+                clearScanFailure();
                 setCameraOpen(false);
                 onRequestTypedInput();
               }
@@ -755,12 +893,15 @@ export default function FoodAnalyzer({
         </div>
       )}
 
-      {/* AnimatePresence enter-only: no exit animation keeps it snappy */}
+      {/* AnimatePresence enter-only: no exit animation keeps it snappy.
+          Reduced-motion gate matches the item rows inside the card —
+          positional travel is exactly the class of motion the
+          preference suppresses. */}
       <AnimatePresence>
         {activeResult && (
           <motion.div
             key="result"
-            initial={{ opacity: 0, y: 12 }}
+            initial={reducedMotion ? false : { opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2 }}
             className="space-y-4"
@@ -862,8 +1003,16 @@ export default function FoodAnalyzer({
                       );
                       if (item.removed) {
                         return (
-                          <div
+                          <motion.div
                             key={`${item.name}-${i}-removed`}
+                            initial={
+                              reducedMotion ? false : { opacity: 0, y: 8 }
+                            }
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{
+                              duration: 0.25,
+                              delay: Math.min(i, 6) * 0.05,
+                            }}
                             className="flex items-center justify-between gap-2 py-1"
                           >
                             <p className="text-sm text-muted-foreground/60 line-through truncate flex-1">
@@ -878,12 +1027,18 @@ export default function FoodAnalyzer({
                               <RotateCcw className="size-3" />
                               Restore
                             </button>
-                          </div>
+                          </motion.div>
                         );
                       }
                       return (
-                        <div
+                        <motion.div
                           key={`${item.name}-${i}`}
+                          initial={reducedMotion ? false : { opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{
+                            duration: 0.25,
+                            delay: Math.min(i, 6) * 0.05,
+                          }}
                           className="flex items-center gap-2"
                         >
                           <div className="min-w-0 flex-1">
@@ -939,7 +1094,7 @@ export default function FoodAnalyzer({
                               <X className="size-3.5" />
                             </button>
                           )}
-                        </div>
+                        </motion.div>
                       );
                     })}
                   </div>
@@ -968,9 +1123,9 @@ export default function FoodAnalyzer({
                 <div className="rounded-xl bg-muted/30 p-3 space-y-2">
                   <div className="flex items-baseline justify-between gap-3 flex-wrap">
                     <p className="text-foreground">
-                      <span className="text-xl font-extrabold font-mono tabular-nums">
-                        {Math.round(displayTotals.calories)}
-                      </span>
+                      <AnimatedCalories
+                        value={Math.round(displayTotals.calories)}
+                      />
                       <span className="text-sm text-muted-foreground font-normal ml-1">
                         cal
                       </span>

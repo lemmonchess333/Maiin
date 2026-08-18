@@ -633,6 +633,51 @@ or touching a CTA button, route it through `Button` with the variant above.
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+### Scan failure beat + no-food prompt contract (2026-08-18, PR #2066)
+
+Affects: `functions/index.js` (analyzeFood prompt), `src/components/FoodCameraModal.tsx`, `src/components/FoodAnalyzer.tsx`.
+
+The analyzeFood prompt now instructs the model: no food visible → return
+foodName "No food detected" with empty items. That exact name is a CONTRACT
+with the client's `GENERIC_AI_NAMES` filter — pinned cross-repo by
+`aiFoodIdentification.test.ts` (promptContract), so reword both ends together.
+Client-side, every scan failure now resolves IN the modal (no-food / error /
+offline beats with Retake + Type-it-instead) instead of silently closing;
+pre-fix the parent's catch/toast was dead code because the hook returns null
+rather than throwing.
+
+- [ ] **Deployed-source spot-check (do first).** Console → `analyzeFood`
+      source contains `does not contain any food, drink, or food packaging`,
+      `maxOutputTokens: 2048`, and the `cleaned.match(/\{[\s\S]*\}/)` prose
+      fallback. `.js` change so the bundle-hash dedup shouldn't bite, but
+      CI-green ≠ uploaded.
+- [ ] **Real non-food photo on device.** Scan a bookshelf / a person: the
+      modal must resolve to "No food detected" with Retake + Type it instead
+      — no silent close, no result card with hallucinated macros.
+- [ ] **A nutrition LABEL still scans.** The packaging exemption is the
+      other half of the no-food sentence (the server never sees the tab, so
+      without it a label photo — which contains no literal food — could
+      answer "No food detected"). Scan a packet on the Food label tab and
+      confirm macros come back.
+- [ ] **Airplane mode.** Shutter → instant "You're offline" (no burned wait),
+      with Type it instead as the PRIMARY action — and typing must work
+      end-to-end offline (local NL parse + queued write). Same for the
+      Barcode tab: honest copy, never a raw "Failed to fetch".
+- [ ] **Slow-scan escape.** Start a scan on weak signal and tap the X during
+      the sweep — it must close immediately (pre-fix the X sat under the
+      overlay and iOS users were trapped until the request resolved), and
+      the abandoned scan must NOT park a failure the next session opens onto.
+- [ ] **Rate-limit copy.** Burn the 10-per-10-min limiter with repeated
+      retakes: the beat must read the server's own "wait a moment", not the
+      generic connection line (the copy existed but rendered nowhere).
+- [ ] **A busy multi-item plate.** The output cap went 1024 → 2048 because a
+      crowded plate could truncate mid-JSON and 500 while still charging
+      quota. Scan something with 6+ components and confirm a full item list.
+- [ ] **VoiceOver over the whole journey.** Shutter → "Analyzing food"
+      announced (pre-fix the wait was SILENT), failure verdict announced,
+      and the camera chrome under the overlay unreachable by swipe (it was
+      focusable, and Enter on the invisible shutter fired a blind capture).
+
 ### Nutrition/TDEE sweep 2026-08-12 — one finding left, and the shape of the rest
 
 Five defects shipped from one sweep of the calorie/macro path (#1994-#1998).
