@@ -646,11 +646,17 @@ offline beats with Retake + Type-it-instead) instead of silently closing;
 pre-fix the parent's catch/toast was dead code because the hook returns null
 rather than throwing.
 
-- [ ] **Deployed-source spot-check (do first).** Console → `analyzeFood`
-      source contains `does not contain any food, drink, or food packaging`,
-      `maxOutputTokens: 2048`, and the `cleaned.match(/\{[\s\S]*\}/)` prose
-      fallback. `.js` change so the bundle-hash dedup shouldn't bite, but
-      CI-green ≠ uploaded.
+- [x] **Deployed-source spot-check — CLOSED from the deploy log, 2026-08-18.**
+      No console visit needed: run 32141732273 (merge commit `e41f4d9`) shows
+      the whole chain rather than just a green tick — the build-marker step
+      injected `// CI build: e41f4d96…` (so the bundle hash was unique and
+      the dedup could not skip the upload), then `functions: functions source
+    uploaded successfully`, then explicitly
+      `✔ functions[analyzeFood(us-central1)] Successful update operation.`
+      That is what the standing gotcha asks the console to prove, proven
+      upstream of it — same shape as the `askGeminiText` row, which was also
+      closed from a deploy log rather than a console visit. Reach for the
+      console only when a deploy log LACKS the per-function update line.
 - [ ] **Real non-food photo on device.** Scan a bookshelf / a person: the
       modal must resolve to "No food detected" with Retake + Type it instead
       — no silent close, no result card with hallucinated macros.
