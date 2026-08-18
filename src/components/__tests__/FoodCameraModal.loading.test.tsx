@@ -105,14 +105,23 @@ describe("FoodCameraModal — analysis in flight", () => {
     // Barcode lookups reach this overlay with no photo — the fallback
     // is the plain labelled row, never a reticle over nothing.
     render(<FoodCameraModal {...props} loading />);
-    expect(screen.getByLabelText(/analyzing food/i)).toBeTruthy();
+    // The persistent sr-only status region carries the announcement
+    // (a region inserted WITH its label announces nothing on most
+    // SR/browser pairs — so the region is always mounted and its
+    // content change is the announcement).
+    expect(screen.getByTestId("scan-live-status").textContent).toBe(
+      "Analyzing food"
+    );
     expect(screen.getByText(/fetching nutrition/i)).toBeTruthy();
     expect(screen.queryByTestId("scan-frame")).toBeNull();
   });
 
   it("is silent when idle — the overlay is not always-on", () => {
     render(<FoodCameraModal {...props} loading={false} />);
-    expect(screen.queryByRole("status")).toBeNull();
+    // The persistent live regions stay mounted (that is what makes
+    // them announce) but hold NO text when idle.
+    expect(screen.getByTestId("scan-live-status").textContent).toBe("");
+    expect(screen.getByTestId("scan-live-alert").textContent).toBe("");
     expect(screen.queryAllByTestId("scan-corner").length).toBe(0);
   });
 
@@ -127,8 +136,11 @@ describe("FoodCameraModal — analysis in flight", () => {
   });
 
   it("label mode gets label copy — a nutrition label is not a plate", async () => {
-    render(<FoodCameraModal {...props} loading />);
+    // Tab is chosen BEFORE the shutter in the real flow — and the
+    // chrome is inert under the overlay, so it must be here too.
+    const { rerender } = render(<FoodCameraModal {...props} loading={false} />);
     fireEvent.click(screen.getByText("Food label"));
+    rerender(<FoodCameraModal {...props} loading />);
     await armPhoto();
     expect(screen.getByText(SCAN_STAGES_LABEL[0])).toBeTruthy();
   });
@@ -225,7 +237,10 @@ describe("FoodCameraModal — the completion beat", () => {
     await armPhoto();
     expect(screen.getAllByTestId("scan-corner").length).toBe(4);
     expect(screen.queryByTestId("scan-laser")).toBeNull();
-    expect(screen.getByText("Done")).toBeTruthy();
+    // "Done" also lives in the sr-only status region, so scope the
+    // visible assertion to the scan surface.
+    expect(screen.getAllByText("Done").length).toBeGreaterThan(0);
+    expect(screen.getByTestId("scan-live-status").textContent).toBe("Done");
     // The check is DRAWN (motion.path), not a static glyph — the pin is
     // on the svg path so swapping back to the lucide icon fails here.
     expect(screen.getByTestId("scan-check")).toBeTruthy();
@@ -270,7 +285,9 @@ describe("FoodCameraModal — the failure beat", () => {
     );
     await armPhoto();
     // `loading` is FALSE — the overlay must stand on `failure` alone.
-    expect(screen.getByText("No food detected")).toBeTruthy();
+    expect(screen.getByTestId("scan-failure").textContent).toContain(
+      "No food detected"
+    );
     expect(screen.getByText("Retake photo")).toBeTruthy();
     expect(screen.getByText("Type it instead")).toBeTruthy();
     // The scan has ENDED: no sweep…
@@ -280,19 +297,27 @@ describe("FoodCameraModal — the failure beat", () => {
     const corners = screen.getAllByTestId("scan-corner");
     expect(corners.length).toBe(4);
     for (const c of corners) expect(c.style.borderColor).toBe("");
-    // Announced as an alert, not a status feed.
-    expect(screen.getByRole("alert")).toBeTruthy();
+    // Announced via the persistent alert region — its content
+    // CHANGING is the announcement contract that works.
+    expect(screen.getByTestId("scan-live-alert").textContent).toContain(
+      "No food detected"
+    );
   });
 
   it("error and offline get their own honest lines", async () => {
+    // Scoped to the visible failure block: the sr-only alert region
+    // carries the same words (deliberately — that IS the screen-reader
+    // announcement), so an unscoped text query matches twice.
+    const failureText = () =>
+      screen.getByTestId("scan-failure").textContent ?? "";
     const { unmount } = render(
       <FoodCameraModal {...props} loading={false} failure="error" />
     );
-    expect(screen.getByText("Couldn't read this one")).toBeTruthy();
+    expect(failureText()).toContain("Couldn't read this one");
     unmount();
     render(<FoodCameraModal {...props} loading={false} failure="offline" />);
-    expect(screen.getByText("You're offline")).toBeTruthy();
-    expect(screen.getByText(/scanning needs a connection/i)).toBeTruthy();
+    expect(failureText()).toContain("You're offline");
+    expect(failureText()).toContain("Scanning needs a connection");
   });
 
   it("offline leads with Type it instead — retaking can't fix no connection", async () => {
@@ -331,15 +356,18 @@ describe("FoodCameraModal — the failure beat", () => {
   it("label mode fails in label words — a nutrition panel is not a plate", async () => {
     render(<FoodCameraModal {...props} loading={false} failure="no-food" />);
     fireEvent.click(screen.getByText("Food label"));
-    expect(screen.getByText("Couldn't read the label")).toBeTruthy();
-    expect(screen.queryByText("No food detected")).toBeNull();
+    const failureText = screen.getByTestId("scan-failure").textContent ?? "";
+    expect(failureText).toContain("Couldn't read the label");
+    expect(failureText).not.toContain("No food detected");
   });
 
   it("failure with no held frame still offers the full recovery, never the spinner row", () => {
     // Defensive branch: recovery must not depend on which branch the
     // user came in through.
     render(<FoodCameraModal {...props} loading={false} failure="error" />);
-    expect(screen.getByText("Couldn't read this one")).toBeTruthy();
+    expect(screen.getByTestId("scan-failure").textContent).toContain(
+      "Couldn't read this one"
+    );
     expect(screen.getByText("Retake photo")).toBeTruthy();
     expect(screen.queryByText(/fetching nutrition/i)).toBeNull();
   });
@@ -382,6 +410,81 @@ describe("FoodCameraModal — the failure beat", () => {
     await armPhoto();
     expect(screen.getByText("Retake photo")).toBeTruthy();
     expect(screen.queryByText("Type it instead")).toBeNull();
+  });
+
+  it("an error failure shows the SPECIFIC reason, not a generic connection line", () => {
+    // A rate-limited user told to "try again" is told to retry a
+    // window that is still closed. The server's own copy wins.
+    render(
+      <FoodCameraModal
+        {...props}
+        loading={false}
+        failure="error"
+        failureDetail="Rate limit reached. Please wait a moment."
+      />
+    );
+    const failureText = screen.getByTestId("scan-failure").textContent ?? "";
+    expect(failureText).toContain("Rate limit reached. Please wait a moment.");
+    expect(failureText).not.toContain("Might be the connection");
+  });
+
+  it("falls back to the generic line when no reason came back", () => {
+    render(<FoodCameraModal {...props} loading={false} failure="error" />);
+    expect(screen.getByTestId("scan-failure").textContent).toContain(
+      "Might be the connection"
+    );
+  });
+
+  it("the recovery buttons clear AA contrast — the way out must be readable", async () => {
+    // #D9884E under white is ~2.8:1. The AA fill step (bg-nutrition-fill,
+    // #B45309, 5.02:1) exists precisely because the identity orange keeps
+    // leaking under white text, and this is the one surface where reading
+    // the button IS the way out.
+    render(
+      <FoodCameraModal
+        {...props}
+        loading={false}
+        failure="no-food"
+        onRequestTypedInput={vi.fn()}
+      />
+    );
+    await armPhoto();
+    const primary = screen
+      .getByTestId("scan-failure")
+      .querySelectorAll("button")[0];
+    expect(primary.className).toContain("bg-nutrition-fill");
+    // …and never the raw identity orange as an inline style.
+    expect(primary.getAttribute("style")).toBeNull();
+  });
+});
+
+describe("FoodCameraModal — the chrome underneath", () => {
+  it("camera controls go inert while the overlay is up — no blind capture", async () => {
+    // The overlay is visually opaque but the chrome under it stayed
+    // focusable: a keyboard/SR user could Tab onto an invisible
+    // shutter and fire a blind capture, or flip the tab and change
+    // the failure copy mid-verdict.
+    render(<FoodCameraModal {...props} loading={false} failure="no-food" />);
+    await armPhoto();
+    expect(screen.getByTestId("camera-chrome").hasAttribute("inert")).toBe(
+      true
+    );
+  });
+
+  it("…and is live again once the scan surface is gone", () => {
+    render(<FoodCameraModal {...props} loading={false} />);
+    expect(screen.getByTestId("camera-chrome").hasAttribute("inert")).toBe(
+      false
+    );
+  });
+
+  it("the shutter waits for a LIVE stream — no black-frame scans", () => {
+    // cameraState stays `idle` while getUserMedia is pending (stubbed
+    // never-resolving here, which is also the real permission-prompt
+    // case). drawImage of a stream-less video yields a black JPEG that
+    // burns a real scan on a guaranteed "No food detected".
+    render(<FoodCameraModal {...props} loading={false} />);
+    expect(screen.getByLabelText("Capture")).toBeDisabled();
   });
 });
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
 import { useCountUp } from "@/hooks/useCountUp";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
@@ -185,6 +185,16 @@ export default function FoodAnalyzer({
   } = useFoodAnalysis();
 
   const [cameraOpen, setCameraOpen] = useState(false);
+  /* Ref mirror for async capture handlers: `onCaptureBase64` awaits a
+     network round-trip, and the `cameraOpen` it closed over is stale
+     by the time the await resolves. Reading the ref answers "is the
+     modal still open NOW?" — without it, an X-out during a slow scan
+     followed by a late failure would park `scanFailure` on a CLOSED
+     modal, and the next scan session would open onto a stale verdict. */
+  const cameraOpenRef = useRef(cameraOpen);
+  useEffect(() => {
+    cameraOpenRef.current = cameraOpen;
+  }, [cameraOpen]);
   /* The scan's completion beat: after a USABLE analysis lands, the
      modal is held open ~420ms in a "locked" state (frame tightens,
      laser gone, Done) so the scan visibly resolves instead of
@@ -200,6 +210,18 @@ export default function FoodAnalyzer({
      every path that closes the modal, so a reopen can never show a
      stale verdict. */
   const [scanFailure, setScanFailure] = useState<ScanFailureKind | null>(null);
+  /* The user-facing reason behind an "error" failure, straight from the
+     hook (server rate-limit / quota / auth copy, or the hook's mapped
+     network lines). Shown verbatim as the failure beat's sub-line so a
+     rate-limited user reads "wait a moment" instead of a generic
+     connection line telling them to retry a closed window. */
+  const [scanFailureDetail, setScanFailureDetail] = useState<string | null>(
+    null
+  );
+  const clearScanFailure = () => {
+    setScanFailure(null);
+    setScanFailureDetail(null);
+  };
   const [capturedBase64, setCapturedBase64] = useState<string | null>(null);
 
   const [barcodeResult, setBarcodeResult] = useState<MealResult | null>(null);
@@ -242,7 +264,15 @@ export default function FoodAnalyzer({
      they go through OFF data with user-confirmed product names. */
   const cleanedAiResult: MealResult | null = useMemo(() => {
     if (!aiResult) return null;
-    const items = filterIdentifiableAiItems((aiResult as MealResult).items);
+    /* Array.isArray belt on top of the hook's boundary assertion — a
+       malformed body reaching this render memo used to CRASH the Food
+       page (filter on undefined). The hook now rejects those shapes,
+       but a render-time guard costs nothing and a crash here takes the
+       whole page. */
+    const rawItems = (aiResult as MealResult).items;
+    const items = filterIdentifiableAiItems(
+      Array.isArray(rawItems) ? rawItems : []
+    );
     if (items.length === 0) return null;
     return { ...(aiResult as MealResult), items };
   }, [aiResult]);
@@ -345,6 +375,23 @@ export default function FoodAnalyzer({
         { calories: 0, protein: 0, carbs: 0, fat: 0 }
       );
     }
+    /* Single-item AI results derive totals from the item, exactly as
+       the multi-item branch does above — the model's totals fields are
+       an ordinary hallucination site ({items:[{calories:240}],
+       totalCalories:480}), and trusting them displayed one number over
+       a row saying another, then saved the disagreement. Barcode
+       results keep the totals×servings path: their totals are built
+       client-side FROM the item in fetchOpenFoodFacts, so the two
+       cannot diverge. */
+    if (!isBarcode && activeResult.items.length === 1) {
+      const only = activeResult.items[0];
+      return {
+        calories: safeNum(only.calories),
+        protein: safeNum(only.protein),
+        carbs: safeNum(only.carbs),
+        fat: safeNum(only.fat),
+      };
+    }
     const factor = isBarcode ? servings : 1;
     return {
       calories: safeNum(activeResult.totalCalories) * factor,
@@ -398,7 +445,7 @@ export default function FoodAnalyzer({
     setBarcodeLoading(false);
     setCapturedBase64(null);
     setServings(1);
-    setScanFailure(null);
+    clearScanFailure();
     resetAI();
   };
 
@@ -431,10 +478,15 @@ export default function FoodAnalyzer({
             ...item,
             portionSize:
               s !== 1 ? `${s}x ${item.portionSize}` : item.portionSize,
-            calories: Math.round(item.calories * s),
-            protein: Math.round(item.protein * s),
-            carbs: Math.round(item.carbs * s),
-            fat: Math.round(item.fat * s),
+            /* safeNum here matches the multi-item branch above: a 200
+               body whose item carries "~30g" or omits a field would
+               otherwise persist NaN into the diary doc (setDocGuarded
+               strips undefined, not NaN) and poison every downstream
+               consumer that sums item macros. */
+            calories: Math.round(safeNum(item.calories) * s),
+            protein: Math.round(safeNum(item.protein) * s),
+            carbs: Math.round(safeNum(item.carbs) * s),
+            fat: Math.round(safeNum(item.fat) * s),
           }));
 
       /* Diary row name derived from items, not from the AI's
@@ -641,14 +693,21 @@ export default function FoodAnalyzer({
     setBarcodeResult(null);
     setBarcodeError(null);
     setCapturedBase64(base64);
-    setScanFailure(null);
+    clearScanFailure();
 
     if (!navigator.onLine) {
       setScanFailure("offline");
       return;
     }
 
-    const data = await analyzeFood(base64);
+    const { data, errorMessage } = await analyzeFood(base64);
+    /* The user may have X-ed out during the round-trip (the escape
+       hatch exists precisely for slow scans). A late outcome must not
+       act on a closed modal: no failure parked for the next session
+       to trip over, no invisible locked beat, no redundant close. A
+       late USABLE result still reaches the page — the hook's own
+       `result` state feeds the result card independently. */
+    if (!cameraOpenRef.current) return;
     const usable =
       data && filterIdentifiableAiItems(data.items ?? []).length > 0;
     if (usable) {
@@ -659,6 +718,7 @@ export default function FoodAnalyzer({
       }
       setCameraOpen(false);
     } else {
+      setScanFailureDetail(data ? null : errorMessage);
       setScanFailure(data ? "no-food" : "error");
     }
   };
@@ -677,6 +737,18 @@ export default function FoodAnalyzer({
 
   const onBarcodeDetected = async (raw: string) => {
     const code = raw.replace(/\s+/g, "");
+
+    /* Same offline pre-empt as the photo path — without it, the fetch
+       rejects with TypeError and the user was toasted the literal
+       browser-internal string "Failed to fetch", the dishonest cousin
+       of the modal's "You're offline" one tab over. */
+    if (!navigator.onLine) {
+      const msg = "You're offline — barcode lookup needs a connection.";
+      setBarcodeError(msg);
+      toast.error(msg, { id: "barcode-offline" });
+      return;
+    }
+
     setBarcodeLoading(true);
     setBarcodeError(null);
     setBarcodeResult(null);
@@ -688,7 +760,14 @@ export default function FoodAnalyzer({
       setCameraOpen(false);
       toast.success("Barcode found");
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Barcode lookup failed.";
+      /* TypeError = the fetch itself failed (connection dropped
+         mid-lookup) — its message is browser-internal, never copy. */
+      const msg =
+        e instanceof TypeError
+          ? "Couldn't reach the barcode database. Check your connection."
+          : e instanceof Error
+            ? e.message
+            : "Barcode lookup failed.";
       setBarcodeError(msg);
       toast.error(msg);
     } finally {
@@ -705,7 +784,7 @@ export default function FoodAnalyzer({
              X-out would otherwise show a stale verdict over a fresh
              session. The page-level error/empty cards are the
              landing instead. */
-          setScanFailure(null);
+          clearScanFailure();
           setCameraOpen(false);
         }}
         onCaptureBase64={onCaptureBase64}
@@ -713,11 +792,12 @@ export default function FoodAnalyzer({
         loading={showLoading}
         locked={scanLocked}
         failure={scanFailure}
-        onScanRetry={() => setScanFailure(null)}
+        failureDetail={scanFailureDetail}
+        onScanRetry={clearScanFailure}
         onRequestTypedInput={
           onRequestTypedInput
             ? () => {
-                setScanFailure(null);
+                clearScanFailure();
                 setCameraOpen(false);
                 onRequestTypedInput();
               }
@@ -813,12 +893,15 @@ export default function FoodAnalyzer({
         </div>
       )}
 
-      {/* AnimatePresence enter-only: no exit animation keeps it snappy */}
+      {/* AnimatePresence enter-only: no exit animation keeps it snappy.
+          Reduced-motion gate matches the item rows inside the card —
+          positional travel is exactly the class of motion the
+          preference suppresses. */}
       <AnimatePresence>
         {activeResult && (
           <motion.div
             key="result"
-            initial={{ opacity: 0, y: 12 }}
+            initial={reducedMotion ? false : { opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2 }}
             className="space-y-4"

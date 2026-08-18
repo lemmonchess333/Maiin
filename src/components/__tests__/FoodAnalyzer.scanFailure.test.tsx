@@ -25,6 +25,7 @@ import {
   fireEvent,
   waitFor,
   cleanup,
+  act,
 } from "@testing-library/react";
 
 const analyzeFoodMock = vi.fn();
@@ -45,7 +46,9 @@ vi.mock("@/components/FoodCameraModal", () => ({
     open: boolean;
     loading: boolean;
     failure?: string | null;
+    failureDetail?: string | null;
     onCaptureBase64: (b64: string, mode: string) => Promise<void>;
+    onBarcodeDetected: (raw: string) => Promise<void>;
     onScanRetry?: () => void;
     onClose: () => void;
   }) => (
@@ -53,9 +56,13 @@ vi.mock("@/components/FoodCameraModal", () => ({
       data-testid="stub-modal"
       data-open={String(props.open)}
       data-failure={props.failure ?? ""}
+      data-detail={props.failureDetail ?? ""}
     >
       <button onClick={() => void props.onCaptureBase64("QUJD", "food")}>
         stub-capture
+      </button>
+      <button onClick={() => void props.onBarcodeDetected("5000112637922")}>
+        stub-barcode
       </button>
       <button onClick={() => props.onScanRetry?.()}>stub-retry</button>
       <button onClick={() => props.onClose()}>stub-close</button>
@@ -115,32 +122,76 @@ afterEach(() => {
 
 describe("FoodAnalyzer — scan outcome routing", () => {
   it("request failure → failure beat 'error', modal stays open", async () => {
-    analyzeFoodMock.mockResolvedValue(null);
+    analyzeFoodMock.mockResolvedValue({
+      data: null,
+      errorMessage: "Rate limit reached. Please wait a moment.",
+    });
     await openAndCapture();
     await waitFor(() => expect(modal().dataset.failure).toBe("error"));
     expect(modal().dataset.open).toBe("true");
+    // The SPECIFIC reason travels with the failure — a rate-limited
+    // user must read "wait a moment", never a generic "try again"
+    // pointed at a closed window.
+    expect(modal().dataset.detail).toBe(
+      "Rate limit reached. Please wait a moment."
+    );
+  });
+
+  it("a no-food verdict carries no error detail — the copy is the verdict", async () => {
+    analyzeFoodMock.mockResolvedValue({
+      data: {
+        foodName: "No food detected",
+        items: [],
+        totalCalories: 0,
+        totalProtein: 0,
+        totalCarbs: 0,
+        totalFat: 0,
+        confidence: "high",
+      },
+      errorMessage: null,
+    });
+    await openAndCapture();
+    await waitFor(() => expect(modal().dataset.failure).toBe("no-food"));
+    expect(modal().dataset.detail).toBe("");
+  });
+
+  it("barcode lookup offline pre-empts with honest copy, no raw 'Failed to fetch'", async () => {
+    setOnline(false);
+    const { toast } = await import("@/lib/toast");
+    render(<FoodAnalyzer date="2026-08-18" />);
+    await waitFor(() => expect(modal().dataset.open).toBe("true"));
+    fireEvent.click(screen.getByText("stub-barcode"));
+    await waitFor(() =>
+      expect(vi.mocked(toast.error)).toHaveBeenCalledWith(
+        "You're offline — barcode lookup needs a connection.",
+        expect.anything()
+      )
+    );
   });
 
   it("nothing identifiable → failure beat 'no-food', modal stays open", async () => {
     // The "photographed my parents" case: the AI answers, but every
     // item is a generic fallback the name filter drops.
     analyzeFoodMock.mockResolvedValue({
-      foodName: "No food detected",
-      items: [
-        {
-          name: "Unidentifiable",
-          portionSize: "",
-          calories: 0,
-          protein: 0,
-          carbs: 0,
-          fat: 0,
-        },
-      ],
-      totalCalories: 0,
-      totalProtein: 0,
-      totalCarbs: 0,
-      totalFat: 0,
-      confidence: "high",
+      data: {
+        foodName: "No food detected",
+        items: [
+          {
+            name: "Unidentifiable",
+            portionSize: "",
+            calories: 0,
+            protein: 0,
+            carbs: 0,
+            fat: 0,
+          },
+        ],
+        totalCalories: 0,
+        totalProtein: 0,
+        totalCarbs: 0,
+        totalFat: 0,
+        confidence: "high",
+      },
+      errorMessage: null,
     });
     await openAndCapture();
     await waitFor(() => expect(modal().dataset.failure).toBe("no-food"));
@@ -149,22 +200,25 @@ describe("FoodAnalyzer — scan outcome routing", () => {
 
   it("usable result → modal closes, no failure", async () => {
     analyzeFoodMock.mockResolvedValue({
-      foodName: "Chicken and rice",
-      items: [
-        {
-          name: "Chicken breast",
-          portionSize: "150g",
-          calories: 240,
-          protein: 45,
-          carbs: 0,
-          fat: 5,
-        },
-      ],
-      totalCalories: 240,
-      totalProtein: 45,
-      totalCarbs: 0,
-      totalFat: 5,
-      confidence: "high",
+      data: {
+        foodName: "Chicken and rice",
+        items: [
+          {
+            name: "Chicken breast",
+            portionSize: "150g",
+            calories: 240,
+            protein: 45,
+            carbs: 0,
+            fat: 5,
+          },
+        ],
+        totalCalories: 240,
+        totalProtein: 45,
+        totalCarbs: 0,
+        totalFat: 5,
+        confidence: "high",
+      },
+      errorMessage: null,
     });
     await openAndCapture();
     await waitFor(() => expect(modal().dataset.open).toBe("false"));
@@ -173,7 +227,10 @@ describe("FoodAnalyzer — scan outcome routing", () => {
 
   it("offline → failure 'offline' and the request is never made", async () => {
     setOnline(false);
-    analyzeFoodMock.mockResolvedValue(null);
+    analyzeFoodMock.mockResolvedValue({
+      data: null,
+      errorMessage: "Rate limit reached. Please wait a moment.",
+    });
     await openAndCapture();
     await waitFor(() => expect(modal().dataset.failure).toBe("offline"));
     expect(modal().dataset.open).toBe("true");
@@ -183,7 +240,10 @@ describe("FoodAnalyzer — scan outcome routing", () => {
   });
 
   it("retake clears the failure and keeps the modal open for another go", async () => {
-    analyzeFoodMock.mockResolvedValue(null);
+    analyzeFoodMock.mockResolvedValue({
+      data: null,
+      errorMessage: "Rate limit reached. Please wait a moment.",
+    });
     await openAndCapture();
     await waitFor(() => expect(modal().dataset.failure).toBe("error"));
     fireEvent.click(screen.getByText("stub-retry"));
@@ -192,11 +252,40 @@ describe("FoodAnalyzer — scan outcome routing", () => {
   });
 
   it("closing the modal clears the failure — a reopen never shows a stale verdict", async () => {
-    analyzeFoodMock.mockResolvedValue(null);
+    analyzeFoodMock.mockResolvedValue({
+      data: null,
+      errorMessage: "Rate limit reached. Please wait a moment.",
+    });
     await openAndCapture();
     await waitFor(() => expect(modal().dataset.failure).toBe("error"));
     fireEvent.click(screen.getByText("stub-close"));
     await waitFor(() => expect(modal().dataset.open).toBe("false"));
     expect(modal().dataset.failure).toBe("");
+  });
+
+  it("a failure landing AFTER the user closed the modal is discarded", async () => {
+    // The escape hatch exists for slow scans, which makes this
+    // ordering ordinary: X-out mid-flight, THEN the request fails.
+    // Without the open-guard, the late setScanFailure parks a verdict
+    // on the closed modal and the NEXT scan session opens onto it.
+    // Anchor note (the waitFor-tautology rule): the discard path
+    // changes nothing observable, so the anchor is `act` awaiting the
+    // resolved promise chain — with the guard deleted, this same
+    // flush lands failure="error" and the assertion fails.
+    let resolveAnalyze!: (v: { data: null; errorMessage: string }) => void;
+    analyzeFoodMock.mockReturnValue(
+      new Promise<{ data: null; errorMessage: string }>((r) => {
+        resolveAnalyze = r;
+      })
+    );
+    await openAndCapture();
+    await waitFor(() => expect(analyzeFoodMock).toHaveBeenCalled());
+    fireEvent.click(screen.getByText("stub-close"));
+    await waitFor(() => expect(modal().dataset.open).toBe("false"));
+    await act(async () => {
+      resolveAnalyze({ data: null, errorMessage: "late failure" });
+    });
+    expect(modal().dataset.failure).toBe("");
+    expect(modal().dataset.open).toBe("false");
   });
 });

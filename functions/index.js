@@ -1230,7 +1230,7 @@ exports.analyzeFood = functions
         // ends together or the pin fails.
         const prompt =
           'Analyze this food image and provide nutritional estimates. Return ONLY a valid JSON object with this exact format, no other text: {"foodName": "name of the food/meal", "items": [{"name": "item name", "portionSize": "estimated portion", "calories": 0, "protein": 0, "carbs": 0, "fat": 0}], "totalCalories": 0, "totalProtein": 0, "totalCarbs": 0, "totalFat": 0, "confidence": "high/medium/low"}' +
-          ' If the image does not contain any food or drink, return exactly: {"foodName": "No food detected", "items": [], "totalCalories": 0, "totalProtein": 0, "totalCarbs": 0, "totalFat": 0, "confidence": "high"}';
+          ' If the image shows food packaging or a nutrition label, estimate from the label instead. If the image does not contain any food, drink, or food packaging, return exactly: {"foodName": "No food detected", "items": [], "totalCalories": 0, "totalProtein": 0, "totalCarbs": 0, "totalFat": 0, "confidence": "high"}';
 
         const url =
           "https://us-central1-aiplatform.googleapis.com/v1/projects/" +
@@ -1255,7 +1255,13 @@ exports.analyzeFood = functions
             ],
             generationConfig: {
               temperature: 0.1,
-              maxOutputTokens: 1024,
+              // 2048, was 1024: a busy multi-item plate costs ~60
+              // output tokens per item plus any prose the model wraps
+              // around the JSON, and a response truncated mid-JSON by
+              // the cap fails JSON.parse below — charging the user's
+              // rate-limit slot for a guaranteed 500. Flash output
+              // tokens are cheap; headroom is the fix.
+              maxOutputTokens: 2048,
             },
           }),
         });
@@ -1295,7 +1301,18 @@ exports.analyzeFood = functions
           .replace(/```json\n?/g, "")
           .replace(/```\n?/g, "")
           .trim();
-        const nutrition = JSON.parse(cleaned);
+        // The fence-strip handles ```json wrappers but not leading
+        // prose ("Here is the analysis: {…}"). Fall back to the
+        // outermost {...} span before giving up — a real truncation
+        // (no closing brace) still fails, as it should.
+        let nutrition;
+        try {
+          nutrition = JSON.parse(cleaned);
+        } catch (parseErr) {
+          const braced = cleaned.match(/\{[\s\S]*\}/);
+          if (!braced) throw parseErr;
+          nutrition = JSON.parse(braced[0]);
+        }
 
         res.status(200).json(nutrition);
       } catch (error) {
@@ -1480,7 +1497,18 @@ Food description: "${text.replace(/"/g, '\\"')}"`;
           .replace(/```json\n?/g, "")
           .replace(/```\n?/g, "")
           .trim();
-        const nutrition = JSON.parse(cleaned);
+        // The fence-strip handles ```json wrappers but not leading
+        // prose ("Here is the analysis: {…}"). Fall back to the
+        // outermost {...} span before giving up — a real truncation
+        // (no closing brace) still fails, as it should.
+        let nutrition;
+        try {
+          nutrition = JSON.parse(cleaned);
+        } catch (parseErr) {
+          const braced = cleaned.match(/\{[\s\S]*\}/);
+          if (!braced) throw parseErr;
+          nutrition = JSON.parse(braced[0]);
+        }
 
         res.status(200).json(nutrition);
       } catch (error) {

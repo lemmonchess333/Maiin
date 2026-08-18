@@ -235,9 +235,16 @@ describe("promptContract — analyzeFood no-food sentence", () => {
       "utf8"
     );
 
-    /* The instruction sentence must exist… */
+    /* The instruction sentence must exist… note it must EXEMPT
+       packaging: the label tab routes through this same endpoint (the
+       server never sees the mode), and a nutrition-label photo
+       contains no literal food or drink — without the exemption the
+       model could answer "No food detected" for a valid label scan. */
+    expect(source).toContain(
+      "If the image shows food packaging or a nutrition label, estimate from the label instead."
+    );
     const match = source.match(
-      /If the image does not contain any food or drink, return exactly: \{"foodName": "([^"]+)", "items": \[\]/
+      /If the image does not contain any food, drink, or food packaging, return exactly: \{"foodName": "([^"]+)", "items": \[\]/
     );
     expect(match).not.toBeNull();
 

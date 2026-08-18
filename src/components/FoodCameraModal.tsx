@@ -73,6 +73,11 @@ type Props = {
    *  had to reorient to. The parent owns this state and clears it on
    *  retake / close. */
   failure?: ScanFailureKind | null;
+  /** The user-facing reason behind an "error" failure — the server's
+   *  own rate-limit / quota / auth copy, or the hook's mapped network
+   *  lines. Replaces the generic "Might be the connection" sub-line so
+   *  a rate-limited user is never told to retry a closed window. */
+  failureDetail?: string | null;
   /** Fired by Retake in the failure state. The modal clears its held
    *  frame (so the live feed returns); the parent clears `failure`. */
   onScanRetry?: () => void;
@@ -115,6 +120,7 @@ export default function FoodCameraModal({
   loading,
   locked = false,
   failure = null,
+  failureDetail = null,
   onScanRetry,
   onRequestTypedInput,
 }: Props) {
@@ -159,6 +165,18 @@ export default function FoodCameraModal({
   useEffect(() => {
     onCloseRef.current = onClose;
   }, [onClose]);
+
+  // Same stability treatment for the barcode handler: FoodAnalyzer
+  // passes an inline function (fresh identity every parent render),
+  // and with it in the ZXing effect's deps every re-render while on
+  // the Barcode tab tore the decoder down and restarted it — including
+  // the re-render caused by the lookup's own setBarcodeLoading, which
+  // could re-detect the same code mid-lookup and double the request +
+  // error toast.
+  const onBarcodeDetectedRef = useRef(onBarcodeDetected);
+  useEffect(() => {
+    onBarcodeDetectedRef.current = onBarcodeDetected;
+  }, [onBarcodeDetected]);
 
   // Device/browser BACK closes the camera instead of leaving the Food tab —
   // the #1 back-trap. See lib/backDismiss.ts.
@@ -259,6 +277,14 @@ export default function FoodCameraModal({
       return;
     }
 
+    /* Cancellation flag mirrors the stream effect above: the async init
+       (dynamic import + decodeFromVideoElement) can resolve AFTER this
+       effect's cleanup ran — user left the Barcode tab, or the modal
+       closed — and without the flag the late-arriving decoder kept
+       scanning with nothing left to stop it until the next cleanup,
+       able to hijack a photo session with a barcode detection. */
+    let cancelled = false;
+
     const startZXing = async () => {
       try {
         const videoEl = videoRef.current;
@@ -301,11 +327,21 @@ export default function FoodCameraModal({
               // ignore
             }
             stopZXingRef.current = null;
+            if (cancelled) return;
             setBarcodeHint("Found!");
 
-            await onBarcodeDetected(text);
+            await onBarcodeDetectedRef.current(text);
           }
         );
+
+        if (cancelled) {
+          try {
+            controls.stop();
+          } catch {
+            // ignore
+          }
+          return;
+        }
 
         stopZXingRef.current = () => {
           try {
@@ -316,17 +352,18 @@ export default function FoodCameraModal({
         };
       } catch (e: unknown) {
         logger.error(e);
-        setBarcodeHint("Scanner failed — try again");
+        if (!cancelled) setBarcodeHint("Scanner failed — try again");
       }
     };
 
     void startZXing();
 
     return () => {
+      cancelled = true;
       stopZXingRef.current?.();
       stopZXingRef.current = null;
     };
-  }, [tab, open, onBarcodeDetected]);
+  }, [tab, open]);
 
   const pickFromLibrary = () => {
     fileInputRef.current?.click();
@@ -341,10 +378,21 @@ export default function FoodCameraModal({
       setBusy(true);
       const reader = new FileReader();
       reader.onload = async () => {
-        const dataUrl = String(reader.result || "");
-        const base64 = dataUrlToBase64(dataUrl);
-        setPreview(dataUrl);
-        await onCaptureBase64(base64, tab === "label" ? "label" : "food");
+        try {
+          const dataUrl = String(reader.result || "");
+          const base64 = dataUrlToBase64(dataUrl);
+          setPreview(dataUrl);
+          await onCaptureBase64(base64, tab === "label" ? "label" : "food");
+        } finally {
+          setBusy(false);
+        }
+      };
+      /* A read that never fires onload (file deleted between pick and
+         read, an iOS Files provider error) used to strand busy=true
+         forever — shutter greyed, library dead, no overlay showing,
+         and only close-and-reopen recovered. */
+      reader.onerror = () => {
+        logger.error(reader.error);
         setBusy(false);
       };
       reader.readAsDataURL(file);
@@ -389,7 +437,20 @@ export default function FoodCameraModal({
 
   if (!open) return null;
 
-  const disableShutter = loading || busy || tab === "barcode";
+  /* The analysis overlay is visually opaque but the camera chrome under
+     it stayed focusable and operable — a keyboard/screen-reader user
+     could Tab past the failure actions onto invisible controls and
+     fire a BLIND capture. `inert` on the under-chrome removes it from
+     both the tab order and the a11y tree while the overlay is up; the
+     top-bar X deliberately stays live (the escape hatch). */
+  const overlayUp = Boolean(loading || locked || failure);
+
+  /* Shutter also waits for a LIVE stream: in the `idle` state (stream
+     starting, or a permission prompt still unanswered) `drawImage` of
+     a stream-less video yields a black JPEG that burns a real scan on
+     a guaranteed "No food detected". */
+  const disableShutter =
+    loading || busy || tab === "barcode" || cameraState !== "granted";
   const cameraBlocked =
     cameraState === "denied" || cameraState === "unavailable";
 
@@ -410,7 +471,12 @@ export default function FoodCameraModal({
               },
         error: {
           title: "Couldn't read this one",
-          sub: "Might be the connection. Try again, or type it in.",
+          /* The specific reason when we have one (server rate-limit /
+             quota / auth copy, the hook's mapped network lines) —
+             "wait a moment" must never render as "try again". */
+          sub:
+            failureDetail ??
+            "Might be the connection. Try again, or type it in.",
         },
         offline: {
           title: "You're offline",
@@ -461,6 +527,11 @@ export default function FoodCameraModal({
 
   const failureActions = (
     <div className="flex w-full max-w-[300px] flex-col gap-2">
+      {/* Primary fill is bg-nutrition-fill (#B45309, 5.02:1 under
+          white) — the AA step that exists precisely because the
+          identity orange (#D9884E, ~2.8:1) keeps leaking under white
+          text. The one surface where reading the button IS the way
+          out cannot be the one that fails contrast. */}
       {failureButtons.map((b, i) => (
         <button
           key={b.key}
@@ -468,9 +539,8 @@ export default function FoodCameraModal({
           onClick={b.onClick}
           className={cn(
             "w-full h-12 rounded-xl text-white font-medium text-sm flex items-center justify-center gap-2",
-            i > 0 && "bg-white/10"
+            i === 0 ? "bg-nutrition-fill" : "bg-white/10"
           )}
-          style={i === 0 ? { background: THEME.semantic.nutrition } : undefined}
         >
           {b.icon}
           {b.label}
@@ -516,13 +586,30 @@ export default function FoodCameraModal({
           back to the plain spinner row — a scan reticle over
           nothing, or over a STALE previous photo, would be worse
           than dull. */}
-      {(loading || locked || failure) && (
-        <div
-          className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-6 overflow-hidden bg-black/85 px-8"
-          role={failure ? "alert" : "status"}
-          aria-live="polite"
-          aria-label={failureCopy ? failureCopy.title : "Analyzing food"}
-        >
+      {/* Persistent live regions OUTSIDE the conditional overlay — a
+          region inserted together with its label announces nothing on
+          most SR/browser pairs (live regions announce mutations after
+          the region exists), so the scan wait used to be total silence
+          for VoiceOver and the failure verdict a coin flip. These two
+          nodes are always mounted while the modal is open; their
+          CONTENT changing is the announcement contract that works.
+          Two regions rather than one role-swapped node, because a
+          role mutation on an existing node has the same registration
+          problem. The overlay div itself is now a plain visual
+          container: its failure buttons stay in the a11y tree. */}
+      <span
+        className="sr-only"
+        role="status"
+        aria-live="polite"
+        data-testid="scan-live-status"
+      >
+        {locked ? "Done" : loading ? "Analyzing food" : ""}
+      </span>
+      <span className="sr-only" role="alert" data-testid="scan-live-alert">
+        {failureCopy ? `${failureCopy.title}. ${failureCopy.sub}` : ""}
+      </span>
+      {overlayUp && (
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-6 overflow-hidden bg-black/85 px-8">
           {preview && tab !== "barcode" ? (
             <>
               {/* Ambient backdrop — the photo's own colours flood the
@@ -677,7 +764,7 @@ export default function FoodCameraModal({
                     <p className="text-[15px] font-semibold text-white">
                       {failureCopy.title}
                     </p>
-                    <p className="text-[13px] text-white/60">
+                    <p className="text-[13px] text-white/75">
                       {failureCopy.sub}
                     </p>
                   </div>
@@ -751,7 +838,7 @@ export default function FoodCameraModal({
                 <p className="text-[15px] font-semibold text-white">
                   {failureCopy.title}
                 </p>
-                <p className="text-[13px] text-white/60">{failureCopy.sub}</p>
+                <p className="text-[13px] text-white/75">{failureCopy.sub}</p>
               </div>
               {failureActions}
             </div>
@@ -829,8 +916,7 @@ export default function FoodCameraModal({
                 haptic("light");
                 fileInputRef.current?.click();
               }}
-              className="w-full h-12 rounded-xl text-white font-medium text-sm flex items-center justify-center gap-2"
-              style={{ background: THEME.semantic.nutrition }}
+              className="w-full h-12 rounded-xl bg-nutrition-fill text-white font-medium text-sm flex items-center justify-center gap-2"
             >
               <ImageIcon className="size-4" />
               Upload a photo instead
@@ -960,8 +1046,12 @@ export default function FoodCameraModal({
         )}
       </div>
 
-      {/* bottom */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 pb-8">
+      {/* bottom — inert while the overlay is up (see `overlayUp`). */}
+      <div
+        className="absolute bottom-0 left-0 right-0 p-4 pb-8"
+        inert={overlayUp || undefined}
+        data-testid="camera-chrome"
+      >
         <div className="mx-auto max-w-[520px] space-y-3">
           {/* tabs — pill/segment pattern matching app style */}
           <div className="flex gap-1.5 justify-center bg-black/30 rounded-full p-1">
