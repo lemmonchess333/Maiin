@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { motion, AnimatePresence, type PanInfo } from "framer-motion";
 import { Trash2, Pencil } from "lucide-react";
 import { THEME } from "@/lib/theme";
@@ -234,20 +234,37 @@ export default function FoodRow({
   // Photo cards stack the hero image above the meta row inside the same
   // swipeable surface. pointer-events-none keeps the browser's native
   // image drag / long-press callout from fighting the framer x-drag.
-  const rowInner = photoUrl ? (
-    <div className="flex-1 min-w-0">
-      <img
-        src={photoUrl}
-        alt={group.foodName}
-        className="w-full h-44 object-cover rounded-lg mb-2.5 pointer-events-none select-none"
-        loading="lazy"
-        draggable={false}
-      />
-      <div className="flex items-center justify-between">{rowBody}</div>
-    </div>
-  ) : (
-    rowBody
-  );
+  /* Remember WHICH src failed, not merely that one did. The device-local
+     read is async, so a group's photo can arrive after the row has
+     already rendered; keying on the src means a later, working source
+     recovers on its own without an effect resetting a boolean (which is
+     also what keeps this off `react-hooks/set-state-in-effect`). */
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const photoFailed = !!photoUrl && failedSrc === photoUrl;
+
+  const rowInner =
+    photoUrl && !photoFailed ? (
+      <div className="flex-1 min-w-0">
+        <img
+          src={photoUrl}
+          alt={group.foodName}
+          className="w-full h-44 object-cover rounded-lg mb-2.5 pointer-events-none select-none"
+          loading="lazy"
+          draggable={false}
+          /* A meal photo can genuinely go missing underneath a rendered
+           row: photos are device-local and age out at 90 days, a legacy
+           Storage URL can 404, and browser storage can be evicted. With
+           no handler the row keeps a 176px frame holding alt text and
+           then reflows. Collapsing to the ordinary compact row is the
+           honest degrade — that is the shape most rows already have, so
+           it reads as a text log rather than as breakage. */
+          onError={() => setFailedSrc(photoUrl)}
+        />
+        <div className="flex items-center justify-between">{rowBody}</div>
+      </div>
+    ) : (
+      rowBody
+    );
 
   // ── Reduced-motion fallback: no drag gesture. The row body is a tap
   //    target that opens the edit sheet (mirrors the swipe path's

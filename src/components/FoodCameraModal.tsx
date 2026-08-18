@@ -858,7 +858,7 @@ export default function FoodCameraModal({
   if (cameraBlocked) {
     const deniedCopy =
       cameraState === "denied"
-        ? "Camera access was denied. Tropos only uses the camera to scan meals and barcodes — no photos are stored from the scanner."
+        ? "Camera access was denied. Tropos only uses the camera to scan meals and barcodes. Your photo is sent to Google for analysis and kept only on this device — never on our servers."
         : "No camera available right now. You can still log your meal by uploading a photo or typing it in.";
     return (
       <div

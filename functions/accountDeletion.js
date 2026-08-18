@@ -125,9 +125,13 @@ const TOP_LEVEL_USER_KEYED_COLLECTIONS = Object.freeze([
 const STORAGE_PREFIX_TEMPLATES = Object.freeze([
   "progress-photos/__UID__/",
   "profile-photos/__UID__/",
-  // Food diary photos (src/lib/foodPhotoUpload.ts). Meal deletion is
-  // soft (24h restore) so blobs are never deleted with the meal —
-  // this sweep is the only cleanup path, same as progress photos.
+  // Food diary photos — LEGACY ONLY as of Food9 (2026-08-18). Captures
+  // are written to the DEVICE now (src/lib/foodPhotoStore.ts) and never
+  // reach Storage, so nothing new lands under this prefix. It stays
+  // because blobs uploaded before the swap are still there and still
+  // rendered by pre-Food9 meal docs; a deleting user must have them
+  // erased. Do not remove until that legacy sweep has run (tracked in
+  // the CLAUDE.md pre-launch backlog).
   "food-photos/__UID__/",
   // Community Space post photos (Spc1 PR4, src/lib/spacePhotoUpload.ts).
   // The Firestore posts are deleted by the spaces cleanup step (3d);

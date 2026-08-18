@@ -14,6 +14,8 @@ import {
   QueryDocumentSnapshot,
 } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
+import { deleteFoodPhoto } from "@/lib/foodPhotoStore";
+import { invalidateFoodPhotoCache } from "@/hooks/useFoodPhotoUrls";
 import { noteActivitySnapshot } from "@/lib/activationTracker";
 import { db } from "@/lib/firebase";
 import { useUid } from "@/lib/auth";
@@ -50,21 +52,25 @@ export interface Meal {
    *  "+ Breakfast" / ... targeting flow so a snack logged at 9am goes to
    *  Snacks, not Breakfast. */
   meal?: "breakfast" | "lunch" | "snacks" | "dinner";
-  /** User-captured meal photo (AI scan path) — Storage download URL
-   *  written by the post-save background upload in FoodAnalyzer
-   *  (src/lib/foodPhotoUpload.ts). Drives the diary timeline's big
-   *  photo cards; absent for text/barcode/manual logs. */
+  /** LEGACY ONLY — a Firebase Storage download URL for a meal photo,
+   *  written by the pre-Food9 background upload. NOTHING WRITES THIS ANY
+   *  MORE: captures now live on the device (`src/lib/foodPhotoStore.ts`)
+   *  and no photo field is persisted at all. It stays parsed so docs
+   *  written before the swap keep rendering their photo card, and it
+   *  drains on its own as those meals fall out of the diary's 90-day
+   *  tap-back window. Do not add new writers.
+   *
+   *  Its sibling `photoPath` was deleted with the swap: it was written,
+   *  typed and parsed, and read by nothing anywhere in the repo — the
+   *  account-deletion executor sweeps by PREFIX, not by that field. */
   photoUrl?: string;
-  /** Storage path for the photo blob — cleanup pointer only (the
-   *  account-deletion executor sweeps the prefix; meal soft-delete
-   *  never deletes the blob because of the 24h restore window). */
-  photoPath?: string;
   confidence: string;
   createdAt: unknown;
   /** F5c — soft-delete sentinel. Set to a Firestore Timestamp when
    *  the user deletes the meal; null (or missing) for active meals.
-   *  The 24h auto-purge cron CF clears the doc when this is set and
-   *  older than the threshold. Active-meals views filter by
+   *  Nothing clears it automatically — see the note on `deleteMeal`;
+   *  the only hard delete is the user's own "Delete permanently" in
+   *  Settings → Recently Deleted. Active-meals views filter by
    *  `!deletedAt` client-side (server-side `WHERE deletedAt == null`
    *  would miss docs that predate the field; lazy migration via
    *  `parseMealDoc` reads missing → null). */
@@ -147,7 +153,6 @@ function parseMealDoc(id: string, raw: Record<string, unknown>): Meal {
         ? raw.meal
         : undefined,
     photoUrl: typeof raw.photoUrl === "string" ? raw.photoUrl : undefined,
-    photoPath: typeof raw.photoPath === "string" ? raw.photoPath : undefined,
     confidence: typeof raw.confidence === "string" ? raw.confidence : "",
     createdAt: raw.createdAt,
     // F5c: missing field is interpreted as active (null). Restored
@@ -265,8 +270,21 @@ export function useMeals() {
   }, [uid, lastDoc, hasMore]);
 
   // F5c — soft-delete: writes `deletedAt: serverTimestamp()` instead
-  // of removing the doc. Restoration clears `deletedAt`; the 24h
-  // auto-purge cron CF hard-deletes after the window expires.
+  // of removing the doc. Restoration clears `deletedAt`.
+  //
+  // NOTE this comment used to claim "the 24h auto-purge cron CF
+  // hard-deletes after the window expires". There is NO such function
+  // — all seven scheduled functions in `functions/index.js` were
+  // checked (weeklyPerformanceRollup, dailyPerformanceRefresh,
+  // rolloverChallenges, weeklyCoachPrompts, hourlyStreakNudge,
+  // dailyRaceReconciliationSweep, weeklyFellBehindCheck) and none
+  // touches `meals`. A soft-deleted meal doc lives forever unless the
+  // user taps "Delete permanently" in Settings → Recently Deleted
+  // (`hardDeleteMeal`), or the account is deleted. The "24h window" is
+  // therefore a UI convention on the archive screen, not a retention
+  // guarantee — treat it as such when reasoning about anything hung
+  // off a meal doc's lifetime.
+  //
   // Existing call sites (Food.tsx) keep their 3-second in-session
   // undo timer in front of this call, so the soft-delete only fires
   // after the user has had a chance to undo. That's the in-session
@@ -366,11 +384,21 @@ export function useMeals() {
 
   /** Hard-delete — bypasses the soft-delete window. Reserved for the
    *  Settings recently-deleted page's "Delete permanently" action;
-   *  callers OUTSIDE that surface should call `deleteMeal` instead. */
+   *  callers OUTSIDE that surface should call `deleteMeal` instead.
+   *
+   *  Food9: also drops the meal's device-local photo. This is the
+   *  delete-on-delete the Storage implementation never had — a photo
+   *  uploaded there outlived its meal forever, and only the
+   *  account-deletion prefix sweep ever removed it. Deliberately NOT
+   *  done in the soft `deleteMeal`: restore from Recently Deleted has to
+   *  be lossless, so the blob outlives the soft delete and is collected
+   *  by the retention sweep instead. */
   const hardDeleteMeal = useCallback(
     async (mealId: string) => {
       if (!uid) return;
       await deleteDoc(doc(db, "users", uid, "meals", mealId));
+      await deleteFoodPhoto(uid, mealId);
+      invalidateFoodPhotoCache(uid, mealId);
     },
     [uid]
   );

@@ -161,7 +161,7 @@ async function main() {
   // Two of today's meals carry a `photoUrl` so the diary timeline's
   // photo cards ("photos big, text compact") show up in design-review
   // captures. Production photoUrl is a Storage download URL (see
-  // src/lib/foodPhotoUpload.ts); the emulator set here has no Storage,
+  // src/lib/foodPhotoStore.ts); the emulator set here has no Storage,
   // so the seed uses a small inline-SVG plate illustration — clearly a
   // placeholder, but exercises the exact same render path.
   const FOOD_PHOTO_DATA_URI = `data:image/svg+xml,${encodeURIComponent(
