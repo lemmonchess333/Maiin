@@ -633,6 +633,32 @@ or touching a CTA button, route it through `Button` with the variant above.
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+### Scan failure beat + no-food prompt contract (2026-08-18, PR #2066)
+
+Affects: `functions/index.js` (analyzeFood prompt), `src/components/FoodCameraModal.tsx`, `src/components/FoodAnalyzer.tsx`.
+
+The analyzeFood prompt now instructs the model: no food visible → return
+foodName "No food detected" with empty items. That exact name is a CONTRACT
+with the client's `GENERIC_AI_NAMES` filter — pinned cross-repo by
+`aiFoodIdentification.test.ts` (promptContract), so reword both ends together.
+Client-side, every scan failure now resolves IN the modal (no-food / error /
+offline beats with Retake + Type-it-instead) instead of silently closing;
+pre-fix the parent's catch/toast was dead code because the hook returns null
+rather than throwing.
+
+- [ ] **Deployed-source spot-check (do first).** Console → `analyzeFood`
+      source contains `does not contain any food or drink`. `.js` change so
+      the bundle-hash dedup shouldn't bite, but CI-green ≠ uploaded.
+- [ ] **Real non-food photo on device.** Scan a bookshelf / a person: the
+      modal must resolve to "No food detected" with Retake + Type it instead
+      — no silent close, no result card with hallucinated macros.
+- [ ] **Airplane mode.** Shutter → instant "You're offline" (no burned wait),
+      with Type it instead as the PRIMARY action — and typing must work
+      end-to-end offline (local NL parse + queued write).
+- [ ] **Slow-scan escape.** Start a scan on weak signal and tap the X during
+      the sweep — it must close immediately (pre-fix the X sat under the
+      overlay and iOS users were trapped until the request resolved).
+
 ### Nutrition/TDEE sweep 2026-08-12 — one finding left, and the shape of the rest
 
 Five defects shipped from one sweep of the calorie/macro path (#1994-#1998).

@@ -1218,8 +1218,19 @@ exports.analyzeFood = functions
           .applicationDefault()
           .getAccessToken();
 
+        // The no-food sentence is a CONTRACT with the client: the exact
+        // foodName "No food detected" is in the client's GENERIC_AI_NAMES
+        // filter (src/lib/aiFoodIdentification.ts), and empty items make
+        // isEmptyAiFoodResult true — either signal routes the scan into
+        // the modal's "No food detected" failure beat. Without this
+        // sentence the model improvises on non-food photos ("Two people",
+        // "A desk") with hallucinated macros that sail through the name
+        // filter and render as a real result. Pinned by
+        // aiFoodIdentification.test.ts (promptContract) — reword BOTH
+        // ends together or the pin fails.
         const prompt =
-          'Analyze this food image and provide nutritional estimates. Return ONLY a valid JSON object with this exact format, no other text: {"foodName": "name of the food/meal", "items": [{"name": "item name", "portionSize": "estimated portion", "calories": 0, "protein": 0, "carbs": 0, "fat": 0}], "totalCalories": 0, "totalProtein": 0, "totalCarbs": 0, "totalFat": 0, "confidence": "high/medium/low"}';
+          'Analyze this food image and provide nutritional estimates. Return ONLY a valid JSON object with this exact format, no other text: {"foodName": "name of the food/meal", "items": [{"name": "item name", "portionSize": "estimated portion", "calories": 0, "protein": 0, "carbs": 0, "fat": 0}], "totalCalories": 0, "totalProtein": 0, "totalCarbs": 0, "totalFat": 0, "confidence": "high/medium/low"}' +
+          ' If the image does not contain any food or drink, return exactly: {"foodName": "No food detected", "items": [], "totalCalories": 0, "totalProtein": 0, "totalCarbs": 0, "totalFat": 0, "confidence": "high"}';
 
         const url =
           "https://us-central1-aiplatform.googleapis.com/v1/projects/" +

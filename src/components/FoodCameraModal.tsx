@@ -6,6 +6,7 @@ import {
   X,
   Image as ImageIcon,
   RefreshCw,
+  Camera,
   CameraOff,
   Keyboard,
 } from "lucide-react";
@@ -40,6 +41,17 @@ type TabMode = "food" | "barcode" | "label";
  */
 type CameraState = "idle" | "granted" | "denied" | "unavailable";
 
+/**
+ * How a scan can fail. Drives the in-modal failure beat:
+ *  - `no-food`  — the AI answered but found nothing identifiable
+ *                 (a photo of the dog, the desk, your parents…)
+ *  - `error`    — the request itself failed (network, server, auth)
+ *  - `offline`  — pre-empted before the request: scanning needs a
+ *                 connection, so we say so instantly instead of
+ *                 burning the sweep on a fetch that must fail
+ */
+export type ScanFailureKind = "no-food" | "error" | "offline";
+
 type Props = {
   open: boolean;
   onClose: () => void;
@@ -52,9 +64,22 @@ type Props = {
    *  the result. The reference apps all stage this moment; the hard cut
    *  was ours alone. */
   locked?: boolean;
+  /** The failure beat: analysis ended with nothing to show. The scan
+   *  RESOLVES in place — laser stops, corners go neutral, honest copy
+   *  ("No food detected" / "Couldn't read this one" / "You're
+   *  offline") with Retake + Type-it-instead right where the user is
+   *  already looking. Pre-beat, every failure silently closed the
+   *  modal mid-sweep and dumped the user on a page-level card they
+   *  had to reorient to. The parent owns this state and clears it on
+   *  retake / close. */
+  failure?: ScanFailureKind | null;
+  /** Fired by Retake in the failure state. The modal clears its held
+   *  frame (so the live feed returns); the parent clears `failure`. */
+  onScanRetry?: () => void;
   /**
-   * Fired when the user taps "Type it instead" from the denied-permission
-   * fallback. The parent should close the modal and focus the NL input.
+   * Fired when the user taps "Type it instead" — from the
+   * denied-permission fallback or the scan-failure beat. The parent
+   * should close the modal and focus the NL input.
    */
   onRequestTypedInput?: () => void;
 };
@@ -89,6 +114,8 @@ export default function FoodCameraModal({
   onBarcodeDetected,
   loading,
   locked = false,
+  failure = null,
+  onScanRetry,
   onRequestTypedInput,
 }: Props) {
   const focusTrapRef = useFocusTrap<HTMLDivElement>(open);
@@ -366,6 +393,92 @@ export default function FoodCameraModal({
   const cameraBlocked =
     cameraState === "denied" || cameraState === "unavailable";
 
+  /* Failure copy, resolved per kind AND per mode — "No food detected"
+     is the wrong sentence when the user was photographing a nutrition
+     label. Sub-lines name the next move; the buttons below make it. */
+  const failureCopy = failure
+    ? {
+        "no-food":
+          tab === "label"
+            ? {
+                title: "Couldn't read the label",
+                sub: "Try a straighter, closer shot of the nutrition panel.",
+              }
+            : {
+                title: "No food detected",
+                sub: "Try a clearer shot of the plate — or type it in.",
+              },
+        error: {
+          title: "Couldn't read this one",
+          sub: "Might be the connection. Try again, or type it in.",
+        },
+        offline: {
+          title: "You're offline",
+          sub: "Scanning needs a connection — typing it in still works.",
+        },
+      }[failure]
+    : null;
+
+  const handleScanRetry = () => {
+    haptic("light");
+    /* Drop the held frame so the surface returns to the live feed
+       (or the blocked-branch upload fallback) ready for another go. */
+    setPreview(null);
+    onScanRetry?.();
+  };
+
+  /* The failure action row. Rendered wherever the failure beat shows —
+     with or without a held frame — so recovery never depends on which
+     branch the user came in through. The buttons follow this surface's
+     own chrome idiom (the blocked-branch fallback pair): h-12 ≥ the
+     44px floor. The PRIMARY slot goes to the action that can actually
+     succeed: normally Retake — but offline, retaking lands on the same
+     dead end, while typing works fully offline (local NL parser +
+     queue-routed write), so Type-it-instead takes the orange. */
+  const failureButtons = [
+    {
+      key: "retake",
+      icon: <Camera className="size-4" />,
+      label: cameraBlocked ? "Try another photo" : "Retake photo",
+      onClick: handleScanRetry,
+    },
+    ...(onRequestTypedInput
+      ? [
+          {
+            key: "typed",
+            icon: <Keyboard className="size-4" />,
+            label: "Type it instead",
+            onClick: () => {
+              haptic("light");
+              onRequestTypedInput();
+            },
+          },
+        ]
+      : []),
+  ];
+  if (failure === "offline" && failureButtons.length > 1)
+    failureButtons.reverse();
+
+  const failureActions = (
+    <div className="flex w-full max-w-[300px] flex-col gap-2">
+      {failureButtons.map((b, i) => (
+        <button
+          key={b.key}
+          type="button"
+          onClick={b.onClick}
+          className={cn(
+            "w-full h-12 rounded-xl text-white font-medium text-sm flex items-center justify-center gap-2",
+            i > 0 && "bg-white/10"
+          )}
+          style={i === 0 ? { background: THEME.semantic.nutrition } : undefined}
+        >
+          {b.icon}
+          {b.label}
+        </button>
+      ))}
+    </div>
+  );
+
   // Permission denied / camera unavailable — render a fallback surface
   // instead of the camera preview. Gives the user a clear path back to
   // the happy case (upload from library or type the meal manually)
@@ -403,12 +516,12 @@ export default function FoodCameraModal({
           back to the plain spinner row — a scan reticle over
           nothing, or over a STALE previous photo, would be worse
           than dull. */}
-      {(loading || locked) && (
+      {(loading || locked || failure) && (
         <div
           className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-6 overflow-hidden bg-black/85 px-8"
-          role="status"
+          role={failure ? "alert" : "status"}
           aria-live="polite"
-          aria-label="Analyzing food"
+          aria-label={failureCopy ? failureCopy.title : "Analyzing food"}
         >
           {preview && tab !== "barcode" ? (
             <>
@@ -459,6 +572,12 @@ export default function FoodCameraModal({
 
                 {/* Reticle corners, seated just OUTSIDE the photo so
                   they frame it instead of sinking into it. */}
+                {/* On failure the corners settle to NEUTRAL — the
+                    orange is the "reading" register, and holding it
+                    over "No food detected" would say two things at
+                    once. Neutral white is camera chrome, not a
+                    warning: nothing bad happened, the scan just
+                    ended. */}
                 {[
                   "-top-1 -left-1 border-t-[3px] border-l-[3px] rounded-tl-[20px]",
                   "-top-1 -right-1 border-t-[3px] border-r-[3px] rounded-tr-[20px]",
@@ -469,8 +588,16 @@ export default function FoodCameraModal({
                     key={corner}
                     aria-hidden
                     data-testid="scan-corner"
-                    className={cn("absolute size-8", corner)}
-                    style={{ borderColor: THEME.semantic.nutrition }}
+                    className={cn(
+                      "absolute size-8",
+                      corner,
+                      failure && "border-white/40"
+                    )}
+                    style={
+                      failure
+                        ? undefined
+                        : { borderColor: THEME.semantic.nutrition }
+                    }
                     initial={
                       reducedMotion ? false : { opacity: 0, scale: 1.12 }
                     }
@@ -488,7 +615,7 @@ export default function FoodCameraModal({
                     around the line — the "being read" region — fading
                     out at its edges via a static mask. One mover, one
                     loop, transform-only throughout. */}
-                {!reducedMotion && !locked && (
+                {!reducedMotion && !locked && !failure && (
                   <div
                     aria-hidden
                     data-testid="scan-laser"
@@ -532,54 +659,102 @@ export default function FoodCameraModal({
                   </div>
                 )}
               </motion.div>
-              {/* Stage copy. Crossfades between lines (the hard swap
+              {/* Failure content replaces the stage copy: title + next
+                  move + the action row. NOT aria-hidden (unlike the
+                  decorative stage feed) — this is the actionable
+                  state, announced via the container's role="alert".
+                  One-shot motion-safe entrance; reduced motion gets
+                  it settled. */}
+              {failure && failureCopy ? (
+                <motion.div
+                  data-testid="scan-failure"
+                  className="flex w-full flex-col items-center gap-4 text-center"
+                  initial={reducedMotion ? false : { opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.22, ease: "easeOut" }}
+                >
+                  <div className="space-y-1">
+                    <p className="text-[15px] font-semibold text-white">
+                      {failureCopy.title}
+                    </p>
+                    <p className="text-[13px] text-white/60">
+                      {failureCopy.sub}
+                    </p>
+                  </div>
+                  {failureActions}
+                </motion.div>
+              ) : (
+                /* Stage copy. Crossfades between lines (the hard swap
                   every 1.3s read as a glitch next to the smooth laser)
                   using the same keyed-AnimatePresence pattern as the
                   barcode hint, inside a fixed-height row so the swap
                   never shifts the frame above it. On Done the check
                   DRAWS itself — pathLength 0→1, the settle gesture the
                   reference scanners all stage. Reduced motion swaps
-                  text instantly and gets the check pre-drawn. */}
-              <div
-                aria-hidden
-                className="relative flex h-5 items-center justify-center"
-              >
-                <AnimatePresence mode="wait" initial={false}>
-                  <motion.p
-                    key={locked ? "scan-done" : stageLine}
-                    initial={reducedMotion ? false : { opacity: 0, y: 7 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={reducedMotion ? undefined : { opacity: 0, y: -7 }}
-                    transition={{ duration: 0.18, ease: "easeOut" }}
-                    className="text-[15px] font-semibold text-white"
-                  >
-                    {locked ? (
-                      <span
-                        className="inline-flex items-center gap-1.5"
-                        style={{ color: THEME.semantic.nutrition }}
-                      >
-                        <svg viewBox="0 0 24 24" className="size-4" fill="none">
-                          <motion.path
-                            data-testid="scan-check"
-                            d="M4.5 12.75 L9.75 18 L19.5 6.75"
-                            stroke="currentColor"
-                            strokeWidth={3.2}
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            initial={reducedMotion ? false : { pathLength: 0 }}
-                            animate={{ pathLength: 1 }}
-                            transition={{ duration: 0.32, ease: "easeOut" }}
-                          />
-                        </svg>
-                        Done
-                      </span>
-                    ) : (
-                      stageLine
-                    )}
-                  </motion.p>
-                </AnimatePresence>
-              </div>
+                  text instantly and gets the check pre-drawn. */
+                <div
+                  aria-hidden
+                  className="relative flex h-5 items-center justify-center"
+                >
+                  <AnimatePresence mode="wait" initial={false}>
+                    <motion.p
+                      key={locked ? "scan-done" : stageLine}
+                      initial={reducedMotion ? false : { opacity: 0, y: 7 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={reducedMotion ? undefined : { opacity: 0, y: -7 }}
+                      transition={{ duration: 0.18, ease: "easeOut" }}
+                      className="text-[15px] font-semibold text-white"
+                    >
+                      {locked ? (
+                        <span
+                          className="inline-flex items-center gap-1.5"
+                          style={{ color: THEME.semantic.nutrition }}
+                        >
+                          <svg
+                            viewBox="0 0 24 24"
+                            className="size-4"
+                            fill="none"
+                          >
+                            <motion.path
+                              data-testid="scan-check"
+                              d="M4.5 12.75 L9.75 18 L19.5 6.75"
+                              stroke="currentColor"
+                              strokeWidth={3.2}
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              initial={
+                                reducedMotion ? false : { pathLength: 0 }
+                              }
+                              animate={{ pathLength: 1 }}
+                              transition={{ duration: 0.32, ease: "easeOut" }}
+                            />
+                          </svg>
+                          Done
+                        </span>
+                      ) : (
+                        stageLine
+                      )}
+                    </motion.p>
+                  </AnimatePresence>
+                </div>
+              )}
             </>
+          ) : failure && failureCopy ? (
+            /* Failure with no held frame (defensive — the photo paths
+               always hold one). Recovery must not depend on which
+               branch the user came in through. */
+            <div
+              data-testid="scan-failure"
+              className="flex w-full flex-col items-center gap-4 text-center"
+            >
+              <div className="space-y-1">
+                <p className="text-[15px] font-semibold text-white">
+                  {failureCopy.title}
+                </p>
+                <p className="text-[13px] text-white/60">{failureCopy.sub}</p>
+              </div>
+              {failureActions}
+            </div>
           ) : (
             <div className="flex items-center gap-2">
               <Spinner size="sm" variant="inverse" label="Fetching nutrition" />
@@ -606,7 +781,9 @@ export default function FoodCameraModal({
         aria-label="Camera unavailable"
         className="fixed inset-0 z-[60] bg-background flex flex-col"
       >
-        <div className="flex items-center justify-between p-4">
+        {/* Same escape-hatch rule as the camera return: the close X
+            stays above the z-20 analysis overlay. */}
+        <div className="relative z-30 flex items-center justify-between p-4">
           <button
             type="button"
             onClick={onClose}
@@ -694,8 +871,11 @@ export default function FoodCameraModal({
       aria-label="Food camera"
       className="fixed inset-0 z-[60] bg-black"
     >
-      {/* top bar */}
-      <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4">
+      {/* top bar — z-30 rides ABOVE the z-20 analysis overlay: the X
+          must stay tappable during a slow scan. Pre-fix it sat at
+          z-10 UNDER the overlay, so an iOS user (no hardware back,
+          no Escape key) had no way out until the request resolved. */}
+      <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between p-4">
         <button
           type="button"
           onClick={onClose}

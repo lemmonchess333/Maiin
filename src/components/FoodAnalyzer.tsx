@@ -13,10 +13,9 @@ import { db } from "@/lib/firebase";
 import { useUid } from "@/lib/auth";
 import { safeNum, parseServingGrams, round1 } from "@/lib/foodParseHelpers";
 import { toast } from "@/lib/toast";
-import { logger } from "@/lib/logger";
 import { haptic } from "@/lib/haptic";
 import { isPhotoShareSupported, sharePhotoToLibrary } from "@/lib/sharePhoto";
-import FoodCameraModal from "./FoodCameraModal";
+import FoodCameraModal, { type ScanFailureKind } from "./FoodCameraModal";
 import MealMacroBar from "./food/MealMacroBar";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Spinner } from "@/components/ui/Spinner";
@@ -38,13 +37,10 @@ interface Props {
    * and focuses the NL text composer.
    */
   onRequestTypedInput?: () => void;
-  /* Fired from the AI photo failure toast's action button. The
-     camera modal stays open on AI errors (so a retry is a single
-     shutter tap away — original product intent), which means the
-     user can't see Food.tsx's Log manually CTA from inside the
-     scanner. The action button bridges that gap: closes the
-     scanner + opens the manual logger drawer. Optional — when not
-     provided the toast renders without an action button. */
+  /* Fired from the page-level empty-result card's "Log manually"
+     action (the landing when the user exits the scanner after a
+     failure rather than retaking). Closes the analyzer flow and
+     opens the manual logger drawer. Optional. */
   onRequestManualLog?: () => void;
   /* Daily calorie target (Nutr1: flat === baseTarget; no eat-back,
      no calorie bonus — day-type fuelling is a net-neutral macro
@@ -192,11 +188,18 @@ export default function FoodAnalyzer({
   /* The scan's completion beat: after a USABLE analysis lands, the
      modal is held open ~420ms in a "locked" state (frame tightens,
      laser gone, Done) so the scan visibly resolves instead of
-     hard-cutting to the result card. Success-with-results only —
-     failures and empty results keep their existing immediate paths —
-     and skipped entirely under reduced motion, which must never be
-     made to WAIT for theatre. */
+     hard-cutting to the result card. Success-with-results only, and
+     skipped entirely under reduced motion, which must never be made
+     to WAIT for theatre. */
   const [scanLocked, setScanLocked] = useState(false);
+  /* The scan's FAILURE beat: when analysis ends with nothing to show
+     (request failed / nothing identifiable / offline), the modal
+     stays open and resolves in place — honest copy + Retake +
+     Type-it-instead — instead of silently closing mid-sweep and
+     dumping the user on a page-level card. Cleared on retake and on
+     every path that closes the modal, so a reopen can never show a
+     stale verdict. */
+  const [scanFailure, setScanFailure] = useState<ScanFailureKind | null>(null);
   const [capturedBase64, setCapturedBase64] = useState<string | null>(null);
 
   const [barcodeResult, setBarcodeResult] = useState<MealResult | null>(null);
@@ -395,6 +398,7 @@ export default function FoodAnalyzer({
     setBarcodeLoading(false);
     setCapturedBase64(null);
     setServings(1);
+    setScanFailure(null);
     resetAI();
   };
 
@@ -616,45 +620,46 @@ export default function FoodAnalyzer({
   // the capture toast wording; now no toast fires (UI transitions
   // straight to the analysis result), so the parameter is unused.
   //
-  // Camera auto-closes on success so the user lands on the result card.
-  // On error we keep it open so a retry is a single shutter tap away.
+  // Every outcome resolves VISIBLY inside the modal:
+  //  - usable result  → 420ms locked beat (motion users), then close
+  //                     to the result card
+  //  - request failed → failure beat "error"
+  //  - AI answered but found nothing identifiable (a photo of the
+  //    dog / the desk / your parents) → failure beat "no-food"
+  //  - offline        → pre-empted BEFORE the request: an instant
+  //                     honest answer beats burning the sweep on a
+  //                     fetch that must fail
+  //
+  // NOTE `analyzeFood` never throws — the hook catches internally,
+  // sets its own error state, and returns null. The old try/catch +
+  // toast here was dead code, which is how every failure came to
+  // close the modal silently mid-sweep: `usable` was false, no
+  // branch handled it, and the close ran unconditionally. The page-
+  // level error/empty cards remain as the landing if the user exits
+  // the modal instead of retaking.
   const onCaptureBase64 = async (base64: string, _mode: "food" | "label") => {
     setBarcodeResult(null);
     setBarcodeError(null);
     setCapturedBase64(base64);
+    setScanFailure(null);
 
-    try {
-      const data = await analyzeFood(base64);
-      const usable =
-        data && filterIdentifiableAiItems(data.items ?? []).length > 0;
-      if (usable && !reducedMotion) {
+    if (!navigator.onLine) {
+      setScanFailure("offline");
+      return;
+    }
+
+    const data = await analyzeFood(base64);
+    const usable =
+      data && filterIdentifiableAiItems(data.items ?? []).length > 0;
+    if (usable) {
+      if (!reducedMotion) {
         setScanLocked(true);
         await new Promise((r) => setTimeout(r, 420));
         setScanLocked(false);
       }
       setCameraOpen(false);
-    } catch (e) {
-      logger.error(e);
-      /* Camera modal stays open on AI failure (per the original
-         "retry is a single shutter tap away" intent), which means
-         the user can't see Food.tsx's Log manually CTA. The toast
-         action bridges that — closes the scanner and opens the
-         manual logger so the user has a clear next action that
-         doesn't require finding their way back to the page. */
-      toast.error("Couldn't analyse the photo. Try again or log manually.", {
-        id: "food-ai-error",
-        ...(onRequestManualLog
-          ? {
-              action: {
-                label: "Log manually",
-                onClick: () => {
-                  setCameraOpen(false);
-                  onRequestManualLog();
-                },
-              },
-            }
-          : {}),
-      });
+    } else {
+      setScanFailure(data ? "no-food" : "error");
     }
   };
 
@@ -695,14 +700,24 @@ export default function FoodAnalyzer({
     <div className="space-y-4">
       <FoodCameraModal
         open={cameraOpen}
-        onClose={() => setCameraOpen(false)}
+        onClose={() => {
+          /* Failure must not survive the modal: a reopen after an
+             X-out would otherwise show a stale verdict over a fresh
+             session. The page-level error/empty cards are the
+             landing instead. */
+          setScanFailure(null);
+          setCameraOpen(false);
+        }}
         onCaptureBase64={onCaptureBase64}
         onBarcodeDetected={onBarcodeDetected}
         loading={showLoading}
         locked={scanLocked}
+        failure={scanFailure}
+        onScanRetry={() => setScanFailure(null)}
         onRequestTypedInput={
           onRequestTypedInput
             ? () => {
+                setScanFailure(null);
                 setCameraOpen(false);
                 onRequestTypedInput();
               }

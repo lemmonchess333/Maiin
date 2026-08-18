@@ -249,3 +249,163 @@ describe("FoodCameraModal — the completion beat", () => {
     ).toBe(true);
   });
 });
+
+describe("FoodCameraModal — the failure beat", () => {
+  /* Pre-beat, every failure closed the modal silently mid-sweep:
+     the hook returns null instead of throwing, `usable` came back
+     false, and the close ran unconditionally — so the scan
+     evaporated and the user was dumped on a page-level card. These
+     pins keep every failure resolving IN PLACE, where the user is
+     already looking, with the next move one tap away. */
+
+  it("no-food resolves the scan in place: honest copy, actions, no laser, neutral corners", async () => {
+    render(
+      <FoodCameraModal
+        {...props}
+        loading={false}
+        failure="no-food"
+        onScanRetry={vi.fn()}
+        onRequestTypedInput={vi.fn()}
+      />
+    );
+    await armPhoto();
+    // `loading` is FALSE — the overlay must stand on `failure` alone.
+    expect(screen.getByText("No food detected")).toBeTruthy();
+    expect(screen.getByText("Retake photo")).toBeTruthy();
+    expect(screen.getByText("Type it instead")).toBeTruthy();
+    // The scan has ENDED: no sweep…
+    expect(screen.queryByTestId("scan-laser")).toBeNull();
+    // …and the corners settle to neutral — orange is the "reading"
+    // register and must not hold over a failure verdict.
+    const corners = screen.getAllByTestId("scan-corner");
+    expect(corners.length).toBe(4);
+    for (const c of corners) expect(c.style.borderColor).toBe("");
+    // Announced as an alert, not a status feed.
+    expect(screen.getByRole("alert")).toBeTruthy();
+  });
+
+  it("error and offline get their own honest lines", async () => {
+    const { unmount } = render(
+      <FoodCameraModal {...props} loading={false} failure="error" />
+    );
+    expect(screen.getByText("Couldn't read this one")).toBeTruthy();
+    unmount();
+    render(<FoodCameraModal {...props} loading={false} failure="offline" />);
+    expect(screen.getByText("You're offline")).toBeTruthy();
+    expect(screen.getByText(/scanning needs a connection/i)).toBeTruthy();
+  });
+
+  it("offline leads with Type it instead — retaking can't fix no connection", async () => {
+    // The primary slot goes to the action that can actually succeed:
+    // typing works fully offline (local NL parser + queue-routed
+    // write); retaking lands on the same pre-empt again.
+    render(
+      <FoodCameraModal
+        {...props}
+        loading={false}
+        failure="offline"
+        onRequestTypedInput={vi.fn()}
+      />
+    );
+    const buttons = screen
+      .getByTestId("scan-failure")
+      .querySelectorAll("button");
+    expect(buttons[0].textContent).toContain("Type it instead");
+    expect(buttons[1].textContent).toContain("Retake photo");
+    // …while every other failure keeps Retake primary.
+    cleanup();
+    render(
+      <FoodCameraModal
+        {...props}
+        loading={false}
+        failure="no-food"
+        onRequestTypedInput={vi.fn()}
+      />
+    );
+    const noFoodButtons = screen
+      .getByTestId("scan-failure")
+      .querySelectorAll("button");
+    expect(noFoodButtons[0].textContent).toContain("Retake photo");
+  });
+
+  it("label mode fails in label words — a nutrition panel is not a plate", async () => {
+    render(<FoodCameraModal {...props} loading={false} failure="no-food" />);
+    fireEvent.click(screen.getByText("Food label"));
+    expect(screen.getByText("Couldn't read the label")).toBeTruthy();
+    expect(screen.queryByText("No food detected")).toBeNull();
+  });
+
+  it("failure with no held frame still offers the full recovery, never the spinner row", () => {
+    // Defensive branch: recovery must not depend on which branch the
+    // user came in through.
+    render(<FoodCameraModal {...props} loading={false} failure="error" />);
+    expect(screen.getByText("Couldn't read this one")).toBeTruthy();
+    expect(screen.getByText("Retake photo")).toBeTruthy();
+    expect(screen.queryByText(/fetching nutrition/i)).toBeNull();
+  });
+
+  it("Retake drops the held frame and hands control back to the parent", async () => {
+    const onScanRetry = vi.fn();
+    render(
+      <FoodCameraModal
+        {...props}
+        loading={false}
+        failure="no-food"
+        onScanRetry={onScanRetry}
+      />
+    );
+    await armPhoto();
+    fireEvent.click(screen.getByText("Retake photo"));
+    expect(onScanRetry).toHaveBeenCalledTimes(1);
+    // The frame is gone — the surface is ready for another go the
+    // moment the parent clears `failure`.
+    expect(screen.queryByTestId("scan-frame")).toBeNull();
+  });
+
+  it("Type it instead fires the typed-input handoff", async () => {
+    const onRequestTypedInput = vi.fn();
+    render(
+      <FoodCameraModal
+        {...props}
+        loading={false}
+        failure="no-food"
+        onRequestTypedInput={onRequestTypedInput}
+      />
+    );
+    await armPhoto();
+    fireEvent.click(screen.getByText("Type it instead"));
+    expect(onRequestTypedInput).toHaveBeenCalledTimes(1);
+  });
+
+  it("no typed-input handler, no dangling button", async () => {
+    render(<FoodCameraModal {...props} loading={false} failure="no-food" />);
+    await armPhoto();
+    expect(screen.getByText("Retake photo")).toBeTruthy();
+    expect(screen.queryByText("Type it instead")).toBeNull();
+  });
+});
+
+describe("FoodCameraModal — the escape hatch", () => {
+  it("Close stays live during analysis", async () => {
+    // iOS has no hardware back and no Escape key — the X is the only
+    // way out of a slow scan. This is the behavioural half of the
+    // guard: the button must never be disabled while loading.
+    const onClose = vi.fn();
+    render(<FoodCameraModal {...props} onClose={onClose} loading />);
+    await armPhoto();
+    fireEvent.click(screen.getByLabelText("Close"));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("the top bar rides ABOVE the analysis overlay (z-30 over z-20)", async () => {
+    // The structural half. jsdom cannot hit-test stacking contexts,
+    // so this pins the class relationship the fix consists of: the
+    // close control's bar must carry a HIGHER z-class than the
+    // overlay, or on real devices the overlay swallows every tap.
+    // Pre-fix the bar sat at z-10 under the z-20 overlay.
+    render(<FoodCameraModal {...props} loading />);
+    await armPhoto();
+    const bar = screen.getByLabelText("Close").closest(".z-30");
+    expect(bar).not.toBeNull();
+  });
+});
