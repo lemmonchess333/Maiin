@@ -722,7 +722,7 @@ rather than throwing.
       the whole chain rather than just a green tick — the build-marker step
       injected `// CI build: e41f4d96…` (so the bundle hash was unique and
       the dedup could not skip the upload), then `functions: functions source
-  uploaded successfully`, then explicitly
+uploaded successfully`, then explicitly
       `✔ functions[analyzeFood(us-central1)] Successful update operation.`
       That is what the standing gotcha asks the console to prove, proven
       upstream of it — same shape as the `askGeminiText` row, which was also
@@ -894,9 +894,17 @@ orphan, so the list is genuinely mixed.
 
 ### Cost & margin operator setup (unit economics)
 
-Modelled 2026-07-05. Apple's cut dwarfs all infra: at £3.99/mo, Apple takes £1.20 (30%) or £0.60 (15% Small Business Program); combined Gemini + Firebase + storage + ORS run ~15–20p/Pro user/mo (Gemini Flash food scan ≈ ½p; only Pro users hit the AI gate). ORS routing is ~free at ~5k users (occasional route-plans, ~2–5 calls each, under the 2,500/day free tier); on quota-exceed it degrades to the existing straight-line planner (no lockout), and true scale = self-host ORS on a ~£25/mo VM (fixed, not per-request). `maxInstances` caps are already in every Cloud Function (runaway-cost guard).
+Modelled 2026-07-05. Apple's cut dwarfs all infra: at £3.99/mo, Apple takes £0.60 (15% — Small Business Program, accepted 2026-08-18; it was £1.20 at the standard 30%); combined Gemini + Firebase + storage + ORS run ~15–20p/Pro user/mo (Gemini Flash food scan ≈ ½p; only Pro users hit the AI gate). ORS routing is ~free at ~5k users (occasional route-plans, ~2–5 calls each, under the 2,500/day free tier); on quota-exceed it degrades to the existing straight-line planner (no lockout), and true scale = self-host ORS on a ~£25/mo VM (fixed, not per-request). `maxInstances` caps are already in every Cloud Function (runaway-cost guard).
 
-- [ ] **Enrol in the Apple Small Business Program** (App Store Connect → Business/Agreements). Halves Apple's commission 30% → 15% for under-$1M/yr — worth ~£0.60/user/mo, more than all infra combined. Highest-leverage single action; do before/at launch.
+- [x] **Apple Small Business Program — ACCEPTED 2026-08-18.** Apple's
+      commission on Tropos is now **15%**, not 30%, for as long as the
+      under-$1M/yr condition holds. Net per £3.99 subscription goes
+      £2.79 → £3.39. Treat 15% as the live number in any margin
+      arithmetic from here; the 30% figure above is historical. Worth
+      ~£0.60/user/mo — still more than the entire infra bill (~15-20p),
+      which is why this was the highest-leverage item on the list.
+      Re-check enrolment annually: Apple requires it and drops you back
+      to 30% if the renewal lapses or revenue crosses the threshold.
 - [ ] **Set a Google Cloud budget alert** (GCP Console → Billing → Budgets & alerts): email at, e.g., >£50/mo. Single smoke-detector across Gemini/Vertex, Firebase, and the future ORS proxy. Optionally set a hard Vertex/Gemini quota ceiling.
 - [ ] When Run11 (ORS) ships: wire per-user quota in the proxy (one user can't drain the daily 2,500), log quota-exceeded, and confirm the straight-line fallback fires on 429.
 
@@ -906,25 +914,44 @@ The app's real domain is **`troposfit.com`** (owned + Cloudflare-managed;
 `tropos.app` is NOT owned — do not use it anywhere). The App Store listing
 (Description footer + the Support URL field) must point at
 `https://troposfit.com/terms`, `https://troposfit.com/privacy`, and
-`https://troposfit.com/support`, none of which **resolve yet** — there is no
-public `troposfit.com` site pages standing up those paths. The app has in-app
-`/terms` + `/privacy` routes, but Apple's reviewer clicks these from the public
-web _outside_ the app, so in-app routes alone don't satisfy the check. A dead
-legal/Support URL is a common first-submission rejection.
+`https://troposfit.com/support`. Apple's reviewer clicks these from the public
+web _outside_ the app, so in-app routes alone don't satisfy the check, and a
+dead legal/Support URL is a common first-submission rejection.
 
-- [ ] **Stand up public Terms + Privacy pages at `troposfit.com`.** Cheapest path:
-      point the existing GitHub Pages deploy (`/Maiin/privacy`, `/Maiin/terms`) at
-      `troposfit.com` via CNAME, or publish the two legal docs as standalone static
-      pages (a one-file host / GitHub Pages root / Notion public page all work). They
-      must open with no login.
-- [ ] **Stand up a public Support page** — `https://troposfit.com/support` does NOT
-      resolve yet either. Needs a real public page with a contact email (the privacy
-      page can double as this). Apple rejects a dead Support URL.
-- [ ] **After the pages are live, update App Store Connect** to the real URLs:
-      the two links in the **Description** footer, the **Support URL** field, and any
-      other Support/legal links on the 1.0 version page. All three of Terms, Privacy,
-      and Support must use `troposfit.com` paths — none can ship
-      as-is. Do NOT submit with placeholder links.
+**CORRECTED 2026-08-18 — this row was substantially wrong, and being wrong
+made the remaining work look bigger than it is.** Three fixes:
+
+1. **The pages all exist and are already deployed.** `PrivacyPolicy.tsx`,
+   `TermsOfService.tsx` and `Support.tsx` are real routes, declared in ALL
+   THREE of App.tsx's route sets including the signed-out one, so they open
+   with no login. `Support.tsx` carries `support@troposfit.com`. This row
+   claimed the Support page still needed building; it did not.
+2. **`deploy-hosting.yml` already publishes them at a root path.** It builds
+   with `HOSTING_TARGET=firebase` → `base: "/"` and deploys to the live
+   Firebase Hosting channel on every push to main (last run: `99413966`,
+   2026-08-18, success). So `/privacy`, `/terms` and `/support` resolve at
+   the Hosting origin **today**.
+3. **The suggested "point GitHub Pages at troposfit.com via CNAME" does not
+   work** and would have produced exactly the dead links this row warns
+   about. The Pages build uses `base: "/Maiin/"` (`vite.config.ts:57`), so a
+   CNAME alone serves the app at `troposfit.com/Maiin/privacy` —
+   `troposfit.com/privacy` would 404. **Use Firebase Hosting**, which is
+   already root-based, already wired, and same-origin with the auth handler.
+
+What is genuinely left is operator-only — there is no code change pending:
+
+- [ ] **Add `troposfit.com` as a custom domain** in Firebase Console →
+      Hosting → Add custom domain, for the `adaptive-fitness-af8bb` project.
+- [ ] **Add the DNS records Firebase issues, in Cloudflare.** Set those
+      records to **DNS-only (grey cloud), not proxied** — Cloudflare's proxy
+      intercepts the ACME challenge and Firebase's certificate provisioning
+      stalls. You can re-enable proxying after the cert is issued if wanted.
+- [ ] **Confirm all three URLs load signed-out in a private window** before
+      touching App Store Connect. `src/lib/__tests__/publicLegalRoutes.test.ts`
+      pins that the ROUTES exist in the signed-out set; it cannot pin DNS.
+- [ ] **Then update App Store Connect** to the real URLs: the two links in
+      the **Description** footer and the **Support URL** field. Do NOT submit
+      with placeholder links.
 
 ### Stripe stays DORMANT — web storefront steer at launch (Sub4, locked 2026-07-05)
 
