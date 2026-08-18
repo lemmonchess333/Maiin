@@ -9,6 +9,7 @@ import { logger } from "@/lib/logger";
 import {} from "@/lib/export";
 import { deleteAccount } from "@/lib/socialApi";
 import { discardDeletedAccountPushState } from "@/lib/pushNotifications";
+import { purgeFoodPhotos } from "@/lib/foodPhotoStore";
 import {
   reauthWithPassword,
   reauthWithGoogle,
@@ -136,6 +137,13 @@ export default function AccountSection({
       // (which rejects future callables). Skip the tombstone-rejected fallback
       // release; just drop the local token.
       await discardDeletedAccountPushState(user.uid);
+      /* Food9: meal photos live on the DEVICE, so the server-side
+         executor cannot reach them. This erases the copies on THIS device.
+         Photos on another device the user never reopens stay there —
+         a real narrowing of erasure coverage versus the Storage prefix
+         sweep it replaces, stated in the lock row rather than papered
+         over. */
+      await purgeFoodPhotos(user.uid);
       signOut();
     } catch (err) {
       const fe = err as {
@@ -208,6 +216,13 @@ export default function AccountSection({
           /* storage unavailable */
         }
         await discardDeletedAccountPushState(user.uid);
+        /* Food9: meal photos live on the DEVICE, so the server-side
+           executor cannot reach them. This erases the copies on THIS device.
+           Photos on another device the user never reopens stay there —
+           a real narrowing of erasure coverage versus the Storage prefix
+           sweep it replaces, stated in the lock row rather than papered
+           over. */
+        await purgeFoodPhotos(user.uid);
         signOut();
       } else {
         toast.error(msg);

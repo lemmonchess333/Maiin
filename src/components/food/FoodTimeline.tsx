@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { UtensilsCrossed } from "lucide-react";
 import { format } from "date-fns";
 import FoodRow, { type FoodRowGroup } from "./FoodRow";
@@ -9,6 +9,7 @@ import { mealSlotFor, mealLoggedAt } from "@/lib/mealSlots";
 import { THEME } from "@/lib/theme";
 import { track as trackFoodEvent } from "@/lib/foodAnalytics";
 import type { Meal } from "@/hooks/useMeals";
+import { useFoodPhotoUrls } from "@/hooks/useFoodPhotoUrls";
 
 /**
  * The Food diary feed — a single chronological timeline (newest first),
@@ -25,10 +26,19 @@ import type { Meal } from "@/hooks/useMeals";
  * macro semantics all carry over untouched.
  *
  * Mixed feed ("photos big, text compact" locked decision): AI-scanned
- * meals persist their capture via foodPhotoUpload (background, after
- * the doc write) and render as BIG photo cards; text/barcode/manual
- * logs stay compact rows. Both shapes share FoodRow's swipe/tap
- * machinery — the photo is just a hero block inside the same surface.
+ * meals persist their capture and render as BIG photo cards;
+ * text/barcode/manual logs stay compact rows. Both shapes share
+ * FoodRow's swipe/tap machinery — the photo is just a hero block inside
+ * the same surface.
+ *
+ * Food9 moved that persistence off Firebase Storage and onto the device
+ * (`foodPhotoStore.ts`), so the photo source is now resolved
+ * ASYNCHRONOUSLY by `useFoodPhotoUrls` rather than read off the meal doc.
+ * Docs written before the swap still carry a `photoUrl` pointing at a
+ * Storage blob; that stays the fallback so nothing already on screen
+ * disappears. A photo the retention sweep has since dropped simply
+ * resolves to nothing and the row renders in its ordinary compact form —
+ * the shape most rows already have, so the degrade needs no design.
  */
 
 /* Render-perf telemetry, throttled to once per day per user — the
@@ -122,6 +132,17 @@ export default function FoodTimeline({
     (a, b) => b.latestMs - a.latestMs
   );
 
+  /* Device-local photo resolution (Food9). One id per group is enough:
+     grouping collapses same-name logs in one slot, and the card shows a
+     single hero — the FIRST group member that has a photo, matching what
+     the legacy `photoUrl` derive below already did. Hooks must run before
+     the empty-list early return, so this sits above it. */
+  const photoCandidateIds = useMemo(
+    () => entries.map((g) => g.meals[0]?.id).filter((id): id is string => !!id),
+    [entries]
+  );
+  const localPhotoUrls = useFoodPhotoUrls(photoCandidateIds);
+
   /* Same render-timing shape as the FoodMealSection probe it replaces —
      see that pattern's rationale in the Food6e lock. */
   // eslint-disable-next-line react-hooks/purity
@@ -185,7 +206,13 @@ export default function FoodTimeline({
           /* Mixed feed: a group whose docs carry a captured photo
              renders as a big photo card (image above the meta row,
              same swipe/tap surface); text logs stay compact rows. */
-          const photoUrl = group.meals.find((m) => m.photoUrl)?.photoUrl;
+          /* Local first, legacy Storage URL second. Pre-Food9 docs keep
+             rendering from `photoUrl`; new ones never write that field at
+             all, so the fallback drains on its own as those meals age out
+             of the 90-day diary window. */
+          const photoUrl =
+            localPhotoUrls[group.meals[0]?.id ?? ""] ??
+            group.meals.find((m) => m.photoUrl)?.photoUrl;
           return (
             <FoodRow
               key={group.id}

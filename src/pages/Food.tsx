@@ -70,6 +70,7 @@ import {
 } from "@/components/food/mealConstants";
 import { mealSlotFor } from "@/lib/mealSlots";
 import { track as trackFoodEvent } from "@/lib/foodAnalytics";
+import { sweepFoodPhotosOnce } from "@/lib/foodPhotoStore";
 
 const DEFAULT_QUICK_MEALS = [
   { name: "Grilled Chicken & Rice", cal: 450, pro: 40, carb: 45, fat: 12 },
@@ -176,6 +177,17 @@ export default function Food() {
   // (calories + macros + activity-burn adjustment). Read-only — the
   // sheet is a drill-down for review, not an editing surface.
   const [heroSheetOpen, setHeroSheetOpen] = useState(false);
+
+  /* Food9 retention sweep. Meal photos live on the device now, so
+     nothing server-side ages them out — this is what enforces the 90-day
+     window (the diary's own tap-back limit, past which a photo is
+     unreachable anyway) and the byte backstop. Once per uid per session,
+     fire-and-forget: it must never delay the page, and a failed sweep
+     just means the next session tries again. */
+  useEffect(() => {
+    if (!uid) return;
+    void sweepFoodPhotosOnce(uid);
+  }, [uid]);
 
   // Cycle the placeholder every 2.8s when the input is idle (empty +
   // unfocused + not adding to a specific meal). Stops the moment the

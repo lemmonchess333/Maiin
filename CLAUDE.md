@@ -331,6 +331,34 @@ These are distilled from the project's own rework history — classes of mistake
 - **A centrality or cohesion score is a question, not a defect.** Graph metrics (graphify communities, "god nodes") cannot distinguish a deployment manifest or a shared vocabulary from tangled logic. `functions/index.js` scores the worst cohesion in the codebase (0.023) purely because every deployed function must be exported from one entrypoint — the split has now been re-derived and declined **four** times; the standing hold + its reasoning live in `functions/__tests__/triggerMetadata.test.js`. `RUN_TEMPLATES` bridges seven run communities because a shared run vocabulary is exactly what it should be. ADR-0001 already bars the size argument; treat these scores as prompts to go **read**, and expect the answer to often be "correct as-is". (The 2026-08-02 graph run's value was entirely in what reading turned up while chasing its questions — both of its own headline verdicts were "change nothing".)
 - **Verify the three design-system invariants that keep drifting back, per-PR — not in periodic sweeps.** Before committing any UI: every numeric display uses `font-mono` + `tabular-nums`; every colour is a `THEME`/token (no hex literals); every interactive element clears 44px via the `Button`/`IconButton`/`Toggle` primitives. These three regress constantly and keep getting swept up after the fact. (`2dec467` + `97a783d` mono/font audits; `9ef01a1` + `82b5266` tokenized stray hex; `f89d34b` whole-app consistency pass; touch-target policy shipped in 5 parts.)
 
+## Meal photos are device-local — a standing invariant, not a preference
+
+Locked as Food9 (2026-08-18), reinstating F3d after Food8 reversed it
+silently. **Tropos never stores a meal photo on a server.** The AI-scan
+capture is written to the device via `src/lib/foodPhotoStore.ts`
+(`food-photos/{uid}/{mealId}.jpg`, `Directory.LibraryNoCloud`) and NO
+photo field is persisted to Firestore. `photoUrl` on a meal doc is
+legacy-only — pre-Food9 documents keep rendering, nothing writes it.
+
+- **"Device-local" is about RETENTION, not transmission.** The photo is
+  still sent to Gemini to be analysed; there is no on-device model. Copy
+  that implies the photo never leaves the phone is as false as the copy
+  this replaced. Name Google as the processor and the device as the only
+  store — `PrivacyPolicy.tsx` and `FoodCameraModal.tsx` both do.
+- **Retention is 90 days because `Food.tsx`'s `FOOD_TAP_BACK_DAYS` is 90.**
+  Not a product guess. The diary row is the only surface that renders a
+  photo and the diary cannot navigate further back, so anything older is
+  unreachable. Move one and you must move the other;
+  `foodPhotoStore.test.ts` fails until you do.
+- **Eviction acts on positive evidence only.** `useMeals` paginates, so
+  "this meal is not in the loaded set" NEVER means "this meal is gone".
+  Any eviction rule phrased that way deletes live photos for exactly the
+  heavy users the feature exists for.
+- Reversing this is a lock-level decision. Read the Food9 row first — an
+  audit that re-derives it is wasted effort even when it lands in the
+  same place, and the last reversal happened by accident precisely
+  because nobody read F3d.
+
 ## Common Gotchas
 
 - **Typecheck with `tsc -b`, never `tsc --noEmit -p tsconfig.json`.** The
@@ -633,6 +661,49 @@ or touching a CTA button, route it through `Button` with the variant above.
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+### Meal photos moved to the device (Food9, 2026-08-18)
+
+Affects: `src/lib/foodPhotoStore.ts` (new), `src/lib/foodPhotoUpload.ts`
+(deleted), `src/hooks/useFoodPhotoUrls.ts` (new), `FoodAnalyzer.tsx`,
+`FoodTimeline.tsx`, `FoodRow.tsx`, `useMeals.ts`, `AccountSection.tsx`,
+`PrivacyPolicy.tsx`.
+
+The retention policy is pure and fully pinned (`planEviction`, 29 tests,
+three mutations checked). What follows is the half no suite in this repo
+can reach — the same device-only residue the Storage implementation had,
+plus two new ones the platform change introduces.
+
+- [ ] **The ≤1280px downscale.** `toStorableJpeg` needs `<img>` + canvas;
+      jsdom has neither. Scan a meal on a device and confirm the stored
+      file is ≤1280px on its longest edge. (Inherited unchanged from the
+      Storage implementation — it was never covered there either.)
+- [ ] **`Directory.LibraryNoCloud` behaves as its docstring claims.**
+      Two separate checks, both iOS: the photo must NOT appear in the
+      Files app or in Photos, and it must NOT ride the device's iCloud
+      backup. The Swift package that implements it (`IONFilesystemLib`)
+      is fetched by SPM at build time and is not vendored, so nothing
+      about this is confirmable off-device.
+- [ ] **A photo survives an app restart** (native and web PWA). This is
+      the whole point of choosing a filesystem over memory; on web it
+      additionally proves the plugin's IndexedDB backend persists.
+- [ ] **Multi-device is now a TEXT ROW, by design.** Scan on the phone,
+      open the same day on the web build: macros present, no photo. Not
+      a bug — confirm it reads as an ordinary log rather than as
+      breakage, which is what `FoodRow`'s degrade is for.
+- [ ] **Account deletion.** Delete a test account on device and confirm
+      `food-photos/<uid>/` is gone from app storage. Known and accepted
+      narrowing: a second device the user never reopens keeps its copies,
+      because no server process can reach a device.
+
+**Follow-up, NOT done in this change — legacy Storage blobs.** New
+writes stopped; the blobs already under `food-photos/{uid}/` were left
+in place so pre-Food9 diary rows keep rendering, and the `storage.rules`
+block stays (editing it is blocked behind `STORAGE_XSERVICE_APPROVED`,
+which `workflow_dispatch` does not bypass). Sweeping them is a separate
+piece of work. Until it happens, "Tropos stores no meal photos" is true
+of everything written from 2026-08-18 onward and NOT of what came
+before — do not read the Food9 lock as meaning the bucket is empty.
+
 ### Scan failure beat + no-food prompt contract (2026-08-18, PR #2066)
 
 Affects: `functions/index.js` (analyzeFood prompt), `src/components/FoodCameraModal.tsx`, `src/components/FoodAnalyzer.tsx`.
@@ -651,7 +722,7 @@ rather than throwing.
       the whole chain rather than just a green tick — the build-marker step
       injected `// CI build: e41f4d96…` (so the bundle hash was unique and
       the dedup could not skip the upload), then `functions: functions source
-    uploaded successfully`, then explicitly
+  uploaded successfully`, then explicitly
       `✔ functions[analyzeFood(us-central1)] Successful update operation.`
       That is what the standing gotcha asks the console to prove, proven
       upstream of it — same shape as the `askGeminiText` row, which was also

@@ -241,7 +241,17 @@ export default function PrivacyPolicy() {
                 Food photos and text descriptions may be processed by Google
                 Gemini AI to estimate nutritional content. Photos are
                 temporarily processed and not permanently retained by Google. We
-                do not use your food photos for AI model training.
+                do not use your food photos for AI model training.{" "}
+                <strong className="text-foreground">
+                  Tropos does not store your food photos on its servers.
+                </strong>{" "}
+                After analysis, the photo is kept only on the device that took
+                it, so your meal diary can show it. It is not backed up to
+                iCloud, does not sync between your devices, and is deleted
+                automatically after 90 days — the furthest back the diary can be
+                viewed. Deleting the app, or getting a new phone, removes these
+                photos; your logged meals and their nutrition data are
+                unaffected.
               </li>
               <li>
                 <strong className="text-foreground">MapLibre:</strong> Map

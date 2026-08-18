@@ -8,7 +8,8 @@ import { RotateCcw, Save, Check, Plus, Minus, Download, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { doc, Timestamp, collection } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
-import { uploadFoodPhoto } from "@/lib/foodPhotoUpload";
+import { saveFoodPhoto } from "@/lib/foodPhotoStore";
+import { invalidateFoodPhotoCache } from "@/hooks/useFoodPhotoUrls";
 import { db } from "@/lib/firebase";
 import { useUid } from "@/lib/auth";
 import { safeNum, parseServingGrams, round1 } from "@/lib/foodParseHelpers";
@@ -526,23 +527,29 @@ export default function FoodAnalyzer({
       });
 
       /* Persist the captured photo for the diary timeline ("photos
-         big, text compact"). Deliberately AFTER the doc write and
-         fire-and-forget: the photo is an enhancement, never a gate —
-         the meal is already logged, and when the upload lands the
-         merge write pops the photo card in via the onSnapshot
-         listener. Any failure (offline, slow network past the 20s
-         ceiling) resolves null and the row simply stays text. A
-         merge onto a doc the user soft-deleted meanwhile is a
-         harmless field add on a hidden doc. */
-      if (capturedBase64) {
+         big, text compact"). Food9: this writes to the DEVICE, not to
+         Firebase Storage — no `photoUrl`/`photoPath` is written to the
+         meal doc, and nothing about the photo reaches a server. The
+         store keys on `mealRef.id`, which is minted client-side above,
+         so no reconciliation write is needed at all.
+
+         Deliberately AFTER the doc write and fire-and-forget: the photo
+         is an enhancement, never a gate. Any failure resolves false and
+         the row simply stays text.
+
+         Gated on `isAiCapture` rather than on `capturedBase64` alone.
+         The capture survives a FAILED scan (the user may retake), so a
+         bare truthiness check attached a rejected food photo to whatever
+         was saved next — a barcode result scanned in the same session
+         rendered, and stored, someone else's failed plate. */
+      const isAiCapture = !isBarcode && Boolean(capturedBase64);
+      if (isAiCapture && capturedBase64) {
         const photoBase64 = capturedBase64;
-        void uploadFoodPhoto(uid, photoBase64).then((photo) => {
-          if (!photo) return;
-          return setDocGuarded(
-            mealRef,
-            { photoUrl: photo.photoUrl, photoPath: photo.photoPath },
-            { merge: true }
-          );
+        const savedMealId = mealRef.id;
+        void saveFoodPhoto(uid, savedMealId, photoBase64).then((ok) => {
+          // Drop the cached readdir so the diary's next resolve sees the
+          // new file; without this the row stays text until remount.
+          if (ok) invalidateFoodPhotoCache(uid);
         });
       }
 
@@ -738,6 +745,13 @@ export default function FoodAnalyzer({
   const onBarcodeDetected = async (raw: string) => {
     const code = raw.replace(/\s+/g, "");
 
+    /* Drop any capture left over from an earlier food scan in this same
+       session. `capturedBase64` is only cleared by handleResetAll, so a
+       failed food scan followed by a barcode scan used to render the
+       rejected plate as the barcode product's hero (heroImageSrc prefers
+       the capture) — and, pre-Food9, upload it as that meal's photo. */
+    setCapturedBase64(null);
+
     /* Same offline pre-empt as the photo path — without it, the fetch
        rejects with TypeError and the user was toasted the literal
        browser-internal string "Failed to fetch", the dishonest cousin
@@ -785,6 +799,7 @@ export default function FoodAnalyzer({
              session. The page-level error/empty cards are the
              landing instead. */
           clearScanFailure();
+          setCapturedBase64(null);
           setCameraOpen(false);
         }}
         onCaptureBase64={onCaptureBase64}
@@ -793,7 +808,13 @@ export default function FoodAnalyzer({
         locked={scanLocked}
         failure={scanFailure}
         failureDetail={scanFailureDetail}
-        onScanRetry={clearScanFailure}
+        onScanRetry={() => {
+          /* Retake discards the rejected capture along with its verdict.
+             Leaving it set is what let a failed plate leak into whatever
+             was saved next in the same session. */
+          setCapturedBase64(null);
+          clearScanFailure();
+        }}
         onRequestTypedInput={
           onRequestTypedInput
             ? () => {
