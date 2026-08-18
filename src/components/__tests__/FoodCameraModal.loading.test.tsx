@@ -478,6 +478,18 @@ describe("FoodCameraModal — the chrome underneath", () => {
     );
   });
 
+  it("the blocked branch's own recovery buttons go inert too", async () => {
+    // This is the branch where library upload actually happens, so
+    // it is the one most likely to have controls exposed under a
+    // live overlay.
+    stubCamera("denied");
+    render(<FoodCameraModal {...props} loading />);
+    await screen.findByText(/camera access needed|camera unavailable/i);
+    expect(screen.getByTestId("blocked-chrome").hasAttribute("inert")).toBe(
+      true
+    );
+  });
+
   it("the shutter waits for a LIVE stream — no black-frame scans", () => {
     // cameraState stays `idle` while getUserMedia is pending (stubbed
     // never-resolving here, which is also the real permission-prompt

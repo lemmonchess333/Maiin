@@ -880,7 +880,17 @@ export default function FoodCameraModal({
             <X className="size-5" />
           </button>
         </div>
-        <div className="flex-1 flex flex-col items-center justify-center px-6 text-center space-y-5 -mt-16">
+        {/* Inert under the overlay for the same reason the camera
+            chrome is: this branch's own recovery buttons (Upload a
+            photo / Type it instead) sit UNDER the opaque analysis
+            surface and would otherwise stay focusable and clickable
+            mid-scan — the blocked branch is exactly where library
+            upload happens, so this is the branch that hits it. */}
+        <div
+          className="flex-1 flex flex-col items-center justify-center px-6 text-center space-y-5 -mt-16"
+          inert={overlayUp || undefined}
+          data-testid="blocked-chrome"
+        >
           <div
             className="size-16 rounded-2xl flex items-center justify-center"
             style={{
