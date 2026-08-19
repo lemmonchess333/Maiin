@@ -661,6 +661,62 @@ or touching a CTA button, route it through `Button` with the variant above.
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+### The Privacy Policy's claim about Google's retention (F3d pin 2)
+
+`PrivacyPolicy.tsx` section 7 tells users two things about the food-scan
+photo once it reaches Google: that it is _"temporarily processed and not
+permanently retained by Google"_, and that _"we do not use your food
+photos for AI model training"_. Both are statements about someone else's
+system. Nothing in this repo enforces or verifies either, and F3d pin 2
+— "configure Vertex AI to disable retention, document in
+`docs/privacy.md`, verify on every release" — was never ticked.
+`docs/privacy.md` does not exist.
+
+**Checked 2026-08-19, and the picture is better than that history
+suggests.** The endpoint is the one thing that decides most of this, and
+it was worth reading before assuming the worst:
+
+```
+functions/index.js:1236, :1444
+  https://us-central1-aiplatform.googleapis.com/v1/projects/…
+    /locations/us-central1/publishers/google/models/gemini-2.0-flash:generateContent
+```
+
+That is **Vertex AI** (`aiplatform.googleapis.com`), the GCP enterprise
+endpoint — NOT the consumer Gemini Developer API
+(`generativelanguage.googleapis.com`). The distinction is the whole
+ballgame for the training half of the claim: the Developer API's free
+tier may use submitted data to improve Google's products, whereas Vertex
+AI customer data is contractually excluded from training Google's
+foundation models under the Cloud terms. So _"we do not use your food
+photos for AI model training"_ rests on a contract rather than on a
+setting somebody forgot to flip.
+
+Nothing in `functions/` enables request logging either — grepped for
+prompt/response-logging configuration and there is none, which is the
+default and the one we want.
+
+What is genuinely left, and it is narrower than the row implied:
+
+- [ ] **Confirm the abuse-monitoring retention window.** The
+      "temporarily processed, not permanently retained" half is about
+      Google's own caching for abuse monitoring, which is the part a
+      contract does not settle. Check the current Vertex AI data-
+      governance documentation for `gemini-2.0-flash` and confirm the
+      sentence matches what Google actually states. If it does not,
+      reword the policy rather than the expectation.
+- [ ] **Confirm no prompt logging is enabled at the project level**
+      (Cloud console). Absent from the code is necessary, not
+      sufficient — it can be switched on outside the repo.
+- [ ] **Write `docs/privacy.md`** capturing whatever the two checks
+      above establish, so the next person re-verifying has something to
+      diff against instead of re-deriving it. This is the actual value
+      of F3d pin 2 and the reason it keeps going unticked: nobody knows
+      what "verify on every release" is supposed to compare against.
+
+Do this before an App Store reviewer or a data-subject request reads
+section 7. The claim is probably true; "probably" is the problem.
+
 ### Meal photos moved to the device (Food9, 2026-08-18)
 
 Affects: `src/lib/foodPhotoStore.ts` (new), `src/lib/foodPhotoUpload.ts`
