@@ -112,3 +112,26 @@ describe("the collection inventory is complete", () => {
     expect(sectionOne).toMatch(/Progress Photos/);
   });
 });
+
+describe("the data controller is identified", () => {
+  it("the policy names a controller, not just a support address", () => {
+    /* UK GDPR Art. 13(1)(a) wants the controller's identity AND contact
+       details. The policy carried the contact half only — "Tropos" is a
+       trading name, not a legal person, so a reader could not tell who is
+       actually responsible for their data.
+
+       This pin deliberately does NOT assert a particular name. Tropos
+       trades as a sole trader today and may incorporate, at which point
+       the COMPANY becomes the controller and the name changes. Asserting
+       the current name would fail on a correct change; asserting the
+       SECTION guards the thing that must never silently disappear. The
+       source comment carries the update-on-incorporation reminder. */
+    expect(PRIVACY_PROSE).toMatch(/Who we are/);
+    expect(PRIVACY_PROSE).toMatch(/is the data controller/);
+  });
+
+  it("the controller section offers a route to exercise rights", () => {
+    // An identity with no reachable contact is half the requirement.
+    expect(PRIVACY_PROSE).toMatch(/support@troposfit\.com/);
+  });
+});

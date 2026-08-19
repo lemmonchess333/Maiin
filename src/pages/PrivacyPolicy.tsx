@@ -27,6 +27,34 @@ export default function PrivacyPolicy() {
         </div>
 
         <div className="space-y-5 text-sm text-foreground/80 leading-relaxed">
+          {/* Data controller. UK GDPR Art. 13(1)(a) requires the identity
+              and contact details of the controller, and "Tropos" alone
+              cannot satisfy it — a trading name is not a legal person, so
+              a data subject reading this could not tell who is
+              responsible. Tropos currently trades as a sole trader, which
+              makes the individual the controller.
+
+              MUST BE UPDATED ON INCORPORATION: if Tropos becomes a limited
+              company, the COMPANY becomes the controller and this section
+              names it (plus its company number) instead of an individual.
+              Pinned by `legalCopyClaims.test.ts` so the section cannot
+              simply vanish; the test cannot know which is currently true,
+              so this comment is the reminder. */}
+          <section className="space-y-2">
+            <h2 className="text-base font-semibold text-foreground">
+              Who we are
+            </h2>
+            <p>
+              Tropos is operated by{" "}
+              <strong className="text-foreground">Myles Kennedy</strong>,
+              trading as Tropos, who is the data controller for the personal
+              data described in this policy. For any question about your data,
+              or to exercise any of the rights in sections 5 and 6, contact{" "}
+              <strong className="text-foreground">support@troposfit.com</strong>
+              .
+            </p>
+          </section>
+
           <section className="space-y-2">
             <h2 className="text-base font-semibold text-foreground">
               1. Information We Collect
