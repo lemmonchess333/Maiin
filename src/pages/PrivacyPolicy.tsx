@@ -81,6 +81,18 @@ export default function PrivacyPolicy() {
                 stored as plain image files. See &ldquo;How we protect your
                 data&rdquo; below for what that does and does not mean.
               </li>
+              <li>
+                <strong className="text-foreground">
+                  Meal Photos (optional):
+                </strong>{" "}
+                If you use the camera to log a meal, the photo is sent to Google
+                for analysis and then kept{" "}
+                <strong className="text-foreground">
+                  only on the device that took it
+                </strong>{" "}
+                — we do not store it on our servers. It is deleted automatically
+                after 90 days. See section 7 for the detail.
+              </li>
             </ul>
           </section>
 
@@ -155,8 +167,10 @@ export default function PrivacyPolicy() {
               <li>Access all data we store about you</li>
               <li>Update or correct your personal information</li>
               <li>
-                Delete your account and all associated data from within the app
-                (Settings &gt; Delete Account)
+                Delete your account from within the app (Settings &gt; Delete
+                Account). Everything we hold is erased immediately, and meal
+                photos are cleared from the device you delete from — see section
+                6 for the one thing this cannot reach.
               </li>
               <li>Export your data in a standard format</li>
             </ul>
@@ -208,9 +222,21 @@ export default function PrivacyPolicy() {
               </li>
               <li>
                 <strong className="text-foreground">Data retention:</strong> We
-                retain your data for as long as your account is active. Upon
-                deletion, all personal data is permanently removed within 30
-                days.
+                retain your data for as long as your account is active. When you
+                delete your account, everything held on our servers is erased{" "}
+                <strong className="text-foreground">immediately</strong> — it is
+                not queued for later deletion.
+              </li>
+              <li>
+                <strong className="text-foreground">
+                  One limit on erasure, stated plainly:
+                </strong>{" "}
+                meal photos are not on our servers, so there is nothing there
+                for us to erase — and equally, no process of ours can reach a
+                phone. Deleting your account clears them from the device you
+                delete from. If you have signed in on another device, that
+                device keeps its copies until they expire after 90 days or you
+                delete the app there.
               </li>
             </ul>
             <p>
