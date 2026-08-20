@@ -135,3 +135,57 @@ describe("the data controller is identified", () => {
     expect(PRIVACY_PROSE).toMatch(/support@troposfit\.com/);
   });
 });
+
+describe("cross-references resolve", () => {
+  /* Found by reading the rendered pages rather than the diff, twice in
+     one pass. The Privacy Policy told readers to see a heading called
+     "How we protect your data" — no such heading exists; section 3 is
+     "Data Storage & Security". The Terms said content may be removed for
+     violating "our Community Guidelines" — a document that has never
+     existed anywhere in this repo.
+
+     Both are the same failure: prose citing a target nobody checked. In
+     a legal document a dangling pointer is worse than in code, because
+     the reader concludes the protection they were promised is written
+     down somewhere they cannot find. */
+
+  /** Section numbers the policy asks the reader to go and read. */
+  const referenced = [...PRIVACY_PROSE.matchAll(/section (\d+)/gi)].map((m) =>
+    Number(m[1])
+  );
+  /** Section numbers that actually have a heading. */
+  const declared = new Set(
+    [...PRIVACY_PROSE.matchAll(/(\d+)\. [A-Z]/g)].map((m) => Number(m[1]))
+  );
+
+  it("the policy references at least one section (guard against a silent no-op)", () => {
+    // Without this, deleting every cross-reference would make the test
+    // below vacuously pass — the tautology shape this repo keeps finding.
+    expect(referenced.length).toBeGreaterThan(0);
+  });
+
+  it("every section the policy points at exists", () => {
+    const dangling = [...new Set(referenced)].filter((n) => !declared.has(n));
+    expect(dangling).toEqual([]);
+  });
+
+  it("neither page cites a document that does not exist", () => {
+    // "Community Guidelines" is the one that shipped. If such a page is
+    // ever written, this assertion is what tells you to come back and
+    // reinstate the reference deliberately.
+    expect(PRIVACY_PROSE).not.toMatch(/Community Guidelines/);
+    expect(TERMS_PROSE).not.toMatch(/Community Guidelines/);
+  });
+});
+
+describe("the Terms identify the trader", () => {
+  it("the Terms name who the agreement is with", () => {
+    // The Terms are the CONTRACT — trader identity matters at least as
+    // much here as in the privacy notice, and the page previously said
+    // only "Tropos and its creators". Like the controller pin, this
+    // guards the statement rather than the name, so incorporation can
+    // change it without failing.
+    expect(TERMS_PROSE).toMatch(/Tropos is operated by/);
+    expect(TERMS_PROSE).toMatch(/agreement between you and/);
+  });
+});
