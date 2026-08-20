@@ -21,7 +21,7 @@ export default function TermsOfService() {
             Terms of Service
           </h1>
           <p className="text-xs text-muted-foreground mt-1">
-            Last updated: March 2026
+            Last updated: August 2026
           </p>
         </div>
 
@@ -114,7 +114,7 @@ export default function TermsOfService() {
               Content you share publicly (e.g. social feed posts, activity
               summaries) remains yours but you grant Tropos a non-exclusive
               licence to display it within the App. We may remove content that
-              violates these Terms or our Community Guidelines.
+              violates these Terms.
             </p>
           </section>
 
@@ -172,6 +172,12 @@ export default function TermsOfService() {
             <h2 className="text-base font-semibold text-foreground">
               11. Contact
             </h2>
+            <p>
+              Tropos is operated by{" "}
+              <strong className="text-foreground">Myles Kennedy</strong>,
+              trading as Tropos. These Terms are an agreement between you and
+              him.
+            </p>
             <p>
               For questions about these Terms, please contact us at
               support@troposfit.com

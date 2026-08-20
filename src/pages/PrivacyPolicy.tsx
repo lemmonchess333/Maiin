@@ -106,8 +106,8 @@ export default function PrivacyPolicy() {
                 </strong>{" "}
                 If you choose to add progress photos, they are encrypted on your
                 device with AES-GCM before they are uploaded, so they are never
-                stored as plain image files. See &ldquo;How we protect your
-                data&rdquo; below for what that does and does not mean.
+                stored as plain image files. See section 3 for what that does
+                and does not mean.
               </li>
               <li>
                 <strong className="text-foreground">
