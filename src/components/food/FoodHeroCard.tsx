@@ -225,7 +225,7 @@ export default function FoodHeroCard({
     dailyTargets.carbs,
     dailyTargets.fat,
     isToday,
-      celebratedKey,
+    celebratedKey,
   ]);
 
   // Build the top-left caption. Suppressed on rest days.
@@ -473,10 +473,18 @@ export default function FoodHeroCard({
       {/* Macro tile row — three floating tiles. Each reads the SAME shared
           `mode` as the calorie ring, and tapping any tile flips that one
           shared mode (via toggleMode) so the ring + all three tiles stay in
-          lockstep. mt-4 = 16px gap to the calorie card above; gap-4 = 16px
-          between tiles. */}
-      <div className="flex gap-4 mt-4">
-        <div className="flex-1 flex p-3 rounded-2xl bg-card card-shadow">
+          lockstep. mt-4 = 16px gap to the calorie card above.
+
+          An explicit 3-column GRID rather than flex-1 children: flex-1
+          sizes from content, so the widest macro number could take space
+          from its neighbours and the three tiles stopped being the same
+          width exactly when the numbers got long. grid-cols-3 makes the
+          columns equal by construction, and `min-w-0` on each cell lets a
+          long number shrink inside its own tile instead of pushing the
+          row wider. gap-2 matches the compact-grid rule in the design
+          system and the sibling PeriodOverview grid. */}
+      <div className="grid grid-cols-3 gap-2 mt-4">
+        <div className="min-w-0 flex p-3 rounded-2xl bg-card card-shadow">
           <MacroColumn
             macroKey="protein"
             Icon={Beef}
@@ -490,7 +498,7 @@ export default function FoodHeroCard({
             barDurationSec={LOG_MOMENT_SEC}
           />
         </div>
-        <div className="flex-1 flex p-3 rounded-2xl bg-card card-shadow">
+        <div className="min-w-0 flex p-3 rounded-2xl bg-card card-shadow">
           <MacroColumn
             macroKey="carbs"
             Icon={Wheat}
@@ -504,7 +512,7 @@ export default function FoodHeroCard({
             barDurationSec={LOG_MOMENT_SEC}
           />
         </div>
-        <div className="flex-1 flex p-3 rounded-2xl bg-card card-shadow">
+        <div className="min-w-0 flex p-3 rounded-2xl bg-card card-shadow">
           <MacroColumn
             macroKey="fat"
             Icon={Avocado}
