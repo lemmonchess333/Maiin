@@ -92,17 +92,25 @@ export default function StatCard({
           sparkline overflows the ~152px content area. Stacking the
           sparkline below as a thin full-width band gives every realistic
           value enough room without truncation. */}
-      <div className="flex items-baseline gap-1">
+      <div className="flex items-baseline gap-1 min-w-0">
         <span
           className={
             valueKind === "text"
-              ? "text-xl font-bold text-foreground leading-tight break-words"
-              : "text-3xl font-extrabold font-mono tabular-nums text-foreground leading-none whitespace-nowrap"
+              ? "min-w-0 text-xl font-bold text-foreground leading-tight break-words"
+              : "min-w-0 text-3xl font-extrabold font-mono tabular-nums text-foreground leading-none whitespace-nowrap"
           }
         >
           {value}
         </span>
-        {unit && <span className="text-xs text-muted-foreground">{unit}</span>}
+        {/* The unit is secondary to the figure, and at text-caption it
+            reads that way against either branch above. `shrink-0` keeps
+            it whole: on a narrow card the VALUE should give up width,
+            never the unit that makes it meaningful. */}
+        {unit && (
+          <span className="text-caption text-muted-foreground shrink-0">
+            {unit}
+          </span>
+        )}
       </div>
 
       {showSparkline && (

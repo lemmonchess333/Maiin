@@ -147,3 +147,96 @@ describe("MacroColumn — tap contract", () => {
     expect(discOf(over.container)).toBeNull();
   });
 });
+
+/**
+ * The tile is a toggle shared with the calorie ring, so its accessible
+ * name has to say what the tap DOES, not what the tile currently shows.
+ * The visible number already carries the state; what a screen-reader
+ * user cannot see is the destination.
+ *
+ * Before this, the button had no `aria-label` at all — its accessible
+ * name was the concatenated visible text ("42g eaten 42 / 120g PROTEIN"),
+ * which announces the state twice and the action never.
+ */
+describe("MacroColumn — accessible toggle label", () => {
+  function renderIn(mode: "eaten" | "left") {
+    render(
+      <MacroColumn
+        macroKey="protein"
+        Icon={Beef}
+        consumed={42}
+        target={120}
+        label="PROTEIN"
+        color="#000"
+        mode={mode}
+      />
+    );
+  }
+
+  it("in EATEN mode, offers to show what is remaining", () => {
+    renderIn("eaten");
+    expect(
+      screen.getByRole("button", { name: "Show protein remaining" })
+    ).toBeInTheDocument();
+  });
+
+  it("in LEFT mode, offers to show what has been eaten", () => {
+    renderIn("left");
+    expect(
+      screen.getByRole("button", { name: "Show protein eaten" })
+    ).toBeInTheDocument();
+  });
+
+  it("names the macro it belongs to, so three tiles are distinguishable", () => {
+    // All three tiles are otherwise identical to a screen reader walking
+    // the row; the macro name is what separates them.
+    render(
+      <MacroColumn
+        macroKey="carbs"
+        Icon={Beef}
+        consumed={10}
+        target={200}
+        label="CARBS"
+        color="#000"
+        mode="eaten"
+      />
+    );
+    expect(
+      screen.getByRole("button", { name: "Show carbs remaining" })
+    ).toBeInTheDocument();
+  });
+});
+
+describe("MacroColumn — numeric hierarchy", () => {
+  it("renders the unit smaller than the figure it qualifies", () => {
+    // The `g` shipped at text-2xl, identical to the number, so "42g"
+    // read as one token rather than a value with a unit. The NUMBER is
+    // deliberately unchanged — it is glanceable data, and shrinking it
+    // to fix a problem caused by its neighbour is the wrong lever.
+    const { container } = render(
+      <MacroColumn
+        macroKey="protein"
+        Icon={Beef}
+        consumed={42}
+        target={120}
+        label="PROTEIN"
+        color="#000"
+        mode="eaten"
+      />
+    );
+    const unit = Array.from(container.querySelectorAll("span")).find(
+      (el) => el.textContent === "g"
+    );
+    expect(unit).toBeDefined();
+    expect(unit).toHaveClass("text-small");
+    expect(unit).not.toHaveClass("text-2xl");
+
+    const figure = unit?.closest("p");
+    expect(figure).toHaveClass("text-2xl");
+    expect(figure).toHaveClass("font-mono");
+    expect(figure).toHaveClass("tabular-nums");
+    // A three-digit value plus its unit must stay on one line now the
+    // column can be narrower than it was under flex-1.
+    expect(figure).toHaveClass("whitespace-nowrap");
+  });
+});

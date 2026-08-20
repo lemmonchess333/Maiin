@@ -181,7 +181,13 @@ export default function MacroColumn({
       type="button"
       data-macro={macroKey}
       onClick={onTap}
-      className="flex-1 flex flex-col items-center text-center bg-transparent border-0 p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-lg"
+      /* Names the ACTION, not the current state. The visible number
+         already says what the tile shows; what a screen-reader user
+         cannot see is what tapping would do — and since the tap flips a
+         mode shared with the calorie ring, "toggle" would be too vague
+         to predict. So the label reads as the destination mode. */
+      aria-label={`Show ${label.toLowerCase()} ${isLeftMode ? "eaten" : "remaining"}`}
+      className="min-w-0 flex-1 flex flex-col items-center text-center bg-transparent border-0 p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-lg"
     >
       {/* Icon — a bare glyph in every state. No disc behind it.
           Deliberate, and it has been wrong in both directions:
@@ -225,13 +231,21 @@ export default function MacroColumn({
           number is the calorie ring's unified-colour story applied to the
           tiles. text-foreground is theme-aware (dark on light, light on
           dark) so there's no AA concern. */}
-      <p className="text-2xl font-extrabold font-mono tabular-nums leading-none tracking-tight mt-2 text-foreground">
+      {/* The unit is SECONDARY to the figure. It rendered at text-2xl —
+         identical to the number — so "128g" read as one four-character
+         token rather than a value with a unit, and the tile lost its
+         numeric hierarchy at exactly the widths where it matters. The
+         number keeps text-2xl: it is glanceable data, and shrinking it
+         to fix a problem caused by its neighbour is the wrong lever.
+         whitespace-nowrap keeps a three-digit value and its unit on one
+         line now that the column can be narrower. */}
+      <p className="text-2xl font-extrabold font-mono tabular-nums leading-none tracking-tight mt-2 text-foreground whitespace-nowrap">
         <AnimatedNumber
           value={displayValue}
           duration={numberDurationSec}
           ease={RING_EASE}
         />
-        <span className="text-2xl">g</span>
+        <span className="text-small font-bold text-muted-foreground">g</span>
       </p>
 
       {/* Mode-aware label sits below the big number. Always-rendered
@@ -291,7 +305,7 @@ export default function MacroColumn({
 
       {/* Tertiary line — consumed value tweens with the big number so all
           three (big number, bar fill, tertiary) advance together during a log. */}
-      <p className="text-caption text-muted-foreground/70 font-mono tabular-nums mt-1.5">
+      <p className="text-caption text-muted-foreground/70 font-mono tabular-nums mt-1.5 whitespace-nowrap">
         <AnimatedNumber
           value={Math.round(consumed)}
           duration={numberDurationSec}

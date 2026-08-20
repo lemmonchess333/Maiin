@@ -106,10 +106,15 @@ export default function LeaderboardCard({
         ) : (
           <Zap className="size-5" style={{ color: THEME.brand }} />
         )}
-        <div className="flex-1">
-          <h3 className="text-sm font-bold">{title}</h3>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-sm font-bold truncate">{title}</h3>
         </div>
-        <span className="text-xs text-muted-foreground">This Week</span>
+        {/* Quiet, and never the element that gives up room: the title is
+            the variable-length half ("Weekly Distance" vs "Hybrid
+            Score"), so it truncates and this stays whole. */}
+        <span className="shrink-0 text-caption font-mono tabular-nums text-muted-foreground">
+          This Week
+        </span>
       </div>
 
       <div className="space-y-1.5">
