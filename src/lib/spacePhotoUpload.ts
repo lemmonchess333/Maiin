@@ -2,7 +2,7 @@
  * Space post photo upload (Spc1 PR4 — the operator's Runna-parity
  * amendment: "post in these spaces with photos of yourself").
  *
- * Mirrors foodPhotoUpload's pipeline (decode → downscale to 1280px
+ * Mirrors the pre-Food9 foodPhotoUpload pipeline (decode → downscale to 1280px
  * longest edge via <img> + canvas for WKWebView compatibility →
  * JPEG re-encode → uploadBytes) but takes a picker File instead of a
  * base64 capture, and — unlike the diary — the photo here is CORE

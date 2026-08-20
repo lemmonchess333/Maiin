@@ -8,7 +8,7 @@ import { RotateCcw, Save, Check, Plus, Minus, Download, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { doc, Timestamp, collection } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
-import { uploadFoodPhoto } from "@/lib/foodPhotoUpload";
+import { saveFoodPhoto } from "@/lib/foodPhotoStore";
 import { db } from "@/lib/firebase";
 import { useUid } from "@/lib/auth";
 import { safeNum, parseServingGrams, round1 } from "@/lib/foodParseHelpers";
@@ -526,24 +526,25 @@ export default function FoodAnalyzer({
       });
 
       /* Persist the captured photo for the diary timeline ("photos
-         big, text compact"). Deliberately AFTER the doc write and
-         fire-and-forget: the photo is an enhancement, never a gate —
-         the meal is already logged, and when the upload lands the
-         merge write pops the photo card in via the onSnapshot
-         listener. Any failure (offline, slow network past the 20s
-         ceiling) resolves null and the row simply stays text. A
-         merge onto a doc the user soft-deleted meanwhile is a
-         harmless field add on a hidden doc. */
+         big, text compact"). Food9: it is written to THIS DEVICE, not
+         to Storage — see src/lib/foodPhotoStore.ts for why Library and
+         why age plus a byte budget.
+
+         Still deliberately AFTER the doc write and fire-and-forget:
+         the photo is an enhancement, never a gate. The meal is already
+         logged, and the store notifies the diary when the file lands
+         so the card pops in — there is no Firestore field to change,
+         so no snapshot would otherwise announce it. Any failure
+         (decode, full disk) resolves false and the row simply stays
+         text, which is the shape most rows in the mixed feed have.
+
+         Keyed by mealRef.id, which Firestore generates client-side
+         BEFORE the write — so the file and the doc it belongs to can
+         never disagree about their id, even if the write is still in
+         flight or never reaches the server. */
       if (capturedBase64) {
         const photoBase64 = capturedBase64;
-        void uploadFoodPhoto(uid, photoBase64).then((photo) => {
-          if (!photo) return;
-          return setDocGuarded(
-            mealRef,
-            { photoUrl: photo.photoUrl, photoPath: photo.photoPath },
-            { merge: true }
-          );
-        });
+        void saveFoodPhoto(uid, mealRef.id, photoBase64, Date.now());
       }
 
       // Preserve favourites functionality — favourite reflects the

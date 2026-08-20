@@ -6,6 +6,17 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Meal photos stay on your phone.** Photos from the food scanner are no
+  longer uploaded — they're saved on the device and shown in your diary
+  from there, so nothing of yours sits on a server once the scan is
+  analysed. They're kept for 90 days and then removed automatically. When
+  a photo has gone, the meal stays exactly where it was with all of its
+  calories and macros — the entry simply becomes a text row, the same as
+  a meal you typed, scanned by barcode, or logged by voice. Photos are
+  kept per-account, so on a shared device you only ever see your own.
+
 ### Important — sync before updating
 
 - **Offline changes queued by an older version are discarded when you update.**

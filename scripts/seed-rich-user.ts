@@ -160,10 +160,14 @@ async function main() {
   //
   // Two of today's meals carry a `photoUrl` so the diary timeline's
   // photo cards ("photos big, text compact") show up in design-review
-  // captures. Production photoUrl is a Storage download URL (see
-  // src/lib/foodPhotoUpload.ts); the emulator set here has no Storage,
-  // so the seed uses a small inline-SVG plate illustration — clearly a
-  // placeholder, but exercises the exact same render path.
+  // captures. `photoUrl` is the LEGACY Storage download URL that Food9
+  // retired — real captures now live on the device
+  // (src/lib/foodPhotoStore.ts) and carry no Firestore field, which a
+  // REST seed cannot write. The legacy field is still the honest lever
+  // here: the diary renders it exactly as it renders a pre-Food9 doc,
+  // so the photo-card path stays exercised in captures. The emulator
+  // has no Storage, so the seed uses a small inline-SVG plate
+  // illustration — clearly a placeholder, same render path.
   const FOOD_PHOTO_DATA_URI = `data:image/svg+xml,${encodeURIComponent(
     '<svg xmlns="http://www.w3.org/2000/svg" width="640" height="440">' +
       '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">' +

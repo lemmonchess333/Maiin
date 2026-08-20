@@ -18,6 +18,7 @@ import {
 } from "firebase/firestore";
 import { setDocGuarded, addDocGuarded } from "@/lib/firestoreWrite";
 import { httpsCallable, getFunctions } from "firebase/functions";
+import { logger } from "./logger";
 
 // ============================================
 // Auth helper — single source of truth for identity
@@ -921,10 +922,26 @@ export async function getBlockedUsers(uid: string): Promise<string[]> {
  * Pre-W1f this ran client-side and deleted the Auth user first,
  * which stranded users in an inconsistent state if any Firestore
  * cleanup step failed afterwards.
+ *
+ * The one thing the server CANNOT reach is the phone's own copy of the
+ * user's meal photos (Food9 — they never leave the device, so no
+ * Storage prefix sweep covers them). Those are wiped here, first, while
+ * the user is still authenticated. Best-effort by design: a filesystem
+ * failure must never block the account deletion itself, and the
+ * directory is uid-scoped, so anything left behind is invisible to
+ * every other account on the device.
  */
 export async function deleteAccount(uid: string): Promise<void> {
   const authedUid = getAuthUid();
   if (uid !== authedUid) throw new Error("Identity mismatch");
+  try {
+    // Dynamic for the same reason as the eviction sweep: account
+    // deletion is a once-ever path and has no claim on the bundle.
+    const { deleteAllFoodPhotos } = await import("./foodPhotoStore");
+    await deleteAllFoodPhotos(uid);
+  } catch (err) {
+    logger.warn("[deleteAccount] local food photo wipe failed", err);
+  }
   const deleteMyAccount = httpsCallable(getFunctions(), "deleteMyAccount");
   await deleteMyAccount({});
 }

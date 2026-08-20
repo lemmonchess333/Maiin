@@ -874,6 +874,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                   logger.warn("[AuthProvider] email reconcile failed", err)
                 );
               }
+              // Food9 — apply the 90-day / byte-budget retention rule to
+              // this device's meal photos. Deliberately here rather than
+              // on write: a sweep triggered by the capture that just
+              // landed makes the user's own newest photo pay for the
+              // pass. It rides the same once-per-uid guard because
+              // onAuthStateChanged fires several times per sign-in, and
+              // it is uid-keyed so an account switch on a shared device
+              // sweeps the incoming account's directory, not the
+              // outgoing one's. Purely local and fire-and-forget — it
+              // touches no Firestore doc and can never fail a sign-in.
+              // Dynamic import so `@capacitor/filesystem` stays out of
+              // the bundle every page pays for — auth.tsx is on the
+              // critical path, and the Login screen has no photos to
+              // sweep. It lands in its own chunk, after sign-in.
+              void import("./foodPhotoStore")
+                .then((m) => m.evictFoodPhotos(firebaseUser.uid))
+                .catch((err) =>
+                  logger.warn("[AuthProvider] food photo eviction failed", err)
+                );
             }
           } else {
             setProfile(null);

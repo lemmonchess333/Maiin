@@ -651,7 +651,7 @@ rather than throwing.
       the whole chain rather than just a green tick — the build-marker step
       injected `// CI build: e41f4d96…` (so the bundle hash was unique and
       the dedup could not skip the upload), then `functions: functions source
-    uploaded successfully`, then explicitly
+  uploaded successfully`, then explicitly
       `✔ functions[analyzeFood(us-central1)] Successful update operation.`
       That is what the standing gotcha asks the console to prove, proven
       upstream of it — same shape as the `askGeminiText` row, which was also
@@ -862,16 +862,65 @@ Distribution decision: Tropos ships **App Store now + Google Play later; no web 
 - [ ] **Launch gate:** add the web App-Store steer — signed-in web visitors on `/upgrade` (and the ProModal paywall) see "Get the iOS app" instead of Stripe checkout tiles. One component change, NOT a backend migration. Deliberately not built pre-launch: the web build is the active dev/preview surface and the operator still exercises the checkout/trial flows there.
 - [ ] At that point also confirm no other web surface deep-links into Stripe checkout (`useProCheckout` call sites).
 
-### Food photo persistence (`claude/ultrathink-improvement-fljctw`)
+### Food photos live on the device (Food9)
 
-Affects: `src/lib/foodPhotoUpload.ts`, `src/components/FoodAnalyzer.tsx` (post-save background upload), `storage.rules` (`food-photos/{uid}/` block), `functions/accountDeletion.js` (prefix sweep).
+Affects: `src/lib/foodPhotoStore.ts`, `src/hooks/useFoodPhotos.ts`,
+`src/components/FoodAnalyzer.tsx` (post-save local write),
+`src/components/food/FoodTimeline.tsx`, `src/lib/auth.tsx` (the eviction
+sweep rides the once-per-uid boot reconciliation), `src/lib/socialApi.ts`
+(pre-deletion wipe).
 
-**The agent sandbox DOES run the Storage emulator** — `npm run test:rules:storage` passes here (29 tests, firestore+storage emulators, Java 21 present). This row claimed the opposite until 2026-07-26, and that false constraint was doing real work: it justified leaving the whole path manual. What is actually unverifiable in-sandbox is narrower — `toUploadBlob`'s `<img>`+canvas downscale needs a real browser (jsdom has no `canvas`, and the module isn't reachable from the built preview bundle a Playwright spec loads), so the **≤1280px resize** is the only genuinely device-level claim. The rules half is already automated in `storage.rules.test.ts` ("food-photos/{uid} — owner-only").
+Food9 reversed the Storage half of Food8: captures are written to
+`Directory.Library` via `@capacitor/filesystem`, evicted at 90 days with
+a ~250 MB oldest-first byte budget as a backstop, and carry **no
+Firestore field at all** — the directory is the index. `foodPhotoUpload.ts`
+is deleted.
 
-- [ ] Real AI food scan on device: save the meal, confirm the photo card pops into the diary timeline within a few seconds (background upload + onSnapshot merge), and the Storage console shows `food-photos/<uid>/<ts>.jpg` at ≤1280px. (The ≤1280px downscale is the part no automated suite covers.)
-- [ ] Offline scan: save while airplane-moded — meal must save as a text row with NO error surfaced; photo is silently skipped (never re-tried).
-- [x] Signed-out and cross-uid reads of a food-photos path are denied — covered by `storage.rules.test.ts` against the emulator. Note the rules block itself IS deployed: the ungated `a990d4bb` run (2026-07-12) shipped it. Only the later account-deletion write freeze (`779ca7ba`) is held back by the packet-11 gate.
-- [ ] Account deletion (test account): confirm the executor logs the `food-photos/<uid>/` prefix sweep alongside progress/profile photos.
+`foodPhotoStore.test.ts` runs the IO against an in-memory fake and pins
+the rules against literals; seven mutations were checked (age boundary,
+filename split, uid scoping, budget ordering, budget bound, the save
+notification, the native/web src branch) and all fail the suite. What
+that fake CANNOT prove is anything about a real device's filesystem or a
+real decode, which is what the rows below are for.
+
+**`storage.rules` and the `food-photos/{uid}/` prefix sweep in
+`functions/accountDeletion.js` are deliberately UNTOUCHED.** Pre-Food9
+blobs still exist and the sweep is still their only cleanup path; the
+rules block is also behind the packet-11 storage gate, so tightening it
+would produce a change nothing in CI can deploy. Leave both alone.
+
+- [ ] **Real AI food scan on device.** Save the meal and confirm the photo
+      card appears in the diary within a second or so — the store notifies
+      the timeline directly, because no Firestore write happens any more
+      and no snapshot would otherwise announce the photo. Kill the app,
+      reopen with the network off: the card must still be there.
+- [ ] **The ≤1280px downscale.** Still the one genuinely device-level
+      claim in this arc, and for the same reason it always was — jsdom
+      has no canvas backend, so the suite stubs the decode and asserts
+      everything around it. Confirm on device that a native-resolution
+      capture lands at roughly a quarter-megabyte, not several.
+- [ ] **Offline scan.** Airplane mode: the meal saves, and the photo
+      saves too — this path no longer touches the network at all, which
+      is a behaviour CHANGE from the Storage era (the photo used to be
+      silently skipped offline). Confirm the card appears.
+- [ ] **Eviction actually fires on a real device.** The sweep runs on the
+      once-per-uid boot reconciliation. Back-date a file (or shorten
+      `RETENTION_DAYS` in a debug build) and confirm the row degrades to
+      a compact text row with its calories and macros intact — not a
+      broken image, not a missing row.
+- [ ] **Account switch on one device.** Sign in as a second account and
+      confirm none of the first account's photos appear in its diary, and
+      that the sweep operates on the incoming account's directory.
+- [ ] **Account deletion.** Confirm the local directory is emptied before
+      the callable runs, and that a filesystem failure there does not
+      block the deletion. The executor's `food-photos/<uid>/` prefix
+      sweep still runs for the legacy blobs.
+- [ ] **iCloud restore.** `Library` is in the backup set (only
+      `Library/Caches` is excluded), so a restore-to-new-device is
+      expected to CARRY the photos across — the opposite of how this was
+      first reasoned. Worth confirming once, because if it does not, the
+      44 MB backup cost is being paid for nothing and `LibraryNoCloud`
+      becomes the better directory.
 
 ### Tooltip + Coachmark primitive (`claude/tooltip-primitive`)
 

@@ -80,7 +80,7 @@ vi.mock("@/hooks/useReducedMotion", () => ({
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {} }));
 vi.mock("@/lib/firestoreWrite", () => ({ setDocGuarded: vi.fn() }));
-vi.mock("@/lib/foodPhotoUpload", () => ({ uploadFoodPhoto: vi.fn() }));
+vi.mock("@/lib/foodPhotoStore", () => ({ saveFoodPhoto: vi.fn() }));
 vi.mock("@/lib/auth", () => ({ useUid: () => "u-scan" }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/toast", () => ({

@@ -125,9 +125,13 @@ const TOP_LEVEL_USER_KEYED_COLLECTIONS = Object.freeze([
 const STORAGE_PREFIX_TEMPLATES = Object.freeze([
   "progress-photos/__UID__/",
   "profile-photos/__UID__/",
-  // Food diary photos (src/lib/foodPhotoUpload.ts). Meal deletion is
-  // soft (24h restore) so blobs are never deleted with the meal —
-  // this sweep is the only cleanup path, same as progress photos.
+  // LEGACY food diary photos, written before Food9 moved captures onto
+  // the device (src/lib/foodPhotoStore.ts). Nothing uploads here any
+  // more, but blobs from before that change still exist and this sweep
+  // is still their only cleanup path — meal deletion is soft (24h
+  // restore), so it never deleted them. The on-device copies are out of
+  // this executor's reach entirely; the client wipes those itself
+  // before calling in (see deleteAccount in src/lib/socialApi.ts).
   "food-photos/__UID__/",
   // Community Space post photos (Spc1 PR4, src/lib/spacePhotoUpload.ts).
   // The Firestore posts are deleted by the spaces cleanup step (3d);

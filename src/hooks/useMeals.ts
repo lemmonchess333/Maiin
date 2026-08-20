@@ -50,14 +50,17 @@ export interface Meal {
    *  "+ Breakfast" / ... targeting flow so a snack logged at 9am goes to
    *  Snacks, not Breakfast. */
   meal?: "breakfast" | "lunch" | "snacks" | "dinner";
-  /** User-captured meal photo (AI scan path) — Storage download URL
-   *  written by the post-save background upload in FoodAnalyzer
-   *  (src/lib/foodPhotoUpload.ts). Drives the diary timeline's big
-   *  photo cards; absent for text/barcode/manual logs. */
+  /** LEGACY (pre-Food9) captured meal photo — a Storage download URL
+   *  written by the background upload that Food9 removed. Nothing
+   *  writes this any more: captures now live on the device
+   *  (src/lib/foodPhotoStore.ts) and carry no Firestore field at all.
+   *  Read-only, and deliberately un-migrated — docs that have it keep
+   *  rendering from it in the diary until they age out with the meal. */
   photoUrl?: string;
-  /** Storage path for the photo blob — cleanup pointer only (the
-   *  account-deletion executor sweeps the prefix; meal soft-delete
-   *  never deletes the blob because of the 24h restore window). */
+  /** LEGACY (pre-Food9) Storage path for the photo blob — cleanup
+   *  pointer only. The `food-photos/` prefix sweep in the
+   *  account-deletion executor still clears these blobs; meal
+   *  soft-delete never did, because of the 24h restore window. */
   photoPath?: string;
   confidence: string;
   createdAt: unknown;

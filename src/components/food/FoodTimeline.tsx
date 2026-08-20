@@ -8,6 +8,7 @@ import { MEAL_LABELS } from "./mealConstants";
 import { mealSlotFor, mealLoggedAt } from "@/lib/mealSlots";
 import { THEME } from "@/lib/theme";
 import { track as trackFoodEvent } from "@/lib/foodAnalytics";
+import { useFoodPhotos } from "@/hooks/useFoodPhotos";
 import type { Meal } from "@/hooks/useMeals";
 
 /**
@@ -25,10 +26,12 @@ import type { Meal } from "@/hooks/useMeals";
  * macro semantics all carry over untouched.
  *
  * Mixed feed ("photos big, text compact" locked decision): AI-scanned
- * meals persist their capture via foodPhotoUpload (background, after
- * the doc write) and render as BIG photo cards; text/barcode/manual
- * logs stay compact rows. Both shapes share FoodRow's swipe/tap
- * machinery — the photo is just a hero block inside the same surface.
+ * meals persist their capture via foodPhotoStore (Food9 — on THIS
+ * device, written after the doc write) and render as BIG photo cards;
+ * text/barcode/manual logs stay compact rows. Docs predating Food9 keep
+ * their Storage `photoUrl` and still render from it. Both shapes share
+ * FoodRow's swipe/tap machinery — the photo is just a hero block inside
+ * the same surface.
  */
 
 /* Render-perf telemetry, throttled to once per day per user — the
@@ -122,6 +125,12 @@ export default function FoodTimeline({
     (a, b) => b.latestMs - a.latestMs
   );
 
+  /* Food9 — on-device photos. Sorted + deduped so the hook's cache key
+     changes when the DAY's logs change, not on every parent render. */
+  const localPhotos = useFoodPhotos(
+    Array.from(new Set(meals.map((m) => m.id))).sort()
+  );
+
   /* Same render-timing shape as the FoodMealSection probe it replaces —
      see that pattern's rationale in the Food6e lock. */
   // eslint-disable-next-line react-hooks/purity
@@ -184,8 +193,17 @@ export default function FoodTimeline({
           };
           /* Mixed feed: a group whose docs carry a captured photo
              renders as a big photo card (image above the meta row,
-             same swipe/tap surface); text logs stay compact rows. */
-          const photoUrl = group.meals.find((m) => m.photoUrl)?.photoUrl;
+             same swipe/tap surface); text logs stay compact rows.
+
+             Two sources, remote first. `photoUrl` is the LEGACY Storage
+             download URL written before Food9 moved captures onto the
+             device — those docs keep rendering from it, with no
+             migration and no backfill. Everything captured since
+             resolves from this phone. A group with neither is the
+             ordinary text row. */
+          const photoUrl =
+            group.meals.find((m) => m.photoUrl)?.photoUrl ??
+            group.meals.map((m) => localPhotos[m.id]).find(Boolean);
           return (
             <FoodRow
               key={group.id}
