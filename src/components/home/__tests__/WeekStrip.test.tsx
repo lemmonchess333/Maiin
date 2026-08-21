@@ -350,6 +350,36 @@ describe("WeekStrip — accessible name and selection state", () => {
   const todayCell = (container: HTMLElement) =>
     container.querySelectorAll("button")[0];
 
+  /* The capture spec `surfaces.screens.capture.spec.ts` opens the day
+     peek by selecting a day cell on its accessible NAME — it needs a
+     non-today cell, because handleDayTap scrolls instead of peeking on
+     today. Its regex had rotted: it anchored the date to end-of-name,
+     which stopped being true once the training label was appended, so
+     it matched nothing and that step timed out on every screenshot run.
+     Nothing failed locally, because the tests above assert only the
+     training-label FRAGMENT.
+
+     These pin the whole shape the selector depends on: weekday, date,
+     training label, and "(today)" present on exactly one cell. */
+  it("labels a day cell as weekday, date, then training label", () => {
+    const { container } = renderAllDays("rest");
+    const label = todayCell(container).getAttribute("aria-label") ?? "";
+    expect(label).toMatch(/^\w+day, \w+ \d+, /);
+  });
+
+  it("marks today, and only today, with the (today) suffix", () => {
+    const { container } = renderAllDays("rest");
+    const cells = Array.from(container.querySelectorAll("button"));
+    const labels = cells.map((c) => c.getAttribute("aria-label") ?? "");
+    expect(labels.filter((l) => l.includes("(today)"))).toHaveLength(1);
+    // And at least one cell the capture spec's selector can land on —
+    // the same predicate, so this fails when that selector would.
+    const selectable = labels.filter((l) =>
+      /^(?!.*\(today\))\w+day, \w+ \d+,/.test(l)
+    );
+    expect(selectable.length).toBeGreaterThan(0);
+  });
+
   it("names a rest day, a lift day and a run day", () => {
     for (const [type, expected] of [
       ["rest", /rest day/i],

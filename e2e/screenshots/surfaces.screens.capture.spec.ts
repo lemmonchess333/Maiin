@@ -162,14 +162,23 @@ test.describe(`home + food surfaces (${PHASE})`, () => {
     });
     await shoot(page, "home-energy-default");
 
-    // Open the day peek. Must be a NON-today cell: `handleDayTap` treats
-    // a tap on today as redundant with the live session cards below and
-    // scrolls to them instead of peeking (Cal-A), so targeting "today"
-    // silently captures the wrong screen — which is what the first run
-    // of this spec did. Day-cell labels carry a "(today)" suffix, so the
-    // absence of it is the selector.
+    /* Open the day peek. Must be a NON-today cell: `handleDayTap` treats
+       a tap on today as redundant with the live session cards below and
+       scrolls to them instead of peeking (Cal-A), so targeting "today"
+       silently captures the wrong screen — which is what the first run
+       of this spec did. Day-cell labels carry a "(today)" suffix, so the
+       absence of it is the selector.
+
+       That intent was right and the regex had rotted. It anchored the
+       date to END of name (`/day, \w+ \d+$/`), but WeekStrip appends the
+       training label after the date — "Friday, August 21, rest day" —
+       so it matched NOTHING and this step had been timing out for as
+       long as the label has had that suffix. A negative lookahead now
+       carries the "not today" half explicitly instead of relying on an
+       anchor to imply it. `weekStripDayLabel` in the unit suite pins the
+       shape this depends on. */
     const otherDay = page
-      .getByRole("button", { name: /day, \w+ \d+$/ })
+      .getByRole("button", { name: /^(?!.*\(today\))\w+day, \w+ \d+,/ })
       .first();
     await otherDay.click({ timeout: 10_000 });
     await expect(page.getByText(/manage day|no sessions/i).first()).toBeVisible(
