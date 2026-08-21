@@ -67,3 +67,40 @@ Source of truth for tokens: `src/styles/tokens.css`, `src/index.css`,
 
 > When this file or `DESIGN_GUIDE.md` disagrees with generic UI instincts, the
 > docs win. When something genuinely isn't covered, ask before inventing.
+
+## Never report a failure as pre-existing without measuring the baseline
+
+Two task briefs handed over on 2026-08-20 both carried the line _"known
+repo-wide failures may already exist in Programme, WeeklyReview, and
+unrelated tests."_ Both were false. Measured on `main` at `0bac122`
+immediately before the work: **613 files, 7574 tests, 0 failures**, lint
+and build clean. Re-measured against exactly the named areas
+(`src/features/program/__tests__`, the three WeeklyReview suites,
+`blockReviewViewModel`, `src/components/review/__tests__`): **92 files,
+1738 tests, 0 failures.** Nothing in the repo claims otherwise either —
+no doc, no skipped suite, no pushed branch in that state.
+
+Both briefs also asserted a dirty working tree ("inspect the current
+local diff first", "do not overwrite existing Social work in progress")
+when the tree was clean and no such branch had been pushed. The two
+false premises travel together, which is the tell: the briefs were
+written against an **uncommitted local working tree**, and the
+"pre-existing failures" were almost certainly that tree's OWN breakage —
+the author's in-progress edits — attributed to the repo.
+
+Why this matters more than a wrong sentence: "the suite is already
+broken" is the single most effective way to make the next agent skip
+`npm run verify`. A real regression then ships green, and the belief
+that licensed it is unfalsifiable because nobody re-measured.
+
+So:
+
+- **Measure before you claim.** `git stash && npm run test` on a clean
+  tree gives you the baseline in one command. Quote the numbers.
+- **Suspect your own diff first.** If a suite fails and your changes are
+  uncommitted, the null hypothesis is that you broke it — not the repo.
+- **Never carry a failure claim forward from a previous session.** The
+  tree it described is not the tree you are on.
+- **A failing baseline does not excuse skipping the full run** — it
+  raises the bar, because now you have to show the same set failing
+  before and after.
