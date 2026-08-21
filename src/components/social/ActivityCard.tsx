@@ -461,11 +461,11 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
         {/* Workout volume/duration/PR count. Cells already printed on
             the muscle hero panel (volume numeral, PR chip) drop out
             here — same no-double-printing rule as the run card's km. */}
-        /* Two columns rather than an unconstrained flex row. Volume, exercises,
-        PRs and duration can all be present at once, and a volume like "12,480"
-        is wide enough that four flex cells left the card at 375px. Two columns
-        give every cell a predictable half-width and wrap the rest onto a second
-        line. */
+        {/* Two columns rather than an unconstrained flex row. Volume,
+            exercises, PRs and duration can all be present at once, and a
+            volume like "12,480" is wide enough that four flex cells left
+            the card at 375px. Two columns give every cell a predictable
+            half-width and wrap the rest onto a second line. */}
         <div className="grid grid-cols-2 gap-x-4 gap-y-3">
           {!showVolumeOverlay && (activity.totalVolume ?? 0) > 0 && (
             /* Volume is the primary metric of a lift, and renders at

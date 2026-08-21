@@ -240,3 +240,44 @@ describe("MacroColumn — numeric hierarchy", () => {
     expect(figure).toHaveClass("whitespace-nowrap");
   });
 });
+
+describe("MacroColumn — the goal-reached state stays in the accessible name", () => {
+  /* Regression guard. Adding an `aria-label` to this button REPLACED the
+     content-derived accessible name, which silently dropped the sr-only
+     "{label} goal reached" out of it. `surfaces.screens.capture.spec.ts`
+     asserts that name as the state-independent proof of the halo — but
+     that spec only runs in the screenshot CI job, so the whole unit
+     suite stayed green while the regression shipped to main.
+
+     This is the unit-level guard that was missing. It fails if the state
+     is ever dropped from the name again, whatever draws the halo. */
+  function renderAt(consumed: number, target: number) {
+    render(
+      <MacroColumn
+        macroKey="protein"
+        Icon={Beef}
+        consumed={consumed}
+        target={target}
+        label="PROTEIN"
+        color="#000"
+        mode="eaten"
+      />
+    );
+  }
+
+  it("announces the goal alongside the action once the target is met", () => {
+    renderAt(130, 120);
+    const btn = screen.getByRole("button");
+    expect(btn).toHaveAccessibleName(/goal reached/i);
+    // The action half must survive too — the name has to say what the
+    // tap does, not only what state the tile is in.
+    expect(btn).toHaveAccessibleName(/show protein remaining/i);
+  });
+
+  it("says nothing about a goal that has not been reached", () => {
+    renderAt(42, 120);
+    expect(screen.getByRole("button")).not.toHaveAccessibleName(
+      /goal reached/i
+    );
+  });
+});
