@@ -272,24 +272,31 @@ test.describe("feed activity card screenshots", () => {
       .getByRole("radio", { name: /explore/i })
       .click({ timeout: 15_000 });
 
-    // Assert BEFORE shooting, so a regression films loudly rather than
-    // producing a quietly empty frame.
-    await expect(page.getByText("Half marathon pace run")).toBeVisible({
+    /* Assert BEFORE shooting, so a regression films loudly rather than
+       producing a quietly empty frame.
+
+       Every locator takes `.first()`. The Explore source shows the
+       shared seed fixtures alongside ours, and an exercise name appears
+       twice per card in any case (the row plus its compare-affordance
+       label) — the first run past the solo gate died on strict-mode
+       violations rather than on anything being absent. Presence is what
+       these assert; the frame is what documents the layout. */
+    await expect(page.getByText("Half marathon pace run").first()).toBeVisible({
       timeout: 30_000,
     });
-    await expect(page.getByText(/Romanian Deadlift/)).toBeVisible({
+    await expect(page.getByText(/Romanian Deadlift/).first()).toBeVisible({
       timeout: 15_000,
     });
     // The four-metric run row: every metric present means the grid is
     // carrying the case the old flex row could not.
-    await expect(page.getByText("21.10")).toBeVisible();
+    await expect(page.getByText("21.10").first()).toBeVisible();
     // Anchored to the unit rather than the bare number: "342" alone
     // could match anything on the page, and the point of the elevation
     // change is that the value and its unit sit together with the unit
     // demoted — so assert the pair.
-    await expect(page.getByText(/342\s*m/)).toBeVisible();
+    await expect(page.getByText(/342\s*m/).first()).toBeVisible();
     // Volume is the promoted primary on the lift card.
-    await expect(page.getByText("12,480")).toBeVisible();
+    await expect(page.getByText("12,480").first()).toBeVisible();
 
     await page.waitForTimeout(600);
     await shootBoth(page, "feed-activity-cards");
