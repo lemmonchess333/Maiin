@@ -124,10 +124,19 @@ export default function WaterCard({
                 Water
               </p>
             </div>
-            <p className="text-xl font-bold leading-none text-foreground font-mono tabular-nums">
+            {/* Matches the weight tile beside it, which is the canonical
+                compact-tile numeral treatment (text-2xl / 800, unit at
+                text-sm). This variant sat a full tier below it —
+                text-xl / 700 with a text-xs unit — so two tiles of equal
+                rank, in the same row, read as different ranks, and the
+                pair broke DESIGN_GUIDE's "never mix 700 and 800 in the
+                same visual tier". The non-compact variant below already
+                uses this treatment, so the compact one was the outlier
+                inside its own component too. */}
+            <p className="text-2xl font-extrabold leading-none text-foreground font-mono tabular-nums">
               {formatLitresValue(ml)}
               <span
-                className="text-xs font-normal mx-1"
+                className="text-sm font-normal mx-1"
                 style={{ color: THEME.text.muted }}
               >
                 / {formatVolume(targetMl)}
