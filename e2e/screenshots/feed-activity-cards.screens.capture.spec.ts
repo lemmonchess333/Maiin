@@ -97,6 +97,37 @@ async function seedActivity(id: string, fields: FsValue): Promise<void> {
   if (!res.ok) throw new Error(await res.text());
 }
 
+/**
+ * ONE follow edge. Without it the account is `isNewUser`, and
+ * `showSoloFeed = isNewUser` in Social.tsx routes every feed SOURCE —
+ * Explore included — to the curated solo stack, so no activity card can
+ * render at any source. The first run of this spec failed exactly here:
+ * the seed was fine and the account was simply never eligible to see it.
+ * `followUser` writes both sides, so the fixture does too.
+ */
+async function seedFollow(uid: string, targetUid: string): Promise<void> {
+  const body = JSON.stringify({
+    fields: { createdAt: { timestampValue: new Date().toISOString() } },
+  });
+  for (const path of [
+    `following/${uid}/users/${targetUid}`,
+    `followers/${targetUid}/users/${uid}`,
+  ]) {
+    const res = await fetch(
+      `http://${FS_HOST}/v1/projects/demo-tropos/databases/(default)/documents/${path}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer owner",
+        },
+        body,
+      }
+    );
+    if (!res.ok) throw new Error(await res.text());
+  }
+}
+
 /** A run with no route preview — so distance renders IN the metric row
  *  and the row carries its four-metric worst case. */
 async function seedRun(uid: string, stamp: string): Promise<void> {
@@ -217,8 +248,12 @@ test.describe("feed activity card screenshots", () => {
 
     const uid = await uidByEmail(email);
     await completeOnboardingDirect(uid);
-    await seedRun(uid, stamp);
-    await seedWorkout(uid, stamp);
+    // The activities are authored by a DIFFERENT uid, which is what a
+    // real feed shows and what keeps the card's author row meaningful.
+    const authorUid = `cap-author-${stamp}`;
+    await seedFollow(uid, authorUid);
+    await seedRun(authorUid, stamp);
+    await seedWorkout(authorUid, stamp);
 
     await page.goto("social");
     await page

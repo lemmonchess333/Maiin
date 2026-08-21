@@ -185,10 +185,28 @@ export default function MacroColumn({
          already says what the tile shows; what a screen-reader user
          cannot see is what tapping would do — and since the tap flips a
          mode shared with the calorie ring, "toggle" would be too vague
-         to predict. So the label reads as the destination mode. */
-      aria-label={`Show ${label.toLowerCase()} ${isLeftMode ? "eaten" : "remaining"}`}
+         to predict. So the label reads as the destination mode.
+
+         The goal-reached state is APPENDED rather than left to the
+         sr-only span below, because an `aria-label` REPLACES the
+         content-derived name outright: adding this label silently
+         dropped "{label} goal reached" out of the button's accessible
+         name, which `surfaces.screens.capture.spec.ts` asserts as the
+         state-independent proof of the halo. Nothing in the unit suite
+         covered it, so it only surfaced in the screenshot CI run. */
+      aria-label={
+        `Show ${label.toLowerCase()} ${isLeftMode ? "eaten" : "remaining"}` +
+        (goalReached ? `. ${label} goal reached` : "")
+      }
       className="min-w-0 flex-1 flex flex-col items-center text-center bg-transparent border-0 p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-lg"
     >
+      {/* Kept ALONGSIDE the aria-label above, not replaced by it. Two
+          existing unit tests assert this sr-only TEXT, while
+          surfaces.screens.capture.spec.ts asserts the accessible NAME —
+          and an aria-label satisfies only the second. That split is
+          exactly how the regression hid: text-based tests stayed green
+          while the name lost the state. Both now carry it. */}
+      {goalReached && <span className="sr-only">{label} goal reached</span>}
       {/* Icon — a bare glyph in every state. No disc behind it.
           Deliberate, and it has been wrong in both directions:
 
@@ -224,7 +242,6 @@ export default function MacroColumn({
           aria-hidden="true"
         />
       </motion.span>
-      {goalReached && <span className="sr-only">{label} goal reached</span>}
 
       {/* Big number — Food7: neutral foreground (not the macro hue). The
           macro identity is carried by the icon + progress bar; a neutral
