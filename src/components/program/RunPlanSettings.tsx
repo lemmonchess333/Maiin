@@ -32,7 +32,13 @@
  */
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Footprints, Minus, Plus } from "lucide-react";
+import {
+  ChevronRight,
+  Footprints,
+  Minus,
+  Plus,
+  SlidersHorizontal,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
@@ -601,14 +607,28 @@ export default function RunPlanSettings({
           haptic();
           onOpenFullSettings();
         }}
-        className="w-full text-left rounded-2xl bg-card border border-border/40 px-3.5 py-3 hover:bg-muted/40 transition-colors"
+        className="w-full text-left rounded-2xl bg-card border border-border/40 px-3.5 py-3 min-h-[56px] flex items-center gap-3 hover:bg-muted/40 transition-colors"
       >
-        <p className="text-sm font-medium text-foreground">
-          Full programme settings
-        </p>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          Goal, nutrition, lifting, equipment, injuries
-        </p>
+        {/* Icon container + trailing chevron, i.e. the row shape every
+            other drill-in in Settings uses (`SettingsIndex.tsx`). Without
+            them this was the only cross-page navigation row in Settings
+            with neither affordance, so the one escape hatch out to
+            /settings/training read as a static description card. */}
+        <div className="size-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+          <SlidersHorizontal className="size-4 text-muted-foreground" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-foreground">
+            Full programme settings
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Goal, nutrition, lifting, equipment, injuries
+          </p>
+        </div>
+        <ChevronRight
+          className="size-4 text-muted-foreground shrink-0"
+          aria-hidden="true"
+        />
       </button>
 
       {/* ── Sticky save bar (only when there's a run-plan change) ─────── */}

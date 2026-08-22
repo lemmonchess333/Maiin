@@ -108,6 +108,16 @@
   --color-achievement: hsl(var(--achievement));
   --color-achievement-strong: hsl(var(--achievement-strong));
   --color-achievement-bg: hsl(var(--achievement-bg));
+  /* Streak flame. `--ds-orange-500`'s own comment in tokens.css names
+     "streak flame" as one of its uses, but there was no Tailwind colour
+     pointing at it, so every flame site reached for `text-orange-500`
+     instead — raw Tailwind palette (#ff6900), not a Tropos token, and
+     invisible to the hex-literal lint because it is a class name rather
+     than a hex. A `var()` value rather than `hsl(var(…))` because this
+     ramp is stored as hex; Tailwind's opacity modifier resolves it
+     through color-mix either way. NOT the nutrition orange — see the
+     ramp's comment: --nutrition owns calorie/macro context. */
+  --color-streak: var(--ds-orange-500);
   /* DS2 redesign — premium radius CURVE. Base bumped 8→10px and the card
      tiers widened (xl 12→16, 2xl 16→22) so cards read modern/soft while
      small controls stay tight. Cascades to every rounded-* consumer. */

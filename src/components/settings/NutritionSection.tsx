@@ -1,15 +1,7 @@
-import { useState, useRef } from "react";
+import { useRef } from "react";
 import { motion } from "framer-motion";
 import { haptic } from "@/lib/haptic";
-import {
-  Calculator,
-  ChevronDown,
-  ChevronUp,
-  Flame,
-  Minus,
-  Plus,
-  Target,
-} from "lucide-react";
+import { Calculator, Flame, Minus, Plus, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
 import { MIN_TARGET_CALORIES } from "@/lib/macroConstants";
@@ -18,10 +10,7 @@ import type { ActivityLevel, TDEEResult } from "@/lib/tdee";
 import type { GoalWeightPlan } from "@/lib/goalWeightPlan";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Button } from "@/components/ui/Button";
-import {
-  resolveTargetDrift,
-  shouldShowTargetDrift,
-} from "@/lib/targetDrift";
+import { resolveTargetDrift, shouldShowTargetDrift } from "@/lib/targetDrift";
 import AccordionSection from "@/components/AccordionSection";
 import { useMacroPalette } from "@/hooks/useMacroPalette";
 import {
@@ -75,7 +64,6 @@ export default function NutritionSection({
   onRecalculate,
   inline = false,
 }: NutritionSectionProps) {
-  const [showTDEE, setShowTDEE] = useState(false);
   // Contrast-safe macro colours from the shared palette — protein=pink,
   // carbs=gold, fat=sage everywhere else in the app. These tiles were
   // previously mis-coloured (protein blue / carbs amber / fat pink) with
@@ -114,105 +102,90 @@ export default function NutritionSection({
       title="Nutrition"
       subtitle="TDEE, phase, macros"
     >
-      {/* TDEE Calculator (sub-collapsible) */}
-      <div className="bg-card rounded-2xl overflow-hidden">
-        <button
-          type="button"
-          onClick={() => setShowTDEE(!showTDEE)}
-          className="w-full flex items-center justify-between p-4"
-        >
-          <div className="flex items-center gap-3">
-            <Calculator className="size-5 text-primary" />
-            <div className="text-left">
-              <p className="text-sm font-medium text-foreground">
-                TDEE Calculator
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {tdee.targetCalories} cal/day target
-              </p>
-            </div>
+      {/* The TDEE sub-collapsible, on the primitive rather than a
+            hand-rolled copy of it. The old markup reproduced
+            `AccordionSection`'s non-inline branch class-for-class —
+            same shell, same header row, same chevron pair, same body
+            padding — in a file that already imports the primitive, so
+            it looked identical and silently shipped none of the
+            wiring: no `aria-expanded`, no `aria-controls`, no
+            `role="region"` on the panel, and no haptic on toggle.
+
+            Deliberately NOT `inline`: the collapse is correct here.
+            `inline` exists for a nested Settings page whose own chrome
+            already names the section — this is a sub-section INSIDE
+            such a page, and folding a calculator away by default is
+            the point. */}
+      <AccordionSection
+        icon={<Calculator className="size-5 text-primary" />}
+        title="TDEE Calculator"
+        subtitle={`${tdee.targetCalories} cal/day target`}
+      >
+        <div>
+          <label htmlFor="tdee-age" className="text-sm text-muted-foreground">
+            Age
+          </label>
+          <input
+            id="tdee-age"
+            type="number"
+            value={age}
+            onChange={(e) => setAge(Number(e.target.value) || 25)}
+            onBlur={async () => {
+              const prev = profile.age ?? 25;
+              if (age === prev) return;
+              const result = await updateProfile({ age });
+              if (!result.ok) setAge(prev);
+            }}
+            className="w-full mt-1 px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
+          />
+        </div>
+
+        <div>
+          <span className="text-sm text-muted-foreground">Activity Level</span>
+          <div className="mt-1 space-y-1">
+            {(Object.entries(ACTIVITY_LABELS) as [ActivityLevel, string][]).map(
+              ([key, label]) => (
+                <button
+                  type="button"
+                  key={key}
+                  onClick={async () => {
+                    const prev = activityLevel;
+                    setActivityLevel(key);
+                    const result = await updateProfile({
+                      activityLevel: key,
+                    });
+                    if (!result.ok) setActivityLevel(prev);
+                  }}
+                  className={cn(
+                    "w-full text-left px-3 py-2 rounded-lg text-xs transition-colors",
+                    activityLevel === key
+                      ? "bg-primary/10 text-primary font-medium"
+                      : "bg-muted text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {label}
+                </button>
+              )
+            )}
           </div>
-          {showTDEE ? (
-            <ChevronUp className="size-4 text-muted-foreground" />
-          ) : (
-            <ChevronDown className="size-4 text-muted-foreground" />
-          )}
-        </button>
+        </div>
 
-        {showTDEE && (
-          <div className="px-4 pb-4 space-y-4 border-t border-border/50 pt-4">
-            <div>
-              <label
-                htmlFor="tdee-age"
-                className="text-sm text-muted-foreground"
-              >
-                Age
-              </label>
-              <input
-                id="tdee-age"
-                type="number"
-                value={age}
-                onChange={(e) => setAge(Number(e.target.value) || 25)}
-                onBlur={async () => {
-                  const prev = profile.age ?? 25;
-                  if (age === prev) return;
-                  const result = await updateProfile({ age });
-                  if (!result.ok) setAge(prev);
-                }}
-                className="w-full mt-1 px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
-              />
-            </div>
-
-            <div>
-              <span className="text-sm text-muted-foreground">
-                Activity Level
-              </span>
-              <div className="mt-1 space-y-1">
-                {(
-                  Object.entries(ACTIVITY_LABELS) as [ActivityLevel, string][]
-                ).map(([key, label]) => (
-                  <button
-                    type="button"
-                    key={key}
-                    onClick={async () => {
-                      const prev = activityLevel;
-                      setActivityLevel(key);
-                      const result = await updateProfile({
-                        activityLevel: key,
-                      });
-                      if (!result.ok) setActivityLevel(prev);
-                    }}
-                    className={cn(
-                      "w-full text-left px-3 py-2 rounded-lg text-xs transition-colors",
-                      activityLevel === key
-                        ? "bg-primary/10 text-primary font-medium"
-                        : "bg-muted text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* TDEE Results */}
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-muted rounded-lg p-3 text-center">
-                <p className="text-lg font-bold text-foreground font-mono tabular-nums">
-                  {tdee.bmr}
-                </p>
-                <p className="text-xs text-muted-foreground">BMR</p>
-              </div>
-              <div className="bg-muted rounded-lg p-3 text-center">
-                <p className="text-lg font-bold text-foreground font-mono tabular-nums">
-                  {tdee.tdee}
-                </p>
-                <p className="text-xs text-muted-foreground">TDEE</p>
-              </div>
-            </div>
+        {/* TDEE Results */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="bg-muted rounded-lg p-3 text-center">
+            <p className="text-lg font-bold text-foreground font-mono tabular-nums">
+              {tdee.bmr}
+            </p>
+            <p className="text-xs text-muted-foreground">BMR</p>
           </div>
-        )}
-      </div>
+          <div className="bg-muted rounded-lg p-3 text-center">
+            <p className="text-lg font-bold text-foreground font-mono tabular-nums">
+              {tdee.tdee}
+            </p>
+            <p className="text-xs text-muted-foreground">TDEE</p>
+          </div>
+        </div>
+      </AccordionSection>
 
       {/* Goal Weight — owns the nutrition direction (target vs current → phase) */}
       <div className="bg-card rounded-2xl p-4 space-y-3">

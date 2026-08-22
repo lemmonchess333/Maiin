@@ -73,7 +73,7 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // 2026-08-11: 53 → 54. The Feather icon on AdjustWeekSheet's "this week
   // is already eased" row — an icon, which the 4.5:1 small-text bar does
   // not apply to; its label beside it is `text-foreground`.
-  running: 54,
+  running: 53,
   lifting: 23,
   nutrition: 4,
   destructive: 0,

@@ -65,8 +65,8 @@ export default function PartnerStreakCard({
   if (bond) {
     return (
       <div className="flex items-center gap-3 rounded-xl bg-muted p-3">
-        <div className="flex size-9 items-center justify-center rounded-lg bg-orange-500/10">
-          <Flame className="size-5 text-orange-500" />
+        <div className="flex size-9 items-center justify-center rounded-lg bg-streak/10">
+          <Flame className="size-5 text-streak" />
         </div>
         <div className="flex-1">
           {bond.streak > 0 ? (
@@ -119,8 +119,8 @@ export default function PartnerStreakCard({
   // ---- Eligible, no bond: start CTA ----
   return (
     <div className="flex items-center gap-3 rounded-xl bg-muted p-3">
-      <div className="flex size-9 items-center justify-center rounded-lg bg-orange-500/10">
-        <Flame className="size-5 text-orange-500" />
+      <div className="flex size-9 items-center justify-center rounded-lg bg-streak/10">
+        <Flame className="size-5 text-streak" />
       </div>
       <div className="flex-1">
         <p className="text-sm font-bold">Start a streak</p>

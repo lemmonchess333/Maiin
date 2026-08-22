@@ -494,7 +494,7 @@ export default function UserProfile() {
       {/* Current streak */}
       {streak > 0 && (
         <p className="text-xs text-muted-foreground">
-          <Flame size={14} className="text-orange-500 inline" />{" "}
+          <Flame size={14} className="text-streak inline" />{" "}
           <strong className="text-foreground">{streak}-day</strong> streak
         </p>
       )}

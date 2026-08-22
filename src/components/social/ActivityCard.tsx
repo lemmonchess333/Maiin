@@ -311,23 +311,30 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
             </div>
           )}
           {(activity.elevationGain || 0) > 0 && (
-            <div className="min-w-0 flex items-start gap-1">
-              <Mountain className="size-4 text-muted-foreground mt-1 shrink-0" />
-              <div className="min-w-0">
-                {/* Elevation was the one metric fusing its unit into the
-                    numeral — `elevationLabel` returns "120m", so the "m"
-                    rendered at text-xl/700 while every sibling metric
-                    puts its unit in the muted SectionLabel beneath. Pass
-                    withUnit=false and render the unit as its own
-                    secondary span so the four cells finally agree. */}
-                <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground whitespace-nowrap">
-                  {elevationLabel(activity.elevationGain ?? 0, unit, false)}
-                  <span className="text-caption font-semibold text-muted-foreground">
-                    {elevationUnitLabel(unit)}
-                  </span>
-                </p>
-                <SectionLabel className="mt-0.5">elev</SectionLabel>
-              </div>
+            <div className="min-w-0">
+              {/* Elevation was the one metric fusing its unit into the
+                  numeral — `elevationLabel` returns "120m", so the "m"
+                  rendered at text-xl/700 while every sibling metric
+                  puts its unit in the muted SectionLabel beneath. Pass
+                  withUnit=false and render the unit as its own
+                  secondary span so the four cells finally agree.
+
+                  The Mountain icon used to be a SIBLING of this stack
+                  inside a `flex gap-1`, which pushed the numeral and its
+                  caption ~20px inboard of the grid column while every
+                  peer cell sat flush against it. It now rides in the
+                  caption, so the figures line up and the icon still
+                  marks the cell. */}
+              <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground whitespace-nowrap">
+                {elevationLabel(activity.elevationGain ?? 0, unit, false)}
+                <span className="text-caption font-semibold text-muted-foreground">
+                  {elevationUnitLabel(unit)}
+                </span>
+              </p>
+              <SectionLabel className="mt-0.5 flex items-center gap-1">
+                <Mountain className="size-3 shrink-0" aria-hidden="true" />
+                elev
+              </SectionLabel>
             </div>
           )}
         </div>
@@ -650,21 +657,23 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
                   </div>
                 )}
                 {(activity.elevationGain || 0) > 0 && (
-                  <div className="min-w-0 flex items-start gap-1">
-                    <Mountain className="size-4 text-muted-foreground mt-1 shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground whitespace-nowrap">
-                        {elevationLabel(
-                          activity.elevationGain ?? 0,
-                          unit,
-                          false
-                        )}
-                        <span className="text-caption font-semibold text-muted-foreground">
-                          {elevationUnitLabel(unit)}
-                        </span>
-                      </p>
-                      <SectionLabel className="mt-0.5">elev</SectionLabel>
-                    </div>
+                  <div className="min-w-0">
+                    {/* Same cell as the compact stat row above — icon
+                        inside the stack so the numeral stays flush with
+                        its grid column. */}
+                    <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground whitespace-nowrap">
+                      {elevationLabel(activity.elevationGain ?? 0, unit, false)}
+                      <span className="text-caption font-semibold text-muted-foreground">
+                        {elevationUnitLabel(unit)}
+                      </span>
+                    </p>
+                    <SectionLabel className="mt-0.5 flex items-center gap-1">
+                      <Mountain
+                        className="size-3 shrink-0"
+                        aria-hidden="true"
+                      />
+                      elev
+                    </SectionLabel>
                   </div>
                 )}
               </div>
