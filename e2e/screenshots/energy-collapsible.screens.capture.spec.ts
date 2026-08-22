@@ -44,12 +44,14 @@ test.describe("energy collapsible card", () => {
     );
     await page.waitForTimeout(250);
     await page.screenshot({
+      animations: "disabled",
       path: `screenshots/${name}-light.png`,
       fullPage: true,
     });
     await page.evaluate(() => document.documentElement.classList.add("dark"));
     await page.waitForTimeout(300);
     await page.screenshot({
+      animations: "disabled",
       path: `screenshots/${name}-dark.png`,
       fullPage: true,
     });

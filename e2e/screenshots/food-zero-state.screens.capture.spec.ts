@@ -68,7 +68,10 @@ test.describe("food zero state", () => {
     await dismissSeal(page);
     await page.evaluate(() => document.documentElement.classList.add("dark"));
     await page.waitForTimeout(900);
-    await page.screenshot({ path: "screenshots/food-zero-dark.png" });
+    await page.screenshot({
+      animations: "disabled",
+      path: "screenshots/food-zero-dark.png",
+    });
   });
 
   test("zero kcal eaten — light", async ({ page }) => {
@@ -79,6 +82,9 @@ test.describe("food zero state", () => {
       .waitFor({ state: "visible", timeout: 20000 });
     await dismissSeal(page);
     await page.waitForTimeout(900);
-    await page.screenshot({ path: "screenshots/food-zero-light.png" });
+    await page.screenshot({
+      animations: "disabled",
+      path: "screenshots/food-zero-light.png",
+    });
   });
 });

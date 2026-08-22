@@ -51,7 +51,11 @@ test.describe("app screenshots", () => {
   });
 
   async function shoot(page: Page, name: string) {
-    await page.screenshot({ path: `screenshots/${name}.png`, fullPage: true });
+    await page.screenshot({
+      animations: "disabled",
+      path: `screenshots/${name}.png`,
+      fullPage: true,
+    });
   }
 
   /** The rich-seeded user legitimately EARNS a badge on first open, so the

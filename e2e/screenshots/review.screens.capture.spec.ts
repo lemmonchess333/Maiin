@@ -23,8 +23,26 @@ test.describe("weekly review screenshots", () => {
     await signInAsTestUser(page);
   });
 
+  /* `animations: "disabled"` is load-bearing here, not tidiness.
+     The theme is switched below by toggling the `dark` class and shooting
+     straight after, and the SegmentedControl's options carry
+     `motion-safe:transition-colors` — so the frame caught them at the START
+     of that colour transition, still holding the LIGHT muted-foreground.
+     `weekly-review-dark.png` showed the check-in's three options at 2.96:1
+     against their track while every other muted string on the same frame
+     sat at 5.51:1, and the component was innocent: identical markup on
+     Social measured correctly. A design review reading that frame chases a
+     contrast bug that does not exist in the app.
+
+     Playwright fast-forwards finite transitions to completion under this
+     option, so the colour lands on its end state. Every capture spec now
+     passes it — see `captureAnimationsFrozen.test.ts`. */
   async function shoot(page: Page, name: string) {
-    await page.screenshot({ path: `screenshots/${name}.png`, fullPage: true });
+    await page.screenshot({
+      animations: "disabled",
+      path: `screenshots/${name}.png`,
+      fullPage: true,
+    });
   }
 
   test("weekly review — light + dark", async ({ page }) => {

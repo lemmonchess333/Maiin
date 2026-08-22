@@ -54,6 +54,9 @@ test.describe("food delight", () => {
     await dismissSeal(page);
     await page.evaluate(() => document.documentElement.classList.add("dark"));
     await page.waitForTimeout(700);
-    await page.screenshot({ path: "screenshots/food-delight-dark.png" });
+    await page.screenshot({
+      animations: "disabled",
+      path: "screenshots/food-delight-dark.png",
+    });
   });
 });

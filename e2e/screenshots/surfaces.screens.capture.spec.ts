@@ -111,6 +111,7 @@ test.describe(`home + food surfaces (${PHASE})`, () => {
   async function shoot(page: Page, name: string) {
     await page.waitForTimeout(400);
     await page.screenshot({
+      animations: "disabled",
       path: `screenshots/${name}-${PHASE}.png`,
       fullPage: true,
     });

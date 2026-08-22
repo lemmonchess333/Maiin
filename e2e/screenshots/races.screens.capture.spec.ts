@@ -41,7 +41,10 @@ test.describe("races & events directory screenshots", () => {
   });
 
   async function shoot(page: Page, name: string) {
-    await page.screenshot({ path: `screenshots/${name}.png` });
+    await page.screenshot({
+      animations: "disabled",
+      path: `screenshots/${name}.png`,
+    });
   }
 
   /* Re-anchor on the races row before every shot — late-settling

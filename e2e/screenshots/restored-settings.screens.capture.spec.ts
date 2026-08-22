@@ -85,6 +85,7 @@ test.describe("restored settings sections", () => {
         await page.waitForTimeout(600);
 
         await page.screenshot({
+          animations: "disabled",
           path: `screenshots/settings-${stem}-${theme}.png`,
           fullPage: true,
         });
