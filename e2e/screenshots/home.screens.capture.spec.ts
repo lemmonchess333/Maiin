@@ -91,6 +91,7 @@ test.describe("app screenshots", () => {
     await page.evaluate(() =>
       document.documentElement.classList.remove("dark")
     );
+    await page.waitForTimeout(400);
     await shoot(page, "home-light");
 
     await page.evaluate(() => document.documentElement.classList.add("dark"));
@@ -177,6 +178,9 @@ test.describe("app screenshots", () => {
       await page.evaluate(() =>
         document.documentElement.classList.remove("dark")
       );
+      // Symmetry with the dark shot below: a JS-read theme (useIsDarkMode,
+      // MuscleHeatMap) needs a re-render before its colours change.
+      await page.waitForTimeout(400);
       await shoot(page, `${name}-light`);
       await page.evaluate(() => document.documentElement.classList.add("dark"));
       await page.waitForTimeout(400);
@@ -197,6 +201,7 @@ test.describe("app screenshots", () => {
       await page.evaluate(() =>
         document.documentElement.classList.remove("dark")
       );
+      await page.waitForTimeout(400);
       await shoot(page, `${name}-light`);
       await page.evaluate(() => document.documentElement.classList.add("dark"));
       await page.waitForTimeout(350);
@@ -241,6 +246,7 @@ test.describe("app screenshots", () => {
       await page.evaluate(() =>
         document.documentElement.classList.remove("dark")
       );
+      await page.waitForTimeout(400);
       await shoot(page, `${name}-light`);
       await page.evaluate(() => document.documentElement.classList.add("dark"));
       await page.waitForTimeout(350);
@@ -358,6 +364,7 @@ test.describe("app screenshots", () => {
     await page.evaluate(() =>
       document.documentElement.classList.remove("dark")
     );
+    await page.waitForTimeout(400);
     await shoot(page, `${name}-light`);
     await page.evaluate(() => document.documentElement.classList.add("dark"));
     await page.waitForTimeout(350);

@@ -76,6 +76,7 @@ test.describe("easier today screenshots", () => {
     await page.evaluate(() =>
       document.documentElement.classList.remove("dark")
     );
+    await page.waitForTimeout(400);
     await shoot(page, "easier-chooser-light");
     await page.evaluate(() => document.documentElement.classList.add("dark"));
     await page.waitForTimeout(350);

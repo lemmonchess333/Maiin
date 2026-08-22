@@ -56,12 +56,22 @@ test.describe("weekly review screenshots", () => {
       .catch(() => {});
     await page.waitForTimeout(1500);
 
+    /* The settle is the other half of the fix in `shoot` above, and it is
+       the half `animations: "disabled"` cannot supply. Freezing transitions
+       lands CSS colours on their end state, but `useIsDarkMode` and
+       `MuscleHeatMap` read this class in JAVASCRIPT — they need a React
+       re-render before their colours change, and a screenshot taken in the
+       same tick catches the previous theme. 57 toggles across the capture
+       specs already wait; this file's did not, which is why its frame was
+       the one that lied. */
     await page.evaluate(() =>
       document.documentElement.classList.remove("dark")
     );
+    await page.waitForTimeout(400);
     await shoot(page, "weekly-review-light");
 
     await page.evaluate(() => document.documentElement.classList.add("dark"));
+    await page.waitForTimeout(400);
     await shoot(page, "weekly-review-dark");
 
     await page.evaluate(() =>

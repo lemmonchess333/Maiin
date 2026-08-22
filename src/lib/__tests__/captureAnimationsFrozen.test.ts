@@ -87,3 +87,69 @@ describe("capture specs — frozen animations", () => {
     ).toEqual([]);
   });
 });
+
+/**
+ * The other half: a theme toggle immediately followed by a shot.
+ *
+ * `animations: "disabled"` lands CSS colours on their end state, which is
+ * what fixed the frame that lied. It cannot fix the JavaScript half:
+ * `useIsDarkMode` and `MuscleHeatMap` read
+ * `document.documentElement.classList.contains("dark")` in JS, so a
+ * `page.evaluate` toggle needs a React re-render before their colours
+ * change. A screenshot in the same tick catches the previous theme — and
+ * that would mis-colour a CHART, which is far harder to spot as an
+ * artifact than mis-coloured text was.
+ *
+ * This was originally logged as untestable-from-here and ~75 sites wide.
+ * It is not: 57 of the toggles already wait, and measuring found exactly
+ * THREE that toggled and shot with nothing in between — two of them in the
+ * one spec whose frame carried the artifact. That distribution is itself
+ * the confirmation of the diagnosis, and it turned "don't fix blind" into
+ * a three-line change matching a pattern the same files already use.
+ *
+ * Checked by looking BACKWARDS from each shot rather than forwards from
+ * each toggle: a forward window spans loop boundaries and reports the next
+ * iteration's shot as if it followed this iteration's reset.
+ */
+describe("capture specs — theme toggles settle before the shot", () => {
+  const TOGGLE = /classList\.(?:add|remove)\(\s*"dark"\s*\)/;
+  const SETTLE = /waitForTimeout|waitFor\(|toBeVisible|toHaveText/;
+  const SHOT = /(?:\.screenshot\(|\bshoot[A-Za-z]*\()/;
+
+  /** Statement-ish slices, so "the thing immediately before" is meaningful. */
+  function statements(src: string): string[] {
+    return src
+      .split(/;\s*\n/)
+      .map((t) => t.trim())
+      .filter(Boolean);
+  }
+
+  it("no shot is taken in the same breath as a theme toggle", () => {
+    const offenders: string[] = [];
+    for (const f of specFiles(e2eRoot)) {
+      const stmts = statements(readFileSync(f, "utf8"));
+      for (let i = 0; i < stmts.length; i += 1) {
+        if (!SHOT.test(stmts[i])) continue;
+        const prev = stmts[i - 1] ?? "";
+        /* Only the IMMEDIATELY preceding statement. Walking further back
+           produces false positives: an intervening interaction (opening a
+           tooltip, clicking a tab) takes real wall-clock time and settles
+           the theme just as well as an explicit wait, but is unreadable as
+           such from source. The three real sites were all toggle-then-shot
+           with nothing between, so precision costs nothing here. */
+        if (TOGGLE.test(prev) && !SETTLE.test(prev)) {
+          offenders.push(
+            `${relative(repoRoot, f)} :: ${stmts[i].replace(/\s+/g, " ").slice(0, 60)}`
+          );
+        }
+      }
+    }
+    expect(
+      offenders,
+      `A screenshot taken in the same tick as a theme toggle can capture ` +
+        `the PREVIOUS theme wherever the colour is read in JavaScript ` +
+        `(useIsDarkMode, MuscleHeatMap) rather than in CSS. Add a settle ` +
+        `between them — 57 toggles in these specs already do.`
+    ).toEqual([]);
+  });
+});
