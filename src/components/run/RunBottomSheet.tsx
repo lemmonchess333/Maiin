@@ -8,6 +8,7 @@ import {
 } from "react";
 import { motion, useMotionValue, animate } from "framer-motion";
 import { THEME } from "../../lib/theme";
+import { HUD_CAPTION, HUD_SECONDARY } from "./runHudTypography";
 import { haptic } from "../../lib/haptic";
 import { projectAndSnap } from "../../lib/sheetSnap";
 import {
@@ -131,8 +132,7 @@ function SplitsStrip({
             </p>
             <p
               style={{
-                fontSize: 8,
-                color: "rgba(255,255,255,0.25)",
+                ...HUD_CAPTION,
                 marginTop: 1,
               }}
             >
@@ -165,9 +165,11 @@ function KmProgress({
     <div className="flex items-center gap-2 px-1">
       <p
         style={{
-          fontSize: 9,
-          color: "rgba(255,255,255,0.3)",
-          width: 28,
+          ...HUD_SECONDARY,
+          /* 34, not 28: the label went 9px → 11px with the D18 floor, and
+             28px was sized for the smaller type. `{kmDone}{u}` reaches four
+             glyphs at "12km" (~24px at 11px tabular) and five past 100km. */
+          width: 34,
           textAlign: "right",
           fontVariantNumeric: "tabular-nums",
         }}
@@ -189,9 +191,11 @@ function KmProgress({
       </div>
       <p
         style={{
-          fontSize: 9,
-          color: "rgba(255,255,255,0.3)",
-          width: 28,
+          ...HUD_SECONDARY,
+          /* 34, not 28: the label went 9px → 11px with the D18 floor, and
+             28px was sized for the smaller type. `{kmDone}{u}` reaches four
+             glyphs at "12km" (~24px at 11px tabular) and five past 100km. */
+          width: 34,
           fontVariantNumeric: "tabular-nums",
         }}
       >
@@ -419,8 +423,7 @@ export default function RunBottomSheet({
                 </p>
                 <p
                   style={{
-                    fontSize: 9,
-                    color: "rgba(255,255,255,0.28)",
+                    ...HUD_CAPTION,
                     letterSpacing: "0.12em",
                     marginTop: 4,
                   }}
@@ -446,8 +449,7 @@ export default function RunBottomSheet({
                   </p>
                   <p
                     style={{
-                      fontSize: 9,
-                      color: "rgba(255,255,255,0.28)",
+                      ...HUD_CAPTION,
                       letterSpacing: "0.12em",
                       marginTop: 3,
                     }}
@@ -470,8 +472,7 @@ export default function RunBottomSheet({
                   </p>
                   <p
                     style={{
-                      fontSize: 9,
-                      color: "rgba(255,255,255,0.28)",
+                      ...HUD_CAPTION,
                       letterSpacing: "0.12em",
                       marginTop: 3,
                     }}
@@ -481,8 +482,7 @@ export default function RunBottomSheet({
                   {pace !== "--:--" && pace !== livePace && (
                     <p
                       style={{
-                        fontSize: 10,
-                        color: "rgba(255,255,255,0.35)",
+                        ...HUD_SECONDARY,
                         fontVariantNumeric: "tabular-nums",
                         fontFamily: "var(--font-mono)",
                         marginTop: 4,
@@ -523,8 +523,7 @@ export default function RunBottomSheet({
                 </p>
                 <p
                   style={{
-                    fontSize: 8,
-                    color: "rgba(255,255,255,0.25)",
+                    ...HUD_CAPTION,
                     letterSpacing: "0.1em",
                     marginTop: 2,
                   }}
@@ -553,8 +552,7 @@ export default function RunBottomSheet({
                 </p>
                 <p
                   style={{
-                    fontSize: 8,
-                    color: "rgba(255,255,255,0.25)",
+                    ...HUD_CAPTION,
                     letterSpacing: "0.1em",
                     marginTop: 2,
                   }}
@@ -583,8 +581,7 @@ export default function RunBottomSheet({
                 </p>
                 <p
                   style={{
-                    fontSize: 8,
-                    color: "rgba(255,255,255,0.25)",
+                    ...HUD_CAPTION,
                     letterSpacing: "0.1em",
                     marginTop: 2,
                   }}
@@ -618,8 +615,7 @@ export default function RunBottomSheet({
                     </p>
                     <p
                       style={{
-                        fontSize: 8,
-                        color: "rgba(255,255,255,0.25)",
+                        ...HUD_CAPTION,
                         letterSpacing: "0.1em",
                         marginTop: 2,
                       }}
@@ -777,8 +773,7 @@ export default function RunBottomSheet({
               </p>
               <p
                 style={{
-                  fontSize: 8,
-                  color: "rgba(255,255,255,0.25)",
+                  ...HUD_CAPTION,
                   letterSpacing: "0.1em",
                 }}
               >
@@ -799,8 +794,7 @@ export default function RunBottomSheet({
               </p>
               <p
                 style={{
-                  fontSize: 8,
-                  color: "rgba(255,255,255,0.25)",
+                  ...HUD_CAPTION,
                   letterSpacing: "0.1em",
                 }}
               >
@@ -821,8 +815,7 @@ export default function RunBottomSheet({
               </p>
               <p
                 style={{
-                  fontSize: 8,
-                  color: "rgba(255,255,255,0.25)",
+                  ...HUD_CAPTION,
                   letterSpacing: "0.1em",
                 }}
               >
@@ -922,7 +915,9 @@ export default function RunBottomSheet({
               >
                 {distanceValue(distance, unit, 2)}
               </p>
-              <p style={{ fontSize: 9, color: "rgba(255,255,255,0.4)" }}>{distanceUnitLabel(unit).toUpperCase()}</p>
+              <p style={{ ...HUD_CAPTION }}>
+                {distanceUnitLabel(unit).toUpperCase()}
+              </p>
             </div>
             <div className="text-center">
               <p
@@ -931,9 +926,7 @@ export default function RunBottomSheet({
               >
                 {formatTime(elapsed)}
               </p>
-              <p style={{ fontSize: 9, color: "rgba(255,255,255,0.4)" }}>
-                TIME
-              </p>
+              <p style={{ ...HUD_CAPTION }}>TIME</p>
             </div>
             <div className="text-center">
               <p
@@ -942,7 +935,7 @@ export default function RunBottomSheet({
               >
                 {pace}
               </p>
-              <p style={{ fontSize: 9, color: "rgba(255,255,255,0.4)" }}>/KM</p>
+              <p style={{ ...HUD_CAPTION }}>/KM</p>
             </div>
           </div>
           {/* Primary-action swap: for sub-threshold runs the safest

@@ -104,10 +104,17 @@ test.describe("live run HUD", () => {
       await launch.click({ timeout: 15_000 });
     }
 
-    // Acquiring needs one fix; countdown is 3s from there. Walk through
-    // both, then keep walking so distance and rolling pace are non-zero —
-    // an all-zero HUD would not show the treatment this frame exists for.
-    await walk(page, 14);
+    /* Two walks, not one, and the split matters. The first only has to
+       reach the active phase: acquiring needs a single fix, then the
+       countdown burns three seconds during which fixes still stream but
+       the timer has not started. The FIRST version of this spec walked
+       once, for 14 steps, and the resulting frame read 0:02 / 0.00 km /
+       --:-- — the HUD captured, but every value it exists to display at
+       zero, and the live-pace label never in its real state.
+
+       So: walk enough to get in, assert, then keep walking so distance
+       and rolling pace are real when the shutter goes. */
+    await walk(page, 12);
 
     /* Assert the HUD is really up before shooting. `Pause run` is the
        primary control and exists only in the active/paused phases. */
@@ -117,6 +124,10 @@ test.describe("live run HUD", () => {
       "the run never reached the active phase — the frame would show the " +
         "setup screen or the countdown while claiming to be the HUD"
     ).toBeVisible({ timeout: 30_000 });
+
+    // ~36m per step at this spacing, so 20 more puts roughly 700m and a
+    // settled rolling pace on the display.
+    await walk(page, 20, 12);
 
     await page.screenshot({
       animations: "disabled",
