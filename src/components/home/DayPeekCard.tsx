@@ -189,6 +189,14 @@ export default function DayPeekCard({
         : shownType === "both"
           ? THEME.lifting
           : "hsl(var(--muted-foreground))";
+  const typeBg =
+    shownType === "lift"
+      ? THEME.lifting + "18"
+      : shownType === "run"
+        ? THEME.running + "18"
+        : shownType === "both"
+          ? THEME.teal + "18"
+          : "hsl(var(--muted-foreground) / 0.09)";
   let tonnage = 0;
   let totalMinutes = 0;
   workouts.forEach(function (w) {
@@ -261,7 +269,11 @@ export default function DayPeekCard({
               </span>
               <span
                 className="text-xs font-medium px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: typeColor + "18", color: typeColor }}
+                /* The bg comes from the pair, never `typeColor + "18"` —
+                   the rest branch is a var() string and hex-alpha concat
+                   onto it is invalid CSS (the pill silently loses its
+                   tint). Caught in self-review before the frame did. */
+                style={{ backgroundColor: typeBg, color: typeColor }}
               >
                 {typeLabel}
               </span>

@@ -1704,8 +1704,8 @@ export default function Onboarding() {
                       transition={{ delay: i * 0.04, duration: 0.25 }}
                       className="rounded-xl py-2 px-1 text-center"
                       style={{
-                        background: `${meta.color}18`,
-                        border: `1px solid ${meta.color}40`,
+                        background: meta.tint,
+                        border: `1px solid ${meta.border}`,
                       }}
                     >
                       <p

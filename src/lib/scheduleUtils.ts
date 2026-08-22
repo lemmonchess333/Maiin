@@ -35,12 +35,36 @@ export { DAY_LABELS, DAY_LABELS_SHORT };
  */
 export const SCHEDULE_TYPE_META: Record<
   DayType,
-  { label: string; color: string }
+  { label: string; color: string; tint: string; border: string }
 > = {
-  lift: { label: "Lift", color: THEME.lifting },
-  run: { label: "Run", color: THEME.running },
-  both: { label: "Both", color: THEME.teal },
-  rest: { label: "Rest", color: "hsl(var(--muted-foreground))" },
+  /* `tint`/`border` are PRECOMPUTED here rather than concatenated at call
+     sites (`${color}18`), because the rest colour is a CSS var() string
+     and hex-alpha concatenation onto it produces invalid CSS — the exact
+     hazard the DS1b lock recorded. One source, both forms. */
+  lift: {
+    label: "Lift",
+    color: THEME.lifting,
+    tint: THEME.lifting + "18",
+    border: THEME.lifting + "40",
+  },
+  run: {
+    label: "Run",
+    color: THEME.running,
+    tint: THEME.running + "18",
+    border: THEME.running + "40",
+  },
+  both: {
+    label: "Both",
+    color: THEME.teal,
+    tint: THEME.teal + "18",
+    border: THEME.teal + "40",
+  },
+  rest: {
+    label: "Rest",
+    color: "hsl(var(--muted-foreground))",
+    tint: "hsl(var(--muted-foreground) / 0.09)",
+    border: "hsl(var(--muted-foreground) / 0.25)",
+  },
 };
 
 /**
