@@ -164,7 +164,7 @@ function TierMarker({
       style={{ left: `${pct}%` }}
     >
       <div
-        className={`size-2.5 rounded-full border-2 border-background ${achieved ? "" : "bg-muted-foreground/30"}`}
+        className={`size-2.5 rounded-full border-2 border-card ${achieved ? "" : "bg-muted-foreground/30"}`}
         style={achieved ? { backgroundColor: TIER_COLORS[tier] } : undefined}
       />
       <span
@@ -485,7 +485,12 @@ export function ChallengeCard({
                 computes tierAchieved correctly; we just stop the
                 progress bar from rendering nonsense width when
                 currentValue is 0 (no qualifying run yet). */}
-            <div className="relative pt-1 pb-5">
+            {/* pb-7, not pb-5: the labels hang below the marker layer and
+                were overrunning the container by roughly a line's descent,
+                which is why "20.0km / 40.0km / 75.0km" sat jammed against
+                the "You're at …" line beneath while a gap opened above the
+                bar. */}
+            <div className="relative pt-1 pb-7">
               <div className="h-2 rounded-full bg-muted overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
@@ -508,7 +513,15 @@ export function ChallengeCard({
                   lower-is-better semantic for fastest_effort so each
                   marker is just a comparison instead of repeating the
                   metric branch three times. */}
-              <div className="relative mt-1">
+              {/* The dot is centred ON the bar, not floating beneath it.
+                  `mt-1` put the marker layer 4px BELOW the bar's bottom
+                  edge, so the dots read as a second empty track and the
+                  `border-card` ring — whose whole job is punching the dot
+                  out of the fill — had nothing to separate it from. The
+                  offset lands the 10px dot's centre on the 8px bar's
+                  centreline: bar top 4px (pt-1) + 4px = 8px, dot top
+                  8 - 5 = 3px, i.e. 9px above the bar's bottom edge. */}
+              <div className="relative -mt-[9px]">
                 <TierMarker
                   tier="bronze"
                   value={challenge.tiers.bronze}

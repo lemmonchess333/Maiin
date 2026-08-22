@@ -208,7 +208,16 @@ export default function WeightStepsTiles({
           {stepsConnected ? (
             <>
               <div className="flex items-baseline gap-1">
-                <p className="text-xl font-bold leading-none text-foreground font-mono tabular-nums">
+                {/* Same tier as the weight figure directly above it.
+                    These two are peer tiles stacked in one column, and
+                    they had drifted apart — steps at text-xl / 700 under
+                    weight at text-2xl / 800 — which reads as steps being
+                    the lesser stat rather than the equal one it is, and
+                    breaches DESIGN_GUIDE's "never mix 700 and 800 in the
+                    same visual tier". Invisible on web by construction:
+                    the steps tile is gated on isNativePlatform(), so no
+                    capture frame has ever contained it. */}
+                <p className="text-2xl font-extrabold leading-none text-foreground font-mono tabular-nums">
                   {stepsValue.toLocaleString()}
                 </p>
               </div>
