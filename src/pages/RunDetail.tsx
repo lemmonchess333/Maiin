@@ -420,8 +420,16 @@ export default function RunDetail() {
             said otherwise. */}
         {hasGpsTrace && (
           <div className="space-y-2">
+            {/* `sport`, not `sport-tinted`. The variant table puts a main
+                running CTA on solid coral, and while this button was one of
+                three equal-width utilities the tinted step was defensible.
+                Full-width it is not: the frame shows a coral-tinted pill
+                sitting a short scroll above the equally-tinted destructive
+                "Delete this run", two soft red-ish bars of nearly the same
+                weight. Solid separates them by weight as well as hue, and
+                matches what this control now is on the page. */}
             <Button
-              variant="sport-tinted"
+              variant="sport"
               fullWidth
               onClick={() =>
                 navigate("/run", { state: { followRoute: run.points } })
