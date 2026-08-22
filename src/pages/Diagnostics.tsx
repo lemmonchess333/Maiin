@@ -233,7 +233,7 @@ export default function Diagnostics() {
         </div>
 
         <section className="bg-card rounded-2xl p-4 space-y-1">
-          <p className="text-caption uppercase tracking-widest text-muted-foreground/70 mb-1">
+          <p className="text-caption uppercase tracking-widest text-muted-foreground mb-1">
             App
           </p>
           <Row label="Version" value={`v${__APP_VERSION__}`} />
@@ -242,7 +242,7 @@ export default function Diagnostics() {
         </section>
 
         <section className="bg-card rounded-2xl p-4 space-y-1">
-          <p className="text-caption uppercase tracking-widest text-muted-foreground/70 mb-1">
+          <p className="text-caption uppercase tracking-widest text-muted-foreground mb-1">
             Service Worker
           </p>
           <Row label="State" value={swSummary} />
@@ -250,21 +250,21 @@ export default function Diagnostics() {
         </section>
 
         <section className="bg-card rounded-2xl p-4 space-y-1">
-          <p className="text-caption uppercase tracking-widest text-muted-foreground/70 mb-1">
+          <p className="text-caption uppercase tracking-widest text-muted-foreground mb-1">
             App Check
           </p>
           <Row label="Token" value={appCheckSummary} />
         </section>
 
         <section className="bg-card rounded-2xl p-4 space-y-1">
-          <p className="text-caption uppercase tracking-widest text-muted-foreground/70 mb-1">
+          <p className="text-caption uppercase tracking-widest text-muted-foreground mb-1">
             Analytics
           </p>
           <Row label="Provider" value={analyticsStatus} />
         </section>
 
         <section className="bg-card rounded-2xl p-4 space-y-1">
-          <p className="text-caption uppercase tracking-widest text-muted-foreground/70 mb-1">
+          <p className="text-caption uppercase tracking-widest text-muted-foreground mb-1">
             Notifications
           </p>
           <Row label="Permission" value={permissionSummary} />
@@ -289,7 +289,7 @@ export default function Diagnostics() {
         </section>
 
         <section className="bg-card rounded-2xl p-4 space-y-1">
-          <p className="text-caption uppercase tracking-widest text-muted-foreground/70 mb-1">
+          <p className="text-caption uppercase tracking-widest text-muted-foreground mb-1">
             Offline Queue
           </p>
           <Row label="Depth" value={`${queueLength} pending`} />
@@ -304,7 +304,7 @@ export default function Diagnostics() {
         </section>
 
         <section className="bg-card rounded-2xl p-4 space-y-1">
-          <p className="text-caption uppercase tracking-widest text-muted-foreground/70 mb-1">
+          <p className="text-caption uppercase tracking-widest text-muted-foreground mb-1">
             Recent Crashes
           </p>
           {crashes === null ? (
@@ -334,7 +334,7 @@ export default function Diagnostics() {
                     </p>
                   )}
                   {c.componentStack && (
-                    <p className="text-muted-foreground/80 break-all whitespace-pre-wrap">
+                    <p className="text-muted-foreground break-all whitespace-pre-wrap">
                       {c.componentStack
                         .trim()
                         .split("\n")
@@ -348,7 +348,7 @@ export default function Diagnostics() {
           )}
         </section>
 
-        <p className="text-center text-xs text-muted-foreground/60 pt-2">
+        <p className="text-center text-xs text-muted-foreground pt-2">
           Unlinked route. Share by URL to support.
         </p>
       </div>

@@ -141,7 +141,7 @@ function MicroRow({
         <span className="text-caption uppercase tracking-[0.14em] text-muted-foreground font-semibold">
           {label}
           {isLimit && (
-            <span className="ml-1.5 normal-case tracking-normal text-[10px] text-muted-foreground/70">
+            <span className="ml-1.5 normal-case tracking-normal text-[10px] text-muted-foreground">
               limit
             </span>
           )}

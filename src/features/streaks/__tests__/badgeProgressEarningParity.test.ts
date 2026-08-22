@@ -253,8 +253,6 @@ describe("badge progress and earning never disagree", () => {
     const withProgress = BADGE_DEFINITIONS.filter((b) =>
       badgeProgress(b, rich)
     );
-    expect(withProgress.length).toBeGreaterThan(
-      BADGE_DEFINITIONS.length * 0.4
-    );
+    expect(withProgress.length).toBeGreaterThan(BADGE_DEFINITIONS.length * 0.4);
   });
 });

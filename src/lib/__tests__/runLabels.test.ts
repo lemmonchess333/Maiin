@@ -267,7 +267,8 @@ describe("paceMinSec", () => {
     for (let secPerKm = 100; secPerKm <= 1200; secPerKm++) {
       for (const unit of ["km", "mi"] as const) {
         const out = paceMinSec(secPerKm, unit);
-        if (/:(6\d|\d{3})$/.test(out)) offenders.push(`${secPerKm} ${unit} -> ${out}`);
+        if (/:(6\d|\d{3})$/.test(out))
+          offenders.push(`${secPerKm} ${unit} -> ${out}`);
       }
     }
     expect(offenders, "seconds component must stay 00–59").toEqual([]);

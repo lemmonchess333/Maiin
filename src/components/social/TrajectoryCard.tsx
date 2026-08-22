@@ -35,12 +35,12 @@ export default function TrajectoryCard({
   // muted grey = flat / no baseline.
   const deltaColor =
     deltaPct == null
-      ? THEME.text.muted
+      ? "hsl(var(--muted-foreground))"
       : deltaPct > 0
         ? THEME.success
         : deltaPct < 0
           ? THEME.running
-          : THEME.text.muted;
+          : "hsl(var(--muted-foreground))";
 
   const DeltaIcon =
     deltaPct == null

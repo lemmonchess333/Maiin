@@ -33,13 +33,22 @@ import { createRequire } from "node:module";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../../..");
-const inventoryPath = resolve(repoRoot, "functions/accountDeletionInventory.json");
+const inventoryPath = resolve(
+  repoRoot,
+  "functions/accountDeletionInventory.json"
+);
 const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
 
 const require = createRequire(import.meta.url);
-const { matchesPathFilter } = require("../../../functions/lib/pathFilterMatcher.js");
+const {
+  matchesPathFilter,
+} = require("../../../functions/lib/pathFilterMatcher.js");
 
-interface InventoryAlias { key: string; path: string; reason: string; }
+interface InventoryAlias {
+  key: string;
+  path: string;
+  reason: string;
+}
 interface InventoryEntry {
   key: string;
   path?: string;
@@ -119,7 +128,10 @@ function isUserSubcollectionClassified(sub: string): boolean {
  * Check whether a top-level user-keyed write to `X/{uid}` or
  * `X/{uid}/SUB` is classified.
  */
-function isTopLevelUserKeyedClassified(first: string, sub: string | null): boolean {
+function isTopLevelUserKeyedClassified(
+  first: string,
+  sub: string | null
+): boolean {
   const candidates: string[] = [];
   if (sub) candidates.push(`${first}/{uid}/${sub}`);
   candidates.push(`${first}/{uid}`);
@@ -136,7 +148,14 @@ function isTopLevelUserKeyedClassified(first: string, sub: string | null): boole
 
 function walk(dir: string, files: string[] = []): string[] {
   for (const name of readdirSync(dir)) {
-    if (name === "node_modules" || name === ".git" || name === "dist" || name === "ios" || name === "android") continue;
+    if (
+      name === "node_modules" ||
+      name === ".git" ||
+      name === "dist" ||
+      name === "ios" ||
+      name === "android"
+    )
+      continue;
     const full = join(dir, name);
     let s;
     try {
@@ -187,7 +206,8 @@ interface Detection {
  * If a write call uses one of these as the uid-position arg, it's
  * considered user-keyed.
  */
-const UID_LIKE = /\b(uid|user\.uid|currentUser\.uid|currentUid|user\?\.\w*uid|targetUid|followerUid|followingUid|targetUserId|recipientUid|authorId|authorUid|fromUserId|toUserId|memberUid|userId|otherUid)\b/;
+const UID_LIKE =
+  /\b(uid|user\.uid|currentUser\.uid|currentUid|user\?\.\w*uid|targetUid|followerUid|followingUid|targetUserId|recipientUid|authorId|authorUid|fromUserId|toUserId|memberUid|userId|otherUid)\b/;
 
 /**
  * Detection of `collection(db, "X", varname, "Y", ...)` or
@@ -195,25 +215,31 @@ const UID_LIKE = /\b(uid|user\.uid|currentUser\.uid|currentUid|user\?\.\w*uid|ta
  *
  * Captures: first segment, sub segment (if present).
  */
-const WEB_TWO_SEGMENT = /\b(?:collection|doc)\s*\(\s*db\s*,\s*"([^"]+)"\s*,\s*([^,)]+)\s*,\s*"([^"]+)"/g;
+const WEB_TWO_SEGMENT =
+  /\b(?:collection|doc)\s*\(\s*db\s*,\s*"([^"]+)"\s*,\s*([^,)]+)\s*,\s*"([^"]+)"/g;
 
 /** `doc(db, "X", varname)` — top-level doc by some id */
-const WEB_DOC_TOP_LEVEL = /\bdoc\s*\(\s*db\s*,\s*"([^"]+)"\s*,\s*([^,)]+)\s*\)/g;
+const WEB_DOC_TOP_LEVEL =
+  /\bdoc\s*\(\s*db\s*,\s*"([^"]+)"\s*,\s*([^,)]+)\s*\)/g;
 
 /** `collection(db, "X")` — top-level collection access */
 const WEB_COLLECTION_TOP_LEVEL = /\bcollection\s*\(\s*db\s*,\s*"([^"]+)"\s*\)/g;
 
 /** `doc(db, "X", varname1, "Y", varname2)` — 4-segment doc ref where last id may be uid */
-const WEB_FOUR_SEGMENT_DOC = /\bdoc\s*\(\s*db\s*,\s*"([^"]+)"\s*,\s*([^,)]+)\s*,\s*"([^"]+)"\s*,\s*([^,)]+)\s*\)/g;
+const WEB_FOUR_SEGMENT_DOC =
+  /\bdoc\s*\(\s*db\s*,\s*"([^"]+)"\s*,\s*([^,)]+)\s*,\s*"([^"]+)"\s*,\s*([^,)]+)\s*\)/g;
 
 /** Admin SDK: `.collection("X").doc(varname).collection("Y")` */
-const ADMIN_TWO_SEGMENT = /\.collection\s*\(\s*"([^"]+)"\s*\)\s*\.doc\s*\(\s*([^)]+)\s*\)\s*\.collection\s*\(\s*"([^"]+)"/g;
+const ADMIN_TWO_SEGMENT =
+  /\.collection\s*\(\s*"([^"]+)"\s*\)\s*\.doc\s*\(\s*([^)]+)\s*\)\s*\.collection\s*\(\s*"([^"]+)"/g;
 
 /** Admin SDK: `.collection("X").doc(varname)` — first segment / doc by uid */
-const ADMIN_DOC_BY_UID = /\.collection\s*\(\s*"([^"]+)"\s*\)\s*\.doc\s*\(\s*([^)]+)\s*\)/g;
+const ADMIN_DOC_BY_UID =
+  /\.collection\s*\(\s*"([^"]+)"\s*\)\s*\.doc\s*\(\s*([^)]+)\s*\)/g;
 
 /** Storage: `ref(storage, "X/${uid}/...")` or `ref(storage, \`X/${uid}/...\`)` */
-const STORAGE_REF = /\bref\s*\(\s*\w*storage\w*\s*,\s*[`'"]([a-zA-Z][\w-]*)\/\$?\{?(uid|user\.uid|currentUser\.uid|currentUid)\}?/g;
+const STORAGE_REF =
+  /\bref\s*\(\s*\w*storage\w*\s*,\s*[`'"]([a-zA-Z][\w-]*)\/\$?\{?(uid|user\.uid|currentUser\.uid|currentUid)\}?/g;
 
 /**
  * Lines flagged with `// @deletion-classified: <key>` are exempt —
@@ -253,7 +279,12 @@ function scanFile(file: string): Detection[] {
     while ((m = WEB_TWO_SEGMENT.exec(line))) {
       const [, first, varname, sub] = m;
       if (!isUidLikeArg(varname)) continue;
-      detections.push({ file, line: i + 1, signature: `${first}/{uid}/${sub}`, raw: line.trim() });
+      detections.push({
+        file,
+        line: i + 1,
+        signature: `${first}/{uid}/${sub}`,
+        raw: line.trim(),
+      });
     }
 
     // WEB_FOUR_SEGMENT_DOC: doc(db, "X", varname1, "Y", varname2)
@@ -282,7 +313,12 @@ function scanFile(file: string): Detection[] {
       const [, first, varname] = m;
       if (!KNOWN_FIRST_SEGMENTS.has(first)) continue;
       if (!isUidLikeArg(varname)) continue;
-      detections.push({ file, line: i + 1, signature: `${first}/{uid}`, raw: line.trim() });
+      detections.push({
+        file,
+        line: i + 1,
+        signature: `${first}/{uid}`,
+        raw: line.trim(),
+      });
     }
 
     // WEB_COLLECTION_TOP_LEVEL: collection(db, "X") — flag only if X is a
@@ -292,7 +328,12 @@ function scanFile(file: string): Detection[] {
     while ((m = WEB_COLLECTION_TOP_LEVEL.exec(line))) {
       const [, first] = m;
       if (!KNOWN_FIRST_SEGMENTS.has(first)) continue;
-      detections.push({ file, line: i + 1, signature: first, raw: line.trim() });
+      detections.push({
+        file,
+        line: i + 1,
+        signature: first,
+        raw: line.trim(),
+      });
     }
 
     // ADMIN_TWO_SEGMENT: .collection("X").doc(varname).collection("SUB")
@@ -300,7 +341,12 @@ function scanFile(file: string): Detection[] {
     while ((m = ADMIN_TWO_SEGMENT.exec(line))) {
       const [, first, varname, sub] = m;
       if (!isUidLikeArg(varname)) continue;
-      detections.push({ file, line: i + 1, signature: `${first}/{uid}/${sub}`, raw: line.trim() });
+      detections.push({
+        file,
+        line: i + 1,
+        signature: `${first}/{uid}/${sub}`,
+        raw: line.trim(),
+      });
     }
 
     // ADMIN_DOC_BY_UID: .collection("X").doc(varname)
@@ -309,14 +355,24 @@ function scanFile(file: string): Detection[] {
       const [, first, varname] = m;
       if (!isUidLikeArg(varname)) continue;
       if (!KNOWN_FIRST_SEGMENTS.has(first)) continue;
-      detections.push({ file, line: i + 1, signature: `${first}/{uid}`, raw: line.trim() });
+      detections.push({
+        file,
+        line: i + 1,
+        signature: `${first}/{uid}`,
+        raw: line.trim(),
+      });
     }
 
     // Storage
     STORAGE_REF.lastIndex = 0;
     while ((m = STORAGE_REF.exec(line))) {
       const [, prefix] = m;
-      detections.push({ file, line: i + 1, signature: `${prefix}/{uid}/`, raw: line.trim() });
+      detections.push({
+        file,
+        line: i + 1,
+        signature: `${prefix}/{uid}/`,
+        raw: line.trim(),
+      });
     }
   }
   return detections;
@@ -353,7 +409,10 @@ function isCrossUserKeyedClassified(signature: string): boolean {
   // well-formed candidate.
   const candidatePath = `${parts[0]}/__wildcard__/${parts[2]}/__leaf__`;
   for (const entry of ALL_ENTRIES) {
-    if (entry.pathFilter && matchesPathFilter(entry.pathFilter, candidatePath)) {
+    if (
+      entry.pathFilter &&
+      matchesPathFilter(entry.pathFilter, candidatePath)
+    ) {
       return true;
     }
   }
@@ -430,13 +489,13 @@ describe("accountDeletionDrift — every detected user-keyed write is classified
       const message = unclassified
         .map(
           (d) =>
-            `  ${relative(repoRoot, d.file)}:${d.line}\n    signature: ${d.signature}\n    code:      ${d.raw.slice(0, 200)}`,
+            `  ${relative(repoRoot, d.file)}:${d.line}\n    signature: ${d.signature}\n    code:      ${d.raw.slice(0, 200)}`
         )
         .join("\n\n");
       throw new Error(
         `R1A-Deletion drift detected — ${unclassified.length} unclassified user-keyed write site(s):\n\n${message}\n\n` +
           `Fix by either (a) adding an entry to functions/accountDeletionInventory.json, ` +
-          `or (b) annotating the line(s) with: // @deletion-classified: <inventory-key>`,
+          `or (b) annotating the line(s) with: // @deletion-classified: <inventory-key>`
       );
     }
     expect(unclassified).toEqual([]);
@@ -480,8 +539,8 @@ describe("testCoverageStatus=implemented entries map to real test files", () => 
       (f) =>
         f.endsWith(".test.ts") ||
         f.endsWith(".test.tsx") ||
-        f.endsWith(".test.js"),
-    ),
+        f.endsWith(".test.js")
+    )
   );
   // Read every test file once. The check is a substring match — cheap.
   const allTestSources = testFiles
@@ -500,7 +559,7 @@ describe("testCoverageStatus=implemented entries map to real test files", () => 
   ].filter((e: CoverageEntry) => typeof e.testCoverageKey === "string");
 
   const implementedEntries = allEntries.filter(
-    (e) => e.testCoverageStatus === "implemented",
+    (e) => e.testCoverageStatus === "implemented"
   );
 
   it("the guard exists (sanity)", () => {
@@ -525,22 +584,30 @@ describe("testCoverageStatus=implemented entries map to real test files", () => 
     const overclaiming: Array<{ key: string; testCoverageKey: string }> = [];
     for (const entry of implementedEntries) {
       if (!allTestSources.includes(entry.testCoverageKey)) {
-        overclaiming.push({ key: entry.key, testCoverageKey: entry.testCoverageKey });
+        overclaiming.push({
+          key: entry.key,
+          testCoverageKey: entry.testCoverageKey,
+        });
       }
     }
     if (overclaiming.length > 0) {
       const detail = overclaiming
-        .map((o) => `  ${o.key} claims '${o.testCoverageKey}' — no test file contains that string`)
+        .map(
+          (o) =>
+            `  ${o.key} claims '${o.testCoverageKey}' — no test file contains that string`
+        )
         .join("\n");
       throw new Error(
-        `R1A-Deletion testCoverageStatus overclaim — ${overclaiming.length} entry(ies) claim 'implemented' coverage with no matching test:\n${detail}\n\nFix by adding a test that contains the testCoverageKey string, or revert testCoverageStatus to 'planned'.`,
+        `R1A-Deletion testCoverageStatus overclaim — ${overclaiming.length} entry(ies) claim 'implemented' coverage with no matching test:\n${detail}\n\nFix by adding a test that contains the testCoverageKey string, or revert testCoverageStatus to 'planned'.`
       );
     }
     expect(overclaiming).toEqual([]);
   });
 
   it("at least one entry exists with testCoverageStatus=planned (sanity — until Chunk 3 starts flipping to implemented)", () => {
-    const plannedCount = allEntries.filter((e) => e.testCoverageStatus === "planned").length;
+    const plannedCount = allEntries.filter(
+      (e) => e.testCoverageStatus === "planned"
+    ).length;
     // Pre-Chunk-3 expectation: all 40 included entries are planned.
     // This will tighten as Chunk 3/4 land smoke tests.
     expect(plannedCount).toBeGreaterThan(0);

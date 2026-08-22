@@ -23,7 +23,10 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DEFAULT_REST_SECONDS } from "../programTypes";
 
-const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
+const repoRoot = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../../../.."
+);
 const read = (rel: string) => readFileSync(resolve(repoRoot, rel), "utf8");
 
 describe("rest-timer default", () => {

@@ -391,9 +391,7 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
                  beside it grew. The name owns the flexible half, the
                  summary owns a fixed one. */
               const summaryClass = `text-sm font-mono tabular-nums shrink-0 whitespace-nowrap ${
-                isBodyweight
-                  ? "text-muted-foreground/60"
-                  : "text-muted-foreground"
+                isBodyweight ? "text-muted-foreground" : "text-muted-foreground"
               }`;
               if (!canCompare) {
                 return (

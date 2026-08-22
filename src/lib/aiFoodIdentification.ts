@@ -26,21 +26,21 @@
  */
 
 const GENERIC_AI_NAMES = new Set<string>([
-  'unidentifiable',
-  'unidentified',
-  'unknown',
-  'unknown food',
-  'unknown item',
-  'food',
-  'item',
-  'object',
-  'meal',
-  'thing',
-  'no food detected',
-  'no food',
-  'n/a',
-  'na',
-  'none',
+  "unidentifiable",
+  "unidentified",
+  "unknown",
+  "unknown food",
+  "unknown item",
+  "food",
+  "item",
+  "object",
+  "meal",
+  "thing",
+  "no food detected",
+  "no food",
+  "n/a",
+  "na",
+  "none",
 ]);
 
 /**
@@ -59,9 +59,9 @@ export function isGenericAiFoodName(name: string | undefined | null): boolean {
  * a new array — does not mutate the input. Caller decides what
  * to do with the empty case (show empty-result state, etc).
  */
-export function filterIdentifiableAiItems<T extends { name?: string | null | undefined }>(
-  items: readonly T[],
-): T[] {
+export function filterIdentifiableAiItems<
+  T extends { name?: string | null | undefined },
+>(items: readonly T[]): T[] {
   return items.filter((item) => !isGenericAiFoodName(item.name));
 }
 
@@ -70,9 +70,9 @@ export function filterIdentifiableAiItems<T extends { name?: string | null | und
  * (no identifiable items)? True when the array is empty OR
  * every entry is generic / unidentifiable.
  */
-export function isEmptyAiFoodResult<T extends { name?: string | null | undefined }>(
-  items: readonly T[] | undefined | null,
-): boolean {
+export function isEmptyAiFoodResult<
+  T extends { name?: string | null | undefined },
+>(items: readonly T[] | undefined | null): boolean {
   if (!items || items.length === 0) return true;
   return filterIdentifiableAiItems(items).length === 0;
 }

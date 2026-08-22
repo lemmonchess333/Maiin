@@ -65,9 +65,15 @@ export const THEME = {
   scrimSoft: "rgba(0,0,0,0.15)",
 
   // Light mode text helpers
-  text: {
-    muted: "#8E8E93", // iOS system grey
-  },
+  /* `text.muted` (#8E8E93) was deleted in the 2026-08-22 owner-decided
+     consolidation: it was a FIXED grey serving both themes, measuring
+     2.53–3.26:1 across the light surfaces it actually rendered on and
+     failing dark's muted tiles too. The muted-text identity is the
+     theme-aware `--muted-foreground` token — `text-muted-foreground` in
+     className contexts, `"hsl(var(--muted-foreground))"` in style/JS
+     contexts. Do not reintroduce a JS hex for secondary text; the one
+     legitimate literal left is `runLiveActivity.ts` (native plugin,
+     always-dark overlay, no CSS vars). */
 
   // Neutral backgrounds
   neutral: {

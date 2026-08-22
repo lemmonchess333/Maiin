@@ -141,7 +141,9 @@ describe("buildPerformanceInsight — lowest-sub-score selection", () => {
     // but source pins the band.
     expect(result.source).toBe("load");
     // All low templates open with one of the documented headlines.
-    expect(["Load is light", "Light week", "Quiet week"]).toContain(result.headline);
+    expect(["Load is light", "Light week", "Quiet week"]).toContain(
+      result.headline
+    );
   });
 });
 
@@ -167,19 +169,27 @@ describe("buildPerformanceInsight — determinism", () => {
     // With 3 variants per band a hash hitting different remainders
     // for different weeks should produce at least 2 distinct headlines
     // across 6 weeks of similar input.
-    const inputs = ["2026-04-05", "2026-04-12", "2026-04-19", "2026-04-26", "2026-05-03", "2026-05-10"];
+    const inputs = [
+      "2026-04-05",
+      "2026-04-12",
+      "2026-04-19",
+      "2026-04-26",
+      "2026-05-03",
+      "2026-05-10",
+    ];
     const headlines = new Set(
-      inputs.map((weekKey) =>
-        buildPerformanceInsight({
-          uid: "u-rotate",
-          weekKey,
-          loadScore: 30,
-          recoveryScore: 70,
-          adherenceScore: 80,
-          weeksAvailable: 8,
-          delta: 5,
-        }).headline,
-      ),
+      inputs.map(
+        (weekKey) =>
+          buildPerformanceInsight({
+            uid: "u-rotate",
+            weekKey,
+            loadScore: 30,
+            recoveryScore: 70,
+            adherenceScore: 80,
+            weeksAvailable: 8,
+            delta: 5,
+          }).headline
+      )
     );
     expect(headlines.size).toBeGreaterThan(1);
   });
@@ -192,10 +202,30 @@ describe("buildPerformanceInsight — tone guards", () => {
       { weeksAvailable: 2 }, // baseline
       { weeksAvailable: 8, loadBand: "deload" },
       { weeksAvailable: 8, delta: -20 },
-      { weeksAvailable: 8, loadScore: 20, recoveryScore: 70, adherenceScore: 70 },
-      { weeksAvailable: 8, loadScore: 70, recoveryScore: 20, adherenceScore: 70 },
-      { weeksAvailable: 8, loadScore: 70, recoveryScore: 70, adherenceScore: 20 },
-      { weeksAvailable: 8, loadScore: 80, recoveryScore: 80, adherenceScore: 80 },
+      {
+        weeksAvailable: 8,
+        loadScore: 20,
+        recoveryScore: 70,
+        adherenceScore: 70,
+      },
+      {
+        weeksAvailable: 8,
+        loadScore: 70,
+        recoveryScore: 20,
+        adherenceScore: 70,
+      },
+      {
+        weeksAvailable: 8,
+        loadScore: 70,
+        recoveryScore: 70,
+        adherenceScore: 20,
+      },
+      {
+        weeksAvailable: 8,
+        loadScore: 80,
+        recoveryScore: 80,
+        adherenceScore: 80,
+      },
     ];
     for (const s of scenarios) {
       const result = buildPerformanceInsight({

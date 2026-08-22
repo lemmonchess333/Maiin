@@ -1636,14 +1636,14 @@ export default function RunSummary() {
                       adherenceLabel === "Extra"
                         ? `${THEME.running}1A`
                         : adherenceLabel === "Custom"
-                          ? `${THEME.text.muted}1A`
+                          ? "hsl(var(--muted-foreground) / 0.1)"
                           : `${THEME.success}1A`,
                     color:
                       adherenceLabel === "Extra"
                         ? THEME.running
                         : adherenceLabel === "Custom"
-                          ? THEME.text.muted
-                          : THEME.success,
+                          ? "hsl(var(--muted-foreground))"
+                          : "hsl(var(--success-strong))",
                   }}
                   aria-label={`Plan adherence: ${adherenceLabel}`}
                 >

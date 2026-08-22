@@ -133,9 +133,7 @@ describe("admin allowlist — TS and JS copies agree", () => {
   it("agrees on non-string input", () => {
     setAllowlist("uid-alpha");
     for (const v of NON_STRINGS) {
-      expect(server.isAdminUid(v as string)).toBe(
-        clientIsAdmin(v as string)
-      );
+      expect(server.isAdminUid(v as string)).toBe(clientIsAdmin(v as string));
     }
   });
 

@@ -161,9 +161,7 @@ export default function SecuritySection({
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
                 <p className="text-xs text-muted-foreground">Email</p>
-                <p className="text-sm text-foreground truncate">
-                  {user.email}
-                </p>
+                <p className="text-sm text-foreground truncate">{user.email}</p>
               </div>
               {user.emailVerified ? (
                 <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold text-success-strong">
@@ -221,8 +219,8 @@ export default function SecuritySection({
         ) : (
           <p className="text-xs text-muted-foreground leading-relaxed px-1">
             You sign in with {provider ?? "an external provider"}. To add a
-            password, use "Forgot password" on the sign-in screen — we'll
-            email you a set-password link.
+            password, use "Forgot password" on the sign-in screen — we'll email
+            you a set-password link.
           </p>
         )}
       </AccordionSection>

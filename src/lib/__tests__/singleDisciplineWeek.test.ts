@@ -145,8 +145,16 @@ describe.each(ENGINES)(
     it("cannot tell a 70 km week from a 110 km week", () => {
       // The saturation, stated as the equality it is. Both are already at
       // the run-half ceiling, and the lift half is fixed at zero.
-      const a = scorePerformance(week({ lifts: 0, runs: 5, km: 70 }), BASELINE, PROFILE);
-      const b = scorePerformance(week({ lifts: 0, runs: 6, km: 110 }), BASELINE, PROFILE);
+      const a = scorePerformance(
+        week({ lifts: 0, runs: 5, km: 70 }),
+        BASELINE,
+        PROFILE
+      );
+      const b = scorePerformance(
+        week({ lifts: 0, runs: 6, km: 110 }),
+        BASELINE,
+        PROFILE
+      );
       expect(a.performanceIndex).toBe(b.performanceIndex);
     });
 
@@ -200,8 +208,7 @@ describe.each(ENGINES)(
       const signals: PerformanceSignals = {
         bothLoadsStrong: false,
         liftAheadOfBaseline: 0,
-        runAheadOfBaseline:
-          scored.runVolume > 1.05 ? scored.runVolume - 1 : 0,
+        runAheadOfBaseline: scored.runVolume > 1.05 ? scored.runVolume - 1 : 0,
         recoveryWeak: false,
         adherenceWeak: false,
         deloadFlag: scored.deloadRecommended,
@@ -241,7 +248,9 @@ describe.each(ENGINES)(
         scored.deloadRecommended
       );
       expect(state).toBe("cruising");
-      expect(getLine(state, signals)).toMatch(/^Lifting load \d+% above baseline$/);
+      expect(getLine(state, signals)).toMatch(
+        /^Lifting load \d+% above baseline$/
+      );
     });
 
     it("a week only slightly above baseline still reads as steady", () => {
@@ -260,8 +269,7 @@ describe.each(ENGINES)(
         bothLoadsStrong: false,
         liftAheadOfBaseline:
           scored.liftProgression > 1.05 ? scored.liftProgression - 1 : 0,
-        runAheadOfBaseline:
-          scored.runVolume > 1.05 ? scored.runVolume - 1 : 0,
+        runAheadOfBaseline: scored.runVolume > 1.05 ? scored.runVolume - 1 : 0,
         recoveryWeak: false,
         adherenceWeak: false,
         deloadFlag: false,
@@ -350,7 +358,11 @@ describe.each(ENGINES)(
       );
       expect(lopsided.deloadIndex).toBe(lopsided.performanceIndex);
 
-      const neither = scorePerformance(week({ lifts: 0, runs: 0 }), BASELINE, PROFILE);
+      const neither = scorePerformance(
+        week({ lifts: 0, runs: 0 }),
+        BASELINE,
+        PROFILE
+      );
       expect(neither.deloadIndex).toBe(neither.performanceIndex);
     });
 
@@ -374,11 +386,15 @@ describe.each(ENGINES)(
          A runner on a lean bulk is capped lower than the same runner on a
          recomp — worth pinning because it is the opposite of what someone
          reading "goal-aware" would expect for a running week. */
-      const bulk = scorePerformance(week({ lifts: 0, runs: 6, km: 110 }), BASELINE, {
-        goal: "lean bulk",
-        targetCalories: 2500,
-        targetProtein: 160,
-      });
+      const bulk = scorePerformance(
+        week({ lifts: 0, runs: 6, km: 110 }),
+        BASELINE,
+        {
+          goal: "lean bulk",
+          targetCalories: 2500,
+          targetProtein: 160,
+        }
+      );
       expect(bulk.performanceIndex).toBeLessThan(68);
     });
 
@@ -386,7 +402,11 @@ describe.each(ENGINES)(
       // The convention is not wrong everywhere: no training at all SHOULD
       // score low, and does. The problem is only that one discipline and
       // none are treated on the same scale.
-      const nothing = scorePerformance(week({ lifts: 0, runs: 0 }), BASELINE, PROFILE);
+      const nothing = scorePerformance(
+        week({ lifts: 0, runs: 0 }),
+        BASELINE,
+        PROFILE
+      );
       expect(nothing.liftLoadScore).toBe(0);
       expect(nothing.runLoadScore).toBe(0);
       expect(nothing.performanceIndex).toBeLessThan(45);

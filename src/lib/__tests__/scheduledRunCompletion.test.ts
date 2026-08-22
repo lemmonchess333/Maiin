@@ -88,8 +88,10 @@ function run(
   };
 }
 
-const claimOf = (map: Map<string, { claimedSavedRunId?: string }>, id: string) =>
-  map.get(id)?.claimedSavedRunId;
+const claimOf = (
+  map: Map<string, { claimedSavedRunId?: string }>,
+  id: string
+) => map.get(id)?.claimedSavedRunId;
 
 describe("the two-phase claim walk", () => {
   it("gives a run to the day it was actually run on, not to an older gap", () => {

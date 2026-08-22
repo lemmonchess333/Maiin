@@ -34,11 +34,11 @@ export interface FoodValuesToValidate {
 }
 
 export type FoodValidationResult =
-  | { kind: 'ok' }
-  | { kind: 'blocked'; reason: string }
+  | { kind: "ok" }
+  | { kind: "blocked"; reason: string }
   | {
-      kind: 'warn';
-      field: 'calories' | 'protein' | 'carbs' | 'fat';
+      kind: "warn";
+      field: "calories" | "protein" | "carbs" | "fat";
       title: string;
       description: string;
     };
@@ -49,10 +49,10 @@ export const FOOD_WARN_CARBS_G = 600;
 export const FOOD_WARN_FAT_G = 300;
 
 const FIELD_LABELS: Record<keyof FoodValuesToValidate, string> = {
-  calories: 'Calories',
-  protein: 'Protein',
-  carbs: 'Carbs',
-  fat: 'Fat',
+  calories: "Calories",
+  protein: "Protein",
+  carbs: "Carbs",
+  fat: "Fat",
 };
 
 function blockReason(field: keyof FoodValuesToValidate, val: number): string {
@@ -62,58 +62,65 @@ function blockReason(field: keyof FoodValuesToValidate, val: number): string {
   return `Macros can't be negative.`;
 }
 
-export function validateFoodEntry(values: FoodValuesToValidate): FoodValidationResult {
-  const fields: (keyof FoodValuesToValidate)[] = ['calories', 'protein', 'carbs', 'fat'];
+export function validateFoodEntry(
+  values: FoodValuesToValidate
+): FoodValidationResult {
+  const fields: (keyof FoodValuesToValidate)[] = [
+    "calories",
+    "protein",
+    "carbs",
+    "fat",
+  ];
 
   for (const field of fields) {
     const val = values[field];
     if (val === undefined || val === null) continue;
-    if (typeof val !== 'number' || Number.isNaN(val) || !Number.isFinite(val)) {
-      return { kind: 'blocked', reason: blockReason(field, val as number) };
+    if (typeof val !== "number" || Number.isNaN(val) || !Number.isFinite(val)) {
+      return { kind: "blocked", reason: blockReason(field, val as number) };
     }
     if (val < 0) {
-      return { kind: 'blocked', reason: blockReason(field, val) };
+      return { kind: "blocked", reason: blockReason(field, val) };
     }
   }
 
   const cal = values.calories ?? 0;
   if (cal > FOOD_WARN_CALORIES) {
     return {
-      kind: 'warn',
-      field: 'calories',
+      kind: "warn",
+      field: "calories",
       title: `${cal} calories looks unusually high`,
-      description: 'Check the serving size before saving.',
+      description: "Check the serving size before saving.",
     };
   }
   const pro = values.protein ?? 0;
   if (pro > FOOD_WARN_PROTEIN_G) {
     return {
-      kind: 'warn',
-      field: 'protein',
+      kind: "warn",
+      field: "protein",
       title: `${pro}g protein looks unusually high`,
-      description: 'Check the serving size before saving.',
+      description: "Check the serving size before saving.",
     };
   }
   const carbs = values.carbs ?? 0;
   if (carbs > FOOD_WARN_CARBS_G) {
     return {
-      kind: 'warn',
-      field: 'carbs',
+      kind: "warn",
+      field: "carbs",
       title: `${carbs}g carbs looks unusually high`,
-      description: 'Check the serving size before saving.',
+      description: "Check the serving size before saving.",
     };
   }
   const fat = values.fat ?? 0;
   if (fat > FOOD_WARN_FAT_G) {
     return {
-      kind: 'warn',
-      field: 'fat',
+      kind: "warn",
+      field: "fat",
       title: `${fat}g fat looks unusually high`,
-      description: 'Check the serving size before saving.',
+      description: "Check the serving size before saving.",
     };
   }
 
-  return { kind: 'ok' };
+  return { kind: "ok" };
 }
 
 /**
@@ -147,14 +154,18 @@ export interface AggregateAgainstTargetResult {
 
 export function checkAggregateAgainstTarget(
   totalCalories: number,
-  effectiveDailyTarget: number | undefined,
+  effectiveDailyTarget: number | undefined
 ): AggregateAgainstTargetResult | null {
   /* Defensive: skip if the target isn't ready yet (parent component
      loading) or if the total is non-finite. The check is a polish
      guard, not a save-blocker — never break the save flow on a
      missing target. */
   if (!Number.isFinite(totalCalories) || totalCalories <= 0) return null;
-  if (!effectiveDailyTarget || !Number.isFinite(effectiveDailyTarget) || effectiveDailyTarget <= 0) {
+  if (
+    !effectiveDailyTarget ||
+    !Number.isFinite(effectiveDailyTarget) ||
+    effectiveDailyTarget <= 0
+  ) {
     return null;
   }
 
@@ -162,7 +173,7 @@ export function checkAggregateAgainstTarget(
   if (totalCalories <= limit) return null;
 
   return {
-    title: 'This meal looks unusually high',
+    title: "This meal looks unusually high",
     description: `This scan totals about ${Math.round(totalCalories)} kcal, which is over a full day's target. Check the items before saving.`,
   };
 }

@@ -26,7 +26,8 @@ function MileagePill({ shoe }: { shoe: Shoe }) {
           )}
         </p>
         <p className="text-xs font-mono tabular-nums text-muted-foreground shrink-0">
-          {storedKmLabel(shoe.totalKm, unit, false)} / {storedKmLabel(shoe.maxKm, unit)}
+          {storedKmLabel(shoe.totalKm, unit, false)} /{" "}
+          {storedKmLabel(shoe.maxKm, unit)}
         </p>
       </div>
       <div className="h-1.5 rounded-full bg-muted overflow-hidden">
@@ -65,7 +66,7 @@ export default function ShoeMileageSection() {
       <div className="flex items-center gap-2">
         <Footprints className="size-4 text-muted-foreground" />
         <SectionLabel className="flex-1">Shoe Mileage</SectionLabel>
-        <ChevronRight className="size-4 text-muted-foreground/60" />
+        <ChevronRight className="size-4 text-muted-foreground" />
       </div>
       <div className="space-y-3">
         {activeShoes.slice(0, 3).map((shoe) => (

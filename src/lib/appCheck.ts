@@ -70,7 +70,7 @@ type NativeAppCheckProviderFactory = () => CustomProvider;
 let nativeProviderFactory: NativeAppCheckProviderFactory | null = null;
 
 export function setNativeAppCheckProvider(
-  factory: NativeAppCheckProviderFactory,
+  factory: NativeAppCheckProviderFactory
 ): void {
   nativeProviderFactory = factory;
 }
@@ -98,7 +98,7 @@ export function initAppCheck(app: FirebaseApp): boolean {
   if (isNativePlatform()) {
     if (!nativeProviderFactory) {
       logger.log(
-        "[AppCheck] Running on native shell without attestation — install @capacitor-firebase/app-check and call setNativeAppCheckProvider() to enable.",
+        "[AppCheck] Running on native shell without attestation — install @capacitor-firebase/app-check and call setNativeAppCheckProvider() to enable."
       );
       return false;
     }
@@ -122,7 +122,7 @@ export function initAppCheck(app: FirebaseApp): boolean {
   if (!siteKey) {
     if (!import.meta.env.DEV) {
       logger.warn(
-        "[AppCheck] VITE_RECAPTCHA_V3_SITE_KEY not set — running without enforcement. Configure before enabling App Check enforcement in the Firebase console.",
+        "[AppCheck] VITE_RECAPTCHA_V3_SITE_KEY not set — running without enforcement. Configure before enabling App Check enforcement in the Firebase console."
       );
     }
     return false;
@@ -132,7 +132,9 @@ export function initAppCheck(app: FirebaseApp): boolean {
   // from the Firebase console to bypass App Check in dev.
   const debugToken = import.meta.env.VITE_APP_CHECK_DEBUG_TOKEN;
   if (debugToken && typeof self !== "undefined") {
-    (self as unknown as { FIREBASE_APPCHECK_DEBUG_TOKEN?: string }).FIREBASE_APPCHECK_DEBUG_TOKEN = debugToken;
+    (
+      self as unknown as { FIREBASE_APPCHECK_DEBUG_TOKEN?: string }
+    ).FIREBASE_APPCHECK_DEBUG_TOKEN = debugToken;
   }
   try {
     appCheckHandle = initializeAppCheck(app, {

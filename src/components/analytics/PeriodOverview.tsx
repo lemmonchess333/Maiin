@@ -171,7 +171,7 @@ export default function PeriodOverview({
                 {/* Sub-values are free text ("12.4t", "2,143 kcal/day")
                     and the column is a third of a phone card, so it
                     truncates rather than wrapping the row taller. */}
-                <p className="text-xs text-muted-foreground/80 mt-0.5 font-mono tabular-nums truncate">
+                <p className="text-xs text-muted-foreground mt-0.5 font-mono tabular-nums truncate">
                   {s.sub}
                 </p>
               </div>

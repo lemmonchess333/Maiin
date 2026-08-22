@@ -228,7 +228,15 @@
   /* Media stage — fixed dark in BOTH themes (see @theme note). */
   --stage: 240 4% 7%;
   --muted: 240 6% 97.5%; /* DS2: near-white raised tile (was 95.9% ≈ page) */
-  --muted-foreground: 240 3.8% 46.1%;
+  /* 46.1% → 43% (owner-decided consolidation, 2026-08-22). At 46.1% the
+     token cleared AA on the white card by only 0.333 (4.833:1) and FAILED
+     on --background (4.397:1) — which every BottomSheet body paints. 43%
+     clears 4.5:1 on all three real surfaces (card / muted / background)
+     with margin, which is also what makes the fractional-opacity ban
+     enforceable: there is ONE secondary grey and it passes everywhere;
+     de-emphasis is the type scale's job, not alpha's. Pinned by
+     tokenContrast.test.ts across both themes. */
+  --muted-foreground: 240 3.8% 43%;
   --border: 240 6% 88%; /* DS2: a hair stronger so hairlines register on the lighter canvas */
   --radius: 0.625rem; /* DS2: 8→10px base (premium radius curve) */
   --input-fill: 240 6% 95.5%; /* DS2: lighter than the deepened page so fields stay distinct */

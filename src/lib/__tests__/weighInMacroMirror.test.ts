@@ -70,7 +70,9 @@ describe("weighInProfilePatch", () => {
   it("moves protein by the amount the drift had accumulated", () => {
     // The concrete number from the probe, so a change to the multiplier or
     // the split is visible here rather than only in a ratio.
-    const patch = weighInProfilePatch(AT_SETUP, 78) as { targetProtein: number };
+    const patch = weighInProfilePatch(AT_SETUP, 78) as {
+      targetProtein: number;
+    };
     expect(patch.targetProtein).toBe(172);
     expect(198 - patch.targetProtein).toBe(26);
   });

@@ -26,7 +26,8 @@ export { DAY_LABELS, DAY_LABELS_SHORT };
  * Lift = purple (#7B72E9, matches THEME.lifting / brand).
  * Run  = coral (#D4637A, matches THEME.running).
  * Both = teal (#52A3BD, the cross-discipline accent).
- * Rest = muted grey (#8E8E93, iOS system grey).
+ * Rest = the theme-aware secondary token (muted-foreground) — consumers
+ * apply it via inline style, where CSS custom properties resolve.
  *
  * Anchored here rather than theme.ts so the rest of the
  * schedule API (generateSchedule, day labels) lives in one
@@ -39,7 +40,7 @@ export const SCHEDULE_TYPE_META: Record<
   lift: { label: "Lift", color: THEME.lifting },
   run: { label: "Run", color: THEME.running },
   both: { label: "Both", color: THEME.teal },
-  rest: { label: "Rest", color: "#8E8E93" },
+  rest: { label: "Rest", color: "hsl(var(--muted-foreground))" },
 };
 
 /**

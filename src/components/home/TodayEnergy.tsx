@@ -122,7 +122,7 @@ export default function TodayEnergy({
           <div className="flex items-center gap-2">
             <p
               className="text-xs font-semibold"
-              style={{ color: THEME.text.muted }}
+              style={{ color: "hsl(var(--muted-foreground))" }}
             >
               Today's Energy
             </p>
@@ -179,7 +179,7 @@ export default function TodayEnergy({
                   className="absolute top-0 h-full w-0.5 rounded-full -translate-x-1/2"
                   style={{
                     left: tickPct + "%",
-                    backgroundColor: THEME.text.muted,
+                    backgroundColor: "hsl(var(--muted-foreground))",
                   }}
                 />
               )}
@@ -268,10 +268,7 @@ export default function TodayEnergy({
                 burn.stepCalories > 0) && (
                 <>
                   <div className="h-px bg-border/50" />
-                  <SectionLabel
-                    tier="section"
-                    style={{ color: THEME.text.muted }}
-                  >
+                  <SectionLabel tier="section">
                     Burned today · already in your target
                   </SectionLabel>
                   {burn.workoutCalories > 0 && (
@@ -292,7 +289,7 @@ export default function TodayEnergy({
                     <BreakdownRow
                       label="Steps"
                       value={burn.stepCalories}
-                      color={THEME.text.muted}
+                      color={"hsl(var(--muted-foreground))"}
                     />
                   )}
                 </>

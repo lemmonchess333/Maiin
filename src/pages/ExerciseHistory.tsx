@@ -594,7 +594,9 @@ export default function ExerciseHistory() {
                             className="text-caption font-medium mt-0.5"
                             style={{
                               color:
-                                delta > 0 ? THEME.success : THEME.text.muted,
+                                delta > 0
+                                  ? "hsl(var(--success-strong))"
+                                  : "hsl(var(--muted-foreground))",
                             }}
                           >
                             {delta > 0 ? "+" : ""}

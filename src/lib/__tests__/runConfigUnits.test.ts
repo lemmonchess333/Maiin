@@ -18,7 +18,9 @@ import { getDistanceTargetMeters } from "../runConfigUnits";
 describe("getDistanceTargetMeters", () => {
   it("returns the value unchanged for a distance target", () => {
     // 10000m in, 10000m out — NOT 10_000_000.
-    expect(getDistanceTargetMeters({ type: "distance", value: 10000 })).toBe(10000);
+    expect(getDistanceTargetMeters({ type: "distance", value: 10000 })).toBe(
+      10000
+    );
   });
 
   it("returns 0 for a pace target", () => {
@@ -47,10 +49,14 @@ describe("getDistanceTargetMeters", () => {
 
   it("passes a 5km target through as 5000m", () => {
     // 5K race target via templateToPrefill emits 5000.
-    expect(getDistanceTargetMeters({ type: "distance", value: 5000 })).toBe(5000);
+    expect(getDistanceTargetMeters({ type: "distance", value: 5000 })).toBe(
+      5000
+    );
   });
 
   it("passes a marathon target through as 42200m", () => {
-    expect(getDistanceTargetMeters({ type: "distance", value: 42200 })).toBe(42200);
+    expect(getDistanceTargetMeters({ type: "distance", value: 42200 })).toBe(
+      42200
+    );
   });
 });

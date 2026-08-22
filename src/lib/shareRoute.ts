@@ -74,7 +74,10 @@ export async function shareRoute(
   }
 
   try {
-    if (typeof document === "undefined" || typeof URL.createObjectURL !== "function") {
+    if (
+      typeof document === "undefined" ||
+      typeof URL.createObjectURL !== "function"
+    ) {
       return "failed";
     }
     const url = URL.createObjectURL(file);

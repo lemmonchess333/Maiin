@@ -21,7 +21,9 @@ import { firestoreFake, type FailOp } from "./firestoreFake";
 /** Wipe all documents, listeners and the write log. Call in `beforeEach`. */
 export function resetFirestore(): void {
   if (firestoreFake.armedFailures.length > 0) {
-    console.error("UNFIRED_FAILURE " + JSON.stringify(firestoreFake.armedFailures));
+    console.error(
+      "UNFIRED_FAILURE " + JSON.stringify(firestoreFake.armedFailures)
+    );
   }
   firestoreFake.reset();
 }

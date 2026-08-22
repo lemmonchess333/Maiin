@@ -50,7 +50,7 @@ describe("AnimatedNumber — render shape", () => {
 
   it("forwards className to the rendered span", () => {
     const { container } = render(
-      <AnimatedNumber value={100} className="text-2xl" />,
+      <AnimatedNumber value={100} className="text-2xl" />
     );
     const span = container.querySelector("span");
     expect(span?.className).toContain("text-2xl");
@@ -106,7 +106,7 @@ describe("AnimatedNumber — custom formatter", () => {
     });
 
     const { container } = render(
-      <AnimatedNumber value={75} format={(n) => `${Math.round(n)}%`} />,
+      <AnimatedNumber value={75} format={(n) => `${Math.round(n)}%`} />
     );
     await waitFor(() => {
       expect(container.querySelector("span")?.textContent).toBe("75%");

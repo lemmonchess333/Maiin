@@ -27,7 +27,7 @@ describe("BottomSheet — closed state", () => {
     render(
       <BottomSheet open={false} onOpenChange={() => {}} title="Comments">
         <p>child content</p>
-      </BottomSheet>,
+      </BottomSheet>
     );
     expect(screen.queryByText("Comments")).toBeNull();
     expect(screen.queryByText("child content")).toBeNull();
@@ -39,7 +39,7 @@ describe("BottomSheet — open state", () => {
     render(
       <BottomSheet open onOpenChange={() => {}} title="Comments">
         <p>child content</p>
-      </BottomSheet>,
+      </BottomSheet>
     );
     expect(screen.getByText("Comments")).toBeTruthy();
   });
@@ -48,7 +48,7 @@ describe("BottomSheet — open state", () => {
     render(
       <BottomSheet open onOpenChange={() => {}} title="X">
         <p>child content</p>
-      </BottomSheet>,
+      </BottomSheet>
     );
     expect(screen.getByText("child content")).toBeTruthy();
   });
@@ -62,7 +62,7 @@ describe("BottomSheet — open state", () => {
         description="Share your reaction"
       >
         <p>child</p>
-      </BottomSheet>,
+      </BottomSheet>
     );
     expect(screen.getByText("Share your reaction")).toBeTruthy();
   });
@@ -71,7 +71,7 @@ describe("BottomSheet — open state", () => {
     render(
       <BottomSheet open onOpenChange={() => {}} title={null}>
         <p>body</p>
-      </BottomSheet>,
+      </BottomSheet>
     );
     // body still renders
     expect(screen.getByText("body")).toBeTruthy();
@@ -83,7 +83,7 @@ describe("BottomSheet — hideHeader", () => {
     render(
       <BottomSheet open onOpenChange={() => {}} title="Comments" hideHeader>
         <p>body</p>
-      </BottomSheet>,
+      </BottomSheet>
     );
     // The title text exists in the DOM (rendered as sr-only) so
     // assistive tech still gets an accessible name.
@@ -96,7 +96,7 @@ describe("BottomSheet — hideHeader", () => {
     render(
       <BottomSheet open onOpenChange={() => {}} title={null} hideHeader>
         <p>body</p>
-      </BottomSheet>,
+      </BottomSheet>
     );
     expect(screen.getByText("body")).toBeTruthy();
   });

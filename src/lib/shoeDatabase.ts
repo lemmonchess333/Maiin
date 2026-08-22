@@ -63,7 +63,11 @@ export const SHOE_DATABASE: readonly ShoeModel[] = [
   { name: "FuelCell SC Elite v4", brand: "New Balance", recommendedMaxKm: 250 },
   { name: "Fresh Foam 1080 v14", brand: "New Balance", recommendedMaxKm: 700 },
   { name: "FuelCell Rebel v4", brand: "New Balance", recommendedMaxKm: 500 },
-  { name: "FuelCell SuperComp Trainer v3", brand: "New Balance", recommendedMaxKm: 500 },
+  {
+    name: "FuelCell SuperComp Trainer v3",
+    brand: "New Balance",
+    recommendedMaxKm: 500,
+  },
 
   // On
   { name: "Cloudmonster", brand: "On", recommendedMaxKm: 700 },

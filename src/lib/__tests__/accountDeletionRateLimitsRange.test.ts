@@ -79,7 +79,15 @@ describe("rateLimits range-query semantics", () => {
   });
 
   it("selects every action with the right uid prefix", () => {
-    const actions = ["a", "b", "c", "z", "zzzzz", "anyAction", "with_underscores"];
+    const actions = [
+      "a",
+      "b",
+      "c",
+      "z",
+      "zzzzz",
+      "anyAction",
+      "with_underscores",
+    ];
     for (const action of actions) {
       expect(rateLimitsRangeFilter(uid, `${uid}_${action}`)).toBe(true);
     }

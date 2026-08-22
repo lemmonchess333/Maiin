@@ -32,13 +32,13 @@ function installMatchMediaMock(initialMatches: boolean) {
     onchange: null,
     addEventListener: (
       event: string,
-      handler: EventListenerOrEventListenerObject,
+      handler: EventListenerOrEventListenerObject
     ) => {
       if (event === "change") listeners.add(handler as ChangeHandler);
     },
     removeEventListener: (
       event: string,
-      handler: EventListenerOrEventListenerObject,
+      handler: EventListenerOrEventListenerObject
     ) => {
       if (event === "change") listeners.delete(handler as ChangeHandler);
     },
@@ -48,7 +48,7 @@ function installMatchMediaMock(initialMatches: boolean) {
   } as MediaQueryList;
   vi.stubGlobal(
     "matchMedia",
-    vi.fn().mockImplementation(() => mql),
+    vi.fn().mockImplementation(() => mql)
   );
   /* Some browsers expose matchMedia on window itself rather than
      globalThis; stub both to be safe. */

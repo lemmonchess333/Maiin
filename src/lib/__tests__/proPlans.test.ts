@@ -164,7 +164,9 @@ describe("PRO_PLANS — the derived copy cannot drift from the price", () => {
     // getCheckoutCtaLabel and getInlinePriceSummary interpolate `price`
     // raw — a bare "3.99" would render "Start Pro — 3.99/mo".
     for (const plan of PRO_PLANS) {
-      expect(plan.price.startsWith("£"), `${plan.id}: ${plan.price}`).toBe(true);
+      expect(plan.price.startsWith("£"), `${plan.id}: ${plan.price}`).toBe(
+        true
+      );
     }
   });
 

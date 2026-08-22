@@ -157,9 +157,9 @@ describe("weekly set volume over six mesocycles", () => {
     const nonDeload = ROWS.filter((r) => r.phase !== "deload");
     expect(new Set(nonDeload.map((r) => r.main))).toEqual(new Set([31]));
     // The deload is the only thing that moves them, and it moves them back.
-    expect(new Set(ROWS.filter((r) => r.phase === "deload").map((r) => r.main))).toEqual(
-      new Set([23])
-    );
+    expect(
+      new Set(ROWS.filter((r) => r.phase === "deload").map((r) => r.main))
+    ).toEqual(new Set([23]));
   });
 
   it("leaves no residue in the anchor — week 24 equals week 4", () => {

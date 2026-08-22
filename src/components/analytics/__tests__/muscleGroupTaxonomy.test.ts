@@ -44,9 +44,7 @@ const ALL_MOVEMENT_CATEGORIES: MovementCategory[] = [
 
 describe("muscle-group taxonomy — both live vocabularies resolve", () => {
   it("every MovementCategory has a display name", () => {
-    const missing = ALL_MOVEMENT_CATEGORIES.filter(
-      (c) => !CATEGORY_DISPLAY[c]
-    );
+    const missing = ALL_MOVEMENT_CATEGORIES.filter((c) => !CATEGORY_DISPLAY[c]);
     expect(
       missing,
       `These are written to WorkoutExercise.category by ` +
@@ -112,7 +110,10 @@ describe("muscle-group taxonomy — both live vocabularies resolve", () => {
     // CATEGORY_DISPLAY route; a MUSCLE_MAP stripped down to exactly those
     // nine names would pass them all while breaking History's primary path.
     for (const group of ["Chest", "Back", "Legs", "Core", "Full Body"]) {
-      expect(MUSCLE_MAP[group], `${group} missing from MUSCLE_MAP`).toBeTruthy();
+      expect(
+        MUSCLE_MAP[group],
+        `${group} missing from MUSCLE_MAP`
+      ).toBeTruthy();
     }
     expect(MUSCLE_MAP["Cardio"]).toEqual([]);
   });

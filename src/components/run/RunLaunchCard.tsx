@@ -127,7 +127,9 @@ export default function RunLaunchCard({
               <Icon className="size-6 text-running" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-semibold text-running-strong">{eyebrow}</p>
+              <p className="text-xs font-semibold text-running-strong">
+                {eyebrow}
+              </p>
               <div className="flex items-baseline gap-2 flex-wrap">
                 <h1 className="text-2xl font-bold truncate">{workout.name}</h1>
                 {distanceKm != null && (

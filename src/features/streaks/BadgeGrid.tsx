@@ -201,7 +201,7 @@ export function BadgeGrid() {
                     <p
                       className={cn(
                         "text-xs font-semibold leading-tight flex-1",
-                        earned ? "text-foreground" : "text-muted-foreground/70"
+                        earned ? "text-foreground" : "text-muted-foreground"
                       )}
                     >
                       {badge.name}
@@ -229,7 +229,7 @@ export function BadgeGrid() {
                         color={tierColor}
                       />
                     ) : (
-                      <p className="text-caption text-muted-foreground/50 mt-1 line-clamp-2">
+                      <p className="text-caption text-muted-foreground mt-1 line-clamp-2">
                         {badge.description}
                       </p>
                     )}

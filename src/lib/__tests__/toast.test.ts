@@ -6,12 +6,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const calls: Array<{ method: string; message: unknown; options: unknown }> = [];
 
 vi.mock("sonner", () => {
-  const make =
-    (method: string) =>
-    (message: unknown, options: unknown) => {
-      calls.push({ method, message, options });
-      return method; // sonner returns the toast id; value is irrelevant here
-    };
+  const make = (method: string) => (message: unknown, options: unknown) => {
+    calls.push({ method, message, options });
+    return method; // sonner returns the toast id; value is irrelevant here
+  };
   const toast = Object.assign(make("default"), {
     success: make("success"),
     error: make("error"),

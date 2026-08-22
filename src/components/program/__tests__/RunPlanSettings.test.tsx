@@ -300,9 +300,7 @@ describe("RunPlanSettings", () => {
       await screen.findByRole("button", { name: /Save .*plan/i })
     );
     await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
-    expect(
-      "targetTimeS" in sentPayload().profileUpdates.raceGoal!
-    ).toBe(false);
+    expect("targetTimeS" in sentPayload().profileUpdates.raceGoal!).toBe(false);
   });
 
   it("Door 1: a valid deep-link seeds race prep and saves the eventSpaceId binding", async () => {

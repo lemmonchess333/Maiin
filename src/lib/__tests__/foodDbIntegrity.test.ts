@@ -164,7 +164,9 @@ describe("FOOD_DB — macros reconcile with calories", () => {
        ethanol, and both are listed deliberately. */
     const undercounted = ROWS.filter((r) => {
       const atwater = r.protein * 4 + r.carbs * 4 + r.fat * 9;
-      return r.calories - atwater > 25 && (r.calories - atwater) / r.calories > 0.2;
+      return (
+        r.calories - atwater > 25 && (r.calories - atwater) / r.calories > 0.2
+      );
     });
     expect(new Set(undercounted.map((r) => r.name))).toEqual(ALCOHOL);
   });
@@ -221,7 +223,8 @@ describe("FOOD_DB — portions are scalable where a portion means anything", () 
        types — the parser documents that fallback, and this keeps it confined
        to the rows where it is the right answer. */
     const unscalable = ROWS.filter(
-      (r) => !COMPOSITE_SERVINGS.has(r.name) && !hasMassOrVolume(r.serving, r.name)
+      (r) =>
+        !COMPOSITE_SERVINGS.has(r.name) && !hasMassOrVolume(r.serving, r.name)
     );
     expect(unscalable.map((r) => `${r.name} → "${r.serving}"`)).toEqual([]);
   });
@@ -231,7 +234,8 @@ describe("FOOD_DB — portions are scalable where a portion means anything", () 
        it should leave the list rather than sit there granting an exemption it
        no longer needs. */
     const stillComposite = ROWS.filter(
-      (r) => COMPOSITE_SERVINGS.has(r.name) && !hasMassOrVolume(r.serving, r.name)
+      (r) =>
+        COMPOSITE_SERVINGS.has(r.name) && !hasMassOrVolume(r.serving, r.name)
     );
     expect(stillComposite).toHaveLength(COMPOSITE_SERVINGS.size);
     // 91% of the table is mass- or volume-scalable.

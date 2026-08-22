@@ -126,7 +126,9 @@ function formatVolume(kg: number): string {
   // "weight wasn't the metric here." Show an em-dash instead.
   if (kg <= 0) return "—";
   if (kg >= 1000) return `${(kg / 1000).toFixed(1)}t`;
-  return `${Math.round(kg)}kg`;
+  // Spaced unit — the repo-wide convention (DS2): "32.5 kg", matching the
+  // "Last: 60 kg × 8" line two rows below on the same card.
+  return `${Math.round(kg)} kg`;
 }
 
 function ProgramInner() {
@@ -1138,19 +1140,6 @@ function ProgramInner() {
             </div>
           </TrackProgrammeSectionView>
 
-          {/* Experience auto-detection: evidence-triggered level suggestion.
-                Renders null almost always — only when the v2 exhaustion
-                criteria hold (misses + survived reset, mature programme,
-                not cutting), and never after a dismissal. Spacing lives
-                INSIDE the card so the null render leaves no phantom gap. */}
-          <ExperienceSuggestionCard
-            workouts={programState?.workouts}
-            context={{
-              weekNumber: programState?.weekNumber,
-              nutritionGoal: programState?.goal,
-            }}
-          />
-
           {/* Single Lift day-selector (ADR-0002 split-ordered rotation).
                 The duplicate "this week" HybridWeekRail that used to sit
                 above this was removed — one selector per tab, in the same
@@ -1167,6 +1156,25 @@ function ProgramInner() {
               />
             </div>
           </TrackProgrammeSectionView>
+
+          {/* Experience auto-detection: evidence-triggered level suggestion.
+                Renders null almost always — only when the v2 exhaustion
+                criteria hold (misses + survived reset, mature programme,
+                not cutting), and never after a dismissal. Spacing lives
+                INSIDE the card so the null render leaves no phantom gap.
+                BELOW the day selector (DS2, 2026-08-22): it used to sit
+                between WeekPhaseRow and the selector, so on the rare render
+                a ~434px card split the week header from the day circles it
+                governs and the circles read as belonging to the suggestion.
+                Below keeps navigator adjacency without burying the
+                navigator, which moving the card ABOVE the header would. */}
+          <ExperienceSuggestionCard
+            workouts={programState?.workouts}
+            context={{
+              weekNumber: programState?.weekNumber,
+              nutritionGoal: programState?.goal,
+            }}
+          />
         </>
       )}
 
@@ -1503,7 +1511,7 @@ function ProgramInner() {
                                             <span className="font-mono tabular-nums">
                                               {ex.weight}
                                             </span>
-                                            kg
+                                            {" kg"}
                                           </>
                                         ) : null}
                                       </p>
@@ -1616,12 +1624,12 @@ function ProgramInner() {
                                           <span className="font-mono tabular-nums">
                                             {ex.weight}
                                           </span>
-                                          kg
+                                          {" kg"}
                                         </>
                                       ) : null}
                                     </p>
                                     {lastPerf && (
-                                      <p className="text-xs mt-0.5 text-muted-foreground/80">
+                                      <p className="text-xs mt-0.5 text-muted-foreground">
                                         Last:{" "}
                                         {ex.repUnit === "seconds" ? (
                                           <>

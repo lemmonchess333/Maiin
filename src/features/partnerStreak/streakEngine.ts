@@ -119,7 +119,10 @@ export function recordPartnerActivity(
 
   const D = mine; // the shared day
   // Already counted (a later log on the same shared day) → no change.
-  if (state.lastSharedDay === D || (state.lastSharedDay && D < state.lastSharedDay)) {
+  if (
+    state.lastSharedDay === D ||
+    (state.lastSharedDay && D < state.lastSharedDay)
+  ) {
     return { ...state, lastActive };
   }
 

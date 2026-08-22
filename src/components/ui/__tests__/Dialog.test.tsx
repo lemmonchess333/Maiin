@@ -27,7 +27,7 @@ describe("Dialog — open/closed rendering", () => {
     render(
       <Dialog open={false} onClose={() => {}} title="X">
         body
-      </Dialog>,
+      </Dialog>
     );
     expect(screen.queryByRole("dialog")).toBeNull();
   });
@@ -36,7 +36,7 @@ describe("Dialog — open/closed rendering", () => {
     render(
       <Dialog open onClose={() => {}} title="End run?">
         body
-      </Dialog>,
+      </Dialog>
     );
     expect(screen.getByRole("dialog")).toBeTruthy();
   });
@@ -47,7 +47,7 @@ describe("Dialog — a11y wiring", () => {
     render(
       <Dialog open onClose={() => {}} title="X">
         body
-      </Dialog>,
+      </Dialog>
     );
     expect(screen.getByRole("dialog")).toBeTruthy();
   });
@@ -56,7 +56,7 @@ describe("Dialog — a11y wiring", () => {
     render(
       <Dialog open onClose={() => {}} title="X" role="alertdialog">
         body
-      </Dialog>,
+      </Dialog>
     );
     expect(screen.getByRole("alertdialog")).toBeTruthy();
   });
@@ -65,7 +65,7 @@ describe("Dialog — a11y wiring", () => {
     render(
       <Dialog open onClose={() => {}} title="X">
         body
-      </Dialog>,
+      </Dialog>
     );
     expect(screen.getByRole("dialog").getAttribute("aria-modal")).toBe("true");
   });
@@ -74,7 +74,7 @@ describe("Dialog — a11y wiring", () => {
     render(
       <Dialog open onClose={() => {}} title="End run?">
         body
-      </Dialog>,
+      </Dialog>
     );
     const dialog = screen.getByRole("dialog");
     const labelledBy = dialog.getAttribute("aria-labelledby");
@@ -92,13 +92,13 @@ describe("Dialog — a11y wiring", () => {
         description="This will discard your in-progress run."
       >
         body
-      </Dialog>,
+      </Dialog>
     );
     const dialog = screen.getByRole("dialog");
     const describedBy = dialog.getAttribute("aria-describedby");
     expect(describedBy).toBeTruthy();
     expect(document.getElementById(describedBy!)?.textContent).toBe(
-      "This will discard your in-progress run.",
+      "This will discard your in-progress run."
     );
   });
 
@@ -106,9 +106,11 @@ describe("Dialog — a11y wiring", () => {
     render(
       <Dialog open onClose={() => {}} title="X">
         body
-      </Dialog>,
+      </Dialog>
     );
-    expect(screen.getByRole("dialog").getAttribute("aria-describedby")).toBeNull();
+    expect(
+      screen.getByRole("dialog").getAttribute("aria-describedby")
+    ).toBeNull();
   });
 });
 
@@ -118,7 +120,7 @@ describe("Dialog — dismissal paths", () => {
     render(
       <Dialog open onClose={onClose} title="X">
         body
-      </Dialog>,
+      </Dialog>
     );
     fireEvent.keyDown(document, { key: "Escape" });
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -129,7 +131,7 @@ describe("Dialog — dismissal paths", () => {
     render(
       <Dialog open onClose={onClose} title="X" closeOnEscape={false}>
         body
-      </Dialog>,
+      </Dialog>
     );
     fireEvent.keyDown(document, { key: "Escape" });
     expect(onClose).not.toHaveBeenCalled();
@@ -140,7 +142,7 @@ describe("Dialog — dismissal paths", () => {
     render(
       <Dialog open onClose={onClose} title="X">
         body
-      </Dialog>,
+      </Dialog>
     );
     fireEvent.click(screen.getByRole("presentation"));
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -151,7 +153,7 @@ describe("Dialog — dismissal paths", () => {
     render(
       <Dialog open onClose={onClose} title="X" closeOnBackdrop={false}>
         body
-      </Dialog>,
+      </Dialog>
     );
     fireEvent.click(screen.getByRole("presentation"));
     expect(onClose).not.toHaveBeenCalled();
@@ -162,7 +164,7 @@ describe("Dialog — dismissal paths", () => {
     render(
       <Dialog open onClose={onClose} title="X" closeButton>
         body
-      </Dialog>,
+      </Dialog>
     );
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -172,7 +174,7 @@ describe("Dialog — dismissal paths", () => {
     render(
       <Dialog open onClose={() => {}} title="X">
         body
-      </Dialog>,
+      </Dialog>
     );
     expect(screen.queryByRole("button", { name: "Close" })).toBeNull();
   });
@@ -187,7 +189,7 @@ describe("Dialog — body scroll lock", () => {
     render(
       <Dialog open onClose={() => {}} title="X">
         body
-      </Dialog>,
+      </Dialog>
     );
     expect(document.body.style.overflow).toBe("hidden");
   });
@@ -196,13 +198,13 @@ describe("Dialog — body scroll lock", () => {
     const { rerender } = render(
       <Dialog open onClose={() => {}} title="X">
         body
-      </Dialog>,
+      </Dialog>
     );
     expect(document.body.style.overflow).toBe("hidden");
     rerender(
       <Dialog open={false} onClose={() => {}} title="X">
         body
-      </Dialog>,
+      </Dialog>
     );
     expect(document.body.style.overflow).toBe("");
   });
@@ -213,7 +215,7 @@ describe("Dialog — content", () => {
     render(
       <Dialog open onClose={() => {}} title="X">
         <p>custom body content</p>
-      </Dialog>,
+      </Dialog>
     );
     expect(screen.getByText("custom body content")).toBeTruthy();
   });

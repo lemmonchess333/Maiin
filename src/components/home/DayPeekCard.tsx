@@ -175,10 +175,12 @@ export default function DayPeekCard({
         : shownType === "both"
           ? "Lift + Run day"
           : "Rest day";
-  // DS1b: typeColor stays inline — the rest-day branch is THEME.text.muted
-  // (#8E8E93), whose match to --muted-foreground isn't guaranteed, so the
-  // lift/run/both sport branches ride along inline rather than risk the rest
-  // pill shifting.
+  // typeColor stays inline (the sport branches are JS hexes), but the rest
+  // branch is the theme-aware secondary token now. DS1b left it on the fixed
+  // #8E8E93 because its "match to --muted-foreground isn't guaranteed" — the
+  // 2026-08-22 owner-decided consolidation RESOLVED that by defining the
+  // muted-text identity as --muted-foreground, so the equality is the
+  // decision, not an assumption.
   const typeColor =
     shownType === "lift"
       ? THEME.lifting
@@ -186,7 +188,7 @@ export default function DayPeekCard({
         ? THEME.running
         : shownType === "both"
           ? THEME.lifting
-          : THEME.text.muted;
+          : "hsl(var(--muted-foreground))";
   let tonnage = 0;
   let totalMinutes = 0;
   workouts.forEach(function (w) {

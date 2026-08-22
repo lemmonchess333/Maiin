@@ -112,7 +112,10 @@ function collectReturnedProperties(): HookProp[] {
 const PROPS = collectReturnedProperties();
 const SOURCES = walk(resolve(repoRoot, "src"))
   .filter((p) => !isTest(p))
-  .map((p) => ({ rel: p.slice(repoRoot.length + 1), text: stripInert(readFileSync(p, "utf8")) }));
+  .map((p) => ({
+    rel: p.slice(repoRoot.length + 1),
+    text: stripInert(readFileSync(p, "utf8")),
+  }));
 
 function isUsedOutside(hp: HookProp): boolean {
   const re = new RegExp(`\\b${hp.prop}\\b`);

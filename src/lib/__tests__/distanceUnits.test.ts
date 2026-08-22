@@ -55,7 +55,6 @@ describe("distance", () => {
     expect(distanceIn(42195, "mi")).toBeCloseTo(26.2187, 3);
   });
 
-
   it("treats non-finite input as zero rather than propagating NaN", () => {
     expect(distanceIn(NaN, "mi")).toBe(0);
   });
@@ -141,7 +140,6 @@ describe("pace — the direction that is easy to get backwards", () => {
     expect(paceIn(300, "km")).toBe(300);
   });
 
-
   it("passes the no-pace sentinels through untouched", () => {
     /* Every formatter downstream tests `<= 0` to render "--:--" / "—".
        Converting 0 to some other non-positive number, or NaN to a number,
@@ -152,14 +150,11 @@ describe("pace — the direction that is easy to get backwards", () => {
   });
 });
 
-
 describe("labels", () => {
   it("distance and pace suffixes track the unit", () => {
     expect(distanceUnitLabel("km")).toBe("km");
     expect(distanceUnitLabel("mi")).toBe("mi");
     expect(paceUnitLabel("km")).toBe("/km");
     expect(paceUnitLabel("mi")).toBe("/mi");
-
   });
-
 });

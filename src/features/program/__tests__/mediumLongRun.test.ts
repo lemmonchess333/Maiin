@@ -99,7 +99,11 @@ describe("the medium-long in generated plans", () => {
   it("distance ceilings hold: half ≤ 75, 10K ≤ 60, 5K ≤ 50 — across EVERY week", () => {
     const cap = { "5k": 50, "10k": 60, half: 75, marathon: 90 } as const;
     for (const distance of ["5k", "10k", "half", "marathon"] as const) {
-      const p = plan(distance, { "5k": 10, "10k": 12, half: 16, marathon: 20 }[distance], 4);
+      const p = plan(
+        distance,
+        { "5k": 10, "10k": 12, half: 16, marathon: 20 }[distance],
+        4
+      );
       for (const wk of p.weeks) {
         for (const id of easies(wk)) {
           expect(minutes(id)).toBeLessThanOrEqual(cap[distance]);
@@ -146,13 +150,17 @@ describe("the medium-long in generated plans", () => {
       }
     });
     // And the block as a whole actually contains strides weeks.
-    const total = p.weeks.flat().filter((d) => d.templateId.endsWith("_strides"));
+    const total = p.weeks
+      .flat()
+      .filter((d) => d.templateId.endsWith("_strides"));
     expect(total.length).toBeGreaterThan(0);
   });
 
   it("WAVE1-STRIDES: a detrained returner gets none", () => {
     const p = plan("marathon", 20, 5, { recentLayoff: "detrained" });
-    const strided = p.weeks.flat().filter((d) => d.templateId.endsWith("_strides"));
+    const strided = p.weeks
+      .flat()
+      .filter((d) => d.templateId.endsWith("_strides"));
     expect(strided).toHaveLength(0);
   });
 

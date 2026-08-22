@@ -1,5 +1,3 @@
-import { THEME } from "@/lib/theme";
-
 export default function BreakdownRow({
   label,
   value,
@@ -22,7 +20,10 @@ export default function BreakdownRow({
         )}
         <span
           className="text-xs font-semibold font-mono tabular-nums text-foreground"
-          style={{ color: value === 0 ? THEME.text.muted : color || undefined }}
+          style={{
+            color:
+              value === 0 ? "hsl(var(--muted-foreground))" : color || undefined,
+          }}
         >
           {value > 0 ? value.toLocaleString() : "0"}
         </span>

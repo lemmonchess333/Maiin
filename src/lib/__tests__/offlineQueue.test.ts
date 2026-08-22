@@ -196,9 +196,7 @@ describe("offlineQueue", () => {
 
       expect(await flushQueue(mockDb, UID_A)).toBe(1);
       expect(getQueueLength(UID_A)).toBe(0);
-      expect(writeLog().map((w) => w.path)).toContain(
-        "users/abc/meals/meal-2"
-      );
+      expect(writeLog().map((w) => w.path)).toContain("users/abc/meals/meal-2");
     });
 
     it("leaves a failed item queued without stranding a mid-flush write", async () => {

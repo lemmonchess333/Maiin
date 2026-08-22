@@ -216,8 +216,7 @@ export default function FeedView({
                string is already-formatted metric text with no way back to
                a value, so an imperial sharer gets no pace stat rather than
                a mislabelled one. */
-            paceSecPerKm:
-              typeof a.avgPace === "number" ? a.avgPace : undefined,
+            paceSecPerKm: typeof a.avgPace === "number" ? a.avgPace : undefined,
             elevationM: a.elevationGain,
           }
         : {

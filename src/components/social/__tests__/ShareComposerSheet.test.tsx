@@ -148,7 +148,6 @@ describe("ShareComposerSheet", () => {
   });
 });
 
-
 /**
  * The drain's marker write. Queued items carry the session they are
  * ABOUT; after the drain posts one, it must record the activity id back
@@ -171,10 +170,14 @@ describe("drain records the share link", () => {
     const { postActivity } = await import("@/lib/socialApi");
     const { recordSharedActivity } = await import("@/lib/sessionDelete");
     vi.mocked(postActivity).mockResolvedValue("act-77");
-    enqueueShare(UID, { type: "run", runName: "Easy 5k" }, {
-      kind: "run",
-      id: "r-42",
-    });
+    enqueueShare(
+      UID,
+      { type: "run", runName: "Easy 5k" },
+      {
+        kind: "run",
+        id: "r-42",
+      }
+    );
 
     render(<ShareComposerSheet />);
     await act(async () => {});

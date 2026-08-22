@@ -138,7 +138,7 @@ export default function WaterCard({
               {formatLitresValue(ml)}
               <span
                 className="text-sm font-normal mx-1"
-                style={{ color: THEME.text.muted }}
+                style={{ color: "hsl(var(--muted-foreground))" }}
               >
                 / {formatVolume(targetMl)}
               </span>
@@ -176,7 +176,10 @@ export default function WaterCard({
             >
               <Plus
                 className="size-4"
-                style={{ color: THEME.semantic.hydration }}
+                /* The AA teal step, not the fixed identity — the '+' is the
+                   card's primary control and the identity measured 2.49:1
+                   on the light tint (3:1 UI floor, WCAG 1.4.11). */
+                style={{ color: "hsl(var(--teal))" }}
               />
             </button>
           </div>
@@ -224,7 +227,7 @@ export default function WaterCard({
               {formatLitresValue(ml)}
               <span
                 className="text-sm font-normal mx-1"
-                style={{ color: THEME.text.muted }}
+                style={{ color: "hsl(var(--muted-foreground))" }}
               >
                 / {formatVolume(targetMl)}
               </span>

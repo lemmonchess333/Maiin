@@ -118,9 +118,7 @@ export default function RaceDayPlanCard({
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground leading-relaxed">
-        {vm.note}
-      </p>
+      <p className="text-xs text-muted-foreground leading-relaxed">{vm.note}</p>
 
       {/* A8: consensus in-race fueling guidance, scaled to the plan time.
           Silent for short races (the helper nulls under ~75 min). */}

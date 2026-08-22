@@ -69,9 +69,7 @@ export default function PRCard({
               <p className="text-sm font-bold font-mono tabular-nums text-foreground">
                 {pr.value}
               </p>
-              <p className="text-xs text-muted-foreground/50 mt-0.5">
-                {pr.date}
-              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">{pr.date}</p>
             </div>
           </div>
         ))}

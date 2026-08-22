@@ -87,24 +87,33 @@ export async function processProfilePhoto(file: File): Promise<Blob> {
   if (isHeic(file)) {
     throw new ProfilePhotoProcessingError(
       "heic_unsupported",
-      "iPhone HEIC photos aren't supported yet. Open the photo in Photos, tap Share, then choose Save as JPEG — or take a new one.",
+      "iPhone HEIC photos aren't supported yet. Open the photo in Photos, tap Share, then choose Save as JPEG — or take a new one."
     );
   }
 
   if (!(file.type || "").startsWith("image/")) {
-    throw new ProfilePhotoProcessingError("non_image", "Please choose an image file.");
+    throw new ProfilePhotoProcessingError(
+      "non_image",
+      "Please choose an image file."
+    );
   }
 
   const img = await loadImage(file);
 
-  if (img.naturalWidth > MAX_INPUT_DIMENSION || img.naturalHeight > MAX_INPUT_DIMENSION) {
+  if (
+    img.naturalWidth > MAX_INPUT_DIMENSION ||
+    img.naturalHeight > MAX_INPUT_DIMENSION
+  ) {
     throw new ProfilePhotoProcessingError(
       "too_large",
-      "Image is too large to process. Use a photo under 8000 pixels per side.",
+      "Image is too large to process. Use a photo under 8000 pixels per side."
     );
   }
   if (img.naturalWidth === 0 || img.naturalHeight === 0) {
-    throw new ProfilePhotoProcessingError("decode_failed", "Couldn't read the image.");
+    throw new ProfilePhotoProcessingError(
+      "decode_failed",
+      "Couldn't read the image."
+    );
   }
 
   const blob = await encodeSquareJpeg(img);
@@ -113,10 +122,16 @@ export async function processProfilePhoto(file: File): Promise<Blob> {
     /* Should never happen at 512² q=0.85; defensive guard so a bizarre
        input can't sneak past the Storage rule's 5MB limit and waste an
        upload round-trip. */
-    throw new ProfilePhotoProcessingError("too_large", "Encoded image is unexpectedly large.");
+    throw new ProfilePhotoProcessingError(
+      "too_large",
+      "Encoded image is unexpectedly large."
+    );
   }
   if (!blob.type.startsWith("image/")) {
-    throw new ProfilePhotoProcessingError("encode_failed", "Couldn't encode the image.");
+    throw new ProfilePhotoProcessingError(
+      "encode_failed",
+      "Couldn't encode the image."
+    );
   }
 
   return blob;
@@ -132,7 +147,12 @@ function loadImage(file: File): Promise<HTMLImageElement> {
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);
-      reject(new ProfilePhotoProcessingError("decode_failed", "Couldn't read the image."));
+      reject(
+        new ProfilePhotoProcessingError(
+          "decode_failed",
+          "Couldn't read the image."
+        )
+      );
     };
     img.src = url;
   });
@@ -155,7 +175,12 @@ function encodeSquareJpeg(img: HTMLImageElement): Promise<Blob> {
        that might survive canvas → JPEG round-trip on Chromium. */
     const ctx = canvas.getContext("2d", { colorSpace: "srgb" });
     if (!ctx) {
-      reject(new ProfilePhotoProcessingError("encode_failed", "Couldn't create a canvas."));
+      reject(
+        new ProfilePhotoProcessingError(
+          "encode_failed",
+          "Couldn't create a canvas."
+        )
+      );
       return;
     }
     ctx.imageSmoothingQuality = "high";
@@ -164,13 +189,18 @@ function encodeSquareJpeg(img: HTMLImageElement): Promise<Blob> {
     canvas.toBlob(
       (blob) => {
         if (!blob) {
-          reject(new ProfilePhotoProcessingError("encode_failed", "Couldn't encode the image."));
+          reject(
+            new ProfilePhotoProcessingError(
+              "encode_failed",
+              "Couldn't encode the image."
+            )
+          );
           return;
         }
         resolve(blob);
       },
       "image/jpeg",
-      JPEG_QUALITY,
+      JPEG_QUALITY
     );
   });
 }

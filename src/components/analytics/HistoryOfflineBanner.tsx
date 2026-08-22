@@ -16,9 +16,14 @@ interface HistoryOfflineBannerProps {
  * so the copy explains the user is looking at cached data rather
  * than implying anything is broken.
  */
-export default function HistoryOfflineBanner({ thresholdMs }: HistoryOfflineBannerProps) {
+export default function HistoryOfflineBanner({
+  thresholdMs,
+}: HistoryOfflineBannerProps) {
   return (
-    <SustainedOfflineBanner thresholdMs={thresholdMs} bannerKey="history-offline">
+    <SustainedOfflineBanner
+      thresholdMs={thresholdMs}
+      bannerKey="history-offline"
+    >
       You&rsquo;re viewing cached data. Latest activity will sync when you
       reconnect.
     </SustainedOfflineBanner>

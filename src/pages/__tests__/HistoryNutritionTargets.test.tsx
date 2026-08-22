@@ -39,7 +39,9 @@ describe("History nutrition targets", () => {
     // The specific regression. `macroTargets` remains a declared profile
     // field (pending an allow-list removal that needs a rules deploy), so
     // re-reading it here would compile and look right.
-    expect(history).not.toMatch(/profile\?\.macroTargets|profile\.macroTargets/);
+    expect(history).not.toMatch(
+      /profile\?\.macroTargets|profile\.macroTargets/
+    );
   });
 
   it("reads the same effective targets Home and Food render", () => {

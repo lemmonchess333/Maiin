@@ -358,7 +358,7 @@ export default function FoodHeroCard({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.3 }}
-                    className={`text-xs font-medium truncate ${photoTextClass ?? "text-muted-foreground/80"}`}
+                    className={`text-xs font-medium truncate ${photoTextClass ?? "text-muted-foreground"}`}
                   >
                     {/* Wave3 G — the day annotation is merged INTO the hero
                       caption as one line ("{dayType} · {rationale}") instead
@@ -391,7 +391,7 @@ export default function FoodHeroCard({
                 to="/settings/nutrition"
                 aria-label="Adjust nutrition targets"
                 onClick={() => haptic("light")}
-                className="-mt-2 -mr-2 size-11 flex items-center justify-center rounded-lg text-muted-foreground/70 hover:text-foreground hover:bg-muted/60 active:scale-95 transition-all"
+                className="-mt-2 -mr-2 size-11 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 active:scale-95 transition-all"
               >
                 <SettingsIcon className="size-4" aria-hidden="true" />
               </Link>
@@ -449,7 +449,7 @@ export default function FoodHeroCard({
                   onTapDrillDown();
                 }}
                 aria-label="View nutrition breakdown"
-                className={`flex items-center gap-1 px-2.5 min-h-[44px] -my-2 rounded-full text-caption font-semibold uppercase tracking-[0.12em] hover:bg-muted/60 active:scale-95 transition-all ${photoTextClass ?? "text-muted-foreground"}`}
+                className={`flex items-center gap-1 px-2.5 min-h-[44px] -my-2 rounded-full text-caption font-semibold uppercase tracking-wider hover:bg-muted/60 active:scale-95 transition-all ${photoTextClass ?? "text-muted-foreground"}`}
               >
                 <span>Details</span>
                 <ChevronRight aria-hidden="true" className="size-3" />

@@ -60,7 +60,10 @@ describe("carryCompletionsAcrossRegen — manualCompletions re-key", () => {
       id: "runday_2026-05-10_2_tempo_40",
       date: "2026-05-12",
     });
-    const newDay = rd({ id: "runday_2026-05-10_4_easy_30", date: "2026-05-14" });
+    const newDay = rd({
+      id: "runday_2026-05-10_4_easy_30",
+      date: "2026-05-14",
+    });
     const out = carryCompletionsAcrossRegen([oldDay], [newDay], {
       "runday_2026-05-10_2_tempo_40": completion,
     });
@@ -68,7 +71,10 @@ describe("carryCompletionsAcrossRegen — manualCompletions re-key", () => {
   });
 
   it("preserves an unmappable key (not present in oldRunDays) rather than dropping it", () => {
-    const oldDay = rd({ id: "runday_2026-05-10_2_easy_30", date: "2026-05-12" });
+    const oldDay = rd({
+      id: "runday_2026-05-10_2_easy_30",
+      date: "2026-05-12",
+    });
     const out = carryCompletionsAcrossRegen([oldDay], [oldDay], {
       legacy_orphan_key: completion,
     });
@@ -87,12 +93,12 @@ describe("carryCompletionsAcrossRegen — manualCompletions re-key", () => {
 
   it("returns an empty map when there are no completions to carry", () => {
     const day = rd();
-    expect(carryCompletionsAcrossRegen([day], [day], undefined).manualCompletions).toEqual(
-      {}
-    );
-    expect(carryCompletionsAcrossRegen([day], [day], {}).manualCompletions).toEqual(
-      {}
-    );
+    expect(
+      carryCompletionsAcrossRegen([day], [day], undefined).manualCompletions
+    ).toEqual({});
+    expect(
+      carryCompletionsAcrossRegen([day], [day], {}).manualCompletions
+    ).toEqual({});
   });
 });
 
@@ -112,8 +118,11 @@ describe("carryCompletionsAcrossRegen — terminal status re-stamp", () => {
       status: "planned",
       completed: false,
     });
-    const [carried] = carryCompletionsAcrossRegen([oldDay], [newDay], undefined)
-      .runDays;
+    const [carried] = carryCompletionsAcrossRegen(
+      [oldDay],
+      [newDay],
+      undefined
+    ).runDays;
     expect(carried.status).toBe("completed_exact");
     expect(carried.completed).toBe(true);
     // identity preserved: it's still the NEW day (new id/template), just
@@ -124,7 +133,11 @@ describe("carryCompletionsAcrossRegen — terminal status re-stamp", () => {
 
   it("carries skipped + race_no_show but never re-stamps a planned old day", () => {
     const skippedOld = rd({ date: "2026-05-12", status: "skipped" });
-    const plannedOld = rd({ date: "2026-05-14", dayIndex: 4, status: "planned" });
+    const plannedOld = rd({
+      date: "2026-05-14",
+      dayIndex: 4,
+      status: "planned",
+    });
     const newA = rd({
       id: "x",
       date: "2026-05-12",
@@ -150,7 +163,11 @@ describe("carryCompletionsAcrossRegen — terminal status re-stamp", () => {
   it("leaves a new day untouched when no old day shares its date", () => {
     const oldDay = rd({ date: "2026-05-12", status: "completed_exact" });
     const newDay = rd({ id: "z", date: "2026-05-19", status: "planned" });
-    const { runDays } = carryCompletionsAcrossRegen([oldDay], [newDay], undefined);
+    const { runDays } = carryCompletionsAcrossRegen(
+      [oldDay],
+      [newDay],
+      undefined
+    );
     expect(runDays[0].status).toBe("planned");
   });
 });

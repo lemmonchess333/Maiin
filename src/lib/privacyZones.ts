@@ -1,5 +1,5 @@
-import { haversine } from './gps';
-import type { GPSPoint } from './gps';
+import { haversine } from "./gps";
+import type { GPSPoint } from "./gps";
 
 export interface PrivacyZone {
   id: string;
@@ -50,7 +50,10 @@ function jitterMargin(routeLength: number): number {
  * a bigger change to both call sites, and worth doing separately rather than
  * smuggling into a privacy fix.
  */
-export function applyPrivacyZones(points: GPSPoint[], zones: PrivacyZone[]): GPSPoint[] {
+export function applyPrivacyZones(
+  points: GPSPoint[],
+  zones: PrivacyZone[]
+): GPSPoint[] {
   if (zones.length === 0 || points.length === 0) return points;
 
   const inside = points.map((p) => isInsideZone(p.lat, p.lon, zones));
@@ -69,7 +72,11 @@ export function applyPrivacyZones(points: GPSPoint[], zones: PrivacyZone[]): GPS
     while (j < points.length && inside[j]) j++;
     const before = jitterMargin(points.length);
     const after = jitterMargin(points.length);
-    for (let k = Math.max(0, i - before); k < Math.min(points.length, j + after); k++) {
+    for (
+      let k = Math.max(0, i - before);
+      k < Math.min(points.length, j + after);
+      k++
+    ) {
       drop[k] = true;
     }
     i = j;

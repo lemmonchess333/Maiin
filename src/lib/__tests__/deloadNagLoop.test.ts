@@ -134,7 +134,8 @@ function run(growthPerWeek: number) {
   return out;
 }
 
-const deloadWeeks = (growth: number) => run(growth).filter((r) => r.deload).length;
+const deloadWeeks = (growth: number) =>
+  run(growth).filter((r) => r.deload).length;
 
 describe("deload trigger — steady progression is told once, not weekly", () => {
   it.each([

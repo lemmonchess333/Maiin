@@ -72,7 +72,6 @@ vi.mock("@/hooks/useDistanceUnit", () => ({
   useDistanceUnit: () => "km" as const,
 }));
 
-
 function mountCues(frequency: "every_km" | "every_500m" = "every_km") {
   return renderHook(() => useAudioCues(true, frequency));
 }

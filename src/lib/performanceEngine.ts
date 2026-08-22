@@ -268,7 +268,6 @@ export function deloadLoadScore(
   return hasLift ? liftLoadScore : runLoadScore;
 }
 
-
 export function shouldRecommendDeload(
   currentPI: number,
   recoveryScore: number,

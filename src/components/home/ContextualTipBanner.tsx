@@ -118,7 +118,7 @@ export default function ContextualTipBanner({
               type="button"
               onClick={handleDismiss}
               aria-label={`Dismiss tip: ${title}`}
-              className="size-11 -m-2 rounded-lg flex items-center justify-center text-muted-foreground/70 hover:text-foreground hover:bg-black/[0.04] active:scale-90 transition-all shrink-0"
+              className="size-11 -m-2 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-black/[0.04] active:scale-90 transition-all shrink-0"
             >
               <X aria-hidden="true" className="size-4" />
             </button>

@@ -901,6 +901,35 @@ three-up row's ~59px of label room, which no longer applies.
 
 Each of these has a correct fix that changes something a person has to choose. Guessing is the defect.
 
+**STATUS 2026-08-22 (3) — the product owner made the call in-session, and
+items 1, 2 and 4–7 are DECIDED and SHIPPED.** The decision is **option (a):
+contrast beats palette purity — theme-aware tokens everywhere, the dark
+recolour accepted** (and wanted: it fixes dark's own 10 failures, and the
+delta is a subtle lightening of secondary text). Concretely: light
+`--muted-foreground` retuned `46.1% → 43%` so the base clears 4.5:1 on
+card, muted AND `--background` (the BottomSheet surface — which measured
+**4.095:1**, worse than this doc's 4.397 estimate); all 64 fractional text
+modifiers deleted and BANNED (`tokenContrast.test.ts` pins 0, and pins the
+base ≥4.5 on all three surfaces in BOTH themes); every `THEME.text.muted`
+site repointed at the token (`text-muted-foreground` in class contexts,
+`"hsl(var(--muted-foreground))"` in style/JS contexts) and the constant
+deleted from `theme.ts`; cluster B's theme-blind hexes moved to their AA
+steps — RunDetail pills (`--teal` / `--warning-strong`), the DeloadBanner
+heading (2.20:1, the audit's worst text reading), WaterCard's "+", the PI
+delta chip, and the verb label via a new `textHue` field beside the
+decorative `hue` (which must STAY hex: it feeds hex+alpha concats, SVG
+gradient stops and stroke attributes, where CSS `var()` cannot resolve).
+Exemptions, mechanical not taste: `runLiveActivity.ts` (native Live
+Activity plugin, always-dark overlay, needs a literal hex — #8E8E93
+measures ~4.9:1 there, passing) and the email templates in
+`functions/lib/`. DS1b's "match to `--muted-foreground` isn't guaranteed"
+reasoning is RESOLVED rather than overridden: the muted-text identity is
+now DEFINED as the token, so the equality is the decision itself. Items
+4–7 shipped per their rows below; item 3 remains open apart from Food's
+four drift sites.
+
+The two superseded STATUS notes below are kept for the record.
+
 **STATUS 2026-08-22 (2) — re-measured, and items 1 and 2 were both wrong in
 ways that matter. Read this before acting on either.**
 

@@ -45,7 +45,11 @@ describe("shouldSuggestDeload", () => {
     // week is the deepest part of the same wind-down, and "deload your
     // lifting" is the worst possible advice the week of a marathon.
     expect(
-      shouldSuggestDeload({ deloadRecommended: true, currentWeek: 15, ...MARATHON })
+      shouldSuggestDeload({
+        deloadRecommended: true,
+        currentWeek: 15,
+        ...MARATHON,
+      })
     ).toBe(false);
   });
 

@@ -168,7 +168,7 @@ function TierMarker({
         style={achieved ? { backgroundColor: TIER_COLORS[tier] } : undefined}
       />
       <span
-        className={`text-xs mt-0.5 font-medium font-mono tabular-nums whitespace-nowrap ${labelShift} ${achieved ? "" : "text-muted-foreground/60"}`}
+        className={`text-xs mt-0.5 font-medium font-mono tabular-nums whitespace-nowrap ${labelShift} ${achieved ? "" : "text-muted-foreground"}`}
         style={achieved ? { color: TIER_COLORS[tier] } : undefined}
       >
         {formatChallengeValue(metric, value)}
@@ -450,7 +450,7 @@ export function ChallengeCard({
                   </span>{" "}
                   / {formatChallengeValue(challenge.metric, target)} together
                 </p>
-                <p className="text-caption text-center text-muted-foreground/70">
+                <p className="text-caption text-center text-muted-foreground">
                   You contributed{" "}
                   {formatChallengeValue(challenge.metric, currentValue)}
                 </p>

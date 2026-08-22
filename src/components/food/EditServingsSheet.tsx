@@ -420,7 +420,7 @@ function EditServingsSheet({
                     color:
                       countDelta > 0
                         ? THEME.semantic.nutrition
-                        : THEME.text.muted,
+                        : "hsl(var(--muted-foreground))",
                   }}
                 >
                   ({countDelta > 0 ? "+" : ""}

@@ -57,7 +57,7 @@ export interface PaywallEventMetadata {
  */
 export function track(
   event: PaywallEvent,
-  metadata: PaywallEventMetadata = {},
+  metadata: PaywallEventMetadata = {}
 ): void {
   emit("paywall", event, metadata as Record<string, unknown>);
 }

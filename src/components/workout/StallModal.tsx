@@ -58,12 +58,18 @@ export default function StallModal({ exercise, onClose }: StallModalProps) {
       if (!result.ok) return;
       toast.success("Calorie target increased by 150");
     }
-    localStorage.setItem(stallCooldownKey(storageUid, exercise.name), String(Date.now()));
+    localStorage.setItem(
+      stallCooldownKey(storageUid, exercise.name),
+      String(Date.now())
+    );
     onClose();
   };
 
   const handleDismiss = () => {
-    localStorage.setItem(stallCooldownKey(storageUid, exercise.name), String(Date.now()));
+    localStorage.setItem(
+      stallCooldownKey(storageUid, exercise.name),
+      String(Date.now())
+    );
     onClose();
   };
 

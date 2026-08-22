@@ -1,4 +1,5 @@
 import type { Ref, RefObject } from "react";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { Camera, Lock, PenLine, SendHorizontal, X } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
@@ -294,9 +295,12 @@ function FoodComposerCard({
         data-no-page-swipe
         className="mt-2 flex items-center gap-2 overflow-x-auto pb-1"
       >
-        <span className="text-caption uppercase tracking-wide text-muted-foreground shrink-0">
+        {/* The one uppercase-label primitive (DS2): 11px tier, standard
+            tracking — this span was one of four hand-rolled treatments on
+            the Food surface, each with its own tracking value. */}
+        <SectionLabel as="span" tier="section" className="shrink-0">
           Add to
-        </span>
+        </SectionLabel>
         {MEAL_ORDER.map((mealKey) => {
           const selected = targetMeal === mealKey;
           return (

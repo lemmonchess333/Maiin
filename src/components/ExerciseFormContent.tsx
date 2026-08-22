@@ -223,7 +223,10 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
                     highlightedColors={[THEME.liftingLight, THEME.lifting]}
                   />
                 </div>
-                <p className="text-xs mt-2" style={{ color: THEME.text.muted }}>
+                <p
+                  className="text-xs mt-2"
+                  style={{ color: "hsl(var(--muted-foreground))" }}
+                >
                   Front
                 </p>
               </div>
@@ -268,7 +271,10 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
                     highlightedColors={[THEME.liftingLight, THEME.lifting]}
                   />
                 </div>
-                <p className="text-xs mt-2" style={{ color: THEME.text.muted }}>
+                <p
+                  className="text-xs mt-2"
+                  style={{ color: "hsl(var(--muted-foreground))" }}
+                >
                   Back
                 </p>
               </div>
@@ -295,7 +301,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
           <div className="mt-4">
             {demo.primaryMuscles.length > 0 && (
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-caption font-medium text-muted-foreground/50 mr-1">
+                <span className="text-caption font-medium text-muted-foreground mr-1">
                   Primary:
                 </span>
                 {demo.primaryMuscles.map((m) => (
@@ -310,7 +316,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
             )}
             {secondaryDedup.length > 0 && (
               <div className="flex flex-wrap items-center gap-2 mt-3">
-                <span className="text-caption font-medium text-muted-foreground/50 mr-1">
+                <span className="text-caption font-medium text-muted-foreground mr-1">
                   Secondary:
                 </span>
                 {secondaryDedup.map((m) => (

@@ -22,33 +22,31 @@ const TARGETS = { protein: 150, carbs: 200, fat: 60 };
 
 describe("allMacrosHit", () => {
   it("returns true when all three macros meet target", () => {
-    expect(
-      allMacrosHit({ protein: 150, carbs: 200, fat: 60 }, TARGETS),
-    ).toBe(true);
+    expect(allMacrosHit({ protein: 150, carbs: 200, fat: 60 }, TARGETS)).toBe(
+      true
+    );
   });
 
   it("returns true when all three exceed target", () => {
-    expect(
-      allMacrosHit({ protein: 200, carbs: 250, fat: 80 }, TARGETS),
-    ).toBe(true);
+    expect(allMacrosHit({ protein: 200, carbs: 250, fat: 80 }, TARGETS)).toBe(
+      true
+    );
   });
 
   it("returns false when any single macro is short", () => {
-    expect(
-      allMacrosHit({ protein: 149, carbs: 200, fat: 60 }, TARGETS),
-    ).toBe(false);
-    expect(
-      allMacrosHit({ protein: 150, carbs: 199, fat: 60 }, TARGETS),
-    ).toBe(false);
-    expect(
-      allMacrosHit({ protein: 150, carbs: 200, fat: 59 }, TARGETS),
-    ).toBe(false);
+    expect(allMacrosHit({ protein: 149, carbs: 200, fat: 60 }, TARGETS)).toBe(
+      false
+    );
+    expect(allMacrosHit({ protein: 150, carbs: 199, fat: 60 }, TARGETS)).toBe(
+      false
+    );
+    expect(allMacrosHit({ protein: 150, carbs: 200, fat: 59 }, TARGETS)).toBe(
+      false
+    );
   });
 
   it("returns false when all macros are short", () => {
-    expect(
-      allMacrosHit({ protein: 0, carbs: 0, fat: 0 }, TARGETS),
-    ).toBe(false);
+    expect(allMacrosHit({ protein: 0, carbs: 0, fat: 0 }, TARGETS)).toBe(false);
   });
 });
 
@@ -104,8 +102,6 @@ describe("todayIsoDate", () => {
   });
 
   it("formats end-of-year boundary correctly", () => {
-    expect(todayIsoDate(new Date(2026, 11, 31, 23, 59, 59))).toBe(
-      "2026-12-31",
-    );
+    expect(todayIsoDate(new Date(2026, 11, 31, 23, 59, 59))).toBe("2026-12-31");
   });
 });

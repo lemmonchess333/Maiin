@@ -5,11 +5,7 @@ import {
   spokenDistanceUnit,
   type DistanceUnit,
 } from "@/lib/distanceUnits";
-import {
-  paceMinSec,
-  distanceValue,
-  elevationLabel,
-} from "@/lib/runLabels";
+import { paceMinSec, distanceValue, elevationLabel } from "@/lib/runLabels";
 
 /** `12.3km` — the compact no-space form this card's small stats use. */
 function distanceLabel2Compact(km: number | undefined, unit: DistanceUnit) {
@@ -559,11 +555,7 @@ function RunTemplate({
       >
         {show("distance") && (
           <Hero
-            value={distanceValue(
-              (data.distanceKm ?? 0) * 1000,
-              data.unit,
-              2
-            )}
+            value={distanceValue((data.distanceKm ?? 0) * 1000, data.unit, 2)}
             label={spokenDistanceUnit(data.unit, 2)}
             color="#ffffff"
             scale={scale}

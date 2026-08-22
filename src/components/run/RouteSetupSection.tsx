@@ -31,8 +31,6 @@ interface RouteSetupSectionProps {
   currentPosition?: { lat: number; lon: number } | null;
 }
 
-
-
 interface PreviewState {
   points: GPSPoint[];
   name: string;

@@ -44,14 +44,14 @@ describe("FORBIDDEN_FIELDS allowlist", () => {
 describe("assertNoForbiddenFields (recursive)", () => {
   it("accepts a record with only allowlisted top-level fields", () => {
     expect(() =>
-      assertNoForbiddenFields({ uid: "abc", status: "running", count: 3 }),
+      assertNoForbiddenFields({ uid: "abc", status: "running", count: 3 })
     ).not.toThrow();
   });
 
   it("rejects a forbidden field at the top level", () => {
-    expect(() => assertNoForbiddenFields({ uid: "abc", email: "a@b.com" })).toThrow(
-      /forbidden field on operational record at .email/,
-    );
+    expect(() =>
+      assertNoForbiddenFields({ uid: "abc", email: "a@b.com" })
+    ).toThrow(/forbidden field on operational record at .email/);
   });
 
   it("rejects a forbidden field nested inside an object", () => {
@@ -59,7 +59,7 @@ describe("assertNoForbiddenFields (recursive)", () => {
       assertNoForbiddenFields({
         uid: "abc",
         meta: { event: { signedTransactionInfo: "X" } },
-      }),
+      })
     ).toThrow(/signedTransactionInfo/);
   });
 
@@ -68,7 +68,7 @@ describe("assertNoForbiddenFields (recursive)", () => {
       assertNoForbiddenFields({
         uid: "abc",
         events: [{ ok: true }, { displayName: "Alice" }],
-      }),
+      })
     ).toThrow(/events\[1\].displayName/);
   });
 
@@ -76,7 +76,7 @@ describe("assertNoForbiddenFields (recursive)", () => {
     expect(() =>
       assertNoForbiddenFields({
         bundles: [{ items: [{ photoURL: "x" }] }],
-      }),
+      })
     ).toThrow();
   });
 
@@ -88,7 +88,7 @@ describe("assertNoForbiddenFields (recursive)", () => {
         flag: true,
         count: 0,
         text: "fine",
-      }),
+      })
     ).not.toThrow();
   });
 });
@@ -118,7 +118,7 @@ describe("assertPaymentEventShape", () => {
         occurredAt: 1700000000,
         hashedUidPrefix: "deadbeef",
         action: "skipped",
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -131,7 +131,7 @@ describe("assertPaymentEventShape", () => {
         occurredAt: 1,
         hashedUidPrefix: "abcdef01",
         action: "logged",
-      }),
+      })
     ).toThrow(/invalid provider/);
   });
 
@@ -144,7 +144,7 @@ describe("assertPaymentEventShape", () => {
         occurredAt: 1,
         hashedUidPrefix: "abcdef01",
         action: "queued",
-      }),
+      })
     ).toThrow(/invalid action/);
   });
 
@@ -158,7 +158,7 @@ describe("assertPaymentEventShape", () => {
         hashedUidPrefix: "abcdef01",
         action: "logged",
         receiptData: "BIG_BLOB",
-      }),
+      })
     ).toThrow(/forbidden field on paymentEventsPostDeletion/);
   });
 

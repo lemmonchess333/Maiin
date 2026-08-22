@@ -14,7 +14,6 @@ vi.mock("@/hooks/useDistanceUnit", () => ({
   useDistanceUnit: () => "km" as const,
 }));
 
-
 // Pace Insights pulls in auth/subscription/running-stats hooks; this render
 // test covers RunFitnessSection's own UI, so stub the insight hook (its logic
 // is unit-tested via resolvePaceInsight).

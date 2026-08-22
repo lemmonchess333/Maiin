@@ -1000,7 +1000,7 @@ export default function Onboarding() {
                   id: "strength" as PrimaryGoal,
                   label: "Get stronger",
                   desc: "Heavy compound lifts with maintenance calories",
-                  icon: <Zap size={22} style={{ color: THEME.warning }} />,
+                  icon: <Zap size={22} className="text-lifting" />,
                 },
                 {
                   id: "fat_loss" as PrimaryGoal,
@@ -1131,7 +1131,11 @@ export default function Onboarding() {
                     label: "Occasional runner",
                     desc: "1 – 2 runs per week",
                     icon: (
-                      <Footprints size={22} style={{ color: THEME.warning }} />
+                      /* Coral, like its "Regular runner" sibling — two
+                         Footprints in one option group were rendering in two
+                         different domain colours (DS2: coral = running,
+                         orange = food; warning is not a category tint). */
+                      <Footprints size={22} className="text-running" />
                     ),
                   },
                   {
@@ -1793,7 +1797,9 @@ export default function Onboarding() {
                   {
                     label: "Metrics",
                     value: `${displayHeight} · ${displayWeight}`,
-                    color: THEME.warning,
+                    // Body data is purple in this app (theme.ts maps weight
+                    // to the brand/lifting identity) — it was food-orange.
+                    color: THEME.lifting,
                   },
                   {
                     // Surfaces the derived nutrition phase + its calorie
@@ -1805,7 +1811,10 @@ export default function Onboarding() {
                       goalPlan.fitnessGoal,
                       tdee.deficit
                     ),
-                    color: THEME.warning,
+                    // The FOOD identity by name. Same hex as THEME.warning
+                    // today (D19), but when the warning hue splits, this row
+                    // stays nutrition-orange — the semantic is the point.
+                    color: THEME.semantic.nutrition,
                   },
                   {
                     label: "Daily targets",

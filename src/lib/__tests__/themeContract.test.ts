@@ -225,7 +225,11 @@ describe("Nutrition domain-colour token contract — --nutrition / --nutrition-s
     expect(themeBlock).toMatch(/--color-nutrition-strong\s*:/);
   });
 
-  for (const name of ["--nutrition", "--nutrition-fill", "--nutrition-strong"]) {
+  for (const name of [
+    "--nutrition",
+    "--nutrition-fill",
+    "--nutrition-strong",
+  ]) {
     it(`:root defines ${name}`, () => {
       expect(rootBlock).toMatch(
         new RegExp(`${name.replace(/-/g, "\\-")}\\s*:`)

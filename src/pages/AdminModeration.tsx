@@ -193,7 +193,10 @@ export default function AdminModeration() {
       </header>
 
       {error && (
-        <div role="alert" className="text-sm text-destructive-strong font-medium">
+        <div
+          role="alert"
+          className="text-sm text-destructive-strong font-medium"
+        >
           {error}
         </div>
       )}
@@ -232,7 +235,7 @@ export default function AdminModeration() {
                         "unknown"}{" "}
                       · {REASON_LABEL[report.reason]}
                     </p>
-                    <p className="text-caption font-mono tabular-nums text-muted-foreground/70 mt-0.5">
+                    <p className="text-caption font-mono tabular-nums text-muted-foreground mt-0.5">
                       {report.createdAt
                         ? new Date(report.createdAt).toISOString()
                         : "(unknown date)"}

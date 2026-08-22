@@ -86,7 +86,7 @@ export default function WaterSizeSheet({
               {formatVolume(consumedMl)}
               <span
                 className="text-sm font-normal ml-1"
-                style={{ color: THEME.text.muted }}
+                style={{ color: "hsl(var(--muted-foreground))" }}
               >
                 / {formatVolume(targetMl)}
               </span>
@@ -118,7 +118,7 @@ export default function WaterSizeSheet({
               </span>
               <span
                 className="text-micro font-mono tabular-nums"
-                style={{ color: THEME.text.muted }}
+                style={{ color: "hsl(var(--muted-foreground))" }}
               >
                 {preset.ml} ml
               </span>
@@ -142,7 +142,7 @@ export default function WaterSizeSheet({
             />
             <span
               className="absolute right-3 top-1/2 -translate-y-1/2 text-xs"
-              style={{ color: THEME.text.muted }}
+              style={{ color: "hsl(var(--muted-foreground))" }}
             >
               ml
             </span>

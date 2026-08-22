@@ -54,7 +54,6 @@ vi.mock("@/hooks/useDistanceUnit", () => ({
   useDistanceUnit: () => "km" as const,
 }));
 
-
 const emptyClaimMap: Map<string, ClaimState> = new Map();
 const emptyUnclaimed: Map<string, SavedRunDoc[]> = new Map();
 

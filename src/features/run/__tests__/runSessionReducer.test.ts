@@ -35,13 +35,13 @@ describe("runSessionReducer — initial state", () => {
 describe("runSessionReducer — START actions from waiting", () => {
   it("START_MANUAL: waiting → active (skips acquiring)", () => {
     expect(runSessionReducer("waiting", { type: "START_MANUAL" })).toBe(
-      "active",
+      "active"
     );
   });
 
   it("START_GPS: waiting → acquiring", () => {
     expect(runSessionReducer("waiting", { type: "START_GPS" })).toBe(
-      "acquiring",
+      "acquiring"
     );
   });
 });
@@ -49,7 +49,7 @@ describe("runSessionReducer — START actions from waiting", () => {
 describe("runSessionReducer — acquiring branches", () => {
   it("GPS_ACQUIRED: acquiring → countdown", () => {
     expect(runSessionReducer("acquiring", { type: "GPS_ACQUIRED" })).toBe(
-      "countdown",
+      "countdown"
     );
   });
 
@@ -59,7 +59,7 @@ describe("runSessionReducer — acquiring branches", () => {
        Same target phase as GPS_ACQUIRED — the difference is what
        Run.tsx does in the effect that fires on countdown entry. */
     expect(runSessionReducer("acquiring", { type: "GPS_FAILED" })).toBe(
-      "countdown",
+      "countdown"
     );
   });
 
@@ -67,13 +67,13 @@ describe("runSessionReducer — acquiring branches", () => {
     /* The "Switch to manual" button on the acquiring screen. Skips
        countdown because the user has already been waiting. */
     expect(runSessionReducer("acquiring", { type: "MANUAL_FALLBACK" })).toBe(
-      "active",
+      "active"
     );
   });
 
   it("CANCEL_ACQUIRING: acquiring → waiting (re-opens setup modal)", () => {
     expect(runSessionReducer("acquiring", { type: "CANCEL_ACQUIRING" })).toBe(
-      "waiting",
+      "waiting"
     );
   });
 });
@@ -81,7 +81,7 @@ describe("runSessionReducer — acquiring branches", () => {
 describe("runSessionReducer — countdown → active", () => {
   it("COUNTDOWN_DONE: countdown → active", () => {
     expect(runSessionReducer("countdown", { type: "COUNTDOWN_DONE" })).toBe(
-      "active",
+      "active"
     );
   });
 });
@@ -137,7 +137,7 @@ describe("runSessionReducer — snapshot resume", () => {
       runSessionReducer("waiting", {
         type: "RESUME_SNAPSHOT",
         phase: "active",
-      }),
+      })
     ).toBe("active");
   });
 
@@ -149,7 +149,7 @@ describe("runSessionReducer — snapshot resume", () => {
       runSessionReducer("waiting", {
         type: "RESUME_SNAPSHOT",
         phase: "paused",
-      }),
+      })
     ).toBe("paused");
   });
 
@@ -168,7 +168,7 @@ describe("runSessionReducer — snapshot resume", () => {
         runSessionReducer(start, {
           type: "RESUME_SNAPSHOT",
           phase: "active",
-        }),
+        })
       ).toBe(start);
     }
   });
@@ -208,7 +208,7 @@ describe("runSessionReducer — defensive guards", () => {
       expect(runSessionReducer(start, { type: "GPS_FAILED" })).toBe(start);
       expect(runSessionReducer(start, { type: "MANUAL_FALLBACK" })).toBe(start);
       expect(runSessionReducer(start, { type: "CANCEL_ACQUIRING" })).toBe(
-        start,
+        start
       );
     }
   });

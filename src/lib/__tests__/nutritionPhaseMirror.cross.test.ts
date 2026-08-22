@@ -24,9 +24,10 @@ import { createRequire } from "node:module";
 import { getNutritionPhase as client } from "@/lib/nutritionPhase";
 
 const require = createRequire(import.meta.url);
-const { getNutritionPhase: server, VALID_PHASES } = require(
-  "../../../functions/lib/nutritionPhase.js"
-);
+const {
+  getNutritionPhase: server,
+  VALID_PHASES,
+} = require("../../../functions/lib/nutritionPhase.js");
 
 const CASES: { label: string; profile: unknown }[] = [
   { label: "cut", profile: { program: { goal: "cut" } } },

@@ -171,7 +171,7 @@ function PIGauge({
             <button
               type="button"
               aria-label="About Performance Index"
-              className="p-4 -m-4 text-muted-foreground/70 hover:text-muted-foreground transition-colors"
+              className="p-4 -m-4 text-muted-foreground hover:text-foreground transition-colors"
             >
               <Info className="size-3" aria-hidden="true" />
             </button>

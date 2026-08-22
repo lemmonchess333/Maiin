@@ -297,7 +297,9 @@ describe("deload run half — client planner → server reducer", () => {
       ],
     }) as unknown as ProgramState & { runDays: ScheduledRunDay[] };
 
-  const applyWithRuns = (state: ProgramState & { runDays: ScheduledRunDay[] }) =>
+  const applyWithRuns = (
+    state: ProgramState & { runDays: ScheduledRunDay[] }
+  ) =>
     cmds2.applyProgramCommand({
       state,
       profile: { experience: "intermediate" },

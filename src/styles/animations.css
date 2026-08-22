@@ -4,40 +4,75 @@
 
 /* ─── PAGE / CARD ENTRANCE ──────────────────────────────────── */
 @keyframes ds-fade-up {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes ds-fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes ds-scale-in {
-  from { opacity: 0; transform: scale(0.93); }
-  to   { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.93);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
-.ds-fade-up    { animation: ds-fade-up 0.28s cubic-bezier(0.4,0,0.2,1) both; }
-.ds-fade-in    { animation: ds-fade-in 0.2s ease both; }
-.ds-scale-in   { animation: ds-scale-in 0.2s cubic-bezier(0.34,1.56,0.64,1) both; }
+.ds-fade-up {
+  animation: ds-fade-up 0.28s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+.ds-fade-in {
+  animation: ds-fade-in 0.2s ease both;
+}
+.ds-scale-in {
+  animation: ds-scale-in 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
 
 /* Stagger delays */
-.ds-stagger-1  { animation-delay: 0.05s; }
-.ds-stagger-2  { animation-delay: 0.10s; }
-.ds-stagger-3  { animation-delay: 0.15s; }
-.ds-stagger-4  { animation-delay: 0.20s; }
-.ds-stagger-5  { animation-delay: 0.25s; }
+.ds-stagger-1 {
+  animation-delay: 0.05s;
+}
+.ds-stagger-2 {
+  animation-delay: 0.1s;
+}
+.ds-stagger-3 {
+  animation-delay: 0.15s;
+}
+.ds-stagger-4 {
+  animation-delay: 0.2s;
+}
+.ds-stagger-5 {
+  animation-delay: 0.25s;
+}
 
 /* ─── START RUN BUTTON — PULSE GLOW ────────────────────────── */
 @keyframes ds-run-pulse {
-  0%, 100% {
-    box-shadow: 0 4px 16px rgba(232, 115, 22, 0.22),
-                0 0 0 0 rgba(232, 115, 22, 0);
+  0%,
+  100% {
+    box-shadow:
+      0 4px 16px rgba(232, 115, 22, 0.22),
+      0 0 0 0 rgba(232, 115, 22, 0);
   }
   50% {
-    box-shadow: 0 6px 22px rgba(232, 115, 22, 0.32),
-                0 0 0 6px rgba(232, 115, 22, 0.06);
+    box-shadow:
+      0 6px 22px rgba(232, 115, 22, 0.32),
+      0 0 0 6px rgba(232, 115, 22, 0.06);
   }
 }
 
@@ -51,8 +86,12 @@
 
 /* ─── SKELETON LOADING ──────────────────────────────────────── */
 @keyframes ds-shimmer {
-  0%   { background-position: -600px 0; }
-  100% { background-position: 600px 0; }
+  0% {
+    background-position: -600px 0;
+  }
+  100% {
+    background-position: 600px 0;
+  }
 }
 
 .ds-skeleton {
@@ -68,46 +107,81 @@
 }
 
 @keyframes shimmer {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 /* ─── NUMBER UPDATE FLASH ───────────────────────────────────── */
 @keyframes ds-number-update {
-  0%   { transform: scale(1); }
-  30%  { transform: scale(1.12); color: var(--ds-purple-500); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.12);
+    color: var(--ds-purple-500);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
-.ds-stat-updated { animation: ds-number-update 0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
+.ds-stat-updated {
+  animation: ds-number-update 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
 
 /* ─── PR CELEBRATION ────────────────────────────────────────── */
 @keyframes ds-pr-flash {
-  0%   { background-color: var(--ds-orange-500); }
-  30%  { background-color: #fbbf24; }
-  100% { background-color: var(--ds-orange-500); }
+  0% {
+    background-color: var(--ds-orange-500);
+  }
+  30% {
+    background-color: #fbbf24;
+  }
+  100% {
+    background-color: var(--ds-orange-500);
+  }
 }
-.ds-badge-new-pr { animation: ds-pr-flash 0.6s ease both; }
+.ds-badge-new-pr {
+  animation: ds-pr-flash 0.6s ease both;
+}
 
 /* ─── TAB BAR ICON BOUNCE ───────────────────────────────────── */
 @keyframes ds-tab-bounce {
-  0%   { transform: translateY(0); }
-  40%  { transform: translateY(-3px); }
-  100% { transform: translateY(0); }
+  0% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-3px);
+  }
+  100% {
+    transform: translateY(0);
+  }
 }
 .ds-tab-active-icon {
-  animation: ds-tab-bounce 0.25s cubic-bezier(0.34,1.56,0.64,1) both;
+  animation: ds-tab-bounce 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
 /* ─── KUDOS POP ────────────────────────────────────────────── */
 @keyframes kudos-pop {
-  0%   { transform: scale(1); }
-  50%  { transform: scale(1.4); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.4);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* ─── REDUCED MOTION ────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

@@ -9,11 +9,7 @@
  * a regression in either branch surfaces immediately.
  */
 import { describe, it, expect } from "vitest";
-import {
-  formatCalories,
-  formatMacro,
-  CALORIE_UNIT,
-} from "../formatNutrition";
+import { formatCalories, formatMacro, CALORIE_UNIT } from "../formatNutrition";
 
 describe("formatCalories", () => {
   it("rounds to a whole number", () => {

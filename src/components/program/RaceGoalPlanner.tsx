@@ -233,7 +233,7 @@ export default function RaceGoalPlanner({
           maxLength={60}
           placeholder="London Marathon 2026"
           autoComplete="off"
-          className="block w-full min-w-0 appearance-none mt-1 px-3 py-2.5 min-h-11 rounded-lg bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="block w-full min-w-0 appearance-none mt-1 px-3 py-2.5 min-h-11 rounded-lg bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         />
       </div>
 

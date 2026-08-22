@@ -130,8 +130,7 @@ const PINNED: Record<string, string> = {
   // link renders — so a cross-test, not an exemption. The two read different
   // env vars, so the test drives both from one string and compares the
   // parse + membership semantics that were hand-written twice.
-  "functions/adminAuth.js":
-    "src/lib/__tests__/adminAuthMirror.cross.test.ts",
+  "functions/adminAuth.js": "src/lib/__tests__/adminAuthMirror.cross.test.ts",
   "functions/lib/validatePlanPayload.js":
     "src/features/program/__tests__/validatePlanPayload.cross.test.ts",
   "functions/lib/challengeTiers.js":
@@ -329,12 +328,18 @@ describe("mirror cross-test gate", () => {
        belongs here when it declares a mirror in a way none of these already
        covers. */
     const PHRASINGS: [string, string][] = [
-      ["functions/profanityFilter.js", "Mirrors <path> — names the counterpart by path"],
+      [
+        "functions/profanityFilter.js",
+        "Mirrors <path> — names the counterpart by path",
+      ],
       ["functions/lib/perfScoring.js", "parity seam / client-mirroring prose"],
-      ["functions/lib/runEligibility.js", "declared mirror of a client predicate"],
+      [
+        "functions/lib/runEligibility.js",
+        "declared mirror of a client predicate",
+      ],
       [
         "functions/adminAuth.js",
-        "plain English — \"the client-side mirror in <path>\", noun and path separated",
+        'plain English — "the client-side mirror in <path>", noun and path separated',
       ],
     ];
     const missed = PHRASINGS.filter(([f]) => !flagged.includes(f)).map(

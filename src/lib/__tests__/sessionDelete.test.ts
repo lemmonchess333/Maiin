@@ -71,10 +71,7 @@ describe("deleteLoggedSession", () => {
       id: "w-1",
       sharedActivityId: "act-1",
     });
-    expect(deletions()).toEqual([
-      "activities/act-1",
-      "users/u1/workouts/w-1",
-    ]);
+    expect(deletions()).toEqual(["activities/act-1", "users/u1/workouts/w-1"]);
   });
 
   it("leaves the session in place when the post delete fails", async () => {

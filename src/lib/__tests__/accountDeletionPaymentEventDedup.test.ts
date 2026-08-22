@@ -33,7 +33,8 @@ const locks = require("../../../functions/lib/accountDeletionLocks.js");
  * IDs and idempotent overwrites.
  */
 function makeRecordingDb() {
-  const writes: Array<{ collection: string; docId: string; record: unknown }> = [];
+  const writes: Array<{ collection: string; docId: string; record: unknown }> =
+    [];
   const store: Record<string, Record<string, unknown>> = {};
   return {
     writes,
@@ -91,7 +92,9 @@ describe("recordPaymentEventPostDeletion — deterministic doc ID", () => {
         eventType: "customer.subscription.deleted",
         uid: "alice",
       });
-      expect(db.writes[0].docId).toBe("stripe_sub_xyz_customer.subscription.deleted");
+      expect(db.writes[0].docId).toBe(
+        "stripe_sub_xyz_customer.subscription.deleted"
+      );
       expect(warn).toHaveBeenCalled();
       const warnArg = warn.mock.calls[0][0] as string;
       // Chunk 2.C: warn is now structured JSON for Cloud Logging

@@ -137,9 +137,7 @@ export default function WeightStepsTiles({
               aria-hidden="true"
             />
           </div>
-          <SectionLabel style={{ color: THEME.text.muted }}>
-            Weight
-          </SectionLabel>
+          <SectionLabel>Weight</SectionLabel>
         </div>
         {/* Value centred in the tile's remaining height so the number
             fills the (water-matched) tile instead of clustering at the
@@ -165,14 +163,17 @@ export default function WeightStepsTiles({
               {lastWeight && (
                 <span
                   className="text-sm font-medium"
-                  style={{ color: THEME.text.muted }}
+                  style={{ color: "hsl(var(--muted-foreground))" }}
                 >
                   {weightUnitDisplay}
                 </span>
               )}
             </div>
           )}
-          <p className="text-micro mt-1" style={{ color: THEME.text.muted }}>
+          <p
+            className="text-micro mt-1"
+            style={{ color: "hsl(var(--muted-foreground))" }}
+          >
             {lastWeightDate}
           </p>
         </div>
@@ -201,9 +202,7 @@ export default function WeightStepsTiles({
                 aria-hidden="true"
               />
             </div>
-            <SectionLabel style={{ color: THEME.text.muted }}>
-              Steps
-            </SectionLabel>
+            <SectionLabel>Steps</SectionLabel>
           </div>
           {stepsConnected ? (
             <>
@@ -223,7 +222,7 @@ export default function WeightStepsTiles({
               </div>
               <p
                 className="text-micro mt-1"
-                style={{ color: THEME.text.muted }}
+                style={{ color: "hsl(var(--muted-foreground))" }}
               >
                 today
               </p>

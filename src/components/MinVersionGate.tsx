@@ -18,11 +18,7 @@ declare const __APP_VERSION__: string;
  * App.tsx's static graph — the check rides the same chunks the app loads
  * anyway, and a failed load simply fails open.
  */
-export default function MinVersionGate({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function MinVersionGate({ children }: { children: ReactNode }) {
   const [blocked, setBlocked] = useState(false);
 
   useEffect(() => {
@@ -78,10 +74,7 @@ export default function MinVersionGate({
             : "This version of Tropos is out of date. Reload to get the latest version."}
         </p>
         {!native && (
-          <Button
-            className="w-full"
-            onClick={() => window.location.reload()}
-          >
+          <Button className="w-full" onClick={() => window.location.reload()}>
             Reload Tropos
           </Button>
         )}

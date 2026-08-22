@@ -33,10 +33,7 @@ import Button from "@/components/ui/Button";
 import { toast } from "@/lib/toast";
 import { logger } from "@/lib/logger";
 import { localDateString, localWeekKey } from "@/lib/dateHelpers";
-import {
-  clearEasedWeekKey,
-  setEasedWeekKey,
-} from "@/lib/easeWeekNudgeMarkers";
+import { clearEasedWeekKey, setEasedWeekKey } from "@/lib/easeWeekNudgeMarkers";
 import { planEasierWeek, type EasySwap } from "@/lib/adjustWeek";
 import { track } from "@/lib/programAnalytics";
 import {

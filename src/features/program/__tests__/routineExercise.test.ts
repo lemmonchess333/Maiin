@@ -80,8 +80,10 @@ describe("exerciseFromRoutine — rep unit", () => {
        exercise added to `TIMED_EXERCISE_IDS` later is covered here for
        free instead of silently escaping. */
     for (const id of TIMED_EXERCISE_IDS) {
-      expect(exerciseFromRoutine(routineEx({ name: id, exerciseId: id }))
-        .repUnit, id).toBe("seconds");
+      expect(
+        exerciseFromRoutine(routineEx({ name: id, exerciseId: id })).repUnit,
+        id
+      ).toBe("seconds");
     }
   });
 

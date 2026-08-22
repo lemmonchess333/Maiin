@@ -3,11 +3,7 @@
  * for the Open Food Facts barcode + AI macro-parsing pipelines.
  */
 import { describe, it, expect } from "vitest";
-import {
-  safeNum,
-  parseServingGrams,
-  round1,
-} from "../foodParseHelpers";
+import { safeNum, parseServingGrams, round1 } from "../foodParseHelpers";
 
 describe("safeNum", () => {
   it("returns finite numbers unchanged", () => {

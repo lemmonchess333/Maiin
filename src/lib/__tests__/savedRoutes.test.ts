@@ -26,7 +26,9 @@ describe("downsampleCoords", () => {
   });
 
   it("caps long polylines at max points and keeps the endpoints", () => {
-    const pts = Array.from({ length: 5000 }, (_, i) => pt(51.5 + i * 1e-5, -0.1));
+    const pts = Array.from({ length: 5000 }, (_, i) =>
+      pt(51.5 + i * 1e-5, -0.1)
+    );
     const flat = downsampleCoords(pts, 600);
     expect(flat).toHaveLength(MAX_COORDS * 2);
     // first point preserved

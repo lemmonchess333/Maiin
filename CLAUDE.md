@@ -426,7 +426,7 @@ Use the `/browse` skill from gstack for **all web browsing**. Never use `mcp__cl
 - Icon backgrounds: rgba(123, 114, 233, 0.10) — subtle purple tint
 - Card backgrounds: white (light) / #1A1A1F (dark)
 - Page background: hsl(240 5% 96%) = ~#F2F2F7 (light) / #121214 (dark)
-- Text muted: #8E8E93 (iOS system grey)
+- Text muted: the theme-aware `--muted-foreground` token (light `240 3.8% 43%`, dark `240 4% 64%`) — tuned to clear 4.5:1 on card, muted AND page background in both themes. The old fixed #8E8E93 was deleted in the DS2 consolidation (2026-08-22, owner-decided): one grey serving both themes measured 2.53–3.26:1 across the light surfaces it rendered on. No fractional `text-muted-foreground/<n>` anywhere — de-emphasis is the type scale's job (banned + pinned in `tokenContrast.test.ts`). In JS/style contexts use `"hsl(var(--muted-foreground))"`.
 
 ### Typography (Plus Jakarta Sans + Archivo)
 

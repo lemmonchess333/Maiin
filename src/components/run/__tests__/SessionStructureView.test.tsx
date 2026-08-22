@@ -14,10 +14,7 @@ import { describe, it, expect } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import { afterEach } from "vitest";
 import SessionStructureView from "../SessionStructureView";
-import {
-  segmentsFromGuided,
-  segmentsFromIntervals,
-} from "@/lib/runSegments";
+import { segmentsFromGuided, segmentsFromIntervals } from "@/lib/runSegments";
 import type { GuidedRunWorkout } from "@/lib/guidedRun";
 
 afterEach(() => cleanup());
@@ -26,14 +23,17 @@ describe("SessionStructureView — intervals", () => {
   it("renders warmup, per-rep work/recovery rows, and cooldown in order", () => {
     render(
       <SessionStructureView
-        segments={segmentsFromIntervals({
-          reps: 5,
-          workDistance: 1000,
-          workPace: 270,
-          restDuration: 90,
-          warmupDuration: 600,
-          cooldownDuration: 300,
-        }, "km")}
+        segments={segmentsFromIntervals(
+          {
+            reps: 5,
+            workDistance: 1000,
+            workPace: 270,
+            restDuration: 90,
+            warmupDuration: 600,
+            cooldownDuration: 300,
+          },
+          "km"
+        )}
       />
     );
     expect(screen.getByText("Warm-up")).toBeInTheDocument();
@@ -49,11 +49,14 @@ describe("SessionStructureView — intervals", () => {
   it("omits warmup + cooldown when not set, and pace when missing", () => {
     render(
       <SessionStructureView
-        segments={segmentsFromIntervals({
-          reps: 4,
-          workDistance: 400,
-          restDuration: 60,
-        }, "km")}
+        segments={segmentsFromIntervals(
+          {
+            reps: 4,
+            workDistance: 400,
+            restDuration: 60,
+          },
+          "km"
+        )}
       />
     );
     expect(screen.queryByText("Warm-up")).not.toBeInTheDocument();

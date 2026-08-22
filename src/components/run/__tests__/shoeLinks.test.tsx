@@ -12,7 +12,6 @@ vi.mock("@/hooks/useDistanceUnit", () => ({
   useDistanceUnit: () => "km" as const,
 }));
 
-
 /**
  * Both run-tab shoe surfaces deep-link to the FOCUSED shoes page
  * (/settings/shoes), not the generic Settings list — the "one tap to the

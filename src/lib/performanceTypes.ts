@@ -6,7 +6,7 @@
    ───────────────────────────────────────────── */
 
 /** Load band emitted by the engine — categorical state derived from PI score. */
-export type LoadBand = 'deload' | 'low' | 'moderate' | 'high' | 'overreach';
+export type LoadBand = "deload" | "low" | "moderate" | "high" | "overreach";
 
 /**
  * Data-aware signals emitted by the engine on every perf doc write.
@@ -41,18 +41,18 @@ export interface WeeklyAggregates {
   weekKey: string; // "YYYY-MM-DD" (Sunday start)
 
   // Lifting
-  liftTonnage: number;      // session tonnage (workoutVolumeKg: stated totalVolume, else weightKg*reps excluding timed holds)
-  liftHardSets: number;     // proxy: count of last-set per non-cardio exercise
+  liftTonnage: number; // session tonnage (workoutVolumeKg: stated totalVolume, else weightKg*reps excluding timed holds)
+  liftHardSets: number; // proxy: count of last-set per non-cardio exercise
   liftSessions: number;
 
   // Running
-  runKm: number;            // total km
-  runLongKm: number;        // longest single run km
-  runQualityCount: number;  // runs with intervalData or tempo/interval activityType
+  runKm: number; // total km
+  runLongKm: number; // longest single run km
+  runQualityCount: number; // runs with intervalData or tempo/interval activityType
   runSessions: number;
 
   // Nutrition (may be partial)
-  mealDaysLogged: number;   // distinct days with ≥1 meal
+  mealDaysLogged: number; // distinct days with ≥1 meal
   avgDailyCalories: number;
   avgDailyProtein: number;
 
@@ -92,12 +92,12 @@ export interface PerformanceDoc {
   adherenceScore: number;
 
   // Multipliers / contextual
-  liftProgression: number;      // ratio vs baseline tonnage
-  runVolume: number;             // ratio vs baseline km
-  runPaceAdjustmentPct: number;  // placeholder until pace tracking matures
+  liftProgression: number; // ratio vs baseline tonnage
+  runVolume: number; // ratio vs baseline km
+  runPaceAdjustmentPct: number; // placeholder until pace tracking matures
 
   // Meta
-  confidence: 'high' | 'medium' | 'low';
+  confidence: "high" | "medium" | "low";
   loadBand: LoadBand;
   deloadRecommended: boolean;
 
@@ -176,7 +176,7 @@ export interface PerformanceWeekDoc {
 export const PI_WEIGHTS = {
   load: 0.65,
   recovery: 0.25,
-  adherence: 0.10,
+  adherence: 0.1,
   liftInLoad: 0.5,
   runInLoad: 0.5,
 } as const;

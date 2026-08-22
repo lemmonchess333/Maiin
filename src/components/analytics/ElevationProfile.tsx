@@ -52,8 +52,7 @@ export default function ElevationProfile({
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-foreground">Elevation</h3>
         <p className="text-xs font-mono tabular-nums text-muted-foreground">
-          {elevationLabel(minAlt, unit, false)} –{" "}
-          {elevationLabel(maxAlt, unit)}
+          {elevationLabel(minAlt, unit, false)} – {elevationLabel(maxAlt, unit)}
         </p>
       </div>
 

@@ -65,7 +65,9 @@ describe("attestedWeeklyRateKg", () => {
   it("rejects absent, zero, non-finite and phase-less input", () => {
     // One "can I trust this?" question for callers instead of four separate
     // guards each consumer has to remember.
-    expect(attestedWeeklyRateKg({ weeklyRateKg: 0, program: { goal: "cut" } })).toBeNull();
+    expect(
+      attestedWeeklyRateKg({ weeklyRateKg: 0, program: { goal: "cut" } })
+    ).toBeNull();
     expect(attestedWeeklyRateKg({ program: { goal: "cut" } })).toBeNull();
     expect(
       attestedWeeklyRateKg({ weeklyRateKg: NaN, program: { goal: "cut" } })

@@ -394,12 +394,12 @@ export default function RunDetail() {
           <StatPill
             value={paceMinSec(avgPace, unit)}
             label={`${paceUnitLabel(unit)} Pace`}
-            color={THEME.teal}
+            color={"hsl(var(--teal))"}
           />
           <StatPill
             value={`${run.calories ?? 0}`}
             label="Cal"
-            color={THEME.warning}
+            color={"hsl(var(--warning-strong))"}
           />
         </div>
 

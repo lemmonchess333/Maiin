@@ -165,7 +165,12 @@ export function getRunningTip(
   }
 
   // Perfect conditions
-  if (temperature >= 10 && temperature <= 18 && humidity < 70 && windSpeed < 15) {
+  if (
+    temperature >= 10 &&
+    temperature <= 18 &&
+    humidity < 70 &&
+    windSpeed < 15
+  ) {
     return "Great conditions — perfect running weather!";
   }
 

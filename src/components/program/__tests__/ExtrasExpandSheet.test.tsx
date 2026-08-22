@@ -21,7 +21,6 @@ vi.mock("@/hooks/useDistanceUnit", () => ({
   useDistanceUnit: () => "km" as const,
 }));
 
-
 const navigateMock = vi.fn();
 vi.mock("react-router-dom", async () => {
   const actual =

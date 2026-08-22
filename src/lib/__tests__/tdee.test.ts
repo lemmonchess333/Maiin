@@ -61,7 +61,10 @@ describe("calculateTDEE", () => {
     expect(result.protein).toBe(160);
     // Fat: 25% of targetCalories, in grams, never below the essential floor.
     expect(result.fat).toBe(
-      Math.max(Math.round((0.25 * result.targetCalories) / 9), Math.round(0.6 * 80))
+      Math.max(
+        Math.round((0.25 * result.targetCalories) / 9),
+        Math.round(0.6 * 80)
+      )
     );
     /* Carbs are asserted through the invariant they exist to satisfy rather
        than by recomputing the expression above them — the previous version of

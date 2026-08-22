@@ -15,6 +15,14 @@ import type { LoadBand } from "./performanceTypes";
 export interface CardColour {
   /** Stroke colour for the ring gradient (brand purple OR amber). */
   hue: string;
+  /** The same band identity as an AA-safe TEXT colour (DS2, 2026-08-22).
+   *  `hue` must stay a literal hex — it feeds hex+alpha concats, SVG
+   *  gradient stops and stroke attributes, where CSS var() cannot
+   *  resolve — but the VERB LABEL is 16px/700 body text (4.5:1 floor)
+   *  and both hues fail it in light (amber 3.19, brand 3.87). Text
+   *  renders through inline style, where var() does resolve, so the
+   *  text step rides the theme-aware -strong tokens. */
+  textHue: string;
   /** Drop-shadow glow intensity, 0..1. Scales linearly across PI 45-100. */
   glowIntensity: number;
 }
@@ -40,15 +48,23 @@ export interface CardColour {
 export function getCardColour(
   pi: number,
   loadBand: LoadBand,
-  deloadRecommended: boolean,
+  deloadRecommended: boolean
 ): CardColour {
   if (deloadRecommended || loadBand === "overreach") {
-    return { hue: THEME.amber, glowIntensity: 0 };
+    return {
+      hue: THEME.amber,
+      textHue: "hsl(var(--warning-strong))",
+      glowIntensity: 0,
+    };
   }
 
   // Continuous glow scales 0 → 1 across PI 45-100.
   // Clamped both sides defensively — engine clamps PI to 0..100 but a
   // future schema change shouldn't blow up the ring filter.
   const glowIntensity = Math.max(0, Math.min(1, (pi - 45) / 55));
-  return { hue: THEME.brand, glowIntensity };
+  return {
+    hue: THEME.brand,
+    textHue: "hsl(var(--primary-strong))",
+    glowIntensity,
+  };
 }

@@ -41,9 +41,7 @@ describe("buildRaceDayPlan — splits", () => {
       expect(finish.cumulativeS, distance).toBe(targetTimeS);
       // Negative split: the first segment's pace is slower (bigger s/km)
       // than the last segment's.
-      expect(vm.splits[0].segmentPaceS).toBeGreaterThan(
-        finish.segmentPaceS
-      );
+      expect(vm.splits[0].segmentPaceS).toBeGreaterThan(finish.segmentPaceS);
       // Cumulatives strictly increase.
       for (let i = 1; i < vm.splits.length; i++) {
         expect(vm.splits[i].cumulativeS).toBeGreaterThan(
@@ -75,8 +73,12 @@ describe("buildRaceDayPlan — pacing source", () => {
     // 1:30 half for a 20:00-5K runner — oracle says not a long shot.
     const targetTimeS = 5400;
     expect(
-      raceTargetVerdict({ unit: "km", distance: "half", targetTimeS, runFitness: fitness })!
-        .band
+      raceTargetVerdict({
+        unit: "km",
+        distance: "half",
+        targetTimeS,
+        runFitness: fitness,
+      })!.band
     ).not.toBe("long_shot");
     const vm = buildRaceDayPlan({
       distance: "half",
@@ -95,8 +97,12 @@ describe("buildRaceDayPlan — pacing source", () => {
   it("a long-shot target is paced from fitness instead (oracle-checked)", () => {
     const targetTimeS = 80 * 60; // 1:20 half
     expect(
-      raceTargetVerdict({ unit: "km", distance: "half", targetTimeS, runFitness: fitness })!
-        .band
+      raceTargetVerdict({
+        unit: "km",
+        distance: "half",
+        targetTimeS,
+        runFitness: fitness,
+      })!.band
     ).toBe("long_shot");
     const vm = buildRaceDayPlan({
       distance: "half",
@@ -104,18 +110,14 @@ describe("buildRaceDayPlan — pacing source", () => {
       runFitness: fitness,
     })!;
     expect(vm.paceSource).toBe("fitness");
-    expect(vm.planTimeS).toBe(
-      predictedRaceTimesFromFitness(fitness)!.half
-    );
+    expect(vm.planTimeS).toBe(predictedRaceTimesFromFitness(fitness)!.half);
     expect(vm.note).toMatch(/well beyond your recent running/i);
   });
 
   it("no target → paced from fitness; no target and no benchmark → null", () => {
     const vm = buildRaceDayPlan({ distance: "10k", runFitness: fitness })!;
     expect(vm.paceSource).toBe("fitness");
-    expect(vm.planTimeS).toBe(
-      predictedRaceTimesFromFitness(fitness)!["10k"]
-    );
+    expect(vm.planTimeS).toBe(predictedRaceTimesFromFitness(fitness)!["10k"]);
     expect(vm.note).toMatch(/set a goal time/i);
     expect(buildRaceDayPlan({ distance: "10k" })).toBeNull();
   });
