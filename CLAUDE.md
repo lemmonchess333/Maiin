@@ -996,18 +996,82 @@ made the remaining work look bigger than it is.** Three fixes:
 
 What is genuinely left is operator-only — there is no code change pending:
 
-- [ ] **Add `troposfit.com` as a custom domain** in Firebase Console →
-      Hosting → Add custom domain, for the `adaptive-fitness-af8bb` project.
-- [ ] **Add the DNS records Firebase issues, in Cloudflare.** Set those
-      records to **DNS-only (grey cloud), not proxied** — Cloudflare's proxy
-      intercepts the ACME challenge and Firebase's certificate provisioning
-      stalls. You can re-enable proxying after the cert is issued if wanted.
-- [ ] **Confirm all three URLs load signed-out in a private window** before
-      touching App Store Connect. `src/lib/__tests__/publicLegalRoutes.test.ts`
-      pins that the ROUTES exist in the signed-out set; it cannot pin DNS.
-- [ ] **Then update App Store Connect** to the real URLs: the two links in
-      the **Description** footer and the **Support URL** field. Do NOT submit
-      with placeholder links.
+- [x] **`troposfit.com` added as a custom domain** — done 2026-08-22, on the
+      `adaptive-fitness-af8bb` project. Firebase reached "Connected" and
+      minted the certificate.
+- [x] **DNS records added in Cloudflare** — `A 199.36.158.100` plus
+      `TXT hosting-site=adaptive-fitness-af8bb`, both **DNS-only (grey
+      cloud)**. Keep them grey: the orange cloud replaces the published A
+      record with Cloudflare's anycast IPs, so Firebase's check for
+      `199.36.158.100` would fail permanently — not just during ACME. Both
+      records were confirmed visible on `8.8.8.8`, `1.1.1.1` and `9.9.9.9`
+      before Firebase caught up; the lag was Firebase's own polling, NOT
+      stale negative caching (a theory that was checked and disproved).
+- [x] **All three URLs confirmed loading signed-out** — `/privacy`,
+      `/terms`, `/support` on the real domain, 2026-08-22.
+- [ ] **Then update App Store Connect** to the real URLs — four fields,
+      three distinct pages: the two **Description** footer links
+      (`/terms`, `/privacy`), the **Support URL** field (`/support`), and
+      **App Privacy → Privacy Policy URL** (`/privacy`), all on
+      `https://troposfit.com`. Do NOT submit with placeholder links.
+
+### App Store Connect age rating — answered 2026-08-22, not yet entered
+
+Operator-only: nothing here is a code change. The questionnaire was worked
+out against the code on 2026-08-22 so that whoever fills it in is not
+guessing, and so a later reader can tell WHY each answer is what it is.
+Apple replaced the old tiers (4+/9+/12+/17+) with **4+/9+/13+/16+/18+** at
+the end of January 2026 and reworded the questions — match by meaning, not
+by literal wording.
+
+**What the code actually does** (grepped, not assumed — the point of
+writing it down is that nobody re-derives it):
+
+| Apple asks about  | Tropos                                                                                                                                                                                                                                                   |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Report mechanism  | `ActivityCard.tsx:894` "Report activity" → `ReportModal` — 5 categories (harassment / spam / inappropriate / impersonation / other) with sub-reasons, own test file                                                                                      |
+| Block mechanism   | Client block **plus server enforcement** via `functions/lib/blockGuard.js` — a blocked user's kudos and comments are refused, not merely hidden                                                                                                          |
+| Private messaging | **None.** No DMs anywhere; social is feed posts, kudos, comments, space posts                                                                                                                                                                            |
+| Web browsing      | **No in-app browser.** The only outbound links are 12 hardcoded race-organiser URLs (`spaceDefs.ts`, with `raceEventOverrides.ts` validating any override as `https://` and ≤200 chars) and Apple's own subscriptions page, opened in the system browser |
+| Location sharing  | **Yes.** A shared run carries `routePreview` (lat/lon) rendered as a map in the feed (`ActivityCard.tsx`). Privacy zones trim points near home/work (`shareRoute.ts`) — a mitigation, not an absence                                                     |
+
+**The answers.** Every content-frequency question is `None` — violence
+(cartoon and realistic), sexual content or nudity, profanity or crude
+humour, alcohol/tobacco/drugs, horror or fear themes, mature or suggestive
+themes, simulated gambling, contests — with ONE exception:
+
+- **Medical or treatment information → `Infrequent/Mild`.** This is the
+  calorie targets, macro splits, TDEE, training load and deload
+  recommendations. MyFitnessPal answers it the same way. `None` is the
+  answer a reviewer would push back on, and conservatism costs nothing here.
+
+Capabilities:
+
+- **User-generated content → `Yes`**, and yes to moderation, reporting and
+  blocking — Tropos genuinely has all three, server-enforced.
+- **Users can communicate with each other → `Yes`.** No DMs, but comments
+  are user-to-user communication. Under-declaring is a Guideline 1.2
+  problem; over-declaring only raises the rating, which is harmless given
+  the Terms already say 16+.
+- **Users can share their location → `Yes`.** Shared runs show the route.
+  Do NOT answer no on the strength of privacy zones.
+- **Unrestricted web access → `No`.** Justified by the table above.
+- **In-app purchases → `Yes`** (Pro subscription).
+
+**The 13+ vs 16+ gap is not a defect — do not "fix" it by inflating an
+answer.** The store rating describes CONTENT SUITABILITY; the Terms and
+Privacy Policy set a CONTRACTUAL MINIMUM AGE, and 16 is there because it is
+the UK GDPR consent threshold. Terms stricter than the rating is the normal
+and safe direction (Instagram has shipped that pairing for years). The
+dangerous direction is the reverse — a rating LOWER than the content
+warrants. Expect to land on 13+ and leave both as they are.
+
+- [ ] **Enter the answers** in App Store Connect → App Information → Age
+      Rating → Edit.
+- [ ] **Re-check if the social surface gains private messaging**, or if the
+      report/block affordances are ever removed or weakened — both would
+      change answers above, and the UGC answers are the ones Apple acts on
+      after launch rather than at review.
 
 ### Stripe stays DORMANT — web storefront steer at launch (Sub4, locked 2026-07-05)
 
