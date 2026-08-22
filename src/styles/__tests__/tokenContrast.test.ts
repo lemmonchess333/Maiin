@@ -476,3 +476,149 @@ describe("the range track's fill/groove edge — WCAG 1.4.11", () => {
     ).toBeLessThan(AA_LARGE);
   });
 });
+
+/**
+ * FRACTIONAL-OPACITY TEXT — the class this suite structurally could not see.
+ *
+ * `tintAlphas` above scans `bg-<token>/<n>`, so every tinted SURFACE gets
+ * its contrast question asked. Nothing scanned `text-<token>/<n>`, and 64
+ * such sites accumulated in `text-muted-foreground` alone, down to a `/30`.
+ *
+ * They all fail, and the reason is arithmetic rather than judgement: the
+ * base token clears AA on the light card by 0.333 (4.833 against a 4.5
+ * floor), so ANY fraction of it lands under. Measured, every alpha in use:
+ *
+ *     /60  2.318   /70  2.743   /80  3.279   /90  3.960
+ *
+ * A correction published on PR #2077 claimed the base measured 7.26:1
+ * (AAA) and that the fractions were therefore comfortable. That figure was
+ * real but belonged to a DIFFERENT element — `Run.tsx:142`'s "Acquiring
+ * GPS..." label, `text-warning-strong/90` on the dark page, which does
+ * measure 7.27. Two tokens, two themes, one number carried between them.
+ * The assertions below compute both, so neither can be quoted for the
+ * other again.
+ *
+ * This is a RATCHET, not a fix. Which way the 64 sites go — delete the
+ * modifiers, or retune the base and re-derive a dimmer step — is a live
+ * question with a documented lock adjacent to it (DS1/DS1b), so this pins
+ * the count rather than driving it to zero. What it buys is that the class
+ * stops growing silently while that question is open.
+ */
+const FRACTIONAL_TEXT_PINS: Record<string, number> = {
+  "muted-foreground": 64,
+};
+
+function fractionalTextUses(token: string): string[] {
+  const out: string[] = [];
+  for (const f of globSync("src/**/*.{ts,tsx}", { cwd: process.cwd() })) {
+    if (f.includes("__tests__")) continue;
+    const src = readFileSync(resolve(process.cwd(), f), "utf8");
+    src.split("\n").forEach((line, i) => {
+      for (const m of line.matchAll(
+        new RegExp(`text-${token}\\/(\\d+)`, "g")
+      )) {
+        out.push(`${f}:${i + 1}  /${m[1]}`);
+      }
+    });
+  }
+  return out;
+}
+
+describe("fractional-opacity text tokens", () => {
+  it.each(Object.keys(FRACTIONAL_TEXT_PINS))(
+    "text-%s/<n> does not grow",
+    (token) => {
+      const uses = fractionalTextUses(token);
+      const pinned = FRACTIONAL_TEXT_PINS[token];
+      expect(
+        uses.length,
+        uses.length > pinned
+          ? `A new text-${token}/<n> appeared. Every fraction of this token ` +
+              `is under 4.5:1 on the light card — the base clears AA by only ` +
+              `0.333, so there is no safe alpha. Use the bare token, or a ` +
+              `smaller type size with the bare token.\n` +
+              uses.slice(pinned).join("\n")
+          : `text-${token}/<n> dropped to ${uses.length} — lower the pin to ` +
+              `lock the gain in. At 0 this whole block should be deleted.`
+      ).toBe(pinned);
+    }
+  );
+
+  it("no alpha of --muted-foreground clears AA on any light surface", () => {
+    /* The arithmetic the ratchet rests on, asserted rather than asserted-
+       about. If someone retunes the base darker, some alphas start passing
+       — this fails, and that is the signal to revisit the pin rather than
+       carry it forever. */
+    const light = lightBlock();
+    const fg = hslToRgb(...readHsl(light, "muted-foreground"));
+    const surfaces: Array<[string, [number, number, number]]> = [
+      ["card", hslToRgb(...readHsl(light, "card"))],
+      ["muted", hslToRgb(...readHsl(light, "muted"))],
+      ["background", hslToRgb(...readHsl(light, "background"))],
+    ];
+    // The alphas actually painted, read from source rather than guessed.
+    const alphas = [
+      ...new Set(
+        fractionalTextUses("muted-foreground").map((u) =>
+          Number(u.split("/").pop())
+        )
+      ),
+    ].sort((a, b) => b - a);
+    expect(alphas.length).toBeGreaterThan(0);
+
+    for (const [name, bg] of surfaces) {
+      for (const a of alphas) {
+        const composite = fg.map(
+          (c, i) => (a / 100) * c + (1 - a / 100) * bg[i]
+        ) as [number, number, number];
+        const ratio = contrast(composite, bg);
+        expect(
+          ratio,
+          `text-muted-foreground/${a} on --${name} is ${ratio.toFixed(3)}:1. ` +
+            `If this now PASSES, the base was retuned and the ratchet above ` +
+            `should be revisited.`
+        ).toBeLessThan(AA_NORMAL);
+      }
+    }
+  });
+
+  it("the base itself is AA-marginal on the card and FAILS on the page canvas", () => {
+    /* The premise, pinned as a literal-free measurement. The card figure is
+       what makes every fraction fail; the canvas figure is the one that is
+       easy to miss, and `BottomSheet.tsx` paints `bg-background`, so every
+       sheet in the app renders its secondary text on it. */
+    const light = lightBlock();
+    const fg = hslToRgb(...readHsl(light, "muted-foreground"));
+    const onCard = contrast(fg, hslToRgb(...readHsl(light, "card")));
+    const onCanvas = contrast(fg, hslToRgb(...readHsl(light, "background")));
+
+    expect(onCard).toBeGreaterThanOrEqual(AA_NORMAL);
+    expect(
+      onCard,
+      `--muted-foreground is ${onCard.toFixed(3)}:1 on the light card. It was ` +
+        `once reported as 7.26:1 (AAA); that number belongs to ` +
+        `text-warning-strong/90 on the DARK page. If this is now comfortably ` +
+        `above 4.5, the token was retuned and the ratchet should be revisited.`
+    ).toBeLessThan(5);
+
+    expect(
+      onCanvas,
+      `--muted-foreground is ${onCanvas.toFixed(3)}:1 on --background. Recorded ` +
+        `as a known failure, not tolerated silently — every BottomSheet body ` +
+        `renders on this surface.`
+    ).toBeLessThan(AA_NORMAL);
+  });
+
+  it("7.26:1 belongs to text-warning-strong/90 on the DARK page, not to muted text", () => {
+    // The misattribution, made permanent so it cannot be re-derived.
+    const dark = darkBlock();
+    const fg = hslToRgb(...readHsl(dark, "warning-strong"));
+    const bg = hslToRgb(...readHsl(dark, "background"));
+    const composite = fg.map((c, i) => 0.9 * c + 0.1 * bg[i]) as [
+      number,
+      number,
+      number,
+    ];
+    expect(contrast(composite, bg)).toBeGreaterThan(7);
+  });
+});

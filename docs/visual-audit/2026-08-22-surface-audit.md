@@ -901,6 +901,86 @@ three-up row's ~59px of label room, which no longer applies.
 
 Each of these has a correct fix that changes something a person has to choose. Guessing is the defect.
 
+**STATUS 2026-08-22 (2) — re-measured, and items 1 and 2 were both wrong in
+ways that matter. Read this before acting on either.**
+
+**Item 1 is governed by a LIVE LOCK the audit never consulted.** DS1/DS1b
+(`.claude/plans/programme-run-followups.md:620`, on main, shipped across 11
+PRs) scoped the sport-token migration and put `text.muted` explicitly in
+its LEFT-INLINE set — "mixed-scope conditionals where an out-of-scope
+branch … has no guaranteed token equality". Its in-code marker still sits
+at one of the 47 sites, `DayPeekCard.tsx:178-181`: "the rest-day branch is
+THEME.text.muted (#8E8E93), whose match to `--muted-foreground` isn't
+guaranteed". So "just repoint the hexes at the token" is a move that was
+already considered and deliberately not made. The lock does NOT forbid
+fixing the contrast — it forbids assuming the two values are equivalent and
+sweeping them, which is exactly what option (a) proposed. Per CLAUDE.md's
+lock discipline, re-deriving this is wasted effort even when it lands in
+the same place.
+
+**The count is 47 grep hits, not 47 defects.** Reading all 47: 1 is a
+comment, 6 paint a non-text property, 40 resolve to text and collapse to 39
+distinct rendered elements. **38 of those 39 fail** their size-correct
+floor in light. Exactly one is rescued by the large-text rule
+(`PerformanceHeroCard.tsx:67`, a 48px/800 em-dash at 3.261 against a 3:1
+bar), so applying 4.5 uniformly was very nearly right here.
+
+**The quoted range is too GENEROUS, not too harsh.** "3.07-3.26:1" is only
+`--muted` and `--card`. The true light range for text is **2.533-3.261**,
+because two grounds were missed:
+
+- `BottomSheet.tsx:121` paints `bg-background`, not `bg-card`. Every sheet
+  body in the app renders its secondary text on the page canvas, which is
+  ~0.5 of a ratio point worse. `tokenContrast.test.ts` already warns about
+  exactly this in its `TINT_SURFACES` comment — written before this audit.
+- Five sites paint `#8E8E93` text on a tint OF ITSELF (`RunSummary:1645` at
+  2.533 is the worst text site in the set). A same-colour tint always
+  lowers contrast, so a call-site swap must move the chip background too or
+  it lands in the same place.
+
+**Neither cluster is light-only.** 10 of the 39 also fail in dark
+(`#8E8E93` on the dark `--muted` tile is 4.388). Any fix framed as
+"light-only, dark byte-identical" leaves those behind — which is the
+strongest argument against the option that otherwise looked free.
+
+**Item 2's fork is not settled, and ORDER matters.** Deleting the 64
+fractions forecloses the "add a dimmer AA-clearing step" option, because
+that option only becomes available if the base is retuned first: at
+`L=43.45%` the base moves to 5.31:1 on the card, opening a real
+[4.50, 5.31] window for a dimmer step. Retuning the base and deleting the
+alphas are therefore ONE question asked twice, and doing the deletion first
+is reversible in git but not in design.
+
+**A correction published on PR #2077 was itself wrong, and it inverted the
+finding.** It claimed `text-muted-foreground` "measures 7.26:1, AAA". The
+real value is **4.833:1 on the light card — AA by 0.333** — and **4.397:1
+on `--background`, i.e. failing**. The 7.26 figure is real but belongs to a
+different element entirely: `Run.tsx:142`'s "Acquiring GPS..." label,
+`text-warning-strong/90` on the dark page, which measures 7.27. Two tokens,
+two themes, one number carried between them. This matters because the
+correction made the base sound comfortable, when in fact its 0.333 of
+margin is precisely why **every** fraction fails:
+
+| alpha | on the light card | in use |
+| ----- | ----------------- | ------ |
+| /90   | 3.960             | 3      |
+| /80   | 3.279             | 8      |
+| /70   | 2.743             | 27     |
+| /60   | 2.318             | 16     |
+| /50   | —                 | 7      |
+| /40   | —                 | 2      |
+| /30   | —                 | 1      |
+
+**What shipped from this re-measurement:** the scanning gate the item asked
+for, as a RATCHET rather than a fix
+(`tokenContrast.test.ts`, "fractional-opacity text tokens"). It pins the 64
+sites so the class cannot grow while the question is open, asserts that no
+alpha in use clears AA on any light surface, and pins the 7.26
+misattribution to its real owner so it cannot be re-quoted. It also
+self-retires: retuning the base makes its own assertions fail, which is the
+signal to revisit the pin rather than carry it forever. Mutation-checked
+both ways.
+
 **1. Theme-blind `THEME.*` hex constants fail AA across the light build.** _(Cluster B — highest user impact of anything here.)_
 
 Measured, all light-mode, all confirmed against the source literal byte-for-byte:
