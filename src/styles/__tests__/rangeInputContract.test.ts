@@ -26,13 +26,26 @@ import { dirname, resolve } from "node:path";
  * Pinned in CSS rather than by rendering, because jsdom has no layout and
  * no UA stylesheet — the thing that went wrong here is precisely what a
  * jsdom render cannot see. The visual half is verified from capture frames
- * instead, and that verification earned its keep immediately: the FIRST
- * fix painted the runnable track with a token, which reads as the more
- * principled change and is wrong, because in Chromium the accent fill IS
- * the track background. The frame showed the bar go uniform with only a
- * 10px thumb left — the fix had deleted the filled-progress indication.
- * `color-scheme` themes the groove WITHOUT touching the fill, which is why
- * the assertions below pin that and explicitly bar the other.
+ * instead, and that verification earned its keep three times over, because
+ * (2) took THREE attempts and every one of them looked right:
+ *
+ *   a. Paint the runnable track with a token. In Chromium the accent fill
+ *      IS the track background, so this replaced it — the frame showed a
+ *      uniform bar with a lone 10px thumb.
+ *   b. `color-scheme: light dark` on the control. That value means "follow
+ *      the USER'S OS preference"; Tropos themes with a `.dark` CLASS, so on
+ *      a light-set phone in dark mode it changes nothing.
+ *   c. `color-scheme` per theme at `:root` / `.dark`. Correct on its own
+ *      terms — every UA-painted control now follows the app — but the next
+ *      frame measured the groove at 239,239,239 still. Chromium does not
+ *      re-derive a range groove from the colour scheme.
+ *
+ * Which exhausts fixing the groove alone, so the track is painted whole:
+ * `accent-color` is gone and both halves come from tokens, the fill as a
+ * hard-stopped gradient at `--range-pct`. That inverts (a) from a
+ * prohibition into a requirement — see the assertion, which keeps the old
+ * reasoning rather than deleting it, because the old rule was CORRECT
+ * under a premise that no longer holds.
  */
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const css = readFileSync(resolve(repoRoot, "src/index.css"), "utf8");
@@ -57,29 +70,100 @@ describe("range input — the app's only drag control", () => {
     ).toBeGreaterThanOrEqual(44);
   });
 
-  it("does NOT paint the track background — that erases the accent fill", () => {
-    /* The wrong fix, kept as an assertion because it is the one that looks
-       right. Painting the runnable track with a token seems more
-       principled than declaring a colour scheme, and in Chromium the
-       accent-color FILL is painted AS the track background — so styling
-       the track replaces it. Measured from the capture frame: the bar went
-       uniform #2A2A2D with only a 10px purple thumb, where before it ran
-       purple from x21 to x146. The slider kept its thumb and lost its
-       filled-progress bar entirely. */
-    for (const sel of [
-      'input[type="range"]::-webkit-slider-runnable-track',
-      'input[type="range"]::-moz-range-track',
-    ]) {
-      const rule = block(sel);
-      if (rule === null) continue;
-      expect(
-        rule,
-        `${sel} sets a background. In Chromium the accent-color fill IS ` +
-          `the track background, so this erases it — the slider keeps its ` +
-          `thumb and loses its filled bar. Use \`color-scheme\` on the ` +
-          `input instead; it themes the groove without touching the fill.`
-      ).not.toMatch(/background:/);
-    }
+  it("if the WebKit track is painted, it carries the FILL too", () => {
+    /* The inverted form of what used to be a flat prohibition here, and
+       the inversion is the whole lesson.
+
+       While `accent-color` supplied the fill, painting the runnable track
+       DELETED it — in Chromium the accent fill is painted as the track
+       background. Measured from the capture frame at the time: the bar
+       went uniform #2A2A2D with a lone 10px thumb, where before it ran
+       purple x21-146. So "never paint the track" was right, conditionally.
+
+       Nothing supplies a fill any more (`appearance: none` would ignore
+       `accent-color` regardless), so the condition is void and the rule it
+       implied would now FORBID the only working fix. What survives is the
+       real invariant: a painted track must paint both halves. A background
+       naming only one colour is the failure the old rule was reaching for. */
+    const rule = block('input[type="range"]::-webkit-slider-runnable-track');
+    expect(
+      rule,
+      "no runnable-track rule — the groove is UA-painted again, " +
+        "which is the original defect (one hard-coded grey in both themes)"
+    ).not.toBeNull();
+    expect(
+      rule,
+      "the track is painted but has no fill stop. A single flat background " +
+        "is a groove with no filled-progress indication — the exact frame " +
+        "the first attempt at this produced."
+    ).toMatch(/var\(--range-pct/);
+    expect(rule, "the fill must come from a token, not a literal").toMatch(
+      /hsl\(var\(--primary-strong\)\)/
+    );
+    expect(rule, "the groove must come from a token, not a literal").toMatch(
+      /hsl\(var\(--muted\)\)/
+    );
+  });
+
+  it("Firefox gets its own fill — it must not depend on --range-pct", () => {
+    /* Firefox has a real `::-moz-range-progress`, so it needs no custom
+       property. Worth pinning because the tempting simplification is one
+       shared gradient, which would make every Firefox slider silently
+       depend on plumbing only the WebKit path needs. */
+    const progress = block('input[type="range"]::-moz-range-progress');
+    expect(
+      progress,
+      "no ::-moz-range-progress — Firefox has no fill"
+    ).not.toBeNull();
+    expect(progress).toMatch(/hsl\(var\(--primary-strong\)\)/);
+    expect(progress, "Firefox should not need the custom property").not.toMatch(
+      /var\(--range-pct/
+    );
+  });
+
+  it("the thumb is explicit — `appearance: none` removes the UA one", () => {
+    // Setting appearance:none on the input opts every part out of UA
+    // painting, the thumb included. Without an explicit rule the control
+    // renders as a bare bar with nothing to grab.
+    const thumb = block('input[type="range"]::-webkit-slider-thumb');
+    expect(
+      thumb,
+      "no thumb rule — the control has nothing to drag"
+    ).not.toBeNull();
+    expect(thumb).toMatch(/appearance:\s*none/);
+    expect(thumb, "the thumb needs a size").toMatch(/width:\s*\d+px/);
+  });
+
+  it("every range input in the app goes through the primitive", () => {
+    /* The fill position reaches CSS as a custom property, which is exactly
+       the plumbing a call site forgets — and forgetting it is silent: the
+       track renders all-groove with a thumb on it, which looks like a
+       slider at zero rather than like a bug. `RangeInput` computes it from
+       the value the input already has, so this guard is what keeps the
+       property from being optional in practice. */
+    const walk = (dir: string): string[] => {
+      const out: string[] = [];
+      for (const name of readdirSync(dir)) {
+        const full = resolve(dir, name);
+        if (statSync(full).isDirectory()) {
+          if (name === "__tests__" || name === "node_modules") continue;
+          out.push(...walk(full));
+          continue;
+        }
+        if (name.endsWith(".tsx")) out.push(full);
+      }
+      return out;
+    };
+    const offenders = walk(resolve(repoRoot, "src"))
+      .filter((f) => /type="range"/.test(readFileSync(f, "utf8")))
+      .map((f) => f.replace(repoRoot + "/", ""))
+      // The primitive itself is where the raw input legitimately lives.
+      .filter((f) => f !== "src/components/ui/RangeInput.tsx");
+    expect(
+      offenders,
+      "these render a raw range input, so `--range-pct` is unset and the " +
+        "track paints all-groove. Use `<RangeInput>`."
+    ).toEqual([]);
   });
 
   it("does NOT declare its own colour scheme — the root does, per theme", () => {

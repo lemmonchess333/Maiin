@@ -791,12 +791,86 @@ html {
    inputs had the same flaw and were only ever right by coincidence.
 
    The scheme is now declared per theme at `:root` / `.dark`, where it
-   follows the class — so every UA-painted control gets it, and this rule
-   correctly says nothing about colour at all. */
+   follows the class. That was the right move on its own terms — every
+   UA-painted control (date pickers, selects, scrollbars) now follows the
+   app's theme instead of the device's — but it did NOT fix this groove.
+   Measured from the capture frame afterwards: still 239,239,239. Chromium
+   does not re-derive a range track's groove from `color-scheme`.
+
+   Which exhausts the ways to fix the groove alone, so the track is
+   painted whole. `accent-color` is gone (`appearance: none` would ignore
+   it anyway) and both halves come from tokens: a hard-stopped gradient at
+   `--range-pct`, which `RangeInput` computes from the same value/min/max
+   the input already carries. Firefox keeps its real `::-moz-range-progress`
+   and needs no custom property.
+
+   `rangeInputContract.test.ts` used to BAR painting the track. That bar
+   was correct while `accent-color` supplied the fill — painting over it
+   deleted the filled bar — and is void now that nothing else paints one.
+   The assertion is inverted rather than deleted: if the track carries a
+   background, the fill token must appear in it. */
 input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
   height: 44px;
   background: transparent;
   cursor: pointer;
+}
+
+/* 6px of visual thickness on the TRACK, inside a 44px hit box — the
+   distinction the original bug collapsed by putting the height on the
+   input. Chromium centres the runnable track in the input's box. */
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    hsl(var(--primary-strong)) 0 var(--range-pct, 0%),
+    hsl(var(--muted)) var(--range-pct, 0%) 100%
+  );
+}
+
+/* margin-top is (track - thumb) / 2 = (6 - 20) / 2. WebKit aligns the
+   thumb's top edge to the track's, so without this it rides high. */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: -7px;
+  border-radius: 999px;
+  background: hsl(var(--primary-strong));
+  /* A card-coloured ring so the thumb stays legible where it overlaps its
+     own fill — without it the two are the same colour and the thumb
+     disappears at the right-hand end of the travel. */
+  border: 2px solid hsl(var(--card));
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+}
+
+input[type="range"]::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: hsl(var(--muted));
+}
+
+input[type="range"]::-moz-range-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: hsl(var(--primary-strong));
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: hsl(var(--primary-strong));
+  border: 2px solid hsl(var(--card));
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+}
+
+input[type="range"]:focus-visible {
+  outline: 2px solid hsl(var(--primary-strong));
+  outline-offset: 2px;
 }
 
 /* ─── TOUCH TARGET MINIMUM ───────────────────────────────── */

@@ -16,6 +16,7 @@ import { calculateTDEE } from "@/lib/tdee";
 import type { FitnessGoal, ActivityLevel } from "@/lib/tdee";
 import { nutritionPhaseLabel } from "@/lib/nutritionPhaseLabel";
 import SegmentedControl from "@/components/ui/SegmentedControl";
+import RangeInput from "@/components/ui/RangeInput";
 import { resolveGoalWeightPlan } from "@/lib/goalWeightPlan";
 import { THEME } from "@/lib/theme";
 import { logger } from "@/lib/logger";
@@ -1215,16 +1216,14 @@ export default function Onboarding() {
                       >
                         Run days per week ({weeklyRunDays})
                       </label>
-                      <input
+                      <RangeInput
                         id="onboarding-run-days"
-                        type="range"
-                        min="1"
+                        min={1}
                         max={7}
                         value={weeklyRunDays}
                         onChange={(e) =>
                           setWeeklyRunDays(Number(e.target.value))
                         }
-                        className="w-full accent-primary"
                       />
                       {daysPerWeek + weeklyRunDays > 7 && (
                         // P0-5: this is no longer a hard block. When
