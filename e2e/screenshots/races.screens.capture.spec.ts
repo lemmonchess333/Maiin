@@ -40,7 +40,39 @@ test.describe("races & events directory screenshots", () => {
     await signInAsTestUser(page);
   });
 
+  /**
+   * D25 probe — deliberately scoped to THIS spec, not swept across all 27.
+   *
+   * After D22 (frozen animations) and D23 (settled theme toggles), most
+   * frames stopped churning between runs. `races-directory-light` did not:
+   * it went 7.4% → 10.9%. Reading the diff mask rather than guessing put
+   * every changed pixel in one band, y 680-839, covering the challenge
+   * card's PHOTOGRAPH — not the "20 DAYS LEFT" countdown beside it, which
+   * would have diffed as a thin strip. So the hypothesis is remote imagery
+   * unfinished at shutter time, which `animations: "disabled"` does nothing
+   * about.
+   *
+   * `decode()` rather than polling `.complete`, because complete is true
+   * for a failed load too and false only until the bytes arrive — decode
+   * resolves when the frame is actually paintable. Failures are swallowed:
+   * a broken image should not fail a capture, and it will show up in the
+   * frame anyway.
+   *
+   * If the next diff shows this frame quiet, the same three lines belong in
+   * the other helpers. If it does not, the hypothesis was wrong and the
+   * cost was one file.
+   */
+  async function settleImages(page: Page) {
+    await page
+      .evaluate(async () => {
+        const imgs = Array.from(document.images);
+        await Promise.all(imgs.map((i) => i.decode().catch(() => undefined)));
+      })
+      .catch(() => undefined);
+  }
+
   async function shoot(page: Page, name: string) {
+    await settleImages(page);
     await page.screenshot({
       animations: "disabled",
       path: `screenshots/${name}.png`,
