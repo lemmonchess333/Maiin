@@ -25,8 +25,14 @@ import { dirname, resolve } from "node:path";
  *
  * Pinned in CSS rather than by rendering, because jsdom has no layout and
  * no UA stylesheet — the thing that went wrong here is precisely what a
- * jsdom render cannot see. The visual half is verified from capture
- * frames instead.
+ * jsdom render cannot see. The visual half is verified from capture frames
+ * instead, and that verification earned its keep immediately: the FIRST
+ * fix painted the runnable track with a token, which reads as the more
+ * principled change and is wrong, because in Chromium the accent fill IS
+ * the track background. The frame showed the bar go uniform with only a
+ * 10px thumb left — the fix had deleted the filled-progress indication.
+ * `color-scheme` themes the groove WITHOUT touching the fill, which is why
+ * the assertions below pin that and explicitly bar the other.
  */
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const css = readFileSync(resolve(repoRoot, "src/index.css"), "utf8");
@@ -51,23 +57,28 @@ describe("range input — the app's only drag control", () => {
     ).toBeGreaterThanOrEqual(44);
   });
 
-  it("the track is painted from a token, not left to the UA default", () => {
-    // The UA groove is theme-blind: it measured the same #EFEFEF in dark
-    // and light, which is 16.5:1 on one and 1.03:1 on the other.
+  it("does NOT paint the track background — that erases the accent fill", () => {
+    /* The wrong fix, kept as an assertion because it is the one that looks
+       right. Painting the runnable track with a token seems more
+       principled than declaring a colour scheme, and in Chromium the
+       accent-color FILL is painted AS the track background — so styling
+       the track replaces it. Measured from the capture frame: the bar went
+       uniform #2A2A2D with only a 10px purple thumb, where before it ran
+       purple from x21 to x146. The slider kept its thumb and lost its
+       filled-progress bar entirely. */
     for (const sel of [
       'input[type="range"]::-webkit-slider-runnable-track',
       'input[type="range"]::-moz-range-track',
     ]) {
       const rule = block(sel);
+      if (rule === null) continue;
       expect(
         rule,
-        `no ${sel} rule — that engine keeps the UA groove`
-      ).not.toBeNull();
-      expect(
-        rule,
-        `${sel} must set an explicit background; a UA-painted groove does ` +
-          `not follow the theme.`
-      ).toMatch(/background:\s*hsl\(var\(--/);
+        `${sel} sets a background. In Chromium the accent-color fill IS ` +
+          `the track background, so this erases it — the slider keeps its ` +
+          `thumb and loses its filled bar. Use \`color-scheme\` on the ` +
+          `input instead; it themes the groove without touching the fill.`
+      ).not.toMatch(/background:/);
     }
   });
 
@@ -76,12 +87,11 @@ describe("range input — the app's only drag control", () => {
     expect(rule).toMatch(/color-scheme:\s*light dark/);
   });
 
-  it("keeps the visual track thin — the 44px is hit area, not a fat bar", () => {
-    // Guards the obvious wrong fix: satisfying the floor by making the
-    // rendered bar 44px tall instead of the hit target.
-    const track = block('input[type="range"]::-webkit-slider-runnable-track');
-    const h = Number(/height:\s*(\d+)px/.exec(track!)?.[1]);
-    expect(h).toBeGreaterThan(0);
-    expect(h).toBeLessThanOrEqual(10);
+  it("keeps the input's own background out of the way", () => {
+    // The 44px is hit area, not a bar. Without a transparent background
+    // the input box would paint a 44px slab behind the UA track — the
+    // other obvious wrong way to satisfy the floor.
+    const rule = block('input[type="range"]');
+    expect(rule).toMatch(/background:\s*transparent/);
   });
 });

@@ -729,56 +729,44 @@ html {
 }
 
 /* ─── RANGE INPUT ─────────────────────────────────────────────
-   Two defects lived in the four lines this replaces, and both reached
-   the first-run flow: the range in Onboarding is the only drag control
-   a new user meets, and it sets weekly run volume.
+   The app's only drag control (onboarding run-days, RunSetupModal), and
+   it had two defects. Both fixes are here; one of them is deliberately
+   NOT the obvious one.
 
-   1. The 6px was on the INPUT, so the whole control was a 6px box — the
-      track you tap to jump is 6px tall and the thumb only 14px, against
-      a documented 44px floor (DESIGN_GUIDE: "44px minimum touch target…
-      Anything smaller needs a real justification", and there was no
-      justification here). The design-system touch-target ratchet could
-      not see it: that test scans `role="switch"` only. The 6px now
-      belongs to the TRACK; the input keeps a 44px box with a
-      transparent background, and the thumb is re-centred over it.
+   1. It was a 6px control. The height sat on the INPUT, so the whole box
+      — the region you tap to jump the value — was 6px, against a 44px
+      floor DESIGN_GUIDE states outright. The design-system touch-target
+      ratchet cannot see this: that test scans `role="switch"` only. The
+      box is now 44px; the visible bar is the UA track inside it.
 
-   2. The unfilled groove was UA-painted. `accent-color` colours only the
-      FILLED portion and the thumb, so the remainder followed the UA
-      default — measured byte-identical #EFEFEF in BOTH themes. On the
-      dark page that is 16.5:1, roughly 4x the luminance of the purple
-      fill beside it, so the brightest mass on the step was the part the
-      user had NOT selected and a value of 3-of-7 read as nearly full. On
-      light it is 1.03:1 — invisible, leaving only a 1px outline. One
-      colour, wrong at both ends. The track now takes an explicit token,
-      so no range input anywhere depends on a UA default. */
+   2. The unfilled groove was theme-blind. `accent-color` paints the
+      FILLED portion and the thumb, so the remainder followed a UA default
+      measured byte-identical #EFEFEF in BOTH themes — 16.5:1 on the dark
+      page, about four times the luminance of the purple fill beside it,
+      so the brightest mass on the step was the part the user had NOT
+      selected and 3-of-7 read as nearly full. On light, 1.03:1: invisible.
+
+   `color-scheme` is the fix for (2), and the ONLY one that works here.
+   The first attempt painted `::-webkit-slider-runnable-track` with a
+   token instead, which looks more principled and is wrong: in Chromium
+   the accent fill IS the track background, so styling the track REPLACES
+   it. The capture proved it — the whole bar went uniform `42,42,45` with
+   only a 10px purple thumb left, i.e. the fix removed the filled-progress
+   indication entirely. Row-scan of the track before and after:
+
+       before  x21-146 purple  · x148-370 #EFEFEF   (fill + wrong groove)
+       broken  x21-134 #2A2A2D · x136-144 purple    (thumb only)
+
+   So: declare the colour scheme and leave both halves to the UA, which
+   themes them correctly and keeps the fill. This is the same opt-in the
+   date input on the SAME onboarding step already carries
+   (Onboarding.tsx:1317) — that control was fixed and this one missed. */
 input[type="range"] {
   height: 44px;
   background: transparent;
   cursor: pointer;
-  /* Belt and braces for anything still UA-painted here (the thumb, and
-     any engine that ignores the track rules below): `color-scheme` is
-     what makes the UA pick a theme-appropriate default at all. This is
-     the same opt-in the date input on the SAME onboarding step already
-     carries (Onboarding.tsx:1317) — that control was fixed and the
-     slider ninety lines above it was missed. */
   color-scheme: light dark;
 }
-input[type="range"]::-webkit-slider-runnable-track {
-  height: 6px;
-  border-radius: 3px;
-  background: hsl(var(--muted));
-}
-input[type="range"]::-moz-range-track {
-  height: 6px;
-  border-radius: 3px;
-  background: hsl(var(--muted));
-}
-/* Deliberately NO ::-webkit-slider-thumb rule. Repositioning a UA-painted
-   thumb without `appearance: none` is engine-dependent, and taking the
-   thumb over entirely means re-implementing what `accent-color` already
-   themes for free. Both engines centre the thumb on a track with an
-   explicit height, which the rules above now give it. If a capture shows
-   otherwise, that is the moment to style it — not before. */
 
 /* ─── TOUCH TARGET MINIMUM ───────────────────────────────── */
 /* Ensure small icon buttons have at least 44px hit area */
