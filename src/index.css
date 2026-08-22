@@ -272,6 +272,13 @@
      white under the deep-purple number. */
   --food-photo-ring-bed: rgba(255, 255, 255, 0.5);
   --food-photo-ring-bed-soft: rgba(255, 255, 255, 0.3);
+  /* Skeleton shimmer sweep. Must DARKEN in light mode: `LoadingSkeleton`
+     sits on `bg-muted`, which here is hsl(240 6% 97.5%) = rgb(248,248,249),
+     and the white-alpha sweep it used to hardcode inline moved that by
+     ZERO bytes — the shimmer did not merely read faintly, it did not
+     render at all, on every light-mode loading state in the app. Black at
+     the same alpha moves it by 10, matching the 9 the dark sweep gets. */
+  --skeleton-shimmer: rgba(0, 0, 0, 0.04);
 }
 
 .dark {
@@ -331,6 +338,8 @@
      help the number without hiding the bowl. */
   --food-photo-ring-bed: rgba(0, 0, 0, 0.38);
   --food-photo-ring-bed-soft: rgba(0, 0, 0, 0.18);
+  /* The direction the inline literal always assumed — correct here only. */
+  --skeleton-shimmer: rgba(255, 255, 255, 0.04);
   /* Fainter sheen on dark glass. */
   --nav-frost-highlight: rgba(255, 255, 255, 0.1);
   /* Semantic status colours — dark mode.
