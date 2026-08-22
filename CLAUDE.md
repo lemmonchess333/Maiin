@@ -575,6 +575,28 @@ other SegmentedControls are `role="radio"`, not buttons; give best-effort
 clicks short explicit timeouts so a missed locator costs seconds, not its
 30s default.
 
+**Read the diff report with the flaky frames in mind.** Three classes
+of frame change between runs with no code change, and chasing one costs
+an hour:
+
+- **Bottom-sheet frames** (`circle-create-compact`, `easier-chooser`,
+  `sheet-trainingblock`) capture at whatever point the sheet's
+  open/settle animation had reached, so consecutive runs can differ by
+  8-57% — one frame showing the sheet open and the next showing the
+  surface behind it. Verified 2026-08-22 across two runs whose only
+  code delta was `index.css` range-input rules: none of the three
+  surfaces imports anything that changed.
+- **Map frames** (`run-detail`) vary with MapLibre tile-load timing.
+  The tell is that every changed pixel sits inside the map's y-band.
+- A frame moving by **0.1-0.7%** is usually antialiasing, not a change.
+
+Localise before diagnosing: read the `diffs/` highlight and find the
+y-band the changed pixels occupy. If it is the map, or a sheet, suspect
+the rig before the diff. And do NOT assume a two-band highlight means
+content shifted vertically — cross-correlate first; on the
+2026-08-22 sheet frames the best vertical offset was 0 and the two
+bands were two different STATES, not one state moved.
+
 ### Button variants (canonical CTA mapping)
 
 Every **CTA / action button** uses the shared `Button` primitive
