@@ -28,7 +28,7 @@ import {
   computeNutritionBadgeDays,
   type DayMacros,
 } from "@/lib/nutritionBadgeDays";
-import { sumMealTotals } from "@/lib/mealTotals";
+import { activeMealDocs, sumMealTotals } from "@/lib/mealTotals";
 import { format } from "date-fns";
 import { logger } from "@/lib/logger";
 import { cancelNotification } from "@/lib/notifications";
@@ -626,16 +626,27 @@ function useStreaksInternal() {
     const unsubMeals = onSnapshot(
       mealsQ,
       (snap) => {
-        const rows: MealRow[] = snap.docs.map((d) => {
-          const raw = d.data() as {
-            date?: unknown;
-            items?: unknown;
-            createdAt?: unknown;
-            totalCalories?: unknown;
-            totalProtein?: unknown;
-            totalCarbs?: unknown;
-            totalFat?: unknown;
-          };
+        /* HOME-MEALS-01 — filter before mapping. Deletion is soft, so a
+           corrected meal still arrives here; counting it fed a phantom
+           active DATE into computeActiveDateSet, so a day whose only meal
+           was deleted still extended a nutrition streak and earned badges.
+           `activeMealDocs` is generic precisely so this row shape (items,
+           createdAt) survives the filter. */
+        const rows: MealRow[] = activeMealDocs(
+          snap.docs.map(
+            (d) =>
+              d.data() as {
+                date?: unknown;
+                items?: unknown;
+                createdAt?: unknown;
+                totalCalories?: unknown;
+                totalProtein?: unknown;
+                totalCarbs?: unknown;
+                totalFat?: unknown;
+                deletedAt?: unknown;
+              }
+          )
+        ).map((raw) => {
           const numOrUndef = (v: unknown) =>
             typeof v === "number" && Number.isFinite(v) ? v : undefined;
           return {

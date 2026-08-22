@@ -79,6 +79,52 @@ function num(v: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+/**
+ * HOME-MEALS-01, as an atom rather than a step inside the summer.
+ *
+ * Deletion is SOFT (`deletedAt` + a 24h restore window), so a "deleted"
+ * meal is still a document that a raw Firestore read will hand you.
+ * Truthy `deletedAt` = deleted; `null` (the post-restore value) and
+ * absent = active.
+ *
+ * Why this is exported rather than living in `sumMealTotals`'s loop:
+ * the rule had ONE reachable caller shape (`Meal[]` → totals) and SEVEN
+ * readers of the collection. The five that read raw snapshots — the
+ * adaptive-TDEE estimator, the streak engine, the consistency card, the
+ * weekly review, and the server's PI adherence pass — never materialise
+ * `Meal[]`, so they could not cross this boundary even in principle,
+ * and four of them counted soft-deleted meals. The estimator's was the
+ * expensive one: a deleted meal's calories stayed in `avgIntake`, so
+ * `learnedTDEE = avgIntake − slope×7700` came out HIGH and the user's
+ * target drifted up after every correction.
+ *
+ * Pair with `activeMealDocs` when you have a list; call this directly
+ * when you are already iterating.
+ *
+ * The parameter is `{ deletedAt?: unknown }`, NOT `MealTotalsInput`:
+ * every bypassing reader casts raw Firestore payloads with `unknown`
+ * field types, so demanding the fully-typed shape would have kept them
+ * out — the same "cannot reach the interface even in principle" that
+ * caused the drift. A predicate should require only the field it reads.
+ */
+export function isActiveMealDoc(meal: { deletedAt?: unknown }): boolean {
+  return !meal.deletedAt;
+}
+
+/**
+ * The active subset, preserving the caller's own document shape.
+ *
+ * Generic on purpose: `useStreaks` needs `items` / `createdAt` that this
+ * module has no business knowing about, so a normalising return type
+ * would have forced it to keep its own raw path — which is how the
+ * bypass happened the first time. Filter here, map your own shape after.
+ */
+export function activeMealDocs<T extends { deletedAt?: unknown }>(
+  meals: ReadonlyArray<T>
+): T[] {
+  return meals.filter(isActiveMealDoc);
+}
+
 export function sumMealTotals(
   meals: ReadonlyArray<MealTotalsInput>
 ): DailyTotals {
@@ -92,10 +138,10 @@ export function sumMealTotals(
   let mealCount = 0;
 
   for (const m of meals) {
-    // HOME-MEALS-01: skip soft-deleted meals (deletedAt truthy) so they
-    // count toward neither the totals nor the meal count. `null` (the
-    // post-restore value) and absent are active.
-    if (m.deletedAt) continue;
+    // HOME-MEALS-01 — the rule itself lives in `isActiveMealDoc` so the
+    // raw-snapshot readers can reach it too; this loop is one of its
+    // seven callers, not its owner.
+    if (!isActiveMealDoc(m)) continue;
     calories += num(m.totalCalories ?? m.calories);
     protein += num(m.totalProtein ?? m.protein);
     carbs += num(m.totalCarbs ?? m.carbs);

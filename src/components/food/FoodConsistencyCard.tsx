@@ -32,6 +32,7 @@ import { Button } from "@/components/ui/Button";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { getWeekKey } from "@/lib/performanceEngine";
 import { weekBounds } from "@/lib/weeklyReviewViewModel";
+import { activeMealDocs } from "@/lib/mealTotals";
 import {
   INTENT_OPTIONS,
   SHARED_MET_TEXT,
@@ -81,8 +82,15 @@ export default function FoodConsistencyCard({ uid }: { uid: string }) {
         if (cancelled) return;
         setCommitment(snap.exists() ? parseCommitment(snap.data()) : null);
         setMealDates(
-          meals.docs
-            .map((d) => d.data()?.date)
+          /* HOME-MEALS-01 — a soft-deleted meal used to keep counting its
+             day toward the weekly commitment, so correcting a mis-scan
+             still "kept" the day. Filter before projecting to dates. */
+          activeMealDocs(
+            meals.docs.map(
+              (d) => d.data() as { date?: unknown; deletedAt?: unknown }
+            )
+          )
+            .map((m) => m.date)
             .filter((d): d is string => typeof d === "string")
         );
       } catch (err) {

@@ -35,6 +35,7 @@ const workoutVolume = require("./lib/workoutVolume");
 // runtime. The TS source of truth is src/lib/runStatsEligibility.ts
 // (isVolumeEligible); keep all three in lockstep when the rule changes.
 const { isVolumeEligibleRun } = require("./lib/runEligibility");
+const { isActiveMealDoc } = require("./lib/mealDocs");
 const { getNutritionPhase } = require("./lib/nutritionPhase");
 
 // Which calorie target adherence is scored against. Not always
@@ -208,8 +209,15 @@ async function fetchWindowData(uid, windowStart, windowEnd) {
     .filter((d) => isVolumeEligibleRun(d.data()))
     .map((d) => ({ id: d.id, ...d.data() }));
 
+  // Active-meal filter — shared helper (functions/lib/mealDocs.js), itself
+  // a mirror of src/lib/mealTotals.ts:isActiveMealDoc. Same shape as the
+  // runs filter above, and consolidated for the same reason: deletion is
+  // SOFT, so without this the adherence pass scored intake the user had
+  // already retracted.
   const meals = mealsResult
-    ? mealsResult.docs.map((d) => ({ id: d.id, ...d.data() }))
+    ? mealsResult.docs
+        .filter((d) => isActiveMealDoc(d.data()))
+        .map((d) => ({ id: d.id, ...d.data() }))
     : [];
   const bodyweightLogs = bwResult
     ? bwResult.docs.map((d) => ({ id: d.id, ...d.data() }))
