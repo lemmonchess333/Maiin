@@ -600,16 +600,22 @@ an hour:
   from a real one — the frame needs an anchor on the DATA it exists to
   show. `e2e/helpers/settleHeight.ts` is still worth calling before a
   fullPage shot; it just is not that fix.
-- **Raster art often needs `img.decode()`** —
-  `e2e/helpers/settleImages.ts` took `races-directory-light` from 10.88%
-  to unchanged. But it is not a universal cure: adopted on
-  `badges-grid` (mask: bands of exactly 62-64px against a `BadgeHex`
-  rendered at `size={64}`, i.e. art and nothing else), that frame got
-  WORSE — light 4.14%, its worst reading. Still unexplained. The mask
-  rules out the tier drop-shadow, which spreads ~9px and would give
-  ~82px bands. Diagnose by band, adopt, then MEASURE the next capture —
-  do not assume the helper worked. Both ratchets live in
-  `src/lib/__tests__/captureAnimationsFrozen.test.ts`.
+- **Raster art needs `img.decode()`** — `e2e/helpers/settleImages.ts`
+  took `races-directory-light` from 10.88% to unchanged, and
+  `badges-grid` from churning-in-every-report to unchanged in both
+  themes. Diagnose by band before adopting: badges' mask was bands of
+  exactly 62-64px against a `BadgeHex` rendered at `size={64}` — art and
+  nothing else.
+- **The capture that first carries a fix MEASURES that fix.** The diff
+  report compares each capture to the previous one, so the run right
+  after you adopt something is a fix-vs-pre-fix comparison, not a churn
+  reading. `badges-grid-light` read 4.14% — its worst value ever — on
+  the capture that introduced `settleImages`, and was written up here as
+  "the helper made it worse". It had not: that was correctly-decoded art
+  replacing partially-decoded art. The NEXT run, both sides post-fix,
+  showed it unchanged. Judge a capture fix on the second diff after it,
+  never the first — otherwise a working fix gets reverted for doing its
+  job.
 - **`home-energy-default-after` is the one that took a content anchor.**
   Five heights across five captures, unfixed by height-settling, because
   Home renders its loading states as empty states. Anchoring on the data

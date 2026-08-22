@@ -275,20 +275,23 @@ describe("capture specs — fullPage shots settle the document height", () => {
  * against a `BadgeHex` that renders at size={64} — one band per row of
  * art, nothing else moving.
  *
- * IT DID NOT FIX THAT FRAME, measured on the next capture: light went to
- * 4.14%, its worst reading yet, and dark to 1.44%. Seven bands, all
- * 63-64px, still art-only. Kept anyway — the badge art IS a real `<img>`
- * and decoding it is correct on its own terms — but not claimed as the
- * cure, and `races-directory` remains the only frame this helper is known
- * to have closed.
+ * IT WORKED — but the first reading said the opposite, and how that
+ * happened is the part worth keeping.
  *
- * What the mask rules OUT is worth recording, because it is the obvious
- * next guess: it is NOT the tier drop-shadow. That filter spreads ~9px
- * beyond the art box, so a shadow-timing difference would produce ~82px
- * bands; these are exactly the 64px art box. The bitmap itself differs.
- * A live hypothesis nobody has tested is that the grid mounts its images
- * after `settleImages` snapshots `document.images`, which would make the
- * await a no-op — but that is a guess, and it is a P3 frame.
+ * The capture immediately after adoption showed light at 4.14%, its worst
+ * value ever, and that was recorded here as "did not fix it". Wrong. The
+ * diff report compares each capture to the PREVIOUS one, so the capture
+ * that first carries a fix is measuring the fix against a pre-fix
+ * baseline. 4.14% was correctly-decoded art replacing partially-decoded
+ * art — the change working, not churn continuing.
+ *
+ * The run after that, with both captures post-fix, has `badges-grid`
+ * absent from the report in BOTH themes. Two consecutive identical runs,
+ * on a frame that had churned in every single report before it.
+ *
+ * So the standing rule: after adopting a capture fix, the next diff tells
+ * you the fix landed, and the one AFTER it tells you whether the churn
+ * stopped. Judging on the first is how a working fix gets reverted.
  *
  * A ratchet again, for the same reason as the height one: the remaining
  * specs shoot pages whose imagery has not been looked at, and a
