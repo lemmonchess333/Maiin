@@ -75,9 +75,17 @@ interface RunBottomSheetProps {
   hrZone?: 0 | ZoneNumber | null;
 }
 
-// Visible sheet height as fraction of viewport: compact, mid, full.
-// idx 2 = expanded timer view; idx 0 = compact bar (map mostly visible).
-const SNAPS: [number, number, number] = [0.13, 0.4, 0.91];
+// Visible sheet height as fraction of viewport: compact, full.
+// idx 1 = expanded timer view; idx 0 = compact bar (map mostly visible).
+// D24 (owner-delegated, 2026-08-22): the 0.4 MIDDLE detent is gone. Only
+// `isExpanded` ever gated content, so snaps 0 and 1 rendered the identical
+// ~90px collapsed bar — at the middle snap inside 341px, leaving ~250px of
+// empty sheet, 27% more screen than compact for zero additional
+// information, all of it taken from the map. A middle snap that EARNS its
+// height (the splits list is the candidate) is a designed feature with its
+// own verification problem — the capture walk is 150m and splits need a
+// full km — so it is deliberately NOT smuggled into this removal.
+const SNAPS: [number, number] = [0.13, 0.91];
 const SHEET_SPRING = { type: "spring" as const, stiffness: 520, damping: 44 };
 
 /* haptic moved to the shared @/lib/haptic implementation in
@@ -227,10 +235,10 @@ export default function RunBottomSheet({
   const hrColor =
     hrZone && hrZone >= 1 ? ZONE_COLOR[hrZone] : "rgba(255,255,255,0.65)";
   const unit = useDistanceUnit();
-  const [snapIdx, setSnapIdx] = useState<0 | 1 | 2>(2);
+  const [snapIdx, setSnapIdx] = useState<0 | 1>(1);
   const [showStopConfirm, setShowStopConfirm] = useState(false);
   const stopTitleId = useId();
-  const isExpanded = snapIdx === 2;
+  const isExpanded = snapIdx === 1;
 
   // ── Draggable bottom sheet ────────────────────────────────────────────
   // Was a touchstart→touchend Y-delta wired ONLY to the 36px handle: tiny
@@ -288,7 +296,7 @@ export default function RunBottomSheet({
   };
   const onSheetPointerMove = (e: React.PointerEvent) => {
     if (!draggingRef.current) return;
-    const minTop = snapTops[2];
+    const minTop = snapTops[SNAPS.length - 1];
     const maxTop = snapTops[0];
     const next = Math.max(
       minTop,
@@ -303,10 +311,7 @@ export default function RunBottomSheet({
   const onSheetPointerUp = () => {
     if (!draggingRef.current) return;
     draggingRef.current = false;
-    const target = projectAndSnap(top.get(), velRef.current, snapTops) as
-      | 0
-      | 1
-      | 2;
+    const target = projectAndSnap(top.get(), velRef.current, snapTops) as 0 | 1;
     if (target !== snapIdx) {
       setSnapIdx(target);
       haptic("light");
@@ -347,12 +352,12 @@ export default function RunBottomSheet({
           tabIndex={0}
           aria-label="Expand bottom sheet"
           onClick={() => {
-            setSnapIdx(2);
+            setSnapIdx(1);
             haptic("light");
           }}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
-              setSnapIdx(2);
+              setSnapIdx(1);
               haptic("light");
             }
           }}
@@ -381,11 +386,11 @@ export default function RunBottomSheet({
           tabIndex={0}
           aria-label="Drag to resize the run panel"
           onKeyDown={(e) => {
-            if (e.key === "ArrowUp" && snapIdx < 2) {
-              setSnapIdx((s) => (s + 1) as 0 | 1 | 2);
+            if (e.key === "ArrowUp" && snapIdx < 1) {
+              setSnapIdx(1);
               haptic("light");
             } else if (e.key === "ArrowDown" && snapIdx > 0) {
-              setSnapIdx((s) => (s - 1) as 0 | 1 | 2);
+              setSnapIdx(0);
               haptic("light");
             }
           }}

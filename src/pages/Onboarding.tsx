@@ -16,6 +16,7 @@ import { calculateTDEE } from "@/lib/tdee";
 import type { FitnessGoal, ActivityLevel } from "@/lib/tdee";
 import { nutritionPhaseLabel } from "@/lib/nutritionPhaseLabel";
 import SegmentedControl from "@/components/ui/SegmentedControl";
+import SectionLabel from "@/components/ui/SectionLabel";
 import RangeInput from "@/components/ui/RangeInput";
 import { resolveGoalWeightPlan } from "@/lib/goalWeightPlan";
 import { THEME } from "@/lib/theme";
@@ -976,9 +977,13 @@ export default function Onboarding() {
           transition={{ duration: 0.22 }}
           className="flex-1 min-h-0 overflow-y-auto"
         >
-          <p className="text-xs uppercase tracking-widest mb-2 text-muted-foreground">
+          {/* Every uppercase micro-label in this flow goes through
+              SectionLabel now — the file carried three hand-rolled
+              treatments (widest/wider tracking, class vs style colour,
+              one /0.7 alpha) for one label kind. */}
+          <SectionLabel className="mb-2">
             Step {step + 1} of {TOTAL_STEPS}
-          </p>
+          </SectionLabel>
           <h1 className="text-2xl font-bold mb-1">{STEP_META[step].title}</h1>
           <p className="text-sm mb-8 text-muted-foreground">
             {STEP_META[step].subtitle}
@@ -1263,12 +1268,9 @@ export default function Onboarding() {
                   {runMode === "race_prep" && (
                     <div className="space-y-3">
                       <div>
-                        <p
-                          className="text-xs uppercase tracking-wider mb-1.5"
-                          style={{ color: "hsl(var(--muted-foreground))" }}
-                        >
+                        <SectionLabel className="mb-1.5">
                           Race distance
-                        </p>
+                        </SectionLabel>
                         {/* `SegmentedControl`, whose own docstring names
                             the race-distance selector as one of the two
                             hand-rolled pill rows it was built to replace.
@@ -1294,12 +1296,9 @@ export default function Onboarding() {
                         />
                       </div>
                       <div>
-                        <p
-                          className="text-xs uppercase tracking-wider mb-1.5"
-                          style={{ color: "hsl(var(--muted-foreground))" }}
-                        >
+                        <SectionLabel className="mb-1.5">
                           Target date (optional)
-                        </p>
+                        </SectionLabel>
                         <input
                           type="date"
                           aria-label="Race target date"
@@ -1475,9 +1474,7 @@ export default function Onboarding() {
             <div className="space-y-7">
               {/* Sex / gender */}
               <div className="space-y-2">
-                <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                  Sex
-                </p>
+                <SectionLabel>Sex</SectionLabel>
                 {[
                   {
                     id: "male" as Gender,
@@ -1508,9 +1505,7 @@ export default function Onboarding() {
 
               {/* Age band */}
               <div className="space-y-2">
-                <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                  Age
-                </p>
+                <SectionLabel>Age</SectionLabel>
                 {[
                   { id: "under-16" as AgeRange, label: "Under 16" },
                   { id: "16-24" as AgeRange, label: "16 – 24" },
@@ -1546,9 +1541,7 @@ export default function Onboarding() {
 
               {/* Training experience */}
               <div className="space-y-2">
-                <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                  Training experience
-                </p>
+                <SectionLabel>Training experience</SectionLabel>
                 {(
                   [
                     {
@@ -1840,12 +1833,10 @@ export default function Onboarding() {
                       style={{ background: row.color }}
                     />
                     <div>
-                      <p
-                        className="text-xs uppercase tracking-wider"
-                        style={{ color: "hsl(var(--muted-foreground) / 0.7)" }}
-                      >
-                        {row.label}
-                      </p>
+                      {/* Full-strength muted — the /0.7 style-string alpha
+                          was the inline twin of the banned
+                          text-muted-foreground/<n> class (2.8:1-ish). */}
+                      <SectionLabel>{row.label}</SectionLabel>
                       <p className="text-sm font-semibold mt-0.5">
                         {row.value}
                       </p>

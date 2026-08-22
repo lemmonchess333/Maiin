@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 import { Calculator, Flame, Minus, Plus, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { THEME } from "@/lib/theme";
 import { MIN_TARGET_CALORIES } from "@/lib/macroConstants";
 import { ACTIVITY_LABELS } from "@/lib/tdee";
 import type { ActivityLevel, TDEEResult } from "@/lib/tdee";
@@ -345,7 +344,7 @@ export default function NutritionSection({
               <div className="pt-2 space-y-2">
                 <p
                   className="text-caption leading-snug"
-                  style={{ color: THEME.warning }}
+                  style={{ color: "hsl(var(--warning-strong))" }}
                 >
                   Your body has changed since this target was set, so it now
                   works out at{" "}
@@ -429,7 +428,7 @@ export default function NutritionSection({
           {tdee.proteinCapped && (
             <p
               className="text-caption leading-snug pt-2"
-              style={{ color: THEME.warning }}
+              style={{ color: "hsl(var(--warning-strong))" }}
             >
               This pace leaves room for{" "}
               <span className="font-mono tabular-nums">{tdee.protein} g</span>{" "}
@@ -493,7 +492,7 @@ export default function NutritionSection({
               profile.customCalorieTarget < MIN_TARGET_CALORIES && (
                 <p
                   className="text-caption leading-snug mt-2"
-                  style={{ color: THEME.warning }}
+                  style={{ color: "hsl(var(--warning-strong))" }}
                 >
                   Below the{" "}
                   <span className="font-mono tabular-nums">

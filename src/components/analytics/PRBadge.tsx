@@ -19,7 +19,11 @@ export default function PRBadge({ isNew = false }: PRBadgeProps) {
   if (!isNew) {
     return (
       <div className="size-5 flex items-center justify-center opacity-40">
-        <Zap size={14} color={THEME.warning} fill={THEME.warning} />
+        <Zap
+          size={14}
+          color="var(--ds-orange-500)"
+          fill="var(--ds-orange-500)"
+        />
       </div>
     );
   }
@@ -40,7 +44,11 @@ export default function PRBadge({ isNew = false }: PRBadgeProps) {
         animate={{ y: 0, scale: 1, opacity: 1 }}
         transition={{ type: "spring", stiffness: 400, damping: 12 }}
       >
-        <Zap size={14} color={THEME.warning} fill={THEME.warning} />
+        <Zap
+          size={14}
+          color="var(--ds-orange-500)"
+          fill="var(--ds-orange-500)"
+        />
       </motion.div>
     </div>
   );

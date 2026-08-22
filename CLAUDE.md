@@ -538,20 +538,21 @@ Constraints these primitives must keep:
   the single most-trained muscle pulses; nothing else loops. `prefers-
 reduced-motion` always gets the settled static state — no entrance, no
   loop.
-- **Warning register:** warnings use `THEME.warning`. Orange
-  (`THEME.semantic.nutrition`) is the FOOD domain identity, never a warning
-  colour on non-food surfaces (the exercise guide's "Watch out" callout was
-  the drift case). **But know what that currently buys you: nothing
-  visual.** `THEME.warning` and `THEME.semantic.nutrition` are the same
-  hex — `#D9884E` — and `warning` lives in a block `theme.ts` itself
-  labels "Legacy semantic (kept for compatibility)". The same holds for
-  `danger`/`semantic.vitals` and `success`/`semantic.positive`. So moving
-  a callout onto the warning token is a pixel-for-pixel no-op, and every
-  warning surface in the app reads in the food colour. The token is
-  still the right one to REACH FOR — it is the seam a real warning hue
-  would land on — but do not read this rule as describing a separation
-  that exists today. Giving warnings their own hue is a palette decision
-  (D19 in `docs/design-backlog.md`), not a refactor.
+- **Warning register:** warnings use `THEME.warning`, and since the D19
+  split (2026-08-22, owner-delegated) that is the AMBER family —
+  `#D97706`, one value with `THEME.amber`, matching the CSS ramp that was
+  already amber (`--warning` light ≈ amber-700, dark = amber-500). Orange
+  (`THEME.semantic.nutrition`, `#D9884E`) is the FOOD domain identity and
+  is now visually distinct from warnings. Warning TEXT takes
+  `hsl(var(--warning-strong))`, never the bare identity (amber-600 is
+  ~3.1:1 on white — fill/icon only). When touching a `THEME.warning`
+  call site, check the SEMANTIC first: the D19 sweep found half of them
+  meant "food" and repointed those to `semantic.nutrition` — a new
+  warning-token use on a food surface recreates the old collision in the
+  other direction. `danger`/`semantic.vitals` and
+  `success`/`semantic.positive` remain value-aliases (pixel-correct,
+  name-only debt, pinned in `colorCanonical.test.ts` alongside the
+  warning≠nutrition inequality that IS the D19 contract).
 - **Empty states go through the `EmptyState` primitive**
   (`src/components/ui/EmptyState.tsx`; `compact` for in-card use) — no
   hand-rolled centered-icon-tile blocks. The primitive owns the brand

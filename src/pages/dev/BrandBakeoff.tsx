@@ -124,7 +124,7 @@ function RunStatCards() {
   const cells: [string, string, string | undefined][] = [
     ["36:10", "Time", undefined],
     ["5:50", "/km Pace", THEME.teal],
-    ["380", "Cal", THEME.warning],
+    ["380", "Cal", THEME.semantic.nutrition],
   ];
   return (
     <div className="rounded-2xl bg-card shadow-sm flex divide-x divide-border/40 w-[300px]">

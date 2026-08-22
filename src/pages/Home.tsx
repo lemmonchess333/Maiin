@@ -882,7 +882,7 @@ export default function Home() {
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <UtensilsCrossed
                 className="size-4 shrink-0"
-                style={{ color: THEME.warning }}
+                style={{ color: THEME.semantic.nutrition }}
               />
               <span>
                 Tap <strong className="text-foreground">Food</strong> to log

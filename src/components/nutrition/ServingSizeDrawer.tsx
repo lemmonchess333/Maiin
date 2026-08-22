@@ -75,7 +75,10 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
         {food.unitConfidence === "low" && (
           <div
             className="mb-4 flex items-start gap-2 px-3 py-2 rounded-lg text-xs leading-snug"
-            style={{ background: `${THEME.warning}14`, color: THEME.warning }}
+            style={{
+              background: `${THEME.semantic.nutrition}14`,
+              color: THEME.semantic.nutrition,
+            }}
             role="status"
           >
             <AlertTriangle
