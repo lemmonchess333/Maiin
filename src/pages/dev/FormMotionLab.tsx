@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BODY_DEMOS, getBodyDemo, renderBodyDemo } from "@/lib/bodyRig";
+import RangeInput from "@/components/ui/RangeInput";
 
 /*
  * DEV/TEST-ONLY Form Motion Lab (Motion Rig V2 roadmap, Phase 1 —
@@ -110,8 +111,7 @@ function DemoCard({ id }: { id: string }) {
         />
       </div>
 
-      <input
-        type="range"
+      <RangeInput
         min={0}
         max={1}
         step={0.01}
@@ -122,7 +122,6 @@ function DemoCard({ id }: { id: string }) {
           setPlaying(false);
           setT(Number(event.target.value));
         }}
-        className="w-full"
       />
 
       <div className="flex items-center gap-1">

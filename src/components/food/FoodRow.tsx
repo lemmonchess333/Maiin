@@ -220,7 +220,7 @@ export default function FoodRow({
         </div>
         {subLabel && (
           /* pl-4 tucks the caption under the name (dot 8px + gap 8px). */
-          <p className="text-caption text-muted-foreground/80 truncate pl-4 mt-0.5">
+          <p className="text-caption text-muted-foreground truncate pl-4 mt-0.5">
             {subLabel}
           </p>
         )}

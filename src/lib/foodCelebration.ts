@@ -17,7 +17,10 @@ export interface MacroTargets {
   fat: number;
 }
 
-export function allMacrosHit(totals: MacroTotals, targets: MacroTargets): boolean {
+export function allMacrosHit(
+  totals: MacroTotals,
+  targets: MacroTargets
+): boolean {
   return (
     totals.protein >= targets.protein &&
     totals.carbs >= targets.carbs &&
@@ -32,7 +35,7 @@ export function allMacrosHit(totals: MacroTotals, targets: MacroTargets): boolea
 export function didJustCompleteAll(
   prev: MacroTotals,
   next: MacroTotals,
-  targets: MacroTargets,
+  targets: MacroTargets
 ): boolean {
   return !allMacrosHit(prev, targets) && allMacrosHit(next, targets);
 }

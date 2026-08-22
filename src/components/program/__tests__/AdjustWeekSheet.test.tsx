@@ -10,10 +10,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import AdjustWeekSheet from "../AdjustWeekSheet";
-import {
-  getEasedWeekKey,
-  setEasedWeekKey,
-} from "@/lib/easeWeekNudgeMarkers";
+import { getEasedWeekKey, setEasedWeekKey } from "@/lib/easeWeekNudgeMarkers";
 import { localWeekKey } from "@/lib/dateHelpers";
 
 vi.mock("@/lib/toast", () => ({
@@ -244,7 +241,9 @@ describe("AdjustWeekSheet — undoing an easier week", () => {
     // The gate matters more than the affordance: an Undo shown for a week
     // with no snapshot is a button whose only outcome is a refusal.
     openEaser({ easedThisWeek: false });
-    expect(screen.queryByRole("button", { name: /Undo easier week/ })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /Undo easier week/ })
+    ).toBeNull();
     expect(screen.queryByText(/already eased/)).toBeNull();
   });
 

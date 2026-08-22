@@ -284,7 +284,7 @@ export default function CommentSheet({
                                 ? "bg-primary/10 text-primary"
                                 : uids.length > 0
                                   ? "bg-muted/70 text-foreground/80"
-                                  : "bg-muted/40 text-muted-foreground/60"
+                                  : "bg-muted/40 text-muted-foreground"
                             }`}
                           >
                             {REACTION_EMOJI[k]}
@@ -307,7 +307,7 @@ export default function CommentSheet({
                     type="button"
                     onClick={() => handleDelete(c.id)}
                     disabled={deletingId === c.id}
-                    className="size-11 inline-flex items-center justify-center text-muted-foreground/60 hover:text-destructive-strong active:text-destructive-strong transition-colors shrink-0"
+                    className="size-11 inline-flex items-center justify-center text-muted-foreground hover:text-destructive-strong active:text-destructive-strong transition-colors shrink-0"
                     aria-label="Delete comment"
                   >
                     <Trash2 className="size-3.5" />

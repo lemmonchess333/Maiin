@@ -20,7 +20,10 @@ interface TrackSectionViewProps {
  * styling so it slots into the existing Home.tsx render tree
  * without rearranging anything.
  */
-export default function TrackSectionView({ section, children }: TrackSectionViewProps) {
+export default function TrackSectionView({
+  section,
+  children,
+}: TrackSectionViewProps) {
   const onView = useCallback(() => {
     trackHomeEvent("home_section_viewed", { section });
   }, [section]);

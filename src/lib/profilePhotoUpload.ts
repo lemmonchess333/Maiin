@@ -62,7 +62,7 @@ export interface UploadProfilePhotoResult {
  */
 export async function uploadProfilePhoto(
   uid: string,
-  blob: Blob,
+  blob: Blob
 ): Promise<UploadProfilePhotoResult> {
   if (!auth.currentUser) {
     throw new Error("Not signed in.");

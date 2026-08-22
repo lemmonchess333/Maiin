@@ -15,8 +15,6 @@ interface RouteFollowChipProps {
 /** Beyond this perpendicular distance from the route line you're "off route". */
 const OFF_ROUTE_M = 35;
 
-
-
 /**
  * Follow-a-route guidance for the live run. Shows distance remaining + percent
  * complete against the target route, and flips to an "off route" warning (with

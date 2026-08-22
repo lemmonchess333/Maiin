@@ -28,7 +28,7 @@ interface Props {
 function deltaColor(delta: number) {
   if (delta > 0) return THEME.success;
   if (delta < 0) return THEME.running;
-  return THEME.text.muted;
+  return "hsl(var(--muted-foreground))";
 }
 
 function formatDate(iso: string): string {
@@ -131,7 +131,7 @@ export default function ExerciseCompareSheet({
                 <p className="text-sm font-mono tabular-nums text-foreground">
                   {yourPR.reps}×{yourPR.weight}kg
                 </p>
-                <p className="text-xs text-muted-foreground/70 font-mono tabular-nums">
+                <p className="text-xs text-muted-foreground font-mono tabular-nums">
                   {formatDate(yourPR.date)}
                 </p>
               </div>

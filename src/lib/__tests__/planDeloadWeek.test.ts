@@ -59,9 +59,10 @@ describe("DELOAD_LADDERS — integrity against the real catalogue", () => {
       const types = new Set(
         ladder.map((id) => RUN_TEMPLATES.find((t) => t.id === id)?.type)
       );
-      expect(types.size, `ladder ${ladder.join(" < ")} spans ${[...types]}`).toBe(
-        1
-      );
+      expect(
+        types.size,
+        `ladder ${ladder.join(" < ")} spans ${[...types]}`
+      ).toBe(1);
     }
   });
 

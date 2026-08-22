@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, type ReactElement, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  type ReactElement,
+  type ReactNode,
+} from "react";
 import { useCoachMarks } from "@/hooks/useCoachMarks";
 import Tooltip, { type TooltipPlacement } from "./Tooltip";
 

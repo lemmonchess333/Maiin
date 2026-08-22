@@ -60,9 +60,17 @@ export default function GhostDeltaChip({
       }
     >
       {ahead ? (
-        <ChevronUp className="size-3.5 shrink-0" style={{ color }} aria-hidden="true" />
+        <ChevronUp
+          className="size-3.5 shrink-0"
+          style={{ color }}
+          aria-hidden="true"
+        />
       ) : behind ? (
-        <ChevronDown className="size-3.5 shrink-0" style={{ color }} aria-hidden="true" />
+        <ChevronDown
+          className="size-3.5 shrink-0"
+          style={{ color }}
+          aria-hidden="true"
+        />
       ) : (
         <Minus className="size-3.5 shrink-0 opacity-60" aria-hidden="true" />
       )}

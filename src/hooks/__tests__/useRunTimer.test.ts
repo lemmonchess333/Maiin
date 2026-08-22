@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
-import { useRunTimer } from '../useRunTimer';
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { renderHook, act } from "@testing-library/react";
+import { useRunTimer } from "../useRunTimer";
 
-describe('useRunTimer', () => {
+describe("useRunTimer", () => {
   beforeEach(() => {
     vi.useFakeTimers();
   });
@@ -11,22 +11,24 @@ describe('useRunTimer', () => {
     vi.useRealTimers();
   });
 
-  it('starts at zero', () => {
+  it("starts at zero", () => {
     const { result } = renderHook(() => useRunTimer());
     expect(result.current.elapsed).toBe(0);
     expect(result.current.isRunning).toBe(false);
   });
 
-  it('starts and tracks elapsed time', () => {
+  it("starts and tracks elapsed time", () => {
     const { result } = renderHook(() => useRunTimer());
     act(() => result.current.start());
     expect(result.current.isRunning).toBe(true);
 
-    act(() => { vi.advanceTimersByTime(3000); });
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
     expect(result.current.elapsed).toBeGreaterThanOrEqual(2);
   });
 
-  it('pauses and resumes', () => {
+  it("pauses and resumes", () => {
     const { result } = renderHook(() => useRunTimer());
     act(() => result.current.start());
     vi.advanceTimersByTime(2000);
@@ -41,7 +43,7 @@ describe('useRunTimer', () => {
     expect(result.current.isRunning).toBe(true);
   });
 
-  it('resets to zero', () => {
+  it("resets to zero", () => {
     const { result } = renderHook(() => useRunTimer());
     act(() => result.current.start());
     vi.advanceTimersByTime(3000);
@@ -50,15 +52,15 @@ describe('useRunTimer', () => {
     expect(result.current.isRunning).toBe(false);
   });
 
-  it('formatTime formats correctly', () => {
+  it("formatTime formats correctly", () => {
     const { result } = renderHook(() => useRunTimer());
-    expect(result.current.formatTime(0)).toBe('0:00');
-    expect(result.current.formatTime(65)).toBe('1:05');
-    expect(result.current.formatTime(3661)).toBe('1:01:01');
-    expect(result.current.formatTime(7200)).toBe('2:00:00');
+    expect(result.current.formatTime(0)).toBe("0:00");
+    expect(result.current.formatTime(65)).toBe("1:05");
+    expect(result.current.formatTime(3661)).toBe("1:01:01");
+    expect(result.current.formatTime(7200)).toBe("2:00:00");
   });
 
-  it('recalcNow forces immediate elapsed update while running', () => {
+  it("recalcNow forces immediate elapsed update while running", () => {
     const { result } = renderHook(() => useRunTimer());
     act(() => result.current.start());
 
@@ -70,7 +72,7 @@ describe('useRunTimer', () => {
     expect(result.current.elapsed).toBeGreaterThanOrEqual(5);
   });
 
-  it('recalcNow does nothing when paused', () => {
+  it("recalcNow does nothing when paused", () => {
     const { result } = renderHook(() => useRunTimer());
     act(() => result.current.start());
     vi.advanceTimersByTime(3000);
@@ -93,37 +95,49 @@ describe('useRunTimer', () => {
        - getAccumulatedSeconds returning live (running) or frozen
          (paused) seconds without flooring
   */
-  it('rehydrate restores elapsed and isRunning=true', () => {
+  it("rehydrate restores elapsed and isRunning=true", () => {
     const { result } = renderHook(() => useRunTimer());
-    act(() => result.current.rehydrate({ accumulatedSeconds: 120, isRunning: true }));
+    act(() =>
+      result.current.rehydrate({ accumulatedSeconds: 120, isRunning: true })
+    );
     expect(result.current.elapsed).toBe(120);
     expect(result.current.isRunning).toBe(true);
   });
 
-  it('rehydrate restores elapsed and isRunning=false', () => {
+  it("rehydrate restores elapsed and isRunning=false", () => {
     const { result } = renderHook(() => useRunTimer());
-    act(() => result.current.rehydrate({ accumulatedSeconds: 75, isRunning: false }));
+    act(() =>
+      result.current.rehydrate({ accumulatedSeconds: 75, isRunning: false })
+    );
     expect(result.current.elapsed).toBe(75);
     expect(result.current.isRunning).toBe(false);
   });
 
-  it('rehydrate then advance — elapsed climbs from the restored base while running', () => {
+  it("rehydrate then advance — elapsed climbs from the restored base while running", () => {
     const { result } = renderHook(() => useRunTimer());
-    act(() => result.current.rehydrate({ accumulatedSeconds: 100, isRunning: true }));
-    act(() => { vi.advanceTimersByTime(3000); });
+    act(() =>
+      result.current.rehydrate({ accumulatedSeconds: 100, isRunning: true })
+    );
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
     // The setInterval inside the hook should have ticked; elapsed
     // climbs above the restored base.
     expect(result.current.elapsed).toBeGreaterThanOrEqual(102);
   });
 
-  it('rehydrate then advance — elapsed stays at the restored base while paused', () => {
+  it("rehydrate then advance — elapsed stays at the restored base while paused", () => {
     const { result } = renderHook(() => useRunTimer());
-    act(() => result.current.rehydrate({ accumulatedSeconds: 50, isRunning: false }));
-    act(() => { vi.advanceTimersByTime(5000); });
+    act(() =>
+      result.current.rehydrate({ accumulatedSeconds: 50, isRunning: false })
+    );
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
     expect(result.current.elapsed).toBe(50);
   });
 
-  it('getAccumulatedSeconds returns the frozen value when paused', () => {
+  it("getAccumulatedSeconds returns the frozen value when paused", () => {
     const { result } = renderHook(() => useRunTimer());
     act(() => result.current.start());
     vi.advanceTimersByTime(3000);
@@ -134,7 +148,7 @@ describe('useRunTimer', () => {
     expect(acc).toBeLessThanOrEqual(3.1);
   });
 
-  it('getAccumulatedSeconds returns the live value while running', () => {
+  it("getAccumulatedSeconds returns the live value while running", () => {
     const { result } = renderHook(() => useRunTimer());
     act(() => result.current.start());
     vi.advanceTimersByTime(4500);
@@ -146,13 +160,15 @@ describe('useRunTimer', () => {
     expect(acc).toBeLessThanOrEqual(4.7);
   });
 
-  it('accumulates time correctly across pause/resume cycles', () => {
+  it("accumulates time correctly across pause/resume cycles", () => {
     const { result } = renderHook(() => useRunTimer());
 
     // Run for 3s
     act(() => result.current.start());
     vi.advanceTimersByTime(3000);
-    act(() => { vi.advanceTimersByTime(0); }); // flush interval
+    act(() => {
+      vi.advanceTimersByTime(0);
+    }); // flush interval
 
     // Pause for 5s
     act(() => result.current.pause());

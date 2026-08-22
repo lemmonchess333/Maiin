@@ -38,7 +38,6 @@ vi.mock("@/hooks/useDistanceUnit", () => ({
   useDistanceUnit: () => "km" as const,
 }));
 
-
 // B3g — DayPeekCard's extras rows tap-through via useNavigate.
 // Mock so we can assert destinations without a full Router tree.
 const navigateMock = vi.fn();

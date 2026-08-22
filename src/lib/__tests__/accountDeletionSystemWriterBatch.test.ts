@@ -60,7 +60,11 @@ describe("system-writer per-UID guard inside batch iteration", () => {
    * functions/index.js. Calls shouldSystemWriteProceed per UID and
    * records which UIDs actually proceeded to the write.
    */
-  async function runBatch(db: unknown, uids: string[], reason: string): Promise<string[]> {
+  async function runBatch(
+    db: unknown,
+    uids: string[],
+    reason: string
+  ): Promise<string[]> {
     const wrote: string[] = [];
     // Mirrors the actual functions/index.js loop: Promise.all over a
     // 10-UID chunk, each UID checked independently.
@@ -72,7 +76,7 @@ describe("system-writer per-UID guard inside batch iteration", () => {
             return; // SKIP this UID, continue to next iteration
           }
           wrote.push(uid);
-        }),
+        })
       );
     }
     return wrote;
@@ -117,7 +121,9 @@ describe("system-writer per-UID guard inside batch iteration", () => {
   it("last UID tombstoned — middle UIDs are processed before the skip", async () => {
     const db = makeFakeDb({
       accountDeletionRequests: {},
-      deletedAccounts: { carol: { uid: "carol", expiresAt: Date.now() + 86_400_000 } },
+      deletedAccounts: {
+        carol: { uid: "carol", expiresAt: Date.now() + 86_400_000 },
+      },
     });
     const wrote = await runBatch(db, ["alice", "bob", "carol"], "test");
     expect(wrote.sort()).toEqual(["alice", "bob"]);

@@ -351,7 +351,15 @@ function FoodSuggestionsDropdown({
                     </p>
                   )}
                   <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                    <span className="text-orange-500 font-medium">
+                    {/* `text-nutrition-strong`, the theme-aware AA step for
+                        orange text on a card — not `text-orange-500`, which
+                        is raw Tailwind palette (#ff6900) and not a Tropos
+                        token at all. Found in the same sweep as the streak
+                        flames: a palette CLASS carries no hex, so the
+                        hex-literal lint cannot see it. tokens.css is
+                        explicit that calorie/macro context belongs to
+                        --nutrition, never the generic warm ramp. */}
+                    <span className="text-nutrition-strong font-medium">
                       {food.calories} cal
                     </span>
                     <span>&middot;</span>

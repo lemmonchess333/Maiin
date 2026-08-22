@@ -55,7 +55,7 @@ function EmptyRing() {
             cy="50"
             r={RING_RADIUS}
             fill="none"
-            stroke={THEME.text.muted + "1A"}
+            stroke="hsl(var(--muted-foreground) / 0.1)"
             strokeWidth={RING_STROKE}
             strokeDasharray={`${RING_ARC_LENGTH} ${RING_CIRCUMFERENCE}`}
             strokeLinecap="round"
@@ -64,14 +64,17 @@ function EmptyRing() {
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <p
             className="text-display font-extrabold leading-none font-mono tabular-nums"
-            style={{ color: THEME.text.muted }}
+            style={{ color: "hsl(var(--muted-foreground))" }}
           >
             —
           </p>
         </div>
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-xs" style={{ color: THEME.text.muted }}>
+        <p
+          className="text-xs"
+          style={{ color: "hsl(var(--muted-foreground))" }}
+        >
           {EMPTY_STATE_LINE}
         </p>
       </div>
@@ -111,12 +114,12 @@ export default function PerformanceHeroCard({
         <div className="flex items-center gap-2 mb-3">
           <Activity
             className="size-4"
-            style={{ color: THEME.text.muted }}
+            style={{ color: "hsl(var(--muted-foreground))" }}
             aria-hidden="true"
           />
           <p
             className="text-xs font-medium"
-            style={{ color: THEME.text.muted }}
+            style={{ color: "hsl(var(--muted-foreground))" }}
           >
             Performance
           </p>
@@ -137,12 +140,12 @@ export default function PerformanceHeroCard({
         <div className="flex items-center gap-2 mb-1">
           <Activity
             className="size-4"
-            style={{ color: THEME.text.muted }}
+            style={{ color: "hsl(var(--muted-foreground))" }}
             aria-hidden="true"
           />
           <p
             className="text-xs font-medium"
-            style={{ color: THEME.text.muted }}
+            style={{ color: "hsl(var(--muted-foreground))" }}
           >
             Performance
           </p>
@@ -171,7 +174,11 @@ export default function PerformanceHeroCard({
      the deload verb + amber card state never fired for anyone. */
   const deloadRecommended = resolveDeloadRecommended(currentWeek);
   const verb = getVerb(loadBand, deloadRecommended);
-  const { hue, glowIntensity } = getCardColour(pi, loadBand, deloadRecommended);
+  const { hue, textHue, glowIntensity } = getCardColour(
+    pi,
+    loadBand,
+    deloadRecommended
+  );
   const line = getLine(verb.state, currentWeek.signals);
 
   // Same shared predicate Analytics uses — this surface's existing rule,
@@ -220,7 +227,10 @@ export default function PerformanceHeroCard({
           style={{ color: hue }}
           aria-hidden="true"
         />
-        <p className="text-xs font-medium" style={{ color: THEME.text.muted }}>
+        <p
+          className="text-xs font-medium"
+          style={{ color: "hsl(var(--muted-foreground))" }}
+        >
           Performance
         </p>
       </div>
@@ -288,14 +298,17 @@ export default function PerformanceHeroCard({
         <div className="flex-1 min-w-0">
           <motion.p
             className="text-base font-bold leading-tight"
-            style={{ color: hue }}
+            style={{ color: textHue }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.2, duration: 0.2 }}
           >
             {verb.label}
           </motion.p>
-          <p className="text-xs mt-1" style={{ color: THEME.text.muted }}>
+          <p
+            className="text-xs mt-1"
+            style={{ color: "hsl(var(--muted-foreground))" }}
+          >
             {line}
           </p>
           {/* Delta chip — hidden when low-confidence (sparse data
@@ -311,7 +324,9 @@ export default function PerformanceHeroCard({
                       ? THEME.semantic.positive
                       : THEME.semantic.vitals) + "1A",
                   color:
-                    delta > 0 ? THEME.semantic.positive : THEME.semantic.vitals,
+                    delta > 0
+                      ? "hsl(var(--success-strong))"
+                      : "hsl(var(--running-strong))",
                 }}
               >
                 {delta > 0 ? (

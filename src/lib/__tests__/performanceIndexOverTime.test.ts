@@ -136,11 +136,8 @@ function progression(growthPerWeek: number): number[] {
   const out: number[] = [];
   for (let w = 4; w < 30; w++) {
     out.push(
-      piFor(
-        level(w),
-        [w - 4, w - 3, w - 2, w - 1].map(level),
-        out.at(-1)
-      ).performanceIndex
+      piFor(level(w), [w - 4, w - 3, w - 2, w - 1].map(level), out.at(-1))
+        .performanceIndex
     );
   }
   return out;
@@ -196,11 +193,14 @@ describe("performance index — the top of the scale is the overreach band", () 
     { ratio: 1.1, pi: 86, band: "overreach" },
     { ratio: 1.25, pi: 93, band: "overreach" },
     { ratio: 1.5, pi: 100, band: "overreach" },
-  ])("$ratio× the recent average → PI $pi, band $band", ({ ratio, pi, band }) => {
-    const s = piFor(ratio, [1, 1, 1, 1]);
-    expect(s.performanceIndex).toBe(pi);
-    expect(s.loadBand).toBe(band);
-  });
+  ])(
+    "$ratio× the recent average → PI $pi, band $band",
+    ({ ratio, pi, band }) => {
+      const s = piFor(ratio, [1, 1, 1, 1]);
+      expect(s.performanceIndex).toBe(pi);
+      expect(s.loadBand).toBe(band);
+    }
+  );
 
   it("leaves a two-point margin before overreach, and no more", () => {
     /* The first sweep of this asserted that EVERY point above steady training

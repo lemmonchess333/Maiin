@@ -12,15 +12,26 @@ export async function exportWorkoutsCSV(uid: string): Promise<string> {
     const w = docSnap.data();
     const date = w.date || "";
     if (Array.isArray(w.exercises)) {
-      w.exercises.forEach((ex: { exerciseName?: string; name?: string; sets?: { weightKg?: number; weight?: number; reps?: number; type?: string }[] }) => {
-        if (Array.isArray(ex.sets)) {
-          ex.sets.forEach((set, i: number) => {
-            rows.push(
-              `${date},"${(ex.exerciseName || ex.name || "").replace(/"/g, '""')}",${i + 1},${set.weightKg ?? set.weight ?? 0},${set.reps ?? 0},${set.type || "working"}`
-            );
-          });
+      w.exercises.forEach(
+        (ex: {
+          exerciseName?: string;
+          name?: string;
+          sets?: {
+            weightKg?: number;
+            weight?: number;
+            reps?: number;
+            type?: string;
+          }[];
+        }) => {
+          if (Array.isArray(ex.sets)) {
+            ex.sets.forEach((set, i: number) => {
+              rows.push(
+                `${date},"${(ex.exerciseName || ex.name || "").replace(/"/g, '""')}",${i + 1},${set.weightKg ?? set.weight ?? 0},${set.reps ?? 0},${set.type || "working"}`
+              );
+            });
+          }
         }
-      });
+      );
     }
   });
 
@@ -36,7 +47,8 @@ export async function exportMealsCSV(uid: string): Promise<string> {
 
   snap.docs.forEach((docSnap) => {
     const m = docSnap.data();
-    const date = m.date || (m.createdAt?.toDate?.()?.toISOString?.()?.split("T")[0] ?? "");
+    const date =
+      m.date || (m.createdAt?.toDate?.()?.toISOString?.()?.split("T")[0] ?? "");
     rows.push(
       `${date},"${(m.foodName || m.name || "").replace(/"/g, '""')}",${m.totalCalories ?? m.calories ?? 0},${m.totalProtein ?? m.protein ?? 0},${m.totalCarbs ?? m.carbs ?? 0},${m.totalFat ?? m.fat ?? 0}`
     );

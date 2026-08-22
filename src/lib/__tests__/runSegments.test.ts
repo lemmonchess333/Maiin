@@ -23,13 +23,16 @@ import { GUIDED_WORKOUTS } from "../guidedRun";
 
 describe("segmentsFromIntervals", () => {
   it("orders warmup → (work, rest)×N → cooldown, no trailing rest", () => {
-    const segs = segmentsFromIntervals({
-      reps: 3,
-      workDistance: 1000,
-      restDuration: 90,
-      warmupDuration: 600,
-      cooldownDuration: 300,
-    }, "km");
+    const segs = segmentsFromIntervals(
+      {
+        reps: 3,
+        workDistance: 1000,
+        restDuration: 90,
+        warmupDuration: 600,
+        cooldownDuration: 300,
+      },
+      "km"
+    );
     expect(segs.map((s) => s.type)).toEqual([
       "warmup",
       "hard",
@@ -47,12 +50,15 @@ describe("segmentsFromIntervals", () => {
   });
 
   it("carries the personalized work pace into label and paceTarget", () => {
-    const segs = segmentsFromIntervals({
-      reps: 2,
-      workDistance: 400,
-      workPace: 250,
-      restDuration: 60,
-    }, "km");
+    const segs = segmentsFromIntervals(
+      {
+        reps: 2,
+        workDistance: 400,
+        workPace: 250,
+        restDuration: 60,
+      },
+      "km"
+    );
     expect(segs[0].label).toMatch(/@ 4:10\/km/);
     expect(segs[0].paceTarget).toBe(250);
   });
@@ -97,7 +103,11 @@ describe("segmentsFromTempo — the promoted prose", () => {
 
 describe("segmentsFromEasyWithStrides", () => {
   it("conserves the stated duration exactly", () => {
-    for (const id of ["easy_30_strides", "easy_40_strides", "easy_50_strides"]) {
+    for (const id of [
+      "easy_30_strides",
+      "easy_40_strides",
+      "easy_50_strides",
+    ]) {
       const t = RUN_TEMPLATES.find((x) => x.id === id)!;
       const segs = segmentsFromEasyWithStrides(
         t.estimatedDuration,
@@ -124,7 +134,9 @@ describe("segmentsFromEasyWithStrides", () => {
 describe("A2 — segmentsFromTempo at goal pace", () => {
   it("pins the pace, renames the effort, and keeps duration conservation", () => {
     const t = RUN_TEMPLATES.find((x) => x.id === "tempo_40")!;
-    const segs = segmentsFromTempo(t.config.tempo!, "km", 300, { atGoalPace: true });
+    const segs = segmentsFromTempo(t.config.tempo!, "km", 300, {
+      atGoalPace: true,
+    });
     // Same shape and the same total — goal pace changes the register,
     // never the dose.
     expect(segmentsDurationSeconds(segs)).toBe(t.estimatedDuration * 60);

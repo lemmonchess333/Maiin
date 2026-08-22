@@ -68,7 +68,7 @@ export default function GuidedRunPicker({ selected, onSelect }: Props) {
                 </span>
               </div>
               <p className="text-xs text-muted-foreground">{w.description}</p>
-              <p className="text-xs text-muted-foreground/60 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 {DIFFICULTY_LABEL[w.difficulty]} · {w.segments.length} segments
               </p>
             </button>

@@ -6,24 +6,48 @@ describe("getCardColour", () => {
   describe("amber branch (Backing off verb)", () => {
     it("returns amber + zero glow when deloadRecommended is true at moderate PI", () => {
       const result = getCardColour(60, "moderate", true);
-      expect(result).toEqual({ hue: THEME.amber, glowIntensity: 0 });
+      expect(result).toEqual({
+        hue: THEME.amber,
+        // DS2: the AA text step riding beside the decorative hue — the verb
+        // label is 16px/700 body text and the raw amber measured 3.19:1.
+        textHue: "hsl(var(--warning-strong))",
+        glowIntensity: 0,
+      });
     });
 
     it("returns amber + zero glow when loadBand is overreach without deloadRecommended", () => {
       const result = getCardColour(90, "overreach", false);
-      expect(result).toEqual({ hue: THEME.amber, glowIntensity: 0 });
+      expect(result).toEqual({
+        hue: THEME.amber,
+        // DS2: the AA text step riding beside the decorative hue — the verb
+        // label is 16px/700 body text and the raw amber measured 3.19:1.
+        textHue: "hsl(var(--warning-strong))",
+        glowIntensity: 0,
+      });
     });
 
     it("returns amber + zero glow when both overreach AND deloadRecommended", () => {
       const result = getCardColour(95, "overreach", true);
-      expect(result).toEqual({ hue: THEME.amber, glowIntensity: 0 });
+      expect(result).toEqual({
+        hue: THEME.amber,
+        // DS2: the AA text step riding beside the decorative hue — the verb
+        // label is 16px/700 body text and the raw amber measured 3.19:1.
+        textHue: "hsl(var(--warning-strong))",
+        glowIntensity: 0,
+      });
     });
 
     it("deload-recommended at high PI suppresses glow even though score is high", () => {
       // PI 80 + deload-recommended → "Backing off" verb per PI1.
       // Without the deload override the colour would be brand + glow ~0.636.
       const result = getCardColour(80, "high", true);
-      expect(result).toEqual({ hue: THEME.amber, glowIntensity: 0 });
+      expect(result).toEqual({
+        hue: THEME.amber,
+        // DS2: the AA text step riding beside the decorative hue — the verb
+        // label is 16px/700 body text and the raw amber measured 3.19:1.
+        textHue: "hsl(var(--warning-strong))",
+        glowIntensity: 0,
+      });
     });
   });
 

@@ -1,9 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  parseVersion,
-  isVersionBelow,
-  upgradeRequired,
-} from "../versionGate";
+import { parseVersion, isVersionBelow, upgradeRequired } from "../versionGate";
 
 describe("parseVersion", () => {
   it("parses full, partial, and v-prefixed versions", () => {

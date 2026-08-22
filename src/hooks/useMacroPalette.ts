@@ -36,7 +36,7 @@ export function useMacroPalette() {
   const isDark = useSyncExternalStore(
     subscribeDarkMode,
     getIsDark,
-    () => false,
+    () => false
   );
 
   const accent = {

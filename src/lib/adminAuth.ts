@@ -16,7 +16,7 @@ function getAdminAllowlist(): Set<string> {
     raw
       .split(",")
       .map((s) => s.trim())
-      .filter(Boolean),
+      .filter(Boolean)
   );
 }
 

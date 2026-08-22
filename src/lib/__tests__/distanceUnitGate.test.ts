@@ -78,7 +78,8 @@ function scan(): Hit[] {
     if (rel in NOT_DISPLAY) continue;
     const src = stripComments(readFileSync(resolve(repoRoot, rel), "utf8"));
     src.split("\n").forEach((line, i) => {
-      if (INLINE.test(line)) out.push({ site: `${rel}:${i + 1}`, line: line.trim() });
+      if (INLINE.test(line))
+        out.push({ site: `${rel}:${i + 1}`, line: line.trim() });
     });
   }
   return out;
@@ -89,8 +90,8 @@ describe("run distances are formatted through runLabels, not inline", () => {
     /* Positive control. The gate is one regex, and a regex that matches
        nothing reports a clean codebase — the exact failure this whole file
        exists to prevent, so prove it fires on the real shapes first. */
-    expect(INLINE.test('`${(run.distance / 1000).toFixed(1)} km`')).toBe(true);
-    expect(INLINE.test('value={`${(dist / 1000).toFixed(1)} km`}')).toBe(true);
+    expect(INLINE.test("`${(run.distance / 1000).toFixed(1)} km`")).toBe(true);
+    expect(INLINE.test("value={`${(dist / 1000).toFixed(1)} km`}")).toBe(true);
     /* KNOWN BLIND SPOT, stated rather than hidden: an assignment names the
        unit BEFORE the arithmetic — `const km = (metres / 1000).toFixed(2)`
        — and the forward-only rule cannot see it without also matching the
@@ -134,9 +135,10 @@ describe("run distances are formatted through runLabels, not inline", () => {
         return true;
       }
     });
-    expect(missing, `NOT_DISPLAY entries naming files that no longer exist`).toEqual(
-      []
-    );
+    expect(
+      missing,
+      `NOT_DISPLAY entries naming files that no longer exist`
+    ).toEqual([]);
   });
 
   it("every allow-listed file really does contain the shape", () => {
@@ -146,8 +148,9 @@ describe("run distances are formatted through runLabels, not inline", () => {
       const src = stripComments(readFileSync(resolve(repoRoot, rel), "utf8"));
       return !src.split("\n").some((l) => INLINE.test(l));
     });
-    expect(inert, `allow-listed but no longer matching — drop the entry`).toEqual(
-      []
-    );
+    expect(
+      inert,
+      `allow-listed but no longer matching — drop the entry`
+    ).toEqual([]);
   });
 });

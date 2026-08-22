@@ -424,3 +424,145 @@ describe("the static JS hexes these replaced", () => {
     expect(onLightCard("#4DB872")).toBeLessThan(3);
   });
 });
+
+describe("the range track's fill/groove edge — WCAG 1.4.11", () => {
+  /* The edge between the filled and unfilled halves of the run-days
+     slider is the ONLY thing that says where the value sits, so it is
+     "visual information required to identify the state of a UI
+     component" — the 3:1 non-text bar, in both themes.
+
+     This exists because naming the token is not the same as checking it.
+     The obvious pick was `--primary-strong`, and it is the pick the rest
+     of the app makes for anything filled and brand-coloured — but that
+     step is tuned for AA TEXT sitting ON the fill, which a track does not
+     have. Measured against `--muted`, it lands at 2.87:1 in dark: an
+     improvement on the inverted UA groove it replaced, and still under
+     the floor. `--primary` clears it in both directions.
+
+     So the assertion measures rather than naming a token. A future
+     retune of either token, or a swap back to `-strong`, fails here
+     rather than shipping a slider you cannot read in the dark. */
+  it.each(["light", "dark"] as const)(
+    "the fill is at least 3:1 against the groove in %s",
+    (theme) => {
+      const b = theme === "light" ? lightBlock() : darkBlock();
+      const fill = hslToRgb(...readHsl(b, "primary"));
+      const groove = hslToRgb(...readHsl(b, "muted"));
+      const ratio = contrast(fill, groove);
+      expect(
+        ratio,
+        `--primary is ${ratio.toFixed(2)}:1 against --muted in ${theme}. ` +
+          `That edge is the slider's only state indication, so it needs ` +
+          `3:1 (WCAG 1.4.11). --primary-strong measures 2.87:1 here, which ` +
+          `is why the track does not use it.`
+      ).toBeGreaterThanOrEqual(AA_LARGE);
+    }
+  );
+
+  it("records why --primary-strong is NOT the track fill", () => {
+    // The executable form of the comment above — if a retune ever makes
+    // -strong viable, this fails and the choice can be revisited.
+    const dark = darkBlock();
+    const ratio = contrast(
+      hslToRgb(...readHsl(dark, "primary-strong")),
+      hslToRgb(...readHsl(dark, "muted"))
+    );
+    expect(
+      ratio,
+      `--primary-strong now measures ${ratio.toFixed(2)}:1 against the ` +
+        `dark groove. It was rejected as the track fill at 2.87:1; if it ` +
+        `clears 3:1 now, the index.css comment explaining the choice is ` +
+        `stale.`
+    ).toBeLessThan(AA_LARGE);
+  });
+});
+
+/**
+ * FRACTIONAL-OPACITY MUTED TEXT — banned, and the base pinned AA everywhere.
+ *
+ * History, because the ban only makes sense with it. `tintAlphas` above
+ * scans `bg-<token>/<n>`, so every tinted SURFACE gets its contrast question
+ * asked; nothing scanned `text-<token>/<n>`, and 64 such sites accumulated
+ * in `text-muted-foreground` alone, down to a `/30`. Every one failed AA in
+ * light, by arithmetic rather than judgement: the base cleared the white
+ * card by only 0.333 (4.833:1) and FAILED outright on `--background`
+ * (4.397:1) — the surface every BottomSheet body paints.
+ *
+ * The 2026-08-22 owner-delegated consolidation (see the DS2 discussion in
+ * docs/visual-audit/2026-08-22-surface-audit.md) resolved it as one move:
+ * retune the light base to `240 3.8% 43%` so it clears 4.5:1 on ALL THREE
+ * real surfaces, delete every fractional modifier, and express de-emphasis
+ * through the type scale (size/weight) instead of alpha. So the ratchet
+ * that used to pin the count at 64 is now a BAN at 0, and the
+ * "base is AA-marginal" record inverts into "base passes everywhere, both
+ * themes" — the contract the retune exists to hold.
+ *
+ * One misattribution stays pinned: 7.26:1 was once published as the base's
+ * ratio (calling it AAA). That figure belongs to `Run.tsx:142`'s
+ * "Acquiring GPS..." label — `text-warning-strong/90` on the DARK page.
+ * The assertion computing it keeps either number from being quoted for the
+ * other again.
+ */
+function fractionalTextUses(token: string): string[] {
+  const out: string[] = [];
+  for (const f of globSync("src/**/*.{ts,tsx}", { cwd: process.cwd() })) {
+    if (f.includes("__tests__")) continue;
+    const src = readFileSync(resolve(process.cwd(), f), "utf8");
+    src.split("\n").forEach((line, i) => {
+      for (const m of line.matchAll(
+        new RegExp(`text-${token}\\/(\\d+)`, "g")
+      )) {
+        out.push(`${f}:${i + 1}  /${m[1]}`);
+      }
+    });
+  }
+  return out;
+}
+
+describe("muted secondary text — the consolidated contract", () => {
+  it("no fractional text-muted-foreground exists anywhere", () => {
+    const uses = fractionalTextUses("muted-foreground");
+    expect(
+      uses,
+      `text-muted-foreground/<n> is BANNED (owner-decided consolidation, ` +
+        `2026-08-22). The base is tuned to pass AA on every real surface, ` +
+        `and any fraction of it un-passes somewhere. De-emphasis belongs to ` +
+        `the type scale (size/weight), not alpha. Use the bare token.\n` +
+        uses.join("\n")
+    ).toEqual([]);
+  });
+
+  it.each(["light", "dark"] as const)(
+    "the base clears 4.5:1 on card, muted AND background in %s",
+    (theme) => {
+      /* The contract that makes the ban above safe. `--background` is in
+         the list because BottomSheet paints it — the surface that was
+         quietly failing at 46.1% lightness. If a retune ever regresses any
+         of the three, this names the exact surface and ratio. */
+      const b = theme === "light" ? lightBlock() : darkBlock();
+      const fg = hslToRgb(...readHsl(b, "muted-foreground"));
+      for (const name of ["card", "muted", "background"] as const) {
+        const ratio = contrast(fg, hslToRgb(...readHsl(b, name)));
+        expect(
+          ratio,
+          `--muted-foreground is ${ratio.toFixed(3)}:1 on --${name} in ` +
+            `${theme} — under the 4.5:1 the consolidation guarantees. ` +
+            `Retune the token, do not reintroduce alpha tiers.`
+        ).toBeGreaterThanOrEqual(AA_NORMAL);
+      }
+    }
+  );
+
+  it("7.26:1 belongs to text-warning-strong/90 on the DARK page, not to muted text", () => {
+    // The misattribution, made permanent so it cannot be re-derived.
+    const dark = darkBlock();
+    const fg = hslToRgb(...readHsl(dark, "warning-strong"));
+    const bg = hslToRgb(...readHsl(dark, "background"));
+    const composite = fg.map((c, i) => 0.9 * c + 0.1 * bg[i]) as [
+      number,
+      number,
+      number,
+    ];
+    expect(contrast(composite, bg)).toBeGreaterThan(7);
+  });
+});

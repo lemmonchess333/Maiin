@@ -178,7 +178,7 @@ describe("FoodComposerCard — conditional quota caption (wave2 B)", () => {
 
   it("renders the last-scan caption at remaining === 1", () => {
     renderComposer({ scanUsage: quota({ remaining: 1 }) });
-    expect(screen.getByText(/1 free scan left · resets Jun 10/i)).toBeTruthy();
+    expect(screen.getByText(/1 free scan left · resets 10 Jun/i)).toBeTruthy();
   });
 
   it("renders the exhausted caption with a working upgrade action at remaining === 0 (real quota)", () => {

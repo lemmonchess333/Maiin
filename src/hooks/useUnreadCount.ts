@@ -47,9 +47,9 @@ export function useUnreadCount() {
   // Same suppression the feed applies, so the badge and the screen agree.
   const { blocked } = useBlockedUsers();
   const { hidden } = useHiddenActivities();
-  const [rows, setRows] = useState<
-    { authorId: string; activityId: string }[]
-  >([]);
+  const [rows, setRows] = useState<{ authorId: string; activityId: string }[]>(
+    []
+  );
   const [error, setError] = useState(false);
   // Bumped on every (re)subscribe so a stale snapshot/error callback from
   // a torn-down listener can't commit the previous account's state.

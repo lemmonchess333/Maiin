@@ -112,7 +112,7 @@ function deriveConfidence(args: {
 
 export function computeRouteQuality(args: ComputeArgs): RouteQuality {
   const acceptedAccuracies = args.acceptedAccuracies.filter(
-    (a) => Number.isFinite(a) && a > 0,
+    (a) => Number.isFinite(a) && a > 0
   );
 
   // Count long inter-fix gaps. timestamps are sorted ascending; a
@@ -124,9 +124,8 @@ export function computeRouteQuality(args: ComputeArgs): RouteQuality {
   }
 
   const medianAccuracyM = median(acceptedAccuracies);
-  const worstAccuracyM = acceptedAccuracies.length === 0
-    ? 0
-    : Math.max(...acceptedAccuracies);
+  const worstAccuracyM =
+    acceptedAccuracies.length === 0 ? 0 : Math.max(...acceptedAccuracies);
 
   const confidence = deriveConfidence({
     backgroundGapMs: args.backgroundGapMs,

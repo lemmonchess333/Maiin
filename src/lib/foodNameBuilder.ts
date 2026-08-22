@@ -29,10 +29,10 @@ export interface ItemForNaming {
   name?: string | null;
 }
 
-const DEFAULT_FALLBACK = 'Meal';
+const DEFAULT_FALLBACK = "Meal";
 
 function cleanName(raw: unknown): string {
-  if (typeof raw !== 'string') return '';
+  if (typeof raw !== "string") return "";
   return raw.trim();
 }
 
@@ -44,7 +44,7 @@ function cleanName(raw: unknown): string {
  */
 export function buildFoodNameFromItems(
   items: readonly ItemForNaming[] | undefined | null,
-  fallback: string = DEFAULT_FALLBACK,
+  fallback: string = DEFAULT_FALLBACK
 ): string {
   if (!items || items.length === 0) {
     const cleaned = cleanName(fallback);

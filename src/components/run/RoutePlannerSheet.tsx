@@ -69,8 +69,6 @@ interface RoutePlannerSheetProps {
   onFollow: (points: GPSPoint[]) => void;
 }
 
-
-
 export default function RoutePlannerSheet({
   open,
   onClose,

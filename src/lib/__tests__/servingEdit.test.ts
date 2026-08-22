@@ -201,7 +201,9 @@ describe("Food.tsx uses it, and passes the changes through", () => {
   it("no longer spreads the pre-edit source into the written doc", () => {
     // The shape that caused it: cloning `source.totalCalories` et al directly
     // into addDocGuarded, bypassing the edit entirely.
-    expect(SOURCE).not.toMatch(/totalCalories:\s*safeNum\(source\.totalCalories\)/);
+    expect(SOURCE).not.toMatch(
+      /totalCalories:\s*safeNum\(source\.totalCalories\)/
+    );
     expect(SOURCE).not.toMatch(/foodName:\s*source\.foodName/);
   });
 });

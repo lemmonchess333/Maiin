@@ -43,7 +43,11 @@ test.describe("easier today screenshots", () => {
   });
 
   async function shoot(page: Page, name: string) {
-    await page.screenshot({ path: `screenshots/${name}.png`, fullPage: true });
+    await page.screenshot({
+      animations: "disabled",
+      path: `screenshots/${name}.png`,
+      fullPage: true,
+    });
   }
 
   test("session chooser with Easier today — light + dark", async ({ page }) => {
@@ -72,6 +76,7 @@ test.describe("easier today screenshots", () => {
     await page.evaluate(() =>
       document.documentElement.classList.remove("dark")
     );
+    await page.waitForTimeout(400);
     await shoot(page, "easier-chooser-light");
     await page.evaluate(() => document.documentElement.classList.add("dark"));
     await page.waitForTimeout(350);

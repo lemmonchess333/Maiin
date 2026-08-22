@@ -1,0 +1,366 @@
+/**
+ * Every capture screenshot freezes animations.
+ *
+ * The capture channel is the app's design-review instrument, and a frame
+ * that lies is worse than a missing one — it sends a reviewer after a
+ * defect that is not there. One did. `weekly-review-dark.png` showed the
+ * Momentum check-in's segmented options at 2.96:1 against their own track
+ * while every other muted string on the same frame sat at 5.51:1. The
+ * component was innocent: identical markup on Social measured correctly,
+ * and a scan of every dark frame found the offending colour — the LIGHT
+ * theme's `--muted-foreground`, exactly — in that one file and nowhere
+ * else.
+ *
+ * The cause was the capture, not the app. The specs switch theme by
+ * toggling the `dark` class and shooting immediately, and
+ * `SegmentedControl` carries `motion-safe:transition-colors`, so the frame
+ * caught its options at the start of the colour transition, still holding
+ * the light value. Nothing else on the page transitions colour, which is
+ * why only that control looked wrong.
+ *
+ * `animations: "disabled"` fast-forwards finite transitions to completion
+ * (verified against the installed playwright-core types, not assumed), so
+ * the colour lands on its end state. It also removes entry-animation and
+ * count-up phase from every frame, which is the other reason to keep it:
+ * the diff report is only readable if a frame changes when the UI changes,
+ * not when the timing does.
+ *
+ * Pinned because it is one option in an options bag — the easiest thing in
+ * the world to drop while editing a spec, and invisible when it goes.
+ */
+import { describe, it, expect } from "vitest";
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve, relative } from "node:path";
+
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
+const e2eRoot = resolve(repoRoot, "e2e");
+
+function specFiles(dir: string): string[] {
+  const out: string[] = [];
+  for (const name of readdirSync(dir)) {
+    const full = resolve(dir, name);
+    if (statSync(full).isDirectory()) {
+      out.push(...specFiles(full));
+      continue;
+    }
+    if (name.endsWith(".spec.ts")) out.push(full);
+  }
+  return out;
+}
+
+/** `page.screenshot({ … })` calls, with the option bag up to its close. */
+function screenshotCalls(src: string): string[] {
+  return [...src.matchAll(/\.screenshot\(\{([\s\S]*?)\}\)/g)].map((m) => m[1]);
+}
+
+describe("capture specs — frozen animations", () => {
+  const files = specFiles(e2eRoot);
+
+  it("finds the capture specs — the fixture this rests on", () => {
+    // Without a floor, a renamed directory would leave the assertion below
+    // passing over an empty list.
+    const withShots = files.filter(
+      (f) => screenshotCalls(readFileSync(f, "utf8")).length > 0
+    );
+    expect(withShots.length).toBeGreaterThanOrEqual(20);
+  });
+
+  it("every screenshot call disables animations", () => {
+    const offenders: string[] = [];
+    for (const f of files) {
+      const src = readFileSync(f, "utf8");
+      for (const bag of screenshotCalls(src)) {
+        if (!/animations:\s*"disabled"/.test(bag)) {
+          offenders.push(
+            `${relative(repoRoot, f)} :: ${bag.replace(/\s+/g, " ").trim().slice(0, 70)}`
+          );
+        }
+      }
+    }
+    expect(
+      offenders,
+      `A capture without \`animations: "disabled"\` can freeze mid-transition ` +
+        `and report a defect the app does not have — which is exactly how ` +
+        `weekly-review-dark came to show a 2.96:1 contrast failure in a ` +
+        `component that measures 5.51:1 everywhere else.`
+    ).toEqual([]);
+  });
+});
+
+/**
+ * The other half: a theme toggle immediately followed by a shot.
+ *
+ * `animations: "disabled"` lands CSS colours on their end state, which is
+ * what fixed the frame that lied. It cannot fix the JavaScript half:
+ * `useIsDarkMode` and `MuscleHeatMap` read
+ * `document.documentElement.classList.contains("dark")` in JS, so a
+ * `page.evaluate` toggle needs a React re-render before their colours
+ * change. A screenshot in the same tick catches the previous theme — and
+ * that would mis-colour a CHART, which is far harder to spot as an
+ * artifact than mis-coloured text was.
+ *
+ * This was originally logged as untestable-from-here and ~75 sites wide.
+ * It is not: 57 of the toggles already wait, and measuring found exactly
+ * THREE that toggled and shot with nothing in between — two of them in the
+ * one spec whose frame carried the artifact. That distribution is itself
+ * the confirmation of the diagnosis, and it turned "don't fix blind" into
+ * a three-line change matching a pattern the same files already use.
+ *
+ * Checked by looking BACKWARDS from each shot rather than forwards from
+ * each toggle: a forward window spans loop boundaries and reports the next
+ * iteration's shot as if it followed this iteration's reset.
+ */
+describe("capture specs — theme toggles settle before the shot", () => {
+  const TOGGLE = /classList\.(?:add|remove)\(\s*"dark"\s*\)/;
+  const SETTLE = /waitForTimeout|waitFor\(|toBeVisible|toHaveText/;
+  const SHOT = /(?:\.screenshot\(|\bshoot[A-Za-z]*\()/;
+
+  /** Statement-ish slices, so "the thing immediately before" is meaningful. */
+  function statements(src: string): string[] {
+    return src
+      .split(/;\s*\n/)
+      .map((t) => t.trim())
+      .filter(Boolean);
+  }
+
+  it("no shot is taken in the same breath as a theme toggle", () => {
+    const offenders: string[] = [];
+    for (const f of specFiles(e2eRoot)) {
+      const stmts = statements(readFileSync(f, "utf8"));
+      for (let i = 0; i < stmts.length; i += 1) {
+        if (!SHOT.test(stmts[i])) continue;
+        const prev = stmts[i - 1] ?? "";
+        /* Only the IMMEDIATELY preceding statement. Walking further back
+           produces false positives: an intervening interaction (opening a
+           tooltip, clicking a tab) takes real wall-clock time and settles
+           the theme just as well as an explicit wait, but is unreadable as
+           such from source. The three real sites were all toggle-then-shot
+           with nothing between, so precision costs nothing here. */
+        if (TOGGLE.test(prev) && !SETTLE.test(prev)) {
+          offenders.push(
+            `${relative(repoRoot, f)} :: ${stmts[i].replace(/\s+/g, " ").slice(0, 60)}`
+          );
+        }
+      }
+    }
+    expect(
+      offenders,
+      `A screenshot taken in the same tick as a theme toggle can capture ` +
+        `the PREVIOUS theme wherever the colour is read in JavaScript ` +
+        `(useIsDarkMode, MuscleHeatMap) rather than in CSS. Add a settle ` +
+        `between them — 57 toggles in these specs already do.`
+    ).toEqual([]);
+  });
+});
+
+/**
+ * `fullPage` shots wait for the document to stop GROWING.
+ *
+ * Sibling defect to the one above, found the same way — by reading the
+ * diff report rather than the app. `home-energy-default-after.png`
+ * measured, across four consecutive captures with no relevant code change:
+ *
+ *     393x1191  ->  393x1190  ->  393x1458  ->  393x1191
+ *
+ * The one-pixel moves are rounding. The 267px jump is a genuinely
+ * different page. Every anchor in these specs is a single element — "wait
+ * until `Today's Energy` is visible" — and a `fullPage` shot is a claim
+ * about the WHOLE document, so the shutter can fire while a card below the
+ * fold is still mounting. A frame that swings 267px between runs cannot be
+ * diffed, which means a real regression has somewhere to hide.
+ *
+ * CORRECTION, measured on the next capture: settling the height did NOT
+ * close that frame. It came back 1358 — a third distinct value. Reading
+ * both frames showed why: each is painted to its bottom edge, so neither
+ * is a half-mounted page. The difference is CONTENT — one carries
+ * "70.0 kg / From profile" and a real calorie total, the other "Tap to
+ * log" and a partial line. Home renders its loading states as ordinary
+ * EMPTY states rather than skeletons, so they are height-stable for
+ * longer than any settle window and the helper returns on a stable page
+ * that is not the final one. Nothing generic can separate a loading empty
+ * state from a real one; that frame needed a content anchor in the spec,
+ * which it now has.
+ *
+ * The helper is kept on its own merits — a fullPage shot should wait for
+ * layout — and the assertion below stays because that property is worth
+ * holding. It is no longer claimed as the fix for that frame.
+ *
+ * This is a RATCHET, not a clean bill. Only `surfaces` is fixed — it is
+ * the one where the flake was measured, and the other specs shoot pages
+ * whose settling behaviour has not been reasoned about individually.
+ * Adoption is one `await settleFullPageHeight(page)` before the shot. The
+ * count below must not GROW; lower it as specs adopt the helper.
+ */
+const UNSETTLED_FULLPAGE_SPECS = 16;
+
+describe("capture specs — fullPage shots settle the document height", () => {
+  const files = specFiles(e2eRoot);
+
+  /** Specs that take a fullPage shot without awaiting the settle helper. */
+  function unsettled(): string[] {
+    return files
+      .filter((f) => {
+        const src = readFileSync(f, "utf8");
+        /* The CALL, not the mention. Matching the bare identifier counts
+           the import line, so a spec that imports the helper and never
+           awaits it would read as settled — which is precisely the state
+           a half-finished edit leaves behind. */
+        return (
+          /fullPage:\s*true/.test(src) &&
+          !/await\s+settleFullPageHeight\s*\(/.test(src)
+        );
+      })
+      .map((f) => relative(repoRoot, f))
+      .sort();
+  }
+
+  it("surfaces.screens.capture.spec.ts settles — it is the measured case", () => {
+    const src = readFileSync(
+      resolve(e2eRoot, "screenshots/surfaces.screens.capture.spec.ts"),
+      "utf8"
+    );
+    expect(src).toMatch(/fullPage:\s*true/);
+    expect(
+      src,
+      "the spec whose frame swung 267px between runs must await the settle " +
+        "helper before shooting"
+    ).toContain("await settleFullPageHeight(page)");
+  });
+
+  it("the helper it depends on exists and polls document height", () => {
+    /* Without this, the assertion above passes against a call to a helper
+       nobody wrote — the spec would fail only in CI, minutes in. */
+    const helper = readFileSync(
+      resolve(e2eRoot, "helpers/settleHeight.ts"),
+      "utf8"
+    );
+    expect(helper).toContain("export async function settleFullPageHeight");
+    expect(helper).toContain("document.documentElement.scrollHeight");
+  });
+
+  it("the set of unsettled fullPage specs does not grow", () => {
+    const offenders = unsettled();
+    expect(
+      offenders.length,
+      offenders.length > UNSETTLED_FULLPAGE_SPECS
+        ? `A new spec takes a fullPage shot without settling the document ` +
+            `height first. Its frame can swing by a whole card between runs, ` +
+            `which makes it undiffable. Add ` +
+            `\`await settleFullPageHeight(page)\` before the shot.\n` +
+            offenders.join("\n")
+        : `Unsettled fullPage specs dropped to ${offenders.length} — lower ` +
+            `UNSETTLED_FULLPAGE_SPECS to lock the gain in. At 0, delete this ` +
+            `ratchet and assert the property outright.`
+    ).toBe(UNSETTLED_FULLPAGE_SPECS);
+  });
+});
+
+/**
+ * Specs whose frames contain raster art wait for it to DECODE.
+ *
+ * D25's residue, and the third member of the same family: an anchor that
+ * does not anchor the thing being measured. `animations: "disabled"` fixed
+ * transitions, `settleFullPageHeight` fixed late-mounting layout, and
+ * neither says anything about whether an image's pixels are ready.
+ *
+ * The probe shipped on ONE spec deliberately, to be judged rather than
+ * swept, and it earned its verdict:
+ *
+ *     races-directory-light   10.88%  ->  unchanged  ->  0.56%
+ *
+ * `badges-grid` is the second adopter, diagnosed the same way rather than
+ * by analogy: it churned 1.70% / 1.46% / 1.21% across three consecutive
+ * captures whatever changed in the app, and its mask is bands of 62-64px
+ * against a `BadgeHex` that renders at size={64} — one band per row of
+ * art, nothing else moving.
+ *
+ * IT WORKED — but the first reading said the opposite, and how that
+ * happened is the part worth keeping.
+ *
+ * The capture immediately after adoption showed light at 4.14%, its worst
+ * value ever, and that was recorded here as "did not fix it". Wrong. The
+ * diff report compares each capture to the PREVIOUS one, so the capture
+ * that first carries a fix is measuring the fix against a pre-fix
+ * baseline. 4.14% was correctly-decoded art replacing partially-decoded
+ * art — the change working, not churn continuing.
+ *
+ * The run after that, with both captures post-fix, has `badges-grid`
+ * absent from the report in BOTH themes. Two consecutive identical runs,
+ * on a frame that had churned in every single report before it.
+ *
+ * So the standing rule: after adopting a capture fix, the next diff tells
+ * you the fix landed, and the one AFTER it tells you whether the churn
+ * stopped. Judging on the first is how a working fix gets reverted.
+ *
+ * A ratchet again, for the same reason as the height one: the remaining
+ * specs shoot pages whose imagery has not been looked at, and a
+ * speculative sweep across specs this sandbox cannot run costs a CI cycle
+ * to find out. Adopt where a diff mask points, then lower the number.
+ */
+const UNSETTLED_IMAGE_SPECS = 26;
+
+describe("capture specs — raster art is decoded before the shutter", () => {
+  const files = specFiles(e2eRoot);
+
+  function withoutImageSettle(): string[] {
+    return files
+      .filter((f) => {
+        const src = readFileSync(f, "utf8");
+        // The CALL, not the identifier — an import alone is a half-edit.
+        return (
+          /\.screenshot\(/.test(src) && !/await\s+settleImages\s*\(/.test(src)
+        );
+      })
+      .map((f) => relative(repoRoot, f))
+      .sort();
+  }
+
+  it("the two diagnosed specs settle images", () => {
+    for (const rel of [
+      "screenshots/races.screens.capture.spec.ts",
+      "screenshots/home.screens.capture.spec.ts",
+    ]) {
+      const src = readFileSync(resolve(e2eRoot, rel), "utf8");
+      expect(
+        src,
+        `${rel} was diagnosed from its diff mask as image-driven churn and ` +
+          `must await settleImages before shooting`
+      ).toMatch(/await\s+settleImages\s*\(/);
+    }
+  });
+
+  it("the helper exists and decodes rather than polling .complete", () => {
+    /* `complete` is true for a FAILED load too, so polling it would report
+       ready for exactly the images that never painted. Pinned because the
+       cheap-looking substitution is the wrong one. */
+    const helper = readFileSync(
+      resolve(e2eRoot, "helpers/settleImages.ts"),
+      "utf8"
+    );
+    expect(helper).toContain("export async function settleImages");
+    expect(helper).toContain(".decode()");
+    /* Comments stripped before the negative check — the docstring
+       explains why `.complete` is the wrong probe, and matching prose
+       would fail the file for saying so. Same reason `componentReachability`
+       strips comments before matching. */
+    const code = helper
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/\/\/.*$/gm, "");
+    expect(code).not.toMatch(/\.complete\b/);
+  });
+
+  it("the set of specs without image settling does not grow", () => {
+    const offenders = withoutImageSettle();
+    expect(
+      offenders.length,
+      offenders.length > UNSETTLED_IMAGE_SPECS
+        ? `A new capture spec shoots without awaiting settleImages. If its ` +
+            `frames carry raster art they will churn run-to-run and the ` +
+            `frame stops being diffable.\n` +
+            offenders.join("\n")
+        : `Specs without image settling dropped to ${offenders.length} — ` +
+            `lower UNSETTLED_IMAGE_SPECS to lock the gain in.`
+    ).toBe(UNSETTLED_IMAGE_SPECS);
+  });
+});

@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { useUidForStorageKey } from '@/lib/auth';
+import { useState } from "react";
+import { useUidForStorageKey } from "@/lib/auth";
 
-const STORAGE_KEY_BASE = 'tropos-coach-marks-dismissed';
+const STORAGE_KEY_BASE = "tropos-coach-marks-dismissed";
 
 /**
  * One-shot dismissible coach mark state, optionally keyed.
@@ -39,7 +39,7 @@ export function useCoachMarks(key?: string) {
   const dismiss = () => {
     setState({ key: storageKey, dismissed: true });
     try {
-      window.localStorage.setItem(storageKey, '1');
+      window.localStorage.setItem(storageKey, "1");
     } catch {
       // Storage unavailable (private mode etc) — state still updates in memory
     }
@@ -49,7 +49,7 @@ export function useCoachMarks(key?: string) {
 }
 
 function readDismissed(storageKey: string): boolean {
-  if (typeof window === 'undefined') return false;
+  if (typeof window === "undefined") return false;
   try {
     return !!window.localStorage.getItem(storageKey);
   } catch {

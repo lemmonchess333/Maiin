@@ -49,7 +49,11 @@ describe("Avatar fallback letter", () => {
 
   it("renders an image when photoURL is provided (no initial in DOM)", () => {
     render(
-      <Avatar photoURL="https://example.com/me.jpg" displayName="You" fallbackInitial="M" />,
+      <Avatar
+        photoURL="https://example.com/me.jpg"
+        displayName="You"
+        fallbackInitial="M"
+      />
     );
     expect(screen.queryByText("M")).toBeNull();
     expect(screen.queryByText("Y")).toBeNull();

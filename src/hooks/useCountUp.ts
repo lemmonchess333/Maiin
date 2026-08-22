@@ -1,5 +1,10 @@
 import { useEffect, useRef } from "react";
-import { useMotionValue, useTransform, animate, type MotionValue } from "framer-motion";
+import {
+  useMotionValue,
+  useTransform,
+  animate,
+  type MotionValue,
+} from "framer-motion";
 import { useReducedMotion } from "./useReducedMotion";
 
 /**
@@ -16,11 +21,17 @@ export function useCountUp(
     suffix?: string;
   }
 ): MotionValue<string> {
-  const { sessionKey, duration = 0.6, decimals = 0, suffix = "" } = options || {};
+  const {
+    sessionKey,
+    duration = 0.6,
+    decimals = 0,
+    suffix = "",
+  } = options || {};
   const prefersReducedMotion = useReducedMotion();
   const motionValue = useMotionValue(0);
   const display = useTransform(motionValue, (v) => {
-    const rounded = decimals > 0 ? v.toFixed(decimals) : Math.round(v).toString();
+    const rounded =
+      decimals > 0 ? v.toFixed(decimals) : Math.round(v).toString();
     return rounded + suffix;
   });
   const hasAnimated = useRef(false);

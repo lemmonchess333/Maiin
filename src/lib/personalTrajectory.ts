@@ -16,9 +16,17 @@
  * space into a useful motivational signal.
  */
 
-import { collection, getDocs, query, where, orderBy, limit, Timestamp } from 'firebase/firestore';
-import { db } from './firebase';
-import { isVolumeEligible } from './runStatsEligibility';
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  limit,
+  Timestamp,
+} from "firebase/firestore";
+import { db } from "./firebase";
+import { isVolumeEligible } from "./runStatsEligibility";
 
 export interface TrajectoryBreakdown {
   km: number;
@@ -67,15 +75,15 @@ function toDateKey(d: Date): string {
   // Firestore workouts are keyed by local yyyy-MM-dd string — match
   // that format here so the `where('date', '>=', ...)` clause lines up.
   const y = d.getFullYear();
-  const m = (d.getMonth() + 1).toString().padStart(2, '0');
-  const day = d.getDate().toString().padStart(2, '0');
+  const m = (d.getMonth() + 1).toString().padStart(2, "0");
+  const day = d.getDate().toString().padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
 
 async function computeRangeBreakdown(
   uid: string,
   fromDate: Date,
-  toDate: Date,
+  toDate: Date
 ): Promise<TrajectoryBreakdown> {
   const fromTs = Timestamp.fromDate(fromDate);
   const toTs = Timestamp.fromDate(toDate);
@@ -83,33 +91,50 @@ async function computeRangeBreakdown(
   const toKey = toDateKey(toDate);
 
   const [runsSnap, workoutsSnap] = await Promise.all([
-    getDocs(query(
-      collection(db, 'users', uid, 'runs'),
-      where('completedAt', '>=', fromTs),
-      where('completedAt', '<', toTs),
-      orderBy('completedAt'),
-      limit(100),
-    )),
-    getDocs(query(
-      collection(db, 'users', uid, 'workouts'),
-      where('date', '>=', fromKey),
-      where('date', '<', toKey),
-      orderBy('date'),
-      limit(100),
-    )),
+    getDocs(
+      query(
+        collection(db, "users", uid, "runs"),
+        where("completedAt", ">=", fromTs),
+        where("completedAt", "<", toTs),
+        orderBy("completedAt"),
+        limit(100)
+      )
+    ),
+    getDocs(
+      query(
+        collection(db, "users", uid, "workouts"),
+        where("date", ">=", fromKey),
+        where("date", "<", toKey),
+        orderBy("date"),
+        limit(100)
+      )
+    ),
   ]);
 
   const km = runsSnap.docs.reduce(
-    (s, d) => isVolumeEligible(d.data()) ? s + (Number(d.data().distance) || 0) / 1000 : s,
-    0,
+    (s, d) =>
+      isVolumeEligible(d.data())
+        ? s + (Number(d.data().distance) || 0) / 1000
+        : s,
+    0
   );
   const kg = workoutsSnap.docs.reduce((s, d) => {
-    const exs = (d.data().exercises || []) as { sets?: { weightKg?: number; reps?: number }[] }[];
-    return s + exs.reduce((es, ex) => (
-      es + (ex.sets ?? []).reduce((ss, set) => (
-        ss + (Number(set.weightKg) || 0) * (Number(set.reps) || 0)
-      ), 0)
-    ), 0);
+    const exs = (d.data().exercises || []) as {
+      sets?: { weightKg?: number; reps?: number }[];
+    }[];
+    return (
+      s +
+      exs.reduce(
+        (es, ex) =>
+          es +
+          (ex.sets ?? []).reduce(
+            (ss, set) =>
+              ss + (Number(set.weightKg) || 0) * (Number(set.reps) || 0),
+            0
+          ),
+        0
+      )
+    );
   }, 0);
 
   const score = km * 100 + kg * 0.1;
@@ -120,7 +145,9 @@ async function computeRangeBreakdown(
   };
 }
 
-export async function getPersonalTrajectory(uid: string): Promise<PersonalTrajectory> {
+export async function getPersonalTrajectory(
+  uid: string
+): Promise<PersonalTrajectory> {
   const now = new Date();
   const thisWeekStart = startOfWeek(now);
   const nextWeekStart = addDays(thisWeekStart, 7);
@@ -139,9 +166,12 @@ export async function getPersonalTrajectory(uid: string): Promise<PersonalTrajec
     computeRangeBreakdown(uid, lastWeekStart, lastWeekToDateEnd),
   ]);
 
-  const deltaPct = lastWeekToDate.score > 0
-    ? Math.round(((thisWeek.score - lastWeekToDate.score) / lastWeekToDate.score) * 100)
-    : null;
+  const deltaPct =
+    lastWeekToDate.score > 0
+      ? Math.round(
+          ((thisWeek.score - lastWeekToDate.score) / lastWeekToDate.score) * 100
+        )
+      : null;
 
   return { thisWeek, lastWeek, lastWeekToDate, deltaPct };
 }

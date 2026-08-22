@@ -1,6 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
-export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(enabled = true) {
+export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
+  enabled = true
+) {
   const ref = useRef<T>(null);
 
   useEffect(() => {
@@ -9,7 +11,8 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(enabled = t
     const el = ref.current;
     if (!el) return;
 
-    const focusableSelector = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const focusableSelector =
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
     const previouslyFocused = document.activeElement as HTMLElement;
 
@@ -18,9 +21,10 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(enabled = t
     if (focusables.length > 0) focusables[0].focus();
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab') return;
+      if (e.key !== "Tab") return;
 
-      const currentFocusables = el.querySelectorAll<HTMLElement>(focusableSelector);
+      const currentFocusables =
+        el.querySelectorAll<HTMLElement>(focusableSelector);
       if (currentFocusables.length === 0) return;
 
       const first = currentFocusables[0];
@@ -35,9 +39,9 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(enabled = t
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener("keydown", handleKeyDown);
       previouslyFocused?.focus?.();
     };
   }, [enabled]);

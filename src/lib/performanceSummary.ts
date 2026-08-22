@@ -70,7 +70,8 @@ export function getPlainLanguageSummary(
   let body: string;
   switch (loadBand) {
     case "overreach":
-      body = "You're pushing hard — recovery matters. Consider a lighter session.";
+      body =
+        "You're pushing hard — recovery matters. Consider a lighter session.";
       break;
     case "high":
       body = "High training load. Keep nutrition and sleep on point.";

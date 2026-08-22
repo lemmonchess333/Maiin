@@ -1,4 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import {
+  useCalorieRingMode,
+  setCalorieRingMode,
+} from "@/hooks/useCalorieRingMode";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -22,7 +26,7 @@ import ShareCardSheet from "@/components/share/ShareCardSheet";
 import { buildGlanceLine } from "@/lib/foodDailySummary";
 import { mealPhotoImage } from "@/lib/editorialImages";
 import { useIsDarkMode } from "@/hooks/useIsDarkMode";
-import CalorieRing, { type CalorieRingMode } from "./CalorieRing";
+import CalorieRing from "./CalorieRing";
 import MacroColumn from "./MacroColumn";
 import AdaptiveWarmupBar from "./AdaptiveWarmupBar";
 
@@ -46,7 +50,6 @@ interface FoodHeroCardProps {
   onTapDrillDown?: () => void;
 }
 
-const MODE_STORAGE_KEY = "tropos.food.calorieRingMode";
 /* The ring MODE stays flat on purpose: "left vs eaten" is a display
    preference of this DEVICE, not a fact about an account. The celebrated
    DATE is the opposite — it records that a particular user hit their targets
@@ -57,16 +60,6 @@ const CELEBRATED_KEY_BASE = "tropos.food.celebratedDate";
 // All log-moment animations share this duration so they finish in sync.
 const LOG_MOMENT_MS = 600;
 const LOG_MOMENT_SEC = LOG_MOMENT_MS / 1000;
-
-function readInitialMode(): CalorieRingMode {
-  if (typeof window === "undefined") return "left";
-  try {
-    const stored = window.localStorage.getItem(MODE_STORAGE_KEY);
-    return stored === "eaten" ? "eaten" : "left";
-  } catch {
-    return "left";
-  }
-}
 
 export default function FoodHeroCard({
   isToday,
@@ -98,7 +91,7 @@ export default function FoodHeroCard({
   // read "2,583 kcal LEFT" while all three tiles read "Xg eaten" — two
   // opposite framings on one card. Unifying to one mode makes the hero speak
   // with a single voice; tapping the ring OR any tile flips all four at once.
-  const [mode, setMode] = useState<CalorieRingMode>(() => readInitialMode());
+  const mode = useCalorieRingMode();
 
   // Celebration state — driven by a log that completes all three macros today
   const [celebrating, setCelebrating] = useState(false);
@@ -124,13 +117,9 @@ export default function FoodHeroCard({
 
   const toggleMode = () => {
     haptic("light");
-    const next: CalorieRingMode = mode === "left" ? "eaten" : "left";
-    setMode(next);
-    try {
-      window.localStorage.setItem(MODE_STORAGE_KEY, next);
-    } catch {
-      // ignore storage errors
-    }
+    // The store owns persistence AND notifies the drill-down sheet, which
+    // renders from Food.tsx and used to be unable to see this at all.
+    setCalorieRingMode(mode === "left" ? "eaten" : "left");
   };
 
   // Log-moment haptic fires on completion of the main ring animation.
@@ -369,7 +358,7 @@ export default function FoodHeroCard({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.3 }}
-                    className={`text-xs font-medium truncate ${photoTextClass ?? "text-muted-foreground/80"}`}
+                    className={`text-xs font-medium truncate ${photoTextClass ?? "text-muted-foreground"}`}
                   >
                     {/* Wave3 G — the day annotation is merged INTO the hero
                       caption as one line ("{dayType} · {rationale}") instead
@@ -402,7 +391,7 @@ export default function FoodHeroCard({
                 to="/settings/nutrition"
                 aria-label="Adjust nutrition targets"
                 onClick={() => haptic("light")}
-                className="-mt-2 -mr-2 size-11 flex items-center justify-center rounded-lg text-muted-foreground/70 hover:text-foreground hover:bg-muted/60 active:scale-95 transition-all"
+                className="-mt-2 -mr-2 size-11 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 active:scale-95 transition-all"
               >
                 <SettingsIcon className="size-4" aria-hidden="true" />
               </Link>
@@ -460,7 +449,7 @@ export default function FoodHeroCard({
                   onTapDrillDown();
                 }}
                 aria-label="View nutrition breakdown"
-                className={`flex items-center gap-1 px-2.5 min-h-[44px] -my-2 rounded-full text-caption font-semibold uppercase tracking-[0.12em] hover:bg-muted/60 active:scale-95 transition-all ${photoTextClass ?? "text-muted-foreground"}`}
+                className={`flex items-center gap-1 px-2.5 min-h-[44px] -my-2 rounded-full text-caption font-semibold uppercase tracking-wider hover:bg-muted/60 active:scale-95 transition-all ${photoTextClass ?? "text-muted-foreground"}`}
               >
                 <span>Details</span>
                 <ChevronRight aria-hidden="true" className="size-3" />

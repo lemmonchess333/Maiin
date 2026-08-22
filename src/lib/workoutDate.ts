@@ -16,7 +16,7 @@ import { Timestamp } from "firebase/firestore";
  */
 export function isWorkoutOnDate(
   workout: { date: string | Date | Timestamp },
-  target: Date,
+  target: Date
 ): boolean {
   const targetKey = format(target, "yyyy-MM-dd");
   const raw = workout.date;

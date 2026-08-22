@@ -2634,4 +2634,3 @@ export function isBodyweightExerciseId(
   if (!exerciseId) return false;
   return getExerciseById(exerciseId)?.equipment === "Bodyweight";
 }
-

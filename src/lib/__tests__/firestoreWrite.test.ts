@@ -9,7 +9,11 @@ vi.mock("firebase/firestore", () => ({
 }));
 
 import { addDoc, setDoc, updateDoc } from "firebase/firestore";
-import { addDocGuarded, setDocGuarded, updateDocGuarded } from "../firestoreWrite";
+import {
+  addDocGuarded,
+  setDocGuarded,
+  updateDocGuarded,
+} from "../firestoreWrite";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const ref: any = { __ref: true };

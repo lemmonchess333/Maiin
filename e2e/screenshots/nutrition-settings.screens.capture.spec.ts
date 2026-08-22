@@ -45,6 +45,7 @@ test.describe("nutrition settings", () => {
     await page.evaluate(() => document.documentElement.classList.add("dark"));
     await page.waitForTimeout(600);
     await page.screenshot({
+      animations: "disabled",
       path: "screenshots/nutrition-settings-dark.png",
       fullPage: true,
     });

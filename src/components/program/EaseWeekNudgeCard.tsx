@@ -63,9 +63,10 @@ export default function EaseWeekNudgeCard({
           {trigger === "harder_ratings" ? (
             <>
               You rated <span className="font-mono tabular-nums">{count}</span>{" "}
-              of your last <span className="font-mono tabular-nums">{total}</span>{" "}
-              runs harder than expected. Ease this week&apos;s quality runs —
-              you decide.
+              of your last{" "}
+              <span className="font-mono tabular-nums">{total}</span> runs
+              harder than expected. Ease this week&apos;s quality runs — you
+              decide.
             </>
           ) : (
             <>
@@ -89,7 +90,7 @@ export default function EaseWeekNudgeCard({
         type="button"
         onClick={onDismiss}
         aria-label="Dismiss"
-        className="absolute top-2 right-2 size-8 flex items-center justify-center rounded-lg text-muted-foreground/70 hover:text-foreground active:scale-90 transition-all"
+        className="absolute top-2 right-2 size-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground active:scale-90 transition-all"
       >
         <X className="size-4" aria-hidden />
       </button>

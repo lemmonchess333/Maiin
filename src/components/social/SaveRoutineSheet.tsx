@@ -43,10 +43,10 @@ function ExerciseSummary({
   const weight = Math.max(0, Number(targetWeightKg) || 0);
 
   const num = "font-mono tabular-nums text-foreground/80";
-  const unit = "text-muted-foreground/80";
+  const unit = "text-muted-foreground";
 
   if (sets === 0 && reps === 0) {
-    return <span className="text-muted-foreground/70">—</span>;
+    return <span className="text-muted-foreground">—</span>;
   }
   if (reps === 0) {
     return (
@@ -250,7 +250,7 @@ export default function SaveRoutineSheet({
               </div>
             ))}
             {previewExercises.length > 6 && (
-              <p className="text-xs text-muted-foreground/70 pt-1">
+              <p className="text-xs text-muted-foreground pt-1">
                 + {previewExercises.length - 6} more
               </p>
             )}

@@ -151,12 +151,14 @@ test.describe("solo-first feed screenshots", () => {
     );
     await page.waitForTimeout(300);
     await page.screenshot({
+      animations: "disabled",
       path: `screenshots/${name}-light.png`,
       fullPage: true,
     });
     await page.evaluate(() => document.documentElement.classList.add("dark"));
     await page.waitForTimeout(300);
     await page.screenshot({
+      animations: "disabled",
       path: `screenshots/${name}-dark.png`,
       fullPage: true,
     });

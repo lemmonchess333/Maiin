@@ -18,7 +18,6 @@ vi.mock("@/hooks/useDistanceUnit", () => ({
   useDistanceUnit: () => "km" as const,
 }));
 
-
 vi.mock("../ShoeSelector", () => ({
   default: () => <div data-testid="shoe" />,
 }));

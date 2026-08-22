@@ -40,7 +40,10 @@ test.describe("race event header + door-2 picker screenshots", () => {
   });
 
   async function shoot(page: Page, name: string) {
-    await page.screenshot({ path: `screenshots/${name}.png` });
+    await page.screenshot({
+      animations: "disabled",
+      path: `screenshots/${name}.png`,
+    });
   }
 
   async function shootLightDark(page: Page, name: string, anchorText: string) {

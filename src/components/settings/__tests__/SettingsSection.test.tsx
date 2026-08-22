@@ -11,7 +11,10 @@ import { MemoryRouter } from "react-router-dom";
 
 const navigateMock = vi.fn();
 vi.mock("react-router-dom", async () => {
-  const actual = await vi.importActual<typeof import("react-router-dom")>("react-router-dom");
+  const actual =
+    await vi.importActual<typeof import("react-router-dom")>(
+      "react-router-dom"
+    );
   return {
     ...actual,
     useNavigate: () => navigateMock,
@@ -27,14 +30,16 @@ function renderWith(node: React.ReactElement) {
 describe("SettingsSection — page chrome", () => {
   it("renders the title as a top-level h1", () => {
     renderWith(<SettingsSection title="Training">child</SettingsSection>);
-    expect(screen.getByRole("heading", { level: 1, name: /training/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 1, name: /training/i })
+    ).toBeInTheDocument();
   });
 
   it("renders the optional subtitle when provided", () => {
     renderWith(
       <SettingsSection title="Training" subtitle="Programme structure">
         child
-      </SettingsSection>,
+      </SettingsSection>
     );
     expect(screen.getByText(/Programme structure/i)).toBeInTheDocument();
   });
@@ -51,7 +56,7 @@ describe("SettingsSection — page chrome", () => {
     renderWith(
       <SettingsSection title="Training">
         <div data-testid="content">section body</div>
-      </SettingsSection>,
+      </SettingsSection>
     );
     expect(screen.getByTestId("content")).toBeInTheDocument();
   });
@@ -61,7 +66,7 @@ describe("SettingsSection — back-arrow behaviour", () => {
   it("renders a back-arrow button labelled 'Back to Settings'", () => {
     renderWith(<SettingsSection title="Training">child</SettingsSection>);
     expect(
-      screen.getByRole("button", { name: /Back to Settings/i }),
+      screen.getByRole("button", { name: /Back to Settings/i })
     ).toBeInTheDocument();
   });
 

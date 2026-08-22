@@ -169,7 +169,15 @@ export function BadgeGrid() {
                         : { scale: 1.02 }
                     }
                     whileTap={{ scale: 0.95 }}
-                    className="relative p-3 rounded-xl bg-card border border-border/50 text-center"
+                    /* `flex flex-col` + `flex-1` on the name block below.
+                       The grid already equalises card HEIGHT, but the card
+                       was a plain block, so its contents top-flowed: a
+                       two-line badge name pushed its own footer down while a
+                       one-line neighbour left a gap, landing the status line
+                       — the row's most scannable element — at three
+                       different heights across peers. Growing the name block
+                       instead pins every footer to the same baseline. */
+                    className="relative p-3 rounded-xl bg-card border border-border/50 text-center flex flex-col"
                     style={{
                       transformStyle: "preserve-3d",
                       // Earned keeps the radial tier tint; the glow itself
@@ -192,8 +200,8 @@ export function BadgeGrid() {
 
                     <p
                       className={cn(
-                        "text-xs font-semibold leading-tight",
-                        earned ? "text-foreground" : "text-muted-foreground/70"
+                        "text-xs font-semibold leading-tight flex-1",
+                        earned ? "text-foreground" : "text-muted-foreground"
                       )}
                     >
                       {badge.name}
@@ -203,7 +211,16 @@ export function BadgeGrid() {
                         className="text-caption font-mono tabular-nums mt-1"
                         style={{ color: tierColor }}
                       >
-                        {new Date(badge.earnedAt!).toLocaleDateString()}
+                        {/* en-GB + explicit options. This was the only
+                            rendered date in the app passing NEITHER, so it
+                            took the device locale and printed all-numeric
+                            (8/22/2026 on a US device) beside sibling
+                            surfaces reading "21 Aug 2026". */}
+                        {new Date(badge.earnedAt!).toLocaleDateString("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
                       </p>
                     ) : progress && progress.pct > 0 ? (
                       <ProgressBar
@@ -212,7 +229,7 @@ export function BadgeGrid() {
                         color={tierColor}
                       />
                     ) : (
-                      <p className="text-caption text-muted-foreground/50 mt-1 line-clamp-2">
+                      <p className="text-caption text-muted-foreground mt-1 line-clamp-2">
                         {badge.description}
                       </p>
                     )}

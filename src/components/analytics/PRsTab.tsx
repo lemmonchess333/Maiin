@@ -120,7 +120,7 @@ function LiftPRRow({ pr }: { pr: LiftPR }) {
           ) : null}
         </div>
         <ChevronRight
-          className="size-4 text-muted-foreground/60 shrink-0"
+          className="size-4 text-muted-foreground shrink-0"
           aria-hidden="true"
         />
       </div>

@@ -53,7 +53,10 @@ test.describe("food photo muesli", () => {
       .waitFor({ state: "visible", timeout: 20000 });
     await dismissSeal(page);
     await page.waitForTimeout(900);
-    await page.screenshot({ path: "screenshots/food-muesli-light.png" });
+    await page.screenshot({
+      animations: "disabled",
+      path: "screenshots/food-muesli-light.png",
+    });
   });
 
   test("calorie hero with muesli photo — dark", async ({ page }) => {
@@ -66,6 +69,9 @@ test.describe("food photo muesli", () => {
     await dismissSeal(page);
     await page.evaluate(() => document.documentElement.classList.add("dark"));
     await page.waitForTimeout(900);
-    await page.screenshot({ path: "screenshots/food-muesli-dark.png" });
+    await page.screenshot({
+      animations: "disabled",
+      path: "screenshots/food-muesli-dark.png",
+    });
   });
 });

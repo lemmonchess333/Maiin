@@ -108,6 +108,16 @@
   --color-achievement: hsl(var(--achievement));
   --color-achievement-strong: hsl(var(--achievement-strong));
   --color-achievement-bg: hsl(var(--achievement-bg));
+  /* Streak flame. `--ds-orange-500`'s own comment in tokens.css names
+     "streak flame" as one of its uses, but there was no Tailwind colour
+     pointing at it, so every flame site reached for `text-orange-500`
+     instead — raw Tailwind palette (#ff6900), not a Tropos token, and
+     invisible to the hex-literal lint because it is a class name rather
+     than a hex. A `var()` value rather than `hsl(var(…))` because this
+     ramp is stored as hex; Tailwind's opacity modifier resolves it
+     through color-mix either way. NOT the nutrition orange — see the
+     ramp's comment: --nutrition owns calorie/macro context. */
+  --color-streak: var(--ds-orange-500);
   /* DS2 redesign — premium radius CURVE. Base bumped 8→10px and the card
      tiers widened (xl 12→16, 2xl 16→22) so cards read modern/soft while
      small controls stay tight. Cascades to every rounded-* consumer. */
@@ -154,6 +164,20 @@
 }
 
 :root {
+  /* UA-painted form controls follow THIS, not the class. Tropos switches
+     theme with a `.dark` class, and `color-scheme` is what tells the
+     browser which palette to paint a range groove, a date picker, a
+     select, a scrollbar or a number spinner in. Declared per theme here
+     so every one of them follows the app instead of the device.
+
+     `light dark` on an individual control does NOT do this — it means
+     "pick by the user's OS preference", which is the device's setting,
+     not ours. So a light-set phone running Tropos in dark mode got
+     light-painted controls: exactly the near-white slider groove on a
+     dark page that started this. Two date inputs still carried that
+     value and have been dropped to inherit from here. */
+  color-scheme: light;
+
   /* DS2 — deeper, cooler light canvas so white cards float instead of
      smudging into the page (the prior 96% page vs 95.9% muted gave the
      secondary cards ZERO separation = the "muddy middle"). The ladder is
@@ -204,7 +228,15 @@
   /* Media stage — fixed dark in BOTH themes (see @theme note). */
   --stage: 240 4% 7%;
   --muted: 240 6% 97.5%; /* DS2: near-white raised tile (was 95.9% ≈ page) */
-  --muted-foreground: 240 3.8% 46.1%;
+  /* 46.1% → 43% (owner-decided consolidation, 2026-08-22). At 46.1% the
+     token cleared AA on the white card by only 0.333 (4.833:1) and FAILED
+     on --background (4.397:1) — which every BottomSheet body paints. 43%
+     clears 4.5:1 on all three real surfaces (card / muted / background)
+     with margin, which is also what makes the fractional-opacity ban
+     enforceable: there is ONE secondary grey and it passes everywhere;
+     de-emphasis is the type scale's job, not alpha's. Pinned by
+     tokenContrast.test.ts across both themes. */
+  --muted-foreground: 240 3.8% 43%;
   --border: 240 6% 88%; /* DS2: a hair stronger so hairlines register on the lighter canvas */
   --radius: 0.625rem; /* DS2: 8→10px base (premium radius curve) */
   --input-fill: 240 6% 95.5%; /* DS2: lighter than the deepened page so fields stay distinct */
@@ -272,9 +304,18 @@
      white under the deep-purple number. */
   --food-photo-ring-bed: rgba(255, 255, 255, 0.5);
   --food-photo-ring-bed-soft: rgba(255, 255, 255, 0.3);
+  /* Skeleton shimmer sweep. Must DARKEN in light mode: `LoadingSkeleton`
+     sits on `bg-muted`, which here is hsl(240 6% 97.5%) = rgb(248,248,249),
+     and the white-alpha sweep it used to hardcode inline moved that by
+     ZERO bytes — the shimmer did not merely read faintly, it did not
+     render at all, on every light-mode loading state in the app. Black at
+     the same alpha moves it by 10, matching the 9 the dark sweep gets. */
+  --skeleton-shimmer: rgba(0, 0, 0, 0.04);
 }
 
 .dark {
+  color-scheme: dark;
+
   /* DS2 — richer dark canvas (the primary surface). Card lifted 10→13%
      vs the 7% bg so layered surfaces SEPARATE (was only ~3% apart →
      near-flat); pairs with the deeper DS2 card shadow. */
@@ -331,6 +372,8 @@
      help the number without hiding the bowl. */
   --food-photo-ring-bed: rgba(0, 0, 0, 0.38);
   --food-photo-ring-bed-soft: rgba(0, 0, 0, 0.18);
+  /* The direction the inline literal always assumed — correct here only. */
+  --skeleton-shimmer: rgba(255, 255, 255, 0.04);
   /* Fainter sheen on dark glass. */
   --nav-frost-highlight: rgba(255, 255, 255, 0.1);
   /* Semantic status colours — dark mode.
@@ -719,11 +762,135 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Range input styling */
+/* ─── RANGE INPUT ─────────────────────────────────────────────
+   The app's only drag control (onboarding run-days, RunSetupModal), and
+   it had two defects. Both fixes are here; one of them is deliberately
+   NOT the obvious one.
+
+   1. It was a 6px control. The height sat on the INPUT, so the whole box
+      — the region you tap to jump the value — was 6px, against a 44px
+      floor DESIGN_GUIDE states outright. The design-system touch-target
+      ratchet cannot see this: that test scans `role="switch"` only. The
+      box is now 44px; the visible bar is the UA track inside it.
+
+   2. The unfilled groove was theme-blind. `accent-color` paints the
+      FILLED portion and the thumb, so the remainder followed a UA default
+      measured byte-identical #EFEFEF in BOTH themes — 16.5:1 on the dark
+      page, about four times the luminance of the purple fill beside it,
+      so the brightest mass on the step was the part the user had NOT
+      selected and 3-of-7 read as nearly full. On light, 1.03:1: invisible.
+
+   Fixing (2) took two wrong turns worth recording, because both look
+   right.
+
+   The first painted `::-webkit-slider-runnable-track` with a token. In
+   Chromium the accent-color FILL is painted as the track background, so
+   styling the track REPLACES it — the capture showed the whole bar go
+   uniform with only a 10px thumb left. Row-scan, same y:
+
+       before  x21-146 purple  · x148-370 #EFEFEF   (fill + wrong groove)
+       broken  x21-134 #2A2A2D · x136-144 purple    (thumb only)
+
+   The second put `color-scheme: light dark` on this rule, copying two
+   date inputs that already did it. That value means "pick by the USER'S
+   OS PREFERENCE" — the device's setting, not the app's. Tropos switches
+   theme with a `.dark` CLASS, so on a light-set phone running Tropos in
+   dark mode it changes nothing, which is the original bug. The two date
+   inputs had the same flaw and were only ever right by coincidence.
+
+   The scheme is now declared per theme at `:root` / `.dark`, where it
+   follows the class. That was the right move on its own terms — every
+   UA-painted control (date pickers, selects, scrollbars) now follows the
+   app's theme instead of the device's — but it did NOT fix this groove.
+   Measured from the capture frame afterwards: still 239,239,239. Chromium
+   does not re-derive a range track's groove from `color-scheme`.
+
+   Which exhausts the ways to fix the groove alone, so the track is
+   painted whole. `accent-color` is gone (`appearance: none` would ignore
+   it anyway) and both halves come from tokens: a hard-stopped gradient at
+   `--range-pct`, which `RangeInput` computes from the same value/min/max
+   the input already carries. Firefox keeps its real `::-moz-range-progress`
+   and needs no custom property.
+
+   `rangeInputContract.test.ts` used to BAR painting the track. That bar
+   was correct while `accent-color` supplied the fill — painting over it
+   deleted the filled bar — and is void now that nothing else paints one.
+   The assertion is inverted rather than deleted: if the track carries a
+   background, the fill token must appear in it. */
 input[type="range"] {
-  height: 6px;
-  border-radius: 3px;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 44px;
+  background: transparent;
   cursor: pointer;
+}
+
+/* 6px of visual thickness on the TRACK, inside a 44px hit box — the
+   distinction the original bug collapsed by putting the height on the
+   input. Chromium centres the runnable track in the input's box. */
+/* `--primary`, NOT `--primary-strong`. The -strong step exists for AA
+   TEXT on a filled CTA, and a track fill carries no text — so here it
+   buys nothing and costs contrast where it matters. Measured against
+   `--muted` (the groove) in each theme:
+
+     --primary-strong   light 4.92:1   dark 2.87:1
+     --primary          light 3.61:1   dark 3.36:1
+
+   The fill/groove edge is what tells you where the value sits, so
+   WCAG 1.4.11's 3:1 non-text floor applies to it. `-strong` misses that
+   in dark. Pinned by tokenContrast.test.ts, which measures rather than
+   naming the token. */
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    hsl(var(--primary)) 0 var(--range-pct, 0%),
+    hsl(var(--muted)) var(--range-pct, 0%) 100%
+  );
+}
+
+/* margin-top is (track - thumb) / 2 = (6 - 20) / 2. WebKit aligns the
+   thumb's top edge to the track's, so without this it rides high. */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: -7px;
+  border-radius: 999px;
+  background: hsl(var(--primary));
+  /* A card-coloured ring so the thumb stays legible where it overlaps its
+     own fill — without it the two are the same colour and the thumb
+     disappears at the right-hand end of the travel. */
+  border: 2px solid hsl(var(--card));
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+}
+
+input[type="range"]::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: hsl(var(--muted));
+}
+
+input[type="range"]::-moz-range-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: hsl(var(--primary));
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: hsl(var(--primary));
+  border: 2px solid hsl(var(--card));
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+}
+
+input[type="range"]:focus-visible {
+  outline: 2px solid hsl(var(--primary-strong));
+  outline-offset: 2px;
 }
 
 /* ─── TOUCH TARGET MINIMUM ───────────────────────────────── */

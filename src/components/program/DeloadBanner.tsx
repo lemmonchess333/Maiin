@@ -194,15 +194,23 @@ export default function DeloadBanner({
               <Flame
                 className="size-5 shrink-0 mt-0.5"
                 style={{
-                  color: deloadActive ? THEME.success : THEME.warning,
+                  color: deloadActive
+                    ? "hsl(var(--success-strong))"
+                    : "hsl(var(--warning-strong))",
                 }}
                 aria-hidden="true"
               />
               <div className="flex-1 min-w-0">
                 <p
                   className="text-sm font-semibold"
+                  /* The -strong text steps, not the fixed identities — this
+                     heading measured 2.20:1 in light on the tinted banner,
+                     the worst text reading in the whole audit. The AA warning
+                     step exists for exactly this line (DS2, 2026-08-22). */
                   style={{
-                    color: deloadActive ? THEME.success : THEME.warning,
+                    color: deloadActive
+                      ? "hsl(var(--success-strong))"
+                      : "hsl(var(--warning-strong))",
                   }}
                 >
                   {deloadActive
@@ -224,7 +232,7 @@ export default function DeloadBanner({
                   type="button"
                   onClick={handleDismiss}
                   aria-label="Dismiss deload banner"
-                  className="size-7 -m-1 relative before:absolute before:-inset-2 before:content-[''] rounded-lg flex items-center justify-center text-muted-foreground/70 hover:text-foreground hover:bg-black/[0.04] active:scale-90 transition-all"
+                  className="size-7 -m-1 relative before:absolute before:-inset-2 before:content-[''] rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-black/[0.04] active:scale-90 transition-all"
                 >
                   <X className="size-4" aria-hidden="true" />
                 </button>

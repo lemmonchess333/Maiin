@@ -84,8 +84,9 @@ describe("adaptiveCalorieStatusLabel — the adapting line names both numbers", 
   });
 
   it("says 'today' rather than '0d ago'", () => {
-    expect(adaptiveCalorieStatusLabel({ kind: "adapting", retunedDaysAgo: 0 }, 2919))
-      .toContain("retuned today");
+    expect(
+      adaptiveCalorieStatusLabel({ kind: "adapting", retunedDaysAgo: 0 }, 2919)
+    ).toContain("retuned today");
   });
 
   it("falls back to the original copy when no learned value is available", () => {

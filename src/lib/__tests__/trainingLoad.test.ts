@@ -164,7 +164,9 @@ describe("B1 — evaluateLoadGuardrails", () => {
   it("steady training reads ~1.0 and stays quiet", () => {
     // 28 days of a normal week shape: 5 training days + 2 rest.
     const week = [60, 60, 0, 60, 45, 0, 75];
-    const g = evaluateLoadGuardrails(pointsFrom([...week, ...week, ...week, ...week]));
+    const g = evaluateLoadGuardrails(
+      pointsFrom([...week, ...week, ...week, ...week])
+    );
     expect(g.acwr).toBeCloseTo(1.0, 1);
     expect(g.advisory).toBeNull();
     // A varied week is not monotonous.

@@ -590,27 +590,30 @@ export default function Home() {
   });
   // Cal-A: scroll target for the today-tap shortcut (the session cards).
   const sessionsRef = useRef<HTMLDivElement>(null);
-  const handleDayTap = useCallback(function (dk: string) {
-    try {
-      localStorage.setItem(dayTapSeenKey, "1");
-    } catch {
-      /* private mode — hint will re-show, minor */
-    }
-    setShowDayTapHint(false);
-    // Cal-A: tapping TODAY is redundant with the live session cards
-    // right below — scroll to them instead of re-printing a peek copy.
-    if (dk === localDateString()) {
-      setPeekDate(null);
-      sessionsRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
+  const handleDayTap = useCallback(
+    function (dk: string) {
+      try {
+        localStorage.setItem(dayTapSeenKey, "1");
+      } catch {
+        /* private mode — hint will re-show, minor */
+      }
+      setShowDayTapHint(false);
+      // Cal-A: tapping TODAY is redundant with the live session cards
+      // right below — scroll to them instead of re-printing a peek copy.
+      if (dk === localDateString()) {
+        setPeekDate(null);
+        sessionsRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+        return;
+      }
+      setPeekDate(function (p) {
+        return p === dk ? null : dk;
       });
-      return;
-    }
-    setPeekDate(function (p) {
-      return p === dk ? null : dk;
-    });
-  }, [dayTapSeenKey]);
+    },
+    [dayTapSeenKey]
+  );
   const closePeek = useCallback(function () {
     setPeekDate(null);
   }, []);
@@ -879,7 +882,7 @@ export default function Home() {
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <UtensilsCrossed
                 className="size-4 shrink-0"
-                style={{ color: THEME.warning }}
+                style={{ color: THEME.semantic.nutrition }}
               />
               <span>
                 Tap <strong className="text-foreground">Food</strong> to log
@@ -1021,7 +1024,7 @@ export default function Home() {
                 {/* One-shot tap affordance — latches off after the first
                     day-tap ever. */}
                 {showDayTapHint && (
-                  <span className="text-caption text-muted-foreground/70">
+                  <span className="text-caption text-muted-foreground">
                     · Tap a day for details
                   </span>
                 )}
@@ -1371,7 +1374,10 @@ export default function Home() {
                   </button>
                 </div>
                 {lastWeightInfo && (
-                  <p className="text-micro" style={{ color: THEME.text.muted }}>
+                  <p
+                    className="text-micro"
+                    style={{ color: "hsl(var(--muted-foreground))" }}
+                  >
                     Last: {lastWeightInfo.weight}{" "}
                     {weightUnit === "lbs" ? "lb" : weightUnit}
                     {lastWeightInfo.rawDate

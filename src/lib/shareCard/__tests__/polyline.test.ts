@@ -59,7 +59,8 @@ describe("simplifyRoute (Douglas–Peucker)", () => {
     // East leg then north leg → the corner point must survive.
     const corner: GPSPoint[] = [];
     for (let i = 0; i < 20; i++) corner.push(pt(51.5, -0.1 + i * 0.0002));
-    for (let i = 1; i < 20; i++) corner.push(pt(51.5 + i * 0.0002, -0.1 + 19 * 0.0002));
+    for (let i = 1; i < 20; i++)
+      corner.push(pt(51.5 + i * 0.0002, -0.1 + 19 * 0.0002));
     const s = simplifyRoute(corner, 5);
     expect(s.length).toBeGreaterThanOrEqual(3);
     expect(s.length).toBeLessThan(corner.length);
@@ -135,7 +136,8 @@ describe("buildRoutePath", () => {
   it("produces a valid SVG path starting with M then L commands", () => {
     const corner: GPSPoint[] = [];
     for (let i = 0; i < 30; i++) corner.push(pt(51.5, -0.1 + i * 0.0003));
-    for (let i = 1; i < 30; i++) corner.push(pt(51.5 + i * 0.0003, -0.1 + 29 * 0.0003));
+    for (let i = 1; i < 30; i++)
+      corner.push(pt(51.5 + i * 0.0003, -0.1 + 29 * 0.0003));
     const { d, pointCount } = buildRoutePath(corner, { clip: false });
     expect(d.startsWith("M")).toBe(true);
     expect(d).toContain("L");
@@ -150,7 +152,12 @@ describe("buildRoutePath", () => {
     const width = 1000;
     const height = 1000;
     const padding = 80;
-    const { d } = buildRoutePath(wiggly, { width, height, padding, clip: false });
+    const { d } = buildRoutePath(wiggly, {
+      width,
+      height,
+      padding,
+      clip: false,
+    });
     const coords = d
       .replace(/[ML]/g, " ")
       .trim()

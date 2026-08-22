@@ -64,7 +64,10 @@ test.describe("reorder into overflow", () => {
     await page.evaluate(() => document.documentElement.classList.add("dark"));
     await page.waitForTimeout(400);
     // Resting Lift header — should show NO ↑↓ reorder icon.
-    await page.screenshot({ path: "screenshots/reorder-header-rest-dark.png" });
+    await page.screenshot({
+      animations: "disabled",
+      path: "screenshots/reorder-header-rest-dark.png",
+    });
     // Open the overflow menu — should list "Reorder exercises".
     await page
       .getByRole("button", { name: /more options/i })
@@ -75,6 +78,9 @@ test.describe("reorder into overflow", () => {
       .waitFor({ state: "visible", timeout: 8000 })
       .catch(() => console.log("[capture] Reorder row not found"));
     await page.waitForTimeout(300);
-    await page.screenshot({ path: "screenshots/reorder-overflow-dark.png" });
+    await page.screenshot({
+      animations: "disabled",
+      path: "screenshots/reorder-overflow-dark.png",
+    });
   });
 });

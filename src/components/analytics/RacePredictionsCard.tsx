@@ -5,11 +5,7 @@ import {
   predictedRaceTimesFromFitness,
   type RaceDistanceKey,
 } from "@/lib/runPaces";
-import {
-  paceMinSec,
-  finishTimeLabel,
-  distanceLabel,
-} from "@/lib/runLabels";
+import { paceMinSec, finishTimeLabel, distanceLabel } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { paceUnitLabel } from "@/lib/distanceUnits";
 import { THEME } from "@/lib/theme";

@@ -57,7 +57,11 @@ const IDLE: SessionPlayerState = {
   phaseDistanceCovered: 0,
 };
 
-function targetMet(seg: SessionSegment, elapsed: number, dist: number): boolean {
+function targetMet(
+  seg: SessionSegment,
+  elapsed: number,
+  dist: number
+): boolean {
   if (seg.target.kind === "distance") {
     return seg.target.meters <= 0 || dist >= seg.target.meters;
   }
@@ -116,8 +120,7 @@ export function useSessionPlayer(
       setState((prev) => {
         if (prev.index < 0 || prev.index >= segs.length) return prev;
         const phaseElapsed = totalElapsed - phaseStartElapsed.current;
-        const phaseDistanceCovered =
-          totalDistance - phaseStartDistance.current;
+        const phaseDistanceCovered = totalDistance - phaseStartDistance.current;
         const seg = segs[prev.index];
         if (targetMet(seg, phaseElapsed, phaseDistanceCovered)) {
           return advance(prev, totalElapsed, totalDistance);

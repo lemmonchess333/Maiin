@@ -52,8 +52,7 @@ export default function GuidedRunOverlay({
     segmentsDurationSeconds(segments.slice(0, Math.max(0, state.index))) +
     state.phaseElapsed;
   const totalProgress = totalSec > 0 ? Math.min(1, doneSec / totalSec) : 0;
-  const nextTarget =
-    next?.target.kind === "duration" ? next.target.seconds : 0;
+  const nextTarget = next?.target.kind === "duration" ? next.target.seconds : 0;
 
   return (
     <div

@@ -48,7 +48,7 @@ describe("estimateLiftBurn", () => {
         tonnageKg: 0,
         bodyweightKg: 80,
         completedSetCount: 12,
-      }),
+      })
     ).toBe(120);
   });
 
@@ -61,7 +61,7 @@ describe("estimateLiftBurn", () => {
         tonnageKg: 12000,
         bodyweightKg: 90,
         completedSetCount: 25,
-      }),
+      })
     ).toBe(371);
   });
 
@@ -74,7 +74,7 @@ describe("estimateLiftBurn", () => {
         tonnageKg: 8000,
         bodyweightKg: 90,
         completedSetCount: 40,
-      }),
+      })
     ).toBe(405);
   });
 
@@ -86,7 +86,7 @@ describe("estimateLiftBurn", () => {
         tonnageKg: 3000,
         bodyweightKg: 80,
         completedSetCount: 15,
-      }),
+      })
     ).toBe(210);
   });
 
@@ -97,7 +97,7 @@ describe("estimateLiftBurn", () => {
         tonnageKg: 5000,
         bodyweightKg: 0,
         completedSetCount: 20,
-      }),
+      })
     ).toBe(0);
   });
 
@@ -108,7 +108,7 @@ describe("estimateLiftBurn", () => {
         tonnageKg: 0,
         bodyweightKg: 80,
         completedSetCount: 0,
-      }),
+      })
     ).toBe(0);
   });
 });
@@ -156,14 +156,18 @@ describe("one run-burn formula", () => {
     const { readFileSync, globSync } = await import("node:fs");
     const { resolve, dirname } = await import("node:path");
     const { fileURLToPath } = await import("node:url");
-    const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
+    const repoRoot = resolve(
+      dirname(fileURLToPath(import.meta.url)),
+      "../../.."
+    );
 
     const sites: string[] = [];
     for (const rel of globSync("src/**/*.{ts,tsx}", { cwd: repoRoot })) {
       if (rel.includes("__tests__") || rel.includes(".test.")) continue;
       const src = readFileSync(resolve(repoRoot, rel), "utf8");
       src.split("\n").forEach((line, i) => {
-        if (/(?<![\d.])1\.036(?![\d])/.test(line)) sites.push(`${rel}:${i + 1}`);
+        if (/(?<![\d.])1\.036(?![\d])/.test(line))
+          sites.push(`${rel}:${i + 1}`);
       });
     }
     expect(

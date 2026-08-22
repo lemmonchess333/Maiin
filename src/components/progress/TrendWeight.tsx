@@ -1,6 +1,8 @@
 import { useMemo, useState, useEffect } from "react";
+import { Scale } from "lucide-react";
 import { Link } from "react-router-dom";
 import SectionLabel from "@/components/ui/SectionLabel";
+import EmptyState from "@/components/ui/EmptyState";
 import { useAuth } from "@/lib/auth";
 import { fetchBodyweightLogs, type BodyweightLog } from "@/lib/api";
 import {
@@ -76,7 +78,7 @@ export function TrendWeight() {
           </p>
         )}
         <p className="text-xs text-muted-foreground">
-          on {d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+          on {d.toLocaleDateString("en-GB", { month: "short", day: "numeric" })}
         </p>
         <p className="text-xs text-muted-foreground mt-1">
           Log daily for better trend tracking
@@ -85,13 +87,20 @@ export function TrendWeight() {
     );
   }
 
-  // Less than 3 entries: show message
+  /* Fewer than 3 entries — which includes ZERO, i.e. what every new user
+     sees. It was a bare centred sentence: no mark, no title, no action,
+     two cards away from hexagon `EmptyState`s on the same page. The
+     single-entry branch above keeps its own treatment (it has a
+     SectionLabel and a real figure to show); this branch had nothing. */
   if (data.length < 3) {
     return (
-      <div className="p-4 rounded-2xl bg-card text-center py-8">
-        <p className="text-sm text-muted-foreground">
-          Log 3+ weigh-ins to see your trend
-        </p>
+      <div className="p-4 rounded-2xl bg-card">
+        <EmptyState
+          compact
+          icon={Scale}
+          headline="Weight trend"
+          sub="Log 3+ weigh-ins and your trend line, average and goal projection appear here."
+        />
       </div>
     );
   }
@@ -274,11 +283,14 @@ export function TrendWeight() {
                 if (relevant.length === 0) return null;
 
                 const label = props.label
-                  ? parseLocalDate(String(props.label)).toLocaleDateString("en-GB", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })
+                  ? parseLocalDate(String(props.label)).toLocaleDateString(
+                      "en-GB",
+                      {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      }
+                    )
                   : "";
 
                 return (

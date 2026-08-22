@@ -15,6 +15,9 @@ import { db, functions } from "@/lib/firebase";
 import { calculateTDEE } from "@/lib/tdee";
 import type { FitnessGoal, ActivityLevel } from "@/lib/tdee";
 import { nutritionPhaseLabel } from "@/lib/nutritionPhaseLabel";
+import SegmentedControl from "@/components/ui/SegmentedControl";
+import SectionLabel from "@/components/ui/SectionLabel";
+import RangeInput from "@/components/ui/RangeInput";
 import { resolveGoalWeightPlan } from "@/lib/goalWeightPlan";
 import { THEME } from "@/lib/theme";
 import { logger } from "@/lib/logger";
@@ -974,9 +977,13 @@ export default function Onboarding() {
           transition={{ duration: 0.22 }}
           className="flex-1 min-h-0 overflow-y-auto"
         >
-          <p className="text-xs uppercase tracking-widest mb-2 text-muted-foreground">
+          {/* Every uppercase micro-label in this flow goes through
+              SectionLabel now — the file carried three hand-rolled
+              treatments (widest/wider tracking, class vs style colour,
+              one /0.7 alpha) for one label kind. */}
+          <SectionLabel className="mb-2">
             Step {step + 1} of {TOTAL_STEPS}
-          </p>
+          </SectionLabel>
           <h1 className="text-2xl font-bold mb-1">{STEP_META[step].title}</h1>
           <p className="text-sm mb-8 text-muted-foreground">
             {STEP_META[step].subtitle}
@@ -998,7 +1005,7 @@ export default function Onboarding() {
                   id: "strength" as PrimaryGoal,
                   label: "Get stronger",
                   desc: "Heavy compound lifts with maintenance calories",
-                  icon: <Zap size={22} style={{ color: THEME.warning }} />,
+                  icon: <Zap size={22} className="text-lifting" />,
                 },
                 {
                   id: "fat_loss" as PrimaryGoal,
@@ -1129,7 +1136,11 @@ export default function Onboarding() {
                     label: "Occasional runner",
                     desc: "1 – 2 runs per week",
                     icon: (
-                      <Footprints size={22} style={{ color: THEME.warning }} />
+                      /* Coral, like its "Regular runner" sibling — two
+                         Footprints in one option group were rendering in two
+                         different domain colours (DS2: coral = running,
+                         orange = food; warning is not a category tint). */
+                      <Footprints size={22} className="text-running" />
                     ),
                   },
                   {
@@ -1214,16 +1225,14 @@ export default function Onboarding() {
                       >
                         Run days per week ({weeklyRunDays})
                       </label>
-                      <input
+                      <RangeInput
                         id="onboarding-run-days"
-                        type="range"
-                        min="1"
+                        min={1}
                         max={7}
                         value={weeklyRunDays}
                         onChange={(e) =>
                           setWeeklyRunDays(Number(e.target.value))
                         }
-                        className="w-full accent-primary"
                       />
                       {daysPerWeek + weeklyRunDays > 7 && (
                         // P0-5: this is no longer a hard block. When
@@ -1259,48 +1268,37 @@ export default function Onboarding() {
                   {runMode === "race_prep" && (
                     <div className="space-y-3">
                       <div>
-                        <p
-                          className="text-xs uppercase tracking-wider mb-1.5"
-                          style={{ color: "hsl(var(--muted-foreground))" }}
-                        >
+                        <SectionLabel className="mb-1.5">
                           Race distance
-                        </p>
-                        <div className="grid grid-cols-4 gap-1.5">
-                          {(
-                            ["5k", "10k", "half", "marathon"] as RaceDistance[]
-                          ).map((d) => (
-                            <button
-                              type="button"
-                              key={d}
-                              onClick={() => setRaceDistance(d)}
-                              className="py-2 rounded-lg text-xs font-medium transition-all"
-                              style={{
-                                background:
-                                  raceDistance === d
-                                    ? THEME.running
-                                    : "hsl(var(--muted) / 0.7)",
-                                color:
-                                  raceDistance === d
-                                    ? "#000"
-                                    : "hsl(var(--muted-foreground))",
-                              }}
-                            >
-                              {d === "half"
-                                ? "Half"
-                                : d === "marathon"
-                                  ? "Full"
-                                  : d.toUpperCase()}
-                            </button>
-                          ))}
-                        </div>
+                        </SectionLabel>
+                        {/* `SegmentedControl`, whose own docstring names
+                            the race-distance selector as one of the two
+                            hand-rolled pill rows it was built to replace.
+                            Onboarding was the straggler: the sibling
+                            surfaces migrated in June, and this copy kept
+                            32px targets (three-quarters of the floor), no
+                            role="radio" / aria-checked, no roving
+                            tabindex, no arrow-key selection, and a `#000`
+                            literal for the selected label — a 3-digit hex
+                            the eslint guard's `#[0-9a-fA-F]{6}` pattern
+                            does not match. */}
+                        <SegmentedControl<RaceDistance>
+                          ariaLabel="Race distance"
+                          tone="running"
+                          value={raceDistance}
+                          onChange={setRaceDistance}
+                          options={[
+                            { value: "5k", label: "5K" },
+                            { value: "10k", label: "10K" },
+                            { value: "half", label: "Half" },
+                            { value: "marathon", label: "Full" },
+                          ]}
+                        />
                       </div>
                       <div>
-                        <p
-                          className="text-xs uppercase tracking-wider mb-1.5"
-                          style={{ color: "hsl(var(--muted-foreground))" }}
-                        >
+                        <SectionLabel className="mb-1.5">
                           Target date (optional)
-                        </p>
+                        </SectionLabel>
                         <input
                           type="date"
                           aria-label="Race target date"
@@ -1314,7 +1312,7 @@ export default function Onboarding() {
                           min={localDateString(new Date())}
                           value={raceTargetDate}
                           onChange={(e) => setRaceTargetDate(e.target.value)}
-                          className="w-full px-3 py-2.5 rounded-xl text-sm outline-none bg-muted text-foreground border border-border focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-transparent [color-scheme:light_dark]"
+                          className="w-full px-3 py-2.5 rounded-xl text-sm outline-none bg-muted text-foreground border border-border focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-transparent"
                         />
                         {/* #975: date is optional — no date completes on the
                             freeform substrate and the Race Goal Planner on the
@@ -1476,9 +1474,7 @@ export default function Onboarding() {
             <div className="space-y-7">
               {/* Sex / gender */}
               <div className="space-y-2">
-                <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                  Sex
-                </p>
+                <SectionLabel>Sex</SectionLabel>
                 {[
                   {
                     id: "male" as Gender,
@@ -1509,9 +1505,7 @@ export default function Onboarding() {
 
               {/* Age band */}
               <div className="space-y-2">
-                <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                  Age
-                </p>
+                <SectionLabel>Age</SectionLabel>
                 {[
                   { id: "under-16" as AgeRange, label: "Under 16" },
                   { id: "16-24" as AgeRange, label: "16 – 24" },
@@ -1547,9 +1541,7 @@ export default function Onboarding() {
 
               {/* Training experience */}
               <div className="space-y-2">
-                <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                  Training experience
-                </p>
+                <SectionLabel>Training experience</SectionLabel>
                 {(
                   [
                     {
@@ -1705,8 +1697,8 @@ export default function Onboarding() {
                       transition={{ delay: i * 0.04, duration: 0.25 }}
                       className="rounded-xl py-2 px-1 text-center"
                       style={{
-                        background: `${meta.color}18`,
-                        border: `1px solid ${meta.color}40`,
+                        background: meta.tint,
+                        border: `1px solid ${meta.border}`,
                       }}
                     >
                       <p
@@ -1798,7 +1790,9 @@ export default function Onboarding() {
                   {
                     label: "Metrics",
                     value: `${displayHeight} · ${displayWeight}`,
-                    color: THEME.warning,
+                    // Body data is purple in this app (theme.ts maps weight
+                    // to the brand/lifting identity) — it was food-orange.
+                    color: THEME.lifting,
                   },
                   {
                     // Surfaces the derived nutrition phase + its calorie
@@ -1810,7 +1804,10 @@ export default function Onboarding() {
                       goalPlan.fitnessGoal,
                       tdee.deficit
                     ),
-                    color: THEME.warning,
+                    // The FOOD identity by name. Same hex as THEME.warning
+                    // today (D19), but when the warning hue splits, this row
+                    // stays nutrition-orange — the semantic is the point.
+                    color: THEME.semantic.nutrition,
                   },
                   {
                     label: "Daily targets",
@@ -1836,12 +1833,10 @@ export default function Onboarding() {
                       style={{ background: row.color }}
                     />
                     <div>
-                      <p
-                        className="text-xs uppercase tracking-wider"
-                        style={{ color: "hsl(var(--muted-foreground) / 0.7)" }}
-                      >
-                        {row.label}
-                      </p>
+                      {/* Full-strength muted — the /0.7 style-string alpha
+                          was the inline twin of the banned
+                          text-muted-foreground/<n> class (2.8:1-ish). */}
+                      <SectionLabel>{row.label}</SectionLabel>
                       <p className="text-sm font-semibold mt-0.5">
                         {row.value}
                       </p>
@@ -1950,19 +1945,34 @@ export default function Onboarding() {
 
       {/* ── Navigation ── */}
       <div className="flex items-center gap-3 pt-6">
-        {step > 0 ? (
-          <button
-            type="button"
-            onClick={() => setStep((s) => s - 1)}
-            className="px-5 py-3.5 rounded-2xl text-sm font-medium active:scale-[0.97]"
-            style={{
-              background: "hsl(var(--muted))",
-              color: "hsl(var(--muted-foreground))",
-            }}
-          >
-            Back
-          </button>
-        ) : null}
+        {/* The Back slot is RESERVED on step 0, not collapsed. It used to
+            render null there, so Continue spanned the full width on the
+            first screen and then shrank by the Back button's width the
+            moment it was tapped — its centre jumping ~43px right between
+            the first and second of eight otherwise identical taps, on the
+            one flow where the user has no muscle memory yet. Reserving
+            the slot costs a hidden button and holds the CTA still.
+
+            `invisible` (not `hidden`) so it still occupies its box;
+            aria-hidden + tabIndex={-1} + disabled so it is unreachable by
+            screen reader, keyboard and pointer alike. */}
+        <button
+          type="button"
+          onClick={() => setStep((s) => s - 1)}
+          className={cn(
+            "px-5 py-3.5 rounded-2xl text-sm font-medium active:scale-[0.97]",
+            step === 0 && "invisible"
+          )}
+          aria-hidden={step === 0 || undefined}
+          tabIndex={step === 0 ? -1 : undefined}
+          disabled={step === 0}
+          style={{
+            background: "hsl(var(--muted))",
+            color: "hsl(var(--muted-foreground))",
+          }}
+        >
+          Back
+        </button>
         <button
           type="button"
           onClick={() => {

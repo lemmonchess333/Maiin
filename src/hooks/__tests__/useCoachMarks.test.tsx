@@ -36,7 +36,7 @@ describe("useCoachMarks — unkeyed (legacy)", () => {
     act(() => result.current.dismiss());
     expect(result.current.showCoachMarks).toBe(false);
     expect(
-      window.localStorage.getItem("anon:tropos-coach-marks-dismissed"),
+      window.localStorage.getItem("anon:tropos-coach-marks-dismissed")
     ).toBe("1");
   });
 
@@ -53,8 +53,8 @@ describe("useCoachMarks — keyed (per-feature)", () => {
     act(() => result.current.dismiss());
     expect(
       window.localStorage.getItem(
-        "anon:tropos-coach-marks-dismissed:food-eyebrow",
-      ),
+        "anon:tropos-coach-marks-dismissed:food-eyebrow"
+      )
     ).toBe("1");
   });
 
@@ -86,7 +86,8 @@ describe("useCoachMarks — keyed (per-feature)", () => {
 
 describe("useCoachMarks — defensive: localStorage unavailable", () => {
   it("does not throw when setItem fails (private mode)", () => {
-    const setItem = vi.spyOn(window.localStorage, "setItem")
+    const setItem = vi
+      .spyOn(window.localStorage, "setItem")
       .mockImplementation(() => {
         throw new Error("QuotaExceededError");
       });
@@ -136,9 +137,9 @@ describe("useCoachMarks — one device, two accounts", () => {
     expect(a.result.current.showCoachMarks).toBe(false);
 
     // Bob signs in on the same device. He has never seen this mark.
-    expect(atUid("bob", "social-find-invite").result.current.showCoachMarks).toBe(
-      true
-    );
+    expect(
+      atUid("bob", "social-find-invite").result.current.showCoachMarks
+    ).toBe(true);
     // And Alice's own dismissal survives, so this is isolation rather
     // than the prefix simply breaking persistence.
     expect(

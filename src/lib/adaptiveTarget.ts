@@ -446,11 +446,14 @@ export function hasAppliedLearnedTarget(capState: unknown): boolean {
  * already renders that as "no target line" rather than a guess.
  */
 export function resolveSnapshotCalorieTarget(
-  profile: {
-    targetCalories?: unknown;
-    customCalorieTarget?: unknown;
-    adaptiveCapState?: unknown;
-  } | null | undefined,
+  profile:
+    | {
+        targetCalories?: unknown;
+        customCalorieTarget?: unknown;
+        adaptiveCapState?: unknown;
+      }
+    | null
+    | undefined,
   isPro: boolean
 ): ResolvedTarget | null {
   const formulaTarget =

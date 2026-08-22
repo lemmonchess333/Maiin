@@ -1,4 +1,7 @@
 import { Suspense, useEffect, useState } from "react";
+import type { CalorieRingMode } from "./CalorieRing";
+import { barFillPct, barLabelPct } from "@/lib/calorieRingFill";
+import { useCalorieRingMode } from "@/hooks/useCalorieRingMode";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { Lock } from "lucide-react";
 import BottomSheet from "@/components/ui/BottomSheet";
@@ -51,11 +54,19 @@ interface MacroRowProps {
   consumed: number;
   target: number;
   color: string;
+  mode: CalorieRingMode;
 }
 
-function MacroRow({ label, consumed, target, color }: MacroRowProps) {
+function MacroRow({ label, consumed, target, color, mode }: MacroRowProps) {
   const pct = clampPct(consumed, target);
   const remaining = Math.max(0, Math.round(target - consumed));
+  /* Lockstep with the tile that opened this sheet. `MacroColumn` documents
+     the bar as moving the same direction as the big number beside it; this
+     row never received the mode, so it drew consumed% unconditionally and
+     the same protein data read as a 9%-full bar on the tile and an
+     89%-full bar here, one tap apart. */
+  const fillPct = barFillPct(pct, mode, consumed > target && target > 0);
+  const shownPct = barLabelPct(pct, mode);
   return (
     <div className="space-y-1.5">
       <div className="flex items-baseline justify-between">
@@ -75,7 +86,7 @@ function MacroRow({ label, consumed, target, color }: MacroRowProps) {
       <div className="h-1.5 rounded-full overflow-hidden bg-muted">
         <div
           className="h-full rounded-full transition-all"
-          style={{ width: `${pct}%`, background: color }}
+          style={{ width: `${fillPct}%`, background: color }}
         />
       </div>
       <p className="text-caption text-muted-foreground font-mono tabular-nums">
@@ -83,7 +94,7 @@ function MacroRow({ label, consumed, target, color }: MacroRowProps) {
           ? `${formatMacro(remaining)}g left`
           : `${formatMacro(consumed - target)}g over`}
         {" · "}
-        {pct}%
+        {shownPct}%
       </p>
     </div>
   );
@@ -130,7 +141,7 @@ function MicroRow({
         <span className="text-caption uppercase tracking-[0.14em] text-muted-foreground font-semibold">
           {label}
           {isLimit && (
-            <span className="ml-1.5 normal-case tracking-normal text-[10px] text-muted-foreground/70">
+            <span className="ml-1.5 normal-case tracking-normal text-[10px] text-muted-foreground">
               limit
             </span>
           )}
@@ -181,6 +192,11 @@ export default function HeroDrillDownSheet({
   dailyTotals,
   dailyTargets,
 }: HeroDrillDownSheetProps) {
+  /* The same mode the hero tile is showing. Read from the shared store
+     rather than passed as a prop: this sheet renders from Food.tsx, a
+     SIBLING of the hero card, so there was no prop path to thread — which
+     is why the divergence existed at all. */
+  const mode = useCalorieRingMode();
   const target = dailyTargets.finalTarget;
   const remaining = target - dailyTotals.calories;
   const consumedPct = clampPct(dailyTotals.calories, target);
@@ -237,14 +253,14 @@ export default function HeroDrillDownSheet({
                 </span>
               </div>
               <span className="font-mono tabular-nums text-xs text-muted-foreground">
-                {consumedPct}%
+                {barLabelPct(consumedPct, mode)}%
               </span>
             </div>
             <div className="h-2 rounded-full overflow-hidden bg-muted">
               <div
                 className="h-full rounded-full transition-all"
                 style={{
-                  width: `${consumedPct}%`,
+                  width: `${barFillPct(consumedPct, mode, remaining < 0)}%`,
                   background:
                     remaining < 0 ? THEME.semantic.nutrition : "var(--primary)",
                 }}
@@ -359,18 +375,21 @@ export default function HeroDrillDownSheet({
               consumed={dailyTotals.protein}
               target={dailyTargets.protein}
               color={THEME.macros.protein}
+              mode={mode}
             />
             <MacroRow
               label="Carbs"
               consumed={dailyTotals.carbs}
               target={dailyTargets.carbs}
               color={THEME.macros.carbs}
+              mode={mode}
             />
             <MacroRow
               label="Fat"
               consumed={dailyTotals.fat}
               target={dailyTargets.fat}
               color={THEME.macros.fat}
+              mode={mode}
             />
           </section>
 

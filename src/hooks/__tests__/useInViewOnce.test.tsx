@@ -35,7 +35,10 @@ describe("useInViewOnce", () => {
 
     class MockIO {
       callback: IntersectionObserverCallback;
-      constructor(cb: IntersectionObserverCallback, options?: IntersectionObserverInit) {
+      constructor(
+        cb: IntersectionObserverCallback,
+        options?: IntersectionObserverInit
+      ) {
         registeredCallback = cb;
         registeredOptions = options;
         this.callback = cb;
@@ -48,7 +51,10 @@ describe("useInViewOnce", () => {
       rootMargin = "";
       thresholds: ReadonlyArray<number> = [];
     }
-    vi.stubGlobal("IntersectionObserver", MockIO as unknown as typeof IntersectionObserver);
+    vi.stubGlobal(
+      "IntersectionObserver",
+      MockIO as unknown as typeof IntersectionObserver
+    );
 
     const onView = vi.fn();
     render(<Probe onView={onView} threshold={0.5} />);
@@ -59,8 +65,13 @@ describe("useInViewOnce", () => {
 
     act(() => {
       registeredCallback!(
-        [{ isIntersecting: true, intersectionRatio: 0.8 } as IntersectionObserverEntry],
-        {} as IntersectionObserver,
+        [
+          {
+            isIntersecting: true,
+            intersectionRatio: 0.8,
+          } as IntersectionObserverEntry,
+        ],
+        {} as IntersectionObserver
       );
     });
 
@@ -88,15 +99,23 @@ describe("useInViewOnce", () => {
       rootMargin = "";
       thresholds: ReadonlyArray<number> = [];
     }
-    vi.stubGlobal("IntersectionObserver", MockIO as unknown as typeof IntersectionObserver);
+    vi.stubGlobal(
+      "IntersectionObserver",
+      MockIO as unknown as typeof IntersectionObserver
+    );
 
     const onView = vi.fn();
     render(<Probe onView={onView} threshold={0.5} />);
 
     act(() => {
       registeredCallback!(
-        [{ isIntersecting: true, intersectionRatio: 0.3 } as IntersectionObserverEntry],
-        {} as IntersectionObserver,
+        [
+          {
+            isIntersecting: true,
+            intersectionRatio: 0.3,
+          } as IntersectionObserverEntry,
+        ],
+        {} as IntersectionObserver
       );
     });
 
@@ -115,7 +134,10 @@ describe("useInViewOnce", () => {
       rootMargin = "";
       thresholds: ReadonlyArray<number> = [];
     }
-    vi.stubGlobal("IntersectionObserver", MockIO as unknown as typeof IntersectionObserver);
+    vi.stubGlobal(
+      "IntersectionObserver",
+      MockIO as unknown as typeof IntersectionObserver
+    );
 
     const onView = vi.fn();
     render(<Probe onView={onView} enabled={false} />);

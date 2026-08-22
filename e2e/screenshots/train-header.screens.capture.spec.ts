@@ -55,10 +55,16 @@ test.describe("train header sport-tint", () => {
       document.documentElement.classList.remove("dark")
     );
     await page.waitForTimeout(250);
-    await page.screenshot({ path: `screenshots/${name}-light.png` });
+    await page.screenshot({
+      animations: "disabled",
+      path: `screenshots/${name}-light.png`,
+    });
     await page.evaluate(() => document.documentElement.classList.add("dark"));
     await page.waitForTimeout(300);
-    await page.screenshot({ path: `screenshots/${name}-dark.png` });
+    await page.screenshot({
+      animations: "disabled",
+      path: `screenshots/${name}-dark.png`,
+    });
     await page.evaluate(() =>
       document.documentElement.classList.remove("dark")
     );

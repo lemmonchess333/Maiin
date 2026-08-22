@@ -267,7 +267,7 @@ export function useGPS(elapsedSeconds = 0) {
               distance: 0,
               isTracking: true,
               error: null,
-              }));
+            }));
             return;
           }
           // Still coarse — let the map follow the position, but don't record

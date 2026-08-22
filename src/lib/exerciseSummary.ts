@@ -50,6 +50,8 @@ export function formatExerciseSummary(input: ExerciseSummaryInput): string {
       : `${sets}×${reps}`;
   }
   // Drop trailing .0 on round weights so "100kg" doesn't become "100.0kg".
-  const weightStr = Number.isInteger(weight) ? String(weight) : weight.toFixed(1);
+  const weightStr = Number.isInteger(weight)
+    ? String(weight)
+    : weight.toFixed(1);
   return `${sets}×${reps}×${weightStr}kg`;
 }

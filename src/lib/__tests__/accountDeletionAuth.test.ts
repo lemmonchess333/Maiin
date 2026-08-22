@@ -18,11 +18,7 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const auth = require("../../../functions/lib/accountDeletionAuth.js");
 
-const {
-  RECENT_AUTH_MAX_AGE_SECONDS,
-  checkRecentAuth,
-  assertRecentAuth,
-} = auth;
+const { RECENT_AUTH_MAX_AGE_SECONDS, checkRecentAuth, assertRecentAuth } = auth;
 
 describe("checkRecentAuth", () => {
   it("threshold is 5 minutes (300s)", () => {
@@ -78,7 +74,9 @@ describe("assertRecentAuth (callable-context shape)", () => {
       },
     };
     const fixedNow = () => 100_000;
-    expect(() => assertRecentAuth(stale, fixedNow)).toThrow(/Recent reauthentication required/);
+    expect(() => assertRecentAuth(stale, fixedNow)).toThrow(
+      /Recent reauthentication required/
+    );
   });
 
   it("does not throw when auth_time is recent", () => {
@@ -99,8 +97,8 @@ describe("assertRecentAuth (callable-context shape)", () => {
   });
 
   it("throws when token has no auth_time claim", () => {
-    expect(() =>
-      assertRecentAuth({ auth: { token: {} } }, () => 1),
-    ).toThrow(/no auth_time claim/);
+    expect(() => assertRecentAuth({ auth: { token: {} } }, () => 1)).toThrow(
+      /no auth_time claim/
+    );
   });
 });

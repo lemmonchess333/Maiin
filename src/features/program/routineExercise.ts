@@ -10,9 +10,7 @@ import type { SavedRoutineExercise } from "@/lib/savedRoutines";
  * therefore unreachable from any test — which is how it went the whole
  * feature's life without one, and how the `repUnit` gap below survived.
  */
-export function exerciseFromRoutine(
-  ex: SavedRoutineExercise
-): ProgramExercise {
+export function exerciseFromRoutine(ex: SavedRoutineExercise): ProgramExercise {
   /* The saved routine snapshot only carries `setCount / targetReps /
      targetWeightKg` per exercise. Fill the rest of ProgramExercise's
      surface with safe defaults — the UI uses these for progression

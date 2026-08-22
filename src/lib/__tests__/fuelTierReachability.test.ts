@@ -278,7 +278,10 @@ describe("fuel tiers — the mechanism, stated so the numbers aren't a black box
     expect(Math.round(boundary)).toBe(2412);
 
     const below = (c: number) =>
-      TIERS.map((t) => getAdjustedTargets(profileFor(w, c, "cut"), "rest", undefined, t).fat);
+      TIERS.map(
+        (t) =>
+          getAdjustedTargets(profileFor(w, c, "cut"), "rest", undefined, t).fat
+      );
     // 200 kcal either side of the boundary — the same user, one meaningful
     // difference between them.
     expect(below(2200)[1]).toBe(below(2200)[2]); // EASY === MODERATE
@@ -288,16 +291,16 @@ describe("fuel tiers — the mechanism, stated so the numbers aren't a black box
   it("a 70 kg user cutting gets one fuel level below the boundary, two above", () => {
     const at = (c: number) =>
       TIERS.map((t) => {
-        const o = getAdjustedTargets(profileFor(70, c, "cut"), "rest", undefined, t);
+        const o = getAdjustedTargets(
+          profileFor(70, c, "cut"),
+          "rest",
+          undefined,
+          t
+        );
         return `${o.carbs}C/${o.fat}F`;
       });
     // Below: rest, easy and moderate days are indistinguishable.
-    expect(at(2000)).toEqual([
-      "220C/56F",
-      "220C/56F",
-      "220C/56F",
-      "252C/42F",
-    ]);
+    expect(at(2000)).toEqual(["220C/56F", "220C/56F", "220C/56F", "252C/42F"]);
     // Above: four distinct days, which is what the feature promises.
     expect(new Set(at(2800)).size).toBe(4);
   });
@@ -319,7 +322,9 @@ describe("fuel tiers — the mechanism, stated so the numbers aren't a black box
           (FAT_CALORIE_FRACTION * r.targetCalories) / 9
         );
         const floorG = Math.round(floorPerKg * r.weightKg);
-        return baselineFat - floorG > Math.round(fuelShiftCalsForTier(tier) / 9);
+        return (
+          baselineFat - floorG > Math.round(fuelShiftCalsForTier(tier) / 9)
+        );
       }).length;
 
     const easy = bindingCount("EASY", DAILY_FAT_FLOOR_PER_KG);
@@ -343,7 +348,12 @@ describe("fuel tiers — the mechanism, stated so the numbers aren't a black box
        itself is the constraint and HARD's fat rises off the floor. Both sides
        asserted, so the constant is genuinely covered. */
     const hardFat = (c: number) =>
-      getAdjustedTargets(profileFor(70, c, "lean bulk"), "rest", undefined, "HARD").fat;
+      getAdjustedTargets(
+        profileFor(70, c, "lean bulk"),
+        "rest",
+        undefined,
+        "HARD"
+      ).fat;
     expect(hardFat(3300)).toBe(42); // floor-bound
     expect(hardFat(3400)).toBe(44); // shift-bound
     expect(hardFat(3800)).toBe(56);
@@ -356,7 +366,9 @@ describe("fuel tiers — the mechanism, stated so the numbers aren't a black box
        (66 g), so every tier is raised back up to the same number and the shift
        has nothing to give. */
     const fats = TIERS.map(
-      (t) => getAdjustedTargets(profileFor(110, 2200, "cut"), "rest", undefined, t).fat
+      (t) =>
+        getAdjustedTargets(profileFor(110, 2200, "cut"), "rest", undefined, t)
+          .fat
     );
     expect(fats).toEqual([66, 66, 66, 66]);
   });

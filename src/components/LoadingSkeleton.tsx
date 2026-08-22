@@ -18,8 +18,15 @@ export function Skeleton({ className, stagger }: SkeletonProps) {
         className
       )}
       style={{
+        /* Theme-flipped token, not a literal. The hardcoded
+           rgba(255,255,255,0.04) this replaced assumed a dark canvas: over
+           light `bg-muted` (rgb 248,248,249) it changed the pixel by ZERO
+           bytes, so every light-mode skeleton in the app had no sweep at
+           all — only the `pulse` opacity. Same shape as the ChallengeCard
+           marker that rendered invisibly on the white card, and the same
+           fix `--food-photo-ring-bed` already uses. */
         backgroundImage:
-          "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%)",
+          "linear-gradient(90deg, transparent 0%, var(--skeleton-shimmer) 50%, transparent 100%)",
         backgroundSize: "200% 100%",
         animation:
           "pulse 2s ease-in-out infinite, shimmer 1.5s ease-in-out infinite",

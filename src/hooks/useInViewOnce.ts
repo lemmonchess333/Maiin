@@ -37,7 +37,7 @@ interface UseInViewOnceOptions {
  */
 export function useInViewOnce(
   onView: () => void,
-  { threshold = 0.5, enabled = true }: UseInViewOnceOptions = {},
+  { threshold = 0.5, enabled = true }: UseInViewOnceOptions = {}
 ) {
   const ref = useRef<HTMLDivElement | null>(null);
   const onViewRef = useRef(onView);
@@ -70,7 +70,7 @@ export function useInViewOnce(
           }
         }
       },
-      { threshold },
+      { threshold }
     );
     observer.observe(el);
     return () => observer.disconnect();

@@ -109,13 +109,19 @@ describe("hasAppliedLearnedTarget — the server's stand-in for the warmup gate"
     expect(hasAppliedLearnedTarget({})).toBe(false);
     expect(hasAppliedLearnedTarget({ lastApplied: 2450 })).toBe(false);
     expect(
-      hasAppliedLearnedTarget({ lastApplied: "2450", lastAppliedAt: "2026-08-04" })
+      hasAppliedLearnedTarget({
+        lastApplied: "2450",
+        lastAppliedAt: "2026-08-04",
+      })
     ).toBe(false);
     expect(
       hasAppliedLearnedTarget({ lastApplied: NaN, lastAppliedAt: "2026-08-04" })
     ).toBe(false);
     expect(
-      hasAppliedLearnedTarget({ lastApplied: 2450, lastAppliedAt: "not a date" })
+      hasAppliedLearnedTarget({
+        lastApplied: 2450,
+        lastAppliedAt: "not a date",
+      })
     ).toBe(false);
   });
 });

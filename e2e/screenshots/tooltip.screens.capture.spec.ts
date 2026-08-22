@@ -41,7 +41,10 @@ test.describe("tooltip screenshots", () => {
   });
 
   async function shoot(page: Page, name: string) {
-    await page.screenshot({ path: `screenshots/${name}.png` });
+    await page.screenshot({
+      animations: "disabled",
+      path: `screenshots/${name}.png`,
+    });
   }
 
   test("Performance Index tooltip — light + dark", async ({ page }) => {

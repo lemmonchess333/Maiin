@@ -16,8 +16,6 @@ const MIN_DISTANCE_M = 200;
  *  this the runner is effectively stationary and GPS jitter spins the arrow. */
 const MIN_HEADING_MOVE_M = 5;
 
-
-
 /**
  * "Back to start" navigation aid for the live run. Shows the straight-line
  * (crow-flies) distance back to where the run began, plus a direction arrow
@@ -62,7 +60,8 @@ export default function BackToStartChip({
     moved > MIN_HEADING_MOVE_M
       ? bearing(prev.lat, prev.lon, last.lat, last.lon)
       : null;
-  const relative = heading != null ? (bearingToStart - heading + 360) % 360 : null;
+  const relative =
+    heading != null ? (bearingToStart - heading + 360) % 360 : null;
 
   return (
     <div
@@ -77,7 +76,10 @@ export default function BackToStartChip({
         aria-hidden="true"
         style={
           relative != null
-            ? { transform: `rotate(${relative}deg)`, transition: "transform .3s" }
+            ? {
+                transform: `rotate(${relative}deg)`,
+                transition: "transform .3s",
+              }
             : { opacity: 0.4 }
         }
       />

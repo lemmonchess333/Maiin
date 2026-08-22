@@ -18,6 +18,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import { emulatorActive } from "../helpers/emulator";
 import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
+import { settleFullPageHeight } from "../helpers/settleHeight";
 
 const AUTH_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
 const FS_HOST = process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080";
@@ -110,7 +111,17 @@ test.describe(`home + food surfaces (${PHASE})`, () => {
 
   async function shoot(page: Page, name: string) {
     await page.waitForTimeout(400);
+    /* Then wait for the document to stop GROWING. The 400ms above is a
+       fixed guess, and these are fullPage shots, so the frame's height is
+       a claim about the whole page — while every anchor in this spec is a
+       single element near the top. `home-energy-default-after.png` swung
+       393x1191 -> 1190 -> 1458 -> 1191 across four captures with no
+       relevant code change; the 267px jump is a card below the fold that
+       had not arrived yet. See the helper for why height and not
+       networkidle. */
+    await settleFullPageHeight(page);
     await page.screenshot({
+      animations: "disabled",
       path: `screenshots/${name}-${PHASE}.png`,
       fullPage: true,
     });
@@ -160,6 +171,35 @@ test.describe(`home + food surfaces (${PHASE})`, () => {
     await expect(page.getByText(/today's energy/i)).toBeVisible({
       timeout: 30_000,
     });
+    /* Then anchor on the DATA, not the heading. The heading renders
+       immediately; the card's target arrives from the profile, and until
+       it does the card shows "/ 0 kcal" and the weight tile beside it
+       shows "Tap to log" — a legitimate empty state, not a skeleton, so
+       nothing generic can tell the two apart.
+
+       That is what made this frame undiffable: it measured 1191 -> 1190
+       -> 1458 -> 1191 -> 1358 across five captures. Settling the document
+       height (added first, and kept — a fullPage shot should wait for
+       layout) does NOT fix it, measured: the loading state is itself
+       height-stable for longer than the settle window, so the helper
+       returns on a stable page that is not the final one.
+
+       A non-zero target is the readiness signal. Hard assertion rather
+       than best-effort: if Home cannot load its energy target in 20s that
+       is worth failing on, and shooting anyway is how you get a frame
+       that lies about what it shows. */
+    await expect(
+      // Separator-agnostic. `formatCalories` is `toLocaleString()` with no
+      // locale, so grouping follows the RUNTIME: "2,200" on en-US,
+      // "2.200" on de-DE, "2 200" (U+202F) on fr-FR. A comma-only pattern
+      // is a bet on the CI runner's locale; the class below covers all
+      // three and still refuses a leading zero, which is the actual
+      // signal. Pinned against a real render in
+      // `energyCaptureAnchor.test.tsx`, including this runtime's grouping.
+      page.getByText(/\/ [1-9][\d.,\s\u00a0\u202f]*kcal/).first(),
+      "the energy card never loaded its target — the frame would capture " +
+        "the pre-load state, which is what made this frame swing 267px"
+    ).toBeVisible({ timeout: 20_000 });
     await shoot(page, "home-energy-default");
 
     /* Open the day peek. Must be a NON-today cell: `handleDayTap` treats
@@ -176,7 +216,13 @@ test.describe(`home + food surfaces (${PHASE})`, () => {
        long as the label has had that suffix. A negative lookahead now
        carries the "not today" half explicitly instead of relying on an
        anchor to imply it. `weekStripDayLabel` in the unit suite pins the
-       shape this depends on. */
+       shape this depends on.
+
+       Worth keeping about the SYMPTOM, because it is what made this
+       survive so long: the only outward sign was `home-day-peek`
+       quietly leaving the capture set. The spec timed out, the other 45
+       tests passed, and the job still committed screenshots — so a
+       missing frame looked like a frame nobody had asked for. */
     const otherDay = page
       .getByRole("button", { name: /^(?!.*\(today\))\w+day, \w+ \d+,/ })
       .first();

@@ -106,4 +106,3 @@ export function gradeAdjustedPace(
     gainPerKm,
   };
 }
-

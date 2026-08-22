@@ -372,12 +372,18 @@ describe("WeekStrip — accessible name and selection state", () => {
     const cells = Array.from(container.querySelectorAll("button"));
     const labels = cells.map((c) => c.getAttribute("aria-label") ?? "");
     expect(labels.filter((l) => l.includes("(today)"))).toHaveLength(1);
-    // And at least one cell the capture spec's selector can land on —
-    // the same predicate, so this fails when that selector would.
-    const selectable = labels.filter((l) =>
-      /^(?!.*\(today\))\w+day, \w+ \d+,/.test(l)
-    );
-    expect(selectable.length).toBeGreaterThan(0);
+    /* This deliberately does NOT re-assert the capture spec's regex.
+       It used to carry a hand-written copy of the pattern, described as
+       "the same predicate, so this fails when that selector would" —
+       which holds only while somebody keeps the two literals in sync by
+       hand, and a copy of a selector is the same shape of bug as the
+       rotted selector it was written to catch.
+
+       `weekStripCaptureSelector.test.tsx` reads the LIVE regex out of
+       the spec file and runs it against these same names: six non-today
+       matches, never today. That cannot drift. What stays here is the
+       label shape itself, which is what the selector depends on and is
+       this suite's own business. */
   });
 
   it("names a rest day, a lift day and a run day", () => {

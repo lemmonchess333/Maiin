@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { isHeic, processProfilePhoto, ProfilePhotoProcessingError } from "../profilePhotoProcessor";
+import {
+  isHeic,
+  processProfilePhoto,
+  ProfilePhotoProcessingError,
+} from "../profilePhotoProcessor";
 
 /* The canvas-dependent path (decode → re-encode) requires a real
  * image rasterizer, which jsdom doesn't ship. We unit-test the pure
@@ -48,7 +52,9 @@ describe("isHeic", () => {
 
 describe("processProfilePhoto error gates", () => {
   it("throws heic_unsupported with a remediation message for HEIC files", async () => {
-    await expect(processProfilePhoto(makeFile("img.heic", "image/heic"))).rejects.toMatchObject({
+    await expect(
+      processProfilePhoto(makeFile("img.heic", "image/heic"))
+    ).rejects.toMatchObject({
       code: "heic_unsupported",
     });
     /* The error message must include conversion guidance. Users on
@@ -62,7 +68,9 @@ describe("processProfilePhoto error gates", () => {
   });
 
   it("throws non_image when the file MIME isn't an image type", async () => {
-    await expect(processProfilePhoto(makeFile("doc.pdf", "application/pdf"))).rejects.toMatchObject({
+    await expect(
+      processProfilePhoto(makeFile("doc.pdf", "application/pdf"))
+    ).rejects.toMatchObject({
       code: "non_image",
     });
   });
@@ -71,7 +79,9 @@ describe("processProfilePhoto error gates", () => {
     /* This is the right behavior: we can't trust the file is an
        image without a MIME, and the HEIC path already covers iOS's
        quirky empty-MIME case. */
-    await expect(processProfilePhoto(makeFile("photo", ""))).rejects.toMatchObject({
+    await expect(
+      processProfilePhoto(makeFile("photo", ""))
+    ).rejects.toMatchObject({
       code: "non_image",
     });
   });

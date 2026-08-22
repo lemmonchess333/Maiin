@@ -223,7 +223,7 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
                   value={field.value}
                   onChange={(e) => field.set(e.target.value)}
                   placeholder={field.unit}
-                  className="w-full p-3 rounded-xl text-foreground text-base font-semibold text-center placeholder:text-muted-foreground/40 bg-muted/40 border border-border"
+                  className="w-full p-3 rounded-xl text-foreground text-base font-semibold text-center placeholder:text-muted-foreground bg-muted/40 border border-border"
                 />
               </div>
             ))}

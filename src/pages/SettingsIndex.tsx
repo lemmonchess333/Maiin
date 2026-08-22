@@ -144,7 +144,12 @@ const SECTIONS: SectionRow[] = [
   {
     slug: "recently-deleted-meals",
     label: "Recently deleted meals",
-    description: "Restore meals you deleted in the last 24 hours",
+    /* Short phrase, like every other row. The full sentence this
+       replaced was the ONLY description in the catalogue long enough to
+       truncate — "…in the last 24 hou…" in the settings capture — and it
+       was also the only one written as a sentence rather than a label.
+       The title already says what is being restored. */
+    description: "Restore within 24 hours",
     icon: Trash2,
     migrated: true,
   },

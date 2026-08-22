@@ -51,13 +51,18 @@ test.describe("circle weekly focus screenshots", () => {
   });
 
   async function shoot(page: Page, name: string) {
-    await page.screenshot({ path: `screenshots/${name}.png`, fullPage: true });
+    await page.screenshot({
+      animations: "disabled",
+      path: `screenshots/${name}.png`,
+      fullPage: true,
+    });
   }
 
   async function shootLightDark(page: Page, name: string) {
     await page.evaluate(() =>
       document.documentElement.classList.remove("dark")
     );
+    await page.waitForTimeout(400);
     await shoot(page, `${name}-light`);
     await page.evaluate(() => document.documentElement.classList.add("dark"));
     await page.waitForTimeout(350);

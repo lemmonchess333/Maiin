@@ -389,14 +389,14 @@ export default function CalorieRing({
                 <ArrowLeftRight className="size-2.5" aria-hidden="true" />
               </span>
               {trajectoryLabel && (
-                <p className="text-caption mt-1 text-muted-foreground/70 font-mono tabular-nums">
+                <p className="text-caption mt-1 text-muted-foreground font-mono tabular-nums">
                   {trajectoryLabel}
                 </p>
               )}
             </motion.div>
           </AnimatePresence>
         ) : (
-          <span className="text-4xl font-extrabold text-muted-foreground/40">
+          <span className="text-4xl font-extrabold text-muted-foreground">
             &mdash;
           </span>
         )}

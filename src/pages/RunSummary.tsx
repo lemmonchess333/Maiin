@@ -94,9 +94,7 @@ import {
 } from "../lib/runGuards";
 import { getDistanceComparison } from "@/lib/funComparisons";
 import { elevationLabel } from "@/lib/runLabels";
-import {
-  gradeAdjustedPace,
-} from "../lib/gradeAdjustedPace";
+import { gradeAdjustedPace } from "../lib/gradeAdjustedPace";
 
 /* Reusable retry banner. Shown above the action row on a save
  * failure. Coral-tinted to read as in-flow rather than modal-alert.
@@ -120,7 +118,9 @@ function RetryBanner({
         aria-hidden="true"
       />
       <div className="flex-1 text-xs text-foreground/80">
-        <p className="font-medium text-running-strong">Couldn&apos;t save your run</p>
+        <p className="font-medium text-running-strong">
+          Couldn&apos;t save your run
+        </p>
         <p className="mt-0.5 text-muted-foreground">
           {error || "We couldn't save this run."}
         </p>
@@ -1256,7 +1256,9 @@ export default function RunSummary() {
               {heroCopy}
             </h1>
             <p className="text-sm text-muted-foreground">
-              {new Date().toLocaleDateString("en-US", {
+              {/* en-GB, like every other dated surface in the app. This
+                  was one of two rendered dates still pinned to en-US. */}
+              {new Date().toLocaleDateString("en-GB", {
                 weekday: "long",
                 month: "long",
                 day: "numeric",
@@ -1634,14 +1636,14 @@ export default function RunSummary() {
                       adherenceLabel === "Extra"
                         ? `${THEME.running}1A`
                         : adherenceLabel === "Custom"
-                          ? `${THEME.text.muted}1A`
+                          ? "hsl(var(--muted-foreground) / 0.1)"
                           : `${THEME.success}1A`,
                     color:
                       adherenceLabel === "Extra"
                         ? THEME.running
                         : adherenceLabel === "Custom"
-                          ? THEME.text.muted
-                          : THEME.success,
+                          ? "hsl(var(--muted-foreground))"
+                          : "hsl(var(--success-strong))",
                   }}
                   aria-label={`Plan adherence: ${adherenceLabel}`}
                 >

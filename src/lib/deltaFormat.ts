@@ -17,7 +17,7 @@ export interface DeltaPayload {
 
 export function buildDelta(
   current: number,
-  previous: number,
+  previous: number
 ): DeltaPayload | null {
   if (!Number.isFinite(current) || !Number.isFinite(previous)) return null;
   if (previous <= 0) return null;

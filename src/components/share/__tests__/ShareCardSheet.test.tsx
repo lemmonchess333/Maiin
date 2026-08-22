@@ -17,7 +17,9 @@ vi.mock("@/lib/shareCardGenerator", () => ({
   shareImageFile: (...a: unknown[]) => shareImageFile(...a),
 }));
 const track = vi.fn();
-vi.mock("@/lib/socialAnalytics", () => ({ track: (...a: unknown[]) => track(...a) }));
+vi.mock("@/lib/socialAnalytics", () => ({
+  track: (...a: unknown[]) => track(...a),
+}));
 
 import { setNativeInstagramProvider } from "@/lib/shareCard/instagramShare";
 
@@ -29,7 +31,6 @@ import { setNativeInstagramProvider } from "@/lib/shareCard/instagramShare";
 vi.mock("@/hooks/useDistanceUnit", () => ({
   useDistanceUnit: () => "km" as const,
 }));
-
 
 const runData: ShareCardSheetData = {
   template: "run",
@@ -54,9 +55,7 @@ afterEach(() => {
 
 describe("ShareCardSheet — export funnel", () => {
   it("emits share_card_opened when opened", () => {
-    render(
-      <ShareCardSheet open onOpenChange={() => {}} data={runData} />
-    );
+    render(<ShareCardSheet open onOpenChange={() => {}} data={runData} />);
     expect(track).toHaveBeenCalledWith("share_card_opened", {
       template: "run",
     });
@@ -83,11 +82,14 @@ describe("ShareCardSheet — export funnel", () => {
 
     await waitFor(() => expect(generateShareImage).toHaveBeenCalled());
     // Default format/background are story/brand.
-    expect(generateShareImage).toHaveBeenCalledWith(
-      expect.anything(),
-      { format: "story", background: "brand" }
+    expect(generateShareImage).toHaveBeenCalledWith(expect.anything(), {
+      format: "story",
+      background: "brand",
+    });
+    expect(shareImageFile).toHaveBeenCalledWith(
+      file,
+      expect.stringMatching(/run/i)
     );
-    expect(shareImageFile).toHaveBeenCalledWith(file, expect.stringMatching(/run/i));
     await waitFor(() =>
       expect(track).toHaveBeenCalledWith("share_card_exported", {
         template: "run",

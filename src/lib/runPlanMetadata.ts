@@ -379,7 +379,12 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
         planTotalWeeks,
         scheduledRunId: resolvedPlannedDay?.id ?? null,
       },
-      prefill: templateToPrefill(tmpl, inputs.displayUnit, inputs.paceTable, race),
+      prefill: templateToPrefill(
+        tmpl,
+        inputs.displayUnit,
+        inputs.paceTable,
+        race
+      ),
     };
   }
 

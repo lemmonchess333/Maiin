@@ -111,7 +111,9 @@ describe("run screen — design-system invariants", () => {
     // success.
     expect("bg-red-500/20".match(RAW_PALETTE)).not.toBeNull();
     expect("text-yellow-300".match(RAW_PALETTE)).not.toBeNull();
-    expect("animate-pulse".match(/(?<!motion-safe:)animate-pulse/g)).not.toBeNull();
+    expect(
+      "animate-pulse".match(/(?<!motion-safe:)animate-pulse/g)
+    ).not.toBeNull();
   });
 });
 
