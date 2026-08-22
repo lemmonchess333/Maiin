@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { energyBarGeometry } from "@/lib/energyBarGeometry";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { THEME } from "@/lib/theme";
 import { Link } from "react-router-dom";
@@ -155,9 +156,7 @@ export default function TodayEnergy({
           </span>
         </div>
         {(() => {
-          const maxPct = Math.max(100, Math.min(calPct, 130));
-          const barWidth = Math.min((calPct / maxPct) * 100, 100);
-          const tickPos = (100 / maxPct) * 100;
+          const { barWidth, tickPct } = energyBarGeometry(calPct);
           return (
             <div className="relative h-2.5">
               <div className="absolute inset-0 rounded-full bg-muted overflow-hidden">
@@ -169,13 +168,21 @@ export default function TodayEnergy({
                   style={{ background: THEME.semantic.nutrition }}
                 />
               </div>
-              <div
-                className="absolute top-0 h-full w-0.5 rounded-full"
-                style={{
-                  left: tickPos + "%",
-                  backgroundColor: THEME.text.muted,
-                }}
-              />
+              {/* Only once the track has stretched past target — under
+                  target the track's own end IS target, and the tick was
+                  rendering as a sliver hanging off the right edge.
+                  Centred on its position: a 2px marker whose LEFT edge
+                  sits on the value misses it by its own width. */}
+              {tickPct !== null && (
+                <div
+                  aria-hidden="true"
+                  className="absolute top-0 h-full w-0.5 rounded-full -translate-x-1/2"
+                  style={{
+                    left: tickPct + "%",
+                    backgroundColor: THEME.text.muted,
+                  }}
+                />
+              )}
             </div>
           );
         })()}
