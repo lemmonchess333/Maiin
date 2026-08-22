@@ -197,3 +197,101 @@ describe("HeroDrillDownSheet — training-aware fuel", () => {
     ).toBeNull();
   });
 });
+
+/**
+ * The macro bars must move the same direction as the tile that opened this
+ * sheet.
+ *
+ * `MacroColumn` documents the property — the bar is "mode-locked to the big
+ * number's direction so both signals move in lockstep" — and this sheet was
+ * the one surface that never received the mode. It drew consumed%
+ * unconditionally, so the SAME protein data rendered as a 9.2%-full bar on
+ * the tile and an 88.7%-full bar here, one tap apart, measured off the Food
+ * capture frames.
+ *
+ * Rendered rather than unit-tested on the helper, because the helper's own
+ * suite already passes when this component ignores it: reverting the sheet
+ * to raw `pct` leaves `calorieRingFill.test.ts` green and typechecks
+ * cleanly. The wiring is the thing that broke, so the wiring is what this
+ * asserts.
+ */
+describe("HeroDrillDownSheet — bars follow the hero's display mode", () => {
+  /** Inline widths of the three MACRO bars.
+   *
+   *  Scoped to the "Macros" section deliberately. The micronutrient rows
+   *  below it use the same `h-1.5` bar, and they must NOT follow this
+   *  mode: fiber is a goal and sugar/sodium are limits, so "remaining"
+   *  does not mean the same thing there. An unscoped query caught a
+   *  fourth bar sitting at 32% in both modes — correct behaviour that a
+   *  sloppier assertion would have called a bug.
+   *
+   *  Read from `document`, not render's `container`: `BottomSheet` portals
+   *  its content to the body, which is why every other test here uses
+   *  `screen`. */
+  function barWidths(): string[] {
+    const heading = Array.from(document.querySelectorAll("p")).find(
+      (el) => el.textContent?.trim() === "Macros"
+    );
+    const section = heading?.closest("section");
+    if (!section) return [];
+    return Array.from(section.querySelectorAll<HTMLElement>("div"))
+      .filter(
+        (el) =>
+          el.style.width.endsWith("%") &&
+          (el.parentElement?.className ?? "").includes("h-1.5")
+      )
+      .map((el) => el.style.width);
+  }
+
+  /* Rendered directly rather than through `Harness`, which hardcodes
+     all-zero totals — at 0% consumed the two directions are 100 and 0,
+     which sums correctly even if one of them is a constant. Partial
+     consumption is what makes the assertion mean something. */
+  function renderAt(mode: "left" | "eaten") {
+    window.localStorage.setItem("tropos.food.calorieRingMode", mode);
+    return render(
+      <HeroDrillDownSheet
+        open
+        onOpenChange={() => {}}
+        selectedDate="2026-07-13"
+        isToday
+        dailyTotals={{
+          calories: 1000,
+          protein: 56,
+          carbs: 110,
+          fat: 30,
+          fiber: 12,
+          sugar: 20,
+          sodium: 900,
+        }}
+        dailyTargets={targets({
+          protein: 140,
+          carbs: 273,
+          fat: 61,
+        } as Partial<EffectiveTargets>)}
+      />
+    );
+  }
+
+  it("drains in LEFT mode and fills in EATEN mode — opposite, not offset", () => {
+    const { unmount } = renderAt("left");
+    const left = barWidths();
+    expect(left.length, "no macro bars rendered").toBeGreaterThanOrEqual(3);
+    unmount();
+
+    renderAt("eaten");
+    const eaten = barWidths();
+
+    expect(eaten).toHaveLength(left.length);
+    left.forEach((w, i) => {
+      const l = Number.parseFloat(w);
+      const e = Number.parseFloat(eaten[i]);
+      expect(
+        l + e,
+        `macro bar ${i}: LEFT ${w} + EATEN ${eaten[i]} should be one full ` +
+          `bar. If they are EQUAL the sheet is ignoring the mode, which is ` +
+          `the defect that put a 9% bar on the tile and an 89% bar here.`
+      ).toBeCloseTo(100, 4);
+    });
+  });
+});
