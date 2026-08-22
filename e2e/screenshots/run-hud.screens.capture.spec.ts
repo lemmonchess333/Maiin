@@ -164,29 +164,42 @@ test.describe("live run HUD", () => {
        for a control that cannot exist. (Caught by the unit pin, not by a
        CI timeout — which is the whole point of that file.)
 
-       What IS worth a second frame is the other direction: the compact
-       snap, a different layout with its own labels. The drag handle takes
-       ArrowDown, which is a far steadier way to get there than synthesising
-       a pointer drag. */
+       What IS worth more frames is the other direction. The sheet now has
+       THREE snaps (expanded → splits middle → compact bar): one ArrowDown
+       lands the splits detent — on this 150m walk that films its designed
+       sub-first-lap state (current-lap progress bar + "splits appear
+       after each km"), which is exactly why that state exists as real
+       copy rather than an empty box — and a second ArrowDown lands the
+       compact bar. The drag handle takes ArrowDown, which is a far
+       steadier way to step through them than synthesising pointer
+       drags. */
     const handle = page.getByRole("button", {
       name: /drag to resize the run panel/i,
     });
-    const collapsed = await handle
+    const stepped = await handle
       .focus({ timeout: 4_000 })
       .then(async () => {
         await handle.press("ArrowDown");
         return true;
       })
       .catch(() => false);
-    if (collapsed) {
+    if (stepped) {
+      await page.waitForTimeout(700);
+      await page.screenshot({
+        animations: "disabled",
+        path: "screenshots/run-hud-splits.png",
+        fullPage: false,
+      });
+      await handle.press("ArrowDown").catch(() => {});
       await page.waitForTimeout(700);
       await page.screenshot({
         animations: "disabled",
         path: "screenshots/run-hud-compact.png",
         fullPage: false,
       });
-      // Back to the expanded snap so the paused frame below is comparable
-      // to the active one.
+      // Back up to the expanded snap (two steps) so the paused frame
+      // below is comparable to the active one.
+      await handle.press("ArrowUp").catch(() => {});
       await handle.press("ArrowUp").catch(() => {});
       await page.waitForTimeout(700);
     }

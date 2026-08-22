@@ -36,7 +36,7 @@ export default function PRCard({
       }}
     >
       <div className="px-4 pt-4 pb-3 flex items-center gap-2 border-b border-border/30">
-        <Trophy className="size-4 text-amber-500" />
+        <Trophy className="size-4 text-achievement" />
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-semibold text-foreground">{title}</h3>
           {subtitle && (

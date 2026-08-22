@@ -223,7 +223,7 @@ function FoodSuggestionsDropdown({
               the same rows framed as EXAMPLES, not as their own history. */}
           <div className="px-4 pt-2 pb-1 flex items-center gap-1.5">
             {!quickAdd.asExamples && (
-              <Star aria-hidden="true" className="size-3 text-amber-500" />
+              <Star aria-hidden="true" className="size-3 text-achievement" />
             )}
             <SectionLabel as="span" tier="section">
               {quickAdd.asExamples ? "Examples" : "Quick Add"}
@@ -277,7 +277,7 @@ function FoodSuggestionsDropdown({
               dropdown stays scannable as one continuous list when
               local DB + OFF results follow. */}
           <div className="px-4 pt-2 pb-1 flex items-center gap-1.5">
-            <Star aria-hidden="true" className="size-3 text-amber-500" />
+            <Star aria-hidden="true" className="size-3 text-achievement" />
             <span className="text-caption uppercase tracking-wide text-muted-foreground font-medium">
               Your pantry
             </span>

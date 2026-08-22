@@ -38,22 +38,35 @@ describe("projectAndSnap", () => {
   });
 });
 
-describe("projectAndSnap — the run sheet's ACTUAL two-snap config (D24)", () => {
-  /* SNAPS = [0.13, 0.91] at an 852px viewport → tops [741, 77]. The dead
-     0.4 middle detent is gone; a release anywhere between the two ends
-     must resolve to one of them, never hover. */
-  const TWO = [741, 77];
+describe("projectAndSnap — the run sheet's ACTUAL config (three snaps, splits middle)", () => {
+  /* SNAPS = [0.13, 0.42, 0.91] at an 852px viewport → tops
+     [741, 494, 77]. History: the ORIGINAL 0.4 middle rendered nothing
+     the compact bar didn't and was removed (D24, 2026-08-22); this
+     middle is its designed successor — the splits list — restored the
+     same day as its own change. A release anywhere in the travel must
+     resolve to one of the three detents, never hover. */
+  const PROD = [741, 494, 77];
 
-  it("resolves the whole travel to exactly the two detents", () => {
+  it("resolves the whole travel to exactly the three detents", () => {
     for (let top = 77; top <= 741; top += 83) {
-      const idx = projectAndSnap(top, 0, TWO);
-      expect([0, 1]).toContain(idx);
+      const idx = projectAndSnap(top, 0, PROD);
+      expect([0, 1, 2]).toContain(idx);
     }
-    expect(projectAndSnap(700, 0, TWO)).toBe(0);
-    expect(projectAndSnap(120, 0, TWO)).toBe(1);
+    expect(projectAndSnap(700, 0, PROD)).toBe(0);
+    expect(projectAndSnap(500, 0, PROD)).toBe(1);
+    expect(projectAndSnap(120, 0, PROD)).toBe(2);
   });
 
-  it("a downward flick from expanded lands compact — there is no middle to catch it", () => {
-    expect(projectAndSnap(77, 4000, TWO)).toBe(0);
+  it("a moderate downward flick from expanded lands the splits middle", () => {
+    // Momentum projects vel*0.12s past the finger: 2500px/s from the top
+    // (77) projects to 377 — nearest detent 494, the middle catches it.
+    // The expanded→middle crossover sits at ~1740px/s.
+    expect(projectAndSnap(77, 2500, PROD)).toBe(1);
+  });
+
+  it("a hard downward flick from expanded skips the middle to compact", () => {
+    // 6000px/s projects to 797 — past the middle/compact crossover
+    // (~4500px/s), straight to the bar.
+    expect(projectAndSnap(77, 6000, PROD)).toBe(0);
   });
 });

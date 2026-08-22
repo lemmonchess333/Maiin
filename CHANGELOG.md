@@ -6,6 +6,34 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Readability pass across the whole app.** Secondary text is slightly
+  darker in light mode and slightly brighter in dark mode, tuned so every
+  caption clears accessibility contrast on the surface it actually sits
+  on. The dozens of small labels that previously rendered too faint —
+  badge progress, challenge milestones, analytics verdicts, deload
+  advisories, chart deltas — are now legible in both themes.
+- **Warnings look like warnings.** Cautionary messages (deload
+  suggestions, injury flags, form cues, off-route alerts) now use a
+  distinct amber, separate from the orange that marks food and calories —
+  previously the two were the same colour.
+- **The live run screen is easier to read on the move.** Stat labels and
+  run controls moved up from 8–9px to a consistent legible size with
+  proper contrast, and the stats panel now has two positions — compact
+  bar or expanded — instead of three, removing a middle stop that showed
+  nothing extra.
+- **One date and one unit style everywhere.** Dates render day-first
+  ("22 Aug", "Saturday 23 August") regardless of the phone's region —
+  previously several screens (and shared workout images) showed the
+  American order on US-region devices. Units are consistently spaced
+  ("60 kg", "5.2 km", "400 m").
+- **Small layout fixes.** Horizontal carousels (Spaces, Races) no longer
+  pin their first card flush to the screen edge; the duplicate
+  "Performance" label on Home is gone; PR trophies use one consistent
+  gold; badge and challenge tier colours stay on the artwork instead of
+  making text unreadable.
+
 ### Important — sync before updating
 
 - **Offline changes queued by an older version are discarded when you update.**

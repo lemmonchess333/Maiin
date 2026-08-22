@@ -432,7 +432,7 @@ export default function ExerciseHistory() {
           {!isTimed && (
             <div className="rounded-2xl bg-card p-4 space-y-3 card-shadow">
               <div className="flex items-center gap-2">
-                <Trophy className="size-4 text-amber-500" />
+                <Trophy className="size-4 text-achievement" />
                 <h3 className="text-sm font-semibold text-foreground">
                   {isBodyweight ? "Personal bests by reps" : "Rep-range PRs"}
                 </h3>
