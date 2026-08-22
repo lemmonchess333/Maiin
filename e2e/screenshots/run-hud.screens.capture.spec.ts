@@ -140,10 +140,15 @@ test.describe("live run HUD", () => {
         "setup screen or the countdown while claiming to be the HUD"
     ).toBeVisible({ timeout: 30_000 });
 
-    // 50 more at 6m puts ~300m and a settled rolling pace on the display —
-    // enough for every figure and unit label to render in its real state,
-    // which an all-zero HUD does not do.
-    await walk(page, 50, 4);
+    /* 25 more at 6m — ~150m over 50s, which is all the frame needs: every
+       figure and unit label rendering in a real state rather than at zero.
+       Sized against the BUDGET, not against what would be nice. The capture
+       job caps at 15 minutes, `workers: 1` makes it serial, and
+       `retries: 2` means a failure costs this test's wall-clock THREE
+       times. 300m would have been 108s of deliberate waiting, so 5.4
+       minutes on the retry path for one frame. 150m proves the same thing
+       for half. */
+    await walk(page, 25, 4);
 
     await page.screenshot({
       animations: "disabled",
