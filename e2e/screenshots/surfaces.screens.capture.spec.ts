@@ -189,7 +189,14 @@ test.describe(`home + food surfaces (${PHASE})`, () => {
        is worth failing on, and shooting anyway is how you get a frame
        that lies about what it shows. */
     await expect(
-      page.getByText(/\/ [1-9][\d,]* kcal/).first(),
+      // Separator-agnostic. `formatCalories` is `toLocaleString()` with no
+      // locale, so grouping follows the RUNTIME: "2,200" on en-US,
+      // "2.200" on de-DE, "2 200" (U+202F) on fr-FR. A comma-only pattern
+      // is a bet on the CI runner's locale; the class below covers all
+      // three and still refuses a leading zero, which is the actual
+      // signal. Pinned against a real render in
+      // `energyCaptureAnchor.test.tsx`, including this runtime's grouping.
+      page.getByText(/\/ [1-9][\d.,\s\u00a0\u202f]*kcal/).first(),
       "the energy card never loaded its target — the frame would capture " +
         "the pre-load state, which is what made this frame swing 267px"
     ).toBeVisible({ timeout: 20_000 });

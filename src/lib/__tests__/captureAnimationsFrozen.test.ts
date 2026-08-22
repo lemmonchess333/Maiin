@@ -269,11 +269,26 @@ describe("capture specs — fullPage shots settle the document height", () => {
  *
  *     races-directory-light   10.88%  ->  unchanged  ->  0.56%
  *
- * `badges-grid-dark` is the second adopter, and it was diagnosed the same
- * way rather than by analogy: it churned 1.70% / 1.46% / 1.21% across
- * three consecutive captures whatever changed in the app, and its diff
- * mask is three bands of 62-64px against a `BadgeHex` that renders at
- * size={64} — one band per row of art, nothing else moving.
+ * `badges-grid` is the second adopter, diagnosed the same way rather than
+ * by analogy: it churned 1.70% / 1.46% / 1.21% across three consecutive
+ * captures whatever changed in the app, and its mask is bands of 62-64px
+ * against a `BadgeHex` that renders at size={64} — one band per row of
+ * art, nothing else moving.
+ *
+ * IT DID NOT FIX THAT FRAME, measured on the next capture: light went to
+ * 4.14%, its worst reading yet, and dark to 1.44%. Seven bands, all
+ * 63-64px, still art-only. Kept anyway — the badge art IS a real `<img>`
+ * and decoding it is correct on its own terms — but not claimed as the
+ * cure, and `races-directory` remains the only frame this helper is known
+ * to have closed.
+ *
+ * What the mask rules OUT is worth recording, because it is the obvious
+ * next guess: it is NOT the tier drop-shadow. That filter spreads ~9px
+ * beyond the art box, so a shadow-timing difference would produce ~82px
+ * bands; these are exactly the 64px art box. The bitmap itself differs.
+ * A live hypothesis nobody has tested is that the grid mounts its images
+ * after `settleImages` snapshots `document.images`, which would make the
+ * await a no-op — but that is a guess, and it is a P3 frame.
  *
  * A ratchet again, for the same reason as the height one: the remaining
  * specs shoot pages whose imagery has not been looked at, and a

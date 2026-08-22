@@ -600,13 +600,24 @@ an hour:
   from a real one — the frame needs an anchor on the DATA it exists to
   show. `e2e/helpers/settleHeight.ts` is still worth calling before a
   fullPage shot; it just is not that fix.
-- **Raster art needs `img.decode()`**, and this one IS generic.
+- **Raster art often needs `img.decode()`** —
   `e2e/helpers/settleImages.ts` took `races-directory-light` from 10.88%
-  to unchanged. Diagnose by band before adopting it: `badges-grid-dark`
-  churned 1.70/1.46/1.21% across three captures and its mask is three
-  bands of 62-64px against a `BadgeHex` rendered at `size={64}` — one
-  band per row of art. Both ratchets live in
+  to unchanged. But it is not a universal cure: adopted on
+  `badges-grid` (mask: bands of exactly 62-64px against a `BadgeHex`
+  rendered at `size={64}`, i.e. art and nothing else), that frame got
+  WORSE — light 4.14%, its worst reading. Still unexplained. The mask
+  rules out the tier drop-shadow, which spreads ~9px and would give
+  ~82px bands. Diagnose by band, adopt, then MEASURE the next capture —
+  do not assume the helper worked. Both ratchets live in
   `src/lib/__tests__/captureAnimationsFrozen.test.ts`.
+- **`home-energy-default-after` is the one that took a content anchor.**
+  Five heights across five captures, unfixed by height-settling, because
+  Home renders its loading states as empty states. Anchoring on the data
+  (a non-zero calorie target) held it steady across two runs. The anchor
+  is pinned against a real render in `energyCaptureAnchor.test.tsx`,
+  including the runtime's number grouping — `formatCalories` is
+  `toLocaleString()` with no locale, so a comma-only pattern is a bet on
+  the CI runner's locale.
 
 Localise before diagnosing: read the `diffs/` highlight and find the
 y-band the changed pixels occupy. If it is the map, or a sheet, suspect
