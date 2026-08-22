@@ -1,4 +1,5 @@
 import { useState } from "react";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Droplets } from "lucide-react";
 import { THEME } from "@/lib/theme";
@@ -80,12 +81,7 @@ export default function WaterSizeSheet({
             />
           </div>
           <div className="min-w-0">
-            <p
-              className="text-xs font-medium"
-              style={{ color: THEME.text.muted }}
-            >
-              Water today
-            </p>
+            <SectionLabel>Water today</SectionLabel>
             <p className="text-lg font-bold leading-tight text-foreground font-mono tabular-nums">
               {formatVolume(consumedMl)}
               <span

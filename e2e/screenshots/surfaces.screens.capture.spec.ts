@@ -162,14 +162,26 @@ test.describe(`home + food surfaces (${PHASE})`, () => {
     });
     await shoot(page, "home-energy-default");
 
-    // Open the day peek. Must be a NON-today cell: `handleDayTap` treats
-    // a tap on today as redundant with the live session cards below and
-    // scrolls to them instead of peeking (Cal-A), so targeting "today"
-    // silently captures the wrong screen — which is what the first run
-    // of this spec did. Day-cell labels carry a "(today)" suffix, so the
-    // absence of it is the selector.
+    /* Open the day peek. Must be a NON-today cell: `handleDayTap` treats
+       a tap on today as redundant with the live session cards below and
+       scrolls to them instead of peeking (Cal-A), so targeting "today"
+       silently captures the wrong screen — which is what the first run
+       of this spec did.
+
+       The previous selector — /day, \w+ \d+$/ — used `$` to mean "no
+       (today) suffix", and it had been dead for as long as WeekStrip's
+       label carried a training descriptor. The real name is
+       "Saturday, August 23, lift day", so anchoring on the date's END
+       can never match: something always follows it. It matched nothing,
+       every run, and the only symptom was this spec timing out and
+       `home-day-peek` silently dropping out of the capture set — the
+       same rot that had frozen the whole channel earlier.
+
+       Stated as what it means instead: a day cell, without "(today)"
+       anywhere in its name. That survives another descriptor being
+       appended, which is exactly what broke the last one. */
     const otherDay = page
-      .getByRole("button", { name: /day, \w+ \d+$/ })
+      .getByRole("button", { name: /^(?!.*\(today\))\w+day, \w+ \d+,/ })
       .first();
     await otherDay.click({ timeout: 10_000 });
     await expect(page.getByText(/manage day|no sessions/i).first()).toBeVisible(

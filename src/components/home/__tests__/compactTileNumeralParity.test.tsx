@@ -108,6 +108,44 @@ describe("Home compact tiles share one numeral tier", () => {
     }
   });
 
+  it("both tiles name themselves in the same register", () => {
+    /* Water rendered "Water" in sentence case beside "WEIGHT" in the
+       canonical uppercase, because it hand-rolled `text-xs font-medium`
+       instead of using `SectionLabel` — one of the last survivors of the
+       ~60 variants that primitive was created to consolidate. Same
+       peer-tile mismatch as the numeral tier, one line further up the
+       card. */
+    const { container: water } = render(
+      <WaterCard compact ml={0} targetMl={2000} onLog={vi.fn()} />
+    );
+    const { container: weight } = render(
+      <WeightStepsTiles
+        lastWeight="70.0"
+        weightUnit="kg"
+        onLogWeight={vi.fn()}
+        lastWeightDate="From profile"
+      />
+    );
+
+    const labelOf = (root: HTMLElement, text: string) => {
+      const el = Array.from(root.querySelectorAll("p")).find(
+        (p) => p.textContent?.trim() === text
+      );
+      if (!el) throw new Error(`no "${text}" label in ${root.innerHTML}`);
+      return el;
+    };
+
+    for (const [root, text] of [
+      [water, "Water"],
+      [weight, "Weight"],
+    ] as const) {
+      expect(
+        labelOf(root, text),
+        `"${text}" is not the canonical label`
+      ).toHaveClass("uppercase");
+    }
+  });
+
   it("both tiles keep their unit secondary to the figure", () => {
     const { container: water } = render(
       <WaterCard compact ml={0} targetMl={2000} onLog={vi.fn()} />

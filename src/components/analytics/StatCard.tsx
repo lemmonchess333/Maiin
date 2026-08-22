@@ -1,5 +1,6 @@
-import { ResponsiveContainer, AreaChart, Area } from "recharts";
+import { ResponsiveContainer, AreaChart, Area, YAxis } from "recharts";
 import ChartAreaGradient from "./ChartAreaGradient";
+import { sparklineDomain } from "@/lib/sparklineDomain";
 import { THEME } from "@/lib/theme";
 import SectionLabel from "@/components/ui/SectionLabel";
 
@@ -128,6 +129,11 @@ export default function StatCard({
               data={sparklineData!.map((v, i) => ({ v, i }))}
               margin={{ top: 1, right: 0, bottom: 0, left: 0 }}
             >
+              {/* Without this the axis defaults to [0, dataMax], which
+                  pins every series to the top of the band and turns a
+                  steady one into a solid slab — Avg Pace beside Monthly
+                  Distance was the visible case. */}
+              <YAxis hide domain={sparklineDomain(sparklineData!)} />
               <ChartAreaGradient id={gradientId} color={accentColor} />
               <Area
                 type="monotone"

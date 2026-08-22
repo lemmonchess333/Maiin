@@ -5,6 +5,7 @@ import { Droplets, Plus, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
+import SectionLabel from "@/components/ui/SectionLabel";
 import WaterWave from "@/components/home/WaterWave";
 import WaterBubbles from "@/components/home/WaterBubbles";
 import WaterSizeSheet from "@/components/home/WaterSizeSheet";
@@ -117,12 +118,12 @@ export default function WaterCard({
                   style={{ color: THEME.semantic.hydration }}
                 />
               </div>
-              <p
-                className="text-xs font-medium"
-                style={{ color: THEME.text.muted }}
-              >
-                Water
-              </p>
+              {/* SectionLabel, not a hand-rolled label: the weight tile
+                  beside it uses the primitive, so this one rendered
+                  "Water" in sentence case next to "WEIGHT" in the
+                  canonical uppercase — the same peer-tile mismatch as the
+                  numeral tier below, one line up. */}
+              <SectionLabel>Water</SectionLabel>
             </div>
             {/* Matches the weight tile beside it, which is the canonical
                 compact-tile numeral treatment (text-2xl / 800, unit at
@@ -218,12 +219,7 @@ export default function WaterCard({
             />
           </div>
           <div className="flex-1 min-w-0">
-            <p
-              className="text-xs font-medium"
-              style={{ color: THEME.text.muted }}
-            >
-              Water
-            </p>
+            <SectionLabel>Water</SectionLabel>
             <p className="text-2xl font-extrabold leading-none text-foreground font-mono tabular-nums">
               {formatLitresValue(ml)}
               <span
