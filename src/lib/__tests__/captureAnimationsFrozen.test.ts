@@ -170,6 +170,22 @@ describe("capture specs — theme toggles settle before the shot", () => {
  * fold is still mounting. A frame that swings 267px between runs cannot be
  * diffed, which means a real regression has somewhere to hide.
  *
+ * CORRECTION, measured on the next capture: settling the height did NOT
+ * close that frame. It came back 1358 — a third distinct value. Reading
+ * both frames showed why: each is painted to its bottom edge, so neither
+ * is a half-mounted page. The difference is CONTENT — one carries
+ * "70.0 kg / From profile" and a real calorie total, the other "Tap to
+ * log" and a partial line. Home renders its loading states as ordinary
+ * EMPTY states rather than skeletons, so they are height-stable for
+ * longer than any settle window and the helper returns on a stable page
+ * that is not the final one. Nothing generic can separate a loading empty
+ * state from a real one; that frame needed a content anchor in the spec,
+ * which it now has.
+ *
+ * The helper is kept on its own merits — a fullPage shot should wait for
+ * layout — and the assertion below stays because that property is worth
+ * holding. It is no longer claimed as the fix for that frame.
+ *
  * This is a RATCHET, not a clean bill. Only `surfaces` is fixed — it is
  * the one where the flake was measured, and the other specs shoot pages
  * whose settling behaviour has not been reasoned about individually.
@@ -237,5 +253,96 @@ describe("capture specs — fullPage shots settle the document height", () => {
             `UNSETTLED_FULLPAGE_SPECS to lock the gain in. At 0, delete this ` +
             `ratchet and assert the property outright.`
     ).toBe(UNSETTLED_FULLPAGE_SPECS);
+  });
+});
+
+/**
+ * Specs whose frames contain raster art wait for it to DECODE.
+ *
+ * D25's residue, and the third member of the same family: an anchor that
+ * does not anchor the thing being measured. `animations: "disabled"` fixed
+ * transitions, `settleFullPageHeight` fixed late-mounting layout, and
+ * neither says anything about whether an image's pixels are ready.
+ *
+ * The probe shipped on ONE spec deliberately, to be judged rather than
+ * swept, and it earned its verdict:
+ *
+ *     races-directory-light   10.88%  ->  unchanged  ->  0.56%
+ *
+ * `badges-grid-dark` is the second adopter, and it was diagnosed the same
+ * way rather than by analogy: it churned 1.70% / 1.46% / 1.21% across
+ * three consecutive captures whatever changed in the app, and its diff
+ * mask is three bands of 62-64px against a `BadgeHex` that renders at
+ * size={64} — one band per row of art, nothing else moving.
+ *
+ * A ratchet again, for the same reason as the height one: the remaining
+ * specs shoot pages whose imagery has not been looked at, and a
+ * speculative sweep across specs this sandbox cannot run costs a CI cycle
+ * to find out. Adopt where a diff mask points, then lower the number.
+ */
+const UNSETTLED_IMAGE_SPECS = 26;
+
+describe("capture specs — raster art is decoded before the shutter", () => {
+  const files = specFiles(e2eRoot);
+
+  function withoutImageSettle(): string[] {
+    return files
+      .filter((f) => {
+        const src = readFileSync(f, "utf8");
+        // The CALL, not the identifier — an import alone is a half-edit.
+        return (
+          /\.screenshot\(/.test(src) && !/await\s+settleImages\s*\(/.test(src)
+        );
+      })
+      .map((f) => relative(repoRoot, f))
+      .sort();
+  }
+
+  it("the two diagnosed specs settle images", () => {
+    for (const rel of [
+      "screenshots/races.screens.capture.spec.ts",
+      "screenshots/home.screens.capture.spec.ts",
+    ]) {
+      const src = readFileSync(resolve(e2eRoot, rel), "utf8");
+      expect(
+        src,
+        `${rel} was diagnosed from its diff mask as image-driven churn and ` +
+          `must await settleImages before shooting`
+      ).toMatch(/await\s+settleImages\s*\(/);
+    }
+  });
+
+  it("the helper exists and decodes rather than polling .complete", () => {
+    /* `complete` is true for a FAILED load too, so polling it would report
+       ready for exactly the images that never painted. Pinned because the
+       cheap-looking substitution is the wrong one. */
+    const helper = readFileSync(
+      resolve(e2eRoot, "helpers/settleImages.ts"),
+      "utf8"
+    );
+    expect(helper).toContain("export async function settleImages");
+    expect(helper).toContain(".decode()");
+    /* Comments stripped before the negative check — the docstring
+       explains why `.complete` is the wrong probe, and matching prose
+       would fail the file for saying so. Same reason `componentReachability`
+       strips comments before matching. */
+    const code = helper
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/\/\/.*$/gm, "");
+    expect(code).not.toMatch(/\.complete\b/);
+  });
+
+  it("the set of specs without image settling does not grow", () => {
+    const offenders = withoutImageSettle();
+    expect(
+      offenders.length,
+      offenders.length > UNSETTLED_IMAGE_SPECS
+        ? `A new capture spec shoots without awaiting settleImages. If its ` +
+            `frames carry raster art they will churn run-to-run and the ` +
+            `frame stops being diffable.\n` +
+            offenders.join("\n")
+        : `Specs without image settling dropped to ${offenders.length} — ` +
+            `lower UNSETTLED_IMAGE_SPECS to lock the gain in.`
+    ).toBe(UNSETTLED_IMAGE_SPECS);
   });
 });

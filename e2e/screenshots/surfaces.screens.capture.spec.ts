@@ -171,6 +171,28 @@ test.describe(`home + food surfaces (${PHASE})`, () => {
     await expect(page.getByText(/today's energy/i)).toBeVisible({
       timeout: 30_000,
     });
+    /* Then anchor on the DATA, not the heading. The heading renders
+       immediately; the card's target arrives from the profile, and until
+       it does the card shows "/ 0 kcal" and the weight tile beside it
+       shows "Tap to log" — a legitimate empty state, not a skeleton, so
+       nothing generic can tell the two apart.
+
+       That is what made this frame undiffable: it measured 1191 -> 1190
+       -> 1458 -> 1191 -> 1358 across five captures. Settling the document
+       height (added first, and kept — a fullPage shot should wait for
+       layout) does NOT fix it, measured: the loading state is itself
+       height-stable for longer than the settle window, so the helper
+       returns on a stable page that is not the final one.
+
+       A non-zero target is the readiness signal. Hard assertion rather
+       than best-effort: if Home cannot load its energy target in 20s that
+       is worth failing on, and shooting anyway is how you get a frame
+       that lies about what it shows. */
+    await expect(
+      page.getByText(/\/ [1-9][\d,]* kcal/).first(),
+      "the energy card never loaded its target — the frame would capture " +
+        "the pre-load state, which is what made this frame swing 267px"
+    ).toBeVisible({ timeout: 20_000 });
     await shoot(page, "home-energy-default");
 
     /* Open the day peek. Must be a NON-today cell: `handleDayTap` treats

@@ -11,6 +11,7 @@
  */
 import { test, type Page } from "@playwright/test";
 import { signInAsTestUser } from "../helpers/auth";
+import { settleImages } from "../helpers/settleImages";
 import { emulatorActive } from "../helpers/emulator";
 import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
 
@@ -62,15 +63,6 @@ test.describe("races & events directory screenshots", () => {
    * the other helpers. If it does not, the hypothesis was wrong and the
    * cost was one file.
    */
-  async function settleImages(page: Page) {
-    await page
-      .evaluate(async () => {
-        const imgs = Array.from(document.images);
-        await Promise.all(imgs.map((i) => i.decode().catch(() => undefined)));
-      })
-      .catch(() => undefined);
-  }
-
   async function shoot(page: Page, name: string) {
     await settleImages(page);
     await page.screenshot({

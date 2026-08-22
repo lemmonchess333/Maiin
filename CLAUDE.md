@@ -589,6 +589,24 @@ an hour:
 - **Map frames** (`run-detail`) vary with MapLibre tile-load timing.
   The tell is that every changed pixel sits inside the map's y-band.
 - A frame moving by **0.1-0.7%** is usually antialiasing, not a change.
+- **Frames whose height changes** are a different problem from frames
+  whose pixels change, and the tempting fix does not work.
+  `home-energy-default-after` measured 1191 → 1190 → 1458 → 1191 → 1358
+  across five captures. Waiting for the document height to settle does
+  NOT close it: Home renders its loading states as ordinary EMPTY states
+  (`—` / "Tap to log") rather than skeletons, so they are height-stable
+  for longer than any settle window, and the shot lands on a page that is
+  stable but not final. Nothing generic separates a loading empty state
+  from a real one — the frame needs an anchor on the DATA it exists to
+  show. `e2e/helpers/settleHeight.ts` is still worth calling before a
+  fullPage shot; it just is not that fix.
+- **Raster art needs `img.decode()`**, and this one IS generic.
+  `e2e/helpers/settleImages.ts` took `races-directory-light` from 10.88%
+  to unchanged. Diagnose by band before adopting it: `badges-grid-dark`
+  churned 1.70/1.46/1.21% across three captures and its mask is three
+  bands of 62-64px against a `BadgeHex` rendered at `size={64}` — one
+  band per row of art. Both ratchets live in
+  `src/lib/__tests__/captureAnimationsFrozen.test.ts`.
 
 Localise before diagnosing: read the `diffs/` highlight and find the
 y-band the changed pixels occupy. If it is the map, or a sheet, suspect
