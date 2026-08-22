@@ -98,7 +98,7 @@ describe("range input — the app's only drag control", () => {
         "the first attempt at this produced."
     ).toMatch(/var\(--range-pct/);
     expect(rule, "the fill must come from a token, not a literal").toMatch(
-      /hsl\(var\(--primary-strong\)\)/
+      /hsl\(var\(--primary\)\)/
     );
     expect(rule, "the groove must come from a token, not a literal").toMatch(
       /hsl\(var\(--muted\)\)/
@@ -115,7 +115,7 @@ describe("range input — the app's only drag control", () => {
       progress,
       "no ::-moz-range-progress — Firefox has no fill"
     ).not.toBeNull();
-    expect(progress).toMatch(/hsl\(var\(--primary-strong\)\)/);
+    expect(progress).toMatch(/hsl\(var\(--primary\)\)/);
     expect(progress, "Firefox should not need the custom property").not.toMatch(
       /var\(--range-pct/
     );

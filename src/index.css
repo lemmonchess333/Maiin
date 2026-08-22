@@ -820,12 +820,24 @@ input[type="range"] {
 /* 6px of visual thickness on the TRACK, inside a 44px hit box — the
    distinction the original bug collapsed by putting the height on the
    input. Chromium centres the runnable track in the input's box. */
+/* `--primary`, NOT `--primary-strong`. The -strong step exists for AA
+   TEXT on a filled CTA, and a track fill carries no text — so here it
+   buys nothing and costs contrast where it matters. Measured against
+   `--muted` (the groove) in each theme:
+
+     --primary-strong   light 4.92:1   dark 2.87:1
+     --primary          light 3.61:1   dark 3.36:1
+
+   The fill/groove edge is what tells you where the value sits, so
+   WCAG 1.4.11's 3:1 non-text floor applies to it. `-strong` misses that
+   in dark. Pinned by tokenContrast.test.ts, which measures rather than
+   naming the token. */
 input[type="range"]::-webkit-slider-runnable-track {
   height: 6px;
   border-radius: 999px;
   background: linear-gradient(
     to right,
-    hsl(var(--primary-strong)) 0 var(--range-pct, 0%),
+    hsl(var(--primary)) 0 var(--range-pct, 0%),
     hsl(var(--muted)) var(--range-pct, 0%) 100%
   );
 }
@@ -839,7 +851,7 @@ input[type="range"]::-webkit-slider-thumb {
   height: 20px;
   margin-top: -7px;
   border-radius: 999px;
-  background: hsl(var(--primary-strong));
+  background: hsl(var(--primary));
   /* A card-coloured ring so the thumb stays legible where it overlaps its
      own fill — without it the two are the same colour and the thumb
      disappears at the right-hand end of the travel. */
@@ -856,14 +868,14 @@ input[type="range"]::-moz-range-track {
 input[type="range"]::-moz-range-progress {
   height: 6px;
   border-radius: 999px;
-  background: hsl(var(--primary-strong));
+  background: hsl(var(--primary));
 }
 
 input[type="range"]::-moz-range-thumb {
   width: 20px;
   height: 20px;
   border-radius: 999px;
-  background: hsl(var(--primary-strong));
+  background: hsl(var(--primary));
   border: 2px solid hsl(var(--card));
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
 }

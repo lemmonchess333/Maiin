@@ -424,3 +424,55 @@ describe("the static JS hexes these replaced", () => {
     expect(onLightCard("#4DB872")).toBeLessThan(3);
   });
 });
+
+describe("the range track's fill/groove edge — WCAG 1.4.11", () => {
+  /* The edge between the filled and unfilled halves of the run-days
+     slider is the ONLY thing that says where the value sits, so it is
+     "visual information required to identify the state of a UI
+     component" — the 3:1 non-text bar, in both themes.
+
+     This exists because naming the token is not the same as checking it.
+     The obvious pick was `--primary-strong`, and it is the pick the rest
+     of the app makes for anything filled and brand-coloured — but that
+     step is tuned for AA TEXT sitting ON the fill, which a track does not
+     have. Measured against `--muted`, it lands at 2.87:1 in dark: an
+     improvement on the inverted UA groove it replaced, and still under
+     the floor. `--primary` clears it in both directions.
+
+     So the assertion measures rather than naming a token. A future
+     retune of either token, or a swap back to `-strong`, fails here
+     rather than shipping a slider you cannot read in the dark. */
+  it.each(["light", "dark"] as const)(
+    "the fill is at least 3:1 against the groove in %s",
+    (theme) => {
+      const b = theme === "light" ? lightBlock() : darkBlock();
+      const fill = hslToRgb(...readHsl(b, "primary"));
+      const groove = hslToRgb(...readHsl(b, "muted"));
+      const ratio = contrast(fill, groove);
+      expect(
+        ratio,
+        `--primary is ${ratio.toFixed(2)}:1 against --muted in ${theme}. ` +
+          `That edge is the slider's only state indication, so it needs ` +
+          `3:1 (WCAG 1.4.11). --primary-strong measures 2.87:1 here, which ` +
+          `is why the track does not use it.`
+      ).toBeGreaterThanOrEqual(AA_LARGE);
+    }
+  );
+
+  it("records why --primary-strong is NOT the track fill", () => {
+    // The executable form of the comment above — if a retune ever makes
+    // -strong viable, this fails and the choice can be revisited.
+    const dark = darkBlock();
+    const ratio = contrast(
+      hslToRgb(...readHsl(dark, "primary-strong")),
+      hslToRgb(...readHsl(dark, "muted"))
+    );
+    expect(
+      ratio,
+      `--primary-strong now measures ${ratio.toFixed(2)}:1 against the ` +
+        `dark groove. It was rejected as the track fill at 2.87:1; if it ` +
+        `clears 3:1 now, the index.css comment explaining the choice is ` +
+        `stale.`
+    ).toBeLessThan(AA_LARGE);
+  });
+});
