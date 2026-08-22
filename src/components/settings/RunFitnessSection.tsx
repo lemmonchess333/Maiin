@@ -13,6 +13,7 @@ import {
 } from "@/lib/runPaces";
 import { usePaceInsight } from "@/hooks/usePaceInsight";
 import PaceInsightCard from "@/components/run/PaceInsightCard";
+import { formatDayMonth } from "@/utils/formatters";
 import type { UserProfile } from "@/lib/auth";
 
 /**
@@ -157,7 +158,7 @@ export default function RunFitnessSection({
                   From your{" "}
                   {fitness?.source === "derived"
                     ? fitness?.sourceRunAt
-                      ? `run on ${new Date(fitness.sourceRunAt).toLocaleDateString(undefined, { day: "numeric", month: "short" })}`
+                      ? `run on ${formatDayMonth(new Date(fitness.sourceRunAt))}`
                       : "recent runs"
                     : "recent race"}{" "}
                   · VDOT{" "}

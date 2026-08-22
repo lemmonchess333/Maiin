@@ -72,6 +72,18 @@ export function formatDayMonthYear(d: Date): string {
   });
 }
 
+/** "Saturday 22 August" — the long weekday form (sheet subtitles). The
+ *  en-GB order, like the two helpers above: an absent locale follows the
+ *  DEVICE, so it renders "Saturday, August 22" on a US phone — the bug
+ *  class a 2026-08-22 sweep found six of. */
+export function formatWeekdayDayMonth(d: Date): string {
+  return d.toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+}
+
 /** Format distance, showing "—" when zero/null */
 export function formatDistance(km: number | null | undefined): string {
   if (!km || km <= 0) return "\u2014";

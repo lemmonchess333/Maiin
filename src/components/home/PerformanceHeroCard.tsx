@@ -111,19 +111,11 @@ export default function PerformanceHeroCard({
         className="block p-4 rounded-2xl bg-card active:scale-[0.98] transition-transform card-shadow"
         aria-label="Performance — loading"
       >
-        <div className="flex items-center gap-2 mb-3">
-          <Activity
-            className="size-4"
-            style={{ color: "hsl(var(--muted-foreground))" }}
-            aria-hidden="true"
-          />
-          <p
-            className="text-xs font-medium"
-            style={{ color: "hsl(var(--muted-foreground))" }}
-          >
-            Performance
-          </p>
-        </div>
+        {/* No in-card "Performance" eyebrow — D20 (2026-08-22): Home's
+            SectionLabel directly above this card already says the word,
+            so the card repeated it 40px below its own section header in
+            every branch. The section label owns the word; aria-labels
+            keep it for the accessibility tree. */}
         <EmptyRing />
       </Link>
     );
@@ -137,19 +129,7 @@ export default function PerformanceHeroCard({
   if (!currentWeek) {
     return (
       <div className="p-4 rounded-2xl bg-card card-shadow">
-        <div className="flex items-center gap-2 mb-1">
-          <Activity
-            className="size-4"
-            style={{ color: "hsl(var(--muted-foreground))" }}
-            aria-hidden="true"
-          />
-          <p
-            className="text-xs font-medium"
-            style={{ color: "hsl(var(--muted-foreground))" }}
-          >
-            Performance
-          </p>
-        </div>
+        {/* Eyebrow removed — D20; see the loading branch's note. */}
         <EmptyState
           compact
           icon={Activity}
@@ -221,19 +201,9 @@ export default function PerformanceHeroCard({
           background: `radial-gradient(circle, ${hue}33, transparent 70%)`,
         }}
       />
-      <div className="relative flex items-center gap-2 mb-4">
-        <Activity
-          className="size-4"
-          style={{ color: hue }}
-          aria-hidden="true"
-        />
-        <p
-          className="text-xs font-medium"
-          style={{ color: "hsl(var(--muted-foreground))" }}
-        >
-          Performance
-        </p>
-      </div>
+      {/* Eyebrow removed — D20; see the loading branch's note. The
+          band-state hue the icon carried is not lost: the halo, ring
+          track, ring gradient, PI numeral and verb all carry it. */}
       <div className="relative flex items-center gap-6">
         <div className="relative size-28 flex-shrink-0">
           <svg

@@ -324,7 +324,7 @@ export default function Diagnostics() {
                     </p>
                     {c.timestamp && (
                       <p className="text-muted-foreground shrink-0">
-                        {new Date(c.timestamp).toLocaleString()}
+                        {new Date(c.timestamp).toLocaleString("en-GB")}
                       </p>
                     )}
                   </div>

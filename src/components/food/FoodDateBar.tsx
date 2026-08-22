@@ -78,7 +78,7 @@ function FoodDateBar({
         <p className="text-xs font-medium text-foreground">
           {isToday
             ? "Today"
-            : format(new Date(selectedDate + "T12:00:00"), "EEE, MMMM d")}
+            : format(new Date(selectedDate + "T12:00:00"), "EEE d MMMM")}
         </p>
       </button>
       <input

@@ -698,7 +698,7 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
               New PR:{" "}
               {feedItem.prExercise || activity?.prExercise || "Personal Record"}{" "}
               {feedItem.prWeight || activity?.prWeight
-                ? `${feedItem.prWeight || activity?.prWeight}kg`
+                ? `${feedItem.prWeight || activity?.prWeight} kg`
                 : ""}
             </p>
           </div>
@@ -717,7 +717,12 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
               className="size-4 shrink-0"
               style={{ color: THEME.brand }}
             />
-            <p className="text-xs font-medium" style={{ color: THEME.brand }}>
+            {/* Text on the -strong step — brand is 3.87:1 as 12px text on
+                the light card; the Target icon keeps the identity. */}
+            <p
+              className="text-xs font-medium"
+              style={{ color: "hsl(var(--primary-strong))" }}
+            >
               {feedItem.challengeMilestone || activity?.challengeMilestone}
             </p>
           </div>

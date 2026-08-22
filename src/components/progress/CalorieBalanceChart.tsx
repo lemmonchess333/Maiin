@@ -251,7 +251,12 @@ export default function CalorieBalanceChart({
                 style={{ color: THEME.amber }}
                 aria-hidden="true"
               />
-              <p className="text-xs font-medium" style={{ color: THEME.amber }}>
+              {/* Text on the -strong step — the amber identity is ~3.1:1
+                  as 12px text on the light card; the icon keeps it. */}
+              <p
+                className="text-xs font-medium"
+                style={{ color: "hsl(var(--warning-strong))" }}
+              >
                 {alignment.message}
               </p>
             </div>

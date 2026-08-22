@@ -8,6 +8,7 @@ import {
   type ExercisePR,
 } from "@/lib/prTracking";
 import { THEME } from "@/lib/theme";
+import { formatDayMonth } from "@/utils/formatters";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Spinner } from "@/components/ui/Spinner";
 
@@ -32,11 +33,12 @@ function deltaColor(delta: number) {
 }
 
 function formatDate(iso: string): string {
-  // YYYY-MM-DD → "Mar 28". No need for date-fns for this single case;
-  // date strings come from workout docs which we always write as
-  // local YYYY-MM-DD.
+  // YYYY-MM-DD → "28 Mar" via the canonical helper. The previous inline
+  // toLocaleDateString passed no locale, so it followed the device and
+  // rendered "Mar 28" on a US phone; date strings come from workout docs
+  // which we always write as local YYYY-MM-DD.
   const d = new Date(iso + "T12:00:00");
-  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return formatDayMonth(d);
 }
 
 /**
@@ -92,7 +94,7 @@ export default function ExerciseCompareSheet({
           <SectionLabel>Their set</SectionLabel>
           <p className="text-sm font-mono tabular-nums text-foreground mt-1">
             {authorSummary ||
-              `${authorSetCount}×${authorTargetReps}×${authorTargetWeightKg}kg`}
+              `${authorSetCount}×${authorTargetReps}×${authorTargetWeightKg} kg`}
           </p>
         </div>
 
@@ -129,7 +131,7 @@ export default function ExerciseCompareSheet({
               <SectionLabel>Your best</SectionLabel>
               <div className="flex items-baseline justify-between mt-1">
                 <p className="text-sm font-mono tabular-nums text-foreground">
-                  {yourPR.reps}×{yourPR.weight}kg
+                  {yourPR.reps}×{yourPR.weight} kg
                 </p>
                 <p className="text-xs text-muted-foreground font-mono tabular-nums">
                   {formatDate(yourPR.date)}
@@ -151,7 +153,7 @@ export default function ExerciseCompareSheet({
               <p className="text-xs font-semibold font-mono tabular-nums">
                 {delta === 0
                   ? "Matched"
-                  : `${deltaSign}${delta.toFixed(1)}kg vs them`}
+                  : `${deltaSign}${delta.toFixed(1)} kg vs them`}
               </p>
             </div>
           </>

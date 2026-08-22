@@ -9,6 +9,7 @@ import { Plus, Star } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
+import SectionLabel from "@/components/ui/SectionLabel";
 import type { FoodSuggestion } from "@/lib/nlFoodParser";
 import type { QuickAddItem } from "@/lib/quickAddOrder";
 
@@ -224,9 +225,9 @@ function FoodSuggestionsDropdown({
             {!quickAdd.asExamples && (
               <Star aria-hidden="true" className="size-3 text-amber-500" />
             )}
-            <span className="text-caption uppercase tracking-wide text-muted-foreground font-medium">
+            <SectionLabel as="span" tier="section">
               {quickAdd.asExamples ? "Examples" : "Quick Add"}
-            </span>
+            </SectionLabel>
           </div>
           {quickAdd.items.map((item) => (
             <button
@@ -296,8 +297,8 @@ function FoodSuggestionsDropdown({
                 </span>
               </span>
               <span className="text-xs text-muted-foreground font-mono tabular-nums shrink-0">
-                {Math.round(p.calories)} cal · P{Math.round(p.protein)}g · C
-                {Math.round(p.carbs)}g · F{Math.round(p.fat)}g
+                {Math.round(p.calories)} cal · P {Math.round(p.protein)}g · C{" "}
+                {Math.round(p.carbs)}g · F {Math.round(p.fat)}g
               </span>
             </button>
           ))}
@@ -320,7 +321,11 @@ function FoodSuggestionsDropdown({
                 </span>
               </span>
               <span className="text-xs text-muted-foreground font-mono tabular-nums shrink-0">
-                {s.calories} cal · P{s.protein}g · C{s.carbs}g · F{s.fat}g
+                {/* Label-space matches the OFF row below ("P 30g") — this
+                    row read "P30g" eight lines above its sibling's
+                    spaced form. Gram UNIT stays unspaced (house style,
+                    MacroColumn's rationale). */}
+                {s.calories} cal · P {s.protein}g · C {s.carbs}g · F {s.fat}g
               </span>
             </button>
           ))}

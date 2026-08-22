@@ -41,6 +41,7 @@ import { BottomSheet } from "@/components/ui/BottomSheet";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Spinner } from "@/components/ui/Spinner";
 import { getTimeAgo } from "@/lib/timeAgo";
+import { formatDayMonth } from "@/utils/formatters";
 import { localWeekKey } from "@/lib/dateHelpers";
 import {
   LAUNCH_TEMPLATES,
@@ -127,11 +128,14 @@ const COLD_START_OPTIONS: Array<{
   description: string;
 }> = [...LAUNCH_TEMPLATES, HYBRID_TEMPLATE];
 
-/** "YYYY-MM-DD" → "12 Sep" — same short-date idiom as the rest of the app. */
+/** "YYYY-MM-DD" → "12 Sep" via the canonical helper. The previous inline
+ *  toLocaleDateString passed an ABSENT locale, so it followed the device
+ *  and rendered "Sep 12" on a US phone while its own comment claimed the
+ *  app idiom. */
 function formatTargetDate(iso: string): string {
   const d = new Date(iso + "T00:00:00");
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+  return formatDayMonth(d);
 }
 
 /** Today's local calendar day as YYYY-MM-DD — the same string basis the

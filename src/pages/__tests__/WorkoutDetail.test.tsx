@@ -91,8 +91,8 @@ describe("WorkoutDetail", () => {
     // Two working sets at 60kg. The 40kg warm-up is NOT work and must not
     // appear — counting it inflates every set total on the page, the same
     // boundary SessionCompleteScreen's SETS stat enforces.
-    expect(screen.getAllByText("8× 60kg")).toHaveLength(2);
-    expect(screen.queryByText("10× 40kg")).toBeNull();
+    expect(screen.getAllByText("8× 60 kg")).toHaveLength(2);
+    expect(screen.queryByText("10× 40 kg")).toBeNull();
     expect(screen.getByText("2 sets")).toBeTruthy();
   });
 

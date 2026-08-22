@@ -50,8 +50,9 @@ describe("FoodDateBar", function () {
         onPick={vi.fn()}
       />
     );
-    // date-fns "EEE, MMMM d" → "Mon, January 15"
-    expect(screen.getByText("Mon, January 15")).toBeInTheDocument();
+    // date-fns "EEE d MMMM" → "Mon 15 January" (en-GB day-before-month,
+    // the app's one date treatment)
+    expect(screen.getByText("Mon 15 January")).toBeInTheDocument();
   });
 
   it("fires onPrev when the prev button is tapped", function () {

@@ -189,7 +189,7 @@ export default function PrivacySection({
               <div>
                 <p className="text-xs font-medium text-foreground">{z.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {z.radiusMeters}m radius
+                  {z.radiusMeters} m radius
                 </p>
               </div>
               <IconButton
@@ -219,9 +219,9 @@ export default function PrivacySection({
               className="p-2 rounded-lg bg-card border border-border text-sm"
             >
               <option value={200}>200m</option>
-              <option value={500}>500m</option>
-              <option value={750}>750m</option>
-              <option value={1000}>1km</option>
+              <option value={500}>500 m</option>
+              <option value={750}>750 m</option>
+              <option value={1000}>1 km</option>
             </select>
           </div>
           <Button

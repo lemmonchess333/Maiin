@@ -55,9 +55,9 @@ export function getTargetValidationError(
   switch (config.target.type) {
     case "distance":
       if (value < TARGET_DISTANCE_MIN_M)
-        return "Distance must be at least 0.5km";
+        return "Distance must be at least 0.5 km";
       if (value > TARGET_DISTANCE_MAX_M)
-        return "Distance must be at most 100km";
+        return "Distance must be at most 100 km";
       return null;
     case "time":
       if (value < TARGET_TIME_MIN_S)

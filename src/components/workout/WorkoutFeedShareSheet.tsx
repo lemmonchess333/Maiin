@@ -128,7 +128,7 @@ export default function WorkoutFeedShareSheet({
             {[
               `${exercises.length} exercise${exercises.length === 1 ? "" : "s"}`,
               tonnage > 0
-                ? `${Math.round(tonnage).toLocaleString()}kg volume`
+                ? `${Math.round(tonnage).toLocaleString()} kg volume`
                 : "",
               (workout.durationMinutes ?? 0) > 0
                 ? `${workout.durationMinutes} min`

@@ -195,7 +195,7 @@ export default function IntervalStepShell({
           )}
           <p className="text-2xl font-extrabold font-mono tabular-nums text-white shrink-0 leading-none">
             {isDistanceBased
-              ? `${Math.max(0, Math.round(targetValue - state.phaseDistanceCovered))}m`
+              ? `${Math.max(0, Math.round(targetValue - state.phaseDistanceCovered))} m`
               : countdownLabel(targetValue - state.phaseElapsed)}
           </p>
         </div>

@@ -94,6 +94,7 @@ import {
 } from "../lib/runGuards";
 import { getDistanceComparison } from "@/lib/funComparisons";
 import { elevationLabel } from "@/lib/runLabels";
+import { formatDayMonthYear } from "@/utils/formatters";
 import { gradeAdjustedPace } from "../lib/gradeAdjustedPace";
 
 /* Reusable retry banner. Shown above the action row on a save
@@ -186,7 +187,7 @@ function InvalidRunReview({
   onEditDistance,
 }: InvalidRunReviewProps) {
   const formattedDuration = formatTime(elapsedSeconds);
-  const formattedDistance = `${distanceKm.toFixed(2)}km`;
+  const formattedDistance = `${distanceKm.toFixed(2)} km`;
   const showSaveAnyway = canShowSaveAnyway({ isInvalid: true, saveStatus });
   const showDiscard = canShowDiscard({ saveStatus });
   const showRetry = canShowRetrySave({ saveStatus });
@@ -317,7 +318,7 @@ function InvalidRunReview({
               />
               {!editValid && editValue !== "" && (
                 <p className="text-xs" style={{ color: THEME.running }}>
-                  Distance must be between 0.05km and 100km.
+                  Distance must be between 0.05 km and 100 km.
                 </p>
               )}
               <div className="flex gap-2">
@@ -1048,7 +1049,7 @@ export default function RunSummary() {
           type: "run",
           title: runName,
           meta: [
-            `${km.toFixed(2)}km`,
+            `${km.toFixed(2)} km`,
             `${mins}:${secs.toString().padStart(2, "0")}`,
             calories ? `${Math.round(calories)} cal` : "",
           ].filter(Boolean),
@@ -1186,7 +1187,9 @@ export default function RunSummary() {
   };
 
   const handleExportGPX = () => {
-    const gpx = toGPX(points, `Tropos Run ${new Date().toLocaleDateString()}`);
+    // Track name travels into other apps with the export — a stable
+    // "22 Aug 2026", not whatever the device locale renders.
+    const gpx = toGPX(points, `Tropos Run ${formatDayMonthYear(new Date())}`);
     const blob = new Blob([gpx], { type: "application/gpx+xml" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

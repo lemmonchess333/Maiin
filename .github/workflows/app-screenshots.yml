@@ -10,6 +10,21 @@ on:
     branches: ["claude/screenshot-app"]
   workflow_dispatch:
 
+# D26 (2026-08-22): two concurrent runs race on the app-screenshots branch —
+# both force-push frames there while each diffs against whatever the branch
+# held when it STARTED, so the loser's frames vanish and the winner's diff
+# report can be computed off the loser's output instead of the intended
+# baseline (observed with b9fce05/d2f130c overlapping by four minutes). A
+# report off the wrong baseline doesn't look wrong; it looks like a change
+# you didn't make — the same instrument-lies class as D22. Cancelling the
+# superseded run discards nothing of value: its frames would be overwritten
+# by the newer force-push anyway, and its report is exactly the artifact the
+# race corrupts. Anyone wanting sequential A-vs-B reports must wait for A's
+# run regardless (the second-diff rule), which this does not change.
+concurrency:
+  group: app-screenshots
+  cancel-in-progress: true
+
 permissions:
   contents: write
 

@@ -25,6 +25,7 @@ import {
   isTierAchieved,
 } from "./useChallenges";
 import { THEME } from "@/lib/theme";
+import { formatChallengeValue } from "./challengeFormat";
 import { Button } from "@/components/ui/Button";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { challengeEditorialImage } from "@/lib/editorialImages";
@@ -91,22 +92,6 @@ const CHALLENGE_ICON_MAP: Record<
   leaf: Leaf,
   snowflake: Snowflake,
 };
-
-/** Format a challenge progress value with units appropriate to the
- *  metric. PR 5 introduces fastest_effort (seconds → mm:ss) and
- *  group_goal (still numeric km, just summed collectively). */
-function formatChallengeValue(metric: string, value: number): string {
-  if (metric === "fastest_effort") {
-    if (value <= 0) return "—";
-    const m = Math.floor(value / 60);
-    const s = Math.round(value % 60);
-    return `${m}:${s.toString().padStart(2, "0")}`;
-  }
-  if (metric === "total_km") return `${value.toFixed(1)}km`;
-  if (metric === "total_volume")
-    return `${Math.round(value).toLocaleString()}kg`;
-  return Math.round(value).toLocaleString();
-}
 
 function TierMarker({
   tier,

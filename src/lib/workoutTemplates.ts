@@ -184,7 +184,7 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     name: "4×1K Intervals",
     type: "intervals",
     icon: "refresh-cw",
-    description: "4 reps of 1km hard with 90s rest",
+    description: "4 reps of 1 km hard with 90s rest",
     estimatedDuration: 29,
     config: {
       intervals: {
@@ -201,7 +201,7 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     name: "5×1K Intervals",
     type: "intervals",
     icon: "refresh-cw",
-    description: "5 reps of 1km hard with 90s rest",
+    description: "5 reps of 1 km hard with 90s rest",
     estimatedDuration: 35,
     config: {
       intervals: {
@@ -218,7 +218,7 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     name: "6×1K Intervals",
     type: "intervals",
     icon: "refresh-cw",
-    description: "6 reps of 1km hard with 90s rest",
+    description: "6 reps of 1 km hard with 90s rest",
     estimatedDuration: 41,
     config: {
       intervals: {
@@ -327,7 +327,7 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     name: "5K Race",
     type: "race",
     icon: "flag",
-    description: "All-out 5km effort",
+    description: "All-out 5 km effort",
     estimatedDuration: 25,
     config: { targetDistanceKm: 5 },
   },
@@ -336,7 +336,7 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     name: "10K Race",
     type: "race",
     icon: "flag",
-    description: "All-out 10km effort",
+    description: "All-out 10 km effort",
     estimatedDuration: 50,
     config: { targetDistanceKm: 10 },
   },

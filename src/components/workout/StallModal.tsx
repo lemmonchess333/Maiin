@@ -84,7 +84,7 @@ export default function StallModal({ exercise, onClose }: StallModalProps) {
         // fire on, actively wrong.
         (exercise.isBodyweight
           ? `${exercise.name} has held the same reps for 3 sessions.`
-          : `You've been at ${exercise.weight}kg on ${exercise.name} for 3 sessions.`) +
+          : `You've been at ${exercise.weight} kg on ${exercise.name} for 3 sessions.`) +
         ` A small calorie increase (~150 cal/day) could help you break through.` +
         // Naming the real consequence: this writes a MANUAL calorie override,
         // and a manual override is what switches adaptive calories off.

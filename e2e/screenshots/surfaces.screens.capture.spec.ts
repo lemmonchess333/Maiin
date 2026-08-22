@@ -224,7 +224,7 @@ test.describe(`home + food surfaces (${PHASE})`, () => {
        tests passed, and the job still committed screenshots — so a
        missing frame looked like a frame nobody had asked for. */
     const otherDay = page
-      .getByRole("button", { name: /^(?!.*\(today\))\w+day, \w+ \d+,/ })
+      .getByRole("button", { name: /^(?!.*\(today\))\w+day \d+ \w+,/ })
       .first();
     await otherDay.click({ timeout: 10_000 });
     await expect(page.getByText(/manage day|no sessions/i).first()).toBeVisible(
