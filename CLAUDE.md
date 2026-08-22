@@ -797,21 +797,26 @@ default and the one we want.
 
 What is genuinely left, and it is narrower than the row implied:
 
-- [ ] **Confirm the abuse-monitoring retention window.** The
-      "temporarily processed, not permanently retained" half is about
-      Google's own caching for abuse monitoring, which is the part a
-      contract does not settle. Check the current Vertex AI data-
-      governance documentation for `gemini-2.0-flash` and confirm the
-      sentence matches what Google actually states. If it does not,
-      reword the policy rather than the expectation.
+- [x] **Confirm the abuse-monitoring retention window — DONE 2026-08-22,
+      with one caveat recorded in the doc.** Every Google-side route is
+      temporary and bounded (≤24h serving cache by default; conditional
+      abuse-flagged prompt logging for a bounded window, with invoiced
+      accounts exempt by default), so the policy sentence stands as
+      written — no rewording needed. Caveat: the sandbox egress proxy
+      blocks the canonical doc host, so the facts were triangulated from
+      two independent search syntheses (which disagreed 30-vs-90 days on
+      the flagged-prompt window — immaterial to the sentence, but settle
+      it from a browser). Full detail in `docs/privacy.md`.
 - [ ] **Confirm no prompt logging is enabled at the project level**
       (Cloud console). Absent from the code is necessary, not
       sufficient — it can be switched on outside the repo.
-- [ ] **Write `docs/privacy.md`** capturing whatever the two checks
-      above establish, so the next person re-verifying has something to
-      diff against instead of re-deriving it. This is the actual value
-      of F3d pin 2 and the reason it keeps going unticked: nobody knows
-      what "verify on every release" is supposed to compare against.
+- [x] **Write `docs/privacy.md` — DONE 2026-08-22.** It records what
+      holds each policy sentence up (the Vertex endpoint as the
+      load-bearing fact, Google's retention posture with dated caveats,
+      the repo's own Food9 guarantees), the residual operator-only
+      checks, and a per-release re-verification procedure with a dated
+      pass ledger — so "verify on every release" finally has something
+      to diff against.
 
 Do this before an App Store reviewer or a data-subject request reads
 section 7. The claim is probably true; "probably" is the problem.
