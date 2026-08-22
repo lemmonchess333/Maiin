@@ -152,9 +152,12 @@ function TierMarker({
         className={`size-2.5 rounded-full border-2 border-card ${achieved ? "" : "bg-muted-foreground/30"}`}
         style={achieved ? { backgroundColor: TIER_COLORS[tier] } : undefined}
       />
+      {/* Achieved reads as FOREGROUND ink (vs muted for unachieved) — the
+          tier metal stays on the marker dot above. As 12px text the raw
+          metals fail light AA (bronze 3.14:1, silver 1.82, gold 1.40 —
+          2026-08-22 frame sweep). */}
       <span
-        className={`text-xs mt-0.5 font-medium font-mono tabular-nums whitespace-nowrap ${labelShift} ${achieved ? "" : "text-muted-foreground"}`}
-        style={achieved ? { color: TIER_COLORS[tier] } : undefined}
+        className={`text-xs mt-0.5 font-medium font-mono tabular-nums whitespace-nowrap ${labelShift} ${achieved ? "text-foreground" : "text-muted-foreground"}`}
       >
         {formatChallengeValue(metric, value)}
       </span>
@@ -553,10 +556,10 @@ export function ChallengeCard({
                     className="inline"
                     style={{ color: TIER_COLORS.gold }}
                   />{" "}
-                  <span
-                    className="font-semibold"
-                    style={{ color: TIER_COLORS.gold }}
-                  >
+                  {/* Gold as TEXT is 1.40:1 on white; the achievement
+                      token is the same celebration register with a real
+                      text step. The trophy keeps the metal. */}
+                  <span className="font-semibold text-achievement-strong">
                     Gold achieved!
                   </span>
                   {" — "}

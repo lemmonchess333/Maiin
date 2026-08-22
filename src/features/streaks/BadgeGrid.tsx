@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { THEME } from "@/lib/theme";
 import { useStreaks } from "./useStreaks";
 import {
   BADGE_ART,
@@ -35,7 +34,10 @@ function ProgressBar({
           style={{ width: `${Math.round(pct * 100)}%`, background: color }}
         />
       </div>
-      <p className="text-caption font-mono tabular-nums" style={{ color }}>
+      {/* Tier metal stays on the BAR; the label is muted. A raw metal hex
+          can never be light-mode text — gold #FFD700 measures 1.39:1 on
+          the white card, silver 1.82:1 (2026-08-22 frame sweep). */}
+      <p className="text-caption font-mono tabular-nums text-muted-foreground">
         {label}
       </p>
     </div>
@@ -86,10 +88,9 @@ export function BadgeGrid() {
             </div>
           </div>
           <div className="min-w-0">
-            <p
-              className="text-caption font-semibold uppercase tracking-wider"
-              style={{ color: nextColor }}
-            >
+            {/* Muted, not the tier metal (silver eyebrow = 1.82:1 on
+                white); the hex tile beside carries the tier. */}
+            <p className="text-caption font-semibold uppercase tracking-wider text-muted-foreground">
               Next badge
             </p>
             <p className="text-base font-bold text-foreground leading-tight">
@@ -110,10 +111,11 @@ export function BadgeGrid() {
       {/* Streak summary. */}
       <div className="grid grid-cols-3 gap-3 text-center">
         <div className="p-3 rounded-xl bg-card border border-border/50">
-          <p
-            className="text-3xl font-extrabold font-mono tabular-nums"
-            style={{ color: THEME.amberLight }}
-          >
+          {/* amberLight is the amber-500 dark-mode step (theme.ts says
+              so) — as light-mode text it measured 2.15:1, under even the
+              3:1 large-text floor. The achievement token is the same
+              celebration register, theme-aware, AA both sides. */}
+          <p className="text-3xl font-extrabold font-mono tabular-nums text-achievement-strong">
             {currentStreak}
           </p>
           <p className="text-xs text-muted-foreground mt-1">Current Streak</p>
@@ -207,10 +209,9 @@ export function BadgeGrid() {
                       {badge.name}
                     </p>
                     {earned ? (
-                      <p
-                        className="text-caption font-mono tabular-nums mt-1"
-                        style={{ color: tierColor }}
-                      >
+                      // Muted, not the tier metal — bronze was 3.14:1 as
+                      // an 11px date on white; the badge art carries tier.
+                      <p className="text-caption font-mono tabular-nums mt-1 text-muted-foreground">
                         {/* en-GB + explicit options. This was the only
                             rendered date in the app passing NEITHER, so it
                             took the device locale and printed all-numeric

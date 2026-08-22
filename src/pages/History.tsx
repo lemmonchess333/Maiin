@@ -1603,7 +1603,11 @@ export default function History() {
                                 bg: "transparent",
                               }
                             : {
-                                color: THEME.amberLight,
+                                /* Text on the -strong step — amberLight
+                                   is the dark-mode amber and measured
+                                   1.70:1 as light text on its own tint.
+                                   The tint concat stays on the hex. */
+                                color: "hsl(var(--warning-strong))",
                                 bg: `${THEME.amberLight}1A`,
                               };
                       return (

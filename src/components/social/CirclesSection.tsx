@@ -1017,7 +1017,7 @@ export default function CirclesSection({
                       haptic("light");
                       setGoalPrechosen(false);
                     }}
-                    className="shrink-0 min-h-[44px] flex items-center px-1 text-xs font-medium text-primary"
+                    className="shrink-0 min-h-[44px] flex items-center px-1 text-xs font-medium text-primary-strong"
                   >
                     Change
                   </button>
@@ -1238,7 +1238,11 @@ export default function CirclesSection({
                       setFocusSheetOpen(true);
                     }}
                   >
-                    {myCheckIn ? "Change weekly focus" : "Set weekly focus"}
+                    {/* "Weekly focus" both ways: the longer verbs made
+                        this the only WRAPPING button in the three-up row
+                        (~115px per cell) — two lines beside single-line
+                        peers. The sheet it opens restates the verb. */}
+                    Weekly focus
                   </Button>
                   <Button
                     variant="secondary"

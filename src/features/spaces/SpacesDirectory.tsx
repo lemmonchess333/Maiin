@@ -61,6 +61,17 @@ const ACCENT_HEX: Record<SpaceDef["accent"], string> = {
   brand: THEME.brand,
 };
 
+/* The same accents as chip INK — theme-aware -strong steps for the
+   tinted (no-photo) chips, where the raw identities measured ~3.1:1 as
+   10-11px text on the light card (2026-08-22 frame sweep). Photo chips
+   don't use this: a fixed white pill can't take a theme-aware ink, so
+   they carry the scrim register instead. */
+const ACCENT_INK: Record<SpaceDef["accent"], string> = {
+  running: "hsl(var(--running-strong))",
+  lifting: "hsl(var(--lifting-strong))",
+  brand: "hsl(var(--primary-strong))",
+};
+
 function SpaceCard({
   entry,
   compact = false,
@@ -124,15 +135,19 @@ function SpaceCard({
       {event && (
         <span
           className={`absolute top-2.5 left-2.5 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
-            photo ? "bg-white/90" : ""
+            photo ? "bg-black/55 text-white backdrop-blur-sm" : ""
           }`}
-          /* Same chip grammar as Joined: on a photo, a white pill with
-             the accent as ink — the photo, not the theme, is the
-             surface. */
+          /* Same chip grammar as Joined. On a photo the pill is the SCRIM
+             register (photo-overlay text is white-over-dark-scrim in both
+             themes — THEME.scrim's rule): the previous white pill carried
+             the accent as ink, which measured 3.19:1 at this size on the
+             fixed white — in BOTH themes, since the pill never changed.
+             On the themed fallback card the tint stays and the ink takes
+             the accent's -strong step. */
           style={
             photo
-              ? { color: accent }
-              : { background: `${accent}1F`, color: accent }
+              ? undefined
+              : { background: `${accent}1F`, color: ACCENT_INK[def.accent] }
           }
         >
           Race
@@ -142,12 +157,12 @@ function SpaceCard({
       {joined && (
         <span
           className={`absolute top-2.5 right-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-caption font-semibold ${
-            photo ? "bg-white/90" : ""
+            photo ? "bg-black/55 text-white backdrop-blur-sm" : ""
           }`}
           style={
             photo
-              ? { color: accent }
-              : { background: `${accent}1F`, color: accent }
+              ? undefined
+              : { background: `${accent}1F`, color: ACCENT_INK[def.accent] }
           }
         >
           <Check className="size-3" aria-hidden />
@@ -209,9 +224,14 @@ function CardRow({
           data-no-page-swipe: a horizontal swipe to scroll this carousel
           must NOT be hijacked by the page/tab swipe-navigation gesture
           (useSwipeNavigation hard-blocks from inside this scroller). */}
+      {/* scroll-pl-4: with MANDATORY snap and no scroll-padding,
+          scrollLeft 0 is not a valid snap position (the first card's
+          snap edge sits 16px in), so the engine snapped to 16 at load
+          and pulled card 1 flush to the viewport edge — cancelling the
+          px-4 inset on every carousel (2026-08-22 frame sweep). */}
       <div
         data-no-page-swipe
-        className="flex gap-3 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex gap-3 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 scroll-pl-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         role="list"
         aria-label={label}
       >

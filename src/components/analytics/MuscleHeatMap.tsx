@@ -76,7 +76,12 @@ export default function MuscleHeatMap({ data, recovery }: MuscleHeatMapProps) {
   const normalizedData = useMemo(() => {
     const result: Record<string, number> = {};
     for (const [key, val] of Object.entries(data)) {
-      const friendly = CATEGORY_DISPLAY[key] || key;
+      // Title-case the fallthrough: a key outside the display map used
+      // to render verbatim — a legend chip reading lowercase "legs"
+      // beside Title-Case peers (any legacy/custom category hits this).
+      const friendly =
+        CATEGORY_DISPLAY[key] ||
+        (key ? key.charAt(0).toUpperCase() + key.slice(1) : key);
       result[friendly] = (result[friendly] || 0) + val;
     }
     return result;
