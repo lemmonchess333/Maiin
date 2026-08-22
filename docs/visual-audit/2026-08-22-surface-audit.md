@@ -668,7 +668,7 @@ All four call sites confirmed: PartnerStreakHero.tsx:22-23 (`bg-orange-500/10` +
 
 **Suggested fix.** Pick one form and route both sites through it — add a `weightLabel(kg)` helper next to the existing `formatRepTarget` in Program.tsx and use it at 1506/1525/1619/1638, so the fix cannot drift again between the reorder and default branches.
 
-**Corrected by the verifier.** The visual observation is real and confirmed on both frames, but the stated justification overreaches and the scope is mis-set. There is no documented rule on unit spacing: CLAUDE.md's numeric invariant is font-mono + tabular-nums, which both lines already satisfy, and DESIGN_GUIDE.md says nothing about whether a unit suffix takes a leading space. So this is a convention gap, not a rule violation. It is also app-wide rather than a Program.tsx defect — roughly 54 spaced (` kg`) against 24 unspaced sites across src/\*_/_.tsx — so a local `weightLabel(kg)` helper in Program.tsx fixes the visible adjacency but leaves the app split. The defensible finding is the narrow one: the same unit rendered two ways two lines apart on one card is a visible inconsistency worth normalising, best done by picking one form repo-wide rather than patching four call sites.
+**Corrected by the verifier.** The visual observation is real and confirmed on both frames, but the stated justification overreaches and the scope is mis-set. There is no documented rule on unit spacing: CLAUDE.md's numeric invariant is font-mono + tabular-nums, which both lines already satisfy, and DESIGN\*GUIDE.md says nothing about whether a unit suffix takes a leading space. So this is a convention gap, not a rule violation. It is also app-wide rather than a Program.tsx defect — roughly 54 spaced (` kg`) against 24 unspaced sites across src/\*\*/\_.tsx — so a local `weightLabel(kg)` helper in Program.tsx fixes the visible adjacency but leaves the app split. The defensible finding is the narrow one: the same unit rendered two ways two lines apart on one card is a visible inconsistency worth normalising, best done by picking one form repo-wide rather than patching four call sites.
 
 <details><summary>Verifier's refutation attempt</summary>
 
@@ -820,6 +820,42 @@ Dropped outright: the 9px Recharts tick (documented D18 carve-out, pinned by `ru
 ## Fix now
 
 Mechanical, low-risk, no product or palette call.
+
+**STATUS 2026-08-22 — 18 of 19 shipped.** Everything below is
+implemented except **#1**, whose two halves came apart: the 6px track is
+fixed (the input box is 44px now) but the groove is NOT. Three attempts
+failed for three different reasons, all recorded in `docs/design-backlog.md`
+D27; the short version is that on Chromium `accent-color`'s fill IS the
+track background, so painting the track erases the fill, and
+`color-scheme` follows the DEVICE, not the app's `.dark` class. The
+remaining fix is a gradient-painted track driven by a per-value custom
+property with an explicit thumb, dropping `accent-color` entirely.
+
+Three things worth carrying forward from the implementation, none of them
+predictable from the audit:
+
+- **#5 could not ship alone.** Moving race distance onto
+  `SegmentedControl` gives its options an explicit `role="radio"`, which
+  overrides the implicit button role — so
+  `onboarding.screens.capture.spec.ts`'s `tap(page, /full/i)` helper
+  (a `getByRole("button")`) stopped matching. `tap` is best-effort and
+  swallows misses, so the distance would have stayed at its `10k`
+  default and the two Run15 assertions below it would have failed
+  against a scenario nobody wrote. Any migration onto this primitive
+  needs its e2e locators moved in the same commit.
+- **#8's existing test asserted the drifted side.** Every test in
+  `CirclesSection.together.test.tsx` rendered ONE of the two surfaces,
+  never both, so the rename was invisible to a green suite. The
+  replacement walks each option end to end — and had to be scoped to the
+  confirmed header, because the chooser stays mounted under the sheet and
+  a document-wide query finds its own copy of the string. Mutation-checked.
+- **#13's sweep was incomplete as written.** It named TrendWeight and
+  RunSummary; `ScanQuotaIndicator` was a third site, and its unit test
+  pinned the en-US form.
+
+#11's second half (the label rename) is done because the row was
+restacked 1 + 2 first — the "needs a decision" framing rested on the
+three-up row's ~59px of label room, which no longer applies.
 
 1. **The run-days slider reads inverted in dark and has a 6px track.** The unfilled groove is UA-painted (`#EFEFEF` in _both_ themes — 16.5:1 against the dark page, invisible at 1.03:1 on light), and `input[type="range"] { height: 6px }` puts the whole control ~3× under the 44px floor. `src/index.css:732-736`. Give the track pseudo-elements the 6px and a `bg-muted` fill, set the input box to 44px with a transparent background, and re-centre the thumb — that closes `Onboarding.tsx:1219` and `RunSetupModal.tsx:1204` together. **This is the only drag control in the first-run flow.**
 
