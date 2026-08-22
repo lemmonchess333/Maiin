@@ -68,6 +68,15 @@ function contrastOnSheet(rgba: string): number {
   return l1 / l2;
 }
 
+/**
+ * `RunControlButton` is a run-SURFACE component that happens to live in
+ * `ui/`. It renders the LOCK / PAUSE / HOLD captions, which measured
+ * 2.22:1 on the first HUD frame — and it was missed on D18's first pass
+ * precisely because the scan walked the run DIRECTORY rather than the run
+ * surface. Named explicitly so the same miss cannot repeat.
+ */
+const EXTRA_RUN_SURFACE = ["src/components/ui/RunControlButton.tsx"];
+
 function runFiles(dir: string): string[] {
   const out: string[] = [];
   for (const name of readdirSync(dir)) {
@@ -135,7 +144,11 @@ describe("run HUD typography — D18 floors", () => {
        — Recharts ticks are not body text." Scoped to the `tick={{…}}` prop
        specifically, so a genuine label in a charting file is still caught. */
     const offenders: string[] = [];
-    for (const f of runFiles(runDir)) {
+    const files = [
+      ...runFiles(runDir),
+      ...EXTRA_RUN_SURFACE.map((r) => resolve(repoRoot, r)),
+    ];
+    for (const f of files) {
       const src = readFileSync(f, "utf8");
       for (const m of src.matchAll(/fontSize:\s*(\d+)/g)) {
         const px = Number(m[1]);

@@ -37,9 +37,22 @@ import { signInAsTestUser } from "../helpers/auth";
 import { emulatorActive } from "../helpers/emulator";
 import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
 
-/** A short walk in Hyde Park. Roughly 40m between points. */
+/* A short run in Hyde Park, at a pace the app will actually ACCEPT.
+   `isValidReading` rejects any fix implying more than 12 m/s — the
+   athlete-plausibility gate — and separately rejects any fix within 1m of
+   the previous one. The first version of this spec stepped ~40m every
+   400ms: 100 m/s, eight times over the limit, so every fix after the first
+   was discarded and the HUD sat at 0.00 km however long it walked. The
+   frame still looked plausible, which is what made it worth writing down.
+
+   6m every 2s is 3 m/s — about 5:33/km, a real runner's pace — so the
+   distance AND the elapsed timer stay consistent with each other in the
+   frame rather than implying a 36 km/h sprint. */
 const START = { latitude: 51.5074, longitude: -0.1657 };
-const STEP_DEG = 0.00036;
+const STEP_M = 6;
+const INTERVAL_MS = 2000;
+/** Metres per degree of latitude; longitude is held constant. */
+const STEP_DEG = STEP_M / 111_320;
 
 test.use({
   viewport: { width: 393, height: 852 },
@@ -77,12 +90,12 @@ test.describe("live run HUD", () => {
         longitude: START.longitude,
         accuracy: 5,
       });
-      await page.waitForTimeout(400);
+      await page.waitForTimeout(INTERVAL_MS);
     }
   }
 
   test("active HUD with a run in progress", async ({ page }) => {
-    test.setTimeout(180_000);
+    test.setTimeout(300_000);
 
     await page.goto("run");
     await page.waitForLoadState("domcontentloaded");
@@ -114,7 +127,9 @@ test.describe("live run HUD", () => {
 
        So: walk enough to get in, assert, then keep walking so distance
        and rolling pace are real when the shutter goes. */
-    await walk(page, 12);
+    // One fix leaves acquiring; the countdown is 3s. Four fixes at this
+    // cadence covers both with margin.
+    await walk(page, 4);
 
     /* Assert the HUD is really up before shooting. `Pause run` is the
        primary control and exists only in the active/paused phases. */
@@ -125,9 +140,10 @@ test.describe("live run HUD", () => {
         "setup screen or the countdown while claiming to be the HUD"
     ).toBeVisible({ timeout: 30_000 });
 
-    // ~36m per step at this spacing, so 20 more puts roughly 700m and a
-    // settled rolling pace on the display.
-    await walk(page, 20, 12);
+    // 50 more at 6m puts ~300m and a settled rolling pace on the display —
+    // enough for every figure and unit label to render in its real state,
+    // which an all-zero HUD does not do.
+    await walk(page, 50, 4);
 
     await page.screenshot({
       animations: "disabled",

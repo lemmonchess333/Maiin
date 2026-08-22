@@ -33,6 +33,7 @@
  * name independent of visible decoration.
  */
 import type { ButtonHTMLAttributes, ReactNode, Ref } from "react";
+import { HUD_CAPTION } from "@/components/run/runHudTypography";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
@@ -161,8 +162,13 @@ function RunControlButton({
           aria-hidden="true"
           className={LABEL_CLASSES}
           style={{
-            fontSize: 9,
-            color: "rgba(255, 255, 255, 0.28)",
+            /* D18. These are the LOCK / PAUSE / HOLD captions, and they
+               measured 2.22:1 at 9px on `run-hud-active.png` — the same
+               defect as the sheet's own captions, missed on the first pass
+               because this component lives in `ui/` rather than `run/`,
+               which is where both the transform and the guard were looking.
+               Same role, same treatment. */
+            ...HUD_CAPTION,
             letterSpacing: "0.08em",
           }}
         >
