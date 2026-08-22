@@ -590,7 +590,14 @@ next capture. Gotchas: capture specs must be named
 `*.capture.spec.ts` (auth-emulator project); the Progress/Form switch and
 other SegmentedControls are `role="radio"`, not buttons; give best-effort
 clicks short explicit timeouts so a missed locator costs seconds, not its
-30s default.
+30s default. **Capture specs select by user-visible STRINGS, so renaming
+copy or reshaping an aria-label requires `rg` over `e2e/` in the same
+commit** — three selectors broke this way on 2026-08-22 alone (the
+surfaces day-cell regex, its unpinned twin in day-peek whose count-guard
+skipped the click SILENTLY, and the circles weekly-focus button). Where a
+component renders standalone, pin the spec's literal against the real
+render the way `weekStripCaptureSelector.test.tsx` does — it now reads
+BOTH day-cell specs.
 
 **Read the diff report with the flaky frames in mind.** Three classes
 of frame change between runs with no code change, and chasing one costs
