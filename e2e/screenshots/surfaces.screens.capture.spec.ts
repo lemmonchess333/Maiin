@@ -18,6 +18,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import { emulatorActive } from "../helpers/emulator";
 import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
+import { settleFullPageHeight } from "../helpers/settleHeight";
 
 const AUTH_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
 const FS_HOST = process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080";
@@ -110,6 +111,15 @@ test.describe(`home + food surfaces (${PHASE})`, () => {
 
   async function shoot(page: Page, name: string) {
     await page.waitForTimeout(400);
+    /* Then wait for the document to stop GROWING. The 400ms above is a
+       fixed guess, and these are fullPage shots, so the frame's height is
+       a claim about the whole page — while every anchor in this spec is a
+       single element near the top. `home-energy-default-after.png` swung
+       393x1191 -> 1190 -> 1458 -> 1191 across four captures with no
+       relevant code change; the 267px jump is a card below the fold that
+       had not arrived yet. See the helper for why height and not
+       networkidle. */
+    await settleFullPageHeight(page);
     await page.screenshot({
       animations: "disabled",
       path: `screenshots/${name}-${PHASE}.png`,

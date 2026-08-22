@@ -153,3 +153,89 @@ describe("capture specs — theme toggles settle before the shot", () => {
     ).toEqual([]);
   });
 });
+
+/**
+ * `fullPage` shots wait for the document to stop GROWING.
+ *
+ * Sibling defect to the one above, found the same way — by reading the
+ * diff report rather than the app. `home-energy-default-after.png`
+ * measured, across four consecutive captures with no relevant code change:
+ *
+ *     393x1191  ->  393x1190  ->  393x1458  ->  393x1191
+ *
+ * The one-pixel moves are rounding. The 267px jump is a genuinely
+ * different page. Every anchor in these specs is a single element — "wait
+ * until `Today's Energy` is visible" — and a `fullPage` shot is a claim
+ * about the WHOLE document, so the shutter can fire while a card below the
+ * fold is still mounting. A frame that swings 267px between runs cannot be
+ * diffed, which means a real regression has somewhere to hide.
+ *
+ * This is a RATCHET, not a clean bill. Only `surfaces` is fixed — it is
+ * the one where the flake was measured, and the other specs shoot pages
+ * whose settling behaviour has not been reasoned about individually.
+ * Adoption is one `await settleFullPageHeight(page)` before the shot. The
+ * count below must not GROW; lower it as specs adopt the helper.
+ */
+const UNSETTLED_FULLPAGE_SPECS = 16;
+
+describe("capture specs — fullPage shots settle the document height", () => {
+  const files = specFiles(e2eRoot);
+
+  /** Specs that take a fullPage shot without awaiting the settle helper. */
+  function unsettled(): string[] {
+    return files
+      .filter((f) => {
+        const src = readFileSync(f, "utf8");
+        /* The CALL, not the mention. Matching the bare identifier counts
+           the import line, so a spec that imports the helper and never
+           awaits it would read as settled — which is precisely the state
+           a half-finished edit leaves behind. */
+        return (
+          /fullPage:\s*true/.test(src) &&
+          !/await\s+settleFullPageHeight\s*\(/.test(src)
+        );
+      })
+      .map((f) => relative(repoRoot, f))
+      .sort();
+  }
+
+  it("surfaces.screens.capture.spec.ts settles — it is the measured case", () => {
+    const src = readFileSync(
+      resolve(e2eRoot, "screenshots/surfaces.screens.capture.spec.ts"),
+      "utf8"
+    );
+    expect(src).toMatch(/fullPage:\s*true/);
+    expect(
+      src,
+      "the spec whose frame swung 267px between runs must await the settle " +
+        "helper before shooting"
+    ).toContain("await settleFullPageHeight(page)");
+  });
+
+  it("the helper it depends on exists and polls document height", () => {
+    /* Without this, the assertion above passes against a call to a helper
+       nobody wrote — the spec would fail only in CI, minutes in. */
+    const helper = readFileSync(
+      resolve(e2eRoot, "helpers/settleHeight.ts"),
+      "utf8"
+    );
+    expect(helper).toContain("export async function settleFullPageHeight");
+    expect(helper).toContain("document.documentElement.scrollHeight");
+  });
+
+  it("the set of unsettled fullPage specs does not grow", () => {
+    const offenders = unsettled();
+    expect(
+      offenders.length,
+      offenders.length > UNSETTLED_FULLPAGE_SPECS
+        ? `A new spec takes a fullPage shot without settling the document ` +
+            `height first. Its frame can swing by a whole card between runs, ` +
+            `which makes it undiffable. Add ` +
+            `\`await settleFullPageHeight(page)\` before the shot.\n` +
+            offenders.join("\n")
+        : `Unsettled fullPage specs dropped to ${offenders.length} — lower ` +
+            `UNSETTLED_FULLPAGE_SPECS to lock the gain in. At 0, delete this ` +
+            `ratchet and assert the property outright.`
+    ).toBe(UNSETTLED_FULLPAGE_SPECS);
+  });
+});
