@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 
@@ -82,9 +82,56 @@ describe("range input — the app's only drag control", () => {
     }
   });
 
-  it("declares a colour scheme, so anything still UA-painted follows the theme", () => {
+  it("does NOT declare its own colour scheme — the root does, per theme", () => {
+    /* The second wrong turn. `color-scheme: light dark` on the control
+       means "pick by the USER'S OS preference", i.e. the device's setting
+       rather than the app's — and Tropos switches theme with a `.dark`
+       CLASS. On a light-set phone running Tropos in dark mode it changes
+       nothing, which is the original bug. Declared at the theme blocks
+       instead, so it follows the class and covers every UA-painted
+       control (date pickers, selects, scrollbars, spinners) at once. */
     const rule = block('input[type="range"]');
-    expect(rule).toMatch(/color-scheme:\s*light dark/);
+    expect(
+      rule,
+      "`color-scheme` on the control follows the DEVICE, not the `.dark` " +
+        "class. Declare it at :root / .dark instead."
+    ).not.toMatch(/color-scheme:/);
+  });
+
+  it("the theme blocks declare the scheme, so UA controls follow the class", () => {
+    expect(block(":root"), ":root must declare color-scheme: light").toMatch(
+      /color-scheme:\s*light\s*;/
+    );
+    expect(block(".dark"), ".dark must declare color-scheme: dark").toMatch(
+      /color-scheme:\s*dark\s*;/
+    );
+  });
+
+  it("no component overrides the scheme back to an OS-driven choice", () => {
+    // Two date inputs carried `[color-scheme:light_dark]`, which overrides
+    // the inherited per-theme value with the device preference.
+    const walk = (dir: string): string[] => {
+      const out: string[] = [];
+      for (const name of readdirSync(dir)) {
+        const full = resolve(dir, name);
+        if (statSync(full).isDirectory()) {
+          if (name === "__tests__" || name === "node_modules") continue;
+          out.push(...walk(full));
+          continue;
+        }
+        if (name.endsWith(".tsx")) out.push(full);
+      }
+      return out;
+    };
+    const offenders = walk(resolve(repoRoot, "src")).filter((f) =>
+      /color-scheme:light_dark|color-scheme:\s*light dark/.test(
+        readFileSync(f, "utf8")
+      )
+    );
+    expect(
+      offenders.map((f) => f.replace(repoRoot + "/", "")),
+      "These override the per-theme scheme with the DEVICE preference."
+    ).toEqual([]);
   });
 
   it("keeps the input's own background out of the way", () => {

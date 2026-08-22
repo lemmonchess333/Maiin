@@ -154,6 +154,20 @@
 }
 
 :root {
+  /* UA-painted form controls follow THIS, not the class. Tropos switches
+     theme with a `.dark` class, and `color-scheme` is what tells the
+     browser which palette to paint a range groove, a date picker, a
+     select, a scrollbar or a number spinner in. Declared per theme here
+     so every one of them follows the app instead of the device.
+
+     `light dark` on an individual control does NOT do this — it means
+     "pick by the user's OS preference", which is the device's setting,
+     not ours. So a light-set phone running Tropos in dark mode got
+     light-painted controls: exactly the near-white slider groove on a
+     dark page that started this. Two date inputs still carried that
+     value and have been dropped to inherit from here. */
+  color-scheme: light;
+
   /* DS2 — deeper, cooler light canvas so white cards float instead of
      smudging into the page (the prior 96% page vs 95.9% muted gave the
      secondary cards ZERO separation = the "muddy middle"). The ladder is
@@ -282,6 +296,8 @@
 }
 
 .dark {
+  color-scheme: dark;
+
   /* DS2 — richer dark canvas (the primary surface). Card lifted 10→13%
      vs the 7% bg so layered surfaces SEPARATE (was only ~3% apart →
      near-flat); pairs with the deeper DS2 card shadow. */
@@ -746,26 +762,31 @@ html {
       so the brightest mass on the step was the part the user had NOT
       selected and 3-of-7 read as nearly full. On light, 1.03:1: invisible.
 
-   `color-scheme` is the fix for (2), and the ONLY one that works here.
-   The first attempt painted `::-webkit-slider-runnable-track` with a
-   token instead, which looks more principled and is wrong: in Chromium
-   the accent fill IS the track background, so styling the track REPLACES
-   it. The capture proved it — the whole bar went uniform `42,42,45` with
-   only a 10px purple thumb left, i.e. the fix removed the filled-progress
-   indication entirely. Row-scan of the track before and after:
+   Fixing (2) took two wrong turns worth recording, because both look
+   right.
+
+   The first painted `::-webkit-slider-runnable-track` with a token. In
+   Chromium the accent-color FILL is painted as the track background, so
+   styling the track REPLACES it — the capture showed the whole bar go
+   uniform with only a 10px thumb left. Row-scan, same y:
 
        before  x21-146 purple  · x148-370 #EFEFEF   (fill + wrong groove)
        broken  x21-134 #2A2A2D · x136-144 purple    (thumb only)
 
-   So: declare the colour scheme and leave both halves to the UA, which
-   themes them correctly and keeps the fill. This is the same opt-in the
-   date input on the SAME onboarding step already carries
-   (Onboarding.tsx:1317) — that control was fixed and this one missed. */
+   The second put `color-scheme: light dark` on this rule, copying two
+   date inputs that already did it. That value means "pick by the USER'S
+   OS PREFERENCE" — the device's setting, not the app's. Tropos switches
+   theme with a `.dark` CLASS, so on a light-set phone running Tropos in
+   dark mode it changes nothing, which is the original bug. The two date
+   inputs had the same flaw and were only ever right by coincidence.
+
+   The scheme is now declared per theme at `:root` / `.dark`, where it
+   follows the class — so every UA-painted control gets it, and this rule
+   correctly says nothing about colour at all. */
 input[type="range"] {
   height: 44px;
   background: transparent;
   cursor: pointer;
-  color-scheme: light dark;
 }
 
 /* ─── TOUCH TARGET MINIMUM ───────────────────────────────── */

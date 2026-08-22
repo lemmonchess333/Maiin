@@ -1314,7 +1314,7 @@ export default function Onboarding() {
                           min={localDateString(new Date())}
                           value={raceTargetDate}
                           onChange={(e) => setRaceTargetDate(e.target.value)}
-                          className="w-full px-3 py-2.5 rounded-xl text-sm outline-none bg-muted text-foreground border border-border focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-transparent [color-scheme:light_dark]"
+                          className="w-full px-3 py-2.5 rounded-xl text-sm outline-none bg-muted text-foreground border border-border focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-transparent"
                         />
                         {/* #975: date is optional — no date completes on the
                             freeform substrate and the Race Goal Planner on the
