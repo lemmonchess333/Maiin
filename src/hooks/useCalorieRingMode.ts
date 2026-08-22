@@ -76,9 +76,3 @@ export function setCalorieRingMode(next: CalorieRingMode): void {
 export function useCalorieRingMode(): CalorieRingMode {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
-
-/** Test seam — resets the module store between cases. */
-export function __resetCalorieRingMode(): void {
-  current = read();
-  for (const fn of listeners) fn();
-}
