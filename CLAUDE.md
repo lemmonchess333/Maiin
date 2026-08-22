@@ -541,7 +541,17 @@ reduced-motion` always gets the settled static state — no entrance, no
 - **Warning register:** warnings use `THEME.warning`. Orange
   (`THEME.semantic.nutrition`) is the FOOD domain identity, never a warning
   colour on non-food surfaces (the exercise guide's "Watch out" callout was
-  the drift case).
+  the drift case). **But know what that currently buys you: nothing
+  visual.** `THEME.warning` and `THEME.semantic.nutrition` are the same
+  hex — `#D9884E` — and `warning` lives in a block `theme.ts` itself
+  labels "Legacy semantic (kept for compatibility)". The same holds for
+  `danger`/`semantic.vitals` and `success`/`semantic.positive`. So moving
+  a callout onto the warning token is a pixel-for-pixel no-op, and every
+  warning surface in the app reads in the food colour. The token is
+  still the right one to REACH FOR — it is the seam a real warning hue
+  would land on — but do not read this rule as describing a separation
+  that exists today. Giving warnings their own hue is a palette decision
+  (D19 in `docs/design-backlog.md`), not a refactor.
 - **Empty states go through the `EmptyState` primitive**
   (`src/components/ui/EmptyState.tsx`; `compact` for in-card use) — no
   hand-rolled centered-icon-tile blocks. The primitive owns the brand

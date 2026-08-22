@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- mock return types need any casts */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { Timestamp } from "firebase/firestore";
 import { localDateString } from "@/lib/dateHelpers";
@@ -49,6 +49,23 @@ const WEIGHT = "users/u1/bodyweightLogs";
 const TODAY_KEY = localDateString();
 const todayStart = new Date();
 todayStart.setHours(0, 0, 0, 0);
+
+/**
+ * The pinned "now": local noon of TODAY_KEY.
+ *
+ * Every run fixture here is built by subtracting from the current time, and
+ * the hook windows runs to `[startOfToday, now]` — so on a real clock those
+ * subtractions walk into YESTERDAY near midnight and the rows fall out of
+ * the query. "A run finished more than two hours ago" is not even
+ * REPRESENTABLE between 00:00 and 02:00: no instant is both today and >2h
+ * old. Both halves were observed on 2026-08-22 — one failure at 00:12, and
+ * three when the date rolled over between module load (which computes
+ * TODAY_KEY) and the test body.
+ *
+ * Derived from TODAY_KEY rather than from `new Date()` so the pin and the
+ * date the rows are stamped with cannot disagree, whenever this evaluates.
+ */
+const NOW = new Date(`${TODAY_KEY}T12:00:00`);
 
 /** Seed one collection's rows; ids are positional and irrelevant here. */
 function seedRows(base: string, rows: Record<string, unknown>[]) {
@@ -102,6 +119,13 @@ describe("useHomeData", { timeout: 5000 }, () => {
   beforeEach(() => {
     resetFirestore();
     vi.clearAllMocks();
+    // Only `Date` is faked — setTimeout/setInterval stay real so `waitFor`
+    // and the Firestore fake's scheduling are untouched.
+    vi.useFakeTimers({ toFake: ["Date"], now: NOW });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("starts in loading state and resolves to not loading", async () => {
@@ -474,7 +498,7 @@ describe("useHomeData", { timeout: 5000 }, () => {
        These assert the CLASSIFICATION, which is what was broken. Each
        fails on the pre-fix hook: run-only returned null, and both-in-one-
        day returned "lift". */
-    const RECENT = Timestamp.fromDate(new Date(Date.now() - 10 * 60_000));
+    const RECENT = Timestamp.fromDate(new Date(NOW.getTime() - 10 * 60_000));
 
     /** A countable run: clears isVolumeEligible's 50 m / 30 s floors. */
     const countableRun = {
@@ -547,7 +571,7 @@ describe("useHomeData", { timeout: 5000 }, () => {
           {
             ...countableRun,
             completedAt: Timestamp.fromDate(
-              new Date(Date.now() - 3 * 60 * 60_000)
+              new Date(NOW.getTime() - 3 * 60 * 60_000)
             ),
           },
         ],
@@ -556,9 +580,10 @@ describe("useHomeData", { timeout: 5000 }, () => {
       // Anchored on the run having actually been READ (it still counts
       // toward today's calories) — otherwise this passes while the runs
       // query returns nothing.
-      await waitFor(() => expect(result.current.todayRunCals).toBeGreaterThan(0));
+      await waitFor(() =>
+        expect(result.current.todayRunCals).toBeGreaterThan(0)
+      );
       expect(result.current.postWorkoutNudge).toBeNull();
     });
   });
-
 });

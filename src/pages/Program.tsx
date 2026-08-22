@@ -1382,27 +1382,38 @@ function ProgramInner() {
                                 today's session. */}
                             {status === "today" &&
                               !selectedWorkout.completed && (
-                                <button
-                                  type="button"
+                                /* Was a hand-rolled button in
+                                   text-muted-foreground with NO focus
+                                   styling: it read as disabled, and a
+                                   keyboard user got no focus indicator at
+                                   all. `ghost` is the guide's variant for
+                                   a low-emphasis action, and md is the
+                                   same geometry these already had
+                                   (min-h-44 / px-4 / text-sm), so this is
+                                   a drop-in that buys foreground contrast,
+                                   a hover tint and the focus-visible ring.
+                                   Transparent background keeps it from
+                                   competing with the filled Begin
+                                   Workout CTA above. */
+                                <Button
+                                  variant="ghost"
                                   onClick={() => {
                                     haptic("light");
                                     setExpressChooserDay(idx);
                                   }}
-                                  className="min-h-[44px] px-4 inline-flex items-center justify-center text-sm font-medium text-muted-foreground active:scale-[0.97] transition-transform"
                                 >
                                   Short on time?
-                                </button>
+                                </Button>
                               )}
-                            <button
-                              type="button"
+                            <Button
+                              variant="ghost"
                               onClick={() => {
                                 setSkipTargetDay(idx);
                                 setShowSkipConfirm(true);
                               }}
-                              className="min-h-[44px] px-4 inline-flex items-center justify-center text-sm font-medium text-muted-foreground active:scale-[0.97] transition-transform"
                             >
                               Skip Session
-                            </button>
+                            </Button>
 
                             {/* PROGRAM-SESSION-ORDER-01: real weeks rarely
                                 happen in order. "Make this next" moves the
