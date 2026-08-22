@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { THEME } from "@/lib/theme";
 
 interface TreadmillModeProps {
   elapsed: number;
@@ -49,6 +50,7 @@ export default function TreadmillMode({
      immediately so the user isn't gated by a redundant confirm. */
   const hasDataAtStake =
     elapsed >= 30 || (distance !== "" && Number(distance) > 0);
+  const saveDisabled = !distance || Number(distance) < 0.05;
   const handleDiscardClick = () => {
     if (hasDataAtStake) setShowDiscardConfirm(true);
     else onDiscard();
@@ -105,21 +107,34 @@ export default function TreadmillMode({
         <button
           type="button"
           onClick={() => onSave(Number(distance) * 1000)}
-          disabled={!distance || Number(distance) < 0.05}
+          disabled={saveDisabled}
           /* Disabled state previously dropped the whole button to
              40% opacity, which made the white text unreadable
              against the faded purple. Distinct disabled style
              (grey background, dimmed text) keeps the affordance
              clearly disabled while the label remains legible —
-             matches the iOS / app convention for disabled CTAs. */
-          className="w-full py-3.5 rounded-xl font-medium transition-colors bg-purple-500 text-white disabled:bg-white/15 disabled:text-white/50 disabled:cursor-not-allowed"
+             matches the iOS / app convention for disabled CTAs.
+             THEME.brandStrong (fixed), not a theme-aware token: this
+             surface is always-dark by its own values while the CSS
+             vars follow the USER'S theme — a light-mode user on /run
+             would get light-theme token values on the dark ground.
+             Inline background only when enabled so the disabled:
+             classes still win. */
+          className="w-full py-3.5 rounded-xl font-medium transition-colors text-white disabled:bg-white/15 disabled:text-white/50 disabled:cursor-not-allowed"
+          style={saveDisabled ? undefined : { background: THEME.brandStrong }}
         >
           {saveLabel}
         </button>
         <button
           type="button"
           onClick={handleDiscardClick}
-          className="w-full py-2 text-sm text-red-400"
+          /* Fixed destructive red for the same always-dark reason —
+             THEME.swipe.destructive is the one fixed destructive value
+             in the palette (≈5.4:1 on this ground; the old red-400 was
+             raw Tailwind palette, and a theme-aware token would hand
+             light-mode users the dark-red light step on black). */
+          className="w-full py-2 text-sm"
+          style={{ color: THEME.swipe.destructive }}
         >
           Discard
         </button>

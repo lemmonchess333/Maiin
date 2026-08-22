@@ -1626,7 +1626,7 @@ export default function RunSummary() {
                   }}
                 >
                   {paceTrend.trend === "pr" && (
-                    <Trophy size={16} className="text-amber-500" />
+                    <Trophy size={16} className="text-achievement" />
                   )}{" "}
                   {paceTrend.label}
                 </span>

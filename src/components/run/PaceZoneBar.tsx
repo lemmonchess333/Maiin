@@ -1,3 +1,5 @@
+import { THEME } from "@/lib/theme";
+
 interface PaceZoneBarProps {
   currentPace: number;
   targetPace: number;
@@ -14,12 +16,15 @@ export default function PaceZoneBar({
   const diff = currentPace - targetPace;
   const pct = Math.max(-1, Math.min(1, diff / (tolerance * 2)));
 
+  // Token identities, not raw Tailwind palette (green-500 drifted from
+  // THEME.success; the guardrail test bans the class form). Bar fills on
+  // the dark run surface — decorative data-viz, identities are correct.
   const color =
     Math.abs(diff) <= tolerance
-      ? "bg-green-500"
+      ? THEME.success
       : diff > 0
-        ? "bg-red-500"
-        : "bg-yellow-500";
+        ? THEME.danger
+        : THEME.amberLight;
 
   const label =
     Math.abs(diff) <= tolerance
@@ -40,7 +45,10 @@ export default function PaceZoneBar({
           className="absolute top-0 h-full w-3 rounded-full transition-all duration-500"
           style={{ left: `${Math.min(95, Math.max(2, 50 + pct * 48))}%` }}
         >
-          <div className={`size-full rounded-full ${color}`} />
+          <div
+            className="size-full rounded-full"
+            style={{ background: color }}
+          />
         </div>
       </div>
     </div>

@@ -249,7 +249,7 @@ export default function AdminModeration() {
                     {targetPreview(report)}
                   </p>
                   {report.target?.flagged === true && (
-                    <p className="text-caption text-amber-700 dark:text-amber-400 mt-1.5 font-medium">
+                    <p className="text-caption text-warning-strong mt-1.5 font-medium">
                       Already flagged by auto-filter
                     </p>
                   )}

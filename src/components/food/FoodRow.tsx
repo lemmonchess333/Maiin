@@ -291,7 +291,7 @@ export default function FoodRow({
           type="button"
           onClick={onDelete}
           aria-label={`Delete ${group.foodName}`}
-          className="p-2.5 mr-1 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors active:scale-90"
+          className="p-2.5 mr-1 rounded-lg text-muted-foreground hover:text-destructive-strong hover:bg-destructive/10 transition-colors active:scale-90"
         >
           <Trash2 aria-hidden="true" className="size-4" />
         </button>

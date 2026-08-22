@@ -171,7 +171,7 @@ export default function SessionCompleteScreen({
               delay: 0.2,
             }}
           >
-            <Trophy className="size-14 text-yellow-500 mx-auto" />
+            <Trophy className="size-14 text-achievement mx-auto" />
           </motion.div>
           <h2 className="text-2xl font-bold text-foreground">
             Workout Complete

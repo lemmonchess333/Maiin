@@ -79,7 +79,11 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   destructive: 0,
   success: 0,
   warning: 0,
-  achievement: 5,
+  // +7 (palette-class sweep, 2026-08-22): six Trophy/Star ICONS that were
+  // raw text-amber-500/yellow-500 (PRCard, PRsTab, ExerciseHistory,
+  // RunSummary pace-trend, SessionCompleteScreen, FoodSuggestionsDropdown
+  // pantry star x2) — all icon fills, none text.
+  achievement: 12,
 };
 
 function sourceFiles(): string[] {
