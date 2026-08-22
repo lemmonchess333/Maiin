@@ -15,6 +15,7 @@ import { db, functions } from "@/lib/firebase";
 import { calculateTDEE } from "@/lib/tdee";
 import type { FitnessGoal, ActivityLevel } from "@/lib/tdee";
 import { nutritionPhaseLabel } from "@/lib/nutritionPhaseLabel";
+import SegmentedControl from "@/components/ui/SegmentedControl";
 import { resolveGoalWeightPlan } from "@/lib/goalWeightPlan";
 import { THEME } from "@/lib/theme";
 import { logger } from "@/lib/logger";
@@ -1265,34 +1266,29 @@ export default function Onboarding() {
                         >
                           Race distance
                         </p>
-                        <div className="grid grid-cols-4 gap-1.5">
-                          {(
-                            ["5k", "10k", "half", "marathon"] as RaceDistance[]
-                          ).map((d) => (
-                            <button
-                              type="button"
-                              key={d}
-                              onClick={() => setRaceDistance(d)}
-                              className="py-2 rounded-lg text-xs font-medium transition-all"
-                              style={{
-                                background:
-                                  raceDistance === d
-                                    ? THEME.running
-                                    : "hsl(var(--muted) / 0.7)",
-                                color:
-                                  raceDistance === d
-                                    ? "#000"
-                                    : "hsl(var(--muted-foreground))",
-                              }}
-                            >
-                              {d === "half"
-                                ? "Half"
-                                : d === "marathon"
-                                  ? "Full"
-                                  : d.toUpperCase()}
-                            </button>
-                          ))}
-                        </div>
+                        {/* `SegmentedControl`, whose own docstring names
+                            the race-distance selector as one of the two
+                            hand-rolled pill rows it was built to replace.
+                            Onboarding was the straggler: the sibling
+                            surfaces migrated in June, and this copy kept
+                            32px targets (three-quarters of the floor), no
+                            role="radio" / aria-checked, no roving
+                            tabindex, no arrow-key selection, and a `#000`
+                            literal for the selected label — a 3-digit hex
+                            the eslint guard's `#[0-9a-fA-F]{6}` pattern
+                            does not match. */}
+                        <SegmentedControl<RaceDistance>
+                          ariaLabel="Race distance"
+                          tone="running"
+                          value={raceDistance}
+                          onChange={setRaceDistance}
+                          options={[
+                            { value: "5k", label: "5K" },
+                            { value: "10k", label: "10K" },
+                            { value: "half", label: "Half" },
+                            { value: "marathon", label: "Full" },
+                          ]}
+                        />
                       </div>
                       <div>
                         <p
@@ -1950,19 +1946,34 @@ export default function Onboarding() {
 
       {/* ── Navigation ── */}
       <div className="flex items-center gap-3 pt-6">
-        {step > 0 ? (
-          <button
-            type="button"
-            onClick={() => setStep((s) => s - 1)}
-            className="px-5 py-3.5 rounded-2xl text-sm font-medium active:scale-[0.97]"
-            style={{
-              background: "hsl(var(--muted))",
-              color: "hsl(var(--muted-foreground))",
-            }}
-          >
-            Back
-          </button>
-        ) : null}
+        {/* The Back slot is RESERVED on step 0, not collapsed. It used to
+            render null there, so Continue spanned the full width on the
+            first screen and then shrank by the Back button's width the
+            moment it was tapped — its centre jumping ~43px right between
+            the first and second of eight otherwise identical taps, on the
+            one flow where the user has no muscle memory yet. Reserving
+            the slot costs a hidden button and holds the CTA still.
+
+            `invisible` (not `hidden`) so it still occupies its box;
+            aria-hidden + tabIndex={-1} + disabled so it is unreachable by
+            screen reader, keyboard and pointer alike. */}
+        <button
+          type="button"
+          onClick={() => setStep((s) => s - 1)}
+          className={cn(
+            "px-5 py-3.5 rounded-2xl text-sm font-medium active:scale-[0.97]",
+            step === 0 && "invisible"
+          )}
+          aria-hidden={step === 0 || undefined}
+          tabIndex={step === 0 ? -1 : undefined}
+          disabled={step === 0}
+          style={{
+            background: "hsl(var(--muted))",
+            color: "hsl(var(--muted-foreground))",
+          }}
+        >
+          Back
+        </button>
         <button
           type="button"
           onClick={() => {

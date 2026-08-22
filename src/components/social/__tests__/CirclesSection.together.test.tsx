@@ -116,10 +116,19 @@ describe("CirclesSection (SOCIAL-HOME-01 Together surface)", () => {
     );
 
     expect(screen.getByText("What support would help?")).toBeInTheDocument();
+    /* The first three are the LOCK-PINNED `LAUNCH_TEMPLATES` labels
+       (GsPb1), written out rather than derived so this pins the copy a
+       user actually reads. They were "Race" and "Nutrition Consistency"
+       here until 2026-08-22: the chooser kept a second hand-written copy
+       of the catalogue, so tapping "Race" confirmed "Race Journey" and
+       "Nutrition Consistency" confirmed "Consistency Reset" one screen
+       later. This test asserted the drifted side, which is why nothing
+       caught it. The chooser now derives from LAUNCH_TEMPLATES; the
+       cross-check below is what holds the two ends together. */
     for (const label of [
       "Strength Block",
-      "Race",
-      "Nutrition Consistency",
+      "Race Journey",
+      "Consistency Reset",
       "Hybrid",
       "Private Progress",
     ]) {
@@ -129,6 +138,60 @@ describe("CirclesSection (SOCIAL-HOME-01 Together surface)", () => {
     expect(
       screen.getByRole("button", { name: "Join with code" })
     ).toBeInTheDocument();
+  });
+
+  it("the goal you pick is the goal the sheet confirms — same string, both ends", async () => {
+    /* The cross-check the drift got past. `COLD_START_OPTIONS` used to be
+       a second hand-written copy of `LAUNCH_TEMPLATES`, and the two had
+       drifted on BOTH fields: you tapped "Race" and the next screen said
+       "Race Journey"; you tapped "Nutrition Consistency" and it said
+       "Consistency Reset". Every test in this file rendered only ONE of
+       the two surfaces, so nothing compared them.
+
+       This walks each option end-to-end and asserts the confirmed header
+       carries the string the chooser offered. Deliberately NOT derived
+       from either constant — reading the label off the rendered chooser
+       and looking for that same text in the rendered sheet is what makes
+       this a behaviour check rather than a restatement of the spread. */
+    for (const type of [
+      "Strength Block",
+      "Race Journey",
+      "Consistency Reset",
+      "Hybrid",
+    ]) {
+      mockUseGoalSpaces.mockReturnValue(hookValue());
+      const { unmount } = render(
+        <MemoryRouter>
+          <CirclesSection uid="me" />
+        </MemoryRouter>
+      );
+
+      const option = screen.getByText(type);
+      const offered = option.textContent ?? "";
+      expect(offered).toBeTruthy();
+      fireEvent.click(option);
+
+      // The sheet opens on the compact confirmed header (goalPrechosen).
+      expect(await screen.findByLabelText(/circle name/i)).toBeInTheDocument();
+
+      /* Scope to the confirmed header, NOT the document. The chooser stays
+         mounted under the sheet, so a document-wide getAllByText(offered)
+         finds the chooser's own copy of the string and passes however far
+         the sheet has drifted — checked by mutation: rewriting the sheet's
+         label to the old "Race" left that version of this test green. The
+         header is the block containing the "Change" control, so walk up
+         from it. */
+      const change = screen.getByRole("button", { name: /^change$/i });
+      const header = change.parentElement as HTMLElement;
+      expect(
+        within(header).queryByText(offered),
+        `the chooser offered "${offered}" but the create sheet's confirmed ` +
+          `header reads "${header.textContent}" — the two catalogues have ` +
+          `drifted apart again`
+      ).not.toBeNull();
+
+      unmount();
+    }
   });
 
   it("Private Progress navigates to /review and never creates a circle", () => {

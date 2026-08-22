@@ -20,9 +20,7 @@ import { db } from "../lib/firebase";
 import { useAuth } from "../lib/auth";
 import { THEME } from "../lib/theme";
 import { isOutdoorGpsRun } from "../lib/runGuards";
-import {
-  gradeAdjustedPace,
-} from "../lib/gradeAdjustedPace";
+import { gradeAdjustedPace } from "../lib/gradeAdjustedPace";
 import RunMap from "../components/run/RunMapLazy";
 import PaceLegend from "../components/run/PaceLegend";
 import SplitsBarChart from "../components/analytics/SplitsBarChart";
@@ -30,11 +28,7 @@ import ElevationProfile from "../components/analytics/ElevationProfile";
 import ShareCardSheet from "@/components/share/ShareCardSheet";
 import DeleteSessionAction from "@/components/session/DeleteSessionAction";
 import { Spinner } from "../components/ui/Spinner";
-import {
-  distanceLabel,
-  distanceLabel2,
-  paceMinSec,
-} from "@/lib/runLabels";
+import { distanceLabel, distanceLabel2, paceMinSec } from "@/lib/runLabels";
 import { distanceUnitLabel, paceUnitLabel } from "@/lib/distanceUnits";
 import { splitsForDisplay } from "@/lib/gps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
@@ -378,13 +372,18 @@ export default function RunDetail() {
                 {distanceLabel2(run.distance, unit)}
               </h1>
             </div>
-            <button
-              type="button"
+            {/* The `sport-tinted` variant, not a hand-copy of it. This was
+                a raw <button> reproducing the variant a shade off —
+                `bg-running/8` where the token is `/10`, `text-xs` where
+                the primitive is `text-sm` — with a literal "↗" glyph
+                standing in for an icon. */}
+            <Button
+              variant="sport-tinted"
               onClick={handleShare}
-              className="inline-flex items-center gap-1.5 px-3 min-h-[44px] rounded-xl text-xs font-medium active:scale-[0.97] transition-transform bg-running/8 text-running-strong"
+              leftIcon={<Share2 className="size-4" aria-hidden="true" />}
             >
-              ↗ Share
-            </button>
+              Share
+            </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-1">{dateStr}</p>
         </div>
@@ -404,14 +403,26 @@ export default function RunDetail() {
           />
         </div>
 
-        {/* Re-run this route (follow its GPS line) + Share route (.gpx via the
-            native share sheet). Distinct from the header "Share" which shares a
-            visual card image. Only when there's a real trace. */}
+        {/* Re-run this route (follow its GPS line), save it as a reusable
+            favourite, or export the .gpx. Only when there's a real trace.
+
+            1 + 2 rather than three-up. At 393px a three-way split leaves
+            ~59px of label room per button, which "Save route" already
+            overflowed — it was the one wrapping button in a row of equal
+            peers — and the rename below makes the third label longer
+            still. Re-run is the primary action here anyway, so it takes
+            the full width and the two utilities pair beneath it.
+
+            "Export GPX", not "Share": the header action 165px above is
+            also called Share and does something else entirely (a visual
+            card image). This one hands over a .gpx file — which is what
+            this block's own comment always said it did, while the button
+            said otherwise. */}
         {hasGpsTrace && (
-          <div className="flex gap-2">
+          <div className="space-y-2">
             <Button
               variant="sport-tinted"
-              className="flex-1"
+              fullWidth
               onClick={() =>
                 navigate("/run", { state: { followRoute: run.points } })
               }
@@ -419,22 +430,24 @@ export default function RunDetail() {
               <Navigation className="size-4" aria-hidden="true" />
               Re-run
             </Button>
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => void saveThisRoute()}
-            >
-              <Bookmark className="size-4" aria-hidden="true" />
-              Save route
-            </Button>
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => shareThisRoute()}
-            >
-              <Share2 className="size-4" aria-hidden="true" />
-              Share
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => void saveThisRoute()}
+              >
+                <Bookmark className="size-4" aria-hidden="true" />
+                Save route
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => shareThisRoute()}
+              >
+                <Share2 className="size-4" aria-hidden="true" />
+                Export GPX
+              </Button>
+            </div>
           </div>
         )}
 

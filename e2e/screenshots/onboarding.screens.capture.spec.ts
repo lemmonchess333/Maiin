@@ -119,7 +119,16 @@ test.describe("onboarding screenshots", () => {
     // Step 3 — run frequency + mode → Race Prep → distance + date.
     await tap(page, /regular runner/i);
     await tap(page, /race prep/i);
-    await tap(page, /full/i);
+    /* Race distance is a `SegmentedControl` now, so its options carry an
+       explicit role="radio" — which OVERRIDES the implicit button role, so
+       the `tap` helper's getByRole("button") stops matching. And `tap` is
+       best-effort by design: it would swallow the miss, leave the distance
+       at its "10k" default, and the two assertions below would then fail
+       against a scenario nobody wrote — 9 weeks out is compressed for a
+       marathon (minWeeks 12) but healthy for a 10K (minWeeks 6), and the
+       frames would quietly start filming the wrong race. A hard click on
+       the radio role, because a silent miss here is the whole failure. */
+    await page.getByRole("radio", { name: /^full$/i }).click({ timeout: 4000 });
 
     // The Run15 advisory: a marathon two weeks out is under the taper
     // floor → the ENGINE's mostly-easy line must appear at date entry.

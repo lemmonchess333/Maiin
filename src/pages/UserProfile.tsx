@@ -504,10 +504,16 @@ export default function UserProfile() {
           photos are private/personal artefacts that belong with the
           owner's stats and activity history, not in a public-facing
           social destination. The component handles upload, encryption,
-          and the compare/empty states internally. */}
+          and the compare/empty states internally.
+
+          No heading here. `ProgressPhotos` renders its own "Progress
+          Vault" title, and this wrapper <h3> read "Progress photos" at
+          the same size ~37px above it — one section announcing itself
+          twice, in two registers, disagreeing about its own name. The
+          section's aria-label still names the region for assistive
+          tech. */}
       {isOwnProfile && (
-        <section aria-label="Progress photos" className="space-y-2">
-          <h3 className="text-sm font-semibold">Progress photos</h3>
+        <section aria-label="Progress photos">
           <ProgressPhotos />
         </section>
       )}
