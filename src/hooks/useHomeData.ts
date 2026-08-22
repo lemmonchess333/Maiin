@@ -270,7 +270,7 @@ export function useHomeData(
                     : latest.weight.toFixed(1);
                 weightInfo = {
                   weight: w,
-                  date: format(new Date(latest.date + "T12:00:00"), "MMM d"),
+                  date: format(new Date(latest.date + "T12:00:00"), "d MMM"),
                   rawDate: latest.date,
                 };
                 // #984 — derive direction from the logged history via

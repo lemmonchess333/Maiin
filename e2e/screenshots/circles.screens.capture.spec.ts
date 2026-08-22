@@ -95,11 +95,14 @@ test.describe("circle weekly focus screenshots", () => {
     // Detail sheet ready once the primary action + the partner's focus
     // timeline row are in — that's the surface under review (pulse line,
     // focus copy, Back this focus). The featured card carries its OWN
-    // "Set weekly focus" button, so sheet assertions are scoped to the
-    // dialog to stay unambiguous.
+    // "Weekly focus" button (renamed from "Set weekly focus" in the
+    // 2026-08-22 frame sweep — it was the only wrapping button in the
+    // three-up row), so sheet assertions are scoped to the dialog to
+    // stay unambiguous. Anchored ^…$ so it cannot also match the
+    // radiogroup labelled "weekly focus".
     const detailSheet = page.getByRole("dialog");
     await detailSheet
-      .getByRole("button", { name: /set weekly focus/i })
+      .getByRole("button", { name: /^weekly focus$/i })
       .waitFor({ state: "visible", timeout: 15000 });
     await page
       .getByText(/is focusing on running this week/i)
@@ -117,7 +120,7 @@ test.describe("circle weekly focus screenshots", () => {
     // Same dialog scoping: the page-level locator would also match the
     // featured card's button behind the sheet.
     await detailSheet
-      .getByRole("button", { name: /set weekly focus/i })
+      .getByRole("button", { name: /^weekly focus$/i })
       .click({ timeout: 4000 });
     await page
       .getByRole("radiogroup", { name: /weekly focus/i })

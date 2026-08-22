@@ -22,6 +22,20 @@ import {
 } from "@/utils/calorieBalance";
 import { calculateTDEE, type ActivityLevel } from "@/lib/tdee";
 
+/* getBalanceColor's identities as theme-aware TEXT steps. The util keeps
+   returning the fixed hexes (its tests pin them, and the chart BARS want
+   them); text sites map through here — as 12-14px text the identities
+   fail light AA (success 2.50:1, warning 3.19, danger 3.58). */
+const BALANCE_TEXT: Record<string, string> = {
+  [THEME.success]: "hsl(var(--success-strong))",
+  [THEME.warning]: "hsl(var(--warning-strong))",
+  [THEME.danger]: "hsl(var(--running-strong))",
+};
+function balanceTextColor(balance: number, goal: string | undefined): string {
+  const identity = getBalanceColor(balance, goal);
+  return BALANCE_TEXT[identity] ?? identity;
+}
+
 interface CalorieBalanceChartProps {
   // Passed down from History, which already holds the live meals listener.
   meals: Meal[];
@@ -210,9 +224,14 @@ export default function CalorieBalanceChart({
       <div className="flex items-center justify-around pt-1 border-t border-border/30">
         <div className="text-center">
           <p className="text-xs text-muted-foreground">Avg daily</p>
+          {/* getBalanceColor returns the fixed identities (fine for the
+              chart fills its tests pin); as 14px TEXT they fail light AA
+              (success 2.50, warning 3.19, danger 3.58 — the sibling of
+              the alignment-line fix three lines down). Map to the
+              theme-aware steps here rather than change the util. */}
           <p
             className="text-sm font-bold font-mono tabular-nums"
-            style={{ color: getBalanceColor(avgBalance, goal) }}
+            style={{ color: balanceTextColor(avgBalance, goal) }}
           >
             {avgBalance >= 0 ? "+" : ""}
             {avgBalance} cal
@@ -251,7 +270,12 @@ export default function CalorieBalanceChart({
                 style={{ color: THEME.amber }}
                 aria-hidden="true"
               />
-              <p className="text-xs font-medium" style={{ color: THEME.amber }}>
+              {/* Text on the -strong step — the amber identity is ~3.1:1
+                  as 12px text on the light card; the icon keeps it. */}
+              <p
+                className="text-xs font-medium"
+                style={{ color: "hsl(var(--warning-strong))" }}
+              >
                 {alignment.message}
               </p>
             </div>
@@ -264,7 +288,7 @@ export default function CalorieBalanceChart({
             style={{
               color:
                 alignment.state === "on-track"
-                  ? getBalanceColor(avgBalance, goal)
+                  ? balanceTextColor(avgBalance, goal)
                   : "hsl(var(--muted-foreground))",
             }}
           >

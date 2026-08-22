@@ -503,9 +503,10 @@ export default function DayPeekCard({
  * slot row), muted-foreground text. Whole `<button type="button">` is the tap
  * target so the row meets the iOS HIG touch floor inside the card.
  *
- * Distance label format: "5km" when whole-km, "5.4km" otherwise.
- * Bucket text falls back from `type` to "run" so the aria-label
- * always has something to announce.
+ * Distance label format: "5 km" when whole-km, "5.4 km" otherwise
+ * (spaced unit — the app's one unit treatment). Bucket text falls back
+ * from `type` to "run" so the aria-label always has something to
+ * announce.
  */
 function ExtraRunRow({
   extra,
@@ -522,7 +523,7 @@ function ExtraRunRow({
   const distanceText =
     dist === null
       ? "Run"
-      : `${Number.isInteger(dist) ? dist : dist.toFixed(1)}${distanceUnitLabel(unit)}`;
+      : `${Number.isInteger(dist) ? dist : dist.toFixed(1)} ${distanceUnitLabel(unit)}`;
   const bucketText =
     typeof extra.type === "string" && extra.type.length > 0
       ? extra.type

@@ -982,7 +982,7 @@ export default function WorkoutSession({
         });
         haptic(50);
         toast.success(
-          `New ${repBucketLabel(prBucket)}! ${set.weight}kg × ${set.reps} on ${exName}`
+          `New ${repBucketLabel(prBucket)}! ${set.weight} kg × ${set.reps} on ${exName}`
         );
       }
     } else if (validation.warn) {
@@ -1998,7 +1998,7 @@ export default function WorkoutSession({
             Target: {currentExercise.sets}&times;
             {formatRepTarget(currentExercise)}
             {currentExercise.weight > 0
-              ? ` @ ${currentExercise.weight}kg`
+              ? ` @ ${currentExercise.weight} kg`
               : getExerciseById(currentExercise.exerciseId)?.equipment ===
                   "Bodyweight"
                 ? " @ Bodyweight"
@@ -2010,7 +2010,7 @@ export default function WorkoutSession({
         {plateLoad && plateLoad.perSide.length > 0 && (
           <p className="mt-0.5 text-center text-caption font-mono tabular-nums text-muted-foreground">
             Per side: {plateLoad.perSide.join(" + ")}
-            {!plateLoad.exact && ` · ${plateLoad.leftover}kg short`}
+            {!plateLoad.exact && ` · ${plateLoad.leftover} kg short`}
           </p>
         )}
       </div>

@@ -1277,7 +1277,7 @@ export function useProgram() {
           meta: [
             `${day.exercises.length} exercise${day.exercises.length === 1 ? "" : "s"}`,
             tonnage > 0
-              ? `${Math.round(tonnage).toLocaleString()}kg volume`
+              ? `${Math.round(tonnage).toLocaleString()} kg volume`
               : "",
             effectiveDurationMin > 0 ? `${effectiveDurationMin} min` : "",
           ].filter(Boolean),
@@ -1314,7 +1314,7 @@ export function useProgram() {
               return {
                 name: ex.exerciseName,
                 exerciseId: ex.exerciseId,
-                summary: `${setCount}×${targetReps}×${targetWeightKg}kg`,
+                summary: `${setCount}×${targetReps}×${targetWeightKg} kg`,
                 setCount,
                 targetReps,
                 targetWeightKg,

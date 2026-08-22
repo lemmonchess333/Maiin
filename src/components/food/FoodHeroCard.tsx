@@ -347,7 +347,15 @@ export default function FoodHeroCard({
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.3 }}
                     className="text-micro uppercase tracking-wider font-semibold"
-                    style={{ color: THEME.success }}
+                    style={{
+                      /* Photo hero: bright identity over the dark scrim
+                         (the photo, not the theme, is the surface). Plain
+                         card: the theme-aware -strong step — the identity
+                         is 2.36:1 as 12px text on the light card (DS2). */
+                      color: photoTextClass
+                        ? THEME.success
+                        : "hsl(var(--success-strong))",
+                    }}
                   >
                     {celebrationCaptionText}
                   </motion.p>

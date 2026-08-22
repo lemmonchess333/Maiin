@@ -90,7 +90,7 @@ export function formatBinLabel(
   if (granularity === "monthly") {
     const now = new Date();
     const sameYear = d.getUTCFullYear() === now.getUTCFullYear();
-    const month = d.toLocaleString("en-US", {
+    const month = d.toLocaleString("en-GB", {
       month: "short",
       timeZone: "UTC",
     });

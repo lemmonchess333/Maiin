@@ -29,6 +29,30 @@ function pctSigned(x: number) {
   return (v >= 0 ? "+" : "") + `${v}%`;
 }
 
+/* Band colour, in the CardColour hue/textHue shape (DS2). `identity` is
+ * the fixed THEME hex — correct for the gauge arc (decorative data-viz)
+ * and the large PI numeral (3:1 large-text bar). `text` is the theme-aware
+ * AA step for SMALL text in the same hue: every one of the five identities
+ * fails 4.5:1 on the light card (best case brand at 3.87), so the 12px
+ * band label and the 16px verdict headline must not take the identity.
+ * The same fix as PerformanceHeroCard's textHue, applied to this tab's
+ * own five-way scale — the two ternaries this replaces had already
+ * drifted into gauge and summary as separate copies. */
+function bandPalette(
+  score: number,
+  establishing: boolean
+): { identity: string; text: string } {
+  if (establishing)
+    return { identity: THEME.brand, text: "hsl(var(--primary-strong))" };
+  const clamped = Math.max(0, Math.min(100, score));
+  if (clamped >= 80)
+    return { identity: THEME.success, text: "hsl(var(--success-strong))" };
+  if (clamped >= 60) return { identity: THEME.teal, text: "hsl(var(--teal))" };
+  if (clamped >= 40)
+    return { identity: THEME.warning, text: "hsl(var(--warning-strong))" };
+  return { identity: THEME.running, text: "hsl(var(--running-strong))" };
+}
+
 // Semicircle gauge for the Performance Index
 function PIGauge({
   score,
@@ -57,15 +81,10 @@ function PIGauge({
 
   // Colour is a verdict too — a confident green on a first-week score
   // says "peak" as loudly as the word did.
-  const color = establishing
-    ? THEME.brand
-    : clamped >= 80
-      ? THEME.success
-      : clamped >= 60
-        ? THEME.teal
-        : clamped >= 40
-          ? THEME.warning
-          : THEME.running;
+  const { identity: color, text: bandTextColor } = bandPalette(
+    clamped,
+    !!establishing
+  );
 
   const band = establishing
     ? "Early read"
@@ -162,7 +181,10 @@ function PIGauge({
         >
           {Math.round(clamped)}
         </p>
-        <p className="text-xs font-semibold mt-0.5" style={{ color }}>
+        <p
+          className="text-xs font-semibold mt-0.5"
+          style={{ color: bandTextColor }}
+        >
           {band}
         </p>
         <div className="inline-flex items-center justify-center gap-1">
@@ -187,10 +209,16 @@ function ScoreBar({
   label,
   value,
   color,
+  textColor,
 }: {
   label: string;
   value: number;
+  /** Bar fill — the fixed identity hex (decorative, 1.4.11's 3:1 bar). */
   color: string;
+  /** The 12px value numeral — the identity's theme-aware AA text step.
+   *  At text-xs the identities all miss 4.5:1 on the light card, so the
+   *  value must not reuse the fill colour (DS2). */
+  textColor: string;
 }) {
   return (
     <div className="space-y-1">
@@ -198,7 +226,7 @@ function ScoreBar({
         <p className="text-xs text-muted-foreground">{label}</p>
         <p
           className="text-xs font-bold font-mono tabular-nums"
-          style={{ color }}
+          style={{ color: textColor }}
         >
           {Math.round(value)}
         </p>
@@ -304,15 +332,7 @@ export default function PerformanceTab() {
     establishing
   );
 
-  const summaryColor = establishing
-    ? THEME.brand
-    : pi >= 80
-      ? THEME.success
-      : pi >= 60
-        ? THEME.teal
-        : pi >= 40
-          ? THEME.warning
-          : THEME.running;
+  const summaryColor = bandPalette(pi, establishing).text;
 
   const insightBullets = currentWeek.insight?.bullets;
   const planAdj = (
@@ -329,14 +349,17 @@ export default function PerformanceTab() {
           className="p-4 rounded-2xl flex items-start gap-3"
           style={{ background: THEME.warning + "14" }}
         >
+          {/* Icon + heading on the -strong step, tint from the identity —
+              the treatment DeloadBanner (program) already carries. The
+              identity as 14px text measured ~3.1:1 on the light tint. */}
           <Flame
             className="size-5 shrink-0 mt-0.5"
-            style={{ color: THEME.warning }}
+            style={{ color: "hsl(var(--warning-strong))" }}
           />
           <div>
             <p
               className="text-sm font-semibold"
-              style={{ color: THEME.warning }}
+              style={{ color: "hsl(var(--warning-strong))" }}
             >
               Consider a deload week
             </p>
@@ -369,13 +392,19 @@ export default function PerformanceTab() {
                 unchanged week says nothing rather than saying nothing
                 positively; the headline already carries the verdict. */}
             {delta !== null && delta !== 0 && !establishing && (
-              // DS1b: stays inline — the chip mixes THEME.success (a status
-              // colour with no guaranteed --success equality) with running, so
-              // a class swap would risk shifting the positive-delta colour.
+              // Text on the -strong steps, tint from the identity — the
+              // same pair PerformanceHeroCard's delta chip uses (DS2).
+              // Supersedes the DS1b "stays inline" note: the concern was a
+              // CLASS swap shifting the hue; the -strong VAR steps keep the
+              // hue and add the AA lightness the identities lack at 12px
+              // (success 2.36:1, coral 3.20:1 on the light card).
               <span
                 className="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0"
                 style={{
-                  color: delta >= 0 ? THEME.success : THEME.running,
+                  color:
+                    delta >= 0
+                      ? "hsl(var(--success-strong))"
+                      : "hsl(var(--running-strong))",
                   background: `${delta >= 0 ? THEME.success : THEME.running}18`,
                 }}
               >
@@ -461,21 +490,25 @@ export default function PerformanceTab() {
                   label="Lift Load"
                   value={b.liftLoadScore}
                   color={THEME.lifting}
+                  textColor="hsl(var(--lifting-strong))"
                 />
                 <ScoreBar
                   label="Run Load"
                   value={b.runLoadScore}
                   color={THEME.running}
+                  textColor="hsl(var(--running-strong))"
                 />
                 <ScoreBar
                   label="Recovery"
                   value={b.recoveryScore}
                   color={THEME.success}
+                  textColor="hsl(var(--success-strong))"
                 />
                 <ScoreBar
                   label="Adherence"
                   value={b.adherenceScore}
                   color={THEME.teal}
+                  textColor="hsl(var(--teal))"
                 />
               </div>
 

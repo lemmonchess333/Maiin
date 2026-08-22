@@ -234,6 +234,18 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 - **UI patterns:** Drawer (vaul), bottom sheets, pressable cards
 - **Class names:** `clsx()` + `twMerge()` for conditional/merged Tailwind classes
 - **Drag & drop:** @dnd-kit for sortable exercise lists
+- **Dates:** en-GB day-before-month ("22 Aug", "Saturday 23 August") via the
+  `src/utils/formatters.ts` helpers. Locale-less `toLocaleDateString` follows
+  the DEVICE (renders "Aug 22" on a US phone) and month-first date-fns
+  patterns ("MMM d") are the same bug in disguise — both are banned by
+  `src/utils/__tests__/dateTreatment.test.ts`. Chart-axis "22/8" numerals are
+  their own compact register and exempt.
+- **Units:** spaced — "60 kg", "5.2 km", "400 m", "2,633 cal"
+  (`src/utils/__tests__/unitTreatment.test.ts` bans unspaced kg/km, including
+  the `${x}kg` template form). Two named exceptions: grams on the food
+  surface stay unspaced ("128g" — MacroColumn's documented house style), and
+  `ShareCardRenderer`'s compact forms ("12.3km") are a deliberate
+  space-constrained variant on the rasterised card.
 
 ## Testing
 
@@ -570,11 +582,22 @@ pixelmatch): `screenshot-diff/DIFF_REPORT.md` + per-frame changed-pixel
 highlights ride the same branch and mirror into the run's step summary —
 a report, not a gate (intended change is normal here). Visual
 PRs cite before/after from this channel (the D15 lesson: no visual churn
-without screenshots). Gotchas: capture specs must be named
+without screenshots). Concurrent runs no longer race the branch: the
+workflow cancels a superseded run (D26), because the loser's frames are
+overwritten by the newer force-push anyway and its diff report is exactly
+the artifact the race corrupts — push, WAIT for the run, then push the
+next capture. Gotchas: capture specs must be named
 `*.capture.spec.ts` (auth-emulator project); the Progress/Form switch and
 other SegmentedControls are `role="radio"`, not buttons; give best-effort
 clicks short explicit timeouts so a missed locator costs seconds, not its
-30s default.
+30s default. **Capture specs select by user-visible STRINGS, so renaming
+copy or reshaping an aria-label requires `rg` over `e2e/` in the same
+commit** — three selectors broke this way on 2026-08-22 alone (the
+surfaces day-cell regex, its unpinned twin in day-peek whose count-guard
+skipped the click SILENTLY, and the circles weekly-focus button). Where a
+component renders standalone, pin the spec's literal against the real
+render the way `weekStripCaptureSelector.test.tsx` does — it now reads
+BOTH day-cell specs.
 
 **Read the diff report with the flaky frames in mind.** Three classes
 of frame change between runs with no code change, and chasing one costs

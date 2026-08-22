@@ -753,7 +753,7 @@ export default function ProgrammeRunSection({
     if (!selectedTemplate) return [];
     const meta: string[] = [];
     if (selectedTemplate.config.targetDistanceKm) {
-      meta.push(`${selectedTemplate.config.targetDistanceKm}km`);
+      meta.push(`${selectedTemplate.config.targetDistanceKm} km`);
     } else if (selectedTemplate.estimatedDuration) {
       meta.push(`${selectedTemplate.estimatedDuration} min`);
     }

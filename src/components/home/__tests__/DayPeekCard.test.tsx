@@ -485,7 +485,7 @@ describe("DayPeekCard — Q5 extras rows (chunk B3g)", () => {
       />
     );
     expect(
-      screen.getByRole("button", { name: /Extra run: 5km easy/i })
+      screen.getByRole("button", { name: /Extra run: 5 km easy/i })
     ).toBeInTheDocument();
     // Activity section took over — fallback empty-state copy hidden.
     expect(screen.queryByText("No activity logged")).not.toBeInTheDocument();
@@ -516,7 +516,7 @@ describe("DayPeekCard — Q5 extras rows (chunk B3g)", () => {
       />
     );
     fireEvent.click(
-      screen.getByRole("button", { name: /Extra run: 5km easy/i })
+      screen.getByRole("button", { name: /Extra run: 5 km easy/i })
     );
     expect(navigateMock).toHaveBeenCalledWith("/run/tap-target");
   });
@@ -552,14 +552,14 @@ describe("DayPeekCard — Q5 extras rows (chunk B3g)", () => {
     );
     // First two render as inline rows.
     expect(
-      screen.getByRole("button", { name: /Extra run: 3km easy/i })
+      screen.getByRole("button", { name: /Extra run: 3 km easy/i })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Extra run: 4km tempo/i })
+      screen.getByRole("button", { name: /Extra run: 4 km tempo/i })
     ).toBeInTheDocument();
     // The 3rd + 4th are hidden behind the overflow indicator.
     expect(
-      screen.queryByRole("button", { name: /Extra run: 5km long/i })
+      screen.queryByRole("button", { name: /Extra run: 5 km long/i })
     ).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /2 more extra runs/i })
@@ -649,7 +649,7 @@ describe("DayPeekCard — Q5 extras rows (chunk B3g)", () => {
     expect(screen.getByText("Easy 30")).toBeInTheDocument();
     expect(screen.queryByText("Run scheduled")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Extra run: 3km easy/i })
+      screen.getByRole("button", { name: /Extra run: 3 km easy/i })
     ).toBeInTheDocument();
   });
 });

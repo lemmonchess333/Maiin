@@ -143,7 +143,7 @@ export function validateSet(input: SetValidationInput): SetValidationResult {
     return {
       ok: false,
       severity: "block",
-      message: `Weight looks too high (max ${WEIGHT_MAX_KG}kg). Check the value.`,
+      message: `Weight looks too high (max ${WEIGHT_MAX_KG} kg). Check the value.`,
     };
   }
 
@@ -162,7 +162,7 @@ export function validateSet(input: SetValidationInput): SetValidationResult {
         warn: {
           severity: "warn",
           kind: "huge-jump",
-          message: `${weight}kg is ${pctOver}% over your current best (${currentBest}kg). Confirm it's right.`,
+          message: `${weight} kg is ${pctOver}% over your current best (${currentBest} kg). Confirm it's right.`,
           confirmLabel: "Log as PR",
           fromKg: currentBest,
           toKg: weight,

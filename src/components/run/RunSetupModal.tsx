@@ -62,6 +62,7 @@ import type { ActivityType } from "@/types/run";
 import { requiresManualDistance } from "@/lib/runGuards";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import { getTargetValidationError } from "@/lib/runTargetValidation";
+import { formatDayMonthYear } from "@/utils/formatters";
 
 /* Preset chip (duration / pace / distance quick-pick groups). Tokenised —
    the old inline rgba(0,0,0,…) styles were light-theme-only values that
@@ -186,7 +187,7 @@ function ProgramContextStripView({ ctx }: { ctx: ProgramContextStrip }) {
     case "race_prep_today":
       line1 = `Race prep · ${ctx.weekLabel} · ${ctx.distanceLabel}`;
       line2 = ctx.targetDate
-        ? `Target ${parseLocalDate(ctx.targetDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`
+        ? `Target ${formatDayMonthYear(parseLocalDate(ctx.targetDate))}`
         : null;
       break;
     case "structured_today":

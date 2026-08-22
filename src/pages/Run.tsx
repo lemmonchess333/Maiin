@@ -170,7 +170,7 @@ function GPSIndicator({
         />
       </div>
       <span className={`text-xs font-mono tabular-nums ${text}`}>
-        {accuracy ? `\u00B1${Math.round(accuracy)}m` : ""}
+        {accuracy ? `\u00B1${Math.round(accuracy)} m` : ""}
       </span>
     </div>
   );
@@ -1428,7 +1428,7 @@ export default function Run() {
                   className="text-micro ml-2 font-mono"
                   style={{ color: "rgba(255,255,255,0.5)" }}
                 >
-                  {acc ? `\u00B1${Math.round(acc)}m` : "---"}
+                  {acc ? `\u00B1${Math.round(acc)} m` : "---"}
                 </p>
               </div>
 

@@ -5,10 +5,10 @@ describe("formatExerciseSummary", function () {
   it("renders standard sets×reps×weight format with kg suffix", function () {
     expect(
       formatExerciseSummary({ setCount: 4, targetReps: 6, targetWeightKg: 100 })
-    ).toBe("4×6×100kg");
+    ).toBe("4×6×100 kg");
     expect(
       formatExerciseSummary({ setCount: 3, targetReps: 8, targetWeightKg: 7.5 })
-    ).toBe("3×8×7.5kg");
+    ).toBe("3×8×7.5 kg");
   });
 
   it("uses BW suffix only when the exerciseId resolves to a true bodyweight movement", function () {
@@ -60,14 +60,14 @@ describe("formatExerciseSummary", function () {
         targetReps: 6,
         targetWeightKg: 100.0,
       })
-    ).toBe("4×6×100kg");
+    ).toBe("4×6×100 kg");
     expect(
       formatExerciseSummary({
         setCount: 4,
         targetReps: 6,
         targetWeightKg: 100.5,
       })
-    ).toBe("4×6×100.5kg");
+    ).toBe("4×6×100.5 kg");
   });
 
   it("falls back to a sets-only label when reps are zero", function () {
@@ -92,7 +92,7 @@ describe("formatExerciseSummary", function () {
         targetReps: 6.3,
         targetWeightKg: 50,
       })
-    ).toBe("5×6×50kg");
+    ).toBe("5×6×50 kg");
     expect(
       formatExerciseSummary({
         setCount: -1,

@@ -25,6 +25,7 @@ import {
   isTierAchieved,
 } from "./useChallenges";
 import { THEME } from "@/lib/theme";
+import { formatChallengeValue } from "./challengeFormat";
 import { Button } from "@/components/ui/Button";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { challengeEditorialImage } from "@/lib/editorialImages";
@@ -92,22 +93,6 @@ const CHALLENGE_ICON_MAP: Record<
   snowflake: Snowflake,
 };
 
-/** Format a challenge progress value with units appropriate to the
- *  metric. PR 5 introduces fastest_effort (seconds → mm:ss) and
- *  group_goal (still numeric km, just summed collectively). */
-function formatChallengeValue(metric: string, value: number): string {
-  if (metric === "fastest_effort") {
-    if (value <= 0) return "—";
-    const m = Math.floor(value / 60);
-    const s = Math.round(value % 60);
-    return `${m}:${s.toString().padStart(2, "0")}`;
-  }
-  if (metric === "total_km") return `${value.toFixed(1)}km`;
-  if (metric === "total_volume")
-    return `${Math.round(value).toLocaleString()}kg`;
-  return Math.round(value).toLocaleString();
-}
-
 function TierMarker({
   tier,
   value,
@@ -167,9 +152,12 @@ function TierMarker({
         className={`size-2.5 rounded-full border-2 border-card ${achieved ? "" : "bg-muted-foreground/30"}`}
         style={achieved ? { backgroundColor: TIER_COLORS[tier] } : undefined}
       />
+      {/* Achieved reads as FOREGROUND ink (vs muted for unachieved) — the
+          tier metal stays on the marker dot above. As 12px text the raw
+          metals fail light AA (bronze 3.14:1, silver 1.82, gold 1.40 —
+          2026-08-22 frame sweep). */}
       <span
-        className={`text-xs mt-0.5 font-medium font-mono tabular-nums whitespace-nowrap ${labelShift} ${achieved ? "" : "text-muted-foreground"}`}
-        style={achieved ? { color: TIER_COLORS[tier] } : undefined}
+        className={`text-xs mt-0.5 font-medium font-mono tabular-nums whitespace-nowrap ${labelShift} ${achieved ? "text-foreground" : "text-muted-foreground"}`}
       >
         {formatChallengeValue(metric, value)}
       </span>
@@ -568,10 +556,10 @@ export function ChallengeCard({
                     className="inline"
                     style={{ color: TIER_COLORS.gold }}
                   />{" "}
-                  <span
-                    className="font-semibold"
-                    style={{ color: TIER_COLORS.gold }}
-                  >
+                  {/* Gold as TEXT is 1.40:1 on white; the achievement
+                      token is the same celebration register with a real
+                      text step. The trophy keeps the metal. */}
+                  <span className="font-semibold text-achievement-strong">
                     Gold achieved!
                   </span>
                   {" — "}

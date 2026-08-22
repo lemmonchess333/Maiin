@@ -215,7 +215,7 @@ export default function DayActionSheet({
   const selectedRunMeta = selectedRunTemplate
     ? [
         selectedRunTemplate.config.targetDistanceKm
-          ? `${selectedRunTemplate.config.targetDistanceKm}km`
+          ? `${selectedRunTemplate.config.targetDistanceKm} km`
           : `${selectedRunTemplate.estimatedDuration} min`,
         ...(selectedRunPace ? [selectedRunPace] : []),
       ].join(" · ")

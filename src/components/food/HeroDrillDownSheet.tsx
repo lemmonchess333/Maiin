@@ -5,6 +5,7 @@ import { useCalorieRingMode } from "@/hooks/useCalorieRingMode";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { Lock } from "lucide-react";
 import BottomSheet from "@/components/ui/BottomSheet";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { Button } from "@/components/ui/Button";
 import { useSubscription } from "@/lib/subscription";
 import { useAuth } from "@/lib/auth";
@@ -16,6 +17,7 @@ import {
 } from "@/utils/formatNutrition";
 import { clampPct } from "@/lib/percentageHelpers";
 import { resolveMicroTargets, type MicroKind } from "@/lib/microTargets";
+import { formatWeekdayDayMonth } from "@/utils/formatters";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 
 const ProModal = lazyRetry(() => import("@/components/ProModal"));
@@ -70,9 +72,9 @@ function MacroRow({ label, consumed, target, color, mode }: MacroRowProps) {
   return (
     <div className="space-y-1.5">
       <div className="flex items-baseline justify-between">
-        <span className="text-caption uppercase tracking-[0.14em] text-muted-foreground font-semibold">
+        <SectionLabel as="span" tier="section">
           {label}
-        </span>
+        </SectionLabel>
         <span className="font-mono tabular-nums text-sm">
           <span className="font-semibold text-foreground">
             {formatMacro(consumed)}
@@ -138,14 +140,14 @@ function MicroRow({
   return (
     <div className="space-y-1.5">
       <div className="flex items-baseline justify-between">
-        <span className="text-caption uppercase tracking-[0.14em] text-muted-foreground font-semibold">
+        <SectionLabel as="span" tier="section">
           {label}
           {isLimit && (
             <span className="ml-1.5 normal-case tracking-normal text-[10px] text-muted-foreground">
               limit
             </span>
           )}
-        </span>
+        </SectionLabel>
         <span className="font-mono tabular-nums text-sm">
           <span
             className="font-semibold text-foreground"
@@ -223,11 +225,7 @@ export default function HeroDrillDownSheet({
 
   const dateLabel = isToday
     ? "Today"
-    : new Date(selectedDate + "T12:00:00").toLocaleDateString(undefined, {
-        weekday: "long",
-        month: "long",
-        day: "numeric",
-      });
+    : formatWeekdayDayMonth(new Date(selectedDate + "T12:00:00"));
 
   return (
     <>
@@ -240,9 +238,7 @@ export default function HeroDrillDownSheet({
         <div className="p-4 space-y-5 overflow-y-auto">
           {/* Calorie summary */}
           <section className="space-y-2">
-            <p className="text-caption uppercase tracking-[0.14em] text-muted-foreground font-semibold">
-              Calories
-            </p>
+            <SectionLabel tier="section">Calories</SectionLabel>
             <div className="flex items-baseline justify-between">
               <div className="flex items-baseline gap-1.5">
                 <span className="font-mono tabular-nums text-2xl font-extrabold text-foreground">
@@ -367,9 +363,7 @@ export default function HeroDrillDownSheet({
 
           {/* Macros */}
           <section className="space-y-4">
-            <p className="text-caption uppercase tracking-[0.14em] text-muted-foreground font-semibold">
-              Macros
-            </p>
+            <SectionLabel tier="section">Macros</SectionLabel>
             <MacroRow
               label="Protein"
               consumed={dailyTotals.protein}
@@ -398,9 +392,7 @@ export default function HeroDrillDownSheet({
               reference targets come from microTargets (not personalised the
               way calories/macros are — there's no engine for these). */}
           <section className="space-y-4">
-            <p className="text-caption uppercase tracking-[0.14em] text-muted-foreground font-semibold">
-              Other nutrients
-            </p>
+            <SectionLabel tier="section">Other nutrients</SectionLabel>
             {micros.map((m) => (
               <MicroRow
                 key={m.key}
@@ -420,9 +412,7 @@ export default function HeroDrillDownSheet({
             calories are shown for context, NOT added back to the target. */}
           {showBurnBreakdown && (
             <section className="space-y-2">
-              <p className="text-caption uppercase tracking-[0.14em] text-muted-foreground font-semibold">
-                Activity today
-              </p>
+              <SectionLabel tier="section">Activity today</SectionLabel>
               <div className="space-y-1.5 text-sm">
                 {dailyTargets.actualLiftBurn > 0 && (
                   <div className="flex justify-between">

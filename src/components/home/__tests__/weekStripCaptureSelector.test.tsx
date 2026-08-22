@@ -53,6 +53,30 @@ function captureSelector(): RegExp {
   return new RegExp(m[1]);
 }
 
+/** day-peek.screens.capture.spec.ts carries its OWN day-cell selector —
+ *  a twin this file did not cover, which is exactly how the 2026-08-22
+ *  en-GB label change broke it while the pinned surfaces selector moved
+ *  in lockstep: the stale regex matched ZERO cells, the spec's
+ *  count-guard silently skipped the click, and `day-peek-open` filmed a
+ *  bare strip at exactly the closed-Home page height. Pin every spec
+ *  that selects on this label, not just the first one found rotting. */
+function dayPeekSelector(): RegExp {
+  const spec = readFileSync(
+    resolve(repoRoot, "e2e/screenshots/day-peek.screens.capture.spec.ts"),
+    "utf8"
+  );
+  const m = spec.match(
+    /const dayCells = page\.getByRole\("button", \{ name: \/(.+?)\/i \}\)/
+  );
+  if (!m) {
+    throw new Error(
+      "could not find the day-cell selector in day-peek.screens.capture.spec.ts — " +
+        "if the spec was restructured, retarget this extractor rather than deleting it"
+    );
+  }
+  return new RegExp(m[1], "i");
+}
+
 function makeProfile(): UserProfile {
   const weekSchedule: ScheduleDay[] = Array.from({ length: 7 }, (_, day) => ({
     day,
@@ -118,6 +142,20 @@ describe("capture spec — WeekStrip day-cell selector", () => {
         `WeekStrip's accessible names. This is what a dead selector looks ` +
         `like: the spec times out and its frame silently leaves the set.`
     ).toHaveLength(6);
+  });
+
+  it("day-peek spec's own selector matches at least five cells", () => {
+    // Its click targets `.nth(4)` behind a `count >= 5` guard, so fewer
+    // than five matches doesn't fail the spec — it silently films the
+    // wrong screen. Five is therefore the real contract, not one.
+    const selector = dayPeekSelector();
+    const matched = dayCellNames().filter((n) => selector.test(n));
+    expect(
+      matched.length,
+      `day-peek.screens.capture.spec.ts's day-cell selector ${selector} ` +
+        `matches ${matched.length} of WeekStrip's accessible names — its ` +
+        `count-guard needs 5, and a shortfall skips the peek silently.`
+    ).toBeGreaterThanOrEqual(5);
   });
 
   it("never matches today — tapping it scrolls instead of peeking", () => {

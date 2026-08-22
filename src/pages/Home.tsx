@@ -448,7 +448,7 @@ export default function Home() {
           : storeW.toFixed(1);
       setLastWeightInfo({
         weight: disp,
-        date: format(new Date(), "MMM d"),
+        date: format(new Date(), "d MMM"),
         rawDate: today,
       });
       setWeightSaved(true);

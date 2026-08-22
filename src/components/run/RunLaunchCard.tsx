@@ -66,7 +66,7 @@ function intervalSummary(intervals: RunConfig["intervals"]): string | null {
   const { reps, workDistance, workDuration } = intervals;
   if (workDistance) {
     const unit =
-      workDistance >= 1000 ? `${workDistance / 1000}K` : `${workDistance}m`;
+      workDistance >= 1000 ? `${workDistance / 1000}K` : `${workDistance} m`;
     return `${reps} × ${unit}`;
   }
   if (workDuration) return `${reps} × ${Math.round(workDuration / 60)}min`;

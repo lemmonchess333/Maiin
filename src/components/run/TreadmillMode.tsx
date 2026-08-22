@@ -94,7 +94,7 @@ export default function TreadmillMode({
             the validation copy (so they know what to fix). */}
         {distance && Number(distance) < 0.05 ? (
           <p className="text-xs text-white/50 mt-1">
-            Distance must be at least 0.05km.
+            Distance must be at least 0.05 km.
           </p>
         ) : (
           <p className="text-xs text-white/40 mt-1">{helperCopy}</p>

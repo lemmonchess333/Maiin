@@ -389,9 +389,12 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
                 style={{ color: THEME.warning }}
               />
               <div>
+                {/* Heading on the -strong text step, not the identity —
+                    the identity is fill/icon grade (~3.1:1 on the light
+                    tint at 14px). Icon + tint above keep THEME.warning. */}
                 <p
                   className="text-small font-semibold"
-                  style={{ color: THEME.warning }}
+                  style={{ color: "hsl(var(--warning-strong))" }}
                 >
                   Watch out
                 </p>

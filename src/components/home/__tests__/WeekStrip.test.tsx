@@ -364,7 +364,9 @@ describe("WeekStrip — accessible name and selection state", () => {
   it("labels a day cell as weekday, date, then training label", () => {
     const { container } = renderAllDays("rest");
     const label = todayCell(container).getAttribute("aria-label") ?? "";
-    expect(label).toMatch(/^\w+day, \w+ \d+, /);
+    // en-GB day-before-month ("Saturday 23 August, …") — the app's one
+    // date treatment, applied to the label 2026-08-22.
+    expect(label).toMatch(/^\w+day \d+ \w+, /);
   });
 
   it("marks today, and only today, with the (today) suffix", () => {
@@ -486,7 +488,7 @@ describe("WeekStrip — accessible name and selection state", () => {
     // The parts that already worked must survive the rewrite.
     const { container } = renderAllDays("rest");
     const label = todayCell(container).getAttribute("aria-label") ?? "";
-    expect(label).toMatch(/^[A-Z][a-z]+day, [A-Z][a-z]+ \d{1,2}/);
+    expect(label).toMatch(/^[A-Z][a-z]+day \d{1,2} [A-Z][a-z]+/);
     expect(label).toMatch(/\(today\)/);
     // …and a day that is not today does not claim to be.
     const other = container.querySelectorAll("button")[3];

@@ -98,7 +98,7 @@ describe("getTargetValidationError — distance", () => {
         ...valid,
         target: { type: "distance", value: 5 },
       })
-    ).toBe("Distance must be at least 0.5km");
+    ).toBe("Distance must be at least 0.5 km");
   });
 
   it("rejects sub-floor values just below 0.5km", () => {
@@ -107,7 +107,7 @@ describe("getTargetValidationError — distance", () => {
         ...valid,
         target: { type: "distance", value: 499 },
       })
-    ).toBe("Distance must be at least 0.5km");
+    ).toBe("Distance must be at least 0.5 km");
   });
 
   it("rejects above-ceiling values", () => {
@@ -116,7 +116,7 @@ describe("getTargetValidationError — distance", () => {
         ...valid,
         target: { type: "distance", value: 100_001 },
       })
-    ).toBe("Distance must be at most 100km");
+    ).toBe("Distance must be at most 100 km");
   });
 });
 

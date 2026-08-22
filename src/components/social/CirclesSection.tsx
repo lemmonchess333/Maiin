@@ -41,6 +41,7 @@ import { BottomSheet } from "@/components/ui/BottomSheet";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Spinner } from "@/components/ui/Spinner";
 import { getTimeAgo } from "@/lib/timeAgo";
+import { formatDayMonth } from "@/utils/formatters";
 import { localWeekKey } from "@/lib/dateHelpers";
 import {
   LAUNCH_TEMPLATES,
@@ -127,11 +128,14 @@ const COLD_START_OPTIONS: Array<{
   description: string;
 }> = [...LAUNCH_TEMPLATES, HYBRID_TEMPLATE];
 
-/** "YYYY-MM-DD" → "12 Sep" — same short-date idiom as the rest of the app. */
+/** "YYYY-MM-DD" → "12 Sep" via the canonical helper. The previous inline
+ *  toLocaleDateString passed an ABSENT locale, so it followed the device
+ *  and rendered "Sep 12" on a US phone while its own comment claimed the
+ *  app idiom. */
 function formatTargetDate(iso: string): string {
   const d = new Date(iso + "T00:00:00");
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+  return formatDayMonth(d);
 }
 
 /** Today's local calendar day as YYYY-MM-DD — the same string basis the
@@ -1013,7 +1017,7 @@ export default function CirclesSection({
                       haptic("light");
                       setGoalPrechosen(false);
                     }}
-                    className="shrink-0 min-h-[44px] flex items-center px-1 text-xs font-medium text-primary"
+                    className="shrink-0 min-h-[44px] flex items-center px-1 text-xs font-medium text-primary-strong"
                   >
                     Change
                   </button>
@@ -1234,7 +1238,11 @@ export default function CirclesSection({
                       setFocusSheetOpen(true);
                     }}
                   >
-                    {myCheckIn ? "Change weekly focus" : "Set weekly focus"}
+                    {/* "Weekly focus" both ways: the longer verbs made
+                        this the only WRAPPING button in the three-up row
+                        (~115px per cell) — two lines beside single-line
+                        peers. The sheet it opens restates the verb. */}
+                    Weekly focus
                   </Button>
                   <Button
                     variant="secondary"

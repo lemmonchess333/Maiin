@@ -901,6 +901,29 @@ three-up row's ~59px of label room, which no longer applies.
 
 Each of these has a correct fix that changes something a person has to choose. Guessing is the defect.
 
+**STATUS 2026-08-22 (4) — the section is CLOSED; nothing here remains
+open.** The second pass of the day (post-merge of PR #2077) finished what
+(3) left: **item 3's Food half** — HeroDrillDownSheet's six `[0.14em]`
+labels, EditServingsSheet's three, and FoodSuggestionsDropdown's header
+all route through `SectionLabel` now (the macro-input `<label>` wraps the
+primitive `as="span"` since it cannot render a label element); the "ADD
+TO" worry was already resolved by the earlier drift-site fix. **Item 7
+went repo-wide**: ~30 unspaced kg/km/m sites spaced, the byte-identical
+challenge formatter deduped into `challengeFormat.ts`, and the treatment
+ratcheted by `unitTreatment.test.ts` — whose mutation check caught three
+sites every prior sweep missed (`${x}kg` template-form is invisible to a
+digit-anchored grep). Dates got the same treatment in the same pass
+(en-GB day-before-month, 10 deviant sites — two of them share-card
+payloads rasterised into public images — plus `dateTreatment.test.ts`).
+The residue class this doc's items 1/2 created ("identity hex as small
+text") was swept once more against the merged tree: PerformanceTab's
+five-state verdict headline + gauge band label + ScoreBar values + its
+second deload banner + delta chip, WeeklyVolumeCard's status labels,
+ExerciseFormContent's "Watch out", TrainingLoadCard's advisory,
+CalorieBalanceChart's alignment line, ActivityCard's milestone chip, the
+off-route chip (dark-on-amber), and FoodHeroCard's celebration caption
+(photo-conditional). D20/D21/D26 closed per their backlog rows.\*\*
+
 **STATUS 2026-08-22 (3) — the product owner made the call in-session, and
 items 1, 2 and 4–7 are DECIDED and SHIPPED.** The decision is **option (a):
 contrast beats palette purity — theme-aware tokens everywhere, the dark

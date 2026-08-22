@@ -137,7 +137,11 @@ export default function WeekStrip({
                double-announce against it. */
             aria-pressed={day.isSelected}
             aria-label={
-              format(day.date, "EEEE, MMMM d") +
+              // en-GB day-before-month, the app's one date treatment —
+              // "Saturday 23 August", not "Saturday, August 23". The
+              // capture spec's day-cell selector parses this shape;
+              // weekStripCaptureSelector.test.tsx pins the two together.
+              format(day.date, "EEEE d MMMM") +
               ", " +
               trainingLabel(day) +
               // Kept, but named for what it is: `dayMap` counts meals, and
