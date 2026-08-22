@@ -167,20 +167,23 @@ test.describe(`home + food surfaces (${PHASE})`, () => {
        a tap on today as redundant with the live session cards below and
        scrolls to them instead of peeking (Cal-A), so targeting "today"
        silently captures the wrong screen — which is what the first run
-       of this spec did.
+       of this spec did. Day-cell labels carry a "(today)" suffix, so the
+       absence of it is the selector.
 
-       The previous selector — /day, \w+ \d+$/ — used `$` to mean "no
-       (today) suffix", and it had been dead for as long as WeekStrip's
-       label carried a training descriptor. The real name is
-       "Saturday, August 23, lift day", so anchoring on the date's END
-       can never match: something always follows it. It matched nothing,
-       every run, and the only symptom was this spec timing out and
-       `home-day-peek` silently dropping out of the capture set — the
-       same rot that had frozen the whole channel earlier.
+       That intent was right and the regex had rotted. It anchored the
+       date to END of name (`/day, \w+ \d+$/`), but WeekStrip appends the
+       training label after the date — "Friday, August 21, rest day" —
+       so it matched NOTHING and this step had been timing out for as
+       long as the label has had that suffix. A negative lookahead now
+       carries the "not today" half explicitly instead of relying on an
+       anchor to imply it. `weekStripDayLabel` in the unit suite pins the
+       shape this depends on.
 
-       Stated as what it means instead: a day cell, without "(today)"
-       anywhere in its name. That survives another descriptor being
-       appended, which is exactly what broke the last one. */
+       Worth keeping about the SYMPTOM, because it is what made this
+       survive so long: the only outward sign was `home-day-peek`
+       quietly leaving the capture set. The spec timed out, the other 45
+       tests passed, and the job still committed screenshots — so a
+       missing frame looked like a frame nobody had asked for. */
     const otherDay = page
       .getByRole("button", { name: /^(?!.*\(today\))\w+day, \w+ \d+,/ })
       .first();
