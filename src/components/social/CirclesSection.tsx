@@ -999,7 +999,7 @@ export default function CirclesSection({
         title="Start a circle"
         description="Invite-only, 2–8 people. Numbers, meals and photos stay private — a circle only ever sees check-ins."
       >
-        <div className="space-y-3 pb-2">
+        <div className="px-4 space-y-3 pb-2">
           {goalPrechosen ? (
             /* Goal already chosen (cold-start / hand-off) — show it as a
                compact confirmed header instead of re-showing the full
@@ -1111,7 +1111,7 @@ export default function CirclesSection({
         description="You already have a matching circle."
       >
         {trainTogether && (
-          <div className="space-y-2 pb-2">
+          <div className="px-4 space-y-2 pb-2">
             <Button
               className="w-full"
               onClick={() => {
@@ -1153,7 +1153,7 @@ export default function CirclesSection({
         title="Join a circle"
         description="Paste the invite code a friend shared with you."
       >
-        <div className="space-y-3 pb-2">
+        <div className="px-4 space-y-3 pb-2">
           <input
             type="text"
             value={joinInput}
@@ -1187,7 +1187,7 @@ export default function CirclesSection({
         }
       >
         {detailOf && (
-          <div className="space-y-4 pb-2">
+          <div className="px-4 space-y-4 pb-2">
             {members === null && (
               <div className="flex justify-center py-6">
                 <Spinner label="Loading circle" />
@@ -1363,7 +1363,7 @@ export default function CirclesSection({
         description="Invite 1–7 people — the circle only ever sees check-ins, never numbers, meals or photos."
       >
         {inviteHandoff && (
-          <div className="space-y-3 pb-2">
+          <div className="px-4 space-y-3 pb-2">
             <p className="w-full px-3 py-2.5 rounded-xl bg-muted text-sm text-foreground font-mono break-all select-all">
               {inviteString(inviteHandoff.spaceId, inviteHandoff.inviteCode)}
             </p>
