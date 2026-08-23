@@ -1152,6 +1152,19 @@ What is genuinely left is operator-only — there is no code change pending:
       stale negative caching (a theory that was checked and disproved).
 - [x] **All three URLs confirmed loading signed-out** — `/privacy`,
       `/terms`, `/support` on the real domain, 2026-08-22.
+- [ ] **Add `troposfit.com` to the browser API key's referrer allowlist**
+      (found live 2026-08-23: sign-in at the new domain fails with
+      `auth/requests-from-referer-https://troposfit.com-are-blocked`).
+      The key hardening in `docs/LAUNCH_TODO.md` §"Browser API key"
+      allowlisted only `adaptive-fitness-af8bb.firebaseapp.com/*` and
+      `…web.app/*` — the custom domain postdates it. Google Cloud →
+      Credentials → _Browser key (auto created by Firebase)_ → Website
+      restrictions → add `troposfit.com/*` and `*.troposfit.com/*`. The
+      legal pages loading proved HOSTING, not auth — the two are gated
+      separately, which is why the signed-out URL check missed this.
+      While there, confirm Firebase Auth → Settings → Authorized domains
+      lists `troposfit.com` (Hosting usually auto-adds it). Then verify
+      an actual sign-in from `troposfit.com`.
 - [ ] **Then update App Store Connect** to the real URLs — four fields,
       three distinct pages: the two **Description** footer links
       (`/terms`, `/privacy`), the **Support URL** field (`/support`), and
