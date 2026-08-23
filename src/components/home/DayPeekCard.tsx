@@ -175,10 +175,12 @@ export default function DayPeekCard({
         : shownType === "both"
           ? "Lift + Run day"
           : "Rest day";
-  // DS1b: typeColor stays inline — the rest-day branch is THEME.text.muted
-  // (#8E8E93), whose match to --muted-foreground isn't guaranteed, so the
-  // lift/run/both sport branches ride along inline rather than risk the rest
-  // pill shifting.
+  // typeColor stays inline (the sport branches are JS hexes), but the rest
+  // branch is the theme-aware secondary token now. DS1b left it on the fixed
+  // #8E8E93 because its "match to --muted-foreground isn't guaranteed" — the
+  // 2026-08-22 owner-decided consolidation RESOLVED that by defining the
+  // muted-text identity as --muted-foreground, so the equality is the
+  // decision, not an assumption.
   const typeColor =
     shownType === "lift"
       ? THEME.lifting
@@ -186,7 +188,15 @@ export default function DayPeekCard({
         ? THEME.running
         : shownType === "both"
           ? THEME.lifting
-          : THEME.text.muted;
+          : "hsl(var(--muted-foreground))";
+  const typeBg =
+    shownType === "lift"
+      ? THEME.lifting + "18"
+      : shownType === "run"
+        ? THEME.running + "18"
+        : shownType === "both"
+          ? THEME.teal + "18"
+          : "hsl(var(--muted-foreground) / 0.09)";
   let tonnage = 0;
   let totalMinutes = 0;
   workouts.forEach(function (w) {
@@ -259,7 +269,11 @@ export default function DayPeekCard({
               </span>
               <span
                 className="text-xs font-medium px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: typeColor + "18", color: typeColor }}
+                /* The bg comes from the pair, never `typeColor + "18"` —
+                   the rest branch is a var() string and hex-alpha concat
+                   onto it is invalid CSS (the pill silently loses its
+                   tint). Caught in self-review before the frame did. */
+                style={{ backgroundColor: typeBg, color: typeColor }}
               >
                 {typeLabel}
               </span>
@@ -489,9 +503,10 @@ export default function DayPeekCard({
  * slot row), muted-foreground text. Whole `<button type="button">` is the tap
  * target so the row meets the iOS HIG touch floor inside the card.
  *
- * Distance label format: "5km" when whole-km, "5.4km" otherwise.
- * Bucket text falls back from `type` to "run" so the aria-label
- * always has something to announce.
+ * Distance label format: "5 km" when whole-km, "5.4 km" otherwise
+ * (spaced unit — the app's one unit treatment). Bucket text falls back
+ * from `type` to "run" so the aria-label always has something to
+ * announce.
  */
 function ExtraRunRow({
   extra,
@@ -508,7 +523,7 @@ function ExtraRunRow({
   const distanceText =
     dist === null
       ? "Run"
-      : `${Number.isInteger(dist) ? dist : dist.toFixed(1)}${distanceUnitLabel(unit)}`;
+      : `${Number.isInteger(dist) ? dist : dist.toFixed(1)} ${distanceUnitLabel(unit)}`;
   const bucketText =
     typeof extra.type === "string" && extra.type.length > 0
       ? extra.type

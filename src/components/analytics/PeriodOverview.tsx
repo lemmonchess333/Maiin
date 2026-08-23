@@ -145,7 +145,7 @@ export default function PeriodOverview({
           return (
             <div
               key={s.label}
-              className="flex flex-col items-center gap-2"
+              className="min-w-0 flex flex-col items-center gap-2"
               style={isEmpty ? { opacity: 0.4 } : undefined}
             >
               <div className="relative">
@@ -154,11 +154,24 @@ export default function PeriodOverview({
                   {s.icon}
                 </div>
               </div>
-              <div className="text-center">
+              <div className="min-w-0 w-full text-center">
                 <p className="text-xl font-bold font-mono tabular-nums text-foreground leading-none">
                   {s.value}
                 </p>
-                <p className="text-xs text-muted-foreground mt-0.5 font-mono tabular-nums">
+                {/* `label` existed on every stat but was only ever spent
+                    as the React key, so the three columns were a number,
+                    a ring and an icon — meaning carried by the glyph
+                    alone. A shoe, a dumbbell and a flame are not
+                    self-evident, and nothing here is announced to a
+                    screen reader either. NOT font-mono: this is a word,
+                    and that treatment is scoped to numerals. */}
+                <p className="text-caption text-muted-foreground mt-1 truncate">
+                  {s.label}
+                </p>
+                {/* Sub-values are free text ("12.4t", "2,143 kcal/day")
+                    and the column is a third of a phone card, so it
+                    truncates rather than wrapping the row taller. */}
+                <p className="text-xs text-muted-foreground mt-0.5 font-mono tabular-nums truncate">
                   {s.sub}
                 </p>
               </div>

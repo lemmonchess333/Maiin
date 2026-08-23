@@ -50,7 +50,7 @@ export const initialModalState: ModalPhase = { phase: "confirm" };
 
 export function modalReducer(
   state: ModalPhase,
-  action: ModalAction,
+  action: ModalAction
 ): ModalPhase {
   switch (action.type) {
     case "DELETE_START":

@@ -8,6 +8,7 @@ import {
 } from "react";
 import { motion, useMotionValue, animate } from "framer-motion";
 import { THEME } from "../../lib/theme";
+import { HUD_CAPTION, HUD_SECONDARY } from "./runHudTypography";
 import { haptic } from "../../lib/haptic";
 import { projectAndSnap } from "../../lib/sheetSnap";
 import {
@@ -74,9 +75,17 @@ interface RunBottomSheetProps {
   hrZone?: 0 | ZoneNumber | null;
 }
 
-// Visible sheet height as fraction of viewport: compact, mid, full.
-// idx 2 = expanded timer view; idx 0 = compact bar (map mostly visible).
-const SNAPS: [number, number, number] = [0.13, 0.4, 0.91];
+// Visible sheet height as fraction of viewport: compact, splits, full.
+// idx 2 = expanded timer view; idx 1 = glance bar + live splits list;
+// idx 0 = compact bar (map mostly visible).
+// D24 history: the original 0.4 middle detent rendered the IDENTICAL
+// collapsed bar inside 341px — ~250px of empty sheet — and was removed
+// (owner-delegated, 2026-08-22). This middle is its designed successor,
+// built as its own change per that removal's note: the glance bar plus
+// the last few splits, with the current-lap progress bar and an honest
+// "splits appear after each km" line before the first lap — which is
+// also what makes the state filmable on the capture rig's 150m walk.
+const SNAPS: [number, number, number] = [0.13, 0.42, 0.91];
 const SHEET_SPRING = { type: "spring" as const, stiffness: 520, damping: 44 };
 
 /* haptic moved to the shared @/lib/haptic implementation in
@@ -131,8 +140,7 @@ function SplitsStrip({
             </p>
             <p
               style={{
-                fontSize: 8,
-                color: "rgba(255,255,255,0.25)",
+                ...HUD_CAPTION,
                 marginTop: 1,
               }}
             >
@@ -143,6 +151,118 @@ function SplitsStrip({
       })}
     </div>
   );
+}
+
+// ── Splits list (middle snap) ────────────────────────────────────────────────
+/** The middle detent's content — the reason it exists. Newest lap first
+ *  (the lap a runner mid-run actually checks), capped at the FIVE most
+ *  recent with an honest "last 5 of N" header rather than an inner
+ *  scroller: the whole sheet is a pointer-drag surface, and a scrollable
+ *  list inside it would fight the drag for the same gesture. The full
+ *  list lives on the post-run summary. Best lap carries the teal the
+ *  expanded SplitsStrip already uses for it; each later lap shows a
+ *  signed delta vs the lap before (green = faster). Before the first
+ *  lap completes, the current-lap progress bar plus a quiet line — the
+ *  designed cold-start, not an empty box. */
+const SPLITS_LIST_MAX = 5;
+// Exported for the unit suite: the capture rig's 150m walk films the
+// sub-first-lap state, so the ROWS branch is pinned by test instead.
+export function SplitsList({
+  splits,
+  distance,
+  unit,
+}: {
+  splits: Split[];
+  distance: number;
+  unit: DistanceUnit;
+}) {
+  const u = distanceUnitLabel(unit);
+  if (splits.length === 0) {
+    return (
+      <div className="px-6 pt-1 pb-4 flex-shrink-0">
+        {distance > 0 && <KmProgress distance={distance} unit={unit} />}
+        <p
+          className="text-center"
+          style={{ ...HUD_CAPTION, letterSpacing: "0.1em", marginTop: 10 }}
+        >
+          SPLITS APPEAR AFTER EACH {u === "mi" ? "MILE" : "KM"}
+        </p>
+      </div>
+    );
+  }
+  const bestPace = Math.min(...splits.map((s) => s.paceSeconds));
+  const recent = splits.slice(-SPLITS_LIST_MAX).reverse();
+  return (
+    <div className="px-6 pt-1 pb-4 flex-shrink-0">
+      {distance > 0 && <KmProgress distance={distance} unit={unit} />}
+      <div className="flex items-baseline justify-between mt-3 mb-1 px-1">
+        <p style={{ ...HUD_CAPTION, letterSpacing: "0.1em" }}>
+          {splits.length > SPLITS_LIST_MAX
+            ? `SPLITS · LAST ${SPLITS_LIST_MAX} OF ${splits.length}`
+            : "SPLITS"}
+        </p>
+        <p style={{ ...HUD_CAPTION, letterSpacing: "0.1em" }}>
+          BEST {paceMinSec(bestPace, unit)}
+        </p>
+      </div>
+      {recent.map((s) => {
+        const prev = splits[s.km - 2];
+        const delta = prev
+          ? Math.round(s.paceSeconds - prev.paceSeconds)
+          : null;
+        const isBest = s.paceSeconds === bestPace;
+        return (
+          <div
+            key={s.km}
+            className="flex items-center justify-between px-1"
+            style={{ height: 32 }}
+          >
+            <p style={{ ...HUD_SECONDARY, width: 44 }}>
+              {u} {s.km}
+            </p>
+            <p
+              style={{
+                fontSize: 15,
+                fontWeight: 700,
+                color: isBest ? THEME.teal : "rgba(255,255,255,0.85)",
+                fontVariantNumeric: "tabular-nums",
+                fontFamily: "var(--font-mono)",
+              }}
+            >
+              {paceMinSec(s.paceSeconds, unit)}
+            </p>
+            <p
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                width: 52,
+                textAlign: "right",
+                color:
+                  delta === null
+                    ? "rgba(255,255,255,0.35)"
+                    : delta < 0
+                      ? THEME.success
+                      : "rgba(255,255,255,0.45)",
+                fontVariantNumeric: "tabular-nums",
+                fontFamily: "var(--font-mono)",
+              }}
+            >
+              {delta === null
+                ? "—"
+                : `${delta < 0 ? "−" : "+"}${formatDeltaSeconds(Math.abs(delta))}`}
+            </p>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** "8" → "0:08", "72" → "1:12" — split deltas read as pace-style m:ss. */
+function formatDeltaSeconds(s: number): string {
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return `${m}:${r.toString().padStart(2, "0")}`;
 }
 
 // ── Current km progress bar ───────────────────────────────────────────────────
@@ -165,9 +285,11 @@ function KmProgress({
     <div className="flex items-center gap-2 px-1">
       <p
         style={{
-          fontSize: 9,
-          color: "rgba(255,255,255,0.3)",
-          width: 28,
+          ...HUD_SECONDARY,
+          /* 34, not 28: the label went 9px → 11px with the D18 floor, and
+             28px was sized for the smaller type. `{kmDone}{u}` reaches four
+             glyphs at "12km" (~24px at 11px tabular) and five past 100km. */
+          width: 34,
           textAlign: "right",
           fontVariantNumeric: "tabular-nums",
         }}
@@ -189,9 +311,11 @@ function KmProgress({
       </div>
       <p
         style={{
-          fontSize: 9,
-          color: "rgba(255,255,255,0.3)",
-          width: 28,
+          ...HUD_SECONDARY,
+          /* 34, not 28: the label went 9px → 11px with the D18 floor, and
+             28px was sized for the smaller type. `{kmDone}{u}` reaches four
+             glyphs at "12km" (~24px at 11px tabular) and five past 100km. */
+          width: 34,
           fontVariantNumeric: "tabular-nums",
         }}
       >
@@ -227,6 +351,7 @@ export default function RunBottomSheet({
   const [showStopConfirm, setShowStopConfirm] = useState(false);
   const stopTitleId = useId();
   const isExpanded = snapIdx === 2;
+  const isSplitsView = snapIdx === 1;
 
   // ── Draggable bottom sheet ────────────────────────────────────────────
   // Was a touchstart→touchend Y-delta wired ONLY to the 36px handle: tiny
@@ -284,7 +409,7 @@ export default function RunBottomSheet({
   };
   const onSheetPointerMove = (e: React.PointerEvent) => {
     if (!draggingRef.current) return;
-    const minTop = snapTops[2];
+    const minTop = snapTops[SNAPS.length - 1];
     const maxTop = snapTops[0];
     const next = Math.max(
       minTop,
@@ -378,10 +503,10 @@ export default function RunBottomSheet({
           aria-label="Drag to resize the run panel"
           onKeyDown={(e) => {
             if (e.key === "ArrowUp" && snapIdx < 2) {
-              setSnapIdx((s) => (s + 1) as 0 | 1 | 2);
+              setSnapIdx((snapIdx + 1) as 0 | 1 | 2);
               haptic("light");
             } else if (e.key === "ArrowDown" && snapIdx > 0) {
-              setSnapIdx((s) => (s - 1) as 0 | 1 | 2);
+              setSnapIdx((snapIdx - 1) as 0 | 1 | 2);
               haptic("light");
             }
           }}
@@ -419,8 +544,7 @@ export default function RunBottomSheet({
                 </p>
                 <p
                   style={{
-                    fontSize: 9,
-                    color: "rgba(255,255,255,0.28)",
+                    ...HUD_CAPTION,
                     letterSpacing: "0.12em",
                     marginTop: 4,
                   }}
@@ -446,8 +570,7 @@ export default function RunBottomSheet({
                   </p>
                   <p
                     style={{
-                      fontSize: 9,
-                      color: "rgba(255,255,255,0.28)",
+                      ...HUD_CAPTION,
                       letterSpacing: "0.12em",
                       marginTop: 3,
                     }}
@@ -470,8 +593,7 @@ export default function RunBottomSheet({
                   </p>
                   <p
                     style={{
-                      fontSize: 9,
-                      color: "rgba(255,255,255,0.28)",
+                      ...HUD_CAPTION,
                       letterSpacing: "0.12em",
                       marginTop: 3,
                     }}
@@ -481,8 +603,7 @@ export default function RunBottomSheet({
                   {pace !== "--:--" && pace !== livePace && (
                     <p
                       style={{
-                        fontSize: 10,
-                        color: "rgba(255,255,255,0.35)",
+                        ...HUD_SECONDARY,
                         fontVariantNumeric: "tabular-nums",
                         fontFamily: "var(--font-mono)",
                         marginTop: 4,
@@ -523,8 +644,7 @@ export default function RunBottomSheet({
                 </p>
                 <p
                   style={{
-                    fontSize: 8,
-                    color: "rgba(255,255,255,0.25)",
+                    ...HUD_CAPTION,
                     letterSpacing: "0.1em",
                     marginTop: 2,
                   }}
@@ -553,8 +673,7 @@ export default function RunBottomSheet({
                 </p>
                 <p
                   style={{
-                    fontSize: 8,
-                    color: "rgba(255,255,255,0.25)",
+                    ...HUD_CAPTION,
                     letterSpacing: "0.1em",
                     marginTop: 2,
                   }}
@@ -583,8 +702,7 @@ export default function RunBottomSheet({
                 </p>
                 <p
                   style={{
-                    fontSize: 8,
-                    color: "rgba(255,255,255,0.25)",
+                    ...HUD_CAPTION,
                     letterSpacing: "0.1em",
                     marginTop: 2,
                   }}
@@ -618,8 +736,7 @@ export default function RunBottomSheet({
                     </p>
                     <p
                       style={{
-                        fontSize: 8,
-                        color: "rgba(255,255,255,0.25)",
+                        ...HUD_CAPTION,
                         letterSpacing: "0.1em",
                         marginTop: 2,
                       }}
@@ -760,7 +877,8 @@ export default function RunBottomSheet({
           </div>
         )}
 
-        {/* ── COLLAPSED BAR ── */}
+        {/* ── COLLAPSED BAR ── (both lower snaps: alone at compact, the
+            glance row above the splits list at the middle detent) */}
         {!isExpanded && (
           <div className="flex items-center justify-between px-5 py-3 flex-shrink-0">
             <div className="text-center">
@@ -777,8 +895,7 @@ export default function RunBottomSheet({
               </p>
               <p
                 style={{
-                  fontSize: 8,
-                  color: "rgba(255,255,255,0.25)",
+                  ...HUD_CAPTION,
                   letterSpacing: "0.1em",
                 }}
               >
@@ -799,8 +916,7 @@ export default function RunBottomSheet({
               </p>
               <p
                 style={{
-                  fontSize: 8,
-                  color: "rgba(255,255,255,0.25)",
+                  ...HUD_CAPTION,
                   letterSpacing: "0.1em",
                 }}
               >
@@ -821,8 +937,7 @@ export default function RunBottomSheet({
               </p>
               <p
                 style={{
-                  fontSize: 8,
-                  color: "rgba(255,255,255,0.25)",
+                  ...HUD_CAPTION,
                   letterSpacing: "0.1em",
                 }}
               >
@@ -881,6 +996,11 @@ export default function RunBottomSheet({
             </button>
           </div>
         )}
+
+        {/* ── SPLITS LIST (middle snap only) ── */}
+        {isSplitsView && (
+          <SplitsList splits={splits} distance={distance} unit={unit} />
+        )}
       </motion.div>
       {/* Sprint 3: stop-confirmation migrated onto the shared <Dialog>
           primitive. Pre-Sprint-3 this modal had no escape-to-close
@@ -922,7 +1042,9 @@ export default function RunBottomSheet({
               >
                 {distanceValue(distance, unit, 2)}
               </p>
-              <p style={{ fontSize: 9, color: "rgba(255,255,255,0.4)" }}>{distanceUnitLabel(unit).toUpperCase()}</p>
+              <p style={{ ...HUD_CAPTION }}>
+                {distanceUnitLabel(unit).toUpperCase()}
+              </p>
             </div>
             <div className="text-center">
               <p
@@ -931,9 +1053,7 @@ export default function RunBottomSheet({
               >
                 {formatTime(elapsed)}
               </p>
-              <p style={{ fontSize: 9, color: "rgba(255,255,255,0.4)" }}>
-                TIME
-              </p>
+              <p style={{ ...HUD_CAPTION }}>TIME</p>
             </div>
             <div className="text-center">
               <p
@@ -942,7 +1062,7 @@ export default function RunBottomSheet({
               >
                 {pace}
               </p>
-              <p style={{ fontSize: 9, color: "rgba(255,255,255,0.4)" }}>/KM</p>
+              <p style={{ ...HUD_CAPTION }}>/KM</p>
             </div>
           </div>
           {/* Primary-action swap: for sub-threshold runs the safest

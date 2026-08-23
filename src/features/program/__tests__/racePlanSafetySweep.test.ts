@@ -120,7 +120,11 @@ describe("race plans — nothing is scheduled after race day", () => {
     for (let startOffsetDays = 0; startOffsetDays < 7; startOffsetDays++) {
       for (const distance of RACE_DISTANCES) {
         for (let daysOut = 3; daysOut <= 210; daysOut++) {
-          const { out, raceDate } = plan({ distance, daysOut, startOffsetDays });
+          const { out, raceDate } = plan({
+            distance,
+            daysOut,
+            startOffsetDays,
+          });
           const after = out.weeks
             .flat()
             .filter((r) => r.type !== "race" && r.date && r.date > raceDate);

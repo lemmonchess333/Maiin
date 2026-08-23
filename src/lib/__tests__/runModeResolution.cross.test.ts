@@ -20,7 +20,10 @@
 import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";
 import * as ts from "@/features/program/runModeResolution";
-import type { RaceGoal, RecoveryContext } from "@/features/program/runModeResolution";
+import type {
+  RaceGoal,
+  RecoveryContext,
+} from "@/features/program/runModeResolution";
 
 const require = createRequire(import.meta.url);
 const js = require("../../../functions/lib/runModeResolution") as typeof ts;
@@ -32,7 +35,12 @@ const raceB: RaceGoal = { distance: "half", targetDate: "2026-07-15" }; // diffe
 const racePast: RaceGoal = { distance: "5k", targetDate: "2026-01-01" }; // different race, past
 const TODAY = "2026-06-04";
 
-const raceGoals: (RaceGoal | null | undefined)[] = [raceA, raceB, null, undefined];
+const raceGoals: (RaceGoal | null | undefined)[] = [
+  raceA,
+  raceB,
+  null,
+  undefined,
+];
 
 function ctx(
   currentRaceGoal: RaceGoal | null | undefined,
@@ -116,7 +124,9 @@ describe("runModeResolution — client (.ts) ↔ server (.js) parity", () => {
   describe("locked materialization invariant", () => {
     it("every patch carries a materialized runMode", () => {
       for (const c of recoveryContexts) {
-        expect(ts.resolveRecoveryExit(c).runMode).toMatch(/^(race_prep|freeform)$/);
+        expect(ts.resolveRecoveryExit(c).runMode).toMatch(
+          /^(race_prep|freeform)$/
+        );
       }
       expect(ts.setRaceGoalPatch(raceA).runMode).toBe("race_prep");
       expect(ts.setRaceGoalPatch(null).runMode).toBe("freeform");
@@ -136,8 +146,12 @@ describe("runModeResolution — client (.ts) ↔ server (.js) parity", () => {
 
     it("a new FUTURE race supersedes recovery; the completed race and past races do not", () => {
       expect(ts.newRaceSupersedesRecovery(ctx(raceB, raceA), TODAY)).toBe(true); // future, different
-      expect(ts.newRaceSupersedesRecovery(ctx(raceA, raceA2), TODAY)).toBe(false); // same race
-      expect(ts.newRaceSupersedesRecovery(ctx(racePast, raceA), TODAY)).toBe(false); // past race
+      expect(ts.newRaceSupersedesRecovery(ctx(raceA, raceA2), TODAY)).toBe(
+        false
+      ); // same race
+      expect(ts.newRaceSupersedesRecovery(ctx(racePast, raceA), TODAY)).toBe(
+        false
+      ); // past race
       expect(ts.newRaceSupersedesRecovery(ctx(null, raceA), TODAY)).toBe(false); // no current race
     });
   });

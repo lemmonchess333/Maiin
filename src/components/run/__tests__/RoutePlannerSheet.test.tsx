@@ -23,7 +23,6 @@ vi.mock("@/hooks/useDistanceUnit", () => ({
   useDistanceUnit: () => "km" as const,
 }));
 
-
 // The road-aware layer (Run11/Mapbox) reads Pro entitlement via
 // useSubscription → useAuth, which needs AuthProvider. Mock it like the
 // other useSubscription consumers (HeroDrillDownSheet.test.tsx) — these
@@ -40,7 +39,9 @@ vi.mock("@/lib/subscription", () => ({
 
 /** Every `new maplibregl.Map(...)` option bag, so the OPENING VIEW can be
  *  asserted — which is the thing that was broken and unpinned. */
-const mapOpts = vi.hoisted(() => [] as { center: [number, number]; zoom: number }[]);
+const mapOpts = vi.hoisted(
+  () => [] as { center: [number, number]; zoom: number }[]
+);
 
 vi.mock("maplibre-gl/dist/maplibre-gl.css", () => ({}));
 vi.mock("maplibre-gl", () => {
@@ -109,7 +110,6 @@ describe("RoutePlannerSheet — exit affordance", () => {
     ).toBeDisabled();
   });
 });
-
 
 describe("RoutePlannerSheet — where the map opens", () => {
   it("opens on the supplied position at a zoom you can draw a route at", () => {

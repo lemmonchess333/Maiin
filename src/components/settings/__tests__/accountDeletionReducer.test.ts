@@ -39,7 +39,7 @@ describe("modalReducer — forward path", () => {
   it("deleting → REQUIRE_REAUTH → needs-reauth with 0 attempts", () => {
     const next = modalReducer(
       { phase: "deleting" },
-      { type: "REQUIRE_REAUTH" },
+      { type: "REQUIRE_REAUTH" }
     );
     expect(next).toEqual({ phase: "needs-reauth", failedAttempts: 0 });
   });
@@ -47,7 +47,7 @@ describe("modalReducer — forward path", () => {
   it("needs-reauth → REAUTH_START → reauthenticating with chosen provider", () => {
     const next = modalReducer(
       { phase: "needs-reauth", failedAttempts: 0 },
-      { type: "REAUTH_START", provider: "password" },
+      { type: "REAUTH_START", provider: "password" }
     );
     expect(next).toEqual({
       phase: "reauthenticating",
@@ -63,7 +63,7 @@ describe("modalReducer — forward path", () => {
         provider: "google.com",
         failedAttempts: 0,
       },
-      { type: "REAUTH_SUCCESS" },
+      { type: "REAUTH_SUCCESS" }
     );
     expect(next).toEqual({ phase: "retrying" });
   });
@@ -77,7 +77,7 @@ describe("modalReducer — failure cycle", () => {
         provider: "password",
         failedAttempts: 0,
       },
-      { type: "REAUTH_FAIL" },
+      { type: "REAUTH_FAIL" }
     );
     expect(next).toEqual({ phase: "needs-reauth", failedAttempts: 1 });
   });
@@ -112,7 +112,7 @@ describe("modalReducer — failure cycle", () => {
        correctly. */
     const next = modalReducer(
       { phase: "needs-reauth", failedAttempts: 1 },
-      { type: "REAUTH_START", provider: "apple.com" },
+      { type: "REAUTH_START", provider: "apple.com" }
     );
     expect(next).toEqual({
       phase: "reauthenticating",
@@ -126,7 +126,7 @@ describe("modalReducer — cancel paths", () => {
   it("CANCEL_REAUTH from needs-reauth → confirm (counter reset)", () => {
     const next = modalReducer(
       { phase: "needs-reauth", failedAttempts: 2 },
-      { type: "CANCEL_REAUTH" },
+      { type: "CANCEL_REAUTH" }
     );
     expect(next).toEqual({ phase: "confirm" });
   });
@@ -141,16 +141,13 @@ describe("modalReducer — cancel paths", () => {
         provider: "password",
         failedAttempts: 1,
       },
-      { type: "CANCEL_REAUTH" },
+      { type: "CANCEL_REAUTH" }
     );
     expect(next).toEqual({ phase: "confirm" });
   });
 
   it("CANCEL_REAUTH from confirm is a no-op identity (returns confirm)", () => {
-    const next = modalReducer(
-      { phase: "confirm" },
-      { type: "CANCEL_REAUTH" },
-    );
+    const next = modalReducer({ phase: "confirm" }, { type: "CANCEL_REAUTH" });
     expect(next).toEqual({ phase: "confirm" });
   });
 });
@@ -214,7 +211,7 @@ describe("modalReducer — defensive guards", () => {
        caller is responsible for only dispatching it from the
        confirm phase (UI ensures via the disabled Delete button). */
     expect(
-      modalReducer({ phase: "retrying" }, { type: "DELETE_START" }),
+      modalReducer({ phase: "retrying" }, { type: "DELETE_START" })
     ).toEqual({ phase: "deleting" });
   });
 });

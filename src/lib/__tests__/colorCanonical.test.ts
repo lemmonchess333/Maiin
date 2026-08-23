@@ -96,8 +96,18 @@ describe("colour canonical layer — theme.ts ↔ tokens.css (EXACT hex)", () =>
 
   it("nutrition orange is the single canonical #D9884E (post #E87316 resolution)", () => {
     expect(norm(THEME.semantic.nutrition)).toBe("#d9884e");
-    expect(norm(THEME.warning)).toBe("#d9884e"); // legacy alias kept in sync
     expect(norm(MACROS_TEXT_LIGHT.nutrition)).toBe("#b45309"); // -strong step
+  });
+
+  it("warning is the AMBER family — and is NOT the nutrition orange (D19)", () => {
+    /* For its whole life THEME.warning was #D9884E, byte-identical to
+       semantic.nutrition, so the documented warning register bought
+       nothing visual: the deload banner, the injury icons and the
+       exercise guide's "Watch out" all rendered in the food colour.
+       Split 2026-08-22 (owner-delegated). The inequality IS the
+       contract — collapsing them back reintroduces D19. */
+    expect(norm(THEME.warning)).toBe(norm(THEME.amber));
+    expect(norm(THEME.warning)).not.toBe(norm(THEME.semantic.nutrition));
   });
 
   it("sport + accent identity hexes are internally consistent", () => {

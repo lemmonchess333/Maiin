@@ -5,7 +5,10 @@ interface ScanQuotaIndicatorProps {
 }
 
 function formatResetDate(date: Date): string {
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  /* en-GB, like every other dated surface in the app. This was the last
+     rendered en-US date left in src/ after the BadgeGrid sweep — it printed
+     "Sep 1" in a caption sitting beside surfaces printing "1 Sep". */
+  return date.toLocaleDateString("en-GB", { month: "short", day: "numeric" });
 }
 
 /**

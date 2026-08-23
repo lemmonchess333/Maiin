@@ -50,7 +50,9 @@ import {
   unfiredFailures,
 } from "@/test/firestoreHarness";
 
-function renderAction(props: Partial<React.ComponentProps<typeof DeleteSessionAction>> = {}) {
+function renderAction(
+  props: Partial<React.ComponentProps<typeof DeleteSessionAction>> = {}
+) {
   return render(
     <MemoryRouter>
       <DeleteSessionAction uid="u1" kind="workout" id="w-1" {...props} />
@@ -82,7 +84,9 @@ describe("DeleteSessionAction", () => {
 
   it("warns that challenge standing can drop, and that streaks and badges stay", async () => {
     renderAction();
-    fireEvent.click(screen.getByRole("button", { name: /delete this workout/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /delete this workout/i })
+    );
 
     const dialog = await screen.findByRole("alertdialog");
     // The consequence ADR-0012 says the copy must not hide.
@@ -94,14 +98,18 @@ describe("DeleteSessionAction", () => {
 
   it("says the feed post goes when the session was shared, and stays when it wasn't", async () => {
     const { unmount } = renderAction({ sharedActivityId: "act-1" });
-    fireEvent.click(screen.getByRole("button", { name: /delete this workout/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /delete this workout/i })
+    );
     expect(await screen.findByRole("alertdialog")).toHaveTextContent(
       /post is removed from your feed/i
     );
     unmount();
 
     renderAction();
-    fireEvent.click(screen.getByRole("button", { name: /delete this workout/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /delete this workout/i })
+    );
     // A session with no recorded link — anything shared before
     // `recordSharedActivity` covered its path (runs and all offline
     // shares, pre-fix) — has an unreachable post, so the copy must not
@@ -113,7 +121,9 @@ describe("DeleteSessionAction", () => {
 
   it("deletes nothing when the confirmation is cancelled", async () => {
     renderAction();
-    fireEvent.click(screen.getByRole("button", { name: /delete this workout/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /delete this workout/i })
+    );
     await screen.findByRole("alertdialog");
     fireEvent.click(screen.getByRole("button", { name: /^cancel$/i }));
 
@@ -126,7 +136,9 @@ describe("DeleteSessionAction", () => {
 
   it("deletes the session, confirms, and leaves the detail page", async () => {
     renderAction();
-    fireEvent.click(screen.getByRole("button", { name: /delete this workout/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /delete this workout/i })
+    );
     await screen.findByRole("alertdialog");
     fireEvent.click(screen.getByRole("button", { name: /^delete$/i }));
 
@@ -143,7 +155,9 @@ describe("DeleteSessionAction", () => {
   it("keeps the session and stays put when the delete fails", async () => {
     failNextFirestore("deleteDoc", { path: "users/u1/workouts/w-1" });
     renderAction();
-    fireEvent.click(screen.getByRole("button", { name: /delete this workout/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /delete this workout/i })
+    );
     await screen.findByRole("alertdialog");
     fireEvent.click(screen.getByRole("button", { name: /^delete$/i }));
 

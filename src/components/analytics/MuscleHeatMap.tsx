@@ -76,7 +76,12 @@ export default function MuscleHeatMap({ data, recovery }: MuscleHeatMapProps) {
   const normalizedData = useMemo(() => {
     const result: Record<string, number> = {};
     for (const [key, val] of Object.entries(data)) {
-      const friendly = CATEGORY_DISPLAY[key] || key;
+      // Title-case the fallthrough: a key outside the display map used
+      // to render verbatim — a legend chip reading lowercase "legs"
+      // beside Title-Case peers (any legacy/custom category hits this).
+      const friendly =
+        CATEGORY_DISPLAY[key] ||
+        (key ? key.charAt(0).toUpperCase() + key.slice(1) : key);
       result[friendly] = (result[friendly] || 0) + val;
     }
     return result;
@@ -200,7 +205,7 @@ export default function MuscleHeatMap({ data, recovery }: MuscleHeatMapProps) {
                   <span className="text-xs text-muted-foreground font-medium">
                     {group}
                   </span>
-                  <span className="text-xs font-mono tabular-nums text-muted-foreground/60">
+                  <span className="text-xs font-mono tabular-nums text-muted-foreground">
                     {sets} sets
                   </span>
                   {rec && (
@@ -236,7 +241,7 @@ export default function MuscleHeatMap({ data, recovery }: MuscleHeatMapProps) {
           </div>
         )}
         {recovery && trainedGroups.length > 0 && (
-          <p className="mt-2 text-[10px] text-muted-foreground/70 text-center">
+          <p className="mt-2 text-[10px] text-muted-foreground text-center">
             Recovery chips are as of today, independent of the selected range.
           </p>
         )}

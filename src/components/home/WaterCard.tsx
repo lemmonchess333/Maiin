@@ -5,6 +5,7 @@ import { Droplets, Plus, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
+import SectionLabel from "@/components/ui/SectionLabel";
 import WaterWave from "@/components/home/WaterWave";
 import WaterBubbles from "@/components/home/WaterBubbles";
 import WaterSizeSheet from "@/components/home/WaterSizeSheet";
@@ -117,18 +118,27 @@ export default function WaterCard({
                   style={{ color: THEME.semantic.hydration }}
                 />
               </div>
-              <p
-                className="text-xs font-medium"
-                style={{ color: THEME.text.muted }}
-              >
-                Water
-              </p>
+              {/* SectionLabel, not a hand-rolled label: the weight tile
+                  beside it uses the primitive, so this one rendered
+                  "Water" in sentence case next to "WEIGHT" in the
+                  canonical uppercase — the same peer-tile mismatch as the
+                  numeral tier below, one line up. */}
+              <SectionLabel>Water</SectionLabel>
             </div>
-            <p className="text-xl font-bold leading-none text-foreground font-mono tabular-nums">
+            {/* Matches the weight tile beside it, which is the canonical
+                compact-tile numeral treatment (text-2xl / 800, unit at
+                text-sm). This variant sat a full tier below it —
+                text-xl / 700 with a text-xs unit — so two tiles of equal
+                rank, in the same row, read as different ranks, and the
+                pair broke DESIGN_GUIDE's "never mix 700 and 800 in the
+                same visual tier". The non-compact variant below already
+                uses this treatment, so the compact one was the outlier
+                inside its own component too. */}
+            <p className="text-2xl font-extrabold leading-none text-foreground font-mono tabular-nums">
               {formatLitresValue(ml)}
               <span
-                className="text-xs font-normal mx-1"
-                style={{ color: THEME.text.muted }}
+                className="text-sm font-normal mx-1"
+                style={{ color: "hsl(var(--muted-foreground))" }}
               >
                 / {formatVolume(targetMl)}
               </span>
@@ -166,7 +176,10 @@ export default function WaterCard({
             >
               <Plus
                 className="size-4"
-                style={{ color: THEME.semantic.hydration }}
+                /* The AA teal step, not the fixed identity — the '+' is the
+                   card's primary control and the identity measured 2.49:1
+                   on the light tint (3:1 UI floor, WCAG 1.4.11). */
+                style={{ color: "hsl(var(--teal))" }}
               />
             </button>
           </div>
@@ -209,17 +222,12 @@ export default function WaterCard({
             />
           </div>
           <div className="flex-1 min-w-0">
-            <p
-              className="text-xs font-medium"
-              style={{ color: THEME.text.muted }}
-            >
-              Water
-            </p>
+            <SectionLabel>Water</SectionLabel>
             <p className="text-2xl font-extrabold leading-none text-foreground font-mono tabular-nums">
               {formatLitresValue(ml)}
               <span
                 className="text-sm font-normal mx-1"
-                style={{ color: THEME.text.muted }}
+                style={{ color: "hsl(var(--muted-foreground))" }}
               >
                 / {formatVolume(targetMl)}
               </span>

@@ -41,9 +41,7 @@ describe("useRunVisibility — enabled / disabled", () => {
 
   it("does NOT attach a listener when enabled=false", () => {
     const onHidden = vi.fn();
-    renderHook(() =>
-      useRunVisibility({ onHidden, enabled: false }),
-    );
+    renderHook(() => useRunVisibility({ onHidden, enabled: false }));
     act(() => setVisibilityState("hidden"));
     expect(onHidden).not.toHaveBeenCalled();
   });
@@ -107,7 +105,7 @@ describe("useRunVisibility — fresh callback refs", () => {
     const v2 = vi.fn();
     const { rerender } = renderHook(
       ({ cb }) => useRunVisibility({ onHidden: cb }),
-      { initialProps: { cb: v1 } },
+      { initialProps: { cb: v1 } }
     );
     rerender({ cb: v2 });
 
@@ -120,9 +118,7 @@ describe("useRunVisibility — fresh callback refs", () => {
 describe("useRunVisibility — cleanup on unmount", () => {
   it("removes the visibilitychange listener", () => {
     const onHidden = vi.fn();
-    const { unmount } = renderHook(() =>
-      useRunVisibility({ onHidden }),
-    );
+    const { unmount } = renderHook(() => useRunVisibility({ onHidden }));
     unmount();
     act(() => setVisibilityState("hidden"));
     expect(onHidden).not.toHaveBeenCalled();

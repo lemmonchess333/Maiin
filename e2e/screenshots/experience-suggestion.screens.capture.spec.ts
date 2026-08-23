@@ -45,7 +45,11 @@ test.describe("experience suggestion screenshots", () => {
   });
 
   async function shoot(page: Page, name: string) {
-    await page.screenshot({ path: `screenshots/${name}.png`, fullPage: true });
+    await page.screenshot({
+      animations: "disabled",
+      path: `screenshots/${name}.png`,
+      fullPage: true,
+    });
   }
 
   test("programme lift tab with the suggestion card — light + dark", async ({

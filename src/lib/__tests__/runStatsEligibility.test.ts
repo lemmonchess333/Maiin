@@ -259,7 +259,11 @@ describe("sumLifetimeRunTotals", () => {
   });
 
   it("excludes isInvalid runs and sub-floor runs", () => {
-    const invalid: RunRecord = { distance: 8000, duration: 2400, isInvalid: true };
+    const invalid: RunRecord = {
+      distance: 8000,
+      duration: 2400,
+      isInvalid: true,
+    };
     const tooShort: RunRecord = { distance: 40, duration: 60 };
     const tooBrief: RunRecord = { distance: 5000, duration: 20 };
     expect(

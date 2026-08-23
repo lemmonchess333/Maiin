@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { useEffect, useMemo, useRef } from "react";
 import { UtensilsCrossed } from "lucide-react";
 import { format } from "date-fns";
@@ -182,10 +183,10 @@ export default function FoodTimeline({
       {/* Header caption — item count answers "did I log all five
           things?" at a glance; totals stay the hero card's job. */}
       <div className="px-3.5 pt-3.5 pb-2">
-        <p className="text-caption uppercase tracking-[0.14em] text-muted-foreground/90 font-semibold">
+        <SectionLabel tier="section">
           Food log {" · "}
           {entries.length} {entries.length === 1 ? "item" : "items"}
-        </p>
+        </SectionLabel>
       </div>
 
       <div className="divide-y divide-border/12">

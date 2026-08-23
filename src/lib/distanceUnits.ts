@@ -111,7 +111,6 @@ export function distanceIn(metres: number, unit: DistanceUnit): number {
   return unit === "mi" ? metres / METRES_PER_MILE : metres / 1000;
 }
 
-
 /**
  * Metres from a value the user TYPED, in whatever unit they read in.
  *
@@ -139,8 +138,6 @@ export function paceIn(secPerKm: number, unit: DistanceUnit): number {
   if (!Number.isFinite(secPerKm) || secPerKm <= 0) return secPerKm;
   return unit === "mi" ? secPerKm * KM_PER_MILE : secPerKm;
 }
-
-
 
 /**
  * The lap a run's splits are cut on, in metres.
@@ -247,5 +244,3 @@ export function spokenDistanceUnit(unit: DistanceUnit, count: number): string {
 export function paceUnitLabel(unit: DistanceUnit): string {
   return unit === "mi" ? "/mi" : "/km";
 }
-
-

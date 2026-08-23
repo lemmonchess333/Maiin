@@ -37,7 +37,10 @@ function contentId(message: Message): string | undefined {
   return `t:${hash >>> 0}`;
 }
 
-function withDedupe(message: Message, options?: ExternalToast): ExternalToast | undefined {
+function withDedupe(
+  message: Message,
+  options?: ExternalToast
+): ExternalToast | undefined {
   if (options?.id != null) return options;
   const id = contentId(message);
   if (id == null) return options;

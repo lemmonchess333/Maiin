@@ -141,7 +141,7 @@ describe("useWakeLock — request / release", () => {
     });
     /* No throw — and the request mock wasn't called. */
     expect(
-      (navigator.wakeLock as { request: ReturnType<typeof vi.fn> }).request,
+      (navigator.wakeLock as { request: ReturnType<typeof vi.fn> }).request
     ).not.toHaveBeenCalled();
   });
 });

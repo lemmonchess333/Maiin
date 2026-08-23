@@ -1,5 +1,4 @@
 import { useReducer, useState } from "react";
-import { motion } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 import { Download, LogOut, Trash2 } from "lucide-react";
 import DataExportSection from "./DataExportSection";
@@ -23,6 +22,7 @@ import AccordionSection from "@/components/AccordionSection";
 import type { User } from "firebase/auth";
 import { Spinner } from "@/components/ui/Spinner";
 import { Dialog } from "@/components/ui/Dialog";
+import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/lib/auth";
 
 /** Apple manage-subscriptions deep-link. Works on iOS (opens
@@ -334,17 +334,24 @@ export default function AccountSection({
           <DataExportSection user={user} />
         </TrackSettingsSectionView>
 
-        <motion.button
-          whileTap={{ scale: 0.98 }}
-          onClick={signOut}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors"
-        >
+        {/* Sign Out is `outline`, Delete Account is `destructive` — the
+            way round the actions actually rank. It was the reverse: Sign
+            Out wore a filled `bg-destructive` at 16px/46px and shouted
+            louder than anything else on the page, while the irreversible
+            one sat underneath it as a 42px outline a type step smaller —
+            below the 44px floor as well as below its neighbour. Signing
+            out is reversible in one tap; deleting an account is not.
+
+            Both now route through the `Button` primitive, which is where
+            the 44px floor, the focus ring and the 0.97 press live. */}
+        <Button variant="outline" fullWidth onClick={signOut}>
           <LogOut className="size-4" /> Sign Out
-        </motion.button>
+        </Button>
 
         {/* Account Deletion (App Store Guideline 5.1.1(v)) */}
-        <button
-          type="button"
+        <Button
+          variant="destructive"
+          fullWidth
           onClick={() => {
             haptic("error");
             // P0b: route through the Apple-cancel warning when the
@@ -357,10 +364,9 @@ export default function AccountSection({
               setShowDeleteModal(true);
             }
           }}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-destructive/30 text-destructive-strong text-sm hover:bg-destructive/10 transition-colors"
         >
           <Trash2 className="size-4" /> Delete Account
-        </button>
+        </Button>
       </AccordionSection>
 
       {/* P0b — Apple-subscription pre-deletion warning. Surfaces
@@ -375,33 +381,40 @@ export default function AccountSection({
         description="Tropos can't cancel your iOS subscription for you — Apple bills your account directly. Open subscription settings to cancel before deleting your account, or delete anyway and continue to be charged until you cancel."
         role="alertdialog"
       >
+        {/* All three on the primitive. They were three bespoke class
+            strings landing at 44px, 42px and 36px — two of them under the
+            floor, in a dialog whose whole job is to make the user pause and
+            choose deliberately. `destructive-tinted` for "Delete anyway"
+            rather than filled red: it does not delete, it advances to the
+            typed-DELETE modal, which is precisely the gated-danger case
+            that variant documents. */}
         <div className="space-y-2">
-          <button
-            type="button"
+          <Button
+            variant="primary"
+            fullWidth
             onClick={() => {
               window.open(APPLE_MANAGE_SUBSCRIPTIONS_URL, "_blank");
             }}
-            className="w-full px-4 py-2.5 rounded-xl bg-primary-strong text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
           >
             Open subscription settings
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="destructive-tinted"
+            fullWidth
             onClick={() => {
               setShowAppleWarning(false);
               setShowDeleteModal(true);
             }}
-            className="w-full px-4 py-2.5 rounded-xl border border-destructive/30 text-destructive-strong text-sm hover:bg-destructive/10 transition-colors"
           >
             Delete anyway
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="ghost"
+            fullWidth
             onClick={() => setShowAppleWarning(false)}
-            className="w-full px-4 py-2 rounded-xl text-sm text-muted-foreground hover:bg-muted transition-colors"
           >
             Cancel
-          </button>
+          </Button>
         </div>
       </Dialog>
 

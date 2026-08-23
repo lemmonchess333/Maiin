@@ -104,16 +104,24 @@ describe("STATE_GRAPH transitions", () => {
   it("terminal states (cancelled / completed) reject any further transition", () => {
     expect(STATE_GRAPH[STATUS.CANCELLED]).toEqual([]);
     expect(STATE_GRAPH[STATUS.COMPLETED]).toEqual([]);
-    expect(() => assertValidTransition(STATUS.COMPLETED, STATUS.RUNNING)).toThrow(/disallowed/);
-    expect(() => assertValidTransition(STATUS.CANCELLED, STATUS.RUNNING)).toThrow(/disallowed/);
+    expect(() =>
+      assertValidTransition(STATUS.COMPLETED, STATUS.RUNNING)
+    ).toThrow(/disallowed/);
+    expect(() =>
+      assertValidTransition(STATUS.CANCELLED, STATUS.RUNNING)
+    ).toThrow(/disallowed/);
   });
 
   it("rejects unknown source status", () => {
-    expect(() => assertValidTransition("garbage", STATUS.RUNNING)).toThrow(/unknown source status/);
+    expect(() => assertValidTransition("garbage", STATUS.RUNNING)).toThrow(
+      /unknown source status/
+    );
   });
 
   it("rejects unmapped destination from a known source", () => {
-    expect(() => assertValidTransition(STATUS.REQUESTED, STATUS.COMPLETED)).toThrow(/disallowed/);
+    expect(() =>
+      assertValidTransition(STATUS.REQUESTED, STATUS.COMPLETED)
+    ).toThrow(/disallowed/);
   });
 });
 
@@ -145,16 +153,16 @@ describe("assertMinimisedRecord", () => {
         status: "running",
         leaseGeneration: 1,
         operationId: "op-1",
-      }),
+      })
     ).not.toThrow();
   });
 
   it("rejects forbidden personal-data fields", () => {
     expect(() =>
-      assertMinimisedRecord({ uid: "abc", displayName: "Alice" }),
+      assertMinimisedRecord({ uid: "abc", displayName: "Alice" })
     ).toThrow(/forbidden field on accountDeletionRequests/);
     expect(() =>
-      assertMinimisedRecord({ uid: "abc", email: "a@b.com" }),
+      assertMinimisedRecord({ uid: "abc", email: "a@b.com" })
     ).toThrow(/forbidden field on accountDeletionRequests/);
   });
 });

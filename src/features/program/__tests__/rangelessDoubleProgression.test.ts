@@ -377,7 +377,13 @@ describe("range-less double progression — the ceilings", () => {
         undefined,
         0
       );
-      const client = clientApplyProgression(linearEx, 8, 60, goal, microloading);
+      const client = clientApplyProgression(
+        linearEx,
+        8,
+        60,
+        goal,
+        microloading
+      );
       expect(server.weight).toBe(client.weight);
       expect(server.reps).toBe(8);
       // microloading on → +1 kg; off → unchanged (the pre-existing gap).

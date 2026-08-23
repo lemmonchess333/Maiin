@@ -178,10 +178,14 @@ describe("offline queue", function () {
        stranded its post on delete, while the same share made online was
        cleanable: two different delete outcomes for one user action,
        decided by network state the user can't see. */
-    enqueueShare(UID_A, { type: "run", runName: "Easy 5k" }, {
-      kind: "run",
-      id: "r-42",
-    });
+    enqueueShare(
+      UID_A,
+      { type: "run", runName: "Easy 5k" },
+      {
+        kind: "run",
+        id: "r-42",
+      }
+    );
     const post = vi.fn().mockResolvedValue(undefined);
     await drainQueue(UID_A, post);
     expect(post).toHaveBeenCalledWith(
@@ -209,7 +213,10 @@ describe("offline queue", function () {
     expect(getQueueLength(UID_A)).toBe(1);
     const retry = vi.fn().mockResolvedValue(undefined);
     await drainQueue(UID_A, retry);
-    expect(retry).toHaveBeenCalledWith({ id: "a" }, { kind: "workout", id: "w-9" });
+    expect(retry).toHaveBeenCalledWith(
+      { id: "a" },
+      { kind: "workout", id: "w-9" }
+    );
   });
 
   it("drainQueue only replays items belonging to the given uid", async function () {

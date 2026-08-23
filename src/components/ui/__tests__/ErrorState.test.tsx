@@ -28,9 +28,11 @@ describe("ErrorState — base contract", () => {
       <ErrorState
         title="Couldn't load"
         description="Check your connection and try again."
-      />,
+      />
     );
-    expect(screen.getByText("Check your connection and try again.")).toBeTruthy();
+    expect(
+      screen.getByText("Check your connection and try again.")
+    ).toBeTruthy();
   });
 
   it("omits the description element entirely when not provided", () => {
@@ -63,7 +65,7 @@ describe("ErrorState — retry button", () => {
       <ErrorState
         title="X"
         retry={{ label: "Retry feed", onClick: () => {} }}
-      />,
+      />
     );
     expect(screen.getByRole("button", { name: "Retry feed" })).toBeTruthy();
   });

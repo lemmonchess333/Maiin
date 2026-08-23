@@ -19,8 +19,8 @@ export default function PartnerStreakHero({
   return (
     <div className="rounded-2xl bg-card border border-border/50 p-4">
       <div className="flex items-start gap-3">
-        <div className="flex size-12 items-center justify-center rounded-xl bg-orange-500/10 shrink-0">
-          <Flame className="size-6 text-orange-500" />
+        <div className="flex size-12 items-center justify-center rounded-xl bg-streak/10 shrink-0">
+          <Flame className="size-6 text-streak" />
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="text-base font-bold">Start a partner streak</h3>

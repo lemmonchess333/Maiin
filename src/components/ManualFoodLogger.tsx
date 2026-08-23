@@ -223,7 +223,7 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
                   value={field.value}
                   onChange={(e) => field.set(e.target.value)}
                   placeholder={field.unit}
-                  className="w-full p-3 rounded-xl text-foreground text-base font-semibold text-center placeholder:text-muted-foreground/40 bg-muted/40 border border-border"
+                  className="w-full p-3 rounded-xl text-foreground text-base font-semibold text-center placeholder:text-muted-foreground bg-muted/40 border border-border"
                 />
               </div>
             ))}
@@ -247,19 +247,20 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
               className={cn(
                 "w-full py-3.5 rounded-xl font-semibold text-base transition-all flex items-center justify-center gap-2",
                 saved
-                  ? "bg-green-500 text-white shadow-[0_4px_20px_rgba(52,211,153,0.35)]"
+                  ? "text-white shadow-[0_4px_20px_rgba(52,211,153,0.35)]"
                   : "text-white active:scale-95",
                 (saving || !name.trim()) &&
                   !saved &&
                   "opacity-50 cursor-not-allowed"
               )}
               style={
-                !saved
-                  ? {
+                saved
+                  ? // Saved-state fill from the palette (was raw green-500).
+                    { backgroundColor: THEME.success }
+                  : {
                       backgroundColor: THEME.lifting,
                       boxShadow: "0 4px 16px rgba(124,110,246,0.25)",
                     }
-                  : undefined
               }
             >
               {saved ? (

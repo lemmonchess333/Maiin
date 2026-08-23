@@ -300,7 +300,7 @@ items from the GPT 5.5 review. None block submission.
 
 ### 10. HealthKit integration
 
-The single biggest iOS-credibility upgrade. Priority order:
+The single biggest iOS-credibility upgrade. Original priority order:
 
 - Steps (read)
 - Active Energy (read)
@@ -309,8 +309,47 @@ The single biggest iOS-credibility upgrade. Priority order:
 - Heart Rate (read, later)
 - Sleep / Recovery (read, later)
 
-Needs `@capacitor-community/health` or similar plugin + iOS
-entitlement config.
+**CAPABILITY AUDIT 2026-08-20 — four of those six cannot be built with
+the plugin we actually ship.** Read this before planning any of them;
+the list above describes what we WANT, not what is reachable, and two
+separate design passes have now been spent designing body-weight sync
+that the installed plugin has no API for.
+
+The shipped plugin is `capacitor-health` (^8.1.2). Its complete surface,
+read from `node_modules/capacitor-health/dist/esm/definitions.d.ts`:
+
+| Wanted                      | Reachable today? | Why                                                                                                                                                                                                                                                                                                                                                          |
+| --------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Steps (read)                | **Shipped**      | `READ_STEPS` + `queryAggregated({dataType:'steps'})`. See the POST_LAUNCH.md section.                                                                                                                                                                                                                                                                        |
+| Active Energy (read)        | **Yes**          | `READ_ACTIVE_CALORIES` + `queryAggregated({dataType:'active-calories'})`. But ADR-0007 REFUSES it as an input to target/burn/balance/adaptive-TDEE. Only a display-only cross-check card is open, and that is an unmade product call.                                                                                                                        |
+| Body Weight (bidirectional) | **No**           | There is no weight permission and no weight data type. `HealthPermission` is the closed set `READ_STEPS \| READ_WORKOUTS \| WRITE_WORKOUTS \| READ_ACTIVE_CALORIES \| READ_TOTAL_CALORIES \| READ_DISTANCE \| READ_HEART_RATE \| READ_ROUTE \| READ_MINDFULNESS`; grepping the definitions for `weight`/`mass` returns nothing.                              |
+| Workouts (write)            | **No**           | `WRITE_WORKOUTS` exists in the permission enum, but the `HealthPlugin` interface exposes NO write method — only `queryAggregated` / `queryWorkouts` / `queryRecords`. The plugin is read-only in practice.                                                                                                                                                   |
+| Heart Rate (read)           | **Not usefully** | Only ever returned ATTACHED to a workout (`queryWorkouts({includeHeartRate:true})`). `queryRecords` accepts `dataType: 'steps'` only, so ambient samples are unreachable. Since we cannot write workouts, a Tropos-tracked run has no `HKWorkout` and therefore no HR — we would only ever see HR for runs recorded by Apple's own Workout app, Strava, etc. |
+| Sleep (read)                | **No**           | No data type.                                                                                                                                                                                                                                                                                                                                                |
+
+So the honest state of #10: steps is done, and **everything else needs a
+different or additional plugin**, plus iOS entitlements and Info.plist
+usage strings, plus `cap sync ios` and an Xcode build to verify. Per the
+"Environment reality" section below that build is not currently
+possible, so any such work lands unverifiable.
+
+Two consequences worth stating plainly:
+
+- **Body weight is the one with real product value** (it feeds the
+  adaptive-TDEE slope — ADR-0007 Q3 already designed the merge rule, and
+  `isPreferred()` in `src/lib/bodyweightLogs.ts` already implements
+  "manual wins over `source:'healthkit'`" for rows nothing yet writes).
+  It is blocked purely on plugin capability, not on design.
+- **Heart rate is the one the competitive analysis ranks highest**
+  (`docs/competitive-analysis-running-2026.md` calls HR/zones a
+  table-stakes gap), and `src/lib/hrZones.ts` + `zoneDistribution()`
+  are already written and unused. But note the two documents answer
+  different questions: that one ranks COMPETITIVE leverage, this one
+  ranks LAUNCH sequencing, and #10 is 🟢 post-launch either way.
+
+Next step if picked up: evaluate a replacement plugin against the table
+above BEFORE writing any client code, and confirm a Mac/Xcode build is
+available to verify it.
 
 ### 11. Background run tracking — Step 2 (native; needs Mac/Xcode)
 
@@ -656,9 +695,9 @@ trusting:
     "Stripe stays DORMANT — web storefront steer at launch" gate; closing
     that gate closes this.
 - ✅ Social content moderation + reporting — Terms §5 (acceptable use),
-      re-checked 2026-08-12 end to end rather than by presence of the word:
-      `ReportModal.tsx` → `socialApi.createReport` → the `createReport`
-      callable in `functions/index.js`. The path exists and connects.
+  re-checked 2026-08-12 end to end rather than by presence of the word:
+  `ReportModal.tsx` → `socialApi.createReport` → the `createReport`
+  callable in `functions/index.js`. The path exists and connects.
   §6 (UGC removal), §9 (termination)
 - ✅ Data export / deletion rights — Privacy §5, §6 (GDPR), Terms §9
 

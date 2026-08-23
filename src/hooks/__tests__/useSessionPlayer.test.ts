@@ -25,13 +25,16 @@ import {
 // elapsed, so tests drive time by passing it — no fake timers.
 
 describe("useSessionPlayer", () => {
-  const intervalSegs = segmentsFromIntervals({
-    reps: 2,
-    workDistance: 400,
-    restDuration: 60,
-    warmupDuration: 300,
-    cooldownDuration: 120,
-  }, "km");
+  const intervalSegs = segmentsFromIntervals(
+    {
+      reps: 2,
+      workDistance: 400,
+      restDuration: 60,
+      warmupDuration: 300,
+      cooldownDuration: 120,
+    },
+    "km"
+  );
 
   it("start is idempotent — re-fires never reset a live session", () => {
     const { result } = renderHook(() => useSessionPlayer(intervalSegs));
@@ -69,7 +72,13 @@ describe("useSessionPlayer", () => {
 
   it("walks a tempo session: warmup → block → float → block → cooldown", () => {
     const segs = segmentsFromTempo(
-      { warmupSec: 600, workSecs: [1200, 1200], floatSec: 180, cooldownSec: 300 }, "km",
+      {
+        warmupSec: 600,
+        workSecs: [1200, 1200],
+        floatSec: 180,
+        cooldownSec: 300,
+      },
+      "km",
       270
     );
     const { result } = renderHook(() => useSessionPlayer(segs));
@@ -116,9 +125,7 @@ describe("useSessionPlayer", () => {
       result.current.tick(60, 350);
     });
     expect(result.current.current?.type).toBe("hard");
-    expect(
-      Math.round(result.current.state.phaseDistanceCovered)
-    ).toBe(250);
+    expect(Math.round(result.current.state.phaseDistanceCovered)).toBe(250);
   });
 
   it("zero-target segments can never wedge the walk", () => {
@@ -151,11 +158,14 @@ describe("useSessionPlayer", () => {
     // accounting to avoid exactly that. The player anchors on the pushed
     // (pause-corrected) elapsed: a pause — however long in wall time —
     // freezes the phase clock because the timer freezes.
-    const segs = segmentsFromTempo({
-      warmupSec: 300,
-      workSecs: [600],
-      cooldownSec: 300,
-    }, "km");
+    const segs = segmentsFromTempo(
+      {
+        warmupSec: 300,
+        workSecs: [600],
+        cooldownSec: 300,
+      },
+      "km"
+    );
     const { result } = renderHook(() => useSessionPlayer(segs));
     act(() => result.current.start());
     act(() => result.current.tick(100, 0));

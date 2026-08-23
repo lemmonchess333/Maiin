@@ -1,8 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  suggestNextLoad,
-  INCREMENT_KG,
-} from "../progressionSuggestion";
+import { suggestNextLoad, INCREMENT_KG } from "../progressionSuggestion";
 
 const sets = (weight: number, ...reps: number[]) =>
   reps.map((r) => ({ weight, reps: r }));
@@ -37,10 +34,16 @@ describe("suggestNextLoad (double progression)", () => {
   });
 
   it("returns null for bodyweight rows, empty history, bad targets", () => {
-    expect(suggestNextLoad({ prevSets: sets(0, 12, 12), targetReps: 12 })).toBeNull();
+    expect(
+      suggestNextLoad({ prevSets: sets(0, 12, 12), targetReps: 12 })
+    ).toBeNull();
     expect(suggestNextLoad({ prevSets: [], targetReps: 8 })).toBeNull();
-    expect(suggestNextLoad({ prevSets: sets(60, 8), targetReps: 0 })).toBeNull();
-    expect(suggestNextLoad({ prevSets: sets(60, 8), targetReps: NaN })).toBeNull();
+    expect(
+      suggestNextLoad({ prevSets: sets(60, 8), targetReps: 0 })
+    ).toBeNull();
+    expect(
+      suggestNextLoad({ prevSets: sets(60, 8), targetReps: NaN })
+    ).toBeNull();
   });
 
   it("returns null for pyramid schemes (no single honest next weight)", () => {

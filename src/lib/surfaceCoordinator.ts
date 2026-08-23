@@ -66,15 +66,11 @@ export function pickNext(
   regs: SurfaceRegistration[],
   consumed: string[]
 ): string | null {
-  const eligibleIds = new Set(
-    regs.filter((r) => r.eligible).map((r) => r.id)
-  );
+  const eligibleIds = new Set(regs.filter((r) => r.eligible).map((r) => r.id));
   const consumedSet = new Set(consumed);
   const candidates = regs
     .filter((r) => r.eligible && !consumedSet.has(r.id))
-    .filter(
-      (r) => !(r.suppressedBy ?? []).some((s) => eligibleIds.has(s))
-    )
+    .filter((r) => !(r.suppressedBy ?? []).some((s) => eligibleIds.has(s)))
     .sort((a, b) => b.priority - a.priority);
   return candidates.length > 0 ? candidates[0].id : null;
 }

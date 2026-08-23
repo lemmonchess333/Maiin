@@ -84,7 +84,13 @@ describe("ShareCardRenderer", () => {
         for (const background of backgrounds) {
           const { unmount } = render(
             <ShareCardRenderer
-              data={{ ...base, template, format, background, photoUrl: "x.jpg" }}
+              data={{
+                ...base,
+                template,
+                format,
+                background,
+                photoUrl: "x.jpg",
+              }}
               offscreen={false}
             />
           );

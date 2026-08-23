@@ -58,12 +58,18 @@ export default function StallModal({ exercise, onClose }: StallModalProps) {
       if (!result.ok) return;
       toast.success("Calorie target increased by 150");
     }
-    localStorage.setItem(stallCooldownKey(storageUid, exercise.name), String(Date.now()));
+    localStorage.setItem(
+      stallCooldownKey(storageUid, exercise.name),
+      String(Date.now())
+    );
     onClose();
   };
 
   const handleDismiss = () => {
-    localStorage.setItem(stallCooldownKey(storageUid, exercise.name), String(Date.now()));
+    localStorage.setItem(
+      stallCooldownKey(storageUid, exercise.name),
+      String(Date.now())
+    );
     onClose();
   };
 
@@ -78,7 +84,7 @@ export default function StallModal({ exercise, onClose }: StallModalProps) {
         // fire on, actively wrong.
         (exercise.isBodyweight
           ? `${exercise.name} has held the same reps for 3 sessions.`
-          : `You've been at ${exercise.weight}kg on ${exercise.name} for 3 sessions.`) +
+          : `You've been at ${exercise.weight} kg on ${exercise.name} for 3 sessions.`) +
         ` A small calorie increase (~150 cal/day) could help you break through.` +
         // Naming the real consequence: this writes a MANUAL calorie override,
         // and a manual override is what switches adaptive calories off.

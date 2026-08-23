@@ -52,8 +52,7 @@ interface PlanePoint {
  */
 function project(points: GPSPoint[]): PlanePoint[] {
   if (points.length === 0) return [];
-  const lat0 =
-    points.reduce((sum, p) => sum + p.lat, 0) / points.length;
+  const lat0 = points.reduce((sum, p) => sum + p.lat, 0) / points.length;
   const lon0 = points[0].lon;
   const cosLat0 = Math.cos((lat0 * Math.PI) / 180);
   return points.map((p, i) => ({
@@ -143,10 +142,7 @@ export function clipRouteEnds(
       points[i].lon
     );
   }
-  const effectiveTrim = Math.min(
-    trimMeters,
-    total * MAX_CLIP_FRACTION_PER_END
-  );
+  const effectiveTrim = Math.min(trimMeters, total * MAX_CLIP_FRACTION_PER_END);
   if (effectiveTrim <= 0) return points.slice();
 
   let acc = 0;
@@ -265,6 +261,11 @@ export function buildRoutePath(
     return `${x.toFixed(2)},${y.toFixed(2)}`;
   });
 
-  const d = `M${coords[0]}` + coords.slice(1).map((c) => `L${c}`).join("");
+  const d =
+    `M${coords[0]}` +
+    coords
+      .slice(1)
+      .map((c) => `L${c}`)
+      .join("");
   return { d, width, height, pointCount: plane.length };
 }

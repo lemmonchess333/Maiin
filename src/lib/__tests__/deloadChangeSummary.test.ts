@@ -92,16 +92,16 @@ describe("deloadRunSwapCount", () => {
     const s = state();
     const snap = { ...s!.deloadSnapshot! };
     delete (snap as { runDays?: unknown }).runDays;
-    expect(deloadRunSwapCount({ ...s!, deloadSnapshot: snap } as Input)).toBe(0);
+    expect(deloadRunSwapCount({ ...s!, deloadSnapshot: snap } as Input)).toBe(
+      0
+    );
   });
 
   it("does not count a day that only exists on one side", () => {
     // A day added or removed since the deload is not a swap — the week
     // changed shape, which is a different fact and not this one.
     expect(
-      deloadRunSwapCount(
-        state({ runDays: [day("run-3", "easy_40")] as never })
-      )
+      deloadRunSwapCount(state({ runDays: [day("run-3", "easy_40")] as never }))
     ).toBe(0);
   });
 

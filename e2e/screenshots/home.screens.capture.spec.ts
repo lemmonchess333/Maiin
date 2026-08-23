@@ -12,6 +12,7 @@
  */
 import { test, type Page } from "@playwright/test";
 import { signInAsTestUser } from "../helpers/auth";
+import { settleImages } from "../helpers/settleImages";
 import { emulatorActive } from "../helpers/emulator";
 import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
 
@@ -51,7 +52,21 @@ test.describe("app screenshots", () => {
   });
 
   async function shoot(page: Page, name: string) {
-    await page.screenshot({ path: `screenshots/${name}.png`, fullPage: true });
+    /* Badge art is raster (`BADGE_ART[badge.id]` through `BadgeHex`), and
+       `badges-grid-dark` had churned in EVERY capture — 1.70%, 1.46%,
+       1.21% — regardless of what changed in the app. Read the diff mask
+       rather than guessing: three changed bands, each 62-64px tall, and
+       `BadgeHex` renders at size={64}. One band per row of ART, nothing
+       else on the frame moving.
+
+       Same cause D25 identified on `races-directory-light`, where this
+       helper took it from 10.88% to unchanged. */
+    await settleImages(page);
+    await page.screenshot({
+      animations: "disabled",
+      path: `screenshots/${name}.png`,
+      fullPage: true,
+    });
   }
 
   /** The rich-seeded user legitimately EARNS a badge on first open, so the
@@ -87,6 +102,7 @@ test.describe("app screenshots", () => {
     await page.evaluate(() =>
       document.documentElement.classList.remove("dark")
     );
+    await page.waitForTimeout(400);
     await shoot(page, "home-light");
 
     await page.evaluate(() => document.documentElement.classList.add("dark"));
@@ -173,6 +189,9 @@ test.describe("app screenshots", () => {
       await page.evaluate(() =>
         document.documentElement.classList.remove("dark")
       );
+      // Symmetry with the dark shot below: a JS-read theme (useIsDarkMode,
+      // MuscleHeatMap) needs a re-render before its colours change.
+      await page.waitForTimeout(400);
       await shoot(page, `${name}-light`);
       await page.evaluate(() => document.documentElement.classList.add("dark"));
       await page.waitForTimeout(400);
@@ -193,6 +212,7 @@ test.describe("app screenshots", () => {
       await page.evaluate(() =>
         document.documentElement.classList.remove("dark")
       );
+      await page.waitForTimeout(400);
       await shoot(page, `${name}-light`);
       await page.evaluate(() => document.documentElement.classList.add("dark"));
       await page.waitForTimeout(350);
@@ -237,6 +257,7 @@ test.describe("app screenshots", () => {
       await page.evaluate(() =>
         document.documentElement.classList.remove("dark")
       );
+      await page.waitForTimeout(400);
       await shoot(page, `${name}-light`);
       await page.evaluate(() => document.documentElement.classList.add("dark"));
       await page.waitForTimeout(350);
@@ -354,6 +375,7 @@ test.describe("app screenshots", () => {
     await page.evaluate(() =>
       document.documentElement.classList.remove("dark")
     );
+    await page.waitForTimeout(400);
     await shoot(page, `${name}-light`);
     await page.evaluate(() => document.documentElement.classList.add("dark"));
     await page.waitForTimeout(350);

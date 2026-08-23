@@ -15,4 +15,13 @@
  * The modal's ACTIVITY_TYPES list deliberately omits `'manual'` —
  * users don't pick it directly.
  */
-export type ActivityType = 'easy' | 'tempo' | 'intervals' | 'long' | 'race' | 'treadmill' | 'manual' | 'freerun' | 'guided';
+export type ActivityType =
+  | "easy"
+  | "tempo"
+  | "intervals"
+  | "long"
+  | "race"
+  | "treadmill"
+  | "manual"
+  | "freerun"
+  | "guided";

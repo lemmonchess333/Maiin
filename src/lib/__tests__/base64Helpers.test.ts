@@ -17,9 +17,7 @@ describe("stripDataUrlPrefix", () => {
     /* The regex matches any mime — supports future formats
        (image/webp, image/heic via canvas, etc) without changes. */
     expect(stripDataUrlPrefix("data:image/webp;base64,CCCC")).toBe("CCCC");
-    expect(stripDataUrlPrefix("data:application/pdf;base64,DDDD")).toBe(
-      "DDDD",
-    );
+    expect(stripDataUrlPrefix("data:application/pdf;base64,DDDD")).toBe("DDDD");
   });
 
   it("returns the input unchanged when no prefix is present", () => {
@@ -35,7 +33,7 @@ describe("stripDataUrlPrefix", () => {
     /* base64 contains +, /, = padding — none should be mangled. */
     const payload = "abc+/123==";
     expect(stripDataUrlPrefix(`data:image/jpeg;base64,${payload}`)).toBe(
-      payload,
+      payload
     );
   });
 
@@ -43,7 +41,7 @@ describe("stripDataUrlPrefix", () => {
     /* "data:text/plain,Hello" is a valid data URL but not base64 —
        the regex requires `;base64,` so it should pass through. */
     expect(stripDataUrlPrefix("data:text/plain,Hello")).toBe(
-      "data:text/plain,Hello",
+      "data:text/plain,Hello"
     );
   });
 

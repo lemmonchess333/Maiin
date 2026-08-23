@@ -205,7 +205,10 @@ export function useHomeData(
               // happened. Same eligibility gate as the calorie tally, so a
               // saved-anyway misclick can't trigger a refuel prompt either.
               const at = data.completedAt?.toMillis?.();
-              if (typeof at === "number" && (lastRunAtMs === null || at > lastRunAtMs))
+              if (
+                typeof at === "number" &&
+                (lastRunAtMs === null || at > lastRunAtMs)
+              )
                 lastRunAtMs = at;
             });
           } else {
@@ -267,7 +270,7 @@ export function useHomeData(
                     : latest.weight.toFixed(1);
                 weightInfo = {
                   weight: w,
-                  date: format(new Date(latest.date + "T12:00:00"), "MMM d"),
+                  date: format(new Date(latest.date + "T12:00:00"), "d MMM"),
                   rawDate: latest.date,
                 };
                 // #984 — derive direction from the logged history via
@@ -358,12 +361,14 @@ export function useHomeData(
       // written this session) — preserved from the original.
       const liftAtMs =
         todayWorkouts.length > 0
-          ? todayWorkouts.reduce(function (a, b) {
-              return (b.createdAt?.toMillis?.() || 0) >
-                (a.createdAt?.toMillis?.() || 0)
-                ? b
-                : a;
-            }).createdAt?.toMillis?.() || now
+          ? todayWorkouts
+              .reduce(function (a, b) {
+                return (b.createdAt?.toMillis?.() || 0) >
+                  (a.createdAt?.toMillis?.() || 0)
+                  ? b
+                  : a;
+              })
+              .createdAt?.toMillis?.() || now
           : null;
 
       function isRecent(atMs: number | null): boolean {
@@ -384,8 +389,7 @@ export function useHomeData(
 
       // Same target the rings show, falling back to the stored baseline
       // only while the effective targets resolve.
-      const targetProtein =
-        effectiveProtein || profile?.targetProtein || 160;
+      const targetProtein = effectiveProtein || profile?.targetProtein || 160;
       // Round — dailyProt is a float sum of per-meal protein, so the raw
       // subtraction surfaces FP noise (e.g. 6.300000000000011g) straight
       // into the "Post-lift — Ng protein for recovery" nudge copy.

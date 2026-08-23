@@ -52,7 +52,9 @@ function checkinRef(uid: string, weekKey: string) {
 function pillClass(selected: boolean): string {
   return cn(
     "min-h-[44px] px-3 rounded-xl text-xs font-semibold transition-colors active:scale-[0.97]",
-    selected ? "bg-primary-strong text-primary-foreground" : "bg-muted text-foreground"
+    selected
+      ? "bg-primary-strong text-primary-foreground"
+      : "bg-muted text-foreground"
   );
 }
 

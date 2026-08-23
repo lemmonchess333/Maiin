@@ -3,6 +3,7 @@ import SectionLabel from "@/components/ui/SectionLabel";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
+import RangeInput from "@/components/ui/RangeInput";
 import {
   ArrowLeft,
   ChevronDown,
@@ -55,15 +56,13 @@ import { heatPaceAdjustment, heatAdjustmentLine } from "@/lib/heatAdjustment";
 import ShoeSelector from "./ShoeSelector";
 import GuidedRunPicker from "./GuidedRunPicker";
 import SessionStructureView from "./SessionStructureView";
-import {
-  segmentsFromGuided,
-  segmentsFromIntervals,
-} from "@/lib/runSegments";
+import { segmentsFromGuided, segmentsFromIntervals } from "@/lib/runSegments";
 import type { GuidedRunWorkout } from "@/lib/guidedRun";
 import type { ActivityType } from "@/types/run";
 import { requiresManualDistance } from "@/lib/runGuards";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import { getTargetValidationError } from "@/lib/runTargetValidation";
+import { formatDayMonthYear } from "@/utils/formatters";
 
 /* Preset chip (duration / pace / distance quick-pick groups). Tokenised —
    the old inline rgba(0,0,0,…) styles were light-theme-only values that
@@ -188,7 +187,7 @@ function ProgramContextStripView({ ctx }: { ctx: ProgramContextStrip }) {
     case "race_prep_today":
       line1 = `Race prep · ${ctx.weekLabel} · ${ctx.distanceLabel}`;
       line2 = ctx.targetDate
-        ? `Target ${parseLocalDate(ctx.targetDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`
+        ? `Target ${formatDayMonthYear(parseLocalDate(ctx.targetDate))}`
         : null;
       break;
     case "structured_today":
@@ -1026,7 +1025,10 @@ export default function RunSetupModal({
                            preset value rather than the stale one
                            from first mount. */
                             key={`pace-${currentValueS}`}
-                            defaultValue={paceMinSec(currentValueS || 330, unit)}
+                            defaultValue={paceMinSec(
+                              currentValueS || 330,
+                              unit
+                            )}
                             onChange={(e) => {
                               const [m, s] = e.target.value
                                 .split(":")
@@ -1200,17 +1202,15 @@ export default function RunSetupModal({
                         {config.voiceRate.toFixed(1)}×
                       </span>
                     </div>
-                    <input
-                      type="range"
+                    <RangeInput
                       aria-label="Voice speed"
-                      min="0.6"
-                      max="1.4"
+                      min={0.6}
+                      max={1.4}
                       step="0.1"
                       value={config.voiceRate}
                       onChange={(e) =>
                         updateConfig({ voiceRate: Number(e.target.value) })
                       }
-                      className="w-full accent-primary"
                     />
                   </div>
                 </>

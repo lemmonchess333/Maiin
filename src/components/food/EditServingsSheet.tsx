@@ -4,6 +4,7 @@ import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { cn } from "@/lib/utils";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { MEAL_ORDER, MEAL_LABELS, type MealKey } from "./mealConstants";
 
 interface ServingSource {
@@ -266,9 +267,9 @@ function EditServingsSheet({
             this picker IS the intended outcome but the section
             label here would be misleading. */}
         <div className="space-y-1.5">
-          <p className="text-caption uppercase tracking-[0.14em] text-muted-foreground font-semibold text-center">
+          <SectionLabel tier="section" className="text-center">
             Meal slot
-          </p>
+          </SectionLabel>
           <div className="flex gap-1.5 justify-center flex-wrap">
             {MEAL_ORDER.map((slot) => {
               const isPicked = pickedMeal === slot;
@@ -306,9 +307,9 @@ function EditServingsSheet({
             propagated to editMeal — parseMacro() above gates which
             fields land in macroOverrides. */}
         <div className="space-y-1.5">
-          <p className="text-caption uppercase tracking-[0.14em] text-muted-foreground font-semibold text-center">
+          <SectionLabel tier="section" className="text-center">
             Per serving
-          </p>
+          </SectionLabel>
           <div className="grid grid-cols-4 gap-2">
             {(
               [
@@ -339,11 +340,12 @@ function EditServingsSheet({
               ] as const
             ).map(({ id, label, value, setter }) => (
               <div key={id} className="flex flex-col items-center gap-1">
-                <label
-                  htmlFor={id}
-                  className="text-caption uppercase tracking-wide text-muted-foreground"
-                >
-                  {label}
+                <label htmlFor={id}>
+                  {/* SectionLabel can't render a <label>, so the primitive
+                      rides inside as a span — treatment stays canonical. */}
+                  <SectionLabel as="span" tier="section">
+                    {label}
+                  </SectionLabel>
                 </label>
                 <input
                   id={id}
@@ -420,7 +422,7 @@ function EditServingsSheet({
                     color:
                       countDelta > 0
                         ? THEME.semantic.nutrition
-                        : THEME.text.muted,
+                        : "hsl(var(--muted-foreground))",
                   }}
                 >
                   ({countDelta > 0 ? "+" : ""}

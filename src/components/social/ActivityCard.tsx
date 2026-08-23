@@ -44,7 +44,11 @@ import { getTimeAgo } from "../../lib/timeAgo";
 import { Spinner } from "../ui/Spinner";
 import { IconButton } from "../ui/IconButton";
 import { distanceValue, paceMinSec } from "@/lib/runLabels";
-import { distanceUnitLabel, paceUnitLabel } from "@/lib/distanceUnits";
+import {
+  distanceUnitLabel,
+  paceUnitLabel,
+  elevationUnitLabel,
+} from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { elevationLabel } from "@/lib/runLabels";
 
@@ -223,7 +227,9 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
           <p className="text-2xl font-extrabold font-mono tabular-nums leading-none text-running">
             {distanceValue(activity?.distance || 0, unit, 2)}
           </p>
-          <SectionLabel className="mt-0.5">{distanceUnitLabel(unit)}</SectionLabel>
+          <SectionLabel className="mt-0.5">
+            {distanceUnitLabel(unit)}
+          </SectionLabel>
         </div>
       )}
     </div>
@@ -264,40 +270,71 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
     <>
       {routePreview && renderRouteHero(mapHeight)}
       {activity && (
-        <div className="flex gap-5 p-4 pb-0">
+        /* A three-column GRID, not a flex row. The row can carry FOUR
+           metrics (distance + pace + time + elevation) whenever there is
+           no route preview to host the distance overlay, and `flex
+           gap-5` gave them no way to wrap — on a 375px screen the fourth
+           went off the card. The grid wraps the overflow metric onto a
+           second line and keeps the columns aligned between the two. */
+        <div className="grid grid-cols-3 gap-x-3 gap-y-3 p-4 pb-0">
           {!showDistanceOverlay && (
-            <div>
-              <p className="text-xl font-bold font-mono tabular-nums leading-none text-running">
+            /* Distance is the primary metric of a run, and it already
+               renders that way at text-2xl/800 in the route-hero overlay
+               above. Matching it here means the two paths agree instead
+               of the no-route card quietly demoting distance to a peer
+               of pace and time. */
+            <div className="min-w-0">
+              <p className="text-2xl font-extrabold font-mono tabular-nums leading-none text-running whitespace-nowrap">
                 {distanceValue(activity.distance || 0, unit, 2)}
               </p>
-              <SectionLabel className="mt-0.5">{distanceUnitLabel(unit)}</SectionLabel>
+              <SectionLabel className="mt-0.5">
+                {distanceUnitLabel(unit)}
+              </SectionLabel>
             </div>
           )}
-          <div>
-            <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
+          <div className="min-w-0">
+            <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground whitespace-nowrap">
               {typeof activity.avgPace === "number"
                 ? paceMinSec(activity.avgPace, unit)
                 : activity.avgPace || "--:--"}
             </p>
-            <SectionLabel className="mt-0.5">{paceUnitLabel(unit)}</SectionLabel>
+            <SectionLabel className="mt-0.5">
+              {paceUnitLabel(unit)}
+            </SectionLabel>
           </div>
           {activity.duration && (
-            <div>
-              <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
+            <div className="min-w-0">
+              <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground whitespace-nowrap">
                 {formatDur(activity.duration)}
               </p>
               <SectionLabel className="mt-0.5">time</SectionLabel>
             </div>
           )}
           {(activity.elevationGain || 0) > 0 && (
-            <div className="flex items-start gap-1">
-              <Mountain className="size-4 text-muted-foreground mt-1" />
-              <div>
-                <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
-                  {elevationLabel(activity.elevationGain ?? 0, unit)}
-                </p>
-                <SectionLabel className="mt-0.5">elev</SectionLabel>
-              </div>
+            <div className="min-w-0">
+              {/* Elevation was the one metric fusing its unit into the
+                  numeral — `elevationLabel` returns "120m", so the "m"
+                  rendered at text-xl/700 while every sibling metric
+                  puts its unit in the muted SectionLabel beneath. Pass
+                  withUnit=false and render the unit as its own
+                  secondary span so the four cells finally agree.
+
+                  The Mountain icon used to be a SIBLING of this stack
+                  inside a `flex gap-1`, which pushed the numeral and its
+                  caption ~20px inboard of the grid column while every
+                  peer cell sat flush against it. It now rides in the
+                  caption, so the figures line up and the icon still
+                  marks the cell. */}
+              <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground whitespace-nowrap">
+                {elevationLabel(activity.elevationGain ?? 0, unit, false)}
+                <span className="text-caption font-semibold text-muted-foreground">
+                  {elevationUnitLabel(unit)}
+                </span>
+              </p>
+              <SectionLabel className="mt-0.5 flex items-center gap-1">
+                <Mountain className="size-3 shrink-0" aria-hidden="true" />
+                elev
+              </SectionLabel>
             </div>
           )}
         </div>
@@ -349,15 +386,25 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
                  the same visual weight per row — kg numbers should
                  stand out more than "BW" strings. */
               const isBodyweight = displaySummary.endsWith(" BW");
-              const summaryClass = `text-sm font-mono tabular-nums ml-2 shrink-0 ${
-                isBodyweight
-                  ? "text-muted-foreground/60"
-                  : "text-muted-foreground"
+              /* whitespace-nowrap joins shrink-0: a summary like
+                 "3 x 8 60kg" was free to break mid-token once the name
+                 beside it grew. The name owns the flexible half, the
+                 summary owns a fixed one. */
+              const summaryClass = `text-sm font-mono tabular-nums shrink-0 whitespace-nowrap ${
+                isBodyweight ? "text-muted-foreground" : "text-muted-foreground"
               }`;
               if (!canCompare) {
                 return (
-                  <div key={i} className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-foreground truncate">
+                  <div
+                    key={i}
+                    className="flex items-center justify-between gap-2"
+                  >
+                    {/* min-w-0 with flex-1: `truncate` alone cannot
+                        shrink a flex child whose default min-width is
+                        `auto`, so a long exercise name pushed its
+                        set/rep summary out of the card instead of
+                        ellipsing. */}
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
                       {ex.name}
                     </span>
                     <span className={summaryClass}>{displaySummary}</span>
@@ -378,9 +425,9 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
                     })
                   }
                   aria-label={`Compare your ${ex.name}`}
-                  className="w-full flex items-center justify-between text-left -mx-1 px-1 py-0.5 rounded-md hover:bg-muted/40 transition-colors"
+                  className="w-full flex items-center justify-between gap-2 text-left -mx-1 px-1 py-0.5 rounded-md hover:bg-muted/40 transition-colors"
                 >
-                  <span className="text-sm font-medium text-foreground truncate">
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
                     {ex.name}
                   </span>
                   <span className={summaryClass}>{displaySummary}</span>
@@ -389,7 +436,6 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
             })}
           </div>
         )}
-
         {/* Muscle groups — internal taxonomy keys (horizontal_push, etc.)
             mapped to session-level labels via movementCategoryLabel
             (Push / Pull / Legs / Arms / Core). Multiple raw categories
@@ -417,32 +463,39 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
               </div>
             );
           })()}
-
         {/* Workout volume/duration/PR count. Cells already printed on
             the muscle hero panel (volume numeral, PR chip) drop out
             here — same no-double-printing rule as the run card's km. */}
-        <div className="flex gap-4">
+        {/* Two columns rather than an unconstrained flex row. Volume,
+            exercises, PRs and duration can all be present at once, and a
+            volume like "12,480" is wide enough that four flex cells left
+            the card at 375px. Two columns give every cell a predictable
+            half-width and wrap the rest onto a second line. */}
+        <div className="grid grid-cols-2 gap-x-4 gap-y-3">
           {!showVolumeOverlay && (activity.totalVolume ?? 0) > 0 && (
-            <div>
-              <p className="text-xl font-bold font-mono tabular-nums leading-none text-lifting">
+            /* Volume is the primary metric of a lift, and renders at
+               text-2xl/800 in the muscle-hero overlay already — this
+               matches it so the two paths agree. */
+            <div className="min-w-0">
+              <p className="text-2xl font-extrabold font-mono tabular-nums leading-none text-lifting whitespace-nowrap">
                 {Math.round(activity.totalVolume ?? 0).toLocaleString()}
               </p>
               <SectionLabel className="mt-0.5">kg volume</SectionLabel>
             </div>
           )}
           {(activity.exerciseCount ?? 0) > 0 && (
-            <div>
-              <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
+            <div className="min-w-0">
+              <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground whitespace-nowrap">
                 {activity.exerciseCount}
               </p>
               <SectionLabel className="mt-0.5">exercises</SectionLabel>
             </div>
           )}
           {!showPrChip && (prCount ?? 0) > 0 && (
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-1">
-                <Star className="size-4 text-achievement fill-achievement" />
-                <p className="text-xl font-bold font-mono tabular-nums leading-none text-achievement">
+                <Star className="size-4 text-achievement fill-achievement shrink-0" />
+                <p className="text-xl font-bold font-mono tabular-nums leading-none text-achievement whitespace-nowrap">
                   {prCount}
                 </p>
               </div>
@@ -450,8 +503,8 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
             </div>
           )}
           {(activity.duration ?? 0) > 0 && (
-            <div>
-              <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
+            <div className="min-w-0">
+              <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground whitespace-nowrap">
                 {Math.round((activity.duration ?? 0) / 60)}
               </p>
               <SectionLabel className="mt-0.5">min</SectionLabel>
@@ -569,40 +622,56 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
             {/* Run stats — km lives on the hero overlay when the route
                 scene rendered */}
             {isRun && activity && (
-              <div className="flex gap-5 mb-3">
+              /* Same three-column grid as the standard card's run row —
+                 the hybrid card carries the identical four metrics and
+                 had the identical unconstrained flex row. */
+              <div className="grid grid-cols-3 gap-x-3 gap-y-3 mb-3">
                 {!showDistanceOverlay && (
-                  <div>
-                    <p className="text-xl font-bold font-mono tabular-nums leading-none text-running">
+                  <div className="min-w-0">
+                    <p className="text-2xl font-extrabold font-mono tabular-nums leading-none text-running whitespace-nowrap">
                       {distanceValue(activity.distance || 0, unit, 2)}
                     </p>
-                    <SectionLabel className="mt-0.5">{distanceUnitLabel(unit)}</SectionLabel>
+                    <SectionLabel className="mt-0.5">
+                      {distanceUnitLabel(unit)}
+                    </SectionLabel>
                   </div>
                 )}
-                <div>
-                  <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
+                <div className="min-w-0">
+                  <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground whitespace-nowrap">
                     {typeof activity.avgPace === "number"
                       ? formatDur(activity.avgPace)
                       : activity.avgPace || "--:--"}
                   </p>
-                  <SectionLabel className="mt-0.5">{paceUnitLabel(unit)}</SectionLabel>
+                  <SectionLabel className="mt-0.5">
+                    {paceUnitLabel(unit)}
+                  </SectionLabel>
                 </div>
                 {activity.duration && (
-                  <div>
-                    <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
+                  <div className="min-w-0">
+                    <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground whitespace-nowrap">
                       {formatDur(activity.duration)}
                     </p>
                     <SectionLabel className="mt-0.5">time</SectionLabel>
                   </div>
                 )}
                 {(activity.elevationGain || 0) > 0 && (
-                  <div className="flex items-start gap-1">
-                    <Mountain className="size-4 text-muted-foreground mt-1" />
-                    <div>
-                      <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
-                        {elevationLabel(activity.elevationGain ?? 0, unit)}
-                      </p>
-                      <SectionLabel className="mt-0.5">elev</SectionLabel>
-                    </div>
+                  <div className="min-w-0">
+                    {/* Same cell as the compact stat row above — icon
+                        inside the stack so the numeral stays flush with
+                        its grid column. */}
+                    <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground whitespace-nowrap">
+                      {elevationLabel(activity.elevationGain ?? 0, unit, false)}
+                      <span className="text-caption font-semibold text-muted-foreground">
+                        {elevationUnitLabel(unit)}
+                      </span>
+                    </p>
+                    <SectionLabel className="mt-0.5 flex items-center gap-1">
+                      <Mountain
+                        className="size-3 shrink-0"
+                        aria-hidden="true"
+                      />
+                      elev
+                    </SectionLabel>
                   </div>
                 )}
               </div>
@@ -629,7 +698,7 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
               New PR:{" "}
               {feedItem.prExercise || activity?.prExercise || "Personal Record"}{" "}
               {feedItem.prWeight || activity?.prWeight
-                ? `${feedItem.prWeight || activity?.prWeight}kg`
+                ? `${feedItem.prWeight || activity?.prWeight} kg`
                 : ""}
             </p>
           </div>
@@ -648,7 +717,12 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
               className="size-4 shrink-0"
               style={{ color: THEME.brand }}
             />
-            <p className="text-xs font-medium" style={{ color: THEME.brand }}>
+            {/* Text on the -strong step — brand is 3.87:1 as 12px text on
+                the light card; the Target icon keeps the identity. */}
+            <p
+              className="text-xs font-medium"
+              style={{ color: "hsl(var(--primary-strong))" }}
+            >
               {feedItem.challengeMilestone || activity?.challengeMilestone}
             </p>
           </div>

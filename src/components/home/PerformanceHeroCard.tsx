@@ -55,7 +55,7 @@ function EmptyRing() {
             cy="50"
             r={RING_RADIUS}
             fill="none"
-            stroke={THEME.text.muted + "1A"}
+            stroke="hsl(var(--muted-foreground) / 0.1)"
             strokeWidth={RING_STROKE}
             strokeDasharray={`${RING_ARC_LENGTH} ${RING_CIRCUMFERENCE}`}
             strokeLinecap="round"
@@ -64,14 +64,17 @@ function EmptyRing() {
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <p
             className="text-display font-extrabold leading-none font-mono tabular-nums"
-            style={{ color: THEME.text.muted }}
+            style={{ color: "hsl(var(--muted-foreground))" }}
           >
             —
           </p>
         </div>
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-xs" style={{ color: THEME.text.muted }}>
+        <p
+          className="text-xs"
+          style={{ color: "hsl(var(--muted-foreground))" }}
+        >
           {EMPTY_STATE_LINE}
         </p>
       </div>
@@ -108,19 +111,11 @@ export default function PerformanceHeroCard({
         className="block p-4 rounded-2xl bg-card active:scale-[0.98] transition-transform card-shadow"
         aria-label="Performance — loading"
       >
-        <div className="flex items-center gap-2 mb-3">
-          <Activity
-            className="size-4"
-            style={{ color: THEME.text.muted }}
-            aria-hidden="true"
-          />
-          <p
-            className="text-xs font-medium"
-            style={{ color: THEME.text.muted }}
-          >
-            Performance
-          </p>
-        </div>
+        {/* No in-card "Performance" eyebrow — D20 (2026-08-22): Home's
+            SectionLabel directly above this card already says the word,
+            so the card repeated it 40px below its own section header in
+            every branch. The section label owns the word; aria-labels
+            keep it for the accessibility tree. */}
         <EmptyRing />
       </Link>
     );
@@ -134,19 +129,7 @@ export default function PerformanceHeroCard({
   if (!currentWeek) {
     return (
       <div className="p-4 rounded-2xl bg-card card-shadow">
-        <div className="flex items-center gap-2 mb-1">
-          <Activity
-            className="size-4"
-            style={{ color: THEME.text.muted }}
-            aria-hidden="true"
-          />
-          <p
-            className="text-xs font-medium"
-            style={{ color: THEME.text.muted }}
-          >
-            Performance
-          </p>
-        </div>
+        {/* Eyebrow removed — D20; see the loading branch's note. */}
         <EmptyState
           compact
           icon={Activity}
@@ -171,7 +154,11 @@ export default function PerformanceHeroCard({
      the deload verb + amber card state never fired for anyone. */
   const deloadRecommended = resolveDeloadRecommended(currentWeek);
   const verb = getVerb(loadBand, deloadRecommended);
-  const { hue, glowIntensity } = getCardColour(pi, loadBand, deloadRecommended);
+  const { hue, textHue, glowIntensity } = getCardColour(
+    pi,
+    loadBand,
+    deloadRecommended
+  );
   const line = getLine(verb.state, currentWeek.signals);
 
   // Same shared predicate Analytics uses — this surface's existing rule,
@@ -214,16 +201,9 @@ export default function PerformanceHeroCard({
           background: `radial-gradient(circle, ${hue}33, transparent 70%)`,
         }}
       />
-      <div className="relative flex items-center gap-2 mb-4">
-        <Activity
-          className="size-4"
-          style={{ color: hue }}
-          aria-hidden="true"
-        />
-        <p className="text-xs font-medium" style={{ color: THEME.text.muted }}>
-          Performance
-        </p>
-      </div>
+      {/* Eyebrow removed — D20; see the loading branch's note. The
+          band-state hue the icon carried is not lost: the halo, ring
+          track, ring gradient, PI numeral and verb all carry it. */}
       <div className="relative flex items-center gap-6">
         <div className="relative size-28 flex-shrink-0">
           <svg
@@ -288,14 +268,17 @@ export default function PerformanceHeroCard({
         <div className="flex-1 min-w-0">
           <motion.p
             className="text-base font-bold leading-tight"
-            style={{ color: hue }}
+            style={{ color: textHue }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.2, duration: 0.2 }}
           >
             {verb.label}
           </motion.p>
-          <p className="text-xs mt-1" style={{ color: THEME.text.muted }}>
+          <p
+            className="text-xs mt-1"
+            style={{ color: "hsl(var(--muted-foreground))" }}
+          >
             {line}
           </p>
           {/* Delta chip — hidden when low-confidence (sparse data
@@ -311,7 +294,9 @@ export default function PerformanceHeroCard({
                       ? THEME.semantic.positive
                       : THEME.semantic.vitals) + "1A",
                   color:
-                    delta > 0 ? THEME.semantic.positive : THEME.semantic.vitals,
+                    delta > 0
+                      ? "hsl(var(--success-strong))"
+                      : "hsl(var(--running-strong))",
                 }}
               >
                 {delta > 0 ? (

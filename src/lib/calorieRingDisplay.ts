@@ -22,7 +22,7 @@
  * lens the user picked; the glance line surfaces the fact.
  */
 
-export type CalorieRingLabel = 'left' | 'eaten' | 'over';
+export type CalorieRingLabel = "left" | "eaten" | "over";
 
 export interface CalorieRingDisplayInput {
   consumed: number;
@@ -37,7 +37,7 @@ export interface CalorieRingDisplayResult {
 }
 
 export function getCalorieRingDisplay(
-  input: CalorieRingDisplayInput,
+  input: CalorieRingDisplayInput
 ): CalorieRingDisplayResult {
   const { consumed, target, isLeftMode } = input;
 
@@ -50,10 +50,10 @@ export function getCalorieRingDisplay(
 
   if (isLeftMode) {
     displayValue = isOver ? Math.abs(remaining) : remaining;
-    labelMode = isOver ? 'over' : 'left';
+    labelMode = isOver ? "over" : "left";
   } else {
     displayValue = consumed;
-    labelMode = 'eaten';
+    labelMode = "eaten";
   }
 
   return { displayValue, labelMode, isOver };

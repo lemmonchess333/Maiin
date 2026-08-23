@@ -1,5 +1,6 @@
-import { ResponsiveContainer, AreaChart, Area } from "recharts";
+import { ResponsiveContainer, AreaChart, Area, YAxis } from "recharts";
 import ChartAreaGradient from "./ChartAreaGradient";
+import { sparklineDomain } from "@/lib/sparklineDomain";
 import { THEME } from "@/lib/theme";
 import SectionLabel from "@/components/ui/SectionLabel";
 
@@ -92,17 +93,25 @@ export default function StatCard({
           sparkline overflows the ~152px content area. Stacking the
           sparkline below as a thin full-width band gives every realistic
           value enough room without truncation. */}
-      <div className="flex items-baseline gap-1">
+      <div className="flex items-baseline gap-1 min-w-0">
         <span
           className={
             valueKind === "text"
-              ? "text-xl font-bold text-foreground leading-tight break-words"
-              : "text-3xl font-extrabold font-mono tabular-nums text-foreground leading-none whitespace-nowrap"
+              ? "min-w-0 text-xl font-bold text-foreground leading-tight break-words"
+              : "min-w-0 text-3xl font-extrabold font-mono tabular-nums text-foreground leading-none whitespace-nowrap"
           }
         >
           {value}
         </span>
-        {unit && <span className="text-xs text-muted-foreground">{unit}</span>}
+        {/* The unit is secondary to the figure, and at text-caption it
+            reads that way against either branch above. `shrink-0` keeps
+            it whole: on a narrow card the VALUE should give up width,
+            never the unit that makes it meaningful. */}
+        {unit && (
+          <span className="text-caption text-muted-foreground shrink-0">
+            {unit}
+          </span>
+        )}
       </div>
 
       {showSparkline && (
@@ -120,6 +129,11 @@ export default function StatCard({
               data={sparklineData!.map((v, i) => ({ v, i }))}
               margin={{ top: 1, right: 0, bottom: 0, left: 0 }}
             >
+              {/* Without this the axis defaults to [0, dataMax], which
+                  pins every series to the top of the band and turns a
+                  steady one into a solid slab — Avg Pace beside Monthly
+                  Distance was the visible case. */}
+              <YAxis hide domain={sparklineDomain(sparklineData!)} />
               <ChartAreaGradient id={gradientId} color={accentColor} />
               <Area
                 type="monotone"
@@ -145,7 +159,7 @@ export default function StatCard({
         </p>
       )}
       {target && (
-        <p className="text-caption text-muted-foreground/80 mt-0.5 font-mono tabular-nums">
+        <p className="text-caption text-muted-foreground mt-0.5 font-mono tabular-nums">
           {target}
         </p>
       )}

@@ -118,8 +118,12 @@ describe("RaceCockpitCard", () => {
   it("says the long-run build is PACKED IN, not shortened", () => {
     renderCard({ compressed: true });
     expect(screen.getByText(/packed into fewer weeks/i)).toBeInTheDocument();
-    expect(screen.getByText(/bigger jumps between long runs/i)).toBeInTheDocument();
-    expect(document.body.textContent ?? "").not.toMatch(/progression shortened/i);
+    expect(
+      screen.getByText(/bigger jumps between long runs/i)
+    ).toBeInTheDocument();
+    expect(document.body.textContent ?? "").not.toMatch(
+      /progression shortened/i
+    );
   });
 
   /**

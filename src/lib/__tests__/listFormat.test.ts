@@ -24,21 +24,21 @@ describe("joinHumanList", () => {
 
   it("uses comma + ' & ' for three items (no Oxford comma)", () => {
     expect(joinHumanList(["Breakfast", "Lunch", "Dinner"])).toBe(
-      "Breakfast, Lunch & Dinner",
+      "Breakfast, Lunch & Dinner"
     );
   });
 
   it("uses commas + ' & ' for four or more items", () => {
-    expect(
-      joinHumanList(["Breakfast", "Lunch", "Snacks", "Dinner"]),
-    ).toBe("Breakfast, Lunch, Snacks & Dinner");
+    expect(joinHumanList(["Breakfast", "Lunch", "Snacks", "Dinner"])).toBe(
+      "Breakfast, Lunch, Snacks & Dinner"
+    );
   });
 
   it("preserves item strings verbatim (no trimming or casing)", () => {
     /* Defensive: the caller is responsible for casing — the
        formatter doesn't re-case or trim. */
     expect(joinHumanList(["  Breakfast  ", "lunch"])).toBe(
-      "  Breakfast   & lunch",
+      "  Breakfast   & lunch"
     );
   });
 

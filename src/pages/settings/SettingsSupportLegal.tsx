@@ -4,7 +4,10 @@ import SupportLegalSection from "@/components/settings/SupportLegalSection";
 
 export default function SettingsSupportLegal() {
   return (
-    <SettingsSection title="Support & Legal" subtitle="Help, privacy policy, terms">
+    <SettingsSection
+      title="Support & Legal"
+      subtitle="Help, privacy policy, terms"
+    >
       <SupportLegalSection inline />
     </SettingsSection>
   );

@@ -75,9 +75,9 @@ export default function Support() {
               <span className="text-foreground font-medium">
                 Forgot password
               </span>{" "}
-              on the sign-in screen — it works for Google and Apple accounts
-              too (it emails you a link that sets a password). Still stuck?
-              Email us from the address on your account.
+              on the sign-in screen — it works for Google and Apple accounts too
+              (it emails you a link that sets a password). Still stuck? Email us
+              from the address on your account.
             </p>
           </section>
 

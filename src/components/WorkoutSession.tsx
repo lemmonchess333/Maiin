@@ -982,7 +982,7 @@ export default function WorkoutSession({
         });
         haptic(50);
         toast.success(
-          `New ${repBucketLabel(prBucket)}! ${set.weight}kg × ${set.reps} on ${exName}`
+          `New ${repBucketLabel(prBucket)}! ${set.weight} kg × ${set.reps} on ${exName}`
         );
       }
     } else if (validation.warn) {
@@ -1540,7 +1540,7 @@ export default function WorkoutSession({
                 [currentExIndex]: e.target.value,
               }))
             }
-            className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-xs text-foreground placeholder:text-muted-foreground/60"
+            className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-xs text-foreground placeholder:text-muted-foreground"
           />
         </div>
 
@@ -1744,7 +1744,7 @@ export default function WorkoutSession({
                               carried through the completion boundary. */}
                           {set.type === "warmup" ? (
                             <span
-                              className="text-small text-muted-foreground/50 text-center block w-full"
+                              className="text-small text-muted-foreground text-center block w-full"
                               aria-hidden="true"
                             >
                               —
@@ -1802,7 +1802,7 @@ export default function WorkoutSession({
                               )
                             }
                             disabled={set.completed}
-                            className="w-full px-2 py-2.5 min-h-11 rounded-lg bg-muted text-foreground text-sm font-mono tabular-nums text-center placeholder:text-muted-foreground/50 disabled:opacity-50"
+                            className="w-full px-2 py-2.5 min-h-11 rounded-lg bg-muted text-foreground text-sm font-mono tabular-nums text-center placeholder:text-muted-foreground disabled:opacity-50"
                           />
                         </div>
                         <div className="col-span-3">
@@ -1998,7 +1998,7 @@ export default function WorkoutSession({
             Target: {currentExercise.sets}&times;
             {formatRepTarget(currentExercise)}
             {currentExercise.weight > 0
-              ? ` @ ${currentExercise.weight}kg`
+              ? ` @ ${currentExercise.weight} kg`
               : getExerciseById(currentExercise.exerciseId)?.equipment ===
                   "Bodyweight"
                 ? " @ Bodyweight"
@@ -2010,7 +2010,7 @@ export default function WorkoutSession({
         {plateLoad && plateLoad.perSide.length > 0 && (
           <p className="mt-0.5 text-center text-caption font-mono tabular-nums text-muted-foreground">
             Per side: {plateLoad.perSide.join(" + ")}
-            {!plateLoad.exact && ` · ${plateLoad.leftover}kg short`}
+            {!plateLoad.exact && ` · ${plateLoad.leftover} kg short`}
           </p>
         )}
       </div>

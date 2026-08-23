@@ -52,9 +52,9 @@ describe("resolveProteinMultiplier — default", () => {
   });
 
   it("returns the default when both keys are unknown", () => {
-    expect(
-      resolveProteinMultiplier("not-a-phase", "not-a-goal"),
-    ).toBe(DEFAULT_PROTEIN_MULTIPLIER);
+    expect(resolveProteinMultiplier("not-a-phase", "not-a-goal")).toBe(
+      DEFAULT_PROTEIN_MULTIPLIER
+    );
   });
 });
 

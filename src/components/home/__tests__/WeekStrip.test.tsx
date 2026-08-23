@@ -350,6 +350,44 @@ describe("WeekStrip — accessible name and selection state", () => {
   const todayCell = (container: HTMLElement) =>
     container.querySelectorAll("button")[0];
 
+  /* The capture spec `surfaces.screens.capture.spec.ts` opens the day
+     peek by selecting a day cell on its accessible NAME — it needs a
+     non-today cell, because handleDayTap scrolls instead of peeking on
+     today. Its regex had rotted: it anchored the date to end-of-name,
+     which stopped being true once the training label was appended, so
+     it matched nothing and that step timed out on every screenshot run.
+     Nothing failed locally, because the tests above assert only the
+     training-label FRAGMENT.
+
+     These pin the whole shape the selector depends on: weekday, date,
+     training label, and "(today)" present on exactly one cell. */
+  it("labels a day cell as weekday, date, then training label", () => {
+    const { container } = renderAllDays("rest");
+    const label = todayCell(container).getAttribute("aria-label") ?? "";
+    // en-GB day-before-month ("Saturday 23 August, …") — the app's one
+    // date treatment, applied to the label 2026-08-22.
+    expect(label).toMatch(/^\w+day \d+ \w+, /);
+  });
+
+  it("marks today, and only today, with the (today) suffix", () => {
+    const { container } = renderAllDays("rest");
+    const cells = Array.from(container.querySelectorAll("button"));
+    const labels = cells.map((c) => c.getAttribute("aria-label") ?? "");
+    expect(labels.filter((l) => l.includes("(today)"))).toHaveLength(1);
+    /* This deliberately does NOT re-assert the capture spec's regex.
+       It used to carry a hand-written copy of the pattern, described as
+       "the same predicate, so this fails when that selector would" —
+       which holds only while somebody keeps the two literals in sync by
+       hand, and a copy of a selector is the same shape of bug as the
+       rotted selector it was written to catch.
+
+       `weekStripCaptureSelector.test.tsx` reads the LIVE regex out of
+       the spec file and runs it against these same names: six non-today
+       matches, never today. That cannot drift. What stays here is the
+       label shape itself, which is what the selector depends on and is
+       this suite's own business. */
+  });
+
   it("names a rest day, a lift day and a run day", () => {
     for (const [type, expected] of [
       ["rest", /rest day/i],
@@ -450,7 +488,7 @@ describe("WeekStrip — accessible name and selection state", () => {
     // The parts that already worked must survive the rewrite.
     const { container } = renderAllDays("rest");
     const label = todayCell(container).getAttribute("aria-label") ?? "";
-    expect(label).toMatch(/^[A-Z][a-z]+day, [A-Z][a-z]+ \d{1,2}/);
+    expect(label).toMatch(/^[A-Z][a-z]+day \d{1,2} [A-Z][a-z]+/);
     expect(label).toMatch(/\(today\)/);
     // …and a day that is not today does not claim to be.
     const other = container.querySelectorAll("button")[3];

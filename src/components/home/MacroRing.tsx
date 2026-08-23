@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
-import { THEME } from "@/lib/theme";
 import { motion } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 import { macroRingState } from "@/utils/formatters";
@@ -112,8 +111,11 @@ export default function MacroRing({
         )}
       </div>
       <div className="text-center">
-        <SectionLabel style={{ color: THEME.text.muted }}>{label}</SectionLabel>
-        <p className="text-micro" style={{ color: THEME.text.muted }}>
+        <SectionLabel>{label}</SectionLabel>
+        <p
+          className="text-micro"
+          style={{ color: "hsl(var(--muted-foreground))" }}
+        >
           {subLabel}
         </p>
       </div>

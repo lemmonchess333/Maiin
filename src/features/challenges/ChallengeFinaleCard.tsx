@@ -8,25 +8,13 @@ import {
   type ChallengeParticipant,
   type ChallengeTier,
 } from "./useChallenges";
+import { formatChallengeValue as formatValue } from "./challengeFormat";
 
 const TIER_LABELS: Record<ChallengeTier, string> = {
   bronze: "Bronze",
   silver: "Silver",
   gold: "Gold",
 };
-
-function formatValue(metric: string, value: number): string {
-  if (metric === "fastest_effort") {
-    if (value <= 0) return "—";
-    const m = Math.floor(value / 60);
-    const s = Math.round(value % 60);
-    return `${m}:${s.toString().padStart(2, "0")}`;
-  }
-  if (metric === "total_km") return `${value.toFixed(1)}km`;
-  if (metric === "total_volume")
-    return `${Math.round(value).toLocaleString()}kg`;
-  return Math.round(value).toLocaleString();
-}
 
 /**
  * Challenge finale (social features pass, 2026-07). Challenges used to

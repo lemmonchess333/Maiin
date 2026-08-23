@@ -65,7 +65,7 @@ export default function RestTimerRing({
           <p
             className={cn(
               "text-3xl font-extrabold font-mono tabular-nums tracking-tight",
-              isOver ? "text-green-400" : "text-foreground"
+              isOver ? "text-success-strong" : "text-foreground"
             )}
           >
             {formatTime(restSeconds)}

@@ -174,7 +174,10 @@ export default function TrainingLoadCard({
         <p
           className="text-xs mt-2 rounded-lg px-3 py-2 leading-relaxed"
           style={{
-            color: THEME.warning,
+            /* Text on the -strong step (identity is ~3.1:1 at 12px on the
+               light tint); the tint concat must stay on the hex — an
+               alpha suffix on a var() string is invalid CSS (DS1b). */
+            color: "hsl(var(--warning-strong))",
             background: `${THEME.warning}14`,
           }}
         >

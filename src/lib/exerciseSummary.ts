@@ -49,7 +49,10 @@ export function formatExerciseSummary(input: ExerciseSummaryInput): string {
       ? `${sets}×${reps} BW`
       : `${sets}×${reps}`;
   }
-  // Drop trailing .0 on round weights so "100kg" doesn't become "100.0kg".
-  const weightStr = Number.isInteger(weight) ? String(weight) : weight.toFixed(1);
-  return `${sets}×${reps}×${weightStr}kg`;
+  // Drop trailing .0 on round weights so "100 kg" doesn't become "100.0 kg".
+  const weightStr = Number.isInteger(weight)
+    ? String(weight)
+    : weight.toFixed(1);
+  // Spaced unit — the app's one unit treatment ("60 kg", never "60kg").
+  return `${sets}×${reps}×${weightStr} kg`;
 }

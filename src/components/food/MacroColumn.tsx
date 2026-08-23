@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ComponentType, type SVGProps } from "react";
+import SectionLabel from "@/components/ui/SectionLabel";
 import {
   motion,
   useMotionValue,
@@ -181,8 +182,32 @@ export default function MacroColumn({
       type="button"
       data-macro={macroKey}
       onClick={onTap}
-      className="flex-1 flex flex-col items-center text-center bg-transparent border-0 p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-lg"
+      /* Names the ACTION, not the current state. The visible number
+         already says what the tile shows; what a screen-reader user
+         cannot see is what tapping would do — and since the tap flips a
+         mode shared with the calorie ring, "toggle" would be too vague
+         to predict. So the label reads as the destination mode.
+
+         The goal-reached state is APPENDED rather than left to the
+         sr-only span below, because an `aria-label` REPLACES the
+         content-derived name outright: adding this label silently
+         dropped "{label} goal reached" out of the button's accessible
+         name, which `surfaces.screens.capture.spec.ts` asserts as the
+         state-independent proof of the halo. Nothing in the unit suite
+         covered it, so it only surfaced in the screenshot CI run. */
+      aria-label={
+        `Show ${label.toLowerCase()} ${isLeftMode ? "eaten" : "remaining"}` +
+        (goalReached ? `. ${label} goal reached` : "")
+      }
+      className="min-w-0 flex-1 flex flex-col items-center text-center bg-transparent border-0 p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-lg"
     >
+      {/* Kept ALONGSIDE the aria-label above, not replaced by it. Two
+          existing unit tests assert this sr-only TEXT, while
+          surfaces.screens.capture.spec.ts asserts the accessible NAME —
+          and an aria-label satisfies only the second. That split is
+          exactly how the regression hid: text-based tests stayed green
+          while the name lost the state. Both now carry it. */}
+      {goalReached && <span className="sr-only">{label} goal reached</span>}
       {/* Icon — a bare glyph in every state. No disc behind it.
           Deliberate, and it has been wrong in both directions:
 
@@ -218,20 +243,27 @@ export default function MacroColumn({
           aria-hidden="true"
         />
       </motion.span>
-      {goalReached && <span className="sr-only">{label} goal reached</span>}
 
       {/* Big number — Food7: neutral foreground (not the macro hue). The
           macro identity is carried by the icon + progress bar; a neutral
           number is the calorie ring's unified-colour story applied to the
           tiles. text-foreground is theme-aware (dark on light, light on
           dark) so there's no AA concern. */}
-      <p className="text-2xl font-extrabold font-mono tabular-nums leading-none tracking-tight mt-2 text-foreground">
+      {/* The unit is SECONDARY to the figure. It rendered at text-2xl —
+         identical to the number — so "128g" read as one four-character
+         token rather than a value with a unit, and the tile lost its
+         numeric hierarchy at exactly the widths where it matters. The
+         number keeps text-2xl: it is glanceable data, and shrinking it
+         to fix a problem caused by its neighbour is the wrong lever.
+         whitespace-nowrap keeps a three-digit value and its unit on one
+         line now that the column can be narrower. */}
+      <p className="text-2xl font-extrabold font-mono tabular-nums leading-none tracking-tight mt-2 text-foreground whitespace-nowrap">
         <AnimatedNumber
           value={displayValue}
           duration={numberDurationSec}
           ease={RING_EASE}
         />
-        <span className="text-2xl">g</span>
+        <span className="text-small font-bold text-muted-foreground">g</span>
       </p>
 
       {/* Mode-aware label sits below the big number. Always-rendered
@@ -291,7 +323,7 @@ export default function MacroColumn({
 
       {/* Tertiary line — consumed value tweens with the big number so all
           three (big number, bar fill, tertiary) advance together during a log. */}
-      <p className="text-caption text-muted-foreground/70 font-mono tabular-nums mt-1.5">
+      <p className="text-caption text-muted-foreground font-mono tabular-nums mt-1.5 whitespace-nowrap">
         <AnimatedNumber
           value={Math.round(consumed)}
           duration={numberDurationSec}
@@ -305,9 +337,9 @@ export default function MacroColumn({
           `X / Yg` ratio line above) so the card's colour identity is
           carried by the icon + big number + progress bar, not duplicated
           four times. The label is a caption, not a headline. */}
-      <p className="text-caption font-semibold uppercase tracking-wider mt-0.5 text-muted-foreground">
+      <SectionLabel tier="section" className="mt-0.5">
         {label}
-      </p>
+      </SectionLabel>
     </button>
   );
 }

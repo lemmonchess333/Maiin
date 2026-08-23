@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { useSubscription } from "@/lib/subscription";
 import { fetchBodyweightLogs } from "@/lib/api";
 import { localDateString } from "@/lib/dateHelpers";
+import { isActiveMealDoc } from "@/lib/mealTotals";
 import { ADAPTIVE_TDEE_DEFAULTS } from "@/lib/adaptiveTdee";
 import { getNutritionPhase } from "@/lib/nutritionPhase";
 import {
@@ -107,8 +108,20 @@ export function useAdaptiveTdee(): AdaptiveTdeeView {
       );
       const byDay = new Map<string, number>();
       mealsSnap.docs.forEach((d) => {
-        const data = d.data() as { date?: unknown; totalCalories?: unknown };
+        const data = d.data() as {
+          date?: unknown;
+          totalCalories?: unknown;
+          deletedAt?: unknown;
+        };
         if (typeof data.date !== "string") return;
+        /* HOME-MEALS-01. Deletion is soft, so a corrected meal (mis-scanned
+           photo, wrong portion) is still a doc here. Counting it left its
+           calories in `avgIntake`, which is the minuend of
+           `learnedTDEE = avgIntake − slope×7700` — so every correction
+           pushed the learned target UP, silently and in the direction that
+           makes the user eat more. The cast previously omitted `deletedAt`
+           entirely, so the compiler could not point at the omission either. */
+        if (!isActiveMealDoc(data)) return;
         const kcal =
           typeof data.totalCalories === "number" ? data.totalCalories : 0;
         byDay.set(data.date, (byDay.get(data.date) ?? 0) + kcal);

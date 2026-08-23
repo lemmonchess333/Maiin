@@ -215,7 +215,7 @@ export default function DayActionSheet({
   const selectedRunMeta = selectedRunTemplate
     ? [
         selectedRunTemplate.config.targetDistanceKm
-          ? `${selectedRunTemplate.config.targetDistanceKm}km`
+          ? `${selectedRunTemplate.config.targetDistanceKm} km`
           : `${selectedRunTemplate.estimatedDuration} min`,
         ...(selectedRunPace ? [selectedRunPace] : []),
       ].join(" · ")
@@ -357,7 +357,7 @@ export default function DayActionSheet({
                   </p>
                 )}
                 {selectedRunWhy && (
-                  <p className="text-xs text-muted-foreground/90 mt-1.5 leading-snug">
+                  <p className="text-xs text-muted-foreground mt-1.5 leading-snug">
                     {selectedRunWhy}
                   </p>
                 )}
@@ -365,7 +365,7 @@ export default function DayActionSheet({
                     one line, same register as the explainer above. */}
                 {selectedRunTemplate &&
                   sessionFuelingLine(selectedRunTemplate.estimatedDuration) && (
-                    <p className="text-xs text-muted-foreground/90 mt-1.5 leading-snug">
+                    <p className="text-xs text-muted-foreground mt-1.5 leading-snug">
                       {sessionFuelingLine(
                         selectedRunTemplate.estimatedDuration
                       )}
@@ -651,7 +651,7 @@ export default function DayActionSheet({
                                     "min-h-[44px] rounded-lg text-xs font-bold flex flex-col items-center justify-center gap-0.5 transition-transform",
                                     opt.available
                                       ? "bg-background border border-border active:scale-[0.95]"
-                                      : "bg-muted/40 text-muted-foreground/50 cursor-not-allowed"
+                                      : "bg-muted/40 text-muted-foreground cursor-not-allowed"
                                   )}
                                   style={
                                     opt.warning

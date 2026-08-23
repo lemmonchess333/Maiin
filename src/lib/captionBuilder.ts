@@ -30,7 +30,7 @@ export interface DailyTargetsCaption {
  */
 export function buildCaption(
   dayType: DayType,
-  activityBonus: number,
+  activityBonus: number
 ): DailyTargetsCaption | null {
   if (dayType === "rest") return null;
   const trainingType =

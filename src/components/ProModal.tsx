@@ -65,12 +65,17 @@ const FEATURE_PREVIEWS: Partial<
   Record<ProFeatureKey, { icon: React.ReactNode; preview: React.ReactNode }>
 > = {
   ai_food_logging: {
-    icon: <Utensils className="size-6" style={{ color: THEME.warning }} />,
+    icon: (
+      <Utensils
+        className="size-6"
+        style={{ color: THEME.semantic.nutrition }}
+      />
+    ),
     preview: (
       <div className="relative rounded-xl overflow-hidden">
         <div
           className="blur-sm pointer-events-none select-none p-4 rounded-xl border border-border"
-          style={{ background: `${THEME.warning}12` }}
+          style={{ background: `${THEME.semantic.nutrition}12` }}
         >
           <div className="text-xs text-muted-foreground mb-2">
             Detected: Chicken &amp; rice bowl
@@ -79,7 +84,7 @@ const FEATURE_PREVIEWS: Partial<
             {[
               ["P", "42g", THEME.teal],
               ["C", "58g", THEME.brand],
-              ["F", "12g", THEME.warning],
+              ["F", "12g", THEME.semantic.nutrition],
             ].map(([l, v, c]) => (
               <div
                 key={String(l)}
@@ -96,7 +101,10 @@ const FEATURE_PREVIEWS: Partial<
         </div>
         <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-card/85">
           <div className="flex flex-col items-center gap-1">
-            <Utensils className="size-7" style={{ color: THEME.warning }} />
+            <Utensils
+              className="size-7"
+              style={{ color: THEME.semantic.nutrition }}
+            />
             <p className="text-xs font-semibold text-foreground">
               Unlock AI logging
             </p>
@@ -123,7 +131,7 @@ const PRO_FEATURE_BULLETS: {
     icon: <Utensils className="size-4" />,
     label: "Unlimited AI food photo logging",
     sub: "Log meals from a photo. No manual searching.",
-    color: THEME.warning,
+    color: THEME.semantic.nutrition,
   },
   {
     icon: <Sparkles className="size-4" />,

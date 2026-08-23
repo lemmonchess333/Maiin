@@ -34,7 +34,7 @@ interface RunTargetLike {
  *   getDistanceTargetMeters(undefined)                          → 0
  */
 export function getDistanceTargetMeters(
-  target: RunTargetLike | undefined | null,
+  target: RunTargetLike | undefined | null
 ): number {
   if (!target || target.type !== "distance" || !target.value) return 0;
   return target.value;

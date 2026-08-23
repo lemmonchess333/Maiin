@@ -353,12 +353,11 @@ describe("the adapting status line is wired to the learned target", () => {
      this file's harness does not build. The wire-up is the thing that broke;
      this is what holds it. */
   const src = readFileSync(
-    resolve(
-      dirname(fileURLToPath(import.meta.url)),
-      "../NutritionSection.tsx"
-    ),
+    resolve(dirname(fileURLToPath(import.meta.url)), "../NutritionSection.tsx"),
     "utf8"
-  ).replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ");
+  )
+    .replace(/\/\*[\s\S]*?\*\//g, " ")
+    .replace(/\/\/[^\n]*/g, " ");
 
   it("passes adaptiveCapState.lastApplied into the label", () => {
     expect(src).toMatch(

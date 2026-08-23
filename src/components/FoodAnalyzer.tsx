@@ -3,6 +3,7 @@ import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
 import { useCountUp } from "@/hooks/useCountUp";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
+import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { RotateCcw, Save, Check, Plus, Minus, Download, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -1003,7 +1004,7 @@ export default function FoodAnalyzer({
                           {activeResult.foodName}
                         </p>
                       )}
-                      <p className="text-caption text-muted-foreground/70 mt-1">
+                      <p className="text-caption text-muted-foreground mt-1">
                         AI estimate — adjust portions before logging.
                       </p>
                     </>
@@ -1036,7 +1037,7 @@ export default function FoodAnalyzer({
                             }}
                             className="flex items-center justify-between gap-2 py-1"
                           >
-                            <p className="text-sm text-muted-foreground/60 line-through truncate flex-1">
+                            <p className="text-sm text-muted-foreground line-through truncate flex-1">
                               {item.name}
                             </p>
                             <button
@@ -1110,7 +1111,7 @@ export default function FoodAnalyzer({
                               type="button"
                               onClick={() => removeItem(i)}
                               aria-label={`Remove ${item.name}`}
-                              className="size-6 relative before:absolute before:-inset-2.5 before:content-[''] rounded-full flex items-center justify-center text-muted-foreground/60 hover:text-red-500 hover:bg-red-500/10 active:scale-90 transition-all shrink-0"
+                              className="size-6 relative before:absolute before:-inset-2.5 before:content-[''] rounded-full flex items-center justify-center text-muted-foreground hover:text-destructive-strong hover:bg-destructive/10 active:scale-90 transition-all shrink-0"
                             >
                               <X className="size-3.5" />
                             </button>
@@ -1250,10 +1251,12 @@ export default function FoodAnalyzer({
                 className={cn(
                   "flex-1 py-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 active:scale-[0.98]",
                   saved
-                    ? "bg-green-500 text-white"
+                    ? "text-white"
                     : "bg-primary-strong text-primary-foreground hover:opacity-90",
                   (saving || allRemoved) && "opacity-50 cursor-not-allowed"
                 )}
+                /* Saved-state fill from the palette (was raw green-500). */
+                style={saved ? { background: THEME.success } : undefined}
               >
                 {saved ? (
                   <>

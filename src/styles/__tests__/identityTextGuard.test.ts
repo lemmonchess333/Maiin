@@ -73,13 +73,17 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // 2026-08-11: 53 → 54. The Feather icon on AdjustWeekSheet's "this week
   // is already eased" row — an icon, which the 4.5:1 small-text bar does
   // not apply to; its label beside it is `text-foreground`.
-  running: 54,
-  lifting: 23,
+  running: 54, // +1: Onboarding 'Occasional runner' Footprints icon (DS2 sport-coding)
+  lifting: 24, // +1: Onboarding 'Get stronger' Zap icon (DS2 sport-coding)
   nutrition: 4,
   destructive: 0,
   success: 0,
   warning: 0,
-  achievement: 5,
+  // +7 (palette-class sweep, 2026-08-22): six Trophy/Star ICONS that were
+  // raw text-amber-500/yellow-500 (PRCard, PRsTab, ExerciseHistory,
+  // RunSummary pace-trend, SessionCompleteScreen, FoodSuggestionsDropdown
+  // pantry star x2) — all icon fills, none text.
+  achievement: 12,
 };
 
 function sourceFiles(): string[] {

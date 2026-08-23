@@ -71,7 +71,7 @@ export default function CircleWeeklyFocusSheet({
       title="Weekly focus"
       description="One shared focus for the week. Only the focus you choose is shared — never numbers, meals, photos or plans."
     >
-      <div className="space-y-3 pb-2">
+      <div className="px-4 space-y-3 pb-2">
         <div className="space-y-2" role="radiogroup" aria-label="Weekly focus">
           {options.map((focus) => (
             <button

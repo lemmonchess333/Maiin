@@ -1,6 +1,9 @@
 import { useCallback, type ReactNode } from "react";
 import { useInViewOnce } from "@/hooks/useInViewOnce";
-import { track as trackSettingsEvent, type SettingsSection } from "@/lib/settingsAnalytics";
+import {
+  track as trackSettingsEvent,
+  type SettingsSection,
+} from "@/lib/settingsAnalytics";
 
 interface TrackSettingsSectionViewProps {
   /** Section identifier matching the SettingsSection union — fires

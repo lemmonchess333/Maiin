@@ -41,6 +41,7 @@ import { BottomSheet } from "@/components/ui/BottomSheet";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Spinner } from "@/components/ui/Spinner";
 import { getTimeAgo } from "@/lib/timeAgo";
+import { formatDayMonth } from "@/utils/formatters";
 import { localWeekKey } from "@/lib/dateHelpers";
 import {
   LAUNCH_TEMPLATES,
@@ -93,37 +94,6 @@ function inviteString(spaceId: string, code: string): string {
     : `${spaceId}.${code}`;
 }
 
-/* SOCIAL-HOME-01 — cold-start goal selector options. The first four
-   map straight onto a create-sheet template; "Private Progress" (its
-   own button below) routes to the private Momentum check-in page and
-   NEVER creates a circle. */
-const COLD_START_OPTIONS: Array<{
-  type: GoalSpaceType;
-  label: string;
-  description: string;
-}> = [
-  {
-    type: "strength_block",
-    label: "Strength Block",
-    description: "A shared 4–12 week lifting focus.",
-  },
-  {
-    type: "race",
-    label: "Race",
-    description: "Training for the same event, together.",
-  },
-  {
-    type: "nutrition_consistency",
-    label: "Nutrition Consistency",
-    description: "Support for logging steadily — never calories or meals.",
-  },
-  {
-    type: "hybrid",
-    label: "Hybrid",
-    description: "Lifting + running, one shared push.",
-  },
-];
-
 /* LAUNCH_TEMPLATES is lock-pinned to three entries (GsPb1) — "hybrid"
    is reachable only via the cold-start selector, so the create sheet
    appends this fourth RENDERED option when it's the current selection,
@@ -139,11 +109,33 @@ const HYBRID_TEMPLATE: {
   description: "Lifting + running together — one shared push.",
 };
 
-/** "YYYY-MM-DD" → "12 Sep" — same short-date idiom as the rest of the app. */
+/* SOCIAL-HOME-01 — cold-start goal selector options. The first three
+   ARE the lock-pinned launch templates, plus the hybrid the create
+   sheet appends; "Private Progress" (its own button below) routes to
+   the private Momentum check-in page and NEVER creates a circle.
+
+   DERIVED, not re-listed. This used to be a second hand-written copy
+   of the same catalogue, and the two had drifted on both fields: you
+   picked "Race" and the very next screen called it "Race Journey";
+   you picked "Nutrition Consistency" and confirmed "Consistency
+   Reset". A chooser that renames your choice one tap later is the
+   worst place for a copy to drift, and a second literal list is how
+   it drifted. `LAUNCH_TEMPLATES` is the lock-pinned source, so it
+   wins; the chooser now reads from it. */
+const COLD_START_OPTIONS: Array<{
+  type: GoalSpaceType;
+  label: string;
+  description: string;
+}> = [...LAUNCH_TEMPLATES, HYBRID_TEMPLATE];
+
+/** "YYYY-MM-DD" → "12 Sep" via the canonical helper. The previous inline
+ *  toLocaleDateString passed an ABSENT locale, so it followed the device
+ *  and rendered "Sep 12" on a US phone while its own comment claimed the
+ *  app idiom. */
 function formatTargetDate(iso: string): string {
   const d = new Date(iso + "T00:00:00");
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+  return formatDayMonth(d);
 }
 
 /** Today's local calendar day as YYYY-MM-DD — the same string basis the
@@ -999,7 +991,7 @@ export default function CirclesSection({
         title="Start a circle"
         description="Invite-only, 2–8 people. Numbers, meals and photos stay private — a circle only ever sees check-ins."
       >
-        <div className="space-y-3 pb-2">
+        <div className="px-4 space-y-3 pb-2">
           {goalPrechosen ? (
             /* Goal already chosen (cold-start / hand-off) — show it as a
                compact confirmed header instead of re-showing the full
@@ -1025,7 +1017,7 @@ export default function CirclesSection({
                       haptic("light");
                       setGoalPrechosen(false);
                     }}
-                    className="shrink-0 min-h-[44px] flex items-center px-1 text-xs font-medium text-primary"
+                    className="shrink-0 min-h-[44px] flex items-center px-1 text-xs font-medium text-primary-strong"
                   >
                     Change
                   </button>
@@ -1111,7 +1103,7 @@ export default function CirclesSection({
         description="You already have a matching circle."
       >
         {trainTogether && (
-          <div className="space-y-2 pb-2">
+          <div className="px-4 space-y-2 pb-2">
             <Button
               className="w-full"
               onClick={() => {
@@ -1153,7 +1145,7 @@ export default function CirclesSection({
         title="Join a circle"
         description="Paste the invite code a friend shared with you."
       >
-        <div className="space-y-3 pb-2">
+        <div className="px-4 space-y-3 pb-2">
           <input
             type="text"
             value={joinInput}
@@ -1187,7 +1179,7 @@ export default function CirclesSection({
         }
       >
         {detailOf && (
-          <div className="space-y-4 pb-2">
+          <div className="px-4 space-y-4 pb-2">
             {members === null && (
               <div className="flex justify-center py-6">
                 <Spinner label="Loading circle" />
@@ -1246,7 +1238,11 @@ export default function CirclesSection({
                       setFocusSheetOpen(true);
                     }}
                   >
-                    {myCheckIn ? "Change weekly focus" : "Set weekly focus"}
+                    {/* "Weekly focus" both ways: the longer verbs made
+                        this the only WRAPPING button in the three-up row
+                        (~115px per cell) — two lines beside single-line
+                        peers. The sheet it opens restates the verb. */}
+                    Weekly focus
                   </Button>
                   <Button
                     variant="secondary"
@@ -1363,7 +1359,7 @@ export default function CirclesSection({
         description="Invite 1–7 people — the circle only ever sees check-ins, never numbers, meals or photos."
       >
         {inviteHandoff && (
-          <div className="space-y-3 pb-2">
+          <div className="px-4 space-y-3 pb-2">
             <p className="w-full px-3 py-2.5 rounded-xl bg-muted text-sm text-foreground font-mono break-all select-all">
               {inviteString(inviteHandoff.spaceId, inviteHandoff.inviteCode)}
             </p>

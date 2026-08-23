@@ -129,7 +129,9 @@ function record(o: {
 
   for (let t = 0; t < o.seconds; t++) {
     const lat =
-      START_LAT + (o.speedMps * t) / M_PER_DEG_LAT + (rng() * jitter) / M_PER_DEG_LAT;
+      START_LAT +
+      (o.speedMps * t) / M_PER_DEG_LAT +
+      (rng() * jitter) / M_PER_DEG_LAT;
     const lon =
       (rng() * jitter) /
       (M_PER_DEG_LAT * Math.cos((START_LAT * Math.PI) / 180));
@@ -211,7 +213,13 @@ describe("GPS speed gate — the filter's lag is out of the measurement", () => 
        accuracy report. */
     for (const jitterM of [1, 2]) {
       for (const accuracy of [5, 8, 20]) {
-        const r = record({ accuracy, speedMps: 3, jitterM, seconds: 300, seed: 3 });
+        const r = record({
+          accuracy,
+          speedMps: 3,
+          jitterM,
+          seconds: 300,
+          seed: 3,
+        });
         expect(
           pct(r.ratio),
           `accuracy ${accuracy}m, jitter ${jitterM}m`
@@ -269,7 +277,8 @@ describe("GPS speed gate — the filter's lag is out of the measurement", () => 
     }
     const frozenAt = 60;
     const impliedAgainstSmoothed = (secondsStuck: number) => {
-      const trueLat = START_LAT + (3 * (frozenAt + secondsStuck)) / M_PER_DEG_LAT;
+      const trueLat =
+        START_LAT + (3 * (frozenAt + secondsStuck)) / M_PER_DEG_LAT;
       return haversine(sm.lat, sm.lon, trueLat, 0) / secondsStuck;
     };
     // One second after freezing, the lag dominates and the gate refuses.

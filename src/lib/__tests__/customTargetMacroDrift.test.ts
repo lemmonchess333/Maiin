@@ -54,8 +54,11 @@ function build(customCalorieTarget?: number) {
   });
 }
 
-const sum = (p: { targetProtein: number; targetCarbs: number; targetFat: number }) =>
-  p.targetProtein * 4 + p.targetCarbs * 4 + p.targetFat * 9;
+const sum = (p: {
+  targetProtein: number;
+  targetCarbs: number;
+  targetFat: number;
+}) => p.targetProtein * 4 + p.targetCarbs * 4 + p.targetFat * 9;
 
 describe("a manual calorie override", () => {
   it("is the target the macros are split from", () => {
@@ -109,7 +112,9 @@ describe("a manual calorie override", () => {
     expect(tdee).toEqual(formulaTdee);
     expect(payload.targetCalories).toBe(formulaTdee.targetCalories);
     expect(payload.targetProtein).toBe(formulaTdee.protein);
-    expect(Math.abs(sum(payload) - payload.targetCalories)).toBeLessThanOrEqual(9);
+    expect(Math.abs(sum(payload) - payload.targetCalories)).toBeLessThanOrEqual(
+      9
+    );
   });
 
   it("treats 0 as no override, matching the field's own clearing behaviour", () => {

@@ -148,12 +148,48 @@ describe("adaptive target — the loop closes on the truth", () => {
     goalOffset: number;
     days: number;
   }[] = [
-    { label: "formula exact, maintaining", maintenance: 2500, formulaTdee: 2500, goalOffset: 0, days: 180 },
-    { label: "formula 400 low, maintaining", maintenance: 2900, formulaTdee: 2500, goalOffset: 0, days: 180 },
-    { label: "formula 400 high, maintaining", maintenance: 2100, formulaTdee: 2500, goalOffset: 0, days: 180 },
-    { label: "formula 400 low, cutting", maintenance: 2900, formulaTdee: 2500, goalOffset: -550, days: 180 },
-    { label: "formula 400 high, cutting", maintenance: 2100, formulaTdee: 2500, goalOffset: -550, days: 180 },
-    { label: "formula 800 low, lean bulk", maintenance: 3300, formulaTdee: 2500, goalOffset: 330, days: 240 },
+    {
+      label: "formula exact, maintaining",
+      maintenance: 2500,
+      formulaTdee: 2500,
+      goalOffset: 0,
+      days: 180,
+    },
+    {
+      label: "formula 400 low, maintaining",
+      maintenance: 2900,
+      formulaTdee: 2500,
+      goalOffset: 0,
+      days: 180,
+    },
+    {
+      label: "formula 400 high, maintaining",
+      maintenance: 2100,
+      formulaTdee: 2500,
+      goalOffset: 0,
+      days: 180,
+    },
+    {
+      label: "formula 400 low, cutting",
+      maintenance: 2900,
+      formulaTdee: 2500,
+      goalOffset: -550,
+      days: 180,
+    },
+    {
+      label: "formula 400 high, cutting",
+      maintenance: 2100,
+      formulaTdee: 2500,
+      goalOffset: -550,
+      days: 180,
+    },
+    {
+      label: "formula 800 low, lean bulk",
+      maintenance: 3300,
+      formulaTdee: 2500,
+      goalOffset: 330,
+      days: 240,
+    },
   ];
 
   it.each(CASES)(
@@ -172,13 +208,18 @@ describe("adaptive target — the loop closes on the truth", () => {
       // quantization, measured and explained in its own test below — not
       // controller error.
       for (const r of settled) {
-        expect(Math.abs(r.target - goal), `day ${r.day} target ${r.target}`).toBeLessThanOrEqual(40);
+        expect(
+          Math.abs(r.target - goal),
+          `day ${r.day} target ${r.target}`
+        ).toBeLessThanOrEqual(40);
       }
       // And gets there without ringing: once learned takes over, the target
       // never swings past the goal by more than one small correction.
       const afterLearned = rows.filter((r) => r.source === "learned");
       const worstOvershoot = Math.max(
-        ...afterLearned.map((r) => Math.abs(r.target - goal) - Math.abs(rows[0].target - goal))
+        ...afterLearned.map(
+          (r) => Math.abs(r.target - goal) - Math.abs(rows[0].target - goal)
+        )
       );
       expect(worstOvershoot).toBeLessThanOrEqual(40);
     }
@@ -249,7 +290,9 @@ describe("adaptive target — a metabolism that moves", () => {
     const worst = Math.max(...during.map((r) => Math.abs(r.target - r.truth)));
     expect(worst).toBeLessThan(80);
     // And closes once the metabolism stops moving.
-    expect(Math.abs(rows[239].target - rows[239].truth)).toBeLessThanOrEqual(10);
+    expect(Math.abs(rows[239].target - rows[239].truth)).toBeLessThanOrEqual(
+      10
+    );
   });
 });
 
@@ -280,7 +323,10 @@ describe("adaptive target — a logging gap holds, it does not drift", () => {
     expect(gate.length).toBeGreaterThan(50); // the gate really did go down
 
     const held = new Set(gate.map((r) => r.target));
-    expect(held.size, `target moved during the gap: ${[...held].join(", ")}`).toBe(1);
+    expect(
+      held.size,
+      `target moved during the gap: ${[...held].join(", ")}`
+    ).toBe(1);
     for (const r of gate) expect(r.source).toBe("learned"); // never reverts
 
     // Resumes and re-converges once the scale comes back.
@@ -307,7 +353,11 @@ describe("adaptive target — the residual wobble is the SCALE, not the controll
      a property of weighing yourself, not of this code. Pinned because it is
      the floor on how precise this number can be, and anything that changes
      the window length or adds recency weighting will move it. */
-  const band = (o: { maintenance: number; goalOffset: number; roundWeight?: (kg: number) => number }) => {
+  const band = (o: {
+    maintenance: number;
+    goalOffset: number;
+    roundWeight?: (kg: number) => number;
+  }) => {
     const rows = loop({
       maintenanceAt: steady(o.maintenance),
       formulaTdee: 2500,
@@ -328,9 +378,15 @@ describe("adaptive target — the residual wobble is the SCALE, not the controll
 
   it("a finer scale removes it, which is what identifies the cause", () => {
     const fine = (kg: number) => Math.round(kg * 100) / 100;
-    expect(band({ maintenance: 2900, goalOffset: 0, roundWeight: fine })).toEqual([-4, 4]);
+    expect(
+      band({ maintenance: 2900, goalOffset: 0, roundWeight: fine })
+    ).toEqual([-4, 4]);
     // Exact weights settle dead on — no residual error anywhere in the loop.
-    expect(band({ maintenance: 2900, goalOffset: 0, roundWeight: (kg) => kg })).toEqual([0, 0]);
-    expect(band({ maintenance: 2900, goalOffset: -550, roundWeight: (kg) => kg })).toEqual([0, 0]);
+    expect(
+      band({ maintenance: 2900, goalOffset: 0, roundWeight: (kg) => kg })
+    ).toEqual([0, 0]);
+    expect(
+      band({ maintenance: 2900, goalOffset: -550, roundWeight: (kg) => kg })
+    ).toEqual([0, 0]);
   });
 });

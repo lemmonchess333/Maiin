@@ -309,7 +309,7 @@ const EXPERIENCE_OPTIONS: {
     id: "advanced",
     label: "Advanced",
     desc: "2+ years of structured training",
-    icon: <Sparkles size={20} style={{ color: THEME.warning }} />,
+    icon: <Sparkles size={20} style={{ color: "var(--ds-orange-500)" }} />,
   },
 ];
 
@@ -759,7 +759,7 @@ export default function ProgrammeSettings({
               className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card px-3.5 py-3 shadow-sm transition-all active:scale-[0.98]"
             >
               <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-muted/50">
-                <Apple size={18} style={{ color: THEME.warning }} />
+                <Apple size={18} style={{ color: THEME.semantic.nutrition }} />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-body font-bold leading-tight">

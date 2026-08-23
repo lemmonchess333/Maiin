@@ -255,7 +255,7 @@ export default function WorkoutDetail() {
                           {ex.repUnit === "seconds"
                             ? `${s.reps}s`
                             : `${s.reps}×`}
-                          {s.weightKg > 0 ? ` ${s.weightKg}kg` : ""}
+                          {s.weightKg > 0 ? ` ${s.weightKg} kg` : ""}
                         </span>
                       ))}
                     </div>

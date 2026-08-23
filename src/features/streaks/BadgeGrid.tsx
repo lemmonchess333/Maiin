@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { THEME } from "@/lib/theme";
 import { useStreaks } from "./useStreaks";
 import {
   BADGE_ART,
@@ -35,7 +34,10 @@ function ProgressBar({
           style={{ width: `${Math.round(pct * 100)}%`, background: color }}
         />
       </div>
-      <p className="text-caption font-mono tabular-nums" style={{ color }}>
+      {/* Tier metal stays on the BAR; the label is muted. A raw metal hex
+          can never be light-mode text — gold #FFD700 measures 1.39:1 on
+          the white card, silver 1.82:1 (2026-08-22 frame sweep). */}
+      <p className="text-caption font-mono tabular-nums text-muted-foreground">
         {label}
       </p>
     </div>
@@ -86,10 +88,9 @@ export function BadgeGrid() {
             </div>
           </div>
           <div className="min-w-0">
-            <p
-              className="text-caption font-semibold uppercase tracking-wider"
-              style={{ color: nextColor }}
-            >
+            {/* Muted, not the tier metal (silver eyebrow = 1.82:1 on
+                white); the hex tile beside carries the tier. */}
+            <p className="text-caption font-semibold uppercase tracking-wider text-muted-foreground">
               Next badge
             </p>
             <p className="text-base font-bold text-foreground leading-tight">
@@ -110,10 +111,11 @@ export function BadgeGrid() {
       {/* Streak summary. */}
       <div className="grid grid-cols-3 gap-3 text-center">
         <div className="p-3 rounded-xl bg-card border border-border/50">
-          <p
-            className="text-3xl font-extrabold font-mono tabular-nums"
-            style={{ color: THEME.amberLight }}
-          >
+          {/* amberLight is the amber-500 dark-mode step (theme.ts says
+              so) — as light-mode text it measured 2.15:1, under even the
+              3:1 large-text floor. The achievement token is the same
+              celebration register, theme-aware, AA both sides. */}
+          <p className="text-3xl font-extrabold font-mono tabular-nums text-achievement-strong">
             {currentStreak}
           </p>
           <p className="text-xs text-muted-foreground mt-1">Current Streak</p>
@@ -169,7 +171,15 @@ export function BadgeGrid() {
                         : { scale: 1.02 }
                     }
                     whileTap={{ scale: 0.95 }}
-                    className="relative p-3 rounded-xl bg-card border border-border/50 text-center"
+                    /* `flex flex-col` + `flex-1` on the name block below.
+                       The grid already equalises card HEIGHT, but the card
+                       was a plain block, so its contents top-flowed: a
+                       two-line badge name pushed its own footer down while a
+                       one-line neighbour left a gap, landing the status line
+                       — the row's most scannable element — at three
+                       different heights across peers. Growing the name block
+                       instead pins every footer to the same baseline. */
+                    className="relative p-3 rounded-xl bg-card border border-border/50 text-center flex flex-col"
                     style={{
                       transformStyle: "preserve-3d",
                       // Earned keeps the radial tier tint; the glow itself
@@ -192,18 +202,26 @@ export function BadgeGrid() {
 
                     <p
                       className={cn(
-                        "text-xs font-semibold leading-tight",
-                        earned ? "text-foreground" : "text-muted-foreground/70"
+                        "text-xs font-semibold leading-tight flex-1",
+                        earned ? "text-foreground" : "text-muted-foreground"
                       )}
                     >
                       {badge.name}
                     </p>
                     {earned ? (
-                      <p
-                        className="text-caption font-mono tabular-nums mt-1"
-                        style={{ color: tierColor }}
-                      >
-                        {new Date(badge.earnedAt!).toLocaleDateString()}
+                      // Muted, not the tier metal — bronze was 3.14:1 as
+                      // an 11px date on white; the badge art carries tier.
+                      <p className="text-caption font-mono tabular-nums mt-1 text-muted-foreground">
+                        {/* en-GB + explicit options. This was the only
+                            rendered date in the app passing NEITHER, so it
+                            took the device locale and printed all-numeric
+                            (8/22/2026 on a US device) beside sibling
+                            surfaces reading "21 Aug 2026". */}
+                        {new Date(badge.earnedAt!).toLocaleDateString("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
                       </p>
                     ) : progress && progress.pct > 0 ? (
                       <ProgressBar
@@ -212,7 +230,7 @@ export function BadgeGrid() {
                         color={tierColor}
                       />
                     ) : (
-                      <p className="text-caption text-muted-foreground/50 mt-1 line-clamp-2">
+                      <p className="text-caption text-muted-foreground mt-1 line-clamp-2">
                         {badge.description}
                       </p>
                     )}

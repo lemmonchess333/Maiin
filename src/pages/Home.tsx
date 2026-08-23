@@ -448,7 +448,7 @@ export default function Home() {
           : storeW.toFixed(1);
       setLastWeightInfo({
         weight: disp,
-        date: format(new Date(), "MMM d"),
+        date: format(new Date(), "d MMM"),
         rawDate: today,
       });
       setWeightSaved(true);
@@ -882,7 +882,7 @@ export default function Home() {
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <UtensilsCrossed
                 className="size-4 shrink-0"
-                style={{ color: THEME.warning }}
+                style={{ color: THEME.semantic.nutrition }}
               />
               <span>
                 Tap <strong className="text-foreground">Food</strong> to log
@@ -1024,7 +1024,7 @@ export default function Home() {
                 {/* One-shot tap affordance — latches off after the first
                     day-tap ever. */}
                 {showDayTapHint && (
-                  <span className="text-caption text-muted-foreground/70">
+                  <span className="text-caption text-muted-foreground">
                     · Tap a day for details
                   </span>
                 )}
@@ -1374,7 +1374,10 @@ export default function Home() {
                   </button>
                 </div>
                 {lastWeightInfo && (
-                  <p className="text-micro" style={{ color: THEME.text.muted }}>
+                  <p
+                    className="text-micro"
+                    style={{ color: "hsl(var(--muted-foreground))" }}
+                  >
                     Last: {lastWeightInfo.weight}{" "}
                     {weightUnit === "lbs" ? "lb" : weightUnit}
                     {lastWeightInfo.rawDate

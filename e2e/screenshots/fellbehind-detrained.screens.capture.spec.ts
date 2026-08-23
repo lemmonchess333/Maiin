@@ -54,10 +54,16 @@ test.describe("fell-behind detrained screenshots", () => {
       document.documentElement.classList.remove("dark")
     );
     await page.waitForTimeout(300);
-    await page.screenshot({ path: `screenshots/${name}-light.png` });
+    await page.screenshot({
+      animations: "disabled",
+      path: `screenshots/${name}-light.png`,
+    });
     await page.evaluate(() => document.documentElement.classList.add("dark"));
     await page.waitForTimeout(300);
-    await page.screenshot({ path: `screenshots/${name}-dark.png` });
+    await page.screenshot({
+      animations: "disabled",
+      path: `screenshots/${name}-dark.png`,
+    });
   }
 
   test("detrained register — light + dark", async ({ page }) => {

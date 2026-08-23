@@ -161,6 +161,8 @@ describe("partnerToNudge", () => {
       ["bob", "2026-06-12"],
     ]);
     expect(partnerToNudge(both, MEMBERS, "2026-06-12")).toBeNull();
-    expect(partnerToNudge(emptyStreakState(), MEMBERS, "2026-06-12")).toBeNull();
+    expect(
+      partnerToNudge(emptyStreakState(), MEMBERS, "2026-06-12")
+    ).toBeNull();
   });
 });

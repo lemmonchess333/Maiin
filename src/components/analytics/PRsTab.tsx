@@ -120,7 +120,7 @@ function LiftPRRow({ pr }: { pr: LiftPR }) {
           ) : null}
         </div>
         <ChevronRight
-          className="size-4 text-muted-foreground/60 shrink-0"
+          className="size-4 text-muted-foreground shrink-0"
           aria-hidden="true"
         />
       </div>
@@ -155,7 +155,7 @@ function LiftPRList({
   return (
     <div className="rounded-2xl bg-card overflow-hidden card-shadow">
       <div className="px-4 pt-4 pb-3 flex items-center gap-2 border-b border-border/30">
-        <Trophy size={16} className="text-amber-500" />
+        <Trophy size={16} className="text-achievement" />
         <h3 className="text-sm font-semibold text-foreground flex-1">
           {title}
         </h3>

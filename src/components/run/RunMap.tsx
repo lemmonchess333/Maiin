@@ -388,7 +388,11 @@ export default function RunMap({
       // Numbered km waypoints. Append-only: figure out how many whole km the
       // route now covers and add any markers we don't have yet (positions
       // interpolated along the polyline). Skipped during replay.
-      if (distanceMarkers && replayIndex === undefined && visiblePoints.length > 1) {
+      if (
+        distanceMarkers &&
+        replayIndex === undefined &&
+        visiblePoints.length > 1
+      ) {
         let total = 0;
         for (let i = 1; i < visiblePoints.length; i++) {
           total += haversineQuick(

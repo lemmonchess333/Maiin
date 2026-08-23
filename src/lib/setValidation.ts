@@ -39,7 +39,11 @@
 
 export type SetValidationResult =
   | { ok: true; normalized: { reps: number; weight: number }; warn?: undefined }
-  | { ok: true; normalized: { reps: number; weight: number }; warn: SetValidationWarn }
+  | {
+      ok: true;
+      normalized: { reps: number; weight: number };
+      warn: SetValidationWarn;
+    }
   | { ok: false; severity: "block"; message: string };
 
 export interface SetValidationWarn {
@@ -96,13 +100,25 @@ export function validateSet(input: SetValidationInput): SetValidationResult {
     return { ok: false, severity: "block", message: "Reps can't be negative." };
   }
   if (!Number.isInteger(reps)) {
-    return { ok: false, severity: "block", message: "Reps must be a whole number." };
+    return {
+      ok: false,
+      severity: "block",
+      message: "Reps must be a whole number.",
+    };
   }
   if (reps === 0) {
-    return { ok: false, severity: "block", message: "Log at least one rep to complete the set." };
+    return {
+      ok: false,
+      severity: "block",
+      message: "Log at least one rep to complete the set.",
+    };
   }
   if (reps > REP_MAX) {
-    return { ok: false, severity: "block", message: `Reps look too high (max ${REP_MAX}). Check the value.` };
+    return {
+      ok: false,
+      severity: "block",
+      message: `Reps look too high (max ${REP_MAX}). Check the value.`,
+    };
   }
 
   const weight = toFiniteNumber(input.weight);
@@ -117,13 +133,17 @@ export function validateSet(input: SetValidationInput): SetValidationResult {
     return { ok: false, severity: "block", message: "Enter a weight." };
   }
   if (weight < 0) {
-    return { ok: false, severity: "block", message: "Weight can't be negative." };
+    return {
+      ok: false,
+      severity: "block",
+      message: "Weight can't be negative.",
+    };
   }
   if (weight > WEIGHT_MAX_KG) {
     return {
       ok: false,
       severity: "block",
-      message: `Weight looks too high (max ${WEIGHT_MAX_KG}kg). Check the value.`,
+      message: `Weight looks too high (max ${WEIGHT_MAX_KG} kg). Check the value.`,
     };
   }
 
@@ -142,7 +162,7 @@ export function validateSet(input: SetValidationInput): SetValidationResult {
         warn: {
           severity: "warn",
           kind: "huge-jump",
-          message: `${weight}kg is ${pctOver}% over your current best (${currentBest}kg). Confirm it's right.`,
+          message: `${weight} kg is ${pctOver}% over your current best (${currentBest} kg). Confirm it's right.`,
           confirmLabel: "Log as PR",
           fromKg: currentBest,
           toKg: weight,

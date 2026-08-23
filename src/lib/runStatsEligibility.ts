@@ -1,5 +1,5 @@
-import type { ActivityType } from '@/types/run';
-import { isOutdoorGpsRun } from './runGuards';
+import type { ActivityType } from "@/types/run";
+import { isOutdoorGpsRun } from "./runGuards";
 
 /**
  * Stat eligibility predicates for run records. Three sibling policies
@@ -40,9 +40,9 @@ import { isOutdoorGpsRun } from './runGuards';
 export interface RunRecord {
   isInvalid?: boolean;
   savedAnyway?: boolean;
-  distance?: number;     // metres
-  duration?: number;     // seconds
-  avgPace?: number;      // sec/km
+  distance?: number; // metres
+  duration?: number; // seconds
+  avgPace?: number; // sec/km
   activityType?: ActivityType | string;
 }
 
@@ -54,8 +54,8 @@ export interface RunRecord {
 export interface RunPaceTrendInput {
   isInvalid?: boolean;
   savedAnyway?: boolean;
-  distance: number;      // metres
-  avgPace: number;       // sec/km
+  distance: number; // metres
+  avgPace: number; // sec/km
   activityType?: ActivityType | string;
 }
 
@@ -97,7 +97,10 @@ export function isPaceTrendEligible(run: RunPaceTrendInput): boolean {
   if (run.isInvalid === true) return false;
   if (run.savedAnyway === true) return false;
   if (run.avgPace <= 0 || run.distance <= 0) return false;
-  if (run.activityType !== undefined && !isOutdoorGpsRun(run.activityType as ActivityType)) {
+  if (
+    run.activityType !== undefined &&
+    !isOutdoorGpsRun(run.activityType as ActivityType)
+  ) {
     return false;
   }
   return true;

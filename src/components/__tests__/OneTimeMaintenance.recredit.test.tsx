@@ -46,7 +46,16 @@ const CURSOR = `${UID}:tropos.liftVolumeRecredit.cursor.v1`;
 
 /** One page response. */
 function page(cursor: string | null, truncated: boolean) {
-  return { data: { ok: true, scanned: 500, withVolume: 1, lifetimeKg: 1, truncated, cursor } };
+  return {
+    data: {
+      ok: true,
+      scanned: 500,
+      withVolume: 1,
+      lifetimeKg: 1,
+      truncated,
+      cursor,
+    },
+  };
 }
 
 beforeEach(() => {
@@ -142,7 +151,13 @@ describe("liftVolumeRecredit drain", () => {
    */
   describe("against a callable that predates paging", () => {
     const oldShape = (truncated: boolean) => ({
-      data: { ok: true, scanned: truncated ? 500 : 12, withVolume: 3, lifetimeKg: 900, truncated },
+      data: {
+        ok: true,
+        scanned: truncated ? 500 : 12,
+        withVolume: 3,
+        lifetimeKg: 900,
+        truncated,
+      },
     });
 
     it("still completes for a history that fits in one page", async () => {

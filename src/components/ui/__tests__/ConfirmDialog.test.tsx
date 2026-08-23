@@ -56,10 +56,7 @@ describe("ConfirmDialog — semantics", () => {
 
   it("renders the description when provided", () => {
     render(
-      <ConfirmDialog
-        {...baseProps}
-        description="This cannot be undone."
-      />,
+      <ConfirmDialog {...baseProps} description="This cannot be undone." />
     );
     expect(screen.queryByText("This cannot be undone.")).not.toBeNull();
   });
@@ -74,11 +71,7 @@ describe("ConfirmDialog — labels", () => {
 
   it("accepts custom confirmLabel + cancelLabel", () => {
     render(
-      <ConfirmDialog
-        {...baseProps}
-        confirmLabel="Delete"
-        cancelLabel="Keep"
-      />,
+      <ConfirmDialog {...baseProps} confirmLabel="Delete" cancelLabel="Keep" />
     );
     expect(screen.queryByRole("button", { name: "Delete" })).not.toBeNull();
     expect(screen.queryByRole("button", { name: "Keep" })).not.toBeNull();
@@ -106,13 +99,7 @@ describe("ConfirmDialog — callbacks", () => {
 
 describe("ConfirmDialog — destructive variant", () => {
   it("applies destructive styling on the confirm button when destructive=true", () => {
-    render(
-      <ConfirmDialog
-        {...baseProps}
-        destructive
-        confirmLabel="Delete"
-      />,
-    );
+    render(<ConfirmDialog {...baseProps} destructive confirmLabel="Delete" />);
     const confirm = screen.getByRole("button", { name: "Delete" });
     expect(confirm.className).toContain("bg-destructive");
   });

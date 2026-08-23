@@ -1,4 +1,4 @@
-import type { ActivityType } from '@/types/run';
+import type { ActivityType } from "@/types/run";
 
 /**
  * Pre-flight validation for run setup targets. Returns a
@@ -27,7 +27,7 @@ import type { ActivityType } from '@/types/run';
 
 export interface RunTargetConfigSlice {
   activityType: ActivityType;
-  target: { type: 'none' | 'distance' | 'time' | 'pace'; value?: number };
+  target: { type: "none" | "distance" | "time" | "pace"; value?: number };
 }
 
 export const TARGET_DISTANCE_MIN_M = 500;
@@ -37,9 +37,15 @@ export const TARGET_TIME_MAX_S = 18_000;
 export const TARGET_PACE_MIN_S_PER_KM = 120;
 export const TARGET_PACE_MAX_S_PER_KM = 900;
 
-export function getTargetValidationError(config: RunTargetConfigSlice): string | null {
-  if (config.target.type === 'none') return null;
-  if (config.activityType === 'intervals' || config.activityType === 'treadmill') return null;
+export function getTargetValidationError(
+  config: RunTargetConfigSlice
+): string | null {
+  if (config.target.type === "none") return null;
+  if (
+    config.activityType === "intervals" ||
+    config.activityType === "treadmill"
+  )
+    return null;
 
   const value = config.target.value;
   if (value === undefined || value === null || !Number.isFinite(value)) {
@@ -47,17 +53,22 @@ export function getTargetValidationError(config: RunTargetConfigSlice): string |
   }
 
   switch (config.target.type) {
-    case 'distance':
-      if (value < TARGET_DISTANCE_MIN_M) return 'Distance must be at least 0.5km';
-      if (value > TARGET_DISTANCE_MAX_M) return 'Distance must be at most 100km';
+    case "distance":
+      if (value < TARGET_DISTANCE_MIN_M)
+        return "Distance must be at least 0.5 km";
+      if (value > TARGET_DISTANCE_MAX_M)
+        return "Distance must be at most 100 km";
       return null;
-    case 'time':
-      if (value < TARGET_TIME_MIN_S) return 'Duration must be at least 1 minute';
-      if (value > TARGET_TIME_MAX_S) return 'Duration must be at most 5 hours';
+    case "time":
+      if (value < TARGET_TIME_MIN_S)
+        return "Duration must be at least 1 minute";
+      if (value > TARGET_TIME_MAX_S) return "Duration must be at most 5 hours";
       return null;
-    case 'pace':
-      if (value < TARGET_PACE_MIN_S_PER_KM) return 'Pace must be at least 2:00/km';
-      if (value > TARGET_PACE_MAX_S_PER_KM) return 'Pace must be at most 15:00/km';
+    case "pace":
+      if (value < TARGET_PACE_MIN_S_PER_KM)
+        return "Pace must be at least 2:00/km";
+      if (value > TARGET_PACE_MAX_S_PER_KM)
+        return "Pace must be at most 15:00/km";
       return null;
   }
   return null;

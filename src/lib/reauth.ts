@@ -48,7 +48,7 @@ import {
  */
 export async function reauthWithPassword(
   user: User,
-  password: string,
+  password: string
 ): Promise<void> {
   if (!user.email) {
     throw new Error("auth/missing-email");
@@ -121,7 +121,7 @@ export type SupportedReauthProviderId =
   (typeof SUPPORTED_REAUTH_PROVIDERS)[number];
 
 export function isSupportedReauthProvider(
-  providerId: string,
+  providerId: string
 ): providerId is SupportedReauthProviderId {
   return (SUPPORTED_REAUTH_PROVIDERS as readonly string[]).includes(providerId);
 }

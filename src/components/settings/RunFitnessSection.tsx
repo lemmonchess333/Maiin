@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/Button";
 import { haptic } from "@/lib/haptic";
 import { paceLabel } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
-import { paceUnitLabel } from "@/lib/distanceUnits";
 import {
   paceTableFromFitness,
   vdotFromRace,
@@ -14,6 +13,7 @@ import {
 } from "@/lib/runPaces";
 import { usePaceInsight } from "@/hooks/usePaceInsight";
 import PaceInsightCard from "@/components/run/PaceInsightCard";
+import { formatDayMonth } from "@/utils/formatters";
 import type { UserProfile } from "@/lib/auth";
 
 /**
@@ -158,7 +158,7 @@ export default function RunFitnessSection({
                   From your{" "}
                   {fitness?.source === "derived"
                     ? fitness?.sourceRunAt
-                      ? `run on ${new Date(fitness.sourceRunAt).toLocaleDateString(undefined, { day: "numeric", month: "short" })}`
+                      ? `run on ${formatDayMonth(new Date(fitness.sourceRunAt))}`
                       : "recent runs"
                     : "recent race"}{" "}
                   · VDOT{" "}
@@ -275,7 +275,9 @@ export default function RunFitnessSection({
                 className="mt-1 w-full rounded-lg bg-muted border border-border/40 px-3 py-2 text-sm font-mono tabular-nums text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               />
             </div>
-            {error && <p className="text-xs text-destructive-strong">{error}</p>}
+            {error && (
+              <p className="text-xs text-destructive-strong">{error}</p>
+            )}
             <Button
               variant="sport"
               fullWidth
@@ -310,7 +312,10 @@ function PaceRow({
         {band
           ? `${paceLabel(band[0], unit)}–${paceLabel(band[1], unit)}`
           : value
-            ? `${paceLabel(value, unit)}${paceUnitLabel(unit)}`
+            ? /* `paceLabel` already appends the unit (runLabels.ts:66), so
+                 the extra `paceUnitLabel` here printed it twice — the 10K
+                 tile read "5:34/km/km". */
+              paceLabel(value, unit)
             : "—"}
       </p>
     </div>

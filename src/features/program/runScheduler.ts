@@ -423,7 +423,10 @@ const EASY_PEAK_MINUTES = 50;
  * ceiling above, these are TROPOS HEURISTICS (RUN-EV-06 register), not
  * source-derived safety rules.
  */
-const MEDIUM_LONG_PEAK_MINUTES: Record<"5k" | "10k" | "half" | "marathon", number> = {
+const MEDIUM_LONG_PEAK_MINUTES: Record<
+  "5k" | "10k" | "half" | "marathon",
+  number
+> = {
   "5k": 50,
   "10k": 60,
   half: 75,
@@ -675,8 +678,7 @@ export function mediumLongMinutesForWeek(input: {
   const fullPeak = MEDIUM_LONG_PEAK_MINUTES[input.distance];
   const peak =
     input.volume === "lighter"
-      ? EASY_BASE_MINUTES +
-        (fullPeak - EASY_BASE_MINUTES) * LIGHTER_PEAK_FACTOR
+      ? EASY_BASE_MINUTES + (fullPeak - EASY_BASE_MINUTES) * LIGHTER_PEAK_FACTOR
       : fullPeak;
   const ramped =
     EASY_BASE_MINUTES + (peak - EASY_BASE_MINUTES) * shape.progress;

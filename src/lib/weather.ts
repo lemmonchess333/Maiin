@@ -139,7 +139,7 @@ export function getRunningTip(
   // Hot + humid
   if (temperature >= 30 && humidity >= 60) {
     return activityType === "long"
-      ? "Hot & humid — carry water, add walk breaks every 3km"
+      ? "Hot & humid — carry water, add walk breaks every 3 km"
       : "Very hot — hydrate well before, go easy on pace";
   }
 

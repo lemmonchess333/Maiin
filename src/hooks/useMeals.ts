@@ -19,7 +19,7 @@ import { invalidateFoodPhotoCache } from "@/hooks/useFoodPhotoUrls";
 import { noteActivitySnapshot } from "@/lib/activationTracker";
 import { db } from "@/lib/firebase";
 import { useUid } from "@/lib/auth";
-import { sumMealTotals } from "@/lib/mealTotals";
+import { activeMealDocs, sumMealTotals } from "@/lib/mealTotals";
 import { validateFoodEntry } from "@/lib/foodValidation";
 import { logger } from "@/lib/logger";
 
@@ -245,7 +245,10 @@ export function useMeals() {
   // active meals via `meals`; the Settings recently-deleted archive
   // reads `deletedMeals`. Memoised so the array references stay
   // stable across renders that don't change the underlying snapshot.
-  const meals = useMemo(() => allMeals.filter((m) => !m.deletedAt), [allMeals]);
+  const meals = useMemo(() => activeMealDocs(allMeals), [allMeals]);
+  // The complement — deliberately NOT `!isActiveMealDoc`, because this is
+  // the archive's own question ("what can I restore?"), not the counting
+  // rule. Kept adjacent so the pair reads as one decision.
   const deletedMeals = useMemo(
     () => allMeals.filter((m) => !!m.deletedAt),
     [allMeals]

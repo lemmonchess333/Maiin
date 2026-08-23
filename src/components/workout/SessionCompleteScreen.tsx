@@ -171,7 +171,7 @@ export default function SessionCompleteScreen({
               delay: 0.2,
             }}
           >
-            <Trophy className="size-14 text-yellow-500 mx-auto" />
+            <Trophy className="size-14 text-achievement mx-auto" />
           </motion.div>
           <h2 className="text-2xl font-bold text-foreground">
             Workout Complete
@@ -200,14 +200,14 @@ export default function SessionCompleteScreen({
           <div className="p-4 rounded-2xl bg-card text-center space-y-1">
             <Clock
               className="size-4 mx-auto"
-              style={{ color: THEME.text.muted }}
+              style={{ color: "hsl(var(--muted-foreground))" }}
             />
             <p className="text-lg font-bold font-mono tabular-nums text-foreground">
               {durationDisplay}
             </p>
             <p
               className="text-xs uppercase tracking-wider"
-              style={{ color: THEME.text.muted }}
+              style={{ color: "hsl(var(--muted-foreground))" }}
             >
               Duration
             </p>
@@ -218,14 +218,14 @@ export default function SessionCompleteScreen({
               {totalVolumeDisplay}
               <span
                 className="text-xs font-normal"
-                style={{ color: THEME.text.muted }}
+                style={{ color: "hsl(var(--muted-foreground))" }}
               >
                 kg
               </span>
             </p>
             <p
               className="text-xs uppercase tracking-wider"
-              style={{ color: THEME.text.muted }}
+              style={{ color: "hsl(var(--muted-foreground))" }}
             >
               Volume
             </p>
@@ -240,7 +240,7 @@ export default function SessionCompleteScreen({
             </p>
             <p
               className="text-xs uppercase tracking-wider"
-              style={{ color: THEME.text.muted }}
+              style={{ color: "hsl(var(--muted-foreground))" }}
             >
               Sets
             </p>
@@ -282,7 +282,7 @@ export default function SessionCompleteScreen({
         {funComparison && (
           <motion.p
             className="text-center text-xs font-medium"
-            style={{ color: THEME.text.muted }}
+            style={{ color: "hsl(var(--muted-foreground))" }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
@@ -301,7 +301,7 @@ export default function SessionCompleteScreen({
           <div className="px-4 pt-4 pb-2">
             <p
               className="text-sm font-semibold uppercase tracking-wider"
-              style={{ color: THEME.text.muted }}
+              style={{ color: "hsl(var(--muted-foreground))" }}
             >
               Exercises
             </p>
@@ -342,7 +342,10 @@ export default function SessionCompleteScreen({
                       ? `${ex.bestWeight} kg × ${ex.bestReps}`
                       : `${ex.bestReps} reps`}
                   </p>
-                  <p className="text-xs" style={{ color: THEME.text.muted }}>
+                  <p
+                    className="text-xs"
+                    style={{ color: "hsl(var(--muted-foreground))" }}
+                  >
                     {ex.setsCompleted}/{ex.totalSets} sets
                   </p>
                 </div>

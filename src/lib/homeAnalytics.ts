@@ -48,6 +48,9 @@ export interface HomeEventMetadata {
   section?: HomeSection;
 }
 
-export function track(event: HomeEvent, metadata: HomeEventMetadata = {}): void {
+export function track(
+  event: HomeEvent,
+  metadata: HomeEventMetadata = {}
+): void {
   emit("home", event, metadata as Record<string, unknown>);
 }

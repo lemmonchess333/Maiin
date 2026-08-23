@@ -77,7 +77,13 @@ export default function SettingsSection({
       </button>
 
       <header className="space-y-1">
-        <h1 className="text-h2 font-extrabold text-foreground">{title}</h1>
+        {/* text-xl, not text-h2 (DS2, 2026-08-22). Every other page title
+            in the app — the Settings index these pages drill down FROM
+            included — is text-xl (20px), so the 15 nested pages rendered
+            their titles a full tier LARGER than their parent. CLAUDE.md's
+            31px H1 row was aspirational and used by nothing; the de facto
+            tier is the standard. */}
+        <h1 className="text-xl font-extrabold text-foreground">{title}</h1>
         {subtitle ? (
           <p className="text-sm text-muted-foreground">{subtitle}</p>
         ) : null}

@@ -29,10 +29,12 @@ describe("BlockAwareAvatar", () => {
         uid="alice"
         photoURL="https://firebasestorage.googleapis.com/photo.jpg"
         displayName="Alice"
-      />,
+      />
     );
     const img = screen.getByRole("img");
-    expect(img.getAttribute("src")).toBe("https://firebasestorage.googleapis.com/photo.jpg");
+    expect(img.getAttribute("src")).toBe(
+      "https://firebasestorage.googleapis.com/photo.jpg"
+    );
   });
 
   it("suppresses the photo and falls back to initial when uid is blocked", () => {
@@ -42,7 +44,7 @@ describe("BlockAwareAvatar", () => {
         uid="alice"
         photoURL="https://firebasestorage.googleapis.com/photo.jpg"
         displayName="Alice"
-      />,
+      />
     );
     /* No img tag — fallback letter is rendered instead. */
     expect(screen.queryByRole("img")).toBeNull();
@@ -62,7 +64,7 @@ describe("BlockAwareAvatar", () => {
         uid="alice"
         photoURL="https://firebasestorage.googleapis.com/photo.jpg"
         displayName="Alice"
-      />,
+      />
     );
     /* The fallback initial comes from displayName="Alice" → "A". */
     expect(screen.getByText("A")).toBeTruthy();
@@ -79,7 +81,7 @@ describe("BlockAwareAvatar", () => {
         uid={undefined}
         photoURL="https://firebasestorage.googleapis.com/photo.jpg"
         displayName="Alice"
-      />,
+      />
     );
     expect(screen.getByRole("img")).toBeTruthy();
   });

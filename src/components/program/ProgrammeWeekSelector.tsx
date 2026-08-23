@@ -39,7 +39,13 @@ export interface ProgrammeWeekSelectorCell {
 }
 
 const GREEN = THEME.success;
-const SKIPPED = THEME.text.muted;
+/* DS2 muted-text consolidation (owner-decided, 2026-08-22): the skipped
+   identity is the theme-aware secondary token, not the old fixed #8E8E93 —
+   its bottomLabel text sat at 2.77:1 on the light page. Alpha steps use
+   hsl()/alpha rather than hex concatenation, same value, theme-aware. */
+const SKIPPED = "hsl(var(--muted-foreground))";
+const SKIPPED_FILL = "hsl(var(--muted-foreground) / 0.2)";
+const SKIPPED_BORDER = "hsl(var(--muted-foreground) / 0.33)";
 
 export default function ProgrammeWeekSelector({
   sport,
@@ -85,9 +91,9 @@ export default function ProgrammeWeekSelector({
 
         if (isSkipped) {
           diameter = 40;
-          fill = SKIPPED + "33";
+          fill = SKIPPED_FILL;
           bWidth = 1;
-          bColor = SKIPPED + "55";
+          bColor = SKIPPED_BORDER;
           content = (
             <Ban
               className="size-4"
@@ -103,14 +109,15 @@ export default function ProgrammeWeekSelector({
           bColor = "transparent";
           glow = `0 0 0 4px ${GREEN}1A, 0 4px 14px ${GREEN}33`;
           content = <Check className="size-5 text-white" strokeWidth={3} />;
-          labelColor = GREEN;
+          // Text takes the AA step; the fill/glow keep the identity green.
+          labelColor = "hsl(var(--success-strong))";
         } else if (isCompleted) {
           diameter = 40;
           fill = GREEN;
           bWidth = 0;
           bColor = "transparent";
           content = <Check className="size-4 text-white" strokeWidth={3} />;
-          labelColor = GREEN;
+          labelColor = "hsl(var(--success-strong))";
         } else if (isToday && isSelected) {
           diameter = 48;
           fill = SPORT;

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from "react";
 
 /**
  * Tracks document visibility state and provides callbacks for
@@ -29,7 +29,11 @@ interface UseRunVisibilityOptions {
   enabled?: boolean;
 }
 
-export function useRunVisibility({ onHidden, onVisible, enabled = true }: UseRunVisibilityOptions) {
+export function useRunVisibility({
+  onHidden,
+  onVisible,
+  enabled = true,
+}: UseRunVisibilityOptions) {
   const [isVisible, setIsVisible] = useState(true);
   const [lastGap, setLastGap] = useState<VisibilityEvent | null>(null);
   const hiddenAtRef = useRef<number | null>(null);
@@ -37,18 +41,22 @@ export function useRunVisibility({ onHidden, onVisible, enabled = true }: UseRun
   const onVisibleRef = useRef(onVisible);
 
   // Keep callback refs fresh without triggering effect re-runs
-  useEffect(() => { onHiddenRef.current = onHidden; }, [onHidden]);
-  useEffect(() => { onVisibleRef.current = onVisible; }, [onVisible]);
+  useEffect(() => {
+    onHiddenRef.current = onHidden;
+  }, [onHidden]);
+  useEffect(() => {
+    onVisibleRef.current = onVisible;
+  }, [onVisible]);
 
   useEffect(() => {
     if (!enabled) return;
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
+      if (document.visibilityState === "hidden") {
         hiddenAtRef.current = Date.now();
         setIsVisible(false);
         onHiddenRef.current?.();
-      } else if (document.visibilityState === 'visible') {
+      } else if (document.visibilityState === "visible") {
         setIsVisible(true);
         const hiddenAt = hiddenAtRef.current;
         if (hiddenAt) {
@@ -65,8 +73,9 @@ export function useRunVisibility({ onHidden, onVisible, enabled = true }: UseRun
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, [enabled]);
 
   return { isVisible, lastGap };

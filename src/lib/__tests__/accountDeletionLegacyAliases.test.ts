@@ -24,7 +24,11 @@ const inventoryLoader = require("../../../functions/accountDeletionInventory.js"
 const { expandUserSubcollectionPaths } = inventoryLoader;
 const inventory = require("../../../functions/accountDeletionInventory.json");
 
-interface AliasEntry { key: string; path: string; reason: string; }
+interface AliasEntry {
+  key: string;
+  path: string;
+  reason: string;
+}
 interface IncludedEntry {
   key: string;
   path?: string;
@@ -32,7 +36,9 @@ interface IncludedEntry {
 }
 
 const findEntry = (key: string): IncludedEntry =>
-  (inventory.included as IncludedEntry[]).find((e) => e.key === key) as IncludedEntry;
+  (inventory.included as IncludedEntry[]).find(
+    (e) => e.key === key
+  ) as IncludedEntry;
 
 describe("legacy aliases are executable deletion targets", () => {
   const namingDriftEntries = [
@@ -62,7 +68,10 @@ describe("legacy aliases are executable deletion targets", () => {
     for (const drift of namingDriftEntries) {
       const entry = findEntry(drift.key);
       expect(entry, `missing entry: ${drift.key}`).toBeTruthy();
-      expect(Array.isArray(entry.aliases), `${drift.key}.aliases must be an array`).toBe(true);
+      expect(
+        Array.isArray(entry.aliases),
+        `${drift.key}.aliases must be an array`
+      ).toBe(true);
       for (const alias of entry.aliases!) {
         expect(typeof alias).toBe("object");
         expect(alias.key).toBeTruthy();
@@ -77,7 +86,10 @@ describe("legacy aliases are executable deletion targets", () => {
       const entry = findEntry(drift.key);
       const aliasPaths = entry.aliases!.map((a) => a.path);
       for (const legacyPath of drift.expectedLegacyPaths) {
-        expect(aliasPaths, `${drift.key}: missing legacy alias ${legacyPath}`).toContain(legacyPath);
+        expect(
+          aliasPaths,
+          `${drift.key}: missing legacy alias ${legacyPath}`
+        ).toContain(legacyPath);
       }
     }
   });
@@ -121,7 +133,10 @@ describe("executor contract: missing legacy alias is success", () => {
     // Verify the alias path is well-formed (so deletion would succeed-no-op
     // rather than throw a malformed-path error).
     const entry = findEntry("userBodyweightLogs");
-    const paths: string[] = expandUserSubcollectionPaths(entry, "uid-with-special-chars-_123");
+    const paths: string[] = expandUserSubcollectionPaths(
+      entry,
+      "uid-with-special-chars-_123"
+    );
     for (const path of paths) {
       // Each path is parseable as a Firestore collection ref shape:
       // segments separated by /, no double slashes, at least 2 segments.
@@ -142,7 +157,13 @@ describe("executor contract: missing legacy alias is success", () => {
 
 describe("non-naming-drift entries do not accidentally carry aliases", () => {
   it("entries with no naming history have aliases: []", () => {
-    const noLegacyKeys = ["userMeals", "userWorkouts", "userRuns", "userShoes", "userPrivacyZones"];
+    const noLegacyKeys = [
+      "userMeals",
+      "userWorkouts",
+      "userRuns",
+      "userShoes",
+      "userPrivacyZones",
+    ];
     for (const key of noLegacyKeys) {
       const entry = findEntry(key);
       expect(entry.aliases, `${key} should have aliases: []`).toEqual([]);

@@ -66,7 +66,7 @@ function intervalSummary(intervals: RunConfig["intervals"]): string | null {
   const { reps, workDistance, workDuration } = intervals;
   if (workDistance) {
     const unit =
-      workDistance >= 1000 ? `${workDistance / 1000}K` : `${workDistance}m`;
+      workDistance >= 1000 ? `${workDistance / 1000}K` : `${workDistance} m`;
     return `${reps} × ${unit}`;
   }
   if (workDuration) return `${reps} × ${Math.round(workDuration / 60)}min`;
@@ -127,7 +127,9 @@ export default function RunLaunchCard({
               <Icon className="size-6 text-running" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-semibold text-running-strong">{eyebrow}</p>
+              <p className="text-xs font-semibold text-running-strong">
+                {eyebrow}
+              </p>
               <div className="flex items-baseline gap-2 flex-wrap">
                 <h1 className="text-2xl font-bold truncate">{workout.name}</h1>
                 {distanceKm != null && (

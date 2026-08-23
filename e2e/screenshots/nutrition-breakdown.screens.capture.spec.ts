@@ -74,11 +74,15 @@ test.describe("nutrition breakdown micros", () => {
     );
     await page.waitForTimeout(250);
     await page.screenshot({
+      animations: "disabled",
       path: "screenshots/nutrition-breakdown-light.png",
     });
     // Dark
     await page.evaluate(() => document.documentElement.classList.add("dark"));
     await page.waitForTimeout(300);
-    await page.screenshot({ path: "screenshots/nutrition-breakdown-dark.png" });
+    await page.screenshot({
+      animations: "disabled",
+      path: "screenshots/nutrition-breakdown-dark.png",
+    });
   });
 });

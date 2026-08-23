@@ -41,12 +41,14 @@ test.describe("calendar day peek", () => {
     );
     await page.waitForTimeout(250);
     await page.screenshot({
+      animations: "disabled",
       path: `screenshots/${name}-light.png`,
       fullPage: true,
     });
     await page.evaluate(() => document.documentElement.classList.add("dark"));
     await page.waitForTimeout(300);
     await page.screenshot({
+      animations: "disabled",
       path: `screenshots/${name}-dark.png`,
       fullPage: true,
     });
@@ -78,8 +80,14 @@ test.describe("calendar day peek", () => {
     // Strip with legend (no peek open yet).
     await shootLightDark(page, "day-peek-strip");
 
-    // Open a peek on a non-today weekday cell (aria-label "Weekday, Month D").
-    const dayCells = page.getByRole("button", { name: /day, \w+ \d+/i });
+    // Open a peek on a weekday cell (aria-label "Weekday D Month, …" —
+    // en-GB day-before-month since 2026-08-22). This regex is read out of
+    // this file and pinned against WeekStrip's real render by
+    // weekStripCaptureSelector.test.tsx: the previous shape ("Weekday,
+    // Month D") went stale when the label order changed, matched ZERO
+    // cells, and the count-guard below silently skipped the click — the
+    // frame filmed a bare strip labelled as an open peek.
+    const dayCells = page.getByRole("button", { name: /\w+day \d+ \w+,/i });
     const count = await dayCells.count().catch(() => 0);
     if (count >= 5) {
       await dayCells

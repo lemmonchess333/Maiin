@@ -193,7 +193,10 @@ export default function AdminModeration() {
       </header>
 
       {error && (
-        <div role="alert" className="text-sm text-destructive-strong font-medium">
+        <div
+          role="alert"
+          className="text-sm text-destructive-strong font-medium"
+        >
           {error}
         </div>
       )}
@@ -232,7 +235,7 @@ export default function AdminModeration() {
                         "unknown"}{" "}
                       · {REASON_LABEL[report.reason]}
                     </p>
-                    <p className="text-caption font-mono tabular-nums text-muted-foreground/70 mt-0.5">
+                    <p className="text-caption font-mono tabular-nums text-muted-foreground mt-0.5">
                       {report.createdAt
                         ? new Date(report.createdAt).toISOString()
                         : "(unknown date)"}
@@ -246,7 +249,7 @@ export default function AdminModeration() {
                     {targetPreview(report)}
                   </p>
                   {report.target?.flagged === true && (
-                    <p className="text-caption text-amber-700 dark:text-amber-400 mt-1.5 font-medium">
+                    <p className="text-caption text-warning-strong mt-1.5 font-medium">
                       Already flagged by auto-filter
                     </p>
                   )}

@@ -32,7 +32,7 @@ export function isPhotoShareSupported(): boolean {
  */
 export async function sharePhotoToLibrary(
   base64: string,
-  filename = `tropos-meal-${Date.now()}.jpg`,
+  filename = `tropos-meal-${Date.now()}.jpg`
 ): Promise<boolean> {
   // Guard against empty/missing input
   if (!base64 || typeof base64 !== "string") {

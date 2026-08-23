@@ -13,12 +13,11 @@ export const THEME = {
   liftingLight: "#9590E0",
   brand: "#7B72E9",
   brandLight: "#9590E0",
-  /* Amber — warning banners (Run7 Q10). Distinct from `warning` /
-     `semantic.nutrition` (#D9884E) which is the warm orange used for
-     food/calorie/macro context. Amber here is a Tailwind amber-600
-     base with an amber-500 step for dark-mode visibility (per the
-     12–15% tint floor in Q10). Only applied to severity = warning
-     banner surfaces + icons; do not use as a CTA fill. */
+  /* Amber — the WARNING family (Run7 Q10; D19 made `warning` its alias
+     on 2026-08-22, so the two are one value now). Tailwind amber-600
+     base with an amber-500 step for dark-mode visibility. Severity =
+     warning surfaces + icons only; never a CTA fill, and never for
+     food/calorie context — that is `semantic.nutrition` (#D9884E). */
   amber: "#D97706",
   amberLight: "#F59E0B",
   /* Darker brand step for filled primary CTAs (Join, Follow, Invite,
@@ -46,9 +45,17 @@ export const THEME = {
     scanLight: "#FF7D5F", // +8% lightness in HSL for gradient top stop
   },
 
-  // Legacy semantic (kept for compatibility)
+  /* Semantic aliases. `warning` was #D9884E — byte-identical to
+     semantic.nutrition — for its whole life, which meant CLAUDE.md's
+     warning-register rule bought nothing visual: every warning rendered
+     in the food colour (D19). Split 2026-08-22 (owner-delegated): warning
+     IS the amber family now, same value as THEME.amber, matching the CSS
+     ramp that was already amber (--warning light ≈ amber-700, dark =
+     amber-500). Fill/icon use only; TEXT takes hsl(var(--warning-strong)).
+     `success`/`danger` remain value-aliases of semantic.positive/vitals —
+     pixel-correct, name-only debt, pinned in colorCanonical.test.ts. */
   success: "#4DB872",
-  warning: "#D9884E",
+  warning: "#D97706",
   danger: "#D4637A",
   teal: "#52A3BD",
 
@@ -65,9 +72,15 @@ export const THEME = {
   scrimSoft: "rgba(0,0,0,0.15)",
 
   // Light mode text helpers
-  text: {
-    muted: "#8E8E93", // iOS system grey
-  },
+  /* `text.muted` (#8E8E93) was deleted in the 2026-08-22 owner-decided
+     consolidation: it was a FIXED grey serving both themes, measuring
+     2.53–3.26:1 across the light surfaces it actually rendered on and
+     failing dark's muted tiles too. The muted-text identity is the
+     theme-aware `--muted-foreground` token — `text-muted-foreground` in
+     className contexts, `"hsl(var(--muted-foreground))"` in style/JS
+     contexts. Do not reintroduce a JS hex for secondary text; the one
+     legitimate literal left is `runLiveActivity.ts` (native plugin,
+     always-dark overlay, no CSS vars). */
 
   // Neutral backgrounds
   neutral: {

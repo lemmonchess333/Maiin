@@ -248,7 +248,9 @@ describe("DeloadBanner — the active copy names the run half", () => {
         experience="intermediate"
       />
     );
-    expect(screen.getByText(/3 runs are a step shorter too/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/3 runs are a step shorter too/i)
+    ).toBeInTheDocument();
     // and the lift half is still described
     expect(screen.getByText(/at the same weights/i)).toBeInTheDocument();
   });
@@ -263,7 +265,9 @@ describe("DeloadBanner — the active copy names the run half", () => {
         experience="beginner"
       />
     );
-    expect(screen.getByText(/One run is a step shorter too/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/One run is a step shorter too/i)
+    ).toBeInTheDocument();
   });
 
   it("stays silent for a lift-only deload", () => {

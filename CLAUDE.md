@@ -234,6 +234,18 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 - **UI patterns:** Drawer (vaul), bottom sheets, pressable cards
 - **Class names:** `clsx()` + `twMerge()` for conditional/merged Tailwind classes
 - **Drag & drop:** @dnd-kit for sortable exercise lists
+- **Dates:** en-GB day-before-month ("22 Aug", "Saturday 23 August") via the
+  `src/utils/formatters.ts` helpers. Locale-less `toLocaleDateString` follows
+  the DEVICE (renders "Aug 22" on a US phone) and month-first date-fns
+  patterns ("MMM d") are the same bug in disguise — both are banned by
+  `src/utils/__tests__/dateTreatment.test.ts`. Chart-axis "22/8" numerals are
+  their own compact register and exempt.
+- **Units:** spaced — "60 kg", "5.2 km", "400 m", "2,633 cal"
+  (`src/utils/__tests__/unitTreatment.test.ts` bans unspaced kg/km, including
+  the `${x}kg` template form). Two named exceptions: grams on the food
+  surface stay unspaced ("128g" — MacroColumn's documented house style), and
+  `ShareCardRenderer`'s compact forms ("12.3km") are a deliberate
+  space-constrained variant on the rasterised card.
 
 ## Testing
 
@@ -465,7 +477,7 @@ held to it, so it is now the APP-WIDE standard, not an insights-file local:
 - Icon backgrounds: rgba(123, 114, 233, 0.10) — subtle purple tint
 - Card backgrounds: white (light) / #1A1A1F (dark)
 - Page background: hsl(240 5% 96%) = ~#F2F2F7 (light) / #121214 (dark)
-- Text muted: #8E8E93 (iOS system grey)
+- Text muted: the theme-aware `--muted-foreground` token (light `240 3.8% 43%`, dark `240 4% 64%`) — tuned to clear 4.5:1 on card, muted AND page background in both themes. The old fixed #8E8E93 was deleted in the DS2 consolidation (2026-08-22, owner-decided): one grey serving both themes measured 2.53–3.26:1 across the light surfaces it rendered on. No fractional `text-muted-foreground/<n>` anywhere — de-emphasis is the type scale's job (banned + pinned in `tokenContrast.test.ts`). In JS/style contexts use `"hsl(var(--muted-foreground))"`.
 
 ### Typography (Plus Jakarta Sans + Archivo)
 
@@ -577,10 +589,21 @@ Constraints these primitives must keep:
   the single most-trained muscle pulses; nothing else loops. `prefers-
 reduced-motion` always gets the settled static state — no entrance, no
   loop.
-- **Warning register:** warnings use `THEME.warning`. Orange
-  (`THEME.semantic.nutrition`) is the FOOD domain identity, never a warning
-  colour on non-food surfaces (the exercise guide's "Watch out" callout was
-  the drift case).
+- **Warning register:** warnings use `THEME.warning`, and since the D19
+  split (2026-08-22, owner-delegated) that is the AMBER family —
+  `#D97706`, one value with `THEME.amber`, matching the CSS ramp that was
+  already amber (`--warning` light ≈ amber-700, dark = amber-500). Orange
+  (`THEME.semantic.nutrition`, `#D9884E`) is the FOOD domain identity and
+  is now visually distinct from warnings. Warning TEXT takes
+  `hsl(var(--warning-strong))`, never the bare identity (amber-600 is
+  ~3.1:1 on white — fill/icon only). When touching a `THEME.warning`
+  call site, check the SEMANTIC first: the D19 sweep found half of them
+  meant "food" and repointed those to `semantic.nutrition` — a new
+  warning-token use on a food surface recreates the old collision in the
+  other direction. `danger`/`semantic.vitals` and
+  `success`/`semantic.positive` remain value-aliases (pixel-correct,
+  name-only debt, pinned in `colorCanonical.test.ts` alongside the
+  warning≠nutrition inequality that IS the D19 contract).
 - **Empty states go through the `EmptyState` primitive**
   (`src/components/ui/EmptyState.tsx`; `compact` for in-card use) — no
   hand-rolled centered-icon-tile blocks. The primitive owns the brand
@@ -598,11 +621,87 @@ pixelmatch): `screenshot-diff/DIFF_REPORT.md` + per-frame changed-pixel
 highlights ride the same branch and mirror into the run's step summary —
 a report, not a gate (intended change is normal here). Visual
 PRs cite before/after from this channel (the D15 lesson: no visual churn
-without screenshots). Gotchas: capture specs must be named
+without screenshots). Concurrent runs no longer race the branch: the
+workflow cancels a superseded run (D26), because the loser's frames are
+overwritten by the newer force-push anyway and its diff report is exactly
+the artifact the race corrupts — push, WAIT for the run, then push the
+next capture. Gotchas: capture specs must be named
 `*.capture.spec.ts` (auth-emulator project); the Progress/Form switch and
 other SegmentedControls are `role="radio"`, not buttons; give best-effort
 clicks short explicit timeouts so a missed locator costs seconds, not its
-30s default.
+30s default. **Capture specs select by user-visible STRINGS, so renaming
+copy or reshaping an aria-label requires `rg` over `e2e/` in the same
+commit** — three selectors broke this way on 2026-08-22 alone (the
+surfaces day-cell regex, its unpinned twin in day-peek whose count-guard
+skipped the click SILENTLY, and the circles weekly-focus button). Where a
+component renders standalone, pin the spec's literal against the real
+render the way `weekStripCaptureSelector.test.tsx` does — it now reads
+BOTH day-cell specs.
+
+**Read the diff report with the flaky frames in mind.** Three classes
+of frame change between runs with no code change, and chasing one costs
+an hour:
+
+- **Bottom-sheet frames** (`circle-create-compact`, `easier-chooser`,
+  `sheet-trainingblock`) capture at whatever point the sheet's
+  open/settle animation had reached, so consecutive runs can differ by
+  8-57% — one frame showing the sheet open and the next showing the
+  surface behind it. Verified 2026-08-22 across two runs whose only
+  code delta was `index.css` range-input rules: none of the three
+  surfaces imports anything that changed.
+- **Map frames** (`run-detail`) vary with MapLibre tile-load timing.
+  The tell is that every changed pixel sits inside the map's y-band.
+- A frame moving by **0.1-0.7%** is usually antialiasing, not a change.
+- **`badges-grid` resizes ±10px with the capture's WALL CLOCK.** The
+  seeded user earns "Early Bird" only when the run executes before 7am
+  (the badge is "log before 7am for 5 days"), so a pre-7am-UTC capture
+  shows it earned (1-line date footer) and a later one shows it locked
+  (2-line description) — the row grows ~10px and the whole page shifts.
+  Diagnosed 2026-08-22 by cropping the insertion boundary (y≈900): the
+  delta is fixture DATA, not layout. Same family as the useHomeData
+  midnight flake — time-of-day-dependent seeds.
+- **Frames whose height changes** are a different problem from frames
+  whose pixels change, and the tempting fix does not work.
+  `home-energy-default-after` measured 1191 → 1190 → 1458 → 1191 → 1358
+  across five captures. Waiting for the document height to settle does
+  NOT close it: Home renders its loading states as ordinary EMPTY states
+  (`—` / "Tap to log") rather than skeletons, so they are height-stable
+  for longer than any settle window, and the shot lands on a page that is
+  stable but not final. Nothing generic separates a loading empty state
+  from a real one — the frame needs an anchor on the DATA it exists to
+  show. `e2e/helpers/settleHeight.ts` is still worth calling before a
+  fullPage shot; it just is not that fix.
+- **Raster art needs `img.decode()`** — `e2e/helpers/settleImages.ts`
+  took `races-directory-light` from 10.88% to unchanged, and
+  `badges-grid` from churning-in-every-report to unchanged in both
+  themes. Diagnose by band before adopting: badges' mask was bands of
+  exactly 62-64px against a `BadgeHex` rendered at `size={64}` — art and
+  nothing else.
+- **The capture that first carries a fix MEASURES that fix.** The diff
+  report compares each capture to the previous one, so the run right
+  after you adopt something is a fix-vs-pre-fix comparison, not a churn
+  reading. `badges-grid-light` read 4.14% — its worst value ever — on
+  the capture that introduced `settleImages`, and was written up here as
+  "the helper made it worse". It had not: that was correctly-decoded art
+  replacing partially-decoded art. The NEXT run, both sides post-fix,
+  showed it unchanged. Judge a capture fix on the second diff after it,
+  never the first — otherwise a working fix gets reverted for doing its
+  job.
+- **`home-energy-default-after` is the one that took a content anchor.**
+  Five heights across five captures, unfixed by height-settling, because
+  Home renders its loading states as empty states. Anchoring on the data
+  (a non-zero calorie target) held it steady across two runs. The anchor
+  is pinned against a real render in `energyCaptureAnchor.test.tsx`,
+  including the runtime's number grouping — `formatCalories` is
+  `toLocaleString()` with no locale, so a comma-only pattern is a bet on
+  the CI runner's locale.
+
+Localise before diagnosing: read the `diffs/` highlight and find the
+y-band the changed pixels occupy. If it is the map, or a sheet, suspect
+the rig before the diff. And do NOT assume a two-band highlight means
+content shifted vertically — cross-correlate first; on the
+2026-08-22 sheet frames the best vertical offset was 0 and the two
+bands were two different STATES, not one state moved.
 
 ### Button variants (canonical CTA mapping)
 
@@ -737,21 +836,26 @@ default and the one we want.
 
 What is genuinely left, and it is narrower than the row implied:
 
-- [ ] **Confirm the abuse-monitoring retention window.** The
-      "temporarily processed, not permanently retained" half is about
-      Google's own caching for abuse monitoring, which is the part a
-      contract does not settle. Check the current Vertex AI data-
-      governance documentation for `gemini-2.0-flash` and confirm the
-      sentence matches what Google actually states. If it does not,
-      reword the policy rather than the expectation.
+- [x] **Confirm the abuse-monitoring retention window — DONE 2026-08-22,
+      with one caveat recorded in the doc.** Every Google-side route is
+      temporary and bounded (≤24h serving cache by default; conditional
+      abuse-flagged prompt logging for a bounded window, with invoiced
+      accounts exempt by default), so the policy sentence stands as
+      written — no rewording needed. Caveat: the sandbox egress proxy
+      blocks the canonical doc host, so the facts were triangulated from
+      two independent search syntheses (which disagreed 30-vs-90 days on
+      the flagged-prompt window — immaterial to the sentence, but settle
+      it from a browser). Full detail in `docs/privacy.md`.
 - [ ] **Confirm no prompt logging is enabled at the project level**
       (Cloud console). Absent from the code is necessary, not
       sufficient — it can be switched on outside the repo.
-- [ ] **Write `docs/privacy.md`** capturing whatever the two checks
-      above establish, so the next person re-verifying has something to
-      diff against instead of re-deriving it. This is the actual value
-      of F3d pin 2 and the reason it keeps going unticked: nobody knows
-      what "verify on every release" is supposed to compare against.
+- [x] **Write `docs/privacy.md` — DONE 2026-08-22.** It records what
+      holds each policy sentence up (the Vertex endpoint as the
+      load-bearing fact, Google's retention posture with dated caveats,
+      the repo's own Food9 guarantees), the residual operator-only
+      checks, and a per-release re-verification procedure with a dated
+      pass ledger — so "verify on every release" finally has something
+      to diff against.
 
 Do this before an App Store reviewer or a data-subject request reads
 section 7. The claim is probably true; "probably" is the problem.

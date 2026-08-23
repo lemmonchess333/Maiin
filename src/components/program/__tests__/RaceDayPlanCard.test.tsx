@@ -18,7 +18,6 @@ vi.mock("@/hooks/useDistanceUnit", () => ({
   useDistanceUnit: () => "km" as const,
 }));
 
-
 const fitness = { benchmark: { distanceM: 5000, timeS: 1200 }, vdot: null };
 
 describe("RaceDayPlanCard", () => {

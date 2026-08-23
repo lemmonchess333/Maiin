@@ -1603,7 +1603,11 @@ export default function History() {
                                 bg: "transparent",
                               }
                             : {
-                                color: THEME.amberLight,
+                                /* Text on the -strong step — amberLight
+                                   is the dark-mode amber and measured
+                                   1.70:1 as light text on its own tint.
+                                   The tint concat stays on the hex. */
+                                color: "hsl(var(--warning-strong))",
                                 bg: `${THEME.amberLight}1A`,
                               };
                       return (
@@ -1774,14 +1778,28 @@ export default function History() {
                 0 && (
                 <section id="analytics-lifetime" aria-label="Lifetime totals">
                   <SectionLabel className="mt-6 mb-2">Lifetime</SectionLabel>
+                  {/* Three peer tiles, one unit treatment. The runs tile
+                      used to push its `km` down into the caption ("km ·
+                      1 runs") while the lifting tile beside it carried
+                      `kg` inline on the figure — so the same information
+                      sat in two different places in one row, and the runs
+                      caption opened on a dangling unit that only parsed if
+                      you read upward. Unit inline on the figure, caption
+                      as a plain descriptor, for all three. The unit span
+                      also dropped from 700 to font-medium: at 700 beside
+                      an 800 figure it was the weight-mixing DESIGN_GUIDE
+                      bars, and `text-sm font-medium` is what the Home
+                      weight tile already uses for exactly this role. */}
                   <div className="grid grid-cols-3 gap-2">
                     <div className="p-3 rounded-2xl bg-card text-center card-shadow">
                       <Footprints className="size-4 mx-auto mb-1.5 text-running" />
                       <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
                         {abbreviateK(lifetimeTotals.runKm)}
+                        <span className="text-xs font-medium ml-0.5">km</span>
                       </p>
                       <p className="text-caption text-muted-foreground mt-0.5">
-                        km · {lifetimeTotals.runCount} runs
+                        {lifetimeTotals.runCount}{" "}
+                        {lifetimeTotals.runCount === 1 ? "run" : "runs"}
                       </p>
                     </div>
                     <div className="p-3 rounded-2xl bg-card text-center card-shadow">
@@ -1789,13 +1807,16 @@ export default function History() {
                       <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
                         {formatVolume(lifetimeTotals.liftVolume).value}
                         {formatVolume(lifetimeTotals.liftVolume).unit && (
-                          <span className="text-xs font-bold ml-0.5">
+                          <span className="text-xs font-medium ml-0.5">
                             {formatVolume(lifetimeTotals.liftVolume).unit}
                           </span>
                         )}
                       </p>
                       <p className="text-caption text-muted-foreground mt-0.5">
-                        lifted · {lifetimeTotals.liftCount} sessions
+                        {lifetimeTotals.liftCount}{" "}
+                        {lifetimeTotals.liftCount === 1
+                          ? "session"
+                          : "sessions"}
                       </p>
                     </div>
                     <div className="p-3 rounded-2xl bg-card text-center card-shadow">
@@ -1805,9 +1826,12 @@ export default function History() {
                       />
                       <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
                         {lifetimeTotals.daysLogged.toLocaleString()}
+                        <span className="text-xs font-medium ml-0.5">
+                          {lifetimeTotals.daysLogged === 1 ? "day" : "days"}
+                        </span>
                       </p>
                       <p className="text-caption text-muted-foreground mt-0.5">
-                        days logged
+                        logged
                       </p>
                     </div>
                   </div>

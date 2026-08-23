@@ -227,9 +227,7 @@ describe("buildPRMap applies the live PR gate", () => {
     expect(map["Bench"]["10rm"]).toBeNull();
     expect(map["Bench"]["5rm"]?.weight).toBe(100);
     // ...and the suppressed-PR scenario now fires.
-    expect(
-      checkSetPR("Bench", 55, 10, map, { Bench: 5 })
-    ).toBe("10rm");
+    expect(checkSetPR("Bench", 55, 10, map, { Bench: 5 })).toBe("10rm");
   });
 
   it("still records drop sets and failure sets", () => {

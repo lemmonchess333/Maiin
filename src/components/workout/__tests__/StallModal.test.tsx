@@ -21,14 +21,20 @@
  * the modal rendered correctly throughout.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  cleanup,
+  fireEvent,
+  waitFor,
+} from "@testing-library/react";
 
 /* Typed param, not bare `vi.fn(async () => …)`: without it the mock's
    argument tuple infers as `[]` and every `mock.calls[0][0]` read below is a
    type error. vitest runs it happily either way — `tsc -b` is the gate. */
-const updateProfile = vi.fn(
-  async (_patch: Record<string, number>) => ({ ok: true })
-);
+const updateProfile = vi.fn(async (_patch: Record<string, number>) => ({
+  ok: true,
+}));
 const profile = {
   weightKg: 80,
   heightCm: 180,

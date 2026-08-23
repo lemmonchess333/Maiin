@@ -51,7 +51,7 @@ const DEVICE_SCOPED: Record<string, string> = {
     "written precisely when there is no longer an account to scope to",
   "tropos.food.calorieRingMode":
     "FoodHeroCard display preference (left vs eaten) — a device choice, not a fact about an account",
-  "tropos_fcm_device_tokens": "the push token IS the device identity",
+  tropos_fcm_device_tokens: "the push token IS the device identity",
   "tropos.run.bgGrantNoteDismissed":
     "acknowledges THIS DEVICE's iOS location grant (While Using vs Always) — an OS per-app setting no account owns; re-nagging a second account about the same grant would be noise",
   tropos_offline_queue:
@@ -67,7 +67,13 @@ const DEVICE_SCOPED: Record<string, string> = {
  * purge instead. `removeItem` only; a `getItem` on one of these would be
  * reading another account's value and is not covered here.
  */
-const LEGACY_PURGE = ["socialPreferenceKeys.ts", "shareComposer.ts", "runResumeStorage.ts", "useWorkoutDraft.ts", "pushNotifications.ts"];
+const LEGACY_PURGE = [
+  "socialPreferenceKeys.ts",
+  "shareComposer.ts",
+  "runResumeStorage.ts",
+  "useWorkoutDraft.ts",
+  "pushNotifications.ts",
+];
 
 /**
  * Keyed by an id only its owner holds. A Firestore run id is per-user and
@@ -84,11 +90,13 @@ const OWNED_ID = /tropos:reconcileDismissed:/;
  * this from being a hand-wave.
  */
 const KEY_IS_A_PARAMETER: Record<string, string> = {
-  "useDismissOnce.ts": "the hook prefixes the uid itself; the inner reader takes the finished key",
+  "useDismissOnce.ts":
+    "the hook prefixes the uid itself; the inner reader takes the finished key",
   "usePersistedToggle.ts": "generic toggle — caller supplies the key",
   "useSnoozeDismiss.ts": "generic snooze — caller supplies the key",
   "useFeedSubTabFreshness.ts": "builds its key from the uid prop it is given",
-  "useWorkoutDraft.ts": "read/write helpers take the finished key; the hook builds it with v1StorageKey(uid, …)",
+  "useWorkoutDraft.ts":
+    "read/write helpers take the finished key; the hook builds it with v1StorageKey(uid, …)",
 };
 
 /** Resolve `const NAME = <expr>` within the same file, one hop. */
@@ -171,7 +179,10 @@ describe("localStorage keys are uid-scoped", () => {
     const race = found.find((f) =>
       f.site.startsWith("src/components/program/ProgrammeRunSection.tsx")
     );
-    expect(race, "expected ProgrammeRunSection to still use localStorage").toBeTruthy();
+    expect(
+      race,
+      "expected ProgrammeRunSection to still use localStorage"
+    ).toBeTruthy();
     /* Resolution chains: the key names `storageUid`, which is itself a const
        assigned from `useUidForStorageKey()`. Asserting on the CHAIN END is
        the stronger claim — it says the uid actually came from auth context,
@@ -233,12 +244,17 @@ describe("localStorage keys are uid-scoped", () => {
         let m: RegExpExecArray | null;
         while ((m = re.exec(src))) {
           calls += 1;
-          if (!/uid/i.test(m[1])) bad.push(`${rel}: ${hook}(${m[1].slice(0, 60)}…`);
+          if (!/uid/i.test(m[1]))
+            bad.push(`${rel}: ${hook}(${m[1].slice(0, 60)}…`);
         }
       }
-      if (calls === 0) bad.push(`${hook}: no call sites found — detector blind`);
+      if (calls === 0)
+        bad.push(`${hook}: no call sites found — detector blind`);
     }
-    expect(bad, `these pass an unscoped key to a shared storage primitive`).toEqual([]);
+    expect(
+      bad,
+      `these pass an unscoped key to a shared storage primitive`
+    ).toEqual([]);
   });
 
   it("the device-scoped list stays honest (no entry for a vanished key)", () => {

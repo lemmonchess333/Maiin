@@ -192,6 +192,32 @@ describe("D15 · DS invariant — touch-target primitive (44px floor)", () => {
 });
 
 describe("D15 · DS invariant — numeric displays use the mono numeral font", () => {
+  /* Only ONE direction of this is a defect, and it is worth saying so
+     because the other one scans as if it were. `font-mono` WITHOUT
+     `tabular-nums` looks like the same class of miss and is not: `index.css`
+     applies `font-variant-numeric: tabular-nums` (and `tnum`) to every
+     `.font-mono` element, precisely because Archivo is proportional. So the
+     class is redundant wherever `font-mono` is present, and a sweep to add
+     it — the live run HUD's big numbers among them — would change nothing.
+     That rests entirely on the stylesheet rule, so the rule is pinned below
+     rather than trusted: if it ever goes, those sites become real defects
+     the same day.
+
+     The direction after that IS real: `tabular-nums` alone opts into aligned
+     columns while leaving the text in the proportional UI face, which is the
+     week-strip bug's exact shape. */
+
+  it("`.font-mono` forces tabular figures, so the class alone is enough", () => {
+    // Archivo is proportional (it replaced JetBrains Mono in the brand
+    // bake-off), so digit alignment is not inherent to the face — it comes
+    // from this rule. Everything that writes `font-mono` and omits
+    // `tabular-nums` depends on it.
+    const css = readFileSync(resolve(repoRoot, "src/index.css"), "utf8");
+    const rule = /\.font-mono\s*\{[^}]*\}/.exec(css)?.[0] ?? "";
+    expect(rule, "no `.font-mono` rule in index.css").not.toBe("");
+    expect(rule).toMatch(/font-variant-numeric:\s*tabular-nums/);
+  });
+
   // Invariant #1 proxy: `tabular-nums` is a NUMERIC-display utility — if a
   // className opts into tabular figures, it's rendering numbers, so it must
   // also carry `font-mono` (the Archivo numeral font; CLAUDE.md). `tabular-nums`

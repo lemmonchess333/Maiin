@@ -240,7 +240,10 @@ export default function SpacePostComposer({
           className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground leading-snug resize-none focus:outline-none focus:ring-2 focus:ring-primary/40"
         />
         {profane && (
-          <p className="text-xs" style={{ color: THEME.warning }}>
+          <p
+            className="text-xs"
+            style={{ color: "hsl(var(--warning-strong))" }}
+          >
             Let&apos;s keep it friendly — please reword that.
           </p>
         )}

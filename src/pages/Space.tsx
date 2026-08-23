@@ -116,7 +116,12 @@ function RaceEventHeader({
       <div className="flex items-center gap-2 flex-wrap">
         <span
           className="inline-flex items-center px-2.5 py-1 rounded-full text-caption font-semibold"
-          style={{ background: `${THEME.running}1F`, color: THEME.running }}
+          style={{
+            /* Ink on the -strong step — the coral identity is 3.12:1 as
+               11px text on its light tint; the tint concat stays hex. */
+            background: `${THEME.running}1F`,
+            color: "hsl(var(--running-strong))",
+          }}
         >
           {DISTANCE_LABEL[event.distance]}
         </span>

@@ -110,7 +110,7 @@ export default function ProfileInfoSection({
             }}
             className="w-full mt-1 px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
           />
-          <p className="text-xs text-muted-foreground/60 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             For TDEE calc. Log daily weight from Home.
           </p>
         </div>
@@ -199,7 +199,7 @@ export default function ProfileInfoSection({
           placeholder="What's driving you?"
           className="w-full mt-1 px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground"
         />
-        <p className="text-xs text-muted-foreground/60 mt-1">
+        <p className="text-xs text-muted-foreground mt-1">
           We resurface this in your weekly review.
         </p>
       </div>

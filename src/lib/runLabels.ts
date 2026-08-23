@@ -138,10 +138,7 @@ export function finishTimeLabel(timeS: number): string {
  * Format a distance (metres) as `K.k km`, with the em-dash
  * placeholder for missing / zero / negative values.
  */
-export function distanceLabel(
-  distanceM: number,
-  unit: DistanceUnit
-): string {
+export function distanceLabel(distanceM: number, unit: DistanceUnit): string {
   if (!distanceM || distanceM <= 0) return "—";
   return `${distanceIn(distanceM, unit).toFixed(1)} ${distanceUnitLabel(unit)}`;
 }
@@ -199,10 +196,7 @@ export function nearDistanceLabel(
  * `K.kk km` — the two-decimal form, for the live run screen and the social
  * cards. Same em-dash guard as `distanceLabel`.
  */
-export function distanceLabel2(
-  distanceM: number,
-  unit: DistanceUnit
-): string {
+export function distanceLabel2(distanceM: number, unit: DistanceUnit): string {
   if (!distanceM || distanceM <= 0) return "—";
   return `${distanceValue(distanceM, unit, 2)} ${distanceUnitLabel(unit)}`;
 }

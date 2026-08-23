@@ -219,7 +219,7 @@ export default function Routine() {
           meta: [
             `${synthDay.exercises.length} exercise${synthDay.exercises.length === 1 ? "" : "s"}`,
             tonnage > 0
-              ? `${Math.round(tonnage).toLocaleString()}kg volume`
+              ? `${Math.round(tonnage).toLocaleString()} kg volume`
               : "",
             effectiveDurationMin > 0 ? `${effectiveDurationMin} min` : "",
           ].filter(Boolean),
@@ -244,7 +244,7 @@ export default function Routine() {
               return {
                 name: ex.name,
                 exerciseId: ex.exerciseId,
-                summary: `${setCount}×${targetReps}×${targetWeightKg}kg`,
+                summary: `${setCount}×${targetReps}×${targetWeightKg} kg`,
                 setCount,
                 targetReps,
                 targetWeightKg,

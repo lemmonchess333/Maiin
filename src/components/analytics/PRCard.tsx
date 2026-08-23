@@ -36,7 +36,7 @@ export default function PRCard({
       }}
     >
       <div className="px-4 pt-4 pb-3 flex items-center gap-2 border-b border-border/30">
-        <Trophy className="size-4 text-amber-500" />
+        <Trophy className="size-4 text-achievement" />
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-semibold text-foreground">{title}</h3>
           {subtitle && (
@@ -69,9 +69,7 @@ export default function PRCard({
               <p className="text-sm font-bold font-mono tabular-nums text-foreground">
                 {pr.value}
               </p>
-              <p className="text-xs text-muted-foreground/50 mt-0.5">
-                {pr.date}
-              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">{pr.date}</p>
             </div>
           </div>
         ))}

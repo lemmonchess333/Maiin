@@ -96,9 +96,9 @@ interface Query {
 
 function scan(): { queries: Query[]; skipped: number; unresolvable: string[] } {
   const unresolvable: string[] = [];
-  const files = [
-    ...globSync("src/**/*.{ts,tsx}", { cwd: repoRoot }),
-  ].filter((f) => !f.includes("__tests__") && !f.includes(".test."));
+  const files = [...globSync("src/**/*.{ts,tsx}", { cwd: repoRoot })].filter(
+    (f) => !f.includes("__tests__") && !f.includes(".test.")
+  );
   const queries: Query[] = [];
   let skipped = 0;
 
@@ -110,9 +110,9 @@ function scan(): { queries: Query[]; skipped: number; unresolvable: string[] } {
           /where\(\s*["'`]([\w.]+)["'`]\s*,\s*["'`]([^"'`]+)["'`]/g
         ),
       ];
-      const orders = [
-        ...body.matchAll(/orderBy\(\s*["'`]([\w.]+)["'`]/g),
-      ].map((x) => x[1]);
+      const orders = [...body.matchAll(/orderBy\(\s*["'`]([\w.]+)["'`]/g)].map(
+        (x) => x[1]
+      );
       if (!wheres.length || !orders.length) continue;
 
       const coll =
@@ -126,16 +126,19 @@ function scan(): { queries: Query[]; skipped: number; unresolvable: string[] } {
            Every such query in this codebase today is an inequality and an
            orderBy on the SAME field (`completedAt >= x` ordered by
            `completedAt`), which a single-field automatic index serves. */
-        const sameFieldOnly =
-          new Set([...fields, ...orders]).size === 1;
-        if (!sameFieldOnly) unresolvable.push(`${rel}: where[${fields.join(", ")}] orderBy[${orders.join(", ")}]`);
+        const sameFieldOnly = new Set([...fields, ...orders]).size === 1;
+        if (!sameFieldOnly)
+          unresolvable.push(
+            `${rel}: where[${fields.join(", ")}] orderBy[${orders.join(", ")}]`
+          );
         skipped += 1;
         continue;
       }
       const eq = fields;
       // A single equality on the SAME field as the orderBy needs no
       // composite index.
-      if (eq.length === 1 && orders.length === 1 && eq[0] === orders[0]) continue;
+      if (eq.length === 1 && orders.length === 1 && eq[0] === orders[0])
+        continue;
       queries.push({ file: rel, coll: coll[1], eq, orders });
     }
   }
@@ -152,7 +155,9 @@ describe("firestore composite indexes", () => {
        codebase unless something pins that it sees. */
     expect(queries.length).toBeGreaterThanOrEqual(2);
     expect(
-      queries.some((q) => q.coll === "activities" && q.orders.includes("createdAt"))
+      queries.some(
+        (q) => q.coll === "activities" && q.orders.includes("createdAt")
+      )
     ).toBe(true);
   });
 
@@ -193,8 +198,12 @@ describe("firestore composite indexes", () => {
   it("would reject a query with no matching index", () => {
     // Guards the guard: `covered` returning true for everything would make
     // the assertion above vacuous.
-    expect(covered("activities", ["authorId", "visibility"], ["createdAt"])).toBe(true);
-    expect(covered("activities", ["nonexistentField"], ["createdAt"])).toBe(false);
+    expect(
+      covered("activities", ["authorId", "visibility"], ["createdAt"])
+    ).toBe(true);
+    expect(covered("activities", ["nonexistentField"], ["createdAt"])).toBe(
+      false
+    );
     expect(covered("noSuchCollection", ["a"], ["b"])).toBe(false);
   });
 });

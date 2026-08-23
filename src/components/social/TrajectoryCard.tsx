@@ -35,12 +35,17 @@ export default function TrajectoryCard({
   // muted grey = flat / no baseline.
   const deltaColor =
     deltaPct == null
-      ? THEME.text.muted
+      ? "hsl(var(--muted-foreground))"
       : deltaPct > 0
         ? THEME.success
         : deltaPct < 0
           ? THEME.running
-          : THEME.text.muted;
+          : "hsl(var(--muted-foreground))";
+
+  const deltaBg =
+    deltaPct == null || deltaPct === 0
+      ? "hsl(var(--muted-foreground) / 0.08)"
+      : (deltaPct > 0 ? THEME.success : THEME.running) + "14";
 
   const DeltaIcon =
     deltaPct == null
@@ -105,7 +110,10 @@ export default function TrajectoryCard({
                   type="button"
                   className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold"
                   style={{
-                    backgroundColor: `${deltaColor}14`,
+                    /* Pair, not `${deltaColor}14` — the null/zero branches
+                       are var() strings and hex-alpha concat onto them is
+                       invalid CSS. */
+                    backgroundColor: deltaBg,
                     color: deltaColor,
                   }}
                 >

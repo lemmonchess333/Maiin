@@ -33,6 +33,15 @@ const STATUS_COLOR: Record<VolumeStatus, string> = {
   optimal: THEME.success,
   high: THEME.lifting,
 };
+/* The same statuses as TEXT — the row's status label is text-caption
+   (11px), where every identity above misses AA on the light card
+   (warning 3.10, success 2.36, lifting 3.87). Bar fills keep the
+   identities; the label takes the theme-aware -strong step (DS2). */
+const STATUS_TEXT: Record<VolumeStatus, string> = {
+  low: "hsl(var(--warning-strong))",
+  optimal: "hsl(var(--success-strong))",
+  high: "hsl(var(--lifting-strong))",
+};
 const STATUS_LABEL: Record<VolumeStatus, string> = {
   low: "below target",
   optimal: "on target",
@@ -111,9 +120,10 @@ export default function WeeklyVolumeCard({
         <div>
           <SectionLabel>Weekly volume</SectionLabel>
           <p className="text-xs text-muted-foreground mt-0.5">
+            {/* -strong step, not the identity: 12px text (DS2). */}
             <span
               style={{
-                color: lowCount > 0 ? THEME.warning : undefined,
+                color: lowCount > 0 ? "hsl(var(--warning-strong))" : undefined,
               }}
             >
               {summary}
@@ -153,7 +163,7 @@ export default function WeeklyVolumeCard({
                 </span>
                 <span
                   className="text-caption w-20 shrink-0 text-right"
-                  style={{ color: STATUS_COLOR[status] }}
+                  style={{ color: STATUS_TEXT[status] }}
                 >
                   {STATUS_LABEL[status]}
                 </span>

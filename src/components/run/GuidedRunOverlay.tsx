@@ -29,12 +29,18 @@ export default function GuidedRunOverlay({
       <div
         className="mx-4 mb-3 p-4 rounded-2xl text-center"
         style={{
-          background: "rgba(34,197,94,0.12)",
-          border: "1px solid rgba(34,197,94,0.3)",
+          /* Fixed THEME.success family, not theme-aware tokens: the run
+             surface is always-dark by its own values while CSS vars
+             follow the user's theme. (Was raw green-500 rgba + Tailwind
+             green-400 classes — off-palette greens.) */
+          background: `${THEME.success}1F`,
+          border: `1px solid ${THEME.success}4D`,
         }}
       >
-        <p className="text-lg font-bold text-green-400">Workout Complete!</p>
-        <p className="text-xs text-green-400/70 mt-1">
+        <p className="text-lg font-bold" style={{ color: THEME.success }}>
+          Workout Complete!
+        </p>
+        <p className="text-xs mt-1" style={{ color: THEME.success }}>
           Great session — keep it up
         </p>
       </div>
@@ -52,8 +58,7 @@ export default function GuidedRunOverlay({
     segmentsDurationSeconds(segments.slice(0, Math.max(0, state.index))) +
     state.phaseElapsed;
   const totalProgress = totalSec > 0 ? Math.min(1, doneSec / totalSec) : 0;
-  const nextTarget =
-    next?.target.kind === "duration" ? next.target.seconds : 0;
+  const nextTarget = next?.target.kind === "duration" ? next.target.seconds : 0;
 
   return (
     <div

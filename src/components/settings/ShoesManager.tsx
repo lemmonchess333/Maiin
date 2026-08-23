@@ -261,11 +261,7 @@ export default function ShoesManager() {
                   inputMode="numeric"
                   min={Math.round(distanceIn(SHOE_MAX_MIN_KM * 1000, unit))}
                   value={newMax}
-                  placeholder={storedKmLabel(
-                    SHOE_MAX_DEFAULT_KM,
-                    unit,
-                    false
-                  )}
+                  placeholder={storedKmLabel(SHOE_MAX_DEFAULT_KM, unit, false)}
                   onChange={(e) => setNewMax(e.target.value)}
                   aria-describedby="shoe-max-km-hint"
                   className="w-full px-3 py-2 pr-10 rounded-lg bg-muted border border-border text-sm"

@@ -114,7 +114,7 @@ export default function SpaceCommentSheet({
 
   return (
     <BottomSheet open={open} onOpenChange={onOpenChange} title="Comments">
-      <div className="space-y-3 pb-2">
+      <div className="px-4 space-y-3 pb-2">
         {comments === null && (
           <div className="flex items-center justify-center py-6">
             <Spinner size="sm" variant="muted" label="Loading comments" />

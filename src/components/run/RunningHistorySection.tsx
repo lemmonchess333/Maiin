@@ -1,4 +1,3 @@
-import { Footprints } from "lucide-react";
 import { useRunningStats } from "../../hooks/useRunningStats";
 import {
   ResponsiveContainer,
@@ -9,6 +8,10 @@ import {
   CartesianGrid,
 } from "recharts";
 import { THEME } from "../../lib/theme";
+import {
+  CHART_GRID_PROPS,
+  CHART_AXIS_TICK,
+} from "@/components/analytics/chartStyles";
 import {
   isVolumeEligible,
   isPaceEligible,
@@ -33,10 +36,12 @@ export default function RunningHistorySection() {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-semibold flex items-center gap-2">
-        <Footprints size={14} className="text-running" /> Running
-      </h3>
-
+      {/* No heading here. `History.tsx` already renders a coral uppercase
+          `SectionLabel` reading "Running" at the top of the same
+          `<section aria-label="Running analytics">` — this component's own
+          <h3> repeated it ~450px lower in a different register (14px
+          sentence case), so one section announced itself twice. The
+          SectionLabel is the app's register for this; the local copy went. */}
       {weeklyData.length > 0 && (
         <div className="p-4 rounded-2xl bg-card border border-border">
           <p className="text-xs text-muted-foreground mb-3">
@@ -44,20 +49,30 @@ export default function RunningHistorySection() {
           </p>
           <ResponsiveContainer width="100%" height={120}>
             <BarChart data={weeklyData}>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="hsl(var(--border))"
-                vertical={false}
-              />
+              <CartesianGrid {...CHART_GRID_PROPS} />
+              {/* The shared tokens, not a hand-rolled copy. This was the
+                  one analytics chart that never adopted them: it drew a
+                  solid axis line and per-tick stubs beside `VolumeChart`,
+                  which draws neither, and its ticks used Recharts' default
+                  fill (#666) rather than the muted token — a fixed grey
+                  that is theme-blind, so the labels sat at ~2.5:1 on the
+                  dark canvas. */}
               <XAxis
                 dataKey="week"
-                tick={{ fontSize: 9 }}
+                tick={CHART_AXIS_TICK}
+                axisLine={false}
+                tickLine={false}
                 tickFormatter={(v: string) => {
                   const d = new Date(v);
                   return `${d.getDate()}/${d.getMonth() + 1}`;
                 }}
               />
-              <YAxis tick={{ fontSize: 9 }} width={25} />
+              <YAxis
+                tick={CHART_AXIS_TICK}
+                axisLine={false}
+                tickLine={false}
+                width={28}
+              />
               <Bar
                 dataKey="totalDistance"
                 fill={THEME.running}
@@ -94,7 +109,10 @@ export default function RunningHistorySection() {
                 </p>
               </div>
               <div className="p-3 rounded-xl bg-card border border-border text-center">
-                <p className="text-lg font-bold font-mono tabular-nums">
+                {/* `text-running-strong` like both its peers. It was the
+                    only figure of the three without it, so a grid-cols-3
+                    of identical tiles rendered coral / black / coral. */}
+                <p className="text-lg font-bold font-mono tabular-nums text-running-strong">
                   {volume.length}
                 </p>
                 <p className="text-xs text-muted-foreground">total runs</p>

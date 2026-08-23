@@ -117,7 +117,7 @@ describe("parseFoodText", () => {
   it("does not merge unrecognized rows", () => {
     const result = parseFoodText("glorpgorp, eggs");
     expect(result).toHaveLength(2);
-    expect(result.some(r => r.unrecognized)).toBe(true);
+    expect(result.some((r) => r.unrecognized)).toBe(true);
   });
 
   it("merges prawns and shrimp", () => {
@@ -225,20 +225,26 @@ describe("getFoodSuggestions", () => {
   it("returns suggestions for partial input 'choc'", () => {
     const results = getFoodSuggestions("choc");
     expect(results.length).toBeGreaterThan(0);
-    expect(results.some((r) => r.name.toLowerCase().includes("chocolate"))).toBe(true);
+    expect(
+      results.some((r) => r.name.toLowerCase().includes("chocolate"))
+    ).toBe(true);
     expect(results[0]).toHaveProperty("serving");
   });
 
   it("returns suggestions for input with leading number '2choc'", () => {
     const results = getFoodSuggestions("2choc");
     expect(results.length).toBeGreaterThan(0);
-    expect(results.some((r) => r.name.toLowerCase().includes("chocolate"))).toBe(true);
+    expect(
+      results.some((r) => r.name.toLowerCase().includes("chocolate"))
+    ).toBe(true);
   });
 
   it("returns fuzzy suggestions for typos 'chiken'", () => {
     const results = getFoodSuggestions("chiken");
     expect(results.length).toBeGreaterThan(0);
-    expect(results.some((r) => r.name.toLowerCase().includes("chicken"))).toBe(true);
+    expect(results.some((r) => r.name.toLowerCase().includes("chicken"))).toBe(
+      true
+    );
   });
 
   it("limits results to the specified limit", () => {

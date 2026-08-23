@@ -18,7 +18,9 @@ interface FoodOfflineBannerProps {
  * lookup both require network; text NL logging keeps working via
  * offlineQueue; hero card uses cached data).
  */
-export default function FoodOfflineBanner({ thresholdMs }: FoodOfflineBannerProps) {
+export default function FoodOfflineBanner({
+  thresholdMs,
+}: FoodOfflineBannerProps) {
   return (
     <SustainedOfflineBanner thresholdMs={thresholdMs} bannerKey="food-offline">
       Image AI and barcode scanner are unavailable offline. Text logging keeps

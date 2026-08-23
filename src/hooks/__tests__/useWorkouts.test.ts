@@ -119,7 +119,9 @@ describe("workoutTonnageKg", () => {
             // Legacy rows: each would poison the whole sum unguarded.
             { setNumber: 2, reps: 3 },
             { setNumber: 3, weightKg: 60 },
-          ] as unknown as Parameters<typeof workoutTonnageKg>[0]["exercises"][0]["sets"],
+          ] as unknown as Parameters<
+            typeof workoutTonnageKg
+          >[0]["exercises"][0]["sets"],
         },
       ],
     });
@@ -181,9 +183,9 @@ describe("workoutTonnageKg", () => {
     // `.reduce` on undefined THROWS — for SoloFirstFeed that was a render
     // crash inside a useMemo on the cold-start social surface, not a wrong
     // number.
-    expect(
-      workoutTonnageKg({} as Parameters<typeof workoutTonnageKg>[0])
-    ).toBe(0);
+    expect(workoutTonnageKg({} as Parameters<typeof workoutTonnageKg>[0])).toBe(
+      0
+    );
     expect(
       workoutTonnageKg({
         exercises: [

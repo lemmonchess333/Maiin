@@ -136,8 +136,7 @@ function buildSplits(
     cumulative += len * pace;
     return {
       label: end === totalKm ? "Finish" : `${end} km`,
-      cumulativeS:
-        i === n - 1 ? Math.round(planTimeS) : Math.round(cumulative),
+      cumulativeS: i === n - 1 ? Math.round(planTimeS) : Math.round(cumulative),
       segmentPaceS: Math.round(pace),
     };
   });
@@ -153,8 +152,7 @@ export function buildRaceDayPlan(input: {
   const target =
     input.targetTimeS && input.targetTimeS > 0 ? input.targetTimeS : null;
   const predicted =
-    predictedRaceTimesFromFitness(input.runFitness ?? null)?.[distance] ??
-    null;
+    predictedRaceTimesFromFitness(input.runFitness ?? null)?.[distance] ?? null;
   if (!target && !predicted) return null;
 
   // Long-shot check — the same judgment the training gate makes
@@ -197,10 +195,7 @@ export function buildRaceDayPlan(input: {
   // by its source. One candidate → B is a flat +2.5% back-off.
   const candidates: { timeS: number; detail: string }[] = [];
   if (target) candidates.push({ timeS: target, detail: "Your goal" });
-  if (
-    predicted &&
-    (!target || Math.abs(predicted - target) / target > 0.01)
-  ) {
+  if (predicted && (!target || Math.abs(predicted - target) / target > 0.01)) {
     candidates.push({
       timeS: predicted,
       detail: "What your recent running implies",
@@ -214,8 +209,16 @@ export function buildRaceDayPlan(input: {
     });
   }
   const goals: RaceGoalRow[] = [
-    { tier: "A", label: raceTimeLabel(candidates[0].timeS), detail: candidates[0].detail },
-    { tier: "B", label: raceTimeLabel(candidates[1].timeS), detail: candidates[1].detail },
+    {
+      tier: "A",
+      label: raceTimeLabel(candidates[0].timeS),
+      detail: candidates[0].detail,
+    },
+    {
+      tier: "B",
+      label: raceTimeLabel(candidates[1].timeS),
+      detail: candidates[1].detail,
+    },
     { tier: "C", label: "Finish", detail: "The goal that always counts" },
   ];
 

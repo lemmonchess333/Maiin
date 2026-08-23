@@ -50,10 +50,16 @@ const rulesText = readFileSync(resolve(repoRoot, "firestore.rules"), "utf8");
  */
 function extractRulesActiveStatuses(): string[] {
   const idx = rulesText.indexOf("function isDeleting(uid)");
-  expect(idx, "firestore.rules must contain `function isDeleting(uid)`").toBeGreaterThan(-1);
+  expect(
+    idx,
+    "firestore.rules must contain `function isDeleting(uid)`"
+  ).toBeGreaterThan(-1);
   // Find the next `in [` and capture until the matching `]`.
   const inIdx = rulesText.indexOf("in [", idx);
-  expect(inIdx, "isDeleting() must use `in [...]` for active-status set").toBeGreaterThan(-1);
+  expect(
+    inIdx,
+    "isDeleting() must use `in [...]` for active-status set"
+  ).toBeGreaterThan(-1);
   const closeIdx = rulesText.indexOf("]", inIdx);
   const slice = rulesText.slice(inIdx + 4, closeIdx);
   // Pick out single-quoted strings.
@@ -80,7 +86,10 @@ describe("active-status drift across sources", () => {
   it("every active status is a valid status in the ledger STATE_GRAPH", () => {
     const validStatuses = Object.keys(ledger.STATE_GRAPH);
     for (const s of jsActive) {
-      expect(validStatuses, `status '${s}' is active but not in STATE_GRAPH`).toContain(s);
+      expect(
+        validStatuses,
+        `status '${s}' is active but not in STATE_GRAPH`
+      ).toContain(s);
     }
   });
 
@@ -111,6 +120,9 @@ describe("active-status drift across sources", () => {
       "requested",
       "running",
     ];
-    expect(allKnown, "STATE_GRAPH has a new status — explicitly classify it as active or non-active in this test and in firestore.rules isDeleting()").toEqual(expectedAllKnown);
+    expect(
+      allKnown,
+      "STATE_GRAPH has a new status — explicitly classify it as active or non-active in this test and in firestore.rules isDeleting()"
+    ).toEqual(expectedAllKnown);
   });
 });

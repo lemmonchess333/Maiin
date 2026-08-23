@@ -334,7 +334,7 @@ export default function ExercisePicker({
               </div>
               {filteredExercises.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-16 px-8">
-                  <Search className="size-12 text-muted-foreground/30 mb-3" />
+                  <Search className="size-12 text-muted-foreground mb-3" />
                   <p className="text-base font-semibold text-foreground">
                     No exercises found
                   </p>

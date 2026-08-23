@@ -34,7 +34,7 @@ export function getShareTier(sets: number, totalSets: number): ShareTier {
 
 export function getFrequencyForShare(
   sets: number,
-  totalSets: number,
+  totalSets: number
 ): 1 | 2 | 3 {
   const tier = getShareTier(sets, totalSets);
   if (tier === "low") return 1;

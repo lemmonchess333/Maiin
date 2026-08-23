@@ -30,7 +30,10 @@ import type { ProgramState } from "@/features/program/programTypes";
  * the same.
  */
 export function deloadRunSwapCount(
-  state: Pick<ProgramState, "runDays" | "deloadSnapshot" | "weekNumber"> | null | undefined
+  state:
+    | Pick<ProgramState, "runDays" | "deloadSnapshot" | "weekNumber">
+    | null
+    | undefined
 ): number {
   if (!state) return 0;
   const snap = state.deloadSnapshot;

@@ -92,7 +92,7 @@ export const initialRunPhase: RunPhase = "waiting";
 
 export function runSessionReducer(
   state: RunPhase,
-  action: RunSessionAction,
+  action: RunSessionAction
 ): RunPhase {
   switch (action.type) {
     case "START_MANUAL":

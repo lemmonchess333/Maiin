@@ -1,6 +1,9 @@
 import { useCallback, type ReactNode } from "react";
 import { useInViewOnce } from "@/hooks/useInViewOnce";
-import { track as trackProgrammeEvent, type ProgrammeSection } from "@/lib/programmeAnalytics";
+import {
+  track as trackProgrammeEvent,
+  type ProgrammeSection,
+} from "@/lib/programmeAnalytics";
 
 interface TrackProgrammeSectionViewProps {
   /** Section identifier matching the ProgrammeSection union — fires

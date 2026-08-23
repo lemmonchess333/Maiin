@@ -20,7 +20,10 @@
  *  80 ≤ density < 200 kg/min    → MET 4.5  (moderate density)
  *  density ≥ 200 kg/min         → MET 5.5  (high density, heavy low-rep)
  */
-export function selectLiftMET(tonnageKg: number, durationMinutes: number): number {
+export function selectLiftMET(
+  tonnageKg: number,
+  durationMinutes: number
+): number {
   if (tonnageKg === 0) return 4.5;
   if (durationMinutes <= 0) return 4.5;
   const density = tonnageKg / durationMinutes;
@@ -44,11 +47,11 @@ export interface LiftBurnInput {
  * the old `exercises.length × 5` placeholder.
  */
 export function estimateLiftBurn(params: LiftBurnInput): number {
-  const { durationMinutes, tonnageKg, bodyweightKg, completedSetCount } = params;
+  const { durationMinutes, tonnageKg, bodyweightKg, completedSetCount } =
+    params;
 
-  const effectiveDuration = durationMinutes > 0
-    ? durationMinutes
-    : completedSetCount * 3;
+  const effectiveDuration =
+    durationMinutes > 0 ? durationMinutes : completedSetCount * 3;
 
   if (effectiveDuration === 0 || bodyweightKg <= 0) return 0;
 

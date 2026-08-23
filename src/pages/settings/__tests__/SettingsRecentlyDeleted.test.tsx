@@ -17,7 +17,10 @@ const hardDeleteMock = vi.fn(async () => undefined);
 let deletedMealsMock: Meal[] = [];
 
 vi.mock("@/hooks/useMeals", async () => {
-  const actual = await vi.importActual<typeof import("@/hooks/useMeals")>("@/hooks/useMeals");
+  const actual =
+    await vi.importActual<typeof import("@/hooks/useMeals")>(
+      "@/hooks/useMeals"
+    );
   return {
     ...actual,
     useMeals: () => ({
@@ -51,7 +54,7 @@ function makeMeal(overrides: Partial<Meal> & { deletedAtMs?: number }): Meal {
     confidence: "high",
     createdAt: null,
     deletedAt: deletedAtMs
-      ? { toDate: () => new Date(deletedAtMs) } as unknown
+      ? ({ toDate: () => new Date(deletedAtMs) } as unknown)
       : null,
     ...rest,
   };
@@ -77,7 +80,12 @@ describe("SettingsRecentlyDeleted — empty state", () => {
 describe("SettingsRecentlyDeleted — listing", () => {
   it("renders each soft-deleted meal with calories + relative-time label", () => {
     deletedMealsMock = [
-      makeMeal({ id: "m-1", foodName: "Oats", totalCalories: 320, deletedAtMs: Date.now() - 30_000 }),
+      makeMeal({
+        id: "m-1",
+        foodName: "Oats",
+        totalCalories: 320,
+        deletedAtMs: Date.now() - 30_000,
+      }),
     ];
     renderWith(<SettingsRecentlyDeleted />);
     expect(screen.getByText("Oats")).toBeInTheDocument();
@@ -90,7 +98,11 @@ describe("SettingsRecentlyDeleted — listing", () => {
   it("sorts most-recently-deleted first", () => {
     const now = Date.now();
     deletedMealsMock = [
-      makeMeal({ id: "old", foodName: "Older", deletedAtMs: now - 6 * 3_600_000 }),
+      makeMeal({
+        id: "old",
+        foodName: "Older",
+        deletedAtMs: now - 6 * 3_600_000,
+      }),
       makeMeal({ id: "new", foodName: "Newer", deletedAtMs: now - 60_000 }),
     ];
     renderWith(<SettingsRecentlyDeleted />);
@@ -115,7 +127,9 @@ describe("SettingsRecentlyDeleted — actions", () => {
     deletedMealsMock = [makeMeal({ id: "m-2", foodName: "Toast" })];
     renderWith(<SettingsRecentlyDeleted />);
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /Permanently delete Toast/i }));
+      fireEvent.click(
+        screen.getByRole("button", { name: /Permanently delete Toast/i })
+      );
     });
     expect(hardDeleteMock).toHaveBeenCalledWith("m-2");
     expect(restoreMock).not.toHaveBeenCalled();
