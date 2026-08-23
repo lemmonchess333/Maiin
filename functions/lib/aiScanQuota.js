@@ -33,6 +33,18 @@
  * fresh window on their first post-F1b call; no migration script
  * needed.
  *
+ * Mirror discipline (ADR-0008): `DAILY_LIMITS` below mirrors
+ * src/lib/subscription.ts `DAILY_AI_LIMITS`, and this is the copy that
+ * ACTUALLY allows or denies a scan — the client copy only decides whether
+ * to render the Scan-Meal CTA or an upgrade prompt. Pinned byte-identical
+ * by src/lib/__tests__/aiScanQuota.parity.cross.test.ts.
+ *
+ * That cross-test existed for months before this paragraph did, and the
+ * mirror gate could not see it: the declaration lived only on the CLIENT
+ * side, and the gate scans the functions tree. A mirror is a relation
+ * between two files, so whichever end a reader arrives from has to be able
+ * to find the other — hence the declaration on both.
+ *
  * Pinned-by-test invariants live in `__tests__/aiScanQuota.test.js`.
  */
 
