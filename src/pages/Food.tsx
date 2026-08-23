@@ -847,7 +847,7 @@ export default function Food() {
       const zeroItems = items.filter((i) => i.calories === 0);
       if (zeroItems.length > 0) {
         toast.warning(
-          `Couldn't find macros for: ${zeroItems.map((i) => i.name).join(", ")}. Try searching for accurate data.`,
+          `Couldn't find macros for: ${zeroItems.map((i) => i.name).join(", ")}. Search the foods to fill them in.`,
           { id: "food-nl-warning" }
         );
       }
@@ -1720,7 +1720,7 @@ export default function Food() {
         <motion.div variants={itemVariant}>
           <div className="flex items-center gap-3 rounded-xl bg-running/10 px-4 py-3">
             <p className="flex-1 text-sm text-foreground">
-              Nice run — carbs + protein soon help recovery.
+              Nice run — refuel with carbs and protein.
               {(() => {
                 const proteinLeft = Math.max(
                   0,

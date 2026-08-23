@@ -330,8 +330,8 @@ export default function HeroDrillDownSheet({
                 <>
                   <p className="text-xs text-muted-foreground leading-relaxed">
                     {dailyTargets.targetTooAggressive
-                      ? "Your plan knows today is a training day. Pro first protects protein and essential fat within a tight calorie target."
-                      : "Your plan knows today is a training day. Pro shifts carbs up and fat down while keeping calories steady."}
+                      ? "Today is a training day. Pro protects protein and essential fat first within a tight calorie target."
+                      : "Today is a training day. Pro shifts carbs up and fat down while keeping calories steady."}
                   </p>
                   <Button
                     variant="ghost"

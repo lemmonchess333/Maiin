@@ -1,7 +1,7 @@
 import { THEME } from "@/lib/theme";
 
 /**
- * Nutr2 / #981 — the "Personalizing your metabolism" warmup indicator.
+ * Nutr2 / #981 — the "Learning your metabolism" warmup indicator.
  *
  * Tier-1 ambient/inline (NOT a popup or toast): a thin progress bar that
  * annotates the calorie target while the adaptive-TDEE estimator collects
@@ -28,7 +28,7 @@ export default function AdaptiveWarmupBar({
     <div className="mt-2" role="status" aria-live="polite">
       <div className="flex items-center justify-between gap-2 mb-1">
         <span className="text-caption font-medium text-muted-foreground/80">
-          Personalizing your metabolism
+          Learning your metabolism
         </span>
         <span
           className="text-caption font-mono tabular-nums text-muted-foreground/60"
@@ -48,7 +48,7 @@ export default function AdaptiveWarmupBar({
       </div>
       {stalled && (
         <p className="mt-1 text-caption leading-snug text-muted-foreground">
-          Keep logging meals + weigh-ins to keep personalizing.
+          Keep logging meals and weigh-ins to keep learning.
         </p>
       )}
     </div>

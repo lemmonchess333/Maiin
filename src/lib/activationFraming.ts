@@ -91,7 +91,7 @@ export function isWelcomeChecklistComplete(
 }
 
 /**
- * Whether the Home "Welcome to Tropos!" cold-start checklist should render.
+ * Whether the Home "Welcome to Tropos" cold-start checklist should render.
  *
  * Visibility is DATA-DERIVED, not just a one-time localStorage flag — the old
  * behaviour (a bare `useCoachMarks` dismissed-flag) left the card stranded on

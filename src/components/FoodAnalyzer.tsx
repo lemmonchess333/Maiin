@@ -840,7 +840,7 @@ export default function FoodAnalyzer({
       {showError && !activeResult && (
         <div className="bg-destructive/10 rounded-xl p-4 space-y-2">
           <p className="text-sm text-destructive-strong">
-            Couldn't identify food. Try manual entry.
+            Couldn't identify food.
           </p>
           <div className="flex gap-3">
             <button

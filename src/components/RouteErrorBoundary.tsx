@@ -38,8 +38,7 @@ export default class RouteErrorBoundary extends Component<Props, State> {
       // "Please try again" in production.
       const isDev = import.meta.env.DEV;
       const errorText = isDev
-        ? this.state.error?.message ||
-          "An unexpected error occurred on this page."
+        ? this.state.error?.message || "This page couldn't load."
         : "Please try again. If the problem keeps happening, restart Tropos.";
       return (
         <div

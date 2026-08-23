@@ -61,11 +61,11 @@ const COACH_AUTHOR = Object.freeze({
 const INTEREST_PROMPTS = Object.freeze([
   {
     title: "What's your week one win?",
-    body: "New week, clean slate. What's the ONE session you're definitely not skipping this week — and what usually gets in its way? Naming the obstacle out loud is half the fix.",
+    body: "New week, clean slate. What's the ONE session you're definitely not skipping this week — and what usually gets in its way?",
   },
   {
     title: "Coach tip: the 10-minute rule",
-    body: "Motivation low? Commit to just the first 10 minutes of the session. If you still want to stop after that, stop — you almost never will. Consistency is built on showing up small, not feeling ready.",
+    body: "Motivation low? Commit to just the first 10 minutes of the session. If you still want to stop after that, stop — you almost never will.",
   },
   {
     title: "What did your last rest day look like?",
@@ -77,7 +77,7 @@ const INTEREST_PROMPTS = Object.freeze([
   },
   {
     title: "One exercise you'd never drop?",
-    body: "If your programme got cut to five movements, what survives — and why? There are no wrong answers, only interesting ones.",
+    body: "If your programme got cut to five movements, what survives — and why?",
   },
   {
     title: "Coach tip: protect the easy days",
@@ -89,7 +89,7 @@ const INTEREST_PROMPTS = Object.freeze([
   },
   {
     title: "Coach tip: the deload isn't optional",
-    body: "Feeling flat for a week straight, sleep off, weights heavier than the numbers say? That's not weakness — that's the signal. An easier week now buys you a stronger month.",
+    body: "Feeling flat for a week straight, sleep off, weights heavier than the numbers say? That's the signal to ease off. An easier week now buys you a stronger month.",
   },
   {
     title: "What got you into training?",
@@ -97,7 +97,7 @@ const INTEREST_PROMPTS = Object.freeze([
   },
   {
     title: "Coach tip: pair the habit",
-    body: "Struggling to make sessions stick? Anchor them to something that already happens daily — same time, same trigger, same bag by the door. The calendar beats willpower every time.",
+    body: "Struggling to make sessions stick? Anchor them to something that already happens daily — same time, same trigger, same bag by the door.",
   },
 ]);
 
@@ -112,11 +112,11 @@ const RACE_PROMPTS = Object.freeze([
   },
   {
     title: "What's your goal for this one?",
-    body: "Time goal, finish-line goal, or just-get-round goal — all three are real races. Say yours out loud. Written-down goals get chased harder.",
+    body: "Time goal, finish-line goal, or just-get-round goal — all three are real races. Say yours out loud.",
   },
   {
     title: "Coach tip: the taper will feel wrong",
-    body: "When the volume drops, expect phantom niggles, restlessness and doubt — that's the adaptation arriving, not fitness leaving. Trust the block you've already banked.",
+    body: "When the volume drops, expect phantom niggles, restlessness and doubt — that's normal in a taper. Trust the block you've already banked.",
   },
   {
     title: "Kit check: what are you racing in?",

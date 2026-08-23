@@ -94,9 +94,7 @@ import {
 } from "../lib/runGuards";
 import { getDistanceComparison } from "@/lib/funComparisons";
 import { elevationLabel } from "@/lib/runLabels";
-import {
-  gradeAdjustedPace,
-} from "../lib/gradeAdjustedPace";
+import { gradeAdjustedPace } from "../lib/gradeAdjustedPace";
 
 /* Reusable retry banner. Shown above the action row on a save
  * failure. Coral-tinted to read as in-flow rather than modal-alert.
@@ -120,7 +118,9 @@ function RetryBanner({
         aria-hidden="true"
       />
       <div className="flex-1 text-xs text-foreground/80">
-        <p className="font-medium text-running-strong">Couldn&apos;t save your run</p>
+        <p className="font-medium text-running-strong">
+          Couldn&apos;t save your run
+        </p>
         <p className="mt-0.5 text-muted-foreground">
           {error || "We couldn't save this run."}
         </p>
@@ -1124,12 +1124,12 @@ export default function RunSummary() {
           const alert = await updateMileage(effectiveShoeId, distance / 1000);
           if (alert === "replace") {
             toast.error(
-              "Time for new shoes! This pair has exceeded its recommended mileage.",
+              "Time for new shoes — this pair is past its recommended mileage.",
               { duration: 5000 }
             );
           } else if (alert === "warning") {
             toast.warning(
-              "Your shoes are at 85% of their recommended mileage. Start looking for a replacement!",
+              "Your shoes are at 85% of their recommended mileage — start thinking about a replacement.",
               { duration: 5000 }
             );
           }
@@ -1397,7 +1397,7 @@ export default function RunSummary() {
                       Off-plan save
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {`This didn't match today's ${plannedTypeLabel}. How should we handle the scheduled slot?`}
+                      {`This didn't match today's ${plannedTypeLabel}. What should happen to the planned run?`}
                     </p>
                   </div>
                   <div className="grid grid-cols-1 gap-2">

@@ -328,7 +328,7 @@ export default function FoodCameraModal({
             }
             stopZXingRef.current = null;
             if (cancelled) return;
-            setBarcodeHint("Found!");
+            setBarcodeHint("Barcode found");
 
             await onBarcodeDetectedRef.current(text);
           }
@@ -1101,7 +1101,7 @@ export default function FoodCameraModal({
               jump every time the user toggled tabs. Reserving the
               row's height + crossfading the text keeps the scaffold
               stable; AnimatePresence is keyed on the hint string so a
-              hint change ("Scanning…" → "Found!") also crossfades. */}
+              hint change ("Scanning…" → "Barcode found") also crossfades. */}
           <div
             className="h-4 flex items-center justify-center"
             aria-live="polite"

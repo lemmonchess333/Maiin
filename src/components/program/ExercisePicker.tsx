@@ -36,7 +36,7 @@ export default function ExercisePicker({
   onSelect,
   onMultiSelect,
   onClose,
-  headerTitle = "Select Exercise",
+  headerTitle = "Select exercise",
   existingExerciseIds,
   onRemoveExercise,
 }: Props) {

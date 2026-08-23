@@ -406,6 +406,37 @@ Use the `/browse` skill from gstack for **all web browsing**. Never use `mcp__cl
 - `/retro` — Retrospective
 - `/document-release` — Document a release
 
+## House voice — how Tropos talks (app-wide, 2026-08-22)
+
+The rubric has lived in `src/lib/performanceInsights.ts`'s header since it
+was written; the 2026-08-22 copy sweep found the rest of the app was never
+held to it, so it is now the APP-WIDE standard, not an insights-file local:
+
+- **Observational, not judgmental.** "Load is high" ✓ · "You're crushing
+  it!" ✗. State what the data shows; pair it with what to consider next.
+- **No exclamation-mark cheer in UI chrome.** Confirmations, toasts,
+  banners, summaries: "Saved", "Meal logged", never "Saved!". The
+  checkmark carries the success.
+- **No AI-tells.** "Your plan knows…" (anthropomorphised app), "unlock /
+  elevate / seamless / your journey", motivational-poster tails glued
+  onto clean sentences ("…that's what drives progress"), a literal "+"
+  in prose, and the every-sentence-ends-in-an-epigram cadence (one strong
+  line is a coach; ten out of ten is a language model — the coachPrompts
+  trim was exactly this).
+- **No system-speak.** Users search for a food, not "accurate data"; a
+  planned run is not a "scheduled slot"; nothing "occurred unexpectedly".
+- **Genre exceptions are real and stay.** Spoken mid-run audio cues are
+  NRC-register coach speech ("Last one — leave nothing!" is correct
+  THERE); kudos quick-chips are the USER'S voice to a friend ("Nice
+  run!" stays); badge names are Fitbit-era vernacular ("Week Warrior"
+  stays); share-card fun facts are playful by design. Do not flatten
+  these into the calm-chrome register.
+- **Buttons are sentence case** ("Start workout", "Add exercise") — the
+  Title Case strays kept reading unpolished next to the majority.
+- Reference register when unsure: Strava (data-forward, terse), Hevy
+  (minimal utility), MyFitnessPal (plain), MacroFactor (never shames a
+  high day), Happy Scale (a stall reads as "expected", not failure).
+
 ## Tropos Design System
 
 ### Visual Identity

@@ -3,9 +3,9 @@ import { render, screen } from "@testing-library/react";
 import AdaptiveWarmupBar from "../AdaptiveWarmupBar";
 
 describe("AdaptiveWarmupBar", () => {
-  it("renders the personalizing label and the rounded percentage", () => {
+  it("renders the learning label and the rounded percentage", () => {
     render(<AdaptiveWarmupBar fraction={0.5} stalled={false} />);
-    expect(screen.getByText("Personalizing your metabolism")).toBeTruthy();
+    expect(screen.getByText("Learning your metabolism")).toBeTruthy();
     expect(screen.getByText("50%")).toBeTruthy();
   });
 

@@ -5,11 +5,7 @@ import {
   predictedRaceTimesFromFitness,
   type RaceDistanceKey,
 } from "@/lib/runPaces";
-import {
-  paceMinSec,
-  finishTimeLabel,
-  distanceLabel,
-} from "@/lib/runLabels";
+import { paceMinSec, finishTimeLabel, distanceLabel } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { paceUnitLabel } from "@/lib/distanceUnits";
 import { THEME } from "@/lib/theme";
@@ -58,8 +54,8 @@ export default function RacePredictionsCard() {
           compact
           icon={Timer}
           accent={THEME.running}
-          headline="Race predictions unlock after a few runs"
-          sub="Log three outdoor runs and Tropos derives your fitness benchmark automatically — or set a recent race time yourself."
+          headline="Race predictions appear after a few runs"
+          sub="Log three outdoor runs and Tropos estimates your fitness level — or set a recent race time yourself."
           action={{
             label: "Set a race time",
             href: "/settings/training",
@@ -111,7 +107,7 @@ export default function RacePredictionsCard() {
             {sourceLabel ? ` — ${sourceLabel}` : ""}.{" "}
           </>
         ) : (
-          <>Based on your stored fitness level. </>
+          <>Based on your current fitness level. </>
         )}
         {/* inline-block + negative-margin padding: keeps the footnote rhythm
             while clearing the 44px touch floor for the only tap target */}

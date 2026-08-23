@@ -795,7 +795,7 @@ export function useProgram() {
   // PR-G: auto week-rollover effect. When the user opens the app
   // and the calendar week has advanced past the week their
   // runDays were generated for, automatically rotate forward to
-  // catch up. Mirrors what the user-tapped "Advance to Next Week"
+  // catch up. Mirrors what the user-tapped "Start next week"
   // button does on the Lift tab, but driven by calendar instead
   // of lift completion.
   //
@@ -954,7 +954,15 @@ export function useProgram() {
       .catch((err) => {
         logger.warn("[auto-rollover] save failed", err);
       });
-  }, [programState, profile, saveProgram, recovery, layoffRead, recentLayoff, user]);
+  }, [
+    programState,
+    profile,
+    saveProgram,
+    recovery,
+    layoffRead,
+    recentLayoff,
+    user,
+  ]);
 
   /**
    * D1 — calendar week rollover for the LIFT side.
@@ -1347,7 +1355,7 @@ export function useProgram() {
       const allDone = updated.workouts.every((d) => d.completed || d.skipped);
       if (allDone) {
         toast.success(
-          "All workouts complete! Advance to next week when ready."
+          "All workouts complete. Start next week when you're ready."
         );
       }
       return { workoutId };
@@ -3035,16 +3043,25 @@ export function useProgram() {
         // the dayIndex otherwise — the same key `applyDeloadRunSwaps` builds
         // its map from, so the two sides agree on identity.
         const byKey = new Map(
-          after.map((rd) => [rd.id != null ? String(rd.id) : String(rd.dayIndex), rd])
+          after.map((rd) => [
+            rd.id != null ? String(rd.id) : String(rd.dayIndex),
+            rd,
+          ])
         );
         const wasByKey = new Map(
-          before.map((rd) => [rd.id != null ? String(rd.id) : String(rd.dayIndex), rd])
+          before.map((rd) => [
+            rd.id != null ? String(rd.id) : String(rd.dayIndex),
+            rd,
+          ])
         );
         let landed = 0;
         for (const s of command.runSwaps) {
           const now = byKey.get(s.runDayId);
           const was = wasByKey.get(s.runDayId);
-          if (now?.templateId === s.templateId && was?.templateId !== s.templateId) {
+          if (
+            now?.templateId === s.templateId &&
+            was?.templateId !== s.templateId
+          ) {
             landed += 1;
           }
         }

@@ -2,10 +2,10 @@
  * Pre-session chooser capture (PROGRAM-ADAPT-01 — the 393px light+dark
  * visual QA for "Easier today").
  *
- * The chooser now opens on EVERY "Begin Workout" (Easier today is
- * always offered), so the capture drives Program → Begin Workout and
+ * The chooser now opens on EVERY "Start workout" (Easier today is
+ * always offered), so the capture drives Program → Start workout and
  * shoots the sheet in both themes. The rich-seeded e2e user has an
- * all-lift weekSchedule + a programme, so Begin Workout renders on
+ * all-lift weekSchedule + a programme, so Start workout renders on
  * every weekday CI runs.
  *
  * Rig conventions: fresh context per spec file, short best-effort
@@ -52,8 +52,8 @@ test.describe("easier today screenshots", () => {
     await page
       .getByRole("navigation", { name: /main navigation/i })
       .waitFor({ state: "visible", timeout: 20000 });
-    // The chooser opens from "Short on time?", NOT from Begin Workout.
-    // This spec waited on Begin Workout until 2026-08-10, which stopped
+    // The chooser opens from "Short on time?", NOT from Start workout.
+    // This spec waited on Start workout until 2026-08-10, which stopped
     // being that path on 2026-08-05 ("begin means begin" — the every-tap
     // interstitial was removed as too much choice; see the header comment
     // in ExpressSessionSheet.tsx). Nobody noticed because the whole

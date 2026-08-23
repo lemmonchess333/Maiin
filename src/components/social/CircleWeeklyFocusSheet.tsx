@@ -69,7 +69,7 @@ export default function CircleWeeklyFocusSheet({
       open={open}
       onOpenChange={onOpenChange}
       title="Weekly focus"
-      description="One shared intention for the week. Only the focus you choose is shared — never numbers, meals, photos or plans."
+      description="One shared focus for the week. Only the focus you choose is shared — never numbers, meals, photos or plans."
     >
       <div className="space-y-3 pb-2">
         <div className="space-y-2" role="radiogroup" aria-label="Weekly focus">

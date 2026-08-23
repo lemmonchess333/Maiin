@@ -590,27 +590,30 @@ export default function Home() {
   });
   // Cal-A: scroll target for the today-tap shortcut (the session cards).
   const sessionsRef = useRef<HTMLDivElement>(null);
-  const handleDayTap = useCallback(function (dk: string) {
-    try {
-      localStorage.setItem(dayTapSeenKey, "1");
-    } catch {
-      /* private mode — hint will re-show, minor */
-    }
-    setShowDayTapHint(false);
-    // Cal-A: tapping TODAY is redundant with the live session cards
-    // right below — scroll to them instead of re-printing a peek copy.
-    if (dk === localDateString()) {
-      setPeekDate(null);
-      sessionsRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
+  const handleDayTap = useCallback(
+    function (dk: string) {
+      try {
+        localStorage.setItem(dayTapSeenKey, "1");
+      } catch {
+        /* private mode — hint will re-show, minor */
+      }
+      setShowDayTapHint(false);
+      // Cal-A: tapping TODAY is redundant with the live session cards
+      // right below — scroll to them instead of re-printing a peek copy.
+      if (dk === localDateString()) {
+        setPeekDate(null);
+        sessionsRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+        return;
+      }
+      setPeekDate(function (p) {
+        return p === dk ? null : dk;
       });
-      return;
-    }
-    setPeekDate(function (p) {
-      return p === dk ? null : dk;
-    });
-  }, [dayTapSeenKey]);
+    },
+    [dayTapSeenKey]
+  );
   const closePeek = useCallback(function () {
     setPeekDate(null);
   }, []);
@@ -854,7 +857,7 @@ export default function Home() {
         >
           <div className="flex items-center justify-between">
             <p className="text-sm font-bold text-foreground">
-              Welcome to Tropos!
+              Welcome to Tropos
             </p>
             <button
               type="button"
@@ -1100,7 +1103,7 @@ export default function Home() {
           tipKey="body-metrics-v1"
           lanePriority={20}
           title="Personalise your calorie targets"
-          description="Add your age and sex so we can tune your TDEE more accurately than the defaults."
+          description="Add your age and sex to make your calorie target more accurate."
           visible={!profile?.age || !profile?.sex}
         />
 
@@ -1442,7 +1445,7 @@ export default function Home() {
                         animate={{ scale: 1, opacity: 1 }}
                         className="inline-flex items-center gap-2"
                       >
-                        <Check className="size-5" /> Saved!
+                        <Check className="size-5" /> Saved
                       </motion.span>
                     ) : (
                       <motion.span

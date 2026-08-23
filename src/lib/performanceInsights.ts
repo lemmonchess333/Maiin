@@ -221,17 +221,17 @@ const ADHERENCE_TEMPLATES: Record<ScoreBand, PerformanceInsight[]> = {
     {
       source: "adherence",
       headline: "On plan",
-      body: "Sessions matched the plan closely this week. Consistency compounds.",
+      body: "Sessions matched the plan closely this week. Keep the current cadence.",
     },
     {
       source: "adherence",
       headline: "Consistent week",
-      body: "Adherence was high this week — that's what drives progress.",
+      body: "Adherence was high this week. Nothing needs changing.",
     },
     {
       source: "adherence",
       headline: "You stuck to the plan",
-      body: "You followed the plan this week. Keep it steady and the progress follows.",
+      body: "You followed the plan this week. Keep it steady.",
     },
   ],
 };
