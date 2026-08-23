@@ -38,6 +38,7 @@ import { buildPRMap, checkSetPR } from "@/lib/prTracking";
 import { isSetEligibleForStrengthPr } from "@/features/program/sessionSetPolicy";
 import { fetchBodyweightLogs } from "@/lib/api";
 import { resolveRunPlanSurface } from "@/lib/runProgrammeViewModel";
+import { isActiveMealDoc } from "@/lib/mealTotals";
 import { logger } from "@/lib/logger";
 import {
   resolveDeloadRecommended,
@@ -334,7 +335,10 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
         const byDay = new Map<string, number>();
         for (const d of mealsSnap.docs) {
           const m = d.data() as Record<string, unknown>;
-          if (m.deletedAt) continue;
+          // HOME-MEALS-01 via the shared predicate — this was a correct
+          // hand-written copy of the rule, which is exactly how a rule
+          // ends up with several owners and one of them drifts.
+          if (!isActiveMealDoc(m)) continue;
           if (typeof m.date !== "string") continue;
           const cals =
             typeof m.totalCalories === "number" ? m.totalCalories : 0;

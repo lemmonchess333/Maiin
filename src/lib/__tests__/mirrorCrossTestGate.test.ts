@@ -80,7 +80,7 @@ const repoRoot = resolve(here, "../../..");
 // that were caught. The span is capped and stops at a full stop so it cannot
 // run across sentences into an unrelated path mention.
 const MIRROR_RE =
-  /mirror of|mirrors? the client|ids mirror the|to mirror `|in lockstep|keep .{0,24}in lockstep|MUST return identical|identical output|parity seam|mirrors?\b[^.\n]{0,40}?\bsrc\/[\w./-]+/i;
+  /mirror of|mirrors? (?:the )?client|ids mirror the|to mirror `|in lockstep|keep .{0,24}in lockstep|MUST return identical|identical output|parity seam|mirror(?:s|ing)?\b[^.\n]{0,40}?\bsrc\/[\w./-]+/i;
 
 // Escape hatches. `@unwired` requires a reason after the colon.
 //
@@ -209,6 +209,30 @@ const PINNED: Record<string, string> = {
   // getWeeklyRunTarget's ??-semantics (explicit 0 authoritative).
   "functions/lib/fellBehindWeek.js":
     "src/lib/__tests__/weeklyRunTargetParity.cross.test.ts",
+  // HOME-MEALS-01 — the soft-delete predicate. Both copies run: the client
+  // for every meals reader, the server for the PI adherence pass.
+  "functions/lib/mealDocs.js":
+    "src/lib/__tests__/mealActiveSingleSource.test.ts",
+  // Effective subscription tier. The SERVER copy is the one that spends
+  // money (Vertex scan quota, Mapbox routing, adherence target); the client
+  // copy decides what is offered. Invisible to this gate until 2026-08-22 —
+  // its header says "mirrors client getSubscriptionInfo" and the detector
+  // wanted the definite article. See PHRASINGS below.
+  "functions/helpers.js":
+    "src/lib/__tests__/subscriptionTierMirror.cross.test.ts",
+  // Which calorie target the server scores adherence against — the RUNNING
+  // copy of adaptiveTarget.ts's resolveTargetSource. Also invisible until
+  // 2026-08-22: it writes "mirroring src/lib/adaptiveTarget.ts", and the
+  // detector matched only "mirror"/"mirrors", not the gerund.
+  "functions/lib/calorieTargetResolution.js":
+    "src/lib/__tests__/adaptiveTargetMirror.cross.test.ts",
+  // Daily AI-scan limits. The cross-test predates this entry by months —
+  // the mirror was declared only on the CLIENT side (subscription.ts's
+  // "Mirror of functions/lib/aiScanQuota.js DAILY_LIMITS"), and a scan of
+  // the functions tree cannot see that by construction. The server file now
+  // declares it too, which is what makes this entry reachable.
+  "functions/lib/aiScanQuota.js":
+    "src/lib/__tests__/aiScanQuota.parity.cross.test.ts",
 };
 
 // Flagged by the heuristic but NOT a TS↔JS equality mirror — reason each.
@@ -341,6 +365,14 @@ describe("mirror cross-test gate", () => {
         "functions/adminAuth.js",
         'plain English — "the client-side mirror in <path>", noun and path separated',
       ],
+      [
+        "functions/helpers.js",
+        '"mirrors client <fn>" — the definite article dropped',
+      ],
+      [
+        "functions/lib/calorieTargetResolution.js",
+        '"mirroring src/<path>" — the gerund, which `mirrors?` cannot match',
+      ],
     ];
     const missed = PHRASINGS.filter(([f]) => !flagged.includes(f)).map(
       ([f, why]) => `${f} (${why})`
@@ -366,6 +398,37 @@ describe("mirror cross-test gate", () => {
       .filter(([, test]) => !existsSync(resolve(repoRoot, test)))
       .map(([mirror, test]) => `${mirror} → ${test}`);
     expect(missing, `PINNED cross-tests that don't exist`).toEqual([]);
+  });
+
+  it("every PINNED cross-test actually LOADS the module it claims to pin", () => {
+    /* The existence check above is the ADR-0008 mistake in miniature: it
+       proves a FILE is there, never that the file reaches the code. A pin
+       whose test was gutted, renamed onto a different module, or written
+       against a re-implementation stays green — which is exactly how
+       `scheduledRunCompletion.js` sat pinned, tested, and `require`d by
+       nothing while a third copy did the work.
+
+       Structural, so it costs nothing and chases no English: the named test
+       must carry an import/require specifier ending in the module's
+       basename. It cannot prove the test EXERCISES the module meaningfully
+       — no cheap check can — but "the pin names a file that never loads
+       it" is the failure that has actually happened here, twice. */
+    const notLoaded: string[] = [];
+    for (const [mirror, test] of Object.entries(PINNED)) {
+      const abs = resolve(repoRoot, test);
+      if (!existsSync(abs)) continue; // reported by the test above
+      const base = basename(mirror, ".js");
+      const spec = new RegExp(`["'\`][^"'\`]*[/]${base}(\\.js)?["'\`]`);
+      if (!spec.test(stripComments(readFileSync(abs, "utf8")))) {
+        notLoaded.push(`${mirror} → ${test}`);
+      }
+    }
+    expect(
+      notLoaded,
+      `These cross-tests are named as the pin for a functions module but ` +
+        `never import or require it. Either the pin points at the wrong ` +
+        `test, or the test stopped loading the copy that runs`
+    ).toEqual([]);
   });
 
   it("classifications stay honest (no entry for a deleted file)", () => {
