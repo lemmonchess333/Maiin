@@ -379,7 +379,13 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
         planTotalWeeks,
         scheduledRunId: resolvedPlannedDay?.id ?? null,
       },
-      prefill: templateToPrefill(tmpl, inputs.displayUnit, inputs.paceTable, race),
+      prefill: templateToPrefill(
+        tmpl,
+        inputs.displayUnit,
+        inputs.paceTable,
+        race,
+        cueSeed(resolvedPlannedDay?.id ?? tmpl.id, planWeekIndex)
+      ),
     };
   }
 
@@ -504,7 +510,8 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
           plannedTemplate,
           inputs.displayUnit,
           inputs.paceTable,
-          race
+          race,
+          cueSeed(todayDay.id ?? plannedTemplate.id, planWeekIndex)
         ),
       };
     }
@@ -768,6 +775,17 @@ function resolveRaceEnrichment(
   };
 }
 
+/** Deterministic cue-rotation seed from run identity. The builders'
+ *  variation pools rotate on it, so the same session on a DIFFERENT day
+ *  (or plan week) opens with different lines while staying reproducible
+ *  for tests — no clock, no Math.random (the runCueCopy contract). */
+function cueSeed(id: string, weekIndex: number | null): number {
+  const key = `${id}:${weekIndex ?? 0}`;
+  let h = 0;
+  for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) % 9973;
+  return h;
+}
+
 function templateToPrefill(
   tmpl: RunTemplate,
   /* Segment LABELS and spoken CUES are authored here, so plan generation
@@ -777,7 +795,8 @@ function templateToPrefill(
      every consumer; this keeps the unit honest without that. */
   unit: DistanceUnit,
   paceTable?: PaceTable | null,
-  race?: RaceEnrichment | null
+  race?: RaceEnrichment | null,
+  seed: number = 0
 ): RunPlanPrefill {
   const prefill: RunPlanPrefill = { activityType: tmpl.type };
   // A2 gating: tempo runs at goal pace through build AND taper (race
@@ -848,18 +867,20 @@ function templateToPrefill(
   // structure with the resolved target pace; strides from the easy variant.
   // A2 adds the build-phase long run closing at goal race pace.
   if (prefill.intervals) {
-    prefill.segments = segmentsFromIntervals(prefill.intervals, unit);
+    prefill.segments = segmentsFromIntervals(prefill.intervals, unit, seed);
   } else if (tmpl.config.tempo) {
     prefill.segments = segmentsFromTempo(
       tmpl.config.tempo,
       unit,
       prefill.target?.type === "pace" ? prefill.target.value : undefined,
-      tempoAtGoal ? { atGoalPace: true } : undefined
+      tempoAtGoal ? { atGoalPace: true } : undefined,
+      seed
     );
   } else if (tmpl.config.strides) {
     prefill.segments = segmentsFromEasyWithStrides(
       tmpl.estimatedDuration,
-      tmpl.config.strides
+      tmpl.config.strides,
+      seed
     );
   } else if (longAtRacePace && tmpl.config.targetDistanceKm) {
     const km = tmpl.config.targetDistanceKm;

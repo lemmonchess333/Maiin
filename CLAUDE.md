@@ -433,6 +433,14 @@ held to it, so it is now the APP-WIDE standard, not an insights-file local:
   these into the calm-chrome register.
 - **Buttons are sentence case** ("Start workout", "Add exercise") — the
   Title Case strays kept reading unpolished next to the majority.
+- **Spoken cues never ship as fixed strings on repeated surfaces.** Every
+  in-run line lives in a variation pool in `src/lib/runCueCopy.ts`,
+  rotated by a caller-supplied seed (per-day for planned sessions, per
+  mount for ad-hoc ones) — deterministic, no `Math.random`, so tests pin
+  it. Pace alerts carry a nag budget (3 per off-pace stretch, 30/60/120s
+  spacing) and a positive close-out when pace recovers. Adding a bare
+  string `cue:` to a builder reintroduces the same-sentence-every-run
+  defect this replaced.
 - Reference register when unsure: Strava (data-forward, terse), Hevy
   (minimal utility), MyFitnessPal (plain), MacroFactor (never shames a
   high day), Happy Scale (a stall reads as "expected", not failure).
