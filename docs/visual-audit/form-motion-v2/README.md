@@ -972,3 +972,41 @@ already has (curl family, incline bench, lunges, raises, shrugs, triceps
 extensions, hip thrust) before the machine and cable work, and leaving
 cardio and holds (plank, l-sit) for a later decision on whether a
 static two-up is the honest form for them.
+
+## STATUS 2026-09-03b — build-out, batch 1: six demos, five aliases
+
+Coverage 35 → 46 of 152 (15 → 21 demos with their own model, 20 → 25
+by alias). Every new demo is profile, is written against its catalogue
+instruction text from the start, opens where the lift starts, and is
+pinned the same way the parity audit pinned the originals.
+
+| Demo                 | Built from                                    | Pinned claim (from its instructions)                                    |
+| -------------------- | --------------------------------------------- | ----------------------------------------------------------------------- |
+| `db-curl`            | the strict-curl pose, bell at the hand        | elbow pinned (shares `strictCurlPose` with the barbell curl)            |
+| `front-raise`        | arm swing about the shoulder, bell at hand    | hand finishes in front at shoulder height, not above                    |
+| `overhead-extension` | upper arm held vertical, forearm folds back   | hand BEHIND the elbow at the stretch; above it at lockout               |
+| `tricep-kickback`    | the row's hinge; far arm as the bench support | upper arm parallel to the floor; arm straight at lockout                |
+| `skull-crushers`     | the bench chain, arm tilted toward the head   | upper arm still through the rep; bar past the forehead at the stretch   |
+| `lunges`             | new split-stance chain, both legs IK          | both feet PLANTED every frame; front knee ~90; back knee near the floor |
+
+Aliases, each honest in profile specifically — the variant differs by
+hand orientation, bar shape or grip width, none of which an end-on view
+can show and none of which changes the arc: `hammer-curl` → `db-curl`,
+`ez-bar-curl` → `barbell-curl`, `close-grip-bench` → `bench-press`,
+`walking-dumbbell-lunges` → `lunges`, `bodyweight-lunge` → `lunges`
+gear-free. `cable-curl` and `reverse-grip-cable-pushdown` stay fallback:
+different implement.
+
+**The lunge's first draft slid the front foot 33 units forward through
+the rep.** It rotated the front thigh and kept the shin vertical, which
+moves the foot. A lunge is the opposite constraint — both feet planted,
+hips move — so the chain is now two-bone IK from the moving hip to each
+FIXED ankle, the same solve the arms use, front knee on the forward
+branch and back knee on the low one so it travels toward the floor as
+the hips drop. Pinned: both ankles within 0.05 of their planted points
+in every frame.
+
+**The far arm's "both hands on the same bar" pin gained its first
+exemption.** The kickback is unilateral by its own instruction ("one
+knee and hand on a bench"), so its far arm is the support, reaching
+forward to a bench pad the scene draws under it.
