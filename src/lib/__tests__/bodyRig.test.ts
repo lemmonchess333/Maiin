@@ -1,7 +1,10 @@
 import { describe, it, expect } from "vitest";
 import {
   applyToPoint,
+  BACK_RACK,
   BODY_DEMOS,
+  CALF_BALL,
+  CALF_BLOCK_TOP,
   getBodyDemo,
   renderBodyDemo,
 } from "../bodyRig";
@@ -30,15 +33,17 @@ describe("vendored body model", () => {
 });
 
 describe("renderBodyDemo", () => {
-  it("t=0 renders the untransformed figure (identity)", () => {
-    const svg = renderBodyDemo("squat", 0);
-    // The head's top vertex sits at the model's y≈0 when nothing moved.
+  it("an anterior demo renders the full vendored figure", () => {
+    // Lateral raise at t=0: the arms sit 4° off rest and the head is
+    // untouched (its top vertex still at the model's y≈0). 33 vendored
+    // + 2 feet + 4 fist facets (two per hand — the second is the
+    // knuckle band); the library figure ships neither feet nor hands.
+    // (Was the squat, which has been a SIDE demo since the 2026-09-02
+    // evaluation rebuild.)
+    const svg = renderBodyDemo("lateral-raise", 0);
     const ys = polyYs(svg);
     expect(Math.min(...ys)).toBeLessThan(1);
     const body = svg.replace(/<g class="glow">.*?<\/g>/, "");
-    // 33 vendored + 2 feet + 4 fist facets (two per hand — the second
-    // is the knuckle band). The library figure ships neither feet nor
-    // hands; both are added outside the vendored array.
     expect(body.match(/<polygon/g)!.length).toBe(39);
   });
 
@@ -60,24 +65,29 @@ describe("renderBodyDemo", () => {
     // hand anchor sitting ~6.5 units off the end of the arm, so it read
     // as a rock balanced next to the limb. Pinned as: the fist's mass
     // sits ON the elbow→wrist line, and PAST the wrist, not to one side.
-    // calf-raise at t=0 is the identity pose for the ARMS — the squat
-    // stopped being one when its hands went up to the bar.
-    const svg = renderBodyDemo("calf-raise", 0);
-    const facets = polysNear(svg, ANT_WRIST, 11);
+    // No anterior demo is an arms-at-rest identity any more (calf-raise
+    // moved to the side view on 2026-09-02), so measure against the
+    // SOLVED forearm axis: lateral-raise at t=0, elbow and wrist run
+    // through the arm's own ops. The fist is grouped with the forearm,
+    // so it must cap that solved axis exactly as it capped the rest one.
+    const pose = BODY_DEMOS["lateral-raise"].pose(0);
+    const elbow = applyToPoint([20, 71], (pose.upperArmL ?? []) as never[]);
+    const wrist = applyToPoint(ANT_WRIST, (pose.foreArmL ?? []) as never[]);
+    const svg = renderBodyDemo("lateral-raise", 0);
+    const facets = polysNear(svg, wrist, 11);
     expect(facets.length).toBe(2); // main mass + knuckle band
 
-    const elbow: [number, number] = [20, 71];
     const ux =
-      (ANT_WRIST[0] - elbow[0]) /
-      Math.hypot(ANT_WRIST[0] - elbow[0], ANT_WRIST[1] - elbow[1]);
+      (wrist[0] - elbow[0]) /
+      Math.hypot(wrist[0] - elbow[0], wrist[1] - elbow[1]);
     const uy =
-      (ANT_WRIST[1] - elbow[1]) /
-      Math.hypot(ANT_WRIST[0] - elbow[0], ANT_WRIST[1] - elbow[1]);
+      (wrist[1] - elbow[1]) /
+      Math.hypot(wrist[0] - elbow[0], wrist[1] - elbow[1]);
     for (const pts of facets) {
       const cx = pts.reduce((a, q) => a + q[0], 0) / pts.length;
       const cy = pts.reduce((a, q) => a + q[1], 0) / pts.length;
-      const vx = cx - ANT_WRIST[0];
-      const vy = cy - ANT_WRIST[1];
+      const vx = cx - wrist[0];
+      const vy = cy - wrist[1];
       // Along the arm: positive, i.e. beyond the wrist.
       expect(vx * ux + vy * uy).toBeGreaterThan(0);
       // Across the arm: essentially nothing. A fist 6 units to the side
@@ -89,12 +99,14 @@ describe("renderBodyDemo", () => {
   it("the fist is TAPERED — narrow at the wrist, wide at the knuckles", () => {
     // A symmetric block reads as a lump; the taper is half of what makes
     // it a hand (the knuckle seam is the other half).
-    const svg = renderBodyDemo("calf-raise", 0);
-    const [mass] = polysNear(svg, ANT_WRIST, 11);
+    const pose = BODY_DEMOS["lateral-raise"].pose(0);
+    const wrist = applyToPoint(ANT_WRIST, (pose.foreArmL ?? []) as never[]);
+    const svg = renderBodyDemo("lateral-raise", 0);
+    const [mass] = polysNear(svg, wrist, 11);
     const byDist = [...mass].sort(
       (a, b) =>
-        Math.hypot(a[0] - ANT_WRIST[0], a[1] - ANT_WRIST[1]) -
-        Math.hypot(b[0] - ANT_WRIST[0], b[1] - ANT_WRIST[1])
+        Math.hypot(a[0] - wrist[0], a[1] - wrist[1]) -
+        Math.hypot(b[0] - wrist[0], b[1] - wrist[1])
     );
     const span = (p: [number, number], q: [number, number]) =>
       Math.hypot(p[0] - q[0], p[1] - q[1]);
@@ -190,103 +202,123 @@ describe("renderBodyDemo", () => {
     expect(bellAt(1)[0]).toBeLessThan(bellAt(0)[0] - 25); // swung out
   });
 
-  it("squat: a barbell rides the traps BEHIND the body", () => {
-    // First instruction: "Bar on your upper traps" — undrawn until
-    // 2026-08-17. Back-racked, so the shaft must render in the BEHIND
-    // layer (before the glow group) with the torso occluding its
-    // middle, and it must ride the dive, because it sits ON the body.
-    const shaft = (t: number) => {
-      const svg = renderBodyDemo("squat", t);
-      const m = svg.match(
-        /<line x1="(-?[\d.]+)" y1="(-?[\d.]+)" x2="(-?[\d.]+)" y2="(-?[\d.]+)"/
-      )!;
-      expect(svg.indexOf("<line"), `behind @${t}`).toBeLessThan(
-        svg.indexOf('<g class="glow"')
-      );
-      expect(
-        (svg.match(/<ellipse[^>]*stroke="#565760"/g) ?? []).length,
-        `plates @${t}`
-      ).toBe(2);
-      return m.slice(1, 5).map(Number);
-    };
-    const top = shaft(0);
-    const bottom = shaft(1);
-    // Spans past both grips (the sleeves), level.
-    const grips = BODY_DEMOS["squat"].bar!(0, BODY_DEMOS["squat"].pose(0))!;
-    expect(top[0]).toBeLessThan(grips[0][0]);
-    expect(top[2]).toBeGreaterThan(grips[1][0]);
-    expect(top[1]).toBeCloseTo(top[3], 1);
-    // Rides the dive: the drop at the bottom is ~22 units.
-    expect(bottom[1] - top[1]).toBeGreaterThan(18);
+  /* ── 2026-09-02 evaluation rebuild: the squat family and the calf
+     raise moved to the SIDE view. The anterior versions faked depth
+     with scaleY (a figure shrinking) and a 6.5-unit rise (nothing
+     visibly happening) — the evaluation's three failing grades. ── */
+
+  it("squat: a side hinge — knees forward, hips back and down, heels planted", () => {
+    const pose = (t: number) => BODY_DEMOS["squat"].pose(t);
+    const at = (pt: [number, number], ops?: unknown[]) =>
+      applyToPoint(pt, (ops ?? []) as never[]);
+    // The ankle is the planted pivot — it must not move at all.
+    const ankle0 = at(SIDE_ANCHORS.ankle, pose(0).shankL);
+    const ankle1 = at(SIDE_ANCHORS.ankle, pose(1).shankL);
+    expect(ankle1[0]).toBeCloseTo(ankle0[0], 5);
+    expect(ankle1[1]).toBeCloseTo(ankle0[1], 5);
+    // Knees travel forward over the toes.
+    const knee0 = at(SIDE_ANCHORS.knee, pose(0).thighL);
+    const knee1 = at(SIDE_ANCHORS.knee, pose(1).thighL);
+    expect(knee1[0]).toBeGreaterThan(knee0[0] + 4);
+    // Hips travel BACK and DOWN — the shape the front view could never
+    // show — finishing just above parallel (no lower than the knee).
+    const hip0 = at(SIDE_ANCHORS.hip, pose(0).thighL);
+    const hip1 = at(SIDE_ANCHORS.hip, pose(1).thighL);
+    expect(hip1[0]).toBeLessThan(hip0[0] - 25);
+    expect(hip1[1]).toBeGreaterThan(hip0[1] + 30);
+    expect(hip1[1]).toBeLessThanOrEqual(knee1[1] + 1);
+    // The torso inclines: the shoulder moves well forward of the hip.
+    const sh1 = at(SIDE_ANCHORS.shoulder, pose(1).torso);
+    expect(sh1[0] - hip1[0]).toBeGreaterThan(25);
   });
 
-  it("squat: the WIDE grip is what keeps the arm out of the chest", () => {
-    // The July failure pinned as a number. Front-view IK to a grip near
-    // the shoulder solves the elbow INBOARD — pull the grips in to x=10
-    // and the left elbow lands ~11 units inside the shoulder, folding
-    // the arm across the chest (the "broken polygons" of the July
-    // attempt). At the canvas-edge grips the elbow stays within ~2
-    // units of its natural hang.
-    for (const t of [0, 1]) {
+  it("squat: the bar sits on the traps and rides the torso", () => {
+    // The near plate (end-on, r=11) is drawn AT the back-rack contact,
+    // which lives in torso space — so it follows the hinge exactly and
+    // can never leave the body.
+    for (const t of [0, 0.5, 1]) {
       const pose = BODY_DEMOS["squat"].pose(t);
-      const drop = t === 0 ? 0 : (1 - 0.6) * (148 - 92);
-      const elbow = applyToPoint([20, 71], (pose.upperArmL ?? []) as never[]);
-      expect(elbow[0], `elbow x @${t}`).toBeLessThan(24 + 1);
-      expect(Math.abs(elbow[1] - (71 + drop)), `elbow y @${t}`).toBeLessThan(4);
+      const contact = applyToPoint(BACK_RACK, (pose.torso ?? []) as never[]);
+      const svg = renderBodyDemo("squat", t);
+      const disc = svg.match(/<circle cx="(-?[\d.]+)" cy="(-?[\d.]+)" r="11"/);
+      expect(disc, `plate @${t}`).not.toBeNull();
+      expect(Number(disc![1])).toBeCloseTo(contact[0], 0);
+      expect(Number(disc![2])).toBeCloseTo(contact[1], 0);
+      // Behind the shoulder joint — on the traps, not held out front.
+      const sh = applyToPoint(
+        SIDE_ANCHORS.shoulder,
+        (pose.torso ?? []) as never[]
+      );
+      expect(contact[0]).toBeLessThan(sh[0]);
     }
+    // The hand is ON the bar, and the bar drops with the squat.
+    const bottom = BODY_DEMOS["squat"].pose(1);
+    const wrist = applyToPoint(
+      SIDE_ANCHORS.hand,
+      (bottom.handL ?? []) as never[]
+    );
+    const contact = applyToPoint(BACK_RACK, (bottom.torso ?? []) as never[]);
+    expect(
+      Math.hypot(wrist[0] - contact[0], wrist[1] - contact[1])
+    ).toBeLessThan(0.5);
+    const top = applyToPoint(
+      BACK_RACK,
+      (BODY_DEMOS["squat"].pose(0).torso ?? []) as never[]
+    );
+    expect(contact[1] - top[1]).toBeGreaterThan(30);
   });
 
   it("gear-incompatible squat aliases keep the motion, lose the bar", () => {
-    // The moment squat gained a back-rack barbell, its aliases became
-    // lies: bodyweight holds nothing, front squat racks on the FRONT
-    // delts. They keep the animation and drop the gear;
-    // smith-machine-squat keeps the bar (true of it, minus the rails);
-    // goblet-squat graduated to its own demo with the bell it holds.
+    // Stripped of the plate, the hands-behind-the-neck pose IS the
+    // prisoner squat — right for bodyweight; front-squat stays the
+    // accepted residue (a bar on the FRONT delts is a different arm).
+    // smith-machine-squat keeps the plate (true of it, minus the rails).
     for (const id of ["bodyweight-squat", "front-squat"]) {
       const svg = renderBodyDemo(id, 0.5);
-      expect(svg.includes("<line"), `${id} shaft`).toBe(false);
-      expect(
-        (svg.match(/<ellipse[^>]*stroke="#565760"/g) ?? []).length,
-        `${id} plates`
-      ).toBe(0);
-      expect(svg.match(/<polygon/g)!.length, `${id} alive`).toBeGreaterThan(35);
+      expect(svg.includes('r="11"'), `${id} plate`).toBe(false);
+      expect(svg.match(/<polygon/g)!.length, `${id} alive`).toBeGreaterThan(20);
       expect(getBodyDemo(id)!.equip, `${id} equip`).toBeUndefined();
     }
-    expect(renderBodyDemo("smith-machine-squat", 0.5).includes("<line")).toBe(
+    expect(renderBodyDemo("smith-machine-squat", 0.5).includes('r="11"')).toBe(
       true
     );
-    expect(getBodyDemo("squat")!.equip).toBe("back-barbell");
+    expect(getBodyDemo("squat")!.equip).toBe("plate-end");
   });
 
-  it("goblet squat: hands cup ONE bell at the sternum, riding the dive", () => {
+  it("goblet squat: one bell cupped at the chest, riding the hinge", () => {
     for (const t of [0, 1]) {
       const pose = BODY_DEMOS["goblet-squat"].pose(t);
-      const drop = t === 0 ? 0 : (1 - 0.6) * (148 - 92);
-      // Hands together at the chest, glued through the descent.
-      const wl = applyToPoint(ANT_WRIST, (pose.foreArmL ?? []) as never[]);
-      expect(
-        Math.hypot(wl[0] - 46.5, wl[1] - (52 + drop)),
-        `hand @${t}`
-      ).toBeLessThan(0.1);
-      // "Elbows pinned under it": below the shoulder and OUTBOARD —
-      // never solved inboard across the chest (the July collapse).
-      const el = applyToPoint([20, 71], (pose.upperArmL ?? []) as never[]);
-      expect(el[1], `elbow low @${t}`).toBeGreaterThan(60 + drop);
-      expect(el[0], `elbow out @${t}`).toBeLessThan(24 + 1);
-      // ONE bell, centred between the hands, sitting just above them.
+      const wrist = applyToPoint(
+        SIDE_ANCHORS.hand,
+        (pose.handL ?? []) as never[]
+      );
+      const sh = applyToPoint(
+        SIDE_ANCHORS.shoulder,
+        (pose.torso ?? []) as never[]
+      );
+      // Hands out in FRONT of the chest (the figure faces +x), below
+      // the shoulder line.
+      expect(wrist[0] - sh[0], `hand forward @${t}`).toBeGreaterThan(8);
+      expect(wrist[1], `hand below shoulder @${t}`).toBeGreaterThan(sh[1]);
+      // "Elbows pinned under it": tucked below and behind the hands,
+      // never solved forward-up over the bell.
+      const el = applyToPoint(
+        SIDE_ANCHORS.elbow,
+        (pose.upperArmL ?? []) as never[]
+      );
+      expect(el[1], `elbow low @${t}`).toBeGreaterThan(sh[1] + 10);
+      expect(el[0], `elbow behind hand @${t}`).toBeLessThan(wrist[0]);
+      // ONE bell, sitting just above the cupped hands; no barbell plate.
       const svg = renderBodyDemo("goblet-squat", t);
       const bells = [
         ...svg.matchAll(/<circle cx="(-?[\d.]+)" cy="(-?[\d.]+)" r="6"/g),
       ].map((m) => [Number(m[1]), Number(m[2])]);
       expect(bells.length, `bells @${t}`).toBe(1);
-      expect(bells[0][0]).toBeCloseTo(50, 0);
-      expect(bells[0][1]).toBeCloseTo(52 + drop - 6, 0);
-      // A goblet squat has no barbell.
-      expect(svg.includes("<line")).toBe(false);
+      expect(bells[0][1]).toBeCloseTo(wrist[1] - 6, 0);
+      expect(svg.includes('r="11"')).toBe(false);
     }
     expect(getBodyDemo("goblet-squat")!.equip).toBe("goblet-bell");
   });
-
   it("squat: the body visibly sinks at the bottom", () => {
     const top = Math.min(...polyYs(renderBodyDemo("squat", 0)));
     const bottom = Math.min(...polyYs(renderBodyDemo("squat", 1)));
@@ -309,25 +341,29 @@ describe("renderBodyDemo", () => {
 
   it("tints exactly the declared muscles (honest fill)", () => {
     // Strip the aura layer — it repeats the primary colour by design.
-    const svg = renderBodyDemo("squat", 0).replace(
+    // Lateral raise (front-deltoids primary) — the squat was this test's
+    // subject until it became a side demo on 2026-09-02.
+    const svg = renderBodyDemo("lateral-raise", 0).replace(
       /<g class="glow">.*?<\/g>/,
       ""
     );
     const purples = (svg.match(/#7B72E9/g) || []).length;
-    const quadPolys = ANTERIOR.filter((p) => p.muscle === "quadriceps").length;
-    expect(purples).toBe(quadPolys); // primary tint = quadriceps only
+    const deltPolys = ANTERIOR.filter(
+      (p) => p.muscle === "front-deltoids"
+    ).length;
+    expect(purples).toBe(deltPolys); // primary tint = front deltoids only
     expect(svg.includes("#B6BDC3")).toBe(true); // library body grey everywhere else
   });
 
   it("primary muscles carry a glow aura that breathes with effort", () => {
     const glowOf = (svg: string) => svg.match(/<g class="glow">(.*?)<\/g>/)![1];
-    const soft = glowOf(renderBodyDemo("squat", 0.5, 0));
-    const hard = glowOf(renderBodyDemo("squat", 0.5, 1));
+    const soft = glowOf(renderBodyDemo("lateral-raise", 0.5, 0));
+    const hard = glowOf(renderBodyDemo("lateral-raise", 0.5, 1));
     expect(hard.length).toBeGreaterThan(0);
     const firstOpacity = (g: string) =>
       Number(g.match(/opacity="([\d.]+)"/)![1]);
     expect(firstOpacity(hard)).toBeGreaterThan(firstOpacity(soft));
-    // Two quads → two hulls × three rings.
+    // Two deltoids → two hulls × three rings.
     expect((hard.match(/<polygon/g) || []).length).toBe(6);
   });
 
@@ -858,13 +894,32 @@ describe("renderBodyDemo", () => {
     expect(ankle[1] + 10).toBeLessThan(174);
   });
 
-  it("calf raise: body rises but the feet stay planted", () => {
-    const maxY = (svg: string) => Math.max(...polyYs(svg));
-    const minY = (svg: string) => Math.min(...polyYs(svg));
-    const down = renderBodyDemo("calf-raise", 0);
-    const up = renderBodyDemo("calf-raise", 1);
-    expect(minY(down) - minY(up)).toBeGreaterThan(4); // head rose
-    expect(Math.abs(maxY(down) - maxY(up))).toBeLessThan(1); // toes didn't
+  it("calf raise: heels lift off the block, toes stay planted, body rises", () => {
+    const pose = (t: number) => BODY_DEMOS["calf-raise"].pose(t);
+    const at = (pt: [number, number], ops?: unknown[]) =>
+      applyToPoint(pt, (ops ?? []) as never[]);
+    // The ball of the foot is the pivot: it never moves.
+    const ball0 = at(CALF_BALL, pose(0).shankL);
+    const ball1 = at(CALF_BALL, pose(1).shankL);
+    expect(ball1[0]).toBeCloseTo(ball0[0], 5);
+    expect(ball1[1]).toBeCloseTo(ball0[1], 5);
+    // The heel (behind the ball, on the sole line) drops below the
+    // block edge at the bottom and clears it at the top — the cue the
+    // anterior version could not show at all.
+    const heel: [number, number] = [CALF_BALL[0] - 18, CALF_BALL[1]];
+    const heel0 = at(heel, pose(0).shankL);
+    const heel1 = at(heel, pose(1).shankL);
+    expect(heel0[1]).toBeGreaterThan(CALF_BLOCK_TOP);
+    expect(heel1[1]).toBeLessThan(CALF_BLOCK_TOP - 3);
+    expect(heel0[1] - heel1[1]).toBeGreaterThan(6);
+    // Everything above rides the knee: the thigh stays attached to the
+    // pitched shank's knee end.
+    const kneeShank = at(SIDE_ANCHORS.knee, pose(1).shankL);
+    const kneeThigh = at(SIDE_ANCHORS.knee, pose(1).thighL);
+    expect(kneeThigh[0]).toBeCloseTo(kneeShank[0], 5);
+    expect(kneeThigh[1]).toBeCloseTo(kneeShank[1], 5);
+    // The block is drawn under the toes.
+    expect(renderBodyDemo("calf-raise", 0)).toContain(`y="${CALF_BLOCK_TOP}"`);
   });
 });
 
