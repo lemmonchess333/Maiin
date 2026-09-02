@@ -216,7 +216,6 @@ const TORSO_B: C = smoothC([
   [74, 38],
   [82, 37.8],
   [90, 34.6],
-  [94, 33.1],
 ]);
 const TORSO_F: C = smoothC([
   [31, 48.5],
@@ -239,15 +238,25 @@ const TORSO_F: C = smoothC([
 
 /* Pelvis segment (split from the upper torso so hinges and bridges can
  * articulate at the waist): the glute mass + hip wedge, overlapping the
- * upper torso at the lumbar joint (y 86-94). */
+ * upper torso at the lumbar joint (y 86-94).
+ *
+ * The torso paints OVER this piece, so wherever the torso's outline ends
+ * its 0.45 inset shows as a dark rim ON the buttock. Ending both torso
+ * contours at y 94 put that rim across the glute as a straight
+ * horizontal line, cutting it in two. The torso's BACK contour now stops
+ * at 90, which tilts the closing edge into the iliac-crest diagonal —
+ * high at the back, low at the front, where a crease belongs — and the
+ * lower-back and flank facets run past it to 93.2, so they cover the rim
+ * rather than leaving it visible. */
 const PELV_B: C = smoothC([
   [86, 35.9],
   [90, 33.8],
   [97, 29.8],
   [104, 29.2],
-  [109, 31.8],
-  [112, 36.8],
-  [113.5, 43.8],
+  [108, 31.4],
+  [111, 34.8],
+  [113, 39.8],
+  [114, 44.5],
 ]);
 const PELV_F: C = smoothC([
   [86, 56.6],
@@ -257,15 +266,31 @@ const PELV_F: C = smoothC([
   [112.5, 44.8],
 ]);
 
-/* Thigh: quad sweep peaking mid-thigh, hamstring belly behind. */
+/* Thigh: quad sweep peaking mid-thigh, hamstring belly behind.
+ *
+ * The back contour used to start at x 43.5 while the glute above it
+ * reaches 29.8 — a 14-unit overhang, so the buttock read as a shelf
+ * bolted to the back of the leg rather than as mass flowing into the
+ * hamstring. It starts at 37.2 now, which leaves the 4-6 units that a
+ * standing buttock actually projects behind the thigh, and the gluteal
+ * fold (the pelvis outline's bottom edge, sweeping forward to 44.5)
+ * still reads as the crease it is.
+ *
+ * It also ends at 152 while the front runs to 156, for the same reason
+ * the torso's back stops short of its front: the thigh paints over the
+ * shank, so a level bottom edge laid its inset rim across the knee as a
+ * straight dark bar. Tilted, the edge is the knee line — popliteal fold
+ * high at the back, patella low at the front — and the kneecap facet
+ * runs past it to cover the rim. */
 const THIGH_B: C = smoothC([
-  [97, 43.5],
-  [104, 41.2],
-  [116, 39.8],
-  [128, 39.6],
+  [97, 37.2],
+  [104, 36.4],
+  [110, 37.6],
+  [116, 39.0],
+  [128, 39.4],
   [140, 41.4],
-  [150, 44.4],
-  [156, 45.8],
+  [148, 44.0],
+  [152, 45.4],
 ]);
 const THIGH_F: C = smoothC([
   [95.5, 52.5],
@@ -347,17 +372,24 @@ const FOOT: Pt[] = [
   [41.8, 194.4],
 ];
 
+/* Back contour down, round the heel and sole to the toe, back along the
+ * instep, then UP the front contour. It used to be the back contour plus
+ * the foot and nothing else — `silhouette(...).slice(0, 6)` kept only the
+ * back half — so the piece's outline closed as a vertical line up the
+ * calf and the whole shin lay OUTSIDE its own underlay. The facets still
+ * drew (they are painted over it, not clipped by it), which is why the
+ * leg looked fine until a seam wanted a groove behind it. */
 const SHANK_OUTLINE: Pt[] = [
-  ...silhouette(SHANK_B, SHANK_F).slice(0, SHANK_B.length),
-  // splice the foot into the silhouette bottom
-  [49.8, 191],
-  [55.4, 193.4],
-  [60.8, 196.8],
-  [65, 199.6],
-  [64.2, 202.8],
-  [42.2, 203],
-  [40.2, 198.4],
+  ...SHANK_B.map(([y, x]) => [x, y] as Pt),
   [41.4, 193.6],
+  [40.2, 198.4],
+  [42.2, 203],
+  [64.2, 202.8],
+  [65, 199.6],
+  [60.8, 196.8],
+  [55.4, 193.4],
+  [49.8, 191],
+  ...[...SHANK_F].reverse().map(([y, x]) => [x, y] as Pt),
 ];
 /* Facet-count discipline (device feedback 2026-07-27: "too many
  * individualized body parts"): at the card's 190px width every extra
@@ -366,13 +398,18 @@ const SHANK_OUTLINE: Pt[] = [
  * mid-length splits (calves gastroc/soleus row, abs/obliques second
  * row, forearm halves) are merged into single bellies below. */
 const SHANK_FACETS = [
+  /* The calf/shin split is the tibial crest, so a seam there is real —
+     but at t 0.47/0.58 it was 0.11 of the shank's depth PLUS both insets,
+     a 2.3-unit gash down the middle of the leg where every other seam on
+     the figure is 0.9. Both facets also stopped 2.6 units above the
+     foot, which put a dark band right across the ankle. */
   {
     muscle: "calves",
-    points: band(SHANK_B, SHANK_F, 151, 191, 0, 0.47, { bellyR: 0.08 }),
+    points: band(SHANK_B, SHANK_F, 151, 192.2, 0, 0.5, { bellyR: 0.08 }),
   },
   {
     muscle: "shin",
-    points: band(SHANK_B, SHANK_F, 150, 190, 0.58, 1, { bellyL: -0.04 }),
+    points: band(SHANK_B, SHANK_F, 150, 192.2, 0.55, 1, { bellyL: -0.04 }),
   },
   { muscle: "foot", points: FOOT },
 ];
@@ -391,8 +428,9 @@ const THIGH_FACETS = [
     muscle: "knees",
     /* Runs the full depth: cut to t 0.3 it left the popliteal hollow —
        13 units of underlay behind the knee — as a dark block. */
-    points: band(THIGH_B, THIGH_F, 145.4, 155.4, 0, 1, {
+    points: band(THIGH_B, THIGH_F, 145.4, 156.4, 0, 1, {
       skewT: [-1.5, 0],
+      skewB: [-1.2, 0],
     }),
   },
 ];
@@ -533,38 +571,19 @@ const RAW_PIECES: SidePiece[] = [
   {
     group: "pelvis",
     outline: silhouette(PELV_B, PELV_F),
+    /* Built from the contours like every other facet. These were two
+       hand-authored polygons with straight sides that did not follow the
+       silhouette, so the buttock read as a slab bolted onto the leg
+       rather than as mass, and their gaps against the outline were
+       nothing like a seam. */
     facets: [
-      /* Both pelvis facets run to within the standard 1.2-unit gap of
-       * the piece's outline bottom (113.5). They used to stop at 110.8
-       * and 101.8, leaving a 3-unit band of underlay across the whole
-       * hip that read on device as a dark seam cutting the pelvis off
-       * from the thighs ("a pale block on top of the legs"). */
       {
         muscle: "gluteal",
-        points: [
-          [36.2, 91],
-          [43.6, 90],
-          [45.4, 94.6],
-          [44.8, 103],
-          [42.8, 112.2],
-          [36.6, 112.4],
-          [31.6, 106.4],
-          [30.8, 97.4],
-          [33, 92.8],
-        ],
+        points: band(PELV_B, PELV_F, 88.4, 112.4, 0, 0.46, { bellyR: 0.06 }),
       },
       {
         muscle: "pelvis",
-        points: [
-          [49.8, 89.4],
-          [55.6, 89.8],
-          [53.6, 98.6],
-          [50.2, 106.2],
-          [46.4, 110.6],
-          [45.6, 103.8],
-          [46.6, 96.4],
-          [47.6, 92],
-        ],
+        points: band(PELV_B, PELV_F, 88.4, 110.6, 0.54, 1, { bellyL: -0.05 }),
       },
     ],
   },
