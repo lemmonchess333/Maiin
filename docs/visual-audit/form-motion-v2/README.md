@@ -932,3 +932,43 @@ the rule.
 Cleared in the same audit: the pulldown reaches the upper chest, the
 press locks out above the head, and the calf raise stretches below the
 platform.
+
+## STATUS 2026-09-03a — the dip was the mirror image of a dip
+
+Owner, on the dips two-up: "arms are wrong way round, you can't
+physically do a dip like this, where your body moves away from the
+bars."
+
+The shoulder path was built with the bottom position one upper-arm
+length BEHIND the hand, so as the body descended it swung away from the
+station and the arm folded the wrong way round. That was the actual
+bug. The 2026-09-02o parity pass then flipped the elbow's IK branch to
+get the upper arm horizontal — which it did, by making a second wrong:
+the elbow went forward over a hand the body had already left behind.
+Two wrongs measured as one right, and the parity test passed on it.
+
+The hand is fixed on the bar and the body hangs between the bars, so
+the shoulder can only go where the arm's two bones let it: straight
+above the hand at the top; one upper-arm length FORWARD of the hand and
+one forearm length above it at the bottom, elbow behind the shoulder
+over the hand. Down and forward — the chest dip. The legs also
+counter-rotate against the lean now so they hang rather than trailing
+30 degrees back, and the grip sits a little further back on a slightly
+wider station so the body stays between the posts.
+
+Lesson recorded: a parity test that measures one joint angle can be
+satisfied by a pose that is globally impossible. The next pass on this
+demo should pin the shoulder's position relative to the hand, not just
+the upper arm's angle.
+
+## Catalogue build-out — survey
+
+152 exercises in the catalogue. 15 have their own demo, 20 more resolve
+through an honest alias, **117 fall back to the static muscle map.**
+Owner (2026-09-03): "do some research and start to build out the rest
+of the exercises into those animations." Build-out proceeds in batches,
+each PR'd with sheets and pins, prioritising variants of chains the rig
+already has (curl family, incline bench, lunges, raises, shrugs, triceps
+extensions, hip thrust) before the machine and cable work, and leaving
+cardio and holds (plank, l-sit) for a later decision on whether a
+static two-up is the honest form for them.
