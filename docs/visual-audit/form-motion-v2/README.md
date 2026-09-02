@@ -862,3 +862,35 @@ row hanging, bench locked out, calf heels-down, deadlift bent over at
 the bar, dips in support, goblet standing, pulldown extended, raise at
 the sides, press racked, pull-up hanging, push-up at the top, RDL
 standing, pushdown flexed, squat standing.
+
+## STATUS 2026-09-02n — the foot, and a mid-rep sweep that found nothing
+
+**Swept every demo at t=0.35 and t=0.65** — the frames where joints sit
+half-rotated and props overlap the body, which is where the last three
+owner reports came from. Nothing to fix. Three suspects checked and
+cleared:
+
+- The deadlift and RDL plates DO draw over the leg at mid-pull. That is
+  correct: the bar tracks the legs, so it should occlude them.
+- The pulldown bar is drawn BEHIND the figure in the posterior view,
+  which means it is on the far side of the body — in front of the
+  lifter. It reads as a front pulldown, not behind-the-neck, and only
+  the ends outboard of the shoulders show. Same convention as the back
+  squat's frontal bar.
+- The press bar crosses the face at mid-rep. Physically what happens: a
+  press travels past the chin. Left alone.
+
+**The foot was a nine-point wedge** — a flat sole running straight from
+heel to toe, no heel curve, no arch. Under a leg that now has a condyle
+at the knee it read as a doorstop. It traces down the achilles, round
+the heel, along the sole with the arch lifted clear between heel and
+ball, out to the toe and back up the instep. Authored once, in the order
+the shank's outline needs to splice it, and closed + inset for the
+facet, so outline and facet cannot drift apart.
+
+The arch is shallow and SAMPLED — three rows across a 0.6-unit lift. A
+single raised point made a hard V notch cutting up into the sole, which
+is not what an arch looks like from the side. Pinned on the property a
+wedge cannot fake: the sole must lift between its two ground contacts,
+by more than 0.3 and less than 3, and the toe must rise off the ground.
+Mutation-checked against the old wedge.
