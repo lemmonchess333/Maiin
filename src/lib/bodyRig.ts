@@ -690,6 +690,100 @@ const PELVIS_FOLLOW = 0.6;
  *  counter-rotates about the neck by this fraction of the hinge. */
 const HEAD_LIFT = 0.4;
 
+/* The strict curl's pose, shared by the barbell and dumbbell curls: the
+ * flexion arc lives in-plane, the elbow pins to the side (3 degrees of
+ * drift, per instruction 2), nothing else moves. */
+function strictCurlPose(e: number): Partial<Record<GroupName, Op[]>> {
+  const curl = lerp(0, 135, e);
+  const drift = lerp(0, 3, e);
+  const armDrift: Op[] = [
+    { kind: "rotate", deg: -drift, pivot: SIDE_ANCHORS.shoulder },
+  ];
+  const fore: Op[] = [
+    { kind: "rotate", deg: -curl, pivot: SIDE_ANCHORS.elbow },
+    ...armDrift,
+  ];
+  return {
+    upperArmL: armDrift,
+    foreArmL: fore,
+    handL: fore,
+    upperArmR: armDrift,
+    foreArmR: fore,
+    handR: fore,
+  };
+}
+
+/* Split-stance (lunge) chain. The near leg is the FRONT leg, the far
+ * leg the BACK leg — which is what the far-leg pieces exist for.
+ *
+ * Both feet are PLANTED and the hips move: that is what a lunge is, and
+ * it is the constraint the first draft got wrong (it rotated the front
+ * thigh and let the foot slide forward 33 units through the rep). Each
+ * leg is two-bone IK from the moving hip to its fixed ankle — the same
+ * solve the arms use — with the front knee taking the forward branch
+ * and the back knee the low one, so the back knee travels toward the
+ * floor as the hips drop. */
+const LUNGE_FRONT_ANKLE: Pt = [84, 196];
+const LUNGE_BACK_ANKLE: Pt = [2, 196];
+function lungeChain(e: number): {
+  body: Op[];
+  frontThigh: Op[];
+  frontShank: Op[];
+  backThigh: Op[];
+  backShank: Op[];
+} {
+  const hip0 = SIDE_ANCHORS.hip;
+  const thigh = Math.hypot(
+    SIDE_ANCHORS.knee[0] - hip0[0],
+    SIDE_ANCHORS.knee[1] - hip0[1]
+  );
+  const shank = Math.hypot(
+    SIDE_ANCHORS.ankle[0] - SIDE_ANCHORS.knee[0],
+    SIDE_ANCHORS.ankle[1] - SIDE_ANCHORS.knee[1]
+  );
+  // Hips: a touch forward and well down through the rep.
+  const hip: Pt = [lerp(42, 47, e), lerp(112, 141, e)];
+  const dx = hip[0] - hip0[0];
+  const dy = hip[1] - hip0[1];
+  const body: Op[] = [{ kind: "translate", dx, dy }];
+  // Solve in the REST frame (rotations pivot on rest anchors; the body
+  // translate lands everything in the world afterwards).
+  const toRest = (p: Pt): Pt => [p[0] - dx, p[1] - dy];
+  const legOps = (ankleWorld: Pt, pickKnee: (a: Pt, b: Pt) => Pt) => {
+    const A = toRest(ankleWorld);
+    const kA = solveElbow(hip0, A, thigh, shank, 1);
+    const kB = solveElbow(hip0, A, thigh, shank, -1);
+    const K = pickKnee(kA, kB);
+    const restThigh: Pt = [
+      SIDE_ANCHORS.knee[0] - hip0[0],
+      SIDE_ANCHORS.knee[1] - hip0[1],
+    ];
+    const restShank: Pt = [
+      SIDE_ANCHORS.ankle[0] - SIDE_ANCHORS.knee[0],
+      SIDE_ANCHORS.ankle[1] - SIDE_ANCHORS.knee[1],
+    ];
+    const th = angleBetween(restThigh, [K[0] - hip0[0], K[1] - hip0[1]]);
+    const sh = angleBetween(restShank, [A[0] - K[0], A[1] - K[1]]) - th;
+    return {
+      thighOps: [{ kind: "rotate", deg: th, pivot: hip0 }, ...body] as Op[],
+      shankOps: [
+        { kind: "rotate", deg: sh, pivot: SIDE_ANCHORS.knee },
+        { kind: "rotate", deg: th, pivot: hip0 },
+        ...body,
+      ] as Op[],
+    };
+  };
+  const front = legOps(LUNGE_FRONT_ANKLE, (a, b) => (a[0] > b[0] ? a : b));
+  const back = legOps(LUNGE_BACK_ANKLE, (a, b) => (a[1] > b[1] ? a : b));
+  return {
+    body,
+    frontThigh: front.thighOps,
+    frontShank: front.shankOps,
+    backThigh: back.thighOps,
+    backShank: back.shankOps,
+  };
+}
+
 function sideSquatChain(
   e: number,
   hingeDeg: number
@@ -1194,6 +1288,292 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       `<line x1="${DIP_GRIP[0] - 32}" y1="205" x2="${DIP_GRIP[0] + 36}" y2="205" stroke="${GEAR_DARK}" stroke-width="2.4" stroke-linecap="round"/>` +
       `<rect x="${DIP_GRIP[0] - 28}" y="${DIP_GRIP[1] - 1.7}" width="60" height="3.4" rx="1.7" fill="${GEAR}"/>` +
       `<line x1="-12" y1="206" x2="168" y2="206" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  "db-curl": {
+    /* Dumbbell curl: the strict curl with a bell at each hand instead of
+     * a bar. In profile both bells stack behind the near one, end-on.
+     * `hammer-curl` aliases here — the grip is neutral instead of
+     * supinated, which a profile cannot show and which changes nothing
+     * about the arc. */
+    view: "side",
+    equip: "dumbbell",
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { biceps: "primary", forearm: "secondary" },
+    pose: strictCurlPose,
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+  },
+
+  "front-raise": {
+    /* Front raise, in profile because the arc is in-plane: the arm
+     * swings forward from the thigh to shoulder height with a slight
+     * fixed elbow bend (instruction 2), the bell riding the hand. Torso
+     * planted: "no swinging, no momentum". */
+    view: "side",
+    equip: "dumbbell",
+    concentricTo: 1,
+    startsAt: "stretch",
+    viewBox: "-8 -14 132 224",
+    tint: { "front-deltoids": "primary", chest: "secondary" },
+    pose: (e) => {
+      const raise = lerp(4, 88, e); // to shoulder height, not above
+      const upper: Op[] = [
+        { kind: "rotate", deg: -raise, pivot: SIDE_ANCHORS.shoulder },
+      ];
+      const fore: Op[] = [
+        { kind: "rotate", deg: -10, pivot: SIDE_ANCHORS.elbow },
+        ...upper,
+      ];
+      return {
+        upperArmL: upper,
+        foreArmL: fore,
+        handL: fore,
+        upperArmR: upper,
+        foreArmR: fore,
+        handR: fore,
+      };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+  },
+
+  "overhead-extension": {
+    /* Overhead triceps extension: upper arm vertical beside the ear and
+     * held there (instruction 2), the forearm folding BEHIND the head
+     * and extending to lockout. One bell in both hands, end-on. */
+    view: "side",
+    equip: "dumbbell",
+    concentricTo: 1,
+    startsAt: "stretch",
+    viewBox: "-12 -50 128 260",
+    tint: { triceps: "primary", "front-deltoids": "secondary" },
+    pose: (e) => {
+      const flex = lerp(-100, -8, e); // folded behind the head -> lockout
+      const upper: Op[] = [
+        { kind: "rotate", deg: 176, pivot: SIDE_ANCHORS.shoulder },
+      ];
+      const fore: Op[] = [
+        { kind: "rotate", deg: flex, pivot: SIDE_ANCHORS.elbow },
+        ...upper,
+      ];
+      return {
+        upperArmL: upper,
+        foreArmL: fore,
+        handL: fore,
+        upperArmR: upper,
+        foreArmR: fore,
+        handR: fore,
+      };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+  },
+
+  "tricep-kickback": {
+    /* Kickback on the row's hinge. Upper arm held parallel to the floor
+     * (instruction 2), the forearm extends back from 90 degrees to
+     * straight. The far arm hangs as the support — the instruction has
+     * the other hand on a bench. */
+    view: "side",
+    equip: "dumbbell",
+    concentricTo: 1,
+    startsAt: "stretch",
+    viewBox: "-30 -6 160 218",
+    tint: { triceps: "primary" },
+    pose: (e) => {
+      const HINGE = 55;
+      const KNEE = 20;
+      const LEAN = hipsBack(HINGE);
+      const T: Op = { kind: "rotate", deg: HINGE, pivot: SIDE_ANCHORS.hip };
+      const torso: Op[] = [T, LEAN];
+      const head: Op[] = [
+        { kind: "rotate", deg: -HINGE * HEAD_LIFT, pivot: SIDE_ANCHORS.neck },
+        ...torso,
+      ];
+      const pelvis: Op[] = [
+        { kind: "rotate", deg: HINGE * PELVIS_FOLLOW, pivot: SIDE_ANCHORS.hip },
+        LEAN,
+      ];
+      const leg: Op[] = [
+        { kind: "rotate", deg: KNEE, pivot: SIDE_ANCHORS.hip },
+        LEAN,
+      ];
+      const shank: Op[] = [
+        { kind: "rotate", deg: -KNEE, pivot: SIDE_ANCHORS.knee },
+        { kind: "rotate", deg: KNEE, pivot: SIDE_ANCHORS.hip },
+        LEAN,
+      ];
+      // Upper arm: from hanging in torso space to world-horizontal-back,
+      // i.e. 90 minus the hinge past the torso's own line.
+      const upper: Op[] = [
+        { kind: "rotate", deg: 90 - HINGE + 2, pivot: SIDE_ANCHORS.shoulder },
+        ...torso,
+      ];
+      const ext = lerp(-90, -4, e); // forearm hangs -> in line with the upper arm
+      const fore: Op[] = [
+        { kind: "rotate", deg: ext, pivot: SIDE_ANCHORS.elbow },
+        ...upper,
+      ];
+      // Support arm: reaches forward-down to the bench the instruction
+      // puts the other hand on (drawn under it by `scene`). Angled ahead
+      // of the near thigh so it is not painted behind it and left as a
+      // floating hand.
+      const support: Op[] = [
+        { kind: "rotate", deg: -HINGE - 22, pivot: SIDE_ANCHORS.shoulder },
+        ...torso,
+      ];
+      return {
+        head,
+        torso,
+        pelvis,
+        thighL: leg,
+        thighR: leg,
+        shankL: shank,
+        shankR: shank,
+        upperArmL: upper,
+        foreArmL: fore,
+        handL: fore,
+        upperArmR: support,
+        foreArmR: support,
+        handR: support,
+      };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+    // The bench the support hand rests on: a pad just under that hand,
+    // with a leg to the floor.
+    scene: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, [
+        ...(pose.handR ?? []),
+        { kind: "translate", dx: FAR_ARM_SHIFT[0], dy: FAR_ARM_SHIFT[1] },
+      ]);
+      const top = h[1] + 4;
+      return (
+        `<rect x="${(h[0] - 16).toFixed(1)}" y="${top.toFixed(1)}" width="34" height="6" rx="2.2" fill="${GEAR}"/>` +
+        `<line x1="${(h[0] - 10).toFixed(1)}" y1="${(top + 6).toFixed(1)}" x2="${(h[0] - 10).toFixed(1)}" y2="204" stroke="${GEAR_DARK}" stroke-width="3"/>` +
+        `<line x1="${(h[0] + 12).toFixed(1)}" y1="${(top + 6).toFixed(1)}" x2="${(h[0] + 12).toFixed(1)}" y2="204" stroke="${GEAR_DARK}" stroke-width="3"/>` +
+        `<line x1="-26" y1="205" x2="126" y2="205" stroke="${GEAR_DARK}" stroke-width="1.6"/>`
+      );
+    },
+  },
+
+  "skull-crushers": {
+    /* Skull crushers on the bench chain: lying, upper arms tilted a
+     * touch back toward the head and HELD there (instruction 4), the
+     * forearms fold the bar past the forehead and extend to lockout. */
+    view: "side",
+    equip: "plate-end",
+    plateR: 9,
+    concentricTo: 1,
+    startsAt: "stretch",
+    viewBox: "-64 20 186 162",
+    groundY: 172,
+    shadowCx: 40,
+    shadowRx: 68,
+    tint: { triceps: "primary" },
+    pose: (e) => {
+      const G: Op = { kind: "rotate", deg: -90, pivot: [44, 100] };
+      const leg: Op[] = [
+        { kind: "rotate", deg: BENCH_THIGH, pivot: SIDE_ANCHORS.hip },
+        G,
+      ];
+      const shank: Op[] = [
+        { kind: "rotate", deg: 90 - BENCH_THIGH, pivot: SIDE_ANCHORS.knee },
+        { kind: "rotate", deg: BENCH_THIGH, pivot: SIDE_ANCHORS.hip },
+        G,
+      ];
+      // In body space the arm rests along +y; "up" on screen is body +x,
+      // so a -90 rotation points it up, and a further -12 tilts it toward
+      // the head.
+      const upper: Op[] = [
+        { kind: "rotate", deg: -102, pivot: SIDE_ANCHORS.shoulder },
+        G,
+      ];
+      const flex = lerp(-100, -6, e); // folded toward the forehead -> lockout
+      const fore: Op[] = [
+        { kind: "rotate", deg: flex, pivot: SIDE_ANCHORS.elbow },
+        ...upper,
+      ];
+      return {
+        head: [G],
+        torso: [G],
+        pelvis: [G],
+        thighL: leg,
+        thighR: leg,
+        shankL: shank,
+        shankR: shank,
+        upperArmL: upper,
+        foreArmL: fore,
+        handL: fore,
+        upperArmR: upper,
+        foreArmR: fore,
+        handR: fore,
+      };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+    scene: () =>
+      `<rect x="-64" y="109" width="136" height="7" rx="2.5" fill="${GEAR}"/>` +
+      `<line x1="-50" y1="116" x2="-50" y2="170" stroke="${GEAR_DARK}" stroke-width="3.4"/>` +
+      `<line x1="56" y1="116" x2="56" y2="170" stroke="${GEAR_DARK}" stroke-width="3.4"/>` +
+      `<line x1="-58" y1="171" x2="118" y2="171" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  lunges: {
+    /* Lunge in profile — the one view that shows a split stance. The
+     * rep is the lunge itself (bottom <-> split-stance top), not the
+     * step: both knees to about 90 degrees, back knee toward the floor,
+     * torso upright, dumbbells hanging. `bodyweight-lunge` aliases here
+     * gear-free; `walking-dumbbell-lunges` aliases here as-is. */
+    view: "side",
+    equip: "dumbbell",
+    concentricTo: 0,
+    viewBox: "-40 -6 176 218",
+    groundY: 205,
+    shadowCx: 44,
+    shadowRx: 44,
+    tint: {
+      quadriceps: "primary",
+      gluteal: "secondary",
+      hamstring: "secondary",
+    },
+    pose: (e) => {
+      const c = lungeChain(e);
+      const armHang: Op[] = [...c.body];
+      return {
+        head: c.body,
+        torso: c.body,
+        pelvis: c.body,
+        thighL: c.frontThigh,
+        shankL: c.frontShank,
+        thighR: c.backThigh,
+        shankR: c.backShank,
+        upperArmL: armHang,
+        foreArmL: armHang,
+        handL: armHang,
+        upperArmR: armHang,
+        foreArmR: armHang,
+        handR: armHang,
+      };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+    scene: () =>
+      `<line x1="-36" y1="206" x2="132" y2="206" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
   },
 
   deadlift: {
@@ -1941,6 +2321,15 @@ const DEMO_ALIASES: Record<string, string> = {
   "pendlay-row": "barbell-row",
   "db-row": "barbell-row",
   "t-bar-row": "barbell-row",
+  /* 2026-09-03 build-out, batch 1. Each alias is honest in PROFILE
+     specifically: the difference between the variant and its canonical
+     is grip width or hand orientation, which an end-on profile cannot
+     show and which does not change the arc. */
+  "hammer-curl": "db-curl", // neutral vs supinated grip: invisible end-on
+  "ez-bar-curl": "barbell-curl", // EZ vs straight bar: same end-on plate
+  "close-grip-bench": "bench-press", // grip width: both hands stack in profile
+  "bodyweight-lunge": "lunges", // gear-free (stripped below)
+  "walking-dumbbell-lunges": "lunges",
 };
 
 /* Side-view demos ship since the Prompt-9 rig rebuild (canonical master
@@ -1984,6 +2373,7 @@ const GATED_PENDING_REPAIR: ReadonlySet<string> = new Set([
 const HELD_GEAR_FREE_VARIANTS: ReadonlySet<string> = new Set([
   "bodyweight-squat",
   "front-squat",
+  "bodyweight-lunge",
 ]);
 
 function stripHeldGear(demo: BodyDemo): BodyDemo {

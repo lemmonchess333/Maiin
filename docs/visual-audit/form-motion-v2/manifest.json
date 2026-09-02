@@ -115,6 +115,33 @@
         "file": "calf-raise-t100.png"
       }
     ],
+    "db-curl": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "db-curl-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "db-curl-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "db-curl-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "db-curl-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "db-curl-t100.png"
+      }
+    ],
     "deadlift": [
       {
         "t": 0,
@@ -167,6 +194,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "dips-t100.png"
+      }
+    ],
+    "front-raise": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "front-raise-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "front-raise-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "front-raise-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "front-raise-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "front-raise-t100.png"
       }
     ],
     "goblet-squat": [
@@ -248,6 +302,60 @@
         "t": 1,
         "effort": 0.8,
         "file": "lateral-raise-t100.png"
+      }
+    ],
+    "lunges": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "lunges-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "lunges-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "lunges-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "lunges-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "lunges-t100.png"
+      }
+    ],
+    "overhead-extension": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "overhead-extension-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "overhead-extension-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "overhead-extension-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "overhead-extension-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "overhead-extension-t100.png"
       }
     ],
     "overhead-press": [
@@ -385,6 +493,33 @@
         "file": "rope-tricep-pushdown-t100.png"
       }
     ],
+    "skull-crushers": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "skull-crushers-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "skull-crushers-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "skull-crushers-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "skull-crushers-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "skull-crushers-t100.png"
+      }
+    ],
     "squat": [
       {
         "t": 0,
@@ -410,6 +545,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "squat-t100.png"
+      }
+    ],
+    "tricep-kickback": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "tricep-kickback-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "tricep-kickback-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "tricep-kickback-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "tricep-kickback-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "tricep-kickback-t100.png"
       }
     ]
   }

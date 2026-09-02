@@ -508,16 +508,31 @@ describe("renderBodyDemo", () => {
     // Different implement/grip than the canonical (roadmap alias hygiene,
     // owner-decided 2026-07-16) — the Form surface must show the honest
     // static reference, not a borrowed model.
-    for (const id of [
-      "db-curl",
-      "hammer-curl",
-      "ez-bar-curl",
-      "cable-curl",
-      "reverse-grip-cable-pushdown",
-    ]) {
+    /* 2026-09-03: db-curl got its own demo (a bell at the hand), and
+       hammer-curl / ez-bar-curl alias it and the barbell curl — honest
+       in PROFILE specifically, because the difference is hand
+       orientation or bar shape, which an end-on view cannot show and
+       which does not change the arc. The two below still differ in
+       implement (a low-pulley cable, a reverse grip on a rope) and stay
+       fallback until they have their own contract. */
+    for (const id of ["cable-curl", "reverse-grip-cable-pushdown"]) {
       expect(getBodyDemo(id), id).toBeNull();
       expect(renderBodyDemo(id, 0.5), id).toBe("");
     }
+    for (const [id, canonical] of [
+      ["hammer-curl", "db-curl"],
+      ["ez-bar-curl", "barbell-curl"],
+      ["close-grip-bench", "bench-press"],
+      ["walking-dumbbell-lunges", "lunges"],
+    ] as const) {
+      expect(getBodyDemo(id), id).toBe(BODY_DEMOS[canonical]);
+    }
+    // Gear-free alias: the lunge motion without the bells.
+    expect(
+      getBodyDemo("bodyweight-lunge")?.equip,
+      "bodyweight-lunge"
+    ).toBeUndefined();
+    expect(renderBodyDemo("bodyweight-lunge", 0.5)).not.toBe("");
   });
 
   it("repaired canonicals are production-enabled again", () => {
@@ -993,6 +1008,13 @@ describe("renderBodyDemo", () => {
       "rope-tricep-pushdown": "stretch",
       "lateral-raise": "stretch",
       "calf-raise": "stretch",
+      // 2026-09-03 build-out, batch 1.
+      "db-curl": "stretch",
+      "front-raise": "stretch",
+      "overhead-extension": "stretch",
+      "tricep-kickback": "stretch",
+      "skull-crushers": "stretch",
+      lunges: "lockout",
     };
     expect(Object.keys(START).sort()).toEqual(Object.keys(BODY_DEMOS).sort());
     for (const [id, expected] of Object.entries(START)) {
@@ -1085,6 +1107,100 @@ describe("renderBodyDemo", () => {
       expect(heel[1], "calf heel below the block top").toBeGreaterThan(
         CALF_BLOCK_TOP
       );
+    }
+
+    /* 2026-09-03 build-out, batch 1 — each demo written against its
+       instruction text from the start, and pinned the same way. */
+
+    // front raise: "raise ... straight in front to shoulder height".
+    {
+      const p = at("front-raise", 1);
+      const hand = pt(SIDE_ANCHORS.hand, p.handL);
+      const sh = pt(SIDE_ANCHORS.shoulder, p.upperArmL);
+      expect(hand[0] - sh[0], "hand well in front").toBeGreaterThan(50);
+      expect(Math.abs(hand[1] - sh[1]), "hand at shoulder height").toBeLessThan(
+        8
+      );
+    }
+    // overhead extension: "lower ... behind your head" then "full lockout".
+    {
+      const p0 = at("overhead-extension", 0);
+      const el = pt(SIDE_ANCHORS.elbow, p0.foreArmL);
+      const h0 = pt(SIDE_ANCHORS.hand, p0.handL);
+      expect(el[1], "elbow above the shoulder").toBeLessThan(
+        SIDE_ANCHORS.shoulder[1] - 25
+      );
+      expect(h0[0], "hand BEHIND the elbow at the stretch").toBeLessThan(
+        el[0] - 20
+      );
+      const p1 = at("overhead-extension", 1);
+      const h1 = pt(SIDE_ANCHORS.hand, p1.handL);
+      expect(el[1] - h1[1], "hand above the elbow at lockout").toBeGreaterThan(
+        25
+      );
+    }
+    // kickback: "upper arm parallel to the floor" and "fully straight".
+    {
+      const p = at("tricep-kickback", 1);
+      const sh = pt(SIDE_ANCHORS.shoulder, p.upperArmL);
+      const el = pt(SIDE_ANCHORS.elbow, p.upperArmL);
+      const hd = pt(SIDE_ANCHORS.hand, p.handL);
+      const off = Math.abs(
+        (Math.atan2(el[1] - sh[1], el[0] - sh[0]) * 180) / Math.PI
+      );
+      expect(Math.min(off, 180 - off), "upper arm off horizontal").toBeLessThan(
+        15
+      );
+      const a = Math.atan2(el[1] - sh[1], el[0] - sh[0]);
+      const b = Math.atan2(hd[1] - el[1], hd[0] - el[0]);
+      const bend = Math.abs(((a - b) * 180) / Math.PI);
+      expect(
+        Math.min(bend, 360 - bend),
+        "arm straight at lockout"
+      ).toBeLessThan(12);
+    }
+    // skull crushers: "past your forehead" then extend, upper arm still.
+    {
+      const e0 = pt(SIDE_ANCHORS.elbow, at("skull-crushers", 0).upperArmL);
+      const e1 = pt(SIDE_ANCHORS.elbow, at("skull-crushers", 1).upperArmL);
+      expect(
+        Math.hypot(e1[0] - e0[0], e1[1] - e0[1]),
+        "upper arm still"
+      ).toBeLessThan(0.01);
+      const h0 = pt(SIDE_ANCHORS.hand, at("skull-crushers", 0).handL);
+      const h1 = pt(SIDE_ANCHORS.hand, at("skull-crushers", 1).handL);
+      // Lying head-left: the stretch carries the bar toward the head
+      // (smaller x); lockout is above the elbow (smaller y).
+      expect(h0[0], "bar past the forehead").toBeLessThan(e0[0] - 20);
+      expect(e1[1] - h1[1], "lockout above the elbow").toBeGreaterThan(25);
+    }
+    // lunges: "both knees bending to about 90 degrees", feet planted.
+    {
+      for (const t of [0, 0.5, 1]) {
+        const p = at("lunges", t);
+        const fa = pt(SIDE_ANCHORS.ankle, p.shankL);
+        const ba = pt(SIDE_ANCHORS.ankle, p.shankR);
+        expect(
+          Math.hypot(fa[0] - 84, fa[1] - 196),
+          `front foot planted @${t}`
+        ).toBeLessThan(0.05);
+        expect(
+          Math.hypot(ba[0] - 2, ba[1] - 196),
+          `back foot planted @${t}`
+        ).toBeLessThan(0.05);
+      }
+      const p = at("lunges", 1);
+      const hip = pt(SIDE_ANCHORS.hip, p.thighL);
+      const fk = pt(SIDE_ANCHORS.knee, p.thighL);
+      const fa = pt(SIDE_ANCHORS.ankle, p.shankL);
+      const a = Math.atan2(hip[1] - fk[1], hip[0] - fk[0]);
+      const b = Math.atan2(fa[1] - fk[1], fa[0] - fk[0]);
+      let knee = Math.abs(((a - b) * 180) / Math.PI);
+      if (knee > 180) knee = 360 - knee;
+      expect(knee, "front knee angle").toBeGreaterThan(75);
+      expect(knee, "front knee angle").toBeLessThan(105);
+      const bk = pt(SIDE_ANCHORS.knee, p.thighR);
+      expect(196 - bk[1], "back knee near the floor").toBeLessThan(12);
     }
   });
 
@@ -1320,8 +1436,11 @@ describe("renderBodyDemo", () => {
     // the far wrist must land exactly where the near one does, in every
     // frame. A demo that forgets the far arm leaves it hanging at rest
     // while the near arm presses — which is what this catches.
+    // The kickback is unilateral by its own instruction ("one knee and
+    // hand on a bench"): the far arm is the support and poses on its own.
+    const UNILATERAL = new Set(["tricep-kickback"]);
     for (const [id, d] of Object.entries(BODY_DEMOS)) {
-      if (d.view !== "side") continue;
+      if (d.view !== "side" || UNILATERAL.has(id)) continue;
       for (const t of [0, 0.5, 1]) {
         const pose = d.pose(t);
         for (const [g, anchor] of [
@@ -1599,6 +1718,12 @@ describe("tint honesty", () => {
       "pull-ups": "upper-back",
       "barbell-row": "upper-back",
       "romanian-deadlift": "hamstring",
+      "db-curl": "biceps",
+      "front-raise": "front-deltoids",
+      "overhead-extension": "triceps",
+      "tricep-kickback": "triceps",
+      "skull-crushers": "triceps",
+      lunges: "quadriceps",
     };
     for (const [id, muscle] of Object.entries(expectPrimary)) {
       expect(BODY_DEMOS[id].tint[muscle], `${id} primary`).toBe("primary");
