@@ -344,3 +344,47 @@ low and outboard, exactly one bell above the hands, no barbell), four
 mutations each caught — including pointing the goblet hands at the
 squat's trap grips and un-riding the dive. Only goblet's sheets are
 new; every other demo re-renders byte-identical.
+
+## STATUS 2026-09-02 — owner evaluation: "improve them, or go back to the muscle map?"
+
+Owner-directed evaluation of the animation side of the form guides
+("most of them are bad"). Method: every registered demo re-rendered at
+card scale (five frames) and graded against the owner's bar — _reads as
+a person doing the exercise_ — alongside the other two media the Form
+tab can show. Coverage of the 152-exercise library: **35** exercises get
+a rig demo (15 demos + aliases), **91** get a free-exercise-db photo pair
+(static start/finish, real humans), **26** get the muscle diagram only.
+The rig OUTRANKS the photo pair in `ExerciseFormContent`'s resolution,
+so a bad rig demo displaces a real photograph.
+
+| Grade        | Demos                                                                                                                 | Why                                                                                                                                                                                                                               |
+| ------------ | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Good (8)     | deadlift, romanian-deadlift, bench-press, pull-ups, overhead-press, barbell-curl, rope-tricep-pushdown, lateral-raise | Read as the exercise; gear is real; the working muscle lights at the right phase. Every one is a side view or a hand-constrained (IK) movement.                                                                                   |
+| Passable (4) | barbell-row, push-ups, dips, lat-pulldown                                                                             | Recognisable but mannequin-stiff: single profile arm, body moving as one beam, missing seat pads.                                                                                                                                 |
+| Bad (3)      | squat, goblet-squat, calf-raise                                                                                       | Front-view DEPTH fakes: scaleY thigh compression reads as a figure shrinking; a 6.5-unit rise reads as nothing happening. Not tunable — the movement lives in the sagittal plane, which a frontal orthographic camera cannot see. |
+
+**Verdict: curate, don't revert.** The medium's ceiling is a placard
+mannequin — rigid facets rotating about joints — and it will never look
+like video of a human; what it does that the static muscle map cannot is
+show the movement pattern and which muscle fires when. Every demo that
+reads well is a side view or IK-constrained; every demo that reads badly
+faked depth from the front. Adopted: keep the 12, rebuild the 3 in the
+side view on the deadlift's planted-ankle chain, and gate anything that
+still fails the bar afterwards (a gated demo falls back to the photo
+pair, not to nothing). The wholesale revert to the muscle map remains a
+one-line switch (`getBodyDemo` returning null) if the owner prefers zero
+mannequins.
+
+| Demo         | Delta                                                                                                                                                                                                                                                                                                                                   |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| squat        | REBUILT side view on the shared `sideSquatChain` (shin ≤10° about the planted ankle, thigh about the MOVED knee to just above parallel, torso 38° about the MOVED hip). Near plate end-on at the back-rack contact in torso space; hands behind the neck. The gear-stripped aliases (bodyweight, front) now read as the prisoner squat. |
+| goblet-squat | REBUILT side view: same chain, 30° torso (front load keeps it upright); hands cupped just proud of the chest with the elbow tucked (out −1); one bell above the hands.                                                                                                                                                                  |
+| calf-raise   | REBUILT side view: toes on a block; shank+foot pitch about the ball of the foot (−8° → +15°) so the heel drops below the block edge at the bottom and lifts clear at the top; everything above rides the knee.                                                                                                                          |
+
+Pins shipped with the rebuild (each on the geometry it names): planted
+ankle / ball-of-foot invariants, hips back AND down with the knee
+forward, the bar riding the traps with the hand ON it, the gear strip,
+one bell above the hands, the heel below/above the block edge.
+The fist tests that used the anterior calf raise as their arms-at-rest
+reference now measure against the SOLVED forearm axis of the lateral
+raise — no anterior demo is an identity pose any more.

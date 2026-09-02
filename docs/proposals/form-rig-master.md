@@ -44,6 +44,8 @@ packet's design content as the plan and its status content as void.
 | Curl + rope-pushdown repairs — side-view rebuilds fix the gated defects; both un-gated (Phase 4 items 1–2); side triceps facet added (Phase 2 item) | `bodyRig.ts` / `bodySideData.ts` + mechanics pins     | ✅ 2026-08-15               |
 | Typed props (Phase 3, prop half) — `bodyProps.ts` union + pure resolver; two divergent gear branch chains consolidated, dead anterior copy removed  | `bodyProps.ts` + `bodyRig.ts` `resolveProp`           | ✅ 2026-08-17               |
 | Rope split + gravity tails; press/bench bar paths fitted to the arm (one unreachable, one never locking out)                                        | `bodyProps.ts` / `bodyRig.ts` + mutation-checked pins | ✅ 2026-08-17               |
+| Owner evaluation of every demo — 8 good / 4 passable / 3 bad; verdict "curate, don't revert" (ledger section in the Gate-0 README)                  | `docs/visual-audit/form-motion-v2/README.md`          | ✅ 2026-09-02               |
+| Squat family + calf raise moved to the SIDE view on the planted-ankle chain — the last front-view depth fakes retired                               | `bodyRig.ts` + mechanics pins                         | ✅ 2026-09-02               |
 | Everything else below                                                                                                                               | —                                                     | Pending                     |
 
 **Demo1 supersession note (2026-07-27).** The single bounded teaching

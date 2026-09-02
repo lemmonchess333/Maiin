@@ -11,8 +11,11 @@
  *
  * Motion language (front/back view, like the reference):
  *  - arms rotate about the measured shoulder/elbow pivots (in-plane);
- *  - squats/hinges read via vertical compression about the knee/hip lines
- *    plus body drop — the standard stylization for frontal anatomy figures;
+ *  - squats and hinges are SIDE-view demos on a planted-ankle chain
+ *    (deadlift 2026-07-27, squat family + calf raise 2026-09-02). The
+ *    frontal "vertical compression" stylization they replaced read as
+ *    a figure shrinking — depth lives in the sagittal plane, and the
+ *    frontal camera cannot see it;
  *  - Held weights follow the HANDS. They were built and removed on
  *    2026-07-03 (product owner) because "the figure has no hands, so a
  *    held prop always read detached" — and that premise was tracked,
@@ -516,24 +519,6 @@ const lerp = (a: number, b: number, e: number) => a + (b - a) * e;
  * GRIP ≤ 10.45; widen the grip and the lockout must come down with it.
  * The "hands stay ON the declared bar path" test pins exactly that.
  */
-/* Back-squat grips: at the canvas edges, ON the trap line. Wide is not
- * style, it is what makes the front-view grip solvable — see the squat
- * pose comment. */
-const SQUAT_GRIP_L: Pt = [0, 45];
-const SQUAT_GRIP_R: Pt = [100, 45];
-
-/* Goblet grips: cupped together at the sternum ("hold a dumbbell
- * vertically against your chest, elbows pinned under it"). Unlike the
- * back squat's canvas-edge grips these sit at the MIDLINE — and the IK
- * still keeps the elbows out of the chest, because with hands this
- * high the elbows solve just outside-below the shoulders (the
- * pinned-under posture). Only the FOREARMS cross the torso, which the
- * vendored draw order supports: forearm polys paint at indices 29-32,
- * chest at 0-1, so the crossing arm renders in front — exactly how a
- * goblet hold looks from the front. */
-const GOBLET_GRIP_L: Pt = [46.5, 52];
-const GOBLET_GRIP_R: Pt = [53.5, 52];
-
 const PRESS_GRIP = 10;
 
 /**
@@ -566,178 +551,188 @@ const pressBarPath = (e: number): [Pt, Pt] => {
   ];
 };
 
-/* Legs + torso + dive shared by the squat-pattern demos (back squat,
- * goblet squat). ONE copy, because the movement is identical — only
- * the load and the arms differ — and two copies of the same motion is
- * precisely the mirror-drift this codebase keeps paying for. */
-function squatLegsAndDive(e: number): {
-  drop: number;
-  groups: Partial<Record<GroupName, Op[]>>;
+/* ── Side-view squat chain (2026-09-02 evaluation rebuild) ──────
+ * ONE copy shared by the back squat and the goblet squat (the July
+ * one-copy rule kept — the load and the arms differ, the squat does
+ * not). Built ankle-up like the deadlift so the feet stay planted: the
+ * shin tilts about the planted ankle (≤10° — the foot is part of the
+ * shank piece, so more visibly lifts the heel), the thigh rotates about
+ * the MOVED knee down to just above parallel, and the torso hinges
+ * about the MOVED hip. Knees forward, hips back and down, torso
+ * inclined — the entire shape of a squat, none of which a frontal
+ * orthographic projection can show (the anterior version scaleY-
+ * compressed the thighs and read as a figure shrinking: the 2026-09-02
+ * evaluation's worst grade). `hingeDeg` is the bottom-frame torso
+ * incline: a back squat leans further than a goblet, whose front load
+ * keeps the torso upright. */
+function sideSquatChain(
+  e: number,
+  hingeDeg: number
+): {
+  torsoOps: Op[];
+  thighOps: Op[];
+  legOps: Op[];
+  hinge: number;
 } {
-  const k = lerp(1, 0.6, e); // thigh compression about the knee line
-  // The torso must track the moving thigh TOPS exactly (y≈92) or a
-  // waist gap opens between the obliques and the quads.
-  const drop = (1 - k) * (ANT.kneeL[1] - 92);
-  const flare = lerp(0, 7, e);
-  const dive: Op[] = [{ kind: "translate", dx: 0, dy: drop }];
-  return {
-    drop,
-    groups: {
-      thighL: [
-        { kind: "scaleY", k, pivotY: ANT.kneeL[1] },
-        { kind: "rotate", deg: -flare, pivot: ANT.kneeL },
-      ],
-      thighR: [
-        { kind: "scaleY", k, pivotY: ANT.kneeR[1] },
-        { kind: "rotate", deg: flare, pivot: ANT.kneeR },
-      ],
-      shankL: [
-        {
-          kind: "rotate",
-          deg: -flare * 0.5,
-          pivot: [ANT.kneeL[0], ANT.ankleY],
-        },
-      ],
-      shankR: [
-        {
-          kind: "rotate",
-          deg: flare * 0.5,
-          pivot: [ANT.kneeR[0], ANT.ankleY],
-        },
-      ],
-      torso: dive,
-      head: dive,
+  const shin = lerp(0, 10, e); // about the planted ankle
+  const thighRel = lerp(0, -78, e); // thigh world −68° at the bottom — just above parallel
+  const hinge = lerp(0, hingeDeg, e);
+  const legOps: Op[] = [
+    { kind: "rotate", deg: shin, pivot: SIDE_ANCHORS.ankle },
+  ];
+  const thighOps: Op[] = [
+    { kind: "rotate", deg: thighRel, pivot: SIDE_ANCHORS.knee },
+    { kind: "rotate", deg: shin, pivot: SIDE_ANCHORS.ankle },
+  ];
+  const hipNew = applyToPoint(SIDE_ANCHORS.hip, thighOps);
+  const torsoOps: Op[] = [
+    { kind: "rotate", deg: hinge, pivot: SIDE_ANCHORS.hip },
+    {
+      kind: "translate",
+      dx: hipNew[0] - SIDE_ANCHORS.hip[0],
+      dy: hipNew[1] - SIDE_ANCHORS.hip[1],
     },
-  };
+  ];
+  return { torsoOps, thighOps, legOps, hinge };
 }
 
+/** Where the bar sits on the traps, in TORSO space (the bar rides the
+ *  body, so this point is fixed relative to the shoulder and the whole
+ *  assembly inherits the hinge). Behind and just above the shoulder
+ *  joint. */
+export const BACK_RACK: Pt = [
+  SIDE_ANCHORS.shoulder[0] - 5,
+  SIDE_ANCHORS.shoulder[1] - 5,
+];
+
+/** Goblet hold, in TORSO space: the cupped hands sit just proud of the
+ *  chest contour at sternum height, so the bell reads as pressed
+ *  against the chest rather than floating. */
+export const GOBLET_HOLD: Pt = [66, 58];
+
+/** Ball of the near foot — the calf raise pivots about it. Measured
+ *  from the FOOT facet's sole line (y ≈ 202.3) at the ball. */
+export const CALF_BALL: Pt = [60, 202.3];
+/** The block the toes stand on: its top is the sole line; the floor is
+ *  below it so the heels can drop past the edge at the bottom. */
+export const CALF_BLOCK_TOP = 203;
+const CALF_FLOOR = 212;
 export const BODY_DEMOS: Record<string, BodyDemo> = {
   squat: {
-    view: "anterior",
-    /* Its first instruction is "Bar on your upper traps" — and until
-     * 2026-08-17 it squatted nothing. Racked BEHIND the neck, so the
-     * torso hides the shaft's middle and the ends + plates read beside
-     * the shoulders. Aliases that carry no barbell (bodyweight, goblet,
-     * front squat) are stripped of this gear at resolution — see
-     * HELD_GEAR_FREE_VARIANTS. */
-    equip: "back-barbell",
-    plateR: 12,
-    // Wide grips put the plates outside the default canvas.
-    viewBox: "-16 -14 132 224",
+    view: "side",
+    /* Its first instruction is "Bar on your upper traps": the near plate
+     * (end-on, profile) sits at the back-rack contact and rides the
+     * torso. Aliases that carry no barbell (bodyweight, front squat)
+     * are stripped of this gear at resolution — see
+     * HELD_GEAR_FREE_VARIANTS; with nothing at the contact the
+     * hands-behind-the-neck pose IS the prisoner squat. */
+    equip: "plate-end",
+    plateR: 11,
     concentricTo: 0,
-    tint: { quadriceps: "primary", abductors: "secondary", abs: "secondary" },
+    // The bottom frame carries the hips ~40 units behind the knee, so
+    // the glutes cross x=0 — same left margin as the deadlift.
+    viewBox: "-24 -2 192 212",
+    groundY: 204,
+    shadowCx: 56,
+    shadowRx: 40,
+    tint: { quadriceps: "primary", gluteal: "secondary", abs: "secondary" },
     pose: (e) => {
-      const { drop, groups } = squatLegsAndDive(e);
-      /* The hands grip the bar on the traps — a WIDE grip, and the
-         width is load-bearing twice over. A folded front-view grip was
-         tried in July and read as broken polygons ACROSS THE CHEST;
-         with the grips at the canvas edges the IK puts the elbow
-         within ~2 units of its natural hang (upper arm barely moves)
-         and the forearm sweeps up through the FREE SPACE beside the
-         torso — nothing folds over the body. Narrower grips collapse
-         exactly as July found: pull the grip in to x=10 and the solved
-         elbow lands ~11 units INBOARD of the shoulder, burying the arm
-         in the chest (pinned by test). The whole assembly rides the
-         dive, since the bar sits ON the body. */
-      const hl: Pt = [SQUAT_GRIP_L[0], SQUAT_GRIP_L[1] + drop];
-      const hr: Pt = [SQUAT_GRIP_R[0], SQUAT_GRIP_R[1] + drop];
-      const L = aimArm(
-        { S: ANT.shoulderL, E: ANT.elbowL, H: ANT.handL },
+      /* Side-view back squat (2026-09-02, replaces the anterior
+       * scaleY-compression version). Legs + torso from the shared
+       * chain; the hands grip the bar behind the neck, so the arm is
+       * aimed in torso space at the rack contact and composed with the
+       * hinge — the elbow solves down-and-back (the real back-squat
+       * elbow), the forearm runs up beside the lats to the bar. */
+      const { torsoOps, thighOps, legOps } = sideSquatChain(e, 38);
+      const arm = aimArm(
+        {
+          S: SIDE_ANCHORS.shoulder,
+          E: SIDE_ANCHORS.elbow,
+          H: SIDE_ANCHORS.hand,
+        },
         solveElbow(
-          [ANT.shoulderL[0], ANT.shoulderL[1] + drop],
-          hl,
-          ANT_UPPER_LEN,
-          ANT_FORE_LEN,
+          SIDE_ANCHORS.shoulder,
+          BACK_RACK,
+          SIDE_UPPER_LEN,
+          SIDE_FORE_LEN,
           1
         ),
-        hl,
-        drop
-      );
-      const R = aimArm(
-        { S: ANT.shoulderR, E: ANT.elbowR, H: ANT.handR },
-        solveElbow(
-          [ANT.shoulderR[0], ANT.shoulderR[1] + drop],
-          hr,
-          ANT_UPPER_LEN,
-          ANT_FORE_LEN,
-          -1
-        ),
-        hr,
-        drop
+        BACK_RACK,
+        0
       );
       return {
-        ...groups,
-        upperArmL: L.upper,
-        upperArmR: R.upper,
-        foreArmL: L.fore,
-        foreArmR: R.fore,
+        head: torsoOps,
+        torso: torsoOps,
+        pelvis: torsoOps,
+        thighL: thighOps,
+        thighR: thighOps,
+        shankL: legOps,
+        shankR: legOps,
+        upperArmL: [...arm.upper, ...torsoOps],
+        foreArmL: [...arm.fore, ...torsoOps],
+        handL: [...arm.fore, ...torsoOps],
       };
     },
-    /* The solved wrists ARE the grips, so the bar can never leave the
-     * hands — and it rides the dive because the hands do. */
-    bar: (_e, pose) => [
-      applyToPoint(ANT.handL, pose.foreArmL ?? []),
-      applyToPoint(ANT.handR, pose.foreArmR ?? []),
-    ],
+    /* The rack contact IS the bar: it rides the torso by construction. */
+    bar: (_e, pose) => {
+      const c = applyToPoint(BACK_RACK, pose.torso ?? []);
+      return [c, c];
+    },
   },
 
   "goblet-squat": {
-    view: "anterior",
-    /* Its own demo since 2026-08-17, not an alias: the squat gained a
-     * back-rack barbell, and a goblet squat holds a DUMBBELL cupped at
-     * the sternum — same movement, different load, different arms
-     * (owner-directed). The legs come from the same squatLegsAndDive
-     * the squat uses, so the two movements cannot drift apart. */
+    view: "side",
+    /* Its own demo since 2026-08-17: same squat, different load,
+     * different arms. The bell is cupped at the sternum, so the hands
+     * are aimed at a point just proud of the chest in torso space and
+     * the bell (goblet-bell: one end-on disc above the hands) rides
+     * the hinge with them. A goblet's front load keeps the torso more
+     * upright than a back squat — 30° at the bottom against 38°. */
     equip: "goblet-bell",
     concentricTo: 0,
-    tint: { quadriceps: "primary", abductors: "secondary", abs: "secondary" },
+    viewBox: "-24 -2 192 212",
+    groundY: 204,
+    shadowCx: 56,
+    shadowRx: 40,
+    tint: { quadriceps: "primary", gluteal: "secondary", abs: "secondary" },
     pose: (e) => {
-      const { drop, groups } = squatLegsAndDive(e);
-      /* Hands cup together at the sternum and ride the dive — the bell
-       * is "glued to your chest", per its own instructions. See the
-       * GOBLET_GRIP note for why this midline target does NOT re-create
-       * the July across-the-chest collapse: the elbows solve just
-       * outside-below the shoulders, and only the forearms cross. */
-      const hl: Pt = [GOBLET_GRIP_L[0], GOBLET_GRIP_L[1] + drop];
-      const hr: Pt = [GOBLET_GRIP_R[0], GOBLET_GRIP_R[1] + drop];
-      const L = aimArm(
-        { S: ANT.shoulderL, E: ANT.elbowL, H: ANT.handL },
+      const { torsoOps, thighOps, legOps } = sideSquatChain(e, 30);
+      // out −1: the elbow tucks DOWN and back under the load ("elbows
+      // pinned under it"); +1 would solve it forward-up over the bell.
+      const arm = aimArm(
+        {
+          S: SIDE_ANCHORS.shoulder,
+          E: SIDE_ANCHORS.elbow,
+          H: SIDE_ANCHORS.hand,
+        },
         solveElbow(
-          [ANT.shoulderL[0], ANT.shoulderL[1] + drop],
-          hl,
-          ANT_UPPER_LEN,
-          ANT_FORE_LEN,
+          SIDE_ANCHORS.shoulder,
+          GOBLET_HOLD,
+          SIDE_UPPER_LEN,
+          SIDE_FORE_LEN,
           -1
         ),
-        hl,
-        drop
-      );
-      const R = aimArm(
-        { S: ANT.shoulderR, E: ANT.elbowR, H: ANT.handR },
-        solveElbow(
-          [ANT.shoulderR[0], ANT.shoulderR[1] + drop],
-          hr,
-          ANT_UPPER_LEN,
-          ANT_FORE_LEN,
-          1
-        ),
-        hr,
-        drop
+        GOBLET_HOLD,
+        0
       );
       return {
-        ...groups,
-        upperArmL: L.upper,
-        upperArmR: R.upper,
-        foreArmL: L.fore,
-        foreArmR: R.fore,
+        head: torsoOps,
+        torso: torsoOps,
+        pelvis: torsoOps,
+        thighL: thighOps,
+        thighR: thighOps,
+        shankL: legOps,
+        shankR: legOps,
+        upperArmL: [...arm.upper, ...torsoOps],
+        foreArmL: [...arm.fore, ...torsoOps],
+        handL: [...arm.fore, ...torsoOps],
       };
     },
-    bar: (_e, pose) => [
-      applyToPoint(ANT.handL, pose.foreArmL ?? []),
-      applyToPoint(ANT.handR, pose.foreArmR ?? []),
-    ],
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
   },
-
   "overhead-press": {
     view: "anterior",
     equip: "barbell",
@@ -1198,35 +1193,50 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
   },
 
   "calf-raise": {
-    view: "anterior",
+    view: "side",
     concentricTo: 1,
+    viewBox: "-4 -2 172 220",
+    groundY: CALF_FLOOR,
+    shadowCx: 56,
+    shadowRx: 24,
     tint: { calves: "primary" },
     pose: (e) => {
-      /* Heels drive the body straight up — but the FEET stay planted.
-       * The shanks stretch from the ground line (tiptoe height is real:
-       * floor→knee lengthens on plantarflexion), which lifts the knees
-       * to meet the risen thighs while the foot wedges, sitting at the
-       * bottom of the same group, barely move. Translating the shanks
-       * instead floated the feet — a levitation, not a calf raise. */
-      const rise = 6.5 * e;
-      const lift: Op[] = [{ kind: "translate", dx: 0, dy: -rise }];
-      const KNEE_TO_GROUND = 55; // knee line ~148 → ground 203
-      const stretch: Op[] = [
-        { kind: "scaleY", k: 1 + rise / KNEE_TO_GROUND, pivotY: 203 },
+      /* Side view (2026-09-02, replaces the anterior version whose
+       * 6.5-unit vertical rise was invisible at card scale — the
+       * evaluation's "nothing happens" grade). Toes on a block: the
+       * shank+foot piece pitches about the BALL of the foot, so the
+       * heel drops below the block edge at the bottom and lifts clear
+       * of it at the top — the one cue that says calf raise. The
+       * thigh and everything above translate with the knee (the thigh
+       * stays vertical; the shin's forward lean is the knee travelling
+       * over the toes, which a raise on a block really does). */
+      const pitch = lerp(-8, 15, e);
+      const legOps: Op[] = [{ kind: "rotate", deg: pitch, pivot: CALF_BALL }];
+      const kneeNew = applyToPoint(SIDE_ANCHORS.knee, legOps);
+      const rise: Op[] = [
+        {
+          kind: "translate",
+          dx: kneeNew[0] - SIDE_ANCHORS.knee[0],
+          dy: kneeNew[1] - SIDE_ANCHORS.knee[1],
+        },
       ];
       return {
-        head: lift,
-        torso: lift,
-        upperArmL: lift,
-        upperArmR: lift,
-        foreArmL: lift,
-        foreArmR: lift,
-        thighL: lift,
-        thighR: lift,
-        shankL: stretch,
-        shankR: stretch,
+        shankL: legOps,
+        shankR: legOps,
+        thighL: rise,
+        thighR: rise,
+        pelvis: rise,
+        torso: rise,
+        head: rise,
+        upperArmL: rise,
+        foreArmL: rise,
+        handL: rise,
       };
     },
+    // The block under the toes + the floor below it.
+    scene: () =>
+      `<rect x="52" y="${CALF_BLOCK_TOP}" width="26" height="${CALF_FLOOR - CALF_BLOCK_TOP}" rx="1.5" fill="${GEAR}"/>` +
+      `<line x1="-2" y1="${CALF_FLOOR}" x2="166" y2="${CALF_FLOOR}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
   },
 
   "bench-press": {
