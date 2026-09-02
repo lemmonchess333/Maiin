@@ -557,3 +557,28 @@ further as it sinks (a chest dip), and the legs hang with the knees
 tucked back so the feet clear the floor. The station is scene furniture
 in profile: the near bar runs front-to-back, so it reads as a tube
 between its two posts with the grip mid-bar.
+
+## STATUS 2026-09-02f — bilateral arms on the profile figure
+
+The roadmap's P0 side-topology item, and the last of the four owner
+asks from the 2026-09-02 recordings. The profile figure had ONE arm, so
+every bar, bench and hinge was held one-handed — legible as a diagram,
+wrong as a body. It now has a far arm: the near arm's geometry pushed
+back and down by `FAR_ARM_SHIFT` (−2.6, +1.6 in authored space), flagged
+`far` so it paints in the shadow body colour with its tint at 62%, and
+painted BEFORE the torso so it can only ever peek out from behind the
+body. Hanging beside the trunk it is fully hidden inside the silhouette;
+the moment the arms leave it (a curl, the bench lockout, the hinge to
+the bar, the push-up) a darker second arm appears just behind the
+first, where a profile expects one.
+
+Every side demo now poses `upperArmR / foreArmR / handR` with the near
+arm's ops — all eleven are bilateral (a bar, a station, the floor), so
+the far wrist lands exactly on the near one in every frame; a pin
+iterates every side demo at three samples to hold that. Two more pins
+hold the piece contract (far flag, paint order, the exact x offset and
+the re-rowed y offset, matching facet lists) and the render (shadow
+body colour present, the far biceps dimmer than the near one).
+
+Not a depth cue on the legs: the far leg pair keeps its zero offset —
+symmetric stances must stay clean — so this is arm-only by design.

@@ -11,7 +11,7 @@ import {
 } from "../bodyRig";
 import { ANTERIOR, POSTERIOR } from "../bodyModelData";
 import { EXERCISES } from "../exercises";
-import { SIDE_ANCHORS, SIDE_PIECES } from "../bodySideData";
+import { FAR_ARM_SHIFT, SIDE_ANCHORS, SIDE_PIECES } from "../bodySideData";
 
 /** The measured wrist anchors — ON the art, since 2026-08-17. They used
  *  to be [10,100] / [9,106], ~6.5 units off the end of the forearm art,
@@ -539,7 +539,10 @@ describe("renderBodyDemo", () => {
     // STRICT: no body english — the pose touches only the arm chain.
     const d = BODY_DEMOS["barbell-curl"];
     for (const g of Object.keys(d.pose(1))) {
-      expect(["upperArmL", "foreArmL", "handL"], g).toContain(g);
+      expect(
+        ["upperArmL", "foreArmL", "handL", "upperArmR", "foreArmR", "handR"],
+        g
+      ).toContain(g);
     }
   });
 
@@ -862,6 +865,94 @@ describe("renderBodyDemo", () => {
     const headW = width(head.outline, 0);
     expect(width(hand.outline, 0)).toBeLessThanOrEqual(headW / 2 + 0.5);
     expect(width(hand.outline, 1)).toBeLessThanOrEqual(headW / 2 + 0.5);
+  });
+
+  /* ── 2026-09-02 bilateral arms on the profile figure ── */
+
+  it("the profile figure has a far arm: darker, pushed back and down, painted behind the torso", () => {
+    // Roadmap side-topology P0 item ("bilateral arms/hands"). The far
+    // arm is the near arm's geometry offset by FAR_ARM_SHIFT — back (−x)
+    // and down (+y) — flagged `far` so the renderer shadows it, and
+    // painted BEFORE the torso so it can only ever peek out from behind
+    // the body. The near arm stays in front of the torso.
+    const idx = (g: string) => SIDE_PIECES.findIndex((p) => p.group === g);
+    expect(FAR_ARM_SHIFT[0]).toBeLessThan(0);
+    expect(FAR_ARM_SHIFT[1]).toBeGreaterThan(0);
+    for (const [far, near] of [
+      ["upperArmR", "upperArmL"],
+      ["foreArmR", "foreArmL"],
+      ["handR", "handL"],
+    ] as const) {
+      const f = SIDE_PIECES[idx(far)];
+      const n = SIDE_PIECES[idx(near)];
+      expect(f?.far, `${far} flagged far`).toBe(true);
+      expect(n?.far, `${near} is the near arm`).toBeFalsy();
+      expect(idx(far), `${far} behind torso`).toBeLessThan(idx("torso"));
+      expect(idx(near), `${near} in front of torso`).toBeGreaterThan(
+        idx("torso")
+      );
+      expect(f.outline.length).toBe(n.outline.length);
+      f.outline.forEach(([x, y], i) => {
+        // x is exact; y passes through the re-row after the shift, so
+        // the vertical offset is the authored one scaled by the local
+        // remap slope — always downward, never more than the shift ×2.
+        expect(x - n.outline[i][0], `${far} x`).toBeCloseTo(
+          FAR_ARM_SHIFT[0],
+          6
+        );
+        const dy = y - n.outline[i][1];
+        expect(dy, `${far} y`).toBeGreaterThan(0);
+        expect(dy, `${far} y`).toBeLessThan(FAR_ARM_SHIFT[1] * 2);
+      });
+      expect(f.facets.map((fc) => fc.muscle)).toEqual(
+        n.facets.map((fc) => fc.muscle)
+      );
+    }
+  });
+
+  it("every side demo moves the far arm with the near one — both hands on the same bar", () => {
+    // Every profile demo is bilateral (a bar, a station, the floor), so
+    // the far wrist must land exactly where the near one does, in every
+    // frame. A demo that forgets the far arm leaves it hanging at rest
+    // while the near arm presses — which is what this catches.
+    for (const [id, d] of Object.entries(BODY_DEMOS)) {
+      if (d.view !== "side") continue;
+      for (const t of [0, 0.5, 1]) {
+        const pose = d.pose(t);
+        for (const [g, anchor] of [
+          ["handR", SIDE_ANCHORS.hand],
+          ["foreArmR", SIDE_ANCHORS.elbow],
+          ["upperArmR", SIDE_ANCHORS.shoulder],
+        ] as const) {
+          const near = g.replace("R", "L") as keyof typeof pose;
+          const a = applyToPoint(anchor, (pose[g] ?? []) as never[]);
+          const b = applyToPoint(anchor, (pose[near] ?? []) as never[]);
+          expect(
+            Math.hypot(a[0] - b[0], a[1] - b[1]),
+            `${id}@${t} ${g}`
+          ).toBeLessThan(1e-6);
+        }
+        // A posed near hand without a posed far hand is the regression.
+        if (pose.handL)
+          expect(pose.handR, `${id}@${t} far hand posed`).toBeDefined();
+      }
+    }
+  });
+
+  it("the far arm renders in shadow: darker body colour, dimmer tint, painted first", () => {
+    const svg = renderBodyDemo("barbell-curl", 1).replace(
+      /<g class="glow">.*?<\/g>/,
+      ""
+    );
+    // Untinted far facets take the shadow body colour.
+    expect(svg).toContain('fill="#9FA6AC"');
+    // The biceps is primary on BOTH arms: the far copy (painted first)
+    // carries a lower fill-opacity than the near copy (painted last).
+    const ops = [
+      ...svg.matchAll(/fill="#7B72E9" fill-opacity="([\d.]+)"/g),
+    ].map((m) => Number(m[1]));
+    expect(ops.length).toBeGreaterThanOrEqual(2);
+    expect(ops[0]).toBeLessThan(ops[ops.length - 1]);
   });
 
   /* ── 2026-07-27 anatomy rebuild pins (owner device feedback) ── */

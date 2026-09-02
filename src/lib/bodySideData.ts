@@ -27,10 +27,10 @@
  * unchanged; profile-only parts ("pelvis", "shin", "foot", "jaw") are
  * never tinted.
  *
- * Paint order (fixed): shank → thigh → head → torso → forearm → upper
- * arm. Legs tuck under the torso, the elbow tucks under the upper arm,
- * the near arm reads in front of the torso — exactly how a profile
- * layers.
+ * Paint order (fixed): far leg → far arm → near leg → head → torso →
+ * forearm → upper arm → hand. Legs tuck under the torso, the elbow
+ * tucks under the upper arm, the near arm reads in front of the torso
+ * and the far arm only ever behind it — exactly how a profile layers.
  */
 
 import type { GroupName } from "./bodyTypes";
@@ -309,6 +309,69 @@ const THIGH_FACETS = [
   },
 ];
 
+/* ── Arm pieces (shared by the near and far arm) ───────────────── */
+
+const FORE_FACETS = [
+  {
+    muscle: "forearm",
+    points: band(FORE_B, FORE_F, 68.4, 99.8, 0, 1),
+  },
+];
+const UPPER_ARM_FACETS = [
+  {
+    muscle: "front-deltoids",
+    points: band(ARM_B, ARM_F, 38, 51.8, 0, 1, { skewB: [-1.5, 1] }),
+  },
+  {
+    /* Front/back split at the real muscle boundary, mirroring the
+       thigh's quadriceps/hamstring convention — the triceps facet is
+       what lets a pushdown's working-muscle emphasis render at all
+       (roadmap side-topology item "triceps facet"). */
+    muscle: "biceps",
+    points: band(ARM_B, ARM_F, 53.2, 70.8, 0.52, 1, {
+      skewT: [-1.5, 1],
+      bellyL: -0.05,
+    }),
+  },
+  {
+    muscle: "triceps",
+    points: band(ARM_B, ARM_F, 54, 70, 0, 0.46, { bellyR: 0.05 }),
+  },
+];
+const HAND_OUTLINE: Pt[] = [
+  [46.8, 99.4],
+  [52.8, 99.2],
+  [54, 103.2],
+  [52.8, 107.6],
+  [48.8, 108.6],
+  [46, 104.6],
+];
+const HAND_FACETS = [
+  {
+    muscle: "hand",
+    points: [
+      [47.4, 100],
+      [52.2, 99.8],
+      [53.4, 103.2],
+      [52.2, 107],
+      [49.2, 107.9],
+      [46.8, 104.4],
+    ] as Pt[],
+  },
+];
+
+/* The FAR arm is the near arm's geometry pushed a touch back and down —
+ * the depth cue a profile reads a second arm by. It is hidden inside the
+ * torso silhouette while the arms hang, and shows the moment the arms
+ * leave it (a curl, a bench, a hinge to the bar): a darker second arm
+ * just behind the first, exactly where the eye expects one. Authored
+ * space, so the re-row below moves it with the arm it shadows. */
+export const FAR_ARM_SHIFT: Pt = [-2.6, 1.6];
+const shiftFar = (pts: Pt[]): Pt[] =>
+  pts.map(([x, y]) => [x + FAR_ARM_SHIFT[0], y + FAR_ARM_SHIFT[1]]);
+const farFacets = (facets: { muscle: string; points: Pt[] }[]) =>
+  facets.map((f) => ({ muscle: f.muscle, points: shiftFar(f.points) }));
+
 const RAW_PIECES: SidePiece[] = [
   // Far-side leg pair: same geometry, darker, painted FIRST — hidden in
   // symmetric stances, visible the moment a pose splits the legs.
@@ -323,6 +386,26 @@ const RAW_PIECES: SidePiece[] = [
     far: true,
     outline: silhouette(THIGH_B, THIGH_F),
     facets: THIGH_FACETS,
+  },
+  // Far-side arm: painted behind the torso (and the near leg) so it can
+  // only ever peek out from behind the body — never in front of it.
+  {
+    group: "foreArmR",
+    far: true,
+    outline: shiftFar(silhouette(FORE_B, FORE_F)),
+    facets: farFacets(FORE_FACETS),
+  },
+  {
+    group: "upperArmR",
+    far: true,
+    outline: shiftFar(silhouette(ARM_B, ARM_F)),
+    facets: farFacets(UPPER_ARM_FACETS),
+  },
+  {
+    group: "handR",
+    far: true,
+    outline: shiftFar(HAND_OUTLINE),
+    facets: farFacets(HAND_FACETS),
   },
   {
     group: "shankL",
@@ -479,63 +562,19 @@ const RAW_PIECES: SidePiece[] = [
   {
     group: "foreArmL",
     outline: silhouette(FORE_B, FORE_F),
-    facets: [
-      {
-        muscle: "forearm",
-        points: band(FORE_B, FORE_F, 68.4, 99.8, 0, 1),
-      },
-    ],
+    facets: FORE_FACETS,
   },
   {
     group: "upperArmL",
     outline: silhouette(ARM_B, ARM_F),
-    facets: [
-      {
-        muscle: "front-deltoids",
-        points: band(ARM_B, ARM_F, 38, 51.8, 0, 1, { skewB: [-1.5, 1] }),
-      },
-      {
-        /* Front/back split at the real muscle boundary, mirroring the
-           thigh's quadriceps/hamstring convention — the triceps facet is
-           what lets a pushdown's working-muscle emphasis render at all
-           (roadmap side-topology item "triceps facet"). */
-        muscle: "biceps",
-        points: band(ARM_B, ARM_F, 53.2, 70.8, 0.52, 1, {
-          skewT: [-1.5, 1],
-          bellyL: -0.05,
-        }),
-      },
-      {
-        muscle: "triceps",
-        points: band(ARM_B, ARM_F, 54, 70, 0, 0.46, { bellyR: 0.05 }),
-      },
-    ],
+    facets: UPPER_ARM_FACETS,
   },
   {
     // Compact mitt (≤ half head-width), articulated from the forearm at
     // the wrist pivot. Rides the forearm chain in every pose.
     group: "handL",
-    outline: [
-      [46.8, 99.4],
-      [52.8, 99.2],
-      [54, 103.2],
-      [52.8, 107.6],
-      [48.8, 108.6],
-      [46, 104.6],
-    ],
-    facets: [
-      {
-        muscle: "hand",
-        points: [
-          [47.4, 100],
-          [52.2, 99.8],
-          [53.4, 103.2],
-          [52.2, 107],
-          [49.2, 107.9],
-          [46.8, 104.4],
-        ],
-      },
-    ],
+    outline: HAND_OUTLINE,
+    facets: HAND_FACETS,
   },
 ];
 
@@ -584,6 +623,9 @@ const ARM_GROUPS: ReadonlySet<GroupName> = new Set<GroupName>([
   "upperArmL",
   "foreArmL",
   "handL",
+  "upperArmR",
+  "foreArmR",
+  "handR",
 ]);
 function reRow(piece: SidePiece): SidePiece {
   const f = ARM_GROUPS.has(piece.group) ? ARM_Y : BODY_Y;
