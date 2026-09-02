@@ -992,6 +992,39 @@ describe("renderBodyDemo", () => {
     }
   });
 
+  it("the foot has a heel, an arch and a toe — not a wedge", () => {
+    // It was nine points: a flat sole straight from heel to toe, no heel
+    // curve, no arch. Under a leg that now has a condyle at the knee it
+    // read as a doorstop. The arch is the part a wedge cannot fake, so
+    // that is what this measures.
+    const shank = SIDE_PIECES.find((p) => p.group === "shankL")!;
+    const foot = shank.facets.find((f) => f.muscle === "foot")!.points as [
+      number,
+      number,
+    ][];
+    const ground = Math.max(...foot.map(([, y]) => y));
+    // Points ON the ground, front and back of the sole.
+    const contacts = foot.filter(([, y]) => y > ground - 0.35);
+    const heelX = Math.min(...contacts.map(([x]) => x));
+    const ballX = Math.max(...contacts.map(([x]) => x));
+    expect(ballX - heelX, "sole length").toBeGreaterThan(12);
+    // Between them the sole LIFTS — that is the arch.
+    const between = foot.filter(
+      ([x, y]) => x > heelX + 2 && x < ballX - 2 && y > ground - 4
+    );
+    expect(between.length, "sole samples between the contacts").toBeGreaterThan(
+      1
+    );
+    const lift = ground - Math.min(...between.map(([, y]) => y));
+    expect(lift, "arch lift").toBeGreaterThan(0.3);
+    // ...but shallowly. A single raised point made a hard V notch.
+    expect(lift, "arch lift").toBeLessThan(3);
+    // And the toe tapers: the foot's forward tip is well above the sole.
+    const tipX = Math.max(...foot.map(([x]) => x));
+    const tip = foot.find(([x]) => x === tipX)!;
+    expect(ground - tip[1], "toe rise").toBeGreaterThan(0.4);
+  });
+
   it("the knee is a condyle: nothing at the joint projects past ~5 units", () => {
     // A squat swings the thigh 78 degrees about the knee pivot. Anything
     // on either piece that sits far from that pivot comes out from under

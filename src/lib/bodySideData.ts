@@ -402,17 +402,50 @@ const FORE_F: C = smoothC([
 
 /* ── Pieces ──────────────────────────────────────────────────────── */
 
-const FOOT: Pt[] = [
-  [44.2, 192.6],
-  [49.8, 191.6],
-  [55, 194],
-  [60.2, 197.4],
-  [64.2, 199.8],
-  [63.6, 202.2],
-  [42.8, 202.4],
-  [40.9, 198.6],
-  [41.8, 194.4],
+/* Foot in profile: achilles, heel, arch, ball, toes.
+ *
+ * It was a nine-point wedge — a flat sole running straight from heel to
+ * toe, no heel curve, no arch — which reads as a doorstop under a leg
+ * that now has a condyle at the knee. The chain below traces down the
+ * achilles, round the heel, along the sole with the arch LIFTED clear of
+ * the ground between heel and ball, out to the toe and back up the
+ * instep to the ankle. The arch is SHALLOW and sampled — three rows
+ * across a 0.6-unit lift. A single raised point made a hard V notch
+ * cutting up into the sole, which is not what an arch looks like from
+ * the side. Authored once, in the order the shank's outline
+ * needs to splice it, and closed + inset for the facet. */
+const FOOT_PROFILE: Pt[] = [
+  [41.6, 193.4],
+  [39.8, 196.8],
+  [39.4, 199.8],
+  [40.4, 201.9],
+  [42.4, 202.9],
+  [45.8, 203.0],
+  [48.6, 202.7],
+  [51.4, 202.4],
+  [54.2, 202.7],
+  [57.4, 203.0],
+  [65.0, 203.0],
+  [66.2, 201.9],
+  [63.2, 199.9],
+  [59.6, 197.3],
+  [54.8, 194.0],
+  [50.2, 192.9],
 ];
+
+/** Shrink a closed outline toward its own centroid by `by` units, so a
+ *  facet sits one seam inside the piece it belongs to. */
+function insetPolygon(pts: Pt[], by: number): Pt[] {
+  const cx = pts.reduce((a, p) => a + p[0], 0) / pts.length;
+  const cy = pts.reduce((a, p) => a + p[1], 0) / pts.length;
+  return pts.map(([x, y]) => {
+    const d = Math.hypot(x - cx, y - cy) || 1;
+    const k = Math.max(0, (d - by) / d);
+    return [cx + (x - cx) * k, cy + (y - cy) * k] as Pt;
+  });
+}
+
+const FOOT: Pt[] = insetPolygon(FOOT_PROFILE, 0.5);
 
 /* Back contour down, round the heel and sole to the toe, back along the
  * instep, then UP the front contour. It used to be the back contour plus
@@ -423,14 +456,7 @@ const FOOT: Pt[] = [
  * leg looked fine until a seam wanted a groove behind it. */
 const SHANK_OUTLINE: Pt[] = [
   ...SHANK_B.map(([y, x]) => [x, y] as Pt),
-  [41.4, 193.6],
-  [40.2, 198.4],
-  [42.2, 203],
-  [64.2, 202.8],
-  [65, 199.6],
-  [60.8, 196.8],
-  [55.4, 193.4],
-  [49.8, 191],
+  ...FOOT_PROFILE,
   ...[...SHANK_F].reverse().map(([y, x]) => [x, y] as Pt),
 ];
 /* Facet-count discipline (device feedback 2026-07-27: "too many
