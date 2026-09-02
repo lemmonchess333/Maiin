@@ -960,6 +960,62 @@ describe("renderBodyDemo", () => {
     }
   });
 
+  it("the knee is a condyle: nothing at the joint projects past ~5 units", () => {
+    // A squat swings the thigh 78 degrees about the knee pivot. Anything
+    // on either piece that sits far from that pivot comes out from under
+    // its neighbour as a spike — which is what "the knee looks a little
+    // pointy and misaligned with the calf" was. Both pieces now arc into
+    // a short chord at the pivot's row, so the joint is a circle and a
+    // rotation reveals a curve rather than a corner.
+    const piece = (g: string) => SIDE_PIECES.find((p) => p.group === g)!;
+    const knee = SIDE_ANCHORS.knee;
+    const near = (pts: readonly [number, number][], lo: number, hi: number) =>
+      pts.filter(([, y]) => y >= lo && y <= hi);
+    // Rendered rows: the pivot is at y 145; look at the joint's own band.
+    const thighBottom = near(
+      piece("thighL").outline as [number, number][],
+      143,
+      152
+    );
+    const shankTop = near(
+      piece("shankL").outline as [number, number][],
+      138,
+      147
+    );
+    expect(thighBottom.length, "thigh points at the joint").toBeGreaterThan(2);
+    expect(shankTop.length, "shank points at the joint").toBeGreaterThan(2);
+    for (const [label, pts] of [
+      ["thigh", thighBottom],
+      ["shank", shankTop],
+    ] as const) {
+      const worst = Math.max(
+        ...pts.map(([x, y]) => Math.hypot(x - knee[0], y - knee[1]))
+      );
+      expect(worst, `${label} reach from the knee pivot`).toBeLessThan(5.4);
+    }
+  });
+
+  it("the squat's bar sleeve does not cross the face", () => {
+    // The profile barbell drew its collar and sleeve tip at a fixed
+    // +0.7r, which is right wherever the bar hangs in FRONT of the body
+    // and wrong on a back squat, where the bar sits behind the neck and
+    // the stub crossed the jaw and poked out past the face.
+    for (const t of [0, 0.5, 1]) {
+      const svg = renderBodyDemo("squat", t);
+      const plate = svg.match(/<circle cx="(-?[\d.]+)" cy="(-?[\d.]+)" r="11"/);
+      expect(plate, `plate @${t}`).not.toBeNull();
+      const cx = Number(plate![1]);
+      const rects = [
+        ...svg.matchAll(/<rect x="(-?[\d.]+)"[^>]*width="([\d.]+)"/g),
+      ].map((m) => Number(m[1]) + Number(m[2]));
+      expect(rects.length, `gear rects @${t}`).toBeGreaterThan(1);
+      // Every piece of bar hardware stays BEHIND the plate's centre.
+      expect(Math.max(...rects), `rightmost gear @${t}`).toBeLessThanOrEqual(
+        cx
+      );
+    }
+  });
+
   it("the head is 7.5 to 8.5 figure-heights, not nine", () => {
     // A head that is too small reads as wrong without a viewer being
     // able to say why, and it makes the neck look long because the neck

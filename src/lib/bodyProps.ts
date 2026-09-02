@@ -57,7 +57,15 @@ export const GEAR_FAR = "#3E3F45";
  */
 export type PropState =
   /** Profile barbell: the near sleeve end at the solved grip. */
-  | { kind: "rigidBar"; view: "profile"; hand: Pt; plateR: number }
+  | {
+      kind: "rigidBar";
+      view: "profile";
+      hand: Pt;
+      plateR: number;
+      /** Which side the sleeve tip protrudes; -1 where the bar sits
+       *  BEHIND the body (a back squat) so it cannot cross the face. */
+      sleeveDir?: -1 | 1;
+    }
   /** Frontal barbell: shaft spanning both grips, a plate off each end.
    *  `layer: "behind"` racks it behind the body — a BACK squat's bar
    *  sits on the traps, so the torso occludes the shaft's middle and
@@ -119,13 +127,24 @@ const n = (v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(1));
  * protruding sleeve tip behind the disc, so it reads as the end of a bar
  * rather than a wheel.
  */
-export function profileBarbell(hand: Pt, plateR: number): string {
+export function profileBarbell(
+  hand: Pt,
+  plateR: number,
+  sleeveDir: -1 | 1 = 1
+): string {
   const [x, y] = hand;
   const r = plateR;
-  const collarX = x + r * 0.7;
+  /* Which side the collar and sleeve tip stick out. It was hard-coded
+     forward, which is right wherever the bar hangs in front of the body
+     — and wrong on a back squat, where the bar sits behind the neck and
+     the stub then crossed the jaw and poked out past the face (owner,
+     2026-09-02). The plate overlapping the head is correct and stays;
+     real plates are wider than heads. */
+  const sleeveX = sleeveDir === 1 ? x + r * 0.7 : x - r * 0.7 - 5;
+  const tipX = sleeveDir === 1 ? sleeveX + 4.4 : sleeveX - 4.6;
   return (
-    `<rect x="${n(collarX)}" y="${n(y - 2.6)}" width="5" height="5.2" rx="1.4" fill="${GEAR}"/>` +
-    `<rect x="${n(collarX + 4.4)}" y="${n(y - 1.6)}" width="4.6" height="3.2" rx="1" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="0.6"/>` +
+    `<rect x="${n(sleeveX)}" y="${n(y - 2.6)}" width="5" height="5.2" rx="1.4" fill="${GEAR}"/>` +
+    `<rect x="${n(tipX)}" y="${n(y - 1.6)}" width="4.6" height="3.2" rx="1" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="0.6"/>` +
     `<circle cx="${n(x)}" cy="${n(y)}" r="${n(r)}" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="1"/>` +
     `<circle cx="${n(x)}" cy="${n(y)}" r="${n(r * 0.64)}" fill="none" stroke="${GEAR}" stroke-width="1.2" opacity="0.7"/>` +
     `<circle cx="${n(x)}" cy="${n(y)}" r="${n(r * 0.22)}" fill="${GEAR}"/>`
@@ -276,7 +295,10 @@ export function renderProp(state: PropState): PropLayers {
   switch (state.kind) {
     case "rigidBar": {
       if (state.view === "profile") {
-        return { behind: "", front: profileBarbell(state.hand, state.plateR) };
+        return {
+          behind: "",
+          front: profileBarbell(state.hand, state.plateR, state.sleeveDir ?? 1),
+        };
       }
       const svg = frontalBarbell(state.left, state.right, state.plateR);
       return state.layer === "behind"

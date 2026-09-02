@@ -289,7 +289,17 @@ const PELV_F: C = smoothC([
  * shank, so a level bottom edge laid its inset rim across the knee as a
  * straight dark bar. Tilted, the edge is the knee line — popliteal fold
  * high at the back, patella low at the front — and the kneecap facet
- * runs past it to cover the rim. */
+ * runs past it to cover the rim.
+ *
+ * Its bottom is also a DOME about the knee pivot, for the same reason
+ * the shank's top is. A squat swings this piece 78 degrees about that
+ * pivot, and its bottom-front corner sat 5.5 forward and 4 below — a
+ * 6.8-unit radius that came out from under the shank as a sharp point
+ * (owner: "knee looks a little pointy"). Both contours now arc inward
+ * below y 147 and meet in a chord from (46.0, 152.6) to (53.6, 155.4):
+ * nothing further than 5 units from the pivot, no corner for a rotation
+ * to expose, and the chord still TILTS 2.8 so it reads as the popliteal
+ * crease rather than a level cut. */
 const THIGH_B: C = smoothC([
   [97, 37.2],
   [104, 36.4],
@@ -297,31 +307,55 @@ const THIGH_B: C = smoothC([
   [116, 39.0],
   [128, 39.4],
   [140, 41.4],
-  [148, 44.0],
-  [152, 45.4],
+  [147, 43.6],
+  [152.6, 46.0],
 ]);
 const THIGH_F: C = smoothC([
   [95.5, 52.5],
   [103, 57.8],
   [112, 60.6],
   [124, 60.2],
-  [138, 57.6],
-  [148, 55.3],
-  [156, 55.5],
+  [138, 57.4],
+  [146, 56.2],
+  [151, 55.0],
+  [155.4, 53.6],
 ]);
 
-/* Shank: gastroc bulge behind, straight shin, achilles taper. */
+/* Shank: gastroc bulge behind, straight shin, achilles taper.
+ *
+ * Both contours now START at y 152 — the knee pivot's own row — and
+ * narrow toward it, so the top of the shank is a chord through the
+ * pivot rather than a pair of corners above it. It used to start at
+ * 148.5/150 spanning x 41.6-54.2, which put the front corner 4.2 forward
+ * of the pivot and 3.5 ABOVE it: a 5.5-unit radius. The thigh hides that
+ * standing, but a squat swings the thigh 78 degrees about the same pivot
+ * and the corner comes out from under it as a spike (owner: "knee looks
+ * a little pointy and misaligned with the calf"). At the pivot's row
+ * nothing projects above it, and the chord's midpoint is 49.6 against a
+ * pivot at 50, so the shank is centred under the knee instead of sitting
+ * 2 units behind it.
+ *
+ * The top is a DOME about that pivot rather than a flat chord: both
+ * contours arc inward above y 152 and meet in a 3.2-wide chord at 148.8,
+ * so every point on the silhouette's top is within 4 units of the pivot
+ * and there is no corner for a rotation to expose. A chord alone still
+ * left a 90-degree corner where the front contour turned — which is what
+ * a condyle is for. */
 const SHANK_B: C = smoothC([
-  [150, 41.6],
-  [160, 39.2],
-  [168, 38.2],
-  [178, 40.9],
+  [148.8, 48.4],
+  [150.6, 46.4],
+  [152, 45.2],
+  [158, 41.4],
+  [166, 38.6],
+  [176, 40.2],
   [186, 43.2],
   [192, 44.5],
 ]);
 const SHANK_F: C = smoothC([
-  [148.5, 54.2],
-  [158, 52.9],
+  [148.8, 51.6],
+  [150.6, 53.2],
+  [152, 54.0],
+  [160, 52.6],
   [170, 51.5],
   [182, 50.2],
   [191, 49.6],
@@ -436,9 +470,9 @@ const THIGH_FACETS = [
     muscle: "knees",
     /* Runs the full depth: cut to t 0.3 it left the popliteal hollow —
        13 units of underlay behind the knee — as a dark block. */
-    points: band(THIGH_B, THIGH_F, 145.4, 156.4, 0, 1, {
+    points: band(THIGH_B, THIGH_F, 145.4, 155.4, 0, 1, {
       skewT: [-1.5, 0],
-      skewB: [-1.2, 0],
+      skewB: [-2.8, 0],
     }),
   },
 ];
