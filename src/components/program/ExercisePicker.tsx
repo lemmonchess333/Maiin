@@ -411,18 +411,19 @@ export default function ExercisePicker({
                         ? "Selected — tap to unselect"
                         : "Add to workout"}
                   </Button>
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
+                    fullWidth
+                    className="mt-2"
                     onClick={() => {
                       const name = detail.name;
                       setDetail(null);
                       onClose();
                       navigate(`/history/exercise/${encodeURIComponent(name)}`);
                     }}
-                    className="mt-2 w-full min-h-[44px] text-sm font-medium text-lifting"
                   >
                     View full progress
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}
