@@ -53,6 +53,8 @@ const SECONDARY = THEME.liftingLight; // #9590E0
 const STAGE = "#111113";
 /** Far-side limbs in the profile rig — ~12% darker so overlaps read. */
 const BODY_FAR = "#9FA6AC";
+/** Tint opacity multiplier on far-side pieces — shadowed, not lit. */
+const FAR_TINT = 0.62;
 
 /* ── Measured joint anchors (viewBox 0 0 100 200) ─────────────── */
 
@@ -808,6 +810,9 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         upperArmL: [...arm.upper, ...torsoOps],
         foreArmL: [...arm.fore, ...torsoOps],
         handL: [...arm.fore, ...torsoOps],
+        upperArmR: [...arm.upper, ...torsoOps],
+        foreArmR: [...arm.fore, ...torsoOps],
+        handR: [...arm.fore, ...torsoOps],
       };
     },
     /* The rack contact IS the bar: it rides the torso by construction. */
@@ -866,6 +871,9 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         upperArmL: [...arm.upper, ...torsoOps],
         foreArmL: [...arm.fore, ...torsoOps],
         handL: [...arm.fore, ...torsoOps],
+        upperArmR: [...arm.upper, ...torsoOps],
+        foreArmR: [...arm.fore, ...torsoOps],
+        handR: [...arm.fore, ...torsoOps],
       };
     },
     bar: (_e, pose) => {
@@ -973,6 +981,9 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         upperArmL: armDrift,
         foreArmL: fore,
         handL: fore,
+        upperArmR: armDrift,
+        foreArmR: fore,
+        handR: fore,
       };
     },
     bar: (_e, pose) => {
@@ -1007,7 +1018,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       const fore: Op[] = [
         { kind: "rotate", deg: -flex, pivot: SIDE_ANCHORS.elbow },
       ];
-      return { foreArmL: fore, handL: fore };
+      return { foreArmL: fore, handL: fore, foreArmR: fore, handR: fore };
     },
     bar: (_e, pose) => {
       const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
@@ -1107,6 +1118,9 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         upperArmL: [...arm.upper, ...bodyOps],
         foreArmL: [...arm.fore, ...bodyOps],
         handL: [...arm.fore, ...bodyOps],
+        upperArmR: [...arm.upper, ...bodyOps],
+        foreArmR: [...arm.fore, ...bodyOps],
+        handR: [...arm.fore, ...bodyOps],
       };
     },
     // The station in profile: the near bar runs front-to-back (so it
@@ -1232,6 +1246,9 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         upperArmL: [...arm.upper, ...torsoOps],
         foreArmL: [...arm.fore, ...torsoOps],
         handL: [...arm.fore, ...torsoOps],
+        upperArmR: [...arm.upper, ...torsoOps],
+        foreArmR: [...arm.fore, ...torsoOps],
+        handR: [...arm.fore, ...torsoOps],
       };
     },
     bar: (_e, pose) => {
@@ -1456,6 +1473,9 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         upperArmL: rise,
         foreArmL: rise,
         handL: rise,
+        upperArmR: rise,
+        foreArmR: rise,
+        handR: rise,
       };
     },
     // The block under the toes + the floor below it.
@@ -1536,6 +1556,9 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         upperArmL: [...arm.upper, G],
         foreArmL: [...arm.fore, G],
         handL: [...arm.fore, G],
+        upperArmR: [...arm.upper, G],
+        foreArmR: [...arm.fore, G],
+        handR: [...arm.fore, G],
       };
     },
     bar: (_e, pose) => {
@@ -1635,6 +1658,9 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         upperArmL: [...arm.upper, T, LEAN],
         foreArmL: [...arm.fore, T, LEAN],
         handL: [...arm.fore, T, LEAN],
+        upperArmR: [...arm.upper, T, LEAN],
+        foreArmR: [...arm.fore, T, LEAN],
+        handR: [...arm.fore, T, LEAN],
       };
     },
     bar: (_e, pose) => {
@@ -1732,6 +1758,9 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         upperArmL: [...arm.upper, T, LEAN],
         foreArmL: [...arm.fore, T, LEAN],
         handL: [...arm.fore, T, LEAN],
+        upperArmR: [...arm.upper, T, LEAN],
+        foreArmR: [...arm.fore, T, LEAN],
+        handR: [...arm.fore, T, LEAN],
       };
     },
     bar: (_e, pose) => {
@@ -1797,6 +1826,9 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         upperArmL: [...arm.upper, ...bodyOps],
         foreArmL: [...arm.fore, ...bodyOps],
         handL: [...arm.fore, ...bodyOps],
+        upperArmR: [...arm.upper, ...bodyOps],
+        foreArmR: [...arm.fore, ...bodyOps],
+        handR: [...arm.fore, ...bodyOps],
       };
     },
     scene: () =>
@@ -2265,8 +2297,10 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
                 : piece.far
                   ? BODY_FAR
                   : BODY;
+          // A far piece's tint sits in shadow too (×FAR_TINT), so the
+          // second arm reads as depth rather than as a second highlight.
           const op = f.level
-            ? ` fill-opacity="${tintOpacity(f.level).toFixed(3)}"`
+            ? ` fill-opacity="${(tintOpacity(f.level) * (piece.far ? FAR_TINT : 1)).toFixed(3)}"`
             : "";
           return `<polygon points="${P(f.pts)}" fill="${fill}"${op}/>`;
         })
