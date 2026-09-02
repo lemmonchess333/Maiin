@@ -768,3 +768,26 @@ the front view's numbers and the disc poked out past the arm as a
 visible bubble: the upper arm is 9.5 deep, so anything over 4.75 clears
 the silhouette. Capped at 4.2 for the elbow and shoulder, 4.6 for the
 knee.
+
+## STATUS 2026-09-02k — the head was nine figure-heights
+
+Measured rather than judged, like the chest. The skull was authored 23
+units crown to chin on a 210-unit figure: 9.1 heads, where an adult is
+7.5 to 8, and anthropometry puts the chin at 0.87 of stature (y 27.3
+here). A head that small reads as wrong without a viewer being able to
+say why, and it makes the NECK look long, because the neck absorbs the
+difference — which is how this surfaced, as "the neck looks long".
+
+Grown 17% about the crown, moving the chin to 27. Only points at or
+above the jaw scale, so the neck shortens by exactly what the skull
+gains rather than stretching with it. The profile head's own proportion
+is unchanged: length over height 0.87, where a real profile head is 0.83
+to 0.87.
+
+**The throat was in front of the chin.** Its rows sat at x 53-54 against
+a chin at 50.2 — three units of throat projecting past the jaw, which is
+backwards (a chin projects, a throat is set behind it) and cut a hard V
+under the jawline. Pre-existing, and the skull growth made it plain.
+Both facts are pinned now: the head must measure 7.2 to 8.6 figure
+heights, and the throat must sit behind the chin. Mutation-checked —
+reverting the growth reads 9.8 and fails.

@@ -960,6 +960,35 @@ describe("renderBodyDemo", () => {
     }
   });
 
+  it("the head is 7.5 to 8.5 figure-heights, not nine", () => {
+    // A head that is too small reads as wrong without a viewer being
+    // able to say why, and it makes the neck look long because the neck
+    // absorbs the difference. This one was authored at 23 units crown to
+    // chin on a 210-unit figure — 9.1 heads, where an adult is 7.5 to 8
+    // and anthropometry puts the chin at 0.87 of stature.
+    const head = SIDE_PIECES.find((p) => p.group === "head")!;
+    const skull = head.facets.find((f) => f.muscle === "head")!.points;
+    const ys = skull.map(([, y]) => y);
+    const height = Math.max(...ys) - Math.min(...ys);
+    // The facet is inset from the outline, so it reads a touch short of
+    // the true crown-to-chin; the band allows for that.
+    const heads = 210 / height;
+    expect(heads, "figure heights").toBeGreaterThan(7.2);
+    expect(heads, "figure heights").toBeLessThan(8.6);
+  });
+
+  it("the throat sits BEHIND the chin", () => {
+    // It sat three units in front — a throat projecting past the jaw,
+    // which is backwards and cut a hard V under the jawline.
+    const head = SIDE_PIECES.find((p) => p.group === "head")!;
+    const skull = head.facets.find((f) => f.muscle === "head")!.points;
+    const neck = head.facets.find((f) => f.muscle === "neck")!.points;
+    // The chin is the lowest point of the skull facet.
+    const chin = skull.reduce((a, b) => (b[1] > a[1] ? b : a));
+    const throat = Math.max(...neck.map(([x]) => x));
+    expect(throat, "throat x vs chin").toBeLessThan(chin[0]);
+  });
+
   it("a piece that paints over another does not end on a level cut", () => {
     // The torso paints over the pelvis and the thigh over the shank, so
     // wherever the upper piece's outline ends, its 0.45 facet inset shows
