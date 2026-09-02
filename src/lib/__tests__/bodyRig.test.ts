@@ -960,6 +960,63 @@ describe("renderBodyDemo", () => {
     }
   });
 
+  it("a piece that paints over another does not end on a level cut", () => {
+    // The torso paints over the pelvis and the thigh over the shank, so
+    // wherever the upper piece's outline ends, its 0.45 facet inset shows
+    // as a dark rim ON the piece below. Both used to end level — both
+    // contours at the same y — which laid that rim across the buttock and
+    // across the knee as straight horizontal bars. Tilted to the real
+    // crease (iliac crest, popliteal fold: high at the back, low at the
+    // front) the same rim reads as anatomy.
+    const piece = (g: string) => SIDE_PIECES.find((p) => p.group === g)!;
+    for (const [group, minTilt] of [
+      ["torso", 2],
+      ["thighL", 2],
+    ] as const) {
+      const pts = piece(group).outline as [number, number][];
+      /* A silhouette is the back contour then the reversed front one, so
+         its only two width-crossing segments are the top and bottom
+         edges; every other consecutive pair steps ALONG a contour. Take
+         the two widest and keep the lower — index arithmetic would need
+         the contour lengths, which this file does not have. */
+      const crossings = pts
+        .map((p, i) => ({
+          a: p,
+          b: pts[(i + 1) % pts.length],
+          dx: Math.abs(pts[(i + 1) % pts.length][0] - p[0]),
+        }))
+        .sort((x, y) => y.dx - x.dx)
+        .slice(0, 2)
+        .sort((x, y) => x.a[1] + x.b[1] - (y.a[1] + y.b[1]));
+      const bottom = crossings[1];
+      expect(
+        Math.abs(bottom.a[1] - bottom.b[1]),
+        `${group} bottom edge tilt`
+      ).toBeGreaterThanOrEqual(minTilt);
+    }
+  });
+
+  it("the shank outline traces BOTH contours, not just its back", () => {
+    // It was `silhouette(...).slice(0, 6)` plus the foot, which keeps only
+    // the back half — so the piece closed as a vertical line up the calf
+    // and the entire shin lay outside its own underlay. Facets are painted
+    // over the outline rather than clipped by it, so the leg still drew;
+    // the tell was a wedge behind the calf where a seam wanted a groove.
+    const shank = SIDE_PIECES.find((p) => p.group === "shankL")!;
+    const at = (y: number) =>
+      shank.outline.filter(([, py]) => Math.abs(py - y) < 3).map(([x]) => x);
+    // Rendered rows: the shank runs ~142 (knee) to ~203 (sole).
+    for (const y of [155, 170, 185]) {
+      const xs = at(y);
+      expect(xs.length, `outline samples at y=${y}`).toBeGreaterThan(1);
+      // Front and back both present: the shank is 8+ units deep mid-length.
+      expect(
+        Math.max(...xs) - Math.min(...xs),
+        `outline depth at y=${y}`
+      ).toBeGreaterThan(6);
+    }
+  });
+
   it("the profile figure's gaps are a seam tone, not the stage colour", () => {
     // The pieces used to lay their underlay in the stage colour, so a
     // seam read as a hole punched THROUGH the body onto the background.

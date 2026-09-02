@@ -691,3 +691,47 @@ exercises, light and dark. Two deliberate choices:
 - **The demo card is shot as an ELEMENT, not fullPage.** The surrounding
   stats carry seeded numbers and a date; a full-page frame would diff on
   those rather than on the art.
+
+## STATUS 2026-09-02i — the lower body, and a rim that was never a seam
+
+Continuing the art pass downward, into the parts no review had reached.
+Four defects, three of them the same mechanism seen from a new angle.
+
+**A piece that paints over another leaves a rim ON it.** The profile is
+overlapping slabs, and each one's facets are inset 0.45 from its own
+outline — so wherever an upper piece ENDS, that inset shows as a dark
+rim over the piece below. The torso ended level (both contours at y 94)
+and laid a straight horizontal bar across the buttock, cutting the glute
+in two. The thigh ended level and laid the same bar across the knee.
+Neither is a seam between facets, which is why the seam-width pin did
+not see them. Both pieces now end TILTED, on the crease that is really
+there — iliac crest and popliteal fold, high at the back, low at the
+front — and the facet below runs past the edge to cover the rim. Pinned:
+a piece that overlaps another may not end on a level cut.
+
+**The buttock was two hand-authored polygons.** Straight-sided, not
+following the silhouette, with gaps against the outline that were
+nothing like a seam — it read as a slab bolted to the back of the leg.
+Both pelvis facets are `band(PELV_B, PELV_F, …)` now, like every other
+facet on the figure, so they follow the contour and inherit the standard
+seam. The thigh's back contour also started at x 43.5 while the glute
+above it reaches 29.8: a 14-unit overhang, which is what made the
+buttock a shelf. It starts at 37.2, leaving the 4-6 units a standing
+buttock actually projects.
+
+**The shin seam was 2.3 units where every other seam is 0.9.** The
+calf/shin split is the tibial crest and belongs there, but at t 0.47/0.58
+the cut fractions alone opened 1.4 units before either inset. Both
+facets also stopped 2.6 above the foot, which put a dark band across the
+ankle. Now 0.5/0.55, both running to 192.2.
+
+**The shank's outline traced only its back.** `silhouette(…).slice(0, 6)`
+keeps the back contour and drops the front, so the piece closed as a
+vertical line up the calf and the entire shin lay OUTSIDE its own
+underlay. Facets are painted over an outline rather than clipped by it,
+so the leg still drew — the tell was a wedge behind the calf where a
+seam wanted a groove behind it and found nothing. The outline now runs
+back contour, heel, sole, toe, instep, then up the front. Pinned by
+depth: the outline must be more than 6 units deep at three heights.
+
+Both new pins are mutation-checked against the pre-fix geometry.
