@@ -131,6 +131,13 @@ test.describe("form demo screenshots", () => {
   );
 
   test.beforeEach(async ({ page }) => {
+    // Belt AND braces on reduced motion. `test.use({ reducedMotion })` did
+    // not reach the page in the auth-emulator project — the first capture
+    // run came back with the loop still running and every frame caught
+    // mid-rep — so the media state is emulated here as well, and the
+    // shot below selects the reduced-motion label specifically so a
+    // regression fails the spec instead of quietly producing churn.
+    await page.emulateMedia({ reducedMotion: "reduce" });
     await suppressCoachmarks(page);
     await page.addInitScript(() => {
       document.addEventListener("DOMContentLoaded", () => {
@@ -143,7 +150,12 @@ test.describe("form demo screenshots", () => {
   });
 
   async function shootBoth(page: Page, name: string) {
-    const card = page.getByRole("img", { name: /demonstration/i }).first();
+    // The EXACT reduced-motion label. `/demonstration/i` alone matches the
+    // animated player too ("... demonstration — looping reps"), which is
+    // how the first run shipped frames of a running loop.
+    const card = page
+      .getByRole("img", { name: /demonstration — start and end positions/i })
+      .first();
     await expect(card).toBeVisible({ timeout: 20_000 });
     // The demo itself is inline SVG, but the page around it carries art;
     // settling keeps this spec out of the unsettled-capture ratchet and
