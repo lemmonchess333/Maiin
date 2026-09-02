@@ -517,3 +517,30 @@ fists, deltoid alone lit). Two fixes from the pushdown frames:
 Noted, not a rig defect: a PWA serves its cached bundle until the
 service worker updates, so a device can show a build one or two merges
 behind main for a few minutes after a deploy.
+
+### The one-frame flash — the actual reason the recording was sent
+
+Read at 60 fps (frame-to-frame greyscale diff, then the outliers tiled
+with their neighbours), the recording shows the figure snapping to the
+LOCKOUT pose for one or two frames at every cue change — frames 126 and
+153-154 of the lateral raise — then back. "It just spazzes out where one
+frame appears in the wrong place, on every single one."
+
+Cause, in the player: the cue line is React state, so each phase change
+re-rendered `ExerciseRigDemo`; the figure div carried
+`dangerouslySetInnerHTML={{ __html: initialSvg }}` as a fresh object
+literal, and React 19 re-applies that prop whenever its identity changes
+(it does not compare the strings). Every phase change therefore
+overwrote the live frame with the INITIAL lockout SVG until the next
+rAF tick drew over it — four flashes per rep, every demo.
+
+Fix: the figure lives in a `memo`'d child with a memoised `{ __html }`
+object, so the parent's re-renders never reach it; after the mount
+paint only the rAF loop writes that div. Pinned by a test that drives
+mid-rep, crosses a phase boundary and asserts the figure still shows the
+last DRAWN frame — verified to fail on the old component.
+
+Why 4 fps review missed it: a one-frame event at 60 fps has a 1-in-15
+chance of landing on a sampled frame. Frame-diff outlier detection is
+the tool for "one frame in the wrong place"; contact sheets never will
+be.
