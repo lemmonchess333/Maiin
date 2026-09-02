@@ -408,3 +408,50 @@ demo, so each fix lands on every demo that shares it.
 Every other demo re-renders unchanged apart from the trunk bands. The
 goblet pin now asserts two stacked heads centred on the grip instead of
 one disc.
+
+## STATUS 2026-09-02c — mechanics pass: muscle groups, execution, proportions audit
+
+Owner direction: "keep improving — muscle groups, proportions, and the
+actual exercises: bar path and carrying out the exercise". Audited
+every demo's tint against the exercise catalogue, every movement
+against textbook execution, and the profile skeleton against
+anthropometric norms.
+
+**Muscle groups** (tint vs catalogue, now pinned by `tint honesty`):
+
+| Demo              | Was                                | Now                                            | Why                                                                                                                                     |
+| ----------------- | ---------------------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| dips              | triceps PRIMARY, chest secondary   | chest primary, triceps + front delts secondary | Catalogue: Pectorals — the tint was inverted.                                                                                           |
+| lateral-raise     | front-deltoids + `neck`            | front-deltoids only                            | `neck` was an invented tint; the catalogue names traps, which the FRONT figure has no polygon for (the honesty pin caught the attempt). |
+| pull-ups          | upper-back + trapezius + forearm   | upper-back + back-deltoids + forearm           | Catalogue: rear delts, not traps.                                                                                                       |
+| deadlift          | hams/glutes + lower-back + forearm | hams/glutes + lower-back + trapezius           | Catalogue lists traps; forearm is not listed.                                                                                           |
+| romanian-deadlift | + trapezius                        |                                                | Catalogue lists traps.                                                                                                                  |
+| push-ups          | + front-deltoids                   |                                                | Catalogue lists front delts; drawable in profile.                                                                                       |
+| squat             | + hamstring                        |                                                | Catalogue lists hamstrings.                                                                                                             |
+
+**Execution** (pinned by `execution mechanics`):
+
+| Demo              | Change                                                                                                                                                                                                                                         |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| deadlift          | Joints are STAGGERED, not lock-stepped: the hinge leads (hips back first — it is an RDL until the bar passes the knees) and the knees trail; the pull mirrors it (legs drive first, hips come through). Smoothstep hand-overs, same end poses. |
+| romanian-deadlift | The grip is pulled back toward the legs as the hinge deepens so the bar slides DOWN the shins instead of hanging plumb out in front of them.                                                                                                   |
+| squat             | Torso hinge 38° → 43° so the bar finishes over the foot rather than ~9 units behind mid-foot.                                                                                                                                                  |
+
+**Proportions** — measured, NOT yet changed. The profile skeleton
+against anthropometric landmarks on a 200-unit figure:
+
+| Landmark | Rig   | Norm | Segment   | Rig  | Norm |
+| -------- | ----- | ---- | --------- | ---- | ---- |
+| shoulder | 45    | 36   | upper arm | 25.5 | ~37  |
+| elbow    | 70.5  | 74   | forearm   | 29.5 | ~30  |
+| wrist    | 100   | 106  | thigh     | 52   | ~49  |
+| hip      | 100.5 | 94   | shank     | 41   | ~49  |
+| knee     | 152   | 143  |           |      |      |
+
+The shoulder sits 9 low (a long neck), the upper arm is ~31% short and
+the shin ~16% short — the same rows the vendored front figure uses, so
+the two views agree with each other and both disagree with a human.
+Fixing it is a coordinated re-row of every contour in `bodySideData`
+plus a re-fit of every side pose's hard-coded reach and every mechanics
+pin — its own PR, after this one, so its re-review is not mixed with
+these changes.
