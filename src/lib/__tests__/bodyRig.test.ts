@@ -9,6 +9,7 @@ import {
   renderBodyDemo,
 } from "../bodyRig";
 import { ANTERIOR, POSTERIOR } from "../bodyModelData";
+import { EXERCISES } from "../exercises";
 import { SIDE_ANCHORS, SIDE_PIECES } from "../bodySideData";
 
 /** The measured wrist anchors — ON the art, since 2026-08-17. They used
@@ -951,6 +952,105 @@ describe("registry", () => {
       expect(d, id).toBeTruthy();
       expect(Object.keys(d.tint).length, id).toBeGreaterThan(0);
       expect([0, 1], id).toContain(d.concentricTo);
+    }
+  });
+});
+
+/* ── 2026-09-02 mechanics pass: execution sequencing + tint honesty ── */
+describe("execution mechanics", () => {
+  const at = (pt: [number, number], ops?: unknown[]) =>
+    applyToPoint(pt, (ops ?? []) as never[]);
+
+  it("deadlift: the hinge leads and the knees trail (hips back first, legs drive first)", () => {
+    // A deadlift descends as an RDL until the bar passes the knees, then
+    // bends the knees to reach the bar; the pull is the mirror. Pinned
+    // as: at mid-rep the shoulder has completed a larger share of its
+    // forward travel than the knee has of its forward travel.
+    const pose = (t: number) => BODY_DEMOS["deadlift"].pose(t);
+    const sx = (t: number) => at(SIDE_ANCHORS.shoulder, pose(t).torso)[0];
+    const kx = (t: number) => at(SIDE_ANCHORS.knee, pose(t).thighL)[0];
+    const fracS = (sx(0.5) - sx(0)) / (sx(1) - sx(0));
+    const fracK = (kx(0.5) - kx(0)) / (kx(1) - kx(0));
+    expect(fracS).toBeGreaterThan(fracK + 0.25);
+    // Same end poses as the un-staggered version: standing and bottom.
+    expect(kx(0)).toBeCloseTo(SIDE_ANCHORS.knee[0], 5);
+    // The shoulder's NET forward travel is modest (~15): the hips going
+    // back cancel most of the hinge — which is the balance the pin above
+    // measures in fractions, not absolutes.
+    expect(sx(1) - sx(0)).toBeGreaterThan(10);
+  });
+
+  it("RDL: the bar slides down the legs, not out in front of them", () => {
+    // Plumb hands would hang forward of the shins once the shoulders
+    // travel forward; the grip is pulled back as the hinge deepens.
+    const pose = BODY_DEMOS["romanian-deadlift"].pose(1);
+    const grip = at(SIDE_ANCHORS.hand, pose.handL);
+    const sh = at(SIDE_ANCHORS.shoulder, pose.torso);
+    expect(grip[0]).toBeLessThan(sh[0] - 3);
+  });
+
+  it("squat: the bar finishes over the foot, not behind it", () => {
+    const pose = BODY_DEMOS["squat"].pose(1);
+    const bar = at(BACK_RACK, pose.torso);
+    const ankle = at(SIDE_ANCHORS.ankle, pose.shankL);
+    // Within a foot's length of the ankle in x (foot spans ~41-65).
+    expect(Math.abs(bar[0] - ankle[0])).toBeLessThan(12);
+  });
+});
+
+describe("tint honesty", () => {
+  const SIDE_FACETS = new Set(
+    SIDE_PIECES.flatMap((p) => p.facets.map((f) => f.muscle))
+  );
+  const ANT_MUSCLES = new Set(ANTERIOR.map((p) => p.muscle));
+  const POST_MUSCLES = new Set(POSTERIOR.map((p) => p.muscle));
+
+  it("every tint names a muscle the demo's view can actually draw", () => {
+    for (const [id, d] of Object.entries(BODY_DEMOS)) {
+      const vocab =
+        d.view === "side"
+          ? SIDE_FACETS
+          : d.view === "anterior"
+            ? ANT_MUSCLES
+            : POST_MUSCLES;
+      for (const m of Object.keys(d.tint)) {
+        expect(vocab.has(m), `${id} tints undrawable "${m}"`).toBe(true);
+      }
+    }
+  });
+
+  it("the primary tint is the catalogue's primary muscle group", () => {
+    // The 2026-09-02 audit found dips INVERTED (triceps primary where
+    // the catalogue says pectorals). Pin the mapping for every demo
+    // whose primary the catalogue names in a drawable vocabulary.
+    const expectPrimary: Record<string, string> = {
+      dips: "chest",
+      "bench-press": "chest",
+      "push-ups": "chest",
+      "barbell-curl": "biceps",
+      "rope-tricep-pushdown": "triceps",
+      squat: "quadriceps",
+      "goblet-squat": "quadriceps",
+      "calf-raise": "calves",
+      "overhead-press": "front-deltoids",
+      "lat-pulldown": "upper-back",
+      "pull-ups": "upper-back",
+      "barbell-row": "upper-back",
+      "romanian-deadlift": "hamstring",
+    };
+    for (const [id, muscle] of Object.entries(expectPrimary)) {
+      expect(BODY_DEMOS[id].tint[muscle], `${id} primary`).toBe("primary");
+    }
+    // Invented tints are gone: nothing lights `neck` any more.
+    for (const [id, d] of Object.entries(BODY_DEMOS)) {
+      expect(d.tint.neck, `${id} neck`).toBeUndefined();
+    }
+    // Every catalogue exercise these demos serve still exists.
+    for (const id of Object.keys(expectPrimary)) {
+      expect(
+        EXERCISES.some((e) => e.id === id),
+        id
+      ).toBe(true);
     }
   });
 });

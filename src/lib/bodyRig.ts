@@ -497,6 +497,13 @@ export interface BodyDemo {
 }
 
 const lerp = (a: number, b: number, e: number) => a + (b - a) * e;
+const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+/** Smoothstep — used to stagger joints inside one rep without velocity
+ *  kinks at the hand-over points. */
+const smooth = (v: number) => {
+  const x = clamp01(v);
+  return x * x * (3 - 2 * x);
+};
 
 /**
  * Overhead-press bar path — ONE definition, read both by the pose (which
@@ -661,7 +668,13 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     groundY: 204,
     shadowCx: 56,
     shadowRx: 40,
-    tint: { quadriceps: "primary", gluteal: "secondary", abs: "secondary" },
+    /* Catalogue: Quads | Glutes, Hamstrings, Core. */
+    tint: {
+      quadriceps: "primary",
+      gluteal: "secondary",
+      hamstring: "secondary",
+      abs: "secondary",
+    },
     pose: (e) => {
       /* Side-view back squat (2026-09-02, replaces the anterior
        * scaleY-compression version). Legs + torso from the shared
@@ -671,7 +684,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * elbow), the forearm runs up beside the lats to the bar. */
       const { torsoOps, pelvisOps, headOps, thighOps, legOps } = sideSquatChain(
         e,
-        38
+        43
       );
       const arm = aimArm(
         {
@@ -716,7 +729,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
      * are aimed at a point just proud of the chest in torso space and
      * the bell (goblet-bell: one end-on disc above the hands) rides
      * the hinge with them. A goblet's front load keeps the torso more
-     * upright than a back squat — 30° at the bottom against 38°. */
+     * upright than a back squat — 30° at the bottom against 43°. */
     equip: "goblet-bell",
     concentricTo: 0,
     viewBox: "-24 -2 192 212",
@@ -911,9 +924,11 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     // floor, so the scene extends below the figure.
     viewBox: "-8 -14 116 240",
     groundY: 222,
+    /* Catalogue: Pectorals | Triceps, Front Delts. It was INVERTED
+     * (triceps primary) until the 2026-09-02 mechanics audit. */
     tint: {
-      triceps: "primary",
-      chest: "secondary",
+      chest: "primary",
+      triceps: "secondary",
       "front-deltoids": "secondary",
     },
     pose: (e) => {
@@ -974,11 +989,14 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     groundY: 204,
     shadowCx: 58,
     shadowRx: 44,
+    /* Catalogue: Full Back | Glutes, Hamstrings, Core, Traps. The hinge
+     * movers carry the emphasis; erectors and traps (isometric holds)
+     * read secondary. Forearm dropped — not in the catalogue. */
     tint: {
       hamstring: "primary",
       gluteal: "primary",
       "lower-back": "secondary",
-      forearm: "secondary",
+      trapezius: "secondary",
     },
     pose: (e) => {
       /* Conventional deadlift, rebuilt as a SIDE hinge (2026-07-27).
@@ -997,9 +1015,20 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * every degree of shin tilt tips the sole — at 8° the heel read
        * stays planted, at 14° it visibly lifted. The hip depth lost is
        * recovered in thighRel. */
-      const shin = lerp(0, 8, e); // about the planted ankle
-      const thighRel = lerp(0, -64, e); // about the knee → hips back+down
-      const hinge = lerp(0, 70, e); // torso about the hip
+      /* Execution sequencing (2026-09-02 mechanics pass). A deadlift is
+       * not one blended motion: the descent pushes the hips BACK first
+       * (it is an RDL until the bar passes the knees) and only then
+       * bends the knees to reach the bar; the pull mirrors it — the legs
+       * drive first while the back angle holds, then the hips come
+       * through. One shared easing lerped every joint in lockstep, which
+       * read as a squat/hinge hybrid. The hinge leads (done by e=0.8),
+       * the knees trail (start at e=0.3). Same end poses as before, so
+       * the bottom-frame pins are untouched. */
+      const hipP = smooth(e / 0.8);
+      const kneeP = smooth((e - 0.3) / 0.7);
+      const shin = lerp(0, 8, kneeP); // about the planted ankle
+      const thighRel = lerp(0, -64, kneeP); // about the knee → hips back+down
+      const hinge = lerp(0, 70, hipP); // torso about the hip
       const legOps: Op[] = [
         { kind: "rotate", deg: shin, pivot: SIDE_ANCHORS.ankle },
       ];
@@ -1078,9 +1107,13 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     // below the dangling heels at the dead hang.
     viewBox: "-20 -24 140 254",
     groundY: 226,
+    /* Catalogue: Lats | Biceps, Rear Delts, Core. Rear delts are
+     * drawable from behind (traps were not what the catalogue names);
+     * biceps are not visible from behind, so the grip's forearm stands
+     * in for the arm's share. */
     tint: {
       "upper-back": "primary",
-      trapezius: "secondary",
+      "back-deltoids": "secondary",
       forearm: "secondary",
     },
     pose: (e) => {
@@ -1203,7 +1236,12 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     // the bells (r 5.5 past the wrists at full abduction) push it
     // wider still.
     viewBox: "-44 -14 188 224",
-    tint: { "front-deltoids": "primary", neck: "secondary" },
+    /* Catalogue: Side Delts | Traps. The anterior figure has ONE
+     * deltoid facet and NO trapezius polygon (traps are posterior art
+     * only — the tint-honesty pin caught the attempt), so the raise
+     * lights the deltoid alone. `neck` was an invented tint (the same
+     * one the press dropped). */
+    tint: { "front-deltoids": "primary" },
     pose: (e) => {
       // Whole arm sweeps out to shoulder height (proper form stops at
       // parallel); a constant soft elbow bend so the arm never reads
@@ -1470,10 +1508,12 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     groundY: 204,
     shadowCx: 62,
     shadowRx: 40,
+    /* Catalogue: Hamstrings | Glutes, Lower Back, Traps. */
     tint: {
       hamstring: "primary",
       gluteal: "primary",
       "lower-back": "secondary",
+      trapezius: "secondary",
     },
     pose: (e) => {
       /* The RDL is THE hinge: the torso rotates about the hip while the
@@ -1492,7 +1532,11 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       // Arms hang plumb from the hinged+leaned shoulder — the bar stays
       // against the legs on the way down.
       const S = applyToPoint(SIDE_ANCHORS.shoulder, [T, LEAN]);
-      const hPre = applyToPoint([S[0] + 1.2, S[1] + 52], unpose);
+      /* The bar slides DOWN THE LEGS: plumb hands hang forward of the
+       * shins once the shoulders travel forward, so the grip is pulled
+       * back toward the thigh/shin as the hinge deepens (lats hold the
+       * bar in). */
+      const hPre = applyToPoint([S[0] + lerp(1.2, -5, e), S[1] + 52], unpose);
       const arm = aimArm(
         {
           S: SIDE_ANCHORS.shoulder,
@@ -1555,7 +1599,13 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     groundY: 158.5,
     shadowCx: 20,
     shadowRx: 78,
-    tint: { chest: "primary", triceps: "secondary", abs: "secondary" },
+    /* Catalogue: Pectorals | Triceps, Front Delts, Core. */
+    tint: {
+      chest: "primary",
+      triceps: "secondary",
+      "front-deltoids": "secondary",
+      abs: "secondary",
+    },
     pose: (e) => {
       /* Prone plank (global +90, face down, head right), tilted about
        * the planted hands so the toes meet the floor, then the whole
