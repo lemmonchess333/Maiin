@@ -830,3 +830,35 @@ Both fixes are pinned and mutation-checked: nothing at the knee may
 reach past 5.4 units from the pivot (reverting the thigh reads 7.2), and
 every piece of the squat's bar hardware must stay behind the plate's
 centre (reverting reads 55.2 against a plate at 42.5).
+
+## STATUS 2026-09-02m — a deadlift that started at the top
+
+Owner, on the deadlift demo: "typical start positions — it starts the
+video at the top of a lift, deadlifts should start at the bottom."
+
+The player opened every demo at LOCKOUT and lowered first. That is right
+for a squat, a bench press, a push-up, a dip, a goblet squat and an RDL,
+and wrong for the other nine: a deadlift begins with the bar on the
+floor, a curl with the arms extended, a press with the bar racked, a
+pull-up in a dead hang.
+
+**The question `concentricTo` answers is not this one.** It says which
+end of t FINISHES the lift. A squat and a deadlift both lock out
+standing — both `concentricTo: 0` — but one starts there and the other
+does not. So the start is an explicit `startsAt` per demo, and all
+fifteen are listed in a test table: adding a demo forces the question,
+and changing one is deliberate.
+
+`repSampleStretchAt` is the same five beats REORDERED — set (holding the
+bottom) → drive → lockout → lower → pause. Not an offset into the
+existing timeline: starting that partway through lands on the right
+frame with the wrong cue (the demo would open reading "Pause") and skips
+the set lead-in, whose whole job is to hold still until the eye finds
+the figure. Reduced motion's two-up is now start-then-finish for the
+same reason, so a deadlift reads floor-then-standing.
+
+Verified by rendering all fifteen opening frames: curl at the thighs,
+row hanging, bench locked out, calf heels-down, deadlift bent over at
+the bar, dips in support, goblet standing, pulldown extended, raise at
+the sides, press racked, pull-up hanging, push-up at the top, RDL
+standing, pushdown flexed, squat standing.

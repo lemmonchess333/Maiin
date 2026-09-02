@@ -32,6 +32,7 @@
  */
 
 import { ANTERIOR, POSTERIOR, type BodyPoly } from "./bodyModelData";
+import type { RepStart } from "./exerciseTempo";
 import { FAR_ARM_SHIFT, SIDE_PIECES, SIDE_ANCHORS } from "./bodySideData";
 import {
   GEAR,
@@ -548,6 +549,13 @@ export interface BodyDemo {
    *  uses this to put the slow eccentric on the right half of the rep,
    *  and the renderer to breathe the ground shadow with body depth. */
   concentricTo: 0 | 1;
+  /** Where the rep BEGINS. Defaults to "lockout" — the finished
+   *  position — which is right for a squat, a bench press or a push-up.
+   *  Nine demos start at the stretched end instead (every pull, press,
+   *  curl, raise and the calf raise): a deadlift begins with the bar on
+   *  the floor, not standing with it at the hips. Not derivable from
+   *  `concentricTo`, which only says which end is the finish. */
+  startsAt?: RepStart;
   /** Movements whose envelope exceeds the body's column (e.g. a lateral
    *  raise at full span) declare a wider canvas. */
   viewBox?: string;
@@ -912,6 +920,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
      * grips, so the canvas tops out at -24 or lockout clips them. */
     viewBox: "-8 -24 116 234",
     concentricTo: 1,
+    startsAt: "stretch",
     /* Drops `neck`, which the catalogue entry never claims among its
      * secondaryMuscles and which nothing justified.
      *
@@ -986,6 +995,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     equip: "plate-end",
     plateR: 10,
     concentricTo: 1,
+    startsAt: "stretch",
     tint: { biceps: "primary", forearm: "secondary" },
     pose: (e) => {
       const curl = lerp(0, 135, e); // elbow flexion, hanging → top
@@ -1028,6 +1038,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     equip: "rope",
     pulley: [72, -10],
     concentricTo: 1,
+    startsAt: "stretch",
     tint: { triceps: "primary", forearm: "secondary" },
     pose: (e) => {
       /* Top position = hands at the UPPER chest, forearms ~25° above
@@ -1158,6 +1169,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     equip: "plate-end",
     plateR: 16,
     concentricTo: 0,
+    startsAt: "stretch",
     // Wider left margin than the RDL: the deep-hinge hips travel far
     // enough back that the glutes cross x=0.
     viewBox: "-18 -2 186 212",
@@ -1281,6 +1293,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     view: "posterior",
     equip: "fixed-bar",
     concentricTo: 1,
+    startsAt: "stretch",
     // Hanging scene: bar overhead, body travels ~25 units, floor just
     // below the dangling heels at the dead hang.
     viewBox: "-20 -24 140 254",
@@ -1352,6 +1365,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     view: "posterior",
     equip: "cable-bar",
     concentricTo: 1,
+    startsAt: "stretch",
     viewBox: "-20 -20 140 246",
     tint: {
       "upper-back": "primary",
@@ -1409,6 +1423,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
      * way. */
     equip: "dumbbell",
     concentricTo: 1,
+    startsAt: "stretch",
     // A raise at full span is nearly two arm-lengths wide — this is the
     // one movement whose envelope genuinely needs a wider canvas, and
     // the bells (r 5.5 past the wrists at full abduction) push it
@@ -1457,6 +1472,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
   "calf-raise": {
     view: "side",
     concentricTo: 1,
+    startsAt: "stretch",
     viewBox: "-4 -2 172 220",
     groundY: CALF_FLOOR,
     shadowCx: 56,
@@ -1597,6 +1613,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     view: "side",
     equip: "plate-end",
     concentricTo: 1,
+    startsAt: "stretch",
     viewBox: "-4 38 172 174",
     groundY: 204,
     shadowCx: 62,

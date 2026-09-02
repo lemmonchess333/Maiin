@@ -28,8 +28,9 @@ vi.mock("@/hooks/useReducedMotion", () => ({
 
 // Every animated draw is recorded so tests can compare full sequences.
 const drawLog: Array<{ t: number; effort: number | undefined }> = [];
+const demoRef = { current: { concentricTo: 0 } as Record<string, unknown> };
 vi.mock("@/lib/bodyRig", () => ({
-  getBodyDemo: () => ({ concentricTo: 0 }),
+  getBodyDemo: () => demoRef.current,
   renderBodyDemo: (id: string, t: number, effort?: number) => {
     drawLog.push({ t, effort });
     return `<svg data-demo="${id}" data-t="${t}"></svg>`;
@@ -52,6 +53,7 @@ function step(now: number) {
 }
 
 beforeEach(() => {
+  demoRef.current = { concentricTo: 0 };
   rafQueue.length = 0;
   drawLog.length = 0;
   clock = 0;
@@ -137,6 +139,43 @@ describe("ExerciseRigDemo", () => {
     expect(screen.getByText("Pause")).toBeInTheDocument();
     expect(container.querySelector('[data-t="1"]')).not.toBeNull();
     expect(container.querySelector('[data-t="0"]')).toBeNull();
+  });
+
+  it("a stretch-start demo opens at the BOTTOM and drives first", () => {
+    // `concentricTo` says which end finishes the lift, not where it
+    // begins. A squat and a deadlift both lock out standing; the squat
+    // starts there, the deadlift starts with the bar on the floor. The
+    // player opened every demo at lockout, so the deadlift demo began
+    // with the lift already done (owner, 2026-09-02).
+    reduceRef.current = false;
+    demoRef.current = { concentricTo: 0, startsAt: "stretch" };
+    const { container } = render(
+      <ExerciseRigDemo exerciseId="deadlift" name="Deadlift" />
+    );
+    // concentricTo 0 → lockout at t=0, so the stretched end is t=1.
+    expect(container.querySelector('[data-t="1"]')).not.toBeNull();
+    expect(container.querySelector('[data-t="0"]')).toBeNull();
+    expect(screen.getByText("Set")).toBeInTheDocument();
+    step(40);
+    // First motion is the DRIVE, not the lower.
+    step(900);
+    expect(screen.getByText("Drive up")).toBeInTheDocument();
+    expect(screen.queryByText("Lower under control")).toBeNull();
+  });
+
+  it("reduced motion shows the START frame first", () => {
+    // The two-up is start → finish, so a deadlift reads floor-then-
+    // standing rather than the reverse.
+    reduceRef.current = true;
+    demoRef.current = { concentricTo: 0, startsAt: "stretch" };
+    const { container } = render(
+      <ExerciseRigDemo exerciseId="deadlift" name="Deadlift" />
+    );
+    const frames = [...container.querySelectorAll("[data-t]")].map((n) =>
+      n.getAttribute("data-t")
+    );
+    expect(frames).toEqual(["1", "0"]);
+    reduceRef.current = false;
   });
 
   it("draw spacing is even under a 60Hz rAF (quantized 30fps steps)", () => {

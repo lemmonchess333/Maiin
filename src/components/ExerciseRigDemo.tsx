@@ -12,6 +12,7 @@ import {
   repTimingFor,
   repSampleLoopedAt,
   type RepPhase,
+  type RepStart,
 } from "@/lib/exerciseTempo";
 
 const FPS_INTERVAL = 1000 / 30;
@@ -109,15 +110,24 @@ export default function ExerciseRigDemo({
   // Which end of t is the concentric top decides the cycle's shape AND
   // the opening frame: squats/hinges lock out at t=0 (standing),
   // presses/curls at t=1. The loop starts from lockout.
-  const liftsToOne = getBodyDemo(exerciseId)?.concentricTo === 1;
+  const demo = getBodyDemo(exerciseId);
+  const liftsToOne = demo?.concentricTo === 1;
   const lockoutT = liftsToOne ? 1 : 0;
+  /* Where the rep BEGINS, which is not the same question as which end
+     locks out. A squat and a deadlift both finish standing; the squat
+     starts there and the deadlift starts with the bar on the floor.
+     The player opened every demo at lockout, so a deadlift began with
+     the lift already done. */
+  const startsAt: RepStart = demo?.startsAt ?? "lockout";
+  const stretchT = liftsToOne ? 0 : 1;
+  const openingT = startsAt === "stretch" ? stretchT : lockoutT;
 
   // First paint = the lockout frame. Stable per instance (the parent keys
   // this component by exercise), so React never rewrites the figure div
   // after mount — the rAF loop owns its innerHTML from then on.
   const initialHtml = useMemo(
-    () => ({ __html: renderBodyDemo(exerciseId, lockoutT, 0.7) }),
-    [exerciseId, lockoutT]
+    () => ({ __html: renderBodyDemo(exerciseId, openingT, 0.7) }),
+    [exerciseId, openingT]
   );
   const figureRef = useRef<HTMLDivElement>(null);
   const [phase, setPhase] = useState<RepPhase>("set");
@@ -144,7 +154,7 @@ export default function ExerciseRigDemo({
       setPhase(p);
     };
     cue("set");
-    draw(renderBodyDemo(exerciseId, lockoutT, 0.7));
+    draw(renderBodyDemo(exerciseId, openingT, 0.7));
 
     const tick = (now: number) => {
       rafRef.current = requestAnimationFrame(tick);
@@ -160,7 +170,7 @@ export default function ExerciseRigDemo({
         FPS_INTERVAL *
         Math.max(1, Math.round((now - lastDrawRef.current) / FPS_INTERVAL));
 
-      const sample = repSampleLoopedAt(now - start, timing);
+      const sample = repSampleLoopedAt(now - start, timing, startsAt);
       const t = liftsToOne ? 1 - sample.ecc : sample.ecc;
       // Low-pass the effort so phase changes glow in, never flicker.
       effortRef.current += (sample.targetEffort - effortRef.current) * 0.1;
@@ -169,7 +179,15 @@ export default function ExerciseRigDemo({
     };
     rafRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [exerciseId, reducedMotion, active, tempo, liftsToOne, lockoutT]);
+  }, [
+    exerciseId,
+    reducedMotion,
+    active,
+    tempo,
+    liftsToOne,
+    openingT,
+    startsAt,
+  ]);
 
   /* The demo renders on a fixed DARK stage in both themes (like any
    * media viewer): the figure's facet gaps read as the dark surface
@@ -182,13 +200,19 @@ export default function ExerciseRigDemo({
         aria-label={`${name} demonstration — start and end positions`}
         className="bg-stage rounded-2xl p-4 mt-4 flex justify-center gap-3"
       >
+        {/* START position first, then the far end — so a deadlift reads
+            floor-then-standing rather than the reverse. */}
         <div
           className="w-1/2 max-w-[150px]"
-          dangerouslySetInnerHTML={{ __html: renderBodyDemo(exerciseId, 0) }}
+          dangerouslySetInnerHTML={{
+            __html: renderBodyDemo(exerciseId, openingT),
+          }}
         />
         <div
           className="w-1/2 max-w-[150px]"
-          dangerouslySetInnerHTML={{ __html: renderBodyDemo(exerciseId, 1) }}
+          dangerouslySetInnerHTML={{
+            __html: renderBodyDemo(exerciseId, openingT === 0 ? 1 : 0),
+          }}
         />
       </div>
     );

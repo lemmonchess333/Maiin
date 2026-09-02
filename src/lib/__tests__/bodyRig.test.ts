@@ -960,6 +960,38 @@ describe("renderBodyDemo", () => {
     }
   });
 
+  it("every demo declares where its rep starts, and they are right", () => {
+    // A table rather than a rule, because the answer is not derivable:
+    // `concentricTo` says which end FINISHES. A squat and a deadlift both
+    // lock out standing; the squat starts there and the deadlift starts
+    // with the bar on the floor. Listing all fifteen means adding a demo
+    // forces the question, and changing one is deliberate.
+    const START: Record<string, "lockout" | "stretch"> = {
+      // Begin at the finish and lower first.
+      squat: "lockout",
+      "goblet-squat": "lockout",
+      "bench-press": "lockout",
+      "push-ups": "lockout",
+      dips: "lockout",
+      "romanian-deadlift": "lockout",
+      // Begin at the stretch and drive first — every pull, press, curl
+      // and raise, plus the calf raise off a block.
+      deadlift: "stretch",
+      "barbell-row": "stretch",
+      "barbell-curl": "stretch",
+      "overhead-press": "stretch",
+      "pull-ups": "stretch",
+      "lat-pulldown": "stretch",
+      "rope-tricep-pushdown": "stretch",
+      "lateral-raise": "stretch",
+      "calf-raise": "stretch",
+    };
+    expect(Object.keys(START).sort()).toEqual(Object.keys(BODY_DEMOS).sort());
+    for (const [id, expected] of Object.entries(START)) {
+      expect(BODY_DEMOS[id].startsAt ?? "lockout", id).toBe(expected);
+    }
+  });
+
   it("the knee is a condyle: nothing at the joint projects past ~5 units", () => {
     // A squat swings the thigh 78 degrees about the knee pivot. Anything
     // on either piece that sits far from that pivot comes out from under
