@@ -32,7 +32,7 @@
  */
 
 import { ANTERIOR, POSTERIOR, type BodyPoly } from "./bodyModelData";
-import { SIDE_PIECES, SIDE_ANCHORS } from "./bodySideData";
+import { FAR_ARM_SHIFT, SIDE_PIECES, SIDE_ANCHORS } from "./bodySideData";
 import {
   GEAR,
   GEAR_DARK,
@@ -2288,7 +2288,20 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
 
   const primaryPts = new Map<string, Pt[]>();
   const body = SIDE_PIECES.map((piece) => {
-    const ops = pose[piece.group] ?? [];
+    const posed = pose[piece.group] ?? [];
+    // A far limb's depth offset is a fact about the camera, so it lands
+    // AFTER the pose: baked in, it rode the limb's rotation and put the
+    // far arm in front of the near one at the top of a curl.
+    const ops: Op[] = piece.depthShift
+      ? [
+          ...posed,
+          {
+            kind: "translate",
+            dx: piece.depthShift[0],
+            dy: piece.depthShift[1],
+          },
+        ]
+      : posed;
     const outline = applyOps(piece.outline as Pt[], ops);
     const facets = piece.facets.map((f) => ({
       level: demo.tint[f.muscle],
@@ -2327,6 +2340,41 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
     );
   }).join("");
 
+  /* Joint caps, the same recipe the front view uses: a body-grey disc at
+     each MOVING joint, painted BEHIND the pieces so it shows only in the
+     wedge a rotation opens and nowhere else. The profile is built from
+     overlapping slabs, so it needs them at fewer joints than the facet
+     mosaic does — but a curl swings the forearm ~120 degrees about a
+     pivot on the arm's centre line, and past ~60 the far corner of the
+     forearm's outline clears the upper arm and the elbow opens a notch.
+     Emitted only where the group actually rotates, so a resting figure
+     keeps its clean seams. */
+  const sideTurn = (ops?: Op[]) =>
+    (ops ?? []).reduce(
+      (sum, o) => sum + (o.kind === "rotate" ? Math.abs(o.deg) : 0),
+      0
+    );
+  const capAt = (group: GroupName, anchor: Pt, r: number, shift?: Pt) => {
+    const ops = pose[group];
+    const turn = sideTurn(ops);
+    if (turn < 12) return "";
+    const [x, y] = applyToPoint(anchor, ops ?? []);
+    const cx = x + (shift?.[0] ?? 0);
+    const cy = y + (shift?.[1] ?? 0);
+    /* Kept UNDER the limb's half-depth (the upper arm is 9.5 deep, so
+       4.75) or the disc pokes out past the silhouette at the elbow and
+       reads as a bubble rather than as the joint. */
+    const rr = r + (1.2 * Math.min(turn, 150)) / 150;
+    return `<circle cx="${cx.toFixed(2)}" cy="${cy.toFixed(2)}" r="${rr.toFixed(2)}" fill="${BODY}"/>`;
+  };
+  const jointCaps =
+    capAt("upperArmR", SIDE_ANCHORS.shoulder, 3.0, FAR_ARM_SHIFT) +
+    capAt("foreArmR", SIDE_ANCHORS.elbow, 2.8, FAR_ARM_SHIFT) +
+    capAt("shankR", SIDE_ANCHORS.knee, 3.4) +
+    capAt("shankL", SIDE_ANCHORS.knee, 3.4) +
+    capAt("upperArmL", SIDE_ANCHORS.shoulder, 3.0) +
+    capAt("foreArmL", SIDE_ANCHORS.elbow, 2.8);
+
   const glowStrength = 0.35 + 0.65 * effort;
   const glow =
     `<g class="glow">` +
@@ -2362,6 +2410,7 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
     scene +
     prop.behind +
     glow +
+    jointCaps +
     body +
     prop.front +
     `</svg>`

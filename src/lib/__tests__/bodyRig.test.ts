@@ -1052,19 +1052,17 @@ describe("renderBodyDemo", () => {
       expect(idx(near), `${near} in front of torso`).toBeGreaterThan(
         idx("torso")
       );
+      // The geometry is now IDENTICAL — the offset is a post-pose
+      // translate carried on the piece, not baked into its points.
       expect(f.outline.length).toBe(n.outline.length);
       f.outline.forEach(([x, y], i) => {
-        // x is exact; y passes through the re-row after the shift, so
-        // the vertical offset is the authored one scaled by the local
-        // remap slope — always downward, never more than the shift ×2.
-        expect(x - n.outline[i][0], `${far} x`).toBeCloseTo(
-          FAR_ARM_SHIFT[0],
-          6
-        );
-        const dy = y - n.outline[i][1];
-        expect(dy, `${far} y`).toBeGreaterThan(0);
-        expect(dy, `${far} y`).toBeLessThan(FAR_ARM_SHIFT[1] * 2);
+        expect(x, `${far} x`).toBeCloseTo(n.outline[i][0], 6);
+        expect(y, `${far} y`).toBeCloseTo(n.outline[i][1], 6);
       });
+      expect(f.depthShift, `${far} carries the depth offset`).toEqual(
+        FAR_ARM_SHIFT
+      );
+      expect(n.depthShift, `${near} carries none`).toBeUndefined();
       expect(f.facets.map((fc) => fc.muscle)).toEqual(
         n.facets.map((fc) => fc.muscle)
       );
@@ -1098,6 +1096,44 @@ describe("renderBodyDemo", () => {
           expect(pose.handR, `${id}@${t} far hand posed`).toBeDefined();
       }
     }
+  });
+
+  it("the far arm's depth offset does not rotate with the limb", () => {
+    // The defect this replaced: the offset was baked into the authored
+    // points, so it rode the arm's own rotation. Through a curl's ~120
+    // degrees "back and down" became forward-and-up and the far arm
+    // surfaced IN FRONT of the near one. Read off the RENDER at the top
+    // of the curl — the pose furthest from rest — where the two hand
+    // facets are the only six-point polygons on the figure.
+    const svg = renderBodyDemo("barbell-curl", 1).replace(
+      /<g class="glow">.*?<\/g>/,
+      ""
+    );
+    const sixPointsWithFill = (fill: string) =>
+      [...svg.matchAll(/<polygon points="([^"]+)" fill="([^"]+)"/g)]
+        .filter((m) => m[2] === fill && m[1].split(" ").length === 6)
+        .map((m) =>
+          m[1]
+            .split(" ")
+            .map((p) => p.split(",").map(Number) as [number, number])
+        );
+    const far = sixPointsWithFill("#9FA6AC");
+    const near = sixPointsWithFill("#B6BDC3");
+    expect(far.length, "the far hand facet").toBe(1);
+    expect(near.length, "candidate near facets").toBeGreaterThan(0);
+    const mean = (pts: [number, number][], i: 0 | 1) =>
+      pts.reduce((a, p) => a + p[i], 0) / pts.length;
+    const fx = mean(far[0], 0);
+    const fy = mean(far[0], 1);
+    // The near hand is whichever six-point body facet the far one shadows.
+    const twin = near.reduce((a, b) =>
+      Math.hypot(mean(b, 0) - fx, mean(b, 1) - fy) <
+      Math.hypot(mean(a, 0) - fx, mean(a, 1) - fy)
+        ? b
+        : a
+    );
+    expect(fx - mean(twin, 0), "dx").toBeCloseTo(FAR_ARM_SHIFT[0], 3);
+    expect(fy - mean(twin, 1), "dy").toBeCloseTo(FAR_ARM_SHIFT[1], 3);
   });
 
   it("the far arm renders in shadow: darker body colour, dimmer tint, painted first", () => {

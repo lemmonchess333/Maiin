@@ -47,6 +47,14 @@ export interface SidePiece {
   facets: { muscle: string; points: Pt[] }[];
   /** Far-side limb: rendered first and ~12% darker so overlaps read. */
   far?: boolean;
+  /** Depth offset applied AFTER the pose, in world units.
+   *
+   *  It has to be post-pose. Baked into the authored points it rides the
+   *  limb's own rotation, so on a curl — where the arm swings through
+   *  ~120 degrees — "back and down" became forward-and-up and the far arm
+   *  surfaced IN FRONT of the near one. A depth cue is a fact about the
+   *  camera, not about the limb, so it is constant on screen. */
+  depthShift?: Pt;
 }
 
 /* ── Facet construction ──────────────────────────────────────────── */
@@ -500,12 +508,9 @@ const HAND_FACETS = [
  * torso silhouette while the arms hang, and shows the moment the arms
  * leave it (a curl, a bench, a hinge to the bar): a darker second arm
  * just behind the first, exactly where the eye expects one. Authored
- * space, so the re-row below moves it with the arm it shadows. */
+ * space, and is applied AFTER the pose so it stays a screen-space depth
+ * cue rather than rotating with the limb. */
 export const FAR_ARM_SHIFT: Pt = [-2.6, 1.6];
-const shiftFar = (pts: Pt[]): Pt[] =>
-  pts.map(([x, y]) => [x + FAR_ARM_SHIFT[0], y + FAR_ARM_SHIFT[1]]);
-const farFacets = (facets: { muscle: string; points: Pt[] }[]) =>
-  facets.map((f) => ({ muscle: f.muscle, points: shiftFar(f.points) }));
 
 /* The pec's lower border, as the single line every neighbour derives
  * from. It runs from the armpit (the chest facet's back cut) down to the
@@ -543,20 +548,23 @@ const RAW_PIECES: SidePiece[] = [
   {
     group: "foreArmR",
     far: true,
-    outline: shiftFar(silhouette(FORE_B, FORE_F)),
-    facets: farFacets(FORE_FACETS),
+    depthShift: FAR_ARM_SHIFT,
+    outline: silhouette(FORE_B, FORE_F),
+    facets: FORE_FACETS,
   },
   {
     group: "upperArmR",
     far: true,
-    outline: shiftFar(silhouette(ARM_B, ARM_F)),
-    facets: farFacets(UPPER_ARM_FACETS),
+    depthShift: FAR_ARM_SHIFT,
+    outline: silhouette(ARM_B, ARM_F),
+    facets: UPPER_ARM_FACETS,
   },
   {
     group: "handR",
     far: true,
-    outline: shiftFar(HAND_OUTLINE),
-    facets: farFacets(HAND_FACETS),
+    depthShift: FAR_ARM_SHIFT,
+    outline: HAND_OUTLINE,
+    facets: HAND_FACETS,
   },
   {
     group: "shankL",
