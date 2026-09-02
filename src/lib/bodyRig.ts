@@ -570,6 +570,11 @@ export interface BodyDemo {
    *  full-size 45 (r=26 ≈ 45 cm on a 175 cm figure) so the bottom
    *  frame reads bar-near-the-floor. */
   plateR?: number;
+  /** Which side the profile barbell's sleeve tip protrudes. Default 1
+   *  (forward), which is right wherever the bar hangs in front of the
+   *  body; -1 where it sits BEHIND (a back squat), so the stub cannot
+   *  cross the face. */
+  sleeveDir?: -1 | 1;
   /** `rope` only: the high-pulley anchor, fixed at the station. The
    *  cable is solved from it to the grip every frame, so the gear is
    *  never positioned independently of the body. */
@@ -757,6 +762,8 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
      * hands-behind-the-neck pose IS the prisoner squat. */
     equip: "plate-end",
     plateR: 11,
+    // Racked BEHIND the neck, so the sleeve points back.
+    sleeveDir: -1,
     concentricTo: 0,
     // The bottom frame carries the hips ~40 units behind the knee, so
     // the glutes cross x=0 — same left margin as the deadlift.
@@ -2039,6 +2046,7 @@ function resolveProp(
         view: "profile",
         hand: left,
         plateR: demo.plateR ?? 10,
+        sleeveDir: demo.sleeveDir ?? 1,
       };
       break;
     case "rope":

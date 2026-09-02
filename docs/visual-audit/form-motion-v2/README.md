@@ -791,3 +791,42 @@ under the jawline. Pre-existing, and the skull growth made it plain.
 Both facts are pinned now: the head must measure 7.2 to 8.6 figure
 heights, and the throat must sit behind the chin. Mutation-checked —
 reverting the growth reads 9.8 and fails.
+
+## STATUS 2026-09-02l — a pointy knee and a bar through the face
+
+Both from an owner device screenshot of the squat's bottom frame.
+
+**The knee.** Not the shank, as it first looked — the THIGH's
+bottom-front corner. A squat swings the thigh 78 degrees about the knee
+pivot, and that corner sat 5.5 forward and 4 below it, a 6.8-unit
+radius, so it came out from under the shank as a spike. Diagnosed by
+rendering the two posed pieces in different colours, which is the only
+way to tell whose corner is whose once they overlap.
+
+Both pieces now arc into a short chord at the pivot's row: the shank's
+top is a dome (nothing above the pivot at all, and its midpoint sits at
+49.6 against a pivot at 50, so the lower leg is centred under the knee
+instead of 2 units behind it — the "misaligned with the calf" half of
+the report), and the thigh's bottom is a dome whose chord still TILTS
+2.8 so it keeps reading as the popliteal crease rather than a level cut.
+Nothing at the joint now reaches more than 5 units from the pivot, which
+is what a condyle is: a rotation reveals a curve, never a corner.
+
+**The bar through the face.** `profileBarbell` drew its collar and
+sleeve tip at a fixed +0.7r — always forward. That is right wherever the
+bar hangs in front of the body, and wrong on a back squat, where the bar
+sits behind the neck and the stub crossed the jaw and poked out past the
+face. The sleeve now takes a direction, and the squat is the one demo
+that sets it backward. The plate overlapping the head is correct and
+stays: real plates are wider than heads.
+
+**Audited every demo at both extremes for the same class of defect** —
+gear crossing the body. The squat was the only one. The overhead press's
+bar passes across the upper chest at the rack position, not the chin;
+the pushdown's cable hangs in front of the torso, which is where a
+pushdown cable is.
+
+Both fixes are pinned and mutation-checked: nothing at the knee may
+reach past 5.4 units from the pivot (reverting the thigh reads 7.2), and
+every piece of the squat's bar hardware must stay behind the plate's
+centre (reverting reads 55.2 against a plate at 42.5).
