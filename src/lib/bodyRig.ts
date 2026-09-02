@@ -763,7 +763,7 @@ const CALF_FLOOR = 212;
 
 /** Dip station grip, fixed in final space: hand height beside the
  *  figure, well above the floor so the tucked feet never touch it. */
-export const DIP_GRIP: Pt = [60, 108];
+export const DIP_GRIP: Pt = [56, 108];
 export const BODY_DEMOS: Record<string, BodyDemo> = {
   squat: {
     view: "side",
@@ -1103,13 +1103,28 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       // touch behind the grip; bottom = elbow at 90° with the upper arm
       // horizontal and pointing back (the shoulder sits one upper-arm
       // length BEHIND and one forearm ABOVE the grip).
+      /* Shoulder path. The hand is FIXED on the bar and the body hangs
+         between the bars, so the shoulder can only go where the arm's
+         two bones let it. Top: straight arm, shoulder just forward of
+         the hand. Bottom: elbow ~90 degrees with the upper arm parallel
+         to the floor, so the shoulder sits one upper-arm length FORWARD
+         of the hand and one forearm length above it — down and forward,
+         the chest dip.
+
+         It used to sit one upper-arm length BEHIND the hand, so the
+         whole body swung away from the station as it descended and the
+         arm folded the wrong way round (owner, 2026-09-03: "arms are
+         wrong way round, you can't physically do a dip like this, where
+         your body moves away from the bars"). The mirror-image
+         geometry was the actual bug; a later "fix" flipped the elbow
+         branch to compensate and made a second wrong. */
       const top: Pt = [
-        DIP_GRIP[0] - 0.97 * (SIDE_UPPER_LEN + SIDE_FORE_LEN) * Math.sin(0.06),
-        DIP_GRIP[1] - 0.97 * (SIDE_UPPER_LEN + SIDE_FORE_LEN) * Math.cos(0.06),
+        DIP_GRIP[0] + 2,
+        DIP_GRIP[1] - 0.97 * (SIDE_UPPER_LEN + SIDE_FORE_LEN),
       ];
       const bottom: Pt = [
-        DIP_GRIP[0] - SIDE_UPPER_LEN * 0.92,
-        DIP_GRIP[1] - SIDE_FORE_LEN * 0.92,
+        DIP_GRIP[0] + SIDE_UPPER_LEN * 0.8,
+        DIP_GRIP[1] - SIDE_FORE_LEN * 0.85,
       ];
       const S: Pt = [lerp(top[0], bottom[0], e), lerp(top[1], bottom[1], e)];
       const bodyOps: Op[] = [
@@ -1123,13 +1138,18 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       ];
       // Legs: hips a touch flexed, knees tucked back 90° so the shins
       // trail behind and the feet clear the floor.
+      /* Legs hang. bodyOps rotates everything about the shoulder by the
+         lean, which would sweep the legs 30 degrees BACK at the bottom
+         — the trailing-legs look in the capture. Counter-rotate the
+         thigh by the lean so it stays near vertical in world space,
+         with a small forward tuck; the shin folds back under it. */
       const thighOps: Op[] = [
-        { kind: "rotate", deg: -8, pivot: SIDE_ANCHORS.hip },
+        { kind: "rotate", deg: -lean + 10, pivot: SIDE_ANCHORS.hip },
         ...bodyOps,
       ];
       const shankOps: Op[] = [
-        { kind: "rotate", deg: 70, pivot: SIDE_ANCHORS.knee },
-        { kind: "rotate", deg: -8, pivot: SIDE_ANCHORS.hip },
+        { kind: "rotate", deg: 58, pivot: SIDE_ANCHORS.knee },
+        { kind: "rotate", deg: -lean + 10, pivot: SIDE_ANCHORS.hip },
         ...bodyOps,
       ];
       // Aim the arm at the grip in pre-pose space.
@@ -1137,19 +1157,16 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         { kind: "translate", dx: S0[0] - S[0], dy: S0[1] - S[1] },
         { kind: "rotate", deg: -lean, pivot: S0 },
       ]);
-      /* Of the two IK branches, the one that puts the elbow FORWARD —
-         over the hand — which is the dip. Its instruction 3 is "lower
-         until upper arms are parallel to the floor", and that is what
-         this branch gives: the forearm runs vertically down to the grip
-         and the upper arm runs back from the elbow to the shoulder.
-         Taking the smaller x instead hung the upper arm VERTICALLY (85
-         degrees off the floor, measured) with the forearm reaching
-         forward — a hang, not a dip. */
+      /* Of the two IK branches, the one that puts the elbow BEHIND the
+         shoulder — over the hand. With the shoulder forward of the hand
+         at the bottom, that is the forearm vertical down to the grip and
+         the upper arm running back to the shoulder: "until upper arms
+         are parallel to the floor". */
       const eA = solveElbow(S0, gPre, SIDE_UPPER_LEN, SIDE_FORE_LEN, 1);
       const eB = solveElbow(S0, gPre, SIDE_UPPER_LEN, SIDE_FORE_LEN, -1);
       const arm = aimArm(
         { S: S0, E: SIDE_ANCHORS.elbow, H: SIDE_ANCHORS.hand },
-        eA[0] > eB[0] ? eA : eB,
+        eA[0] < eB[0] ? eA : eB,
         gPre,
         0
       );
@@ -1172,10 +1189,10 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     // The station in profile: the near bar runs front-to-back (so it
     // reads as a horizontal tube between its two posts), grip mid-bar.
     scene: () =>
-      `<line x1="${DIP_GRIP[0] - 20}" y1="${DIP_GRIP[1]}" x2="${DIP_GRIP[0] - 20}" y2="205" stroke="${GEAR_DARK}" stroke-width="3.2"/>` +
-      `<line x1="${DIP_GRIP[0] + 20}" y1="${DIP_GRIP[1]}" x2="${DIP_GRIP[0] + 20}" y2="205" stroke="${GEAR_DARK}" stroke-width="3.2"/>` +
-      `<line x1="${DIP_GRIP[0] - 28}" y1="205" x2="${DIP_GRIP[0] + 28}" y2="205" stroke="${GEAR_DARK}" stroke-width="2.4" stroke-linecap="round"/>` +
-      `<rect x="${DIP_GRIP[0] - 24}" y="${DIP_GRIP[1] - 1.7}" width="48" height="3.4" rx="1.7" fill="${GEAR}"/>` +
+      `<line x1="${DIP_GRIP[0] - 24}" y1="${DIP_GRIP[1]}" x2="${DIP_GRIP[0] - 24}" y2="205" stroke="${GEAR_DARK}" stroke-width="3.2"/>` +
+      `<line x1="${DIP_GRIP[0] + 28}" y1="${DIP_GRIP[1]}" x2="${DIP_GRIP[0] + 28}" y2="205" stroke="${GEAR_DARK}" stroke-width="3.2"/>` +
+      `<line x1="${DIP_GRIP[0] - 32}" y1="205" x2="${DIP_GRIP[0] + 36}" y2="205" stroke="${GEAR_DARK}" stroke-width="2.4" stroke-linecap="round"/>` +
+      `<rect x="${DIP_GRIP[0] - 28}" y="${DIP_GRIP[1] - 1.7}" width="60" height="3.4" rx="1.7" fill="${GEAR}"/>` +
       `<line x1="-12" y1="206" x2="168" y2="206" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
   },
 
