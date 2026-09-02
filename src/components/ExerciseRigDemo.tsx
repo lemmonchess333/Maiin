@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  memo,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { getBodyDemo, renderBodyDemo } from "@/lib/bodyRig";
 import {
@@ -8,6 +15,40 @@ import {
 } from "@/lib/exerciseTempo";
 
 const FPS_INTERVAL = 1000 / 30;
+
+/**
+ * The figure div, isolated from the player's React re-renders.
+ *
+ * The one-frame "spaz" (owner device recording, 2026-09-02): the cue
+ * line is React state, so every PHASE change re-rendered the player,
+ * and the figure div carried `dangerouslySetInnerHTML={{ __html }}` as
+ * a fresh object literal. React 19 re-applies that prop whenever its
+ * identity changes — it does not compare the strings — so each phase
+ * change overwrote the live frame with the INITIAL lockout SVG until the
+ * next rAF tick drew over it: a lockout pose flashing for a frame or two,
+ * four times per rep, on every demo.
+ *
+ * Two layers of defence, either sufficient alone: the html prop is a
+ * memoised object (same identity → React skips the prop entirely), and
+ * the div lives in a memo'd child with stable props (the parent's
+ * re-render never reaches it). After the mount paint, only the rAF loop
+ * ever writes this div's innerHTML.
+ */
+const Figure = memo(function Figure({
+  html,
+  figureRef,
+}: {
+  html: { __html: string };
+  figureRef: RefObject<HTMLDivElement | null>;
+}) {
+  return (
+    <div
+      ref={figureRef}
+      className="mx-auto max-w-[190px]"
+      dangerouslySetInnerHTML={html}
+    />
+  );
+});
 
 /** Phase cues for the looping rep. Labels are generic and direction-
  *  derived — the eccentric is always "lower under control" and the
@@ -74,8 +115,8 @@ export default function ExerciseRigDemo({
   // First paint = the lockout frame. Stable per instance (the parent keys
   // this component by exercise), so React never rewrites the figure div
   // after mount — the rAF loop owns its innerHTML from then on.
-  const initialSvg = useMemo(
-    () => renderBodyDemo(exerciseId, lockoutT, 0.7),
+  const initialHtml = useMemo(
+    () => ({ __html: renderBodyDemo(exerciseId, lockoutT, 0.7) }),
     [exerciseId, lockoutT]
   );
   const figureRef = useRef<HTMLDivElement>(null);
@@ -156,11 +197,7 @@ export default function ExerciseRigDemo({
   return (
     <div className="bg-stage rounded-2xl p-4 mt-4">
       <div role="img" aria-label={`${name} demonstration — looping reps`}>
-        <div
-          ref={figureRef}
-          className="mx-auto max-w-[190px]"
-          dangerouslySetInnerHTML={{ __html: initialSvg }}
-        />
+        <Figure html={initialHtml} figureRef={figureRef} />
       </div>
       {/* Phase cue — the teaching half of the loop. aria-live=polite reads
           the phase to screen-reader users without interrupting. */}

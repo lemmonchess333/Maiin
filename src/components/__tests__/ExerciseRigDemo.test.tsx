@@ -118,6 +118,27 @@ describe("ExerciseRigDemo", () => {
     expect(screen.queryByText("Rep complete")).toBeNull();
   });
 
+  it("a phase change never repaints the initial lockout frame (the one-frame flash)", () => {
+    // Owner device recording 2026-09-02: at every cue change the figure
+    // snapped to the lockout pose for a frame. The cue is React state,
+    // so a phase change re-rendered the player, and React 19 re-applied
+    // the figure's dangerouslySetInnerHTML (a fresh object each render)
+    // — overwriting the live frame with the INITIAL svg until the next
+    // tick. This drives mid-rep, crosses a phase boundary, and asserts
+    // the figure still shows the last DRAWN frame, not the initial one.
+    reduceRef.current = false;
+    const { container } = render(
+      <ExerciseRigDemo exerciseId="squat" name="Barbell Squat" />
+    );
+    step(40);
+    step(1500); // mid-eccentric: the live frame is t≈0.55, not 0
+    expect(container.querySelector('[data-t="0"]')).toBeNull();
+    step(2350); // → pause: draws t=1, then cues → React re-render
+    expect(screen.getByText("Pause")).toBeInTheDocument();
+    expect(container.querySelector('[data-t="1"]')).not.toBeNull();
+    expect(container.querySelector('[data-t="0"]')).toBeNull();
+  });
+
   it("draw spacing is even under a 60Hz rAF (quantized 30fps steps)", () => {
     reduceRef.current = false;
     render(<ExerciseRigDemo exerciseId="squat" name="Barbell Squat" />);

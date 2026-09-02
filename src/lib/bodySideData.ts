@@ -338,16 +338,21 @@ const RAW_PIECES: SidePiece[] = [
     group: "pelvis",
     outline: silhouette(PELV_B, PELV_F),
     facets: [
+      /* Both pelvis facets run to within the standard 1.2-unit gap of
+       * the piece's outline bottom (113.5). They used to stop at 110.8
+       * and 101.8, leaving a 3-unit band of underlay across the whole
+       * hip that read on device as a dark seam cutting the pelvis off
+       * from the thighs ("a pale block on top of the legs"). */
       {
         muscle: "gluteal",
         points: [
           [36.2, 91],
           [43.6, 90],
           [45.4, 94.6],
-          [44.6, 102.4],
-          [41.6, 110.2],
-          [35.8, 110.8],
-          [31.6, 105.4],
+          [44.8, 103],
+          [42.8, 112.2],
+          [36.6, 112.4],
+          [31.6, 106.4],
           [30.8, 97.4],
           [33, 92.8],
         ],
@@ -357,8 +362,10 @@ const RAW_PIECES: SidePiece[] = [
         points: [
           [49.8, 89.4],
           [55.6, 89.8],
-          [52.9, 97.8],
-          [48.6, 101.8],
+          [53.6, 98.6],
+          [50.2, 106.2],
+          [46.4, 110.6],
+          [45.6, 103.8],
           [46.6, 96.4],
           [47.6, 92],
         ],

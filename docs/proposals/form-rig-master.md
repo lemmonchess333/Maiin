@@ -49,6 +49,7 @@ packet's design content as the plan and its status content as void.
 | Side-model anatomy pass from owner device review — trunk band proportions, pelvis follow (0.6) + head lift (0.4) on every hinge, vertical goblet dumbbell                       | `bodySideData.ts` / `bodyRig.ts` / `bodyProps.ts`          | ✅ 2026-09-02               |
 | Mechanics pass — tints reconciled to the catalogue (dips was inverted), deadlift joint staggering, RDL bar on the legs, squat bar over the foot; skeleton proportions measured  | `bodyRig.ts` + `tint honesty` / `execution mechanics` pins | ✅ 2026-09-02               |
 | Profile skeleton re-rowed to anthropometric norms (shoulder 38, elbow 74, wrist 105, hip 96, knee 145); every side reach re-fitted from the measured arm; push-up plank derived | `bodySideData.ts` re-row + `bodyRig.ts` reach constants    | ✅ 2026-09-02               |
+| Device-recording review — pushdown top raised to the upper chest; pelvis facets closed to the outline (the dark hip seam)                                                       | `bodyRig.ts` / `bodySideData.ts`                           | ✅ 2026-09-02               |
 | Everything else below                                                                                                                                                           | —                                                          | Pending                     |
 
 **Demo1 supersession note (2026-07-27).** The single bounded teaching
