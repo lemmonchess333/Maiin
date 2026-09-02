@@ -528,6 +528,35 @@ const pecBottomAt = (t: number) =>
 /** One seam, in authored units (the y remap scales it to ~0.9 rendered). */
 const SEAM = 0.86;
 
+/* The skull is authored 23 units from crown to chin on a 210-unit
+ * figure — 9.1 heads, where an adult is 7.5 to 8, and anthropometry puts
+ * the chin at 0.87 of stature (y 27.3 here). A head that small reads as
+ * wrong without a viewer being able to say why, and it makes the neck
+ * look long because the neck is taking up the difference.
+ *
+ * Grown 17% about the crown, which moves the chin to 27 and keeps the
+ * profile head's proportion intact (length/height 0.87, and a real
+ * profile head is 0.83-0.87). Only points at or above the jaw scale —
+ * the neck rows below y 24 stay where they are, so the neck shortens by
+ * exactly what the skull gains rather than stretching with it.
+ *
+ * The neck's front rows came back with it. They sat at x 53-54 against a
+ * chin at 50.2 — the throat projecting three units FORWARD of the jaw,
+ * which is backwards (a chin projects, the throat is set behind it) and
+ * cut a hard V under the jawline. They now sit just behind the chin, and
+ * the back rows moved back a little so the neck is not a thin post. */
+const SKULL_GROW = 1.17;
+const SKULL_ORIGIN: Pt = [51.6, 0.2];
+const growSkull = (pts: Pt[]): Pt[] =>
+  pts.map(([x, y]) =>
+    y <= 24
+      ? [
+          SKULL_ORIGIN[0] + (x - SKULL_ORIGIN[0]) * SKULL_GROW,
+          SKULL_ORIGIN[1] + (y - SKULL_ORIGIN[1]) * SKULL_GROW,
+        ]
+      : [x, y]
+  );
+
 const RAW_PIECES: SidePiece[] = [
   // Far-side leg pair: same geometry, darker, painted FIRST — hidden in
   // symmetric stances, visible the moment a pose splits the legs.
@@ -602,7 +631,7 @@ const RAW_PIECES: SidePiece[] = [
      * brow ridge, nose, lips and chin, and a jaw line back to the neck.
      * The old outline had five straight cuts for the whole skull. */
     group: "head",
-    outline: [
+    outline: growSkull([
       [43.5, 15.0],
       [42.8, 12.4],
       [42.7, 9.7],
@@ -626,18 +655,18 @@ const RAW_PIECES: SidePiece[] = [
       [58.6, 21.4],
       [55.4, 22.6],
       [50.4, 23.0],
-      [52.8, 26],
-      [53.8, 31],
-      [53.2, 35.8],
-      [44.2, 35.4],
-      [44.8, 27],
+      [49.8, 28.6],
+      [50.4, 31.4],
+      [50.0, 35.8],
+      [42.6, 35.4],
+      [43.4, 27.4],
       [45.4, 21.6],
       [44.0, 18.4],
-    ],
+    ]),
     facets: [
       {
         muscle: "head",
-        points: [
+        points: growSkull([
           [44.0, 14.8],
           [43.3, 12.4],
           [43.2, 9.8],
@@ -663,20 +692,20 @@ const RAW_PIECES: SidePiece[] = [
           [50.5, 21.9],
           [45.7, 21.1],
           [44.4, 18.1],
-        ],
+        ]),
       },
       {
         muscle: "neck",
         // Top-back corner tucks up under the skull so no underlay
         // triangle shows at the nape.
-        points: [
+        points: growSkull([
           [45.8, 21.9],
           [52.6, 22.6],
-          [53.6, 27],
-          [53.2, 34.8],
-          [44.6, 35.2],
-          [45.2, 27],
-        ],
+          [49.2, 29.4],
+          [49.2, 34.8],
+          [43.2, 35.2],
+          [44.1, 28.2],
+        ]),
       },
     ],
   },
