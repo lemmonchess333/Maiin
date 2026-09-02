@@ -5,6 +5,7 @@ import {
   BODY_DEMOS,
   CALF_BALL,
   CALF_BLOCK_TOP,
+  DIP_GRIP,
   getBodyDemo,
   renderBodyDemo,
 } from "../bodyRig";
@@ -689,14 +690,20 @@ describe("renderBodyDemo", () => {
     // ~6 units elsewhere. Nothing caught it because nothing was DRAWN at
     // a hand. Both demos below declare their actual grip (not a bar that
     // overhangs it), so the wrist must sit on it exactly.
-    for (const [id, wrist] of [
-      ["overhead-press", ANT_WRIST],
-      ["dips", ANT_WRIST],
+    // Dips moved to the profile figure (2026-09-02): its grip is the
+    // fixed station tube, DIP_GRIP, and its wrist is the side art's.
+    const gripOf = (id: string, t: number): readonly [number, number] =>
+      id === "dips"
+        ? DIP_GRIP
+        : BODY_DEMOS[id].bar!(t, BODY_DEMOS[id].pose(t))![0];
+    for (const [id, wrist, group] of [
+      ["overhead-press", ANT_WRIST, "foreArmL"],
+      ["dips", SIDE_ANCHORS.hand, "handL"],
     ] as const) {
       for (const t of [0, 0.5, 1]) {
         const pose = BODY_DEMOS[id].pose(t);
-        const grip = BODY_DEMOS[id].bar!(t, pose)![0];
-        const w = applyToPoint(wrist, (pose.foreArmL ?? []) as never[]);
+        const grip = gripOf(id, t);
+        const w = applyToPoint(wrist, (pose[group] ?? []) as never[]);
         expect(
           Math.hypot(w[0] - grip[0], w[1] - grip[1]),
           `${id}@${t}`
@@ -710,12 +717,12 @@ describe("renderBodyDemo", () => {
     // the art crept along bars the anchors held perfectly still. The
     // existing "grips stay put" test misses this entirely — it checks
     // the POST lines, which are drawn from the anchor, never the arm.
-    for (const [id, wrist] of [
-      ["pull-ups", POST_WRIST],
-      ["dips", ANT_WRIST],
+    for (const [id, wrist, group] of [
+      ["pull-ups", POST_WRIST, "foreArmL"],
+      ["dips", SIDE_ANCHORS.hand, "handL"],
     ] as const) {
       const at = (t: number) =>
-        applyToPoint(wrist, (BODY_DEMOS[id].pose(t).foreArmL ?? []) as never[]);
+        applyToPoint(wrist, (BODY_DEMOS[id].pose(t)[group] ?? []) as never[]);
       const drift = Math.hypot(at(1)[0] - at(0)[0], at(1)[1] - at(0)[1]);
       expect(drift, `${id} grip drift`).toBeLessThan(0.2);
     }
