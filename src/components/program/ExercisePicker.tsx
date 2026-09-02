@@ -7,6 +7,9 @@ import {
   useCallback,
 } from "react";
 import { createPortal } from "react-dom";
+import { useNavigate } from "react-router-dom";
+import { BottomSheet } from "@/components/ui/BottomSheet";
+import ExerciseFormContent from "@/components/ExerciseFormContent";
 import { EXERCISE_CATEGORIES, getExercisesByCategory } from "@/lib/exercises";
 import type { Exercise } from "@/lib/exercises";
 import { cn } from "@/lib/utils";
@@ -46,6 +49,12 @@ export default function ExercisePicker({
     () => new Set(existingExerciseIds ?? [])
   );
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  /* Owner request 2026-09-02: a row should SHOW the exercise (its form
+   * demo, muscles, instructions), not only add it. The row body opens
+   * this sheet; only the trailing circle toggles selection. The sheet
+   * lives inside the picker so the selection survives looking. */
+  const [detail, setDetail] = useState<Exercise | null>(null);
+  const navigate = useNavigate();
   const searchRef = useRef<HTMLInputElement>(null);
 
   const preExistingIds = useMemo(
@@ -311,6 +320,7 @@ export default function ExercisePicker({
                           exercise={exercise}
                           isSelected={selectedIds.has(exercise.id)}
                           onToggle={toggleSelection}
+                          onOpen={setDetail}
                         />
                       ))}
                     </div>
@@ -329,6 +339,7 @@ export default function ExercisePicker({
                     exercise={exercise}
                     isSelected={selectedIds.has(exercise.id)}
                     onToggle={toggleSelection}
+                    onOpen={setDetail}
                   />
                 ))}
               </div>
@@ -368,6 +379,54 @@ export default function ExercisePicker({
               )}
             </AnimatePresence>
           </motion.div>
+
+          {/* Exercise detail — the same Form content the history page
+              shows, plus the add/remove action, without leaving the
+              picker. "View full progress" is the one exit: it closes the
+              picker (unsaved ticks are dropped deliberately — a route
+              change is an explicit leave). */}
+          <BottomSheet
+            open={detail !== null}
+            onOpenChange={(o) => {
+              if (!o) setDetail(null);
+            }}
+            title={detail?.name ?? null}
+          >
+            {detail && (
+              <div className="px-4 pb-4">
+                <ExerciseFormContent exerciseName={detail.name} active />
+                <div className="mt-5">
+                  <Button
+                    variant={
+                      selectedIds.has(detail.id) ? "secondary" : "primary"
+                    }
+                    fullWidth
+                    onClick={() => toggleSelection(detail.id)}
+                  >
+                    {preExistingIds.has(detail.id)
+                      ? selectedIds.has(detail.id)
+                        ? "In this workout — tap to remove"
+                        : "Add back to workout"
+                      : selectedIds.has(detail.id)
+                        ? "Selected — tap to unselect"
+                        : "Add to workout"}
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const name = detail.name;
+                      setDetail(null);
+                      onClose();
+                      navigate(`/history/exercise/${encodeURIComponent(name)}`);
+                    }}
+                    className="mt-2 w-full min-h-[44px] text-sm font-medium text-lifting"
+                  >
+                    View full progress
+                  </button>
+                </div>
+              </div>
+            )}
+          </BottomSheet>
         </>
       )}
     </AnimatePresence>,
@@ -383,58 +442,73 @@ function ExerciseRow({
   exercise,
   isSelected,
   onToggle,
+  onOpen,
 }: {
   exercise: Exercise;
   isSelected: boolean;
   onToggle: (id: string) => void;
+  onOpen: (exercise: Exercise) => void;
 }) {
   const figure = categoryFigureUri(exercise.category);
   return (
-    <button
-      type="button"
-      role="checkbox"
-      aria-checked={isSelected}
-      aria-label={exercise.name}
-      onClick={() => onToggle(exercise.id)}
+    <div
       className={cn(
-        "w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-colors min-h-[64px]",
+        "w-full flex items-center gap-2 pl-3 pr-1.5 py-1.5 rounded-xl border transition-colors min-h-[64px]",
         isSelected
           ? "bg-lifting/8 border-lifting/40"
-          : "bg-card border-border/40 active:bg-muted/60"
+          : "bg-card border-border/40"
       )}
     >
-      <div
-        className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 overflow-hidden"
-        style={{ background: `${THEME.lifting}0F` }}
+      {/* Body → detail sheet (owner request 2026-09-02: tap to SEE it). */}
+      <button
+        type="button"
+        onClick={() => onOpen(exercise)}
+        aria-label={`${exercise.name} details`}
+        className="flex-1 min-w-0 flex items-center gap-3 text-left min-h-[44px] active:opacity-80"
       >
-        {figure ? (
-          <img src={figure} alt="" aria-hidden className="h-9 w-auto" />
-        ) : (
-          <Dumbbell className="size-4" style={{ color: THEME.lifting }} />
-        )}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-foreground truncate">
-          {exercise.name}
-        </p>
-        <p className="text-caption text-muted-foreground truncate mt-0.5">
-          {exercise.muscleGroup} · {exercise.equipment}
-        </p>
-      </div>
-      <div className="shrink-0">
+        <div
+          className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 overflow-hidden"
+          style={{ background: `${THEME.lifting}0F` }}
+        >
+          {figure ? (
+            <img src={figure} alt="" aria-hidden className="h-9 w-auto" />
+          ) : (
+            <Dumbbell className="size-4" style={{ color: THEME.lifting }} />
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-foreground truncate">
+            {exercise.name}
+          </p>
+          <p className="text-caption text-muted-foreground truncate mt-0.5">
+            {exercise.muscleGroup} · {exercise.equipment}
+          </p>
+        </div>
+      </button>
+      {/* Trailing circle → select/unselect. Keeps the checkbox role the
+          batch-add flow is built on; the 44px target is the button, the
+          32px circle is its visual. */}
+      <button
+        type="button"
+        role="checkbox"
+        aria-checked={isSelected}
+        aria-label={exercise.name}
+        onClick={() => onToggle(exercise.id)}
+        className="size-11 shrink-0 flex items-center justify-center rounded-full active:scale-[0.97] transition-transform"
+      >
         {isSelected ? (
-          <div
+          <span
             className="size-8 rounded-full flex items-center justify-center"
             style={{ backgroundColor: THEME.lifting }}
           >
             <Check className="size-4 text-white" />
-          </div>
+          </span>
         ) : (
-          <div className="size-8 rounded-full border-[1.5px] border-border flex items-center justify-center">
+          <span className="size-8 rounded-full border-[1.5px] border-border flex items-center justify-center">
             <Plus className="size-4 text-muted-foreground" />
-          </div>
+          </span>
         )}
-      </div>
-    </button>
+      </button>
+    </div>
   );
 }
