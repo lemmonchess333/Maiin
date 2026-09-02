@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { captureError } from "@/lib/errorReporting";
 import {
   doc,
   getDoc,
@@ -335,6 +336,35 @@ function stripCallablePrefix(message: string): string {
       ? cleaned.slice(marker + "failed-precondition:".length)
       : cleaned
   ).trim();
+}
+
+/**
+ * The user-fit sentence behind a rejected command, or null. Only a
+ * `failed-precondition` carries prose written for the user ("This workout
+ * changed since you started. Refresh and try again."); every other code
+ * (invalid-argument, internal, unauthenticated) is a developer message and
+ * goes to error reporting instead. Eleven writers used to collapse every
+ * rejection to "Couldn't X. Refreshing." and log the reason only to the
+ * console, which is why "some things don't work" was undiagnosable from a
+ * device (owner, 2026-09-02).
+ */
+function describeRejection(err: unknown): string | null {
+  const code = String((err as { code?: unknown })?.code ?? "");
+  const message = String((err as { message?: unknown })?.message ?? "");
+  if (!message) return null;
+  if (
+    code.endsWith("failed-precondition") ||
+    /failed-precondition:/.test(message)
+  ) {
+    const why = stripCallablePrefix(message);
+    return why || null;
+  }
+  return null;
+}
+
+/** "Couldn't add that." + the server's own reason when it gave one. */
+function rejectedToast(base: string, reason: string | null): void {
+  toast.error(reason ? `${base} ${reason}` : `${base} Refreshing.`);
 }
 
 export function useProgram() {
@@ -736,6 +766,10 @@ export function useProgram() {
    * recovery reads as a bug. **A new caller must handle `rejected`**: leaving
    * it unhandled means the user watches their change silently undo itself.
    */
+  /** The last rejected command's user-fit reason, read by the writers'
+   *  toasts (a ref: the writers' callbacks must not re-create on it). */
+  const lastRejectionRef = useRef<string | null>(null);
+
   const runProgramCommand = useCallback(
     async (
       command: { kind: string; commandId: string } & Record<string, unknown>,
@@ -761,6 +795,17 @@ export function useProgram() {
         // acts on the `rejected` result and repairs its own state.
         setProgramState(before);
         logger.error(`[useProgram] ${command.kind} rejected`, err);
+        const reason = describeRejection(err);
+        lastRejectionRef.current = reason;
+        captureError(
+          err instanceof Error ? err : new Error(String(err)),
+          "error",
+          {
+            command: command.kind,
+            code: String((err as { code?: unknown })?.code ?? ""),
+            reason: reason ?? "",
+          }
+        );
         return "rejected";
       }
       await refetchProgramState();
@@ -1638,7 +1683,7 @@ export function useProgram() {
         })
       );
       if (outcome === "rejected") {
-        toast.error("Couldn't mark that complete. Refreshing.");
+        rejectedToast("Couldn't mark that complete.", lastRejectionRef.current);
         await refetchProgramState();
       }
     },
@@ -1669,7 +1714,7 @@ export function useProgram() {
         (state) => ({ ...state, manualCompletions: next })
       );
       if (outcome === "rejected") {
-        toast.error("Couldn't undo that. Refreshing.");
+        rejectedToast("Couldn't undo that.", lastRejectionRef.current);
         await refetchProgramState();
       }
     },
@@ -1742,7 +1787,7 @@ export function useProgram() {
         (state) => ({ ...state, runDays: updatedDays })
       );
       if (outcome === "rejected") {
-        toast.error("Couldn't skip that run. Refreshing.");
+        rejectedToast("Couldn't skip that run.", lastRejectionRef.current);
         await refetchProgramState();
       }
     },
@@ -1807,7 +1852,7 @@ export function useProgram() {
         (state) => ({ ...state, runDays: updatedDays })
       );
       if (outcome === "rejected") {
-        toast.error("Couldn't restore that run. Refreshing.");
+        rejectedToast("Couldn't restore that run.", lastRejectionRef.current);
         await refetchProgramState();
       }
     },
@@ -1840,7 +1885,10 @@ export function useProgram() {
         })
       );
       if (outcome === "rejected") {
-        toast.error("Couldn't restore that session. Refreshing.");
+        rejectedToast(
+          "Couldn't restore that session.",
+          lastRejectionRef.current
+        );
         await refetchProgramState();
       }
     },
@@ -1940,7 +1988,7 @@ export function useProgram() {
         })
       );
       if (outcome === "rejected") {
-        toast.error("Couldn't move that run. Refreshing.");
+        rejectedToast("Couldn't move that run.", lastRejectionRef.current);
         await refetchProgramState();
       }
     },
@@ -2049,7 +2097,7 @@ export function useProgram() {
         })
       );
       if (outcome === "rejected") {
-        toast.error("Couldn't change that run. Refreshing.");
+        rejectedToast("Couldn't change that run.", lastRejectionRef.current);
         await refetchProgramState();
         return false;
       }
@@ -2181,7 +2229,7 @@ export function useProgram() {
         (state) => ({ ...state, workouts: updatedWorkouts })
       );
       if (outcome === "rejected") {
-        toast.error("Couldn't save that set. Refreshing.");
+        rejectedToast("Couldn't save that set.", lastRejectionRef.current);
         await refetchProgramState();
       }
     },
@@ -2530,7 +2578,7 @@ export function useProgram() {
     );
 
     if (outcome === "rejected") {
-      toast.error("Couldn't end recovery. Refreshing.");
+      rejectedToast("Couldn't end recovery.", lastRejectionRef.current);
       await refetchProgramState();
       return;
     }
@@ -2700,7 +2748,7 @@ export function useProgram() {
         })
       );
       if (outcome === "rejected") {
-        toast.error("Couldn't remove that. Refreshing.");
+        rejectedToast("Couldn't remove that.", lastRejectionRef.current);
         await refetchProgramState();
       }
       return outcome !== "rejected";
@@ -2764,7 +2812,7 @@ export function useProgram() {
         })
       );
       if (outcome === "rejected") {
-        toast.error("Couldn't add that. Refreshing.");
+        rejectedToast("Couldn't add that.", lastRejectionRef.current);
         await refetchProgramState();
       }
       return outcome !== "rejected";
@@ -2912,7 +2960,7 @@ export function useProgram() {
         })
       );
       if (outcome === "rejected") {
-        toast.error("Couldn't swap that. Refreshing.");
+        rejectedToast("Couldn't swap that.", lastRejectionRef.current);
         await refetchProgramState();
       }
       return outcome !== "rejected";
@@ -3182,7 +3230,7 @@ export function useProgram() {
         })
       );
       if (outcome === "rejected") {
-        toast.error("Couldn't start that block. Refreshing.");
+        rejectedToast("Couldn't start that block.", lastRejectionRef.current);
         await refetchProgramState();
         return false;
       }
@@ -3228,7 +3276,7 @@ export function useProgram() {
       }
     );
     if (outcome === "rejected") {
-      toast.error("Couldn't end that block. Refreshing.");
+      rejectedToast("Couldn't end that block.", lastRejectionRef.current);
       await refetchProgramState();
       return false;
     }
@@ -3251,7 +3299,7 @@ export function useProgram() {
       }
     );
     if (outcome === "rejected") {
-      toast.error("Couldn't end that block. Refreshing.");
+      rejectedToast("Couldn't end that block.", lastRejectionRef.current);
       await refetchProgramState();
       return false;
     }

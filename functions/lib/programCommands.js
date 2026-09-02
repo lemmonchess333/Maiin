@@ -1106,9 +1106,30 @@ function failedPrecondition(message) {
   throw new ProgramCommandError(message, "failed-precondition");
 }
 
-// Deterministic normalize: default settings/weekHistory + skipped flag only.
-// Mirrors the NON-identity parts of client normalizeProgramState; deliberately
-// does NOT run normalizeExercise (no instanceId / movementCategory synthesis).
+/**
+ * The instanceId a pre-packet-18 row (stored without one) is given, from its
+ * position. MIRRORED by the client (`legacyInstanceId` in programTypes.ts,
+ * pinned by programCommands.cross.test.ts).
+ *
+ * Why deterministic, and why both sides: the client used to synthesise a
+ * RANDOM UUID for a missing id on every load, while this reducer signed the
+ * stored row as `undefined`. Until the client's write-back persisted that
+ * UUID (and on every cache-first paint and refetch before it did), the two
+ * signatures could never match and EVERY command on that day failed its
+ * precondition with "This workout changed since you started" — the owner's
+ * "some things don't work" (2026-09-02). Same formula on both sides ⇒ a
+ * legacy day signs identically everywhere; whichever side writes first
+ * persists the id and it is stable from then on. Deterministic ⇒ a retried
+ * command re-derives the same id, so the per-slice update stays pure.
+ */
+function legacyInstanceId(dayIndex, exerciseIndex, exerciseId) {
+  return `legacy-d${dayIndex}-${exerciseIndex}-${exerciseId || "unknown"}`;
+}
+
+// Deterministic normalize: default settings/weekHistory + skipped flag, and
+// the positional legacy instanceId for rows stored without one. Mirrors the
+// NON-identity parts of client normalizeProgramState; deliberately does NOT
+// run normalizeExercise (no movementCategory synthesis, no field rebuild).
 function normalizeForReducer(state) {
   if (!isPlainObject(state)) {
     failedPrecondition("Your programme is not ready. Refresh and try again.");
@@ -1120,7 +1141,19 @@ function normalizeForReducer(state) {
       ? state.settings
       : { autoProgression: true, microloading: true },
     weekHistory: Array.isArray(state.weekHistory) ? state.weekHistory : [],
-    workouts: workouts.map((day) => ({ ...day, skipped: day.skipped ?? false })),
+    workouts: workouts.map((day, d) => ({
+      ...day,
+      skipped: day.skipped ?? false,
+      ...(Array.isArray(day.exercises)
+        ? {
+            exercises: day.exercises.map((ex, i) =>
+              isPlainObject(ex) && ex.instanceId == null
+                ? { ...ex, instanceId: legacyInstanceId(d, i, ex.exerciseId) }
+                : ex
+            ),
+          }
+        : {}),
+    })),
   };
 }
 
@@ -2399,6 +2432,8 @@ function applyProgramCommand({ state, profile, command, now }) {
 }
 
 module.exports = {
+  legacyInstanceId,
+  normalizeForReducer,
   RESTORE_WINDOW_MS,
   assertClientProgramCommand,
   assertCommandId,

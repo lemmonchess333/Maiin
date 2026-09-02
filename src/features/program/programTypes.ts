@@ -899,15 +899,39 @@ export function generateInstanceId(): string {
     .slice(2, 10)}`;
 }
 
+/**
+ * The instanceId a pre-packet-18 row (stored without one) is given, from its
+ * position. MIRRORS `legacyInstanceId` in functions/lib/programCommands.js
+ * (pinned by programCommands.cross.test.ts). A loaded legacy row used to get
+ * a RANDOM UUID here while the server signed it as `undefined`, so the
+ * day's precondition signature could never match until the write-back
+ * landed — and never matched on a cache-first paint or a refetch before it
+ * did. Every command on such a day failed with "This workout changed since
+ * you started" (owner: "some things don't work", 2026-09-02).
+ */
+export function legacyInstanceId(
+  dayIndex: number,
+  exerciseIndex: number,
+  exerciseId: string
+): string {
+  return `legacy-d${dayIndex}-${exerciseIndex}-${exerciseId || "unknown"}`;
+}
+
 export function normalizeExercise(
-  ex: Partial<ProgramExercise> & { name: string; exerciseId: string }
+  ex: Partial<ProgramExercise> & { name: string; exerciseId: string },
+  opts?: {
+    /** For rows loaded from storage: the deterministic id the server would
+     *  also derive. New rows (no position yet) keep the random UUID. */
+    fallbackInstanceId?: string;
+  }
 ): ProgramExercise {
   return {
     name: ex.name,
     exerciseId: ex.exerciseId,
     // #1038: assign once, keep thereafter — idempotent so the persist-if-
     // changed guard on read only writes the first time a legacy plan loads.
-    instanceId: ex.instanceId ?? generateInstanceId(),
+    instanceId:
+      ex.instanceId ?? opts?.fallbackInstanceId ?? generateInstanceId(),
     movementCategory:
       ex.movementCategory ?? inferMovementCategory(ex.name, ex.exerciseId),
     sets: ex.sets ?? 3,
@@ -963,10 +987,14 @@ export function normalizeProgramState(
     ...(resolvedPrimaryGoal !== undefined && {
       primaryGoal: resolvedPrimaryGoal,
     }),
-    workouts: (state.workouts ?? []).map((day) => ({
+    workouts: (state.workouts ?? []).map((day, d) => ({
       ...day,
       skipped: day.skipped ?? false,
-      exercises: (day.exercises ?? []).map((ex) => normalizeExercise(ex)),
+      exercises: (day.exercises ?? []).map((ex, i) =>
+        normalizeExercise(ex, {
+          fallbackInstanceId: legacyInstanceId(d, i, ex.exerciseId),
+        })
+      ),
     })),
   };
 }

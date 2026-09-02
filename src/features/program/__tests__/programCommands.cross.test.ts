@@ -1,7 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";
 
-import { transitionStatus } from "@/features/program/programTypes";
+import {
+  legacyInstanceId,
+  normalizeProgramState,
+  transitionStatus,
+} from "@/features/program/programTypes";
+import { workoutDaySignature } from "@/features/program/programCommandPrecondition";
 import type { ScheduledRunDay } from "@/features/program/programTypes";
 import {
   getScheduledRunStatus,
@@ -23,6 +28,8 @@ const cf = require("../../../../functions/lib/programCommands") as {
   getScheduledRunStatus: (rd: unknown) => string;
   isScheduledRunEditable: (status: string) => boolean;
   workoutDaySignature: (day: unknown) => string;
+  normalizeForReducer: (state: unknown) => { workouts: unknown[] };
+  legacyInstanceId: (d: number, i: number, exerciseId: string) => string;
 };
 
 const STATUSES: AnyScheduledRunStatus[] = [
@@ -74,5 +81,53 @@ describe("CF reducer ↔ client parity", () => {
       exercises: [{ instanceId: "inst-a" }, { instanceId: "inst-b" }],
     };
     expect(cf.workoutDaySignature(day)).toBe("Push|inst-a|inst-b");
+  });
+
+  it("a legacy day (rows stored without instanceId) signs identically on both sides", () => {
+    // The owner's "some things don't work" (2026-09-02): the client gave a
+    // missing id a random UUID on load, the server signed it as undefined,
+    // and every command on that day failed its precondition. Both sides now
+    // derive the same positional id; this pins that they agree AND that the
+    // client's answer is stable across loads (a random id never was).
+    const raw = {
+      weekNumber: 1,
+      workouts: [
+        {
+          dayName: "Push",
+          exercises: [
+            {
+              name: "Bench Press",
+              exerciseId: "bench-press",
+              sets: 3,
+              reps: 8,
+              weight: 60,
+            },
+            {
+              name: "Dips",
+              exerciseId: "dips",
+              instanceId: "inst-b",
+              sets: 3,
+              reps: 10,
+              weight: 0,
+            },
+          ],
+        },
+      ],
+    };
+    const client = workoutDaySignature(
+      normalizeProgramState(raw as never).workouts[0]
+    );
+    const server = cf.workoutDaySignature(
+      cf.normalizeForReducer(raw).workouts[0]
+    );
+    expect(client).toBe(server);
+    expect(client).toBe("Push|legacy-d0-0-bench-press|inst-b");
+    expect(
+      workoutDaySignature(normalizeProgramState(raw as never).workouts[0])
+    ).toBe(client);
+    // The formula itself is mirrored.
+    expect(legacyInstanceId(3, 2, "squat")).toBe(
+      cf.legacyInstanceId(3, 2, "squat")
+    );
   });
 });
