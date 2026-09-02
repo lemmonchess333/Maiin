@@ -252,7 +252,10 @@ describe("renderBodyDemo", () => {
       );
       expect(contact[0]).toBeLessThan(sh[0]);
     }
-    // The hand is ON the bar, and the bar drops with the squat.
+    // The fist sits just UNDER the bar (the grip is outboard of the
+    // sagittal plane — a profile shows it foreshortened beneath the
+    // bar, never on it), the elbow points down-and-back, and the bar
+    // drops with the squat.
     const bottom = BODY_DEMOS["squat"].pose(1);
     const wrist = applyToPoint(
       SIDE_ANCHORS.hand,
@@ -261,7 +264,25 @@ describe("renderBodyDemo", () => {
     const contact = applyToPoint(BACK_RACK, (bottom.torso ?? []) as never[]);
     expect(
       Math.hypot(wrist[0] - contact[0], wrist[1] - contact[1])
-    ).toBeLessThan(0.5);
+    ).toBeLessThan(10);
+    // Elbow down-and-back: standing it hangs well below the shoulder;
+    // at the bottom the hinge swings it mostly behind, still behind.
+    const standing = BODY_DEMOS["squat"].pose(0);
+    const elbow0 = applyToPoint(
+      SIDE_ANCHORS.elbow,
+      (standing.upperArmL ?? []) as never[]
+    );
+    expect(elbow0[1]).toBeGreaterThan(SIDE_ANCHORS.shoulder[1] + 15);
+    expect(elbow0[0]).toBeLessThan(SIDE_ANCHORS.shoulder[0]);
+    const elbow1 = applyToPoint(
+      SIDE_ANCHORS.elbow,
+      (bottom.upperArmL ?? []) as never[]
+    );
+    const shoulder1 = applyToPoint(
+      SIDE_ANCHORS.shoulder,
+      (bottom.torso ?? []) as never[]
+    );
+    expect(elbow1[0]).toBeLessThan(shoulder1[0] - 15);
     const top = applyToPoint(
       BACK_RACK,
       (BODY_DEMOS["squat"].pose(0).torso ?? []) as never[]

@@ -16,11 +16,16 @@
  * on the dark stage) and keeps overlaps opaque so joints never crack
  * under rotation.
  *
- * The figure faces RIGHT. Same 200-unit height and landmark rows as the
- * vendored figure (shoulder ≈45, elbow ≈71, hip ≈100, knee ≈152,
- * ankle ≈193). Facet muscle names reuse the library vocabulary so demo
- * tints and glow work unchanged; profile-only parts ("pelvis", "shin",
- * "foot", "jaw") are never tinted.
+ * The figure faces RIGHT. The contours below are AUTHORED on the vendored
+ * figure's landmark rows (shoulder ≈45, elbow ≈71, hip ≈100, knee ≈152,
+ * ankle ≈193) and then RE-ROWED to anthropometric proportions at module
+ * load (see "Proportion re-row" at the bottom: shoulder 38, elbow 74,
+ * wrist 105, hip 96, knee 145) — the 2026-09-02 mechanics audit measured
+ * the authored rows against a 200-unit human and found the shoulder 9
+ * low, the upper arm ~31% short and the shin ~16% short. Facet muscle
+ * names reuse the library vocabulary so demo tints and glow work
+ * unchanged; profile-only parts ("pelvis", "shin", "foot", "jaw") are
+ * never tinted.
  *
  * Paint order (fixed): shank → thigh → head → torso → forearm → upper
  * arm. Legs tuck under the torso, the elbow tucks under the upper arm,
@@ -304,7 +309,7 @@ const THIGH_FACETS = [
   },
 ];
 
-export const SIDE_PIECES: SidePiece[] = [
+const RAW_PIECES: SidePiece[] = [
   // Far-side leg pair: same geometry, darker, painted FIRST — hidden in
   // symmetric stances, visible the moment a pose splits the legs.
   {
@@ -527,14 +532,76 @@ export const SIDE_PIECES: SidePiece[] = [
   },
 ];
 
-/* Measured joint anchors for the side rig. */
+/* ── Proportion re-row (2026-09-02) ─────────────────────────────────
+ * Two monotonic piecewise-linear y-remaps, applied to every authored
+ * point at module load. The BODY chain (head, torso, pelvis, legs, feet)
+ * and the ARM chain (upper arm, forearm, hand) are remapped separately
+ * because the arm hangs from the shoulder row and has its own lengths.
+ * Authored → re-rowed landmarks (200-unit figure, anthropometric norms
+ * in brackets): shoulder 45→38 [36], hip 100.5→96 [94], knee 152→145
+ * [143], ankle 193 [192]; elbow 70.5→74 [74], wrist 100→105 [106]. So
+ * the upper arm goes 25.5→36 [37], the shin 41→48 [49], the thigh
+ * 52→49.6 [49], and the neck loses the 7 units that read as a mannequin.
+ * Applying the remap to the generated polygons (rather than to the
+ * authored rows) keeps every facet's construction intact; the remap is
+ * linear inside each segment, so a facet that straddles a breakpoint
+ * gains only a sub-unit kink. */
+function piecewise(pts: [number, number][]): (y: number) => number {
+  return (y: number) => {
+    if (y <= pts[0][0]) return pts[0][1];
+    for (let i = 1; i < pts.length; i++) {
+      const [y0, v0] = pts[i - 1];
+      const [y1, v1] = pts[i];
+      if (y <= y1) return v0 + ((v1 - v0) * (y - y0)) / (y1 - y0);
+    }
+    return pts[pts.length - 1][1];
+  };
+}
+const BODY_Y = piecewise([
+  [0, 0],
+  [30, 30],
+  [45, 38],
+  [100.5, 96],
+  [152, 145],
+  [193, 193],
+  [210, 210],
+]);
+const ARM_Y = piecewise([
+  [0, 0],
+  [37.5, 31],
+  [70.5, 74],
+  [100, 105],
+  [120, 125],
+]);
+const ARM_GROUPS: ReadonlySet<GroupName> = new Set<GroupName>([
+  "upperArmL",
+  "foreArmL",
+  "handL",
+]);
+function reRow(piece: SidePiece): SidePiece {
+  const f = ARM_GROUPS.has(piece.group) ? ARM_Y : BODY_Y;
+  const map = (pts: Pt[]) => pts.map(([x, y]) => [x, f(y)] as Pt);
+  return {
+    ...piece,
+    outline: map(piece.outline),
+    facets: piece.facets.map((fc) => ({
+      muscle: fc.muscle,
+      points: map(fc.points),
+    })),
+  };
+}
+
+export const SIDE_PIECES: SidePiece[] = RAW_PIECES.map(reRow);
+
+/* Measured joint anchors for the side rig — authored rows passed through
+ * the same remaps as the art they sit in. */
 export const SIDE_ANCHORS = {
-  neck: [48, 32] as Pt,
-  lumbar: [45, 90] as Pt,
-  shoulder: [47.5, 45] as Pt,
-  elbow: [48.6, 70.5] as Pt,
-  hand: [50.3, 100] as Pt,
-  hip: [42, 100.5] as Pt,
-  knee: [50, 152] as Pt,
-  ankle: [46.6, 193] as Pt,
+  neck: [48, BODY_Y(32)] as Pt,
+  lumbar: [45, BODY_Y(90)] as Pt,
+  shoulder: [47.5, BODY_Y(45)] as Pt,
+  elbow: [48.6, ARM_Y(70.5)] as Pt,
+  hand: [50.3, ARM_Y(100)] as Pt,
+  hip: [42, BODY_Y(100.5)] as Pt,
+  knee: [50, BODY_Y(152)] as Pt,
+  ankle: [46.6, BODY_Y(193)] as Pt,
 };
