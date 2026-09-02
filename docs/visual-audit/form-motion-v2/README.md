@@ -501,3 +501,19 @@ All 72 existing pins passed the re-row unchanged before the squat-arm
 pin was rewritten — the geometry pins were written as relations, not
 absolutes, which is what let a skeleton change ship without a re-tune
 of every test.
+
+## STATUS 2026-09-02d — device recording review (lateral raise + rope pushdown)
+
+Owner screen recording of the two demos looping on device, read at
+4 fps and at native resolution. The loop, cues and even frame pacing
+behave; the lateral raise passes (parallel at the top, dumbbells in the
+fists, deltoid alone lit). Two fixes from the pushdown frames:
+
+| Fix                          | What the frames showed                                                                                  | Change                                                                                                                 |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Pushdown top                 | Forearm level with the elbow and the hands at the LOWER chest — a half rep's top.                       | Elbow flexion at the top 108° → 120°: hands at the upper chest, forearm ~25° above horizontal.                         |
+| Pelvis seam (all side demos) | On the standing figure the pelvis read as a pale block with a dark band cutting it off from the thighs. | The glute and hip-wedge facets stopped 3 units short of the pelvis outline; both now run to the standard 1.2-unit gap. |
+
+Noted, not a rig defect: a PWA serves its cached bundle until the
+service worker updates, so a device can show a build one or two merges
+behind main for a few minutes after a deploy.

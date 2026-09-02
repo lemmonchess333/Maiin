@@ -995,7 +995,11 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     concentricTo: 1,
     tint: { triceps: "primary", forearm: "secondary" },
     pose: (e) => {
-      const flex = lerp(108, 10, e); // folded at the chest → lockout
+      /* Top position = hands at the UPPER chest, forearms ~25° above
+       * horizontal (device review 2026-09-02: at 108° the forearm sat
+       * level with the elbow and the hands at the lower chest — a half
+       * rep). Elbow flexion 120° from hanging → 10° at lockout. */
+      const flex = lerp(120, 10, e); // folded at the chest → lockout
       const fore: Op[] = [
         { kind: "rotate", deg: -flex, pivot: SIDE_ANCHORS.elbow },
       ];
