@@ -93,6 +93,7 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import SortableExerciseRow from "@/components/SortableExerciseRow";
+import IconButton from "@/components/ui/IconButton";
 import ExercisePicker from "@/components/program/ExercisePicker";
 import { ProgramSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ui/ErrorState";
@@ -1579,92 +1580,120 @@ function ProgramInner() {
                                   showHandle={false}
                                   onDelete={() => removeExFromDay(idx, i)}
                                 >
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      navigate(
-                                        `/history/exercise/${encodeURIComponent(ex.name)}`,
-                                        { state: { initialTab: "form" } }
-                                      )
-                                    }
-                                    className="w-full p-3 rounded-xl bg-card text-left active:scale-[0.97] transition-transform"
-                                    onTouchStart={(e) =>
-                                      handleLongPressStart(idx, i, e)
-                                    }
-                                    onTouchMove={handleLongPressCancel}
-                                    onTouchEnd={handleLongPressCancel}
-                                    onContextMenu={(e) => {
-                                      // D-LIFT-17: long-press is touch-only —
-                                      // right-click is its pointer/desktop
-                                      // equivalent for the same manage menu.
-                                      e.preventDefault();
-                                      setContextMenu({
-                                        dayIndex: idx,
-                                        exIndex: i,
-                                        x: e.clientX,
-                                        y: e.clientY,
-                                      });
-                                    }}
-                                  >
-                                    <p className="text-sm font-semibold text-foreground truncate">
-                                      {ex.name}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">
-                                      <span className="font-mono tabular-nums">
-                                        {ex.sets}
-                                      </span>{" "}
-                                      sets ×{" "}
-                                      <span className="font-mono tabular-nums">
-                                        {formatRepTarget(ex)}
-                                      </span>{" "}
-                                      {ex.repUnit === "seconds" ? "" : "reps"}
-                                      {!isBW && ex.weight > 0 ? (
-                                        <>
-                                          {" · "}
-                                          <span className="font-mono tabular-nums">
-                                            {ex.weight}
-                                          </span>
-                                          {" kg"}
-                                        </>
-                                      ) : null}
-                                    </p>
-                                    {lastPerf && (
-                                      <p className="text-xs mt-0.5 text-muted-foreground">
-                                        Last:{" "}
-                                        {ex.repUnit === "seconds" ? (
-                                          <>
-                                            <span className="font-mono tabular-nums">
-                                              {lastPerf.reps}
-                                            </span>
-                                            s
-                                          </>
-                                        ) : lastPerf.weight > 0 ? (
-                                          <>
-                                            <span className="font-mono tabular-nums">
-                                              {lastPerf.weight}
-                                            </span>{" "}
-                                            kg ×{" "}
-                                            <span className="font-mono tabular-nums">
-                                              {lastPerf.reps}
-                                            </span>
-                                          </>
-                                        ) : (
-                                          <>
-                                            <span className="font-mono tabular-nums">
-                                              {lastPerf.reps}
-                                            </span>{" "}
-                                            reps
-                                          </>
-                                        )}
+                                  {/* Owner request 2026-09-02: removing an
+                                      exercise was reachable only by swipe or
+                                      long-press. The "…" opens the same
+                                      manage menu (Replace / Remove / Move)
+                                      visibly; swipe and long-press stay. */}
+                                  <div className="flex items-center rounded-xl bg-card">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        navigate(
+                                          `/history/exercise/${encodeURIComponent(ex.name)}`,
+                                          { state: { initialTab: "form" } }
+                                        )
+                                      }
+                                      className="flex-1 min-w-0 p-3 text-left active:scale-[0.97] transition-transform"
+                                      onTouchStart={(e) =>
+                                        handleLongPressStart(idx, i, e)
+                                      }
+                                      onTouchMove={handleLongPressCancel}
+                                      onTouchEnd={handleLongPressCancel}
+                                      onContextMenu={(e) => {
+                                        // D-LIFT-17: long-press is touch-only —
+                                        // right-click is its pointer/desktop
+                                        // equivalent for the same manage menu.
+                                        e.preventDefault();
+                                        setContextMenu({
+                                          dayIndex: idx,
+                                          exIndex: i,
+                                          x: e.clientX,
+                                          y: e.clientY,
+                                        });
+                                      }}
+                                    >
+                                      <p className="text-sm font-semibold text-foreground truncate">
+                                        {ex.name}
                                       </p>
-                                    )}
-                                    {ex.notes && (
-                                      <p className="text-xs mt-1 text-muted-foreground flex items-start gap-1">
-                                        <Info className="size-3 shrink-0 mt-0.5" />
-                                        <span>{ex.notes}</span>
+                                      <p className="text-xs text-muted-foreground">
+                                        <span className="font-mono tabular-nums">
+                                          {ex.sets}
+                                        </span>{" "}
+                                        sets ×{" "}
+                                        <span className="font-mono tabular-nums">
+                                          {formatRepTarget(ex)}
+                                        </span>{" "}
+                                        {ex.repUnit === "seconds" ? "" : "reps"}
+                                        {!isBW && ex.weight > 0 ? (
+                                          <>
+                                            {" · "}
+                                            <span className="font-mono tabular-nums">
+                                              {ex.weight}
+                                            </span>
+                                            {" kg"}
+                                          </>
+                                        ) : null}
                                       </p>
-                                    )}
-                                  </button>
+                                      {lastPerf && (
+                                        <p className="text-xs mt-0.5 text-muted-foreground">
+                                          Last:{" "}
+                                          {ex.repUnit === "seconds" ? (
+                                            <>
+                                              <span className="font-mono tabular-nums">
+                                                {lastPerf.reps}
+                                              </span>
+                                              s
+                                            </>
+                                          ) : lastPerf.weight > 0 ? (
+                                            <>
+                                              <span className="font-mono tabular-nums">
+                                                {lastPerf.weight}
+                                              </span>{" "}
+                                              kg ×{" "}
+                                              <span className="font-mono tabular-nums">
+                                                {lastPerf.reps}
+                                              </span>
+                                            </>
+                                          ) : (
+                                            <>
+                                              <span className="font-mono tabular-nums">
+                                                {lastPerf.reps}
+                                              </span>{" "}
+                                              reps
+                                            </>
+                                          )}
+                                        </p>
+                                      )}
+                                      {ex.notes && (
+                                        <p className="text-xs mt-1 text-muted-foreground flex items-start gap-1">
+                                          <Info className="size-3 shrink-0 mt-0.5" />
+                                          <span>{ex.notes}</span>
+                                        </p>
+                                      )}
+                                    </button>
+                                    <IconButton
+                                      aria-label={`More options for ${ex.name}`}
+                                      icon={
+                                        <MoreHorizontal className="size-5" />
+                                      }
+                                      variant="ghost"
+                                      size="md"
+                                      className="mr-1 text-muted-foreground"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        const r = (
+                                          e.currentTarget as HTMLElement
+                                        ).getBoundingClientRect();
+                                        setContextMenu({
+                                          dayIndex: idx,
+                                          exIndex: i,
+                                          x: r.left + r.width / 2,
+                                          y: r.bottom + 4,
+                                        });
+                                      }}
+                                    />
+                                  </div>
                                 </SortableExerciseRow>
                               </div>
                             );
