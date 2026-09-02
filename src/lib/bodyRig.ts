@@ -2087,11 +2087,16 @@ export function renderBodyDemo(
      left the arm detaching from a static shoulder. Only shoulder-pivot
      ROTATES are damped — translations (squat dive, hang shifts) pass
      through so the deltoid always travels with the body. */
-  const DELTOID_FOLLOW = 0.4;
+  /* 0.22, down from 0.4 (owner device review 2026-09-02: "in the front
+     the shoulders move weird"): at a raise to parallel the 0.4 follow
+     swung each cap ~29° up and out of the trap line, so the shoulders
+     read as epaulettes lifting off the torso. The cap now tilts ~16°
+     at parallel and still rides the girdle lift. */
+  const DELTOID_FOLLOW = 0.22;
   /** Cap on the cap: scapular upward rotation tops out (~60 deg of a
    *  180-deg reach), which reads as ~38 deg of deltoid tilt in this 2D
    *  stylization — beyond that the wedge visibly lifts off the traps. */
-  const DELTOID_MAX_DEG = 38;
+  const DELTOID_MAX_DEG = 20;
   const shoulders =
     view === "anterior"
       ? [ANT.shoulderL, ANT.shoulderR]

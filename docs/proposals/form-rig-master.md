@@ -52,6 +52,7 @@ packet's design content as the plan and its status content as void.
 | Device-recording review — pushdown top raised to the upper chest; pelvis facets closed to the outline (the dark hip seam)                                                       | `bodyRig.ts` / `bodySideData.ts`                           | ✅ 2026-09-02               |
 | Dips moved to the SIDE view — fixed grip, solved shoulder path, chest-dip lean, knees tucked (owner recording: "looks bad")                                                     | `bodyRig.ts`                                               | ✅ 2026-09-02               |
 | Bilateral arms on the profile figure — far arm behind the torso, shadowed and depth-offset; every side demo poses both (roadmap P0 side-topology item)                          | `bodySideData.ts` / `bodyRig.ts` + pins                    | ✅ 2026-09-02               |
+| Model art pass from owner device review — smoothed contours, ellipse cranium, rounded pec, muscular arms, 0.9 seams, waist band closed, deltoid follow damped                   | `bodySideData.ts` / `bodyRig.ts`                           | ✅ 2026-09-02               |
 | Everything else below                                                                                                                                                           | —                                                          | Pending                     |
 
 **Demo1 supersession note (2026-07-27).** The single bounded teaching
