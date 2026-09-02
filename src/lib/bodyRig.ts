@@ -565,11 +565,28 @@ const pressBarPath = (e: number): [Pt, Pt] => {
  * evaluation's worst grade). `hingeDeg` is the bottom-frame torso
  * incline: a back squat leans further than a goblet, whose front load
  * keeps the torso upright. */
+/** How much of the torso's hinge the PELVIS takes. The pelvis piece used
+ *  to be welded to the torso, so at the bottom of a hinge it swung the
+ *  full angle while the thigh rotated the other way — and the glute
+ *  wedge lifted clear of the thigh ("the glutes pop out", owner review
+ *  2026-09-02). A real pelvis tilts less than the trunk; the lumbar
+ *  spine absorbs the rest. 0.6 keeps the glute seated on the thigh at
+ *  every hinge depth; the torso/pelvis overlap at the lumbar joint
+ *  (y 86-94 in bodySideData) hides the differential. */
+const PELVIS_FOLLOW = 0.6;
+/** How much of a hinge the HEAD keeps out of. Welded to the torso, the
+ *  head stared at the floor at the bottom of every hinge; a lifter
+ *  extends the neck so the gaze stays forward-down. The head
+ *  counter-rotates about the neck by this fraction of the hinge. */
+const HEAD_LIFT = 0.4;
+
 function sideSquatChain(
   e: number,
   hingeDeg: number
 ): {
   torsoOps: Op[];
+  pelvisOps: Op[];
+  headOps: Op[];
   thighOps: Op[];
   legOps: Op[];
   hinge: number;
@@ -585,15 +602,24 @@ function sideSquatChain(
     { kind: "rotate", deg: shin, pivot: SIDE_ANCHORS.ankle },
   ];
   const hipNew = applyToPoint(SIDE_ANCHORS.hip, thighOps);
+  const shift: Op = {
+    kind: "translate",
+    dx: hipNew[0] - SIDE_ANCHORS.hip[0],
+    dy: hipNew[1] - SIDE_ANCHORS.hip[1],
+  };
   const torsoOps: Op[] = [
     { kind: "rotate", deg: hinge, pivot: SIDE_ANCHORS.hip },
-    {
-      kind: "translate",
-      dx: hipNew[0] - SIDE_ANCHORS.hip[0],
-      dy: hipNew[1] - SIDE_ANCHORS.hip[1],
-    },
+    shift,
   ];
-  return { torsoOps, thighOps, legOps, hinge };
+  const pelvisOps: Op[] = [
+    { kind: "rotate", deg: hinge * PELVIS_FOLLOW, pivot: SIDE_ANCHORS.hip },
+    shift,
+  ];
+  const headOps: Op[] = [
+    { kind: "rotate", deg: -hinge * HEAD_LIFT, pivot: SIDE_ANCHORS.neck },
+    ...torsoOps,
+  ];
+  return { torsoOps, pelvisOps, headOps, thighOps, legOps, hinge };
 }
 
 /** Where the bar sits on the traps, in TORSO space (the bar rides the
@@ -643,7 +669,10 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * aimed in torso space at the rack contact and composed with the
        * hinge — the elbow solves down-and-back (the real back-squat
        * elbow), the forearm runs up beside the lats to the bar. */
-      const { torsoOps, thighOps, legOps } = sideSquatChain(e, 38);
+      const { torsoOps, pelvisOps, headOps, thighOps, legOps } = sideSquatChain(
+        e,
+        38
+      );
       const arm = aimArm(
         {
           S: SIDE_ANCHORS.shoulder,
@@ -661,9 +690,9 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         0
       );
       return {
-        head: torsoOps,
+        head: headOps,
         torso: torsoOps,
-        pelvis: torsoOps,
+        pelvis: pelvisOps,
         thighL: thighOps,
         thighR: thighOps,
         shankL: legOps,
@@ -696,7 +725,10 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     shadowRx: 40,
     tint: { quadriceps: "primary", gluteal: "secondary", abs: "secondary" },
     pose: (e) => {
-      const { torsoOps, thighOps, legOps } = sideSquatChain(e, 30);
+      const { torsoOps, pelvisOps, headOps, thighOps, legOps } = sideSquatChain(
+        e,
+        30
+      );
       // out −1: the elbow tucks DOWN and back under the load ("elbows
       // pinned under it"); +1 would solve it forward-up over the bell.
       const arm = aimArm(
@@ -716,9 +748,9 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         0
       );
       return {
-        head: torsoOps,
+        head: headOps,
         torso: torsoOps,
-        pelvis: torsoOps,
+        pelvis: pelvisOps,
         thighL: thighOps,
         thighR: thighOps,
         shankL: legOps,
@@ -983,6 +1015,14 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       };
       const T: Op = { kind: "rotate", deg: hinge, pivot: SIDE_ANCHORS.hip };
       const torsoOps: Op[] = [T, shift];
+      const pelvisOps: Op[] = [
+        { kind: "rotate", deg: hinge * PELVIS_FOLLOW, pivot: SIDE_ANCHORS.hip },
+        shift,
+      ];
+      const headOps: Op[] = [
+        { kind: "rotate", deg: -hinge * HEAD_LIFT, pivot: SIDE_ANCHORS.neck },
+        ...torsoOps,
+      ];
       /* Straight arms hang from the hinged shoulder. The x-offset
        * interpolates: standing lockout rests the bar against the FRONT
        * of the thigh (+8), the bottom pulls it back under the shoulder
@@ -1012,9 +1052,9 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         0
       );
       return {
-        head: torsoOps,
+        head: headOps,
         torso: torsoOps,
-        pelvis: torsoOps,
+        pelvis: pelvisOps,
         thighL: thighOps,
         thighR: thighOps,
         shankL: legOps,
@@ -1113,8 +1153,14 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * IK machinery as the pull-up with the constraints swapped. */
       /* Top of the stroke re-fitted for the corrected arm: -14.5 left
        * the fully-reached position 43° short of straight. */
-      const hl: Pt = [lerp(12.2, 6, e), lerp(-17.7, 50, e)];
-      const hr: Pt = [lerp(87.8, 94, e), lerp(-17.7, 50, e)];
+      /* Bottom of the stroke at the UPPER CHEST (y 58), not the
+       * collarbone (50): from behind, a bar at 50 showed through the
+       * neck gap between the head and the traps, as if it passed
+       * through the throat (2026-09-02 review). At 58 the upper back
+       * occludes the shaft and only the ends + fists show beside the
+       * shoulders — what a pulldown looks like from behind. */
+      const hl: Pt = [lerp(12.2, 6, e), lerp(-17.7, 58, e)];
+      const hr: Pt = [lerp(87.8, 94, e), lerp(-17.7, 58, e)];
       const L = aimArm(
         { S: POST.shoulderL, E: POST.elbowL, H: POST.handL },
         solveElbow(POST.shoulderL, hl, POST_UPPER_LEN, POST_FORE_LEN, 1),
@@ -1135,7 +1181,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       };
     },
     bar: (e) => {
-      const y = lerp(-17.7, 50, e);
+      const y = lerp(-17.7, 58, e);
       return [
         [lerp(12.2, 6, e) - 10, y],
         [lerp(87.8, 94, e) + 10, y],
@@ -1385,9 +1431,20 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         LEAN,
       ];
       return {
-        head: [T, LEAN],
+        head: [
+          { kind: "rotate", deg: -HINGE * HEAD_LIFT, pivot: SIDE_ANCHORS.neck },
+          T,
+          LEAN,
+        ],
         torso: [T, LEAN],
-        pelvis: [T, LEAN],
+        pelvis: [
+          {
+            kind: "rotate",
+            deg: HINGE * PELVIS_FOLLOW,
+            pivot: SIDE_ANCHORS.hip,
+          },
+          LEAN,
+        ],
         thighL: leg,
         thighR: leg,
         shankL: shank,
@@ -1462,9 +1519,20 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         LEAN,
       ];
       return {
-        head: [T, LEAN],
+        head: [
+          { kind: "rotate", deg: -hinge * HEAD_LIFT, pivot: SIDE_ANCHORS.neck },
+          T,
+          LEAN,
+        ],
         torso: [T, LEAN],
-        pelvis: [T, LEAN],
+        pelvis: [
+          {
+            kind: "rotate",
+            deg: hinge * PELVIS_FOLLOW,
+            pivot: SIDE_ANCHORS.hip,
+          },
+          LEAN,
+        ],
         thighL: leg,
         thighR: leg,
         shankL: shank,
@@ -1705,11 +1773,13 @@ function resolveProp(
       };
       break;
     case "goblet-bell": {
-      // ONE bell, held vertically at the sternum: the disc sits just
-      // above the cupped hands (they pin it from below), centred
-      // between the two grips. Rides wherever the hands ride.
-      const mid: Pt = [(left[0] + right[0]) / 2, (left[1] + right[1]) / 2 - 6];
-      state = { kind: "dumbbell", hands: [mid], bellR: 6 };
+      // ONE dumbbell held VERTICALLY at the sternum — top head cupped
+      // in the hands, handle down through the palms, bottom head
+      // hanging below (owner review 2026-09-02: "the actual weight
+      // should be a goblet" — it drew a flat plate disc). Centred on
+      // the grip, rides wherever the hands ride.
+      const mid: Pt = [(left[0] + right[0]) / 2, (left[1] + right[1]) / 2];
+      state = { kind: "gobletDumbbell", hand: mid };
       break;
     }
     case "dumbbell":
