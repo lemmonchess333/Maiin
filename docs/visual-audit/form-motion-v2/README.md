@@ -894,3 +894,41 @@ is not what an arch looks like from the side. Pinned on the property a
 wedge cannot fake: the sole must lift between its two ground contacts,
 by more than 0.3 and less than 3, and the toe must rise off the ground.
 Mutation-checked against the old wedge.
+
+## STATUS 2026-09-02o — five demos contradicted their own instructions
+
+Audited every demo against its catalogue instruction text — the
+roadmap's honesty standard, measured rather than eyeballed. Five of the
+fifteen were teaching the fault their own cue warns about:
+
+| Demo     | Its instruction                                  | What it did                             |
+| -------- | ------------------------------------------------ | --------------------------------------- |
+| squat    | "lower until thighs are at or below parallel"    | hip finished 10.9 ABOVE the knee        |
+| curl     | "pin your elbows — they shouldn't drift forward" | elbow travelled 5.0 units forward       |
+| row      | "row the bar to your lower chest"                | bar finished level with the HIP         |
+| pull-ups | "until your chin clears it"                      | chin finished 8 units BELOW the bar     |
+| dips     | "until upper arms are parallel to the floor"     | upper arm hung 85 degrees off the floor |
+
+The dips one was not a tuning value: the elbow IK has two branches and
+it took the one that puts the elbow BEHIND, so the forearm reached
+forward and the upper arm hung vertical — a hang, not a dip. Taking the
+forward branch gives the forearm vertical to the grip and the upper arm
+running back to the shoulder, which is the position the instruction
+describes. It now measures 3.8 degrees off horizontal.
+
+**Two of the rig's own comments admitted the gap and nobody read them
+as defects.** The squat's said "thigh world −68° at the bottom — just
+above parallel", and the pull-up's said "dead hang → chin over the bar"
+above a value that never got the chin there. A comment describing what
+the code does is not a specification; the instruction text is.
+
+**One existing pin encoded the defect.** `squat: a side hinge` asserted
+the hip finishes "no lower than the knee" — the exact thing instruction
+3 forbids. Same shape as the far-arm pin corrected in 2026-09-02j: a
+test written to describe the rig rather than to hold it to a standard
+will block the fix. Its bound is inverted now and the parity test states
+the rule.
+
+Cleared in the same audit: the pulldown reaches the upper chest, the
+press locks out above the head, and the calf raise stretches below the
+platform.

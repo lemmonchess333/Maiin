@@ -222,13 +222,21 @@ describe("renderBodyDemo", () => {
     const knee0 = at(SIDE_ANCHORS.knee, pose(0).thighL);
     const knee1 = at(SIDE_ANCHORS.knee, pose(1).thighL);
     expect(knee1[0]).toBeGreaterThan(knee0[0] + 4);
-    // Hips travel BACK and DOWN — the shape the front view could never
-    // show — finishing just above parallel (no lower than the knee).
+    /* Hips travel BACK and DOWN — the shape the front view could never
+       show — finishing AT OR BELOW the knee.
+ 
+       This bound used to read "no lower than the knee", with a comment
+       saying the squat finished "just above parallel". That was a pin
+       written to describe what the rig did rather than what the exercise
+       asks for: instruction 3 is "lower until thighs are at or below
+       parallel", and the demo stopped 12.7 degrees short of it. The
+       instruction-parity test below is the one that states the rule; this
+       keeps the direction of travel. */
     const hip0 = at(SIDE_ANCHORS.hip, pose(0).thighL);
     const hip1 = at(SIDE_ANCHORS.hip, pose(1).thighL);
     expect(hip1[0]).toBeLessThan(hip0[0] - 25);
     expect(hip1[1]).toBeGreaterThan(hip0[1] + 30);
-    expect(hip1[1]).toBeLessThanOrEqual(knee1[1] + 1);
+    expect(hip1[1]).toBeGreaterThanOrEqual(knee1[1] - 0.5);
     // The torso inclines: the shoulder moves well forward of the hip.
     const sh1 = at(SIDE_ANCHORS.shoulder, pose(1).torso);
     expect(sh1[0] - hip1[0]).toBeGreaterThan(25);
@@ -989,6 +997,94 @@ describe("renderBodyDemo", () => {
     expect(Object.keys(START).sort()).toEqual(Object.keys(BODY_DEMOS).sort());
     for (const [id, expected] of Object.entries(START)) {
       expect(BODY_DEMOS[id].startsAt ?? "lockout", id).toBe(expected);
+    }
+  });
+
+  it("each demo reaches the position its own instructions describe", () => {
+    /* The roadmap's honesty standard, measured against the catalogue
+       text rather than against a screenshot. Every claim below is a
+       quote from the exercise's own instruction list, and every one of
+       them was FALSE when this was written:
+
+         squat      "lower until thighs are at or below parallel"
+                    → the hip finished 10.9 ABOVE the knee.
+         curl       "pin your elbows ... they shouldn't drift forward"
+                    → the elbow travelled 5.0 units forward.
+         row        "row the bar to your lower chest"
+                    → the bar finished level with the HIP.
+         pull-ups   "until your chin clears it"
+                    → the chin finished 8 units BELOW the bar.
+         dips       "until upper arms are parallel to the floor"
+                    → the upper arm hung 85 degrees off the floor,
+                      because the elbow IK took the wrong branch.
+
+       A demo that contradicts its own cue teaches the fault the cue
+       warns about, which is worse than no demo. */
+    const at = (id: string, t: number) => BODY_DEMOS[id].pose(t);
+    const pt = (
+      anchor: readonly [number, number],
+      ops: unknown
+    ): [number, number] =>
+      applyToPoint(anchor as [number, number], (ops ?? []) as never[]);
+
+    // "at or below parallel" — the hip may not finish above the knee.
+    for (const id of ["squat", "goblet-squat"]) {
+      const p = at(id, 1);
+      const hip = pt(SIDE_ANCHORS.hip, p.thighL);
+      const knee = pt(SIDE_ANCHORS.knee, p.thighL);
+      expect(hip[1] - knee[1], `${id} hip below knee`).toBeGreaterThan(-0.5);
+    }
+
+    // "pin your elbows to your sides".
+    const e0 = pt(SIDE_ANCHORS.elbow, at("barbell-curl", 0).upperArmL);
+    const e1 = pt(SIDE_ANCHORS.elbow, at("barbell-curl", 1).upperArmL);
+    expect(
+      Math.hypot(e1[0] - e0[0], e1[1] - e0[1]),
+      "curl elbow travel"
+    ).toBeLessThan(2.5);
+
+    // "row the bar to your lower chest" — not the hip.
+    {
+      const p = at("barbell-row", 1);
+      const bar = BODY_DEMOS["barbell-row"].bar!(1, p)![0];
+      const sh = pt(SIDE_ANCHORS.shoulder, p.torso);
+      const hip = pt(SIDE_ANCHORS.hip, p.pelvis ?? p.torso);
+      const down = (bar[1] - sh[1]) / (hip[1] - sh[1]);
+      expect(down, "row bar, shoulder→hip fraction").toBeGreaterThan(0.25);
+      expect(down, "row bar, shoulder→hip fraction").toBeLessThan(0.6);
+    }
+
+    // "until your chin clears it".
+    {
+      const p = at("pull-ups", 1);
+      const bar = BODY_DEMOS["pull-ups"].bar!(1, p)![0];
+      const head = POSTERIOR.filter(
+        (m) => m.muscle === "head" || m.muscle === "neck"
+      ).flatMap((m) => m.points.map((q) => pt(q as [number, number], p.head)));
+      const chin = Math.max(...head.map(([, y]) => y));
+      expect(bar[1] - chin, "chin above the bar").toBeGreaterThan(0);
+    }
+
+    // "until upper arms are parallel to the floor".
+    {
+      const p = at("dips", 1);
+      const sh = pt(SIDE_ANCHORS.shoulder, p.upperArmL);
+      const el = pt(SIDE_ANCHORS.elbow, p.upperArmL);
+      const off = Math.abs(
+        (Math.atan2(el[1] - sh[1], el[0] - sh[0]) * 180) / Math.PI
+      );
+      expect(
+        Math.min(off, 180 - off),
+        "dips upper arm off horizontal"
+      ).toBeLessThan(15);
+    }
+
+    // "lower slowly to a full stretch below the platform".
+    {
+      const heel = pt([41.6, 202.9], at("calf-raise", 0).shankL);
+      expect(heel[1], "calf heel below the block top").toBeGreaterThan(
+        CALF_BLOCK_TOP
+      );
     }
   });
 

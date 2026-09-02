@@ -702,7 +702,12 @@ function sideSquatChain(
   hinge: number;
 } {
   const shin = lerp(0, 10, e); // about the planted ankle
-  const thighRel = lerp(0, -78, e); // thigh world −68° at the bottom — just above parallel
+  /* To PARALLEL, which is what the exercise's own instruction asks for
+     ("lower until thighs are at or below parallel"). At -78 the hip
+     finished 10.9 units ABOVE the knee — 12.7 degrees short — and the
+     comment here said so: "just above parallel". A demo that stops
+     higher than its instructions is teaching the wrong depth. */
+  const thighRel = lerp(0, -92, e);
   const hinge = lerp(0, hingeDeg, e);
   const legOps: Op[] = [
     { kind: "rotate", deg: shin, pivot: SIDE_ANCHORS.ankle },
@@ -999,7 +1004,11 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     tint: { biceps: "primary", forearm: "secondary" },
     pose: (e) => {
       const curl = lerp(0, 135, e); // elbow flexion, hanging → top
-      const drift = lerp(0, 8, e); // elbows ease forward at the top
+      /* 3 degrees, not 8. Instruction 2 is "pin your elbows to your
+         sides — they shouldn't drift forward", and 8 degrees moved the
+         elbow 5 units forward, which is the fault the cue warns about.
+         A strict curl still travels a little; this is that little. */
+      const drift = lerp(0, 3, e);
       const armDrift: Op[] = [
         { kind: "rotate", deg: -drift, pivot: SIDE_ANCHORS.shoulder },
       ];
@@ -1128,13 +1137,19 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         { kind: "translate", dx: S0[0] - S[0], dy: S0[1] - S[1] },
         { kind: "rotate", deg: -lean, pivot: S0 },
       ]);
-      // Elbow BEHIND the shoulder line (dips drive the elbows back);
-      // pick the branch by result, as the squat does.
+      /* Of the two IK branches, the one that puts the elbow FORWARD —
+         over the hand — which is the dip. Its instruction 3 is "lower
+         until upper arms are parallel to the floor", and that is what
+         this branch gives: the forearm runs vertically down to the grip
+         and the upper arm runs back from the elbow to the shoulder.
+         Taking the smaller x instead hung the upper arm VERTICALLY (85
+         degrees off the floor, measured) with the forearm reaching
+         forward — a hang, not a dip. */
       const eA = solveElbow(S0, gPre, SIDE_UPPER_LEN, SIDE_FORE_LEN, 1);
       const eB = solveElbow(S0, gPre, SIDE_UPPER_LEN, SIDE_FORE_LEN, -1);
       const arm = aimArm(
         { S: S0, E: SIDE_ANCHORS.elbow, H: SIDE_ANCHORS.hand },
-        eA[0] < eB[0] ? eA : eB,
+        eA[0] > eB[0] ? eA : eB,
         gPre,
         0
       );
@@ -1316,7 +1331,10 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * corrected forearm makes it 65.95, so at 1 the dead hang kept a
        * 43° bend — a shrugged hang, not a dead one. 5 puts the bottom
        * frame at 99% extension. */
-      const dy = lerp(5, -24, e); // dead hang → chin over the bar
+      /* -33, not -24. The comment already claimed "chin over the bar"
+         and the chin finished 8 units BELOW it — instruction 3 is "pull
+         your chest toward the bar until your chin clears it". */
+      const dy = lerp(5, -33, e);
       const L = aimArm(
         { S: POST.shoulderL, E: POST.elbowL, H: POST.handL },
         solveElbow(
@@ -1645,7 +1663,10 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       // Dead hang at ~91% of reach, lower ribs at the top.
       const hFinal: Pt = [
         S[0] + 1,
-        lerp(S[1] + STRAIGHT_ARM * 0.91, S[1] + STRAIGHT_ARM * 0.48, e),
+        /* 0.30, not 0.48: at 0.48 the bar finished level with the HIP
+           (y 92.5 against a hip at 98.8 and a shoulder at 60.7), while
+           instruction 3 says "row the bar to your lower chest". */
+        lerp(S[1] + STRAIGHT_ARM * 0.91, S[1] + STRAIGHT_ARM * 0.3, e),
       ];
       const hPre = applyToPoint(hFinal, unpose);
       const arm = aimArm(
