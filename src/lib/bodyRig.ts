@@ -47,10 +47,23 @@ import { THEME } from "./theme";
 const BODY = "#B6BDC3"; // react-body-highlighter DEFAULT_BODY_COLOR
 const PRIMARY = THEME.lifting; // #7B72E9
 const SECONDARY = THEME.liftingLight; // #9590E0
-/** The demo stage surface (--stage, #111113). Side-view pieces use it
- *  for their separation strokes, so the seams read as the stage showing
- *  through — identical language to the front/back facet gaps. */
-const STAGE = "#111113";
+/** Seam tone under the PROFILE pieces (owner device review 2026-09-02:
+ *  "the black space between the body looks odd").
+ *
+ *  The profile figure is solid overlapping slabs, so its handful of
+ *  facet seams are long unbroken lines. Painted in the stage colour
+ *  they read as cracks THROUGH the body onto the background — the
+ *  front figure gets away with the same trick only because its mosaic
+ *  gaps are short and numerous. A tone between body and stage turns
+ *  every seam into a shadowed groove and keeps the silhouette solid,
+ *  including the 0.45 inset that now reads as the figure's own dark
+ *  edge.
+ *
+ *  It replaces the stage colour (#111113) the pieces used to paint. The
+ *  front/back figures are untouched: their gaps are short and numerous,
+ *  the mosaic reads as definition rather than as damage, and that is the
+ *  muscle-map language the app already ships. */
+const SEAM = "#33363D";
 /** Far-side limbs in the profile rig — ~12% darker so overlaps read. */
 const BODY_FAR = "#9FA6AC";
 /** Tint opacity multiplier on far-side pieces — shadowed, not lit. */
@@ -2288,10 +2301,11 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
           ...(primaryPts.get(f.muscle) ?? []),
           ...f.pts,
         ]);
-    // Underlay in the stage colour: shows through the facet gaps AS the
-    // gaps, and keeps overlapped pieces below fully occluded.
+    // Underlay in the SEAM tone: shows through the facet gaps as a
+    // shadowed groove, and keeps overlapped pieces below fully
+    // occluded (it is opaque, like the stage fill it replaced).
     return (
-      `<polygon points="${P(outline)}" fill="${STAGE}"/>` +
+      `<polygon points="${P(outline)}" fill="${SEAM}"/>` +
       facets
         .map((f) => {
           const fill =

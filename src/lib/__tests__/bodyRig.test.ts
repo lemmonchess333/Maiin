@@ -867,6 +867,110 @@ describe("renderBodyDemo", () => {
     expect(width(hand.outline, 1)).toBeLessThanOrEqual(headW / 2 + 0.5);
   });
 
+  /* ── 2026-09-02 model art pass ── */
+
+  it("no facet seam on the profile figure opens into a wedge", () => {
+    // The recurring defect on this figure, found four times in one
+    // review: a facet's LEVEL border butted against a neighbour's
+    // DIAGONAL one, so the seam between them started around a unit and
+    // opened to 3-5 as it ran. Rendered, that is a dark gash across the
+    // body — "the black space between the body looks odd". Every pair
+    // below was one of them.
+    //
+    // `band` emits the right edge then the reversed left edge, so a
+    // facet's own borders are exact segments: its TOP is the closing
+    // segment (last point -> first), its BOTTOM the segment across the
+    // array's midpoint. Measuring those beats scanning the polygon,
+    // which reads a corner as a 3-unit seam wherever a facet's side
+    // edge slants.
+    const piece = (g: string) => SIDE_PIECES.find((p) => p.group === g)!;
+    const facet = (g: string, m: string) =>
+      piece(g).facets.find((f) => f.muscle === m)!.points as [number, number][];
+    // The top is the CLOSING segment — `band` emits the right edge from
+    // top to bottom, then the left edge from bottom to top, so the wrap
+    // from last point to first is always the top border.
+    const topEdge = (p: [number, number][]) =>
+      [p[p.length - 1], p[0]] as [[number, number], [number, number]];
+    // The bottom is the segment JOINING the two side edges. It is the
+    // only non-closing pair that crosses the band's width, so it is the
+    // one with the largest |dx| — every other pair is a step ALONG an
+    // edge. Neither the array midpoint nor the greatest mean y finds it:
+    // the edges sample independently (a skew gives them different
+    // lengths), and on a diagonal bottom the join's mean y is lower than
+    // the last pair of the deeper edge.
+    const bottomEdge = (p: [number, number][]) => {
+      let best = 0;
+      let bestDx = -Infinity;
+      for (let i = 0; i + 1 < p.length; i++) {
+        const dx = Math.abs(p[i + 1][0] - p[i][0]);
+        if (dx > bestDx) {
+          bestDx = dx;
+          best = i;
+        }
+      }
+      return [p[best], p[best + 1]] as [[number, number], [number, number]];
+    };
+    const yAt = (
+      [[x1, y1], [x2, y2]]: [[number, number], [number, number]],
+      x: number
+    ) =>
+      x < Math.min(x1, x2) || x > Math.max(x1, x2) || x1 === x2
+        ? null
+        : y1 + ((y2 - y1) * (x - x1)) / (x2 - x1);
+    const pairs: [string, string, string][] = [
+      ["torso", "chest", "abs"],
+      ["torso", "chest", "obliques"],
+      ["torso", "upper-back", "lower-back"],
+      ["upperArmL", "front-deltoids", "biceps"],
+      ["upperArmL", "front-deltoids", "triceps"],
+      ["thighL", "quadriceps", "knees"],
+      ["thighL", "hamstring", "knees"],
+    ];
+    for (const [group, above, below] of pairs) {
+      const A = bottomEdge(facet(group, above));
+      const B = topEdge(facet(group, below));
+      const lo = Math.max(
+        Math.min(A[0][0], A[1][0]),
+        Math.min(B[0][0], B[1][0])
+      );
+      const hi = Math.min(
+        Math.max(A[0][0], A[1][0]),
+        Math.max(B[0][0], B[1][0])
+      );
+      const gaps: number[] = [];
+      for (let i = 0; i <= 20; i++) {
+        const x = lo + ((hi - lo) * i) / 20;
+        const a = yAt(A, x);
+        const b = yAt(B, x);
+        if (a === null || b === null) continue;
+        gaps.push(b - a);
+      }
+      expect(
+        gaps.length,
+        `${group} ${above}/${below} borders overlap`
+      ).toBeGreaterThan(10);
+      expect(
+        Math.max(...gaps),
+        `${group} ${above}/${below} widest seam`
+      ).toBeLessThan(2);
+      expect(
+        Math.min(...gaps),
+        `${group} ${above}/${below} narrowest seam`
+      ).toBeGreaterThan(0.2);
+    }
+  });
+
+  it("the profile figure's gaps are a seam tone, not the stage colour", () => {
+    // The pieces used to lay their underlay in the stage colour, so a
+    // seam read as a hole punched THROUGH the body onto the background.
+    // The front/back figures still work that way on purpose (short,
+    // numerous mosaic gaps); the profile's few long ones do not.
+    const svg = renderBodyDemo("barbell-curl", 0);
+    expect(svg).toContain('fill="#33363D"');
+    // ...and no piece paints the stage colour any more.
+    expect(svg).not.toContain('fill="#111113"');
+  });
+
   /* ── 2026-09-02 bilateral arms on the profile figure ── */
 
   it("the profile figure has a far arm: darker, pushed back and down, painted behind the torso", () => {
