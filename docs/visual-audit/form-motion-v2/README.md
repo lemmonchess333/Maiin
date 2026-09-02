@@ -735,3 +735,36 @@ back contour, heel, sole, toe, instep, then up the front. Pinned by
 depth: the outline must be more than 6 units deep at three heights.
 
 Both new pins are mutation-checked against the pre-fix geometry.
+
+## STATUS 2026-09-02j — the arms: a depth cue that rotated, and no joint caps
+
+**The far arm's depth offset rode the limb's rotation.** It was baked
+into the authored points, so it was "back and down" only at rest. A curl
+swings the forearm about 120 degrees, and through that arc the offset
+rotated with it until "back and down" pointed forward and up — the far
+arm surfaced IN FRONT of the near one at the top of the rep, which is
+the opposite of what a depth cue is for. It is now a `depthShift` on the
+piece, applied AFTER the pose, so it is constant on screen. A depth cue
+is a fact about the camera, not about the limb.
+
+The far-arm pin was rewritten to match: the two arms' geometry is now
+IDENTICAL, so the old assertion (far points sit 2.6 back of near ones)
+was asserting the bug. The replacement reads the RENDER at the top of
+the curl — the pose furthest from rest, where the two hand facets are
+the only six-point polygons on the figure — and measures their offset
+there.
+
+**The side renderer had no joint caps.** The front view has had them
+since the 2026-07-27 rebuild; the profile never did, because slabs
+overlap generously and it did not need them at rest. It needs them at
+the elbow: the forearm pivots about a point on the arm's centre line, so
+past about 60 degrees the far corner of its outline clears the upper arm
+and the joint opens a notch. Same recipe as the front — a body-grey disc
+behind the pieces, emitted only where the group actually rotates, so a
+resting figure keeps its clean seams.
+
+Radius matters more here than on the front figure. The first pass used
+the front view's numbers and the disc poked out past the arm as a
+visible bubble: the upper arm is 9.5 deep, so anything over 4.75 clears
+the silhouette. Capped at 4.2 for the elbow and shoulder, 4.6 for the
+knee.

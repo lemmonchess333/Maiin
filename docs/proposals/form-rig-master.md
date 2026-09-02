@@ -55,6 +55,7 @@ packet's design content as the plan and its status content as void.
 | Model art pass from owner device review — smoothed contours, ellipse cranium, rounded pec, muscular arms, 0.9 seams, waist band closed, deltoid follow damped                                | `bodySideData.ts` / `bodyRig.ts`                           | ✅ 2026-09-02               |
 | Pec plane replaces the chest dome; four level-against-diagonal seam wedges closed and pinned; profile seams painted as a groove tone; CI capture spec for the Form demos                     | `bodySideData.ts` / `bodyRig.ts` / `e2e/screenshots`       | ✅ 2026-09-02               |
 | Lower-body pass — overlap rims tilted onto real creases (hip, knee), pelvis facets rebuilt from contours, thigh/glute junction, shin seam and ankle band, shank outline traced both contours | `bodySideData.ts` + 2 pins                                 | ✅ 2026-09-02               |
+| Arms — far-arm depth offset moved post-pose (it rotated with the limb and surfaced in front on a curl); joint caps added to the side renderer                                                | `bodySideData.ts` / `bodyRig.ts` + pins                    | ✅ 2026-09-02               |
 | Everything else below                                                                                                                                                                        | —                                                          | Pending                     |
 
 **Demo1 supersession note (2026-07-27).** The single bounded teaching
