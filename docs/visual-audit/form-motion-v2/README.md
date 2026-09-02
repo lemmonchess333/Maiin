@@ -582,3 +582,29 @@ body colour present, the far biceps dimmer than the near one).
 
 Not a depth cue on the legs: the far leg pair keeps its zero offset —
 symmetric stances must stay clean — so this is arm-only by design.
+
+## STATUS 2026-09-02g — model art pass (owner device review)
+
+Owner, on the live app: "some solid ones are too sharp, the head shape
+is odd, the chest is too pointy, in the front the shoulders move weird,
+arms could be more muscular, the black space between the body looks
+odd." Six complaints, six changes, all on the model rather than the
+motion:
+
+| Complaint            | Cause                                                                                                                                                                                                                     | Change                                                                                                                                                                |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Too sharp            | Contours authored as 6-11 rows and drawn straight between them: a hexagonal calf, a flat skull, a creased chest.                                                                                                          | `smoothC` — every contour is resampled through a Catmull-Rom cubic at 2.5-unit steps before use. Authored rows are unchanged; everything between them curves.         |
+| Head shape odd       | Five straight cuts for the whole cranium, a spike for the nose.                                                                                                                                                           | Cranium is 14 samples of an ellipse from the jaw hinge over the crown to the brow, then brow, nose, lips, chin and a jaw line back to the neck.                       |
+| Chest too pointy     | The pec apex was a single contour corner, and the facet's 2-unit front drop met the receding curve in a spike.                                                                                                            | Front contour gets three rows across the pec (rounded), the lower border skew drops from [-1.5, 2] to [-1, 1].                                                        |
+| Shoulders move weird | The front-view deltoid cap followed 40% of the arm's rotation (up to 38°): at a raise to parallel each cap swung ~29° up out of the trap.                                                                                 | `DELTOID_FOLLOW` 0.22, cap 20° — the cap tilts ~16° at parallel and still rides the girdle lift.                                                                      |
+| Arms more muscular   | Upper arm a uniform 9 deep; forearm a plain taper.                                                                                                                                                                        | Delt cap 12.6, biceps/triceps belly 11 at mid-length tapering to the elbow; brachioradialis belly 8.4 below the elbow.                                                |
+| Black space odd      | Three sources: 1.2-unit seams everywhere; the lower-trunk facets stopped 4-6 units above the torso's bottom, which paints OVER the pelvis, so the waist wore a dark band; the chest/abs boundary was a wedge, not a seam. | Seams 0.9 (`GAP` 0.45); lower-trunk facets run to 93.2; abs/obliques tops re-skewed to sit one seam under the chest; kneecap facet to the front contour; nape tucked. |
+
+Facet cut edges now sample every 3 units (was 8) so seams follow the
+rounded silhouette instead of chording across it. Every geometry pin
+held unchanged through the pass — they are relations, not absolutes —
+and the far-arm pin held because both arms are built from the same
+smoothed contours.
+
+Not touched: the front/back figures' vendored facet art (its gaps are
+the muscle-map style the owner accepted), and the motion of any demo.

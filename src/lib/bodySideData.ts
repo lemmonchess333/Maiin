@@ -51,7 +51,8 @@ export interface SidePiece {
 
 /* ── Facet construction ──────────────────────────────────────────── */
 
-const GAP = 0.6; // per-side inset → 1.2-unit gaps, like the vendored art
+const GAP = 0.45; // per-side inset → 0.9-unit seams (was 1.2: "the black
+// space between the body looks odd", owner device review 2026-09-02)
 
 function xAt(contour: C, y: number): number {
   if (y <= contour[0][0]) return contour[0][1];
@@ -102,7 +103,7 @@ function band(
   ) => {
     const y0 = yTop + dyT;
     const y1 = yBot + dyB;
-    const steps = Math.max(1, Math.round((y1 - y0) / 8));
+    const steps = Math.max(1, Math.round((y1 - y0) / 3));
     const pts: Pt[] = [];
     for (let i = 0; i <= steps; i++) {
       const y = y0 + ((y1 - y0) * i) / steps;
@@ -131,11 +132,52 @@ function silhouette(B: C, F: C): Pt[] {
   ];
 }
 
+/* ── Contour smoothing ─────────────────────────────────────────── *
+ * Authored contours are sparse (6-11 rows). Drawn straight between
+ * rows they read as cut from card — a flat skull, a pointed chest, a
+ * hexagonal calf ("some solid ones are too sharp", owner device review
+ * 2026-09-02). Every contour is resampled through a Catmull-Rom cubic
+ * (x as a function of y) at ~2.5-unit steps before it is used, so the
+ * authored rows are still the truth and everything between them is a
+ * curve. Facet cut edges sample the same smoothed contours, so seams
+ * follow the rounded silhouette instead of chording across it. */
+function smoothC(c: C, step = 2.5): C {
+  const n = c.length;
+  if (n < 3) return c;
+  const slope = (i: number) => {
+    const a = c[Math.max(0, i - 1)];
+    const b = c[Math.min(n - 1, i + 1)];
+    return (b[1] - a[1]) / (b[0] - a[0]);
+  };
+  const out: C = [];
+  for (let i = 0; i < n - 1; i++) {
+    const [y0, x0] = c[i];
+    const [y1, x1] = c[i + 1];
+    const h = y1 - y0;
+    const m0 = slope(i) * h;
+    const m1 = slope(i + 1) * h;
+    const k = Math.max(1, Math.round(h / step));
+    for (let j = 0; j < k; j++) {
+      const u = j / k;
+      const u2 = u * u;
+      const u3 = u2 * u;
+      const x =
+        (2 * u3 - 3 * u2 + 1) * x0 +
+        (u3 - 2 * u2 + u) * m0 +
+        (-2 * u3 + 3 * u2) * x1 +
+        (u3 - u2) * m1;
+      out.push([y0 + h * u, x]);
+    }
+  }
+  out.push(c[n - 1]);
+  return out;
+}
+
 /* ── Contours (the proportions live here) ────────────────────────── */
 
 /* Torso: strong trap slope, deep heroic chest (depth ≈29 at the pecs),
  * lumbar curve, tight glute that creases at ~110. */
-const TORSO_B: C = [
+const TORSO_B: C = smoothC([
   [30, 44.5],
   [36, 39.6],
   [44, 37],
@@ -145,25 +187,27 @@ const TORSO_B: C = [
   [82, 37.8],
   [90, 34.6],
   [94, 33.1],
-];
-const TORSO_F: C = [
+]);
+const TORSO_F: C = smoothC([
   [31, 48.5],
   [33.5, 51],
   [38, 57.5],
-  [42, 63.4],
-  [47.5, 65.4],
-  [53.5, 61.8],
+  [42, 63],
+  [45.5, 65.2],
+  [49, 65],
+  [52.5, 63.2],
+  [56, 60.6],
   [60, 59.2],
   [70, 59.6],
   [78, 58.2],
   [88, 56.2],
   [94, 54.6],
-];
+]);
 
 /* Pelvis segment (split from the upper torso so hinges and bridges can
  * articulate at the waist): the glute mass + hip wedge, overlapping the
  * upper torso at the lumbar joint (y 86-94). */
-const PELV_B: C = [
+const PELV_B: C = smoothC([
   [86, 35.9],
   [90, 33.8],
   [97, 29.8],
@@ -171,17 +215,17 @@ const PELV_B: C = [
   [109, 31.8],
   [112, 36.8],
   [113.5, 43.8],
-];
-const PELV_F: C = [
+]);
+const PELV_F: C = smoothC([
   [86, 56.6],
   [96, 54],
   [103, 50.4],
   [109, 46.5],
   [112.5, 44.8],
-];
+]);
 
 /* Thigh: quad sweep peaking mid-thigh, hamstring belly behind. */
-const THIGH_B: C = [
+const THIGH_B: C = smoothC([
   [97, 43.5],
   [104, 41.2],
   [116, 39.8],
@@ -189,8 +233,8 @@ const THIGH_B: C = [
   [140, 41.4],
   [150, 44.4],
   [156, 45.8],
-];
-const THIGH_F: C = [
+]);
+const THIGH_F: C = smoothC([
   [95.5, 52.5],
   [103, 57.8],
   [112, 60.6],
@@ -198,56 +242,63 @@ const THIGH_F: C = [
   [138, 57.6],
   [148, 55.3],
   [156, 55.5],
-];
+]);
 
 /* Shank: gastroc bulge behind, straight shin, achilles taper. */
-const SHANK_B: C = [
+const SHANK_B: C = smoothC([
   [150, 41.6],
   [160, 39.2],
   [168, 38.2],
   [178, 40.9],
   [186, 43.2],
   [192, 44.5],
-];
-const SHANK_F: C = [
+]);
+const SHANK_F: C = smoothC([
   [148.5, 54.2],
   [158, 52.9],
   [170, 51.5],
   [182, 50.2],
   [191, 49.6],
-];
+]);
 
-/* Upper arm: round delt cap flowing into the bi/tri columns. */
-const ARM_B: C = [
+/* Upper arm: round delt cap, a biceps/triceps belly (~11 deep at
+ * mid-length) tapering to the elbow. Owner review 2026-09-02: "arms
+ * could be more muscular" — the previous columns were a uniform 9. */
+const ARM_B: C = smoothC([
   [37.5, 42],
-  [43, 40.8],
-  [49, 42.2],
-  [56, 43.8],
-  [64, 44.4],
-  [71.5, 45.4],
-];
-const ARM_F: C = [
+  [42, 40.4],
+  [48, 41.2],
+  [54, 42.6],
+  [60, 43.8],
+  [66, 44.9],
+  [71.5, 45.6],
+]);
+const ARM_F: C = smoothC([
   [37.5, 51.5],
-  [43, 52.8],
-  [49, 52.4],
-  [56, 53],
-  [63, 52.6],
-  [71.5, 51.7],
-];
+  [42, 53.0],
+  [48, 52.8],
+  [54, 53.6],
+  [60, 53.2],
+  [66, 52.6],
+  [71.5, 51.9],
+]);
 
-/* Forearm: tapers toward the wrist. */
-const FORE_B: C = [
+/* Forearm: brachioradialis belly just below the elbow, then the taper
+ * to the wrist. */
+const FORE_B: C = smoothC([
   [67.8, 45.2],
-  [76, 45.8],
-  [88, 46.6],
-  [100.6, 47.9],
-];
-const FORE_F: C = [
+  [74, 45.4],
+  [82, 46.0],
+  [90, 46.8],
+  [100.6, 48.0],
+]);
+const FORE_F: C = smoothC([
   [67.6, 52.3],
-  [78, 53.6],
-  [90, 53.2],
-  [100.4, 52.6],
-];
+  [74, 53.8],
+  [82, 53.9],
+  [90, 53.0],
+  [100.4, 52.5],
+]);
 
 /* ── Pieces ──────────────────────────────────────────────────────── */
 
@@ -264,7 +315,7 @@ const FOOT: Pt[] = [
 ];
 
 const SHANK_OUTLINE: Pt[] = [
-  ...silhouette(SHANK_B, SHANK_F).slice(0, 6),
+  ...silhouette(SHANK_B, SHANK_F).slice(0, SHANK_B.length),
   // splice the foot into the silhouette bottom
   [49.8, 191],
   [55.4, 193.4],
@@ -305,7 +356,7 @@ const THIGH_FACETS = [
   },
   {
     muscle: "knees",
-    points: band(THIGH_B, THIGH_F, 146.2, 155, 0.3, 0.92),
+    points: band(THIGH_B, THIGH_F, 146.2, 155.4, 0.3, 1),
   },
 ];
 
@@ -456,55 +507,79 @@ const RAW_PIECES: SidePiece[] = [
     ],
   },
   {
+    /* Profile head (owner device review 2026-09-02: "the head shape is
+     * odd"). The cranium is 14 samples of an ellipse (centre 51.6/10.6,
+     * 8.9 × 10.4) from the jaw hinge over the crown to the brow, then a
+     * brow ridge, nose, lips and chin, and a jaw line back to the neck.
+     * The old outline had five straight cuts for the whole skull. */
     group: "head",
     outline: [
-      [44.5, 0.5],
-      [52, 0],
-      [58, 1.8],
-      [61, 5.5],
-      [62, 9],
-      [61.2, 10.6],
-      [63, 13],
-      [61.6, 15.6],
-      [60.8, 17.2],
-      [60.4, 19.2],
-      [56.8, 21.6],
-      [50.4, 23],
+      [43.5, 15.0],
+      [42.8, 12.4],
+      [42.7, 9.7],
+      [43.2, 7.0],
+      [44.3, 4.6],
+      [45.9, 2.6],
+      [47.8, 1.2],
+      [50.1, 0.4],
+      [52.4, 0.2],
+      [54.6, 0.8],
+      [56.7, 2.1],
+      [58.4, 3.9],
+      [59.7, 6.2],
+      [60.4, 8.8],
+      [61.0, 9.6],
+      [60.6, 11.6],
+      [62.2, 14.0],
+      [60.8, 15.8],
+      [61.2, 17.6],
+      [60.2, 19.6],
+      [58.6, 21.4],
+      [55.4, 22.6],
+      [50.4, 23.0],
       [52.8, 26],
       [53.8, 31],
       [53.2, 35.8],
       [44.2, 35.4],
       [44.8, 27],
-      [45.4, 20],
-      [43.6, 12],
-      [43.4, 6],
+      [45.4, 21.6],
+      [44.0, 18.4],
     ],
     facets: [
       {
         muscle: "head",
         points: [
-          [45.6, 1.6],
-          [52, 1],
-          [57.4, 2.6],
-          [60.2, 5.9],
-          [61, 9],
-          [60.2, 10.7],
-          [62.2, 13.2],
-          [60.6, 15.4],
-          [59.9, 17],
-          [59.5, 18.8],
-          [55.8, 20.9],
-          [49.8, 21.7],
-          [46.9, 19],
-          [45.9, 15],
-          [44.6, 10],
-          [44.6, 6],
+          [44.0, 14.8],
+          [43.3, 12.4],
+          [43.2, 9.8],
+          [43.7, 7.3],
+          [44.7, 5.0],
+          [46.2, 3.1],
+          [48.0, 1.7],
+          [50.2, 0.9],
+          [52.4, 0.7],
+          [54.5, 1.3],
+          [56.5, 2.6],
+          [58.1, 4.3],
+          [59.3, 6.5],
+          [59.9, 9.0],
+          [60.5, 9.7],
+          [60.1, 11.6],
+          [61.7, 13.9],
+          [60.3, 15.6],
+          [60.7, 17.3],
+          [59.8, 19.2],
+          [58.3, 20.9],
+          [55.2, 22.1],
+          [50.5, 21.9],
         ],
       },
       {
         muscle: "neck",
+        // Top-back corner tucks up under the skull so no underlay
+        // triangle shows at the nape.
         points: [
-          [45.4, 23],
+          [45.8, 21.9],
           [52.6, 22.6],
           [53.6, 27],
           [53.2, 34.8],
@@ -521,9 +596,12 @@ const RAW_PIECES: SidePiece[] = [
       { muscle: "trapezius", points: band(TORSO_B, TORSO_F, 30.5, 37, 0, 1) },
       {
         muscle: "chest",
+        /* Lower border skewed only gently: with the front contour
+         * receding below the pec, a 2-unit front drop met the curve in
+         * a spike ("the chest is too pointy"). */
         points: band(TORSO_B, TORSO_F, 38.5, 55.6, 0.42, 1, {
           bellyL: -0.05,
-          skewB: [-1.5, 2],
+          skewB: [-1, 1],
         }),
       },
       {
@@ -533,6 +611,10 @@ const RAW_PIECES: SidePiece[] = [
           skewB: [2, -2],
         }),
       },
+      /* All three lower-trunk facets run to 93.2 — within a seam of the
+       * torso outline's bottom (94). They stopped at 88-90, and since the
+       * torso paints OVER the pelvis, that 4-6 unit strip of underlay was
+       * the thick dark band across the waist on device. */
       /* Lower trunk in profile (owner review 2026-09-02: "split into
        * three sections of the abdominal — is this accurate?"). Three
        * regions IS what a profile shows — rectus at the front, the
@@ -542,20 +624,20 @@ const RAW_PIECES: SidePiece[] = [
        * obliques are most of the flank (~48%), the erectors the rest. */
       {
         muscle: "abs",
-        points: band(TORSO_B, TORSO_F, 57.4, 89.5, 0.78, 1, {
-          skewT: [1.2, -0.8],
+        points: band(TORSO_B, TORSO_F, 57.5, 93.2, 0.78, 1, {
+          skewT: [-0.8, 0],
         }),
       },
       {
         muscle: "obliques",
-        points: band(TORSO_B, TORSO_F, 58.8, 90, 0.3, 0.78, {
-          skewT: [1.5, -1.5],
+        points: band(TORSO_B, TORSO_F, 57.6, 93.2, 0.3, 0.78, {
+          skewT: [1.2, -0.6],
           bellyR: 0.03,
         }),
       },
       {
         muscle: "lower-back",
-        points: band(TORSO_B, TORSO_F, 68.8, 88.4, 0, 0.3),
+        points: band(TORSO_B, TORSO_F, 68.8, 93.2, 0, 0.3),
       },
     ],
   },
