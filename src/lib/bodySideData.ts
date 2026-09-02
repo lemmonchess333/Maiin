@@ -175,8 +175,38 @@ function smoothC(c: C, step = 2.5): C {
 
 /* ── Contours (the proportions live here) ────────────────────────── */
 
-/* Torso: strong trap slope, deep heroic chest (depth ≈29 at the pecs),
- * lumbar curve, tight glute that creases at ~110. */
+/* Torso: strong trap slope, an anatomically PLACED pec, a lumbar curve,
+ * and a tight glute that creases at ~110.
+ *
+ * The chest has now been wrong twice in opposite directions, so the
+ * placement is measured rather than judged. Two things decide whether a
+ * profile chest reads as a pec:
+ *
+ * WHERE. The forward-most point of the chest is the NIPPLE line. Read
+ * off reference photography against the rig's OWN two anchors rather
+ * than off a stature fraction, it sits 24% of the way from shoulder to
+ * hip — rendered y 52 on a figure whose shoulder is 38 and hip 96, so
+ * authored (this file is pre-remap) y 58. Both of the earlier attempts
+ * were wide of it in opposite directions: authored 43 put the mass under
+ * the collarbone ("what person's chest is high up"), and 64 dropped it
+ * far enough to read as a gut. Below the clavicle a real chest is
+ * slightly HOLLOW; it builds gradually and peaks at the nipple.
+ *
+ * HOW DEEP. Chest depth was 27 units on a 59-unit trunk — a 2.2 ratio,
+ * a barrel. Reference photography runs nearer 2.5, so the front contour
+ * sits ~2 units back of the previous pass: 25.2 deep at the nipple
+ * against 18.8 at the waist, which keeps the 1.34 chest-to-waist
+ * contrast that makes a chest read as a chest.
+ *
+ * WHAT HAPPENS UNDER IT. A breast is a smooth arc: it bulges, peaks, and
+ * rounds away, and any contour shaped like that reads as one wherever it
+ * is placed — which is why moving the apex alone did not fix this. A pec
+ * ENDS. Its lower border is a corner, and under that corner the trunk
+ * steps back and runs slightly HOLLOW over the upper abdomen before the
+ * belly fills again. So the contour falls 3.9 units in the 6 below the
+ * apex (63.0 at y 61 to 58.9 at y 70), flattens through the hollow, and
+ * lifts 0.2 at y 83. The seam under the pec is the facet border; this
+ * corner is the silhouette, and the silhouette is what the eye reads. */
 const TORSO_B: C = smoothC([
   [30, 44.5],
   [36, 39.6],
@@ -190,17 +220,20 @@ const TORSO_B: C = smoothC([
 ]);
 const TORSO_F: C = smoothC([
   [31, 48.5],
-  [33.5, 51],
-  [38, 57.5],
-  [42, 63],
-  [45.5, 65.2],
-  [49, 65],
-  [52.5, 63.2],
-  [56, 60.6],
-  [60, 59.2],
-  [70, 59.6],
-  [78, 58.2],
-  [88, 56.2],
+  [36, 51.4],
+  [41, 54.4],
+  [46, 57.4],
+  [50, 59.6],
+  [54, 60.9],
+  [57, 61.4],
+  [61, 61.0],
+  [64, 60.0],
+  [67, 58.3],
+  [70, 57.3],
+  [74, 56.8],
+  [78, 56.7],
+  [83, 56.9],
+  [88, 56.0],
   [94, 54.6],
 ]);
 
@@ -356,7 +389,11 @@ const THIGH_FACETS = [
   },
   {
     muscle: "knees",
-    points: band(THIGH_B, THIGH_F, 146.2, 155.4, 0.3, 1),
+    /* Runs the full depth: cut to t 0.3 it left the popliteal hollow —
+       13 units of underlay behind the knee — as a dark block. */
+    points: band(THIGH_B, THIGH_F, 145.4, 155.4, 0, 1, {
+      skewT: [-1.5, 0],
+    }),
   },
 ];
 
@@ -371,22 +408,31 @@ const FORE_FACETS = [
 const UPPER_ARM_FACETS = [
   {
     muscle: "front-deltoids",
-    points: band(ARM_B, ARM_F, 38, 51.8, 0, 1, { skewB: [-1.5, 1] }),
+    points: band(ARM_B, ARM_F, 38, 52.4, 0, 1, { skewB: [-1.5, 1] }),
   },
   {
     /* Front/back split at the real muscle boundary, mirroring the
        thigh's quadriceps/hamstring convention — the triceps facet is
        what lets a pushdown's working-muscle emphasis render at all
-       (roadmap side-topology item "triceps facet"). */
+       (roadmap side-topology item "triceps facet").
+
+       Both tops parallel the deltoid's lower border, one seam under
+       it. They used to sit level while that border ran diagonally, so
+       the gap opened from 1.4 units at the front to 3.7 at the back —
+       a wedge of underlay right across the arm, and the widest dark
+       band anywhere on the figure. */
     muscle: "biceps",
-    points: band(ARM_B, ARM_F, 53.2, 70.8, 0.52, 1, {
-      skewT: [-1.5, 1],
+    points: band(ARM_B, ARM_F, 52.9, 70.8, 0.52, 1, {
+      skewT: [0, 1.2],
       bellyL: -0.05,
     }),
   },
   {
     muscle: "triceps",
-    points: band(ARM_B, ARM_F, 54, 70, 0, 0.46, { bellyR: 0.05 }),
+    points: band(ARM_B, ARM_F, 51.6, 70, 0, 0.46, {
+      skewT: [0, 1.15],
+      bellyR: 0.05,
+    }),
   },
 ];
 const HAND_OUTLINE: Pt[] = [
@@ -422,6 +468,22 @@ const shiftFar = (pts: Pt[]): Pt[] =>
   pts.map(([x, y]) => [x + FAR_ARM_SHIFT[0], y + FAR_ARM_SHIFT[1]]);
 const farFacets = (facets: { muscle: string; points: Pt[] }[]) =>
   facets.map((f) => ({ muscle: f.muscle, points: shiftFar(f.points) }));
+
+/* The pec's lower border, as the single line every neighbour derives
+ * from. It runs from the armpit (the chest facet's back cut) down to the
+ * sternum, so it is a function of the cut fraction, not a row. The flank
+ * and the rectus take their tops from it, which is why their seams stay
+ * parallel: three facets meeting a diagonal with level borders is the
+ * wedge this figure kept growing. */
+const PEC_BACK_T = 0.42;
+const PEC_BOTTOM_ARMPIT = 60;
+const PEC_BOTTOM_STERNUM = 66;
+const pecBottomAt = (t: number) =>
+  PEC_BOTTOM_ARMPIT +
+  ((PEC_BOTTOM_STERNUM - PEC_BOTTOM_ARMPIT) * (t - PEC_BACK_T)) /
+    (1 - PEC_BACK_T);
+/** One seam, in authored units (the y remap scales it to ~0.9 rendered). */
+const SEAM = 0.86;
 
 const RAW_PIECES: SidePiece[] = [
   // Far-side leg pair: same geometry, darker, painted FIRST — hidden in
@@ -572,6 +634,8 @@ const RAW_PIECES: SidePiece[] = [
           [58.3, 20.9],
           [55.2, 22.1],
           [50.5, 21.9],
+          [45.7, 21.1],
+          [44.4, 18.1],
         ],
       },
       {
@@ -593,20 +657,46 @@ const RAW_PIECES: SidePiece[] = [
     group: "torso",
     outline: silhouette(TORSO_B, TORSO_F),
     facets: [
-      { muscle: "trapezius", points: band(TORSO_B, TORSO_F, 30.5, 37, 0, 1) },
+      /* Down to the clavicle: the chest now starts at the shoulder line
+         rather than at the neck, and the gap between them was 4 rendered
+         units of bare underlay across the upper chest. */
+      { muscle: "trapezius", points: band(TORSO_B, TORSO_F, 30.5, 44, 0, 1) },
       {
         muscle: "chest",
         /* Lower border skewed only gently: with the front contour
          * receding below the pec, a 2-unit front drop met the curve in
          * a spike ("the chest is too pointy"). */
-        points: band(TORSO_B, TORSO_F, 38.5, 55.6, 0.42, 1, {
+        points: band(TORSO_B, TORSO_F, 45, PEC_BOTTOM_STERNUM, PEC_BACK_T, 1, {
           bellyL: -0.05,
-          skewB: [-1, 1],
+          skewB: [PEC_BOTTOM_ARMPIT - PEC_BOTTOM_STERNUM, 0],
         }),
+      },
+      /* The flank runs UP to the pec's lower border, and is painted
+       * BEFORE the upper back so the lat still reads full behind it.
+       * The pec's border is a diagonal — low at the sternum, high at the
+       * armpit — while the lat reaches to y 65, so the region below the
+       * pec and in front of the lat is a triangle no straight-topped
+       * facet could reach. It rendered as bare underlay: the dark wedge
+       * in the middle of the trunk on device. The flank's top edge now
+       * runs parallel to the pec border, one seam under it. */
+      {
+        muscle: "obliques",
+        points: band(
+          TORSO_B,
+          TORSO_F,
+          pecBottomAt(0.3) + SEAM,
+          93.2,
+          0.3,
+          0.78,
+          {
+            skewT: [0, pecBottomAt(0.78) - pecBottomAt(0.3)],
+            bellyR: 0.03,
+          }
+        ),
       },
       {
         muscle: "upper-back",
-        points: band(TORSO_B, TORSO_F, 38.5, 67.2, 0, 0.4, {
+        points: band(TORSO_B, TORSO_F, 45, 67.2, 0, 0.4, {
           bellyR: 0.04,
           skewB: [2, -2],
         }),
@@ -624,20 +714,26 @@ const RAW_PIECES: SidePiece[] = [
        * obliques are most of the flank (~48%), the erectors the rest. */
       {
         muscle: "abs",
-        points: band(TORSO_B, TORSO_F, 57.5, 93.2, 0.78, 1, {
-          skewT: [-0.8, 0],
-        }),
-      },
-      {
-        muscle: "obliques",
-        points: band(TORSO_B, TORSO_F, 57.6, 93.2, 0.3, 0.78, {
-          skewT: [1.2, -0.6],
-          bellyR: 0.03,
-        }),
+        points: band(
+          TORSO_B,
+          TORSO_F,
+          pecBottomAt(0.78) + SEAM,
+          93.2,
+          0.78,
+          1,
+          {
+            skewT: [0, pecBottomAt(1) - pecBottomAt(0.78)],
+          }
+        ),
       },
       {
         muscle: "lower-back",
-        points: band(TORSO_B, TORSO_F, 68.8, 93.2, 0, 0.3),
+        /* Top follows the lat's lower border, one seam under it. Flat
+           against a border that fell 3 units across the facet left a
+           wedge of underlay above the kidney. */
+        points: band(TORSO_B, TORSO_F, 70.1, 93.2, 0, 0.3, {
+          skewT: [0, -3],
+        }),
       },
     ],
   },

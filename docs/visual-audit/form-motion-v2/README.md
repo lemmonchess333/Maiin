@@ -608,3 +608,86 @@ smoothed contours.
 
 Not touched: the front/back figures' vendored facet art (its gaps are
 the muscle-map style the owner accepted), and the motion of any demo.
+
+## STATUS 2026-09-02h — the pec, and the seams that were really wedges
+
+Owner, on a pinch-zoomed device screenshot of the profile figure: "the
+chest looks weird, looks like a pair of tits". Four changes, one of
+which is a new invariant rather than a tweak.
+
+**The chest.** Wrong twice, in opposite directions, before it was
+right — so it is now placed from measurement rather than judgement, and
+both numbers are written into `bodySideData.ts` beside the contour.
+
+- **Where.** The forward-most point of a chest is the NIPPLE line. Read
+  off reference photography against the rig's OWN anchors (shoulder and
+  hip) rather than off a stature fraction, it sits 24% of the way from
+  shoulder to hip: rendered y 52, authored y 57. The first attempt
+  apexed at authored 43, tucked under the collarbone — "what person's
+  chest is high up". Correcting it to 64 by a stature fraction dropped
+  it far enough to read as a gut. Two anchors the rig already defines
+  beat one ratio it does not.
+- **What happens under it.** A breast is a smooth arc: bulge, peak,
+  round away. A contour shaped like that reads as one wherever it is
+  placed, which is why moving the apex alone changed nothing. A pec
+  ENDS. Its lower border is a corner, and under that corner the trunk
+  steps back and runs slightly hollow over the upper abdomen before the
+  belly fills again. The contour now falls 3.7 units in the 6 below the
+  apex, flattens through the hollow, and lifts 0.2 at y 83.
+- **How deep.** 27 units on a 59-unit trunk is a 2.2 ratio — a barrel.
+  Reference runs nearer 2.5, so the whole front contour moved ~2 units
+  back: 25.2 deep at the nipple against 18.8 at the waist, keeping the
+  1.34 chest-to-waist contrast that makes a chest read as a chest.
+
+The pec's lower border is now ONE line (`pecBottomAt`), and the flank
+and rectus take their tops from it rather than carrying hand-tuned
+rows. Three facets meeting a diagonal with level borders is the wedge
+this figure kept growing, so the fix is structural, not a tuning.
+
+**Three wedges, one shape of mistake.** Fixing the pec exposed that the
+figure's dark bands were not seams at all. In each case a facet's LEVEL
+border sat against a neighbour's DIAGONAL one, so the gap between them
+started around a unit and opened as it ran:
+
+| Where                | Opened to | Cause                                                                                                                                                                                                                                                            |
+| -------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Across the upper arm | 3.7       | Deltoid's lower border is skewed; biceps and triceps tops were level. The widest band on the figure.                                                                                                                                                             |
+| Under the pec        | 3.0       | The flank's top was level under a diagonal pec border, and the lat reaches 10 units lower than the pec — a triangle no straight-topped facet could reach. The flank now runs up to the pec and is painted BEFORE the lat, so the lat still reads full behind it. |
+| Above the kidney     | 2.3       | Lower back flat against the lat's sloping border.                                                                                                                                                                                                                |
+| Behind the knee      | 13        | The kneecap facet was cut to t 0.3, leaving the popliteal hollow uncovered entirely.                                                                                                                                                                             |
+
+`bodyRig.test.ts` now pins all of them: it reads each band's own top and
+bottom borders (a band emits its right edge then its reversed left edge,
+so the closing segment IS the top and the widest non-closing pair IS the
+bottom) and asserts the seam between neighbours stays between 0.2 and 2
+units along its whole run. Mutation-checked: restoring the old triceps
+row reproduces 3.81 and fails.
+
+**Seams are a tone now, not a hole.** The profile pieces laid their
+underlay in the exact stage colour, so a seam read as a gap punched
+THROUGH the body onto the background — fine for the front figure, whose
+mosaic gaps are short and numerous, wrong for a figure built from a few
+big slabs. They paint `#33363D`, between body and stage: every seam
+becomes a shadowed groove and the 0.45 inset along the silhouette reads
+as the figure's own dark edge. The front and back figures are untouched.
+
+**The head facet** stopped at the back of the skull while its outline
+carried on to the jaw, leaving a triangle of underlay at the nape. It
+now closes round the jaw line.
+
+## Capture channel — the demos are now shot by CI
+
+`e2e/screenshots/form-demo.screens.capture.spec.ts` drives the real
+journey (Analytics → exercise → Form) and shoots the demo card for five
+exercises, light and dark. Two deliberate choices:
+
+- **Reduced motion is forced.** The player loops on rAF, which
+  `animations: "disabled"` does not stop — that flag freezes CSS and Web
+  Animations only — so an unforced capture lands on whatever frame the
+  loop had reached. Every run would churn the diff report. Under
+  `prefers-reduced-motion` the player renders its static two-up of the
+  START and END extremes: stable, and the exact pair a model-art review
+  wants.
+- **The demo card is shot as an ELEMENT, not fullPage.** The surrounding
+  stats carry seeded numbers and a date; a full-page frame would diff on
+  those rather than on the art.
