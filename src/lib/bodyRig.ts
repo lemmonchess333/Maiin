@@ -124,6 +124,42 @@ const SIDE_FORE_LEN = Math.hypot(
   SIDE_ANCHORS.hand[0] - SIDE_ANCHORS.elbow[0],
   SIDE_ANCHORS.hand[1] - SIDE_ANCHORS.elbow[1]
 );
+/** A straight hanging arm, written ONCE as a fraction of the measured
+ *  reach — the 2026-09-02 re-row lengthened the arm ~20%, and every
+ *  hard-coded "S[1] + 52" would have left the bar floating a hand's
+ *  width below the fist. 0.99 keeps the elbow just off the clamp. */
+const STRAIGHT_ARM = 0.99 * (SIDE_UPPER_LEN + SIDE_FORE_LEN);
+/** Bench lockout: 99.2% of reach — near-straight, off the clamp. */
+const BENCH_LOCKOUT = Math.sqrt(
+  (0.992 * (SIDE_UPPER_LEN + SIDE_FORE_LEN)) ** 2 - 4 ** 2
+);
+/** Bench thigh droop (deg of rotation about the hip) solved so that,
+ *  with the shin vertical (shank rotates 90 − this) and the foot flat,
+ *  the sole lands ON the 171 floor line: hip screen height + thigh·sinθ
+ *  + shank + foot = floor. */
+const BENCH_THIGH = (() => {
+  const hipScreenY = 100 - (SIDE_ANCHORS.hip[0] - 44) + 0; // after G(−90) about [44,100]
+  const thigh = Math.hypot(
+    SIDE_ANCHORS.knee[0] - SIDE_ANCHORS.hip[0],
+    SIDE_ANCHORS.knee[1] - SIDE_ANCHORS.hip[1]
+  );
+  const shank = Math.hypot(
+    SIDE_ANCHORS.ankle[0] - SIDE_ANCHORS.knee[0],
+    SIDE_ANCHORS.ankle[1] - SIDE_ANCHORS.knee[1]
+  );
+  const FOOT = 9.4; // ankle → sole
+  const FLOOR = 171;
+  const lean =
+    (Math.atan2(
+      SIDE_ANCHORS.knee[0] - SIDE_ANCHORS.hip[0],
+      SIDE_ANCHORS.knee[1] - SIDE_ANCHORS.hip[1]
+    ) *
+      180) /
+    Math.PI; // the thigh's standing forward lean
+  const droop =
+    (Math.asin((FLOOR - FOOT - shank - hipScreenY) / thigh) * 180) / Math.PI;
+  return droop + lean;
+})();
 
 /** Balance rule (pose physics): mass stays over mid-foot, so as the
  *  torso hinges forward the hips travel BACK — implemented as the whole
@@ -138,8 +174,47 @@ function hipsBack(hingeDeg: number): Extract<Op, { kind: "rotate" }> {
 
 /* Push-up scene constants (final space): where the hands plant and
  * where the tilted plank's toes rest. */
-const PUSHUP_HAND: Pt = [100, 156];
-const PUSHUP_TOE: Pt = [-61.6, 155.8];
+/* Push-up plank geometry, DERIVED (2026-09-02 re-row) instead of the
+ * hand-tuned constants it replaces — those encoded the old arm length
+ * and went stale the moment the skeleton changed. Prone (+90 about
+ * [44,100]), the body is a rigid line from the toe to the shoulder; at
+ * the top of a push-up the arms are straight (98% reach, leaning ~8°
+ * back toward the feet), so the shoulder sits at a known height above
+ * the hand plant. That fixes the plank's angle (asin of height over
+ * body length), which fixes where the toe rests on the floor and where
+ * the hands plant. Nothing here is a free constant. */
+const PU_G: Op = { kind: "rotate", deg: 90, pivot: [44, 100] };
+const PU_FLOOR = 158.5;
+const PU_TOE_STANDING: Pt = [64.2, 199.8]; // front tip of the FOOT facet
+const PU_TOE_G = applyToPoint(PU_TOE_STANDING, [PU_G]);
+const PU_SH_G = applyToPoint(SIDE_ANCHORS.shoulder, [PU_G]);
+const PU_BODY_LEN = Math.hypot(
+  PU_SH_G[0] - PU_TOE_G[0],
+  PU_SH_G[1] - PU_TOE_G[1]
+);
+const PU_REACH = 0.98 * (SIDE_UPPER_LEN + SIDE_FORE_LEN);
+const PU_ARM_LEAN = (8 * Math.PI) / 180;
+const PU_SH_HEIGHT = PU_REACH * Math.cos(PU_ARM_LEAN);
+/** Body axis angle after G (toe → shoulder), then the angle it must
+ *  have for the shoulder to sit PU_SH_HEIGHT above the plant. */
+const PU_AXIS_G =
+  (Math.atan2(PU_SH_G[1] - PU_TOE_G[1], PU_SH_G[0] - PU_TOE_G[0]) * 180) /
+  Math.PI;
+const PU_AXIS_TARGET =
+  (-Math.asin(Math.min(1, PU_SH_HEIGHT / PU_BODY_LEN)) * 180) / Math.PI;
+const PU_TILT = PU_AXIS_TARGET - PU_AXIS_G;
+/** Rotate about the (post-G) toe, then drop the whole plank so that toe
+ *  sits on the floor line. */
+const PU_SHIFT: Op = { kind: "translate", dx: 0, dy: PU_FLOOR - PU_TOE_G[1] };
+const PUSHUP_TOE: Pt = [PU_TOE_G[0], PU_FLOOR];
+const PU_SH_TOP = applyToPoint(PU_SH_G, [
+  { kind: "rotate", deg: PU_TILT, pivot: PU_TOE_G },
+  PU_SHIFT,
+]);
+const PUSHUP_HAND: Pt = [
+  PU_SH_TOP[0] + PU_REACH * Math.sin(PU_ARM_LEAN),
+  PU_SH_TOP[1] + PU_SH_HEIGHT,
+];
 
 /* Muscle-aura rings — nested convex hulls at falling opacity (the
  * no-filter fake blur; see the glow block in the renderers). */
@@ -633,6 +708,8 @@ function sideSquatChain(
  *  body, so this point is fixed relative to the shoulder and the whole
  *  assembly inherits the hinge). Behind and just above the shoulder
  *  joint. */
+/** Back-squat upper-arm angle back from vertical (deg). */
+const SQUAT_ELBOW_BACK = 40;
 export const BACK_RACK: Pt = [
   SIDE_ANCHORS.shoulder[0] - 5,
   SIDE_ANCHORS.shoulder[1] - 5,
@@ -641,7 +718,7 @@ export const BACK_RACK: Pt = [
 /** Goblet hold, in TORSO space: the cupped hands sit just proud of the
  *  chest contour at sternum height, so the bell reads as pressed
  *  against the chest rather than floating. */
-export const GOBLET_HOLD: Pt = [66, 58];
+export const GOBLET_HOLD: Pt = [66, SIDE_ANCHORS.shoulder[1] + 11];
 
 /** Ball of the near foot — the calf raise pivots about it. Measured
  *  from the FOOT facet's sole line (y ≈ 202.3) at the ball. */
@@ -686,20 +763,34 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         e,
         43
       );
+      /* The rack contact sits ~7 units up-and-back of the shoulder, so
+       * an in-plane IK folds the arm almost closed and BOTH elbow
+       * branches land at shoulder height (one straight back, one
+       * straight up). A real back-squat elbow points down-and-back
+       * because the grip is OUTBOARD of the body — an abduction a true
+       * profile cannot solve. So the arm is choreographed: upper arm 40°
+       * back from vertical, forearm folded up toward the bar. The fist
+       * lands a few units under the bar, which is what the foreshortened
+       * outboard grip looks like from the side. */
+      const elbowPre = applyToPoint(SIDE_ANCHORS.elbow, [
+        { kind: "rotate", deg: SQUAT_ELBOW_BACK, pivot: SIDE_ANCHORS.shoulder },
+      ]);
+      const toRack = Math.hypot(
+        BACK_RACK[0] - elbowPre[0],
+        BACK_RACK[1] - elbowPre[1]
+      );
+      const handPre: Pt = [
+        elbowPre[0] + ((BACK_RACK[0] - elbowPre[0]) / toRack) * SIDE_FORE_LEN,
+        elbowPre[1] + ((BACK_RACK[1] - elbowPre[1]) / toRack) * SIDE_FORE_LEN,
+      ];
       const arm = aimArm(
         {
           S: SIDE_ANCHORS.shoulder,
           E: SIDE_ANCHORS.elbow,
           H: SIDE_ANCHORS.hand,
         },
-        solveElbow(
-          SIDE_ANCHORS.shoulder,
-          BACK_RACK,
-          SIDE_UPPER_LEN,
-          SIDE_FORE_LEN,
-          1
-        ),
-        BACK_RACK,
+        elbowPre,
+        handPre,
         0
       );
       return {
@@ -1058,7 +1149,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * blades toward mid-foot (−5, the lats-pull-the-bar-in line) so
        * the bar never drifts out past the toes. */
       const S = applyToPoint(SIDE_ANCHORS.shoulder, torsoOps);
-      const hFinal: Pt = [S[0] + lerp(8, -5, e), S[1] + 54.8];
+      const hFinal: Pt = [S[0] + lerp(8, -5, e), S[1] + STRAIGHT_ARM];
       const unpose: Op[] = [
         { kind: "translate", dx: -shift.dx, dy: -shift.dy },
         { kind: "rotate", deg: -hinge, pivot: SIDE_ANCHORS.hip },
@@ -1357,7 +1448,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * renders as a ~12° soft lock: straight to the eye, not
        * hyperextended. Same ceiling rule as the press — stay under
        * 55.07 or the solve clamps instead of failing. */
-      const H: Pt = [S[0] + lerp(24, 54.2, e), S[1] + lerp(22, 8, e)];
+      const H: Pt = [S[0] + lerp(30, BENCH_LOCKOUT, e), S[1] + lerp(16, 4, e)];
       const arm = aimArm(
         { S, E: SIDE_ANCHORS.elbow, H: SIDE_ANCHORS.hand },
         // out −1: the elbow tucks toward the feet/floor side, the real
@@ -1376,12 +1467,12 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * (the old 35°/55° split buried the feet and opened the knee to
        * ~125°). */
       const leg: Op[] = [
-        { kind: "rotate", deg: 28, pivot: SIDE_ANCHORS.hip },
+        { kind: "rotate", deg: BENCH_THIGH, pivot: SIDE_ANCHORS.hip },
         G,
       ];
       const shank: Op[] = [
-        { kind: "rotate", deg: 62, pivot: SIDE_ANCHORS.knee },
-        { kind: "rotate", deg: 28, pivot: SIDE_ANCHORS.hip },
+        { kind: "rotate", deg: 90 - BENCH_THIGH, pivot: SIDE_ANCHORS.knee },
+        { kind: "rotate", deg: BENCH_THIGH, pivot: SIDE_ANCHORS.hip },
         G,
       ];
       return {
@@ -1441,7 +1532,11 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       // Bar path: a straight VERTICAL line below the shoulder joint —
       // below the knee at the bottom, lower ribs at the top with the
       // elbow driving past the torso line (IK bends it up-back).
-      const hFinal: Pt = [S[0] + 1, lerp(S[1] + 50, S[1] + 26, e)];
+      // Dead hang at ~91% of reach, lower ribs at the top.
+      const hFinal: Pt = [
+        S[0] + 1,
+        lerp(S[1] + STRAIGHT_ARM * 0.91, S[1] + STRAIGHT_ARM * 0.48, e),
+      ];
       const hPre = applyToPoint(hFinal, unpose);
       const arm = aimArm(
         {
@@ -1536,7 +1631,10 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * shins once the shoulders travel forward, so the grip is pulled
        * back toward the thigh/shin as the hinge deepens (lats hold the
        * bar in). */
-      const hPre = applyToPoint([S[0] + lerp(1.2, -5, e), S[1] + 52], unpose);
+      const hPre = applyToPoint(
+        [S[0] + lerp(1.2, -5, e), S[1] + STRAIGHT_ARM],
+        unpose
+      );
       const arm = aimArm(
         {
           S: SIDE_ANCHORS.shoulder,
@@ -1611,15 +1709,15 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * the planted hands so the toes meet the floor, then the whole
        * body pivots about the TOES as the chest drops — hands stay
        * planted, elbows IK-solved toward the feet. */
-      const G: Op = { kind: "rotate", deg: 90, pivot: [44, 100] };
-      const TILT: Op = { kind: "rotate", deg: -13, pivot: PUSHUP_HAND };
+      const TILT: Op = { kind: "rotate", deg: PU_TILT, pivot: PU_TOE_G };
       const beta = lerp(0, 9.5, e);
       const B: Op = { kind: "rotate", deg: beta, pivot: PUSHUP_TOE };
-      const bodyOps: Op[] = [G, TILT, B];
+      const bodyOps: Op[] = [PU_G, TILT, PU_SHIFT, B];
       // Map the fixed hand plant back to standing space for the aim.
       const hPre = applyToPoint(PUSHUP_HAND, [
         { kind: "rotate", deg: -beta, pivot: PUSHUP_TOE },
-        { kind: "rotate", deg: 13, pivot: PUSHUP_HAND },
+        { kind: "translate", dx: 0, dy: -PU_SHIFT.dy },
+        { kind: "rotate", deg: -PU_TILT, pivot: PU_TOE_G },
         { kind: "rotate", deg: -90, pivot: [44, 100] },
       ]);
       const arm = aimArm(

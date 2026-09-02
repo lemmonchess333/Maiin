@@ -455,3 +455,49 @@ Fixing it is a coordinated re-row of every contour in `bodySideData`
 plus a re-fit of every side pose's hard-coded reach and every mechanics
 pin — its own PR, after this one, so its re-review is not mixed with
 these changes.
+
+## STATUS 2026-09-02d — proportions: the profile skeleton re-rowed to anthropometric norms
+
+The measurement recorded in 2026-09-02c, acted on. The contours in
+`bodySideData` are still AUTHORED on the vendored figure's rows, then
+passed through two monotonic piecewise remaps at module load (body
+chain and arm chain separately), and every anchor is derived through
+the same remap as the art it sits in — so the construction of every
+facet is untouched and the figure cannot drift from its own skeleton.
+
+| Landmark | Was   | Now | Norm | Segment   | Was  | Now  | Norm |
+| -------- | ----- | --- | ---- | --------- | ---- | ---- | ---- |
+| shoulder | 45    | 38  | 36   | upper arm | 25.5 | 36   | ~37  |
+| elbow    | 70.5  | 74  | 74   | forearm   | 29.5 | 31   | ~30  |
+| wrist    | 100   | 105 | 106  | thigh     | 52   | 49.6 | ~49  |
+| hip      | 100.5 | 96  | 94   | shank     | 41   | 48   | ~49  |
+| knee     | 152   | 145 | 143  |           |      |      |      |
+
+What it changed on screen: the standing fist reaches mid-thigh instead
+of the hip crease; the neck loses the 7 units that read as a mannequin;
+the shins are no longer stubby; the deadlift reaches to just above the
+ankle.
+
+Every side pose's hard-coded reach was re-fitted to the measured arm
+rather than re-tuned by hand: `STRAIGHT_ARM` (deadlift, RDL, row) and
+`BENCH_LOCKOUT` are fractions of the measured reach, `BENCH_THIGH` is
+solved from the floor line so the sole still lands on it with a
+vertical shin, the goblet hold is relative to the shoulder, and the
+push-up plank is DERIVED from body length and arm reach (tilt = asin of
+shoulder height over toe-to-shoulder length) instead of the three
+hand-tuned constants that encoded the old arm.
+
+One pose could not survive by IK: the back-squat arm. The rack contact
+sits ~7 units up-and-back of the shoulder, and with the longer upper arm
+both in-plane elbow branches land at shoulder height (one straight back,
+one straight up). A real back-squat elbow points down-and-back because
+the grip is OUTBOARD of the body — an abduction a true profile cannot
+solve — so the arm is choreographed (upper arm 40° back, forearm folded
+up toward the bar) and the fist lands just under the bar, which is what
+the foreshortened outboard grip looks like from the side. Pinned as
+elbow-below-and-behind rather than wrist-on-bar.
+
+All 72 existing pins passed the re-row unchanged before the squat-arm
+pin was rewritten — the geometry pins were written as relations, not
+absolutes, which is what let a skeleton change ship without a re-tune
+of every test.
