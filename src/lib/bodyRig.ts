@@ -727,6 +727,10 @@ export const CALF_BALL: Pt = [60, 202.3];
  *  below it so the heels can drop past the edge at the bottom. */
 export const CALF_BLOCK_TOP = 203;
 const CALF_FLOOR = 212;
+
+/** Dip station grip, fixed in final space: hand height beside the
+ *  figure, well above the floor so the tucked feet never touch it. */
+export const DIP_GRIP: Pt = [60, 108];
 export const BODY_DEMOS: Record<string, BodyDemo> = {
   squat: {
     view: "side",
@@ -1012,13 +1016,14 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
   },
 
   dips: {
-    view: "anterior",
-    equip: "dip-bars",
+    view: "side",
     concentricTo: 0,
-    // The body hangs on the bars the whole time — feet never touch the
-    // floor, so the scene extends below the figure.
-    viewBox: "-8 -14 116 240",
-    groundY: 222,
+    // The whole figure hangs on the station: feet clear of the floor at
+    // every frame, the floor line well below the tucked shins.
+    viewBox: "-14 -6 184 218",
+    groundY: 206,
+    shadowCx: 52,
+    shadowRx: 30,
     /* Catalogue: Pectorals | Triceps, Front Delts. It was INVERTED
      * (triceps primary) until the 2026-09-02 mechanics audit. */
     tint: {
@@ -1027,50 +1032,91 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       "front-deltoids": "secondary",
     },
     pose: (e) => {
-      /* Hands stay ON the grips while the body drops between them —
-       * same both-ends-constrained problem as the pull-up, IK-solved.
-       * The elbows flare outward as the body sinks. */
-      const dy = lerp(0, 13, e);
-      const L = aimArm(
-        { S: ANT.shoulderL, E: ANT.elbowL, H: ANT.handL },
-        solveElbow(
-          [ANT.shoulderL[0], ANT.shoulderL[1] + dy],
-          ANT.handL,
-          ANT_UPPER_LEN,
-          ANT_FORE_LEN,
-          -1
-        ),
-        ANT.handL,
-        dy
+      /* Side-view dip (2026-09-02, replaces the anterior version — the
+       * owner's "looks bad"). From the front a dip is a figure bobbing
+       * between two poles; the two things that make it a dip — the
+       * forward lean and the elbows travelling BACK — live in the side
+       * plane. Here the hand is pinned to the fixed grip, the shoulder
+       * travels a solved path (straight-arm support at the top; at the
+       * bottom the upper arm is horizontal pointing back with the
+       * forearm vertical, i.e. the elbow at 90°), the trunk leans
+       * further forward as it sinks (a chest dip), and the legs hang
+       * with the knees tucked back so the feet stay clear of the floor.
+       * Everything rides the shoulder: the body rotates about the
+       * standing shoulder by the lean and translates to the solved
+       * shoulder position, and the arm is aimed at the grip in pre-pose
+       * space — same machinery as the bench. */
+      const S0 = SIDE_ANCHORS.shoulder;
+      const lean = lerp(12, 30, e);
+      // Shoulder path: top = grip minus a near-straight arm angled a
+      // touch behind the grip; bottom = elbow at 90° with the upper arm
+      // horizontal and pointing back (the shoulder sits one upper-arm
+      // length BEHIND and one forearm ABOVE the grip).
+      const top: Pt = [
+        DIP_GRIP[0] - 0.97 * (SIDE_UPPER_LEN + SIDE_FORE_LEN) * Math.sin(0.06),
+        DIP_GRIP[1] - 0.97 * (SIDE_UPPER_LEN + SIDE_FORE_LEN) * Math.cos(0.06),
+      ];
+      const bottom: Pt = [
+        DIP_GRIP[0] - SIDE_UPPER_LEN * 0.92,
+        DIP_GRIP[1] - SIDE_FORE_LEN * 0.92,
+      ];
+      const S: Pt = [lerp(top[0], bottom[0], e), lerp(top[1], bottom[1], e)];
+      const bodyOps: Op[] = [
+        { kind: "rotate", deg: lean, pivot: S0 },
+        { kind: "translate", dx: S[0] - S0[0], dy: S[1] - S0[1] },
+      ];
+      // Gaze stays forward as the trunk leans.
+      const headOps: Op[] = [
+        { kind: "rotate", deg: -lean * HEAD_LIFT, pivot: SIDE_ANCHORS.neck },
+        ...bodyOps,
+      ];
+      // Legs: hips a touch flexed, knees tucked back 90° so the shins
+      // trail behind and the feet clear the floor.
+      const thighOps: Op[] = [
+        { kind: "rotate", deg: -8, pivot: SIDE_ANCHORS.hip },
+        ...bodyOps,
+      ];
+      const shankOps: Op[] = [
+        { kind: "rotate", deg: 70, pivot: SIDE_ANCHORS.knee },
+        { kind: "rotate", deg: -8, pivot: SIDE_ANCHORS.hip },
+        ...bodyOps,
+      ];
+      // Aim the arm at the grip in pre-pose space.
+      const gPre = applyToPoint(DIP_GRIP, [
+        { kind: "translate", dx: S0[0] - S[0], dy: S0[1] - S[1] },
+        { kind: "rotate", deg: -lean, pivot: S0 },
+      ]);
+      // Elbow BEHIND the shoulder line (dips drive the elbows back);
+      // pick the branch by result, as the squat does.
+      const eA = solveElbow(S0, gPre, SIDE_UPPER_LEN, SIDE_FORE_LEN, 1);
+      const eB = solveElbow(S0, gPre, SIDE_UPPER_LEN, SIDE_FORE_LEN, -1);
+      const arm = aimArm(
+        { S: S0, E: SIDE_ANCHORS.elbow, H: SIDE_ANCHORS.hand },
+        eA[0] < eB[0] ? eA : eB,
+        gPre,
+        0
       );
-      const R = aimArm(
-        { S: ANT.shoulderR, E: ANT.elbowR, H: ANT.handR },
-        solveElbow(
-          [ANT.shoulderR[0], ANT.shoulderR[1] + dy],
-          ANT.handR,
-          ANT_UPPER_LEN,
-          ANT_FORE_LEN,
-          1
-        ),
-        ANT.handR,
-        dy
-      );
-      const ride: Op[] = [{ kind: "translate", dx: 0, dy }];
       return {
-        head: ride,
-        torso: ride,
-        thighL: ride,
-        thighR: ride,
-        shankL: ride,
-        shankR: ride,
-        upperArmL: L.upper,
-        foreArmL: L.fore,
-        upperArmR: R.upper,
-        foreArmR: R.fore,
+        head: headOps,
+        torso: bodyOps,
+        pelvis: bodyOps,
+        thighL: thighOps,
+        thighR: thighOps,
+        shankL: shankOps,
+        shankR: shankOps,
+        upperArmL: [...arm.upper, ...bodyOps],
+        foreArmL: [...arm.fore, ...bodyOps],
+        handL: [...arm.fore, ...bodyOps],
       };
     },
-    // Grip anchor line for the posts (the hands never move).
-    bar: () => [ANT.handL, ANT.handR],
+    // The station in profile: the near bar runs front-to-back (so it
+    // reads as a horizontal tube between its two posts), grip mid-bar.
+    scene: () =>
+      `<line x1="${DIP_GRIP[0] - 20}" y1="${DIP_GRIP[1]}" x2="${DIP_GRIP[0] - 20}" y2="205" stroke="${GEAR_DARK}" stroke-width="3.2"/>` +
+      `<line x1="${DIP_GRIP[0] + 20}" y1="${DIP_GRIP[1]}" x2="${DIP_GRIP[0] + 20}" y2="205" stroke="${GEAR_DARK}" stroke-width="3.2"/>` +
+      `<line x1="${DIP_GRIP[0] - 28}" y1="205" x2="${DIP_GRIP[0] + 28}" y2="205" stroke="${GEAR_DARK}" stroke-width="2.4" stroke-linecap="round"/>` +
+      `<rect x="${DIP_GRIP[0] - 24}" y="${DIP_GRIP[1] - 1.7}" width="48" height="3.4" rx="1.7" fill="${GEAR}"/>` +
+      `<line x1="-12" y1="206" x2="168" y2="206" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
   },
 
   deadlift: {

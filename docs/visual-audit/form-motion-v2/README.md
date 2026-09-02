@@ -544,3 +544,16 @@ Why 4 fps review missed it: a one-frame event at 60 fps has a 1-in-15
 chance of landing on a sampled frame. Frame-diff outlier detection is
 the tool for "one frame in the wrong place"; contact sheets never will
 be.
+
+## STATUS 2026-09-02e — dips moved to the side view
+
+Owner recording of the dips loop: "looks bad". From the front a dip is
+a figure bobbing between two poles — the two things that make it a dip,
+the forward lean and the elbows travelling BACK, live in the side plane.
+Rebuilt as a profile: the hand is pinned to a fixed grip, the shoulder
+travels a solved path (straight-arm support at the top; elbow at 90°
+with the upper arm horizontal-back at the bottom), the trunk leans
+further as it sinks (a chest dip), and the legs hang with the knees
+tucked back so the feet clear the floor. The station is scene furniture
+in profile: the near bar runs front-to-back, so it reads as a tube
+between its two posts with the grip mid-bar.
