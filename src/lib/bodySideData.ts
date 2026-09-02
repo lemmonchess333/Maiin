@@ -438,21 +438,29 @@ export const SIDE_PIECES: SidePiece[] = [
           skewB: [2, -2],
         }),
       },
+      /* Lower trunk in profile (owner review 2026-09-02: "split into
+       * three sections of the abdominal — is this accurate?"). Three
+       * regions IS what a profile shows — rectus at the front, the
+       * obliques as the visible flank, erectors at the back — but they
+       * were cut in equal thirds, which reads as ribs on a robot. The
+       * rectus is a thin front strip (~22% of trunk depth), the
+       * obliques are most of the flank (~48%), the erectors the rest. */
       {
         muscle: "abs",
-        points: band(TORSO_B, TORSO_F, 57.4, 89.5, 0.64, 1, {
+        points: band(TORSO_B, TORSO_F, 57.4, 89.5, 0.78, 1, {
           skewT: [1.2, -0.8],
         }),
       },
       {
         muscle: "obliques",
-        points: band(TORSO_B, TORSO_F, 58.8, 90, 0.34, 0.64, {
+        points: band(TORSO_B, TORSO_F, 58.8, 90, 0.3, 0.78, {
           skewT: [1.5, -1.5],
+          bellyR: 0.03,
         }),
       },
       {
         muscle: "lower-back",
-        points: band(TORSO_B, TORSO_F, 68.8, 88.4, 0, 0.34),
+        points: band(TORSO_B, TORSO_F, 68.8, 88.4, 0, 0.3),
       },
     ],
   },

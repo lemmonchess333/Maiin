@@ -308,13 +308,20 @@ describe("renderBodyDemo", () => {
       );
       expect(el[1], `elbow low @${t}`).toBeGreaterThan(sh[1] + 10);
       expect(el[0], `elbow behind hand @${t}`).toBeLessThan(wrist[0]);
-      // ONE bell, sitting just above the cupped hands; no barbell plate.
+      // ONE dumbbell held VERTICALLY: two heads, one cupped above the
+      // hands and one hanging below, centred on the grip; no barbell
+      // plate. (It drew a flat plate disc until the 2026-09-02 review.)
       const svg = renderBodyDemo("goblet-squat", t);
-      const bells = [
-        ...svg.matchAll(/<circle cx="(-?[\d.]+)" cy="(-?[\d.]+)" r="6"/g),
-      ].map((m) => [Number(m[1]), Number(m[2])]);
-      expect(bells.length, `bells @${t}`).toBe(1);
-      expect(bells[0][1]).toBeCloseTo(wrist[1] - 6, 0);
+      const heads = [
+        ...svg.matchAll(
+          /<rect x="(-?[\d.]+)" y="(-?[\d.]+)" width="11" height="5"/g
+        ),
+      ].map((m) => [Number(m[1]) + 5.5, Number(m[2]) + 2.5]);
+      expect(heads.length, `heads @${t}`).toBe(2);
+      const ys = heads.map((h) => h[1]).sort((a, b) => a - b);
+      expect(ys[0]).toBeCloseTo(wrist[1] - 7, 0);
+      expect(ys[1]).toBeCloseTo(wrist[1] + 7, 0);
+      for (const h of heads) expect(h[0]).toBeCloseTo(wrist[0], 0);
       expect(svg.includes('r="11"')).toBe(false);
     }
     expect(getBodyDemo("goblet-squat")!.equip).toBe("goblet-bell");

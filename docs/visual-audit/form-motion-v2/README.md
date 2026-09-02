@@ -388,3 +388,23 @@ one bell above the hands, the heel below/above the block edge.
 The fist tests that used the anterior calf raise as their arms-at-rest
 reference now measure against the SOLVED forearm axis of the lateral
 raise — no anterior demo is an identity pose any more.
+
+## STATUS 2026-09-02b — owner review of the side model: three anatomy fixes, applied to every side demo
+
+Owner review of the new side-view squats on device: "the abdominal is
+split into three sections — is this accurate?", "the glutes pop out
+when it bends down", "the weight should be a goblet". Each was a
+property of the SHARED profile model or the hinge chain, not of one
+demo, so each fix lands on every demo that shares it.
+
+| Fix               | What was wrong                                                                                                                                                 | Change                                                                                                                                                                                               |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Trunk proportions | The profile trunk WAS three regions (rectus front, obliques flank, erectors back — accurate), but cut in equal thirds, which reads as ribs on a robot.         | `bodySideData` bands re-proportioned: rectus a thin front strip (22% of depth), obliques the flank (48%, with a belly), erectors the rest. Every side demo.                                          |
+| Pelvis follow     | The pelvis piece was welded to the torso, so at the bottom of a hinge it swung the full angle while the thigh rotated the other way — the glute lifted off it. | `PELVIS_FOLLOW = 0.6`: the pelvis takes 60% of the hinge; the lumbar overlap hides the differential. Applied to squat, goblet, deadlift, RDL, row.                                                   |
+| Head lift         | The head was welded to the torso and stared at the floor at the bottom of every hinge.                                                                         | `HEAD_LIFT = 0.4`: the head counter-rotates about the neck by 40% of the hinge so the gaze stays forward-down. Same five demos.                                                                      |
+| Goblet            | The goblet "bell" was a flat end-on plate disc.                                                                                                                | New `gobletDumbbell` prop: a dumbbell held VERTICALLY — top head cupped in the hands, handle down through the palms (behind layer), bottom head hanging below. `goblet-bell` equip dispatches to it. |
+| Pulldown bottom   | From behind, the bar at collarbone height showed through the neck gap as if it passed through the throat.                                                      | Bottom of the stroke lowered to the upper chest (y 58) so the back occludes the shaft and only the ends + fists show.                                                                                |
+
+Every other demo re-renders unchanged apart from the trunk bands. The
+goblet pin now asserts two stacked heads centred on the grip instead of
+one disc.

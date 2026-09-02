@@ -72,6 +72,10 @@ export type PropState =
     }
   /** A dumbbell in each hand, end-on at the solved grips. */
   | { kind: "dumbbell"; hands: Pt[]; bellR: number }
+  /** ONE dumbbell held vertically at the chest (goblet): the hands cup
+   *  the top head, the handle runs down through them, the bottom head
+   *  hangs below. Seen from the side, so both heads show. */
+  | { kind: "gobletDumbbell"; hand: Pt }
   /** Cable + rope attachment, solved from the grip and the pulley. */
   | {
       kind: "ropeAttachment";
@@ -179,6 +183,26 @@ export function dumbbell(hands: Pt[], bellR: number): string {
 }
 
 /**
+ * Goblet dumbbell — held vertically, so the profile shows both heads
+ * stacked with the handle between them. The HANDLE goes in the behind
+ * layer (the hands wrap it), the heads in front (the top one is what
+ * the palms cup, the bottom one hangs clear beneath the fists).
+ */
+export const GOBLET_HEAD_W = 11;
+export const GOBLET_HEAD_H = 5;
+export const GOBLET_HEAD_DY = 7;
+export function gobletDumbbell(hand: Pt): PropLayers {
+  const [x, y] = hand;
+  const head = (cy: number) =>
+    `<rect x="${n(x - GOBLET_HEAD_W / 2)}" y="${n(cy - GOBLET_HEAD_H / 2)}" width="${n(GOBLET_HEAD_W)}" height="${n(GOBLET_HEAD_H)}" rx="2.4" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="0.9"/>` +
+    `<rect x="${n(x - GOBLET_HEAD_W / 2 + 2)}" y="${n(cy - 0.7)}" width="${n(GOBLET_HEAD_W - 4)}" height="1.4" rx="0.7" fill="${GEAR}" opacity="0.7"/>`;
+  return {
+    behind: `<rect x="${n(x - 1.3)}" y="${n(y - GOBLET_HEAD_DY)}" width="2.6" height="${n(GOBLET_HEAD_DY * 2)}" rx="1" fill="${GEAR}"/>`,
+    front: head(y - GOBLET_HEAD_DY) + head(y + GOBLET_HEAD_DY),
+  };
+}
+
+/**
  * Cable + rope attachment.
  *
  * Three honesty repairs over the hand-rolled version this replaces:
@@ -262,6 +286,9 @@ export function renderProp(state: PropState): PropLayers {
 
     case "dumbbell":
       return { behind: "", front: dumbbell(state.hands, state.bellR) };
+
+    case "gobletDumbbell":
+      return gobletDumbbell(state.hand);
 
     case "ropeAttachment":
       return {
