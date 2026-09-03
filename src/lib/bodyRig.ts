@@ -37,6 +37,7 @@ import { FAR_ARM_SHIFT, SIDE_PIECES, SIDE_ANCHORS } from "./bodySideData";
 import {
   GEAR,
   GEAR_DARK,
+  GEAR_EDGE,
   renderProp,
   type PropLayers,
   type PropState,
@@ -573,7 +574,8 @@ export interface BodyDemo {
     | "barbell"
     | "back-barbell"
     | "dumbbell"
-    | "goblet-bell";
+    | "goblet-bell"
+    | "cable-handle";
   /** plate-end disc radius (default 10). The deadlift draws a
    *  full-size 45 (r=26 ≈ 45 cm on a 175 cm figure) so the bottom
    *  frame reads bar-near-the-floor. */
@@ -583,7 +585,7 @@ export interface BodyDemo {
    *  body; -1 where it sits BEHIND (a back squat), so the stub cannot
    *  cross the face. */
   sleeveDir?: -1 | 1;
-  /** `rope` only: the high-pulley anchor, fixed at the station. The
+  /** `rope` / `cable-handle`: the pulley anchor, fixed at the station. The
    *  cable is solved from it to the grip every frame, so the gear is
    *  never positioned independently of the body. */
   pulley?: Pt;
@@ -903,6 +905,112 @@ const inclineScene = (): string => {
     `<line x1="-70" y1="${SUPINE_FLOOR}" x2="118" y2="${SUPINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`
   );
 };
+
+/* Seated machine chain — the hips parked on a seat, thigh forward along
+ * it, shank swinging about the knee. `thighDeg` is the thigh's rotation
+ * from hanging (about -85 lays it along a seat), `shankRel` the shank's
+ * rotation RELATIVE to the thigh (0 = straight leg, +90 = hanging
+ * vertical off the seat edge). `lean` reclines the trunk against a
+ * backrest (negative = back). The body translate lands the rest hip on
+ * `seat`, so the hips never leave it — which is the one thing every
+ * seated-machine instruction insists on ("keep your hips pressed into
+ * the seat"). Arms hold the side handles beside the seat. */
+function seatedChain(
+  seat: Pt,
+  thighDeg: number,
+  shankRel: number,
+  lean: number
+): {
+  body: Op[];
+  torso: Op[];
+  head: Op[];
+  thigh: Op[];
+  shank: Op[];
+  arm: { upper: Op[]; fore: Op[] };
+} {
+  const body: Op[] = [
+    {
+      kind: "translate",
+      dx: seat[0] - SIDE_ANCHORS.hip[0],
+      dy: seat[1] - SIDE_ANCHORS.hip[1],
+    },
+  ];
+  const torso: Op[] = [
+    { kind: "rotate", deg: lean, pivot: SIDE_ANCHORS.hip },
+    ...body,
+  ];
+  // The head stays level against the recline.
+  const head: Op[] = [
+    { kind: "rotate", deg: -lean, pivot: SIDE_ANCHORS.neck },
+    ...torso,
+  ];
+  const thigh: Op[] = [
+    { kind: "rotate", deg: thighDeg, pivot: SIDE_ANCHORS.hip },
+    ...body,
+  ];
+  const shank: Op[] = [
+    { kind: "rotate", deg: shankRel, pivot: SIDE_ANCHORS.knee },
+    ...thigh,
+  ];
+  // Hands on the side handles at the seat edge: the arm hangs a touch
+  // forward with a bent elbow.
+  const upper: Op[] = [
+    { kind: "rotate", deg: -6, pivot: SIDE_ANCHORS.shoulder },
+    ...torso,
+  ];
+  const fore: Op[] = [
+    { kind: "rotate", deg: -28, pivot: SIDE_ANCHORS.elbow },
+    ...upper,
+  ];
+  return { body, torso, head, thigh, shank, arm: { upper, fore } };
+}
+/** Machine seat height: the hip 138 down, which leaves a hanging shank's
+ *  foot ~10 clear of the floor — a leg-extension seat, not a chair. */
+const MACHINE_SEAT: Pt = [44, 138];
+const MACHINE_FLOOR = 204;
+/** Row bench: lower than the machine seat, so the legs stretch forward
+ *  to a footplate at floor level rather than hanging. */
+const ROW_SEAT: Pt = [44, 142];
+/** Seat block + reclined backrest + post + floor, for the seated
+ *  machines. The lever arm and pads are per-demo (they follow the shank). */
+function machineSeatScene(seat: Pt, lean: number): string {
+  return (
+    `<rect x="${(seat[0] - 26).toFixed(1)}" y="${(seat[1] + 6).toFixed(1)}" width="62" height="8" rx="2.6" fill="${GEAR}"/>` +
+    `<rect x="${(seat[0] - 20).toFixed(1)}" y="${(seat[1] - 78).toFixed(1)}" width="8" height="86" rx="2.6" fill="${GEAR}" transform="rotate(${lean} ${(seat[0] - 12).toFixed(1)} ${(seat[1] + 4).toFixed(1)})"/>` +
+    `<line x1="${(seat[0] + 4).toFixed(1)}" y1="${(seat[1] + 14).toFixed(1)}" x2="${(seat[0] + 4).toFixed(1)}" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+    `<line x1="-26" y1="${MACHINE_FLOOR + 1}" x2="140" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`
+  );
+}
+/** A roller pad on the shank: `side` +1 puts it on the FRONT of the
+ *  shin (leg extension), -1 on the calf (leg curl). Drawn with the
+ *  machine's lever from the knee. */
+function shankPad(
+  pose: Partial<Record<GroupName, Op[]>>,
+  side: 1 | -1
+): string {
+  const k = applyToPoint(SIDE_ANCHORS.knee, pose.shankL ?? []);
+  const a = applyToPoint(SIDE_ANCHORS.ankle, pose.shankL ?? []);
+  const len = Math.hypot(a[0] - k[0], a[1] - k[1]) || 1;
+  const ux = (a[0] - k[0]) / len;
+  const uy = (a[1] - k[1]) / len;
+  // Perpendicular that points to the FRONT of the shin for any swing.
+  const px = uy * side;
+  const py = -ux * side;
+  const c: Pt = [a[0] - ux * 5 + px * 6.4, a[1] - uy * 5 + py * 6.4];
+  return (
+    `<line x1="${k[0].toFixed(1)}" y1="${k[1].toFixed(1)}" x2="${c[0].toFixed(1)}" y2="${c[1].toFixed(1)}" stroke="${GEAR_DARK}" stroke-width="3.2"/>` +
+    `<circle cx="${c[0].toFixed(1)}" cy="${c[1].toFixed(1)}" r="5.2" fill="${GEAR}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>`
+  );
+}
+
+/* Standing cable demos share a station: a post at the pulley's x from
+ * the top of the frame to the floor, and the floor. */
+function cableStationScene(postX: number, top: number): string {
+  return (
+    `<line x1="${postX}" y1="${top}" x2="${postX}" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+    `<line x1="-26" y1="${MACHINE_FLOOR + 1}" x2="140" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`
+  );
+}
 
 function sideSquatChain(
   e: number,
@@ -2584,6 +2692,304 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     scene: () =>
       `<line x1="-70" y1="158.5" x2="120" y2="158.5" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
   },
+
+  /* ── 2026-09-03 build-out, batch 3: cables and seated machines ── */
+
+  "cable-curl": {
+    /* The strict curl's arc, on a LOW pulley: "stand facing a low cable
+     * pulley ... elbows pinned ... curl the bar up toward your
+     * shoulders". Same pose as the barbell curl (the elbow does the
+     * same thing whatever is in the hand); what differs is the gear,
+     * and the tip is about the gear — "step back until there's tension
+     * through the whole rep" — so the cable is drawn taut from the floor
+     * pulley to the grip every frame. */
+    view: "side",
+    equip: "cable-handle",
+    pulley: [106, 190],
+    viewBox: "-12 -6 152 218",
+    groundY: 204,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { biceps: "primary", forearm: "secondary" },
+    pose: strictCurlPose,
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+    scene: () => cableStationScene(110, -6),
+  },
+
+  "straight-arm-pulldown": {
+    /* "Stand facing a high pulley, grip the bar with straight arms,
+     * hinge slightly forward. Lock your elbows into a soft, fixed bend
+     * ... Pull the bar down in an arc to your thighs ... return to a
+     * full overhead stretch." A 20-degree hinge held throughout, the
+     * arm swinging about the SHOULDER from overhead-forward to the
+     * front of the thigh with the elbow's 12 degrees never changing —
+     * the fixed-bend cue is the whole exercise, so it is pinned. */
+    view: "side",
+    equip: "cable-handle",
+    pulley: [134, -30],
+    viewBox: "-12 -36 160 248",
+    groundY: 204,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { "upper-back": "primary", triceps: "secondary" },
+    pose: (e) => {
+      const HINGE = 20;
+      const LEAN = hipsBack(HINGE);
+      const torso: Op[] = [
+        { kind: "rotate", deg: HINGE, pivot: SIDE_ANCHORS.hip },
+        LEAN,
+      ];
+      const head: Op[] = [
+        { kind: "rotate", deg: -HINGE * HEAD_LIFT, pivot: SIDE_ANCHORS.neck },
+        ...torso,
+      ];
+      const pelvis: Op[] = [
+        { kind: "rotate", deg: HINGE * PELVIS_FOLLOW, pivot: SIDE_ANCHORS.hip },
+        LEAN,
+      ];
+      const leg: Op[] = [LEAN];
+      // Overhead-forward at the stretch, back against the thigh at the
+      // finish (the torso leans 20, so the hanging arm has to angle a
+      // little BACK in torso space to meet the thigh front).
+      const swing = lerp(-145, -5, e);
+      const upper: Op[] = [
+        { kind: "rotate", deg: swing, pivot: SIDE_ANCHORS.shoulder },
+        ...torso,
+      ];
+      const fore: Op[] = [
+        { kind: "rotate", deg: -12, pivot: SIDE_ANCHORS.elbow },
+        ...upper,
+      ];
+      return {
+        head,
+        torso,
+        pelvis,
+        thighL: leg,
+        thighR: leg,
+        shankL: leg,
+        shankR: leg,
+        upperArmL: upper,
+        foreArmL: fore,
+        handL: fore,
+        upperArmR: upper,
+        foreArmR: fore,
+        handR: fore,
+      };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+    scene: () => cableStationScene(138, -36),
+  },
+
+  "face-pulls": {
+    /* "Set a rope at or slightly above face height ... arms extended
+     * straight toward the pulley. Pull the rope toward your face,
+     * separating the ends past your ears ... elbows high throughout."
+     * The pulley sits at eye level in front; the upper arm stays at the
+     * shoulder line (elbows high is the cue the tip repeats — "pulling
+     * low turns it into a row") while the forearm folds 145 degrees so
+     * the hand finishes beside the eyes. The rope is the pushdown's
+     * rope with its pulley moved: strands open with the pull. */
+    view: "side",
+    equip: "rope",
+    pulley: [128, 14],
+    viewBox: "-12 -14 156 226",
+    groundY: 204,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { "upper-back": "primary", trapezius: "secondary" },
+    pose: (e) => {
+      // Straight out toward the pulley; the elbow ends a touch behind
+      // horizontal as the blades pull together.
+      const upper: Op[] = [
+        {
+          kind: "rotate",
+          deg: lerp(-98, -100, e),
+          pivot: SIDE_ANCHORS.shoulder,
+        },
+      ];
+      const fore: Op[] = [
+        { kind: "rotate", deg: -lerp(0, 108, e), pivot: SIDE_ANCHORS.elbow },
+        ...upper,
+      ];
+      return {
+        upperArmL: upper,
+        foreArmL: fore,
+        handL: fore,
+        upperArmR: upper,
+        foreArmR: fore,
+        handR: fore,
+      };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+    scene: () => cableStationScene(132, -14),
+  },
+
+  "seated-row": {
+    /* "Sit with feet braced, knees softly bent, torso upright ... pull
+     * the handle to your lower ribs, elbows tracking close to your
+     * body. Extend your arms slowly without letting your lower back
+     * round." The hips sit on a low bench with the legs stretched to a
+     * footplate, the torso stays VERTICAL at both ends (the tip: "keep
+     * your chest tall and still" — no rocking), and the hand travels a
+     * straight line from full reach to the lower ribs with the elbow
+     * solved BEHIND the trunk. Cable from a chest-height pulley at the
+     * footplate end. */
+    view: "side",
+    equip: "cable-handle",
+    pulley: [140, 96],
+    viewBox: "-12 -6 164 218",
+    groundY: 204,
+    shadowCx: 70,
+    shadowRx: 40,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: {
+      "upper-back": "primary",
+      biceps: "secondary",
+      trapezius: "secondary",
+    },
+    pose: (e) => {
+      const seat = ROW_SEAT;
+      const chain = seatedChain(seat, -70, 26, 0);
+      const S = SIDE_ANCHORS.shoulder;
+      // Body-space hand path: full reach forward-and-down, to the lower
+      // ribs (just ahead of the torso front, a hand below the chest).
+      const H: Pt = [
+        lerp(S[0] + 63, S[0] + 12, e),
+        lerp(S[1] + 22, S[1] + 26, e),
+      ];
+      const E = solveElbow(S, H, SIDE_UPPER_LEN, SIDE_FORE_LEN, -1);
+      const arm = aimArm(
+        { S, E: SIDE_ANCHORS.elbow, H: SIDE_ANCHORS.hand },
+        E,
+        H,
+        0
+      );
+      return {
+        head: chain.head,
+        torso: chain.torso,
+        pelvis: chain.body,
+        thighL: chain.thigh,
+        thighR: chain.thigh,
+        shankL: chain.shank,
+        shankR: chain.shank,
+        upperArmL: [...arm.upper, ...chain.body],
+        foreArmL: [...arm.fore, ...chain.body],
+        handL: [...arm.fore, ...chain.body],
+        upperArmR: [...arm.upper, ...chain.body],
+        foreArmR: [...arm.fore, ...chain.body],
+        handR: [...arm.fore, ...chain.body],
+      };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+    scene: (_e, pose) => {
+      const seat = ROW_SEAT;
+      const a = applyToPoint(SIDE_ANCHORS.ankle, pose.shankL ?? []);
+      return (
+        // Low bench under the hips, the footplate the feet brace on,
+        // the station's post at the pulley, and the floor.
+        `<rect x="${(seat[0] - 24).toFixed(1)}" y="${(seat[1] + 6).toFixed(1)}" width="50" height="8" rx="2.6" fill="${GEAR}"/>` +
+        `<line x1="${seat[0]}" y1="${(seat[1] + 14).toFixed(1)}" x2="${seat[0]}" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+        `<rect x="${(a[0] + 8).toFixed(1)}" y="${(a[1] - 14).toFixed(1)}" width="6" height="26" rx="2" fill="${GEAR}" transform="rotate(-16 ${(a[0] + 11).toFixed(1)} ${(a[1] - 1).toFixed(1)})"/>` +
+        cableStationScene(144, 40)
+      );
+    },
+  },
+
+  "leg-extension": {
+    /* "Sit in the machine ... pad on your shins, just above the ankle
+     * ... hips pressed into the seat. Extend your legs smoothly until
+     * they're fully straight." The seated chain with the thigh along
+     * the seat: the shank swings about the knee from hanging (knee at
+     * 90) to in line with the thigh (fully straight — pinned), the hip
+     * never moving. The roller rides the shin and the lever follows it
+     * from the knee, so the machine is drawn FROM the leg. */
+    view: "side",
+    viewBox: "-12 -6 172 218",
+    groundY: 204,
+    shadowCx: 62,
+    shadowRx: 36,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { quadriceps: "primary" },
+    pose: (e) => {
+      const chain = seatedChain(MACHINE_SEAT, -86, lerp(80, 0, e), -12);
+      return {
+        head: chain.head,
+        torso: chain.torso,
+        pelvis: chain.body,
+        thighL: chain.thigh,
+        thighR: chain.thigh,
+        shankL: chain.shank,
+        shankR: chain.shank,
+        upperArmL: chain.arm.upper,
+        foreArmL: chain.arm.fore,
+        handL: chain.arm.fore,
+        upperArmR: chain.arm.upper,
+        foreArmR: chain.arm.fore,
+        handR: chain.arm.fore,
+      };
+    },
+    scene: (_e, pose) =>
+      machineSeatScene(MACHINE_SEAT, -12) + shankPad(pose, 1),
+  },
+
+  "seated-leg-curl": {
+    /* "Sit with the thigh pad pinning your legs and the ankle pad on
+     * your lower calves ... curl your legs down and back by driving the
+     * heels toward the floor." The extension's chain run the other way:
+     * the leg starts STRAIGHT out along the seat (the hamstring's
+     * stretch — where the rep begins) and curls under to past 90, hips
+     * pinned. Roller behind the calf, and the thigh pad the
+     * instruction names sits over the knee. */
+    view: "side",
+    viewBox: "-12 -6 172 218",
+    groundY: 204,
+    shadowCx: 62,
+    shadowRx: 36,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { hamstring: "primary", calves: "secondary" },
+    pose: (e) => {
+      const chain = seatedChain(MACHINE_SEAT, -86, lerp(2, 100, e), -12);
+      return {
+        head: chain.head,
+        torso: chain.torso,
+        pelvis: chain.body,
+        thighL: chain.thigh,
+        thighR: chain.thigh,
+        shankL: chain.shank,
+        shankR: chain.shank,
+        upperArmL: chain.arm.upper,
+        foreArmL: chain.arm.fore,
+        handL: chain.arm.fore,
+        upperArmR: chain.arm.upper,
+        foreArmR: chain.arm.fore,
+        handR: chain.arm.fore,
+      };
+    },
+    scene: (_e, pose) => {
+      const k = applyToPoint(SIDE_ANCHORS.knee, pose.thighL ?? []);
+      return (
+        machineSeatScene(MACHINE_SEAT, -12) +
+        // Thigh pad: a roller pinning the leg just behind the knee.
+        `<circle cx="${(k[0] - 12).toFixed(1)}" cy="${(k[1] - 12).toFixed(1)}" r="5.2" fill="${GEAR}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>` +
+        shankPad(pose, -1)
+      );
+    },
+  },
 };
 
 /** Sibling exercises that share a demo's motion pattern.
@@ -2788,6 +3194,13 @@ function resolveProp(
         plateR: demo.plateR ?? 10,
         sleeveDir: demo.sleeveDir ?? 1,
       };
+      break;
+    case "cable-handle":
+      // One grip end-on (both hands stack in profile), the cable solved
+      // from wherever the station's pulley is to the hand every frame.
+      if (demo.pulley) {
+        state = { kind: "cableHandle", pulley: demo.pulley, hand: left };
+      }
       break;
     case "rope":
       // Spread opens with the rep — the exercise's own instruction is

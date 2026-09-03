@@ -93,6 +93,10 @@ export type PropState =
        *  swings the hanging tails apart. */
       spread: number;
     }
+  /** Cable + a short handle (a straight bar, a V-grip, a single D-handle
+   *  — all end-on in profile, so one drawing is honest for all three),
+   *  solved from the grip and the pulley. */
+  | { kind: "cableHandle"; pulley: Pt; hand: Pt }
   /** Machine bar on a cable (pulldown): pulley block + drop + bar. */
   | { kind: "cableBar"; left: Pt; right: Pt; frameY: number }
   /** Ceiling-mounted bar the body hangs from (pull-up). */
@@ -288,6 +292,35 @@ export function ropeAttachment(pulley: Pt, hand: Pt, spread: number): string {
   );
 }
 
+/**
+ * Cable + handle, end-on.
+ *
+ * The rope attachment's cable and pulley block, with a plain grip at
+ * the hand instead of the two strands: a collar where the cable clips
+ * on, then the handle's end seen along its own axis — a disc with a
+ * hub, the same construction the profile barbell uses for "this is a
+ * bar coming AT you". Straight bar, V-grip and D-handle all present
+ * this picture side-on, which is why there is one builder and not
+ * three. The pulley can sit anywhere: low for a curl, high for a
+ * pulldown, at face height for a face pull, at chest height for a row.
+ */
+export function cableHandle(pulley: Pt, hand: Pt): string {
+  const dx = hand[0] - pulley[0];
+  const dy = hand[1] - pulley[1];
+  const len = Math.hypot(dx, dy) || 1;
+  const ux = dx / len;
+  const uy = dy / len;
+  // Clip: where the cable meets the handle, just short of the grip.
+  const clip: Pt = [hand[0] - ux * 6, hand[1] - uy * 6];
+  return (
+    `<line x1="${n(pulley[0])}" y1="${n(pulley[1])}" x2="${n(clip[0])}" y2="${n(clip[1])}" stroke="${GEAR}" stroke-width="1.1"/>` +
+    `<circle cx="${n(pulley[0])}" cy="${n(pulley[1])}" r="3.2" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>` +
+    `<rect x="${n(clip[0] - 2.2)}" y="${n(clip[1] - 2.2)}" width="4.4" height="4.4" rx="1.3" fill="${GEAR}" transform="rotate(${(Math.atan2(uy, ux) * 180) / Math.PI} ${n(clip[0])} ${n(clip[1])})"/>` +
+    `<circle cx="${n(hand[0])}" cy="${n(hand[1])}" r="3.4" fill="${GEAR}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>` +
+    `<circle cx="${n(hand[0])}" cy="${n(hand[1])}" r="1.2" fill="${GEAR_DARK}"/>`
+  );
+}
+
 /* ── Resolver ─────────────────────────────────────────────────── */
 
 /** Render a prop into its two layers. Pure: same state → same SVG. */
@@ -317,6 +350,9 @@ export function renderProp(state: PropState): PropLayers {
         behind: "",
         front: ropeAttachment(state.pulley, state.hand, state.spread),
       };
+
+    case "cableHandle":
+      return { behind: "", front: cableHandle(state.pulley, state.hand) };
 
     case "fixedBar": {
       // Ceiling-mounted: two stems from the frame top down to the bar,

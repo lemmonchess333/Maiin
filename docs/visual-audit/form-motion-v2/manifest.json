@@ -115,6 +115,33 @@
         "file": "bulgarian-split-t100.png"
       }
     ],
+    "cable-curl": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "cable-curl-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "cable-curl-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "cable-curl-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "cable-curl-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "cable-curl-t100.png"
+      }
+    ],
     "calf-raise": [
       {
         "t": 0,
@@ -221,6 +248,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "dips-t100.png"
+      }
+    ],
+    "face-pulls": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "face-pulls-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "face-pulls-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "face-pulls-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "face-pulls-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "face-pulls-t100.png"
       }
     ],
     "front-raise": [
@@ -439,6 +493,33 @@
         "file": "lateral-raise-t100.png"
       }
     ],
+    "leg-extension": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "leg-extension-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "leg-extension-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "leg-extension-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "leg-extension-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "leg-extension-t100.png"
+      }
+    ],
     "lunges": [
       {
         "t": 0,
@@ -628,6 +709,60 @@
         "file": "rope-tricep-pushdown-t100.png"
       }
     ],
+    "seated-leg-curl": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "seated-leg-curl-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "seated-leg-curl-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "seated-leg-curl-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "seated-leg-curl-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "seated-leg-curl-t100.png"
+      }
+    ],
+    "seated-row": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "seated-row-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "seated-row-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "seated-row-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "seated-row-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "seated-row-t100.png"
+      }
+    ],
     "skull-crushers": [
       {
         "t": 0,
@@ -680,6 +815,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "squat-t100.png"
+      }
+    ],
+    "straight-arm-pulldown": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "straight-arm-pulldown-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "straight-arm-pulldown-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "straight-arm-pulldown-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "straight-arm-pulldown-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "straight-arm-pulldown-t100.png"
       }
     ],
     "tricep-kickback": [

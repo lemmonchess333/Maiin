@@ -40,6 +40,11 @@ const DEMOS: [id: string, name: string][] = [
   ["front-raise", "Front Raise"],
   // Batch 2: the supine chain.
   ["hip-thrust", "Hip Thrust"],
+  // Batch 3: the cable station (a rope at face height, a handle from a
+  // chest-height pulley on a row bench) and the seated machine.
+  ["face-pulls", "Face Pulls"],
+  ["seated-row", "Seated Cable Row"],
+  ["leg-extension", "Leg Extension"],
 ];
 
 test.use({
