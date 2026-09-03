@@ -53,6 +53,10 @@ const DEMOS: [id: string, name: string][] = [
   ["leg-raise", "Hanging Leg Raise"],
   ["ab-wheel", "Ab Wheel Rollout"],
   ["cable-crunch", "Cable Crunch"],
+  // Batch 6: the rigid-body row, the pendulum, the knee hinge.
+  ["inverted-row", "Inverted Row"],
+  ["kettlebell-swing", "Kettlebell Swing"],
+  ["nordic-hamstring-curl", "Nordic Hamstring Curl"],
 ];
 
 test.use({

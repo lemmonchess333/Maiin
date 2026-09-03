@@ -97,6 +97,10 @@ export type PropState =
    *  — all end-on in profile, so one drawing is honest for all three),
    *  solved from the grip and the pulley. */
   | { kind: "cableHandle"; pulley: Pt; hand: Pt }
+  /** Kettlebell: the handle at the grip, the ball beyond it along the
+   *  arm (`bell` is the ball's centre — the demo places it, so the bell
+   *  swings in line with the arm rather than always hanging). */
+  | { kind: "kettlebell"; hand: Pt; bell: Pt }
   /** Machine bar on a cable (pulldown): pulley block + drop + bar. */
   | { kind: "cableBar"; left: Pt; right: Pt; frameY: number }
   /** Ceiling-mounted bar the body hangs from (pull-up). */
@@ -321,6 +325,31 @@ export function cableHandle(pulley: Pt, hand: Pt): string {
   );
 }
 
+/**
+ * Kettlebell, side-on: a ball with a handle loop rising from it to the
+ * grip. The ball sits at `bell`, wherever the demo puts it — hanging
+ * under the hands at the bottom of a swing, floating beyond them at
+ * the top — and the handle is the short bar between the two points.
+ */
+export const KETTLEBELL_R = 7.5;
+export function kettlebell(hand: Pt, bell: Pt): string {
+  const dx = bell[0] - hand[0];
+  const dy = bell[1] - hand[1];
+  const len = Math.hypot(dx, dy) || 1;
+  const ux = dx / len;
+  const uy = dy / len;
+  // Handle: from the grip to the ball's near edge.
+  const near: Pt = [
+    bell[0] - ux * (KETTLEBELL_R - 1),
+    bell[1] - uy * (KETTLEBELL_R - 1),
+  ];
+  return (
+    `<line x1="${n(hand[0])}" y1="${n(hand[1])}" x2="${n(near[0])}" y2="${n(near[1])}" stroke="${GEAR}" stroke-width="3" stroke-linecap="round"/>` +
+    `<circle cx="${n(bell[0])}" cy="${n(bell[1])}" r="${n(KETTLEBELL_R)}" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="1"/>` +
+    `<circle cx="${n(hand[0])}" cy="${n(hand[1])}" r="2.2" fill="${GEAR}"/>`
+  );
+}
+
 /* ── Resolver ─────────────────────────────────────────────────── */
 
 /** Render a prop into its two layers. Pure: same state → same SVG. */
@@ -353,6 +382,9 @@ export function renderProp(state: PropState): PropLayers {
 
     case "cableHandle":
       return { behind: "", front: cableHandle(state.pulley, state.hand) };
+
+    case "kettlebell":
+      return { behind: "", front: kettlebell(state.hand, state.bell) };
 
     case "fixedBar": {
       // Ceiling-mounted: two stems from the frame top down to the bar,

@@ -1050,6 +1050,16 @@ describe("renderBodyDemo", () => {
       "cable-crunch": "stretch",
       "ab-wheel": "lockout",
       "superman-hold": "stretch",
+      // Batch 6: pulls and the swing start stretched; dips, squats and
+      // the two knee hinges start at the top (their lowering is the work).
+      "inverted-row": "stretch",
+      "bench-dips": "lockout",
+      "kettlebell-swing": "stretch",
+      "barbell-upright-row": "stretch",
+      "zercher-squat": "lockout",
+      "nordic-hamstring-curl": "lockout",
+      "glute-ham-raise": "lockout",
+      "sissy-squat": "lockout",
     };
     expect(Object.keys(START).sort()).toEqual(Object.keys(BODY_DEMOS).sort());
     for (const [id, expected] of Object.entries(START)) {
@@ -1911,6 +1921,275 @@ describe("renderBodyDemo", () => {
         "superman: chest lifts"
       ).toBeGreaterThan(8);
     }
+
+    /* Batch 6: bodyweight rows and dips, the swing, the rail. */
+    const REST_BODY_BEND =
+      lineDeg(SIDE_ANCHORS.ankle, SIDE_ANCHORS.hip) -
+      lineDeg(SIDE_ANCHORS.hip, SIDE_ANCHORS.shoulder);
+    const REST_KNEE_BEND =
+      lineDeg(SIDE_ANCHORS.knee, SIDE_ANCHORS.hip) -
+      lineDeg(SIDE_ANCHORS.hip, SIDE_ANCHORS.shoulder);
+    // inverted row: heels planted; "one straight line from heels to
+    // head"; hands fixed on the bar; "chest to the bar" at the top;
+    // "full arm extension" at the bottom.
+    {
+      const id = "inverted-row";
+      stationary(
+        id,
+        SIDE_ANCHORS.ankle,
+        "shankL",
+        "inverted row: heels planted"
+      );
+      stationary(
+        id,
+        SIDE_ANCHORS.hand,
+        "handL",
+        "inverted row: hands on the bar"
+      );
+      for (const t of [0, 0.5, 1]) {
+        const p = at(id, t);
+        const bend =
+          lineDeg(
+            pt(SIDE_ANCHORS.ankle, p.shankL),
+            pt(SIDE_ANCHORS.hip, p.pelvis)
+          ) -
+          lineDeg(
+            pt(SIDE_ANCHORS.hip, p.pelvis),
+            pt(SIDE_ANCHORS.shoulder, p.torso)
+          );
+        expect(
+          Math.abs(bend - REST_BODY_BEND),
+          `inverted row: straight body @${t}`
+        ).toBeLessThan(0.5);
+      }
+      expect(elbowDeg(id, 0), "inverted row: full extension").toBeGreaterThan(
+        160
+      );
+      const p1 = at(id, 1);
+      const S = pt(SIDE_ANCHORS.shoulder, p1.torso);
+      const H = pt(SIDE_ANCHORS.hand, p1.handL);
+      expect(
+        Math.hypot(H[0] - S[0], H[1] - S[1]),
+        "inverted row: chest at the bar"
+      ).toBeLessThan(20);
+    }
+    // bench dips: hands fixed on the edge, heels fixed ahead; straight
+    // arms at the top; "about 90°" with the elbows "tracking back" at
+    // the bottom; the trunk stays upright.
+    {
+      const id = "bench-dips";
+      stationary(
+        id,
+        SIDE_ANCHORS.hand,
+        "handL",
+        "bench dip: hands on the edge"
+      );
+      stationary(id, SIDE_ANCHORS.ankle, "shankL", "bench dip: heels planted");
+      expect(
+        elbowDeg(id, 0),
+        "bench dip: locked out at the top"
+      ).toBeGreaterThan(158);
+      const k = elbowDeg(id, 1);
+      expect(k, "bench dip: about 90 at the bottom").toBeGreaterThan(78);
+      expect(k, "bench dip: about 90 at the bottom").toBeLessThan(102);
+      const p1 = at(id, 1);
+      expect(
+        pt(SIDE_ANCHORS.elbow, p1.foreArmL)[0],
+        "bench dip: elbows track back"
+      ).toBeLessThan(pt(SIDE_ANCHORS.shoulder, p1.torso)[0]);
+      const restLean = lineDeg(SIDE_ANCHORS.hip, SIDE_ANCHORS.shoulder);
+      for (const t of [0, 1]) {
+        const p = at(id, t);
+        expect(
+          Math.abs(
+            lineDeg(
+              pt(SIDE_ANCHORS.hip, p.pelvis),
+              pt(SIDE_ANCHORS.shoulder, p.torso)
+            ) - restLean
+          ),
+          `bench dip: trunk upright @${t}`
+        ).toBeLessThan(0.5);
+      }
+    }
+    // kettlebell swing: straight arms throughout ("without lifting with
+    // your arms"); the bell "between your legs" at the hike; standing
+    // tall with the bell at "chest height" at the top.
+    {
+      const id = "kettlebell-swing";
+      for (const t of [0, 0.5, 1])
+        expect(elbowDeg(id, t), `swing: straight arms @${t}`).toBeGreaterThan(
+          170
+        );
+      const p1 = at(id, 1);
+      const H1 = pt(SIDE_ANCHORS.hand, p1.handL);
+      const K1 = pt(SIDE_ANCHORS.knee, p1.thighL);
+      const hip1 = pt(SIDE_ANCHORS.hip, p1.pelvis);
+      expect(H1[0], "swing: bell back between the legs").toBeLessThan(
+        K1[0] + 4
+      );
+      expect(H1[1], "swing: bell low at the hike").toBeGreaterThan(
+        hip1[1] + 30
+      );
+      const p0 = at(id, 0);
+      const S0 = pt(SIDE_ANCHORS.shoulder, p0.torso);
+      const H0 = pt(SIDE_ANCHORS.hand, p0.handL);
+      const hip0 = pt(SIDE_ANCHORS.hip, p0.pelvis);
+      expect(
+        Math.abs(
+          lineDeg(hip0, S0) - lineDeg(SIDE_ANCHORS.hip, SIDE_ANCHORS.shoulder)
+        ),
+        "swing: standing tall at the top"
+      ).toBeLessThan(1);
+      expect(H0[0] - S0[0], "swing: bell out front").toBeGreaterThan(50);
+      expect(H0[1] - S0[1], "swing: chest height").toBeGreaterThan(0);
+      expect(H0[1] - S0[1], "swing: chest height, not overhead").toBeLessThan(
+        24
+      );
+    }
+    // upright row: the bar "straight up along your body" (a hand's width
+    // off the trunk), stopping at "upper chest height", "elbows should
+    // not go above shoulders".
+    {
+      const id = "barbell-upright-row";
+      for (const t of [0, 0.25, 0.5, 0.75, 1]) {
+        const p = at(id, t);
+        const H = pt(SIDE_ANCHORS.hand, p.handL);
+        const E = pt(SIDE_ANCHORS.elbow, p.foreArmL);
+        expect(
+          H[0] - SIDE_ANCHORS.shoulder[0],
+          `upright row: bar along the body @${t}`
+        ).toBeGreaterThan(4);
+        expect(
+          H[0] - SIDE_ANCHORS.shoulder[0],
+          `upright row: bar along the body @${t}`
+        ).toBeLessThan(18);
+        expect(
+          E[1],
+          `upright row: elbows not above the shoulders @${t}`
+        ).toBeGreaterThan(SIDE_ANCHORS.shoulder[1] - 2);
+      }
+      const top =
+        pt(SIDE_ANCHORS.hand, at(id, 1).handL)[1] - SIDE_ANCHORS.shoulder[1];
+      expect(top, "upright row: upper chest height").toBeGreaterThan(8);
+      expect(top, "upright row: upper chest height").toBeLessThan(20);
+    }
+    // Zercher: the bar rides the elbow crook, never the hand; the torso
+    // stays more upright than the back squat's; parallel depth.
+    {
+      const id = "zercher-squat";
+      for (const t of [0, 0.5, 1]) {
+        const p = at(id, t);
+        const bar = BODY_DEMOS[id].bar!(t, p)![0];
+        const E = pt(SIDE_ANCHORS.elbow, p.foreArmL);
+        const H = pt(SIDE_ANCHORS.hand, p.handL);
+        expect(
+          Math.hypot(bar[0] - E[0], bar[1] - E[1]),
+          `zercher: bar in the crook @${t}`
+        ).toBeLessThan(6);
+        expect(
+          Math.hypot(bar[0] - H[0], bar[1] - H[1]),
+          `zercher: bar not at the hand @${t}`
+        ).toBeGreaterThan(20);
+      }
+      const z = at(id, 1);
+      const q = at("squat", 1);
+      const lean = (p: ReturnType<typeof at>) =>
+        lineDeg(
+          pt(SIDE_ANCHORS.hip, p.pelvis),
+          pt(SIDE_ANCHORS.shoulder, p.torso)
+        );
+      expect(
+        lean(z) - lean(q),
+        "zercher: torso more upright than the back squat"
+      ).toBeLessThan(-8);
+      expect(
+        pt(SIDE_ANCHORS.hip, z.pelvis)[1],
+        "zercher: parallel"
+      ).toBeGreaterThan(pt(SIDE_ANCHORS.knee, z.thighL)[1] - 2);
+    }
+    // Nordic curl + GHR: knee and ankle fixed; "body dead straight" /
+    // "straight line from knees to head"; upright at the top; the Nordic
+    // reaches near the floor, the GHR reaches horizontal.
+    for (const [id, bottom] of [
+      ["nordic-hamstring-curl", "floor"],
+      ["glute-ham-raise", "horizontal"],
+    ] as const) {
+      stationary(id, SIDE_ANCHORS.knee, "thighL", `${id}: knees fixed`);
+      stationary(id, SIDE_ANCHORS.ankle, "shankL", `${id}: ankles anchored`);
+      for (const t of [0, 0.5, 1]) {
+        const p = at(id, t);
+        const bend =
+          lineDeg(
+            pt(SIDE_ANCHORS.knee, p.thighL),
+            pt(SIDE_ANCHORS.hip, p.pelvis)
+          ) -
+          lineDeg(
+            pt(SIDE_ANCHORS.hip, p.pelvis),
+            pt(SIDE_ANCHORS.shoulder, p.torso)
+          );
+        expect(
+          Math.abs(bend - REST_KNEE_BEND),
+          `${id}: straight body @${t}`
+        ).toBeLessThan(0.5);
+      }
+      const p0 = at(id, 0);
+      expect(
+        Math.abs(
+          lineDeg(
+            pt(SIDE_ANCHORS.knee, p0.thighL),
+            pt(SIDE_ANCHORS.shoulder, p0.torso)
+          ) + 90
+        ),
+        `${id}: upright at the top`
+      ).toBeLessThan(12);
+      const p1 = at(id, 1);
+      const line = lineDeg(
+        pt(SIDE_ANCHORS.knee, p1.thighL),
+        pt(SIDE_ANCHORS.shoulder, p1.torso)
+      );
+      if (bottom === "floor") {
+        expect(
+          pt(SIDE_ANCHORS.shoulder, p1.torso)[1],
+          "nordic: shoulders near the floor"
+        ).toBeGreaterThan(204 - 45);
+      } else {
+        expect(Math.abs(line), "GHR: horizontal at the bottom").toBeLessThan(
+          10
+        );
+      }
+    }
+    // sissy squat: the ball of the foot never moves and the heel rises;
+    // knees travel forward of the toes; thigh and trunk stay one line;
+    // hands stay on the rail.
+    {
+      const id = "sissy-squat";
+      stationary(id, CALF_BALL, "shankL", "sissy: ball of the foot planted");
+      stationary(id, SIDE_ANCHORS.hand, "handL", "sissy: hands on the rail");
+      const a0 = pt(SIDE_ANCHORS.ankle, at(id, 0).shankL);
+      const a1 = pt(SIDE_ANCHORS.ankle, at(id, 1).shankL);
+      expect(a0[1] - a1[1], "sissy: heel rises").toBeGreaterThan(5);
+      const p1 = at(id, 1);
+      expect(
+        pt(SIDE_ANCHORS.knee, p1.thighL)[0],
+        "sissy: knees forward of the toes"
+      ).toBeGreaterThan(66);
+      for (const t of [0, 0.5, 1]) {
+        const p = at(id, t);
+        const bend =
+          lineDeg(
+            pt(SIDE_ANCHORS.knee, p.thighL),
+            pt(SIDE_ANCHORS.hip, p.pelvis)
+          ) -
+          lineDeg(
+            pt(SIDE_ANCHORS.hip, p.pelvis),
+            pt(SIDE_ANCHORS.shoulder, p.torso)
+          );
+        expect(
+          Math.abs(bend - REST_KNEE_BEND),
+          `sissy: thigh and trunk one line @${t}`
+        ).toBeLessThan(0.5);
+      }
+    }
   });
 
   it("the foot has a heel, an arch and a toe — not a wedge", () => {
@@ -2459,6 +2738,14 @@ describe("tint honesty", () => {
       "cable-crunch": "abs",
       "ab-wheel": "abs",
       "superman-hold": "lower-back",
+      "inverted-row": "upper-back",
+      "bench-dips": "triceps",
+      "kettlebell-swing": "gluteal",
+      "barbell-upright-row": "trapezius",
+      "zercher-squat": "quadriceps",
+      "nordic-hamstring-curl": "hamstring",
+      "glute-ham-raise": "hamstring",
+      "sissy-squat": "quadriceps",
     };
     for (const [id, muscle] of Object.entries(expectPrimary)) {
       expect(BODY_DEMOS[id].tint[muscle], `${id} primary`).toBe("primary");

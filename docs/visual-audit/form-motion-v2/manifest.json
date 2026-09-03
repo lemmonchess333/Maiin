@@ -88,6 +88,60 @@
         "file": "barbell-row-t100.png"
       }
     ],
+    "barbell-upright-row": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "barbell-upright-row-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "barbell-upright-row-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "barbell-upright-row-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "barbell-upright-row-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "barbell-upright-row-t100.png"
+      }
+    ],
+    "bench-dips": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "bench-dips-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "bench-dips-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "bench-dips-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "bench-dips-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "bench-dips-t100.png"
+      }
+    ],
     "bench-press": [
       {
         "t": 0,
@@ -520,6 +574,33 @@
         "file": "glute-bridge-t100.png"
       }
     ],
+    "glute-ham-raise": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "glute-ham-raise-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "glute-ham-raise-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "glute-ham-raise-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "glute-ham-raise-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "glute-ham-raise-t100.png"
+      }
+    ],
     "goblet-squat": [
       {
         "t": 0,
@@ -682,6 +763,60 @@
         "file": "incline-db-press-t100.png"
       }
     ],
+    "inverted-row": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "inverted-row-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "inverted-row-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "inverted-row-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "inverted-row-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "inverted-row-t100.png"
+      }
+    ],
+    "kettlebell-swing": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "kettlebell-swing-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "kettlebell-swing-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "kettlebell-swing-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "kettlebell-swing-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "kettlebell-swing-t100.png"
+      }
+    ],
     "lat-pulldown": [
       {
         "t": 0,
@@ -842,6 +977,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "lunges-t100.png"
+      }
+    ],
+    "nordic-hamstring-curl": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "nordic-hamstring-curl-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "nordic-hamstring-curl-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "nordic-hamstring-curl-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "nordic-hamstring-curl-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "nordic-hamstring-curl-t100.png"
       }
     ],
     "overhead-extension": [
@@ -1114,6 +1276,33 @@
         "file": "seated-row-t100.png"
       }
     ],
+    "sissy-squat": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "sissy-squat-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "sissy-squat-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "sissy-squat-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "sissy-squat-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "sissy-squat-t100.png"
+      }
+    ],
     "skull-crushers": [
       {
         "t": 0,
@@ -1274,6 +1463,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "tricep-kickback-t100.png"
+      }
+    ],
+    "zercher-squat": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "zercher-squat-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "zercher-squat-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "zercher-squat-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "zercher-squat-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "zercher-squat-t100.png"
       }
     ]
   }
