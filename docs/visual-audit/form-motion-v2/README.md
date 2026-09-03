@@ -1353,3 +1353,64 @@ Two things the numbers caught before a screenshot could:
   > 160°.
 
 Capture channel: `landmine-press`, `pike-push-up`, `dragon-flag` added.
+
+## STATUS 2026-09-03k — build-out, batch 10: the last honest ones, and the ledger
+
+Coverage 104 → 109 of 152. This closes the build-out that started at
+35 on 2026-09-03 ("start to build out the rest of the exercises into
+those animations"). Five more:
+
+| Demo              | Chain                                                          | Pinned claim (from its instructions)                                                  |
+| ----------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `plank`           | `plankPose`: shoulder fixed over the elbow, feet extend back   | elbow under the shoulder, forearm on the floor, every frame; hips lift into ONE line  |
+| `weighted-plank`  | same, plate on the upper back riding the trunk                 | same                                                                                  |
+| `l-sit`           | hips over parallettes, straight arms, legs swing to horizontal | hands fixed; arms >165° and legs straight every frame; hips off the floor; legs level |
+| `muscle-ups`      | `muscleUpShoulder`: hang → chest at the bar → over → lockout   | hands on the bar throughout; >60 below at the hang; at the bar at ½; >60 above at top |
+| `clean-and-press` | `hingeLift` to standing, catch to the rack, thruster dip+press | bar near the floor at 0; racked (±2) and standing at ½; a dip at 0.6; overhead at 1   |
+
+Two of these are HOLDS. A hold has no rep, but the plank's first three
+instructions ("get on your forearms ... extend your legs back ... lift
+your hips ... make one straight line") are a motion, and that motion is
+what the demo draws, settling into the hold at t = 1. The L-sit's
+instruction 2 ("raise your legs ... until parallel") is the same shape.
+Holds whose instructions describe only the held position (side plank,
+the carries) are in the ledger below instead.
+
+The muscle-up's elbow branch flips at t = 0.5 — front of the body for
+the pull, behind it for the press — which is exactly where the
+instructions put the wrist roll, and where the arm is folded enough
+that the two branches nearly coincide.
+
+### The ledger — what stays on the static reference, and why
+
+43 exercises. Each reason is a property of the rig or the camera, not
+of the exercise; a future rig change (a shoulder girdle, an ankle, a
+second camera) reopens the row it names.
+
+**Frontal-plane movements the profile camera cannot show honestly** (11)
+`cable-crossover`, `cable-fly`, `db-flyes`, `machine-chest-fly`, `pec-deck`, `reverse-flyes`, `rear-delt-machine-fly`, `reverse-pec-deck`, `hip-abduction-machine`, `hip-adduction-machine`, `lu-raise`
+
+**Rotations and twists (a rotating humerus or trunk is invisible edge-on)** (10)
+`arnold-press`, `cuban-press`, `russian-twist`, `cable-woodchopper`, `pallof-press`, `zottman-curl`, `cross-body-hammer-curl`, `bicycle-crunch`, `dead-bug`, `mountain-climbers`
+
+**Holds and carries with no set-up motion in their instructions** (4)
+`side-plank`, `farmers-carry`, `sled-push-pull`, `battle-ropes`
+
+**Flight, or a multi-phase sequence the two-way rep player would play backwards dishonestly** (4)
+`box-jumps`, `burpees`, `man-maker`, `turkish-get-up`
+
+**A joint the rig does not have (shoulder girdle, ankle)** (3)
+`shrugs`, `barbell-shrug`, `seated-calf-raise`
+
+**Cardio — no rep** (11)
+`assault-bike`, `bike`, `elliptical`, `incline-treadmill-walk`, `jump-rope`, `rowing-machine`, `ski-erg`, `spin-bike`, `stairmaster`, `swimming`, `treadmill`
+
+`shrugs`, `barbell-shrug` and `seated-calf-raise` are the three whose
+reason is the rig itself: the shoulder anchor cannot rise (the traps are
+part of the torso piece) and the foot is fused to the shin. Both are
+rig changes — a joint each — and each would unlock its row. The
+frontal-plane and rotation rows would need the anterior camera's
+figure to gain the side view's articulated arms; that is the larger
+change, and the one this build-out did not attempt.
+
+Capture channel: `plank`, `muscle-ups`, `clean-and-press` added.

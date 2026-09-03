@@ -439,6 +439,33 @@
         "file": "chest-supported-db-row-t100.png"
       }
     ],
+    "clean-and-press": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "clean-and-press-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "clean-and-press-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "clean-and-press-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "clean-and-press-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "clean-and-press-t100.png"
+      }
+    ],
     "concentration-curl": [
       {
         "t": 0,
@@ -1087,6 +1114,33 @@
         "file": "kettlebell-swing-t100.png"
       }
     ],
+    "l-sit": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "l-sit-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "l-sit-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "l-sit-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "l-sit-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "l-sit-t100.png"
+      }
+    ],
     "landmine-press": [
       {
         "t": 0,
@@ -1330,6 +1384,33 @@
         "file": "meadows-row-t100.png"
       }
     ],
+    "muscle-ups": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "muscle-ups-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "muscle-ups-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "muscle-ups-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "muscle-ups-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "muscle-ups-t100.png"
+      }
+    ],
     "nordic-hamstring-curl": [
       {
         "t": 0,
@@ -1490,6 +1571,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "pistol-squat-t100.png"
+      }
+    ],
+    "plank": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "plank-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "plank-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "plank-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "plank-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "plank-t100.png"
       }
     ],
     "preacher-curl": [
@@ -2111,6 +2219,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "tricep-kickback-t100.png"
+      }
+    ],
+    "weighted-plank": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "weighted-plank-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "weighted-plank-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "weighted-plank-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "weighted-plank-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "weighted-plank-t100.png"
       }
     ],
     "zercher-squat": [

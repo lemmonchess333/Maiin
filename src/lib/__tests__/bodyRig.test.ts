@@ -1090,6 +1090,12 @@ describe("renderBodyDemo", () => {
       "pike-push-up": "lockout",
       "handstand-push-ups": "lockout",
       "dragon-flag": "lockout",
+      // Batch 10: two holds drawn as their set-up, an L-sit, two transitions.
+      plank: "stretch",
+      "weighted-plank": "stretch",
+      "l-sit": "stretch",
+      "muscle-ups": "stretch",
+      "clean-and-press": "stretch",
     };
     expect(Object.keys(START).sort()).toEqual(Object.keys(BODY_DEMOS).sort());
     for (const [id, expected] of Object.entries(START)) {
@@ -1098,6 +1104,12 @@ describe("renderBodyDemo", () => {
   });
 
   const SUPINE_FLOOR_Y = 172;
+  /** The rig's FRONT_RACK point in torso space (`bodyRig.ts`), mirrored
+   *  as a literal so a drift in either shows here. */
+  const FRONT_RACK_TEST: [number, number] = [
+    SIDE_ANCHORS.shoulder[0] + 9,
+    SIDE_ANCHORS.shoulder[1] - 1,
+  ];
   it("each demo reaches the position its own instructions describe", () => {
     /* The roadmap's honesty standard, measured against the catalogue
        text rather than against a screenshot. Every claim below is a
@@ -2875,6 +2887,144 @@ describe("renderBodyDemo", () => {
         "dragon: hips off the bench"
       ).toBeLessThan(150 - 6);
     }
+
+    /* Batch 10: holds drawn as their set-up, and two transitions. */
+    // Plank: "elbows directly under your shoulders" (every frame); the
+    // hips lift from the floor into "one straight line from the back of
+    // your head to your heels" — the hip's offset from the shoulder-ankle
+    // line ends at the standing figure's own.
+    for (const id of ["plank", "weighted-plank"]) {
+      stationary(
+        id,
+        SIDE_ANCHORS.shoulder,
+        "torso",
+        `${id}: shoulder over the elbow`
+      );
+      for (const t of [0, 0.5, 1]) {
+        const p = at(id, t);
+        const S = pt(SIDE_ANCHORS.shoulder, p.torso);
+        const E = pt(SIDE_ANCHORS.elbow, p.foreArmL);
+        expect(
+          Math.abs(E[0] - S[0]),
+          `${id}: elbow under the shoulder @${t}`
+        ).toBeLessThan(3);
+        expect(E[1], `${id}: forearm on the floor @${t}`).toBeGreaterThan(196);
+      }
+      const hip0 = pt(SIDE_ANCHORS.hip, at(id, 0).pelvis);
+      const p1 = at(id, 1);
+      const hip1 = pt(SIDE_ANCHORS.hip, p1.pelvis);
+      expect(hip0[1] - hip1[1], `${id}: hips lift`).toBeGreaterThan(8);
+      const S1 = pt(SIDE_ANCHORS.shoulder, p1.torso);
+      const A1 = pt(SIDE_ANCHORS.ankle, p1.shankL);
+      const len = Math.hypot(A1[0] - S1[0], A1[1] - S1[1]);
+      const perp =
+        ((A1[0] - S1[0]) * (hip1[1] - S1[1]) -
+          (A1[1] - S1[1]) * (hip1[0] - S1[0])) /
+        len;
+      const restPerp =
+        ((SIDE_ANCHORS.ankle[0] - SIDE_ANCHORS.shoulder[0]) *
+          (SIDE_ANCHORS.hip[1] - SIDE_ANCHORS.shoulder[1]) -
+          (SIDE_ANCHORS.ankle[1] - SIDE_ANCHORS.shoulder[1]) *
+            (SIDE_ANCHORS.hip[0] - SIDE_ANCHORS.shoulder[0])) /
+        Math.hypot(
+          SIDE_ANCHORS.ankle[0] - SIDE_ANCHORS.shoulder[0],
+          SIDE_ANCHORS.ankle[1] - SIDE_ANCHORS.shoulder[1]
+        );
+      expect(
+        Math.abs(Math.abs(perp) - Math.abs(restPerp)),
+        `${id}: one straight line at the hold`
+      ).toBeLessThan(3);
+    }
+    // L-sit: "straight arms" on the parallettes (hands fixed) every
+    // frame; hips off the floor; legs straight and "parallel to the
+    // ground" at the hold.
+    {
+      const id = "l-sit";
+      stationary(
+        id,
+        SIDE_ANCHORS.hand,
+        "handL",
+        "l-sit: hands on the parallettes"
+      );
+      for (const t of [0, 0.5, 1]) {
+        expect(elbowDeg(id, t), `l-sit: straight arms @${t}`).toBeGreaterThan(
+          165
+        );
+        expect(kneeDeg(id, t), `l-sit: straight legs @${t}`).toBeGreaterThan(
+          REST_KNEE - 1
+        );
+        expect(
+          pt(SIDE_ANCHORS.hip, at(id, t).pelvis)[1],
+          `l-sit: hips off the floor @${t}`
+        ).toBeLessThan(204 - 14);
+      }
+      const p1 = at(id, 1);
+      const hip = pt(SIDE_ANCHORS.hip, p1.pelvis);
+      const a = pt(SIDE_ANCHORS.ankle, p1.shankL);
+      expect(
+        Math.abs(lineDeg(hip, a)),
+        "l-sit: legs parallel to the ground"
+      ).toBeLessThan(8);
+    }
+    // Muscle-up: hands never leave the bar; a straight-arm hang below it,
+    // the chest AT the bar halfway, one straight arm ABOVE it at the top.
+    {
+      const id = "muscle-ups";
+      stationary(id, SIDE_ANCHORS.hand, "handL", "muscle-up: hands on the bar");
+      const bar = pt(SIDE_ANCHORS.hand, at(id, 0).handL);
+      const S0 = pt(SIDE_ANCHORS.shoulder, at(id, 0).torso);
+      expect(
+        S0[1] - bar[1],
+        "muscle-up: hanging below the bar"
+      ).toBeGreaterThan(60);
+      expect(elbowDeg(id, 0), "muscle-up: straight-arm hang").toBeGreaterThan(
+        160
+      );
+      const Sm = pt(SIDE_ANCHORS.shoulder, at(id, 0.5).torso);
+      expect(
+        Math.hypot(Sm[0] - bar[0], Sm[1] - bar[1]),
+        "muscle-up: chest at the bar"
+      ).toBeLessThan(16);
+      const S1 = pt(SIDE_ANCHORS.shoulder, at(id, 1).torso);
+      expect(
+        bar[1] - S1[1],
+        "muscle-up: lockout above the bar"
+      ).toBeGreaterThan(60);
+      expect(elbowDeg(id, 1), "muscle-up: full lockout").toBeGreaterThan(160);
+    }
+    // Clean and press: the bar near the floor at the start (the deadlift's
+    // own bottom), racked on the front delts standing at the half, a dip
+    // after the catch, overhead at the top.
+    {
+      const id = "clean-and-press";
+      const bar0 = BODY_DEMOS[id].bar!(0, at(id, 0))![0];
+      expect(bar0[1], "clean: bar near the floor").toBeGreaterThan(165);
+      const pMid = at(id, 0.5);
+      const rack = pt(FRONT_RACK_TEST, pMid.torso);
+      const hMid = pt(SIDE_ANCHORS.hand, pMid.handL);
+      expect(
+        Math.hypot(hMid[0] - rack[0], hMid[1] - rack[1]),
+        "clean: racked at the half"
+      ).toBeLessThan(2);
+      const hipMid = pt(SIDE_ANCHORS.hip, pMid.pelvis);
+      expect(
+        Math.hypot(
+          hipMid[0] - SIDE_ANCHORS.hip[0],
+          hipMid[1] - SIDE_ANCHORS.hip[1]
+        ),
+        "clean: standing at the half"
+      ).toBeLessThan(8);
+      const hipDip = pt(SIDE_ANCHORS.hip, at(id, 0.6).pelvis);
+      expect(
+        hipDip[1] - SIDE_ANCHORS.hip[1],
+        "press: a dip after the catch"
+      ).toBeGreaterThan(4);
+      const p1 = at(id, 1);
+      const S1 = pt(SIDE_ANCHORS.shoulder, p1.torso);
+      const h1 = pt(SIDE_ANCHORS.hand, p1.handL);
+      expect(S1[1] - h1[1], "press: overhead").toBeGreaterThan(60);
+      expect(elbowDeg(id, 1), "press: lockout").toBeGreaterThan(160);
+    }
   });
 
   it("the foot has a heel, an arch and a toe — not a wedge", () => {
@@ -3466,6 +3616,11 @@ describe("tint honesty", () => {
       "pike-push-up": "front-deltoids",
       "handstand-push-ups": "front-deltoids",
       "dragon-flag": "abs",
+      plank: "abs",
+      "weighted-plank": "abs",
+      "l-sit": "abs",
+      "muscle-ups": "upper-back",
+      "clean-and-press": "gluteal",
     };
     for (const [id, muscle] of Object.entries(expectPrimary)) {
       expect(BODY_DEMOS[id].tint[muscle], `${id} primary`).toBe("primary");
