@@ -406,20 +406,116 @@ for (const [i, rect] of panels.entries()) {
   );
 }
 
-// One rect for all six: the union of every figure's box.
-let U = { x0: 1e9, y0: 1e9, x1: -1, y1: -1 };
-for (const buf of cleaned) {
-  const { data, info } = await sharp(buf)
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-  const b = contentBox(data, info, bg);
-  U = {
-    x0: Math.min(U.x0, b.x0),
-    y0: Math.min(U.y0, b.y0),
-    x1: Math.max(U.x1, b.x1),
-    y1: Math.max(U.y1, b.y1),
-  };
+/* ── Registration, applied only when it MEASURABLY helps ────────────
+ *
+ * The equipment is the one thing in the scene that must not move, so
+ * aligning on it is what stops the station swimming under the lifter.
+ *
+ * A first version was removed for measuring WORSE — 9.3% → 8.7% on a
+ * card — and that conclusion was wrong. It was a statement about a bad
+ * implementation, not about registration: that version searched a
+ * downsampled mask, applied whatever it found without checking, and so
+ * moved frames that should have been left alone.
+ *
+ * Searching at full resolution and applying the shift only when it
+ * beats leaving the frame alone helps BOTH cases, measured on the
+ * output files rather than on an intermediate:
+ *
+ *   card            10.2% → 23.1%
+ *   per-position    38.2% → 47.6%
+ *
+ * The per-position numbers start far higher because those frames are
+ * edits of one original and differ mostly by translation, which is
+ * exactly what a shift can correct. The card's panels are separate
+ * drawings that also differ in scale, which no translation reaches —
+ * that part of the original reasoning held. The manifest reports what
+ * was applied per frame.
+ */
+const STATION_LO = 28;
+const STATION_HI = 95;
+function stationMask(data, info) {
+  const { width: W, height: H, channels: C } = info;
+  const m = new Uint8Array(W * H);
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) {
+      const p = (y * W + x) * C;
+      const r = data[p],
+        g = data[p + 1],
+        b = data[p + 2];
+      if (
+        r > STATION_LO &&
+        r < STATION_HI &&
+        Math.abs(r - g) < 14 &&
+        Math.abs(r - b) < 18
+      )
+        m[y * W + x] = 1;
+    }
+  return { m, W, H };
 }
+const iouAt = (a, b, dx, dy) => {
+  let i = 0,
+    u = 0;
+  for (let y = 0; y < a.H; y++) {
+    const yy = y + dy;
+    if (yy < 0 || yy >= b.H) continue;
+    for (let x = 0; x < a.W; x++) {
+      const xx = x + dx;
+      if (xx < 0 || xx >= b.W) continue;
+      const p = a.m[y * a.W + x];
+      const q = b.m[yy * b.W + xx];
+      if (p && q) i++;
+      if (p || q) u++;
+    }
+  }
+  return u ? i / u : 0;
+};
+
+const raws = [];
+for (const buf of cleaned)
+  raws.push(await sharp(buf).raw().toBuffer({ resolveWithObject: true }));
+const masks = raws.map((r) => stationMask(r.data, r.info));
+const RANGE = Math.round(Math.min(W, H) * 0.08);
+const STEP = 4;
+const shifts = [{ dx: 0, dy: 0 }];
+const scores = [];
+for (let k = 1; k < masks.length; k++) {
+  const flat0 = iouAt(masks[0], masks[k], 0, 0);
+  let best = flat0,
+    bx = 0,
+    by = 0;
+  for (let dy = -RANGE; dy <= RANGE; dy += STEP)
+    for (let dx = -RANGE; dx <= RANGE; dx += STEP) {
+      const v = iouAt(masks[0], masks[k], dx, dy);
+      if (v > best) {
+        best = v;
+        bx = dx;
+        by = dy;
+      }
+    }
+  // Only worth moving a frame if it is a real improvement, not noise.
+  const helps = best > flat0 * 1.05;
+  shifts.push(helps ? { dx: bx, dy: by } : { dx: 0, dy: 0 });
+  scores.push({
+    frame: k + 1,
+    before: +(flat0 * 100).toFixed(1),
+    after: +((helps ? best : flat0) * 100).toFixed(1),
+    applied: helps ? `${bx},${by}` : "none",
+  });
+}
+
+// One rect for all frames: the union of every figure's box, in the
+// registered frame of reference.
+let U = { x0: 1e9, y0: 1e9, x1: -1, y1: -1 };
+raws.forEach((r, i) => {
+  const b = contentBox(r.data, r.info, bg);
+  const { dx, dy } = shifts[i];
+  U = {
+    x0: Math.min(U.x0, b.x0 - dx),
+    y0: Math.min(U.y0, b.y0 - dy),
+    x1: Math.max(U.x1, b.x1 - dx),
+    y1: Math.max(U.y1, b.y1 - dy),
+  };
+});
 const rect = {
   left: Math.max(0, U.x0 - MARGIN),
   top: Math.max(0, U.y0 - MARGIN),
@@ -458,7 +554,16 @@ async function keyed(buf) {
 }
 
 for (let i = 0; i < cleaned.length; i++) {
-  const cropped = await sharp(cleaned[i]).extract(rect).png().toBuffer();
+  /* The shift lands as a per-frame CROP OFFSET, so alignment costs no
+     resampling — each frame is still its own pixels, windowed where its
+     station lines up with the first's. Clamped inside the panel. */
+  const win = {
+    left: Math.min(W - rect.width, Math.max(0, rect.left + shifts[i].dx)),
+    top: Math.min(H - rect.height, Math.max(0, rect.top + shifts[i].dy)),
+    width: rect.width,
+    height: rect.height,
+  };
+  const cropped = await sharp(cleaned[i]).extract(win).png().toBuffer();
   await sharp(await keyed(cropped))
     .resize({
       width: OUT_W,
@@ -477,6 +582,7 @@ console.log(
       panels: panels.length,
       panelSize: `${PW}x${PH}`,
       sharedRect: rect,
+      registration: scores,
       writtenWidth: OUT_W,
       outDir,
     },

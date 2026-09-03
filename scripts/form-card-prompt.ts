@@ -96,9 +96,12 @@ ${positions.slice(1).join("\n")}
 
 WHY IT IS TWO STEPS
 Six separately generated pictures do not share a camera. Measured on
-the first card of this kind: the equipment overlapped between frames by
-9%, so it visibly swam under the lifter when animated, and no amount of
-downstream alignment fixed it. Editing one image holds the scene.
+the first card of this kind, the equipment overlapped between frames by
+about 10%, so it visibly swam under the lifter when animated. Editing
+one image instead starts around 38% and the extractor's alignment pass
+takes it to about 48%; alignment alone gets a card only to 23%, because
+separate drawings differ in scale as well as position and no shift
+reaches that.
 Generating one figure per image also gives roughly three times the
 resolution of six panels squeezed into one card, which is the other
 half of why the first attempt looked soft.
