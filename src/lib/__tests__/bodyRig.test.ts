@@ -1118,6 +1118,14 @@ describe("renderBodyDemo", () => {
       "dead-bug": "stretch",
       "bicycle-crunch": "stretch",
       "russian-twist": "stretch",
+      // Batch 13.
+      "mountain-climbers": "stretch",
+      "battle-ropes": "stretch",
+      "side-plank": "stretch",
+      "rowing-machine": "stretch",
+      "ski-erg": "stretch",
+      "jump-rope": "stretch",
+      "pallof-press": "stretch",
     };
     expect(Object.keys(START).sort()).toEqual(Object.keys(BODY_DEMOS).sort());
     for (const [id, expected] of Object.entries(START)) {
@@ -3375,6 +3383,188 @@ describe("renderBodyDemo", () => {
       );
       expect(antAt(id, 1).HL[1], "twist: at hip height").toBeGreaterThan(86);
     }
+
+    /* Batch 13: the profile's last rows, and a side plank on the front figure. */
+    // Mountain climbers: hands and the far foot planted; the near knee
+    // driven to the chest with the foot never through the floor; the
+    // hips ripple, never pike (≤ 8).
+    {
+      const id = "mountain-climbers";
+      stationary(id, SIDE_ANCHORS.hand, "handL", "climber: hands planted");
+      stationary(id, SIDE_ANCHORS.ankle, "shankR", "climber: far foot planted");
+      const hip0 = pt(SIDE_ANCHORS.hip, at(id, 0).pelvis);
+      for (const t of [0.1, 0.25, 0.4, 0.5, 0.6, 0.75, 0.9, 1]) {
+        const p = at(id, t);
+        expect(
+          pt(SIDE_ANCHORS.ankle, p.shankL)[1],
+          `climber: foot above the floor @${t}`
+        ).toBeLessThan(204);
+        expect(
+          hip0[1] - pt(SIDE_ANCHORS.hip, p.pelvis)[1],
+          `climber: no pike @${t}`
+        ).toBeLessThan(10);
+      }
+      const p1 = at(id, 1);
+      const K = pt(SIDE_ANCHORS.knee, p1.shankL);
+      const S = pt(SIDE_ANCHORS.shoulder, p1.torso);
+      expect(
+        Math.hypot(K[0] - S[0], K[1] - S[1]),
+        "climber: knee to the chest"
+      ).toBeLessThan(16);
+    }
+    // Battle ropes: the quarter squat held; the near hand rises as the far
+    // hand falls; the anchor ahead on the floor.
+    {
+      const id = "battle-ropes";
+      stationary(id, SIDE_ANCHORS.hip, "pelvis", "ropes: squat held");
+      const n0 = pt(SIDE_ANCHORS.hand, at(id, 0).handL);
+      const n1 = pt(SIDE_ANCHORS.hand, at(id, 1).handL);
+      const f0 = pt(SIDE_ANCHORS.hand, at(id, 0).handR);
+      const f1 = pt(SIDE_ANCHORS.hand, at(id, 1).handR);
+      expect(n0[1] - n1[1], "ropes: near arm rises").toBeGreaterThan(50);
+      expect(f1[1] - f0[1], "ropes: far arm falls").toBeGreaterThan(50);
+      expect(kneeDeg(id, 0), "ropes: quarter squat").toBeLessThan(
+        REST_KNEE - 15
+      );
+    }
+    // Side plank (front figure on its side): the supporting elbow on the
+    // floor under the shoulder every frame, forearm flat; the feet on the
+    // floor; the hips lift into the line.
+    {
+      const id = "side-plank";
+      for (const t of [0, 0.5, 1]) {
+        const p = at(id, t);
+        const E = pt([80, 71], p.foreArmR);
+        const H = pt([96.1, 101.2], p.foreArmR);
+        const S = pt([76, 48], p.upperArmR);
+        expect(
+          Math.abs(E[1] - (204 - 8)),
+          `side plank: elbow on the floor @${t}`
+        ).toBeLessThan(4);
+        expect(
+          Math.abs(H[1] - E[1]),
+          `side plank: forearm flat @${t}`
+        ).toBeLessThan(0.5);
+        expect(
+          Math.abs(E[0] - S[0]),
+          `side plank: elbow under the shoulder @${t}`
+        ).toBeLessThan(4);
+        expect(
+          pt([65, 196], p.shankR)[1],
+          `side plank: feet on the floor @${t}`
+        ).toBeGreaterThan(190);
+      }
+      const k0 = pt([68, 148], at(id, 0).shankR);
+      const k1 = pt([68, 148], at(id, 1).shankR);
+      expect(k0[1] - k1[1], "side plank: hips lift").toBeGreaterThan(3);
+    }
+    // Rowing machine: feet on the plate; shins vertical at the catch with
+    // the arms straight; legs first (nearly straight by the half); lean
+    // back and the handle at the ribs with the elbow behind at the finish.
+    {
+      const id = "rowing-machine";
+      stationary(id, SIDE_ANCHORS.ankle, "shankL", "rower: feet on the plate");
+      const p0 = at(id, 0);
+      const K0 = pt(SIDE_ANCHORS.knee, p0.shankL);
+      const A0 = pt(SIDE_ANCHORS.ankle, p0.shankL);
+      expect(
+        Math.abs(K0[0] - A0[0]),
+        "rower: shins vertical at the catch"
+      ).toBeLessThan(8);
+      expect(
+        elbowDeg(id, 0),
+        "rower: arms straight at the catch"
+      ).toBeGreaterThan(165);
+      // Legs first: by the half the knee has opened to within 4° of its
+      // finish angle (a soft knee, never locked), before the arms pull.
+      // (The last 4° open with the lean, which overlaps the drive.)
+      expect(kneeDeg(id, 0.5), "rower: legs drive first").toBeGreaterThan(
+        kneeDeg(id, 1) - 4
+      );
+      expect(kneeDeg(id, 0.5), "rower: legs drive first").toBeGreaterThan(140);
+      const hip0 = pt(SIDE_ANCHORS.hip, p0.pelvis);
+      const hip1 = pt(SIDE_ANCHORS.hip, at(id, 1).pelvis);
+      expect(hip0[0] - hip1[0], "rower: the seat slides").toBeGreaterThan(36);
+      const p1 = at(id, 1);
+      const S1 = pt(SIDE_ANCHORS.shoulder, p1.torso);
+      const E1 = pt(SIDE_ANCHORS.elbow, p1.foreArmL);
+      const H1 = pt(SIDE_ANCHORS.hand, p1.handL);
+      expect(S1[0], "rower: lean back at the finish").toBeLessThan(hip1[0] - 4);
+      expect(E1[0], "rower: elbow behind").toBeLessThan(S1[0]);
+      expect(
+        Math.hypot(H1[0] - (S1[0] + 8), H1[1] - (S1[1] + 26)),
+        "rower: handle at the ribs"
+      ).toBeLessThan(2);
+    }
+    // Ski erg: handles overhead at the start; hinged 40-60 with the hands
+    // past the thighs at the finish; the pulley at the top of the machine.
+    {
+      const id = "ski-erg";
+      expect(
+        pt(SIDE_ANCHORS.hand, at(id, 0).handL)[1],
+        "ski: handles overhead"
+      ).toBeLessThan(0);
+      expect(trunkLean(id, 0), "ski: upright at the start").toBeLessThan(10);
+      expect(trunkLean(id, 1), "ski: hinged at the finish").toBeGreaterThan(40);
+      expect(trunkLean(id, 1), "ski: hinged at the finish").toBeLessThan(60);
+      const p1 = at(id, 1);
+      const H = pt(SIDE_ANCHORS.hand, p1.handL);
+      const hip = pt(SIDE_ANCHORS.hip, p1.pelvis);
+      expect(H[1], "ski: hands down past the thighs").toBeGreaterThan(hip[1]);
+      expect(H[0], "ski: hands behind the hip").toBeLessThan(hip[0]);
+      expect(BODY_DEMOS[id].pulley![1], "ski: pulley at the top").toBeLessThan(
+        -20
+      );
+    }
+    // Jump rope: a small hop (6-10) with the elbows at the ribs and the
+    // hands at the hips every frame; feet on the floor at the start.
+    {
+      const id = "jump-rope";
+      const a0 = pt(SIDE_ANCHORS.ankle, at(id, 0).shankL);
+      const a1 = pt(SIDE_ANCHORS.ankle, at(id, 1).shankL);
+      expect(a0[1] - a1[1], "rope: a small hop").toBeGreaterThan(6);
+      expect(a0[1] - a1[1], "rope: an inch or two, not a jump").toBeLessThan(
+        10
+      );
+      expect(
+        Math.abs(a0[1] - SIDE_ANCHORS.ankle[1]),
+        "rope: feet on the floor at the start"
+      ).toBeLessThan(0.01);
+      for (const t of [0, 1]) {
+        const p = at(id, t);
+        const E = pt(SIDE_ANCHORS.elbow, p.foreArmL);
+        const S = pt(SIDE_ANCHORS.shoulder, p.torso);
+        const H = pt(SIDE_ANCHORS.hand, p.handL);
+        const hip = pt(SIDE_ANCHORS.hip, p.pelvis);
+        expect(
+          Math.abs(E[0] - S[0]),
+          `rope: elbows at the ribs @${t}`
+        ).toBeLessThan(3);
+        expect(
+          Math.abs(H[1] - hip[1]),
+          `rope: hands at the hips @${t}`
+        ).toBeLessThan(6);
+      }
+    }
+    // Pallof press: hands together at the chest, pressed straight out at
+    // chest height to full extension; the trunk never turns.
+    {
+      const id = "pallof-press";
+      const p0 = at(id, 0);
+      const S = pt(SIDE_ANCHORS.shoulder, p0.torso);
+      const H0 = pt(SIDE_ANCHORS.hand, p0.handL);
+      expect(
+        Math.hypot(H0[0] - S[0], H0[1] - S[1]),
+        "pallof: at the chest"
+      ).toBeLessThan(20);
+      const H1 = pt(SIDE_ANCHORS.hand, at(id, 1).handL);
+      expect(
+        Math.abs(H1[1] - H0[1]),
+        "pallof: straight out at chest height"
+      ).toBeLessThan(0.5);
+      expect(elbowDeg(id, 1), "pallof: full extension").toBeGreaterThan(165);
+      expect(at(id, 1).torso, "pallof: trunk resists the turn").toBeUndefined();
+    }
   });
 
   it("the foot has a heel, an arch and a toe — not a wedge", () => {
@@ -3614,6 +3804,8 @@ describe("renderBodyDemo", () => {
     const UNILATERAL = new Set([
       "tricep-kickback",
       "concentration-curl",
+      // Batch 13: the arms alternate by instruction.
+      "battle-ropes",
       // Batch 8: "with one hand" / "one side" by instruction.
       "single-arm-cable-pushdown",
       "single-arm-lat-pulldown",
@@ -3992,6 +4184,13 @@ describe("tint honesty", () => {
       "dead-bug": "abs",
       "bicycle-crunch": "obliques",
       "russian-twist": "obliques",
+      "mountain-climbers": "abs",
+      "battle-ropes": "front-deltoids",
+      "side-plank": "obliques",
+      "rowing-machine": "quadriceps",
+      "ski-erg": "upper-back",
+      "jump-rope": "calves",
+      "pallof-press": "abs",
     };
     for (const [id, muscle] of Object.entries(expectPrimary)) {
       expect(BODY_DEMOS[id].tint[muscle], `${id} primary`).toBe("primary");
