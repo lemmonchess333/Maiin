@@ -10,6 +10,7 @@ import {
   DIP_GRIP,
   FORM_BEAT_IDS,
   getBodyDemo,
+  getAuthoredBeats,
   getFormBeats,
   renderBodyDemo,
 } from "../bodyRig";
@@ -4786,7 +4787,7 @@ describe("form beats — the caption is a claim about the frame", () => {
   it("every beat sequence names a real demo and stays inside its range", () => {
     expect(FORM_BEAT_IDS.length).toBeGreaterThan(0);
     for (const id of FORM_BEAT_IDS) {
-      const beats = getFormBeats(id);
+      const beats = getAuthoredBeats(id);
       expect(beats, id).not.toBeNull();
       expect(getBodyDemo(id), `${id} has no demo to caption`).not.toBeNull();
       expect(
@@ -4811,7 +4812,7 @@ describe("form beats — the caption is a claim about the frame", () => {
     // ordinary reading rate), so an over-long cue is not a style
     // preference — it is a line that scrolls past unread.
     for (const id of FORM_BEAT_IDS) {
-      for (const b of getFormBeats(id)!) {
+      for (const b of getAuthoredBeats(id)!) {
         const words = b.cue.trim().split(/\s+/).length;
         expect(words, `${id} "${b.label}": ${words} words`).toBeLessThanOrEqual(
           PLACARD_CUE_WORDS
@@ -4825,7 +4826,7 @@ describe("form beats — the caption is a claim about the frame", () => {
     // same frame that wrap is a still; where they differ the figure
     // would snap across the seam every loop.
     for (const id of FORM_BEAT_IDS) {
-      const beats = getFormBeats(id)!;
+      const beats = getAuthoredBeats(id)!;
       expect(beats[beats.length - 1].t, `${id} wrap`).toBe(beats[0].t);
     }
   });
@@ -4908,7 +4909,7 @@ describe("form beats — the caption is a claim about the frame", () => {
  */
 describe("supplied placard frames", () => {
   const framed = FORM_BEAT_IDS.filter((id) =>
-    getFormBeats(id)!.some((b) => b.image)
+    getAuthoredBeats(id)!.some((b) => b.image)
   );
 
   /** WebP is a RIFF container, and it has two shapes here.
@@ -4942,7 +4943,7 @@ describe("supplied placard frames", () => {
   it("every frame path names a file that is actually there", () => {
     expect(framed.length).toBeGreaterThan(0);
     for (const id of framed) {
-      for (const b of getFormBeats(id)!) {
+      for (const b of getAuthoredBeats(id)!) {
         expect(b.image, `${id} "${b.label}" has no frame`).toBeTruthy();
         const file = resolve(process.cwd(), "public", b.image!);
         expect(existsSync(file), `missing ${b.image}`).toBe(true);
@@ -4957,7 +4958,7 @@ describe("supplied placard frames", () => {
        body jumps around the canvas between positions — the single
        property that decides whether six stills read as one movement. */
     for (const id of framed) {
-      const sizes = getFormBeats(id)!.map((b) =>
+      const sizes = getAuthoredBeats(id)!.map((b) =>
         webpSize(readFileSync(resolve(process.cwd(), "public", b.image!)))
       );
       for (const s of sizes) expect(s, id).toEqual(sizes[0]);
@@ -4972,7 +4973,7 @@ describe("supplied placard frames", () => {
     // is not "the user got it". The rig renders the same position from
     // the beat's own t when a frame cannot load.
     for (const id of framed) {
-      for (const b of getFormBeats(id)!) {
+      for (const b of getAuthoredBeats(id)!) {
         expect(typeof b.t, `${id} "${b.label}"`).toBe("number");
       }
       expect(
@@ -4987,16 +4988,55 @@ describe("supplied placard frames", () => {
     // weight in the bundle and reads as a frame that is still in use.
     const dirs = new Set(
       framed.flatMap((id) =>
-        getFormBeats(id)!.map((b) => b.image!.replace(/\/[^/]+$/, ""))
+        getAuthoredBeats(id)!.map((b) => b.image!.replace(/\/[^/]+$/, ""))
       )
     );
     const used = new Set(
-      framed.flatMap((id) => getFormBeats(id)!.map((b) => b.image!))
+      framed.flatMap((id) => getAuthoredBeats(id)!.map((b) => b.image!))
     );
     for (const d of dirs) {
       for (const f of readdirSync(resolve(process.cwd(), "public", d))) {
         expect(used.has(`${d}/${f}`), `orphan frame ${d}/${f}`).toBe(true);
       }
     }
+  });
+});
+
+describe("a placard goes live with its art, not before", () => {
+  /* Positions are authored AHEAD of the card, because the generator
+     prompt is built from them: asking a generator for six panels while
+     the app knows only the catalogue's four instructions produces a
+     card the code cannot use. Until every position has a frame the
+     exercise must play exactly as it did — authoring content is not a
+     product change. */
+  it("an authored placard with no frames is not live", () => {
+    const authored = FORM_BEAT_IDS.filter(
+      (id) => !getAuthoredBeats(id)!.every((b) => b.image)
+    );
+    expect(
+      authored.length,
+      "expected some positions authored ahead"
+    ).toBeGreaterThan(0);
+    for (const id of authored) {
+      expect(getAuthoredBeats(id), id).not.toBeNull();
+      expect(getFormBeats(id), `${id} went live without its card`).toBeNull();
+    }
+  });
+
+  it("a placard whose frames are all present IS live", () => {
+    const withArt = FORM_BEAT_IDS.filter((id) =>
+      getAuthoredBeats(id)!.every((b) => b.image)
+    );
+    expect(withArt.length).toBeGreaterThan(0);
+    for (const id of withArt) expect(getFormBeats(id), id).not.toBeNull();
+  });
+
+  it("a HALF-carded placard stays dark rather than mixing", () => {
+    // A sequence that alternated a photograph with a drawing would
+    // read as broken, so the gate is all-or-nothing by construction.
+    const half = FORM_BEAT_IDS.map((id) => getAuthoredBeats(id)!).find(
+      (b) => b.some((x) => x.image) && !b.every((x) => x.image)
+    );
+    expect(half, "no half-carded placard should exist").toBeUndefined();
   });
 });

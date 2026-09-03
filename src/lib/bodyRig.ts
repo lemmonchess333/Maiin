@@ -9608,11 +9608,140 @@ const FORM_BEATS: Record<string, FormPlacard> = {
       secondaryFill: "hatch",
     },
   },
+
+  /* ── Authored ahead of the art (2026-09-03) ──────────────────────
+   * Positions only: no `image`, so `getFormBeats` returns null and
+   * these play as ordinary reps until their cards arrive. They exist
+   * so `form-card-prompt.ts` can ask a generator for exactly these six
+   * panels — a prompt built from four catalogue instructions produces
+   * a card the app cannot use.
+   *
+   * `t` runs in each demo's OWN direction, which differs: bench and
+   * row lock out at t=1, squat and deadlift at t=0. The order pins in
+   * bodyRig.test.ts check the labels against that, not against a
+   * convention assumed here. */
+
+  "bench-press": {
+    beats: [
+      { t: 1, label: "Set up", cue: "Shoulder blades pinched, feet planted." },
+      { t: 0.75, label: "Unrack", cue: "Bar over the shoulders, arms locked." },
+      {
+        t: 0.35,
+        label: "Lower",
+        cue: "Elbows about 45 degrees from the torso.",
+      },
+      { t: 0, label: "Chest", cue: "Bar touches the mid-chest, no bounce." },
+      { t: 0.5, label: "Drive", cue: "Press up and slightly back." },
+      { t: 1, label: "Lockout", cue: "Arms straight, ribs still down." },
+    ],
+  },
+
+  squat: {
+    beats: [
+      { t: 0, label: "Set up", cue: "Bar on the traps, chest tall, brace." },
+      { t: 0.3, label: "Descend", cue: "Hips back and knees out together." },
+      { t: 0.7, label: "Parallel", cue: "Hip crease level with the knee." },
+      { t: 1, label: "Bottom", cue: "Depth without the lower back rounding." },
+      { t: 0.45, label: "Drive", cue: "Push the floor away, chest up." },
+      { t: 0, label: "Stand", cue: "Hips and knees lock out together." },
+    ],
+  },
+
+  deadlift: {
+    beats: [
+      { t: 1, label: "Set up", cue: "Bar over mid-foot, shins close." },
+      {
+        t: 0.8,
+        label: "Take the slack",
+        cue: "Chest up, lats tight, arms straight.",
+      },
+      {
+        t: 0.5,
+        label: "Break the floor",
+        cue: "Push the legs, bar stays against you.",
+      },
+      {
+        t: 0.25,
+        label: "Past the knees",
+        cue: "Hips and shoulders rise together.",
+      },
+      { t: 0, label: "Lockout", cue: "Stand tall, glutes squeezed." },
+      { t: 1, label: "Return", cue: "Hips back first, then bend the knees." },
+    ],
+  },
+
+  "overhead-press": {
+    beats: [
+      {
+        t: 0,
+        label: "Front rack",
+        cue: "Bar on the front delts, elbows under.",
+      },
+      {
+        t: 0.25,
+        label: "Clear the chin",
+        cue: "Head back slightly, bar travels straight.",
+      },
+      { t: 0.6, label: "Mid press", cue: "Head through as the bar passes it." },
+      { t: 1, label: "Lockout", cue: "Bar over the mid-foot, ribs down." },
+      { t: 0.5, label: "Lower", cue: "Same path down, elbows stay under." },
+      { t: 0, label: "Rack", cue: "Bar back on the delts, rebrace." },
+    ],
+  },
+
+  "pull-ups": {
+    beats: [
+      { t: 0, label: "Dead hang", cue: "Arms straight, shoulders active." },
+      {
+        t: 0.3,
+        label: "Initiate",
+        cue: "Pull the shoulder blades down first.",
+      },
+      { t: 0.6, label: "Mid pull", cue: "Elbows drive down toward the ribs." },
+      { t: 1, label: "Top", cue: "Chin over the bar, chest to it." },
+      { t: 0.5, label: "Lower", cue: "Control the descent, no dropping." },
+      { t: 0, label: "Hang", cue: "Back to straight arms, stay tight." },
+    ],
+  },
+
+  "barbell-row": {
+    beats: [
+      { t: 0, label: "Hinge", cue: "Torso about 45 degrees, back flat." },
+      {
+        t: 0.3,
+        label: "Initiate",
+        cue: "Shoulder blades pull before the arms.",
+      },
+      { t: 0.7, label: "Mid row", cue: "Elbows track back, not out." },
+      { t: 1, label: "Top", cue: "Bar to the lower ribs, squeeze." },
+      { t: 0.5, label: "Lower", cue: "Control it, torso angle unchanged." },
+      { t: 0, label: "Stretch", cue: "Arms straight, lats loaded." },
+    ],
+  },
 };
 
-/** The placard sequence for an exercise, or null where the demo plays
- *  as an ordinary rep or a cycle. */
+/**
+ * The placard sequence for an exercise, or null where the demo plays as
+ * an ordinary rep or a cycle.
+ *
+ * A placard is LIVE only once its card exists. The positions are
+ * authored AHEAD of the art, because the generator prompt is built from
+ * them — asking for six panels while the app knows only four
+ * instructions produces a card that does not match the code. Until
+ * every position has a frame, the exercise plays as an ordinary rep and
+ * nothing about it changes.
+ */
 export function getFormBeats(exerciseId: string): readonly FormBeat[] | null {
+  const placard = FORM_BEATS[exerciseId];
+  if (!placard || placard.beats.length === 0) return null;
+  return placard.beats.every((b) => b.image) ? placard.beats : null;
+}
+
+/** The authored positions whether or not their art has arrived — for
+ *  `form-card-prompt.ts`, which exists to go and ask for that art. */
+export function getAuthoredBeats(
+  exerciseId: string
+): readonly FormBeat[] | null {
   return FORM_BEATS[exerciseId]?.beats ?? null;
 }
 

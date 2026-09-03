@@ -104,11 +104,15 @@ const PlacardFrames = memo(function PlacardFrames({
   name: string;
   onFail: () => void;
 }) {
+  /* The FIRST frame sits in normal flow and sizes the box; the rest
+     overlay it. The container used to declare `aspectRatio: 680/594`,
+     measured off the first card — and a later card of the same exercise
+     came back 680x734, which letterboxed inside a box shaped for the
+     old one. Since every frame of a sequence shares one canvas (pinned
+     in bodyRig.test.ts), the frame itself is the honest sizer and there
+     is no constant to keep in step. */
   return (
-    <div
-      className="relative mx-auto w-full max-w-[300px]"
-      style={{ aspectRatio: "680 / 594" }}
-    >
+    <div className="relative mx-auto w-full max-w-[300px]">
       {beats.map((b, i) => (
         <img
           key={b.image}
@@ -117,7 +121,11 @@ const PlacardFrames = memo(function PlacardFrames({
           aria-hidden={i !== index}
           draggable={false}
           onError={onFail}
-          className="absolute inset-0 size-full object-contain motion-safe:transition-opacity"
+          className={
+            i === 0
+              ? "block w-full motion-safe:transition-opacity"
+              : "absolute inset-0 size-full object-contain motion-safe:transition-opacity"
+          }
           style={{
             opacity: i === index ? 1 : 0,
             transitionDuration: `${PLACARD_TIMING.moveMs}ms`,
