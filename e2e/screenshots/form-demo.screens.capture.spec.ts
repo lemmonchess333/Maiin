@@ -85,6 +85,8 @@ const DEMOS: [id: string, name: string][] = [
   ["mountain-climbers", "Mountain Climbers"],
   ["rowing-machine", "Rowing Machine"],
   ["side-plank", "Side Plank"],
+  // Batch 14: the keyed burpee.
+  ["burpees", "Burpees"],
 ];
 
 test.use({

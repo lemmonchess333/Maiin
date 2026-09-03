@@ -1689,6 +1689,122 @@ function antSidePlank(e: number): Partial<Record<GroupName, Op[]>> {
   };
 }
 
+/* ── Batch 14: the burpee — a keyframed chain ──
+ * Six positions on one e: squat with the hands down, high plank, chest
+ * to the floor, plank, squat, jump. Each keyframe is a world hip, a
+ * trunk angle, a world ankle and a world hand; the trunk is placed by
+ * `trunkBetween`, the legs by `plantedLeg`, the arms by `armToWorld`,
+ * and the frames interpolate. The two-way player reverses it into the
+ * same sequence in the other order — a burpee's own second rep. */
+interface BurpeeKey {
+  e: number;
+  hip: Pt;
+  /** Trunk angle, degrees, screen convention (−90 = upright). */
+  trunk: number;
+  ankle: Pt;
+  hand: Pt;
+}
+const BURPEE_HAND: Pt = [111, MACHINE_FLOOR - 2];
+const BURPEE_KEYS: BurpeeKey[] = (() => {
+  const plankAnkle = HIGH_PLANK_ANKLE;
+  const plank = highPlankBase();
+  const plankHip = applyToPoint(SIDE_ANCHORS.hip, plank.body);
+  const plankTrunk =
+    (Math.atan2(
+      plank.shoulder[1] - plankHip[1],
+      plank.shoulder[0] - plankHip[0]
+    ) *
+      180) /
+    Math.PI;
+  // Push-up bottom: the same rigid line lowered about the heels until
+  // the shoulder sits a bent arm above the hands.
+  const lowDeg = Math.asin(
+    (plankAnkle[1] - (MACHINE_FLOOR - 2 - 39)) / (LEG_LEN + TRUNK_LEN)
+  );
+  const lowHip: Pt = [
+    plankAnkle[0] + LEG_LEN * Math.cos(lowDeg),
+    plankAnkle[1] - LEG_LEN * Math.sin(lowDeg),
+  ];
+  const squat: BurpeeKey = {
+    e: 0,
+    hip: [49.5, 160],
+    trunk: -20,
+    ankle: [60, 196],
+    hand: BURPEE_HAND,
+  };
+  const plankKey: BurpeeKey = {
+    e: 0.3,
+    hip: plankHip,
+    trunk: plankTrunk,
+    ankle: plankAnkle,
+    hand: BURPEE_HAND,
+  };
+  return [
+    squat,
+    plankKey,
+    {
+      e: 0.5,
+      hip: lowHip,
+      trunk: (-lowDeg * 180) / Math.PI,
+      ankle: plankAnkle,
+      hand: BURPEE_HAND,
+    },
+    { ...plankKey, e: 0.7 },
+    { ...squat, e: 0.85 },
+    {
+      e: 1,
+      hip: [42, 86],
+      trunk: -90 + 5.4,
+      ankle: [46.6, 183],
+      hand: [50, -34],
+    },
+  ];
+})();
+function burpeePose(e: number): Partial<Record<GroupName, Op[]>> {
+  const keys = BURPEE_KEYS;
+  let i = 0;
+  while (i < keys.length - 2 && e > keys[i + 1].e) i++;
+  const a = keys[i];
+  const b = keys[i + 1];
+  const k = smooth((e - a.e) / (b.e - a.e));
+  const hip: Pt = [lerp(a.hip[0], b.hip[0], k), lerp(a.hip[1], b.hip[1], k)];
+  const trunk = lerp(a.trunk, b.trunk, k);
+  const ankle: Pt = [
+    lerp(a.ankle[0], b.ankle[0], k),
+    lerp(a.ankle[1], b.ankle[1], k),
+  ];
+  const hand: Pt = [
+    lerp(a.hand[0], b.hand[0], k),
+    lerp(a.hand[1], b.hand[1], k),
+  ];
+  const rad = (trunk * Math.PI) / 180;
+  const S: Pt = [
+    hip[0] + TRUNK_LEN * Math.cos(rad),
+    hip[1] + TRUNK_LEN * Math.sin(rad),
+  ];
+  const torso = trunkBetween(hip, S);
+  // The high branch: forward in the crouch, and above the hip-ankle
+  // line while the feet travel — the forward branch dipped the knee
+  // through the floor mid-kick.
+  const leg = plantedLeg(hip, ankle, KNEE_HIGH);
+  const arm = armToWorld(torso, hand, ELBOW_BACK);
+  return {
+    head: torso,
+    torso,
+    pelvis: torso,
+    thighL: leg.thigh,
+    thighR: leg.thigh,
+    shankL: leg.shank,
+    shankR: leg.shank,
+    upperArmL: arm.upper,
+    foreArmL: arm.fore,
+    handL: arm.fore,
+    upperArmR: arm.upper,
+    foreArmR: arm.fore,
+    handR: arm.fore,
+  };
+}
+
 function sideSquatChain(
   e: number,
   hingeDeg: number,
@@ -7967,6 +8083,34 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         `<line x1="-12" y1="${MACHINE_FLOOR + 1}" x2="140" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`
       );
     },
+  },
+
+  /* ── 2026-09-03 build-out, batch 14: the burpee ── */
+
+  burpees: {
+    /* "Drop into a squat with your hands on the floor in front of you.
+     * Kick your feet back into a plank, lower your chest to the floor.
+     * Press back up, jump your feet forward to your hands. Explode
+     * upward into a jump with arms overhead, then repeat." Six keyed
+     * positions on one e (`burpeePose`); the hands stay on the floor
+     * from the drop to the feet-forward, then go overhead with the jump.
+     * Played back, the order is a burpee's own next rep. */
+    view: "side",
+    viewBox: "-60 -50 200 262",
+    groundY: 204,
+    shadowCx: 40,
+    shadowRx: 60,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: {
+      quadriceps: "primary",
+      chest: "primary",
+      abs: "secondary",
+      "front-deltoids": "secondary",
+    },
+    pose: burpeePose,
+    scene: () =>
+      `<line x1="-60" y1="${MACHINE_FLOOR + 1}" x2="140" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
   },
 };
 

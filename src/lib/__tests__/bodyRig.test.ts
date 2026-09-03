@@ -1126,6 +1126,8 @@ describe("renderBodyDemo", () => {
       "ski-erg": "stretch",
       "jump-rope": "stretch",
       "pallof-press": "stretch",
+      // Batch 14.
+      burpees: "stretch",
     };
     expect(Object.keys(START).sort()).toEqual(Object.keys(BODY_DEMOS).sort());
     for (const [id, expected] of Object.entries(START)) {
@@ -3565,6 +3567,65 @@ describe("renderBodyDemo", () => {
       expect(elbowDeg(id, 1), "pallof: full extension").toBeGreaterThan(165);
       expect(at(id, 1).torso, "pallof: trunk resists the turn").toBeUndefined();
     }
+
+    /* Batch 14: the burpee. */
+    // Hands on the floor from the drop through the feet-forward; a plank
+    // at 0.3 and 0.7 (body straight, feet back); chest to the floor at
+    // 0.5 (shoulder well below the plank's); feet off the floor with the
+    // arms overhead at the jump; nothing through the floor.
+    {
+      const id = "burpees";
+      const H0 = pt(SIDE_ANCHORS.hand, at(id, 0).handL);
+      for (const t of [0.15, 0.3, 0.5, 0.7, 0.85]) {
+        const H = pt(SIDE_ANCHORS.hand, at(id, t).handL);
+        expect(
+          Math.hypot(H[0] - H0[0], H[1] - H0[1]),
+          `burpee: hands on the floor @${t}`
+        ).toBeLessThan(0.01);
+      }
+      for (const t of [0.3, 0.7]) {
+        const p = at(id, t);
+        const S = pt(SIDE_ANCHORS.shoulder, p.torso);
+        const A = pt(SIDE_ANCHORS.ankle, p.shankL);
+        expect(
+          S[0] - A[0],
+          `burpee: feet kicked back into a plank @${t}`
+        ).toBeGreaterThan(130);
+        expect(
+          kneeDeg(id, t),
+          `burpee: plank legs straight @${t}`
+        ).toBeGreaterThan(REST_KNEE - 3);
+      }
+      const sPlank = pt(SIDE_ANCHORS.shoulder, at(id, 0.3).torso);
+      const sLow = pt(SIDE_ANCHORS.shoulder, at(id, 0.5).torso);
+      expect(sLow[1] - sPlank[1], "burpee: chest to the floor").toBeGreaterThan(
+        14
+      );
+      for (const t of [
+        0, 0.1, 0.15, 0.2, 0.25, 0.5, 0.75, 0.8, 0.85, 0.9, 0.95, 1,
+      ]) {
+        const p = at(id, t);
+        for (const [anchor, group, label] of [
+          [SIDE_ANCHORS.knee, "shankL", "knee"],
+          [SIDE_ANCHORS.ankle, "shankL", "ankle"],
+          [SIDE_ANCHORS.hip, "pelvis", "hip"],
+        ] as const) {
+          expect(
+            pt(anchor, (p as Record<string, unknown>)[group])[1],
+            `burpee: ${label} above the floor @${t}`
+          ).toBeLessThan(204);
+        }
+      }
+      const p1 = at(id, 1);
+      expect(
+        pt(SIDE_ANCHORS.ankle, p1.shankL)[1],
+        "burpee: feet off the floor at the jump"
+      ).toBeLessThan(SIDE_ANCHORS.ankle[1] - 6);
+      expect(
+        pt(SIDE_ANCHORS.hand, p1.handL)[1],
+        "burpee: arms overhead at the jump"
+      ).toBeLessThan(0);
+    }
   });
 
   it("the foot has a heel, an arch and a toe — not a wedge", () => {
@@ -4191,6 +4252,7 @@ describe("tint honesty", () => {
       "ski-erg": "upper-back",
       "jump-rope": "calves",
       "pallof-press": "abs",
+      burpees: "quadriceps",
     };
     for (const [id, muscle] of Object.entries(expectPrimary)) {
       expect(BODY_DEMOS[id].tint[muscle], `${id} primary`).toBe("primary");

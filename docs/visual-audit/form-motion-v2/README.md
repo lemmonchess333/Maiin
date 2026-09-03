@@ -1569,3 +1569,41 @@ treadmill, incline walk, swimming).
 
 Capture channel: `mountain-climbers`, `rowing-machine`, `side-plank`
 added.
+
+## STATUS 2026-09-03o — build-out, batch 14: the burpee, and the ledger closes
+
+Coverage 136 → 137 of 152. The ledger filed the burpee under "a
+multi-phase sequence the two-way player would reverse dishonestly".
+Checked rather than assumed: a burpee's phases are squat → plank →
+chest down → plank → squat → jump, and played backwards they are jump
+(landing) → squat → plank (feet kicked back) → chest down → plank →
+squat — which is the order a burpee's OWN next rep uses, since the
+push-up is symmetric and the feet travel both ways. So it is honest in
+the two-way player, and it is built: `burpeePose` interpolates six
+keyframes (world hip, trunk angle, world ankle, world hand) through
+`trunkBetween`, `plantedLeg` and `armToWorld`.
+
+| Demo      | Chain                           | Pinned claim (from its instructions)                                                                           |
+| --------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `burpees` | `burpeePose`, six keys on one e | hands on the floor 0 → 0.85; plank (feet >130 back, legs straight) at 0.3 and 0.7; chest down >14 at 0.5; jump |
+
+One thing the numbers caught: with the forward knee branch, the knee
+dipped 5 units through the floor as the feet kicked back (the leg
+passes through a bend with the hip low). The high branch keeps it above
+the hip-ankle line, and twelve samples now pin knee, ankle and hip
+above the floor.
+
+**The ledger, final — 15 of 152 stay on the static reference:**
+
+- Flight, or a sequence the reverse would misstate: `box-jumps` (the
+  reverse is a jump DOWN, which the instruction forbids), `man-maker`,
+  `turkish-get-up`.
+- Carries and walks, where the exercise is the gait: `farmers-carry`,
+  `sled-push-pull`.
+- A grip rotation no camera shows: `zottman-curl`.
+- A joint the rig lacks: `seated-calf-raise` (ankle).
+- Cardio whose rep is a gait or a pedal: `assault-bike`, `bike`,
+  `elliptical`, `incline-treadmill-walk`, `spin-bike`, `stairmaster`,
+  `swimming`, `treadmill`.
+
+Capture channel: `burpees` added.
