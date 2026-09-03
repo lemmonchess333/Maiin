@@ -1414,3 +1414,64 @@ figure to gain the side view's articulated arms; that is the larger
 change, and the one this build-out did not attempt.
 
 Capture channel: `plank`, `muscle-ups`, `clean-and-press` added.
+
+## STATUS 2026-09-03l — build-out, batch 11: the frontal plane, on the front figure
+
+Coverage 109 → 119 of 152. The 2026-09-03k ledger filed eleven
+exercises under "frontal-plane movements the profile camera cannot
+show honestly" and ten under rotations. Owner: "I'm sure you can do
+more of them." Correct — the ledger's reason was a property of the
+PROFILE camera, and the rig has two others. The lateral raise, overhead
+press, pull-up and pulldown had been driving the front/back figure all
+along; this batch puts the flys, decks, raises and presses on it.
+
+What the front camera can do that the profile cannot is show an arm
+coming AT the viewer. `scaleAxis` already existed for exactly that
+("the 2D foreshortening cheat": a limb shortens along its own length
+and keeps its width). Three helpers wrap it:
+
+- **`antArmToward(side, hand)`** — a near-straight front arm aimed at a
+  world hand. A hand nearer than the arm's reach is READ as the arm
+  pointing toward the viewer and the arm is foreshortened to land on
+  it; a hand beyond the reach clamps to a full in-plane arm. The flys
+  and the Lu raise's second half are this: wide in the plane, then
+  short and together over the chest.
+- **`antElbowAt(side, elbow, up|down)`** — the upper arm aimed at a
+  world elbow (foreshortened when the elbow sits in front of the body)
+  with the forearm standing vertical from it. The pec deck and the
+  Arnold's first segment.
+- **`antForeRotate`** — a forearm swung about a fixed elbow from
+  hanging to upright THROUGH the viewer, shortest as it passes: the
+  Cuban press's external rotation.
+
+Plus `frontalPair` (`bodyProps.ts`): a pair of cables from pulleys or
+levers from pivots to the two hands, front-on — and the front/back
+renderer now takes `scene`, which it never needed before.
+
+| Demo                | Camera / chain                                           | Pinned claim (from its instructions)                                                      |
+| ------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `db-flyes`          | above the bench; `antArmToward`                          | span >140 at the stretch, <16 at the top; hands within 14 of the shoulder line            |
+| `cable-fly`         | standing; chest-height pulleys; `frontalPair`            | same                                                                                      |
+| `machine-chest-fly` | levers from pivots above; `frontalPair`                  | same                                                                                      |
+| `cable-crossover`   | high pulleys; hands high-wide → together before the hips | hands <30 at the start, >96 (hip level) and <18 apart at the end; pulleys above the frame |
+| `pec-deck`          | `antElbowAt`, forearms up on the pads                    | elbows at shoulder height (±2) and forearms vertical (±0.5) every frame; 90 → 30 span     |
+| `lu-raise`          | `lateralRaiseOps` then `antArmToward` forward            | shoulder height and >150 wide at ½; together (<16) at shoulder height at 1                |
+| `arnold-press`      | `antElbowAt` swing (front → wide), then the press        | elbows in front (<12) at 0; at shoulder height and >18 out at 0.35; overhead lockout      |
+| `cuban-press`       | row, `antForeRotate`, press                              | elbows at shoulder height with hands >25 below at ⅓; hands >25 above at ⅔; lockout        |
+| `shrugs`            | arm group (which carries the deltoid cap) rises          | 6-8.5 rise, strictly vertical, whole arm together; trunk untouched                        |
+| `barbell-shrug`     | same, bar across the thighs                              | same                                                                                      |
+
+The shrug is worth a note: the ledger said "no shoulder girdle joint".
+There still isn't one — but on the front figure the deltoid cap is
+part of the ARM group (the 2026-07-11 joint pass put it there), so
+raising the arm group raises the cap, and the cap rising is what a
+shrug looks like from the front. The profile could not do this because
+its shoulder is part of the torso piece. Same rig, other camera.
+
+One thing the numbers caught: the pec deck's first finish had the
+elbows straight in front of the shoulders, which projected the forearms
+64 apart — pads that never met. The upper arms have to cross INWARD as
+they come forward (elbow 13 inside the shoulder line); the pads then
+meet at 26.
+
+Capture channel: `db-flyes`, `pec-deck`, `arnold-press` added.

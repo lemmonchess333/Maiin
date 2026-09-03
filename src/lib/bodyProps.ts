@@ -113,6 +113,15 @@ export type PropState =
    *  pivot (chest press, shoulder press). The arm goes behind the body,
    *  the handle in front — the hands work in front of the trunk. */
   | { kind: "leverHandle"; pivot: Pt; hand: Pt }
+  /** Two anchored lines to two hands, seen from the FRONT — a pair of
+   *  cables from their pulleys, or a pair of machine levers from their
+   *  pivots. Lines behind the body, handle discs in front. */
+  | {
+      kind: "frontalPair";
+      anchors: [Pt, Pt];
+      hands: [Pt, Pt];
+      style: "cable" | "lever";
+    }
   /** Dip station: two uprights with base feet and grip end-caps. */
   | { kind: "dipBars"; left: Pt; right: Pt; floorY: number };
 
@@ -395,6 +404,31 @@ export function leverHandle(pivot: Pt, hand: Pt): PropLayers {
   };
 }
 
+/** A pair of cables (from pulley blocks) or machine levers (from pivot
+ *  hinges) to the two hands, front-on. */
+export function frontalPair(
+  anchors: [Pt, Pt],
+  hands: [Pt, Pt],
+  style: "cable" | "lever"
+): PropLayers {
+  let behind = "";
+  let front = "";
+  for (let i = 0; i < 2; i++) {
+    const a = anchors[i];
+    const h = hands[i];
+    behind +=
+      style === "cable"
+        ? `<line x1="${n(a[0])}" y1="${n(a[1])}" x2="${n(h[0])}" y2="${n(h[1])}" stroke="${GEAR}" stroke-width="1.1"/>` +
+          `<circle cx="${n(a[0])}" cy="${n(a[1])}" r="3.2" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>`
+        : `<line x1="${n(a[0])}" y1="${n(a[1])}" x2="${n(h[0])}" y2="${n(h[1])}" stroke="${GEAR_DARK}" stroke-width="3.4" stroke-linecap="round"/>` +
+          `<circle cx="${n(a[0])}" cy="${n(a[1])}" r="3.6" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>`;
+    front +=
+      `<circle cx="${n(h[0])}" cy="${n(h[1])}" r="3.4" fill="${GEAR}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>` +
+      `<circle cx="${n(h[0])}" cy="${n(h[1])}" r="1.2" fill="${GEAR_DARK}"/>`;
+  }
+  return { behind, front };
+}
+
 /* ── Resolver ─────────────────────────────────────────────────── */
 
 /** Render a prop into its two layers. Pure: same state → same SVG. */
@@ -424,6 +458,9 @@ export function renderProp(state: PropState): PropLayers {
         behind: "",
         front: ropeAttachment(state.pulley, state.hand, state.spread),
       };
+
+    case "frontalPair":
+      return frontalPair(state.anchors, state.hands, state.style);
 
     case "landmine":
       return { behind: "", front: landmineBar(state.pivot, state.hand) };
