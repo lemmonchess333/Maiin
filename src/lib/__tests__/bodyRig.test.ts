@@ -1015,6 +1015,12 @@ describe("renderBodyDemo", () => {
       "tricep-kickback": "stretch",
       "skull-crushers": "stretch",
       lunges: "lockout",
+      // Batch 2.
+      "incline-bench": "lockout",
+      "incline-db-press": "lockout",
+      "glute-bridge": "stretch",
+      "hip-thrust": "stretch",
+      "bulgarian-split": "lockout",
     };
     expect(Object.keys(START).sort()).toEqual(Object.keys(BODY_DEMOS).sort());
     for (const [id, expected] of Object.entries(START)) {
@@ -1022,6 +1028,7 @@ describe("renderBodyDemo", () => {
     }
   });
 
+  const SUPINE_FLOOR_Y = 172;
   it("each demo reaches the position its own instructions describe", () => {
     /* The roadmap's honesty standard, measured against the catalogue
        text rather than against a screenshot. Every claim below is a
@@ -1201,6 +1208,89 @@ describe("renderBodyDemo", () => {
       expect(knee, "front knee angle").toBeLessThan(105);
       const bk = pt(SIDE_ANCHORS.knee, p.thighR);
       expect(196 - bk[1], "back knee near the floor").toBeLessThan(12);
+    }
+
+    /* Batch 2. */
+    const lineDeg = (a: [number, number], b: [number, number]) =>
+      (Math.atan2(b[1] - a[1], b[0] - a[0]) * 180) / Math.PI;
+    // glute bridge: "a straight line from shoulders to knees" at the top.
+    {
+      const p = at("glute-bridge", 1);
+      const sh = pt(SIDE_ANCHORS.shoulder, p.torso);
+      const hip = pt(SIDE_ANCHORS.hip, p.pelvis);
+      const kn = pt(SIDE_ANCHORS.knee, p.thighL);
+      expect(
+        Math.abs(lineDeg(sh, hip) - lineDeg(hip, kn)),
+        "bridge: shoulder-hip-knee in a line"
+      ).toBeLessThan(8);
+      const down = pt(SIDE_ANCHORS.hip, at("glute-bridge", 0).pelvis);
+      expect(
+        down[1],
+        "bridge: hips on the floor at the stretch"
+      ).toBeGreaterThan(SUPINE_FLOOR_Y - 8);
+    }
+    // hip thrust: torso horizontal at the top, hips just off the floor at the bottom.
+    {
+      const p = at("hip-thrust", 1);
+      const sh = pt(SIDE_ANCHORS.shoulder, p.torso);
+      const hip = pt(SIDE_ANCHORS.hip, p.pelvis);
+      expect(
+        Math.abs(lineDeg(sh, hip)),
+        "thrust: torso horizontal at the top"
+      ).toBeLessThan(8);
+      const down = pt(SIDE_ANCHORS.hip, at("hip-thrust", 0).pelvis);
+      expect(
+        down[1],
+        "thrust: hips near the floor at the stretch"
+      ).toBeGreaterThan(SUPINE_FLOOR_Y - 12);
+      // The bar rides the hips, every frame.
+      for (const t of [0, 0.5, 1]) {
+        const q = at("hip-thrust", t);
+        const bar = BODY_DEMOS["hip-thrust"].bar!(t, q)![0];
+        const h = pt(SIDE_ANCHORS.hip, q.pelvis);
+        expect(
+          Math.hypot(bar[0] - h[0], bar[1] - h[1]),
+          `thrust bar at the hip @${t}`
+        ).toBeLessThan(12);
+      }
+    }
+    // incline press: the bar travels PERPENDICULAR to the inclined trunk.
+    for (const id of ["incline-bench", "incline-db-press"]) {
+      const p1 = at(id, 1);
+      const sh = pt(SIDE_ANCHORS.shoulder, p1.torso);
+      const hip = pt(SIDE_ANCHORS.hip, p1.pelvis);
+      const trunk = lineDeg(hip, sh); // up-left
+      const hand = pt(SIDE_ANCHORS.hand, p1.handL);
+      const press = lineDeg(sh, hand);
+      let d = Math.abs(((press - trunk) % 360) + 360) % 360;
+      if (d > 180) d = 360 - d;
+      expect(
+        Math.abs(d - 90),
+        `${id}: press perpendicular to the trunk`
+      ).toBeLessThan(14);
+      // Incline: the trunk sits 25-40 degrees above horizontal.
+      const incline = 180 - Math.abs(trunk);
+      expect(incline, `${id}: trunk incline`).toBeGreaterThan(25);
+      expect(incline, `${id}: trunk incline`).toBeLessThan(42);
+      // Lockout is nearly a full arm.
+      expect(
+        Math.hypot(hand[0] - sh[0], hand[1] - sh[1]),
+        `${id}: lockout reach`
+      ).toBeGreaterThan(62);
+    }
+    // Bulgarian split: both feet planted, the back one on the bench.
+    for (const t of [0, 0.5, 1]) {
+      const p = at("bulgarian-split", t);
+      const fa = pt(SIDE_ANCHORS.ankle, p.shankL);
+      const ba = pt(SIDE_ANCHORS.ankle, p.shankR);
+      expect(
+        Math.hypot(fa[0] - 84, fa[1] - 196),
+        `bulgarian front foot @${t}`
+      ).toBeLessThan(0.05);
+      expect(
+        Math.hypot(ba[0] - 4, ba[1] - 174),
+        `bulgarian back foot on the bench @${t}`
+      ).toBeLessThan(0.05);
     }
   });
 
@@ -1724,6 +1814,11 @@ describe("tint honesty", () => {
       "tricep-kickback": "triceps",
       "skull-crushers": "triceps",
       lunges: "quadriceps",
+      "incline-bench": "chest",
+      "incline-db-press": "chest",
+      "glute-bridge": "gluteal",
+      "hip-thrust": "gluteal",
+      "bulgarian-split": "quadriceps",
     };
     for (const [id, muscle] of Object.entries(expectPrimary)) {
       expect(BODY_DEMOS[id].tint[muscle], `${id} primary`).toBe("primary");

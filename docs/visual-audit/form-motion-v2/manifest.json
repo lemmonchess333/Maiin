@@ -88,6 +88,33 @@
         "file": "bench-press-t100.png"
       }
     ],
+    "bulgarian-split": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "bulgarian-split-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "bulgarian-split-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "bulgarian-split-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "bulgarian-split-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "bulgarian-split-t100.png"
+      }
+    ],
     "calf-raise": [
       {
         "t": 0,
@@ -223,6 +250,33 @@
         "file": "front-raise-t100.png"
       }
     ],
+    "glute-bridge": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "glute-bridge-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "glute-bridge-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "glute-bridge-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "glute-bridge-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "glute-bridge-t100.png"
+      }
+    ],
     "goblet-squat": [
       {
         "t": 0,
@@ -248,6 +302,87 @@
         "t": 1,
         "effort": 0.8,
         "file": "goblet-squat-t100.png"
+      }
+    ],
+    "hip-thrust": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "hip-thrust-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "hip-thrust-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "hip-thrust-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "hip-thrust-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "hip-thrust-t100.png"
+      }
+    ],
+    "incline-bench": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "incline-bench-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "incline-bench-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "incline-bench-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "incline-bench-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "incline-bench-t100.png"
+      }
+    ],
+    "incline-db-press": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "incline-db-press-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "incline-db-press-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "incline-db-press-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "incline-db-press-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "incline-db-press-t100.png"
       }
     ],
     "lat-pulldown": [

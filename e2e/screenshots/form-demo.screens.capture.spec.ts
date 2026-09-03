@@ -38,6 +38,8 @@ const DEMOS: [id: string, name: string][] = [
   // 2026-09-03 build-out, batch 1: the two with new chains.
   ["lunges", "Lunges"],
   ["front-raise", "Front Raise"],
+  // Batch 2: the supine chain.
+  ["hip-thrust", "Hip Thrust"],
 ];
 
 test.use({
