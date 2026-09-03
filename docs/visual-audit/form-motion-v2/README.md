@@ -1252,3 +1252,58 @@ It stays on the static reference until the foot is its own piece.
 
 Capture channel: `barbell-step-ups`, `pistol-squat`,
 `chest-supported-db-row` added.
+
+## STATUS 2026-09-03i — build-out, batch 8: the rest of the cables
+
+Coverage 87 → 95 of 152, and the alias-hygiene fallback list — the
+exercises that fell back to the static reference because they lacked
+an honest implement — is now EMPTY. `reverse-grip-cable-pushdown` was
+its last member; it gets the `cable-handle` (a straight bar end-on)
+the rule asked for. The test that used to assert those ids render
+nothing now asserts the opposite, so re-gating one has to say why.
+
+Two small extractions, one hoist:
+
+- **`pushdownFore`** — the rope pushdown's forearm arc (120° → 10°
+  about a pinned elbow), now called by the rope, straight-bar and
+  single-handle versions. The grip is the prop's business.
+- **`staggeredStance`** — the cable station's "stagger your stance and
+  lean slightly forward": body leaned about the heel, trunk hinged at
+  the hip, near foot a little forward, far foot a little back. Overhead
+  cable extension and Bayesian curl share it.
+- **`chestSupportedPadScene`** — the chest-supported row's pad, hoisted
+  so the spider curl draws the same bench instead of a copy.
+
+| Demo                              | Chain / gear                                              | Pinned claim (from its instructions)                                                      |
+| --------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `reverse-grip-cable-pushdown`     | `pushdownFore`, bar on the cable                          | elbow STATIONARY; folded <70° at the stretch; lockout >165°; pulley high                  |
+| `single-arm-cable-pushdown`       | `pushdownFore`, one handle, far arm hangs                 | same, unilateral                                                                          |
+| `overhead-cable-tricep-extension` | `staggeredStance(12)`, overhead arm, LOW pulley BEHIND    | elbow beside the head (±12) and above the neck every frame; straight top; lean 6-18°      |
+| `bayesian-cable-curl`             | `staggeredStance(6)`, upper arm held 24° back, low pulley | elbow >8 behind the shoulder line every frame and stationary; straight stretch            |
+| `reverse-barbell-curl`            | `strictCurlPose`, forearm-first tint                      | elbows pinned (≤3.2 drift); bar at shoulder height                                        |
+| `spider-db-curl`                  | `rigidLeanForward(48)`, arm hangs plumb                   | elbow stationary; upper arm plumb (±4°) every frame; straight at the stretch              |
+| `single-arm-lat-pulldown`         | `seatedChain` leaned 12 away, `armToWorld` ELBOW_BACK     | hips on the seat; hand above the head at the stretch; elbow >8 behind the trunk at finish |
+| `cable-glute-kickback`            | hinge 18 on the planted far leg, near leg swings back     | planted foot + hands stationary; knee straight every frame; ankle >40 behind hip, >10 up  |
+
+Two things the numbers caught before a screenshot could:
+
+- The single-arm pulldown's first pulley sat at x 124 (the seated row's
+  station), so the "full overhead stretch" reached forward at 45° and
+  the hand topped out at the CHIN. At x 84 the reach is steep and the
+  hand clears the head by 20 — and the station's post had to move off
+  the knees, which sit at x 93.
+- The overhead cable extension uses `cable-handle`, not `rope`: the
+  rope prop's tails hang DOWN from the grips, which is right for a
+  pushdown and wrong for hands overhead (they would cross the
+  forearms). The two strands stack in profile anyway.
+
+What is still uncovered is now almost entirely what the profile camera
+cannot show honestly — flys, pec decks, reverse flys, abductions,
+rotations (Arnold, Cuban, Lu), twists and chops — plus holds (plank,
+side plank, L-sit, farmer's carry), cardio machines, and the
+multi-phase full-body movements (burpee, man-maker, get-up, muscle-up,
+clean-and-press). Shrugs stay out for the same reason as the seated
+calf raise: no shoulder-girdle joint in the rig.
+
+Capture channel: `overhead-cable-tricep-extension`, `spider-db-curl`,
+`cable-glute-kickback` added.

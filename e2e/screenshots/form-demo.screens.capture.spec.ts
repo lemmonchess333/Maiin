@@ -61,6 +61,10 @@ const DEMOS: [id: string, name: string][] = [
   ["barbell-step-ups", "Barbell Step-Ups"],
   ["pistol-squat", "Pistol Squats"],
   ["chest-supported-db-row", "Chest-Supported Dumbbell Row"],
+  // Batch 8: the low pulley behind, the pad, the ankle strap.
+  ["overhead-cable-tricep-extension", "Overhead Cable Tricep Extension"],
+  ["spider-db-curl", "Spider Dumbbell Curl"],
+  ["cable-glute-kickback", "Cable Glute Kickback"],
 ];
 
 test.use({

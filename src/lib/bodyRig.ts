@@ -1386,6 +1386,52 @@ const OVERHEAD: Pt = [
   SIDE_ANCHORS.shoulder[1] - 0.996 * (SIDE_UPPER_LEN + SIDE_FORE_LEN),
 ];
 
+/* Standing with a slight forward hinge and a staggered stance — the
+ * cable station's "stagger your stance and lean slightly forward"
+ * (overhead cable extension, Bayesian curl): the whole body leans about
+ * the planted heel by `hipsBack`, the trunk hinges `deg` at the hip, the
+ * near leg steps a little forward and the far leg a little back. */
+function staggeredStance(deg: number): {
+  torso: Op[];
+  head: Op[];
+  pelvis: Op[];
+  nearLeg: Op[];
+  farLeg: Op[];
+} {
+  const LEAN = hipsBack(deg);
+  const torso: Op[] = [{ kind: "rotate", deg, pivot: SIDE_ANCHORS.hip }, LEAN];
+  const head: Op[] = [
+    { kind: "rotate", deg: -deg * HEAD_LIFT, pivot: SIDE_ANCHORS.neck },
+    ...torso,
+  ];
+  const pelvis: Op[] = [
+    { kind: "rotate", deg: deg * PELVIS_FOLLOW, pivot: SIDE_ANCHORS.hip },
+    LEAN,
+  ];
+  const nearLeg: Op[] = [
+    { kind: "rotate", deg: -7, pivot: SIDE_ANCHORS.hip },
+    LEAN,
+  ];
+  const farLeg: Op[] = [
+    { kind: "rotate", deg: 12, pivot: SIDE_ANCHORS.hip },
+    LEAN,
+  ];
+  return { torso, head, pelvis, nearLeg, farLeg };
+}
+/** The high-pulley pushdown's forearm arc (folded at the chest →
+ *  lockout at the thigh), elbow pinned at the side. Shared by the rope,
+ *  straight-bar and single-handle versions — the grip is what differs,
+ *  and the grip is the prop's business. */
+function pushdownFore(e: number): Op[] {
+  const flex = lerp(120, 10, e);
+  return [{ kind: "rotate", deg: -flex, pivot: SIDE_ANCHORS.elbow }];
+}
+const HIGH_PULLEY: Pt = [72, -10];
+const LOW_PULLEY_BEHIND: Pt = [-22, 190];
+const KICKBACK_PULLEY: Pt = [112, 190];
+const PULLDOWN_SEAT: Pt = [44, 142];
+const PULLDOWN_PULLEY: Pt = [84, -14];
+
 function sideSquatChain(
   e: number,
   hingeDeg: number,
@@ -1561,6 +1607,34 @@ function hingeLift(
     foreArmR: [...arm.fore, ...torsoOps],
     handR: [...arm.fore, ...torsoOps],
   };
+}
+
+/* The chest-supported pad — along the body line, offset to the chest
+ * side, from the thighs up past the shoulders; posts to the floor.
+ * Shared by the chest-supported row and the spider curl. */
+function chestSupportedPadScene(
+  _e: number,
+  pose: Partial<Record<GroupName, Op[]>>
+): string {
+  // The pad: along the body line, offset to the chest side, from
+  // the thighs up past the shoulders; posts to the floor.
+  const S = applyToPoint(SIDE_ANCHORS.shoulder, pose.torso ?? []);
+  const K = applyToPoint(SIDE_ANCHORS.knee, pose.thighL ?? []);
+  const dx = S[0] - K[0];
+  const dy = S[1] - K[1];
+  const len = Math.hypot(dx, dy);
+  const ux = dx / len;
+  const uy = dy / len;
+  const px = -uy; // chest side (down-forward for a forward lean)
+  const py = ux;
+  const off = 15;
+  const a: Pt = [K[0] + ux * 10 + px * off, K[1] + uy * 10 + py * off];
+  const b: Pt = [S[0] + ux * 26 + px * off, S[1] + uy * 26 + py * off];
+  return (
+    `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}" stroke="${GEAR}" stroke-width="8" stroke-linecap="round"/>` +
+    `<line x1="${((a[0] + b[0]) / 2).toFixed(1)}" y1="${((a[1] + b[1]) / 2 + 4).toFixed(1)}" x2="${((a[0] + b[0]) / 2).toFixed(1)}" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+    `<line x1="-6" y1="${MACHINE_FLOOR + 1}" x2="166" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`
+  );
 }
 
 export const BODY_DEMOS: Record<string, BodyDemo> = {
@@ -5013,25 +5087,366 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
       return [h, h];
     },
+    scene: chestSupportedPadScene,
+  },
+
+  /* ── 2026-09-03 build-out, batch 8: the rest of the cables ── */
+
+  "reverse-grip-cable-pushdown": {
+    /* "Attach a straight bar to a high pulley, grip underhand ... pin
+     * your elbows to your sides ... push the bar down to full lockout."
+     * The rope pushdown's arc with a BAR on the cable — the implement
+     * the alias-hygiene rule said it had to have before it could leave
+     * the static fallback. The underhand grip is a frontal-plane fact
+     * the profile cannot show; the pinned elbow and the lockout can. */
+    view: "side",
+    equip: "cable-handle",
+    pulley: HIGH_PULLEY,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { triceps: "primary", forearm: "secondary" },
+    pose: (e) => {
+      const fore = pushdownFore(e);
+      return { foreArmL: fore, handL: fore, foreArmR: fore, handR: fore };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+  },
+
+  "single-arm-cable-pushdown": {
+    /* "Attach a single handle to a high pulley, grip neutrally with one
+     * hand. Pin your elbow at your side — it stays put the whole set.
+     * Push the handle down ... to full lockout." One arm works the
+     * pushdown arc on a single handle; the other hangs (unilateral by
+     * instruction). */
+    view: "side",
+    equip: "cable-handle",
+    pulley: HIGH_PULLEY,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { triceps: "primary", forearm: "secondary" },
+    pose: (e) => {
+      const fore = pushdownFore(e);
+      return { foreArmL: fore, handL: fore };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+  },
+
+  "overhead-cable-tricep-extension": {
+    /* "Face away from a low pulley with a rope held behind your head.
+     * Stagger your stance and lean slightly forward ... extend your arms
+     * overhead until fully straight, keeping elbows close to your head.
+     * Lower slowly to a deep triceps stretch." The dumbbell overhead
+     * extension's arm on a staggered, slightly-hinged stance, the cable
+     * running from a low pulley BEHIND the lifter up to the grip. The
+     * rope's two strands stack in profile, so the grip is drawn as one
+     * handle end-on. */
+    view: "side",
+    equip: "cable-handle",
+    pulley: LOW_PULLEY_BEHIND,
+    viewBox: "-40 -50 168 262",
+    groundY: 204,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { triceps: "primary", "front-deltoids": "secondary" },
+    pose: (e) => {
+      const st = staggeredStance(12);
+      const upper: Op[] = [
+        { kind: "rotate", deg: 176, pivot: SIDE_ANCHORS.shoulder },
+        ...st.torso,
+      ];
+      const fore: Op[] = [
+        { kind: "rotate", deg: lerp(-100, -8, e), pivot: SIDE_ANCHORS.elbow },
+        ...upper,
+      ];
+      return {
+        head: st.head,
+        torso: st.torso,
+        pelvis: st.pelvis,
+        thighL: st.nearLeg,
+        shankL: st.nearLeg,
+        thighR: st.farLeg,
+        shankR: st.farLeg,
+        upperArmL: upper,
+        foreArmL: fore,
+        handL: fore,
+        upperArmR: upper,
+        foreArmR: fore,
+        handR: fore,
+      };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+    scene: () =>
+      `<line x1="${LOW_PULLEY_BEHIND[0] - 4}" y1="-50" x2="${LOW_PULLEY_BEHIND[0] - 4}" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+      `<line x1="-40" y1="${MACHINE_FLOOR + 1}" x2="128" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  "bayesian-cable-curl": {
+    /* "Face away from a low cable, handle in one hand, stagger your
+     * stance. Let the cable pull your arm back so the elbow sits behind
+     * your torso. Curl your hand up to your shoulder, keeping the elbow
+     * behind you." Staggered stance, the working upper arm held BEHIND
+     * the trunk line (pinned, every frame) with the cable from the low
+     * pulley behind, forearm curling to the shoulder; the other arm
+     * hangs (unilateral by instruction). */
+    view: "side",
+    equip: "cable-handle",
+    pulley: LOW_PULLEY_BEHIND,
+    viewBox: "-40 -6 168 218",
+    groundY: 204,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { biceps: "primary", forearm: "secondary" },
+    pose: (e) => {
+      const st = staggeredStance(6);
+      const upper: Op[] = [
+        { kind: "rotate", deg: 24, pivot: SIDE_ANCHORS.shoulder },
+        ...st.torso,
+      ];
+      const fore: Op[] = [
+        { kind: "rotate", deg: -lerp(0, 132, e), pivot: SIDE_ANCHORS.elbow },
+        ...upper,
+      ];
+      return {
+        head: st.head,
+        torso: st.torso,
+        pelvis: st.pelvis,
+        thighL: st.nearLeg,
+        shankL: st.nearLeg,
+        thighR: st.farLeg,
+        shankR: st.farLeg,
+        upperArmL: upper,
+        foreArmL: fore,
+        handL: fore,
+        upperArmR: st.torso,
+        foreArmR: st.torso,
+        handR: st.torso,
+      };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+    scene: () =>
+      `<line x1="${LOW_PULLEY_BEHIND[0] - 4}" y1="-6" x2="${LOW_PULLEY_BEHIND[0] - 4}" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+      `<line x1="-40" y1="${MACHINE_FLOOR + 1}" x2="128" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  "reverse-barbell-curl": {
+    /* "Stand with the bar at your thighs, overhand grip ... pin elbows
+     * at your sides ... curl the bar up to shoulder height." The strict
+     * curl's arc — an overhand grip is invisible end-on and does not
+     * change it — with the emphasis the catalogue gives it: forearm
+     * (brachioradialis) first, biceps second. Own demo rather than an
+     * alias because an alias would inherit the barbell curl's tints. */
+    view: "side",
+    equip: "plate-end",
+    plateR: 10,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { forearm: "primary", biceps: "secondary" },
+    pose: strictCurlPose,
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+  },
+
+  "spider-db-curl": {
+    /* "Lie face down on an incline bench with arms hanging straight ...
+     * chest pinned to the pad. Curl the dumbbells up to your shoulders
+     * without moving your upper arms." The chest-supported row's body on
+     * the pad; the upper arm hangs PLUMB and stays there (pinned), the
+     * forearm curls to the shoulder. */
+    view: "side",
+    equip: "dumbbell",
+    viewBox: "-12 -6 176 218",
+    groundY: 204,
+    shadowCx: 70,
+    shadowRx: 60,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { biceps: "primary", forearm: "secondary" },
+    pose: (e) => {
+      const body = rigidLeanForward(CSR_LEAN, CSR_ANKLE);
+      // The body leans (90 − CSR_LEAN) forward; hanging plumb means
+      // cancelling exactly that in the arm's own frame.
+      const upper: Op[] = [
+        { kind: "rotate", deg: -(90 - CSR_LEAN), pivot: SIDE_ANCHORS.shoulder },
+        ...body,
+      ];
+      const fore: Op[] = [
+        { kind: "rotate", deg: -lerp(0, 128, e), pivot: SIDE_ANCHORS.elbow },
+        ...upper,
+      ];
+      return {
+        head: body,
+        torso: body,
+        pelvis: body,
+        thighL: body,
+        thighR: body,
+        shankL: body,
+        shankR: body,
+        upperArmL: upper,
+        foreArmL: fore,
+        handL: fore,
+        upperArmR: upper,
+        foreArmR: fore,
+        handR: fore,
+      };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+    scene: chestSupportedPadScene,
+  },
+
+  "single-arm-lat-pulldown": {
+    /* "Attach a single handle to a high pulley and sit ... facing it.
+     * Grip the handle neutrally and lean slightly away for a deeper
+     * stretch. Pull the handle down toward your side, elbow driving
+     * back behind your torso. Return slowly to a full overhead
+     * stretch." Seated under the knee pad, trunk leaned 12 away from the
+     * stack, one arm from full reach toward the high pulley down to the
+     * side with the elbow solved BEHIND the trunk; the other hand holds
+     * the seat (unilateral by instruction). */
+    view: "side",
+    equip: "cable-handle",
+    pulley: PULLDOWN_PULLEY,
+    viewBox: "-12 -20 160 232",
+    groundY: 204,
+    shadowCx: 62,
+    shadowRx: 40,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { "upper-back": "primary", biceps: "secondary" },
+    pose: (e) => {
+      const chain = seatedChain(PULLDOWN_SEAT, -74, 74, -12);
+      const S = applyToPoint(SIDE_ANCHORS.shoulder, chain.torso);
+      // Full reach toward the pulley at the stretch; beside the ribs at
+      // the finish.
+      const toP: Pt = [PULLDOWN_PULLEY[0] - S[0], PULLDOWN_PULLEY[1] - S[1]];
+      const d = Math.hypot(toP[0], toP[1]);
+      const H0: Pt = [
+        S[0] + (toP[0] / d) * STRAIGHT_ARM,
+        S[1] + (toP[1] / d) * STRAIGHT_ARM,
+      ];
+      const H1: Pt = [S[0] + 4, S[1] + 34];
+      const H: Pt = [lerp(H0[0], H1[0], e), lerp(H0[1], H1[1], e)];
+      const arm = armToWorld(chain.torso, H, ELBOW_BACK);
+      return {
+        head: chain.head,
+        torso: chain.torso,
+        pelvis: chain.body,
+        thighL: chain.thigh,
+        thighR: chain.thigh,
+        shankL: chain.shank,
+        shankR: chain.shank,
+        upperArmL: arm.upper,
+        foreArmL: arm.fore,
+        handL: arm.fore,
+        upperArmR: chain.arm.upper,
+        foreArmR: chain.arm.fore,
+        handR: chain.arm.fore,
+      };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
     scene: (_e, pose) => {
-      // The pad: along the body line, offset to the chest side, from
-      // the thighs up past the shoulders; posts to the floor.
-      const S = applyToPoint(SIDE_ANCHORS.shoulder, pose.torso ?? []);
-      const K = applyToPoint(SIDE_ANCHORS.knee, pose.thighL ?? []);
-      const dx = S[0] - K[0];
-      const dy = S[1] - K[1];
-      const len = Math.hypot(dx, dy);
-      const ux = dx / len;
-      const uy = dy / len;
-      const px = -uy; // chest side (down-forward for a forward lean)
-      const py = ux;
-      const off = 15;
-      const a: Pt = [K[0] + ux * 10 + px * off, K[1] + uy * 10 + py * off];
-      const b: Pt = [S[0] + ux * 26 + px * off, S[1] + uy * 26 + py * off];
+      const k = applyToPoint(SIDE_ANCHORS.knee, pose.thighL ?? []);
       return (
-        `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}" stroke="${GEAR}" stroke-width="8" stroke-linecap="round"/>` +
-        `<line x1="${((a[0] + b[0]) / 2).toFixed(1)}" y1="${((a[1] + b[1]) / 2 + 4).toFixed(1)}" x2="${((a[0] + b[0]) / 2).toFixed(1)}" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
-        `<line x1="-6" y1="${MACHINE_FLOOR + 1}" x2="166" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`
+        machineSeatScene(PULLDOWN_SEAT, -12) +
+        // Knee pad over the thighs, and the station's post at the pulley.
+        `<rect x="${(k[0] - 22).toFixed(1)}" y="${(k[1] - 22).toFixed(1)}" width="26" height="8" rx="3" fill="${GEAR}"/>` +
+        // The station: a post clear of the knees, its arm out to the pulley.
+        `<line x1="132" y1="-20" x2="132" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+        `<line x1="132" y1="${PULLDOWN_PULLEY[1] - 4}" x2="${PULLDOWN_PULLEY[0]}" y2="${PULLDOWN_PULLEY[1] - 4}" stroke="${GEAR_DARK}" stroke-width="3"/>`
+      );
+    },
+  },
+
+  "cable-glute-kickback": {
+    /* "Attach an ankle strap to a low pulley and face the stack. Grip
+     * the frame for balance, hinge slightly, core braced. Kick the
+     * working leg straight back, squeezing the glute at full extension."
+     * Slight hinge held on the planted far leg, hands on the frame; the
+     * near leg swings straight back from the hip with the cable running
+     * from the low pulley in front to the ankle strap. */
+    view: "side",
+    equip: "cable-handle",
+    pulley: KICKBACK_PULLEY,
+    viewBox: "-40 -6 168 218",
+    groundY: 204,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { gluteal: "primary", hamstring: "secondary" },
+    pose: (e) => {
+      const HINGE = 18;
+      const LEAN = hipsBack(HINGE);
+      const torso: Op[] = [
+        { kind: "rotate", deg: HINGE, pivot: SIDE_ANCHORS.hip },
+        LEAN,
+      ];
+      const head: Op[] = [
+        { kind: "rotate", deg: -HINGE * HEAD_LIFT, pivot: SIDE_ANCHORS.neck },
+        ...torso,
+      ];
+      const pelvis: Op[] = [
+        { kind: "rotate", deg: HINGE * PELVIS_FOLLOW, pivot: SIDE_ANCHORS.hip },
+        LEAN,
+      ];
+      const planted: Op[] = [LEAN];
+      const working: Op[] = [
+        { kind: "rotate", deg: lerp(-4, 42, e), pivot: SIDE_ANCHORS.hip },
+        LEAN,
+      ];
+      // Hands on the frame ahead at shoulder height.
+      const upper: Op[] = [
+        { kind: "rotate", deg: -78, pivot: SIDE_ANCHORS.shoulder },
+        ...torso,
+      ];
+      const fore: Op[] = [
+        { kind: "rotate", deg: -18, pivot: SIDE_ANCHORS.elbow },
+        ...upper,
+      ];
+      return {
+        head,
+        torso,
+        pelvis,
+        thighL: working,
+        shankL: working,
+        thighR: planted,
+        shankR: planted,
+        upperArmL: upper,
+        foreArmL: fore,
+        handL: fore,
+        upperArmR: upper,
+        foreArmR: fore,
+        handR: fore,
+      };
+    },
+    // The cable runs to the ankle strap, not a hand.
+    bar: (_e, pose) => {
+      const a = applyToPoint(SIDE_ANCHORS.ankle, pose.shankL ?? []);
+      return [a, a];
+    },
+    scene: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return (
+        `<line x1="${KICKBACK_PULLEY[0] + 4}" y1="-6" x2="${KICKBACK_PULLEY[0] + 4}" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+        `<line x1="${(h[0] - 4).toFixed(1)}" y1="${(h[1] + 3).toFixed(1)}" x2="${KICKBACK_PULLEY[0] + 4}" y2="${(h[1] + 3).toFixed(1)}" stroke="${GEAR_DARK}" stroke-width="3"/>` +
+        `<line x1="-40" y1="${MACHINE_FLOOR + 1}" x2="128" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`
       );
     },
   },
@@ -5044,8 +5459,9 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
  * canonical's grip, prop, and support geometry. `db-curl`/`hammer-curl`/
  * `ez-bar-curl`/`cable-curl` (different implement + grip semantics) and
  * `reverse-grip-cable-pushdown` (straight bar, not a rope attachment)
- * were removed — they fall back to the static reference until each has
- * its own prop/grip contract. */
+ * were removed — they fell back to the static reference until each had
+ * its own prop/grip contract. Every one of them has one now (batches
+ * 1, 3 and 8 of the 2026-09-03 build-out). */
 const DEMO_ALIASES: Record<string, string> = {
   "db-shoulder-press": "overhead-press",
   "smith-shoulder-press": "overhead-press",

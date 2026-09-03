@@ -516,10 +516,13 @@ describe("renderBodyDemo", () => {
        implement (a low-pulley cable, a reverse grip on a rope) and stay
        fallback until they have their own contract.
        2026-09-03 batch 3: cable-curl got that contract (its own demo on
-       a low pulley); the reverse-grip pushdown is still fallback. */
-    for (const id of ["reverse-grip-cable-pushdown"]) {
-      expect(getBodyDemo(id), id).toBeNull();
-      expect(renderBodyDemo(id, 0.5), id).toBe("");
+       a low pulley); batch 8: the reverse-grip pushdown got its own too
+       (a straight bar on the cable, `cable-handle`). Nothing is left on
+       the implement-mismatch fallback — pinned so a future removal has
+       to say why here. */
+    for (const id of ["cable-curl", "reverse-grip-cable-pushdown"]) {
+      expect(getBodyDemo(id), id).toBe(BODY_DEMOS[id]);
+      expect(renderBodyDemo(id, 0.5), id).not.toBe("");
     }
     for (const [id, canonical] of [
       ["hammer-curl", "db-curl"],
@@ -1068,6 +1071,15 @@ describe("renderBodyDemo", () => {
       "pistol-squat": "lockout",
       thrusters: "stretch",
       "chest-supported-db-row": "stretch",
+      // Batch 8: every cable movement starts at its stretch.
+      "reverse-grip-cable-pushdown": "stretch",
+      "single-arm-cable-pushdown": "stretch",
+      "overhead-cable-tricep-extension": "stretch",
+      "bayesian-cable-curl": "stretch",
+      "reverse-barbell-curl": "stretch",
+      "spider-db-curl": "stretch",
+      "single-arm-lat-pulldown": "stretch",
+      "cable-glute-kickback": "stretch",
     };
     expect(Object.keys(START).sort()).toEqual(Object.keys(BODY_DEMOS).sort());
     for (const [id, expected] of Object.entries(START)) {
@@ -2410,6 +2422,182 @@ describe("renderBodyDemo", () => {
       ).toBeLessThan(14);
       expect(E1[1], "CS row: elbow driven up").toBeLessThan(H1[1]);
     }
+
+    /* Batch 8: the rest of the cables. */
+    // Pushdowns (bar, single handle): "pin your elbow(s)" — stationary;
+    // folded at the stretch, full lockout at the finish.
+    for (const id of [
+      "reverse-grip-cable-pushdown",
+      "single-arm-cable-pushdown",
+    ]) {
+      stationary(id, SIDE_ANCHORS.elbow, "foreArmL", `${id}: elbow pinned`);
+      expect(elbowDeg(id, 0), `${id}: folded at the stretch`).toBeLessThan(70);
+      expect(elbowDeg(id, 1), `${id}: full lockout`).toBeGreaterThan(165);
+      expect(BODY_DEMOS[id].pulley![1], `${id}: high pulley`).toBeLessThan(0);
+    }
+    // Overhead cable extension: "elbows close to your head" (beside it,
+    // every frame); "fully straight" overhead; "lean slightly forward";
+    // the cable from a LOW pulley BEHIND.
+    {
+      const id = "overhead-cable-tricep-extension";
+      const headX = pt(SIDE_ANCHORS.neck, at(id, 0).head)[0];
+      for (const t of [0, 0.5, 1]) {
+        const E = pt(SIDE_ANCHORS.elbow, at(id, t).foreArmL);
+        expect(
+          Math.abs(E[0] - headX),
+          `overhead cable: elbow beside the head @${t}`
+        ).toBeLessThan(12);
+        expect(E[1], `overhead cable: elbow above the neck @${t}`).toBeLessThan(
+          20
+        );
+        const H = pt(SIDE_ANCHORS.hand, at(id, t).handL);
+        const pulley = BODY_DEMOS[id].pulley!;
+        expect(pulley[1], `overhead cable: pulley low @${t}`).toBeGreaterThan(
+          H[1] + 100
+        );
+        expect(pulley[0], `overhead cable: pulley behind @${t}`).toBeLessThan(
+          H[0]
+        );
+      }
+      expect(elbowDeg(id, 1), "overhead cable: fully straight").toBeGreaterThan(
+        165
+      );
+      const p = at(id, 0);
+      const lean =
+        lineDeg(
+          pt(SIDE_ANCHORS.hip, p.pelvis),
+          pt(SIDE_ANCHORS.shoulder, p.torso)
+        ) +
+        90 -
+        (lineDeg(SIDE_ANCHORS.hip, SIDE_ANCHORS.shoulder) + 90);
+      expect(lean, "overhead cable: slight forward lean").toBeGreaterThan(6);
+      expect(lean, "overhead cable: slight forward lean").toBeLessThan(18);
+    }
+    // Bayesian curl: "elbow sits behind your torso ... keeping the elbow
+    // behind you" — behind the shoulder line every frame and stationary;
+    // straight at the stretch; up toward the shoulder at the finish.
+    {
+      const id = "bayesian-cable-curl";
+      stationary(id, SIDE_ANCHORS.elbow, "foreArmL", "bayesian: elbow held");
+      for (const t of [0, 0.5, 1]) {
+        const p = at(id, t);
+        const S = pt(SIDE_ANCHORS.shoulder, p.torso);
+        const E = pt(SIDE_ANCHORS.elbow, p.foreArmL);
+        expect(
+          S[0] - E[0],
+          `bayesian: elbow behind the trunk @${t}`
+        ).toBeGreaterThan(8);
+      }
+      expect(
+        elbowDeg(id, 0),
+        "bayesian: straight at the stretch"
+      ).toBeGreaterThan(172);
+      const p1 = at(id, 1);
+      const S = pt(SIDE_ANCHORS.shoulder, p1.torso);
+      const H = pt(SIDE_ANCHORS.hand, p1.handL);
+      expect(
+        Math.hypot(H[0] - S[0], H[1] - S[1]),
+        "bayesian: hand up toward the shoulder"
+      ).toBeLessThan(30);
+      expect(
+        BODY_DEMOS[id].pulley![0],
+        "bayesian: low pulley behind"
+      ).toBeLessThan(0);
+    }
+    // Reverse curl: the strict curl's contract — elbows pinned (≤3 of
+    // drift) — with the bar at shoulder height at the top.
+    {
+      const id = "reverse-barbell-curl";
+      const E0 = pt(SIDE_ANCHORS.elbow, at(id, 0).foreArmL);
+      const E1 = pt(SIDE_ANCHORS.elbow, at(id, 1).foreArmL);
+      expect(
+        Math.hypot(E1[0] - E0[0], E1[1] - E0[1]),
+        "reverse curl: elbows pinned"
+      ).toBeLessThan(3.2);
+      const S = pt(SIDE_ANCHORS.shoulder, at(id, 1).torso);
+      const H = pt(SIDE_ANCHORS.hand, at(id, 1).handL);
+      expect(
+        Math.abs(H[1] - S[1]),
+        "reverse curl: bar at shoulder height"
+      ).toBeLessThan(14);
+    }
+    // Spider curl: "arms hanging straight" (plumb) and "without moving
+    // your upper arms" — the elbow stationary, the upper arm plumb every
+    // frame; straight at the stretch.
+    {
+      const id = "spider-db-curl";
+      stationary(id, SIDE_ANCHORS.elbow, "foreArmL", "spider: upper arm fixed");
+      for (const t of [0, 0.5, 1]) {
+        const p = at(id, t);
+        const S = pt(SIDE_ANCHORS.shoulder, p.upperArmL);
+        const E = pt(SIDE_ANCHORS.elbow, p.foreArmL);
+        expect(
+          Math.abs(lineDeg(S, E) - 90),
+          `spider: upper arm plumb @${t}`
+        ).toBeLessThan(4);
+      }
+      expect(
+        elbowDeg(id, 0),
+        "spider: straight at the stretch"
+      ).toBeGreaterThan(172);
+    }
+    // Single-arm pulldown: "full overhead stretch" (hand above the
+    // head); "elbow driving back behind your torso" at the finish; hips
+    // on the seat.
+    {
+      const id = "single-arm-lat-pulldown";
+      stationary(id, SIDE_ANCHORS.hip, "pelvis", "pulldown: hips on the seat");
+      const p0 = at(id, 0);
+      const headTop = pt(SIDE_ANCHORS.neck, p0.head)[1] - 28;
+      expect(
+        pt(SIDE_ANCHORS.hand, p0.handL)[1],
+        "pulldown: hand above the head"
+      ).toBeLessThan(headTop);
+      expect(
+        elbowDeg(id, 0),
+        "pulldown: extended at the stretch"
+      ).toBeGreaterThan(160);
+      const p1 = at(id, 1);
+      const S = pt(SIDE_ANCHORS.shoulder, p1.torso);
+      const E = pt(SIDE_ANCHORS.elbow, p1.foreArmL);
+      const H = pt(SIDE_ANCHORS.hand, p1.handL);
+      expect(E[0], "pulldown: elbow behind the trunk").toBeLessThan(S[0] - 8);
+      expect(Math.abs(H[0] - S[0]), "pulldown: hand at the side").toBeLessThan(
+        14
+      );
+    }
+    // Glute kickback: the planted foot never moves; the working leg
+    // "straight back" — the knee stays straight and the ankle finishes
+    // well behind the hip and off the floor; "hinge slightly".
+    {
+      const id = "cable-glute-kickback";
+      stationary(id, SIDE_ANCHORS.ankle, "shankR", "kickback: planted foot");
+      stationary(
+        id,
+        SIDE_ANCHORS.hand,
+        "handL",
+        "kickback: hands on the frame"
+      );
+      for (const t of [0, 0.5, 1]) {
+        expect(kneeDeg(id, t), `kickback: leg straight @${t}`).toBeGreaterThan(
+          REST_KNEE - 1
+        );
+      }
+      const p1 = at(id, 1);
+      const hip = pt(SIDE_ANCHORS.hip, p1.pelvis);
+      const a = pt(SIDE_ANCHORS.ankle, p1.shankL);
+      const a0 = pt(SIDE_ANCHORS.ankle, at(id, 0).shankL);
+      expect(hip[0] - a[0], "kickback: ankle behind the hip").toBeGreaterThan(
+        40
+      );
+      expect(a0[1] - a[1], "kickback: ankle off the floor").toBeGreaterThan(10);
+      const lean =
+        lineDeg(hip, pt(SIDE_ANCHORS.shoulder, p1.torso)) +
+        90 -
+        (lineDeg(SIDE_ANCHORS.hip, SIDE_ANCHORS.shoulder) + 90);
+      expect(lean, "kickback: slight hinge").toBeGreaterThan(10);
+      expect(lean, "kickback: slight hinge").toBeLessThan(26);
+    }
   });
 
   it("the foot has a heel, an arch and a toe — not a wedge", () => {
@@ -2646,7 +2834,14 @@ describe("renderBodyDemo", () => {
     // while the near arm presses — which is what this catches.
     // The kickback is unilateral by its own instruction ("one knee and
     // hand on a bench"): the far arm is the support and poses on its own.
-    const UNILATERAL = new Set(["tricep-kickback", "concentration-curl"]);
+    const UNILATERAL = new Set([
+      "tricep-kickback",
+      "concentration-curl",
+      // Batch 8: "with one hand" / "one side" by instruction.
+      "single-arm-cable-pushdown",
+      "single-arm-lat-pulldown",
+      "bayesian-cable-curl",
+    ]);
     for (const [id, d] of Object.entries(BODY_DEMOS)) {
       if (d.view !== "side" || UNILATERAL.has(id)) continue;
       for (const t of [0, 0.5, 1]) {
@@ -2973,6 +3168,14 @@ describe("tint honesty", () => {
       "pistol-squat": "quadriceps",
       thrusters: "quadriceps",
       "chest-supported-db-row": "upper-back",
+      "reverse-grip-cable-pushdown": "triceps",
+      "single-arm-cable-pushdown": "triceps",
+      "overhead-cable-tricep-extension": "triceps",
+      "bayesian-cable-curl": "biceps",
+      "reverse-barbell-curl": "forearm",
+      "spider-db-curl": "biceps",
+      "single-arm-lat-pulldown": "upper-back",
+      "cable-glute-kickback": "gluteal",
     };
     for (const [id, muscle] of Object.entries(expectPrimary)) {
       expect(BODY_DEMOS[id].tint[muscle], `${id} primary`).toBe("primary");
