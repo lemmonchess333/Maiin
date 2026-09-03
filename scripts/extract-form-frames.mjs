@@ -100,7 +100,17 @@ const outDir = resolve(
 if (!card && inputs.length === 0) {
   console.error(
     "usage: node scripts/extract-form-frames.mjs <card.png> [outDir]\n" +
-      "       node scripts/extract-form-frames.mjs [outDir] --frames 1.png 2.png ..."
+      "       node scripts/extract-form-frames.mjs [outDir] --frames 1.png 2.png ...\n" +
+      "\n" +
+      "  --inset N   discard N px from each panel edge before measuring.\n" +
+      "              Needed only for a card whose panels are drawn as\n" +
+      "              BOXES: the border is chrome, and left in it becomes\n" +
+      "              the bounding box. Try 7 on a ~450px panel. Leave it\n" +
+      "              at 0 for figures on a flat background.\n" +
+      "  --chrome    the card draws a title and caption INSIDE each\n" +
+      "              panel; paint those regions out. Off by default: a\n" +
+      "              card that captions BELOW each figure loses the top\n" +
+      "              and bottom of its art to it."
   );
   process.exit(1);
 }
@@ -195,9 +205,17 @@ async function findPanels(card) {
     for (let x = 0; x < W; x++) if (ink(x, y)) n++;
     rowD.push(n / W);
   }
-  /* A panel row is filled edge to edge; a header row is sparse text.
-     The tip bar is filled too, which the height filter removes. */
-  let rows = bands(rowD, 0.5, Math.round(H * 0.05));
+  /* Bands of ANY ink, not of a filled panel.
+     
+     It used to require a row to be half ink, which is true of a card
+     whose panels have their own background and false of one that is
+     just figures on flat black — the second card of this kind had no
+     panel boxes at all, and the detector came back with six 290x75
+     "panels" that were actually the caption lines. Any-ink works for
+     both: a panelled card's fill spans its row, an unpanelled card's
+     figures still stand clear of the gaps, and the height filter below
+     drops captions and tip bars either way. */
+  let rows = bands(rowD, 0.004, Math.round(H * 0.05));
   const tallest = Math.max(0, ...rows.map(([a, b]) => b - a));
   rows = rows.filter(([a, b]) => b - a > tallest * 0.7);
   if (rows.length === 0)
@@ -213,7 +231,7 @@ async function findPanels(card) {
     }
   const cols = bands(
     colD.map((v) => v / counted),
-    0.5,
+    0.004,
     Math.round(W * 0.1)
   );
 
@@ -233,7 +251,7 @@ async function findPanels(card) {
         width: x1 - x0 + 1,
         height: y1 - y0 + 1,
       });
-  return panels;
+  return { panels, page };
 }
 
 /** Bounding box of everything that differs from `bg` by more than
@@ -276,29 +294,93 @@ const flat = (bg, box) => ({
 
 /** Per-position images need no grid: each file IS a panel. Their whole
  *  frame is the panel, so the title/caption boxes are empty. */
-const detected = perFrame
-  ? await Promise.all(
-      inputs.map(async (f) => {
-        const m = await sharp(f).metadata();
-        return { left: 0, top: 0, width: m.width ?? 0, height: m.height ?? 0 };
-      })
-    )
+const found = perFrame
+  ? {
+      panels: await Promise.all(
+        inputs.map(async (f) => {
+          const m = await sharp(f).metadata();
+          return {
+            left: 0,
+            top: 0,
+            width: m.width ?? 0,
+            height: m.height ?? 0,
+          };
+        })
+      ),
+      page: null,
+    }
   : await findPanels(card);
+const detected = found.panels;
 /* Normalised to one size before anything measures them. Detection is
    per-run and lands a pixel or two apart between panels, which is
    invisible until a title box computed from the first panel overflows
    a slightly shorter one. Everything downstream — the caption boxes,
    the shared crop — assumes the panels are congruent, so make them so
    here rather than defending against it in four places. */
-const PW = Math.min(...detected.map((p) => p.width));
-const PH = Math.min(...detected.map((p) => p.height));
-const panels = detected.map((p) => ({ ...p, width: PW, height: PH }));
+/* Sized to the LARGEST panel, not the smallest, and re-centred on each
+   panel's own centre.
+   
+   Taking the min looked safer and quietly clipped: on a flat card the
+   panel rect IS the ink box, so the panels differ in width by however
+   much the figure moves, and normalising down cut the barbell plate off
+   the wider ones. Growing a panel only ever pulls in gutter, which the
+   content-box pass ignores; shrinking one loses art. Clamped to the
+   card so the edge panels cannot run off it. */
+const PW = Math.max(...detected.map((p) => p.width));
+const PH = Math.max(...detected.map((p) => p.height));
+const cardMeta = await sharp(perFrame ? inputs[0] : card).metadata();
+const panels = detected.map((p) => {
+  const cx = p.left + p.width / 2;
+  const cy = p.top + p.height / 2;
+  return {
+    left: Math.max(
+      0,
+      Math.min((cardMeta.width ?? PW) - PW, Math.round(cx - PW / 2))
+    ),
+    top: Math.max(
+      0,
+      Math.min((cardMeta.height ?? PH) - PH, Math.round(cy - PH / 2))
+    ),
+    width: PW,
+    height: PH,
+  };
+});
 console.error(`detected ${panels.length} panels, ${PW}x${PH}`);
 
-/** The panel border is card chrome, not figure: left in, the rounded
- *  frame sets the bounding box for every panel and the shared rect
- *  becomes the whole panel. Inset scales with the card. */
-const INSET = Math.max(4, Math.round(PW * 0.016));
+/**
+ * The panel border is card chrome, not figure: left in, the rounded
+ * frame sets the bounding box for every panel and the shared rect
+ * becomes the whole panel.
+ *
+ * But only a card that HAS panels has a border. The second card of this
+ * kind was figures on flat black with no boxes at all, and insetting
+ * 7px cut the lifter's legs off at one edge and the rack at the other.
+ * So: inset only when the panel's own background differs from the
+ * page's, which is exactly the condition for there being a frame.
+ */
+/**
+ * How much of each panel's edge to discard before measuring, in px.
+ *
+ * A card whose panels are drawn as BOXES has a border, and the border
+ * is chrome rather than figure: left in, it sets the bounding box for
+ * every panel and the shared rect becomes the whole panel. A card
+ * that is just figures on flat black has no border, and insetting cost
+ * the lifter his legs at one edge and the rack at the other.
+ *
+ * This is a FLAG rather than a detection. Three auto-detections were
+ * tried — comparing the panel's background tone to the page's, checking
+ * how much of the panel the content spans, sampling the panel corners —
+ * and each failed on one of the two real cards, because the panel rect
+ * is itself derived from where the ink is and so straddles both tones.
+ * A number the operator passes once per card is worth more than a
+ * fourth heuristic that works on two samples.
+ */
+const insetAt = args.indexOf("--inset");
+const INSET = insetAt >= 0 ? Number(args[insetAt + 1]) : 0;
+if (!Number.isFinite(INSET) || INSET < 0) {
+  console.error("--inset takes a pixel count");
+  process.exit(1);
+}
 const W = PW - INSET * 2;
 const H = PH - INSET * 2;
 const scaleBox = (f) => {
@@ -370,9 +452,24 @@ async function captionBox(file, bg) {
   };
 }
 
-// A per-position image carries no panel chrome to paint out.
-const TITLE_BOX = perFrame ? null : scaleBox(TITLE_BOX_F);
-const CAPTION_BOX = perFrame ? null : scaleBox(CAPTION_BOX_F);
+/**
+ * Per-panel title and caption boxes, as fractions of the panel.
+ *
+ * OPT-IN, and that is the point. They were applied to every card,
+ * measured off the first one, where the number and title sit inside the
+ * panel at the top-left and the caption inside it at the bottom. The
+ * second card put its captions BELOW each figure and had no titles at
+ * all, so painting those fractions took the barbell plate out of the
+ * top-left of every frame and the lifter's feet out of the bottom —
+ * both silently, since a painted region simply stops being content.
+ *
+ * The caption DETECTION below still runs either way: it finds a short
+ * band standing clear of the picture, which is what a burned-in caption
+ * looks like wherever it sits.
+ */
+const chrome = args.includes("--chrome");
+const TITLE_BOX = chrome ? scaleBox(TITLE_BOX_F) : null;
+const CAPTION_BOX = chrome ? scaleBox(CAPTION_BOX_F) : null;
 
 const cleaned = [];
 let bg;
@@ -380,14 +477,19 @@ for (const [i, rect] of panels.entries()) {
   const source = perFrame ? inputs[i] : card;
   const panel = await sharp(source).extract(rect).png().toBuffer();
   if (!bg) bg = await background(panel);
-  const boxes =
-    TITLE_BOX && CAPTION_BOX
-      ? [flat(bg, TITLE_BOX), flat(bg, CAPTION_BOX)]
-      : await (async () => {
-          const cap = await captionBox(source, bg);
-          if (cap) console.error(`  ${source}: painting out a caption`);
-          return cap ? [flat(bg, cap)] : [];
-        })();
+  const boxes = [];
+  if (TITLE_BOX && CAPTION_BOX) {
+    boxes.push(flat(bg, TITLE_BOX), flat(bg, CAPTION_BOX));
+  } else {
+    /* Measured on the PANEL, not the source file: in card mode those
+       are different images and a card-relative box does not fit the
+       panel it is composited onto. */
+    const cap = await captionBox(panel, bg);
+    if (cap) {
+      console.error(`  frame ${i + 1}: painting out a caption`);
+      boxes.push(flat(bg, cap));
+    }
+  }
   const painted = boxes.length
     ? await sharp(panel).composite(boxes).png().toBuffer()
     : panel;
@@ -578,6 +680,8 @@ console.log(
   JSON.stringify(
     {
       mode: perFrame ? "per-position" : "card",
+      inset: INSET,
+      chrome,
       background: bg,
       panels: panels.length,
       panelSize: `${PW}x${PH}`,

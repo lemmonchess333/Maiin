@@ -9622,17 +9622,47 @@ const FORM_BEATS: Record<string, FormPlacard> = {
    * convention assumed here. */
 
   "bench-press": {
+    /* Card-sourced (2026-09-03), so the figure region is 451px against
+       the 900 the player renders — softer than the dips set, which came
+       from six per-position images at 754. Labels follow the card's own
+       panel headings so the two agree. */
     beats: [
-      { t: 1, label: "Set up", cue: "Shoulder blades pinched, feet planted." },
-      { t: 0.75, label: "Unrack", cue: "Bar over the shoulders, arms locked." },
+      {
+        t: 1,
+        label: "Set up",
+        cue: "Shoulder blades pinched, feet planted.",
+        image: "form-frames/bench-press/1.webp",
+      },
+      {
+        t: 0.75,
+        label: "Unrack",
+        cue: "Bar over the shoulders, arms locked.",
+        image: "form-frames/bench-press/2.webp",
+      },
       {
         t: 0.35,
         label: "Lower",
         cue: "Elbows about 45 degrees from the torso.",
+        image: "form-frames/bench-press/3.webp",
       },
-      { t: 0, label: "Chest", cue: "Bar touches the mid-chest, no bounce." },
-      { t: 0.5, label: "Drive", cue: "Press up and slightly back." },
-      { t: 1, label: "Lockout", cue: "Arms straight, ribs still down." },
+      {
+        t: 0,
+        label: "Bottom position",
+        cue: "Bar touches the mid-chest, no bounce.",
+        image: "form-frames/bench-press/4.webp",
+      },
+      {
+        t: 0.5,
+        label: "Drive",
+        cue: "Press up and slightly back.",
+        image: "form-frames/bench-press/5.webp",
+      },
+      {
+        t: 1,
+        label: "Lockout",
+        cue: "Arms straight, ribs still down.",
+        image: "form-frames/bench-press/6.webp",
+      },
     ],
   },
 

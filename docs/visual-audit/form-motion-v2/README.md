@@ -2444,3 +2444,62 @@ finds and paints those out: content rows are grouped into bands, and a
 short band at the bottom standing clear of the picture is a caption. A
 figure whose feet reach the bottom edge has no such gap, so the rule
 cannot eat a limb.
+
+## STATUS 2026-09-04 — bench press, and two boxes that were eating art
+
+Second exercise on the placard. The card came back in a DIFFERENT
+layout from the dips one — figures on flat black with the caption under
+each, no panel boxes at all — and it broke the extractor in three ways
+that are worth naming, because all three were the same mistake:
+something measured off the first card and applied to every card.
+
+### 1. The row test assumed a filled panel
+
+Rows were found where ink covered half the width, which is true of a
+panel with its own background and false of a figure on black. The
+detector returned six 290x75 "panels" that were the caption lines. Now
+it bands on ANY ink, which works for both: a panelled card's fill spans
+its row, an unpanelled card's figures still stand clear of the gaps.
+
+### 2. Panels were normalised DOWN
+
+To the smallest of the six, which on a flat card silently clipped the
+barbell plate off the wider ones — the panel rect IS the ink box there,
+so panels differ in width by however far the figure moves. Now
+normalised UP and re-centred: growing a panel only pulls in gutter,
+which the content pass ignores, while shrinking one loses art.
+
+### 3. The title and caption boxes were painting out the figure
+
+The worst of the three, and invisible: a painted region simply stops
+being content. The fractions were measured on the dips card, where the
+number and title sit INSIDE the panel top-left and the caption inside
+it at the bottom. On a card that captions below each figure, those
+fractions took the barbell plate out of every frame's top-left and the
+lifter's feet out of the bottom.
+
+Both are now opt-in (`--chrome`), along with the border inset
+(`--inset N`). Three auto-detections were tried for the inset —
+comparing panel tone to page tone, measuring how much of the panel the
+content spans, sampling the panel corners — and each failed on one of
+the two real cards, because the panel rect is derived from where the
+ink is and so straddles both tones. A flag the operator passes once per
+card beats a fourth heuristic tuned on two samples.
+
+The caption DETECTION still runs unconditionally, and it is measured on
+the PANEL rather than the source file — in card mode those are
+different images, and a card-relative box does not fit the panel it is
+composited onto.
+
+### Where bench press lands
+
+|                                 | dips                    | bench press |
+| ------------------------------- | ----------------------- | ----------- |
+| source                          | six per-position images | one card    |
+| figure region                   | 754 px                  | 451 px      |
+| upscale to the 900 px displayed | 1.2x                    | 2.0x        |
+
+It will read softer than dips, and that is the card, not the pipeline.
+Regenerating it the per-position way is the fix, and the flow is
+unchanged: `form-card-prompt.ts bench-press` already prints the
+two-step prompt.
