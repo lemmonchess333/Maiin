@@ -1107,6 +1107,17 @@ describe("renderBodyDemo", () => {
       "cuban-press": "stretch",
       shrugs: "stretch",
       "barbell-shrug": "stretch",
+      // Batch 12.
+      "hip-abduction-machine": "stretch",
+      "hip-adduction-machine": "stretch",
+      "reverse-flyes": "stretch",
+      "rear-delt-machine-fly": "stretch",
+      "reverse-pec-deck": "stretch",
+      "cross-body-hammer-curl": "stretch",
+      "cable-woodchopper": "stretch",
+      "dead-bug": "stretch",
+      "bicycle-crunch": "stretch",
+      "russian-twist": "stretch",
     };
     expect(Object.keys(START).sort()).toEqual(Object.keys(BODY_DEMOS).sort());
     for (const [id, expected] of Object.entries(START)) {
@@ -3199,6 +3210,171 @@ describe("renderBodyDemo", () => {
       );
       expect(at(id, 1).torso, `${id}: trunk still`).toBeUndefined();
     }
+
+    /* Batch 12: legs on the front figure, the back figure, the twists. */
+    const antKnees = (id: string, t: number) => {
+      const p = at(id, t);
+      return {
+        KL: pt([32, 148], p.shankL),
+        KR: pt([68, 148], p.shankR),
+        AL: pt([29, 196], p.shankL),
+        AR: pt([65, 196], p.shankR),
+      };
+    };
+    // Hip machines: the trunk never moves; the knees (and feet) spread
+    // apart for abduction, close for adduction.
+    {
+      for (const id of ["hip-abduction-machine", "hip-adduction-machine"]) {
+        expect(
+          at(id, 1).torso,
+          `${id}: trunk pinned to the pad`
+        ).toBeUndefined();
+      }
+      const ab0 = antKnees("hip-abduction-machine", 0);
+      const ab1 = antKnees("hip-abduction-machine", 1);
+      expect(
+        ab0.KR[0] - ab0.KL[0],
+        "abduction: knees together at the start"
+      ).toBeLessThan(32);
+      expect(ab1.KR[0] - ab1.KL[0], "abduction: knees apart").toBeGreaterThan(
+        46
+      );
+      expect(ab1.AR[0] - ab1.AL[0], "abduction: feet wide").toBeGreaterThan(80);
+      const ad0 = antKnees("hip-adduction-machine", 0);
+      const ad1 = antKnees("hip-adduction-machine", 1);
+      expect(
+        ad0.KR[0] - ad0.KL[0],
+        "adduction: apart at the start"
+      ).toBeGreaterThan(46);
+      expect(
+        ad1.KR[0] - ad1.KL[0],
+        "adduction: squeezed together"
+      ).toBeLessThan(34);
+    }
+    // Reverse flys (back figure): from the arms reaching away — hands
+    // close together — to wide at shoulder height.
+    for (const id of [
+      "reverse-flyes",
+      "rear-delt-machine-fly",
+      "reverse-pec-deck",
+    ]) {
+      const h = (t: number) => {
+        const p = at(id, t);
+        return {
+          L: pt([3.4, 108.5], p.foreArmL),
+          R: pt([96.6, 108.9], p.foreArmR),
+        };
+      };
+      expect(
+        h(0).R[0] - h(0).L[0],
+        `${id}: hands close at the stretch`
+      ).toBeLessThan(24);
+      expect(h(1).R[0] - h(1).L[0], `${id}: wide open`).toBeGreaterThan(150);
+      expect(
+        Math.abs(h(1).L[1] - 46),
+        `${id}: at shoulder height`
+      ).toBeLessThan(8);
+    }
+    // Cross-body hammer curl: the elbow pinned (within 5 of rest), the bell
+    // crossing the midline up at the chest, the other arm hanging.
+    {
+      const id = "cross-body-hammer-curl";
+      for (const t of [0, 0.5, 1]) {
+        const E = antAt(id, t).EL;
+        expect(
+          Math.hypot(E[0] - AS.elbowL[0], E[1] - AS.elbowL[1]),
+          `cross-body: elbow pinned @${t}`
+        ).toBeLessThan(5);
+      }
+      const H = antAt(id, 1).HL;
+      expect(H[0], "cross-body: across the midline").toBeGreaterThan(52);
+      expect(H[1], "cross-body: up at the chest").toBeLessThan(62);
+      expect(at(id, 1).foreArmR, "cross-body: other arm hangs").toBeUndefined();
+    }
+    // Woodchopper: both hands on the handle every frame; high on one side
+    // to low on the other; the cable from a high pulley.
+    {
+      const id = "cable-woodchopper";
+      for (const t of [0, 0.5, 1]) {
+        const a = antAt(id, t);
+        expect(
+          Math.hypot(a.HR[0] - a.HL[0], a.HR[1] - a.HL[1]),
+          `woodchop: both hands on the handle @${t}`
+        ).toBeLessThan(0.5);
+      }
+      const a0 = antAt(id, 0);
+      const a1 = antAt(id, 1);
+      expect(a0.HL[0], "woodchop: starts on one side").toBeLessThan(32);
+      expect(a0.HL[1], "woodchop: starts high").toBeLessThan(20);
+      expect(a1.HL[0], "woodchop: ends on the other side").toBeGreaterThan(66);
+      expect(a1.HL[1], "woodchop: ends low").toBeGreaterThan(84);
+      expect(
+        BODY_DEMOS[id].pivots![0][1],
+        "woodchop: high pulley"
+      ).toBeLessThan(0);
+    }
+    // Dead bug: both arms up at the viewer and both knees bent at the
+    // start; one arm overhead and the OPPOSITE leg straight at the end,
+    // the other two unchanged.
+    {
+      const id = "dead-bug";
+      const a0 = antAt(id, 0);
+      const k0 = antKnees(id, 0);
+      expect(
+        Math.hypot(a0.HL[0] - AS.shoulderL[0], a0.HL[1] - AS.shoulderL[1]),
+        "dead bug: arms up at the viewer"
+      ).toBeLessThan(14);
+      expect(k0.KL[1], "dead bug: knees bent").toBeLessThan(120);
+      expect(k0.KR[1], "dead bug: knees bent").toBeLessThan(120);
+      const a1 = antAt(id, 1);
+      const k1 = antKnees(id, 1);
+      expect(a1.HL[1], "dead bug: one arm overhead").toBeLessThan(0);
+      expect(k1.KR[1], "dead bug: opposite leg straight").toBeGreaterThan(145);
+      expect(
+        k1.AR[1],
+        "dead bug: opposite leg along the floor"
+      ).toBeGreaterThan(190);
+      expect(k1.KL[1], "dead bug: the other knee stays bent").toBeLessThan(120);
+      expect(
+        Math.hypot(a1.HR[0] - a0.HR[0], a1.HR[1] - a0.HR[1]),
+        "dead bug: the other arm stays up"
+      ).toBeLessThan(0.01);
+    }
+    // Bicycle crunch: the pedal swaps the tucked knee.
+    {
+      const id = "bicycle-crunch";
+      const k0 = antKnees(id, 0);
+      const k1 = antKnees(id, 1);
+      expect(k0.KL[1], "bicycle: left knee tucked at the start").toBeLessThan(
+        120
+      );
+      expect(k0.KR[1], "bicycle: right leg long at the start").toBeGreaterThan(
+        145
+      );
+      expect(k1.KR[1], "bicycle: right knee tucked at the end").toBeLessThan(
+        120
+      );
+      expect(k1.KL[1], "bicycle: left leg long at the end").toBeGreaterThan(
+        145
+      );
+    }
+    // Russian twist: clasped hands (together every frame) tapping just
+    // outside one hip, then the other.
+    {
+      const id = "russian-twist";
+      for (const t of [0, 0.5, 1]) {
+        const a = antAt(id, t);
+        expect(
+          Math.hypot(a.HR[0] - a.HL[0], a.HR[1] - a.HL[1]),
+          `twist: hands clasped @${t}`
+        ).toBeLessThan(0.5);
+      }
+      expect(antAt(id, 0).HL[0], "twist: outside one hip").toBeLessThan(26);
+      expect(antAt(id, 1).HL[0], "twist: outside the other").toBeGreaterThan(
+        74
+      );
+      expect(antAt(id, 1).HL[1], "twist: at hip height").toBeGreaterThan(86);
+    }
   });
 
   it("the foot has a heel, an arch and a toe — not a wedge", () => {
@@ -3806,6 +3982,16 @@ describe("tint honesty", () => {
       // The front figure draws no trapezius; the cap that rises is the deltoid.
       shrugs: "front-deltoids",
       "barbell-shrug": "front-deltoids",
+      "hip-abduction-machine": "abductors",
+      "hip-adduction-machine": "abductors",
+      "reverse-flyes": "back-deltoids",
+      "rear-delt-machine-fly": "back-deltoids",
+      "reverse-pec-deck": "back-deltoids",
+      "cross-body-hammer-curl": "biceps",
+      "cable-woodchopper": "obliques",
+      "dead-bug": "abs",
+      "bicycle-crunch": "obliques",
+      "russian-twist": "obliques",
     };
     for (const [id, muscle] of Object.entries(expectPrimary)) {
       expect(BODY_DEMOS[id].tint[muscle], `${id} primary`).toBe("primary");

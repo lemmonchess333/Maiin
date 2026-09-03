@@ -1475,3 +1475,46 @@ they come forward (elbow 13 inside the shoulder line); the pads then
 meet at 26.
 
 Capture channel: `db-flyes`, `pec-deck`, `arnold-press` added.
+
+## STATUS 2026-09-03m — build-out, batch 12: legs on the front figure, the back figure, the twists
+
+Coverage 119 → 129 of 152. The rest of the ledger's frontal-plane and
+rotation rows, on the cameras that show them:
+
+- **`antLegToward`** — a front-figure leg with the thigh pointing at
+  the viewer (foreshortened about the hip along its own line), the
+  shin hanging unscaled from the drawn knee, the whole leg swung about
+  the hip. A seated figure's legs, and a lying figure's bent knees seen
+  from above. The hip joints are the thigh polygons' top centres
+  (`ANT_HIP_L/R`).
+- **`postArmToward`** — `antArmToward` on the BACK figure: the reverse
+  flys start with the arms reaching AWAY from the viewer, drawn short.
+- **`preTwist`** — a hand target pulled back through a trunk twist, so
+  an arm aimed before the twist lands on it after. Needed because the
+  front figure's arms are short (57 units against the profile's 67): a
+  handle both hands hold must stay within BOTH shoulders' reach, and
+  the trunk twist is what carries the far shoulder round. The first
+  woodchop and Russian twist drafts ignored this and the far hand
+  trailed the handle by 24-26 units; both now hold it to 0.1.
+
+| Demo                     | Camera / chain                                         | Pinned claim (from its instructions)                                                       |
+| ------------------------ | ------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| `hip-abduction-machine`  | seated, front; `antLegToward` ± swing                  | trunk pinned; knees <32 apart → >46, feet >80 apart                                        |
+| `hip-adduction-machine`  | same, run the other way                                | trunk pinned; knees >46 apart → <34                                                        |
+| `reverse-flyes`          | back figure; `postArmToward`                           | hands <24 apart reaching away → >150 wide at shoulder height (±8)                          |
+| `rear-delt-machine-fly`  | back figure, levers from pivots above                  | same                                                                                       |
+| `reverse-pec-deck`       | same machine, same picture                             | same                                                                                       |
+| `cross-body-hammer-curl` | one arm; `antElbowAt` + `antForeToward`                | elbow within 5 of rest every frame; bell across the midline (x>52) up at the chest         |
+| `cable-woodchopper`      | one handle, both arms; twist ±16 with `preTwist`       | hands on the handle (<0.5) every frame; high one side → low the other; pulley high         |
+| `dead-bug`               | camera above; arms at the viewer, `antLegToward` knees | arms up + knees bent at 0; one arm overhead and the OPPOSITE leg straight at 1; rest still |
+| `bicycle-crunch`         | camera above; the pedal swaps the tucked knee          | left tucked / right long at 0, swapped at 1                                                |
+| `russian-twist`          | camera above; twist ±25 with `preTwist`                | hands clasped (<0.5) every frame; outside one hip (x<26) → outside the other (x>74)        |
+
+The reverse fly's hinge is toward the camera and does not show; what
+the back camera shows is the sweep, which is the exercise. The
+top-down core demos (dead bug, bicycle crunch, Russian twist) use the
+front figure as a figure seen from above — the same convention the
+dumbbell fly adopted in batch 11.
+
+Capture channel: `hip-abduction-machine`, `reverse-pec-deck`,
+`dead-bug` added.

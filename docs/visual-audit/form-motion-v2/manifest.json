@@ -304,6 +304,33 @@
         "file": "bench-press-t100.png"
       }
     ],
+    "bicycle-crunch": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "bicycle-crunch-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "bicycle-crunch-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "bicycle-crunch-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "bicycle-crunch-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "bicycle-crunch-t100.png"
+      }
+    ],
     "bulgarian-split": [
       {
         "t": 0,
@@ -466,6 +493,33 @@
         "file": "cable-glute-kickback-t100.png"
       }
     ],
+    "cable-woodchopper": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "cable-woodchopper-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "cable-woodchopper-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "cable-woodchopper-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "cable-woodchopper-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "cable-woodchopper-t100.png"
+      }
+    ],
     "calf-raise": [
       {
         "t": 0,
@@ -601,6 +655,33 @@
         "file": "concentration-curl-t100.png"
       }
     ],
+    "cross-body-hammer-curl": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "cross-body-hammer-curl-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "cross-body-hammer-curl-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "cross-body-hammer-curl-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "cross-body-hammer-curl-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "cross-body-hammer-curl-t100.png"
+      }
+    ],
     "crunches": [
       {
         "t": 0,
@@ -707,6 +788,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "db-flyes-t100.png"
+      }
+    ],
+    "dead-bug": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "dead-bug-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "dead-bug-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "dead-bug-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "dead-bug-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "dead-bug-t100.png"
       }
     ],
     "deadlift": [
@@ -1085,6 +1193,60 @@
         "t": 1,
         "effort": 0.8,
         "file": "handstand-push-ups-t100.png"
+      }
+    ],
+    "hip-abduction-machine": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "hip-abduction-machine-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "hip-abduction-machine-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "hip-abduction-machine-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "hip-abduction-machine-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "hip-abduction-machine-t100.png"
+      }
+    ],
+    "hip-adduction-machine": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "hip-adduction-machine-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "hip-adduction-machine-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "hip-adduction-machine-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "hip-adduction-machine-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "hip-adduction-machine-t100.png"
       }
     ],
     "hip-thrust": [
@@ -1951,6 +2113,33 @@
         "file": "rack-pull-t100.png"
       }
     ],
+    "rear-delt-machine-fly": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "rear-delt-machine-fly-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "rear-delt-machine-fly-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "rear-delt-machine-fly-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "rear-delt-machine-fly-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "rear-delt-machine-fly-t100.png"
+      }
+    ],
     "reverse-barbell-curl": [
       {
         "t": 0,
@@ -1978,6 +2167,33 @@
         "file": "reverse-barbell-curl-t100.png"
       }
     ],
+    "reverse-flyes": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "reverse-flyes-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "reverse-flyes-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "reverse-flyes-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "reverse-flyes-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "reverse-flyes-t100.png"
+      }
+    ],
     "reverse-grip-cable-pushdown": [
       {
         "t": 0,
@@ -2003,6 +2219,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "reverse-grip-cable-pushdown-t100.png"
+      }
+    ],
+    "reverse-pec-deck": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "reverse-pec-deck-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "reverse-pec-deck-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "reverse-pec-deck-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "reverse-pec-deck-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "reverse-pec-deck-t100.png"
       }
     ],
     "romanian-deadlift": [
@@ -2057,6 +2300,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "rope-tricep-pushdown-t100.png"
+      }
+    ],
+    "russian-twist": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "russian-twist-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "russian-twist-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "russian-twist-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "russian-twist-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "russian-twist-t100.png"
       }
     ],
     "seated-leg-curl": [
