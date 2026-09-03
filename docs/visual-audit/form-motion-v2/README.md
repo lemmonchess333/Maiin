@@ -2063,3 +2063,37 @@ roadmap's own licensing line ("record a rights-cleared performer") is
 still open. A row now sits in the pre-launch QA backlog. The mechanism
 here is general: any card can be cut by the same script. Whether THIS
 card can ship is a question about the card, not about the code.
+
+### Addendum — the frames are not one scene, and registration cannot fix it
+
+Origin confirmed by the owner: the card was generated with ChatGPT. That
+answers the licence question (OpenAI assigns output rights to the user)
+and raises a different one that matters more for the animation.
+
+**Each panel was generated separately, so they do not share a camera.**
+The dip station — the one thing in the scene that must not move — is
+drawn at a different position, size and angle in all six. Overlaying the
+station mask from every frame shows six bars fanned across ~40px
+vertically with the posts spread wider still.
+
+A translation-registration pass was written and measured. It made things
+slightly worse:
+
+|                               | mean station overlap vs frame 1 |
+| ----------------------------- | ------------------------------- |
+| as generated                  | 9.3%                            |
+| after best-shift registration | 8.7%                            |
+
+It was removed. Aligning the grip bar pulls the posts apart, because the
+frames differ by scale and perspective rather than by an offset, and a
+translation has no way to express that. Shipping an alignment step that
+measurably does nothing is worse than not having one — the number is
+recorded here so the next person does not rewrite it.
+
+The real fix is upstream: generate ONE image and edit only the pose for
+the other five, so the scene is shared by construction. Nothing in the
+extraction script can recover a camera that was never the same.
+
+What survives regardless: the crossfade softens the drift into a morph
+rather than a jump, and the six positions are correct as poses. Judge it
+on the animated preview, not on the stills.

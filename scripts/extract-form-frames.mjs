@@ -23,6 +23,15 @@
  *    of someone else's background. Soft-edged: pixels near the
  *    background fade rather than cut, or the figure gets a hard halo
  *    where its anti-aliased edge blended into the card.
+ * What it deliberately does NOT do is register the frames on the
+ * equipment. Panels generated one at a time do not share a camera — on
+ * the dips card the station is drawn at a different position, size and
+ * angle in all six — and a translation search was written, measured and
+ * removed: mean station overlap against the first frame went 9.3% →
+ * 8.7%, i.e. slightly worse, because aligning the bar pulls the posts
+ * apart. Translation cannot fix a scene that was redrawn each time. The
+ * fix for that is upstream, in how the card is generated; a fix in here
+ * would be complexity that measurably does nothing.
  *
  * Usage: node scripts/extract-form-frames.mjs <card.png> <outDir>
  */
