@@ -220,6 +220,25 @@ function BeatCaption({
   );
 }
 
+/**
+ * The capture channel's anchor, on the reduced-motion renders ONLY.
+ *
+ * `form-demo.screens.capture.spec.ts` used to wait on the two-up's
+ * accessible name, and its comment explains why it had to be the EXACT
+ * string: `/demonstration/i` alone also matches the animated player, so
+ * a looser locator shipped frames of a running loop. Then the placard
+ * arrived, whose still version is a six-panel storyboard with no such
+ * element, and the capture broke at `dips` — taking every demo after it
+ * in the same run.
+ *
+ * A presentation-independent attribute is the fix, and it keeps the
+ * guarantee the string was carrying: it exists on the two reduced-motion
+ * roots and nowhere else, so the animated loop can never be captured by
+ * accident. Pinned against the real render in
+ * `ExerciseRigDemo.test.tsx`, per CLAUDE.md's rule about capture
+ * selectors.
+ */
+
 /** Phase cues for the looping rep. Labels are generic and direction-
  *  derived — the eccentric is always "lower under control" and the
  *  concentric always the drive, whichever end of t the exercise locks
@@ -445,7 +464,7 @@ export default function ExerciseRigDemo({
        caption. Nothing is lost — an animation that steps through six
        frames has six frames to print. */
     return (
-      <div className="bg-stage rounded-2xl p-4 mt-4">
+      <div className="bg-stage rounded-2xl p-4 mt-4" data-demo-still="placard">
         <MuscleKey legend={legend} />
         <ol className="grid grid-cols-2 gap-x-3 gap-y-4">
           {beats.map((b, i) => (
@@ -492,6 +511,7 @@ export default function ExerciseRigDemo({
         role="img"
         aria-label={`${name} demonstration — start and end positions`}
         className="bg-stage rounded-2xl p-4 mt-4 flex justify-center gap-3"
+        data-demo-still="two-up"
       >
         {/* START position first, then the far end — so a deadlift reads
             floor-then-standing rather than the reverse. A cycle's far

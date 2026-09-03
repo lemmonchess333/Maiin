@@ -2097,3 +2097,28 @@ extraction script can recover a camera that was never the same.
 What survives regardless: the crossfade softens the drift into a morph
 rather than a jump, and the six positions are correct as poses. Judge it
 on the animated preview, not on the stills.
+
+### The capture channel broke, and how it is anchored now
+
+The first capture run after the frames landed **failed at `dips` and lost
+every demo after it** — the spec shoots the list in order, so 37 frames
+went uncaptured from one bad locator.
+
+`shootBoth` waited on the two-up's accessible name, and its own comment
+explains why it had to be that exact string: `/demonstration/i` alone
+also matches the animated player, and a looser locator had once shipped
+screenshots of a running loop. The placard's still version is a
+six-panel storyboard with no such element, so the wait timed out.
+
+This is precisely the failure CLAUDE.md describes — "capture specs
+select by user-visible STRINGS, so renaming copy or reshaping an
+aria-label requires `rg` over `e2e/` in the same commit" — and it was
+missed because the string was not renamed, it stopped existing for one
+demo.
+
+The anchor is now `data-demo-still`, on the two reduced-motion roots and
+nowhere else. It survives a change of presentation while keeping the
+guarantee the string was carrying: the animated loop cannot be captured
+by accident. Pinned against the real render in
+`ExerciseRigDemo.test.tsx` — present on both still paths, absent on both
+animated ones — and mutation-checked by deleting the attribute.

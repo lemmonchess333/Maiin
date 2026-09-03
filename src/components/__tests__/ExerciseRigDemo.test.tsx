@@ -460,6 +460,41 @@ describe("ExerciseRigDemo", () => {
     reduceRef.current = false;
   });
 
+  /* ── The capture channel's anchor ────────────────────────────────
+   * CLAUDE.md: a capture selector that a component renders standalone
+   * must be pinned against the real render. This one earned the rule
+   * the hard way — the spec waited on the two-up's accessible name,
+   * the placard's still version has no such element, and the capture
+   * run broke at `dips`, losing every demo after it. */
+  it("marks the reduced-motion roots, and ONLY those", () => {
+    reduceRef.current = true;
+    beatsRef.current = null;
+    const twoUp = render(
+      <ExerciseRigDemo exerciseId="squat" name="Barbell Squat" />
+    );
+    expect(twoUp.container.querySelector("[data-demo-still]")).not.toBeNull();
+    twoUp.unmount();
+
+    beatsRef.current = PLACARD_BEATS;
+    const still = render(<ExerciseRigDemo exerciseId="dips" name="Dips" />);
+    expect(still.container.querySelector("[data-demo-still]")).not.toBeNull();
+    still.unmount();
+
+    /* The animated roots carry no anchor, which is the guarantee the
+       old exact-string locator was really enforcing: a looser selector
+       once shipped screenshots of a running loop. */
+    reduceRef.current = false;
+    const placard = render(<ExerciseRigDemo exerciseId="dips" name="Dips" />);
+    expect(placard.container.querySelector("[data-demo-still]")).toBeNull();
+    placard.unmount();
+
+    beatsRef.current = null;
+    const looping = render(
+      <ExerciseRigDemo exerciseId="squat" name="Barbell Squat" />
+    );
+    expect(looping.container.querySelector("[data-demo-still]")).toBeNull();
+  });
+
   it("a demo with no beats is untouched by any of it", () => {
     // The style is opt-in per exercise: everything without a beat list
     // still plays the two-way rep with its phase cues.
