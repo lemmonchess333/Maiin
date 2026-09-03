@@ -61,6 +61,33 @@
         "file": "arnold-press-t100.png"
       }
     ],
+    "assault-bike": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "assault-bike-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "assault-bike-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "assault-bike-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "assault-bike-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "assault-bike-t100.png"
+      }
+    ],
     "barbell-curl": [
       {
         "t": 0,
@@ -356,6 +383,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "bicycle-crunch-t100.png"
+      }
+    ],
+    "bike": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "bike-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "bike-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "bike-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "bike-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "bike-t100.png"
       }
     ],
     "box-jumps": [
@@ -1085,6 +1139,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "dragon-flag-t100.png"
+      }
+    ],
+    "elliptical": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "elliptical-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "elliptical-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "elliptical-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "elliptical-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "elliptical-t100.png"
       }
     ],
     "face-pulls": [
@@ -2923,6 +3004,33 @@
         "file": "spider-db-curl-t100.png"
       }
     ],
+    "spin-bike": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "spin-bike-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "spin-bike-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "spin-bike-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "spin-bike-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "spin-bike-t100.png"
+      }
+    ],
     "squat": [
       {
         "t": 0,
@@ -3029,6 +3137,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "superman-hold-t100.png"
+      }
+    ],
+    "swimming": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "swimming-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "swimming-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "swimming-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "swimming-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "swimming-t100.png"
       }
     ],
     "thrusters": [
@@ -3191,6 +3326,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "zercher-squat-t100.png"
+      }
+    ],
+    "zottman-curl": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "zottman-curl-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "zottman-curl-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "zottman-curl-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "zottman-curl-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "zottman-curl-t100.png"
       }
     ]
   }

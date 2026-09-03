@@ -1664,3 +1664,48 @@ curl; and the seated calf raise, which is the one that needs a rig
 joint.
 
 Capture channel: `treadmill`, `stairmaster`, `box-jumps` added.
+
+## STATUS 2026-09-03q — wave 3, batch 16: pedals, the pool, the Zottman
+
+Coverage 143 → 149 of 152. Four more cycles on the player mode batch
+15 added, one stroke, one rep:
+
+- **`pedalChain`** — a crank stroke: the hip fixed on a saddle (or
+  standing, for the elliptical), each foot on a pedal riding a closed
+  path about the crank — a circle for the bikes, a flat ellipse for the
+  elliptical — the far foot half a turn behind, legs `plantedLeg` from
+  the hip, the trunk leaned to the bars, the hands on fixed bars or on
+  `swingHandle` levers that push and pull against the pedals.
+- **`swimPose`** — freestyle side-on: the body prone just under a
+  water line with the hips at the surface, each arm turning a full
+  stroke about the shoulder (recovery over the water, pull under it),
+  the far arm half a stroke behind, a flutter kick about the hips.
+
+| Demo           | Chain                                        | Pinned claim (from its instructions)                                                              |
+| -------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `bike`         | `pedalChain`, upright bars                   | on the saddle; foot on the pedal circle every frame; slight bend at the bottom; hands on the bars |
+| `spin-bike`    | `pedalChain`, low bars, faster               | same, and a deeper lean than the bike                                                             |
+| `assault-bike` | `pedalChain` + `swingHandle`                 | same pedals; the hand rides the handle >24 forward-and-back with the stroke                       |
+| `elliptical`   | `pedalChain` standing, flat ellipse + levers | stand tall (<8°); foot on the stride ellipse every frame; handles swing >20                       |
+| `swimming`     | `swimPose`                                   | hips within 10 of the surface; body horizontal (±6°); hand above the water at ¼, under at ¾       |
+| `zottman-curl` | `strictCurlPose`, biceps AND forearm lit     | elbows pinned; the pronated lower is a forearm movement, so both movers are primary               |
+
+The Zottman is the one non-cycle here and the one row of the ledger
+whose reason stands: the wrist turn at the top is a grip change no
+camera on this rig shows. What the split DOES change — who works on the
+way down — is what the demo shows instead.
+
+Two things the numbers caught: the first saddles sat 16 units too low
+and folded the knee to 104° at the bottom of the stroke ("a slight
+bend", says the instruction — the pin holds it above 130°); and the
+elliptical's first stride ellipse reached past the leg, so the foot
+fell short of the path at the front. The swim's stroke direction is the
+kind of sign that is easy to argue either way in a prone frame, so it
+is not argued: the pin holds the hand above the water line at a quarter
+turn and below it at three quarters.
+
+Left: the man-maker (a keyed cycle), the Turkish get-up (reversible by
+its own instruction, so the rep player fits), and the seated calf
+raise, which needs the ankle joint.
+
+Capture channel: `bike`, `elliptical`, `swimming` added.
