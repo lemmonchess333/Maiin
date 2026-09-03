@@ -1518,3 +1518,54 @@ dumbbell fly adopted in batch 11.
 
 Capture channel: `hip-abduction-machine`, `reverse-pec-deck`,
 `dead-bug` added.
+
+## STATUS 2026-09-03n — build-out, batch 13: the profile's last rows, and a side plank
+
+Coverage 129 → 136 of 152. The rest of the ledger that a camera CAN
+show: the holds whose instructions describe a set-up, the cardio
+machines that are a rep, the anti-rotation press.
+
+- **`highPlankBase`** — the standing figure leaned onto straight arms
+  (`rigidLeanForward`), hands under the shoulders. The mountain climber
+  drives the near knee to the chest on it. The geometry has a catch: a
+  high plank's hip sits a thigh's length above the floor, so a thigh
+  swinging under it passes THROUGH the floor at mid-swing. The hips
+  ripple a few units through the swing (pinned ≤ 8 — a ripple, not the
+  pike the instruction forbids), with the hands and the far foot
+  re-solved to stay planted, and the shin's fold leads the thigh's
+  swing so the foot tucks before it can drag.
+- **`antSidePlank`** — the FRONT figure laid on its side, facing the
+  viewer: trunk and stacked legs placed between a world shoulder, hip
+  and ankle as in the plank, the supporting arm aimed by pulling the
+  world directions ("down", "along the floor") back through the trunk's
+  turn. The supporting shoulder sits half a shoulder-width below the
+  body's axis once the figure is on its side, so the axis passes that
+  much higher than the elbow-plus-upper-arm the first draft assumed —
+  the first draft put the supporting elbow 20 units under the floor.
+
+| Demo                | Camera / chain                                           | Pinned claim (from its instructions)                                                           |
+| ------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `mountain-climbers` | `highPlankBase` + near-leg drive                         | hands + far foot planted; foot above the floor at 8 samples; hips ≤8; knee within 16 of chest  |
+| `battle-ropes`      | `sideSquatChain(0.3)`, arms alternating, wave paths      | squat held; near hand rises >50 as the far falls >50; knee bent ≥15° from rest                 |
+| `side-plank`        | `antSidePlank` (front figure on its side)                | elbow on the floor under the shoulder, forearm flat, feet on the floor, every frame; hips lift |
+| `rowing-machine`    | hip on a rail, `plantedLeg` to the footplate, 3 segments | shins vertical + arms straight at the catch; legs first; seat slides >45; ribs + elbow back    |
+| `ski-erg`           | hinge 4 → 50, arms swept from overhead                   | overhead at 0; hinged 40-60 with hands past and behind the thighs at 1; pulley at the top      |
+| `jump-rope`         | whole-body hop, rope loop about the hands                | 6-10 hop; feet on the floor at 0; elbows at the ribs and hands at the hips every frame         |
+| `pallof-press`      | hands together at the sternum pressed straight out       | at the chest at 0; straight out at chest height (±0.5); full extension; trunk never turns      |
+
+Two honesty notes. The jump rope's loop swings from under the feet,
+through the front, to over the head: the two-way player brings it back
+the same way, which is half a turn each direction rather than a full
+rotation — the hop, which is the exercise, is right both ways. The
+Pallof cable runs to the camera and is not drawn; the end-on grip is.
+
+After this batch the ledger holds 16: flight and multi-phase sequences
+the two-way player would reverse dishonestly (box jump, burpee,
+man-maker, get-up), the carries and walks (farmer's carry, sled),
+grip-only rotations invisible on every camera (Zottman), the seated
+calf raise's missing ankle, and the cardio machines whose rep is a gait
+or a pedal (bike, spin, assault bike, elliptical, stairmaster,
+treadmill, incline walk, swimming).
+
+Capture channel: `mountain-climbers`, `rowing-machine`, `side-plank`
+added.

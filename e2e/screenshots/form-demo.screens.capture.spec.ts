@@ -81,6 +81,10 @@ const DEMOS: [id: string, name: string][] = [
   ["hip-abduction-machine", "Hip Abduction Machine"],
   ["reverse-pec-deck", "Reverse Pec Deck"],
   ["dead-bug", "Dead Bug"],
+  // Batch 13: the climber's foot path, the rower's sequence, the side plank.
+  ["mountain-climbers", "Mountain Climbers"],
+  ["rowing-machine", "Rowing Machine"],
+  ["side-plank", "Side Plank"],
 ];
 
 test.use({

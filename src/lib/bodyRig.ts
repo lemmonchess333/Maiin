@@ -38,6 +38,7 @@ import {
   GEAR,
   GEAR_DARK,
   GEAR_EDGE,
+  GEAR_FAR,
   renderProp,
   type PropLayers,
   type PropState,
@@ -1566,6 +1567,126 @@ function muscleUpShoulder(e: number): Pt {
   }
   const k = smooth((e - 0.65) / 0.35);
   return [lerp(over[0], top[0], k), lerp(over[1], top[1], k)];
+}
+
+/* ── Batch 13 helpers: the high plank, the rower, the side plank ── */
+
+/** High plank: the standing figure leaned forward about its heels onto
+ *  straight arms, hands on the floor under the shoulders. */
+const HIGH_PLANK_ANKLE: Pt = [-36, 196];
+const HIGH_PLANK_DEG = 19;
+const MC_HIP_LIFT = 8;
+const MC_FAR_ANKLE: Pt = [HIGH_PLANK_ANKLE[0] + 3, HIGH_PLANK_ANKLE[1]];
+function highPlankBase(): { body: Op[]; shoulder: Pt; hand: Pt } {
+  const body = rigidLeanForward(HIGH_PLANK_DEG, HIGH_PLANK_ANKLE);
+  const S = applyToPoint(SIDE_ANCHORS.shoulder, body);
+  return { body, shoulder: S, hand: [S[0] + 2, MACHINE_FLOOR - 2] };
+}
+
+/** Rowing machine geometry: the footplate, the seat rail height. */
+const ROWER_ANKLE: Pt = [128, 178];
+const ROWER_SEAT_Y = 150;
+/** Hip x at [catch, finish] along the rail. */
+/** The finish keeps the hip within a leg's reach of the plate (a soft
+ *  knee at the finish, never a locked one — and a planted foot). */
+const ROWER_HIP_X: [number, number] = [78, 38];
+const ROWER_PULLEY: Pt = [172, 122];
+const SKI_ERG_PULLEY: Pt = [118, -40];
+const BATTLE_ANCHOR: Pt = [156, 196];
+const JUMP_ROPE_R = 53;
+const JUMP_HOP = 8;
+
+/* Anterior figure laid on its SIDE (a side plank): the front faces the
+ * viewer, the head to the right, the floor below. The trunk is placed
+ * between a world pelvis centre and a world neck base, the stacked
+ * legs between the pelvis and a world ankle, so a sag at the hip and
+ * the straight line are the same construction. */
+const ANT_PELVIS: Pt = [50, 96];
+const ANT_NECK: Pt = [50, 48];
+const ANT_ANKLE_MID: Pt = [50, 196];
+const ANT_TRUNK_LEN = ANT_PELVIS[1] - ANT_NECK[1];
+const ANT_LEG_LEN = ANT_ANKLE_MID[1] - ANT_PELVIS[1];
+function antSidePlank(e: number): Partial<Record<GroupName, Op[]>> {
+  // The supporting shoulder sits half a shoulder-width below the body's
+  // axis once the figure is on its side; its elbow rests on the floor
+  // one upper arm below it. So the AXIS passes that much higher.
+  const S: Pt = [
+    88,
+    MACHINE_FLOOR - 4 - ANT_UPPER_LEN - (ANT.shoulderR[0] - ANT_NECK[0]),
+  ];
+  const total = (ANT_TRUNK_LEN + ANT_LEG_LEN) * 0.998;
+  const rad = Math.asin((MACHINE_FLOOR - 22 - S[1]) / total);
+  // Feet on the floor to the left, extending a touch as the hips lift.
+  const A1: Pt = [S[0] - total * Math.cos(rad), MACHINE_FLOOR - 22];
+  const A: Pt = [lerp(A1[0] + 3, A1[0], e), A1[1]];
+  const hip = ELBOW_LOW(
+    solveElbow(A, S, ANT_LEG_LEN, ANT_TRUNK_LEN, 1),
+    solveElbow(A, S, ANT_LEG_LEN, ANT_TRUNK_LEN, -1)
+  );
+  // Trunk: rest axis pelvis→neck points UP; rotate it onto hip→S.
+  const trunkDeg = angleBetween([0, -1], [S[0] - hip[0], S[1] - hip[1]]);
+  const trunk: Op[] = [
+    { kind: "rotate", deg: trunkDeg, pivot: ANT_PELVIS },
+    {
+      kind: "translate",
+      dx: hip[0] - ANT_PELVIS[0],
+      dy: hip[1] - ANT_PELVIS[1],
+    },
+  ];
+  // Legs: rest axis pelvis→ankle points DOWN; rotate onto hip→A.
+  const legDeg = angleBetween([0, 1], [A[0] - hip[0], A[1] - hip[1]]);
+  const legs: Op[] = [
+    { kind: "rotate", deg: legDeg, pivot: ANT_PELVIS },
+    {
+      kind: "translate",
+      dx: hip[0] - ANT_PELVIS[0],
+      dy: hip[1] - ANT_PELVIS[1],
+    },
+  ];
+  // The trunk turns `trunkDeg`; the figure's screen-right side ("R")
+  // ends on the floor side. That arm supports: upper arm straight DOWN
+  // to the elbow on the floor, forearm flat along the floor toward the
+  // head. Aim in the arm's own frame by pulling the world directions
+  // back through the trunk's turn. The top ("L") arm lies along the
+  // body. Both legs stack: the far leg is translated onto the near one.
+  const pre = (d: Pt): Pt =>
+    applyToPoint(d, [{ kind: "rotate", deg: -trunkDeg, pivot: [0, 0] }]);
+  const armDown = angleBetween(
+    [ANT.elbowR[0] - ANT.shoulderR[0], ANT.elbowR[1] - ANT.shoulderR[1]],
+    pre([0, 1])
+  );
+  const foreFlat =
+    angleBetween(
+      [ANT.handR[0] - ANT.elbowR[0], ANT.handR[1] - ANT.elbowR[1]],
+      pre([1, 0])
+    ) - armDown;
+  const upperR: Op[] = [
+    { kind: "rotate", deg: armDown, pivot: ANT.shoulderR },
+    ...trunk,
+  ];
+  const foreR: Op[] = [
+    { kind: "rotate", deg: foreFlat, pivot: ANT.elbowR },
+    { kind: "rotate", deg: armDown, pivot: ANT.shoulderR },
+    ...trunk,
+  ];
+  // Stack onto the floor-side ("R") leg, so the pair rests on the floor.
+  const stack: Op = {
+    kind: "translate",
+    dx: ANT.kneeR[0] - ANT.kneeL[0],
+    dy: 0,
+  };
+  return {
+    head: trunk,
+    torso: trunk,
+    upperArmL: trunk,
+    foreArmL: trunk,
+    upperArmR: upperR,
+    foreArmR: foreR,
+    thighL: [stack, ...legs],
+    thighR: legs,
+    shankL: [stack, ...legs],
+    shankR: legs,
+  };
 }
 
 function sideSquatChain(
@@ -7394,6 +7515,457 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         thighR: legR.thigh,
         shankR: legR.shank,
       };
+    },
+  },
+
+  /* ── 2026-09-03 build-out, batch 13: the profile's last rows ── */
+
+  "mountain-climbers": {
+    /* "Start in a high plank, hands under shoulders, body straight.
+     * Drive one knee toward your chest without letting hips pike up.
+     * Quickly switch legs." The high plank held (hands, far foot and
+     * the hips all pinned — no pike), the near knee driving forward and
+     * up to the chest with the shin folded under. One knee per rep. */
+    view: "side",
+    viewBox: "-60 -6 200 218",
+    groundY: 204,
+    shadowCx: 40,
+    shadowRx: 70,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: {
+      abs: "primary",
+      quadriceps: "secondary",
+      "front-deltoids": "secondary",
+    },
+    pose: (e) => {
+      const b = highPlankBase();
+      // The hip sits a thigh's length above the floor in a high plank,
+      // so a thigh swinging under it would pass through the floor at
+      // mid-swing. The hips rise a few units through the swing — a
+      // ripple, not a pike (pinned ≤ 10) — with the hands and the far
+      // foot re-solved to stay planted.
+      const lift = MC_HIP_LIFT * Math.sin(Math.PI * e);
+      const body: Op[] = [...b.body, { kind: "translate", dx: 0, dy: -lift }];
+      const hipW = applyToPoint(SIDE_ANCHORS.hip, body);
+      // The thigh swings from along the body line to pointing at the
+      // chest (nearly a half turn in its own frame), the shin folding
+      // back under it so the foot tucks beneath the hips; the fold
+      // leads the swing.
+      const drive: Op[] = [
+        {
+          kind: "rotate",
+          deg: -170 * smooth((e - 0.06) / 0.94),
+          pivot: SIDE_ANCHORS.hip,
+        },
+        ...body,
+      ];
+      const shin: Op[] = [
+        {
+          kind: "rotate",
+          deg: 130 * smooth(e / 0.45),
+          pivot: SIDE_ANCHORS.knee,
+        },
+        ...drive,
+      ];
+      // A touch of slack in the far leg (its ankle target 3 in from the
+      // rigid lean's), so it can stay planted while the hips ripple.
+      const far = plantedLeg(hipW, MC_FAR_ANKLE, KNEE_LOW);
+      const arm = armToWorld(body, b.hand, ELBOW_BACK);
+      return {
+        head: body,
+        torso: body,
+        pelvis: body,
+        thighL: drive,
+        shankL: shin,
+        thighR: far.thigh,
+        shankR: far.shank,
+        upperArmL: arm.upper,
+        foreArmL: arm.fore,
+        handL: arm.fore,
+        upperArmR: arm.upper,
+        foreArmR: arm.fore,
+        handR: arm.fore,
+      };
+    },
+    scene: () =>
+      `<line x1="-60" y1="${MACHINE_FLOOR + 1}" x2="140" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  "battle-ropes": {
+    /* "Grip one end of the rope in each hand, stance wide, soft knees.
+     * Drop into a quarter squat and brace your core. Drive waves by
+     * alternating arms up and down." A quarter squat held; the near arm
+     * rises as the far arm falls (and back), each rope drawn as a wave
+     * from the hand to the anchor ahead. */
+    view: "side",
+    viewBox: "-12 -6 176 218",
+    groundY: 204,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: {
+      "front-deltoids": "primary",
+      abs: "secondary",
+      forearm: "secondary",
+    },
+    pose: (e) => {
+      const c = sideSquatChain(0.3, 14);
+      const near: Op[] = [
+        {
+          kind: "rotate",
+          deg: lerp(-20, -95, e),
+          pivot: SIDE_ANCHORS.shoulder,
+        },
+        ...c.torsoOps,
+      ];
+      const nearFore: Op[] = [
+        { kind: "rotate", deg: -28, pivot: SIDE_ANCHORS.elbow },
+        ...near,
+      ];
+      const far: Op[] = [
+        {
+          kind: "rotate",
+          deg: lerp(-95, -20, e),
+          pivot: SIDE_ANCHORS.shoulder,
+        },
+        ...c.torsoOps,
+      ];
+      const farFore: Op[] = [
+        { kind: "rotate", deg: -28, pivot: SIDE_ANCHORS.elbow },
+        ...far,
+      ];
+      return {
+        head: c.headOps,
+        torso: c.torsoOps,
+        pelvis: c.pelvisOps,
+        thighL: c.thighOps,
+        thighR: c.thighOps,
+        shankL: c.legOps,
+        shankR: c.legOps,
+        upperArmL: near,
+        foreArmL: nearFore,
+        handL: nearFore,
+        upperArmR: far,
+        foreArmR: farFore,
+        handR: farFore,
+      };
+    },
+    scene: (e, pose) => {
+      const hL = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      const hR = applyToPoint(SIDE_ANCHORS.hand, [
+        ...(pose.handR ?? []),
+        { kind: "translate", dx: FAR_ARM_SHIFT[0], dy: FAR_ARM_SHIFT[1] },
+      ]);
+      // Each rope: a wave from the hand to the anchor, its phase driven
+      // by the arm so the crest leaves the hand as the hand rises.
+      const wave = (h: Pt, phase: number, colour: string) => {
+        const A = BATTLE_ANCHOR;
+        const n = 24;
+        let d = `M ${h[0].toFixed(1)} ${h[1].toFixed(1)}`;
+        for (let i = 1; i <= n; i++) {
+          const t = i / n;
+          const x = lerp(h[0], A[0], t);
+          const base = lerp(h[1], A[1], t);
+          const amp = 14 * (1 - t) * Math.min(1, t * 6);
+          const y =
+            base + amp * Math.sin(t * 3 * Math.PI * 2 - phase * Math.PI * 2);
+          d += ` L ${x.toFixed(1)} ${y.toFixed(1)}`;
+        }
+        return `<path d="${d}" fill="none" stroke="${colour}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>`;
+      };
+      return (
+        `<rect x="${BATTLE_ANCHOR[0] - 4}" y="${BATTLE_ANCHOR[1] - 10}" width="8" height="10" rx="2" fill="${GEAR_DARK}"/>` +
+        wave(hR, 0.5 + e * 0.5, GEAR_FAR) +
+        wave(hL, e * 0.5, GEAR) +
+        `<line x1="-12" y1="${MACHINE_FLOOR + 1}" x2="164" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`
+      );
+    },
+  },
+
+  "side-plank": {
+    /* "Lie on your side with your forearm on the floor, elbow under your
+     * shoulder. Stack your feet ... lift your hips off the floor into a
+     * straight line from head to feet. Hold for time." The front figure
+     * laid on its side, facing the viewer: the shoulder fixed over the
+     * elbow on the floor, the hips lifting from a sag into the line.
+     * The set-up is the motion; the hold is t = 1. */
+    view: "anterior",
+    viewBox: "-90 40 220 168",
+    groundY: 204,
+    shadowCx: 20,
+    shadowRx: 70,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: {
+      obliques: "primary",
+      abs: "secondary",
+      "front-deltoids": "secondary",
+    },
+    pose: (e) => antSidePlank(e),
+    scene: () =>
+      `<line x1="-90" y1="${MACHINE_FLOOR + 1}" x2="130" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  "rowing-machine": {
+    /* "Start compressed with shins vertical. Drive with your legs first,
+     * then lean back, then pull the handle to your ribs. Return in
+     * reverse order: arms out, hinge forward, then slide the seat in."
+     * Feet on the footplate, the hip sliding back along the rail (legs
+     * first), the trunk swinging from a forward lean to a lean back,
+     * then the arms pulling to the ribs — three overlapping segments on
+     * one e, so the reverse is the recovery in its own order. */
+    view: "side",
+    equip: "cable-handle",
+    pulley: ROWER_PULLEY,
+    viewBox: "-16 -6 204 218",
+    groundY: 204,
+    shadowCx: 70,
+    shadowRx: 60,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: {
+      quadriceps: "primary",
+      "upper-back": "primary",
+      hamstring: "secondary",
+      biceps: "secondary",
+    },
+    pose: (e) => {
+      const legE = smooth(e / 0.55);
+      const leanE = smooth((e - 0.3) / 0.4);
+      const armE = smooth((e - 0.55) / 0.45);
+      const hip: Pt = [
+        lerp(ROWER_HIP_X[0], ROWER_HIP_X[1], legE),
+        ROWER_SEAT_Y,
+      ];
+      const lean = lerp(14, -14, leanE);
+      const body: Op[] = [
+        {
+          kind: "translate",
+          dx: hip[0] - SIDE_ANCHORS.hip[0],
+          dy: hip[1] - SIDE_ANCHORS.hip[1],
+        },
+      ];
+      const torso: Op[] = [
+        { kind: "rotate", deg: lean, pivot: SIDE_ANCHORS.hip },
+        ...body,
+      ];
+      const head: Op[] = [
+        { kind: "rotate", deg: -lean * HEAD_LIFT, pivot: SIDE_ANCHORS.neck },
+        ...torso,
+      ];
+      const leg = plantedLeg(hip, ROWER_ANKLE, KNEE_HIGH);
+      const S = applyToPoint(SIDE_ANCHORS.shoulder, torso);
+      // Hand: straight ahead at handle height, then to the lower ribs.
+      const H: Pt = [
+        lerp(S[0] + STRAIGHT_ARM * 0.97, S[0] + 8, armE),
+        lerp(ROWER_PULLEY[1] - 4, S[1] + 26, armE),
+      ];
+      const arm = armToWorld(torso, H, ELBOW_BACK);
+      return {
+        head,
+        torso,
+        pelvis: body,
+        thighL: leg.thigh,
+        thighR: leg.thigh,
+        shankL: leg.shank,
+        shankR: leg.shank,
+        upperArmL: arm.upper,
+        foreArmL: arm.fore,
+        handL: arm.fore,
+        upperArmR: arm.upper,
+        foreArmR: arm.fore,
+        handR: arm.fore,
+      };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+    scene: (e, pose) => {
+      const hip = applyToPoint(SIDE_ANCHORS.hip, pose.pelvis ?? []);
+      void e;
+      return (
+        // Rail, the sliding seat under the hips, the footplate, the
+        // flywheel housing at the pulley, the floor.
+        `<line x1="10" y1="${ROWER_SEAT_Y + 14}" x2="140" y2="${ROWER_SEAT_Y + 14}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+        `<rect x="${(hip[0] - 14).toFixed(1)}" y="${ROWER_SEAT_Y + 6}" width="28" height="8" rx="2.6" fill="${GEAR}"/>` +
+        `<rect x="${ROWER_ANKLE[0] + 4}" y="${ROWER_ANKLE[1] - 18}" width="7" height="34" rx="2" fill="${GEAR}" transform="rotate(-22 ${ROWER_ANKLE[0] + 7} ${ROWER_ANKLE[1] - 1})"/>` +
+        `<rect x="${ROWER_PULLEY[0] - 6}" y="${ROWER_PULLEY[1] - 30}" width="14" height="68" rx="5" fill="${GEAR_DARK}"/>` +
+        `<line x1="20" y1="${ROWER_SEAT_Y + 18}" x2="20" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+        `<line x1="-16" y1="${MACHINE_FLOOR + 1}" x2="188" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`
+      );
+    },
+  },
+
+  "ski-erg": {
+    /* "Stand facing the machine, grip both handles overhead, soft knees.
+     * Hinge at the hips and pull the handles down past your thighs ...
+     * stand up and reach overhead smoothly for the next pull." Standing
+     * under the handles, the trunk hinging from upright to 50 as the
+     * straight-ish arms sweep from overhead to behind the thighs, the
+     * cable solved from the machine's top pulley. */
+    view: "side",
+    equip: "cable-handle",
+    pulley: SKI_ERG_PULLEY,
+    viewBox: "-30 -50 176 262",
+    groundY: 204,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { "upper-back": "primary", abs: "secondary", triceps: "secondary" },
+    pose: (e) => {
+      // 58 at the hip nets ~47 from the rest trunk once the body leans
+      // back about the heels to balance it.
+      const hinge = lerp(4, 58, e);
+      const knee = lerp(4, 14, e);
+      const LEAN = hipsBack(hinge);
+      const torso: Op[] = [
+        { kind: "rotate", deg: hinge, pivot: SIDE_ANCHORS.hip },
+        LEAN,
+      ];
+      const head: Op[] = [
+        { kind: "rotate", deg: -hinge * HEAD_LIFT, pivot: SIDE_ANCHORS.neck },
+        ...torso,
+      ];
+      const pelvis: Op[] = [
+        { kind: "rotate", deg: hinge * PELVIS_FOLLOW, pivot: SIDE_ANCHORS.hip },
+        LEAN,
+      ];
+      const leg: Op[] = [
+        { kind: "rotate", deg: knee, pivot: SIDE_ANCHORS.hip },
+        LEAN,
+      ];
+      const shank: Op[] = [
+        { kind: "rotate", deg: -knee, pivot: SIDE_ANCHORS.knee },
+        { kind: "rotate", deg: knee, pivot: SIDE_ANCHORS.hip },
+        LEAN,
+      ];
+      // Arm about the shoulder: overhead-forward → down past the thigh.
+      const swing = lerp(-160, 18, e);
+      const upper: Op[] = [
+        { kind: "rotate", deg: swing, pivot: SIDE_ANCHORS.shoulder },
+        ...torso,
+      ];
+      const fore: Op[] = [
+        { kind: "rotate", deg: -14, pivot: SIDE_ANCHORS.elbow },
+        ...upper,
+      ];
+      return {
+        head,
+        torso,
+        pelvis,
+        thighL: leg,
+        thighR: leg,
+        shankL: shank,
+        shankR: shank,
+        upperArmL: upper,
+        foreArmL: fore,
+        handL: fore,
+        upperArmR: upper,
+        foreArmR: fore,
+        handR: fore,
+      };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+    scene: () =>
+      `<line x1="${SKI_ERG_PULLEY[0] + 6}" y1="-50" x2="${SKI_ERG_PULLEY[0] + 6}" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+      `<line x1="-30" y1="${MACHINE_FLOOR + 1}" x2="146" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  "jump-rope": {
+    /* "Hold handles at your hips, elbows pinned close to your ribs ...
+     * jump just an inch or two off the floor — enough to clear the rope.
+     * Land softly on the balls of your feet." A small hop with the
+     * elbows at the ribs and the hands at the hips; the rope is a loop
+     * held at the hands, swinging from under the feet (0) forward and
+     * over the head (1). */
+    view: "side",
+    viewBox: "-40 -30 176 244",
+    groundY: 204,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { calves: "primary", forearm: "secondary" },
+    pose: (e) => {
+      const hop: Op[] = [{ kind: "translate", dx: 0, dy: -JUMP_HOP * e }];
+      const fore: Op[] = [
+        { kind: "rotate", deg: -32, pivot: SIDE_ANCHORS.elbow },
+        ...hop,
+      ];
+      return {
+        head: hop,
+        torso: hop,
+        pelvis: hop,
+        thighL: hop,
+        thighR: hop,
+        shankL: hop,
+        shankR: hop,
+        upperArmL: hop,
+        foreArmL: fore,
+        handL: fore,
+        upperArmR: hop,
+        foreArmR: fore,
+        handR: fore,
+      };
+    },
+    scene: (e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      // The loop: a circle through the hands whose far side swings from
+      // under the feet, through the front, to over the head.
+      const a = Math.PI / 2 - e * Math.PI; // centre direction: down → up via front
+      const cx = h[0] + JUMP_ROPE_R * Math.cos(a);
+      const cy = h[1] + JUMP_ROPE_R * Math.sin(a);
+      return (
+        `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${JUMP_ROPE_R}" fill="none" stroke="${GEAR}" stroke-width="1.6"/>` +
+        `<line x1="-40" y1="${MACHINE_FLOOR + 1}" x2="136" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`
+      );
+    },
+  },
+
+  "pallof-press": {
+    /* "Stand sideways to the cable at chest height, grip the handle with
+     * both hands ... press the handle straight out in front of your
+     * chest, resisting the rotation. Return slowly to your chest." The
+     * cable runs to the camera and cannot be drawn; the press can: both
+     * hands together at the sternum, out to full extension at chest
+     * height, the trunk never turning (pinned still). */
+    view: "side",
+    viewBox: "-12 -6 152 218",
+    groundY: 204,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: {
+      abs: "primary",
+      obliques: "primary",
+      "front-deltoids": "secondary",
+    },
+    pose: (e) => {
+      const S = SIDE_ANCHORS.shoulder;
+      const H: Pt = [S[0] + lerp(14, STRAIGHT_ARM * 0.995, e), S[1] + 12];
+      const arm = aimArm(
+        { S, E: SIDE_ANCHORS.elbow, H: SIDE_ANCHORS.hand },
+        solveElbow(S, H, SIDE_UPPER_LEN, SIDE_FORE_LEN, 1),
+        H,
+        0
+      );
+      return {
+        upperArmL: arm.upper,
+        foreArmL: arm.fore,
+        handL: arm.fore,
+        upperArmR: arm.upper,
+        foreArmR: arm.fore,
+        handR: arm.fore,
+      };
+    },
+    scene: (_e, pose) => {
+      // The handle's end-on grip at the hands (the cable leaves toward
+      // the viewer), and the floor.
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return (
+        `<circle cx="${h[0].toFixed(1)}" cy="${h[1].toFixed(1)}" r="4" fill="${GEAR}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>` +
+        `<line x1="-12" y1="${MACHINE_FLOOR + 1}" x2="140" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`
+      );
     },
   },
 };

@@ -223,6 +223,33 @@
         "file": "barbell-upright-row-t100.png"
       }
     ],
+    "battle-ropes": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "battle-ropes-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "battle-ropes-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "battle-ropes-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "battle-ropes-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "battle-ropes-t100.png"
+      }
+    ],
     "bayesian-cable-curl": [
       {
         "t": 0,
@@ -1411,6 +1438,33 @@
         "file": "jm-press-t100.png"
       }
     ],
+    "jump-rope": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "jump-rope-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "jump-rope-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "jump-rope-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "jump-rope-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "jump-rope-t100.png"
+      }
+    ],
     "kettlebell-swing": [
       {
         "t": 0,
@@ -1762,6 +1816,33 @@
         "file": "meadows-row-t100.png"
       }
     ],
+    "mountain-climbers": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "mountain-climbers-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "mountain-climbers-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "mountain-climbers-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "mountain-climbers-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "mountain-climbers-t100.png"
+      }
+    ],
     "muscle-ups": [
       {
         "t": 0,
@@ -1895,6 +1976,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "overhead-press-t100.png"
+      }
+    ],
+    "pallof-press": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "pallof-press-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "pallof-press-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "pallof-press-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "pallof-press-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "pallof-press-t100.png"
       }
     ],
     "pec-deck": [
@@ -2302,6 +2410,33 @@
         "file": "rope-tricep-pushdown-t100.png"
       }
     ],
+    "rowing-machine": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "rowing-machine-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "rowing-machine-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "rowing-machine-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "rowing-machine-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "rowing-machine-t100.png"
+      }
+    ],
     "russian-twist": [
       {
         "t": 0,
@@ -2437,6 +2572,33 @@
         "file": "shrugs-t100.png"
       }
     ],
+    "side-plank": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "side-plank-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "side-plank-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "side-plank-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "side-plank-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "side-plank-t100.png"
+      }
+    ],
     "single-arm-cable-pushdown": [
       {
         "t": 0,
@@ -2543,6 +2705,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "sissy-squat-t100.png"
+      }
+    ],
+    "ski-erg": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "ski-erg-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "ski-erg-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "ski-erg-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "ski-erg-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "ski-erg-t100.png"
       }
     ],
     "skull-crushers": [
