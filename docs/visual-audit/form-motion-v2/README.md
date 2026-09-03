@@ -1790,3 +1790,335 @@ hinge is toward the camera; the top-down core demos use the front
 figure as a figure seen from above. Each is written on its demo.
 
 Capture channel: `seated-calf-raise` added.
+
+## STATUS 2026-09-03t — a second animation style: the form placard
+
+Owner brief, with a six-panel chest-dip card as the reference: "take
+these images, put them together as an animation, and put the form as
+instructions below like in the images instead of below like normal."
+Tried on dips, which is the only exercise that has it.
+
+### What it is
+
+A third player mode, beside the rep and the cycle. A demo declares a
+list of **beats** — a named position, the frame that shows it, and the
+cue that belongs to it — and the player steps through them, holding on
+each long enough to read and tweening between. The cue sits under the
+figure it describes, which is the whole point: on the reference card
+every caption is under its own drawing, and the app's instruction list
+was two screens away from the animation it explained.
+
+| Piece                            | Where                          |
+| -------------------------------- | ------------------------------ |
+| `FormBeat` / `FORM_BEATS`        | `bodyRig.ts`, beside the demos |
+| `placardSampleAt`                | `exerciseTempo.ts`             |
+| Stage furniture (key, rail, cue) | `ExerciseRigDemo.tsx`          |
+| `--stage-foreground` / `-muted`  | `index.css`                    |
+
+### Why it could not be the rep player with captions bolted on
+
+Timing. Six captions inside one 3.66 s rep gives each about 600 ms; a
+seven-word line needs about 1.8 s to read. The text would strobe.
+
+So in a placard the DWELL leads and the movement follows —
+`PLACARD_TIMING.holdMs` is **derived** from a cue width (7 words) and an
+ordinary reading rate (4 words/second), not chosen by feel, and
+`bodyRig.test.ts` holds every authored cue to that width. The first
+draft had 1600 ms while claiming seven words at four a second; the test
+that asserts the derivation is what caught the 150 ms of reading that
+did not fit.
+
+One dip card is 6 x (1800 + 560) = 14.2 s per loop. That is slow for a
+rep and right for a placard.
+
+### The caption is a claim, and the first one was false
+
+A generic phase cue ("Lower under control") is true of any eccentric.
+"Arms locked" is true of one frame or it is not — which is a stronger
+obligation than the rig had carried, and the dip failed it.
+
+The support position was built at `0.97 * (upper + fore)`. That sounds
+like a locked arm and is not: near full extension the cosine is flat, so
+0.97 of the span leaves the elbow at **152 degrees** — a visibly bent
+arm holding the top of a dip. It is the same defect the overhead press
+had (0.985, failing a 165-degree floor at 163.9) and the same fix:
+**0.995**, which reads 169. Nothing had pinned it because nothing had
+ever said in words what that frame was supposed to be.
+
+| Beat | t    | Pinned claim                                                    |
+| ---- | ---- | --------------------------------------------------------------- |
+| 1, 6 | 0    | elbow > 165 degrees — "arms locked"                             |
+| 2    | 0.22 | descent order: 1 < 2 < 3 < 4                                    |
+| 3    | 0.62 |                                                                 |
+| 4    | 1    | upper arm within 10 degrees of the floor; elbow behind the hand |
+| 5    | 0.5  | 6 < 5 < 4 — the press runs the other way                        |
+| all  |      | the hands are on the grip at every beat, to 6 decimals          |
+
+The last beat's t equals the first's, so the loop's wrap is a still
+rather than a snap. That is pinned for every sequence, not just this one.
+
+### The muscle key
+
+The reference card names the muscles beside its swatches. `getDemoLegend`
+reads that FROM the demo doing the painting and returns the renderer's
+own two fills, so a key cannot disagree with the figure it explains — and
+a test asserts the returned colours appear in the rendered SVG. Every
+tint id across all 152 demos must have an entry, or a legend would
+quietly read "front-deltoids" at a user.
+
+### Two things this turned up that were not the brief
+
+- **The stage was an untokenised surface.** The demo stage is fixed dark
+  in both themes; `--muted-foreground` was consolidated (DS2) against
+  card, muted and page. On the stage in the LIGHT theme it measures
+  **3.62:1** — so the rig's phase cue has been under the floor since it
+  shipped, invisible because the app defaults to dark. The stage now has
+  `--stage-foreground` and `--stage-muted`, pinned in
+  `tokenContrast.test.ts` (which also records the 3.62 so nobody
+  rediscovers it).
+- **A purple number chip failed an existing guard.** `bg-lifting/25`
+  added a tint fraction, and that file derives its bars from the
+  fractions the source paints — `--lifting-strong` on lifting/25 over a
+  card is 4.49:1. The chip is neutral instead; purple stays where it is
+  non-text, on the rail's active dot.
+
+### Reduced motion gets the card
+
+An animation that steps through six frames has six frames to print, so
+`prefers-reduced-motion` renders the whole storyboard — every position
+under its caption — instead of a two-up that drops four of them. The
+capture channel runs under that flag, so `dips` now captures as the
+six-panel frame. Its first diff after this is a whole-frame change by
+construction, not churn.
+
+### Deliberately scoped
+
+- **Beats are keyed by exercise id and are NOT alias-resolved.**
+  `tricep-dips` and `weighted-chest-dip` render the dips geometry, which
+  is already an approximation for the upright variant — whose own
+  catalogue entry says "don't lean forward like a chest dip". Inheriting
+  these captions would promote a silent visual approximation into
+  written coaching that contradicts the exercise.
+- **The authored steps are not deleted, only collapsed.** With a placard
+  present, `ExerciseFormContent` starts the instruction list closed
+  rather than showing two of it — the duplication the style exists to
+  remove. The catalogue text carries detail seven-word cues cannot (the
+  30 degrees of lean, and why), and stays one tap away.
+- **One exercise.** Everything without a beat list plays exactly as
+  before, pinned by a test. Reverting the style is deleting one map.
+
+Review artefact: `npx tsx scripts/preview-placard.ts` renders each
+sequence as the card it is a moving version of. The ordinary contact
+sheet cannot show this — it samples t at fixed fifths, which for a
+placard lands between the authored positions rather than on them.
+
+## STATUS 2026-09-03u — the placard's ART, not just its layout
+
+Owner, on the first pass: "we're not doing it in our SVG style, we're
+trying this in the style I sent to you." Correct — the first pass copied
+the reference card's LAYOUT (six named positions, cue under the figure,
+muscle key) and kept the faceted mosaic figure, which was the wrong half
+of what the card is.
+
+So there is now a second renderer, `renderIllustratedSide`, over the
+**same skeleton**. Every pose, anchor, IK solve and contour is shared and
+untouched; only the paint differs. If a limb is in the wrong place it is
+wrong in both styles, which is the point of not forking the geometry —
+and it is why every mechanics pin above still applies unchanged.
+
+| mosaic                      | illustrated                             |
+| --------------------------- | --------------------------------------- |
+| straight-edged polygons     | Catmull-Rom smoothed closed curves      |
+| every facet drawn, gapped   | one solid form per piece, no seams      |
+| flat body grey              | lit-to-shade gradient + highlight core  |
+| tint = flat fill on a facet | facets merged into one organic muscle   |
+| secondary = paler purple    | secondary = diagonal hatch (the card's) |
+
+Four things that took a second look:
+
+- **The mosaic's gaps were doing structural work.** Remove them and the
+  arm resting against the torso dissolves into one smooth grey mass —
+  the first render was exactly that. Each piece now paints a **contact
+  shadow** first (its silhouette grown by 1.5, near-black at 0.22), and
+  since pieces paint back-to-front each one darkens what sits behind it.
+  That is the separation the 1.2-unit facet gaps used to provide.
+- **Catmull-Rom at the textbook tension overshoots.** Between sparse
+  contour points it bulges outside the contour, which read as a lump on
+  the pelvis. 0.45 keeps the curve inside while still losing the
+  straight-edge read.
+- **Merging the facets needed no new geometry.** Each facet is stroked
+  in its own colour at 1.2 wide with round joins, so the gaps close and
+  the facets of one muscle become a single organic shape. The anatomy
+  comes out of the data already there.
+- **Def ids are per FRAME.** The reduced-motion placard puts six of
+  these SVGs inline on one page, and duplicate ids across inline SVGs
+  resolve to the first definition — every figure would take the first
+  frame's gradient. The suffix is derived from the exercise and t, so it
+  is unique per frame and still deterministic for the preview manifest
+  and the screenshot diff. Pinned, and mutation-checked.
+
+### The legend had to learn the style
+
+`getDemoLegend` returns the fills the figure actually paints, and the
+two styles disagree about secondaries — the mosaic pales the purple, the
+illustrated figure hatches it. A solid swatch beside a striped muscle is
+a key describing a figure that is not on screen. The legend now carries
+`secondaryFill`, and the key repeats the figure's own diagonal.
+
+This was **caught rather than remembered**: the existing test asserting
+that the legend's colours appear in the rendered SVG failed the moment
+dips changed style, because the illustrated figure never paints
+`#9590E0`.
+
+### What it does not close
+
+The reference is a 3/4 view of a modelled figure; this is a profile of a
+mannequin built from contour slabs. Two honest consequences, both
+visible in `dips-placard.png`:
+
+- **The pec reads small.** In profile the chest is nearly edge-on, so
+  the primary muscle is a narrow strip where the card shows a broad fan.
+  That is the camera, not the paint — and changing the camera is a
+  different piece of work from changing the style.
+- **There is no rib, oblique or deltoid separation.** The card's figure
+  has modelled anatomy; ours has smoothed slabs. Shading gets some of
+  the way; it will not get all of it without more detailed contours.
+
+Style is opt-in per demo (`art: "illustrated"`), and dips is the only one
+on it. Everything else still paints the mosaic — pinned, so a migration
+has to be a deliberate act.
+
+## STATUS 2026-09-03v — the frames ARE the card
+
+Owner, after 03u: "I'm not telling you to take what I send and adapt it
+to our style — I'm telling you to adapt what I send and animate exactly
+that."
+
+Both earlier passes read the reference as a style brief. It was not. The
+card's six panels are the frames; the job was to animate them.
+
+- **03t** copied the card's LAYOUT and kept our faceted figure.
+- **03u** redrew our figure in the card's manner. Closer, still a
+  redrawing.
+- **03v** animates the card itself.
+
+### What shipped
+
+`scripts/extract-form-frames.mjs` cuts the owner's card into six frames
+under `public/form-frames/dips/`. Three things it does that a naive crop
+does not, each of which showed up as a visible defect first:
+
+- **Paints out the panel title and caption before measuring.** Otherwise
+  the trim finds the text, not the figure — and the app renders those
+  words itself, where they can be themed, selected, translated and read
+  at any size, none of which pixels can do.
+- **Crops all six to ONE shared rect**, the union of every figure's
+  bounding box. Trim each frame to its own box and the body jumps around
+  the canvas between positions. This single property is what makes six
+  stills read as one movement, and it is pinned.
+- **Keys the card's panel background out to transparency**, with a soft
+  ramp so the figure keeps its anti-aliased edge. Without it each frame
+  sits on the card's lighter near-black as a visible rectangle on our
+  darker stage. The station's dark bars survive the key because they are
+  well above the threshold; that was checked, not assumed.
+
+The player crossfades them: every frame is in the DOM from the first
+paint at zero opacity, so the browser has fetched all six before the
+first fade needs one, and the fade is a CSS transition on a beat change.
+There is nothing to interpolate between two pictures, so the rAF loop's
+only job here is to say which position is current — and while frames are
+on screen the rig does not draw at all, including the opening frame.
+
+### The beat keeps its `t`, and that is not redundancy
+
+Pictures are fetched at runtime, so "the file is in the repo" is not
+"the user got it": a bad deploy, an offline first visit or a stale
+service worker all end the same way. A frame that fails to load falls
+back to the rig figure at that beat's own `t` — so every geometry pin
+above still measures something real, including the 0.995 lockout fix
+that 03t's captions forced.
+
+### The key follows the art
+
+`getDemoLegend` reads the rig's tint map, which is a true statement
+about the rig's figure and a false one about a picture that highlights
+different muscles. A placard with supplied frames now carries its own
+key, authored from the card: pectoralis major solid, and triceps,
+anterior deltoids, lower chest and serratus anterior hatched. The
+catalogue's own vocabulary still appears in the muscle pills below.
+
+### 03u is reverted, not kept
+
+`renderIllustratedSide` and its art tokens are gone. It answered a
+question that turned out not to be the question, and an unused second
+renderer is precisely the half-built seam this repo keeps finding months
+later. It is in the history if the look is ever wanted for the 151
+exercises that have no card.
+
+### The open question is provenance, and it is a launch gate
+
+These frames are art of unknown origin — they arrived as a screenshot.
+Nothing in this change establishes the right to ship them, and the
+roadmap's own licensing line ("record a rights-cleared performer") is
+still open. A row now sits in the pre-launch QA backlog. The mechanism
+here is general: any card can be cut by the same script. Whether THIS
+card can ship is a question about the card, not about the code.
+
+### Addendum — the frames are not one scene, and registration cannot fix it
+
+Origin confirmed by the owner: the card was generated with ChatGPT. That
+answers the licence question (OpenAI assigns output rights to the user)
+and raises a different one that matters more for the animation.
+
+**Each panel was generated separately, so they do not share a camera.**
+The dip station — the one thing in the scene that must not move — is
+drawn at a different position, size and angle in all six. Overlaying the
+station mask from every frame shows six bars fanned across ~40px
+vertically with the posts spread wider still.
+
+A translation-registration pass was written and measured. It made things
+slightly worse:
+
+|                               | mean station overlap vs frame 1 |
+| ----------------------------- | ------------------------------- |
+| as generated                  | 9.3%                            |
+| after best-shift registration | 8.7%                            |
+
+It was removed. Aligning the grip bar pulls the posts apart, because the
+frames differ by scale and perspective rather than by an offset, and a
+translation has no way to express that. Shipping an alignment step that
+measurably does nothing is worse than not having one — the number is
+recorded here so the next person does not rewrite it.
+
+The real fix is upstream: generate ONE image and edit only the pose for
+the other five, so the scene is shared by construction. Nothing in the
+extraction script can recover a camera that was never the same.
+
+What survives regardless: the crossfade softens the drift into a morph
+rather than a jump, and the six positions are correct as poses. Judge it
+on the animated preview, not on the stills.
+
+### The capture channel broke, and how it is anchored now
+
+The first capture run after the frames landed **failed at `dips` and lost
+every demo after it** — the spec shoots the list in order, so 37 frames
+went uncaptured from one bad locator.
+
+`shootBoth` waited on the two-up's accessible name, and its own comment
+explains why it had to be that exact string: `/demonstration/i` alone
+also matches the animated player, and a looser locator had once shipped
+screenshots of a running loop. The placard's still version is a
+six-panel storyboard with no such element, so the wait timed out.
+
+This is precisely the failure CLAUDE.md describes — "capture specs
+select by user-visible STRINGS, so renaming copy or reshaping an
+aria-label requires `rg` over `e2e/` in the same commit" — and it was
+missed because the string was not renamed, it stopped existing for one
+demo.
+
+The anchor is now `data-demo-still`, on the two reduced-motion roots and
+nowhere else. It survives a change of presentation while keeping the
+guarantee the string was carrying: the animated loop cannot be captured
+by accident. Pinned against the real render in
+`ExerciseRigDemo.test.tsx` — present on both still paths, absent on both
+animated ones — and mutation-checked by deleting the attribute.

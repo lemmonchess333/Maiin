@@ -14,6 +14,12 @@
  * static two-up of the START and END extremes, which is both stable and
  * the exact pair a model-art review wants to see.
  *
+ * A PLACARD demo (2026-09-03) prints something better under the same
+ * flag: every named position at once, each under its own caption — the
+ * form card the animation steps through. So `dips` now captures as a
+ * six-panel frame rather than a two-up, and its first diff after that
+ * change is a whole-frame change by construction, not churn.
+ *
  * The demo card is shot as an ELEMENT, not fullPage: the surrounding
  * stats carry seeded numbers and a date, and a full-page frame would
  * diff on those instead of on the art.
@@ -215,12 +221,21 @@ test.describe("form demo screenshots", () => {
   });
 
   async function shootBoth(page: Page, name: string) {
-    // The EXACT reduced-motion label. `/demonstration/i` alone matches the
-    // animated player too ("... demonstration — looping reps"), which is
-    // how the first run shipped frames of a running loop.
-    const card = page
-      .getByRole("img", { name: /demonstration — start and end positions/i })
-      .first();
+    /* The reduced-motion root, by attribute rather than by accessible
+       name. It used to wait on the two-up's EXACT label, because
+       `/demonstration/i` alone also matches the animated player
+       ("... demonstration — looping reps") and a looser locator once
+       shipped frames of a running loop. That string then stopped
+       existing for a placard demo, whose still version is a six-panel
+       storyboard, and this spec broke at `dips` — taking every demo
+       after it in the same run with it.
+
+       `data-demo-still` is on the two reduced-motion roots and nowhere
+       else, so it survives a change of presentation while keeping the
+       guarantee the string carried. `ExerciseRigDemo.test.tsx` pins it
+       against the real render, both that it is there and that the
+       animated path does not have it. */
+    const card = page.locator("[data-demo-still]").first();
     await expect(card).toBeVisible({ timeout: 20_000 });
     // The demo itself is inline SVG, but the page around it carries art;
     // settling keeps this spec out of the unsettled-capture ratchet and

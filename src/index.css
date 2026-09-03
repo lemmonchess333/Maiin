@@ -73,6 +73,8 @@
      gaps are designed against a dark backdrop). Same value in :root and
      .dark, like the sport identities. */
   --color-stage: hsl(var(--stage));
+  --color-stage-foreground: hsl(var(--stage-foreground));
+  --color-stage-muted: hsl(var(--stage-muted));
   --color-muted: hsl(var(--muted));
   --color-muted-foreground: hsl(var(--muted-foreground));
   --color-border: hsl(var(--border));
@@ -227,6 +229,13 @@
   --destructive-strong: 0 72% 39%; /* #AB1C1C — worst case 4.55:1 (20% tint over background) */
   /* Media stage — fixed dark in BOTH themes (see @theme note). */
   --stage: 240 4% 7%;
+  /* Text ON the stage. The stage is a FOURTH surface: --muted-foreground
+     was tuned for card / muted / page, and on this near-black it
+     measures 3.62:1 in the light theme — the demo's phase cue has been
+     under the floor there since it shipped. These two are fixed in both
+     themes, like the stage itself, because the surface is. */
+  --stage-foreground: 240 6% 96%;
+  --stage-muted: 240 5% 70%;
   --muted: 240 6% 97.5%; /* DS2: near-white raised tile (was 95.9% ≈ page) */
   /* 46.1% → 43% (owner-decided consolidation, 2026-08-22). At 46.1% the
      token cleared AA on the white card by only 0.333 (4.833:1) and FAILED
@@ -338,6 +347,8 @@
   --lifting: 245 73% 68%; /* #7B72E9 purple */
   /* Media stage — IDENTICAL to :root (fixed dark surface). */
   --stage: 240 4% 7%;
+  --stage-foreground: 240 6% 96%;
+  --stage-muted: 240 5% 70%;
   /* Nutrition — the identity and the white-text fill step are IDENTICAL to
      :root (both fixed). Only the TEXT step follows the theme: on a dark
      surface the AA-clearing orange is the light one, which lands back on

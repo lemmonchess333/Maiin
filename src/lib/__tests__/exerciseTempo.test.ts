@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vitest";
 import {
   cycleSampleAt,
+  placardSampleAt,
+  PLACARD_CUE_WORDS,
+  PLACARD_TIMING,
+  PLACARD_WORDS_PER_SECOND,
   parseTempo,
   repTimingFor,
   repSampleAt,
@@ -244,5 +248,97 @@ describe("cycleSampleAt — a gait, a pedal stroke, a jump-and-step-down", () =>
       [0, 300, 600, 900].map((m) => cycleSampleAt(600 + m, CYCLE).targetEffort)
     );
     expect(efforts.size).toBe(1);
+  });
+});
+
+/* ── Placard sequences ───────────────────────────────────────────────
+ * A stepped demo: named positions, each HELD long enough to read its
+ * cue, tweening between them. The hold is the whole reason the mode
+ * exists — six captions inside one 3.66 s rep would give each ~600 ms,
+ * and a seven-word line needs about 1.8 s. */
+describe("placardSampleAt — the stepped form card", () => {
+  const T = PLACARD_TIMING;
+  const SLOT = T.holdMs + T.moveMs;
+
+  it("HOLDS still for the whole read budget, then moves", () => {
+    // Every millisecond of the hold reports the same position, not
+    // moving — nothing on screen changes while the cue is being read.
+    for (const m of [0, 1, 800, T.holdMs - 1]) {
+      expect(placardSampleAt(m, 3, T)).toEqual({
+        index: 0,
+        k: 0,
+        moving: false,
+      });
+    }
+    // The tween starts exactly at the end of the hold and runs 0→1.
+    expect(placardSampleAt(T.holdMs, 3, T)).toEqual({
+      index: 0,
+      k: 0,
+      moving: true,
+    });
+    expect(placardSampleAt(T.holdMs + T.moveMs / 2, 3, T).k).toBeCloseTo(
+      0.5,
+      6
+    );
+    expect(placardSampleAt(SLOT - 1, 3, T).moving).toBe(true);
+  });
+
+  it("gives every position an identical slot", () => {
+    expect(placardSampleAt(SLOT, 3, T).index).toBe(1);
+    expect(placardSampleAt(SLOT + 100, 3, T)).toEqual({
+      index: 1,
+      k: 0,
+      moving: false,
+    });
+    expect(placardSampleAt(2 * SLOT + 100, 3, T).index).toBe(2);
+  });
+
+  it("wraps after the last position — the card loops", () => {
+    expect(placardSampleAt(3 * SLOT, 3, T).index).toBe(0);
+    expect(placardSampleAt(3 * SLOT + 900, 3, T)).toEqual({
+      index: 0,
+      k: 0,
+      moving: false,
+    });
+    // The final slot's tween belongs to the LAST position travelling
+    // back to the first, so a sequence ending where it began holds
+    // across the seam instead of jumping.
+    const seam = placardSampleAt(2 * SLOT + T.holdMs + 10, 3, T);
+    expect(seam.index).toBe(2);
+    expect(seam.moving).toBe(true);
+  });
+
+  it("never indexes past the sequence, at any elapsed time", () => {
+    for (const count of [1, 2, 6, 9]) {
+      for (let m = 0; m < count * SLOT * 2.5; m += 37) {
+        const s = placardSampleAt(m, count, T);
+        expect(s.index).toBeGreaterThanOrEqual(0);
+        expect(s.index).toBeLessThan(count);
+        expect(s.k).toBeGreaterThanOrEqual(0);
+        expect(s.k).toBeLessThanOrEqual(1);
+      }
+    }
+  });
+
+  it("an empty sequence is inert rather than a divide-by-zero", () => {
+    expect(placardSampleAt(1234, 0, T)).toEqual({
+      index: 0,
+      k: 0,
+      moving: false,
+    });
+  });
+
+  it("the hold IS the read budget, not a number chosen by feel", () => {
+    // The first draft had 1600 ms and claimed seven words at four words
+    // a second — 1750 ms of reading in 1600 ms of stillness. Deriving
+    // it makes the claim and the timing the same statement.
+    expect(T.holdMs).toBe(
+      (PLACARD_CUE_WORDS / PLACARD_WORDS_PER_SECOND) * 1000
+    );
+    expect(T.holdMs / 1000).toBeGreaterThanOrEqual(
+      PLACARD_CUE_WORDS / PLACARD_WORDS_PER_SECOND
+    );
+    // And a whole six-position card stays inside a watchable loop.
+    expect(6 * SLOT).toBeLessThan(16_000);
   });
 });

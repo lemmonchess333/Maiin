@@ -566,3 +566,77 @@ describe("muted secondary text — the consolidated contract", () => {
     expect(contrast(composite, bg)).toBeGreaterThan(7);
   });
 });
+
+/* ── The media stage is a FOURTH surface ─────────────────────────────
+ *
+ * `--muted-foreground` was consolidated (DS2, 2026-08-22) against the
+ * three surfaces it renders on: card, muted and page. The demo stage is
+ * none of them — it is fixed dark in BOTH themes, so in the light theme
+ * a token tuned for a white card lands on near-black.
+ *
+ * The rig demo's phase cue has been `text-muted-foreground` on that
+ * stage since it shipped, which measures 3.62:1 in the light theme —
+ * under the 4.5:1 floor for a 12px line. It went unseen for the reason
+ * the file header already names about `THEME.teal`: it looks correct in
+ * the dark theme the app defaults to. The placard puts a great deal
+ * MORE reading on that surface, so the stage now has text tokens of its
+ * own and this holds them to the bar.
+ */
+describe("token contrast — text tokens on the media stage", () => {
+  const STAGE_BARS = [
+    { token: "stage-foreground", min: AA_NORMAL },
+    { token: "stage-muted", min: AA_NORMAL },
+  ] as const;
+
+  it.each(STAGE_BARS)(
+    "--$token clears AA on the stage (light)",
+    ({ token, min }) => {
+      const block = lightBlock();
+      const ratio = contrast(
+        hslToRgb(...readHsl(block, token)),
+        hslToRgb(...readHsl(block, "stage"))
+      );
+      expect(
+        ratio,
+        `--${token} is ${ratio.toFixed(2)}:1 on the light stage (needs ${min}:1)`
+      ).toBeGreaterThanOrEqual(min);
+    }
+  );
+
+  it.each(STAGE_BARS)(
+    "--$token clears AA on the stage (dark)",
+    ({ token, min }) => {
+      const dark = darkBlock();
+      const ratio = contrast(
+        hslToRgb(...readHsl(dark, token)),
+        hslToRgb(...readHsl(dark, "stage"))
+      );
+      expect(
+        ratio,
+        `--${token} is ${ratio.toFixed(2)}:1 on the dark stage (needs ${min}:1)`
+      ).toBeGreaterThanOrEqual(min);
+    }
+  );
+
+  it("the stage and its text are IDENTICAL in both themes", () => {
+    // The stage is a video-player convention, not a themed surface: if
+    // one of the three drifts between blocks the pair stops matching
+    // the ground they were measured against.
+    for (const token of ["stage", "stage-foreground", "stage-muted"]) {
+      expect(readHsl(lightBlock(), token), token).toEqual(
+        readHsl(darkBlock(), token)
+      );
+    }
+  });
+
+  it("records what --muted-foreground actually measures there", () => {
+    // The number this replaced, kept so the next person does not have
+    // to rediscover that the old cue line was under the floor.
+    const ratio = contrast(
+      hslToRgb(...readHsl(lightBlock(), "muted-foreground")),
+      hslToRgb(...readHsl(lightBlock(), "stage"))
+    );
+    expect(ratio).toBeLessThan(AA_NORMAL);
+    expect(ratio).toBeGreaterThan(3);
+  });
+});
