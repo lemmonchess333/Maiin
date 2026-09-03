@@ -1911,3 +1911,79 @@ Review artefact: `npx tsx scripts/preview-placard.ts` renders each
 sequence as the card it is a moving version of. The ordinary contact
 sheet cannot show this — it samples t at fixed fifths, which for a
 placard lands between the authored positions rather than on them.
+
+## STATUS 2026-09-03u — the placard's ART, not just its layout
+
+Owner, on the first pass: "we're not doing it in our SVG style, we're
+trying this in the style I sent to you." Correct — the first pass copied
+the reference card's LAYOUT (six named positions, cue under the figure,
+muscle key) and kept the faceted mosaic figure, which was the wrong half
+of what the card is.
+
+So there is now a second renderer, `renderIllustratedSide`, over the
+**same skeleton**. Every pose, anchor, IK solve and contour is shared and
+untouched; only the paint differs. If a limb is in the wrong place it is
+wrong in both styles, which is the point of not forking the geometry —
+and it is why every mechanics pin above still applies unchanged.
+
+| mosaic                      | illustrated                             |
+| --------------------------- | --------------------------------------- |
+| straight-edged polygons     | Catmull-Rom smoothed closed curves      |
+| every facet drawn, gapped   | one solid form per piece, no seams      |
+| flat body grey              | lit-to-shade gradient + highlight core  |
+| tint = flat fill on a facet | facets merged into one organic muscle   |
+| secondary = paler purple    | secondary = diagonal hatch (the card's) |
+
+Four things that took a second look:
+
+- **The mosaic's gaps were doing structural work.** Remove them and the
+  arm resting against the torso dissolves into one smooth grey mass —
+  the first render was exactly that. Each piece now paints a **contact
+  shadow** first (its silhouette grown by 1.5, near-black at 0.22), and
+  since pieces paint back-to-front each one darkens what sits behind it.
+  That is the separation the 1.2-unit facet gaps used to provide.
+- **Catmull-Rom at the textbook tension overshoots.** Between sparse
+  contour points it bulges outside the contour, which read as a lump on
+  the pelvis. 0.45 keeps the curve inside while still losing the
+  straight-edge read.
+- **Merging the facets needed no new geometry.** Each facet is stroked
+  in its own colour at 1.2 wide with round joins, so the gaps close and
+  the facets of one muscle become a single organic shape. The anatomy
+  comes out of the data already there.
+- **Def ids are per FRAME.** The reduced-motion placard puts six of
+  these SVGs inline on one page, and duplicate ids across inline SVGs
+  resolve to the first definition — every figure would take the first
+  frame's gradient. The suffix is derived from the exercise and t, so it
+  is unique per frame and still deterministic for the preview manifest
+  and the screenshot diff. Pinned, and mutation-checked.
+
+### The legend had to learn the style
+
+`getDemoLegend` returns the fills the figure actually paints, and the
+two styles disagree about secondaries — the mosaic pales the purple, the
+illustrated figure hatches it. A solid swatch beside a striped muscle is
+a key describing a figure that is not on screen. The legend now carries
+`secondaryFill`, and the key repeats the figure's own diagonal.
+
+This was **caught rather than remembered**: the existing test asserting
+that the legend's colours appear in the rendered SVG failed the moment
+dips changed style, because the illustrated figure never paints
+`#9590E0`.
+
+### What it does not close
+
+The reference is a 3/4 view of a modelled figure; this is a profile of a
+mannequin built from contour slabs. Two honest consequences, both
+visible in `dips-placard.png`:
+
+- **The pec reads small.** In profile the chest is nearly edge-on, so
+  the primary muscle is a narrow strip where the card shows a broad fan.
+  That is the camera, not the paint — and changing the camera is a
+  different piece of work from changing the style.
+- **There is no rib, oblique or deltoid separation.** The card's figure
+  has modelled anatomy; ours has smoothed slabs. Shading gets some of
+  the way; it will not get all of it without more detailed contours.
+
+Style is opt-in per demo (`art: "illustrated"`), and dips is the only one
+on it. Everything else still paints the mosaic — pinned, so a migration
+has to be a deliberate act.

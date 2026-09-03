@@ -82,8 +82,7 @@ const MuscleKey = memo(function MuscleKey({ legend }: { legend: DemoLegend }) {
   const row = (
     label: string,
     names: string[],
-    color: string,
-    opacity: number
+    swatch: { background: string; opacity?: number }
   ) =>
     names.length === 0 ? null : (
       <div className="flex items-baseline gap-2">
@@ -99,7 +98,7 @@ const MuscleKey = memo(function MuscleKey({ legend }: { legend: DemoLegend }) {
               <span
                 aria-hidden="true"
                 className="size-2 shrink-0 rounded-full"
-                style={{ background: color, opacity }}
+                style={swatch}
               />
               {n}
             </span>
@@ -107,10 +106,21 @@ const MuscleKey = memo(function MuscleKey({ legend }: { legend: DemoLegend }) {
         </span>
       </div>
     );
+  /* A hatched muscle needs a hatched swatch. Repeating the figure's own
+     diagonal in CSS keeps the key describing the figure that is on
+     screen — a solid dot beside a striped muscle is a wrong key. */
+  const secondary =
+    legend.secondaryFill === "hatch"
+      ? {
+          background: `repeating-linear-gradient(45deg, ${legend.colors.secondary} 0 1.2px, transparent 1.2px 2.6px)`,
+        }
+      : { background: legend.colors.secondary, opacity: 0.8 };
   return (
     <div className="mb-3 flex flex-col gap-1.5">
-      {row("Primary", legend.primary, legend.colors.primary, 1)}
-      {row("Secondary", legend.secondary, legend.colors.secondary, 0.8)}
+      {row("Primary", legend.primary, {
+        background: legend.colors.primary,
+      })}
+      {row("Secondary", legend.secondary, secondary)}
     </div>
   );
 });

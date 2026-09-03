@@ -14,6 +14,7 @@ import {
   renderBodyDemo,
 } from "../bodyRig";
 import { PLACARD_CUE_WORDS } from "../exerciseTempo";
+import { THEME } from "../theme";
 import { ANTERIOR, POSTERIOR } from "../bodyModelData";
 import { EXERCISES } from "../exercises";
 import { FAR_ARM_SHIFT, SIDE_ANCHORS, SIDE_PIECES } from "../bodySideData";
@@ -4924,7 +4925,118 @@ describe("the muscle key", () => {
     expect(renderBodyDemo("dips", 0.5)).toContain(legend.colors.secondary);
   });
 
+  it("says HOW the secondaries are painted, per art style", () => {
+    /* The two styles disagree about this and the legend has to follow.
+       The mosaic pales the purple; the illustrated figure hatches it,
+       which is the reference card's own register — and a solid dot
+       beside a striped muscle is a key describing a figure that is not
+       on screen. Caught by the test above the moment dips changed
+       style: the legend still promised #9590E0, which the illustrated
+       SVG never paints. */
+    const dips = getDemoLegend("dips")!;
+    expect(BODY_DEMOS.dips.art).toBe("illustrated");
+    expect(dips.secondaryFill).toBe("hatch");
+    expect(renderBodyDemo("dips", 0.5)).toContain('<pattern id="hatch-');
+
+    const mosaic = Object.keys(BODY_DEMOS).find(
+      (id) => BODY_DEMOS[id].view === "side" && !BODY_DEMOS[id].art
+    )!;
+    const legend = getDemoLegend(mosaic)!;
+    expect(legend.secondaryFill).toBe("solid");
+    expect(renderBodyDemo(mosaic, 0.5)).not.toContain("<pattern");
+  });
+
   it("an exercise with no rig demo has no legend to show", () => {
     expect(getDemoLegend("not-an-exercise")).toBeNull();
+  });
+});
+
+/* ── The illustrated art style (2026-09-03) ──────────────────────────
+ *
+ * A second renderer over the SAME skeleton: every pose, anchor, IK
+ * solve and contour is shared, and only the paint changes. These pin
+ * the properties that are true of the PAINT — the geometry pins above
+ * apply to both styles by construction, which is the point of not
+ * forking the skeleton.
+ */
+describe("illustrated art", () => {
+  const ILLUSTRATED = Object.keys(BODY_DEMOS).filter(
+    (id) => BODY_DEMOS[id].art === "illustrated"
+  );
+
+  it("is opt-in, and side-view only", () => {
+    expect(ILLUSTRATED.length).toBeGreaterThan(0);
+    for (const id of ILLUSTRATED) expect(BODY_DEMOS[id].view, id).toBe("side");
+    // Everything else still paints the mosaic — the style is a trial,
+    // not a migration.
+    expect(ILLUSTRATED.length).toBeLessThan(Object.keys(BODY_DEMOS).length);
+  });
+
+  it("draws the body as curves, not as a facet mosaic", () => {
+    const svg = renderBodyDemo(ILLUSTRATED[0], 0.5);
+    // Bezier body paths, and no straight-edged body polygons. The glow
+    // hulls are still polygons, so this asks about `<path`.
+    expect(svg).toContain('<path d="M');
+    expect(svg).toContain("C"); // cubic segments
+    // The mosaic's per-facet body fill is gone: no piece is painted in
+    // the seam tone any more.
+    expect(svg).not.toContain('fill="#33363D"');
+  });
+
+  it("every url(#…) reference resolves inside its own SVG", () => {
+    for (const id of ILLUSTRATED) {
+      for (const t of [0, 0.5, 1]) {
+        const svg = renderBodyDemo(id, t);
+        const ids = new Set(
+          [...svg.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1])
+        );
+        const refs = [...svg.matchAll(/url\(#([^)]+)\)/g)].map((m) => m[1]);
+        expect(refs.length, `${id} t=${t}`).toBeGreaterThan(0);
+        for (const r of refs) {
+          expect(ids.has(r), `${id} t=${t}: url(#${r}) has no definition`).toBe(
+            true
+          );
+        }
+      }
+    }
+  });
+
+  it("two frames on one page cannot share a def id", () => {
+    /* The reduced-motion placard renders SIX of these inline on one
+       page. Duplicate ids across inline SVGs resolve to the FIRST
+       definition, so a module-level id would give every figure the
+       first frame's gradient — and with a per-frame gradient that is
+       invisible until a gradient actually differs. The suffix is
+       derived from the exercise and t, which also keeps it
+       deterministic for the preview manifest and the screenshot diff. */
+    const beats = getFormBeats(ILLUSTRATED[0]);
+    const ts = beats ? beats.map((b) => b.t) : [0, 0.25, 0.5, 0.75, 1];
+    const seen = new Map<string, number>();
+    for (const t of new Set(ts)) {
+      for (const m of renderBodyDemo(ILLUSTRATED[0], t).matchAll(
+        /\sid="([^"]+)"/g
+      )) {
+        expect(seen.has(m[1]), `id ${m[1]} repeats at t=${t}`).toBe(false);
+        seen.set(m[1], t);
+      }
+    }
+    expect(seen.size).toBeGreaterThan(1);
+    // Deterministic: the same frame renders the same ids twice running.
+    expect(renderBodyDemo(ILLUSTRATED[0], 0.5)).toBe(
+      renderBodyDemo(ILLUSTRATED[0], 0.5)
+    );
+  });
+
+  it("paints the same muscles the mosaic would", () => {
+    // Only the paint changes. A style that quietly lit a different
+    // muscle would be a different claim about the exercise.
+    for (const id of ILLUSTRATED) {
+      const svg = renderBodyDemo(id, 0.6, 1);
+      const demo = BODY_DEMOS[id];
+      if (Object.values(demo.tint).includes("primary"))
+        expect(svg, id).toContain(`fill="${THEME.lifting}"`);
+      if (Object.values(demo.tint).includes("secondary"))
+        expect(svg, id).toContain("hatch-");
+    }
   });
 });

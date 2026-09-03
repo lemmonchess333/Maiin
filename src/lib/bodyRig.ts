@@ -630,6 +630,13 @@ export interface BodyDemo {
   /** Free scene furniture (a bench, a floor line) drawn behind the
    *  body — raw SVG in GEAR colours. Side-view demos use this. */
   scene?: (e: number, pose: Partial<Record<GroupName, Op[]>>) => string;
+  /** Which ART the figure is drawn in. Default is the faceted mosaic —
+   *  the app's own visual language, matching the muscle-map figure the
+   *  Form view already renders. "illustrated" is the 2026-09-03 trial
+   *  style (owner reference: a printed form card): the same skeleton
+   *  and the same poses, drawn as smooth shaded forms with anatomical
+   *  muscle fills instead of a facet mosaic. Side view only. */
+  art?: "illustrated";
   /** Ground line override (hanging demos float above a lower floor). */
   groundY?: number;
   /** Shadow centre override (lying scenes aren't centred on x=50). */
@@ -3317,6 +3324,10 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
 
   dips: {
     view: "side",
+    /* The 2026-09-03 trial style — the owner's reference card. Same
+       skeleton, same poses, drawn as shaded forms instead of a facet
+       mosaic. Dips is the only demo on it. */
+    art: "illustrated",
     concentricTo: 0,
     // The whole figure hangs on the station: feet clear of the floor at
     // every frame, the floor line well below the tucked shins.
@@ -9614,6 +9625,12 @@ export interface DemoLegend {
   /** The exact fills the figure paints with, so a swatch cannot drift
    *  from the muscle it stands for. */
   colors: { primary: string; secondary: string };
+  /** How the SECONDARY muscles are painted, which is not the same in
+   *  both art styles: the mosaic uses a paler purple, the illustrated
+   *  style a diagonal hatch (the reference card's own register). A
+   *  legend that showed a solid swatch for a hatched muscle would be
+   *  describing a figure that is not on screen. */
+  secondaryFill: "solid" | "hatch";
 }
 
 /** What the figure's purple means, in words. Null where the exercise
@@ -9625,10 +9642,14 @@ export function getDemoLegend(exerciseId: string): DemoLegend | null {
     Object.entries(demo.tint)
       .filter(([, l]) => l === level)
       .map(([m]) => MUSCLE_LABEL[m] ?? m);
+  const illustrated = demo.art === "illustrated";
   return {
     primary: named("primary"),
     secondary: named("secondary"),
-    colors: { primary: PRIMARY, secondary: SECONDARY },
+    // The hatch is drawn in the PRIMARY purple at low weight, so that
+    // is the colour a hatched swatch has to repeat.
+    colors: { primary: PRIMARY, secondary: illustrated ? PRIMARY : SECONDARY },
+    secondaryFill: illustrated ? "hatch" : "solid",
   };
 }
 
@@ -9805,7 +9826,16 @@ export function renderBodyDemo(
   // upstream by getBodyDemo in ExerciseFormContent).
   const demo = resolveDemoForReview(exerciseId);
   if (!demo) return "";
-  if (demo.view === "side") return renderSideDemo(demo, t, effort);
+  if (demo.view === "side") {
+    return demo.art === "illustrated"
+      ? renderIllustratedSide(
+          demo,
+          t,
+          effort,
+          `${exerciseId.replace(/[^a-z0-9]+/gi, "")}${Math.round(t * 1000)}`
+        )
+      : renderSideDemo(demo, t, effort);
+  }
   const e = easeInOutSine(t);
   const pose = demo.pose(e);
   // The side view returned above — narrow the view for the closures.
@@ -10008,6 +10038,266 @@ export function renderBodyDemo(
  * coloured separation stroke, its tint regions, then its muscle seams —
  * so rotations never open cracks and the seams read exactly like the
  * front/back facet gaps on the dark stage. */
+/* ── The illustrated art style (2026-09-03) ─────────────────────────
+ *
+ * The owner's reference for the placard was a printed form card whose
+ * figure is a smooth shaded mannequin with anatomically-shaped muscle
+ * highlights — not the faceted mosaic this rig draws. The first pass
+ * copied the card's LAYOUT and kept our art, which was the wrong half:
+ * "we're not doing it in our SVG style, we're trying this in the style
+ * I sent to you".
+ *
+ * So this is a second renderer over the SAME skeleton. Every pose,
+ * anchor, IK solve and contour is untouched and shared — only the paint
+ * changes:
+ *
+ *   mosaic                        illustrated
+ *   ----------------------------  ------------------------------------
+ *   straight-edged polygons       Catmull-Rom smoothed closed curves
+ *   every facet drawn, gapped     one solid form per piece, no seams
+ *   flat body grey                lit-to-shade gradient + inner highlight
+ *   tint = flat fill on a facet   muscle merged into one organic shape
+ *   secondary = paler purple      secondary = diagonal hatch (the card's)
+ *
+ * Nothing here re-derives geometry. If a limb is in the wrong place it
+ * is wrong in both styles, which is the point of sharing the skeleton.
+ */
+
+/** Body tones. The mid is the mosaic's own `BODY`, so the two styles
+ *  read as the same figure lit differently rather than as two figures. */
+const SKIN_LIT = "#D2D6DD";
+const SKIN_MID = BODY;
+const SKIN_SHADE = "#878D96";
+/** Muscle edge — a deeper purple, so a fill reads as a form with a
+ *  shaded rim rather than as a flat sticker. */
+const MUSCLE_EDGE = "#5A51C4";
+
+/**
+ * A closed ring of points → one cubic-bezier path, Catmull-Rom.
+ *
+ * `k` is the tension. 1 is the textbook spline: it rounds the figure's
+ * deliberate corners (the toe, the heel, the hand) into blobs AND
+ * overshoots between sparse contour points, which read as lumps on the
+ * pelvis. 0 is the polygon back again. 0.45 loses the straight-edge
+ * read while staying inside the contour.
+ */
+function smoothClosedPath(pts: readonly Pt[], k = 0.45): string {
+  const n = pts.length;
+  if (n < 3) return "";
+  const f = (v: number) => v.toFixed(2);
+  let d = `M${f(pts[0][0])},${f(pts[0][1])}`;
+  for (let i = 0; i < n; i++) {
+    const p0 = pts[(i - 1 + n) % n];
+    const p1 = pts[i];
+    const p2 = pts[(i + 1) % n];
+    const p3 = pts[(i + 2) % n];
+    const c1: Pt = [
+      p1[0] + ((p2[0] - p0[0]) * k) / 6,
+      p1[1] + ((p2[1] - p0[1]) * k) / 6,
+    ];
+    const c2: Pt = [
+      p2[0] - ((p3[0] - p1[0]) * k) / 6,
+      p2[1] - ((p3[1] - p1[1]) * k) / 6,
+    ];
+    d += `C${f(c1[0])},${f(c1[1])} ${f(c2[0])},${f(c2[1])} ${f(p2[0])},${f(p2[1])}`;
+  }
+  return `${d}Z`;
+}
+
+/** Pull a ring toward its centroid — the inner highlight core that
+ *  makes a flat slab read as a rounded limb. Not a true offset, and
+ *  deliberately so: it shrinks more along a limb's long axis, which
+ *  darkens the ends and lands the light in the belly of the muscle. */
+function shrinkRing(pts: readonly Pt[], by: number): Pt[] {
+  const cx = pts.reduce((a, p) => a + p[0], 0) / pts.length;
+  const cy = pts.reduce((a, p) => a + p[1], 0) / pts.length;
+  return pts.map(([x, y]) => {
+    const d = Math.hypot(x - cx, y - cy) || 1;
+    const s = Math.max(0, (d - by) / d);
+    return [cx + (x - cx) * s, cy + (y - cy) * s] as Pt;
+  });
+}
+
+function renderIllustratedSide(
+  demo: BodyDemo,
+  t: number,
+  effort: number,
+  uid: string
+): string {
+  const e = easeInOutSine(t);
+  const pose = demo.pose(e);
+  const P = (pts: Pt[]) =>
+    pts.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(" ");
+  const opsFor = (group: GroupName): Op[] =>
+    pose[group] ??
+    (group === "footL"
+      ? pose.shankL
+      : group === "footR"
+        ? pose.shankR
+        : undefined) ??
+    [];
+
+  const primaryPts = new Map<string, Pt[]>();
+  const tintOpacity = (level: "primary" | "secondary") =>
+    level === "primary" ? 0.82 + 0.18 * effort : 0.5 + 0.18 * effort;
+
+  const body = SIDE_PIECES.map((piece) => {
+    const posed = opsFor(piece.group);
+    const ops: Op[] = piece.depthShift
+      ? [
+          ...posed,
+          {
+            kind: "translate",
+            dx: piece.depthShift[0],
+            dy: piece.depthShift[1],
+          },
+        ]
+      : posed;
+    const outline = applyOps(piece.outline as Pt[], ops);
+    const far = piece.far === true;
+
+    /* The form, in four stacked paths — no SVG filter anywhere, since
+       the WKWebView glow rule bans animating one and the cheapest way
+       never to animate a filter is never to have one.
+       
+       1. A CONTACT SHADOW: the silhouette grown by 2, in near-black at
+          low opacity. Pieces paint back-to-front, so each one darkens
+          whatever sits behind it — which is the whole job the mosaic's
+          1.2-unit facet gaps used to do. Without it an arm resting
+          against the torso dissolves into it, and the first render of
+          this style had exactly that: one smooth grey mass.
+       2. A shaded rim, 3. the lit body, 4. a highlight core pulled in
+          from the contour so a flat slab reads as a rounded limb. */
+    const form =
+      `<path d="${smoothClosedPath(shrinkRing(outline, -1.5))}" fill="#08080A" opacity="0.22"/>` +
+      `<path d="${smoothClosedPath(outline)}" fill="${SKIN_SHADE}"/>` +
+      `<path d="${smoothClosedPath(shrinkRing(outline, 1))}" fill="url(#skin-${uid})"/>` +
+      `<path d="${smoothClosedPath(shrinkRing(outline, 3.4))}" fill="${SKIN_LIT}" opacity="0.5"/>`;
+
+    /* Muscles. Each facet is drawn with a stroke of its own colour, so
+       the mosaic's 1.2-unit gaps close and the facets of one muscle
+       merge into a single organic shape with rounded edges — the
+       card's anatomy read, out of the geometry we already have. */
+    const muscles = piece.facets
+      .map((f) => {
+        const level = demo.tint[f.muscle];
+        if (!level) return "";
+        const pts = applyOps(f.points as Pt[], ops);
+        if (level === "primary")
+          primaryPts.set(f.muscle, [
+            ...(primaryPts.get(f.muscle) ?? []),
+            ...pts,
+          ]);
+        const op = (tintOpacity(level) * (far ? FAR_TINT : 1)).toFixed(3);
+        const fill = level === "primary" ? PRIMARY : `url(#hatch-${uid})`;
+        const base =
+          level === "secondary"
+            ? `<path d="${smoothClosedPath(pts)}" fill="${PRIMARY}" opacity="${(Number(op) * 0.3).toFixed(3)}" stroke="${PRIMARY}" stroke-width="1.2" stroke-opacity="${(Number(op) * 0.3).toFixed(3)}" stroke-linejoin="round"/>`
+            : "";
+        return (
+          base +
+          `<path d="${smoothClosedPath(pts)}" fill="${fill}" opacity="${op}"` +
+          ` stroke="${fill}" stroke-width="1.2" stroke-opacity="${op}" stroke-linejoin="round"/>` +
+          // The shaded rim: the same shape, drawn as an edge only.
+          `<path d="${smoothClosedPath(shrinkRing(pts, -0.5))}" fill="none"` +
+          ` stroke="${MUSCLE_EDGE}" stroke-width="0.7" stroke-opacity="${(Number(op) * 0.5).toFixed(3)}" stroke-linejoin="round"/>`
+        );
+      })
+      .join("");
+
+    return (
+      form +
+      muscles +
+      (far
+        ? `<path d="${smoothClosedPath(outline)}" fill="#0B0B0D" opacity="0.22"/>`
+        : "")
+    );
+  }).join("");
+
+  /* Joint caps, as the mosaic uses them: a body-toned disc behind the
+     pieces, showing only in the wedge a rotation opens. */
+  const sideTurn = (ops?: Op[]) =>
+    (ops ?? []).reduce(
+      (sum, o) => sum + (o.kind === "rotate" ? Math.abs(o.deg) : 0),
+      0
+    );
+  const capAt = (group: GroupName, anchor: Pt, r: number, shift?: Pt) => {
+    const ops = opsFor(group);
+    const turn = sideTurn(ops);
+    if (turn < 12) return "";
+    const [x, y] = applyToPoint(anchor, ops ?? []);
+    const rr = r + (1.2 * Math.min(turn, 150)) / 150;
+    return `<circle cx="${(x + (shift?.[0] ?? 0)).toFixed(2)}" cy="${(y + (shift?.[1] ?? 0)).toFixed(2)}" r="${rr.toFixed(2)}" fill="url(#skin-${uid})"/>`;
+  };
+  const jointCaps =
+    capAt("upperArmR", SIDE_ANCHORS.shoulder, 3.0, FAR_ARM_SHIFT) +
+    capAt("foreArmR", SIDE_ANCHORS.elbow, 2.8, FAR_ARM_SHIFT) +
+    capAt("shankR", SIDE_ANCHORS.knee, 3.4) +
+    capAt("shankL", SIDE_ANCHORS.knee, 3.4) +
+    capAt("footR", SIDE_ANCHORS.ankle, 2.6) +
+    capAt("footL", SIDE_ANCHORS.ankle, 2.6) +
+    capAt("upperArmL", SIDE_ANCHORS.shoulder, 3.0) +
+    capAt("foreArmL", SIDE_ANCHORS.elbow, 2.8);
+
+  const glowStrength = 0.35 + 0.65 * effort;
+  const glow =
+    `<g class="glow">` +
+    [...primaryPts.values()]
+      .map((pts) => {
+        const hull = convexHull(pts);
+        return GLOW_RINGS.map(
+          ([k, o]) =>
+            `<polygon points="${P(scaleAboutCentroid(hull, k))}" fill="${PRIMARY}" opacity="${(o * glowStrength).toFixed(3)}"/>`
+        ).join("");
+      })
+      .join("") +
+    `</g>`;
+
+  const depth = demo.concentricTo === 0 ? e : 1 - e;
+  const shadow = `<ellipse cx="${demo.shadowCx ?? 50}" cy="${demo.groundY ?? 204}" rx="${((demo.shadowRx ?? 26) + 6 * depth).toFixed(1)}" ry="2.6" fill="#000" opacity="${(0.16 + 0.1 * depth).toFixed(2)}"/>`;
+  const scene = demo.scene?.(e, pose) ?? "";
+  const viewTop = Number(
+    (demo.viewBox ?? "-12 -14 124 244").split(/\s+/)[1] as string
+  );
+  const prop = resolveProp(demo, e, pose, {
+    frameY: viewTop,
+    floorY: demo.groundY ?? 204,
+  });
+
+  /* Ids are suffixed per FRAME, not per module. The reduced-motion
+     placard puts six of these SVGs on one page, and duplicate ids
+     across inline SVGs resolve to the first definition — every figure
+     would take the first frame's gradient. The suffix is derived from
+     the exercise and t, so it stays deterministic for the preview
+     manifest and the screenshot diff. */
+  const defs =
+    `<defs>` +
+    `<linearGradient id="skin-${uid}" x1="0" y1="0" x2="0.55" y2="1">` +
+    `<stop offset="0" stop-color="${SKIN_LIT}"/>` +
+    `<stop offset="0.55" stop-color="${SKIN_MID}"/>` +
+    `<stop offset="1" stop-color="${SKIN_SHADE}"/>` +
+    `</linearGradient>` +
+    // The card's secondary register: diagonal hatch, not a paler purple.
+    `<pattern id="hatch-${uid}" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">` +
+    `<rect width="3" height="3" fill="${PRIMARY}" opacity="0.1"/>` +
+    `<line x1="0" y1="0" x2="0" y2="3" stroke="${PRIMARY}" stroke-width="0.9"/>` +
+    `</pattern>` +
+    `</defs>`;
+
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${demo.viewBox ?? "-8 -14 116 224"}" role="img">` +
+    defs +
+    shadow +
+    scene +
+    prop.behind +
+    glow +
+    jointCaps +
+    body +
+    prop.front +
+    `</svg>`
+  );
+}
+
 function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
   const e = easeInOutSine(t);
   const pose = demo.pose(e);
