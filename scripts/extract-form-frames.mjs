@@ -39,17 +39,25 @@ import sharp from "sharp";
 import { mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 
-/** Panel grid of the 2026-09-03 dips card, in source pixels. */
-const GRID = {
-  cols: [26, 403, 780],
-  rows: [958, 1288],
-  w: 374,
-  h: 322,
-};
-/** Panel-local boxes holding the number+title and the two caption
- *  lines. Painted with the panel's own background before trimming. */
-const TITLE_BOX = { left: 0, top: 0, width: 214, height: 54 };
-const CAPTION_BOX = { left: 0, top: 258, width: 374, height: 64 };
+/* The panel grid is DETECTED, not declared.
+ *
+ * It was hardcoded to the first card's pixel coordinates, which worked
+ * for exactly that file: the second card arrived as 1448x1086 where the
+ * first had been a 1170x2532 phone screenshot, and every constant was
+ * wrong. Cards come out of a generator one at a time and their framing
+ * is not going to be stable, so the script finds the panels instead.
+ *
+ * The signal is the panel BACKGROUND — a few levels lighter than the
+ * page — because it is the one thing the layout is made of. Projecting
+ * that mask onto each axis gives the gutters, and the gutters give the
+ * grid. */
+
+/** Panel-local boxes holding the number+title and the caption, as
+ *  FRACTIONS of the panel, so they travel between card sizes. Measured
+ *  on the first card (a 374x322 panel: title 214x54, caption full-width
+ *  x64 starting at y258). */
+const TITLE_BOX_F = { left: 0, top: 0, width: 0.572, height: 0.168 };
+const CAPTION_BOX_F = { left: 0, top: 0.801, width: 1, height: 0.199 };
 /** Breathing room around the union box, in source pixels. */
 const MARGIN = 10;
 /** Output width. 2x a ~340px phone card, which is where these render. */
@@ -63,20 +71,134 @@ if (!card) {
 }
 mkdirSync(outDir, { recursive: true });
 
-const panelRect = (i) => ({
-  left: GRID.cols[i % 3],
-  top: GRID.rows[Math.floor(i / 3)],
-  width: GRID.w,
-  height: GRID.h,
-});
-
-/** The panel's flat background, read from a corner the art never uses. */
+/** The panel's flat background, read from a corner its art never
+ *  reaches — in the panel's own proportions, since a fixed offset is
+ *  off the bottom of a smaller card's panel entirely. */
 async function background(buf) {
+  const m = await sharp(buf).metadata();
   const { data } = await sharp(buf)
-    .extract({ left: 4, top: 300, width: 8, height: 8 })
+    .extract({
+      left: Math.round((m.width ?? 0) * 0.01),
+      top: Math.round((m.height ?? 0) * 0.93),
+      width: 8,
+      height: 8,
+    })
     .raw()
     .toBuffer({ resolveWithObject: true });
   return { r: data[0], g: data[1], b: data[2] };
+}
+
+/**
+ * Find the card's panels, in reading order.
+ *
+ * Detected rather than declared: the constants were measured off the
+ * first card, and the second arrived as 1448x1086 where the first had
+ * been a 1170x2532 phone screenshot. Cards come out of a generator one
+ * at a time and their framing will not be stable.
+ *
+ * Three approaches were tried; the two that failed say why this one is
+ * shaped as it is.
+ *
+ *  - Masking the panel TONE and projecting it. The figure sits inside
+ *    the panel and is not that tone, so it punches a hole through every
+ *    panel at almost every row. There is no band of clean full-width
+ *    fill to find.
+ *  - Identifying the page background by its commonest colour. Wrong in
+ *    both directions: on a standalone card the panels cover more area
+ *    than the gaps, so the panel fill wins; on a screenshot the phone's
+ *    own black chrome wins.
+ *
+ * What works is the negative space. A GUTTER is page background at
+ * every row it crosses, and neither art nor fill nor text can fake
+ * that. Rows are measured first so the column pass can be confined to
+ * the band the panels actually occupy — which is also what keeps the
+ * header and the tip bar out of it.
+ */
+async function findPanels(card) {
+  const { data, info } = await sharp(card)
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const { width: W, height: H, channels: C } = info;
+  const at = (x, y) => {
+    const p = (y * W + x) * C;
+    return [data[p], data[p + 1], data[p + 2]];
+  };
+  /* The page is read from a corner. That is exact for a card image and
+     wrong for a screenshot of one, where the corner is the phone's
+     chrome — hence the check at the end, which fails loudly rather than
+     cutting six frames out of the wrong rectangles. */
+  const page = at(2, 2);
+  const ink = (x, y) => {
+    const c = at(x, y);
+    return (
+      Math.abs(c[0] - page[0]) > 3 ||
+      Math.abs(c[1] - page[1]) > 3 ||
+      Math.abs(c[2] - page[2]) > 3
+    );
+  };
+
+  /** Bands where `density` stays above `bar`, at least `minLen` long. */
+  const bands = (density, bar, minLen) => {
+    const out = [];
+    let a = -1;
+    density.forEach((v, i) => {
+      if (v >= bar) {
+        if (a < 0) a = i;
+      } else {
+        if (a >= 0 && i - a >= minLen) out.push([a, i - 1]);
+        a = -1;
+      }
+    });
+    if (a >= 0 && density.length - a >= minLen)
+      out.push([a, density.length - 1]);
+    return out;
+  };
+
+  const rowD = [];
+  for (let y = 0; y < H; y++) {
+    let n = 0;
+    for (let x = 0; x < W; x++) if (ink(x, y)) n++;
+    rowD.push(n / W);
+  }
+  /* A panel row is filled edge to edge; a header row is sparse text.
+     The tip bar is filled too, which the height filter removes. */
+  let rows = bands(rowD, 0.5, Math.round(H * 0.05));
+  const tallest = Math.max(0, ...rows.map(([a, b]) => b - a));
+  rows = rows.filter(([a, b]) => b - a > tallest * 0.7);
+  if (rows.length === 0)
+    throw new Error("no panel rows found — is this a form card?");
+
+  // Columns, measured only down the panel rows.
+  const colD = new Array(W).fill(0);
+  let counted = 0;
+  for (const [y0, y1] of rows)
+    for (let y = y0; y <= y1; y++) {
+      counted++;
+      for (let x = 0; x < W; x++) if (ink(x, y)) colD[x]++;
+    }
+  const cols = bands(
+    colD.map((v) => v / counted),
+    0.5,
+    Math.round(W * 0.1)
+  );
+
+  if (cols.length < 2 || rows.length < 2)
+    throw new Error(
+      `grid not found (${cols.length} columns x ${rows.length} rows). ` +
+        `Send the card IMAGE rather than a screenshot of one: a screenshot's ` +
+        `corner pixel is the phone's chrome, not the card's background.`
+    );
+
+  const panels = [];
+  for (const [y0, y1] of rows)
+    for (const [x0, x1] of cols)
+      panels.push({
+        left: x0,
+        top: y0,
+        width: x1 - x0 + 1,
+        height: y1 - y0 + 1,
+      });
+  return panels;
 }
 
 /** Bounding box of everything that differs from `bg` by more than
@@ -117,10 +239,41 @@ const flat = (bg, box) => ({
   top: box.top,
 });
 
+const detected = await findPanels(card);
+/* Normalised to one size before anything measures them. Detection is
+   per-run and lands a pixel or two apart between panels, which is
+   invisible until a title box computed from the first panel overflows
+   a slightly shorter one. Everything downstream — the caption boxes,
+   the shared crop — assumes the panels are congruent, so make them so
+   here rather than defending against it in four places. */
+const PW = Math.min(...detected.map((p) => p.width));
+const PH = Math.min(...detected.map((p) => p.height));
+const panels = detected.map((p) => ({ ...p, width: PW, height: PH }));
+console.error(`detected ${panels.length} panels, ${PW}x${PH}`);
+
+/** The panel border is card chrome, not figure: left in, the rounded
+ *  frame sets the bounding box for every panel and the shared rect
+ *  becomes the whole panel. Inset scales with the card. */
+const INSET = Math.max(4, Math.round(PW * 0.016));
+const W = PW - INSET * 2;
+const H = PH - INSET * 2;
+const scaleBox = (f) => {
+  const left = Math.round(f.left * PW);
+  const top = Math.round(f.top * PH);
+  return {
+    left,
+    top,
+    width: Math.min(PW - left, Math.max(1, Math.round(f.width * PW))),
+    height: Math.min(PH - top, Math.max(1, Math.round(f.height * PH))),
+  };
+};
+const TITLE_BOX = scaleBox(TITLE_BOX_F);
+const CAPTION_BOX = scaleBox(CAPTION_BOX_F);
+
 const cleaned = [];
 let bg;
-for (let i = 0; i < 6; i++) {
-  const panel = await sharp(card).extract(panelRect(i)).png().toBuffer();
+for (const rect of panels) {
+  const panel = await sharp(card).extract(rect).png().toBuffer();
   if (!bg) bg = await background(panel);
   const painted = await sharp(panel)
     .composite([flat(bg, TITLE_BOX), flat(bg, CAPTION_BOX)])
@@ -135,7 +288,7 @@ for (let i = 0; i < 6; i++) {
      shared rect becomes the panel. */
   cleaned.push(
     await sharp(painted)
-      .extract({ left: 6, top: 6, width: GRID.w - 12, height: GRID.h - 12 })
+      .extract({ left: INSET, top: INSET, width: W, height: H })
       .png()
       .toBuffer()
   );
@@ -155,8 +308,6 @@ for (const buf of cleaned) {
     y1: Math.max(U.y1, b.y1),
   };
 }
-const W = GRID.w - 12;
-const H = GRID.h - 12;
 const rect = {
   left: Math.max(0, U.x0 - MARGIN),
   top: Math.max(0, U.y0 - MARGIN),
@@ -194,7 +345,7 @@ async function keyed(buf) {
     .toBuffer();
 }
 
-for (let i = 0; i < 6; i++) {
+for (let i = 0; i < cleaned.length; i++) {
   const cropped = await sharp(cleaned[i]).extract(rect).png().toBuffer();
   await sharp(await keyed(cropped))
     .resize({ width: OUT_W })
@@ -203,7 +354,13 @@ for (let i = 0; i < 6; i++) {
 }
 console.log(
   JSON.stringify(
-    { background: bg, sharedRect: rect, frames: 6, outDir },
+    {
+      background: bg,
+      panels: panels.length,
+      panelSize: `${PW}x${PH}`,
+      sharedRect: rect,
+      outDir,
+    },
     null,
     2
   )

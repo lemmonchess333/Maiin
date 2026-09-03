@@ -2252,3 +2252,87 @@ hatch variant, the omitted-empty-tier case, and the casing. The
 `ExerciseFormContent` suite pins both routes: catalogue names deduped
 across tiers, and supplied names overriding them. Swatch-colour and
 casing mutations both fail.
+
+## STATUS 2026-09-03y — the card pipeline, for exercises beyond dips
+
+Owner: "do the same for the other exercises, can you do this? Do you
+need to grab each one from ChatGPT, or can you do it?"
+
+**I cannot generate the cards.** There is no image model in this
+environment. The rig draws vector figures in code, which is the style
+that was rejected; anything in the card's style has to be generated
+outside and handed over. What IS mine is everything around that, and
+this change makes the handover one command.
+
+### The extractor finds the grid now
+
+It hardcoded the first card's pixel coordinates, which worked for
+exactly that file. The second card of the SAME exercise arrived as
+1448x1086 where the first had been a 1170x2532 phone screenshot, and
+every constant was wrong. Cards come out of a generator one at a time;
+their framing is not going to be stable.
+
+Two detection attempts failed first, and the reasons shaped the third:
+
+| approach                                  | why it failed                                                                                                                       |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| mask the panel TONE, project it           | the figure is not that tone, so a wide body punches a gap through every panel and reads as a gutter — it split the card into twelve |
+| find the PAGE colour as the commonest one | wrong in both directions: on a card the panels out-cover the gaps, on a screenshot the phone's black chrome wins                    |
+| **find the GUTTERS**                      | a gutter is page background at every row it crosses, and neither art nor fill nor text can fake that                                |
+
+Rows are measured first so the column pass can be confined to the band
+the panels occupy, which is also what keeps the header and the tip bar
+out of it. A screenshot of a card still fails — the corner pixel is the
+phone's chrome — but it fails LOUDLY, naming the fix, rather than
+cutting six frames out of the wrong rectangles.
+
+The shipped dips frames were re-cut from the direct card image: 444x399
+panels against the screenshot's 367x318, so the art is sharper. The
+player's hardcoded `aspectRatio: 680/594` went with it — the first frame
+now sizes the box and the rest overlay it, because every frame of a
+sequence shares one canvas and a constant measured off one card is a
+constant that will be wrong for the next.
+
+### The prompt is built from the catalogue
+
+`scripts/form-card-prompt.ts <id>` prints a ready generator prompt: the
+exercise, its equipment, its muscles, and the six positions the app is
+already expecting. Author the beats first and generate second, and the
+card cannot disagree with the code about what the exercise is.
+
+Two lines in it are load-bearing rather than decorative. It demands ONE
+camera and ONE piece of equipment across all six panels, which is the
+only place the drift measured in 03v can be fixed. And it demands flat
+panel backgrounds with clear gutters, because that is what the extractor
+finds.
+
+### Positions authored ahead of the art, and gated on it
+
+Six lifts now carry authored positions: bench press, squat, deadlift,
+overhead press, pull-ups, barbell row. **None of them is live.**
+`getFormBeats` returns null until every position has a frame, so these
+play as ordinary reps exactly as before; `getAuthoredBeats` is what the
+prompt tooling reads.
+
+That gate exists because the alternative is worse in both directions: a
+prompt built from four catalogue instructions asks for a card the app
+cannot use, and authoring six positions without the gate would switch
+six exercises to the stepped player with the drawn figure — a product
+change nobody asked for, arriving as a side effect of content work. It
+is pinned three ways, including that no placard is ever half-carded: a
+sequence alternating a photograph with a drawing would read as broken.
+
+### The loop, per exercise
+
+1. `npx tsx scripts/form-card-prompt.ts <id>` → paste into the generator
+2. hand over the card IMAGE (not a screenshot of one)
+3. `node scripts/extract-form-frames.mjs card.png public/form-frames/<id>`
+
+Step 3 is the whole wiring: the positions are already authored, and the
+placard goes live the moment the frames land.
+
+Two things to decide before doing many. **152 exercises at six frames is
+roughly 23 MB of precached assets**, which is a different conversation
+about bundle size. And the drift is per-card: every generation is a new
+roll, so it is worth checking one card animates before committing to a
+run of them.
