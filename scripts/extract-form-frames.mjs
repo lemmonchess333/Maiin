@@ -311,6 +311,65 @@ const scaleBox = (f) => {
     height: Math.min(PH - top, Math.max(1, Math.round(f.height * PH))),
   };
 };
+/**
+ * A caption burned into a per-position image, as a box to paint out.
+ *
+ * The prompt asks for no text and the generators add it anyway — the
+ * first real set came back with "RETURN TO TOP 6/6" across the bottom.
+ * Left in, it joins the figure's bounding box, so the shared canvas
+ * grows to hold it and every frame carries someone else's caption under
+ * a caption the app is already drawing.
+ *
+ * Found rather than assumed: content rows are grouped into bands, and a
+ * SHORT band at the bottom, separated from the body of the picture by a
+ * clear gap, is a caption. A figure whose feet reach the bottom edge has
+ * no such gap and nothing is painted.
+ */
+async function captionBox(file, bg) {
+  const { data, info } = await sharp(file)
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const { width: W, height: H, channels: C } = info;
+  const ink = [];
+  for (let y = 0; y < H; y++) {
+    let n = 0;
+    for (let x = 0; x < W; x++) {
+      const i = (y * W + x) * C;
+      if (
+        Math.abs(data[i] - bg.r) > 14 ||
+        Math.abs(data[i + 1] - bg.g) > 14 ||
+        Math.abs(data[i + 2] - bg.b) > 14
+      )
+        n++;
+    }
+    ink.push(n);
+  }
+  const bands = [];
+  let a = -1;
+  ink.forEach((v, y) => {
+    if (v > 0) {
+      if (a < 0) a = y;
+    } else {
+      if (a >= 0) bands.push([a, y - 1]);
+      a = -1;
+    }
+  });
+  if (a >= 0) bands.push([a, H - 1]);
+  if (bands.length < 2) return null;
+  const last = bands[bands.length - 1];
+  const prev = bands[bands.length - 2];
+  const tall = last[1] - last[0];
+  const gap = last[0] - prev[1];
+  // A caption is short and stands clear of the figure above it.
+  if (tall > H * 0.12 || gap < H * 0.02) return null;
+  return {
+    left: 0,
+    top: Math.max(0, last[0] - 4),
+    width: W,
+    height: Math.min(H - Math.max(0, last[0] - 4), tall + 12),
+  };
+}
+
 // A per-position image carries no panel chrome to paint out.
 const TITLE_BOX = perFrame ? null : scaleBox(TITLE_BOX_F);
 const CAPTION_BOX = perFrame ? null : scaleBox(CAPTION_BOX_F);
@@ -321,13 +380,17 @@ for (const [i, rect] of panels.entries()) {
   const source = perFrame ? inputs[i] : card;
   const panel = await sharp(source).extract(rect).png().toBuffer();
   if (!bg) bg = await background(panel);
-  const painted =
+  const boxes =
     TITLE_BOX && CAPTION_BOX
-      ? await sharp(panel)
-          .composite([flat(bg, TITLE_BOX), flat(bg, CAPTION_BOX)])
-          .png()
-          .toBuffer()
-      : panel;
+      ? [flat(bg, TITLE_BOX), flat(bg, CAPTION_BOX)]
+      : await (async () => {
+          const cap = await captionBox(source, bg);
+          if (cap) console.error(`  ${source}: painting out a caption`);
+          return cap ? [flat(bg, cap)] : [];
+        })();
+  const painted = boxes.length
+    ? await sharp(panel).composite(boxes).png().toBuffer()
+    : panel;
   /* Two passes, deliberately. `extract` in the SAME pipeline as
      `composite` is applied as a PRE-crop by sharp, which shrinks the
      canvas under the overlays and fails with "image to composite must
