@@ -9,10 +9,8 @@ import {
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import {
   getBodyDemo,
-  getDemoLegend,
   getFormBeats,
   renderBodyDemo,
-  type DemoLegend,
   type FormBeat,
 } from "@/lib/bodyRig";
 import {
@@ -77,55 +75,6 @@ const smoothK = (v: number) => {
   return x * x * (3 - 2 * x);
 };
 
-/** What the purple means. Read from the demo that paints it, so the
- *  swatch and the figure cannot disagree. */
-const MuscleKey = memo(function MuscleKey({ legend }: { legend: DemoLegend }) {
-  const row = (
-    label: string,
-    names: string[],
-    swatch: { background: string; opacity?: number }
-  ) =>
-    names.length === 0 ? null : (
-      <div className="flex items-baseline gap-2">
-        <span className="shrink-0 text-micro uppercase tracking-wider text-stage-muted">
-          {label}
-        </span>
-        <span className="flex flex-wrap gap-x-2.5 gap-y-1">
-          {names.map((n) => (
-            <span
-              key={n}
-              className="inline-flex items-center gap-1.5 text-micro text-stage-foreground"
-            >
-              <span
-                aria-hidden="true"
-                className="size-2 shrink-0 rounded-full"
-                style={swatch}
-              />
-              {n}
-            </span>
-          ))}
-        </span>
-      </div>
-    );
-  /* A hatched muscle needs a hatched swatch. Repeating the figure's own
-     diagonal in CSS keeps the key describing the figure that is on
-     screen — a solid dot beside a striped muscle is a wrong key. */
-  const secondary =
-    legend.secondaryFill === "hatch"
-      ? {
-          background: `repeating-linear-gradient(45deg, ${legend.colors.secondary} 0 1.2px, transparent 1.2px 2.6px)`,
-        }
-      : { background: legend.colors.secondary, opacity: 0.8 };
-  return (
-    <div className="mb-3 flex flex-col gap-1.5">
-      {row("Primary", legend.primary, {
-        background: legend.colors.primary,
-      })}
-      {row("Secondary", legend.secondary, secondary)}
-    </div>
-  );
-});
-
 /** A supplied frame's path, against the app's base URL (the build is
  *  served from `/Maiin/` on Pages and `/` on Hosting). */
 const frameUrl = (p: string) =>
@@ -178,47 +127,6 @@ const PlacardFrames = memo(function PlacardFrames({
     </div>
   );
 });
-
-/** One position's caption — the numbered panel heading and its cue,
- *  directly under the figure it describes (the reference card's
- *  layout, which is the point of the style). */
-function BeatCaption({
-  index,
-  total,
-  beat,
-}: {
-  index: number;
-  total: number;
-  beat: FormBeat;
-}) {
-  return (
-    <>
-      <p className="flex items-center justify-center gap-2 text-small font-semibold text-stage-foreground">
-        <span
-          aria-hidden="true"
-          /* A NEUTRAL chip, not a purple tint. `tokenContrast.test.ts`
-             derives its tint bars from the fractions the source paints,
-             so a new `lifting/25` would be measured as somewhere
-             `--lifting-strong` text might sit — which on a card it
-             fails (4.49:1). Purple stays where it is non-text: the
-             rail's active dot. */
-          className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-micro font-bold font-mono tabular-nums text-stage-foreground"
-        >
-          {index + 1}
-        </span>
-        <span>
-          <span className="sr-only">
-            Step {index + 1} of {total}:{" "}
-          </span>
-          {beat.label}
-        </span>
-      </p>
-      <p className="mt-1 text-small leading-relaxed text-stage-muted">
-        {beat.cue}
-      </p>
-    </>
-  );
-}
 
 /**
  * The capture channel's anchor, on the reduced-motion renders ONLY.
@@ -285,6 +193,7 @@ export default function ExerciseRigDemo({
   name,
   active = true,
   tempo,
+  onStep,
 }: {
   exerciseId: string;
   /** Exercise name, for the accessible label. */
@@ -294,8 +203,22 @@ export default function ExerciseRigDemo({
   /** Authored "down-pause-up" tempo (seconds) — drives the cycle's phase
    *  durations via lib/exerciseTempo; absent → the calm defaults. */
   tempo?: string;
+  /** Which placard position is on screen, so the numbered list beneath
+   *  the player can light the matching row. Only ever called for a
+   *  placard demo. */
+  onStep?: (index: number) => void;
 }) {
   const reducedMotion = useReducedMotion();
+  /* Held in a ref so a caller passing an inline arrow does not restart
+     the animation on every one of its own renders — which, since the
+     caller re-renders on each step, would be every step. Written in an
+     effect rather than during render: a ref write during render is not
+     a rendering output and React may discard the render it happened
+     in. */
+  const onStepRef = useRef(onStep);
+  useEffect(() => {
+    onStepRef.current = onStep;
+  }, [onStep]);
   // Which end of t is the concentric top decides the cycle's shape AND
   // the opening frame: squats/hinges lock out at t=0 (standing),
   // presses/curls at t=1. The loop starts from lockout.
@@ -321,14 +244,6 @@ export default function ExerciseRigDemo({
      do not apply. */
   const beats = getFormBeats(exerciseId);
   const placard = beats !== null && beats.length > 0;
-  /* Memoised for its IDENTITY, not its cost: `getDemoLegend` builds a
-     fresh object, and the caption re-renders on every position change,
-     so an unmemoised legend would defeat `MuscleKey`'s memo boundary
-     each time. */
-  const legend = useMemo(
-    () => (placard ? getDemoLegend(exerciseId) : null),
-    [placard, exerciseId]
-  );
   /* SUPPLIED frames: where every position carries one, the pictures are
      the animation and the rig figure is the fallback. Partial coverage
      is not a half-state worth building — a sequence that alternated
@@ -420,6 +335,7 @@ export default function ExerciseRigDemo({
         if (beatRef.current !== sample.index) {
           beatRef.current = sample.index;
           setBeatIndex(sample.index);
+          onStepRef.current?.(sample.index);
         }
       } else {
         const sample = cycle
@@ -458,49 +374,32 @@ export default function ExerciseRigDemo({
    * media viewer): the figure's facet gaps read as the dark surface
    * showing through — the exact contrast the muscle-map art was
    * designed against. A light backing would wash the gaps out. */
-  if (reducedMotion && placard && beats && legend) {
-    /* Reduced motion gets the placard as the thing it is a moving
-       version OF: every position drawn at once, each under its own
-       caption. Nothing is lost — an animation that steps through six
-       frames has six frames to print. */
+  if (reducedMotion && placard && beats && framed) {
+    /* The same two-up shape every other demo gets: the START position
+       and the far end of the movement. It used to print all six under
+       their captions, which made sense while the stage was the only
+       place the steps appeared — now they are a numbered list below,
+       and printing them twice is the duplication this layout removes.
+       `deepest` is the position furthest from the start, which for a
+       placard is the one whose `t` is furthest from the first beat's. */
+    const deepest = beats.reduce((far, b) =>
+      Math.abs(b.t - beats[0].t) > Math.abs(far.t - beats[0].t) ? b : far
+    );
     return (
-      <div className="bg-stage rounded-2xl p-4 mt-4" data-demo-still="placard">
-        <MuscleKey legend={legend} />
-        <ol className="grid grid-cols-2 gap-x-3 gap-y-4">
-          {beats.map((b, i) => (
-            <li key={`${b.label}-${i}`}>
-              {framed ? (
-                <img
-                  src={frameUrl(b.image!)}
-                  alt={`${name}, ${b.label}`}
-                  draggable={false}
-                  onError={() => setFramesFailed(true)}
-                  className="w-full"
-                />
-              ) : (
-                <div
-                  role="img"
-                  aria-label={`${name}, ${b.label}`}
-                  dangerouslySetInnerHTML={{
-                    __html: renderBodyDemo(exerciseId, b.t),
-                  }}
-                />
-              )}
-              <p className="mt-1 flex items-center gap-1.5 text-micro font-semibold text-stage-foreground">
-                <span
-                  aria-hidden="true"
-                  className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-micro font-bold font-mono tabular-nums"
-                >
-                  {i + 1}
-                </span>
-                {b.label}
-              </p>
-              <p className="mt-0.5 text-micro leading-relaxed text-stage-muted">
-                {b.cue}
-              </p>
-            </li>
-          ))}
-        </ol>
+      <div
+        className="bg-stage rounded-2xl p-4 mt-4 flex justify-center gap-3"
+        data-demo-still="placard"
+      >
+        {[beats[0], deepest].map((b, i) => (
+          <img
+            key={`${b.label}-${i}`}
+            src={frameUrl(b.image!)}
+            alt={`${name}, ${b.label}`}
+            draggable={false}
+            onError={() => setFramesFailed(true)}
+            className="w-1/2 max-w-[150px]"
+          />
+        ))}
       </div>
     );
   }
@@ -536,11 +435,10 @@ export default function ExerciseRigDemo({
     );
   }
 
-  if (placard && beats && legend) {
+  if (placard && beats) {
     const beat = beats[Math.min(beatIndex, beats.length - 1)];
     return (
       <div className="bg-stage rounded-2xl p-4 mt-4">
-        <MuscleKey legend={legend} />
         {framed ? (
           <PlacardFrames
             beats={beats}
@@ -556,32 +454,24 @@ export default function ExerciseRigDemo({
             <Figure html={initialHtml} figureRef={figureRef} />
           </div>
         )}
-        {/* Where we are in the sequence. The printed card shows six
-            panels at once; moving, it shows one — so the rail is what
-            carries "of six". */}
-        <div
-          aria-hidden="true"
-          className="mt-3 flex items-center justify-center gap-1.5"
+        {/* One label line, in the looping player's own register. It
+            NAMES the position and says where in the sequence it falls;
+            the instruction it belongs to is in the numbered list below,
+            where it can be read at the reader's own pace and where the
+            active row lights up in time with this.
+
+            That split is what let the hold come down: a caption that
+            has to be READ in place sets the tempo of the whole demo,
+            and a label that only has to be recognised does not. */}
+        <p
+          aria-live="polite"
+          className="mt-2 text-center text-micro uppercase tracking-wider text-stage-muted"
         >
-          {beats.map((b, i) => (
-            <span
-              key={`${b.label}-${i}`}
-              className={
-                i === beatIndex
-                  ? "h-1.5 w-4 rounded-full bg-lifting motion-safe:transition-all"
-                  : "h-1.5 w-1.5 rounded-full bg-white/20 motion-safe:transition-all"
-              }
-            />
-          ))}
-        </div>
-        {/* The cue, under the figure it describes — the placard layout,
-            rather than an instruction list further down the page. Two
-            lines are RESERVED: the caption changes every couple of
-            seconds, and a card that grows and shrinks under a still
-            figure reads as a glitch. */}
-        <div aria-live="polite" className="mt-2 min-h-[2.75rem] text-center">
-          <BeatCaption index={beatIndex} total={beats.length} beat={beat} />
-        </div>
+          {beat.label}
+          <span className="ml-2 font-mono tabular-nums opacity-70">
+            {beatIndex + 1}/{beats.length}
+          </span>
+        </p>
       </div>
     );
   }

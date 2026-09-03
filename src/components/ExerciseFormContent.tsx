@@ -12,7 +12,8 @@ import { THEME } from "@/lib/theme";
 import { Spinner } from "@/components/ui/Spinner";
 import ExerciseDemoPlayer from "@/components/ExerciseDemoPlayer";
 import ExerciseRigDemo from "@/components/ExerciseRigDemo";
-import { getBodyDemo, getFormBeats } from "@/lib/bodyRig";
+import { getBodyDemo, getDemoMuscleKey, getFormBeats } from "@/lib/bodyRig";
+import MuscleKey from "@/components/MuscleKey";
 import { EXERCISES } from "@/lib/exercises";
 import BodyMapGlow from "@/components/BodyMapGlow";
 
@@ -43,6 +44,12 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
   // hero back to the muscle diagram so a no-image exercise never shows a dead
   // empty box. Reset per exercise in the load effect below.
   const [demoFailed, setDemoFailed] = useState(false);
+  /* Which placard position the player is showing, so the numbered list
+     can light the matching row. This is the "words appear in time"
+     idea without the cost that comes with it: the whole list stays
+     readable at the reader's own pace, and the highlight only says
+     which row the figure is on. */
+  const [activeStep, setActiveStep] = useState(0);
 
   useEffect(() => {
     if (!active) return;
@@ -128,8 +135,16 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
      of them. They are NOT dropped: the catalogue text carries detail
      the seven-word cues cannot (the 30 degrees of lean, why it is
      there), and it stays one tap away. */
-  const placard = exerciseId ? getFormBeats(exerciseId) !== null : false;
-  const collapsedSteps = placard ? 0 : COLLAPSED_STEPS;
+  /* A placard's own positions ARE the instructions: six named beats
+     that match the label under the figure word for word, so a reader
+     can follow the animation down the list. They replace the
+     catalogue's prose steps rather than sitting beside them — two
+     numbered lists describing one movement is the duplication the
+     layout exists to remove. The catalogue's tip and common mistakes
+     still render below, unchanged. */
+  const beats = exerciseId ? getFormBeats(exerciseId) : null;
+  const steps = beats ? beats.map((b) => b.cue) : demo.instructions;
+  const collapsedSteps = beats ? steps.length : COLLAPSED_STEPS;
 
   return (
     <div>
@@ -159,6 +174,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
           name={demo.name}
           active={active}
           tempo={demo.tempo}
+          onStep={beats ? setActiveStep : undefined}
         />
       )}
 
@@ -293,53 +309,32 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
         </div>
       )}
 
-      {/* Primary / Secondary muscle pills.
-          Dedup secondary against primary — LOCAL_MUSCLE_MAP intentionally
-          expands "Upper Chest" → ["chest", "shoulders"] so the body
-          diagram highlights front delts for Incline Bench Press, but
-          the same expansion produces a duplicate "shoulders" chip
-          when secondaryMuscles already lists Front Delts → shoulders.
-          The diagram still gets both regions; the chip row reads as
-          one canonical placement per muscle. Primary wins ties since
-          it's the more emphatic categorisation. */}
+      {/* The muscles worked, as a KEY: a swatch in the tier's own
+          paint, so the reader can tie a purple shape on the figure to a
+          name. It was two rows of chips prefixed "Primary:" /
+          "Secondary:" until 2026-09-03 — the chips carried nothing the
+          text did not, and named muscles without saying which colour
+          was which.
+
+          Supplied card art brings its OWN names: the catalogue's groups
+          describe the exercise, and a key has to describe the picture.
+
+          Dedup secondary against primary — LOCAL_MUSCLE_MAP
+          intentionally expands "Upper Chest" → ["chest", "shoulders"]
+          so the body diagram highlights front delts for Incline Bench
+          Press, but the same expansion produces a duplicate "shoulders"
+          entry when secondaryMuscles already lists Front Delts →
+          shoulders. Primary wins ties, being the more emphatic
+          categorisation. */}
       {(() => {
+        const supplied = exerciseId ? getDemoMuscleKey(exerciseId) : null;
+        if (supplied) return <MuscleKey {...supplied} />;
         const primarySet = new Set(demo.primaryMuscles);
-        const secondaryDedup = demo.secondaryMuscles.filter(
-          (m) => !primarySet.has(m)
-        );
         return (
-          <div className="mt-4">
-            {demo.primaryMuscles.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-caption font-medium text-muted-foreground mr-1">
-                  Primary:
-                </span>
-                {demo.primaryMuscles.map((m) => (
-                  <span
-                    key={m}
-                    className="inline-flex items-center whitespace-nowrap h-6 px-2.5 rounded-xl text-small font-medium bg-lifting/8 text-lifting-strong"
-                  >
-                    {m}
-                  </span>
-                ))}
-              </div>
-            )}
-            {secondaryDedup.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2 mt-3">
-                <span className="text-caption font-medium text-muted-foreground mr-1">
-                  Secondary:
-                </span>
-                {secondaryDedup.map((m) => (
-                  <span
-                    key={m}
-                    className="inline-flex items-center whitespace-nowrap h-6 px-2.5 rounded-xl text-small font-medium bg-muted text-foreground/70"
-                  >
-                    {m}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
+          <MuscleKey
+            primary={demo.primaryMuscles}
+            secondary={demo.secondaryMuscles.filter((m) => !primarySet.has(m))}
+          />
         );
       })()}
 
@@ -350,28 +345,40 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
           sits OUTSIDE the collapse so the guide's highest-value line is
           always visible. Warning register is THEME.warning — the previous
           nutrition-orange was food-domain colour on a lifting surface. */}
-      {demo.instructions.length > 0 && (
+      {steps.length > 0 && (
         <div className="mt-6">
           <p className="text-lg font-bold text-foreground">Instructions</p>
           <div className="flex flex-col gap-4 mt-3">
-            {(showInstructions
-              ? demo.instructions
-              : demo.instructions.slice(0, collapsedSteps)
-            ).map((step, i) => (
-              <div key={i} className="flex gap-2.5">
-                <span
-                  aria-hidden="true"
-                  className="mt-0.5 size-5 shrink-0 rounded-full bg-lifting/10 text-lifting-strong text-xs font-bold font-mono tabular-nums flex items-center justify-center"
-                >
-                  {i + 1}
-                </span>
-                <p className="text-body text-foreground/80 leading-relaxed">
-                  {step}
-                </p>
-              </div>
-            ))}
+            {(showInstructions ? steps : steps.slice(0, collapsedSteps)).map(
+              (step, i) => {
+                const live = beats !== null && i === activeStep;
+                return (
+                  <div key={i} className="flex gap-2.5">
+                    <span
+                      aria-hidden="true"
+                      className={
+                        live
+                          ? "mt-0.5 size-5 shrink-0 rounded-full bg-lifting text-white text-xs font-bold font-mono tabular-nums flex items-center justify-center motion-safe:transition-colors"
+                          : "mt-0.5 size-5 shrink-0 rounded-full bg-lifting/10 text-lifting-strong text-xs font-bold font-mono tabular-nums flex items-center justify-center motion-safe:transition-colors"
+                      }
+                    >
+                      {i + 1}
+                    </span>
+                    <p
+                      className={
+                        live
+                          ? "text-body text-foreground leading-relaxed motion-safe:transition-colors"
+                          : "text-body text-foreground/80 leading-relaxed motion-safe:transition-colors"
+                      }
+                    >
+                      {step}
+                    </p>
+                  </div>
+                );
+              }
+            )}
           </div>
-          {demo.instructions.length > collapsedSteps && (
+          {steps.length > collapsedSteps && (
             <button
               type="button"
               onClick={() => setShowInstructions(!showInstructions)}
@@ -383,8 +390,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
                 </>
               ) : (
                 <>
-                  <ChevronDown className="size-4" /> All{" "}
-                  {demo.instructions.length} steps
+                  <ChevronDown className="size-4" /> All {steps.length} steps
                 </>
               )}
             </button>

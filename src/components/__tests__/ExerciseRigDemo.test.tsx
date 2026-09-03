@@ -36,13 +36,6 @@ type TestBeat = {
   image?: string;
 };
 const beatsRef = { current: null as readonly TestBeat[] | null };
-const legendRef = {
-  current: {
-    primary: ["Chest"],
-    secondary: ["Triceps", "Front delts"],
-    colors: { primary: "#7B72E9", secondary: "#9590E0" },
-  },
-};
 /* Partial mocks are not an option here — the module is the rig, and its
    real render would need the whole figure. Every export the component
    imports must therefore be listed, which is exactly the trap CLAUDE.md
@@ -51,7 +44,6 @@ const legendRef = {
 vi.mock("@/lib/bodyRig", () => ({
   getBodyDemo: () => demoRef.current,
   getFormBeats: () => beatsRef.current,
-  getDemoLegend: () => legendRef.current,
   renderBodyDemo: (id: string, t: number, effort?: number) => {
     drawLog.push({ t, effort });
     return `<svg data-demo="${id}" data-t="${t}"></svg>`;
@@ -277,22 +269,45 @@ describe("ExerciseRigDemo", () => {
     { t: 1, label: "Bottom position", cue: "Upper arms parallel." },
   ];
 
-  it("a placard opens on its FIRST named position, captioned", () => {
+  it("opens on its FIRST position, NAMED but not captioned", () => {
     reduceRef.current = false;
     beatsRef.current = PLACARD_BEATS;
     const { container } = render(
       <ExerciseRigDemo exerciseId="dips" name="Dips" />
     );
     expect(container.querySelector('[data-t="0"]')).not.toBeNull();
-    // The position's name and its cue, under the figure — the point of
-    // the style. Not the rep player's generic phase word.
-    expect(screen.getByText("Top position")).toBeInTheDocument();
-    expect(screen.getByText("Arms locked, chest tall.")).toBeInTheDocument();
+    // The label NAMES the position and says where in the sequence it
+    // falls. Not the rep player's generic phase word.
+    expect(screen.getByText(/Top position/)).toBeInTheDocument();
+    expect(screen.getByText("1/3")).toBeInTheDocument();
     expect(screen.queryByText("Set")).toBeNull();
     expect(screen.queryByText("Lower under control")).toBeNull();
-    // The muscle key — what the purple on the figure means.
-    expect(screen.getByText("Chest")).toBeInTheDocument();
-    expect(screen.getByText("Front delts")).toBeInTheDocument();
+    /* The CUE is not on the stage. It belongs to the numbered list
+       beneath the player, where it is readable at the reader's own
+       pace — which is what let the hold come down from 1750ms. A cue
+       under the figure sets the tempo of the whole demo. */
+    expect(screen.queryByText("Arms locked, chest tall.")).toBeNull();
+    // Nor is the muscle key: the Primary/Secondary pills below the
+    // player already carry it, and a second copy cost three lines
+    // above the figure.
+    expect(screen.queryByText("Primary")).toBeNull();
+  });
+
+  it("reports each position to the caller, for the list highlight", () => {
+    reduceRef.current = false;
+    beatsRef.current = PLACARD_BEATS;
+    const seen: number[] = [];
+    render(
+      <ExerciseRigDemo
+        exerciseId="dips"
+        name="Dips"
+        onStep={(i) => seen.push(i)}
+      />
+    );
+    step(40);
+    step(SLOT + 100);
+    step(2 * SLOT + 100);
+    expect(seen).toEqual([1, 2]);
   });
 
   it("it HOLDS on a position, then tweens to the next", () => {
@@ -317,8 +332,8 @@ describe("ExerciseRigDemo", () => {
     drawLog.length = 0;
     step(SLOT + 100);
     expect(drawLog[0].t).toBe(0.5);
-    expect(screen.getByText("Mid descent")).toBeInTheDocument();
-    expect(screen.getByText("Elbows travel back.")).toBeInTheDocument();
+    expect(screen.getByText(/Mid descent/)).toBeInTheDocument();
+    expect(screen.getByText("2/3")).toBeInTheDocument();
   });
 
   it("the sequence wraps back to the first position and repeats", () => {
@@ -357,10 +372,9 @@ describe("ExerciseRigDemo", () => {
     expect(pressing).toBeGreaterThan(lowering);
   });
 
-  it("reduced motion prints every position with its own caption", () => {
-    // An animation that steps through six frames HAS six frames to
-    // print — so the still version is the card it came from, not a
-    // two-up that drops four of them.
+  it("reduced motion falls back to the drawn two-up without frames", () => {
+    // Unframed placards have no pictures to print, so they get the
+    // ordinary start-and-end pair like every other demo.
     reduceRef.current = true;
     beatsRef.current = PLACARD_BEATS;
     const { container } = render(
@@ -369,11 +383,7 @@ describe("ExerciseRigDemo", () => {
     const frames = [...container.querySelectorAll("[data-t]")].map((n) =>
       n.getAttribute("data-t")
     );
-    expect(frames).toEqual(["0", "0.5", "1"]);
-    for (const b of PLACARD_BEATS) {
-      expect(screen.getByText(b.label)).toBeInTheDocument();
-      expect(screen.getByText(b.cue)).toBeInTheDocument();
-    }
+    expect(frames).toHaveLength(2);
     expect(rafQueue.length).toBe(0);
     reduceRef.current = false;
   });
@@ -445,18 +455,22 @@ describe("ExerciseRigDemo", () => {
     expect(screen.getByText("Top position")).toBeInTheDocument();
   });
 
-  it("reduced motion prints the supplied frames, not the drawn ones", () => {
+  it("reduced motion shows the supplied START and far end", () => {
+    /* The same two-up shape every other demo gets. It used to print all
+       six under their captions, which made sense while the stage was
+       the only place the steps appeared; they are a numbered list below
+       now, so printing them twice was pure duplication. */
     reduceRef.current = true;
     beatsRef.current = FRAMED;
     const { container } = render(
       <ExerciseRigDemo exerciseId="dips" name="Dips" />
     );
     const frames = [...container.querySelectorAll("img")];
-    expect(frames).toHaveLength(3);
+    expect(frames).toHaveLength(2);
     expect(drawLog).toHaveLength(0);
-    for (const b of FRAMED) {
-      expect(screen.getByText(b.cue)).toBeInTheDocument();
-    }
+    // The start, and the position furthest from it — the bottom.
+    expect(frames[0].getAttribute("alt")).toContain("Top position");
+    expect(frames[1].getAttribute("alt")).toContain("Bottom position");
     reduceRef.current = false;
   });
 

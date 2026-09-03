@@ -2122,3 +2122,133 @@ guarantee the string was carrying: the animated loop cannot be captured
 by accident. Pinned against the real render in
 `ExerciseRigDemo.test.tsx` — present on both still paths, absent on both
 animated ones — and mutation-checked by deleting the attribute.
+
+## STATUS 2026-09-03w — the placard moves into the ordinary player
+
+Owner, with a screenshot of the bench-press Form tab: "I think we need
+it in this way, that the animation plays in the player, with
+instructions below like this." Two decisions delegated — where the
+muscle groups go, and the best arrangement.
+
+The placard's stage chrome is gone. The frames play in the same card
+every other demo uses, with ONE label line under the figure, and the
+positions are the numbered list below.
+
+| was (03t–03v)                         | now                               |
+| ------------------------------------- | --------------------------------- |
+| muscle key on the stage               | the Primary/Secondary pills below |
+| six-dot rail                          | `1/6` beside the label            |
+| full cue under the figure             | the position's NAME only          |
+| catalogue steps collapsed to nothing  | the six positions ARE the steps   |
+| six panels printed for reduced motion | the ordinary start/end two-up     |
+
+### Why the muscle key went below rather than staying up top
+
+It duplicated the Primary/Secondary pills that already sit under every
+demo, and it cost three lines above the figure — the card's key names
+four secondaries, which wrap. A printed card needs a legend because it
+is a standalone artefact; in the app that context is already on screen
+twice. `getDemoLegend`, `MUSCLE_LABEL` and the placard's `key` override
+are deleted rather than left unused.
+
+### The layout paid for itself in the timing
+
+The reason the loop ran 14 seconds was that each cue had to be READ
+where it stood: seven words at four words a second is 1750 ms, six times
+over. A viewer arriving mid-set landed on "mid descent" and waited ten
+seconds to see the top.
+
+With the cues in the list, the label under the figure only has to be
+recognised, so the hold is a LOOK budget instead of a read budget:
+
+|         | hold    | loop   |
+| ------- | ------- | ------ |
+| 03t–03v | 1750 ms | 14.2 s |
+| now     | 1000 ms | 9.4 s  |
+
+`PLACARD_CUE_WORDS` survives as a scanning limit on the authored cues,
+no longer as a timing input.
+
+### The highlight is the "words appear in time" idea, without its cost
+
+The active row lights as the player reaches it. `ExerciseRigDemo` now
+takes an `onStep` callback; the parent holds the index and marks the
+row. The whole list stays readable at the reader's own pace, so the text
+never paces the animation — which is the trap the first version fell
+into and the reason it had to be slow.
+
+The callback is held in a ref, written in an effect. A caller passing an
+inline arrow re-renders on every step, and an inline arrow in the effect
+deps would restart the animation each time.
+
+### The positions replace the catalogue steps, they do not join them
+
+Two numbered lists describing one movement is the duplication this
+layout removes, and the six positions match the label under the figure
+word for word so a reader can follow along. The catalogue's tip and
+common mistakes still render below, untouched.
+
+`ExerciseFormContent` had no test file at all; it has one now, pinning
+the replacement, the highlight following the player, and — the
+regression worth watching — that a demo WITHOUT beats still shows the
+collapsed catalogue list exactly as before.
+
+## STATUS 2026-09-03x — the muscles-worked row becomes a KEY
+
+Owner, holding the form card next to the Form tab: "the pills we have
+that show the area worked as primary and secondary aren't that good, I
+think these look better."
+
+They are better, and for one reason that is not styling. The card's
+version carries a **swatch per tier in the tier's own paint**, so it
+explains the picture: that purple shape is your pec. A chip row only
+names muscles and leaves the reader to guess which shape is which.
+
+### Taken
+
+- **The swatch.** `MuscleKey` draws a dot in `THEME.lifting` for
+  primary and `THEME.liftingLight` for secondary — the renderer's own
+  two fills, so the key cannot drift from the figure it explains. Where
+  the art hatches, the swatch hatches.
+- **No chips.** They carried nothing the text did not, and two chip
+  styles at different weights read as two kinds of thing.
+- **One casing rule.** Two data sources feed these names and they
+  disagree: the catalogue title-cases ("Rear Delts", "Teres Major"), the
+  borrowed free-exercise-db does not ("chest"), and which one an
+  exercise resolves to depends on whether it carries local
+  instructions — so the same row rendered differently between two
+  exercises for a reason no reader could infer. `titleCaseMuscle`
+  normalises at DISPLAY, not in the data: the lowercase forms are keys
+  into `MUSCLE_MAP` for the body diagram, and rewriting them at source
+  would break the diagram to tidy a caption.
+
+### Declined
+
+**The card's third tier** — "Core (Stabilizers)", greyed. Nothing in the
+catalogue records stabilisers and no demo paints them. A key entry for
+something the picture does not show is a key to nothing.
+
+**Moving it above the player.** The card puts its legend at the top,
+where it has the width for a two-column grid. On a 360pt card the same
+content wraps and pushes the figure down. It stays below.
+
+### Supplied art brings its own names
+
+The catalogue names what the exercise TRAINS; a key describes what is
+ON SCREEN. For dips those differ: the catalogue says chest / triceps /
+shoulders, the card shades a pec solid and hatches the serratus. So
+`FormPlacard.key` is back — deleted in 03w when the stage legend went,
+and correct now that the row below IS the key.
+
+Cost, visible in the preview: the card names four secondaries, so that
+row runs to three lines on a phone. Every catalogue-driven exercise is
+one or two. Worth trimming the card's list if it reads heavy.
+
+### Coverage
+
+`MuscleKey.test.tsx` pins the swatch against the theme values (derived,
+not written out, so a token change still has to move the test), the
+hatch variant, the omitted-empty-tier case, and the casing. The
+`ExerciseFormContent` suite pins both routes: catalogue names deduped
+across tiers, and supplied names overriding them. Swatch-colour and
+casing mutations both fail.

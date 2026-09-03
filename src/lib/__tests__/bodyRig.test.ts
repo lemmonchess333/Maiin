@@ -10,17 +10,10 @@ import {
   DIP_GRIP,
   FORM_BEAT_IDS,
   getBodyDemo,
-  getDemoLegend,
   getFormBeats,
-  MUSCLE_LABEL_IDS,
   renderBodyDemo,
 } from "../bodyRig";
 import { PLACARD_CUE_WORDS } from "../exerciseTempo";
-import { THEME } from "../theme";
-
-/** The rig's paler secondary purple — `THEME.liftingLight`, which is
- *  what a rig-drawn figure paints a secondary muscle with. */
-const SECONDARY_TINT = THEME.liftingLight;
 import { ANTERIOR, POSTERIOR } from "../bodyModelData";
 import { EXERCISES } from "../exercises";
 import { FAR_ARM_SHIFT, SIDE_ANCHORS, SIDE_PIECES } from "../bodySideData";
@@ -4903,60 +4896,6 @@ describe("form beats — the caption is a claim about the frame", () => {
       expect(h[0]).toBeCloseTo(hands[0][0], 6);
       expect(h[1]).toBeCloseTo(hands[0][1], 6);
     }
-  });
-});
-
-describe("the muscle key", () => {
-  it("names every muscle any demo tints", () => {
-    // A missing entry does not fail — `getDemoLegend` falls back to the
-    // raw highlighter id, so the legend would quietly read
-    // "front-deltoids" at a user. Cover the whole vocabulary instead.
-    const named = new Set(MUSCLE_LABEL_IDS);
-    for (const [id, d] of Object.entries(BODY_DEMOS)) {
-      for (const m of Object.keys(d.tint)) {
-        expect(named.has(m), `${id} tints "${m}" with no name in the key`).toBe(
-          true
-        );
-      }
-    }
-  });
-
-  it("reads the legend FROM the demo that does the painting", () => {
-    // For a rig-drawn demo the key IS its tint map, and the swatch
-    // colours are the renderer's own fills — so the key cannot
-    // disagree with the figure it explains.
-    const id = Object.keys(BODY_DEMOS).find(
-      (k) => BODY_DEMOS[k].view === "side" && getFormBeats(k) === null
-    )!;
-    const legend = getDemoLegend(id)!;
-    expect(legend.primary.length + legend.secondary.length).toBe(
-      Object.keys(BODY_DEMOS[id].tint).length
-    );
-    const svg = renderBodyDemo(id, 0.5);
-    if (legend.primary.length) expect(svg).toContain(legend.colors.primary);
-    if (legend.secondary.length) expect(svg).toContain(legend.colors.secondary);
-  });
-
-  it("a placard with SUPPLIED frames gets the key to those frames", () => {
-    /* The rig's tint map is a true statement about the rig's figure and
-       a false one about a picture that highlights different muscles.
-       Dips runs the owner's own card, which shades the pec solid and
-       hatches the lower chest and serratus — so the key names those,
-       not the rig's chest / triceps / front delts. */
-    const dips = getDemoLegend("dips")!;
-    expect(dips.primary).toEqual(["Pectoralis major"]);
-    expect(dips.secondary).toContain("Serratus anterior");
-    expect(dips.secondaryFill).toBe("hatch");
-    // Every rig-drawn demo still reads its key off its own tint map.
-    const rigDrawn = Object.keys(BODY_DEMOS).find(
-      (id) => BODY_DEMOS[id].view === "side" && getFormBeats(id) === null
-    )!;
-    expect(getDemoLegend(rigDrawn)!.secondaryFill).toBe("solid");
-    expect(renderBodyDemo(rigDrawn, 0.5)).toContain(SECONDARY_TINT);
-  });
-
-  it("an exercise with no rig demo has no legend to show", () => {
-    expect(getDemoLegend("not-an-exercise")).toBeNull();
   });
 });
 

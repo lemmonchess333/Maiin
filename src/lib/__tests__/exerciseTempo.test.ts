@@ -2,9 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   cycleSampleAt,
   placardSampleAt,
-  PLACARD_CUE_WORDS,
   PLACARD_TIMING,
-  PLACARD_WORDS_PER_SECOND,
   parseTempo,
   repTimingFor,
   repSampleAt,
@@ -328,17 +326,19 @@ describe("placardSampleAt — the stepped form card", () => {
     });
   });
 
-  it("the hold IS the read budget, not a number chosen by feel", () => {
-    // The first draft had 1600 ms and claimed seven words at four words
-    // a second — 1750 ms of reading in 1600 ms of stillness. Deriving
-    // it makes the claim and the timing the same statement.
-    expect(T.holdMs).toBe(
-      (PLACARD_CUE_WORDS / PLACARD_WORDS_PER_SECOND) * 1000
-    );
-    expect(T.holdMs / 1000).toBeGreaterThanOrEqual(
-      PLACARD_CUE_WORDS / PLACARD_WORDS_PER_SECOND
-    );
-    // And a whole six-position card stays inside a watchable loop.
-    expect(6 * SLOT).toBeLessThan(16_000);
+  it("the hold is a LOOK budget, and the loop stays watchable", () => {
+    /* It used to be a READ budget: the cue sat under the figure, so
+       every position had to hold long enough to read a sentence, which
+       put a six-position loop at 14 seconds. The cues moved to the
+       numbered list beside the player, the label under the figure only
+       names the position, and the hold came down to what recognising a
+       pose takes.
+
+       The number that matters is the LOOP, because arriving mid-set is
+       the common case: at 14 seconds a viewer landing on "mid descent"
+       waited ten seconds to see the top. */
+    expect(T.holdMs).toBeLessThan(1750);
+    expect(T.holdMs).toBeGreaterThanOrEqual(800);
+    expect(6 * SLOT).toBeLessThan(10_000);
   });
 });

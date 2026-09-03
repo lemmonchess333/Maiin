@@ -9521,11 +9521,22 @@ export interface FormBeat {
  *  rather than the rig's own figure — the key that describes THAT art. */
 export interface FormPlacard {
   beats: readonly FormBeat[];
-  /** Overrides the muscle key `getDemoLegend` would otherwise read off
-   *  the demo's tint map. Needed whenever the frames are supplied art:
-   *  the rig's tint describes the rig's figure, and a key that names
-   *  muscles a picture does not highlight is a key to nothing. */
-  key?: { primary: string[]; secondary: string[] };
+  /** The muscle key for SUPPLIED art. The catalogue names the muscle
+   *  groups an exercise trains, which is a true statement about the
+   *  exercise and not necessarily about the picture: the dips card
+   *  shades a pec solid and hatches the serratus, neither of which the
+   *  catalogue's "chest / triceps / shoulders" describes. A key is a
+   *  key to what is ON SCREEN, so supplied art brings its own. */
+  key?: DemoMuscleKey;
+}
+
+export interface DemoMuscleKey {
+  primary: string[];
+  secondary: string[];
+  /** How the secondary muscles are painted. The rig pales the purple;
+   *  the supplied card hatches it, and a solid swatch beside a hatched
+   *  muscle is a key describing something that is not there. */
+  secondaryFill: "solid" | "hatch";
 }
 
 const FORM_BEATS: Record<string, FormPlacard> = {
@@ -9583,12 +9594,9 @@ const FORM_BEATS: Record<string, FormPlacard> = {
         image: "form-frames/dips/6.webp",
       },
     ],
-    /* The card's own key, because the card's art is what is on screen.
-       It is finer than the rig's tint map (which says chest / triceps /
-       front delts) — the frames shade the pec solid and hatch the
-       lower chest and serratus, so those are the names that describe
-       them. The catalogue's own vocabulary still appears in the muscle
-       pills below the demo. */
+    /* The card's own names, because the card's art is what is on
+       screen. Finer than the catalogue's groups, and the two hatched
+       entries are hatched in the pictures. */
     key: {
       primary: ["Pectoralis major"],
       secondary: [
@@ -9597,6 +9605,7 @@ const FORM_BEATS: Record<string, FormPlacard> = {
         "Lower chest",
         "Serratus anterior",
       ],
+      secondaryFill: "hatch",
     },
   },
 };
@@ -9611,6 +9620,13 @@ export function getFormBeats(exerciseId: string): readonly FormBeat[] | null {
  *  geometry they caption. */
 export const FORM_BEAT_IDS = Object.keys(FORM_BEATS);
 
+/** The muscle key a demo's own art needs, or null where the catalogue's
+ *  groups describe the picture perfectly well (every rig-drawn demo:
+ *  it tints the muscles the catalogue names). */
+export function getDemoMuscleKey(exerciseId: string): DemoMuscleKey | null {
+  return FORM_BEATS[exerciseId]?.key ?? null;
+}
+
 /** PRODUCTION lookup — what the Form surface may mount. Applies the
  *  alias map, the side-demo flag, the misrepresentation gate, and the
  *  held-gear strip for gear-incompatible aliases. */
@@ -9624,82 +9640,6 @@ export function getBodyDemo(exerciseId: string): BodyDemo | null {
   }
   return demo;
 }
-
-/* ── The muscle key ──────────────────────────────────────────────────
- *
- * The names behind the paint. The rig tints by react-body-highlighter
- * muscle id; a reader looking at a purple shape needs the English. The
- * placard shows this as a legend, the way the reference card does.
- *
- * Read FROM the demo that does the painting, never assembled from a
- * second source — a key that can disagree with the figure it explains
- * is worse than no key. Every id any demo tints must appear here, or
- * a lit muscle drops silently out of the legend; `bodyRig.test.ts`
- * pins the coverage.
- */
-const MUSCLE_LABEL: Record<string, string> = {
-  abductors: "Abductors",
-  abs: "Abs",
-  "back-deltoids": "Rear delts",
-  biceps: "Biceps",
-  calves: "Calves",
-  chest: "Chest",
-  forearm: "Forearms",
-  "front-deltoids": "Front delts",
-  gluteal: "Glutes",
-  hamstring: "Hamstrings",
-  "lower-back": "Lower back",
-  obliques: "Obliques",
-  quadriceps: "Quads",
-  trapezius: "Traps",
-  triceps: "Triceps",
-  "upper-back": "Upper back",
-};
-
-export interface DemoLegend {
-  primary: string[];
-  secondary: string[];
-  /** The exact fills the figure paints with, so a swatch cannot drift
-   *  from the muscle it stands for. */
-  colors: { primary: string; secondary: string };
-  /** How the SECONDARY muscles are painted, which the rig and the
-   *  supplied card do differently: the rig pales the purple, the card
-   *  hatches it. A solid swatch beside a hatched muscle is a key
-   *  describing a figure that is not on screen. */
-  secondaryFill: "solid" | "hatch";
-}
-
-/** What the figure's purple means, in words. Null where the exercise
- *  has no rig demo to read. */
-export function getDemoLegend(exerciseId: string): DemoLegend | null {
-  const demo = getBodyDemo(exerciseId);
-  if (!demo) return null;
-  const named = (level: "primary" | "secondary") =>
-    Object.entries(demo.tint)
-      .filter(([, l]) => l === level)
-      .map(([m]) => MUSCLE_LABEL[m] ?? m);
-  /* A placard with supplied frames describes ITS art, not the rig's.
-     The rig's tint map is a true statement about the rig's figure and
-     a false one about a picture that highlights different muscles. */
-  const supplied = FORM_BEATS[exerciseId]?.key;
-  if (supplied)
-    return {
-      primary: supplied.primary,
-      secondary: supplied.secondary,
-      colors: { primary: PRIMARY, secondary: PRIMARY },
-      // The card hatches its secondaries; so does the key.
-      secondaryFill: "hatch",
-    };
-  return {
-    primary: named("primary"),
-    secondary: named("secondary"),
-    colors: { primary: PRIMARY, secondary: SECONDARY },
-    secondaryFill: "solid",
-  };
-}
-
-/** The key's vocabulary, for the coverage test. */
-export const MUSCLE_LABEL_IDS = Object.keys(MUSCLE_LABEL);
 
 /** REVIEW lookup — alias-aware registry resolution with no production
  *  gates, so contact sheets and mechanics tests keep rendering gated
