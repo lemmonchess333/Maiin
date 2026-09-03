@@ -19,4 +19,9 @@ export type GroupName =
   | "thighL"
   | "thighR"
   | "shankL"
-  | "shankR";
+  | "shankR"
+  /** The feet — their own pieces on the SIDE figure since the 2026-09-03
+   *  ankle joint (batch 18). They ride the shank unless a pose gives
+   *  them ops of their own; the front/back figures draw no foot group. */
+  | "footL"
+  | "footR";

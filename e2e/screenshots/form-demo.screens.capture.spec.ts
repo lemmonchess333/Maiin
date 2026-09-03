@@ -98,6 +98,8 @@ const DEMOS: [id: string, name: string][] = [
   // Batch 17: the two keyed sequences.
   ["man-maker", "Man Maker"],
   ["turkish-get-up", "Turkish Get-Up"],
+  // Batch 18: the ankle joint — the last row.
+  ["seated-calf-raise", "Seated Calf Raise"],
 ];
 
 test.use({

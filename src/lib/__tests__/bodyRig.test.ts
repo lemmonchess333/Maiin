@@ -1146,6 +1146,8 @@ describe("renderBodyDemo", () => {
       // Batch 17: a cycle, and a sequence its own instruction reverses.
       "man-maker": "lockout",
       "turkish-get-up": "stretch",
+      // Batch 18: heels dropped below the platform first.
+      "seated-calf-raise": "stretch",
     };
     expect(Object.keys(START).sort()).toEqual(Object.keys(BODY_DEMOS).sort());
     for (const [id, expected] of Object.entries(START)) {
@@ -4014,6 +4016,57 @@ describe("renderBodyDemo", () => {
         "get-up: standing"
       ).toBeLessThan(0.1);
     }
+
+    /* Batch 18: the ankle. */
+    // Seated calf raise: hips on the seat; the ball of the foot fixed on
+    // the platform; heels below the platform at the stretch, high at the
+    // top; the knee (and its pad) rising with the heel; and the joint
+    // itself — the foot's ankle and the shin's ankle never part.
+    {
+      const id = "seated-calf-raise";
+      const PLATFORM_Y = 196;
+      stationary(
+        id,
+        SIDE_ANCHORS.hip,
+        "pelvis",
+        "seated calf: hips on the seat"
+      );
+      stationary(
+        id,
+        SIDE_ANCHORS.ball,
+        "footL",
+        "seated calf: ball on the platform"
+      );
+      for (const t of [0, 0.5, 1]) {
+        const p = at(id, t);
+        const aShank = pt(SIDE_ANCHORS.ankle, p.shankL);
+        const aFoot = pt(SIDE_ANCHORS.ankle, p.footL);
+        expect(
+          Math.hypot(aShank[0] - aFoot[0], aShank[1] - aFoot[1]),
+          `seated calf: the ankle joint holds @${t}`
+        ).toBeLessThan(0.01);
+      }
+      const heel = (t: number) => pt([39.4, 199.8], at(id, t).footL);
+      expect(
+        heel(0)[1],
+        "seated calf: heels dropped below the platform"
+      ).toBeGreaterThan(PLATFORM_Y + 2);
+      expect(heel(1)[1], "seated calf: heels raised high").toBeLessThan(
+        PLATFORM_Y - 8
+      );
+      const knee = (t: number) => pt(SIDE_ANCHORS.knee, at(id, t).shankL);
+      expect(
+        knee(0)[1] - knee(1)[1],
+        "seated calf: the knee rises with the heel"
+      ).toBeGreaterThan(4);
+    }
+    // Every other side demo's feet still ride their shins: with no foot
+    // ops the foot's ankle IS the shin's ankle. (The renderer's fallback,
+    // pinned through the one demo that has both.)
+    for (const id of ["squat", "calf-raise", "lunges"]) {
+      const p = at(id, 0.5);
+      expect(p.footL, `${id}: no foot ops of its own`).toBeUndefined();
+    }
   });
 
   it("the foot has a heel, an arch and a toe — not a wedge", () => {
@@ -4021,8 +4074,9 @@ describe("renderBodyDemo", () => {
     // curve, no arch. Under a leg that now has a condyle at the knee it
     // read as a doorstop. The arch is the part a wedge cannot fake, so
     // that is what this measures.
-    const shank = SIDE_PIECES.find((p) => p.group === "shankL")!;
-    const foot = shank.facets.find((f) => f.muscle === "foot")!.points as [
+    // The foot is its own piece since the ankle joint (batch 18).
+    const footPiece = SIDE_PIECES.find((p) => p.group === "footL")!;
+    const foot = footPiece.facets.find((f) => f.muscle === "foot")!.points as [
       number,
       number,
     ][];
@@ -4665,6 +4719,7 @@ describe("tint honesty", () => {
       "zottman-curl": "biceps",
       "man-maker": "chest",
       "turkish-get-up": "abs",
+      "seated-calf-raise": "calves",
     };
     for (const [id, muscle] of Object.entries(expectPrimary)) {
       expect(BODY_DEMOS[id].tint[muscle], `${id} primary`).toBe("primary");

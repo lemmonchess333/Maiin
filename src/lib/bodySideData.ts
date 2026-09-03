@@ -447,6 +447,25 @@ function insetPolygon(pts: Pt[], by: number): Pt[] {
 
 const FOOT: Pt[] = insetPolygon(FOOT_PROFILE, 0.5);
 
+/* The foot's OWN outline (2026-09-03 ankle joint): the profile, closed
+ * over the top by a cuff — a half-disc about the ankle anchor that sits
+ * INSIDE the shin, so when the foot rotates about the ankle its
+ * underlay never opens a gap at the joint. The cuff is painted before
+ * the shank and the shank covers it. */
+const ANKLE_C: Pt = [46.6, 193];
+const ANKLE_CUFF_R = 4.8;
+const FOOT_OUTLINE: Pt[] = [
+  ...FOOT_PROFILE,
+  ...[-20, -45, -70, -90, -110, -135, -160].map((deg) => {
+    const a = (deg * Math.PI) / 180;
+    return [
+      ANKLE_C[0] + ANKLE_CUFF_R * Math.cos(a),
+      ANKLE_C[1] + ANKLE_CUFF_R * Math.sin(a),
+    ] as Pt;
+  }),
+];
+const FOOT_FACETS = [{ muscle: "foot", points: FOOT }];
+
 /* Back contour down, round the heel and sole to the toe, back along the
  * instep, then UP the front contour. It used to be the back contour plus
  * the foot and nothing else — `silhouette(...).slice(0, 6)` kept only the
@@ -456,7 +475,10 @@ const FOOT: Pt[] = insetPolygon(FOOT_PROFILE, 0.5);
  * leg looked fine until a seam wanted a groove behind it. */
 const SHANK_OUTLINE: Pt[] = [
   ...SHANK_B.map(([y, x]) => [x, y] as Pt),
-  ...FOOT_PROFILE,
+  // Closes across the ankle: the foot is its own piece now, painted
+  // beneath this one, with a cuff up inside the shin.
+  FOOT_PROFILE[0],
+  FOOT_PROFILE[FOOT_PROFILE.length - 1],
   ...[...SHANK_F].reverse().map(([y, x]) => [x, y] as Pt),
 ];
 /* Facet-count discipline (device feedback 2026-07-27: "too many
@@ -479,7 +501,6 @@ const SHANK_FACETS = [
     muscle: "shin",
     points: band(SHANK_B, SHANK_F, 150, 192.2, 0.55, 1, { bellyL: -0.04 }),
   },
-  { muscle: "foot", points: FOOT },
 ];
 const THIGH_FACETS = [
   {
@@ -620,6 +641,13 @@ const growSkull = (pts: Pt[]): Pt[] =>
 const RAW_PIECES: SidePiece[] = [
   // Far-side leg pair: same geometry, darker, painted FIRST — hidden in
   // symmetric stances, visible the moment a pose splits the legs.
+  // Each foot paints just BEFORE its shank: the shin covers the cuff.
+  {
+    group: "footR",
+    far: true,
+    outline: FOOT_OUTLINE,
+    facets: FOOT_FACETS,
+  },
   {
     group: "shankR",
     far: true,
@@ -654,6 +682,11 @@ const RAW_PIECES: SidePiece[] = [
     depthShift: FAR_ARM_SHIFT,
     outline: HAND_OUTLINE,
     facets: HAND_FACETS,
+  },
+  {
+    group: "footL",
+    outline: FOOT_OUTLINE,
+    facets: FOOT_FACETS,
   },
   {
     group: "shankL",
@@ -947,4 +980,7 @@ export const SIDE_ANCHORS = {
   hip: [42, BODY_Y(100.5)] as Pt,
   knee: [50, BODY_Y(152)] as Pt,
   ankle: [46.6, BODY_Y(193)] as Pt,
+  /** The ball of the foot — the sole's front contact, where a calf
+   *  raise pivots. */
+  ball: [60, BODY_Y(202.7)] as Pt,
 };
