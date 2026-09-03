@@ -1143,6 +1143,9 @@ describe("renderBodyDemo", () => {
       elliptical: "lockout",
       swimming: "lockout",
       "zottman-curl": "stretch",
+      // Batch 17: a cycle, and a sequence its own instruction reverses.
+      "man-maker": "lockout",
+      "turkish-get-up": "stretch",
     };
     expect(Object.keys(START).sort()).toEqual(Object.keys(BODY_DEMOS).sort());
     for (const [id, expected] of Object.entries(START)) {
@@ -3908,6 +3911,109 @@ describe("renderBodyDemo", () => {
         "zottman: the pronated lower works the forearm"
       ).toBe("primary");
     }
+
+    /* Batch 17: the man-maker and the get-up. */
+    // Man-maker: plank → push-up → row each bell to the ribs (the other
+    // hand holding the plank) → feet forward → clean to the shoulders →
+    // press overhead → back to the plank.
+    {
+      const id = "man-maker";
+      const H = (t: number) => {
+        const p = at(id, t);
+        return {
+          L: pt(SIDE_ANCHORS.hand, p.handL),
+          R: pt(SIDE_ANCHORS.hand, p.handR),
+          S: pt(SIDE_ANCHORS.shoulder, p.torso),
+          hip: pt(SIDE_ANCHORS.hip, p.pelvis),
+        };
+      };
+      for (const t of [0, 0.2, 0.54]) {
+        expect(
+          Math.abs(H(t).L[1] - 198) + Math.abs(H(t).R[1] - 198),
+          `man-maker: bells on the floor @${t}`
+        ).toBeLessThan(0.1);
+      }
+      expect(
+        H(0.1).S[1] - H(0).S[1],
+        "man-maker: the push-up drops the shoulder"
+      ).toBeGreaterThan(10);
+      expect(
+        H(0.3).R[1] - H(0.3).L[1],
+        "man-maker: near bell rowed to the ribs"
+      ).toBeGreaterThan(25);
+      expect(
+        Math.abs(H(0.3).R[1] - 198),
+        "man-maker: far hand holds the plank"
+      ).toBeLessThan(0.1);
+      expect(
+        H(0.46).L[1] - H(0.46).R[1],
+        "man-maker: far bell rowed"
+      ).toBeGreaterThan(25);
+      const rack = H(0.72);
+      expect(
+        Math.hypot(
+          rack.hip[0] - SIDE_ANCHORS.hip[0],
+          rack.hip[1] - SIDE_ANCHORS.hip[1]
+        ),
+        "man-maker: standing at the clean"
+      ).toBeLessThan(0.1);
+      expect(
+        Math.hypot(rack.L[0] - 57, rack.L[1] - 40),
+        "man-maker: bells at the shoulders"
+      ).toBeLessThan(4);
+      expect(H(0.82).L[1], "man-maker: pressed overhead").toBeLessThan(-20);
+    }
+    // Turkish get-up: the bell plumb above the shoulder at every key; the
+    // trunk rising through elbow, hand, bridge and half-kneel in order;
+    // the far hand posted on the floor through the bridge; the far knee
+    // on the floor in the kneel; standing at the top.
+    {
+      const id = "turkish-get-up";
+      const K = (t: number) => {
+        const p = at(id, t);
+        return {
+          L: pt(SIDE_ANCHORS.hand, p.handL),
+          R: pt(SIDE_ANCHORS.hand, p.handR),
+          S: pt(SIDE_ANCHORS.shoulder, p.torso),
+          hip: pt(SIDE_ANCHORS.hip, p.pelvis),
+          KR: pt(SIDE_ANCHORS.knee, p.shankR),
+        };
+      };
+      for (const t of [0, 0.2, 0.4, 0.55, 0.7, 0.84, 1]) {
+        const f = K(t);
+        expect(
+          Math.abs(f.L[0] - f.S[0]),
+          `get-up: bell plumb over the shoulder @${t}`
+        ).toBeLessThan(0.5);
+        expect(f.S[1] - f.L[1], `get-up: arm locked @${t}`).toBeGreaterThan(64);
+      }
+      const trunkUp = (t: number) =>
+        (Math.atan2(K(t).hip[1] - K(t).S[1], K(t).hip[0] - K(t).S[0]) * 180) /
+        Math.PI;
+      expect(Math.abs(trunkUp(0)), "get-up: lying flat").toBeLessThan(2);
+      expect(trunkUp(0.2), "get-up: to the elbow").toBeGreaterThan(25);
+      expect(trunkUp(0.2), "get-up: to the elbow").toBeLessThan(35);
+      expect(trunkUp(0.4), "get-up: to the hand").toBeGreaterThan(55);
+      expect(trunkUp(0.4), "get-up: to the hand").toBeLessThan(65);
+      for (const t of [0.2, 0.4, 0.55])
+        expect(K(t).R[1], `get-up: far hand posted @${t}`).toBeGreaterThan(196);
+      expect(
+        K(0.4).hip[1] - K(0.55).hip[1],
+        "get-up: the bridge lifts the hips"
+      ).toBeGreaterThan(12);
+      for (const t of [0.7, 0.84])
+        expect(
+          K(t).KR[1],
+          `get-up: far knee on the floor @${t}`
+        ).toBeGreaterThan(190);
+      expect(
+        Math.hypot(
+          K(1).hip[0] - SIDE_ANCHORS.hip[0],
+          K(1).hip[1] - SIDE_ANCHORS.hip[1]
+        ),
+        "get-up: standing"
+      ).toBeLessThan(0.1);
+    }
   });
 
   it("the foot has a heel, an arch and a toe — not a wedge", () => {
@@ -4163,6 +4269,10 @@ describe("renderBodyDemo", () => {
       "incline-treadmill-walk",
       // Batch 16: the far arm is half a stroke behind the near one.
       "swimming",
+      // Batch 17: the man-maker rows one arm at a time; the get-up holds
+      // the bell in one hand and posts the other.
+      "man-maker",
+      "turkish-get-up",
     ]);
     for (const [id, d] of Object.entries(BODY_DEMOS)) {
       if (d.view !== "side" || UNILATERAL.has(id)) continue;
@@ -4553,6 +4663,8 @@ describe("tint honesty", () => {
       elliptical: "quadriceps",
       swimming: "upper-back",
       "zottman-curl": "biceps",
+      "man-maker": "chest",
+      "turkish-get-up": "abs",
     };
     for (const [id, muscle] of Object.entries(expectPrimary)) {
       expect(BODY_DEMOS[id].tint[muscle], `${id} primary`).toBe("primary");

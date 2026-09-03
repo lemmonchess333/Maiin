@@ -1709,3 +1709,34 @@ its own instruction, so the rep player fits), and the seated calf
 raise, which needs the ankle joint.
 
 Capture channel: `bike`, `elliptical`, `swimming` added.
+
+## STATUS 2026-09-03r — wave 3, batch 17: the man-maker and the get-up
+
+Coverage 149 → 151 of 152. The burpee's keyframe construction,
+generalised: **`keyedPose`** takes frames of a world hip, a trunk
+angle, per-leg ankles and per-arm world hands (each with its own knee
+or elbow branch) and interpolates them — trunk by `trunkBetween`, legs
+by `plantedLeg`, arms by `armToWorld`.
+
+| Demo             | Player | Keys | Pinned claim (from its instructions)                                                                                                                                                                     |
+| ---------------- | ------ | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `man-maker`      | cycle  | 13   | bells on the floor in every plank; push-up drops the shoulder >10; each bell rowed >25 while the other holds; standing racked at the clean; overhead                                                     |
+| `turkish-get-up` | rep    | 7    | bell plumb over the shoulder (±0.5) at every key; trunk flat → 25-35° → 55-65°; far hand on the floor through the bridge; hips lift >12 at the bridge; far knee on the floor in the kneel; standing at 1 |
+
+The get-up is the one sequence the ordinary rep player is RIGHT for:
+its instruction 4 is "reverse the sequence with the same control back
+to the start", and a there-and-back is exactly that. The man-maker is
+a cycle — its instruction 4 ends "reverse back into plank for the next
+rep", and the next rep begins there.
+
+Two things the numbers caught: the get-up's first trunk angles were
+positive (150, 120 ...), which in screen space (y down) lifts the
+shoulder INTO the floor — 219 against a floor at 204 — rather than off
+it; and its first bridge stood the trunk near-vertical, which put the
+shoulder 87 units from the posted far hand against an arm of 66. A
+bridge with a posted hand is a 40° trunk.
+
+One row left: the seated calf raise, which needs the rig's foot to be
+its own piece.
+
+Capture channel: `man-maker`, `turkish-get-up` added.

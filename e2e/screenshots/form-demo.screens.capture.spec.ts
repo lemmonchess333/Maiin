@@ -95,6 +95,9 @@ const DEMOS: [id: string, name: string][] = [
   ["bike", "Stationary Bike"],
   ["elliptical", "Elliptical"],
   ["swimming", "Swimming"],
+  // Batch 17: the two keyed sequences.
+  ["man-maker", "Man Maker"],
+  ["turkish-get-up", "Turkish Get-Up"],
 ];
 
 test.use({
