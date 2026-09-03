@@ -57,6 +57,10 @@ const DEMOS: [id: string, name: string][] = [
   ["inverted-row", "Inverted Row"],
   ["kettlebell-swing", "Kettlebell Swing"],
   ["nordic-hamstring-curl", "Nordic Hamstring Curl"],
+  // Batch 7: the box, one leg, the pad.
+  ["barbell-step-ups", "Barbell Step-Ups"],
+  ["pistol-squat", "Pistol Squats"],
+  ["chest-supported-db-row", "Chest-Supported Dumbbell Row"],
 ];
 
 test.use({

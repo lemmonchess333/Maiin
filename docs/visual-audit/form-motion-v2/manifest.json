@@ -61,6 +61,33 @@
         "file": "barbell-curl-t100.png"
       }
     ],
+    "barbell-floor-press": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "barbell-floor-press-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "barbell-floor-press-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "barbell-floor-press-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "barbell-floor-press-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "barbell-floor-press-t100.png"
+      }
+    ],
     "barbell-row": [
       {
         "t": 0,
@@ -86,6 +113,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "barbell-row-t100.png"
+      }
+    ],
+    "barbell-step-ups": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "barbell-step-ups-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "barbell-step-ups-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "barbell-step-ups-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "barbell-step-ups-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "barbell-step-ups-t100.png"
       }
     ],
     "barbell-upright-row": [
@@ -275,6 +329,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "calf-raise-t100.png"
+      }
+    ],
+    "chest-supported-db-row": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "chest-supported-db-row-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "chest-supported-db-row-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "chest-supported-db-row-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "chest-supported-db-row-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "chest-supported-db-row-t100.png"
       }
     ],
     "concentration-curl": [
@@ -491,6 +572,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "dips-t100.png"
+      }
+    ],
+    "donkey-calf-raise": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "donkey-calf-raise-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "donkey-calf-raise-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "donkey-calf-raise-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "donkey-calf-raise-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "donkey-calf-raise-t100.png"
       }
     ],
     "face-pulls": [
@@ -1060,6 +1168,33 @@
         "file": "overhead-press-t100.png"
       }
     ],
+    "pistol-squat": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "pistol-squat-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "pistol-squat-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "pistol-squat-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "pistol-squat-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "pistol-squat-t100.png"
+      }
+    ],
     "preacher-curl": [
       {
         "t": 0,
@@ -1276,6 +1411,33 @@
         "file": "seated-row-t100.png"
       }
     ],
+    "single-leg-calf-raise": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "single-leg-calf-raise-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "single-leg-calf-raise-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "single-leg-calf-raise-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "single-leg-calf-raise-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "single-leg-calf-raise-t100.png"
+      }
+    ],
     "sissy-squat": [
       {
         "t": 0,
@@ -1409,6 +1571,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "superman-hold-t100.png"
+      }
+    ],
+    "thrusters": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "thrusters-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "thrusters-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "thrusters-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "thrusters-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "thrusters-t100.png"
       }
     ],
     "toe-touches": [

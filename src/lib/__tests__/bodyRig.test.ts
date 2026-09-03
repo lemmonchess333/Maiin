@@ -1060,6 +1060,14 @@ describe("renderBodyDemo", () => {
       "nordic-hamstring-curl": "lockout",
       "glute-ham-raise": "lockout",
       "sissy-squat": "lockout",
+      // Batch 7.
+      "barbell-floor-press": "lockout",
+      "single-leg-calf-raise": "stretch",
+      "donkey-calf-raise": "stretch",
+      "barbell-step-ups": "stretch",
+      "pistol-squat": "lockout",
+      thrusters: "stretch",
+      "chest-supported-db-row": "stretch",
     };
     expect(Object.keys(START).sort()).toEqual(Object.keys(BODY_DEMOS).sort());
     for (const [id, expected] of Object.entries(START)) {
@@ -2190,6 +2198,218 @@ describe("renderBodyDemo", () => {
         ).toBeLessThan(0.5);
       }
     }
+
+    /* Batch 7: floor, box, one leg, the thruster. */
+    // floor press: "upper arms touch the floor" at the bottom (the elbow
+    // at shoulder height, i.e. the floor); full lockout at the top.
+    {
+      const id = "barbell-floor-press";
+      const p0 = at(id, 0);
+      const S0 = pt(SIDE_ANCHORS.shoulder, p0.torso);
+      const E0 = pt(SIDE_ANCHORS.elbow, p0.foreArmL);
+      expect(
+        Math.abs(E0[1] - S0[1]),
+        "floor press: upper arm on the floor"
+      ).toBeLessThan(3);
+      expect(
+        E0[0] - S0[0],
+        "floor press: elbow toward the feet"
+      ).toBeGreaterThan(20);
+      const p1 = at(id, 1);
+      const S1 = pt(SIDE_ANCHORS.shoulder, p1.torso);
+      const H1 = pt(SIDE_ANCHORS.hand, p1.handL);
+      expect(
+        Math.hypot(H1[0] - S1[0], H1[1] - S1[1]),
+        "floor press: full lockout"
+      ).toBeGreaterThan(62);
+      expect(
+        S1[1] - H1[1],
+        "floor press: bar straight up over the shoulder"
+      ).toBeGreaterThan(60);
+    }
+    // single-leg calf raise: the working ball planted, heel dropping
+    // below the block at the stretch; the other foot off the step every
+    // frame; hands still on the rail.
+    {
+      const id = "single-leg-calf-raise";
+      stationary(id, CALF_BALL, "shankL", "one-leg calf: ball planted");
+      stationary(
+        id,
+        SIDE_ANCHORS.hand,
+        "handL",
+        "one-leg calf: hands still on the rail"
+      );
+      // Same pivot as the two-leg raise, so the heel drops exactly as far
+      // below the block as that demo's own pins hold it to.
+      expect(
+        pt(SIDE_ANCHORS.ankle, at(id, 0).shankL)[1] -
+          pt(SIDE_ANCHORS.ankle, at("calf-raise", 0).shankL)[1],
+        "one-leg calf: heel drops as the two-leg raise does"
+      ).toBeLessThan(0.01);
+      for (const t of [0, 0.5, 1]) {
+        const far = pt(SIDE_ANCHORS.ankle, at(id, t).shankR);
+        expect(
+          far[1],
+          `one-leg calf: far foot off the step @${t}`
+        ).toBeLessThan(CALF_BLOCK_TOP - 20);
+      }
+    }
+    // donkey calf raise: "hinge forward to about 90°" held; ball planted;
+    // hands still on the rail; heel rises.
+    {
+      const id = "donkey-calf-raise";
+      stationary(id, CALF_BALL, "shankL", "donkey: ball planted");
+      stationary(id, SIDE_ANCHORS.hand, "handL", "donkey: hands on the rail");
+      for (const t of [0, 1]) {
+        const p = at(id, t);
+        expect(
+          Math.abs(
+            lineDeg(
+              pt(SIDE_ANCHORS.hip, p.pelvis),
+              pt(SIDE_ANCHORS.shoulder, p.torso)
+            )
+          ),
+          `donkey: trunk horizontal @${t}`
+        ).toBeLessThan(8);
+      }
+      const a0 = pt(SIDE_ANCHORS.ankle, at(id, 0).shankL);
+      const a1 = pt(SIDE_ANCHORS.ankle, at(id, 1).shankL);
+      expect(a0[1] - a1[1], "donkey: heel rises").toBeGreaterThan(5);
+    }
+    // step-ups: the front foot planted on the box; the trailing foot on
+    // the floor at the start and on the box at the finish; the hip rises
+    // a box height; the bar rides the traps.
+    {
+      const id = "barbell-step-ups";
+      stationary(
+        id,
+        SIDE_ANCHORS.ankle,
+        "shankL",
+        "step-up: front foot on the box"
+      );
+      const b0 = pt(SIDE_ANCHORS.ankle, at(id, 0).shankR);
+      const b1 = pt(SIDE_ANCHORS.ankle, at(id, 1).shankR);
+      expect(
+        b0[1],
+        "step-up: trailing foot on the floor at the start"
+      ).toBeGreaterThan(190);
+      expect(
+        Math.abs(b1[1] - pt(SIDE_ANCHORS.ankle, at(id, 1).shankL)[1]),
+        "step-up: both feet on the box at the finish"
+      ).toBeLessThan(1);
+      const h0 = pt(SIDE_ANCHORS.hip, at(id, 0).pelvis);
+      const h1 = pt(SIDE_ANCHORS.hip, at(id, 1).pelvis);
+      expect(h0[1] - h1[1], "step-up: stands up a box height").toBeGreaterThan(
+        40
+      );
+      for (const t of [0, 1]) {
+        const p = at(id, t);
+        const bar = BODY_DEMOS[id].bar!(t, p)![0];
+        const rack = pt(BACK_RACK, p.torso);
+        expect(
+          Math.hypot(bar[0] - rack[0], bar[1] - rack[1]),
+          `step-up: bar on the traps @${t}`
+        ).toBeLessThan(0.01);
+      }
+    }
+    // pistol: working foot planted; the other leg straight out and off
+    // the floor every frame; "butt nearly touches the heel" at the bottom.
+    {
+      const id = "pistol-squat";
+      stationary(
+        id,
+        SIDE_ANCHORS.ankle,
+        "shankL",
+        "pistol: working foot planted"
+      );
+      for (const t of [0, 0.5, 1]) {
+        const p = at(id, t);
+        const far = pt(SIDE_ANCHORS.ankle, p.shankR);
+        const hip = pt(SIDE_ANCHORS.hip, p.pelvis);
+        expect(far[1], `pistol: free foot off the floor @${t}`).toBeLessThan(
+          180
+        );
+        expect(
+          far[0] - hip[0],
+          `pistol: free leg out in front @${t}`
+        ).toBeGreaterThan(60);
+      }
+      const p1 = at(id, 1);
+      const hip = pt(SIDE_ANCHORS.hip, p1.pelvis);
+      const heel = pt(SIDE_ANCHORS.ankle, p1.shankL);
+      expect(
+        Math.hypot(hip[0] - heel[0], hip[1] - heel[1]),
+        "pistol: butt to the heel"
+      ).toBeLessThan(42);
+    }
+    // thrusters: parallel at the bottom with the bar racked; standing at
+    // the midpoint with the bar still at the shoulder; overhead lockout
+    // at the top, standing tall.
+    {
+      const id = "thrusters";
+      const p0 = at(id, 0);
+      expect(
+        pt(SIDE_ANCHORS.hip, p0.pelvis)[1],
+        "thruster: parallel at the bottom"
+      ).toBeGreaterThan(pt(SIDE_ANCHORS.knee, p0.thighL)[1] - 2);
+      const rack = (t: number) => {
+        const p = at(id, t);
+        const S = pt(SIDE_ANCHORS.shoulder, p.torso);
+        const H = pt(SIDE_ANCHORS.hand, p.handL);
+        return Math.hypot(H[0] - S[0], H[1] - S[1]);
+      };
+      expect(rack(0), "thruster: bar racked at the bottom").toBeLessThan(12);
+      expect(
+        rack(0.5),
+        "thruster: bar still racked when standing"
+      ).toBeLessThan(12);
+      const mid = at(id, 0.5);
+      expect(
+        Math.hypot(
+          pt(SIDE_ANCHORS.hip, mid.pelvis)[0] - SIDE_ANCHORS.hip[0],
+          pt(SIDE_ANCHORS.hip, mid.pelvis)[1] - SIDE_ANCHORS.hip[1]
+        ),
+        "thruster: standing at the midpoint"
+      ).toBeLessThan(0.01);
+      const p1 = at(id, 1);
+      const S1 = pt(SIDE_ANCHORS.shoulder, p1.torso);
+      const H1 = pt(SIDE_ANCHORS.hand, p1.handL);
+      expect(S1[1] - H1[1], "thruster: bar overhead").toBeGreaterThan(60);
+      expect(elbowDeg(id, 1), "thruster: locked out").toBeGreaterThan(160);
+    }
+    // chest-supported row: the chest (shoulder) never leaves the pad;
+    // feet planted; plumb straight arms at the stretch; hands at the
+    // hips at the top with the elbow up and back.
+    {
+      const id = "chest-supported-db-row";
+      stationary(
+        id,
+        SIDE_ANCHORS.shoulder,
+        "torso",
+        "CS row: chest on the pad"
+      );
+      stationary(id, SIDE_ANCHORS.ankle, "shankL", "CS row: feet planted");
+      const p0 = at(id, 0);
+      const S0 = pt(SIDE_ANCHORS.shoulder, p0.torso);
+      const H0 = pt(SIDE_ANCHORS.hand, p0.handL);
+      expect(
+        Math.abs(lineDeg(S0, H0) - 90),
+        "CS row: arms plumb at the stretch"
+      ).toBeLessThan(5);
+      expect(
+        elbowDeg(id, 0),
+        "CS row: straight at the stretch"
+      ).toBeGreaterThan(158);
+      const p1 = at(id, 1);
+      const hip = pt(SIDE_ANCHORS.hip, p1.pelvis);
+      const H1 = pt(SIDE_ANCHORS.hand, p1.handL);
+      const E1 = pt(SIDE_ANCHORS.elbow, p1.foreArmL);
+      expect(
+        Math.hypot(H1[0] - hip[0], H1[1] - hip[1]),
+        "CS row: hand at the hip"
+      ).toBeLessThan(14);
+      expect(E1[1], "CS row: elbow driven up").toBeLessThan(H1[1]);
+    }
   });
 
   it("the foot has a heel, an arch and a toe — not a wedge", () => {
@@ -2746,6 +2966,13 @@ describe("tint honesty", () => {
       "nordic-hamstring-curl": "hamstring",
       "glute-ham-raise": "hamstring",
       "sissy-squat": "quadriceps",
+      "barbell-floor-press": "chest",
+      "single-leg-calf-raise": "calves",
+      "donkey-calf-raise": "calves",
+      "barbell-step-ups": "quadriceps",
+      "pistol-squat": "quadriceps",
+      thrusters: "quadriceps",
+      "chest-supported-db-row": "upper-back",
     };
     for (const [id, muscle] of Object.entries(expectPrimary)) {
       expect(BODY_DEMOS[id].tint[muscle], `${id} primary`).toBe("primary");
