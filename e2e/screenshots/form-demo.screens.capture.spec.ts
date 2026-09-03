@@ -69,6 +69,10 @@ const DEMOS: [id: string, name: string][] = [
   ["landmine-press", "Landmine Press"],
   ["pike-push-up", "Pike Push-Up"],
   ["dragon-flag", "Dragon Flag"],
+  // Batch 10: a hold drawn as its set-up, and the two-phase transition.
+  ["plank", "Plank"],
+  ["muscle-ups", "Muscle-Ups"],
+  ["clean-and-press", "Clean and Press"],
 ];
 
 test.use({

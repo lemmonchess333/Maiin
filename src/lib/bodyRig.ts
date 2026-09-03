@@ -1497,6 +1497,72 @@ const DRAGON_BENCH_Y = 150;
 const ELBOW_HIGH = (a: Pt, b: Pt): Pt => (a[1] < b[1] ? a : b);
 const ELBOW_FRONT = (a: Pt, b: Pt): Pt => (a[0] > b[0] ? a : b);
 
+/* Forearm plank set-up — the shoulder fixed over the elbow on the
+ * floor, the feet extending back as the hips lift from a sag into one
+ * line. The hip is the apex of a leg-and-trunk pair between the fixed
+ * shoulder and the (sliding) ankle, low branch, so it sags when the
+ * feet are in and lies on the line when they are out. */
+const PLANK_SHOULDER: Pt = [86, 164];
+/** Body line above the floor at the hold. */
+const PLANK_LINE_DEG = 11;
+/** How far the feet start in (the sag) before extending back. */
+const PLANK_FEET_IN = 3;
+function plankPose(e: number): Partial<Record<GroupName, Op[]>> {
+  const S = PLANK_SHOULDER;
+  const total = (LEG_LEN + TRUNK_LEN) * 0.998;
+  const rad = (PLANK_LINE_DEG * Math.PI) / 180;
+  const A1: Pt = [S[0] - total * Math.cos(rad), S[1] + total * Math.sin(rad)];
+  const A: Pt = [lerp(A1[0] + PLANK_FEET_IN, A1[0], e), A1[1]];
+  const hip = ELBOW_LOW(
+    solveElbow(A, S, LEG_LEN, TRUNK_LEN, 1),
+    solveElbow(A, S, LEG_LEN, TRUNK_LEN, -1)
+  );
+  const torso = trunkBetween(hip, S);
+  const leg = plantedLeg(hip, A, KNEE_LOW);
+  // Forearm flat on the floor ahead of the elbow, elbow under the shoulder.
+  const arm = armToWorld(torso, [S[0] + 30, MACHINE_FLOOR - 2], ELBOW_LOW);
+  return {
+    head: torso,
+    torso,
+    pelvis: torso,
+    thighL: leg.thigh,
+    thighR: leg.thigh,
+    shankL: leg.shank,
+    shankR: leg.shank,
+    upperArmL: arm.upper,
+    foreArmL: arm.fore,
+    handL: arm.fore,
+    upperArmR: arm.upper,
+    foreArmR: arm.fore,
+    handR: arm.fore,
+  };
+}
+
+const LSIT_HIP: Pt = [44, 178];
+const LSIT_HAND: Pt = [55.5, 188];
+
+/** The muscle-up's shoulder path: a straight-arm hang, up to the bar
+ *  (chest at it, shoulder just below and behind), over it, to one
+ *  straight arm ABOVE it. Hands never leave the bar. */
+const MUSCLE_UP_BAR: Pt = [50, 10];
+function muscleUpShoulder(e: number): Pt {
+  const B = MUSCLE_UP_BAR;
+  const hang: Pt = [B[0] - 4, B[1] + STRAIGHT_ARM];
+  const atBar: Pt = [B[0] - 10, B[1] + 10];
+  const over: Pt = [B[0] + 4, B[1] - 12];
+  const top: Pt = [B[0] - 2, B[1] - STRAIGHT_ARM];
+  if (e < 0.5) {
+    const k = smooth(e * 2);
+    return [lerp(hang[0], atBar[0], k), lerp(hang[1], atBar[1], k)];
+  }
+  if (e < 0.65) {
+    const k = (e - 0.5) / 0.15;
+    return [lerp(atBar[0], over[0], k), lerp(atBar[1], over[1], k)];
+  }
+  const k = smooth((e - 0.65) / 0.35);
+  return [lerp(over[0], top[0], k), lerp(over[1], top[1], k)];
+}
+
 function sideSquatChain(
   e: number,
   hingeDeg: number,
@@ -6034,6 +6100,262 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       `<line x1="-76" y1="${DRAGON_BENCH_Y + 8}" x2="-50" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
       `<line x1="34" y1="${DRAGON_BENCH_Y + 8}" x2="34" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
       `<line x1="-70" y1="${MACHINE_FLOOR + 1}" x2="120" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  /* ── 2026-09-03 build-out, batch 10: holds with a set-up, two transitions ── */
+
+  plank: {
+    /* "Get on your forearms, elbows directly under your shoulders.
+     * Extend your legs back, tuck your toes under, and lift your hips
+     * off the floor. Make one straight line from the back of your head
+     * to your heels ... hold for time." A hold has no rep, but its first
+     * three instructions are a MOTION, and that is what is drawn: the
+     * shoulder fixed over the elbow on the floor, the feet extending
+     * back as the hips lift from the floor into the line. */
+    view: "side",
+    viewBox: "-90 40 220 168",
+    groundY: 204,
+    shadowCx: 20,
+    shadowRx: 70,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: {
+      abs: "primary",
+      gluteal: "secondary",
+      "front-deltoids": "secondary",
+    },
+    pose: (e) => plankPose(e),
+    scene: () =>
+      `<line x1="-90" y1="${MACHINE_FLOOR + 1}" x2="130" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  "weighted-plank": {
+    /* "Get into a forearm plank ... have a partner place a plate on your
+     * upper back over the shoulder blades ... hold rigid for time." The
+     * plank's set-up with the plate on the upper back once the line is
+     * made — drawn on the back, over the shoulder blades, riding the
+     * trunk. */
+    view: "side",
+    viewBox: "-90 40 220 168",
+    groundY: 204,
+    shadowCx: 20,
+    shadowRx: 70,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { abs: "primary", gluteal: "secondary", "upper-back": "secondary" },
+    pose: (e) => plankPose(e),
+    scene: (_e, pose) => {
+      // The plate: a slab on the back over the shoulder blades, in trunk
+      // space so it rides the line.
+      const c = applyToPoint(
+        [SIDE_ANCHORS.shoulder[0] - 14, SIDE_ANCHORS.shoulder[1] + 12],
+        pose.torso ?? []
+      );
+      const S = applyToPoint(SIDE_ANCHORS.shoulder, pose.torso ?? []);
+      const hip = applyToPoint(SIDE_ANCHORS.hip, pose.pelvis ?? []);
+      const ang = (Math.atan2(S[1] - hip[1], S[0] - hip[0]) * 180) / Math.PI;
+      return (
+        `<line x1="-90" y1="${MACHINE_FLOOR + 1}" x2="130" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>` +
+        `<rect x="${(c[0] - 11).toFixed(1)}" y="${(c[1] - 7).toFixed(1)}" width="22" height="5" rx="1.6" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="0.8" transform="rotate(${ang.toFixed(1)} ${c[0].toFixed(1)} ${c[1].toFixed(1)})"/>`
+      );
+    },
+  },
+
+  "l-sit": {
+    /* "Support yourself on parallel bars or the floor with straight
+     * arms, shoulders packed. Raise your legs straight out in front of
+     * you until they're parallel to the ground ... hold." Straight arms
+     * down to parallettes with the hips off the floor; the legs, kept
+     * straight, swing from heels-on-the-floor to horizontal. */
+    view: "side",
+    viewBox: "-12 -6 176 218",
+    groundY: 204,
+    shadowCx: 70,
+    shadowRx: 50,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: {
+      abs: "primary",
+      triceps: "secondary",
+      "front-deltoids": "secondary",
+    },
+    pose: (e) => {
+      const body: Op[] = [
+        {
+          kind: "translate",
+          dx: LSIT_HIP[0] - SIDE_ANCHORS.hip[0],
+          dy: LSIT_HIP[1] - SIDE_ANCHORS.hip[1],
+        },
+      ];
+      const legs: Op[] = [
+        { kind: "rotate", deg: lerp(-77, -92, e), pivot: SIDE_ANCHORS.hip },
+        ...body,
+      ];
+      const arm = armToWorld(body, LSIT_HAND, ELBOW_BACK);
+      return {
+        head: body,
+        torso: body,
+        pelvis: body,
+        thighL: legs,
+        thighR: legs,
+        shankL: legs,
+        shankR: legs,
+        upperArmL: arm.upper,
+        foreArmL: arm.fore,
+        handL: arm.fore,
+        upperArmR: arm.upper,
+        foreArmR: arm.fore,
+        handR: arm.fore,
+      };
+    },
+    scene: () =>
+      // Parallettes: a short bar under each hand (one in profile) on two feet.
+      `<line x1="${LSIT_HAND[0] - 14}" y1="${LSIT_HAND[1] + 3}" x2="${LSIT_HAND[0] + 14}" y2="${LSIT_HAND[1] + 3}" stroke="${GEAR}" stroke-width="3.2" stroke-linecap="round"/>` +
+      `<line x1="${LSIT_HAND[0] - 10}" y1="${LSIT_HAND[1] + 4}" x2="${LSIT_HAND[0] - 10}" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="2.4"/>` +
+      `<line x1="${LSIT_HAND[0] + 10}" y1="${LSIT_HAND[1] + 4}" x2="${LSIT_HAND[0] + 10}" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="2.4"/>` +
+      `<line x1="-12" y1="${MACHINE_FLOOR + 1}" x2="164" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  "muscle-ups": {
+    /* "Hang from the bar ... pull yourself up explosively, leaning back
+     * ... roll your wrists forward over the bar as chest passes it.
+     * Press up to full lockout above the bar, then lower with control."
+     * Two halves on one e: a pull (the shoulder rising to the bar, body
+     * leaned back) then the transition and press (the shoulder passing
+     * over the bar to one straight arm ABOVE it). Hands fixed on the
+     * bar throughout; the elbow branch flips at the bar, which is where
+     * the wrists roll. */
+    view: "side",
+    // The bar is drawn as an end-on grip hanging from its stem, IN FRONT
+    // of the body: at lockout the thighs pass in front of the bar's
+    // height, and a scene-drawn bar vanished behind them.
+    equip: "cable-handle",
+    pulley: [MUSCLE_UP_BAR[0], -100],
+    viewBox: "-50 -100 220 350",
+    groundY: 246,
+    shadowCx: 50,
+    shadowRx: 34,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { "upper-back": "primary", chest: "secondary", triceps: "secondary" },
+    pose: (e) => {
+      const S = muscleUpShoulder(e);
+      const lean = e < 0.5 ? lerp(-4, -16, e * 2) : lerp(-16, 0, (e - 0.5) * 2);
+      const body: Op[] = [
+        { kind: "rotate", deg: lean, pivot: SIDE_ANCHORS.shoulder },
+        {
+          kind: "translate",
+          dx: S[0] - SIDE_ANCHORS.shoulder[0],
+          dy: S[1] - SIDE_ANCHORS.shoulder[1],
+        },
+      ];
+      const arm = armToWorld(
+        body,
+        MUSCLE_UP_BAR,
+        e < 0.5 ? ELBOW_FRONT : ELBOW_BACK
+      );
+      return {
+        head: body,
+        torso: body,
+        pelvis: body,
+        thighL: body,
+        thighR: body,
+        shankL: body,
+        shankR: body,
+        upperArmL: arm.upper,
+        foreArmL: arm.fore,
+        handL: arm.fore,
+        upperArmR: arm.upper,
+        foreArmR: arm.fore,
+        handR: arm.fore,
+      };
+    },
+    bar: () => [MUSCLE_UP_BAR, MUSCLE_UP_BAR],
+    scene: () =>
+      `<line x1="-40" y1="247" x2="150" y2="247" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  "clean-and-press": {
+    /* "Set up over the bar like a deadlift ... explosively extend hips
+     * and catch the bar on your front delts. Dip into a quarter squat
+     * and drive the bar overhead to lockout. Lower to shoulders, then to
+     * the floor." Three movements on one e, in the order the
+     * instructions give them: the deadlift's own hinge to standing
+     * (0-0.4), the catch — hands from the hang to the front rack (0.3-
+     * 0.45) — then the thruster's dip and press (0.45-1). Played back
+     * the other way it is instruction 4. */
+    view: "side",
+    equip: "plate-end",
+    plateR: 14,
+    viewBox: "-24 -40 192 250",
+    groundY: 204,
+    shadowCx: 56,
+    shadowRx: 44,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: {
+      hamstring: "primary",
+      gluteal: "primary",
+      "front-deltoids": "primary",
+      quadriceps: "secondary",
+      triceps: "secondary",
+    },
+    pose: (e) => {
+      const pullE = clamp01(1 - e / 0.4); // deadlift depth: 1 at e=0 → 0 at 0.4
+      const catchE = smooth((e - 0.3) / 0.15); // hang → rack
+      const dipE =
+        e < 0.45
+          ? 0
+          : e < 0.6
+            ? smooth((e - 0.45) / 0.15)
+            : smooth(1 - (e - 0.6) / 0.25);
+      const pressE = clamp01((e - 0.6) / 0.4);
+      // Legs + trunk: the hinge until standing, then the dip.
+      const lift = hingeLift(pullE, pullE, 70, -64, 8, lerp(8, -5, pullE));
+      const dip = sideSquatChain(dipE * 0.35, 8);
+      const standing = e >= 0.45;
+      const torso = standing ? dip.torsoOps : lift.torso!;
+      const head = standing ? dip.headOps : lift.head!;
+      const pelvis = standing ? dip.pelvisOps : lift.pelvis!;
+      const thigh = standing ? dip.thighOps : lift.thighL!;
+      const shank = standing ? dip.legOps : lift.shankL!;
+      // Hands, in WORLD: hanging plumb from the shoulder through the
+      // pull (the deadlift's own bar line), to the front rack over the
+      // catch, then overhead — the rack and overhead points ride the
+      // trunk.
+      const Sw = applyToPoint(SIDE_ANCHORS.shoulder, torso);
+      const hangW: Pt = [Sw[0] + lerp(8, -5, pullE), Sw[1] + STRAIGHT_ARM];
+      const rackW = applyToPoint(FRONT_RACK, torso);
+      const overW = applyToPoint(OVERHEAD, torso);
+      const caughtW: Pt = [
+        lerp(hangW[0], rackW[0], catchE),
+        lerp(hangW[1], rackW[1], catchE),
+      ];
+      const HW: Pt = [
+        lerp(caughtW[0], overW[0], pressE),
+        lerp(caughtW[1], overW[1], pressE),
+      ];
+      const arm = armToWorld(torso, HW, ELBOW_FRONT);
+      return {
+        head,
+        torso,
+        pelvis,
+        thighL: thigh,
+        thighR: thigh,
+        shankL: shank,
+        shankR: shank,
+        upperArmL: arm.upper,
+        foreArmL: arm.fore,
+        handL: arm.fore,
+        upperArmR: arm.upper,
+        foreArmR: arm.fore,
+        handR: arm.fore,
+      };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
   },
 };
 
