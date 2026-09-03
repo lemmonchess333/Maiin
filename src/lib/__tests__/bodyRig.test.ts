@@ -1031,6 +1031,16 @@ describe("renderBodyDemo", () => {
       "seated-row": "stretch",
       "leg-extension": "stretch",
       "seated-leg-curl": "stretch",
+      // Batch 4: curls start hanging, the sleds and the decline press
+      // start at lockout, the rack pull starts on the pins.
+      "preacher-curl": "stretch",
+      "concentration-curl": "stretch",
+      "incline-db-curl": "stretch",
+      "leg-press": "lockout",
+      "hack-squat": "lockout",
+      "rack-pull": "stretch",
+      "decline-bench": "lockout",
+      "decline-db-press": "lockout",
     };
     expect(Object.keys(START).sort()).toEqual(Object.keys(BODY_DEMOS).sort());
     for (const [id, expected] of Object.entries(START)) {
@@ -1499,6 +1509,210 @@ describe("renderBodyDemo", () => {
       expect(a[1], "leg curl: heel driven down").toBeGreaterThan(k[1] + 30);
       expect(a[0], "leg curl: heel driven back").toBeLessThan(k[0]);
     }
+
+    /* Batch 4: pads, sleds, a rack. */
+    const stationary = (
+      id: string,
+      anchor: readonly [number, number],
+      group: string,
+      label: string
+    ) => {
+      const p0 = pt(anchor, (at(id, 0) as Record<string, unknown>)[group]);
+      for (const t of [0.25, 0.5, 0.75, 1]) {
+        const p = pt(anchor, (at(id, t) as Record<string, unknown>)[group]);
+        expect(
+          Math.hypot(p[0] - p0[0], p[1] - p0[1]),
+          `${label} @${t}`
+        ).toBeLessThan(0.01);
+      }
+    };
+    // preacher curl: "upper arms flat on the pad" — the elbow never moves;
+    // "just short of full extension" at the bottom; "up to shoulder
+    // height" at the top.
+    {
+      const id = "preacher-curl";
+      stationary(
+        id,
+        SIDE_ANCHORS.elbow,
+        "foreArmL",
+        "preacher: elbow on the pad"
+      );
+      expect(
+        elbowDeg(id, 0),
+        "preacher: short of full extension"
+      ).toBeGreaterThan(156);
+      expect(elbowDeg(id, 0), "preacher: short of full extension").toBeLessThan(
+        172
+      );
+      const p1 = at(id, 1);
+      const S = pt(SIDE_ANCHORS.shoulder, p1.torso);
+      const H = pt(SIDE_ANCHORS.hand, p1.handL);
+      expect(
+        Math.abs(H[1] - S[1]),
+        "preacher: bar at shoulder height"
+      ).toBeLessThan(8);
+    }
+    // concentration curl: the upper arm is braced against the thigh
+    // (elbow stationary); "straight arm" at the hang; "up to your
+    // shoulder" at the top.
+    {
+      const id = "concentration-curl";
+      stationary(
+        id,
+        SIDE_ANCHORS.elbow,
+        "foreArmL",
+        "concentration: elbow braced"
+      );
+      expect(elbowDeg(id, 0), "concentration: straight arm").toBeGreaterThan(
+        172
+      );
+      const p1 = at(id, 1);
+      const S = pt(SIDE_ANCHORS.shoulder, p1.torso);
+      const H = pt(SIDE_ANCHORS.hand, p1.handL);
+      expect(
+        Math.hypot(H[0] - S[0], H[1] - S[1]),
+        "concentration: to the shoulder"
+      ).toBeLessThan(24);
+    }
+    // incline curl: "sit back" — the shoulder sits well behind the hip
+    // (the stretch); "without letting your upper arms move forward" —
+    // the elbow is stationary and the upper arm hangs plumb-or-behind.
+    {
+      const id = "incline-db-curl";
+      stationary(
+        id,
+        SIDE_ANCHORS.elbow,
+        "foreArmL",
+        "incline curl: upper arm fixed"
+      );
+      const p0 = at(id, 0);
+      const S = pt(SIDE_ANCHORS.shoulder, p0.torso);
+      const hip = pt(SIDE_ANCHORS.hip, p0.pelvis);
+      const E = pt(SIDE_ANCHORS.elbow, p0.foreArmL);
+      expect(
+        hip[0] - S[0],
+        "incline curl: shoulder behind the hip"
+      ).toBeGreaterThan(25);
+      expect(
+        E[0],
+        "incline curl: upper arm hangs plumb or behind"
+      ).toBeLessThan(S[0] + 1);
+      expect(
+        Math.abs(lineDeg(S, E) - 90),
+        "incline curl: upper arm near plumb"
+      ).toBeLessThan(8);
+    }
+    // leg press: the hip never leaves the seat; the platform travels the
+    // 45-degree track; lockout is a soft knee ("without fully locking");
+    // the bottom is deep ("thighs near your ribs").
+    {
+      const id = "leg-press";
+      stationary(id, SIDE_ANCHORS.hip, "pelvis", "leg press: hips on the seat");
+      for (const t of [0, 0.5, 1]) {
+        const p = at(id, t);
+        const hip = pt(SIDE_ANCHORS.hip, p.pelvis);
+        const a = pt(SIDE_ANCHORS.ankle, p.shankL);
+        expect(
+          Math.abs(lineDeg(hip, a) + 45),
+          `leg press: foot on the 45° track @${t}`
+        ).toBeLessThan(2);
+      }
+      expect(kneeDeg(id, 0), "leg press: soft lockout").toBeGreaterThan(125);
+      expect(kneeDeg(id, 0), "leg press: never locked").toBeLessThan(
+        REST_KNEE - 12
+      );
+      expect(kneeDeg(id, 1), "leg press: deep").toBeLessThan(70);
+    }
+    // hack squat: the feet never leave the platform; the top is soft;
+    // "thighs parallel to the platform" at the bottom.
+    {
+      const id = "hack-squat";
+      stationary(
+        id,
+        SIDE_ANCHORS.ankle,
+        "shankL",
+        "hack squat: feet on the platform"
+      );
+      expect(kneeDeg(id, 0), "hack squat: soft top").toBeGreaterThan(138);
+      expect(kneeDeg(id, 0), "hack squat: never locked hard").toBeLessThan(
+        REST_KNEE - 6
+      );
+      const p1 = at(id, 1);
+      const hip = pt(SIDE_ANCHORS.hip, p1.pelvis);
+      const knee = pt(SIDE_ANCHORS.knee, p1.thighL);
+      expect(
+        Math.abs(lineDeg(hip, knee)),
+        "hack squat: thighs parallel at the bottom"
+      ).toBeLessThan(12);
+    }
+    // rack pull: "the bar sits just below your knees" on the pins —
+    // just under and just ahead of the knee at the bottom; the top is
+    // the deadlift's own standing lockout (hip back at rest).
+    {
+      const id = "rack-pull";
+      const p1 = at(id, 1);
+      const knee = pt(SIDE_ANCHORS.knee, p1.thighL);
+      const bar = BODY_DEMOS[id].bar!(1, p1)![0];
+      expect(
+        bar[1] - knee[1],
+        "rack pull: bar just below the knee"
+      ).toBeGreaterThan(3);
+      expect(
+        bar[1] - knee[1],
+        "rack pull: bar just below the knee"
+      ).toBeLessThan(12);
+      expect(bar[0] - knee[0], "rack pull: bar at the shin").toBeGreaterThan(0);
+      expect(bar[0] - knee[0], "rack pull: bar at the shin").toBeLessThan(14);
+      const hip0 = pt(SIDE_ANCHORS.hip, at(id, 0).pelvis);
+      expect(
+        Math.hypot(
+          hip0[0] - SIDE_ANCHORS.hip[0],
+          hip0[1] - SIDE_ANCHORS.hip[1]
+        ),
+        "rack pull: standing at the top"
+      ).toBeLessThan(0.01);
+    }
+    // decline press: the trunk is declined 15-25 degrees (head below the
+    // hip); the bar travels perpendicular to it; the bottom is on the
+    // LOWER chest (hip-ward of the shoulder along the trunk); lockout is
+    // a full arm.
+    for (const id of ["decline-bench", "decline-db-press"]) {
+      const p0 = at(id, 0);
+      const p1 = at(id, 1);
+      const sh = pt(SIDE_ANCHORS.shoulder, p1.torso);
+      const hip = pt(SIDE_ANCHORS.hip, p1.pelvis);
+      expect(sh[1] - hip[1], `${id}: head below the hip`).toBeGreaterThan(0);
+      const decline = Math.abs(lineDeg(hip, sh)) - 180 + 0; // hip→shoulder points down-left
+      const declineDeg = Math.abs(180 - Math.abs(lineDeg(hip, sh)));
+      void decline;
+      expect(declineDeg, `${id}: decline angle`).toBeGreaterThan(15);
+      expect(declineDeg, `${id}: decline angle`).toBeLessThan(25);
+      const hand1 = pt(SIDE_ANCHORS.hand, p1.handL);
+      const trunk = lineDeg(hip, sh);
+      const press = lineDeg(sh, hand1);
+      let d = Math.abs(((press - trunk) % 360) + 360) % 360;
+      if (d > 180) d = 360 - d;
+      expect(
+        Math.abs(d - 90),
+        `${id}: press perpendicular to the trunk`
+      ).toBeLessThan(14);
+      expect(
+        Math.hypot(hand1[0] - sh[0], hand1[1] - sh[1]),
+        `${id}: lockout reach`
+      ).toBeGreaterThan(62);
+      // Bottom: the hand sits hip-ward of the shoulder along the trunk.
+      const sh0 = pt(SIDE_ANCHORS.shoulder, p0.torso);
+      const hip0 = pt(SIDE_ANCHORS.hip, p0.pelvis);
+      const hand0 = pt(SIDE_ANCHORS.hand, p0.handL);
+      const ux =
+        (hip0[0] - sh0[0]) / Math.hypot(hip0[0] - sh0[0], hip0[1] - sh0[1]);
+      const uy =
+        (hip0[1] - sh0[1]) / Math.hypot(hip0[0] - sh0[0], hip0[1] - sh0[1]);
+      expect(
+        (hand0[0] - sh0[0]) * ux + (hand0[1] - sh0[1]) * uy,
+        `${id}: bottom on the lower chest`
+      ).toBeGreaterThan(4);
+    }
   });
 
   it("the foot has a heel, an arch and a toe — not a wedge", () => {
@@ -1735,7 +1949,7 @@ describe("renderBodyDemo", () => {
     // while the near arm presses — which is what this catches.
     // The kickback is unilateral by its own instruction ("one knee and
     // hand on a bench"): the far arm is the support and poses on its own.
-    const UNILATERAL = new Set(["tricep-kickback"]);
+    const UNILATERAL = new Set(["tricep-kickback", "concentration-curl"]);
     for (const [id, d] of Object.entries(BODY_DEMOS)) {
       if (d.view !== "side" || UNILATERAL.has(id)) continue;
       for (const t of [0, 0.5, 1]) {
@@ -2032,6 +2246,14 @@ describe("tint honesty", () => {
       "seated-row": "upper-back",
       "leg-extension": "quadriceps",
       "seated-leg-curl": "hamstring",
+      "preacher-curl": "biceps",
+      "concentration-curl": "biceps",
+      "incline-db-curl": "biceps",
+      "leg-press": "quadriceps",
+      "hack-squat": "quadriceps",
+      "rack-pull": "gluteal",
+      "decline-bench": "chest",
+      "decline-db-press": "chest",
     };
     for (const [id, muscle] of Object.entries(expectPrimary)) {
       expect(BODY_DEMOS[id].tint[muscle], `${id} primary`).toBe("primary");

@@ -1090,3 +1090,43 @@ Three things the numbers caught before a screenshot could:
 
 Capture channel: `face-pulls`, `seated-row`, `leg-extension` added to
 `form-demo.screens.capture.spec.ts`.
+
+## STATUS 2026-09-03e — build-out, batch 4: pads, sleds, a rack
+
+Coverage 57 → 65 of 152. Three pieces of shared machinery:
+
+- **`hingeLift`** — the deadlift's construction, extracted and
+  parameterised (per-joint progress, full-depth hinge / thigh / shin
+  angles, bar x offset). The deadlift calls it with exactly its old
+  numbers (its pins are untouched); the rack pull calls it with
+  shallower ones. The first rack-pull draft composed
+  `deadlift.pose(0.6·e)` instead, and the measurement said why that is
+  wrong: the deadlift's hinge leads its knees, so at 60% its shoulders
+  are 30 units ahead of the foot and the bar hangs 27 ahead of the knee
+  — a mid-rep position, not a start. The rack pull needs its OWN depth
+  angles (more knee, less hinge) to put the bar at the shin.
+- **`benchAnglePose`** — the incline chain generalised by bench angle,
+  hip height, chest offset and leg mode (planted feet vs hooked shins).
+  Incline is `-60`, decline `-115` (19.5° head-down) with the legs
+  hooked over the high end under rollers.
+- **Sled chains** — `legPressChain` (hip fixed, ankle slides a 45°
+  track, `plantedLeg` from the hip) and `hackSquatChain` (ankle fixed,
+  hip slides the pad line, `plantedLeg` to the platform). Same machine
+  seen two ways, and the same solve with the moving end swapped.
+
+| Demo                 | Chain                                       | Pinned claim (from its instructions)                                                |
+| -------------------- | ------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `preacher-curl`      | `seatedChain` + 45° pad under the upper arm | elbow STATIONARY; short of full extension (156-172°); bar at shoulder height        |
+| `concentration-curl` | `seatedChain` leaned 30, arm on the thigh   | elbow stationary; straight arm at the hang (>172°); hand within 24 of shoulder      |
+| `incline-db-curl`    | `seatedChain` reclined 45                   | shoulder >25 behind the hip; elbow stationary; upper arm plumb-or-behind (±8°)      |
+| `leg-press`          | `legPressChain`                             | hip stationary; foot on the 45° track (±2°); soft lockout 125°-(rest−12); deep <70  |
+| `hack-squat`         | `hackSquatChain`                            | feet stationary; soft top; thighs within 12° of horizontal at the bottom            |
+| `rack-pull`          | `hingeLift(62, −38, 5)`                     | bar 3-12 below and 0-14 ahead of the knee at the bottom; standing at the top        |
+| `decline-bench`      | `benchAnglePose(−115)`, hooked legs         | head below the hip, 15-25° decline; press ⊥ trunk (±14°); bottom on the LOWER chest |
+| `decline-db-press`   | same, bells                                 | same                                                                                |
+
+`concentration-curl` joins `tricep-kickback` in the far-arm UNILATERAL
+exemption: its far arm rests across the far thigh while the near one
+curls, by instruction.
+
+Capture channel: `preacher-curl`, `leg-press`, `decline-bench` added.
