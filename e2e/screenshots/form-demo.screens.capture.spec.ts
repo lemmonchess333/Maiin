@@ -77,6 +77,10 @@ const DEMOS: [id: string, name: string][] = [
   ["db-flyes", "Dumbbell Flyes"],
   ["pec-deck", "Pec Deck"],
   ["arnold-press", "Arnold Press"],
+  // Batch 12: legs on the front figure, the back figure, a top-down core.
+  ["hip-abduction-machine", "Hip Abduction Machine"],
+  ["reverse-pec-deck", "Reverse Pec Deck"],
+  ["dead-bug", "Dead Bug"],
 ];
 
 test.use({

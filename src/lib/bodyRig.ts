@@ -1786,6 +1786,14 @@ function antRest(side: "L" | "R"): { S: Pt; E: Pt; H: Pt; out: 1 | -1 } {
     ? { S: ANT.shoulderL, E: ANT.elbowL, H: ANT.handL, out: 1 }
     : { S: ANT.shoulderR, E: ANT.elbowR, H: ANT.handR, out: -1 };
 }
+function postRest(side: "L" | "R"): { S: Pt; E: Pt; H: Pt; out: 1 | -1 } {
+  return side === "L"
+    ? { S: POST.shoulderL, E: POST.elbowL, H: POST.handL, out: 1 }
+    : { S: POST.shoulderR, E: POST.elbowR, H: POST.handR, out: -1 };
+}
+/** Anterior hip joints: the thigh polygons' top centres. */
+const ANT_HIP_L: Pt = [37, 96];
+const ANT_HIP_R: Pt = [63, 96];
 /** The `scaleAxis` angle that scales ALONG direction `d` (its deg is
  *  measured from vertical in the rotate convention). */
 function axisDeg(d: Pt): number {
@@ -1800,23 +1808,119 @@ function antArmToward(
   hand: Pt,
   reach = 0.985
 ): { upper: Op[]; fore: Op[] } {
-  const r = antRest(side);
+  return armTowardOn(antRest(side), ANT_UPPER_LEN, ANT_FORE_LEN, hand, reach);
+}
+/** The same on the BACK figure (reverse flys and decks). */
+function postArmToward(
+  side: "L" | "R",
+  hand: Pt,
+  reach = 0.985
+): { upper: Op[]; fore: Op[] } {
+  return armTowardOn(
+    postRest(side),
+    POST_UPPER_LEN,
+    POST_FORE_LEN,
+    hand,
+    reach
+  );
+}
+function armTowardOn(
+  r: { S: Pt; E: Pt; H: Pt; out: 1 | -1 },
+  upperLen: number,
+  foreLen: number,
+  hand: Pt,
+  reach: number
+): { upper: Op[]; fore: Op[] } {
   const dx = hand[0] - r.S[0];
   const dy = hand[1] - r.S[1];
   const dist = Math.hypot(dx, dy) || 1;
   const d: Pt = [dx / dist, dy / dist];
-  const full = ANT_ARM_LEN * reach;
+  const full = (upperLen + foreLen) * reach;
   const k = Math.min(1, dist / full);
   const T: Pt = [r.S[0] + d[0] * full, r.S[1] + d[1] * full];
   const arm = aimArm(
     { S: r.S, E: r.E, H: r.H },
-    solveElbow(r.S, T, ANT_UPPER_LEN, ANT_FORE_LEN, r.out),
+    solveElbow(r.S, T, upperLen, foreLen, r.out),
     T,
     0
   );
   const scale: Op = { kind: "scaleAxis", k, deg: axisDeg(d), pivot: r.S };
   return { upper: [...arm.upper, scale], fore: [...arm.fore, scale] };
 }
+/** Anterior FOREARM aimed at a world hand from a world elbow (the upper
+ *  arm placed by `antElbowAt`-style ops or left at rest), foreshortened
+ *  when the hand sits nearer than the forearm's length. */
+function antForeToward(side: "L" | "R", elbow: Pt, hand: Pt): Op[] {
+  const r = antRest(side);
+  const dx = hand[0] - elbow[0];
+  const dy = hand[1] - elbow[1];
+  const dist = Math.hypot(dx, dy) || 1;
+  const d: Pt = [dx / dist, dy / dist];
+  const fa = angleBetween([r.H[0] - r.E[0], r.H[1] - r.E[1]], d);
+  const k = Math.min(1, dist / ANT_FORE_LEN);
+  return [
+    { kind: "rotate", deg: fa, pivot: r.E },
+    { kind: "scaleAxis", k, deg: axisDeg(d), pivot: r.E },
+    { kind: "translate", dx: elbow[0] - r.E[0], dy: elbow[1] - r.E[1] },
+  ];
+}
+/** An anterior LEG seen from the front with the thigh pointing toward
+ *  the viewer (a seated figure, or lying with the knee bent): the thigh
+ *  is foreshortened by `k` about the hip along its own line, the shank
+ *  hangs unscaled from the drawn knee, and the whole leg is swung
+ *  `swingDeg` about the hip (abduction out, adduction in). */
+function antLegToward(
+  side: "L" | "R",
+  k: number,
+  swingDeg: number
+): { thigh: Op[]; shank: Op[]; knee: Pt; ankle: Pt } {
+  const hip = side === "L" ? ANT_HIP_L : ANT_HIP_R;
+  const knee0 = side === "L" ? ANT.kneeL : ANT.kneeR;
+  const d: Pt = [knee0[0] - hip[0], knee0[1] - hip[1]];
+  const len = Math.hypot(d[0], d[1]);
+  const u: Pt = [d[0] / len, d[1] / len];
+  const swing: Op = { kind: "rotate", deg: swingDeg, pivot: hip };
+  const thigh: Op[] = [
+    { kind: "scaleAxis", k, deg: axisDeg(u), pivot: hip },
+    swing,
+  ];
+  const kneeScaled: Pt = [hip[0] + u[0] * len * k, hip[1] + u[1] * len * k];
+  const shank: Op[] = [
+    {
+      kind: "translate",
+      dx: kneeScaled[0] - knee0[0],
+      dy: kneeScaled[1] - knee0[1],
+    },
+    swing,
+  ];
+  const knee = applyToPoint(knee0, shank);
+  const ankle = applyToPoint([knee0[0] - 3, ANT.ankleY], shank);
+  return { thigh, shank, knee, ankle };
+}
+const postHands = (
+  _e: number,
+  pose: Partial<Record<GroupName, Op[]>>
+): [Pt, Pt] => [
+  applyToPoint(POST.handL, pose.foreArmL ?? []),
+  applyToPoint(POST.handR, pose.foreArmR ?? []),
+];
+/** Seated-machine furniture on the front figure: a backrest behind the
+ *  trunk and the floor the feet would reach if the shins hung. */
+const antSeatScene = (floorY: number): string =>
+  `<rect x="30" y="34" width="40" height="70" rx="4" fill="${GEAR}"/>` +
+  `<line x1="-8" y1="${floorY}" x2="108" y2="${floorY}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`;
+const HIP_MACHINE_K = 0.42;
+const HIP_MACHINE_FLOOR = 172;
+const WOODCHOP_PULLEY: Pt = [-30, -14];
+/** A world hand target pulled back through a trunk twist, so an arm aimed
+ *  BEFORE the twist lands on it AFTER (the arm ops append the twist). */
+function preTwist(hand: Pt, deg: number, pivot: Pt): Pt {
+  return applyToPoint(hand, [{ kind: "rotate", deg: -deg, pivot }]);
+}
+const REAR_FLY_LEVERS: [Pt, Pt] = [
+  [-10, -2],
+  [110, -2],
+];
 /** Anterior upper arm aimed at a world ELBOW (foreshortened when it sits
  *  nearer than the upper arm's length — an elbow in front of the body),
  *  with the forearm standing vertical from it, up or down, unscaled. */
@@ -6922,6 +7026,375 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       };
     },
     bar: antHands,
+  },
+
+  /* ── 2026-09-03 build-out, batch 12: legs, the back figure, the twists ── */
+
+  "hip-abduction-machine": {
+    /* "Sit with your back pinned to the pad, pads on the outside of your
+     * knees ... push your legs apart as wide as the machine allows."
+     * Seated facing the viewer: the thighs point at the camera (drawn
+     * short), the shins hang from the drawn knees, and both legs swing
+     * apart about the hips. Hips never move (pinned). */
+    view: "anterior",
+    viewBox: "-24 -14 148 224",
+    groundY: HIP_MACHINE_FLOOR,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { abductors: "primary", quadriceps: "secondary" },
+    pose: (e) => {
+      const swing = lerp(0, 26, e);
+      const L = antLegToward("L", HIP_MACHINE_K, swing);
+      const R = antLegToward("R", HIP_MACHINE_K, -swing);
+      return {
+        thighL: L.thigh,
+        shankL: L.shank,
+        thighR: R.thigh,
+        shankR: R.shank,
+      };
+    },
+    scene: (e) => {
+      const swing = lerp(0, 26, e);
+      const L = antLegToward("L", HIP_MACHINE_K, swing);
+      const R = antLegToward("R", HIP_MACHINE_K, -swing);
+      // Pads on the OUTSIDE of the knees.
+      return (
+        antSeatScene(HIP_MACHINE_FLOOR) +
+        `<rect x="${(L.knee[0] - 12).toFixed(1)}" y="${(L.knee[1] - 8).toFixed(1)}" width="7" height="18" rx="2.5" fill="${GEAR}"/>` +
+        `<rect x="${(R.knee[0] + 5).toFixed(1)}" y="${(R.knee[1] - 8).toFixed(1)}" width="7" height="18" rx="2.5" fill="${GEAR}"/>`
+      );
+    },
+  },
+
+  "hip-adduction-machine": {
+    /* "Sit with your back pinned to the pad, pads on the inside of your
+     * knees ... squeeze your legs together, contracting the inner
+     * thighs." The abduction machine run the other way: legs start
+     * apart and close. */
+    view: "anterior",
+    viewBox: "-24 -14 148 224",
+    groundY: HIP_MACHINE_FLOOR,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { abductors: "primary", quadriceps: "secondary" },
+    pose: (e) => {
+      const swing = lerp(26, 2, e);
+      const L = antLegToward("L", HIP_MACHINE_K, swing);
+      const R = antLegToward("R", HIP_MACHINE_K, -swing);
+      return {
+        thighL: L.thigh,
+        shankL: L.shank,
+        thighR: R.thigh,
+        shankR: R.shank,
+      };
+    },
+    scene: (e) => {
+      const swing = lerp(26, 2, e);
+      const L = antLegToward("L", HIP_MACHINE_K, swing);
+      const R = antLegToward("R", HIP_MACHINE_K, -swing);
+      // Pads on the INSIDE of the knees.
+      return (
+        antSeatScene(HIP_MACHINE_FLOOR) +
+        `<rect x="${(L.knee[0] + 5).toFixed(1)}" y="${(L.knee[1] - 8).toFixed(1)}" width="7" height="18" rx="2.5" fill="${GEAR}"/>` +
+        `<rect x="${(R.knee[0] - 12).toFixed(1)}" y="${(R.knee[1] - 8).toFixed(1)}" width="7" height="18" rx="2.5" fill="${GEAR}"/>`
+      );
+    },
+  },
+
+  "reverse-flyes": {
+    /* "Hinge forward at the hips ... hold dumbbells below your chest,
+     * palms facing each other, elbows soft. Raise the dumbbells out to
+     * the sides, squeezing your rear delts." The BACK figure: the arms
+     * start hanging toward the floor beneath the chest — away from the
+     * viewer, drawn short — and sweep out wide to shoulder height. The
+     * hinge itself is toward the camera and does not show; the sweep,
+     * which is the exercise, does. */
+    view: "posterior",
+    equip: "dumbbell",
+    viewBox: "-44 -14 188 244",
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { "back-deltoids": "primary", "upper-back": "secondary" },
+    pose: (e) => {
+      const spread = lerp(10, 80, e);
+      const y = lerp(80, 46, e);
+      const L = postArmToward("L", [50 - spread, y]);
+      const R = postArmToward("R", [50 + spread, y]);
+      return {
+        upperArmL: L.upper,
+        foreArmL: L.fore,
+        upperArmR: R.upper,
+        foreArmR: R.fore,
+      };
+    },
+    bar: postHands,
+  },
+
+  "rear-delt-machine-fly": {
+    /* "Sit facing the pec deck pad with chest pinned, grips at shoulder
+     * height. Start with arms extended forward ... push the handles
+     * apart by squeezing your rear delts, opening wide." From behind:
+     * the arms start reaching away from the viewer (short) at shoulder
+     * height and open to wide, on the machine's lever arms. */
+    view: "posterior",
+    equip: "frontal-levers",
+    pivots: REAR_FLY_LEVERS,
+    viewBox: "-44 -14 188 244",
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { "back-deltoids": "primary", "upper-back": "secondary" },
+    pose: (e) => {
+      const spread = lerp(8, 80, e);
+      const L = postArmToward("L", [50 - spread, 48]);
+      const R = postArmToward("R", [50 + spread, 48]);
+      return {
+        upperArmL: L.upper,
+        foreArmL: L.fore,
+        upperArmR: R.upper,
+        foreArmR: R.fore,
+      };
+    },
+    bar: postHands,
+  },
+
+  "reverse-pec-deck": {
+    /* "Sit facing the pad with chest pinned, grips at shoulder height.
+     * Start with arms extended forward, soft bend in the elbows locked.
+     * Pull the handles back and out in a wide arc." The rear-delt
+     * machine fly's arc — the same machine, the same picture from
+     * behind. */
+    view: "posterior",
+    equip: "frontal-levers",
+    pivots: REAR_FLY_LEVERS,
+    viewBox: "-44 -14 188 244",
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { "back-deltoids": "primary", "upper-back": "secondary" },
+    pose: (e) => {
+      const spread = lerp(8, 82, e);
+      const L = postArmToward("L", [50 - spread, 48]);
+      const R = postArmToward("R", [50 + spread, 48]);
+      return {
+        upperArmL: L.upper,
+        foreArmL: L.fore,
+        upperArmR: R.upper,
+        foreArmR: R.fore,
+      };
+    },
+    bar: postHands,
+  },
+
+  "cross-body-hammer-curl": {
+    /* "Pin your elbow and curl one dumbbell across your body to the
+     * opposite shoulder ... alternate arms and keep the torso still."
+     * One arm: the elbow held at the side (it drifts a few units
+     * forward, which a pinned elbow does), the forearm sweeping up and
+     * ACROSS the midline toward the far pec; the other arm hangs. */
+    view: "anterior",
+    equip: "dumbbell",
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { biceps: "primary", forearm: "secondary" },
+    pose: (e) => {
+      // Elbow: at rest, drifting a touch forward (toward the viewer,
+      // foreshortened upper arm) as the bell crosses.
+      const elbow: Pt = [
+        lerp(ANT.elbowL[0], ANT.elbowL[0] + 3, e),
+        lerp(ANT.elbowL[1], ANT.elbowL[1] - 3, e),
+      ];
+      const up = antElbowAt("L", elbow, "down");
+      const hand: Pt = [lerp(ANT.handL[0], 58, e), lerp(ANT.handL[1], 56, e)];
+      const fore = antForeToward("L", elbow, hand);
+      return { upperArmL: up.upper, foreArmL: fore };
+    },
+    bar: antHands,
+  },
+
+  "cable-woodchopper": {
+    /* "Set the cable to the highest position, grip the handle with both
+     * hands. Stand sideways to the pulley ... pull the handle diagonally
+     * across your body from high to low, rotating your torso." Both
+     * hands on one handle, the cable from a high pulley at the corner,
+     * the handle sweeping from high on one side to low on the other;
+     * the trunk leans with it — the projection of the twist the front
+     * camera can show. */
+    view: "anterior",
+    equip: "frontal-cables",
+    pivots: [WOODCHOP_PULLEY, WOODCHOP_PULLEY],
+    viewBox: "-44 -24 188 234",
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: {
+      obliques: "primary",
+      abs: "secondary",
+      "front-deltoids": "secondary",
+    },
+    pose: (e) => {
+      // Both hands on one handle: the path stays within BOTH shoulders'
+      // reach (the front figure's arms are short), the trunk twist
+      // carrying the far shoulder around, and the target is pulled back
+      // through that twist so the arms land on it after it.
+      const deg = lerp(-16, 16, e);
+      const twist: Op[] = [{ kind: "rotate", deg, pivot: [50, 100] }];
+      const hand = preTwist([lerp(28, 70, e), lerp(14, 88, e)], deg, [50, 100]);
+      const L = antArmToward("L", hand);
+      const R = antArmToward("R", hand);
+      return {
+        torso: twist,
+        head: twist,
+        upperArmL: [...L.upper, ...twist],
+        foreArmL: [...L.fore, ...twist],
+        upperArmR: [...R.upper, ...twist],
+        foreArmR: [...R.fore, ...twist],
+      };
+    },
+    bar: antHands,
+  },
+
+  "dead-bug": {
+    /* "Lie on your back, arms straight up toward the ceiling, knees bent
+     * at 90°. Press your lower back into the floor ... slowly extend one
+     * arm overhead and straighten the opposite leg. Return to start and
+     * alternate." Camera above: at the start both arms and both thighs
+     * point at the viewer (drawn short) with the shins folded; one arm
+     * sweeps overhead along the floor and the opposite leg straightens
+     * along it. One side per rep. */
+    view: "anterior",
+    viewBox: "-24 -30 148 240",
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { abs: "primary", obliques: "secondary" },
+    pose: (e) => {
+      const armUp = antArmToward("R", [
+        ANT.shoulderR[0] + 2,
+        ANT.shoulderR[1] - 10,
+      ]);
+      const armL = antArmToward("L", [
+        lerp(ANT.shoulderL[0] - 2, ANT.shoulderL[0] - 6, e),
+        lerp(ANT.shoulderL[1] - 10, ANT.shoulderL[1] - ANT_ARM_LEN, e),
+      ]);
+      const legL = antLegToward("L", 0.36, 0);
+      const legR = antLegToward("R", lerp(0.36, 1, e), 0);
+      // Folded shin at the start: the shin points at the viewer too, so
+      // it is foreshortened about the drawn knee; straight leg: unscaled.
+      const shinK = lerp(0.35, 1, e);
+      const shankR: Op[] = [
+        { kind: "scaleAxis", k: shinK, deg: 0, pivot: ANT.kneeR },
+        ...legR.shank,
+      ];
+      const shankL: Op[] = [
+        { kind: "scaleAxis", k: 0.35, deg: 0, pivot: ANT.kneeL },
+        ...legL.shank,
+      ];
+      return {
+        upperArmL: armL.upper,
+        foreArmL: armL.fore,
+        upperArmR: armUp.upper,
+        foreArmR: armUp.fore,
+        thighL: legL.thigh,
+        shankL,
+        thighR: legR.thigh,
+        shankR,
+      };
+    },
+  },
+
+  "bicycle-crunch": {
+    /* "Lie on your back, hands behind your head, legs lifted at 90°.
+     * Bring one knee toward your chest while rotating the opposite
+     * elbow to meet it. Extend the opposite leg straight out ...
+     * alternate sides in a smooth, controlled pedal." Camera above: the
+     * pedal swaps which knee is tucked (short thigh, folded shin) and
+     * which leg is long, while the trunk turns toward the tucked knee;
+     * elbows out with the hands behind the head. */
+    view: "anterior",
+    viewBox: "-24 -14 148 224",
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { obliques: "primary", abs: "secondary" },
+    pose: (e) => {
+      const kL = lerp(0.36, 1, e); // left leg: tucked → long
+      const kR = lerp(1, 0.36, e); // right leg: long → tucked
+      const legL = antLegToward("L", kL, 0);
+      const legR = antLegToward("R", kR, 0);
+      const shankL: Op[] = [
+        { kind: "scaleAxis", k: lerp(0.35, 1, e), deg: 0, pivot: ANT.kneeL },
+        ...legL.shank,
+      ];
+      const shankR: Op[] = [
+        { kind: "scaleAxis", k: lerp(1, 0.35, e), deg: 0, pivot: ANT.kneeR },
+        ...legR.shank,
+      ];
+      // Trunk turns toward the tucked knee; elbows wide, hands behind the head.
+      const twist: Op[] = [
+        { kind: "rotate", deg: lerp(-8, 8, e), pivot: [50, 100] },
+      ];
+      const eL = antElbowAt(
+        "L",
+        [ANT.shoulderL[0] - 16, ANT.shoulderL[1] - 4],
+        "up"
+      );
+      const eR = antElbowAt(
+        "R",
+        [ANT.shoulderR[0] + 16, ANT.shoulderR[1] - 4],
+        "up"
+      );
+      const foreL = [
+        { kind: "scaleAxis" as const, k: 0.55, deg: 0, pivot: ANT.elbowL },
+        ...eL.fore,
+      ];
+      const foreR = [
+        { kind: "scaleAxis" as const, k: 0.55, deg: 0, pivot: ANT.elbowR },
+        ...eR.fore,
+      ];
+      return {
+        torso: twist,
+        head: twist,
+        upperArmL: [...eL.upper, ...twist],
+        foreArmL: [...foreL, ...twist],
+        upperArmR: [...eR.upper, ...twist],
+        foreArmR: [...foreR, ...twist],
+        thighL: legL.thigh,
+        shankL,
+        thighR: legR.thigh,
+        shankR,
+      };
+    },
+  },
+
+  "russian-twist": {
+    /* "Sit on the floor, knees bent, lean back to about 45° ... clasp
+     * your hands together in front of your chest. Rotate your torso side
+     * to side, tapping the weight just outside your hips." Camera above:
+     * knees bent (thighs short toward the viewer), the clasped hands
+     * sweeping from just outside one hip to just outside the other as
+     * the trunk turns. One side to the other is a rep. */
+    view: "anterior",
+    viewBox: "-24 -14 148 224",
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { obliques: "primary", abs: "secondary" },
+    pose: (e) => {
+      const deg = lerp(-25, 25, e);
+      const twist: Op[] = [{ kind: "rotate", deg, pivot: [50, 104] }];
+      const hand = preTwist([lerp(24, 76, e), 92], deg, [50, 104]);
+      const L = antArmToward("L", hand);
+      const R = antArmToward("R", hand);
+      const legL = antLegToward("L", 0.5, 0);
+      const legR = antLegToward("R", 0.5, 0);
+      return {
+        torso: twist,
+        head: twist,
+        upperArmL: [...L.upper, ...twist],
+        foreArmL: [...L.fore, ...twist],
+        upperArmR: [...R.upper, ...twist],
+        foreArmR: [...R.fore, ...twist],
+        thighL: legL.thigh,
+        shankL: legL.shank,
+        thighR: legR.thigh,
+        shankR: legR.shank,
+      };
+    },
   },
 };
 
