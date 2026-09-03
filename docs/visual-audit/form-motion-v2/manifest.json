@@ -169,6 +169,33 @@
         "file": "calf-raise-t100.png"
       }
     ],
+    "concentration-curl": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "concentration-curl-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "concentration-curl-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "concentration-curl-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "concentration-curl-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "concentration-curl-t100.png"
+      }
+    ],
     "db-curl": [
       {
         "t": 0,
@@ -221,6 +248,60 @@
         "t": 1,
         "effort": 0.8,
         "file": "deadlift-t100.png"
+      }
+    ],
+    "decline-bench": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "decline-bench-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "decline-bench-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "decline-bench-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "decline-bench-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "decline-bench-t100.png"
+      }
+    ],
+    "decline-db-press": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "decline-db-press-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "decline-db-press-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "decline-db-press-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "decline-db-press-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "decline-db-press-t100.png"
       }
     ],
     "dips": [
@@ -358,6 +439,33 @@
         "file": "goblet-squat-t100.png"
       }
     ],
+    "hack-squat": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "hack-squat-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "hack-squat-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "hack-squat-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "hack-squat-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "hack-squat-t100.png"
+      }
+    ],
     "hip-thrust": [
       {
         "t": 0,
@@ -410,6 +518,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "incline-bench-t100.png"
+      }
+    ],
+    "incline-db-curl": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "incline-db-curl-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "incline-db-curl-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "incline-db-curl-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "incline-db-curl-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "incline-db-curl-t100.png"
       }
     ],
     "incline-db-press": [
@@ -520,6 +655,33 @@
         "file": "leg-extension-t100.png"
       }
     ],
+    "leg-press": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "leg-press-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "leg-press-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "leg-press-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "leg-press-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "leg-press-t100.png"
+      }
+    ],
     "lunges": [
       {
         "t": 0,
@@ -601,6 +763,33 @@
         "file": "overhead-press-t100.png"
       }
     ],
+    "preacher-curl": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "preacher-curl-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "preacher-curl-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "preacher-curl-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "preacher-curl-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "preacher-curl-t100.png"
+      }
+    ],
     "pull-ups": [
       {
         "t": 0,
@@ -653,6 +842,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "push-ups-t100.png"
+      }
+    ],
+    "rack-pull": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "rack-pull-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "rack-pull-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "rack-pull-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "rack-pull-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "rack-pull-t100.png"
       }
     ],
     "romanian-deadlift": [

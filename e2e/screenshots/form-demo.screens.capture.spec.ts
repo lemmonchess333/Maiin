@@ -45,6 +45,10 @@ const DEMOS: [id: string, name: string][] = [
   ["face-pulls", "Face Pulls"],
   ["seated-row", "Seated Cable Row"],
   ["leg-extension", "Leg Extension"],
+  // Batch 4: a pad, a sled, the declined bench.
+  ["preacher-curl", "Preacher Curl"],
+  ["leg-press", "Leg Press"],
+  ["decline-bench", "Decline Bench Press"],
 ];
 
 test.use({

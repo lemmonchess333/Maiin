@@ -855,15 +855,44 @@ const SUPINE_FLOOR = 172;
  * from the upper chest to lockout. Shared by the barbell and dumbbell
  * versions. */
 function inclinePressPose(e: number): Partial<Record<GroupName, Op[]>> {
-  const G: Op = { kind: "rotate", deg: -60, pivot: [44, 100] };
+  return benchAnglePose(e, -60, INCLINE_SEAT_Y, [-3, -8], "planted");
+}
+/* Decline press — the same chain tipped the other way: trunk rotated
+ * -115 (head DOWN 19.5 degrees, feet up), the legs hooked over the high
+ * end of the bench with the shins hanging under the rollers, and the
+ * bar pressed perpendicular to the trunk from the LOWER chest — which,
+ * with the trunk declined, is "up and slightly back" (instruction 4).
+ * Shared by the barbell and dumbbell versions. */
+function declinePressPose(e: number): Partial<Record<GroupName, Op[]>> {
+  return benchAnglePose(e, DECLINE_DEG, DECLINE_HIP_Y, [8, 2], "hooked");
+}
+const DECLINE_DEG = -115;
+const DECLINE_HIP_Y = 118;
+/* One angled-bench press. `gDeg` rotates the lying body about [44,100]
+ * (-90 = flat, head-left; -60 = 30-degree incline; -115 = decline),
+ * `hipY` parks the hip, `chestY` is the bar's body-space y offset from
+ * the shoulder at [bottom, lockout] (negative = toward the head, the
+ * upper chest; positive = toward the hip, the lower chest). Legs are
+ * either planted-foot IK to the floor (incline seat) or hooked over
+ * the bench end with the shins hanging (decline rollers). */
+function benchAnglePose(
+  e: number,
+  gDeg: number,
+  hipY: number,
+  chestY: [number, number],
+  legs: "planted" | "hooked"
+): Partial<Record<GroupName, Op[]>> {
+  const G: Op = { kind: "rotate", deg: gDeg, pivot: [44, 100] };
   const hipG = applyToPoint(SIDE_ANCHORS.hip, [G]);
-  const T0: Op = { kind: "translate", dx: 0, dy: INCLINE_SEAT_Y - hipG[1] };
+  const T0: Op = { kind: "translate", dx: 0, dy: hipY - hipG[1] };
   const body: Op[] = [G, T0];
   const S = SIDE_ANCHORS.shoulder;
   // Body-space bar path: perpendicular to the trunk (+x), from the
-  // upper chest (a touch toward the head, -y) to lockout over the
-  // shoulder line.
-  const H: Pt = [S[0] + lerp(30, BENCH_LOCKOUT, e), S[1] + lerp(-3, -8, e)];
+  // chest to lockout over the shoulder line.
+  const H: Pt = [
+    S[0] + lerp(30, BENCH_LOCKOUT, e),
+    S[1] + lerp(chestY[0], chestY[1], e),
+  ];
   const arm = aimArm(
     { S, E: SIDE_ANCHORS.elbow, H: SIDE_ANCHORS.hand },
     solveElbow(S, H, SIDE_UPPER_LEN, SIDE_FORE_LEN, -1),
@@ -871,11 +900,18 @@ function inclinePressPose(e: number): Partial<Record<GroupName, Op[]>> {
     0
   );
   const hipWorld = applyToPoint(SIDE_ANCHORS.hip, body);
-  const leg = plantedLeg(
-    hipWorld,
-    [hipWorld[0] + 36, SUPINE_FLOOR - 6],
-    KNEE_HIGH
-  );
+  const leg =
+    legs === "planted"
+      ? plantedLeg(hipWorld, [hipWorld[0] + 36, SUPINE_FLOOR - 6], KNEE_HIGH)
+      : {
+          // Thigh along the bench (rest hang, rotated with the body),
+          // shin folded 90 under the roller.
+          thigh: body,
+          shank: [
+            { kind: "rotate" as const, deg: 90, pivot: SIDE_ANCHORS.knee },
+            ...body,
+          ],
+        };
   return {
     head: body,
     torso: body,
@@ -971,6 +1007,12 @@ const MACHINE_FLOOR = 204;
 /** Row bench: lower than the machine seat, so the legs stretch forward
  *  to a footplate at floor level rather than hanging. */
 const ROW_SEAT: Pt = [44, 142];
+/** A plain bench (preacher, concentration curl): low enough that a
+ *  hanging shank puts the foot flat on the floor. */
+const PREACHER_SEAT: Pt = [44, 144];
+/** Preacher pad: the upper arm rests 45 degrees forward of hanging. */
+const PREACHER_PAD_DEG = -45;
+const INCLINE_CURL_SEAT: Pt = [44, 140];
 /** Seat block + reclined backrest + post + floor, for the seated
  *  machines. The lever arm and pads are per-demo (they follow the shank). */
 function machineSeatScene(seat: Pt, lean: number): string {
@@ -1010,6 +1052,88 @@ function cableStationScene(postX: number, top: number): string {
     `<line x1="${postX}" y1="${top}" x2="${postX}" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
     `<line x1="-26" y1="${MACHINE_FLOOR + 1}" x2="140" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`
   );
+}
+
+const declineScene = (
+  _e: number,
+  pose: Partial<Record<GroupName, Op[]>>
+): string => {
+  // The pad runs the trunk-and-thigh line from below the head to the
+  // knee; rollers hold the ankles at the high end; posts to the floor.
+  const hip = applyToPoint(SIDE_ANCHORS.hip, pose.pelvis ?? []);
+  const knee = applyToPoint(SIDE_ANCHORS.knee, pose.thighL ?? []);
+  const ankle = applyToPoint(SIDE_ANCHORS.ankle, pose.shankL ?? []);
+  const tilt = 180 + DECLINE_DEG + 90; // pad angle, degrees (head down-left)
+  return (
+    `<rect x="${(hip[0] - 88).toFixed(1)}" y="${(hip[1] + 10).toFixed(1)}" width="142" height="7" rx="2.5" fill="${GEAR}" transform="rotate(${-tilt} ${hip[0].toFixed(1)} ${(hip[1] + 13).toFixed(1)})"/>` +
+    `<circle cx="${(ankle[0] + 7).toFixed(1)}" cy="${(ankle[1] - 3).toFixed(1)}" r="5" fill="${GEAR}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>` +
+    `<line x1="${(knee[0] + 4).toFixed(1)}" y1="${(knee[1] + 8).toFixed(1)}" x2="${(knee[0] + 4).toFixed(1)}" y2="${SUPINE_FLOOR - 1}" stroke="${GEAR_DARK}" stroke-width="3.4"/>` +
+    `<line x1="${(hip[0] - 50).toFixed(1)}" y1="${(hip[1] + 28).toFixed(1)}" x2="${(hip[0] - 50).toFixed(1)}" y2="${SUPINE_FLOOR - 1}" stroke="${GEAR_DARK}" stroke-width="3.4"/>` +
+    `<line x1="-70" y1="${SUPINE_FLOOR}" x2="150" y2="${SUPINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`
+  );
+};
+
+/* Sled chains — the leg press and the hack squat are the same machine
+ * seen two ways: a 45-degree track, a reclined trunk, and a leg that
+ * closes from near-straight to deep. On the LEG PRESS the body is fixed
+ * on the seat and the platform slides away; on the HACK SQUAT the feet
+ * are fixed on the platform and the body slides down the pad. Both are
+ * `plantedLeg` between a hip and an ankle, one of which moves. */
+const SLED_DIR: Pt = [Math.cos(Math.PI / 4), -Math.sin(Math.PI / 4)]; // up-forward
+const LEG_PRESS_HIP: Pt = [40, 150];
+/** Reach along the track at [lockout, bottom]: the platform sits at
+ *  one leg length minus a soft knee at the top, and "thighs near your
+ *  ribs" at the bottom. */
+const LEG_PRESS_REACH: [number, number] = [90, 50];
+function legPressChain(e: number): {
+  body: Op[];
+  torso: Op[];
+  head: Op[];
+  leg: { thigh: Op[]; shank: Op[] };
+  ankle: Pt;
+} {
+  const chain = seatedChain(LEG_PRESS_HIP, 0, 0, -50);
+  const reach = lerp(LEG_PRESS_REACH[0], LEG_PRESS_REACH[1], e);
+  const ankle: Pt = [
+    LEG_PRESS_HIP[0] + SLED_DIR[0] * reach,
+    LEG_PRESS_HIP[1] + SLED_DIR[1] * reach,
+  ];
+  const leg = plantedLeg(LEG_PRESS_HIP, ankle, KNEE_HIGH);
+  return { body: chain.body, torso: chain.torso, head: chain.head, leg, ankle };
+}
+const HACK_ANKLE: Pt = [86, 194];
+/** Hip path down the pad at [top, bottom]. */
+const HACK_HIP: [Pt, Pt] = [
+  [37, 115],
+  [58, 142],
+];
+function hackSquatChain(e: number): {
+  body: Op[];
+  torso: Op[];
+  head: Op[];
+  leg: { thigh: Op[]; shank: Op[] };
+  hip: Pt;
+} {
+  const hip: Pt = [
+    lerp(HACK_HIP[0][0], HACK_HIP[1][0], e),
+    lerp(HACK_HIP[0][1], HACK_HIP[1][1], e),
+  ];
+  const chain = seatedChain(hip, 0, 0, -45);
+  const leg = plantedLeg(hip, HACK_ANKLE, KNEE_FORWARD);
+  return { body: chain.body, torso: chain.torso, head: chain.head, leg, hip };
+}
+
+/** The rack pull is the deadlift's hinge stopped early: the bar starts
+ *  "just below your knees" on the pins. Same construction (`hingeLift`),
+ *  shallower full-depth angles — a modest knee bend so the shoulders
+ *  stay over the bar and the bar stays at the shin, which the deadlift's
+ *  own mid-rep does not do (its knees trail its hinge). The bar height
+ *  at the bottom is pinned just under the knee. */
+const RACK_HINGE = 62;
+const RACK_THIGH = -38;
+const RACK_SHIN = 5;
+function rackPullPose(e: number): Partial<Record<GroupName, Op[]>> {
+  return hingeLift(e, e, RACK_HINGE, RACK_THIGH, RACK_SHIN, lerp(8, -14, e));
 }
 
 function sideSquatChain(
@@ -1086,6 +1210,86 @@ const CALF_FLOOR = 212;
 /** Dip station grip, fixed in final space: hand height beside the
  *  figure, well above the floor so the tucked feet never touch it. */
 export const DIP_GRIP: Pt = [56, 108];
+/* The hinge lift — the deadlift's construction, parameterised so the
+ * rack pull can stop it early WITHOUT a second copy of the hinge to
+ * drift (the mirrored-constant failure this codebase keeps paying
+ * for). `hipP` / `kneeP` are the per-joint progress (the deadlift
+ * staggers them: hinge leads, knees trail), the *Deg arguments the
+ * full-depth joint angles, `handX` the bar's x offset from the
+ * shoulder at this frame. Built ankle-up so the feet stay planted. */
+function hingeLift(
+  hipP: number,
+  kneeP: number,
+  hingeDeg: number,
+  thighDeg: number,
+  shinDeg: number,
+  handX: number
+): Partial<Record<GroupName, Op[]>> {
+  const shin = lerp(0, shinDeg, kneeP); // about the planted ankle
+  const thighRel = lerp(0, thighDeg, kneeP); // about the knee → hips back+down
+  const hinge = lerp(0, hingeDeg, hipP); // torso about the hip
+  const legOps: Op[] = [
+    { kind: "rotate", deg: shin, pivot: SIDE_ANCHORS.ankle },
+  ];
+  const thighOps: Op[] = [
+    { kind: "rotate", deg: thighRel, pivot: SIDE_ANCHORS.knee },
+    { kind: "rotate", deg: shin, pivot: SIDE_ANCHORS.ankle },
+  ];
+  const hipNew = applyToPoint(SIDE_ANCHORS.hip, thighOps);
+  const shift: Op = {
+    kind: "translate",
+    dx: hipNew[0] - SIDE_ANCHORS.hip[0],
+    dy: hipNew[1] - SIDE_ANCHORS.hip[1],
+  };
+  const T: Op = { kind: "rotate", deg: hinge, pivot: SIDE_ANCHORS.hip };
+  const torsoOps: Op[] = [T, shift];
+  const pelvisOps: Op[] = [
+    { kind: "rotate", deg: hinge * PELVIS_FOLLOW, pivot: SIDE_ANCHORS.hip },
+    shift,
+  ];
+  const headOps: Op[] = [
+    { kind: "rotate", deg: -hinge * HEAD_LIFT, pivot: SIDE_ANCHORS.neck },
+    ...torsoOps,
+  ];
+  /* Straight arms hang from the hinged shoulder. The x-offset
+   * interpolates: standing lockout rests the bar against the FRONT
+   * of the thigh (+8), the bottom pulls it back under the shoulder
+   * blades toward mid-foot (−5, the lats-pull-the-bar-in line) so
+   * the bar never drifts out past the toes. */
+  const S = applyToPoint(SIDE_ANCHORS.shoulder, torsoOps);
+  const hFinal: Pt = [S[0] + handX, S[1] + STRAIGHT_ARM];
+  const unpose: Op[] = [
+    { kind: "translate", dx: -shift.dx, dy: -shift.dy },
+    { kind: "rotate", deg: -hinge, pivot: SIDE_ANCHORS.hip },
+  ];
+  const hPre = applyToPoint(hFinal, unpose);
+  const arm = aimArm(
+    {
+      S: SIDE_ANCHORS.shoulder,
+      E: SIDE_ANCHORS.elbow,
+      H: SIDE_ANCHORS.hand,
+    },
+    solveElbow(SIDE_ANCHORS.shoulder, hPre, SIDE_UPPER_LEN, SIDE_FORE_LEN, -1),
+    hPre,
+    0
+  );
+  return {
+    head: headOps,
+    torso: torsoOps,
+    pelvis: pelvisOps,
+    thighL: thighOps,
+    thighR: thighOps,
+    shankL: legOps,
+    shankR: legOps,
+    upperArmL: [...arm.upper, ...torsoOps],
+    foreArmL: [...arm.fore, ...torsoOps],
+    handL: [...arm.fore, ...torsoOps],
+    upperArmR: [...arm.upper, ...torsoOps],
+    foreArmR: [...arm.fore, ...torsoOps],
+    handR: [...arm.fore, ...torsoOps],
+  };
+}
+
 export const BODY_DEMOS: Record<string, BodyDemo> = {
   squat: {
     view: "side",
@@ -2026,77 +2230,14 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * read as a squat/hinge hybrid. The hinge leads (done by e=0.8),
        * the knees trail (start at e=0.3). Same end poses as before, so
        * the bottom-frame pins are untouched. */
-      const hipP = smooth(e / 0.8);
-      const kneeP = smooth((e - 0.3) / 0.7);
-      const shin = lerp(0, 8, kneeP); // about the planted ankle
-      const thighRel = lerp(0, -64, kneeP); // about the knee → hips back+down
-      const hinge = lerp(0, 70, hipP); // torso about the hip
-      const legOps: Op[] = [
-        { kind: "rotate", deg: shin, pivot: SIDE_ANCHORS.ankle },
-      ];
-      const thighOps: Op[] = [
-        { kind: "rotate", deg: thighRel, pivot: SIDE_ANCHORS.knee },
-        { kind: "rotate", deg: shin, pivot: SIDE_ANCHORS.ankle },
-      ];
-      const hipNew = applyToPoint(SIDE_ANCHORS.hip, thighOps);
-      const shift: Op = {
-        kind: "translate",
-        dx: hipNew[0] - SIDE_ANCHORS.hip[0],
-        dy: hipNew[1] - SIDE_ANCHORS.hip[1],
-      };
-      const T: Op = { kind: "rotate", deg: hinge, pivot: SIDE_ANCHORS.hip };
-      const torsoOps: Op[] = [T, shift];
-      const pelvisOps: Op[] = [
-        { kind: "rotate", deg: hinge * PELVIS_FOLLOW, pivot: SIDE_ANCHORS.hip },
-        shift,
-      ];
-      const headOps: Op[] = [
-        { kind: "rotate", deg: -hinge * HEAD_LIFT, pivot: SIDE_ANCHORS.neck },
-        ...torsoOps,
-      ];
-      /* Straight arms hang from the hinged shoulder. The x-offset
-       * interpolates: standing lockout rests the bar against the FRONT
-       * of the thigh (+8), the bottom pulls it back under the shoulder
-       * blades toward mid-foot (−5, the lats-pull-the-bar-in line) so
-       * the bar never drifts out past the toes. */
-      const S = applyToPoint(SIDE_ANCHORS.shoulder, torsoOps);
-      const hFinal: Pt = [S[0] + lerp(8, -5, e), S[1] + STRAIGHT_ARM];
-      const unpose: Op[] = [
-        { kind: "translate", dx: -shift.dx, dy: -shift.dy },
-        { kind: "rotate", deg: -hinge, pivot: SIDE_ANCHORS.hip },
-      ];
-      const hPre = applyToPoint(hFinal, unpose);
-      const arm = aimArm(
-        {
-          S: SIDE_ANCHORS.shoulder,
-          E: SIDE_ANCHORS.elbow,
-          H: SIDE_ANCHORS.hand,
-        },
-        solveElbow(
-          SIDE_ANCHORS.shoulder,
-          hPre,
-          SIDE_UPPER_LEN,
-          SIDE_FORE_LEN,
-          -1
-        ),
-        hPre,
-        0
+      return hingeLift(
+        smooth(e / 0.8),
+        smooth((e - 0.3) / 0.7),
+        70,
+        -64,
+        8,
+        lerp(8, -5, e)
       );
-      return {
-        head: headOps,
-        torso: torsoOps,
-        pelvis: pelvisOps,
-        thighL: thighOps,
-        thighR: thighOps,
-        shankL: legOps,
-        shankR: legOps,
-        upperArmL: [...arm.upper, ...torsoOps],
-        foreArmL: [...arm.fore, ...torsoOps],
-        handL: [...arm.fore, ...torsoOps],
-        upperArmR: [...arm.upper, ...torsoOps],
-        foreArmR: [...arm.fore, ...torsoOps],
-        handR: [...arm.fore, ...torsoOps],
-      };
     },
     bar: (_e, pose) => {
       const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
@@ -2989,6 +3130,422 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         shankPad(pose, -1)
       );
     },
+  },
+
+  /* ── 2026-09-03 build-out, batch 4: pads, sleds, a rack ── */
+
+  "preacher-curl": {
+    /* "Sit at the preacher bench with your upper arms flat on the pad
+     * ... curl the bar up to shoulder height without shrugging. Lower
+     * slowly to just short of full extension." The upper arm is FIXED
+     * on a 45-degree pad (pinned: it does not move), the forearm curls
+     * from just-short-of-straight to the shoulder, hips on the seat,
+     * feet flat. The pad is drawn under the upper arm from the solved
+     * elbow. */
+    view: "side",
+    equip: "plate-end",
+    plateR: 10,
+    viewBox: "-12 -6 152 218",
+    groundY: 204,
+    shadowCx: 60,
+    shadowRx: 36,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { biceps: "primary", forearm: "secondary" },
+    pose: (e) => {
+      const chain = seatedChain(PREACHER_SEAT, -80, 80, 4);
+      const upper: Op[] = [
+        { kind: "rotate", deg: PREACHER_PAD_DEG, pivot: SIDE_ANCHORS.shoulder },
+        ...chain.torso,
+      ];
+      const fore: Op[] = [
+        { kind: "rotate", deg: -lerp(14, 125, e), pivot: SIDE_ANCHORS.elbow },
+        ...upper,
+      ];
+      return {
+        head: chain.head,
+        torso: chain.torso,
+        pelvis: chain.body,
+        thighL: chain.thigh,
+        thighR: chain.thigh,
+        shankL: chain.shank,
+        shankR: chain.shank,
+        upperArmL: upper,
+        foreArmL: fore,
+        handL: fore,
+        upperArmR: upper,
+        foreArmR: fore,
+        handR: fore,
+      };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+    scene: (_e, pose) => {
+      const S = applyToPoint(SIDE_ANCHORS.shoulder, pose.upperArmL ?? []);
+      const E = applyToPoint(SIDE_ANCHORS.elbow, pose.upperArmL ?? []);
+      // Pad: along the upper arm, just under it, from the armpit past
+      // the elbow; a post from the pad to the floor; the seat.
+      const ang = (Math.atan2(E[1] - S[1], E[0] - S[0]) * 180) / Math.PI;
+      return (
+        `<rect x="${(S[0] + 6).toFixed(1)}" y="${(S[1] + 6).toFixed(1)}" width="46" height="8" rx="2.6" fill="${GEAR}" transform="rotate(${ang.toFixed(1)} ${(S[0] + 6).toFixed(1)} ${(S[1] + 6).toFixed(1)})"/>` +
+        `<line x1="${(E[0] + 6).toFixed(1)}" y1="${(E[1] + 8).toFixed(1)}" x2="${(E[0] + 6).toFixed(1)}" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+        `<rect x="${(PREACHER_SEAT[0] - 22).toFixed(1)}" y="${(PREACHER_SEAT[1] + 6).toFixed(1)}" width="44" height="8" rx="2.6" fill="${GEAR}"/>` +
+        `<line x1="${PREACHER_SEAT[0]}" y1="${(PREACHER_SEAT[1] + 14).toFixed(1)}" x2="${PREACHER_SEAT[0]}" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+        `<line x1="-26" y1="${MACHINE_FLOOR + 1}" x2="140" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`
+      );
+    },
+  },
+
+  "concentration-curl": {
+    /* "Sit on a bench, spread your knees, brace your upper arm against
+     * your inner thigh. Let the dumbbell hang with a straight arm ...
+     * curl the dumbbell up to your shoulder." Seated, trunk hinged
+     * forward 30, the upper arm hanging just inside vertical against
+     * the thigh (pinned: it does not move), the forearm curling from
+     * straight to the shoulder. The far arm rests on the far knee. */
+    view: "side",
+    equip: "dumbbell",
+    viewBox: "-12 -6 152 218",
+    groundY: 204,
+    shadowCx: 60,
+    shadowRx: 36,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { biceps: "primary", forearm: "secondary" },
+    pose: (e) => {
+      const LEAN = 30;
+      const chain = seatedChain(PREACHER_SEAT, -80, 80, LEAN);
+      // World-vertical would be -LEAN; a few degrees forward of that is
+      // the brace against the inner thigh.
+      const upper: Op[] = [
+        { kind: "rotate", deg: -LEAN - 6, pivot: SIDE_ANCHORS.shoulder },
+        ...chain.torso,
+      ];
+      const fore: Op[] = [
+        { kind: "rotate", deg: -lerp(2, 140, e), pivot: SIDE_ANCHORS.elbow },
+        ...upper,
+      ];
+      // Far arm: forearm resting across the far thigh.
+      const restUpper: Op[] = [
+        { kind: "rotate", deg: -LEAN - 20, pivot: SIDE_ANCHORS.shoulder },
+        ...chain.torso,
+      ];
+      const restFore: Op[] = [
+        { kind: "rotate", deg: -70, pivot: SIDE_ANCHORS.elbow },
+        ...restUpper,
+      ];
+      return {
+        head: chain.head,
+        torso: chain.torso,
+        pelvis: chain.body,
+        thighL: chain.thigh,
+        thighR: chain.thigh,
+        shankL: chain.shank,
+        shankR: chain.shank,
+        upperArmL: upper,
+        foreArmL: fore,
+        handL: fore,
+        upperArmR: restUpper,
+        foreArmR: restFore,
+        handR: restFore,
+      };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+    scene: () =>
+      `<rect x="${(PREACHER_SEAT[0] - 22).toFixed(1)}" y="${(PREACHER_SEAT[1] + 6).toFixed(1)}" width="44" height="8" rx="2.6" fill="${GEAR}"/>` +
+      `<line x1="${PREACHER_SEAT[0]}" y1="${(PREACHER_SEAT[1] + 14).toFixed(1)}" x2="${PREACHER_SEAT[0]}" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+      `<line x1="-26" y1="${MACHINE_FLOOR + 1}" x2="140" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  "incline-db-curl": {
+    /* "Set a bench to 45°, sit back, arms hanging straight ... let your
+     * shoulders open up — the stretch is the whole point. Curl the
+     * dumbbells up without letting your upper arms move forward."
+     * Trunk reclined 45 on the bench, the upper arm hanging plumb from
+     * a shoulder that now sits well BEHIND the hip (that is the
+     * stretch), fixed through the rep (pinned), forearm curling. */
+    view: "side",
+    equip: "dumbbell",
+    viewBox: "-44 -6 172 218",
+    groundY: 204,
+    shadowCx: 40,
+    shadowRx: 40,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { biceps: "primary", forearm: "secondary" },
+    pose: (e) => {
+      const chain = seatedChain(INCLINE_CURL_SEAT, -70, 70, -45);
+      // Plumb would be +45 (cancelling the recline); a shade behind
+      // plumb is the open-shoulder hang.
+      const upper: Op[] = [
+        { kind: "rotate", deg: 49, pivot: SIDE_ANCHORS.shoulder },
+        ...chain.torso,
+      ];
+      const fore: Op[] = [
+        { kind: "rotate", deg: -lerp(0, 120, e), pivot: SIDE_ANCHORS.elbow },
+        ...upper,
+      ];
+      return {
+        head: chain.head,
+        torso: chain.torso,
+        pelvis: chain.body,
+        thighL: chain.thigh,
+        thighR: chain.thigh,
+        shankL: chain.shank,
+        shankR: chain.shank,
+        upperArmL: upper,
+        foreArmL: fore,
+        handL: fore,
+        upperArmR: upper,
+        foreArmR: fore,
+        handR: fore,
+      };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+    scene: () => machineSeatScene(INCLINE_CURL_SEAT, -45),
+  },
+
+  "leg-press": {
+    /* "Sit with your back flat against the pad ... lower the platform
+     * toward your chest. Stop when your thighs are near your ribs ...
+     * press back up without fully locking the knees." Reclined 50 on
+     * the seat, the hip FIXED (pinned), the platform sliding down a
+     * 45-degree track toward the body and the leg closing behind it:
+     * planted-foot IK from the fixed hip to the moving ankle. Lockout
+     * is a soft knee, never straight (pinned). */
+    view: "side",
+    viewBox: "-22 -16 180 228",
+    groundY: 204,
+    shadowCx: 50,
+    shadowRx: 44,
+    concentricTo: 0,
+    tint: {
+      quadriceps: "primary",
+      gluteal: "secondary",
+      hamstring: "secondary",
+    },
+    pose: (e) => {
+      const c = legPressChain(e);
+      // Hands on the side handles by the hips.
+      const upper: Op[] = [
+        { kind: "rotate", deg: 20, pivot: SIDE_ANCHORS.shoulder },
+        ...c.torso,
+      ];
+      const fore: Op[] = [
+        { kind: "rotate", deg: -30, pivot: SIDE_ANCHORS.elbow },
+        ...upper,
+      ];
+      return {
+        head: c.head,
+        torso: c.torso,
+        pelvis: c.body,
+        thighL: c.leg.thigh,
+        thighR: c.leg.thigh,
+        shankL: c.leg.shank,
+        shankR: c.leg.shank,
+        upperArmL: upper,
+        foreArmL: fore,
+        handL: fore,
+        upperArmR: upper,
+        foreArmR: fore,
+        handR: fore,
+      };
+    },
+    scene: (e) => {
+      const c = legPressChain(e);
+      const a = c.ankle;
+      // Platform: perpendicular to the track at the foot, sliding with
+      // it; the track rail behind; the seat + backrest; the floor.
+      const px = -SLED_DIR[1];
+      const py = SLED_DIR[0];
+      const plate = (k: number): Pt => [
+        a[0] + 10 * SLED_DIR[0] + px * k,
+        a[1] + 10 * SLED_DIR[1] + py * k,
+      ];
+      const p1 = plate(-30);
+      const p2 = plate(26);
+      const r1: Pt = [
+        LEG_PRESS_HIP[0] + SLED_DIR[0] * 40,
+        LEG_PRESS_HIP[1] + SLED_DIR[1] * 40 + 22,
+      ];
+      const r2: Pt = [
+        LEG_PRESS_HIP[0] + SLED_DIR[0] * 118,
+        LEG_PRESS_HIP[1] + SLED_DIR[1] * 118 + 22,
+      ];
+      return (
+        `<line x1="${r1[0].toFixed(1)}" y1="${r1[1].toFixed(1)}" x2="${r2[0].toFixed(1)}" y2="${r2[1].toFixed(1)}" stroke="${GEAR_DARK}" stroke-width="3"/>` +
+        `<line x1="${p1[0].toFixed(1)}" y1="${p1[1].toFixed(1)}" x2="${p2[0].toFixed(1)}" y2="${p2[1].toFixed(1)}" stroke="${GEAR}" stroke-width="7" stroke-linecap="round"/>` +
+        machineSeatScene(LEG_PRESS_HIP, -50)
+      );
+    },
+  },
+
+  "hack-squat": {
+    /* "Set your back flat against the pad, shoulders under the pads,
+     * feet mid-platform ... lower until your thighs are parallel to
+     * the platform, knees tracking over toes. Press back up ... without
+     * locking out hard." The same 45-degree machine with the FEET fixed
+     * on the platform (pinned) and the body sliding down the pad: the
+     * hip travels the pad line and the leg is planted-foot IK from it
+     * to the fixed ankle, knee forward. */
+    view: "side",
+    viewBox: "-22 -16 180 228",
+    groundY: 204,
+    shadowCx: 60,
+    shadowRx: 40,
+    concentricTo: 0,
+    tint: { quadriceps: "primary", gluteal: "secondary" },
+    pose: (e) => {
+      const c = hackSquatChain(e);
+      // Hands up on the shoulder-pad handles.
+      const upper: Op[] = [
+        { kind: "rotate", deg: -110, pivot: SIDE_ANCHORS.shoulder },
+        ...c.torso,
+      ];
+      const fore: Op[] = [
+        { kind: "rotate", deg: -130, pivot: SIDE_ANCHORS.elbow },
+        ...upper,
+      ];
+      return {
+        head: c.head,
+        torso: c.torso,
+        pelvis: c.body,
+        thighL: c.leg.thigh,
+        thighR: c.leg.thigh,
+        shankL: c.leg.shank,
+        shankR: c.leg.shank,
+        upperArmL: upper,
+        foreArmL: fore,
+        handL: fore,
+        upperArmR: upper,
+        foreArmR: fore,
+        handR: fore,
+      };
+    },
+    scene: (e, pose) => {
+      // Back pad along the hip path (fixed in the world), the platform
+      // under the fixed feet, shoulder pads riding the body, the floor.
+      const top = HACK_HIP[0];
+      const bot = HACK_HIP[1];
+      const dx = bot[0] - top[0];
+      const dy = bot[1] - top[1];
+      const len = Math.hypot(dx, dy);
+      const ux = dx / len;
+      const uy = dy / len;
+      const padA: Pt = [top[0] - ux * 70 - 12, top[1] - uy * 70];
+      const padB: Pt = [bot[0] + ux * 16 - 12, bot[1] + uy * 16];
+      const S = applyToPoint(SIDE_ANCHORS.shoulder, pose.torso ?? []);
+      const a = HACK_ANKLE;
+      void e;
+      return (
+        `<line x1="${padA[0].toFixed(1)}" y1="${padA[1].toFixed(1)}" x2="${padB[0].toFixed(1)}" y2="${padB[1].toFixed(1)}" stroke="${GEAR}" stroke-width="8" stroke-linecap="round"/>` +
+        `<line x1="${padB[0].toFixed(1)}" y1="${padB[1].toFixed(1)}" x2="${padB[0].toFixed(1)}" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+        `<line x1="${(a[0] - 26).toFixed(1)}" y1="${(a[1] + 8).toFixed(1)}" x2="${(a[0] + 30).toFixed(1)}" y2="${(a[1] + 8).toFixed(1)}" stroke="${GEAR}" stroke-width="6" stroke-linecap="round"/>` +
+        `<rect x="${(S[0] - 6).toFixed(1)}" y="${(S[1] - 12).toFixed(1)}" width="14" height="8" rx="3" fill="${GEAR}"/>` +
+        `<line x1="-26" y1="${MACHINE_FLOOR + 1}" x2="150" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`
+      );
+    },
+  },
+
+  "rack-pull": {
+    /* "Set the pins so the bar sits just below your knees ... stand up
+     * by driving your hips forward ... lower the bar back to the pins."
+     * The deadlift's own chain, stopped at the fraction where the bar
+     * sits just under the knee (pinned) — a rack pull IS the top of a
+     * deadlift, and drawing it as anything else would be a second copy
+     * of the hinge to drift. The pins are drawn at that bar height. */
+    view: "side",
+    equip: "plate-end",
+    plateR: 16,
+    concentricTo: 0,
+    startsAt: "stretch",
+    viewBox: "-18 -2 186 212",
+    groundY: 204,
+    shadowCx: 56,
+    shadowRx: 40,
+    /* Catalogue: Posterior Chain | Traps, Glutes, Core. */
+    tint: {
+      hamstring: "primary",
+      gluteal: "primary",
+      "lower-back": "primary",
+      trapezius: "secondary",
+    },
+    pose: (e) => rackPullPose(e),
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+    scene: () => {
+      const bottom = rackPullPose(1);
+      const h = applyToPoint(SIDE_ANCHORS.hand, bottom.handL ?? []);
+      // Upright in front of the bar with a pin reaching back under it;
+      // the bar's shaft rests on the pin at the bottom frame.
+      const postX = h[0] + 28;
+      return (
+        `<line x1="${postX.toFixed(1)}" y1="${(h[1] - 60).toFixed(1)}" x2="${postX.toFixed(1)}" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+        `<rect x="${(h[0] - 8).toFixed(1)}" y="${(h[1] + 2.5).toFixed(1)}" width="${(postX - h[0] + 8).toFixed(1)}" height="3.2" rx="1.2" fill="${GEAR}"/>` +
+        `<line x1="-36" y1="${MACHINE_FLOOR + 1}" x2="150" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`
+      );
+    },
+  },
+
+  "decline-bench": {
+    /* "Stack the bar over your lower chest ... lower with control until
+     * the bar lightly touches your lower chest. Press up and slightly
+     * back, finishing with elbows stacked over shoulders." The bench
+     * chain declined 19.5 degrees, legs hooked under the rollers, bar
+     * pressed perpendicular to the trunk from the LOWER chest. */
+    view: "side",
+    equip: "plate-end",
+    plateR: 10,
+    viewBox: "-40 -6 190 190",
+    groundY: SUPINE_FLOOR,
+    shadowCx: 40,
+    shadowRx: 60,
+    concentricTo: 0,
+    tint: {
+      chest: "primary",
+      triceps: "secondary",
+      "front-deltoids": "secondary",
+    },
+    pose: declinePressPose,
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+    scene: declineScene,
+  },
+
+  "decline-db-press": {
+    /* The decline bench with bells: "press the dumbbells up to full
+     * extension ... lower until you feel a deep stretch across your
+     * lower chest." Same chain, one bell per hand end-on. */
+    view: "side",
+    equip: "dumbbell",
+    viewBox: "-40 -6 190 190",
+    groundY: SUPINE_FLOOR,
+    shadowCx: 40,
+    shadowRx: 60,
+    concentricTo: 0,
+    tint: {
+      chest: "primary",
+      triceps: "secondary",
+      "front-deltoids": "secondary",
+    },
+    pose: declinePressPose,
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+    scene: declineScene,
   },
 };
 
