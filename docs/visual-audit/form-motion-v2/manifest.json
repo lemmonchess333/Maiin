@@ -1978,6 +1978,33 @@
         "file": "machine-chest-fly-t100.png"
       }
     ],
+    "man-maker": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "man-maker-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "man-maker-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "man-maker-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "man-maker-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "man-maker-t100.png"
+      }
+    ],
     "meadows-row": [
       {
         "t": 0,
@@ -3272,6 +3299,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "tricep-kickback-t100.png"
+      }
+    ],
+    "turkish-get-up": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "turkish-get-up-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "turkish-get-up-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "turkish-get-up-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "turkish-get-up-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "turkish-get-up-t100.png"
       }
     ],
     "weighted-plank": [

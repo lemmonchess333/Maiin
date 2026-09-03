@@ -2266,6 +2266,271 @@ function swimPose(phi: number): Partial<Record<GroupName, Op[]>> {
   };
 }
 
+/* ── Keyed chains (batch 17): the man-maker and the Turkish get-up ──
+ * The burpee's construction generalised: a keyframe is a world hip, a
+ * trunk angle, per-leg ankles and per-arm world hands (with an elbow
+ * branch each), plus optional overrides for a leg that is not planted
+ * (a knee on the floor) and an arm that must be straight. Frames
+ * interpolate with `smooth`; the trunk is `trunkBetween`, the legs
+ * `plantedLeg`, the arms `armToWorld`. */
+interface KeyFrame {
+  e: number;
+  hip: Pt;
+  trunk: number;
+  ankleL: Pt;
+  ankleR: Pt;
+  handL: Pt;
+  handR: Pt;
+  /** Knee branch per leg. */
+  kneeL?: (a: Pt, b: Pt) => Pt;
+  kneeR?: (a: Pt, b: Pt) => Pt;
+  /** Elbow branch per arm. */
+  elbowL?: (a: Pt, b: Pt) => Pt;
+  elbowR?: (a: Pt, b: Pt) => Pt;
+}
+function keyedPose(
+  keys: KeyFrame[],
+  e: number
+): Partial<Record<GroupName, Op[]>> {
+  let i = 0;
+  while (i < keys.length - 2 && e > keys[i + 1].e) i++;
+  const a = keys[i];
+  const b = keys[i + 1];
+  const k = smooth((e - a.e) / (b.e - a.e));
+  const L = (p: Pt, q: Pt): Pt => [lerp(p[0], q[0], k), lerp(p[1], q[1], k)];
+  const hip = L(a.hip, b.hip);
+  const trunk = lerp(a.trunk, b.trunk, k);
+  const rad = (trunk * Math.PI) / 180;
+  const S: Pt = [
+    hip[0] + TRUNK_LEN * Math.cos(rad),
+    hip[1] + TRUNK_LEN * Math.sin(rad),
+  ];
+  const torso = trunkBetween(hip, S);
+  // Branches switch at the midpoint of a segment.
+  const pick = k < 0.5 ? a : b;
+  const legL = plantedLeg(
+    hip,
+    L(a.ankleL, b.ankleL),
+    pick.kneeL ?? KNEE_FORWARD
+  );
+  const legR = plantedLeg(
+    hip,
+    L(a.ankleR, b.ankleR),
+    pick.kneeR ?? KNEE_FORWARD
+  );
+  const armL = armToWorld(
+    torso,
+    L(a.handL, b.handL),
+    pick.elbowL ?? ELBOW_BACK
+  );
+  const armR = armToWorld(
+    torso,
+    L(a.handR, b.handR),
+    pick.elbowR ?? ELBOW_BACK
+  );
+  return {
+    head: torso,
+    torso,
+    pelvis: torso,
+    thighL: legL.thigh,
+    shankL: legL.shank,
+    thighR: legR.thigh,
+    shankR: legR.shank,
+    upperArmL: armL.upper,
+    foreArmL: armL.fore,
+    handL: armL.fore,
+    upperArmR: armR.upper,
+    foreArmR: armR.fore,
+    handR: armR.fore,
+  };
+}
+/** The straight-trunk angle for a standing figure (the shoulder sits
+ *  5.4° ahead of the hip at rest). */
+const UPRIGHT_TRUNK = -90 + 5.4;
+
+/* Man-maker: a burpee with dumbbells and a row each side, ending in a
+ * clean and press — a CYCLE from plank to plank. The hands hold the
+ * bells throughout, so the "hands" are where the bells are. */
+const MM_BELL_L: Pt = [112, MACHINE_FLOOR - 6];
+const MM_BELL_R: Pt = [116, MACHINE_FLOOR - 6];
+const MM_PLANK = (() => {
+  const b = highPlankBase();
+  const hip = applyToPoint(SIDE_ANCHORS.hip, b.body);
+  const trunk =
+    (Math.atan2(b.shoulder[1] - hip[1], b.shoulder[0] - hip[0]) * 180) /
+    Math.PI;
+  return { hip, trunk };
+})();
+const MM_LOW = (() => {
+  const lowDeg = Math.asin(
+    (HIGH_PLANK_ANKLE[1] - (MACHINE_FLOOR - 6 - 39)) / (LEG_LEN + TRUNK_LEN)
+  );
+  return {
+    hip: [
+      HIGH_PLANK_ANKLE[0] + LEG_LEN * Math.cos(lowDeg),
+      HIGH_PLANK_ANKLE[1] - LEG_LEN * Math.sin(lowDeg),
+    ] as Pt,
+    trunk: (-lowDeg * 180) / Math.PI,
+  };
+})();
+const MM_KEYS: KeyFrame[] = (() => {
+  const plank: KeyFrame = {
+    e: 0,
+    hip: MM_PLANK.hip,
+    trunk: MM_PLANK.trunk,
+    ankleL: HIGH_PLANK_ANKLE,
+    ankleR: HIGH_PLANK_ANKLE,
+    handL: MM_BELL_L,
+    handR: MM_BELL_R,
+  };
+  const squat: KeyFrame = {
+    e: 0.62,
+    hip: [49.5, 160],
+    trunk: -20,
+    ankleL: [60, 196],
+    ankleR: [60, 196],
+    handL: MM_BELL_L,
+    handR: MM_BELL_R,
+    kneeL: KNEE_HIGH,
+    kneeR: KNEE_HIGH,
+  };
+  const racked: KeyFrame = {
+    e: 0.72,
+    hip: [42, 96],
+    trunk: UPRIGHT_TRUNK,
+    ankleL: [46.6, 193],
+    ankleR: [46.6, 193],
+    handL: [57, 40],
+    handR: [57, 40],
+    elbowL: ELBOW_LOW,
+    elbowR: ELBOW_LOW,
+  };
+  return [
+    plank,
+    { ...plank, e: 0.1, hip: MM_LOW.hip, trunk: MM_LOW.trunk },
+    { ...plank, e: 0.2 },
+    // Row the near bell to the ribs; the far arm holds the plank.
+    { ...plank, e: 0.3, handL: [MM_PLANK.hip[0] + 58, MM_PLANK.hip[1] + 6] },
+    { ...plank, e: 0.38 },
+    { ...plank, e: 0.46, handR: [MM_PLANK.hip[0] + 58, MM_PLANK.hip[1] + 6] },
+    { ...plank, e: 0.54 },
+    squat,
+    racked,
+    { ...racked, e: 0.82, handL: [50, -34], handR: [50, -34] },
+    { ...racked, e: 0.9 },
+    { ...squat, e: 0.96 },
+    { ...plank, e: 1 },
+  ];
+})();
+
+/* Turkish get-up: lying with the bell pressed up, to the elbow, to the
+ * hand, the bridge, sweep to a half-kneel, kneel, stand — and the
+ * instruction's own "reverse the sequence", so the rep player's
+ * there-and-back is right for it. The near arm holds the bell VERTICAL
+ * over the shoulder at every position (pinned); the far arm posts on
+ * the floor. */
+const TGU_FLOOR = MACHINE_FLOOR - 4;
+function tguKeys(): KeyFrame[] {
+  const bellAbove = (S: Pt): Pt => [S[0], S[1] - STRAIGHT_ARM];
+  const S_of = (hip: Pt, trunk: number): Pt => {
+    const r = (trunk * Math.PI) / 180;
+    return [hip[0] + TRUNK_LEN * Math.cos(r), hip[1] + TRUNK_LEN * Math.sin(r)];
+  };
+  const mk = (
+    e: number,
+    hip: Pt,
+    trunk: number,
+    ankleL: Pt,
+    ankleR: Pt,
+    handR: Pt,
+    extra: Partial<KeyFrame> = {}
+  ): KeyFrame => ({
+    e,
+    hip,
+    trunk,
+    ankleL,
+    ankleR,
+    handL: bellAbove(S_of(hip, trunk)),
+    handR,
+    elbowL: ELBOW_FRONT,
+    ...extra,
+  });
+  // Lying head-left: the trunk points LEFT (180°) from the hip and
+  // lifts through NEGATIVE angles (screen y points down, so −150 is
+  // up-and-left); the near leg bent with the foot planted, the far leg
+  // straight out.
+  const lyingHip: Pt = [60, TGU_FLOOR - 10];
+  return [
+    mk(
+      0,
+      lyingHip,
+      180,
+      [96, TGU_FLOOR - 4],
+      [140, TGU_FLOOR - 6],
+      [lyingHip[0] - 62, TGU_FLOOR - 2],
+      { kneeL: KNEE_HIGH, kneeR: KNEE_HIGH }
+    ),
+    // To the elbow: the trunk lifts 30°, the far forearm on the floor.
+    mk(
+      0.2,
+      lyingHip,
+      -150,
+      [96, TGU_FLOOR - 4],
+      [140, TGU_FLOOR - 6],
+      [lyingHip[0] - 50, TGU_FLOOR - 2],
+      { kneeL: KNEE_HIGH, kneeR: KNEE_HIGH, elbowR: ELBOW_LOW }
+    ),
+    // To the hand: trunk 60°, far arm straight to the floor.
+    mk(
+      0.4,
+      [62, TGU_FLOOR - 12],
+      -120,
+      [96, TGU_FLOOR - 4],
+      [140, TGU_FLOOR - 6],
+      [lyingHip[0] - 40, TGU_FLOOR - 2],
+      { kneeL: KNEE_HIGH, kneeR: KNEE_HIGH, elbowR: ELBOW_LOW }
+    ),
+    // Bridge: hips up, far leg straight, the near foot planted.
+    // Bridge: the trunk stays low enough (40° up) for the posted far
+    // hand to reach the floor — a near-vertical trunk lifts the shoulder
+    // out of the arm's reach.
+    mk(
+      0.55,
+      [64, TGU_FLOOR - 28],
+      -140,
+      [96, TGU_FLOOR - 4],
+      [140, TGU_FLOOR - 6],
+      [lyingHip[0] - 42, TGU_FLOOR - 2],
+      { kneeL: KNEE_HIGH, kneeR: KNEE_HIGH, elbowR: ELBOW_LOW }
+    ),
+    // Sweep to the half-kneel: the far knee comes under, the near foot
+    // stays planted, the far hand still posted.
+    // Half-kneel: the hip a thigh above the floor, the far shin along it.
+    mk(
+      0.7,
+      [60, TGU_FLOOR - 53],
+      -100,
+      [96, TGU_FLOOR - 4],
+      [12, TGU_FLOOR - 2],
+      [lyingHip[0] - 40, TGU_FLOOR - 2],
+      { kneeL: KNEE_HIGH, kneeR: KNEE_LOW, elbowR: ELBOW_LOW }
+    ),
+    // Kneel upright: the far hand comes off the floor to the side.
+    mk(
+      0.84,
+      [52, TGU_FLOOR - 53],
+      UPRIGHT_TRUNK,
+      [96, TGU_FLOOR - 4],
+      [12, TGU_FLOOR - 2],
+      [42, TGU_FLOOR - 10],
+      { kneeL: KNEE_HIGH, kneeR: KNEE_LOW }
+    ),
+    // Stand.
+    mk(1, [42, 96], UPRIGHT_TRUNK, [46.6, 193], [46.6, 193], [44, 105]),
+  ];
+}
+const TGU_KEYS = tguKeys();
+
 function sideSquatChain(
   e: number,
   hingeDeg: number,
@@ -8960,6 +9225,77 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
       return [h, h];
     },
+  },
+
+  /* ── 2026-09-03 build-out, batch 17: the man-maker and the get-up ── */
+
+  "man-maker": {
+    /* "Start in a high plank gripping dumbbells, body straight. Do a
+     * push-up, then row each dumbbell in turn to your ribs. Jump your
+     * feet forward to your hands and clean the dumbbells to your
+     * shoulders. Press overhead, then reverse back into plank for the
+     * next rep." A CYCLE of thirteen keyframes from plank to plank: the
+     * push-up, each row (one hand to the ribs while the other holds the
+     * plank — unilateral by instruction), the feet forward, the clean
+     * to the shoulders, the press, and back down into the plank. */
+    view: "side",
+    cycle: true,
+    cycleMs: 5200,
+    equip: "dumbbell",
+    viewBox: "-60 -50 200 262",
+    groundY: 204,
+    shadowCx: 40,
+    shadowRx: 60,
+    concentricTo: 1,
+    tint: {
+      chest: "primary",
+      "upper-back": "primary",
+      "front-deltoids": "primary",
+      quadriceps: "secondary",
+      abs: "secondary",
+    },
+    pose: (e) => keyedPose(MM_KEYS, e),
+    bar: (_e, pose) => [
+      applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []),
+      applyToPoint(SIDE_ANCHORS.hand, [
+        ...(pose.handR ?? []),
+        { kind: "translate", dx: FAR_ARM_SHIFT[0], dy: FAR_ARM_SHIFT[1] },
+      ]),
+    ],
+    scene: () =>
+      `<line x1="-60" y1="${MACHINE_FLOOR + 1}" x2="140" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  "turkish-get-up": {
+    /* "Lie on your back, kettlebell pressed straight up with one arm ...
+     * rise through a sequence: to elbow, to hand, to bridge, to
+     * kneeling, to standing. Keep the arm locked and bell vertical
+     * through every position. Reverse the sequence with the same
+     * control." Seven keyframes in that order; the near arm holds the
+     * bell plumb over the shoulder at every one (pinned), the far arm
+     * posts on the floor until the kneel. Instruction 4 makes the rep
+     * player's there-and-back the right player for it. */
+    view: "side",
+    equip: "kettlebell",
+    viewBox: "-40 -50 200 262",
+    groundY: 204,
+    shadowCx: 60,
+    shadowRx: 60,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: {
+      abs: "primary",
+      "front-deltoids": "primary",
+      gluteal: "secondary",
+      obliques: "secondary",
+    },
+    pose: (e) => keyedPose(TGU_KEYS, e),
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, [h[0], h[1] - 8]];
+    },
+    scene: () =>
+      `<line x1="-40" y1="${MACHINE_FLOOR + 1}" x2="160" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
   },
 };
 
