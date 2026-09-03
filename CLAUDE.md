@@ -1053,6 +1053,39 @@ orphan, so the list is genuinely mixed.
       documented fields of an exported interface three components take as a
       prop type.
 
+### Supplied form-card frames — provenance is a LAUNCH GATE (2026-09-03)
+
+Affects: `public/form-frames/dips/*.webp`, `scripts/extract-form-frames.mjs`,
+the `FORM_BEATS` placard for `dips`.
+
+The dips form demo animates six frames cut from a form card the owner
+supplied as a screenshot. The pipeline is general and the code is fine;
+what is NOT established is the right to ship that particular art. It
+could be the owner's own work, licensed stock, an AI generation, or a
+screenshot of a competitor's app — the repo cannot tell, and neither
+could the agent that wired it in.
+
+This is the same open item the Motion Rig roadmap already carries as
+"Reference capture — OPEN, operator-owned: record a rights-cleared
+performer". It is now concrete rather than hypothetical, because art of
+unknown origin is in `public/` and will be served to users.
+
+- [ ] **Establish where the card came from** before this reaches the App
+      Store. Owner-created or commissioned-with-rights: fine, record it
+      here. Generated: check the generator's terms for commercial use.
+      Taken from another app or a stock site without a licence: it has
+      to come out, and the demo falls back to the rig figure on its own
+      (every beat keeps the `t` it needs — no code change to remove the
+      art, just delete the files).
+- [ ] **If it stays, record the licence** in this row with a date, the
+      way `docs/privacy.md` records what holds each policy sentence up.
+      A "probably fine" here is the same shape of risk as the Vertex
+      retention claim: probably true, and "probably" is the problem.
+- [ ] **Decide the scale question before cutting more cards.** One
+      exercise is 72 KB; 152 exercises at six frames each is ~18 MB of
+      precached assets, which is a different conversation about bundle
+      size and about how many cards would have to be sourced.
+
 ### Cost & margin operator setup (unit economics)
 
 Modelled 2026-07-05. Apple's cut dwarfs all infra: at £3.99/mo, Apple takes £0.60 (15% — Small Business Program, accepted 2026-08-18; it was £1.20 at the standard 30%); combined Gemini + Firebase + storage + ORS run ~15–20p/Pro user/mo (Gemini Flash food scan ≈ ½p; only Pro users hit the AI gate). ORS routing is ~free at ~5k users (occasional route-plans, ~2–5 calls each, under the 2,500/day free tier); on quota-exceed it degrades to the existing straight-line planner (no lockout), and true scale = self-host ORS on a ~£25/mo VM (fixed, not per-request). `maxInstances` caps are already in every Cloud Function (runaway-cost guard).

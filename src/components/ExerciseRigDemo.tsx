@@ -19,6 +19,7 @@ import {
   CYCLE_MS_DEFAULT,
   cycleSampleAt,
   placardSampleAt,
+  PLACARD_TIMING,
   repTimingFor,
   repSampleLoopedAt,
   type RepPhase,
@@ -121,6 +122,59 @@ const MuscleKey = memo(function MuscleKey({ legend }: { legend: DemoLegend }) {
         background: legend.colors.primary,
       })}
       {row("Secondary", legend.secondary, secondary)}
+    </div>
+  );
+});
+
+/** A supplied frame's path, against the app's base URL (the build is
+ *  served from `/Maiin/` on Pages and `/` on Hosting). */
+const frameUrl = (p: string) =>
+  `${(import.meta.env.BASE_URL || "/").replace(/\/$/, "")}/${p.replace(/^\//, "")}`;
+
+/**
+ * The supplied frames, crossfading.
+ *
+ * All of them are in the DOM from the first paint at zero opacity, so
+ * the browser has fetched every one before it is needed — a src swap
+ * would show the gap on the first pass through the sequence, which is
+ * the pass that matters.
+ *
+ * The fade is a CSS transition on a beat change rather than a per-frame
+ * opacity written from the rAF loop: there is nothing to interpolate
+ * between two photographs, so the loop's job here is only to say which
+ * position is current.
+ */
+const PlacardFrames = memo(function PlacardFrames({
+  beats,
+  index,
+  name,
+  onFail,
+}: {
+  beats: readonly FormBeat[];
+  index: number;
+  name: string;
+  onFail: () => void;
+}) {
+  return (
+    <div
+      className="relative mx-auto w-full max-w-[300px]"
+      style={{ aspectRatio: "680 / 594" }}
+    >
+      {beats.map((b, i) => (
+        <img
+          key={b.image}
+          src={frameUrl(b.image!)}
+          alt={i === index ? `${name}, ${b.label}` : ""}
+          aria-hidden={i !== index}
+          draggable={false}
+          onError={onFail}
+          className="absolute inset-0 size-full object-contain motion-safe:transition-opacity"
+          style={{
+            opacity: i === index ? 1 : 0,
+            transitionDuration: `${PLACARD_TIMING.moveMs}ms`,
+          }}
+        />
+      ))}
     </div>
   );
 });
@@ -256,6 +310,14 @@ export default function ExerciseRigDemo({
     () => (placard ? getDemoLegend(exerciseId) : null),
     [placard, exerciseId]
   );
+  /* SUPPLIED frames: where every position carries one, the pictures are
+     the animation and the rig figure is the fallback. Partial coverage
+     is not a half-state worth building — a sequence that alternated
+     between a photograph and a drawing would read as broken — so it is
+     all or nothing. */
+  const [framesFailed, setFramesFailed] = useState(false);
+  const framed =
+    placard && !framesFailed && beats !== null && beats.every((b) => b.image);
   const openingT =
     placard && beats
       ? beats[0].t
@@ -269,8 +331,11 @@ export default function ExerciseRigDemo({
   // this component by exercise), so React never rewrites the figure div
   // after mount — the rAF loop owns its innerHTML from then on.
   const initialHtml = useMemo(
-    () => ({ __html: renderBodyDemo(exerciseId, openingT, 0.7) }),
-    [exerciseId, openingT]
+    // Skipped entirely while supplied frames are on screen: it is a
+    // whole figure render, and the fallback does not need to be warm —
+    // when a frame fails, `framed` flips and this recomputes.
+    () => ({ __html: framed ? "" : renderBodyDemo(exerciseId, openingT, 0.7) }),
+    [exerciseId, openingT, framed]
   );
   const figureRef = useRef<HTMLDivElement>(null);
   const [phase, setPhase] = useState<RepPhase>("set");
@@ -303,7 +368,7 @@ export default function ExerciseRigDemo({
       setPhase(p);
     };
     cue("set");
-    draw(renderBodyDemo(exerciseId, openingT, 0.7));
+    if (!framed) draw(renderBodyDemo(exerciseId, openingT, 0.7));
 
     const tick = (now: number) => {
       rafRef.current = requestAnimationFrame(tick);
@@ -347,7 +412,11 @@ export default function ExerciseRigDemo({
       }
       // Low-pass the effort so phase changes glow in, never flicker.
       effortRef.current += (targetEffort - effortRef.current) * 0.1;
-      draw(renderBodyDemo(exerciseId, t, effortRef.current));
+      // With supplied frames there is no figure to redraw — the loop's
+      // only job is to say which position is current, and the crossfade
+      // is CSS. Kept on the same clock rather than a second timer so
+      // there is one timing path to reason about and to test.
+      if (!framed) draw(renderBodyDemo(exerciseId, t, effortRef.current));
     };
     rafRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafRef.current);
@@ -363,6 +432,7 @@ export default function ExerciseRigDemo({
     cycleMs,
     placard,
     beats,
+    framed,
   ]);
 
   /* The demo renders on a fixed DARK stage in both themes (like any
@@ -380,13 +450,23 @@ export default function ExerciseRigDemo({
         <ol className="grid grid-cols-2 gap-x-3 gap-y-4">
           {beats.map((b, i) => (
             <li key={`${b.label}-${i}`}>
-              <div
-                role="img"
-                aria-label={`${name}, ${b.label}`}
-                dangerouslySetInnerHTML={{
-                  __html: renderBodyDemo(exerciseId, b.t),
-                }}
-              />
+              {framed ? (
+                <img
+                  src={frameUrl(b.image!)}
+                  alt={`${name}, ${b.label}`}
+                  draggable={false}
+                  onError={() => setFramesFailed(true)}
+                  className="w-full"
+                />
+              ) : (
+                <div
+                  role="img"
+                  aria-label={`${name}, ${b.label}`}
+                  dangerouslySetInnerHTML={{
+                    __html: renderBodyDemo(exerciseId, b.t),
+                  }}
+                />
+              )}
               <p className="mt-1 flex items-center gap-1.5 text-micro font-semibold text-stage-foreground">
                 <span
                   aria-hidden="true"
@@ -441,12 +521,21 @@ export default function ExerciseRigDemo({
     return (
       <div className="bg-stage rounded-2xl p-4 mt-4">
         <MuscleKey legend={legend} />
-        <div
-          role="img"
-          aria-label={`${name} demonstration — stepping through each position`}
-        >
-          <Figure html={initialHtml} figureRef={figureRef} />
-        </div>
+        {framed ? (
+          <PlacardFrames
+            beats={beats}
+            index={beatIndex}
+            name={name}
+            onFail={() => setFramesFailed(true)}
+          />
+        ) : (
+          <div
+            role="img"
+            aria-label={`${name} demonstration — stepping through each position`}
+          >
+            <Figure html={initialHtml} figureRef={figureRef} />
+          </div>
+        )}
         {/* Where we are in the sequence. The printed card shows six
             panels at once; moving, it shows one — so the rail is what
             carries "of six". */}

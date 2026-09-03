@@ -29,7 +29,12 @@ vi.mock("@/hooks/useReducedMotion", () => ({
 // Every animated draw is recorded so tests can compare full sequences.
 const drawLog: Array<{ t: number; effort: number | undefined }> = [];
 const demoRef = { current: { concentricTo: 0 } as Record<string, unknown> };
-type TestBeat = { t: number; label: string; cue: string };
+type TestBeat = {
+  t: number;
+  label: string;
+  cue: string;
+  image?: string;
+};
 const beatsRef = { current: null as readonly TestBeat[] | null };
 const legendRef = {
   current: {
@@ -370,6 +375,88 @@ describe("ExerciseRigDemo", () => {
       expect(screen.getByText(b.cue)).toBeInTheDocument();
     }
     expect(rafQueue.length).toBe(0);
+    reduceRef.current = false;
+  });
+
+  /* ── Supplied frames ─────────────────────────────────────────────
+   * The owner's own card, cut into six. Where every position carries a
+   * picture the pictures ARE the animation and the rig is the fallback
+   * for when they cannot load. */
+  const FRAMED: TestBeat[] = PLACARD_BEATS.map((b, i) => ({
+    ...b,
+    image: `form-frames/dips/${i + 1}.webp`,
+  }));
+
+  it("supplied frames replace the drawn figure entirely", () => {
+    reduceRef.current = false;
+    beatsRef.current = FRAMED;
+    const { container } = render(
+      <ExerciseRigDemo exerciseId="dips" name="Dips" />
+    );
+    /* Queried by TAG, not by role: every frame but the current one is
+       `alt=""` + aria-hidden, which is role `presentation` — correctly,
+       since six stacked copies of one figure must not read as six
+       images to a screen reader. */
+    const frames = [...container.querySelectorAll("img")];
+    expect(frames).toHaveLength(3);
+    // The current position is the visible one.
+    expect(frames[0]).toHaveStyle({ opacity: "1" });
+    expect(frames[1]).toHaveStyle({ opacity: "0" });
+    // And the rig never draws: the loop's only job here is the index.
+    step(40);
+    step(900);
+    expect(drawLog).toHaveLength(0);
+  });
+
+  it("the visible frame follows the position", () => {
+    reduceRef.current = false;
+    beatsRef.current = FRAMED;
+    const { container } = render(
+      <ExerciseRigDemo exerciseId="dips" name="Dips" />
+    );
+    step(40);
+    step(SLOT + 100);
+    expect(screen.getByText("Mid descent")).toBeInTheDocument();
+    const frames = [...container.querySelectorAll("img")];
+    expect(frames[0]).toHaveStyle({ opacity: "0" });
+    expect(frames[1]).toHaveStyle({ opacity: "1" });
+  });
+
+  it("a frame that cannot load falls back to the drawn figure", () => {
+    /* The pictures live under public/ and are fetched at runtime, so
+       "the file is in the repo" is not the same claim as "the user got
+       it" — a bad deploy, an offline first visit, or a stale service
+       worker all end the same way. The beat's own `t` is what the rig
+       falls back TO, which is why a framed beat still carries one. */
+    reduceRef.current = false;
+    beatsRef.current = FRAMED;
+    const { container } = render(
+      <ExerciseRigDemo exerciseId="dips" name="Dips" />
+    );
+    const first = container.querySelector("img")!;
+    act(() => {
+      first.dispatchEvent(new Event("error", { bubbles: false }));
+    });
+    step(40);
+    step(900);
+    // The rig is drawing again, at the beat's own t.
+    expect(drawLog.length).toBeGreaterThan(0);
+    expect(drawLog[drawLog.length - 1].t).toBe(0);
+    expect(screen.getByText("Top position")).toBeInTheDocument();
+  });
+
+  it("reduced motion prints the supplied frames, not the drawn ones", () => {
+    reduceRef.current = true;
+    beatsRef.current = FRAMED;
+    const { container } = render(
+      <ExerciseRigDemo exerciseId="dips" name="Dips" />
+    );
+    const frames = [...container.querySelectorAll("img")];
+    expect(frames).toHaveLength(3);
+    expect(drawLog).toHaveLength(0);
+    for (const b of FRAMED) {
+      expect(screen.getByText(b.cue)).toBeInTheDocument();
+    }
     reduceRef.current = false;
   });
 

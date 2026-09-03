@@ -12,12 +12,14 @@
 import sharp from "sharp";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { readFileSync } from "node:fs";
 import {
   FORM_BEAT_IDS,
   getDemoLegend,
   getFormBeats,
   renderBodyDemo,
   __unlockSideDemosForPreview,
+  type FormBeat,
 } from "../src/lib/bodyRig";
 
 __unlockSideDemosForPreview();
@@ -34,6 +36,14 @@ const CELL_W = 300;
 const CELL_H = 400;
 const PAD = 28;
 const HEAD = 96;
+
+/** A position's picture: the supplied frame where there is one, else
+ *  the rig's own figure at that beat's t. The preview has to show what
+ *  the app shows, or it is reviewing something nobody will see. */
+const frameOf = (id: string, b: FormBeat, effort = 0.85): Buffer =>
+  b.image
+    ? readFileSync(resolve("public", b.image))
+    : Buffer.from(renderBodyDemo(id, b.t, effort));
 
 const esc = (t: string) =>
   t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -72,9 +82,7 @@ async function main() {
     // inside another <svg> would re-resolve its viewBox.
     const tiles = await Promise.all(
       beats.map(async (b, i) => {
-        const png = await sharp(Buffer.from(renderBodyDemo(id, b.t, 0.85)), {
-          density: 300,
-        })
+        const png = await sharp(frameOf(id, b), { density: 300 })
           .resize(CELL_W - 24, CELL_H - 118, {
             fit: "contain",
             background: { r: 17, g: 17, b: 19, alpha: 1 },
@@ -133,9 +141,7 @@ async function main() {
     const CARD_H = 470;
     const cards = await Promise.all(
       beats.map(async (b, i) => {
-        const png = await sharp(Buffer.from(renderBodyDemo(id, b.t, 0.85)), {
-          density: 300,
-        })
+        const png = await sharp(frameOf(id, b), { density: 300 })
           .resize(190, 250, {
             fit: "contain",
             background: { r: 17, g: 17, b: 19, alpha: 1 },

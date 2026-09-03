@@ -1,4 +1,6 @@
 import { describe, it, expect } from "vitest";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { resolve } from "node:path";
 import {
   applyToPoint,
   BACK_RACK,
@@ -15,6 +17,10 @@ import {
 } from "../bodyRig";
 import { PLACARD_CUE_WORDS } from "../exerciseTempo";
 import { THEME } from "../theme";
+
+/** The rig's paler secondary purple — `THEME.liftingLight`, which is
+ *  what a rig-drawn figure paints a secondary muscle with. */
+const SECONDARY_TINT = THEME.liftingLight;
 import { ANTERIOR, POSTERIOR } from "../bodyModelData";
 import { EXERCISES } from "../exercises";
 import { FAR_ARM_SHIFT, SIDE_ANCHORS, SIDE_PIECES } from "../bodySideData";
@@ -4916,34 +4922,37 @@ describe("the muscle key", () => {
   });
 
   it("reads the legend FROM the demo that does the painting", () => {
-    const legend = getDemoLegend("dips")!;
-    expect(legend.primary).toEqual(["Chest"]);
-    expect(legend.secondary).toEqual(["Triceps", "Front delts"]);
-    // The swatch colours are the renderer's own fills, so a key cannot
+    // For a rig-drawn demo the key IS its tint map, and the swatch
+    // colours are the renderer's own fills — so the key cannot
     // disagree with the figure it explains.
-    expect(renderBodyDemo("dips", 0.5)).toContain(legend.colors.primary);
-    expect(renderBodyDemo("dips", 0.5)).toContain(legend.colors.secondary);
+    const id = Object.keys(BODY_DEMOS).find(
+      (k) => BODY_DEMOS[k].view === "side" && getFormBeats(k) === null
+    )!;
+    const legend = getDemoLegend(id)!;
+    expect(legend.primary.length + legend.secondary.length).toBe(
+      Object.keys(BODY_DEMOS[id].tint).length
+    );
+    const svg = renderBodyDemo(id, 0.5);
+    if (legend.primary.length) expect(svg).toContain(legend.colors.primary);
+    if (legend.secondary.length) expect(svg).toContain(legend.colors.secondary);
   });
 
-  it("says HOW the secondaries are painted, per art style", () => {
-    /* The two styles disagree about this and the legend has to follow.
-       The mosaic pales the purple; the illustrated figure hatches it,
-       which is the reference card's own register — and a solid dot
-       beside a striped muscle is a key describing a figure that is not
-       on screen. Caught by the test above the moment dips changed
-       style: the legend still promised #9590E0, which the illustrated
-       SVG never paints. */
+  it("a placard with SUPPLIED frames gets the key to those frames", () => {
+    /* The rig's tint map is a true statement about the rig's figure and
+       a false one about a picture that highlights different muscles.
+       Dips runs the owner's own card, which shades the pec solid and
+       hatches the lower chest and serratus — so the key names those,
+       not the rig's chest / triceps / front delts. */
     const dips = getDemoLegend("dips")!;
-    expect(BODY_DEMOS.dips.art).toBe("illustrated");
+    expect(dips.primary).toEqual(["Pectoralis major"]);
+    expect(dips.secondary).toContain("Serratus anterior");
     expect(dips.secondaryFill).toBe("hatch");
-    expect(renderBodyDemo("dips", 0.5)).toContain('<pattern id="hatch-');
-
-    const mosaic = Object.keys(BODY_DEMOS).find(
-      (id) => BODY_DEMOS[id].view === "side" && !BODY_DEMOS[id].art
+    // Every rig-drawn demo still reads its key off its own tint map.
+    const rigDrawn = Object.keys(BODY_DEMOS).find(
+      (id) => BODY_DEMOS[id].view === "side" && getFormBeats(id) === null
     )!;
-    const legend = getDemoLegend(mosaic)!;
-    expect(legend.secondaryFill).toBe("solid");
-    expect(renderBodyDemo(mosaic, 0.5)).not.toContain("<pattern");
+    expect(getDemoLegend(rigDrawn)!.secondaryFill).toBe("solid");
+    expect(renderBodyDemo(rigDrawn, 0.5)).toContain(SECONDARY_TINT);
   });
 
   it("an exercise with no rig demo has no legend to show", () => {
@@ -4951,92 +4960,104 @@ describe("the muscle key", () => {
   });
 });
 
-/* ── The illustrated art style (2026-09-03) ──────────────────────────
+/* ── Supplied frames (2026-09-03) ────────────────────────────────────
  *
- * A second renderer over the SAME skeleton: every pose, anchor, IK
- * solve and contour is shared, and only the paint changes. These pin
- * the properties that are true of the PAINT — the geometry pins above
- * apply to both styles by construction, which is the point of not
- * forking the skeleton.
+ * The dips placard animates the owner's own card, cut into six by
+ * `scripts/extract-form-frames.mjs`. These pin the properties that make
+ * six stills read as one movement, and that a path in a TypeScript file
+ * still names a file on disk — the failure mode a type cannot catch.
  */
-describe("illustrated art", () => {
-  const ILLUSTRATED = Object.keys(BODY_DEMOS).filter(
-    (id) => BODY_DEMOS[id].art === "illustrated"
+describe("supplied placard frames", () => {
+  const framed = FORM_BEAT_IDS.filter((id) =>
+    getFormBeats(id)!.some((b) => b.image)
   );
 
-  it("is opt-in, and side-view only", () => {
-    expect(ILLUSTRATED.length).toBeGreaterThan(0);
-    for (const id of ILLUSTRATED) expect(BODY_DEMOS[id].view, id).toBe("side");
-    // Everything else still paints the mosaic — the style is a trial,
-    // not a migration.
-    expect(ILLUSTRATED.length).toBeLessThan(Object.keys(BODY_DEMOS).length);
-  });
+  /** WebP is a RIFF container, and it has two shapes here.
+   *
+   *  A plain lossy file is `VP8 ` with 14-bit dimensions after the sync
+   *  code. Once the frames gained an alpha channel — the card's
+   *  background is keyed out so the figure sits on our stage — they
+   *  became the EXTENDED form, `VP8X`, whose canvas size is two 24-bit
+   *  fields and is stored minus one. The test caught that change rather
+   *  than being told about it.
+   *
+   *  Parsed rather than decoded because the image libraries this repo
+   *  uses live in dev scripts and are not in package.json: a test that
+   *  reached for one would pass locally and be unavailable in CI. */
+  function webpSize(buf: Buffer): { w: number; h: number } {
+    expect(buf.toString("ascii", 0, 4)).toBe("RIFF");
+    expect(buf.toString("ascii", 8, 12)).toBe("WEBP");
+    const kind = buf.toString("ascii", 12, 16);
+    if (kind === "VP8X")
+      return {
+        w: buf.readUIntLE(24, 3) + 1,
+        h: buf.readUIntLE(27, 3) + 1,
+      };
+    expect(kind).toBe("VP8 ");
+    return {
+      w: buf.readUInt16LE(26) & 0x3fff,
+      h: buf.readUInt16LE(28) & 0x3fff,
+    };
+  }
 
-  it("draws the body as curves, not as a facet mosaic", () => {
-    const svg = renderBodyDemo(ILLUSTRATED[0], 0.5);
-    // Bezier body paths, and no straight-edged body polygons. The glow
-    // hulls are still polygons, so this asks about `<path`.
-    expect(svg).toContain('<path d="M');
-    expect(svg).toContain("C"); // cubic segments
-    // The mosaic's per-facet body fill is gone: no piece is painted in
-    // the seam tone any more.
-    expect(svg).not.toContain('fill="#33363D"');
-  });
-
-  it("every url(#…) reference resolves inside its own SVG", () => {
-    for (const id of ILLUSTRATED) {
-      for (const t of [0, 0.5, 1]) {
-        const svg = renderBodyDemo(id, t);
-        const ids = new Set(
-          [...svg.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1])
-        );
-        const refs = [...svg.matchAll(/url\(#([^)]+)\)/g)].map((m) => m[1]);
-        expect(refs.length, `${id} t=${t}`).toBeGreaterThan(0);
-        for (const r of refs) {
-          expect(ids.has(r), `${id} t=${t}: url(#${r}) has no definition`).toBe(
-            true
-          );
-        }
+  it("every frame path names a file that is actually there", () => {
+    expect(framed.length).toBeGreaterThan(0);
+    for (const id of framed) {
+      for (const b of getFormBeats(id)!) {
+        expect(b.image, `${id} "${b.label}" has no frame`).toBeTruthy();
+        const file = resolve(process.cwd(), "public", b.image!);
+        expect(existsSync(file), `missing ${b.image}`).toBe(true);
+        expect(statSync(file).size).toBeGreaterThan(2000);
       }
     }
   });
 
-  it("two frames on one page cannot share a def id", () => {
-    /* The reduced-motion placard renders SIX of these inline on one
-       page. Duplicate ids across inline SVGs resolve to the FIRST
-       definition, so a module-level id would give every figure the
-       first frame's gradient — and with a per-frame gradient that is
-       invisible until a gradient actually differs. The suffix is
-       derived from the exercise and t, which also keeps it
-       deterministic for the preview manifest and the screenshot diff. */
-    const beats = getFormBeats(ILLUSTRATED[0]);
-    const ts = beats ? beats.map((b) => b.t) : [0, 0.25, 0.5, 0.75, 1];
-    const seen = new Map<string, number>();
-    for (const t of new Set(ts)) {
-      for (const m of renderBodyDemo(ILLUSTRATED[0], t).matchAll(
-        /\sid="([^"]+)"/g
-      )) {
-        expect(seen.has(m[1]), `id ${m[1]} repeats at t=${t}`).toBe(false);
-        seen.set(m[1], t);
-      }
+  it("all of a sequence's frames share one canvas", () => {
+    /* The extraction crops every panel to the UNION of all six figures'
+       bounding boxes. Trim each frame to its own box instead and the
+       body jumps around the canvas between positions — the single
+       property that decides whether six stills read as one movement. */
+    for (const id of framed) {
+      const sizes = getFormBeats(id)!.map((b) =>
+        webpSize(readFileSync(resolve(process.cwd(), "public", b.image!)))
+      );
+      for (const s of sizes) expect(s, id).toEqual(sizes[0]);
+      // A real canvas, not a 1x1 that would satisfy "all equal".
+      expect(sizes[0].w).toBeGreaterThan(200);
+      expect(sizes[0].h).toBeGreaterThan(200);
     }
-    expect(seen.size).toBeGreaterThan(1);
-    // Deterministic: the same frame renders the same ids twice running.
-    expect(renderBodyDemo(ILLUSTRATED[0], 0.5)).toBe(
-      renderBodyDemo(ILLUSTRATED[0], 0.5)
+  });
+
+  it("a framed beat still carries the t it falls back to", () => {
+    // The pictures are fetched at runtime, so "the file is in the repo"
+    // is not "the user got it". The rig renders the same position from
+    // the beat's own t when a frame cannot load.
+    for (const id of framed) {
+      for (const b of getFormBeats(id)!) {
+        expect(typeof b.t, `${id} "${b.label}"`).toBe("number");
+      }
+      expect(
+        getBodyDemo(id),
+        `${id} has no figure to fall back to`
+      ).not.toBeNull();
+    }
+  });
+
+  it("leaves no orphan frames in the directory", () => {
+    // A renamed beat that leaves its old picture behind ships dead
+    // weight in the bundle and reads as a frame that is still in use.
+    const dirs = new Set(
+      framed.flatMap((id) =>
+        getFormBeats(id)!.map((b) => b.image!.replace(/\/[^/]+$/, ""))
+      )
     );
-  });
-
-  it("paints the same muscles the mosaic would", () => {
-    // Only the paint changes. A style that quietly lit a different
-    // muscle would be a different claim about the exercise.
-    for (const id of ILLUSTRATED) {
-      const svg = renderBodyDemo(id, 0.6, 1);
-      const demo = BODY_DEMOS[id];
-      if (Object.values(demo.tint).includes("primary"))
-        expect(svg, id).toContain(`fill="${THEME.lifting}"`);
-      if (Object.values(demo.tint).includes("secondary"))
-        expect(svg, id).toContain("hatch-");
+    const used = new Set(
+      framed.flatMap((id) => getFormBeats(id)!.map((b) => b.image!))
+    );
+    for (const d of dirs) {
+      for (const f of readdirSync(resolve(process.cwd(), "public", d))) {
+        expect(used.has(`${d}/${f}`), `orphan frame ${d}/${f}`).toBe(true);
+      }
     }
   });
 });

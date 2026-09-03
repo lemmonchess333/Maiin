@@ -1987,3 +1987,79 @@ visible in `dips-placard.png`:
 Style is opt-in per demo (`art: "illustrated"`), and dips is the only one
 on it. Everything else still paints the mosaic — pinned, so a migration
 has to be a deliberate act.
+
+## STATUS 2026-09-03v — the frames ARE the card
+
+Owner, after 03u: "I'm not telling you to take what I send and adapt it
+to our style — I'm telling you to adapt what I send and animate exactly
+that."
+
+Both earlier passes read the reference as a style brief. It was not. The
+card's six panels are the frames; the job was to animate them.
+
+- **03t** copied the card's LAYOUT and kept our faceted figure.
+- **03u** redrew our figure in the card's manner. Closer, still a
+  redrawing.
+- **03v** animates the card itself.
+
+### What shipped
+
+`scripts/extract-form-frames.mjs` cuts the owner's card into six frames
+under `public/form-frames/dips/`. Three things it does that a naive crop
+does not, each of which showed up as a visible defect first:
+
+- **Paints out the panel title and caption before measuring.** Otherwise
+  the trim finds the text, not the figure — and the app renders those
+  words itself, where they can be themed, selected, translated and read
+  at any size, none of which pixels can do.
+- **Crops all six to ONE shared rect**, the union of every figure's
+  bounding box. Trim each frame to its own box and the body jumps around
+  the canvas between positions. This single property is what makes six
+  stills read as one movement, and it is pinned.
+- **Keys the card's panel background out to transparency**, with a soft
+  ramp so the figure keeps its anti-aliased edge. Without it each frame
+  sits on the card's lighter near-black as a visible rectangle on our
+  darker stage. The station's dark bars survive the key because they are
+  well above the threshold; that was checked, not assumed.
+
+The player crossfades them: every frame is in the DOM from the first
+paint at zero opacity, so the browser has fetched all six before the
+first fade needs one, and the fade is a CSS transition on a beat change.
+There is nothing to interpolate between two pictures, so the rAF loop's
+only job here is to say which position is current — and while frames are
+on screen the rig does not draw at all, including the opening frame.
+
+### The beat keeps its `t`, and that is not redundancy
+
+Pictures are fetched at runtime, so "the file is in the repo" is not
+"the user got it": a bad deploy, an offline first visit or a stale
+service worker all end the same way. A frame that fails to load falls
+back to the rig figure at that beat's own `t` — so every geometry pin
+above still measures something real, including the 0.995 lockout fix
+that 03t's captions forced.
+
+### The key follows the art
+
+`getDemoLegend` reads the rig's tint map, which is a true statement
+about the rig's figure and a false one about a picture that highlights
+different muscles. A placard with supplied frames now carries its own
+key, authored from the card: pectoralis major solid, and triceps,
+anterior deltoids, lower chest and serratus anterior hatched. The
+catalogue's own vocabulary still appears in the muscle pills below.
+
+### 03u is reverted, not kept
+
+`renderIllustratedSide` and its art tokens are gone. It answered a
+question that turned out not to be the question, and an unused second
+renderer is precisely the half-built seam this repo keeps finding months
+later. It is in the history if the look is ever wanted for the 151
+exercises that have no card.
+
+### The open question is provenance, and it is a launch gate
+
+These frames are art of unknown origin — they arrived as a screenshot.
+Nothing in this change establishes the right to ship them, and the
+roadmap's own licensing line ("record a rights-cleared performer") is
+still open. A row now sits in the pre-launch QA backlog. The mechanism
+here is general: any card can be cut by the same script. Whether THIS
+card can ship is a question about the card, not about the code.
