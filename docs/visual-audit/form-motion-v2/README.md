@@ -1175,3 +1175,40 @@ for the next rep"); `plank`, `side-plank`, `l-sit` and the other true
 holds are still open — a hold has no rep for the player to loop.
 
 Capture channel: `leg-raise`, `ab-wheel`, `cable-crunch` added.
+
+## STATUS 2026-09-03g — build-out, batch 6: bodyweight rows and dips, the swing, the rail
+
+Coverage 72 → 80 of 152. New machinery:
+
+- **`rigidLean`** — the standing figure tilted rigidly about its ankle to
+  an angle above the floor and translated onto a planted heel. "One
+  straight line from heels to head" is literally the standing figure,
+  tilted; the inverted row is that figure hinging on its heels under a
+  fixed bar.
+- **`armToWorld`** — aim the rest arm at a WORLD target for a body
+  already placed by its ops (via `invertOps`), with the elbow branch
+  chosen in world space (`ELBOW_LOW`, `ELBOW_BACK`). Six demos in this
+  batch use it; the deadlift's hand-rolled version is the same idea.
+- **`kneelHingeChain`** — thigh + trunk rigid about a fixed knee, shins
+  flat, arms crossed: the Nordic curl on the floor, the GHR on a pad.
+- **`kettlebell`** prop — ball + handle, the ball placed by the demo so
+  it swings in line with the arm rather than always hanging.
+
+| Demo                    | Chain                                              | Pinned claim (from its instructions)                                                    |
+| ----------------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `inverted-row`          | `rigidLean` 28° → 50°, hands on a fixed bar        | heels + hands stationary; body straight (±0.5° of rest); extension >160°; chest at bar  |
+| `bench-dips`            | hip drops 20 on a plumb trunk, `plantedLeg` heels  | hands + heels stationary; >160° top; 78-102° bottom; elbow BEHIND; trunk upright        |
+| `kettlebell-swing`      | `hingeLift(74)` + pendulum arm −80° → +32°         | arms >170° every frame; bell behind the knee line and low at the hike; chest height top |
+| `barbell-upright-row`   | hand path a hand's width off the trunk             | 4-18 off the trunk every frame; upper-chest finish; elbow never above the shoulder      |
+| `zercher-squat`         | `sideSquatChain(26)`, forearms folded              | bar within 6 of the elbow crook and >20 from the hand; torso >8° more upright; parallel |
+| `nordic-hamstring-curl` | `kneelHingeChain` on the floor, 0 → 80°            | knees + ankles fixed; straight body; upright top; shoulders within 45 of the floor      |
+| `glute-ham-raise`       | `kneelHingeChain` on a pad, 0 → 90°                | knees + ankles fixed; straight body; upright top; horizontal bottom (±10°)              |
+| `sissy-squat`           | shin about the ball of the foot, thigh+trunk rigid | ball + hands stationary; heel rises >8; knees past the toes; thigh-trunk one line       |
+
+`barbell-upright-row` is the one demo here the profile shows only half
+of: the elbows' outward flare is a frontal-plane fact. What the profile
+DOES show — the bar riding the body, the stopping height, the elbows
+never clearing the shoulders — is what the instructions are about.
+
+Capture channel: `inverted-row`, `kettlebell-swing`,
+`nordic-hamstring-curl` added.
