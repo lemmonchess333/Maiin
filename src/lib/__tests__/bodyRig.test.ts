@@ -1080,6 +1080,16 @@ describe("renderBodyDemo", () => {
       "spider-db-curl": "stretch",
       "single-arm-lat-pulldown": "stretch",
       "cable-glute-kickback": "stretch",
+      // Batch 9.
+      "landmine-press": "stretch",
+      "landmine-squat": "lockout",
+      "meadows-row": "stretch",
+      "chest-press-machine": "stretch",
+      "shoulder-press-machine": "stretch",
+      "jm-press": "lockout",
+      "pike-push-up": "lockout",
+      "handstand-push-ups": "lockout",
+      "dragon-flag": "lockout",
     };
     expect(Object.keys(START).sort()).toEqual(Object.keys(BODY_DEMOS).sort());
     for (const [id, expected] of Object.entries(START)) {
@@ -2598,6 +2608,273 @@ describe("renderBodyDemo", () => {
       expect(lean, "kickback: slight hinge").toBeGreaterThan(10);
       expect(lean, "kickback: slight hinge").toBeLessThan(26);
     }
+
+    /* Batch 9: landmines, levers, inversions. */
+    const restLeanDeg = lineDeg(SIDE_ANCHORS.hip, SIDE_ANCHORS.shoulder) + 90;
+    const trunkLean = (id: string, t: number) => {
+      const p = at(id, t);
+      return (
+        lineDeg(
+          pt(SIDE_ANCHORS.hip, p.pelvis),
+          pt(SIDE_ANCHORS.shoulder, p.torso)
+        ) +
+        90 -
+        restLeanDeg
+      );
+    };
+    // Landmine press: the hand rides the bar's ARC about the floor sleeve
+    // (constant radius); starts at shoulder height; finishes fully
+    // extended, up and forward.
+    {
+      const id = "landmine-press";
+      const pivot = BODY_DEMOS[id].pivot!;
+      const r0 = Math.hypot(
+        pt(SIDE_ANCHORS.hand, at(id, 0).handL)[0] - pivot[0],
+        pt(SIDE_ANCHORS.hand, at(id, 0).handL)[1] - pivot[1]
+      );
+      for (const t of [0.25, 0.5, 0.75, 1]) {
+        const H = pt(SIDE_ANCHORS.hand, at(id, t).handL);
+        expect(
+          Math.abs(Math.hypot(H[0] - pivot[0], H[1] - pivot[1]) - r0),
+          `landmine press: hand on the bar's arc @${t}`
+        ).toBeLessThan(0.3);
+      }
+      const S0 = pt(SIDE_ANCHORS.shoulder, at(id, 0).torso);
+      const H0 = pt(SIDE_ANCHORS.hand, at(id, 0).handL);
+      expect(
+        Math.abs(H0[1] - S0[1]),
+        "landmine press: bar end at shoulder height"
+      ).toBeLessThan(10);
+      expect(elbowDeg(id, 1), "landmine press: fully extended").toBeGreaterThan(
+        160
+      );
+      const H1 = pt(SIDE_ANCHORS.hand, at(id, 1).handL);
+      expect(S0[1] - H1[1], "landmine press: up").toBeGreaterThan(10);
+      expect(H1[0] - S0[0], "landmine press: and forward").toBeGreaterThan(40);
+    }
+    // Landmine squat: the bar end hugged to the chest (hand-to-shoulder
+    // distance constant); to parallel with an upright trunk.
+    {
+      const id = "landmine-squat";
+      const d = (t: number) => {
+        const p = at(id, t);
+        const S = pt(SIDE_ANCHORS.shoulder, p.torso);
+        const H = pt(SIDE_ANCHORS.hand, p.handL);
+        return Math.hypot(H[0] - S[0], H[1] - S[1]);
+      };
+      for (const t of [0.5, 1])
+        expect(
+          Math.abs(d(t) - d(0)),
+          `landmine squat: bar hugged @${t}`
+        ).toBeLessThan(0.3);
+      const p1 = at(id, 1);
+      expect(
+        pt(SIDE_ANCHORS.hip, p1.pelvis)[1],
+        "landmine squat: parallel"
+      ).toBeGreaterThan(pt(SIDE_ANCHORS.knee, p1.thighL)[1] - 2);
+      expect(trunkLean(id, 1), "landmine squat: upright trunk").toBeLessThan(
+        18
+      );
+    }
+    // Meadows row: "keeping the hinge locked" (40-50° at both ends);
+    // straight hang at the stretch; elbow driven back behind the trunk
+    // and the end at the hip at the top.
+    {
+      const id = "meadows-row";
+      for (const t of [0, 1]) {
+        expect(trunkLean(id, t), `meadows: hinge locked @${t}`).toBeGreaterThan(
+          40
+        );
+        expect(trunkLean(id, t), `meadows: hinge locked @${t}`).toBeLessThan(
+          50
+        );
+      }
+      expect(elbowDeg(id, 0), "meadows: straight hang").toBeGreaterThan(160);
+      const p1 = at(id, 1);
+      const S = pt(SIDE_ANCHORS.shoulder, p1.torso);
+      const E = pt(SIDE_ANCHORS.elbow, p1.foreArmL);
+      const H = pt(SIDE_ANCHORS.hand, p1.handL);
+      const hip = pt(SIDE_ANCHORS.hip, p1.pelvis);
+      expect(S[0] - E[0], "meadows: elbow behind the trunk").toBeGreaterThan(
+        20
+      );
+      expect(
+        Math.hypot(H[0] - hip[0], H[1] - hip[1]),
+        "meadows: end at the hip"
+      ).toBeLessThan(14);
+    }
+    // Chest press machine: hips on the seat; a HORIZONTAL press at
+    // mid-chest; fully extended at the finish.
+    {
+      const id = "chest-press-machine";
+      stationary(
+        id,
+        SIDE_ANCHORS.hip,
+        "pelvis",
+        "chest press: hips on the seat"
+      );
+      const y0 = pt(SIDE_ANCHORS.hand, at(id, 0).handL)[1];
+      for (const t of [0.5, 1])
+        expect(
+          Math.abs(pt(SIDE_ANCHORS.hand, at(id, t).handL)[1] - y0),
+          `chest press: horizontal @${t}`
+        ).toBeLessThan(1);
+      expect(elbowDeg(id, 1), "chest press: fully extended").toBeGreaterThan(
+        160
+      );
+      const S = pt(SIDE_ANCHORS.shoulder, at(id, 0).torso);
+      const H = pt(SIDE_ANCHORS.hand, at(id, 0).handL);
+      expect(
+        Math.hypot(H[0] - S[0], H[1] - S[1]),
+        "chest press: handles at the chest"
+      ).toBeLessThan(26);
+    }
+    // Shoulder press machine: "without shrugging" — the shoulder never
+    // moves; handles at shoulder height; straight up to full extension.
+    {
+      const id = "shoulder-press-machine";
+      stationary(
+        id,
+        SIDE_ANCHORS.shoulder,
+        "torso",
+        "shoulder press: no shrug"
+      );
+      const S = pt(SIDE_ANCHORS.shoulder, at(id, 0).torso);
+      const H0 = pt(SIDE_ANCHORS.hand, at(id, 0).handL);
+      const H1 = pt(SIDE_ANCHORS.hand, at(id, 1).handL);
+      expect(
+        Math.abs(H0[1] - S[1]),
+        "shoulder press: handles at shoulder height"
+      ).toBeLessThan(10);
+      expect(H0[1] - H1[1], "shoulder press: straight up").toBeGreaterThan(55);
+      expect(
+        Math.abs(H1[0] - H0[0]),
+        "shoulder press: straight up, not forward"
+      ).toBeLessThan(16);
+      expect(elbowDeg(id, 1), "shoulder press: full extension").toBeGreaterThan(
+        160
+      );
+    }
+    // JM press: the bar to the upper chin — toward the head and above
+    // the shoulder line — with the elbow FORWARD (anterior = above, lying
+    // down) of the bar; lockout over the shoulder.
+    {
+      const id = "jm-press";
+      const p0 = at(id, 0);
+      const S = pt(SIDE_ANCHORS.shoulder, p0.torso);
+      const E = pt(SIDE_ANCHORS.elbow, p0.foreArmL);
+      const H = pt(SIDE_ANCHORS.hand, p0.handL);
+      expect(S[0] - H[0], "jm: bar toward the chin").toBeGreaterThan(8);
+      expect(S[1] - H[1], "jm: bar above the shoulder line").toBeGreaterThan(8);
+      expect(H[1] - E[1], "jm: elbows forward of the bar").toBeGreaterThan(8);
+      expect(elbowDeg(id, 1), "jm: lockout").toBeGreaterThan(160);
+      stationary(id, SIDE_ANCHORS.shoulder, "torso", "jm: on the bench");
+    }
+    // Pike push-up: hands and feet fixed; hips high above the shoulders
+    // throughout; legs straight; crown to the floor at the bottom;
+    // straight arms at the top.
+    {
+      const id = "pike-push-up";
+      stationary(id, SIDE_ANCHORS.hand, "handL", "pike: hands planted");
+      stationary(id, SIDE_ANCHORS.ankle, "shankL", "pike: feet planted");
+      for (const t of [0, 0.5, 1]) {
+        const p = at(id, t);
+        expect(
+          pt(SIDE_ANCHORS.shoulder, p.torso)[1] -
+            pt(SIDE_ANCHORS.hip, p.pelvis)[1],
+          `pike: hips high @${t}`
+        ).toBeGreaterThan(20);
+        expect(kneeDeg(id, t), `pike: legs straight @${t}`).toBeGreaterThan(
+          REST_KNEE - 2
+        );
+      }
+      expect(
+        pt(SIDE_ANCHORS.shoulder, at(id, 1).torso)[1],
+        "pike: crown to the floor"
+      ).toBeGreaterThan(204 - 38 - 10);
+      expect(elbowDeg(id, 0), "pike: straight arms at the top").toBeGreaterThan(
+        160
+      );
+    }
+    // Handstand push-up: hands fixed; the body stacked plumb over the
+    // hands every frame; head to the floor at the bottom; locked at the top.
+    {
+      const id = "handstand-push-ups";
+      stationary(id, SIDE_ANCHORS.hand, "handL", "hspu: hands planted");
+      for (const t of [0, 0.5, 1]) {
+        const p = at(id, t);
+        expect(
+          Math.abs(
+            pt(SIDE_ANCHORS.ankle, p.shankL)[0] -
+              pt(SIDE_ANCHORS.shoulder, p.torso)[0]
+          ),
+          `hspu: stacked @${t}`
+        ).toBeLessThan(8);
+      }
+      expect(
+        pt(SIDE_ANCHORS.shoulder, at(id, 1).torso)[1],
+        "hspu: head to the floor"
+      ).toBeGreaterThan(204 - 38 - 8);
+      expect(elbowDeg(id, 0), "hspu: locked at the top").toBeGreaterThan(160);
+    }
+    // Dragon flag: supported only on the shoulder (stationary); ONE rigid
+    // plank (hip on the shoulder-ankle line); vertical at the top; nearly
+    // parallel at the bottom with the hips still off the bench.
+    {
+      const id = "dragon-flag";
+      stationary(
+        id,
+        SIDE_ANCHORS.shoulder,
+        "torso",
+        "dragon: on the shoulders"
+      );
+      // "One rigid plank": the hip's offset from the shoulder-ankle line
+      // is the standing figure's own (the anatomical hip sits a few units
+      // behind that line) and does not change through the rep.
+      const perpOf = (
+        S: [number, number],
+        hip: [number, number],
+        a: [number, number]
+      ) => {
+        const len = Math.hypot(a[0] - S[0], a[1] - S[1]);
+        return (
+          ((a[0] - S[0]) * (hip[1] - S[1]) - (a[1] - S[1]) * (hip[0] - S[0])) /
+          len
+        );
+      };
+      const restPerp = perpOf(
+        SIDE_ANCHORS.shoulder,
+        SIDE_ANCHORS.hip,
+        SIDE_ANCHORS.ankle
+      );
+      for (const t of [0, 0.5, 1]) {
+        const p = at(id, t);
+        const S = pt(SIDE_ANCHORS.shoulder, p.torso);
+        const hip = pt(SIDE_ANCHORS.hip, p.pelvis);
+        const a = pt(SIDE_ANCHORS.ankle, p.shankL);
+        expect(
+          Math.abs(Math.abs(perpOf(S, hip, a)) - Math.abs(restPerp)),
+          `dragon: rigid plank @${t}`
+        ).toBeLessThan(0.5);
+      }
+      const p0 = at(id, 0);
+      const S0 = pt(SIDE_ANCHORS.shoulder, p0.torso);
+      const a0 = pt(SIDE_ANCHORS.ankle, p0.shankL);
+      expect(
+        Math.abs(a0[0] - S0[0]),
+        "dragon: vertical at the top"
+      ).toBeLessThan(20);
+      expect(S0[1] - a0[1], "dragon: vertical at the top").toBeGreaterThan(130);
+      const p1 = at(id, 1);
+      const a1 = pt(SIDE_ANCHORS.ankle, p1.shankL);
+      const deg = (Math.atan2(S0[1] - a1[1], a1[0] - S0[0]) * 180) / Math.PI;
+      expect(deg, "dragon: nearly parallel at the bottom").toBeGreaterThan(8);
+      expect(deg, "dragon: nearly parallel at the bottom").toBeLessThan(22);
+      expect(
+        pt(SIDE_ANCHORS.hip, p1.pelvis)[1],
+        "dragon: hips off the bench"
+      ).toBeLessThan(150 - 6);
+    }
   });
 
   it("the foot has a heel, an arch and a toe — not a wedge", () => {
@@ -2841,6 +3118,10 @@ describe("renderBodyDemo", () => {
       "single-arm-cable-pushdown",
       "single-arm-lat-pulldown",
       "bayesian-cable-curl",
+      // Batch 9: "with one hand" (landmine press), the Meadows row's
+      // bracing far hand.
+      "landmine-press",
+      "meadows-row",
     ]);
     for (const [id, d] of Object.entries(BODY_DEMOS)) {
       if (d.view !== "side" || UNILATERAL.has(id)) continue;
@@ -3176,6 +3457,15 @@ describe("tint honesty", () => {
       "spider-db-curl": "biceps",
       "single-arm-lat-pulldown": "upper-back",
       "cable-glute-kickback": "gluteal",
+      "landmine-press": "front-deltoids",
+      "landmine-squat": "quadriceps",
+      "meadows-row": "upper-back",
+      "chest-press-machine": "chest",
+      "shoulder-press-machine": "front-deltoids",
+      "jm-press": "triceps",
+      "pike-push-up": "front-deltoids",
+      "handstand-push-ups": "front-deltoids",
+      "dragon-flag": "abs",
     };
     for (const [id, muscle] of Object.entries(expectPrimary)) {
       expect(BODY_DEMOS[id].tint[muscle], `${id} primary`).toBe("primary");

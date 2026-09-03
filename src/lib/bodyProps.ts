@@ -105,6 +105,14 @@ export type PropState =
   | { kind: "cableBar"; left: Pt; right: Pt; frameY: number }
   /** Ceiling-mounted bar the body hangs from (pull-up). */
   | { kind: "fixedBar"; left: Pt; right: Pt; frameY: number }
+  /** Landmine: a barbell whose far end pivots in a floor sleeve; the
+   *  loaded end is at the grip, so the shaft is drawn from the pivot
+   *  through the hand with the plates just past it. */
+  | { kind: "landmine"; pivot: Pt; hand: Pt }
+  /** Machine lever: a handle at the grip on an arm from the machine's
+   *  pivot (chest press, shoulder press). The arm goes behind the body,
+   *  the handle in front — the hands work in front of the trunk. */
+  | { kind: "leverHandle"; pivot: Pt; hand: Pt }
   /** Dip station: two uprights with base feet and grip end-caps. */
   | { kind: "dipBars"; left: Pt; right: Pt; floorY: number };
 
@@ -350,6 +358,43 @@ export function kettlebell(hand: Pt, bell: Pt): string {
   );
 }
 
+/**
+ * Landmine barbell — shaft from the floor sleeve through the grip, the
+ * plates just past the hand. Seen side-on the plates are a thin slab
+ * across the shaft, not a disc: the bar runs across the picture, not at
+ * the viewer, which is the one barbell the profile shows lengthways.
+ */
+export function landmineBar(pivot: Pt, hand: Pt): string {
+  const dx = hand[0] - pivot[0];
+  const dy = hand[1] - pivot[1];
+  const len = Math.hypot(dx, dy) || 1;
+  const ux = dx / len;
+  const uy = dy / len;
+  const px = -uy;
+  const py = ux;
+  const tip: Pt = [hand[0] + ux * 13, hand[1] + uy * 13];
+  const plate: Pt = [hand[0] + ux * 7.5, hand[1] + uy * 7.5];
+  return (
+    `<rect x="${n(pivot[0] - 5)}" y="${n(pivot[1] - 3)}" width="10" height="5" rx="1.6" fill="${GEAR_DARK}"/>` +
+    `<circle cx="${n(pivot[0])}" cy="${n(pivot[1] - 3)}" r="3" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>` +
+    `<line x1="${n(pivot[0])}" y1="${n(pivot[1] - 3)}" x2="${n(tip[0])}" y2="${n(tip[1])}" stroke="${GEAR}" stroke-width="2.6" stroke-linecap="round"/>` +
+    `<line x1="${n(plate[0] - px * 10)}" y1="${n(plate[1] - py * 10)}" x2="${n(plate[0] + px * 10)}" y2="${n(plate[1] + py * 10)}" stroke="${GEAR_DARK}" stroke-width="5.5" stroke-linecap="round"/>` +
+    `<line x1="${n(plate[0] - px * 10)}" y1="${n(plate[1] - py * 10)}" x2="${n(plate[0] + px * 10)}" y2="${n(plate[1] + py * 10)}" stroke="${GEAR_EDGE}" stroke-width="1" stroke-linecap="round"/>`
+  );
+}
+
+/** Machine lever — pivot block, the arm to the grip, the handle end-on. */
+export function leverHandle(pivot: Pt, hand: Pt): PropLayers {
+  return {
+    behind:
+      `<line x1="${n(pivot[0])}" y1="${n(pivot[1])}" x2="${n(hand[0])}" y2="${n(hand[1])}" stroke="${GEAR_DARK}" stroke-width="3.4" stroke-linecap="round"/>` +
+      `<circle cx="${n(pivot[0])}" cy="${n(pivot[1])}" r="3.6" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>`,
+    front:
+      `<circle cx="${n(hand[0])}" cy="${n(hand[1])}" r="3.4" fill="${GEAR}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>` +
+      `<circle cx="${n(hand[0])}" cy="${n(hand[1])}" r="1.2" fill="${GEAR_DARK}"/>`,
+  };
+}
+
 /* ── Resolver ─────────────────────────────────────────────────── */
 
 /** Render a prop into its two layers. Pure: same state → same SVG. */
@@ -379,6 +424,12 @@ export function renderProp(state: PropState): PropLayers {
         behind: "",
         front: ropeAttachment(state.pulley, state.hand, state.spread),
       };
+
+    case "landmine":
+      return { behind: "", front: landmineBar(state.pivot, state.hand) };
+
+    case "leverHandle":
+      return leverHandle(state.pivot, state.hand);
 
     case "cableHandle":
       return { behind: "", front: cableHandle(state.pulley, state.hand) };

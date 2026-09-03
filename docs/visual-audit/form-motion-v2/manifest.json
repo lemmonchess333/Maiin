@@ -385,6 +385,33 @@
         "file": "calf-raise-t100.png"
       }
     ],
+    "chest-press-machine": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "chest-press-machine-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "chest-press-machine-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "chest-press-machine-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "chest-press-machine-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "chest-press-machine-t100.png"
+      }
+    ],
     "chest-supported-db-row": [
       {
         "t": 0,
@@ -655,6 +682,33 @@
         "file": "donkey-calf-raise-t100.png"
       }
     ],
+    "dragon-flag": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "dragon-flag-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "dragon-flag-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "dragon-flag-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "dragon-flag-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "dragon-flag-t100.png"
+      }
+    ],
     "face-pulls": [
       {
         "t": 0,
@@ -817,6 +871,33 @@
         "file": "hack-squat-t100.png"
       }
     ],
+    "handstand-push-ups": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "handstand-push-ups-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "handstand-push-ups-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "handstand-push-ups-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "handstand-push-ups-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "handstand-push-ups-t100.png"
+      }
+    ],
     "hip-thrust": [
       {
         "t": 0,
@@ -952,6 +1033,33 @@
         "file": "inverted-row-t100.png"
       }
     ],
+    "jm-press": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "jm-press-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "jm-press-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "jm-press-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "jm-press-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "jm-press-t100.png"
+      }
+    ],
     "kettlebell-swing": [
       {
         "t": 0,
@@ -977,6 +1085,60 @@
         "t": 1,
         "effort": 0.8,
         "file": "kettlebell-swing-t100.png"
+      }
+    ],
+    "landmine-press": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "landmine-press-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "landmine-press-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "landmine-press-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "landmine-press-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "landmine-press-t100.png"
+      }
+    ],
+    "landmine-squat": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "landmine-squat-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "landmine-squat-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "landmine-squat-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "landmine-squat-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "landmine-squat-t100.png"
       }
     ],
     "lat-pulldown": [
@@ -1141,6 +1303,33 @@
         "file": "lunges-t100.png"
       }
     ],
+    "meadows-row": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "meadows-row-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "meadows-row-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "meadows-row-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "meadows-row-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "meadows-row-t100.png"
+      }
+    ],
     "nordic-hamstring-curl": [
       {
         "t": 0,
@@ -1247,6 +1436,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "overhead-press-t100.png"
+      }
+    ],
+    "pike-push-up": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "pike-push-up-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "pike-push-up-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "pike-push-up-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "pike-push-up-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "pike-push-up-t100.png"
       }
     ],
     "pistol-squat": [
@@ -1544,6 +1760,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "seated-row-t100.png"
+      }
+    ],
+    "shoulder-press-machine": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "shoulder-press-machine-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "shoulder-press-machine-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "shoulder-press-machine-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "shoulder-press-machine-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "shoulder-press-machine-t100.png"
       }
     ],
     "single-arm-cable-pushdown": [
