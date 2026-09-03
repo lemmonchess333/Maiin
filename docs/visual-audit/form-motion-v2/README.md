@@ -1212,3 +1212,43 @@ never clearing the shoulders — is what the instructions are about.
 
 Capture channel: `inverted-row`, `kettlebell-swing`,
 `nordic-hamstring-curl` added.
+
+## STATUS 2026-09-03h — build-out, batch 7: floor, box, one leg, the thruster
+
+Coverage 80 → 87 of 152. Mostly recombination of what earlier batches
+built, plus two extractions that remove copies:
+
+- **`calfRise`** — the standing calf raise's shin-about-the-ball rise as
+  a reusable pair (`legOps` for the working shank, `rise` for everything
+  the knee carries). The calf raise itself now calls it; the single-leg
+  and donkey variants share the pivot instead of re-deriving it.
+- **`backRackArms`** — the squat's back-rack arm solve, extracted so the
+  step-up racks the bar on the same point (`BACK_RACK`) the squat does.
+- **`sideSquatChain(e, hinge, thighDeg = −92, shinDeg = 10)`** — depth
+  parameters with today's numbers as defaults, so the pistol can run the
+  same chain to −132 without touching the squat.
+- **`rigidLeanForward`** — `rigidLean`'s mirror, for a body lying
+  forward onto an incline pad.
+
+| Demo                     | Chain                                                 | Pinned claim (from its instructions)                                                           |
+| ------------------------ | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `barbell-floor-press`    | `supineFlat`, bottom set by the FLOOR                 | upper arm on the floor at the bottom (elbow at shoulder height); full lockout over shoulder    |
+| `single-leg-calf-raise`  | `calfRise` + far leg folded behind, hands on a rail   | ball planted; hands still; heel below the block at the stretch; far foot off the step          |
+| `donkey-calf-raise`      | `calfRise` under an 88° hinge, hands on a rail        | ball planted; hands still; trunk horizontal (±8°) both ends; heel rises                        |
+| `barbell-step-ups`       | two `plantedLeg`s, the trailing ankle travelling      | front foot planted on the box; trailing foot floor → box; hip rises a box height; bar on traps |
+| `pistol-squat`           | `sideSquatChain(48, −132, 26)` + far leg straight out | working foot planted; free foot off the floor and >60 ahead every frame; hip <42 from heel     |
+| `thrusters`              | squat half then press half on one e                   | parallel at 0; racked at 0 and 0.5; standing at 0.5; overhead >60 above shoulder at 1          |
+| `chest-supported-db-row` | `rigidLeanForward(48)`, `armToWorld` to the hip       | shoulder stationary on the pad; feet planted; plumb straight arm at stretch; hand at hip       |
+
+**Dropped, with the reason on record — `seated-calf-raise`.** The shank
+piece has the foot fused to it (the foot rotates with the shin; there is
+no ankle joint). A standing calf raise survives that because the whole
+body rises with the knee. A SEATED one cannot: the hip is fixed on the
+seat and the ball of the foot is fixed on the platform, so with a rigid
+shin+foot the knee is pinned too — there is no degree of freedom left
+for the heel to rise through. Drawing it would mean either sliding the
+hips along the seat (wrong) or an ankle joint (a rig change, not a demo).
+It stays on the static reference until the foot is its own piece.
+
+Capture channel: `barbell-step-ups`, `pistol-squat`,
+`chest-supported-db-row` added.

@@ -1334,9 +1334,63 @@ function kneelHingeChain(
 const GHD_KNEE: Pt = [60, 150];
 const SISSY_RAIL: Pt = [88, 90];
 
+/* Rigid straight body leaning FORWARD about the planted heel (a chest-
+ * supported row's incline): the mirror of `rigidLean`. */
+function rigidLeanForward(degAboveFloor: number, ankle: Pt): Op[] {
+  return [
+    { kind: "rotate", deg: 90 - degAboveFloor, pivot: SIDE_ANCHORS.ankle },
+    {
+      kind: "translate",
+      dx: ankle[0] - SIDE_ANCHORS.ankle[0],
+      dy: ankle[1] - SIDE_ANCHORS.ankle[1],
+    },
+  ];
+}
+const CSR_ANKLE: Pt = [26, 196];
+const CSR_LEAN = 48;
+
+/* The standing calf raise's rise — shin about the ball of the foot,
+ * everything above carried by the knee's displacement — as a reusable
+ * pair, so the single-leg and donkey variants share the pivot. */
+function calfRise(e: number): { legOps: Op[]; rise: Op[] } {
+  const pitch = lerp(-8, 15, e);
+  const legOps: Op[] = [{ kind: "rotate", deg: pitch, pivot: CALF_BALL }];
+  const kneeNew = applyToPoint(SIDE_ANCHORS.knee, legOps);
+  const rise: Op[] = [
+    {
+      kind: "translate",
+      dx: kneeNew[0] - SIDE_ANCHORS.knee[0],
+      dy: kneeNew[1] - SIDE_ANCHORS.knee[1],
+    },
+  ];
+  return { legOps, rise };
+}
+const CALF_RAIL: Pt = [74, 92];
+const DONKEY_RAIL: Pt = [128, 100];
+
+const STEP_BOX_TOP = 149;
+const STEP_FRONT_ANKLE: Pt = [84, STEP_BOX_TOP - 5];
+const STEP_BACK_ANKLE_FLOOR: Pt = [30, 196];
+const STEP_BACK_ANKLE_BOX: Pt = [70, STEP_BOX_TOP - 5];
+
+const PISTOL_FAR_LEG = -86;
+
+/** Front-rack hand (thruster, front squat catch), in TORSO space: just
+ *  ahead of the shoulder, elbows high. */
+const FRONT_RACK: Pt = [
+  SIDE_ANCHORS.shoulder[0] + 9,
+  SIDE_ANCHORS.shoulder[1] - 1,
+];
+const OVERHEAD: Pt = [
+  SIDE_ANCHORS.shoulder[0] + 2,
+  SIDE_ANCHORS.shoulder[1] - 0.996 * (SIDE_UPPER_LEN + SIDE_FORE_LEN),
+];
+
 function sideSquatChain(
   e: number,
-  hingeDeg: number
+  hingeDeg: number,
+  thighDeg = -92,
+  shinDeg = 10
 ): {
   torsoOps: Op[];
   pelvisOps: Op[];
@@ -1345,13 +1399,13 @@ function sideSquatChain(
   legOps: Op[];
   hinge: number;
 } {
-  const shin = lerp(0, 10, e); // about the planted ankle
+  const shin = lerp(0, shinDeg, e); // about the planted ankle
   /* To PARALLEL, which is what the exercise's own instruction asks for
      ("lower until thighs are at or below parallel"). At -78 the hip
      finished 10.9 units ABOVE the knee — 12.7 degrees short — and the
      comment here said so: "just above parallel". A demo that stops
      higher than its instructions is teaching the wrong depth. */
-  const thighRel = lerp(0, -92, e);
+  const thighRel = lerp(0, thighDeg, e);
   const hinge = lerp(0, hingeDeg, e);
   const legOps: Op[] = [
     { kind: "rotate", deg: shin, pivot: SIDE_ANCHORS.ankle },
@@ -1387,6 +1441,27 @@ function sideSquatChain(
  *  joint. */
 /** Back-squat upper-arm angle back from vertical (deg). */
 const SQUAT_ELBOW_BACK = 40;
+/** The back-rack arms in TORSO space: upper arm angled back, forearm
+ *  reaching up to the bar on the traps. Ride them on the torso ops. */
+function backRackArms(): { upper: Op[]; fore: Op[] } {
+  const elbowPre = applyToPoint(SIDE_ANCHORS.elbow, [
+    { kind: "rotate", deg: SQUAT_ELBOW_BACK, pivot: SIDE_ANCHORS.shoulder },
+  ]);
+  const toRack = Math.hypot(
+    BACK_RACK[0] - elbowPre[0],
+    BACK_RACK[1] - elbowPre[1]
+  );
+  const handPre: Pt = [
+    elbowPre[0] + ((BACK_RACK[0] - elbowPre[0]) / toRack) * SIDE_FORE_LEN,
+    elbowPre[1] + ((BACK_RACK[1] - elbowPre[1]) / toRack) * SIDE_FORE_LEN,
+  ];
+  return aimArm(
+    { S: SIDE_ANCHORS.shoulder, E: SIDE_ANCHORS.elbow, H: SIDE_ANCHORS.hand },
+    elbowPre,
+    handPre,
+    0
+  );
+}
 export const BACK_RACK: Pt = [
   SIDE_ANCHORS.shoulder[0] - 5,
   SIDE_ANCHORS.shoulder[1] - 5,
@@ -1535,27 +1610,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * back from vertical, forearm folded up toward the bar. The fist
        * lands a few units under the bar, which is what the foreshortened
        * outboard grip looks like from the side. */
-      const elbowPre = applyToPoint(SIDE_ANCHORS.elbow, [
-        { kind: "rotate", deg: SQUAT_ELBOW_BACK, pivot: SIDE_ANCHORS.shoulder },
-      ]);
-      const toRack = Math.hypot(
-        BACK_RACK[0] - elbowPre[0],
-        BACK_RACK[1] - elbowPre[1]
-      );
-      const handPre: Pt = [
-        elbowPre[0] + ((BACK_RACK[0] - elbowPre[0]) / toRack) * SIDE_FORE_LEN,
-        elbowPre[1] + ((BACK_RACK[1] - elbowPre[1]) / toRack) * SIDE_FORE_LEN,
-      ];
-      const arm = aimArm(
-        {
-          S: SIDE_ANCHORS.shoulder,
-          E: SIDE_ANCHORS.elbow,
-          H: SIDE_ANCHORS.hand,
-        },
-        elbowPre,
-        handPre,
-        0
-      );
+      const arm = backRackArms();
       return {
         head: headOps,
         torso: torsoOps,
@@ -2645,16 +2700,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * thigh and everything above translate with the knee (the thigh
        * stays vertical; the shin's forward lean is the knee travelling
        * over the toes, which a raise on a block really does). */
-      const pitch = lerp(-8, 15, e);
-      const legOps: Op[] = [{ kind: "rotate", deg: pitch, pivot: CALF_BALL }];
-      const kneeNew = applyToPoint(SIDE_ANCHORS.knee, legOps);
-      const rise: Op[] = [
-        {
-          kind: "translate",
-          dx: kneeNew[0] - SIDE_ANCHORS.knee[0],
-          dy: kneeNew[1] - SIDE_ANCHORS.knee[1],
-        },
-      ];
+      const { legOps, rise } = calfRise(e);
       return {
         shankL: legOps,
         shankR: legOps,
@@ -4555,6 +4601,439 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       `<line x1="${SISSY_RAIL[0] + 34}" y1="${SISSY_RAIL[1]}" x2="${SISSY_RAIL[0] - 4}" y2="${SISSY_RAIL[1]}" stroke="${GEAR}" stroke-width="3.2" stroke-linecap="round"/>` +
       `<circle cx="${SISSY_RAIL[0]}" cy="${SISSY_RAIL[1]}" r="3.4" fill="${GEAR}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>` +
       `<line x1="-20" y1="${MACHINE_FLOOR + 1}" x2="146" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  /* ── 2026-09-03 build-out, batch 7: floor, box, one leg, the
+     thruster ── */
+
+  "barbell-floor-press": {
+    /* "Lie on the floor ... bar positioned over your mid-chest ... bend
+     * your knees. Lower the bar until your upper arms touch the floor,
+     * pause ... drive the bar back up to full lockout." The bench
+     * chain on the floor: back down (the crunch's placement), knees
+     * bent with the feet flat, and the bottom defined by the FLOOR
+     * rather than the chest — the upper arm lies on it (pinned), so
+     * the range is a forearm's height, not a bench press's. */
+    view: "side",
+    equip: "plate-end",
+    plateR: 10,
+    viewBox: "-64 40 186 142",
+    groundY: SUPINE_FLOOR,
+    shadowCx: 30,
+    shadowRx: 60,
+    concentricTo: 1,
+    tint: {
+      chest: "primary",
+      triceps: "primary",
+      "front-deltoids": "secondary",
+    },
+    pose: (e) => {
+      const f = supineFlat();
+      const S = SIDE_ANCHORS.shoulder;
+      // Body space: bottom = upper arm along the floor toward the hip
+      // (+y) with the forearm vertical (+x); top = lockout over the
+      // shoulder line.
+      const H: Pt = [
+        S[0] + lerp(SIDE_FORE_LEN, BENCH_LOCKOUT, e),
+        S[1] + lerp(SIDE_UPPER_LEN, 4, e),
+      ];
+      const arm = aimArm(
+        { S, E: SIDE_ANCHORS.elbow, H: SIDE_ANCHORS.hand },
+        solveElbow(S, H, SIDE_UPPER_LEN, SIDE_FORE_LEN, -1),
+        H,
+        0
+      );
+      const leg = plantedLeg(
+        f.hip,
+        [f.hip[0] + 42, SUPINE_FLOOR - 6],
+        KNEE_HIGH
+      );
+      return {
+        head: f.body,
+        torso: f.body,
+        pelvis: f.body,
+        thighL: leg.thigh,
+        thighR: leg.thigh,
+        shankL: leg.shank,
+        shankR: leg.shank,
+        upperArmL: [...arm.upper, ...f.body],
+        foreArmL: [...arm.fore, ...f.body],
+        handL: [...arm.fore, ...f.body],
+        upperArmR: [...arm.upper, ...f.body],
+        foreArmR: [...arm.fore, ...f.body],
+        handR: [...arm.fore, ...f.body],
+      };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+    scene: () =>
+      `<line x1="-58" y1="${SUPINE_FLOOR}" x2="118" y2="${SUPINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  "single-leg-calf-raise": {
+    /* "Stand on one foot on a step's edge, ball of the foot planted,
+     * heel hanging free. Hold a wall or rail for balance only ... rise
+     * as high onto your toes as possible ... lower until your heel
+     * drops below the step." The calf raise's rise on the near leg
+     * (ball pinned, heel below the block at the bottom), the far leg
+     * folded up behind and off the step every frame (pinned), the
+     * hands resting on a rail ahead (pinned still — balance only). */
+    view: "side",
+    concentricTo: 1,
+    startsAt: "stretch",
+    viewBox: "-4 -2 172 220",
+    groundY: CALF_FLOOR,
+    shadowCx: 56,
+    shadowRx: 24,
+    tint: { calves: "primary" },
+    pose: (e) => {
+      const { legOps, rise } = calfRise(e);
+      const farThigh: Op[] = [
+        { kind: "rotate", deg: 6, pivot: SIDE_ANCHORS.hip },
+        ...rise,
+      ];
+      const farShank: Op[] = [
+        // Heel up toward the glute (110 puts the ankle behind AND above
+        // the knee; at 74 the shin stuck out level like a kick).
+        { kind: "rotate", deg: 110, pivot: SIDE_ANCHORS.knee },
+        ...farThigh,
+      ];
+      const arm = armToWorld(rise, CALF_RAIL, ELBOW_LOW);
+      return {
+        shankL: legOps,
+        thighL: rise,
+        thighR: farThigh,
+        shankR: farShank,
+        pelvis: rise,
+        torso: rise,
+        head: rise,
+        upperArmL: arm.upper,
+        foreArmL: arm.fore,
+        handL: arm.fore,
+        upperArmR: arm.upper,
+        foreArmR: arm.fore,
+        handR: arm.fore,
+      };
+    },
+    scene: () =>
+      `<rect x="52" y="${CALF_BLOCK_TOP}" width="26" height="${CALF_FLOOR - CALF_BLOCK_TOP}" rx="1.5" fill="${GEAR}"/>` +
+      `<line x1="${CALF_RAIL[0] + 30}" y1="${CALF_RAIL[1] - 50}" x2="${CALF_RAIL[0] + 30}" y2="${CALF_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+      `<line x1="${CALF_RAIL[0] + 30}" y1="${CALF_RAIL[1]}" x2="${CALF_RAIL[0] - 4}" y2="${CALF_RAIL[1]}" stroke="${GEAR}" stroke-width="3.2" stroke-linecap="round"/>` +
+      `<line x1="-2" y1="${CALF_FLOOR}" x2="166" y2="${CALF_FLOOR}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  "donkey-calf-raise": {
+    /* "Set the pad on your lower back and hinge forward to about 90°.
+     * Place the balls of your feet on the platform, heels hanging.
+     * Rise up onto your toes ... lower slowly to a deep stretch." The
+     * calf raise's rise under a trunk hinged to horizontal (pinned),
+     * hands on a rail ahead (pinned), the pad drawn over the hips. */
+    view: "side",
+    concentricTo: 1,
+    startsAt: "stretch",
+    viewBox: "-4 30 172 188",
+    groundY: CALF_FLOOR,
+    shadowCx: 70,
+    shadowRx: 40,
+    tint: { calves: "primary", hamstring: "secondary" },
+    pose: (e) => {
+      const { legOps, rise } = calfRise(e);
+      const HINGE = 88;
+      const torso: Op[] = [
+        { kind: "rotate", deg: HINGE, pivot: SIDE_ANCHORS.hip },
+        ...rise,
+      ];
+      const head: Op[] = [
+        { kind: "rotate", deg: -HINGE * HEAD_LIFT, pivot: SIDE_ANCHORS.neck },
+        ...torso,
+      ];
+      const pelvis: Op[] = [
+        {
+          kind: "rotate",
+          deg: HINGE * PELVIS_FOLLOW * 0.5,
+          pivot: SIDE_ANCHORS.hip,
+        },
+        ...rise,
+      ];
+      const arm = armToWorld(torso, DONKEY_RAIL, ELBOW_LOW);
+      return {
+        shankL: legOps,
+        shankR: legOps,
+        thighL: rise,
+        thighR: rise,
+        pelvis,
+        torso,
+        head,
+        upperArmL: arm.upper,
+        foreArmL: arm.fore,
+        handL: arm.fore,
+        upperArmR: arm.upper,
+        foreArmR: arm.fore,
+        handR: arm.fore,
+      };
+    },
+    scene: (_e, pose) => {
+      const hip = applyToPoint(SIDE_ANCHORS.hip, pose.pelvis ?? []);
+      return (
+        `<rect x="52" y="${CALF_BLOCK_TOP}" width="26" height="${CALF_FLOOR - CALF_BLOCK_TOP}" rx="1.5" fill="${GEAR}"/>` +
+        // The machine's pad over the lower back, on an arm from the post.
+        `<rect x="${(hip[0] - 12).toFixed(1)}" y="${(hip[1] - 22).toFixed(1)}" width="26" height="8" rx="3" fill="${GEAR}"/>` +
+        `<line x1="${(hip[0] + 1).toFixed(1)}" y1="${(hip[1] - 22).toFixed(1)}" x2="${(hip[0] + 1).toFixed(1)}" y2="${(hip[1] - 60).toFixed(1)}" stroke="${GEAR_DARK}" stroke-width="3"/>` +
+        `<line x1="${DONKEY_RAIL[0] + 22}" y1="${DONKEY_RAIL[1] - 50}" x2="${DONKEY_RAIL[0] + 22}" y2="${CALF_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+        `<line x1="${DONKEY_RAIL[0] + 22}" y1="${DONKEY_RAIL[1]}" x2="${DONKEY_RAIL[0] - 4}" y2="${DONKEY_RAIL[1]}" stroke="${GEAR}" stroke-width="3.2" stroke-linecap="round"/>` +
+        `<line x1="-2" y1="${CALF_FLOOR}" x2="166" y2="${CALF_FLOOR}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`
+      );
+    },
+  },
+
+  "barbell-step-ups": {
+    /* "Position a sturdy box at knee height, bar racked on your upper
+     * traps. Step one foot fully onto the box, drive through that heel
+     * to stand up. Bring the trailing leg up." The front foot planted
+     * on the box (pinned) with the hip rising from standing on the
+     * floor to standing on the box; the trailing foot leaves the floor
+     * and lands on the box beside it (pinned at both ends); the bar
+     * rides the traps as the squat's does (pinned). */
+    view: "side",
+    equip: "plate-end",
+    plateR: 11,
+    sleeveDir: -1,
+    viewBox: "-12 -10 172 222",
+    groundY: 204,
+    shadowCx: 56,
+    shadowRx: 40,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { quadriceps: "primary", gluteal: "secondary" },
+    pose: (e) => {
+      const hip: Pt = [lerp(36, 82, e), lerp(100, 48, e)];
+      const body: Op[] = [
+        {
+          kind: "translate",
+          dx: hip[0] - SIDE_ANCHORS.hip[0],
+          dy: hip[1] - SIDE_ANCHORS.hip[1],
+        },
+      ];
+      const backAnkle: Pt = [
+        lerp(STEP_BACK_ANKLE_FLOOR[0], STEP_BACK_ANKLE_BOX[0], smooth(e)),
+        lerp(STEP_BACK_ANKLE_FLOOR[1], STEP_BACK_ANKLE_BOX[1], smooth(e)),
+      ];
+      const front = plantedLeg(hip, STEP_FRONT_ANKLE, KNEE_FORWARD);
+      const back = plantedLeg(hip, backAnkle, KNEE_LOW);
+      const arm = backRackArms();
+      return {
+        head: body,
+        torso: body,
+        pelvis: body,
+        thighL: front.thigh,
+        shankL: front.shank,
+        thighR: back.thigh,
+        shankR: back.shank,
+        upperArmL: [...arm.upper, ...body],
+        foreArmL: [...arm.fore, ...body],
+        handL: [...arm.fore, ...body],
+        upperArmR: [...arm.upper, ...body],
+        foreArmR: [...arm.fore, ...body],
+        handR: [...arm.fore, ...body],
+      };
+    },
+    bar: (_e, pose) => {
+      const c = applyToPoint(BACK_RACK, pose.torso ?? []);
+      return [c, c];
+    },
+    scene: () =>
+      `<rect x="58" y="${STEP_BOX_TOP}" width="72" height="${MACHINE_FLOOR - STEP_BOX_TOP}" rx="2" fill="${GEAR}"/>` +
+      `<line x1="-6" y1="${MACHINE_FLOOR + 1}" x2="156" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  "pistol-squat": {
+    /* "Stand on one leg, other leg extended straight in front, arms
+     * forward for balance. Sit back and down on the working leg ...
+     * lower until your butt nearly touches the heel of your working
+     * foot." The squat chain driven far past parallel on the near leg
+     * (foot planted — pinned; hip within a shin of the heel — pinned),
+     * the far leg held straight out ahead and off the floor every frame
+     * (pinned), both arms reaching forward. */
+    view: "side",
+    viewBox: "-30 -2 200 212",
+    groundY: 204,
+    shadowCx: 50,
+    shadowRx: 40,
+    concentricTo: 0,
+    tint: { quadriceps: "primary", gluteal: "secondary", abs: "secondary" },
+    pose: (e) => {
+      const c = sideSquatChain(e, 48, -132, 26);
+      const shift = c.torsoOps[1];
+      const farThigh: Op[] = [
+        { kind: "rotate", deg: PISTOL_FAR_LEG, pivot: SIDE_ANCHORS.hip },
+        shift,
+      ];
+      const upper: Op[] = [
+        { kind: "rotate", deg: -84, pivot: SIDE_ANCHORS.shoulder },
+        ...c.torsoOps,
+      ];
+      const fore: Op[] = [
+        { kind: "rotate", deg: -4, pivot: SIDE_ANCHORS.elbow },
+        ...upper,
+      ];
+      return {
+        head: c.headOps,
+        torso: c.torsoOps,
+        pelvis: c.pelvisOps,
+        thighL: c.thighOps,
+        shankL: c.legOps,
+        thighR: farThigh,
+        shankR: farThigh,
+        upperArmL: upper,
+        foreArmL: fore,
+        handL: fore,
+        upperArmR: upper,
+        foreArmR: fore,
+        handR: fore,
+      };
+    },
+    scene: () =>
+      `<line x1="-26" y1="${MACHINE_FLOOR + 1}" x2="166" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  thrusters: {
+    /* "Hold the bar in a front rack, elbows high ... squat down with an
+     * upright torso until thighs are parallel. Drive up explosively and
+     * use the leg momentum to press the bar overhead. Lower the bar
+     * back to the rack and squat again in one fluid cycle." One
+     * continuous e: the first half is the squat rising from parallel
+     * (pinned) with the bar racked on the front delts (pinned), the
+     * second half the press from the rack to lockout overhead (pinned)
+     * standing tall. The eccentric runs it backwards, which IS the
+     * cycle the instruction describes. */
+    view: "side",
+    equip: "plate-end",
+    plateR: 11,
+    viewBox: "-24 -40 192 250",
+    groundY: 204,
+    shadowCx: 56,
+    shadowRx: 40,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: {
+      quadriceps: "primary",
+      "front-deltoids": "primary",
+      gluteal: "secondary",
+      triceps: "secondary",
+    },
+    pose: (e) => {
+      const squatE = clamp01(1 - e * 2); // 1 at e=0 (bottom) → 0 at e=0.5
+      const pressE = clamp01(e * 2 - 1); // 0 until e=0.5 → 1 at e=1
+      const c = sideSquatChain(squatE, 22);
+      const S = SIDE_ANCHORS.shoulder;
+      const H: Pt = [
+        lerp(FRONT_RACK[0], OVERHEAD[0], pressE),
+        lerp(FRONT_RACK[1], OVERHEAD[1], pressE),
+      ];
+      // Elbow forward (high) in the rack, forward of the bar overhead.
+      const arm = aimArm(
+        { S, E: SIDE_ANCHORS.elbow, H: SIDE_ANCHORS.hand },
+        solveElbow(S, H, SIDE_UPPER_LEN, SIDE_FORE_LEN, -1),
+        H,
+        0
+      );
+      return {
+        head: c.headOps,
+        torso: c.torsoOps,
+        pelvis: c.pelvisOps,
+        thighL: c.thighOps,
+        thighR: c.thighOps,
+        shankL: c.legOps,
+        shankR: c.legOps,
+        upperArmL: [...arm.upper, ...c.torsoOps],
+        foreArmL: [...arm.fore, ...c.torsoOps],
+        handL: [...arm.fore, ...c.torsoOps],
+        upperArmR: [...arm.upper, ...c.torsoOps],
+        foreArmR: [...arm.fore, ...c.torsoOps],
+        handR: [...arm.fore, ...c.torsoOps],
+      };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+  },
+
+  "chest-supported-db-row": {
+    /* "Set an incline bench to 30-45° and lie face down, dumbbells
+     * hanging below. Pin your chest to the pad ... row both dumbbells
+     * toward your hips ... lower to a full stretch without letting your
+     * chest leave the pad." The standing figure leaned forward rigidly
+     * onto the pad (chest — the shoulder — never moves: pinned), feet
+     * on the floor behind (pinned), the arm from plumb-and-straight at
+     * the stretch (pinned) to the hand at the hip (pinned) with the
+     * elbow driven up and back. */
+    view: "side",
+    equip: "dumbbell",
+    viewBox: "-12 -6 176 218",
+    groundY: 204,
+    shadowCx: 70,
+    shadowRx: 60,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: {
+      "upper-back": "primary",
+      biceps: "secondary",
+      trapezius: "secondary",
+    },
+    pose: (e) => {
+      const body = rigidLeanForward(CSR_LEAN, CSR_ANKLE);
+      const S = applyToPoint(SIDE_ANCHORS.shoulder, body);
+      const hip = applyToPoint(SIDE_ANCHORS.hip, body);
+      const reach = 0.99 * (SIDE_UPPER_LEN + SIDE_FORE_LEN);
+      const H: Pt = [
+        lerp(S[0], hip[0] + 6, e),
+        lerp(S[1] + reach, hip[1] + 10, e),
+      ];
+      const arm = armToWorld(body, H, ELBOW_BACK);
+      return {
+        head: body,
+        torso: body,
+        pelvis: body,
+        thighL: body,
+        thighR: body,
+        shankL: body,
+        shankR: body,
+        upperArmL: arm.upper,
+        foreArmL: arm.fore,
+        handL: arm.fore,
+        upperArmR: arm.upper,
+        foreArmR: arm.fore,
+        handR: arm.fore,
+      };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+    scene: (_e, pose) => {
+      // The pad: along the body line, offset to the chest side, from
+      // the thighs up past the shoulders; posts to the floor.
+      const S = applyToPoint(SIDE_ANCHORS.shoulder, pose.torso ?? []);
+      const K = applyToPoint(SIDE_ANCHORS.knee, pose.thighL ?? []);
+      const dx = S[0] - K[0];
+      const dy = S[1] - K[1];
+      const len = Math.hypot(dx, dy);
+      const ux = dx / len;
+      const uy = dy / len;
+      const px = -uy; // chest side (down-forward for a forward lean)
+      const py = ux;
+      const off = 15;
+      const a: Pt = [K[0] + ux * 10 + px * off, K[1] + uy * 10 + py * off];
+      const b: Pt = [S[0] + ux * 26 + px * off, S[1] + uy * 26 + py * off];
+      return (
+        `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}" stroke="${GEAR}" stroke-width="8" stroke-linecap="round"/>` +
+        `<line x1="${((a[0] + b[0]) / 2).toFixed(1)}" y1="${((a[1] + b[1]) / 2 + 4).toFixed(1)}" x2="${((a[0] + b[0]) / 2).toFixed(1)}" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+        `<line x1="-6" y1="${MACHINE_FLOOR + 1}" x2="166" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`
+      );
+    },
   },
 };
 
