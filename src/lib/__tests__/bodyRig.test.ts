@@ -1136,6 +1136,13 @@ describe("renderBodyDemo", () => {
       "sled-push-pull": "lockout",
       stairmaster: "lockout",
       "box-jumps": "lockout",
+      // Batch 16: four more cycles, one rep.
+      bike: "lockout",
+      "spin-bike": "lockout",
+      "assault-bike": "lockout",
+      elliptical: "lockout",
+      swimming: "lockout",
+      "zottman-curl": "stretch",
     };
     expect(Object.keys(START).sort()).toEqual(Object.keys(BODY_DEMOS).sort());
     for (const [id, expected] of Object.entries(START)) {
@@ -3801,6 +3808,106 @@ describe("renderBodyDemo", () => {
         "box: the other still on the box"
       ).toBeLessThan(0.1);
     }
+
+    /* Batch 16: pedals, the pool, the Zottman. */
+    const CRANK_T: [number, number] = [66, 178];
+    // Bikes: seated on a fixed saddle, hands on the bars, each foot on a
+    // pedal circle about the crank every frame; "a slight bend at the
+    // bottom of the pedal" — never a locked knee there.
+    for (const id of ["bike", "spin-bike", "assault-bike"]) {
+      stationary(id, SIDE_ANCHORS.hip, "pelvis", `${id}: on the saddle`);
+      for (const t of [0, 0.2, 0.45, 0.7, 0.9]) {
+        const a = pt(SIDE_ANCHORS.ankle, at(id, t).shankL);
+        expect(
+          Math.abs(Math.hypot(a[0] - CRANK_T[0], a[1] - CRANK_T[1]) - 15),
+          `${id}: foot on the pedal circle @${t}`
+        ).toBeLessThan(0.1);
+      }
+      const bottom = kneeDeg(id, 0.25);
+      expect(bottom, `${id}: slight bend at the bottom`).toBeGreaterThan(130);
+      expect(bottom, `${id}: never locked at the bottom`).toBeLessThan(
+        REST_KNEE - 4
+      );
+    }
+    for (const id of ["bike", "spin-bike"]) {
+      stationary(id, SIDE_ANCHORS.hand, "handL", `${id}: hands on the bars`);
+    }
+    expect(
+      trunkLean("spin-bike", 0),
+      "spin: a deeper lean than the upright bike"
+    ).toBeGreaterThan(trunkLean("bike", 0) + 8);
+    // Assault bike: the hands ride the moving handle — forward when the
+    // near foot is at the front of the stroke, back half a turn later.
+    {
+      const id = "assault-bike";
+      const h0 = pt(SIDE_ANCHORS.hand, at(id, 0).handL);
+      const h5 = pt(SIDE_ANCHORS.hand, at(id, 0.5).handL);
+      expect(
+        h0[0] - h5[0],
+        "assault: handle travels with the stroke"
+      ).toBeGreaterThan(24);
+    }
+    // Elliptical: standing tall, feet riding the flat ellipse, hands on
+    // the swinging levers.
+    {
+      const id = "elliptical";
+      expect(Math.abs(trunkLean(id, 0)), "elliptical: stand tall").toBeLessThan(
+        8
+      );
+      for (const t of [0, 0.25, 0.5, 0.75]) {
+        const a = pt(SIDE_ANCHORS.ankle, at(id, t).shankL);
+        const u = ((a[0] - 60) / 20) ** 2 + ((a[1] - 180) / 6) ** 2;
+        expect(
+          Math.abs(u - 1),
+          `elliptical: foot on the stride ellipse @${t}`
+        ).toBeLessThan(0.02);
+      }
+      const h0 = pt(SIDE_ANCHORS.hand, at(id, 0).handL);
+      const h5 = pt(SIDE_ANCHORS.hand, at(id, 0.5).handL);
+      expect(
+        Math.abs(h0[0] - h5[0]),
+        "elliptical: handles swing"
+      ).toBeGreaterThan(20);
+    }
+    // Swimming: hips at the surface, body streamlined (horizontal); the
+    // near arm recovers ABOVE the water at ¼ and pulls BELOW it at ¾.
+    {
+      const id = "swimming";
+      const WATER = 118;
+      const p0 = at(id, 0);
+      const hip = pt(SIDE_ANCHORS.hip, p0.pelvis);
+      const S = pt(SIDE_ANCHORS.shoulder, p0.torso);
+      expect(
+        Math.abs(hip[1] - WATER),
+        "swim: hips at the surface"
+      ).toBeLessThan(10);
+      expect(
+        Math.abs(lineDeg(hip, S)),
+        "swim: streamlined, horizontal"
+      ).toBeLessThan(6);
+      expect(
+        pt(SIDE_ANCHORS.hand, at(id, 0.25).handL)[1],
+        "swim: recovery over the water"
+      ).toBeLessThan(WATER - 20);
+      expect(
+        pt(SIDE_ANCHORS.hand, at(id, 0.75).handL)[1],
+        "swim: the pull under it"
+      ).toBeGreaterThan(WATER + 30);
+    }
+    // Zottman: the strict curl's pinned elbows, both movers lit.
+    {
+      const id = "zottman-curl";
+      const E0 = pt(SIDE_ANCHORS.elbow, at(id, 0).foreArmL);
+      const E1 = pt(SIDE_ANCHORS.elbow, at(id, 1).foreArmL);
+      expect(
+        Math.hypot(E1[0] - E0[0], E1[1] - E0[1]),
+        "zottman: elbows pinned"
+      ).toBeLessThan(3.2);
+      expect(
+        BODY_DEMOS[id].tint.forearm,
+        "zottman: the pronated lower works the forearm"
+      ).toBe("primary");
+    }
   });
 
   it("the foot has a heel, an arch and a toe — not a wedge", () => {
@@ -4054,6 +4161,8 @@ describe("renderBodyDemo", () => {
       // cycle from the near one by construction.
       "treadmill",
       "incline-treadmill-walk",
+      // Batch 16: the far arm is half a stroke behind the near one.
+      "swimming",
     ]);
     for (const [id, d] of Object.entries(BODY_DEMOS)) {
       if (d.view !== "side" || UNILATERAL.has(id)) continue;
@@ -4438,6 +4547,12 @@ describe("tint honesty", () => {
       "sled-push-pull": "quadriceps",
       stairmaster: "gluteal",
       "box-jumps": "quadriceps",
+      bike: "quadriceps",
+      "spin-bike": "quadriceps",
+      "assault-bike": "quadriceps",
+      elliptical: "quadriceps",
+      swimming: "upper-back",
+      "zottman-curl": "biceps",
     };
     for (const [id, muscle] of Object.entries(expectPrimary)) {
       expect(BODY_DEMOS[id].tint[muscle], `${id} primary`).toBe("primary");

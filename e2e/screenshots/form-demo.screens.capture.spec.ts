@@ -91,6 +91,10 @@ const DEMOS: [id: string, name: string][] = [
   ["treadmill", "Treadmill"],
   ["stairmaster", "Stairmaster"],
   ["box-jumps", "Box Jumps"],
+  // Batch 16: a crank stroke, the elliptical's levers, the pool.
+  ["bike", "Stationary Bike"],
+  ["elliptical", "Elliptical"],
+  ["swimming", "Swimming"],
 ];
 
 test.use({

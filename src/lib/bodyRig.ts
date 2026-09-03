@@ -2084,6 +2084,188 @@ function boxJumpPose(e: number): Partial<Record<GroupName, Op[]>> {
   };
 }
 
+/* ── Pedal chain (batch 16) — a crank stroke ──
+ * Seated (or standing, for the elliptical) with the feet on pedals that
+ * ride a closed path about a crank: a circle for the bikes, a flat
+ * ellipse for the elliptical. The far foot is half a turn behind. Legs
+ * are `plantedLeg` from the fixed hip to each pedal, knee forward. The
+ * trunk leans to the bars; the hands hold them, or ride moving handles
+ * (assault bike, elliptical) that push and pull against the pedals. */
+const CRANK: Pt = [66, 178];
+const CRANK_R = 15;
+const BIKE_HIP: Pt = [36, 106];
+const BIKE_BARS: Pt = [104, 104];
+const SPIN_HIP: Pt = [34, 104];
+const SPIN_BARS: Pt = [106, 112];
+const ASSAULT_HIP: Pt = [36, 106];
+const ASSAULT_HANDLE_PIVOT: Pt = [100, 178];
+const ELLIPTICAL_HIP: Pt = [42, 92];
+const ELLIPTICAL_CRANK: Pt = [60, 180];
+const ELLIPTICAL_HANDLE_PIVOT: Pt = [98, 168];
+/** Pedal position at phase φ on a circle (ry = rx) or a flat ellipse;
+ *  φ = 0 is the pedal at its FRONT, turning down and back — the drive. */
+function pedalAt(phi: number, c: Pt, rx: number, ry: number): Pt {
+  const a = 2 * Math.PI * phi;
+  return [c[0] + rx * Math.cos(a), c[1] + ry * Math.sin(a)];
+}
+interface PedalOpts {
+  hip: Pt;
+  lean: number;
+  crank: Pt;
+  rx: number;
+  ry: number;
+  /** Fixed bars, or a moving handle (its world point at this phase). */
+  hands: Pt;
+}
+function pedalChain(
+  phi: number,
+  o: PedalOpts
+): Partial<Record<GroupName, Op[]>> {
+  const body: Op[] = [
+    {
+      kind: "translate",
+      dx: o.hip[0] - SIDE_ANCHORS.hip[0],
+      dy: o.hip[1] - SIDE_ANCHORS.hip[1],
+    },
+  ];
+  const torso: Op[] = [
+    { kind: "rotate", deg: o.lean, pivot: SIDE_ANCHORS.hip },
+    ...body,
+  ];
+  const head: Op[] = [
+    { kind: "rotate", deg: -o.lean * HEAD_LIFT, pivot: SIDE_ANCHORS.neck },
+    ...torso,
+  ];
+  const near = plantedLeg(
+    o.hip,
+    pedalAt(phi, o.crank, o.rx, o.ry),
+    KNEE_FORWARD
+  );
+  const far = plantedLeg(
+    o.hip,
+    pedalAt(phi + 0.5, o.crank, o.rx, o.ry),
+    KNEE_FORWARD
+  );
+  const arm = armToWorld(torso, o.hands, ELBOW_LOW);
+  return {
+    head,
+    torso,
+    pelvis: body,
+    thighL: near.thigh,
+    shankL: near.shank,
+    thighR: far.thigh,
+    shankR: far.shank,
+    upperArmL: arm.upper,
+    foreArmL: arm.fore,
+    handL: arm.fore,
+    upperArmR: arm.upper,
+    foreArmR: arm.fore,
+    handR: arm.fore,
+  };
+}
+/** A bike's frame: the crank wheel, a down tube to the saddle, the seat
+ *  post + saddle under the hip, the head tube to the bars. */
+function bikeScene(
+  hip: Pt,
+  bars: Pt,
+  crank: Pt,
+  r: number,
+  wheel = true
+): string {
+  return (
+    (wheel
+      ? `<circle cx="${crank[0]}" cy="${crank[1]}" r="${r + 5}" fill="none" stroke="${GEAR_DARK}" stroke-width="3"/>`
+      : "") +
+    `<circle cx="${crank[0]}" cy="${crank[1]}" r="3" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>` +
+    `<line x1="${crank[0]}" y1="${crank[1]}" x2="${hip[0] + 2}" y2="${hip[1] + 8}" stroke="${GEAR_DARK}" stroke-width="3.4"/>` +
+    `<rect x="${hip[0] - 12}" y="${hip[1] + 6}" width="26" height="6" rx="3" fill="${GEAR}"/>` +
+    `<line x1="${crank[0]}" y1="${crank[1]}" x2="${bars[0] - 2}" y2="${bars[1] + 4}" stroke="${GEAR_DARK}" stroke-width="3.4"/>` +
+    `<line x1="${bars[0] - 12}" y1="${bars[1] + 2}" x2="${bars[0] + 6}" y2="${bars[1] + 2}" stroke="${GEAR}" stroke-width="3.2" stroke-linecap="round"/>` +
+    `<line x1="${crank[0]}" y1="${crank[1] + r + 5}" x2="${crank[0]}" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+    `<line x1="-12" y1="${MACHINE_FLOOR + 1}" x2="150" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`
+  );
+}
+/** A moving handle: a lever about a low pivot whose grip swings
+ *  forward and back with the stroke. */
+function swingHandle(
+  phi: number,
+  pivot: Pt,
+  len: number,
+  amp: number,
+  phase: number
+): Pt {
+  // cos, not sin: the handle is at its extremes at φ = 0 and ½ — forward
+  // when the near pedal is at the front of the stroke, back half a
+  // turn later. sin put both extremes at the quarter turns and left the
+  // hand in the same place at 0 and ½.
+  const a = -Math.PI / 2 + amp * Math.cos(2 * Math.PI * phi + phase);
+  return [pivot[0] + len * Math.cos(a), pivot[1] + len * Math.sin(a)];
+}
+
+/* Swimming — freestyle, side-on at the surface. The body lies prone
+ * (head-right) just under a water line; each arm turns a full circle
+ * about the shoulder (the recovery over the water, the pull under it),
+ * the far arm half a stroke behind; the legs flutter about the hips. */
+const WATER_Y = 118;
+function swimPose(phi: number): Partial<Record<GroupName, Op[]>> {
+  const G: Op = { kind: "rotate", deg: 90, pivot: [44, 100] };
+  const hipG = applyToPoint(SIDE_ANCHORS.hip, [G]);
+  const T0: Op = { kind: "translate", dx: 0, dy: WATER_Y + 8 - hipG[1] };
+  const body: Op[] = [G, T0];
+  // Arms: a full turn about the shoulder. In the prone body's own frame
+  // the arm hangs "down" toward the feet (−x on screen); a positive
+  // rotation carries the hand back, over the top and forward again.
+  // Positive: from hanging back along the body, over the top (the
+  // recovery, above the water), forward to the entry, then down and
+  // back under it (the pull). The pin holds the hand above the line at
+  // a quarter turn and below it at three quarters.
+  const nearDeg = 360 * phi;
+  const farDeg = 360 * phi + 180;
+  const upperL: Op[] = [
+    { kind: "rotate", deg: nearDeg, pivot: SIDE_ANCHORS.shoulder },
+    ...body,
+  ];
+  const upperR: Op[] = [
+    { kind: "rotate", deg: farDeg, pivot: SIDE_ANCHORS.shoulder },
+    ...body,
+  ];
+  // A soft elbow through the pull, straighter on the recovery.
+  const bendL: Op = { kind: "rotate", deg: -16, pivot: SIDE_ANCHORS.elbow };
+  // Flutter kick: small alternating hip swings, the knee soft.
+  const kick = 10 * Math.sin(4 * Math.PI * phi);
+  const thighL: Op[] = [
+    { kind: "rotate", deg: kick, pivot: SIDE_ANCHORS.hip },
+    ...body,
+  ];
+  const thighR: Op[] = [
+    { kind: "rotate", deg: -kick, pivot: SIDE_ANCHORS.hip },
+    ...body,
+  ];
+  const shankL: Op[] = [
+    { kind: "rotate", deg: kick * 0.6, pivot: SIDE_ANCHORS.knee },
+    ...thighL,
+  ];
+  const shankR: Op[] = [
+    { kind: "rotate", deg: -kick * 0.6, pivot: SIDE_ANCHORS.knee },
+    ...thighR,
+  ];
+  return {
+    head: body,
+    torso: body,
+    pelvis: body,
+    thighL,
+    shankL,
+    thighR,
+    shankR,
+    upperArmL: upperL,
+    foreArmL: [bendL, ...upperL],
+    handL: [bendL, ...upperL],
+    upperArmR: upperR,
+    foreArmR: [bendL, ...upperR],
+    handR: [bendL, ...upperR],
+  };
+}
+
 function sideSquatChain(
   e: number,
   hingeDeg: number,
@@ -8590,6 +8772,194 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     scene: () =>
       `<rect x="${BOX_X[0]}" y="${BOX_TOP}" width="${BOX_X[1] - BOX_X[0]}" height="${MACHINE_FLOOR - BOX_TOP}" rx="2" fill="${GEAR}"/>` +
       `<line x1="-30" y1="${MACHINE_FLOOR + 1}" x2="160" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  /* ── 2026-09-03 build-out, batch 16: pedals, the pool, the Zottman ── */
+
+  bike: {
+    /* "Adjust the seat so your leg has a slight bend at the bottom of
+     * the pedal. Sit with a neutral spine, grip the bars loosely. Pedal
+     * at a steady cadence." A crank CYCLE: seated, hands on the bars,
+     * each foot riding the pedal circle, the far leg half a turn
+     * behind. The seat height leaves a slight bend at the bottom
+     * (pinned), never a locked knee. */
+    view: "side",
+    cycle: true,
+    cycleMs: 1400,
+    viewBox: "-12 -6 160 218",
+    groundY: 204,
+    shadowCx: 60,
+    shadowRx: 50,
+    concentricTo: 1,
+    tint: {
+      quadriceps: "primary",
+      hamstring: "secondary",
+      calves: "secondary",
+    },
+    pose: (e) =>
+      pedalChain(e, {
+        hip: BIKE_HIP,
+        lean: 24,
+        crank: CRANK,
+        rx: CRANK_R,
+        ry: CRANK_R,
+        hands: BIKE_BARS,
+      }),
+    scene: () => bikeScene(BIKE_HIP, BIKE_BARS, CRANK, CRANK_R),
+  },
+
+  "spin-bike": {
+    /* "Seat level with the bars ... pedal at a high cadence, alternating
+     * seated and standing drives." The bike's crank cycle at a faster
+     * cadence, lower bars and a deeper lean — the seated drive is the
+     * one drawn. */
+    view: "side",
+    cycle: true,
+    cycleMs: 1000,
+    viewBox: "-12 -6 160 218",
+    groundY: 204,
+    shadowCx: 60,
+    shadowRx: 50,
+    concentricTo: 1,
+    tint: { quadriceps: "primary", gluteal: "secondary", calves: "secondary" },
+    pose: (e) =>
+      pedalChain(e, {
+        hip: SPIN_HIP,
+        lean: 38,
+        crank: CRANK,
+        rx: CRANK_R,
+        ry: CRANK_R,
+        hands: SPIN_BARS,
+      }),
+    scene: () => bikeScene(SPIN_HIP, SPIN_BARS, CRANK, CRANK_R),
+  },
+
+  "assault-bike": {
+    /* "Grip the moving handles, place feet on the pedals. Push and pull
+     * with the arms while driving the pedals hard." The crank cycle
+     * with the handles on a lever that swings with the stroke: the near
+     * hand pushes forward as the near foot drives down (pinned: the
+     * handle travels, the hand stays on it). */
+    view: "side",
+    cycle: true,
+    cycleMs: 1200,
+    viewBox: "-12 -6 160 218",
+    groundY: 204,
+    shadowCx: 60,
+    shadowRx: 50,
+    concentricTo: 1,
+    tint: {
+      quadriceps: "primary",
+      "front-deltoids": "primary",
+      "upper-back": "secondary",
+      triceps: "secondary",
+    },
+    pose: (e) =>
+      pedalChain(e, {
+        hip: ASSAULT_HIP,
+        lean: 20,
+        crank: CRANK,
+        rx: CRANK_R,
+        ry: CRANK_R,
+        hands: swingHandle(e, ASSAULT_HANDLE_PIVOT, 84, 0.28, 0),
+      }),
+    scene: (e) => {
+      const h = swingHandle(e, ASSAULT_HANDLE_PIVOT, 84, 0.28, 0);
+      return (
+        bikeScene(ASSAULT_HIP, [h[0] - 40, h[1] + 30], CRANK, CRANK_R, false) +
+        // The fan, and the handle lever from its pivot to the grip.
+        `<circle cx="${ASSAULT_HANDLE_PIVOT[0] + 24}" cy="${ASSAULT_HANDLE_PIVOT[1] - 40}" r="24" fill="none" stroke="${GEAR_DARK}" stroke-width="3"/>` +
+        `<line x1="${ASSAULT_HANDLE_PIVOT[0]}" y1="${ASSAULT_HANDLE_PIVOT[1]}" x2="${h[0].toFixed(1)}" y2="${h[1].toFixed(1)}" stroke="${GEAR_DARK}" stroke-width="3.4" stroke-linecap="round"/>` +
+        `<circle cx="${ASSAULT_HANDLE_PIVOT[0]}" cy="${ASSAULT_HANDLE_PIVOT[1]}" r="3.2" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>`
+      );
+    },
+  },
+
+  elliptical: {
+    /* "Step on the pedals with feet evenly placed, grip the moving
+     * handles ... push and pull with arms and legs together for
+     * full-body drive. Stand tall — no leaning on the console." Standing
+     * (pinned upright), the feet riding a flat ellipse — the stride the
+     * machine makes — and the hands on levers that swing with it. */
+    view: "side",
+    cycle: true,
+    cycleMs: 1500,
+    viewBox: "-12 -6 160 218",
+    groundY: 204,
+    shadowCx: 60,
+    shadowRx: 50,
+    concentricTo: 1,
+    tint: {
+      quadriceps: "primary",
+      gluteal: "primary",
+      "front-deltoids": "secondary",
+      "upper-back": "secondary",
+    },
+    pose: (e) =>
+      pedalChain(e, {
+        hip: ELLIPTICAL_HIP,
+        lean: 4,
+        crank: ELLIPTICAL_CRANK,
+        rx: 20,
+        ry: 6,
+        hands: swingHandle(e, ELLIPTICAL_HANDLE_PIVOT, 96, 0.22, Math.PI),
+      }),
+    scene: (e) => {
+      const h = swingHandle(e, ELLIPTICAL_HANDLE_PIVOT, 96, 0.22, Math.PI);
+      const c = ELLIPTICAL_CRANK;
+      return (
+        `<ellipse cx="${c[0]}" cy="${c[1]}" rx="22" ry="8" fill="none" stroke="${GEAR_DARK}" stroke-width="2.4"/>` +
+        `<line x1="${ELLIPTICAL_HANDLE_PIVOT[0]}" y1="${ELLIPTICAL_HANDLE_PIVOT[1]}" x2="${h[0].toFixed(1)}" y2="${h[1].toFixed(1)}" stroke="${GEAR_DARK}" stroke-width="3.4" stroke-linecap="round"/>` +
+        `<circle cx="${ELLIPTICAL_HANDLE_PIVOT[0]}" cy="${ELLIPTICAL_HANDLE_PIVOT[1]}" r="3.2" fill="${GEAR_DARK}" stroke="${GEAR_EDGE}" stroke-width="0.8"/>` +
+        `<line x1="${ELLIPTICAL_HANDLE_PIVOT[0] + 24}" y1="${ELLIPTICAL_HANDLE_PIVOT[1] + 6}" x2="${ELLIPTICAL_HANDLE_PIVOT[0] + 24}" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+        `<line x1="-12" y1="${MACHINE_FLOOR + 1}" x2="150" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`
+      );
+    },
+  },
+
+  swimming: {
+    /* "Focus on a streamlined body position — hips at the surface.
+     * Breathe on a consistent rhythm for the stroke." Freestyle,
+     * side-on: the body prone just under the water line with the hips
+     * at the surface (pinned), each arm turning a full stroke about the
+     * shoulder — recovery over the water, pull under it — the far arm
+     * half a stroke behind, a flutter kick. */
+    view: "side",
+    cycle: true,
+    cycleMs: 1800,
+    viewBox: "-80 10 260 190",
+    groundY: 204,
+    shadowCx: 40,
+    shadowRx: 0,
+    concentricTo: 1,
+    tint: {
+      "upper-back": "primary",
+      chest: "secondary",
+      "front-deltoids": "secondary",
+      gluteal: "secondary",
+    },
+    pose: swimPose,
+    scene: () =>
+      `<line x1="-70" y1="${WATER_Y}" x2="130" y2="${WATER_Y}" stroke="${GEAR}" stroke-width="1.4" stroke-dasharray="6 4"/>`,
+  },
+
+  "zottman-curl": {
+    /* "Curl up with supinated (palms up) grip to shoulder height. At the
+     * top, rotate your wrists so palms face down. Lower slowly in the
+     * pronated grip." The curl's arc is the dumbbell curl's; the wrist
+     * turn at the top is a grip change no camera on this rig can show.
+     * What the split DOES change is who works: biceps on the way up,
+     * forearm on the way down — so both are lit. */
+    view: "side",
+    equip: "dumbbell",
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { biceps: "primary", forearm: "primary" },
+    pose: strictCurlPose,
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
   },
 };
 
