@@ -17,8 +17,10 @@
 import sharp from "sharp";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { titleCaseMuscle } from "../src/lib/muscleNames";
 import {
   FORM_BEAT_IDS,
+  getDemoMuscleKey,
   getFormBeats,
   renderBodyDemo,
   __unlockSideDemosForPreview,
@@ -106,9 +108,28 @@ async function formTab(id: string, beats: readonly FormBeat[], at: number) {
   const FIG_W = 300;
   const FIG_H = Math.round((FIG_W * 594) / 680);
   const stageH = PAD + FIG_H + 8 + 18 + PAD;
+  const stageTop = 16 + 28 + 12;
+
+  const mk = getDemoMuscleKey(id);
+  /* Wrapped, because the component's names span wraps inside its flex
+     row and the dips card names four secondaries. An unwrapped mock hid
+     that the row runs to two lines on a phone. */
+  const keyPrimary = wrap(
+    (mk?.primary ?? ["Pectorals"]).map(titleCaseMuscle).join(", "),
+    30
+  );
+  const keySecondary = wrap(
+    (mk?.secondary ?? ["Triceps", "Front Delts"])
+      .map(titleCaseMuscle)
+      .join(", "),
+    26
+  );
+  const priY = stageTop + stageH + 30;
+  const secY = priY + keyPrimary.length * 19 + 7;
+  const headY = secY + keySecondary.length * 19 + 30;
 
   const cues = beats.map((b) => wrap(b.cue, 38));
-  let y = 16 + 28 + 12 + stageH + 20 + 64 + 24 + 26;
+  let y = headY + 26;
   const rowTops: number[] = [];
   for (const c of cues) {
     rowTops.push(y);
@@ -119,8 +140,14 @@ async function formTab(id: string, beats: readonly FormBeat[], at: number) {
   const pill = (x: number, t: string, on: boolean) =>
     `<rect x="${x}" y="16" width="${w(t, 14) + 26}" height="28" rx="14" fill="${on ? LIFT : "none"}" stroke="${on ? "none" : "#3A3A42"}"/><text x="${x + 13}" y="35" fill="${on ? "#fff" : FG}" font-family="sans-serif" font-size="14" font-weight="${on ? 600 : 500}">${esc(t)}</text>`;
 
-  const stageTop = 16 + 28 + 12;
-  const label = beats[at].label.toUpperCase();
+  const names = (ls: string[], x: number, top: number) =>
+    ls
+      .map(
+        (l, k) =>
+          `<text x="${x}" y="${top + k * 19}" fill="#DEDEE4" font-family="sans-serif" font-size="14">${esc(l)}</text>`
+      )
+      .join("");
+
   const rows = beats
     .map((b, i) => {
       const live = i === at;
@@ -138,20 +165,20 @@ async function formTab(id: string, beats: readonly FormBeat[], at: number) {
     })
     .join("");
 
+  const label = beats[at].label.toUpperCase();
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${CARD_W * SC}" height="${H * SC}" viewBox="0 0 ${CARD_W} ${H}">
+  <defs><pattern id="kh" width="3.4" height="3.4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="3.4" height="3.4" fill="${CARD}"/><line x1="0" y1="0" x2="0" y2="3.4" stroke="${LIFT}" stroke-width="1.6"/></pattern></defs>
   <rect width="${CARD_W}" height="${H}" fill="${CARD}"/>
   ${pill(PAD, "Chest", true)}${pill(PAD + w("Chest", 14) + 34, "Bodyweight", false)}
   <rect x="${PAD}" y="${stageTop}" width="${CARD_W - PAD * 2}" height="${stageH}" rx="16" fill="${STAGE}"/>
-  <text x="${CARD_W / 2}" y="${stageTop + PAD + FIG_H + 22}" fill="${MUTED}" text-anchor="middle" font-family="sans-serif" font-size="11" letter-spacing="1">${esc(label)}<tspan dx="8" fill="${MUTED}" opacity="0.7">${at + 1}/${beats.length}</tspan></text>
-  <text x="${PAD}" y="${stageTop + stageH + 34}" fill="${MUTED}" font-family="sans-serif" font-size="13">Primary:</text>
-  <rect x="${PAD + 62}" y="${stageTop + stageH + 20}" width="64" height="22" rx="11" fill="rgba(123,114,233,0.12)"/>
-  <text x="${PAD + 74}" y="${stageTop + stageH + 35}" fill="#9B93EE" font-family="sans-serif" font-size="13">chest</text>
-  <text x="${PAD}" y="${stageTop + stageH + 64}" fill="${MUTED}" font-family="sans-serif" font-size="13">Secondary:</text>
-  <rect x="${PAD + 78}" y="${stageTop + stageH + 50}" width="66" height="22" rx="11" fill="#26262C"/>
-  <text x="${PAD + 90}" y="${stageTop + stageH + 65}" fill="#C8C8CE" font-family="sans-serif" font-size="13">triceps</text>
-  <rect x="${PAD + 152}" y="${stageTop + stageH + 50}" width="90" height="22" rx="11" fill="#26262C"/>
-  <text x="${PAD + 164}" y="${stageTop + stageH + 65}" fill="#C8C8CE" font-family="sans-serif" font-size="13">front delts</text>
-  <text x="${PAD}" y="${stageTop + stageH + 108}" fill="${FG}" font-family="sans-serif" font-size="19" font-weight="700">Instructions</text>
+  <text x="${CARD_W / 2}" y="${stageTop + PAD + FIG_H + 22}" fill="${MUTED}" text-anchor="middle" font-family="sans-serif" font-size="11" letter-spacing="1">${esc(label)}<tspan dx="8" opacity="0.7">${at + 1}/${beats.length}</tspan></text>
+  <circle cx="${PAD + 5}" cy="${priY - 4}" r="5" fill="${LIFT}"/>
+  <text x="${PAD + 16}" y="${priY}" fill="${MUTED}" font-family="sans-serif" font-size="11" letter-spacing="0.8">PRIMARY</text>
+  ${names(keyPrimary, PAD + 78, priY + 1)}
+  <circle cx="${PAD + 5}" cy="${secY - 4}" r="5" fill="url(#kh)"/>
+  <text x="${PAD + 16}" y="${secY}" fill="${MUTED}" font-family="sans-serif" font-size="11" letter-spacing="0.8">SECONDARY</text>
+  ${names(keySecondary, PAD + 92, secY + 1)}
+  <text x="${PAD}" y="${headY}" fill="${FG}" font-family="sans-serif" font-size="19" font-weight="700">Instructions</text>
   ${rows}</svg>`;
 
   const base = await sharp(Buffer.from(svg)).png().toBuffer();

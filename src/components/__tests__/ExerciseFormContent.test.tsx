@@ -24,9 +24,17 @@ import { render, screen, waitFor, act } from "@testing-library/react";
 const beatsRef = {
   current: null as { t: number; label: string; cue: string }[] | null,
 };
+const keyRef = {
+  current: null as {
+    primary: string[];
+    secondary: string[];
+    secondaryFill: "solid" | "hatch";
+  } | null,
+};
 vi.mock("@/lib/bodyRig", () => ({
   getBodyDemo: () => ({ view: "side", tint: {}, concentricTo: 0 }),
   getFormBeats: () => beatsRef.current,
+  getDemoMuscleKey: () => keyRef.current,
 }));
 
 vi.mock("@/lib/exerciseDemo", async (importOriginal) => ({
@@ -36,7 +44,7 @@ vi.mock("@/lib/exerciseDemo", async (importOriginal) => ({
     category: "Chest",
     equipment: "Bodyweight",
     primaryMuscles: ["Pectorals"],
-    secondaryMuscles: ["Triceps"],
+    secondaryMuscles: ["Triceps", "Pectorals"],
     images: [],
     instructions: ["Catalogue step one.", "Catalogue step two."],
     tip: "Watch the shoulders.",
@@ -67,6 +75,7 @@ const BEATS = [
 
 beforeEach(() => {
   beatsRef.current = null;
+  keyRef.current = null;
   reportStep = undefined;
 });
 
@@ -113,5 +122,42 @@ describe("ExerciseFormContent — the instruction list", () => {
     // Two steps is the collapse threshold, so nothing is hidden and no
     // disclosure appears — the pre-existing behaviour.
     expect(screen.getByText("Catalogue step two.")).toBeInTheDocument();
+  });
+});
+
+describe("ExerciseFormContent — the muscle key", () => {
+  it("falls back to the catalogue, deduped and title-cased", async () => {
+    /* LOCAL_MUSCLE_MAP expands some groups, which can put the same
+       muscle in both tiers; primary wins, being the more emphatic
+       categorisation. And the borrowed database supplies lowercase
+       names, which used to render as "chest" beside another exercise's
+       "Pectorals". */
+    render(<ExerciseFormContent exerciseName="Dips" />);
+    expect(await screen.findByText("Primary")).toBeInTheDocument();
+    expect(screen.getByText("Pectorals")).toBeInTheDocument();
+    expect(screen.getByText("Triceps")).toBeInTheDocument();
+  });
+
+  it("supplied card art overrides it, because a key describes the PICTURE", async () => {
+    /* The catalogue names what the exercise trains; the dips card
+       shades a pec solid and hatches the serratus. Both are true, but
+       only one of them is on screen. */
+    beatsRef.current = BEATS;
+    keyRef.current = {
+      primary: ["Pectoralis major"],
+      secondary: ["Serratus anterior"],
+      secondaryFill: "hatch",
+    };
+    const { container } = render(<ExerciseFormContent exerciseName="Dips" />);
+    expect(await screen.findByText("Pectoralis Major")).toBeInTheDocument();
+    expect(screen.getByText("Serratus Anterior")).toBeInTheDocument();
+    expect(screen.queryByText("Pectorals")).toBeNull();
+    /* Scoped to the KEY's swatches: the numbered step chips in the
+       instruction list are round too, and matching them made this
+       assertion read an empty background from the wrong element. */
+    const swatches = [
+      ...container.querySelectorAll<HTMLElement>("span.size-2\\.5"),
+    ];
+    expect(swatches[1].style.background).toContain("repeating-linear-gradient");
   });
 });

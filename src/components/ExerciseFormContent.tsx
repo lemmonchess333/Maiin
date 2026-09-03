@@ -12,7 +12,8 @@ import { THEME } from "@/lib/theme";
 import { Spinner } from "@/components/ui/Spinner";
 import ExerciseDemoPlayer from "@/components/ExerciseDemoPlayer";
 import ExerciseRigDemo from "@/components/ExerciseRigDemo";
-import { getBodyDemo, getFormBeats } from "@/lib/bodyRig";
+import { getBodyDemo, getDemoMuscleKey, getFormBeats } from "@/lib/bodyRig";
+import MuscleKey from "@/components/MuscleKey";
 import { EXERCISES } from "@/lib/exercises";
 import BodyMapGlow from "@/components/BodyMapGlow";
 
@@ -308,53 +309,32 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
         </div>
       )}
 
-      {/* Primary / Secondary muscle pills.
-          Dedup secondary against primary — LOCAL_MUSCLE_MAP intentionally
-          expands "Upper Chest" → ["chest", "shoulders"] so the body
-          diagram highlights front delts for Incline Bench Press, but
-          the same expansion produces a duplicate "shoulders" chip
-          when secondaryMuscles already lists Front Delts → shoulders.
-          The diagram still gets both regions; the chip row reads as
-          one canonical placement per muscle. Primary wins ties since
-          it's the more emphatic categorisation. */}
+      {/* The muscles worked, as a KEY: a swatch in the tier's own
+          paint, so the reader can tie a purple shape on the figure to a
+          name. It was two rows of chips prefixed "Primary:" /
+          "Secondary:" until 2026-09-03 — the chips carried nothing the
+          text did not, and named muscles without saying which colour
+          was which.
+
+          Supplied card art brings its OWN names: the catalogue's groups
+          describe the exercise, and a key has to describe the picture.
+
+          Dedup secondary against primary — LOCAL_MUSCLE_MAP
+          intentionally expands "Upper Chest" → ["chest", "shoulders"]
+          so the body diagram highlights front delts for Incline Bench
+          Press, but the same expansion produces a duplicate "shoulders"
+          entry when secondaryMuscles already lists Front Delts →
+          shoulders. Primary wins ties, being the more emphatic
+          categorisation. */}
       {(() => {
+        const supplied = exerciseId ? getDemoMuscleKey(exerciseId) : null;
+        if (supplied) return <MuscleKey {...supplied} />;
         const primarySet = new Set(demo.primaryMuscles);
-        const secondaryDedup = demo.secondaryMuscles.filter(
-          (m) => !primarySet.has(m)
-        );
         return (
-          <div className="mt-4">
-            {demo.primaryMuscles.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-caption font-medium text-muted-foreground mr-1">
-                  Primary:
-                </span>
-                {demo.primaryMuscles.map((m) => (
-                  <span
-                    key={m}
-                    className="inline-flex items-center whitespace-nowrap h-6 px-2.5 rounded-xl text-small font-medium bg-lifting/8 text-lifting-strong"
-                  >
-                    {m}
-                  </span>
-                ))}
-              </div>
-            )}
-            {secondaryDedup.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2 mt-3">
-                <span className="text-caption font-medium text-muted-foreground mr-1">
-                  Secondary:
-                </span>
-                {secondaryDedup.map((m) => (
-                  <span
-                    key={m}
-                    className="inline-flex items-center whitespace-nowrap h-6 px-2.5 rounded-xl text-small font-medium bg-muted text-foreground/70"
-                  >
-                    {m}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
+          <MuscleKey
+            primary={demo.primaryMuscles}
+            secondary={demo.secondaryMuscles.filter((m) => !primarySet.has(m))}
+          />
         );
       })()}
 

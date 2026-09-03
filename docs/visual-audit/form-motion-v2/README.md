@@ -2192,3 +2192,63 @@ common mistakes still render below, untouched.
 the replacement, the highlight following the player, and — the
 regression worth watching — that a demo WITHOUT beats still shows the
 collapsed catalogue list exactly as before.
+
+## STATUS 2026-09-03x — the muscles-worked row becomes a KEY
+
+Owner, holding the form card next to the Form tab: "the pills we have
+that show the area worked as primary and secondary aren't that good, I
+think these look better."
+
+They are better, and for one reason that is not styling. The card's
+version carries a **swatch per tier in the tier's own paint**, so it
+explains the picture: that purple shape is your pec. A chip row only
+names muscles and leaves the reader to guess which shape is which.
+
+### Taken
+
+- **The swatch.** `MuscleKey` draws a dot in `THEME.lifting` for
+  primary and `THEME.liftingLight` for secondary — the renderer's own
+  two fills, so the key cannot drift from the figure it explains. Where
+  the art hatches, the swatch hatches.
+- **No chips.** They carried nothing the text did not, and two chip
+  styles at different weights read as two kinds of thing.
+- **One casing rule.** Two data sources feed these names and they
+  disagree: the catalogue title-cases ("Rear Delts", "Teres Major"), the
+  borrowed free-exercise-db does not ("chest"), and which one an
+  exercise resolves to depends on whether it carries local
+  instructions — so the same row rendered differently between two
+  exercises for a reason no reader could infer. `titleCaseMuscle`
+  normalises at DISPLAY, not in the data: the lowercase forms are keys
+  into `MUSCLE_MAP` for the body diagram, and rewriting them at source
+  would break the diagram to tidy a caption.
+
+### Declined
+
+**The card's third tier** — "Core (Stabilizers)", greyed. Nothing in the
+catalogue records stabilisers and no demo paints them. A key entry for
+something the picture does not show is a key to nothing.
+
+**Moving it above the player.** The card puts its legend at the top,
+where it has the width for a two-column grid. On a 360pt card the same
+content wraps and pushes the figure down. It stays below.
+
+### Supplied art brings its own names
+
+The catalogue names what the exercise TRAINS; a key describes what is
+ON SCREEN. For dips those differ: the catalogue says chest / triceps /
+shoulders, the card shades a pec solid and hatches the serratus. So
+`FormPlacard.key` is back — deleted in 03w when the stage legend went,
+and correct now that the row below IS the key.
+
+Cost, visible in the preview: the card names four secondaries, so that
+row runs to three lines on a phone. Every catalogue-driven exercise is
+one or two. Worth trimming the card's list if it reads heavy.
+
+### Coverage
+
+`MuscleKey.test.tsx` pins the swatch against the theme values (derived,
+not written out, so a token change still has to move the test), the
+hatch variant, the omitted-empty-tier case, and the casing. The
+`ExerciseFormContent` suite pins both routes: catalogue names deduped
+across tiers, and supplied names overriding them. Swatch-colour and
+casing mutations both fail.

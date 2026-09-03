@@ -9521,6 +9521,22 @@ export interface FormBeat {
  *  rather than the rig's own figure — the key that describes THAT art. */
 export interface FormPlacard {
   beats: readonly FormBeat[];
+  /** The muscle key for SUPPLIED art. The catalogue names the muscle
+   *  groups an exercise trains, which is a true statement about the
+   *  exercise and not necessarily about the picture: the dips card
+   *  shades a pec solid and hatches the serratus, neither of which the
+   *  catalogue's "chest / triceps / shoulders" describes. A key is a
+   *  key to what is ON SCREEN, so supplied art brings its own. */
+  key?: DemoMuscleKey;
+}
+
+export interface DemoMuscleKey {
+  primary: string[];
+  secondary: string[];
+  /** How the secondary muscles are painted. The rig pales the purple;
+   *  the supplied card hatches it, and a solid swatch beside a hatched
+   *  muscle is a key describing something that is not there. */
+  secondaryFill: "solid" | "hatch";
 }
 
 const FORM_BEATS: Record<string, FormPlacard> = {
@@ -9578,6 +9594,19 @@ const FORM_BEATS: Record<string, FormPlacard> = {
         image: "form-frames/dips/6.webp",
       },
     ],
+    /* The card's own names, because the card's art is what is on
+       screen. Finer than the catalogue's groups, and the two hatched
+       entries are hatched in the pictures. */
+    key: {
+      primary: ["Pectoralis major"],
+      secondary: [
+        "Triceps",
+        "Anterior deltoids",
+        "Lower chest",
+        "Serratus anterior",
+      ],
+      secondaryFill: "hatch",
+    },
   },
 };
 
@@ -9590,6 +9619,13 @@ export function getFormBeats(exerciseId: string): readonly FormBeat[] | null {
 /** Every id that has one, for the tests that pin them against the
  *  geometry they caption. */
 export const FORM_BEAT_IDS = Object.keys(FORM_BEATS);
+
+/** The muscle key a demo's own art needs, or null where the catalogue's
+ *  groups describe the picture perfectly well (every rig-drawn demo:
+ *  it tints the muscles the catalogue names). */
+export function getDemoMuscleKey(exerciseId: string): DemoMuscleKey | null {
+  return FORM_BEATS[exerciseId]?.key ?? null;
+}
 
 /** PRODUCTION lookup — what the Form surface may mount. Applies the
  *  alias map, the side-demo flag, the misrepresentation gate, and the
