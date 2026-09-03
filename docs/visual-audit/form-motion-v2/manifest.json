@@ -385,6 +385,33 @@
         "file": "bulgarian-split-t100.png"
       }
     ],
+    "burpees": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "burpees-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "burpees-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "burpees-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "burpees-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "burpees-t100.png"
+      }
+    ],
     "cable-crossover": [
       {
         "t": 0,
