@@ -169,6 +169,33 @@
         "file": "barbell-upright-row-t100.png"
       }
     ],
+    "bayesian-cable-curl": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "bayesian-cable-curl-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "bayesian-cable-curl-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "bayesian-cable-curl-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "bayesian-cable-curl-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "bayesian-cable-curl-t100.png"
+      }
+    ],
     "bench-dips": [
       {
         "t": 0,
@@ -302,6 +329,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "cable-curl-t100.png"
+      }
+    ],
+    "cable-glute-kickback": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "cable-glute-kickback-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "cable-glute-kickback-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "cable-glute-kickback-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "cable-glute-kickback-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "cable-glute-kickback-t100.png"
       }
     ],
     "calf-raise": [
@@ -1114,6 +1168,33 @@
         "file": "nordic-hamstring-curl-t100.png"
       }
     ],
+    "overhead-cable-tricep-extension": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "overhead-cable-tricep-extension-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "overhead-cable-tricep-extension-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "overhead-cable-tricep-extension-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "overhead-cable-tricep-extension-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "overhead-cable-tricep-extension-t100.png"
+      }
+    ],
     "overhead-extension": [
       {
         "t": 0,
@@ -1303,6 +1384,60 @@
         "file": "rack-pull-t100.png"
       }
     ],
+    "reverse-barbell-curl": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "reverse-barbell-curl-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "reverse-barbell-curl-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "reverse-barbell-curl-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "reverse-barbell-curl-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "reverse-barbell-curl-t100.png"
+      }
+    ],
+    "reverse-grip-cable-pushdown": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "reverse-grip-cable-pushdown-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "reverse-grip-cable-pushdown-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "reverse-grip-cable-pushdown-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "reverse-grip-cable-pushdown-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "reverse-grip-cable-pushdown-t100.png"
+      }
+    ],
     "romanian-deadlift": [
       {
         "t": 0,
@@ -1411,6 +1546,60 @@
         "file": "seated-row-t100.png"
       }
     ],
+    "single-arm-cable-pushdown": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "single-arm-cable-pushdown-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "single-arm-cable-pushdown-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "single-arm-cable-pushdown-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "single-arm-cable-pushdown-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "single-arm-cable-pushdown-t100.png"
+      }
+    ],
+    "single-arm-lat-pulldown": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "single-arm-lat-pulldown-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "single-arm-lat-pulldown-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "single-arm-lat-pulldown-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "single-arm-lat-pulldown-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "single-arm-lat-pulldown-t100.png"
+      }
+    ],
     "single-leg-calf-raise": [
       {
         "t": 0,
@@ -1490,6 +1679,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "skull-crushers-t100.png"
+      }
+    ],
+    "spider-db-curl": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "spider-db-curl-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "spider-db-curl-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "spider-db-curl-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "spider-db-curl-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "spider-db-curl-t100.png"
       }
     ],
     "squat": [
