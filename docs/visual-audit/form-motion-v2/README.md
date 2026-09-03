@@ -1044,3 +1044,49 @@ Two things the numbers caught before a screenshot could:
   line closes to within 11°. The bridge's feet also started too close
   to the hips (16 out), folding both legs straight up like a crunch;
   they sit 42 out, which stands the shin vertical at the top.
+
+## STATUS 2026-09-03d — build-out, batch 3: cables and seated machines
+
+Coverage 51 → 57 of 152. One prop and one chain came out of it:
+
+- **`cableHandle`** (`bodyProps.ts`) — cable + pulley block + a short
+  handle seen end-on. A straight bar, a V-grip and a D-handle are the
+  same picture side-on (a disc with a hub — the profile barbell's own
+  "this is a bar coming at you" construction), so there is one builder,
+  and the pulley can sit anywhere: on the floor for a curl, high for a
+  pulldown, at chest height for a row. Face pulls reuse the pushdown's
+  ROPE with its pulley moved to eye level, strands opening with the
+  pull.
+- **`seatedChain`** — hips parked on a seat, thigh along it, shank
+  swinging about the knee by an angle RELATIVE to the thigh, trunk
+  reclined against a backrest, hands on the side handles. The machine
+  is drawn FROM the leg: `shankPad` puts the roller on the shin
+  (extension) or the calf (curl) wherever the shank is, with the lever
+  from the knee.
+
+| Demo                    | Chain / gear                                      | Pinned claim (from its instructions)                                              |
+| ----------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `cable-curl`            | `strictCurlPose`, handle from a FLOOR pulley      | pulley below the hand every frame ("tension through the whole rep")               |
+| `straight-arm-pulldown` | 20° hinge, arm swung about the shoulder           | elbow bend FIXED to ±0.5° across the rep; hand above the head; finishes at thigh  |
+| `face-pulls`            | rope from an eye-level pulley                     | elbow never below the shoulder line; extended at start; hand in FRONT of the eyes |
+| `seated-row`            | row bench + footplate, handle from a chest pulley | torso upright at both ends (±3°); arm extended; elbow behind trunk; hand at ribs  |
+| `leg-extension`         | `seatedChain`, shin pad                           | hip stationary; knee 80-100° hanging → the rest leg's own straight angle          |
+| `seated-leg-curl`       | `seatedChain`, calf pad + thigh pad               | hip stationary; straight at start; past 90 at finish; heel below AND behind knee  |
+
+Three things the numbers caught before a screenshot could:
+
+- The row's first arm targets landed the elbow IN FRONT of the trunk at
+  the finish (the wrong IK branch) — a row whose elbow never passes the
+  body is a curl. Branch flipped; the elbow now ends 19 behind the
+  shoulder.
+- The face pull's first finish put the hand INSIDE the head outline
+  (x 58 against a face front at ~62) — pulling the rope through the
+  face. Flexion 145 → 108 and the upper arm a shade higher: the hand
+  finishes at [67, 4], in front of the eyes.
+- The pulldown's first finish left the hand 24 units ahead of the
+  thigh, because the 20° hinge carries the shoulder forward and a
+  hanging arm hangs from wherever the shoulder is. The arm has to
+  angle BACK in torso space to meet the thigh; it does, to within 15.
+
+Capture channel: `face-pulls`, `seated-row`, `leg-extension` added to
+`form-demo.screens.capture.spec.ts`.

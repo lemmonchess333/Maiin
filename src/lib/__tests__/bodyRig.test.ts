@@ -514,8 +514,10 @@ describe("renderBodyDemo", () => {
        orientation or bar shape, which an end-on view cannot show and
        which does not change the arc. The two below still differ in
        implement (a low-pulley cable, a reverse grip on a rope) and stay
-       fallback until they have their own contract. */
-    for (const id of ["cable-curl", "reverse-grip-cable-pushdown"]) {
+       fallback until they have their own contract.
+       2026-09-03 batch 3: cable-curl got that contract (its own demo on
+       a low pulley); the reverse-grip pushdown is still fallback. */
+    for (const id of ["reverse-grip-cable-pushdown"]) {
       expect(getBodyDemo(id), id).toBeNull();
       expect(renderBodyDemo(id, 0.5), id).toBe("");
     }
@@ -1021,6 +1023,14 @@ describe("renderBodyDemo", () => {
       "glute-bridge": "stretch",
       "hip-thrust": "stretch",
       "bulgarian-split": "lockout",
+      // Batch 3: every cable pull starts extended toward the pulley, the
+      // extension with the shins hanging, the curl with the legs straight.
+      "cable-curl": "stretch",
+      "straight-arm-pulldown": "stretch",
+      "face-pulls": "stretch",
+      "seated-row": "stretch",
+      "leg-extension": "stretch",
+      "seated-leg-curl": "stretch",
     };
     expect(Object.keys(START).sort()).toEqual(Object.keys(BODY_DEMOS).sort());
     for (const [id, expected] of Object.entries(START)) {
@@ -1291,6 +1301,203 @@ describe("renderBodyDemo", () => {
         Math.hypot(ba[0] - 4, ba[1] - 174),
         `bulgarian back foot on the bench @${t}`
       ).toBeLessThan(0.05);
+    }
+
+    /* Batch 3: cables and seated machines. */
+    const jointDeg = (
+      a: [number, number],
+      b: [number, number],
+      c: [number, number]
+    ) => {
+      const v1 = [a[0] - b[0], a[1] - b[1]];
+      const v2 = [c[0] - b[0], c[1] - b[1]];
+      return (
+        (Math.acos(
+          (v1[0] * v2[0] + v1[1] * v2[1]) /
+            (Math.hypot(v1[0], v1[1]) * Math.hypot(v2[0], v2[1]))
+        ) *
+          180) /
+        Math.PI
+      );
+    };
+    const elbowDeg = (id: string, t: number) => {
+      const p = at(id, t);
+      return jointDeg(
+        pt(SIDE_ANCHORS.shoulder, p.torso),
+        pt(SIDE_ANCHORS.elbow, p.foreArmL),
+        pt(SIDE_ANCHORS.hand, p.handL)
+      );
+    };
+    const kneeDeg = (id: string, t: number) => {
+      const p = at(id, t);
+      return jointDeg(
+        pt(SIDE_ANCHORS.hip, p.pelvis),
+        pt(SIDE_ANCHORS.knee, p.shankL),
+        pt(SIDE_ANCHORS.ankle, p.shankL)
+      );
+    };
+    // The rest leg's own knee angle IS "fully straight" for this figure
+    // (the anchors are not collinear), so straightness is measured
+    // against it rather than against 180.
+    const REST_KNEE = jointDeg(
+      SIDE_ANCHORS.hip,
+      SIDE_ANCHORS.knee,
+      SIDE_ANCHORS.ankle
+    );
+    // cable curl: a LOW pulley — the tip is "step back until there's
+    // tension through the whole rep", so the cable pulls from the floor
+    // at every frame, never from above the hand.
+    for (const t of [0, 0.5, 1]) {
+      const h = pt(SIDE_ANCHORS.hand, at("cable-curl", t).handL);
+      expect(
+        BODY_DEMOS["cable-curl"].pulley![1],
+        `cable-curl: pulley below the hand @${t}`
+      ).toBeGreaterThan(h[1] + 60);
+    }
+    // straight-arm pulldown: "lock your elbows into a soft, fixed bend —
+    // don't change it on the set"; "full overhead stretch"; "down in an
+    // arc to your thighs"; "hinge slightly forward".
+    {
+      const id = "straight-arm-pulldown";
+      const e0 = elbowDeg(id, 0);
+      expect(e0, "pulldown: soft bend").toBeGreaterThan(160);
+      expect(e0, "pulldown: soft bend").toBeLessThan(176);
+      for (const t of [0.25, 0.5, 0.75, 1]) {
+        expect(
+          Math.abs(elbowDeg(id, t) - e0),
+          `pulldown: elbow bend fixed @${t}`
+        ).toBeLessThan(0.5);
+      }
+      const h0 = pt(SIDE_ANCHORS.hand, at(id, 0).handL);
+      expect(
+        h0[1],
+        "pulldown: hand above the head at the stretch"
+      ).toBeLessThan(0);
+      const p1 = at(id, 1);
+      const hip = pt(SIDE_ANCHORS.hip, p1.pelvis);
+      const knee = pt(SIDE_ANCHORS.knee, p1.thighL);
+      const h1 = pt(SIDE_ANCHORS.hand, p1.handL);
+      const xOnThigh =
+        hip[0] + ((knee[0] - hip[0]) * (h1[1] - hip[1])) / (knee[1] - hip[1]);
+      expect(h1[0] - xOnThigh, "pulldown: hand at the thigh").toBeGreaterThan(
+        0
+      );
+      expect(h1[0] - xOnThigh, "pulldown: hand at the thigh").toBeLessThan(18);
+      for (const t of [0, 1]) {
+        const p = at(id, t);
+        const lean =
+          lineDeg(
+            pt(SIDE_ANCHORS.hip, p.pelvis),
+            pt(SIDE_ANCHORS.shoulder, p.torso)
+          ) + 90;
+        expect(lean, `pulldown: slight hinge held @${t}`).toBeGreaterThan(14);
+        expect(lean, `pulldown: slight hinge held @${t}`).toBeLessThan(26);
+      }
+    }
+    // face pulls: "elbows high throughout" (never below the shoulder
+    // line); "arms extended straight toward the pulley" at the start;
+    // "pull towards your eyes" — the hand finishes in front of the face
+    // at eye height, not on it.
+    {
+      const id = "face-pulls";
+      for (const t of [0, 0.25, 0.5, 0.75, 1]) {
+        const p = at(id, t);
+        const S = pt(SIDE_ANCHORS.shoulder, p.torso);
+        const E = pt(SIDE_ANCHORS.elbow, p.foreArmL);
+        expect(E[1], `face pull: elbow high @${t}`).toBeLessThan(S[1] + 3);
+      }
+      expect(
+        elbowDeg(id, 0),
+        "face pull: extended toward the pulley"
+      ).toBeGreaterThan(172);
+      const h = pt(SIDE_ANCHORS.hand, at(id, 1).handL);
+      expect(h[1], "face pull: hand at eye height").toBeGreaterThan(-2);
+      expect(h[1], "face pull: hand at eye height").toBeLessThan(16);
+      expect(h[0], "face pull: hand in FRONT of the face").toBeGreaterThan(63);
+      expect(h[0], "face pull: hand in front of the face").toBeLessThan(76);
+    }
+    // seated row: "torso upright" at both ends (the tip: "chest tall and
+    // still" — no rocking); "extend your arms" at the stretch; "pull the
+    // handle to your lower ribs" with the elbow behind the trunk; "knees
+    // softly bent".
+    {
+      const id = "seated-row";
+      // "Upright" is the standing figure's own trunk line (the shoulder
+      // sits 5.4° ahead of the hip at rest), not a plumb vertical.
+      const restLean = lineDeg(SIDE_ANCHORS.hip, SIDE_ANCHORS.shoulder) + 90;
+      for (const t of [0, 1]) {
+        const p = at(id, t);
+        const lean =
+          lineDeg(
+            pt(SIDE_ANCHORS.hip, p.pelvis),
+            pt(SIDE_ANCHORS.shoulder, p.torso)
+          ) + 90;
+        expect(
+          Math.abs(lean - restLean),
+          `row: torso upright @${t}`
+        ).toBeLessThan(3);
+        const k = kneeDeg(id, t);
+        expect(k, `row: knees softly bent @${t}`).toBeGreaterThan(132);
+        expect(k, `row: knees softly bent @${t}`).toBeLessThan(REST_KNEE - 8);
+      }
+      expect(
+        elbowDeg(id, 0),
+        "row: arms extended at the stretch"
+      ).toBeGreaterThan(165);
+      const p1 = at(id, 1);
+      const S = pt(SIDE_ANCHORS.shoulder, p1.torso);
+      const E = pt(SIDE_ANCHORS.elbow, p1.foreArmL);
+      const H = pt(SIDE_ANCHORS.hand, p1.handL);
+      expect(E[0], "row: elbow behind the trunk at the finish").toBeLessThan(
+        S[0]
+      );
+      expect(
+        Math.hypot(H[0] - (S[0] + 12), H[1] - (S[1] + 26)),
+        "row: hand at the lower ribs"
+      ).toBeLessThan(6);
+    }
+    // leg extension: "hips pressed into the seat" (the hip does not move);
+    // from a hanging shin to "fully straight".
+    {
+      const id = "leg-extension";
+      const hip0 = pt(SIDE_ANCHORS.hip, at(id, 0).pelvis);
+      for (const t of [0.5, 1]) {
+        const hip = pt(SIDE_ANCHORS.hip, at(id, t).pelvis);
+        expect(
+          Math.hypot(hip[0] - hip0[0], hip[1] - hip0[1]),
+          `extension: hips on the seat @${t}`
+        ).toBeLessThan(0.01);
+      }
+      expect(kneeDeg(id, 0), "extension: shin hanging").toBeGreaterThan(80);
+      expect(kneeDeg(id, 0), "extension: shin hanging").toBeLessThan(100);
+      expect(kneeDeg(id, 1), "extension: fully straight").toBeGreaterThan(
+        REST_KNEE - 1
+      );
+    }
+    // seated leg curl: starts straight (the stretch), curls "down and
+    // back" past 90 with the heel driven toward the floor — the ankle
+    // finishes below and behind the knee; hips pinned.
+    {
+      const id = "seated-leg-curl";
+      const hip0 = pt(SIDE_ANCHORS.hip, at(id, 0).pelvis);
+      for (const t of [0.5, 1]) {
+        const hip = pt(SIDE_ANCHORS.hip, at(id, t).pelvis);
+        expect(
+          Math.hypot(hip[0] - hip0[0], hip[1] - hip0[1]),
+          `leg curl: hips on the seat @${t}`
+        ).toBeLessThan(0.01);
+      }
+      expect(kneeDeg(id, 0), "leg curl: straight at the start").toBeGreaterThan(
+        REST_KNEE - 4
+      );
+      expect(kneeDeg(id, 1), "leg curl: past 90 at the finish").toBeLessThan(
+        75
+      );
+      const p1 = at(id, 1);
+      const k = pt(SIDE_ANCHORS.knee, p1.shankL);
+      const a = pt(SIDE_ANCHORS.ankle, p1.shankL);
+      expect(a[1], "leg curl: heel driven down").toBeGreaterThan(k[1] + 30);
+      expect(a[0], "leg curl: heel driven back").toBeLessThan(k[0]);
     }
   });
 
@@ -1819,6 +2026,12 @@ describe("tint honesty", () => {
       "glute-bridge": "gluteal",
       "hip-thrust": "gluteal",
       "bulgarian-split": "quadriceps",
+      "cable-curl": "biceps",
+      "straight-arm-pulldown": "upper-back",
+      "face-pulls": "upper-back",
+      "seated-row": "upper-back",
+      "leg-extension": "quadriceps",
+      "seated-leg-curl": "hamstring",
     };
     for (const [id, muscle] of Object.entries(expectPrimary)) {
       expect(BODY_DEMOS[id].tint[muscle], `${id} primary`).toBe("primary");
