@@ -65,6 +65,10 @@ const DEMOS: [id: string, name: string][] = [
   ["overhead-cable-tricep-extension", "Overhead Cable Tricep Extension"],
   ["spider-db-curl", "Spider Dumbbell Curl"],
   ["cable-glute-kickback", "Cable Glute Kickback"],
+  // Batch 9: a landmine arc, a solved pike, the bench-edge flag.
+  ["landmine-press", "Landmine Press"],
+  ["pike-push-up", "Pike Push-Up"],
+  ["dragon-flag", "Dragon Flag"],
 ];
 
 test.use({

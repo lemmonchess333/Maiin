@@ -593,7 +593,9 @@ export interface BodyDemo {
     | "dumbbell"
     | "goblet-bell"
     | "cable-handle"
-    | "kettlebell";
+    | "kettlebell"
+    | "landmine"
+    | "lever-handle";
   /** plate-end disc radius (default 10). The deadlift draws a
    *  full-size 45 (r=26 ≈ 45 cm on a 175 cm figure) so the bottom
    *  frame reads bar-near-the-floor. */
@@ -607,6 +609,9 @@ export interface BodyDemo {
    *  cable is solved from it to the grip every frame, so the gear is
    *  never positioned independently of the body. */
   pulley?: Pt;
+  /** `landmine` / `lever-handle`: the fixed pivot the bar or lever arm
+   *  swings about — a floor sleeve, a machine's hinge. */
+  pivot?: Pt;
   bar?: (_e: number, pose: Partial<Record<GroupName, Op[]>>) => [Pt, Pt] | null;
   /** Free scene furniture (a bench, a floor line) drawn behind the
    *  body — raw SVG in GEAR colours. Side-view demos use this. */
@@ -1431,6 +1436,66 @@ const LOW_PULLEY_BEHIND: Pt = [-22, 190];
 const KICKBACK_PULLEY: Pt = [112, 190];
 const PULLDOWN_SEAT: Pt = [44, 142];
 const PULLDOWN_PULLEY: Pt = [84, -14];
+
+/** The flat bench — pad, legs, floor — drawn behind the body. Shared by
+ *  the bench press and the JM press. */
+const flatBenchScene = (): string =>
+  `<rect x="-64" y="109" width="136" height="7" rx="2.5" fill="${GEAR}"/>` +
+  `<line x1="-50" y1="116" x2="-50" y2="170" stroke="${GEAR_DARK}" stroke-width="3.4"/>` +
+  `<line x1="56" y1="116" x2="56" y2="170" stroke="${GEAR_DARK}" stroke-width="3.4"/>` +
+  `<line x1="-58" y1="171" x2="118" y2="171" stroke="${GEAR_DARK}" stroke-width="1.6"/>`;
+
+/* Place the trunk between a WORLD hip and a WORLD shoulder: rotate the
+ * rest trunk about the rest hip onto the hip→shoulder direction, then
+ * translate the hip. The pieces the trunk carries (head, arms) append
+ * these ops. Used wherever the body is a link in a solved chain (pike
+ * push-up). */
+function trunkBetween(hipWorld: Pt, shoulderWorld: Pt): Op[] {
+  const rest: Pt = [
+    SIDE_ANCHORS.shoulder[0] - SIDE_ANCHORS.hip[0],
+    SIDE_ANCHORS.shoulder[1] - SIDE_ANCHORS.hip[1],
+  ];
+  const deg = angleBetween(rest, [
+    shoulderWorld[0] - hipWorld[0],
+    shoulderWorld[1] - hipWorld[1],
+  ]);
+  return [
+    { kind: "rotate", deg, pivot: SIDE_ANCHORS.hip },
+    {
+      kind: "translate",
+      dx: hipWorld[0] - SIDE_ANCHORS.hip[0],
+      dy: hipWorld[1] - SIDE_ANCHORS.hip[1],
+    },
+  ];
+}
+const TRUNK_LEN = Math.hypot(
+  SIDE_ANCHORS.shoulder[0] - SIDE_ANCHORS.hip[0],
+  SIDE_ANCHORS.shoulder[1] - SIDE_ANCHORS.hip[1]
+);
+const LEG_LEN =
+  Math.hypot(
+    SIDE_ANCHORS.knee[0] - SIDE_ANCHORS.hip[0],
+    SIDE_ANCHORS.knee[1] - SIDE_ANCHORS.hip[1]
+  ) +
+  Math.hypot(
+    SIDE_ANCHORS.ankle[0] - SIDE_ANCHORS.knee[0],
+    SIDE_ANCHORS.ankle[1] - SIDE_ANCHORS.knee[1]
+  );
+/** Skull top above the shoulder, along the trunk (for "head to the
+ *  floor" pins and placements). */
+const HEAD_ABOVE_SHOULDER = 38;
+
+const PIKE_ANKLE: Pt = [12, 196];
+const PIKE_HAND: Pt = [94, 200];
+const HSPU_HAND: Pt = [50, 200];
+const HSPU_WALL_X = 64;
+const LANDMINE_PIVOT: Pt = [150, 200];
+const LANDMINE_SQUAT_PIVOT: Pt = [156, 200];
+const CHEST_PRESS_PIVOT: Pt = [122, 64];
+const SHOULDER_PRESS_PIVOT: Pt = [124, 26];
+const DRAGON_BENCH_Y = 150;
+const ELBOW_HIGH = (a: Pt, b: Pt): Pt => (a[1] < b[1] ? a : b);
+const ELBOW_FRONT = (a: Pt, b: Pt): Pt => (a[0] > b[0] ? a : b);
 
 function sideSquatChain(
   e: number,
@@ -2878,12 +2943,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
       return [h, h];
     },
-    // Bench pad + legs + floor line, drawn behind the body.
-    scene: () =>
-      `<rect x="-64" y="109" width="136" height="7" rx="2.5" fill="${GEAR}"/>` +
-      `<line x1="-50" y1="116" x2="-50" y2="170" stroke="${GEAR_DARK}" stroke-width="3.4"/>` +
-      `<line x1="56" y1="116" x2="56" y2="170" stroke="${GEAR_DARK}" stroke-width="3.4"/>` +
-      `<line x1="-58" y1="171" x2="118" y2="171" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+    scene: flatBenchScene,
   },
 
   "barbell-row": {
@@ -5450,6 +5510,531 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       );
     },
   },
+
+  /* ── 2026-09-03 build-out, batch 9: landmines, levers, inversions ── */
+
+  "landmine-press": {
+    /* "Stagger your stance facing the landmine, bar end at shoulder
+     * height. Grip the end with one hand, other arm tucked at your side
+     * ... press the bar up and forward until your arm is fully
+     * extended. Lower under control to your shoulder." The bar is an
+     * ARC about the floor sleeve, so the hand rides that arc from the
+     * shoulder to the point one straight arm from the shoulder that
+     * still lies on it (a circle-circle solve, the same two-bone
+     * machinery the elbows use). */
+    view: "side",
+    equip: "landmine",
+    pivot: LANDMINE_PIVOT,
+    viewBox: "-24 -30 190 242",
+    groundY: 204,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: {
+      "front-deltoids": "primary",
+      chest: "secondary",
+      triceps: "secondary",
+    },
+    pose: (e) => {
+      const st = staggeredStance(4);
+      const S = applyToPoint(SIDE_ANCHORS.shoulder, st.torso);
+      const H0: Pt = [S[0] + 20, S[1] + 6];
+      const r = Math.hypot(
+        H0[0] - LANDMINE_PIVOT[0],
+        H0[1] - LANDMINE_PIVOT[1]
+      );
+      // The point one straight arm from the shoulder AND one bar length
+      // from the pivot — the upper of the two.
+      const H1 = ELBOW_HIGH(
+        solveElbow(S, LANDMINE_PIVOT, STRAIGHT_ARM, r, 1),
+        solveElbow(S, LANDMINE_PIVOT, STRAIGHT_ARM, r, -1)
+      );
+      const a0 = Math.atan2(
+        H0[1] - LANDMINE_PIVOT[1],
+        H0[0] - LANDMINE_PIVOT[0]
+      );
+      const a1 = Math.atan2(
+        H1[1] - LANDMINE_PIVOT[1],
+        H1[0] - LANDMINE_PIVOT[0]
+      );
+      const a = lerp(a0, a1, e);
+      const H: Pt = [
+        LANDMINE_PIVOT[0] + r * Math.cos(a),
+        LANDMINE_PIVOT[1] + r * Math.sin(a),
+      ];
+      const arm = armToWorld(st.torso, H, ELBOW_LOW);
+      return {
+        head: st.head,
+        torso: st.torso,
+        pelvis: st.pelvis,
+        thighL: st.nearLeg,
+        shankL: st.nearLeg,
+        thighR: st.farLeg,
+        shankR: st.farLeg,
+        upperArmL: arm.upper,
+        foreArmL: arm.fore,
+        handL: arm.fore,
+        upperArmR: st.torso,
+        foreArmR: st.torso,
+        handR: st.torso,
+      };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+    scene: () =>
+      `<line x1="-24" y1="${MACHINE_FLOOR + 1}" x2="166" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  "landmine-squat": {
+    /* "Grip the loaded end at chest height ... squat down with an
+     * upright torso, letting the bar arc in toward your chest. Drive
+     * up ... keeping the bar hugged to your chest." The squat chain at
+     * a 12-degree hinge (the goblet's upright trunk), the hands FIXED
+     * on the chest in trunk space so the bar end rides the body, and
+     * the shaft drawn from the floor sleeve through them. */
+    view: "side",
+    equip: "landmine",
+    pivot: LANDMINE_SQUAT_PIVOT,
+    viewBox: "-24 -6 196 218",
+    groundY: 204,
+    shadowCx: 56,
+    shadowRx: 40,
+    concentricTo: 0,
+    tint: { quadriceps: "primary", gluteal: "secondary", abs: "secondary" },
+    pose: (e) => {
+      const c = sideSquatChain(e, 12);
+      const S = SIDE_ANCHORS.shoulder;
+      const H: Pt = [S[0] + 14, S[1] + 12];
+      // Elbows pinned IN: the low branch, under the bar against the ribs.
+      const arm = aimArm(
+        { S, E: SIDE_ANCHORS.elbow, H: SIDE_ANCHORS.hand },
+        ELBOW_LOW(
+          solveElbow(S, H, SIDE_UPPER_LEN, SIDE_FORE_LEN, 1),
+          solveElbow(S, H, SIDE_UPPER_LEN, SIDE_FORE_LEN, -1)
+        ),
+        H,
+        0
+      );
+      return {
+        head: c.headOps,
+        torso: c.torsoOps,
+        pelvis: c.pelvisOps,
+        thighL: c.thighOps,
+        thighR: c.thighOps,
+        shankL: c.legOps,
+        shankR: c.legOps,
+        upperArmL: [...arm.upper, ...c.torsoOps],
+        foreArmL: [...arm.fore, ...c.torsoOps],
+        handL: [...arm.fore, ...c.torsoOps],
+        upperArmR: [...arm.upper, ...c.torsoOps],
+        foreArmR: [...arm.fore, ...c.torsoOps],
+        handR: [...arm.fore, ...c.torsoOps],
+      };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+    scene: () =>
+      `<line x1="-24" y1="${MACHINE_FLOOR + 1}" x2="172" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  "meadows-row": {
+    /* "Anchor one end of a barbell in a landmine and stand perpendicular
+     * to it. Stagger your stance and grip the loaded end overhand. Row
+     * the end toward your hip, driving your elbow back ... keeping the
+     * hinge locked." Perpendicular to the bar means the bar points AT
+     * the camera in profile — so the loaded end is the deadlift's end-on
+     * plate, at one hand. A locked 45-degree hinge, the near arm rowing
+     * from a straight hang to the hip with the elbow behind the trunk;
+     * the far hand braces on the far thigh (unilateral by instruction). */
+    view: "side",
+    equip: "plate-end",
+    plateR: 10,
+    viewBox: "-30 -6 160 218",
+    groundY: 204,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: {
+      "upper-back": "primary",
+      biceps: "secondary",
+      trapezius: "secondary",
+    },
+    pose: (e) => {
+      // 56 at the hip nets ~45 from the rest trunk once the whole body
+      // leans back about the heel to balance it.
+      const st = staggeredStance(56);
+      const S = applyToPoint(SIDE_ANCHORS.shoulder, st.torso);
+      const hip = applyToPoint(SIDE_ANCHORS.hip, st.torso);
+      const H: Pt = [
+        lerp(S[0] + 2, hip[0] + 10, e),
+        lerp(S[1] + STRAIGHT_ARM, hip[1] + 4, e),
+      ];
+      const arm = armToWorld(st.torso, H, ELBOW_BACK);
+      // Far arm: braced on the far thigh.
+      const brace: Op[] = [
+        { kind: "rotate", deg: -56 - 4, pivot: SIDE_ANCHORS.shoulder },
+        ...st.torso,
+      ];
+      const braceFore: Op[] = [
+        { kind: "rotate", deg: -18, pivot: SIDE_ANCHORS.elbow },
+        ...brace,
+      ];
+      return {
+        head: st.head,
+        torso: st.torso,
+        pelvis: st.pelvis,
+        thighL: st.nearLeg,
+        shankL: st.nearLeg,
+        thighR: st.farLeg,
+        shankR: st.farLeg,
+        upperArmL: arm.upper,
+        foreArmL: arm.fore,
+        handL: arm.fore,
+        upperArmR: brace,
+        foreArmR: braceFore,
+        handR: braceFore,
+      };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+    scene: () =>
+      `<line x1="-30" y1="${MACHINE_FLOOR + 1}" x2="130" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  "chest-press-machine": {
+    /* "Handles level with your mid-chest. Pin your back to the pad and
+     * plant your feet ... press the handles forward until your arms are
+     * fully extended. Return slowly." Seated against a backrest, feet
+     * flat, the hand travelling a horizontal line at mid-chest from
+     * beside the chest to full extension, the lever arm drawn from the
+     * machine's pivot to the handle. */
+    view: "side",
+    equip: "lever-handle",
+    pivot: CHEST_PRESS_PIVOT,
+    viewBox: "-12 -6 172 218",
+    groundY: 204,
+    shadowCx: 60,
+    shadowRx: 40,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: {
+      chest: "primary",
+      triceps: "secondary",
+      "front-deltoids": "secondary",
+    },
+    pose: (e) => {
+      const chain = seatedChain(PREACHER_SEAT, -80, 80, -6);
+      const S = applyToPoint(SIDE_ANCHORS.shoulder, chain.torso);
+      const H: Pt = [lerp(S[0] + 16, S[0] + STRAIGHT_ARM, e), S[1] + 16];
+      const arm = armToWorld(chain.torso, H, ELBOW_LOW);
+      return {
+        head: chain.head,
+        torso: chain.torso,
+        pelvis: chain.body,
+        thighL: chain.thigh,
+        thighR: chain.thigh,
+        shankL: chain.shank,
+        shankR: chain.shank,
+        upperArmL: arm.upper,
+        foreArmL: arm.fore,
+        handL: arm.fore,
+        upperArmR: arm.upper,
+        foreArmR: arm.fore,
+        handR: arm.fore,
+      };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+    scene: () =>
+      machineSeatScene(PREACHER_SEAT, -6) +
+      `<line x1="${CHEST_PRESS_PIVOT[0] + 10}" y1="${CHEST_PRESS_PIVOT[1] - 30}" x2="${CHEST_PRESS_PIVOT[0] + 10}" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+      `<line x1="${CHEST_PRESS_PIVOT[0] + 10}" y1="${CHEST_PRESS_PIVOT[1]}" x2="${CHEST_PRESS_PIVOT[0]}" y2="${CHEST_PRESS_PIVOT[1]}" stroke="${GEAR_DARK}" stroke-width="3"/>`,
+  },
+
+  "shoulder-press-machine": {
+    /* "Handles line up with shoulder height. Pin your back to the pad
+     * ... press straight up to full extension without shrugging your
+     * traps. Lower under control." Same seat; the hand from beside the
+     * shoulder straight up to lockout, the shoulder itself never moving
+     * (pinned — that is the no-shrug), lever from a pivot behind-above. */
+    view: "side",
+    equip: "lever-handle",
+    pivot: SHOULDER_PRESS_PIVOT,
+    viewBox: "-12 -40 172 252",
+    groundY: 204,
+    shadowCx: 60,
+    shadowRx: 40,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { "front-deltoids": "primary", triceps: "secondary" },
+    pose: (e) => {
+      const chain = seatedChain(PREACHER_SEAT, -80, 80, -6);
+      const S = applyToPoint(SIDE_ANCHORS.shoulder, chain.torso);
+      const H: Pt = [
+        lerp(S[0] + 16, S[0] + 4, e),
+        lerp(S[1] + 6, S[1] - STRAIGHT_ARM, e),
+      ];
+      const arm = armToWorld(chain.torso, H, ELBOW_LOW);
+      return {
+        head: chain.head,
+        torso: chain.torso,
+        pelvis: chain.body,
+        thighL: chain.thigh,
+        thighR: chain.thigh,
+        shankL: chain.shank,
+        shankR: chain.shank,
+        upperArmL: arm.upper,
+        foreArmL: arm.fore,
+        handL: arm.fore,
+        upperArmR: arm.upper,
+        foreArmR: arm.fore,
+        handR: arm.fore,
+      };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+    scene: () =>
+      machineSeatScene(PREACHER_SEAT, -6) +
+      `<line x1="${SHOULDER_PRESS_PIVOT[0] + 10}" y1="${SHOULDER_PRESS_PIVOT[1] - 20}" x2="${SHOULDER_PRESS_PIVOT[0] + 10}" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+      `<line x1="${SHOULDER_PRESS_PIVOT[0] + 10}" y1="${SHOULDER_PRESS_PIVOT[1]}" x2="${SHOULDER_PRESS_PIVOT[0]}" y2="${SHOULDER_PRESS_PIVOT[1]}" stroke="${GEAR_DARK}" stroke-width="3"/>`,
+  },
+
+  "jm-press": {
+    /* "Lie flat, bar pressed up over your chest ... lower the bar toward
+     * your upper chin by bending the elbows forward. Let the bar sink
+     * close to your throat but never touch down. Press back to lockout
+     * by driving the elbows forward and up." The bench chain with a
+     * different bar path: lockout over the shoulder, bottom at the chin
+     * — and the elbow on the ANTERIOR branch (forward of the bar, which
+     * lying down is above it), the opposite of the bench's tuck. */
+    view: "side",
+    equip: "plate-end",
+    concentricTo: 1,
+    viewBox: "-64 20 186 162",
+    groundY: 172,
+    shadowCx: 40,
+    shadowRx: 68,
+    tint: {
+      triceps: "primary",
+      chest: "secondary",
+      "front-deltoids": "secondary",
+    },
+    pose: (e) => {
+      const G: Op = { kind: "rotate", deg: -90, pivot: [44, 100] };
+      const S = SIDE_ANCHORS.shoulder;
+      // Body space: +x anterior (up off the bench), -y toward the head.
+      const H: Pt = [S[0] + lerp(15, BENCH_LOCKOUT, e), S[1] + lerp(-14, 4, e)];
+      const arm = aimArm(
+        { S, E: SIDE_ANCHORS.elbow, H: SIDE_ANCHORS.hand },
+        ELBOW_FRONT(
+          solveElbow(S, H, SIDE_UPPER_LEN, SIDE_FORE_LEN, 1),
+          solveElbow(S, H, SIDE_UPPER_LEN, SIDE_FORE_LEN, -1)
+        ),
+        H,
+        0
+      );
+      const leg: Op[] = [
+        { kind: "rotate", deg: BENCH_THIGH, pivot: SIDE_ANCHORS.hip },
+        G,
+      ];
+      const shank: Op[] = [
+        { kind: "rotate", deg: 90 - BENCH_THIGH, pivot: SIDE_ANCHORS.knee },
+        { kind: "rotate", deg: BENCH_THIGH, pivot: SIDE_ANCHORS.hip },
+        G,
+      ];
+      return {
+        head: [G],
+        torso: [G],
+        pelvis: [G],
+        thighL: leg,
+        thighR: leg,
+        shankL: shank,
+        shankR: shank,
+        upperArmL: [...arm.upper, G],
+        foreArmL: [...arm.fore, G],
+        handL: [...arm.fore, G],
+        upperArmR: [...arm.upper, G],
+        foreArmR: [...arm.fore, G],
+        handR: [...arm.fore, G],
+      };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+    scene: flatBenchScene,
+  },
+
+  "pike-push-up": {
+    /* "Downward-dog with hands shoulder-width and hips stacked high
+     * ... torso nearly vertical over your hands. Bend your elbows and
+     * lower the crown of your head toward the floor. Press back up to
+     * straight arms, keeping your hips piked high." Hands and feet
+     * FIXED on the floor; the shoulder sits over the hands at the arm's
+     * current reach, and the hip is solved from the ankle and the
+     * shoulder as the apex of a leg-and-trunk pair — a pike by
+     * construction, with the legs straight. */
+    view: "side",
+    viewBox: "-12 -6 176 218",
+    groundY: 204,
+    shadowCx: 54,
+    shadowRx: 56,
+    concentricTo: 0,
+    tint: {
+      "front-deltoids": "primary",
+      triceps: "secondary",
+      chest: "secondary",
+    },
+    pose: (e) => {
+      const reach = lerp(STRAIGHT_ARM, HEAD_ABOVE_SHOULDER + 4, e);
+      const S: Pt = [PIKE_HAND[0] - 6, PIKE_HAND[1] - reach];
+      const hip = ELBOW_HIGH(
+        solveElbow(PIKE_ANKLE, S, LEG_LEN * 0.995, TRUNK_LEN, 1),
+        solveElbow(PIKE_ANKLE, S, LEG_LEN * 0.995, TRUNK_LEN, -1)
+      );
+      const torso = trunkBetween(hip, S);
+      const leg = plantedLeg(hip, PIKE_ANKLE, KNEE_HIGH);
+      const arm = armToWorld(torso, PIKE_HAND, ELBOW_BACK);
+      return {
+        head: torso,
+        torso,
+        pelvis: torso,
+        thighL: leg.thigh,
+        thighR: leg.thigh,
+        shankL: leg.shank,
+        shankR: leg.shank,
+        upperArmL: arm.upper,
+        foreArmL: arm.fore,
+        handL: arm.fore,
+        upperArmR: arm.upper,
+        foreArmR: arm.fore,
+        handR: arm.fore,
+      };
+    },
+    scene: () =>
+      `<line x1="-12" y1="${MACHINE_FLOOR + 1}" x2="164" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  "handstand-push-ups": {
+    /* "Kick into a handstand against a wall, arms locked, body stacked
+     * ... lower by bending your elbows until the top of your head
+     * touches the floor. Press back up to full arm extension, keeping
+     * the line tight." The standing figure turned over: hands FIXED on
+     * the floor, the whole body stacked plumb above the shoulder, which
+     * sits at the arm's current reach; at the bottom that reach is the
+     * skull's height, so the crown meets the floor. */
+    view: "side",
+    viewBox: "-40 -40 190 252",
+    groundY: 204,
+    shadowCx: 50,
+    shadowRx: 30,
+    concentricTo: 0,
+    tint: {
+      "front-deltoids": "primary",
+      triceps: "secondary",
+      trapezius: "secondary",
+    },
+    pose: (e) => {
+      const reach = lerp(STRAIGHT_ARM, HEAD_ABOVE_SHOULDER + 2, e);
+      const S: Pt = [HSPU_HAND[0], HSPU_HAND[1] - reach];
+      const body: Op[] = [
+        { kind: "rotate", deg: 180, pivot: SIDE_ANCHORS.shoulder },
+        {
+          kind: "translate",
+          dx: S[0] - SIDE_ANCHORS.shoulder[0],
+          dy: S[1] - SIDE_ANCHORS.shoulder[1],
+        },
+      ];
+      const arm = armToWorld(body, HSPU_HAND, ELBOW_BACK);
+      return {
+        head: body,
+        torso: body,
+        pelvis: body,
+        thighL: body,
+        thighR: body,
+        shankL: body,
+        shankR: body,
+        upperArmL: arm.upper,
+        foreArmL: arm.fore,
+        handL: arm.fore,
+        upperArmR: arm.upper,
+        foreArmR: arm.fore,
+        handR: arm.fore,
+      };
+    },
+    scene: () =>
+      `<line x1="${HSPU_WALL_X}" y1="-40" x2="${HSPU_WALL_X}" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="3"/>` +
+      `<line x1="-40" y1="${MACHINE_FLOOR + 1}" x2="150" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  "dragon-flag": {
+    /* "Lie on a bench, gripping the edge behind your head. Raise your
+     * whole body vertically, supported only on your upper back. Lower
+     * as one rigid plank until nearly parallel to the bench ... never
+     * letting the hips bend." The supine body on a bench, the trunk +
+     * pelvis + straight legs rotating as ONE piece about the shoulder
+     * (the only support) from vertical to just above the bench; the
+     * arms reach back to the bench edge and stay there. */
+    view: "side",
+    viewBox: "-70 -20 190 232",
+    groundY: 204,
+    shadowCx: 20,
+    shadowRx: 60,
+    concentricTo: 0,
+    tint: { abs: "primary", "lower-back": "secondary" },
+    pose: (e) => {
+      const G: Op = { kind: "rotate", deg: -90, pivot: [44, 100] };
+      const sG = applyToPoint(SIDE_ANCHORS.shoulder, [G]);
+      const T0: Op = {
+        kind: "translate",
+        dx: 0,
+        dy: DRAGON_BENCH_Y - 8 - sG[1],
+      };
+      const base: Op[] = [G, T0];
+      const Sw: Pt = [sG[0], DRAGON_BENCH_Y - 8];
+      // Negative = hips UP about the shoulder (the bridge's convention).
+      const body: Op[] = [
+        ...base,
+        { kind: "rotate", deg: lerp(-84, -14, e), pivot: Sw },
+      ];
+      const arms: Op[] = [
+        { kind: "rotate", deg: 172, pivot: SIDE_ANCHORS.shoulder },
+        ...base,
+      ];
+      const fore: Op[] = [
+        { kind: "rotate", deg: -22, pivot: SIDE_ANCHORS.elbow },
+        ...arms,
+      ];
+      return {
+        head: base,
+        torso: body,
+        pelvis: body,
+        thighL: body,
+        thighR: body,
+        shankL: body,
+        shankR: body,
+        upperArmL: arms,
+        foreArmL: fore,
+        handL: fore,
+        upperArmR: arms,
+        foreArmR: fore,
+        handR: fore,
+      };
+    },
+    scene: () =>
+      `<rect x="-90" y="${DRAGON_BENCH_Y}" width="138" height="8" rx="2.6" fill="${GEAR}"/>` +
+      `<line x1="-76" y1="${DRAGON_BENCH_Y + 8}" x2="-50" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+      `<line x1="34" y1="${DRAGON_BENCH_Y + 8}" x2="34" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+      `<line x1="-70" y1="${MACHINE_FLOOR + 1}" x2="120" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
 };
 
 /** Sibling exercises that share a demo's motion pattern.
@@ -5660,6 +6245,15 @@ function resolveProp(
       // `bar` returns [grip, ball centre]: the demo decides where the
       // bell hangs or floats relative to the arm.
       state = { kind: "kettlebell", hand: left, bell: right };
+      break;
+    case "landmine":
+      if (demo.pivot)
+        state = { kind: "landmine", pivot: demo.pivot, hand: left };
+      break;
+    case "lever-handle":
+      if (demo.pivot) {
+        state = { kind: "leverHandle", pivot: demo.pivot, hand: left };
+      }
       break;
     case "cable-handle":
       // One grip end-on (both hands stack in profile), the cable solved

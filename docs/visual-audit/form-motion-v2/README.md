@@ -1307,3 +1307,49 @@ calf raise: no shoulder-girdle joint in the rig.
 
 Capture channel: `overhead-cable-tricep-extension`, `spider-db-curl`,
 `cable-glute-kickback` added.
+
+## STATUS 2026-09-03j — build-out, batch 9: landmines, levers, inversions
+
+Coverage 95 → 104 of 152. Two props and one chain:
+
+- **`landmineBar`** (`bodyProps.ts`) — shaft from the floor sleeve
+  through the grip, plates just past the hand as a slab across the
+  shaft. The one barbell the profile shows LENGTHWAYS, so it is drawn
+  as one. `BodyDemo.pivot` carries the sleeve.
+- **`leverHandle`** — a machine's arm from its pivot to the grip
+  (behind the body) and the handle end-on (in front). Chest press and
+  shoulder press.
+- **`trunkBetween`** — the trunk placed between a WORLD hip and a
+  WORLD shoulder, so the body can be one link in a solved chain. The
+  pike push-up is that chain: hands and feet fixed, the shoulder over
+  the hands at the arm's current reach, the hip the apex of a
+  leg-and-trunk pair from the ankle — a pike by construction.
+
+| Demo                     | Chain / gear                                                 | Pinned claim (from its instructions)                                                        |
+| ------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| `landmine-press`         | `staggeredStance(4)`, hand on the bar's ARC about the sleeve | hand at constant radius from the sleeve (±0.3); shoulder height at start; up + forward      |
+| `landmine-squat`         | `sideSquatChain(12)`, hands fixed on the chest               | bar hugged (hand-shoulder distance constant); parallel; trunk <18° from rest                |
+| `meadows-row`            | `staggeredStance(45)`, end-on plate at one hand              | hinge 40-50° at both ends; straight hang; elbow >20 behind the trunk; end at the hip        |
+| `chest-press-machine`    | `seatedChain`, lever from a pivot ahead                      | hips on the seat; horizontal press (±1); fully extended; handles at the chest               |
+| `shoulder-press-machine` | `seatedChain`, lever from a pivot above                      | shoulder STATIONARY (no shrug); shoulder height at start; >55 straight up; full extension   |
+| `jm-press`               | bench chain, bar path to the chin, ANTERIOR elbow branch     | bar toward the chin and above the shoulder line; elbow forward of the bar; lockout          |
+| `pike-push-up`           | `trunkBetween` on a solved hip, `plantedLeg`, `armToWorld`   | hands + feet fixed; hips >20 above the shoulders every frame; legs straight; crown to floor |
+| `handstand-push-ups`     | the standing figure rotated 180 over fixed hands             | hands fixed; ankle plumb over the shoulder (±8) every frame; head to the floor; locked top  |
+| `dragon-flag`            | supine on a bench, trunk+legs one piece about the shoulder   | shoulder stationary; hip on the shoulder-ankle line (<3); vertical top; 8-22° bottom        |
+
+The Meadows row is the one landmine demo WITHOUT the landmine prop: the
+instruction has the lifter perpendicular to the bar, which points the
+bar at the camera — so the loaded end is the deadlift's end-on plate,
+and drawing a lengthways shaft would contradict the stance.
+
+Two things the numbers caught before a screenshot could:
+
+- The landmine squat's first elbow branch put the elbow ABOVE the
+  shoulder — the bar hugged with chicken wings. The low branch is
+  "elbows pinned in".
+- Both machine presses' first lockouts were 0.985 of a straight arm,
+  which reads as 155° at the elbow (the cosine rule is steep near
+  extension). "Fully extended" is the full `STRAIGHT_ARM`; the pin is
+  > 160°.
+
+Capture channel: `landmine-press`, `pike-push-up`, `dragon-flag` added.
