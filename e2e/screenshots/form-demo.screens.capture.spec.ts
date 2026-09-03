@@ -49,6 +49,10 @@ const DEMOS: [id: string, name: string][] = [
   ["preacher-curl", "Preacher Curl"],
   ["leg-press", "Leg Press"],
   ["decline-bench", "Decline Bench Press"],
+  // Batch 5: the hang, the kneel, the cable at the temples.
+  ["leg-raise", "Hanging Leg Raise"],
+  ["ab-wheel", "Ab Wheel Rollout"],
+  ["cable-crunch", "Cable Crunch"],
 ];
 
 test.use({

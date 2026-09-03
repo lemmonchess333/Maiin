@@ -7,6 +7,33 @@
     [1, 0.8]
   ],
   "demos": {
+    "ab-wheel": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "ab-wheel-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "ab-wheel-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "ab-wheel-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "ab-wheel-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "ab-wheel-t100.png"
+      }
+    ],
     "barbell-curl": [
       {
         "t": 0,
@@ -115,6 +142,33 @@
         "file": "bulgarian-split-t100.png"
       }
     ],
+    "cable-crunch": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "cable-crunch-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "cable-crunch-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "cable-crunch-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "cable-crunch-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "cable-crunch-t100.png"
+      }
+    ],
     "cable-curl": [
       {
         "t": 0,
@@ -194,6 +248,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "concentration-curl-t100.png"
+      }
+    ],
+    "crunches": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "crunches-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "crunches-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "crunches-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "crunches-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "crunches-t100.png"
       }
     ],
     "db-curl": [
@@ -302,6 +383,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "decline-db-press-t100.png"
+      }
+    ],
+    "decline-sit-up": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "decline-sit-up-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "decline-sit-up-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "decline-sit-up-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "decline-sit-up-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "decline-sit-up-t100.png"
       }
     ],
     "dips": [
@@ -682,6 +790,33 @@
         "file": "leg-press-t100.png"
       }
     ],
+    "leg-raise": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "leg-raise-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "leg-raise-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "leg-raise-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "leg-raise-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "leg-raise-t100.png"
+      }
+    ],
     "lunges": [
       {
         "t": 0,
@@ -1058,6 +1193,60 @@
         "t": 1,
         "effort": 0.8,
         "file": "straight-arm-pulldown-t100.png"
+      }
+    ],
+    "superman-hold": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "superman-hold-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "superman-hold-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "superman-hold-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "superman-hold-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "superman-hold-t100.png"
+      }
+    ],
+    "toe-touches": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "toe-touches-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "toe-touches-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "toe-touches-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "toe-touches-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "toe-touches-t100.png"
       }
     ],
     "tricep-kickback": [

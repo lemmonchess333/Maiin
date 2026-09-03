@@ -1130,3 +1130,48 @@ exemption: its far arm rests across the far thigh while the near one
 curls, by instruction.
 
 Capture channel: `preacher-curl`, `leg-press`, `decline-bench` added.
+
+## STATUS 2026-09-03f — build-out, batch 5: the core
+
+Coverage 65 → 72 of 152. Four small bases, one helper:
+
+- **`supineFlat`** — the bridge's placement with no lift, returning the
+  world hip and shoulder; **`crunchOps`** pivots the rigid trunk about a
+  point 18 up from the hip, which is how a one-piece torso approximates
+  "shoulders up, lower back down".
+- **`kneelingBase`** — shins flat on the floor pointing back, knee a
+  shin's thickness off the floor; the thigh and trunk hang off it.
+- **`hangingBase`** — arms plumb to a bar overhead, the body translated
+  down to meet it (side-on twin of the posterior pull-up rig).
+- **`invertOps`** — the inverse of an op list, so a WORLD target (the ab
+  wheel on the floor) can be pulled back into pre-pose space for
+  `aimArm`. The deadlift hand-coded this inverse; this is the general
+  form.
+
+| Demo             | Base                                            | Pinned claim (from its instructions)                                        |
+| ---------------- | ----------------------------------------------- | --------------------------------------------------------------------------- |
+| `crunches`       | `supineFlat` + planted feet + `crunchOps`       | hip stationary; shoulders lift >15; head rides the trunk (no neck pull)     |
+| `toe-touches`    | `supineFlat`, legs plumb up, straight arms      | legs vertical ±8° every frame; arms >168°; hands close on the toes by >15   |
+| `decline-sit-up` | decline bench placement, trunk about the hip    | hip stationary; shoulder below hip at the stretch; shoulder <30 from knee   |
+| `leg-raise`      | `hangingBase`, legs about the hip               | hands stationary on the bar; plumb ±6° → parallel-or-higher (0 to −15°)     |
+| `cable-crunch`   | `kneelingBase`, rope from a high pulley         | hips stationary; hand-to-skull distance constant; trunk flexes ≥55°         |
+| `ab-wheel`       | `kneelingBase`, wheel solved on the floor       | knees stationary; wheel on the floor every frame; arms >160°; body straight |
+| `superman-hold`  | prone (rotate +90), trunk and legs counter-lift | hips stationary; hands, feet and chest all rise at the top                  |
+
+Two things the numbers caught before a screenshot could:
+
+- The ab wheel's first draft rolled the wrong way — the thigh tilt was
+  signed for "hips back", so at full extension the body lay out BEHIND
+  the knees. The same draft started with the shoulder 82 above the wheel
+  on a 67-unit arm, so the hand hung 15 short of the floor. Fixed sign,
+  deeper starting fold (trunk 85° to the thigh), and the body line ends
+  at 28° above the floor with the wheel 55 ahead.
+- The crunch's first hands-behind-head was two fixed angles and put the
+  hands 5 BELOW the floor line behind the skull. They are now an
+  `aimArm` solve to the back of the skull, elbow forward.
+
+`superman-hold` is filmed as a rep (its instruction 4 says "lower ...
+for the next rep"); `plank`, `side-plank`, `l-sit` and the other true
+holds are still open — a hold has no rep for the player to loop.
+
+Capture channel: `leg-raise`, `ab-wheel`, `cable-crunch` added.

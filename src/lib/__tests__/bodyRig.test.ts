@@ -1041,6 +1041,15 @@ describe("renderBodyDemo", () => {
       "rack-pull": "stretch",
       "decline-bench": "lockout",
       "decline-db-press": "lockout",
+      // Batch 5: every core rep starts at the floor / the hang / the
+      // stretch; the ab wheel starts kneeling tall and rolls out first.
+      crunches: "stretch",
+      "toe-touches": "stretch",
+      "decline-sit-up": "stretch",
+      "leg-raise": "stretch",
+      "cable-crunch": "stretch",
+      "ab-wheel": "lockout",
+      "superman-hold": "stretch",
     };
     expect(Object.keys(START).sort()).toEqual(Object.keys(BODY_DEMOS).sort());
     for (const [id, expected] of Object.entries(START)) {
@@ -1713,6 +1722,195 @@ describe("renderBodyDemo", () => {
         `${id}: bottom on the lower chest`
       ).toBeGreaterThan(4);
     }
+
+    /* Batch 5: the core. */
+    const SKULL: [number, number] = [51.6, 0.2];
+    // crunches: "curl your shoulders off the floor" with the lower back
+    // down (hip stationary); "don't pull on your neck" — the head rides
+    // the trunk rigidly.
+    {
+      const id = "crunches";
+      stationary(id, SIDE_ANCHORS.hip, "pelvis", "crunch: lower back down");
+      const s0 = pt(SIDE_ANCHORS.shoulder, at(id, 0).torso);
+      const s1 = pt(SIDE_ANCHORS.shoulder, at(id, 1).torso);
+      expect(s0[1] - s1[1], "crunch: shoulders off the floor").toBeGreaterThan(
+        15
+      );
+      for (const t of [0, 0.5, 1]) {
+        const p = at(id, t);
+        const a = pt(SKULL, p.head);
+        const b = pt(SKULL, p.torso);
+        expect(
+          Math.hypot(a[0] - b[0], a[1] - b[1]),
+          `crunch: no neck pull @${t}`
+        ).toBeLessThan(0.01);
+      }
+    }
+    // toe touches: "legs extended straight up" the whole set; "reach your
+    // hands up toward your toes, curling your shoulders off the floor".
+    {
+      const id = "toe-touches";
+      for (const t of [0, 0.5, 1]) {
+        const p = at(id, t);
+        const hip = pt(SIDE_ANCHORS.hip, p.pelvis);
+        const a = pt(SIDE_ANCHORS.ankle, p.shankL);
+        expect(
+          Math.abs(lineDeg(hip, a) + 90),
+          `toe touch: legs vertical @${t}`
+        ).toBeLessThan(8);
+        expect(
+          elbowDeg(id, t),
+          `toe touch: straight arms @${t}`
+        ).toBeGreaterThan(168);
+      }
+      const s0 = pt(SIDE_ANCHORS.shoulder, at(id, 0).torso);
+      const s1 = pt(SIDE_ANCHORS.shoulder, at(id, 1).torso);
+      expect(
+        s0[1] - s1[1],
+        "toe touch: shoulders off the floor"
+      ).toBeGreaterThan(15);
+      const reach = (t: number) => {
+        const p = at(id, t);
+        const h = pt(SIDE_ANCHORS.hand, p.handL);
+        const a = pt(SIDE_ANCHORS.ankle, p.shankL);
+        return Math.hypot(h[0] - a[0], h[1] - a[1]);
+      };
+      expect(
+        reach(0) - reach(1),
+        "toe touch: hands closer to the toes"
+      ).toBeGreaterThan(15);
+    }
+    // decline sit-up: hips fixed by the rollers; lying on the pad at the
+    // stretch (shoulder below the hip); "chest toward your knees" at the top.
+    {
+      const id = "decline-sit-up";
+      stationary(id, SIDE_ANCHORS.hip, "pelvis", "sit-up: hips on the bench");
+      const p0 = at(id, 0);
+      expect(
+        pt(SIDE_ANCHORS.shoulder, p0.torso)[1] -
+          pt(SIDE_ANCHORS.hip, p0.pelvis)[1],
+        "sit-up: lying back on the decline"
+      ).toBeGreaterThan(10);
+      const p1 = at(id, 1);
+      const S = pt(SIDE_ANCHORS.shoulder, p1.torso);
+      const K = pt(SIDE_ANCHORS.knee, p1.thighL);
+      expect(
+        Math.hypot(S[0] - K[0], S[1] - K[1]),
+        "sit-up: chest to the knees"
+      ).toBeLessThan(30);
+    }
+    // hanging leg raise: hands fixed on the bar; legs from plumb to
+    // "parallel to the floor or higher".
+    {
+      const id = "leg-raise";
+      stationary(id, SIDE_ANCHORS.hand, "handL", "leg raise: hands on the bar");
+      const p0 = at(id, 0);
+      expect(
+        Math.abs(
+          lineDeg(
+            pt(SIDE_ANCHORS.hip, p0.pelvis),
+            pt(SIDE_ANCHORS.ankle, p0.shankL)
+          ) - 90
+        ),
+        "leg raise: hanging plumb"
+      ).toBeLessThan(6);
+      const p1 = at(id, 1);
+      const d = lineDeg(
+        pt(SIDE_ANCHORS.hip, p1.pelvis),
+        pt(SIDE_ANCHORS.ankle, p1.shankL)
+      );
+      expect(d, "leg raise: parallel or higher").toBeLessThan(0.5);
+      expect(d, "leg raise: parallel or higher").toBeGreaterThan(-15);
+      for (const t of [0, 1])
+        expect(
+          elbowDeg(id, t),
+          `leg raise: straight arms @${t}`
+        ).toBeGreaterThan(172);
+    }
+    // cable crunch: "keeping hips fixed"; rope "held at your temples" —
+    // the hand keeps one distance from the head; the trunk flexes ≥55°.
+    {
+      const id = "cable-crunch";
+      stationary(id, SIDE_ANCHORS.hip, "pelvis", "cable crunch: hips fixed");
+      const gap = (t: number) => {
+        const p = at(id, t);
+        const h = pt(SIDE_ANCHORS.hand, p.handL);
+        const k = pt(SKULL, p.head);
+        return Math.hypot(h[0] - k[0], h[1] - k[1]);
+      };
+      for (const t of [0.25, 0.5, 0.75, 1])
+        expect(
+          Math.abs(gap(t) - gap(0)),
+          `cable crunch: rope at the temples @${t}`
+        ).toBeLessThan(0.05);
+      expect(gap(0), "cable crunch: hand AT the head").toBeLessThan(22);
+      const trunk = (t: number) => {
+        const p = at(id, t);
+        return lineDeg(
+          pt(SIDE_ANCHORS.hip, p.pelvis),
+          pt(SIDE_ANCHORS.shoulder, p.torso)
+        );
+      };
+      expect(trunk(1) - trunk(0), "cable crunch: trunk flexes").toBeGreaterThan(
+        55
+      );
+    }
+    // ab wheel: knees fixed on the pad; the wheel stays ON the floor and
+    // rolls forward; arms straight; "body staying straight" at the end.
+    {
+      const id = "ab-wheel";
+      stationary(id, SIDE_ANCHORS.knee, "thighL", "ab wheel: knees on the pad");
+      const floorY = 204 - 7;
+      for (const t of [0, 0.5, 1]) {
+        const h = pt(SIDE_ANCHORS.hand, at(id, t).handL);
+        expect(
+          Math.abs(h[1] - floorY),
+          `ab wheel: wheel on the floor @${t}`
+        ).toBeLessThan(0.5);
+        expect(
+          elbowDeg(id, t),
+          `ab wheel: straight arms @${t}`
+        ).toBeGreaterThan(160);
+      }
+      const h0 = pt(SIDE_ANCHORS.hand, at(id, 0).handL);
+      const h1 = pt(SIDE_ANCHORS.hand, at(id, 1).handL);
+      expect(h1[0] - h0[0], "ab wheel: rolls forward").toBeGreaterThan(40);
+      const p1 = at(id, 1);
+      const K = pt(SIDE_ANCHORS.knee, p1.thighL);
+      const H = pt(SIDE_ANCHORS.hip, p1.pelvis);
+      const S = pt(SIDE_ANCHORS.shoulder, p1.torso);
+      // "Straight" is the standing figure's own knee-hip-shoulder line
+      // (the anchors put 14.7° between the two segments at rest).
+      const restBend =
+        lineDeg(SIDE_ANCHORS.knee, SIDE_ANCHORS.hip) -
+        lineDeg(SIDE_ANCHORS.hip, SIDE_ANCHORS.shoulder);
+      expect(
+        Math.abs(lineDeg(K, H) - lineDeg(H, S) - restBend),
+        "ab wheel: body straight at the end"
+      ).toBeLessThan(8);
+    }
+    // superman: hips on the floor; "lift arms, chest, and legs off the
+    // floor" — hands AND feet rise at the top.
+    {
+      const id = "superman-hold";
+      stationary(id, SIDE_ANCHORS.hip, "pelvis", "superman: hips down");
+      const p0 = at(id, 0);
+      const p1 = at(id, 1);
+      expect(
+        pt(SIDE_ANCHORS.hand, p0.handL)[1] - pt(SIDE_ANCHORS.hand, p1.handL)[1],
+        "superman: hands lift"
+      ).toBeGreaterThan(12);
+      expect(
+        pt(SIDE_ANCHORS.ankle, p0.shankL)[1] -
+          pt(SIDE_ANCHORS.ankle, p1.shankL)[1],
+        "superman: feet lift"
+      ).toBeGreaterThan(12);
+      expect(
+        pt(SIDE_ANCHORS.shoulder, p0.torso)[1] -
+          pt(SIDE_ANCHORS.shoulder, p1.torso)[1],
+        "superman: chest lifts"
+      ).toBeGreaterThan(8);
+    }
   });
 
   it("the foot has a heel, an arch and a toe — not a wedge", () => {
@@ -2254,6 +2452,13 @@ describe("tint honesty", () => {
       "rack-pull": "gluteal",
       "decline-bench": "chest",
       "decline-db-press": "chest",
+      crunches: "abs",
+      "toe-touches": "abs",
+      "decline-sit-up": "abs",
+      "leg-raise": "abs",
+      "cable-crunch": "abs",
+      "ab-wheel": "abs",
+      "superman-hold": "lower-back",
     };
     for (const [id, muscle] of Object.entries(expectPrimary)) {
       expect(BODY_DEMOS[id].tint[muscle], `${id} primary`).toBe("primary");
