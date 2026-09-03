@@ -60,13 +60,48 @@ const TITLE_BOX_F = { left: 0, top: 0, width: 0.572, height: 0.168 };
 const CAPTION_BOX_F = { left: 0, top: 0.801, width: 1, height: 0.199 };
 /** Breathing room around the union box, in source pixels. */
 const MARGIN = 10;
-/** Output width. 2x a ~340px phone card, which is where these render. */
-const OUT_W = 680;
+/**
+ * Output width: the DISPLAY size, so the browser resamples nothing.
+ *
+ * The player renders the frame 300pt wide, which is 900 device pixels
+ * on a 3x phone. Writing anything else means two resamples instead of
+ * one — sharp's Lanczos and then the browser's, which is the poorer of
+ * the two. Writing exactly the display size costs a little in bytes on
+ * a small source and spends it in the right place.
+ *
+ * It does NOT fix sharpness on a card, and nothing here can. Six panels
+ * inside the 1448px a generator emits leave each figure about 300px
+ * against the 900 the phone asks for: a 3x upscale however it is
+ * resampled, and a card that could feed it would need to be roughly
+ * 4300px wide. That is what `--frames` is for.
+ */
+const OUT_W = 1000;
 
-const card = process.argv[2];
-const outDir = resolve(process.argv[3] ?? "public/form-frames/dips");
-if (!card) {
-  console.error("usage: node scripts/extract-form-frames.mjs <card.png> [out]");
+/* Two inputs, because a card cannot be sharp.
+ *
+ *   <card.png>                 six panels in one image
+ *   --frames a.png b.png ...   one image per position
+ *
+ * The card is the convenient form and the low-resolution one: six
+ * panels inside what a generator can emit leaves each figure about a
+ * third of what a 3x phone asks for. One image per position spends the
+ * whole canvas on one figure and is the only route to a sharp frame
+ * here — at the cost that the six are separate generations, so they
+ * must be produced by EDITING the first rather than generated afresh,
+ * or the camera moves between them. */
+const args = process.argv.slice(2);
+const framesAt = args.indexOf("--frames");
+const perFrame = framesAt >= 0;
+const inputs = perFrame ? args.slice(framesAt + 1) : [];
+const card = perFrame ? null : args[0];
+const outDir = resolve(
+  (perFrame ? args[framesAt - 1] : args[1]) ?? "public/form-frames/dips"
+);
+if (!card && inputs.length === 0) {
+  console.error(
+    "usage: node scripts/extract-form-frames.mjs <card.png> [outDir]\n" +
+      "       node scripts/extract-form-frames.mjs [outDir] --frames 1.png 2.png ..."
+  );
   process.exit(1);
 }
 mkdirSync(outDir, { recursive: true });
@@ -239,7 +274,16 @@ const flat = (bg, box) => ({
   top: box.top,
 });
 
-const detected = await findPanels(card);
+/** Per-position images need no grid: each file IS a panel. Their whole
+ *  frame is the panel, so the title/caption boxes are empty. */
+const detected = perFrame
+  ? await Promise.all(
+      inputs.map(async (f) => {
+        const m = await sharp(f).metadata();
+        return { left: 0, top: 0, width: m.width ?? 0, height: m.height ?? 0 };
+      })
+    )
+  : await findPanels(card);
 /* Normalised to one size before anything measures them. Detection is
    per-run and lands a pixel or two apart between panels, which is
    invisible until a title box computed from the first panel overflows
@@ -267,18 +311,86 @@ const scaleBox = (f) => {
     height: Math.min(PH - top, Math.max(1, Math.round(f.height * PH))),
   };
 };
-const TITLE_BOX = scaleBox(TITLE_BOX_F);
-const CAPTION_BOX = scaleBox(CAPTION_BOX_F);
+/**
+ * A caption burned into a per-position image, as a box to paint out.
+ *
+ * The prompt asks for no text and the generators add it anyway — the
+ * first real set came back with "RETURN TO TOP 6/6" across the bottom.
+ * Left in, it joins the figure's bounding box, so the shared canvas
+ * grows to hold it and every frame carries someone else's caption under
+ * a caption the app is already drawing.
+ *
+ * Found rather than assumed: content rows are grouped into bands, and a
+ * SHORT band at the bottom, separated from the body of the picture by a
+ * clear gap, is a caption. A figure whose feet reach the bottom edge has
+ * no such gap and nothing is painted.
+ */
+async function captionBox(file, bg) {
+  const { data, info } = await sharp(file)
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const { width: W, height: H, channels: C } = info;
+  const ink = [];
+  for (let y = 0; y < H; y++) {
+    let n = 0;
+    for (let x = 0; x < W; x++) {
+      const i = (y * W + x) * C;
+      if (
+        Math.abs(data[i] - bg.r) > 14 ||
+        Math.abs(data[i + 1] - bg.g) > 14 ||
+        Math.abs(data[i + 2] - bg.b) > 14
+      )
+        n++;
+    }
+    ink.push(n);
+  }
+  const bands = [];
+  let a = -1;
+  ink.forEach((v, y) => {
+    if (v > 0) {
+      if (a < 0) a = y;
+    } else {
+      if (a >= 0) bands.push([a, y - 1]);
+      a = -1;
+    }
+  });
+  if (a >= 0) bands.push([a, H - 1]);
+  if (bands.length < 2) return null;
+  const last = bands[bands.length - 1];
+  const prev = bands[bands.length - 2];
+  const tall = last[1] - last[0];
+  const gap = last[0] - prev[1];
+  // A caption is short and stands clear of the figure above it.
+  if (tall > H * 0.12 || gap < H * 0.02) return null;
+  return {
+    left: 0,
+    top: Math.max(0, last[0] - 4),
+    width: W,
+    height: Math.min(H - Math.max(0, last[0] - 4), tall + 12),
+  };
+}
+
+// A per-position image carries no panel chrome to paint out.
+const TITLE_BOX = perFrame ? null : scaleBox(TITLE_BOX_F);
+const CAPTION_BOX = perFrame ? null : scaleBox(CAPTION_BOX_F);
 
 const cleaned = [];
 let bg;
-for (const rect of panels) {
-  const panel = await sharp(card).extract(rect).png().toBuffer();
+for (const [i, rect] of panels.entries()) {
+  const source = perFrame ? inputs[i] : card;
+  const panel = await sharp(source).extract(rect).png().toBuffer();
   if (!bg) bg = await background(panel);
-  const painted = await sharp(panel)
-    .composite([flat(bg, TITLE_BOX), flat(bg, CAPTION_BOX)])
-    .png()
-    .toBuffer();
+  const boxes =
+    TITLE_BOX && CAPTION_BOX
+      ? [flat(bg, TITLE_BOX), flat(bg, CAPTION_BOX)]
+      : await (async () => {
+          const cap = await captionBox(source, bg);
+          if (cap) console.error(`  ${source}: painting out a caption`);
+          return cap ? [flat(bg, cap)] : [];
+        })();
+  const painted = boxes.length
+    ? await sharp(panel).composite(boxes).png().toBuffer()
+    : panel;
   /* Two passes, deliberately. `extract` in the SAME pipeline as
      `composite` is applied as a PRE-crop by sharp, which shrinks the
      canvas under the overlays and fails with "image to composite must
@@ -294,20 +406,116 @@ for (const rect of panels) {
   );
 }
 
-// One rect for all six: the union of every figure's box.
-let U = { x0: 1e9, y0: 1e9, x1: -1, y1: -1 };
-for (const buf of cleaned) {
-  const { data, info } = await sharp(buf)
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-  const b = contentBox(data, info, bg);
-  U = {
-    x0: Math.min(U.x0, b.x0),
-    y0: Math.min(U.y0, b.y0),
-    x1: Math.max(U.x1, b.x1),
-    y1: Math.max(U.y1, b.y1),
-  };
+/* ── Registration, applied only when it MEASURABLY helps ────────────
+ *
+ * The equipment is the one thing in the scene that must not move, so
+ * aligning on it is what stops the station swimming under the lifter.
+ *
+ * A first version was removed for measuring WORSE — 9.3% → 8.7% on a
+ * card — and that conclusion was wrong. It was a statement about a bad
+ * implementation, not about registration: that version searched a
+ * downsampled mask, applied whatever it found without checking, and so
+ * moved frames that should have been left alone.
+ *
+ * Searching at full resolution and applying the shift only when it
+ * beats leaving the frame alone helps BOTH cases, measured on the
+ * output files rather than on an intermediate:
+ *
+ *   card            10.2% → 23.1%
+ *   per-position    38.2% → 47.6%
+ *
+ * The per-position numbers start far higher because those frames are
+ * edits of one original and differ mostly by translation, which is
+ * exactly what a shift can correct. The card's panels are separate
+ * drawings that also differ in scale, which no translation reaches —
+ * that part of the original reasoning held. The manifest reports what
+ * was applied per frame.
+ */
+const STATION_LO = 28;
+const STATION_HI = 95;
+function stationMask(data, info) {
+  const { width: W, height: H, channels: C } = info;
+  const m = new Uint8Array(W * H);
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) {
+      const p = (y * W + x) * C;
+      const r = data[p],
+        g = data[p + 1],
+        b = data[p + 2];
+      if (
+        r > STATION_LO &&
+        r < STATION_HI &&
+        Math.abs(r - g) < 14 &&
+        Math.abs(r - b) < 18
+      )
+        m[y * W + x] = 1;
+    }
+  return { m, W, H };
 }
+const iouAt = (a, b, dx, dy) => {
+  let i = 0,
+    u = 0;
+  for (let y = 0; y < a.H; y++) {
+    const yy = y + dy;
+    if (yy < 0 || yy >= b.H) continue;
+    for (let x = 0; x < a.W; x++) {
+      const xx = x + dx;
+      if (xx < 0 || xx >= b.W) continue;
+      const p = a.m[y * a.W + x];
+      const q = b.m[yy * b.W + xx];
+      if (p && q) i++;
+      if (p || q) u++;
+    }
+  }
+  return u ? i / u : 0;
+};
+
+const raws = [];
+for (const buf of cleaned)
+  raws.push(await sharp(buf).raw().toBuffer({ resolveWithObject: true }));
+const masks = raws.map((r) => stationMask(r.data, r.info));
+const RANGE = Math.round(Math.min(W, H) * 0.08);
+const STEP = 4;
+const shifts = [{ dx: 0, dy: 0 }];
+const scores = [];
+for (let k = 1; k < masks.length; k++) {
+  const flat0 = iouAt(masks[0], masks[k], 0, 0);
+  let best = flat0,
+    bx = 0,
+    by = 0;
+  for (let dy = -RANGE; dy <= RANGE; dy += STEP)
+    for (let dx = -RANGE; dx <= RANGE; dx += STEP) {
+      const v = iouAt(masks[0], masks[k], dx, dy);
+      if (v > best) {
+        best = v;
+        bx = dx;
+        by = dy;
+      }
+    }
+  // Only worth moving a frame if it is a real improvement, not noise.
+  const helps = best > flat0 * 1.05;
+  shifts.push(helps ? { dx: bx, dy: by } : { dx: 0, dy: 0 });
+  scores.push({
+    frame: k + 1,
+    before: +(flat0 * 100).toFixed(1),
+    after: +((helps ? best : flat0) * 100).toFixed(1),
+    applied: helps ? `${bx},${by}` : "none",
+  });
+}
+
+// One rect for all frames: the union of every figure's box, in the
+// registered frame of reference.
+let U = { x0: 1e9, y0: 1e9, x1: -1, y1: -1 };
+raws.forEach((r, i) => {
+  const b = contentBox(r.data, r.info, bg);
+  const { dx, dy } = shifts[i];
+  U = {
+    x0: Math.min(U.x0, b.x0 - dx),
+    y0: Math.min(U.y0, b.y0 - dy),
+    x1: Math.max(U.x1, b.x1 - dx),
+    y1: Math.max(U.y1, b.y1 - dy),
+  };
+});
 const rect = {
   left: Math.max(0, U.x0 - MARGIN),
   top: Math.max(0, U.y0 - MARGIN),
@@ -346,22 +554,45 @@ async function keyed(buf) {
 }
 
 for (let i = 0; i < cleaned.length; i++) {
-  const cropped = await sharp(cleaned[i]).extract(rect).png().toBuffer();
+  /* The shift lands as a per-frame CROP OFFSET, so alignment costs no
+     resampling — each frame is still its own pixels, windowed where its
+     station lines up with the first's. Clamped inside the panel. */
+  const win = {
+    left: Math.min(W - rect.width, Math.max(0, rect.left + shifts[i].dx)),
+    top: Math.min(H - rect.height, Math.max(0, rect.top + shifts[i].dy)),
+    width: rect.width,
+    height: rect.height,
+  };
+  const cropped = await sharp(cleaned[i]).extract(win).png().toBuffer();
   await sharp(await keyed(cropped))
-    .resize({ width: OUT_W })
-    .webp({ quality: 88, alphaQuality: 100 })
+    .resize({
+      width: OUT_W,
+    })
+    // 82, not 90: on a card the source is upscaled and carries no
+    // detail worth 55 KB an exercise to preserve. Alpha stays lossless
+    // — the keyed edge is the one thing a low setting visibly frays.
+    .webp({ quality: 82, alphaQuality: 100 })
     .toFile(resolve(outDir, `${i + 1}.webp`));
 }
 console.log(
   JSON.stringify(
     {
+      mode: perFrame ? "per-position" : "card",
       background: bg,
       panels: panels.length,
       panelSize: `${PW}x${PH}`,
       sharedRect: rect,
+      registration: scores,
+      writtenWidth: OUT_W,
       outDir,
     },
     null,
     2
   )
 );
+if (!perFrame && rect.width < 600)
+  console.error(
+    `\nNOTE: each figure is only ${rect.width}px wide in this card, and the ` +
+      `Form card renders ~900 device pixels on a 3x phone. It will look soft. ` +
+      `Generate one image per position and use --frames for a sharp result.`
+  );

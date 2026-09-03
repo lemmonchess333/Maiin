@@ -55,29 +55,58 @@ for (const id of ids) {
       `[no beats authored yet — the positions below are the catalogue's\n` +
         ` instructions. Author beats first so the card and the app agree.]\n`
     );
-  console.log(`A single wide image: an exercise form card for "${ex.name}".
-
-LAYOUT
-- One dark card, flat near-black background, subtle rounded panels.
-- A 3 x 2 grid of six numbered panels, with clear gaps between them.
-- Each panel: a small number badge and a short title at the top, the
-  figure in the middle, a one-line caption underneath.
-- A muscle legend at the top right. A tip bar along the bottom.
-
-THE SIX PANELS, in order
-${positions.join("\n")}
-
-FIGURE
-- One neutral grey anatomical mannequin, no face, no clothing.
+  /* "same bodyweight" is not a sentence. Bodyweight exercises still
+     have furniture the camera must hold still — bars, a bench — so the
+     instruction names the setup rather than the load. */
+  const gear =
+    ex.equipment.toLowerCase() === "bodyweight"
+      ? "setup and surroundings"
+      : ex.equipment.toLowerCase();
+  const figure = `- One neutral grey anatomical mannequin, no face, no clothing.
 - Solid purple (#7B72E9) on the PRIMARY muscles: ${ex.muscleGroup}.
 - Diagonal hatching in the same purple on the SECONDARY muscles: ${ex.secondaryMuscles.join(", ") || "none"}.
 - Equipment: ${ex.equipment}.
+- Draw the shoulder and upper back as continuous anatomy. Do not leave
+  a flat plate or a seam where the deltoid meets the neck.
+- Flat near-black background, nothing else in the frame.`;
 
-CRITICAL — this is what makes the six panels animate
-- The SAME camera angle, the SAME distance and the SAME equipment,
-  drawn identically in all six panels. Only the body moves between
-  them. Treat it as six frames of one locked-off shot, not six
-  separate drawings of the exercise.
-- The figure must be the same size in every panel.
-- Keep the panel backgrounds flat and the gaps between panels clear.`);
+  console.log(`STEP 1 — generate ONE image, position 1 of 6.
+
+A single square image on a flat near-black background: "${ex.name}",
+at the position "${positions[0]}".
+
+FIGURE
+${figure}
+
+FRAMING
+- The figure fills most of the frame. No panel, no caption, no legend,
+  no border, no text of any kind.
+- Remember this camera. Every later position reuses it exactly.
+
+
+STEP 2 — for EACH of the five positions below, EDIT the image from
+step 1. Do not generate a new one.
+
+Say: "Keep this image exactly as it is — same camera, same distance,
+same ${gear}, same figure size, same style and
+shading. Change ONLY the body position to: <position>."
+
+${positions.slice(1).join("\n")}
+
+
+WHY IT IS TWO STEPS
+Six separately generated pictures do not share a camera. Measured on
+the first card of this kind, the equipment overlapped between frames by
+about 10%, so it visibly swam under the lifter when animated. Editing
+one image instead starts around 38% and the extractor's alignment pass
+takes it to about 48%; alignment alone gets a card only to 23%, because
+separate drawings differ in scale as well as position and no shift
+reaches that.
+Generating one figure per image also gives roughly three times the
+resolution of six panels squeezed into one card, which is the other
+half of why the first attempt looked soft.
+
+Send all six images. They are wired up with:
+  node scripts/extract-form-frames.mjs public/form-frames/${id} \\
+    --frames 1.png 2.png 3.png 4.png 5.png 6.png`);
 }
