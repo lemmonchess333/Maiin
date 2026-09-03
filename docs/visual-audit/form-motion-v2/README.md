@@ -1790,3 +1790,124 @@ hinge is toward the camera; the top-down core demos use the front
 figure as a figure seen from above. Each is written on its demo.
 
 Capture channel: `seated-calf-raise` added.
+
+## STATUS 2026-09-03t — a second animation style: the form placard
+
+Owner brief, with a six-panel chest-dip card as the reference: "take
+these images, put them together as an animation, and put the form as
+instructions below like in the images instead of below like normal."
+Tried on dips, which is the only exercise that has it.
+
+### What it is
+
+A third player mode, beside the rep and the cycle. A demo declares a
+list of **beats** — a named position, the frame that shows it, and the
+cue that belongs to it — and the player steps through them, holding on
+each long enough to read and tweening between. The cue sits under the
+figure it describes, which is the whole point: on the reference card
+every caption is under its own drawing, and the app's instruction list
+was two screens away from the animation it explained.
+
+| Piece                            | Where                          |
+| -------------------------------- | ------------------------------ |
+| `FormBeat` / `FORM_BEATS`        | `bodyRig.ts`, beside the demos |
+| `placardSampleAt`                | `exerciseTempo.ts`             |
+| Stage furniture (key, rail, cue) | `ExerciseRigDemo.tsx`          |
+| `--stage-foreground` / `-muted`  | `index.css`                    |
+
+### Why it could not be the rep player with captions bolted on
+
+Timing. Six captions inside one 3.66 s rep gives each about 600 ms; a
+seven-word line needs about 1.8 s to read. The text would strobe.
+
+So in a placard the DWELL leads and the movement follows —
+`PLACARD_TIMING.holdMs` is **derived** from a cue width (7 words) and an
+ordinary reading rate (4 words/second), not chosen by feel, and
+`bodyRig.test.ts` holds every authored cue to that width. The first
+draft had 1600 ms while claiming seven words at four a second; the test
+that asserts the derivation is what caught the 150 ms of reading that
+did not fit.
+
+One dip card is 6 x (1800 + 560) = 14.2 s per loop. That is slow for a
+rep and right for a placard.
+
+### The caption is a claim, and the first one was false
+
+A generic phase cue ("Lower under control") is true of any eccentric.
+"Arms locked" is true of one frame or it is not — which is a stronger
+obligation than the rig had carried, and the dip failed it.
+
+The support position was built at `0.97 * (upper + fore)`. That sounds
+like a locked arm and is not: near full extension the cosine is flat, so
+0.97 of the span leaves the elbow at **152 degrees** — a visibly bent
+arm holding the top of a dip. It is the same defect the overhead press
+had (0.985, failing a 165-degree floor at 163.9) and the same fix:
+**0.995**, which reads 169. Nothing had pinned it because nothing had
+ever said in words what that frame was supposed to be.
+
+| Beat | t    | Pinned claim                                                    |
+| ---- | ---- | --------------------------------------------------------------- |
+| 1, 6 | 0    | elbow > 165 degrees — "arms locked"                             |
+| 2    | 0.22 | descent order: 1 < 2 < 3 < 4                                    |
+| 3    | 0.62 |                                                                 |
+| 4    | 1    | upper arm within 10 degrees of the floor; elbow behind the hand |
+| 5    | 0.5  | 6 < 5 < 4 — the press runs the other way                        |
+| all  |      | the hands are on the grip at every beat, to 6 decimals          |
+
+The last beat's t equals the first's, so the loop's wrap is a still
+rather than a snap. That is pinned for every sequence, not just this one.
+
+### The muscle key
+
+The reference card names the muscles beside its swatches. `getDemoLegend`
+reads that FROM the demo doing the painting and returns the renderer's
+own two fills, so a key cannot disagree with the figure it explains — and
+a test asserts the returned colours appear in the rendered SVG. Every
+tint id across all 152 demos must have an entry, or a legend would
+quietly read "front-deltoids" at a user.
+
+### Two things this turned up that were not the brief
+
+- **The stage was an untokenised surface.** The demo stage is fixed dark
+  in both themes; `--muted-foreground` was consolidated (DS2) against
+  card, muted and page. On the stage in the LIGHT theme it measures
+  **3.62:1** — so the rig's phase cue has been under the floor since it
+  shipped, invisible because the app defaults to dark. The stage now has
+  `--stage-foreground` and `--stage-muted`, pinned in
+  `tokenContrast.test.ts` (which also records the 3.62 so nobody
+  rediscovers it).
+- **A purple number chip failed an existing guard.** `bg-lifting/25`
+  added a tint fraction, and that file derives its bars from the
+  fractions the source paints — `--lifting-strong` on lifting/25 over a
+  card is 4.49:1. The chip is neutral instead; purple stays where it is
+  non-text, on the rail's active dot.
+
+### Reduced motion gets the card
+
+An animation that steps through six frames has six frames to print, so
+`prefers-reduced-motion` renders the whole storyboard — every position
+under its caption — instead of a two-up that drops four of them. The
+capture channel runs under that flag, so `dips` now captures as the
+six-panel frame. Its first diff after this is a whole-frame change by
+construction, not churn.
+
+### Deliberately scoped
+
+- **Beats are keyed by exercise id and are NOT alias-resolved.**
+  `tricep-dips` and `weighted-chest-dip` render the dips geometry, which
+  is already an approximation for the upright variant — whose own
+  catalogue entry says "don't lean forward like a chest dip". Inheriting
+  these captions would promote a silent visual approximation into
+  written coaching that contradicts the exercise.
+- **The authored steps are not deleted, only collapsed.** With a placard
+  present, `ExerciseFormContent` starts the instruction list closed
+  rather than showing two of it — the duplication the style exists to
+  remove. The catalogue text carries detail seven-word cues cannot (the
+  30 degrees of lean, and why), and stays one tap away.
+- **One exercise.** Everything without a beat list plays exactly as
+  before, pinned by a test. Reverting the style is deleting one map.
+
+Review artefact: `npx tsx scripts/preview-placard.ts` renders each
+sequence as the card it is a moving version of. The ordinary contact
+sheet cannot show this — it samples t at fixed fifths, which for a
+placard lands between the authored positions rather than on them.

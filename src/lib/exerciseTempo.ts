@@ -207,3 +207,81 @@ export function cycleSampleAt(elapsedMs: number, cycleMs: number): RepSample {
   const m = (elapsedMs - SET_BEAT_MS) % cycleMs;
   return { phase: "cycle", ecc: m / cycleMs, targetEffort: 0.85 };
 }
+
+/* ── Placard sequences ───────────────────────────────────────────────
+ *
+ * The third player mode, after the rep and the cycle: a demo that steps
+ * through NAMED positions, holding on each long enough to read its cue,
+ * and tweening between them. It is the gym-wall form placard — the
+ * numbered panels of a technique card — animated, instead of six
+ * stills printed side by side.
+ *
+ * Why it cannot be the rep player with captions bolted on. A rep is
+ * timed like a rep: with the default tempo, six beats over one 3.66 s
+ * cycle would give each caption ~600 ms. A seven-word line needs about
+ * 1.8 s to read, so the text would strobe and teach nothing. The rep
+ * timeline is also authored in eccentric/pause/concentric terms, which
+ * is the wrong vocabulary for "chest to the floor" — a position, not a
+ * phase.
+ *
+ * So the DWELL leads and the movement follows. The tempo module's own
+ * contract already allows this: the visible duration is a teaching aid,
+ * not a literal timing promise.
+ */
+
+export interface PlacardTiming {
+  /** Still hold on each position — sized for reading its cue. */
+  holdMs: number;
+  /** Tween from one position to the next. */
+  moveMs: number;
+}
+
+/** The widest cue a hold is sized to carry. Beat cues are authored to
+ *  this; `bodyRig.test.ts` holds them to it. */
+export const PLACARD_CUE_WORDS = 7;
+/** Ordinary adult reading rate — ~240 wpm. */
+export const PLACARD_WORDS_PER_SECOND = 4;
+
+/**
+ * The hold is a READ budget, derived rather than chosen by feel: seven
+ * words at four words a second. Shorten the hold and the cues have to
+ * shorten with it — which is the coupling this expresses, so the two
+ * cannot drift apart silently.
+ */
+export const PLACARD_TIMING: PlacardTiming = {
+  holdMs: (PLACARD_CUE_WORDS / PLACARD_WORDS_PER_SECOND) * 1000,
+  moveMs: 560,
+};
+
+export interface PlacardSample {
+  /** Which position we are on, or travelling FROM while `moving`. */
+  index: number;
+  /** 0 through the hold; 0→1 across the tween to the next position. */
+  k: number;
+  moving: boolean;
+}
+
+/**
+ * The placard sample at `elapsedMs`. Every position gets an identical
+ * slot (hold, then tween to the next), and the last position tweens
+ * back to the first — so a sequence whose final position IS its first
+ * (a rep that returns to the top) simply holds still across the wrap,
+ * with no seam to special-case.
+ */
+export function placardSampleAt(
+  elapsedMs: number,
+  count: number,
+  timing: PlacardTiming = PLACARD_TIMING
+): PlacardSample {
+  if (count <= 0) return { index: 0, k: 0, moving: false };
+  const slot = timing.holdMs + timing.moveMs;
+  const m = Math.max(0, elapsedMs) % (count * slot);
+  const index = Math.min(count - 1, Math.floor(m / slot));
+  const within = m - index * slot;
+  const moving = within >= timing.holdMs;
+  return {
+    index,
+    k: moving ? (within - timing.holdMs) / timing.moveMs : 0,
+    moving,
+  };
+}

@@ -29,14 +29,31 @@ vi.mock("@/hooks/useReducedMotion", () => ({
 // Every animated draw is recorded so tests can compare full sequences.
 const drawLog: Array<{ t: number; effort: number | undefined }> = [];
 const demoRef = { current: { concentricTo: 0 } as Record<string, unknown> };
+type TestBeat = { t: number; label: string; cue: string };
+const beatsRef = { current: null as readonly TestBeat[] | null };
+const legendRef = {
+  current: {
+    primary: ["Chest"],
+    secondary: ["Triceps", "Front delts"],
+    colors: { primary: "#7B72E9", secondary: "#9590E0" },
+  },
+};
+/* Partial mocks are not an option here — the module is the rig, and its
+   real render would need the whole figure. Every export the component
+   imports must therefore be listed, which is exactly the trap CLAUDE.md
+   names: adding an import to a component breaks a suite that mocks its
+   module wholesale, and the failure surfaces at the CALL SITE. */
 vi.mock("@/lib/bodyRig", () => ({
   getBodyDemo: () => demoRef.current,
+  getFormBeats: () => beatsRef.current,
+  getDemoLegend: () => legendRef.current,
   renderBodyDemo: (id: string, t: number, effort?: number) => {
     drawLog.push({ t, effort });
     return `<svg data-demo="${id}" data-t="${t}"></svg>`;
   },
 }));
 
+import { PLACARD_TIMING } from "@/lib/exerciseTempo";
 import ExerciseRigDemo from "../ExerciseRigDemo";
 
 /* Controllable rAF harness (the WaterWave pattern): callbacks queue up
@@ -54,6 +71,7 @@ function step(now: number) {
 
 beforeEach(() => {
   demoRef.current = { concentricTo: 0 };
+  beatsRef.current = null;
   rafQueue.length = 0;
   drawLog.length = 0;
   clock = 0;
@@ -234,5 +252,134 @@ describe("ExerciseRigDemo", () => {
     const min = Math.min(...deltas);
     const max = Math.max(...deltas);
     expect(max / min).toBeLessThan(1.6);
+  });
+
+  /* ── Placard mode (2026-09-03) ──────────────────────────────────────
+   * The third player: named positions, each held long enough to read
+   * its cue, tweening between them — a gym form card animated rather
+   * than printed.
+   *
+   * The clock is DERIVED from PLACARD_TIMING, not written out. The
+   * first draft hard-coded a 2160 ms slot; the hold then moved 1600 →
+   * 1800 (it is a read budget, and seven words at four a second is
+   * 1750), and two of these tests started asserting the wrong
+   * position at the right time. The full suite caught it — a
+   * single-file run before the constant changed did not. */
+  const SLOT = PLACARD_TIMING.holdMs + PLACARD_TIMING.moveMs;
+  const PLACARD_BEATS: TestBeat[] = [
+    { t: 0, label: "Top position", cue: "Arms locked, chest tall." },
+    { t: 0.5, label: "Mid descent", cue: "Elbows travel back." },
+    { t: 1, label: "Bottom position", cue: "Upper arms parallel." },
+  ];
+
+  it("a placard opens on its FIRST named position, captioned", () => {
+    reduceRef.current = false;
+    beatsRef.current = PLACARD_BEATS;
+    const { container } = render(
+      <ExerciseRigDemo exerciseId="dips" name="Dips" />
+    );
+    expect(container.querySelector('[data-t="0"]')).not.toBeNull();
+    // The position's name and its cue, under the figure — the point of
+    // the style. Not the rep player's generic phase word.
+    expect(screen.getByText("Top position")).toBeInTheDocument();
+    expect(screen.getByText("Arms locked, chest tall.")).toBeInTheDocument();
+    expect(screen.queryByText("Set")).toBeNull();
+    expect(screen.queryByText("Lower under control")).toBeNull();
+    // The muscle key — what the purple on the figure means.
+    expect(screen.getByText("Chest")).toBeInTheDocument();
+    expect(screen.getByText("Front delts")).toBeInTheDocument();
+  });
+
+  it("it HOLDS on a position, then tweens to the next", () => {
+    reduceRef.current = false;
+    beatsRef.current = PLACARD_BEATS;
+    render(<ExerciseRigDemo exerciseId="dips" name="Dips" />);
+    step(40);
+    // Anywhere inside the hold the frame is beat 0 EXACTLY — a still,
+    // which is what makes the cue readable.
+    step(PLACARD_TIMING.holdMs * 0.5);
+    step(PLACARD_TIMING.holdMs - 40);
+    expect(drawLog.every((d) => d.t === 0)).toBe(true);
+    expect(screen.getByText("Top position")).toBeInTheDocument();
+    // Into the tween: between beat 0 and beat 1, and the caption still
+    // names the position being LEFT, not the one being approached.
+    drawLog.length = 0;
+    step(PLACARD_TIMING.holdMs + 100);
+    expect(drawLog[0].t).toBeGreaterThan(0);
+    expect(drawLog[0].t).toBeLessThan(0.5);
+    expect(screen.getByText("Top position")).toBeInTheDocument();
+    // Next slot: settled on beat 1, captioned as beat 1.
+    drawLog.length = 0;
+    step(SLOT + 100);
+    expect(drawLog[0].t).toBe(0.5);
+    expect(screen.getByText("Mid descent")).toBeInTheDocument();
+    expect(screen.getByText("Elbows travel back.")).toBeInTheDocument();
+  });
+
+  it("the sequence wraps back to the first position and repeats", () => {
+    reduceRef.current = false;
+    beatsRef.current = PLACARD_BEATS;
+    render(<ExerciseRigDemo exerciseId="dips" name="Dips" />);
+    step(40);
+    step(2 * SLOT + 100); // third slot → the bottom
+    expect(screen.getByText("Bottom position")).toBeInTheDocument();
+    // Past the last slot it is back on the first position — a loop,
+    // not a settle.
+    step(3 * SLOT + 100);
+    expect(screen.getByText("Top position")).toBeInTheDocument();
+    expect(rafQueue.length).toBeGreaterThan(0);
+  });
+
+  it("effort brightens on the way to the finished position, not away", () => {
+    // concentricTo 0: t=0 IS the finished position, so travelling
+    // DOWNWARD in t is the drive. The rep player reads this off a named
+    // phase; a placard has only the direction of travel.
+    reduceRef.current = false;
+    beatsRef.current = PLACARD_BEATS;
+    demoRef.current = { concentricTo: 0 };
+    render(<ExerciseRigDemo exerciseId="dips" name="Dips" />);
+    step(40);
+    drawLog.length = 0;
+    step(PLACARD_TIMING.holdMs + 100); // tween 0 → 0.5: away from the finish
+    const lowering = drawLog[0].effort!;
+    expect(drawLog[0].t).toBeGreaterThan(0); // really mid-tween, not a hold
+    drawLog.length = 0;
+    // The wrap tween: the last beat (t=1) travelling back to the first
+    // (t=0) — toward the finish, so this is the press.
+    step(2 * SLOT + PLACARD_TIMING.holdMs + 100);
+    const pressing = drawLog[0].effort!;
+    expect(drawLog[0].t).toBeLessThan(1);
+    expect(pressing).toBeGreaterThan(lowering);
+  });
+
+  it("reduced motion prints every position with its own caption", () => {
+    // An animation that steps through six frames HAS six frames to
+    // print — so the still version is the card it came from, not a
+    // two-up that drops four of them.
+    reduceRef.current = true;
+    beatsRef.current = PLACARD_BEATS;
+    const { container } = render(
+      <ExerciseRigDemo exerciseId="dips" name="Dips" />
+    );
+    const frames = [...container.querySelectorAll("[data-t]")].map((n) =>
+      n.getAttribute("data-t")
+    );
+    expect(frames).toEqual(["0", "0.5", "1"]);
+    for (const b of PLACARD_BEATS) {
+      expect(screen.getByText(b.label)).toBeInTheDocument();
+      expect(screen.getByText(b.cue)).toBeInTheDocument();
+    }
+    expect(rafQueue.length).toBe(0);
+    reduceRef.current = false;
+  });
+
+  it("a demo with no beats is untouched by any of it", () => {
+    // The style is opt-in per exercise: everything without a beat list
+    // still plays the two-way rep with its phase cues.
+    reduceRef.current = false;
+    beatsRef.current = null;
+    render(<ExerciseRigDemo exerciseId="squat" name="Barbell Squat" />);
+    expect(screen.getByText("Set")).toBeInTheDocument();
+    expect(screen.queryByText("Primary")).toBeNull();
   });
 });

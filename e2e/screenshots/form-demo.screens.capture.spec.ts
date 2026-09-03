@@ -14,6 +14,12 @@
  * static two-up of the START and END extremes, which is both stable and
  * the exact pair a model-art review wants to see.
  *
+ * A PLACARD demo (2026-09-03) prints something better under the same
+ * flag: every named position at once, each under its own caption — the
+ * form card the animation steps through. So `dips` now captures as a
+ * six-panel frame rather than a two-up, and its first diff after that
+ * change is a whole-frame change by construction, not churn.
+ *
  * The demo card is shot as an ELEMENT, not fullPage: the surrounding
  * stats carry seeded numbers and a date, and a full-page frame would
  * diff on those instead of on the art.

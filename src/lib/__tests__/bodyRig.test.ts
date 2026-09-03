@@ -6,9 +6,14 @@ import {
   CALF_BALL,
   CALF_BLOCK_TOP,
   DIP_GRIP,
+  FORM_BEAT_IDS,
   getBodyDemo,
+  getDemoLegend,
+  getFormBeats,
+  MUSCLE_LABEL_IDS,
   renderBodyDemo,
 } from "../bodyRig";
+import { PLACARD_CUE_WORDS } from "../exerciseTempo";
 import { ANTERIOR, POSTERIOR } from "../bodyModelData";
 import { EXERCISES } from "../exercises";
 import { FAR_ARM_SHIFT, SIDE_ANCHORS, SIDE_PIECES } from "../bodySideData";
@@ -4735,5 +4740,191 @@ describe("tint honesty", () => {
         id
       ).toBe(true);
     }
+  });
+});
+
+/* ── Placard beats (2026-09-03) ──────────────────────────────────────
+ *
+ * A stepped demo names its positions and captions each one under the
+ * drawing. That makes the caption a CLAIM about the frame, which is a
+ * stronger obligation than the rig has carried before: a generic phase
+ * cue ("Lower under control") is true of any eccentric, but "arms
+ * locked" is either true of that frame or it is not.
+ *
+ * Authoring the dips beats found it false. The support position was
+ * built at 0.97 of arm length, which sounds like a locked arm and is
+ * not — near full extension the cosine is flat, and 0.97 leaves the
+ * elbow at 152°, visibly bent. Nothing pinned it, because nothing had
+ * ever said in words what that frame was supposed to be.
+ */
+describe("form beats — the caption is a claim about the frame", () => {
+  const at = (pt: [number, number], ops?: unknown[]) =>
+    applyToPoint(pt, (ops ?? []) as never[]);
+  const jointDeg = (
+    a: [number, number],
+    b: [number, number],
+    c: [number, number]
+  ) => {
+    const v1 = [a[0] - b[0], a[1] - b[1]];
+    const v2 = [c[0] - b[0], c[1] - b[1]];
+    return (
+      (Math.acos(
+        Math.max(
+          -1,
+          Math.min(
+            1,
+            (v1[0] * v2[0] + v1[1] * v2[1]) /
+              (Math.hypot(v1[0], v1[1]) * Math.hypot(v2[0], v2[1]))
+          )
+        )
+      ) *
+        180) /
+      Math.PI
+    );
+  };
+
+  it("every beat sequence names a real demo and stays inside its range", () => {
+    expect(FORM_BEAT_IDS.length).toBeGreaterThan(0);
+    for (const id of FORM_BEAT_IDS) {
+      const beats = getFormBeats(id);
+      expect(beats, id).not.toBeNull();
+      expect(getBodyDemo(id), `${id} has no demo to caption`).not.toBeNull();
+      expect(
+        beats!.length,
+        `${id} needs more than one position`
+      ).toBeGreaterThan(1);
+      for (const b of beats!) {
+        expect(b.t, `${id} "${b.label}"`).toBeGreaterThanOrEqual(0);
+        expect(b.t, `${id} "${b.label}"`).toBeLessThanOrEqual(1);
+        expect(b.label.trim().length, id).toBeGreaterThan(0);
+        expect(b.cue.trim().length, id).toBeGreaterThan(0);
+      }
+      // Labels are how a reader tells the positions apart.
+      expect(new Set(beats!.map((b) => b.label)).size, `${id} labels`).toBe(
+        beats!.length
+      );
+    }
+  });
+
+  it("every cue fits the hold it is read in", () => {
+    // The dwell is derived from this width (PLACARD_CUE_WORDS at an
+    // ordinary reading rate), so an over-long cue is not a style
+    // preference — it is a line that scrolls past unread.
+    for (const id of FORM_BEAT_IDS) {
+      for (const b of getFormBeats(id)!) {
+        const words = b.cue.trim().split(/\s+/).length;
+        expect(words, `${id} "${b.label}": ${words} words`).toBeLessThanOrEqual(
+          PLACARD_CUE_WORDS
+        );
+      }
+    }
+  });
+
+  it("a sequence ENDS where it begins, so the loop has no jump", () => {
+    // The last position tweens back to the first. Where they are the
+    // same frame that wrap is a still; where they differ the figure
+    // would snap across the seam every loop.
+    for (const id of FORM_BEAT_IDS) {
+      const beats = getFormBeats(id)!;
+      expect(beats[beats.length - 1].t, `${id} wrap`).toBe(beats[0].t);
+    }
+  });
+
+  it("dips: the two named ends ARE the positions they are named after", () => {
+    const beats = getFormBeats("dips")!;
+    const pose = (t: number) => BODY_DEMOS.dips.pose(t);
+    const elbow = (t: number) => {
+      const p = pose(t);
+      return jointDeg(
+        at(SIDE_ANCHORS.shoulder, p.upperArmL),
+        at(SIDE_ANCHORS.elbow, p.upperArmL),
+        at(SIDE_ANCHORS.hand, p.foreArmL)
+      );
+    };
+
+    // "Arms locked" — the house floor for a lockout is 165°, the same
+    // bar the overhead press was held to. At the shipped 0.97 of arm
+    // length this read 152.0 and the caption was a lie.
+    const top = beats.find((b) => b.label === "Top position")!;
+    expect(elbow(top.t)).toBeGreaterThan(165);
+
+    // "Stop when upper arms reach parallel" — the upper arm within 10°
+    // of the floor at the bottom.
+    const bottom = beats.find((b) => b.label === "Bottom position")!;
+    const p = pose(bottom.t);
+    const S = at(SIDE_ANCHORS.shoulder, p.upperArmL);
+    const E = at(SIDE_ANCHORS.elbow, p.upperArmL);
+    const fromHorizontal = Math.abs(
+      Math.abs((Math.atan2(E[1] - S[1], E[0] - S[0]) * 180) / Math.PI) - 180
+    );
+    expect(fromHorizontal).toBeLessThan(10);
+    // And the elbow travels BACK to get there — behind the hand, which
+    // is the dip's own instruction and the geometry the 2026-09-03
+    // mirror-image bug got backwards.
+    expect(E[0]).toBeLessThan(at(SIDE_ANCHORS.hand, p.foreArmL)[0]);
+  });
+
+  it("dips: the descent captions run in the direction they describe", () => {
+    // t=0 is the top for this demo, so a descent reads as increasing t
+    // and the press as decreasing — the order the labels claim.
+    const beats = getFormBeats("dips")!;
+    const t = (label: string) => beats.find((b) => b.label === label)!.t;
+    expect(t("Top position")).toBeLessThan(t("Initiate descent"));
+    expect(t("Initiate descent")).toBeLessThan(t("Mid descent"));
+    expect(t("Mid descent")).toBeLessThan(t("Bottom position"));
+    expect(t("Press up")).toBeLessThan(t("Bottom position"));
+    expect(t("Return to top")).toBeLessThan(t("Press up"));
+  });
+
+  it("the hands never leave the bar across the whole sequence", () => {
+    // A dip's hands are FIXED on the grip; every position is the body
+    // moving around them. This is what makes the six frames one
+    // exercise rather than six drawings.
+    const beats = getFormBeats("dips")!;
+    for (const b of beats) {
+      const h = at(SIDE_ANCHORS.hand, BODY_DEMOS.dips.pose(b.t).foreArmL);
+      expect(
+        Math.hypot(h[0] - DIP_GRIP[0], h[1] - DIP_GRIP[1]),
+        b.label
+      ).toBeLessThan(18);
+    }
+    // …and identically at every position, not merely nearby.
+    const hands = beats.map((b) =>
+      at(SIDE_ANCHORS.hand, BODY_DEMOS.dips.pose(b.t).foreArmL)
+    );
+    for (const h of hands) {
+      expect(h[0]).toBeCloseTo(hands[0][0], 6);
+      expect(h[1]).toBeCloseTo(hands[0][1], 6);
+    }
+  });
+});
+
+describe("the muscle key", () => {
+  it("names every muscle any demo tints", () => {
+    // A missing entry does not fail — `getDemoLegend` falls back to the
+    // raw highlighter id, so the legend would quietly read
+    // "front-deltoids" at a user. Cover the whole vocabulary instead.
+    const named = new Set(MUSCLE_LABEL_IDS);
+    for (const [id, d] of Object.entries(BODY_DEMOS)) {
+      for (const m of Object.keys(d.tint)) {
+        expect(named.has(m), `${id} tints "${m}" with no name in the key`).toBe(
+          true
+        );
+      }
+    }
+  });
+
+  it("reads the legend FROM the demo that does the painting", () => {
+    const legend = getDemoLegend("dips")!;
+    expect(legend.primary).toEqual(["Chest"]);
+    expect(legend.secondary).toEqual(["Triceps", "Front delts"]);
+    // The swatch colours are the renderer's own fills, so a key cannot
+    // disagree with the figure it explains.
+    expect(renderBodyDemo("dips", 0.5)).toContain(legend.colors.primary);
+    expect(renderBodyDemo("dips", 0.5)).toContain(legend.colors.secondary);
+  });
+
+  it("an exercise with no rig demo has no legend to show", () => {
+    expect(getDemoLegend("not-an-exercise")).toBeNull();
   });
 });

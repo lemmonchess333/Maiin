@@ -12,7 +12,7 @@ import { THEME } from "@/lib/theme";
 import { Spinner } from "@/components/ui/Spinner";
 import ExerciseDemoPlayer from "@/components/ExerciseDemoPlayer";
 import ExerciseRigDemo from "@/components/ExerciseRigDemo";
-import { getBodyDemo } from "@/lib/bodyRig";
+import { getBodyDemo, getFormBeats } from "@/lib/bodyRig";
 import { EXERCISES } from "@/lib/exercises";
 import BodyMapGlow from "@/components/BodyMapGlow";
 
@@ -120,6 +120,16 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
   )?.id;
   const rigDemo = exerciseId ? getBodyDemo(exerciseId) : null;
   const hasAnimation = !rigDemo && demo.images.length > 0 && !demoFailed;
+  /* A placard demo teaches the steps ON the figure — each position
+     named and cued under the drawing it belongs to. Showing the same
+     sequence again as a numbered list directly beneath it is the
+     duplication the style exists to remove, so the authored steps
+     collapse behind their own disclosure instead of leading with two
+     of them. They are NOT dropped: the catalogue text carries detail
+     the seven-word cues cannot (the 30 degrees of lean, why it is
+     there), and it stays one tap away. */
+  const placard = exerciseId ? getFormBeats(exerciseId) !== null : false;
+  const collapsedSteps = placard ? 0 : COLLAPSED_STEPS;
 
   return (
     <div>
@@ -346,7 +356,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
           <div className="flex flex-col gap-4 mt-3">
             {(showInstructions
               ? demo.instructions
-              : demo.instructions.slice(0, COLLAPSED_STEPS)
+              : demo.instructions.slice(0, collapsedSteps)
             ).map((step, i) => (
               <div key={i} className="flex gap-2.5">
                 <span
@@ -361,7 +371,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
               </div>
             ))}
           </div>
-          {demo.instructions.length > COLLAPSED_STEPS && (
+          {demo.instructions.length > collapsedSteps && (
             <button
               type="button"
               onClick={() => setShowInstructions(!showInstructions)}

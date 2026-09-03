@@ -3367,9 +3367,19 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
          your body moves away from the bars"). The mirror-image
          geometry was the actual bug; a later "fix" flipped the elbow
          branch to compensate and made a second wrong. */
+      /* 0.995, not 0.97. The support position is a LOCKED arm — the
+         exercise's own first instruction — and near full extension the
+         cosine is flat enough that "97% of arm length" is not close to
+         it: with a 36.02 upper and a 31.05 forearm, 0.97 of the span
+         leaves the elbow at 152°, a visibly bent arm holding the top
+         of a dip. 0.995 puts it at 172°. Same correction, same reason,
+         as the overhead-press lockout (0.985 → 0.995, which was
+         failing a 165° floor at 163.9°); it is the placard caption
+         that surfaced it here, since a named position has to be the
+         position it is named after. */
       const top: Pt = [
         DIP_GRIP[0] + 2,
-        DIP_GRIP[1] - 0.97 * (SIDE_UPPER_LEN + SIDE_FORE_LEN),
+        DIP_GRIP[1] - 0.995 * (SIDE_UPPER_LEN + SIDE_FORE_LEN),
       ];
       const bottom: Pt = [
         DIP_GRIP[0] + SIDE_UPPER_LEN * 0.8,
@@ -9473,6 +9483,86 @@ function stripHeldGear(demo: BodyDemo): BodyDemo {
   return rest;
 }
 
+/* ── Form beats: the placard sequence ────────────────────────────────
+ *
+ * A named position, the frame that shows it, and the cue that belongs
+ * to it — the numbered panels of a gym form placard (owner reference,
+ * 2026-09-03: a six-panel chest-dip card, every panel captioned under
+ * its own drawing). Where a demo has beats the player STEPS through
+ * them, holding on each long enough to read, instead of running the
+ * two-way rep — and the cue sits under the figure it describes rather
+ * than in an instruction list further down the page.
+ *
+ * Keyed by EXERCISE ID, and deliberately NOT alias-resolved.
+ * `tricep-dips` and `weighted-chest-dip` render the `dips` GEOMETRY,
+ * which is already an approximation for the upright triceps variant —
+ * whose own catalogue entry reads "don't lean forward like a chest
+ * dip". Inheriting these captions would promote a silent visual
+ * approximation into written coaching that contradicts the exercise.
+ * A variant earns beats by having its own row.
+ */
+export interface FormBeat {
+  /** The demo's own progress value — this beat IS a frame of it. */
+  t: number;
+  /** The position's name: the panel heading. */
+  label: string;
+  /** What the lifter does here. Authored to the placard read budget in
+   *  `PLACARD_TIMING` — about seven words, one instruction. */
+  cue: string;
+}
+
+const FORM_BEATS: Record<string, readonly FormBeat[]> = {
+  /* Dips — the first placard demo. Six positions on the dip's own t,
+   * where 0 is the locked-out top and 1 the bottom. The cues are the
+   * catalogue's four authored steps re-cut into the six frames the
+   * geometry actually passes through: the lean (step 2) belongs to the
+   * descent because the rig leans continuously, 12° → 30°, as it
+   * sinks, and "keeping the forward lean locked" (step 4) belongs to
+   * the press. */
+  dips: [
+    {
+      t: 0,
+      label: "Top position",
+      cue: "Arms locked, chest tall, core braced.",
+    },
+    {
+      t: 0.22,
+      label: "Initiate descent",
+      cue: "Unlock the elbows and lean forward.",
+    },
+    {
+      t: 0.62,
+      label: "Mid descent",
+      cue: "Elbows travel back as the chest sinks.",
+    },
+    {
+      t: 1,
+      label: "Bottom position",
+      cue: "Stop when upper arms reach parallel.",
+    },
+    {
+      t: 0.5,
+      label: "Press up",
+      cue: "Drive through the palms, holding the lean.",
+    },
+    {
+      t: 0,
+      label: "Return to top",
+      cue: "Lock the elbows out, ready to repeat.",
+    },
+  ],
+};
+
+/** The placard sequence for an exercise, or null where the demo plays
+ *  as an ordinary rep or a cycle. */
+export function getFormBeats(exerciseId: string): readonly FormBeat[] | null {
+  return FORM_BEATS[exerciseId] ?? null;
+}
+
+/** Every id that has one, for the tests that pin them against the
+ *  geometry they caption. */
+export const FORM_BEAT_IDS = Object.keys(FORM_BEATS);
+
 /** PRODUCTION lookup — what the Form surface may mount. Applies the
  *  alias map, the side-demo flag, the misrepresentation gate, and the
  *  held-gear strip for gear-incompatible aliases. */
@@ -9486,6 +9576,64 @@ export function getBodyDemo(exerciseId: string): BodyDemo | null {
   }
   return demo;
 }
+
+/* ── The muscle key ──────────────────────────────────────────────────
+ *
+ * The names behind the paint. The rig tints by react-body-highlighter
+ * muscle id; a reader looking at a purple shape needs the English. The
+ * placard shows this as a legend, the way the reference card does.
+ *
+ * Read FROM the demo that does the painting, never assembled from a
+ * second source — a key that can disagree with the figure it explains
+ * is worse than no key. Every id any demo tints must appear here, or
+ * a lit muscle drops silently out of the legend; `bodyRig.test.ts`
+ * pins the coverage.
+ */
+const MUSCLE_LABEL: Record<string, string> = {
+  abductors: "Abductors",
+  abs: "Abs",
+  "back-deltoids": "Rear delts",
+  biceps: "Biceps",
+  calves: "Calves",
+  chest: "Chest",
+  forearm: "Forearms",
+  "front-deltoids": "Front delts",
+  gluteal: "Glutes",
+  hamstring: "Hamstrings",
+  "lower-back": "Lower back",
+  obliques: "Obliques",
+  quadriceps: "Quads",
+  trapezius: "Traps",
+  triceps: "Triceps",
+  "upper-back": "Upper back",
+};
+
+export interface DemoLegend {
+  primary: string[];
+  secondary: string[];
+  /** The exact fills the figure paints with, so a swatch cannot drift
+   *  from the muscle it stands for. */
+  colors: { primary: string; secondary: string };
+}
+
+/** What the figure's purple means, in words. Null where the exercise
+ *  has no rig demo to read. */
+export function getDemoLegend(exerciseId: string): DemoLegend | null {
+  const demo = getBodyDemo(exerciseId);
+  if (!demo) return null;
+  const named = (level: "primary" | "secondary") =>
+    Object.entries(demo.tint)
+      .filter(([, l]) => l === level)
+      .map(([m]) => MUSCLE_LABEL[m] ?? m);
+  return {
+    primary: named("primary"),
+    secondary: named("secondary"),
+    colors: { primary: PRIMARY, secondary: SECONDARY },
+  };
+}
+
+/** The key's vocabulary, for the coverage test. */
+export const MUSCLE_LABEL_IDS = Object.keys(MUSCLE_LABEL);
 
 /** REVIEW lookup — alias-aware registry resolution with no production
  *  gates, so contact sheets and mechanics tests keep rendering gated
