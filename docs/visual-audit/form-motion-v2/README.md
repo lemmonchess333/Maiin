@@ -1010,3 +1010,37 @@ in every frame.
 exemption.** The kickback is unilateral by its own instruction ("one
 knee and hand on a bench"), so its far arm is the support, reaching
 forward to a bench pad the scene draws under it.
+
+## STATUS 2026-09-03c — build-out, batch 2: five demos on two new chains
+
+Coverage 46 → 51 of 152. Two reusable chains came out of it:
+
+- **`plantedLeg`** — one leg as two-bone IK from a MOVING hip to a FIXED
+  ankle (the lunge's per-leg solve, factored out) with a named knee
+  branch: `KNEE_FORWARD` (a lunge's front leg), `KNEE_LOW` (its back
+  leg), `KNEE_HIGH` (a bent knee with the foot flat — seated, supine).
+  Anything with a foot on the floor and a hip that moves is this.
+- **`supineHinge`** — lying head-left, torso and pelvis rotate about the
+  SHOULDER through a `[from, to]` range (positive = hips down), legs
+  planted-foot IK from the rising hip, head follows a quarter of the
+  lift so the neck stays joined.
+
+| Demo               | Chain                                   | Pinned claim (from its instructions)                                     |
+| ------------------ | --------------------------------------- | ------------------------------------------------------------------------ |
+| `incline-bench`    | bench chain at −60, seat at knee height | press PERPENDICULAR to the trunk (±14°); trunk 25-42° up; full lockout   |
+| `incline-db-press` | same pose, bells                        | same                                                                     |
+| `glute-bridge`     | `supineHinge` from the floor, 0 → −31   | shoulder-hip-knee in a line at the top (±8°); hips on the floor at rest  |
+| `hip-thrust`       | `supineHinge` from a shin-height bench  | torso horizontal at the top; hips near the floor at rest; bar AT the hip |
+| `bulgarian-split`  | lunge chain, back ankle on a bench      | both feet planted, the back one on the bench, every frame                |
+
+Two things the numbers caught before a screenshot could:
+
+- The incline's first seat was 24 units off the floor, so the legs had
+  nowhere to go but folded up past the hip. A real incline bench seats
+  at roughly knee height; at 52 the thigh lies flat and the shin stands.
+- The thrust's first bench was 32 high against a 54-unit shin, so at
+  the top the knees sat 25 above the hips and the "line from shoulders
+  to knees" bent in the middle. The bench is shin height now and the
+  line closes to within 11°. The bridge's feet also started too close
+  to the hips (16 out), folding both legs straight up like a crunch;
+  they sit 42 out, which stands the shin vertical at the top.

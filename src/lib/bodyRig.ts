@@ -713,76 +713,196 @@ function strictCurlPose(e: number): Partial<Record<GroupName, Op[]>> {
   };
 }
 
+/* One leg, planted: two-bone IK from a MOVING hip to a FIXED ankle —
+ * the same solve the arms use. Rotations pivot on the rest anchors and
+ * a body translate lands the rest hip on `hipWorld`, so the returned ops
+ * fully place the piece. `pick` chooses the knee branch: forward for a
+ * lunge's front leg, low for its back leg, high for a bent knee with the
+ * foot flat on the floor (bridge, incline seat). */
+function plantedLeg(
+  hipWorld: Pt,
+  ankleWorld: Pt,
+  pick: (a: Pt, b: Pt) => Pt
+): { thigh: Op[]; shank: Op[] } {
+  const hip0 = SIDE_ANCHORS.hip;
+  const thighLen = Math.hypot(
+    SIDE_ANCHORS.knee[0] - hip0[0],
+    SIDE_ANCHORS.knee[1] - hip0[1]
+  );
+  const shankLen = Math.hypot(
+    SIDE_ANCHORS.ankle[0] - SIDE_ANCHORS.knee[0],
+    SIDE_ANCHORS.ankle[1] - SIDE_ANCHORS.knee[1]
+  );
+  const dx = hipWorld[0] - hip0[0];
+  const dy = hipWorld[1] - hip0[1];
+  const body: Op = { kind: "translate", dx, dy };
+  const A: Pt = [ankleWorld[0] - dx, ankleWorld[1] - dy];
+  const K = pick(
+    solveElbow(hip0, A, thighLen, shankLen, 1),
+    solveElbow(hip0, A, thighLen, shankLen, -1)
+  );
+  const restThigh: Pt = [
+    SIDE_ANCHORS.knee[0] - hip0[0],
+    SIDE_ANCHORS.knee[1] - hip0[1],
+  ];
+  const restShank: Pt = [
+    SIDE_ANCHORS.ankle[0] - SIDE_ANCHORS.knee[0],
+    SIDE_ANCHORS.ankle[1] - SIDE_ANCHORS.knee[1],
+  ];
+  const th = angleBetween(restThigh, [K[0] - hip0[0], K[1] - hip0[1]]);
+  const sh = angleBetween(restShank, [A[0] - K[0], A[1] - K[1]]) - th;
+  return {
+    thigh: [{ kind: "rotate", deg: th, pivot: hip0 }, body],
+    shank: [
+      { kind: "rotate", deg: sh, pivot: SIDE_ANCHORS.knee },
+      { kind: "rotate", deg: th, pivot: hip0 },
+      body,
+    ],
+  };
+}
+const KNEE_FORWARD = (a: Pt, b: Pt): Pt => (a[0] > b[0] ? a : b);
+const KNEE_LOW = (a: Pt, b: Pt): Pt => (a[1] > b[1] ? a : b);
+const KNEE_HIGH = (a: Pt, b: Pt): Pt => (a[1] < b[1] ? a : b);
+
 /* Split-stance (lunge) chain. The near leg is the FRONT leg, the far
  * leg the BACK leg — which is what the far-leg pieces exist for.
  *
  * Both feet are PLANTED and the hips move: that is what a lunge is, and
  * it is the constraint the first draft got wrong (it rotated the front
  * thigh and let the foot slide forward 33 units through the rep). Each
- * leg is two-bone IK from the moving hip to its fixed ankle — the same
- * solve the arms use — with the front knee taking the forward branch
- * and the back knee the low one, so the back knee travels toward the
- * floor as the hips drop. */
+ * leg is `plantedLeg`, front knee on the forward branch and back knee on
+ * the low one, so the back knee travels toward the floor as the hips
+ * drop. The Bulgarian split squat is the same chain with the back ankle
+ * raised onto a bench. */
 const LUNGE_FRONT_ANKLE: Pt = [84, 196];
 const LUNGE_BACK_ANKLE: Pt = [2, 196];
-function lungeChain(e: number): {
+function lungeChain(
+  e: number,
+  backAnkle: Pt = LUNGE_BACK_ANKLE
+): {
   body: Op[];
   frontThigh: Op[];
   frontShank: Op[];
   backThigh: Op[];
   backShank: Op[];
 } {
-  const hip0 = SIDE_ANCHORS.hip;
-  const thigh = Math.hypot(
-    SIDE_ANCHORS.knee[0] - hip0[0],
-    SIDE_ANCHORS.knee[1] - hip0[1]
-  );
-  const shank = Math.hypot(
-    SIDE_ANCHORS.ankle[0] - SIDE_ANCHORS.knee[0],
-    SIDE_ANCHORS.ankle[1] - SIDE_ANCHORS.knee[1]
-  );
-  // Hips: a touch forward and well down through the rep.
   const hip: Pt = [lerp(42, 47, e), lerp(112, 141, e)];
-  const dx = hip[0] - hip0[0];
-  const dy = hip[1] - hip0[1];
-  const body: Op[] = [{ kind: "translate", dx, dy }];
-  // Solve in the REST frame (rotations pivot on rest anchors; the body
-  // translate lands everything in the world afterwards).
-  const toRest = (p: Pt): Pt => [p[0] - dx, p[1] - dy];
-  const legOps = (ankleWorld: Pt, pickKnee: (a: Pt, b: Pt) => Pt) => {
-    const A = toRest(ankleWorld);
-    const kA = solveElbow(hip0, A, thigh, shank, 1);
-    const kB = solveElbow(hip0, A, thigh, shank, -1);
-    const K = pickKnee(kA, kB);
-    const restThigh: Pt = [
-      SIDE_ANCHORS.knee[0] - hip0[0],
-      SIDE_ANCHORS.knee[1] - hip0[1],
-    ];
-    const restShank: Pt = [
-      SIDE_ANCHORS.ankle[0] - SIDE_ANCHORS.knee[0],
-      SIDE_ANCHORS.ankle[1] - SIDE_ANCHORS.knee[1],
-    ];
-    const th = angleBetween(restThigh, [K[0] - hip0[0], K[1] - hip0[1]]);
-    const sh = angleBetween(restShank, [A[0] - K[0], A[1] - K[1]]) - th;
-    return {
-      thighOps: [{ kind: "rotate", deg: th, pivot: hip0 }, ...body] as Op[],
-      shankOps: [
-        { kind: "rotate", deg: sh, pivot: SIDE_ANCHORS.knee },
-        { kind: "rotate", deg: th, pivot: hip0 },
-        ...body,
-      ] as Op[],
-    };
-  };
-  const front = legOps(LUNGE_FRONT_ANKLE, (a, b) => (a[0] > b[0] ? a : b));
-  const back = legOps(LUNGE_BACK_ANKLE, (a, b) => (a[1] > b[1] ? a : b));
+  const body: Op[] = [
+    {
+      kind: "translate",
+      dx: hip[0] - SIDE_ANCHORS.hip[0],
+      dy: hip[1] - SIDE_ANCHORS.hip[1],
+    },
+  ];
+  const front = plantedLeg(hip, LUNGE_FRONT_ANKLE, KNEE_FORWARD);
+  const back = plantedLeg(hip, backAnkle, KNEE_LOW);
   return {
     body,
-    frontThigh: front.thighOps,
-    frontShank: front.shankOps,
-    backThigh: back.thighOps,
-    backShank: back.shankOps,
+    frontThigh: front.thigh,
+    frontShank: front.shank,
+    backThigh: back.thigh,
+    backShank: back.shank,
   };
 }
+
+/* Supine hip hinge — glute bridge (shoulders on the floor) and hip
+ * thrust (upper back on a bench). Lying head-left like the bench chain,
+ * the torso+pelvis rotate about the SHOULDER to lift the hips, and each
+ * leg is planted-foot IK from the rising hip to its fixed ankle, knee
+ * on the high branch. The head stays down (a quarter of the lift, so
+ * the neck does not separate). */
+function supineHinge(
+  e: number,
+  shoulderY: number,
+  fromDeg: number,
+  toDeg: number
+): {
+  torso: Op[];
+  head: Op[];
+  hipWorld: Pt;
+  leg: { thigh: Op[]; shank: Op[] };
+  ankle: Pt;
+} {
+  const G: Op = { kind: "rotate", deg: -90, pivot: [44, 100] };
+  const sG = applyToPoint(SIDE_ANCHORS.shoulder, [G]);
+  const T0: Op = { kind: "translate", dx: 0, dy: shoulderY - sG[1] };
+  const Sw: Pt = [sG[0], shoulderY];
+  // Positive = hips DOWN (clockwise about the shoulder, head-left).
+  const deg = lerp(fromDeg, toDeg, e);
+  const lift: Op = { kind: "rotate", deg, pivot: Sw };
+  const torso: Op[] = [G, T0, lift];
+  const head: Op[] = [G, T0, { kind: "rotate", deg: deg * 0.25, pivot: Sw }];
+  const hipWorld = applyToPoint(SIDE_ANCHORS.hip, torso);
+  const hipTop = applyToPoint(SIDE_ANCHORS.hip, [
+    G,
+    T0,
+    { kind: "rotate", deg: toDeg, pivot: Sw },
+  ]);
+  // Feet well forward of the hips (a foot and a half), so the shin
+  // stands vertical at the top and the thigh angles up to it; closer in
+  // and both legs fold straight up like a crunch.
+  const ankle: Pt = [hipTop[0] + 42, SUPINE_FLOOR - 6];
+  const leg = plantedLeg(hipWorld, ankle, KNEE_HIGH);
+  return { torso, head, hipWorld, leg, ankle };
+}
+const SUPINE_FLOOR = 172;
+
+/* Incline press — the bench chain at 30 degrees. Torso rotated -60
+ * (head up-left), hips on a seat, feet flat on the floor with the knees
+ * on the high branch, and the bar pressed PERPENDICULAR to the trunk
+ * from the upper chest to lockout. Shared by the barbell and dumbbell
+ * versions. */
+function inclinePressPose(e: number): Partial<Record<GroupName, Op[]>> {
+  const G: Op = { kind: "rotate", deg: -60, pivot: [44, 100] };
+  const hipG = applyToPoint(SIDE_ANCHORS.hip, [G]);
+  const T0: Op = { kind: "translate", dx: 0, dy: INCLINE_SEAT_Y - hipG[1] };
+  const body: Op[] = [G, T0];
+  const S = SIDE_ANCHORS.shoulder;
+  // Body-space bar path: perpendicular to the trunk (+x), from the
+  // upper chest (a touch toward the head, -y) to lockout over the
+  // shoulder line.
+  const H: Pt = [S[0] + lerp(30, BENCH_LOCKOUT, e), S[1] + lerp(-3, -8, e)];
+  const arm = aimArm(
+    { S, E: SIDE_ANCHORS.elbow, H: SIDE_ANCHORS.hand },
+    solveElbow(S, H, SIDE_UPPER_LEN, SIDE_FORE_LEN, -1),
+    H,
+    0
+  );
+  const hipWorld = applyToPoint(SIDE_ANCHORS.hip, body);
+  const leg = plantedLeg(
+    hipWorld,
+    [hipWorld[0] + 36, SUPINE_FLOOR - 6],
+    KNEE_HIGH
+  );
+  return {
+    head: body,
+    torso: body,
+    pelvis: body,
+    thighL: leg.thigh,
+    thighR: leg.thigh,
+    shankL: leg.shank,
+    shankR: leg.shank,
+    upperArmL: [...arm.upper, ...body],
+    foreArmL: [...arm.fore, ...body],
+    handL: [...arm.fore, ...body],
+    upperArmR: [...arm.upper, ...body],
+    foreArmR: [...arm.fore, ...body],
+    handR: [...arm.fore, ...body],
+  };
+}
+/* Seat 52 above the floor: at 24 the legs had nowhere to go but folded
+   up past the hip. A real incline bench seats at roughly knee height. */
+const INCLINE_SEAT_Y = 120;
+const inclineScene = (): string => {
+  // Seat, the inclined back pad along the trunk, a post, and the floor.
+  return (
+    `<rect x="-6" y="${INCLINE_SEAT_Y + 4}" width="40" height="6" rx="2.2" fill="${GEAR}"/>` +
+    `<rect x="-74" y="${INCLINE_SEAT_Y - 8}" width="78" height="7" rx="2.5" fill="${GEAR}" transform="rotate(-30 4 ${INCLINE_SEAT_Y - 5})"/>` +
+    `<line x1="10" y1="${INCLINE_SEAT_Y + 10}" x2="10" y2="${SUPINE_FLOOR - 1}" stroke="${GEAR_DARK}" stroke-width="3.4"/>` +
+    `<line x1="-40" y1="${INCLINE_SEAT_Y + 20}" x2="-40" y2="${SUPINE_FLOOR - 1}" stroke="${GEAR_DARK}" stroke-width="3.4"/>` +
+    `<line x1="-70" y1="${SUPINE_FLOOR}" x2="118" y2="${SUPINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`
+  );
+};
 
 function sideSquatChain(
   e: number,
@@ -1573,6 +1693,181 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       return [h, h];
     },
     scene: () =>
+      `<line x1="-36" y1="206" x2="132" y2="206" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  "incline-bench": {
+    view: "side",
+    equip: "plate-end",
+    plateR: 10,
+    concentricTo: 1,
+    viewBox: "-76 -4 194 184",
+    groundY: SUPINE_FLOOR,
+    shadowCx: 20,
+    shadowRx: 64,
+    tint: {
+      chest: "primary",
+      triceps: "secondary",
+      "front-deltoids": "secondary",
+    },
+    pose: inclinePressPose,
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+    scene: inclineScene,
+  },
+
+  "incline-db-press": {
+    /* The incline press with a bell in each hand — both stack end-on in
+     * profile. Instruction 3's "up and slightly in until they nearly
+     * touch" is the one thing the profile cannot show. */
+    view: "side",
+    equip: "dumbbell",
+    concentricTo: 1,
+    viewBox: "-76 -4 194 184",
+    groundY: SUPINE_FLOOR,
+    shadowCx: 20,
+    shadowRx: 64,
+    tint: {
+      chest: "primary",
+      triceps: "secondary",
+      "front-deltoids": "secondary",
+    },
+    pose: inclinePressPose,
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+    scene: inclineScene,
+  },
+
+  "glute-bridge": {
+    /* Lying on the floor, knees bent, feet flat: the hips drive up until
+     * shoulders, hips and knees line up (instruction 3), then lower. */
+    view: "side",
+    concentricTo: 1,
+    startsAt: "stretch",
+    viewBox: "-64 40 186 142",
+    groundY: SUPINE_FLOOR,
+    shadowCx: 30,
+    shadowRx: 60,
+    tint: { gluteal: "primary", hamstring: "secondary", abs: "secondary" },
+    pose: (e) => {
+      const c = supineHinge(e, SUPINE_FLOOR - 9, 0, -31);
+      const arms: Op[] = [...c.torso.slice(0, 2)]; // lie flat beside the body
+      return {
+        head: c.head,
+        torso: c.torso,
+        pelvis: c.torso,
+        thighL: c.leg.thigh,
+        thighR: c.leg.thigh,
+        shankL: c.leg.shank,
+        shankR: c.leg.shank,
+        upperArmL: arms,
+        foreArmL: arms,
+        handL: arms,
+        upperArmR: arms,
+        foreArmR: arms,
+        handR: arms,
+      };
+    },
+    scene: () =>
+      `<line x1="-58" y1="${SUPINE_FLOOR}" x2="118" y2="${SUPINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  "hip-thrust": {
+    /* The bridge with the upper back on a bench and a loaded bar over
+     * the hips (instruction 2). The bar rides the hip: it is drawn AT
+     * the hip anchor every frame. */
+    view: "side",
+    equip: "plate-end",
+    plateR: 13,
+    concentricTo: 1,
+    startsAt: "stretch",
+    viewBox: "-64 20 186 162",
+    groundY: SUPINE_FLOOR,
+    shadowCx: 30,
+    shadowRx: 60,
+    tint: { gluteal: "primary", hamstring: "secondary", abs: "secondary" },
+    pose: (e) => {
+      /* From hips just off the floor (18 degrees down about the
+         shoulder) to the torso horizontal — shoulders, hips and knees
+         in a line, which is the thrust's instruction 3. */
+      const c = supineHinge(e, SUPINE_FLOOR - 48, 40, -2);
+      return {
+        head: c.head,
+        torso: c.torso,
+        pelvis: c.torso,
+        thighL: c.leg.thigh,
+        thighR: c.leg.thigh,
+        shankL: c.leg.shank,
+        shankR: c.leg.shank,
+        upperArmL: c.torso,
+        foreArmL: c.torso,
+        handL: c.torso,
+        upperArmR: c.torso,
+        foreArmR: c.torso,
+        handR: c.torso,
+      };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(
+        [SIDE_ANCHORS.hip[0] + 8, SIDE_ANCHORS.hip[1] - 6],
+        pose.pelvis ?? []
+      );
+      return [h, h];
+    },
+    // Bench at shin height, so the top position lines shoulders, hips
+    // and knees up — a low bench leaves the knees above the hips.
+    scene: () =>
+      `<rect x="-64" y="${SUPINE_FLOOR - 46}" width="48" height="7" rx="2.5" fill="${GEAR}"/>` +
+      `<line x1="-50" y1="${SUPINE_FLOOR - 39}" x2="-50" y2="${SUPINE_FLOOR - 1}" stroke="${GEAR_DARK}" stroke-width="3.4"/>` +
+      `<line x1="-26" y1="${SUPINE_FLOOR - 39}" x2="-26" y2="${SUPINE_FLOOR - 1}" stroke="${GEAR_DARK}" stroke-width="3.4"/>` +
+      `<line x1="-58" y1="${SUPINE_FLOOR}" x2="118" y2="${SUPINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  "bulgarian-split": {
+    /* The lunge chain with the back foot up on a bench (instruction 1);
+     * the front leg does the work. */
+    view: "side",
+    equip: "dumbbell",
+    concentricTo: 0,
+    viewBox: "-40 -6 176 218",
+    groundY: 205,
+    shadowCx: 60,
+    shadowRx: 34,
+    tint: {
+      quadriceps: "primary",
+      gluteal: "secondary",
+      hamstring: "secondary",
+    },
+    pose: (e) => {
+      const c = lungeChain(e, [4, 174]);
+      return {
+        head: c.body,
+        torso: c.body,
+        pelvis: c.body,
+        thighL: c.frontThigh,
+        shankL: c.frontShank,
+        thighR: c.backThigh,
+        shankR: c.backShank,
+        upperArmL: c.body,
+        foreArmL: c.body,
+        handL: c.body,
+        upperArmR: c.body,
+        foreArmR: c.body,
+        handR: c.body,
+      };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+    scene: () =>
+      `<rect x="-24" y="180" width="40" height="6" rx="2.2" fill="${GEAR}"/>` +
+      `<line x1="-18" y1="186" x2="-18" y2="204" stroke="${GEAR_DARK}" stroke-width="3"/>` +
+      `<line x1="10" y1="186" x2="10" y2="204" stroke="${GEAR_DARK}" stroke-width="3"/>` +
       `<line x1="-36" y1="206" x2="132" y2="206" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
   },
 
