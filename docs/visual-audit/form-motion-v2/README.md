@@ -2122,3 +2122,73 @@ guarantee the string was carrying: the animated loop cannot be captured
 by accident. Pinned against the real render in
 `ExerciseRigDemo.test.tsx` — present on both still paths, absent on both
 animated ones — and mutation-checked by deleting the attribute.
+
+## STATUS 2026-09-03w — the placard moves into the ordinary player
+
+Owner, with a screenshot of the bench-press Form tab: "I think we need
+it in this way, that the animation plays in the player, with
+instructions below like this." Two decisions delegated — where the
+muscle groups go, and the best arrangement.
+
+The placard's stage chrome is gone. The frames play in the same card
+every other demo uses, with ONE label line under the figure, and the
+positions are the numbered list below.
+
+| was (03t–03v)                         | now                               |
+| ------------------------------------- | --------------------------------- |
+| muscle key on the stage               | the Primary/Secondary pills below |
+| six-dot rail                          | `1/6` beside the label            |
+| full cue under the figure             | the position's NAME only          |
+| catalogue steps collapsed to nothing  | the six positions ARE the steps   |
+| six panels printed for reduced motion | the ordinary start/end two-up     |
+
+### Why the muscle key went below rather than staying up top
+
+It duplicated the Primary/Secondary pills that already sit under every
+demo, and it cost three lines above the figure — the card's key names
+four secondaries, which wrap. A printed card needs a legend because it
+is a standalone artefact; in the app that context is already on screen
+twice. `getDemoLegend`, `MUSCLE_LABEL` and the placard's `key` override
+are deleted rather than left unused.
+
+### The layout paid for itself in the timing
+
+The reason the loop ran 14 seconds was that each cue had to be READ
+where it stood: seven words at four words a second is 1750 ms, six times
+over. A viewer arriving mid-set landed on "mid descent" and waited ten
+seconds to see the top.
+
+With the cues in the list, the label under the figure only has to be
+recognised, so the hold is a LOOK budget instead of a read budget:
+
+|         | hold    | loop   |
+| ------- | ------- | ------ |
+| 03t–03v | 1750 ms | 14.2 s |
+| now     | 1000 ms | 9.4 s  |
+
+`PLACARD_CUE_WORDS` survives as a scanning limit on the authored cues,
+no longer as a timing input.
+
+### The highlight is the "words appear in time" idea, without its cost
+
+The active row lights as the player reaches it. `ExerciseRigDemo` now
+takes an `onStep` callback; the parent holds the index and marks the
+row. The whole list stays readable at the reader's own pace, so the text
+never paces the animation — which is the trap the first version fell
+into and the reason it had to be slow.
+
+The callback is held in a ref, written in an effect. A caller passing an
+inline arrow re-renders on every step, and an inline arrow in the effect
+deps would restart the animation each time.
+
+### The positions replace the catalogue steps, they do not join them
+
+Two numbered lists describing one movement is the duplication this
+layout removes, and the six positions match the label under the figure
+word for word so a reader can follow along. The catalogue's tip and
+common mistakes still render below, untouched.
+
+`ExerciseFormContent` had no test file at all; it has one now, pinning
+the replacement, the highlight following the player, and — the
+regression worth watching — that a demo WITHOUT beats still shows the
+collapsed catalogue list exactly as before.

@@ -236,22 +236,28 @@ export interface PlacardTiming {
   moveMs: number;
 }
 
-/** The widest cue a hold is sized to carry. Beat cues are authored to
- *  this; `bodyRig.test.ts` holds them to it. */
+/** The widest cue a position may carry. It is a SCANNING limit for the
+ *  step list, not a timing input any more; `bodyRig.test.ts` holds the
+ *  authored cues to it. */
 export const PLACARD_CUE_WORDS = 7;
-/** Ordinary adult reading rate — ~240 wpm. */
-export const PLACARD_WORDS_PER_SECOND = 4;
 
 /**
- * The hold is a READ budget, derived rather than chosen by feel: seven
- * words at four words a second. Shorten the hold and the cues have to
- * shorten with it — which is the coupling this expresses, so the two
- * cannot drift apart silently.
+ * The hold is a LOOK budget, not a read budget — and that change is the
+ * whole reason the loop got watchable.
+ *
+ * The first version put the cue under the figure, so every position had
+ * to stay on screen long enough to READ a sentence: seven words at four
+ * words a second is 1750 ms, and six of those plus the tweens made a
+ * 14-second loop. A viewer arriving mid-set landed on "mid descent"
+ * and waited ten seconds to see the top.
+ *
+ * The cues now live in the numbered list beneath the player, where they
+ * are all visible at once and read at the reader's own pace, and the
+ * label under the figure only NAMES the position. Recognising a name
+ * and a pose takes about a second, so that is what the hold is. The
+ * loop lands near nine seconds.
  */
-export const PLACARD_TIMING: PlacardTiming = {
-  holdMs: (PLACARD_CUE_WORDS / PLACARD_WORDS_PER_SECOND) * 1000,
-  moveMs: 560,
-};
+export const PLACARD_TIMING: PlacardTiming = { holdMs: 1000, moveMs: 560 };
 
 export interface PlacardSample {
   /** Which position we are on, or travelling FROM while `moving`. */
