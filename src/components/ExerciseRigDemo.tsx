@@ -9,6 +9,8 @@ import {
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { getBodyDemo, renderBodyDemo } from "@/lib/bodyRig";
 import {
+  CYCLE_MS_DEFAULT,
+  cycleSampleAt,
   repTimingFor,
   repSampleLoopedAt,
   type RepPhase,
@@ -62,6 +64,7 @@ const PHASE_LABEL: Record<RepPhase, string> = {
   drive: "Drive up",
   lockout: "Lockout",
   done: "Rep complete",
+  cycle: "Steady rhythm",
 };
 
 /**
@@ -120,7 +123,12 @@ export default function ExerciseRigDemo({
      the lift already done. */
   const startsAt: RepStart = demo?.startsAt ?? "lockout";
   const stretchT = liftsToOne ? 0 : 1;
-  const openingT = startsAt === "stretch" ? stretchT : lockoutT;
+  /* A CYCLE (a gait, a pedal stroke, a jump-and-step-down) has no
+     lockout or stretch: t=1 is t=0 again, and it must never play
+     backwards. It opens at t=0 and advances monotonically. */
+  const cycle = demo?.cycle === true;
+  const cycleMs = demo?.cycleMs ?? CYCLE_MS_DEFAULT;
+  const openingT = cycle ? 0 : startsAt === "stretch" ? stretchT : lockoutT;
 
   // First paint = the lockout frame. Stable per instance (the parent keys
   // this component by exercise), so React never rewrites the figure div
@@ -170,8 +178,10 @@ export default function ExerciseRigDemo({
         FPS_INTERVAL *
         Math.max(1, Math.round((now - lastDrawRef.current) / FPS_INTERVAL));
 
-      const sample = repSampleLoopedAt(now - start, timing, startsAt);
-      const t = liftsToOne ? 1 - sample.ecc : sample.ecc;
+      const sample = cycle
+        ? cycleSampleAt(now - start, cycleMs)
+        : repSampleLoopedAt(now - start, timing, startsAt);
+      const t = cycle ? sample.ecc : liftsToOne ? 1 - sample.ecc : sample.ecc;
       // Low-pass the effort so phase changes glow in, never flicker.
       effortRef.current += (sample.targetEffort - effortRef.current) * 0.1;
       draw(renderBodyDemo(exerciseId, t, effortRef.current));
@@ -187,6 +197,8 @@ export default function ExerciseRigDemo({
     liftsToOne,
     openingT,
     startsAt,
+    cycle,
+    cycleMs,
   ]);
 
   /* The demo renders on a fixed DARK stage in both themes (like any
@@ -201,7 +213,9 @@ export default function ExerciseRigDemo({
         className="bg-stage rounded-2xl p-4 mt-4 flex justify-center gap-3"
       >
         {/* START position first, then the far end — so a deadlift reads
-            floor-then-standing rather than the reverse. */}
+            floor-then-standing rather than the reverse. A cycle's far
+            end is its opposite phase (t=0.5): the other foot forward,
+            the other pedal down. */}
         <div
           className="w-1/2 max-w-[150px]"
           dangerouslySetInnerHTML={{
@@ -211,7 +225,10 @@ export default function ExerciseRigDemo({
         <div
           className="w-1/2 max-w-[150px]"
           dangerouslySetInnerHTML={{
-            __html: renderBodyDemo(exerciseId, openingT === 0 ? 1 : 0),
+            __html: renderBodyDemo(
+              exerciseId,
+              cycle ? 0.5 : openingT === 0 ? 1 : 0
+            ),
           }}
         />
       </div>

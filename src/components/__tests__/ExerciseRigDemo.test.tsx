@@ -178,6 +178,47 @@ describe("ExerciseRigDemo", () => {
     reduceRef.current = false;
   });
 
+  it("a cycle demo opens at t=0, cues the steady rhythm, and never runs backwards", () => {
+    // A gait, a pedal stroke, a jump-and-step-down: the rep player's
+    // there-and-back would walk a treadmill backwards.
+    reduceRef.current = false;
+    demoRef.current = { concentricTo: 1, cycle: true, cycleMs: 1000 };
+    const { container } = render(
+      <ExerciseRigDemo exerciseId="treadmill" name="Treadmill" />
+    );
+    expect(container.querySelector('[data-t="0"]')).not.toBeNull();
+    expect(screen.getByText("Set")).toBeInTheDocument();
+    step(40);
+    for (let now = 700; now <= 2400; now += 1000 / 30) step(now);
+    expect(screen.getByText("Steady rhythm")).toBeInTheDocument();
+    expect(screen.queryByText("Lower under control")).toBeNull();
+    const ts = drawLog.map((d) => d.t);
+    // Monotonic between wraps: every decrease is a wrap back near 0,
+    // and there are wraps (the cycle repeats).
+    let wraps = 0;
+    for (let i = 1; i < ts.length; i++) {
+      if (ts[i] < ts[i - 1]) {
+        wraps++;
+        expect(ts[i]).toBeLessThan(0.1);
+      }
+    }
+    expect(wraps).toBeGreaterThan(0);
+    expect(Math.max(...ts)).toBeGreaterThan(0.9);
+  });
+
+  it("a cycle's reduced-motion two-up shows t=0 and its opposite phase t=0.5", () => {
+    reduceRef.current = true;
+    demoRef.current = { concentricTo: 1, cycle: true };
+    const { container } = render(
+      <ExerciseRigDemo exerciseId="treadmill" name="Treadmill" />
+    );
+    const frames = [...container.querySelectorAll("[data-t]")].map((n) =>
+      n.getAttribute("data-t")
+    );
+    expect(frames).toEqual(["0", "0.5"]);
+    reduceRef.current = false;
+  });
+
   it("draw spacing is even under a 60Hz rAF (quantized 30fps steps)", () => {
     reduceRef.current = false;
     render(<ExerciseRigDemo exerciseId="squat" name="Barbell Squat" />);

@@ -80,7 +80,8 @@ export type RepPhase =
   | "pause"
   | "drive"
   | "lockout"
-  | "done";
+  | "done"
+  | "cycle";
 
 /**
  * Where a rep BEGINS, which is not derivable from `concentricTo`.
@@ -181,4 +182,28 @@ export function repSampleAt(elapsedMs: number, timing: RepTiming): RepSample {
   m -= upMs;
   if (m < holdMs) return { phase: "lockout", ecc: 0, targetEffort: 0.55 };
   return { phase: "done", ecc: 0, targetEffort: 0.7 };
+}
+
+/* ── Cycles ──────────────────────────────────────────────────────────
+ *
+ * A gait, a pedal stroke, a stair step, a jump-and-step-down: the pose
+ * at t=1 IS the pose at t=0, and the movement never runs backwards. The
+ * rep timeline above plays every demo there-and-back (drive, then the
+ * eccentric is the same path reversed), which is right for a lift and
+ * wrong for a walk — played back, a treadmill stride walks backwards
+ * and a box jump floats down off the box. A cycle demo declares
+ * `cycle: true` and the player advances t monotonically, wrapping at
+ * the period, after the same one-time Set lead-in. */
+
+/** Default period of one cycle (a brisk walking stride, a pedal turn). */
+export const CYCLE_MS_DEFAULT = 1600;
+
+/** The cycle sample at `elapsedMs`: the Set lead-in holds t=0, then t
+ *  runs 0→1 over `cycleMs` and wraps — never reversing. Effort is
+ *  steady: a cycle has no eccentric to soften on. */
+export function cycleSampleAt(elapsedMs: number, cycleMs: number): RepSample {
+  if (elapsedMs < SET_BEAT_MS)
+    return { phase: "set", ecc: 0, targetEffort: 0.55 };
+  const m = (elapsedMs - SET_BEAT_MS) % cycleMs;
+  return { phase: "cycle", ecc: m / cycleMs, targetEffort: 0.85 };
 }
