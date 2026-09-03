@@ -34,6 +34,33 @@
         "file": "ab-wheel-t100.png"
       }
     ],
+    "arnold-press": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "arnold-press-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "arnold-press-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "arnold-press-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "arnold-press-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "arnold-press-t100.png"
+      }
+    ],
     "barbell-curl": [
       {
         "t": 0,
@@ -113,6 +140,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "barbell-row-t100.png"
+      }
+    ],
+    "barbell-shrug": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "barbell-shrug-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "barbell-shrug-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "barbell-shrug-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "barbell-shrug-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "barbell-shrug-t100.png"
       }
     ],
     "barbell-step-ups": [
@@ -277,6 +331,33 @@
         "file": "bulgarian-split-t100.png"
       }
     ],
+    "cable-crossover": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "cable-crossover-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "cable-crossover-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "cable-crossover-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "cable-crossover-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "cable-crossover-t100.png"
+      }
+    ],
     "cable-crunch": [
       {
         "t": 0,
@@ -329,6 +410,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "cable-curl-t100.png"
+      }
+    ],
+    "cable-fly": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "cable-fly-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "cable-fly-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "cable-fly-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "cable-fly-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "cable-fly-t100.png"
       }
     ],
     "cable-glute-kickback": [
@@ -520,6 +628,33 @@
         "file": "crunches-t100.png"
       }
     ],
+    "cuban-press": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "cuban-press-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "cuban-press-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "cuban-press-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "cuban-press-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "cuban-press-t100.png"
+      }
+    ],
     "db-curl": [
       {
         "t": 0,
@@ -545,6 +680,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "db-curl-t100.png"
+      }
+    ],
+    "db-flyes": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "db-flyes-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "db-flyes-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "db-flyes-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "db-flyes-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "db-flyes-t100.png"
       }
     ],
     "deadlift": [
@@ -1330,6 +1492,33 @@
         "file": "leg-raise-t100.png"
       }
     ],
+    "lu-raise": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "lu-raise-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "lu-raise-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "lu-raise-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "lu-raise-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "lu-raise-t100.png"
+      }
+    ],
     "lunges": [
       {
         "t": 0,
@@ -1355,6 +1544,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "lunges-t100.png"
+      }
+    ],
+    "machine-chest-fly": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "machine-chest-fly-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "machine-chest-fly-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "machine-chest-fly-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "machine-chest-fly-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "machine-chest-fly-t100.png"
       }
     ],
     "meadows-row": [
@@ -1517,6 +1733,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "overhead-press-t100.png"
+      }
+    ],
+    "pec-deck": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "pec-deck-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "pec-deck-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "pec-deck-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "pec-deck-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "pec-deck-t100.png"
       }
     ],
     "pike-push-up": [
@@ -1895,6 +2138,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "shoulder-press-machine-t100.png"
+      }
+    ],
+    "shrugs": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "shrugs-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "shrugs-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "shrugs-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "shrugs-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "shrugs-t100.png"
       }
     ],
     "single-arm-cable-pushdown": [

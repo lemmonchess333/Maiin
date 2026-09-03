@@ -1096,6 +1096,17 @@ describe("renderBodyDemo", () => {
       "l-sit": "stretch",
       "muscle-ups": "stretch",
       "clean-and-press": "stretch",
+      // Batch 11 (the frontal plane): every one starts at its stretch.
+      "db-flyes": "stretch",
+      "cable-fly": "stretch",
+      "cable-crossover": "stretch",
+      "pec-deck": "stretch",
+      "machine-chest-fly": "stretch",
+      "lu-raise": "stretch",
+      "arnold-press": "stretch",
+      "cuban-press": "stretch",
+      shrugs: "stretch",
+      "barbell-shrug": "stretch",
     };
     expect(Object.keys(START).sort()).toEqual(Object.keys(BODY_DEMOS).sort());
     for (const [id, expected] of Object.entries(START)) {
@@ -3025,6 +3036,169 @@ describe("renderBodyDemo", () => {
       expect(S1[1] - h1[1], "press: overhead").toBeGreaterThan(60);
       expect(elbowDeg(id, 1), "press: lockout").toBeGreaterThan(160);
     }
+
+    /* Batch 11: the frontal plane, on the FRONT figure. */
+    const AS: Record<string, [number, number]> = {
+      shoulderL: [24, 48],
+      shoulderR: [76, 48],
+      elbowL: [20, 71],
+      elbowR: [80, 71],
+      handL: [3.5, 101.2],
+      handR: [96.1, 101.2],
+    };
+    const antAt = (id: string, t: number) => {
+      const p = at(id, t);
+      return {
+        EL: pt(AS.elbowL, p.foreArmL),
+        HL: pt(AS.handL, p.foreArmL),
+        ER: pt(AS.elbowR, p.foreArmR),
+        HR: pt(AS.handR, p.foreArmR),
+        SL: pt(AS.shoulderL, p.upperArmL),
+        SR: pt(AS.shoulderR, p.upperArmR),
+      };
+    };
+    const span = (id: string, t: number) => {
+      const a = antAt(id, t);
+      return a.HR[0] - a.HL[0];
+    };
+    // Flys: hands wide in the fly plane at the stretch, together over
+    // the chest at the top, never far from the shoulder line.
+    for (const id of ["db-flyes", "cable-fly", "machine-chest-fly"]) {
+      expect(span(id, 0), `${id}: wide stretch`).toBeGreaterThan(140);
+      expect(span(id, 1), `${id}: together at the top`).toBeLessThan(16);
+      for (const t of [0, 1]) {
+        const a = antAt(id, t);
+        expect(
+          Math.abs(a.HL[1] - AS.shoulderL[1]),
+          `${id}: in the fly plane @${t}`
+        ).toBeLessThan(14);
+      }
+    }
+    // Crossover: from above the shoulders, wide, to together in front of
+    // the hips; the pulleys high.
+    {
+      const id = "cable-crossover";
+      expect(
+        antAt(id, 0).HL[1],
+        "crossover: hands high at the stretch"
+      ).toBeLessThan(30);
+      expect(span(id, 0), "crossover: wide at the stretch").toBeGreaterThan(
+        130
+      );
+      expect(span(id, 1), "crossover: together at the bottom").toBeLessThan(18);
+      expect(
+        antAt(id, 1).HL[1],
+        "crossover: in front of the hips"
+      ).toBeGreaterThan(96);
+      for (const p of BODY_DEMOS[id].pivots!)
+        expect(p[1], "crossover: pulleys high").toBeLessThan(0);
+    }
+    // Pec deck: "elbows at shoulder height" every frame, forearms vertical
+    // on the pads every frame, and the pads squeezed together.
+    {
+      const id = "pec-deck";
+      for (const t of [0, 0.5, 1]) {
+        const a = antAt(id, t);
+        expect(
+          Math.abs(a.EL[1] - AS.shoulderL[1]),
+          `pec deck: elbow at shoulder height @${t}`
+        ).toBeLessThan(2);
+        expect(
+          Math.abs(a.HL[0] - a.EL[0]),
+          `pec deck: forearm vertical @${t}`
+        ).toBeLessThan(0.5);
+        expect(a.EL[1] - a.HL[1], `pec deck: forearm up @${t}`).toBeGreaterThan(
+          30
+        );
+      }
+      expect(span(id, 0), "pec deck: open").toBeGreaterThan(90);
+      expect(span(id, 1), "pec deck: squeezed together").toBeLessThan(30);
+    }
+    // Lu raise: a lateral raise to shoulder height by the half, then the
+    // bells together in front at shoulder height.
+    {
+      const id = "lu-raise";
+      const mid = antAt(id, 0.5);
+      expect(
+        Math.abs(mid.HL[1] - AS.shoulderL[1]),
+        "lu: shoulder height at the half"
+      ).toBeLessThan(6);
+      expect(span(id, 0.5), "lu: wide at the half").toBeGreaterThan(150);
+      const top = antAt(id, 1);
+      expect(span(id, 1), "lu: together in front").toBeLessThan(16);
+      expect(
+        Math.abs(top.HL[1] - AS.shoulderL[1]),
+        "lu: still at shoulder height"
+      ).toBeLessThan(6);
+    }
+    // Arnold press: bells in front of the shoulders at the start (elbows
+    // in, hands above), elbows out wide at shoulder height by the swing's
+    // end, then a full lockout overhead.
+    {
+      const id = "arnold-press";
+      const a0 = antAt(id, 0);
+      expect(
+        Math.abs(a0.EL[0] - AS.shoulderL[0]),
+        "arnold: elbows in front at the start"
+      ).toBeLessThan(12);
+      expect(a0.HL[1], "arnold: bells up before the face").toBeLessThan(30);
+      const aS = antAt(id, 0.35);
+      expect(
+        Math.abs(aS.EL[1] - AS.shoulderL[1]),
+        "arnold: elbows at shoulder height after the swing"
+      ).toBeLessThan(3);
+      expect(
+        AS.shoulderL[0] - aS.EL[0],
+        "arnold: elbows out wide"
+      ).toBeGreaterThan(18);
+      const a1 = antAt(id, 1);
+      expect(a1.HL[1], "arnold: overhead").toBeLessThan(-4);
+      expect(jointDeg(a1.SL, a1.EL, a1.HL), "arnold: lockout").toBeGreaterThan(
+        165
+      );
+    }
+    // Cuban press: row top with elbows leading (at shoulder height, hands
+    // below them); rotated with the hands above the elbows; then lockout.
+    {
+      const id = "cuban-press";
+      const row = antAt(id, 1 / 3);
+      expect(
+        Math.abs(row.EL[1] - AS.shoulderL[1]),
+        "cuban: elbows lead to shoulder height"
+      ).toBeLessThan(4);
+      expect(
+        row.HL[1] - row.EL[1],
+        "cuban: hands below the elbows at the row"
+      ).toBeGreaterThan(25);
+      const rot = antAt(id, 2 / 3);
+      expect(
+        rot.EL[1] - rot.HL[1],
+        "cuban: rotated — hands above the elbows"
+      ).toBeGreaterThan(25);
+      const a1 = antAt(id, 1);
+      expect(
+        jointDeg(a1.SL, a1.EL, a1.HL),
+        "cuban: lockout overhead"
+      ).toBeGreaterThan(165);
+      expect(a1.HL[1], "cuban: overhead").toBeLessThan(-4);
+    }
+    // Shrugs: the shoulders (cap + arm) rise strictly vertically with a
+    // straight arm; the trunk does not move.
+    for (const id of ["shrugs", "barbell-shrug"]) {
+      const a0 = antAt(id, 0);
+      const a1 = antAt(id, 1);
+      expect(a0.HL[1] - a1.HL[1], `${id}: rise`).toBeGreaterThan(6);
+      expect(a0.HL[1] - a1.HL[1], `${id}: rise`).toBeLessThan(8.5);
+      expect(
+        Math.abs(a1.HL[0] - a0.HL[0]),
+        `${id}: strictly vertical`
+      ).toBeLessThan(0.01);
+      expect(a0.EL[1] - a1.EL[1], `${id}: the whole arm rises`).toBeCloseTo(
+        a0.HL[1] - a1.HL[1],
+        5
+      );
+      expect(at(id, 1).torso, `${id}: trunk still`).toBeUndefined();
+    }
   });
 
   it("the foot has a heel, an arch and a toe — not a wedge", () => {
@@ -3621,6 +3795,17 @@ describe("tint honesty", () => {
       "l-sit": "abs",
       "muscle-ups": "upper-back",
       "clean-and-press": "gluteal",
+      "db-flyes": "chest",
+      "cable-fly": "chest",
+      "cable-crossover": "chest",
+      "pec-deck": "chest",
+      "machine-chest-fly": "chest",
+      "lu-raise": "front-deltoids",
+      "arnold-press": "front-deltoids",
+      "cuban-press": "front-deltoids",
+      // The front figure draws no trapezius; the cap that rises is the deltoid.
+      shrugs: "front-deltoids",
+      "barbell-shrug": "front-deltoids",
     };
     for (const [id, muscle] of Object.entries(expectPrimary)) {
       expect(BODY_DEMOS[id].tint[muscle], `${id} primary`).toBe("primary");

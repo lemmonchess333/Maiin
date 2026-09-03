@@ -73,6 +73,10 @@ const DEMOS: [id: string, name: string][] = [
   ["plank", "Plank"],
   ["muscle-ups", "Muscle-Ups"],
   ["clean-and-press", "Clean and Press"],
+  // Batch 11: the front camera — a foreshortened fly, the deck, the Arnold.
+  ["db-flyes", "Dumbbell Flyes"],
+  ["pec-deck", "Pec Deck"],
+  ["arnold-press", "Arnold Press"],
 ];
 
 test.use({

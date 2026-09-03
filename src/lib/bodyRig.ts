@@ -595,7 +595,9 @@ export interface BodyDemo {
     | "cable-handle"
     | "kettlebell"
     | "landmine"
-    | "lever-handle";
+    | "lever-handle"
+    | "frontal-cables"
+    | "frontal-levers";
   /** plate-end disc radius (default 10). The deadlift draws a
    *  full-size 45 (r=26 ≈ 45 cm on a 175 cm figure) so the bottom
    *  frame reads bar-near-the-floor. */
@@ -612,6 +614,9 @@ export interface BodyDemo {
   /** `landmine` / `lever-handle`: the fixed pivot the bar or lever arm
    *  swings about — a floor sleeve, a machine's hinge. */
   pivot?: Pt;
+  /** `frontal-cables` / `frontal-levers`: the two anchors (pulleys or
+   *  lever hinges) a front-on pair of cables or levers runs from. */
+  pivots?: [Pt, Pt];
   bar?: (_e: number, pose: Partial<Record<GroupName, Op[]>>) => [Pt, Pt] | null;
   /** Free scene furniture (a bench, a floor line) drawn behind the
    *  body — raw SVG in GEAR colours. Side-view demos use this. */
@@ -1767,6 +1772,152 @@ function chestSupportedPadScene(
     `<line x1="-6" y1="${MACHINE_FLOOR + 1}" x2="166" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`
   );
 }
+
+/* ── Anterior arm helpers (2026-09-03 batch 11, the frontal plane) ──
+ * The front figure's arms are two segments on measured anchors, and the
+ * one thing the front camera can do that the profile cannot is show an
+ * arm coming AT the viewer: `scaleAxis` shortens a limb along its own
+ * length while keeping its width, which is exactly what foreshortening
+ * looks like. These helpers aim an arm at a WORLD hand and derive the
+ * foreshortening from how far short of a full reach that hand sits. */
+const ANT_ARM_LEN = ANT_UPPER_LEN + ANT_FORE_LEN;
+function antRest(side: "L" | "R"): { S: Pt; E: Pt; H: Pt; out: 1 | -1 } {
+  return side === "L"
+    ? { S: ANT.shoulderL, E: ANT.elbowL, H: ANT.handL, out: 1 }
+    : { S: ANT.shoulderR, E: ANT.elbowR, H: ANT.handR, out: -1 };
+}
+/** The `scaleAxis` angle that scales ALONG direction `d` (its deg is
+ *  measured from vertical in the rotate convention). */
+function axisDeg(d: Pt): number {
+  return (Math.atan2(d[0], -d[1]) * 180) / Math.PI;
+}
+/** A near-straight anterior arm aimed at a world hand. A hand nearer
+ *  than the arm's reach is read as the arm pointing TOWARD the viewer,
+ *  so the arm is foreshortened along its axis to land on it; a hand
+ *  further than the reach clamps to a full in-plane arm. */
+function antArmToward(
+  side: "L" | "R",
+  hand: Pt,
+  reach = 0.985
+): { upper: Op[]; fore: Op[] } {
+  const r = antRest(side);
+  const dx = hand[0] - r.S[0];
+  const dy = hand[1] - r.S[1];
+  const dist = Math.hypot(dx, dy) || 1;
+  const d: Pt = [dx / dist, dy / dist];
+  const full = ANT_ARM_LEN * reach;
+  const k = Math.min(1, dist / full);
+  const T: Pt = [r.S[0] + d[0] * full, r.S[1] + d[1] * full];
+  const arm = aimArm(
+    { S: r.S, E: r.E, H: r.H },
+    solveElbow(r.S, T, ANT_UPPER_LEN, ANT_FORE_LEN, r.out),
+    T,
+    0
+  );
+  const scale: Op = { kind: "scaleAxis", k, deg: axisDeg(d), pivot: r.S };
+  return { upper: [...arm.upper, scale], fore: [...arm.fore, scale] };
+}
+/** Anterior upper arm aimed at a world ELBOW (foreshortened when it sits
+ *  nearer than the upper arm's length — an elbow in front of the body),
+ *  with the forearm standing vertical from it, up or down, unscaled. */
+function antElbowAt(
+  side: "L" | "R",
+  elbow: Pt,
+  foreDir: "up" | "down"
+): { upper: Op[]; fore: Op[]; hand: Pt } {
+  const r = antRest(side);
+  const dx = elbow[0] - r.S[0];
+  const dy = elbow[1] - r.S[1];
+  const dist = Math.hypot(dx, dy) || 1;
+  const d: Pt = [dx / dist, dy / dist];
+  const ua = angleBetween([r.E[0] - r.S[0], r.E[1] - r.S[1]], d);
+  const k = Math.min(1, dist / ANT_UPPER_LEN);
+  const upper: Op[] = [
+    { kind: "rotate", deg: ua, pivot: r.S },
+    { kind: "scaleAxis", k, deg: axisDeg(d), pivot: r.S },
+  ];
+  const fa = angleBetween(
+    [r.H[0] - r.E[0], r.H[1] - r.E[1]],
+    foreDir === "up" ? [0, -1] : [0, 1]
+  );
+  const fore: Op[] = [
+    { kind: "rotate", deg: fa, pivot: r.E },
+    { kind: "translate", dx: elbow[0] - r.E[0], dy: elbow[1] - r.E[1] },
+  ];
+  const hand: Pt = [
+    elbow[0],
+    elbow[1] + (foreDir === "up" ? -ANT_FORE_LEN : ANT_FORE_LEN),
+  ];
+  return { upper, fore, hand };
+}
+/** Forearm swung about a fixed world elbow from pointing DOWN to pointing
+ *  UP through the viewer (an external rotation seen from the front):
+ *  at t=0.5 it points at the camera and is drawn shortest. */
+function antForeRotate(
+  side: "L" | "R",
+  elbow: Pt,
+  t: number
+): { fore: Op[]; hand: Pt } {
+  const r = antRest(side);
+  const up = t >= 0.5;
+  const fa = angleBetween(
+    [r.H[0] - r.E[0], r.H[1] - r.E[1]],
+    up ? [0, -1] : [0, 1]
+  );
+  const k = Math.max(0.12, Math.abs(Math.cos(Math.PI * t)));
+  const fore: Op[] = [
+    { kind: "rotate", deg: fa, pivot: r.E },
+    { kind: "scaleAxis", k, deg: 0, pivot: r.E },
+    { kind: "translate", dx: elbow[0] - r.E[0], dy: elbow[1] - r.E[1] },
+  ];
+  const hand: Pt = [elbow[0], elbow[1] + (up ? -1 : 1) * ANT_FORE_LEN * k];
+  return { fore, hand };
+}
+const antHands = (
+  _e: number,
+  pose: Partial<Record<GroupName, Op[]>>
+): [Pt, Pt] => [
+  applyToPoint(ANT.handL, pose.foreArmL ?? []),
+  applyToPoint(ANT.handR, pose.foreArmR ?? []),
+];
+/** The lateral raise's arm sweep (shared with the Lu raise's first half). */
+function lateralRaiseOps(e: number): Partial<Record<GroupName, Op[]>> {
+  const arm = lerp(4, 72, e);
+  const lift: Op = { kind: "translate", dx: 0, dy: -1.7 * e };
+  return {
+    upperArmL: [{ kind: "rotate", deg: arm, pivot: ANT.shoulderL }, lift],
+    foreArmL: [
+      { kind: "rotate", deg: -10, pivot: ANT.elbowL },
+      { kind: "rotate", deg: arm, pivot: ANT.shoulderL },
+      lift,
+    ],
+    upperArmR: [{ kind: "rotate", deg: -arm, pivot: ANT.shoulderR }, lift],
+    foreArmR: [
+      { kind: "rotate", deg: 10, pivot: ANT.elbowR },
+      { kind: "rotate", deg: -arm, pivot: ANT.shoulderR },
+      lift,
+    ],
+  };
+}
+const FLY_WIDE = 80;
+/** How far the shoulders rise in a shrug (the arm group carries the
+ *  deltoid cap, so this is the cap's travel). */
+const SHRUG_RISE = 7;
+/** Pec-deck finish: the elbow this far INSIDE the shoulder line (negative
+ *  "out"), so the forearm pads meet in front of the chest. */
+const PEC_DECK_IN = -13;
+const CHEST_PULLEYS: [Pt, Pt] = [
+  [-36, 46],
+  [136, 46],
+];
+const HIGH_PULLEYS: [Pt, Pt] = [
+  [-36, -16],
+  [136, -16],
+];
+const FLY_LEVERS: [Pt, Pt] = [
+  [-10, -2],
+  [110, -2],
+];
 
 export const BODY_DEMOS: Record<string, BodyDemo> = {
   squat: {
@@ -6357,6 +6508,421 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       return [h, h];
     },
   },
+
+  /* ── 2026-09-03 build-out, batch 11: the frontal plane ── */
+
+  "db-flyes": {
+    /* "Lie flat with dumbbells pressed straight up over your chest. Set
+     * a soft bend in your elbows — lock that angle ... lower the weights
+     * in a wide arc until you feel a stretch across your chest. Squeeze
+     * ... back together above your chest." The camera is ABOVE the
+     * bench: the wide stretch lies in the picture plane, and at the top
+     * both arms point at the viewer, drawn foreshortened with the bells
+     * meeting over the chest. */
+    view: "anterior",
+    equip: "dumbbell",
+    viewBox: "-44 -14 188 224",
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { chest: "primary", "front-deltoids": "secondary" },
+    pose: (e) => {
+      const spread = lerp(FLY_WIDE, 7, e);
+      const y = lerp(56, 42, e);
+      const L = antArmToward("L", [50 - spread, y]);
+      const R = antArmToward("R", [50 + spread, y]);
+      return {
+        upperArmL: L.upper,
+        foreArmL: L.fore,
+        upperArmR: R.upper,
+        foreArmR: R.fore,
+      };
+    },
+    bar: antHands,
+  },
+
+  "cable-fly": {
+    /* "Set pulleys at chest height, grab a handle in each hand, step
+     * forward. Set a soft bend ... bring your hands together in front of
+     * your chest in a wide arc. Open slowly to a full chest stretch."
+     * Standing, front-on, cables from chest-height pulleys either side;
+     * the hands sweep from wide to together in front of the chest — the
+     * finish is toward the viewer, so the arms foreshorten. */
+    view: "anterior",
+    equip: "frontal-cables",
+    pivots: CHEST_PULLEYS,
+    viewBox: "-44 -14 188 224",
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { chest: "primary", "front-deltoids": "secondary" },
+    pose: (e) => {
+      const spread = lerp(78, 6, e);
+      const y = lerp(54, 52, e);
+      const L = antArmToward("L", [50 - spread, y]);
+      const R = antArmToward("R", [50 + spread, y]);
+      return {
+        upperArmL: L.upper,
+        foreArmL: L.fore,
+        upperArmR: R.upper,
+        foreArmR: R.fore,
+      };
+    },
+    bar: antHands,
+  },
+
+  "cable-crossover": {
+    /* "Set both pulleys high ... step forward with a slight forward lean
+     * and a soft bend at the elbows. Pull the handles down and together
+     * in front of your hips in a wide arc. Squeeze hard at the bottom."
+     * Cables from high pulleys either side; hands from high-and-wide to
+     * together in front of the hips. */
+    view: "anterior",
+    equip: "frontal-cables",
+    pivots: HIGH_PULLEYS,
+    viewBox: "-44 -30 188 240",
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { chest: "primary", "front-deltoids": "secondary" },
+    pose: (e) => {
+      const spread = lerp(72, 6, e);
+      const y = lerp(20, 106, e);
+      const L = antArmToward("L", [50 - spread, y]);
+      const R = antArmToward("R", [50 + spread, y]);
+      return {
+        upperArmL: L.upper,
+        foreArmL: L.fore,
+        upperArmR: R.upper,
+        foreArmR: R.fore,
+      };
+    },
+    bar: antHands,
+  },
+
+  "pec-deck": {
+    /* "Place your forearms on the pads with elbows at shoulder height.
+     * Squeeze the pads together in front of your chest ... open slowly
+     * to a full stretch." Elbows held at shoulder height (pinned) and
+     * swung from out wide to in front of the chest — toward the viewer,
+     * so the upper arms foreshorten — with the forearms standing
+     * vertical on the pads throughout. */
+    view: "anterior",
+    viewBox: "-24 -14 148 224",
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { chest: "primary", "front-deltoids": "secondary" },
+    pose: (e) => {
+      // Out wide → in FRONT and inward: the upper arms cross toward the
+      // midline as they come at the viewer, so the pads meet.
+      const out = lerp(23, PEC_DECK_IN, e);
+      const L = antElbowAt(
+        "L",
+        [ANT.shoulderL[0] - out, ANT.shoulderL[1]],
+        "up"
+      );
+      const R = antElbowAt(
+        "R",
+        [ANT.shoulderR[0] + out, ANT.shoulderR[1]],
+        "up"
+      );
+      return {
+        upperArmL: L.upper,
+        foreArmL: L.fore,
+        upperArmR: R.upper,
+        foreArmR: R.fore,
+      };
+    },
+    scene: (e) => {
+      // The pads: a slab along each forearm, from the elbow up.
+      const out = lerp(23, PEC_DECK_IN, e);
+      const pad = (x: number) =>
+        `<rect x="${(x - 5).toFixed(1)}" y="${(ANT.shoulderL[1] - ANT_FORE_LEN - 2).toFixed(1)}" width="10" height="${(ANT_FORE_LEN + 6).toFixed(1)}" rx="3" fill="${GEAR}"/>`;
+      return pad(ANT.shoulderL[0] - out) + pad(ANT.shoulderR[0] + out);
+    },
+  },
+
+  "machine-chest-fly": {
+    /* "Sit with your back flat and grip the handles at chest height. Set
+     * a soft bend in your elbows and lock that angle ... bring the
+     * handles together in front of your chest." The cable fly's sweep on
+     * a machine's lever arms, from pivots above the shoulders. */
+    view: "anterior",
+    equip: "frontal-levers",
+    pivots: FLY_LEVERS,
+    viewBox: "-44 -14 188 224",
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { chest: "primary", "front-deltoids": "secondary" },
+    pose: (e) => {
+      const spread = lerp(76, 6, e);
+      const L = antArmToward("L", [50 - spread, 50]);
+      const R = antArmToward("R", [50 + spread, 50]);
+      return {
+        upperArmL: L.upper,
+        foreArmL: L.fore,
+        upperArmR: R.upper,
+        foreArmR: R.fore,
+      };
+    },
+    bar: antHands,
+  },
+
+  "lu-raise": {
+    /* "Raise your arms out to shoulder height like a lateral raise. At
+     * the top, rotate forward and bring the dumbbells together in
+     * front. Reverse through both segments." The lateral raise's own
+     * sweep for the first half, then the arms swing forward at shoulder
+     * height to meet in front — toward the viewer, foreshortened. */
+    view: "anterior",
+    equip: "dumbbell",
+    viewBox: "-44 -14 188 224",
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { "front-deltoids": "primary" },
+    pose: (e) => {
+      if (e <= 0.5) return lateralRaiseOps(e * 2);
+      const top = lateralRaiseOps(1);
+      const hL = applyToPoint(ANT.handL, top.foreArmL ?? []);
+      const hR = applyToPoint(ANT.handR, top.foreArmR ?? []);
+      const k = smooth((e - 0.5) * 2);
+      const L = antArmToward("L", [
+        lerp(hL[0], 44, k),
+        lerp(hL[1], ANT.shoulderL[1], k),
+      ]);
+      const R = antArmToward("R", [
+        lerp(hR[0], 56, k),
+        lerp(hR[1], ANT.shoulderR[1], k),
+      ]);
+      return {
+        upperArmL: L.upper,
+        foreArmL: L.fore,
+        upperArmR: R.upper,
+        foreArmR: R.fore,
+      };
+    },
+    bar: antHands,
+  },
+
+  "arnold-press": {
+    /* "Dumbbells at chest height, palms facing you. As you press up,
+     * rotate the dumbbells so palms face forward at lockout. Press to
+     * full extension." The rotation is what the front shows: the elbows
+     * start IN FRONT of the body (upper arms pointing at the viewer,
+     * forearms up with the bells before the face), swing out to the
+     * sides at shoulder height, then the press goes overhead. */
+    view: "anterior",
+    equip: "dumbbell",
+    viewBox: "-24 -40 148 250",
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { "front-deltoids": "primary", triceps: "secondary" },
+    pose: (e) => {
+      const SWING = 0.35;
+      if (e <= SWING) {
+        const k = smooth(e / SWING);
+        const out = lerp(7, 23, k);
+        const L = antElbowAt(
+          "L",
+          [ANT.shoulderL[0] - out, ANT.shoulderL[1] + lerp(3, 0, k)],
+          "up"
+        );
+        const R = antElbowAt(
+          "R",
+          [ANT.shoulderR[0] + out, ANT.shoulderR[1] + lerp(3, 0, k)],
+          "up"
+        );
+        return {
+          upperArmL: L.upper,
+          foreArmL: L.fore,
+          upperArmR: R.upper,
+          foreArmR: R.fore,
+        };
+      }
+      const k = smooth((e - SWING) / (1 - SWING));
+      const startL: Pt = [
+        ANT.shoulderL[0] - 23,
+        ANT.shoulderL[1] - ANT_FORE_LEN,
+      ];
+      const startR: Pt = [
+        ANT.shoulderR[0] + 23,
+        ANT.shoulderR[1] - ANT_FORE_LEN,
+      ];
+      const hl: Pt = [
+        lerp(startL[0], ANT.shoulderL[0] - 6, k),
+        lerp(startL[1], ANT.shoulderL[1] - ANT_ARM_LEN * 0.995, k),
+      ];
+      const hr: Pt = [
+        lerp(startR[0], ANT.shoulderR[0] + 6, k),
+        lerp(startR[1], ANT.shoulderR[1] - ANT_ARM_LEN * 0.995, k),
+      ];
+      const L = aimArm(
+        { S: ANT.shoulderL, E: ANT.elbowL, H: ANT.handL },
+        solveElbow(ANT.shoulderL, hl, ANT_UPPER_LEN, ANT_FORE_LEN, 1),
+        hl,
+        0
+      );
+      const R = aimArm(
+        { S: ANT.shoulderR, E: ANT.elbowR, H: ANT.handR },
+        solveElbow(ANT.shoulderR, hr, ANT_UPPER_LEN, ANT_FORE_LEN, -1),
+        hr,
+        0
+      );
+      return {
+        upperArmL: L.upper,
+        foreArmL: L.fore,
+        upperArmR: R.upper,
+        foreArmR: R.fore,
+      };
+    },
+    bar: antHands,
+  },
+
+  "cuban-press": {
+    /* "Upright-row to chest height with elbows leading. From there,
+     * rotate your shoulders so the dumbbells point up. Press overhead,
+     * then reverse each segment." Three segments on one e: the row (hands
+     * up the front, elbows high and wide), the external rotation (the
+     * forearm swings from hanging to upright THROUGH the viewer — drawn
+     * shortest as it passes), then the press. */
+    view: "anterior",
+    equip: "dumbbell",
+    viewBox: "-24 -40 148 250",
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { "front-deltoids": "primary", triceps: "secondary" },
+    pose: (e) => {
+      const ROW = 1 / 3;
+      const ROT = 2 / 3;
+      const elbowL: Pt = [ANT.shoulderL[0] - 22, ANT.shoulderL[1] + 2];
+      const elbowR: Pt = [ANT.shoulderR[0] + 22, ANT.shoulderR[1] + 2];
+      if (e <= ROW) {
+        const k = smooth(e / ROW);
+        // Row: hands rise up the front, elbows leading out and up.
+        const hl: Pt = [
+          lerp(ANT.shoulderL[0] + 6, elbowL[0], k),
+          lerp(104, elbowL[1] + ANT_FORE_LEN, k),
+        ];
+        const hr: Pt = [
+          lerp(ANT.shoulderR[0] - 6, elbowR[0], k),
+          lerp(104, elbowR[1] + ANT_FORE_LEN, k),
+        ];
+        // "Elbows leading": of the two elbow solutions, the HIGH one.
+        const L = aimArm(
+          { S: ANT.shoulderL, E: ANT.elbowL, H: ANT.handL },
+          ELBOW_HIGH(
+            solveElbow(ANT.shoulderL, hl, ANT_UPPER_LEN, ANT_FORE_LEN, 1),
+            solveElbow(ANT.shoulderL, hl, ANT_UPPER_LEN, ANT_FORE_LEN, -1)
+          ),
+          hl,
+          0
+        );
+        const R = aimArm(
+          { S: ANT.shoulderR, E: ANT.elbowR, H: ANT.handR },
+          ELBOW_HIGH(
+            solveElbow(ANT.shoulderR, hr, ANT_UPPER_LEN, ANT_FORE_LEN, 1),
+            solveElbow(ANT.shoulderR, hr, ANT_UPPER_LEN, ANT_FORE_LEN, -1)
+          ),
+          hr,
+          0
+        );
+        return {
+          upperArmL: L.upper,
+          foreArmL: L.fore,
+          upperArmR: R.upper,
+          foreArmR: R.fore,
+        };
+      }
+      const upL = antElbowAt("L", elbowL, "up");
+      const upR = antElbowAt("R", elbowR, "up");
+      if (e <= ROT) {
+        const t = (e - ROW) / (ROT - ROW);
+        const fL = antForeRotate("L", elbowL, t);
+        const fR = antForeRotate("R", elbowR, t);
+        return {
+          upperArmL: upL.upper,
+          foreArmL: fL.fore,
+          upperArmR: upR.upper,
+          foreArmR: fR.fore,
+        };
+      }
+      const k = smooth((e - ROT) / (1 - ROT));
+      const hl: Pt = [
+        lerp(upL.hand[0], ANT.shoulderL[0] - 6, k),
+        lerp(upL.hand[1], ANT.shoulderL[1] - ANT_ARM_LEN * 0.995, k),
+      ];
+      const hr: Pt = [
+        lerp(upR.hand[0], ANT.shoulderR[0] + 6, k),
+        lerp(upR.hand[1], ANT.shoulderR[1] - ANT_ARM_LEN * 0.995, k),
+      ];
+      const L = aimArm(
+        { S: ANT.shoulderL, E: ANT.elbowL, H: ANT.handL },
+        solveElbow(ANT.shoulderL, hl, ANT_UPPER_LEN, ANT_FORE_LEN, 1),
+        hl,
+        0
+      );
+      const R = aimArm(
+        { S: ANT.shoulderR, E: ANT.elbowR, H: ANT.handR },
+        solveElbow(ANT.shoulderR, hr, ANT_UPPER_LEN, ANT_FORE_LEN, -1),
+        hr,
+        0
+      );
+      return {
+        upperArmL: L.upper,
+        foreArmL: L.fore,
+        upperArmR: R.upper,
+        foreArmR: R.fore,
+      };
+    },
+    bar: antHands,
+  },
+
+  shrugs: {
+    /* "Stand tall with dumbbells at your sides, arms straight. Shrug
+     * your shoulders straight up toward your ears — no rolling." The
+     * front figure's deltoids ride the upper-arm group, so the whole
+     * arm-and-cap rises with the bells while the trunk stays put — a
+     * shrug is the shoulders rising, and that is what rises. Strictly
+     * vertical (pinned). */
+    view: "anterior",
+    equip: "dumbbell",
+    concentricTo: 1,
+    startsAt: "stretch",
+    // The traps are not drawn on the front figure; the deltoid cap is the
+    // part that visibly rises.
+    tint: { "front-deltoids": "primary", forearm: "secondary" },
+    pose: (e) => {
+      const lift: Op[] = [{ kind: "translate", dx: 0, dy: -SHRUG_RISE * e }];
+      return {
+        upperArmL: lift,
+        foreArmL: lift,
+        upperArmR: lift,
+        foreArmR: lift,
+      };
+    },
+    bar: antHands,
+  },
+
+  "barbell-shrug": {
+    /* "Stand with the bar at your thighs ... shrug your shoulders straight
+     * up toward your ears, arms straight ... strictly vertical — no
+     * rolling, no rocking." The shrug with the bar across the thighs. */
+    view: "anterior",
+    equip: "barbell",
+    plateR: 9,
+    concentricTo: 1,
+    startsAt: "stretch",
+    // The traps are not drawn on the front figure; the deltoid cap is the
+    // part that visibly rises.
+    tint: { "front-deltoids": "primary", forearm: "secondary" },
+    pose: (e) => {
+      const lift: Op[] = [{ kind: "translate", dx: 0, dy: -SHRUG_RISE * e }];
+      return {
+        upperArmL: lift,
+        foreArmL: lift,
+        upperArmR: lift,
+        foreArmR: lift,
+      };
+    },
+    bar: antHands,
+  },
 };
 
 /** Sibling exercises that share a demo's motion pattern.
@@ -6571,6 +7137,17 @@ function resolveProp(
     case "landmine":
       if (demo.pivot)
         state = { kind: "landmine", pivot: demo.pivot, hand: left };
+      break;
+    case "frontal-cables":
+    case "frontal-levers":
+      if (demo.pivots) {
+        state = {
+          kind: "frontalPair",
+          anchors: demo.pivots,
+          hands: [left, right],
+          style: demo.equip === "frontal-cables" ? "cable" : "lever",
+        };
+      }
       break;
     case "lever-handle":
       if (demo.pivot) {
@@ -6802,9 +7379,14 @@ export function renderBodyDemo(
   const groundY = demo.groundY ?? (demo.view === "anterior" ? 199 : 222);
   const shadow = `<ellipse cx="50" cy="${groundY}" rx="${shadowRx.toFixed(1)}" ry="2.6" fill="#000" opacity="${(0.16 + 0.1 * depth).toFixed(2)}"/>`;
 
+  // Free scene furniture (pads, a rope anchor) behind the body — the
+  // front/back views gained this with the batch-11 frontal-plane demos.
+  const scene = demo.scene?.(e, pose) ?? "";
+
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${demo.viewBox ?? (demo.view === "anterior" ? "-8 -14 116 224" : "-12 -14 124 244")}" role="img">` +
     shadow +
+    scene +
     barBehind +
     glow +
     caps +
