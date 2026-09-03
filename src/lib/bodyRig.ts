@@ -2531,6 +2531,53 @@ function tguKeys(): KeyFrame[] {
 }
 const TGU_KEYS = tguKeys();
 
+/* ── The ankle (batch 18) — the seated calf raise ──
+ * The foot is its own piece now, so a heel can rise while the ball of
+ * the foot stays on a platform: the foot rotates about the ball, the
+ * ankle goes where that puts it, and the leg is `plantedLeg` from the
+ * seated hip to the moving ankle — the knee (and the pad on it) rises
+ * with the heel, which is what the machine does. */
+const SCR_SEAT: Pt = [44, 136];
+const SCR_PLATFORM: Pt = [106, 196];
+/** Foot tilt about the ball at [stretch, top]: NEGATIVE drops the heel
+ *  below the platform (screen y points down, so a negative turn about
+ *  the ball sends the heel, behind it, downward), positive lifts it. */
+const SCR_TILT: [number, number] = [-14, 30];
+function seatedCalfPose(e: number): Partial<Record<GroupName, Op[]>> {
+  const chain = seatedChain(SCR_SEAT, -86, 0, -4);
+  const foot: Op[] = [
+    {
+      kind: "rotate",
+      deg: lerp(SCR_TILT[0], SCR_TILT[1], e),
+      pivot: SIDE_ANCHORS.ball,
+    },
+    {
+      kind: "translate",
+      dx: SCR_PLATFORM[0] - SIDE_ANCHORS.ball[0],
+      dy: SCR_PLATFORM[1] - SIDE_ANCHORS.ball[1],
+    },
+  ];
+  const ankle = applyToPoint(SIDE_ANCHORS.ankle, foot);
+  const leg = plantedLeg(SCR_SEAT, ankle, KNEE_FORWARD);
+  return {
+    head: chain.head,
+    torso: chain.torso,
+    pelvis: chain.body,
+    thighL: leg.thigh,
+    thighR: leg.thigh,
+    shankL: leg.shank,
+    shankR: leg.shank,
+    footL: foot,
+    footR: foot,
+    upperArmL: chain.arm.upper,
+    foreArmL: chain.arm.fore,
+    handL: chain.arm.fore,
+    upperArmR: chain.arm.upper,
+    foreArmR: chain.arm.fore,
+    handR: chain.arm.fore,
+  };
+}
+
 function sideSquatChain(
   e: number,
   hingeDeg: number,
@@ -9297,6 +9344,42 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     scene: () =>
       `<line x1="-40" y1="${MACHINE_FLOOR + 1}" x2="160" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
   },
+
+  /* ── 2026-09-03 build-out, batch 18: the ankle — the last row ── */
+
+  "seated-calf-raise": {
+    /* "Sit with the pads on your lower thighs, balls of your feet on the
+     * platform. Release the safety lever and drop your heels below the
+     * platform for a stretch. Raise your heels as high as possible,
+     * squeezing the soleus at the top." The ball of the foot FIXED on
+     * the platform (pinned), the foot rotating about it from heels
+     * below the platform to heels high, the shin and the thigh pad
+     * rising with the ankle, the hips on the seat (pinned). The rig's
+     * foot became its own piece for this: the ledger's last row. */
+    view: "side",
+    viewBox: "-12 -6 172 218",
+    groundY: 204,
+    shadowCx: 62,
+    shadowRx: 36,
+    concentricTo: 1,
+    startsAt: "stretch",
+    tint: { calves: "primary" },
+    pose: seatedCalfPose,
+    scene: (_e, pose) => {
+      const knee = applyToPoint(SIDE_ANCHORS.knee, pose.thighL ?? []);
+      return (
+        // Seat, backrest, the thigh pad riding the knee, the platform
+        // the ball rests on (open below it for the heel), the floor.
+        `<rect x="${(SCR_SEAT[0] - 26).toFixed(1)}" y="${(SCR_SEAT[1] + 6).toFixed(1)}" width="56" height="8" rx="2.6" fill="${GEAR}"/>` +
+        `<rect x="${(SCR_SEAT[0] - 20).toFixed(1)}" y="${(SCR_SEAT[1] - 78).toFixed(1)}" width="8" height="86" rx="2.6" fill="${GEAR}" transform="rotate(-4 ${(SCR_SEAT[0] - 12).toFixed(1)} ${(SCR_SEAT[1] + 4).toFixed(1)})"/>` +
+        `<line x1="${SCR_SEAT[0]}" y1="${(SCR_SEAT[1] + 14).toFixed(1)}" x2="${SCR_SEAT[0]}" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+        `<rect x="${(knee[0] - 22).toFixed(1)}" y="${(knee[1] - 16).toFixed(1)}" width="30" height="8" rx="3" fill="${GEAR}"/>` +
+        `<line x1="${(knee[0] - 7).toFixed(1)}" y1="${(knee[1] - 16).toFixed(1)}" x2="${(knee[0] - 7).toFixed(1)}" y2="${(knee[1] - 40).toFixed(1)}" stroke="${GEAR_DARK}" stroke-width="3"/>` +
+        `<rect x="${SCR_PLATFORM[0] - 4}" y="${SCR_PLATFORM[1]}" width="20" height="${MACHINE_FLOOR - SCR_PLATFORM[1]}" rx="1.5" fill="${GEAR}"/>` +
+        `<line x1="-12" y1="${MACHINE_FLOOR + 1}" x2="160" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`
+      );
+    },
+  },
 };
 
 /** Sibling exercises that share a demo's motion pattern.
@@ -9786,8 +9869,18 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
     pts.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(" ");
 
   const primaryPts = new Map<string, Pt[]>();
+  /* A foot rides its shank unless the pose moves it on its own (the
+     seated calf raise is the one that does — the ankle joint). */
+  const opsFor = (group: GroupName): Op[] =>
+    pose[group] ??
+    (group === "footL"
+      ? pose.shankL
+      : group === "footR"
+        ? pose.shankR
+        : undefined) ??
+    [];
   const body = SIDE_PIECES.map((piece) => {
-    const posed = pose[piece.group] ?? [];
+    const posed = opsFor(piece.group);
     // A far limb's depth offset is a fact about the camera, so it lands
     // AFTER the pose: baked in, it rode the limb's rotation and put the
     // far arm in front of the near one at the top of a curl.
@@ -9854,7 +9947,7 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
       0
     );
   const capAt = (group: GroupName, anchor: Pt, r: number, shift?: Pt) => {
-    const ops = pose[group];
+    const ops = opsFor(group);
     const turn = sideTurn(ops);
     if (turn < 12) return "";
     const [x, y] = applyToPoint(anchor, ops ?? []);
@@ -9871,6 +9964,8 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
     capAt("foreArmR", SIDE_ANCHORS.elbow, 2.8, FAR_ARM_SHIFT) +
     capAt("shankR", SIDE_ANCHORS.knee, 3.4) +
     capAt("shankL", SIDE_ANCHORS.knee, 3.4) +
+    capAt("footR", SIDE_ANCHORS.ankle, 2.6) +
+    capAt("footL", SIDE_ANCHORS.ankle, 2.6) +
     capAt("upperArmL", SIDE_ANCHORS.shoulder, 3.0) +
     capAt("foreArmL", SIDE_ANCHORS.elbow, 2.8);
 

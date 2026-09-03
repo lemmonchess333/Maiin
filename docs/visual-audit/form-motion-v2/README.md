@@ -1740,3 +1740,53 @@ One row left: the seated calf raise, which needs the rig's foot to be
 its own piece.
 
 Capture channel: `man-maker`, `turkish-get-up` added.
+
+## STATUS 2026-09-03s — wave 3, batch 18: the ankle, and the ledger empties
+
+Coverage 151 → 152 of 152. Every exercise in the catalogue now has a
+demo. The last row was the seated calf raise, and its reason was the
+one genuine rig gap in the whole ledger: the foot was fused to the
+shin, so a seated heel had no degree of freedom to rise through.
+
+**The foot is its own piece.** `footL` / `footR` join `GroupName`; on
+the side figure each foot paints just BEFORE its shank with a cuff (a
+half-disc about the ankle anchor) that sits inside the shin, so the
+shin covers the joint at any angle and no gap opens. The shank's
+outline now closes across the ankle. The renderer's `opsFor` lets a
+foot ride its shank unless a pose gives it ops of its own — which is
+why the other 151 demos changed by nothing: a pin asserts the squat,
+calf raise and lunge still pass no foot ops, and the contact sheets
+were regenerated and eyeballed. `SIDE_ANCHORS.ball` is the new anchor:
+the sole's front contact, where a calf raise pivots.
+
+| Demo                | Chain                                                        | Pinned claim (from its instructions)                                                                                                                                   |
+| ------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `seated-calf-raise` | foot about the ball; `plantedLeg` from the seat to the ankle | hips on the seat; ball fixed on the platform; heels >2 below it at 0, >8 above at 1; the knee rises >4 with the heel; the foot's ankle and the shin's ankle never part |
+
+One thing the numbers caught: the first tilt sign lifted the heel at
+the stretch and dropped it at the top — screen y points down, so a
+NEGATIVE turn about the ball is what sends the heel, behind it,
+downward.
+
+### The ledger, closed
+
+The 2026-09-03k ledger listed 43 exercises the rig could not show
+honestly; by 2026-09-03o it was 15; it is now empty. The reasons, in
+retrospect, were three, and none was about the exercises:
+
+- **The camera.** Twenty-one rows were "the profile cannot show it".
+  The rig had two other cameras all along (batches 11–12).
+- **The player.** Nine rows were "the two-way rep would play it
+  backwards". A `cycle` mode fixed all of them (batches 15–16), and
+  two more turned out to be honest in the rep player after all (the
+  burpee, the get-up) because their own instructions reverse.
+- **The rig.** Two rows named a missing joint. The shoulder cap turned
+  out to be on the front figure's arm group already (the shrugs,
+  batch 11); the ankle is this batch.
+
+What is still an approximation, on record: the Zottman's wrist turn
+is shown as who works rather than as a rotation; the reverse fly's
+hinge is toward the camera; the top-down core demos use the front
+figure as a figure seen from above. Each is written on its demo.
+
+Capture channel: `seated-calf-raise` added.
