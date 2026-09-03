@@ -60,13 +60,48 @@ const TITLE_BOX_F = { left: 0, top: 0, width: 0.572, height: 0.168 };
 const CAPTION_BOX_F = { left: 0, top: 0.801, width: 1, height: 0.199 };
 /** Breathing room around the union box, in source pixels. */
 const MARGIN = 10;
-/** Output width. 2x a ~340px phone card, which is where these render. */
-const OUT_W = 680;
+/**
+ * Output width: the DISPLAY size, so the browser resamples nothing.
+ *
+ * The player renders the frame 300pt wide, which is 900 device pixels
+ * on a 3x phone. Writing anything else means two resamples instead of
+ * one — sharp's Lanczos and then the browser's, which is the poorer of
+ * the two. Writing exactly the display size costs a little in bytes on
+ * a small source and spends it in the right place.
+ *
+ * It does NOT fix sharpness on a card, and nothing here can. Six panels
+ * inside the 1448px a generator emits leave each figure about 300px
+ * against the 900 the phone asks for: a 3x upscale however it is
+ * resampled, and a card that could feed it would need to be roughly
+ * 4300px wide. That is what `--frames` is for.
+ */
+const OUT_W = 1000;
 
-const card = process.argv[2];
-const outDir = resolve(process.argv[3] ?? "public/form-frames/dips");
-if (!card) {
-  console.error("usage: node scripts/extract-form-frames.mjs <card.png> [out]");
+/* Two inputs, because a card cannot be sharp.
+ *
+ *   <card.png>                 six panels in one image
+ *   --frames a.png b.png ...   one image per position
+ *
+ * The card is the convenient form and the low-resolution one: six
+ * panels inside what a generator can emit leaves each figure about a
+ * third of what a 3x phone asks for. One image per position spends the
+ * whole canvas on one figure and is the only route to a sharp frame
+ * here — at the cost that the six are separate generations, so they
+ * must be produced by EDITING the first rather than generated afresh,
+ * or the camera moves between them. */
+const args = process.argv.slice(2);
+const framesAt = args.indexOf("--frames");
+const perFrame = framesAt >= 0;
+const inputs = perFrame ? args.slice(framesAt + 1) : [];
+const card = perFrame ? null : args[0];
+const outDir = resolve(
+  (perFrame ? args[framesAt - 1] : args[1]) ?? "public/form-frames/dips"
+);
+if (!card && inputs.length === 0) {
+  console.error(
+    "usage: node scripts/extract-form-frames.mjs <card.png> [outDir]\n" +
+      "       node scripts/extract-form-frames.mjs [outDir] --frames 1.png 2.png ..."
+  );
   process.exit(1);
 }
 mkdirSync(outDir, { recursive: true });
@@ -239,7 +274,16 @@ const flat = (bg, box) => ({
   top: box.top,
 });
 
-const detected = await findPanels(card);
+/** Per-position images need no grid: each file IS a panel. Their whole
+ *  frame is the panel, so the title/caption boxes are empty. */
+const detected = perFrame
+  ? await Promise.all(
+      inputs.map(async (f) => {
+        const m = await sharp(f).metadata();
+        return { left: 0, top: 0, width: m.width ?? 0, height: m.height ?? 0 };
+      })
+    )
+  : await findPanels(card);
 /* Normalised to one size before anything measures them. Detection is
    per-run and lands a pixel or two apart between panels, which is
    invisible until a title box computed from the first panel overflows
@@ -267,18 +311,23 @@ const scaleBox = (f) => {
     height: Math.min(PH - top, Math.max(1, Math.round(f.height * PH))),
   };
 };
-const TITLE_BOX = scaleBox(TITLE_BOX_F);
-const CAPTION_BOX = scaleBox(CAPTION_BOX_F);
+// A per-position image carries no panel chrome to paint out.
+const TITLE_BOX = perFrame ? null : scaleBox(TITLE_BOX_F);
+const CAPTION_BOX = perFrame ? null : scaleBox(CAPTION_BOX_F);
 
 const cleaned = [];
 let bg;
-for (const rect of panels) {
-  const panel = await sharp(card).extract(rect).png().toBuffer();
+for (const [i, rect] of panels.entries()) {
+  const source = perFrame ? inputs[i] : card;
+  const panel = await sharp(source).extract(rect).png().toBuffer();
   if (!bg) bg = await background(panel);
-  const painted = await sharp(panel)
-    .composite([flat(bg, TITLE_BOX), flat(bg, CAPTION_BOX)])
-    .png()
-    .toBuffer();
+  const painted =
+    TITLE_BOX && CAPTION_BOX
+      ? await sharp(panel)
+          .composite([flat(bg, TITLE_BOX), flat(bg, CAPTION_BOX)])
+          .png()
+          .toBuffer()
+      : panel;
   /* Two passes, deliberately. `extract` in the SAME pipeline as
      `composite` is applied as a PRE-crop by sharp, which shrinks the
      canvas under the overlays and fails with "image to composite must
@@ -348,20 +397,33 @@ async function keyed(buf) {
 for (let i = 0; i < cleaned.length; i++) {
   const cropped = await sharp(cleaned[i]).extract(rect).png().toBuffer();
   await sharp(await keyed(cropped))
-    .resize({ width: OUT_W })
-    .webp({ quality: 88, alphaQuality: 100 })
+    .resize({
+      width: OUT_W,
+    })
+    // 82, not 90: on a card the source is upscaled and carries no
+    // detail worth 55 KB an exercise to preserve. Alpha stays lossless
+    // — the keyed edge is the one thing a low setting visibly frays.
+    .webp({ quality: 82, alphaQuality: 100 })
     .toFile(resolve(outDir, `${i + 1}.webp`));
 }
 console.log(
   JSON.stringify(
     {
+      mode: perFrame ? "per-position" : "card",
       background: bg,
       panels: panels.length,
       panelSize: `${PW}x${PH}`,
       sharedRect: rect,
+      writtenWidth: OUT_W,
       outDir,
     },
     null,
     2
   )
 );
+if (!perFrame && rect.width < 600)
+  console.error(
+    `\nNOTE: each figure is only ${rect.width}px wide in this card, and the ` +
+      `Form card renders ~900 device pixels on a 3x phone. It will look soft. ` +
+      `Generate one image per position and use --frames for a sharp result.`
+  );

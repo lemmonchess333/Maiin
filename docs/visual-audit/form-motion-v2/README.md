@@ -2336,3 +2336,61 @@ roughly 23 MB of precached assets**, which is a different conversation
 about bundle size. And the drift is per-card: every generation is a new
 roll, so it is worth checking one card animates before committing to a
 run of them.
+
+## STATUS 2026-09-03z — three complaints from the device, and what each is
+
+Owner, with five screenshots of the shipped dips demo: "image quality
+needs to increase, the position changes from image to image, and the
+shoulder part appears missing."
+
+Three separate problems with three different owners.
+
+### The shoulder is the generator's, not the pipeline's
+
+Checked before assuming: the same crop from the SOURCE card shows the
+same hard-edged grey plate over the deltoid, with a visible seam where
+it meets the neck. The extractor reproduces it faithfully. The prompt
+now asks for continuous shoulder anatomy explicitly, which is the only
+place it can be fixed.
+
+### The resolution is the card's, and a card cannot fix it
+
+Measured rather than estimated:
+
+|                                       |              |
+| ------------------------------------- | ------------ |
+| card                                  | 1448 px wide |
+| one panel                             | 444 px       |
+| the figure region six panels share    | **301 px**   |
+| what the player renders on a 3x phone | **900 px**   |
+
+That is a 3x upscale however it is resampled, and a card that could
+feed it would need to be roughly 4300 px wide — past what the
+generators emit. **Six panels in one image cannot be sharp.**
+
+Two changes in the meantime. Frames are written at the DISPLAY size
+(1000 px) so the browser resamples nothing: writing 680 meant two
+resamples, sharp's Lanczos and then the browser's poorer one. And WebP
+quality drops 90 → 82, because an upscaled source carries no detail
+worth 55 KB an exercise; alpha stays lossless, since the keyed edge is
+the one thing a low setting visibly frays.
+
+### The drift is the generation strategy's
+
+Already measured at 9% mean equipment overlap, with registration making
+it worse. It cannot be fixed downstream.
+
+### So the flow changes: one image per position, by EDITING
+
+`form-card-prompt.ts` now prints two steps. Generate ONE image of
+position 1 with the figure filling the frame, then for each of the
+other five, **edit that image** — same camera, same setup, same figure
+size, change only the body. Editing holds the scene where six fresh
+generations cannot, and one figure per image is roughly three times the
+resolution of six squeezed into a card.
+
+`extract-form-frames.mjs` takes `--frames a.png b.png ...` for this.
+Per-position images need no grid detection — each file IS a panel — so
+that path is the simple one; the card path stays for convenience and
+now prints a warning naming its own resolution when the figure region
+comes out under 600 px.
