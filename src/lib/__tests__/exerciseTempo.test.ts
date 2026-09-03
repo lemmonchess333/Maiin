@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  cycleSampleAt,
   parseTempo,
   repTimingFor,
   repSampleAt,
@@ -203,5 +204,45 @@ describe("a rep that starts at the stretched end", () => {
     expect(repSampleLoopedAt(SET_BEAT_MS + 40, T, "lockout").phase).toBe(
       "eccentric"
     );
+  });
+});
+
+describe("cycleSampleAt — a gait, a pedal stroke, a jump-and-step-down", () => {
+  // The rep timeline plays every demo there-and-back; a cycle's pose at
+  // t=1 IS its pose at t=0 and it must never run backwards (a treadmill
+  // stride played back walks backwards; a box jump floats down).
+  const CYCLE = 1000;
+  it("holds t=0 through the Set lead-in, then cues the steady rhythm", () => {
+    expect(cycleSampleAt(0, CYCLE)).toEqual({
+      phase: "set",
+      ecc: 0,
+      targetEffort: 0.55,
+    });
+    expect(cycleSampleAt(599, CYCLE).phase).toBe("set");
+    expect(cycleSampleAt(600, CYCLE).phase).toBe("cycle");
+  });
+  it("advances t monotonically across the period", () => {
+    const ts = [0, 100, 250, 500, 750, 999].map(
+      (m) => cycleSampleAt(600 + m, CYCLE).ecc
+    );
+    expect(ts).toEqual([0, 0.1, 0.25, 0.5, 0.75, 0.999]);
+    for (let i = 1; i < ts.length; i++)
+      expect(ts[i]).toBeGreaterThan(ts[i - 1]);
+  });
+  it("wraps to 0 at the period — never reverses", () => {
+    expect(cycleSampleAt(600 + CYCLE, CYCLE).ecc).toBe(0);
+    expect(cycleSampleAt(600 + CYCLE + 250, CYCLE).ecc).toBeCloseTo(0.25, 6);
+    let prev = -1;
+    for (let m = 0; m < CYCLE; m += 7) {
+      const e = cycleSampleAt(600 + m, CYCLE).ecc;
+      expect(e).toBeGreaterThanOrEqual(prev);
+      prev = e;
+    }
+  });
+  it("keeps a steady effort — a cycle has no eccentric to soften on", () => {
+    const efforts = new Set(
+      [0, 300, 600, 900].map((m) => cycleSampleAt(600 + m, CYCLE).targetEffort)
+    );
+    expect(efforts.size).toBe(1);
   });
 });

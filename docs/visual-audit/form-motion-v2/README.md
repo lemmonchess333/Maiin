@@ -1607,3 +1607,60 @@ above the floor.
   `swimming`, `treadmill`.
 
 Capture channel: `burpees` added.
+
+## STATUS 2026-09-03p — wave 3, batch 15: the player learns to cycle
+
+Coverage 137 → 143 of 152. Owner, on the 15-row ledger: "You can do
+these as well, think it through." Thought through: five of the rows
+were refused for one reason — the PLAYER plays every rep there-and-back
+(the eccentric is the drive reversed), and a gait, a pedal stroke, a
+stair step or a jump-and-step-down is a cycle, not a there-and-back.
+Played back, a treadmill stride walks backwards and a box jump floats
+down off the box. That is a property of the player, not of the rig.
+
+**`cycle: true`** on a `BodyDemo` now means: the pose at t=1 IS the
+pose at t=0, and the player advances t monotonically and wraps at
+`cycleMs` (default 1600) after the one-time Set lead-in — it never
+reverses. `cycleSampleAt` in `exerciseTempo.ts` is the timeline; the
+cue reads "Steady rhythm"; the reduced-motion two-up shows t=0 and its
+opposite phase t=0.5 (the other foot forward). A pin in
+`bodyRig.test.ts` asserts every cycle CLOSES — shoulder, hip, both
+ankles, both hands identical at 0 and 1 — because that is the property
+the wrap relies on.
+
+**`gaitChain`** — a stride on a treadmill belt: the figure stays put,
+each ankle rides a closed path (stance slides straight back along the
+belt, swing lifts and comes forward), the far leg is the near leg half
+a cycle later, legs are `plantedLeg` from a bobbing hip, arms
+counter-swing (or hold world targets: a sled handle, a rail). An
+option tilts the BELT for an incline.
+
+| Demo                     | Chain                                            | Pinned claim (from its instructions)                                                |
+| ------------------------ | ------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| `treadmill`              | `gaitChain`, arms swinging                       | near foot leads at 0 / trails at ½, feet on the belt; hands off the rails; upright  |
+| `incline-treadmill-walk` | `gaitChain` with the belt tilted 7°              | stance feet on a 5-9° uphill line; trunk 3-8° forward of upright                    |
+| `farmers-carry`          | `gaitChain`, bells on straight arms              | arms >170° hanging plumb (±4) every frame; trunk upright; the stride alternates     |
+| `sled-push-pull`         | `gaitChain` leaned 40°, hands on the handle      | hands fixed; lean 34-46°; the stride alternates                                     |
+| `stairmaster`            | `stairAnkle`: stance foot rides down, swing over | upright; hands on the rail; stance foot descends >10; swing foot lifts >12 above it |
+| `box-jumps`              | seven keyframes, per-leg ankles                  | floor at 0; arms back at the dip; both feet in flight; both on the box; step-down   |
+
+The box jump is the one that could only ever be a cycle: its
+instruction 4 is "step down — don't jump down", and the only way a
+two-way player can honour that is to not play the jump backwards. The
+step-down is drawn stepping BACK off the box, one foot then the other,
+so the cycle returns the figure to where it started.
+
+One thing the numbers caught: the incline walk's first draft rotated
+the whole figure with the belt, which reads as leaning BACK 7° against
+gravity — the opposite of walking uphill. The belt tilts; the body
+stays upright with the instruction's slight forward lean from the
+ankles.
+
+What remains after this batch: the pedal machines (bike, spin bike,
+assault bike, elliptical) and swimming — cycles too, next batch; the
+man-maker (a cycle of keyframes) and the Turkish get-up (reversible by
+its own instruction 4, so the rep player is right for it); the Zottman
+curl; and the seated calf raise, which is the one that needs a rig
+joint.
+
+Capture channel: `treadmill`, `stairmaster`, `box-jumps` added.

@@ -1128,6 +1128,14 @@ describe("renderBodyDemo", () => {
       "pallof-press": "stretch",
       // Batch 14.
       burpees: "stretch",
+      // Batch 15: CYCLES have no start — t=1 is t=0 — so the default
+      // stands and the player ignores it.
+      treadmill: "lockout",
+      "incline-treadmill-walk": "lockout",
+      "farmers-carry": "lockout",
+      "sled-push-pull": "lockout",
+      stairmaster: "lockout",
+      "box-jumps": "lockout",
     };
     expect(Object.keys(START).sort()).toEqual(Object.keys(BODY_DEMOS).sort());
     for (const [id, expected] of Object.entries(START)) {
@@ -3626,6 +3634,173 @@ describe("renderBodyDemo", () => {
         "burpee: arms overhead at the jump"
       ).toBeLessThan(0);
     }
+
+    /* Batch 15: cycles. */
+    // Every cycle closes: the pose at t=1 is the pose at t=0, at every
+    // joint that moves. This is what lets the player wrap instead of
+    // reversing.
+    for (const [id, d] of Object.entries(BODY_DEMOS)) {
+      if (!d.cycle) continue;
+      const p0 = at(id, 0);
+      const p1 = at(id, 1);
+      for (const [g, anchor] of [
+        ["torso", SIDE_ANCHORS.shoulder],
+        ["pelvis", SIDE_ANCHORS.hip],
+        ["shankL", SIDE_ANCHORS.ankle],
+        ["shankR", SIDE_ANCHORS.ankle],
+        ["handL", SIDE_ANCHORS.hand],
+        ["handR", SIDE_ANCHORS.hand],
+      ] as const) {
+        const a = pt(anchor, (p0 as Record<string, unknown>)[g]);
+        const b = pt(anchor, (p1 as Record<string, unknown>)[g]);
+        expect(
+          Math.hypot(a[0] - b[0], a[1] - b[1]),
+          `${id}: cycle closes at ${g}`
+        ).toBeLessThan(0.01);
+      }
+    }
+    const feet = (id: string, t: number) => {
+      const p = at(id, t);
+      return {
+        L: pt(SIDE_ANCHORS.ankle, p.shankL),
+        R: pt(SIDE_ANCHORS.ankle, p.shankR),
+      };
+    };
+    // A stride alternates: the near foot leads at 0, trails at ½, both
+    // on the belt at those instants; mid-swing the trailing foot lifts.
+    for (const id of ["treadmill", "farmers-carry", "sled-push-pull"]) {
+      const f0 = feet(id, 0);
+      const f5 = feet(id, 0.5);
+      expect(f0.L[0] - f0.R[0], `${id}: near foot leads at 0`).toBeGreaterThan(
+        30
+      );
+      expect(f5.R[0] - f5.L[0], `${id}: near foot trails at ½`).toBeGreaterThan(
+        30
+      );
+      for (const f of [f0, f5]) {
+        expect(Math.abs(f.L[1] - 193), `${id}: feet on the belt`).toBeLessThan(
+          0.1
+        );
+        expect(Math.abs(f.R[1] - 193), `${id}: feet on the belt`).toBeLessThan(
+          0.1
+        );
+      }
+      expect(
+        193 - feet(id, 0.75).L[1],
+        `${id}: swing foot lifts`
+      ).toBeGreaterThan(6);
+    }
+    // Treadmill: "don't hold the handrails"; upright posture.
+    for (const t of [0, 0.25, 0.5, 0.75]) {
+      const p = at("treadmill", t);
+      expect(
+        pt(SIDE_ANCHORS.hand, p.handL)[0],
+        `treadmill: hands off the rails @${t}`
+      ).toBeLessThan(100);
+      expect(
+        Math.abs(trunkLean("treadmill", t)),
+        `treadmill: upright @${t}`
+      ).toBeLessThan(1);
+    }
+    // Incline walk: the belt tilts (stance feet on a 5-9° uphill line)
+    // and the body leans slightly FORWARD of upright — not back with it.
+    {
+      const id = "incline-treadmill-walk";
+      const f0 = feet(id, 0);
+      const grade =
+        (Math.atan2(f0.R[1] - f0.L[1], f0.L[0] - f0.R[0]) * 180) / Math.PI;
+      expect(grade, "incline: belt tilted uphill ahead").toBeGreaterThan(5);
+      expect(grade, "incline: belt tilted uphill ahead").toBeLessThan(9);
+      expect(trunkLean(id, 0), "incline: slight forward lean").toBeGreaterThan(
+        3
+      );
+      expect(trunkLean(id, 0), "incline: slight forward lean").toBeLessThan(8);
+    }
+    // Farmer's carry: straight arms hanging plumb; trunk upright.
+    for (const t of [0, 0.25, 0.5, 0.75]) {
+      const id = "farmers-carry";
+      expect(elbowDeg(id, t), `carry: straight arms @${t}`).toBeGreaterThan(
+        170
+      );
+      const p = at(id, t);
+      const S = pt(SIDE_ANCHORS.shoulder, p.torso);
+      const H = pt(SIDE_ANCHORS.hand, p.handL);
+      expect(
+        Math.abs(H[0] - S[0]),
+        `carry: bells hang plumb @${t}`
+      ).toBeLessThan(4);
+      expect(
+        Math.abs(trunkLean(id, t)),
+        `carry: stand tall @${t}`
+      ).toBeLessThan(1);
+    }
+    // Sled push: "lean in" (34-46°), hands fixed on the handles.
+    {
+      const id = "sled-push-pull";
+      stationary(id, SIDE_ANCHORS.hand, "handL", "sled: hands on the handles");
+      for (const t of [0, 0.5]) {
+        expect(trunkLean(id, t), `sled: lean in @${t}`).toBeGreaterThan(34);
+        expect(trunkLean(id, t), `sled: lean in @${t}`).toBeLessThan(46);
+      }
+    }
+    // Stairmaster: upright, hands resting on the rail, the stance foot
+    // riding its step DOWN and the swing foot lifting over.
+    {
+      const id = "stairmaster";
+      stationary(id, SIDE_ANCHORS.hand, "handL", "stairs: hands on the rail");
+      expect(Math.abs(trunkLean(id, 0)), "stairs: stand tall").toBeLessThan(1);
+      const a0 = feet(id, 0).L;
+      const a5 = feet(id, 0.5).L;
+      expect(
+        a5[1] - a0[1],
+        "stairs: the stance foot rides down a step"
+      ).toBeGreaterThan(10);
+      expect(
+        a5[1] - feet(id, 0.75).L[1],
+        "stairs: the swing foot lifts over"
+      ).toBeGreaterThan(12);
+    }
+    // Box jump: on the floor standing at 0; arms back at the dip; both
+    // feet off the floor in flight; both on the box at the landing and
+    // standing tall; one foot down at the step-down.
+    {
+      const id = "box-jumps";
+      const f0 = feet(id, 0);
+      expect(
+        Math.abs(f0.L[1] - 193) + Math.abs(f0.R[1] - 193),
+        "box: on the floor at 0"
+      ).toBeLessThan(0.1);
+      const pDip = at(id, 0.18);
+      expect(
+        pt(SIDE_ANCHORS.hand, pDip.handL)[0],
+        "box: arms swung back"
+      ).toBeLessThan(pt(SIDE_ANCHORS.hip, pDip.pelvis)[0] - 10);
+      const fFly = feet(id, 0.34);
+      expect(fFly.L[1], "box: in flight").toBeLessThan(160);
+      expect(fFly.R[1], "box: in flight").toBeLessThan(160);
+      for (const t of [0.5, 0.64]) {
+        const f = feet(id, t);
+        expect(
+          Math.abs(f.L[1] - 147) + Math.abs(f.R[1] - 147),
+          `box: both feet on the box @${t}`
+        ).toBeLessThan(0.1);
+      }
+      const pTop = at(id, 0.64);
+      expect(
+        pt(SIDE_ANCHORS.ankle, pTop.shankL)[1] -
+          pt(SIDE_ANCHORS.hip, pTop.pelvis)[1],
+        "box: standing tall on it"
+      ).toBeGreaterThan(94);
+      const fStep = feet(id, 0.82);
+      expect(
+        Math.abs(fStep.L[1] - 193),
+        "box: one foot stepped down"
+      ).toBeLessThan(0.1);
+      expect(
+        Math.abs(fStep.R[1] - 147),
+        "box: the other still on the box"
+      ).toBeLessThan(0.1);
+    }
   });
 
   it("the foot has a heel, an arch and a toe — not a wedge", () => {
@@ -3875,6 +4050,10 @@ describe("renderBodyDemo", () => {
       // bracing far hand.
       "landmine-press",
       "meadows-row",
+      // Batch 15: a stride's arms counter-swing — the far arm is half a
+      // cycle from the near one by construction.
+      "treadmill",
+      "incline-treadmill-walk",
     ]);
     for (const [id, d] of Object.entries(BODY_DEMOS)) {
       if (d.view !== "side" || UNILATERAL.has(id)) continue;
@@ -4253,6 +4432,12 @@ describe("tint honesty", () => {
       "jump-rope": "calves",
       "pallof-press": "abs",
       burpees: "quadriceps",
+      treadmill: "quadriceps",
+      "incline-treadmill-walk": "gluteal",
+      "farmers-carry": "forearm",
+      "sled-push-pull": "quadriceps",
+      stairmaster: "gluteal",
+      "box-jumps": "quadriceps",
     };
     for (const [id, muscle] of Object.entries(expectPrimary)) {
       expect(BODY_DEMOS[id].tint[muscle], `${id} primary`).toBe("primary");

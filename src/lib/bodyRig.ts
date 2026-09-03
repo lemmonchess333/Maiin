@@ -575,6 +575,14 @@ export interface BodyDemo {
    *  the floor, not standing with it at the hips. Not derivable from
    *  `concentricTo`, which only says which end is the finish. */
   startsAt?: RepStart;
+  /** A CYCLE: the pose at t=1 is the pose at t=0 and the movement never
+   *  runs backwards (a gait, a pedal stroke, a stair step, a jump and
+   *  step-down). The player advances t monotonically and wraps instead
+   *  of playing the eccentric as the drive reversed. `startsAt` and
+   *  `concentricTo` are moot for a cycle. */
+  cycle?: true;
+  /** Period of one cycle in ms (default `CYCLE_MS_DEFAULT`). */
+  cycleMs?: number;
   /** Movements whose envelope exceeds the body's column (e.g. a lateral
    *  raise at full span) declare a wider canvas. */
   viewBox?: string;
@@ -1796,6 +1804,277 @@ function burpeePose(e: number): Partial<Record<GroupName, Op[]>> {
     thighR: leg.thigh,
     shankL: leg.shank,
     shankR: leg.shank,
+    upperArmL: arm.upper,
+    foreArmL: arm.fore,
+    handL: arm.fore,
+    upperArmR: arm.upper,
+    foreArmR: arm.fore,
+    handR: arm.fore,
+  };
+}
+
+/* ── Gait (batch 15) — a stride cycle on a treadmill belt ──
+ * The figure stays put and the belt moves under it, which is exactly
+ * what a treadmill is and what a walking demo in a fixed frame needs.
+ * Each ankle rides a closed path: stance (φ 0→0.5) slides straight back
+ * along the belt, swing (0.5→1) lifts and comes forward. The far leg is
+ * the near leg half a cycle later. Legs are `plantedLeg` from the
+ * (bobbing) hip to each ankle; the arms counter-swing. */
+const GAIT_STRIDE = 20;
+const GAIT_LIFT = 11;
+const GAIT_BELT_Y = 193;
+const GAIT_CX = 48;
+const GAIT_HIP_Y = 100;
+function gaitAnkle(phi: number, cx: number, beltY: number): Pt {
+  const p = ((phi % 1) + 1) % 1;
+  if (p < 0.5) {
+    const k = p / 0.5;
+    return [cx + GAIT_STRIDE * (1 - 2 * k), beltY];
+  }
+  const k = (p - 0.5) / 0.5;
+  return [
+    cx + GAIT_STRIDE * (-1 + 2 * k),
+    beltY - GAIT_LIFT * Math.sin(Math.PI * k),
+  ];
+}
+interface GaitOpts {
+  /** Trunk lean forward, degrees. */
+  lean?: number;
+  /** Arm swing amplitude about the shoulder (0 = arms still). */
+  armSwing?: number;
+  /** Elbow bend held through the swing. */
+  elbow?: number;
+  /** World hand targets instead of a swing (hands on a sled, a rail). */
+  hands?: Pt;
+  beltY?: number;
+  /** Tilt the BELT (the ankle paths) about a pivot — an incline. The
+   *  body stays upright; the legs reach the tilted belt. */
+  beltTilt?: { deg: number; pivot: Pt };
+}
+function gaitChain(
+  phi: number,
+  opts: GaitOpts = {}
+): Partial<Record<GroupName, Op[]>> & { hip: Pt; near: Pt; far: Pt } {
+  const beltY = opts.beltY ?? GAIT_BELT_Y;
+  const lean = opts.lean ?? 0;
+  // The hips ride highest at mid-stance, lowest at the step-over.
+  const bob = 1.2 * (0.5 - 0.5 * Math.cos(4 * Math.PI * phi));
+  const hip: Pt = [GAIT_CX - 6, GAIT_HIP_Y + bob];
+  const tilt: Op[] = opts.beltTilt
+    ? [{ kind: "rotate", deg: opts.beltTilt.deg, pivot: opts.beltTilt.pivot }]
+    : [];
+  const near = applyToPoint(gaitAnkle(phi, GAIT_CX, beltY), tilt);
+  const far = applyToPoint(gaitAnkle(phi + 0.5, GAIT_CX, beltY), tilt);
+  const body: Op[] = [
+    {
+      kind: "translate",
+      dx: hip[0] - SIDE_ANCHORS.hip[0],
+      dy: hip[1] - SIDE_ANCHORS.hip[1],
+    },
+  ];
+  const torso: Op[] = [
+    { kind: "rotate", deg: lean, pivot: SIDE_ANCHORS.hip },
+    ...body,
+  ];
+  const head: Op[] = [
+    { kind: "rotate", deg: -lean * HEAD_LIFT, pivot: SIDE_ANCHORS.neck },
+    ...torso,
+  ];
+  const pelvis: Op[] = [
+    { kind: "rotate", deg: lean * PELVIS_FOLLOW, pivot: SIDE_ANCHORS.hip },
+    ...body,
+  ];
+  const nearLeg = plantedLeg(hip, near, KNEE_FORWARD);
+  const farLeg = plantedLeg(hip, far, KNEE_FORWARD);
+  let arms: Partial<Record<GroupName, Op[]>>;
+  if (opts.hands) {
+    const a = armToWorld(torso, opts.hands, ELBOW_LOW);
+    arms = {
+      upperArmL: a.upper,
+      foreArmL: a.fore,
+      handL: a.fore,
+      upperArmR: a.upper,
+      foreArmR: a.fore,
+      handR: a.fore,
+    };
+  } else {
+    const A = opts.armSwing ?? 24;
+    const E = opts.elbow ?? 0;
+    // The near arm swings against the near leg: back when the near foot
+    // is forward (φ = 0).
+    const nearUp: Op[] = [
+      {
+        kind: "rotate",
+        deg: A * Math.cos(2 * Math.PI * phi),
+        pivot: SIDE_ANCHORS.shoulder,
+      },
+      ...torso,
+    ];
+    const farUp: Op[] = [
+      {
+        kind: "rotate",
+        deg: -A * Math.cos(2 * Math.PI * phi),
+        pivot: SIDE_ANCHORS.shoulder,
+      },
+      ...torso,
+    ];
+    const bend: Op = { kind: "rotate", deg: -E, pivot: SIDE_ANCHORS.elbow };
+    arms = {
+      upperArmL: nearUp,
+      foreArmL: [bend, ...nearUp],
+      handL: [bend, ...nearUp],
+      upperArmR: farUp,
+      foreArmR: [bend, ...farUp],
+      handR: [bend, ...farUp],
+    };
+  }
+  return {
+    head,
+    torso,
+    pelvis,
+    thighL: nearLeg.thigh,
+    shankL: nearLeg.shank,
+    thighR: farLeg.thigh,
+    shankR: farLeg.shank,
+    ...arms,
+    hip,
+    near,
+    far,
+  };
+}
+/** Strip the chain's bookkeeping fields into a plain pose. */
+function gaitPose(
+  c: ReturnType<typeof gaitChain>
+): Partial<Record<GroupName, Op[]>> {
+  const { hip: _h, near: _n, far: _f, ...pose } = c;
+  return pose;
+}
+const treadmillScene = (): string =>
+  `<rect x="6" y="${GAIT_BELT_Y + 3}" width="96" height="7" rx="3" fill="${GEAR}"/>` +
+  `<line x1="112" y1="${GAIT_BELT_Y + 6}" x2="112" y2="86" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+  `<line x1="112" y1="88" x2="86" y2="98" stroke="${GEAR_DARK}" stroke-width="3"/>` +
+  `<rect x="104" y="72" width="18" height="10" rx="2" fill="${GEAR_DARK}"/>` +
+  `<line x1="-12" y1="${MACHINE_FLOOR + 1}" x2="140" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`;
+/** Incline grade as an angle: 12% ≈ 7 degrees. */
+const INCLINE_WALK_DEG = 7;
+const INCLINE_PIVOT: Pt = [GAIT_CX, GAIT_BELT_Y];
+const SLED_HANDLE: Pt = [112, 118];
+const STAIR_RAIL: Pt = [74, 96];
+const STAIR_STEP = 12;
+/** Stairmaster ankle: the stance foot rides DOWN with its step, the
+ *  swing foot lifts up and over onto the next one. */
+function stairAnkle(phi: number): Pt {
+  const p = ((phi % 1) + 1) % 1;
+  const x = GAIT_CX + 4;
+  if (p < 0.5) {
+    const k = p / 0.5;
+    return [x + 6 - 12 * k, GAIT_BELT_Y - STAIR_STEP + STAIR_STEP * k];
+  }
+  const k = (p - 0.5) / 0.5;
+  return [
+    x - 6 + 12 * k,
+    GAIT_BELT_Y - STAIR_STEP * k - (STAIR_STEP + 4) * Math.sin(Math.PI * k),
+  ];
+}
+const BOX_TOP = 150;
+const BOX_X: [number, number] = [82, 138];
+/** Box-jump keyframes: stand, dip with the arms back, flight, land on
+ *  the box, stand tall on it, step down backwards, stand — a cycle. */
+interface JumpKey {
+  e: number;
+  hip: Pt;
+  trunk: number;
+  ankleL: Pt;
+  ankleR: Pt;
+  /** World hand target. */
+  hand: Pt;
+}
+const STAND_TRUNK = -90 + 5.4;
+const BOX_KEYS: JumpKey[] = [
+  {
+    e: 0,
+    hip: [42, 96],
+    trunk: STAND_TRUNK,
+    ankleL: [46.6, 193],
+    ankleR: [46.6, 193],
+    hand: [50.3, 105],
+  },
+  {
+    e: 0.18,
+    hip: [34, 120],
+    trunk: -62,
+    ankleL: [46.6, 193],
+    ankleR: [46.6, 193],
+    hand: [10, 128],
+  },
+  {
+    e: 0.34,
+    hip: [76, 66],
+    trunk: -84,
+    ankleL: [86, 140],
+    ankleR: [86, 140],
+    hand: [110, 30],
+  },
+  {
+    e: 0.5,
+    hip: [102, 116],
+    trunk: -66,
+    ankleL: [110, BOX_TOP - 3],
+    ankleR: [110, BOX_TOP - 3],
+    hand: [136, 112],
+  },
+  {
+    e: 0.64,
+    hip: [104, 50],
+    trunk: STAND_TRUNK,
+    ankleL: [110, BOX_TOP - 3],
+    ankleR: [110, BOX_TOP - 3],
+    hand: [112, 60],
+  },
+  {
+    e: 0.82,
+    hip: [76, 112],
+    trunk: -78,
+    ankleL: [54, 193],
+    ankleR: [110, BOX_TOP - 3],
+    hand: [86, 120],
+  },
+  {
+    e: 1,
+    hip: [42, 96],
+    trunk: STAND_TRUNK,
+    ankleL: [46.6, 193],
+    ankleR: [46.6, 193],
+    hand: [50.3, 105],
+  },
+];
+function boxJumpPose(e: number): Partial<Record<GroupName, Op[]>> {
+  const keys = BOX_KEYS;
+  let i = 0;
+  while (i < keys.length - 2 && e > keys[i + 1].e) i++;
+  const a = keys[i];
+  const b = keys[i + 1];
+  const k = smooth((e - a.e) / (b.e - a.e));
+  const L = (p: Pt, q: Pt): Pt => [lerp(p[0], q[0], k), lerp(p[1], q[1], k)];
+  const hip = L(a.hip, b.hip);
+  const trunk = lerp(a.trunk, b.trunk, k);
+  const rad = (trunk * Math.PI) / 180;
+  const S: Pt = [
+    hip[0] + TRUNK_LEN * Math.cos(rad),
+    hip[1] + TRUNK_LEN * Math.sin(rad),
+  ];
+  const torso = trunkBetween(hip, S);
+  const legL = plantedLeg(hip, L(a.ankleL, b.ankleL), KNEE_FORWARD);
+  const legR = plantedLeg(hip, L(a.ankleR, b.ankleR), KNEE_FORWARD);
+  const arm = armToWorld(torso, L(a.hand, b.hand), ELBOW_BACK);
+  return {
+    head: torso,
+    torso,
+    pelvis: torso,
+    thighL: legL.thigh,
+    shankL: legL.shank,
+    thighR: legR.thigh,
+    shankR: legR.shank,
     upperArmL: arm.upper,
     foreArmL: arm.fore,
     handL: arm.fore,
@@ -8111,6 +8390,206 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     pose: burpeePose,
     scene: () =>
       `<line x1="-60" y1="${MACHINE_FLOOR + 1}" x2="140" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  /* ── 2026-09-03 build-out, batch 15: cycles — the walks, the stairs, the box ── */
+
+  treadmill: {
+    /* "Run or walk with upright posture and a natural arm swing. Don't
+     * hold the handrails — let your arms drive the pace." A stride
+     * CYCLE: the figure stays put, the belt moves under it, each foot
+     * slides back in stance and lifts forward in swing, the arms
+     * counter-swinging, hands off the rails (pinned). */
+    view: "side",
+    cycle: true,
+    viewBox: "-12 -6 152 218",
+    groundY: 204,
+    concentricTo: 1,
+    tint: {
+      quadriceps: "primary",
+      calves: "primary",
+      gluteal: "secondary",
+      hamstring: "secondary",
+    },
+    pose: (e) => gaitPose(gaitChain(e, { armSwing: 24, elbow: 28 })),
+    scene: treadmillScene,
+  },
+
+  "incline-treadmill-walk": {
+    /* "Set the incline between 10-15% ... keep a slight forward lean
+     * from the ankles, not the hips. Let your arms swing naturally,
+     * glutes and calves doing the work." The same stride on a belt
+     * tilted 7° (a 12% grade): the BELT tilts and the body stays
+     * upright with a 5° forward lean (pinned) — the first draft rotated
+     * the whole figure with the belt, which leans it BACK against
+     * gravity, the opposite of walking uphill. */
+    view: "side",
+    cycle: true,
+    cycleMs: 1800,
+    viewBox: "-12 -16 152 228",
+    groundY: 204,
+    concentricTo: 1,
+    tint: {
+      gluteal: "primary",
+      calves: "primary",
+      quadriceps: "secondary",
+      hamstring: "secondary",
+    },
+    pose: (e) =>
+      gaitPose(
+        gaitChain(e, {
+          lean: 5,
+          armSwing: 18,
+          elbow: 20,
+          beltTilt: { deg: -INCLINE_WALK_DEG, pivot: INCLINE_PIVOT },
+        })
+      ),
+    scene: () =>
+      `<g transform="rotate(${-INCLINE_WALK_DEG} ${INCLINE_PIVOT[0]} ${INCLINE_PIVOT[1]})">` +
+      `<rect x="6" y="${GAIT_BELT_Y + 3}" width="96" height="7" rx="3" fill="${GEAR}"/>` +
+      `<line x1="112" y1="${GAIT_BELT_Y + 6}" x2="112" y2="86" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+      `<rect x="104" y="72" width="18" height="10" rx="2" fill="${GEAR_DARK}"/>` +
+      `</g>` +
+      `<line x1="6" y1="${MACHINE_FLOOR + 1}" x2="140" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  "farmers-carry": {
+    /* "Stand tall with shoulders packed down and back, core braced.
+     * Walk forward in short controlled steps, eyes up, chest proud."
+     * The stride cycle with the bells hanging from straight arms at the
+     * sides (pinned: no swing, arms >170°), the trunk upright (pinned). */
+    view: "side",
+    cycle: true,
+    cycleMs: 1800,
+    equip: "dumbbell",
+    viewBox: "-12 -6 152 218",
+    groundY: 204,
+    concentricTo: 1,
+    tint: {
+      forearm: "primary",
+      trapezius: "secondary",
+      abs: "secondary",
+      quadriceps: "secondary",
+    },
+    pose: (e) => gaitPose(gaitChain(e, { armSwing: 0, elbow: 0 })),
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
+    },
+    scene: () =>
+      `<line x1="-12" y1="${MACHINE_FLOOR + 1}" x2="140" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  "sled-push-pull": {
+    /* "For the push: grip the handles low, lean in, drive through your
+     * feet in short powerful strides." The stride cycle under a trunk
+     * leaned 40° into the sled, straight arms to its handles (hands
+     * pinned on them), the sled ahead. The pull is the same drill
+     * facing the other way; the push is the one drawn. */
+    view: "side",
+    cycle: true,
+    cycleMs: 1500,
+    viewBox: "-12 -6 176 218",
+    groundY: 204,
+    shadowCx: 60,
+    shadowRx: 40,
+    concentricTo: 1,
+    tint: {
+      quadriceps: "primary",
+      gluteal: "primary",
+      calves: "secondary",
+      abs: "secondary",
+    },
+    pose: (e) => gaitPose(gaitChain(e, { lean: 40, hands: SLED_HANDLE })),
+    scene: () =>
+      // The sled: runners on the floor, an upright post carrying the
+      // handle, a plate on the runners; the floor.
+      `<rect x="104" y="${MACHINE_FLOOR - 6}" width="52" height="5" rx="2" fill="${GEAR_DARK}"/>` +
+      `<line x1="${SLED_HANDLE[0]}" y1="${MACHINE_FLOOR - 6}" x2="${SLED_HANDLE[0]}" y2="${SLED_HANDLE[1] - 6}" stroke="${GEAR_DARK}" stroke-width="4"/>` +
+      `<rect x="120" y="${MACHINE_FLOOR - 34}" width="26" height="28" rx="3" fill="${GEAR}"/>` +
+      `<line x1="-12" y1="${MACHINE_FLOOR + 1}" x2="164" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  stairmaster: {
+    /* "Stand tall with shoulders stacked over hips, light grip on the
+     * rails. Climb with full steps — drive your whole foot down each
+     * time." A step CYCLE: the stance foot rides its step down, the
+     * swing foot lifts up and over onto the next; trunk upright
+     * (pinned), hands resting on the rail ahead (pinned). */
+    view: "side",
+    cycle: true,
+    cycleMs: 1700,
+    viewBox: "-12 -6 152 218",
+    groundY: 204,
+    concentricTo: 1,
+    tint: { gluteal: "primary", quadriceps: "primary", calves: "secondary" },
+    pose: (e) => {
+      const bob = 1.5 * (0.5 - 0.5 * Math.cos(4 * Math.PI * e));
+      const hip: Pt = [GAIT_CX - 6, GAIT_HIP_Y - 4 + bob];
+      const body: Op[] = [
+        {
+          kind: "translate",
+          dx: hip[0] - SIDE_ANCHORS.hip[0],
+          dy: hip[1] - SIDE_ANCHORS.hip[1],
+        },
+      ];
+      const nearLeg = plantedLeg(hip, stairAnkle(e), KNEE_FORWARD);
+      const farLeg = plantedLeg(hip, stairAnkle(e + 0.5), KNEE_FORWARD);
+      const arm = armToWorld(body, STAIR_RAIL, ELBOW_LOW);
+      return {
+        head: body,
+        torso: body,
+        pelvis: body,
+        thighL: nearLeg.thigh,
+        shankL: nearLeg.shank,
+        thighR: farLeg.thigh,
+        shankR: farLeg.shank,
+        upperArmL: arm.upper,
+        foreArmL: arm.fore,
+        handL: arm.fore,
+        upperArmR: arm.upper,
+        foreArmR: arm.fore,
+        handR: arm.fore,
+      };
+    },
+    scene: () => {
+      // The stair block: a run of steps rising ahead, the rail.
+      let steps = "";
+      for (let i = -2; i <= 3; i++) {
+        const x = GAIT_CX - 2 + i * 12;
+        const y = GAIT_BELT_Y - i * STAIR_STEP;
+        steps += `<rect x="${x}" y="${y + 2}" width="12" height="${STAIR_STEP - 1}" fill="${GEAR}"/>`;
+      }
+      return (
+        steps +
+        `<line x1="${STAIR_RAIL[0] + 2}" y1="${STAIR_RAIL[1] + 2}" x2="${STAIR_RAIL[0] + 2}" y2="${MACHINE_FLOOR}" stroke="${GEAR_DARK}" stroke-width="3"/>` +
+        `<line x1="${STAIR_RAIL[0] - 14}" y1="${STAIR_RAIL[1] + 2}" x2="${STAIR_RAIL[0] + 14}" y2="${STAIR_RAIL[1] + 2}" stroke="${GEAR_DARK}" stroke-width="3" stroke-linecap="round"/>` +
+        `<line x1="-12" y1="${MACHINE_FLOOR + 1}" x2="140" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`
+      );
+    },
+  },
+
+  "box-jumps": {
+    /* "Dip into a quarter squat and swing your arms back for momentum.
+     * Explode up onto the box, landing softly with both feet at the same
+     * time. Stand fully upright on the box, then step down — don't jump
+     * down." A CYCLE, so the step-down is a step-down and never a jump
+     * played backwards: stand, dip with the arms back, flight, land on
+     * the box with both feet, stand tall, step down backwards one foot
+     * at a time, stand. */
+    view: "side",
+    cycle: true,
+    cycleMs: 2600,
+    viewBox: "-30 -56 190 268",
+    groundY: 204,
+    shadowCx: 70,
+    shadowRx: 50,
+    concentricTo: 1,
+    tint: { quadriceps: "primary", gluteal: "primary", calves: "secondary" },
+    pose: boxJumpPose,
+    scene: () =>
+      `<rect x="${BOX_X[0]}" y="${BOX_TOP}" width="${BOX_X[1] - BOX_X[0]}" height="${MACHINE_FLOOR - BOX_TOP}" rx="2" fill="${GEAR}"/>` +
+      `<line x1="-30" y1="${MACHINE_FLOOR + 1}" x2="160" y2="${MACHINE_FLOOR + 1}" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
   },
 };
 

@@ -87,6 +87,10 @@ const DEMOS: [id: string, name: string][] = [
   ["side-plank", "Side Plank"],
   // Batch 14: the keyed burpee.
   ["burpees", "Burpees"],
+  // Batch 15: cycles — a stride, a stair step, the box landing.
+  ["treadmill", "Treadmill"],
+  ["stairmaster", "Stairmaster"],
+  ["box-jumps", "Box Jumps"],
 ];
 
 test.use({

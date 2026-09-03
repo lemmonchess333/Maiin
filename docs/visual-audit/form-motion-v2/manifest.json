@@ -358,6 +358,33 @@
         "file": "bicycle-crunch-t100.png"
       }
     ],
+    "box-jumps": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "box-jumps-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "box-jumps-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "box-jumps-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "box-jumps-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "box-jumps-t100.png"
+      }
+    ],
     "bulgarian-split": [
       {
         "t": 0,
@@ -1087,6 +1114,33 @@
         "file": "face-pulls-t100.png"
       }
     ],
+    "farmers-carry": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "farmers-carry-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "farmers-carry-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "farmers-carry-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "farmers-carry-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "farmers-carry-t100.png"
+      }
+    ],
     "front-raise": [
       {
         "t": 0,
@@ -1409,6 +1463,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "incline-db-press-t100.png"
+      }
+    ],
+    "incline-treadmill-walk": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "incline-treadmill-walk-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "incline-treadmill-walk-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "incline-treadmill-walk-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "incline-treadmill-walk-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "incline-treadmill-walk-t100.png"
       }
     ],
     "inverted-row": [
@@ -2788,6 +2869,33 @@
         "file": "skull-crushers-t100.png"
       }
     ],
+    "sled-push-pull": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "sled-push-pull-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "sled-push-pull-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "sled-push-pull-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "sled-push-pull-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "sled-push-pull-t100.png"
+      }
+    ],
     "spider-db-curl": [
       {
         "t": 0,
@@ -2840,6 +2948,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "squat-t100.png"
+      }
+    ],
+    "stairmaster": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "stairmaster-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "stairmaster-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "stairmaster-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "stairmaster-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "stairmaster-t100.png"
       }
     ],
     "straight-arm-pulldown": [
@@ -2948,6 +3083,33 @@
         "t": 1,
         "effort": 0.8,
         "file": "toe-touches-t100.png"
+      }
+    ],
+    "treadmill": [
+      {
+        "t": 0,
+        "effort": 0.5,
+        "file": "treadmill-t000.png"
+      },
+      {
+        "t": 0.25,
+        "effort": 0.75,
+        "file": "treadmill-t025.png"
+      },
+      {
+        "t": 0.5,
+        "effort": 1,
+        "file": "treadmill-t050.png"
+      },
+      {
+        "t": 0.75,
+        "effort": 0.9,
+        "file": "treadmill-t075.png"
+      },
+      {
+        "t": 1,
+        "effort": 0.8,
+        "file": "treadmill-t100.png"
       }
     ],
     "tricep-kickback": [
