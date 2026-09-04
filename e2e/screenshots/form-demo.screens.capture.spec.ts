@@ -116,6 +116,7 @@ const DEMOS: [id: string, name: string][] = [
   // only check on the extractor's `--anchor base` registration.
   ["rope-tricep-pushdown", "Rope Tricep Pushdown"],
   ["overhead-press", "Overhead Press"],
+  ["skull-crushers", "Skull Crushers"],
 ];
 
 test.use({

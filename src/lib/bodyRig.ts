@@ -9655,15 +9655,28 @@ const FORM_BEATS: Record<string, FormPlacard> = {
   },
 
   "rope-tricep-pushdown": {
-    /* Six per-position images, edited from the first (2026-09-04).
-       The most consistent set yet: equipment overlap runs 77-82%
-       between frames before any alignment, against dips' 38% and a
-       card's 10%, so the registration pass declines to move anything.
+    /* RE-ART 2026-09-04. The first set drew the cable machine as a
+       bare post with a pulley — no stack, no guide rods, no housing —
+       and this one draws the whole tower, with the plate block moving
+       through the rep. That is the change worth having; it is also the
+       one a consistency metric MISSES, because a machine with more
+       parts in it scores slightly WORSE on frame-to-frame overlap
+       while being strictly better art. The overlap reading nearly
+       argued against adopting it.
+
+       Six per-position images, edited from one original: figure height
+       936px and foot line y=1080 in all six, back edge within 8px.
+       Registration declines to move any frame.
 
        `t` runs stretch (elbows bent, rope high) to lockout, which is
        this demo's own direction: concentricTo 1, startsAt "stretch".
-       The card's own text for position 1 says "arms extended" and its
-       own drawing shows them bent — the cue follows the picture. */
+
+       The stack ladder is monotonic 1 -> 5 and descends at 6, which is
+       right — but it is DECORATION, not a readout. Measured across the
+       set the cable is not conserved: between "set elbows" and
+       "controlled return" the hands rise 68px and the stack rises with
+       them, the wrong way. Fine at a second a frame; do not describe
+       it to a user as feedback. */
     beats: [
       {
         t: 0,
@@ -9692,7 +9705,7 @@ const FORM_BEATS: Record<string, FormPlacard> = {
       {
         t: 1,
         label: "Lockout",
-        cue: "Arms locked, spread the rope apart.",
+        cue: "Elbows fully extended, hands at the thighs.",
         image: "form-frames/rope-tricep-pushdown/5.webp",
       },
       {
@@ -9764,6 +9777,128 @@ const FORM_BEATS: Record<string, FormPlacard> = {
     key: {
       primary: ["Anterior deltoids"],
       secondary: ["Upper chest", "Triceps", "Core"],
+      secondaryFill: "solid",
+    },
+  },
+
+  /* Supplied art, 2026-09-04. The first card whose registration
+     EARNED itself: `MID LOWER` was drawn 31px low (its bench pad sits
+     at y=718 where the other five sit at 687), and the gated shift
+     caught it — 28% aligned before, 62.4% after. Every earlier card
+     either needed no shift or had the shift declined, so this is the
+     first evidence the pass does anything on real art.
+
+     The bench is furniture, so the DEFAULT station anchor is correct
+     here; `--anchor base` exists for the free-weight case (see the
+     overhead press) and would be wrong on a lying exercise, where the
+     figure's ground contact is the bench it is lying on. */
+  "skull-crushers": {
+    beats: [
+      {
+        t: 0,
+        label: "Start",
+        cue: "Bar over the chest, elbows locked.",
+        image: "form-frames/skull-crushers/1.webp",
+      },
+      {
+        t: 0.15,
+        label: "Initiate lower",
+        cue: "Tilt the upper arms back, unlock elbows.",
+        image: "form-frames/skull-crushers/2.webp",
+      },
+      {
+        t: 0.5,
+        label: "Mid lower",
+        cue: "Only the forearms move; upper arms hold.",
+        image: "form-frames/skull-crushers/3.webp",
+      },
+      {
+        t: 1,
+        label: "Bottom",
+        cue: "Bar past the forehead, triceps stretched.",
+        image: "form-frames/skull-crushers/4.webp",
+      },
+      {
+        t: 0.55,
+        label: "Extend",
+        cue: "Drive back up; elbows stay stacked.",
+        image: "form-frames/skull-crushers/5.webp",
+      },
+      {
+        t: 0,
+        label: "Return to lockout",
+        cue: "Elbows locked again, ready to repeat.",
+        image: "form-frames/skull-crushers/6.webp",
+      },
+    ],
+    /* The card's own reading, which is NARROWER than the catalogue's.
+       `secondaryMuscles` claims Chest and Front Delts; the art shades
+       neither. It shades the triceps solid and pales the forearms —
+       the same two-tier convention as the rope pushdown card, from the
+       same generator. A key describes what is on screen. */
+    key: {
+      primary: ["Triceps"],
+      secondary: ["Forearms"],
+      secondaryFill: "solid",
+    },
+  },
+
+  /* Supplied art, 2026-09-04. The tightest source set so far — foot
+     line within 4px and stance width within 3px across all six, which
+     is what lets registration sit at 84-97% with a single 4px nudge.
+
+     `--anchor base` again, and for the same reason as the overhead
+     press: the dumbbells travel from the thighs to shoulder height, so
+     the grey-equipment mask is the WORST thing in frame to align on.
+     The rule that decides it is not "free weight" but "does the load
+     move" — the skull-crusher bench is furniture and takes the default
+     anchor even though a barbell is in shot. */
+  "lateral-raise": {
+    beats: [
+      {
+        t: 0,
+        label: "Start",
+        cue: "Dumbbells at the thighs, arms straight.",
+        image: "form-frames/lateral-raise/1.webp",
+      },
+      {
+        t: 0.1,
+        label: "Set position",
+        cue: "Slight bend in the elbows, ribs down.",
+        image: "form-frames/lateral-raise/2.webp",
+      },
+      {
+        t: 0.4,
+        label: "Initiate raise",
+        cue: "Lead with the elbows, not the hands.",
+        image: "form-frames/lateral-raise/3.webp",
+      },
+      {
+        t: 0.7,
+        label: "Mid raise",
+        cue: "Keep the elbow angle fixed throughout.",
+        image: "form-frames/lateral-raise/4.webp",
+      },
+      {
+        t: 1,
+        label: "Top position",
+        cue: "Arms level with the shoulders.",
+        image: "form-frames/lateral-raise/5.webp",
+      },
+      {
+        t: 0,
+        label: "Controlled return",
+        cue: "Lower slowly; resist all the way down.",
+        image: "form-frames/lateral-raise/6.webp",
+      },
+    ],
+    /* Read off the art at the top position, where the shading is
+       clearest: the side-delt cap is solid, and the pale wash covers
+       the trap, the FOREARM and the abs — the upper arm is unshaded.
+       Broader than the catalogue, which claims Traps alone. */
+    key: {
+      primary: ["Side deltoids"],
+      secondary: ["Traps", "Forearms", "Core"],
       secondaryFill: "solid",
     },
   },
