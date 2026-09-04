@@ -31,7 +31,14 @@ permissions:
 jobs:
   screenshots:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # 30, not 15. The 15 was set when the capture was much smaller; by
+    # 2026-09-04 a full pass took ~14 minutes and adding ONE exercise to
+    # the form-demo list tipped it over. A timeout is the worst way for
+    # this job to fail, because the commit/diff steps below are
+    # `if: always()` — so a killed run still force-pushes a TRUNCATED
+    # frame set as the new baseline, and the diff reports every
+    # never-captured frame as "removed". Keep real headroom here.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -78,6 +85,7 @@ jobs:
           VITE_FIREBASE_APP_ID: "1:000000000000:web:0000000000000000000000"
 
       - name: Capture screenshots
+        id: capture
         env:
           E2E_AUTH_EMULATOR: "1"
           FIRESTORE_EMULATOR_HOST: 127.0.0.1:8080
@@ -104,6 +112,18 @@ jobs:
           fi
           mkdir -p baseline-screenshots
           node scripts/diff-screenshots.mjs baseline-screenshots screenshots screenshot-diff
+          # A truncated run reaches here too (this step is `always()`), and
+          # its report is actively misleading: every frame whose spec never
+          # ran is listed as "removed". Say so at the top rather than
+          # leaving a reader to infer it from the check's conclusion.
+          if [ "${{ steps.capture.outcome }}" != "success" ]; then
+            printf '%s\n' \
+              "> **INCOMPLETE CAPTURE** — the capture step ended in \`${{ steps.capture.outcome }}\`," \
+              "> so specs that never ran contribute no frames. Any \"removed\" row below" \
+              "> is most likely a frame this run did not reach, NOT a deleted surface." \
+              "" | cat - screenshot-diff/DIFF_REPORT.md > screenshot-diff/DIFF_REPORT.md.tmp
+            mv screenshot-diff/DIFF_REPORT.md.tmp screenshot-diff/DIFF_REPORT.md
+          fi
           cat screenshot-diff/DIFF_REPORT.md >> "$GITHUB_STEP_SUMMARY" || true
 
       - name: Commit screenshots to the app-screenshots branch

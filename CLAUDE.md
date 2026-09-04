@@ -657,6 +657,18 @@ an hour:
   including the runtime's number grouping — `formatCalories` is
   `toLocaleString()` with no locale, so a comma-only pattern is a bet on
   the CI runner's locale.
+- **A `removed` row usually means the run did not finish, not that a
+  surface was deleted.** The diff and commit steps are `if: always()`,
+  so a job killed by `timeout-minutes` still force-pushes the frames it
+  managed to take — as the new BASELINE — and every frame whose spec
+  never ran reads as "removed". Hit on 2026-09-04: a full pass was
+  taking ~14 minutes against a 15-minute budget, and adding ONE exercise
+  to the form-demo list tipped it over; 15 frames across the solo-feed,
+  run-HUD, tooltip and home specs vanished at once. Nothing was wrong
+  with any of them. The budget is now 30 minutes, and an unsuccessful
+  capture step stamps an INCOMPLETE CAPTURE banner at the top of the
+  report — but check the run's conclusion before believing a cluster of
+  removals, and re-run rather than diffing against a truncated baseline.
 
 Localise before diagnosing: read the `diffs/` highlight and find the
 y-band the changed pixels occupy. If it is the map, or a sheet, suspect
