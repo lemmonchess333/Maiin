@@ -23,15 +23,18 @@
  *    of someone else's background. Soft-edged: pixels near the
  *    background fade rather than cut, or the figure gets a hard halo
  *    where its anti-aliased edge blended into the card.
- * What it deliberately does NOT do is register the frames on the
- * equipment. Panels generated one at a time do not share a camera — on
- * the dips card the station is drawn at a different position, size and
- * angle in all six — and a translation search was written, measured and
- * removed: mean station overlap against the first frame went 9.3% →
- * 8.7%, i.e. slightly worse, because aligning the bar pulls the posts
- * apart. Translation cannot fix a scene that was redrawn each time. The
- * fix for that is upstream, in how the card is generated; a fix in here
- * would be complexity that measurably does nothing.
+ *  - Registers the frames on the equipment, but only where the shift
+ *    measurably beats leaving the frame alone. An earlier version of
+ *    this comment said registration had been tried and made things
+ *    worse; that was wrong, and the reasoning is at the registration
+ *    section below rather than repeated here.
+ *
+ * What it cannot do is rescue a scene that was REDRAWN per panel.
+ * Translation corrects a camera that moved, not a station drawn at a
+ * different size and angle each time — that fix is upstream, in how
+ * the card is generated. Nor can it add detail the source never had:
+ * the first pushdown set drew the cable machine as a bare post with a
+ * pulley, and no amount of processing puts a weight stack back.
  *
  * Usage: node scripts/extract-form-frames.mjs <card.png> <outDir>
  */
@@ -94,8 +97,37 @@ const framesAt = args.indexOf("--frames");
 const perFrame = framesAt >= 0;
 const inputs = perFrame ? args.slice(framesAt + 1) : [];
 const card = perFrame ? null : args[0];
+/* Positional args are whatever is left once the flags and their values
+ * are removed. Reading the out dir as "the token before --frames" was
+ * positional in the other sense — it broke the moment a flag TAKING A
+ * VALUE was added before it, and it broke silently, writing the frames
+ * to a directory named after the flag's value. */
+const VALUE_FLAGS = new Set(["--inset", "--anchor"]);
+const BOOL_FLAGS = new Set(["--chrome", "--frames"]);
+/* Any flag this parser does not recognise is an ERROR, not something to
+ * skip. The alternative is the failure this replaced: a value-taking
+ * flag the parser did not know about left its VALUE sitting in the
+ * positional list, and the frames were written to a directory named
+ * after it — no error, no warning, just output somewhere nobody looked.
+ * Add a new flag to one of these two sets or the script refuses it. */
+for (const a of args)
+  if (a.startsWith("--") && !VALUE_FLAGS.has(a) && !BOOL_FLAGS.has(a)) {
+    console.error(`unknown flag ${a}`);
+    process.exit(1);
+  }
+const positional = [];
+for (let i = 0; i < (perFrame ? framesAt : args.length); i++) {
+  const a = args[i];
+  if (a === "--frames") break;
+  if (VALUE_FLAGS.has(a)) {
+    i++;
+    continue;
+  }
+  if (a.startsWith("--")) continue;
+  positional.push(a);
+}
 const outDir = resolve(
-  (perFrame ? args[framesAt - 1] : args[1]) ?? "public/form-frames/dips"
+  (perFrame ? positional[0] : positional[1]) ?? "public/form-frames/dips"
 );
 if (!card && inputs.length === 0) {
   console.error(
@@ -479,6 +511,27 @@ async function captionBox(file, bg) {
  * looks like wherever it sits.
  */
 const chrome = args.includes("--chrome");
+
+/* Which part of the scene is allowed to define "did not move".
+ *
+ * The default keys on the mid-grey EQUIPMENT, which is right whenever
+ * the equipment is furniture: a dip station, a bench, a cable tower.
+ * It is exactly wrong for a free weight. On the overhead press the
+ * barbell travels from the collarbone to full extension — it is the
+ * most-moving object in the frame — and registering on it drove three
+ * of four frames to the search boundary (dy = -100, the cap), which
+ * would have shoved the LIFTER a hundred pixels between beats to hold
+ * a bar still that is supposed to rise.
+ *
+ * `--anchor base` keys on the figure's ground contact instead: the
+ * feet and lower legs, which is what stays put in any standing lift.
+ * Reach for it whenever the load is carried rather than mounted. */
+const anchorAt = args.indexOf("--anchor");
+const ANCHOR = anchorAt >= 0 ? args[anchorAt + 1] : "station";
+if (!["station", "base"].includes(ANCHOR)) {
+  console.error(`--anchor takes "station" or "base", got "${ANCHOR}"`);
+  process.exit(1);
+}
 const TITLE_BOX = chrome ? scaleBox(TITLE_BOX_F) : null;
 const CAPTION_BOX = chrome ? scaleBox(CAPTION_BOX_F) : null;
 
@@ -565,6 +618,25 @@ function stationMask(data, info) {
     }
   return { m, W, H };
 }
+/* The figure's ground contact: bright pixels in the bottom band. Sized
+ * generously enough to hold both feet and the lower shin, small enough
+ * that a bar carried at the hip cannot reach into it. */
+function baseMask(data, info) {
+  const { width: W, height: H, channels: C } = info;
+  const m = new Uint8Array(W * H);
+  const from = Math.round(H * 0.78);
+  for (let y = from; y < H; y++)
+    for (let x = 0; x < W; x++) {
+      const p = (y * W + x) * C;
+      const r = data[p],
+        g = data[p + 1],
+        b = data[p + 2];
+      if (r > 150 && g > 150 && b > 150 && Math.abs(r - b) < 40)
+        m[y * W + x] = 1;
+    }
+  return { m, W, H };
+}
+
 const iouAt = (a, b, dx, dy) => {
   let i = 0,
     u = 0;
@@ -586,7 +658,8 @@ const iouAt = (a, b, dx, dy) => {
 const raws = [];
 for (const buf of cleaned)
   raws.push(await sharp(buf).raw().toBuffer({ resolveWithObject: true }));
-const masks = raws.map((r) => stationMask(r.data, r.info));
+const maskOf = ANCHOR === "base" ? baseMask : stationMask;
+const masks = raws.map((r) => maskOf(r.data, r.info));
 const RANGE = Math.round(Math.min(W, H) * 0.08);
 const STEP = 4;
 const shifts = [{ dx: 0, dy: 0 }];
@@ -605,14 +678,19 @@ for (let k = 1; k < masks.length; k++) {
         by = dy;
       }
     }
+  /* A winner sitting ON the search boundary is not a winner: the
+   * optimiser wanted to keep going and simply ran out of window, which
+   * is what aligning on something that genuinely MOVED looks like.
+   * Trusting it is how a moving barbell drags the lifter with it. */
+  const railed = Math.abs(bx) === RANGE || Math.abs(by) === RANGE;
   // Only worth moving a frame if it is a real improvement, not noise.
-  const helps = best > flat0 * 1.05;
+  const helps = best > flat0 * 1.05 && !railed;
   shifts.push(helps ? { dx: bx, dy: by } : { dx: 0, dy: 0 });
   scores.push({
     frame: k + 1,
     before: +(flat0 * 100).toFixed(1),
     after: +((helps ? best : flat0) * 100).toFixed(1),
-    applied: helps ? `${bx},${by}` : "none",
+    applied: helps ? `${bx},${by}` : railed ? "none (railed)" : "none",
   });
 }
 

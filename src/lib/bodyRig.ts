@@ -9609,18 +9609,6 @@ const FORM_BEATS: Record<string, FormPlacard> = {
     },
   },
 
-  /* ── Authored ahead of the art (2026-09-03) ──────────────────────
-   * Positions only: no `image`, so `getFormBeats` returns null and
-   * these play as ordinary reps until their cards arrive. They exist
-   * so `form-card-prompt.ts` can ask a generator for exactly these six
-   * panels — a prompt built from four catalogue instructions produces
-   * a card the app cannot use.
-   *
-   * `t` runs in each demo's OWN direction, which differs: bench and
-   * row lock out at t=1, squat and deadlift at t=0. The order pins in
-   * bodyRig.test.ts check the labels against that, not against a
-   * convention assumed here. */
-
   "bench-press": {
     /* Card-sourced (2026-09-03), so the figure region is 451px against
        the 900 the player renders — softer than the dips set, which came
@@ -9716,6 +9704,88 @@ const FORM_BEATS: Record<string, FormPlacard> = {
     ],
   },
 
+  /* Supplied art, 2026-09-04. The labels are the card's, not the ones
+     authored ahead of it: the pictures decide, the same way the
+     pushdown's cues follow its drawings.
+
+     THREE cues from the authored set are gone, all for one reason —
+     this card is a FRONT view and they are sagittal claims. "Head back
+     slightly", "head through as the bar passes it" and "bar over the
+     mid-foot" are all true of the lift and none of them is visible
+     from the front, so each would have been a caption asserting
+     something the frame beneath it cannot show. That is the dips
+     lockout mistake in another form: there the caption said "arms
+     locked" over a 152-degree elbow. A cue has to be checkable against
+     its own picture. */
+  "overhead-press": {
+    beats: [
+      {
+        t: 0,
+        label: "Start position",
+        cue: "Bar on the front delts, elbows under.",
+        image: "form-frames/overhead-press/1.webp",
+      },
+      {
+        t: 0.1,
+        label: "Brace and set",
+        cue: "Ribs down, glutes tight, grip outside shoulders.",
+        image: "form-frames/overhead-press/2.webp",
+      },
+      {
+        t: 0.4,
+        label: "Initiate press",
+        cue: "Drive the bar straight past the chin.",
+        image: "form-frames/overhead-press/3.webp",
+      },
+      {
+        t: 0.7,
+        label: "Drive up",
+        cue: "Keep pushing; the bar clears the head.",
+        image: "form-frames/overhead-press/4.webp",
+      },
+      {
+        t: 1,
+        label: "Lockout",
+        cue: "Elbows locked, bar centred over the head.",
+        image: "form-frames/overhead-press/5.webp",
+      },
+      {
+        t: 0,
+        label: "Controlled return",
+        cue: "Same path down, elbows stay under.",
+        image: "form-frames/overhead-press/6.webp",
+      },
+    ],
+    /* Solid, not hatched: this card fills its secondaries with flat
+       lilac where the dips card cross-hatched them. The names are the
+       card's own — it shades the anterior delt caps darkest and pales
+       the chest, abs and upper arms, which is finer than the
+       catalogue's "Deltoids / Triceps, Upper Chest, Core". */
+    key: {
+      primary: ["Anterior deltoids"],
+      secondary: ["Upper chest", "Triceps", "Core"],
+      secondaryFill: "solid",
+    },
+  },
+
+  /* ── Authored ahead of the art (2026-09-03) ──────────────────────
+   * Positions only: no `image`, so `getFormBeats` returns null and
+   * these play as ordinary reps until their cards arrive. They exist
+   * so `form-card-prompt.ts` can ask a generator for exactly these six
+   * panels — a prompt built from four catalogue instructions produces
+   * a card the app cannot use.
+   *
+   * This header used to sit above bench-press, and stayed put as three
+   * placards below it were given art — so it went on calling them
+   * imageless long after they stopped being. It belongs immediately
+   * above the first entry it is still true of; move it DOWN again as
+   * the remaining cards arrive.
+   *
+   * `t` runs in each demo's OWN direction, which differs: row locks
+   * out at t=1, squat and deadlift at t=0. The order pins in
+   * bodyRig.test.ts check the labels against that, not against a
+   * convention assumed here. */
+
   squat: {
     beats: [
       { t: 0, label: "Set up", cue: "Bar on the traps, chest tall, brace." },
@@ -9747,25 +9817,6 @@ const FORM_BEATS: Record<string, FormPlacard> = {
       },
       { t: 0, label: "Lockout", cue: "Stand tall, glutes squeezed." },
       { t: 1, label: "Return", cue: "Hips back first, then bend the knees." },
-    ],
-  },
-
-  "overhead-press": {
-    beats: [
-      {
-        t: 0,
-        label: "Front rack",
-        cue: "Bar on the front delts, elbows under.",
-      },
-      {
-        t: 0.25,
-        label: "Clear the chin",
-        cue: "Head back slightly, bar travels straight.",
-      },
-      { t: 0.6, label: "Mid press", cue: "Head through as the bar passes it." },
-      { t: 1, label: "Lockout", cue: "Bar over the mid-foot, ribs down." },
-      { t: 0.5, label: "Lower", cue: "Same path down, elbows stay under." },
-      { t: 0, label: "Rack", cue: "Bar back on the delts, rebrace." },
     ],
   },
 
