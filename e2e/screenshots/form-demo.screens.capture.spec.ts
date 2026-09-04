@@ -106,6 +106,12 @@ const DEMOS: [id: string, name: string][] = [
   ["turkish-get-up", "Turkish Get-Up"],
   // Batch 18: the ankle joint — the last row.
   ["seated-calf-raise", "Seated Calf Raise"],
+  // Placards. These three render supplied art rather than the rig, so
+  // their frames are the only proof the extraction pipeline's output
+  // still composes into a readable position — a rig regression and a
+  // bad crop look nothing alike, and only one of them has unit tests.
+  // bench-press and dips are already above; this is the third.
+  ["rope-tricep-pushdown", "Rope Tricep Pushdown"],
 ];
 
 test.use({
