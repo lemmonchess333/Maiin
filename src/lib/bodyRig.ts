@@ -9903,6 +9903,78 @@ const FORM_BEATS: Record<string, FormPlacard> = {
     },
   },
 
+  /* Supplied art, 2026-09-04. This card REFINES the anchor rule the
+     lateral raise stated, and the earlier phrasing was too categorical.
+     "Does the load move" is not the test; what matters is how much of
+     the GREY MASK moves. Both anchors decline to shift here and the
+     output is byte-identical either way, but the reported alignment
+     differs hugely:
+
+       station (default)  56.1 - 61.7%
+       base               87.5 - 94.3%
+
+     The machine frame is pixel-identical across all six (top y=38,
+     base y=1077, right edge x=970-971) — yet the station mask ALSO
+     holds the bar and the weight stack, which move by design and are a
+     large share of the grey on this machine. Compare skull crushers,
+     where a barbell moves in shot but the bench dominates the grey and
+     the default anchor reads fine. Probe both and take the higher; it
+     is one command and the numbers decide.
+
+     No claim is made here about the weight stack's travel. It could
+     not be measured reliably off these frames (three of six defeated
+     the column heuristic), and the pushdown taught that a stack ladder
+     asserted without measurement is how decoration gets described as
+     feedback. */
+  "lat-pulldown": {
+    beats: [
+      {
+        t: 0,
+        label: "Start",
+        cue: "Arms fully extended, lats stretched.",
+        image: "form-frames/lat-pulldown/1.webp",
+      },
+      {
+        t: 0.2,
+        label: "Initiate pull",
+        cue: "Pull the shoulder blades down first.",
+        image: "form-frames/lat-pulldown/2.webp",
+      },
+      {
+        t: 0.5,
+        label: "Mid pull",
+        cue: "Elbows drive down toward the ribs.",
+        image: "form-frames/lat-pulldown/3.webp",
+      },
+      {
+        t: 0.8,
+        label: "Lower to chest",
+        cue: "Chest tall, elbows tracking down.",
+        image: "form-frames/lat-pulldown/4.webp",
+      },
+      {
+        t: 1,
+        label: "Contract",
+        cue: "Bar at the upper chest, squeeze.",
+        image: "form-frames/lat-pulldown/5.webp",
+      },
+      {
+        t: 0,
+        label: "Controlled return",
+        cue: "Let it rise slowly, arms straightening.",
+        image: "form-frames/lat-pulldown/6.webp",
+      },
+    ],
+    /* Lats solid; the pale wash covers the arms end to end, the traps
+       and the rear delts. Broader than the catalogue's Biceps + Rear
+       Delts, which omits the forearms and traps the art shades. */
+    key: {
+      primary: ["Lats"],
+      secondary: ["Biceps", "Forearms", "Traps", "Rear deltoids"],
+      secondaryFill: "solid",
+    },
+  },
+
   /* ── Authored ahead of the art (2026-09-03) ──────────────────────
    * Positions only: no `image`, so `getFormBeats` returns null and
    * these play as ordinary reps until their cards arrive. They exist

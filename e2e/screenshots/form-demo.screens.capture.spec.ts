@@ -118,6 +118,7 @@ const DEMOS: [id: string, name: string][] = [
   ["overhead-press", "Overhead Press"],
   ["skull-crushers", "Skull Crushers"],
   ["barbell-row", "Barbell Row"],
+  ["lat-pulldown", "Lat Pulldown"],
 ];
 
 test.use({
