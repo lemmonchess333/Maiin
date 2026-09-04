@@ -9970,19 +9970,68 @@ const FORM_BEATS: Record<string, FormPlacard> = {
     ],
   },
 
+  /* Supplied art, 2026-09-04. The cleanest registration of any set:
+     95.8-98.7%, not one shift applied. The shoes are why — a rigid,
+     high-contrast ground contact that never moves (L=540, R=762, sole
+     at y=1069-1070 across all six, a 1px spread), which is exactly
+     what `--anchor base` wants. Load moves, so base anchor; see the
+     lateral raise for why the test is "does the load move" and not
+     "is it a free weight".
+
+     The authored cue said "torso about 45 degrees". MEASURED off this
+     art it is 27-30 degrees below horizontal — so 45 was wrong on the
+     horizontal reading and wrong on the vertical one (63) too. The cue
+     now describes the hinge without asserting a number, which is the
+     dips-lockout lesson: a caption is a claim about its own frame. */
   "barbell-row": {
     beats: [
-      { t: 0, label: "Hinge", cue: "Torso about 45 degrees, back flat." },
       {
-        t: 0.3,
-        label: "Initiate",
-        cue: "Shoulder blades pull before the arms.",
+        t: 0,
+        label: "Start",
+        cue: "Hinged over, arms straight, lats stretched.",
+        image: "form-frames/barbell-row/1.webp",
       },
-      { t: 0.7, label: "Mid row", cue: "Elbows track back, not out." },
-      { t: 1, label: "Top", cue: "Bar to the lower ribs, squeeze." },
-      { t: 0.5, label: "Lower", cue: "Control it, torso angle unchanged." },
-      { t: 0, label: "Stretch", cue: "Arms straight, lats loaded." },
+      {
+        t: 0.1,
+        label: "Set position",
+        cue: "Back flat, hinged from the hips.",
+        image: "form-frames/barbell-row/2.webp",
+      },
+      {
+        t: 0.4,
+        label: "Initiate pull",
+        cue: "Shoulder blades pull before the arms.",
+        image: "form-frames/barbell-row/3.webp",
+      },
+      {
+        t: 0.7,
+        label: "Mid row",
+        cue: "Elbows track back, not out.",
+        image: "form-frames/barbell-row/4.webp",
+      },
+      {
+        t: 1,
+        label: "Top contract",
+        cue: "Bar to the lower ribs, squeeze.",
+        image: "form-frames/barbell-row/5.webp",
+      },
+      {
+        t: 0,
+        label: "Controlled lower",
+        cue: "Control it; the torso angle holds.",
+        image: "form-frames/barbell-row/6.webp",
+      },
     ],
+    /* Broader than the catalogue again: it claims Rhomboids, Rear
+       Delts and Biceps, and the art additionally washes the traps and
+       the whole posterior chain — glutes and hamstrings are shaded
+       because they hold the hinge. Rhomboids are not separable from
+       the lat wedge at this size, so they are not named. */
+    key: {
+      primary: ["Lats"],
+      secondary: ["Traps", "Rear deltoids", "Biceps", "Glutes", "Hamstrings"],
+      secondaryFill: "solid",
+    },
   },
 };
 
