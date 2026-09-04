@@ -110,8 +110,12 @@ const DEMOS: [id: string, name: string][] = [
   // their frames are the only proof the extraction pipeline's output
   // still composes into a readable position — a rig regression and a
   // bad crop look nothing alike, and only one of them has unit tests.
-  // bench-press and dips are already above; this is the third.
+  // bench-press and dips are already above; these are the third and
+  // fourth. The overhead press is the first placard whose EQUIPMENT
+  // moves — the bar travels the whole range — so its frame is also the
+  // only check on the extractor's `--anchor base` registration.
   ["rope-tricep-pushdown", "Rope Tricep Pushdown"],
+  ["overhead-press", "Overhead Press"],
 ];
 
 test.use({
