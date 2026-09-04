@@ -9655,15 +9655,28 @@ const FORM_BEATS: Record<string, FormPlacard> = {
   },
 
   "rope-tricep-pushdown": {
-    /* Six per-position images, edited from the first (2026-09-04).
-       The most consistent set yet: equipment overlap runs 77-82%
-       between frames before any alignment, against dips' 38% and a
-       card's 10%, so the registration pass declines to move anything.
+    /* RE-ART 2026-09-04. The first set drew the cable machine as a
+       bare post with a pulley — no stack, no guide rods, no housing —
+       and this one draws the whole tower, with the plate block moving
+       through the rep. That is the change worth having; it is also the
+       one a consistency metric MISSES, because a machine with more
+       parts in it scores slightly WORSE on frame-to-frame overlap
+       while being strictly better art. The overlap reading nearly
+       argued against adopting it.
+
+       Six per-position images, edited from one original: figure height
+       936px and foot line y=1080 in all six, back edge within 8px.
+       Registration declines to move any frame.
 
        `t` runs stretch (elbows bent, rope high) to lockout, which is
        this demo's own direction: concentricTo 1, startsAt "stretch".
-       The card's own text for position 1 says "arms extended" and its
-       own drawing shows them bent — the cue follows the picture. */
+
+       The stack ladder is monotonic 1 -> 5 and descends at 6, which is
+       right — but it is DECORATION, not a readout. Measured across the
+       set the cable is not conserved: between "set elbows" and
+       "controlled return" the hands rise 68px and the stack rises with
+       them, the wrong way. Fine at a second a frame; do not describe
+       it to a user as feedback. */
     beats: [
       {
         t: 0,
@@ -9692,7 +9705,7 @@ const FORM_BEATS: Record<string, FormPlacard> = {
       {
         t: 1,
         label: "Lockout",
-        cue: "Arms locked, spread the rope apart.",
+        cue: "Elbows fully extended, hands at the thighs.",
         image: "form-frames/rope-tricep-pushdown/5.webp",
       },
       {
