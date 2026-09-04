@@ -438,18 +438,29 @@ async function captionBox(file, bg) {
   });
   if (a >= 0) bands.push([a, H - 1]);
   if (bands.length < 2) return null;
-  const last = bands[bands.length - 1];
-  const prev = bands[bands.length - 2];
-  const tall = last[1] - last[0];
-  const gap = last[0] - prev[1];
-  // A caption is short and stands clear of the figure above it.
-  if (tall > H * 0.12 || gap < H * 0.02) return null;
-  return {
-    left: 0,
-    top: Math.max(0, last[0] - 4),
-    width: W,
-    height: Math.min(H - Math.max(0, last[0] - 4), tall + 12),
-  };
+
+  /* Anchor on the FIGURE, not on the last band.
+     
+     The rule used to test the last band alone, which works only when the
+     caption is one solid run. Two of the six pushdown frames split
+     theirs into three and four bands — a descender or an antialiased row
+     left stranded a couple of pixels below the rest — so the "caption"
+     it measured was a single row with a 2px gap, failed the test, and
+     the real caption shipped inside the frame.
+     
+     The figure is the tallest band by a wide margin. Everything below it
+     is caption, however many pieces the text breaks into. */
+  let tallest = 0;
+  bands.forEach(([b0, b1], i) => {
+    if (b1 - b0 > bands[tallest][1] - bands[tallest][0]) tallest = i;
+  });
+  if (tallest === bands.length - 1) return null;
+  const top = bands[tallest][1] + 1;
+  const below = H - top;
+  // Only a caption-sized remainder; a figure in two parts is not one.
+  if (below > H * 0.2) return null;
+  const cut = Math.max(0, top - 2);
+  return { left: 0, top: cut, width: W, height: H - cut };
 }
 
 /**

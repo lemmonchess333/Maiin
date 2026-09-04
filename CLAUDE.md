@@ -657,6 +657,18 @@ an hour:
   including the runtime's number grouping — `formatCalories` is
   `toLocaleString()` with no locale, so a comma-only pattern is a bet on
   the CI runner's locale.
+- **A `removed` row usually means the run did not finish, not that a
+  surface was deleted.** The diff and commit steps are `if: always()`,
+  so a job killed by `timeout-minutes` still force-pushes the frames it
+  managed to take — as the new BASELINE — and every frame whose spec
+  never ran reads as "removed". Hit on 2026-09-04: a full pass was
+  taking ~14 minutes against a 15-minute budget, and adding ONE exercise
+  to the form-demo list tipped it over; 15 frames across the solo-feed,
+  run-HUD, tooltip and home specs vanished at once. Nothing was wrong
+  with any of them. The budget is now 30 minutes, and an unsuccessful
+  capture step stamps an INCOMPLETE CAPTURE banner at the top of the
+  report — but check the run's conclusion before believing a cluster of
+  removals, and re-run rather than diffing against a truncated baseline.
 
 Localise before diagnosing: read the `diffs/` highlight and find the
 y-band the changed pixels occupy. If it is the map, or a sheet, suspect
@@ -1092,10 +1104,25 @@ Still open:
       is a fitness app: the demo teaches. The 03t captions already
       caught the rig claiming a locked arm at 152 degrees; nothing has
       checked the pictures to the same standard.
-- [ ] **Decide the scale question before cutting more cards.** One
-      exercise is ~72 KB; 152 at six frames each is ~18 MB of precached
-      assets, which is a different conversation about bundle size and
-      about generating 151 more cards.
+- [ ] **Decide the scale question before cutting more cards.** Corrected
+      2026-09-04 — the earlier figures here ("~72 KB per exercise",
+      "~18 MB of precached assets") were both wrong, and the second one
+      wrong in the way that mattered: **nothing precaches these.**
+      `public/sw.js`'s `STATIC_ASSETS` is the three-entry app shell, and
+      `.webp` falls into the stale-while-revalidate IMAGE branch — so a
+      user downloads a set only when they open that exercise's Form tab,
+      and it is runtime-cached after that. No user ever pays for the
+      whole library.
+      The real numbers, measured: ~500 KB per exercise at current
+      quality (424 / 468 / 632 KB for bench-press / dips /
+      rope-tricep-pushdown), so 1.5 MB for three and ~76 MB if all 152
+      were cut. That cost lands on the REPO and on every deploy
+      artifact, not on the client — which is a different and easier
+      conversation than a bundle-size one, and points at moving the
+      frames to Storage and fetching on demand rather than at cutting
+      fewer of them.
+      The other half is unchanged: generating 151 more cards is the
+      larger cost, and it is human-in-the-loop.
 
 ### Cost & margin operator setup (unit economics)
 

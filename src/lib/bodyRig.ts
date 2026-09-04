@@ -9666,6 +9666,56 @@ const FORM_BEATS: Record<string, FormPlacard> = {
     ],
   },
 
+  "rope-tricep-pushdown": {
+    /* Six per-position images, edited from the first (2026-09-04).
+       The most consistent set yet: equipment overlap runs 77-82%
+       between frames before any alignment, against dips' 38% and a
+       card's 10%, so the registration pass declines to move anything.
+
+       `t` runs stretch (elbows bent, rope high) to lockout, which is
+       this demo's own direction: concentricTo 1, startsAt "stretch".
+       The card's own text for position 1 says "arms extended" and its
+       own drawing shows them bent — the cue follows the picture. */
+    beats: [
+      {
+        t: 0,
+        label: "Start",
+        cue: "Elbows pinned, rope high, triceps stretched.",
+        image: "form-frames/rope-tricep-pushdown/1.webp",
+      },
+      {
+        t: 0.1,
+        label: "Set elbows",
+        cue: "Pin the elbows; upper arms stay still.",
+        image: "form-frames/rope-tricep-pushdown/2.webp",
+      },
+      {
+        t: 0.4,
+        label: "Initiate push",
+        cue: "Drive the rope down by extending.",
+        image: "form-frames/rope-tricep-pushdown/3.webp",
+      },
+      {
+        t: 0.7,
+        label: "Mid pushdown",
+        cue: "Keep pushing; the triceps contract.",
+        image: "form-frames/rope-tricep-pushdown/4.webp",
+      },
+      {
+        t: 1,
+        label: "Lockout",
+        cue: "Arms locked, spread the rope apart.",
+        image: "form-frames/rope-tricep-pushdown/5.webp",
+      },
+      {
+        t: 0,
+        label: "Controlled return",
+        cue: "Return slowly; elbows must not drift.",
+        image: "form-frames/rope-tricep-pushdown/6.webp",
+      },
+    ],
+  },
+
   squat: {
     beats: [
       { t: 0, label: "Set up", cue: "Bar on the traps, chest tall, brace." },

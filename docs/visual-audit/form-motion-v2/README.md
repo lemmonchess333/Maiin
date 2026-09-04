@@ -2503,3 +2503,53 @@ It will read softer than dips, and that is the card, not the pipeline.
 Regenerating it the per-position way is the fix, and the flow is
 unchanged: `form-card-prompt.ts bench-press` already prints the
 two-step prompt.
+
+## STATUS 2026-09-04b — rope pushdown, and a caption rule that anchored wrong
+
+Third exercise, and the most consistent set so far. Six per-position
+images edited from the first:
+
+|                                  | card | dips | pushdown   |
+| -------------------------------- | ---- | ---- | ---------- |
+| equipment overlap between frames | 10%  | 38%  | **77–82%** |
+| after the alignment pass         | 23%  | 48%  | unchanged  |
+
+The registration pass declines to move anything here, which is the gate
+working: at 80% there is nothing a translation would improve.
+
+### The caption rule was anchored on the wrong end
+
+It tested the LAST content band — short, and standing clear of the
+picture above it. That holds only when the caption is one solid run.
+Two of the six frames split theirs into three and four bands, a
+descender or an antialiased row stranded a couple of pixels below the
+rest, so the "caption" it measured was a single row with a 2px gap. It
+failed the test, and the real caption shipped inside the frame.
+
+Anchored on the FIGURE now: the figure is the tallest band by a wide
+margin, and everything below it is caption however many pieces the text
+breaks into. Guarded by requiring the remainder to be caption-sized —
+under a fifth of the height — so a figure drawn in two parts is never
+mistaken for one.
+
+The dips frames were re-cut with the corrected rule. They gained a
+little: the old rule cut from the caption's own start, the new one from
+just past the figure, which removes the dead gap between them.
+
+### Where the three exercises stand
+
+|               | source           | figure region | upscale to the 900px displayed |
+| ------------- | ---------------- | ------------- | ------------------------------ |
+| dips          | six per-position | 758 px        | 1.2x                           |
+| rope pushdown | six per-position | 485 px        | 1.9x                           |
+| bench press   | one card         | 451 px        | 2.0x                           |
+
+The pushdown figure is narrow because the exercise is: a standing
+lifter at a cable stack occupies far less width than a body on a bench,
+and the shared canvas is the union of six of those. It is 1046px TALL,
+so the frame carries plenty of detail — the width figure is not the
+whole story for an upright exercise.
+
+Three exercises now hold 1.5 MB of precached art. That is the number
+that decides how many more are worth generating before the frames move
+to storage and are fetched on demand.
