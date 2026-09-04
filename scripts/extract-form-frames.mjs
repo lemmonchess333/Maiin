@@ -23,15 +23,18 @@
  *    of someone else's background. Soft-edged: pixels near the
  *    background fade rather than cut, or the figure gets a hard halo
  *    where its anti-aliased edge blended into the card.
- * What it deliberately does NOT do is register the frames on the
- * equipment. Panels generated one at a time do not share a camera — on
- * the dips card the station is drawn at a different position, size and
- * angle in all six — and a translation search was written, measured and
- * removed: mean station overlap against the first frame went 9.3% →
- * 8.7%, i.e. slightly worse, because aligning the bar pulls the posts
- * apart. Translation cannot fix a scene that was redrawn each time. The
- * fix for that is upstream, in how the card is generated; a fix in here
- * would be complexity that measurably does nothing.
+ *  - Registers the frames on the equipment, but only where the shift
+ *    measurably beats leaving the frame alone. An earlier version of
+ *    this comment said registration had been tried and made things
+ *    worse; that was wrong, and the reasoning is at the registration
+ *    section below rather than repeated here.
+ *
+ * What it cannot do is rescue a scene that was REDRAWN per panel.
+ * Translation corrects a camera that moved, not a station drawn at a
+ * different size and angle each time — that fix is upstream, in how
+ * the card is generated. Nor can it add detail the source never had:
+ * the first pushdown set drew the cable machine as a bare post with a
+ * pulley, and no amount of processing puts a weight stack back.
  *
  * Usage: node scripts/extract-form-frames.mjs <card.png> <outDir>
  */
