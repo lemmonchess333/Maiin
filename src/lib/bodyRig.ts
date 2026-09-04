@@ -9768,6 +9768,68 @@ const FORM_BEATS: Record<string, FormPlacard> = {
     },
   },
 
+  /* Supplied art, 2026-09-04. The first card whose registration
+     EARNED itself: `MID LOWER` was drawn 31px low (its bench pad sits
+     at y=718 where the other five sit at 687), and the gated shift
+     caught it — 28% aligned before, 62.4% after. Every earlier card
+     either needed no shift or had the shift declined, so this is the
+     first evidence the pass does anything on real art.
+
+     The bench is furniture, so the DEFAULT station anchor is correct
+     here; `--anchor base` exists for the free-weight case (see the
+     overhead press) and would be wrong on a lying exercise, where the
+     figure's ground contact is the bench it is lying on. */
+  "skull-crushers": {
+    beats: [
+      {
+        t: 0,
+        label: "Start",
+        cue: "Bar over the chest, elbows locked.",
+        image: "form-frames/skull-crushers/1.webp",
+      },
+      {
+        t: 0.15,
+        label: "Initiate lower",
+        cue: "Tilt the upper arms back, unlock elbows.",
+        image: "form-frames/skull-crushers/2.webp",
+      },
+      {
+        t: 0.5,
+        label: "Mid lower",
+        cue: "Only the forearms move; upper arms hold.",
+        image: "form-frames/skull-crushers/3.webp",
+      },
+      {
+        t: 1,
+        label: "Bottom",
+        cue: "Bar past the forehead, triceps stretched.",
+        image: "form-frames/skull-crushers/4.webp",
+      },
+      {
+        t: 0.55,
+        label: "Extend",
+        cue: "Drive back up; elbows stay stacked.",
+        image: "form-frames/skull-crushers/5.webp",
+      },
+      {
+        t: 0,
+        label: "Return to lockout",
+        cue: "Elbows locked again, ready to repeat.",
+        image: "form-frames/skull-crushers/6.webp",
+      },
+    ],
+    /* The card's own reading, which is NARROWER than the catalogue's.
+       `secondaryMuscles` claims Chest and Front Delts; the art shades
+       neither. It shades the triceps solid and pales the forearms —
+       the same two-tier convention as the rope pushdown card, from the
+       same generator. A key describes what is on screen. */
+    key: {
+      primary: ["Triceps"],
+      secondary: ["Forearms"],
+      secondaryFill: "solid",
+    },
+  },
+
   /* ── Authored ahead of the art (2026-09-03) ──────────────────────
    * Positions only: no `image`, so `getFormBeats` returns null and
    * these play as ordinary reps until their cards arrive. They exist
