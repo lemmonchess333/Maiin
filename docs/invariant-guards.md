@@ -71,6 +71,17 @@ The three invariants CLAUDE.md flags as "regress constantly":
 | `eslint.config.js` (`no-restricted-syntax`) | **hex** — no hardcoded hex / `bg-white` / `text-black` / bare `text-muted` (lint-enforced)                                                                                                     |
 | `designSystemInvariants.test.ts`            | **mono-numerals** (`tabular-nums` className units carry `font-mono`, ratcheted) + **44px floor** (no hand-rolled `role="switch"`; `Toggle`/`Button`/`IconButton` keep their default 44px size) |
 
+## Hygiene ratchets
+
+Debt that is grandfathered, pinned, and only allowed to shrink. Each test
+prints the new floor when the count drops, so the next PR can lower it.
+
+| Guard                              | Pins                                                                                                                                                                                                                                  |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `stylesUsage.test.ts`              | every class and keyframe declared in `src/styles/*.css` is referenced by src or another stylesheet; `KNOWN_DEAD` (20 classes + 1 keyframe) is delete-only                                                                             |
+| `archaeologyMarkers.test.ts`       | PR citations + ISO dates + "used to" inside non-test comments across `src/` and `functions/` — baseline 790, never total comment share (a share ratchet rewards deleting the load-bearing comments)                                   |
+| `scripts/check-dist-size.mjs` (CI) | per-chunk and total JS size against `scripts/dist-size.baseline.json`: >5% growth (or +2 kB on small chunks) fails, a new chunk ≥20 kB must be added deliberately; `--update` rewrites the baseline — in the same PR, with the reason |
+
 ## Hosting & CSP
 
 | Guard                            | Pins                                                                                                                                                                                                                                                                                                                                       |

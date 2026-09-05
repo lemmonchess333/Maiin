@@ -14,6 +14,7 @@
     "build:ios": "CAPACITOR_BUILD=true tsc -b && CAPACITOR_BUILD=true vite build && npx cap sync ios",
     "build:android": "echo 'Android platform is not committed yet (ios/ only) — see README: Capacitor / Android' && exit 1",
     "lint": "eslint .",
+    "check:dist-size": "node scripts/check-dist-size.mjs",
     "check:cycles": "madge --circular --extensions ts,tsx --ts-config tsconfig.app.json src",
     "verify": "npm run lint && npm run build && npm run test",
     "typecheck": "tsc -b",
