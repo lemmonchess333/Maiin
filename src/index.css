@@ -75,6 +75,7 @@
   --color-stage: hsl(var(--stage));
   --color-stage-foreground: hsl(var(--stage-foreground));
   --color-stage-muted: hsl(var(--stage-muted));
+  --color-stage-raised: hsl(var(--stage-raised));
   --color-muted: hsl(var(--muted));
   --color-muted-foreground: hsl(var(--muted-foreground));
   --color-border: hsl(var(--border));
@@ -236,6 +237,9 @@
      themes, like the stage itself, because the surface is. */
   --stage-foreground: 240 6% 96%;
   --stage-muted: 240 5% 70%;
+  /* A raised panel ON the stage (dialogs over the run HUD) — the dark card
+     value, fixed in both themes because the surface beneath it is. */
+  --stage-raised: 240 6% 11%; /* #1A1A1E */
   --muted: 240 6% 97.5%; /* DS2: near-white raised tile (was 95.9% ≈ page) */
   /* 46.1% → 43% (owner-decided consolidation, 2026-08-22). At 46.1% the
      token cleared AA on the white card by only 0.333 (4.833:1) and FAILED
@@ -349,6 +353,9 @@
   --stage: 240 4% 7%;
   --stage-foreground: 240 6% 96%;
   --stage-muted: 240 5% 70%;
+  /* A raised panel ON the stage (dialogs over the run HUD) — the dark card
+     value, fixed in both themes because the surface beneath it is. */
+  --stage-raised: 240 6% 11%; /* #1A1A1E */
   /* Nutrition — the identity and the white-text fill step are IDENTICAL to
      :root (both fixed). Only the TEXT step follows the theme: on a dark
      surface the AA-clearing orange is the light one, which lands back on

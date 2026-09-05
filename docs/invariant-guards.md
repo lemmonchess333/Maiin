@@ -66,10 +66,10 @@ must carry every mirrored/derived companion.
 
 The three invariants CLAUDE.md flags as "regress constantly":
 
-| Guard                                       | Pins                                                                                                                                                                                           |
-| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `eslint.config.js` (`no-restricted-syntax`) | **hex** — no hardcoded hex / `bg-white` / `text-black` / bare `text-muted` (lint-enforced)                                                                                                     |
-| `designSystemInvariants.test.ts`            | **mono-numerals** (`tabular-nums` className units carry `font-mono`, ratcheted) + **44px floor** (no hand-rolled `role="switch"`; `Toggle`/`Button`/`IconButton` keep their default 44px size) |
+| Guard                                       | Pins                                                                                                                                                                                                                                                                                                                                         |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `eslint.config.js` (`no-restricted-syntax`) | **hex** — no hardcoded hex / `bg-white` / `text-black` / bare `text-muted` (lint-enforced); Tailwind arbitrary hex (`bg-[#…]`) is barred in className attributes, class maps (`Property` literals) AND template strings. `npm run lint` pins `--max-warnings 99` — the warnings are WARN on purpose (#1051); the pin stops the count growing |
+| `designSystemInvariants.test.ts`            | **mono-numerals** (`tabular-nums` className units carry `font-mono`, ratcheted) + **44px floor** (no hand-rolled `role="switch"`; `Toggle`/`Button`/`IconButton` keep their default 44px size)                                                                                                                                               | + four **surface-drift ratchets** (raw `<button` 399, `font-medium` 305, `animate-*` without `motion-safe:` 38, off-scale `<h1` 13 — baselines only go down) |
 
 ## Hosting & CSP
 
