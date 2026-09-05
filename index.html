@@ -28,7 +28,17 @@
          hits to *.google-analytics.com / *.analytics.google.com
          (connect-src + img-src). Without these the browser silently
          blocks all analytics delivery. Native iOS analytics doesn't
-         touch the web CSP (it goes through the native SDK). -->
+         touch the web CSP (it goes through the native SDK).
+
+         connect-src carries https://raw.githubusercontent.com because
+         src/lib/exerciseDemo.ts fetches the free-exercise-db catalogue
+         and its images from that host for the exercise guide.
+
+         form-action 'self': no form posts anywhere but the app's own
+         origin (Stripe Checkout is a redirect, not a form post). The
+         anti-framing directive, frame-ancestors, is deliberately NOT
+         here: browsers ignore it in a <meta> policy, so it ships as a
+         response header from Firebase Hosting (firebase.json). -->
     <meta
       http-equiv="Content-Security-Policy"
       content="
@@ -62,6 +72,7 @@
       manifest-src 'self';
       object-src 'none';
       base-uri 'self';
+      form-action 'self';
     "
     />
     <meta
