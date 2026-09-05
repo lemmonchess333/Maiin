@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { readString, writeString } from "@/lib/localStore";
 
 /**
  * Snoozeable dismissal (home-declutter 6b, locked 2026-07-20) — the
@@ -35,20 +36,13 @@ export function useSnoozeDismiss(
 ): { snoozed: boolean; snooze: () => void } {
   const [snoozed, setSnoozed] = useState(() => {
     if (typeof window === "undefined") return false;
-    try {
-      return isSnoozed(window.localStorage.getItem(key), Date.now(), days);
-    } catch {
-      return false;
-    }
+    return isSnoozed(readString(key), Date.now(), days);
   });
 
   const snooze = () => {
     setSnoozed(true);
-    try {
-      window.localStorage.setItem(key, String(Date.now()));
-    } catch {
-      // Best-effort — private mode degrades to a single-session snooze.
-    }
+    // Best-effort — private mode degrades to a single-session snooze.
+    writeString(key, String(Date.now()));
   };
 
   return { snoozed, snooze };

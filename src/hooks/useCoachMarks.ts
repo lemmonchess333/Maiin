@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useUidForStorageKey } from "@/lib/auth";
+import { readString, writeString } from "@/lib/localStore";
 
 const STORAGE_KEY_BASE = "tropos-coach-marks-dismissed";
 
@@ -38,11 +39,8 @@ export function useCoachMarks(key?: string) {
 
   const dismiss = () => {
     setState({ key: storageKey, dismissed: true });
-    try {
-      window.localStorage.setItem(storageKey, "1");
-    } catch {
-      // Storage unavailable (private mode etc) — state still updates in memory
-    }
+    // Storage unavailable (private mode etc) — state still updates in memory.
+    writeString(storageKey, "1");
   };
 
   return { showCoachMarks: !state.dismissed, dismiss };
@@ -50,9 +48,5 @@ export function useCoachMarks(key?: string) {
 
 function readDismissed(storageKey: string): boolean {
   if (typeof window === "undefined") return false;
-  try {
-    return !!window.localStorage.getItem(storageKey);
-  } catch {
-    return false;
-  }
+  return !!readString(storageKey);
 }

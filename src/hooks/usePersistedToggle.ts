@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { readString, writeString } from "@/lib/localStore";
 
 /**
  * A boolean that survives navigation and reload, backed by localStorage.
@@ -31,26 +32,20 @@ export function usePersistedToggle(
 ): { value: boolean; toggle: () => void; set: (next: boolean) => void } {
   const [value, setValue] = useState<boolean>(() => {
     if (typeof window === "undefined") return defaultValue;
-    try {
-      const stored = window.localStorage.getItem(key);
-      // Absent means "never chosen" — the default, not `false`. A card
-      // that defaults OPEN must not be closed by the mere absence of a
-      // stored value.
-      if (stored === null) return defaultValue;
-      return stored === "1";
-    } catch {
-      return defaultValue;
-    }
+    const stored = readString(key);
+    // Absent (or unreadable) means "never chosen" — the default, not
+    // `false`. A card that defaults OPEN must not be closed by the mere
+    // absence of a stored value.
+    if (stored === null) return defaultValue;
+    return stored === "1";
   });
 
+  // A refused write (private mode / quota) leaves the in-memory value
+  // applying for this session.
   const set = useCallback(
     (next: boolean) => {
       setValue(next);
-      try {
-        window.localStorage.setItem(key, next ? "1" : "0");
-      } catch {
-        /* private mode / quota — the in-memory value still applies */
-      }
+      writeString(key, next ? "1" : "0");
     },
     [key]
   );
@@ -58,11 +53,7 @@ export function usePersistedToggle(
   const toggle = useCallback(() => {
     setValue((prev) => {
       const next = !prev;
-      try {
-        window.localStorage.setItem(key, next ? "1" : "0");
-      } catch {
-        /* private mode / quota — the in-memory value still applies */
-      }
+      writeString(key, next ? "1" : "0");
       return next;
     });
   }, [key]);

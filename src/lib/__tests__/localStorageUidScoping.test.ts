@@ -20,11 +20,11 @@
  *     page
  *   - the Food celebration date
  *
- * WHAT THIS CHECKS. Raw `localStorage.getItem/setItem/removeItem` in `src/`
- * where the key expression shows no sign of a uid. It cannot know what a
- * variable holds, so a key built elsewhere is judged by NAME — which is why
- * the allow-list below exists and why every entry carries a reason rather
- * than just a path.
+ * WHAT THIS CHECKS. Every call into `src/lib/localStore` — the one door to
+ * storage, held shut by `localStorageGuard.test.ts` — whose key expression
+ * shows no sign of a uid. It cannot know what a variable holds, so a key
+ * built elsewhere is judged by NAME — which is why the allow-list below
+ * exists and why every entry carries a reason rather than just a path.
  *
  * The primitives (`useDismissOnce`, `useCoachMarks`) are the preferred fix;
  * `useUidForStorageKey()` is the escape hatch when the surface needs raw
@@ -64,7 +64,7 @@ const DEVICE_SCOPED: Record<string, string> = {
  * Unscoped ON PURPOSE because the call DELETES a pre-uid key. Migrating the
  * value forward would re-introduce the very bleed the scoping fixed — a
  * shared browser cannot prove which account last wrote it — so both of these
- * purge instead. `removeItem` only; a `getItem` on one of these would be
+ * purge instead. `remove` only; a `readString` on one of these would be
  * reading another account's value and is not covered here.
  */
 const LEGACY_PURGE = [
@@ -120,6 +120,20 @@ function stripComments(src: string): string {
     .replace(/\/\/[^\n]*/g, (s) => " ".repeat(s.length));
 }
 
+/** The door itself. Its functions take the finished key as a parameter, so
+ *  there is nothing to judge inside it — every caller is judged instead. */
+const DOOR = "src/lib/localStore.ts";
+/** A file reaches storage only by importing the door. */
+const IMPORTS_DOOR = /from\s+["'][^"']*\/localStore["']/;
+/**
+ * A call through the door: `readString(key)`, `writeString(key, v)`,
+ * `readJson(key, fallback)`, `writeJson(key, v)`, `remove(key)`. The
+ * lookbehind keeps `classList.remove(` and friends out; the optional
+ * type-argument group keeps `readJson<unknown>(key, …)` in.
+ */
+const DOOR_CALL =
+  /(?<![.\w])(readString|writeString|readJson|writeJson|remove)(?:<[^>]*>)?\(\s*([^,)]+)/g;
+
 interface Site {
   site: string;
   file: string;
@@ -133,8 +147,10 @@ function scan(): Site[] {
   const out: Site[] = [];
   for (const rel of globSync("src/**/*.{ts,tsx}", { cwd: repoRoot })) {
     if (rel.includes("__tests__") || rel.includes(".test.")) continue;
+    if (rel === DOOR) continue;
     const src = stripComments(readFileSync(resolve(repoRoot, rel), "utf8"));
-    const re = /localStorage\.(getItem|setItem|removeItem)\(\s*([^,)]+)/g;
+    if (!IMPORTS_DOOR.test(src)) continue;
+    const re = new RegExp(DOOR_CALL.source, "g");
     let m: RegExpExecArray | null;
     while ((m = re.exec(src))) {
       const key = m[2].trim();
@@ -165,9 +181,27 @@ const found = scan();
 
 describe("localStorage keys are uid-scoped", () => {
   it("sees the call sites at all", () => {
-    // Positive control: the regex is the whole gate, and a refactor to a
-    // wrapper would make it match nothing while reporting a clean bill.
+    // Positive control: the regex is the whole gate. A rename of the door's
+    // functions, or a file reaching it under another import path, would
+    // make it match nothing while reporting a clean bill.
     expect(found.length).toBeGreaterThan(20);
+  });
+
+  it("the door is imported under its own names — an alias would blind the scan", () => {
+    /* `DOOR_CALL` matches the five function names literally. `import { remove
+       as rm }` would call storage under a name the scan never sees, and every
+       key passed that way would go unjudged. */
+    const aliased: string[] = [];
+    for (const rel of globSync("src/**/*.{ts,tsx}", { cwd: repoRoot })) {
+      if (rel.includes("__tests__") || rel.includes(".test.")) continue;
+      const src = stripComments(readFileSync(resolve(repoRoot, rel), "utf8"));
+      const re = /import\s*\{([^}]*)\}\s*from\s*["'][^"']*\/localStore["']/g;
+      let m: RegExpExecArray | null;
+      while ((m = re.exec(src))) {
+        if (/\bas\b/.test(m[1])) aliased.push(`${rel}: ${m[1].trim()}`);
+      }
+    }
+    expect(aliased).toEqual([]);
   });
 
   it("resolves a key through a same-file const rather than guessing from its name", () => {
@@ -181,7 +215,7 @@ describe("localStorage keys are uid-scoped", () => {
     );
     expect(
       race,
-      "expected ProgrammeRunSection to still use localStorage"
+      "expected ProgrammeRunSection to still call the storage door"
     ).toBeTruthy();
     /* Resolution chains: the key names `storageUid`, which is itself a const
        assigned from `useUidForStorageKey()`. Asserting on the CHAIN END is
@@ -211,12 +245,12 @@ describe("localStorage keys are uid-scoped", () => {
       .filter((f) => !looksScoped(f.resolved))
       .filter((f) => !OWNED_ID.test(f.resolved))
       // A legacy key is unscoped BY DESIGN when the call deletes it.
-      .filter((f) => !(f.op === "removeItem" && LEGACY_PURGE.includes(f.file)))
+      .filter((f) => !(f.op === "remove" && LEGACY_PURGE.includes(f.file)))
       .filter((f) => !(f.file in KEY_IS_A_PARAMETER))
       .filter(
         (f) => !Object.keys(DEVICE_SCOPED).some((k) => f.resolved.includes(k))
       )
-      .map((f) => `${f.site}  localStorage.${f.op}(${f.key})`);
+      .map((f) => `${f.site}  ${f.op}(${f.key})`);
     expect(
       offenders,
       `localStorage is per-DEVICE, so an unscoped key is shared by every ` +

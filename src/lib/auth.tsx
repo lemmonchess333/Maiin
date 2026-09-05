@@ -32,6 +32,7 @@ import {
   getAppleCredentialNative,
 } from "@/lib/nativeAuth";
 import { setErrorReportingUid } from "./errorReporting";
+import { remove, writeString } from "@/lib/localStore";
 import {
   doc,
   getDoc,
@@ -499,7 +500,7 @@ function syncDarkMode(dark: boolean) {
   } else {
     document.documentElement.classList.remove("dark");
   }
-  localStorage.setItem("tropos-dark-mode", String(dark));
+  writeString("tropos-dark-mode", String(dark));
 }
 
 /* ================================
@@ -1158,7 +1159,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // init.js / the next profile load own the value; the signed-out auth
     // listener also re-applies the dark default.)
     document.documentElement.classList.add("dark");
-    localStorage.removeItem("tropos-dark-mode");
+    remove("tropos-dark-mode");
   }, [revokeOutgoingAccountDeviceState]);
 
   const updateProfile = useCallback(

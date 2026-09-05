@@ -65,6 +65,7 @@
  */
 
 import { logger } from "@/lib/logger";
+import { readJson, remove, writeJson } from "@/lib/localStore";
 
 const OUTBOX_KEY = "tropos.program.commandOutbox";
 
@@ -113,53 +114,39 @@ export function isTransportFailure(err: unknown): boolean {
 }
 
 function read(): OutboxEntry[] {
-  try {
-    const raw = localStorage.getItem(OUTBOX_KEY);
-    if (!raw) return [];
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    // Shape-guard every entry: a malformed one would either throw at send time
-    // or, worse, post a command with no id and defeat the idempotency the whole
-    // design rests on.
-    return parsed.filter((e): e is OutboxEntry => {
-      if (!e || typeof e !== "object") return false;
-      const { uid, command } = e as Partial<OutboxEntry>;
-      return (
-        typeof uid === "string" &&
-        !!command &&
-        typeof command === "object" &&
-        typeof command.kind === "string" &&
-        typeof command.commandId === "string"
-      );
-    });
-  } catch {
-    return [];
-  }
+  const parsed = readJson<unknown>(OUTBOX_KEY, null);
+  if (!Array.isArray(parsed)) return [];
+  // Shape-guard every entry: a malformed one would either throw at send time
+  // or, worse, post a command with no id and defeat the idempotency the whole
+  // design rests on.
+  return parsed.filter((e): e is OutboxEntry => {
+    if (!e || typeof e !== "object") return false;
+    const { uid, command } = e as Partial<OutboxEntry>;
+    return (
+      typeof uid === "string" &&
+      !!command &&
+      typeof command === "object" &&
+      typeof command.kind === "string" &&
+      typeof command.commandId === "string"
+    );
+  });
 }
 
 function write(entries: OutboxEntry[]): void {
   let working = entries;
   for (;;) {
-    try {
-      localStorage.setItem(OUTBOX_KEY, JSON.stringify(working));
+    if (writeJson(OUTBOX_KEY, working)) return;
+    if (working.length === 0) {
+      // Nothing fits even when empty — drop the key so a corrupt giant value
+      // cannot wedge every future write.
+      remove(OUTBOX_KEY);
       return;
-    } catch {
-      if (working.length === 0) {
-        // Nothing fits even when empty — drop the key so a corrupt giant value
-        // cannot wedge every future write.
-        try {
-          localStorage.removeItem(OUTBOX_KEY);
-        } catch {
-          /* best-effort */
-        }
-        return;
-      }
-      logger.error(
-        "[commandOutbox] storage full — shedding the oldest queued command",
-        working[0]?.command.kind
-      );
-      working = working.slice(1);
     }
+    logger.error(
+      "[commandOutbox] storage full — shedding the oldest queued command",
+      working[0]?.command.kind
+    );
+    working = working.slice(1);
   }
 }
 
@@ -242,9 +229,5 @@ export async function flushCommandOutbox(
 
 /** Test seam — clears every uid's entries. */
 export function __resetCommandOutboxForTests(): void {
-  try {
-    localStorage.removeItem(OUTBOX_KEY);
-  } catch {
-    /* best-effort */
-  }
+  remove(OUTBOX_KEY);
 }

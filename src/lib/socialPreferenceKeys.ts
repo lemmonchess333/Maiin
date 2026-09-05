@@ -17,6 +17,8 @@
  * of up-to-a-page of "unread", the intended privacy-first trade-off).
  */
 
+import { remove } from "@/lib/localStore";
+
 /** The uid-scoped key family. Value shape is owned by each hook. */
 export type SocialPrefFamily =
   | "unread-last-seen"
@@ -48,9 +50,5 @@ export function socialPreferenceKey(
  */
 export function purgeLegacySocialKey(family: SocialPrefFamily): void {
   if (typeof window === "undefined") return;
-  try {
-    window.localStorage.removeItem(LEGACY_KEYS[family]);
-  } catch {
-    /* private mode / quota — non-fatal */
-  }
+  remove(LEGACY_KEYS[family]);
 }

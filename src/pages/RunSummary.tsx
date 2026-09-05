@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { readString, writeString } from "@/lib/localStore";
 import WeekPulseCard from "@/components/WeekPulseCard";
 import {
   collection,
@@ -423,17 +424,11 @@ export default function RunSummary() {
   // prompt-then-quiet cycle.
   useEffect(() => {
     if (!savedRunId) return;
-    try {
-      const flag = localStorage.getItem(
-        `tropos:reconcileDismissed:${savedRunId}`
-      );
-      if (flag === "1") setReconciliation("dismissed");
-    } catch {
-      // localStorage might be unavailable (private mode, blocked).
-      // Fall through silently — the prompt re-fires per mount;
-      // user can dismiss again. Same end state, just one extra
-      // tap in the rare error path.
-    }
+    // Unavailable storage (private mode, blocked) reads as not dismissed:
+    // the prompt re-fires per mount and the user can dismiss again. Same
+    // end state, just one extra tap in the rare error path.
+    const flag = readString(`tropos:reconcileDismissed:${savedRunId}`);
+    if (flag === "1") setReconciliation("dismissed");
   }, [savedRunId]);
   const [shareOpen, setShareOpen] = useState(false);
   // CIRCLE-SESSION-01 — explicit summary-only Circle share, offered
@@ -1469,18 +1464,15 @@ export default function RunSummary() {
                         // Persist so re-mounts of this same saved run
                         // don't re-prompt. Same key the on-mount
                         // useEffect reads above.
+                        // Storage unavailable — the dismissal still
+                        // sticks for this mount via React state; it just
+                        // won't survive a re-mount. Acceptable degraded
+                        // mode.
                         if (savedRunId) {
-                          try {
-                            localStorage.setItem(
-                              `tropos:reconcileDismissed:${savedRunId}`,
-                              "1"
-                            );
-                          } catch {
-                            // localStorage unavailable — dismissal still
-                            // sticks for this mount via React state; it
-                            // just won't survive a re-mount. Acceptable
-                            // degraded mode.
-                          }
+                          writeString(
+                            `tropos:reconcileDismissed:${savedRunId}`,
+                            "1"
+                          );
                         }
                       }}
                       className="w-full py-2 text-xs text-muted-foreground disabled:opacity-50"

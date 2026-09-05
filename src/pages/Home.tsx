@@ -7,6 +7,7 @@ import {
   Suspense,
 } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
+import { readString, writeString } from "@/lib/localStore";
 import { useAuth } from "@/lib/auth";
 import { useUidForStorageKey } from "@/lib/auth";
 import { useWorkouts } from "@/hooks/useWorkouts";
@@ -581,22 +582,15 @@ export default function Home() {
   // because localStorage is per-DEVICE and an unscoped hint is one the second
   // account on a shared phone never sees.
   const dayTapSeenKey = `${storageUid}:home-day-tap-seen`;
-  const [showDayTapHint, setShowDayTapHint] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem(dayTapSeenKey) !== "1";
-    } catch {
-      return true;
-    }
-  });
+  const [showDayTapHint, setShowDayTapHint] = useState<boolean>(
+    () => readString(dayTapSeenKey) !== "1"
+  );
   // Cal-A: scroll target for the today-tap shortcut (the session cards).
   const sessionsRef = useRef<HTMLDivElement>(null);
   const handleDayTap = useCallback(
     function (dk: string) {
-      try {
-        localStorage.setItem(dayTapSeenKey, "1");
-      } catch {
-        /* private mode — hint will re-show, minor */
-      }
+      // Private mode: the hint re-shows next session, minor.
+      writeString(dayTapSeenKey, "1");
       setShowDayTapHint(false);
       // Cal-A: tapping TODAY is redundant with the live session cards
       // right below — scroll to them instead of re-printing a peek copy.
