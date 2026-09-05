@@ -7,6 +7,7 @@ import {
   Suspense,
 } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
+import { Button } from "@/components/ui/Button";
 import { formatWeightInUnit, lbToKg } from "@/lib/weightUnits";
 import { readString, writeString } from "@/lib/localStore";
 import { useAuth } from "@/lib/auth";
@@ -1592,27 +1593,27 @@ export default function Home() {
                 adaptive macros, and performance insights.
               </p>
               <div className="flex gap-3">
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  className="flex-1 text-muted-foreground"
                   onClick={function () {
                     trialSurface.dismiss();
                     updateProfile({ trialExpiryPromptShown: true });
                   }}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
                 >
                   Maybe later
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
+                  variant="primary"
+                  className="flex-1 font-bold"
                   onClick={function () {
                     trialSurface.dismiss();
                     updateProfile({ trialExpiryPromptShown: true });
                     navigate("/upgrade");
                   }}
-                  className="flex-1 py-2.5 rounded-xl bg-primary-strong text-primary-foreground text-sm font-bold hover:opacity-90 transition-opacity"
                 >
                   Upgrade
-                </button>
+                </Button>
               </div>
             </motion.div>
           </>

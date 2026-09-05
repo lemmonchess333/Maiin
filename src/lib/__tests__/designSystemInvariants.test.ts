@@ -255,7 +255,7 @@ describe("DS ratchets — surface-level drift", () => {
   // Raw <button> elements. CTAs belong on the Button / IconButton
   // primitives (44px floor, focus ring, press feedback come with them);
   // pressable cards, rows, chips and day-cells are legitimately bare.
-  const RAW_BUTTON_BASELINE = 399;
+  const RAW_BUTTON_BASELINE = 390;
   it("raw <button> elements do not increase (CTAs use the Button primitive)", () => {
     const { total, byFile } = scan(
       (src) => (src.match(/<button\b/g) ?? []).length
@@ -265,7 +265,7 @@ describe("DS ratchets — surface-level drift", () => {
 
   // font-medium is not on the weight scale (800 hero / 700 heading /
   // 600 pill+button). It keeps appearing as a "slightly bold" reflex.
-  const FONT_MEDIUM_BASELINE = 305;
+  const FONT_MEDIUM_BASELINE = 302;
   it("font-medium does not increase (the scale is 800 / 700 / 600)", () => {
     const { total, byFile } = scan((src) =>
       classNameChunks(src).reduce(

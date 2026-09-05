@@ -1083,7 +1083,7 @@ export default function FoodAnalyzer({
                                 }
                                 aria-label={`Decrease ${item.name} portion`}
                                 disabled={item.multiplier <= 0.5}
-                                className="size-6 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/70 disabled:opacity-40 active:scale-90 transition-transform"
+                                className="size-6 relative before:absolute before:-inset-2.5 before:content-[''] rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/70 disabled:opacity-40 active:scale-90 transition-transform"
                               >
                                 <Minus className="size-3" />
                               </button>
@@ -1097,7 +1097,7 @@ export default function FoodAnalyzer({
                                 }
                                 aria-label={`Increase ${item.name} portion`}
                                 disabled={item.multiplier >= 4}
-                                className="size-6 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/70 disabled:opacity-40 active:scale-90 transition-transform"
+                                className="size-6 relative before:absolute before:-inset-2.5 before:content-[''] rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/70 disabled:opacity-40 active:scale-90 transition-transform"
                               >
                                 <Plus className="size-3" />
                               </button>

@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { IconButton } from "@/components/ui/IconButton";
 
 interface WeekPhaseRowProps {
   weekNumber: number;
@@ -26,16 +27,13 @@ export default function WeekPhaseRow({
     >
       {showChevrons &&
         (canGoPrev ? (
-          <button
-            type="button"
-            onClick={onPrevWeek}
-            className="p-1 active:scale-95 transition-transform"
+          <IconButton
+            icon={<ChevronLeft className="size-[15px] text-muted-foreground" />}
             aria-label="Previous week"
-          >
-            <ChevronLeft className="size-[15px] text-muted-foreground" />
-          </button>
+            onClick={onPrevWeek}
+          />
         ) : (
-          <div className="w-[23px]" />
+          <div className="size-11" aria-hidden="true" />
         ))}
 
       <span className="text-sm font-semibold text-foreground">
@@ -57,16 +55,15 @@ export default function WeekPhaseRow({
 
       {showChevrons &&
         (canGoNext ? (
-          <button
-            type="button"
-            onClick={onNextWeek}
-            className="p-1 active:scale-95 transition-transform"
+          <IconButton
+            icon={
+              <ChevronRight className="size-[15px] text-muted-foreground" />
+            }
             aria-label="Next week"
-          >
-            <ChevronRight className="size-[15px] text-muted-foreground" />
-          </button>
+            onClick={onNextWeek}
+          />
         ) : (
-          <div className="w-[23px]" />
+          <div className="size-11" aria-hidden="true" />
         ))}
     </div>
   );

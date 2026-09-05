@@ -199,7 +199,7 @@ function FoodComposerCard({
               disabled={nlParsing}
               aria-label="Log meal"
               className={cn(
-                "p-1.5 rounded-lg transition-all active:scale-90",
+                "p-1.5 relative before:absolute before:-inset-1.5 before:content-[''] rounded-lg transition-all active:scale-90",
                 nlParsing ? "opacity-50" : ""
               )}
               style={{ color: THEME.semantic.nutrition }}
