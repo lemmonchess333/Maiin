@@ -683,7 +683,7 @@ export default function ProgrammeSettings({
       ) {
         toast.error("Plan didn't validate — try a different combination.");
       } else {
-        toast.error("Couldn't save your plan. Please try again.");
+        toast.error("Couldn't save your plan. Try again.");
       }
     } finally {
       setSaving(false);

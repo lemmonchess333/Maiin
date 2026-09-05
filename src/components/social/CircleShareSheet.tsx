@@ -72,7 +72,7 @@ export default function CircleShareSheet({
       onOpenChange(false);
     } else {
       // Stays open — the user keeps their note and selection.
-      toast.error("Couldn't share. Please try again.");
+      toast.error("Couldn't share. Try again.");
     }
   };
 

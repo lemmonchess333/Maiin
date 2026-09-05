@@ -70,9 +70,8 @@ function friendlyRestructureError(error: unknown): string {
     return "Please sign in again to save changes.";
   if (code === "unavailable")
     return "You're offline — changes will save when you reconnect.";
-  if (code === "deadline-exceeded")
-    return "Saving took too long. Please try again.";
-  return "Couldn't rebuild your programme. Please try again.";
+  if (code === "deadline-exceeded") return "Saving took too long. Try again.";
+  return "Couldn't rebuild your programme. Try again.";
 }
 
 export interface UseProgrammeScheduleEditorArgs {

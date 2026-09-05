@@ -365,7 +365,7 @@ export default function RunPlanSettings({
       );
     } catch (e) {
       logger.error("[RunPlanSettings] save failed", e);
-      toast.error("Couldn't save your run plan. Please try again.", {
+      toast.error("Couldn't save your run plan. Try again.", {
         id: "run-plan",
       });
     } finally {

@@ -797,7 +797,7 @@ export default function Food() {
       // macro tiles animate, which is the confirmation. See ToastProvider
       // commit notes for the wider rule.
     } catch {
-      toast.error("Couldn't save. Please try again.", {
+      toast.error("Couldn't save. Try again.", {
         id: "food-save-error",
       });
     }
@@ -951,7 +951,7 @@ export default function Food() {
           });
         }
       } catch {
-        toast.error("Couldn't save. Please try again.", {
+        toast.error("Couldn't save. Try again.", {
           id: "food-save-error",
         });
       }
@@ -1501,7 +1501,7 @@ export default function Food() {
       setTargetMeal(null);
       // No success toast — meal list updates, macros animate.
     } catch {
-      toast.error("Couldn't save. Please try again.", {
+      toast.error("Couldn't save. Try again.", {
         id: "food-save-error",
       });
     } finally {
@@ -1563,7 +1563,7 @@ export default function Food() {
       setSuggestionsActive(false);
       setTargetMeal(null);
     } catch {
-      toast.error("Couldn't save. Please try again.", {
+      toast.error("Couldn't save. Try again.", {
         id: "food-save-error",
       });
     }

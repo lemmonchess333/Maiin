@@ -304,9 +304,7 @@ export default function PrivacySection({
                     setBlockedUsersList(users);
                     setBlockedUsersLoaded(true);
                   } catch {
-                    toast.error(
-                      "Couldn't load your blocked users. Please try again."
-                    );
+                    toast.error("Couldn't load your blocked users. Try again.");
                   } finally {
                     setBlockedUsersLoading(false);
                   }

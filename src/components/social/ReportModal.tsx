@@ -161,7 +161,7 @@ export default function ReportModal({
       toast.success(parts.length > 0 ? parts.join(" · ") + "." : "Done.");
       onClose();
     } catch {
-      toast.error("Couldn't complete that. Please try again.");
+      toast.error("Couldn't complete that. Try again.");
     } finally {
       setSending(false);
     }
