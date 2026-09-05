@@ -9,6 +9,7 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
+import { describeRejection, stripCallablePrefix } from "@/lib/callableErrors";
 import { stripUndefined } from "@/lib/firestoreGuards";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
@@ -322,45 +323,6 @@ interface RefreshRunScheduleOverrides {
    *  `runTuningFromProfile(profile)` here would read the closure's
    *  pre-save values. */
   tuning?: RunTuning;
-}
-
-/**
- * Firebase prefixes a callable's message with its code, e.g.
- * "FirebaseError: failed-precondition: Undo the deload week first." Only
- * the sentence is fit to show a user.
- */
-function stripCallablePrefix(message: string): string {
-  const cleaned = message.replace(/^FirebaseError:\s*/i, "");
-  const marker = cleaned.indexOf("failed-precondition:");
-  return (
-    marker >= 0
-      ? cleaned.slice(marker + "failed-precondition:".length)
-      : cleaned
-  ).trim();
-}
-
-/**
- * The user-fit sentence behind a rejected command, or null. Only a
- * `failed-precondition` carries prose written for the user ("This workout
- * changed since you started. Refresh and try again."); every other code
- * (invalid-argument, internal, unauthenticated) is a developer message and
- * goes to error reporting instead. Eleven writers used to collapse every
- * rejection to "Couldn't X. Refreshing." and log the reason only to the
- * console, which is why "some things don't work" was undiagnosable from a
- * device (owner, 2026-09-02).
- */
-function describeRejection(err: unknown): string | null {
-  const code = String((err as { code?: unknown })?.code ?? "");
-  const message = String((err as { message?: unknown })?.message ?? "");
-  if (!message) return null;
-  if (
-    code.endsWith("failed-precondition") ||
-    /failed-precondition:/.test(message)
-  ) {
-    const why = stripCallablePrefix(message);
-    return why || null;
-  }
-  return null;
 }
 
 /** "Couldn't add that." + the server's own reason when it gave one. */
