@@ -66,6 +66,7 @@ vi.mock("@/lib/exercises", () => ({
 }));
 
 import ExerciseFormContent from "../ExerciseFormContent";
+import * as exerciseDemoModule from "@/lib/exerciseDemo";
 
 const BEATS = [
   { t: 0, label: "Top position", cue: "Arms locked, chest tall." },
@@ -80,6 +81,19 @@ beforeEach(() => {
 });
 
 describe("ExerciseFormContent — the instruction list", () => {
+  it("requests local instructions when the form surface owns a rig/placard", async () => {
+    const lookup = vi.spyOn(exerciseDemoModule, "getExerciseDemo");
+    try {
+      render(<ExerciseFormContent exerciseName="Dips" />);
+      expect(
+        await screen.findByText("Catalogue step one.")
+      ).toBeInTheDocument();
+      expect(lookup).toHaveBeenCalledWith("Dips", { preferLocal: true });
+    } finally {
+      lookup.mockRestore();
+    }
+  });
+
   it("a placard's positions replace the catalogue's prose steps", async () => {
     beatsRef.current = BEATS;
     render(<ExerciseFormContent exerciseName="Dips" />);

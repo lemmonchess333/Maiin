@@ -15,6 +15,7 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 const mockUsePerformanceWeeks = vi.fn();
+vi.mock("@/lib/historyAnalytics", () => ({ track: vi.fn() }));
 vi.mock("@/hooks/usePerformance", () => ({
   usePerformanceWeeks: (...args: unknown[]) => mockUsePerformanceWeeks(...args),
 }));
