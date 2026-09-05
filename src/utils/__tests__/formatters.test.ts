@@ -8,6 +8,8 @@ import {
   percentagesSummingTo100,
   formatDayMonth,
   formatDayMonthYear,
+  formatVolumeLabel,
+  formatLoadKg,
 } from "../formatters";
 
 describe("formatVolume", () => {
@@ -203,5 +205,19 @@ describe("formatDayMonth / formatDayMonthYear", () => {
   it("both variants agree on the day+month prefix", () => {
     const d = new Date("2026-12-31T12:00:00");
     expect(formatDayMonthYear(d).startsWith(formatDayMonth(d))).toBe(true);
+  });
+});
+
+describe("formatVolumeLabel / formatLoadKg (moved out of the pages, 2026-09)", () => {
+  it("volume: dash for nothing lifted, tonnes past 1000 kg, spaced kg below", () => {
+    expect(formatVolumeLabel(0)).toBe("\u2014");
+    expect(formatVolumeLabel(320.4)).toBe("320 kg");
+    expect(formatVolumeLabel(1234)).toBe("1.2t");
+  });
+
+  it("load: BW for bodyweight, whole or one-decimal kg otherwise", () => {
+    expect(formatLoadKg(0)).toBe("BW");
+    expect(formatLoadKg(60)).toBe("60 kg");
+    expect(formatLoadKg(62.5)).toBe("62.5 kg");
   });
 });

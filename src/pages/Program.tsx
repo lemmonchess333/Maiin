@@ -107,6 +107,7 @@ import { shouldSuggestDeload } from "@/lib/deloadSuggestVisibility";
 import { runHeaderLine } from "@/lib/runHeaderLine";
 import { resolveDeloadRecommended } from "@/lib/performanceDocFields";
 import { deloadRunSwapCount } from "@/lib/deloadChangeSummary";
+import { formatVolumeLabel } from "@/utils/formatters";
 
 /**
  * IMPORTANT:
@@ -118,18 +119,6 @@ import { deloadRunSwapCount } from "@/lib/deloadChangeSummary";
 
 export default function Program() {
   return <ProgramInner />;
-}
-
-function formatVolume(kg: number): string {
-  // 0kg isn't a meaningful "volume achievement" — it just means
-  // every exercise in the session was bodyweight or uncalibrated, in
-  // which case asserting "0kg" reads as a loss rather than as
-  // "weight wasn't the metric here." Show an em-dash instead.
-  if (kg <= 0) return "—";
-  if (kg >= 1000) return `${(kg / 1000).toFixed(1)}t`;
-  // Spaced unit — the repo-wide convention (DS2): "32.5 kg", matching the
-  // "Last: 60 kg × 8" line two rows below on the same card.
-  return `${Math.round(kg)} kg`;
 }
 
 function ProgramInner() {
@@ -1744,7 +1733,7 @@ function ProgramInner() {
                             />
                             <div className="text-center">
                               <p className="text-base font-bold font-mono tabular-nums text-foreground">
-                                {formatVolume(totalVolume)}
+                                {formatVolumeLabel(totalVolume)}
                               </p>
                               <p className="text-caption font-medium text-muted-foreground">
                                 Volume

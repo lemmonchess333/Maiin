@@ -28,6 +28,7 @@
  * snapshot resolves.
  */
 import { useEffect, useState } from "react";
+import { formatVolume } from "@/utils/formatters";
 import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { ChevronLeft, Share2, Users, Check, Dumbbell } from "lucide-react";
@@ -73,11 +74,6 @@ function StatPill({
       </p>
     </div>
   );
-}
-
-function formatVolume(kg: number): string {
-  if (kg >= 1000) return `${(kg / 1000).toFixed(1)}k`;
-  return String(Math.round(kg));
 }
 
 /** Working sets only. Warm-ups are logged on the same list but are not the
@@ -210,7 +206,7 @@ export default function WorkoutDetail() {
         <div className="rounded-2xl bg-card card-shadow flex divide-x divide-border/40">
           <StatPill value={`${workout.durationMinutes ?? 0}`} label="Minutes" />
           <StatPill
-            value={formatVolume(tonnage)}
+            value={formatVolume(tonnage).value}
             label="kg Volume"
             color={THEME.lifting}
           />

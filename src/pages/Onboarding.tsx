@@ -13,7 +13,7 @@ import { setDocGuarded } from "@/lib/firestoreWrite";
 import { httpsCallable } from "firebase/functions";
 import { db, functions } from "@/lib/firebase";
 import { calculateTDEE } from "@/lib/tdee";
-import type { FitnessGoal, ActivityLevel } from "@/lib/tdee";
+import type { ActivityLevel } from "@/lib/tdee";
 import { nutritionPhaseLabel } from "@/lib/nutritionPhaseLabel";
 import SegmentedControl from "@/components/ui/SegmentedControl";
 import SectionLabel from "@/components/ui/SectionLabel";
@@ -23,20 +23,22 @@ import { THEME } from "@/lib/theme";
 import { logger } from "@/lib/logger";
 import { motion, AnimatePresence } from "framer-motion";
 import { PROGRAM_TEMPLATES } from "@/features/program/templates";
-import type { ProgramTemplate } from "@/features/program/templates";
+import { templateToProgramState } from "@/features/program/templateConversion";
 import {
-  templateExToProgEx,
-  templateProgressionFor,
-} from "@/features/program/templateConversion";
+  equipmentLabel,
+  experienceLabel,
+  goalLabel,
+  runFreqLabel,
+  splitLabel,
+  type RunFrequency,
+} from "@/features/program/programLabels";
 import {
   matchTemplate,
   applyInjuryFilters,
 } from "@/features/program/matchTemplate";
 import type {
   ProgramState,
-  WorkoutDay,
   PreferredSplit,
-  SplitType,
   Experience,
   Equipment,
   RaceDistance,
@@ -93,7 +95,6 @@ type PrimaryGoal =
 // Experience / Equipment / RunMode / RaceDistance are imported from the
 // single-source measure vocabularies (D3) — no longer re-declared here.
 type DaysPerWeek = 2 | 3 | 4 | 5 | 6;
-type RunFrequency = "regular" | "occasional" | "none";
 
 /* ============================
    HELPERS
@@ -111,116 +112,6 @@ const AGE_MIDPOINTS: Record<AgeRange, number> = {
 // Note: the old goalToFitnessGoal(primaryGoal) mapping was removed in Tier 2
 // — the nutrition phase now derives from the goal-weight plan (target weight
 // owns direction), so primaryGoal no longer determines the nutrition phase.
-
-function templateSplitToSplitType(s: ProgramTemplate["split"]): SplitType {
-  switch (s) {
-    case "full_body":
-      return "full_body";
-    case "upper_lower":
-      return "upper_lower";
-    case "ppl":
-      return "ppl";
-    case "bro_split":
-      return "ppl"; // closest match
-  }
-}
-
-function templateToProgramState(
-  template: ProgramTemplate,
-  goal: FitnessGoal
-): ProgramState {
-  const week1 = template.weeks[0];
-  // P1 (training-book backlog): the conversion itself lives in
-  // features/program/templateConversion.ts so the boundary is unit-tested.
-  // Main lifts take the template goal's progression scheme; accessories
-  // stay "linear" for parity with the generated-program path.
-  const mainProgression = templateProgressionFor(template.goal);
-  const workouts: WorkoutDay[] = week1.days
-    .filter((d) => d.type === "lift")
-    .map((d) => ({
-      dayName: d.name,
-      dayType: d.type,
-      exercises: d.exercises.map((te) =>
-        templateExToProgEx(te, mainProgression)
-      ),
-      completed: false,
-    }));
-
-  return {
-    goal,
-    currentPhase: "base",
-    weekNumber: 1,
-    splitType: templateSplitToSplitType(template.split),
-    workouts,
-    fatigueScore: 0,
-    updatedAt: Date.now(),
-    settings: { autoProgression: true, microloading: true },
-    weekHistory: [],
-  };
-}
-
-function splitLabel(s: PreferredSplit): string {
-  switch (s) {
-    case "full_body":
-      return "Full Body";
-    case "upper_lower":
-      return "Upper / Lower";
-    case "ppl":
-      return "Push / Pull / Legs";
-    case "bro_split":
-      return "Bro Split";
-    case "auto":
-      return "Auto-assigned";
-  }
-}
-
-function goalLabel(g: PrimaryGoal): string {
-  switch (g) {
-    case "hypertrophy":
-      return "Hypertrophy focus";
-    case "strength":
-      return "Strength focus";
-    case "fat_loss":
-      return "Fat loss focus";
-    case "general":
-      return "General fitness";
-    case "running":
-      return "Running focus";
-  }
-}
-
-function runFreqLabel(r: RunFrequency): string {
-  switch (r) {
-    case "regular":
-      return "Runs 3x/week integrated";
-    case "occasional":
-      return "Runs 1-2x/week integrated";
-    case "none":
-      return "No running";
-  }
-}
-
-function experienceLabel(e: Experience): string {
-  switch (e) {
-    case "beginner":
-      return "Beginner";
-    case "intermediate":
-      return "Intermediate";
-    case "advanced":
-      return "Advanced";
-  }
-}
-
-function equipmentLabel(e: Equipment): string {
-  switch (e) {
-    case "full_gym":
-      return "Full gym";
-    case "home_gym":
-      return "Home gym";
-    case "minimal":
-      return "Minimal";
-  }
-}
 
 /* ============================
    STEP DEFINITIONS
