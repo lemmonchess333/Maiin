@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, Navigate } from "react-router-dom";
 import { readString, writeString } from "@/lib/localStore";
 import WeekPulseCard from "@/components/WeekPulseCard";
 import {
@@ -612,9 +612,11 @@ export default function RunSummary() {
     return meters ? getDistanceComparison(meters / 1000) : null;
   }, [editedDistanceMeters, state?.distance]);
 
+  // A redirect is an element, not a call made while rendering: React Router
+  // warns on navigate() in render, and a re-render before the navigation
+  // commits would fire it twice.
   if (!state) {
-    navigate("/");
-    return null;
+    return <Navigate to="/" replace />;
   }
 
   const {
