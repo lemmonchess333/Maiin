@@ -64,8 +64,10 @@ import { dirname, resolve, relative } from "node:path";
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../../..");
 
-/** Where components live. */
-const COMPONENT_ROOT = "src/components";
+/** Where components live. Feature modules ship their own UI (`ChallengeCard`,
+ * `BadgeGrid`, the space and circle surfaces), so their .tsx files are held
+ * to the same rule as `src/components`. */
+const COMPONENT_ROOTS = ["src/components", "src/features"];
 /** Everything that could plausibly render one. */
 const CONSUMER_ROOTS = ["src", "e2e"];
 
@@ -128,9 +130,8 @@ function stripComments(src: string): string {
   return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
 }
 
-const componentFiles = walk(
-  resolve(repoRoot, COMPONENT_ROOT),
-  (p) => /\.tsx$/.test(p) && !isTestPath(p)
+const componentFiles = COMPONENT_ROOTS.flatMap((root) =>
+  walk(resolve(repoRoot, root), (p) => /\.tsx$/.test(p) && !isTestPath(p))
 );
 
 const consumers = CONSUMER_ROOTS.flatMap((root) =>
@@ -154,7 +155,7 @@ function unrendered(): string[] {
   return out;
 }
 
-describe("component reachability (src/components)", () => {
+describe("component reachability (src/components + src/features)", () => {
   it("scans a plausible number of components", () => {
     // A collapsed scan (bad root, changed extension) would make every
     // assertion below vacuously pass. Anchor on the shape, not a count

@@ -240,3 +240,79 @@ describe("D15 · DS invariant — numeric displays use the mono numeral font", (
     );
   });
 });
+
+/**
+ * Surface-level drift ratchets (2026-09-05). Each of these is a convention
+ * CLAUDE.md states and nothing enforced; each regressed silently in the
+ * survey that produced the app-improvement prompt. Ratchets, not bans:
+ * every one has legitimate instances (a pressable card IS a `<button>`, a
+ * pill label IS `font-medium`, the wordmark h1 is deliberately not the page
+ * title scale), so the assertion is only that a change does not ADD to the
+ * count. Lower a baseline when you burn some down; raise one only with the
+ * reason written beside the number.
+ */
+describe("DS ratchets — surface-level drift", () => {
+  // Raw <button> elements. CTAs belong on the Button / IconButton
+  // primitives (44px floor, focus ring, press feedback come with them);
+  // pressable cards, rows, chips and day-cells are legitimately bare.
+  const RAW_BUTTON_BASELINE = 399;
+  it("raw <button> elements do not increase (CTAs use the Button primitive)", () => {
+    const { total, byFile } = scan(
+      (src) => (src.match(/<button\b/g) ?? []).length
+    );
+    expectRatchet("raw <button>", total, RAW_BUTTON_BASELINE, byFile);
+  });
+
+  // font-medium is not on the weight scale (800 hero / 700 heading /
+  // 600 pill+button). It keeps appearing as a "slightly bold" reflex.
+  const FONT_MEDIUM_BASELINE = 305;
+  it("font-medium does not increase (the scale is 800 / 700 / 600)", () => {
+    const { total, byFile } = scan((src) =>
+      classNameChunks(src).reduce(
+        (n, c) => n + (c.match(/\bfont-medium\b/g) ?? []).length,
+        0
+      )
+    );
+    expectRatchet("font-medium", total, FONT_MEDIUM_BASELINE, byFile);
+  });
+
+  // Ambient animation must respect prefers-reduced-motion: `motion-safe:`
+  // is the Tailwind spelling of that promise. `animate-none` is a reset,
+  // not an animation, and is excluded.
+  const UNGUARDED_ANIMATION_BASELINE = 38;
+  it("animate-* classes without a motion-safe: prefix do not increase", () => {
+    const { total, byFile } = scan((src) => {
+      let n = 0;
+      for (const m of src.matchAll(/(motion-safe:)?\banimate-([a-z0-9-]+)/g)) {
+        if (!m[1] && m[2] !== "none") n++;
+      }
+      return n;
+    });
+    expectRatchet(
+      "animate-* without motion-safe:",
+      total,
+      UNGUARDED_ANIMATION_BASELINE,
+      byFile
+    );
+  });
+
+  // The page-title h1 is `text-xl font-extrabold` (H1 tier). Off-scale h1s
+  // — the wordmark, a text-h2 hero, a font-bold title — are counted here.
+  const OFF_SCALE_H1_BASELINE = 13;
+  it("<h1> elements off the page-title scale do not increase", () => {
+    const { total, byFile } = scan((src) => {
+      let n = 0;
+      for (const m of src.matchAll(/<h1\b([^>]*)>/g)) {
+        const attrs = m[1];
+        const c =
+          /className=(?:"([^"]*)"|\{`([^`]*)`\}|\{(?:cn|clsx|twMerge)\(([\s\S]*?)\)\})/.exec(
+            attrs
+          );
+        const cls = c ? (c[1] ?? c[2] ?? c[3] ?? "") : "";
+        if (!(/\btext-xl\b/.test(cls) && /\bfont-extrabold\b/.test(cls))) n++;
+      }
+      return n;
+    });
+    expectRatchet("off-scale <h1>", total, OFF_SCALE_H1_BASELINE, byFile);
+  });
+});

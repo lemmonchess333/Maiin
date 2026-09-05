@@ -199,7 +199,7 @@ function buildCurrentChallenges(now = new Date()) {
       // sync path in index.js MIN-updates currentValue for fastest_effort.
       id: `fastest-5k-${ymd(monthStart)}`,
       name: "Fastest 5K",
-      description: "Quickest 5km this month — set your benchmark",
+      description: "Quickest 5 km this month — set your benchmark",
       type: "monthly",
       metric: "fastest_effort",
       icon: "footprints",
@@ -214,7 +214,7 @@ function buildCurrentChallenges(now = new Date()) {
       // collectiveTarget. tiers are a stub (= collectiveTarget) so existing
       // tier logic doesn't break.
       id: `group-goal-${ymd(monthStart)}`,
-      name: "Together: 1,000km",
+      name: "Together: 1,000 km",
       description: "Combined distance from everyone running this month",
       type: "monthly",
       metric: "total_km",

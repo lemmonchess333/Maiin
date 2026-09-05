@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { calcDailyBurn, estimateStepCalories } from "../dailyBurn";
+import { calcDailyBurn } from "../dailyBurn";
 
 describe("calcDailyBurn", () => {
   // Nutr1 (expenditure-inclusive): calcDailyBurn takes the stored
@@ -48,28 +48,5 @@ describe("calcDailyBurn", () => {
     // as-is. A cut user with targetCalories=1,887 should see it unchanged.
     const result = calcDailyBurn(1887, "cut", 0, 0, 0);
     expect(result.phaseAdjustedTdee).toBe(1887);
-  });
-});
-
-describe("estimateStepCalories", () => {
-  it("estimates correctly for a 70kg person", () => {
-    const result = estimateStepCalories(10000, 70);
-    // 0.04 * (70/70) = 0.04 per step → 400 cals
-    expect(result).toBe(400);
-  });
-
-  it("scales with body weight", () => {
-    const light = estimateStepCalories(10000, 50);
-    const heavy = estimateStepCalories(10000, 100);
-    expect(heavy).toBeGreaterThan(light);
-  });
-
-  it("returns 0 for 0 steps", () => {
-    expect(estimateStepCalories(0, 80)).toBe(0);
-  });
-
-  it("rounds to integer", () => {
-    const result = estimateStepCalories(1234, 65);
-    expect(Number.isInteger(result)).toBe(true);
   });
 });

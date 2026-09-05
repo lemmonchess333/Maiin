@@ -66,10 +66,10 @@ must carry every mirrored/derived companion.
 
 The three invariants CLAUDE.md flags as "regress constantly":
 
-| Guard                                       | Pins                                                                                                                                                                                           |
-| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `eslint.config.js` (`no-restricted-syntax`) | **hex** — no hardcoded hex / `bg-white` / `text-black` / bare `text-muted` (lint-enforced)                                                                                                     |
-| `designSystemInvariants.test.ts`            | **mono-numerals** (`tabular-nums` className units carry `font-mono`, ratcheted) + **44px floor** (no hand-rolled `role="switch"`; `Toggle`/`Button`/`IconButton` keep their default 44px size) |
+| Guard                                       | Pins                                                                                                                                                                                                                                                                                                                                         |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `eslint.config.js` (`no-restricted-syntax`) | **hex** — no hardcoded hex / `bg-white` / `text-black` / bare `text-muted` (lint-enforced); Tailwind arbitrary hex (`bg-[#…]`) is barred in className attributes, class maps (`Property` literals) AND template strings. `npm run lint` pins `--max-warnings 99` — the warnings are WARN on purpose (#1051); the pin stops the count growing |
+| `designSystemInvariants.test.ts`            | **mono-numerals** (`tabular-nums` className units carry `font-mono`, ratcheted) + **44px floor** (no hand-rolled `role="switch"`; `Toggle`/`Button`/`IconButton` keep their default 44px size)                                                                                                                                               | + four **surface-drift ratchets** (raw `<button` 399, `font-medium` 305, `animate-*` without `motion-safe:` 38, off-scale `<h1` 13 — baselines only go down) |
 
 ## Hygiene ratchets
 
@@ -87,6 +87,18 @@ prints the new floor when the count drops, so the next PR can lower it.
 | Guard                            | Pins                                                                                                                                                                                                                                                                                                                                       |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `hostingSecurityHeaders.test.ts` | `firebase.json`'s `**` headers entry carries HSTS, `nosniff`, Referrer-Policy, `X-Frame-Options: DENY`, a `frame-ancestors 'none'` CSP header and a Permissions-Policy granting only camera + geolocation; `index.html`'s meta CSP declares `form-action 'self'` and never carries `frame-ancestors` (browsers ignore it in a meta policy) |
+
+## Reachability & documentation freshness
+
+Code nobody reaches and prose nobody checks are the same failure: a claim that
+reads as live. These gates hold the inventory honest in both directions.
+
+| Guard                                                                 | Pins                                                                                                                                                                                                                                               |
+| --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `symbolReachability.test.ts`                                          | every `export function` under `src/lib`, `src/features`, `src/hooks`, `src/utils`, `src/pages`, `functions/lib` has a caller outside its module; the pinned-orphan list is delete-only and must stay true                                          |
+| `componentReachability.test.ts`                                       | every `.tsx` under `src/components` and `src/features` is rendered by something that is not a test; the allowlist is empty                                                                                                                         |
+| `claudeMdFreshness.test.ts`                                           | CLAUDE.md names every `src/features` module and every ADR, describes no retired feature, carries no file counts; its Pages table names every `path=` in `src/App.tsx` and no other (`/dev/*` allowlisted), and every page/lib file it names exists |
+| `unitTreatment.test.ts` + `functions/__tests__/unitTreatment.test.js` | one unit treatment ("60 kg", "5.2 km" — spaced) in rendered client code AND in server-composed copy (feed summaries, notifications, challenge names); the server exempt set is empty                                                               |
 
 ## Adding a new guard
 
