@@ -70,29 +70,7 @@ const mentioned = (name: string, text: string) =>
  * rule with no consumer anywhere in src — the stylesheet half of a
  * component that was rewritten on utilities or removed outright.
  */
-const KNOWN_DEAD: string[] = [
-  "animations.css:ds-badge-new-pr",
-  "animations.css:ds-fade-in",
-  "animations.css:ds-fade-up",
-  "animations.css:ds-scale-in",
-  "animations.css:ds-skeleton",
-  "animations.css:ds-stagger-1",
-  "animations.css:ds-stagger-2",
-  "animations.css:ds-stagger-3",
-  "animations.css:ds-stagger-4",
-  "animations.css:ds-stagger-5",
-  "animations.css:ds-stat-updated",
-  "animations.css:@kudos-pop",
-  "components.css:ds-card",
-  "components.css:ds-card-interactive",
-  "components.css:feature-btn",
-  "components.css:progress-ring",
-  "components.css:progress-ring__bg",
-  "components.css:progress-ring__fill",
-  "components.css:quote-card",
-  "components.css:stat-number",
-  "components.css:stat-tile__value",
-];
+const KNOWN_DEAD: string[] = [];
 
 function deadRules(): string[] {
   const dead: string[] = [];
@@ -140,7 +118,9 @@ describe("src/styles class usage", () => {
       .map((f) => stripCssComments(readFileSync(f, "utf8")))
       .join("\n")
       .match(/(?:^|[\s,{}>+~)])\.[a-zA-Z][\w-]*/gm);
-    expect(declared?.length ?? 0).toBeGreaterThan(40);
+    // ~30 declarations after the 2026-09 dead-rule sweep; the floor only has
+    // to catch a collapsed scan (a bad root or extension reads as zero).
+    expect(declared?.length ?? 0).toBeGreaterThan(20);
     expect(relative(repoRoot, styleFiles[0])).toMatch(/^src\/styles\//);
   });
 

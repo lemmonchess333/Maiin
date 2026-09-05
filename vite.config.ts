@@ -110,7 +110,6 @@ export default defineConfig(({ mode }) => ({
           if (id.includes("node_modules/@zxing/")) return "barcode";
           if (id.includes("node_modules/react-body-highlighter/"))
             return "body-highlighter";
-          if (id.includes("node_modules/@stripe/stripe-js/")) return "stripe";
           // firestore/storage product code + their shims → firebase-db;
           // everything else firebase (+ idb, used by @firebase/app for
           // IndexedDB persistence) → firebase-auth. Order matters: the

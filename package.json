@@ -60,7 +60,6 @@
     "@fontsource-variable/archivo": "^5.2.8",
     "@fontsource-variable/plus-jakarta-sans": "^5.2.8",
     "@revenuecat/purchases-capacitor": "^13.1.7",
-    "@stripe/stripe-js": "^8.7.0",
     "@zxing/browser": "^0.1.5",
     "canvas-confetti": "^1.9.4",
     "capacitor-health": "^8.1.2",

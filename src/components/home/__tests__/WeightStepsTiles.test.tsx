@@ -21,7 +21,6 @@ vi.mock("@/lib/platform", function () {
 });
 
 import WeightStepsTiles from "../WeightStepsTiles";
-import * as tiles from "../WeightStepsTiles";
 import { isNativePlatform } from "@/lib/platform";
 
 const setNative = (v: boolean) =>
@@ -95,8 +94,6 @@ describe("WeightStepsTiles", function () {
   });
 
   afterEach(function () {
-    // Gate ships enabled; keep it at its default between tests.
-    tiles.stepsTileGate.enabled = true;
     vi.clearAllMocks();
     setNative(false);
   });
