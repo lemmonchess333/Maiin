@@ -14,7 +14,6 @@
 const functions = require("firebase-functions/v1");
 const { defineSecret } = require("firebase-functions/params");
 const admin = require("firebase-admin");
-const cors = require("cors")({ origin: true });
 
 // Idempotent — admin keeps an app registry as module-level state
 // that survives Vitest's per-file module-cache reset. Without this
@@ -151,12 +150,20 @@ const profanityFilter = require("./profanityFilter");
 const adminAuth = require("./adminAuth");
 
 // Payment endpoints use a tighter cors config keyed off the same
-// origin allowlist as Stripe return URLs. AI / food-analysis
-// endpoints stay on the permissive `cors` above — they're already
-// gated by Bearer auth and don't carry the same blast radius.
-// See helpers.getAppCorsOptions for the rejection-via-Error
-// short-circuit semantics.
+// origin allowlist as Stripe return URLs. See helpers.getAppCorsOptions
+// for the rejection-via-Error short-circuit semantics.
 const corsForPayments = require("cors")(helpers.getAppCorsOptions());
+
+// AI / food-analysis endpoints use the client-app allow-list: every
+// web deploy plus the Capacitor shells, which the payment list must
+// exclude. cors reports a disallowed origin as the handler's first
+// argument, so each wrapped handler checks it and answers 403 before
+// touching auth — see helpers.getClientAppCorsOptions.
+const corsForAiEndpoints = require("cors")(helpers.getClientAppCorsOptions());
+const {
+  buildFoodTextRequest,
+  FOOD_TEXT_MAX_CHARS,
+} = require("./lib/foodTextRequest");
 
 // Module-load self-check: in deployed (non-emulator) functions,
 // the final resolved Stripe return-URL allowlist MUST include the
@@ -1042,6 +1049,18 @@ exports.applyProgramCommand = functions
     // account-deleting / account-deleted HttpsError reaches the client intact.
     await accountDeletionLocks.assertCallableActorNotDeleting(firestore, uid);
 
+    // After the deletion lock — the limiter WRITES rateLimits/{uid}_…, and a
+    // deleting account must receive no new server writes. Before the
+    // transaction, so a flood never opens one. The ceiling is an abuse
+    // bound, not a pacing rule: one command every five seconds for ten
+    // minutes, against a client whose offline outbox replays at most 50.
+    if (await isRateLimited(uid, "applyProgramCommand", 120, 600_000)) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many programme changes at once. Wait a moment and try again."
+      );
+    }
+
     try {
       // The callable payload IS the command — every shipped client sends it
       // bare (`programCommandClient.ts`: `call(command)`), matching the
@@ -1103,7 +1122,11 @@ exports.applyProgramCommand = functions
 exports.analyzeFood = functions
   .runWith(DEFAULT_HTTP_CAP)
   .https.onRequest((req, res) => {
-    cors(req, res, async () => {
+    corsForAiEndpoints(req, res, async (corsError) => {
+      if (corsError) {
+        res.status(403).json({ error: "Origin not allowed" });
+        return;
+      }
       try {
         if (req.method !== "POST") {
           res.status(405).json({ error: "Method not allowed" });
@@ -1329,7 +1352,11 @@ exports.analyzeFood = functions
 exports.analyzeFoodText = functions
   .runWith(DEFAULT_HTTP_CAP)
   .https.onRequest((req, res) => {
-    cors(req, res, async () => {
+    corsForAiEndpoints(req, res, async (corsError) => {
+      if (corsError) {
+        res.status(403).json({ error: "Origin not allowed" });
+        return;
+      }
       try {
         if (req.method !== "POST") {
           res.status(405).json({ error: "Method not allowed" });
@@ -1415,15 +1442,12 @@ exports.analyzeFoodText = functions
           res.status(400).json({ error: "No text provided" });
           return;
         }
-        // Cap input size to prevent token-cost inflation. (Formerly
-        // "mirrors the askGeminiText prompt cap" — that endpoint was
-        // retired.) A food description is short; this
-        // blocks padding the payload toward the 10MB request size to
-        // inflate Vertex token cost within an otherwise-legitimate quota.
-        if (text.length > 2000) {
-          res
-            .status(400)
-            .json({ error: "Text too long (max 2000 characters)" });
+        // Input cap — the reasoning lives with the constant in
+        // lib/foodTextRequest.js.
+        if (typeof text !== "string" || text.length > FOOD_TEXT_MAX_CHARS) {
+          res.status(400).json({
+            error: `Text too long (max ${FOOD_TEXT_MAX_CHARS} characters)`,
+          });
           return;
         }
 
@@ -1432,37 +1456,21 @@ exports.analyzeFoodText = functions
           .applicationDefault()
           .getAccessToken();
 
-        const prompt = `You are a nutrition expert. Parse this food description and estimate accurate macronutrient values per serving.
-Return ONLY a valid JSON object with this exact format, no other text:
-{"foodName": "short summary name", "items": [{"name": "item name", "portionSize": "estimated portion", "calories": 0, "protein": 0, "carbs": 0, "fat": 0}], "totalCalories": 0, "totalProtein": 0, "totalCarbs": 0, "totalFat": 0, "confidence": "high/medium/low"}
-
-Be accurate with calorie and macro estimates. Use standard serving sizes unless the user specifies a quantity.
-
-Food description: "${text.replace(/"/g, '\\"')}"`;
-
         const url =
           "https://us-central1-aiplatform.googleapis.com/v1/projects/" +
           projectId +
           "/locations/us-central1/publishers/google/models/gemini-2.0-flash:generateContent";
 
+        // Instructions ride in systemInstruction; the description is the
+        // sole user part, verbatim — the user text can never reach the
+        // instruction segment. See lib/foodTextRequest.js.
         const response = await fetch(url, {
           method: "POST",
           headers: {
             Authorization: "Bearer " + accessToken.access_token,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            contents: [
-              {
-                role: "user",
-                parts: [{ text: prompt }],
-              },
-            ],
-            generationConfig: {
-              temperature: 0.2,
-              maxOutputTokens: 1024,
-            },
-          }),
+          body: JSON.stringify(buildFoodTextRequest(text)),
         });
 
         const data = await response.json();
@@ -3212,6 +3220,15 @@ exports.sendTestPush = functions
       throw new functions.https.HttpsError("unauthenticated", "Auth required.");
     }
     const uid = context.auth.uid;
+    // Outside the try below, which converts every throw into an
+    // `ok: false` result: a rate limit is a refusal the client must see
+    // as an error, not as a delivery report.
+    if (await isRateLimited(uid, "sendTestPush", 5, 600_000)) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many test pushes. Wait a few minutes and try again."
+      );
+    }
     try {
       const registrations = await leaseClaimedPushRegistrations(uid);
       const tokens = registrations.map((r) => r.token);
@@ -5300,6 +5317,18 @@ exports.backfillMyActivityCategories = functions
     }
     const uid = context.auth.uid;
 
+    // A 500-document scan plus a batched write per call; the client runs
+    // it once per account per device. Three an hour covers every honest
+    // retry and bounds the read cost a looping caller can incur.
+    if (
+      await isRateLimited(uid, "backfillMyActivityCategories", 3, 3_600_000)
+    ) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Activity re-tagging already ran recently. Try again later."
+      );
+    }
+
     const activitiesSnap = await db
       .collection("activities")
       .where("authorId", "==", uid)
@@ -5402,6 +5431,17 @@ exports.recreditMyLiftVolume = functions
       throw new functions.https.HttpsError("unauthenticated", "Auth required.");
     }
     const uid = context.auth.uid;
+
+    // One page (RECREDIT_PAGE_SIZE workouts) per call, so three an hour is
+    // 1,500 workouts of history per hour. The client persists its cursor
+    // after every page, so a drain that hits this ceiling resumes where it
+    // stopped on the next session rather than restarting.
+    if (await isRateLimited(uid, "recreditMyLiftVolume", 3, 3_600_000)) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Volume re-credit already ran recently. Try again later."
+      );
+    }
 
     /* Challenges are fetched ONCE. Routing each workout through
        `syncChallengeProgress` would re-read the whole collection per
