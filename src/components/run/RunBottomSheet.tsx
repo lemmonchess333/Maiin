@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import { motion, useMotionValue, animate } from "framer-motion";
+import { formatClock } from "@/utils/formatters";
 import { THEME } from "../../lib/theme";
 import { HUD_CAPTION, HUD_SECONDARY } from "./runHudTypography";
 import { haptic } from "../../lib/haptic";
@@ -259,11 +260,7 @@ export function SplitsList({
 }
 
 /** "8" → "0:08", "72" → "1:12" — split deltas read as pace-style m:ss. */
-function formatDeltaSeconds(s: number): string {
-  const m = Math.floor(s / 60);
-  const r = s % 60;
-  return `${m}:${r.toString().padStart(2, "0")}`;
-}
+const formatDeltaSeconds = formatClock;
 
 // ── Current km progress bar ───────────────────────────────────────────────────
 function KmProgress({

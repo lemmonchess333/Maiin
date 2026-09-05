@@ -237,6 +237,7 @@ export default function SecuritySection({
             type="password"
             autoComplete="current-password"
             placeholder="Current password"
+            aria-label="Current password"
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
             className={INPUT_CLASS}
@@ -245,6 +246,7 @@ export default function SecuritySection({
             type="password"
             autoComplete="new-password"
             placeholder="New password (min 6 characters)"
+            aria-label="New password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             className={INPUT_CLASS}
@@ -253,6 +255,7 @@ export default function SecuritySection({
             type="password"
             autoComplete="new-password"
             placeholder="Confirm new password"
+            aria-label="Confirm new password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             className={INPUT_CLASS}
@@ -295,6 +298,7 @@ export default function SecuritySection({
             type="email"
             autoComplete="email"
             placeholder="New email address"
+            aria-label="New email address"
             value={newEmail}
             onChange={(e) => setNewEmail(e.target.value)}
             className={INPUT_CLASS}
@@ -303,6 +307,7 @@ export default function SecuritySection({
             type="password"
             autoComplete="current-password"
             placeholder="Current password"
+            aria-label="Current password"
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
             className={INPUT_CLASS}

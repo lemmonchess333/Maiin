@@ -875,7 +875,9 @@ export default function Onboarding() {
           <SectionLabel className="mb-2">
             Step {step + 1} of {TOTAL_STEPS}
           </SectionLabel>
-          <h1 className="text-2xl font-bold mb-1">{STEP_META[step].title}</h1>
+          <h1 className="text-xl font-extrabold mb-1">
+            {STEP_META[step].title}
+          </h1>
           <p className="text-sm mb-8 text-muted-foreground">
             {STEP_META[step].subtitle}
           </p>

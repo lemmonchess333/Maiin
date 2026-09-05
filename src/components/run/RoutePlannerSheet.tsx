@@ -456,6 +456,7 @@ export default function RoutePlannerSheet({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Route name"
+            aria-label="Route name"
             className="mb-4 w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
           />
           <div className="flex gap-2">

@@ -184,7 +184,7 @@ export default function SettingsIndex() {
                 Settings
               </h1>
               <p className="text-sm text-muted-foreground">
-                Customize your experience
+                Customise your experience
               </p>
             </div>
           </div>

@@ -279,7 +279,7 @@ describe("DS ratchets — surface-level drift", () => {
   // Ambient animation must respect prefers-reduced-motion: `motion-safe:`
   // is the Tailwind spelling of that promise. `animate-none` is a reset,
   // not an animation, and is excluded.
-  const UNGUARDED_ANIMATION_BASELINE = 38;
+  const UNGUARDED_ANIMATION_BASELINE = 8;
   it("animate-* classes without a motion-safe: prefix do not increase", () => {
     const { total, byFile } = scan((src) => {
       let n = 0;
@@ -298,7 +298,7 @@ describe("DS ratchets — surface-level drift", () => {
 
   // The page-title h1 is `text-xl font-extrabold` (H1 tier). Off-scale h1s
   // — the wordmark, a text-h2 hero, a font-bold title — are counted here.
-  const OFF_SCALE_H1_BASELINE = 13;
+  const OFF_SCALE_H1_BASELINE = 6;
   it("<h1> elements off the page-title scale do not increase", () => {
     const { total, byFile } = scan((src) => {
       let n = 0;

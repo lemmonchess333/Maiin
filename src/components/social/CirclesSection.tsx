@@ -42,7 +42,7 @@ import SectionLabel from "@/components/ui/SectionLabel";
 import { Spinner } from "@/components/ui/Spinner";
 import { getTimeAgo } from "@/lib/timeAgo";
 import { formatDayMonth } from "@/utils/formatters";
-import { localWeekKey } from "@/lib/dateHelpers";
+import { localWeekKey, localDateString } from "@/lib/dateHelpers";
 import {
   LAUNCH_TEMPLATES,
   type GoalSpaceEvent,
@@ -142,10 +142,7 @@ function formatTargetDate(iso: string): string {
  *  targetDate is stored in, so the comparison is a plain string compare
  *  with no timezone drift. */
 function localTodayKey(): string {
-  const d = new Date();
-  const m = `${d.getMonth() + 1}`.padStart(2, "0");
-  const day = `${d.getDate()}`.padStart(2, "0");
-  return `${d.getFullYear()}-${m}-${day}`;
+  return localDateString(new Date());
 }
 
 /** Tomorrow (local) as YYYY-MM-DD — the `min` for the extend date input
@@ -154,9 +151,7 @@ function localTodayKey(): string {
 function localTomorrowKey(): string {
   const d = new Date();
   d.setDate(d.getDate() + 1);
-  const m = `${d.getMonth() + 1}`.padStart(2, "0");
-  const day = `${d.getDate()}`.padStart(2, "0");
-  return `${d.getFullYear()}-${m}-${day}`;
+  return localDateString(d);
 }
 
 /** CIRCLE-TARGET-LIFECYCLE — the owner of a still-active Circle whose
@@ -665,7 +660,7 @@ export default function CirclesSection({
 
       {loading && (
         <div
-          className="h-16 rounded-xl bg-muted/40 animate-pulse"
+          className="h-16 rounded-xl bg-muted/40 motion-safe:animate-pulse"
           aria-hidden="true"
         />
       )}

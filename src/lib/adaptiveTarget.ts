@@ -22,6 +22,7 @@
  */
 
 import { estimateAdaptiveTDEE, computeWarmupProgress } from "./adaptiveTdee";
+import { clamp } from "@/lib/utils";
 import { floorTargetCalories } from "./macroConstants";
 
 /** Default maximum the applied target may move per rolling 7-day window. */
@@ -113,10 +114,6 @@ export interface ApplyWeeklyCapResult {
   capState: CapState;
   /** True if the applied value moved this call. */
   changed: boolean;
-}
-
-function clamp(value: number, lo: number, hi: number): number {
-  return Math.max(lo, Math.min(hi, value));
 }
 
 /**

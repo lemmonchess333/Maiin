@@ -14,7 +14,7 @@ export function Skeleton({ className, stagger }: SkeletonProps) {
       aria-label="Loading"
       aria-live="polite"
       className={cn(
-        "animate-pulse rounded-lg bg-muted dark:bg-muted/60",
+        "motion-safe:animate-pulse rounded-lg bg-muted dark:bg-muted/60",
         className
       )}
       style={{
@@ -121,14 +121,14 @@ export function HomeSkeleton() {
  *      grouped page background — so a block placed directly on the page
  *      (a title, a pill row) is invisible. `Bar` fills with a translucent
  *      `foreground` tint that contrasts on BOTH the page background and
- *      the white card surface, and uses Tailwind's built-in `animate-pulse`.
+ *      the white card surface, and uses Tailwind's built-in `motion-safe:animate-pulse`.
  */
 function Bar({ className }: { className?: string }) {
   return (
     <div
       aria-hidden
       className={cn(
-        "animate-pulse rounded-lg bg-foreground/[0.07] dark:bg-foreground/[0.10]",
+        "motion-safe:animate-pulse rounded-lg bg-foreground/[0.07] dark:bg-foreground/[0.10]",
         className
       )}
     />

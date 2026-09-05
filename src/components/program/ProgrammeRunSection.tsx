@@ -1115,11 +1115,11 @@ export default function ProgrammeRunSection({
           {runsLoading ? (
             <div className="space-y-1.5">
               <div
-                className="h-3.5 rounded bg-muted/60 animate-pulse"
+                className="h-3.5 rounded bg-muted/60 motion-safe:animate-pulse"
                 style={{ width: "70%" }}
               />
               <div
-                className="h-3.5 rounded bg-muted/60 animate-pulse"
+                className="h-3.5 rounded bg-muted/60 motion-safe:animate-pulse"
                 style={{ width: "55%" }}
               />
             </div>

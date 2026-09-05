@@ -7,6 +7,7 @@
  * teaching aid, not a literal timing promise. Absent/malformed tempo falls
  * back to the rig's global defaults (the pre-Demo1 constants).
  */
+import { clamp } from "@/lib/utils";
 
 export interface RepTiming {
   downMs: number;
@@ -28,9 +29,6 @@ const MIN_MOVE_MS = 500;
 const MAX_MOVE_MS = 5000;
 const MIN_HOLD_MS = 200;
 const MAX_HOLD_MS = 2500;
-
-const clamp = (ms: number, lo: number, hi: number) =>
-  Math.min(hi, Math.max(lo, ms));
 
 /**
  * Parse "D-P-U" (seconds, eccentric-first) into clamped phase durations.

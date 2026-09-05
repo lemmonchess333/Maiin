@@ -280,9 +280,9 @@ export default function ExerciseHistory() {
   if (loading) {
     return (
       <div className="space-y-4 pt-2">
-        <div className="h-8 bg-muted/50 rounded animate-pulse" />
-        <div className="h-24 bg-muted/50 rounded-2xl animate-pulse" />
-        <div className="h-48 bg-muted/50 rounded-2xl animate-pulse" />
+        <div className="h-8 bg-muted/50 rounded motion-safe:animate-pulse" />
+        <div className="h-24 bg-muted/50 rounded-2xl motion-safe:animate-pulse" />
+        <div className="h-48 bg-muted/50 rounded-2xl motion-safe:animate-pulse" />
       </div>
     );
   }
@@ -324,7 +324,7 @@ export default function ExerciseHistory() {
           <ChevronLeft className="size-5 text-foreground" />
         </button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-lg font-extrabold text-foreground truncate">
+          <h1 className="text-xl font-extrabold text-foreground truncate">
             {decodedName}
           </h1>
           {exercise && (
@@ -402,7 +402,7 @@ export default function ExerciseHistory() {
         <div className="rounded-2xl bg-card p-4 card-shadow">
           <Suspense
             fallback={
-              <div className="h-40 bg-muted/30 rounded animate-pulse" />
+              <div className="h-40 bg-muted/30 rounded motion-safe:animate-pulse" />
             }
           >
             <ExerciseFormContent exerciseName={decodedName} />
@@ -514,7 +514,7 @@ export default function ExerciseHistory() {
               </div>
               <Suspense
                 fallback={
-                  <div className="h-40 bg-muted/30 rounded animate-pulse" />
+                  <div className="h-40 bg-muted/30 rounded motion-safe:animate-pulse" />
                 }
               >
                 <ExerciseProgressChart
