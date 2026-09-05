@@ -1263,14 +1263,14 @@ export default function Run() {
               {/* Signal rings */}
               <div className="relative size-28 flex items-center justify-center mb-8">
                 <div
-                  className="absolute inset-0 rounded-full border-2 animate-ping"
+                  className="absolute inset-0 rounded-full border-2 motion-safe:animate-ping"
                   style={{
                     borderColor: `${THEME.teal}30`,
                     animationDuration: "2s",
                   }}
                 />
                 <div
-                  className="absolute inset-3 rounded-full border-2 animate-ping"
+                  className="absolute inset-3 rounded-full border-2 motion-safe:animate-ping"
                   style={{
                     borderColor: `${THEME.teal}40`,
                     animationDuration: "2s",
@@ -1278,7 +1278,7 @@ export default function Run() {
                   }}
                 />
                 <div
-                  className="absolute inset-6 rounded-full border-2 animate-ping"
+                  className="absolute inset-6 rounded-full border-2 motion-safe:animate-ping"
                   style={{
                     borderColor: `${THEME.teal}50`,
                     animationDuration: "2s",

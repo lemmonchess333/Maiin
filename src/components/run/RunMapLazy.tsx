@@ -16,7 +16,7 @@ function RunMapFallback({
 }) {
   return (
     <div
-      className={`w-full ${height} ${className} bg-black/20 animate-pulse flex items-center justify-center`}
+      className={`w-full ${height} ${className} bg-black/20 motion-safe:animate-pulse flex items-center justify-center`}
     >
       <Spinner size="md" variant="inverse" label="Loading map" />
     </div>

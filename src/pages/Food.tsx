@@ -1646,7 +1646,7 @@ export default function Food() {
           aria-label="Refreshing"
         >
           <div
-            className="h-1 w-12 rounded-full bg-muted animate-pulse"
+            className="h-1 w-12 rounded-full bg-muted motion-safe:animate-pulse"
             aria-hidden="true"
           />
         </div>
@@ -1810,7 +1810,7 @@ export default function Food() {
       {scanOpen && (
         <Suspense
           fallback={
-            <div className="py-12 text-center text-muted-foreground text-sm animate-pulse">
+            <div className="py-12 text-center text-muted-foreground text-sm motion-safe:animate-pulse">
               Loading scanner...
             </div>
           }

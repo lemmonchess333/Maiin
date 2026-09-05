@@ -279,7 +279,7 @@ describe("DS ratchets — surface-level drift", () => {
   // Ambient animation must respect prefers-reduced-motion: `motion-safe:`
   // is the Tailwind spelling of that promise. `animate-none` is a reset,
   // not an animation, and is excluded.
-  const UNGUARDED_ANIMATION_BASELINE = 38;
+  const UNGUARDED_ANIMATION_BASELINE = 8;
   it("animate-* classes without a motion-safe: prefix do not increase", () => {
     const { total, byFile } = scan((src) => {
       let n = 0;

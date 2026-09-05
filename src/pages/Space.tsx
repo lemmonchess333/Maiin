@@ -442,7 +442,7 @@ export default function Space() {
           <SectionLabel>Posts</SectionLabel>
           {posts === null ? (
             <div
-              className="h-24 rounded-2xl bg-muted/40 animate-pulse"
+              className="h-24 rounded-2xl bg-muted/40 motion-safe:animate-pulse"
               aria-hidden
             />
           ) : visiblePosts.length === 0 ? (
