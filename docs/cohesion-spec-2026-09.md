@@ -258,3 +258,39 @@ white-on-scrim eyebrows, the `RouteFollowChip` / `BackToStartChip` /
 `GhostDeltaChip` scrim chips) — §7's fullscreen-HUD exception; the
 `CalorieRing` "kcal left" flip chip (a control); the Login "or" divider;
 `Diagnostics` and `AdminModeration` (operator routes); the dev labs.
+
+### Batch 3 — evidence and verification
+
+The whole capture suite (46 specs) ran locally on both sides in one pass
+each — `main` `4a049fee` from the detached worktree, then the branch at
+`f62dc284` — same rig, viewport, seed and date. 39 specs passed on each
+side and produced 217 matched frames; the same 7 specs failed identically
+on both sides (`circles`, `crews-retirement` ×2, `experience-suggestion`,
+`fellbehind-detrained`, the `audit surfaces` test in `home`, `review`): their
+sign-in helper times out waiting for the authed nav in this sandbox, a rig
+limitation that is independent of the diff (they pass in the CI capture
+channel, whose report for this head is the evidence for those surfaces).
+No retry was run — a failure that reproduces on both sides in two runs is
+not contention.
+
+Every matched frame was pixel-compared (`scripts`-style, sharp; per-channel
+tolerance 8). 46 frames are unchanged at the same height — among them
+`settings`, `settings-subscription`, `run-detail`, `solo-feed`,
+`user-profile`, `tooltip-performance-index`, `race-space-header`,
+`train-header-run`, two onboarding steps — the surfaces the pass did not
+touch, proving no collateral change. The rest divide into:
+
+| Cause                                                                        | Frames                                                                       | Delta                                                                                          |
+| ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Batch 1 — energy card                                                        | `home`, `energy-*`, `water-home`, `day-peek-*`, `sheet-dayaction`            | −14 collapsed / −61 expanded                                                                   |
+| Batch 1 — command card pills → line                                          | `program`, `easier-chooser`, `sheet-trainingblock`, `train-header-lift`      | −5                                                                                             |
+| Batch 2 — feed tag chips → line                                              | `feed-activity-cards`                                                        | −12                                                                                            |
+| Batch 2 + 3 — challenge meta line, 14px → 11px labels                        | `social`, `circles-crews`, `circle-create-compact`                           | −9                                                                                             |
+| Batch 2 + 3 — Details 44px, tile labels, recovery chips, helpers             | `history`, `analytics-loaded`                                                | +31 / +16 (the legend keeps two rows)                                                          |
+| Batch 3 — distance chip → text, RACE badge 11px, form labels, "limit" suffix | `race-picker`, `races-directory`, `settings-run-plan`, `nutrition-breakdown` | 0.3–5.8%, same height                                                                          |
+| Rig noise — animated figure phase                                            | 110 of 144 `form-demo-*` frames                                              | 6–11% with ±1px heights; the exercise art and rig are untouched by every batch                 |
+| Rig noise — sheet settle (documented flaky class)                            | `circle-create-compact` (36%), `home-day-peek-after`                         | the sheet's open state differs between runs; the −9 / −14 underneath are the real deltas above |
+
+Verification on `f62dc284`: full unit suite 659 files / 7,934 tests passed
+(341 emulator-gated skips); `tsc -b`, `npm run lint` (0 errors), `npm run
+check:cycles` clean; the new `OFF_SCALE_TEXT_BASELINE = 0` ratchet passes.
