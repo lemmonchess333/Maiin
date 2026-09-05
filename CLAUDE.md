@@ -77,66 +77,93 @@ e2e/                    # Playwright E2E tests (smoke, navigation, a11y, PWA)
 
 ## Pages (src/pages/)
 
-| Page                 | Route          | Description                                                                |
-| -------------------- | -------------- | -------------------------------------------------------------------------- |
-| `Home.tsx`           | `/`            | Main dashboard — WeekStrip, hero cards, energy, insights                   |
-| `Food.tsx`           | `/food`        | Food/meal logging with camera, NL parsing, barcode (`/log` redirects here) |
-| `History.tsx`        | `/history`     | Workout & run history with analytics charts                                |
-| `Program.tsx`        | `/program`     | Workout program builder & scheduling                                       |
-| `Run.tsx`            | `/run`         | Active GPS run tracking (full-screen, no nav)                              |
-| `RunSummary.tsx`     | `/run-summary` | Post-run stats & map review                                                |
-| `RunDetail.tsx`      | `/run/:runId`  | Historical run detail view                                                 |
-| `Social.tsx`         | `/social`      | Social feed, Circles/Spaces, leaderboards                                  |
-| `UserProfile.tsx`    | `/user/:uid`   | User profile viewing                                                       |
-| `Settings.tsx`       | `/settings`    | User settings & preferences                                                |
-| `Onboarding.tsx`     | `*` (fallback) | Multi-step setup flow (shown when onboarding incomplete)                   |
-| `Login.tsx`          | `*` (fallback) | Authentication (Email, Google, Apple) (shown when unauthenticated)         |
-| `PrivacyPolicy.tsx`  | `/privacy`     | Legal                                                                      |
-| `TermsOfService.tsx` | `/terms`       | Legal                                                                      |
+Every `path=` in `src/App.tsx` is named here, and every file named here
+exists — pinned by `claudeMdFreshness.test.ts` in both directions
+(`/dev/*` is the one allowlisted family). Add the row with the route.
+
+| Page                                   | Route                              | Description                                                                    |
+| -------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------ |
+| `Home.tsx`                             | `/`                                | Main dashboard — WeekStrip, hero cards, energy, insights                       |
+| `Food.tsx`                             | `/food`                            | Food/meal logging with camera, NL parsing, barcode (`/log` redirects here)     |
+| `History.tsx`                          | `/history`                         | Workout & run history with analytics charts                                    |
+| `ExerciseHistory.tsx`                  | `/history/exercise/:name`          | Per-exercise progression chart + rep-bucket PR strip                           |
+| `Program.tsx`                          | `/program`                         | Workout program builder & scheduling                                           |
+| `Routine.tsx`                          | `/routine/:routineId`              | Saved-routine workout runner (reuses `WorkoutSession`)                         |
+| `WorkoutDetail.tsx`                    | `/workout/:workoutId`              | Saved lift session detail; the delete action lives here (ADR-0012)             |
+| `Run.tsx`                              | `/run`                             | Active GPS run tracking (full-screen, no nav)                                  |
+| `RunSummary.tsx`                       | `/run-summary`                     | Post-run stats & map review                                                    |
+| `RunDetail.tsx`                        | `/run/:runId`                      | Historical run detail view                                                     |
+| `WeeklyReview.tsx`                     | `/review`                          | Sunday recap — passive narration of the week (Rev1)                            |
+| `Social.tsx`                           | `/social`                          | Social feed, Circles/Spaces, leaderboards                                      |
+| `Space.tsx`                            | `/space/:spaceId`                  | Community Space — hero, join/leave, post list + composer                       |
+| `UserProfile.tsx`                      | `/user/:uid`                       | User profile viewing                                                           |
+| `Upgrade.tsx`                          | `/upgrade`                         | Pro pricing + purchase page                                                    |
+| `SettingsIndex.tsx`                    | `/settings`                        | Settings section list — iOS nested-page IA (`/settings/legacy` redirects here) |
+| `settings/SettingsProfile.tsx`         | `/settings/profile`                | Profile section                                                                |
+| `settings/SettingsAccount.tsx`         | `/settings/account`                | Account — email, password, sign-out, account deletion                          |
+| `settings/SettingsTraining.tsx`        | `/settings/training`               | Programme settings (canonical, Set1.1 / Pgm4)                                  |
+| `settings/SettingsLiftPlan.tsx`        | `/settings/lift-plan`              | Dedicated lift-plan editor                                                     |
+| `settings/SettingsRunPlan.tsx`         | `/settings/run-plan`               | Dedicated run-plan editor (the Programme Run surface deep-links here)          |
+| `settings/SettingsWorkoutPrefs.tsx`    | `/settings/workout-prefs`          | Workout preferences                                                            |
+| `settings/SettingsNutrition.tsx`       | `/settings/nutrition`              | Nutrition section — targets, adaptive TDEE                                     |
+| `settings/SettingsRecentlyDeleted.tsx` | `/settings/recently-deleted-meals` | Soft-deleted meals archive (24 h window, F5c)                                  |
+| `settings/SettingsHealth.tsx`          | `/settings/health`                 | HealthKit steps — discovery and reconnection (ADR-0007)                        |
+| `settings/SettingsShoes.tsx`           | `/settings/shoes`                  | Running shoes                                                                  |
+| `settings/SettingsNotifications.tsx`   | `/settings/notifications`          | Push and reminder preferences                                                  |
+| `settings/SettingsPrivacy.tsx`         | `/settings/privacy`                | Privacy — visibility, blocked users, privacy zones                             |
+| `settings/SettingsUnitsAppearance.tsx` | `/settings/units-appearance`       | Units and theme                                                                |
+| `settings/SettingsSubscription.tsx`    | `/settings/subscription`           | Subscription status and management                                             |
+| `settings/SettingsSupportLegal.tsx`    | `/settings/support-legal`          | Support, legal links, app version                                              |
+| `AdminModeration.tsx`                  | `/admin/moderation`                | Admin report queue — client gate `VITE_ADMIN_UIDS`, the callable re-checks     |
+| `Diagnostics.tsx`                      | `/diagnostics`                     | Operator diagnostics (push, SW update, App Check state) — hidden, unlinked     |
+| `dev/*.tsx`                            | `/dev/*`                           | Developer labs (brand bake-off, form-motion lab) — not product surfaces        |
+| `Onboarding.tsx`                       | `*` (fallback)                     | Multi-step setup flow (shown when onboarding incomplete)                       |
+| `Login.tsx`                            | `*` (fallback)                     | Authentication (Email, Google, Apple) (shown when unauthenticated)             |
+| `PrivacyPolicy.tsx`                    | `/privacy`                         | Legal — reachable signed-out                                                   |
+| `TermsOfService.tsx`                   | `/terms`                           | Legal — reachable signed-out                                                   |
+| `Support.tsx`                          | `/support`                         | Public support page (App Store Support URL) — reachable signed-out             |
 
 ## Key Business Logic (src/lib/)
 
-| File                      | Purpose                                                        |
-| ------------------------- | -------------------------------------------------------------- |
-| `performanceEngine.ts`    | Weekly performance index (0-100), load bands, deload detection |
-| `tdee.ts`                 | Base TDEE calculation                                          |
-| `phaseNutrition.ts`       | Day-type specific macro adjustments (lift/run/rest)            |
-| `calculateDailyMacros.ts` | Daily macro target computation                                 |
-| `gps.ts`                  | Haversine, pace, splits, elevation, Kalman filter, GPX export  |
-| `paceTrends.ts`           | Running pace trend detection (PR/improving/consistent)         |
-| `guidedRun.ts`            | Guided run logic & coaching                                    |
-| `weather.ts`              | Weather API integration for runs                               |
-| `privacyZones.ts`         | GPS privacy zone detection for runs                            |
-| `prTracking.ts`           | Personal record tracking system                                |
-| `scheduleUtils.ts`        | Weekly schedule generation (lift/run/rest)                     |
-| `exercises.ts`            | Exercise database                                              |
-| `workoutTemplates.ts`     | Workout template library                                       |
-| `nlFoodParser.ts`         | Natural language food parsing                                  |
-| `voiceFoodParser.ts`      | Voice-based food parsing                                       |
-| `socialApi.ts`            | Firestore social operations (feed, kudos, follow)              |
-| `shareCardGenerator.ts`   | Share card image generation (html-to-image)                    |
-| `analytics.ts`            | Analytics computation                                          |
-| `subscription.ts`         | Pro subscription handling                                      |
-| `firebase.ts`             | Firebase app initialization & Firestore/Auth/Storage exports   |
-| `auth.tsx`                | AuthProvider, useAuth hook, UserProfile interface              |
-| `api.ts`                  | API client helpers                                             |
-| `haptic.ts`               | Haptic feedback utility (Capacitor)                            |
-| `offlineQueue.ts`         | Queues Firestore writes when offline, flushes on reconnect     |
-| `errorReporting.ts`       | Error reporting utilities                                      |
-| `logger.ts`               | Structured logging                                             |
-| `notifications.ts`        | Push notification setup                                        |
-| `types.ts`                | Shared TypeScript type definitions                             |
-| `performanceTypes.ts`     | Performance engine type definitions                            |
-| `macroConstants.ts`       | Macro/nutrition constants                                      |
-| `export.ts`               | Data export utilities                                          |
-| `exerciseDemo.ts`         | Exercise demo/animation data                                   |
-| `firestoreGuards.ts`      | Firestore data validation guards                               |
-| `funComparisons.ts`       | Fun stat comparison generators                                 |
-| `purchaseProvider.ts`     | In-app purchase provider (Capacitor)                           |
-| `register-sw.ts`          | Service worker registration                                    |
-| `timeAgo.ts`              | Relative time formatting                                       |
-| `theme.ts`                | THEME object for chart colours & design tokens                 |
-| `utils.ts`                | General utility functions                                      |
+| File                    | Purpose                                                        |
+| ----------------------- | -------------------------------------------------------------- |
+| `performanceEngine.ts`  | Weekly performance index (0-100), load bands, deload detection |
+| `tdee.ts`               | Base TDEE calculation                                          |
+| `phaseNutrition.ts`     | Day-type specific macro adjustments (lift/run/rest)            |
+| `gps.ts`                | Haversine, pace, splits, elevation, Kalman filter, GPX export  |
+| `paceTrends.ts`         | Running pace trend detection (PR/improving/consistent)         |
+| `guidedRun.ts`          | Guided run logic & coaching                                    |
+| `weather.ts`            | Weather API integration for runs                               |
+| `privacyZones.ts`       | GPS privacy zone detection for runs                            |
+| `prTracking.ts`         | Personal record tracking system                                |
+| `scheduleUtils.ts`      | Weekly schedule generation (lift/run/rest)                     |
+| `exercises.ts`          | Exercise database                                              |
+| `workoutTemplates.ts`   | Workout template library                                       |
+| `nlFoodParser.ts`       | Natural language food parsing                                  |
+| `socialApi.ts`          | Firestore social operations (feed, kudos, follow)              |
+| `shareCardGenerator.ts` | Share card image generation (html-to-image)                    |
+| `analytics.ts`          | Analytics computation                                          |
+| `subscription.ts`       | Pro subscription handling                                      |
+| `firebase.ts`           | Firebase app initialization & Firestore/Auth/Storage exports   |
+| `auth.tsx`              | AuthProvider, useAuth hook, UserProfile interface              |
+| `api.ts`                | API client helpers                                             |
+| `haptic.ts`             | Haptic feedback utility (Capacitor)                            |
+| `offlineQueue.ts`       | Queues Firestore writes when offline, flushes on reconnect     |
+| `errorReporting.ts`     | Error reporting utilities                                      |
+| `logger.ts`             | Structured logging                                             |
+| `notifications.ts`      | Push notification setup                                        |
+| `types.ts`              | Shared TypeScript type definitions                             |
+| `performanceTypes.ts`   | Performance engine type definitions                            |
+| `macroConstants.ts`     | Macro/nutrition constants                                      |
+| `export.ts`             | Data export utilities                                          |
+| `exerciseDemo.ts`       | Exercise demo/animation data                                   |
+| `firestoreGuards.ts`    | Firestore data validation guards                               |
+| `funComparisons.ts`     | Fun stat comparison generators                                 |
+| `purchaseProvider.ts`   | In-app purchase provider (Capacitor)                           |
+| `register-sw.ts`        | Service worker registration                                    |
+| `timeAgo.ts`            | Relative time formatting                                       |
+| `theme.ts`              | THEME object for chart colours & design tokens                 |
+| `utils.ts`              | General utility functions                                      |
 
 ## Feature Modules (src/features/)
 

@@ -46,8 +46,3 @@ export function calcDailyBurn(
     phaseLabel,
   };
 }
-
-export function estimateStepCalories(steps: number, weightKg: number): number {
-  const calPerStep = 0.04 * (weightKg / 70);
-  return Math.round(steps * calPerStep);
-}

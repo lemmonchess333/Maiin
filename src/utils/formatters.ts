@@ -90,15 +90,6 @@ export function formatDistance(km: number | null | undefined): string {
   return km.toFixed(1);
 }
 
-/** Format a stat value, showing "—" when zero/null */
-export function formatStat(
-  value: number | null | undefined,
-  suffix = ""
-): string {
-  if (value == null || value <= 0) return "\u2014";
-  return String(value) + suffix;
-}
-
 /** Calculate macro ring percentage (clamped 0–1.3) and done state (±10% of target) */
 export function macroRingState(
   value: number,

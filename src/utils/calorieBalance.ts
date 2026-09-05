@@ -1,15 +1,5 @@
 import { THEME } from "@/lib/theme";
 
-export function estimateBMR(
-  weightKg: number,
-  heightCm: number,
-  age: number,
-  sex: "male" | "female"
-): number {
-  const base = 10 * weightKg + 6.25 * heightCm - 5 * age;
-  return Math.round(sex === "male" ? base + 5 : base - 161);
-}
-
 export interface DayBalance {
   date: string;
   day: string;
@@ -76,7 +66,7 @@ export function getBalanceColor(
  * cal/day average), matching the existing recomp "near maintenance"
  * heuristic in CalorieBalanceChart.
  */
-export const NEAR_MAINTENANCE_THRESHOLD = 200;
+const NEAR_MAINTENANCE_THRESHOLD = 200;
 
 export type PhaseAlignmentState = "on-track" | "at-odds" | "maintaining";
 

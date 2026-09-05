@@ -125,7 +125,14 @@ function stripCommentsAndStrings(src: string): string {
 }
 
 /** Roots whose exports must be reachable. */
-const DOMAIN_ROOTS = ["src/lib", "src/features", "src/hooks", "functions/lib"];
+const DOMAIN_ROOTS = [
+  "src/lib",
+  "src/features",
+  "src/hooks",
+  "src/utils",
+  "src/pages",
+  "functions/lib",
+];
 /** Everything that could plausibly consume them. */
 const CONSUMER_ROOTS = ["src", "functions", "e2e", "scripts"];
 

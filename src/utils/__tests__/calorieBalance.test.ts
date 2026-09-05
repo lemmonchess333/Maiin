@@ -1,24 +1,15 @@
 import { describe, it, expect } from "vitest";
 import {
-  estimateBMR,
   calcDayBalance,
   getBalanceColor,
   getPhaseAlignment,
-  NEAR_MAINTENANCE_THRESHOLD,
 } from "../calorieBalance";
 import { THEME } from "@/lib/theme";
 
-describe("estimateBMR", () => {
-  it("calculates BMR for male", () => {
-    // 10*80 + 6.25*180 - 5*30 + 5 = 800 + 1125 - 150 + 5 = 1780
-    expect(estimateBMR(80, 180, 30, "male")).toBe(1780);
-  });
-
-  it("calculates BMR for female", () => {
-    // 10*60 + 6.25*165 - 5*25 - 161 = 600 + 1031.25 - 125 - 161 = 1345
-    expect(estimateBMR(60, 165, 25, "female")).toBe(1345);
-  });
-});
+// The near-maintenance band is ±200 kcal/day (the module's documented
+// threshold). Pinned as a literal so the boundary tests hold the BEHAVIOUR;
+// importing the module's own constant would only pin consistency with itself.
+const NEAR_MAINTENANCE_KCAL = 200;
 
 describe("calcDayBalance", () => {
   it("computes deficit when maintenance expenditure exceeds intake", () => {
@@ -136,15 +127,12 @@ describe("getPhaseAlignment", () => {
 
   describe("threshold boundary", () => {
     it("exactly at +threshold counts as maintaining (bulk)", () => {
-      const result = getPhaseAlignment("lean bulk", NEAR_MAINTENANCE_THRESHOLD);
+      const result = getPhaseAlignment("lean bulk", NEAR_MAINTENANCE_KCAL);
       expect(result?.state).toBe("maintaining");
     });
 
     it("just above threshold is at-odds (bulk + deficit)", () => {
-      const result = getPhaseAlignment(
-        "lean bulk",
-        NEAR_MAINTENANCE_THRESHOLD + 1
-      );
+      const result = getPhaseAlignment("lean bulk", NEAR_MAINTENANCE_KCAL + 1);
       expect(result?.state).toBe("at-odds");
     });
   });

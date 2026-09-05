@@ -3,7 +3,6 @@ import {
   formatVolume,
   formatVolumeSub,
   formatDistance,
-  formatStat,
   macroRingState,
   abbreviateK,
   percentagesSummingTo100,
@@ -84,24 +83,6 @@ describe("formatDistance", () => {
 
   it("formats exact km", () => {
     expect(formatDistance(10)).toBe("10.0");
-  });
-});
-
-describe("formatStat", () => {
-  it("returns dash for zero", () => {
-    expect(formatStat(0)).toBe("\u2014");
-  });
-
-  it("returns dash for null", () => {
-    expect(formatStat(null)).toBe("\u2014");
-  });
-
-  it("formats positive value", () => {
-    expect(formatStat(3)).toBe("3");
-  });
-
-  it("appends suffix", () => {
-    expect(formatStat(78, "%")).toBe("78%");
   });
 });
 
