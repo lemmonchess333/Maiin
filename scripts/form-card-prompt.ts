@@ -47,7 +47,7 @@ for (const id of ids) {
   const beats = getAuthoredBeats(id);
   const positions = beats
     ? beats.map((b, i) => `${i + 1}. ${b.label} — ${b.cue}`)
-    : ex.instructions.map((s, i) => `${i + 1}. ${s}`);
+    : (ex.instructions ?? []).map((s, i) => `${i + 1}. ${s}`);
 
   console.log(`\n${"=".repeat(64)}\n${ex.name}  (${id})\n${"=".repeat(64)}`);
   if (!beats)
@@ -64,7 +64,7 @@ for (const id of ids) {
       : ex.equipment.toLowerCase();
   const figure = `- One neutral grey anatomical mannequin, no face, no clothing.
 - Solid purple (#7B72E9) on the PRIMARY muscles: ${ex.muscleGroup}.
-- Diagonal hatching in the same purple on the SECONDARY muscles: ${ex.secondaryMuscles.join(", ") || "none"}.
+- Diagonal hatching in the same purple on the SECONDARY muscles: ${(ex.secondaryMuscles ?? []).join(", ") || "none"}.
 - Equipment: ${ex.equipment}.
 - Draw the shoulder and upper back as continuous anatomy. Do not leave
   a flat plate or a seam where the deltoid meets the neck.

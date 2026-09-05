@@ -409,7 +409,10 @@ legacy-only — pre-Food9 documents keep rendering, nothing writes it.
   nothing. `npm run build` and CI both use `tsc -b`. Measured against a real
   missing import in `UserProfile.tsx` — `-p` exit 0, `-b` exit 2 with
   `TS2304`. An agent that "verified types" with the `-p` form has verified
-  nothing, and CI is the only thing that will say so.
+  nothing, and CI is the only thing that will say so. `tsc -b` also
+  covers `scripts/` and `e2e/` through `tsconfig.scripts.json`: a seed script
+  importing a deleted `src/` export is a build error, not a capture-run
+  surprise.
 - **Adding an import to a component breaks any suite that mocks that module
   wholesale.** `vi.mock("@/lib/auth", () => ({ useAuth: … }))` makes every
   OTHER export `undefined`, and the failure surfaces at the call site
