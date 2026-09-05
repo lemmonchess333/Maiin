@@ -1,3 +1,4 @@
+import SectionLabel from "@/components/ui/SectionLabel";
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { IconButton } from "@/components/ui/IconButton";
 import { Button } from "@/components/ui/Button";
@@ -564,7 +565,7 @@ export default function ProgressPhotos() {
             <Lock className="size-4 text-muted-foreground" />
           </div>
         )}
-        <span className="absolute bottom-0 inset-x-0 bg-black/45 text-[10px] text-white text-center py-0.5 uppercase tracking-wide">
+        <span className="absolute bottom-0 inset-x-0 bg-black/45 text-caption text-white text-center py-0.5 uppercase tracking-wider">
           {label}
         </span>
       </div>
@@ -689,9 +690,9 @@ export default function ProgressPhotos() {
                 {entry.date}
               </span>
               {entry.legacy && (
-                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                <SectionLabel as="span" tier="section">
                   Photo
-                </span>
+                </SectionLabel>
               )}
             </div>
             {entry.note && (
@@ -772,9 +773,9 @@ export default function ProgressPhotos() {
                     ) : (
                       <span className="size-full flex flex-col items-center justify-center gap-1 text-muted-foreground">
                         <Plus className="size-4" />
-                        <span className="text-[10px] uppercase tracking-wide">
+                        <SectionLabel as="span" tier="section">
                           {SLOT_LABELS[slot]}
-                        </span>
+                        </SectionLabel>
                       </span>
                     )}
                   </button>

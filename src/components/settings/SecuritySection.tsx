@@ -164,12 +164,12 @@ export default function SecuritySection({
                 <p className="text-sm text-foreground truncate">{user.email}</p>
               </div>
               {user.emailVerified ? (
-                <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold text-success-strong">
+                <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-success-strong">
                   <CheckCircle2 className="size-3.5" aria-hidden="true" />
                   Verified
                 </span>
               ) : (
-                <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold text-muted-foreground">
+                <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-muted-foreground">
                   <MailWarning className="size-3.5" aria-hidden="true" />
                   Not verified
                 </span>

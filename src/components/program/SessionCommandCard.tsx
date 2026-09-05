@@ -16,6 +16,7 @@
 
 import { MoreHorizontal, Play, Footprints, Dumbbell } from "lucide-react";
 import SectionLabel from "@/components/ui/SectionLabel";
+import MetaLine from "@/components/ui/MetaLine";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
@@ -109,18 +110,7 @@ export default function SessionCommandCard({
           )}
         </div>
 
-        {meta.length > 0 && (
-          <div className="flex flex-wrap gap-1.5" aria-hidden="true">
-            {meta.map((item) => (
-              <span
-                key={item}
-                className="rounded-full bg-background/70 px-2.5 py-1 text-caption font-semibold text-muted-foreground"
-              >
-                {item}
-              </span>
-            ))}
-          </div>
-        )}
+        {meta.length > 0 && <MetaLine items={meta} />}
 
         {primaryActionLabel && onPrimaryAction && (
           <Button

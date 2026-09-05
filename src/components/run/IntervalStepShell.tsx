@@ -183,12 +183,12 @@ export default function IntervalStepShell({
       <div className="p-4 pt-3 space-y-1">
         <div className="flex items-baseline justify-between gap-3">
           {flash ? (
-            <p className="text-[11px] font-bold tracking-wider text-success-strong min-w-0 truncate">
+            <p className="text-caption font-bold tracking-wider text-success-strong min-w-0 truncate">
               ✓ {flash.toUpperCase()} DONE
             </p>
           ) : (
             <p
-              className="text-[11px] font-bold tracking-wider"
+              className="text-caption font-bold tracking-wider"
               style={{ color: TYPE_EYEBROW[current.type] }}
             >
               {eyebrowFor(current)}

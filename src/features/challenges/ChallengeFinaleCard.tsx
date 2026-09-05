@@ -1,3 +1,4 @@
+import SectionLabel from "@/components/ui/SectionLabel";
 import { motion } from "framer-motion";
 import { Trophy, X } from "lucide-react";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
@@ -65,12 +66,9 @@ export function ChallengeFinaleCard({
           <Trophy size={18} />
         </div>
         <div className="flex-1 min-w-0">
-          <p
-            className="text-caption font-semibold uppercase tracking-wider"
-            style={{ color: accent }}
-          >
+          <SectionLabel tier="section" style={{ color: accent }}>
             Challenge ended
-          </p>
+          </SectionLabel>
           <p className="text-sm font-semibold text-foreground">
             {challenge.name}
           </p>

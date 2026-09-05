@@ -1,3 +1,4 @@
+import SectionLabel from "@/components/ui/SectionLabel";
 import { Dumbbell, Footprints, Flame } from "lucide-react";
 import { useWeekPulse } from "@/hooks/useWeekPulse";
 import { THEME } from "@/lib/theme";
@@ -21,9 +22,7 @@ export default function WeekPulseCard({
 
   return (
     <div className="p-4 rounded-2xl bg-card border border-border/50 space-y-2">
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-        Your week so far
-      </p>
+      <SectionLabel tier="section">Your week so far</SectionLabel>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
         {pulse.lifts && (
           <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground">

@@ -373,19 +373,16 @@ export default function RunSetupModal({
                 <p className="text-base font-bold text-foreground">
                   {selected.name}
                 </p>
-                {/* Description and chip sit tight against each
-                    other (gap-2, no separator dot) — the chip pill
-                    visually separates the metadata on its own, so
-                    the explicit "·" was making it feel detached.
-                    Description truncates first, chip is shrink-0
-                    so it stays whole on narrow viewports. */}
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-xs text-muted-foreground truncate min-w-0">
+                {/* Description and mode are facts, so one metadata line
+                    (" · "-joined) rather than a chip — the description
+                    truncates first and the mode stays whole on narrow
+                    viewports. */}
+                <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                  <span className="truncate min-w-0">
                     {selected.cardDescription}
                   </span>
-                  <span className="text-caption px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
-                    {selected.cardChip}
-                  </span>
+                  <span aria-hidden="true">·</span>
+                  <span className="shrink-0">{selected.cardChip}</span>
                 </div>
               </div>
               <ChevronRight
@@ -1313,7 +1310,7 @@ export default function RunSetupModal({
                           >
                             {at.name}
                           </p>
-                          <span className="text-caption px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
+                          <span className="text-xs text-muted-foreground shrink-0">
                             {at.chooserChip}
                           </span>
                         </div>

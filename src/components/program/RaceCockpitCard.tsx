@@ -93,10 +93,14 @@ export default function RaceCockpitCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1 min-w-0">
-          <div className="inline-flex items-center gap-1.5 text-caption font-bold uppercase tracking-wider text-running-strong">
+          <SectionLabel
+            as="span"
+            tier="section"
+            className="inline-flex items-center gap-1.5 text-running-strong"
+          >
             <Flag className="size-3.5" aria-hidden="true" />
             Race plan
-          </div>
+          </SectionLabel>
           <h3 className="text-2xl font-extrabold tracking-tight text-foreground leading-tight">
             {eventName || distanceLabel}
           </h3>

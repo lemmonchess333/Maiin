@@ -1,3 +1,4 @@
+import SectionLabel from "@/components/ui/SectionLabel";
 import { useState, useEffect, useMemo } from "react";
 import { useLocation, useNavigate, Navigate } from "react-router-dom";
 import { readString, writeString } from "@/lib/localStore";
@@ -1798,9 +1799,9 @@ export default function RunSummary() {
                 below keeps free text but no longer owns "how did it feel". */}
             {!isInvalid && (
               <div className="space-y-1.5">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1">
+                <SectionLabel tier="section" className="px-1">
                   How did it feel?
-                </p>
+                </SectionLabel>
                 <SegmentedControl
                   options={[
                     { value: "easier", label: "Easier" },

@@ -263,9 +263,9 @@ export default function ReportModal({
         <div className="mt-3">
           <label
             htmlFor="report-freeform"
-            className="text-xs uppercase tracking-wider text-muted-foreground"
+            className="text-xs text-muted-foreground"
           >
-            Anything else? <span className="lowercase">(optional)</span>
+            Anything else? (optional)
           </label>
           <textarea
             id="report-freeform"

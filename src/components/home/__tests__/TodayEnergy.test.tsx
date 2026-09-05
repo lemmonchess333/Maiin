@@ -129,7 +129,7 @@ describe("TodayEnergy — always-on Log affordance (#973)", function () {
 });
 
 describe("TodayEnergy — collapsed macro summary vs expanded rings (Wave3 E1)", function () {
-  it("collapsed default shows the muted grams-remaining line, NOT the rings", function () {
+  it("collapsed default shows the compact eaten/target macro line, NOT the rings", function () {
     renderAt({
       calories: 1450,
       protein: 80,
@@ -137,9 +137,17 @@ describe("TodayEnergy — collapsed macro summary vs expanded rings (Wave3 E1)",
       fat: 38,
       totalLifetimeMeals: 420,
     });
-    // target − consumed, clamped: P 160-80=80, C 220-56=164, F 70-38=32
-    expect(screen.getByText("P 80g · C 164g · F 32g left")).toBeInTheDocument();
+    // Same framing as the calorie line above it: eaten / target per macro.
+    expect(
+      screen.getByText("P 80/160g · C 56/220g · F 38/70g")
+    ).toBeInTheDocument();
     expect(screen.queryByTestId("macro-ring")).toBeNull();
+  });
+
+  it("frames the calories as eaten / target in words, not just a slash", function () {
+    renderAt({ calories: 1450, totalLifetimeMeals: 420 });
+    expect(screen.getByText("eaten")).toBeInTheDocument();
+    expect(screen.getByText("/ 2,200 kcal")).toBeInTheDocument();
   });
 
   it("expanding the card reveals the three macro rings", function () {
@@ -153,7 +161,7 @@ describe("TodayEnergy — collapsed macro summary vs expanded rings (Wave3 E1)",
     fireEvent.click(screen.getByText("Today's Energy"));
     expect(screen.getAllByTestId("macro-ring")).toHaveLength(3);
     // summary line hides once expanded (rings carry the detail)
-    expect(screen.queryByText(/P 80g · C 164g · F 32g left/)).toBeNull();
+    expect(screen.queryByText(/P 80\/160g/)).toBeNull();
   });
 
   it("REMEMBERS an expand across a remount, per account", function () {
@@ -192,7 +200,7 @@ describe("TodayEnergy — collapsed macro summary vs expanded rings (Wave3 E1)",
     expect(screen.queryByTestId("macro-ring")).toBeNull();
   });
 
-  it("grams-remaining never goes negative (clamped at 0)", function () {
+  it("an over-target macro reads plainly (200/160g) — never clamped away", function () {
     renderAt({
       calories: 3000,
       protein: 200,
@@ -200,16 +208,74 @@ describe("TodayEnergy — collapsed macro summary vs expanded rings (Wave3 E1)",
       fat: 90,
       totalLifetimeMeals: 420,
     });
-    expect(screen.getByText("P 0g · C 0g · F 0g left")).toBeInTheDocument();
+    expect(
+      screen.getByText("P 200/160g · C 300/220g · F 90/70g")
+    ).toBeInTheDocument();
   });
 
   it("cold-start (no meals ever) shows neither the summary line nor the rings", function () {
     renderAt({ calories: 0, totalLifetimeMeals: 0 });
-    expect(screen.queryByText(/left$/)).toBeNull();
+    expect(screen.queryByText(/P \d+\/\d+g/)).toBeNull();
     expect(screen.queryByTestId("macro-ring")).toBeNull();
     expect(
       screen.getByText("Log a meal to see your daily energy")
     ).toBeInTheDocument();
+  });
+});
+
+describe("TodayEnergy — one logging action, no duplicated target rows (cohesion V02)", function () {
+  const foodLinks = () =>
+    screen
+      .getAllByRole("link")
+      .filter((a) => a.getAttribute("href") === "/food");
+
+  it("an active day has exactly one way into the food log", function () {
+    renderAt({ calories: 1450, totalLifetimeMeals: 420 });
+    expect(foodLinks()).toHaveLength(1);
+    fireEvent.click(screen.getByText("Today's Energy"));
+    // Expanding must not add a second one ("View food log" is gone).
+    expect(foodLinks()).toHaveLength(1);
+  });
+
+  it("cold-start explains with a status line and still offers exactly one link", function () {
+    renderAt({ calories: 0, totalLifetimeMeals: 0 });
+    expect(foodLinks()).toHaveLength(1);
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Log a meal to see your daily energy"
+    );
+  });
+
+  it("a lapsed user (3+ days without a meal) gets a note, not a second link", function () {
+    renderAt({ calories: 0, totalLifetimeMeals: 40, daysSinceLastMeal: 5 });
+    expect(screen.getByText("Nothing logged yet today")).toBeInTheDocument();
+    expect(foodLinks()).toHaveLength(1);
+  });
+
+  it("the details omit the plan-target row when it equals the header target", function () {
+    renderAt({ calories: 1450, totalLifetimeMeals: 420 });
+    fireEvent.click(screen.getByText("Today's Energy"));
+    // burn.phaseAdjustedTdee (2200) === targets.finalTarget (2200), and no
+    // activity burned: nothing in the details restates the header.
+    expect(screen.queryAllByTestId("breakdown-row")).toHaveLength(0);
+  });
+
+  it("the details show the plan target once adaptation has moved the header away from it", function () {
+    renderAt({
+      calories: 1450,
+      totalLifetimeMeals: 420,
+      burn: { ...burn, phaseAdjustedTdee: 2400 },
+    });
+    fireEvent.click(screen.getByText("Today's Energy"));
+    expect(screen.getAllByTestId("breakdown-row")).toHaveLength(1);
+  });
+
+  it("labels the disclosure — Details — and reports its state", function () {
+    renderAt({ calories: 1450, totalLifetimeMeals: 420 });
+    const header = screen.getByRole("button", { name: /today's energy/i });
+    expect(header).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByText("Details")).toBeInTheDocument();
+    fireEvent.click(header);
+    expect(header).toHaveAttribute("aria-expanded", "true");
   });
 });
 

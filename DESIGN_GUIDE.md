@@ -211,8 +211,13 @@ Never repurpose one of these for an unrelated feature.
 - `600` semibold → pill text + button labels
 - **Never mix 700 and 800 in the same visual tier.**
 
-Section labels are a deliberate style: ~10px, UPPERCASE, wide letter-spacing,
-muted colour. That's intentional, not a bug — match it.
+Section labels are a deliberate style: UPPERCASE, wide letter-spacing, muted
+colour, at exactly two sizes — `SectionLabel tier="section"` (11px,
+`text-caption`, page-section labels) and the default tier (12px, card-internal
+captions). The old "~10px" recipe was floored up to 11px when that became the
+app-wide minimum for tracked uppercase text; do not reintroduce it, and do not
+invent a third size. Use the `SectionLabel` primitive rather than hand-rolling
+the classes.
 
 ---
 
@@ -329,7 +334,8 @@ behaviour.
   `IconButton` meet this by default.
 - **WCAG AA contrast** for text. This is _why_ `primary-strong`,
   `MACROS_TEXT_LIGHT`, and the darker semantic tokens exist — use them.
-- **Body text ≥ 16px**, micro labels ≥ 12px.
+- **Body text ≥ 16px**, micro labels ≥ 12px — with one named floor below it:
+  uppercase tracked section labels sit at 11px (`text-caption`, see §4).
 - **Semantic roles:** `Banner` uses `status`/`alert`; respect ARIA. Icon-only
   controls need labels. Inputs/anchors need accessible names.
 - **Keyboard:** focusable, Enter/Escape behave, focus returns to the trigger

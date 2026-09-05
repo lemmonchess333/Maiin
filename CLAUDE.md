@@ -505,7 +505,7 @@ Use the `/browse` skill from gstack for **all web browsing**. Never use `mcp__cl
 - **Compact tile (Weight, Steps):** rounded-xl, padding 3, bg-muted (slightly darker than white), 2-col grid
 - **CTA card (Today's workout/run):** rounded-xl, sport-coloured tinted background (8% opacity), Play button pill right-aligned
 - **Action pills (Quick Log, Start Run, Log Food):** rounded-xl, sport-coloured tinted bg (6% opacity), icon + 11px semibold label, flex row with equal widths, minimum 44px touch target
-- **Section labels:** 10px uppercase with wider letter-spacing, muted colour
+- **Section labels:** `SectionLabel` — uppercase, wider letter-spacing, muted; 11px (`tier="section"`, page sections) or 12px (default, card captions). No hand-rolled label classes, no third size
 
 ### Training plan primitives
 
@@ -793,7 +793,7 @@ or touching a CTA button, route it through `Button` with the variant above.
 
 - The Quick Log / Start Run / Log Food action pills were recently shrunk to make room for the hero cards (Health Score, Water). The visual weight difference between the large hero cards and small pills is intentional — the hero cards are glanceable data, the pills are secondary quick actions.
 - The water card has a complex animated fill effect (WaterWave + WaterBubbles) — treat carefully when modifying
-- Section headers use 10px uppercase with tracking — this is a deliberate typographic choice, not an error
+- Section labels use uppercase with tracking at 11px/12px (`SectionLabel`'s two tiers) — a deliberate typographic choice, not an error; the 11px tier is the one place text sits below the 12px micro floor
 - The "NEW" badge on PR items uses orange background — this is the nutrition/warm accent colour
 
 ## Reference apps — for /grill-me and /grill-with-docs sessions

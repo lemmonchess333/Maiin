@@ -1,3 +1,4 @@
+import SectionLabel from "@/components/ui/SectionLabel";
 import { useMemo } from "react";
 import { THEME } from "@/lib/theme";
 import { Trophy, Clock, Dumbbell, Target, Zap } from "lucide-react";
@@ -205,12 +206,7 @@ export default function SessionCompleteScreen({
             <p className="text-lg font-bold font-mono tabular-nums text-foreground">
               {durationDisplay}
             </p>
-            <p
-              className="text-xs uppercase tracking-wider"
-              style={{ color: "hsl(var(--muted-foreground))" }}
-            >
-              Duration
-            </p>
+            <SectionLabel>Duration</SectionLabel>
           </div>
           <div className="p-4 rounded-2xl bg-card text-center space-y-1">
             <Dumbbell className="size-4 mx-auto text-lifting" />
@@ -223,12 +219,7 @@ export default function SessionCompleteScreen({
                 kg
               </span>
             </p>
-            <p
-              className="text-xs uppercase tracking-wider"
-              style={{ color: "hsl(var(--muted-foreground))" }}
-            >
-              Volume
-            </p>
+            <SectionLabel>Volume</SectionLabel>
           </div>
           <div className="p-4 rounded-2xl bg-card text-center space-y-1">
             <Target
@@ -238,12 +229,7 @@ export default function SessionCompleteScreen({
             <p className="text-lg font-bold font-mono tabular-nums text-foreground">
               {totalSetsCompleted}
             </p>
-            <p
-              className="text-xs uppercase tracking-wider"
-              style={{ color: "hsl(var(--muted-foreground))" }}
-            >
-              Sets
-            </p>
+            <SectionLabel>Sets</SectionLabel>
           </div>
         </motion.div>
 
@@ -299,12 +285,7 @@ export default function SessionCompleteScreen({
           transition={{ delay: 0.4 }}
         >
           <div className="px-4 pt-4 pb-2">
-            <p
-              className="text-sm font-semibold uppercase tracking-wider"
-              style={{ color: "hsl(var(--muted-foreground))" }}
-            >
-              Exercises
-            </p>
+            <SectionLabel tier="section">Exercises</SectionLabel>
           </div>
           <div className="divide-y divide-border/30">
             {exerciseSummary.map((ex, i) => (

@@ -79,7 +79,7 @@ export default function ProfileInfoSection({
         <div>
           <label
             htmlFor="profile-weight"
-            className="text-sm text-muted-foreground"
+            className="text-xs text-muted-foreground"
           >
             Weight (kg)
           </label>
@@ -117,7 +117,7 @@ export default function ProfileInfoSection({
         <div>
           <label
             htmlFor="profile-height"
-            className="text-sm text-muted-foreground"
+            className="text-xs text-muted-foreground"
           >
             Height (cm)
           </label>
@@ -149,7 +149,7 @@ export default function ProfileInfoSection({
       </div>
 
       <div>
-        <span className="text-sm text-muted-foreground">Gender</span>
+        <span className="text-xs text-muted-foreground">Gender</span>
         <SegmentedControl
           ariaLabel="Gender"
           layout="wrap"
@@ -164,7 +164,7 @@ export default function ProfileInfoSection({
       </div>
 
       <div>
-        <span className="text-sm text-muted-foreground">Age range</span>
+        <span className="text-xs text-muted-foreground">Age range</span>
         <SegmentedControl
           ariaLabel="Age range"
           layout="wrap"
@@ -179,7 +179,7 @@ export default function ProfileInfoSection({
       </div>
 
       <div>
-        <label htmlFor="profile-why" className="text-sm text-muted-foreground">
+        <label htmlFor="profile-why" className="text-xs text-muted-foreground">
           Your why
         </label>
         <input

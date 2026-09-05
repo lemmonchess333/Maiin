@@ -350,7 +350,7 @@ export default function RoutePlannerSheet({
         </div>
 
         <div className="space-y-2 p-4">
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             {roadRoute
               ? "Road route via Mapbox — distance follows the walking network. © Mapbox"
               : "Point-to-point distance — segments don't follow roads."}
@@ -374,7 +374,7 @@ export default function RoutePlannerSheet({
                   working — say WHY alignment went away instead of the
                   button silently vanishing. */}
               {waypoints.length > 12 && (
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   Road alignment works with up to 12 points — your manual route
                   still saves as drawn.
                 </p>

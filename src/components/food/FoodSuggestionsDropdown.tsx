@@ -278,9 +278,9 @@ function FoodSuggestionsDropdown({
               local DB + OFF results follow. */}
           <div className="px-4 pt-2 pb-1 flex items-center gap-1.5">
             <Star aria-hidden="true" className="size-3 text-achievement" />
-            <span className="text-caption uppercase tracking-wide text-muted-foreground font-medium">
+            <SectionLabel as="span" tier="section">
               Your pantry
-            </span>
+            </SectionLabel>
           </div>
           {pantryResults.map((p) => (
             <button

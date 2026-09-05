@@ -60,11 +60,11 @@ export default function GuidedRunPicker({ selected, onSelect }: Props) {
                 >
                   {w.name}
                 </span>
-                <span
-                  className="text-xs px-2 py-0.5 rounded-full font-medium"
-                  style={{ background: `${w.color}20`, color: w.color }}
-                >
-                  {w.totalMinutes} min
+                <span className="text-xs text-muted-foreground">
+                  <span className="font-mono tabular-nums">
+                    {w.totalMinutes}
+                  </span>{" "}
+                  min
                 </span>
               </div>
               <p className="text-xs text-muted-foreground">{w.description}</p>

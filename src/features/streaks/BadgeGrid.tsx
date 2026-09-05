@@ -1,3 +1,4 @@
+import SectionLabel from "@/components/ui/SectionLabel";
 import { motion } from "framer-motion";
 import { useStreaks } from "./useStreaks";
 import {
@@ -90,9 +91,7 @@ export function BadgeGrid() {
           <div className="min-w-0">
             {/* Muted, not the tier metal (silver eyebrow = 1.82:1 on
                 white); the hex tile beside carries the tier. */}
-            <p className="text-caption font-semibold uppercase tracking-wider text-muted-foreground">
-              Next badge
-            </p>
+            <SectionLabel tier="section">Next badge</SectionLabel>
             <p className="text-base font-bold text-foreground leading-tight">
               {next.def.name}
             </p>
@@ -141,9 +140,7 @@ export function BadgeGrid() {
 
         return (
           <div key={cat} className="space-y-2">
-            <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              {CATEGORY_LABELS[cat]}
-            </p>
+            <SectionLabel tier="section">{CATEGORY_LABELS[cat]}</SectionLabel>
             <div
               className="grid grid-cols-3 gap-2"
               style={{ perspective: "800px" }}
