@@ -6,10 +6,9 @@ import {
   where,
   getDoc,
   getDocs,
-  deleteDoc,
   serverTimestamp,
 } from "firebase/firestore";
-import { setDocGuarded } from "@/lib/firestoreWrite";
+import { setDocGuarded, deleteDocGuarded } from "@/lib/firestoreWrite";
 import { isFollowing } from "@/lib/socialApi";
 import {
   canAddPartner,
@@ -134,5 +133,5 @@ export async function createBond(me: string, partner: string): Promise<string> {
  * surviving partner's PartnerStreak surface reverts to its invite state.
  */
 export async function dissolveBond(bondDocId: string): Promise<void> {
-  await deleteDoc(doc(db, "partnerBonds", bondDocId));
+  await deleteDocGuarded(doc(db, "partnerBonds", bondDocId));
 }

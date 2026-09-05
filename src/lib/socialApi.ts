@@ -4,7 +4,6 @@ import {
   collection,
   collectionGroup,
   doc,
-  deleteDoc,
   getDocs,
   getDoc,
   query,
@@ -16,7 +15,11 @@ import {
   serverTimestamp,
   type DocumentSnapshot,
 } from "firebase/firestore";
-import { setDocGuarded, addDocGuarded } from "@/lib/firestoreWrite";
+import {
+  setDocGuarded,
+  addDocGuarded,
+  deleteDocGuarded,
+} from "@/lib/firestoreWrite";
 import { httpsCallable, getFunctions } from "firebase/functions";
 
 // ============================================
@@ -46,8 +49,8 @@ export async function followUser(currentUid: string, targetUid: string) {
 export async function unfollowUser(currentUid: string, targetUid: string) {
   const authedUid = getAuthUid();
   if (currentUid !== authedUid) throw new Error("Identity mismatch");
-  await deleteDoc(doc(db, "following", currentUid, "users", targetUid));
-  await deleteDoc(doc(db, "followers", targetUid, "users", currentUid));
+  await deleteDocGuarded(doc(db, "following", currentUid, "users", targetUid));
+  await deleteDocGuarded(doc(db, "followers", targetUid, "users", currentUid));
 }
 
 export async function isFollowing(
@@ -873,24 +876,24 @@ export async function blockUser(currentUid: string, targetUid: string) {
     blockedAt: serverTimestamp(),
   });
   // Also unfollow in both directions
-  await deleteDoc(doc(db, "following", currentUid, "users", targetUid)).catch(
-    () => {}
-  );
-  await deleteDoc(doc(db, "followers", currentUid, "users", targetUid)).catch(
-    () => {}
-  );
-  await deleteDoc(doc(db, "following", targetUid, "users", currentUid)).catch(
-    () => {}
-  );
-  await deleteDoc(doc(db, "followers", targetUid, "users", currentUid)).catch(
-    () => {}
-  );
+  await deleteDocGuarded(
+    doc(db, "following", currentUid, "users", targetUid)
+  ).catch(() => {});
+  await deleteDocGuarded(
+    doc(db, "followers", currentUid, "users", targetUid)
+  ).catch(() => {});
+  await deleteDocGuarded(
+    doc(db, "following", targetUid, "users", currentUid)
+  ).catch(() => {});
+  await deleteDocGuarded(
+    doc(db, "followers", targetUid, "users", currentUid)
+  ).catch(() => {});
 }
 
 export async function unblockUser(currentUid: string, targetUid: string) {
   const authedUid = getAuthUid();
   if (currentUid !== authedUid) throw new Error("Identity mismatch");
-  await deleteDoc(doc(db, "blocks", currentUid, "users", targetUid));
+  await deleteDocGuarded(doc(db, "blocks", currentUid, "users", targetUid));
 }
 
 export async function isBlocked(

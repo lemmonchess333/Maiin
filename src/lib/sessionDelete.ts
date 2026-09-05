@@ -1,6 +1,6 @@
-import { deleteDoc, doc } from "firebase/firestore";
+import { doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { updateDocGuarded } from "@/lib/firestoreWrite";
+import { updateDocGuarded, deleteDocGuarded } from "@/lib/firestoreWrite";
 import { logger } from "@/lib/logger";
 
 /**
@@ -65,9 +65,9 @@ export async function deleteLoggedSession({
   // gone. This way a partial failure leaves the session in place and a
   // retry is a plain repeat (deleting an already-deleted doc succeeds).
   if (sharedActivityId) {
-    await deleteDoc(doc(db, "activities", sharedActivityId));
+    await deleteDocGuarded(doc(db, "activities", sharedActivityId));
   }
-  await deleteDoc(doc(db, "users", uid, COLLECTION[kind], id));
+  await deleteDocGuarded(doc(db, "users", uid, COLLECTION[kind], id));
 }
 
 /** Where a feed post came from — carried on queued shares so the drain

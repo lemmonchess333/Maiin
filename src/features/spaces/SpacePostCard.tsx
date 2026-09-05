@@ -7,7 +7,7 @@
  * photoUrl renders when present (written by the PR4 photo slice).
  */
 import { useState } from "react";
-import { deleteDoc, doc, type Timestamp } from "firebase/firestore";
+import { doc, type Timestamp } from "firebase/firestore";
 import {
   Ban,
   Flag,
@@ -38,6 +38,7 @@ import { COACH_AUTHOR_ID, type SpacePostDoc } from "./spaceTypes";
 import { distanceValue, paceMinSec } from "@/lib/runLabels";
 import { distanceUnitLabel, paceUnitLabel } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { deleteDocGuarded } from "@/lib/firestoreWrite";
 
 export default function SpacePostCard({
   spaceId,
@@ -97,7 +98,7 @@ export default function SpacePostCard({
 
   const removePost = async () => {
     try {
-      await deleteDoc(doc(db, "spaces", spaceId, "posts", postId));
+      await deleteDocGuarded(doc(db, "spaces", spaceId, "posts", postId));
       haptic("light");
       onRemoved(postId);
     } catch {
