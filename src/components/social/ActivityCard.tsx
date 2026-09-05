@@ -58,8 +58,8 @@ function formatDur(seconds: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-const RUN_CHIPS = ["Nice run!", "Great pace!", "Keep it up!"];
-const LIFT_CHIPS = ["Great lift!", "Solid session!", "Strong work!"];
+const RUN_CHIPS = ["Nice run", "Great pace", "Keep it up"];
+const LIFT_CHIPS = ["Great lift", "Solid session", "Strong work"];
 
 interface ActivityCardProps {
   feedItem: FeedItem;

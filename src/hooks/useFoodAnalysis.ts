@@ -30,8 +30,8 @@ function friendlyFoodAnalysisError(
     return "Please sign in again to log food.";
   if (status === 429) return "Too many photos analysed. Please wait a moment.";
   if (status >= 500)
-    return "Food analysis is temporarily unavailable. Please try again.";
-  return "Couldn't analyse this photo. Please try again.";
+    return "Food analysis is temporarily unavailable. Try again.";
+  return "Couldn't analyse this photo. Try again.";
 }
 
 export interface FoodItem {
@@ -116,7 +116,7 @@ export function useFoodAnalysis() {
         !Array.isArray((data as FoodAnalysis).items)
       ) {
         logger.error("[analyzeFood] malformed 200 body", data);
-        throw new Error("The scan came back garbled. Please try again.");
+        throw new Error("The scan came back garbled. Try again.");
       }
 
       setResult(data);
@@ -129,7 +129,7 @@ export function useFoodAnalysis() {
             ? "Couldn't reach the server. Check your connection and try again."
             : err instanceof Error
               ? err.message
-              : "Couldn't analyse this photo. Please try again.";
+              : "Couldn't analyse this photo. Try again.";
       setError(message);
       return { data: null, errorMessage: message };
     } finally {

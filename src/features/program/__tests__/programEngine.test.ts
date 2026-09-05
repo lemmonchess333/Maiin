@@ -1887,8 +1887,10 @@ describe("overlap caps in generateProgram (backlog #10)", () => {
       generateProgram("recomp", n, undefined, "hypertrophy")
         .workouts.flatMap((d) => d.exercises)
         .reduce((s, e) => s + e.sets, 0);
-    // Deterministic across runs — the cap adds nothing and removes nothing.
-    expect(totalSets(3)).toBe(totalSets(3));
+    // 52 working sets for the 3-day recomp hypertrophy build — a stored
+    // literal, so a cap that started adding or dropping sets moves this
+    // number. (Comparing the call to itself pinned nothing.)
+    expect(totalSets(3)).toBe(52);
     const { workouts } = generateProgram("recomp", 3, undefined, "hypertrophy");
     // Days A and C carry the named calf slot on top of the five built ones.
     workouts.forEach((d, i) =>

@@ -108,7 +108,7 @@ export default function ShoesManager() {
       );
     } catch (err) {
       logger.error("[ShoesManager] reconcileMileageFromRuns failed", err);
-      toast.error("Couldn't recalculate mileage. Please try again.");
+      toast.error("Couldn't recalculate mileage. Try again.");
     } finally {
       setRecalculating(false);
     }

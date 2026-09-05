@@ -1263,7 +1263,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logger.error("[auth] updateProfile failed", err);
         // Stable toast ID collapses bursts (e.g. rapid Settings toggles) into
         // a single visible message.
-        toast.error("Couldn't save your settings. Please try again.", {
+        toast.error("Couldn't save your settings. Try again.", {
           id: "update-profile-error",
         });
         return { ok: false, error: err };

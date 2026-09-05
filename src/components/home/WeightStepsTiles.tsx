@@ -15,21 +15,6 @@ import type { StepsStatus } from "@/hooks/useSteps";
 
 export type WeightTrendDirection = "down" | "up" | "flat" | null;
 
-/**
- * Steps tile gate. HealthKit shipped (iOS) — the tile is enabled, but only
- * renders on the native shell (steps are impossible on web) AND when Health
- * is actually available; `stepsStatus === "unavailable"` (web / no Health)
- * keeps it hidden so there's never a dead affordance. See POST_LAUNCH.md
- * "Steps tile → HealthKit / Health Connect wiring".
- */
-const STEPS_TILE_ENABLED = true;
-
-/* The component reads the gate through this mutable holder so the flip
-   path can be exercised in tests without editing source. Flipping
-   STEPS_TILE_ENABLED above remains the one-line change that ships. */
-// eslint-disable-next-line react-refresh/only-export-components -- test-only gate seam, not a component; fast-refresh impact is nil (module already re-renders on the default export)
-export const stepsTileGate = { enabled: STEPS_TILE_ENABLED };
-
 export default function WeightStepsTiles({
   lastWeight,
   weightUnit,
@@ -91,13 +76,11 @@ export default function WeightStepsTiles({
     : hidden
       ? `Weight ${trendPhrase?.toLowerCase()}, last logged ${lastWeightDate}. Tap to log weight.`
       : `Weight ${lastWeight} ${weightUnitDisplay}, last logged ${lastWeightDate}. Tap to log weight.`;
-  // Native-only + available-only: hide on web and when Health is unavailable
-  // so a dead affordance never ships. The mutable gate keeps the flip
-  // testable; isNativePlatform() + the status guard add the runtime rules.
-  const stepsTileEnabled =
-    stepsTileGate.enabled &&
-    isNativePlatform() &&
-    stepsStatus !== "unavailable";
+  // The Steps tile renders only on the native shell (steps are impossible
+  // on web) AND when Health is actually available: `stepsStatus ===
+  // "unavailable"` keeps it hidden so a dead affordance never ships. See
+  // POST_LAUNCH.md "Steps tile → HealthKit / Health Connect wiring".
+  const stepsTileEnabled = isNativePlatform() && stepsStatus !== "unavailable";
 
   // Connected / ambiguous both render the number (ambiguous = connected but
   // zero/no-data, an iOS read-permission quirk we don't error on). Only

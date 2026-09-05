@@ -96,7 +96,7 @@ export default function SecuritySection({
       /* offline — fall through to the current state */
     }
     setRefreshTick((t) => t + 1);
-    if (user.emailVerified) toast.success("Email verified — thanks!");
+    if (user.emailVerified) toast.success("Email verified");
     else toast.error("Not verified yet — tap the link in the email first");
   };
 

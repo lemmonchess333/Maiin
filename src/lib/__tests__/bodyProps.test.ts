@@ -205,7 +205,13 @@ describe("renderProp", () => {
       hand: [60, 90],
       spread: 0.3,
     };
-    expect(renderProp(state)).toEqual(renderProp(state));
+    // A stored literal: the same call compared to itself is always equal.
+    expect(renderProp(state)).toMatchInlineSnapshot(`
+      {
+        "behind": "",
+        "front": "<line x1="72" y1="-10" x2="61.1" y2="81.1" stroke="#4A4B52" stroke-width="1.1"/><circle cx="72" cy="-8" r="3.2" fill="#35363C" stroke="#565760" stroke-width="0.8"/><line x1="61.1" y1="81.1" x2="62.2" y2="90.3" stroke="#3E3F45" stroke-width="3.2" stroke-linecap="round"/><line x1="62.2" y1="90.3" x2="59.8" y2="103.3" stroke="#3E3F45" stroke-width="2.8" stroke-linecap="round"/><circle cx="59.8" cy="103.3" r="2.4" fill="#3E3F45"/><rect x="58.5" y="79.1" width="5.2" height="4" rx="1.4" fill="#4A4B52"/><line x1="61.1" y1="81.1" x2="57.8" y2="89.7" stroke="#4A4B52" stroke-width="3.2" stroke-linecap="round"/><line x1="57.8" y1="89.7" x2="60.2" y2="102.7" stroke="#4A4B52" stroke-width="2.8" stroke-linecap="round"/><circle cx="60.2" cy="102.7" r="2.4" fill="#4A4B52"/>",
+      }
+    `);
   });
 
   it("gives the dip station feet on the declared floor", () => {

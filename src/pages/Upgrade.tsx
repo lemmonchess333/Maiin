@@ -193,7 +193,7 @@ export default function Upgrade() {
     } else if (checkoutStatus === "error") {
       setStatusBanner({
         kind: "error",
-        message: "Something went wrong with checkout. Please try again.",
+        message: "Something went wrong with checkout. Try again.",
       });
     }
   }, [checkoutStatus]);
