@@ -171,7 +171,7 @@ export function getRunningTip(
     humidity < 70 &&
     windSpeed < 15
   ) {
-    return "Great conditions — perfect running weather!";
+    return "Great conditions — perfect running weather";
   }
 
   return null;

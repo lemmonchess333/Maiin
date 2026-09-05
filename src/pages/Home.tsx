@@ -465,7 +465,7 @@ export default function Home() {
       // signal whether the save worked or not. Now surface the failure
       // so they know to retry.
       logger.error("[Home] weight save failed", e);
-      toast.error("Couldn't save your weight. Please try again.");
+      toast.error("Couldn't save your weight. Try again.");
     }
     setWeightSaving(false);
   };

@@ -40,7 +40,7 @@ export default class RouteErrorBoundary extends Component<Props, State> {
       const errorText = isDev
         ? this.state.error?.message ||
           "An unexpected error occurred on this page."
-        : "Please try again. If the problem keeps happening, restart Tropos.";
+        : "Try again. If the problem keeps happening, restart Tropos.";
       return (
         <div
           className="flex-1 flex items-center justify-center px-6 py-12"

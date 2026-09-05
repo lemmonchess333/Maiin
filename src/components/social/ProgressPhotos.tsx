@@ -330,7 +330,7 @@ export default function ProgressPhotos() {
         } catch (e) {
           logger.error("[UPLOAD] Encryption failed:", e);
           throw new Error(
-            "Couldn't encrypt the photo on this device — upload cancelled to keep it private. Please try again."
+            "Couldn't encrypt the photo on this device — upload cancelled to keep it private. Try again."
           );
         }
 
@@ -414,7 +414,7 @@ export default function ProgressPhotos() {
         const message =
           err instanceof Error && err.message
             ? err.message
-            : "Upload failed. Please try again.";
+            : "Upload failed. Try again.";
         setUploadError(message);
         return null;
       } finally {

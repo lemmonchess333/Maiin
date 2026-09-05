@@ -572,7 +572,7 @@ export default function CirclesSection({
       setEvents(detail.events);
       toast.success("Shared with your circle.");
     } else {
-      toast.error("Couldn't share. Please try again.");
+      toast.error("Couldn't share. Try again.");
     }
   };
 
@@ -598,7 +598,7 @@ export default function CirclesSection({
     const res = await setWeeklyFocus(spaceId, focus);
     setFocusBusy(false);
     if (!res) {
-      toast.error("Couldn't update your focus. Please try again.");
+      toast.error("Couldn't update your focus. Try again.");
       return;
     }
     setFocusSheetOpen(false);
@@ -654,7 +654,7 @@ export default function CirclesSection({
         )
       );
     } else {
-      toast.error("Couldn't back this focus. Please try again.");
+      toast.error("Couldn't back this focus. Try again.");
     }
     setBackingId(null);
   };
@@ -1337,7 +1337,7 @@ export default function CirclesSection({
                       if (ok) {
                         setDetailOf(null);
                         toast.success("You left the circle.");
-                      } else toast.error("Couldn't leave. Please try again.");
+                      } else toast.error("Couldn't leave. Try again.");
                     });
                   }}
                 >

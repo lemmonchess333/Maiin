@@ -245,7 +245,7 @@ export default function AdjustWeekSheet({
          has since been completed, skipped, or turned into a race. */
       const landed = await applyEaseWeek(swaps);
       if (landed === null) {
-        toast.error("Couldn't adjust the week. Please try again.");
+        toast.error("Couldn't adjust the week. Try again.");
         setApplying(false);
         return;
       }
@@ -283,7 +283,7 @@ export default function AdjustWeekSheet({
       close(false);
     } catch (err) {
       logger.error("[adjustWeek] easier-week apply failed", err);
-      toast.error("Couldn't adjust the week. Please try again.");
+      toast.error("Couldn't adjust the week. Try again.");
       setApplying(false);
     }
   };
@@ -304,7 +304,7 @@ export default function AdjustWeekSheet({
       close(false);
     } catch (err) {
       logger.error("[adjustWeek] realign apply failed", err);
-      toast.error("Couldn't re-plan. Please try again.");
+      toast.error("Couldn't re-plan. Try again.");
       setApplying(false);
     }
   };
