@@ -13,6 +13,7 @@
  * taper intake don't poison the learned maintenance estimate.
  */
 import { parseLocalDate, localDateString } from "./dateHelpers";
+import { clamp } from "@/lib/utils";
 import { floorTargetCalories } from "./macroConstants";
 import { TAPER_WEEKS_BY_DISTANCE } from "@/features/program/runScheduler";
 import type { UserProfile } from "./auth";
@@ -68,10 +69,6 @@ function raceContext(
 function daysUntilRace(date: Date, raceDate: Date): number {
   const today0 = parseLocalDate(localDateString(date));
   return Math.round((raceDate.getTime() - today0.getTime()) / 86_400_000);
-}
-
-function clamp(v: number, lo: number, hi: number): number {
-  return Math.max(lo, Math.min(hi, v));
 }
 
 /**

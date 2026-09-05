@@ -31,6 +31,7 @@
  * derivation, so what the runway preview shows is what the save writes.
  */
 import { useMemo, useState } from "react";
+import { formatClock } from "@/utils/formatters";
 import { useSearchParams } from "react-router-dom";
 import {
   ChevronRight,
@@ -127,14 +128,7 @@ interface RunPlanSettingsProps {
 
 /** Seconds → the string the goal-time input round-trips ("24:30",
  *  "3:59:00"). */
-function formatRaceTime(totalS: number): string {
-  const h = Math.floor(totalS / 3600);
-  const m = Math.floor((totalS % 3600) / 60);
-  const sec = Math.round(totalS % 60);
-  if (h > 0)
-    return `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
-  return `${m}:${String(sec).padStart(2, "0")}`;
-}
+const formatRaceTime = formatClock;
 
 const MODE_OPTIONS: { id: RunMode; label: string; desc: string }[] = [
   {

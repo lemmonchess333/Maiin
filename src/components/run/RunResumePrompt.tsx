@@ -19,6 +19,7 @@
  */
 
 import { Play, Plus, Trash2 } from "lucide-react";
+import { formatClock } from "@/utils/formatters";
 import { Dialog } from "@/components/ui/Dialog";
 import { distanceValue } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
@@ -38,14 +39,7 @@ interface Props {
 }
 
 function formatElapsed(seconds: number): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = Math.floor(seconds % 60);
-  if (h > 0)
-    return `${h}:${m.toString().padStart(2, "0")}:${s
-      .toString()
-      .padStart(2, "0")}`;
-  return `${m}:${s.toString().padStart(2, "0")}`;
+  return formatClock(Math.floor(seconds));
 }
 
 function formatStartedAgo(startedAt: number): string {

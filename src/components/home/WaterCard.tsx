@@ -12,7 +12,7 @@ import WaterSizeSheet from "@/components/home/WaterSizeSheet";
 import {
   GLASS_ML,
   formatLitresValue,
-  formatVolume,
+  formatWaterVolume,
   waterProgress,
 } from "@/lib/waterUnits";
 
@@ -140,7 +140,7 @@ export default function WaterCard({
                 className="text-sm font-normal mx-1"
                 style={{ color: "hsl(var(--muted-foreground))" }}
               >
-                / {formatVolume(targetMl)}
+                / {formatWaterVolume(targetMl)}
               </span>
             </p>
           </button>
@@ -229,7 +229,7 @@ export default function WaterCard({
                 className="text-sm font-normal mx-1"
                 style={{ color: "hsl(var(--muted-foreground))" }}
               >
-                / {formatVolume(targetMl)}
+                / {formatWaterVolume(targetMl)}
               </span>
             </p>
           </div>

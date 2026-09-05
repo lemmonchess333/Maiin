@@ -26,6 +26,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { localDateString } from "@/lib/dateHelpers";
 import { useNavigate } from "react-router-dom";
 import { CalendarRange, ChevronRight, Flag } from "lucide-react";
 import { toast } from "@/lib/toast";
@@ -108,10 +109,7 @@ interface Props {
 }
 
 function todayLocal(): string {
-  const now = new Date();
-  const m = String(now.getMonth() + 1).padStart(2, "0");
-  const d = String(now.getDate()).padStart(2, "0");
-  return `${now.getFullYear()}-${m}-${d}`;
+  return localDateString(new Date());
 }
 
 /** Archive shape for a block that has finished doing its job. */

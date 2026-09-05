@@ -33,3 +33,11 @@ const twMerge = extendTailwindMerge({
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+/** Clamp a value into [lo, hi]. The one definition — adaptiveTarget,
+ *  taperNutrition and exerciseTempo import it rather than carrying their
+ *  own. (performanceEngine keeps its 0–100 clamp because the server
+ *  engine mirrors that file line for line.) */
+export function clamp(value: number, lo: number, hi: number): number {
+  return Math.max(lo, Math.min(hi, value));
+}

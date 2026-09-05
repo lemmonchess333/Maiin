@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { formatClock } from "@/utils/formatters";
 import { THEME } from "@/lib/theme";
 import { RotateCcw } from "lucide-react";
 import { motion } from "framer-motion";
@@ -25,11 +26,7 @@ export default function RestTimerRing({
   const dashOffset = CIRCUMFERENCE * (1 - progress);
   const isOver = restSeconds >= restTarget;
 
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${s.toString().padStart(2, "0")}`;
-  };
+  const formatTime = formatClock;
 
   return (
     <motion.div

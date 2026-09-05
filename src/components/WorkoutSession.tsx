@@ -7,6 +7,7 @@ import {
   Suspense,
 } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
+import { formatClock } from "@/utils/formatters";
 import { readString } from "@/lib/localStore";
 import {
   showsRpeByDefault,
@@ -598,14 +599,7 @@ export default function WorkoutSession({
     saveDraft,
   ]);
 
-  const formatElapsed = (s: number): string => {
-    const hrs = Math.floor(s / 3600);
-    const mins = Math.floor((s % 3600) / 60);
-    const secs = s % 60;
-    if (hrs > 0)
-      return `${hrs}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
-    return `${mins}:${String(secs).padStart(2, "0")}`;
-  };
+  const formatElapsed = formatClock;
 
   // Rest timer. PR E (audit P1 #13): pre-PR-E the target was
   // hardcoded to 90s and never read profile.defaultRestSeconds —

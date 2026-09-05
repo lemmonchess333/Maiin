@@ -4,6 +4,7 @@
  * "Hit" is defined as consumed ≥ target (≥, not within ±5%).
  * "Just completed all" fires when prev was NOT all hit AND next IS all hit.
  */
+import { localDateString } from "@/lib/dateHelpers";
 
 export interface MacroTotals {
   protein: number;
@@ -45,8 +46,5 @@ export function didJustCompleteAll(
  * so the celebration only fires once per calendar day.
  */
 export function todayIsoDate(now: Date = new Date()): string {
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  return localDateString(now);
 }

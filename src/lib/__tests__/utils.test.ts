@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { cn } from "../utils";
+import { cn, clamp } from "../utils";
 
 describe("cn (class name merger)", () => {
   it("merges simple class names", () => {
@@ -34,5 +34,14 @@ describe("cn (class name merger)", () => {
   it("preserves non-conflicting classes", () => {
     // eslint-disable-next-line no-restricted-syntax -- test FIXTURE strings for cn(), not rendered UI classes.
     expect(cn("rounded-lg", "p-4", "bg-white")).toBe("rounded-lg p-4 bg-white");
+  });
+});
+
+describe("clamp (the one definition — three modules used to carry their own)", () => {
+  it("returns the value inside the range and the bound outside it", () => {
+    expect(clamp(5, 0, 10)).toBe(5);
+    expect(clamp(-1, 0, 10)).toBe(0);
+    expect(clamp(11, 0, 10)).toBe(10);
+    expect(clamp(0.5, 0, 1)).toBe(0.5);
   });
 });
