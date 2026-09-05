@@ -31,8 +31,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 22
           cache: "npm"
@@ -69,3 +69,28 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
           VITE_FIREBASE_VAPID_KEY: ${{ secrets.VITE_FIREBASE_VAPID_KEY }}
+
+  # Dependency advisories, as a PR gate for the ROOT tree: `npm audit`
+  # fails on high or critical, so a new advisory has to be fixed or
+  # consciously documented before it merges. The functions/ tree is
+  # report-only — CLAUDE.md ("functions/ dependency advisories — the bump
+  # was TRIED and declined") records why its count cannot move: 13.x has
+  # no in-range fix and 14.x is a namespaced-to-modular migration that
+  # still leaves four transitive advisories in place.
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: "npm"
+      - run: npm ci
+      - name: Audit root dependencies (gates on high and critical)
+        run: npm audit --omit=dev --audit-level=high
+      - name: Audit functions dependencies (report only)
+        working-directory: functions
+        run: |
+          npm ci
+          npm audit --omit=dev || true

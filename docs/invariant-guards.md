@@ -48,6 +48,12 @@ must carry every mirrored/derived companion.
 | `functionsScheduleUtcGuard.test.ts`  | every `.pubsub.schedule(...)` anchors to UTC (a Europe/London anchor drifts an hour under BST — shipped bug, PR #815) |
 | `functionsV1ApiGuard.test.ts`        | `index.js` uses the 1st-gen `firebase-functions/v1` API; no live `functions.config()` (throws under v7)               |
 
+## Supply chain
+
+| Guard                              | Pins                                                                                                                                                                                                                                                                                                                                         |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `workflowSupplyChainGuard.test.ts` | every third-party GitHub Action in `.github/workflows` is pinned to a 40-hex commit sha with a `# vX` comment (Dependabot keeps pinned actions updated via that comment); `dependabot-auto-merge.yml` stays on `pull_request_target` with the dependabot-actor gate, no `actions/checkout`, and no `run:` step that executes repository code |
+
 ## State-machine correctness
 
 | Guard                              | Pins                                                                                                                                                                    |
