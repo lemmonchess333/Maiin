@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import ProgrammeRunSection from "@/components/program/ProgrammeRunSection";
+import ProgramOfflineBanner from "@/components/program/ProgramOfflineBanner";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Button } from "@/components/ui/Button";
 import WorkoutSession from "@/components/WorkoutSession";
@@ -951,6 +952,7 @@ function ProgramInner() {
   const SportIcon = activeTab === "run" ? Footprints : Dumbbell;
   return (
     <div>
+      <ProgramOfflineBanner />
       {/* ── Header Zone ── */}
       <div
         className="rounded-2xl px-3 pt-1.5 pb-2.5 transition-colors duration-300"

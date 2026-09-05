@@ -35,6 +35,7 @@ import type { LucideIcon } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useSubscription } from "@/lib/subscription";
 import SettingsAvatar from "@/components/settings/SettingsAvatar";
+import SettingsOfflineBanner from "@/components/settings/SettingsOfflineBanner";
 import { haptic } from "@/lib/haptic";
 
 declare const __APP_VERSION__: string;
@@ -170,6 +171,7 @@ export default function SettingsIndex() {
         visible: { transition: { staggerChildren: 0.04 } },
       }}
     >
+      <SettingsOfflineBanner />
       <motion.header
         variants={{
           hidden: { opacity: 0, y: 6 },
