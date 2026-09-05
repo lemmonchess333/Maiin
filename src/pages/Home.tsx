@@ -1202,7 +1202,7 @@ export default function Home() {
           }}
         >
           {programLoading ? (
-            <div className="h-20 rounded-2xl bg-muted animate-pulse" />
+            <div className="h-20 rounded-2xl bg-muted motion-safe:animate-pulse" />
           ) : (
             <TrackSectionView section="stacked_cta">
               <SectionErrorBoundary sectionName="quick-actions">

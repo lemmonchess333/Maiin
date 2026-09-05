@@ -216,10 +216,12 @@ test.describe("analytics tab screenshots", () => {
       page.getByRole("heading", { name: /analytics/i }).first()
     ).toBeVisible({ timeout: 30_000 });
 
-    // The defect, stated directly. `animate-pulse` is the Skeleton /
-    // ChartSkeleton marker class; the lazy-chunk fallback copy is the
-    // other stuck state. Neither may survive a settled load.
-    await expect(page.locator(".animate-pulse")).toHaveCount(0, {
+    // The defect, stated directly. `motion-safe:animate-pulse` is the
+    // Skeleton / ChartSkeleton marker class (matched by substring so the
+    // variant prefix cannot silently empty this selector); the lazy-chunk
+    // fallback copy is the other stuck state. Neither may survive a
+    // settled load.
+    await expect(page.locator('[class*="animate-pulse"]')).toHaveCount(0, {
       timeout: 30_000,
     });
     await expect(page.getByText(/loading analytics/i)).toHaveCount(0);

@@ -67,7 +67,7 @@ export default function PerformanceSection() {
         <SectionLabel className="mt-6 mb-2" style={{ color: THEME.brand }}>
           Performance
         </SectionLabel>
-        <div className="p-4 rounded-2xl bg-card animate-pulse">
+        <div className="p-4 rounded-2xl bg-card motion-safe:animate-pulse">
           <div className="h-8 w-20 bg-muted rounded" />
         </div>
       </section>
@@ -112,7 +112,7 @@ export default function PerformanceSection() {
       <SectionErrorBoundary sectionName="performance-tab-body">
         <Suspense
           fallback={
-            <div className="p-4 rounded-2xl bg-card animate-pulse h-48" />
+            <div className="p-4 rounded-2xl bg-card motion-safe:animate-pulse h-48" />
           }
         >
           <PerformanceTab />
