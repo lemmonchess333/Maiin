@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/Button";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { haptic } from "@/lib/haptic";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
-import { useUid } from "@/lib/auth";
+import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
+import { useAuth, useUid } from "@/lib/auth";
 import { postActivity } from "@/lib/socialApi";
 import { recordSharedActivity } from "@/lib/sessionDelete";
 import { containsProfanity } from "@/lib/profanityFilter";
+import VerifyEmailNotice from "./VerifyEmailNotice";
 import {
   subscribeShareComposer,
   resolveCompose,
@@ -52,6 +54,8 @@ export default function ShareComposerSheet() {
   const [remember, setRemember] = useState(false);
   const { isOnline } = useOnlineStatus();
   const uid = useUid();
+  const { user } = useAuth();
+  const gate = useEmailVerificationGate(user);
 
   // Subscribe to singleton state changes.
   useEffect(() => {
@@ -125,6 +129,9 @@ export default function ShareComposerSheet() {
   const captionIsProfane = containsProfanity(caption);
 
   const choose = (visibility: ShareVisibility) => {
+    // The buttons are disabled while gated; this keeps a stale click or a
+    // keyboard activation from resolving a post the rules will refuse.
+    if (gate.needsVerification) return;
     if (captionIsProfane) {
       haptic("error");
       return;
@@ -208,6 +215,13 @@ export default function ShareComposerSheet() {
           </p>
         )}
 
+        {/* Public posts need a verified email (rules + callables). The two
+            share actions are held while it is missing; declining stays open
+            because a "never" default needs no email. */}
+        {gate.needsVerification && (
+          <VerifyEmailNotice onRecheck={gate.recheck} />
+        )}
+
         {/* Visibility actions — three EQUAL rows, deliberately (operator,
             2026-08-05: the primary/tile/ghost ladder "just looks weird").
             This is a privacy choice the sheet remembers as a default, and
@@ -222,7 +236,7 @@ export default function ShareComposerSheet() {
             fullWidth
             variant="secondary"
             onClick={() => choose("followers")}
-            disabled={captionIsProfane}
+            disabled={captionIsProfane || gate.needsVerification}
             leftIcon={<Users className="size-4 shrink-0" aria-hidden="true" />}
           >
             Share to followers
@@ -231,7 +245,7 @@ export default function ShareComposerSheet() {
             fullWidth
             variant="secondary"
             onClick={() => choose("public")}
-            disabled={captionIsProfane}
+            disabled={captionIsProfane || gate.needsVerification}
             leftIcon={<Globe className="size-4 shrink-0" aria-hidden="true" />}
           >
             Make public

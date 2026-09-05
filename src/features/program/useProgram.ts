@@ -13,6 +13,7 @@ import { stripUndefined } from "@/lib/firestoreGuards";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { postActivity } from "@/lib/socialApi";
+import { needsEmailVerification } from "@/lib/emailVerificationGate";
 import { compose, enqueueShare, showQueuedToast } from "@/lib/shareComposer";
 import { recordSharedActivity } from "@/lib/sessionDelete";
 import type {
@@ -1316,17 +1317,21 @@ export function useProgram() {
         // default) for visibility + caption. Returns null if they
         // declined to share. Replaces the old autoPostWorkouts flag —
         // see src/lib/shareComposer.ts for the preference store.
-        const decision = await compose(user.uid, {
-          type: "workout",
-          title: day.dayName,
-          meta: [
-            `${day.exercises.length} exercise${day.exercises.length === 1 ? "" : "s"}`,
-            tonnage > 0
-              ? `${Math.round(tonnage).toLocaleString()} kg volume`
-              : "",
-            effectiveDurationMin > 0 ? `${effectiveDurationMin} min` : "",
-          ].filter(Boolean),
-        });
+        const decision = await compose(
+          user.uid,
+          {
+            type: "workout",
+            title: day.dayName,
+            meta: [
+              `${day.exercises.length} exercise${day.exercises.length === 1 ? "" : "s"}`,
+              tonnage > 0
+                ? `${Math.round(tonnage).toLocaleString()} kg volume`
+                : "",
+              effectiveDurationMin > 0 ? `${effectiveDurationMin} min` : "",
+            ].filter(Boolean),
+          },
+          { needsEmailVerification: needsEmailVerification(user) }
+        );
         if (decision) {
           const uniqueCategories = [
             ...new Set(
