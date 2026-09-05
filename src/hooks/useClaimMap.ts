@@ -296,7 +296,7 @@ export function useClaimMap(dateAnchor?: string): UseClaimMapResult {
         DEFAULT_DEPS
       );
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `fingerprint` stands in for savedRuns / manualCompletions / today (see above); listing them directly would recompute on every reference change
     [runDays, fingerprint]
   );
 

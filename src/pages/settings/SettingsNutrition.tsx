@@ -107,7 +107,7 @@ export default function SettingsNutrition() {
         );
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires on the three inputs the persisted plan derives from; `user`, `updateProfile` and the derived payload/goalPlan follow them, and re-running on their identities would rewrite the profile on every render
   }, [goalWeightKg, weeklyRateKg, tdee.targetCalories]);
 
   if (!profile) return <SettingsSection title="Nutrition" />;

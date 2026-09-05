@@ -171,12 +171,20 @@ export default function ProgressPhotos() {
     []
   );
 
-  // Revoke object URLs on unmount to prevent memory leaks (#13)
+  // Revoke every object URL on unmount. The cleanup runs once, so it must
+  // read the LATEST url map through a ref: the mount-only effect's own
+  // closure captured the empty initial state and revoked nothing — every
+  // decrypted photo leaked for the life of the page.
+  const decryptedUrlsRef = useRef(decryptedUrls);
+  useEffect(() => {
+    decryptedUrlsRef.current = decryptedUrls;
+  }, [decryptedUrls]);
   useEffect(() => {
     return () => {
-      Object.values(decryptedUrls).forEach((url) => URL.revokeObjectURL(url));
+      Object.values(decryptedUrlsRef.current).forEach((url) =>
+        URL.revokeObjectURL(url)
+      );
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadPhotos = useCallback(async () => {
@@ -249,7 +257,7 @@ export default function ProgressPhotos() {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- decryptedUrls is read as a skip-guard, not a trigger: re-running on every landed decrypt would cancel the in-flight loop and refetch the photo it was on
   }, [photos, uid]);
 
   const decryptPhoto = useCallback(
