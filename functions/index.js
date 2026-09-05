@@ -5432,14 +5432,30 @@ exports.recreditMyLiftVolume = functions
     }
     const uid = context.auth.uid;
 
-    // One page (RECREDIT_PAGE_SIZE workouts) per call, so three an hour is
-    // 1,500 workouts of history per hour. The client persists its cursor
-    // after every page, so a drain that hits this ceiling resumes where it
-    // stopped on the next session rather than restarting.
-    if (await isRateLimited(uid, "recreditMyLiftVolume", 3, 3_600_000)) {
+    // Validate the cursor before anything else: a malformed one is a client
+    // bug, not a quota event, so it must not consume a rate-limit slot.
+    const startAfter = data && data.startAfter;
+    if (startAfter !== undefined && startAfter !== null) {
+      if (
+        typeof startAfter !== "string" ||
+        !startAfter ||
+        startAfter.includes("/")
+      ) {
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          "startAfter must be a workout document id."
+        );
+      }
+    }
+
+    // Before the first read. The client drains a history page by page in
+    // ONE session, so the window must fit a whole drain: thirty pages is
+    // 15,000 workouts, while a looping caller stays bounded to thirty
+    // 500-document scans per ten minutes.
+    if (await isRateLimited(uid, "recreditMyLiftVolume", 30, 600_000)) {
       throw new functions.https.HttpsError(
         "resource-exhausted",
-        "Volume re-credit already ran recently. Try again later."
+        "Volume re-credit is being requested too often. Wait a few minutes and try again."
       );
     }
 
@@ -5460,19 +5476,6 @@ exports.recreditMyLiftVolume = functions
        page and a history past one page could never be reached. Stating the
        order makes the cursor meaningful rather than relying on an implicit
        default. */
-    const startAfter = data && data.startAfter;
-    if (startAfter !== undefined && startAfter !== null) {
-      if (
-        typeof startAfter !== "string" ||
-        !startAfter ||
-        startAfter.includes("/")
-      ) {
-        throw new functions.https.HttpsError(
-          "invalid-argument",
-          "startAfter must be a workout document id."
-        );
-      }
-    }
     let workoutsQuery = db
       .collection("users")
       .doc(uid)

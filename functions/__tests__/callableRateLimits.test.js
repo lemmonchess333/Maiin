@@ -67,7 +67,7 @@ describe("backfillMyActivityCategories — rate limit", () => {
 });
 
 describe("recreditMyLiftVolume — rate limit", () => {
-  it("refuses with resource-exhausted at 3 calls per hour", async () => {
+  it("refuses with resource-exhausted at 30 pages per 10 minutes", async () => {
     await expect(
       recreditMyLiftVolume.run({ startAfter: "w1" }, CONTEXT)
     ).rejects.toMatchObject({ code: "resource-exhausted" });
@@ -75,10 +75,17 @@ describe("recreditMyLiftVolume — rate limit", () => {
       {
         uid: UID,
         action: "recreditMyLiftVolume",
-        maxCalls: 3,
-        windowMs: ONE_HOUR,
+        maxCalls: 30,
+        windowMs: TEN_MINUTES,
       },
     ]);
+  });
+
+  it("rejects a malformed cursor before consulting the limiter", async () => {
+    await expect(
+      recreditMyLiftVolume.run({ startAfter: 42 }, CONTEXT)
+    ).rejects.toMatchObject({ code: "invalid-argument" });
+    expect(limiterCalls).toEqual([]);
   });
 });
 
