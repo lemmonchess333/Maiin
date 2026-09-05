@@ -134,7 +134,7 @@ function SpaceCard({
 
       {event && (
         <span
-          className={`absolute top-2.5 left-2.5 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
+          className={`absolute top-2.5 left-2.5 inline-flex items-center px-2 py-0.5 rounded-full text-caption font-semibold uppercase tracking-wider ${
             photo ? "bg-black/55 text-white backdrop-blur-sm" : ""
           }`}
           /* Same chip grammar as Joined. On a photo the pill is the SCRIM

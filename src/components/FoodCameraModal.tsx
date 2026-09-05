@@ -761,12 +761,10 @@ export default function FoodCameraModal({
                   transition={{ duration: 0.22, ease: "easeOut" }}
                 >
                   <div className="space-y-1">
-                    <p className="text-[15px] font-semibold text-white">
+                    <p className="text-base font-semibold text-white">
                       {failureCopy.title}
                     </p>
-                    <p className="text-[13px] text-white/75">
-                      {failureCopy.sub}
-                    </p>
+                    <p className="text-sm text-white/75">{failureCopy.sub}</p>
                   </div>
                   {failureActions}
                 </motion.div>
@@ -790,7 +788,7 @@ export default function FoodCameraModal({
                       animate={{ opacity: 1, y: 0 }}
                       exit={reducedMotion ? undefined : { opacity: 0, y: -7 }}
                       transition={{ duration: 0.18, ease: "easeOut" }}
-                      className="text-[15px] font-semibold text-white"
+                      className="text-base font-semibold text-white"
                     >
                       {locked ? (
                         <span
@@ -835,10 +833,10 @@ export default function FoodCameraModal({
               className="flex w-full flex-col items-center gap-4 text-center"
             >
               <div className="space-y-1">
-                <p className="text-[15px] font-semibold text-white">
+                <p className="text-base font-semibold text-white">
                   {failureCopy.title}
                 </p>
-                <p className="text-[13px] text-white/75">{failureCopy.sub}</p>
+                <p className="text-sm text-white/75">{failureCopy.sub}</p>
               </div>
               {failureActions}
             </div>

@@ -1,3 +1,4 @@
+import SectionLabel from "@/components/ui/SectionLabel";
 import { useMemo, useState, Suspense, useCallback } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
@@ -329,9 +330,13 @@ export default function ExerciseHistory() {
           </h1>
           {exercise && (
             <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-caption font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lifting/9 text-lifting-strong">
+              <SectionLabel
+                as="span"
+                tier="section"
+                className="text-lifting-strong"
+              >
                 {exercise.muscleGroup}
-              </span>
+              </SectionLabel>
               <span className="text-xs text-muted-foreground">
                 {exercise.equipment}
               </span>
@@ -343,9 +348,9 @@ export default function ExerciseHistory() {
       {/* ── Stat strip ───────────────────────────────────────────────── */}
       <div className="grid grid-cols-3 gap-2">
         <div className="p-3 rounded-xl bg-card card-shadow">
-          <p className="text-caption uppercase tracking-wider font-medium text-muted-foreground">
+          <SectionLabel tier="section">
             {isTimed ? "Longest hold" : isBodyweight ? "Max reps" : "Best 1RM"}
-          </p>
+          </SectionLabel>
           <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
             {isTimed
               ? headerStats.longestHold
@@ -364,17 +369,13 @@ export default function ExerciseHistory() {
           </p>
         </div>
         <div className="p-3 rounded-xl bg-card card-shadow">
-          <p className="text-caption uppercase tracking-wider font-medium text-muted-foreground">
-            Sessions
-          </p>
+          <SectionLabel tier="section">Sessions</SectionLabel>
           <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
             {headerStats.totalSessions}
           </p>
         </div>
         <div className="p-3 rounded-xl bg-card card-shadow">
-          <p className="text-caption uppercase tracking-wider font-medium text-muted-foreground">
-            Total sets
-          </p>
+          <SectionLabel tier="section">Total sets</SectionLabel>
           <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
             {headerStats.totalSets}
           </p>
@@ -432,9 +433,7 @@ export default function ExerciseHistory() {
                   const pr = repRangePRs[b];
                   return (
                     <div key={b} className="text-center">
-                      <p className="text-caption uppercase tracking-wider text-muted-foreground font-medium">
-                        {b}RM
-                      </p>
+                      <SectionLabel tier="section">{b}RM</SectionLabel>
                       <p className="text-sm font-bold font-mono tabular-nums text-foreground mt-0.5">
                         {pr
                           ? isBodyweight && pr.weightKg === 0
@@ -484,9 +483,7 @@ export default function ExerciseHistory() {
           ) : (
             <div className="rounded-2xl bg-card p-4 space-y-3 card-shadow">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-xs uppercase tracking-wider font-medium text-muted-foreground">
-                  Progression
-                </p>
+                <SectionLabel>Progression</SectionLabel>
                 <div className="flex gap-1 bg-muted rounded-full p-0.5">
                   {metricOptions.map((m) => (
                     <button

@@ -33,6 +33,7 @@
 
 import { useMemo, useState } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
+import MetaLine from "@/components/ui/MetaLine";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import {
   Footprints,
@@ -372,18 +373,16 @@ export default function DayActionSheet({
                     </p>
                   )}
                 {(selectedRunMeta || selectedRunHr) && (
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {selectedRunMeta && (
-                      <span className="inline-flex rounded-full bg-background/70 px-2.5 py-1 text-caption font-semibold text-muted-foreground">
-                        {selectedRunMeta}
-                      </span>
+                  /* Distance/duration and the HR zone are facts about the
+                     session, so they read as one line — the same MetaLine
+                     the command card uses — not as two pills. */
+                  <MetaLine
+                    size="xs"
+                    className="mt-2"
+                    items={[selectedRunMeta, selectedRunHr].filter(
+                      (s): s is string => Boolean(s)
                     )}
-                    {selectedRunHr && (
-                      <span className="inline-flex rounded-full bg-running/10 px-2.5 py-1 text-caption font-semibold text-running-strong font-mono tabular-nums">
-                        {selectedRunHr}
-                      </span>
-                    )}
-                  </div>
+                  />
                 )}
               </div>
               <div className="shrink-0 pt-1">

@@ -129,7 +129,7 @@ export default function NutritionSection({
         subtitle={`${tdee.targetCalories} cal/day target`}
       >
         <div>
-          <label htmlFor="tdee-age" className="text-sm text-muted-foreground">
+          <label htmlFor="tdee-age" className="text-xs text-muted-foreground">
             Age
           </label>
           <input

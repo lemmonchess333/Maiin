@@ -1,3 +1,4 @@
+import SectionLabel from "@/components/ui/SectionLabel";
 interface StepperProps {
   label: string;
   value: number;
@@ -24,9 +25,7 @@ export default function Stepper({
 }: StepperProps) {
   return (
     <div className="rounded-2xl p-4 text-center bg-muted border border-border">
-      <p className="text-xs uppercase tracking-wider mb-2 text-muted-foreground">
-        {label}
-      </p>
+      <SectionLabel className="mb-2">{label}</SectionLabel>
       <div className="flex items-center justify-center gap-3">
         <button
           type="button"

@@ -143,7 +143,7 @@ function MicroRow({
         <SectionLabel as="span" tier="section">
           {label}
           {isLimit && (
-            <span className="ml-1.5 normal-case tracking-normal text-[10px] text-muted-foreground">
+            <span className="ml-1.5 normal-case tracking-normal text-muted-foreground">
               limit
             </span>
           )}

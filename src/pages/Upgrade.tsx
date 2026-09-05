@@ -21,6 +21,7 @@
  *   - Returning from a Stripe round-trip shows a status banner
  *     and clears `?checkout=...` from the URL.
  */
+import SectionLabel from "@/components/ui/SectionLabel";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSubscription } from "@/lib/subscription";
@@ -392,9 +393,7 @@ export default function Upgrade() {
           <div className="bg-card rounded-2xl p-4 space-y-3">
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div className="space-y-2">
-                <p className="font-medium text-muted-foreground uppercase tracking-wider text-xs">
-                  Free (forever)
-                </p>
+                <SectionLabel>Free (forever)</SectionLabel>
                 {/* Wave3 H — was text-muted-foreground, which fell below the
                     AA contrast floor for 12px text on the dark card (REPORT
                     10.3). Raised a step to text-foreground/80: clears AA in
@@ -409,9 +408,7 @@ export default function Upgrade() {
                 </ul>
               </div>
               <div className="space-y-2 bg-primary/5 rounded-lg p-2 -m-1">
-                <p className="font-medium text-primary uppercase tracking-wider text-xs">
-                  Pro
-                </p>
+                <SectionLabel className="text-primary">Pro</SectionLabel>
                 <ul className="space-y-1.5 text-foreground">
                   {[
                     "Everything in Free +",
@@ -501,7 +498,7 @@ export default function Upgrade() {
                       </span>
                     </p>
                     {/* Weekly anchoring (teardown pattern). */}
-                    <p className="text-[11px] text-muted-foreground font-mono tabular-nums">
+                    <p className="text-xs text-muted-foreground font-mono tabular-nums">
                       {weeklyPriceLabel(plan.id)}
                     </p>
                   </div>

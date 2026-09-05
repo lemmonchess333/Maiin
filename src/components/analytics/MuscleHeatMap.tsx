@@ -210,7 +210,7 @@ export default function MuscleHeatMap({ data, recovery }: MuscleHeatMapProps) {
                   </span>
                   {rec && (
                     <span
-                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-muted/60 text-[10px] text-muted-foreground"
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-muted/60 text-xs font-semibold text-muted-foreground"
                       title={
                         rec.status === "ready"
                           ? `${group} is recovered`
@@ -241,7 +241,7 @@ export default function MuscleHeatMap({ data, recovery }: MuscleHeatMapProps) {
           </div>
         )}
         {recovery && trainedGroups.length > 0 && (
-          <p className="mt-2 text-[10px] text-muted-foreground text-center">
+          <p className="mt-2 text-xs text-muted-foreground text-center">
             Recovery chips are as of today, independent of the selected range.
           </p>
         )}

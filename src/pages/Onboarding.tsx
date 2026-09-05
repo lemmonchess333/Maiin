@@ -1647,12 +1647,9 @@ export default function Onboarding() {
                         border: `1px solid ${meta.border}`,
                       }}
                     >
-                      <p
-                        className="text-caption uppercase tracking-wider"
-                        style={{ color: "hsl(var(--muted-foreground) / 0.7)" }}
-                      >
+                      <SectionLabel tier="section">
                         {dayLetters[i]}
-                      </p>
+                      </SectionLabel>
                       <p
                         className="text-caption font-semibold mt-1 leading-tight"
                         style={{ color: meta.color }}

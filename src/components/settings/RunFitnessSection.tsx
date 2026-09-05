@@ -261,7 +261,7 @@ export default function RunFitnessSection({
             <div>
               <label
                 htmlFor="benchmark-time"
-                className="text-caption uppercase tracking-wide text-muted-foreground"
+                className="text-xs text-muted-foreground"
               >
                 Finish time
               </label>
@@ -305,9 +305,7 @@ function PaceRow({
   const unit = useDistanceUnit();
   return (
     <div className="rounded-lg bg-muted/50 px-3 py-2">
-      <p className="text-caption uppercase tracking-wide text-muted-foreground">
-        {label}
-      </p>
+      <SectionLabel tier="section">{label}</SectionLabel>
       <p className="text-sm font-semibold font-mono tabular-nums text-foreground">
         {band
           ? `${paceLabel(band[0], unit)}–${paceLabel(band[1], unit)}`

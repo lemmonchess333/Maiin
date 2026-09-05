@@ -1,3 +1,4 @@
+import SectionLabel from "@/components/ui/SectionLabel";
 import { Link } from "react-router-dom";
 import { Timer } from "lucide-react";
 import { useAuth } from "@/lib/auth";
@@ -79,9 +80,7 @@ export default function RacePredictionsCard() {
       <div className="grid grid-cols-2 gap-2">
         {ROWS.map(({ key, label, km }) => (
           <div key={key} className="rounded-xl bg-muted p-3">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-              {label}
-            </p>
+            <SectionLabel tier="section">{label}</SectionLabel>
             <p className="text-lg font-bold font-mono tabular-nums text-foreground mt-0.5">
               {finishTimeLabel(times[key])}
             </p>
@@ -119,7 +118,7 @@ export default function RacePredictionsCard() {
         </Link>
       </p>
       {/* Range carve-out (Hist5c): predictions are a today-snapshot. */}
-      <p className="text-[10px] text-muted-foreground mt-1">
+      <p className="text-xs text-muted-foreground mt-1">
         As of today — independent of the selected range.
       </p>
     </div>

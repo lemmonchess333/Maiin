@@ -14,9 +14,9 @@
  * colours. 44px+ touch targets via the Button/IconButton primitives.
  */
 
-import { Fragment } from "react";
 import { MoreHorizontal, Play, Footprints, Dumbbell } from "lucide-react";
 import SectionLabel from "@/components/ui/SectionLabel";
+import MetaLine from "@/components/ui/MetaLine";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
@@ -34,43 +34,6 @@ interface SessionCommandCardProps {
   primaryActionLabel?: string;
   onPrimaryAction?: () => void;
   onManage?: () => void;
-}
-
-/**
- * Static metadata reads as one quiet line — "5 exercises · ~43 min" — not
- * as a row of pills. A pill is the shape of a selection or a state; a
- * fact the user cannot tap should not borrow it. Numerals take the
- * numeral font (Archivo, tabular) and words stay in the text font, so a
- * mixed token like "~43 min" keeps both fonts where they belong. Wraps
- * as text; the separators are decorative and hidden from readers.
- */
-function MetaLine({ items }: { items: string[] }) {
-  return (
-    <p className="text-sm text-muted-foreground leading-snug">
-      {items.map((item, i) => (
-        <Fragment key={item}>
-          {i > 0 && (
-            <>
-              {" "}
-              <span aria-hidden="true">·</span>{" "}
-            </>
-          )}
-          <span className="whitespace-nowrap">
-            {item.split(" ").map((token, j) => (
-              <Fragment key={j}>
-                {j > 0 && " "}
-                <span
-                  className={cn(/\d/.test(token) && "font-mono tabular-nums")}
-                >
-                  {token}
-                </span>
-              </Fragment>
-            ))}
-          </span>
-        </Fragment>
-      ))}
-    </p>
-  );
 }
 
 export default function SessionCommandCard({

@@ -1,3 +1,4 @@
+import SectionLabel from "@/components/ui/SectionLabel";
 import { useId, useState } from "react";
 import { MapPin, Mountain, Clock } from "lucide-react";
 import {
@@ -65,9 +66,9 @@ function Stat({
       <span className="font-mono text-base font-bold tabular-nums text-foreground">
         {value}
       </span>
-      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+      <SectionLabel as="span" tier="section">
         {label}
-      </span>
+      </SectionLabel>
     </div>
   );
 }

@@ -144,10 +144,7 @@ export default function HeartRateZonesSection({
 
         {editing && (
           <div className="space-y-2 pt-1">
-            <label
-              htmlFor="max-hr"
-              className="text-caption uppercase tracking-wide text-muted-foreground"
-            >
+            <label htmlFor="max-hr" className="text-xs text-muted-foreground">
               Max heart rate (bpm)
             </label>
             <input

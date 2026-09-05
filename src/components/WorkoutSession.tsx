@@ -1866,7 +1866,7 @@ export default function WorkoutSession({
                             </button>
                           ))}
                           {typeof set.rpe === "number" && (
-                            <span className="w-full pl-1 pt-0.5 text-[11px] text-muted-foreground">
+                            <span className="w-full pl-1 pt-0.5 text-xs text-muted-foreground">
                               <span className="font-mono tabular-nums">
                                 {set.rpe}
                               </span>{" "}
