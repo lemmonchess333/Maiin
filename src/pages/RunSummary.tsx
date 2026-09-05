@@ -1833,14 +1833,14 @@ export default function RunSummary() {
             )}
 
             {canShowNormalSave({ isInvalid: false, saveStatus }) && (
-              <button
-                type="button"
+              <Button
+                variant="sport"
+                fullWidth
                 onClick={handleSave}
-                disabled={saveStatus === "saving"}
-                className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97] disabled:opacity-90 bg-running-fill text-white"
+                loading={saveStatus === "saving"}
               >
-                {saveStatus === "saving" ? "Saving…" : "Save Run"}
-              </button>
+                Save Run
+              </Button>
             )}
 
             {/* Pace insight (Pro) — surfaced at the post-run decision moment,

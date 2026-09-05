@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import { IconButton } from "@/components/ui/IconButton";
 import { Button } from "@/components/ui/Button";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import {
@@ -640,14 +641,12 @@ export default function ProgressPhotos() {
               Retry
             </button>
           )}
-          <button
-            type="button"
-            onClick={dismissError}
+          <IconButton
+            icon={<X size={14} />}
             aria-label="Dismiss error"
-            className="p-0.5 text-destructive-strong/70 hover:text-destructive-strong shrink-0"
-          >
-            <X size={14} />
-          </button>
+            onClick={dismissError}
+            className="shrink-0 -my-2.5 text-destructive-strong/70 hover:text-destructive-strong"
+          />
         </div>
       )}
 
@@ -815,14 +814,12 @@ export default function ProgressPhotos() {
                     Retry
                   </button>
                 )}
-                <button
-                  type="button"
-                  onClick={dismissError}
+                <IconButton
+                  icon={<X size={14} />}
                   aria-label="Dismiss error"
-                  className="p-0.5 text-destructive-strong/70 hover:text-destructive-strong shrink-0"
-                >
-                  <X size={14} />
-                </button>
+                  onClick={dismissError}
+                  className="shrink-0 -my-2.5 text-destructive-strong/70 hover:text-destructive-strong"
+                />
               </div>
             )}
 
