@@ -123,6 +123,31 @@ async function uidByEmail(email: string): Promise<string> {
   return localId;
 }
 
+/** Public writes (the feed share this spec exercises) require a verified
+ *  email — firestore.rules isEmailVerified(). A form-minted emulator
+ *  account is unverified, exactly like a real signup before the link is
+ *  tapped, so the rig marks it verified the way the emulator allows
+ *  (accounts:update under the owner bearer). The next sign-in mints a
+ *  token carrying the claim; production users get there via the link. */
+async function markEmailVerified(localId: string): Promise<void> {
+  const res = await fetch(
+    `http://${AUTH_HOST}/identitytoolkit.googleapis.com/v1/accounts:update`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer owner",
+      },
+      body: JSON.stringify({ localId, emailVerified: true }),
+    }
+  );
+  if (!res.ok) {
+    throw new Error(
+      `auth emulator accounts:update failed: ${await res.text()}`
+    );
+  }
+}
+
 /** Wait until the signup's own profile write has landed server-side.
  *  `writeNewProfileDocs` commits the FULL default profile from the
  *  browser as a non-merge batch (including `onboardingComplete: false`)
@@ -260,6 +285,7 @@ async function mintOnboardedAccount(
 
   const uid = await uidByEmail(email);
   await awaitSignupProfileDoc(uid);
+  await markEmailVerified(uid);
   await completeOnboardingDirect(uid, displayName);
 
   // Reload into the full shell straight onto the account page, then use

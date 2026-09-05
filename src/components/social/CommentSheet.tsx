@@ -19,6 +19,8 @@ import BlockAwareAvatar from "./BlockAwareAvatar";
 import { toast } from "@/lib/toast";
 import { logger } from "../../lib/logger";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
+import VerifyEmailNotice from "./VerifyEmailNotice";
 
 interface Comment {
   id: string;
@@ -55,6 +57,7 @@ export default function CommentSheet({
   quickChips,
 }: CommentSheetProps) {
   const { user, profile } = useAuth();
+  const gate = useEmailVerificationGate(user);
   const [comments, setComments] = useState<Comment[]>([]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
@@ -119,7 +122,9 @@ export default function CommentSheet({
   };
 
   const handleSend = async () => {
-    if (!user || !text.trim()) return;
+    // Comments are public content: the callable refuses an unverified
+    // email. Held here too so Enter cannot bypass the disabled button.
+    if (!user || !text.trim() || gate.needsVerification) return;
     // Client-side profanity check — UX-only; the server is the
     // trust boundary (onCommentCreated trigger auto-deletes
     // profane comments). Surfacing the rejection here saves the
@@ -331,6 +336,9 @@ export default function CommentSheet({
 
       {/* Quick chips + input */}
       <div className="border-t border-border/30 px-4 pt-3 pb-4 space-y-2">
+        {gate.needsVerification && (
+          <VerifyEmailNotice action="comment" onRecheck={gate.recheck} />
+        )}
         {quickChips && quickChips.length > 0 && (
           <div data-no-page-swipe className="flex gap-1.5 overflow-x-auto pb-1">
             {quickChips.map((chip) => (
@@ -353,10 +361,13 @@ export default function CommentSheet({
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
             placeholder="Add a comment..."
             aria-label="Add a comment"
-            disabled={sending}
+            disabled={sending || gate.needsVerification}
             className="flex-1 text-sm px-3 py-2.5 rounded-xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground"
           />
-          <Button onClick={handleSend} disabled={sending || !text.trim()}>
+          <Button
+            onClick={handleSend}
+            disabled={sending || !text.trim() || gate.needsVerification}
+          >
             Send
           </Button>
         </div>

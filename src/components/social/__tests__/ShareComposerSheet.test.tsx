@@ -29,7 +29,14 @@ import {
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/socialApi", () => ({ postActivity: vi.fn() }));
 vi.mock("@/lib/sessionDelete", () => ({ recordSharedActivity: vi.fn() }));
-vi.mock("@/lib/auth", () => ({ useUid: () => "u1" }));
+// The sheet reads the signed-in user for the verified-email gate; a
+// verified account keeps the gate off so these cases test the composer.
+vi.mock("@/lib/auth", () => ({
+  useUid: () => "u1",
+  useAuth: () => ({
+    user: { uid: "u1", emailVerified: true, providerData: [] },
+  }),
+}));
 vi.mock("@/hooks/useOnlineStatus", () => ({
   useOnlineStatus: () => ({ isOnline: true }),
 }));

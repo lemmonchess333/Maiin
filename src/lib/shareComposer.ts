@@ -150,11 +150,23 @@ export function getShareDefault(uid: string, type: ShareType): AlwaysPref {
 
 export function compose(
   uid: string,
-  preview: ActivityPreview
+  preview: ActivityPreview,
+  opts: {
+    /** The account cannot post publicly yet (unverified email/password
+     *  account — `needsEmailVerification`). A stored "always share" default
+     *  is then NOT honoured: the sheet opens instead, because the sheet is
+     *  where the verification notice lives, and a post the rules will refuse
+     *  must never be attempted silently on the strength of a remembered
+     *  choice. "never" still short-circuits — declining needs no email. */
+    needsEmailVerification?: boolean;
+  } = {}
 ): Promise<ShareDecision | null> {
   const pref = readAlways(uid, preview.type);
   if (pref === "never") return Promise.resolve(null);
-  if (pref === "followers" || pref === "public") {
+  if (
+    (pref === "followers" || pref === "public") &&
+    !opts.needsEmailVerification
+  ) {
     return Promise.resolve({ visibility: pref, caption: "" });
   }
   state = { open: true, type: preview.type, preview, uid };
