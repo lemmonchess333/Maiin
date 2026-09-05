@@ -262,6 +262,7 @@ export default function Home() {
     lastWeightInfo,
     weightTrend,
     setLastWeightInfo,
+    loading: homeDataLoading,
   } = useHomeData(
     user,
     profile,
@@ -1282,6 +1283,7 @@ export default function Home() {
                 setShowWeightSheet(true);
               }}
               lastWeightDate={weightRelativeTime}
+              loading={homeDataLoading}
               hideNumber={profile?.hideWeightNumber}
               weightTrend={weightTrend}
               stepsStatus={stepsData.status}
