@@ -244,10 +244,14 @@ export function useGoalSpaces(uid: string | undefined) {
       text?: string
     ): Promise<boolean> => {
       if (!uid) return false;
+      // A text-less event omits the field rather than writing null: the
+      // fence and the reader both treat an absent text as "nothing to
+      // say", and the field is only ever meaningful as a string.
+      const trimmed = text?.trim() ? text.trim().slice(0, 200) : null;
       const payload: Record<string, unknown> = {
         uid,
         kind,
-        text: text?.trim() ? text.trim().slice(0, 200) : null,
+        ...(trimmed ? { text: trimmed } : {}),
         weekKey: null,
         createdAt: Date.now(),
       };
