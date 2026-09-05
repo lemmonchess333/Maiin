@@ -64,6 +64,12 @@ The three invariants CLAUDE.md flags as "regress constantly":
 | `eslint.config.js` (`no-restricted-syntax`) | **hex** — no hardcoded hex / `bg-white` / `text-black` / bare `text-muted` (lint-enforced)                                                                                                     |
 | `designSystemInvariants.test.ts`            | **mono-numerals** (`tabular-nums` className units carry `font-mono`, ratcheted) + **44px floor** (no hand-rolled `role="switch"`; `Toggle`/`Button`/`IconButton` keep their default 44px size) |
 
+## Hosting & CSP
+
+| Guard                            | Pins                                                                                                                                                                                                                                                                                                                                       |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `hostingSecurityHeaders.test.ts` | `firebase.json`'s `**` headers entry carries HSTS, `nosniff`, Referrer-Policy, `X-Frame-Options: DENY`, a `frame-ancestors 'none'` CSP header and a Permissions-Policy granting only camera + geolocation; `index.html`'s meta CSP declares `form-action 'self'` and never carries `frame-ancestors` (browsers ignore it in a meta policy) |
+
 ## Adding a new guard
 
 - Make it **revert-tested**: prove a deliberately-broken case fails, then restore

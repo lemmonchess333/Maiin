@@ -18,6 +18,9 @@ dist-ssr
 !.env.example
 *.local
 
+# Cloud Functions runtime-config dump (`firebase functions:config:get > .runtimeconfig.json`)
+functions/.runtimeconfig.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
