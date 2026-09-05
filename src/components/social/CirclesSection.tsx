@@ -660,7 +660,7 @@ export default function CirclesSection({
 
       {loading && (
         <div
-          className="h-16 rounded-xl bg-muted/40 animate-pulse"
+          className="h-16 rounded-xl bg-muted/40 motion-safe:animate-pulse"
           aria-hidden="true"
         />
       )}

@@ -80,7 +80,10 @@ async function withBodyweightLogs<T>(
 
 async function readBodyweightLogs(): Promise<BodyweightRow[]> {
   return withBodyweightLogs((snap) =>
-    snap.docs.map((d) => ({ id: d.id, weight: d.data().weight as number }))
+    snap.docs.map((d) => ({
+      id: d.id,
+      weight: (d.data() as { weight: number }).weight,
+    }))
   );
 }
 

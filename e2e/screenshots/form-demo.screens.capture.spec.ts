@@ -122,7 +122,12 @@ const DEMOS: [id: string, name: string][] = [
 
 test.use({
   viewport: { width: 393, height: 852 },
-  reducedMotion: "reduce",
+  // `reducedMotion` is a browser-context option, not a test option: only
+  // `contextOptions` applies it. A bare `reducedMotion` key here is
+  // ignored silently (probed: prefers-reduced-motion stayed false) — the
+  // emulateMedia call in beforeEach is what actually held the placards
+  // still; this is now the typed brace to that belt.
+  contextOptions: { reducedMotion: "reduce" },
   ...(process.env.PW_CHROMIUM
     ? { launchOptions: { executablePath: process.env.PW_CHROMIUM } }
     : {}),

@@ -154,9 +154,9 @@ export function Banner({
           type="button"
           onClick={onDismiss}
           aria-label={dismissLabel ?? "Dismiss"}
-          // 32px hit target — banners are ambient, this isn't a primary
-          // action so we sit just below the 44px floor deliberately.
-          className="flex-shrink-0 -m-1 p-1 rounded-md text-muted-foreground hover:text-foreground active:scale-95"
+          // Visual stays a quiet 24px glyph; the pseudo-element extends the
+          // hit area to the 44px floor without growing the banner.
+          className="flex-shrink-0 -m-1 p-1 relative before:absolute before:-inset-2.5 before:content-[''] rounded-md text-muted-foreground hover:text-foreground active:scale-95"
         >
           <X className="size-4" />
         </button>

@@ -63,6 +63,7 @@
  */
 
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
+import { Button } from "@/components/ui/Button";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { readString, writeString } from "@/lib/localStore";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -1114,11 +1115,11 @@ export default function ProgrammeRunSection({
           {runsLoading ? (
             <div className="space-y-1.5">
               <div
-                className="h-3.5 rounded bg-muted/60 animate-pulse"
+                className="h-3.5 rounded bg-muted/60 motion-safe:animate-pulse"
                 style={{ width: "70%" }}
               />
               <div
-                className="h-3.5 rounded bg-muted/60 animate-pulse"
+                className="h-3.5 rounded bg-muted/60 motion-safe:animate-pulse"
                 style={{ width: "55%" }}
               />
             </div>
@@ -1455,17 +1456,18 @@ export default function ProgrammeRunSection({
                       ? "Marked as skipped — you can still head out."
                       : "Rest day. Head out whenever you like."}
                 </p>
-                <button
-                  type="button"
+                <Button
+                  variant="sport"
+                  fullWidth
+                  className="mt-3 font-bold"
                   onClick={() => {
                     haptic();
                     navigate(FREE_RUN_URL);
                   }}
-                  className="mt-3 w-full min-h-[44px] py-2.5 rounded-lg text-sm font-bold text-white inline-flex items-center justify-center gap-1.5 bg-running-fill"
                 >
                   <Play className="size-3.5" fill="white" />
                   Start free run
-                </button>
+                </Button>
               </div>
             ))}
 

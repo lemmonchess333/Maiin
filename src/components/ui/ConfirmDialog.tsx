@@ -10,6 +10,8 @@ interface ConfirmDialogProps {
   destructive?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
+  /** Lift the dialog above a bottom sheet (z-50) it is confirming for. */
+  overSheet?: boolean;
 }
 
 /**
@@ -32,6 +34,7 @@ export function ConfirmDialog({
   destructive = false,
   onConfirm,
   onCancel,
+  overSheet = false,
 }: ConfirmDialogProps) {
   return (
     <Dialog
@@ -41,6 +44,8 @@ export function ConfirmDialog({
       description={description}
       size="sm"
       role="alertdialog"
+      overlayClassName={overSheet ? "z-[60]" : undefined}
+      className={overSheet ? "z-[60]" : undefined}
     >
       <div className="flex gap-2 pt-1">
         <Button onClick={onCancel} variant="secondary" className="flex-1">

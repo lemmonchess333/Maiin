@@ -280,9 +280,9 @@ export default function ExerciseHistory() {
   if (loading) {
     return (
       <div className="space-y-4 pt-2">
-        <div className="h-8 bg-muted/50 rounded animate-pulse" />
-        <div className="h-24 bg-muted/50 rounded-2xl animate-pulse" />
-        <div className="h-48 bg-muted/50 rounded-2xl animate-pulse" />
+        <div className="h-8 bg-muted/50 rounded motion-safe:animate-pulse" />
+        <div className="h-24 bg-muted/50 rounded-2xl motion-safe:animate-pulse" />
+        <div className="h-48 bg-muted/50 rounded-2xl motion-safe:animate-pulse" />
       </div>
     );
   }
@@ -402,7 +402,7 @@ export default function ExerciseHistory() {
         <div className="rounded-2xl bg-card p-4 card-shadow">
           <Suspense
             fallback={
-              <div className="h-40 bg-muted/30 rounded animate-pulse" />
+              <div className="h-40 bg-muted/30 rounded motion-safe:animate-pulse" />
             }
           >
             <ExerciseFormContent exerciseName={decodedName} />
@@ -514,7 +514,7 @@ export default function ExerciseHistory() {
               </div>
               <Suspense
                 fallback={
-                  <div className="h-40 bg-muted/30 rounded animate-pulse" />
+                  <div className="h-40 bg-muted/30 rounded motion-safe:animate-pulse" />
                 }
               >
                 <ExerciseProgressChart

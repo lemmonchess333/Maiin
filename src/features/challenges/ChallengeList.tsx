@@ -152,7 +152,10 @@ export function ChallengeList({
     return (
       <div className="space-y-3">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-32 rounded-2xl bg-muted animate-pulse" />
+          <div
+            key={i}
+            className="h-32 rounded-2xl bg-muted motion-safe:animate-pulse"
+          />
         ))}
       </div>
     );
@@ -309,7 +312,7 @@ export function ChallengeList({
               {[1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className="h-8 rounded-lg bg-muted animate-pulse"
+                  className="h-8 rounded-lg bg-muted motion-safe:animate-pulse"
                 />
               ))}
             </div>

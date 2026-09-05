@@ -390,9 +390,9 @@ function EditServingsSheet({
             >
               {target}
             </p>
-            <p className="text-caption text-muted-foreground uppercase tracking-wider mt-0.5">
+            <SectionLabel tier="section" className="mt-0.5">
               {target === 1 ? "serving" : "servings"}
-            </p>
+            </SectionLabel>
           </div>
           <button
             type="button"
