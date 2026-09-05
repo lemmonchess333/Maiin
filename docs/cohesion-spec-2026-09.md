@@ -294,3 +294,18 @@ touch, proving no collateral change. The rest divide into:
 Verification on `f62dc284`: full unit suite 659 files / 7,934 tests passed
 (341 emulator-gated skips); `tsc -b`, `npm run lint` (0 errors), `npm run
 check:cycles` clean; the new `OFF_SCALE_TEXT_BASELINE = 0` ratchet passes.
+
+**CI capture channel, batch-3 head (`f62dc284`) vs the batch-2 capture:**
+235 frames, 142 with visible change, 93 unchanged. Every resize is a
+batch-3 site — `analytics-loaded` / `history` +16 / +19 (tile labels,
+recovery chips and helpers up to the scale), `badges-grid` −12 (14px
+category labels → 11px), `social` / `circles-crews` / `circle-create-compact`
+−5 ("Your challenges" 14px → 11px), `exercise-form` −4 — plus the ±1px
+form-demo figure class. Changed frames: `races-directory` 2.2–2.8% (the
+`RACE` badge), `race-picker` 0.4%, `settings-run-plan` 0.15%,
+`settings-account` 0.06% (the verified-state label), `onboarding-0/7` ≤0.5%,
+`crews-retirement-together` 0.12%; `easier-chooser` 56% / 8.7% and
+`run-detail` 2.5% are the documented sheet-settle and map-tile flake
+classes. `weekly-review`, `fellbehind-detrained`, `experience-suggestion`
+and `circles-detail-focus` — the surfaces this sandbox could not film —
+are unchanged, as intended: batch 3 touched none of them.
