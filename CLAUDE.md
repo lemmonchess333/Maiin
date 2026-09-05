@@ -262,6 +262,9 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 - **UI patterns:** Drawer (vaul), bottom sheets, pressable cards
 - **Class names:** `clsx()` + `twMerge()` for conditional/merged Tailwind classes
 - **Drag & drop:** @dnd-kit for sortable exercise lists
+- **Firestore writes:** `addDocGuarded` / `setDocGuarded` /
+  `updateDocGuarded` / `deleteDocGuarded` from `src/lib/firestoreWrite.ts`,
+  never the raw SDK — `firestoreWriteGuard.test.ts` bans the raw calls.
 - **Dates:** en-GB day-before-month ("22 Aug", "Saturday 23 August") via the
   `src/utils/formatters.ts` helpers. Locale-less `toLocaleDateString` follows
   the DEVICE (renders "Aug 22" on a US phone) and month-first date-fns
@@ -484,6 +487,13 @@ Use the `/browse` skill from gstack for **all web browsing**. Never use `mcp__cl
   - Micro: 12px — labels, captions, uppercase tracking headers
 - **Weight rules:** 800 (extrabold) for hero numbers and page titles. 700 (bold) for section headings and card titles. 600 (semibold) for pill text and button labels. Never mix 700 and 800 in the same visual tier.
 - **Numeric displays:** Always use font-mono + tabular-nums for alignment
+- **Medium (500, `font-medium`) is not a documented tier.** It appears on
+  ~300 class chunks across ~108 components, ratcheted by
+  `FONT_MEDIUM_BASELINE` in `designSystemInvariants.test.ts` (302 on
+  2026-09-05). Whether it becomes the documented "secondary label" weight
+  or migrates to 400/600 is an owner call, recorded with both options
+  measured in `docs/agents/app-improvement-pass-2026-09-05.md`. Until it
+  is made, do not add new `font-medium`.
 
 ### Card Patterns
 
@@ -595,6 +605,13 @@ reduced-motion` always gets the settled static state — no entrance, no
   `success`/`semantic.positive` remain value-aliases (pixel-correct,
   name-only debt, pinned in `colorCanonical.test.ts` alongside the
   warning≠nutrition inequality that IS the D19 contract).
+- **Framer Motion is gated globally; CSS animations are not.**
+  `useReducedMotion` covers every `motion.*` element, but a Tailwind
+  `animate-*` class runs under Reduce Motion unless it carries the
+  `motion-safe:` variant. Every skeleton pulse and ping does;
+  `animate-spin` spinners are progress feedback and stay unprefixed
+  (`UNGUARDED_ANIMATION_BASELINE = 8` in `designSystemInvariants.test.ts`
+  is exactly the spinner set).
 - **Empty states go through the `EmptyState` primitive**
   (`src/components/ui/EmptyState.tsx`; `compact` for in-card use) — no
   hand-rolled centered-icon-tile blocks. The primitive owns the brand
@@ -1802,6 +1819,9 @@ measured baseline and the pre-decided calls its last run earned:
 `app-improvement-prompt.md` for the whole-app pass (security, guards,
 de-slop, front-end, design). Re-verify their cited lines before acting; the
 citations are starting points, not a to-do list.
+`app-improvement-pass-2026-09-05.md` is that prompt's first run: what
+shipped, what was declined and why, the operator checklist, the open owner
+calls with both options measured, and the ratchet baselines it left.
 
 ### Domain docs
 
