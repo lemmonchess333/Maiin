@@ -33,12 +33,12 @@ inflated new-user PI).
 A persisted field has consumers that read it from a different location; a write
 must carry every mirrored/derived companion.
 
-| Guard                                  | Pins                                                                                                                                               |
-| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `profileFieldParity.cross.test.ts`     | `firestore.rules allowedUserFields()` ↔ `profileSanitizer.js` allow-list parity (a miss = silent data-loss / `hideWeightNumber`-class bug)         |
-| `effectiveTargetsSingleSource.test.ts` | the day-type macro splitter is imported only by `useEffectiveTargets` — no component re-derives macros                                             |
-| `nutritionPhase.test.ts`               | the single `getNutritionPhase` accessor + footgun guard (no calorie/macro module reads `programState.goal`)                                        |
-| `firestoreWriteGuard.test.ts`          | no raw `setDoc`/`addDoc`/`updateDoc` outside `firestoreWrite.ts` + `offlineQueue.ts` (guarded wrappers strip `undefined` + survive offline replay) |
+| Guard                                  | Pins                                                                                                                                                           |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `profileFieldParity.cross.test.ts`     | `firestore.rules allowedUserFields()` ↔ `profileSanitizer.js` allow-list parity (a miss = silent data-loss / `hideWeightNumber`-class bug)                     |
+| `effectiveTargetsSingleSource.test.ts` | the day-type macro splitter is imported only by `useEffectiveTargets` — no component re-derives macros                                                         |
+| `nutritionPhase.test.ts`               | the single `getNutritionPhase` accessor + footgun guard (no calorie/macro module reads `programState.goal`)                                                    |
+| `firestoreWriteGuard.test.ts`          | no raw `setDoc`/`addDoc`/`updateDoc`/`deleteDoc` outside `firestoreWrite.ts` + `offlineQueue.ts` (guarded wrappers strip `undefined` + survive offline replay) |
 
 ## Cloud Functions deploy safety
 

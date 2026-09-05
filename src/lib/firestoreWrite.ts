@@ -2,7 +2,7 @@
  * Guarded Firestore write helpers.
  *
  * Every write in the app should go through these instead of calling
- * `setDoc` / `addDoc` / `updateDoc` from `firebase/firestore` directly.
+ * `setDoc` / `addDoc` / `updateDoc` / `deleteDoc` from `firebase/firestore` directly.
  * They apply {@link stripUndefined} to the payload first, which removes
  * the single most common silent-write failure: Firestore rejects any
  * document containing an explicit `undefined` (nested or top-level) with
@@ -32,6 +32,7 @@
 
 import {
   addDoc as fbAddDoc,
+  deleteDoc as fbDeleteDoc,
   setDoc as fbSetDoc,
   updateDoc as fbUpdateDoc,
   type CollectionReference,
@@ -72,4 +73,15 @@ export function updateDocGuarded<T extends DocumentData>(
   data: UpdateData<T>
 ): Promise<void> {
   return fbUpdateDoc(reference, stripUndefined(data));
+}
+
+/** `deleteDoc` through the same seam as the other writes. There is no
+ *  payload to sanitise; the wrapper exists so every write kind has ONE door
+ *  — the guard test can then ban the raw SDK outright, and any future
+ *  offline or audit policy for deletes attaches here rather than at ~20
+ *  call sites. */
+export function deleteDocGuarded<T extends DocumentData>(
+  reference: DocumentReference<T>
+): Promise<void> {
+  return fbDeleteDoc(reference);
 }

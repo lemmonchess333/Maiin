@@ -9,14 +9,13 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   collection,
-  deleteDoc,
   doc,
   getCountFromServer,
   getDoc,
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { setDocGuarded } from "@/lib/firestoreWrite";
+import { setDocGuarded, deleteDocGuarded } from "@/lib/firestoreWrite";
 import { useAuth } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
 import { toast } from "@/lib/toast";
@@ -82,7 +81,7 @@ export function useSpaceMembership(spaceId: string | undefined) {
     setMemberCount((c) => (c === null ? c : Math.max(0, c - 1)));
     haptic("light");
     try {
-      await deleteDoc(doc(db, "spaces", spaceId, "members", user.uid));
+      await deleteDocGuarded(doc(db, "spaces", spaceId, "members", user.uid));
     } catch {
       setJoined(true);
       setMemberCount((c) => (c === null ? c : c + 1));

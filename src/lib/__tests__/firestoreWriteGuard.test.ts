@@ -1,7 +1,7 @@
 /**
  * Guarded-write enforcement (CLAUDE.md recurring-mistake rule).
  *
- * "Never call raw `setDoc`/`addDoc`/`updateDoc` — always route through the
+ * "Never call raw `setDoc`/`addDoc`/`updateDoc`/`deleteDoc` — always route through the
  * guarded wrappers in `src/lib/firestoreWrite.ts`." They strip `undefined`
  * (which Firestore rejects outright) and survive offline-queue replay (a raw
  * write that fails online fails forever on every flush). PR `5061046` migrated
@@ -35,10 +35,10 @@ const ALLOWLIST = new Set<string>([
   "src/lib/offlineQueue.ts", // the flush layer the wrappers delegate to
 ]);
 
-/** Bare `setDoc(`/`addDoc(`/`updateDoc(` — NOT the `*Guarded(` variants (those
+/** Bare `setDoc(`/`addDoc(`/`updateDoc(`/`deleteDoc(` — NOT the `*Guarded(` variants (those
  *  have `Guarded` between the name and the paren) and NOT imports (`setDoc }`
  *  / `setDoc,`). */
-const RAW_WRITE = /\b(setDoc|addDoc|updateDoc)\(/;
+const RAW_WRITE = /\b(setDoc|addDoc|updateDoc|deleteDoc)\(/;
 
 function sourceFiles(dir: string): string[] {
   const out: string[] = [];
@@ -56,7 +56,7 @@ function sourceFiles(dir: string): string[] {
   return out;
 }
 
-describe("guarded-write enforcement (no raw setDoc/addDoc/updateDoc)", () => {
+describe("guarded-write enforcement (no raw setDoc/addDoc/updateDoc/deleteDoc)", () => {
   it("no src file outside the allow-list calls the raw write SDK", () => {
     const offenders: string[] = [];
     for (const file of sourceFiles(srcRoot)) {
@@ -76,7 +76,7 @@ describe("guarded-write enforcement (no raw setDoc/addDoc/updateDoc)", () => {
     expect(
       offenders,
       `Raw Firestore write(s) found. Route through addDocGuarded / ` +
-        `setDocGuarded / updateDocGuarded (src/lib/firestoreWrite.ts) — they ` +
+        `setDocGuarded / updateDocGuarded / deleteDocGuarded (src/lib/firestoreWrite.ts) — they ` +
         `strip undefined and survive offline-queue replay. If this is a new ` +
         `legitimate low-level writer, add it to ALLOWLIST with a reason.\n  ${offenders.join("\n  ")}`
     ).toEqual([]);
