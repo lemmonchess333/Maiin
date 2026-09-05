@@ -276,28 +276,26 @@ const PELV_F: C = smoothC([
 
 /* Thigh: quad sweep peaking mid-thigh, hamstring belly behind.
  *
- * The back contour used to start at x 43.5 while the glute above it
- * reaches 29.8 — a 14-unit overhang, so the buttock read as a shelf
- * bolted to the back of the leg rather than as mass flowing into the
- * hamstring. It starts at 37.2 now, which leaves the 4-6 units that a
- * standing buttock actually projects behind the thigh, and the gluteal
- * fold (the pelvis outline's bottom edge, sweeping forward to 44.5)
- * still reads as the crease it is.
+ * The back contour starts at x 37.2 against a glute that reaches 29.8:
+ * the 4-6 units a standing buttock actually projects behind the thigh.
+ * Any wider overhang reads as a shelf bolted to the back of the leg
+ * rather than mass flowing into the hamstring, while the gluteal fold
+ * (the pelvis outline's bottom edge, sweeping forward to 44.5) still
+ * reads as the crease it is.
  *
- * It also ends at 152 while the front runs to 156, for the same reason
+ * The back ends at 152 while the front runs to 156, for the same reason
  * the torso's back stops short of its front: the thigh paints over the
- * shank, so a level bottom edge laid its inset rim across the knee as a
- * straight dark bar. Tilted, the edge is the knee line — popliteal fold
- * high at the back, patella low at the front — and the kneecap facet
+ * shank, so a level bottom edge would lay its inset rim across the knee
+ * as a straight dark bar. Tilted, the edge is the knee line — popliteal
+ * fold high at the back, patella low at the front — and the kneecap facet
  * runs past it to cover the rim.
  *
- * Its bottom is also a DOME about the knee pivot, for the same reason
- * the shank's top is. A squat swings this piece 78 degrees about that
- * pivot, and its bottom-front corner sat 5.5 forward and 4 below — a
- * 6.8-unit radius that came out from under the shank as a sharp point
- * (owner: "knee looks a little pointy"). Both contours now arc inward
- * below y 147 and meet in a chord from (46.0, 152.6) to (53.6, 155.4):
- * nothing further than 5 units from the pivot, no corner for a rotation
+ * Its bottom is a DOME about the knee pivot, for the same reason the
+ * shank's top is. A squat swings this piece 78 degrees about that pivot,
+ * and any corner more than ~5 units from it comes out from under the
+ * shank as a sharp point (owner: "knee looks a little pointy"). Both
+ * contours arc inward below y 147 and meet in a chord from (46.0, 152.6)
+ * to (53.6, 155.4): nothing further than 5 units from the pivot, no corner for a rotation
  * to expose, and the chord still TILTS 2.8 so it reads as the popliteal
  * crease rather than a level cut. */
 const THIGH_B: C = smoothC([
@@ -323,24 +321,21 @@ const THIGH_F: C = smoothC([
 
 /* Shank: gastroc bulge behind, straight shin, achilles taper.
  *
- * Both contours now START at y 152 — the knee pivot's own row — and
- * narrow toward it, so the top of the shank is a chord through the
- * pivot rather than a pair of corners above it. It used to start at
- * 148.5/150 spanning x 41.6-54.2, which put the front corner 4.2 forward
- * of the pivot and 3.5 ABOVE it: a 5.5-unit radius. The thigh hides that
- * standing, but a squat swings the thigh 78 degrees about the same pivot
- * and the corner comes out from under it as a spike (owner: "knee looks
- * a little pointy and misaligned with the calf"). At the pivot's row
- * nothing projects above it, and the chord's midpoint is 49.6 against a
- * pivot at 50, so the shank is centred under the knee instead of sitting
- * 2 units behind it.
+ * Both contours START at y 152 — the knee pivot's own row — and narrow
+ * toward it, so the top of the shank is a chord through the pivot rather
+ * than a pair of corners above it. The thigh hides anything above that
+ * row when standing, but a squat swings the thigh 78 degrees about the
+ * same pivot and a corner above or forward of it comes out from under
+ * the thigh as a spike (owner: "knee looks a little pointy and misaligned
+ * with the calf"). The chord's midpoint is 49.6 against a pivot at 50, so
+ * the shank is centred under the knee rather than sitting behind it.
  *
  * The top is a DOME about that pivot rather than a flat chord: both
  * contours arc inward above y 152 and meet in a 3.2-wide chord at 148.8,
  * so every point on the silhouette's top is within 4 units of the pivot
- * and there is no corner for a rotation to expose. A chord alone still
- * left a 90-degree corner where the front contour turned — which is what
- * a condyle is for. */
+ * and there is no corner for a rotation to expose. A flat chord alone
+ * leaves a 90-degree corner where the front contour turns — which is
+ * what a condyle is for. */
 const SHANK_B: C = smoothC([
   [148.8, 48.4],
   [150.6, 46.4],
@@ -467,12 +462,11 @@ const FOOT_OUTLINE: Pt[] = [
 const FOOT_FACETS = [{ muscle: "foot", points: FOOT }];
 
 /* Back contour down, round the heel and sole to the toe, back along the
- * instep, then UP the front contour. It used to be the back contour plus
- * the foot and nothing else — `silhouette(...).slice(0, 6)` kept only the
- * back half — so the piece's outline closed as a vertical line up the
- * calf and the whole shin lay OUTSIDE its own underlay. The facets still
- * drew (they are painted over it, not clipped by it), which is why the
- * leg looked fine until a seam wanted a groove behind it. */
+ * instep, then UP the front contour. Both contours must be here: an
+ * outline that closes with a straight line up the calf leaves the whole
+ * shin OUTSIDE its own underlay, and the facets hide that (they are
+ * painted over the underlay, not clipped by it) right up until a seam
+ * wants a groove behind the leg. */
 const SHANK_OUTLINE: Pt[] = [
   ...SHANK_B.map(([y, x]) => [x, y] as Pt),
   // Closes across the ankle: the foot is its own piece now, painted

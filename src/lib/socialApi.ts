@@ -113,8 +113,7 @@ export async function getFollowerIds(uid: string): Promise<Set<string>> {
 // ============================================
 // Post Activity
 //
-// 2026-05-26 audit PR 3 (finding #3) — only the activity doc is
-// written client-side; fan-out to follower feeds runs in the
+// Only the activity doc is written client-side; fan-out to follower feeds runs in the
 // `onActivityCreated` Firestore trigger. `formatDuration` and
 // `formatPace` moved into `functions/lib/socialFanout.js` along
 // with `buildFeedItem`.
@@ -151,8 +150,7 @@ export async function postActivity(activity: {
 }) {
   const authedUid = getAuthUid();
   if (activity.authorId !== authedUid) throw new Error("Identity mismatch");
-  // 2026-05-26 audit PR 3 (finding #3) — only the activity doc is
-  // written client-side. Fan-out to follower feeds + author feed
+  // Only the activity doc is written client-side. Fan-out to follower feeds + author feed
   // happens server-side via the `onActivityCreated` Firestore
   // trigger (functions/index.js). The trigger reads followers,
   // builds the summary, and writes feed items — `/feeds/*` is
@@ -173,8 +171,8 @@ export async function postActivity(activity: {
 // ============================================
 // Kudos
 //
-// 2026-05-26 audit PR 2 (finding #2) — kudos toggle now routes via
-// the `toggleKudosCallable` Cloud Function. Pre-PR-2 the client
+// The kudos toggle routes via the `toggleKudosCallable` Cloud
+// Function. Before that the client
 // wrote `kudos/{aid}/users/{uid}` + `activities/{aid}.kudosCount`
 // directly via `updateDoc(..., { kudosCount: increment(1) })` —
 // rules let any authed user set kudosCount to any value because
@@ -188,7 +186,7 @@ export async function toggleKudos(
 ): Promise<boolean> {
   const authedUid = getAuthUid();
   if (userId !== authedUid) throw new Error("Identity mismatch");
-  // 2026-05-26 audit PR 3 (finding #6) — `fromName` is forwarded to
+  // `fromName` is forwarded to
   // the callable so the server-side notification carries the
   // sender's display name. The CF sanitises and length-caps it; the
   // recipient uid is read server-side from the activity doc (no
@@ -219,8 +217,7 @@ export async function toggleSpacePostLike(
   >(getFunctions(), "toggleSpacePostLikeCallable");
   // fromName rides the payload for the author's notification, same as
   // toggleKudos above. Without it the server falls back to "Someone" —
-  // which is what every like row showed until 2026-07-27, because this
-  // wrapper never sent it.
+  // which is what every like row shows when a wrapper forgets to send it.
   const result = await fn({
     spaceId,
     postId,
@@ -358,7 +355,7 @@ export async function addComment(
 ) {
   const authedUid = getAuthUid();
   if (authorId !== authedUid) throw new Error("Identity mismatch");
-  // 2026-05-26 audit PR 2 (finding #2) — comment create routes via
+  // Comment create routes via
   // `addCommentCallable`. The CF creates the comment doc + bumps
   // commentCount atomically; client direct writes are denied at
   // the rules layer.
@@ -377,8 +374,7 @@ export async function addComment(
     authorName,
     ...(authorPhotoURL ? { authorPhotoURL } : {}),
   });
-  // 2026-05-26 audit PR 3 (finding #6) — comment notification is
-  // now written server-side by `addCommentCallable` itself. The
+  // The comment notification is written server-side by `addCommentCallable` itself. The
   // client no longer touches /notifications/* — rule layer denies it.
   void activityAuthorId;
 }
@@ -387,8 +383,7 @@ export async function deleteComment(
   activityId: string,
   commentId: string
 ): Promise<void> {
-  // 2026-05-26 audit PR 2 (finding #2) — delete + counter decrement
-  // routed through `deleteCommentCallable`. The CF validates
+  // Delete + counter decrement are routed through `deleteCommentCallable`. The CF validates
   // ownership server-side (authorId === auth.uid) and flips both
   // docs in one txn.
   const fn = httpsCallable<
@@ -733,8 +728,7 @@ export async function getSuggestedPeople(
 // ============================================
 // Notifications
 //
-// 2026-05-26 audit PR 3 (finding #6) — client no longer writes
-// notification docs. Kudos + comment notifications are emitted
+// The client never writes notification docs. Kudos + comment notifications are emitted
 // server-side from `toggleKudosCallable` + `addCommentCallable`.
 // `/notifications/*` create is `if false` in firestore.rules.
 // Owner can still read + delete their own notifications.

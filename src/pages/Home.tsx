@@ -321,17 +321,14 @@ export default function Home() {
     loading: perfLoading,
   } = usePerformanceWeeks(4);
 
-  // The "one voice per screen" arbiter that used to live here went with
-  // the guidance slot it arbitrated (removed 2026-08-10, operator call:
-  // "remove today section it's bad"). The Performance hero is now the
-  // only voice in this position, so there is nothing left to suppress.
+  // The Performance hero is the only voice in this position — nothing
+  // else competes for it, so nothing needs suppressing.
   const perfPrevWeek =
     perfWeeks.length >= 2 ? perfWeeks[perfWeeks.length - 2] : null;
 
-  // Meal history for the energy row's cold-start state.
-  // (home-declutter 2a/3a: the meal-pattern insight + post-workout nudge
-  // that used to pipe into TodayEnergy were dropped with the compact row —
-  // one voice per screen; that detail lives in the Food tab.)
+  // Meal history for the energy row's cold-start state. TodayEnergy gets
+  // no meal-pattern insight or post-workout nudge — one voice per screen;
+  // that detail lives in the Food tab.
   const totalLifetimeMeals = meals.length;
 
   // #972 cold-start activation framing. profile.createdAt is a Firestore
@@ -533,9 +530,9 @@ export default function Home() {
     onDrop: dismissNewBadge,
   });
 
-  // Goal-reached prompt (probe sweep 2026-08-05): the nutrition direction
-  // used to be re-resolved only inside a Settings edit, so a cutter who
-  // arrived kept the full deficit indefinitely. The weigh-in→profile mirror
+  // Goal-reached prompt. The nutrition direction is evaluated on every Home
+  // visit, not only inside a Settings edit — otherwise a cutter who arrives
+  // at goal keeps the full deficit indefinitely. The weigh-in→profile mirror
   // keeps profile.weightKg fresh, which is what makes this condition
   // reliable enough to evaluate on every Home visit. Asked once per goal
   // VALUE (uid-scoped): the deadband wobbles, and a re-firing prompt is a
