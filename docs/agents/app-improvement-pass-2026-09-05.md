@@ -151,6 +151,34 @@ also surfaced eight latent type errors there — one of them a
    run). Recommendation: A; B without a number is the "polish" the
    prompt warns against.
 
+## react-doctor, run once as the prompt asked
+
+`npx react-doctor@latest --yes --no-supply-chain --verbose` over the tree at
+the hotfix head: 1,650 files, 668 findings (Security 3 errors + 1 warning;
+Performance 58 errors + 272 warnings; Maintainability 163 warnings; Bugs 18
+errors + 131 warnings; Accessibility 22 warnings). Its score endpoint is
+blocked by the sandbox proxy, so there is no score. Triage of the error
+tier, each read at the line:
+
+- **Both "permissive Firebase rule" errors are false positives.**
+  `firestore.rules` — the public-profile projection's `allow read: if
+request.auth != null` is the documented cross-user read;
+  `storage.rules` — the flagged line is the owner-only progress-photo read
+  (`request.auth.uid == uid`).
+- **"Hardcoded secret fallback"** is the emulator test password in a
+  verifier skill's `env.mjs`, not app code.
+- **"navigate() called during render"** (`RunSummary.tsx`, the `!state`
+  redirect) is real and small: a render-phase side effect that React Router
+  warns about; `<Navigate replace />` is the fix. Left for a follow-up PR.
+- **"Animating a layout property" ×58** is the WKWebView rule CLAUDE.md
+  already states (animate opacity/transform, never layout); the sites are
+  mostly framer `height: "auto"` reveals, `SustainedOfflineBanner` among
+  them. Worth a sweep, with capture evidence, as its own PR.
+- **"Effect subscription or timer never cleaned up" ×8, "Ref mutated during
+  render" ×6, "State updater has side effects" ×3** were not verified here;
+  the two GPS sites read as having their cleanup on a different path than
+  the rule expects. Treat as hypotheses, per the tool's own guidance.
+
 ## New baseline
 
 | Ratchet / gate                                 | Value after this pass                                   |
