@@ -106,6 +106,33 @@ service cloud.firestore {
         || exists(/databases/$(database)/documents/blocks/$(b)/users/$(a));
     }
 
+    /* Photo URL value gate — shared by every field a client writes that
+       ANOTHER user's device will load as an <img src>: the public
+       profile avatar, activity and space-post author avatars, a space
+       post's attached photo, and the challenge-participant / space-member
+       identity rows. A URL a stranger's browser fetches is a tracking
+       pixel with a per-viewer IP unless its origin is one Tropos already
+       trusts to serve avatars:
+         - own-bucket Firebase Storage (custom uploads, space photos)
+         - Google OAuth CDN (lh3.googleusercontent.com)
+         - Apple OAuth CDN (appleid.cdn-apple.com)
+       `https` only and anchored with `^`, so a downgrade or a
+       suffix-phishing host (lh3.googleusercontent.com.evil.com) fails;
+       capped at 2048 chars so the field cannot carry a payload.
+       Null-safe: the type check runs first and `&&` short-circuits, so
+       a null never reaches `.matches()` (which would be an evaluation
+       error, not false). Whether absent / null / '' are legal is each
+       caller's decision — this speaks only to a present value. */
+    function isAllowedPhotoUrl(v) {
+      return v is string
+        && v.size() <= 2048
+        && (
+          v.matches('^https://firebasestorage\\.googleapis\\.com/.*')
+          || v.matches('^https://lh3\\.googleusercontent\\.com/.*')
+          || v.matches('^https://appleid\\.cdn-apple\\.com/.*')
+        );
+    }
+
     /* raceGoal value gate — the shape the app actually consumes.
        `allowedUserFields()` gates key NAMES only, so before this the field
        could hold any map at all: `raceGoal: { anything: <...> }` was a legal
@@ -477,19 +504,15 @@ service cloud.firestore {
              states; null is what createDefaultProfile writes for
              email signups before any upload, '' is what removeProfilePhoto
              writes when the user clears their custom upload)
-           - own-bucket Firebase Storage URLs (custom uploads)
-           - Google OAuth CDN (lh3.googleusercontent.com)
-           - Apple OAuth CDN (appleid.cdn-apple.com)
-           The null check has to come BEFORE any `.matches()` call —
-           in Firestore rules `null.matches(...)` is an evaluation
-           error, not a falsy short-circuit, so the order matters. */
+           - an origin isAllowedPhotoUrl trusts (own Storage bucket,
+             Google / Apple OAuth CDNs)
+           The null and '' checks come BEFORE the helper so those two
+           real states are accepted rather than type-checked. */
         && (
           !('photoURL' in request.resource.data)
           || request.resource.data.photoURL == null
           || request.resource.data.photoURL == ''
-          || request.resource.data.photoURL.matches('^https://firebasestorage\\.googleapis\\.com/.*')
-          || request.resource.data.photoURL.matches('^https://lh3\\.googleusercontent\\.com/.*')
-          || request.resource.data.photoURL.matches('^https://appleid\\.cdn-apple\\.com/.*')
+          || isAllowedPhotoUrl(request.resource.data.photoURL)
         )
         /* photoStoragePath gate — must point to the owner's own
            profile-photos folder. Prevents writing a value that would
@@ -594,6 +617,13 @@ service cloud.firestore {
         && request.resource.data.authorName is string
         && request.resource.data.authorName.size() > 0
         && request.resource.data.authorName.size() <= 100
+        // authorPhotoURL is loaded as <img src> by every feed viewer.
+        // postActivity omits it when the author has no photo (never
+        // null or ''), so present means a trusted origin or nothing.
+        && (
+          !('authorPhotoURL' in request.resource.data.keys())
+          || isAllowedPhotoUrl(request.resource.data.authorPhotoURL)
+        )
         && request.resource.data.type in ['run', 'workout']
         && request.resource.data.visibility in ['public', 'followers', 'private']
         && request.resource.data.createdAt is timestamp
@@ -860,7 +890,7 @@ service cloud.firestore {
           )
           && (
             !('photoURL' in request.resource.data)
-            || request.resource.data.photoURL is string
+            || isAllowedPhotoUrl(request.resource.data.photoURL)
           );
 
         // Updates may ONLY touch cosmetic identity fields. Any diff
@@ -878,7 +908,7 @@ service cloud.firestore {
           )
           && (
             !('photoURL' in request.resource.data)
-            || request.resource.data.photoURL is string
+            || isAllowedPhotoUrl(request.resource.data.photoURL)
           );
 
         allow delete: if request.auth != null
@@ -953,7 +983,7 @@ service cloud.firestore {
           )
           && (
             !('photoURL' in request.resource.data)
-            || request.resource.data.photoURL is string
+            || isAllowedPhotoUrl(request.resource.data.photoURL)
           );
 
         allow update: if request.auth != null
@@ -968,7 +998,7 @@ service cloud.firestore {
           )
           && (
             !('photoURL' in request.resource.data)
-            || request.resource.data.photoURL is string
+            || isAllowedPhotoUrl(request.resource.data.photoURL)
           );
 
         allow delete: if request.auth != null
@@ -1010,11 +1040,11 @@ service cloud.firestore {
           )
           && (
             !('authorPhotoURL' in request.resource.data)
-            || request.resource.data.authorPhotoURL is string
+            || isAllowedPhotoUrl(request.resource.data.authorPhotoURL)
           )
           && (
             !('photoUrl' in request.resource.data)
-            || request.resource.data.photoUrl is string
+            || isAllowedPhotoUrl(request.resource.data.photoUrl)
           )
           && (
             !('activity' in request.resource.data)
@@ -1470,7 +1500,18 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['id', 'uid', 'kind', 'text', 'weekKey', 'createdAt'])
         && (!('text' in request.resource.data)
             || (request.resource.data.text is string
-                && request.resource.data.text.size() <= 200));
+                && request.resource.data.text.size() <= 200))
+        // weekKey is the writer's LOCAL week as YYYY-MM-DD. The client
+        // sends null on every event it creates, so null must stay legal.
+        && (!('weekKey' in request.resource.data)
+            || request.resource.data.weekKey == null
+            || (request.resource.data.weekKey is string
+                && request.resource.data.weekKey.matches('^\\d{4}-\\d{2}-\\d{2}$')))
+        // id mirrors a document id; bounded so the field cannot carry a
+        // payload into a member-readable feed.
+        && (!('id' in request.resource.data)
+            || (request.resource.data.id is string
+                && request.resource.data.id.size() <= 64));
       allow update, delete: if false;
     }
 
