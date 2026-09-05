@@ -1765,6 +1765,15 @@ Default canonical vocabulary — `needs-triage` / `needs-info` /
 auto-created on first `/triage` use if absent on GitHub. See
 `docs/agents/triage-labels.md`.
 
+### Reusable prompts
+
+Two paste-ready session prompts live in `docs/agents/`, each carrying the
+measured baseline and the pre-decided calls its last run earned:
+`visual-pass-prompt.md` for the pixels-only visual pass, and
+`app-improvement-prompt.md` for the whole-app pass (security, guards,
+de-slop, front-end, design). Re-verify their cited lines before acting; the
+citations are starting points, not a to-do list.
+
 ### Domain docs
 
 Single-context. `CONTEXT.md` at repo root (seed; fill with domain
