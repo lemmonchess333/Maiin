@@ -240,6 +240,12 @@ suite("firestore.rules — goal spaces and server-only ledgers", () => {
       );
     });
 
+    it("accepts text: null, the shape a text-less event was written with", async () => {
+      await assertSucceeds(
+        setDoc(eventRef(asMember(), "tnull"), validEvent({ text: null }))
+      );
+    });
+
     it("refuses a member whose account is mid-deletion", async () => {
       await env.withSecurityRulesDisabled(async (ctx) => {
         await setDoc(doc(ctx.firestore(), "accountDeletionRequests", MEMBER), {

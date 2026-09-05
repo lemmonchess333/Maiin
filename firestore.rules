@@ -1498,7 +1498,10 @@ service cloud.firestore {
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.kind in ['joined', 'session_completed', 'milestone', 'needs_support', 'routine_shared']
         && request.resource.data.keys().hasOnly(['id', 'uid', 'kind', 'text', 'weekKey', 'createdAt'])
+        // text is optional: absent or null for an event with nothing to say,
+        // otherwise a string within the fence's bound.
         && (!('text' in request.resource.data)
+            || request.resource.data.text == null
             || (request.resource.data.text is string
                 && request.resource.data.text.size() <= 200))
         // weekKey is the writer's LOCAL week as YYYY-MM-DD. The client
