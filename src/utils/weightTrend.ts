@@ -1,3 +1,4 @@
+import { localDateString } from "@/lib/dateHelpers";
 export interface WeightTrend {
   current: number;
   avg7d: number;
@@ -23,9 +24,7 @@ export function calcWeightTrend(
   const dayKeyBefore = (dateKey: string, days: number): string => {
     const d = new Date(dateKey + "T12:00:00");
     d.setDate(d.getDate() - days);
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${d.getFullYear()}-${m}-${day}`;
+    return localDateString(d);
   };
   const cutoff7 = dayKeyBefore(latestDate, 6); // latest day + 6 before = 7 days
   const cutoff30 = dayKeyBefore(latestDate, 29);

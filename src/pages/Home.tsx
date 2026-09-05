@@ -7,6 +7,7 @@ import {
   Suspense,
 } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
+import { formatWeightInUnit, lbToKg } from "@/lib/weightUnits";
 import { readString, writeString } from "@/lib/localStore";
 import { useAuth } from "@/lib/auth";
 import { useUidForStorageKey } from "@/lib/auth";
@@ -406,7 +407,7 @@ export default function Home() {
     if (!weightInput || !user) return;
     const raw = Number(weightInput);
     if (Number.isNaN(raw) || raw <= 0) return;
-    const storeW = weightUnit === "lbs" ? raw / 2.20462 : raw;
+    const storeW = weightUnit === "lbs" ? lbToKg(raw) : raw;
     if (storeW < 20 || storeW > 350) return;
     setWeightSaving(true);
     try {
@@ -440,10 +441,7 @@ export default function Home() {
           logger.warn("[Home] weight mirror to profile failed", e)
         );
       }
-      const disp =
-        weightUnit === "lbs"
-          ? (storeW * 2.20462).toFixed(1)
-          : storeW.toFixed(1);
+      const disp = formatWeightInUnit(storeW, weightUnit);
       setLastWeightInfo({
         weight: disp,
         date: format(new Date(), "d MMM"),

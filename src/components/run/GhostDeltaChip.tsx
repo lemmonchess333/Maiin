@@ -1,4 +1,5 @@
 import { ChevronUp, ChevronDown, Minus } from "lucide-react";
+import { formatClock } from "@/utils/formatters";
 import { routeProgress, routeTimeAtDistance } from "../../lib/gps";
 import type { GPSPoint } from "../../lib/gps";
 import { THEME } from "../../lib/theme";
@@ -13,9 +14,7 @@ interface GhostDeltaChipProps {
 const EVEN_S = 2;
 
 function fmtDelta(sec: number): string {
-  const s = Math.round(Math.abs(sec));
-  const m = Math.floor(s / 60);
-  return `${m}:${String(s % 60).padStart(2, "0")}`;
+  return formatClock(Math.abs(sec));
 }
 
 /**

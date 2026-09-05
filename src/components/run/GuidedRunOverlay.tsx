@@ -1,4 +1,5 @@
 import { getSegmentColor } from "@/lib/guidedRun";
+import { formatClock } from "@/utils/formatters";
 import { segmentsDurationSeconds } from "@/lib/runSegments";
 import type { SessionPlayer } from "@/hooks/useSessionPlayer";
 import { THEME } from "@/lib/theme";
@@ -10,11 +11,7 @@ import { THEME } from "@/lib/theme";
  * whole-session progress bar derives from the duration sums.
  */
 
-function formatTime(secs: number): string {
-  const s = Math.max(0, Math.round(secs));
-  const m = Math.floor(s / 60);
-  return `${m}:${(s % 60).toString().padStart(2, "0")}`;
-}
+const formatTime = formatClock;
 
 export default function GuidedRunOverlay({
   player,

@@ -12,7 +12,7 @@ import {
   WATER_PRESETS,
   MAX_SINGLE_LOG_ML,
   clampMl,
-  formatVolume,
+  formatWaterVolume,
 } from "@/lib/waterUnits";
 
 // Glyph scales up with the container so the visual reinforces volume.
@@ -83,12 +83,12 @@ export default function WaterSizeSheet({
           <div className="min-w-0">
             <SectionLabel>Water today</SectionLabel>
             <p className="text-lg font-bold leading-tight text-foreground font-mono tabular-nums">
-              {formatVolume(consumedMl)}
+              {formatWaterVolume(consumedMl)}
               <span
                 className="text-sm font-normal ml-1"
                 style={{ color: "hsl(var(--muted-foreground))" }}
               >
-                / {formatVolume(targetMl)}
+                / {formatWaterVolume(targetMl)}
               </span>
             </p>
           </div>

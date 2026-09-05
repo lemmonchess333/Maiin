@@ -8,6 +8,7 @@ import {
   percentagesSummingTo100,
   formatDayMonth,
   formatDayMonthYear,
+  formatClock,
   formatVolumeLabel,
   formatLoadKg,
 } from "../formatters";
@@ -205,6 +206,21 @@ describe("formatDayMonth / formatDayMonthYear", () => {
   it("both variants agree on the day+month prefix", () => {
     const d = new Date("2026-12-31T12:00:00");
     expect(formatDayMonthYear(d).startsWith(formatDayMonth(d))).toBe(true);
+  });
+});
+
+describe("formatClock (the one m:ss / h:mm:ss formatter — twelve local copies retired)", () => {
+  it("reads m:ss below an hour and h:mm:ss from an hour", () => {
+    expect(formatClock(8)).toBe("0:08");
+    expect(formatClock(72)).toBe("1:12");
+    expect(formatClock(3600)).toBe("1:00:00");
+    expect(formatClock(3661)).toBe("1:01:01");
+  });
+
+  it("rounds to the nearest second and never goes negative", () => {
+    expect(formatClock(59.6)).toBe("1:00");
+    expect(formatClock(59.4)).toBe("0:59");
+    expect(formatClock(-3)).toBe("0:00");
   });
 });
 

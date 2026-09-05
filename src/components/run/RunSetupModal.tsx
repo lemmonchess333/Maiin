@@ -62,7 +62,7 @@ import type { ActivityType } from "@/types/run";
 import { requiresManualDistance } from "@/lib/runGuards";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import { getTargetValidationError } from "@/lib/runTargetValidation";
-import { formatDayMonthYear } from "@/utils/formatters";
+import { formatDayMonthYear, formatClock } from "@/utils/formatters";
 
 /* Preset chip (duration / pace / distance quick-pick groups). Tokenised —
    the old inline rgba(0,0,0,…) styles were light-theme-only values that
@@ -417,9 +417,7 @@ export default function RunSetupModal({
               guided: "Guided",
             };
             const km = distanceValue(lastRun.distanceM, unit, 2);
-            const mins = Math.floor(lastRun.durationS / 60);
-            const secs = Math.floor(lastRun.durationS % 60);
-            const time = `${mins}:${secs.toString().padStart(2, "0")}`;
+            const time = formatClock(Math.floor(lastRun.durationS));
             const type = labelMap[lastRun.activityType] || "Run";
             return (
               <div className="px-4 py-2.5 rounded-xl bg-muted/40 border border-border/50">

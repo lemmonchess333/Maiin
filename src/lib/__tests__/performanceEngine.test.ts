@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import {
-  getWeekKey,
   weekKeyMinusN,
   computeBaseline,
   computeLiftLoadScore,
@@ -48,40 +47,6 @@ function makeBaseline(overrides: Partial<Baseline> = {}): Baseline {
   };
 }
 
-// ── getWeekKey ────────────────────────────────
-
-describe("getWeekKey", () => {
-  it("returns the Sunday of the week for a Sunday", () => {
-    // 2025-01-05 is a Sunday
-    const result = getWeekKey(new Date("2025-01-05T12:00:00"));
-    expect(result).toBe("2025-01-05");
-  });
-
-  it("returns the previous Sunday for a Wednesday", () => {
-    // 2025-01-08 is a Wednesday → Sunday is 2025-01-05
-    const result = getWeekKey(new Date("2025-01-08T12:00:00"));
-    expect(result).toBe("2025-01-05");
-  });
-
-  it("returns the previous Sunday for a Saturday", () => {
-    // 2025-01-11 is a Saturday → Sunday is 2025-01-05
-    const result = getWeekKey(new Date("2025-01-11T12:00:00"));
-    expect(result).toBe("2025-01-05");
-  });
-
-  it("returns the previous Sunday for a Monday", () => {
-    // 2025-01-06 is a Monday → Sunday is 2025-01-05
-    const result = getWeekKey(new Date("2025-01-06T12:00:00"));
-    expect(result).toBe("2025-01-05");
-  });
-
-  it("handles year boundaries", () => {
-    // 2025-01-01 is a Wednesday → Sunday is 2024-12-29
-    const result = getWeekKey(new Date("2025-01-01T12:00:00"));
-    expect(result).toBe("2024-12-29");
-  });
-});
-
 // ── weekKeyMinusN ────────────────────────────
 
 describe("weekKeyMinusN", () => {
@@ -110,20 +75,22 @@ describe("weekKeyMinusN", () => {
 // re-exec a tiny script under TZ=America/New_York (UTC-5) to prove the
 // fix: a Sunday 23:30 LOCAL must key to that local Sunday, not the
 // UTC-rolled Monday.
-describe("getWeekKey / weekKeyMinusN — UTC/local drift", () => {
-  it("getWeekKey keys a late-Sunday-night local time to the local Sunday under a negative-offset TZ", () => {
+describe("localWeekKey / weekKeyMinusN — UTC/local drift", () => {
+  it("localWeekKey keys a late-Sunday-night local time to the local Sunday under a negative-offset TZ", () => {
     const tsx = path.resolve(__dirname, "../../../node_modules/.bin/tsx");
     const enginePath = path.resolve(__dirname, "../performanceEngine.ts");
+    const dateHelpersPath = path.resolve(__dirname, "../dateHelpers.ts");
     // Actually import + call the REAL exported functions under TZ=America/
     // New_York (UTC-5). Sun 2025-01-05 23:30 local NY = 2025-01-06 04:30Z.
     // Pre-fix (local Sunday-rewind + UTC toISOString) this drifted to the
     // previous Saturday 2025-01-04; the fix must return the local Sunday.
     const script = `
-      import { getWeekKey, weekKeyMinusN } from ${JSON.stringify(enginePath)};
+      import { weekKeyMinusN } from ${JSON.stringify(enginePath)};
+      import { localWeekKey } from ${JSON.stringify(dateHelpersPath)};
       const d = new Date(2025, 0, 5, 23, 30, 0); // local Sun 23:30
       process.stdout.write(JSON.stringify({
-        weekKey: getWeekKey(d),
-        minus1: weekKeyMinusN(getWeekKey(d), 1),
+        weekKey: localWeekKey(d),
+        minus1: weekKeyMinusN(localWeekKey(d), 1),
       }));
     `;
     const out = execFileSync(tsx, ["--eval", script], {

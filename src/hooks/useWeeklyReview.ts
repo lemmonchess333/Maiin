@@ -22,7 +22,8 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
-import { getWeekKey, weekKeyMinusN } from "@/lib/performanceEngine";
+import { weekKeyMinusN } from "@/lib/performanceEngine";
+import { localWeekKey } from "@/lib/dateHelpers";
 import {
   buildWeeklyReview,
   weekBounds,
@@ -47,7 +48,7 @@ import {
 
 /** Sunday key of the last COMPLETED week (the reviewed week). */
 export function reviewedWeekKey(now: Date = new Date()): string {
-  return weekKeyMinusN(getWeekKey(now), 1);
+  return weekKeyMinusN(localWeekKey(now), 1);
 }
 
 /** localStorage key for the Home entry's viewed state (useDismissOnce). */
@@ -434,7 +435,7 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
         };
 
         const plannedRuns = raceRunDaysIn(weekKey);
-        const currentWeekKey = getWeekKey(new Date());
+        const currentWeekKey = localWeekKey(new Date());
         const weekAheadRuns =
           surface.kind === "race_goal"
             ? raceRunDaysIn(currentWeekKey)

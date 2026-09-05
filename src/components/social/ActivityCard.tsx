@@ -1,4 +1,5 @@
 import { useState, memo } from "react";
+import { formatClock } from "@/utils/formatters";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../lib/auth";
@@ -52,11 +53,7 @@ import {
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { elevationLabel } from "@/lib/runLabels";
 
-function formatDur(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
+const formatDur = formatClock;
 
 const RUN_CHIPS = ["Nice run", "Great pace", "Keep it up"];
 const LIFT_CHIPS = ["Great lift", "Solid session", "Strong work"];

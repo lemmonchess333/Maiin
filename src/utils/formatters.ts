@@ -107,6 +107,24 @@ export function formatDistance(km: number | null | undefined): string {
   return km.toFixed(1);
 }
 
+/**
+ * Elapsed or remaining time as a clock: "m:ss" below an hour, "h:mm:ss"
+ * from an hour ("0:08", "1:12", "1:01:01"). Rounds to the nearest second
+ * and clamps at zero; a caller that needs floor/ceil semantics (a
+ * stopwatch, a countdown) rounds before passing. Replaced twelve local
+ * copies across the run, workout and share surfaces.
+ */
+export function formatClock(totalSeconds: number): string {
+  const s = Math.max(0, Math.round(totalSeconds));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  const mmss = `${m}:${String(sec).padStart(2, "0")}`;
+  return h > 0
+    ? `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`
+    : mmss;
+}
+
 /** Calculate macro ring percentage (clamped 0–1.3) and done state (±10% of target) */
 export function macroRingState(
   value: number,

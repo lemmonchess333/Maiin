@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { formatWeightInUnit } from "@/lib/weightUnits";
 import {
   collection,
   query,
@@ -221,10 +222,7 @@ export function useHomeData(
             const snap = results[2].value;
             if (snap.empty) {
               if (profile?.weightKg) {
-                const w =
-                  weightUnit === "lbs"
-                    ? (profile.weightKg * 2.20462).toFixed(1)
-                    : profile.weightKg.toFixed(1);
+                const w = formatWeightInUnit(profile.weightKg, weightUnit);
                 weightInfo = { weight: w, date: "From profile", rawDate: null };
               }
             } else {
@@ -264,10 +262,7 @@ export function useHomeData(
                   return a.date.localeCompare(b.date);
                 });
                 const latest = sorted[sorted.length - 1];
-                const w =
-                  weightUnit === "lbs"
-                    ? (latest.weight * 2.20462).toFixed(1)
-                    : latest.weight.toFixed(1);
+                const w = formatWeightInUnit(latest.weight, weightUnit);
                 weightInfo = {
                   weight: w,
                   date: format(new Date(latest.date + "T12:00:00"), "d MMM"),
@@ -296,10 +291,7 @@ export function useHomeData(
             errors.push("Failed to load weight");
             // Fallback to profile weight
             if (profile?.weightKg) {
-              const w =
-                weightUnit === "lbs"
-                  ? (profile.weightKg * 2.20462).toFixed(1)
-                  : profile.weightKg.toFixed(1);
+              const w = formatWeightInUnit(profile.weightKg, weightUnit);
               weightInfo = { weight: w, date: "From profile", rawDate: null };
             }
           }

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { formatClock } from "@/utils/formatters";
 import type { SessionPlayer } from "@/hooks/useSessionPlayer";
 import type { SessionSegment } from "@/lib/runSegments";
 import { paceBandLabel } from "@/lib/runLabels";
@@ -43,9 +44,9 @@ const TYPE_EYEBROW: Record<string, string> = {
   cooldown: `${TEAL}CC`,
 };
 
+/** A countdown shows 0:01 until it reaches zero — ceil before formatting. */
 function countdownLabel(remainingS: number): string {
-  const r = Math.max(0, Math.ceil(remainingS));
-  return `${Math.floor(r / 60)}:${(r % 60).toString().padStart(2, "0")}`;
+  return formatClock(Math.ceil(remainingS));
 }
 
 /** The prescription line: band-first when the runner has a personalized
