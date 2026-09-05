@@ -1,5 +1,6 @@
 import { THEME } from "@/lib/theme";
 import SectionLabel from "@/components/ui/SectionLabel";
+import { Skeleton } from "@/components/LoadingSkeleton";
 import {
   Scale,
   Footprints,
@@ -25,6 +26,7 @@ export default function WeightStepsTiles({
   stepsStatus = "unavailable",
   steps = null,
   onConnectSteps,
+  loading = false,
 }: {
   lastWeight: string | null;
   weightUnit: string;
@@ -42,6 +44,11 @@ export default function WeightStepsTiles({
   stepsStatus?: StepsStatus;
   steps?: number | null;
   onConnectSteps?: () => void;
+  /* True while the home data that carries the last weight is still
+     loading. The tile then shows a skeleton, not the "not yet logged"
+     empty state — every new user sees this window, and an empty state
+     that later fills in reads as a glitch. */
+  loading?: boolean;
 }) {
   /* Home2c a11y pin: each tile button gets an aria-label that
      surfaces its state compactly for screen readers. Without these,
@@ -71,11 +78,14 @@ export default function WeightStepsTiles({
           ? ArrowRight
           : Minus;
 
-  const weightAriaLabel = !lastWeight
-    ? "Weight not yet logged. Log your weight to start tracking trends."
-    : hidden
-      ? `Weight ${trendPhrase?.toLowerCase()}, last logged ${lastWeightDate}. Tap to log weight.`
-      : `Weight ${lastWeight} ${weightUnitDisplay}, last logged ${lastWeightDate}. Tap to log weight.`;
+  const pending = loading && !lastWeight;
+  const weightAriaLabel = pending
+    ? "Weight loading."
+    : !lastWeight
+      ? "Weight not yet logged. Log your weight to start tracking trends."
+      : hidden
+        ? `Weight ${trendPhrase?.toLowerCase()}, last logged ${lastWeightDate}. Tap to log weight.`
+        : `Weight ${lastWeight} ${weightUnitDisplay}, last logged ${lastWeightDate}. Tap to log weight.`;
   // The Steps tile renders only on the native shell (steps are impossible
   // on web) AND when Health is actually available: `stepsStatus ===
   // "unavailable"` keeps it hidden so a dead affordance never ships. See
@@ -127,7 +137,9 @@ export default function WeightStepsTiles({
             top. No chevron \u2014 the whole tile taps to log, same as the
             water card. */}
         <div className="flex-1 flex flex-col justify-center min-h-0">
-          {hidden ? (
+          {pending ? (
+            <Skeleton className="h-6 w-16" />
+          ) : hidden ? (
             <div className="flex items-center gap-1.5">
               <TrendIcon
                 className="size-4 flex-shrink-0"
@@ -153,12 +165,16 @@ export default function WeightStepsTiles({
               )}
             </div>
           )}
-          <p
-            className="text-micro mt-1"
-            style={{ color: "hsl(var(--muted-foreground))" }}
-          >
-            {lastWeightDate}
-          </p>
+          {pending ? (
+            <Skeleton className="h-3 w-20 mt-1.5" />
+          ) : (
+            <p
+              className="text-micro mt-1"
+              style={{ color: "hsl(var(--muted-foreground))" }}
+            >
+              {lastWeightDate}
+            </p>
+          )}
         </div>
       </button>
       {stepsTileEnabled && (
