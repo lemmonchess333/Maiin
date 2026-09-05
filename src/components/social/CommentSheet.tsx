@@ -19,6 +19,8 @@ import BlockAwareAvatar from "./BlockAwareAvatar";
 import { toast } from "@/lib/toast";
 import { logger } from "../../lib/logger";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { describeRejection } from "@/lib/callableErrors";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 import VerifyEmailNotice from "./VerifyEmailNotice";
 
@@ -63,6 +65,7 @@ export default function CommentSheet({
   const [sending, setSending] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const lastDocRef = useRef<DocumentSnapshot | undefined>(undefined);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -152,7 +155,12 @@ export default function CommentSheet({
       setHasMore(result.hasMore);
     } catch (err) {
       logger.error("[CommentSheet] send failed", err);
-      toast.error("Couldn't post comment. Try again.");
+      const reason = describeRejection(err);
+      toast.error(
+        reason
+          ? `Couldn't post comment. ${reason}`
+          : "Couldn't post comment. Try again."
+      );
       haptic("error");
     } finally {
       setSending(false);
@@ -165,8 +173,17 @@ export default function CommentSheet({
       await deleteComment(activityId, commentId);
       haptic("light");
       setComments((prev) => prev.filter((c) => c.id !== commentId));
-    } catch {
-      // Silently fail — comment may already be deleted
+    } catch (err) {
+      // The callable's failed-precondition sentence is the diagnosis; a
+      // swallowed error leaves the row in place with no explanation.
+      logger.error("[CommentSheet] delete failed", err);
+      const reason = describeRejection(err);
+      toast.error(
+        reason
+          ? `Couldn't delete comment. ${reason}`
+          : "Couldn't delete comment. Try again."
+      );
+      haptic("error");
     }
     setDeletingId(null);
   };
@@ -208,170 +225,189 @@ export default function CommentSheet({
     // handles focus trap, escape, backdrop dismiss, body scroll
     // lock; the primitive just removes ~10 lines of duplicate
     // markup and pins the standard 70vh cap via maxHeight.
-    <BottomSheet
-      open={open}
-      onOpenChange={onOpenChange}
-      title={`Comments${commentCount > 0 ? ` (${commentCount})` : ""}`}
-      maxHeight="max-h-[70vh]"
-    >
-      {/* Comment list */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
-        {comments.length === 0 && (
-          <div className="text-center py-8 space-y-1.5">
-            <p className="text-sm font-medium text-foreground">
-              No comments yet
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Be the first to leave a comment
-            </p>
-          </div>
-        )}
+    <>
+      <BottomSheet
+        open={open}
+        onOpenChange={onOpenChange}
+        title={`Comments${commentCount > 0 ? ` (${commentCount})` : ""}`}
+        maxHeight="max-h-[70vh]"
+      >
+        {/* Comment list */}
+        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+          {comments.length === 0 && (
+            <div className="text-center py-8 space-y-1.5">
+              <p className="text-sm font-medium text-foreground">
+                No comments yet
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Be the first to leave a comment
+              </p>
+            </div>
+          )}
 
-        <AnimatePresence>
-          {comments.map((c) => {
-            const timeAgo = c.createdAt?.toDate
-              ? getTimeAgo(c.createdAt.toDate())
-              : "";
-            const isOwn = user?.uid === c.authorId;
+          <AnimatePresence>
+            {comments.map((c) => {
+              const timeAgo = c.createdAt?.toDate
+                ? getTimeAgo(c.createdAt.toDate())
+                : "";
+              const isOwn = user?.uid === c.authorId;
 
-            return (
-              <motion.div
-                key={c.id}
-                layout
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, x: -100, height: 0 }}
-                transition={{ duration: 0.2 }}
-                className="flex gap-2 group"
-              >
-                <BlockAwareAvatar
-                  uid={c.authorId}
-                  photoURL={c.authorPhotoURL}
-                  displayName={c.authorName}
-                  size="sm"
-                />
-                {/* Phase-6 hierarchy fix (visual audit W9): the message is
+              return (
+                <motion.div
+                  key={c.id}
+                  layout
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, x: -100, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex gap-2 group"
+                >
+                  <BlockAwareAvatar
+                    uid={c.authorId}
+                    photoURL={c.authorPhotoURL}
+                    displayName={c.authorName}
+                    size="sm"
+                  />
+                  {/* Phase-6 hierarchy fix (visual audit W9): the message is
                     the primary content — it reads at text-sm in foreground,
                     with author (semibold) and timestamp (caption) as the
                     supporting metadata. Previously author, body AND meta
                     were all text-xs with the body in muted grey. */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm leading-snug">
-                    <span className="text-xs font-semibold text-foreground">
-                      {c.authorName}
-                    </span>{" "}
-                    <span className="text-foreground/90">{c.text}</span>
-                  </p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <p className="text-caption text-muted-foreground">
-                      {timeAgo}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm leading-snug">
+                      <span className="text-xs font-semibold text-foreground">
+                        {c.authorName}
+                      </span>{" "}
+                      <span className="text-foreground/90">{c.text}</span>
                     </p>
-                    {/* One-tap reactions. p-2.5/-m-1.5 inflates each chip's
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <p className="text-caption text-muted-foreground">
+                        {timeAgo}
+                      </p>
+                      {/* One-tap reactions. p-2.5/-m-1.5 inflates each chip's
                         hit area toward the 44px floor without bloating the
                         row visually (the sibling flame's -m trick). */}
-                    {REACTION_KEYS.map((k) => {
-                      const uids = c.reactions?.[k] ?? [];
-                      const mine = !!user && uids.includes(user.uid);
-                      return (
-                        <button
-                          key={k}
-                          type="button"
-                          onClick={() => handleReact(c.id, k)}
-                          aria-pressed={mine}
-                          aria-label={`${mine ? "Remove" : "Add"} ${
-                            k === "muscle" ? "strong" : "fire"
-                          } reaction`}
-                          className="p-2.5 -m-1.5"
-                        >
-                          <span
-                            className={`inline-flex items-center gap-1 h-6 px-2 rounded-full text-xs transition-colors ${
-                              mine
-                                ? "bg-primary/10 text-primary"
-                                : uids.length > 0
-                                  ? "bg-muted/70 text-foreground/80"
-                                  : "bg-muted/40 text-muted-foreground"
-                            }`}
+                      {REACTION_KEYS.map((k) => {
+                        const uids = c.reactions?.[k] ?? [];
+                        const mine = !!user && uids.includes(user.uid);
+                        return (
+                          <button
+                            key={k}
+                            type="button"
+                            onClick={() => handleReact(c.id, k)}
+                            aria-pressed={mine}
+                            aria-label={`${mine ? "Remove" : "Add"} ${
+                              k === "muscle" ? "strong" : "fire"
+                            } reaction`}
+                            className="p-2.5 -m-1.5"
                           >
-                            {REACTION_EMOJI[k]}
-                            {uids.length > 0 && (
-                              <span className="font-mono tabular-nums font-medium">
-                                {uids.length}
-                              </span>
-                            )}
-                          </span>
-                        </button>
-                      );
-                    })}
+                            <span
+                              className={`inline-flex items-center gap-1 h-6 px-2 rounded-full text-xs transition-colors ${
+                                mine
+                                  ? "bg-primary/10 text-primary"
+                                  : uids.length > 0
+                                    ? "bg-muted/70 text-foreground/80"
+                                    : "bg-muted/40 text-muted-foreground"
+                              }`}
+                            >
+                              {REACTION_EMOJI[k]}
+                              {uids.length > 0 && (
+                                <span className="font-mono tabular-nums font-medium">
+                                  {uids.length}
+                                </span>
+                              )}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-                {/* Always visible (W10): the old opacity-0 group-hover reveal
+                  {/* Always visible (W10): the old opacity-0 group-hover reveal
                     made delete unreachable on touch — this is a mobile bottom
                     sheet; there is no hover. */}
-                {isOwn && (
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(c.id)}
-                    disabled={deletingId === c.id}
-                    className="size-11 inline-flex items-center justify-center text-muted-foreground hover:text-destructive-strong active:text-destructive-strong transition-colors shrink-0"
-                    aria-label="Delete comment"
-                  >
-                    <Trash2 className="size-3.5" />
-                  </button>
-                )}
-              </motion.div>
-            );
-          })}
-        </AnimatePresence>
+                  {isOwn && (
+                    <button
+                      type="button"
+                      onClick={() => setPendingDeleteId(c.id)}
+                      disabled={deletingId === c.id}
+                      className="size-11 inline-flex items-center justify-center text-muted-foreground hover:text-destructive-strong active:text-destructive-strong transition-colors shrink-0"
+                      aria-label="Delete comment"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  )}
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
 
-        {hasMore && (
-          <button
-            type="button"
-            onClick={handleLoadMore}
-            className="text-xs text-primary font-medium hover:underline w-full text-center min-h-[44px] inline-flex items-center justify-center"
-          >
-            Load more comments
-          </button>
-        )}
-      </div>
-
-      {/* Quick chips + input */}
-      <div className="border-t border-border/30 px-4 pt-3 pb-4 space-y-2">
-        {gate.needsVerification && (
-          <VerifyEmailNotice action="comment" onRecheck={gate.recheck} />
-        )}
-        {quickChips && quickChips.length > 0 && (
-          <div data-no-page-swipe className="flex gap-1.5 overflow-x-auto pb-1">
-            {quickChips.map((chip) => (
-              <button
-                type="button"
-                key={chip}
-                onClick={() => setText(chip)}
-                className="shrink-0 px-2.5 py-1 rounded-full text-xs font-medium transition-colors active:scale-95 bg-primary/10 text-primary"
-              >
-                {chip}
-              </button>
-            ))}
-          </div>
-        )}
-        <div className="flex gap-2">
-          <input
-            ref={inputRef}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            placeholder="Add a comment..."
-            aria-label="Add a comment"
-            disabled={sending || gate.needsVerification}
-            className="flex-1 text-sm px-3 py-2.5 rounded-xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground"
-          />
-          <Button
-            onClick={handleSend}
-            disabled={sending || !text.trim() || gate.needsVerification}
-          >
-            Send
-          </Button>
+          {hasMore && (
+            <button
+              type="button"
+              onClick={handleLoadMore}
+              className="text-xs text-primary font-medium hover:underline w-full text-center min-h-[44px] inline-flex items-center justify-center"
+            >
+              Load more comments
+            </button>
+          )}
         </div>
-      </div>
-    </BottomSheet>
+
+        {/* Quick chips + input */}
+        <div className="border-t border-border/30 px-4 pt-3 pb-4 space-y-2">
+          {gate.needsVerification && (
+            <VerifyEmailNotice action="comment" onRecheck={gate.recheck} />
+          )}
+          {quickChips && quickChips.length > 0 && (
+            <div
+              data-no-page-swipe
+              className="flex gap-1.5 overflow-x-auto pb-1"
+            >
+              {quickChips.map((chip) => (
+                <button
+                  type="button"
+                  key={chip}
+                  onClick={() => setText(chip)}
+                  className="shrink-0 px-2.5 py-1 rounded-full text-xs font-medium transition-colors active:scale-95 bg-primary/10 text-primary"
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="flex gap-2">
+            <input
+              ref={inputRef}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              placeholder="Add a comment..."
+              aria-label="Add a comment"
+              disabled={sending || gate.needsVerification}
+              className="flex-1 text-sm px-3 py-2.5 rounded-xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground"
+            />
+            <Button
+              onClick={handleSend}
+              disabled={sending || !text.trim() || gate.needsVerification}
+            >
+              Send
+            </Button>
+          </div>
+        </div>
+      </BottomSheet>
+      <ConfirmDialog
+        open={pendingDeleteId !== null}
+        title="Delete comment?"
+        description="This can't be undone."
+        confirmLabel="Delete"
+        destructive
+        overSheet
+        onConfirm={() => {
+          const id = pendingDeleteId;
+          setPendingDeleteId(null);
+          if (id) void handleDelete(id);
+        }}
+        onCancel={() => setPendingDeleteId(null)}
+      />
+    </>
   );
 }

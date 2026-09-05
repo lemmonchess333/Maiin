@@ -25,7 +25,11 @@ import {
   serverTimestamp,
   Timestamp,
 } from "firebase/firestore";
-import { addDocGuarded, deleteDocGuarded } from "@/lib/firestoreWrite";
+import {
+  addDocGuarded,
+  deleteDocGuarded,
+  setDocGuarded,
+} from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 
 export interface SavedRoutineExercise {
@@ -170,6 +174,23 @@ export async function deleteSavedRoutine(
   routineId: string
 ): Promise<void> {
   await deleteDocGuarded(doc(db, "users", uid, "savedRoutines", routineId));
+}
+
+/**
+ * Put a routine back exactly as it was — same id, same fields — so the
+ * Undo on a removal restores the row the user saw and any /routine/:id
+ * link to it keeps working. The exercises are written as loaded (already
+ * redacted for an external source), so no second redaction pass runs.
+ */
+export async function restoreSavedRoutine(
+  uid: string,
+  routine: SavedRoutine
+): Promise<void> {
+  const { id, createdAt, ...fields } = routine;
+  await setDocGuarded(doc(db, "users", uid, "savedRoutines", id), {
+    ...fields,
+    createdAt: createdAt ?? serverTimestamp(),
+  });
 }
 
 export async function getSavedRoutine(

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Send, Trash2 } from "lucide-react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { describeRejection } from "@/lib/callableErrors";
 import { Spinner } from "@/components/ui/Spinner";
 import { IconButton } from "@/components/ui/IconButton";
 import Avatar from "@/components/Avatar";
@@ -48,6 +50,7 @@ export default function SpaceCommentSheet({
   const [comments, setComments] = useState<SpacePostComment[] | null>(null);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const loadedForRef = useRef<string | null>(null);
 
   const load = useCallback(async () => {
@@ -99,7 +102,12 @@ export default function SpaceCommentSheet({
       onCountChange(1);
     } catch (err) {
       logger.error("[SpaceComments] send failed", err);
-      toast.error("Couldn't post the comment. Try again.");
+      const reason = describeRejection(err);
+      toast.error(
+        reason
+          ? `Couldn't post the comment. ${reason}`
+          : "Couldn't post the comment. Try again."
+      );
     } finally {
       setSending(false);
     }
@@ -113,81 +121,104 @@ export default function SpaceCommentSheet({
       haptic("light");
     } catch (err) {
       logger.error("[SpaceComments] delete failed", err);
-      toast.error("Couldn't delete the comment. Try again.");
+      const reason = describeRejection(err);
+      toast.error(
+        reason
+          ? `Couldn't delete the comment. ${reason}`
+          : "Couldn't delete the comment. Try again."
+      );
     }
   };
 
   return (
-    <BottomSheet open={open} onOpenChange={onOpenChange} title="Comments">
-      <div className="px-4 space-y-3 pb-2">
-        {comments === null && (
-          <div className="flex items-center justify-center py-6">
-            <Spinner size="sm" variant="muted" label="Loading comments" />
-          </div>
-        )}
-
-        {comments !== null && comments.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-4">
-            No comments yet — start the thread.
-          </p>
-        )}
-
-        {comments?.map((c) => (
-          <div key={c.id} className="flex items-start gap-2.5">
-            <Avatar
-              photoURL={c.authorPhotoURL}
-              displayName={c.authorName || "Athlete"}
-              size="sm"
-            />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-baseline gap-2">
-                <p className="text-sm font-semibold text-foreground truncate">
-                  {c.authorName || "Athlete"}
-                </p>
-                <span className="text-caption text-muted-foreground shrink-0">
-                  {c.createdAt?.toDate ? getTimeAgo(c.createdAt.toDate()) : ""}
-                </span>
-              </div>
-              <p className="text-sm text-foreground/90 leading-snug whitespace-pre-wrap">
-                {c.text}
-              </p>
+    <>
+      <BottomSheet open={open} onOpenChange={onOpenChange} title="Comments">
+        <div className="px-4 space-y-3 pb-2">
+          {comments === null && (
+            <div className="flex items-center justify-center py-6">
+              <Spinner size="sm" variant="muted" label="Loading comments" />
             </div>
-            {user?.uid === c.authorId && (
-              <IconButton
-                aria-label="Delete comment"
-                onClick={() => remove(c.id)}
-                icon={<Trash2 className="size-4" />}
-                className="text-muted-foreground"
+          )}
+
+          {comments !== null && comments.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No comments yet — start the thread.
+            </p>
+          )}
+
+          {comments?.map((c) => (
+            <div key={c.id} className="flex items-start gap-2.5">
+              <Avatar
+                photoURL={c.authorPhotoURL}
+                displayName={c.authorName || "Athlete"}
+                size="sm"
               />
-            )}
-          </div>
-        ))}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-baseline gap-2">
+                  <p className="text-sm font-semibold text-foreground truncate">
+                    {c.authorName || "Athlete"}
+                  </p>
+                  <span className="text-caption text-muted-foreground shrink-0">
+                    {c.createdAt?.toDate
+                      ? getTimeAgo(c.createdAt.toDate())
+                      : ""}
+                  </span>
+                </div>
+                <p className="text-sm text-foreground/90 leading-snug whitespace-pre-wrap">
+                  {c.text}
+                </p>
+              </div>
+              {user?.uid === c.authorId && (
+                <IconButton
+                  aria-label="Delete comment"
+                  onClick={() => setPendingDeleteId(c.id)}
+                  icon={<Trash2 className="size-4" />}
+                  className="text-muted-foreground"
+                />
+              )}
+            </div>
+          ))}
 
-        {user && gate.needsVerification && (
-          <VerifyEmailNotice action="comment" onRecheck={gate.recheck} />
-        )}
+          {user && gate.needsVerification && (
+            <VerifyEmailNotice action="comment" onRecheck={gate.recheck} />
+          )}
 
-        {user && (
-          <div className="flex items-end gap-2 pt-2 border-t border-border/40">
-            <textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="Add a comment…"
-              rows={1}
-              maxLength={1000}
-              disabled={sending || gate.needsVerification}
-              className="flex-1 resize-none rounded-xl bg-muted px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring min-h-[44px]"
-            />
-            <IconButton
-              aria-label="Post comment"
-              onClick={send}
-              disabled={sending || !text.trim() || gate.needsVerification}
-              icon={<Send className="size-4" />}
-              className="bg-primary-strong text-primary-foreground"
-            />
-          </div>
-        )}
-      </div>
-    </BottomSheet>
+          {user && (
+            <div className="flex items-end gap-2 pt-2 border-t border-border/40">
+              <textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="Add a comment…"
+                rows={1}
+                maxLength={1000}
+                disabled={sending || gate.needsVerification}
+                className="flex-1 resize-none rounded-xl bg-muted px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring min-h-[44px]"
+              />
+              <IconButton
+                aria-label="Post comment"
+                onClick={send}
+                disabled={sending || !text.trim() || gate.needsVerification}
+                icon={<Send className="size-4" />}
+                className="bg-primary-strong text-primary-foreground"
+              />
+            </div>
+          )}
+        </div>
+      </BottomSheet>
+      <ConfirmDialog
+        open={pendingDeleteId !== null}
+        title="Delete comment?"
+        description="This can't be undone."
+        confirmLabel="Delete"
+        destructive
+        overSheet
+        onConfirm={() => {
+          const id = pendingDeleteId;
+          setPendingDeleteId(null);
+          if (id) void remove(id);
+        }}
+        onCancel={() => setPendingDeleteId(null)}
+      />
+    </>
   );
 }
