@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { readString, writeString } from "@/lib/localStore";
 import {
   collection,
   query,
@@ -104,14 +105,10 @@ export function countUnread(
 
 function readLastSeenMs(uid: string | undefined): number {
   if (typeof window === "undefined" || !uid) return 0;
-  try {
-    const raw = window.localStorage.getItem(lastSeenKey(uid));
-    // Malformed value fails CLOSED to never-seen (0) rather than NaN.
-    const ms = raw ? new Date(raw).getTime() : 0;
-    return Number.isFinite(ms) ? ms : 0;
-  } catch {
-    return 0;
-  }
+  const raw = readString(lastSeenKey(uid));
+  // Malformed value fails CLOSED to never-seen (0) rather than NaN.
+  const ms = raw ? new Date(raw).getTime() : 0;
+  return Number.isFinite(ms) ? ms : 0;
 }
 
 export function useNotifications() {
@@ -222,11 +219,8 @@ export function useNotifications() {
   const markAllSeen = useCallback(() => {
     if (!uid) return;
     const now = new Date();
-    try {
-      window.localStorage.setItem(lastSeenKey(uid), now.toISOString());
-    } catch {
-      // localStorage unavailable — in-memory state still clears the badge.
-    }
+    // Storage unavailable — in-memory state still clears the badge.
+    writeString(lastSeenKey(uid), now.toISOString());
     setLastSeenMs(now.getTime());
   }, [uid]);
 

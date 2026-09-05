@@ -11,6 +11,8 @@
  * never dismissed), never throwing into the render path.
  */
 
+import { readString, remove, scopedKey, writeString } from "@/lib/localStore";
+
 const LAST_SHOWN_PREFIX = "tropos:easeNudge:lastShown";
 const DISMISSED_PREFIX = "tropos:easeNudge:dismissedWeek";
 /** A6: the Sunday weekKey the athlete APPLIED an easier week in — read
@@ -18,71 +20,41 @@ const DISMISSED_PREFIX = "tropos:easeNudge:dismissedWeek";
 const EASED_PREFIX = "tropos:easeNudge:easedWeek";
 
 function lastShownKey(uid: string): string {
-  return `${LAST_SHOWN_PREFIX}:${uid}`;
+  return scopedKey(LAST_SHOWN_PREFIX, uid);
 }
 function dismissedKey(uid: string): string {
-  return `${DISMISSED_PREFIX}:${uid}`;
+  return scopedKey(DISMISSED_PREFIX, uid);
 }
 
 /** YYYY-MM-DD the card was last shown for this uid, or null. */
 export function getLastShownAt(uid: string): string | null {
-  if (typeof localStorage === "undefined" || !uid) return null;
-  try {
-    return localStorage.getItem(lastShownKey(uid));
-  } catch {
-    return null;
-  }
+  return uid ? readString(lastShownKey(uid)) : null;
 }
 
 export function setLastShownAt(uid: string, dateKey: string): void {
-  if (typeof localStorage === "undefined" || !uid) return;
-  try {
-    localStorage.setItem(lastShownKey(uid), dateKey);
-  } catch {
-    /* best-effort */
-  }
+  if (uid) writeString(lastShownKey(uid), dateKey);
 }
 
 /** The Sunday weekKey the user dismissed the card in for this uid, or null. */
 export function getDismissedWeekKey(uid: string): string | null {
-  if (typeof localStorage === "undefined" || !uid) return null;
-  try {
-    return localStorage.getItem(dismissedKey(uid));
-  } catch {
-    return null;
-  }
+  return uid ? readString(dismissedKey(uid)) : null;
 }
 
 export function setDismissedWeekKey(uid: string, weekKey: string): void {
-  if (typeof localStorage === "undefined" || !uid) return;
-  try {
-    localStorage.setItem(dismissedKey(uid), weekKey);
-  } catch {
-    /* best-effort */
-  }
+  if (uid) writeString(dismissedKey(uid), weekKey);
 }
 
 function easedKey(uid: string): string {
-  return `${EASED_PREFIX}:${uid}`;
+  return scopedKey(EASED_PREFIX, uid);
 }
 
 /** A6: the Sunday weekKey an easier week was applied in, or null. */
 export function getEasedWeekKey(uid: string): string | null {
-  if (typeof localStorage === "undefined" || !uid) return null;
-  try {
-    return localStorage.getItem(easedKey(uid));
-  } catch {
-    return null;
-  }
+  return uid ? readString(easedKey(uid)) : null;
 }
 
 export function setEasedWeekKey(uid: string, weekKey: string): void {
-  if (typeof localStorage === "undefined" || !uid) return;
-  try {
-    localStorage.setItem(easedKey(uid), weekKey);
-  } catch {
-    /* best-effort */
-  }
+  if (uid) writeString(easedKey(uid), weekKey);
 }
 
 /**
@@ -97,10 +69,5 @@ export function setEasedWeekKey(uid: string, weekKey: string): void {
  * theoretical case into a routine one.
  */
 export function clearEasedWeekKey(uid: string): void {
-  if (typeof localStorage === "undefined" || !uid) return;
-  try {
-    localStorage.removeItem(easedKey(uid));
-  } catch {
-    /* best-effort */
-  }
+  if (uid) remove(easedKey(uid));
 }

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { getFunctions, httpsCallable } from "firebase/functions";
+import { isAvailable, readString, remove, writeString } from "@/lib/localStore";
 import { doc, getDoc } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
@@ -49,15 +50,11 @@ export default function OneTimeMaintenance() {
     const FLAG_KEY = `${uid}:tropos.muscleGroupsBackfilled.v1`;
 
     const run = async () => {
-      try {
-        if (localStorage.getItem(FLAG_KEY)) return;
-      } catch {
-        /* localStorage unavailable (private mode, embedded webview):
-           skip the migration entirely rather than re-running every
-           session — the visible cost of unfixed old tags is lower
-           than spamming the CF on every cold start. */
-        return;
-      }
+      /* Storage unavailable (private mode, embedded webview): skip the
+         migration entirely rather than re-running every session — the
+         visible cost of unfixed old tags is lower than spamming the CF on
+         every cold start. */
+      if (!isAvailable() || readString(FLAG_KEY)) return;
 
       try {
         const fns = getFunctions();
@@ -68,14 +65,10 @@ export default function OneTimeMaintenance() {
         const r = await fn({});
         if (cancelled) return;
         if (r.data?.ok) {
-          try {
-            localStorage.setItem(FLAG_KEY, "1");
-          } catch {
-            /* localStorage write failed — the migration ran but we
-               can't persist the flag, so it'll re-run next session.
-               Idempotent on the server side, so re-runs are safe
-               just slightly wasteful. */
-          }
+          /* A refused flag write means the migration re-runs next session.
+             Idempotent on the server side, so re-runs are safe, just
+             slightly wasteful. */
+          writeString(FLAG_KEY, "1");
         }
       } catch (err) {
         // Failure path: don't set the flag, so next session retries.
@@ -116,11 +109,7 @@ export default function OneTimeMaintenance() {
        the cursor and returned `truncated: true` forever. */
     const MAX_PAGES = 20;
     const runRecredit = async () => {
-      try {
-        if (localStorage.getItem(RECREDIT_FLAG)) return;
-      } catch {
-        return;
-      }
+      if (!isAvailable() || readString(RECREDIT_FLAG)) return;
       try {
         const fns = getFunctions();
         const fn = httpsCallable<
@@ -135,12 +124,8 @@ export default function OneTimeMaintenance() {
           }
         >(fns, "recreditMyLiftVolume");
 
-        let cursor: string | null = null;
-        try {
-          cursor = localStorage.getItem(RECREDIT_CURSOR);
-        } catch {
-          /* no stored cursor — start from the first page */
-        }
+        // No stored cursor — start from the first page.
+        let cursor: string | null = readString(RECREDIT_CURSOR);
 
         for (let page = 0; page < MAX_PAGES; page++) {
           const r = await fn(cursor ? { startAfter: cursor } : {});
@@ -148,13 +133,10 @@ export default function OneTimeMaintenance() {
           if (!r.data?.ok) return;
           cursor = r.data.cursor;
           if (!r.data.truncated) {
-            try {
-              localStorage.setItem(RECREDIT_FLAG, "1");
-              localStorage.removeItem(RECREDIT_CURSOR);
-            } catch {
-              /* Flag unwritable: the replay ran, we just can't record it.
-                 Next session re-runs and the markers make it a no-op. */
-            }
+            /* Flag unwritable: the replay ran, we just can't record it.
+               Next session re-runs and the markers make it a no-op. */
+            writeString(RECREDIT_FLAG, "1");
+            remove(RECREDIT_CURSOR);
             return;
           }
           /* Truncated, but the server gave nothing to resume from — so
@@ -173,12 +155,9 @@ export default function OneTimeMaintenance() {
             );
             return;
           }
-          try {
-            localStorage.setItem(RECREDIT_CURSOR, cursor);
-          } catch {
-            /* Cursor unwritable: this drain still completes in-memory; only
-               a mid-drain interruption would restart from the beginning. */
-          }
+          /* Cursor unwritable: this drain still completes in-memory; only a
+             mid-drain interruption would restart from the beginning. */
+          writeString(RECREDIT_CURSOR, cursor);
         }
         logger.warn(
           "[OneTimeMaintenance] liftVolumeRecredit hit the page bound; resuming next session"
@@ -199,11 +178,7 @@ export default function OneTimeMaintenance() {
        localStorage flag. */
     const LOWER_FLAG = `${uid}:tropos.displayNameLower.backfilled.v1`;
     const runLowerBackfill = async () => {
-      try {
-        if (localStorage.getItem(LOWER_FLAG)) return;
-      } catch {
-        return;
-      }
+      if (!isAvailable() || readString(LOWER_FLAG)) return;
       try {
         const ref = doc(db, "users", uid, "public", "profile");
         const snap = await getDoc(ref);
@@ -211,11 +186,7 @@ export default function OneTimeMaintenance() {
         if (!snap.exists()) {
           // No public profile to migrate; mark done so we don't keep
           // hitting the read on every session.
-          try {
-            localStorage.setItem(LOWER_FLAG, "1");
-          } catch {
-            /* ignore */
-          }
+          writeString(LOWER_FLAG, "1");
           return;
         }
         const data = snap.data() as Record<string, unknown>;
@@ -229,11 +200,7 @@ export default function OneTimeMaintenance() {
             { merge: true }
           );
         }
-        try {
-          localStorage.setItem(LOWER_FLAG, "1");
-        } catch {
-          /* ignore */
-        }
+        writeString(LOWER_FLAG, "1");
       } catch (err) {
         logger.warn(
           "[OneTimeMaintenance] displayNameLower backfill skipped",

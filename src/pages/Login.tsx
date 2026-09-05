@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { readString, remove } from "@/lib/localStore";
 import { useAuth } from "@/lib/auth";
 import {
   friendlyAuthError,
@@ -41,15 +42,9 @@ export default function Login() {
      AccountSection just before signOut; cleared immediately so it shows
      exactly one time. */
   const [accountDeleted] = useState<boolean>(() => {
-    try {
-      if (localStorage.getItem("tropos.account_deleted") === "1") {
-        localStorage.removeItem("tropos.account_deleted");
-        return true;
-      }
-    } catch {
-      /* storage unavailable — skip the banner */
-    }
-    return false;
+    if (readString("tropos.account_deleted") !== "1") return false;
+    remove("tropos.account_deleted");
+    return true;
   });
   // Neutral confirmation for the password-reset flow (shown in a calm banner,
   // not the destructive error one).

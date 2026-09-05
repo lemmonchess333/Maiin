@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useUidForStorageKey } from "@/lib/auth";
+import { readString, writeString } from "@/lib/localStore";
 
 /**
  * Generic dismiss-once primitive backed by localStorage.
@@ -76,13 +77,10 @@ export function useDismissOnce(key: string): {
 
   const dismiss = () => {
     setState({ key: scoped, dismissed: true });
-    try {
-      window.localStorage.setItem(scoped, "1");
-    } catch {
-      // Best-effort persistence — private mode falls back to in-
-      // memory only, which is the right behaviour (no crash, no
-      // toast, just a single-session dismissal).
-    }
+    // Best-effort persistence — private mode falls back to in-memory only,
+    // which is the right behaviour (no crash, no toast, just a
+    // single-session dismissal).
+    writeString(scoped, "1");
   };
 
   return { dismissed: state.dismissed, dismiss };
@@ -90,9 +88,5 @@ export function useDismissOnce(key: string): {
 
 function readDismissed(scopedKey: string): boolean {
   if (typeof window === "undefined") return false;
-  try {
-    return window.localStorage.getItem(scopedKey) === "1";
-  } catch {
-    return false;
-  }
+  return readString(scopedKey) === "1";
 }

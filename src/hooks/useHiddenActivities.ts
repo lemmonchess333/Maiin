@@ -25,6 +25,7 @@
  */
 import { useCallback, useSyncExternalStore } from "react";
 import { useUid } from "@/lib/auth";
+import { readJson, writeJson } from "@/lib/localStore";
 
 function storageKey(uid: string): string {
   return `tropos.hiddenActivities.${uid}`;
@@ -32,27 +33,15 @@ function storageKey(uid: string): string {
 
 function readSet(uid: string | null): Set<string> {
   if (!uid || typeof window === "undefined") return EMPTY_SET;
-  try {
-    const raw = window.localStorage.getItem(storageKey(uid));
-    if (!raw) return EMPTY_SET;
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return EMPTY_SET;
-    return new Set(parsed.filter((v): v is string => typeof v === "string"));
-  } catch {
-    return EMPTY_SET;
-  }
+  const parsed = readJson<unknown>(storageKey(uid), null);
+  if (!Array.isArray(parsed)) return EMPTY_SET;
+  return new Set(parsed.filter((v): v is string => typeof v === "string"));
 }
 
 function writeSet(uid: string, set: Set<string>): void {
   if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(
-      storageKey(uid),
-      JSON.stringify(Array.from(set))
-    );
-  } catch {
-    // Quota or disabled — swallow.
-  }
+  // Quota or disabled storage is swallowed; subscribers are still told.
+  writeJson(storageKey(uid), Array.from(set));
   // Notify same-tab subscribers (storage event only fires cross-tab).
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent("tropos:hidden-activities-changed"));

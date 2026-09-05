@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth";
+import { readString, scopedKey, writeString } from "@/lib/localStore";
 import { auth } from "@/lib/firebase";
 import { useSubscription } from "@/lib/subscription";
 import { useRunningStats } from "./useRunningStats";
@@ -54,7 +55,8 @@ interface DismissalState {
 // Dismissals are UID-scoped (localStorage) so on a shared device account A
 // can't suppress account B's suggestion, and keyed by suggested VDOT so a
 // *new* suggestion re-surfaces but the same one doesn't nag.
-const dismissKey = (uid: string) => `tropos.dismiss.paceInsight:${uid}`;
+const dismissKey = (uid: string) =>
+  scopedKey("tropos.dismiss.paceInsight", uid);
 
 export function usePaceInsightFromRuns(
   runs: PaceInsightRun[],
@@ -76,12 +78,9 @@ export function usePaceInsightFromRuns(
     }
 
     let vdot: number | null = null;
-    try {
-      const stored = Number(window.localStorage.getItem(dismissKey(uid)));
-      if (Number.isFinite(stored) && stored > 0) vdot = stored;
-    } catch {
-      // In-memory dismissal remains available when storage is unavailable.
-    }
+    // In-memory dismissal remains available when storage is unavailable.
+    const stored = Number(readString(dismissKey(uid)));
+    if (Number.isFinite(stored) && stored > 0) vdot = stored;
     setDismissal({ uid, vdot });
   }, [user?.uid]);
 
@@ -174,14 +173,8 @@ export function usePaceInsightFromRuns(
   const dismiss = useCallback(() => {
     if (!insight || !user) return;
     setDismissal({ uid: user.uid, vdot: insight.suggestedVdot });
-    try {
-      window.localStorage.setItem(
-        dismissKey(user.uid),
-        String(insight.suggestedVdot)
-      );
-    } catch {
-      // In-memory state still suppresses the current suggestion.
-    }
+    // In-memory state still suppresses the current suggestion.
+    writeString(dismissKey(user.uid), String(insight.suggestedVdot));
   }, [insight, user]);
 
   return { insight, accept, dismiss };

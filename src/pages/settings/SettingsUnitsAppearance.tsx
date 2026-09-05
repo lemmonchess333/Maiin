@@ -1,5 +1,6 @@
 /** SettingsUnitsAppearance — Units & Appearance nested page (Set1.2). */
 import { useAuth } from "@/lib/auth";
+import { writeString } from "@/lib/localStore";
 import SettingsSection from "@/components/settings/SettingsSection";
 import UnitsAppearanceSection from "@/components/settings/UnitsAppearanceSection";
 
@@ -34,14 +35,14 @@ export default function SettingsUnitsAppearance() {
   async function toggleDark(): Promise<void> {
     const prev = !!profile?.darkMode;
     const next = !prev;
-    // Optimistic DOM + localStorage swap so the visual change is
+    // Optimistic DOM + stored-theme swap so the visual change is
     // instant; revert both if the Firestore write fails.
     document.documentElement.classList.toggle("dark", next);
-    localStorage.setItem("tropos-dark-mode", String(next));
+    writeString("tropos-dark-mode", String(next));
     const result = await updateProfile({ darkMode: next });
     if (!result.ok) {
       document.documentElement.classList.toggle("dark", prev);
-      localStorage.setItem("tropos-dark-mode", String(prev));
+      writeString("tropos-dark-mode", String(prev));
     }
   }
 

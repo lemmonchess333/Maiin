@@ -1,5 +1,6 @@
 import { useReducer, useState } from "react";
 import { haptic } from "@/lib/haptic";
+import { writeString } from "@/lib/localStore";
 import { Download, LogOut, Trash2 } from "lucide-react";
 import DataExportSection from "./DataExportSection";
 import TrackSettingsSectionView from "./TrackSettingsSectionView";
@@ -127,12 +128,9 @@ export default function AccountSection({
       // Read-once flag for the Login screen's persistent confirmation —
       // the toast alone dies in the sign-out transition (deletion QA
       // 2026-07-27: user re-attempted login on the deleted account to
-      // verify, and got a red error as their only "confirmation").
-      try {
-        localStorage.setItem("tropos.account_deleted", "1");
-      } catch {
-        /* storage unavailable — toast remains the only confirmation */
-      }
+      // verify, and got a red error as their only "confirmation"). Without
+      // storage the toast remains the only confirmation.
+      writeString("tropos.account_deleted", "1");
       // The executor already removed the server claim + wrote the tombstone
       // (which rejects future callables). Skip the tombstone-rejected fallback
       // release; just drop the local token.
@@ -210,11 +208,7 @@ export default function AccountSection({
         toast.success("Account already deleted. Signing you out…", {
           duration: 4000,
         });
-        try {
-          localStorage.setItem("tropos.account_deleted", "1");
-        } catch {
-          /* storage unavailable */
-        }
+        writeString("tropos.account_deleted", "1");
         await discardDeletedAccountPushState(user.uid);
         /* Food9: meal photos live on the DEVICE, so the server-side
            executor cannot reach them. This erases the copies on THIS device.

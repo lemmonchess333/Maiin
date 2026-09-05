@@ -64,6 +64,7 @@
 
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
+import { readString, writeString } from "@/lib/localStore";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Footprints,
@@ -291,23 +292,13 @@ export default function ProgrammeRunSection({
   // Run14: the ease-week nudge, dismissed for the rest of this week.
   const [easeNudgeDismissed, setEaseNudgeDismissed] = useState(false);
   const [raceElapsedDismissed, setRaceElapsedDismissed] = useState<boolean>(
-    () => {
-      if (typeof window === "undefined") return false;
-      try {
-        return window.localStorage.getItem(raceElapsedDismissKey) === "1";
-      } catch {
-        return false;
-      }
-    }
+    () => readString(raceElapsedDismissKey) === "1"
   );
   function dismissRaceElapsedBanner() {
     setRaceElapsedDismissed(true);
-    try {
-      window.localStorage.setItem(raceElapsedDismissKey, "1");
-    } catch {
-      // localStorage unavailable / quota — swallow; the in-memory
-      // state still hides the banner for this session.
-    }
+    // Storage unavailable / quota — the in-memory state still hides the
+    // banner for this session.
+    writeString(raceElapsedDismissKey, "1");
   }
 
   const currentMode = profile.runMode ?? "freeform";
@@ -362,23 +353,13 @@ export default function ProgrammeRunSection({
   // past race, by which point a newly-set future race has remounted the page.
   const raceRecentDismissKey = `${storageUid}:tropos.dismiss.raceRecent.${raceGoal?.targetDate ?? "none"}`;
   const [raceRecentDismissed, setRaceRecentDismissed] = useState<boolean>(
-    () => {
-      if (typeof window === "undefined") return false;
-      try {
-        return window.localStorage.getItem(raceRecentDismissKey) === "1";
-      } catch {
-        return false;
-      }
-    }
+    () => readString(raceRecentDismissKey) === "1"
   );
   function dismissRaceRecent() {
     setRaceRecentDismissed(true);
-    try {
-      window.localStorage.setItem(raceRecentDismissKey, "1");
-    } catch {
-      // localStorage unavailable / quota — swallow; the in-memory state still
-      // hides the prompt for this session.
-    }
+    // Storage unavailable / quota — the in-memory state still hides the
+    // prompt for this session.
+    writeString(raceRecentDismissKey, "1");
     toast("Got it — we'll wrap up your plan.");
   }
 
@@ -392,23 +373,13 @@ export default function ProgrammeRunSection({
   // this whole freeform block stops rendering ("dismisses after use").
   const SET_RACE_GOAL_DISMISS_KEY = `${storageUid}:tropos.dismiss.setRaceGoal`;
   const [setRaceGoalDismissed, setSetRaceGoalDismissed] = useState<boolean>(
-    () => {
-      if (typeof window === "undefined") return false;
-      try {
-        return window.localStorage.getItem(SET_RACE_GOAL_DISMISS_KEY) === "1";
-      } catch {
-        return false;
-      }
-    }
+    () => readString(SET_RACE_GOAL_DISMISS_KEY) === "1"
   );
   function dismissSetRaceGoal() {
     setSetRaceGoalDismissed(true);
-    try {
-      window.localStorage.setItem(SET_RACE_GOAL_DISMISS_KEY, "1");
-    } catch {
-      // localStorage unavailable / quota — swallow; in-memory state still
-      // hides it for this session.
-    }
+    // Storage unavailable / quota — in-memory state still hides it for this
+    // session.
+    writeString(SET_RACE_GOAL_DISMISS_KEY, "1");
   }
 
   // PR-C: post-race card state derivation. Driven by:

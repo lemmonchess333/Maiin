@@ -7,6 +7,7 @@ import {
   Suspense,
 } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
+import { readString } from "@/lib/localStore";
 import {
   showsRpeByDefault,
   toExperience,
@@ -1146,9 +1147,9 @@ export default function WorkoutSession({
       const history = snap.docs.map((d) => d.data()) as LoggedWorkout[];
 
       for (const ex of day.exercises) {
-        // Check localStorage cooldown
+        // Check the stored cooldown
         const cooldownKey = stallCooldownKey(storageUid, ex.name);
-        const lastPopup = localStorage.getItem(cooldownKey);
+        const lastPopup = readString(cooldownKey);
         if (lastPopup && Date.now() - Number(lastPopup) < 3 * 7 * 86400000)
           continue; // 3 weeks cooldown
 

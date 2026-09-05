@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { readString, writeString } from "@/lib/localStore";
 import {
   useCalorieRingMode,
   setCalorieRingMode,
@@ -151,24 +152,14 @@ export default function FoodHeroCard({
     // Check for celebration trigger BEFORE updating prevRef
     let shouldCelebrate = false;
     if (isToday) {
-      const celebrated = (() => {
-        try {
-          return window.localStorage.getItem(celebratedKey);
-        } catch {
-          return null;
-        }
-      })();
+      const celebrated = readString(celebratedKey);
       const todayKey = todayIsoDate();
       if (
         celebrated !== todayKey &&
         didJustCompleteAll(prev, dailyTotals, targets)
       ) {
         shouldCelebrate = true;
-        try {
-          window.localStorage.setItem(celebratedKey, todayKey);
-        } catch {
-          // ignore
-        }
+        writeString(celebratedKey, todayKey);
       }
     }
 
