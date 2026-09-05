@@ -21,10 +21,8 @@ import { initializeApp, getApps } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import { assertEmulatorEnvOrExit } from "../e2e/helpers/emulator";
-import {
-  computePerformanceIndex,
-  getWeekKey,
-} from "../src/lib/performanceEngine";
+import { computePerformanceIndex } from "../src/lib/performanceEngine";
+import { localWeekKey } from "../src/lib/dateHelpers";
 import { vdotFromRace } from "../src/lib/runPaces";
 import type {
   WeeklyAggregates,
@@ -229,7 +227,7 @@ async function main() {
   // weekKeys oldest→newest, anchored on the seeded activity window.
   const weekKeys: string[] = [];
   for (let i = NUM_PERF_WEEKS - 1; i >= 0; i--) {
-    weekKeys.push(getWeekKey(day(i * 7)));
+    weekKeys.push(localWeekKey(day(i * 7)));
   }
   const priorAggs: WeeklyAggregates[] = [];
   let prevPI: number | undefined;

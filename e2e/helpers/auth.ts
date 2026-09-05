@@ -27,7 +27,7 @@
  * path or accidentally point at a non-local Firebase target.
  */
 
-import { Page, expect } from "@playwright/test";
+import { type Page, expect } from "@playwright/test";
 
 export const TEST_USER = {
   email: "e2e-test@tropos.test",
@@ -42,12 +42,14 @@ export const TEST_USER = {
  */
 export async function signInAsTestUser(
   page: Page,
-  creds: { email: string; password: string } = TEST_USER,
+  creds: { email: string; password: string } = TEST_USER
 ): Promise<void> {
   // Collect console + page errors so a sign-in failure can surface
   // what the SPA actually did, not just "locator timeout".
   const consoleLogs: string[] = [];
-  page.on("console", (msg) => consoleLogs.push(`[${msg.type()}] ${msg.text()}`));
+  page.on("console", (msg) =>
+    consoleLogs.push(`[${msg.type()}] ${msg.text()}`)
+  );
   page.on("pageerror", (err) => consoleLogs.push(`[pageerror] ${err.message}`));
 
   // Navigate to the root rather than '/login'. Playwright's URL
@@ -60,7 +62,9 @@ export async function signInAsTestUser(
   await page.goto("/");
   await page.waitForLoadState("networkidle");
   try {
-    await page.locator("#login-email").waitFor({ state: "visible", timeout: 20_000 });
+    await page
+      .locator("#login-email")
+      .waitFor({ state: "visible", timeout: 20_000 });
   } catch (err) {
     // Dump page content + console history so the next CI failure
     // shows what's actually rendered. Without this we just see
@@ -94,7 +98,10 @@ export async function signInAsTestUser(
     const url = page.url();
     // Pull the visible text out so the rendered surface is
     // recognisable in the CI log without grepping HTML.
-    const bodyText = await page.locator("body").innerText().catch(() => "<unavailable>");
+    const bodyText = await page
+      .locator("body")
+      .innerText()
+      .catch(() => "<unavailable>");
     console.error("─── post-submit nav check failed; page state ───");
     console.error("URL:", url);
     console.error("Console history:\n" + consoleLogs.join("\n"));
