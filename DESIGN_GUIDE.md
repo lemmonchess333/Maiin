@@ -221,6 +221,15 @@ the classes.
 
 ---
 
+**Numerals against a target — slash spacing.** The default is the spaced
+slash: `1,790 eaten / 2,200 kcal` on the energy header, `125 / 140g` on a
+macro tile. A single-line compact summary (Home's collapsed macro line,
+`P 125/140g · C 172/273g · F 56/61g`) drops the spaces, because at that
+size the spaced form overflows the 256px content width of a 320px device.
+Two forms, one rule: spaced unless the line has to stay a line. Decided
+2026-09-05. The whole-app role map — which treatment each UI role takes,
+and the permitted exceptions — is `docs/cohesion-spec-2026-09.md`.
+
 ## 5. Spacing & layout
 
 - **Page horizontal padding:** `px-4` (16px). Don't invent a different gutter.

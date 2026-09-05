@@ -1909,7 +1909,7 @@ export default function Food() {
         <ManualFoodLogger
           date={selectedDate}
           /* Pass the user's pre-selected meal slot through so a
-             manual entry honours the same "Add to Breakfast" pill
+             manual entry honours the same "Add to" meal selection
              selection as NL / quick-add. Null when no slot is
              selected — ManualFoodLogger omits the meal field in
              that case (no default slot, matches NL convention). */
