@@ -78,6 +78,20 @@ export default defineConfig([
           message:
             "No Tailwind arbitrary hex (bg-[#…]) — use a semantic token class (bg-lifting, text-running, bg-success/…).",
         },
+        // The same class written into a variant MAP (`{ dark: "bg-[#…]" }`)
+        // or a template string reaches className one hop later and was
+        // invisible to the attribute-scoped selector above — Dialog's
+        // TONE_PANEL carried `bg-[#1A1A1F]` unflagged until it got a token.
+        {
+          selector: "Property > Literal[value=/\\[#[0-9a-fA-F]{3,8}\\]/]",
+          message:
+            "No Tailwind arbitrary hex (bg-[#…]) in a class map either — give the colour a token (see --stage / --stage-raised for a fixed-dark surface).",
+        },
+        {
+          selector: "TemplateElement[value.raw=/\\[#[0-9a-fA-F]{3,8}\\]/]",
+          message:
+            "No Tailwind arbitrary hex (bg-[#…]) in a template string — use a semantic token class.",
+        },
         // ── Dark-mode leak guard ─────────────────────────────────────────
         // Solid `bg-white` / `text-black` don't flip with the .dark theme —
         // on theme-aware surfaces they render dark-on-dark / white flashes.
