@@ -58,7 +58,7 @@ function DemoCard({ id }: { id: string }) {
 
   useEffect(() => {
     draw(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- dev lab: `draw` closes over canvas refs only; t and id are the real triggers
   }, [t, id]);
 
   useEffect(() => () => cancelAnimationFrame(rafRef.current), []);

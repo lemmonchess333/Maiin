@@ -48,7 +48,7 @@ export default function WeeklyReview() {
   const { dismiss } = useDismissOnce(reviewViewedKey(weekKey));
   useEffect(() => {
     dismiss();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only: opening the page IS the viewed event; `dismiss` takes a new identity per render and must not re-fire
   }, []);
 
   return (
