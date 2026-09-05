@@ -1183,7 +1183,7 @@ export default function History() {
       }}
     >
       <motion.header variants={itemVariant}>
-        <h1 className="text-lg font-extrabold text-foreground">Analytics</h1>
+        <h1 className="text-xl font-extrabold text-foreground">Analytics</h1>
       </motion.header>
 
       {/* Hist4: small refresh indicator while the pull-to-refresh

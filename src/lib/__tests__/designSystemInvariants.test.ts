@@ -298,7 +298,7 @@ describe("DS ratchets — surface-level drift", () => {
 
   // The page-title h1 is `text-xl font-extrabold` (H1 tier). Off-scale h1s
   // — the wordmark, a text-h2 hero, a font-bold title — are counted here.
-  const OFF_SCALE_H1_BASELINE = 13;
+  const OFF_SCALE_H1_BASELINE = 6;
   it("<h1> elements off the page-title scale do not increase", () => {
     const { total, byFile } = scan((src) => {
       let n = 0;
