@@ -42,6 +42,25 @@ const SPACE = "womens-running";
    seeds mid-test. Distinct id = distinct data plane. */
 const PROJECT_ID = "tropos-spaces-rules-test";
 
+/* Every value a client legitimately writes to a photo field — Storage
+   download URL, Google OAuth CDN, Apple OAuth CDN — and the shapes that
+   must never reach a stranger's <img src>: arbitrary host, suffix-phishing
+   host, http downgrade, non-http schemes, and a 2049-char value on an
+   allowed origin (the size cap). */
+const ALLOWED_PHOTO_URLS = [
+  "https://firebasestorage.googleapis.com/v0/b/tropos-fitness.firebasestorage.app/o/space-photos%2Fmember-uid%2Fp1.jpg?alt=media",
+  "https://lh3.googleusercontent.com/a/ACg8ocIabcdefg=s96-c",
+  "https://appleid.cdn-apple.com/static/bin/avatar/123.jpg",
+];
+const REJECTED_PHOTO_URLS = [
+  "https://pixel-tracker.example/pixel?uid=victim",
+  "https://lh3.googleusercontent.com.evil.com/a/x",
+  "http://firebasestorage.googleapis.com/v0/b/x/o/y.jpg",
+  "javascript:alert(1)",
+  "data:image/svg+xml;base64,PHN2ZyBvbmxvYWQ9YWxlcnQoMSk+",
+  "https://firebasestorage.googleapis.com/" + "a".repeat(2010),
+];
+
 suite("firestore.rules — community spaces", () => {
   let env: RulesTestEnvironment;
 
@@ -144,6 +163,28 @@ suite("firestore.rules — community spaces", () => {
         })
       );
     });
+
+    it("join with a Storage or OAuth avatar succeeds; any other origin fails", async () => {
+      // The roster renders every member's photoURL to every signed-in
+      // viewer; useSpaceMembership copies profile.photoURL and omits the
+      // field when there is none.
+      const ref = doc(db(MEMBER), `spaces/${SPACE}/members/${MEMBER}`);
+      for (const photoURL of ALLOWED_PHOTO_URLS) {
+        await assertSucceeds(setDoc(ref, { joinedAt: new Date(), photoURL }));
+        // Leave so the next iteration is a fresh join, not an update.
+        await assertSucceeds(deleteDoc(ref));
+      }
+      for (const photoURL of [...REJECTED_PHOTO_URLS, 42]) {
+        await assertFails(setDoc(ref, { joinedAt: new Date(), photoURL }));
+      }
+    });
+
+    it("a cosmetic update cannot repoint photoURL off the allowed origins", async () => {
+      await seedMember(MEMBER);
+      const ref = doc(db(MEMBER), `spaces/${SPACE}/members/${MEMBER}`);
+      await assertFails(updateDoc(ref, { photoURL: REJECTED_PHOTO_URLS[0] }));
+      await assertSucceeds(updateDoc(ref, { photoURL: ALLOWED_PHOTO_URLS[1] }));
+    });
   });
 
   describe("posts — create", () => {
@@ -241,6 +282,34 @@ suite("firestore.rules — community spaces", () => {
       await assertFails(
         setDoc(doc(db(MEMBER), `spaces/made-up/posts/p1`), validPost(MEMBER))
       );
+    });
+
+    it("authorPhotoURL and photoUrl must sit on an allowed origin", async () => {
+      // Both render to every signed-in viewer in SpacePostCard — the
+      // avatar through Avatar, the attached photo as a bare <img src>.
+      // The composer writes profile.photoURL and the Storage download URL
+      // respectively, and omits each when there is none.
+      await seedMember(MEMBER);
+      const ref = (id: string) =>
+        doc(db(MEMBER), `spaces/${SPACE}/posts/${id}`);
+      await assertSucceeds(
+        setDoc(ref("ok"), {
+          ...validPost(MEMBER),
+          authorPhotoURL: ALLOWED_PHOTO_URLS[1],
+          photoUrl: ALLOWED_PHOTO_URLS[0],
+        })
+      );
+      for (const [i, bad] of [...REJECTED_PHOTO_URLS, 42].entries()) {
+        await assertFails(
+          setDoc(ref(`bad-author-${i}`), {
+            ...validPost(MEMBER),
+            authorPhotoURL: bad,
+          })
+        );
+        await assertFails(
+          setDoc(ref(`bad-photo-${i}`), { ...validPost(MEMBER), photoUrl: bad })
+        );
+      }
     });
   });
 

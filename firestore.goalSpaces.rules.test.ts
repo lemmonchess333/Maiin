@@ -277,6 +277,55 @@ suite("firestore.rules — goal spaces and server-only ledgers", () => {
       await assertSucceeds(getDoc(eventRef(asMember(), "seeded")));
       await assertFails(getDoc(eventRef(asOther(), "seeded")));
     });
+
+    it("refuses an unauthenticated caller outright", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(
+          doc(ctx.firestore(), "goalSpaces", SPACE, "events", "seeded"),
+          { id: "seeded", uid: MEMBER, kind: "milestone" }
+        );
+      });
+      const db = env.unauthenticatedContext().firestore();
+      await assertFails(getDoc(eventRef(db, "seeded")));
+      await assertFails(setDoc(eventRef(db, "anon"), validEvent()));
+    });
+
+    it("accepts weekKey as null — what publishEvent sends — or a YYYY-MM-DD week", async () => {
+      const db = asMember();
+      await assertSucceeds(
+        setDoc(eventRef(db, "wk-null"), validEvent({ weekKey: null }))
+      );
+      await assertSucceeds(
+        setDoc(eventRef(db, "wk-date"), validEvent({ weekKey: "2026-08-30" }))
+      );
+    });
+
+    it("refuses a weekKey that is not a date key", async () => {
+      // The field is member-readable; without a shape it is a second free
+      // text slot beside the one the 200-char cap bounds.
+      const db = asMember();
+      for (const [i, weekKey] of [
+        "2026/08/30",
+        "30-08-2026",
+        "x".repeat(300),
+        42,
+      ].entries()) {
+        await assertFails(
+          setDoc(eventRef(db, `wk-bad-${i}`), validEvent({ weekKey }))
+        );
+      }
+    });
+
+    it("bounds id at 64 chars and requires a string", async () => {
+      const db = asMember();
+      await assertSucceeds(
+        setDoc(eventRef(db, "id-64"), validEvent({ id: "i".repeat(64) }))
+      );
+      await assertFails(
+        setDoc(eventRef(db, "id-65"), validEvent({ id: "i".repeat(65) }))
+      );
+      await assertFails(setDoc(eventRef(db, "id-num"), validEvent({ id: 7 })));
+    });
   });
 
   describe("server-only ledgers", () => {
@@ -319,9 +368,7 @@ suite("firestore.rules — goal spaces and server-only ledgers", () => {
       await assertSucceeds(
         getDoc(doc(asMember(), "globalRestrictedUids", MEMBER))
       );
-      await assertFails(
-        getDoc(doc(asOther(), "globalRestrictedUids", MEMBER))
-      );
+      await assertFails(getDoc(doc(asOther(), "globalRestrictedUids", MEMBER)));
       await assertFails(
         deleteDoc(doc(asMember(), "globalRestrictedUids", MEMBER))
       );
