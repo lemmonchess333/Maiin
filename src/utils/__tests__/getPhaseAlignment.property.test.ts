@@ -4,7 +4,7 @@
  *
  * `avgBalance` is expenditure − intake (positive = a deficit). The alignment is
  * GOAL-DIRECTIONAL: a deficit is on-track for a cut but at-odds for a lean bulk,
- * and vice-versa; within ±NEAR_MAINTENANCE_THRESHOLD it's "maintaining". A
+ * and vice-versa; within ±200 kcal/day it's "maintaining". A
  * flipped sign or a wrong threshold would tell a user they're on track when
  * they're sabotaging their goal. Example tests pin specific points; this fuzzes
  * the whole balance range and asserts the directional contract for every value.
@@ -12,10 +12,7 @@
  * Deterministic (seeded PRNG).
  */
 import { describe, it, expect } from "vitest";
-import {
-  getPhaseAlignment,
-  NEAR_MAINTENANCE_THRESHOLD,
-} from "../calorieBalance";
+import { getPhaseAlignment } from "../calorieBalance";
 
 function mulberry32(seed: number): () => number {
   let a = seed;
@@ -28,7 +25,9 @@ function mulberry32(seed: number): () => number {
   };
 }
 
-const T = NEAR_MAINTENANCE_THRESHOLD; // 200
+// The documented ±200 kcal/day near-maintenance band, as a literal: the
+// property pins the behaviour, not the module's agreement with itself.
+const T = 200;
 
 describe("getPhaseAlignment directional contract (property-based)", () => {
   it("cut: a deficit (>T) is on-track, a surplus (<-T) is at-odds, near-maintenance holds", () => {

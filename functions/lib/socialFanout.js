@@ -62,7 +62,7 @@ function buildSummary(activity) {
         ? formatPace(activity.avgPace)
         : activity.avgPace || "";
     const name = activity.runName || "Run";
-    return `${name} · ${km}km · ${time} · ${pace} pace`;
+    return `${name} · ${km} km · ${time} · ${pace} pace`;
   }
   const name = activity.workoutName || "Workout";
   const exCount = activity.exerciseCount || 0;
