@@ -1,17 +1,19 @@
-import { useRef } from "react";
 import { motion } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 import { Calculator, Flame, Minus, Plus, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MIN_TARGET_CALORIES } from "@/lib/macroConstants";
 import { ACTIVITY_LABELS } from "@/lib/tdee";
 import type { ActivityLevel, TDEEResult } from "@/lib/tdee";
-import type { GoalWeightPlan } from "@/lib/goalWeightPlan";
+import {
+  buildGoalWeightPersistPayload,
+  type GoalWeightPlan,
+} from "@/lib/goalWeightPlan";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Button } from "@/components/ui/Button";
 import { resolveTargetDrift, shouldShowTargetDrift } from "@/lib/targetDrift";
 import AccordionSection from "@/components/AccordionSection";
 import { useMacroPalette } from "@/hooks/useMacroPalette";
+import CalorieTargetOverride from "./CalorieTargetOverride";
 import {
   adaptiveCalorieStatus,
   adaptiveCalorieStatusLabel,
@@ -69,7 +71,13 @@ export default function NutritionSection({
   // raw Tailwind palette classes that also broke the token invariant.
   const { text: macroText } = useMacroPalette();
 
-  const calorieTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const overrideRecipe = (customCalorieTarget?: number) =>
+    buildGoalWeightPersistPayload({
+      profile: { ...profile, age, activityLevel, customCalorieTarget },
+      currentKg,
+      targetKg: goalWeightKg,
+      rateKgPerWeek: weeklyRateKg,
+    });
 
   /* The stored target was set from the body the user had at the time;
      `tdee.tdee` is maintenance for the body they have now. A cut therefore
@@ -441,69 +449,25 @@ export default function NutritionSection({
             </p>
           )}
 
-          {/* Custom calorie override */}
-          <div className="mt-3 pt-3 border-t border-border/50">
-            <div className="flex items-center justify-between">
-              <label
-                htmlFor="tdee-custom-target"
-                className="text-sm text-muted-foreground"
-              >
-                Override daily target (optional)
-              </label>
-              {profile?.customCalorieTarget && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    updateProfile({ customCalorieTarget: undefined })
-                  }
-                  className="text-xs text-primary font-medium"
-                >
-                  Reset to calculated
-                </button>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground mt-0.5 mb-2">
-              Leave blank to use calculated target of {tdee.targetCalories} cal
-            </p>
-            <input
-              id="tdee-custom-target"
-              type="number"
-              value={profile?.customCalorieTarget ?? ""}
-              onChange={(e) => {
-                const val = e.target.value ? Number(e.target.value) : undefined;
-                clearTimeout(calorieTimerRef.current);
-                calorieTimerRef.current = setTimeout(() => {
-                  updateProfile({ customCalorieTarget: val || undefined });
-                }, 500);
-              }}
-              placeholder={String(tdee.targetCalories)}
-              className="w-full px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
-            />
-            {/* The rate-derived path is floored at MIN_TARGET_CALORIES; this
-                field is not — it is bounded only by the profile sanitizer
-                (0..10000), so a target below the floor is reachable by typing
-                one. Owner decision 2026-08-12: warn, don't clamp. It is the
-                user's own number, and blocking it just pushes them to lower
-                their goal weight instead — but the app enforcing a floor three
-                centimetres up the same screen and saying nothing here is the
-                dishonest option. */}
-            {typeof profile?.customCalorieTarget === "number" &&
-              profile.customCalorieTarget > 0 &&
-              profile.customCalorieTarget < MIN_TARGET_CALORIES && (
-                <p
-                  className="text-caption leading-snug mt-2"
-                  style={{ color: "hsl(var(--warning-strong))" }}
-                >
-                  Below the{" "}
-                  <span className="font-mono tabular-nums">
-                    {MIN_TARGET_CALORIES}
-                  </span>{" "}
-                  cal floor Tropos uses everywhere else. Your plan will keep
-                  this figure — very low targets make protein and essential fat
-                  hard to fit.
-                </p>
-              )}
-          </div>
+          <CalorieTargetOverride
+            key={profile.uid}
+            value={profile.customCalorieTarget || undefined}
+            calculatedTarget={overrideRecipe().formulaTdee.targetCalories}
+            onSave={(customCalorieTarget) => {
+              const { payload } = overrideRecipe(customCalorieTarget);
+              // Undefined is stripped by the guarded merge and cannot clear
+              // a stored override. Zero is the existing no-override value
+              // understood by both the client and server target resolvers.
+              // Persist all target mirrors together, including on reset.
+              return updateProfile({
+                customCalorieTarget: customCalorieTarget ?? 0,
+                targetCalories: payload.targetCalories,
+                targetProtein: payload.targetProtein,
+                targetCarbs: payload.targetCarbs,
+                targetFat: payload.targetFat,
+              });
+            }}
+          />
         </div>
       </div>
 

@@ -353,9 +353,14 @@ function matchRemote(
 // 3. Fall back to the raw local entry so at-least-something renders for
 //    exercises free-exercise-db doesn't cover.
 export async function getExerciseDemo(
-  name: string
+  name: string,
+  options: { preferLocal?: boolean } = {}
 ): Promise<ExerciseDemo | null> {
   const local = buildLocalFallback(name);
+  // A caller with a rig/placard already owns its visual. Reviewed local
+  // media also needs no borrowed photos. Neither should wait for the
+  // optional external database (which may stall on a gym connection).
+  if (local && (options.preferLocal || local.images.length > 0)) return local;
   const demos = await loadDemos();
   const remote = matchRemote(demos, name);
 

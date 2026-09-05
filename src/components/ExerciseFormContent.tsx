@@ -37,6 +37,11 @@ interface Props {
 const COLLAPSED_STEPS = 2;
 
 function ExerciseFormContent({ exerciseName, active = true }: Props) {
+  const exerciseId = EXERCISES.find(
+    (e) => e.name.toLowerCase() === exerciseName.toLowerCase()
+  )?.id;
+  const rigDemo = exerciseId ? getBodyDemo(exerciseId) : null;
+  const preferLocal = rigDemo !== null;
   const [demo, setDemo] = useState<ExerciseDemo | null>(null);
   const [loading, setLoading] = useState(true);
   const [showInstructions, setShowInstructions] = useState(false);
@@ -53,16 +58,24 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
 
   useEffect(() => {
     if (!active) return;
+    // A response belongs to this exercise AND this open session. A slow
+    // request must not replace a newer guide or end its loading state.
+    let cancelled = false;
     const load = async () => {
       setLoading(true);
       setShowInstructions(false);
       setDemoFailed(false);
-      const d = await getExerciseDemo(exerciseName);
+      setActiveStep(0);
+      const d = await getExerciseDemo(exerciseName, { preferLocal });
+      if (cancelled) return;
       setDemo(d);
       setLoading(false);
     };
     load();
-  }, [exerciseName, active]);
+    return () => {
+      cancelled = true;
+    };
+  }, [exerciseName, active, preferLocal]);
 
   const primaryMapped = demo
     ? (mapMuscles(demo.primaryMuscles) as Muscle[])
@@ -122,10 +135,6 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
   // end-state (muscles highlighted ON the moving body) is the 3D-model path.
   // Rig demo (code-built faceted figure) outranks photos: it's the app's
   // own visual language, deterministic, and carries honest muscle tint.
-  const exerciseId = EXERCISES.find(
-    (e) => e.name.toLowerCase() === exerciseName.toLowerCase()
-  )?.id;
-  const rigDemo = exerciseId ? getBodyDemo(exerciseId) : null;
   const hasAnimation = !rigDemo && demo.images.length > 0 && !demoFailed;
   /* A placard demo teaches the steps ON the figure — each position
      named and cued under the drawing it belongs to. Showing the same

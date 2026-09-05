@@ -7,6 +7,7 @@ import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { getPlainLanguageSummary } from "@/lib/performanceSummary";
+import { getVerbState, VERB_LABEL } from "@/lib/performanceLine";
 import {
   resolveLoadBand,
   resolveDeloadRecommended,
@@ -22,7 +23,7 @@ import UITooltip from "@/components/ui/Tooltip";
  * leaking the weights, which would invite over-optimisation against
  * a single dimension. */
 const PI_EXPLAINER =
-  "0–100 score combining your training load, recovery, and consistency over the last 4 weeks. Higher = better progression with sustainable recovery.";
+  "0–100 score combining your training load, recovery, and consistency over the last 4 weeks. A higher score is not a recommendation to train harder — read it alongside your load and recovery guidance.";
 
 function pctSigned(x: number) {
   const v = Math.round(x * 100);
@@ -40,10 +41,13 @@ function pctSigned(x: number) {
  * drifted into gauge and summary as separate copies. */
 function bandPalette(
   score: number,
-  establishing: boolean
+  establishing: boolean,
+  backingOff: boolean
 ): { identity: string; text: string } {
   if (establishing)
     return { identity: THEME.brand, text: "hsl(var(--primary-strong))" };
+  if (backingOff)
+    return { identity: THEME.amber, text: "hsl(var(--warning-strong))" };
   const clamped = Math.max(0, Math.min(100, score));
   if (clamped >= 80)
     return { identity: THEME.success, text: "hsl(var(--success-strong))" };
@@ -57,6 +61,7 @@ function bandPalette(
 function PIGauge({
   score,
   establishing,
+  backingOff,
 }: {
   score: number;
   /**
@@ -70,6 +75,7 @@ function PIGauge({
    * claiming otherwise.
    */
   establishing?: boolean;
+  backingOff: boolean;
 }) {
   const clamped = Math.max(0, Math.min(100, score));
   const RADIUS = 70;
@@ -83,18 +89,21 @@ function PIGauge({
   // says "peak" as loudly as the word did.
   const { identity: color, text: bandTextColor } = bandPalette(
     clamped,
-    !!establishing
+    !!establishing,
+    backingOff
   );
 
   const band = establishing
     ? "Early read"
-    : clamped >= 80
-      ? "Peak"
-      : clamped >= 60
-        ? "Building"
-        : clamped >= 40
-          ? "Moderate"
-          : "Recovery";
+    : backingOff
+      ? VERB_LABEL["backing-off"]
+      : clamped >= 80
+        ? "Peak"
+        : clamped >= 60
+          ? "Building"
+          : clamped >= 40
+            ? "Moderate"
+            : "Recovery";
 
   // Needle tip point
   const angle = Math.PI - progress * Math.PI; // 180° → 0°
@@ -311,6 +320,11 @@ export default function PerformanceTab() {
      at overreach. `resolveLoadBand` is total and shared with the Home hero
      + PI chart so the three surfaces cannot disagree again. */
   const loadBand = resolveLoadBand(currentWeek);
+  const deloadRecommended = resolveDeloadRecommended(currentWeek);
+  // Share Home's override: the score is real, but "Peak / on track" is
+  // the wrong verdict when that same week recommends backing off.
+  const backingOff =
+    getVerbState(loadBand, deloadRecommended) === "backing-off";
   // Cold-start gate: until the baseline is established the load band and
   // the "vs baseline" framing aren't meaningful (the baseline is derived
   // from prior weeks), so the confident verdict, band and delta are all
@@ -329,10 +343,11 @@ export default function PerformanceTab() {
     pi,
     loadBand,
     establishing ? null : delta,
-    establishing
+    establishing,
+    deloadRecommended
   );
 
-  const summaryColor = bandPalette(pi, establishing).text;
+  const summaryColor = bandPalette(pi, establishing, backingOff).text;
 
   const insightBullets = currentWeek.insight?.bullets;
   const planAdj = (
@@ -344,7 +359,7 @@ export default function PerformanceTab() {
       {/* Deload banner */}
       {/* Was `flags?.deloadRecommended` — never written, so this banner
           had never rendered for any user. */}
-      {resolveDeloadRecommended(currentWeek) && (
+      {deloadRecommended && (
         <div
           className="p-4 rounded-2xl flex items-start gap-3"
           style={{ background: THEME.warning + "14" }}
@@ -380,6 +395,7 @@ export default function PerformanceTab() {
         <PIGauge
           score={currentWeek.performanceIndex}
           establishing={establishing}
+          backingOff={backingOff}
         />
         <div className="mt-3 text-center space-y-1.5">
           <div className="flex items-center justify-center gap-2">

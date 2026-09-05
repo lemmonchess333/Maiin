@@ -17,6 +17,7 @@
  */
 
 import type { LoadBand } from "./performanceTypes";
+import { getVerbState } from "./performanceLine";
 
 export interface PerformanceSummary {
   headline: string;
@@ -45,7 +46,9 @@ export function getPlainLanguageSummary(
    * verdict instead of a confident one. Matches the Home hero's existing
    * ", establishing baseline" treatment so the two surfaces don't disagree.
    */
-  establishing = false
+  establishing = false,
+  /** Recovery recommendations override score-tier praise, as on Home. */
+  deloadRecommended = false
 ): PerformanceSummary {
   if (establishing) {
     return {
@@ -54,8 +57,11 @@ export function getPlainLanguageSummary(
     };
   }
 
-  const headline =
-    pi >= 80
+  const backingOff =
+    getVerbState(loadBand, deloadRecommended) === "backing-off";
+  const headline = backingOff
+    ? "Backing off — make room for recovery"
+    : pi >= 80
       ? "Strong week — your training is on track"
       : pi >= 60
         ? "Solid week — keep the cadence"
@@ -89,6 +95,13 @@ export function getPlainLanguageSummary(
       body =
         "Very light week. If that was planned recovery you're on track — otherwise an easy session is the way back in.";
       break;
+  }
+
+  // A discipline-specific recommendation can fire below the composite
+  // overreach band. The body must honour it too, not say "Balanced load"
+  // beneath a recommendation to ease the week.
+  if (deloadRecommended && loadBand !== "overreach") {
+    body = "A lighter week is recommended. Give yourself room to recover.";
   }
 
   if (delta !== null && Math.abs(delta) > 5) {
