@@ -325,7 +325,7 @@ export default function Upgrade() {
             {[
               "Unlimited AI photo food logging",
               "Full Performance Engine",
-              "AI adaptive macros",
+              "Macros that shift with your training",
               "Advanced insights",
             ].map((f) => (
               <li key={f} className="flex items-start gap-1.5">
@@ -417,7 +417,7 @@ export default function Upgrade() {
                     "Everything in Free +",
                     "Unlimited AI photo food logging",
                     "Full Performance Engine",
-                    "AI adaptive macros",
+                    "Macros that shift with your training",
                     "Advanced insights",
                   ].map((f) => (
                     <li key={f} className="flex items-start gap-1.5">

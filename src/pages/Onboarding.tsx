@@ -5,7 +5,7 @@ import {
   useRef,
   type CSSProperties,
 } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { haptic } from "@/lib/haptic";
 import { useAuth } from "@/lib/auth";
 import { doc, serverTimestamp } from "firebase/firestore";
@@ -21,6 +21,10 @@ import RangeInput from "@/components/ui/RangeInput";
 import { resolveGoalWeightPlan } from "@/lib/goalWeightPlan";
 import { THEME } from "@/lib/theme";
 import { logger } from "@/lib/logger";
+import { Toggle } from "@/components/ui/Toggle";
+import { requestNotificationPermission } from "@/lib/notifications";
+import { DEFAULT_MEAL_REMINDERS } from "@/hooks/useMealReminders";
+import { DEFAULT_WORKOUT_REMINDERS } from "@/hooks/useWorkoutReminders";
 import { motion, AnimatePresence } from "framer-motion";
 import { PROGRAM_TEMPLATES } from "@/features/program/templates";
 import { templateToProgramState } from "@/features/program/templateConversion";
@@ -210,6 +214,7 @@ export default function Onboarding() {
   // resume point) and walks all TOTAL_STEPS.
   const [step, setStep] = useState(draft?.step ?? 0);
   const [saving, setSaving] = useState(false);
+  const [remindersOptIn, setRemindersOptIn] = useState(false);
 
   // Funnel: emit a step-view on mount and on each step change. Fires for
   // every onboarding (not first-only), so dashboards see per-step drop-off.
@@ -475,6 +480,26 @@ export default function Onboarding() {
   ];
 
   // ── Save handler — uses Cloud Function (Admin SDK) to bypass Firestore rules
+  // Reminders opt-in on the confirm step. The OS permission prompt belongs
+  // to the tap that meant it, so it is requested here rather than on a
+  // later boot; a refusal leaves the switch off and says where to turn it
+  // on later.
+  const toggleReminders = async () => {
+    haptic("light");
+    if (remindersOptIn) {
+      setRemindersOptIn(false);
+      return;
+    }
+    const granted = await requestNotificationPermission();
+    if (!granted) {
+      toast.error(
+        "Reminders need notification permission. You can turn them on later in Settings → Notifications."
+      );
+      return;
+    }
+    setRemindersOptIn(true);
+  };
+
   const handleFinish = async () => {
     if (!user) return;
     setSaving(true);
@@ -702,6 +727,28 @@ export default function Onboarding() {
       // Clear BEFORE the local profile update so both exits below (normal
       // navigate and the reload fallback) leave no stale draft behind, and
       // latch completedRef so the persist effect can't resurrect it.
+      // Reminders opt-in, written once the profile is durable so a failed
+      // onboarding never leaves stray settings docs. The reminder hooks read
+      // these on the next boot and schedule from them; both defaults come
+      // from the hooks themselves so this cannot drift from what Settings
+      // would write.
+      if (remindersOptIn) {
+        try {
+          await Promise.all([
+            setDocGuarded(
+              doc(db, "users", user.uid, "settings", "mealReminders"),
+              { ...DEFAULT_MEAL_REMINDERS, enabled: true }
+            ),
+            setDocGuarded(
+              doc(db, "users", user.uid, "settings", "workoutReminders"),
+              { ...DEFAULT_WORKOUT_REMINDERS, enabled: true }
+            ),
+          ]);
+        } catch (err) {
+          logger.warn("Onboarding: reminder opt-in write failed", err);
+        }
+      }
+
       onboardingCompletedRef.current = true;
       clearOnboardingDraft(user.uid);
 
@@ -1428,6 +1475,12 @@ export default function Onboarding() {
                       Tropos is only available for users aged 16 and over.
                       Please check back when you meet the age requirement.
                     </p>
+                    <Link
+                      to="/support"
+                      className="inline-flex items-center min-h-[44px] text-xs font-semibold underline underline-offset-2 text-destructive-strong"
+                    >
+                      Questions? Contact support
+                    </Link>
                   </div>
                 )}
               </div>
@@ -1829,6 +1882,35 @@ export default function Onboarding() {
                   style={
                     { "--tw-ring-color": `${THEME.brand}55` } as CSSProperties
                   }
+                />
+              </motion.div>
+              {/* The two reminders default off and sit three taps deep in
+                  Settings; offering them here turns on a return trigger
+                  before the user has to go looking for one. */}
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7, duration: 0.3 }}
+                className="mt-3 rounded-2xl p-4 flex items-center gap-3"
+                style={{
+                  background: "hsl(var(--muted) / 0.5)",
+                  border: "1px solid hsl(var(--border))",
+                }}
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold">Daily reminders</p>
+                  <p
+                    className="text-xs mt-0.5 leading-relaxed"
+                    style={{ color: "hsl(var(--muted-foreground))" }}
+                  >
+                    A nudge to log meals and to train on programme days. Off
+                    until you say so; change any time in Settings.
+                  </p>
+                </div>
+                <Toggle
+                  checked={remindersOptIn}
+                  onChange={() => void toggleReminders()}
+                  label="Daily reminders"
                 />
               </motion.div>
             </>
