@@ -52,9 +52,8 @@ function usesLines(): UsesLine[] {
 /** `uses: owner/repo@<40-hex> # vTag` — third-party actions only. Local
  *  (`./path`) and docker (`docker://`) references are not pins and are
  *  left to their own review. */
-const PINNED =
-  /^\s*-?\s*uses:\s*[\w.-]+\/[\w.\/-]+@[0-9a-f]{40}\s+#\s*v\S+\s*$/;
-const THIRD_PARTY = /^\s*-?\s*uses:\s*[\w.-]+\/[\w.\/-]+@/;
+const PINNED = /^\s*-?\s*uses:\s*[\w.-]+\/[\w./-]+@[0-9a-f]{40}\s+#\s*v\S+\s*$/;
+const THIRD_PARTY = /^\s*-?\s*uses:\s*[\w.-]+\/[\w./-]+@/;
 
 describe("GitHub Actions are pinned to commit SHAs", () => {
   it("scans a non-trivial set of workflows", () => {
