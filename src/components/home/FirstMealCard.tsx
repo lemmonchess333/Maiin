@@ -50,7 +50,7 @@ export default function FirstMealCard({
             Log your first meal
           </p>
           <p className="text-micro text-muted-foreground">
-            Snap a photo or search — it only takes a moment
+            Snap a photo or search
           </p>
         </div>
         <div

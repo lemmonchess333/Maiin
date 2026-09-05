@@ -172,8 +172,7 @@ export default function PeopleView({
   }, []);
 
   const handleShareInvite = async () => {
-    const text =
-      "I'm tracking my lifts and runs on Tropos. Join me and let's compete!";
+    const text = "I'm tracking my lifts and runs on Tropos. Come join me.";
     if (navigator.share) {
       try {
         await navigator.share({

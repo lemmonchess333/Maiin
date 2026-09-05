@@ -841,7 +841,7 @@ export function useProgram() {
   // PR-G: auto week-rollover effect. When the user opens the app
   // and the calendar week has advanced past the week their
   // runDays were generated for, automatically rotate forward to
-  // catch up. Mirrors what the user-tapped "Advance to Next Week"
+  // catch up. Mirrors what the user-tapped "Start next week"
   // button does on the Lift tab, but driven by calendar instead
   // of lift completion.
   //
@@ -1405,7 +1405,7 @@ export function useProgram() {
       const allDone = updated.workouts.every((d) => d.completed || d.skipped);
       if (allDone) {
         toast.success(
-          "All workouts complete! Advance to next week when ready."
+          "All workouts complete. Start next week when you're ready."
         );
       }
       return { workoutId };

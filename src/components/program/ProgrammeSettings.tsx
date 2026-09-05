@@ -707,7 +707,7 @@ export default function ProgrammeSettings({
       {/* ── Group 1: Goal — "What are we optimizing for?" ── */}
       <ProgrammeSettingsGroup
         title="Goal"
-        subtitle="Shape the programme around your current objective."
+        subtitle="We'll shape the programme around this."
       >
         <div>
           <SectionLabel>Training focus</SectionLabel>

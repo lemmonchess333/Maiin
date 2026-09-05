@@ -7,7 +7,7 @@ import { predictRaceTimeS } from "@/lib/runPaces";
 
 /* Pins the Analytics race-predictions surface: with a benchmark the four
  * distances render finish times from the SAME Riegel engine the planner
- * uses; without one the card is the designed cold-start state (unlock
+ * uses; without one the card is the designed cold-start state (how-to
  * paths + settings deep-link), never a blank. */
 
 const mockUseAuth = vi.fn();
@@ -75,10 +75,10 @@ describe("RacePredictionsCard", () => {
     );
   });
 
-  it("cold start renders the unlock explainer with a settings deep-link", () => {
+  it("cold start renders the how-to-get-predictions explainer with a settings deep-link", () => {
     renderCard(null);
     expect(
-      screen.getByText(/Race predictions unlock after a few runs/)
+      screen.getByText(/Race predictions appear after a few runs/)
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /set a race time/i })

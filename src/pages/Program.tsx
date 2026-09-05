@@ -378,7 +378,7 @@ function ProgramInner() {
   const [sessionDayIndex, setSessionDayIndex] = useState<number | null>(null);
   // PROGRAM-FLEX-01: Express Session chooser target + chosen variant.
   // The chooser only opens when a budget would actually change the day
-  // (expressChoices > 1); otherwise Begin Workout stays one tap.
+  // (expressChoices > 1); otherwise Start workout stays one tap.
   const [expressChooserDay, setExpressChooserDay] = useState<number | null>(
     null
   );
@@ -1195,7 +1195,7 @@ function ProgramInner() {
             disabled={advancing}
             leftIcon={<FastForward className="size-4" />}
           >
-            {advancing ? "Advancing..." : "Advance to Next Week"}
+            {advancing ? "Starting…" : "Start next week"}
           </Button>
         </div>
       )}
@@ -1319,7 +1319,7 @@ function ProgramInner() {
                         ]}
                         primaryActionLabel={
                           status === "today" && !selectedWorkout.completed
-                            ? "Begin Workout"
+                            ? "Start workout"
                             : undefined
                         }
                         onPrimaryAction={
@@ -1711,7 +1711,7 @@ function ProgramInner() {
                           }}
                           className="w-full py-3 text-center active:scale-[0.97] transition-all flex items-center justify-center gap-2 bg-card rounded-xl text-primary font-medium text-sm"
                         >
-                          <Plus className="size-4" /> Add Exercise
+                          <Plus className="size-4" /> Add exercise
                         </button>
                       )}
 
@@ -2066,7 +2066,7 @@ function ProgramInner() {
       {/* Exercise Picker — Add mode (scoped to addPickerDayIndex) */}
       <ExercisePicker
         open={showAddPicker}
-        headerTitle="Add Exercise"
+        headerTitle="Add exercise"
         existingExerciseIds={
           programState.workouts[addPickerDayIndex ?? idx]?.exercises.map(
             (ex) => ex.exerciseId

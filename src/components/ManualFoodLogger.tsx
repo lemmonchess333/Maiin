@@ -265,12 +265,12 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
             >
               {saved ? (
                 <>
-                  <Check className="size-4" /> Meal Logged!
+                  <Check className="size-4" /> Meal logged
                 </>
               ) : saving ? (
                 "Saving meal..."
               ) : (
-                "Log This Meal"
+                "Log meal"
               )}
             </motion.button>
           </AnimatePresence>

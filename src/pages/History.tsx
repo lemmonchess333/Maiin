@@ -1331,7 +1331,7 @@ export default function History() {
                 icon={LineChart}
                 accent={THEME.brand}
                 headline="No analytics yet"
-                sub="Log a workout, run, or meal and your trends — volume, pace, calories and your Performance Index — will show up here."
+                sub="Log a workout, run or meal and your trends will show up here."
                 action={{ label: "Start a workout", href: "/program" }}
               />
             )}
@@ -1472,7 +1472,7 @@ export default function History() {
                     icon={<Trophy className="size-5 shrink-0 text-lifting" />}
                     text="Log a workout to see your lifting analytics here"
                     to="/program"
-                    ctaLabel="Start Lift"
+                    ctaLabel="Start a workout"
                     variant="primary"
                   />
                 ) : (

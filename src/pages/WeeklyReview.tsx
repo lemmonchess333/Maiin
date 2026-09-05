@@ -359,12 +359,12 @@ export default function WeeklyReview() {
           </div>
         )}
 
-        {/* D16 — "Your why" reminder. Only when a review exists (so it lands
+        {/* D16 — "Why you train" reminder. Only when a review exists (so it lands
             in the recap, not on an empty first-week state) and the user set
             one. Calm, brand-tinted, verbatim quote of their reason. */}
         {!loading && review && trainingWhy && (
           <div className="p-4 rounded-2xl bg-primary/5 border border-primary/20 space-y-1.5">
-            <SectionLabel as="h2">Your why</SectionLabel>
+            <SectionLabel as="h2">Why you train</SectionLabel>
             <div className="flex items-start gap-3">
               <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 shrink-0">
                 <Heart className="size-4 text-primary" aria-hidden="true" />
@@ -374,7 +374,7 @@ export default function WeeklyReview() {
                   &ldquo;{trainingWhy}&rdquo;
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  The reason you started — still worth it.
+                  You wrote this when you started.
                 </p>
               </div>
             </div>

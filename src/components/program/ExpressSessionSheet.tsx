@@ -2,7 +2,7 @@
  * Session chooser (PROGRAM-FLEX-01 + PROGRAM-ADAPT-01).
  *
  * Opened ON DEMAND from the "Short on time?" link under the session
- * card — NOT on "Begin Workout", which starts the full session
+ * card — NOT on "Start workout", which starts the full session
  * directly (operator, 2026-08-05: the every-tap interstitial was "too
  * much choice"; Hevy / Strong / Fitbod all start on tap, and the
  * CLAUDE.md reference bar for interrupting wasn't met). A menu the

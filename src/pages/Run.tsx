@@ -468,12 +468,22 @@ export default function Run() {
     enabled: phase === "active",
   });
 
+  /* Per-run cue-rotation seed. The variation pools in runCueCopy rotate
+     deterministically, so without a seed every run replays the same
+     script (same first split line, same session bookends). One draw per
+     mount — /run mounts fresh per run — varies it across runs while
+     staying fixed within one. Plan-prefilled segments carry their own
+     date-derived seed from runPlanMetadata; this one covers the cues
+     built or spoken on this page. */
+  const [cueSeed] = useState(() => Math.floor(Date.now() / 1000) % 9973);
+
   const audioCues = useAudioCues(
     runConfig?.audioCues ?? true,
     runConfig?.audioCueFrequency ?? "every_km",
     {
       paceAlerts: runConfig?.paceAlerts ?? true,
       voiceRate: runConfig?.voiceRate ?? 0.9,
+      variantSeed: cueSeed,
     }
   );
   // STRUCT-SESS-02: ONE structure source for the in-run player — the
@@ -490,10 +500,10 @@ export default function Run() {
     }
     if (runConfig.segments?.length) return runConfig.segments;
     if (runConfig.activityType === "intervals" && runConfig.intervals) {
-      return segmentsFromIntervals(runConfig.intervals, unit);
+      return segmentsFromIntervals(runConfig.intervals, unit, cueSeed);
     }
     return null;
-  }, [runConfig, unit]);
+  }, [runConfig, unit, cueSeed]);
   const player = useSessionPlayer(sessionSegments);
   const segmentIndexRef = useRef(-1);
   // Adaptive Paces: the work BAND for the step shell's headline — #18's
@@ -1045,7 +1055,7 @@ export default function Run() {
     if (player.state.index === segmentIndexRef.current) return;
     segmentIndexRef.current = player.state.index;
     if (player.isComplete) {
-      audioCues.speak(sessionCompleteCue());
+      audioCues.speak(sessionCompleteCue(cueSeed));
       haptic("medium");
       return;
     }

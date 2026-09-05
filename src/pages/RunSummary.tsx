@@ -1125,12 +1125,12 @@ export default function RunSummary() {
           const alert = await updateMileage(effectiveShoeId, distance / 1000);
           if (alert === "replace") {
             toast.error(
-              "Time for new shoes! This pair has exceeded its recommended mileage.",
+              "Time for new shoes — this pair is past its recommended mileage.",
               { duration: 5000 }
             );
           } else if (alert === "warning") {
             toast.warning(
-              "Your shoes are at 85% of their recommended mileage. Start looking for a replacement!",
+              "Your shoes are at 85% of their recommended mileage — start thinking about a replacement.",
               { duration: 5000 }
             );
           }
@@ -1402,7 +1402,7 @@ export default function RunSummary() {
                       Off-plan save
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {`This didn't match today's ${plannedTypeLabel}. How should we handle the scheduled slot?`}
+                      {`This didn't match today's ${plannedTypeLabel}. What should happen to the planned run?`}
                     </p>
                   </div>
                   <div className="grid grid-cols-1 gap-2">

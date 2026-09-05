@@ -162,9 +162,9 @@ describe("getRunningTip", () => {
     expect(getRunningTip(w)).toMatch(/cold/i);
   });
 
-  it("celebrates perfect conditions", () => {
+  it("returns the good-conditions line on ideal weather", () => {
     const w = makeWeather({ temperature: 14, humidity: 50, windSpeed: 8 });
-    expect(getRunningTip(w)).toMatch(/great conditions/i);
+    expect(getRunningTip(w)).toMatch(/good conditions/i);
   });
 
   it("stays quiet on unremarkable weather", () => {

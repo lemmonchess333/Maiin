@@ -192,9 +192,9 @@ function goalLabel(g: PrimaryGoal): string {
 function runFreqLabel(r: RunFrequency): string {
   switch (r) {
     case "regular":
-      return "Runs 3x/week integrated";
+      return "Runs 3x/week in your plan";
     case "occasional":
-      return "Runs 1-2x/week integrated";
+      return "Runs 1-2x/week in your plan";
     case "none":
       return "No running";
   }
@@ -253,7 +253,7 @@ const STEP_META: { title: string; subtitle: string }[] = [
     title: "Equipment access",
     subtitle: "We'll choose exercises you can actually do",
   },
-  { title: "Do you run?", subtitle: "We'll weave runs into your schedule" },
+  { title: "Do you run?", subtitle: "We'll fit runs into your schedule" },
   { title: "Any injuries?", subtitle: "We'll program around limitations" },
   {
     title: "About you",
@@ -286,7 +286,7 @@ const STEP_IDS = [
 
 /* D16 — quick-tap motivations shown on the confirmation step. Tapping one
    seeds the `trainingWhy` phrase (still editable in the free-text field).
-   Short, first-person, and resurfaceable verbatim ("Your why: …"). */
+   Short, first-person, and resurfaceable verbatim (shown again in the weekly review). */
 const TRAINING_WHY_CHIPS = [
   "Feel stronger",
   "More energy",
@@ -1930,7 +1930,7 @@ export default function Onboarding() {
                   value={trainingWhy}
                   onChange={(e) => setTrainingWhy(e.target.value)}
                   maxLength={120}
-                  aria-label="Your why"
+                  aria-label="Why you train"
                   placeholder="Or write your own…"
                   className="w-full mt-3 px-3 py-2.5 rounded-xl text-sm bg-card border border-border/60 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2"
                   style={

@@ -34,7 +34,7 @@ import { useAuth } from "./auth";
 //     per-action counters (DAILY_AI_LIMITS below).
 //   - `Program.tsx` — NO LONGER GATED (2026-08-04). `phaseLocked` and
 //     its `useSubscription` call are gone: the last thing it held was
-//     the "Advance to Next Week" button, and gating that was the wrong
+//     the "Start next week" button, and gating that was the wrong
 //     trade. It is not a premium capability, it is the only way to tell
 //     the app you finished your week early — without it a user who
 //     trains six days by Wednesday has no forward affordance and waits

@@ -153,7 +153,7 @@ export function getRunningTip(
     return "Very windy — start into the wind, finish with it behind you";
   }
   if (windSpeed >= 20) {
-    return "Windy — expect slower pace, it's a strength workout!";
+    return "Windy — expect a slower pace for the same effort";
   }
 
   // Cold
@@ -171,7 +171,7 @@ export function getRunningTip(
     humidity < 70 &&
     windSpeed < 15
   ) {
-    return "Great conditions — perfect running weather!";
+    return "Good conditions — no adjustments needed";
   }
 
   return null;

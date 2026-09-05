@@ -452,7 +452,10 @@ web-side fixes, all now done:
 - **Browser API key:** Google Cloud → Credentials → _Browser key (auto created
   by Firebase)_ → HTTP-referrer allowlist now includes
   `adaptive-fitness-af8bb.firebaseapp.com/*` and `…web.app/*` (403 "requests
-  from referer blocked" otherwise). Because the project has Gemini enabled,
+  from referer blocked" otherwise). **`troposfit.com` must be on this list
+  too** — the custom domain went live 2026-08-22 and sign-in from it 403'd
+  until `troposfit.com/*` + `*.troposfit.com/*` were added (any future
+  domain or subdomain serving the app needs the same). Because the project has Gemini enabled,
   Google now forces an **API restriction** too — restricted to the 7 APIs the
   web app uses (Identity Toolkit, Token Service, Firebase Installations, Cloud
   Firestore, Cloud Storage for Firebase, Firebase Remote Config, FCM). The

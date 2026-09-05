@@ -5,6 +5,7 @@ import {
   splitCue,
   timeCue,
   paceAlertCue,
+  paceResolvedCue,
   halfwayCue,
   finalStretchCue,
   type SplitComparison,
@@ -15,14 +16,28 @@ import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 
 type CueFrequency = "every_500m" | "every_km" | "every_5min" | "off";
 
+/** Pace-alert nag budget: per off-pace stretch, spoken alerts are spaced
+ *  30s → 60s → 120s and hard-capped at three; resolution needs the pace
+ *  back in band and HELD there this long. */
+const ALERT_SPACINGS = [30, 60, 120];
+const MAX_ALERTS_PER_STRETCH = 3;
+const RESOLVE_HOLD_SECONDS = 15;
+
 export interface AudioCueConfig {
   paceAlerts: boolean;
   voiceRate: number;
+  /** Starting offset for the phrasing-variation pools. Deterministic
+   *  rotation means an unseeded run replays the SAME script every run —
+   *  same first split line, same halfway line. A per-run seed starts each
+   *  run at a different point in every pool; within-run rotation (and its
+   *  no-back-to-back-repeat property) is unchanged by a constant offset. */
+  variantSeed: number;
 }
 
 const DEFAULT_CUE_CONFIG: AudioCueConfig = {
   paceAlerts: true,
   voiceRate: 0.9,
+  variantSeed: 0,
 };
 
 /* The local `formatPaceSeconds` here was a FOURTH copy of the M:SS logic,
@@ -46,8 +61,9 @@ export function useAudioCues(
   const lastMarkElapsed = useRef(0);
   const primed = useRef(false);
   // Rotates the phrasing-variation pools in runCueCopy so back-to-back cues
-  // don't repeat verbatim (deterministic — no Math.random).
-  const cueVariant = useRef(0);
+  // don't repeat verbatim (deterministic — no Math.random). Starts at the
+  // caller's per-run seed; null = not yet initialised from config.
+  const cueVariant = useRef<number | null>(null);
   // Voice list cache: Chrome returns [] from getVoices() until the async
   // `voiceschanged` event fires, which is why the old inline picker often
   // ran against an empty list and fell back to the engine default.
@@ -67,6 +83,13 @@ export function useAudioCues(
   const paceAlertCooldown = useRef(0);
 
   const cueConfig = { ...DEFAULT_CUE_CONFIG, ...config };
+  if (cueVariant.current === null) cueVariant.current = cueConfig.variantSeed;
+  /** Post-init accessor so the checks below never re-widen to null.
+   *  Ref-only, so the stable identity is honest. */
+  const bumpVariant = useCallback((): number => {
+    cueVariant.current = (cueVariant.current ?? 0) + 1;
+    return cueVariant.current;
+  }, []);
 
   const prime = useCallback(() => {
     if (primed.current || !("speechSynthesis" in window)) return;
@@ -156,7 +179,7 @@ export function useAudioCues(
          Capacitor on iOS where navigator.vibrate is a no-op. */
       haptic([60, 40, 60]);
 
-      cueVariant.current += 1;
+      const variant = bumpVariant();
       const count =
         frequency === "every_500m" ? currentMark * 0.5 : currentMark;
       speak(
@@ -165,11 +188,11 @@ export function useAudioCues(
           unit,
           paceMinSec(currentPaceSec, unit),
           comparison,
-          cueVariant.current
+          variant
         )
       );
     },
-    [enabled, frequency, speak, unit]
+    [enabled, frequency, speak, unit, bumpVariant]
   );
 
   const checkTimeCue = useCallback(
@@ -185,7 +208,27 @@ export function useAudioCues(
     [enabled, frequency, speak, unit]
   );
 
-  /** Pace zone alert: fires when pace deviates ±15s/km from target for >30s */
+  /**
+   * Pace zone alert — with a nag budget.
+   *
+   * The old shape was a metronome: a fixed 30-second cooldown for as long
+   * as the deviation held, so a runner 20s/km off on a 40-minute tempo
+   * heard the alert dozens of times — six phrasings cycling forever is
+   * still the same sentence over and over, and no reference app does it
+   * (Garmin beeps, Runna alerts sparingly, NRC doesn't target-nag at all).
+   *
+   * Now, per off-pace STRETCH (one continuous run of same-direction
+   * deviation): at most three spoken alerts, at 30s, then 60s, then 120s
+   * spacing — after which the app stays quiet and lets the split cues
+   * carry the numbers. A direction flip starts a new stretch. And when
+   * the pace comes back inside the band and HOLDS there (15s — one good
+   * GPS sample must not count), one positive close-out is spoken, so
+   * recovering is audibly different from being given up on.
+   */
+  const alertStreak = useRef(0);
+  const alertDirection = useRef<"behind" | "ahead" | null>(null);
+  const withinBandSince = useRef<number | null>(null);
+
   const checkPaceAlert = useCallback(
     (
       currentPaceSeconds: number,
@@ -194,18 +237,43 @@ export function useAudioCues(
     ) => {
       if (!enabled || !cueConfig.paceAlerts || !targetPaceSeconds) return;
       const deviation = currentPaceSeconds - targetPaceSeconds;
-      if (
-        Math.abs(deviation) > 15 &&
-        elapsed - paceAlertCooldown.current > 30
-      ) {
-        paceAlertCooldown.current = elapsed;
-        cueVariant.current += 1;
-        speak(
-          paceAlertCue(deviation > 0 ? "behind" : "ahead", cueVariant.current)
-        );
+
+      if (Math.abs(deviation) <= 15) {
+        // In band. Only interesting if an off-pace stretch was live.
+        if (alertStreak.current === 0) return;
+        if (withinBandSince.current === null) {
+          withinBandSince.current = elapsed;
+          return;
+        }
+        if (elapsed - withinBandSince.current >= RESOLVE_HOLD_SECONDS) {
+          speak(paceResolvedCue(bumpVariant()));
+          alertStreak.current = 0;
+          alertDirection.current = null;
+          withinBandSince.current = null;
+        }
+        return;
       }
+
+      // Off pace. A dip back into the band that didn't hold long enough
+      // to resolve does not restart the stretch.
+      withinBandSince.current = null;
+      const direction = deviation > 0 ? "behind" : "ahead";
+      if (direction !== alertDirection.current) {
+        alertDirection.current = direction;
+        alertStreak.current = 0;
+      }
+      if (alertStreak.current >= MAX_ALERTS_PER_STRETCH) return;
+      const spacing =
+        ALERT_SPACINGS[
+          Math.min(alertStreak.current, ALERT_SPACINGS.length - 1)
+        ];
+      if (elapsed - paceAlertCooldown.current <= spacing) return;
+
+      paceAlertCooldown.current = elapsed;
+      alertStreak.current += 1;
+      speak(paceAlertCue(direction, bumpVariant()));
     },
-    [enabled, cueConfig.paceAlerts, speak]
+    [enabled, cueConfig.paceAlerts, speak, bumpVariant]
   );
 
   /** Halfway announcement for distance targets */
@@ -214,11 +282,10 @@ export function useAudioCues(
       if (!enabled || halfwayAnnounced.current || !targetDistance) return;
       if (distance >= targetDistance / 2) {
         halfwayAnnounced.current = true;
-        cueVariant.current += 1;
-        speak(halfwayCue(cueVariant.current));
+        speak(halfwayCue(bumpVariant()));
       }
     },
-    [enabled, speak]
+    [enabled, speak, bumpVariant]
   );
 
   /** Final 500m announcement */
@@ -228,11 +295,10 @@ export function useAudioCues(
       const stretch = finalStretchM(unit);
       if (distance >= targetDistance - stretch && distance < targetDistance) {
         final500Announced.current = true;
-        cueVariant.current += 1;
-        speak(finalStretchCue(unit, cueVariant.current));
+        speak(finalStretchCue(unit, bumpVariant()));
       }
     },
-    [enabled, speak, unit]
+    [enabled, speak, unit, bumpVariant]
   );
 
   /* `announcePB` (and its `pbCue` copy) lived here with ZERO callers and
@@ -259,7 +325,11 @@ export function useAudioCues(
     halfwayAnnounced.current = false;
     final500Announced.current = false;
     paceAlertCooldown.current = 0;
-  }, []);
+    alertStreak.current = 0;
+    alertDirection.current = null;
+    withinBandSince.current = null;
+    cueVariant.current = cueConfig.variantSeed;
+  }, [cueConfig.variantSeed]);
 
   return {
     prime,
