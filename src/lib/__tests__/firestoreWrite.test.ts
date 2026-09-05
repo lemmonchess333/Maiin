@@ -6,11 +6,13 @@ vi.mock("firebase/firestore", () => ({
   addDoc: vi.fn(() => Promise.resolve({ id: "generated-id" })),
   setDoc: vi.fn(() => Promise.resolve()),
   updateDoc: vi.fn(() => Promise.resolve()),
+  deleteDoc: vi.fn(() => Promise.resolve()),
 }));
 
-import { addDoc, setDoc, updateDoc } from "firebase/firestore";
+import { addDoc, deleteDoc, setDoc, updateDoc } from "firebase/firestore";
 import {
   addDocGuarded,
+  deleteDocGuarded,
   setDocGuarded,
   updateDocGuarded,
 } from "../firestoreWrite";
@@ -55,6 +57,12 @@ describe("firestoreWrite guarded wrappers", () => {
   it("setDocGuarded omits the options arg when not given", async () => {
     await setDocGuarded(ref, { x: 1 } as never);
     expect(vi.mocked(setDoc).mock.calls[0].length).toBe(2);
+  });
+
+  it("deleteDocGuarded forwards the reference to deleteDoc", async () => {
+    await deleteDocGuarded(ref);
+    expect(vi.mocked(deleteDoc)).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(deleteDoc).mock.calls[0][0]).toBe(ref);
   });
 
   it("updateDocGuarded strips undefined", async () => {

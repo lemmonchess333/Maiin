@@ -17,7 +17,6 @@
 
 import {
   collection,
-  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -26,7 +25,7 @@ import {
   serverTimestamp,
   Timestamp,
 } from "firebase/firestore";
-import { addDocGuarded } from "@/lib/firestoreWrite";
+import { addDocGuarded, deleteDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 
 export interface SavedRoutineExercise {
@@ -170,7 +169,7 @@ export async function deleteSavedRoutine(
   uid: string,
   routineId: string
 ): Promise<void> {
-  await deleteDoc(doc(db, "users", uid, "savedRoutines", routineId));
+  await deleteDocGuarded(doc(db, "users", uid, "savedRoutines", routineId));
 }
 
 export async function getSavedRoutine(

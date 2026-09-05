@@ -13,7 +13,6 @@
  */
 import {
   collection,
-  deleteDoc,
   doc,
   getDocs,
   orderBy,
@@ -21,7 +20,7 @@ import {
   serverTimestamp,
   Timestamp,
 } from "firebase/firestore";
-import { addDocGuarded } from "@/lib/firestoreWrite";
+import { addDocGuarded, deleteDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 import { routeTotalDistance, type GPSPoint } from "@/lib/gps";
 
@@ -120,5 +119,5 @@ export async function deleteSavedRoute(
   uid: string,
   routeId: string
 ): Promise<void> {
-  await deleteDoc(doc(db, "users", uid, "savedRoutes", routeId));
+  await deleteDocGuarded(doc(db, "users", uid, "savedRoutes", routeId));
 }

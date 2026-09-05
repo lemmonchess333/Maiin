@@ -4,7 +4,6 @@ import {
   query,
   onSnapshot,
   doc,
-  deleteDoc,
   Timestamp,
   getDocs,
   orderBy,
@@ -12,7 +11,7 @@ import {
   getDoc,
   where,
 } from "firebase/firestore";
-import { setDocGuarded } from "@/lib/firestoreWrite";
+import { setDocGuarded, deleteDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 import { useUid } from "@/lib/auth";
 import { toast } from "@/lib/toast";
@@ -381,7 +380,7 @@ export function useChallenges() {
     async (challengeId: string) => {
       if (!uid) return;
       try {
-        await deleteDoc(
+        await deleteDocGuarded(
           doc(db, "challenges", challengeId, "participants", uid)
         );
         // participantCount recomputed server-side by the participant-delete

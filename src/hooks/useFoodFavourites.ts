@@ -5,11 +5,10 @@ import {
   orderBy,
   onSnapshot,
   doc,
-  deleteDoc,
   Timestamp,
   increment,
 } from "firebase/firestore";
-import { setDocGuarded } from "@/lib/firestoreWrite";
+import { setDocGuarded, deleteDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 import { useUid } from "@/lib/auth";
 import { logger } from "@/lib/logger";
@@ -251,7 +250,9 @@ export function useFoodFavourites() {
     const timer = setTimeout(async () => {
       evictingRef.current = true;
       try {
-        await deleteDoc(doc(db, "users", uid, "foodFavourites", target.id));
+        await deleteDocGuarded(
+          doc(db, "users", uid, "foodFavourites", target.id)
+        );
         trackFoodEvent("food_pantry_eviction", {
           favouriteId: target.id,
           useCount: target.useCount,
@@ -407,7 +408,7 @@ export function useFoodFavourites() {
     async (id: string): Promise<boolean> => {
       if (!uid) return false;
       try {
-        await deleteDoc(doc(db, "users", uid, "foodFavourites", id));
+        await deleteDocGuarded(doc(db, "users", uid, "foodFavourites", id));
         return true;
       } catch (err) {
         logger.error("[useFoodFavourites] removeFavourite failed", err);

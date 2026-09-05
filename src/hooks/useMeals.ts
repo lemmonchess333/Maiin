@@ -4,7 +4,6 @@ import {
   query,
   orderBy,
   onSnapshot,
-  deleteDoc,
   doc,
   limit,
   startAfter,
@@ -13,7 +12,7 @@ import {
   runTransaction,
   QueryDocumentSnapshot,
 } from "firebase/firestore";
-import { setDocGuarded } from "@/lib/firestoreWrite";
+import { setDocGuarded, deleteDocGuarded } from "@/lib/firestoreWrite";
 import { deleteFoodPhoto } from "@/lib/foodPhotoStore";
 import { invalidateFoodPhotoCache } from "@/hooks/useFoodPhotoUrls";
 import { noteActivitySnapshot } from "@/lib/activationTracker";
@@ -399,7 +398,7 @@ export function useMeals() {
   const hardDeleteMeal = useCallback(
     async (mealId: string) => {
       if (!uid) return;
-      await deleteDoc(doc(db, "users", uid, "meals", mealId));
+      await deleteDocGuarded(doc(db, "users", uid, "meals", mealId));
       await deleteFoodPhoto(uid, mealId);
       invalidateFoodPhotoCache(uid, mealId);
     },
