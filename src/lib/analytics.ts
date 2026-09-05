@@ -1,22 +1,11 @@
 /**
- * Epley 1RM — the estimators the app actually uses.
+ * Epley 1RM — the estimators the app actually uses, and nothing else.
  *
- * This module used to be a general "shared analytics utilities" grab bag:
- * exercise→muscle map, strength-trend slopes, volume-by-muscle, adherence
- * scoring, fatigue detection, insight copy — 22 exports over 314 lines,
- * with a 395-line suite over them.
- *
- * Production imported TWO of them. The surfaces that consumed the rest
- * were rewritten (the analytics tabs, the muscle heat map, the insight
- * strip) and the helpers stayed behind, still green, still proving
- * nothing about anything that runs — the ADR-0008 shape. The symbol-level
- * reachability gate found them once it stopped counting mentions in
- * COMMENTS as uses.
- *
- * Deleted rather than kept "in case": git has them, and a helper nobody
- * calls is a helper nobody has checked against the current data shapes.
- * If a future surface wants muscle-volume or adherence scoring, writing it
- * against that surface's real inputs beats resurrecting a guess.
+ * This module holds only what production imports. Anything a surface wants
+ * later (muscle-volume, adherence scoring) is written against that
+ * surface's real inputs rather than kept here "in case": a helper nobody
+ * calls is a helper nobody has checked against the current data shapes
+ * (ADR-0008 — its worked example was this file's 20 orphaned exports).
  */
 
 /* ================================

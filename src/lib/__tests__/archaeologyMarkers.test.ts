@@ -86,9 +86,10 @@ function countMarkers() {
   return { files: files.length, total, byFile, byKind };
 }
 
-/** 2026-09-05 survey. Lower it when you move narrative out; never raise it
+/** 790 at the 2026-09-05 survey, 766 after the first move-out pass (socialApi,
+ *  Home, analytics, weather, bodySideData). Lower it when you move narrative out; never raise it
  *  without the reason written here. */
-const MARKER_BASELINE = 790;
+const MARKER_BASELINE = 766;
 
 describe("archaeology markers in non-test comments (ratchet)", () => {
   const { files, total, byFile, byKind } = countMarkers();
