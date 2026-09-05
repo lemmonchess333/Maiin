@@ -437,8 +437,9 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
             mapped to session-level labels via movementCategoryLabel
             (Push / Pull / Legs / Arms / Core). Multiple raw categories
             now collapse to the same label (horizontal_push and
-            vertical_push both → "Push"), so we dedupe the labels here
-            to avoid showing duplicate chips on a typical push day. */}
+            vertical_push both → "Push"), so we dedupe the labels here.
+            Static facts, so one quiet line rather than chips — pills on
+            this surface mean a state (the PR badge), not a fact. */}
         {activity.muscleGroups &&
           activity.muscleGroups.length > 0 &&
           (() => {
@@ -448,16 +449,9 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
               )
             );
             return (
-              <div className="flex flex-wrap gap-1.5">
-                {labels.map((label) => (
-                  <span
-                    key={label}
-                    className="text-xs px-2 py-0.5 rounded-full font-medium bg-lifting/8 text-lifting-strong"
-                  >
-                    {label}
-                  </span>
-                ))}
-              </div>
+              <p className="text-xs text-muted-foreground">
+                {labels.join(" · ")}
+              </p>
             );
           })()}
         {/* Workout volume/duration/PR count. Cells already printed on

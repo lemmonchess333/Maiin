@@ -316,27 +316,29 @@ export function ChallengeCard({
           {challenge.description}
         </p>
 
-        {/* Meta row — timeLeft lives on the hero band now */}
-        <div className="flex items-center gap-3 text-small text-muted-foreground">
+        {/* Meta row — timeLeft lives on the hero band now. Facts (joined
+            count, season) are one line; the percentile is the user's
+            STANDING, so it keeps a status pill in the shared chip form. */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-small text-muted-foreground">
           <span className="flex items-center gap-1">
-            <Users className="size-3.5" />
-            {challenge.participantCount >= FOUNDING_COUNT_MIN
-              ? `${challenge.participantCount} joined`
-              : joined
-                ? "You're in — founding member"
-                : "Just launched · founding spots open"}
+            <Users className="size-3.5" aria-hidden="true" />
+            <span>
+              {challenge.participantCount >= FOUNDING_COUNT_MIN
+                ? `${challenge.participantCount} joined`
+                : joined
+                  ? "You're in — founding member"
+                  : "Just launched · founding spots open"}
+            </span>
+            {challenge.season && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span>{challenge.season}</span>
+              </>
+            )}
           </span>
           {percentile !== null && (
-            <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary font-mono tabular-nums font-medium">
+            <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-semibold font-mono tabular-nums">
               Top {percentile}%
-            </span>
-          )}
-          {challenge.season && (
-            <span
-              className="px-1.5 py-0.5 rounded font-medium"
-              style={{ background: `${THEME.brand}14`, color: THEME.brand }}
-            >
-              {challenge.season}
             </span>
           )}
         </div>

@@ -12,7 +12,7 @@ import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
    The prior double-fold (this section's expand accordion + PerformanceTab's
    own "show technical details") buried the gauge two taps deep. The outer
    accordion is removed: PerformanceTab renders always-visible, and its own
-   single "Show details" disclosure is the only remaining fold.
+   single "Details" disclosure is the only remaining fold.
 
    Deep-link continuity: `#performance` (the canonical Home PI-hero
    "tap for details" target from PR #635) still scrolls to this section on

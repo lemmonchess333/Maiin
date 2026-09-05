@@ -81,7 +81,7 @@ function renderWeeks(weeks: ReturnType<typeof week>[]) {
  * proves nothing about the subtree.
  */
 function openDetails() {
-  fireEvent.click(screen.getByRole("button", { name: /show details/i }));
+  fireEvent.click(screen.getByRole("button", { name: "Details" }));
 }
 
 /** One week of history + lifetimeWeeks 1 — squarely establishing. */

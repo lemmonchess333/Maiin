@@ -16,15 +16,15 @@ permission; the same specs run locally instead.
 
 ## 1. Type roles
 
-| Role                         | Treatment                                                                                                                                   | Source                                       |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| Page title                   | `text-xl font-extrabold` (the H1 tier every page uses; `designSystemInvariants` ratchets the rest)                                          | `SettingsIndex`, `History`, …                |
-| Card title                   | `text-xl font-extrabold` on a command card; `text-base`/`text-sm font-semibold` on ordinary cards                                           | `SessionCommandCard`, `SavedRoutinesSection` |
-| Section label (page-level)   | `SectionLabel tier="section"` — 11px `text-caption`, uppercase, `tracking-wider`, semibold, muted                                           | `src/components/ui/SectionLabel.tsx`         |
-| Card caption (inside a card) | `SectionLabel` default tier — 12px `text-xs`, same treatment                                                                                | same                                         |
-| Supporting text              | `text-sm text-muted-foreground` for descriptions; `text-xs text-muted-foreground` for helper lines and field labels                         | `ProfileInfoSection` field labels (batch 1)  |
-| Numeric metric               | `font-mono tabular-nums` (Archivo); hero numbers `text-2xl`+ and `font-bold`/`font-extrabold`; inline numerals inherit the surrounding size | `TodayEnergy`, `WeightStepsTiles`            |
-| Static metadata line         | `text-sm text-muted-foreground`, items joined by " · ", numerals in the numeral font, words in the text font — never pills                  | `SessionCommandCard` `MetaLine` (batch 1)    |
+| Role                         | Treatment                                                                                                                                                                                                                                                                 | Source                                                                               |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Page title                   | `text-xl font-extrabold` (the H1 tier every page uses; `designSystemInvariants` ratchets the rest)                                                                                                                                                                        | `SettingsIndex`, `History`, …                                                        |
+| Card title                   | `text-xl font-extrabold` on a command card; `text-base`/`text-sm font-semibold` on ordinary cards                                                                                                                                                                         | `SessionCommandCard`, `SavedRoutinesSection`                                         |
+| Section label (page-level)   | `SectionLabel tier="section"` — 11px `text-caption`, uppercase, `tracking-wider`, semibold, muted                                                                                                                                                                         | `src/components/ui/SectionLabel.tsx`                                                 |
+| Card caption (inside a card) | `SectionLabel` default tier — 12px `text-xs`, same treatment                                                                                                                                                                                                              | same                                                                                 |
+| Supporting text              | `text-sm text-muted-foreground` for descriptions; `text-xs text-muted-foreground` for helper lines and field labels                                                                                                                                                       | `ProfileInfoSection` field labels (batch 1)                                          |
+| Numeric metric               | `font-mono tabular-nums` (Archivo); hero numbers `text-2xl`+ and `font-bold`/`font-extrabold`; inline numerals inherit the surrounding size                                                                                                                               | `TodayEnergy`, `WeightStepsTiles`                                                    |
+| Static metadata line         | `text-sm text-muted-foreground`, items joined by " · ", numerals in the numeral font, words in the text font — never pills. Inside dense list cards (feed activity, challenge meta) it takes the card's own meta size, `text-xs`, so it does not read as another list row | `SessionCommandCard` `MetaLine` (batch 1); `ActivityCard`, `ChallengeCard` (batch 2) |
 
 **Resolved conflict.** DESIGN_GUIDE §4 said section labels are "~10px";
 §10 said micro labels are "≥ 12px"; CLAUDE.md said "10px". The code has
@@ -116,20 +116,20 @@ Status vocabulary: **rendered** (captured locally this pass), **source**
 (source-inspected only), **historical** (only the June captures),
 **blocked** (needs a device or an account state the rig cannot seed).
 
-| Surface family                                   | Status now                                       | Evidence                                                |
-| ------------------------------------------------ | ------------------------------------------------ | ------------------------------------------------------- |
-| Home (collapsed / expanded energy, light + dark) | rendered                                         | batch 1 before/after                                    |
-| Train / Lift (command card)                      | rendered                                         | batch 1 before/after (`program-*`)                      |
-| Train / Run planning                             | source                                           | `ProgrammeRunSection`, `RunPlanSettings`                |
-| Active workout / exercise guide                  | historical                                       | —                                                       |
-| Running setup / live / summary / detail          | historical                                       | —                                                       |
-| Food                                             | rendered (main-tab frame)                        | `food-*` in the same capture; not changed in batch 1    |
-| Analytics / history                              | rendered (main-tab frame)                        | `history-*`; not changed                                |
-| Social                                           | rendered (main-tab frames)                       | `social-*`; not changed                                 |
-| Settings                                         | rendered (`settings`, `nutrition-settings-dark`) | Profile labels changed in batch 1 — captured            |
-| Authentication / onboarding / upgrade            | historical                                       | —                                                       |
-| Weekly review / legal / support                  | source                                           | —                                                       |
-| Shared overlays / errors / internal routes       | source                                           | sheets and dialogs need their own entries; not captured |
+| Surface family                                   | Status now                                       | Evidence                                                                                   |
+| ------------------------------------------------ | ------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| Home (collapsed / expanded energy, light + dark) | rendered                                         | batch 1 before/after                                                                       |
+| Train / Lift (command card)                      | rendered                                         | batch 1 before/after (`program-*`)                                                         |
+| Train / Run planning                             | source                                           | `ProgrammeRunSection`, `RunPlanSettings`                                                   |
+| Active workout / exercise guide                  | historical                                       | —                                                                                          |
+| Running setup / live / summary / detail          | historical                                       | —                                                                                          |
+| Food                                             | rendered                                         | `food-*` — batch 2 before/after (hero-card disclosure label)                               |
+| Analytics / history                              | rendered                                         | `history-*` — batch 2 before/after (Performance disclosure label)                          |
+| Social                                           | rendered                                         | `social-*`, `social-explore-*` — batch 2 before/after (feed tag line, challenge meta line) |
+| Settings                                         | rendered (`settings`, `nutrition-settings-dark`) | Profile labels changed in batch 1 — captured                                               |
+| Authentication / onboarding / upgrade            | historical                                       | —                                                                                          |
+| Weekly review / legal / support                  | source                                           | —                                                                                          |
+| Shared overlays / errors / internal routes       | source                                           | sheets and dialogs need their own entries; not captured                                    |
 
 Nothing in the "source" or "historical" rows is claimed as verified.
 
@@ -171,3 +171,65 @@ clean; targeted suites green (`TodayEnergy` 3 files / 61 tests,
 `SessionCommandCard` + `ProgrammeRunSection` 42, `ProfileInfoSection`,
 `designSystemInvariants`, `unitTreatment`, `archaeology`,
 `claudeMdFreshness`, `energyCaptureAnchor`).
+
+## Batch 2 — per-change record (Food · Analytics · Social)
+
+Same rules as batch 1, applied to the three main-tab families; four
+components, one selector repoint, two ratchets lowered.
+
+| ID  | Component                           | Design reason                                                                                                                                                                                  | Consumer impact                                                   | Tests                                                                                                 |
+| --- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| A1  | `PerformanceTab` (Analytics)        | "Show details / Hide details" → the shared "Details" + chevron disclosure label (§2/§4), `aria-expanded`, 44px, weight 400 like Home's                                                         | Analytics → Performance; `PerformanceSection` doc comment updated | `PerformanceTab.establishing.test.tsx` selector repointed to the exact name "Details"; 11 files green |
+| F1  | `FoodHeroCard` (Food)               | the drill-down label used the uppercase tracked SECTION-LABEL register for what is a disclosure; now sentence-case `text-xs`, same as Home and Analytics                                       | Food hero card; `aria-label="View nutrition breakdown"` unchanged | `food/__tests__` green                                                                                |
+| S1  | `ActivityCard` (Social feed)        | movement-category tags ("Push", "Arms") are facts, not states — one muted line, not chips; the PR badge stays the card's one pill                                                              | every lift card in the feed, profile and space views              | `social/__tests__` green (no test asserted the chip form)                                             |
+| S2  | `ChallengeCard` (Social → Together) | season joins the joined-count line as a fact; "Top N%" is the user's STANDING, so it keeps a pill — in the shared chip form (`rounded-full`, 600, numeral font) instead of a third badge shape | challenge cards; `THEME.brand` tint on the season chip gone       | `features/challenges` green                                                                           |
+| DS  | `designSystemInvariants`            | `FONT_MEDIUM_BASELINE` 298 → 294 (A1, S1, S2); `RAW_BUTTON_BASELINE` 390 → 388 — the suite reported main already sat 2 below its baseline, so this locks that in                               | —                                                                 | ratchets pass                                                                                         |
+
+### Decisions recorded, not changed
+
+- **Slash spacing.** Food's macro tiles read `125 / 140g`; Home's compact
+  macro line reads `P 125/140g · …`. The compact line is unspaced by
+  constraint, not taste: at `text-micro` in the numeral font the spaced form
+  is ~40 characters (~264px) and overflows the 256px content width of a
+  320px device, while the unspaced form (~225px) fits. Rule: the spaced
+  slash is the default (`1,790 eaten / 2,200 kcal`, the tiles); a
+  single-line compact summary may drop the spaces. Both stay.
+- **Food "Add to" meal chips.** A single choice of four, which §4 maps to
+  `SegmentedControl`. Left as the hand-rolled orange-filled chip row for now:
+  it is the composer's primary control and the selected-slot fill is the one
+  place orange is load-bearing on Food (the brief's "do not recolour Food
+  orange" cuts both ways). Owner call, two options: (a) `SegmentedControl`
+  — neutral raised indicator, equal widths, radiogroup semantics for free;
+  (b) keep the chips, but move them onto the pill weight (600) and the
+  `--nutrition` token. Neither is done in this batch.
+- **Feed stat labels** (`KM`, `/KM`, `TIME`, `KG VOLUME`) stay uppercase —
+  documented stat-label convention, not a section label.
+- **Analytics chips** that name a state stay: `+2 pts` (trend, same chip
+  as Home's hero), `Form -6` (fresh/fatigued), `Recomp` (phase), leaderboard
+  tier pills (`Silver`), `RACE` on race cards.
+
+### Batch 2 — evidence and verification
+
+Same rig as batch 1 (branch `dist/` built with `vite build --mode=test`,
+emulator-seeded fixture, 393×852, light + dark). The "before" side is the
+batch-1 baseline capture of `origin/main` `4a049fee`; the "after" side is
+the `home.screens.capture.spec.ts` "main tabs" run on this branch.
+
+| Pair                                    | Frames                        | Page height (before → after)                                             |
+| --------------------------------------- | ----------------------------- | ------------------------------------------------------------------------ |
+| Food (hero-card disclosure label)       | `food-{light,dark}`           | 1711 → 1711                                                              |
+| Analytics (Performance disclosure)      | `history-{light,dark}`        | 4683 → 4695 (+12: the disclosure row grew from `py-2` to the 44px floor) |
+| Social → Together (challenge meta line) | `social-{light,dark}`         | 1848 → 1844 (−4)                                                         |
+| Social → Feed (lift-card tag line)      | `social-explore-{light,dark}` | 2431 → 2419 (−12: three lift cards, chips → line)                        |
+
+Rig note: the Food hero caption reads "Lift day · Hard session" on the
+before side and "Lift day" on the after side. That suffix is
+`describeDayIntensity` on the fixture's planned day and moved between two
+captures ~40 minutes apart with no change to that code — a wall-clock
+fixture flake of the kind the CLAUDE.md capture notes already list, not a
+change in this batch.
+
+Verification on the branch: full unit suite green (659 files / 7,933 tests
+passed, 341 emulator-gated skips); `tsc -b` clean; `npm run lint` 0 errors
+(99 pre-existing warnings, none in touched files); `npm run check:cycles`
+clean.

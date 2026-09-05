@@ -434,11 +434,12 @@ export default function FoodHeroCard({
               {glanceLine}
             </p>
           )}
-          {/* Food6 a2: drill-down affordance. Subtle chevron pill at the
-            bottom of the calorie card opens the detailed breakdown
-            sheet. Distinct tap target so it doesn't conflict with the
-            CalorieRing mode-toggle, the Settings link, or any nested
-            buttons in the card. */}
+          {/* Food6 a2: drill-down affordance. "Details" + chevron at the
+            bottom of the calorie card opens the breakdown sheet — the same
+            label register as the Home and Analytics disclosures (sentence
+            case, text-xs, muted), not the uppercase section-label one.
+            Distinct tap target so it doesn't conflict with the CalorieRing
+            mode-toggle, the Settings link, or any nested buttons. */}
           {onTapDrillDown && (
             <div className="flex justify-center mt-3">
               <button
@@ -448,7 +449,7 @@ export default function FoodHeroCard({
                   onTapDrillDown();
                 }}
                 aria-label="View nutrition breakdown"
-                className={`flex items-center gap-1 px-2.5 min-h-[44px] -my-2 rounded-full text-caption font-semibold uppercase tracking-wider hover:bg-muted/60 active:scale-95 transition-all ${photoTextClass ?? "text-muted-foreground"}`}
+                className={`flex items-center gap-1 px-2.5 min-h-[44px] -my-2 rounded-full text-xs hover:bg-muted/60 active:scale-95 transition-all ${photoTextClass ?? "text-muted-foreground"}`}
               >
                 <span>Details</span>
                 <ChevronRight aria-hidden="true" className="size-3" />

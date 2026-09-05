@@ -467,17 +467,20 @@ export default function PerformanceTab() {
         </div>
       )}
 
-      {/* Technical details toggle */}
+      {/* Disclosure — the same "Details" + chevron the Home energy card
+          uses; open/closed is carried by the chevron and aria-expanded. */}
       <button
         type="button"
         onClick={() => setShowTechnical((v) => !v)}
+        aria-expanded={showTechnical}
         className={cn(
-          "flex items-center gap-1.5 text-xs font-medium text-muted-foreground",
-          "hover:text-foreground transition-colors w-full justify-center py-2"
+          "flex items-center gap-1 text-xs text-muted-foreground",
+          "hover:text-foreground transition-colors w-full justify-center min-h-11"
         )}
       >
-        {showTechnical ? "Hide details" : "Show details"}
+        Details
         <ChevronDown
+          aria-hidden="true"
           className={cn(
             "size-3.5 transition-transform duration-200",
             showTechnical && "rotate-180"
