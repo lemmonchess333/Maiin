@@ -18,7 +18,7 @@ export interface MealReminders {
   dinner: { enabled: boolean; time: string };
 }
 
-const DEFAULT_REMINDERS: MealReminders = {
+export const DEFAULT_MEAL_REMINDERS: MealReminders = {
   enabled: false,
   breakfast: { enabled: true, time: "08:00" },
   lunch: { enabled: true, time: "12:30" },
@@ -61,7 +61,9 @@ function computeNextOccurrence(timeHHMM: string): Date | null {
  */
 export function useMealRemindersInternal() {
   const uid = useUid();
-  const [reminders, setReminders] = useState<MealReminders>(DEFAULT_REMINDERS);
+  const [reminders, setReminders] = useState<MealReminders>(
+    DEFAULT_MEAL_REMINDERS
+  );
   const [loading, setLoading] = useState(true);
 
   // Load from Firestore
@@ -76,7 +78,7 @@ export function useMealRemindersInternal() {
       .then((snap) => {
         if (snap.exists()) {
           setReminders({
-            ...DEFAULT_REMINDERS,
+            ...DEFAULT_MEAL_REMINDERS,
             ...(snap.data() as MealReminders),
           });
         }

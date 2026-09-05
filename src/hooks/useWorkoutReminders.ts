@@ -16,7 +16,7 @@ export interface WorkoutReminders {
   time: string;
 }
 
-const DEFAULT_REMINDERS: WorkoutReminders = {
+export const DEFAULT_WORKOUT_REMINDERS: WorkoutReminders = {
   enabled: false,
   time: "07:00",
 };
@@ -85,8 +85,9 @@ function isWorkoutDay(
  */
 export function useWorkoutRemindersInternal() {
   const { user, profile } = useAuth();
-  const [reminders, setReminders] =
-    useState<WorkoutReminders>(DEFAULT_REMINDERS);
+  const [reminders, setReminders] = useState<WorkoutReminders>(
+    DEFAULT_WORKOUT_REMINDERS
+  );
   const [loading, setLoading] = useState(true);
 
   // Load from Firestore
@@ -101,7 +102,7 @@ export function useWorkoutRemindersInternal() {
       .then((snap) => {
         if (snap.exists()) {
           setReminders({
-            ...DEFAULT_REMINDERS,
+            ...DEFAULT_WORKOUT_REMINDERS,
             ...(snap.data() as WorkoutReminders),
           });
         }
