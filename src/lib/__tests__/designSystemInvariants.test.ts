@@ -265,7 +265,7 @@ describe("DS ratchets — surface-level drift", () => {
 
   // font-medium is not on the weight scale (800 hero / 700 heading /
   // 600 pill+button). It keeps appearing as a "slightly bold" reflex.
-  const FONT_MEDIUM_BASELINE = 302;
+  const FONT_MEDIUM_BASELINE = 298;
   it("font-medium does not increase (the scale is 800 / 700 / 600)", () => {
     const { total, byFile } = scan((src) =>
       classNameChunks(src).reduce(

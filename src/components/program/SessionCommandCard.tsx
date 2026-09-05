@@ -14,6 +14,7 @@
  * colours. 44px+ touch targets via the Button/IconButton primitives.
  */
 
+import { Fragment } from "react";
 import { MoreHorizontal, Play, Footprints, Dumbbell } from "lucide-react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { cn } from "@/lib/utils";
@@ -33,6 +34,43 @@ interface SessionCommandCardProps {
   primaryActionLabel?: string;
   onPrimaryAction?: () => void;
   onManage?: () => void;
+}
+
+/**
+ * Static metadata reads as one quiet line — "5 exercises · ~43 min" — not
+ * as a row of pills. A pill is the shape of a selection or a state; a
+ * fact the user cannot tap should not borrow it. Numerals take the
+ * numeral font (Archivo, tabular) and words stay in the text font, so a
+ * mixed token like "~43 min" keeps both fonts where they belong. Wraps
+ * as text; the separators are decorative and hidden from readers.
+ */
+function MetaLine({ items }: { items: string[] }) {
+  return (
+    <p className="text-sm text-muted-foreground leading-snug">
+      {items.map((item, i) => (
+        <Fragment key={item}>
+          {i > 0 && (
+            <>
+              {" "}
+              <span aria-hidden="true">·</span>{" "}
+            </>
+          )}
+          <span className="whitespace-nowrap">
+            {item.split(" ").map((token, j) => (
+              <Fragment key={j}>
+                {j > 0 && " "}
+                <span
+                  className={cn(/\d/.test(token) && "font-mono tabular-nums")}
+                >
+                  {token}
+                </span>
+              </Fragment>
+            ))}
+          </span>
+        </Fragment>
+      ))}
+    </p>
+  );
 }
 
 export default function SessionCommandCard({
@@ -109,18 +147,7 @@ export default function SessionCommandCard({
           )}
         </div>
 
-        {meta.length > 0 && (
-          <div className="flex flex-wrap gap-1.5" aria-hidden="true">
-            {meta.map((item) => (
-              <span
-                key={item}
-                className="rounded-full bg-background/70 px-2.5 py-1 text-caption font-semibold text-muted-foreground"
-              >
-                {item}
-              </span>
-            ))}
-          </div>
-        )}
+        {meta.length > 0 && <MetaLine items={meta} />}
 
         {primaryActionLabel && onPrimaryAction && (
           <Button
