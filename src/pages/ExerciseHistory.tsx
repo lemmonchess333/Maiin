@@ -324,7 +324,7 @@ export default function ExerciseHistory() {
           <ChevronLeft className="size-5 text-foreground" />
         </button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-lg font-extrabold text-foreground truncate">
+          <h1 className="text-xl font-extrabold text-foreground truncate">
             {decodedName}
           </h1>
           {exercise && (

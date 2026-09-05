@@ -171,7 +171,7 @@ export default function RunLaunchCard({
           Start {workout.name}
         </Button>
         <Button variant="ghost" fullWidth onClick={onCustomize}>
-          Customize
+          Customise
         </Button>
       </div>
     </div>
