@@ -272,6 +272,7 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 - **deploy.yml:** Builds and deploys to GitHub Pages on push to `main`
 - **deploy-functions.yml:** Deploys Cloud Functions when `functions/**` changes
 - **deploy-firestore.yml:** Deploys Firestore security rules
+- **deploy-hosting.yml:** Builds with `base: "/"` and deploys to Firebase Hosting on push to `main`. The web build's security headers (HSTS, `nosniff`, Referrer-Policy, `X-Frame-Options`, a `frame-ancestors 'none'` CSP header, Permissions-Policy) live in `firebase.json` and ship ONLY via Hosting — GitHub Pages cannot set response headers, accepted because Pages is the preview surface, not the product. `frame-ancestors` is ignored in a `<meta>` CSP, which is why it is a header. Pinned by `hostingSecurityHeaders.test.ts`.
 - **Firebase project:** `adaptive-fitness-af8bb`
 
 ### Cloud Functions deploy — known gotchas
