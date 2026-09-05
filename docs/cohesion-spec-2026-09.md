@@ -309,3 +309,25 @@ form-demo figure class. Changed frames: `races-directory` 2.2–2.8% (the
 classes. `weekly-review`, `fellbehind-detrained`, `experience-suggestion`
 and `circles-detail-focus` — the surfaces this sandbox could not film —
 are unchanged, as intended: batch 3 touched none of them.
+
+### Owner calls — decided 2026-09-05 (owner: "you decide")
+
+- **Meal-slot pickers → `SegmentedControl`.** Both of them: the composer's
+  "Add to" row and `EditServingsSheet`'s "Meal slot" row. They were two
+  hand-rolled chip rows painting the same state in two colours (nutrition
+  orange in the composer, brand purple in the sheet) — the incoherence the
+  pass exists to remove, and the only single-select on a primary surface
+  not on the primitive. The selected slot now reads like every other
+  picker (raised neutral segment); orange stays where it is load-bearing
+  on Food — the scan affordance and the Log action. The label sits above
+  the control rather than inline so four segments fit at 320px.
+  `EditServingsSheet.test.tsx` selectors move from `button` to `radio`.
+- **Slash spacing.** Spaced by default; a single-line compact summary may
+  drop the spaces (measured against a 320px device). Now in DESIGN_GUIDE §4
+  with a pointer to this document.
+- **Race-picker distance.** No coral: coral is the running identity and is
+  already on the selected mode card; repeating it fourteen times down a
+  list would make it wallpaper. The distance reads in foreground text
+  (emphasis by the type scale, not by a pill or a colour), with the
+  numeral font on digit tokens (`5K`, `10K`) and the text font on words
+  (`Half`, `Full`) — the MetaLine rule.

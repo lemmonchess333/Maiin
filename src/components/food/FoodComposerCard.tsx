@@ -1,5 +1,6 @@
 import type { Ref, RefObject } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
+import SegmentedControl from "@/components/ui/SegmentedControl";
 import { Camera, Lock, PenLine, SendHorizontal, X } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
@@ -81,7 +82,7 @@ interface FoodComposerCardProps {
 /**
  * The Food page's input surface: NL textarea (with scan icon, send
  * button + suggestions dropdown), the conditional quota caption, and
- * the "Add to" meal pills. ONE entry surface — manual logging is
+ * the "Add to" meal selector. ONE entry surface — manual logging is
  * contextual (dropdown no-results row), not a standing link.
  *
  * Extracted from src/pages/Food.tsx — the page previously inlined
@@ -291,50 +292,24 @@ function FoodComposerCard({
             />
           </div>
         )}
-      <div
-        data-no-page-swipe
-        className="mt-2 flex items-center gap-2 overflow-x-auto pb-1"
-      >
-        {/* The one uppercase-label primitive (DS2): 11px tier, standard
-            tracking — this span was one of four hand-rolled treatments on
-            the Food surface, each with its own tracking value. */}
-        <SectionLabel as="span" tier="section" className="shrink-0">
-          Add to
-        </SectionLabel>
-        {MEAL_ORDER.map((mealKey) => {
-          const selected = targetMeal === mealKey;
-          return (
-            <button
-              key={mealKey}
-              type="button"
-              onClick={() => onTargetMeal(mealKey)}
-              className={cn(
-                /* Visual stays diary-compact (h-8 = 32px) but
-                     the tap target hits 44px via a transparent
-                     before:pseudo-element extending the click
-                     region vertically. Inset-x stays 0 to avoid
-                     overlapping adjacent meal pills' tap areas. */
-                "relative h-8 px-3.5 rounded-full border text-xs font-medium shrink-0 transition-all active:scale-95 before:content-[''] before:absolute before:inset-x-0 before:-inset-y-1.5",
-                selected
-                  ? // Selected meal target = the nutrition IDENTITY orange
-                    // (--nutrition #D9884E), not the amber -strong step. The
-                    // visual audit flagged the amber-brown fill clashing with
-                    // the coral paywall + warm nutrition palette around it;
-                    // the identity orange sits in-family. Deliberate AA
-                    // trade-off: white on #D9884E is ~2.8:1 — accepted for
-                    // this one short-label pill by the design call recorded
-                    // in the audit (REPORT.md). The meal-section + button
-                    // mirrors this exact treatment so the same state reads
-                    // as ONE colour everywhere on the Food page.
-                    "border-transparent text-white bg-nutrition-fill"
-                  : "border-border/80 text-muted-foreground bg-card hover:bg-muted/60"
-              )}
-              aria-pressed={selected}
-            >
-              {MEAL_LABELS[mealKey]}
-            </button>
-          );
-        })}
+      {/* Meal-slot picker — the one single-select control (SegmentedControl,
+          ADR-0003): radiogroup semantics, keyboard and 44px targets for free,
+          and the same selected-state language as every other picker in the
+          app. This row and EditServingsSheet's "Meal slot" were two
+          hand-rolled chip rows that painted the same state in two colours
+          (nutrition orange here, brand purple there); the label above is the
+          DS2 11px section tier. */}
+      <div className="mt-2 space-y-1.5">
+        <SectionLabel tier="section">Add to</SectionLabel>
+        <SegmentedControl
+          ariaLabel="Add to meal"
+          options={MEAL_ORDER.map((mealKey) => ({
+            value: mealKey,
+            label: MEAL_LABELS[mealKey],
+          }))}
+          value={targetMeal}
+          onChange={onTargetMeal}
+        />
       </div>
       {/* No standing manual-log link (wave2 C). Manual entry remains
           reachable exactly when flows fail the user: the dropdown's

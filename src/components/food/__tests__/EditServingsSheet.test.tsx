@@ -180,7 +180,7 @@ describe("EditServingsSheet", function () {
       },
     });
     expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
-    fireEvent.click(screen.getByRole("button", { name: "Snacks" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Snacks" }));
     expect(screen.getByRole("button", { name: "Save" })).not.toBeDisabled();
   });
 
@@ -195,7 +195,7 @@ describe("EditServingsSheet", function () {
       },
       onSave,
     });
-    fireEvent.click(screen.getByRole("button", { name: "Snacks" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Snacks" }));
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     expect(onSave).toHaveBeenCalledWith({
       targetCount: 1,
@@ -217,7 +217,7 @@ describe("EditServingsSheet", function () {
       onSave,
     });
     fireEvent.click(screen.getByLabelText("Increase servings"));
-    fireEvent.click(screen.getByRole("button", { name: "Dinner" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Dinner" }));
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     expect(onSave).toHaveBeenCalledWith({
       targetCount: 2,
@@ -241,8 +241,8 @@ describe("EditServingsSheet", function () {
     // Bump count so Save isn't disabled, then explicitly re-pick the
     // original slot — that should NOT propagate as a slot change.
     fireEvent.click(screen.getByLabelText("Increase servings"));
-    fireEvent.click(screen.getByRole("button", { name: "Lunch" }));
-    fireEvent.click(screen.getByRole("button", { name: "Breakfast" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Lunch" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Breakfast" }));
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     expect(onSave).toHaveBeenCalledWith({
       targetCount: 2,
@@ -308,7 +308,7 @@ describe("EditServingsSheet", function () {
       target: { value: "Greek yoghurt" },
     });
     fireEvent.click(screen.getByLabelText("Increase servings"));
-    fireEvent.click(screen.getByRole("button", { name: "Snacks" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Snacks" }));
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     expect(onSave).toHaveBeenCalledWith({
       targetCount: 2,

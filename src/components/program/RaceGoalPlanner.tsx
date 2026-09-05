@@ -156,7 +156,13 @@ function UpcomingRacePicker({
                   >
                     ·
                   </span>
-                  <span className="text-caption text-muted-foreground font-mono tabular-nums">
+                  <span
+                    className={cn(
+                      "text-caption text-foreground",
+                      /\d/.test(DISTANCE_CHIP[race.event!.distance]) &&
+                        "font-mono tabular-nums"
+                    )}
+                  >
                     {DISTANCE_CHIP[race.event!.distance]}
                   </span>
                 </span>

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, within, fireEvent } from "@testing-library/react";
 import { createRef } from "react";
 
 vi.mock("framer-motion", () => ({
@@ -133,11 +133,22 @@ describe("FoodComposerCard — no standing manual-log link (wave2 C)", () => {
     expect(onManualOpen).toHaveBeenCalledTimes(1);
   });
 
-  it("composer body is exactly the input surface: textarea + scan + meal pills (no extra CTA shapes)", () => {
-    renderComposer();
-    // Visible buttons: 1 scan icon + 4 meal pills. Nothing else.
-    const buttons = screen.getAllByRole("button");
-    expect(buttons).toHaveLength(5);
+  it("composer body is exactly the input surface: textarea + scan + meal-slot radiogroup (no extra CTA shapes)", () => {
+    renderComposer({ targetMeal: "dinner" });
+    // The meal slots are a SegmentedControl (radiogroup), not pill buttons:
+    // no button carries a meal name, and the only buttons are the scan icon
+    // and the clear-target X that a selected slot brings.
+    expect(
+      screen.queryByRole("button", {
+        name: /^(Breakfast|Lunch|Snacks|Dinner)$/,
+      })
+    ).toBeNull();
+    expect(screen.getAllByRole("button")).toHaveLength(2);
+    const slots = screen.getByRole("radiogroup", { name: "Add to meal" });
+    expect(within(slots).getAllByRole("radio")).toHaveLength(4);
+    expect(
+      within(slots).getByRole("radio", { name: "Dinner" })
+    ).toHaveAttribute("aria-checked", "true");
   });
 });
 

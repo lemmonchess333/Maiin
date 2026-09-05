@@ -5,6 +5,7 @@ import { haptic } from "@/lib/haptic";
 import { cn } from "@/lib/utils";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import SectionLabel from "@/components/ui/SectionLabel";
+import SegmentedControl from "@/components/ui/SegmentedControl";
 import { MEAL_ORDER, MEAL_LABELS, type MealKey } from "./mealConstants";
 
 interface ServingSource {
@@ -257,44 +258,30 @@ function EditServingsSheet({
           </p>
         </div>
 
-        {/* F5a meal-slot picker. Tappable pill row matches the
-            "+ Snacks" composer-pill visual language. Picked state
-            uses the brand purple; unpicked state stays muted so the
-            visual weight signals "tap to change", not "tap to log".
-            Hidden when source.currentMeal is null AND the picker
-            hasn't been touched — that covers groups spanning
-            multiple slots, where snapping all docs to one slot via
-            this picker IS the intended outcome but the section
-            label here would be misleading. */}
+        {/* F5a meal-slot picker — the same SegmentedControl as the composer's
+            "Add to" row, so the picked state reads in one language across
+            the Food surface. Hidden when source.currentMeal is null AND the
+            picker hasn't been touched — that covers groups spanning multiple
+            slots, where snapping all docs to one slot via this picker IS the
+            intended outcome but the section label here would be
+            misleading. */}
         <div className="space-y-1.5">
           <SectionLabel tier="section" className="text-center">
             Meal slot
           </SectionLabel>
-          <div className="flex gap-1.5 justify-center flex-wrap">
-            {MEAL_ORDER.map((slot) => {
-              const isPicked = pickedMeal === slot;
-              return (
-                <button
-                  key={slot}
-                  type="button"
-                  onClick={() => {
-                    haptic("light");
-                    setPickedMeal(slot);
-                  }}
-                  disabled={saving}
-                  aria-pressed={isPicked}
-                  className={cn(
-                    "px-3 py-1 rounded-full text-micro font-semibold transition-colors active:scale-[0.97]",
-                    isPicked
-                      ? "bg-primary-strong text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
-                  )}
-                >
-                  {MEAL_LABELS[slot]}
-                </button>
-              );
-            })}
-          </div>
+          <SegmentedControl
+            ariaLabel="Meal slot"
+            options={MEAL_ORDER.map((slot) => ({
+              value: slot,
+              label: MEAL_LABELS[slot],
+            }))}
+            value={pickedMeal}
+            onChange={(slot) => {
+              haptic("light");
+              setPickedMeal(slot);
+            }}
+            disabled={saving}
+          />
         </div>
 
         {/* F5a macro inputs. Per-serving figures derived from group
