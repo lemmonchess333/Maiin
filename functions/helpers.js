@@ -52,7 +52,6 @@ function computeEffectiveTier(userData, now = new Date()) {
   return "free";
 }
 
-
 /**
  * Build the Stripe price allowlist from environment variables.
  * Returns an object keyed by price ID; missing env vars are
@@ -253,6 +252,82 @@ function getAppCorsOptions() {
 }
 
 /**
+ * Every origin the Tropos client itself is served from. This is the
+ * CORS allow-list for the Bearer-authenticated AI endpoints
+ * (analyzeFood, analyzeFoodText), and it is deliberately a DIFFERENT
+ * list from the payment one above: the native shells belong here
+ * because the iOS and Android apps scan food, and they must stay off
+ * the payment list because iOS billing goes through Apple.
+ *
+ * Static and environment-independent. The dev-server origins are
+ * admitted in production because the dev build calls the DEPLOYED
+ * functions (useFoodAnalysis.ts hard-codes the cloudfunctions.net
+ * URLs); a page on a developer's own loopback is not reachable from
+ * anyone else's browser, and Bearer auth is the access gate.
+ *
+ * Adding an origin: it must be a place the built app is actually
+ * served from. Every entry names its surface.
+ */
+const CLIENT_APP_ORIGINS = Object.freeze([
+  // Firebase Hosting — custom domain.
+  "https://troposfit.com",
+  "https://www.troposfit.com",
+  // Firebase Hosting — the project's default sites (.firebaserc).
+  "https://adaptive-fitness-af8bb.web.app",
+  "https://adaptive-fitness-af8bb.firebaseapp.com",
+  // GitHub Pages build.
+  "https://lemmonchess333.github.io",
+  // Capacitor shells. iOS serves the app from the capacitor scheme;
+  // Android from the `androidScheme` in capacitor.config.ts.
+  "capacitor://localhost",
+  "https://localhost",
+  // Vite dev server and `vite preview`, on both loopback hostnames.
+  "http://localhost:5173",
+  "http://localhost:4173",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:4173",
+]);
+
+/**
+ * Predicate: may this Origin header value call the AI endpoints from a
+ * browser or webview?
+ *
+ * Exact string match against CLIENT_APP_ORIGINS — no parsing, so a
+ * path, a scheme downgrade or a suffix lookalike fails by
+ * construction. A missing Origin is permitted for the same reason as
+ * in isAllowedAppOrigin: only non-browser callers omit it, and Bearer
+ * auth is the gate for them.
+ */
+function isAllowedClientAppOrigin(origin) {
+  if (!origin) return true;
+  if (typeof origin !== "string") return false;
+  return CLIENT_APP_ORIGINS.includes(origin);
+}
+
+/**
+ * cors-config builder for the AI endpoints. Returns a config object
+ * suitable for `require("cors")(getClientAppCorsOptions())`.
+ *
+ * A disallowed origin is reported as an Error. The cors module hands
+ * that Error to the wrapped handler as its `next` argument rather
+ * than ending the response itself, so the handler MUST check that
+ * argument and stop. A handler that ignores it runs the request with
+ * no CORS headers — which the browser blocks from READING, but the
+ * server has already executed.
+ */
+function getClientAppCorsOptions() {
+  return {
+    origin(origin, callback) {
+      if (isAllowedClientAppOrigin(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(new Error("Not allowed by CORS"));
+    },
+  };
+}
+
+/**
  * Closed set of return-path tokens the client is permitted to send.
  * The server builds the full Stripe success/cancel URL itself; the
  * client only chooses *which page in the app* to land on. This is the
@@ -319,4 +394,7 @@ module.exports = {
   buildStripeReturnUrl,
   isAllowedAppOrigin,
   getAppCorsOptions,
+  CLIENT_APP_ORIGINS,
+  isAllowedClientAppOrigin,
+  getClientAppCorsOptions,
 };
