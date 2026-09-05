@@ -25,6 +25,7 @@ import {
   estimateRunCalories,
 } from "../lib/gps";
 import { postActivity } from "../lib/socialApi";
+import { needsEmailVerification } from "../lib/emailVerificationGate";
 import { compose, enqueueShare, showQueuedToast } from "../lib/shareComposer";
 import { recordSharedActivity } from "../lib/sessionDelete";
 import type { GPSPoint, Split } from "../lib/gps";
@@ -1045,15 +1046,19 @@ export default function RunSummary() {
         const km = distance / 1000;
         const mins = Math.floor(elapsed / 60);
         const secs = Math.round(elapsed % 60);
-        const decision = await compose(user.uid, {
-          type: "run",
-          title: runName,
-          meta: [
-            `${km.toFixed(2)} km`,
-            `${mins}:${secs.toString().padStart(2, "0")}`,
-            calories ? `${Math.round(calories)} cal` : "",
-          ].filter(Boolean),
-        });
+        const decision = await compose(
+          user.uid,
+          {
+            type: "run",
+            title: runName,
+            meta: [
+              `${km.toFixed(2)} km`,
+              `${mins}:${secs.toString().padStart(2, "0")}`,
+              calories ? `${Math.round(calories)} cal` : "",
+            ].filter(Boolean),
+          },
+          { needsEmailVerification: needsEmailVerification(user) }
+        );
         if (decision) {
           // Shared-route privacy default. The public activity routePreview is
           // rendered as a REAL map on the feed, so a user who hasn't set

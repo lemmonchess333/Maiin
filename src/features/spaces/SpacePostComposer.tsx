@@ -33,6 +33,8 @@ import {
   type Workout,
 } from "@/hooks/useWorkouts";
 import { useRunningStats, type RunSummaryItem } from "@/hooks/useRunningStats";
+import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
+import VerifyEmailNotice from "@/components/social/VerifyEmailNotice";
 import type { SpacePostActivitySnapshot } from "./spaceTypes";
 import { distanceLabel } from "@/lib/runLabels";
 import type { DistanceUnit } from "@/lib/distanceUnits";
@@ -113,6 +115,7 @@ export default function SpacePostComposer({
   initialTitle?: string;
 }) {
   const { user, profile } = useAuth();
+  const gate = useEmailVerificationGate(user);
   const unit = useDistanceUnit();
   const { workouts } = useWorkouts();
   const { runs } = useRunningStats(30);
@@ -162,7 +165,10 @@ export default function SpacePostComposer({
   }, [workouts, runs]);
 
   const profane = containsProfanity(title) || containsProfanity(body);
-  const canPost = body.trim().length > 0 && !profane && !busy;
+  // Space posts are public content: the rules refuse an unverified email,
+  // so the action is held here and the notice below says why.
+  const canPost =
+    body.trim().length > 0 && !profane && !busy && !gate.needsVerification;
 
   const submit = async () => {
     if (!user || !canPost) return;
@@ -346,6 +352,10 @@ export default function SpacePostComposer({
               </div>
             )}
           </div>
+        )}
+
+        {gate.needsVerification && (
+          <VerifyEmailNotice onRecheck={gate.recheck} />
         )}
 
         <Button

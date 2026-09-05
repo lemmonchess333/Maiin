@@ -41,6 +41,12 @@ const SPACE = "womens-running";
    projectId means one file's clearFirestore() wipes the other's
    seeds mid-test. Distinct id = distinct data plane. */
 const PROJECT_ID = "tropos-spaces-rules-test";
+/** Token claims. Space posts are public content and require
+ *  `email_verified`, so the shared context helper carries the verified
+ *  claim by default — each post test then asserts the rule it names, not
+ *  the gate. Membership never reads the claim; carrying it is harmless. */
+const VERIFIED = { email_verified: true };
+const UNVERIFIED = { email_verified: false };
 
 /* Every value a client legitimately writes to a photo field — Storage
    download URL, Google OAuth CDN, Apple OAuth CDN — and the shapes that
@@ -84,7 +90,8 @@ suite("firestore.rules — community spaces", () => {
     await env.clearFirestore();
   });
 
-  const db = (uid: string) => env.authenticatedContext(uid).firestore();
+  const db = (uid: string, claims: Record<string, unknown> = VERIFIED) =>
+    env.authenticatedContext(uid, claims).firestore();
 
   const join = (uid: string, space = SPACE) =>
     setDoc(doc(db(uid), `spaces/${space}/members/${uid}`), {
@@ -310,6 +317,46 @@ suite("firestore.rules — community spaces", () => {
           setDoc(ref(`bad-photo-${i}`), { ...validPost(MEMBER), photoUrl: bad })
         );
       }
+    });
+  });
+
+  describe("posts — email verification gate", () => {
+    it("the same valid post is refused when email_verified is false", async () => {
+      await seedMember(MEMBER);
+      await assertFails(
+        setDoc(
+          doc(db(MEMBER, UNVERIFIED), `spaces/${SPACE}/posts/p1`),
+          validPost(MEMBER)
+        )
+      );
+      // Paired positive: the refusal above cannot be passing for an
+      // unrelated reason if this identical post lands with the claim true.
+      await assertSucceeds(
+        setDoc(doc(db(MEMBER), `spaces/${SPACE}/posts/p2`), validPost(MEMBER))
+      );
+    });
+
+    it("a token with no email_verified claim at all is refused", async () => {
+      await seedMember(MEMBER);
+      await assertFails(
+        setDoc(
+          doc(db(MEMBER, {}), `spaces/${SPACE}/posts/p1`),
+          validPost(MEMBER)
+        )
+      );
+    });
+
+    it("joining a space is not content — an unverified account still joins", async () => {
+      await assertSucceeds(
+        setDoc(
+          doc(db(MEMBER, UNVERIFIED), `spaces/${SPACE}/members/${MEMBER}`),
+          {
+            joinedAt: new Date(),
+            displayName: "Test",
+            uid: MEMBER,
+          }
+        )
+      );
     });
   });
 

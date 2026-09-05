@@ -83,6 +83,28 @@ service cloud.firestore {
       return isOwner(uid) && !isWriteFrozen(uid);
     }
 
+    /* Public content requires a verified email.
+
+       `email_verified` is a standard ID-token claim: OAuth providers
+       (Google, Apple) mint it true, an email/password signup carries
+       false until the user taps the verification link. Gating on it
+       keeps a throwaway unverified address from publishing into other
+       people's feeds while costing a verified account nothing.
+
+       Scope is the CONTENT surfaces another user reads — the activity
+       feed and space posts here, comments in the two server callables
+       that write them. Private logging under users/{uid}/* and every
+       non-content interaction (likes, kudos, follows, joins, circle
+       events) stay open to unverified accounts: the app must work for
+       a brand-new signup before the email arrives. The `in` check makes
+       an absent claim a plain false rather than an evaluation error —
+       both deny, but the intent reads at the call site. */
+    function isEmailVerified() {
+      return request.auth != null
+        && 'email_verified' in request.auth.token
+        && request.auth.token.email_verified == true;
+    }
+
     /* Is there a block in EITHER direction between these two users?
 
        Blocking severs the follow edges at block time (`blockUser` deletes all
@@ -598,6 +620,8 @@ service cloud.firestore {
 
       allow create: if request.auth != null
         && !isWriteFrozen(request.auth.uid)
+        // Feed posts are public content — verified email only.
+        && isEmailVerified()
         && request.resource.data.authorId == request.auth.uid
         // Field allowlist — fail-closed; adding a field to
         // postActivity requires adding it here too.
@@ -1019,6 +1043,8 @@ service cloud.firestore {
         allow create: if request.auth != null
           && isKnownSpaceId(spaceId)
           && !isWriteFrozen(request.auth.uid)
+          // Space posts are public content — verified email only.
+          && isEmailVerified()
           && request.resource.data.authorId == request.auth.uid
           // Posting requires membership (Spc1 engineering pin).
           && exists(/databases/$(database)/documents/spaces/$(spaceId)/members/$(request.auth.uid))

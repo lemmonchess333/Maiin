@@ -6322,6 +6322,24 @@ exports.toggleSpacePostLikeCallable = functions
 // user). The like callable above gained the matching space_post_like
 // notification in this slice.
 
+/* Comments are public content and the callable is the only writer, so
+   the rules' isEmailVerified() gate (activities + space-post creates)
+   cannot see this write — the same claim is checked here. `email_verified`
+   is true for OAuth accounts and for an email/password account once the
+   verification link is tapped; a missing token reads as unverified.
+   Runs immediately after the auth check and before any Firestore read,
+   so an unverified caller writes nothing, notifies nobody, and cannot
+   probe the rate limiter or the block guard. */
+function assertCallerEmailVerified(context) {
+  const token = context.auth && context.auth.token;
+  if (!token || token.email_verified !== true) {
+    throw new functions.https.HttpsError(
+      "failed-precondition",
+      "Verify your email to comment."
+    );
+  }
+}
+
 exports.addSpacePostCommentCallable = functions
   .runWith(DEFAULT_HTTP_CAP)
   .https.onCall(async (data, context) => {
@@ -6331,6 +6349,7 @@ exports.addSpacePostCommentCallable = functions
         "Sign-in required."
       );
     }
+    assertCallerEmailVerified(context);
     const { spaceId, postId, text, authorName, authorPhotoURL } = data || {};
     if (
       typeof spaceId !== "string" ||
@@ -6489,6 +6508,7 @@ exports.addCommentCallable = functions
         "Sign-in required."
       );
     }
+    assertCallerEmailVerified(context);
     const { activityId, text, authorName, authorPhotoURL } = data || {};
     if (typeof activityId !== "string" || !activityId.trim()) {
       throw new functions.https.HttpsError(

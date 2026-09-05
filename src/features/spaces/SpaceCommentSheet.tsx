@@ -15,6 +15,8 @@ import { getTimeAgo } from "@/lib/timeAgo";
 import { toast } from "@/lib/toast";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
+import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
+import VerifyEmailNotice from "@/components/social/VerifyEmailNotice";
 
 /**
  * SOC-P2g — comments on a Space post. The activity CommentSheet's
@@ -42,6 +44,7 @@ export default function SpaceCommentSheet({
   onCountChange: (delta: number) => void;
 }) {
   const { user, profile } = useAuth();
+  const gate = useEmailVerificationGate(user);
   const [comments, setComments] = useState<SpacePostComment[] | null>(null);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
@@ -68,7 +71,9 @@ export default function SpaceCommentSheet({
 
   const send = async () => {
     const trimmed = text.trim();
-    if (!user || !trimmed || sending) return;
+    // Comments are public content: the callable refuses an unverified
+    // email. Held here as well as on the button.
+    if (!user || !trimmed || sending || gate.needsVerification) return;
     setSending(true);
     haptic("light");
     try {
@@ -158,6 +163,10 @@ export default function SpaceCommentSheet({
           </div>
         ))}
 
+        {user && gate.needsVerification && (
+          <VerifyEmailNotice action="comment" onRecheck={gate.recheck} />
+        )}
+
         {user && (
           <div className="flex items-end gap-2 pt-2 border-t border-border/40">
             <textarea
@@ -166,12 +175,13 @@ export default function SpaceCommentSheet({
               placeholder="Add a comment…"
               rows={1}
               maxLength={1000}
+              disabled={sending || gate.needsVerification}
               className="flex-1 resize-none rounded-xl bg-muted px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring min-h-[44px]"
             />
             <IconButton
               aria-label="Post comment"
               onClick={send}
-              disabled={sending || !text.trim()}
+              disabled={sending || !text.trim() || gate.needsVerification}
               icon={<Send className="size-4" />}
               className="bg-primary-strong text-primary-foreground"
             />

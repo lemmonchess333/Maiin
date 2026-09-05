@@ -16,6 +16,7 @@ import { projectWorkoutSets } from "@/features/program/workoutSetRecord";
 import { compose, enqueueShare, showQueuedToast } from "../lib/shareComposer";
 import { recordSharedActivity } from "../lib/sessionDelete";
 import { postActivity } from "../lib/socialApi";
+import { needsEmailVerification } from "../lib/emailVerificationGate";
 import { toast } from "@/lib/toast";
 
 /* Synthetic dayIndex used by saved-routine sessions.
@@ -213,17 +214,21 @@ export default function Routine() {
         /* Share composer: same flow as useProgram.completeWorkoutDay.
            Title uses the routine name so the social card identifies
            the workout the same way the user thinks of it. */
-        const decision = await compose(user.uid, {
-          type: "workout",
-          title: routine.name,
-          meta: [
-            `${synthDay.exercises.length} exercise${synthDay.exercises.length === 1 ? "" : "s"}`,
-            tonnage > 0
-              ? `${Math.round(tonnage).toLocaleString()} kg volume`
-              : "",
-            effectiveDurationMin > 0 ? `${effectiveDurationMin} min` : "",
-          ].filter(Boolean),
-        });
+        const decision = await compose(
+          user.uid,
+          {
+            type: "workout",
+            title: routine.name,
+            meta: [
+              `${synthDay.exercises.length} exercise${synthDay.exercises.length === 1 ? "" : "s"}`,
+              tonnage > 0
+                ? `${Math.round(tonnage).toLocaleString()} kg volume`
+                : "",
+              effectiveDurationMin > 0 ? `${effectiveDurationMin} min` : "",
+            ].filter(Boolean),
+          },
+          { needsEmailVerification: needsEmailVerification(user) }
+        );
         if (decision) {
           const payload = {
             authorId: user.uid,
