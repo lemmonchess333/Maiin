@@ -23,7 +23,7 @@ npm run test:e2e:ui  # Playwright E2E tests (interactive UI)
 - **Animation:** Framer Motion 12
 - **PWA:** vite-plugin-pwa + Workbox
 - **Native:** Capacitor (iOS/Android)
-- **Payments:** Stripe (@stripe/stripe-js)
+- **Payments:** RevenueCat (`@revenuecat/purchases-capacitor`) for native IAP (ADR-0006); Stripe Checkout is server-side only and dormant (Sub4) — the client loads no Stripe SDK
 - **Drag & Drop:** @dnd-kit (sortable exercise lists)
 - **Barcode:** @zxing/browser (food barcode scanning)
 - **Utilities:** clsx + tailwind-merge, date-fns 4, html-to-image, canvas-confetti
@@ -66,7 +66,7 @@ e2e/                    # Playwright E2E tests (smoke, navigation, a11y, PWA)
 ## Architecture Notes
 
 - **All pages are lazy-loaded** via `lazyRetry()` wrapper in App.tsx (handles stale cache)
-- **Manual chunks** in vite.config.ts: firebase-auth, firebase-db, charts, vendor, maplibre, motion, date-fns, barcode, body-highlighter, stripe
+- **Manual chunks** in vite.config.ts: firebase-auth, firebase-db, charts, vendor, maplibre, motion, date-fns, barcode, body-highlighter
 - **Path alias:** `@/` maps to `src/`
 - **Base path:** `/Maiin/` (for GitHub Pages deployment)
 - **Offline support:** `src/lib/offlineQueue.ts` queues writes when offline

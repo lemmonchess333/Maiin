@@ -44,7 +44,7 @@ checklist in the PR). Android / Health Connect is the remaining follow-up.
 
 **iOS (shipped):** the Home Steps tile shows the real daily step count from
 Apple Health via the `capacitor-health` plugin (peer `@capacitor/core >=8`).
-`STEPS_TILE_ENABLED` is `true`; the tile renders only on the native shell AND
+The tile is always on (the `STEPS_TILE_ENABLED` flag was removed once HealthKit shipped); it renders only on the native shell AND
 when Health is available (`stepsStatus !== "unavailable"`), so web still shows
 a single full-width Weight tile with no dead affordance. Three discovery
 surfaces ship together:

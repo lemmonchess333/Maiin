@@ -3,9 +3,6 @@
    Reusable component styles
 
    Primitive usage (May 2026 visual cohesion pass):
-     .ds-card              Static grouped-card surfaces.
-     .ds-card-interactive  Pressable cards only. Pair with a real
-                           <button> or <a> — never wrap a div.
      .ds-input             Text/email/password/search inputs.
      .ds-status-banner     Global online/offline + app-state banners.
      .ds-auth-shell        Full-page login/signup shell only.
@@ -19,24 +16,6 @@
    instead of one-off Tailwind class strings on shared surfaces;
    for unique single-use surfaces, hand-roll Tailwind as before.
 ============================================================= */
-
-/* ─── STAT NUMBER — mono + tabular-nums for all numeric displays ── */
-.stat-number {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-}
-
-/* ─── STAT TILES (Macro cards) ──────────────────────────────── */
-.stat-tile__value {
-  font-size: clamp(1rem, 3.8vw, 1.25rem);
-  font-weight: 800;
-  letter-spacing: -0.025em;
-  line-height: 1;
-  white-space: nowrap;
-  max-width: 100%;
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-}
 
 /* ─── BOTTOM NAV — SOLID ─────────────────────────────────────
    `color-mix()` is widely supported (Safari 16.4+, Chrome 111+,
@@ -86,37 +65,6 @@
   }
 }
 
-/* ─── FEATURE BUTTONS (replaces dashed borders) ─────────────── */
-.feature-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 1rem;
-  border-radius: 0.75rem;
-  border: 1.5px solid var(--ds-purple-200);
-  background: var(--ds-purple-50);
-  color: var(--ds-purple-600);
-  font-size: var(--ds-text-body);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--ds-transition-fast);
-}
-.feature-btn:hover {
-  background: var(--ds-purple-100);
-  border-color: var(--ds-purple-400);
-}
-.feature-btn:active {
-  transform: scale(0.98);
-}
-
-.dark .feature-btn {
-  background: rgba(123, 114, 233, 0.06);
-  border-color: rgba(123, 114, 233, 0.14);
-  color: var(--ds-purple-400);
-}
-
 /* ─── LOCKED BADGE ARTWORK — theme-aware contrast ────────────
    The bespoke badge art is a light silver metallic. Grayscaled + dimmed for
    the "not earned yet" state it reads fine on the DARK card, but on the WHITE
@@ -144,48 +92,6 @@
   transform: scale(0.97);
 }
 
-/* ─── QUOTE CARD — Gradient version ─────────────────────────── */
-.quote-card {
-  background: linear-gradient(135deg, #7b72e9 0%, #6560c8 50%, #5b4db8 100%);
-  color: white;
-  border-radius: 0.75rem;
-  padding: 1.25rem;
-  position: relative;
-  overflow: hidden;
-}
-.quote-card::before {
-  content: "\201C";
-  position: absolute;
-  top: -8px;
-  left: 12px;
-  font-size: 5rem;
-  line-height: 1;
-  opacity: 0.15;
-  /* Inherits the body font (Plus Jakarta Sans). Previously pinned to
-     Georgia, serif — a lone use of a serif face for a single decorative
-     glyph. Removing it aligns with the two-font system (Plus Jakarta
-     Sans + Archivo only). */
-}
-
-/* ─── PROGRESS RING ─────────────────────────────────────────── */
-.progress-ring {
-  transform: rotate(-90deg);
-}
-.progress-ring__bg {
-  fill: none;
-  stroke: hsl(var(--muted));
-  stroke-width: 6;
-}
-.progress-ring__fill {
-  fill: none;
-  stroke: var(--ds-orange-500);
-  stroke-width: 6;
-  stroke-linecap: round;
-  stroke-dasharray: 213.6;
-  stroke-dashoffset: calc(213.6 * (1 - var(--pct, 0)));
-  transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
 /* ─── COHESIVE SURFACES ──────────────────────────────────────
    Shared visual primitives used during the May 2026 UI audit.
    These keep auth, shell, and feature cards on the same radius,
@@ -195,36 +101,6 @@
   display: flex;
   flex-direction: column;
   gap: clamp(1rem, 3vw, 1.5rem);
-}
-
-.ds-card {
-  background: hsl(var(--card));
-  border: 1px solid hsl(var(--border) / 0.58);
-  border-radius: 1.25rem;
-  box-shadow: var(--ds-shadow-card);
-}
-
-.ds-card-interactive {
-  transition:
-    transform var(--ds-transition-fast),
-    box-shadow var(--ds-transition-fast),
-    border-color var(--ds-transition-fast);
-}
-
-/* Hover-only states gated behind `hover: hover` + `pointer: fine`.
-   On touch devices, `:hover` triggers on tap and the styles "stick"
-   until another tap clears the hover state — a familiar mobile-web
-   bug. Restricting hover to true pointer devices avoids it without
-   blocking desktop polish. */
-@media (hover: hover) and (pointer: fine) {
-  .ds-card-interactive:hover {
-    border-color: hsl(var(--primary) / 0.24);
-    box-shadow: var(--ds-shadow-card-hover);
-  }
-}
-
-.ds-card-interactive:active {
-  transform: scale(0.99);
 }
 
 /* `.ds-input` is intentionally tag-qualified so the rule beats the
@@ -422,14 +298,10 @@ select.ds-input:focus {
    so any future consumer that uses them outside of Framer Motion
    also respects the preference. */
 @media (prefers-reduced-motion: reduce) {
-  .ds-card-interactive,
   input.ds-input,
   textarea.ds-input,
   select.ds-input,
   .bottom-nav-frost {
     transition: none;
-  }
-  .ds-card-interactive:active {
-    transform: none;
   }
 }

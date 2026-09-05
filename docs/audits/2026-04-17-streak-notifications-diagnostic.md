@@ -27,7 +27,7 @@ function computeActiveDateSet(workouts, runs, meals): Set<string> {
 }
 ```
 
-**S3 — reset / grace behaviour.** No freeze / skip mechanic. But a **soft grace rule** is built in (`useStreaks.ts:104-133`): if *today* isn't active yet but *yesterday* is, the streak displays as ending on yesterday (at-risk but alive). The streak doesn't drop to zero at midnight — it drops only once *both* yesterday and today are missing. All date math uses `date-fns format(date, "yyyy-MM-dd")` in the **device's local timezone**. Timezone travel is explicitly acknowledged as out of scope in a code comment — crossing zones can shift date boundaries by a day. No UTC comparison anywhere. Quote:
+**S3 — reset / grace behaviour.** No freeze / skip mechanic. But a **soft grace rule** is built in (`useStreaks.ts:104-133`): if _today_ isn't active yet but _yesterday_ is, the streak displays as ending on yesterday (at-risk but alive). The streak doesn't drop to zero at midnight — it drops only once _both_ yesterday and today are missing. All date math uses `date-fns format(date, "yyyy-MM-dd")` in the **device's local timezone**. Timezone travel is explicitly acknowledged as out of scope in a code comment — crossing zones can shift date boundaries by a day. No UTC comparison anywhere. Quote:
 
 ```
 // Today/yesterday rule — the streak does NOT drop to zero at midnight.
@@ -39,7 +39,7 @@ function computeActiveDateSet(workouts, runs, meals): Set<string> {
 **S4 — award / increment logic.** Computed on every snapshot reflow via `useMemo` over `{workouts, runs, meals}`; derived, not imperatively incremented. Whenever the derived `currentStreak` differs from the last-written ref, a persistence `useEffect` writes the new value to `users/{uid}/streaks/data` with `{ merge: true }`. Loop-guarded (`lastWrittenStreakRef`) so write → re-read → write doesn't oscillate. Badge awards are separate — iterate `BADGE_DEFINITIONS`, award when `currentStreak >= threshold` and `earnedAt` is null. "Silent" mode on first load prevents reshowing badge modals for already-earned badges.
 
 - **No visible race:** write is loop-guarded; fast sequential logs don't double-count because the set is deduped by date string.
-- **Minor concern:** `useStreaks` is instantiated in *both* `Home.tsx` and `FoodHeroCard.tsx` (via `Food.tsx`) — 8 Firestore subscriptions per user when both pages are mounted. A TODO in the hook acknowledges this: "hoist this hook to a context provider. Currently Home and Food each create their own 4 subscriptions (8 total)."
+- **Minor concern:** `useStreaks` is instantiated in _both_ `Home.tsx` and `FoodHeroCard.tsx` (via `Food.tsx`) — 8 Firestore subscriptions per user when both pages are mounted. A TODO in the hook acknowledges this: "hoist this hook to a context provider. Currently Home and Food each create their own 4 subscriptions (8 total)."
 - **Windowing:** streams are capped at 400 workouts, 400 runs, 500 meals. A user with a >400-day streak would miss older days. Acknowledged in a comment — "Acceptable for launch."
 
 **S5 — longest streak / historical.** Yes: `longestStreak` is tracked and persisted. `longestStreak = Math.max(currentStreak, streakData.longestStreak)` on every compute. Also `totalActiveDays = activeDateSet.size` (windowed per the caps above). **Neither is currently surfaced in the UI** — only `currentStreak` renders. `longestStreak` + `totalActiveDays` are dead-ended in the data layer.

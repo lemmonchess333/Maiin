@@ -43,8 +43,8 @@ function createPNG(size) {
   const ihdrData = Buffer.alloc(13);
   ihdrData.writeUInt32BE(size, 0);
   ihdrData.writeUInt32BE(size, 4);
-  ihdrData.writeUInt8(8, 8);   // 8-bit
-  ihdrData.writeUInt8(2, 9);   // RGB
+  ihdrData.writeUInt8(8, 8); // 8-bit
+  ihdrData.writeUInt8(2, 9); // RGB
   ihdrData.writeUInt8(0, 10);
   ihdrData.writeUInt8(0, 11);
   ihdrData.writeUInt8(0, 12);
@@ -60,7 +60,7 @@ function createPNG(size) {
       const px = rowStart + 1 + x * 3;
       // Gradient purple background
       const t = (x + y) / (size * 2);
-      const r = Math.round(124 + t * 44);  // #7c3aed to #a855f7
+      const r = Math.round(124 + t * 44); // #7c3aed to #a855f7
       const g = Math.round(58 + t * 27);
       const b = Math.round(237 - t * 10);
 
@@ -69,23 +69,48 @@ function createPNG(size) {
       const ny = y / size;
 
       // Draw dumbbell shape (white)
-      const cx = 0.5, cy = 0.45;
-      const barHalfW = 0.2, barH = 0.03;
-      const weightW = 0.06, weightH = 0.16;
-      const outerW = 0.03, outerH = 0.11;
+      const cx = 0.5,
+        cy = 0.45;
+      const barHalfW = 0.2,
+        barH = 0.03;
+      const weightW = 0.06,
+        weightH = 0.16;
+      const outerW = 0.03,
+        outerH = 0.11;
 
       let isWhite = false;
 
       // Bar
-      if (Math.abs(ny - cy) < barH && Math.abs(nx - cx) < barHalfW) isWhite = true;
+      if (Math.abs(ny - cy) < barH && Math.abs(nx - cx) < barHalfW)
+        isWhite = true;
       // Left weight
-      if (nx > cx - barHalfW - weightW && nx < cx - barHalfW && Math.abs(ny - cy) < weightH) isWhite = true;
+      if (
+        nx > cx - barHalfW - weightW &&
+        nx < cx - barHalfW &&
+        Math.abs(ny - cy) < weightH
+      )
+        isWhite = true;
       // Right weight
-      if (nx > cx + barHalfW && nx < cx + barHalfW + weightW && Math.abs(ny - cy) < weightH) isWhite = true;
+      if (
+        nx > cx + barHalfW &&
+        nx < cx + barHalfW + weightW &&
+        Math.abs(ny - cy) < weightH
+      )
+        isWhite = true;
       // Left outer
-      if (nx > cx - barHalfW - weightW - outerW && nx < cx - barHalfW - weightW && Math.abs(ny - cy) < outerH) isWhite = true;
+      if (
+        nx > cx - barHalfW - weightW - outerW &&
+        nx < cx - barHalfW - weightW &&
+        Math.abs(ny - cy) < outerH
+      )
+        isWhite = true;
       // Right outer
-      if (nx > cx + barHalfW + weightW && nx < cx + barHalfW + weightW + outerW && Math.abs(ny - cy) < outerH) isWhite = true;
+      if (
+        nx > cx + barHalfW + weightW &&
+        nx < cx + barHalfW + weightW + outerW &&
+        Math.abs(ny - cy) < outerH
+      )
+        isWhite = true;
 
       if (isWhite) {
         raw[px] = 255;

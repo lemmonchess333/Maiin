@@ -76,12 +76,12 @@ Both the UTC-vs-local save/read mismatch and the `totalCalories` ≈ 0 write pat
 
 Four separate base-TDEE paths:
 
-| Path | Used by | Formula | Reads |
-|---|---|---|---|
-| `calculateTDEE` (`src/lib/tdee.ts`) | Onboarding + Settings **writes** `profile.targetCalories` | `bmr × ACTIVITY_MULTIPLIERS[activityLevel] + deficit` | `profile.activityLevel` |
-| `useDailyTargets.baseTarget` | Food ring (via useEffectiveTargets), Home header | `profile.targetCalories \|\| 2200` | stored field |
-| `calcDailyBurn` (`src/utils/dailyBurn.ts`) | Home "Today's budget" expanded line | `bmr × 1.2 + goal_offset` (**fixed NEAT 1.2**) | `profile.weightKg/heightCm/age/sex`, ignores `activityLevel` |
-| `calculateAdaptiveTDEE` (`src/lib/adaptiveTDEE.ts`) | TodayEnergy "Adaptive TDEE" row when present | Weight-trend-based estimate | bodyweight history |
+| Path                                                | Used by                                                   | Formula                                               | Reads                                                        |
+| --------------------------------------------------- | --------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------ |
+| `calculateTDEE` (`src/lib/tdee.ts`)                 | Onboarding + Settings **writes** `profile.targetCalories` | `bmr × ACTIVITY_MULTIPLIERS[activityLevel] + deficit` | `profile.activityLevel`                                      |
+| `useDailyTargets.baseTarget`                        | Food ring (via useEffectiveTargets), Home header          | `profile.targetCalories \|\| 2200`                    | stored field                                                 |
+| `calcDailyBurn` (`src/utils/dailyBurn.ts`)          | Home "Today's budget" expanded line                       | `bmr × 1.2 + goal_offset` (**fixed NEAT 1.2**)        | `profile.weightKg/heightCm/age/sex`, ignores `activityLevel` |
+| `calculateAdaptiveTDEE` (`src/lib/adaptiveTDEE.ts`) | TodayEnergy "Adaptive TDEE" row when present              | Weight-trend-based estimate                           | bodyweight history                                           |
 
 Where each number on your screen reads from:
 
@@ -102,7 +102,7 @@ Coincidence in this specific state. Both read `profile.targetCalories` + day-typ
 **Why the caption still says `+250 FUEL` despite a completed 312 kcal workout.**
 The max rule is correct in isolation (covered by tests); the bug is upstream in `actualBurn`. Two plausible causes, both live:
 
-1. **The saved workout's `totalCalories` field is ≤ 250** (most likely: `Math.round(tonnage × 0.05)` from useProgram.ts with a low-tonnage session, or `sum of per-exercise caloriesBurned` = 0 from WorkoutLogger when cardio inputs weren't filled). Home still shows 312 because Home *recomputes* from `durationMinutes × weightKg × 5 / 60` and ignores the stored field entirely.
+1. **The saved workout's `totalCalories` field is ≤ 250** (most likely: `Math.round(tonnage × 0.05)` from useProgram.ts with a low-tonnage session, or `sum of per-exercise caloriesBurned` = 0 from WorkoutLogger when cardio inputs weren't filled). Home still shows 312 because Home _recomputes_ from `durationMinutes × weightKg × 5 / 60` and ignores the stored field entirely.
 2. **UTC/local date mismatch**: useProgram saves `date: new Date().toISOString().split("T")[0]` (UTC) while useEffectiveTargets filters with `format(targetDate, "yyyy-MM-dd")` (local). Near midnight boundaries this misses the workout entirely.
 
 **Which single fix reconciles all three numbers — or are multiple needed?**
