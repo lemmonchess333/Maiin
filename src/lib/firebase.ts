@@ -45,6 +45,10 @@ initAppCheck(app);
 // is set. See src/lib/analyticsProvider.ts for gating + the native split.
 initAnalytics(app);
 
+// Auth keeps Firebase's default local persistence on purpose: Tropos is a
+// mobile-first app and a session that survives an app restart is the
+// expected behaviour. Destructive actions (account deletion) re-authenticate
+// on their own path rather than by shortening the session.
 export const auth = getAuth(app);
 
 // Try persistent cache first; fall back to memory cache if IndexedDB is unavailable

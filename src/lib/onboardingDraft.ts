@@ -34,6 +34,7 @@
  */
 
 import { logger } from "@/lib/logger";
+import { readString, remove, writeJson } from "@/lib/localStore";
 import {
   VALID_EQUIPMENT,
   VALID_RACE_DISTANCE,
@@ -161,16 +162,14 @@ export function isValidDraft(
 /** Persist the draft. Best-effort — storage failures never surface. */
 export function saveOnboardingDraft(uid: string, draft: OnboardingDraft): void {
   if (!uid) return;
-  try {
-    const envelope: DraftEnvelope = {
-      v: DRAFT_VERSION,
-      uid,
-      savedAt: Date.now(),
-      draft,
-    };
-    localStorage.setItem(keyFor(uid), JSON.stringify(envelope));
-  } catch (err) {
-    logger.warn("[OnboardingDraft] save failed", err);
+  const envelope: DraftEnvelope = {
+    v: DRAFT_VERSION,
+    uid,
+    savedAt: Date.now(),
+    draft,
+  };
+  if (!writeJson(keyFor(uid), envelope)) {
+    logger.warn("[OnboardingDraft] save failed");
   }
 }
 
@@ -184,9 +183,9 @@ export function loadOnboardingDraft(
   maxStep: number
 ): OnboardingDraft | null {
   if (!uid) return null;
+  const raw = readString(keyFor(uid));
+  if (!raw) return null;
   try {
-    const raw = localStorage.getItem(keyFor(uid));
-    if (!raw) return null;
     const envelope = JSON.parse(raw) as Partial<DraftEnvelope> | null;
     if (
       !envelope ||
@@ -196,17 +195,13 @@ export function loadOnboardingDraft(
       Date.now() - envelope.savedAt > DRAFT_TTL_MS ||
       !isValidDraft(envelope.draft, maxStep)
     ) {
-      localStorage.removeItem(keyFor(uid));
+      remove(keyFor(uid));
       return null;
     }
     return envelope.draft;
   } catch (err) {
     logger.warn("[OnboardingDraft] load failed", err);
-    try {
-      localStorage.removeItem(keyFor(uid));
-    } catch {
-      /* storage unavailable — nothing to clean */
-    }
+    remove(keyFor(uid));
     return null;
   }
 }
@@ -214,9 +209,5 @@ export function loadOnboardingDraft(
 /** Remove the draft — called once onboarding completes successfully. */
 export function clearOnboardingDraft(uid: string): void {
   if (!uid) return;
-  try {
-    localStorage.removeItem(keyFor(uid));
-  } catch (err) {
-    logger.warn("[OnboardingDraft] clear failed", err);
-  }
+  if (!remove(keyFor(uid))) logger.warn("[OnboardingDraft] clear failed");
 }

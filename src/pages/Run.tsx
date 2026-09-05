@@ -8,6 +8,7 @@ import {
   useReducer,
 } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import { readString, writeString } from "@/lib/localStore";
 import { useAuth } from "../lib/auth";
 import { useGPS, type GPSSignalQuality } from "../hooks/useGPS";
 import { useRunTimer } from "../hooks/useRunTimer";
@@ -329,25 +330,19 @@ export default function Run() {
   // note. `showBgGrantNote` drives the non-blocking card in the banner
   // stack; the persisted dismissed flag stops it re-nagging once the user
   // has acknowledged it (the grant itself is unreadable — see
-  // nativeLocationSettings — so acknowledgement is the only exit).
+  // nativeLocationSettings — so acknowledgement is the only exit). The key
+  // is device-scoped on purpose: the grant is an OS setting for this
+  // install, not a fact about an account, so a second account on the phone
+  // would only be re-nagged about the same setting.
   const [showBgGrantNote, setShowBgGrantNote] = useState(false);
   const bgGrantNoteDismissedRef = useRef<boolean>(
-    (() => {
-      try {
-        return localStorage.getItem("tropos.run.bgGrantNoteDismissed") === "1";
-      } catch {
-        return false;
-      }
-    })()
+    readString("tropos.run.bgGrantNoteDismissed") === "1"
   );
   const dismissBgGrantNote = useCallback(() => {
     bgGrantNoteDismissedRef.current = true;
     setShowBgGrantNote(false);
-    try {
-      localStorage.setItem("tropos.run.bgGrantNoteDismissed", "1");
-    } catch {
-      /* private mode / storage disabled — the ref still suppresses re-show */
-    }
+    // Private mode / storage disabled — the ref still suppresses re-show.
+    writeString("tropos.run.bgGrantNoteDismissed", "1");
   }, []);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);

@@ -1,5 +1,6 @@
 import { collection, addDoc, doc, setDoc, Firestore } from "firebase/firestore";
 import { logger } from "@/lib/logger";
+import { isAvailable, readJson, remove, writeJson } from "@/lib/localStore";
 import { captureError } from "@/lib/errorReporting";
 import { stripUndefined } from "@/lib/firestoreGuards";
 
@@ -32,67 +33,51 @@ interface QueuedWrite {
 const QUEUE_KEY = "tropos_offline_queue";
 
 function getQueue(): QueuedWrite[] {
-  try {
-    const stored = localStorage.getItem(QUEUE_KEY);
-    if (!stored) return [];
-    const parsed = JSON.parse(stored) as unknown;
-    if (!Array.isArray(parsed)) return [];
-    // Drop legacy items that pre-date uid scoping. They were written
-    // by a previous build and we have no safe way to attribute them
-    // to a uid retroactively — better to drop than to flush under
-    // the wrong session.
-    return parsed.filter(
-      (item): item is QueuedWrite =>
-        item != null &&
-        typeof item === "object" &&
-        typeof (item as { uid?: unknown }).uid === "string"
-    );
-  } catch {
-    return [];
-  }
+  const parsed = readJson<unknown>(QUEUE_KEY, null);
+  if (!Array.isArray(parsed)) return [];
+  // Drop legacy items that pre-date uid scoping. They were written
+  // by a previous build and we have no safe way to attribute them
+  // to a uid retroactively — better to drop than to flush under
+  // the wrong session.
+  return parsed.filter(
+    (item): item is QueuedWrite =>
+      item != null &&
+      typeof item === "object" &&
+      typeof (item as { uid?: unknown }).uid === "string"
+  );
 }
 
 function saveQueue(queue: QueuedWrite[]) {
-  try {
-    localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
-  } catch (e: unknown) {
-    if (e instanceof DOMException && e.name === "QuotaExceededError") {
-      // CORE-01: quota exceeded. Drop the OLDEST item only and retry,
-      // shedding one at a time until it fits — the previous code lopped
-      // off the whole oldest HALF in one go and, on a second failure,
-      // cleared the queue ENTIRELY (silent bulk data loss). Every drop
-      // is reported so an exhausted/blocked sync is diagnosable rather
-      // than vanishing. Newest writes are kept (most likely still
-      // relevant); a dropped queued create can't duplicate because the
-      // creates are now idempotent by stable id (see queueWrite).
-      const working = [...queue];
-      while (working.length > 0) {
-        const dropped = working.shift();
-        captureError(
-          new Error("OfflineQueue: quota exceeded, dropped one queued write"),
-          "network",
-          {
-            collectionPath: dropped?.collectionPath,
-            docId: dropped?.docId,
-            remaining: working.length,
-          }
-        );
-        try {
-          localStorage.setItem(QUEUE_KEY, JSON.stringify(working));
-          return;
-        } catch {
-          // still too big — shed the next-oldest and retry
-        }
+  if (writeJson(QUEUE_KEY, queue)) return;
+  // A refused write with no storage at all is not a full store: there is
+  // nothing to shed into, and every shed would be reported as a drop.
+  if (!isAvailable()) return;
+  // CORE-01: quota exceeded. Drop the OLDEST item only and retry,
+  // shedding one at a time until it fits — the previous code lopped
+  // off the whole oldest HALF in one go and, on a second failure,
+  // cleared the queue ENTIRELY (silent bulk data loss). Every drop
+  // is reported so an exhausted/blocked sync is diagnosable rather
+  // than vanishing. Newest writes are kept (most likely still
+  // relevant); a dropped queued create can't duplicate because the
+  // creates are now idempotent by stable id (see queueWrite).
+  const working = [...queue];
+  while (working.length > 0) {
+    const dropped = working.shift();
+    captureError(
+      new Error("OfflineQueue: quota exceeded, dropped one queued write"),
+      "network",
+      {
+        collectionPath: dropped?.collectionPath,
+        docId: dropped?.docId,
+        remaining: working.length,
       }
-      // Nothing fit even when empty — remove the key so a corrupt giant
-      // value can't wedge every future write.
-      try {
-        localStorage.removeItem(QUEUE_KEY);
-      } catch {
-        /* best-effort */
-      }
-    }
+    );
+    // Still too big — shed the next-oldest and retry.
+    if (writeJson(QUEUE_KEY, working)) return;
   }
+  // Nothing fit even when empty — remove the key so a corrupt giant
+  // value can't wedge every future write.
+  remove(QUEUE_KEY);
 }
 
 export function queueWrite(
