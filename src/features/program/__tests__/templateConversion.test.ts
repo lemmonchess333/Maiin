@@ -5,7 +5,10 @@ import {
   parseTemplateReps,
   templateExToProgEx,
   templateProgressionFor,
+  templateSplitToSplitType,
+  templateToProgramState,
 } from "@/features/program/templateConversion";
+import { PROGRAM_TEMPLATES } from "../templates";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import type { TemplateExercise } from "@/features/program/templates";
 import { applyProgression } from "@/features/program/programEngine";
@@ -186,5 +189,38 @@ describe("formatRepTarget (backlog #7 time axis)", () => {
     );
     expect(plank.repUnit).toBe("seconds");
     expect(formatRepTarget(plank)).toBe("30-45s");
+  });
+});
+
+describe("templateToProgramState (moved out of Onboarding.tsx, 2026-09)", () => {
+  it("maps the template's split vocabulary onto the programme's", () => {
+    expect(templateSplitToSplitType("full_body")).toBe("full_body");
+    expect(templateSplitToSplitType("upper_lower")).toBe("upper_lower");
+    expect(templateSplitToSplitType("ppl")).toBe("ppl");
+    // bro_split has no programme split; ppl is the closest.
+    expect(templateSplitToSplitType("bro_split")).toBe("ppl");
+  });
+
+  it("builds week 1 from the template's lift days only, with fresh state", () => {
+    const template = PROGRAM_TEMPLATES[0];
+    const liftDays = template.weeks[0].days.filter((d) => d.type === "lift");
+    const state = templateToProgramState(template, "recomp");
+    expect(state.workouts).toHaveLength(liftDays.length);
+    expect(state.workouts.map((w) => w.dayName)).toEqual(
+      liftDays.map((d) => d.name)
+    );
+    expect(state.workouts.every((w) => w.completed === false)).toBe(true);
+    expect(state.workouts.map((w) => w.exercises.length)).toEqual(
+      liftDays.map((d) => d.exercises.length)
+    );
+    expect(state).toMatchObject({
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      fatigueScore: 0,
+      weekHistory: [],
+      settings: { autoProgression: true, microloading: true },
+      splitType: templateSplitToSplitType(template.split),
+    });
   });
 });

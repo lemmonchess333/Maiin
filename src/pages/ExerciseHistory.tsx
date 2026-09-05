@@ -6,12 +6,12 @@ import { ChevronLeft, Trophy, Search, Dumbbell } from "lucide-react";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { EXERCISES } from "@/lib/exercises";
 import { epley1RMExact } from "@/lib/analytics";
-import { formatDayMonth } from "@/utils/formatters";
+import { formatDayMonth, formatLoadKg } from "@/utils/formatters";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { localDateString } from "@/lib/dateHelpers";
+import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { isTimedExerciseId } from "@/features/program/repUnits";
 
 const ExerciseProgressChart = lazyRetry(
@@ -68,16 +68,6 @@ function topSetOf(
     }
   }
   return best;
-}
-
-function formatWeight(kg: number): string {
-  if (kg === 0) return "BW";
-  return `${kg % 1 === 0 ? kg.toFixed(0) : kg.toFixed(1)} kg`;
-}
-
-function formatDate(dateStr: string): string {
-  const d = new Date(dateStr + "T12:00:00");
-  return formatDayMonth(d);
 }
 
 export default function ExerciseHistory() {
@@ -459,7 +449,7 @@ export default function ExerciseHistory() {
                       </p>
                       {pr && (
                         <p className="text-caption text-muted-foreground mt-0.5">
-                          {formatDate(pr.date)}
+                          {formatDayMonth(parseLocalDate(pr.date))}
                         </p>
                       )}
                     </div>
@@ -557,7 +547,7 @@ export default function ExerciseHistory() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
                           <p className="text-xs font-medium text-foreground">
-                            {formatDate(s.date)}
+                            {formatDayMonth(parseLocalDate(s.date))}
                           </p>
                           {isPR && (
                             <span
@@ -586,7 +576,7 @@ export default function ExerciseHistory() {
                           {s.topSet
                             ? isTimed
                               ? `${s.topSet.reps}s`
-                              : `${formatWeight(s.topSet.weightKg)} × ${s.topSet.reps}`
+                              : `${formatLoadKg(s.topSet.weightKg)} × ${s.topSet.reps}`
                             : "—"}
                         </p>
                         {delta != null && delta !== 0 && (

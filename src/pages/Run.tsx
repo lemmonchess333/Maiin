@@ -38,6 +38,7 @@ import RunSetupModal, {
   type RunConfig,
   type ProgramContextStrip,
 } from "../components/run/RunSetupModal";
+import { deriveStrip } from "../lib/runContextStrip";
 import RunLaunchCard from "../components/run/RunLaunchCard";
 import RunTilePicker from "../components/run/RunTilePicker";
 import { useLastRunType } from "../hooks/useLastRunType";
@@ -85,10 +86,8 @@ import {
   finalisePlanMetadata,
   freeformPlanMetadata,
   type PlanMode,
-  type RunPlanMetadata,
 } from "../lib/runPlanMetadata";
 import { logger } from "../lib/logger";
-import { localDateString } from "../lib/dateHelpers";
 import { isNativePlatform } from "../lib/platform";
 import RunBackgroundGrantNote from "../components/run/RunBackgroundGrantNote";
 import {
@@ -100,7 +99,7 @@ import {
   initialRunPhase,
 } from "../features/run/runSessionReducer";
 import { haptic } from "../lib/haptic";
-import { formatRaceDistance, distanceLabel, paceLabel } from "../lib/runLabels";
+import { distanceLabel, paceLabel } from "../lib/runLabels";
 import {
   startRunActivity,
   updateRunActivity,
@@ -175,101 +174,6 @@ function GPSIndicator({
       </span>
     </div>
   );
-}
-
-/**
- * Map the metadata returned by computePlanMetadata into the
- * ProgramContextStrip shape consumed by RunSetupModal. Kept local
- * to Run.tsx because the strip-data fields are presentation-level
- * (week label, distance label, today template name) — the metadata
- * module stays purely about adherence accounting.
- *
- * Returns null when no strip should render (freeform users with
- * no plan context, missing-template fallback, or an elapsed plan
- * that the metadata module already folded into freeform metadata).
- */
-function deriveStrip(
-  metadata: RunPlanMetadata,
-  runPlan:
-    | {
-        mode: "structured" | "race_prep";
-        raceGoal?: { distance: string; targetDate: string };
-        totalWeeks?: number;
-        currentWeek?: number;
-      }
-    | undefined
-): ProgramContextStrip | null {
-  // Freeform / fallback cases get no strip.
-  if (metadata.planMode === "freeform") return null;
-  // Race-prep elapsed: metadata module already returned the freeform
-  // shape, but planMode === 'race_prep' is preserved. The trigger
-  // for the elapsed-state strip: we still have an elapsed runPlan
-  // even though planSource is 'manual'.
-  if (
-    metadata.planMode === "race_prep" &&
-    metadata.planSource === "manual" &&
-    runPlan?.mode === "race_prep"
-  ) {
-    const elapsed =
-      (typeof runPlan.currentWeek === "number" &&
-        typeof runPlan.totalWeeks === "number" &&
-        runPlan.currentWeek >= runPlan.totalWeeks) ||
-      // Local date-string compare: elapsed only AFTER race day, not during it
-      // (UTC-midnight parse dropped the race template to freeform on race day
-      // for non-UTC users). Matches isRacePlanElapsed in runPlanMetadata.ts.
-      (!!runPlan.raceGoal?.targetDate &&
-        localDateString() > runPlan.raceGoal.targetDate);
-    if (elapsed) {
-      return { kind: "race_prep_elapsed" };
-    }
-  }
-  if (metadata.planSource === "rest_day") return { kind: "rest_day" };
-  if (metadata.planSource === "completed_day") return { kind: "completed_day" };
-  if (
-    metadata.planSource === "today_plan" ||
-    metadata.planSource === "url_template"
-  ) {
-    // For URL-template overrides on a freeform user, no strip
-    // (no plan context to surface). For URL-template on a
-    // structured/race_prep user with a planned day, fall through
-    // to the planned-day strip — the user is overriding their plan
-    // and we still surface the plan context.
-    if (metadata.planMode === "race_prep") {
-      // Need a planned day or runPlan to render this state.
-      if (
-        metadata.plannedRunDayIndex === null &&
-        metadata.planSource === "url_template"
-      ) {
-        return null; // no plan today and URL is the only context
-      }
-      return {
-        kind: "race_prep_today",
-        weekLabel:
-          typeof metadata.planWeekIndex === "number" &&
-          typeof metadata.planTotalWeeks === "number"
-            ? `Week ${metadata.planWeekIndex + 1} of ${metadata.planTotalWeeks}`
-            : "",
-        distanceLabel: formatRaceDistance(runPlan?.raceGoal?.distance),
-        targetDate: runPlan?.raceGoal?.targetDate,
-      };
-    }
-    if (metadata.planMode === "structured") {
-      if (
-        metadata.plannedRunDayIndex === null &&
-        metadata.planSource === "url_template"
-      ) {
-        return null;
-      }
-      const todayTemplate = RUN_TEMPLATES.find(
-        (t) => t.id === metadata.plannedTemplateId
-      );
-      return {
-        kind: "structured_today",
-        todayLabel: todayTemplate?.name,
-      };
-    }
-  }
-  return null;
 }
 
 export default function Run() {
