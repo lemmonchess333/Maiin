@@ -49,6 +49,12 @@ must carry every mirrored/derived companion.
 | `functionsScheduleUtcGuard.test.ts`  | every `.pubsub.schedule(...)` anchors to UTC (a Europe/London anchor drifts an hour under BST — shipped bug, PR #815) |
 | `functionsV1ApiGuard.test.ts`        | `index.js` uses the 1st-gen `firebase-functions/v1` API; no live `functions.config()` (throws under v7)               |
 
+## Supply chain
+
+| Guard                              | Pins                                                                                                                                                                                                                                                                                                                                         |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `workflowSupplyChainGuard.test.ts` | every third-party GitHub Action in `.github/workflows` is pinned to a 40-hex commit sha with a `# vX` comment (Dependabot keeps pinned actions updated via that comment); `dependabot-auto-merge.yml` stays on `pull_request_target` with the dependabot-actor gate, no `actions/checkout`, and no `run:` step that executes repository code |
+
 ## State-machine correctness
 
 | Guard                              | Pins                                                                                                                                                                    |
@@ -64,6 +70,12 @@ The three invariants CLAUDE.md flags as "regress constantly":
 | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `eslint.config.js` (`no-restricted-syntax`) | **hex** — no hardcoded hex / `bg-white` / `text-black` / bare `text-muted` (lint-enforced)                                                                                                     |
 | `designSystemInvariants.test.ts`            | **mono-numerals** (`tabular-nums` className units carry `font-mono`, ratcheted) + **44px floor** (no hand-rolled `role="switch"`; `Toggle`/`Button`/`IconButton` keep their default 44px size) |
+
+## Hosting & CSP
+
+| Guard                            | Pins                                                                                                                                                                                                                                                                                                                                       |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `hostingSecurityHeaders.test.ts` | `firebase.json`'s `**` headers entry carries HSTS, `nosniff`, Referrer-Policy, `X-Frame-Options: DENY`, a `frame-ancestors 'none'` CSP header and a Permissions-Policy granting only camera + geolocation; `index.html`'s meta CSP declares `form-action 'self'` and never carries `frame-ancestors` (browsers ignore it in a meta policy) |
 
 ## Adding a new guard
 
