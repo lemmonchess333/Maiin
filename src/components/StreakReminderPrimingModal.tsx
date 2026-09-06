@@ -198,7 +198,9 @@ function PrimingDialog({
             id="streak-priming-title"
             className="text-lg font-bold text-foreground"
           >
-            {currentStreak < 2 ? "That's day one done" : "An evening reminder"}
+            {currentStreak < 2
+              ? "That's day one done"
+              : "Keep your streak alive"}
           </p>
           <p
             id="streak-priming-body"
@@ -206,14 +208,14 @@ function PrimingDialog({
           >
             {currentStreak < 2 ? (
               <>
-                Want a reminder tomorrow if you haven&apos;t logged? You can
-                change this anytime in Settings.
+                Want a reminder tomorrow evening so day two doesn&apos;t slip?
+                You can change this anytime in Settings.
               </>
             ) : (
               <>
                 We&apos;ll remind you in the evening if you haven&apos;t logged,
-                if you want to keep the run going. You can change this anytime
-                in Settings.
+                so you don&apos;t lose your {currentStreak}-day streak. You can
+                change this anytime in Settings.
               </>
             )}
           </p>

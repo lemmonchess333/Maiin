@@ -1,3 +1,4 @@
+import InlineNumerals from "@/components/ui/InlineNumerals";
 import { THEME } from "@/lib/theme";
 import { motion } from "framer-motion";
 import { Dumbbell, Play } from "lucide-react";
@@ -6,12 +7,14 @@ import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 
 export default function LiftCTACard({
   nextWorkout,
+  purpose,
   navigate,
   muscleGroups,
   isFirst = false,
   dayIndex = null,
   isStartable = true,
 }: {
+  purpose?: string | null;
   nextWorkout: {
     dayName: string;
     dayType: string;
@@ -53,7 +56,7 @@ export default function LiftCTACard({
           <p className="text-xs font-semibold mb-0.5 text-lifting-strong">
             {isFirst ? "Your first workout" : "Today · Lift day"}
           </p>
-          <p className="text-sm font-bold text-foreground truncate">
+          <p className="text-sm font-bold text-foreground">
             {nextWorkout.dayName}
           </p>
           <p className="text-micro text-muted-foreground capitalize">
@@ -80,6 +83,11 @@ export default function LiftCTACard({
           </div>
         )}
       </div>
+      {purpose && (
+        <p className="mt-2 text-sm text-muted-foreground">
+          <InlineNumerals>{purpose}</InlineNumerals>
+        </p>
+      )}
     </motion.button>
   );
 }

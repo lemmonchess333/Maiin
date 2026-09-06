@@ -346,28 +346,3 @@ describe("the last reschedule pass wins", () => {
     expect(landed).not.toContain(DINNER);
   });
 });
-
-it("moves a logged slot's reminder to tomorrow, leaving other slots today", async () => {
-  seedFirestore({ [PATH]: ALL_ON });
-  const activity = {
-    ready: true,
-    dateKey: "2026-07-15",
-    meals: [] as ("breakfast" | "lunch" | "dinner")[],
-    workout: false,
-  };
-  const { result, rerender } = renderHook(
-    ({ activity }) => useMealRemindersInternal(activity),
-    { initialProps: { activity } }
-  );
-  await waitFor(() => expect(result.current.loading).toBe(false));
-  await waitFor(() =>
-    expect(scheduledIds()).toEqual([BREAKFAST, LUNCH, DINNER])
-  );
-  expect(scheduledAt(LUNCH)?.scheduleAt?.getDate()).toBe(15);
-  rerender({ activity: { ...activity, meals: ["lunch"] } });
-  await act(async () => {
-    await settleNotifications();
-  });
-  expect(scheduledAt(LUNCH)?.scheduleAt?.getDate()).toBe(16);
-  expect(scheduledAt(DINNER)?.scheduleAt?.getDate()).toBe(15);
-});

@@ -1,3 +1,4 @@
+import InlineNumerals from "@/components/ui/InlineNumerals";
 /**
  * Training Block card (Blk2) — the Lift tab's block header and its sheets.
  *
@@ -26,6 +27,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { liftWeekLabel } from "@/lib/liftSessionExplainer";
 import { localDateString } from "@/lib/dateHelpers";
 import { useNavigate } from "react-router-dom";
 import { CalendarRange, ChevronRight, Flag } from "lucide-react";
@@ -315,17 +317,11 @@ export default function TrainingBlockCard({
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-foreground">
-              {focusLabel(block.focus)}
-              {!finished && week !== null && (
-                <span className="font-mono tabular-nums font-normal text-muted-foreground">
-                  {" "}
-                  {/* "Block week", never the programme week counter shown an
-                      inch above — Blk1(3)'s two-counters fix, still load-
-                      bearing because the block deliberately does NOT own
-                      `weekNumber` (owning it is objection 1's failure mode). */}
-                  · Block week {week} of {block.durationWeeks}
-                </span>
-              )}
+              <InlineNumerals>
+                {(!finished && week !== null
+                  ? liftWeekLabel({ trainingBlock: block }, today)
+                  : focusLabel(block.focus)) ?? ""}
+              </InlineNumerals>
             </p>
             <p className="text-xs text-muted-foreground">
               {finished

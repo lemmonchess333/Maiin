@@ -480,10 +480,11 @@ test.describe("offline-queue uid isolation across an account switch", () => {
       .getByRole("button", { name: "Save Run" })
       .click({ timeout: 20_000 });
     // Pre-#1887 this await parked forever offline; now the save
-    // confirms on the durable local commit and the composer opens.
-    await expect(page.getByText("Run saved")).toBeVisible({
+    // confirms on the durable local commit. Sharing is an explicit action.
+    await expect(page.getByRole("button", { name: "Done", exact: true })).toBeVisible({
       timeout: 15_000,
     });
+    await page.getByRole("button", { name: "Share this session", exact: true }).click();
     await page
       .getByRole("button", { name: "Share to followers" })
       .click({ timeout: 15_000 });

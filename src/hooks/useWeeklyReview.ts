@@ -35,7 +35,7 @@ import { workoutTonnageKg } from "@/hooks/useWorkouts";
 import { resolveSnapshotCalorieTarget } from "@/lib/adaptiveTarget";
 import { useSubscription } from "@/lib/subscription";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
-import { buildPRMap, checkSetPR } from "@/lib/prTracking";
+import { buildPRMap, checkSetPR, recordSetBest } from "@/lib/prTracking";
 import { isSetEligibleForStrengthPr } from "@/features/program/sessionSetPolicy";
 import { fetchBodyweightLogs } from "@/lib/api";
 import { resolveRunPlanSurface } from "@/lib/runProgrammeViewModel";
@@ -82,7 +82,7 @@ export function countWeekPRs(
   baseline: WorkoutDocLite[],
   weekWorkouts: WorkoutDocLite[]
 ): number {
-  const map = buildPRMap(baseline);
+  let map = buildPRMap(baseline);
   const sessionCounts: Record<string, number> = {};
   for (const w of baseline) {
     for (const ex of w.exercises) {
@@ -114,23 +114,12 @@ export function countWeekPRs(
           map,
           sessionCounts
         );
-        if (bucket) {
-          fired++;
-          if (!map[ex.exerciseName]) {
-            map[ex.exerciseName] = {
-              "1rm": null,
-              "3rm": null,
-              "5rm": null,
-              "8rm": null,
-              "10rm": null,
-            };
-          }
-          map[ex.exerciseName][bucket] = {
-            weight: set.weightKg,
-            reps: set.reps,
-            date: w.date,
-          };
-        }
+        if (bucket?.kind === "best") fired++;
+        map = recordSetBest(map, ex.exerciseName, {
+          weight: set.weightKg,
+          reps: set.reps,
+          date: w.date,
+        });
       }
     }
     for (const ex of w.exercises) {

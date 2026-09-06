@@ -1,5 +1,3 @@
-import type { ReminderActivity } from "./useReminderActivity";
-import { localDateString } from "@/lib/dateHelpers";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
@@ -85,7 +83,7 @@ function isWorkoutDay(
  * <RemindersProvider>. Public callers use `useWorkoutReminders` from
  * RemindersProvider.tsx which reads this hook's output from context.
  */
-export function useWorkoutRemindersInternal(activity?: ReminderActivity) {
+export function useWorkoutRemindersInternal() {
   const { user, profile } = useAuth();
   const [reminders, setReminders] = useState<WorkoutReminders>(
     DEFAULT_WORKOUT_REMINDERS
@@ -178,13 +176,7 @@ export function useWorkoutRemindersInternal(activity?: ReminderActivity) {
         await cancelNotification(id);
       }
 
-      if (
-        cancelled ||
-        !reminders.enabled ||
-        loading ||
-        (activity && !activity.ready)
-      )
-        return;
+      if (cancelled || !reminders.enabled) return;
 
       const schedule = profile?.weekSchedule as
         | ReadonlyArray<{ day: number; type: string }>
@@ -205,9 +197,6 @@ export function useWorkoutRemindersInternal(activity?: ReminderActivity) {
         if (!isWorkoutDay(day, schedule)) continue;
         const at = computeNextWeekdayOccurrence(reminders.time, day);
         if (!at) continue;
-        // The completed day no longer needs a reminder. Preserve the next week's slot.
-        if (activity?.workout && localDateString(at) === activity.dateKey)
-          at.setDate(at.getDate() + 7);
         await scheduleNotification({
           id: WORKOUT_NOTIFICATION_IDS[day],
           title: "Time to train",
@@ -231,7 +220,7 @@ export function useWorkoutRemindersInternal(activity?: ReminderActivity) {
     return () => {
       cancelled = true;
     };
-  }, [reminders, profile, loading, activity]);
+  }, [reminders, profile]);
 
   // Permission request is a stable module-level function — no wrapper needed.
   return {

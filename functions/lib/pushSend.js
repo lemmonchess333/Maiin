@@ -51,8 +51,8 @@ function buildStreakNudgeMessage() {
     data: {
       type: "streak",
       route: "/",
-      title: "An evening reminder",
-      body: "Still time to log today if you want to keep the run going.",
+      title: "Keep your streak alive 🔥",
+      body: "Log today to keep your streak going.",
     },
   };
 }

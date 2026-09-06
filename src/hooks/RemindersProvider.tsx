@@ -1,5 +1,4 @@
 import { createContext, use, useMemo, type ReactNode } from "react";
-import { useReminderActivity } from "@/hooks/useReminderActivity";
 import { useMealRemindersInternal } from "@/hooks/useMealReminders";
 import { useWorkoutRemindersInternal } from "@/hooks/useWorkoutReminders";
 import { useStreakReminderInternal } from "@/hooks/useStreakReminder";
@@ -40,10 +39,9 @@ interface RemindersValue {
 const RemindersContext = createContext<RemindersValue | null>(null);
 
 export function RemindersProvider({ children }: { children: ReactNode }) {
-  const { activity, pushOwns, refreshKey } = useReminderActivity();
-  const meal = useMealRemindersInternal(activity);
-  const workout = useWorkoutRemindersInternal(activity);
-  const streak = useStreakReminderInternal(pushOwns, refreshKey);
+  const meal = useMealRemindersInternal();
+  const workout = useWorkoutRemindersInternal();
+  const streak = useStreakReminderInternal();
   const value = useMemo(
     () => ({ meal, workout, streak }),
     [meal, workout, streak]
