@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { signInAsTestUser } from "../helpers/auth";
+import { settleImages } from "../helpers/settleImages";
 import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
 import { emulatorActive } from "../helpers/emulator";
 
@@ -21,6 +22,7 @@ test("companion purpose — narrow light and dark", async ({ page }) => {
       (value) => document.documentElement.classList.toggle("dark", value),
       dark
     );
+    await settleImages(page);
     await card.screenshot({
       path: `screenshots/companion-purpose-lift-${dark ? "dark" : "light"}.png`,
       animations: "disabled",
