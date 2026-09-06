@@ -1,3 +1,4 @@
+import InlineNumerals from "@/components/ui/InlineNumerals";
 import { THEME } from "@/lib/theme";
 import { motion } from "framer-motion";
 import {
@@ -33,10 +34,14 @@ const RUN_ICON_MAP: Record<
 
 export default function RunCTACard({
   todayRun,
+  purpose,
+  weekLabel,
   navigate,
   isFirst = false,
 }: {
   todayRun: ScheduledRunDay | null;
+  purpose?: string | null;
+  weekLabel?: string | null;
   navigate: (p: string) => void;
   /** #972 cold-start framing: frame this as the user's first run. */
   isFirst?: boolean;
@@ -47,7 +52,8 @@ export default function RunCTACard({
       })
     : null;
   const runLabel = tmpl ? tmpl.name : "Start a run";
-  const runDesc = tmpl ? tmpl.description : "Easy run, tempo, or intervals";
+  const runDesc =
+    purpose ?? (todayRun ? null : "Free running · your choice today");
   const runIcon = tmpl?.icon;
   // P0-6: pass scheduledRunId so Run.tsx can pin the exact runDay
   // being fulfilled. Falls back to ?template= alone for legacy
@@ -96,16 +102,13 @@ export default function RunCTACard({
             {isFirst ? "Your first run" : "Today · Run day"}
           </p>
           <div className="flex items-baseline gap-2">
-            <p className="text-sm font-bold text-foreground truncate">
-              {runLabel}
-            </p>
+            <p className="text-sm font-bold text-foreground">{runLabel}</p>
             {runKeyMetric && (
               <span className="text-sm font-bold font-mono tabular-nums text-running-strong">
                 {runKeyMetric}
               </span>
             )}
           </div>
-          <p className="text-micro text-muted-foreground truncate">{runDesc}</p>
         </div>
         {/* PR-0b-iii + HOME-ACTION-01: "Go" pill only when startable;
             terminal / reconciliation states show a calm "Done" chip with
@@ -127,6 +130,16 @@ export default function RunCTACard({
           </div>
         )}
       </div>
+      {runDesc && (
+        <p className="mt-2 text-sm text-muted-foreground">
+          <InlineNumerals>{runDesc}</InlineNumerals>
+        </p>
+      )}
+      {weekLabel && (
+        <p className="mt-1 text-micro text-muted-foreground">
+          <InlineNumerals>{weekLabel}</InlineNumerals>
+        </p>
+      )}
     </motion.button>
   );
 }
