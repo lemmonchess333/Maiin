@@ -1,3 +1,5 @@
+import { useLocalDateKey } from "@/hooks/useLocalDateKey";
+import { parseLocalDate } from "@/lib/dateHelpers";
 import {
   useState,
   useEffect,
@@ -405,6 +407,7 @@ export function computeStreakSpanAnchored(
 // runs it once near the authenticated root, and consumers read from context.
 
 function useStreaksInternal() {
+  const todayKey = useLocalDateKey();
   const uid = useUid();
 
   // Streaks doc state (persisted badges + longest streak)
@@ -703,10 +706,14 @@ function useStreaksInternal() {
       // recompute is a fixed point of its own persist — re-running with the
       // just-written anchor returns the same number — so this cannot
       // oscillate with the subscription.
-      const span = computeStreakSpanAnchored(set, {
-        streak: streakData.currentStreak,
-        lastActiveDate: streakData.lastActiveDate,
-      });
+      const span = computeStreakSpanAnchored(
+        set,
+        {
+          streak: streakData.currentStreak,
+          lastActiveDate: streakData.lastActiveDate,
+        },
+        parseLocalDate(todayKey)
+      );
       return {
         activeDateSet: set,
         currentStreak: span.streak,
@@ -715,6 +722,7 @@ function useStreaksInternal() {
         bridgedDates: span.bridgedDates,
       };
     }, [
+      todayKey,
       allLoaded,
       workouts,
       runs,
@@ -815,8 +823,8 @@ function useStreaksInternal() {
   // itself — both read from the same activeDateSet + same date key.
   const hasLoggedToday = useMemo(() => {
     if (!allLoaded) return false;
-    return activeDateSet.has(format(new Date(), "yyyy-MM-dd"));
-  }, [allLoaded, activeDateSet]);
+    return activeDateSet.has(todayKey);
+  }, [allLoaded, activeDateSet, todayKey]);
 
   // Gentle after-the-fact reassurance trigger (Streak1 visibility): true only
   // when the user is active TODAY *and* yesterday was a missed day that grace
