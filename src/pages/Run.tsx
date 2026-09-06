@@ -1687,6 +1687,7 @@ export default function Run() {
           onResume={handleResumeFromPrompt}
           onStartNew={handleStartNewFromPrompt}
           onDiscard={handleDiscardFromPrompt}
+          onBack={() => navigate("/program?tab=run")}
         />
       )}
 

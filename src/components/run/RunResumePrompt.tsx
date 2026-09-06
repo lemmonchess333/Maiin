@@ -1,6 +1,6 @@
 /**
  * Phase B3 — chooser shown when an interrupted run snapshot exists in
- * localStorage on mount of /run. Three branches:
+ * localStorage on mount of /run.
  *
  *   - Resume: rehydrate timer + GPS, jump straight into the stored
  *     phase (active or paused). Suppression of the GPS-loss banner
@@ -14,13 +14,17 @@
  *
  * Renders via the Dialog primitive's dark + bottom variant (run flow is
  * always dark; bottom-on-mobile keeps the actions thumb-reachable). It's a
- * forced choice — no backdrop/Escape dismiss — so the user must pick Resume /
- * Start new / Discard. z lifted to z-[60] to dominate the run-flow overlays.
+ * recoverable choice: Back/Escape leaves the snapshot untouched, while
+ * starting over or discarding requires confirmation before clearing it.
  */
 
-import { Play, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, Play, Plus, Trash2 } from "lucide-react";
 import { formatClock } from "@/utils/formatters";
 import { Dialog } from "@/components/ui/Dialog";
+import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { distanceUnitLabel } from "@/lib/distanceUnits";
 import { distanceValue } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 
@@ -36,6 +40,8 @@ interface Props {
   onResume: () => void;
   onStartNew: () => void;
   onDiscard: () => void;
+  /** Leave setup without changing the recoverable snapshot. */
+  onBack: () => void;
 }
 
 function formatElapsed(seconds: number): string {
@@ -61,21 +67,46 @@ export default function RunResumePrompt({
   onResume,
   onStartNew,
   onDiscard,
+  onBack,
 }: Props) {
   const unit = useDistanceUnit();
-  const km = distanceValue(distanceMeters, unit, 2);
+  const distance = distanceValue(distanceMeters, unit, 2);
+  const [pendingAction, setPendingAction] = useState<"new" | "discard" | null>(
+    null
+  );
+
+  if (pendingAction) {
+    return (
+      <ConfirmDialog
+        open
+        overSheet
+        title={
+          pendingAction === "new"
+            ? "Replace previous run?"
+            : "Discard previous run?"
+        }
+        description="The previous run will be cleared from this device without being saved to your history. This cannot be undone."
+        confirmLabel={
+          pendingAction === "new" ? "Discard and start new" : "Discard run"
+        }
+        cancelLabel="Keep previous run"
+        destructive
+        onConfirm={pendingAction === "new" ? onStartNew : onDiscard}
+        onCancel={() => setPendingAction(null)}
+      />
+    );
+  }
+
   return (
     <Dialog
       open
-      onClose={() => {}}
+      onClose={onBack}
       title="Resume previous run?"
       description={formatStartedAgo(startedAt)}
-      role="alertdialog"
       tone="dark"
       position="bottom"
       size="md"
       closeOnBackdrop={false}
-      closeOnEscape={false}
       overlayClassName="z-[60]"
       className="z-[60]"
     >
@@ -109,38 +140,48 @@ export default function RunResumePrompt({
               className="font-mono tabular-nums text-xl font-bold"
               style={{ color: "white" }}
             >
-              {km} km
+              {distance} {distanceUnitLabel(unit)}
             </p>
           </div>
         </div>
 
         <div className="space-y-2 pt-1">
-          <button
-            type="button"
+          <Button
+            variant="sport"
+            size="lg"
+            fullWidth
             onClick={onResume}
-            className="w-full py-3.5 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform bg-running-fill text-white"
+            leftIcon={<Play size={16} />}
           >
-            <Play size={16} aria-hidden="true" />
             Resume run
-          </button>
-          <button
-            type="button"
-            onClick={onStartNew}
-            className="w-full py-3 rounded-2xl font-medium text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform"
-            style={{ background: "rgba(255,255,255,0.08)", color: "white" }}
+          </Button>
+          <Button
+            variant="secondary"
+            fullWidth
+            onClick={() => setPendingAction("new")}
+            className="bg-stage-foreground/10 text-stage-foreground hover:bg-stage-foreground/20"
+            leftIcon={<Plus size={16} />}
           >
-            <Plus size={16} aria-hidden="true" />
             Start new run
-          </button>
-          <button
-            type="button"
-            onClick={onDiscard}
-            className="w-full py-2.5 text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform"
-            style={{ color: "rgba(255,120,120,0.9)" }}
+          </Button>
+          <Button
+            variant="ghost"
+            fullWidth
+            onClick={onBack}
+            className="text-stage-foreground hover:bg-stage-foreground/10"
+            leftIcon={<ArrowLeft size={16} />}
           >
-            <Trash2 size={14} aria-hidden="true" />
-            Discard
-          </button>
+            Back to Run
+          </Button>
+          <Button
+            variant="ghost"
+            fullWidth
+            onClick={() => setPendingAction("discard")}
+            className="text-stage-muted hover:bg-stage-foreground/10"
+            leftIcon={<Trash2 size={14} />}
+          >
+            Discard previous run
+          </Button>
         </div>
       </div>
     </Dialog>
