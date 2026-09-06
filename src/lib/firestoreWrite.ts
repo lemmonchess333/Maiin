@@ -49,15 +49,12 @@ import { stripUndefined } from "@/lib/firestoreGuards";
 export function addDocGuarded<T extends DocumentData>(
   reference: CollectionReference<T>,
   data: WithFieldValue<T>,
-  queued?: { uid: string; id?: string }
+  queued?: { id?: string; enqueue: (ref: DocumentReference<T>, clean: WithFieldValue<T>) => void }
 ): Promise<DocumentReference<T>> {
   if (queued) {
-    return import("@/lib/offlineQueue").then(({ queueDurableWrite, flushQueue }) => {
-      const ref = queued.id ? doc(reference, queued.id) : doc(reference);
-      queueDurableWrite(queued.uid, reference.path, ref.id, data);
-      void flushQueue(reference.firestore, queued.uid).catch(() => {});
-      return ref;
-    });
+    const ref = queued.id ? doc(reference, queued.id) : doc(reference);
+    queued.enqueue(ref, stripUndefined(data));
+    return Promise.resolve(ref);
   }
   return fbAddDoc(reference, stripUndefined(data));
 }
