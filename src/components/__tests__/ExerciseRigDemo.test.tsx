@@ -388,90 +388,39 @@ describe("ExerciseRigDemo", () => {
     reduceRef.current = false;
   });
 
-  /* ── Supplied frames ─────────────────────────────────────────────
-   * The owner's own card, cut into six. Where every position carries a
-   * picture the pictures ARE the animation and the rig is the fallback
-   * for when they cannot load. */
-  const FRAMED: TestBeat[] = PLACARD_BEATS.map((b, i) => ({
-    ...b,
-    image: `form-frames/dips/${i + 1}.webp`,
-  }));
-
-  it("supplied frames replace the drawn figure entirely", () => {
+  it("routes a complete supplied sequence to the frame player without drawing the rig", () => {
     reduceRef.current = false;
-    beatsRef.current = FRAMED;
-    const { container } = render(
-      <ExerciseRigDemo exerciseId="dips" name="Dips" />
-    );
-    /* Queried by TAG, not by role: every frame but the current one is
-       `alt=""` + aria-hidden, which is role `presentation` — correctly,
-       since six stacked copies of one figure must not read as six
-       images to a screen reader. */
-    const frames = [...container.querySelectorAll("img")];
-    expect(frames).toHaveLength(3);
-    // The current position is the visible one.
-    expect(frames[0]).toHaveStyle({ opacity: "1" });
-    expect(frames[1]).toHaveStyle({ opacity: "0" });
-    // And the rig never draws: the loop's only job here is the index.
-    step(40);
-    step(900);
+    beatsRef.current = Array.from({ length: 6 }, (_, i) => ({
+      t: i / 5,
+      label: `Position ${i + 1}`,
+      cue: `Cue ${i + 1}`,
+      image: `form-frames/dips/${i + 1}.webp`,
+    }));
+    const view = render(<ExerciseRigDemo exerciseId="dips" name="Dips" />);
+    expect(view.container.querySelectorAll("img")).toHaveLength(2);
     expect(drawLog).toHaveLength(0);
+    expect(rafQueue).toHaveLength(0);
   });
 
-  it("the visible frame follows the position", () => {
+  it("a requested cue selects that still and pauses playback", () => {
     reduceRef.current = false;
-    beatsRef.current = FRAMED;
-    const { container } = render(
-      <ExerciseRigDemo exerciseId="dips" name="Dips" />
+    beatsRef.current = Array.from({ length: 6 }, (_, i) => ({
+      t: i / 5,
+      label: `Position ${i + 1}`,
+      cue: `Cue ${i + 1}`,
+      image: `form-frames/dips/${i + 1}.webp`,
+    }));
+    const view = render(<ExerciseRigDemo exerciseId="dips" name="Dips" />);
+    view.rerender(
+      <ExerciseRigDemo
+        exerciseId="dips"
+        name="Dips"
+        stepRequest={{ index: 4, serial: 1 }}
+      />
     );
-    step(40);
-    step(SLOT + 100);
-    expect(screen.getByText("Mid descent")).toBeInTheDocument();
-    const frames = [...container.querySelectorAll("img")];
-    expect(frames[0]).toHaveStyle({ opacity: "0" });
-    expect(frames[1]).toHaveStyle({ opacity: "1" });
-  });
-
-  it("a frame that cannot load falls back to the drawn figure", () => {
-    /* The pictures live under public/ and are fetched at runtime, so
-       "the file is in the repo" is not the same claim as "the user got
-       it" — a bad deploy, an offline first visit, or a stale service
-       worker all end the same way. The beat's own `t` is what the rig
-       falls back TO, which is why a framed beat still carries one. */
-    reduceRef.current = false;
-    beatsRef.current = FRAMED;
-    const { container } = render(
-      <ExerciseRigDemo exerciseId="dips" name="Dips" />
-    );
-    const first = container.querySelector("img")!;
-    act(() => {
-      first.dispatchEvent(new Event("error", { bubbles: false }));
-    });
-    step(40);
-    step(900);
-    // The rig is drawing again, at the beat's own t.
-    expect(drawLog.length).toBeGreaterThan(0);
-    expect(drawLog[drawLog.length - 1].t).toBe(0);
-    expect(screen.getByText("Top position")).toBeInTheDocument();
-  });
-
-  it("reduced motion shows the supplied START and far end", () => {
-    /* The same two-up shape every other demo gets. It used to print all
-       six under their captions, which made sense while the stage was
-       the only place the steps appeared; they are a numbered list below
-       now, so printing them twice was pure duplication. */
-    reduceRef.current = true;
-    beatsRef.current = FRAMED;
-    const { container } = render(
-      <ExerciseRigDemo exerciseId="dips" name="Dips" />
-    );
-    const frames = [...container.querySelectorAll("img")];
-    expect(frames).toHaveLength(2);
-    expect(drawLog).toHaveLength(0);
-    // The start, and the position furthest from it — the bottom.
-    expect(frames[0].getAttribute("alt")).toContain("Top position");
-    expect(frames[1].getAttribute("alt")).toContain("Bottom position");
-    reduceRef.current = false;
+    expect(screen.getByRole("img")).toHaveAttribute("alt", "Dips, Position 5");
+    expect(screen.getByRole("button", { name: "Play" })).toBeInTheDocument();
+    expect(view.container.querySelectorAll("img")).toHaveLength(1);
   });
 
   /* ── The capture channel's anchor ────────────────────────────────

@@ -1,3 +1,4 @@
+import { getReleasedFormArtwork } from "./formArtwork";
 /**
  * Body rig — animated exercise demos built from the REAL muscle-map figure.
  *
@@ -9503,7 +9504,7 @@ function stripHeldGear(demo: BodyDemo): BodyDemo {
  */
 export interface FormBeat {
   /** The demo's own progress value — this beat IS a frame of it, and
-   *  the frame the rig falls back to when `image` cannot load. */
+   *  the legacy rig coordinate; image load failures use the frame player retry state. */
   t: number;
   /** The position's name: the panel heading. */
   label: string;
@@ -9540,6 +9541,17 @@ export interface DemoMuscleKey {
 }
 
 const FORM_BEATS: Record<string, FormPlacard> = {
+  "db-curl": {
+    beats: [
+      { t: 0, label: "Set up", cue: "Stand tall, palms forward, elbows by ribs." },
+      { t: 0.25, label: "Initiate curl", cue: "Bend both elbows; keep your torso still." },
+      { t: 0.6, label: "Mid curl", cue: "Upper arms still, wrists straight." },
+      { t: 1, label: "Top contraction", cue: "Curl up without lifting your elbows." },
+      { t: 0.6, label: "Controlled lower", cue: "Lower slowly along the same arc." },
+      { t: 0.15, label: "Finish return", cue: "Return towards straight arms without bouncing." },
+    ],
+  },
+
   /* Dips — the first placard demo. Six positions on the dip's own t,
    * where 0 is the locked-out top and 1 the bottom. The cues are the
    * catalogue's four authored steps re-cut into the six frames the
@@ -9675,8 +9687,8 @@ const FORM_BEATS: Record<string, FormPlacard> = {
        right — but it is DECORATION, not a readout. Measured across the
        set the cable is not conserved: between "set elbows" and
        "controlled return" the hands rise 68px and the stack rises with
-       them, the wrong way. Fine at a second a frame; do not describe
-       it to a user as feedback. */
+       them, the wrong way. This is a known replacement requirement:
+       the new release gate must reject contradictory cable physics. */
     beats: [
       {
         t: 0,
@@ -10048,8 +10060,10 @@ const FORM_BEATS: Record<string, FormPlacard> = {
  */
 export function getFormBeats(exerciseId: string): readonly FormBeat[] | null {
   const placard = FORM_BEATS[exerciseId];
-  if (!placard || placard.beats.length === 0) return null;
-  return placard.beats.every((b) => b.image) ? placard.beats : null;
+  const artwork = getReleasedFormArtwork(exerciseId);
+  if (!placard || placard.beats.length !== 6 || !artwork) return null;
+  return placard.beats.every((beat, i) => beat.image === artwork.frames[i])
+    ? placard.beats : null;
 }
 
 /** The authored positions whether or not their art has arrived — for

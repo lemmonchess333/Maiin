@@ -7,22 +7,18 @@ import {
   type RefObject,
 } from "react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
-import {
-  getBodyDemo,
-  getFormBeats,
-  renderBodyDemo,
-  type FormBeat,
-} from "@/lib/bodyRig";
+import { getBodyDemo, getFormBeats, renderBodyDemo } from "@/lib/bodyRig";
 import {
   CYCLE_MS_DEFAULT,
   cycleSampleAt,
   placardSampleAt,
-  PLACARD_TIMING,
   repTimingFor,
   repSampleLoopedAt,
   type RepPhase,
   type RepStart,
 } from "@/lib/exerciseTempo";
+
+import ExerciseFormFrames from "@/components/ExerciseFormFrames";
 
 const FPS_INTERVAL = 1000 / 30;
 
@@ -74,67 +70,6 @@ const smoothK = (v: number) => {
   const x = Math.min(1, Math.max(0, v));
   return x * x * (3 - 2 * x);
 };
-
-/** A supplied frame's path, against the app's base URL (the build is
- *  served from `/Maiin/` on Pages and `/` on Hosting). */
-const frameUrl = (p: string) =>
-  `${(import.meta.env.BASE_URL || "/").replace(/\/$/, "")}/${p.replace(/^\//, "")}`;
-
-/**
- * The supplied frames, crossfading.
- *
- * All of them are in the DOM from the first paint at zero opacity, so
- * the browser has fetched every one before it is needed — a src swap
- * would show the gap on the first pass through the sequence, which is
- * the pass that matters.
- *
- * The fade is a CSS transition on a beat change rather than a per-frame
- * opacity written from the rAF loop: there is nothing to interpolate
- * between two photographs, so the loop's job here is only to say which
- * position is current.
- */
-const PlacardFrames = memo(function PlacardFrames({
-  beats,
-  index,
-  name,
-  onFail,
-}: {
-  beats: readonly FormBeat[];
-  index: number;
-  name: string;
-  onFail: () => void;
-}) {
-  /* The FIRST frame sits in normal flow and sizes the box; the rest
-     overlay it. The container used to declare `aspectRatio: 680/594`,
-     measured off the first card — and a later card of the same exercise
-     came back 680x734, which letterboxed inside a box shaped for the
-     old one. Since every frame of a sequence shares one canvas (pinned
-     in bodyRig.test.ts), the frame itself is the honest sizer and there
-     is no constant to keep in step. */
-  return (
-    <div className="relative mx-auto w-full max-w-[300px]">
-      {beats.map((b, i) => (
-        <img
-          key={b.image}
-          src={frameUrl(b.image!)}
-          alt={i === index ? `${name}, ${b.label}` : ""}
-          aria-hidden={i !== index}
-          draggable={false}
-          onError={onFail}
-          className={
-            i === 0
-              ? "block w-full motion-safe:transition-opacity"
-              : "absolute inset-0 size-full object-contain motion-safe:transition-opacity"
-          }
-          style={{
-            opacity: i === index ? 1 : 0,
-            transitionDuration: `${PLACARD_TIMING.moveMs}ms`,
-          }}
-        />
-      ))}
-    </div>
-  );
-});
 
 /**
  * The capture channel's anchor, on the reduced-motion renders ONLY.
@@ -196,7 +131,7 @@ const PHASE_LABEL: Record<RepPhase, string> = {
  * 60Hz rAF — a visible judder the device feedback called reps that
  * "spaz out". Quantized stepping keeps the spacing even.
  */
-export default function ExerciseRigDemo({
+function LegacyExerciseRigDemo({
   exerciseId,
   name,
   active = true,
@@ -252,14 +187,6 @@ export default function ExerciseRigDemo({
      do not apply. */
   const beats = getFormBeats(exerciseId);
   const placard = beats !== null && beats.length > 0;
-  /* SUPPLIED frames: where every position carries one, the pictures are
-     the animation and the rig figure is the fallback. Partial coverage
-     is not a half-state worth building — a sequence that alternated
-     between a photograph and a drawing would read as broken — so it is
-     all or nothing. */
-  const [framesFailed, setFramesFailed] = useState(false);
-  const framed =
-    placard && !framesFailed && beats !== null && beats.every((b) => b.image);
   const openingT =
     placard && beats
       ? beats[0].t
@@ -273,11 +200,8 @@ export default function ExerciseRigDemo({
   // this component by exercise), so React never rewrites the figure div
   // after mount — the rAF loop owns its innerHTML from then on.
   const initialHtml = useMemo(
-    // Skipped entirely while supplied frames are on screen: it is a
-    // whole figure render, and the fallback does not need to be warm —
-    // when a frame fails, `framed` flips and this recomputes.
-    () => ({ __html: framed ? "" : renderBodyDemo(exerciseId, openingT, 0.7) }),
-    [exerciseId, openingT, framed]
+    () => ({ __html: renderBodyDemo(exerciseId, openingT, 0.7) }),
+    [exerciseId, openingT]
   );
   const figureRef = useRef<HTMLDivElement>(null);
   const [phase, setPhase] = useState<RepPhase>("set");
@@ -310,7 +234,7 @@ export default function ExerciseRigDemo({
       setPhase(p);
     };
     cue("set");
-    if (!framed) draw(renderBodyDemo(exerciseId, openingT, 0.7));
+    draw(renderBodyDemo(exerciseId, openingT, 0.7));
 
     const tick = (now: number) => {
       rafRef.current = requestAnimationFrame(tick);
@@ -355,11 +279,7 @@ export default function ExerciseRigDemo({
       }
       // Low-pass the effort so phase changes glow in, never flicker.
       effortRef.current += (targetEffort - effortRef.current) * 0.1;
-      // With supplied frames there is no figure to redraw — the loop's
-      // only job is to say which position is current, and the crossfade
-      // is CSS. Kept on the same clock rather than a second timer so
-      // there is one timing path to reason about and to test.
-      if (!framed) draw(renderBodyDemo(exerciseId, t, effortRef.current));
+      draw(renderBodyDemo(exerciseId, t, effortRef.current));
     };
     rafRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafRef.current);
@@ -375,43 +295,12 @@ export default function ExerciseRigDemo({
     cycleMs,
     placard,
     beats,
-    framed,
   ]);
 
   /* The demo renders on a fixed DARK stage in both themes (like any
    * media viewer): the figure's facet gaps read as the dark surface
    * showing through — the exact contrast the muscle-map art was
    * designed against. A light backing would wash the gaps out. */
-  if (reducedMotion && placard && beats && framed) {
-    /* The same two-up shape every other demo gets: the START position
-       and the far end of the movement. It used to print all six under
-       their captions, which made sense while the stage was the only
-       place the steps appeared — now they are a numbered list below,
-       and printing them twice is the duplication this layout removes.
-       `deepest` is the position furthest from the start, which for a
-       placard is the one whose `t` is furthest from the first beat's. */
-    const deepest = beats.reduce((far, b) =>
-      Math.abs(b.t - beats[0].t) > Math.abs(far.t - beats[0].t) ? b : far
-    );
-    return (
-      <div
-        className="bg-stage rounded-2xl p-4 mt-4 flex justify-center gap-3"
-        data-demo-still="placard"
-      >
-        {[beats[0], deepest].map((b, i) => (
-          <img
-            key={`${b.label}-${i}`}
-            src={frameUrl(b.image!)}
-            alt={`${name}, ${b.label}`}
-            draggable={false}
-            onError={() => setFramesFailed(true)}
-            className="w-1/2 max-w-[150px]"
-          />
-        ))}
-      </div>
-    );
-  }
-
   if (reducedMotion) {
     return (
       <div
@@ -447,21 +336,12 @@ export default function ExerciseRigDemo({
     const beat = beats[Math.min(beatIndex, beats.length - 1)];
     return (
       <div className="bg-stage rounded-2xl p-4 mt-4">
-        {framed ? (
-          <PlacardFrames
-            beats={beats}
-            index={beatIndex}
-            name={name}
-            onFail={() => setFramesFailed(true)}
-          />
-        ) : (
-          <div
-            role="img"
-            aria-label={`${name} demonstration — stepping through each position`}
-          >
-            <Figure html={initialHtml} figureRef={figureRef} />
-          </div>
-        )}
+        <div
+          role="img"
+          aria-label={`${name} demonstration — stepping through each position`}
+        >
+          <Figure html={initialHtml} figureRef={figureRef} />
+        </div>
         {/* One label line, in the looping player's own register. It
             NAMES the position and says where in the sequence it falls;
             the instruction it belongs to is in the numbered list below,
@@ -499,4 +379,32 @@ export default function ExerciseRigDemo({
       </p>
     </div>
   );
+}
+
+interface ExerciseRigDemoProps {
+  exerciseId: string;
+  name: string;
+  active?: boolean;
+  tempo?: string;
+  onStep?: (index: number) => void;
+  stepRequest?: { index: number; serial: number };
+}
+
+/** A supplied sequence owns its playback, including loading and errors. */
+export default function ExerciseRigDemo(props: ExerciseRigDemoProps) {
+  const beats = getFormBeats(props.exerciseId);
+  if (beats?.every((beat) => beat.image)) {
+    return (
+      <ExerciseFormFrames
+        key={`${props.exerciseId}-${props.stepRequest?.serial ?? 0}`}
+        beats={beats}
+        name={props.name}
+        active={props.active}
+        onStep={props.onStep}
+        initialIndex={props.stepRequest?.index}
+        autoPlay={!props.stepRequest}
+      />
+    );
+  }
+  return <LegacyExerciseRigDemo key={props.exerciseId} {...props} />;
 }
