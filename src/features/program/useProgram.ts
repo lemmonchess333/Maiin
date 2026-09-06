@@ -106,6 +106,12 @@ export interface CompletedSessionData {
    *  activity-feed payload below — the variant (and any recovery
    *  reason behind it) never crosses a social or analytics boundary. */
   sessionVariant?: "express45" | "express30" | "easier_today";
+  /** Lift3 — when the session STARTED (ms). The workout doc is dated by its
+   *  start, not by the Finish tap: a session begun at 23:30 and finished at
+   *  00:20 belongs to the day it began (streak, active day, PI window and
+   *  Home's "today" burn all read `date`). Older drafts omit it → finish
+   *  time, the pre-Lift3 behaviour. */
+  startedAt?: number;
 }
 import {
   generateRacePlanV2,
@@ -1103,8 +1109,14 @@ export function useProgram() {
 
       // Local date key so the written workout is picked up by the
       // useEffectiveTargets / useHomeData filters, which both format in
-      // the viewer's local timezone via isWorkoutOnDate.
-      const today = localDateString();
+      // the viewer's local timezone via isWorkoutOnDate. Lift3: dated by
+      // the session's START when the caller supplies it.
+      const today = localDateString(
+        typeof sessionData.startedAt === "number" &&
+          Number.isFinite(sessionData.startedAt)
+          ? new Date(sessionData.startedAt)
+          : new Date()
+      );
 
       // Build exercises array — from actual setLogs when available,
       // otherwise from planned data (every set assumed completed).

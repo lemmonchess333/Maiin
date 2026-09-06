@@ -1831,6 +1831,29 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
     expect(result.current.programState?.workouts[0].completed).toBe(true);
   });
 
+  it("Lift3: the workout doc is dated by when the session STARTED, not by Finish", async () => {
+    seedProgramWithDay();
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+
+    // Started 36 hours ago — a session that crossed midnight (or a resumed
+    // draft) belongs to the day it began.
+    const startedAt = Date.now() - 36 * 3600 * 1000;
+    await act(async () => {
+      await result.current.completeWorkoutDay(0, {
+        ...session("cid-start"),
+        startedAt,
+      });
+    });
+    const workout = batchCommits()[0].find(
+      (w) => w.ref.__id === "programme-cid-start"
+    )!;
+    expect(workout.data.date).toBe(localDateString(new Date(startedAt)));
+    expect(workout.data.date).not.toBe(localDateString());
+  });
+
   it("a rejected commit throws and does NOT mark the day completed locally", async () => {
     seedProgramWithDay();
     const { result } = renderHook(() => useProgram());

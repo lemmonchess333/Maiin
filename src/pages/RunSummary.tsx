@@ -927,7 +927,10 @@ export default function RunSummary() {
       // this field; without it the queries return empty for every
       // user and the reconciliation flow silently mis-fires. Matches
       // the workouts convention (saved workouts already carry both).
-      date: localDateString(new Date()),
+      // Lift3 (runs too): dated by when the run STARTED, its first GPS
+      // point — not by the Save tap, so a run begun before midnight belongs
+      // to the day it began, as on Strava and Garmin.
+      date: localDateString(new Date(points[0]?.timestamp || Date.now())),
       notes: notes.trim(),
       // RUN-03: optional structured effort signal. Null (skipped) survives
       // stripUndefined so the field shape doesn't bifurcate — same precedent
