@@ -7,11 +7,10 @@ import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { RotateCcw, Save, Check, Plus, Minus, Download, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { doc, Timestamp, collection } from "firebase/firestore";
-import { setDocGuarded } from "@/lib/firestoreWrite";
+import { Timestamp } from "firebase/firestore";
+import { createMealEntry, notifyMealsLogged } from "@/lib/mealEntry";
 import { saveFoodPhoto } from "@/lib/foodPhotoStore";
 import { invalidateFoodPhotoCache } from "@/hooks/useFoodPhotoUrls";
-import { db } from "@/lib/firebase";
 import { useUid } from "@/lib/auth";
 import { offProductToPortion } from "@/lib/offNutrition";
 import { safeNum } from "@/lib/foodParseHelpers";
@@ -483,8 +482,7 @@ export default function FoodAnalyzer({
         ? meal.foodName
         : buildFoodNameFromItems(persistedItems, meal.foodName);
 
-      const mealRef = doc(collection(db, "users", uid, "meals"));
-      await setDocGuarded(mealRef, {
+      const mealRef = await createMealEntry(uid, {
         date,
         foodName: derivedFoodName,
         items: persistedItems,
@@ -550,6 +548,7 @@ export default function FoodAnalyzer({
         source: meal.barcode ? "barcode" : "photo",
       });
 
+      notifyMealsLogged(uid, [mealRef.id], `Logged ${derivedFoodName}`);
       setSaving(false);
       setSaved(true);
 

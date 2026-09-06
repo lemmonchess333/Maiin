@@ -1,0 +1,120 @@
+{
+  "mode": "built-in image generation and reference editing",
+  "status": "draft",
+  "calls": [
+    {
+      "frame": 2,
+      "id": "front-raise",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/front-raise/2-early-v2.png",
+      "prompt": "Use case: precise-object-edit. Input1 is the FRONT RAISE starting master and sole edit target. Create one native1024x1536 separate frame, no text. Make a SMALL early bilateral front raise: rotate both almost-straight arms forward only about25degrees from hanging, retaining the same soft elbow angle and pronated closed grips. Near shoulder centre approximately(738,310), near wrist should now be about(585,720); far wrist about(377,685). These are illustrative screen targets, preserve true limb lengths and plausible projection. The weights should remain near upper-thigh/hip level, well below waist and much lower than a halfway raise. Keep head, torso, shoulders, pelvis, legs, shoes and all stationary outlines in exactly the reference positions. Same two dumbbells, same head dimensions and thickness, same handle lengths; wrists straight and grip contact intact. Same canonical faceless white anatomical male, dark fine contours, white shoes, pure black background. Preserve purple anterior deltoids, lilac upper chest and pale forearms exactly, no size or colour drift. Move only arms and dumbbells, do not recreate the whole athlete.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/front-raise/1-master.png"
+      ]
+    },
+    {
+      "frame": 1,
+      "id": "bodyweight-squat",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/bodyweight-squat/1-master.png",
+      "prompt": "Use case: precise-object-edit. Create the BODYWEIGHT SQUAT standing master by editing the supplied canonical goblet-squat reference. KEEP EXACTLY the same head, face, torso, hips, legs, stance, shoes, scale, camera, crop, black background, anatomical style, purple quadriceps, lilac gluteals, pale trunk. Remove the dumbbell completely and change ONLY the arm pose: extend both arms forward at shoulder height for counterbalance, parallel to each other, soft elbows, palms down with relaxed straight fingers. Do not spread arms sideways. Both hands fully inside canvas, avoid obscuring the face. Body remains upright, feet planted shoulder-width and toes slightly out, same white low-top shoes. Preserve the exact white/light-grey anatomical athlete proportions and fine dark contour lines. This is frame1 of six: upright / small descent / near-parallel / bottom / middle rise / late rise. Show only upright here. No equipment, no text, no labels, one separate native1024x1536 image.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/goblet-squat/1-master.png"
+      ]
+    },
+    {
+      "frame": 2,
+      "id": "bodyweight-squat",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/bodyweight-squat/2-early.png",
+      "prompt": "Edit this exact BODYWEIGHT SQUAT standing master into frame2 SMALL INITIAL DESCENT. Same canvas camera zoom anatomy proportions and muscle colours. Keep both complete shoes pixel-aligned in their exact current positions; soles never leave the ground. Bend hips and knees slightly together, lower hips and head by only about100pixels, small knee flexion roughly30degrees, thighs still much closer to vertical than horizontal. Hips travel slightly backward, knees track toes, chest remains lifted. Both arms remain extended forward at shoulder height relative to the trunk, carried downward with shoulders, hands separate and unchanged in size. Spine neutral, no exaggerated torso lean, no knee collapse. Do not shrink head, torso, thighs or calves; flex joints only. Same bald faceless white anatomical male, white shoes, deep purple quads/lilac glutes/pale trunk. Single native full-resolution portrait image, black background, no text or equipment.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/bodyweight-squat/1-master.png"
+      ]
+    },
+    {
+      "frame": 3,
+      "id": "bodyweight-squat",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/bodyweight-squat/3-mid.png",
+      "prompt": "Edit this exact BODYWEIGHT SQUAT early descent into frame3 LOWER, approaching parallel. Preserve same canvas/camera/anatomy scale and white shoes in precisely their fixed floor positions. Bend hips and knees farther to lower head and hips another approximately140pixels. Thighs now slope gently downward from hips toward knees, just above parallel; knees track toes without caving, heels flat. Keep spine neutral and chest lifted, a modest natural forward torso inclination. Both arms stay extended forward approximately horizontal, hands the same size and both fully inside frame. Do not shorten torso, inflate thighs or change head dimensions. Same deep purple quadriceps, lilac gluteals and subtle pale trunk; muscle hierarchy remains fixed. No equipment, text, borders or new scene. One separate native1024x1536 portrait image.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/bodyweight-squat/2-early.png"
+      ]
+    },
+    {
+      "frame": 4,
+      "id": "bodyweight-squat",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/bodyweight-squat/4-bottom.png",
+      "prompt": "Edit this exact bodyweight squat frame into frame4 BOTTOM. Make only a SMALL further descent: lower the hip crease roughly60pixels so it sits just below knee-top height, with a modestly deeper knee bend. Head and outstretched arms follow this small descent; keep their dimensions and outlines identical. Entire shoes and stance stay exactly registered to the original floor, no shoe movement or heel lift. Thighs reach slightly below parallel, knees aligned with toe direction, natural neutral spine and chest lifted, no lumbar rounding or extreme deep collapse. Both arms stay extended forward, parallel, same palms-down fingers, same lengths. Do not shrink head or torso, enlarge muscles or change highlights. Same white anatomical athlete, white shoes, deep purple quads/lilac glutes, black background. Single native full-resolution portrait frame, no text or equipment.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/bodyweight-squat/3-mid.png"
+      ]
+    },
+    {
+      "frame": 3,
+      "id": "bodyweight-squat",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/bodyweight-squat/3-mid-v2.png",
+      "prompt": "Input1 is the exact bodyweight-squat EARLY pose (edit target), input2 is the BOTTOM pose (position reference only). Create a new MIDDLE pose exactly halfway in squat depth between them. The head top must be around y300 on the1536px canvas, not y420; hips roughly halfway between the two reference hip heights. Thighs still angle visibly downward from hip to knee, NOT yet parallel. Keep exact same shoes in same floor positions and stance, exact same head size, hand size, muscle thickness, torso length, camera and canvas. Arms remain forward horizontal and travel down with the torso. Bend hips/knees naturally with heels grounded, knees following toes, neutral spine. No equipment, no text. Same white faceless anatomical man with purple quads/lilac glutes. This should visibly split the large movement gap between the provided poses, not duplicate either. Single native1024x1536 image.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/bodyweight-squat/2-early.png",
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/bodyweight-squat/4-bottom.png"
+      ],
+      "revision": "improve spacing between early and bottom"
+    },
+    {
+      "frame": 3,
+      "id": "bodyweight-squat",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/bodyweight-squat/3-mid-registered.png",
+      "prompt": "Precise whole-figure registration edit. Translate the ENTIRE existing athlete DOWN by exactly32pixels on the same1024x1536 black canvas. Treat the whole visible athlete as one rigid image layer: head, arms, hands, trunk, legs and both shoes ALL move down together by32pixels. Do not articulate any joint, redraw anatomy, rescale, rotate, alter pose, change colours, or move one part independently. Preserve every shape and size. The near/right shoe bottom should end at approximately y1446 and the far/left shoe bottom at approximately y1388. Current near-shoe bottom is approximately1414 and far-shoe bottom1356. Fill newly exposed upper area with the same pure black. Output one separate native-resolution image, no text. ONLY a downward32pixel whole-figure translation.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/bodyweight-squat/3-mid-v2.png"
+      ],
+      "revision": "restore whole-figure floor registration"
+    },
+    {
+      "frame": 3,
+      "id": "hammer-curl",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/3-equipment-v2.png",
+      "prompt": "Precise equipment-only correction. Image1 is the HAMMER CURL MID pose to edit. Image2 is the standing master and supplies the required dumbbell size. Preserve ALL athlete pixels/pose/camera/canvas/hand positions and purple highlights from image1. Its dumbbell end heads became too small relative to image2. Increase the diameter of each of the FOUR round dumbbell heads in image1 to the same physical diameter as the master: approximately130pixels across the long visible axis, rather than the current~110pixels. Keep the existing vertical dumbbell axes and neutral wrist grip, same rigid handles through the hands, heads centred on the same axes. Preserve identical head thickness relative to diameter from the master. Only the dumbbell head geometry changes; do not enlarge hands, move wrists or elbows, alter limb proportions, shift body, or change the pose. Both dumbbells remain identical and each still has exactly two solid round heads. Black background, one separate native1024x1536 image, no text.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/3-mid.png",
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/1-master.png"
+      ],
+      "revision": "dumbbell diameter consistency"
+    },
+    {
+      "frame": 1,
+      "id": "barbell-shrug",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/barbell-shrug/1-master.png",
+      "prompt": "Edit the supplied exact canonical athlete/barbell scene into the START master for BARBELL SHRUG. Keep athlete identity, head/torso/limb proportions, body position, feet, white low-top shoes, bar position at thighs, bar length and ONE modest plate each side, camera crop/zoom and black background identical. Change ONLY grip and muscle highlights for the exercise: both hands must use a closed OVERHAND pronated shoulder-width grip, knuckles forward and thumbs wrapped, rather than the supplied underhand curl grip. Arms hang straight with elbows unbent. Shoulders relaxed at neutral, not elevated yet. Remove purple entirely from biceps and chest. Highlight only the visible UPPER TRAPEZIUS fibres running from back of neck to shoulder tops in deep purple; don't colour front neck/SCM or entire deltoids. Forearm gripping muscles light lilac, subtle pale trunk. Keep anatomy contours sharp and muscles the same size. Six-frame plan is neutral / small shrug / middle shrug / top / middle lowering / nearly neutral; show only neutral here. One separate native1024x1536 image, no text, labels or UI.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/barbell-curl/1-master.png"
+      ]
+    },
+    {
+      "frame": 2,
+      "id": "barbell-shrug",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/barbell-shrug/2-early.png",
+      "prompt": "Edit this exact BARBELL SHRUG master into frame2 BEGIN SHRUG. Raise the shoulder girdle and BOTH straight hanging arms by a small vertical amount, about15pixels. The rigid bar rises by the same15pixels, with both ends level. Keep elbows unbent, wrists straight, overhand grip width unchanged. Head, jaw, neck centre, torso/ribcage, hips, knees and shoes must stay exactly fixed. Only shoulder elevation/scapular motion, not a curl or upright row; no leaning, rolling or arm shortening. Same bar length/thickness, same one plate each side, same perspective and plate dimensions. Upper trapezius purple unchanged, forearms lilac unchanged, all other anatomy white. Same black canvas and camera, no text. One separate native1024x1536 image.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/barbell-shrug/1-master.png"
+      ]
+    },
+    {
+      "frame": 4,
+      "id": "barbell-shrug",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/barbell-shrug/4-top.png",
+      "prompt": "Edit this exact BARBELL SHRUG middle position into the TOP. Elevate both shoulders only a SMALL additional amount, around15–20pixels, keeping the head perfectly stationary and neck neutral. The straight arms carry the rigid bar upward by the SAME amount. Do not bend elbows, pull with biceps, tilt bar, lean torso or lift heels. Shoulders approach ears but do not touch them or deform neck. All head, ribcage, hips, legs and shoe positions and dimensions remain fixed. Same overhand closed grip, identical bar and one plate per side with no size/perspective changes. Upper traps remain deep purple, forearms lilac, no new highlights. One native1024x1536 standalone frame on black, no text.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/barbell-shrug/2-early.png"
+      ]
+    },
+    {
+      "frame": 2,
+      "id": "barbell-shrug",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/barbell-shrug/2-local-edit.png",
+      "prompt": "STRICT LOCAL EDIT, not a whole-person pose regeneration. Use the provided barbell-shrug START image. The entire LOWER HALF of this picture from y850 through1535 is LOCKED: copy it unchanged, including hips, knees, calves, ankles, shoes and black margins. Shoe bottoms remain far y1418 and near y1478. The head from y0–215 is also LOCKED. Edit only shoulder region y220–390, and the straight arms/bar region y390–850. Raise the shoulders by about20px, carrying straight arms and the existing rigid bar up20px. Do NOT shift the pelvis, legs or feet up; do NOT shorten the body. Leave the chest/abdominal centre at its original coordinates. This is small shoulder elevation with a neutral neck, elbows straight, identical closed overhand grip and plate sizes. Preserve every other detail and exact image registration. Black background, white anatomical athlete, purple upper trapezius. One separate native1024x1536 image, no text.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/barbell-shrug/1-master.png"
+      ],
+      "revision": "explicit lower-half lock"
+    }
+  ]
+}

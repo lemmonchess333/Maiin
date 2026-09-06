@@ -1,0 +1,1378 @@
+{
+  "catalogue": 152,
+  "inScope": 141,
+  "existingSets": 7,
+  "newlyApproved": 0,
+  "releasedBytes": 3483250,
+  "errors": [],
+  "inventory": [
+    {
+      "id": "bench-press",
+      "name": "Bench Press",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 6,
+      "status": "existing-needs-review",
+      "bytes": 421764
+    },
+    {
+      "id": "incline-bench",
+      "name": "Incline Bench Press",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "decline-bench",
+      "name": "Decline Bench Press",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "db-bench",
+      "name": "Dumbbell Bench Press",
+      "equipment": "Dumbbells",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "incline-db-press",
+      "name": "Incline Dumbbell Press",
+      "equipment": "Dumbbells",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "decline-db-press",
+      "name": "Decline Dumbbell Press",
+      "equipment": "Dumbbells",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "db-flyes",
+      "name": "Dumbbell Flyes",
+      "equipment": "Dumbbells",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "cable-crossover",
+      "name": "Cable Crossover",
+      "equipment": "Cable Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "chest-press-machine",
+      "name": "Chest Press Machine",
+      "equipment": "Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "pec-deck",
+      "name": "Pec Deck",
+      "equipment": "Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "machine-chest-fly",
+      "name": "Machine Chest Fly",
+      "equipment": "Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "smith-bench-press",
+      "name": "Smith Machine Bench Press",
+      "equipment": "Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "push-ups",
+      "name": "Push-Ups",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "pike-push-up",
+      "name": "Pike Push-Up",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "weighted-push-ups",
+      "name": "Weighted Push-Ups",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "barbell-floor-press",
+      "name": "Barbell Floor Press",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "weighted-chest-dip",
+      "name": "Weighted Chest Dip",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "deadlift",
+      "name": "Deadlift",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 6,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "barbell-row",
+      "name": "Barbell Row",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 6,
+      "status": "existing-needs-review",
+      "bytes": 626884
+    },
+    {
+      "id": "pendlay-row",
+      "name": "Pendlay Row",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "db-row",
+      "name": "Dumbbell Row",
+      "equipment": "Dumbbells",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "chest-supported-db-row",
+      "name": "Chest-Supported Dumbbell Row",
+      "equipment": "Dumbbells",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "meadows-row",
+      "name": "Meadows Row",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "pull-ups",
+      "name": "Pull-Ups",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 6,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "chin-ups",
+      "name": "Chin-Ups",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "lat-pulldown",
+      "name": "Lat Pulldown",
+      "equipment": "Cable Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "single-arm-lat-pulldown",
+      "name": "Single-Arm Lat Pulldown",
+      "equipment": "Cable Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "seated-row",
+      "name": "Seated Cable Row",
+      "equipment": "Cable Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "t-bar-row",
+      "name": "T-Bar Row",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "face-pulls",
+      "name": "Face Pulls",
+      "equipment": "Cable Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "rack-pull",
+      "name": "Rack Pull",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "straight-arm-pulldown",
+      "name": "Straight-Arm Pulldown",
+      "equipment": "Cable Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "inverted-row",
+      "name": "Inverted Row",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "overhead-press",
+      "name": "Overhead Press",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 6,
+      "status": "existing-needs-review",
+      "bytes": 369056
+    },
+    {
+      "id": "db-shoulder-press",
+      "name": "Dumbbell Shoulder Press",
+      "equipment": "Dumbbells",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "lateral-raise",
+      "name": "Lateral Raise",
+      "equipment": "Dumbbells",
+      "inScope": true,
+      "authoredBeats": 6,
+      "status": "existing-needs-review",
+      "bytes": 420916
+    },
+    {
+      "id": "reverse-pec-deck",
+      "name": "Reverse Pec Deck",
+      "equipment": "Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "cable-lateral-raise",
+      "name": "Cable Lateral Raise",
+      "equipment": "Cable Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "front-raise",
+      "name": "Front Raise",
+      "equipment": "Dumbbells",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "reverse-flyes",
+      "name": "Reverse Flyes",
+      "equipment": "Dumbbells",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "rear-delt-machine-fly",
+      "name": "Rear Delt Machine Fly",
+      "equipment": "Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "arnold-press",
+      "name": "Arnold Press",
+      "equipment": "Dumbbells",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "shoulder-press-machine",
+      "name": "Shoulder Press Machine",
+      "equipment": "Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "smith-shoulder-press",
+      "name": "Smith Machine Shoulder Press",
+      "equipment": "Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "barbell-upright-row",
+      "name": "Barbell Upright Row",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "shrugs",
+      "name": "Shrugs",
+      "equipment": "Dumbbells",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "barbell-shrug",
+      "name": "Barbell Shrug",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "cuban-press",
+      "name": "Cuban Press",
+      "equipment": "Dumbbells",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "lu-raise",
+      "name": "Lu Raise",
+      "equipment": "Dumbbells",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "landmine-press",
+      "name": "Landmine Press",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "barbell-curl",
+      "name": "Barbell Curl",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "ez-bar-curl",
+      "name": "EZ Bar Curl",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "db-curl",
+      "name": "Dumbbell Curl",
+      "equipment": "Dumbbells",
+      "inScope": true,
+      "authoredBeats": 6,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "incline-db-curl",
+      "name": "Incline Dumbbell Curl",
+      "equipment": "Dumbbells",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "hammer-curl",
+      "name": "Hammer Curl",
+      "equipment": "Dumbbells",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "cross-body-hammer-curl",
+      "name": "Cross-Body Hammer Curl",
+      "equipment": "Dumbbells",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "zottman-curl",
+      "name": "Zottman Curl",
+      "equipment": "Dumbbells",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "preacher-curl",
+      "name": "Preacher Curl",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "cable-curl",
+      "name": "Cable Curl",
+      "equipment": "Cable Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "bayesian-cable-curl",
+      "name": "Bayesian Cable Curl",
+      "equipment": "Cable Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "concentration-curl",
+      "name": "Concentration Curl",
+      "equipment": "Dumbbells",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "spider-db-curl",
+      "name": "Spider Dumbbell Curl",
+      "equipment": "Dumbbells",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "reverse-barbell-curl",
+      "name": "Reverse Barbell Curl",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "rope-tricep-pushdown",
+      "name": "Rope Tricep Pushdown",
+      "equipment": "Cable Machine",
+      "inScope": true,
+      "authoredBeats": 6,
+      "status": "existing-needs-review",
+      "bytes": 757492
+    },
+    {
+      "id": "skull-crushers",
+      "name": "Skull Crushers",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 6,
+      "status": "existing-needs-review",
+      "bytes": 424828
+    },
+    {
+      "id": "overhead-extension",
+      "name": "Overhead Tricep Extension",
+      "equipment": "Dumbbells",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "overhead-cable-tricep-extension",
+      "name": "Overhead Cable Tricep Extension",
+      "equipment": "Cable Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "tricep-dips",
+      "name": "Tricep Dips",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "bench-dips",
+      "name": "Bench Dips",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "close-grip-bench",
+      "name": "Close Grip Bench Press",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "tricep-kickback",
+      "name": "Tricep Kickback",
+      "equipment": "Dumbbells",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "single-arm-cable-pushdown",
+      "name": "Single-Arm Cable Pushdown",
+      "equipment": "Cable Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "reverse-grip-cable-pushdown",
+      "name": "Reverse Grip Cable Pushdown",
+      "equipment": "Cable Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "jm-press",
+      "name": "JM Press",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "diamond-push-ups",
+      "name": "Diamond Push-Ups",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "squat",
+      "name": "Barbell Squat",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 6,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "front-squat",
+      "name": "Front Squat",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "goblet-squat",
+      "name": "Goblet Squat",
+      "equipment": "Dumbbells",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "sissy-squat",
+      "name": "Sissy Squat",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "smith-machine-squat",
+      "name": "Smith Machine Squat",
+      "equipment": "Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "hack-squat",
+      "name": "Hack Squat",
+      "equipment": "Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "leg-press",
+      "name": "Leg Press",
+      "equipment": "Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "leg-extension",
+      "name": "Leg Extension",
+      "equipment": "Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "seated-leg-curl",
+      "name": "Seated Leg Curl",
+      "equipment": "Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "romanian-deadlift",
+      "name": "Romanian Deadlift",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "db-rdl",
+      "name": "Dumbbell Romanian Deadlift",
+      "equipment": "Dumbbells",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "nordic-hamstring-curl",
+      "name": "Nordic Hamstring Curl",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "glute-ham-raise",
+      "name": "Glute-Ham Raise",
+      "equipment": "Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "sumo-deadlift",
+      "name": "Sumo Deadlift",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "trap-bar-deadlift",
+      "name": "Trap Bar Deadlift",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "lunges",
+      "name": "Lunges",
+      "equipment": "Dumbbells",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "bodyweight-lunge",
+      "name": "Bodyweight Lunge",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "bodyweight-squat",
+      "name": "Bodyweight Squat",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "walking-dumbbell-lunges",
+      "name": "Walking Dumbbell Lunges",
+      "equipment": "Dumbbells",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "bulgarian-split",
+      "name": "Bulgarian Split Squat",
+      "equipment": "Dumbbells",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "barbell-step-ups",
+      "name": "Barbell Step-Ups",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "calf-raise",
+      "name": "Calf Raise",
+      "equipment": "Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "standing-calf-raise",
+      "name": "Standing Calf Raise",
+      "equipment": "Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "seated-calf-raise",
+      "name": "Seated Calf Raise",
+      "equipment": "Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "donkey-calf-raise",
+      "name": "Donkey Calf Raise",
+      "equipment": "Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "single-leg-calf-raise",
+      "name": "Single-Leg Calf Raise",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "hip-thrust",
+      "name": "Hip Thrust",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "glute-bridge",
+      "name": "Glute Bridge",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "hip-abduction-machine",
+      "name": "Hip Abduction Machine",
+      "equipment": "Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "hip-adduction-machine",
+      "name": "Hip Adduction Machine",
+      "equipment": "Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "cable-glute-kickback",
+      "name": "Cable Glute Kickback",
+      "equipment": "Cable Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "pistol-squat",
+      "name": "Pistol Squats",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "plank",
+      "name": "Plank",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "superman-hold",
+      "name": "Superman Hold",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "side-plank",
+      "name": "Side Plank",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "weighted-plank",
+      "name": "Weighted Plank",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "crunches",
+      "name": "Crunches",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "bicycle-crunch",
+      "name": "Bicycle Crunch",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "decline-sit-up",
+      "name": "Decline Sit-Up",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "leg-raise",
+      "name": "Hanging Leg Raise",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "toe-touches",
+      "name": "Toe Touches",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "russian-twist",
+      "name": "Russian Twist",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "mountain-climbers",
+      "name": "Mountain Climbers",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "cable-crunch",
+      "name": "Cable Crunch",
+      "equipment": "Cable Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "cable-woodchopper",
+      "name": "Cable Woodchopper",
+      "equipment": "Cable Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "pallof-press",
+      "name": "Pallof Press",
+      "equipment": "Cable Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "dead-bug",
+      "name": "Dead Bug",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "dragon-flag",
+      "name": "Dragon Flag",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "ab-wheel",
+      "name": "Ab Wheel Rollout",
+      "equipment": "Ab Wheel",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "l-sit",
+      "name": "L-Sit",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "clean-and-press",
+      "name": "Clean and Press",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "kettlebell-swing",
+      "name": "Kettlebell Swing",
+      "equipment": "Kettlebell",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "burpees",
+      "name": "Burpees",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "thrusters",
+      "name": "Thrusters",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "farmers-carry",
+      "name": "Farmer's Carry",
+      "equipment": "Dumbbells",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "sled-push-pull",
+      "name": "Sled Push/Pull",
+      "equipment": "Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "landmine-squat",
+      "name": "Landmine Squat",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "zercher-squat",
+      "name": "Zercher Squat",
+      "equipment": "Barbell",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "turkish-get-up",
+      "name": "Turkish Get-Up",
+      "equipment": "Kettlebell",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "man-maker",
+      "name": "Man Maker",
+      "equipment": "Dumbbells",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "battle-ropes",
+      "name": "Battle Ropes",
+      "equipment": "Battle Ropes",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "box-jumps",
+      "name": "Box Jumps",
+      "equipment": "Box",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "treadmill",
+      "name": "Treadmill",
+      "equipment": "Machine",
+      "inScope": false,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "incline-treadmill-walk",
+      "name": "Incline Treadmill Walking",
+      "equipment": "Machine",
+      "inScope": false,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "elliptical",
+      "name": "Elliptical",
+      "equipment": "Machine",
+      "inScope": false,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "rowing-machine",
+      "name": "Rowing Machine",
+      "equipment": "Machine",
+      "inScope": false,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "stairmaster",
+      "name": "Stairmaster",
+      "equipment": "Machine",
+      "inScope": false,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "bike",
+      "name": "Stationary Bike",
+      "equipment": "Machine",
+      "inScope": false,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "spin-bike",
+      "name": "Spin Bike",
+      "equipment": "Machine",
+      "inScope": false,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "assault-bike",
+      "name": "Assault Bike",
+      "equipment": "Machine",
+      "inScope": false,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "ski-erg",
+      "name": "Ski Erg",
+      "equipment": "Machine",
+      "inScope": false,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "jump-rope",
+      "name": "Jump Rope",
+      "equipment": "Jump Rope",
+      "inScope": false,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "swimming",
+      "name": "Swimming",
+      "equipment": "Pool",
+      "inScope": false,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "dips",
+      "name": "Dips",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 6,
+      "status": "existing-needs-review",
+      "bytes": 462310
+    },
+    {
+      "id": "muscle-ups",
+      "name": "Muscle-Ups",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "handstand-push-ups",
+      "name": "Handstand Push-Ups",
+      "equipment": "Bodyweight",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    },
+    {
+      "id": "cable-fly",
+      "name": "Cable Fly",
+      "equipment": "Cable Machine",
+      "inScope": true,
+      "authoredBeats": 0,
+      "status": "needs-artwork",
+      "bytes": 0
+    }
+  ]
+}

@@ -111,7 +111,8 @@ describe("everyday entry sheets", () => {
       ).toBeEnabled()
     );
     expect(log).toHaveBeenCalledWith(
-      expect.objectContaining({ cal: 80, pro: 7 })
+      expect.objectContaining({ cal: 80, pro: 7 }),
+      "lunch"
     );
     expect(close).not.toHaveBeenCalled();
     expect(screen.getByLabelText("Number of usual portions")).toHaveValue(

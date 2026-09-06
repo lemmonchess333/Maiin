@@ -40,6 +40,7 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npm run lint
+      - run: npm run check:form-art
       - run: npm run test -- --run
       # Guard: fail the deploy if the Firebase web config secrets are unset,
       # rather than shipping a blank config where every sign-in returns

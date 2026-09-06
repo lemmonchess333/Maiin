@@ -51,6 +51,8 @@ test("a saved lift has one finish and Done returns to Program", async ({
   await page.emulateMedia({ reducedMotion: "reduce" });
   await signInAsTestUser(page, { email, password });
   await page.goto("program");
+  // The SDK emulator banner stays visible but must not consume app taps.
+  await page.addStyleTag({ content: ".firebase-emulator-warning { pointer-events: none !important; }" });
   await page
     .getByRole("button", { name: "Begin Workout", exact: true })
     .click();

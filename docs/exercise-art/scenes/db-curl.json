@@ -1,0 +1,48 @@
+{
+  "exerciseId": "db-curl",
+  "status": "reviewed",
+  "reference": "public/form-frames/barbell-row/1.webp",
+  "variation": "Standing bilateral supinated dumbbell curl, strict torso, both arms together",
+  "camera": "Fixed almost-front three-quarter view, athlete turned 15 degrees towards image left; both hands and dumbbells fully visible. Portrait 1024x1536, whole head and shoes in frame, camera near lower chest height, no perspective/scale changes.",
+  "anchors": "Both shoe soles, heels, toes, pelvis, head and shoulders remain fixed. Upper arms remain beside ribs. Only elbow flexion and attached forearms/hands/dumbbells move.",
+  "equipment": "Two identical modest round-ended dark-grey dumbbells; same handle length and head diameter in all six. No numerical weight labels. Each hand fully wraps its handle, palms forward/up throughout.",
+  "primary": "Biceps brachii on both arms, deep purple",
+  "secondary": "Visible brachialis and brachioradialis only, lighter lilac",
+  "stabilisers": "Subtle pale purple at forearm grip muscles and trunk only; leave chest, deltoids and legs white-grey.",
+  "techniqueSources": [
+    "https://www.mayoclinic.org/healthy-lifestyle/fitness/multimedia/biceps-curl/vid-20084675"
+  ],
+  "states": [
+    {
+      "body": "start: both elbows approximately 5 degrees flexion from straight. Shoulders, upper arms, head, torso, pelvis, knees and feet hold the master position. Neutral wrists and supinated grip.",
+      "equipment": "Dumbbells follow forearm arcs around fixed elbows; rigid handles stay centred in the palms. Both bells move synchronously, neither changes dimensions.",
+      "cableAndStack": "Not applicable; no machine, cable or stack."
+    },
+    {
+      "body": "early curl: both elbows approximately 35 degrees flexion from straight. Shoulders, upper arms, head, torso, pelvis, knees and feet hold the master position. Neutral wrists and supinated grip.",
+      "equipment": "Dumbbells follow forearm arcs around fixed elbows; rigid handles stay centred in the palms. Both bells move synchronously, neither changes dimensions.",
+      "cableAndStack": "Not applicable; no machine, cable or stack."
+    },
+    {
+      "body": "mid curl: both elbows approximately 75 degrees flexion from straight. Shoulders, upper arms, head, torso, pelvis, knees and feet hold the master position. Neutral wrists and supinated grip.",
+      "equipment": "Dumbbells follow forearm arcs around fixed elbows; rigid handles stay centred in the palms. Both bells move synchronously, neither changes dimensions.",
+      "cableAndStack": "Not applicable; no machine, cable or stack."
+    },
+    {
+      "body": "top: both elbows approximately 120 degrees flexion from straight. Shoulders, upper arms, head, torso, pelvis, knees and feet hold the master position. Neutral wrists and supinated grip.",
+      "equipment": "Dumbbells follow forearm arcs around fixed elbows; rigid handles stay centred in the palms. Both bells move synchronously, neither changes dimensions.",
+      "cableAndStack": "Not applicable; no machine, cable or stack."
+    },
+    {
+      "body": "controlled lower: both elbows approximately 75 degrees flexion from straight. Shoulders, upper arms, head, torso, pelvis, knees and feet hold the master position. Neutral wrists and supinated grip.",
+      "equipment": "Dumbbells follow forearm arcs around fixed elbows; rigid handles stay centred in the palms. Both bells move synchronously, neither changes dimensions.",
+      "cableAndStack": "Not applicable; no machine, cable or stack."
+    },
+    {
+      "body": "near-bottom return: both elbows approximately 25 degrees flexion from straight. Shoulders, upper arms, head, torso, pelvis, knees and feet hold the master position. Neutral wrists and supinated grip.",
+      "equipment": "Dumbbells follow forearm arcs around fixed elbows; rigid handles stay centred in the palms. Both bells move synchronously, neither changes dimensions.",
+      "cableAndStack": "Not applicable; no machine, cable or stack."
+    }
+  ],
+  "loopBoundary": "Frame 6 is a near-bottom controlled return, not a duplicate of frame 1. Continue elbow extension from about 25 degrees to about 5 degrees across 6 to 1. No pause jump or ping-pong playback."
+}

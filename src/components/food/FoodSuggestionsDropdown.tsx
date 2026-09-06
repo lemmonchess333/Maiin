@@ -228,7 +228,7 @@ function FoodSuggestionsDropdown({
               <Star aria-hidden="true" className="size-3 text-achievement" />
             )}
             <SectionLabel as="span" tier="section">
-              {quickAdd.asExamples ? "Examples" : "Quick Add"}
+              {quickAdd.asExamples ? "Examples — tap to describe your own" : "Quick Add"}
             </SectionLabel>
           </div>
           {quickAdd.items.map((item) => (
@@ -275,7 +275,7 @@ function FoodSuggestionsDropdown({
                   {item.cal} kcal
                 </span>
               </button>
-              {quickAdd.onEditPortion && (
+              {quickAdd.onEditPortion && !item.example && (
                 <IconButton
                   aria-label={`Change portion for ${item.name}`}
                   disabled={quickAdd.adding !== null}

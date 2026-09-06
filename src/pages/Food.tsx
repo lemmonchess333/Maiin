@@ -23,13 +23,14 @@ const ManualFoodLogger = lazyRetry(() =>
 );
 import { useMeals, type Meal } from "@/hooks/useMeals";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
-import { collection, Timestamp } from "firebase/firestore";
-import { addDocGuarded } from "@/lib/firestoreWrite";
+import { Timestamp } from "firebase/firestore";
+import { createMealEntry, notifyMealsLogged } from "@/lib/mealEntry";
+import { usualMeal } from "@/lib/usualMeal";
 import { duplicatedServingPayload } from "@/lib/servingEdit";
-import { db } from "@/lib/firebase";
 import { parseFoodText, getFoodSuggestions } from "@/lib/nlFoodParser";
 import type { ParsedFood, FoodSuggestion } from "@/lib/nlFoodParser";
 import { RotateCcw, X } from "lucide-react";
+import BottomSheet from "@/components/ui/BottomSheet";
 import IconButton from "@/components/ui/IconButton";
 const FoodAnalyzer = lazyRetry(() => import("@/components/FoodAnalyzer"));
 const ProModal = lazyRetry(() => import("@/components/ProModal"));
@@ -248,7 +249,7 @@ export default function Food() {
      changes — vanished items drop, new items append at the end
      via `orderQuickAddItems` rather than rebuilding the whole
      cache and reintroducing the reshuffle bug. */
-  const quickAddOrderCache = useRef<Map<string, string[]>>(new Map());
+  const [quickAddOrderCache, setQuickAddOrderCache] = useState<Map<string, string[]>>(() => new Map());
 
   const [offResults, setOffResults] = useState<OFFResult[]>([]);
   const [, setOffLoading] = useState(false);
@@ -498,12 +499,13 @@ export default function Food() {
     haptic("light");
     try {
       let total = 0;
+      const createdIds: string[] = [];
       const copied: string[] = [];
       for (const mealKey of slotsToCopyFromYesterday) {
         const items = yesterdaySegmented[mealKey] ?? [];
         if (items.length === 0) continue;
         for (const item of items) {
-          await addDocGuarded(collection(db, "users", uid, "meals"), {
+          const added = await createMealEntry(uid, {
             date: selectedDate,
             meal: mealKey,
             foodName: item.foodName,
@@ -515,6 +517,7 @@ export default function Food() {
             confidence: "copy",
             createdAt: Timestamp.now(),
           });
+          createdIds.push(added.id);
           total++;
         }
         copied.push(MEAL_LABELS[mealKey]);
@@ -522,10 +525,8 @@ export default function Food() {
       haptic(15);
       // Toast names the slots that received copies so the user can see
       // exactly what happened, not just an opaque item count.
-      toast.success(
-        `Copied ${total} item${total === 1 ? "" : "s"} into ${joinHumanList(copied)}`,
-        { id: "food-copy-yesterday" }
-      );
+      notifyMealsLogged(uid, createdIds, `Copied ${total} item${total === 1 ? "" : "s"} into ${joinHumanList(copied)}`);
+      setCopyPreviewOpen(false);
     } catch (err) {
       logger.error("[copy-all] Failed:", err);
       toast.error("Couldn't copy from yesterday", {
@@ -781,7 +782,7 @@ export default function Food() {
       return;
     }
     try {
-      await addDocGuarded(collection(db, "users", uid, "meals"), {
+      const added = await createMealEntry(uid, {
         date: selectedDate,
         foodName: food.name,
         items: [
@@ -803,9 +804,9 @@ export default function Food() {
         // by time of day and the NEXT save inherited the stale slot.
         ...(targetMeal ? { meal: targetMeal } : {}),
       });
-      setTargetMeal(null);
-      await addFavourite({ ...food, source: "search" });
+      void addFavourite({ ...food, source: "search" });
       setOffDrawerFood(null);
+      notifyMealsLogged(uid, [added.id], `Logged ${food.name}`);
       // No success toast — the food appears in the meal list and the
       // macro tiles animate, which is the confirmation. See ToastProvider
       // commit notes for the wider rule.
@@ -900,7 +901,7 @@ export default function Food() {
       const totalCarbs = items.reduce((s, i) => s + i.carbs, 0);
       const totalFat = items.reduce((s, i) => s + i.fat, 0);
       try {
-        await addDocGuarded(collection(db, "users", uid, "meals"), {
+        const added = await createMealEntry(uid, {
           date: selectedDate,
           foodName: items.map((i) => i.name).join(", "),
           items: items.map((i) => ({
@@ -925,7 +926,6 @@ export default function Food() {
           ...(targetMeal ? { meal: targetMeal } : {}),
         });
         setNlInput("");
-        setTargetMeal(null);
         const inputSegmentCount = nlInput
           .split(/[,\n]+/)
           .map((s) => s.trim())
@@ -940,11 +940,9 @@ export default function Food() {
            Local NL parser keeps the existing item-count copy
            (the user typed it themselves). */
         if (confidence === "ai-parse") {
-          toast.success("Logged from AI estimate", { id: "food-nl-success" });
+          notifyMealsLogged(uid, [added.id], "Logged from AI estimate");
         } else {
-          toast.success(`${items.length} ${itemNoun} logged${mergedSuffix}`, {
-            id: "food-nl-success",
-          });
+          notifyMealsLogged(uid, [added.id], `${items.length} ${itemNoun} logged${mergedSuffix}`);
         }
 
         /* F2d grill — auto-add to Quick Add pantry. Fire-and-forget
@@ -1082,22 +1080,19 @@ export default function Food() {
           targetName,
           targetMacros,
         });
+        const createdIds: string[] = [];
         for (let i = 0; i < adds; i++) {
-          await addDocGuarded(collection(db, "users", uid, "meals"), {
+          const added = await createMealEntry(uid, {
             date: selectedDate,
             ...duplicate,
             confidence: "duplicate",
             createdAt: Timestamp.now(),
           });
+          createdIds.push(added.id);
         }
         setEditingGroup(null);
         setOpenRowId(null);
-        toast.success(
-          `Updated to ${targetCount} ${targetCount === 1 ? "serving" : "servings"}`,
-          {
-            id: `food-edit-${foodName}`,
-          }
-        );
+        notifyMealsLogged(uid, createdIds, `Added ${adds} ${adds === 1 ? "serving" : "servings"}`);
       } else {
         /* Decrement branch — actual data loss. Mirrors the
            handleDeleteMeal pattern (line 733+): optimistically
@@ -1235,7 +1230,7 @@ export default function Food() {
   //
   // Dedupe is by normalized food name across all three sources.
   // Capped at 5 to keep the row scannable.
-  const quickMeals = useMemo(() => {
+  const quickMealCandidates = useMemo(() => {
     /* Build the live key→item map first. Cap is enforced AFTER
        cache application via orderQuickAddItems (was previously
        enforced during ranking, which combined with the cache
@@ -1351,7 +1346,7 @@ export default function Food() {
         pro: entry.meal.totalProtein || 0,
         carb: entry.meal.totalCarbs || 0,
         fat: entry.meal.totalFat || 0,
-        portionSize: "1 serving",
+        portionSize: items.length === 1 ? items[0].portionSize || "1 serving" : "1 meal",
         /* FOOD-01: multi-item historical meals repeat as a BUNDLE — the
            original foodName + full items[] ride on the chip so a tap
            re-logs the real composition (and the real name) instead of
@@ -1376,27 +1371,13 @@ export default function Food() {
     }
 
     // 3. Seeded defaults so first-time users still see suggestions
-    if (current.size < 3) {
+    if (current.size === 0) {
       for (const d of DEFAULT_QUICK_MEALS) {
-        push({ ...d, portionSize: "1 serving" });
+        push({ ...d, portionSize: "1 serving", example: true });
       }
     }
 
-    /* Apply the stable per-date cache. First visit to a date:
-       seed the cache with the freshly-computed order. Subsequent
-       visits / re-renders within the same date: render the cached
-       order, with vanished keys dropped and new keys appended at
-       the end. Cap of 5 enforced at render. */
-    const cached = quickAddOrderCache.current.get(selectedDate);
-    if (!cached) {
-      const seedOrder = Array.from(current.keys());
-      quickAddOrderCache.current.set(selectedDate, seedOrder);
-    }
-    return orderQuickAddItems(
-      quickAddOrderCache.current.get(selectedDate) ?? [],
-      current,
-      5
-    );
+    return current;
     /* timeRelevantHour added explicitly so eslint-react-hooks
        can verify the dep wiring — even though it derives from
        selectedDate, an explicit dep makes the freeze contract
@@ -1408,6 +1389,12 @@ export default function Food() {
     timeRelevantHour,
     pendingRemovalIds,
   ]);
+
+  const cachedQuickOrder = quickAddOrderCache.get(selectedDate);
+  if (!cachedQuickOrder) {
+    setQuickAddOrderCache(new Map(quickAddOrderCache).set(selectedDate, Array.from(quickMealCandidates.keys())));
+  }
+  const quickMeals = useMemo(() => orderQuickAddItems(cachedQuickOrder ?? [], quickMealCandidates, 5), [cachedQuickOrder, quickMealCandidates]);
 
   const hasStrongQuickAddSuggestions = useMemo(() => {
     if (quickMeals.length === 0) return false;
@@ -1491,8 +1478,17 @@ export default function Food() {
     });
   };
 
+  const usualSlot = targetMeal ?? inferMostLikelyMealSlot(new Date().getHours());
+  const usual = useMemo(() => usualMeal(meals, usualSlot, selectedDate), [meals, usualSlot, selectedDate]);
+  const [copyPreviewOpen, setCopyPreviewOpen] = useState(false);
   const [portionMeal, setPortionMeal] = useState<QuickAddItem | null>(null);
-  const handleQuickMealAdd = async (meal: QuickAddItem): Promise<boolean> => {
+  const handleQuickMealAdd = async (meal: QuickAddItem, slot = targetMeal): Promise<boolean> => {
+    if (meal.example) {
+      setNlInput(meal.name);
+      setSuggestionsActive(false);
+      inputRef.current?.focus();
+      return false;
+    }
     if (!uid || quickAdding || !quickAddGuard.begin()) return false;
     /* Telemetry — emit BEFORE the save so we capture taps that
        fail mid-write too. favouriteId is undefined for recents /
@@ -1506,10 +1502,11 @@ export default function Food() {
       // FOOD-01: bundle chips re-log the original foodName + items[]
       // (composition preserved); plain chips keep the single synthetic
       // item. Pure helper so the 1/2/3+-item shapes are unit-tested.
-      const undo = await saveQuickMeal(uid, meal, selectedDate, targetMeal);
-      setTargetMeal(null);
+      const undo = await saveQuickMeal(uid, meal, selectedDate, slot);
+      if (slot) setTargetMeal(slot);
       let undoing = false;
-      toast.success("Meal logged", {
+      toast.success(navigator.onLine ? `Logged ${meal.name}${slot ? ` to ${slot}` : ""}` : "Saved on this phone — syncs when you're back online", {
+        duration: 5000,
         action: {
           label: "Undo",
           onClick: async () => {
@@ -1818,6 +1815,29 @@ export default function Food() {
         />
       </motion.div>
 
+      {usual && (
+        <div className="ds-card p-4 space-y-2">
+          <p className="text-sm">Your usual at {usualSlot}</p>
+          <p className="text-sm">{usual.name}</p>
+          <p className="text-xs text-muted-foreground"><span className="font-mono tabular-nums">{Math.round(usual.cal)}</span> kcal · {usual.portionSize}</p>
+          <div className="flex gap-2">
+            <Button disabled={quickAdding !== null} onClick={() => void handleQuickMealAdd(usual)}>Log</Button>
+            <Button variant="secondary" disabled={quickAdding !== null} onClick={() => setPortionMeal(usual)}>Adjust portion or meal</Button>
+          </div>
+        </div>
+      )}
+      {copyPreviewOpen && (
+        <BottomSheet open title="Copy yesterday's meals" onOpenChange={setCopyPreviewOpen}>
+          <div className="px-4 pb-6 space-y-3">
+            {slotsToCopyFromYesterday.map((slot) => <div key={slot}>
+              <p className="text-sm">{MEAL_LABELS[slot]}</p>
+              {(yesterdaySegmented[slot] ?? []).map((meal) => <p key={meal.id} className="text-sm text-muted-foreground">{meal.foodName}</p>)}
+            </div>)}
+            <Button fullWidth loading={copyingMealKey !== null} onClick={() => void handleCopyAllMissingFromYesterday()}>Log these meals</Button>
+          </div>
+        </BottomSheet>
+      )}
+
       {scanOpen && (
         <Suspense
           fallback={
@@ -1838,7 +1858,6 @@ export default function Food() {
             effectiveDailyTarget={dailyTargets.finalTarget}
             onSaved={() => {
               setScanOpen(false);
-              setTargetMeal(null);
             }}
             onRequestManualLog={() => {
               // AI photo failure fallback. The camera modal stays
@@ -1903,7 +1922,7 @@ export default function Food() {
               <div className="flex justify-center pt-2">
                 <Button
                   variant="ghost"
-                  onClick={handleCopyAllMissingFromYesterday}
+                  onClick={() => setCopyPreviewOpen(true)}
                   disabled={inFlight}
                   aria-label={label}
                   leftIcon={<RotateCcw className="size-3.5" />}
@@ -1944,6 +1963,7 @@ export default function Food() {
         <QuickMealPortionSheet
           meal={portionMeal}
           onClose={() => setPortionMeal(null)}
+          slot={usualSlot}
           onLog={handleQuickMealAdd}
         />
       )}
