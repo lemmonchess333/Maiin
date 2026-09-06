@@ -68,7 +68,7 @@ C. Selected meal pill → nutrition identity orange — `fixes/C-*`
 1. **Text collision at 393px:** the "FREE RUN" label and the pace legend ("Faster / On pace / Slower") overlap; the Share pill also crowds the legend row. Genuine layout bug at this width.
 2. The offline-map toast renders **on top of the back button** (top-left) — z/placement collision in the toast position.
 3. Hue count: 6 (legend green/purple/coral + teal pace + orange cal + pink share tint).
-4. **Bottom-nav active state is WRONG: the Food tab is highlighted on `/run/:id`** (also wrong on `/upgrade` — see 10). The active-tab matcher appears to fall through to a default rather than reflecting the current route.
+4. ~~**Bottom-nav active state is WRONG: the Food tab is highlighted on `/run/:id`** (also wrong on `/upgrade` — see 10). The active-tab matcher appears to fall through to a default rather than reflecting the current route.~~ — **fixed**: active tab now resolved by the pure `activeTabForPath` matcher (`src/lib/activeTab.ts`), the single source of truth driving the nav pill; non-tab routes return `null` (no highlight), with no default-to-Food fallback. Covered by `src/lib/__tests__/activeTab.test.ts`.
 5. Stat cards: mono numerals ✓, "0 SPLITS" shows a raw zero rather than hiding or explaining the empty splits state.
 
 ### 07 History / Analytics — `screens/light/07-history-*.png`
@@ -94,7 +94,7 @@ C. Selected meal pill → nutrition identity orange — `fixes/C-*`
 ### 10 Upgrade — `screens/dark/10-upgrade-top.png`
 
 1. Clean two-column compare, gradient CTA (the documented brandCta gradient — the only sanctioned gradient), green "Save 27%". Good hierarchy.
-2. **Bottom-nav active state wrong again** (Food highlighted on /upgrade) — confirms finding 06.4 is systemic.
+2. ~~**Bottom-nav active state wrong again** (Food highlighted on /upgrade) — confirms finding 06.4 is systemic.~~ — **fixed** with 06.4: `/upgrade` returns `null` from `activeTabForPath`, so no tab highlights.
 3. Free column uses muted text on dark — borderline-low contrast for the feature list (legible but faint).
 
 ### 11–12 Login / Onboarding — `screens/{light,dark}/11-login*, 12-onboarding*`
@@ -110,7 +110,7 @@ C. Selected meal pill → nutrition identity orange — `fixes/C-*`
 2. ~~Status-bar collision on scroll~~ — **fixed (A)**: compositor-layer drop + z-tie; occluder now survives scroll on every page.
 3. **RunDetail text collision at 393px** — "FREE RUN" × pace-legend overlap + Share pill crowding; plus the toast covering the back button. (`06-run-detail-top`)
 4. **TreadmillMode overflows the viewport** — input + save button clipped off-right at 393px. (`05-run-treadmill-live-top`)
-5. **Bottom-nav active-tab mismatch** — Food highlighted on `/run/:id` and `/upgrade`. Systemic route-matching bug, visible on every non-tab route. (`06-run-detail-top`, `10-upgrade-top`)
+5. ~~**Bottom-nav active-tab mismatch** — Food highlighted on `/run/:id` and `/upgrade`. Systemic route-matching bug, visible on every non-tab route.~~ — **fixed**: explicit route → tab matching in `src/lib/activeTab.ts` (no default fallback); non-tab routes show no active pill. (`06-run-detail-top`, `10-upgrade-top`)
 6. **Undesigned text-only empty states on the highest-traffic surfaces** — Home Performance, History Performance, Social feed/suggestions. All are sentence-in-a-grey-box; none offer a designed next action beyond prose. Cold-start is a most-seen state for the user base. (`01-home-top`, `07-history-top`, `08-social-top`)
 7. **Stale cold-start artifacts on rich accounts** — "Welcome to Tropos!" checklist still rendering for an account with months of data. (`01-home-top`)
 8. **Hue overload on Home + Food** (6–7 distinct hues per viewport vs the documented 4-ish semantic system). Macro pink/yellow/green + sport coral/purple + nutrition orange all co-present; the semantic system is intact but the _density_ of simultaneous accents is the issue. (`01-home-scrolled`, `02-food-scrolled`)
