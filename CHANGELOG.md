@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **One workout finish.** Saving keeps the completion screen open with programme progress, the next session and explicit share/reminder actions. Strength recognition compares estimated bests; a first rep range is labelled separately. Set PR toasts and the circular rest timer are removed, plateau review lives on Program, and pending badge reveals survive a reload per account.
+
 - **Readability pass across the whole app.** Secondary text is slightly
   darker in light mode and slightly brighter in dark mode, tuned so every
   caption clears accessibility contrast on the surface it actually sits

@@ -1,3 +1,5 @@
+import { liftCompletionContext } from "@/lib/completionPlanContext";
+import ProgramStallReview from "@/components/program/ProgramStallReview";
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import type { ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -213,46 +215,7 @@ function ProgramInner() {
     return true;
   }, [applyDeloadWeek, revertDeloadWeek]);
 
-  /**
-   * `completeWorkoutDay`, plus the only route back to what you just saved.
-   *
-   * The completion screen unmounts on save and drops you here on /program.
-   * Before `/workout/:id` existed there was nowhere to go, so nothing was
-   * offered; now the session is a record, and a toast action is the same
-   * shape `Routine` already uses for "View PRs" — no auto-navigation, which
-   * neither this surface nor RunSummary does.
-   *
-   * `completeWorkoutDay` returns `{ workoutId }`; it is typed
-   * `Promise<unknown>` through the WorkoutSession prop, so narrow rather
-   * than cast. A missing id just means no action on the toast.
-   */
-  const completeWithViewToast = useCallback(
-    async (
-      dayIndex: number,
-      sessionData: Parameters<typeof completeWorkoutDay>[1]
-    ) => {
-      const result = await completeWorkoutDay(dayIndex, sessionData);
-      const workoutId =
-        result &&
-        typeof result === "object" &&
-        typeof (result as { workoutId?: unknown }).workoutId === "string"
-          ? (result as { workoutId: string }).workoutId
-          : null;
-      toast.success(
-        "Workout saved",
-        workoutId
-          ? {
-              action: {
-                label: "View",
-                onClick: () => navigate(`/workout/${workoutId}`),
-              },
-            }
-          : undefined
-      );
-      return result;
-    },
-    [completeWorkoutDay, navigate]
-  );
+  const completeWithViewToast = completeWorkoutDay;
 
   const runsTarget = getWeeklyRunTarget(profile);
   // PR-2: weekly layout editor sheet. Mounted conditionally — when
@@ -1363,6 +1326,13 @@ function ProgramInner() {
                           </button>
                         )}
 
+                      {sessionDayIndex === null && (
+                        <ProgramStallReview
+                          key={`${programState.weekNumber}:${idx}`}
+                          exercises={selectedWorkout.exercises}
+                        />
+                      )}
+
                       {/* Secondary action: skip this session — mirrors the
                           Run card's "Start free run instead" link. Offered on
                           the cursor day AND any upcoming day of the CURRENT
@@ -1944,6 +1914,11 @@ function ProgramInner() {
                 plan ? { ...storedDay, exercises: plan.exercises } : storedDay
               }
               dayIndex={sessionDayIndex}
+              planContext={liftCompletionContext(
+                programState,
+                sessionDayIndex,
+                localDateString()
+              )}
               draftEpoch={programState.weekNumber}
               // Variant-scoped draft namespace (PROGRAM-ADAPT-01
               // follow-up): the draft identity fingerprints the

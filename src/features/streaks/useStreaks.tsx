@@ -1,5 +1,12 @@
 import {
+  pendingBadgeIds,
+  subscribePendingBadges,
+  queueBadgeReveals,
+  dismissBadgeReveal,
+} from "./pendingBadgeReveals";
+import {
   useState,
+  useSyncExternalStore,
   useEffect,
   useRef,
   useCallback,
@@ -423,8 +430,26 @@ function useStreaksInternal() {
   const [runsLoaded, setRunsLoaded] = useState(false);
   const [mealsLoaded, setMealsLoaded] = useState(false);
 
+  // Reveal only confirmed awards from this account. Intent may be queued
+  // before the write resolves, so reloads retain it without announcing a failed save.
+  const [confirmedRevealBadges, setConfirmedRevealBadges] = useState<{
+    uid: string;
+    badges: EarnedBadge[];
+  } | null>(null);
   // New-badge queue — multiple badges awarded in one pass show one at a time.
-  const [newBadgeQueue, setNewBadgeQueue] = useState<EarnedBadge[]>([]);
+  const pendingIds = useSyncExternalStore(
+    subscribePendingBadges,
+    () => pendingBadgeIds(uid),
+    () => pendingBadgeIds(null)
+  );
+  const newBadge =
+    pendingIds
+      .map((id) =>
+        confirmedRevealBadges?.uid === uid
+          ? confirmedRevealBadges.badges.find((b) => b.id === id && b.earnedAt)
+          : undefined
+      )
+      .find(Boolean) ?? null;
 
   // Refs — track state across renders without triggering re-runs
   const lastWrittenStreakRef = useRef<number | null>(null);
@@ -455,7 +480,6 @@ function useStreaksInternal() {
       setWorkoutsLoaded(false);
       setRunsLoaded(false);
       setMealsLoaded(false);
-      setNewBadgeQueue([]);
       lastWrittenStreakRef.current = null;
       hasLoadedRef.current = false;
       seenEarnedRef.current = null;
@@ -486,6 +510,8 @@ function useStreaksInternal() {
             const saved = savedBadges.find((b: EarnedBadge) => b.id === def.id);
             return { ...def, earnedAt: saved?.earnedAt || null };
           });
+          if (!snap.metadata?.hasPendingWrites)
+            setConfirmedRevealBadges({ uid, badges: merged });
           // Spread DEFAULT_STREAKS first so legacy docs that pre-date a field
           // (e.g. longestStreak / totalActiveDays) don't propagate `undefined`
           // into state — that previously caused `Math.max(n, undefined) === NaN`
@@ -548,7 +574,10 @@ function useStreaksInternal() {
             );
             if (fresh.length > 0) {
               for (const b of fresh) seenEarnedRef.current!.add(b.id);
-              setNewBadgeQueue((q) => [...q, ...fresh]);
+              queueBadgeReveals(
+                uid,
+                fresh.map((b) => b.id)
+              );
             }
           }
         } else {
@@ -905,10 +934,11 @@ function useStreaksInternal() {
         // users/{uid}/public/{doc} rule accepts subsets via hasOnly, so a
         // partial merge with just badgeSummary is valid.
         batch.set(publicProfileRef, { badgeSummary }, { merge: true });
+        // Persist intent before the async acknowledgement so a killed app
+        // can reveal the badge once the next snapshot confirms the award.
+        if (!silent) queueBadgeReveals(uid, [updated.id]);
         await batch.commit();
-        if (!silent) {
-          setNewBadgeQueue((q) => [...q, updated]);
-        }
+        setConfirmedRevealBadges({ uid, badges: updatedBadges });
       } catch (error) {
         // Badge awards are automatic background reconciliation, not a
         // user-initiated action — a transient write failure must not
@@ -1073,8 +1103,8 @@ function useStreaksInternal() {
   // ── Public API ─────────────────────────────────────────────────────────
 
   const dismissNewBadge = useCallback(() => {
-    setNewBadgeQueue((q) => q.slice(1));
-  }, []);
+    if (uid && newBadge) dismissBadgeReveal(uid, newBadge.id);
+  }, [uid, newBadge]);
 
   const earnedBadges = streakData.badges.filter((b) => b.earnedAt);
   const lockedBadges = streakData.badges.filter((b) => !b.earnedAt);
@@ -1132,7 +1162,7 @@ function useStreaksInternal() {
     allBadges,
     badgeProgressCtx,
     awardEventBadge,
-    newBadge: newBadgeQueue[0] ?? null,
+    newBadge,
     dismissNewBadge,
     // Per-day target snapshots (date → calories + macros as they stood on that
     // day). Exposed for the nutrition-insight generator (NUTR-L4) so consumers

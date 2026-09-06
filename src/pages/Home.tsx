@@ -453,8 +453,6 @@ export default function Home() {
     priority: 20,
     eligible: !!newBadge,
     suppressedBy: ["fell-behind"],
-    dropWhenMissed: true,
-    onDrop: dismissNewBadge,
   });
 
   // Goal-reached prompt. The nutrition direction is evaluated on every Home
