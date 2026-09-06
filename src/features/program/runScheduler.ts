@@ -534,7 +534,15 @@ const BIGGER_PEAK_FACTOR = 1.25;
 function effectivePeakKm(peakLongKm: number, volume: RunVolumePreset): number {
   if (volume === "lighter") return peakLongKm * LIGHTER_PEAK_FACTOR;
   if (volume === "bigger") {
-    const ceiling = LONG_RUN_TIERS[LONG_RUN_TIERS.length - 1].km;
+    // Run17: the clamp is the larger of the top tier and the distance's own
+    // peak — a 32 km marathon intent already sits past the 30 km top tier
+    // (the ladder snaps it), and clamping `bigger` to 30 put it BELOW
+    // `standard`. `bigger` can now never sit below `standard`; the emitted
+    // tier is still capped by the schedulable ladder.
+    const ceiling = Math.max(
+      LONG_RUN_TIERS[LONG_RUN_TIERS.length - 1].km,
+      peakLongKm
+    );
     return Math.min(peakLongKm * BIGGER_PEAK_FACTOR, ceiling);
   }
   return peakLongKm;
@@ -608,6 +616,9 @@ export function longRunKmForWeek(input: {
   peakLongKm: number;
   taperWeeks: number;
   volume: RunVolumePreset;
+  /** Run17 — the runner's confirmed easy pace, or null for the nominal
+   *  table. Decides the ceiling the ramp is clamped to. */
+  easyPaceSPerKm?: number | null;
 }): number {
   const { weekIndex, totalWeeks, baseLongKm, taperWeeks, volume } = input;
   // No headroom in the PLAN — checked before the knob, so "bigger" cannot
@@ -616,7 +627,24 @@ export function longRunKmForWeek(input: {
   // coercion: it passes peak === base, and neither knob can act on that.
   if (input.peakLongKm <= baseLongKm) return baseLongKm;
   // ...and none left after the knob: "lighter" is allowed to flatten it.
-  const peak = effectivePeakKm(input.peakLongKm, volume);
+  // Run17: the peak the ramp climbs to is the peak the ceiling lets this
+  // runner schedule. Before this the curve climbed to `peakLongKm` (32 for
+  // the marathon) while every tier past the ceiling snapped to the same
+  // `long_25k` — six identical weeks at the top of an 18-week block. Now the
+  // ramp ends where the plan can actually go, and `bigger` can never sit
+  // below `standard` (both clamp to the same ceiling).
+  // The curve may aim up to PEAK_HOLD_FRACTION past the ceiling — never past
+  // the distance's own intended peak — so the LAST few ramp weeks land on
+  // the ceiling tier rather than only the final one: with a 20 → 25 km tier
+  // step, a curve that ends exactly at 25 reaches the 25 km tier once. Two
+  // or three peak long runs is the convention every methodology shares; six
+  // identical weeks was the 32 km overshoot. Capping at the intended peak
+  // keeps `lighter` below `standard` (a 24 km intent stays a 20 km tier).
+  // A Tropos heuristic in the RUN-EV-06 register, not a source rule.
+  const peak = Math.min(
+    effectivePeakKm(input.peakLongKm, volume),
+    maxSchedulableLongKm(input.easyPaceSPerKm) * (1 + PEAK_HOLD_FRACTION)
+  );
   if (peak <= baseLongKm) return baseLongKm;
 
   // Pre-taper window: the final race week and the taper weeks before it are
@@ -687,13 +715,56 @@ export function mediumLongMinutesForWeek(input: {
     : ramped;
 }
 
+/**
+ * Run17 — how long a long-run tier takes THIS runner. With a confirmed
+ * benchmark (the caller resolves it through `prescriptivePaceTableFromFitness`,
+ * RUN-EV-08's gate) the tier's km at the runner's easy pace; without one the
+ * template's nominal minutes, which assume roughly 5:36/km. The 150-minute
+ * ceiling was only ever applied to the nominal figure, so a 6:00/km runner's
+ * `long_25k` (150 min) sat exactly on it and a 7:00/km runner's (175 min) was
+ * past it, while a 5:00/km runner was held to 25 km when 30 fit.
+ */
+function tierMinutesForRunner(
+  tier: { km: number; minutes: number },
+  easyPaceSPerKm: number | null | undefined
+): number {
+  return easyPaceSPerKm && easyPaceSPerKm > 0
+    ? (tier.km * easyPaceSPerKm) / 60
+    : tier.minutes;
+}
+
+function schedulableLongTiers(easyPaceSPerKm?: number | null) {
+  const eligible = LONG_RUN_TIERS.filter(
+    (t) => tierMinutesForRunner(t, easyPaceSPerKm) <= LONG_RUN_MAX_MINUTES
+  );
+  // The shortest tier is always schedulable — the floor, not the ceiling.
+  return eligible.length > 0 ? eligible : [LONG_RUN_TIERS[0]];
+}
+
+/** The longest long-run distance the ceiling lets THIS runner schedule —
+ *  the peak every ramp is clamped to (Run17), so the curve ends where the
+ *  plan can actually go instead of flat-lining at the ceiling tier. */
+export function maxSchedulableLongKm(easyPaceSPerKm?: number | null): number {
+  const tiers = schedulableLongTiers(easyPaceSPerKm);
+  return tiers[tiers.length - 1].km;
+}
+
+/** Run17 — how far past the schedulable ceiling the intended long-run
+ *  curve is allowed to aim, so the ceiling TIER is reached for the last
+ *  ~10% of the ramp (two to three peak long runs on the nominal ladder)
+ *  instead of once. The emitted tier can never exceed the ceiling:
+ *  `longTierForKm` only picks from the schedulable ladder. */
+export const PEAK_HOLD_FRACTION = 0.1;
+
 /** Snap a target distance to the nearest tier at or below it, with the
  *  shortest tier as the floor. Never prescribes MORE than asked for, and
- *  never a session over the `LONG_RUN_MAX_MINUTES` time ceiling. */
-export function longTierForKm(km: number): string {
-  const eligible = LONG_RUN_TIERS.filter(
-    (t) => t.minutes <= LONG_RUN_MAX_MINUTES
-  );
+ *  never a session over the `LONG_RUN_MAX_MINUTES` time ceiling — measured
+ *  at the runner's own easy pace when one is confirmed (Run17). */
+export function longTierForKm(
+  km: number,
+  easyPaceSPerKm?: number | null
+): string {
+  const eligible = schedulableLongTiers(easyPaceSPerKm);
   let chosen = eligible[0];
   for (const tier of eligible) {
     if (tier.km <= km) chosen = tier;
@@ -788,9 +859,10 @@ function pickLongTemplateId(input: {
   peakLongKm: number;
   taperWeeks: number;
   volume: RunVolumePreset;
+  easyPaceSPerKm?: number | null;
 }): string {
   if (input.phase === "taper" || input.phase === "race") return "easy_30";
-  return longTierForKm(longRunKmForWeek(input));
+  return longTierForKm(longRunKmForWeek(input), input.easyPaceSPerKm);
 }
 
 export interface StructuredWeekV2Input {
@@ -977,6 +1049,17 @@ export interface RacePlanV2Input {
    * existing caller and test byte-identical, which is why this is additive.
    */
   planTotalWeeks?: number;
+  /**
+   * Run17 — the runner's CONFIRMED easy pace in seconds per km, resolved by
+   * the caller through `planningEasyPaceSPerKm(profile.runFitness)` (which
+   * applies RUN-EV-08's prescription gate). Decides which long-run tiers the
+   * 150-minute ceiling allows for THIS runner and therefore the peak the
+   * ramp climbs to. Null/omitted → the nominal template minutes, which is
+   * byte-identical to the pre-Run17 output. Every live regen path must thread
+   * it (the tuning pattern) or a benchmarked runner's plan silently reverts
+   * to the nominal ceiling on the weekly refresh.
+   */
+  easyPaceSPerKm?: number | null;
 }
 
 export interface RacePlanV2Output {
@@ -1203,6 +1286,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
             peakLongKm: config.baseLongKm,
             taperWeeks: TAPER_WEEKS_BY_DISTANCE[input.raceGoal.distance],
             volume: tuning.volume,
+            easyPaceSPerKm: input.easyPaceSPerKm ?? null,
           }),
           type: phase === "taper" ? "easy" : "long",
           weekStart,
@@ -1242,6 +1326,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
           peakLongKm: detrained ? config.baseLongKm : config.peakLongKm,
           taperWeeks: TAPER_WEEKS_BY_DISTANCE[input.raceGoal.distance],
           volume: tuning.volume,
+          easyPaceSPerKm: input.easyPaceSPerKm ?? null,
         }),
         type: phase === "taper" ? "easy" : "long",
         weekStart,
