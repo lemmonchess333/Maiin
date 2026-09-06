@@ -16,7 +16,7 @@
     "lint": "eslint . --max-warnings 99",
     "check:dist-size": "node scripts/check-dist-size.mjs",
     "check:cycles": "madge --circular --extensions ts,tsx --ts-config tsconfig.app.json src",
-    "verify": "npm run lint && npm run check:form-art && npm run build && npm run test",
+    "verify": "npm run lint && npm run check:form-art && npm run check:form-drafts && npm run build && npm run test",
     "typecheck": "tsc -b",
     "preview": "vite preview",
     "test": "vitest run",
@@ -36,7 +36,8 @@
     "prepare": "husky",
     "doctor": "npx react-doctor@latest",
     "seed:fellbehind": "tsx --tsconfig tsconfig.app.json scripts/seed-fellbehind-capture.ts",
-    "check:form-art": "node --import tsx scripts/audit-form-art.ts"
+    "check:form-art": "node --import tsx scripts/audit-form-art.ts",
+    "check:form-drafts": "node --import tsx scripts/audit-form-drafts.ts"
   },
   "dependencies": {
     "@capacitor-community/background-geolocation": "^1.2.26",

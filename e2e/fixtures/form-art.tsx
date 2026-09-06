@@ -6,6 +6,24 @@ import ExerciseFormFrames from "../../src/components/ExerciseFormFrames";
 import { getAuthoredBeats, getFormBeats } from "../../src/lib/bodyRig";
 import { FORM_ARTWORK } from "../../src/lib/formArtwork";
 import { Button } from "../../src/components/ui/Button";
+import batch from "../../docs/exercise-art/BATCH_REVIEW_MANIFEST.json";
+
+const batchDrafts = Object.fromEntries(
+  batch.completeDraftSets.map((set) => [
+    `${set.exerciseId} (draft)`,
+    {
+      name: set.exerciseId,
+      findings: set.reviewFindings,
+      beats: set.frames.map((frame) => ({
+        t: frame.progress,
+        label: frame.caption.replace(/ \d\/6$/, ""),
+        cue: frame.cue,
+        image: frame.path,
+      })),
+    },
+  ]),
+);
+
 export default function Review() {
   const [id, setId] = useState("barbell-row");
   const [dark, setDark] = useState(true);
@@ -19,13 +37,15 @@ export default function Review() {
     "5-lower-candidate.png",
     "6-return-candidate.png",
   ];
-  const draft = id === "db-curl (draft)";
-  const beats = draft
+  const curlDraft = id === "db-curl (draft)";
+  const batchDraft = batchDrafts[id];
+  const draft = curlDraft || Boolean(batchDraft);
+  const beats = curlDraft
     ? getAuthoredBeats("db-curl")!.map((beat, i) => ({
         ...beat,
         image: `docs/exercise-art/pilots/db-curl/${draftFiles[i]}`,
       }))
-    : getFormBeats(id)!;
+    : batchDraft?.beats ?? getFormBeats(id)!;
   return (
     <div className={dark ? "dark" : ""}>
       <main className="min-h-screen bg-background text-foreground p-4">
@@ -40,9 +60,10 @@ export default function Review() {
               onChange={(event) => {
                 setId(event.target.value);
                 setRequest(undefined);
+                setStep(0);
               }}
             >
-              {[...Object.keys(FORM_ARTWORK), "db-curl (draft)"].map(
+              {[...Object.keys(FORM_ARTWORK), "db-curl (draft)", ...Object.keys(batchDrafts)].map(
                 (value) => (
                   <option key={value}>{value}</option>
                 )
@@ -55,17 +76,29 @@ export default function Review() {
           {draft ? (
             <>
               <p role="status" className="text-small text-muted-foreground">
-                Draft: alignment diagnostics passed; technique, equipment and
-                mobile playback review pending. Not released.
+                Draft: not released. Technique, equipment, consistency and
+                mobile playback checks are required.
               </p>
               <ExerciseFormFrames
                 key={`${id}-${request?.serial ?? 0}`}
                 beats={beats}
-                name="Dumbbell Curl"
+                name={batchDraft?.name ?? "Dumbbell Curl"}
                 onStep={setStep}
                 initialIndex={request?.index}
                 autoPlay={!request}
               />
+              {batchDraft && (
+                <details className="ds-card p-3 text-small">
+                  <summary className="min-h-11 cursor-pointer font-semibold">
+                    Recorded review findings
+                  </summary>
+                  <ul className="list-disc pl-5 space-y-2">
+                    {batchDraft.findings.map((finding) => (
+                      <li key={finding}>{finding}</li>
+                    ))}
+                  </ul>
+                </details>
+              )}
             </>
           ) : (
             <ExerciseRigDemo
