@@ -310,6 +310,7 @@ describe("useHomeData", { timeout: 5000 }, () => {
     });
 
     expect(result.current.lastWeightInfo).toEqual({
+      kg: 75,
       weight: "75.0",
       date: "From profile",
       rawDate: null,
@@ -374,7 +375,7 @@ describe("useHomeData", { timeout: 5000 }, () => {
     expect(result.current.lastWeightInfo!.weight).toBe("176.4");
   });
 
-  it("setLastWeightInfo updates weight optimistically", async () => {
+  it("refreshes the weight after a saved entry or undo", async () => {
     seedHome([], [], []);
 
     const { result } = renderHook(() =>
@@ -385,11 +386,16 @@ describe("useHomeData", { timeout: 5000 }, () => {
       expect(result.current.loading).toBe(false);
     });
 
-    const newWeight = { weight: "82.0", date: "Apr 1", rawDate: "2026-04-01" };
-    result.current.setLastWeightInfo(newWeight);
-
+    seedFirestore({
+      "users/u1/bodyweightLogs/2026-04-01": {
+        date: "2026-04-01",
+        weight: 82,
+        source: "manual",
+      },
+    });
+    window.dispatchEvent(new Event("tropos:weight-changed"));
     await waitFor(() => {
-      expect(result.current.lastWeightInfo).toEqual(newWeight);
+      expect(result.current.lastWeightInfo?.kg).toBe(82);
     });
   });
 

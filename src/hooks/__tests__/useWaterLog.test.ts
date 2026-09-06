@@ -1,25 +1,17 @@
-/**
- * useWaterLog — today's hydration, live.
- *
- * The interesting behaviour isn't the arithmetic, it's the echo-suppression.
- * The hook holds an optimistic `ml` locally, debounces a write, and sets
- * `skipNextSnapshot` so its own write doesn't bounce back through the
- * listener and overwrite what the user is mid-way through tapping. That
- * handshake is only observable against a store that actually re-fires — a
- * stub returning a canned snapshot cannot express it.
- *
- * It also migrates legacy `glasses`-only documents forward (× 250), so a
- * day logged before the ml model still renders instead of reading as zero.
- *
- * TIMER ORDERING: `vi.useFakeTimers` must come AFTER the mount has settled.
- * Faking `setTimeout` first freezes the clock `waitFor` polls on, and the
- * initial `await waitFor(...)` never resolves. Cost three failures to learn.
- */
+/** Water reads plus the durable optimistic queue across navigation and days. */
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
 
 vi.mock("firebase/firestore");
-vi.mock("@/lib/firebase", () => ({ db: {}, functions: {} }));
+vi.mock("@/lib/firebase", () => ({
+  db: {},
+  functions: {},
+  auth: {
+    get currentUser() {
+      return mockUser;
+    },
+  },
+}));
 vi.mock("@/lib/logger", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), log: vi.fn(), info: vi.fn() },
 }));
@@ -31,9 +23,11 @@ vi.mock("@/lib/auth", () => ({
   useUid: () => ({ user: mockUser, profile: mockProfile }).user?.uid ?? null,
 }));
 
+import { flushWater, pendingWater } from "@/lib/waterActions";
 import { useWaterLog } from "../useWaterLog";
 import {
   seedFirestore,
+  failNextFirestore,
   resetFirestore,
   readDoc,
   flushSnapshots,
@@ -43,22 +37,23 @@ import { localDateString } from "@/lib/dateHelpers";
 const TODAY = localDateString();
 const PATH = `users/u1/waterLog/${TODAY}`;
 
-/** Mount, let the listener settle, THEN fake timers. See the header note. */
-async function mountThenFakeTimers() {
+/** Wait until the current server total is available. */
+async function mountSettled() {
   const { result } = renderHook(() => useWaterLog());
   await waitFor(() => expect(result.current.loading).toBe(false));
-  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
   return result;
 }
 
 beforeEach(() => {
   resetFirestore();
+  localStorage.clear();
   vi.clearAllMocks();
   mockUser = { uid: "u1" };
   mockProfile = {};
 });
 
-afterEach(() => {
+afterEach(async () => {
+  await flushWater("u1");
   vi.useRealTimers();
 });
 
@@ -101,22 +96,22 @@ describe("target", () => {
 });
 
 describe("logging", () => {
-  it("updates immediately and persists after the debounce", async () => {
-    const result = await mountThenFakeTimers();
+  it("updates only after local persistence, then syncs without a debounce", async () => {
+    const result = await mountSettled();
 
     act(() => result.current.logWater(250));
     expect(result.current.ml).toBe(250); // optimistic, no await
     expect(readDoc(PATH)).toBeUndefined(); // not yet written
 
     await act(async () => {
-      vi.advanceTimersByTime(600);
+      await flushWater("u1");
     });
     expect(readDoc(PATH)).toMatchObject({ ml: 250, targetMl: 2000 });
   });
 
-  it("coalesces a burst of taps into ONE write", async () => {
+  it("preserves every tap in a burst", async () => {
     // Tapping + four times must not cost four writes.
-    const result = await mountThenFakeTimers();
+    const result = await mountSettled();
 
     act(() => result.current.logWater(250));
     act(() => result.current.logWater(250));
@@ -125,7 +120,7 @@ describe("logging", () => {
     expect(result.current.ml).toBe(1000);
 
     await act(async () => {
-      vi.advanceTimersByTime(600);
+      await flushWater("u1");
     });
     expect(readDoc(PATH)).toMatchObject({ ml: 1000 });
   });
@@ -151,11 +146,11 @@ describe("logging", () => {
   it("does not let its OWN write echo back over the local value", async () => {
     // The skipNextSnapshot handshake. Without it the listener re-fires with
     // the just-written value and can clobber a tap made in between.
-    const result = await mountThenFakeTimers();
+    const result = await mountSettled();
 
     act(() => result.current.logWater(500));
     await act(async () => {
-      vi.advanceTimersByTime(600);
+      await flushWater("u1");
     });
     expect(readDoc(PATH)).toMatchObject({ ml: 500 }); // write landed
 
@@ -180,4 +175,58 @@ describe("signed out", () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.ml).toBe(0);
   });
+});
+
+describe("navigation and account boundaries", () => {
+  it("a tap survives immediate unmount", async () => {
+    const view = renderHook(() => useWaterLog());
+    await waitFor(() => expect(view.result.current.loading).toBe(false));
+    act(() => view.result.current.logWater(500));
+    view.unmount();
+    await flushWater("u1");
+    expect(readDoc(PATH)?.ml).toBe(500);
+  });
+  it("keeps offline entries on their original day after midnight", async () => {
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-09-05T23:59:00"));
+    const view = renderHook(() => useWaterLog());
+    await flushSnapshots();
+    act(() => view.result.current.logWater(500));
+    vi.setSystemTime(new Date("2026-09-06T00:01:00"));
+    act(() => window.dispatchEvent(new Event("focus")));
+    await flushSnapshots();
+    expect(view.result.current.ml).toBe(0);
+    expect(pendingWater("u1")[0].date).toBe("2026-09-05");
+    act(() => view.result.current.logWater(250));
+    expect(view.result.current.ml).toBe(250);
+    vi.restoreAllMocks();
+  });
+  it("does not display another account's optimistic entries or serving preference", async () => {
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+    const view = renderHook(() => useWaterLog());
+    await flushSnapshots();
+    act(() => {
+      view.result.current.setServingMl(500);
+      view.result.current.logWater(500);
+    });
+    mockUser = { uid: "u2" };
+    view.rerender();
+    await flushSnapshots();
+    expect(view.result.current.ml).toBe(0);
+    expect(view.result.current.servingMl).toBe(250);
+    vi.restoreAllMocks();
+  });
+});
+
+it("retry restores a failed live read", async () => {
+  seedFirestore({ [PATH]: { ml: 750 } });
+  failNextFirestore("onSnapshot");
+  const { result } = renderHook(() => useWaterLog());
+  await waitFor(() =>
+    expect(result.current.syncStatus).toContain("Couldn't sync")
+  );
+  act(() => result.current.retry());
+  await waitFor(() => expect(result.current.ml).toBe(750));
+  expect(result.current.syncStatus).toBe("");
 });

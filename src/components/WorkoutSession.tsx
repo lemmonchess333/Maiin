@@ -1026,9 +1026,7 @@ export default function WorkoutSession({
       ) {
         const sessionVolume = exerciseSessionVolume(
           currentSets
-            .map((st, i) =>
-              i === setIdx ? { ...set, completed: true } : st
-            )
+            .map((st, i) => (i === setIdx ? { ...set, completed: true } : st))
             .filter((st) => st.completed && st.type !== "warmup")
             .map((st) => ({ weightKg: st.weight, reps: st.reps }))
         );
@@ -1177,8 +1175,11 @@ export default function WorkoutSession({
     checkStalls();
   }, [sessionComplete, user?.uid, storageUid, day.exercises]);
 
+  const [showStallReview, setShowStallReview] = useState(false);
+  const finishPending = useRef(false);
   const handleFinish = async () => {
-    if (completing) return;
+    if (finishPending.current) return;
+    finishPending.current = true;
     setCompleting(true);
     let saved = false;
 
@@ -1280,10 +1281,14 @@ export default function WorkoutSession({
         "Couldn't save your workout. Your completed session is still here — try again."
       );
     } finally {
+      finishPending.current = false;
       setCompleting(false);
     }
 
-    if (saved) onClose();
+    if (saved) {
+      toast.success("Workout saved");
+      onClose();
+    }
   };
 
   const handleStartFresh = () => {
@@ -1321,11 +1326,14 @@ export default function WorkoutSession({
           completing={completing}
           onFinish={handleFinish}
           onClose={onClose}
+          onReviewProgress={
+            stallExercise ? () => setShowStallReview(true) : undefined
+          }
         />
-        {stallExercise && (
+        {stallExercise && showStallReview && (
           <StallModal
             exercise={stallExercise}
-            onClose={() => setStallExercise(null)}
+            onClose={() => setShowStallReview(false)}
           />
         )}
       </>

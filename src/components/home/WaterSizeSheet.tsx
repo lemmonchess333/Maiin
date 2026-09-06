@@ -1,3 +1,4 @@
+import Button from "@/components/ui/Button";
 import { useState } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { BottomSheet } from "@/components/ui/BottomSheet";
@@ -38,12 +39,16 @@ export default function WaterSizeSheet({
   onLog,
   consumedMl,
   targetMl,
+  servingMl = 250,
+  onServingChange,
 }: {
   open: boolean;
   onClose: () => void;
   onLog: (ml: number) => void;
   consumedMl: number;
   targetMl: number;
+  servingMl?: number;
+  onServingChange?: (ml: number) => void;
 }) {
   const [custom, setCustom] = useState("");
 
@@ -56,8 +61,12 @@ export default function WaterSizeSheet({
     onClose();
   }
 
-  const customMl = clampMl(Number(custom));
-  const customValid = customMl > 0 && customMl <= MAX_SINGLE_LOG_ML;
+  const customMl = Number(custom);
+  const customValid =
+    /^\d+$/.test(custom.trim()) &&
+    Number.isInteger(customMl) &&
+    customMl > 0 &&
+    customMl <= MAX_SINGLE_LOG_ML;
 
   return (
     <BottomSheet
@@ -126,6 +135,31 @@ export default function WaterSizeSheet({
           ))}
         </div>
 
+        {onServingChange && (
+          <div className="space-y-2">
+            <label className="block text-sm" htmlFor="usual-water">
+              Quick-add serving
+            </label>
+            <select
+              id="usual-water"
+              className="ds-input min-h-11 w-full"
+              value={servingMl}
+              onChange={(e) => onServingChange(Number(e.target.value))}
+            >
+              {!WATER_PRESETS.some((p) => p.ml === servingMl) && (
+                <option value={servingMl}>{servingMl} ml</option>
+              )}
+              {WATER_PRESETS.map((p) => (
+                <option key={p.id} value={p.ml}>
+                  {p.label} · {p.ml} ml
+                </option>
+              ))}
+            </select>
+            <p className="text-micro text-muted-foreground">
+              Changes the + button. No water is logged.
+            </p>
+          </div>
+        )}
         {/* Custom amount */}
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
@@ -160,6 +194,20 @@ export default function WaterSizeSheet({
             Add
           </button>
         </div>
+        {custom && !customValid && (
+          <p role="alert" className="text-sm text-destructive-strong">
+            Enter a whole amount from 1 to {MAX_SINGLE_LOG_ML} ml.
+          </p>
+        )}
+        {onServingChange && customValid && (
+          <Button
+            variant="outline"
+            fullWidth
+            onClick={() => onServingChange(customMl)}
+          >
+            Use {customMl} ml for quick add
+          </Button>
+        )}
       </div>
     </BottomSheet>
   );

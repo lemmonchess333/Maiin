@@ -27,7 +27,6 @@
  * targets 26 g apart.
  */
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
 import { weighInProfilePatch } from "../bodyweightLogs";
 import { getAdjustedTargets } from "../phaseNutrition";
 import type { UserProfile } from "../auth";
@@ -145,29 +144,5 @@ describe("weighInProfilePatch", () => {
   });
 });
 
-describe("Home passes the whole profile, not just the weight", () => {
-  /* The gap this closes, found by mutation: narrowing the call site to
-     `weighInProfilePatch({ weightKg: profile?.weightKg }, storeW)` left every
-     test above green. The patch would silently return the weight-only branch
-     — correct-looking, and exactly the pre-fix behaviour — because the macro
-     recompute needs `targetCalories` and `program.goal`, which that narrowed
-     object does not carry.
-
-     Source-level because rendering Home in jsdom to drive a weigh-in would
-     stand up the whole dashboard (GPS, Firestore subscriptions, charts) to
-     assert one argument. Same trade the functions-engine wiring pins make. */
-  const SOURCE = readFileSync(
-    new URL("../../pages/Home.tsx", import.meta.url),
-    "utf8"
-  );
-
-  it("calls the patch builder with the profile object itself", () => {
-    expect(SOURCE).toMatch(/weighInProfilePatch\(\s*profile,\s*storeW\s*\)/);
-  });
-
-  it("no longer calls the weight-only mirror from this flow", () => {
-    // Leaving both wired is the drift risk: the old one still compiles and
-    // still looks like it does the job.
-    expect(SOURCE).not.toContain("weighInProfileMirror(");
-  });
-});
+// The Home write moved to weightEntry. everydayLogging.test.ts exercises the
+// real transaction and verifies the profile-derived protein changes with it.

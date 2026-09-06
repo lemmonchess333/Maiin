@@ -342,6 +342,9 @@ function AppRoutes() {
           flushQueue(db, uid).catch(() => {});
         });
       });
+      import("@/lib/waterActions").then(({ flushWater }) => {
+        if (!cancelled) void flushWater(uid);
+      });
       // P6 — programme COMMANDS are a separate queue from the Firestore write
       // queue above, and cannot share it: that one replays `setDoc` calls,
       // while these are callable invocations. Replay is safe because the
@@ -371,11 +374,23 @@ function AppRoutes() {
     // Re-flush whenever the browser regains connectivity. Listener
     // captures `uid` in closure so it can never flush under a
     // different user — the cleanup removes it on auth change.
+    const resumeWater = () => {
+      if (!cancelled && navigator.onLine)
+        void import("@/lib/waterActions").then(({ flushWater }) => {
+          if (!cancelled) void flushWater(uid);
+        });
+    };
+    document.addEventListener("visibilitychange", resumeWater);
+    window.addEventListener("focus", resumeWater);
+    window.addEventListener("storage", resumeWater);
     window.addEventListener("online", tryFlush);
     return () => {
       cancelled = true;
       stopForegroundPush();
       window.removeEventListener("online", tryFlush);
+      document.removeEventListener("visibilitychange", resumeWater);
+      window.removeEventListener("focus", resumeWater);
+      window.removeEventListener("storage", resumeWater);
     };
   }, [uid]);
 
