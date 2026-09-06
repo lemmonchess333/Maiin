@@ -1,3 +1,5 @@
+import QuickMealPortionSheet from "@/components/food/QuickMealPortionSheet";
+import { saveQuickMeal } from "@/lib/quickMealEntry";
 import { useState, useEffect, useRef, useMemo, Suspense } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { useSearchParams } from "react-router-dom";
@@ -38,7 +40,6 @@ import { validateFoodEntry } from "@/lib/foodValidation";
 import { offProductToPortion, type OffProductLike } from "@/lib/offNutrition";
 import {
   orderQuickAddItems,
-  buildQuickAddMealPayload,
   pickRepresentativeMeal,
   type QuickAddItem,
 } from "@/lib/quickAddOrder";
@@ -1490,8 +1491,9 @@ export default function Food() {
     });
   };
 
-  const handleQuickMealAdd = async (meal: (typeof quickMeals)[number]) => {
-    if (!uid || quickAdding || !quickAddGuard.begin()) return;
+  const [portionMeal, setPortionMeal] = useState<QuickAddItem | null>(null);
+  const handleQuickMealAdd = async (meal: QuickAddItem): Promise<boolean> => {
+    if (!uid || quickAdding || !quickAddGuard.begin()) return false;
     /* Telemetry — emit BEFORE the save so we capture taps that
        fail mid-write too. favouriteId is undefined for recents /
        seeded defaults, which is meaningful — dashboards can split
@@ -1504,25 +1506,36 @@ export default function Food() {
       // FOOD-01: bundle chips re-log the original foodName + items[]
       // (composition preserved); plain chips keep the single synthetic
       // item. Pure helper so the 1/2/3+-item shapes are unit-tested.
-      const payload = buildQuickAddMealPayload(meal);
-      await addDocGuarded(collection(db, "users", uid, "meals"), {
-        date: selectedDate,
-        foodName: payload.foodName,
-        items: payload.items,
-        totalCalories: meal.cal,
-        totalProtein: meal.pro,
-        totalCarbs: meal.carb,
-        totalFat: meal.fat,
-        confidence: "quick-add",
-        createdAt: Timestamp.now(),
-        ...(targetMeal ? { meal: targetMeal } : {}),
-      });
+      const undo = await saveQuickMeal(uid, meal, selectedDate, targetMeal);
       setTargetMeal(null);
-      // No success toast — meal list updates, macros animate.
-    } catch {
-      toast.error("Couldn't save. Try again.", {
-        id: "food-save-error",
+      let undoing = false;
+      toast.success("Meal logged", {
+        action: {
+          label: "Undo",
+          onClick: async () => {
+            if (undoing) return;
+            undoing = true;
+            try {
+              await undo();
+              toast.success("Meal entry undone");
+            } catch (err) {
+              toast.error(
+                err instanceof Error ? err.message : "Couldn't undo meal."
+              );
+              undoing = false;
+            }
+          },
+        },
       });
+      return true;
+    } catch (err) {
+      toast.error(
+        err instanceof Error && !("code" in err)
+          ? err.message
+          : "Couldn't save. Check your connection and retry this meal.",
+        { id: "food-save-error" }
+      );
+      return false;
     } finally {
       quickAddGuard.end();
       setQuickAdding(null);
@@ -1538,37 +1551,21 @@ export default function Food() {
   const handlePantrySelect = async (
     fav: (typeof pantrySuggestions)[number]
   ) => {
-    if (!uid || quickAdding) return;
     trackFoodEvent("food_pantry_typeahead_selected", {
       favouriteId: fav.id,
       useCount: fav.useCount,
     });
-    setQuickAdding(fav.name);
-    try {
-      await addDocGuarded(collection(db, "users", uid, "meals"), {
-        date: selectedDate,
-        foodName: fav.name,
-        items: [
-          {
-            name: fav.name,
-            portionSize: fav.servingSize || "1 serving",
-            calories: fav.calories,
-            protein: fav.protein,
-            carbs: fav.carbs,
-            fat: fav.fat,
-          },
-        ],
-        totalCalories: fav.calories,
-        totalProtein: fav.protein,
-        totalCarbs: fav.carbs,
-        totalFat: fav.fat,
-        confidence: "quick-add",
-        createdAt: Timestamp.now(),
-        ...(targetMeal ? { meal: targetMeal } : {}),
-      });
-      // Re-route the favourite through addFavourite so useCount /
-      // lastUsed update like any other log — typeahead taps are
-      // graduation-relevant signal.
+    const saved = await handleQuickMealAdd({
+      key: fav.id,
+      name: fav.name,
+      portionSize: fav.servingSize || "1 serving",
+      cal: fav.calories,
+      pro: fav.protein,
+      carb: fav.carbs,
+      fat: fav.fat,
+      favouriteId: fav.id,
+    });
+    if (saved) {
       void addFavourite({
         name: fav.name,
         calories: fav.calories,
@@ -1580,13 +1577,7 @@ export default function Food() {
       });
       setNlInput("");
       setSuggestionsActive(false);
-      setTargetMeal(null);
-    } catch {
-      toast.error("Couldn't save. Try again.", {
-        id: "food-save-error",
-      });
     }
-    setQuickAdding(null);
   };
 
   /* wave2 D: empty-focus Quick Add payload. Non-null only while the
@@ -1604,6 +1595,7 @@ export default function Food() {
           asExamples: !hasStrongQuickAddSuggestions,
           adding: quickAdding,
           onAdd: handleQuickMealAdd,
+          onEditPortion: setPortionMeal,
           onRemove: handleRemoveFavourite,
         }
       : null;
@@ -1948,6 +1940,13 @@ export default function Food() {
           on the group id. Each open gets a fresh component instance so
           the stepper's local target state can't be stomped by a parent
           re-render rebuilding the `source` prop with a new identity. */}
+      {portionMeal && (
+        <QuickMealPortionSheet
+          meal={portionMeal}
+          onClose={() => setPortionMeal(null)}
+          onLog={handleQuickMealAdd}
+        />
+      )}
       {editingGroup && (
         <EditServingsSheet
           key={editingGroup.id}

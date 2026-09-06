@@ -13,7 +13,7 @@
  * volume card were untested when their bugs shipped.
  */
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 
 import SessionCompleteScreen from "../SessionCompleteScreen";
 import type { ProgramExercise } from "@/features/program/programTypes";
@@ -189,5 +189,45 @@ describe("SessionCompleteScreen — sharing lives on the saved record", () => {
     expect(
       screen.getByRole("button", { name: /close without saving/i })
     ).toBeTruthy();
+  });
+});
+
+describe("save comes before session detail", () => {
+  it("labels the unsaved state and keeps details collapsed", () => {
+    renderScreen([
+      [{ reps: 12, weight: 10, completed: true, type: "working" }],
+    ]);
+    expect(screen.getByRole("status")).toHaveTextContent("Not saved yet");
+    const detail = screen.getByText("Session details").closest("details")!;
+    expect(detail.open).toBe(false);
+    expect(
+      screen
+        .getByRole("button", { name: "Save Workout" })
+        .compareDocumentPosition(detail) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+  it("prevents save and close while persistence is pending", () => {
+    const finish = vi.fn(),
+      close = vi.fn();
+    render(
+      <SessionCompleteScreen
+        dayName="Upper"
+        exercises={[]}
+        setLogs={[]}
+        firedPRs={new Map()}
+        sessionDurationMinutes={20}
+        completing
+        onFinish={finish}
+        onClose={close}
+      />
+    );
+    const save = screen.getByRole("button", { name: /Save Workout/ });
+    expect(save).toBeDisabled();
+    const cancel = screen.getByRole("button", { name: "Close without saving" });
+    expect(cancel).toBeDisabled();
+    fireEvent.click(save);
+    fireEvent.click(cancel);
+    expect(finish).not.toHaveBeenCalled();
+    expect(close).not.toHaveBeenCalled();
   });
 });

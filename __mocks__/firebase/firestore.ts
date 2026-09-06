@@ -244,12 +244,21 @@ export async function runTransaction<T>(
     delete: (ref: DocRef) => void;
   }) => Promise<T>
 ): Promise<T> {
-  return fn({
-    get: async (ref) => firestoreFake.docSnap(ref),
-    set: (ref, data, opts) => firestoreFake.setDoc(ref, data, opts),
-    update: (ref, data) => firestoreFake.updateDoc(ref, data),
-    delete: (ref) => firestoreFake.deleteDoc(ref),
+  const batch = writeBatch(_db);
+  const result = await fn({
+    get: (ref) => getDoc(ref),
+    set: (ref, data, opts) => {
+      batch.set(ref, data, opts);
+    },
+    update: (ref, data) => {
+      batch.update(ref, data);
+    },
+    delete: (ref) => {
+      batch.delete(ref);
+    },
   });
+  await batch.commit();
+  return result;
 }
 
 export function writeBatch(_db?: unknown) {

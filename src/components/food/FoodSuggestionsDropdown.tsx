@@ -5,7 +5,8 @@ import {
   type MouseEvent as ReactMouseEvent,
 } from "react";
 import { motion } from "framer-motion";
-import { Plus, Star } from "lucide-react";
+import IconButton from "@/components/ui/IconButton";
+import { Plus, Star, Pencil } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
@@ -77,6 +78,7 @@ export interface QuickAddSection {
    *  (same contract as the old chip strip). */
   adding: string | null;
   onAdd: (item: QuickAddItem) => void;
+  onEditPortion?: (item: QuickAddItem) => void;
   /** Long-press remove for favourite-backed rows — preserved from the
    *  chip strip. Only rows with a `favouriteId` arm the gesture. */
   onRemove?: (favouriteId: string, name: string) => void;
@@ -230,43 +232,59 @@ function FoodSuggestionsDropdown({
             </SectionLabel>
           </div>
           {quickAdd.items.map((item) => (
-            <button
-              type="button"
+            <div
               key={item.key}
-              onMouseDown={(e) => e.preventDefault()}
-              onPointerDown={(e) => beginPress(e, item)}
-              onPointerMove={movePress}
-              onPointerUp={endPress}
-              onPointerCancel={endPress}
-              onPointerLeave={endPress}
-              onContextMenu={(e: ReactMouseEvent<HTMLButtonElement>) => {
-                // Desktop right-click + iOS long-press both fire
-                // contextmenu; suppressing it lets our pointer-based
-                // long-press own the gesture without the browser also
-                // opening its native menu.
-                if (item.favouriteId) e.preventDefault();
-              }}
-              onClick={() => handleQuickAddClick(item)}
-              disabled={quickAdd.adding !== null}
-              style={{
-                // iOS text-selection callout suppression — a held row
-                // would otherwise pop Copy / Look Up over our remove flow.
-                WebkitTouchCallout: "none",
-                WebkitUserSelect: "none",
-                userSelect: "none",
-              }}
-              className={cn(
-                "w-full px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center justify-between gap-2 border-b border-border/30 last:border-0",
-                quickAdd.adding !== null && "opacity-60 cursor-not-allowed"
-              )}
+              className="flex items-center border-b border-border/30"
             >
-              <span className="text-sm font-medium text-foreground truncate min-w-0">
-                {item.name}
-              </span>
-              <span className="text-xs text-muted-foreground font-mono tabular-nums shrink-0">
-                {item.cal} kcal
-              </span>
-            </button>
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onPointerDown={(e) => beginPress(e, item)}
+                onPointerMove={movePress}
+                onPointerUp={endPress}
+                onPointerCancel={endPress}
+                onPointerLeave={endPress}
+                onContextMenu={(e: ReactMouseEvent<HTMLButtonElement>) => {
+                  // Desktop right-click + iOS long-press both fire
+                  // contextmenu; suppressing it lets our pointer-based
+                  // long-press own the gesture without the browser also
+                  // opening its native menu.
+                  if (item.favouriteId) e.preventDefault();
+                }}
+                onClick={() => handleQuickAddClick(item)}
+                disabled={quickAdd.adding !== null}
+                style={{
+                  // iOS text-selection callout suppression — a held row
+                  // would otherwise pop Copy / Look Up over our remove flow.
+                  WebkitTouchCallout: "none",
+                  WebkitUserSelect: "none",
+                  userSelect: "none",
+                }}
+                className={cn(
+                  "w-full px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center justify-between gap-2 border-b border-border/30 last:border-0",
+                  quickAdd.adding !== null && "opacity-60 cursor-not-allowed"
+                )}
+              >
+                <span className="text-sm font-medium text-foreground truncate min-w-0">
+                  {item.name}
+                  <span className="block text-micro text-muted-foreground font-normal">
+                    {item.portionSize}
+                  </span>
+                </span>
+                <span className="text-xs text-muted-foreground font-mono tabular-nums shrink-0">
+                  {item.cal} kcal
+                </span>
+              </button>
+              {quickAdd.onEditPortion && (
+                <IconButton
+                  aria-label={`Change portion for ${item.name}`}
+                  disabled={quickAdd.adding !== null}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => quickAdd.onEditPortion?.(item)}
+                  icon={<Pencil className="size-4" />}
+                />
+              )}
+            </div>
           ))}
         </div>
       )}

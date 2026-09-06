@@ -8,7 +8,8 @@ import {
 } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { Button } from "@/components/ui/Button";
-import { formatWeightInUnit, lbToKg } from "@/lib/weightUnits";
+import WeightLogSheet from "@/components/home/WeightLogSheet";
+import { lbToKg } from "@/lib/weightUnits";
 import { readString, writeString } from "@/lib/localStore";
 import { useAuth } from "@/lib/auth";
 import { useUidForStorageKey } from "@/lib/auth";
@@ -41,32 +42,22 @@ import {
   UtensilsCrossed,
   X,
   Target,
-  Minus,
-  Plus,
-  Check,
 } from "lucide-react";
 import { useWaterLog } from "@/hooks/useWaterLog";
-import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
-import { logger } from "@/lib/logger";
 import { toast } from "@/lib/toast";
 import { realignResultMessage } from "@/lib/realignCopy";
 import { HomeSkeleton } from "@/components/LoadingSkeleton";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { format } from "date-fns";
-import { doc, serverTimestamp } from "firebase/firestore";
-import { setDocGuarded } from "@/lib/firestoreWrite";
-import { db } from "@/lib/firebase";
 import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
 import { useClaimMap } from "@/hooks/useClaimMap";
-import { weighInProfilePatch } from "@/lib/bodyweightLogs";
 import { goalReachedOffer } from "@/lib/goalWeightPlan";
 import GoalReachedSheet from "@/components/home/GoalReachedSheet";
 import { localDateString, localWeekKey } from "@/lib/dateHelpers";
 import { calcDailyBurn } from "@/utils/dailyBurn";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
-import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useCountUp } from "@/hooks/useCountUp";
 
 import { StreakFlame } from "@/components/StreakFlame";
@@ -145,7 +136,15 @@ export default function Home() {
     newBadge,
     dismissNewBadge,
   } = useStreaks();
-  const { ml: waterMl, target: waterTargetMl, logWater } = useWaterLog();
+  const {
+    ml: waterMl,
+    target: waterTargetMl,
+    logWater,
+    servingMl,
+    setServingMl,
+    syncStatus: waterSyncStatus,
+    retry: retryWater,
+  } = useWaterLog();
 
   // Home2 perf telemetry. renderStartRef takes its timestamp from
   // the post-mount effect (rather than lazy useState — that would
@@ -173,10 +172,6 @@ export default function Home() {
   const prevStreakRef = useRef<number>(0);
   const [streakBounce, setStreakBounce] = useState(false);
   const [showWeightSheet, setShowWeightSheet] = useState(false);
-  const weightSheetRef = useFocusTrap<HTMLDivElement>(showWeightSheet);
-  const [weightInput, setWeightInput] = useState("");
-  const [weightSaving, setWeightSaving] = useState(false);
-  const [weightSaved, setWeightSaved] = useState(false);
   const [showProModal, setShowProModal] = useState(false);
   // HealthKit steps (native iOS only; web resolves to status "unavailable"
   // so the tile hides and the priming modal never opens). See POST_LAUNCH.md.
@@ -261,7 +256,6 @@ export default function Home() {
     todayRunCals,
     lastWeightInfo,
     weightTrend,
-    setLastWeightInfo,
     postWorkoutNudge,
     loading: homeDataLoading,
   } = useHomeData(
@@ -399,74 +393,6 @@ export default function Home() {
     },
     [lastWeightInfo]
   );
-
-  const adjustWeight = function (delta: number) {
-    const current = parseFloat(weightInput) || 0;
-    const next = Math.max(0, current + delta).toFixed(1);
-    setWeightInput(next);
-  };
-
-  const handleLogWeight = async function () {
-    if (!weightInput || !user) return;
-    const raw = Number(weightInput);
-    if (Number.isNaN(raw) || raw <= 0) return;
-    const storeW = weightUnit === "lbs" ? lbToKg(raw) : raw;
-    if (storeW < 20 || storeW > 350) return;
-    setWeightSaving(true);
-    try {
-      // One canonical row per local day: date-keyed upsert (doc id = date)
-      // instead of a fresh random-id append per tap. A second same-day
-      // weigh-in overwrites the first rather than adding an independent
-      // observation the adaptive-TDEE / trend engines would double-count.
-      // (ADR 0007: doc-id=date, manual-wins, HealthKit uses source:"healthkit".)
-      const today = localDateString();
-      await setDocGuarded(
-        doc(db, "users", user.uid, "bodyweightLogs", today),
-        {
-          date: today,
-          weight: storeW,
-          source: "manual",
-          updatedAt: serverTimestamp(),
-        },
-        { merge: true }
-      );
-      // Mirror the fresh weigh-in onto profile.weightKg — the anchor
-      // calculateTDEE / getAdjustedTargets / resolveGoalWeightPlan all
-      // read, which this flow previously left stale for months — AND onto
-      // the two stored macros that are functions of it (see
-      // weighInProfilePatch). Best-effort AFTER the canonical log row
-      // lands: a failed mirror must not fail the weigh-in, and the next
-      // weigh-in retries it. throwOnError so the generic "couldn't save
-      // your settings" toast doesn't fire over a successful weigh-in.
-      const mirror = weighInProfilePatch(profile, storeW);
-      if (mirror) {
-        updateProfile(mirror, { throwOnError: true }).catch((e) =>
-          logger.warn("[Home] weight mirror to profile failed", e)
-        );
-      }
-      const disp = formatWeightInUnit(storeW, weightUnit);
-      setLastWeightInfo({
-        weight: disp,
-        date: format(new Date(), "d MMM"),
-        rawDate: today,
-      });
-      setWeightSaved(true);
-      haptic("success");
-      setTimeout(function () {
-        setWeightSaved(false);
-        setWeightInput("");
-        setShowWeightSheet(false);
-      }, 500);
-    } catch (e) {
-      // Previously: silent log only — sheet stayed open with the form
-      // still populated, weightSaving turned off, and the user had no
-      // signal whether the save worked or not. Now surface the failure
-      // so they know to retry.
-      logger.error("[Home] weight save failed", e);
-      toast.error("Couldn't save your weight. Try again.");
-    }
-    setWeightSaving(false);
-  };
 
   const [peekDate, setPeekDate] = useState<string | null>(null);
   // PR-1: which date the DayActionSheet is managing. Null = closed.
@@ -1272,6 +1198,10 @@ export default function Home() {
               compact
               ml={waterMl}
               targetMl={waterTargetMl}
+              servingMl={servingMl}
+              onServingChange={setServingMl}
+              syncStatus={waterSyncStatus}
+              onRetry={retryWater}
               onLog={function (deltaMl) {
                 closePeek();
                 logWater(deltaMl);
@@ -1284,7 +1214,6 @@ export default function Home() {
               weightUnit={weightUnit}
               onLogWeight={function () {
                 closePeek();
-                setWeightInput(lastWeightInfo?.weight || "");
                 setShowWeightSheet(true);
               }}
               lastWeightDate={weightRelativeTime}
@@ -1327,140 +1256,20 @@ export default function Home() {
 
       {/* Weight Log Bottom Sheet */}
       <AnimatePresence>
-        {showWeightSheet && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={function () {
-                if (!weightSaved) {
-                  setShowWeightSheet(false);
-                }
-              }}
-              className="fixed inset-0 bg-black/50 z-40"
-            />
-            <motion.div
-              ref={weightSheetRef}
-              role="dialog"
-              aria-modal="true"
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl safe-area-pb bg-card border-t border-border/50"
-            >
-              <div className="max-w-md mx-auto p-4 space-y-4">
-                <div className="w-10 h-1 rounded-full bg-border mx-auto" />
-                <div className="flex items-center justify-between">
-                  <p className="text-base font-semibold text-foreground">
-                    Log Weight
-                  </p>
-                  <button
-                    type="button"
-                    onClick={function () {
-                      setShowWeightSheet(false);
-                    }}
-                    aria-label="Close weight log"
-                    className="p-2 -m-1 rounded-lg hover:bg-muted touch-target"
-                  >
-                    <X
-                      aria-hidden="true"
-                      className="size-4 text-muted-foreground"
-                    />
-                  </button>
-                </div>
-                {lastWeightInfo && (
-                  <p
-                    className="text-micro"
-                    style={{ color: "hsl(var(--muted-foreground))" }}
-                  >
-                    Last: {lastWeightInfo.weight}{" "}
-                    {weightUnit === "lbs" ? "lb" : weightUnit}
-                    {lastWeightInfo.rawDate
-                      ? " \u00b7 " + weightRelativeTime.replace("Logged ", "")
-                      : ""}
-                  </p>
-                )}
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={function () {
-                      haptic();
-                      adjustWeight(-0.1);
-                    }}
-                    aria-label="Decrease by 0.1"
-                    className="size-9 rounded-full flex items-center justify-center flex-shrink-0 bg-muted border border-border/50 active:scale-95 transition-transform"
-                  >
-                    <Minus className="size-3.5 text-muted-foreground" />
-                  </button>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    pattern="[0-9]*[.,]?[0-9]*"
-                    value={weightInput}
-                    onChange={function (e) {
-                      setWeightInput(e.target.value);
-                    }}
-                    onFocus={function (e) {
-                      e.target.select();
-                    }}
-                    placeholder={"Weight in " + weightUnit}
-                    aria-label={"Body weight in " + weightUnit}
-                    className="flex-1 px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground text-xl font-bold font-mono tabular-nums text-center"
-                  />
-                  <button
-                    type="button"
-                    onClick={function () {
-                      haptic();
-                      adjustWeight(0.1);
-                    }}
-                    aria-label="Increase by 0.1"
-                    className="size-9 rounded-full flex items-center justify-center flex-shrink-0 bg-muted border border-border/50 active:scale-95 transition-transform"
-                  >
-                    <Plus className="size-3.5 text-muted-foreground" />
-                  </button>
-                </div>
-                <motion.button
-                  onClick={handleLogWeight}
-                  disabled={!weightInput || weightSaving || weightSaved}
-                  aria-label="Save weight"
-                  className={cn(
-                    "w-full py-3.5 rounded-xl font-semibold text-base transition-all",
-                    !weightInput || weightSaving
-                      ? "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
-                      : "text-white"
-                  )}
-                  style={
-                    weightInput && !weightSaving
-                      ? { backgroundColor: THEME.brand }
-                      : undefined
-                  }
-                >
-                  <AnimatePresence mode="wait">
-                    {weightSaved ? (
-                      <motion.span
-                        key="saved"
-                        initial={{ scale: 0.5, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        className="inline-flex items-center gap-2"
-                      >
-                        <Check className="size-5" /> Saved!
-                      </motion.span>
-                    ) : (
-                      <motion.span
-                        key="save"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                      >
-                        {weightSaving ? "Saving..." : "Save Weight"}
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                </motion.button>
-              </div>
-            </motion.div>
-          </>
+        {showWeightSheet && user && (
+          <WeightLogSheet
+            uid={user.uid}
+            unit={weightUnit}
+            initialKg={
+              lastWeightInfo?.kg ??
+              (lastWeightInfo?.weight
+                ? weightUnit === "lbs"
+                  ? lbToKg(Number(lastWeightInfo.weight))
+                  : Number(lastWeightInfo.weight)
+                : undefined)
+            }
+            onClose={() => setShowWeightSheet(false)}
+          />
         )}
       </AnimatePresence>
 

@@ -1,8 +1,8 @@
 import SectionLabel from "@/components/ui/SectionLabel";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, Suspense } from "react";
 import { useLocation, useNavigate, Navigate } from "react-router-dom";
 import { readString, writeString } from "@/lib/localStore";
-import WeekPulseCard from "@/components/WeekPulseCard";
+import { lazyRetry } from "@/lib/lazyRetry";
 import {
   collection,
   doc,
@@ -17,8 +17,6 @@ import { localDateString, localWeekKey } from "../lib/dateHelpers";
 import { spaceDef } from "@/features/spaces/spaceDefs";
 import { useAuth } from "../lib/auth";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
-import { usePostCompletionKudos } from "../hooks/usePostCompletionKudos";
-import PostCompletionKudos from "../components/social/PostCompletionKudos";
 import { logger } from "../lib/logger";
 import {
   calculatePace,
@@ -150,6 +148,12 @@ function RetryBanner({
  * InvalidRunReview owns its own saved-state UI ("Saved anyway" +
  * Done). Sharing / GPX export / map / charts are deliberately absent
  * because none of them make sense for sub-50m noise. */
+// Keep this optional detail split after the workout save screen stopped importing it.
+const WeekPulseCard = lazyRetry(() => import("@/components/WeekPulseCard"));
+const SavedRunKudos = lazyRetry(
+  () => import("@/components/social/SavedRunKudos")
+);
+
 interface InvalidRunReviewProps {
   distanceKm: number;
   elapsedSeconds: number;
@@ -456,14 +460,6 @@ export default function RunSummary() {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [saveError, setSaveError] = useState<string | null>(null);
   const saved = saveStatus === "saved";
-  // Phase 2 — post-completion kudos. Only after the run is actually saved
-  // (the achievement is banked), and only if someone the user follows also
-  // trained today. Once/day, dismissible.
-  const kudos = usePostCompletionKudos({
-    uid: user?.uid,
-    fromName: profile?.displayName,
-    enabled: saved,
-  });
   const [paceTrend, setPaceTrend] = useState<PaceTrendResult | null>(null);
   // The historical run list, reused for BOTH the pace-trend badge and the
   // Pro pace-insight card — one query, two consumers (no extra Firestore read).
@@ -1364,16 +1360,10 @@ export default function RunSummary() {
           {/* Post-completion kudos (Phase 2) — after the run is banked, if
               someone the user follows also trained today. Renders nothing
               otherwise; once/day; dismissible. */}
-          {saved && kudos.candidate && (
-            <div className="mx-4 mb-4">
-              <PostCompletionKudos
-                candidate={kudos.candidate}
-                sending={kudos.sending}
-                sent={kudos.sent}
-                onSend={kudos.sendKudos}
-                onDismiss={kudos.dismiss}
-              />
-            </div>
+          {saved && (
+            <Suspense fallback={null}>
+              <SavedRunKudos uid={user?.uid} fromName={profile?.displayName} />
+            </Suspense>
           )}
 
           {/* P3-1: save-time mismatch reconciliation.
@@ -1634,7 +1624,9 @@ export default function RunSummary() {
               run doc is saved, so it includes this run). Null while
               loading; no jank. */}
           <div className="px-4 mb-4">
-            <WeekPulseCard />
+            <Suspense fallback={null}>
+              <WeekPulseCard />
+            </Suspense>
           </div>
 
           {/* Pace Trend Badge + Run8-Vocab Adherence chip.

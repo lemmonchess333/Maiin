@@ -1,3 +1,4 @@
+import Button from "@/components/ui/Button";
 import { useState } from "react";
 import { THEME } from "@/lib/theme";
 import { motion } from "framer-motion";
@@ -28,6 +29,10 @@ export default function WaterCard({
   targetMl,
   onLog,
   compact = false,
+  servingMl = GLASS_ML,
+  onServingChange,
+  syncStatus,
+  onRetry,
 }: {
   /** Consumed millilitres today. */
   ml: number;
@@ -38,6 +43,10 @@ export default function WaterCard({
   onLog: (deltaMl: number) => void;
   /** Pyramid tile variant: half-width cell beside the weight tile. */
   compact?: boolean;
+  servingMl?: number;
+  onServingChange?: (ml: number) => void;
+  syncStatus?: string;
+  onRetry?: () => void;
 }) {
   const [rippleKey, setRippleKey] = useState(0);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -48,13 +57,13 @@ export default function WaterCard({
   function quickAdd() {
     haptic();
     trackHomeEvent("home_card_tapped", { card: "water" });
-    onLog(GLASS_ML);
+    onLog(servingMl);
     setRippleKey((k) => k + 1);
   }
   function quickRemove() {
     haptic();
     trackHomeEvent("home_card_tapped", { card: "water" });
-    onLog(-GLASS_ML);
+    onLog(-servingMl);
   }
   function openSheet() {
     haptic();
@@ -70,6 +79,8 @@ export default function WaterCard({
         onLog(v);
         setRippleKey((k) => k + 1);
       }}
+      servingMl={servingMl}
+      onServingChange={onServingChange}
       consumedMl={ml}
       targetMl={targetMl}
     />
@@ -148,7 +159,7 @@ export default function WaterCard({
             <button
               type="button"
               onClick={quickRemove}
-              aria-label="Remove a glass (250 ml)"
+              aria-label={`Remove ${servingMl} ml`}
               disabled={!hasWater}
               className={cn(
                 "size-11 rounded-full flex items-center justify-center active:scale-[0.95] flex-shrink-0 border",
@@ -167,7 +178,7 @@ export default function WaterCard({
             <button
               type="button"
               onClick={quickAdd}
-              aria-label="Add a glass (250 ml)"
+              aria-label={`Add ${servingMl} ml`}
               className="size-11 rounded-full flex items-center justify-center active:scale-[0.95] flex-shrink-0"
               style={{
                 backgroundColor: THEME.semantic.hydration + "26",
@@ -184,6 +195,20 @@ export default function WaterCard({
             </button>
           </div>
         </div>
+        <p className="relative z-10 text-micro text-muted-foreground mt-2">
+          Quick add: {servingMl} ml
+        </p>
+        {syncStatus && (
+          <div
+            role="status"
+            className="relative z-10 text-micro text-muted-foreground mt-2"
+          >
+            {syncStatus}
+            <Button variant="ghost" onClick={onRetry}>
+              Retry sync
+            </Button>
+          </div>
+        )}
         {sheet}
       </div>
     );
@@ -238,7 +263,7 @@ export default function WaterCard({
           <button
             type="button"
             onClick={quickRemove}
-            aria-label="Remove a glass (250 ml)"
+            aria-label={`Remove ${servingMl} ml`}
             disabled={!hasWater}
             className={cn(
               "size-12 rounded-full flex items-center justify-center active:scale-[0.95] flex-shrink-0 border",
@@ -257,7 +282,7 @@ export default function WaterCard({
           <button
             type="button"
             onClick={quickAdd}
-            aria-label="Add a glass (250 ml)"
+            aria-label={`Add ${servingMl} ml`}
             className="size-12 rounded-full flex items-center justify-center active:scale-[0.95] flex-shrink-0"
             style={{
               backgroundColor: THEME.semantic.hydration + "26",
@@ -271,6 +296,20 @@ export default function WaterCard({
           </button>
         </div>
       </div>
+      <p className="relative z-10 text-micro text-muted-foreground mt-2">
+        Quick add: {servingMl} ml
+      </p>
+      {syncStatus && (
+        <div
+          role="status"
+          className="relative z-10 text-micro text-muted-foreground mt-2"
+        >
+          {syncStatus}
+          <Button variant="ghost" onClick={onRetry}>
+            Retry sync
+          </Button>
+        </div>
+      )}
       {sheet}
     </div>
   );

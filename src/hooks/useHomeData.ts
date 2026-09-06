@@ -31,6 +31,7 @@ import {
 export type WeightTrendDirection = "down" | "up" | "flat" | null;
 
 interface WeightInfo {
+  kg?: number;
   weight: string;
   date: string;
   rawDate: string | null;
@@ -107,6 +108,13 @@ export function useHomeData(
     loading: true,
     error: null,
   });
+
+  const [weightVersion, setWeightVersion] = useState(0);
+  useEffect(() => {
+    const refresh = () => setWeightVersion((v) => v + 1);
+    window.addEventListener("tropos:weight-changed", refresh);
+    return () => window.removeEventListener("tropos:weight-changed", refresh);
+  }, []);
 
   // Batch Firestore queries with Promise.allSettled
   useEffect(
@@ -223,7 +231,12 @@ export function useHomeData(
             if (snap.empty) {
               if (profile?.weightKg) {
                 const w = formatWeightInUnit(profile.weightKg, weightUnit);
-                weightInfo = { weight: w, date: "From profile", rawDate: null };
+                weightInfo = {
+                  kg: profile.weightKg,
+                  weight: w,
+                  date: "From profile",
+                  rawDate: null,
+                };
               }
             } else {
               // Collapse duplicate same-day rows to one trustworthy
@@ -264,6 +277,7 @@ export function useHomeData(
                 const latest = sorted[sorted.length - 1];
                 const w = formatWeightInUnit(latest.weight, weightUnit);
                 weightInfo = {
+                  kg: latest.weight,
                   weight: w,
                   date: format(new Date(latest.date + "T12:00:00"), "d MMM"),
                   rawDate: latest.date,
@@ -292,7 +306,12 @@ export function useHomeData(
             // Fallback to profile weight
             if (profile?.weightKg) {
               const w = formatWeightInUnit(profile.weightKg, weightUnit);
-              weightInfo = { weight: w, date: "From profile", rawDate: null };
+              weightInfo = {
+                kg: profile.weightKg,
+                weight: w,
+                date: "From profile",
+                rawDate: null,
+              };
             }
           }
 
@@ -315,7 +334,7 @@ export function useHomeData(
         cancelled = true;
       };
     },
-    [user?.uid, weightUnit, profile?.weightKg]
+    [user?.uid, weightUnit, profile?.weightKg, weightVersion]
   );
 
   // Post-workout nudge — uses Date.now() so must be in useEffect, not useMemo
@@ -400,12 +419,6 @@ export function useHomeData(
     ]
   );
 
-  const setLastWeightInfo = function (info: WeightInfo | null) {
-    setState(function (prev) {
-      return { ...prev, lastWeightInfo: info };
-    });
-  };
-
   return {
     dailyCal: state.dailyCal,
     dailyProt: state.dailyProt,
@@ -414,7 +427,6 @@ export function useHomeData(
     todayRunCals: state.todayRunCals,
     lastWeightInfo: state.lastWeightInfo,
     weightTrend: state.weightTrend,
-    setLastWeightInfo,
     postWorkoutNudge,
     loading: state.loading,
     error: state.error,
