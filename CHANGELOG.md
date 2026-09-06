@@ -8,6 +8,7 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **One workout finish.** Saving keeps the completion screen open with programme progress, the next session and explicit share/reminder actions. Strength recognition compares estimated bests; a first rep range is labelled separately. Set PR toasts and the circular rest timer are removed, plateau review lives on Program, and pending badge reveals survive a reload per account.
 - Reminders skip meals and sessions already logged today. Local streak reminders
   yield to push consent, respect quiet hours, and expire after one day. Reminder
   wording is neutral; Settings lists the activity tray types without controls.

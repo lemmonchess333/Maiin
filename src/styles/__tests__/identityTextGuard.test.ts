@@ -83,7 +83,7 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // raw text-amber-500/yellow-500 (PRCard, PRsTab, ExerciseHistory,
   // RunSummary pace-trend, SessionCompleteScreen, FoodSuggestionsDropdown
   // pantry star x2) — all icon fills, none text.
-  achievement: 12,
+  achievement: 11, // Companion finish removes the decorative trophy.
 };
 
 function sourceFiles(): string[] {

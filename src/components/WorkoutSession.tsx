@@ -8,7 +8,6 @@ import {
 } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { formatClock } from "@/utils/formatters";
-import { readString } from "@/lib/localStore";
 import {
   showsRpeByDefault,
   toExperience,
@@ -46,15 +45,14 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { DEFAULT_REST_SECONDS } from "@/features/program/programTypes";
-import { useUidForStorageKey } from "@/lib/auth";
-import { stallCooldownKey } from "@/features/program/stallDetection";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import { toast } from "@/lib/toast";
 import {
   buildPRMap,
   bumpSessionCounts,
   checkSetPR,
-  repBucketLabel,
+  type SetPR,
+  recordSetBest,
   buildVolumeBest,
   checkVolumePR,
   exerciseSessionVolume,
@@ -77,10 +75,6 @@ import {
   clampExerciseIndex,
   nextIncompleteSet,
 } from "@/features/program/sessionCursor";
-import {
-  detectStall,
-  type LoggedWorkout,
-} from "@/features/program/stallDetection";
 import { platesPerSide } from "@/lib/plateCalculator";
 import {
   useWorkoutDraft,
@@ -90,13 +84,12 @@ import {
 import { logger } from "@/lib/logger";
 import { useScrollEdges } from "@/hooks/useScrollEdges";
 import SessionCompleteScreen from "@/components/workout/SessionCompleteScreen";
-import RestTimerRing from "@/components/workout/RestTimerRing";
+import CompactRestTimer from "@/components/workout/CompactRestTimer";
 import {
   restNotificationDelaySeconds,
   scheduleRestEndNotification,
   cancelRestEndNotification,
 } from "@/lib/restTimerNotification";
-import StallModal from "@/components/workout/StallModal";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { IconButton } from "@/components/ui/IconButton";
 import { Spinner } from "@/components/ui/Spinner";
@@ -105,7 +98,6 @@ import { Spinner } from "@/components/ui/Spinner";
 const ExerciseFormContent = lazyRetry(
   () => import("@/components/ExerciseFormContent")
 );
-const lazyConfetti = () => import("canvas-confetti").then((m) => m.default);
 
 function playChime() {
   try {
@@ -189,6 +181,7 @@ interface SetLog {
 interface Props {
   day: WorkoutDay;
   dayIndex: number;
+  planContext?: { progress: string; next: string };
   /** LIFT-01 draft-identity scope: `"programme"` (default) for
    *  scheduled programme days, `"routine:<id>"` for saved-routine
    *  sessions so each routine gets its own draft isolation. */
@@ -232,6 +225,7 @@ interface Props {
 export default function WorkoutSession({
   day,
   dayIndex,
+  planContext,
   draftScope,
   draftEpoch,
   sessionVariant,
@@ -241,7 +235,6 @@ export default function WorkoutSession({
   onClose,
 }: Props) {
   const { user, profile } = useAuth();
-  const storageUid = useUidForStorageKey();
   const { awardEventBadge } = useStreaks();
   // LIFT-01: bind the draft to this exact session — scope + epoch +
   // day metadata + executable exercise layout. setLogs/exerciseNotes
@@ -383,6 +376,7 @@ export default function WorkoutSession({
     {}
   );
   const [firedPRs, setFiredPRs] = useState<Map<string, RepBucket[]>>(new Map());
+  const [prResults, setPrResults] = useState<Map<string, SetPR>>(new Map());
 
   // Pre-fill weights/reps from most recent previous session + build PR map
   useEffect(() => {
@@ -647,6 +641,10 @@ export default function WorkoutSession({
   const [sessionComplete, setSessionComplete] = useState(false);
   const [showFinishEarly, setShowFinishEarly] = useState(false);
   const [completing, setCompleting] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [shareSaved, setShareSaved] = useState<
+    (() => Promise<void>) | undefined
+  >();
   const [sessionDurationMinutes, setSessionDurationMinutes] = useState(0);
 
   /**
@@ -667,14 +665,6 @@ export default function WorkoutSession({
     setSessionComplete(true);
   }, []);
 
-  // Stall detection
-  const [stallExercise, setStallExercise] = useState<{
-    name: string;
-    weight: number;
-    /** Bodyweight lifts stall on REPS, so the modal must not say "at 0kg". */
-    isBodyweight: boolean;
-  } | null>(null);
-
   // Undo last set. PR E: extended with optional PR-context so undo
   // can revert the prMap mutation AND firedPRs entry, not just the
   // setLogs[].completed flag (pre-PR-E undo would leave a fat-
@@ -689,6 +679,8 @@ export default function WorkoutSession({
       // Previous PR value for this exercise+bucket, captured at
       // completeSet time. `null` means there was no prior PR.
       previousPR: { weight: number; reps: number; date: string } | null;
+      previousResult: SetPR | undefined;
+      previousFired: RepBucket[];
     };
   } | null>(null);
   const undoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -929,7 +921,7 @@ export default function WorkoutSession({
       !validation.warn &&
       isSetEligibleForStrengthPr(set.type, currentExercise.repUnit)
     ) {
-      const prBucket = checkSetPR(
+      const prResult = checkSetPR(
         exName,
         set.weight,
         set.reps,
@@ -937,55 +929,37 @@ export default function WorkoutSession({
         sessionCounts,
         3
       );
-      const alreadyFired = firedPRs.get(exName) || [];
-      if (prBucket && !alreadyFired.includes(prBucket)) {
-        // Capture the previous PR for this bucket BEFORE we mutate it
-        // so undo can restore. `null` means there was no prior PR.
-        const previousPR = prMap[exName]?.[prBucket] ?? null;
-        prContext = { exName, bucket: prBucket, previousPR };
-
-        setFiredPRs((prev) => {
-          const updated = new Map(prev);
-          updated.set(exName, [...(prev.get(exName) || []), prBucket]);
-          return updated;
-        });
-        setPrMap((prev) => {
-          const updated = { ...prev };
-          if (!updated[exName])
-            updated[exName] = {
-              "1rm": null,
-              "3rm": null,
-              "5rm": null,
-              "8rm": null,
-              "10rm": null,
-            };
-          updated[exName] = {
-            ...updated[exName],
-            [prBucket]: {
-              weight: set.weight,
-              reps: set.reps,
-              date: new Date().toISOString().split("T")[0],
-            },
-          };
-          return updated;
-        });
-        lazyConfetti().then((confetti) => {
-          confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-          setTimeout(
-            () =>
-              confetti({
-                particleCount: 30,
-                spread: 90,
-                origin: { y: 0.65 },
-                startVelocity: 15,
-              }),
-            200
+      const prBucket = getRepBucket(set.reps);
+      const nextMap = recordSetBest(prMap, exName, {
+        weight: set.weight,
+        reps: set.reps,
+        date: new Date().toISOString().split("T")[0],
+      });
+      if (nextMap !== prMap || prResult) {
+        prContext = {
+          exName,
+          bucket: prBucket,
+          previousPR: prMap[exName]?.[prBucket] ?? null,
+          previousResult: prResults.get(`${exName}:${prBucket}`),
+          previousFired: firedPRs.get(exName) ?? [],
+        };
+        setPrMap(nextMap);
+        if (prResult) {
+          setPrResults((previous) =>
+            new Map(previous).set(`${exName}:${prBucket}`, {
+              ...prResult,
+              setKey: `${currentExIndex}:${setIdx}`,
+            })
           );
-        });
-        haptic(50);
-        toast.success(
-          `New ${repBucketLabel(prBucket)}! ${set.weight} kg × ${set.reps} on ${exName}`
-        );
+          if (prResult.kind === "best") {
+            setFiredPRs((previous) =>
+              new Map(previous).set(exName, [
+                ...new Set([...(previous.get(exName) ?? []), prBucket]),
+              ])
+            );
+            haptic(50);
+          }
+        }
       }
     } else if (validation.warn) {
       // Surface the warn message so the user knows why no PR
@@ -1039,7 +1013,6 @@ export default function WorkoutSession({
               date: new Date().toISOString().split("T")[0],
             },
           }));
-          toast.success(`Volume PR — most total work on ${exName} yet`);
         }
       }
 
@@ -1109,14 +1082,18 @@ export default function WorkoutSession({
         }
         return updated;
       });
-      setFiredPRs((prev) => {
-        const updated = new Map(prev);
-        const existing = updated.get(pr.exName) || [];
-        updated.set(
-          pr.exName,
-          existing.filter((b) => b !== pr.bucket)
-        );
-        return updated;
+      setPrResults((previous) => {
+        const next = new Map(previous);
+        if (pr.previousResult)
+          next.set(`${pr.exName}:${pr.bucket}`, pr.previousResult);
+        else next.delete(`${pr.exName}:${pr.bucket}`);
+        return next;
+      });
+      setFiredPRs((previous) => {
+        const next = new Map(previous);
+        if (pr.previousFired.length) next.set(pr.exName, pr.previousFired);
+        else next.delete(pr.exName);
+        return next;
       });
     }
 
@@ -1140,54 +1117,17 @@ export default function WorkoutSession({
     };
   }, []);
 
-  // Stall detection on session completion
-  useEffect(() => {
-    if (!sessionComplete || !user?.uid) return;
-
-    const checkStalls = async () => {
-      const workoutsRef = collection(db, "users", user.uid, "workouts");
-      const snap = await getDocs(
-        query(workoutsRef, orderBy("date", "desc"), limit(20))
-      );
-      const history = snap.docs.map((d) => d.data()) as LoggedWorkout[];
-
-      for (const ex of day.exercises) {
-        // Check the stored cooldown
-        const cooldownKey = stallCooldownKey(storageUid, ex.name);
-        const lastPopup = readString(cooldownKey);
-        if (lastPopup && Date.now() - Number(lastPopup) < 3 * 7 * 86400000)
-          continue; // 3 weeks cooldown
-
-        // The predicate lives in `stallDetection.ts` — pure, and therefore
-        // testable. Inline here it fired on the uncalibrated 0 kg sentinel and
-        // nothing could catch it: this component has no test file.
-        const stall = detectStall(
-          { name: ex.name, exerciseId: ex.exerciseId },
-          history
-        );
-        if (stall) {
-          setStallExercise(stall);
-          break;
-        }
-      }
-    };
-
-    checkStalls();
-  }, [sessionComplete, user?.uid, storageUid, day.exercises]);
-
-  const [showStallReview, setShowStallReview] = useState(false);
   const finishPending = useRef(false);
   const handleFinish = async () => {
-    if (finishPending.current) return;
+    if (finishPending.current || saved) return;
     finishPending.current = true;
     setCompleting(true);
-    let saved = false;
 
     try {
       // Pass the wall-clock duration + per-set logs so the saved workout
       // record reflects actual execution instead of planned placeholders.
       // The stable completionId makes a retry target the SAME workout doc.
-      await onCompleteDay(dayIndex, {
+      const receipt = await onCompleteDay(dayIndex, {
         completionId: completionIdRef.current,
         completionCommandId: completionCommandIdRef.current,
         durationMinutes: sessionDurationMinutes,
@@ -1262,16 +1202,16 @@ export default function WorkoutSession({
       // the standard queue.
       if (firedPRs.size > 0) awardEventBadge("first_pr");
 
-      // Streak-priming trigger (audit #10): completing a workout — post
-      // celebration — is the ONLY moment the streak-reminder priming modal may
-      // surface. The global modal listens for this event.
-      try {
-        window.dispatchEvent(new CustomEvent("tropos:workout-completed"));
-      } catch {
-        // CustomEvent unsupported / SSR — priming simply won't prompt.
+      if (
+        receipt &&
+        typeof receipt === "object" &&
+        "share" in receipt &&
+        typeof receipt.share === "function"
+      ) {
+        const share = receipt.share as () => Promise<void>;
+        setShareSaved(() => share);
       }
-
-      saved = true;
+      setSaved(true);
     } catch (error) {
       // The core save failed. Do NOT clear the draft, reset set logs, close
       // the session, or mint a new completion id — the user taps the (now
@@ -1283,11 +1223,6 @@ export default function WorkoutSession({
     } finally {
       finishPending.current = false;
       setCompleting(false);
-    }
-
-    if (saved) {
-      toast.success("Workout saved");
-      onClose();
     }
   };
 
@@ -1321,21 +1256,16 @@ export default function WorkoutSession({
           exercises={day.exercises}
           setLogs={setLogs}
           firedPRs={firedPRs}
+          prResults={prResults}
           sessionDurationMinutes={sessionDurationMinutes}
           sessionVariant={sessionVariant}
           completing={completing}
+          saved={saved}
+          planContext={planContext}
+          onShare={shareSaved}
           onFinish={handleFinish}
           onClose={onClose}
-          onReviewProgress={
-            stallExercise ? () => setShowStallReview(true) : undefined
-          }
         />
-        {stallExercise && showStallReview && (
-          <StallModal
-            exercise={stallExercise}
-            onClose={() => setShowStallReview(false)}
-          />
-        )}
       </>
     );
   }
@@ -1414,6 +1344,18 @@ export default function WorkoutSession({
           <X className="size-5 text-muted-foreground" />
         </button>
       </div>
+
+      {isResting && (
+        <CompactRestTimer
+          seconds={restSeconds}
+          target={restTarget}
+          onStop={stopRest}
+          onChangeTarget={(target) => {
+            manualRestRef.current = true;
+            setRestTarget(target);
+          }}
+        />
+      )}
 
       {/* Progress bar */}
       <div className="h-1 bg-muted">
@@ -1562,21 +1504,6 @@ export default function WorkoutSession({
             className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-xs text-foreground placeholder:text-muted-foreground"
           />
         </div>
-
-        {/* Rest Timer - circular */}
-        <AnimatePresence>
-          {isResting && (
-            <RestTimerRing
-              restSeconds={restSeconds}
-              restTarget={restTarget}
-              onStop={stopRest}
-              onChangeTarget={(t) => {
-                manualRestRef.current = true;
-                setRestTarget(t);
-              }}
-            />
-          )}
-        </AnimatePresence>
 
         {/* D-LIFT-16: with auto-start off, rests are opt-in — offer the
             manual start where the ring appears, once there's a completed
@@ -1851,6 +1778,16 @@ export default function WorkoutSession({
                               transition={{ duration: 0.15 }}
                             >
                               <Check className="size-5 text-success-strong" />
+                              {[...prResults.values()].some(
+                                (result) =>
+                                  result.kind === "best" &&
+                                  result.setKey ===
+                                    `${currentExIndex}:${setIdx}`
+                              ) && (
+                                <span className="text-caption font-semibold text-lifting-strong">
+                                  PR
+                                </span>
+                              )}
                             </motion.div>
                           ) : (
                             <button
@@ -2036,61 +1973,54 @@ export default function WorkoutSession({
 
       {/* Bottom action bar */}
       <div className="px-4 py-3 border-t border-border/50 bg-background">
-        {isResting ? (
-          <Button
-            fullWidth
-            onClick={stopRest}
-            leftIcon={<Play className="size-4" />}
-          >
-            Ready — Start Next Set
-          </Button>
-        ) : (
-          (() => {
-            const allSetsComplete = currentSets.every((s) => s.completed);
-            const next = nextIncompleteSet(setLogs, currentExIndex);
+        {(() => {
+          const allSetsComplete = currentSets.every((s) => s.completed);
+          const next = nextIncompleteSet(setLogs, currentExIndex);
 
-            if (allSetsComplete && !next) {
-              return (
-                <button
-                  type="button"
-                  onClick={completeSession}
-                  className="w-full py-3.5 rounded-xl bg-success text-success-foreground font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
-                >
-                  <Trophy className="size-4" /> Finish Workout
-                </button>
-              );
-            }
-            if (allSetsComplete) {
-              return (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (next) {
-                      setCurrentExIndex(next.exerciseIndex);
-                      setCurrentSetIndex(next.setIndex);
-                    }
-                  }}
-                  className="w-full py-3.5 rounded-xl bg-primary-strong text-primary-foreground font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
-                >
-                  <Play className="size-4" /> Next Exercise →
-                </button>
-              );
-            }
+          if (allSetsComplete && !next) {
             return (
               <button
                 type="button"
-                onClick={() => void completeSet()}
-                disabled={
-                  !currentSets[currentSetIndex] ||
-                  currentSets[currentSetIndex]?.completed
-                }
-                className="w-full py-3.5 rounded-xl bg-primary-strong text-primary-foreground font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
+                onClick={completeSession}
+                className="w-full py-3.5 rounded-xl bg-success text-success-foreground font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
               >
-                <Check className="size-4" /> Complete Set {currentSetIndex + 1}
+                <Trophy className="size-4" /> Finish Workout
               </button>
             );
-          })()
-        )}
+          }
+          if (allSetsComplete) {
+            return (
+              <button
+                type="button"
+                onClick={() => {
+                  if (next) {
+                    setCurrentExIndex(next.exerciseIndex);
+                    setCurrentSetIndex(next.setIndex);
+                  }
+                }}
+                className="w-full py-3.5 rounded-xl bg-primary-strong text-primary-foreground font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+              >
+                <Play className="size-4" /> Next Exercise →
+              </button>
+            );
+          }
+          return (
+            <button
+              type="button"
+              onClick={() => {
+                stopRest();
+                void completeSet();
+              }}
+              disabled={
+                !currentSets[currentSetIndex] ||
+                currentSets[currentSetIndex]?.completed
+              }
+              className="w-full py-3.5 rounded-xl bg-primary-strong text-primary-foreground font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              <Check className="size-4" /> Complete Set {currentSetIndex + 1}
+            </button>
+          );
+        })()}
         {!isResting &&
           nextIncompleteSet(setLogs) &&
           setLogs.some((sets) =>

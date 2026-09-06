@@ -1,3 +1,4 @@
+import CompletionExtras from "@/components/workout/CompletionExtras";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { useState, useEffect, useMemo, useRef, Suspense } from "react";
 import { useLocation, useNavigate, Navigate } from "react-router-dom";
@@ -12,7 +13,7 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { addDocGuarded, setDocGuarded } from "@/lib/firestoreWrite";
-import { db } from "../lib/firebase";
+import { auth, db } from "../lib/firebase";
 import { localDateString, localWeekKey } from "../lib/dateHelpers";
 import { spaceDef } from "@/features/spaces/spaceDefs";
 import { useAuth } from "../lib/auth";
@@ -428,6 +429,9 @@ export default function RunSummary() {
      could post the run twice) and the shoe-mileage increment (a second
      call double-counts the distance). */
   const shareHandledRef = useRef(false);
+  const [shareSaved, setShareSaved] = useState<
+    (() => Promise<void>) | undefined
+  >();
   const mileageAppliedRef = useRef(false);
 
   // Pull dismissal state from localStorage whenever the saved-run
@@ -1032,116 +1036,115 @@ export default function RunSummary() {
           trackLifecycle("run_completed");
           // Session-completed signal for the reminder priming modal (D-1):
           // a run-first user's first session is the consent value moment too.
-          window.dispatchEvent(new CustomEvent("tropos:run-completed"));
         }
-        toast.success("Run saved", {
-          action: {
-            label: "View PRs",
-            onClick: () => navigate("/history?tab=prs"),
-          },
-        });
       }
 
-      /* Skip the share-composer for invalid runs. The user chose
-         "Save anyway" on a sub-threshold run (e.g. 0:02 / 0.00km) —
-         we keep the record on their account but a 0km run has no
-         business prompting a "Share with followers / public"
-         decision. Surfaced in QA: the composer was auto-firing on
-         every Save anyway, even though the InvalidRunReview saved-
-         state UI deliberately hides Share / GPX / map. */
-      if (!isInvalid && !shareHandledRef.current) {
-        // Share composer: prompts the user (or replays their saved
-        // default) for visibility + caption. When offline, the post is
-        // queued and replayed by ShareComposerSheet's drain effect.
-        const runName =
-          runConfig?.activityType === "intervals"
-            ? "Interval Run"
-            : runConfig?.activityType === "guided"
-              ? "Guided Run"
-              : "Run";
-        const km = distance / 1000;
-        const mins = Math.floor(elapsed / 60);
-        const secs = Math.round(elapsed % 60);
-        const decision = await compose(
-          user.uid,
-          {
-            type: "run",
-            title: runName,
-            meta: [
-              `${km.toFixed(2)} km`,
-              `${mins}:${secs.toString().padStart(2, "0")}`,
-              calories ? `${Math.round(calories)} cal` : "",
-            ].filter(Boolean),
-          },
-          { needsEmailVerification: needsEmailVerification(user) }
-        );
-        // Decided (posted, queued or declined) — never prompt again for
-        // this run, even if a later step fails and the chain resumes.
-        shareHandledRef.current = true;
-        if (decision) {
-          // Shared-route privacy default. The public activity routePreview is
-          // rendered as a REAL map on the feed, so a user who hasn't set
-          // explicit privacy zones would otherwise broadcast their home/start
-          // to anyone who follows them (follows are unilateral). Clip ~200m off
-          // each end by default. Scoped to the SHARE only — the user's own map
-          // + saved run keep the full `points`. Opt out in Settings → Privacy
-          // (profile.hideSharedRouteEnds === false). Already-zoned points stay
-          // zoned (this composes on top). clipRouteEnds is self-protecting: a
-          // route too short to clip is returned whole, never emptied.
-          const sharedRoutePoints =
-            profile?.hideSharedRouteEnds === false
-              ? points
-              : clipRouteEnds(points, DEFAULT_CLIP_METERS);
-          const payload = {
-            authorId: user.uid,
-            authorName: profile?.displayName || "Athlete",
-            ...(profile?.photoURL ? { authorPhotoURL: profile.photoURL } : {}),
-            type: "run" as const,
-            visibility: decision.visibility,
-            ...(decision.caption ? { caption: decision.caption } : {}),
-            runName,
-            activityTitle: runName,
-            distance,
-            duration: elapsed,
-            avgPace,
-            elevationGain,
-            calories,
-            routePreview:
-              sharedRoutePoints.length > 20
-                ? sharedRoutePoints
-                    .filter(
-                      (_, i) =>
-                        i % Math.ceil(sharedRoutePoints.length / 20) === 0
-                    )
-                    .map((p) => ({ lat: p.lat, lon: p.lon }))
-                : sharedRoutePoints.map((p) => ({ lat: p.lat, lon: p.lon })),
-          };
-          const runSource = { kind: "run" as const, id: savedId };
-          if (isOnline) {
-            try {
-              const activityId = await postActivity(payload);
-              /* The link that lets deleting this run clear its post —
+      // Prepare an explicit share action only after this run is persisted.
+      setShareSaved(() => async () => {
+        if (auth.currentUser?.uid !== user.uid) return;
+        if (!isInvalid && !shareHandledRef.current) {
+          // Share composer: prompts the user (or replays their saved
+          // default) for visibility + caption. When offline, the post is
+          // queued and replayed by ShareComposerSheet's drain effect.
+          const runName =
+            runConfig?.activityType === "intervals"
+              ? "Interval Run"
+              : runConfig?.activityType === "guided"
+                ? "Guided Run"
+                : "Run";
+          const km = distance / 1000;
+          const mins = Math.floor(elapsed / 60);
+          const secs = Math.round(elapsed % 60);
+          const decision = await compose(
+            user.uid,
+            {
+              type: "run",
+              title: runName,
+              meta: [
+                `${km.toFixed(2)} km`,
+                `${mins}:${secs.toString().padStart(2, "0")}`,
+                calories ? `${Math.round(calories)} cal` : "",
+              ].filter(Boolean),
+            },
+            {
+              needsEmailVerification: needsEmailVerification(user),
+              forcePrompt: true,
+            }
+          );
+          // Decided (posted, queued or declined) — never prompt again for
+          // this run, even if a later step fails and the chain resumes.
+          if (decision && auth.currentUser?.uid === user.uid) {
+            // Shared-route privacy default. The public activity routePreview is
+            // rendered as a REAL map on the feed, so a user who hasn't set
+            // explicit privacy zones would otherwise broadcast their home/start
+            // to anyone who follows them (follows are unilateral). Clip ~200m off
+            // each end by default. Scoped to the SHARE only — the user's own map
+            // + saved run keep the full `points`. Opt out in Settings → Privacy
+            // (profile.hideSharedRouteEnds === false). Already-zoned points stay
+            // zoned (this composes on top). clipRouteEnds is self-protecting: a
+            // route too short to clip is returned whole, never emptied.
+            const sharedRoutePoints =
+              profile?.hideSharedRouteEnds === false
+                ? points
+                : clipRouteEnds(points, DEFAULT_CLIP_METERS);
+            const payload = {
+              authorId: user.uid,
+              authorName: profile?.displayName || "Athlete",
+              ...(profile?.photoURL
+                ? { authorPhotoURL: profile.photoURL }
+                : {}),
+              type: "run" as const,
+              visibility: decision.visibility,
+              ...(decision.caption ? { caption: decision.caption } : {}),
+              runName,
+              activityTitle: runName,
+              distance,
+              duration: elapsed,
+              avgPace,
+              elevationGain,
+              calories,
+              routePreview:
+                sharedRoutePoints.length > 20
+                  ? sharedRoutePoints
+                      .filter(
+                        (_, i) =>
+                          i % Math.ceil(sharedRoutePoints.length / 20) === 0
+                      )
+                      .map((p) => ({ lat: p.lat, lon: p.lon }))
+                  : sharedRoutePoints.map((p) => ({ lat: p.lat, lon: p.lon })),
+            };
+            const runSource = { kind: "run" as const, id: savedId };
+            if (isOnline) {
+              try {
+                const activityId = await postActivity(payload);
+                shareHandledRef.current = true;
+                /* The link that lets deleting this run clear its post —
                  without it the post is stranded (sessionDelete's
                  asymmetry note, now closed). Workout save-composers have
                  written their marker since the share sheet shipped; the
                  run path never did. Best-effort inside the helper. */
-              await recordSharedActivity(user.uid, runSource, activityId);
-            } catch (socialErr) {
-              const lostNet =
-                typeof navigator !== "undefined" && navigator.onLine === false;
-              if (lostNet) {
-                enqueueShare(user.uid, payload, runSource);
-                showQueuedToast();
-              } else {
-                logger.warn("[RunSave] postActivity failed:", socialErr);
+                await recordSharedActivity(user.uid, runSource, activityId);
+              } catch (socialErr) {
+                const lostNet =
+                  typeof navigator !== "undefined" &&
+                  navigator.onLine === false;
+                if (lostNet) {
+                  enqueueShare(user.uid, payload, runSource);
+                  shareHandledRef.current = true;
+                  showQueuedToast();
+                } else {
+                  logger.warn("[RunSave] postActivity failed:", socialErr);
+                  throw socialErr;
+                }
               }
+            } else {
+              enqueueShare(user.uid, payload, runSource);
+              shareHandledRef.current = true;
+              showQueuedToast();
             }
-          } else {
-            enqueueShare(user.uid, payload, runSource);
-            showQueuedToast();
           }
         }
-      }
+      });
 
       // Update shoe mileage against whichever shoe was resolved above —
       // once per run (see mileageAppliedRef).
@@ -1187,9 +1190,7 @@ export default function RunSummary() {
       // PR-J Q2 chunk B2: post-save completeRunDay call dropped.
       // The saved-run write that just happened is the completion
       // signal — the derivation's claim walk picks it up on next
-      // useProgram render. The "Ready for next week" toast moves
-      // to a useProgram effect (chunk B4) that watches derived
-      // completion of runDays + workouts.
+      // useProgram render.
 
       /* Auto-navigation timeouts (800ms online / 1800ms offline) were
          removed: they teleported the user back to home without their
@@ -1697,7 +1698,12 @@ export default function RunSummary() {
               <span className="font-mono tabular-nums font-semibold text-foreground">
                 {Math.min(
                   weeklyRunTarget,
-                  eligibleRunsThisWeek + (saved && currentRunIsEligible ? 1 : 0)
+                  eligibleRunsThisWeek +
+                    (saved &&
+                    currentRunIsEligible &&
+                    !weekRunsRaw.some((run) => run.id === savedRunId)
+                      ? 1
+                      : 0)
                 )}
               </span>
               <span className="text-muted-foreground">of</span>
@@ -1877,13 +1883,43 @@ export default function RunSummary() {
               />
             )}
 
+            {saved &&
+              (() => {
+                const next = programState?.runDays
+                  ?.filter(
+                    (day) =>
+                      day.date &&
+                      day.date > localDateString() &&
+                      !day.completed &&
+                      day.status !== "skipped" &&
+                      day.status !== "race_no_show"
+                  )
+                  .sort((a, b) => a.date!.localeCompare(b.date!))[0];
+                if (!next?.date) return null;
+                const template = RUN_TEMPLATES.find(
+                  (template) =>
+                    template.id === (next.userOverride ?? next.templateId)
+                );
+                if (!template) return null;
+                return (
+                  <p className="text-sm text-muted-foreground">
+                    Next run: {template.name} —{" "}
+                    {new Date(`${next.date}T12:00:00`).toLocaleDateString(
+                      "en-GB",
+                      { weekday: "long" }
+                    )}
+                  </p>
+                );
+              })()}
+            {saved && <CompletionExtras onShare={shareSaved} />}
+
             {canShowDone({ saveStatus }) && (
               /* Replaces the removed auto-navigation timeouts. Sits in the
              same primary-action slot as Save Run so the user's eye
              doesn't move when the state transitions saved → saved. */
               <button
                 type="button"
-                onClick={() => navigate("/")}
+                onClick={() => navigate("/program")}
                 className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97] flex items-center justify-center gap-2"
                 style={{
                   background: `${THEME.success}20`,

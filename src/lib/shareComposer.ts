@@ -159,13 +159,16 @@ export function compose(
      *  must never be attempted silently on the strength of a remembered
      *  choice. "never" still short-circuits — declining needs no email. */
     needsEmailVerification?: boolean;
+    /** An explicit share row always opens the sheet; saved defaults stay intact. */
+    forcePrompt?: boolean;
   } = {}
 ): Promise<ShareDecision | null> {
   const pref = readAlways(uid, preview.type);
-  if (pref === "never") return Promise.resolve(null);
+  if (pref === "never" && !opts.forcePrompt) return Promise.resolve(null);
   if (
     (pref === "followers" || pref === "public") &&
-    !opts.needsEmailVerification
+    !opts.needsEmailVerification &&
+    !opts.forcePrompt
   ) {
     return Promise.resolve({ visibility: pref, caption: "" });
   }
