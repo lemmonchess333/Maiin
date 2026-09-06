@@ -152,3 +152,42 @@ describe("raceDayPlanVisible — the phase gate", () => {
     expect(raceDayPlanVisible(7, null, "half")).toBe(false);
   });
 });
+
+describe("buildRaceDayPlan — the benchmark confirmation gate (RUN-EV-08)", () => {
+  /**
+   * The card prescribes race pace, so it sits behind the same two-tier
+   * consent as every other prescriber: an auto-derived benchmark the user
+   * has not confirmed is treated as no benchmark. Before this the card read
+   * the raw table and was the one prescriptive surface outside the gate.
+   */
+  const pending = { ...fitness, pendingConfirmation: true };
+
+  it("renders nothing from an unconfirmed benchmark with no target", () => {
+    expect(
+      buildRaceDayPlan({ distance: "10k", runFitness: pending })
+    ).toBeNull();
+    // Control: the same benchmark, confirmed, paces the race.
+    expect(
+      buildRaceDayPlan({ distance: "10k", runFitness: fitness })!.paceSource
+    ).toBe("fitness");
+  });
+
+  it("paces from the target alone when the benchmark is unconfirmed", () => {
+    // 10K in 30:00 off a 20:00 5K is a long shot — a CONFIRMED benchmark
+    // demotes it to fitness pacing. Unconfirmed, there is no benchmark to
+    // judge against, so the target stands as the user's own number.
+    const confirmed = buildRaceDayPlan({
+      distance: "10k",
+      targetTimeS: 1800,
+      runFitness: fitness,
+    })!;
+    expect(confirmed.paceSource).toBe("fitness");
+    const gated = buildRaceDayPlan({
+      distance: "10k",
+      targetTimeS: 1800,
+      runFitness: pending,
+    })!;
+    expect(gated.paceSource).toBe("target");
+    expect(gated.planTimeS).toBe(1800);
+  });
+});
