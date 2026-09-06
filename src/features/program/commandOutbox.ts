@@ -167,8 +167,7 @@ export function enqueueCommand(
   if (deduped.length > MAX_OUTBOX_ENTRIES) {
     // The cap sheds the OLDEST entries. Shedding is necessary; shedding
     // silently is how the offline queue's CORE-01 bug lost everything —
-    // and this path did exactly that until 2026-09-06 (only the quota
-    // path logged). A dropped command is a user action that vanished.
+    // and this path did exactly that (only the quota path logged). A dropped command is a user action that vanished.
     const shed = deduped.slice(0, deduped.length - MAX_OUTBOX_ENTRIES);
     logger.error(
       `[commandOutbox] queue full — shedding the oldest ${shed.length} queued command(s)`,

@@ -154,8 +154,8 @@ export function buildRaceDayPlan(input: {
   // RUN-EV-08 two-tier consent: this card PRESCRIBES race pace and splits,
   // so an auto-derived benchmark the user has not confirmed must not feed
   // it — the same rule `prescriptivePaceTableFromFitness` applies to every
-  // other prescriber. Until 2026-09-06 this was the one prescriptive
-  // surface reading the raw table, so an unconfirmed benchmark paced the
+  // other prescriber. This was the one prescriptive surface reading the
+  // raw table, so an unconfirmed benchmark paced the
   // race here while every training session withheld it. With no confirmed
   // fitness the plan paces from the target alone (no long-shot judgement
   // is possible), or renders nothing when there is no target either.

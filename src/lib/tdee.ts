@@ -118,7 +118,7 @@ export function splitMacrosForTarget(
   proteinMultiplier: number
 ): MacroSplit {
   // Non-finite input (a NaN weight from an empty field, an Infinity target)
-  // used to propagate straight into the grams — NaN carbs, Infinity fat —
+  // propagated straight into the grams — NaN carbs, Infinity fat —
   // and from there into the profile. Nothing downstream can render or
   // store that honestly; return a flagged empty split instead.
   if (!Number.isFinite(targetCalories) || !Number.isFinite(weightKg)) {

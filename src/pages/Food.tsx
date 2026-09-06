@@ -798,7 +798,7 @@ export default function Food() {
         confidence: "database",
         createdAt: Timestamp.now(),
         // The armed meal slot applies here exactly as on every other
-        // save path; this one used to ignore it, so a search pick landed
+        // save path; this one ignored it, so a search pick landed
         // by time of day and the NEXT save inherited the stale slot.
         ...(targetMeal ? { meal: targetMeal } : {}),
       });

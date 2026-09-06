@@ -1714,7 +1714,7 @@ function mergeByCanonicalKey(rows: ParsedFood[]): ParsedFood[] {
  * whole: the LONGEST key found anywhere in it won (toast over eggs) and
  * the rest of the sentence was discarded — "2 eggs and a slice of toast"
  * logged as two slices of toast, "chicken and rice" as chicken alone with
- * 0 g carbs. Reproduced through the composer on 2026-09-05.
+ * 0 g carbs. Reproduced through the composer.
  *
  * Rules, deliberately narrow:
  *   - Whole-phrase keys stay whole ("fish and chips" is one dish).

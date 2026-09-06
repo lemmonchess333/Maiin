@@ -1247,9 +1247,8 @@ export default function Home() {
                   mealsLoading={mealsLoading}
                   uid={user?.uid ?? null}
                   // Computed by useHomeData against the same protein target
-                  // the rings show (HOME-TARGET-01) — and, until 2026-09-06,
-                  // never passed here, so the nudge it computed rendered
-                  // nowhere.
+                  // the rings show (HOME-TARGET-01) — and never passed here
+                  // before, so the nudge it computed rendered nowhere.
                   postWorkoutNudge={postWorkoutNudge}
                 />
               </SectionErrorBoundary>

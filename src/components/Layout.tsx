@@ -37,7 +37,7 @@ function useQueueCount(isOnline: boolean, uid: string | null): number {
     // queue because they are callable invocations rather than `setDoc` calls
     // (P6). A user whose deload is waiting to sync should see the same pending
     // state as one whose meal is — the distinction is ours, not theirs.
-    // Both counts are THIS account's: entries are uid-tagged (PR #820), and
+    // Both counts are THIS account's: entries are uid-tagged, and
     // an unscoped count on a shared device showed another account's pending
     // work as yours.
     () => (isOnline || !uid ? 0 : getQueueLength(uid) + outboxLength(uid)),

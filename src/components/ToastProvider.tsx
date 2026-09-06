@@ -20,7 +20,7 @@ export function ToastProvider() {
            manually" on the Food page's failed-search toast) at phone width:
            the pills are flex-shrink:0 below, so the title collapsed to its
            min-content — one character per line ("C o u l d n ' t …",
-           reproduced at 393px on 2026-09-05). Let the row wrap so the
+           reproduced at 393px). Let the row wrap so the
            buttons drop beneath the title, and give the content a real share
            of the width; a single short action still fits beside the title. */
         [data-sonner-toast] {

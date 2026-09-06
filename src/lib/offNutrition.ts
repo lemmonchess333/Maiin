@@ -4,7 +4,7 @@
  * The ONE converter for OFF data. OFF publishes nutrients per 100 g
  * (`*_100g`) and, sometimes, a serving size string. Two call sites read
  * it — the barcode lookup (FoodAnalyzer) and the search results (Food)
- * — and until 2026-09-06 only the barcode path converted: search stored
+ * — and previously only the barcode path converted: search stored
  * the per-100 g values as-is, labelled them "per {serving_size}", and
  * flagged the row HIGH confidence precisely when a serving size existed,
  * so a 30 g bar was logged at its 100 g numbers under a "per 30 g" label

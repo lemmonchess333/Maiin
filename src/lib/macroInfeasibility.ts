@@ -8,7 +8,7 @@
  * Shared by Settings → Nutrition, Home's energy card and the Food hero so
  * the three surfaces say the same thing. Before this only Settings warned;
  * Food and Home rendered "125 / 0g PROTEIN" as if 0 g were the goal
- * (reproduced 2026-09-05 with a 100 kcal manual target).
+ * (reproduced with a 100 kcal manual target).
  *
  * Deliberately NOT a rule about what the target should be: the number is
  * the user's, the app keeps it, and this line says what it can and cannot

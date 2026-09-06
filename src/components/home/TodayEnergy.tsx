@@ -28,7 +28,7 @@ import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
  * "Log food" action at the foot of the card; the cold-start state is a
  * status line above it, not a second link.
  *
- * Two rows left on 2026-09-06 because nothing could ever render them: a
+ * Two rows were removed because nothing could ever render them: a
  * "Plan target" line shown when the header's target differed from the
  * breakdown's — but Home builds the breakdown FROM the header's target
  * (HOME-TARGET-01), so they never differ — and a `nutritionInsight` prop no
