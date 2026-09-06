@@ -148,7 +148,9 @@ describe("SessionCompleteScreen — header stats agree with each other", () => {
     renderScreen([
       [{ reps: 12, weight: 10, completed: true, type: "working" }],
     ]);
-    expect(screen.getByText("Legs — Deadlift Focus")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Legs — Deadlift Focus · done" })
+    ).toBeInTheDocument();
   });
 });
 

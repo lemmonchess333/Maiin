@@ -47,7 +47,7 @@ import {
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { RUN_TEMPLATES, isScheduledRaceRunDay } from "@/lib/workoutTemplates";
-import { runSessionExplainer } from "@/lib/runSessionExplainer";
+import { runSessionPresentation } from "@/lib/runSessionExplainer";
 import { sessionFuelingLine } from "@/lib/fueling";
 import { sessionPaceDisplay } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
@@ -237,7 +237,7 @@ export default function DayActionSheet({
   const selectedRunWhy: string | null = (() => {
     if (!selectedRunTemplate || !run.runDay) return null;
     const rp = programState?.runPlan;
-    return runSessionExplainer({
+    return runSessionPresentation({
       type: selectedRunTemplate.type,
       templateId: selectedRunTemplate.id,
       currentWeek: rp?.currentWeek,
@@ -248,7 +248,7 @@ export default function DayActionSheet({
         | "half"
         | "marathon"
         | undefined,
-    });
+    }).purpose;
   })();
   // Race-day detection by TEMPLATE TYPE, not by `templateId === "race"`.
   // Race templates have ids like `5k_race` / `marathon_race` (never the

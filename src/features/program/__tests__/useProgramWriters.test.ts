@@ -126,7 +126,7 @@ const batchCommits = () =>
     );
 
 vi.mock("firebase/firestore");
-vi.mock("@/lib/firebase", () => ({ db: {}, functions: {} }));
+vi.mock("@/lib/firebase", () => ({ db: {}, functions: {}, auth: { currentUser: { uid: "test-user-1" } } }));
 
 import {
   seedFirestore,
@@ -1823,7 +1823,7 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
     setLogs: [[{ weight: 100, reps: 5, completed: true }]],
   });
 
-  it("shares only performed exercises, not untouched programme slots", async () => {
+  it("saves without a composer and shares only performed exercises on demand", async () => {
     const { compose } = await import("@/lib/shareComposer");
     const { postActivity } = await import("@/lib/socialApi");
     vi.mocked(compose).mockResolvedValueOnce({
@@ -1834,10 +1834,13 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
     const { result } = renderHook(() => useProgram());
     await waitFor(() => expect(result.current.loading).toBe(false));
     await act(async () => {
-      await result.current.completeWorkoutDay(0, {
+      const receipt = await result.current.completeWorkoutDay(0, {
         ...session("partial-count"),
         setLogs: [[{ weight: 100, reps: 5, completed: true }], []],
       });
+      expect(compose).not.toHaveBeenCalled();
+      expect(postActivity).not.toHaveBeenCalled();
+      await receipt.share();
     });
     expect(compose).toHaveBeenCalledWith(
       expect.any(String),

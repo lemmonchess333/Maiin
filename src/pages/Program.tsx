@@ -1,3 +1,5 @@
+import { liftCompletionContext } from "@/lib/completionPlanContext";
+import ProgramStallReview from "@/components/program/ProgramStallReview";
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import type { ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -23,6 +25,10 @@ import {
   blockPrefersShorterSessions,
 } from "@/features/program/represcribe";
 import { THEME } from "@/lib/theme";
+import {
+  liftSessionExplainer,
+  liftWeekLabel,
+} from "@/lib/liftSessionExplainer";
 import WeekPhaseRow from "@/components/program/WeekPhaseRow";
 import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
 import ExpressSessionSheet from "@/components/program/ExpressSessionSheet";
@@ -213,46 +219,7 @@ function ProgramInner() {
     return true;
   }, [applyDeloadWeek, revertDeloadWeek]);
 
-  /**
-   * `completeWorkoutDay`, plus the only route back to what you just saved.
-   *
-   * The completion screen unmounts on save and drops you here on /program.
-   * Before `/workout/:id` existed there was nowhere to go, so nothing was
-   * offered; now the session is a record, and a toast action is the same
-   * shape `Routine` already uses for "View PRs" — no auto-navigation, which
-   * neither this surface nor RunSummary does.
-   *
-   * `completeWorkoutDay` returns `{ workoutId }`; it is typed
-   * `Promise<unknown>` through the WorkoutSession prop, so narrow rather
-   * than cast. A missing id just means no action on the toast.
-   */
-  const completeWithViewToast = useCallback(
-    async (
-      dayIndex: number,
-      sessionData: Parameters<typeof completeWorkoutDay>[1]
-    ) => {
-      const result = await completeWorkoutDay(dayIndex, sessionData);
-      const workoutId =
-        result &&
-        typeof result === "object" &&
-        typeof (result as { workoutId?: unknown }).workoutId === "string"
-          ? (result as { workoutId: string }).workoutId
-          : null;
-      toast.success(
-        "Workout saved",
-        workoutId
-          ? {
-              action: {
-                label: "View",
-                onClick: () => navigate(`/workout/${workoutId}`),
-              },
-            }
-          : undefined
-      );
-      return result;
-    },
-    [completeWorkoutDay, navigate]
-  );
+  const completeWithViewToast = completeWorkoutDay;
 
   const runsTarget = getWeeklyRunTarget(profile);
   // PR-2: weekly layout editor sheet. Mounted conditionally — when
@@ -797,11 +764,6 @@ function ProgramInner() {
     trackProgrammeEvent("programme_day_tapped", { dayIndex: newIndex });
   };
 
-  const goalLabel = (g: string) => {
-    if (g === "lean bulk") return "Lean Bulk";
-    return g.charAt(0).toUpperCase() + g.slice(1);
-  };
-
   // W1b legibility line: "Built for [lifting goal] · [split] · [N] days/week"
   //
   // Pre-W1a the Program-page subtitle hardcoded a binary split check
@@ -1117,7 +1079,18 @@ function ProgramInner() {
             <div>
               <WeekPhaseRow
                 weekNumber={displayWeekNumber}
-                phaseName={goalLabel(programState.goal)}
+                label={
+                  liftWeekLabel(
+                    {
+                      ...programState,
+                      weekNumber: displayWeekNumber,
+                      trainingBlock: isViewingHistory
+                        ? undefined
+                        : programState.trainingBlock,
+                    },
+                    localDateString()
+                  ) ?? undefined
+                }
                 onPrevWeek={goBack}
                 onNextWeek={goForward}
                 canGoPrev={canGoBack}
@@ -1297,11 +1270,23 @@ function ProgramInner() {
                                 : "Upcoming"
                         } · Day ${idx + 1}`}
                         title={selectedWorkout.dayName}
-                        description={muscleGroups || undefined}
+                        description={
+                          isViewingHistory
+                            ? undefined
+                            : (liftSessionExplainer(
+                                programState,
+                                localDateString(),
+                                "full",
+                                selectedWorkout.exercises.map(
+                                  (ex) => ex.progressionType
+                                )
+                              ) ?? undefined)
+                        }
                         meta={
                           status === "completed"
                             ? []
                             : [
+                                ...(muscleGroups ? [muscleGroups] : []),
                                 `${exerciseCount} exercises`,
                                 `~${estimatedMinutes} min`,
                               ]
@@ -1362,6 +1347,13 @@ function ProgramInner() {
                             </p>
                           </button>
                         )}
+
+                      {sessionDayIndex === null && (
+                        <ProgramStallReview
+                          key={`${programState.weekNumber}:${idx}`}
+                          exercises={selectedWorkout.exercises}
+                        />
+                      )}
 
                       {/* Secondary action: skip this session — mirrors the
                           Run card's "Start free run instead" link. Offered on
@@ -1944,6 +1936,11 @@ function ProgramInner() {
                 plan ? { ...storedDay, exercises: plan.exercises } : storedDay
               }
               dayIndex={sessionDayIndex}
+              planContext={liftCompletionContext(
+                programState,
+                sessionDayIndex,
+                localDateString()
+              )}
               draftEpoch={programState.weekNumber}
               // Variant-scoped draft namespace (PROGRAM-ADAPT-01
               // follow-up): the draft identity fingerprints the

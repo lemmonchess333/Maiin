@@ -11,7 +11,7 @@ import {
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { describeRejection, stripCallablePrefix } from "@/lib/callableErrors";
 import { stripUndefined } from "@/lib/firestoreGuards";
-import { db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { postActivity } from "@/lib/socialApi";
 import { needsEmailVerification } from "@/lib/emailVerificationGate";
@@ -1300,104 +1300,113 @@ export function useProgram() {
         throw error;
       }
 
-      // ── POST-SAVE best-effort: sharing must NOT invalidate a saved workout.
-      try {
-        // Share composer: prompt the user (or replay their saved
-        // default) for visibility + caption. Returns null if they
-        // declined to share. Replaces the old autoPostWorkouts flag —
-        // see src/lib/shareComposer.ts for the preference store.
-        const decision = await compose(
-          user.uid,
-          {
-            type: "workout",
-            title: day.dayName,
-            meta: [
-              `${performedExercises.length} exercise${performedExercises.length === 1 ? "" : "s"}`,
-              tonnage > 0
-                ? `${Math.round(tonnage).toLocaleString()} kg volume`
-                : "",
-              effectiveDurationMin > 0 ? `${effectiveDurationMin} min` : "",
-            ].filter(Boolean),
-          },
-          { needsEmailVerification: needsEmailVerification(user) }
-        );
-        if (decision) {
-          const uniqueCategories = [
-            ...new Set(
-              performedExercises.map((ex) => ex.category).filter(Boolean)
-            ),
-          ];
-          const payload = {
-            authorId: user.uid,
-            authorName: profile?.displayName || "Athlete",
-            ...(profile?.photoURL ? { authorPhotoURL: profile.photoURL } : {}),
-            type: "workout" as const,
-            visibility: decision.visibility,
-            ...(decision.caption ? { caption: decision.caption } : {}),
-            workoutName: day.dayName,
-            activityTitle: day.dayName,
-            exerciseCount: performedExercises.length,
-            totalVolume: tonnage,
-            duration: effectiveDurationMin * 60,
-            muscleGroups: uniqueCategories,
-            // Exercises — full list (was previously sliced to 3) with
-            // structured fields per exercise so feed viewers can
-            // "Save as routine" (PR 4) without parsing the summary
-            // string. ActivityCard renders only the top 3 visually
-            // for compactness; the rest sit on the doc for the routine
-            // copy flow.
-            exercises: performedExercises.map((ex) => {
-              const setCount = ex.sets.length;
-              const targetReps = ex.sets[0]?.reps ?? 0;
-              const targetWeightKg = ex.sets[0]?.weightKg ?? 0;
-              return {
-                name: ex.exerciseName,
-                exerciseId: ex.exerciseId,
-                summary: `${setCount}×${targetReps}×${targetWeightKg} kg`,
-                setCount,
-                targetReps,
-                targetWeightKg,
-              };
-            }),
-          };
-          if (typeof navigator !== "undefined" && navigator.onLine === false) {
-            /* #1887 — pre-gate, not a catch: a parked postActivity never
+      // Sharing is explicit and remains reachable after the save has finished.
+      let shared = false;
+      const share = async () => {
+        if (auth.currentUser?.uid !== user.uid || shared) return;
+        try {
+          // Share composer: prompt the user (or replay their saved
+          // default) for visibility + caption. Returns null if they
+          // declined to share. Replaces the old autoPostWorkouts flag —
+          // see src/lib/shareComposer.ts for the preference store.
+          const decision = await compose(
+            user.uid,
+            {
+              type: "workout",
+              title: day.dayName,
+              meta: [
+                `${performedExercises.length} exercise${performedExercises.length === 1 ? "" : "s"}`,
+                tonnage > 0
+                  ? `${Math.round(tonnage).toLocaleString()} kg volume`
+                  : "",
+                effectiveDurationMin > 0 ? `${effectiveDurationMin} min` : "",
+              ].filter(Boolean),
+            },
+            {
+              needsEmailVerification: needsEmailVerification(user),
+              forcePrompt: true,
+            }
+          );
+          if (decision && auth.currentUser?.uid === user.uid) {
+            const uniqueCategories = [
+              ...new Set(
+                performedExercises.map((ex) => ex.category).filter(Boolean)
+              ),
+            ];
+            const payload = {
+              authorId: user.uid,
+              authorName: profile?.displayName || "Athlete",
+              ...(profile?.photoURL
+                ? { authorPhotoURL: profile.photoURL }
+                : {}),
+              type: "workout" as const,
+              visibility: decision.visibility,
+              ...(decision.caption ? { caption: decision.caption } : {}),
+              workoutName: day.dayName,
+              activityTitle: day.dayName,
+              exerciseCount: performedExercises.length,
+              totalVolume: tonnage,
+              duration: effectiveDurationMin * 60,
+              muscleGroups: uniqueCategories,
+              // Exercises — full list (was previously sliced to 3) with
+              // structured fields per exercise so feed viewers can
+              // "Save as routine" (PR 4) without parsing the summary
+              // string. ActivityCard renders only the top 3 visually
+              // for compactness; the rest sit on the doc for the routine
+              // copy flow.
+              exercises: performedExercises.map((ex) => {
+                const setCount = ex.sets.length;
+                const targetReps = ex.sets[0]?.reps ?? 0;
+                const targetWeightKg = ex.sets[0]?.weightKg ?? 0;
+                return {
+                  name: ex.exerciseName,
+                  exerciseId: ex.exerciseId,
+                  summary: `${setCount}×${targetReps}×${targetWeightKg} kg`,
+                  setCount,
+                  targetReps,
+                  targetWeightKg,
+                };
+              }),
+            };
+            if (
+              typeof navigator !== "undefined" &&
+              navigator.onLine === false
+            ) {
+              /* #1887 — pre-gate, not a catch: a parked postActivity never
                throws offline, so the old catch-only branch could not
                fire. Queue up-front and let ShareComposerSheet's drain
                effect replay it on reconnect. */
-            enqueueShare(user.uid, payload, {
-              kind: "workout",
-              id: workoutId,
-            });
-            showQueuedToast();
-          } else {
-            try {
-              const activityId = await postActivity(payload);
-              // Dedupe + delete link (recordSharedActivity's docblock):
-              // `/workout/:id` reads it to avoid a second post, and
-              // deleting the session uses it to clear this one.
-              await recordSharedActivity(
-                user.uid,
-                { kind: "workout", id: workoutId },
-                activityId
-              );
-            } catch (socialErr) {
-              logger.warn("Failed to post workout to feed:", socialErr);
+              enqueueShare(user.uid, payload, {
+                kind: "workout",
+                id: workoutId,
+              });
+              shared = true;
+              showQueuedToast();
+            } else {
+              try {
+                const activityId = await postActivity(payload);
+                shared = true;
+                // Dedupe + delete link (recordSharedActivity's docblock):
+                // `/workout/:id` reads it to avoid a second post, and
+                // deleting the session uses it to clear this one.
+                await recordSharedActivity(
+                  user.uid,
+                  { kind: "workout", id: workoutId },
+                  activityId
+                );
+              } catch (socialErr) {
+                logger.warn("Failed to post workout to feed:", socialErr);
+                throw socialErr;
+              }
             }
           }
+        } catch (err) {
+          // Post-save sharing/social failure — the workout already committed.
+          logger.warn("[Program] post-save workout sharing failed:", err);
+          throw err;
         }
-      } catch (err) {
-        // Post-save sharing/social failure — the workout already committed.
-        logger.warn("[Program] post-save workout sharing failed:", err);
-      }
-
-      const allDone = updated.workouts.every((d) => d.completed || d.skipped);
-      if (allDone) {
-        toast.success(
-          "All workouts complete! Advance to next week when ready."
-        );
-      }
-      return { workoutId };
+      };
+      return { workoutId, share };
     },
     [programState, user, profile]
   );

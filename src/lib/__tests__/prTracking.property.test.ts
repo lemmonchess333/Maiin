@@ -1,3 +1,4 @@
+import { epley1RMExact } from "../analytics";
 /**
  * Property-based guard for the PR-tracking engine.
  *
@@ -73,7 +74,7 @@ describe("getRepBucket monotonicity (property)", () => {
 });
 
 describe("buildPRMap records the true max (property)", () => {
-  it("each exercise × bucket holds the heaviest qualifying set across the history", () => {
+  it("each exercise × bucket holds the highest estimated strength across the history", () => {
     const rnd = mulberry32(601);
     for (let i = 0; i < 1500; i++) {
       const history = genHistory(rnd);
@@ -93,7 +94,7 @@ describe("buildPRMap records the true max (property)", () => {
             const b = getRepBucket(s.reps);
             expected[ex.exerciseName][b] = Math.max(
               expected[ex.exerciseName][b] ?? 0,
-              s.weightKg
+              epley1RMExact(s.weightKg, s.reps)
             );
           }
         }
@@ -103,7 +104,7 @@ describe("buildPRMap records the true max (property)", () => {
         for (const b of BUCKET_ORDER) {
           const rec = buckets[b];
           const exp = expected[name]?.[b];
-          if (rec) expect(rec.weight).toBe(exp);
+          if (rec) expect(epley1RMExact(rec.weight, rec.reps)).toBe(exp);
           else expect(exp).toBeUndefined(); // no qualifying set ⇒ null in map
         }
       }
@@ -125,16 +126,21 @@ describe("checkSetPR agrees with the recorded map (property)", () => {
       const reps = Math.floor(rnd() * 15);
       const flagged = checkSetPR(name, weight, reps, map, sessions, 3);
 
-      if (weight <= 0) {
+      if (weight <= 0 || reps <= 0) {
         expect(flagged).toBeNull();
         continue;
       }
       const rec = map[name]?.[getRepBucket(reps)];
-      const genuinelyBeats =
-        !rec ||
-        weight > rec.weight ||
-        (weight === rec.weight && reps > rec.reps);
-      expect(flagged !== null).toBe(genuinelyBeats);
+      const best = Math.max(
+        0,
+        ...Object.values(map[name] ?? {}).map((record) =>
+          record ? epley1RMExact(record.weight, record.reps) : 0
+        )
+      );
+      const newBest = best > 0 && epley1RMExact(weight, reps) > best;
+      expect(flagged?.kind ?? null).toBe(
+        newBest ? "best" : !rec ? "bucket-first" : null
+      );
     }
   });
 });

@@ -4821,14 +4821,35 @@ describe("form beats — the caption is a claim about the frame", () => {
     }
   });
 
-  it("a sequence ENDS where it begins, so the loop has no jump", () => {
-    // The last position tweens back to the first. Where they are the
-    // same frame that wrap is a still; where they differ the figure
-    // would snap across the seam every loop.
+  it("the loop closes from the start pose or a controlled return towards it", () => {
+    // Six authored stills need not duplicate the first pose at the end.
+    // A partial return must continue in the same direction across 6→1,
+    // with a closing distance no larger than an earlier authored step.
     for (const id of FORM_BEAT_IDS) {
       const beats = getAuthoredBeats(id)!;
-      expect(beats[beats.length - 1].t, `${id} wrap`).toBe(beats[0].t);
+      const first = beats[0].t;
+      const last = beats[beats.length - 1].t;
+      if (last === first) continue;
+      const previous = beats[beats.length - 2].t;
+      expect(
+        (last - previous) * (first - last),
+        `${id}: return direction`
+      ).toBeGreaterThan(0);
+      const largestStep = Math.max(
+        ...beats.slice(1).map((beat, i) => Math.abs(beat.t - beats[i].t))
+      );
+      expect(
+        Math.abs(last - first),
+        `${id}: closing distance`
+      ).toBeLessThanOrEqual(largestStep);
     }
+  });
+
+  it("the curl draft includes a distinct controlled return and remains unreleased", () => {
+    expect(getAuthoredBeats("db-curl")!.map((beat) => beat.t)).toEqual([
+      0, 0.25, 0.6, 1, 0.6, 0.15,
+    ]);
+    expect(getFormBeats("db-curl")).toBeNull();
   });
 
   it("dips: the two named ends ARE the positions they are named after", () => {

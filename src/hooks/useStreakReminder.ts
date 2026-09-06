@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
@@ -18,7 +18,7 @@ import {
 } from "./streakNotificationId";
 
 /**
- * Streak-at-risk reminder — fires in the evening if the user hasn't logged
+ * Optional evening reminder — fires in the evening if the user hasn't logged
  * today and their current streak is ≥ 2. One notification per user.
  *
  * Mirrors useMealReminders / useWorkoutReminders:
@@ -63,7 +63,7 @@ const DEFAULT_PREFS: StreakReminderPrefs = {
 
 /**
  * Given a "HH:MM" time string, return a Date for the next occurrence —
- * today if the time is still in the future, otherwise tomorrow.
+ * today if the time is still in the future and outside quiet hours.
  * Returns null if the input is malformed.
  *
  * Same shape as computeNextOccurrence in useWorkoutReminders — kept
@@ -78,10 +78,11 @@ function computeNextOccurrence(timeHHMM: string): Date | null {
   const now = new Date();
   const target = new Date();
   target.setHours(hours, minutes, 0, 0);
-  if (target.getTime() <= now.getTime()) {
-    target.setDate(target.getDate() + 1);
-  }
-  return target;
+  // A streak alarm is armed for this local day only. Never leave an alarm
+  // that will keep speaking about a streak after the user stops returning.
+  if (hours >= 22) return null;
+  if (hours < 8) target.setHours(8, 0, 0, 0);
+  return target.getTime() > now.getTime() ? target : null;
 }
 
 /**
@@ -92,12 +93,14 @@ function computeNextOccurrence(timeHHMM: string): Date | null {
  */
 export function shouldScheduleStreakReminder(state: {
   loading: boolean;
+  pushOwns?: boolean | null;
   enabled: boolean;
   primingShown: boolean;
   currentStreak: number;
   hasLoggedToday: boolean;
 }): boolean {
-  if (state.loading) return false;
+  if (state.loading || state.pushOwns === true || state.pushOwns === null)
+    return false;
   if (!state.enabled) return false;
   if (!state.primingShown) return false;
   if (state.currentStreak < 2) return false;
@@ -108,8 +111,7 @@ export function shouldScheduleStreakReminder(state: {
 /**
  * First-week (day-2) return nudge — pure decision (D-1,
  * docs/frontend-design-principles-2026-07.md). The daily streak reminder
- * above keeps its deliberate `>= 2` floor (a repeating alarm needs a streak
- * worth protecting); this fills the day-1 → day-2 gap with ONE calm
+ * above keeps its deliberate `>= 2` floor (the daily reminder starts at two days); this fills the day-1 → day-2 gap with ONE calm
  * one-shot local notification, scheduled on the user's FIRST log day to
  * fire the following evening, consumed forever once scheduled.
  *
@@ -162,6 +164,11 @@ export function computeTomorrowOccurrence(timeHHMM: string): Date | null {
   const target = new Date();
   target.setDate(target.getDate() + 1);
   target.setHours(hours, minutes, 0, 0);
+  if (hours < 8) target.setHours(8, 0, 0, 0);
+  if (hours >= 22) {
+    target.setDate(target.getDate() + 1);
+    target.setHours(8, 0, 0, 0);
+  }
   return target;
 }
 
@@ -170,7 +177,12 @@ export function computeTomorrowOccurrence(timeHHMM: string): Date | null {
  * <RemindersProvider>. Public callers use `useStreakReminder` from
  * RemindersProvider.tsx which reads this hook's output from context.
  */
-export function useStreakReminderInternal() {
+export function useStreakReminderInternal(
+  pushOwns: boolean | null = false,
+  refreshKey = ""
+) {
+  const scheduleChain = useRef<Promise<void>>(Promise.resolve());
+  const firstWeekChain = useRef<Promise<void>>(Promise.resolve());
   const uid = useUid();
   const {
     currentStreak,
@@ -259,6 +271,7 @@ export function useStreakReminderInternal() {
 
       const shouldSchedule = shouldScheduleStreakReminder({
         loading: false,
+        pushOwns,
         enabled: prefs.enabled,
         primingShown: prefs.primingShown,
         currentStreak,
@@ -274,25 +287,20 @@ export function useStreakReminderInternal() {
 
       await scheduleNotification({
         id: STREAK_NOTIFICATION_ID,
-        title: "Keep your streak alive",
-        body: `Still time to log today and keep your ${currentStreak}-day streak going`,
+        title: "An evening reminder",
+        body: "Still time to log today if you want to keep the run going.",
         scheduleAt: fireAt,
-        // Daily-repeating so the evening check doesn't silently stop
-        // after one fire. The current-streak body text is captured at
-        // schedule time — when the streak changes the cancel-and-
-        // reschedule effect above re-runs with the fresh number.
-        // cancel-on-log via useStreaks still handles the same-day
-        // suppression.
-        repeats: true,
       });
     };
 
-    void reschedule();
+    scheduleChain.current = scheduleChain.current.then(reschedule, reschedule);
 
     return () => {
       cancelled = true;
     };
   }, [
+    pushOwns,
+    refreshKey,
     loading,
     streaksLoading,
     prefs.enabled,
@@ -318,59 +326,47 @@ export function useStreakReminderInternal() {
 
   useEffect(() => {
     if (loading || streaksLoading) return;
-
-    const action = firstWeekNudgeAction({
-      loading: false,
-      enabled: prefs.enabled,
-      primingShown: prefs.primingShown,
-      currentStreak,
-      hasLoggedToday,
-      firstWeekNudgeDateKey: prefs.firstWeekNudgeDateKey ?? null,
-      todayKey: format(new Date(), "yyyy-MM-dd"),
-    });
-
-    if (action === "cancel") {
-      void cancelNotification(FIRST_WEEK_NOTIFICATION_ID).catch((err) => {
-        logger.warn("[FirstWeekNudge] cancel failed", err);
-      });
-      return;
-    }
-    if (action !== "schedule") return;
-
-    const fireAt = computeTomorrowOccurrence(prefs.time);
-    if (!fireAt) {
-      logger.warn("[FirstWeekNudge] malformed time", prefs.time);
-      return;
-    }
-
     let cancelled = false;
-    void (async () => {
-      // Always-cancel-before-schedule, same platform-quirk defence as the
-      // daily reminder above.
-      await cancelNotification(FIRST_WEEK_NOTIFICATION_ID).catch((err) => {
-        logger.warn("[FirstWeekNudge] pre-schedule cancel failed", err);
+    const reconcile = async () => {
+      if (cancelled) return;
+      const action = firstWeekNudgeAction({
+        loading: false,
+        enabled: prefs.enabled,
+        primingShown: prefs.primingShown,
+        currentStreak,
+        hasLoggedToday,
+        firstWeekNudgeDateKey: prefs.firstWeekNudgeDateKey ?? null,
+        todayKey: format(new Date(), "yyyy-MM-dd"),
       });
+      if (pushOwns !== false || action === "cancel") {
+        await cancelNotification(FIRST_WEEK_NOTIFICATION_ID);
+        return;
+      }
+      if (action !== "schedule") return;
+      const fireAt = computeTomorrowOccurrence(prefs.time);
+      if (!fireAt) return;
+      await cancelNotification(FIRST_WEEK_NOTIFICATION_ID);
       if (cancelled) return;
       const scheduled = await scheduleNotification({
         id: FIRST_WEEK_NOTIFICATION_ID,
-        title: "Yesterday was a good start 💪",
+        title: "A reminder for your next day",
         body: "A quick log today keeps it going.",
         scheduleAt: fireAt,
-        // One-shot by design — no repeats. A daily alarm at streak 0–1 is
-        // exactly the anxiety the weekly-cadence philosophy avoids.
       });
       if (cancelled || !scheduled) return;
       await updatePrefs({
         firstWeekNudgeDateKey: format(fireAt, "yyyy-MM-dd"),
       });
-    })();
-
+    };
+    firstWeekChain.current = firstWeekChain.current.then(reconcile, reconcile);
     return () => {
       cancelled = true;
     };
   }, [
     loading,
     streaksLoading,
+    pushOwns,
+    refreshKey,
     prefs.enabled,
     prefs.primingShown,
     prefs.time,
