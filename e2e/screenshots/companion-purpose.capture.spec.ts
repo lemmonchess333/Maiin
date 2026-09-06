@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { signInAsTestUser } from "../helpers/auth";
+import { settleFullPageHeight } from "../helpers/settleHeight";
 import { settleImages } from "../helpers/settleImages";
 import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
 import { emulatorActive } from "../helpers/emulator";
@@ -24,6 +25,7 @@ test("companion purpose — narrow light and dark", async ({ page }) => {
     );
     await settleImages(page);
     await page.evaluate(() => window.scrollTo(0, 0));
+    await settleFullPageHeight(page);
     await page.screenshot({
       path: `screenshots/companion-purpose-lift-${dark ? "dark" : "light"}.png`,
       animations: "disabled",
