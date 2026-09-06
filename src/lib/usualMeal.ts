@@ -1,3 +1,4 @@
+import { isActiveMealDoc } from "@/lib/mealTotals";
 import type { Meal } from "@/hooks/useMeals";
 import type { MealKey } from "@/components/food/mealConstants";
 import type { QuickAddItem } from "@/lib/quickAddOrder";
@@ -5,10 +6,10 @@ import { mealLoggedAt, mealSlotFor } from "@/lib/mealSlots";
 
 /** Rank real slot history by frequency; carry the latest portion and its macros. */
 export function usualMeal(meals: readonly Meal[], slot: MealKey, date: string): QuickAddItem | null {
-  if (meals.some((meal) => !meal.deletedAt && meal.date === date && mealSlotFor(meal) === slot)) return null;
+  if (meals.some((meal) => isActiveMealDoc(meal) && meal.date === date && mealSlotFor(meal) === slot)) return null;
   const groups = new Map<string, { count: number; latest: Meal }>();
   for (const meal of meals) {
-    if (meal.deletedAt || meal.date >= date || mealSlotFor(meal) !== slot || !meal.foodName.trim()) continue;
+    if (!isActiveMealDoc(meal) || meal.date >= date || mealSlotFor(meal) !== slot || !meal.foodName.trim()) continue;
     const key = meal.foodName.toLowerCase().trim();
     const group = groups.get(key);
     if (!group) groups.set(key, { count: 1, latest: meal });
