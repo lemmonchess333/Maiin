@@ -16,6 +16,20 @@ export function ToastProvider() {
           padding: 12px 16px !important;
           box-shadow: var(--ds-shadow-elevated) !important;
         }
+        /* A toast with BOTH an action and a cancel ("Retry" + "Log
+           manually" on the Food page's failed-search toast) at phone width:
+           the pills are flex-shrink:0 below, so the title collapsed to its
+           min-content — one character per line ("C o u l d n ' t …",
+           reproduced at 393px). Let the row wrap so the
+           buttons drop beneath the title, and give the content a real share
+           of the width; a single short action still fits beside the title. */
+        [data-sonner-toast] {
+          flex-wrap: wrap !important;
+        }
+        [data-sonner-toast] [data-content] {
+          flex: 1 1 60% !important;
+          min-width: 0;
+        }
         [data-sonner-toast] [data-close-button] {
           color: hsl(var(--muted-foreground)) !important;
           background: transparent !important;

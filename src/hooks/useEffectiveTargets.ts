@@ -118,6 +118,13 @@ export interface EffectiveTargets {
   /** The cut is too aggressive to fit bodyweight protein + essential fat —
    *  protein was capped to keep the macro sum valid. Surface a warning. */
   targetTooAggressive: boolean;
+  /** The calorie target is below the essential fat floor's own cost at this
+   *  bodyweight: fat alone exceeds it and the protein/carb targets read 0 g.
+   *  Every surface rendering the macro targets must say so — Settings did,
+   *  Home and Food showed "0g" as a goal. Copy: macroInfeasibilityMessage. */
+  targetInfeasible: boolean;
+  /** Essential fat kcal at this bodyweight — the smallest reconcilable target. */
+  minFeasibleKcal: number;
   /** Race taper is active for this date — `finalTarget` is the tapered (or
    *  carb-load) number, and the split is recomputed off it. Drives taper /
    *  carb-load copy on the Food hero. */
@@ -153,6 +160,8 @@ interface PlannedTargets {
   caption: DailyTargetsCaption | null;
   finalTarget: number;
   aggressive: boolean;
+  infeasible: boolean;
+  minFeasibleKcal: number;
 }
 
 /**
@@ -201,6 +210,8 @@ function computePlannedTargets(
       caption: buildCaption(dayType, 0),
       finalTarget: baseTarget,
       aggressive: false,
+      infeasible: false,
+      minFeasibleKcal: 0,
     };
   }
 
@@ -220,6 +231,8 @@ function computePlannedTargets(
     // baseTarget directly so the no-eat-back invariant is explicit.
     finalTarget: baseTarget,
     aggressive: adjusted.aggressive,
+    infeasible: adjusted.infeasible,
+    minFeasibleKcal: adjusted.minFeasibleKcal,
   };
 }
 
@@ -424,6 +437,8 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
       fat: planned.fat,
     };
     let aggressive = planned.aggressive;
+    let infeasible = planned.infeasible;
+    let minFeasibleKcal = planned.minFeasibleKcal;
     if (
       profile &&
       adaptiveSource === "learned" &&
@@ -440,6 +455,8 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
       carbs = m.carbs;
       fat = m.fat;
       aggressive = m.aggressive;
+      infeasible = m.infeasible;
+      minFeasibleKcal = m.minFeasibleKcal;
     }
 
     // TAPER — the ONLY forward-looking calorie move (the one bridge between the
@@ -469,6 +486,8 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
       carbs = m.carbs;
       fat = m.fat;
       aggressive = m.aggressive;
+      infeasible = m.infeasible;
+      minFeasibleKcal = m.minFeasibleKcal;
       taperActive = true;
     }
 
@@ -535,6 +554,8 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
       annotation,
       caption: planned.caption,
       targetTooAggressive: aggressive,
+      targetInfeasible: infeasible,
+      minFeasibleKcal,
       taperActive,
       trainingFuel,
     };

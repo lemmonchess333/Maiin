@@ -259,14 +259,19 @@ describe("TodayEnergy — one logging action, no duplicated target rows (cohesio
     expect(screen.queryAllByTestId("breakdown-row")).toHaveLength(0);
   });
 
-  it("the details show the plan target once adaptation has moved the header away from it", function () {
+  it("never restates a 'plan target' row, whatever the breakdown's base says", function () {
+    // The row this pinned could not render in the app: Home builds the
+    // breakdown FROM the header's target (HOME-TARGET-01), so the two never
+    // differed and the branch was dead. A fixture that forces them apart is
+    // a state the app cannot reach; the row is gone rather than kept for it.
     renderAt({
       calories: 1450,
       totalLifetimeMeals: 420,
       burn: { ...burn, phaseAdjustedTdee: 2400 },
     });
     fireEvent.click(screen.getByText("Today's Energy"));
-    expect(screen.getAllByTestId("breakdown-row")).toHaveLength(1);
+    expect(screen.queryAllByTestId("breakdown-row")).toHaveLength(0);
+    expect(screen.queryByText(/Plan target/)).toBeNull();
   });
 
   it("labels the disclosure — Details — and reports its state", function () {
@@ -306,5 +311,42 @@ describe("TodayEnergy — HOME-TARGET-01 truthful targets/copy", () => {
     });
     expect(screen.getByText(/40g protein to your target/i)).toBeInTheDocument();
     expect(screen.queryByText(/for recovery/i)).toBeNull();
+  });
+});
+
+/**
+ * Three-surface consistency: a target the split cannot fund is named in
+ * the same sentence on Home, Food and Settings (macroInfeasibility.ts).
+ * Before this Home read "P 125/0g" — 0 g rendered as the goal — while only
+ * Settings warned.
+ */
+import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
+
+describe("TodayEnergy — infeasible target notice", function () {
+  it("renders the shared sentence when the target cannot fund essential fat", function () {
+    renderAt({
+      calories: 1790,
+      protein: 125,
+      carbs: 172,
+      fat: 56,
+      totalLifetimeMeals: 40,
+      targets: {
+        ...targets,
+        finalTarget: 100,
+        protein: 0,
+        carbs: 0,
+        fat: 42,
+        targetInfeasible: true,
+        minFeasibleKcal: 378,
+      },
+    });
+    expect(
+      screen.getByText(macroInfeasibilityMessage(378))
+    ).toBeInTheDocument();
+  });
+
+  it("says nothing on an ordinary target", function () {
+    renderAt({ targets: { ...targets, targetInfeasible: false } });
+    expect(screen.queryByText(/essential fat alone exceeds/)).toBeNull();
   });
 });

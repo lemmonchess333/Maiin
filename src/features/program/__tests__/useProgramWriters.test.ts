@@ -869,6 +869,15 @@ describe("Run9 phase-3 — realign carries completions across regen", () => {
 
     const lastSave = setDocCalls()[setDocCalls().length - 1]
       ?.data as ProgramState;
+    // The block's length is carried with the position. Without it the regen
+    // re-derived totalWeeks from the weeks REMAINING (~10 here), and a
+    // carried currentWeek against that shorter block put the generated week
+    // in a different phase from the one the cockpit showed. (currentWeek
+    // itself is advanced by the load-time rollover from the fixture's fixed
+    // 2026-05 weekKey, then clamped into the block — so only its bound is
+    // asserted here.)
+    expect(lastSave.runPlan?.totalWeeks).toBe(12);
+    expect(lastSave.runPlan?.currentWeek).toBeLessThan(12);
     // A manualCompletions map is persisted (pre-fix the writer kept the stale
     // map via spread but never re-keyed; now the carry path owns it).
     expect(lastSave.manualCompletions).toBeDefined();

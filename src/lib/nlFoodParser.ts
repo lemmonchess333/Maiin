@@ -1706,14 +1706,66 @@ function mergeByCanonicalKey(rows: ParsedFood[]): ParsedFood[] {
  * Splits on commas and newlines. Handles "with" compounds (e.g. "toast with butter")
  * and multi-word fallback matching (e.g. "ham sandwich").
  */
+/**
+ * Conjunction splitting — "2 eggs and a slice of toast" is two foods.
+ *
+ * Before this, only commas and newlines separated foods and only ` with `
+ * formed a compound, so an "and"-joined phrase reached `findBestMatch`
+ * whole: the LONGEST key found anywhere in it won (toast over eggs) and
+ * the rest of the sentence was discarded — "2 eggs and a slice of toast"
+ * logged as two slices of toast, "chicken and rice" as chicken alone with
+ * 0 g carbs. Reproduced through the composer.
+ *
+ * Rules, deliberately narrow:
+ *   - Whole-phrase keys stay whole ("fish and chips" is one dish).
+ *   - The phrase splits only when EVERY part resolves on its own (a single
+ *     food, a `with` compound, or a compound-word match). A part nobody
+ *     recognises keeps the phrase whole, so the existing path decides.
+ *   - A quantity belongs to the part it was written in: "2 eggs and toast"
+ *     is two eggs and one toast.
+ */
+const CONJUNCTION_SPLIT_RE = /\s+(?:and|&|\+)\s+/i;
+const CONJUNCTION_KEYS = Object.keys(FOOD_DB).filter((k) =>
+  /\s(?:and|&)\s/.test(k)
+);
+
+function partResolves(part: string): boolean {
+  const { rest } = extractQty(part);
+  if (!rest) return false;
+  if (rest.split(/\s+with\s+/i).some((w) => findBestMatch(w) !== null)) {
+    return true;
+  }
+  return findCompoundMatch(rest) !== null;
+}
+
+function splitConjunctions(segment: string): string[] {
+  if (!CONJUNCTION_SPLIT_RE.test(segment)) return [segment];
+  const lower = extractQty(segment).rest.toLowerCase();
+  const depluraled = lower.split(/\s+/).map(depluralize).join(" ");
+  if (FOOD_DB[lower] || FOOD_DB[depluraled]) return [segment];
+  for (const key of CONJUNCTION_KEYS) {
+    const re = new RegExp(
+      `\\b${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`
+    );
+    if (re.test(lower)) return [segment];
+  }
+  const parts = segment
+    .split(CONJUNCTION_SPLIT_RE)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (parts.length < 2 || !parts.every(partResolves)) return [segment];
+  return parts;
+}
+
 export function parseFoodText(input: string): ParsedFood[] {
   if (!input.trim()) return [];
 
-  // Split on commas, newlines
+  // Split on commas, newlines, then on conjunctions (see above).
   const segments = input
     .split(/[,\n]+/)
     .map((s) => s.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .flatMap(splitConjunctions);
 
   const results: ParsedFood[] = [];
 

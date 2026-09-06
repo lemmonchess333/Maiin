@@ -1,5 +1,5 @@
 import SectionLabel from "@/components/ui/SectionLabel";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useLocation, useNavigate, Navigate } from "react-router-dom";
 import { readString, writeString } from "@/lib/localStore";
 import WeekPulseCard from "@/components/WeekPulseCard";
@@ -419,6 +419,12 @@ export default function RunSummary() {
   >("pending");
   const [reconciliationBusy, setReconciliationBusy] = useState(false);
   const [savedRunId, setSavedRunId] = useState<string | null>(null);
+  /* Post-write steps that must run once per saved run, however many times
+     the chain is resumed after a failure: the share prompt (a second prompt
+     could post the run twice) and the shoe-mileage increment (a second
+     call double-counts the distance). */
+  const shareHandledRef = useRef(false);
+  const mileageAppliedRef = useRef(false);
 
   // Pull dismissal state from localStorage whenever the saved-run
   // id arrives. The doc id is the natural unique key — different
@@ -865,6 +871,13 @@ export default function RunSummary() {
        saving, but the inline Retry banner can call handleSave again —
        this stops a flap if the user mashes it. */
     if (saveStatus === "saving") return;
+    /* A Retry after the run document was written but a later step failed
+       (share post, shoe mileage). Pre-fix the chain re-entered from the
+       top and wrote a SECOND run document; onRunCreated then credited
+       challenges, lifetime totals and weekly distance twice, because its
+       idempotency markers key on the (new) document id. Resume against
+       the id already held instead. */
+    const resumed = savedRunId !== null;
     setSaveStatus("saving");
     setSaveError(null);
 
@@ -984,7 +997,9 @@ export default function RunSummary() {
       // "Leave open".
       const runsCol = collection(db, "users", user.uid, "runs");
       let savedId: string;
-      if (navigator.onLine) {
+      if (savedRunId) {
+        savedId = savedRunId;
+      } else if (navigator.onLine) {
         const savedDocRef = await addDocGuarded(runsCol, runData);
         savedId = savedDocRef.id;
       } else {
@@ -1010,12 +1025,15 @@ export default function RunSummary() {
          plausibly have set a PR — invalid 0km / 0:00 runs (the
          "Save anyway" exits) shouldn't tease a PR celebration. */
       if (!isInvalid) {
-        // Activation funnel: a real (non-zero) saved run. Invalid 0km/0:00
-        // "save anyway" runs are excluded — same gate as the PR toast/share.
-        trackLifecycle("run_completed");
-        // Session-completed signal for the reminder priming modal (D-1):
-        // a run-first user's first session is the consent value moment too.
-        window.dispatchEvent(new CustomEvent("tropos:run-completed"));
+        if (!resumed) {
+          // Activation funnel: a real (non-zero) saved run. Invalid 0km/0:00
+          // "save anyway" runs are excluded — same gate as the PR toast/share.
+          // Once per run: a resumed chain has already fired both.
+          trackLifecycle("run_completed");
+          // Session-completed signal for the reminder priming modal (D-1):
+          // a run-first user's first session is the consent value moment too.
+          window.dispatchEvent(new CustomEvent("tropos:run-completed"));
+        }
         toast.success("Run saved", {
           action: {
             label: "View PRs",
@@ -1031,7 +1049,7 @@ export default function RunSummary() {
          decision. Surfaced in QA: the composer was auto-firing on
          every Save anyway, even though the InvalidRunReview saved-
          state UI deliberately hides Share / GPX / map. */
-      if (!isInvalid) {
+      if (!isInvalid && !shareHandledRef.current) {
         // Share composer: prompts the user (or replays their saved
         // default) for visibility + caption. When offline, the post is
         // queued and replayed by ShareComposerSheet's drain effect.
@@ -1057,6 +1075,9 @@ export default function RunSummary() {
           },
           { needsEmailVerification: needsEmailVerification(user) }
         );
+        // Decided (posted, queued or declined) — never prompt again for
+        // this run, even if a later step fails and the chain resumes.
+        shareHandledRef.current = true;
         if (decision) {
           // Shared-route privacy default. The public activity routePreview is
           // rendered as a REAL map on the feed, so a user who hasn't set
@@ -1122,10 +1143,12 @@ export default function RunSummary() {
         }
       }
 
-      // Update shoe mileage against whichever shoe was resolved above.
-      if (effectiveShoeId) {
+      // Update shoe mileage against whichever shoe was resolved above —
+      // once per run (see mileageAppliedRef).
+      if (effectiveShoeId && !mileageAppliedRef.current) {
         if (navigator.onLine) {
           const alert = await updateMileage(effectiveShoeId, distance / 1000);
+          mileageAppliedRef.current = true;
           if (alert === "replace") {
             toast.error(
               "Time for new shoes! This pair has exceeded its recommended mileage.",
@@ -1142,6 +1165,7 @@ export default function RunSummary() {
           // too. Fire it into the SDK's durable queue; the wear alerts
           // wait for an online run (they're advisory, not per-run).
           void updateMileage(effectiveShoeId, distance / 1000).catch(() => {});
+          mileageAppliedRef.current = true;
         }
       }
 

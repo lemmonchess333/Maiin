@@ -13,6 +13,8 @@ vi.mock("@/hooks/useUnreadCount", () => ({
   useUnreadCount: () => ({ count: 0, markSeen }),
 }));
 vi.mock("@/lib/offlineQueue", () => ({ getQueueLength: () => 0 }));
+// The pending-sync badge counts THIS account's queued work (uid-scoped).
+vi.mock("@/lib/auth", () => ({ useUid: () => "u-test" }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 /* reduced-motion ON keeps framer-motion deterministic under jsdom */
 vi.mock("@/hooks/useReducedMotion", () => ({ useReducedMotion: () => true }));

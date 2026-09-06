@@ -35,6 +35,7 @@ import { ServingSizeDrawer } from "@/components/nutrition/ServingSizeDrawer";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Button } from "@/components/ui/Button";
 import { validateFoodEntry } from "@/lib/foodValidation";
+import { offProductToPortion, type OffProductLike } from "@/lib/offNutrition";
 import {
   orderQuickAddItems,
   buildQuickAddMealPayload,
@@ -682,34 +683,27 @@ export default function Food() {
               nutriments?: Record<string, number>;
             }) => p.product_name && p.nutriments
           )
-          .map(
-            (p: {
-              product_name?: string;
-              nutriments?: Record<string, number>;
-              brands?: string;
-              serving_size?: string;
-            }) => ({
-              name: p.product_name || "Unknown",
-              brand: p.brands || "",
-              calories: Math.round(
-                p.nutriments?.["energy-kcal_100g"] ||
-                  p.nutriments?.["energy-kcal"] ||
-                  0
-              ),
-              protein: Math.round((p.nutriments?.proteins_100g || 0) * 10) / 10,
-              carbs:
-                Math.round((p.nutriments?.carbohydrates_100g || 0) * 10) / 10,
-              fat: Math.round((p.nutriments?.fat_100g || 0) * 10) / 10,
-              servingSize: p.serving_size || "100g",
-              // F2: macro nutrients above all come from the
-              // *_100g fields. When a real serving_size string is
-              // missing, we fall through to "100g" and the macro
-              // numbers ARE actually per-100g, not per-serving —
-              // that's a low-confidence unit signal the user needs
-              // to confirm via the ServingSizeDrawer.
-              unitConfidence: p.serving_size ? "high" : "low",
-            })
-          );
+          .map((p: OffProductLike) => {
+            // The barcode path's converter, shared: OFF publishes
+            // nutrients per 100 g, so a stated gram serving scales the
+            // numbers to that serving (high confidence) and anything else
+            // is labelled "100g" and flagged low, which the drawer turns
+            // into its confirm-serving banner. Pre-fix this mapping stored
+            // the per-100 g values under the serving's label and flagged
+            // HIGH precisely when a serving existed — a 30 g bar logged at
+            // its 100 g numbers with the banner suppressed.
+            const portion = offProductToPortion(p);
+            return {
+              name: portion.name,
+              brand: portion.brand,
+              calories: portion.calories,
+              protein: portion.protein,
+              carbs: portion.carbs,
+              fat: portion.fat,
+              servingSize: portion.servingSize,
+              unitConfidence: portion.unitConfidence,
+            };
+          });
         if (cancelled) return; // a newer query/retry superseded this run
         setOffResults(products);
         setOffEmpty(products.length === 0);
@@ -769,6 +763,22 @@ export default function Food() {
     const food = offDrawerFood;
     if (!uid || !food) return;
     const s = servings;
+    const entry = {
+      calories: Math.round(food.calories * s),
+      protein: Math.round(food.protein * s),
+      carbs: Math.round(food.carbs * s),
+      fat: Math.round(food.fat * s),
+    };
+    /* Database rows skipped validation on the premise that they reuse
+       already-validated data. Open Food Facts is crowd-sourced and
+       arrives unvalidated, so the blocked tier (negative / non-finite)
+       applies here as on typed entries. Warn-tier values pass: a
+       labelled product is the user's own evidence. */
+    const verdict = validateFoodEntry(entry);
+    if (verdict.kind === "blocked") {
+      toast.error(verdict.reason, { id: "food-validation-error" });
+      return;
+    }
     try {
       await addDocGuarded(collection(db, "users", uid, "meals"), {
         date: selectedDate,
@@ -778,19 +788,21 @@ export default function Food() {
             name: food.name,
             portionSize:
               s !== 1 ? `${s}x ${food.servingSize}` : food.servingSize,
-            calories: Math.round(food.calories * s),
-            protein: Math.round(food.protein * s),
-            carbs: Math.round(food.carbs * s),
-            fat: Math.round(food.fat * s),
+            ...entry,
           },
         ],
-        totalCalories: Math.round(food.calories * s),
-        totalProtein: Math.round(food.protein * s),
-        totalCarbs: Math.round(food.carbs * s),
-        totalFat: Math.round(food.fat * s),
+        totalCalories: entry.calories,
+        totalProtein: entry.protein,
+        totalCarbs: entry.carbs,
+        totalFat: entry.fat,
         confidence: "database",
         createdAt: Timestamp.now(),
+        // The armed meal slot applies here exactly as on every other
+        // save path; this one ignored it, so a search pick landed
+        // by time of day and the NEXT save inherited the stale slot.
+        ...(targetMeal ? { meal: targetMeal } : {}),
       });
+      setTargetMeal(null);
       await addFavourite({ ...food, source: "search" });
       setOffDrawerFood(null);
       // No success toast — the food appears in the meal list and the

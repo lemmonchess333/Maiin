@@ -55,13 +55,32 @@ export interface TDEEResult {
   /** What the goal multiplier asked for, before any cap. Equals `protein`
    *  unless `proteinCapped`. */
   proteinUncapped: number;
+  /**
+   * The target is below what the essential fat floor alone costs at this
+   * bodyweight (`minFeasibleKcal`): no protein or carbs can be funded, and
+   * the grams do NOT reconcile to the target — `fat` alone exceeds it.
+   * There is no smaller honest split, so it is reported rather than hidden,
+   * and every surface that renders these grams must say so. A manual
+   * `customCalorieTarget` of 100 kcal displayed "0 g protein · 0 g carbs ·
+   * 42 g fat" as the day's goals on three screens before this flag existed.
+   */
+  infeasible: boolean;
+  /** Essential fat kcal at this bodyweight — the smallest target the split
+   *  can reconcile to. 0 when the inputs were not finite. */
+  minFeasibleKcal: number;
 }
 
 /** The macro fields of a TDEE result — the split alone, without the energy
  *  arithmetic that produced the target. */
 export type MacroSplit = Pick<
   TDEEResult,
-  "protein" | "carbs" | "fat" | "proteinCapped" | "proteinUncapped"
+  | "protein"
+  | "carbs"
+  | "fat"
+  | "proteinCapped"
+  | "proteinUncapped"
+  | "infeasible"
+  | "minFeasibleKcal"
 >;
 
 /**
@@ -98,6 +117,22 @@ export function splitMacrosForTarget(
   weightKg: number,
   proteinMultiplier: number
 ): MacroSplit {
+  // Non-finite input (a NaN weight from an empty field, an Infinity target)
+  // propagated straight into the grams — NaN carbs, Infinity fat —
+  // and from there into the profile. Nothing downstream can render or
+  // store that honestly; return a flagged empty split instead.
+  if (!Number.isFinite(targetCalories) || !Number.isFinite(weightKg)) {
+    return {
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+      proteinCapped: false,
+      proteinUncapped: 0,
+      infeasible: true,
+      minFeasibleKcal: 0,
+    };
+  }
+
   const essentialFatG = Math.round(ESSENTIAL_FAT_FLOOR_PER_KG * weightKg);
   const fat = Math.max(
     Math.round((FAT_CALORIE_FRACTION * targetCalories) / 9),
@@ -125,7 +160,20 @@ export function splitMacrosForTarget(
     Math.round((targetCalories - protein * 4 - fat * 9) / 4)
   );
 
-  return { protein, carbs, fat, proteinCapped, proteinUncapped };
+  // Below the essential-fat floor's own cost the split cannot reconcile:
+  // fat alone exceeds the target, protein and carbs are already 0.
+  const minFeasibleKcal = essentialFatG * 9;
+  const infeasible = fat * 9 > targetCalories;
+
+  return {
+    protein,
+    carbs,
+    fat,
+    proteinCapped,
+    proteinUncapped,
+    infeasible,
+    minFeasibleKcal,
+  };
 }
 
 /** The protein multiplier a goal implies, for callers that split a target
@@ -178,12 +226,19 @@ export function calculateTDEE(
   const targetCalories = floorTargetCalories(tdee + requestedOffset, tdee);
   const deficit = targetCalories - tdee;
 
-  const { protein, carbs, fat, proteinCapped, proteinUncapped } =
-    splitMacrosForTarget(
-      targetCalories,
-      weightKg,
-      proteinMultiplierForGoal(goal)
-    );
+  const {
+    protein,
+    carbs,
+    fat,
+    proteinCapped,
+    proteinUncapped,
+    infeasible,
+    minFeasibleKcal,
+  } = splitMacrosForTarget(
+    targetCalories,
+    weightKg,
+    proteinMultiplierForGoal(goal)
+  );
 
   return {
     bmr,
@@ -195,5 +250,7 @@ export function calculateTDEE(
     deficit,
     proteinCapped,
     proteinUncapped,
+    infeasible,
+    minFeasibleKcal,
   };
 }

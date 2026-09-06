@@ -130,6 +130,21 @@ describe("exportMealsCSV", () => {
     const csv = await exportMealsCSV("user1");
     expect(csv).toContain('2025-01-15,"",0,0,0,0');
   });
+
+  it("omits soft-deleted meals, like every other reader of the diary", async () => {
+    seedIn(MEALS, [
+      { date: "2025-01-15", foodName: "Kept", totalCalories: 300 },
+      {
+        date: "2025-01-15",
+        foodName: "Binned",
+        totalCalories: 900,
+        deletedAt: "2025-01-15T12:00:00.000Z",
+      },
+    ]);
+    const csv = await exportMealsCSV("user1");
+    expect(csv).toContain('"Kept"');
+    expect(csv).not.toContain('"Binned"');
+  });
 });
 
 describe("exportBodyweightCSV", () => {

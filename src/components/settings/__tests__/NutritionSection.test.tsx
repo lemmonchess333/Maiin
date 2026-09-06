@@ -45,6 +45,8 @@ const DEFAULT_TDEE: TDEEResult = {
   deficit: 0,
   proteinCapped: false,
   proteinUncapped: 135,
+  infeasible: false,
+  minFeasibleKcal: 405,
 };
 
 describe("NutritionSection — editing the calorie override", () => {
@@ -531,5 +533,73 @@ describe("the adapting status line is wired to the learned target", () => {
     expect(src).toMatch(
       /adaptiveCalorieStatusLabel\([\s\S]{0,200}?adaptiveCapState\?\.lastApplied/
     );
+  });
+});
+
+/**
+ * Three-surface consistency: a target the split cannot fund is named in
+ * the same sentence here, on Home and on Food (macroInfeasibility.ts). And
+ * the calculation chain names a manual override for what it is — it used to
+ * call the gap "Recomp offset −2400 cal", a plan choice the user never made.
+ */
+import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
+
+describe("NutritionSection — manual target naming and the infeasible notice", () => {
+  function renderWith(profile: Partial<UserProfile>, tdee: TDEEResult) {
+    return render(
+      <NutritionSection
+        profile={{ uid: "u-1", ...profile } as UserProfile}
+        age={25}
+        setAge={vi.fn()}
+        activityLevel={"moderate" as ActivityLevel}
+        setActivityLevel={vi.fn()}
+        currentKg={70}
+        goalWeightKg={68}
+        setGoalWeightKg={vi.fn()}
+        weeklyRateKg={-0.5}
+        setWeeklyRateKg={vi.fn()}
+        goalPlan={goalPlan}
+        tdee={tdee}
+        updateProfile={vi.fn(async () => ({ ok: true }) as UpdateProfileResult)}
+        inline
+      />
+    );
+  }
+
+  it("labels the gap 'Manual target' when an override is set", () => {
+    renderWith(
+      { customCalorieTarget: 100 },
+      { ...DEFAULT_TDEE, targetCalories: 100, deficit: -2300 }
+    );
+    expect(screen.getByText("Manual target")).toBeInTheDocument();
+    expect(screen.queryByText(/offset$/)).toBeNull();
+  });
+
+  it("keeps the goal's offset label when no override is set", () => {
+    renderWith({}, { ...DEFAULT_TDEE, deficit: 550 });
+    expect(screen.getByText("Lean Bulk offset")).toBeInTheDocument();
+  });
+
+  it("renders the shared sentence when the target cannot fund essential fat", () => {
+    renderWith(
+      { customCalorieTarget: 100 },
+      {
+        ...DEFAULT_TDEE,
+        targetCalories: 100,
+        protein: 0,
+        carbs: 0,
+        fat: 42,
+        infeasible: true,
+        minFeasibleKcal: 378,
+      }
+    );
+    expect(
+      screen.getByText(macroInfeasibilityMessage(378))
+    ).toBeInTheDocument();
+  });
+
+  it("says nothing on an ordinary target", () => {
+    renderWith({}, DEFAULT_TDEE);
+    expect(screen.queryByText(/essential fat alone exceeds/)).toBeNull();
   });
 });

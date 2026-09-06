@@ -151,13 +151,24 @@ export function buildRaceDayPlan(input: {
   const km = DISTANCE_KM[distance];
   const target =
     input.targetTimeS && input.targetTimeS > 0 ? input.targetTimeS : null;
+  // RUN-EV-08 two-tier consent: this card PRESCRIBES race pace and splits,
+  // so an auto-derived benchmark the user has not confirmed must not feed
+  // it — the same rule `prescriptivePaceTableFromFitness` applies to every
+  // other prescriber. This was the one prescriptive surface reading the
+  // raw table, so an unconfirmed benchmark paced the
+  // race here while every training session withheld it. With no confirmed
+  // fitness the plan paces from the target alone (no long-shot judgement
+  // is possible), or renders nothing when there is no target either.
+  const runFitness = input.runFitness?.pendingConfirmation
+    ? null
+    : (input.runFitness ?? null);
   const predicted =
-    predictedRaceTimesFromFitness(input.runFitness ?? null)?.[distance] ?? null;
+    predictedRaceTimesFromFitness(runFitness)?.[distance] ?? null;
   if (!target && !predicted) return null;
 
   // Long-shot check — the same judgment the training gate makes
   // (runPlanMetadata.resolveRaceEnrichment), on the same band scale.
-  const currentVdot = paceTableFromFitness(input.runFitness ?? null)?.vdot;
+  const currentVdot = paceTableFromFitness(runFitness)?.vdot;
   const targetIsLongShot =
     target != null &&
     currentVdot != null &&

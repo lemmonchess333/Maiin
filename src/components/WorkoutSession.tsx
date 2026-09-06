@@ -869,6 +869,13 @@ export default function WorkoutSession({
   const completeSet = async () => {
     const set = currentSets[currentSetIndex];
     if (!set) return;
+    /* A set already marked complete is done. Completing it again re-ran
+       the last-set path below — the volume-PR check and `onLogExercise`,
+       which mints a fresh commandId per call, so the server's receipt
+       dedupe never saw it as a retry — and progressed the exercise twice.
+       Reachable from the exercise pills: returning to a finished exercise
+       lands the cursor on set 1. Undo (handleUndo) is how a set reopens. */
+    if (set.completed) return;
 
     // PR E (audit P0 #4): central validator gates PR detection and
     // confetti. Pre-PR-E `checkSetPR` ran directly on unvalidated
