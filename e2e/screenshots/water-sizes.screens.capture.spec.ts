@@ -3,7 +3,7 @@
  * tile (now reading in litres) and the size sheet opened from it —
  * Glass / Bottle / Large presets + custom input. Light + dark.
  */
-import { test, type Page } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import { signInAsTestUser } from "../helpers/auth";
 import { emulatorActive } from "../helpers/emulator";
 import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
@@ -60,7 +60,7 @@ test.describe("water size picker", () => {
     test.setTimeout(120_000);
     await page.goto("");
     await page
-      .getByRole("button", { name: /add a glass/i })
+      .getByRole("button", { name: /^Add \d+ ml$/i })
       .first()
       .waitFor({ state: "visible", timeout: 20000 });
     await page.waitForTimeout(1000);
@@ -82,8 +82,8 @@ test.describe("water size picker", () => {
     await page
       .getByRole("button", { name: /choose a container size/i })
       .first()
-      .click({ timeout: 5000 })
-      .catch(() => console.log("[capture] water body button not found"));
+      .click({ timeout: 5000 });
+    await expect(page.getByRole("dialog", { name: "Add water" })).toBeVisible();
     await page.waitForTimeout(700);
     await shootLightDark(page, "water-sheet");
   });

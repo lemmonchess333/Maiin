@@ -127,6 +127,7 @@ import { track as trackProgram } from "@/lib/programAnalytics";
 import RaceCockpitCard from "./RaceCockpitCard";
 import RaceDayPlanCard from "./RaceDayPlanCard";
 import type { RaceDistance } from "@/lib/raceDayPlan";
+import { runSessionPresentation } from "@/lib/runSessionExplainer";
 import SessionCommandCard from "./SessionCommandCard";
 import ProgrammeWeekSelector from "./ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "./ProgrammeWeekSelector";
@@ -688,6 +689,18 @@ export default function ProgrammeRunSection({
   };
   const selectedTemplate = selectedRun.template;
   const selectedIsRace = selectedTemplate?.type === "race";
+  const selectedPurpose =
+    selectedTemplate && selectedRun.runDay
+      ? runSessionPresentation({
+          type: selectedTemplate.type,
+          templateId: selectedTemplate.id,
+          currentWeek: programState?.runPlan?.currentWeek,
+          totalWeeks: programState?.runPlan?.totalWeeks,
+          distance:
+            programState?.runPlan?.raceGoal?.distance ??
+            profile.raceGoal?.distance,
+        })
+      : { purpose: null, weekLabel: null };
   const selectedDateLabel = format(
     parseLocalDate(selectedDateKey),
     "EEE d MMM"
@@ -1409,8 +1422,13 @@ export default function ProgrammeRunSection({
                   sport="run"
                   eyebrow={`${selectedEyebrow} · ${selectedDateLabel}`}
                   title={selectedTemplate?.name ?? "Run"}
-                  description={selectedTemplate?.description}
-                  meta={selectedRunMeta}
+                  description={selectedPurpose.purpose ?? undefined}
+                  meta={[
+                    ...(selectedPurpose.weekLabel
+                      ? [selectedPurpose.weekLabel]
+                      : []),
+                    ...selectedRunMeta,
+                  ]}
                   primaryActionLabel={
                     selectedIsRace ? "Start race" : "Start run"
                   }
