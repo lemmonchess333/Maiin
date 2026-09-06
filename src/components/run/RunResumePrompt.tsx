@@ -18,12 +18,12 @@
  * starting over or discarding requires confirmation before clearing it.
  */
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { ArrowLeft, Play, Plus, Trash2 } from "lucide-react";
 import { formatClock } from "@/utils/formatters";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
-import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { ConfirmDialogActions } from "@/components/ui/ConfirmDialog";
 import { distanceUnitLabel } from "@/lib/distanceUnits";
 import { distanceValue } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
@@ -75,115 +75,124 @@ export default function RunResumePrompt({
     null
   );
 
-  if (pendingAction) {
-    return (
-      <ConfirmDialog
-        open
-        overSheet
-        title={
-          pendingAction === "new"
-            ? "Replace previous run?"
-            : "Discard previous run?"
-        }
-        description="The previous run will be cleared from this device without being saved to your history. This cannot be undone."
-        confirmLabel={
-          pendingAction === "new" ? "Discard and start new" : "Discard run"
-        }
-        cancelLabel="Keep previous run"
-        destructive
-        onConfirm={pendingAction === "new" ? onStartNew : onDiscard}
-        onCancel={() => setPendingAction(null)}
-      />
-    );
-  }
+  const focusAction = useCallback((node: HTMLButtonElement | null) => {
+    node?.focus();
+  }, []);
 
+  // Keep the same overlay registration while confirming. Unmounting one
+  // dialog and mounting another churns the browser's back-dismiss sentinel.
   return (
     <Dialog
       open
-      onClose={onBack}
-      title="Resume previous run?"
-      description={formatStartedAgo(startedAt)}
-      tone="dark"
-      position="bottom"
-      size="md"
+      onClose={() => (pendingAction ? setPendingAction(null) : onBack())}
+      title={
+        pendingAction
+          ? pendingAction === "new"
+            ? "Replace previous run?"
+            : "Discard previous run?"
+          : "Resume previous run?"
+      }
+      description={
+        pendingAction
+          ? "The previous run will be cleared from this device without being saved to your history. This cannot be undone."
+          : formatStartedAgo(startedAt)
+      }
+      role={pendingAction ? "alertdialog" : "dialog"}
+      tone={pendingAction ? "light" : "dark"}
+      position={pendingAction ? "center" : "bottom"}
+      size={pendingAction ? "sm" : "md"}
       closeOnBackdrop={false}
       overlayClassName="z-[60]"
       className="z-[60]"
     >
-      <div className="space-y-4">
-        <div
-          className="rounded-xl px-4 py-3 flex items-center justify-between"
-          style={{ background: "rgba(255,255,255,0.06)" }}
-        >
-          <div>
-            <p
-              className="text-micro uppercase tracking-wider"
-              style={{ color: "rgba(255,255,255,0.5)" }}
-            >
-              Time
-            </p>
-            <p
-              className="font-mono tabular-nums text-xl font-bold"
-              style={{ color: "white" }}
-            >
-              {formatElapsed(accumulatedSeconds)}
-            </p>
+      {pendingAction ? (
+        <ConfirmDialogActions
+          cancelRef={focusAction}
+          confirmLabel={
+            pendingAction === "new" ? "Discard and start new" : "Discard run"
+          }
+          cancelLabel="Keep previous run"
+          destructive
+          onConfirm={pendingAction === "new" ? onStartNew : onDiscard}
+          onCancel={() => setPendingAction(null)}
+        />
+      ) : (
+        <div className="space-y-4">
+          <div
+            className="rounded-xl px-4 py-3 flex items-center justify-between"
+            style={{ background: "rgba(255,255,255,0.06)" }}
+          >
+            <div>
+              <p
+                className="text-micro uppercase tracking-wider"
+                style={{ color: "rgba(255,255,255,0.5)" }}
+              >
+                Time
+              </p>
+              <p
+                className="font-mono tabular-nums text-xl font-bold"
+                style={{ color: "white" }}
+              >
+                {formatElapsed(accumulatedSeconds)}
+              </p>
+            </div>
+            <div className="text-right">
+              <p
+                className="text-micro uppercase tracking-wider"
+                style={{ color: "rgba(255,255,255,0.5)" }}
+              >
+                Distance
+              </p>
+              <p
+                className="font-mono tabular-nums text-xl font-bold"
+                style={{ color: "white" }}
+              >
+                {distance} {distanceUnitLabel(unit)}
+              </p>
+            </div>
           </div>
-          <div className="text-right">
-            <p
-              className="text-micro uppercase tracking-wider"
-              style={{ color: "rgba(255,255,255,0.5)" }}
-            >
-              Distance
-            </p>
-            <p
-              className="font-mono tabular-nums text-xl font-bold"
-              style={{ color: "white" }}
-            >
-              {distance} {distanceUnitLabel(unit)}
-            </p>
-          </div>
-        </div>
 
-        <div className="space-y-2 pt-1">
-          <Button
-            variant="sport"
-            size="lg"
-            fullWidth
-            onClick={onResume}
-            leftIcon={<Play size={16} />}
-          >
-            Resume run
-          </Button>
-          <Button
-            variant="secondary"
-            fullWidth
-            onClick={() => setPendingAction("new")}
-            className="bg-stage-foreground/10 text-stage-foreground hover:bg-stage-foreground/20"
-            leftIcon={<Plus size={16} />}
-          >
-            Start new run
-          </Button>
-          <Button
-            variant="ghost"
-            fullWidth
-            onClick={onBack}
-            className="text-stage-foreground hover:bg-stage-foreground/10"
-            leftIcon={<ArrowLeft size={16} />}
-          >
-            Back to Run
-          </Button>
-          <Button
-            variant="ghost"
-            fullWidth
-            onClick={() => setPendingAction("discard")}
-            className="text-stage-muted hover:bg-stage-foreground/10"
-            leftIcon={<Trash2 size={14} />}
-          >
-            Discard previous run
-          </Button>
+          <div className="space-y-2 pt-1">
+            <Button
+              variant="sport"
+              size="lg"
+              fullWidth
+              ref={focusAction}
+              onClick={onResume}
+              leftIcon={<Play size={16} />}
+            >
+              Resume run
+            </Button>
+            <Button
+              variant="secondary"
+              fullWidth
+              onClick={() => setPendingAction("new")}
+              className="bg-stage-foreground/10 text-stage-foreground hover:bg-stage-foreground/20"
+              leftIcon={<Plus size={16} />}
+            >
+              Start new run
+            </Button>
+            <Button
+              variant="ghost"
+              fullWidth
+              onClick={onBack}
+              className="text-stage-foreground hover:bg-stage-foreground/10"
+              leftIcon={<ArrowLeft size={16} />}
+            >
+              Back to Run
+            </Button>
+            <Button
+              variant="ghost"
+              fullWidth
+              onClick={() => setPendingAction("discard")}
+              className="text-stage-muted hover:bg-stage-foreground/10"
+              leftIcon={<Trash2 size={14} />}
+            >
+              Discard previous run
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
     </Dialog>
   );
 }
