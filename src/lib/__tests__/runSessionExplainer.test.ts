@@ -8,11 +8,7 @@
  * no physiology-measurement claims, no safety promises.
  */
 import { describe, it, expect } from "vitest";
-import { getPhaseForWeek } from "@/features/program/runScheduler";
-import {
-  runSessionExplainer,
-  runSessionPresentation,
-} from "../runSessionExplainer";
+import { runSessionExplainer } from "../runSessionExplainer";
 
 const base = {
   currentWeek: 2,
@@ -111,52 +107,5 @@ describe("runSessionExplainer", () => {
       expect(line).not.toMatch(/readiness|recovery score|safe(ly|ty)?\b/i);
       expect(line).not.toMatch(/VO2|lactate|MRV/i);
     }
-  });
-});
-
-describe("shared run purpose presentation", () => {
-  it.each([0, 2, 9, 13, 15])(
-    "preserves the Manage explanation and engine phase at week %s",
-    (currentWeek) => {
-      const input = {
-        ...base,
-        currentWeek,
-        type: "easy",
-        templateId: "easy_30",
-      };
-      const result = runSessionPresentation(input);
-      expect(result.purpose).toBe(runSessionExplainer(input));
-      const phase = getPhaseForWeek(
-        currentWeek,
-        base.totalWeeks,
-        base.distance
-      );
-      expect(result.weekLabel).toBe(
-        `${phase[0].toUpperCase() + phase.slice(1)} · week ${currentWeek + 1} of 16`
-      );
-    }
-  );
-  it.each([-1, 16, NaN, Infinity, 1.5])(
-    "does not invent a phase for invalid week %s",
-    (currentWeek) => {
-      expect(
-        runSessionPresentation({
-          ...base,
-          currentWeek,
-          type: "easy",
-          templateId: "easy_30",
-        })
-      ).toEqual({ purpose: null, weekLabel: null });
-    }
-  );
-  it("omits unsupported race distances", () => {
-    expect(
-      runSessionPresentation({
-        ...base,
-        distance: "ultra",
-        type: "easy",
-        templateId: "easy_30",
-      }).purpose
-    ).toBeNull();
   });
 });

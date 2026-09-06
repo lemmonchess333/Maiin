@@ -241,9 +241,7 @@ describe("TrainingBlockCard (Blk2) — the active block", () => {
   it("labels the row by focus and counts BLOCK weeks", () => {
     renderCard({ block: activeBlock() });
     expect(screen.getByText(/Get stronger/)).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /Week 1 of 12 · Get stronger/ })
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Block week/)).toBeInTheDocument();
   });
 
   it("claims no prescription for an adopted legacy block", () => {

@@ -1,4 +1,3 @@
-import InlineNumerals from "@/components/ui/InlineNumerals";
 /**
  * SessionCommandCard — the Programme Run cockpit's "what do I do next"
  * command surface.
@@ -90,9 +89,14 @@ export default function SessionCommandCard({
             <SectionLabel tier="section" className={accentText}>
               {eyebrow}
             </SectionLabel>
-            <h3 className="text-xl font-extrabold leading-tight text-foreground">
+            <h3 className="text-xl font-extrabold leading-tight text-foreground truncate">
               {title}
             </h3>
+            {description && (
+              <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                {description}
+              </p>
+            )}
           </div>
           {onManage && (
             <IconButton
@@ -106,11 +110,6 @@ export default function SessionCommandCard({
           )}
         </div>
 
-        {description && (
-          <p className="text-sm text-muted-foreground">
-            <InlineNumerals>{description}</InlineNumerals>
-          </p>
-        )}
         {meta.length > 0 && <MetaLine items={meta} />}
 
         {primaryActionLabel && onPrimaryAction && (

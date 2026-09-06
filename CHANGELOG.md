@@ -8,10 +8,6 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- Planned lift and run cards explain today’s session from programme state. Home,
-  the lift week row, and the training block share one week-and-focus label.
-  Nutrition phase no longer appears in the lift week row.
-
 - **Readability pass across the whole app.** Secondary text is slightly
   darker in light mode and slightly brighter in dark mode, tuned so every
   caption clears accessibility contrast on the surface it actually sits

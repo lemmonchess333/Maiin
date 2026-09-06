@@ -1,4 +1,3 @@
-import InlineNumerals from "@/components/ui/InlineNumerals";
 import {
   useState,
   useEffect,
@@ -26,12 +25,7 @@ import {
 
 import { useSubscription } from "@/lib/subscription";
 import { useProgram } from "@/features/program/useProgram";
-import {
-  liftSessionExplainer,
-  liftWeekLabel,
-} from "@/lib/liftSessionExplainer";
-import { runSessionPresentation } from "@/lib/runSessionExplainer";
-import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { primaryGoalLabel } from "@/features/program/programEngine";
 import { getExerciseById } from "@/lib/exercises";
 import { useWeeklyDayMap } from "@/hooks/useFirestore";
 import { BadgeEarnedModal } from "@/features/streaks/BadgeEarnedModal";
@@ -576,28 +570,6 @@ export default function Home() {
   // returns null when today isn't a lift/both day or the schedule
   // has drifted past workouts[].length.
   const nextWorkout = resolvedToday.lift.workout;
-  const liftPurpose = liftSessionExplainer(
-    programState,
-    localDateString(),
-    "full",
-    nextWorkout?.exercises.map((ex) => ex.progressionType)
-  );
-  const plannedRun = resolvedToday.run.runDay;
-  const purposeTemplate = RUN_TEMPLATES.find(
-    (t) => t.id === (plannedRun?.userOverride ?? plannedRun?.templateId)
-  );
-  const runPresentation =
-    purposeTemplate && profile?.runMode !== "freeform"
-      ? runSessionPresentation({
-          type: purposeTemplate.type,
-          templateId: purposeTemplate.id,
-          currentWeek: programState?.runPlan?.currentWeek,
-          totalWeeks: programState?.runPlan?.totalWeeks,
-          distance:
-            programState?.runPlan?.raceGoal?.distance ??
-            profile?.raceGoal?.distance,
-        })
-      : { purpose: null, weekLabel: null };
   const muscleGroups = useMemo(
     function () {
       if (!nextWorkout) return "";
@@ -652,9 +624,18 @@ export default function Home() {
             </h1>
             {programState && (
               <span className="text-xs font-medium text-muted-foreground mt-0.5">
-                <InlineNumerals>
-                  {liftWeekLabel(programState, localDateString()) ?? ""}
-                </InlineNumerals>
+                {/* LIFT-EV-02 (owner decision 2026-08-09): the phase label
+                    derives from the PRIMARY GOAL, with the deload lifecycle
+                    state overriding — the raw currentPhase string told every
+                    fresh plan "Hypertrophy phase" regardless of goal, and
+                    "progression phase" thereafter. */}
+                {"Week " +
+                  programState.weekNumber +
+                  " · " +
+                  (programState.currentPhase === "deload"
+                    ? "Deload"
+                    : primaryGoalLabel(programState.primaryGoal)) +
+                  " phase"}
               </span>
             )}
           </div>
@@ -1154,9 +1135,6 @@ export default function Home() {
               <SectionErrorBoundary sectionName="quick-actions">
                 <StackedCTACards
                   nextWorkout={nextWorkout}
-                  liftPurpose={liftPurpose}
-                  runPurpose={runPresentation.purpose}
-                  runWeekLabel={runPresentation.weekLabel}
                   liftDayIndex={resolvedToday.lift.index}
                   liftStartable={resolvedToday.lift.isStartable}
                   todayType={todayType}
