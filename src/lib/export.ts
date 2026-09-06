@@ -1,4 +1,5 @@
 import { collection, query, orderBy, getDocs } from "firebase/firestore";
+import { isActiveMealDoc } from "@/lib/mealTotals";
 import { db } from "@/lib/firebase";
 
 export async function exportWorkoutsCSV(uid: string): Promise<string> {
@@ -47,6 +48,10 @@ export async function exportMealsCSV(uid: string): Promise<string> {
 
   snap.docs.forEach((docSnap) => {
     const m = docSnap.data();
+    // Soft-deleted meals (Recently Deleted, 24 h window) are not part of
+    // the diary the totals, review and scoring show — the export said
+    // otherwise until 2026-09-06.
+    if (!isActiveMealDoc(m)) return;
     const date =
       m.date || (m.createdAt?.toDate?.()?.toISOString?.()?.split("T")[0] ?? "");
     rows.push(

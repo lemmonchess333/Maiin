@@ -2884,6 +2884,9 @@ async function maybeSendStreakNudge(uid, now) {
       meals: mealsSnap.docs.map((d) => ({
         date: d.data().date,
         items: d.data().items,
+        // Soft-deleted meals ride along so activeDates can skip them, as
+        // the client does at its snapshot boundary.
+        deletedAt: d.data().deletedAt,
       })),
     },
     timezone
