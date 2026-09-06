@@ -998,8 +998,8 @@ export default function ProgrammeSettings({
             <div>
               <p className="text-sm text-foreground">Microloading</p>
               <p className="text-xs text-muted-foreground">
-                Use ½ kg jumps on smaller lifts so progression keeps moving past
-                stalls
+                Add 1 kg every session you complete at the prescribed load,
+                instead of 2.5 kg only after a 2-rep overshoot
               </p>
             </div>
             <Toggle

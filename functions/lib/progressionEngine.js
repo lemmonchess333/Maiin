@@ -90,6 +90,9 @@ function dateStampUTC(now) {
  * @param {number} [now] - ms timestamp for the history date stamp
  * @returns {object} next ProgramExercise
  */
+/** Lift2 mirror of programEngine.ts USER_LOAD_ANCHOR_STEPS. */
+const USER_LOAD_ANCHOR_STEPS = 4;
+
 function applyProgression(
   exercise,
   actualReps,
@@ -151,6 +154,17 @@ function applyProgression(
   );
   const loadStep = microplate ? MICROPLATE_STEP : PLATE_PAIR_STEP;
   const loadBonus = microplate ? 0 : goalWeightBonus(goal);
+  // Lift2 mirror — lighter + reps hit HOLDS (no failure, no cut); heavier +
+  // reps hit re-anchors within USER_LOAD_ANCHOR_STEPS. See programEngine.ts.
+  if (!isBodyweight && actualReps >= exercise.reps && actualWeight < exercise.weight) {
+    return { ...updated, lastSuccessfulWeight: actualWeight };
+  }
+  const anchor =
+    !isBodyweight &&
+    actualWeight > exercise.weight &&
+    actualWeight <= exercise.weight + USER_LOAD_ANCHOR_STEPS * loadStep
+      ? actualWeight
+      : exercise.weight;
   // Backlog #7's time axis (N2) — mirror; see programEngine.ts for why the
   // rep cap is meaningless for a hold that starts above it.
   const isTimed = exercise.repUnit === "seconds";
@@ -179,6 +193,7 @@ function applyProgression(
 
   if (exercise.progressionType === "double") {
     if (completed) {
+      if (anchor > exercise.weight) updated.weight = anchor;
       // Authored ceiling, or the one the legacy arm below already implies.
       // Mirror of the client branch — without the fallback a range-less
       // double never progresses for a lifter who hits the prescription.
@@ -205,7 +220,7 @@ function applyProgression(
         // see programEngine.ts for the full rationale.
         if (rpeOk) {
           if (actualReps >= rangeMax) {
-            updated.weight = exercise.weight + loadStep + loadBonus;
+            updated.weight = anchor + loadStep + loadBonus;
             updated.reps = resetReps;
           } else {
             updated.reps = Math.min(rangeMax, actualReps + 1);
@@ -215,7 +230,7 @@ function applyProgression(
         if (isBodyweight) {
           bumpBodyweightReps();
         } else {
-          updated.weight = exercise.weight + loadStep + loadBonus;
+          updated.weight = anchor + loadStep + loadBonus;
           updated.reps = resetReps;
         }
       }
@@ -241,6 +256,7 @@ function applyProgression(
     }
   } else {
     if (completed) {
+      if (anchor > exercise.weight) updated.weight = anchor;
       if (isBodyweight) {
         const rangeMax = exercise.repRangeMax;
         if (rangeMax != null && rangeMax > resetReps) {
@@ -259,11 +275,11 @@ function applyProgression(
           bumpBodyweightReps();
         }
       } else if (microloading && rpeOk) {
-        updated.weight = exercise.weight + 1;
+        updated.weight = anchor + 1;
       } else {
         if (actualReps >= exercise.reps + 2 && rpeOk) {
           // No goal bonus on the linear path — pre-#7 behaviour, kept.
-          updated.weight = exercise.weight + loadStep;
+          updated.weight = anchor + loadStep;
           updated.reps = resetReps;
         }
       }
@@ -292,6 +308,7 @@ function applyProgression(
 
 module.exports = {
   applyProgression,
+  USER_LOAD_ANCHOR_STEPS,
   dateStampUTC,
   goalWeightBonus,
   PERFORMANCE_HISTORY_CAP,
