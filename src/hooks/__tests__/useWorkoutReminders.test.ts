@@ -401,3 +401,25 @@ describe("the last reschedule pass wins", () => {
     expect(landed).not.toContain(ID(6));
   });
 });
+
+it("moves today's completed session reminder to next week", async () => {
+  seedFirestore({ [PATH]: { ...ON, time: "18:00" } });
+  const activity = {
+    ready: true,
+    dateKey: "2026-07-15",
+    meals: [],
+    workout: false,
+  };
+  const { result, rerender } = renderHook(
+    ({ activity }) => useWorkoutRemindersInternal(activity),
+    { initialProps: { activity } }
+  );
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  await waitFor(() => expect(scheduledIds().length).toBe(5));
+  expect(scheduledAt(2004)?.scheduleAt?.getDate()).toBe(15);
+  rerender({ activity: { ...activity, workout: true } });
+  await act(async () => {
+    await settleNotifications();
+  });
+  expect(scheduledAt(2004)?.scheduleAt?.getDate()).toBe(22);
+});
