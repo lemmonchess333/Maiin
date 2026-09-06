@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- Food shows your usual meal without focusing the composer, remembers portions and meal slots, previews copies, and queues offline entries with a five-second Undo. Examples prefill the composer without logging.
+
 - **Readability pass across the whole app.** Secondary text is slightly
   darker in light mode and slightly brighter in dark mode, tuned so every
   caption clears accessibility contrast on the surface it actually sits

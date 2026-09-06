@@ -32,6 +32,7 @@
 
 import {
   addDoc as fbAddDoc,
+  doc,
   deleteDoc as fbDeleteDoc,
   setDoc as fbSetDoc,
   updateDoc as fbUpdateDoc,
@@ -42,13 +43,21 @@ import {
   type UpdateData,
   type WithFieldValue,
 } from "firebase/firestore";
+import { queueDurableWrite, flushQueue } from "@/lib/offlineQueue";
 import { stripUndefined } from "@/lib/firestoreGuards";
 
 /** `addDoc` with the payload stripped of `undefined`. */
 export function addDocGuarded<T extends DocumentData>(
   reference: CollectionReference<T>,
-  data: WithFieldValue<T>
+  data: WithFieldValue<T>,
+  queued?: { uid: string; id?: string }
 ): Promise<DocumentReference<T>> {
+  if (queued) {
+    const ref = queued.id ? doc(reference, queued.id) : doc(reference);
+    queueDurableWrite(queued.uid, reference.path, ref.id, data);
+    void flushQueue(reference.firestore, queued.uid).catch(() => {});
+    return Promise.resolve(ref);
+  }
   return fbAddDoc(reference, stripUndefined(data));
 }
 
