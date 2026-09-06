@@ -8,7 +8,14 @@
  * still advances to the preview (the removed `keep` branch didn't gate it).
  */
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, cleanup, fireEvent } from "@testing-library/react";
+import {
+  act,
+  render,
+  screen,
+  cleanup,
+  fireEvent,
+  waitFor,
+} from "@testing-library/react";
 import AdjustWeekSheet from "../AdjustWeekSheet";
 import { getEasedWeekKey, setEasedWeekKey } from "@/lib/easeWeekNudgeMarkers";
 import { localWeekKey } from "@/lib/dateHelpers";
@@ -100,18 +107,20 @@ function openEaser(props: {
   ) => Promise<number | null>;
   revertEaseWeek?: () => Promise<{ ok: boolean; message?: string }>;
   easedThisWeek?: boolean;
+  onClose?: () => void;
+  realignRacePlan?: () => Promise<{ timing: "healthy"; totalWeeks: number }>;
 }) {
   render(
     <AdjustWeekSheet
       open
-      onClose={vi.fn()}
+      onClose={props.onClose ?? vi.fn()}
       runDays={RUN_DAYS}
       raceGoal={{ distance: "marathon", targetDate: "2999-10-17" }}
       applyEaseWeek={props.applyEaseWeek ?? vi.fn(async () => 2)}
       revertEaseWeek={props.revertEaseWeek ?? vi.fn(async () => ({ ok: true }))}
       easedThisWeek={props.easedThisWeek}
       uid={UID}
-      realignRacePlan={vi.fn()}
+      realignRacePlan={props.realignRacePlan ?? vi.fn()}
     />
   );
 }
@@ -210,6 +219,120 @@ describe("AdjustWeekSheet — applying an easier week reports the truth", () => 
     const { toast } = await import("@/lib/toast");
     await vi.waitFor(() => expect(toast.error).toHaveBeenCalled());
     expect(toast.success).not.toHaveBeenCalled();
+  });
+});
+
+describe("AdjustWeekSheet — pending changes", () => {
+  function deferred<T>() {
+    let resolve!: (value: T) => void;
+    const promise = new Promise<T>((done) => {
+      resolve = done;
+    });
+    return { promise, resolve };
+  }
+
+  it("shows saving progress and prevents navigating to another adjustment", async () => {
+    const request = deferred<number | null>();
+    const applyEaseWeek = vi.fn(() => request.promise);
+    const onClose = vi.fn();
+    openEaser({ applyEaseWeek, onClose });
+    fireEvent.click(
+      screen.getByRole("button", { name: /I need easier running/ })
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Ease this week/ }));
+    expect(screen.getByRole("status")).toHaveTextContent("Saving changes…");
+    expect(screen.getByRole("button", { name: "Back" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: /Ease this week/ }));
+    expect(applyEaseWeek).toHaveBeenCalledTimes(1);
+    expect(onClose).not.toHaveBeenCalled();
+    await act(async () => request.resolve(null));
+    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.getByRole("button", { name: "Back" })).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: /Ease this week/ })
+    ).toBeEnabled();
+  });
+
+  it("blocks other adjustments during Undo and releases them on refusal", async () => {
+    const request = deferred<{ ok: boolean }>();
+    openEaser({ easedThisWeek: true, revertEaseWeek: () => request.promise });
+    fireEvent.click(screen.getByRole("button", { name: /Undo easier week/ }));
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Restoring your week…"
+    );
+    expect(
+      screen.getByRole("button", { name: /My week is crowded/ })
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /I need easier running/ })
+    ).toBeDisabled();
+    await act(async () => request.resolve({ ok: false }));
+    expect(
+      screen.getByRole("button", { name: /My week is crowded/ })
+    ).toBeEnabled();
+  });
+
+  it("does not repeat Undo through an older toast callback while restoring", async () => {
+    const request = deferred<{ ok: boolean }>();
+    const revertEaseWeek = vi.fn(() => request.promise);
+    openEaser({ revertEaseWeek });
+    fireEvent.click(
+      screen.getByRole("button", { name: /I need easier running/ })
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Ease this week/ }));
+    const { toast } = await import("@/lib/toast");
+    await vi.waitFor(() => expect(toast.success).toHaveBeenCalled());
+    const options = (toast.success as ReturnType<typeof vi.fn>).mock
+      .calls[0][1];
+    const undo = options.action.onClick as () => void;
+    act(() => {
+      undo();
+      undo();
+    });
+    expect(revertEaseWeek).toHaveBeenCalledTimes(1);
+    await act(async () => request.resolve({ ok: false }));
+  });
+
+  it("recovers from an unexpected Undo rejection and allows a retry", async () => {
+    const revertEaseWeek = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("Connection interrupted"))
+      .mockResolvedValueOnce({ ok: true });
+    const onClose = vi.fn();
+    setEasedWeekKey(UID, localWeekKey(new Date()));
+    openEaser({ easedThisWeek: true, revertEaseWeek, onClose });
+    fireEvent.click(screen.getByRole("button", { name: /Undo easier week/ }));
+    const { toast } = await import("@/lib/toast");
+    await vi.waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "Couldn't undo the easier week. Try again."
+      )
+    );
+    expect(getEasedWeekKey(UID)).not.toBeNull();
+    expect(onClose).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: /Undo easier week/ })
+      ).toBeEnabled()
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Undo easier week/ }));
+    await vi.waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
+    expect(revertEaseWeek).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps the re-plan preview stable until the request completes", async () => {
+    const request = deferred<{ timing: "healthy"; totalWeeks: number }>();
+    const onClose = vi.fn();
+    openEaser({ realignRacePlan: () => request.promise, onClose });
+    fireEvent.click(screen.getByRole("button", { name: /My week is crowded/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Re-plan from today" }));
+    expect(screen.getByRole("button", { name: "Back" })).toBeDisabled();
+    expect(screen.getByRole("status")).toHaveTextContent("Saving changes…");
+    await act(async () =>
+      request.resolve({ timing: "healthy", totalWeeks: 12 })
+    );
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("status")).toBeNull();
   });
 });
 
