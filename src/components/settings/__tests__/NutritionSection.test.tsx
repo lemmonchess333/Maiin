@@ -4,6 +4,8 @@
  * the old bespoke purple-outline pills — and that picking a pace writes the
  * rate. Render-level (jsdom), no Firebase emulator.
  */
+import { useState } from "react";
+import { lbToKg } from "@/lib/weightUnits";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
@@ -446,6 +448,16 @@ describe("NutritionSection — target drift notice", () => {
     expect(notice.textContent).toContain("-0.50 kg/wk"); // what was picked
   });
 
+  it("uses pounds for both drift paces and the recalculation action", () => {
+    renderDrift({ preferredWeightUnit: "lbs" });
+    const notice = screen.getByText(/Your body has changed since this target/);
+    expect(notice.textContent).toContain("-0.73 lb/wk");
+    expect(notice.textContent).toContain("-1.10 lb/wk");
+    expect(
+      screen.getByRole("button", { name: "Recalculate for 172.0 lb" })
+    ).toBeInTheDocument();
+  });
+
   it("offers a recalculation that fires the owner's persist recipe", () => {
     /* The button must not write targets itself — SettingsNutrition owns the
        payload, so a recalculation and an ordinary edit cannot drift apart. */
@@ -602,4 +614,88 @@ describe("NutritionSection — manual target naming and the infeasible notice", 
     renderWith({}, DEFAULT_TDEE);
     expect(screen.queryByText(/essential fat alone exceeds/)).toBeNull();
   });
+});
+
+describe("NutritionSection — body-weight units", () => {
+  function setup(unit: "kg" | "lbs", initialKg = 76.5) {
+    const onGoal = vi.fn();
+    const onRate = vi.fn();
+    function Harness() {
+      const [goalWeightKg, setGoal] = useState(initialKg);
+      return (
+        <NutritionSection
+          profile={
+            { uid: "unit-test", preferredWeightUnit: unit } as UserProfile
+          }
+          age={25}
+          setAge={vi.fn()}
+          activityLevel="moderate"
+          setActivityLevel={vi.fn()}
+          currentKg={75}
+          goalWeightKg={goalWeightKg}
+          setGoalWeightKg={(kg) => {
+            onGoal(kg);
+            setGoal(kg);
+          }}
+          weeklyRateKg={0.5}
+          setWeeklyRateKg={onRate}
+          goalPlan={goalPlan}
+          tdee={DEFAULT_TDEE}
+          updateProfile={vi.fn(
+            async () => ({ ok: true }) as UpdateProfileResult
+          )}
+          inline
+        />
+      );
+    }
+    const view = render(<Harness />);
+    return { ...view, onGoal, onRate };
+  }
+
+  it("displays pounds and converts a one-pound goal edit back to kilograms", () => {
+    const { onGoal, onRate } = setup("lbs");
+    expect(screen.getByText("165.3")).toBeInTheDocument();
+    expect(screen.getByText("168.7")).toBeInTheDocument();
+    expect(screen.getByText("lb target")).toBeInTheDocument();
+    expect(
+      screen.getByRole("radio", { name: /Steady 1.10 lb\/wk/ })
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Raise goal weight" }));
+    expect(screen.getByText("169.7")).toBeInTheDocument();
+    expect(onGoal).toHaveBeenLastCalledWith(lbToKg(169.7));
+    fireEvent.click(screen.getByRole("button", { name: "Lower goal weight" }));
+    expect(screen.getByText("168.7")).toBeInTheDocument();
+    expect(onGoal).toHaveBeenLastCalledWith(lbToKg(168.7));
+    fireEvent.click(screen.getByRole("radio", { name: /Fast 1.65 lb\/wk/ }));
+    expect(onRate).toHaveBeenCalledWith(0.75);
+  });
+
+  it("preserves kilogram steps and the engine's existing pace choices", () => {
+    const { onGoal, onRate } = setup("kg");
+    expect(screen.getByText("75.0")).toBeInTheDocument();
+    expect(screen.getByText("kg target")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Raise goal weight" }));
+    expect(onGoal).toHaveBeenLastCalledWith(77);
+    fireEvent.click(screen.getByRole("button", { name: "Lower goal weight" }));
+    expect(onGoal).toHaveBeenLastCalledWith(76.5);
+    fireEvent.click(screen.getByRole("radio", { name: /Fast 0.75 kg\/wk/ }));
+    expect(onRate).toHaveBeenCalledWith(0.75);
+  });
+
+  it.each(["kg", "lbs"] as const)(
+    "keeps the stored goal in bounds when editing in %s",
+    (unit) => {
+      const lower = setup(unit, 30);
+      fireEvent.click(
+        screen.getByRole("button", { name: "Lower goal weight" })
+      );
+      expect(lower.onGoal).toHaveBeenLastCalledWith(30);
+      lower.unmount();
+      const upper = setup(unit, 250);
+      fireEvent.click(
+        screen.getByRole("button", { name: "Raise goal weight" })
+      );
+      expect(upper.onGoal).toHaveBeenLastCalledWith(250);
+    }
+  );
 });

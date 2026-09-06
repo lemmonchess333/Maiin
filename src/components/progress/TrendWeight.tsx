@@ -10,6 +10,7 @@ import {
   deriveGoalWeightKg,
   projectGoalDate,
 } from "@/utils/weightTrend";
+import { formatWeightInUnit } from "@/lib/weightUnits";
 import { THEME } from "@/lib/theme";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import {
@@ -60,7 +61,7 @@ export function TrendWeight() {
   const hideNumber = !!profile?.hideWeightNumber;
   const convert = (v: number) => {
     if (!Number.isFinite(v)) return 0;
-    return Math.round(v * (unit === "lbs" ? 2.205 : 1) * 10) / 10;
+    return Number(formatWeightInUnit(v, unit));
   };
 
   // Single entry: show simple display instead of chart

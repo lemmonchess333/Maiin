@@ -60,7 +60,12 @@ export default function UnitsAppearanceSection({
         >
           <div className="flex items-center gap-3">
             <Weight className="size-5" />
-            <span>Weight Unit</span>
+            <div className="text-left">
+              <span>Body weight unit</span>
+              <p className="text-xs text-muted-foreground">
+                Weigh-ins, goal weight and weekly pace. Lifting loads use kg.
+              </p>
+            </div>
           </div>
           <span className="font-medium">
             {profile.preferredWeightUnit.toUpperCase()}
