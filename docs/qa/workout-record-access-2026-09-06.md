@@ -29,6 +29,29 @@ deployment.
 - `git diff --check` passed.
 - New list still needs a fresh light/dark browser review before deployment.
 
+### Local verification failure repairs
+
+Reproduced all four failures before these repairs (85 passed, four failed in
+the affected suites). The two calendar suites alone passed in UTC, confirming
+their fixture assumptions were timezone-sensitive.
+
+- The leaderboard and performance subprocess tests now use Node's `tsx` loader
+  directly. They still import and test the real functions in isolated timezones,
+  but no longer start the CLI's unnecessary IPC socket.
+- Personal trajectory fixtures now express the same local-calendar timestamps
+  that the production weekly windows use. The one-hour-before-boundary check
+  remains; an additional test pins inclusive start and exclusive end boundaries.
+- The layoff journey's date-only fixture arithmetic now consistently uses UTC
+  getters/setters and formatting. Previously local midnight formatted as UTC
+  caused a +1-day increment to repeat the same date in positive-offset zones.
+  Added explicit day/month/DST-boundary fixture checks.
+- Affected suites: 91 passed in each of UTC, Europe/London, America/New_York and
+  Asia/Kolkata. No tests skipped or original assertions removed by this fix.
+- Full `npm run verify` after repairs: lint passed (0 errors, 99 warnings),
+  build passed, **8,003 tests passed, zero failed, 341 existing skips**.
+
+These are test setup corrections, not changes to training or scoring policy.
+
 ## Completed-set correction investigation
 
 The current data flow does not support a safe generic `editWorkout` operation:
