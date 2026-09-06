@@ -13,7 +13,8 @@ import { saveFoodPhoto } from "@/lib/foodPhotoStore";
 import { invalidateFoodPhotoCache } from "@/hooks/useFoodPhotoUrls";
 import { db } from "@/lib/firebase";
 import { useUid } from "@/lib/auth";
-import { safeNum, parseServingGrams, round1 } from "@/lib/foodParseHelpers";
+import { offProductToPortion } from "@/lib/offNutrition";
+import { safeNum } from "@/lib/foodParseHelpers";
 import { toast } from "@/lib/toast";
 import { haptic } from "@/lib/haptic";
 import { isPhotoShareSupported, sharePhotoToLibrary } from "@/lib/sharePhoto";
@@ -74,9 +75,6 @@ type MealResult = {
   brand?: string;
 };
 
-/* safeNum / parseServingGrams / round1 extracted to
-   `@/lib/foodParseHelpers` so they can be tested in isolation. */
-
 async function fetchOpenFoodFacts(barcode: string): Promise<MealResult> {
   const url =
     `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}.json` +
@@ -93,45 +91,20 @@ async function fetchOpenFoodFacts(barcode: string): Promise<MealResult> {
     throw new Error("Barcode not found. Log it manually instead.");
   }
 
-  const p = data.product;
-  const name: string = (p.product_name || "").trim() || "Barcode item";
-  const brand: string = (p.brands || "").trim();
-
-  const nutr = p.nutriments || {};
-  const pro100 = safeNum(nutr["proteins_100g"]);
-  const carb100 = safeNum(nutr["carbohydrates_100g"]);
-  const fat100 = safeNum(nutr["fat_100g"]);
-
-  const servingSize: string = (p.serving_size || "").trim();
-  const servingGrams = parseServingGrams(servingSize);
-  const portionGrams = servingGrams ?? 100;
-
-  const factor = portionGrams / 100;
-
-  const protein = round1(pro100 * factor);
-  const carbs = round1(carb100 * factor);
-  const fat = round1(fat100 * factor);
-
-  // Calories: only OFF's per-100g energy is safe to scale by portionGrams/100.
-  // The bare `energy-kcal` field is frequently per-SERVING, so scaling it as
-  // per-100g under-based the calories (~3× off) while the macros — which read
-  // only *_100g — stayed correct, leaving calories and macros disagreeing. Drop
-  // the ambiguous fallback: when _100g energy is absent, derive calories from
-  // the (already per-portion) macros via Atwater so the two always agree.
-  const kcal100 = safeNum(nutr["energy-kcal_100g"]);
-  const calories = Math.round(
-    kcal100 > 0 ? kcal100 * factor : 4 * protein + 4 * carbs + 9 * fat
-  );
+  // One converter for OFF data, shared with the Food search results —
+  // see src/lib/offNutrition.ts for the per-100 g → per-serving contract.
+  const portion = offProductToPortion(data.product, "Barcode item");
+  const { name, brand, calories, protein, carbs, fat } = portion;
 
   return {
     foodName: name,
     brand,
     barcode,
-    imageUrl: p.image_url || undefined,
+    imageUrl: data.product.image_url || undefined,
     items: [
       {
         name: brand ? `${name} (${brand})` : name,
-        portionSize: servingGrams ? servingSize : `${portionGrams}g`,
+        portionSize: portion.servingSize,
         calories,
         protein,
         carbs,
