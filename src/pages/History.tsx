@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/Button";
 import EmptyState from "@/components/ui/EmptyState";
 import PeriodOverview from "@/components/analytics/PeriodOverview";
 import StatCard from "@/components/analytics/StatCard";
+import WorkoutHistoryList from "@/components/workout/WorkoutHistoryList";
 import SectionEmptyCTA from "@/components/analytics/SectionEmptyCTA";
 import RacePredictionsCard from "@/components/analytics/RacePredictionsCard";
 import TrainingLoadCard from "@/components/analytics/TrainingLoadCard";
@@ -511,14 +512,10 @@ export default function History() {
   // Uses unfiltered workouts/meals (both hooks return everything) plus
   // a one-shot lifetime run query so pre-window runs aren't excluded.
   const lifetimeTotals = useMemo(() => {
-    let liftVolume = 0;
-    workouts.forEach((w) => {
-      w.exercises?.forEach((ex) => {
-        ex.sets?.forEach((set) => {
-          liftVolume += (set.weightKg || 0) * (set.reps || 0);
-        });
-      });
-    });
+    const liftVolume = workouts.reduce(
+      (sum, workout) => sum + workoutTonnageKg(workout),
+      0
+    );
     const daysLogged = new Set(meals.map((m) => m.date)).size;
     return {
       runCount: lifetimeRuns.runCount,
@@ -1526,6 +1523,10 @@ export default function History() {
                   </>
                 )}
               </section>
+            )}
+
+            {filter === "analytics" && !workoutsLoading && (
+              <WorkoutHistoryList workouts={workouts} />
             )}
 
             {showNutritionSection && filter === "analytics" && (
