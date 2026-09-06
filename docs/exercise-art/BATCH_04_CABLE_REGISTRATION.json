@@ -1,0 +1,56 @@
+{
+  "releaseApproved": false,
+  "master": "pilots/lat-pulldown/1-stack-corrected.png",
+  "masterSha256": "a90cd7dc1f880e1172db9f40d285f12b317b43537f884ad2ba607890ba27ca68",
+  "ratio": "1:1 fixed-pulley routing",
+  "method": "Fixed master right machine and four-plate packet; consistent code-drawn guides, support and cable. No athlete changes.",
+  "limitations": [
+    "Guide attachment and connector style require visual review.",
+    "Handle travel is measured approximately from artwork.",
+    "Movement sequence remains incomplete; numeric travel alone is not approval."
+  ],
+  "states": [
+    {
+      "input": "pilots/lat-pulldown/1-stack-corrected.png",
+      "inputSha256": "a90cd7dc1f880e1172db9f40d285f12b317b43537f884ad2ba607890ba27ca68",
+      "output": "pilots/lat-pulldown/1-machine-registered.png",
+      "outputSha256": "293d19a7545c43bf4d2a70ac2f99e53031e4295e467a34ac5b8ca1d26b6dd83a",
+      "bytes": 1271870,
+      "handleDownPx": 0,
+      "selectedPacketUpPx": 0,
+      "packetBounds": [
+        784,
+        745,
+        919,
+        849
+      ],
+      "fixedBlockBounds": [
+        784,
+        890,
+        919,
+        1198
+      ]
+    },
+    {
+      "input": "pilots/lat-pulldown/2-early.png",
+      "inputSha256": "8464ff2610359879d19e2e4fc8f95e25ca48fadb004e26f1d8a7b6bb30949cff",
+      "output": "pilots/lat-pulldown/2-machine-registered.png",
+      "outputSha256": "a723c9a6a2816d5a163401c9a815c159b6d60f1c1d5a31f6fc3bb92437dd6847",
+      "bytes": 1298792,
+      "handleDownPx": 136,
+      "selectedPacketUpPx": 136,
+      "packetBounds": [
+        784,
+        609,
+        919,
+        713
+      ],
+      "fixedBlockBounds": [
+        784,
+        890,
+        919,
+        1198
+      ]
+    }
+  ]
+}

@@ -9,12 +9,12 @@ branch rebuilds that work on top of the newer app fixes.
 - Catalogue: 152 exercises; 141 non-cardio exercises in this migration.
 - Previously shipped: seven six-frame sets, 42 WebP images, 3,483,250 bytes.
 - Newly approved replacement sets: **zero**.
-- New work: nine complete six-slot **draft** sequences, outside `public/`:
+- New work: ten complete six-slot **draft** sequences, outside `public/`:
   dumbbell curl, hammer curl, front raise, goblet squat, push-ups, barbell
-  back squat, barbell curl, dumbbell bench press and bodyweight squat.
-- Lat pulldown, deadlift and barbell shrug have rejected incomplete pilots.
-- `BATCH_REVIEW_MANIFEST.json` records the eight newer sets; see
-  `BATCH_REVIEW.md` and `BATCH_03_REVIEW.md` for candid review findings.
+  back squat, barbell curl, dumbbell bench press, bodyweight squat and conventional deadlift.
+- Lat pulldown and barbell shrug have rejected incomplete pilots.
+- `BATCH_REVIEW_MANIFEST.json` records the nine newer sets; see
+  `BATCH_REVIEW.md`, `BATCH_03_REVIEW.md` and `BATCH_04_REVIEW.md` for candid review findings.
 - Original squat/cable pilot files were not recovered. Their earlier rejection
   notes are retained in `REVIEW_NOTES.md`; they are not released or counted.
 
@@ -59,7 +59,7 @@ written movement plan has been checked, not that any generated image is approved
 ## Review the draft
 
 `e2e/fixtures/form-art.html` mounts the real player without login or Firebase.
-Its selector includes the seven existing sets and all nine drafts; both themes,
+Its selector includes the seven existing sets and all ten drafts; both themes,
 manual cues and the newer sets' recorded findings are available. Batch frame
 selection and cues come directly from the review manifest, avoiding a second
 hand-maintained file list. Changing exercises resets the active cue. Run

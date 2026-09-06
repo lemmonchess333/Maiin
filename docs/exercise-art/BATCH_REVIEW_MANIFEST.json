@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "batch": "2026-09-06-batch-02",
+  "batch": "2026-09-06-batch-04",
   "releaseApproved": false,
   "productionAssetsChanged": false,
-  "selectedFrameCount": 48,
+  "selectedFrameCount": 54,
   "completeDraftSets": [
     {
       "exerciseId": "hammer-curl",
@@ -804,8 +804,9 @@
         "stabilisers": "Subtle pale trunk/adductors; qualitative contribution."
       },
       "reviewFindings": [
-        "Original selected frames retain shoe bounds within1px; whole-body anatomy and depth still require review.",
-        "Original middle and bottom poses are close in depth. Better-spaced 3-mid-v2 moved soles up30\u201333px; 3-mid-registered still leaves soles10\u201313px high. Both replacements rejected."
+        "Middle and rising poses use a 32 px translation plus bounded master-shoe composites; original images preserved.",
+        "Shoe bounds match the master exactly. Full images and ankle crops inspected; small contour changes at blended ankle joins still require loop review.",
+        "Middle pose is better separated from bottom; body dimensions, technique, muscle treatment and mobile playback remain unapproved."
       ],
       "frames": [
         {
@@ -838,7 +839,7 @@
         },
         {
           "frame": 3,
-          "path": "docs/exercise-art/pilots/bodyweight-squat/3-mid.png",
+          "path": "docs/exercise-art/pilots/bodyweight-squat/3-mid-code-registered.png",
           "caption": "LOWER 3/6",
           "cue": "Keep knees following the direction of toes.",
           "progress": 0.6,
@@ -846,8 +847,8 @@
             1024,
             1536
           ],
-          "bytes": 770432,
-          "sha256": "6095934c4c5bf90a5e96bd6e815980fedcc60d7aeb779af7347157665fe948c2",
+          "bytes": 851828,
+          "sha256": "6d70200d29234203dd75c30e981403275dc408c91482758abd3d9d9ce1a0e8c2",
           "reusedFrom": null
         },
         {
@@ -866,7 +867,7 @@
         },
         {
           "frame": 5,
-          "path": "docs/exercise-art/pilots/bodyweight-squat/5-rise.png",
+          "path": "docs/exercise-art/pilots/bodyweight-squat/5-rise-code-registered.png",
           "caption": "DRIVE UP 5/6",
           "cue": "Raise hips and chest together under control.",
           "progress": 0.6,
@@ -874,8 +875,8 @@
             1024,
             1536
           ],
-          "bytes": 770432,
-          "sha256": "6095934c4c5bf90a5e96bd6e815980fedcc60d7aeb779af7347157665fe948c2",
+          "bytes": 851828,
+          "sha256": "6d70200d29234203dd75c30e981403275dc408c91482758abd3d9d9ce1a0e8c2",
           "reusedFrom": 3
         },
         {
@@ -893,6 +894,121 @@
           "reusedFrom": 2
         }
       ]
+    },
+    {
+      "exerciseId": "deadlift",
+      "status": "draft-awaiting-review",
+      "camera": "Fixed front three-quarter facing left; portrait",
+      "anchors": [
+        "both planted shoes",
+        "camera",
+        "bar dimensions and grip spacing"
+      ],
+      "equipment": "Straight barbell, double-overhand grip, one identical modest plate per side.",
+      "muscles": {
+        "primary": [
+          "glutes",
+          "hamstrings"
+        ],
+        "secondary": [
+          "quadriceps",
+          "spinal erectors"
+        ],
+        "stabilisers": "Subtle lats, abdominals and forearms; qualitative contribution, not measured activation."
+      },
+      "reviewFindings": [
+        "Six separate files from four distinct poses; return frames reuse corresponding lift poses.",
+        "Early pose translated down32px; knee pose left8px/down32px. No body or equipment resizing.",
+        "Lockout abdominal highlight reduced with a bounded colour-only mask; contours preserved.",
+        "Grip spacing, plate silhouette, head/limb dimensions and hip/knee mechanics still require full review.",
+        "Draft ladder differs from production authored cues; reconcile before release. No mobile light/dark playback approval."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/deadlift/1-master.png",
+          "caption": "SET AND BRACE 1/6",
+          "cue": "Brace with the bar over midfoot and arms straight.",
+          "progress": 0,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 849774,
+          "sha256": "7aa5f8608de303ded4054cf1a0b123de572ae7f00cb1e378c6facf58030d0107",
+          "reusedFrom": null
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/deadlift/2-early-code-registered.png",
+          "caption": "LIFT FROM FLOOR 2/6",
+          "cue": "Push through the floor; raise hips and chest together.",
+          "progress": 0.25,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1128732,
+          "sha256": "90af5b45ab8fdc710f9560cd4ff09c707518f8b728e416db1d8d116eff5beff2",
+          "reusedFrom": null
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/deadlift/3-knees-code-registered.png",
+          "caption": "PASS THE KNEES 3/6",
+          "cue": "Keep the bar close as you extend your hips.",
+          "progress": 0.7,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 831224,
+          "sha256": "2502b35a2e48c6e499917ab90f82ba1613e59d6258b728057380f9f0a0612d89",
+          "reusedFrom": null
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/deadlift/4-lockout-colour-refined.png",
+          "caption": "STAND TALL 4/6",
+          "cue": "Stand tall without leaning back or shrugging.",
+          "progress": 1,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 886312,
+          "sha256": "72d4d7525c266c2a33b364433e85d0334e06fa3d459ba8a39186e86c4e9cee45",
+          "reusedFrom": null
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/deadlift/5-lower.png",
+          "caption": "HINGE TO LOWER 5/6",
+          "cue": "Send hips back and keep the bar close.",
+          "progress": 0.7,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 831224,
+          "sha256": "2502b35a2e48c6e499917ab90f82ba1613e59d6258b728057380f9f0a0612d89",
+          "reusedFrom": 3
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/deadlift/6-return.png",
+          "caption": "CONTROLLED RETURN 6/6",
+          "cue": "Bend knees as the bar passes them; lower under control.",
+          "progress": 0.25,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1128732,
+          "sha256": "90af5b45ab8fdc710f9560cd4ff09c707518f8b728e416db1d8d116eff5beff2",
+          "reusedFrom": 2
+        }
+      ]
     }
   ],
   "blockedPilots": [
@@ -900,16 +1016,9 @@
       "exerciseId": "lat-pulldown",
       "status": "rejected-incomplete",
       "directory": "docs/exercise-art/pilots/lat-pulldown",
-      "reason": "Stationary stack geometry/count changes. Early pull packet displacement contradicts 1:1 cable payout; targeted repair also failed.",
-      "expectedState": "Corrected master: selected packet y745\u2013849, fixed block y890\u20131197. Early bar moves down about136px: selected packet should move up about136px; stationary block must stay unchanged.",
-      "nextStep": "Do not retry the same full-scene editing method. Establish a physically registered equipment construction before new frames."
-    },
-    {
-      "exerciseId": "deadlift",
-      "status": "rejected-incomplete",
-      "directory": "docs/exercise-art/pilots/deadlift",
-      "reason": "Early lift shifts both fixed shoes upwards about32px; two-reference anchor repair did not restore floor registration.",
-      "nextStep": "Re-establish feet/floor registration before continuing. Proposed six-beat pilot differs from existing authored cues; reconcile before integration."
+      "reason": "Two deterministic machine candidates preserve fixed twelve-plate block and move identical four-plate packet opposite handle travel. Athlete bottom pose and bar/grip invariants remain unresolved.",
+      "expectedState": "Corrected master: selected packet y745–849, fixed block y890–1197. Early bar moves down about136px: selected packet should move up about136px; stationary block must stay unchanged.",
+      "nextStep": "Reuse registered machine construction; correct bottom pose and grip geometry before completing six frames."
     },
     {
       "exerciseId": "barbell-shrug",

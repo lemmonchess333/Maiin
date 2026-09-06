@@ -1,0 +1,132 @@
+{
+  "releaseApproved": false,
+  "method": "Integer translation with explicit stationary shoe composites; no rescaling or synthesized poses.",
+  "recipes": [
+    {
+      "exerciseId": "bodyweight-squat",
+      "inputs": [
+        {
+          "path": "docs/exercise-art/pilots/bodyweight-squat/3-mid-v2.png",
+          "sha256": "f1477abdc7718b599bf005ba0673709a45b072288491e2556f6ef10237ea95b3"
+        },
+        {
+          "path": "docs/exercise-art/pilots/bodyweight-squat/1-master.png",
+          "sha256": "078414fb2e6edef3b3123772a07490c2abf8ca197fa3ab265fa64235b1d91fed"
+        }
+      ],
+      "translation": {
+        "x": 0,
+        "y": 32
+      },
+      "patches": [
+        {
+          "left": 240,
+          "right": 500,
+          "top": 1252,
+          "bottom": 1420,
+          "feather": 8
+        },
+        {
+          "left": 500,
+          "right": 740,
+          "top": 1290,
+          "bottom": 1510,
+          "feather": 8
+        }
+      ],
+      "outputs": [
+        {
+          "path": "docs/exercise-art/pilots/bodyweight-squat/3-mid-code-registered.png",
+          "sha256": "6d70200d29234203dd75c30e981403275dc408c91482758abd3d9d9ce1a0e8c2",
+          "bytes": 851828,
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "path": "docs/exercise-art/pilots/bodyweight-squat/5-rise-code-registered.png",
+          "sha256": "6d70200d29234203dd75c30e981403275dc408c91482758abd3d9d9ce1a0e8c2",
+          "bytes": 851828,
+          "dimensions": [
+            1024,
+            1536
+          ]
+        }
+      ]
+    },
+    {
+      "exerciseId": "deadlift",
+      "inputs": [
+        {
+          "path": "docs/exercise-art/pilots/deadlift/2-early.png",
+          "sha256": "77fd51f5b35dbedfabc50bad18db5cc5160ea2203c441952548787ba64d7db7c"
+        }
+      ],
+      "translation": {
+        "x": 0,
+        "y": 32
+      },
+      "patches": [],
+      "outputs": [
+        {
+          "path": "docs/exercise-art/pilots/deadlift/2-early-code-registered.png",
+          "sha256": "90af5b45ab8fdc710f9560cd4ff09c707518f8b728e416db1d8d116eff5beff2",
+          "bytes": 1128732,
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "path": "docs/exercise-art/pilots/deadlift/6-return.png",
+          "sha256": "90af5b45ab8fdc710f9560cd4ff09c707518f8b728e416db1d8d116eff5beff2",
+          "bytes": 1128732,
+          "dimensions": [
+            1024,
+            1536
+          ]
+        }
+      ]
+    },
+    {
+      "exerciseId": "deadlift",
+      "inputs": [
+        {
+          "path": "docs/exercise-art/pilots/deadlift/3-knees-rebuilt.png",
+          "sha256": "cafe738f84b623190832bf927862b254ad9a6b64f2303f632224d075fb430623"
+        }
+      ],
+      "translation": {
+        "x": -8,
+        "y": 32
+      },
+      "patches": [],
+      "outputs": [
+        {
+          "path": "docs/exercise-art/pilots/deadlift/3-knees-code-registered.png",
+          "sha256": "2502b35a2e48c6e499917ab90f82ba1613e59d6258b728057380f9f0a0612d89",
+          "bytes": 831224,
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "path": "docs/exercise-art/pilots/deadlift/5-lower.png",
+          "sha256": "2502b35a2e48c6e499917ab90f82ba1613e59d6258b728057380f9f0a0612d89",
+          "bytes": 831224,
+          "dimensions": [
+            1024,
+            1536
+          ]
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Ankle joins, body dimensions and biomechanics require visual review.",
+    "Matching pasted anchors is not independent evidence of anatomical correctness.",
+    "No mobile playback approval."
+  ]
+}

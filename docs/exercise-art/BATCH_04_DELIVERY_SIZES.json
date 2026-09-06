@@ -1,0 +1,16 @@
+[
+  {
+    "exerciseId": "bodyweight-squat",
+    "nativeBytes": 5279817,
+    "webpNativeResolutionQuality90Bytes": 276172,
+    "frameCount": 6,
+    "note": "Compression size experiment; native PNG masters remain authoritative."
+  },
+  {
+    "exerciseId": "deadlift",
+    "nativeBytes": 5655998,
+    "webpNativeResolutionQuality90Bytes": 291146,
+    "frameCount": 6,
+    "note": "Compression size experiment; native PNG masters remain authoritative."
+  }
+]

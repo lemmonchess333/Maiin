@@ -1,0 +1,16 @@
+[
+  {
+    "output_hint": "Generated images are saved to /workspace/scratch/4837f9e4547d/generated_images as /workspace/scratch/4837f9e4547d/generated_images/exec-45cae865-1323-460b-92ee-4e24b22a5e00.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "prompt": "Edit target image into ONE separate native 1024x1536 still, frame 3 of conventional double-overhand barbell deadlift: bar JUST ABOVE KNEES, torso partly upright with hips still hinged, knees almost straight. SAME anatomical athlete, bald faceless white/light-grey muscular male, same proportions and head size, white shoes, fine contours, black background, unchanged purple muscle hierarchy. Arms straight and full length. Preserve BOTH planted feet at identical reference positions, far sole near y1326 and near y1360; camera, crop, perspective and scale fixed. One identical plate per side, preserve rigid bar length/angle and both plate diameters/thickness. Hands stay at same grip spacing, no shifting inward. Bar stays close to legs. Only hips/knees/shoulders move physically for this next pose. Primary glutes/hamstrings deep purple, secondary quads/erectors lilac, abdominal shading subtle and unchanged. No text/captions/UI/collage. Output one full-quality frame, not a whole sheet.",
+    "refs": [
+      "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/deadlift/2-early-code-registered.png"
+    ]
+  },
+  {
+    "output_hint": "Generated images are saved to /workspace/scratch/4837f9e4547d/generated_images as /workspace/scratch/4837f9e4547d/generated_images/exec-13d0f76b-1484-4f10-b134-99772ee01890.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "prompt": "Edit target to ONE separate native1024x1536 final standing lockout frame of conventional double-overhand deadlift. Stand tall: hips and knees extended, spine neutral and ribs stacked over pelvis. No backward lean and no shoulder shrug. Keep EXACT same anatomical white/light-grey bald faceless male, head size, body and limb proportions, white shoes, fine contours and black background. Keep both shoes and floor position fixed exactly. Same3quarter camera facing left, crop, zoom. Arms remain straight full length, hands keep exactly same grip width on bar; rigid bar at upper thighs, one identical modest plate per side unchanged diameter/thickness and perspective. Do not shrink plate or move hands toward middle. Purple hierarchy unchanged: glutes/hamstrings deep, quads/erectors lilac, abdominal stabilisers only very faint purple, NOT darker at lockout. Make no extra muscle highlights. One adjacent movement pose in the same scene. No text, captions, watermark, collage or UI. ONE high-quality full-resolution frame.",
+    "refs": [
+      "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/deadlift/3-knees-code-registered.png"
+    ]
+  }
+]

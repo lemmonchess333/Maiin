@@ -1,0 +1,177 @@
+{
+  "releaseApproved": false,
+  "method": "RGB min>90/max>150 contact strips; clipped bounds do not measure whole shoe dimensions.",
+  "exercises": {
+    "bodyweight-squat": {
+      "rois": {
+        "far": [
+          240,
+          1260,
+          500,
+          1420
+        ],
+        "near": [
+          500,
+          1320,
+          740,
+          1510
+        ]
+      },
+      "frames": [
+        {
+          "file": "1-master.png",
+          "bounds": {
+            "far": {
+              "left": 263,
+              "right": 489,
+              "top": 1260,
+              "bottom": 1388
+            },
+            "near": {
+              "left": 511,
+              "right": 702,
+              "top": 1320,
+              "bottom": 1446
+            }
+          }
+        },
+        {
+          "file": "3-mid-v2.png",
+          "bounds": {
+            "far": {
+              "left": 263,
+              "right": 488,
+              "top": 1260,
+              "bottom": 1358
+            },
+            "near": {
+              "left": 511,
+              "right": 700,
+              "top": 1320,
+              "bottom": 1413
+            }
+          }
+        },
+        {
+          "file": "3-mid-code-registered.png",
+          "bounds": {
+            "far": {
+              "left": 263,
+              "right": 489,
+              "top": 1260,
+              "bottom": 1388
+            },
+            "near": {
+              "left": 511,
+              "right": 702,
+              "top": 1320,
+              "bottom": 1446
+            }
+          }
+        }
+      ]
+    },
+    "deadlift": {
+      "rois": {
+        "far": [
+          280,
+          1200,
+          465,
+          1410
+        ],
+        "near": [
+          490,
+          1230,
+          670,
+          1410
+        ]
+      },
+      "frames": [
+        {
+          "file": "1-master.png",
+          "bounds": {
+            "far": {
+              "left": 292,
+              "right": 464,
+              "top": 1200,
+              "bottom": 1325
+            },
+            "near": {
+              "left": 490,
+              "right": 648,
+              "top": 1230,
+              "bottom": 1359
+            }
+          }
+        },
+        {
+          "file": "2-early-code-registered.png",
+          "bounds": {
+            "far": {
+              "left": 293,
+              "right": 464,
+              "top": 1200,
+              "bottom": 1325
+            },
+            "near": {
+              "left": 490,
+              "right": 647,
+              "top": 1230,
+              "bottom": 1360
+            }
+          }
+        },
+        {
+          "file": "3-knees-code-registered.png",
+          "bounds": {
+            "far": {
+              "left": 293,
+              "right": 464,
+              "top": 1200,
+              "bottom": 1326
+            },
+            "near": {
+              "left": 490,
+              "right": 648,
+              "top": 1230,
+              "bottom": 1360
+            }
+          }
+        },
+        {
+          "file": "4-lockout-colour-refined.png",
+          "bounds": {
+            "far": {
+              "left": 294,
+              "right": 464,
+              "top": 1200,
+              "bottom": 1326
+            },
+            "near": {
+              "left": 490,
+              "right": 648,
+              "top": 1230,
+              "bottom": 1360
+            }
+          }
+        }
+      ]
+    }
+  },
+  "cableChecks": [
+    {
+      "file": "pilots/lat-pulldown/1-machine-registered.png",
+      "fixedBlockDifferentBytes": 0,
+      "packetDifferentBytes": 0,
+      "handleDownPx": 0,
+      "packetUpPx": 0
+    },
+    {
+      "file": "pilots/lat-pulldown/2-machine-registered.png",
+      "fixedBlockDifferentBytes": 0,
+      "packetDifferentBytes": 0,
+      "handleDownPx": 136,
+      "packetUpPx": 136
+    }
+  ]
+}
