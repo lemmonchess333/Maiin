@@ -1,10 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { getDistanceComparison } from "../funComparisons";
-import {
-  MIN_OUTDOOR_DISTANCE_KM,
-  MIN_TREADMILL_DISTANCE_KM,
-  MIN_MANUAL_DISTANCE_KM,
-} from "../runGuards";
+
 
 describe("getDistanceComparison", () => {
   it("returns null for 0 km", () => {
