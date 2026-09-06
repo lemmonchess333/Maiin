@@ -23,9 +23,11 @@ test("companion purpose — narrow light and dark", async ({ page }) => {
       dark
     );
     await settleImages(page);
-    await card.screenshot({
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.screenshot({
       path: `screenshots/companion-purpose-lift-${dark ? "dark" : "light"}.png`,
       animations: "disabled",
+      fullPage: true,
     });
     const title = await card
       .getByRole("heading")
