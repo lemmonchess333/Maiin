@@ -31,6 +31,12 @@ export interface AdjustedTargets {
    *  floored to a broken sum; protein is capped to keep the sum valid and this
    *  flag is raised so the UI can warn. */
   aggressive: boolean;
+  /** The target is below the essential fat floor's own cost — fat alone
+   *  exceeds it and protein/carbs are 0. See `TDEEResult.infeasible`. */
+  infeasible: boolean;
+  /** Essential fat kcal at this bodyweight — the smallest reconcilable
+   *  target. */
+  minFeasibleKcal: number;
 }
 
 /**
@@ -124,5 +130,10 @@ export function getAdjustedTargets(
     fat,
     annotation: describeDayIntensity(tier),
     aggressive,
+    // Same predicate as splitMacrosForTarget: below the floor's own cost
+    // the sum cannot reconcile, and the UI must say so wherever it renders
+    // these grams.
+    infeasible: fat * 9 > calories,
+    minFeasibleKcal: essentialFatG * 9,
   };
 }

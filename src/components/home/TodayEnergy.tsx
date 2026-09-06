@@ -13,6 +13,7 @@ import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 import MacroRing from "@/components/home/MacroRing";
 import BreakdownRow from "@/components/home/BreakdownRow";
 import { usePersistedToggle } from "@/hooks/usePersistedToggle";
+import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
 
 /**
  * Today's Energy — Home's nutrition summary.
@@ -205,6 +206,19 @@ export default function TodayEnergy({
           </p>
         )}
       </button>
+
+      {/* A target below the essential-fat floor's own cost: the summary
+          above would otherwise read "P 125/0g" as if 0 g were the goal.
+          Same sentence as Settings and Food (macroInfeasibility.ts). */}
+      {targets.targetInfeasible && (
+        <p
+          role="status"
+          className="px-4 py-2.5 text-xs leading-snug border-b border-border/30"
+          style={{ color: "hsl(var(--warning-strong))" }}
+        >
+          {macroInfeasibilityMessage(targets.minFeasibleKcal)}
+        </p>
+      )}
 
       {/* Details — only what explains the numbers above. */}
       <AnimatePresence>

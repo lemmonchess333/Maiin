@@ -29,6 +29,7 @@ import { mealPhotoImage } from "@/lib/editorialImages";
 import { useIsDarkMode } from "@/hooks/useIsDarkMode";
 import CalorieRing from "./CalorieRing";
 import MacroColumn from "./MacroColumn";
+import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
 import AdaptiveWarmupBar from "./AdaptiveWarmupBar";
 
 interface DailyTotals {
@@ -432,6 +433,18 @@ export default function FoodHeroCard({
               className={`text-center text-xs font-medium mt-3 px-2 ${photoTextClass ?? "text-muted-foreground"}`}
             >
               {glanceLine}
+            </p>
+          )}
+          {/* A target below the essential-fat floor's own cost: the macro
+              tiles below would otherwise present "0g" as the goal. Same
+              sentence as Settings and Home (macroInfeasibility.ts). */}
+          {dailyTargets.targetInfeasible && (
+            <p
+              role="status"
+              className="text-center text-xs font-medium mt-3 px-2"
+              style={{ color: "hsl(var(--warning-strong))" }}
+            >
+              {macroInfeasibilityMessage(dailyTargets.minFeasibleKcal)}
             </p>
           )}
           {/* Food6 a2: drill-down affordance. "Details" + chevron at the

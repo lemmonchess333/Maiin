@@ -308,3 +308,40 @@ describe("TodayEnergy — HOME-TARGET-01 truthful targets/copy", () => {
     expect(screen.queryByText(/for recovery/i)).toBeNull();
   });
 });
+
+/**
+ * Three-surface consistency: a target the split cannot fund is named in
+ * the same sentence on Home, Food and Settings (macroInfeasibility.ts).
+ * Before this Home read "P 125/0g" — 0 g rendered as the goal — while only
+ * Settings warned.
+ */
+import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
+
+describe("TodayEnergy — infeasible target notice", function () {
+  it("renders the shared sentence when the target cannot fund essential fat", function () {
+    renderAt({
+      calories: 1790,
+      protein: 125,
+      carbs: 172,
+      fat: 56,
+      totalLifetimeMeals: 40,
+      targets: {
+        ...targets,
+        finalTarget: 100,
+        protein: 0,
+        carbs: 0,
+        fat: 42,
+        targetInfeasible: true,
+        minFeasibleKcal: 378,
+      },
+    });
+    expect(
+      screen.getByText(macroInfeasibilityMessage(378))
+    ).toBeInTheDocument();
+  });
+
+  it("says nothing on an ordinary target", function () {
+    renderAt({ targets: { ...targets, targetInfeasible: false } });
+    expect(screen.queryByText(/essential fat alone exceeds/)).toBeNull();
+  });
+});

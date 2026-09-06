@@ -14,6 +14,7 @@ import { resolveTargetDrift, shouldShowTargetDrift } from "@/lib/targetDrift";
 import AccordionSection from "@/components/AccordionSection";
 import { useMacroPalette } from "@/hooks/useMacroPalette";
 import CalorieTargetOverride from "./CalorieTargetOverride";
+import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
 import {
   adaptiveCalorieStatus,
   adaptiveCalorieStatusLabel,
@@ -311,12 +312,18 @@ export default function NutritionSection({
             {tdee.deficit !== 0 && (
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span>
-                  {goalPlan.fitnessGoal === "lean bulk"
-                    ? "Lean Bulk"
-                    : goalPlan.fitnessGoal === "cut"
-                      ? "Cut"
-                      : "Recomp"}{" "}
-                  offset
+                  {/* A manual override REPLACES the plan's offset. Naming
+                      the gap after the goal ("Recomp offset −2400 cal")
+                      described a plan choice the user never made. */}
+                  {profile.customCalorieTarget
+                    ? "Manual target"
+                    : `${
+                        goalPlan.fitnessGoal === "lean bulk"
+                          ? "Lean Bulk"
+                          : goalPlan.fitnessGoal === "cut"
+                            ? "Cut"
+                            : "Recomp"
+                      } offset`}
                 </span>
                 <span className="font-mono tabular-nums">
                   {tdee.deficit > 0 ? "+" : ""}
@@ -381,7 +388,7 @@ export default function NutritionSection({
 
           <div className="flex items-center justify-between pt-1">
             <motion.div
-              key={tdee.protein}
+              key={`protein-${tdee.protein}`}
               initial={{ opacity: 0.5 }}
               animate={{ opacity: 1 }}
               className="text-center flex-1"
@@ -396,7 +403,7 @@ export default function NutritionSection({
             </motion.div>
             <div className="w-px h-6 bg-border/50" />
             <motion.div
-              key={tdee.carbs}
+              key={`carbs-${tdee.carbs}`}
               initial={{ opacity: 0.5 }}
               animate={{ opacity: 1 }}
               className="text-center flex-1"
@@ -411,7 +418,7 @@ export default function NutritionSection({
             </motion.div>
             <div className="w-px h-6 bg-border/50" />
             <motion.div
-              key={tdee.fat}
+              key={`fat-${tdee.fat}`}
               initial={{ opacity: 0.5 }}
               animate={{ opacity: 1 }}
               className="text-center flex-1"
@@ -446,6 +453,19 @@ export default function NutritionSection({
               </span>{" "}
               your plan aims for — essential fat has to fit too. A slower pace
               holds protein.
+            </p>
+          )}
+
+          {/* Below the essential-fat floor's own cost nothing reconciles —
+              the grams above show 0 g protein and carbs. Same sentence Home
+              and Food render (macroInfeasibility.ts). */}
+          {tdee.infeasible && (
+            <p
+              role="status"
+              className="text-caption leading-snug pt-2"
+              style={{ color: "hsl(var(--warning-strong))" }}
+            >
+              {macroInfeasibilityMessage(tdee.minFeasibleKcal)}
             </p>
           )}
 

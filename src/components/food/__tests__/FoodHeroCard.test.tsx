@@ -212,3 +212,44 @@ describe("FoodHeroCard — photo scrim carries the ring bed", () => {
     expect(scrim!.style.background).toContain("50% 47.5%");
   });
 });
+
+/**
+ * Three-surface consistency: a target the split cannot fund is named in
+ * the same sentence on Food, Home and Settings (macroInfeasibility.ts).
+ * Before this the macro tiles here read "125 / 0g PROTEIN" — 0 g rendered
+ * as the goal — while only Settings warned.
+ */
+import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
+
+describe("FoodHeroCard — infeasible target notice", () => {
+  const infeasibleTargets = {
+    ...dailyTargets,
+    finalTarget: 100,
+    protein: 0,
+    carbs: 0,
+    fat: 42,
+    targetInfeasible: true,
+    minFeasibleKcal: 378,
+  } as unknown as EffectiveTargets;
+
+  it("renders the shared sentence when the target cannot fund essential fat", () => {
+    render(
+      <MemoryRouter>
+        <FoodHeroCard
+          selectedDate="2026-06-09"
+          isToday={true}
+          dailyTargets={infeasibleTargets}
+          dailyTotals={{ calories: 1790, protein: 125, carbs: 172, fat: 56 }}
+        />
+      </MemoryRouter>
+    );
+    expect(
+      screen.getByText(macroInfeasibilityMessage(378))
+    ).toBeInTheDocument();
+  });
+
+  it("says nothing on an ordinary target", () => {
+    renderHero();
+    expect(screen.queryByText(/essential fat alone exceeds/)).toBeNull();
+  });
+});
