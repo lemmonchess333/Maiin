@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- Water offers the last three sizes used on this account. Weigh-ins support kg, lb and stone, retain conversion precision and offer dates within the last 30 days.
+
 - **Readability pass across the whole app.** Secondary text is slightly
   darker in light mode and slightly brighter in dark mode, tuned so every
   caption clears accessibility contrast on the surface it actually sits

@@ -1,3 +1,4 @@
+import { recentWaterSizes, rememberWaterSize } from "@/lib/recentWaterSizes";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { doc, onSnapshot, type Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -106,8 +107,10 @@ export function useWaterLog() {
         );
         return;
       }
+      if (delta > 0) rememberWaterSize(uid, Math.round(delta));
       if (delta > 0)
         toast.success(`Added ${Math.round(delta)} ml`, {
+          duration: 5000,
           action: {
             label: "Undo",
             onClick: () => {
@@ -153,6 +156,7 @@ export function useWaterLog() {
     setWater: (value: number) => logWater(clampMl(value) - state.ml),
     progress: waterProgress(state.ml, target),
     servingMl,
+    recentSizes: recentWaterSizes(uid),
     setServingMl,
     syncStatus:
       readError || (uid && waterSyncError(uid))

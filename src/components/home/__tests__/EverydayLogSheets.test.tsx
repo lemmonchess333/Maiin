@@ -21,6 +21,7 @@ import {
   readDoc,
   failNextFirestore,
 } from "@/test/firestoreHarness";
+import { flushQueuedWeights } from "@/lib/weightQueue";
 import { localDateString } from "@/lib/dateHelpers";
 beforeEach(() => {
   resetFirestore();
@@ -39,23 +40,24 @@ describe("everyday entry sheets", () => {
       readDoc(`users/u1/bodyweightLogs/${localDateString()}`)?.weight
     ).toBe(78.412);
   });
-  it("preserves a comma entry and date after a save failure, then retries", async () => {
+  it("accepts a comma entry and date locally, then retries a failed sync", async () => {
     const close = vi.fn();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const date = localDateString(yesterday);
     render(<WeightLogSheet uid="u1" unit="kg" onClose={close} />);
     fireEvent.change(screen.getByLabelText("Weight (kg)"), {
       target: { value: "78,4" },
     });
     fireEvent.change(screen.getByLabelText("Date"), {
-      target: { value: "2025-01-02" },
+      target: { value: date },
     });
     failNextFirestore("commit");
     fireEvent.click(screen.getByRole("button", { name: "Log weight" }));
-    await screen.findByRole("alert");
-    expect(close).not.toHaveBeenCalled();
-    expect(screen.getByLabelText("Weight (kg)")).toHaveValue("78,4");
-    fireEvent.click(screen.getByRole("button", { name: "Log weight" }));
     await waitFor(() => expect(close).toHaveBeenCalledOnce());
-    expect(readDoc("users/u1/bodyweightLogs/2025-01-02")?.weight).toBe(78.4);
+    await flushQueuedWeights("u1");
+    await flushQueuedWeights("u1");
+    expect(readDoc(`users/u1/bodyweightLogs/${date}`)?.weight).toBe(78.4);
   });
   it("changing the usual water size does not log water, and excessive custom amounts are rejected", () => {
     const log = vi.fn(),

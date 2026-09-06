@@ -31,6 +31,7 @@ export default function WaterCard({
   compact = false,
   servingMl = GLASS_ML,
   onServingChange,
+  recentSizes = [],
   syncStatus,
   onRetry,
 }: {
@@ -44,6 +45,7 @@ export default function WaterCard({
   /** Pyramid tile variant: half-width cell beside the weight tile. */
   compact?: boolean;
   servingMl?: number;
+  recentSizes?: number[];
   onServingChange?: (ml: number) => void;
   syncStatus?: string;
   onRetry?: () => void;
@@ -80,6 +82,7 @@ export default function WaterCard({
         setRippleKey((k) => k + 1);
       }}
       servingMl={servingMl}
+      recentSizes={recentSizes}
       onServingChange={onServingChange}
       consumedMl={ml}
       targetMl={targetMl}

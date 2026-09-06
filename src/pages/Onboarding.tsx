@@ -1,3 +1,4 @@
+import { kgToLb } from "@/lib/weightUnits";
 import {
   useState,
   useMemo,
@@ -390,7 +391,7 @@ export default function Onboarding() {
 
   const displayWeight =
     weightUnit === "lbs"
-      ? `${Math.round(weightKg * 2.205)} lbs`
+      ? `${Math.round(kgToLb(weightKg))} lbs`
       : `${weightKg} kg`;
 
   const heightStepSize = heightUnit === "ft" ? 2.54 : 1; // ~1 inch or 1 cm

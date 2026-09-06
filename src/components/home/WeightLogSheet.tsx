@@ -3,13 +3,15 @@ import BottomSheet from "@/components/ui/BottomSheet";
 import Button from "@/components/ui/Button";
 import IconButton from "@/components/ui/IconButton";
 import { Minus, Plus } from "lucide-react";
-import { formatWeightInUnit } from "@/lib/weightUnits";
+import SegmentedControl from "@/components/ui/SegmentedControl";
+import { format, subDays } from "date-fns";
+import { formatStonePounds, kgToStonePounds, stonePoundsToKg, formatWeightInUnit } from "@/lib/weightUnits";
 import { localDateString } from "@/lib/dateHelpers";
 import {
   parseWeightEntry,
-  saveWeightEntry,
   validWeightDate,
 } from "@/lib/weightEntry";
+import { queueWeightEntry } from "@/lib/weightQueue";
 import { toast } from "@/lib/toast";
 
 export default function WeightLogSheet({
@@ -23,12 +25,35 @@ export default function WeightLogSheet({
   initialKg?: number;
   onClose: () => void;
 }) {
-  const initial = initialKg ? formatWeightInUnit(initialKg, unit) : "";
+  type DisplayUnit = "kg" | "lbs" | "st";
+  const [selectedUnit, setSelectedUnit] = useState<DisplayUnit>(unit);
+  const initial = initialKg ? (selectedUnit === "st" ? String(kgToStonePounds(initialKg).stone) : formatWeightInUnit(initialKg, selectedUnit)) : "";
+  const [pounds, setPounds] = useState(initialKg ? String(kgToStonePounds(initialKg).pounds) : "0");
+  const minimumDate = localDateString(subDays(new Date(), 30));
   const [value, setValue] = useState(initial);
   const [date, setDate] = useState(localDateString);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const pending = useRef(false);
+  const parsedKg = () => {
+    if (selectedUnit !== "st") return value === initial && initialKg ? initialKg : parseWeightEntry(value, selectedUnit);
+    if (!/^\d+$/.test(value) || !/^\d+(?:[.,]\d+)?$/.test(pounds)) return null;
+    const remaining = Number(pounds.replace(",", "."));
+    if (remaining < 0 || remaining >= 14) return null;
+    if (initialKg && value === initial && remaining === kgToStonePounds(initialKg).pounds) return initialKg;
+    const kg = stonePoundsToKg(Number(value), remaining);
+    return kg >= 20 && kg <= 350 ? kg : null;
+  };
+  const changeUnit = (next: DisplayUnit) => {
+    const kg = parsedKg();
+    if (kg !== null) {
+      const stone = kgToStonePounds(kg);
+      setValue(next === "st" ? String(stone.stone) : formatWeightInUnit(kg, next));
+      setPounds(String(stone.pounds));
+    }
+    setSelectedUnit(next);
+    setError("");
+  };
   const change = (delta: number) => {
     const amount = Number(value.replace(",", "."));
     if (!Number.isFinite(amount)) return;
@@ -38,29 +63,26 @@ export default function WeightLogSheet({
   const save = async () => {
     if (pending.current) return;
     // An untouched display preserves the precise canonical value.
-    const kg =
-      value === initial && initialKg
-        ? initialKg
-        : parseWeightEntry(value, unit);
+    const kg = parsedKg();
     if (kg === null || kg === undefined) {
       setError(
         "Enter a valid weight between 20 and 350 kg, or the equivalent in pounds."
       );
       return;
     }
-    if (!validWeightDate(date)) {
-      setError("Choose today or an earlier valid date.");
+    if (!validWeightDate(date) || date < minimumDate) {
+      setError("Choose a day within the last 30 days.");
       return;
     }
     pending.current = true;
     setSaving(true);
     setError("");
     try {
-      const undo = await saveWeightEntry(uid, date, kg);
+      const undo = queueWeightEntry(uid, date, kg);
       window.dispatchEvent(new Event("tropos:weight-changed"));
       let undoing = false;
-      toast.success("Weight logged", {
-        duration: 8000,
+      toast.success(!navigator.onLine ? "Saved on this phone — syncs when you’re back online" : `Logged ${selectedUnit === "st" ? formatStonePounds(kg) : `${formatWeightInUnit(kg, selectedUnit)} ${selectedUnit === "lbs" ? "lb" : "kg"}`} · ${format(new Date(`${date}T12:00:00`), "EEE d MMM")}`, {
+        duration: 5000,
         action: {
           label: "Undo",
           onClick: async () => {
@@ -102,16 +124,18 @@ export default function WeightLogSheet({
       }}
     >
       <div className="px-4 pb-6 pt-3 space-y-4">
+        <SegmentedControl<DisplayUnit> ariaLabel="Weight unit" value={selectedUnit} onChange={changeUnit} disabled={saving}
+          options={[{ value: "kg", label: "kg" }, { value: "lbs", label: "lb" }, { value: "st", label: "st" }]} />
         <label htmlFor="weight-value" className="block text-sm font-semibold">
-          Weight ({unit === "lbs" ? "lb" : "kg"})
+          Weight ({selectedUnit === "lbs" ? "lb" : selectedUnit})
         </label>
         <div className="flex items-center gap-2">
-          <IconButton
+          {selectedUnit !== "st" && <IconButton
             aria-label="Decrease weight by 0.1"
             disabled={saving}
             onClick={() => change(-0.1)}
             icon={<Minus />}
-          />
+          />}
           <input
             id="weight-value"
             inputMode="decimal"
@@ -125,12 +149,19 @@ export default function WeightLogSheet({
               setError("");
             }}
           />
-          <IconButton
+          {selectedUnit !== "st" && <IconButton
             aria-label="Increase weight by 0.1"
             disabled={saving}
             onClick={() => change(0.1)}
             icon={<Plus />}
-          />
+          />}
+        </div>
+        {selectedUnit === "st" && <label className="block text-sm">Pounds
+          <input aria-label="Pounds" className="ds-input min-h-11 w-full font-mono tabular-nums" inputMode="decimal" value={pounds} disabled={saving} onChange={(event) => setPounds(event.target.value)} />
+        </label>}
+        <div className="flex gap-2">
+          <Button variant="secondary" disabled={saving} onClick={() => setDate(localDateString())}>Today</Button>
+          <Button variant="secondary" disabled={saving} onClick={() => setDate(localDateString(subDays(new Date(), 1)))}>Yesterday</Button>
         </div>
         <label className="block text-sm" htmlFor="weight-date">
           Date
@@ -140,6 +171,7 @@ export default function WeightLogSheet({
           type="date"
           className="ds-input min-h-11 w-full"
           value={date}
+          min={minimumDate}
           max={localDateString()}
           disabled={saving}
           onChange={(e) => {

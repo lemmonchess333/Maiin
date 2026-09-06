@@ -141,6 +141,7 @@ export default function Home() {
     target: waterTargetMl,
     logWater,
     servingMl,
+    recentSizes: recentWaterSizes,
     setServingMl,
     syncStatus: waterSyncStatus,
     retry: retryWater,
@@ -1199,6 +1200,7 @@ export default function Home() {
               ml={waterMl}
               targetMl={waterTargetMl}
               servingMl={servingMl}
+              recentSizes={recentWaterSizes}
               onServingChange={setServingMl}
               syncStatus={waterSyncStatus}
               onRetry={retryWater}

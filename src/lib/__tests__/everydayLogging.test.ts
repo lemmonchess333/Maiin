@@ -173,8 +173,8 @@ describe("weight correction", () => {
     expect(readDoc("users/u1")?.weightKg).toBe(80);
     const undo = await saveWeightEntry("u1", today, 78.412);
     expect(readDoc(weightPath)?.weight).toBe(78.412);
-    expect(readDoc("users/u1")?.weightKg).toBe(78.4);
-    expect(readDoc("users/u1")?.targetProtein).toBe(172);
+    expect(readDoc("users/u1")?.weightKg).toBe(78.412);
+    expect(readDoc("users/u1")?.targetProtein).toBe(173);
     await undo();
     expect(readDoc(weightPath)?.weight).toBe(80);
     expect(readDoc("users/u1")?.theme).toBe("dark");

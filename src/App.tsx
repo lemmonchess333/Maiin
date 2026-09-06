@@ -130,6 +130,11 @@ const FormMotionLab =
     ? lazyRetry(() => import("@/pages/dev/FormMotionLab"))
     : null;
 
+const WeightPickerLab =
+  import.meta.env.MODE !== "production"
+    ? lazyRetry(() => import("@/pages/dev/WeightPickerLab"))
+    : null;
+
 // The ambient-emission bake-off (#1252) concluded: candidate A (single
 // brand-purple glow) ships as <AmbientGlow>. The dev harness was retired
 // to avoid a double-render with the shipped layer; it's recoverable from
@@ -337,6 +342,7 @@ function AppRoutes() {
     const tryFlush = () => {
       if (!navigator.onLine) return;
       // Lazy-load so this only ships when the user is signed in.
+      void import("@/lib/weightQueue").then(({ flushQueuedWeights }) => flushQueuedWeights(uid));
       import("@/lib/offlineQueue").then(({ flushQueue }) => {
         import("@/lib/firebase").then(({ db }) => {
           flushQueue(db, uid).catch(() => {});
@@ -780,6 +786,16 @@ function AppRoutes() {
                         element={
                           <RouteErrorBoundary>
                             <FormMotionLab />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                    )}
+                    {WeightPickerLab && (
+                      <Route
+                        path="/dev/weight-picker"
+                        element={
+                          <RouteErrorBoundary>
+                            <WeightPickerLab />
                           </RouteErrorBoundary>
                         }
                       />
