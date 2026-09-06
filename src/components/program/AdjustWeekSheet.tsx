@@ -26,7 +26,7 @@
  * Both mounts matter — the A6 eased-week marker used to be a caller's job
  * and the Settings one never did it, which is why this sheet now owns it.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, CalendarClock, Feather } from "lucide-react";
 import BottomSheet from "@/components/ui/BottomSheet";
 import Button from "@/components/ui/Button";
@@ -143,6 +143,10 @@ export default function AdjustWeekSheet({
   const [step, setStep] = useState<Step>({ kind: "intent" });
   const [applying, setApplying] = useState(false);
   const [undoing, setUndoing] = useState(false);
+  // Toast callbacks outlive the render that created them. A shared ref also
+  // blocks repeated Undo taps through those older callbacks.
+  const pendingRef = useRef(false);
+  const busy = applying || undoing;
 
   const todayKey = localDateString();
   const swaps = useMemo(
@@ -161,6 +165,7 @@ export default function AdjustWeekSheet({
   }, [open, initialIntent, swaps]);
 
   const close = (cancelled: boolean) => {
+    if (cancelled && pendingRef.current) return;
     if (cancelled) track("adjust_week_cancelled");
     setStep({ kind: "intent" });
     setApplying(false);
@@ -168,6 +173,7 @@ export default function AdjustWeekSheet({
   };
 
   const pickIntent = (intent: Intent) => {
+    if (pendingRef.current) return;
     track("adjust_week_intent_selected", { intent });
     if (intent === "crowded") {
       // Preview the realign OUTCOME before writing anything: weeks remaining
@@ -206,27 +212,34 @@ export default function AdjustWeekSheet({
    * list of the changes we made to it.
    */
   const undoEase = async () => {
-    if (undoing) return;
+    if (pendingRef.current) return;
+    pendingRef.current = true;
     setUndoing(true);
-    const { ok, message } = await revertEaseWeek();
-    setUndoing(false);
-    track("adjust_week_applied", {
-      intent: "not_100",
-      action: "easier_week_undone",
-    });
-    if (!ok) {
-      // The server's sentence when it gave one — a refusal that names the
-      // next step beats a generic failure that leaves the athlete stuck.
-      toast.error(message || "Couldn't undo the easier week.");
-      return;
+    try {
+      const { ok, message } = await revertEaseWeek();
+      if (!ok) {
+        toast.error(message || "Couldn't undo the easier week.");
+        return;
+      }
+      track("adjust_week_applied", {
+        intent: "not_100",
+        action: "easier_week_undone",
+      });
+      clearEasedWeekKey(uid);
+      toast.success("Easier week undone — this week is back to plan.");
+      close(false);
+    } catch (err) {
+      logger.error("[adjustWeek] easier-week undo failed", err);
+      toast.error("Couldn't undo the easier week. Try again.");
+    } finally {
+      pendingRef.current = false;
+      setUndoing(false);
     }
-    clearEasedWeekKey(uid);
-    toast.success("Easier week undone — this week is back to plan.");
-    close(false);
   };
 
   const applyEasier = async (intent: Intent) => {
-    if (applying) return;
+    if (pendingRef.current) return;
+    pendingRef.current = true;
     setApplying(true);
     try {
       /* ONE command, and the count is the SERVER's answer.
@@ -246,7 +259,6 @@ export default function AdjustWeekSheet({
       const landed = await applyEaseWeek(swaps);
       if (landed === null) {
         toast.error("Couldn't adjust the week. Try again.");
-        setApplying(false);
         return;
       }
       if (landed === 0) {
@@ -254,7 +266,6 @@ export default function AdjustWeekSheet({
         // the belt to that braces — say something rather than close on a
         // silent no-op.
         toast.error("None of this week's runs can be changed now.");
-        setApplying(false);
         return;
       }
       // A6: record the week so next week's bounce check can read this
@@ -284,12 +295,15 @@ export default function AdjustWeekSheet({
     } catch (err) {
       logger.error("[adjustWeek] easier-week apply failed", err);
       toast.error("Couldn't adjust the week. Try again.");
+    } finally {
+      pendingRef.current = false;
       setApplying(false);
     }
   };
 
   const applyRealign = async (intent: Intent) => {
-    if (applying) return;
+    if (pendingRef.current) return;
+    pendingRef.current = true;
     setApplying(true);
     try {
       const { timing, totalWeeks } = await realignRacePlan();
@@ -305,6 +319,8 @@ export default function AdjustWeekSheet({
     } catch (err) {
       logger.error("[adjustWeek] realign apply failed", err);
       toast.error("Couldn't re-plan. Try again.");
+    } finally {
+      pendingRef.current = false;
       setApplying(false);
     }
   };
@@ -312,6 +328,7 @@ export default function AdjustWeekSheet({
   return (
     <BottomSheet
       open={open}
+      dismissible={!busy}
       onOpenChange={(o) => {
         if (!o) close(true);
       }}
@@ -319,6 +336,11 @@ export default function AdjustWeekSheet({
       description="Your race date stays put — this only shapes the week."
     >
       <div className="px-4 pb-6 pt-3 space-y-2">
+        {busy && (
+          <p role="status" className="text-sm text-muted-foreground">
+            {undoing ? "Restoring your week…" : "Saving changes…"}
+          </p>
+        )}
         {step.kind === "intent" && (
           <>
             {/* The durable path back.
@@ -351,6 +373,8 @@ export default function AdjustWeekSheet({
                   variant="sport-tinted"
                   fullWidth
                   loading={undoing}
+                  aria-label="Undo easier week"
+                  disabled={busy}
                   onClick={() => void undoEase()}
                 >
                   Undo easier week
@@ -361,8 +385,9 @@ export default function AdjustWeekSheet({
               <button
                 key={i.id}
                 type="button"
+                disabled={busy}
                 onClick={() => pickIntent(i.id)}
-                className="w-full min-h-[56px] flex items-center gap-3 rounded-xl bg-muted px-4 py-3 text-left active:scale-[0.97] transition-transform"
+                className="w-full min-h-[56px] flex items-center gap-3 rounded-xl bg-muted px-4 py-3 text-left active:scale-[0.97] transition-transform disabled:opacity-50 disabled:pointer-events-none"
               >
                 <div className="flex-1 min-w-0">
                   <span className="block text-sm font-semibold text-foreground">
@@ -421,6 +446,7 @@ export default function AdjustWeekSheet({
                 variant="outline"
                 fullWidth
                 onClick={() => setStep({ kind: "intent" })}
+                disabled={busy}
               >
                 Back
               </Button>
@@ -429,6 +455,8 @@ export default function AdjustWeekSheet({
                   variant="sport"
                   fullWidth
                   loading={applying}
+                  aria-label="Ease this week"
+                  disabled={busy}
                   onClick={() => void applyEasier(step.intent)}
                 >
                   Ease this week
@@ -460,6 +488,7 @@ export default function AdjustWeekSheet({
                 variant="outline"
                 fullWidth
                 onClick={() => setStep({ kind: "intent" })}
+                disabled={busy}
               >
                 Back
               </Button>
@@ -467,6 +496,8 @@ export default function AdjustWeekSheet({
                 variant="sport"
                 fullWidth
                 loading={applying}
+                aria-label="Re-plan from today"
+                disabled={busy}
                 onClick={() => void applyRealign(step.intent)}
               >
                 Re-plan from today
