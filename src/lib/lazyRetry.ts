@@ -11,7 +11,8 @@ import { lazy, type ComponentType, type LazyExoticComponent } from "react";
    recovery path. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function lazyRetry<T extends { default: ComponentType<any> }>(
-  factory: () => Promise<T>
+  factory: () => Promise<T>,
+  options: { reloadOnChunkError?: boolean } = {}
 ): LazyExoticComponent<T["default"]> {
   return lazy(() =>
     factory().catch((err: unknown) => {
@@ -23,7 +24,9 @@ export function lazyRetry<T extends { default: ComponentType<any> }>(
         message.includes("Loading chunk") ||
         message.includes("Loading CSS chunk");
 
-      if (isChunkError) {
+      // Optional in-session surfaces use their local error boundary instead
+      // of reloading the page and interrupting an active recorder.
+      if (isChunkError && options.reloadOnChunkError !== false) {
         // Clear SW caches so the next reload fetches fresh assets
         if ("caches" in window) {
           caches.keys().then((names) => names.forEach((n) => caches.delete(n)));

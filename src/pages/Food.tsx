@@ -816,7 +816,11 @@ export default function Food() {
   };
 
   const handleNLParse = async () => {
-    if (!nlInput.trim() || !uid) return;
+    if (!nlInput.trim() || !uid || nlParsing) return;
+    // Autocomplete is a separate, optional request. Once the user submits,
+    // cancel its effect and dismiss its stale error before parsing/saving.
+    setSuggestionsActive(false);
+    toast.dismiss("food-off-error");
     setNlParsing(true);
     let items: ParsedFood[];
     let confidence: string;

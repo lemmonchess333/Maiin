@@ -9,17 +9,6 @@ export function formatVolume(kg: number): { value: string; unit: string } {
   return { value: String(Math.round(kg)), unit: "kg" };
 }
 
-/**
- * Session volume as one label: "—" for nothing lifted (a bodyweight or
- * uncalibrated session is not a zero-kilogram achievement), tonnes past
- * 1000 kg ("1.2t"), otherwise the spaced unit the DS mandates ("320 kg").
- */
-export function formatVolumeLabel(kg: number): string {
-  if (kg <= 0) return "\u2014";
-  if (kg >= 1000) return `${(kg / 1000).toFixed(1)}t`;
-  return `${Math.round(kg)} kg`;
-}
-
 /** A set's load: "BW" for bodyweight (0 kg), else "60 kg" / "62.5 kg". */
 export function formatLoadKg(kg: number): string {
   if (kg === 0) return "BW";

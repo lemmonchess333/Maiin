@@ -563,8 +563,8 @@ export default function RunMap({
         // pill can never sit under a corner button in any consumer; in the
         // active-run map it lines up with the existing centred GPS pills.
         <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 w-max max-w-[calc(100%-8rem)] rounded-lg bg-black/70 px-3 py-2 text-center text-xs text-white/90 backdrop-blur">
-          Map can&apos;t load — you&apos;re offline. Your route is still being
-          recorded.
+          Map tiles unavailable. Check your connection. GPS status is shown
+          separately.
         </div>
       )}
     </div>

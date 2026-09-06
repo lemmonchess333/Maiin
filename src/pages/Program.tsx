@@ -108,7 +108,6 @@ import { shouldSuggestDeload } from "@/lib/deloadSuggestVisibility";
 import { runHeaderLine } from "@/lib/runHeaderLine";
 import { resolveDeloadRecommended } from "@/lib/performanceDocFields";
 import { deloadRunSwapCount } from "@/lib/deloadChangeSummary";
-import { formatVolumeLabel } from "@/utils/formatters";
 
 /**
  * IMPORTANT:
@@ -762,11 +761,6 @@ function ProgramInner() {
   const estimatedMinutes = estimateSessionMinutes(
     selectedWorkout?.exercises ?? []
   );
-  const totalVolume =
-    selectedWorkout?.exercises.reduce(
-      (sum, ex) => sum + ex.sets * ex.reps * ex.weight,
-      0
-    ) ?? 0;
 
   // PROGRAM-BLOCK-01: the programme's main compounds become the new
   // block's default anchor lifts (v1 auto-anchors — no picker yet).
@@ -1304,10 +1298,14 @@ function ProgramInner() {
                         } · Day ${idx + 1}`}
                         title={selectedWorkout.dayName}
                         description={muscleGroups || undefined}
-                        meta={[
-                          `${exerciseCount} exercises`,
-                          `~${estimatedMinutes} min`,
-                        ]}
+                        meta={
+                          status === "completed"
+                            ? []
+                            : [
+                                `${exerciseCount} exercises`,
+                                `~${estimatedMinutes} min`,
+                              ]
+                        }
                         primaryActionLabel={
                           status === "today" && !selectedWorkout.completed
                             ? "Begin Workout"
@@ -1708,52 +1706,17 @@ function ProgramInner() {
 
                       {/* ── Completed Session Summary ── */}
                       {status === "completed" && (
-                        <div
-                          className="rounded-xl p-3"
-                          style={{
-                            // Brand success green via the THEME token (=#4DB872)
-                            // + hex alpha, not a raw rgb literal. Faithful swap:
-                            // the Tailwind `--success` token is a different,
-                            // darker green, so bg-success/5 would shift the
-                            // colour — THEME.success keeps it exact.
-                            backgroundColor: `${THEME.success}0D`,
-                            border: `1px solid ${THEME.success}26`,
-                          }}
-                        >
-                          <div className="flex justify-around items-center">
-                            <div className="text-center">
-                              <p className="text-base font-bold font-mono tabular-nums text-foreground">
-                                ~{estimatedMinutes} min
-                              </p>
-                              <p className="text-caption font-medium text-muted-foreground">
-                                Duration
-                              </p>
-                            </div>
-                            <div
-                              className="bg-border/60"
-                              style={{ width: 1, height: 24 }}
-                            />
-                            <div className="text-center">
-                              <p className="text-base font-bold font-mono tabular-nums text-foreground">
-                                {formatVolumeLabel(totalVolume)}
-                              </p>
-                              <p className="text-caption font-medium text-muted-foreground">
-                                Volume
-                              </p>
-                            </div>
-                            <div
-                              className="bg-border/60"
-                              style={{ width: 1, height: 24 }}
-                            />
-                            <div className="text-center">
-                              <p className="text-base font-bold font-mono tabular-nums text-foreground">
-                                {exerciseCount}
-                              </p>
-                              <p className="text-caption font-medium text-muted-foreground">
-                                Exercises
-                              </p>
-                            </div>
-                          </div>
+                        <div className="rounded-xl border border-border bg-card p-4 space-y-2">
+                          <p className="text-sm text-muted-foreground">
+                            This programme day is complete. View your recorded
+                            sets and actual totals in History.
+                          </p>
+                          <Button
+                            variant="secondary"
+                            onClick={() => navigate("/history")}
+                          >
+                            View workout history
+                          </Button>
                         </div>
                       )}
                     </div>

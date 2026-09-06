@@ -1773,7 +1773,7 @@ describe("cache-first paint (cold-open latency)", () => {
 
 // Packet 15 — completeWorkoutDay writes programme + workout atomically.
 describe("packet 15 — completeWorkoutDay atomic batch", () => {
-  function seedProgramWithDay() {
+  function seedProgramWithDay(includeUnperformed = false) {
     mockProfile = { uid: "test-user-1", runMode: "freeform" };
     seedProgram({
       goal: "recomp",
@@ -1799,6 +1799,18 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
               reps: 5,
               weight: 100,
             },
+            ...(includeUnperformed
+              ? [
+                  {
+                    exerciseId: "curl",
+                    name: "Curl",
+                    movementCategory: "arms",
+                    sets: 3,
+                    reps: 10,
+                    weight: 20,
+                  },
+                ]
+              : []),
           ],
         },
       ],
@@ -1809,6 +1821,39 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
     completionCommandId: completionId,
     durationMinutes: 30,
     setLogs: [[{ weight: 100, reps: 5, completed: true }]],
+  });
+
+  it("shares only performed exercises, not untouched programme slots", async () => {
+    const { compose } = await import("@/lib/shareComposer");
+    const { postActivity } = await import("@/lib/socialApi");
+    vi.mocked(compose).mockResolvedValueOnce({
+      visibility: "followers",
+      caption: "",
+    });
+    seedProgramWithDay(true);
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => {
+      await result.current.completeWorkoutDay(0, {
+        ...session("partial-count"),
+        setLogs: [[{ weight: 100, reps: 5, completed: true }], []],
+      });
+    });
+    expect(compose).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        meta: expect.arrayContaining(["1 exercise"]),
+      }),
+      expect.anything()
+    );
+    expect(postActivity).toHaveBeenCalledWith(
+      expect.objectContaining({
+        exerciseCount: 1,
+        totalVolume: 500,
+        exercises: [expect.objectContaining({ name: "Bench" })],
+        muscleGroups: ["chest"],
+      })
+    );
   });
 
   it("commits ONE batch writing the programme doc + a deterministic workout id", async () => {
