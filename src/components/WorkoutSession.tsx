@@ -864,22 +864,10 @@ export default function WorkoutSession({
     });
   };
 
-  // Complete a specific set inline (from tapping the DONE circle)
-  const completeInlineSet = (setIdx: number) => {
-    if (setIdx === currentSetIndex) {
-      completeSet();
-    } else {
-      haptic(50);
-      setSetLogs((prev) => {
-        const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
-        updated[currentExIndex][setIdx].completed = true;
-        return updated;
-      });
-    }
-  };
-
-  const completeSet = async () => {
-    const set = currentSets[currentSetIndex];
+  // Row checkmarks and the primary CTA share validation, PRs, undo and
+  // progression, including when a lifter completes sets out of order.
+  const completeSet = async (setIdx = currentSetIndex) => {
+    const set = currentSets[setIdx];
     if (!set) return;
     /* A set already marked complete is done. Completing it again re-ran
        the last-set path below — the volume-PR check and `onLogExercise`,
@@ -925,7 +913,7 @@ export default function WorkoutSession({
     // Mark set complete
     setSetLogs((prev) => {
       const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
-      updated[currentExIndex][currentSetIndex].completed = true;
+      updated[currentExIndex][setIdx].completed = true;
       return updated;
     });
 
@@ -1011,14 +999,14 @@ export default function WorkoutSession({
     if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
     setLastCompleted({
       exIdx: currentExIndex,
-      setIdx: currentSetIndex,
+      setIdx,
       pr: prContext,
     });
     undoTimeoutRef.current = setTimeout(() => setLastCompleted(null), 4000);
 
     const updatedLogs = setLogs.map((sets, exIndex) =>
       sets.map((st, setIndex) =>
-        exIndex === currentExIndex && setIndex === currentSetIndex
+        exIndex === currentExIndex && setIndex === setIdx
           ? { ...st, completed: true }
           : st
       )
@@ -1039,7 +1027,7 @@ export default function WorkoutSession({
         const sessionVolume = exerciseSessionVolume(
           currentSets
             .map((st, i) =>
-              i === currentSetIndex ? { ...set, completed: true } : st
+              i === setIdx ? { ...set, completed: true } : st
             )
             .filter((st) => st.completed && st.type !== "warmup")
             .map((st) => ({ weightKg: st.weight, reps: st.reps }))
@@ -1076,7 +1064,7 @@ export default function WorkoutSession({
       // inventing some would be worse than waiting for the next session.
       const progressionSet = progressionSetFor(
         currentSets.map((st, i) =>
-          i === currentSetIndex ? { ...set, completed: true } : st
+          i === setIdx ? { ...set, completed: true } : st
         )
       );
 
@@ -1860,7 +1848,7 @@ export default function WorkoutSession({
                             <button
                               type="button"
                               aria-label="Mark set complete"
-                              onClick={() => completeInlineSet(setIdx)}
+                              onClick={() => void completeSet(setIdx)}
                               className="group size-11 flex items-center justify-center active:scale-90"
                             >
                               <span className="size-7 rounded-full border-2 border-border group-hover:border-primary/50 transition-colors" />
@@ -2083,7 +2071,7 @@ export default function WorkoutSession({
             return (
               <button
                 type="button"
-                onClick={completeSet}
+                onClick={() => void completeSet()}
                 disabled={
                   !currentSets[currentSetIndex] ||
                   currentSets[currentSetIndex]?.completed

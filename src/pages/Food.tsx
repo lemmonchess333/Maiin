@@ -1033,6 +1033,9 @@ export default function Food() {
       } catch (err) {
         logger.error("[Food] meal edit failed", err);
         toast.error("Could not save changes");
+        // Keep the editor open and do not change servings or announce success
+        // after any of the existing entries failed to update.
+        return;
       }
     }
     if (targetCount === currentCount || targetCount < 1) {
