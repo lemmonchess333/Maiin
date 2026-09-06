@@ -3382,6 +3382,13 @@ export function useProgram() {
       weekStart: localWeekKey(),
       carry: {
         currentWeek: prevRunPlan?.currentWeek,
+        // Carried WITH currentWeek, as every other regen site does: the
+        // phase of a week is currentWeek against totalWeeks, so carrying
+        // the position without the block length re-derived the phase from
+        // the weeks REMAINING — a realign at week 10 of 18 with 6 weeks
+        // left generated a base week while the cockpit showed the carried
+        // build phase.
+        totalWeeks: prevRunPlan?.totalWeeks,
         completedRaces: prevRunPlan?.completedRaces,
       },
       prior: {
