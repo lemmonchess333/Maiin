@@ -36,11 +36,11 @@ interface WeightReceipt {
 }
 /** The retry receipt is bounded: retain the previous row, without nesting
  * its own receipt. An uncertain response can then recover the original undo. */
-export async function saveWeightEntry(uid: string, date: string, kg: number) {
+export async function saveWeightEntry(uid: string, date: string, kg: number, queuedId?: string) {
   if (!validWeightDate(date) || !Number.isFinite(kg) || kg < 20 || kg > 350)
     throw new Error("Check the weight and date.");
   const key = scopedKey(`tropos-weight-retry:${date}:${kg}`, uid);
-  const editId = readString(key) ?? crypto.randomUUID();
+  const editId = queuedId ?? readString(key) ?? crypto.randomUUID();
   if (!writeString(key, editId))
     throw new Error(
       "Couldn't keep this entry for retry. Check device storage."
@@ -87,8 +87,15 @@ export async function saveWeightEntry(uid: string, date: string, kg: number) {
     throw new Error("This entry has changed. Review your weight history.");
   if (!remove(key))
     throw new Error("Weight saved. Free device storage before retrying.");
-  return async () => {
-    await runTransaction(db, async (tx) => {
+  return () => restoreWeightEntry(uid, date, kg, editId, receipt);
+}
+
+/** A queued Undo recovers the original receipt after reload. A newer edit
+ * is preserved; replaying an already-landed Undo is harmless. */
+export async function restoreWeightEntry(uid: string, date: string, kg: number, editId: string, expectedReceipt?: WeightReceipt) {
+  const ref = doc(db, "users", uid, "bodyweightLogs", date);
+  const profileRef = doc(db, "users", uid);
+  await runTransaction(db, async (tx) => {
       if (auth.currentUser?.uid !== uid)
         throw new Error("Sign in again before undoing.");
       const [row, profile] = await Promise.all([
@@ -99,10 +106,12 @@ export async function saveWeightEntry(uid: string, date: string, kg: number) {
         row.data()?.editId !== editId ||
         row.data()?.weight !== kg ||
         row.data()?.source !== "manual"
-      )
-        throw new Error(
-          "A newer weight is saved. Open your history to correct it."
-        );
+      ) {
+        if (!expectedReceipt) return;
+        throw new Error("A newer weight is saved. Open your history to correct it.");
+      }
+      const receipt = expectedReceipt ?? row.data()?.editReceipt as WeightReceipt | undefined;
+      if (!receipt) throw new Error("The previous weight could not be recovered.");
       if (receipt.before) tx.set(ref, receipt.before);
       else tx.delete(ref);
       const current = profile.data() ?? {};
@@ -133,5 +142,4 @@ export async function saveWeightEntry(uid: string, date: string, kg: number) {
         tx.update(profileRef, restore);
       }
     });
-  };
 }

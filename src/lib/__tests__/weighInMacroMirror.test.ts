@@ -87,10 +87,10 @@ describe("weighInProfilePatch", () => {
     expect(patch).not.toHaveProperty("targetCalories");
   });
 
-  it("still returns null when the weight has not meaningfully moved", () => {
+  it("preserves sub-tenth precision while ignoring identical weights", () => {
     // The delta gate is inherited from weighInProfileMirror, not re-implemented.
     expect(weighInProfilePatch(AT_SETUP, 90)).toBeNull();
-    expect(weighInProfilePatch(AT_SETUP, 90.04)).toBeNull();
+    expect(weighInProfilePatch(AT_SETUP, 90.04)?.weightKg).toBe(90.04);
     expect(weighInProfilePatch(AT_SETUP, 0)).toBeNull();
     expect(weighInProfilePatch(AT_SETUP, -5)).toBeNull();
   });

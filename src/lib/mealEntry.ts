@@ -6,7 +6,10 @@ import { toast } from "@/lib/toast";
 
 export async function createMealEntry(uid: string, data: Record<string, unknown>, id?: string) {
   if (auth.currentUser?.uid !== uid) throw new Error("Sign in again to log food.");
-  return addDocGuarded(collection(db, "users", uid, "meals"), data, { uid, id });
+  return addDocGuarded(collection(db, "users", uid, "meals"), data, { id, enqueue: (ref, clean) => {
+    queueDurableWrite(uid, `users/${uid}/meals`, ref.id, clean);
+    void flushQueue(db, uid).catch(() => {});
+  } });
 }
 
 export async function undoMealEntries(uid: string, ids: readonly string[]) {
