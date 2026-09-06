@@ -1,0 +1,729 @@
+{
+  "schemaVersion": 1,
+  "batch": "2026-09-06-batch-02",
+  "releaseApproved": false,
+  "productionAssetsChanged": false,
+  "selectedFrameCount": 42,
+  "completeDraftSets": [
+    {
+      "exerciseId": "hammer-curl",
+      "status": "draft-awaiting-review",
+      "camera": "Front three-quarter facing left; portrait",
+      "anchors": [
+        "feet",
+        "head",
+        "hips",
+        "torso",
+        "upper arms"
+      ],
+      "equipment": "Two identical dumbbells, neutral grip.",
+      "muscles": {
+        "primary": [
+          "biceps",
+          "brachialis"
+        ],
+        "secondary": [
+          "brachioradialis"
+        ],
+        "stabilisers": "Subtle pale trunk emphasis where visible; qualitative contribution, not measured activation."
+      },
+      "reviewFindings": [
+        "Upper-arm proportions and dumbbell handle/axis consistency require manual review.",
+        "2-early.png superseded because dumbbell orientation did not track the neutral wrist."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/hammer-curl/1-master.png",
+          "caption": "START 1/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1063994,
+          "sha256": "1ea22590746b7bcde478551a914542b6da33cb9764c4b4a2f597fcd687511f01",
+          "reusedFrom": null
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/hammer-curl/2-early-corrected.png",
+          "caption": "INITIATE CURL 2/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1267537,
+          "sha256": "a69ee2b2e6183ac986c280859312799985bc7174831cfbb96d22bc27b2304691",
+          "reusedFrom": null
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/hammer-curl/3-mid.png",
+          "caption": "MID CURL 3/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1234010,
+          "sha256": "7058b9b77bcc9436c01eb81c90deee3f48b252e3440d64d4c40cd94665f7ba8e",
+          "reusedFrom": null
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/hammer-curl/4-top.png",
+          "caption": "TOP CURL 4/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1263732,
+          "sha256": "d642b7e3123179f79cd0e247900d07bf4aac5590ddcb51e1a06e39fff71e2530",
+          "reusedFrom": null
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/hammer-curl/5-lower.png",
+          "caption": "CONTROLLED LOWER 5/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1234010,
+          "sha256": "7058b9b77bcc9436c01eb81c90deee3f48b252e3440d64d4c40cd94665f7ba8e",
+          "reusedFrom": 3
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/hammer-curl/6-return.png",
+          "caption": "RETURN 6/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1267537,
+          "sha256": "a69ee2b2e6183ac986c280859312799985bc7174831cfbb96d22bc27b2304691",
+          "reusedFrom": 2
+        }
+      ]
+    },
+    {
+      "exerciseId": "front-raise",
+      "status": "draft-awaiting-review",
+      "camera": "Front-side three-quarter facing left; portrait",
+      "anchors": [
+        "feet",
+        "head",
+        "hips",
+        "torso"
+      ],
+      "equipment": "Two identical dumbbells, pronated grip, fixed soft elbow bend.",
+      "muscles": {
+        "primary": [
+          "anterior deltoids"
+        ],
+        "secondary": [
+          "upper pectorals"
+        ],
+        "stabilisers": "Subtle pale trunk emphasis where visible; qualitative contribution, not measured activation."
+      },
+      "reviewFindings": [
+        "Early and middle poses are farther through the motion than requested; use qualitative cues until joint angles are measured."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/front-raise/1-master.png",
+          "caption": "START 1/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 759500,
+          "sha256": "813df8deed18516707dc7925eda17b69cc96a5ac060e42188a758fd600b94c07",
+          "reusedFrom": null
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/front-raise/2-early.png",
+          "caption": "INITIATE RAISE 2/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 810482,
+          "sha256": "db699f2427a057fd8cc26a4d1b538d29e26f2fd3d34e01874b70775007ff84f9",
+          "reusedFrom": null
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/front-raise/3-mid.png",
+          "caption": "CONTINUE RAISE 3/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 872007,
+          "sha256": "c74e669d1e510f538dca6a5ef586778a08f3b8517abdeeabbeb7e442845dff32",
+          "reusedFrom": null
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/front-raise/4-top.png",
+          "caption": "SHOULDER HEIGHT 4/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1128097,
+          "sha256": "1771951b91a37bbc369f96decc0ad447d0a933646cf032318341c5fef6d1f8be",
+          "reusedFrom": null
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/front-raise/5-lower.png",
+          "caption": "CONTROLLED LOWER 5/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 872007,
+          "sha256": "c74e669d1e510f538dca6a5ef586778a08f3b8517abdeeabbeb7e442845dff32",
+          "reusedFrom": 3
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/front-raise/6-return.png",
+          "caption": "RETURN 6/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 810482,
+          "sha256": "db699f2427a057fd8cc26a4d1b538d29e26f2fd3d34e01874b70775007ff84f9",
+          "reusedFrom": 2
+        }
+      ]
+    },
+    {
+      "exerciseId": "goblet-squat",
+      "status": "draft-awaiting-review",
+      "camera": "Front three-quarter facing left; portrait",
+      "anchors": [
+        "whole-foot contact",
+        "dumbbell-to-chest relationship"
+      ],
+      "equipment": "One vertical dumbbell cupped at upper head with both hands.",
+      "muscles": {
+        "primary": [
+          "quadriceps"
+        ],
+        "secondary": [
+          "gluteals"
+        ],
+        "stabilisers": "Subtle pale trunk emphasis where visible; qualitative contribution, not measured activation."
+      },
+      "reviewFindings": [
+        "Depth and femur/torso foreshortening require technique review; requested numerical angles are not verified."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/goblet-squat/1-master.png",
+          "caption": "STAND TALL 1/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 817126,
+          "sha256": "baf91df05be0056d4be07290e2e1195e39b38222d679bfe2bced8dfbb1c783a7",
+          "reusedFrom": null
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/goblet-squat/2-early.png",
+          "caption": "BEGIN DESCENT 2/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1055378,
+          "sha256": "e0405dd7939366abc059057a49852347084eea0af18c4ea4dc893cb235acc4c0",
+          "reusedFrom": null
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/goblet-squat/3-mid.png",
+          "caption": "LOWER 3/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 812782,
+          "sha256": "7a3ef99906d37749a4424723ebcb165a5d953b312abb64c060fed3bc065364ca",
+          "reusedFrom": null
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/goblet-squat/4-bottom.png",
+          "caption": "BOTTOM 4/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1026769,
+          "sha256": "c1a0abcfd5045b8fb7a3f3f20305080d8e54d8fcf3b8b05617f9a02481ffbf16",
+          "reusedFrom": null
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/goblet-squat/5-rise.png",
+          "caption": "DRIVE UP 5/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 812782,
+          "sha256": "7a3ef99906d37749a4424723ebcb165a5d953b312abb64c060fed3bc065364ca",
+          "reusedFrom": 3
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/goblet-squat/6-return.png",
+          "caption": "FINISH RISING 6/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1055378,
+          "sha256": "e0405dd7939366abc059057a49852347084eea0af18c4ea4dc893cb235acc4c0",
+          "reusedFrom": 2
+        }
+      ]
+    },
+    {
+      "exerciseId": "push-ups",
+      "status": "draft-awaiting-review",
+      "camera": "Front-side three-quarter, head left; landscape",
+      "anchors": [
+        "palms",
+        "toes"
+      ],
+      "equipment": "Bodyweight, floor only.",
+      "muscles": {
+        "primary": [
+          "pectoralis major"
+        ],
+        "secondary": [
+          "triceps",
+          "anterior deltoids"
+        ],
+        "stabilisers": "Subtle pale trunk emphasis where visible; qualitative contribution, not measured activation."
+      },
+      "reviewFindings": [
+        "Near-hand region has up to 8px horizontal bound change; wrist inclusion limits interpretation.",
+        "Review body-line alignment, neck and elbow stacking in all four unique poses."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/push-ups/1-master.png",
+          "caption": "HIGH PLANK 1/6",
+          "dimensions": [
+            1536,
+            1024
+          ],
+          "bytes": 874508,
+          "sha256": "a34c813085bd75c2e8f10d5aef4c77b7f94ac77c33e77cbf212455bd244008ea",
+          "reusedFrom": null
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/push-ups/2-early.png",
+          "caption": "BEGIN LOWERING 2/6",
+          "dimensions": [
+            1536,
+            1024
+          ],
+          "bytes": 881236,
+          "sha256": "2436b01b968110234808ad14a301616b9cb08f9b6723bc7c805fabb4e4227e67",
+          "reusedFrom": null
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/push-ups/3-mid.png",
+          "caption": "LOWER 3/6",
+          "dimensions": [
+            1536,
+            1024
+          ],
+          "bytes": 1000885,
+          "sha256": "88ff1401b3467f6c27314df496b2877e5428d683c77aa3288fa47db7ad446de6",
+          "reusedFrom": null
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/push-ups/4-bottom.png",
+          "caption": "BOTTOM 4/6",
+          "dimensions": [
+            1536,
+            1024
+          ],
+          "bytes": 981444,
+          "sha256": "faf7a1ff1349bf458e62a43551377ed226bc3f3ba681d2f6147786de387ab0b9",
+          "reusedFrom": null
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/push-ups/5-rise.png",
+          "caption": "PRESS UP 5/6",
+          "dimensions": [
+            1536,
+            1024
+          ],
+          "bytes": 1000885,
+          "sha256": "88ff1401b3467f6c27314df496b2877e5428d683c77aa3288fa47db7ad446de6",
+          "reusedFrom": 3
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/push-ups/6-return.png",
+          "caption": "FINISH PRESSING 6/6",
+          "dimensions": [
+            1536,
+            1024
+          ],
+          "bytes": 881236,
+          "sha256": "2436b01b968110234808ad14a301616b9cb08f9b6723bc7c805fabb4e4227e67",
+          "reusedFrom": 2
+        }
+      ]
+    },
+    {
+      "exerciseId": "squat",
+      "status": "draft-awaiting-review",
+      "camera": "Front three-quarter facing left; portrait",
+      "anchors": [
+        "whole-foot contact",
+        "bar-to-upper-traps contact",
+        "hand spacing"
+      ],
+      "equipment": "Straight bar on upper traps, one modest plate each side, unchanged throughout.",
+      "muscles": {
+        "primary": [
+          "quadriceps"
+        ],
+        "secondary": [
+          "gluteals"
+        ],
+        "stabilisers": "Subtle pale trunk emphasis where visible; qualitative contribution, not measured activation."
+      },
+      "reviewFindings": [
+        "Initial 1-master.png bar sat too high; corrected candidate is selected.",
+        "Parallel label/depth and torso/head foreshortening require review.",
+        "Six movement beats match current authored squat order."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/squat-batch-02/1-master-corrected.png",
+          "caption": "SET UP 1/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1024699,
+          "sha256": "a91eb16b24c3062a44e51c754cf66d927427c358db9eadface14bb16f5b68e35",
+          "reusedFrom": null
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/squat-batch-02/2-descend.png",
+          "caption": "DESCEND 2/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1193030,
+          "sha256": "92f390e9615647b03692f2e4aafea786789f20aa181f6d84c8739bbe3ccdc3cf",
+          "reusedFrom": null
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/squat-batch-02/3-parallel.png",
+          "caption": "PARALLEL 3/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1170276,
+          "sha256": "cac768813b7a35ae7d244da7e7c9ef3f335b2f09aaf67b81078d76007988b388",
+          "reusedFrom": null
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/squat-batch-02/4-bottom.png",
+          "caption": "BOTTOM 4/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1216878,
+          "sha256": "167b96301348646c57859770625c4dd98eec0f95a6731be1348bc8adaeeed3fa",
+          "reusedFrom": null
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/squat-batch-02/5-drive.png",
+          "caption": "DRIVE 5/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1239309,
+          "sha256": "b20fc0483ba636f01afbbb85dc9c78b39bfb619d76183d27931f49d12e4f47ff",
+          "reusedFrom": null
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/squat-batch-02/6-stand.png",
+          "caption": "STAND 6/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1024699,
+          "sha256": "a91eb16b24c3062a44e51c754cf66d927427c358db9eadface14bb16f5b68e35",
+          "reusedFrom": 1
+        }
+      ]
+    },
+    {
+      "exerciseId": "barbell-curl",
+      "status": "draft-awaiting-review",
+      "camera": "Front three-quarter facing left; portrait",
+      "anchors": [
+        "feet",
+        "head",
+        "hips",
+        "torso",
+        "upper arms"
+      ],
+      "equipment": "Straight bar, one modest plate each side, shoulder-width supinated closed grip.",
+      "muscles": {
+        "primary": [
+          "biceps"
+        ],
+        "secondary": [
+          "brachialis",
+          "brachioradialis"
+        ],
+        "stabilisers": "Subtle pale trunk emphasis where visible; qualitative contribution, not measured activation."
+      },
+      "reviewFindings": [
+        "Upper-arm length, elbow pivot registration, grip and plate silhouettes need measurement across curl poses."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/barbell-curl/1-master.png",
+          "caption": "START 1/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 882734,
+          "sha256": "7a4a7ef3b2701b3e5deec99c4abd078ddcfde9dca980a9186ab2b7c060ac41b4",
+          "reusedFrom": null
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/barbell-curl/2-early.png",
+          "caption": "INITIATE CURL 2/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 905594,
+          "sha256": "5edbd53b7eba6498287210a23905cc7a8a556b1468d1dc07ce79b2e820e1264f",
+          "reusedFrom": null
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/barbell-curl/3-mid.png",
+          "caption": "MID CURL 3/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1227404,
+          "sha256": "dd4e01a66d1ef5e0d59aba3bedc75f711bfc6cc5b2babec3b34eacb71bdb92e8",
+          "reusedFrom": null
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/barbell-curl/4-top.png",
+          "caption": "TOP CURL 4/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1109310,
+          "sha256": "9b30f182eb452b18d4ba45b8e177c536c929572b88ae57a17ebc27e8abf52276",
+          "reusedFrom": null
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/barbell-curl/5-lower.png",
+          "caption": "CONTROLLED LOWER 5/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1227404,
+          "sha256": "dd4e01a66d1ef5e0d59aba3bedc75f711bfc6cc5b2babec3b34eacb71bdb92e8",
+          "reusedFrom": 3
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/barbell-curl/6-return.png",
+          "caption": "RETURN 6/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 905594,
+          "sha256": "5edbd53b7eba6498287210a23905cc7a8a556b1468d1dc07ce79b2e820e1264f",
+          "reusedFrom": 2
+        }
+      ]
+    },
+    {
+      "exerciseId": "db-bench",
+      "status": "draft-awaiting-review",
+      "camera": "Elevated front-side three-quarter, head left; landscape",
+      "anchors": [
+        "head",
+        "upper back",
+        "buttocks",
+        "feet",
+        "entire bench"
+      ],
+      "equipment": "Flat bench and two identical modest dumbbells, pronated grip.",
+      "muscles": {
+        "primary": [
+          "pectoralis major"
+        ],
+        "secondary": [
+          "triceps",
+          "anterior deltoids"
+        ],
+        "stabilisers": "Subtle pale trunk emphasis where visible; qualitative contribution, not measured activation."
+      },
+      "reviewFindings": [
+        "Elbow angle and wrist-over-elbow alignment need technique review.",
+        "Near upper arm silhouette and dumbbell orientation/size require comparison; requested degree values are not verified."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/db-bench/1-master.png",
+          "caption": "TOP 1/6",
+          "dimensions": [
+            1536,
+            1024
+          ],
+          "bytes": 870609,
+          "sha256": "dec10471eca129c22a7bbc9b9067ecca04247b418ced40d05601807ae1bb9d35",
+          "reusedFrom": null
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/db-bench/2-early.png",
+          "caption": "BEGIN LOWERING 2/6",
+          "dimensions": [
+            1536,
+            1024
+          ],
+          "bytes": 892073,
+          "sha256": "b5bf91c44ee8e47e05d2afc4a3b8f6ce3fd65444a95a8d9fb2036cabb652fd80",
+          "reusedFrom": null
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/db-bench/3-mid.png",
+          "caption": "LOWER 3/6",
+          "dimensions": [
+            1536,
+            1024
+          ],
+          "bytes": 832643,
+          "sha256": "5a30bf26a8ce8cb388d03a93bab3e9ad58e51f34ae42b4769d3426b9e5b8da2f",
+          "reusedFrom": null
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/db-bench/4-bottom.png",
+          "caption": "BOTTOM 4/6",
+          "dimensions": [
+            1536,
+            1024
+          ],
+          "bytes": 1324561,
+          "sha256": "74f9834b532d5ec83e6bb16efcdea4c4bf9953df2c5e0d95c3ffd5eea5830ce6",
+          "reusedFrom": null
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/db-bench/5-press.png",
+          "caption": "PRESS UP 5/6",
+          "dimensions": [
+            1536,
+            1024
+          ],
+          "bytes": 832643,
+          "sha256": "5a30bf26a8ce8cb388d03a93bab3e9ad58e51f34ae42b4769d3426b9e5b8da2f",
+          "reusedFrom": 3
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/db-bench/6-return.png",
+          "caption": "FINISH PRESSING 6/6",
+          "dimensions": [
+            1536,
+            1024
+          ],
+          "bytes": 892073,
+          "sha256": "b5bf91c44ee8e47e05d2afc4a3b8f6ce3fd65444a95a8d9fb2036cabb652fd80",
+          "reusedFrom": 2
+        }
+      ]
+    }
+  ],
+  "blockedPilots": [
+    {
+      "exerciseId": "lat-pulldown",
+      "status": "rejected-incomplete",
+      "directory": "docs/exercise-art/pilots/lat-pulldown",
+      "reason": "Stationary stack geometry/count changes. Early pull packet displacement contradicts 1:1 cable payout; targeted repair also failed.",
+      "expectedState": "Corrected master: selected packet y745\u2013849, fixed block y890\u20131197. Early bar moves down about136px: selected packet should move up about136px; stationary block must stay unchanged.",
+      "nextStep": "Do not retry the same full-scene editing method. Establish a physically registered equipment construction before new frames."
+    },
+    {
+      "exerciseId": "deadlift",
+      "status": "rejected-incomplete",
+      "directory": "docs/exercise-art/pilots/deadlift",
+      "reason": "Early lift shifts both fixed shoes upwards about32px; two-reference anchor repair did not restore floor registration.",
+      "nextStep": "Re-establish feet/floor registration before continuing. Proposed six-beat pilot differs from existing authored cues; reconcile before integration."
+    }
+  ],
+  "captionPolicy": "Text-free native PNG masters; captions are accessible app metadata. Separate captioned exports would require rendering and QA.",
+  "reviewGate": [
+    "Technique review for exact variation",
+    "Character proportions and anchor registration",
+    "Equipment dimensions, grips and physical state",
+    "Stable qualitative muscle hierarchy",
+    "Six-frame motion and loop inspection",
+    "Light/dark mobile playback and reduced motion",
+    "Web delivery conversion and byte budget; never bundle native draft PNGs"
+  ]
+}
