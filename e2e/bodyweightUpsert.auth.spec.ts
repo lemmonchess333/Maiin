@@ -114,12 +114,13 @@ async function logWeight(page: Page, value: string): Promise<void> {
     .getByRole("button", { name: /weight/i })
     .first()
     .click();
-  const input = page.getByLabel(/Body weight in/i);
+  const sheet = page.getByRole("dialog", { name: "Log weight", exact: true });
+  const input = sheet.getByLabel(/^Weight \(/);
   await input.waitFor({ state: "visible", timeout: 10_000 });
   await input.fill(value);
-  await page.getByRole("button", { name: "Save weight" }).click();
-  // The write is fire-and-forget from the UI's perspective, so anchor
-  // on the sheet closing and then on the value being readable back from
+  await sheet.getByRole("button", { name: "Log weight", exact: true }).click();
+  // Save closes the sheet after the transaction. Anchor on that dismissal
+  // and then on the value being readable back from
   // the emulator. This replaces a fixed 1.5s wait, which lost the race
   // under parallel-suite load (2026-08-08 sweep: afterFirst read found
   // 0 docs) — a timer is not an anchor.
@@ -128,7 +129,7 @@ async function logWeight(page: Page, value: string): Promise<void> {
     .poll(async () => (await readBodyweightLogs()).map((r) => r.weight), {
       timeout: 15_000,
     })
-    .toContain(Number(value));
+    .toContain(Number(value.replace(",", ".")));
 }
 
 test.describe("P1 bodyweight upsert — one row per local day", () => {
@@ -170,7 +171,7 @@ test.describe("P1 bodyweight upsert — one row per local day", () => {
     const firstId = afterFirst[0].id;
     const firstWeight = afterFirst[0].weight;
 
-    await logWeight(page, "80.1");
+    await logWeight(page, "80,1");
     const dayOfSecond = await localDay(page);
     const afterSecond = await readBodyweightLogs();
 
