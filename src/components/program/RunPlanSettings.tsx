@@ -306,6 +306,8 @@ export default function RunPlanSettings({
         runMode,
         weeklyRunDays,
         runTuning: { volume: runVolume, difficulty: runDifficulty },
+        // Run17: the long-run ceiling is measured at the confirmed easy pace.
+        runFitness: profile.runFitness ?? null,
         ...(runMode === "race_prep"
           ? {
               raceGoal: {

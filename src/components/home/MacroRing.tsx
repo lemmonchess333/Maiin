@@ -27,7 +27,13 @@ export default function MacroRing({
   const size = 68;
   const r = size / 2 - 6;
   const circ = 2 * Math.PI * r;
-  const { pct, done } = macroRingState(value, target);
+  // Nutr3: a target of 0 means NO goal (a calorie target below the
+  // essential-fat floor funds no protein or carbs), not "0 g to eat" — so
+  // the ring stays empty and the sub-label reads "—" instead of "0g".
+  const hasTarget = target > 0;
+  const { pct, done } = hasTarget
+    ? macroRingState(value, target)
+    : { pct: 0, done: false };
   const [flashKey, setFlashKey] = useState(0);
   const prevDoneRef = useRef(done);
 
@@ -50,8 +56,14 @@ export default function MacroRing({
 
   // cal.ai-style: "left" clamps at 0 (no negative when over-target).
   const displayValue =
-    displayMode === "consumed" ? value : Math.max(0, target - value);
-  const subLabel = displayMode === "consumed" ? `${target}${unit}` : "left";
+    displayMode === "consumed" || !hasTarget
+      ? value
+      : Math.max(0, target - value);
+  const subLabel = !hasTarget
+    ? "—"
+    : displayMode === "consumed"
+      ? `${target}${unit}`
+      : "left";
 
   return (
     <div className="flex flex-col items-center gap-1.5">

@@ -330,7 +330,8 @@ export default function MacroColumn({
           ease={RING_EASE}
         />
         {" / "}
-        {Math.round(target)}g
+        {/* Nutr3: a 0 target is NO goal (below the essential-fat floor), not "0g" */}
+        {hasTarget ? `${Math.round(target)}g` : "—"}
       </p>
 
       {/* Uppercase macro label — intentionally muted (same tone as the

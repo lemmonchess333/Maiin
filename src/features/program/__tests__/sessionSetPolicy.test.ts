@@ -144,15 +144,21 @@ describe("progressionSetFor → applyProgression (D3)", () => {
     expect(withDrop.weight).toBeGreaterThan(100);
   });
 
-  it("…while the pre-fix selection walked the load DOWN over the same sessions", () => {
-    // Not shipped behaviour — proof the fixture can trigger the bug, so the
-    // assertion above is not vacuous. Feeding the raw last set (the drop set)
-    // fails `actualWeight >= exercise.weight` every time.
+  it("…while the pre-fix selection FREEZES the lift over the same sessions", () => {
+    // Not shipped behaviour — proof the fixture can trigger the defect, so
+    // the assertion above is not vacuous. Feeding the raw last set (the drop
+    // set) used to fail `actualWeight >= exercise.weight` every time and walk
+    // the load DOWN; under Lift2 a lighter set with the reps hit HOLDS
+    // instead, so the same wrong selection now freezes the prescription at
+    // 100 kg for six sessions while the correct selection climbed past it.
+    // Either way the selection is what makes the lifter progress.
     let ex = mkEx();
     for (let session = 0; session < 6; session++) {
       ex = applyProgression(ex, 12, 60, "recomp", false);
     }
-    expect(ex.weight).toBeLessThan(100);
+    expect(ex.weight).toBe(100);
+    expect(ex.reps).toBe(mkEx().reps);
+    expect(ex.consecutiveFailures).toBe(0);
   });
 
   it("skips progression when nothing eligible was completed", () => {

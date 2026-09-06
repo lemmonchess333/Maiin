@@ -21,12 +21,12 @@ were never shown.
 This is CLAUDE.md's standing rule ("Persist every mirrored and derived field
 in the same write") failing four times in one pipeline. Expect a fifth.
 
-| ID | Where the target moved | What failed to follow | Fixed in |
-| --- | --- | --- | --- |
-| NUTR-EV-01 | rate-derived target on an aggressive cut | the stored split ignored the essential-fat floor and protein cap the DISPLAY splitter applies | #1960 |
-| NUTR-EV-02 | manual `customCalorieTarget` | macros stayed the formula's; Settings displayed the formula target | #1961 |
-| NUTR-EV-03 | adaptive-TDEE learned target | server adherence still scored `profile.targetCalories` | #1961 |
-| NUTR-EV-04 | bodyweight (a weigh-in) | stored protein/fat, which are defined per kilogram | #1962 |
+| ID         | Where the target moved                   | What failed to follow                                                                         | Fixed in |
+| ---------- | ---------------------------------------- | --------------------------------------------------------------------------------------------- | -------- |
+| NUTR-EV-01 | rate-derived target on an aggressive cut | the stored split ignored the essential-fat floor and protein cap the DISPLAY splitter applies | #1960    |
+| NUTR-EV-02 | manual `customCalorieTarget`             | macros stayed the formula's; Settings displayed the formula target                            | #1961    |
+| NUTR-EV-03 | adaptive-TDEE learned target             | server adherence still scored `profile.targetCalories`                                        | #1961    |
+| NUTR-EV-04 | bodyweight (a weigh-in)                  | stored protein/fat, which are defined per kilogram                                            | #1962    |
 
 ### Measured consequences, at their true size
 
@@ -86,6 +86,14 @@ scratch is wasted effort; changing them is a product call, not a cleanup.
   STATUS 2026-08-12 — owner-decided: warn, don't clamp. The field now names the
   floor and says why very low targets are awkward; the number is still the
   user's.
+  STATUS 2026-09-06 — Nutr3 (plan file): below the essential-fat floor's own
+  cost the split cannot reconcile; the number is kept, the protein and carb
+  TARGETS render as "—" (no goal) on Home and Food with one shared sentence
+  on all three surfaces, and both scoring-target resolvers return null so the
+  adherence factor is dropped rather than scored against the typo. Nutr4:
+  a manual override now outranks the race taper too (client); the server
+  stays taper-blind, pinned inside the cut tolerance by
+  `taperScoringTolerance.cross.test.ts`.
 - **The calorie target on a weigh-in.** Protein and fat follow bodyweight by
   arithmetic; the calorie target is a training decision — as you shrink, the
   same intake is a smaller deficit, which is the plateau the adaptive-TDEE

@@ -66,9 +66,13 @@ describe("ProgressPhotos — private-only contract (BODY-VAULT-00)", () => {
   it("states the real owner-only contract instead", () => {
     render(<ProgressPhotos />);
     expect(screen.getByText(/private to your account/i)).toBeInTheDocument();
+    // Soc9: the key derives from the uid, so the honest claim is "never
+    // shown to other users", not "only you can view" — the operator can.
+    // Both the lock line and the empty-vault card say it.
     expect(
-      screen.getByText(/only you can view these photos/i)
-    ).toBeInTheDocument();
+      screen.getAllByText(/never shown to other users/i).length
+    ).toBeGreaterThan(0);
+    expect(screen.queryByText(/only you can/i)).toBeNull();
   });
 
   it("still offers no toggle once the vault HAS photos", async () => {

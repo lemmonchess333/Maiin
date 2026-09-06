@@ -106,7 +106,14 @@ export interface CompletedSessionData {
    *  activity-feed payload below — the variant (and any recovery
    *  reason behind it) never crosses a social or analytics boundary. */
   sessionVariant?: "express45" | "express30" | "easier_today";
+  /** Lift3 — when the session STARTED (ms). The workout doc is dated by its
+   *  start, not by the Finish tap: a session begun at 23:30 and finished at
+   *  00:20 belongs to the day it began (streak, active day, PI window and
+   *  Home's "today" burn all read `date`). Older drafts omit it → finish
+   *  time, the pre-Lift3 behaviour. */
+  startedAt?: number;
 }
+import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 import {
   generateRacePlanV2,
   scheduleRecoveryWeekV2,
@@ -194,6 +201,7 @@ function makeRunPlanRecord(
 function regenerateRacePlan({
   raceGoal,
   recentLayoff,
+  easyPaceSPerKm,
   weekSchedule,
   weeklyRunDays,
   currentDate,
@@ -221,6 +229,11 @@ function regenerateRacePlan({
    *  silently rebuild a returning runner's week at mid-block volume, and a
    *  compile error is a better guard than a convention. */
   recentLayoff: LayoffClass;
+  /** Run17 — the runner's confirmed easy pace (`planningEasyPaceSPerKm`), or
+   *  null. REQUIRED for the same reason as `tuning`: a regen site that forgot
+   *  it would silently revert a benchmarked runner's long-run ceiling to the
+   *  nominal table on the next weekly refresh. */
+  easyPaceSPerKm: number | null;
   carry?: {
     currentWeek?: number;
     totalWeeks?: number;
@@ -259,6 +272,7 @@ function regenerateRacePlan({
     weekStart,
     tuning,
     recentLayoff,
+    easyPaceSPerKm,
     // The block's original length, so the generator emits the week for where
     // the runner actually IS rather than week 0 of a fresh block. Without it
     // `weeks[0]` — the only week any caller persists — is always a base week,
@@ -531,6 +545,8 @@ export function useProgram() {
           const { runDays, runPlan } = regenerateRacePlan({
             recentLayoff,
             tuning: runTuningFromProfile(profile),
+
+            easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
             raceGoal: profile.raceGoal,
             weekSchedule,
             weeklyRunDays: runTarget,
@@ -587,6 +603,8 @@ export function useProgram() {
           ({ runDays, runPlan } = regenerateRacePlan({
             recentLayoff,
             tuning: runTuningFromProfile(profile),
+
+            easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
             raceGoal: profile.raceGoal,
             weekSchedule,
             weeklyRunDays: runTarget,
@@ -920,6 +938,8 @@ export function useProgram() {
         const r = regenerateRacePlan({
           recentLayoff,
           tuning: runTuningFromProfile(profile),
+
+          easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
           raceGoal: profile.raceGoal,
           weekSchedule,
           weeklyRunDays: runTarget,
@@ -1103,8 +1123,14 @@ export function useProgram() {
 
       // Local date key so the written workout is picked up by the
       // useEffectiveTargets / useHomeData filters, which both format in
-      // the viewer's local timezone via isWorkoutOnDate.
-      const today = localDateString();
+      // the viewer's local timezone via isWorkoutOnDate. Lift3: dated by
+      // the session's START when the caller supplies it.
+      const today = localDateString(
+        typeof sessionData.startedAt === "number" &&
+          Number.isFinite(sessionData.startedAt)
+          ? new Date(sessionData.startedAt)
+          : new Date()
+      );
 
       // Build exercises array — from actual setLogs when available,
       // otherwise from planned data (every set assumed completed).
@@ -1522,6 +1548,8 @@ export function useProgram() {
         const r = regenerateRacePlan({
           recentLayoff,
           tuning: runTuningFromProfile(profile),
+
+          easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
           raceGoal: profile.raceGoal,
           weekSchedule,
           weeklyRunDays: runTarget,
@@ -2301,6 +2329,8 @@ export function useProgram() {
           ({ runDays, runPlan } = regenerateRacePlan({
             recentLayoff,
             tuning: runTuningFromProfile(profile),
+
+            easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
             raceGoal: profile.raceGoal,
             weekSchedule: effectiveSchedule,
             weeklyRunDays: runTarget,
@@ -2455,6 +2485,8 @@ export function useProgram() {
         ({ runDays, runPlan } = regenerateRacePlan({
           recentLayoff,
           tuning: overrides?.tuning ?? runTuningFromProfile(profile),
+
+          easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
           raceGoal: profile.raceGoal,
           weekSchedule,
           weeklyRunDays: runTarget,
@@ -3375,6 +3407,8 @@ export function useProgram() {
     const { runDays, runPlan, manualCompletions } = regenerateRacePlan({
       recentLayoff,
       tuning: runTuningFromProfile(profile),
+
+      easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
       raceGoal: profile.raceGoal,
       weekSchedule: profile.weekSchedule ?? [],
       weeklyRunDays: getWeeklyRunTarget(profile) || 3,

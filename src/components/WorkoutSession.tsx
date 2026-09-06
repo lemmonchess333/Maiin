@@ -218,6 +218,8 @@ interface Props {
         Array<{ weight: number; reps: number; completed: boolean }>
       >;
       sessionVariant?: "express45" | "express30" | "easier_today";
+      /** Lift3 — when the session started (ms); the doc is dated by it. */
+      startedAt?: number;
     }
   ) => Promise<unknown>;
   onClose: () => void;
@@ -1188,6 +1190,9 @@ export default function WorkoutSession({
         // for why this boundary matters and why it lives in a pure module.
         setLogs: toCompletionSetLogs(setLogs),
         sessionVariant,
+        // Lift3: the doc is dated by when the session STARTED (draft-resume
+        // aware — sessionStartRef is backdated by the draft's elapsed time).
+        startedAt: sessionStartRef.current,
       });
 
       // Persist PR map to Firestore for history beyond 50-session window.

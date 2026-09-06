@@ -95,6 +95,8 @@ export default function Routine() {
       sessionData: {
         completionId: string;
         durationMinutes: number;
+        /** Lift3 — the doc is dated by when the session started. */
+        startedAt?: number;
         setLogs: Array<
           Array<{
             weight: number;
@@ -114,7 +116,14 @@ export default function Routine() {
         );
       }
 
-      const today = format(new Date(), "yyyy-MM-dd");
+      // Lift3: dated by the session's START, as the programme writer is.
+      const today = format(
+        typeof sessionData.startedAt === "number" &&
+          Number.isFinite(sessionData.startedAt)
+          ? new Date(sessionData.startedAt)
+          : new Date(),
+        "yyyy-MM-dd"
+      );
       // Deterministic id — a retried/resumed Finish overwrites the same doc.
       const workoutId = `routine-${sessionData.completionId}`;
       const workoutRef = doc(db, "users", user.uid, "workouts", workoutId);

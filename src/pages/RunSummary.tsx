@@ -905,6 +905,9 @@ export default function RunSummary() {
     const planMetadata =
       runConfig?.planMetadata ?? freeformPlanMetadata("freeform");
 
+    // The run's start — its first GPS point. One value feeds both the
+    // Timestamp and (Lift3) the local date the run is filed under.
+    const startedAtDate = new Date(points[0]?.timestamp || Date.now());
     const runData = {
       distance,
       duration: elapsed,
@@ -916,9 +919,7 @@ export default function RunSummary() {
           ? points.filter((_, i) => i % Math.ceil(points.length / 500) === 0)
           : points,
       splits,
-      startedAt: Timestamp.fromDate(
-        new Date(points[0]?.timestamp || Date.now())
-      ),
+      startedAt: Timestamp.fromDate(startedAtDate),
       completedAt: Timestamp.now(),
       // PR-L bugfix — saved-run docs now persist a local-date string
       // alongside the completedAt Timestamp. The PR-L scheduled
@@ -927,7 +928,10 @@ export default function RunSummary() {
       // this field; without it the queries return empty for every
       // user and the reconciliation flow silently mis-fires. Matches
       // the workouts convention (saved workouts already carry both).
-      date: localDateString(new Date()),
+      // Lift3 (runs too): dated by when the run STARTED — not by the Save
+      // tap, so a run begun before midnight belongs to the day it began, as
+      // on Strava and Garmin.
+      date: localDateString(startedAtDate),
       notes: notes.trim(),
       // RUN-03: optional structured effort signal. Null (skipped) survives
       // stripUndefined so the field shape doesn't bifurcate — same precedent
