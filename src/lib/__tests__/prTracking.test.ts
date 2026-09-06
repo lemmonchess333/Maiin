@@ -1,3 +1,4 @@
+import { setPRDescription, recordSetBest } from "../prTracking";
 import { describe, it, expect } from "vitest";
 import {
   getRepBucket,
@@ -110,63 +111,87 @@ describe("buildPRMap", () => {
   });
 });
 
-describe("checkSetPR", () => {
-  const prMap = buildPRMap([
+describe("checkSetPR — honest strength comparisons", () => {
+  const history = buildPRMap([
     {
       date: "2025-01-01",
-      exercises: [
-        {
-          exerciseName: "Bench Press",
-          sets: [
-            { weightKg: 80, reps: 5 },
-            { weightKg: 100, reps: 1 },
-          ],
-        },
-      ],
+      exercises: [{ exerciseName: "Row", sets: [{ weightKg: 60, reps: 8 }] }],
     },
   ]);
-  const sessionCounts = { "Bench Press": 5, "New Exercise": 1 };
-
-  it("returns bucket when weight beats record", () => {
-    expect(checkSetPR("Bench Press", 82.5, 5, prMap, sessionCounts)).toBe(
-      "5rm"
+  const counts = { Row: 5 };
+  it.each([
+    [62.5, 8],
+    [60, 9],
+  ])("recognises a supported new best: %s × %s", (weight, reps) => {
+    expect(checkSetPR("Row", weight, reps, history, counts)).toMatchObject({
+      kind: "best",
+      weight,
+      reps,
+      previousBest: { weight: 60, reps: 8 },
+    });
+  });
+  it("names a lighter new range without claiming improved strength", () => {
+    const result = checkSetPR("Row", 32.5, 10, history, counts)!;
+    expect(result.kind).toBe("bucket-first");
+    expect(setPRDescription(result)).toBe(
+      "First time at 9+ reps. Your best stays 60 kg × 8."
     );
   });
-
-  it("returns null when weight does not beat record and reps are same", () => {
-    expect(checkSetPR("Bench Press", 80, 5, prMap, sessionCounts)).toBeNull();
-    expect(checkSetPR("Bench Press", 75, 5, prMap, sessionCounts)).toBeNull();
-  });
-
-  it("returns bucket for same weight with more reps (rep PR)", () => {
-    // Same weight (80kg) but 6 reps instead of 5 — maps to 8rm bucket (6 reps → 8rm)
-    // Since 8rm has no record, this is a new PR
-    expect(checkSetPR("Bench Press", 80, 6, prMap, sessionCounts)).toBe("8rm");
-    // For 1rm: 100kg with 2 reps maps to 3rm bucket (new), not a same-weight comparison
-    // To test true same-weight rep improvement, we need same bucket
-    expect(checkSetPR("Bench Press", 100, 1, prMap, sessionCounts)).toBeNull(); // same weight, same reps
-  });
-
-  it("returns bucket for a new rep range with no prior record", () => {
-    expect(checkSetPR("Bench Press", 60, 10, prMap, sessionCounts)).toBe(
-      "10rm"
-    );
-  });
-
-  it("returns null when session count < minSessions", () => {
-    expect(checkSetPR("New Exercise", 200, 5, prMap, sessionCounts)).toBeNull();
+  it("does not celebrate a weaker improvement within an existing range", () => {
+    const map = buildPRMap([
+      {
+        date: "2025-01-01",
+        exercises: [
+          {
+            exerciseName: "Row",
+            sets: [
+              { weightKg: 60, reps: 8 },
+              { weightKg: 32.5, reps: 10 },
+            ],
+          },
+        ],
+      },
+    ]);
+    expect(checkSetPR("Row", 35, 10, map, counts)).toBeNull();
     expect(
-      checkSetPR("New Exercise", 200, 5, prMap, sessionCounts, 3)
-    ).toBeNull();
+      recordSetBest(map, "Row", { weight: 35, reps: 10, date: "2025-01-02" })
+        .Row["10rm"]?.weight
+    ).toBe(35);
   });
-
-  it("returns null for zero weight", () => {
-    expect(checkSetPR("Bench Press", 0, 5, prMap, sessionCounts)).toBeNull();
+  it("records stronger estimates even at a lighter weight within the range", () => {
+    const map = buildPRMap([
+      {
+        date: "2025-01-01",
+        exercises: [
+          {
+            exerciseName: "Row",
+            sets: [
+              { weightKg: 60, reps: 6 },
+              { weightKg: 59, reps: 8 },
+            ],
+          },
+        ],
+      },
+    ]);
+    expect(map.Row["8rm"]).toMatchObject({ weight: 59, reps: 8 });
   });
-
-  it("returns bucket for exercise not in prMap but with enough sessions", () => {
-    const counts = { OHP: 4 };
-    expect(checkSetPR("OHP", 50, 8, prMap, counts)).toBe("8rm");
+  it("names a first logged set without a fabricated comparison", () => {
+    const result = checkSetPR("Row", 60, 8, {}, counts)!;
+    expect(result.kind).toBe("bucket-first");
+    expect(setPRDescription(result)).toBe("First logged at 60 kg × 8.");
+  });
+  it.each([
+    [60, 8],
+    [55, 8],
+    [0, 8],
+    [70, 0],
+    [NaN, 8],
+    [70, Infinity],
+  ])("rejects matched, lower or invalid sets: %s × %s", (weight, reps) => {
+    expect(checkSetPR("Row", weight, reps, history, counts)).toBeNull();
+  });
+  it("preserves the minimum-session gate", () => {
+    expect(checkSetPR("Row", 100, 8, history, { Row: 2 })).toBeNull();
   });
 });
 
@@ -227,7 +252,10 @@ describe("buildPRMap applies the live PR gate", () => {
     expect(map["Bench"]["10rm"]).toBeNull();
     expect(map["Bench"]["5rm"]?.weight).toBe(100);
     // ...and the suppressed-PR scenario now fires.
-    expect(checkSetPR("Bench", 55, 10, map, { Bench: 5 })).toBe("10rm");
+    expect(checkSetPR("Bench", 55, 10, map, { Bench: 5 })).toMatchObject({
+      kind: "bucket-first",
+      bucket: "10rm",
+    });
   });
 
   it("still records drop sets and failure sets", () => {
@@ -315,7 +343,7 @@ describe("buildPRMap rebuild tiebreak (B1)", () => {
     });
   });
 
-  it("heavier weight still wins regardless of reps", () => {
+  it("a heavier set with a lower estimate does not replace the best", () => {
     const map = buildPRMap([
       {
         date: "2026-07-01",
@@ -330,7 +358,7 @@ describe("buildPRMap rebuild tiebreak (B1)", () => {
         ],
       },
     ]);
-    expect(map["Bench Press"]["8rm"]?.weight).toBe(102.5);
+    expect(map["Bench Press"]["8rm"]?.weight).toBe(100);
   });
 });
 
@@ -658,6 +686,9 @@ describe("buildPRMap — malformed legacy sets mint no phantom records", () => {
       reps: 1,
       date: "2025-06-01",
     });
-    expect(checkSetPR("Bench", 112.5, 1, map, { Bench: 10 })).toBe("1rm");
+    expect(checkSetPR("Bench", 112.5, 1, map, { Bench: 10 })).toMatchObject({
+      kind: "best",
+      bucket: "1rm",
+    });
   });
 });

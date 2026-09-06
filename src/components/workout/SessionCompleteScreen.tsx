@@ -1,11 +1,12 @@
-import { useMemo } from "react";
-import { getVolumeComparison } from "@/lib/funComparisons";
+import WeekPulseCard from "@/components/WeekPulseCard";
+import InlineNumerals from "@/components/ui/InlineNumerals";
+import CompletionExtras from "@/components/workout/CompletionExtras";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { THEME } from "@/lib/theme";
-import { Trophy, Clock, Dumbbell, Target, Zap } from "lucide-react";
+import { Clock, Dumbbell, Target } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { motion } from "framer-motion";
-import { repBucketLabel, type RepBucket } from "@/lib/prTracking";
+import { setPRDescription, type SetPR, type RepBucket } from "@/lib/prTracking";
 import type { ProgramExercise } from "@/features/program/programTypes";
 
 type SetType = "working" | "warmup" | "dropset" | "failure";
@@ -23,42 +24,32 @@ interface SessionCompleteScreenProps {
   exercises: ProgramExercise[];
   setLogs: SetLog[][];
   firedPRs: Map<string, RepBucket[]>;
+  prResults?: Map<string, SetPR>;
   sessionDurationMinutes: number;
   /** PROGRAM-FLEX-01 / PROGRAM-ADAPT-01: acknowledge a reduced
    *  session positively but without pretending it was the full plan. */
   sessionVariant?: "express45" | "express30" | "easier_today";
   completing: boolean;
+  saved?: boolean;
+  planContext?: { progress: string; next: string };
+  onShare?: () => Promise<void>;
   onFinish: () => void;
   onClose: () => void;
-  onReviewProgress?: () => void;
 }
 
-/**
- * NOTE ON SHARING (2026-08-04). This screen used to carry two share
- * controls — "Share Workout" (image card) and "Share to Circle" — and both
- * fired BEFORE the save, because "Save Workout" is a separate button. So
- * "Share to Circle" → "Close without saving" published a `session_completed`
- * event for a session with no record behind it.
- *
- * Both moved to `/workout/:id`, where the record already exists and the
- * phantom post is structurally impossible. That also ended sharing's
- * one-shot lifetime: this screen unmounts on save, so anything anchored to
- * it could only ever be done in that one moment.
- *
- * Keep this screen to Save and Close. A new share affordance here would
- * re-create both problems.
- */
 export default function SessionCompleteScreen({
   dayName,
   exercises,
   setLogs,
-  firedPRs,
+  prResults,
   sessionDurationMinutes,
   sessionVariant,
   completing,
+  saved = false,
+  planContext,
+  onShare,
   onFinish,
   onClose,
-  onReviewProgress,
 }: SessionCompleteScreenProps) {
   const durationDisplay =
     sessionDurationMinutes >= 60
@@ -88,10 +79,7 @@ export default function SessionCompleteScreen({
     );
   }, 0);
 
-  const totalVolumeDisplay =
-    totalVolume >= 1000
-      ? `${(totalVolume / 1000).toFixed(1)}k`
-      : `${Math.round(totalVolume)}`;
+  const totalVolumeDisplay = Math.round(totalVolume).toLocaleString("en-GB");
 
   // WORKING sets only. This was the one header stat that did not exclude
   // warm-ups, so it counted the auto-generated ramp that VOLUME and the
@@ -101,11 +89,6 @@ export default function SessionCompleteScreen({
   const totalSetsCompleted = setLogs
     .flat()
     .filter((s) => s.completed && s.type !== "warmup").length;
-
-  const prDetails = Array.from(firedPRs.entries()).flatMap(([name, buckets]) =>
-    buckets.map((bucket) => ({ name, label: repBucketLabel(bucket) }))
-  );
-  const prCount = prDetails.length;
 
   const exerciseSummary = exercises
     .map((ex, exIdx) => {
@@ -125,21 +108,16 @@ export default function SessionCompleteScreen({
         totalSets: ex.sets,
         bestWeight: bestSet?.weight || 0,
         bestReps: bestSet?.reps || 0,
-        isPR: firedPRs.has(ex.name),
-        prLabels: (firedPRs.get(ex.name) || []).map((b) => repBucketLabel(b)),
       };
     })
     .filter((e) => e.setsCompleted > 0);
-
-  const funComparison = useMemo(
-    () => getVolumeComparison(totalVolume),
-    [totalVolume]
-  );
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
+      role="region"
+      aria-label="Session completion"
       className="fixed inset-0 z-50 bg-background overflow-y-auto safe-area-pb"
     >
       <div className="max-w-md mx-auto px-5 py-8 space-y-6">
@@ -150,20 +128,9 @@ export default function SessionCompleteScreen({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <motion.div
-            initial={{ scale: 0, rotate: -20 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{
-              type: "spring",
-              stiffness: 200,
-              damping: 12,
-              delay: 0.2,
-            }}
-          >
-            <Trophy className="size-14 text-achievement mx-auto" />
-          </motion.div>
-          <h2 className="text-2xl font-bold text-foreground">Ready to save</h2>
-          <p className="text-sm text-muted-foreground">{dayName}</p>
+          <h2 className="text-2xl font-bold text-foreground">
+            {dayName} · done
+          </h2>
           {sessionVariant === "easier_today" ? (
             <p className="text-xs text-muted-foreground">
               Easier session. Your regular plan stays in place.
@@ -181,25 +148,49 @@ export default function SessionCompleteScreen({
             role="status"
             className="text-center text-sm text-muted-foreground"
           >
-            {completing ? "Saving workout…" : "Not saved yet"}
+            {saved ? "Saved" : completing ? "Saving workout…" : "Not saved yet"}
           </p>
           <Button
             fullWidth
-            aria-label="Save Workout"
-            onClick={onFinish}
+            aria-label={saved ? "Done" : "Save Workout"}
+            onClick={saved ? onClose : onFinish}
             loading={completing}
           >
-            Save Workout
+            {saved ? "Done" : "Save Workout"}
           </Button>
-          <Button
-            fullWidth
-            variant="ghost"
-            onClick={onClose}
-            disabled={completing}
-          >
-            Close without saving
-          </Button>
+          {!saved && (
+            <Button
+              fullWidth
+              variant="ghost"
+              onClick={onClose}
+              disabled={completing}
+            >
+              Close without saving
+            </Button>
+          )}
         </div>
+        {saved && planContext && (
+          <div className="space-y-2 text-sm text-muted-foreground">
+            <p>
+              <InlineNumerals>{planContext.progress}</InlineNumerals>
+            </p>
+            <p>
+              <InlineNumerals>{planContext.next}</InlineNumerals>
+            </p>
+          </div>
+        )}
+        {saved && <WeekPulseCard />}
+        {saved && <CompletionExtras onShare={onShare} />}
+        {prResults && prResults.size > 0 && (
+          <div className="ds-card p-4 space-y-2">
+            {[...prResults.entries()].map(([key, result]) => (
+              <p key={key} className="text-sm text-muted-foreground">
+                {key.slice(0, key.lastIndexOf(":"))} —{" "}
+                <InlineNumerals>{setPRDescription(result)}</InlineNumerals>
+              </p>
+            ))}
+          </div>
+        )}
         <details className="space-y-4">
           <summary className="min-h-11 py-3 cursor-pointer text-sm font-semibold text-foreground">
             Session details
@@ -226,7 +217,7 @@ export default function SessionCompleteScreen({
               <p className="text-lg font-bold font-mono tabular-nums text-foreground">
                 {totalVolumeDisplay}
                 <span
-                  className="text-xs font-normal"
+                  className="ml-1 text-xs font-normal font-sans"
                   style={{ color: "hsl(var(--muted-foreground))" }}
                 >
                   kg
@@ -245,42 +236,6 @@ export default function SessionCompleteScreen({
               <SectionLabel>Sets</SectionLabel>
             </div>
           </motion.div>
-
-          {funComparison && (
-            <p className="text-sm text-muted-foreground text-center">
-              {funComparison}
-            </p>
-          )}
-          {/* PR Banner */}
-          {prCount > 0 && (
-            <motion.div
-              className="p-4 rounded-2xl text-center space-y-2"
-              style={{
-                background: `linear-gradient(135deg, ${THEME.brand}15 0%, ${THEME.semantic.positive}10 100%)`,
-                border: `1px solid ${THEME.brand}30`,
-              }}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
-            >
-              <div className="flex items-center justify-center gap-2">
-                <Zap className="size-5" style={{ color: THEME.brand }} />
-                <p className="text-sm font-bold text-foreground">
-                  {prCount} Personal Record{prCount > 1 ? "s" : ""}!
-                </p>
-              </div>
-              <div className="space-y-0.5">
-                {prDetails.map((pr) => (
-                  <p
-                    key={`${pr.name}-${pr.label}`}
-                    className="text-xs text-muted-foreground"
-                  >
-                    {pr.name} — {pr.label}
-                  </p>
-                ))}
-              </div>
-            </motion.div>
-          )}
 
           {/* Exercise Breakdown */}
           <motion.div
@@ -302,24 +257,6 @@ export default function SessionCompleteScreen({
                   transition={{ delay: 0.5 + i * 0.05 }}
                 >
                   <div className="flex items-center gap-2 min-w-0 flex-1">
-                    {ex.isPR && (
-                      <>
-                        <Zap
-                          className="size-3.5 shrink-0"
-                          style={{ color: THEME.brand }}
-                          fill={THEME.brand}
-                        />
-                        {ex.prLabels.map((label) => (
-                          <span
-                            key={label}
-                            className="text-xs font-medium"
-                            style={{ color: THEME.brand }}
-                          >
-                            {label}
-                          </span>
-                        ))}
-                      </>
-                    )}
                     <p className="text-sm text-foreground truncate">
                       {ex.name}
                     </p>
@@ -341,16 +278,6 @@ export default function SessionCompleteScreen({
               ))}
             </div>
           </motion.div>
-          {onReviewProgress && (
-            <Button
-              variant="outline"
-              fullWidth
-              onClick={onReviewProgress}
-              disabled={completing}
-            >
-              Review exercise progress
-            </Button>
-          )}
         </details>
       </div>
     </motion.div>

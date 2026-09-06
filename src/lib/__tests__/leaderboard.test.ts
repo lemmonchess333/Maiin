@@ -28,7 +28,6 @@ describe("leaderboard weekly cutoff — local vs UTC date string", () => {
   });
 
   it("uses the LOCAL date of `since` under a positive-offset TZ (regression)", () => {
-    const tsx = path.resolve(__dirname, "../../../node_modules/.bin/tsx");
     const helpersPath = path.resolve(__dirname, "../dateHelpers.ts");
     // Reproduce leaderboard's `since` derivation under TZ=Asia/Tokyo (UTC+9):
     // Date() at a Sunday instant → rewind to local Sunday midnight. The local
@@ -46,10 +45,14 @@ describe("leaderboard weekly cutoff — local vs UTC date string", () => {
         utc: since.toISOString().split("T")[0],
       }));
     `;
-    const out = execFileSync(tsx, ["--eval", script], {
-      env: { ...process.env, TZ: "Asia/Tokyo" },
-      encoding: "utf8",
-    });
+    const out = execFileSync(
+      process.execPath,
+      ["--import", "tsx", "--input-type=module", "--eval", script],
+      {
+        env: { ...process.env, TZ: "Asia/Tokyo" },
+        encoding: "utf8",
+      }
+    );
     const result = JSON.parse(out.trim().split("\n").pop() as string);
     expect(result.local).toBe("2025-01-05"); // correct cutoff (what the fix uses)
     expect(result.utc).toBe("2025-01-04"); // old buggy cutoff (previous Saturday)

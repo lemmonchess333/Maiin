@@ -1,3 +1,5 @@
+import { seedFirestore, resetFirestore } from "@/test/firestoreHarness";
+vi.mock("@/components/WeekPulseCard", () => ({ default: () => null }));
 import {
   act,
   cleanup,
@@ -14,12 +16,15 @@ const h = vi.hoisted(() => ({
   clear: vi.fn(),
   error: vi.fn(),
   success: vi.fn(),
+  message: vi.fn(),
+  user: null as { uid: string } | null,
 }));
 vi.mock("@/lib/auth", () => ({
-  useAuth: () => ({ user: null, profile: null }),
+  useAuth: () => ({ user: h.user, profile: null }),
   useUidForStorageKey: () => "test",
 }));
 vi.mock("@/lib/firebase", () => ({ db: {} }));
+vi.mock("firebase/firestore");
 vi.mock("@/features/streaks/useStreaks", () => ({
   useStreaks: () => ({ awardEventBadge: vi.fn() }),
 }));
@@ -28,14 +33,21 @@ vi.mock("@/hooks/useWorkoutDraft", () => ({
   computeDraftIdentity: () => "test",
   createWorkoutCompletionId: () => "test",
 }));
+vi.mock("@/hooks/RemindersProvider", () => ({
+  useStreakReminder: () => ({
+    prefs: { enabled: false },
+    loading: false,
+    updatePrefs: vi.fn(),
+    requestPermission: vi.fn(),
+  }),
+}));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/toast", () => ({
-  toast: { error: h.error, success: h.success, message: vi.fn() },
+  toast: { error: h.error, success: h.success, message: h.message },
 }));
 vi.mock("@/components/workout/PlateCalculatorSheet", () => ({
   default: () => null,
 }));
-vi.mock("@/components/workout/RestTimerRing", () => ({ default: () => null }));
 vi.mock("@/components/workout/StallModal", () => ({ default: () => null }));
 vi.mock("@/lib/restTimerNotification", () => ({
   restNotificationDelaySeconds: () => 0,
@@ -74,6 +86,8 @@ function openSession(onCompleteDay = vi.fn(), onClose = vi.fn()) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  h.user = null;
+  resetFirestore();
   vi.stubGlobal(
     "ResizeObserver",
     class {
@@ -135,6 +149,40 @@ describe("set completion through row controls", () => {
   });
 });
 
+it("a supported PR appears only on its row and Undo removes it", async () => {
+  h.user = { uid: "pr-user" };
+  seedFirestore({
+    "users/pr-user/stats/prMap": {
+      map: {
+        "Test exercise": {
+          "1rm": null,
+          "3rm": null,
+          "5rm": null,
+          "8rm": { weight: 60, reps: 8, date: "2026-07-01" },
+          "10rm": null,
+        },
+      },
+      sessionCounts: { "Test exercise": 5 },
+      volumeBest: {},
+    },
+  });
+  await act(async () => {
+    openSession();
+  });
+  fireEvent.change(screen.getByRole("spinbutton", { name: "Set 1 weight" }), {
+    target: { value: "62.5" },
+  });
+  fireEvent.click(
+    screen.getAllByRole("button", { name: "Mark set complete" })[0]
+  );
+  expect(screen.getByText("PR")).toBeInTheDocument();
+  expect(h.success).not.toHaveBeenCalled();
+  expect(h.message).not.toHaveBeenCalled();
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Undo last set" }));
+  expect(screen.queryByText("PR")).not.toBeInTheDocument();
+});
+
 describe("workout save acknowledgement", () => {
   it("acknowledges only the awaited save and retains the draft on failure", async () => {
     let resolveSave: (() => void) | undefined;
@@ -170,7 +218,10 @@ describe("workout save acknowledgement", () => {
     await act(async () => {
       resolveSave!();
     });
-    expect(h.success).toHaveBeenCalledWith("Workout saved");
+    expect(h.success).not.toHaveBeenCalled();
+    expect(close).not.toHaveBeenCalled();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
     expect(close).toHaveBeenCalledOnce();
     expect(h.clear).toHaveBeenCalledOnce();
     expect(complete.mock.calls[0][1].completionId).toBe(

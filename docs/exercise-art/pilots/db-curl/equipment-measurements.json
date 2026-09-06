@@ -1,0 +1,107 @@
+{
+  "method": "Read-only largest dark connected region in manually selected near-dumbbell-face ROIs. Diagnostic projected bounds only, not recovered 3D dimensions.",
+  "frames": [
+    {
+      "file": "1-master.png",
+      "nearDumbbellFaceROI": [
+        650,
+        700,
+        770,
+        860
+      ],
+      "box": [
+        650,
+        705,
+        751,
+        837
+      ],
+      "width": 102,
+      "height": 133
+    },
+    {
+      "file": "2-early-candidate.png",
+      "nearDumbbellFaceROI": [
+        620,
+        595,
+        765,
+        755
+      ],
+      "box": [
+        630,
+        606,
+        741,
+        737
+      ],
+      "width": 112,
+      "height": 132
+    },
+    {
+      "file": "3-mid-candidate.png",
+      "nearDumbbellFaceROI": [
+        590,
+        505,
+        710,
+        660
+      ],
+      "box": [
+        590,
+        515,
+        684,
+        646
+      ],
+      "width": 95,
+      "height": 132
+    },
+    {
+      "file": "4-top-colour-candidate.png",
+      "nearDumbbellFaceROI": [
+        570,
+        270,
+        705,
+        415
+      ],
+      "box": [
+        570,
+        275,
+        689,
+        402
+      ],
+      "width": 120,
+      "height": 128
+    },
+    {
+      "file": "5-lower-candidate.png",
+      "nearDumbbellFaceROI": [
+        590,
+        505,
+        710,
+        660
+      ],
+      "box": [
+        590,
+        515,
+        684,
+        646
+      ],
+      "width": 95,
+      "height": 132
+    },
+    {
+      "file": "6-return-candidate.png",
+      "nearDumbbellFaceROI": [
+        620,
+        650,
+        765,
+        810
+      ],
+      "box": [
+        630,
+        650,
+        741,
+        792
+      ],
+      "width": 112,
+      "height": 143
+    }
+  ]
+}

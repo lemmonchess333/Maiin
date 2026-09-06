@@ -52,6 +52,7 @@ test("usual meals are visible and offline adds can be undone", async ({
   await page.emulateMedia({ reducedMotion: "reduce" });
   await signInAsTestUser(page, { email, password });
   await page.goto("food");
+  await page.addStyleTag({ content: ".firebase-emulator-warning { pointer-events: none !important; }" });
   const composer = page.locator("textarea").first();
   await composer.focus();
   await expect(page.getByText("Examples — tap to describe your own")).toBeVisible();

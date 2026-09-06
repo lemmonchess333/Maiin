@@ -1,4 +1,4 @@
-import { useState, useEffect, memo } from "react";
+import { useState, useEffect, useId, memo } from "react";
 import Model, { type IExerciseData, type Muscle } from "react-body-highlighter";
 import {
   getExerciseDemo,
@@ -15,6 +15,7 @@ import ExerciseRigDemo from "@/components/ExerciseRigDemo";
 import { getBodyDemo, getDemoMuscleKey, getFormBeats } from "@/lib/bodyRig";
 import MuscleKey from "@/components/MuscleKey";
 import { EXERCISES } from "@/lib/exercises";
+import { Button } from "@/components/ui/Button";
 import BodyMapGlow from "@/components/BodyMapGlow";
 
 // Exercise "form" / demo content — muscle diagrams, primary/secondary
@@ -41,7 +42,14 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
     (e) => e.name.toLowerCase() === exerciseName.toLowerCase()
   )?.id;
   const rigDemo = exerciseId ? getBodyDemo(exerciseId) : null;
-  const preferLocal = rigDemo !== null;
+  const beats = exerciseId ? getFormBeats(exerciseId) : null;
+  const hasLocalGuide = rigDemo !== null || beats !== null;
+  const preferLocal = hasLocalGuide;
+  const cueId = useId();
+  const [stepRequest, setStepRequest] = useState<{
+    index: number;
+    serial: number;
+  }>();
   const [demo, setDemo] = useState<ExerciseDemo | null>(null);
   const [loading, setLoading] = useState(true);
   const [showInstructions, setShowInstructions] = useState(false);
@@ -66,6 +74,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
       setShowInstructions(false);
       setDemoFailed(false);
       setActiveStep(0);
+      setStepRequest(undefined);
       const d = await getExerciseDemo(exerciseName, { preferLocal });
       if (cancelled) return;
       setDemo(d);
@@ -135,7 +144,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
   // end-state (muscles highlighted ON the moving body) is the 3D-model path.
   // Rig demo (code-built faceted figure) outranks photos: it's the app's
   // own visual language, deterministic, and carries honest muscle tint.
-  const hasAnimation = !rigDemo && demo.images.length > 0 && !demoFailed;
+  const hasAnimation = !hasLocalGuide && demo.images.length > 0 && !demoFailed;
   /* A placard demo teaches the steps ON the figure — each position
      named and cued under the drawing it belongs to. Showing the same
      sequence again as a numbered list directly beneath it is the
@@ -151,7 +160,6 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
      numbered lists describing one movement is the duplication the
      layout exists to remove. The catalogue's tip and common mistakes
      still render below, unchanged. */
-  const beats = exerciseId ? getFormBeats(exerciseId) : null;
   const steps = beats ? beats.map((b) => b.cue) : demo.instructions;
   const collapsedSteps = beats ? steps.length : COLLAPSED_STEPS;
 
@@ -176,7 +184,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
           plays); muscles worked are conveyed by the pills below. The `key`
           gives each exercise a fresh player. onUnavailable flips back to the
           muscle diagram if every frame fails to load. */}
-      {rigDemo && exerciseId && (
+      {hasLocalGuide && exerciseId && (
         <ExerciseRigDemo
           key={exerciseId}
           exerciseId={exerciseId}
@@ -184,6 +192,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
           active={active}
           tempo={demo.tempo}
           onStep={beats ? setActiveStep : undefined}
+          stepRequest={stepRequest}
         />
       )}
 
@@ -206,7 +215,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
 
       {/* Muscle diagram — the hero only when there's no demo to show, so we
           never stack two body silhouettes. */}
-      {!rigDemo && !hasAnimation && (
+      {!hasLocalGuide && !hasAnimation && (
         <div className="bg-muted rounded-2xl p-5 mt-4">
           <div
             style={{
@@ -363,17 +372,39 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
                 const live = beats !== null && i === activeStep;
                 return (
                   <div key={i} className="flex gap-2.5">
-                    <span
-                      aria-hidden="true"
-                      className={
-                        live
-                          ? "mt-0.5 size-5 shrink-0 rounded-full bg-lifting text-white text-xs font-bold font-mono tabular-nums flex items-center justify-center motion-safe:transition-colors"
-                          : "mt-0.5 size-5 shrink-0 rounded-full bg-lifting/10 text-lifting-strong text-xs font-bold font-mono tabular-nums flex items-center justify-center motion-safe:transition-colors"
-                      }
-                    >
-                      {i + 1}
-                    </span>
+                    {beats && (
+                      <Button
+                        variant="ghost"
+                        className="shrink-0 font-mono tabular-nums px-3"
+                        aria-label={`Show frame ${i + 1}: ${beats[i].label}`}
+                        aria-describedby={`${cueId}-${i}`}
+                        aria-current={live ? "step" : undefined}
+                        onClick={() =>
+                          setStepRequest((previous) => ({
+                            index: i,
+                            serial: (previous?.serial ?? 0) + 1,
+                          }))
+                        }
+                      >
+                        {i + 1}
+                      </Button>
+                    )}
+                    {!beats && (
+                      <>
+                        <span
+                          aria-hidden="true"
+                          className={
+                            live
+                              ? "mt-0.5 size-5 shrink-0 rounded-full bg-lifting text-white text-xs font-bold font-mono tabular-nums flex items-center justify-center motion-safe:transition-colors"
+                              : "mt-0.5 size-5 shrink-0 rounded-full bg-lifting/10 text-lifting-strong text-xs font-bold font-mono tabular-nums flex items-center justify-center motion-safe:transition-colors"
+                          }
+                        >
+                          {i + 1}
+                        </span>
+                      </>
+                    )}
                     <p
+                      id={`${cueId}-${i}`}
                       className={
                         live
                           ? "text-body text-foreground leading-relaxed motion-safe:transition-colors"
@@ -429,7 +460,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
               </div>
             </div>
           )}
-          {showInstructions &&
+          {(beats !== null || showInstructions) &&
             demo.commonMistakes &&
             demo.commonMistakes.length > 0 && (
               <div className="mt-4">
