@@ -491,7 +491,7 @@ export default function FoodHeroCard({
             macroKey="protein"
             Icon={Beef}
             consumed={dailyTotals.protein}
-            target={dailyTargets.protein}
+            target={dailyTargets.targetInfeasible ? 0 : dailyTargets.protein}
             label="PROTEIN"
             color={THEME.macros.protein}
             mode={mode}
@@ -505,7 +505,7 @@ export default function FoodHeroCard({
             macroKey="carbs"
             Icon={Wheat}
             consumed={dailyTotals.carbs}
-            target={dailyTargets.carbs}
+            target={dailyTargets.targetInfeasible ? 0 : dailyTargets.carbs}
             label="CARBS"
             color={THEME.macros.carbs}
             mode={mode}

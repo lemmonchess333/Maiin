@@ -23,7 +23,10 @@
 
 import { estimateAdaptiveTDEE, computeWarmupProgress } from "./adaptiveTdee";
 import { clamp } from "@/lib/utils";
-import { floorTargetCalories } from "./macroConstants";
+import {
+  floorTargetCalories,
+  ESSENTIAL_FAT_FLOOR_PER_KG,
+} from "./macroConstants";
 
 /** Default maximum the applied target may move per rolling 7-day window. */
 export const MAX_WEEKLY_STEP_KCAL = 150;
@@ -448,6 +451,7 @@ export function resolveSnapshotCalorieTarget(
         targetCalories?: unknown;
         customCalorieTarget?: unknown;
         adaptiveCapState?: unknown;
+        weightKg?: unknown;
       }
     | null
     | undefined,
@@ -461,11 +465,32 @@ export function resolveSnapshotCalorieTarget(
 
   const capState = profile ? profile.adaptiveCapState : null;
   const applied = hasAppliedLearnedTarget(capState);
-  return resolveTargetSource({
+  const resolved = resolveTargetSource({
     isPro,
     ready: applied,
     formulaTarget,
     learnedApplied: applied ? (capState as CapState).lastApplied : null,
     isManualOverride: !!(profile && profile.customCalorieTarget),
   });
+  // Nutr3: an infeasible target is no target — mirror of the server's
+  // resolveScoringCalorieTarget guard (calorieTargetResolution.js).
+  if (isBelowEssentialFatCost(resolved.value, profile?.weightKg)) return null;
+  return resolved;
+}
+
+/** Nutr3: true when `targetCalories` cannot fund the essential fat floor at
+ *  `weightKg` — no protein or carbs can be funded, so nothing downstream may
+ *  treat the number as a goal. Unknown weight → false. */
+export function isBelowEssentialFatCost(
+  targetCalories: number,
+  weightKg: unknown
+): boolean {
+  if (
+    typeof weightKg !== "number" ||
+    !Number.isFinite(weightKg) ||
+    weightKg <= 0
+  )
+    return false;
+  const essentialFatG = Math.round(ESSENTIAL_FAT_FLOOR_PER_KG * weightKg);
+  return targetCalories < essentialFatG * 9;
 }

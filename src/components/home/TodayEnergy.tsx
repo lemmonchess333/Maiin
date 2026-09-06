@@ -74,8 +74,11 @@ export default function TodayEnergy({
   // here so all three rings stay in sync.
   const [macroMode, setMacroMode] = useState<"consumed" | "left">("consumed");
   const tCal = targets.finalTarget;
-  const tProt = targets.protein;
-  const tCarbs = targets.carbs;
+  // Nutr3: below the essential-fat floor the split funds no protein or
+  // carbs, so those two carry NO goal (0 → "—" on the rings and the summary)
+  // rather than a 0 g goal every meal "meets". Fat keeps its floor figure.
+  const tProt = targets.targetInfeasible ? 0 : targets.protein;
+  const tCarbs = targets.targetInfeasible ? 0 : targets.carbs;
   const tFat = targets.fat;
   const calPct = (calories / tCal) * 100;
 
@@ -87,7 +90,9 @@ export default function TodayEnergy({
   // Nothing is clamped: an over-target macro shows as "200/160g", so going
   // over stays visible without colour saying it (no macro hue renders
   // collapsed). Grams are unspaced on the food surface, house style.
-  const macroSummary = `P ${Math.round(protein)}/${Math.round(tProt)}g · C ${Math.round(carbs)}/${Math.round(tCarbs)}g · F ${Math.round(fat)}/${Math.round(tFat)}g`;
+  const macroSummary = targets.targetInfeasible
+    ? `P ${Math.round(protein)}g · C ${Math.round(carbs)}g · F ${Math.round(fat)}/${Math.round(tFat)}g`
+    : `P ${Math.round(protein)}/${Math.round(tProt)}g · C ${Math.round(carbs)}/${Math.round(tCarbs)}g · F ${Math.round(fat)}/${Math.round(tFat)}g`;
 
   // A brand-new user with no meals ever: the macros carry no information
   // at 0g, so the summary line yields to a status line that says what to

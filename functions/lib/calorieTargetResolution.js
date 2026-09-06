@@ -36,6 +36,26 @@
 const EPOCH = "1970-01-01T00:00:00.000Z";
 
 /**
+ * Nutr3 — mirror of src/lib/macroConstants.ts ESSENTIAL_FAT_FLOOR_PER_KG
+ * (pinned equal by adaptiveTargetMirror.cross.test.ts). A calorie target
+ * below what essential fat alone costs at the user's bodyweight funds no
+ * protein or carbs; the app shows no macro goals for it, and the scorer
+ * must not treat it as a target either — scoring a 100 kcal typo as a
+ * daily 1,700 kcal overshoot is the same "punished for complying" shape
+ * this module exists to close.
+ */
+const ESSENTIAL_FAT_FLOOR_PER_KG = 0.6;
+
+/** True when `targetCalories` cannot fund the essential fat floor at
+ *  `weightKg`. Unknown weight → false (nothing to judge against). */
+function isBelowEssentialFatCost(targetCalories, weightKg) {
+  if (typeof weightKg !== "number" || !Number.isFinite(weightKg) || weightKg <= 0)
+    return false;
+  const essentialFatG = Math.round(ESSENTIAL_FAT_FLOOR_PER_KG * weightKg);
+  return targetCalories < essentialFatG * 9;
+}
+
+/**
  * Precedence, mirroring src/lib/adaptiveTarget.ts resolveTargetSource.
  *
  * @param {object} input
@@ -99,7 +119,7 @@ function resolveScoringCalorieTarget(userData, effectiveTier) {
   if (formulaTarget == null) return null;
 
   const capState = userData ? userData.adaptiveCapState : null;
-  return resolveTargetSource({
+  const resolved = resolveTargetSource({
     isPro: effectiveTier === "pro",
     ready: hasAppliedLearnedTarget(capState),
     formulaTarget,
@@ -108,11 +128,16 @@ function resolveScoringCalorieTarget(userData, effectiveTier) {
       : null,
     isManualOverride: !!(userData && userData.customCalorieTarget),
   });
+  // Nutr3: an infeasible target is no target.
+  if (isBelowEssentialFatCost(resolved.value, userData.weightKg)) return null;
+  return resolved;
 }
 
 module.exports = {
   resolveTargetSource,
   hasAppliedLearnedTarget,
+  isBelowEssentialFatCost,
+  ESSENTIAL_FAT_FLOOR_PER_KG,
   resolveScoringCalorieTarget,
   EPOCH,
 };

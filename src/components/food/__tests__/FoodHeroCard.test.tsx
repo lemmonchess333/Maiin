@@ -253,3 +253,40 @@ describe("FoodHeroCard — infeasible target notice", () => {
     expect(screen.queryByText(/essential fat alone exceeds/)).toBeNull();
   });
 });
+
+describe("FoodHeroCard — Nutr3: below the floor, protein and carbs carry no goal", () => {
+  it("renders — for the protein and carb targets and keeps fat's floor figure", () => {
+    render(
+      <MemoryRouter>
+        <FoodHeroCard
+          selectedDate="2026-06-09"
+          isToday={true}
+          dailyTargets={
+            {
+              ...dailyTargets,
+              protein: 0,
+              carbs: 0,
+              fat: 42,
+              targetInfeasible: true,
+              minFeasibleKcal: 378,
+            } as unknown as EffectiveTargets
+          }
+          dailyTotals={{ calories: 900, protein: 80, carbs: 56, fat: 38 }}
+        />
+      </MemoryRouter>
+    );
+    const tiles = Array.from(document.querySelectorAll("[data-macro]"));
+    const protein = tiles.find(
+      (t) => t.getAttribute("data-macro") === "protein"
+    )!;
+    const fat = tiles.find((t) => t.getAttribute("data-macro") === "fat")!;
+    // The big number animates from 0 (count-up), so assert the ratio line's
+    // shape rather than the settled figure.
+    expect(protein.textContent).toMatch(/\/\s*—/);
+    expect(protein.textContent).not.toMatch(/\/\s*0g/);
+    expect(fat.textContent).toMatch(/\/\s*42g/);
+    expect(screen.getByRole("status")).toHaveTextContent(
+      /essential fat alone exceeds/
+    );
+  });
+});

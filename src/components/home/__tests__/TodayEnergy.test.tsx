@@ -345,6 +345,26 @@ describe("TodayEnergy — infeasible target notice", function () {
     ).toBeInTheDocument();
   });
 
+  it("Nutr3: below the floor, protein and carbs carry NO goal in the summary", function () {
+    renderAt({
+      calories: 900,
+      protein: 80,
+      carbs: 56,
+      fat: 38,
+      totalLifetimeMeals: 12,
+      targets: {
+        ...targets,
+        protein: 0,
+        carbs: 0,
+        fat: 42,
+        targetInfeasible: true,
+        minFeasibleKcal: 378,
+      },
+    });
+    expect(screen.getByText("P 80g · C 56g · F 38/42g")).toBeInTheDocument();
+    expect(screen.queryByText(/\/0g/)).toBeNull();
+  });
+
   it("says nothing on an ordinary target", function () {
     renderAt({ targets: { ...targets, targetInfeasible: false } });
     expect(screen.queryByText(/essential fat alone exceeds/)).toBeNull();
