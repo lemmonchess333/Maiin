@@ -78,12 +78,13 @@ export default function StatCard({
         : "text-muted-foreground";
 
   const showSparkline = !!sparklineData && sparklineData.length > 2;
+  const Container = onClick ? "button" : "div";
 
   return (
-    <button
-      type="button"
+    <Container
+      {...(onClick ? { type: "button" as const } : {})}
       onClick={onClick}
-      className="p-4 rounded-2xl bg-card text-left w-full active:scale-[0.98] card-shadow"
+      className={`p-4 rounded-2xl bg-card text-left w-full card-shadow${onClick ? " motion-safe:active:scale-[0.98]" : ""}`}
     >
       <SectionLabel className="mb-2">{label}</SectionLabel>
 
@@ -163,6 +164,6 @@ export default function StatCard({
           {target}
         </p>
       )}
-    </button>
+    </Container>
   );
 }
