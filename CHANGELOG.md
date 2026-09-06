@@ -8,6 +8,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- Reminders skip meals and sessions already logged today. Local streak reminders
+  yield to push consent, respect quiet hours, and expire after one day. Reminder
+  wording is neutral; Settings lists the activity tray types without controls.
+
 - **Readability pass across the whole app.** Secondary text is slightly
   darker in light mode and slightly brighter in dark mode, tuned so every
   caption clears accessibility contrast on the surface it actually sits

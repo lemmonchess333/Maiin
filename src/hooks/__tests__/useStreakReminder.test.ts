@@ -204,3 +204,10 @@ describe("FIRST_WEEK_NOTIFICATION_ID", () => {
     expect(FIRST_WEEK_NOTIFICATION_ID).not.toBe(STREAK_NOTIFICATION_ID);
   });
 });
+
+
+it("lets push own streak reminders and waits for consent to load", () => {
+  expect(shouldScheduleStreakReminder({ ...base, pushOwns: true })).toBe(false);
+  expect(shouldScheduleStreakReminder({ ...base, pushOwns: null })).toBe(false);
+  expect(shouldScheduleStreakReminder({ ...base, pushOwns: false })).toBe(true);
+});
