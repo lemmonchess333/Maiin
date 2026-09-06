@@ -25,6 +25,10 @@ import {
   blockPrefersShorterSessions,
 } from "@/features/program/represcribe";
 import { THEME } from "@/lib/theme";
+import {
+  liftSessionExplainer,
+  liftWeekLabel,
+} from "@/lib/liftSessionExplainer";
 import WeekPhaseRow from "@/components/program/WeekPhaseRow";
 import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
 import ExpressSessionSheet from "@/components/program/ExpressSessionSheet";
@@ -760,11 +764,6 @@ function ProgramInner() {
     trackProgrammeEvent("programme_day_tapped", { dayIndex: newIndex });
   };
 
-  const goalLabel = (g: string) => {
-    if (g === "lean bulk") return "Lean Bulk";
-    return g.charAt(0).toUpperCase() + g.slice(1);
-  };
-
   // W1b legibility line: "Built for [lifting goal] · [split] · [N] days/week"
   //
   // Pre-W1a the Program-page subtitle hardcoded a binary split check
@@ -1080,7 +1079,18 @@ function ProgramInner() {
             <div>
               <WeekPhaseRow
                 weekNumber={displayWeekNumber}
-                phaseName={goalLabel(programState.goal)}
+                label={
+                  liftWeekLabel(
+                    {
+                      ...programState,
+                      weekNumber: displayWeekNumber,
+                      trainingBlock: isViewingHistory
+                        ? undefined
+                        : programState.trainingBlock,
+                    },
+                    localDateString()
+                  ) ?? undefined
+                }
                 onPrevWeek={goBack}
                 onNextWeek={goForward}
                 canGoPrev={canGoBack}
@@ -1260,11 +1270,23 @@ function ProgramInner() {
                                 : "Upcoming"
                         } · Day ${idx + 1}`}
                         title={selectedWorkout.dayName}
-                        description={muscleGroups || undefined}
+                        description={
+                          isViewingHistory
+                            ? undefined
+                            : (liftSessionExplainer(
+                                programState,
+                                localDateString(),
+                                "full",
+                                selectedWorkout.exercises.map(
+                                  (ex) => ex.progressionType
+                                )
+                              ) ?? undefined)
+                        }
                         meta={
                           status === "completed"
                             ? []
                             : [
+                                ...(muscleGroups ? [muscleGroups] : []),
                                 `${exerciseCount} exercises`,
                                 `~${estimatedMinutes} min`,
                               ]
