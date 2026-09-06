@@ -25,6 +25,14 @@ The initial focused pass passed 50 tests across navigation, sharing, nutrition u
 
 Final `npm run verify`: lint passed with the same 99 warnings and zero errors; production build passed. Tests: 662 files passed, 4 failed, 7 skipped; 8,002 tests passed, 4 failed, 341 skipped. The exact four failing cases match the clean baseline. All 51 tests in the changed-area suites pass, including the 11 net additional cases. `git diff --check` passed. The required command was executed, but its overall exit is nonzero because of those baseline failures.
 
+## GitHub verification after integration
+
+The branch incorporated main at `e35f4fc22ec728d3c70113e82b757be9d70eff63` through merge commit `afd1b945d2d24af768c6c2bec341952d12753bf9`. The intervening logging-consistency changes do not overlap this batch's files.
+
+On that integrated commit, [CI run 34037227824](https://github.com/lemmonchess333/Maiin/actions/runs/34037227824) passed lint, cycle checks, the full unit suite, production build, bundle-size checks and the dependency audit. [Firebase Emulator Tests run 34037226678](https://github.com/lemmonchess333/Maiin/actions/runs/34037226678) passed Firestore and Storage rules tests, functions integration tests and authenticated E2E. The local baseline failures described above did not fail these GitHub runs.
+
+These runs were dispatched by the repository's auto-update workflow. Its documented event-context limitation left the required PR check expected despite successful results. This QA update is a normal authenticated branch push so the required PR-triggered checks can run; branch rules remain unchanged.
+
 ## Browser and release limits
 
 Vite initially failed while enumerating network interfaces; binding only to loopback started the server. The cloud browser refused the local preview with `ERR_BLOCKED_BY_CLIENT`. No browser restriction was bypassed. Consequently, rendered mobile layouts and light/dark visual checks of the changed build remain unverified. Component and router tests are not a live or native-device walkthrough.
