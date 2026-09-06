@@ -38,6 +38,7 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npm run lint
+      - run: npm run check:form-art
       # Zero-cycle gate (2026-07-11 repo audit batch 3): six circular
       # import chains were removed by relocating shared types to neutral
       # modules; this keeps the dependency graph acyclic.

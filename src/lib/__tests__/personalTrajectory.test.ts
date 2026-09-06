@@ -29,10 +29,10 @@ import { getPersonalTrajectory } from "../personalTrajectory";
 import { seedFirestore, resetFirestore } from "@/test/firestoreHarness";
 import { Timestamp } from "firebase/firestore";
 
-/** Tuesday 14:00 UTC. Week starts Sunday, so: this week from Sun 26th;
+/** Tuesday 14:00 local time. Week starts Sunday, so: this week from Sun 26th;
  *  last week Sun 19th → Sun 26th; last-week-to-date Sun 19th → Tue 21st
  *  14:00. */
-const NOW = new Date("2026-04-28T14:00:00Z");
+const NOW = new Date("2026-04-28T14:00:00");
 
 /** A run doc as stored — `duration` clears the eligibility floor (30s). */
 function run(iso: string, km: number) {
@@ -64,12 +64,12 @@ describe("getPersonalTrajectory", () => {
   it("compares against lastWeekToDate, not lastWeek (the PR-G bug)", async () => {
     seedFirestore({
       // This week — Monday, 2 km.
-      "users/user1/runs/tw": run("2026-04-27T10:00:00Z", 2),
+      "users/user1/runs/tw": run("2026-04-27T10:00:00", 2),
       // Last week, INSIDE the to-date slice (Mon 20th, before Tue 14:00).
-      "users/user1/runs/lw_early": run("2026-04-20T10:00:00Z", 1),
+      "users/user1/runs/lw_early": run("2026-04-20T10:00:00", 1),
       // Last week, AFTER the slice (Thu 23rd) — counts toward the full
       // week only. The to-date window must exclude it.
-      "users/user1/runs/lw_late": run("2026-04-23T10:00:00Z", 9),
+      "users/user1/runs/lw_late": run("2026-04-23T10:00:00", 9),
     });
 
     const result = await getPersonalTrajectory("user1");
@@ -90,8 +90,8 @@ describe("getPersonalTrajectory", () => {
     // tolerates a week-start that is a day off; this one does not — and
     // an off-by-one week anchor is the likeliest way this drifts.
     seedFirestore({
-      "users/user1/runs/just_before": run("2026-04-18T23:00:00Z", 42),
-      "users/user1/runs/tw": run("2026-04-27T10:00:00Z", 2),
+      "users/user1/runs/just_before": run("2026-04-18T23:00:00", 42),
+      "users/user1/runs/tw": run("2026-04-27T10:00:00", 2),
     });
 
     const result = await getPersonalTrajectory("user1");
@@ -100,12 +100,22 @@ describe("getPersonalTrajectory", () => {
     expect(result.lastWeekToDate.km).toBe(0);
   });
 
+  it("includes the exact local Sunday boundary in last week", async () => {
+    seedFirestore({
+      "users/user1/runs/boundary": run("2026-04-19T00:00:00", 4),
+    });
+    const result = await getPersonalTrajectory("user1");
+    expect(result.lastWeek.km).toBe(4);
+    expect(result.lastWeekToDate.km).toBe(4);
+    expect(result.thisWeek.km).toBe(0);
+  });
+
   it("returns deltaPct=null when lastWeekToDate is zero (no division)", async () => {
     seedFirestore({
-      "users/user1/runs/tw": run("2026-04-27T10:00:00Z", 3),
+      "users/user1/runs/tw": run("2026-04-27T10:00:00", 3),
       // Last week's 5 km all lands AFTER the to-date cut, so the slice is
       // empty while the full week is not.
-      "users/user1/runs/lw_late": run("2026-04-23T10:00:00Z", 5),
+      "users/user1/runs/lw_late": run("2026-04-23T10:00:00", 5),
     });
 
     const result = await getPersonalTrajectory("user1");
@@ -120,7 +130,7 @@ describe("getPersonalTrajectory", () => {
   it("ignores a sub-threshold run (eligibility floor)", async () => {
     seedFirestore({
       "users/user1/runs/bogus": {
-        completedAt: Timestamp.fromDate(new Date("2026-04-27T10:00:00Z")),
+        completedAt: Timestamp.fromDate(new Date("2026-04-27T10:00:00")),
         distance: 40000,
         duration: 8,
       },

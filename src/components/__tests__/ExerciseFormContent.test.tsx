@@ -19,7 +19,13 @@
  * the LIST, not the animation.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor, act } from "@testing-library/react";
+import {
+  render,
+  screen,
+  waitFor,
+  act,
+  fireEvent,
+} from "@testing-library/react";
 
 const beatsRef = {
   current: null as { t: number; label: string; cue: string }[] | null,
@@ -53,10 +59,18 @@ vi.mock("@/lib/exerciseDemo", async (importOriginal) => ({
 }));
 
 /** A stand-in player: one button per position, reporting it upward. */
+let requestedStep: { index: number; serial: number } | undefined;
 let reportStep: ((i: number) => void) | undefined;
 vi.mock("@/components/ExerciseRigDemo", () => ({
-  default: ({ onStep }: { onStep?: (i: number) => void }) => {
+  default: ({
+    onStep,
+    stepRequest,
+  }: {
+    onStep?: (i: number) => void;
+    stepRequest?: { index: number; serial: number };
+  }) => {
     reportStep = onStep;
+    requestedStep = stepRequest;
     return <div data-testid="player" />;
   },
 }));
@@ -78,6 +92,7 @@ beforeEach(() => {
   beatsRef.current = null;
   keyRef.current = null;
   reportStep = undefined;
+  requestedStep = undefined;
 });
 
 describe("ExerciseFormContent — the instruction list", () => {
@@ -124,6 +139,21 @@ describe("ExerciseFormContent — the instruction list", () => {
     expect(await row(BEATS[0].cue)).toContain("text-foreground/80");
     expect(await row(BEATS[1].cue)).toContain("text-foreground ");
     expect(await row(BEATS[2].cue)).toContain("text-foreground/80");
+  });
+
+  it("lets a reader select a cue and exposes its instruction accessibly", async () => {
+    beatsRef.current = BEATS;
+    render(<ExerciseFormContent exerciseName="Dips" />);
+    const button = await screen.findByRole("button", {
+      name: "Show frame 2: Mid descent",
+    });
+    expect(button).toHaveAccessibleDescription("Elbows travel back.");
+    fireEvent.click(button);
+    expect(requestedStep).toEqual({ index: 1, serial: 1 });
+    fireEvent.click(button);
+    expect(requestedStep).toEqual({ index: 1, serial: 2 });
+    act(() => reportStep!(1));
+    expect(button).toHaveAttribute("aria-current", "step");
   });
 
   it("an ordinary demo keeps the collapsed catalogue list", async () => {
