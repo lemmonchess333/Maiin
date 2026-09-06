@@ -1,8 +1,15 @@
 /** Exercise the real Run route's three setup exits with device I/O stubbed. */
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import Run from "../Run";
+import {
+  readStoredRun,
+  writeStoredRun,
+  RUN_RESUME_SCHEMA_VERSION,
+  type StoredRun,
+} from "@/lib/runResumeStorage";
+import { freeformPlanMetadata } from "@/lib/runPlanMetadata";
 
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ profile: { uid: "navigation-test", runMode: "freeform" } }),
@@ -85,9 +92,70 @@ function open(url: string) {
   );
 }
 
-afterEach(cleanup);
+beforeEach(() => localStorage.clear());
+afterEach(() => {
+  cleanup();
+  localStorage.clear();
+});
+
+function saveInterruptedRun() {
+  const snapshot: StoredRun = {
+    v: RUN_RESUME_SCHEMA_VERSION,
+    config: {
+      activityType: "easy",
+      autoPause: true,
+      audioCues: true,
+      audioCueFrequency: "every_km",
+      paceAlerts: true,
+      voiceRate: 0.9,
+      displayStats: ["pace", "distance", "time"],
+      target: { type: "none" },
+      planMetadata: freeformPlanMetadata("freeform"),
+    },
+    startedAt: Date.now() - 600000,
+    lastWriteAt: Date.now(),
+    accumulatedSeconds: 360,
+    isRunning: false,
+    phase: "paused",
+    points: [],
+  };
+  expect(writeStoredRun("navigation-test", snapshot)).toBe(true);
+  return snapshot;
+}
 
 describe("Run setup navigation", () => {
+  it.each(["button", "escape"])(
+    "keeps the interrupted run when leaving via %s",
+    (method) => {
+      const snapshot = saveInterruptedRun();
+      open("/run");
+      if (method === "button")
+        fireEvent.click(screen.getByRole("button", { name: "Back to Run" }));
+      else fireEvent.keyDown(document, { key: "Escape" });
+      expect(screen.getByTestId("destination")).toHaveTextContent(
+        "/program?tab=run"
+      );
+      expect(readStoredRun("navigation-test")).toEqual(snapshot);
+    }
+  );
+
+  it("only clears the interrupted run after confirming a replacement", () => {
+    const snapshot = saveInterruptedRun();
+    open("/run");
+    fireEvent.click(screen.getByRole("button", { name: "Start new run" }));
+    expect(readStoredRun("navigation-test")).toEqual(snapshot);
+    fireEvent.click(screen.getByRole("button", { name: "Keep previous run" }));
+    expect(readStoredRun("navigation-test")).toEqual(snapshot);
+    fireEvent.click(screen.getByRole("button", { name: "Start new run" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Discard and start new" })
+    );
+    expect(readStoredRun("navigation-test")).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Back from picker" })
+    ).toBeInTheDocument();
+  });
+
   it("returns the free-run picker to the Run tab", () => {
     open("/run");
     fireEvent.click(screen.getByRole("button", { name: "Back from picker" }));
