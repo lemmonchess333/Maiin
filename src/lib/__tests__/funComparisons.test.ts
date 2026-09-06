@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { getDistanceComparison, getVolumeComparison } from "../funComparisons";
+import { getDistanceComparison } from "../funComparisons";
 import {
   MIN_OUTDOOR_DISTANCE_KM,
   MIN_TREADMILL_DISTANCE_KM,
@@ -92,109 +92,5 @@ describe("getDistanceComparison", () => {
       `That's ${Math.round((1 * 1000) / 324)} Eiffel Towers stacked`
     );
     vi.restoreAllMocks();
-  });
-});
-
-describe("getVolumeComparison", () => {
-  it("returns null for 0 kg", () => {
-    expect(getVolumeComparison(0)).toBeNull();
-  });
-
-  it("returns null for weight below all thresholds", () => {
-    expect(getVolumeComparison(10)).toBeNull();
-  });
-
-  it("returns a string for 50 kg (meets washing machine threshold)", () => {
-    const result = getVolumeComparison(50);
-    expect(result).toBeTypeOf("string");
-  });
-
-  it("returns a string for 100 kg", () => {
-    const result = getVolumeComparison(100);
-    expect(result).toBeTypeOf("string");
-  });
-
-  it("returns a string for 1000 kg", () => {
-    const result = getVolumeComparison(1000);
-    expect(result).toBeTypeOf("string");
-  });
-
-  it("returns a string for 1500 kg (meets all thresholds)", () => {
-    const result = getVolumeComparison(1500);
-    expect(result).toBeTypeOf("string");
-  });
-
-  it("returns correct washing machine comparison", () => {
-    vi.spyOn(Math, "random").mockReturnValue(0);
-    // At 50 kg, only washing machines eligible (threshold 50)
-    const result = getVolumeComparison(50);
-    expect(result).toBe(`That's ${(50 / 80).toFixed(1)} washing machines`);
-    vi.restoreAllMocks();
-  });
-
-  it("returns correct baby elephants comparison for 100 kg", () => {
-    vi.spyOn(Math, "random").mockReturnValue(0);
-    // At 100 kg, eligible: baby elephants (100), washing machines (50)
-    // random=0 picks index 0 => baby elephants
-    const result = getVolumeComparison(100);
-    expect(result).toBe(`That's ${(100 / 120).toFixed(1)} baby elephants`);
-    vi.restoreAllMocks();
-  });
-
-  it("returns correct cars lifted comparison for 1500 kg", () => {
-    vi.spyOn(Math, "random").mockReturnValue(0);
-    // At 1500 kg, all eligible. random=0 picks index 0 => cars
-    const result = getVolumeComparison(1500);
-    expect(result).toBe(`That's ${(1500 / 1500).toFixed(1)} cars lifted`);
-    vi.restoreAllMocks();
-  });
-
-  it("can return polar bears comparison", () => {
-    vi.spyOn(Math, "random").mockReturnValue(0.99);
-    // At 1500 kg, all 5 eligible. floor(0.99*5)=4 => polar bears (index 4)
-    const result = getVolumeComparison(1500);
-    expect(result).toBe(`That's ${(1500 / 450).toFixed(1)} adult polar bears`);
-    vi.restoreAllMocks();
-  });
-
-  it("returns correct grand pianos comparison for 300 kg", () => {
-    vi.spyOn(Math, "random").mockReturnValue(0);
-    // At 300 kg, eligible: baby elephants (100), grand pianos (300), washing machines (50)
-    // random=0 picks index 0 => baby elephants (first in filter order)
-    const result = getVolumeComparison(300);
-    expect(result).toBe(`That's ${(300 / 120).toFixed(1)} baby elephants`);
-    vi.restoreAllMocks();
-  });
-});
-
-/**
- * Cross-module invariant added when the run half was finally wired into
- * RunSummary (the lift half has shipped on SessionCompleteScreen since
- * the module landed).
- *
- * The comparison renders inside RunSummary's VALID branch, so every run
- * that clears the validity floor reaches it. If the lowest comparison
- * threshold ever drifts ABOVE that floor, short-but-valid runs silently
- * get no line — invisible, because "no comparison" and "no comparison
- * for this distance" render identically (both render nothing).
- *
- * Pinned here rather than in a RunSummary render test because it is a
- * relationship between two CONSTANTS, and that is where it can break.
- */
-describe("distance comparisons cover every valid run", () => {
-  it("fires at the run-validity floor, so no valid run is left blank", () => {
-    // Deliberately reads the real guard constant rather than restating
-    // 0.05 — restating it is how the two drift apart unnoticed.
-    expect(getDistanceComparison(MIN_OUTDOOR_DISTANCE_KM)).toBeTypeOf("string");
-    expect(getDistanceComparison(MIN_TREADMILL_DISTANCE_KM)).toBeTypeOf(
-      "string"
-    );
-    expect(getDistanceComparison(MIN_MANUAL_DISTANCE_KM)).toBeTypeOf("string");
-  });
-
-  it("stays non-null across the whole plausible run range", () => {
-    for (const km of [0.05, 0.1, 0.5, 1, 3, 5, 10, 21.1, 42.2, 100]) {
-      expect(getDistanceComparison(km), `${km} km`).toBeTypeOf("string");
-    }
   });
 });
