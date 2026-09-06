@@ -3,7 +3,7 @@
   "batch": "2026-09-06-batch-02",
   "releaseApproved": false,
   "productionAssetsChanged": false,
-  "selectedFrameCount": 48,
+  "selectedFrameCount": 54,
   "completeDraftSets": [
     {
       "exerciseId": "hammer-curl",
@@ -893,6 +893,120 @@
           "reusedFrom": 2
         }
       ]
+    },
+    {
+      "exerciseId": "barbell-shrug",
+      "status": "draft-awaiting-review",
+      "camera": "Front three-quarter facing left; portrait",
+      "anchors": [
+        "head",
+        "central core",
+        "lower legs and feet",
+        "rigid bar",
+        "grips"
+      ],
+      "equipment": "Rigid straight bar with one identical modest plate per side; double-overhand grip.",
+      "muscles": {
+        "primary": [
+          "upper trapezius"
+        ],
+        "secondary": [
+          "forearm gripping muscles"
+        ],
+        "stabilisers": "Subtle trunk emphasis; qualitative contribution only."
+      },
+      "reviewFindings": [
+        "Single-master code-based compositing authorized by the user. Head, central-core and lower-body ROI pixels are unchanged; sampled bar, plate and grip regions translate exactly.",
+        "Shoulder/neck joins and the upper-thigh region revealed by the bar use deformation and feathering. These are still visual-review findings, not approved anatomy or a claim of a fully fixed pelvis.",
+        "Six ordered files use 0/12/24/36/24/12-pixel load elevation; return slots reuse matching outward poses.",
+        "Cloud browser blocks local player with ERR_BLOCKED_BY_CLIENT. Actual mobile light/dark playback remains unverified."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/barbell-shrug/composite-v1/1-start.png",
+          "caption": "START 1/6",
+          "cue": "Stand tall with arms straight.",
+          "progress": 0,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 866336,
+          "sha256": "f15ee5e946f71387617afe27efffe579006a327c1c87a9e87eb7f94f8da38f12",
+          "reusedFrom": null
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/barbell-shrug/composite-v1/2-begin-shrug.png",
+          "caption": "BEGIN SHRUG 2/6",
+          "cue": "Lift shoulders without bending elbows.",
+          "progress": 0.3333333333333333,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 788937,
+          "sha256": "9d5f4038bc96a481383eed193d4af1c8dc36974dbef8c0061bbd84002929cd5d",
+          "reusedFrom": null
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/barbell-shrug/composite-v1/3-continue-lift.png",
+          "caption": "CONTINUE LIFT 3/6",
+          "cue": "Raise shoulders straight up; avoid rolling.",
+          "progress": 0.6666666666666666,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 790113,
+          "sha256": "f2b4806fe93095cb82139c0bf2b9a695ccf152e87a8cea8eb8feb0763232bf01",
+          "reusedFrom": null
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/barbell-shrug/composite-v1/4-top.png",
+          "caption": "TOP 4/6",
+          "cue": "Hold briefly with your neck neutral.",
+          "progress": 1,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 789844,
+          "sha256": "46d5390c07b0365ef9bc36318f9f0a7fcae070fcb11b79611f38621db853c0fb",
+          "reusedFrom": null
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/barbell-shrug/composite-v1/5-lower.png",
+          "caption": "LOWER 5/6",
+          "cue": "Lower shoulders slowly with straight arms.",
+          "progress": 0.6666666666666666,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 790113,
+          "sha256": "f2b4806fe93095cb82139c0bf2b9a695ccf152e87a8cea8eb8feb0763232bf01",
+          "reusedFrom": 3
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/barbell-shrug/composite-v1/6-finish-lowering.png",
+          "caption": "FINISH LOWERING 6/6",
+          "cue": "Finish lowering without rocking your torso.",
+          "progress": 0.3333333333333333,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 788937,
+          "sha256": "9d5f4038bc96a481383eed193d4af1c8dc36974dbef8c0061bbd84002929cd5d",
+          "reusedFrom": 2
+        }
+      ]
     }
   ],
   "blockedPilots": [
@@ -916,7 +1030,7 @@
       "status": "rejected-incomplete",
       "directory": "docs/exercise-art/pilots/barbell-shrug",
       "reason": "Shoulder edits also translate fixed lower body: far/near sole bottoms1418/1478 at master,1386/1446 at early,1355/1415 at top. Explicit lower-half lock also failed visually.",
-      "nextStep": "Preserve static regions with deterministic editing before completing further shrug frames; no six-frame selection or release approval."
+      "nextStep": "Original generated candidates remain rejected. The separately selected composite-v1 draft fixes measured anchors and rigid equipment; inspect shoulder/neck and revealed-thigh joins before release."
     }
   ],
   "captionPolicy": "Text-free native PNG masters. Numbered labels, exercise-specific cues and progress values are draft metadata consumed by the account-free review fixture; production authored cues are unchanged.",
