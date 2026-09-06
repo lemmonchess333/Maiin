@@ -159,10 +159,16 @@ export default function AdjustWeekSheet({
   // realign ("crowded") still deserves its own preview step, so it isn't
   // pre-jumped here (the nudge never sends it).
   useEffect(() => {
+    if (open && easedThisWeek) {
+      setStep((current) =>
+        current.kind === "preview-easier" ? { kind: "intent" } : current
+      );
+      return;
+    }
     if (open && (initialIntent === "easier" || initialIntent === "not_100")) {
       setStep({ kind: "preview-easier", intent: initialIntent, swaps });
     }
-  }, [open, initialIntent, swaps]);
+  }, [open, initialIntent, swaps, easedThisWeek]);
 
   const close = (cancelled: boolean) => {
     if (cancelled && pendingRef.current) return;
@@ -173,7 +179,7 @@ export default function AdjustWeekSheet({
   };
 
   const pickIntent = (intent: Intent) => {
-    if (pendingRef.current) return;
+    if (pendingRef.current || (easedThisWeek && intent !== "crowded")) return;
     track("adjust_week_intent_selected", { intent });
     if (intent === "crowded") {
       // Preview the realign OUTCOME before writing anything: weeks remaining
@@ -237,8 +243,8 @@ export default function AdjustWeekSheet({
     }
   };
 
-  const applyEasier = async (intent: Intent) => {
-    if (pendingRef.current) return;
+  const applyEasier = async (intent: Intent, previewSwaps: EasySwap[]) => {
+    if (pendingRef.current || easedThisWeek) return;
     pendingRef.current = true;
     setApplying(true);
     try {
@@ -256,7 +262,8 @@ export default function AdjustWeekSheet({
          replaced. `landed` comes back from the refetched document rather
          than the request, because the server silently skips a day that
          has since been completed, skipped, or turned into a race. */
-      const landed = await applyEaseWeek(swaps);
+      // A plan refresh must not silently add runs the athlete never previewed.
+      const landed = await applyEaseWeek(previewSwaps);
       if (landed === null) {
         toast.error("Couldn't adjust the week. Try again.");
         return;
@@ -381,28 +388,30 @@ export default function AdjustWeekSheet({
                 </Button>
               </div>
             )}
-            {INTENTS.map((i) => (
-              <button
-                key={i.id}
-                type="button"
-                disabled={busy}
-                onClick={() => pickIntent(i.id)}
-                className="w-full min-h-[56px] flex items-center gap-3 rounded-xl bg-muted px-4 py-3 text-left active:scale-[0.97] transition-transform disabled:opacity-50 disabled:pointer-events-none"
-              >
-                <div className="flex-1 min-w-0">
-                  <span className="block text-sm font-semibold text-foreground">
-                    {i.label}
-                  </span>
-                  <span className="text-micro text-muted-foreground">
-                    {i.hint}
-                  </span>
-                </div>
-                <ArrowRight
-                  className="size-4 text-muted-foreground shrink-0"
-                  aria-hidden="true"
-                />
-              </button>
-            ))}
+            {INTENTS.filter((i) => !easedThisWeek || i.id === "crowded").map(
+              (i) => (
+                <button
+                  key={i.id}
+                  type="button"
+                  disabled={busy}
+                  onClick={() => pickIntent(i.id)}
+                  className="w-full min-h-[56px] flex items-center gap-3 rounded-xl bg-muted px-4 py-3 text-left active:scale-[0.97] transition-transform disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  <div className="flex-1 min-w-0">
+                    <span className="block text-sm font-semibold text-foreground">
+                      {i.label}
+                    </span>
+                    <span className="text-micro text-muted-foreground">
+                      {i.hint}
+                    </span>
+                  </div>
+                  <ArrowRight
+                    className="size-4 text-muted-foreground shrink-0"
+                    aria-hidden="true"
+                  />
+                </button>
+              )
+            )}
           </>
         )}
 
@@ -457,7 +466,7 @@ export default function AdjustWeekSheet({
                   loading={applying}
                   aria-label="Ease this week"
                   disabled={busy}
-                  onClick={() => void applyEasier(step.intent)}
+                  onClick={() => void applyEasier(step.intent, step.swaps)}
                 >
                   Ease this week
                 </Button>
