@@ -23,11 +23,16 @@ import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
  * the progress bar and the three macros in the same eaten/target
  * framing — and is the single tap that opens the details. The details
  * hold only what explains the target: the macro rings (with their
- * consumed/remaining flip), the plan target when adaptation has moved the
- * header away from it, what today's training already contributed, and the
- * day's insight. The one way into the food log is the "Log food" action at
- * the foot of the card; the cold-start state is a status line above it,
- * not a second link.
+ * consumed/remaining flip), what today's training already contributed, and
+ * the post-workout protein nudge. The one way into the food log is the
+ * "Log food" action at the foot of the card; the cold-start state is a
+ * status line above it, not a second link.
+ *
+ * Two rows left on 2026-09-06 because nothing could ever render them: a
+ * "Plan target" line shown when the header's target differed from the
+ * breakdown's — but Home builds the breakdown FROM the header's target
+ * (HOME-TARGET-01), so they never differ — and a `nutritionInsight` prop no
+ * caller produced.
  */
 export default function TodayEnergy({
   calories,
@@ -41,7 +46,6 @@ export default function TodayEnergy({
   mealsLoading = false,
   uid,
   postWorkoutNudge,
-  nutritionInsight,
 }: {
   calories: number;
   protein: number;
@@ -57,11 +61,6 @@ export default function TodayEnergy({
   postWorkoutNudge?: {
     type: "lift" | "run" | "both";
     proteinRemaining: number;
-  } | null;
-  nutritionInsight?: {
-    type: "positive" | "warning" | "tip";
-    title: string;
-    message: string;
   } | null;
 }) {
   // Remembered per account, closed by default (Wave3 E1 keeps the Home
@@ -95,11 +94,6 @@ export default function TodayEnergy({
   // do. Returning users with a logged history keep the summary.
   const isColdStart =
     !mealsLoading && calories === 0 && totalLifetimeMeals === 0;
-  // The stored plan target earns a line in the details only when
-  // adaptation has moved the header target away from it; otherwise it
-  // would repeat the number the header already shows.
-  const planTargetDiffers =
-    Math.round(burn.phaseAdjustedTdee) !== Math.round(tCal);
   const nudgeText =
     postWorkoutNudge && postWorkoutNudge.proteinRemaining > 0
       ? postWorkoutNudge.type === "run"
@@ -278,13 +272,6 @@ export default function TodayEnergy({
                   />
                 </motion.button>
               )}
-              {planTargetDiffers && (
-                <BreakdownRow
-                  label={`Plan target (${burn.phaseLabel})`}
-                  value={burn.phaseAdjustedTdee}
-                  color={THEME.semantic.nutrition}
-                />
-              )}
               {/* Nutr1: activity is INFORMATIONAL — it's already counted in
                   the target above, never added back (no eat-back budget). */}
               {(burn.workoutCalories > 0 ||
@@ -316,32 +303,6 @@ export default function TodayEnergy({
                       color={"hsl(var(--muted-foreground))"}
                     />
                   )}
-                </>
-              )}
-              {nutritionInsight && (
-                <>
-                  <div className="h-px bg-border/50" />
-                  <div className="flex items-start gap-2">
-                    <span
-                      className="size-1.5 rounded-full mt-1 shrink-0"
-                      style={{
-                        background:
-                          nutritionInsight.type === "positive"
-                            ? THEME.semantic.positive
-                            : nutritionInsight.type === "warning"
-                              ? THEME.warning
-                              : THEME.brand,
-                      }}
-                    />
-                    <div>
-                      <p className="text-xs font-medium text-foreground">
-                        {nutritionInsight.title}
-                      </p>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        {nutritionInsight.message}
-                      </p>
-                    </div>
-                  </div>
                 </>
               )}
             </div>

@@ -259,14 +259,19 @@ describe("TodayEnergy — one logging action, no duplicated target rows (cohesio
     expect(screen.queryAllByTestId("breakdown-row")).toHaveLength(0);
   });
 
-  it("the details show the plan target once adaptation has moved the header away from it", function () {
+  it("never restates a 'plan target' row, whatever the breakdown's base says", function () {
+    // The row this pinned could not render in the app: Home builds the
+    // breakdown FROM the header's target (HOME-TARGET-01), so the two never
+    // differed and the branch was dead. A fixture that forces them apart is
+    // a state the app cannot reach; the row is gone rather than kept for it.
     renderAt({
       calories: 1450,
       totalLifetimeMeals: 420,
       burn: { ...burn, phaseAdjustedTdee: 2400 },
     });
     fireEvent.click(screen.getByText("Today's Energy"));
-    expect(screen.getAllByTestId("breakdown-row")).toHaveLength(1);
+    expect(screen.queryAllByTestId("breakdown-row")).toHaveLength(0);
+    expect(screen.queryByText(/Plan target/)).toBeNull();
   });
 
   it("labels the disclosure — Details — and reports its state", function () {
