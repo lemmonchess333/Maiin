@@ -474,7 +474,13 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
     const taper = profile
       ? resolveTaper(targetDate, profile, finalTarget)
       : null;
-    if (taper && profile && isPro) {
+    // Nutr4: a manual override outranks the taper exactly as it outranks the
+    // learned target (`resolveTargetSource`: the user pinned a number — never
+    // override it). The race-week LABEL below still renders; only the calorie
+    // and macro MOVE is skipped, the eligible-but-not-applied shape free users
+    // already get.
+    const manualOverride = !!profile?.customCalorieTarget;
+    if (taper && profile && isPro && !manualOverride) {
       finalTarget = taper.taperedCalories;
       const m = getAdjustedTargets(
         { ...profile, targetCalories: finalTarget },
