@@ -618,8 +618,8 @@ export default function ProgressPhotos() {
       <div className="flex items-center gap-2">
         <Lock className="size-3.5 text-muted-foreground shrink-0" />
         <span className="text-xs text-muted-foreground">
-          Private to your account — encrypted on this device before upload; only
-          you can view these photos.
+          Private to your account — encrypted on this device before upload and
+          never shown to other users.
         </span>
       </div>
 
@@ -655,7 +655,7 @@ export default function ProgressPhotos() {
         <EmptyState
           icon={Camera}
           headline="Track your transformation"
-          sub="A weekly check-in — front, side and back — shows change no mirror can. Only you can ever see these."
+          sub="A weekly check-in — front, side and back — shows change no mirror can. Never shown to other users."
           accent={THEME.brand}
           action={{ label: "+ First check-in", onClick: openNewCheckIn }}
         />
