@@ -1,3 +1,5 @@
+import type { ReminderActivity } from "./useReminderActivity";
+import { localDateString } from "@/lib/dateHelpers";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
@@ -83,7 +85,7 @@ function isWorkoutDay(
  * <RemindersProvider>. Public callers use `useWorkoutReminders` from
  * RemindersProvider.tsx which reads this hook's output from context.
  */
-export function useWorkoutRemindersInternal() {
+export function useWorkoutRemindersInternal(activity?: ReminderActivity) {
   const { user, profile } = useAuth();
   const [reminders, setReminders] = useState<WorkoutReminders>(
     DEFAULT_WORKOUT_REMINDERS
@@ -176,7 +178,13 @@ export function useWorkoutRemindersInternal() {
         await cancelNotification(id);
       }
 
-      if (cancelled || !reminders.enabled) return;
+      if (
+        cancelled ||
+        !reminders.enabled ||
+        loading ||
+        (activity && !activity.ready)
+      )
+        return;
 
       const schedule = profile?.weekSchedule as
         | ReadonlyArray<{ day: number; type: string }>
@@ -197,6 +205,9 @@ export function useWorkoutRemindersInternal() {
         if (!isWorkoutDay(day, schedule)) continue;
         const at = computeNextWeekdayOccurrence(reminders.time, day);
         if (!at) continue;
+        // The completed day no longer needs a reminder. Preserve the next week's slot.
+        if (activity?.workout && localDateString(at) === activity.dateKey)
+          at.setDate(at.getDate() + 7);
         await scheduleNotification({
           id: WORKOUT_NOTIFICATION_IDS[day],
           title: "Time to train",
@@ -220,7 +231,7 @@ export function useWorkoutRemindersInternal() {
     return () => {
       cancelled = true;
     };
-  }, [reminders, profile]);
+  }, [reminders, profile, loading, activity]);
 
   // Permission request is a stable module-level function — no wrapper needed.
   return {
