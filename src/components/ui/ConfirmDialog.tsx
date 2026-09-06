@@ -1,5 +1,6 @@
 import { Button } from "./Button";
 import { Dialog } from "./Dialog";
+import type { Ref } from "react";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -47,18 +48,48 @@ export function ConfirmDialog({
       overlayClassName={overSheet ? "z-[60]" : undefined}
       className={overSheet ? "z-[60]" : undefined}
     >
-      <div className="flex gap-2 pt-1">
-        <Button onClick={onCancel} variant="secondary" className="flex-1">
-          {cancelLabel}
-        </Button>
-        <Button
-          onClick={onConfirm}
-          variant={destructive ? "destructive" : "primary"}
-          className="flex-1"
-        >
-          {confirmLabel}
-        </Button>
-      </div>
+      <ConfirmDialogActions
+        onCancel={onCancel}
+        onConfirm={onConfirm}
+        cancelLabel={cancelLabel}
+        confirmLabel={confirmLabel}
+        destructive={destructive}
+      />
     </Dialog>
+  );
+}
+
+/** Shared confirmation controls for flows that keep one dialog mounted. */
+export function ConfirmDialogActions({
+  onCancel,
+  onConfirm,
+  cancelLabel = "Cancel",
+  confirmLabel = "Confirm",
+  destructive = false,
+  cancelRef,
+}: Pick<
+  ConfirmDialogProps,
+  "onCancel" | "onConfirm" | "cancelLabel" | "confirmLabel" | "destructive"
+> & {
+  cancelRef?: Ref<HTMLButtonElement>;
+}) {
+  return (
+    <div className="flex gap-2 pt-1">
+      <Button
+        ref={cancelRef}
+        onClick={onCancel}
+        variant="secondary"
+        className="flex-1"
+      >
+        {cancelLabel}
+      </Button>
+      <Button
+        onClick={onConfirm}
+        variant={destructive ? "destructive" : "primary"}
+        className="flex-1"
+      >
+        {confirmLabel}
+      </Button>
+    </div>
   );
 }

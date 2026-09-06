@@ -2,11 +2,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import RunResumePrompt from "../RunResumePrompt";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { MemoryRouter } from "react-router-dom";
+import { BackDismissProvider } from "@/lib/BackDismissProvider";
 
 vi.mock("@/hooks/useDistanceUnit", () => ({ useDistanceUnit: vi.fn() }));
 
 beforeEach(() => vi.mocked(useDistanceUnit).mockReturnValue("km"));
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
 function setup() {
   const actions = {
@@ -27,6 +32,41 @@ function setup() {
 }
 
 describe("Run recovery choices", () => {
+  it.each(["Start new run", "Discard previous run"])(
+    "does not navigate browser history when cancelling %s",
+    (action) => {
+      const historyBack = vi
+        .spyOn(window.history, "back")
+        .mockImplementation(() => {});
+      const onBack = vi.fn();
+      render(
+        <MemoryRouter>
+          <BackDismissProvider>
+            <RunResumePrompt
+              accumulatedSeconds={185}
+              distanceMeters={1609.344}
+              startedAt={Date.now() - 60000}
+              onResume={vi.fn()}
+              onStartNew={vi.fn()}
+              onDiscard={vi.fn()}
+              onBack={onBack}
+            />
+          </BackDismissProvider>
+        </MemoryRouter>
+      );
+      fireEvent.click(screen.getByRole("button", { name: action }));
+      expect(
+        screen.getByRole("button", { name: "Keep previous run" })
+      ).toHaveFocus();
+      fireEvent.click(
+        screen.getByRole("button", { name: "Keep previous run" })
+      );
+      expect(screen.getByRole("button", { name: "Resume run" })).toHaveFocus();
+      expect(historyBack).not.toHaveBeenCalled();
+      expect(onBack).not.toHaveBeenCalled();
+    }
+  );
+
   it.each(["km", "mi"] as const)(
     "labels the converted distance in %s",
     (unit) => {
