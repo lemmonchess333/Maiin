@@ -1166,7 +1166,7 @@ export default function Run() {
                 )
               }
               onCustomize={() => setForceModal(true)}
-              onBack={() => navigate("/program")}
+              onBack={() => navigate("/program?tab=run")}
             />
           ) : forceModal || targetRoute != null ? (
             <div className="flex-1 flex flex-col min-h-0 bg-background text-foreground">
@@ -1191,7 +1191,7 @@ export default function Run() {
               </div>
               <RunSetupModal
                 onStart={handleStart}
-                onCancel={() => navigate("/program")}
+                onCancel={() => navigate("/program?tab=run")}
                 programContext={planDecision.strip}
                 savedPreferences={{
                   autoPause: true,
@@ -1229,7 +1229,7 @@ export default function Run() {
                 )
               }
               onMoreOptions={() => setForceModal(true)}
-              onBack={() => navigate("/program")}
+              onBack={() => navigate("/program?tab=run")}
             />
           )}
         </>

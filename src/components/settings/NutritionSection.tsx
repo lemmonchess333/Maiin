@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { formatWeightInUnit, kgToLb, lbToKg } from "@/lib/weightUnits";
 import { haptic } from "@/lib/haptic";
 import { Calculator, Flame, Minus, Plus, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -100,8 +101,21 @@ export default function NutritionSection({
       isManualOverride: adaptiveStatus.kind === "manual",
       isAdaptiveEngaged: adaptiveStatus.kind === "adapting",
     });
+  const weightUnit = profile.preferredWeightUnit === "lbs" ? "lbs" : "kg";
+  const weightLabel = weightUnit === "lbs" ? "lb" : "kg";
+  const displayRate = (kgPerWeek: number) =>
+    (weightUnit === "lbs" ? kgToLb(kgPerWeek) : kgPerWeek).toFixed(2);
   const paceLabel = (kgPerWeek: number) =>
-    `${kgPerWeek > 0 ? "+" : ""}${kgPerWeek.toFixed(2)} kg/wk`;
+    `${kgPerWeek > 0 ? "+" : ""}${displayRate(kgPerWeek)} ${weightLabel}/wk`;
+  const adjustGoalWeight = (direction: -1 | 1) => {
+    // Edit in the displayed unit; keep the engine and persistence in kg.
+    // Round the displayed pounds only, never the converted stored kilograms.
+    const nextKg =
+      weightUnit === "lbs"
+        ? lbToKg(Number(formatWeightInUnit(goalWeightKg, "lbs")) + direction)
+        : Math.round((goalWeightKg + direction * 0.5) * 10) / 10;
+    setGoalWeightKg(Math.min(250, Math.max(30, nextKg)));
+  };
 
   return (
     <AccordionSection
@@ -204,23 +218,21 @@ export default function NutritionSection({
             <p className="text-xs text-muted-foreground">
               Sets your calorie target — current{" "}
               <span className="font-mono tabular-nums">
-                {currentKg.toFixed(1)}
+                {formatWeightInUnit(currentKg, weightUnit)}
               </span>{" "}
-              kg
+              {weightLabel}
             </p>
           </div>
         </div>
 
-        {/* Target weight stepper (0.5 kg steps) */}
+        {/* Target weight stepper: 0.5 kg or 1 lb per tap. */}
         <div className="flex items-center justify-between rounded-xl bg-muted/30 p-2">
           <button
             type="button"
             aria-label="Lower goal weight"
             onClick={() => {
               haptic("light");
-              setGoalWeightKg(
-                Math.max(30, Math.round((goalWeightKg - 0.5) * 10) / 10)
-              );
+              adjustGoalWeight(-1);
             }}
             className="size-11 rounded-lg bg-card border border-border/50 flex items-center justify-center text-foreground active:scale-95 transition-transform"
           >
@@ -228,18 +240,18 @@ export default function NutritionSection({
           </button>
           <div className="text-center">
             <p className="text-2xl font-mono tabular-nums font-bold text-foreground">
-              {goalWeightKg.toFixed(1)}
+              {formatWeightInUnit(goalWeightKg, weightUnit)}
             </p>
-            <p className="text-xs text-muted-foreground">kg target</p>
+            <p className="text-xs text-muted-foreground">
+              {weightLabel} target
+            </p>
           </div>
           <button
             type="button"
             aria-label="Raise goal weight"
             onClick={() => {
               haptic("light");
-              setGoalWeightKg(
-                Math.min(250, Math.round((goalWeightKg + 0.5) * 10) / 10)
-              );
+              adjustGoalWeight(1);
             }}
             className="size-11 rounded-lg bg-card border border-border/50 flex items-center justify-center text-foreground active:scale-95 transition-transform"
           >
@@ -268,9 +280,10 @@ export default function NutritionSection({
                 value: r.value,
                 label: (
                   <span className="flex flex-col items-center leading-tight">
-                    <span>{r.label}</span>
+                    <span>{r.label}</span>{" "}
                     <span className="text-caption font-normal text-muted-foreground font-mono tabular-nums mt-0.5">
-                      {r.value} kg/wk
+                      {weightUnit === "lbs" ? displayRate(r.value) : r.value}{" "}
+                      {weightLabel}/wk
                     </span>
                   </span>
                 ),
@@ -380,7 +393,8 @@ export default function NutritionSection({
                     onRecalculate?.();
                   }}
                 >
-                  Recalculate for {currentKg.toFixed(1)} kg
+                  Recalculate for {formatWeightInUnit(currentKg, weightUnit)}{" "}
+                  {weightLabel}
                 </Button>
               </div>
             )}

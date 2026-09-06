@@ -1,22 +1,4 @@
-/**
- * ShareComposerSheet — the sheet is meant to appear ONCE.
- *
- * `compose()` short-circuits as soon as a default is stored, so the sheet
- * was always designed to stop asking. But the "remember this" tick defaulted
- * OFF, and nothing else could write the preference, so a user who never
- * spotted the checkbox got the same prompt after every single session. That
- * is the operator's "it duplicates it, and it's not needed" report: not a
- * duplicated flow, a default that never stuck.
- *
- * The end-to-end property is what these tests pin — answer once, and the
- * SECOND `compose()` resolves without opening. Asserting the checkbox's
- * `checked` attribute alone would pass against a sheet whose tick was
- * decorative.
- *
- * The visibility itself is NOT pre-selected, deliberately: publishing
- * training data without an explicit choice is the one outcome worth
- * avoiding outright. Only the remembering is defaulted.
- */
+/** Sharing is session-only unless the user explicitly remembers a choice. */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   render,
@@ -45,6 +27,7 @@ import ShareComposerSheet from "../ShareComposerSheet";
 import {
   compose,
   getShareDefault,
+  resolveCompose,
   type ActivityPreview,
 } from "@/lib/shareComposer";
 
@@ -72,30 +55,23 @@ function rememberBox(): HTMLInputElement {
 beforeEach(() => {
   localStorage.clear();
 });
-afterEach(cleanup);
+afterEach(() => {
+  act(() => resolveCompose(null, false));
+  cleanup();
+});
 
 describe("ShareComposerSheet", () => {
-  it("pre-ticks 'remember' so the sheet asks once, not every session", () => {
+  it("starts with a session-only choice and no audience default", () => {
     render(<ShareComposerSheet />);
     void openSheet();
-
-    expect(rememberBox().checked).toBe(true);
-    expect(screen.getByText(/make this my default for workouts/i)).toBeTruthy();
-  });
-
-  it("does NOT pre-select a visibility — only the remembering", () => {
-    // Remembering a choice the user made is safe; making one for them
-    // publishes training data they never agreed to publish.
-    render(<ShareComposerSheet />);
-    void openSheet();
-
+    expect(rememberBox().checked).toBe(false);
     expect(getShareDefault(UID, "workout")).toBeNull();
+    expect(screen.getByText(/Applies to this session only/)).toBeTruthy();
   });
 
-  it("stops opening after the user answers once", async () => {
+  it("sharing once does not automatically share the next workout", async () => {
     render(<ShareComposerSheet />);
     const first = openSheet();
-
     fireEvent.click(
       screen.getByRole("button", { name: /share to followers/i })
     );
@@ -103,55 +79,91 @@ describe("ShareComposerSheet", () => {
       visibility: "followers",
       caption: "",
     });
-    expect(getShareDefault(UID, "workout")).toBe("followers");
+    expect(getShareDefault(UID, "workout")).toBeNull();
+    void openSheet();
+    expect(rememberBox().checked).toBe(false);
+  });
 
-    // The second session must resolve from the stored default, with no sheet.
+  it("declining once does not suppress the next sharing choice", async () => {
+    render(<ShareComposerSheet />);
+    const first = openSheet();
+    fireEvent.click(
+      screen.getByRole("button", { name: /don't share this one/i })
+    );
+    await expect(first).resolves.toBeNull();
+    expect(getShareDefault(UID, "workout")).toBeNull();
+    void openSheet();
+    expect(rememberBox()).toBeTruthy();
+  });
+
+  it("remembers an audience only after an explicit opt-in and choice", async () => {
+    render(<ShareComposerSheet />);
+    const first = openSheet();
+    fireEvent.click(rememberBox());
+    expect(
+      screen.getByText(/apply automatically to future workouts/)
+    ).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("button", { name: /share to followers/i })
+    );
+    await first;
+    expect(getShareDefault(UID, "workout")).toBe("followers");
     await expect(openSheet()).resolves.toEqual({
       visibility: "followers",
       caption: "",
     });
     expect(screen.queryByRole("checkbox")).toBeNull();
+    expect(getShareDefault(UID, "run")).toBeNull();
   });
 
-  it("remembers 'don't share' too — declining is a default like any other", async () => {
+  it("allows an explicit never-share default", async () => {
     render(<ShareComposerSheet />);
     const first = openSheet();
-
+    fireEvent.click(rememberBox());
     fireEvent.click(
-      screen.getByRole("button", { name: /don't share this one/i })
+      screen.getByRole("button", { name: /don't share future workouts/i })
     );
     await expect(first).resolves.toBeNull();
     expect(getShareDefault(UID, "workout")).toBe("never");
-
     await expect(openSheet()).resolves.toBeNull();
   });
 
-  it("respects the user un-ticking it — that session stays a one-off", async () => {
-    // The pre-tick is a default, not a decision taken away from them.
+  it("closing after ticking remember never saves a default", async () => {
     render(<ShareComposerSheet />);
     const first = openSheet();
-
     fireEvent.click(rememberBox());
-    expect(rememberBox().checked).toBe(false);
-    fireEvent.click(
-      screen.getByRole("button", { name: /share to followers/i })
-    );
-    await first;
-
+    fireEvent.keyDown(document, { key: "Escape" });
+    await expect(first).resolves.toBeNull();
     expect(getShareDefault(UID, "workout")).toBeNull();
-
-    // …so it opens again next time.
     void openSheet();
-    expect(rememberBox()).toBeTruthy();
+    expect(rememberBox().checked).toBe(false);
   });
 
-  it("tells the user where to change it", () => {
-    // A remembered choice with no visible way back is a one-way door; the
-    // hint names the screen that owns the reversal (ShareDefaultsRow).
+  it("saves run defaults independently after explicit opt-in", async () => {
     render(<ShareComposerSheet />);
-    void openSheet();
+    let first!: Promise<unknown>;
+    act(() => {
+      first = compose(UID, { ...WORKOUT, type: "run", title: "Easy run" });
+    });
+    expect(rememberBox().checked).toBe(false);
+    fireEvent.click(rememberBox());
+    expect(screen.getByText(/apply automatically to future runs/)).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("button", { name: /don't share future runs/i })
+    );
+    await expect(first).resolves.toBeNull();
+    expect(getShareDefault(UID, "run")).toBe("never");
+    expect(getShareDefault(UID, "workout")).toBeNull();
+  });
 
-    expect(screen.getByText(/settings/i)).toBeTruthy();
+  it("allows the user to change their mind about remembering", async () => {
+    render(<ShareComposerSheet />);
+    const first = openSheet();
+    fireEvent.click(rememberBox());
+    fireEvent.click(rememberBox());
+    fireEvent.click(screen.getByRole("button", { name: /make public/i }));
+    await expect(first).resolves.toEqual({ visibility: "public", caption: "" });
+    expect(getShareDefault(UID, "workout")).toBeNull();
   });
 });
 

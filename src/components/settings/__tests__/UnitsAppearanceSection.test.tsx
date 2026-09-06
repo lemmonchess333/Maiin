@@ -101,3 +101,12 @@ describe("distance & pace unit toggle", () => {
     });
   });
 });
+
+describe("body weight unit scope", () => {
+  it("names the body-weight scope and keeps lifting loads explicit", () => {
+    const { toggleUnit } = renderSection({ preferredWeightUnit: "lbs" });
+    fireEvent.click(screen.getByRole("button", { name: /Body weight unit/ }));
+    expect(toggleUnit).toHaveBeenCalledWith("preferredWeightUnit", "lbs");
+    expect(screen.getByText(/Lifting loads use kg/)).toBeInTheDocument();
+  });
+});

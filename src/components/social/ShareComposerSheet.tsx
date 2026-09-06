@@ -31,9 +31,12 @@ const REMEMBER_LABEL: Record<ShareType, string> = {
   run: "Make this my default for runs",
 };
 
-/** Shown under the actions so the one-time nature of the ask is legible —
- *  the sheet is choosing a default, not interrogating this one session. */
-const REMEMBER_HINT = "You can change this any time in Settings → Privacy.";
+/** Explain the scope before the user chooses an audience. */
+const REMEMBER_HINT: Record<ShareType, string> = {
+  workout:
+    "Your choice will apply automatically to future workouts. Change it any time in Settings → Privacy.",
+  run: "Your choice will apply automatically to future runs. Change it any time in Settings → Privacy.",
+};
 
 /**
  * App-level share composer. Mounted once (App.tsx) and listens to the
@@ -63,24 +66,8 @@ export default function ShareComposerSheet() {
       setState(s);
       if (s.open) {
         setCaption("");
-        // Pre-ticked, deliberately (2026-08-04). `compose()` already
-        // short-circuits once a preference exists, so this sheet was only
-        // ever meant to appear until the user chose a default — but the tick
-        // defaulted OFF, so a user who never noticed it got prompted after
-        // EVERY session. That is the "it duplicates it, and it's not needed"
-        // in the operator's report: not a duplicated flow, a default that
-        // never stuck.
-        //
-        // Reference apps (Strava, Hevy, Strong) all treat share visibility as
-        // a setting with a per-post override, never a per-session prompt.
-        // CLAUDE.md's grill heuristic: 3+ reference apps doing it invisibly
-        // means Tropos surfaces it only with a Tropos-specific reason, and
-        // there isn't one. Asking ONCE and remembering is that behaviour.
-        //
-        // Not defaulted to a VISIBILITY, note — only to remembering whatever
-        // the user picks. Publishing training data without an explicit choice
-        // is the one outcome worth avoiding outright.
-        setRemember(true);
+        // Each session is a one-off unless the user explicitly opts in.
+        setRemember(false);
       }
     });
   }, []);
@@ -145,11 +132,10 @@ export default function ShareComposerSheet() {
   };
   const dismiss = (open: boolean) => {
     if (!open && state.open) {
-      // Drag-to-close + tap-outside both behave as "Don't share this one".
-      // Remember-toggle still applies if checked, mirroring the explicit
-      // skip button.
+      // Closing is not an explicit decision about future sessions, even
+      // if the user ticked remember before changing their mind.
       haptic("light");
-      resolveCompose(null, remember);
+      resolveCompose(null, false);
     }
   };
 
@@ -256,12 +242,14 @@ export default function ShareComposerSheet() {
             onClick={skip}
             leftIcon={<EyeOff className="size-4 shrink-0" aria-hidden="true" />}
           >
-            Don&apos;t share this one
+            {remember
+              ? `Don't share future ${state.type === "workout" ? "workouts" : "runs"}`
+              : "Don't share this one"}
           </Button>
         </div>
 
         {/* Remember toggle */}
-        <label className="flex items-center gap-3 px-1 py-2 cursor-pointer select-none">
+        <label className="flex min-h-11 items-center gap-3 px-1 py-2 cursor-pointer select-none">
           <input
             type="checkbox"
             checked={remember}
@@ -272,11 +260,11 @@ export default function ShareComposerSheet() {
             {REMEMBER_LABEL[state.type]}
           </span>
         </label>
-        {remember && (
-          <p className="text-caption text-muted-foreground px-1 -mt-1">
-            {REMEMBER_HINT}
-          </p>
-        )}
+        <p className="text-caption text-muted-foreground px-1 -mt-1">
+          {remember
+            ? REMEMBER_HINT[state.type]
+            : "Applies to this session only. Set a default in Settings → Privacy."}
+        </p>
 
         {!isOnline && (
           <p className="text-caption text-muted-foreground text-center">
