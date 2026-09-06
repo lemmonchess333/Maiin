@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import type { Meal } from "@/hooks/useMeals";
 import { useAuth } from "@/lib/auth";
-import { THEME } from "@/lib/theme";
 import { format, subDays } from "date-fns";
 import {
   ResponsiveContainer,
@@ -14,115 +13,61 @@ import {
   Cell,
   Tooltip,
 } from "recharts";
-import { AlertTriangle } from "lucide-react";
-import {
-  calcDayBalance,
-  getBalanceColor,
-  getPhaseAlignment,
-} from "@/utils/calorieBalance";
+import { calcDayBalance, getBalanceColor } from "@/utils/calorieBalance";
 import { calculateTDEE, type ActivityLevel } from "@/lib/tdee";
 
-/* getBalanceColor's identities as theme-aware TEXT steps. The util keeps
-   returning the fixed hexes (its tests pin them, and the chart BARS want
-   them); text sites map through here — as 12-14px text the identities
-   fail light AA (success 2.50:1, warning 3.19, danger 3.58). */
-const BALANCE_TEXT: Record<string, string> = {
-  [THEME.success]: "hsl(var(--success-strong))",
-  [THEME.warning]: "hsl(var(--warning-strong))",
-  [THEME.danger]: "hsl(var(--running-strong))",
-};
-function balanceTextColor(balance: number, goal: string | undefined): string {
-  const identity = getBalanceColor(balance, goal);
-  return BALANCE_TEXT[identity] ?? identity;
-}
-
-interface CalorieBalanceChartProps {
-  // Passed down from History, which already holds the live meals listener.
-  meals: Meal[];
-}
-
-export default function CalorieBalanceChart({
-  meals,
-}: CalorieBalanceChartProps) {
+export default function CalorieBalanceChart({ meals }: { meals: Meal[] }) {
   const { profile } = useAuth();
-
-  const weightKg = profile?.weightKg ?? 70;
-  const heightCm = profile?.heightCm ?? 175;
-  const age = profile?.age ?? 30;
-  const sex = (profile?.sex as "male" | "female") ?? "male";
-  const activityLevel = (profile?.activityLevel as ActivityLevel) ?? "moderate";
-  const goal = profile?.program?.goal;
-
-  // Expenditure baseline = MAINTENANCE TDEE (BMR × activity multiplier) — the
-  // same value calculateTDEE uses everywhere else. Expenditure-inclusive
-  // (Nutr1): logged exercise is already captured by the multiplier, so it is
-  // NOT added per-day. The prior bare-BMR baseline understated expenditure by
-  // ~20-40% and showed a "surplus" to a user eating at maintenance (NUTR-H1).
-  // tdee is goal-independent, so a fixed goal arg is passed.
-  const maintenance = useMemo(
-    () =>
-      calculateTDEE(weightKg, heightCm, age, activityLevel, "recomp", sex).tdee,
-    [weightKg, heightCm, age, activityLevel, sex]
-  );
-
+  const maintenance = calculateTDEE(
+    profile?.weightKg ?? 70,
+    profile?.heightCm ?? 175,
+    profile?.age ?? 30,
+    (profile?.activityLevel as ActivityLevel) ?? "moderate",
+    "recomp",
+    (profile?.sex as "male" | "female") ?? "male"
+  ).tdee;
+  const today = format(new Date(), "yyyy-MM-dd");
   const data = useMemo(() => {
-    const now = new Date();
+    const now = new Date(today + "T12:00:00");
     return Array.from({ length: 14 }, (_, i) => {
       const date = subDays(now, 13 - i);
       const dateStr = format(date, "yyyy-MM-dd");
-      const dayLabel = format(date, "EEE");
-
-      const dayMeals = meals.filter((m) => m.date === dateStr);
-      const consumed = dayMeals.reduce(
-        (sum, m) => sum + (m.totalCalories || 0),
+      const entries = meals.filter((meal) => meal.date === dateStr);
+      const consumed = entries.reduce(
+        (sum, meal) => sum + (meal.totalCalories || 0),
         0
       );
-
-      return calcDayBalance(dateStr, dayLabel, consumed, maintenance);
+      const point = calcDayBalance(
+        dateStr,
+        format(date, "EEE"),
+        consumed,
+        maintenance
+      );
+      return {
+        ...point,
+        // No entry is unknown, not zero intake. Today is still in progress.
+        // Even past days are estimates: a meal entry does not prove a full log.
+        balance: entries.length > 0 && dateStr !== today ? point.balance : null,
+      };
     });
-  }, [meals, maintenance]);
-
-  // Aggregates cover only LOGGED days. An unlogged day has consumed=0, so its
-  // balance is a full phantom deficit (maintenance − 0 ≈ +2500); including
-  // empties made avgBalance/deficitDays/getPhaseAlignment falsely warn a
-  // sparse-logging user they were off-phase (e.g. a bulker told they're "below
-  // maintenance"). The bars still render all 14 days (empties greyed).
-  const loggedDays = data.filter((d) => d.consumed > 0);
-  const rawAvg = loggedDays.length
-    ? loggedDays.reduce((s, d) => s + d.balance, 0) / loggedDays.length
-    : 0;
-  const avgBalance = Number.isFinite(rawAvg) ? Math.round(rawAvg) : 0;
-  const deficitDays = loggedDays.filter((d) => d.balance > 0).length;
-
-  const phaseLabel =
-    goal === "cut"
-      ? "Cut"
-      : goal === "lean bulk"
-        ? "Bulk"
-        : goal === "recomp"
-          ? "Recomp"
-          : "Maintain";
+  }, [meals, maintenance, today]);
+  const loggedDays = data.filter((day) => day.balance !== null);
+  const average = loggedDays.length
+    ? Math.round(
+        loggedDays.reduce((sum, day) => sum + (day.balance ?? 0), 0) /
+          loggedDays.length
+      )
+    : null;
 
   return (
     <div className="p-4 rounded-2xl bg-card space-y-3">
       <div className="flex items-center justify-between">
         <SectionLabel>Calorie Balance</SectionLabel>
-        <div className="flex items-center gap-2">
-          <span
-            className="text-xs px-2 py-0.5 rounded-full font-medium"
-            style={{
-              backgroundColor: THEME.brand + "18",
-              color: THEME.brand,
-            }}
-          >
-            {phaseLabel}
-          </span>
-          <span className="text-xs text-muted-foreground">14 days</span>
-        </div>
+        <span className="text-xs text-muted-foreground">14 days</span>
       </div>
-
-      <p className="text-xs text-muted-foreground">Maintenance − food intake</p>
-
+      <p className="text-xs text-muted-foreground">
+        Estimated maintenance − logged food. Today is excluded.
+      </p>
       <div className="h-44">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
@@ -131,187 +76,88 @@ export default function CalorieBalanceChart({
           >
             <XAxis
               dataKey="day"
-              tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
+              tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
               axisLine={false}
               tickLine={false}
               interval={1}
             />
             <YAxis
-              tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
+              tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
               axisLine={false}
               tickLine={false}
               width={35}
-              tickFormatter={(v) =>
-                Math.abs(v) >= 1000 ? `${(v / 1000).toFixed(1)}k` : String(v)
+              tickFormatter={(value) =>
+                Math.abs(value) >= 1000
+                  ? `${(value / 1000).toFixed(1)}k`
+                  : String(value)
               }
             />
-            <ReferenceLine y={0} stroke="hsl(var(--border))" strokeWidth={1} />
-            {/* Custom tooltip matches TrendWeight — full-date heading, then
-                label: value line. Previously rendered the day abbrev ("Sun")
-                as the heading; now both History charts show a consistent
-                "22 Mar 2026 / Deficit: 1,736 cal" template. */}
+            <ReferenceLine y={0} stroke="hsl(var(--border))" />
             <Tooltip
               cursor={false}
-              offset={20}
-              allowEscapeViewBox={{ x: false, y: false }}
-              wrapperStyle={{ outline: "none", zIndex: 10 }}
               content={(props) => {
                 if (!props.active || !props.payload?.length) return null;
                 const entry = props.payload[0];
-                const v = Number(entry.value);
-                if (!Number.isFinite(v)) return null;
-                const point = entry.payload as { date?: string } | undefined;
-                const heading = point?.date
-                  ? new Date(point.date + "T12:00:00").toLocaleDateString(
-                      "en-GB",
-                      { day: "numeric", month: "short", year: "numeric" }
-                    )
-                  : String(props.label ?? "");
-                const abs = Math.abs(Math.round(v)).toLocaleString();
-                const label = v >= 0 ? "Deficit" : "Surplus";
+                if (entry.value == null) return null;
+                const value = Number(entry.value);
+                if (!Number.isFinite(value)) return null;
+                const point = entry.payload as { date: string };
                 return (
-                  <div
-                    style={{
-                      background: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: 12,
-                      fontSize: 12,
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                      padding: "10px 14px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontWeight: 600,
-                        marginBottom: 4,
-                        color: "hsl(var(--foreground))",
-                      }}
-                    >
-                      {heading}
-                    </div>
-                    <div style={{ color: "hsl(var(--muted-foreground))" }}>
-                      {label}: {abs} cal
-                    </div>
+                  <div className="rounded-xl border border-border bg-card p-3 text-xs text-foreground shadow-sm">
+                    <p className="font-semibold">
+                      {format(new Date(point.date + "T12:00:00"), "d MMM yyyy")}
+                    </p>
+                    <p>
+                      Estimated gap: {value > 0 ? "+" : ""}
+                      {Math.round(value).toLocaleString()} kcal
+                    </p>
+                    <p className="text-muted-foreground">
+                      Based on logged food; entries may be incomplete.
+                    </p>
                   </div>
                 );
               }}
             />
-            <Bar
-              dataKey="balance"
-              radius={[3, 3, 3, 3]}
-              barSize={12}
-              minPointSize={2}
-            >
-              {data.map((entry) => {
-                const noData = entry.consumed === 0 && entry.balance !== 0;
-                return (
-                  <Cell
-                    key={entry.date}
-                    fill={
-                      noData
-                        ? "hsl(var(--muted-foreground))"
-                        : getBalanceColor(entry.balance, goal)
-                    }
-                    opacity={noData ? 0.25 : 0.75}
-                  />
-                );
-              })}
+            <Bar dataKey="balance" radius={[3, 3, 3, 3]} barSize={12}>
+              {data.map((entry) => (
+                <Cell
+                  key={entry.date}
+                  fill={getBalanceColor(
+                    entry.balance ?? 0,
+                    profile?.program?.goal
+                  )}
+                  opacity={0.75}
+                />
+              ))}
             </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>
-
-      <div className="flex items-center justify-around pt-1 border-t border-border/30">
+      <div className="flex items-center justify-around border-t border-border/30 pt-2">
         <div className="text-center">
-          <p className="text-xs text-muted-foreground">Avg daily</p>
-          {/* getBalanceColor returns the fixed identities (fine for the
-              chart fills its tests pin); as 14px TEXT they fail light AA
-              (success 2.50, warning 3.19, danger 3.58 — the sibling of
-              the alignment-line fix three lines down). Map to the
-              theme-aware steps here rather than change the util. */}
-          <p
-            className="text-sm font-bold font-mono tabular-nums"
-            style={{ color: balanceTextColor(avgBalance, goal) }}
-          >
-            {avgBalance >= 0 ? "+" : ""}
-            {avgBalance} cal
+          <p className="text-xs text-muted-foreground">
+            Average logged-day gap
+          </p>
+          <p className="text-sm font-bold font-mono tabular-nums text-foreground">
+            {average === null
+              ? "Not enough data"
+              : `${average >= 0 ? "+" : ""}${average} kcal`}
           </p>
         </div>
         <div className="text-center">
-          <p className="text-xs text-muted-foreground">Deficit days</p>
+          <p className="text-xs text-muted-foreground">
+            Past days with entries
+          </p>
           <p className="text-sm font-bold font-mono tabular-nums text-foreground">
-            {deficitDays} / {data.length}
+            {loggedDays.length} / 13
           </p>
         </div>
       </div>
-
-      {/* Hist5c pin 5 (audit E1) — phase-aware framing. Reconciles
-          the user's chosen phase (Bulk / Cut / Recomp) with their
-          actual 14-day balance. At-odds states (Bulk+deficit,
-          Cut+surplus) surface as an amber warning so the user
-          reads the conflict explicitly instead of synthesising it
-          from two raw lines. On-track / maintaining states stay as
-          quiet centered text — the chart already tells that story.
-          Replaces the prior "Currently in deficit" line that
-          contradicted the Bulk chip without flagging the conflict. */}
-      {(() => {
-        const alignment = getPhaseAlignment(goal, avgBalance);
-        if (!alignment) return null;
-
-        if (alignment.state === "at-odds") {
-          return (
-            <div
-              role="alert"
-              className="flex items-center gap-2 px-3 py-2 rounded-lg"
-              style={{ background: THEME.amber + "1A" }}
-            >
-              <AlertTriangle
-                className="size-3.5 shrink-0"
-                style={{ color: THEME.amber }}
-                aria-hidden="true"
-              />
-              {/* Text on the -strong step — the amber identity is ~3.1:1
-                  as 12px text on the light card; the icon keeps it. */}
-              <p
-                className="text-xs font-medium"
-                style={{ color: "hsl(var(--warning-strong))" }}
-              >
-                {alignment.message}
-              </p>
-            </div>
-          );
-        }
-
-        return (
-          <p
-            className="text-xs font-medium text-center pt-1"
-            style={{
-              color:
-                alignment.state === "on-track"
-                  ? balanceTextColor(avgBalance, goal)
-                  : "hsl(var(--muted-foreground))",
-            }}
-          >
-            {alignment.message}
-          </p>
-        );
-      })()}
-
-      {/* Projected weekly weight change — rule-of-thumb 7700 cal ≈ 1 kg.
-          Suppressed under ±100 cal/day because the "projection" becomes
-          meaningless noise at maintenance. Positive avgBalance = deficit
-          convention (see data computation above), so positive → weight
-          down, negative → weight up. */}
-      {Math.abs(avgBalance) >= 100 &&
-        (() => {
-          const kgPerWeek = (Math.abs(avgBalance) * 7) / 7700;
-          const direction = avgBalance > 0 ? "down" : "up";
-          return (
-            <p className="text-xs text-muted-foreground text-center">
-              At this rate, ~{kgPerWeek.toFixed(1)} kg/week {direction}
-            </p>
-          );
-        })()}
+      <p className="text-xs text-muted-foreground">
+        Gaps mean no food was logged. Partial logs can overstate a deficit, so
+        this chart does not predict weight change or confirm progress toward
+        your goal.
+      </p>
     </div>
   );
 }

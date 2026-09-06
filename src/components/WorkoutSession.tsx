@@ -30,6 +30,7 @@ import {
   Timer,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { motion, AnimatePresence } from "framer-motion";
 import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
@@ -72,7 +73,10 @@ import Tooltip from "@/components/ui/Tooltip";
 import PlateCalculatorSheet from "@/components/workout/PlateCalculatorSheet";
 import { validateSet } from "@/lib/setValidation";
 import { getExerciseById } from "@/lib/exercises";
-import { clampExerciseIndex } from "@/features/program/sessionCursor";
+import {
+  clampExerciseIndex,
+  nextIncompleteSet,
+} from "@/features/program/sessionCursor";
 import {
   detectStall,
   type LoggedWorkout,
@@ -281,10 +285,15 @@ export default function WorkoutSession({
   // CIRCLE-SESSION-01 — explicit Circle share from the completion
   // screen. The sheet mounts ONLY while open so its Circle reads
   // never fire unless the user taps "Share to Circle".
+  const resumeCursor = initialDraft
+    ? nextIncompleteSet(initialDraft.setLogs, initialDraft.currentExIndex)
+    : null;
   const [currentExIndex, setCurrentExIndex] = useState(
-    initialDraft?.currentExIndex ?? 0
+    resumeCursor?.exerciseIndex ?? initialDraft?.currentExIndex ?? 0
   );
-  const [currentSetIndex, setCurrentSetIndex] = useState(0);
+  const [currentSetIndex, setCurrentSetIndex] = useState(
+    resumeCursor?.setIndex ?? 0
+  );
   const [setLogs, setSetLogs] = useState<SetLog[][]>(() => {
     if (initialDraft?.setLogs) return initialDraft.setLogs as SetLog[][];
     // Backlog #12: pre-fill a warm-up ramp on the first loaded exercise per
@@ -636,6 +645,7 @@ export default function WorkoutSession({
 
   // Session state
   const [sessionComplete, setSessionComplete] = useState(false);
+  const [showFinishEarly, setShowFinishEarly] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [sessionDurationMinutes, setSessionDurationMinutes] = useState(0);
 
@@ -1006,8 +1016,15 @@ export default function WorkoutSession({
     });
     undoTimeoutRef.current = setTimeout(() => setLastCompleted(null), 4000);
 
-    const isLastSet = currentSetIndex >= currentSets.length - 1;
-    const isLastExercise = currentExIndex >= day.exercises.length - 1;
+    const updatedLogs = setLogs.map((sets, exIndex) =>
+      sets.map((st, setIndex) =>
+        exIndex === currentExIndex && setIndex === currentSetIndex
+          ? { ...st, completed: true }
+          : st
+      )
+    );
+    const isLastSet = updatedLogs[currentExIndex].every((st) => st.completed);
+    const next = nextIncompleteSet(updatedLogs, currentExIndex);
 
     if (isLastSet) {
       // Backlog #2 — session-volume PR (three-axis PR, Green/B1): most
@@ -1073,17 +1090,16 @@ export default function WorkoutSession({
         );
       }
 
-      if (isLastExercise) {
+      if (!next) {
         completeSession();
       } else {
-        // Move to next exercise
-        setCurrentExIndex((prev) => prev + 1);
-        setCurrentSetIndex(0);
+        setCurrentExIndex(next.exerciseIndex);
+        setCurrentSetIndex(next.setIndex);
         if (autoRest) startRest(day.exercises[currentExIndex]?.restSeconds);
       }
     } else {
       // Move to next set, start rest timer (unless auto-start is off)
-      setCurrentSetIndex((prev) => prev + 1);
+      setCurrentSetIndex(next?.setIndex ?? 0);
       if (autoRest) startRest(day.exercises[currentExIndex]?.restSeconds);
     }
   };
@@ -2035,9 +2051,9 @@ export default function WorkoutSession({
         ) : (
           (() => {
             const allSetsComplete = currentSets.every((s) => s.completed);
-            const isLastExercise = currentExIndex >= day.exercises.length - 1;
+            const next = nextIncompleteSet(setLogs, currentExIndex);
 
-            if (allSetsComplete && isLastExercise) {
+            if (allSetsComplete && !next) {
               return (
                 <button
                   type="button"
@@ -2053,8 +2069,10 @@ export default function WorkoutSession({
                 <button
                   type="button"
                   onClick={() => {
-                    setCurrentExIndex((prev) => prev + 1);
-                    setCurrentSetIndex(0);
+                    if (next) {
+                      setCurrentExIndex(next.exerciseIndex);
+                      setCurrentSetIndex(next.setIndex);
+                    }
                   }}
                   className="w-full py-3.5 rounded-xl bg-primary-strong text-primary-foreground font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
                 >
@@ -2077,7 +2095,33 @@ export default function WorkoutSession({
             );
           })()
         )}
+        {!isResting &&
+          nextIncompleteSet(setLogs) &&
+          setLogs.some((sets) =>
+            sets.some((set) => set.completed && set.type !== "warmup")
+          ) && (
+            <Button
+              variant="ghost"
+              fullWidth
+              onClick={() => setShowFinishEarly(true)}
+            >
+              Finish early
+            </Button>
+          )}
       </div>
+
+      <ConfirmDialog
+        open={showFinishEarly}
+        title="Finish with unfinished sets?"
+        description="Only completed working sets will be saved. Unfinished sets will not count toward your workout totals."
+        confirmLabel="Review completed work"
+        cancelLabel="Keep training"
+        onCancel={() => setShowFinishEarly(false)}
+        onConfirm={() => {
+          setShowFinishEarly(false);
+          completeSession();
+        }}
+      />
 
       <PlateCalculatorSheet
         open={showPlates}

@@ -9,7 +9,6 @@ import {
   formatDayMonth,
   formatDayMonthYear,
   formatClock,
-  formatVolumeLabel,
   formatLoadKg,
 } from "../formatters";
 
@@ -224,13 +223,7 @@ describe("formatClock (the one m:ss / h:mm:ss formatter — twelve local copies 
   });
 });
 
-describe("formatVolumeLabel / formatLoadKg (moved out of the pages, 2026-09)", () => {
-  it("volume: dash for nothing lifted, tonnes past 1000 kg, spaced kg below", () => {
-    expect(formatVolumeLabel(0)).toBe("\u2014");
-    expect(formatVolumeLabel(320.4)).toBe("320 kg");
-    expect(formatVolumeLabel(1234)).toBe("1.2t");
-  });
-
+describe("formatLoadKg (moved out of the pages, 2026-09)", () => {
   it("load: BW for bodyweight, whole or one-decimal kg otherwise", () => {
     expect(formatLoadKg(0)).toBe("BW");
     expect(formatLoadKg(60)).toBe("60 kg");

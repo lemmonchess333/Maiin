@@ -1185,6 +1185,7 @@ export function useProgram() {
             : ex.sets.reduce((s, set) => s + set.weightKg * set.reps, 0)),
         0
       );
+      const performedExercises = exercises.filter((ex) => ex.sets.length > 0);
       const completedSetCount = exercises.reduce(
         (c, ex) => c + ex.sets.length,
         0
@@ -1311,7 +1312,7 @@ export function useProgram() {
             type: "workout",
             title: day.dayName,
             meta: [
-              `${day.exercises.length} exercise${day.exercises.length === 1 ? "" : "s"}`,
+              `${performedExercises.length} exercise${performedExercises.length === 1 ? "" : "s"}`,
               tonnage > 0
                 ? `${Math.round(tonnage).toLocaleString()} kg volume`
                 : "",
@@ -1323,7 +1324,7 @@ export function useProgram() {
         if (decision) {
           const uniqueCategories = [
             ...new Set(
-              day.exercises.map((ex) => ex.movementCategory).filter(Boolean)
+              performedExercises.map((ex) => ex.category).filter(Boolean)
             ),
           ];
           const payload = {
@@ -1335,7 +1336,7 @@ export function useProgram() {
             ...(decision.caption ? { caption: decision.caption } : {}),
             workoutName: day.dayName,
             activityTitle: day.dayName,
-            exerciseCount: day.exercises.length,
+            exerciseCount: performedExercises.length,
             totalVolume: tonnage,
             duration: effectiveDurationMin * 60,
             muscleGroups: uniqueCategories,
@@ -1345,7 +1346,7 @@ export function useProgram() {
             // string. ActivityCard renders only the top 3 visually
             // for compactness; the rest sit on the doc for the routine
             // copy flow.
-            exercises: exercises.map((ex) => {
+            exercises: performedExercises.map((ex) => {
               const setCount = ex.sets.length;
               const targetReps = ex.sets[0]?.reps ?? 0;
               const targetWeightKg = ex.sets[0]?.weightKg ?? 0;
