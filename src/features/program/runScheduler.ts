@@ -1329,8 +1329,12 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
             })
           );
           // Harder: a SECOND quality session (the other flavour) when
-          // the week has a spare slot and no safety cap applies.
-          const secondQualityHere = allowSecondQuality && remaining.length >= 2;
+          // the week has a spare slot and no safety cap applies. Run18:
+          // "spare" means a slot BEYOND the week's easy run — with three
+          // run days the second quality session took the only easy day
+          // (tempo + intervals + long, nothing easy), so it needs three
+          // remaining slots, i.e. four run days or more.
+          const secondQualityHere = allowSecondQuality && remaining.length >= 3;
           if (secondQualityHere) {
             const secondType = qualityType === "tempo" ? "intervals" : "tempo";
             week.push(
