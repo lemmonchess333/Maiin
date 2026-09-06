@@ -69,15 +69,14 @@ describe("weekKeyMinusN", () => {
 
 // ── UTC/local drift pin (regression) ─────────
 //
-// The vitest runner is pinned to UTC, so an in-process assertion can't
-// observe the negative-offset drift these functions previously had
+// The vitest runner can use any timezone, so an in-process assertion can't
+// reliably observe the negative-offset drift these functions previously had
 // (local Sunday-rewind + UTC toISOString → previous Saturday key). We
 // re-exec a tiny script under TZ=America/New_York (UTC-5) to prove the
 // fix: a Sunday 23:30 LOCAL must key to that local Sunday, not the
 // UTC-rolled Monday.
 describe("localWeekKey / weekKeyMinusN — UTC/local drift", () => {
   it("localWeekKey keys a late-Sunday-night local time to the local Sunday under a negative-offset TZ", () => {
-    const tsx = path.resolve(__dirname, "../../../node_modules/.bin/tsx");
     const enginePath = path.resolve(__dirname, "../performanceEngine.ts");
     const dateHelpersPath = path.resolve(__dirname, "../dateHelpers.ts");
     // Actually import + call the REAL exported functions under TZ=America/
@@ -93,10 +92,15 @@ describe("localWeekKey / weekKeyMinusN — UTC/local drift", () => {
         minus1: weekKeyMinusN(localWeekKey(d), 1),
       }));
     `;
-    const out = execFileSync(tsx, ["--eval", script], {
-      env: { ...process.env, TZ: "America/New_York" },
-      encoding: "utf8",
-    });
+    // The loader runs the real TS modules without the tsx CLI's unused IPC socket.
+    const out = execFileSync(
+      process.execPath,
+      ["--import", "tsx", "--input-type=module", "--eval", script],
+      {
+        env: { ...process.env, TZ: "America/New_York" },
+        encoding: "utf8",
+      }
+    );
     const result = JSON.parse(out.trim().split("\n").pop() as string);
     expect(result.weekKey).toBe("2025-01-05"); // local Sunday, not 2025-01-04
     expect(result.minus1).toBe("2024-12-29"); // prior local Sunday, no UTC drift

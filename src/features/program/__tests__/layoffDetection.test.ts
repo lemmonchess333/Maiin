@@ -37,8 +37,11 @@ const run = (date: string, extra: Partial<DatedRun> = {}): DatedRun => ({
 });
 
 function addDays(key: string, n: number): string {
-  const d = new Date(`${key}T00:00:00`);
-  d.setDate(d.getDate() + n);
+  // Date-only fixture arithmetic: keep both parsing and formatting in UTC.
+  // Mixing local midnight with toISOString made +1 day repeat the SAME
+  // date in positive-offset timezones, so the journey never advanced.
+  const d = new Date(`${key}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
   return d.toISOString().slice(0, 10);
 }
 
@@ -105,6 +108,12 @@ describe("classifyLayoff boundaries", () => {
 });
 
 describe("the re-entry window keeps a returner returning", () => {
+  it("advances the journey's calendar fixtures across month and DST boundaries", () => {
+    expect(addDays("2026-08-10", 1)).toBe("2026-08-11");
+    expect(addDays("2026-08-31", 1)).toBe("2026-09-01");
+    expect(addDays("2026-03-29", 1)).toBe("2026-03-30");
+  });
+
   it("a single run back does not clear a ten-week layoff", () => {
     // THE DEFECT THIS PINS. Days-since-last-run is zero the moment they run,
     // so a recency-only classifier flipped to `none` on their first easy

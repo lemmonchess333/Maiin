@@ -17,8 +17,8 @@ import { localDateString } from "../dateHelpers";
  * SDK mock), so this pins the date-derivation invariant the fix relies on:
  * `localDateString(since)` is the local calendar date of `since` regardless
  * of timezone, and diverges from `toISOString()` for a local-midnight Date
- * in positive-offset zones. The vitest runner is UTC, so that case is
- * exercised in a child process under TZ=Asia/Tokyo (UTC+9).
+ * in positive-offset zones. Exercise that case in a child process under
+ * TZ=Asia/Tokyo (UTC+9), independent of the test runner's timezone.
  */
 describe("leaderboard weekly cutoff — local vs UTC date string", () => {
   it("localDateString returns the local calendar date (not UTC) for a midnight Date", () => {
@@ -28,7 +28,6 @@ describe("leaderboard weekly cutoff — local vs UTC date string", () => {
   });
 
   it("uses the LOCAL date of `since` under a positive-offset TZ (regression)", () => {
-    const tsx = path.resolve(__dirname, "../../../node_modules/.bin/tsx");
     const helpersPath = path.resolve(__dirname, "../dateHelpers.ts");
     // Reproduce leaderboard's `since` derivation under TZ=Asia/Tokyo (UTC+9):
     // Date() at a Sunday instant → rewind to local Sunday midnight. The local
@@ -46,10 +45,16 @@ describe("leaderboard weekly cutoff — local vs UTC date string", () => {
         utc: since.toISOString().split("T")[0],
       }));
     `;
-    const out = execFileSync(tsx, ["--eval", script], {
-      env: { ...process.env, TZ: "Asia/Tokyo" },
-      encoding: "utf8",
-    });
+    // Load TypeScript in Node directly: the tsx CLI also opens an IPC
+    // socket, which this one-shot regression test neither needs nor uses.
+    const out = execFileSync(
+      process.execPath,
+      ["--import", "tsx", "--input-type=module", "--eval", script],
+      {
+        env: { ...process.env, TZ: "Asia/Tokyo" },
+        encoding: "utf8",
+      }
+    );
     const result = JSON.parse(out.trim().split("\n").pop() as string);
     expect(result.local).toBe("2025-01-05"); // correct cutoff (what the fix uses)
     expect(result.utc).toBe("2025-01-04"); // old buggy cutoff (previous Saturday)
