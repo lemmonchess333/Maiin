@@ -164,6 +164,17 @@ export function enqueueCommand(
     (e) => e.command.commandId !== command.commandId
   );
   deduped.push({ uid, command, queuedAt: Date.now() });
+  if (deduped.length > MAX_OUTBOX_ENTRIES) {
+    // The cap sheds the OLDEST entries. Shedding is necessary; shedding
+    // silently is how the offline queue's CORE-01 bug lost everything —
+    // and this path did exactly that until 2026-09-06 (only the quota
+    // path logged). A dropped command is a user action that vanished.
+    const shed = deduped.slice(0, deduped.length - MAX_OUTBOX_ENTRIES);
+    logger.error(
+      `[commandOutbox] queue full — shedding the oldest ${shed.length} queued command(s)`,
+      shed.map((e) => e.command.kind)
+    );
+  }
   write(
     deduped.length > MAX_OUTBOX_ENTRIES
       ? deduped.slice(deduped.length - MAX_OUTBOX_ENTRIES)
@@ -197,19 +208,20 @@ export async function flushCommandOutbox(
   const mine = queue.filter((e) => e.uid === uid);
   if (mine.length === 0) return 0;
 
-  const others = queue.filter((e) => e.uid !== uid);
-  const remaining: OutboxEntry[] = [];
+  // Ids this pass finished with — sent, or rejected by the server. Kept as
+  // ids rather than as a rebuilt array: see the write-back below.
+  const done = new Set<string>();
   let cleared = 0;
 
-  for (let i = 0; i < mine.length; i++) {
-    const entry = mine[i];
+  for (const entry of mine) {
     try {
       await send(entry.command);
       cleared += 1;
+      done.add(entry.command.commandId);
     } catch (err) {
       if (isTransportFailure(err)) {
-        // Still offline. Keep this one and everything after it, in order.
-        remaining.push(...mine.slice(i));
+        // Still offline. This one and everything after it stay queued, in
+        // order — commands can depend on each other.
         break;
       }
       // The server considered it and said no. Retrying is guaranteed to fail
@@ -220,10 +232,18 @@ export async function flushCommandOutbox(
         err
       );
       cleared += 1;
+      done.add(entry.command.commandId);
     }
   }
 
-  write([...others, ...remaining]);
+  // Write back against the queue AS IT IS NOW, not the snapshot taken before
+  // the sends. Every send above is an await; a command enqueued meanwhile — a
+  // write that failed while this flush ran, or the auth-change flush racing
+  // the online one (App.tsx fires both) — exists only in storage, and writing
+  // the pre-flush snapshot back erased it. Removing what this pass finished
+  // from the LIVE queue keeps everything else, any uid, in storage order.
+  const live = read();
+  write(live.filter((e) => !done.has(e.command.commandId)));
   return cleared;
 }
 

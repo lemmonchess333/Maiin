@@ -14,6 +14,7 @@ import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
 import { getQueueLength } from "@/lib/offlineQueue";
 import { outboxLength } from "@/features/program/commandOutbox";
+import { useUid } from "@/lib/auth";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
@@ -21,7 +22,7 @@ import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import { useEffect, useSyncExternalStore, useCallback, useState } from "react";
 
 /** Subscribe to offline queue length — polls every 3s while offline */
-function useQueueCount(isOnline: boolean): number {
+function useQueueCount(isOnline: boolean, uid: string | null): number {
   const subscribe = useCallback(
     (cb: () => void) => {
       if (isOnline) return () => {};
@@ -36,8 +37,11 @@ function useQueueCount(isOnline: boolean): number {
     // queue because they are callable invocations rather than `setDoc` calls
     // (P6). A user whose deload is waiting to sync should see the same pending
     // state as one whose meal is — the distinction is ours, not theirs.
-    () => (isOnline ? 0 : getQueueLength() + outboxLength()),
-    [isOnline]
+    // Both counts are THIS account's: entries are uid-tagged (PR #820), and
+    // an unscoped count on a shared device showed another account's pending
+    // work as yours.
+    () => (isOnline || !uid ? 0 : getQueueLength(uid) + outboxLength(uid)),
+    [isOnline, uid]
   );
   return useSyncExternalStore(subscribe, getSnapshot);
 }
@@ -60,7 +64,8 @@ export default function Layout() {
   const { isOnline, wasOffline } = useOnlineStatus();
   const { count: unreadCount, markSeen } = useUnreadCount();
   const prefersReducedMotion = useReducedMotion();
-  const queueCount = useQueueCount(isOnline);
+  const uid = useUid();
+  const queueCount = useQueueCount(isOnline, uid);
 
   // Swipe-between-tabs. Active only on the tab roots (the hook no-ops on
   // sub-pages); conflict avoidance lives in the hook + the data-no-page-swipe
