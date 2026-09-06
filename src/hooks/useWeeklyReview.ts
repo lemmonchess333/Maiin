@@ -256,7 +256,14 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
     (async () => {
       try {
         const { start, end } = weekBounds(weekKey);
-        const prevKey = weekKeyMinusN(weekKey, 1);
+        // Performance docs are keyed by COMPUTE date (PI1a), not week
+        // start. The doc named after this week's Sunday is the compute
+        // from the week's first morning — LAST week's number — and on
+        // many days no doc carries that exact id at all. The compute that
+        // summarises the reviewed week landed after it ended: the latest
+        // in (weekKey, weekKey + 7d]. The previous week's is the latest
+        // at or before weekKey. Read by range, never by id.
+        const nextKey = weekKeyMinusN(weekKey, -1);
 
         const [
           workoutsSnap,
@@ -290,8 +297,23 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
             )
           ),
           fetchBodyweightLogs(user.uid),
-          getDoc(doc(db, "users", user.uid, "performance", weekKey)),
-          getDoc(doc(db, "users", user.uid, "performance", prevKey)),
+          getDocs(
+            query(
+              collection(db, "users", user.uid, "performance"),
+              where("weekKey", ">", weekKey),
+              where("weekKey", "<=", nextKey),
+              orderBy("weekKey", "desc"),
+              limit(1)
+            )
+          ),
+          getDocs(
+            query(
+              collection(db, "users", user.uid, "performance"),
+              where("weekKey", "<=", weekKey),
+              orderBy("weekKey", "desc"),
+              limit(1)
+            )
+          ),
           getDocs(
             query(
               collection(db, "users", user.uid, "workouts"),
@@ -350,12 +372,12 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
           calories,
         }));
 
-        const perfData = perfSnap.exists()
-          ? (perfSnap.data() as Record<string, unknown>)
-          : null;
-        const prevPerfData = prevPerfSnap.exists()
-          ? (prevPerfSnap.data() as Record<string, unknown>)
-          : null;
+        const perfData = perfSnap.empty
+          ? null
+          : (perfSnap.docs[0].data() as Record<string, unknown>);
+        const prevPerfData = prevPerfSnap.empty
+          ? null
+          : (prevPerfSnap.docs[0].data() as Record<string, unknown>);
         const perf =
           perfData && typeof perfData.performanceIndex === "number"
             ? {

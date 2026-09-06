@@ -104,8 +104,17 @@ describe("useWeeklyReview assembly", () => {
       },
       "users/u1/meals/m1": { date: "2026-07-06", totalCalories: 2200 },
       "users/u1/meals/m2": { date: "2026-07-07", totalCalories: 2600 },
-      "users/u1/performance/2026-07-05": { performanceIndex: 68 },
-      "users/u1/performance/2026-06-28": { performanceIndex: 60 },
+      // Compute-date keys: the doc that summarises the reviewed week
+      // landed the Sunday AFTER it (2026-07-12); the one before it is
+      // last week's number.
+      "users/u1/performance/2026-07-12": {
+        weekKey: "2026-07-12",
+        performanceIndex: 68,
+      },
+      "users/u1/performance/2026-07-05": {
+        weekKey: "2026-07-05",
+        performanceIndex: 60,
+      },
     });
 
     const { result } = renderHook(() => useWeeklyReview());
@@ -333,9 +342,15 @@ describe("the load band is RESOLVED, not read raw", () => {
   it("derives the band from PI when the doc never stored one", async () => {
     seedFirestore({
       "users/u1/workouts/w1": lift("2026-07-06", 100, 5),
-      // No loadBand field at all — a pre-PI1a doc.
-      "users/u1/performance/2026-07-05": { performanceIndex: 88 },
-      "users/u1/performance/2026-06-28": { performanceIndex: 86 },
+      // No loadBand field at all — a doc from before the band was stored.
+      "users/u1/performance/2026-07-12": {
+        weekKey: "2026-07-12",
+        performanceIndex: 88,
+      },
+      "users/u1/performance/2026-07-05": {
+        weekKey: "2026-07-05",
+        performanceIndex: 86,
+      },
     });
 
     const { result } = renderHook(() => useWeeklyReview());
@@ -351,11 +366,15 @@ describe("the load band is RESOLVED, not read raw", () => {
   it("tolerates a stored band whose case differs", async () => {
     seedFirestore({
       "users/u1/workouts/w1": lift("2026-07-06", 100, 5),
-      "users/u1/performance/2026-07-05": {
+      "users/u1/performance/2026-07-12": {
+        weekKey: "2026-07-12",
         performanceIndex: 88,
         loadBand: "Overreach",
       },
-      "users/u1/performance/2026-06-28": { performanceIndex: 86 },
+      "users/u1/performance/2026-07-05": {
+        weekKey: "2026-07-05",
+        performanceIndex: 86,
+      },
     });
 
     const { result } = renderHook(() => useWeeklyReview());
@@ -374,13 +393,78 @@ describe("the load band is RESOLVED, not read raw", () => {
        verdictFor has no copy for, so the delta path is correct here. */
     seedFirestore({
       "users/u1/workouts/w1": lift("2026-07-06", 100, 5),
-      "users/u1/performance/2026-07-05": { performanceIndex: 60 },
-      "users/u1/performance/2026-06-28": { performanceIndex: 58 },
+      "users/u1/performance/2026-07-12": {
+        weekKey: "2026-07-12",
+        performanceIndex: 60,
+      },
+      "users/u1/performance/2026-07-05": {
+        weekKey: "2026-07-05",
+        performanceIndex: 58,
+      },
     });
 
     const { result } = renderHook(() => useWeeklyReview());
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     expect(result.current.review!.headline!.verdict).toBe("Steady week.");
+  });
+});
+
+describe("performance docs are keyed by COMPUTE date, and read by range", () => {
+  /**
+   * The server names each performance doc after the UTC date it was
+   * computed on (PI1a: `weekKey` = compute date), and computes daily for
+   * active users. The hook used to `getDoc` the id equal to the reviewed
+   * week's Sunday — the compute from the week's FIRST morning, i.e. last
+   * week's number, and on a user without a compute on that exact day, no
+   * doc at all. The reviewed week's number is the latest compute that
+   * landed after the week ended (Sunday 12th … up to and including the
+   * following Sunday's own compute); the previous week's is the latest at
+   * or before the reviewed Sunday.
+   */
+  const perf = (weekKey: string, performanceIndex: number) => ({
+    weekKey,
+    performanceIndex,
+  });
+
+  it("takes the latest compute in (reviewed Sunday, next Sunday], not the doc named after the week", async () => {
+    seedFirestore({
+      "users/u1/workouts/w1": lift("2026-07-06", 100, 5),
+      "users/u1/performance/2026-07-04": perf("2026-07-04", 50),
+      "users/u1/performance/2026-07-05": perf("2026-07-05", 60), // reviewed Sunday itself → previous week
+      "users/u1/performance/2026-07-08": perf("2026-07-08", 64), // mid-week daily refresh
+      "users/u1/performance/2026-07-12": perf("2026-07-12", 68), // the Sunday after → this week
+      "users/u1/performance/2026-07-14": perf("2026-07-14", 75), // already next week's story
+    });
+
+    const { result } = renderHook(() => useWeeklyReview());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.review!.headline).toMatchObject({ pi: 68, delta: 8 });
+  });
+
+  it("with no compute after the week ended, claims no PI rather than last week's", async () => {
+    seedFirestore({
+      "users/u1/workouts/w1": lift("2026-07-06", 100, 5),
+      "users/u1/performance/2026-07-05": perf("2026-07-05", 60),
+    });
+
+    const { result } = renderHook(() => useWeeklyReview());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.review!.headline).toBeNull();
+  });
+
+  it("a partial-week compute still counts when nothing later exists", async () => {
+    seedFirestore({
+      "users/u1/workouts/w1": lift("2026-07-06", 100, 5),
+      "users/u1/performance/2026-07-05": perf("2026-07-05", 60),
+      "users/u1/performance/2026-07-09": perf("2026-07-09", 66),
+    });
+
+    const { result } = renderHook(() => useWeeklyReview());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.review!.headline).toMatchObject({ pi: 66, delta: 6 });
   });
 });
