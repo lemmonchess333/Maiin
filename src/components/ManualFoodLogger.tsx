@@ -84,7 +84,9 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
       });
 
       setSaved(true);
-      notifyMealsLogged(uid, [savedMeal.id], "Logged manually");
+      notifyMealsLogged(uid, [savedMeal.id], "Logged manually", {
+        path: "manual",
+      });
 
       /* F2d grill — auto-add to Quick Add pantry. Fire-and-forget;
          the favourites collection is a best-effort cache (see

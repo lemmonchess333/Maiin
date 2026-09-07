@@ -47,6 +47,11 @@ import { useAuth } from "@/lib/auth";
 import { DEFAULT_REST_SECONDS } from "@/features/program/programTypes";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import { toast } from "@/lib/toast";
+import { track as trackLifecycleEvent } from "@/lib/lifecycleAnalytics";
+import {
+  beginCompletionWindow,
+  flushCompletionSurfaces,
+} from "@/lib/completionSurfaceCounter";
 import {
   buildPRMap,
   bumpSessionCounts,
@@ -637,6 +642,23 @@ export default function WorkoutSession({
   // and the manual "Start rest" affordance below the grid takes over.
   const autoRest = profile?.autoRestTimer !== false;
 
+  // B0: one `session_started` per opening of the session surface. No
+  // `offPlan` here — a lift day has no planned date to be off (ADR-0002
+  // pins lifts as split-ordered), so the field is absent rather than
+  // guessed. A resumed draft still counts: the user opened a session.
+  useEffect(() => {
+    trackLifecycleEvent("session_started", { kind: "lift" });
+    // Flush on unmount rather than on a Done handler: abandoning the
+    // completion screen is a real exit, and a window left open would keep
+    // counting unrelated toasts into the next session's total.
+    return () => {
+      const surfaces = flushCompletionSurfaces();
+      if (surfaces !== null) {
+        trackLifecycleEvent("completion_surfaces", { count: surfaces });
+      }
+    };
+  }, []);
+
   // Session state
   const [sessionComplete, setSessionComplete] = useState(false);
   const [showFinishEarly, setShowFinishEarly] = useState(false);
@@ -659,6 +681,9 @@ export default function WorkoutSession({
    * training-load series. One entry point makes the pair un-droppable.
    */
   const completeSession = useCallback(() => {
+    // Opened before the completion screen renders, so everything the finish
+    // puts on screen from here on is inside the window.
+    beginCompletionWindow();
     setSessionDurationMinutes(
       Math.round((Date.now() - sessionStartRef.current) / 60000)
     );

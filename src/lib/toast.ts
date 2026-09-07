@@ -1,4 +1,5 @@
 import { toast as sonnerToast, type ExternalToast } from "sonner";
+import { noteCompletionSurface } from "./completionSurfaceCounter";
 
 /**
  * Global toast wrapper with content-based deduplication.
@@ -37,10 +38,19 @@ function contentId(message: Message): string | undefined {
   return `t:${hash >>> 0}`;
 }
 
+/**
+ * Every variant funnels through here, which makes it the one place a toast
+ * can be counted for `completion_surfaces`. It is a no-op unless a session
+ * has just finished, so ordinary toasts pay a boolean check and nothing
+ * else. Deliberately NOT deduplicated against the sonner id: two toasts
+ * collapsing visually still means two were fired at a user who wanted to
+ * be finished, which is exactly the pile-up being watched.
+ */
 function withDedupe(
   message: Message,
   options?: ExternalToast
 ): ExternalToast | undefined {
+  noteCompletionSurface();
   if (options?.id != null) return options;
   const id = contentId(message);
   if (id == null) return options;

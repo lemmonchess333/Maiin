@@ -45,6 +45,11 @@ import {
   beginAppOpen,
   celebrationsToDrop,
 } from "@/lib/surfaceCoordinator";
+import {
+  track as trackLifecycleEvent,
+  type ReturnSurface,
+} from "@/lib/lifecycleAnalytics";
+import { noteCompletionSurface } from "@/lib/completionSurfaceCounter";
 
 const SETTLE_MS = 400;
 
@@ -106,6 +111,24 @@ export function SurfaceCoordinatorProvider({
     () => ({ register, unregister, dismiss }),
     [register, unregister, dismiss]
   );
+
+  // One call site for `return_surface_shown`, because the coordinator is the
+  // only place that knows which surface actually won the app-open. Reading
+  // `state.active` rather than instrumenting each surface also means a
+  // surface added later is measured without remembering to wire it.
+  const reported = useRef<string | null>(null);
+  useEffect(() => {
+    if (state.active === reported.current) return;
+    reported.current = state.active;
+    if (state.active) {
+      trackLifecycleEvent("return_surface_shown", {
+        surface: state.active as ReturnSurface,
+      });
+      // A blocking surface that lands during a finish is part of the
+      // pile-up, not just a return surface. No-op outside that window.
+      noteCompletionSurface();
+    }
+  }, [state.active]);
 
   // Drop eligible celebrations that won't show this open (lost or suppressed)
   // once the budget is committed. Post-commit effect — NOT inside the resolve()

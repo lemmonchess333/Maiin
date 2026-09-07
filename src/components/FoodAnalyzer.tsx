@@ -548,7 +548,9 @@ export default function FoodAnalyzer({
         source: meal.barcode ? "barcode" : "photo",
       });
 
-      notifyMealsLogged(uid, [mealRef.id], `Logged ${derivedFoodName}`);
+      notifyMealsLogged(uid, [mealRef.id], `Logged ${derivedFoodName}`, {
+        path: "photo",
+      });
       setSaving(false);
       setSaved(true);
 

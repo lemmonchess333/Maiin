@@ -11,6 +11,7 @@ import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { readString, writeString } from "@/lib/localStore";
 import { useAuth } from "../lib/auth";
 import { useGPS, type GPSSignalQuality } from "../hooks/useGPS";
+import { track as trackLifecycleEvent } from "@/lib/lifecycleAnalytics";
 import { useRunTimer } from "../hooks/useRunTimer";
 import { useWakeLock } from "../hooks/useWakeLock";
 import { useRunVisibility } from "../hooks/useRunVisibility";
@@ -606,6 +607,12 @@ export default function Run() {
     // write effect persists it in every snapshot. Resume re-uses
     // the stored value (see handleResumeFromPrompt below).
     startedAtRef.current = Date.now();
+    // B0: runs ARE date-pinned (ADR-0002), so `offPlan` is meaningful here
+    // and is already decided by computePlanMetadata — read, not re-derived.
+    trackLifecycleEvent("session_started", {
+      kind: "run",
+      offPlan: planDecision.metadata.offPlan,
+    });
     if (requiresManualDistance(finalConfig.activityType)) {
       dispatch({ type: "START_MANUAL" });
       timer.start();
