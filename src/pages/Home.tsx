@@ -989,147 +989,12 @@ export default function Home() {
         </motion.div>
       </div>
 
-      {/* PI1 + PI4: consolidated Performance hero. Replaces the
-          earlier HealthScoreCard (daily 0-100 composite) + the
-          PerformanceCard compact tile. Single ring + verb + line +
-          delta chip driven by the weekly PI doc. Tap →
-          /history#performance per the canonical deep-link target.
-          Sits in HealthScoreCard's original slot (PI4 drop-in);
-          the PerformanceCard slot below it was removed.
-          Home2-hierarchy: kept in place (between This week and Today)
-          per the chosen arrangement. */}
-      <div className="space-y-2.5">
-        <SectionLabel tier="section" className="px-1">
-          Performance
-        </SectionLabel>
-        <motion.div
-          variants={{
-            hidden: { opacity: 0, y: 12 },
-            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-          }}
-        >
-          <TrackSectionView section="hero">
-            <SectionErrorBoundary sectionName="performance-hero">
-              <PerformanceHeroCard
-                currentWeek={perfWeek ?? null}
-                previousWeek={perfPrevWeek}
-                weeksAvailable={perfWeeks.length}
-                loading={perfLoading}
-              />
-            </SectionErrorBoundary>
-          </TrackSectionView>
-        </motion.div>
-      </div>
-
       {/* Home2-hierarchy: Today group — contextual nudges + energy +
           quick actions + insight, clustered under one "Today" header. */}
       <div className="space-y-2.5">
         <SectionLabel tier="section" className="px-1">
           Today
         </SectionLabel>
-
-        {/* A1 contextual tip: nudge the user to add age + sex if
-          either is missing. These two fields drive TDEE precision
-          (calculateTDEE consumes both); without them the user gets
-          generic defaults and the calorie targets drift from
-          accurate. One-shot per dismiss — the banner doesn't re-
-          appear after dismissal even if the user re-introduces
-          the gap. */}
-        <ContextualTipBanner
-          tipKey="body-metrics-v1"
-          lanePriority={20}
-          title="Personalise your calorie targets"
-          description="Add your age and sex so we can tune your TDEE more accurately than the defaults."
-          visible={!profile?.age || !profile?.sex}
-        />
-
-        {/* D7 — proactive recalibration check-in at natural seams (a few weeks
-            in / after a gap). Per-seam tipKey so each seam can re-surface even
-            after an earlier one was dismissed; gentle + dismiss-once. */}
-        {(() => {
-          const recal = recalibrationCheckIn({
-            weekNumber: programState?.weekNumber,
-          });
-          return recal ? (
-            <ContextualTipBanner
-              tipKey={recal.tipKey}
-              lanePriority={12}
-              title={recal.title}
-              description={recal.description}
-              ctaLabel="Edit plan"
-              ctaHref="/settings/training"
-              visible={true}
-            />
-          ) : null;
-        })()}
-
-        {/* Goal-weight nudge REMOVED from Home (2026-07-20): it's an
-          optional refinement — the app runs fine on the maintenance
-          default — so it doesn't earn an interrupting full-width
-          banner. Goal weight stays fully settable in Settings + the
-          weight-log flow. (Contrast the age/sex nudge above, which is
-          KEPT because a missing value there corrupts the TDEE math.) */}
-
-        {/* Nutr1 one-time explainer (expenditure-inclusive model),
-          relocated here into the Today group (2026-07-20) so the
-          education lane always renders below the week strip in one
-          consistent spot. It previously lived above the groups and,
-          whenever it won the lane (e.g. once goal-weight was cut),
-          jumped to the very top of the page above the week strip.
-          Dismiss-once via the versioned tipKey; surfaces the
-          deficit×big-session tension the #976 lock required. */}
-        <ContextualTipBanner
-          tipKey="nutrition-expenditure-inclusive-v1"
-          lanePriority={10}
-          title="Your activity is already in your target"
-          description="No need to eat back exercise calories — your daily target already accounts for training. Big training days shift more carbs for fuel, so expect a deliberate deficit on your biggest days."
-          visible={!!profile}
-          ctaLabel="How targets work"
-          ctaHref="/settings"
-        />
-
-        {/* Progressive profiling (fast-start PRD, final nudge): experience.
-          Onboarding defaults experience to "intermediate" without asking;
-          once the user has actually trained, invite them to set it so
-          programme volume is tuned to reality. Same default-marker
-          heuristic as the goal-weight nudge: visible while the value
-          still equals the onboarding default — a genuine intermediate
-          dismisses once (dismiss-once semantics), anyone else sets it
-          and the banner never returns. */}
-        <ContextualTipBanner
-          tipKey="training-experience-v1"
-          lanePriority={10}
-          title="Tune your training volume"
-          description="Tell us your training experience — your programme assumed intermediate as a starting point."
-          visible={
-            !!profile &&
-            workouts.length > 0 &&
-            (profile.experience ?? "intermediate") === "intermediate"
-          }
-          ctaLabel="Set experience"
-          ctaHref="/settings/training"
-        />
-
-        {/* Progressive profiling: race-goal invitation. Fast-start runners default
-          to freeform (Run9a); once they've logged a run, invite race-prep via
-          the Race Goal Planner (/settings/training, Run8/Run10). Hides when
-          already race_prep with a date, or on dismiss. Discovery nudge, so it
-          sits at the bottom of the lane priority. */}
-        <ContextualTipBanner
-          tipKey="race-goal-v1"
-          lanePriority={5}
-          title="Training for a race?"
-          description="Set a target date and we'll shape your runs into a race plan."
-          visible={
-            !!profile &&
-            !runStatsLoading &&
-            lifetimeRunCount > 0 &&
-            profile.runMode !== "race_prep" &&
-            !profile.raceGoal?.targetDate
-          }
-          ctaLabel="Set a race goal"
-          ctaHref="/settings/run-plan"
-        />
 
         {/* Today's Energy promoted above the CTA stack — calorie/macro tracking
           is the primary daily answer this page has to give, and buried at the
@@ -1141,6 +1006,7 @@ export default function Home() {
             vitals follow. */}
         <motion.div
           ref={sessionsRef}
+          aria-label="Today’s training"
           variants={{
             hidden: { opacity: 0, y: 12 },
             visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
@@ -1274,6 +1140,144 @@ export default function Home() {
             loads high, ease this week" + "Consider a deload week" on one
             scroll). The hero carries the verdict; the strip's richer
             bullets live on in Analytics. */}
+      </div>
+
+      {/* PI1 + PI4: consolidated Performance hero. Replaces the
+          earlier HealthScoreCard (daily 0-100 composite) + the
+          PerformanceCard compact tile. Single ring + verb + line +
+          delta chip driven by the weekly PI doc. Tap →
+          /history#performance per the canonical deep-link target.
+          Sits in HealthScoreCard's original slot (PI4 drop-in);
+          the PerformanceCard slot below it was removed.
+          Designer first release: supporting progress follows today’s session
+          and logging actions. Detailed interpretation remains in Analytics. */}
+      <div className="space-y-2.5">
+        <SectionLabel tier="section" className="px-1">
+          Performance
+        </SectionLabel>
+        <motion.div
+          variants={{
+            hidden: { opacity: 0, y: 12 },
+            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+          }}
+        >
+          <TrackSectionView section="hero">
+            <SectionErrorBoundary sectionName="performance-hero">
+              <PerformanceHeroCard
+                compact
+                currentWeek={perfWeek ?? null}
+                previousWeek={perfPrevWeek}
+                weeksAvailable={perfWeeks.length}
+                loading={perfLoading}
+              />
+            </SectionErrorBoundary>
+          </TrackSectionView>
+        </motion.div>
+      </div>
+
+      <div className="space-y-2.5" aria-label="Helpful tips">
+        {/* A1 contextual tip: nudge the user to add age + sex if
+          either is missing. These two fields drive TDEE precision
+          (calculateTDEE consumes both); without them the user gets
+          generic defaults and the calorie targets drift from
+          accurate. One-shot per dismiss — the banner doesn't re-
+          appear after dismissal even if the user re-introduces
+          the gap. */}
+        <ContextualTipBanner
+          tipKey="body-metrics-v1"
+          lanePriority={20}
+          title="Personalise your calorie targets"
+          description="Add your age and sex so we can tune your TDEE more accurately than the defaults."
+          visible={!profile?.age || !profile?.sex}
+        />
+
+        {/* D7 — proactive recalibration check-in at natural seams (a few weeks
+            in / after a gap). Per-seam tipKey so each seam can re-surface even
+            after an earlier one was dismissed; gentle + dismiss-once. */}
+        {(() => {
+          const recal = recalibrationCheckIn({
+            weekNumber: programState?.weekNumber,
+          });
+          return recal ? (
+            <ContextualTipBanner
+              tipKey={recal.tipKey}
+              lanePriority={12}
+              title={recal.title}
+              description={recal.description}
+              ctaLabel="Edit plan"
+              ctaHref="/settings/training"
+              visible={true}
+            />
+          ) : null;
+        })()}
+
+        {/* Goal-weight nudge REMOVED from Home (2026-07-20): it's an
+          optional refinement — the app runs fine on the maintenance
+          default — so it doesn't earn an interrupting full-width
+          banner. Goal weight stays fully settable in Settings + the
+          weight-log flow. (Contrast the age/sex nudge above, which is
+          KEPT because a missing value there corrupts the TDEE math.) */}
+
+        {/* Nutr1 one-time explainer (expenditure-inclusive model),
+          relocated here into the Today group (2026-07-20) so the
+          education lane always renders below the week strip in one
+          consistent spot. It previously lived above the groups and,
+          whenever it won the lane (e.g. once goal-weight was cut),
+          jumped to the very top of the page above the week strip.
+          Dismiss-once via the versioned tipKey; surfaces the
+          deficit×big-session tension the #976 lock required. */}
+        <ContextualTipBanner
+          tipKey="nutrition-expenditure-inclusive-v1"
+          lanePriority={10}
+          title="Your activity is already in your target"
+          description="No need to eat back exercise calories — your daily target already accounts for training. Big training days shift more carbs for fuel, so expect a deliberate deficit on your biggest days."
+          visible={!!profile}
+          ctaLabel="How targets work"
+          ctaHref="/settings"
+        />
+
+        {/* Progressive profiling (fast-start PRD, final nudge): experience.
+          Onboarding defaults experience to "intermediate" without asking;
+          once the user has actually trained, invite them to set it so
+          programme volume is tuned to reality. Same default-marker
+          heuristic as the goal-weight nudge: visible while the value
+          still equals the onboarding default — a genuine intermediate
+          dismisses once (dismiss-once semantics), anyone else sets it
+          and the banner never returns. */}
+        <ContextualTipBanner
+          tipKey="training-experience-v1"
+          lanePriority={10}
+          title="Tune your training volume"
+          description="Review your training experience if your programme needs a different starting point."
+          visible={
+            !!profile &&
+            workouts.length > 0 &&
+            (profile.experience ?? "intermediate") === "intermediate"
+          }
+          ctaLabel="Set experience"
+          ctaHref="/settings/training"
+        />
+
+        {/* Progressive profiling: race-goal invitation. Fast-start runners default
+          to freeform (Run9a); once they've logged a run, invite race-prep via
+          the Race Goal Planner (/settings/training, Run8/Run10). Hides when
+          already race_prep with a date, or on dismiss. Discovery nudge, so it
+          sits at the bottom of the lane priority. */}
+        <ContextualTipBanner
+          tipKey="race-goal-v1"
+          lanePriority={5}
+          title="Training for a race?"
+          description="Set a target date and we'll shape your runs into a race plan."
+          visible={
+            !!profile &&
+            !runStatsLoading &&
+            lifetimeRunCount > 0 &&
+            profile.runMode !== "race_prep" &&
+            !profile.raceGoal?.targetDate
+          }
+          ctaLabel="Set a race goal"
+          ctaHref="/settings/run-plan"
+        />
       </div>
 
       {/* Weight Log Bottom Sheet */}

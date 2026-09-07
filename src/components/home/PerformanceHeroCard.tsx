@@ -32,6 +32,7 @@ interface PerformanceHeroCardProps {
    *  loading variant; downstream consumers see the empty state once
    *  loading clears with no doc. */
   loading: boolean;
+  compact?: boolean;
 }
 
 /* Card geometry — preserved from HealthScoreCard chrome so the
@@ -87,6 +88,7 @@ export default function PerformanceHeroCard({
   previousWeek,
   weeksAvailable,
   loading,
+  compact = false,
 }: PerformanceHeroCardProps) {
   const pi = currentWeek ? Math.round(currentWeek.performanceIndex ?? 0) : 0;
   /* useCountUp is called unconditionally to satisfy the Rules of Hooks
@@ -95,6 +97,44 @@ export default function PerformanceHeroCard({
      cache from the prior session doesn't bleed into the new card's
      animation baseline. */
   const piDisplay = useCountUp(pi, { sessionKey: "perf", duration: 1 });
+
+  if (compact) {
+    const verb = currentWeek
+      ? getVerb(
+          resolveLoadBand(currentWeek),
+          resolveDeloadRecommended(currentWeek)
+        )
+      : null;
+    return (
+      <Link
+        to="/history#performance"
+        aria-label="View performance details"
+        onClick={() => {
+          haptic();
+          trackHomeEvent("home_card_tapped", { card: "performance" });
+        }}
+        className="rounded-2xl bg-card card-shadow p-4 flex items-center gap-4 min-h-11 focus-visible:ring-2 focus-visible:ring-primary"
+      >
+        {currentWeek && (
+          <span className="font-mono tabular-nums text-2xl font-bold">
+            {pi}
+          </span>
+        )}
+        <span className="flex-1 min-w-0">
+          <span className="block text-base font-semibold">
+            {verb?.label ??
+              (loading ? "Loading your week…" : "Your progress starts here")}
+          </span>
+          <span className="block text-sm text-muted-foreground">
+            {currentWeek && verb
+              ? getLine(verb.state, currentWeek.signals)
+              : EMPTY_STATE_LINE}
+          </span>
+        </span>
+        <span className="text-caption text-muted-foreground">Details</span>
+      </Link>
+    );
+  }
 
   /* Loading state — muted ring + dash, no verb / delta. Framer-motion
      fade-in handled by the parent wrapper. Distinct from empty so the

@@ -209,3 +209,29 @@ describe("clear-on-complete", () => {
     expect(loadOnboardingDraft(UID_B, MAX_STEP)).not.toBeNull();
   });
 });
+
+describe("chapter redesign metadata", () => {
+  it("retains old v2 drafts and round-trips explicit choices and review edits", () => {
+    const legacy = makeDraft({ step: 6 });
+    saveOnboardingDraft(UID_A, legacy);
+    expect(loadOnboardingDraft(UID_A, MAX_STEP)).toEqual(legacy);
+    const revised = makeDraft({
+      step: 3,
+      goalConfirmed: true,
+      runConfirmed: false,
+      returnToReview: true,
+      weightDisplayUnit: "st",
+      displayName: "My training name",
+    });
+    saveOnboardingDraft(UID_A, revised);
+    expect(loadOnboardingDraft(UID_A, MAX_STEP)).toEqual(revised);
+  });
+  it("rejects malformed additive metadata instead of treating it as confirmation", () => {
+    expect(
+      isValidDraft({ ...makeDraft(), goalConfirmed: "true" }, MAX_STEP)
+    ).toBe(false);
+    expect(
+      isValidDraft({ ...makeDraft(), weightDisplayUnit: "oz" }, MAX_STEP)
+    ).toBe(false);
+  });
+});
