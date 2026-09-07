@@ -14,6 +14,7 @@ test("weight picker prototypes are available for the device trial", async ({ pag
   await expect(page.getByRole("heading", { name: "Weight picker lab" })).toBeVisible();
   await expect(page.getByRole("slider", { name: "Ruler weight" })).toBeVisible();
   await expect(page.getByRole("listbox", { name: "Whole weight" })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(393);
   for (const dark of [false, true]) {
     await page.evaluate((value) => document.documentElement.classList.toggle("dark", value), dark);
     await settleImages(page);
