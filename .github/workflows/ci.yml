@@ -38,6 +38,8 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npm run lint
+      - name: Test production Rules verifier (offline)
+        run: python3 -m unittest discover -s scripts -p 'test_verify_deployed_rules.py' -v
       - run: npm run check:form-art
       # Zero-cycle gate (2026-07-11 repo audit batch 3): six circular
       # import chains were removed by relocating shared types to neutral

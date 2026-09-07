@@ -30,6 +30,9 @@ jobs:
       - name: Deploy Firestore rules
         run: firebase deploy --only firestore:rules --project adaptive-fitness-af8bb --force
 
+      - name: Verify active Firestore Rules source
+        run: python3 scripts/verify_deployed_rules.py --service firestore
+
       # Indexes were previously never deployed by CI — a composite index the app
       # needed (activities visibility+createdAt, for the Explore/Discover feed)
       # was missing in prod, so getDiscoverFeed threw failed-precondition and the
