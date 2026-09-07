@@ -36,6 +36,7 @@
     "prepare": "husky",
     "doctor": "npx react-doctor@latest",
     "seed:fellbehind": "tsx --tsconfig tsconfig.app.json scripts/seed-fellbehind-capture.ts",
+    "seed:liftreturn": "tsx --tsconfig tsconfig.app.json scripts/seed-liftreturn-capture.ts",
     "check:form-art": "node --import tsx scripts/audit-form-art.ts",
     "check:form-drafts": "node --import tsx scripts/audit-form-drafts.ts"
   },
