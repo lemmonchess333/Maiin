@@ -1147,10 +1147,10 @@ export default function Home() {
           PerformanceCard compact tile. Single ring + verb + line +
           delta chip driven by the weekly PI doc. Tap →
           /history#performance per the canonical deep-link target.
-          Sits in HealthScoreCard's original slot (PI4 drop-in);
-          the PerformanceCard slot below it was removed.
-          Designer first release: supporting progress follows today’s session
-          and logging actions. Detailed interpretation remains in Analytics. */}
+          Sits below today's session and the logging actions, so a daily
+          action is the first thing on the scroll; the full ring, verb and
+          delta chip stay — a compact numbers row does not carry the weekly
+          verdict the same way. Detailed interpretation remains in Analytics. */}
       <div className="space-y-2.5">
         <SectionLabel tier="section" className="px-1">
           Performance
@@ -1164,7 +1164,6 @@ export default function Home() {
           <TrackSectionView section="hero">
             <SectionErrorBoundary sectionName="performance-hero">
               <PerformanceHeroCard
-                compact
                 currentWeek={perfWeek ?? null}
                 previousWeek={perfPrevWeek}
                 weeksAvailable={perfWeeks.length}
