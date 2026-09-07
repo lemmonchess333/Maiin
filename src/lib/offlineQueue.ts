@@ -1,4 +1,4 @@
-import { collection, addDoc, doc, setDoc, Firestore } from "firebase/firestore";
+import { collection, addDoc, doc, setDoc, Firestore, Timestamp, runTransaction } from "firebase/firestore";
 import { logger } from "@/lib/logger";
 import { isAvailable, readJson, remove, writeJson } from "@/lib/localStore";
 import { captureError } from "@/lib/errorReporting";
@@ -28,6 +28,35 @@ interface QueuedWrite {
   merge?: boolean;
   data: Record<string, unknown>;
   timestamp: number;
+  durable?: boolean;
+}
+
+const queueListeners = new Set<() => void>();
+let queueVersion = 0;
+export const subscribeQueuedWrites = (listener: () => void) => {
+  queueListeners.add(listener);
+  return () => { queueListeners.delete(listener); };
+};
+export const queuedWritesVersion = () => queueVersion;
+function notifyQueue() {
+  queueVersion++;
+  queueListeners.forEach((listener) => listener());
+}
+// Durable entries encode SDK timestamps explicitly; JSON alone loses their type.
+function encode(value: unknown): unknown {
+  if (value instanceof Timestamp) return { __queuedTimestamp: [value.seconds, value.nanoseconds] };
+  if (Array.isArray(value)) return value.map(encode);
+  if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([key, child]) => [key, encode(child)]));
+  return value;
+}
+function decode(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(decode);
+  if (value && typeof value === "object") {
+    const stamp = (value as { __queuedTimestamp?: number[] }).__queuedTimestamp;
+    if (stamp?.length === 2) return new Timestamp(stamp[0], stamp[1]);
+    return Object.fromEntries(Object.entries(value).map(([key, child]) => [key, decode(child)]));
+  }
+  return value;
 }
 
 const QUEUE_KEY = "tropos_offline_queue";
@@ -48,7 +77,9 @@ function getQueue(): QueuedWrite[] {
 }
 
 function saveQueue(queue: QueuedWrite[]) {
-  if (writeJson(QUEUE_KEY, queue)) return;
+  if (writeJson(QUEUE_KEY, queue)) { notifyQueue(); return; }
+  // Never evict an accepted durable meal to make space for another write.
+  if (queue.some((item) => item.durable)) throw new Error("Couldn't save on this phone. Free device storage and retry.");
   // A refused write with no storage at all is not a full store: there is
   // nothing to shed into, and every shed would be reported as a drop.
   if (!isAvailable()) return;
@@ -100,6 +131,22 @@ export function queueWrite(
   saveQueue(queue);
 }
 
+/** Accept locally before attempting sync. The caller can close immediately,
+ * including when the browser says online but the server is unreachable. */
+export function queueDurableWrite(uid: string, collectionPath: string, docId: string, data: Record<string, unknown>, merge = false) {
+  const queue = getQueue();
+  queue.push({ id: crypto.randomUUID(), uid, collectionPath, docId, merge,
+    data: encode(stripUndefined(data)) as Record<string, unknown>, timestamp: Date.now(), durable: true });
+  // Strict persistence: no quota shedding and no success on unavailable storage.
+  if (!writeJson(QUEUE_KEY, queue)) throw new Error("Couldn't save on this phone. Free device storage and retry.");
+  notifyQueue();
+}
+
+export function pendingDocumentWrites(uid: string, collectionPath: string) {
+  return getQueue().filter((item) => item.uid === uid && item.collectionPath === collectionPath && item.durable)
+    .map((item) => ({ id: item.docId!, merge: item.merge, data: decode(item.data) as Record<string, unknown> }));
+}
+
 export function getQueueLength(uid?: string): number {
   const queue = getQueue();
   return uid ? queue.filter((q) => q.uid === uid).length : queue.length;
@@ -144,10 +191,26 @@ async function flushQueueOnce(db: Firestore, uid: string): Promise<number> {
     // Not our user's item — leave it for the next time that user signs in.
     if (item.uid !== uid) continue;
     try {
-      const payload = { ...item.data, _offlineCreatedAt: item.timestamp };
+      if (item.durable && !navigator.onLine) break;
+      if (item.durable) {
+        const { auth } = await import("@/lib/firebase");
+        if (auth.currentUser?.uid !== uid) break;
+      }
+      const decoded = item.durable ? decode(item.data) as Record<string, unknown> : item.data;
+      const payload = { ...decoded, _offlineCreatedAt: item.timestamp };
       if (item.docId) {
         const docRef = doc(db, item.collectionPath, item.docId);
-        await setDoc(docRef, payload, item.merge ? { merge: true } : {});
+        if (item.durable && !item.merge) {
+          const { auth } = await import("@/lib/firebase");
+          await runTransaction(db, async (transaction) => {
+            const current = await transaction.get(docRef);
+            if (auth.currentUser?.uid !== uid) throw new Error("Sign in again to sync food.");
+            // An ambiguous acknowledgement must not overwrite later diary edits.
+            if (!current.exists()) transaction.set(docRef, payload);
+          });
+        } else {
+          await setDoc(docRef, payload, item.merge ? { merge: true } : {});
+        }
       } else {
         await addDoc(collection(db, item.collectionPath), payload);
       }
@@ -159,6 +222,8 @@ async function flushQueueOnce(db: Firestore, uid: string): Promise<number> {
         "network",
         { collectionPath: item.collectionPath, docId: item.docId }
       );
+      // Preserve create → undo ordering across a failed reconnect.
+      if (item.durable) break;
     }
   }
 

@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { THEME } from "@/lib/theme";
-import { doc, Timestamp } from "firebase/firestore";
-import { setDocGuarded } from "@/lib/firestoreWrite";
-import { db } from "@/lib/firebase";
+import { Timestamp } from "firebase/firestore";
+import { createMealEntry, notifyMealsLogged } from "@/lib/mealEntry";
 import { useUid } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
@@ -59,8 +58,7 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
     setSaving(true);
     try {
       const logDate = date || localDateString();
-      const id = `${logDate}_${Date.now()}`;
-      await setDocGuarded(doc(db, "users", uid, "meals", id), {
+      const savedMeal = await createMealEntry(uid, {
         date: logDate,
         foodName: entry.name,
         items: [
@@ -86,7 +84,7 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
       });
 
       setSaved(true);
-      toast.success("Logged manually", { id: "food-manual-success" });
+      notifyMealsLogged(uid, [savedMeal.id], "Logged manually");
 
       /* F2d grill — auto-add to Quick Add pantry. Fire-and-forget;
          the favourites collection is a best-effort cache (see
