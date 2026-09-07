@@ -622,6 +622,20 @@ reduced-motion` always gets the settled static state — no entrance, no
 
 ### Design-review capture channel (screenshots without a local rig)
 
+**The capture specs are a PR gate as well as a screenshot source.** The
+`capture-specs` job in `emulator-tests.yml` runs every
+`e2e/screenshots/*.capture.spec.ts` on pull requests and on main, blocking,
+with the same build and the same five seeds `app-screenshots.yml` uses.
+Before that job existed these specs ran ONLY on a push to
+`claude/screenshot-app`, so their ~98 assertions could not fail a PR:
+#2187 removed an `aria-label` a spec located by, the locator matched zero
+elements for two merges, and nothing went red. If you change a
+user-visible string, an aria-label, or a reading order, that job is what
+tells you which spec you broke — so read its failure before assuming the
+rig is at fault. Frames written there are thrown away with the runner;
+committing them to the `app-screenshots` branch is still the workflow
+below.
+
 The agent sandbox can't run a browser; CI can. Push any branch's code to
 `claude/screenshot-app` (scratch trigger branch — force-with-lease is fine)
 and `app-screenshots.yml` builds it against the emulator, captures the key
