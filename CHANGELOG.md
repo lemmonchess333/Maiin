@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- Weigh-ins use a spinning scale dial with a fixed pointer, precise tenths, direct typing and keyboard adjustment.
+
 - Water offers the last three sizes used on this account. Weigh-ins support kg, lb and stone, retain conversion precision and offer dates within the last 30 days.
 - Food shows your usual meal without focusing the composer, remembers portions and meal slots, previews copies, and queues offline entries with a five-second Undo. Examples prefill the composer without logging.
 - **One workout finish.** Saving keeps the completion screen open with programme progress, the next session and explicit share/reminder actions. Strength recognition compares estimated bests; a first rep range is labelled separately. Set PR toasts and the circular rest timer are removed, plateau review lives on Program, and pending badge reveals survive a reload per account.

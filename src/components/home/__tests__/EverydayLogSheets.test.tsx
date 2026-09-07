@@ -22,6 +22,7 @@ import {
   failNextFirestore,
 } from "@/test/firestoreHarness";
 import { flushQueuedWeights } from "@/lib/weightQueue";
+import { kgToLb, lbToKg } from "@/lib/weightUnits";
 import { localDateString } from "@/lib/dateHelpers";
 beforeEach(() => {
   resetFirestore();
@@ -59,6 +60,66 @@ describe("everyday entry sheets", () => {
     await flushQueuedWeights("u1");
     expect(readDoc(`users/u1/bodyweightLogs/${date}`)?.weight).toBe(78.4);
   });
+  it("adjusts the dial without saving and preserves the chosen weight through unit switches", async () => {
+    const close = vi.fn();
+    render(
+      <WeightLogSheet uid="u1" unit="kg" initialKg={78.412} onClose={close} />
+    );
+    fireEvent.change(screen.getByRole("slider", { name: "Weight scale" }), {
+      target: { value: "81.6" },
+    });
+    expect(screen.getByLabelText("Weight (kg)")).toHaveValue("81.6");
+    expect(
+      readDoc(`users/u1/bodyweightLogs/${localDateString()}`)
+    ).toBeUndefined();
+    fireEvent.click(screen.getByRole("radio", { name: "lb" }));
+    expect(screen.getByLabelText("Weight (lb)")).toHaveValue(
+      kgToLb(81.6).toFixed(1)
+    );
+    fireEvent.click(screen.getByRole("radio", { name: "st" }));
+    fireEvent.click(screen.getByRole("radio", { name: "kg" }));
+    fireEvent.click(screen.getByRole("button", { name: "Log weight" }));
+    await waitFor(() => expect(close).toHaveBeenCalledOnce());
+    expect(
+      readDoc(`users/u1/bodyweightLogs/${localDateString()}`)?.weight
+    ).toBe(81.6);
+  });
+  it("treats an explicitly typed rounded weight as an edit", async () => {
+    const close = vi.fn();
+    render(
+      <WeightLogSheet uid="u1" unit="kg" initialKg={78.412} onClose={close} />
+    );
+    fireEvent.change(screen.getByLabelText("Weight (kg)"), {
+      target: { value: "" },
+    });
+    fireEvent.change(screen.getByLabelText("Weight (kg)"), {
+      target: { value: "78.4" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Log weight" }));
+    await waitFor(() => expect(close).toHaveBeenCalledOnce());
+    expect(
+      readDoc(`users/u1/bodyweightLogs/${localDateString()}`)?.weight
+    ).toBe(78.4);
+  });
+  it("carries the pounds dial across a stone boundary without an implicit save", () => {
+    render(
+      <WeightLogSheet
+        uid="u1"
+        unit="lbs"
+        initialKg={lbToKg(167.9)}
+        onClose={vi.fn()}
+      />
+    );
+    fireEvent.click(screen.getByRole("radio", { name: "st" }));
+    fireEvent.change(screen.getByRole("slider", { name: "Weight scale" }), {
+      target: { value: "168" },
+    });
+    expect(screen.getByLabelText("Weight (st)")).toHaveValue("12");
+    expect(screen.getByLabelText("Pounds")).toHaveValue("0");
+    expect(
+      readDoc(`users/u1/bodyweightLogs/${localDateString()}`)
+    ).toBeUndefined();
+  });
   it("changing the usual water size does not log water, and excessive custom amounts are rejected", () => {
     const log = vi.fn(),
       preference = vi.fn();
@@ -80,9 +141,7 @@ describe("everyday entry sheets", () => {
     fireEvent.change(screen.getByLabelText("Custom amount in millilitres"), {
       target: { value: "99999" },
     });
-    expect(
-      screen.getByRole("button", { name: "Add" })
-    ).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Add" })).toBeDisabled();
     expect(screen.getByRole("alert")).toBeInTheDocument();
   });
   it("keeps a corrected meal portion available after failure", async () => {
