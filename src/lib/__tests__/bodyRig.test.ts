@@ -4845,11 +4845,11 @@ describe("form beats — the caption is a claim about the frame", () => {
     }
   });
 
-  it("the curl draft includes a distinct controlled return and remains unreleased", () => {
+  it("the released curl retains its distinct controlled return", () => {
     expect(getAuthoredBeats("db-curl")!.map((beat) => beat.t)).toEqual([
       0, 0.25, 0.6, 1, 0.6, 0.15,
     ]);
-    expect(getFormBeats("db-curl")).toBeNull();
+    expect(getFormBeats("db-curl")).toHaveLength(6);
   });
 
   it("dips: the two named ends ARE the positions they are named after", () => {

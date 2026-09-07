@@ -25,7 +25,10 @@ describe("six-frame production brief", () => {
   });
   it("never substitutes four catalogue instructions for six authored beats", () => {
     expect(() =>
-      buildFormArtPrompt("hammer-curl", { ...scene, exerciseId: "hammer-curl" })
+      buildFormArtPrompt("concentration-curl", {
+        ...scene,
+        exerciseId: "concentration-curl",
+      })
     ).toThrow(/six/);
   });
   it("includes a physical selected-stack ladder and rejects reversed movement", () => {

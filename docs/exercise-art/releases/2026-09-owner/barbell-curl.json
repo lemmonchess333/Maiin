@@ -1,0 +1,124 @@
+{
+  "exerciseId": "barbell-curl",
+  "version": "owner-release-2026-09",
+  "width": 1024,
+  "height": 1536,
+  "decision": "owner-released-with-findings",
+  "approval": {
+    "actor": "repository owner",
+    "instruction": "Merge the new artwork",
+    "context": "User requested activation after being told the previous merge kept these ten complete sets as drafts."
+  },
+  "reference": {
+    "path": "form-frames/barbell-curl/1.webp",
+    "sha256": "88dbef553df593422a669d03a7f5a8573a293ebb668f1b9325d73b9aaec991b3"
+  },
+  "frames": [
+    {
+      "path": "form-frames/barbell-curl/1.webp",
+      "sha256": "88dbef553df593422a669d03a7f5a8573a293ebb668f1b9325d73b9aaec991b3",
+      "source": {
+        "path": "docs/exercise-art/pilots/barbell-curl/1-master.png",
+        "sha256": "7a4a7ef3b2701b3e5deec99c4abd078ddcfde9dca980a9186ab2b7c060ac41b4"
+      }
+    },
+    {
+      "path": "form-frames/barbell-curl/2.webp",
+      "sha256": "6753d6b26293a89be6ea300c7fe9019a2828787df29b9f8511f7df36046d42eb",
+      "source": {
+        "path": "docs/exercise-art/pilots/barbell-curl/2-early.png",
+        "sha256": "5edbd53b7eba6498287210a23905cc7a8a556b1468d1dc07ce79b2e820e1264f"
+      }
+    },
+    {
+      "path": "form-frames/barbell-curl/3.webp",
+      "sha256": "c545ab705f38c6d59875f0a1b3bc88a529f695afe5431312cfa78c4c60e2dcb1",
+      "source": {
+        "path": "docs/exercise-art/pilots/barbell-curl/3-mid.png",
+        "sha256": "dd4e01a66d1ef5e0d59aba3bedc75f711bfc6cc5b2babec3b34eacb71bdb92e8"
+      }
+    },
+    {
+      "path": "form-frames/barbell-curl/4.webp",
+      "sha256": "929b4b2c9b1ab9f3a47ed097ed5731f20468c46096bcd98e8bf7e6842d9a1e63",
+      "source": {
+        "path": "docs/exercise-art/pilots/barbell-curl/4-top.png",
+        "sha256": "9b30f182eb452b18d4ba45b8e177c536c929572b88ae57a17ebc27e8abf52276"
+      }
+    },
+    {
+      "path": "form-frames/barbell-curl/5.webp",
+      "sha256": "c545ab705f38c6d59875f0a1b3bc88a529f695afe5431312cfa78c4c60e2dcb1",
+      "source": {
+        "path": "docs/exercise-art/pilots/barbell-curl/5-lower.png",
+        "sha256": "dd4e01a66d1ef5e0d59aba3bedc75f711bfc6cc5b2babec3b34eacb71bdb92e8"
+      }
+    },
+    {
+      "path": "form-frames/barbell-curl/6.webp",
+      "sha256": "6753d6b26293a89be6ea300c7fe9019a2828787df29b9f8511f7df36046d42eb",
+      "source": {
+        "path": "docs/exercise-art/pilots/barbell-curl/6-return.png",
+        "sha256": "5edbd53b7eba6498287210a23905cc7a8a556b1468d1dc07ce79b2e820e1264f"
+      }
+    }
+  ],
+  "cueSha256": "be3c8aab267aaf3ff369ada3e64af668f4c366b0988bcedae25bf871e2671a75",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    }
+  },
+  "findings": [
+    "Upper-arm length, elbow pivot registration, grip and plate silhouettes need measurement across curl poses.",
+    "Full visual acceptance under the strict artwork review contract is outstanding."
+  ],
+  "encoding": {
+    "format": "WebP",
+    "quality": 92,
+    "method": 6,
+    "resize": false,
+    "crop": false
+  }
+}

@@ -1,0 +1,125 @@
+{
+  "exerciseId": "bodyweight-squat",
+  "version": "owner-release-2026-09",
+  "width": 1024,
+  "height": 1536,
+  "decision": "owner-released-with-findings",
+  "approval": {
+    "actor": "repository owner",
+    "instruction": "Merge the new artwork",
+    "context": "User requested activation after being told the previous merge kept these ten complete sets as drafts."
+  },
+  "reference": {
+    "path": "form-frames/bodyweight-squat/1.webp",
+    "sha256": "53ca322fbace41caa6225228b2bad186bd0a5a71bd1f2ab2f0bcac9190d11fc0"
+  },
+  "frames": [
+    {
+      "path": "form-frames/bodyweight-squat/1.webp",
+      "sha256": "53ca322fbace41caa6225228b2bad186bd0a5a71bd1f2ab2f0bcac9190d11fc0",
+      "source": {
+        "path": "docs/exercise-art/pilots/bodyweight-squat/1-master.png",
+        "sha256": "078414fb2e6edef3b3123772a07490c2abf8ca197fa3ab265fa64235b1d91fed"
+      }
+    },
+    {
+      "path": "form-frames/bodyweight-squat/2.webp",
+      "sha256": "251e5a92663b9bea7a8e9164d99eb281eebe83b4067f12a0ad08a0fdf85757dd",
+      "source": {
+        "path": "docs/exercise-art/pilots/bodyweight-squat/2-early.png",
+        "sha256": "c66a73dc3b96bba22c0a3b5bf41291ed853d60a3088997312c5b4e2791040618"
+      }
+    },
+    {
+      "path": "form-frames/bodyweight-squat/3.webp",
+      "sha256": "c016924fd0e2c1525f93b8eedb7fb47a004b5e60cecd65106f5eec6a490618ab",
+      "source": {
+        "path": "docs/exercise-art/pilots/bodyweight-squat/3-mid.png",
+        "sha256": "6095934c4c5bf90a5e96bd6e815980fedcc60d7aeb779af7347157665fe948c2"
+      }
+    },
+    {
+      "path": "form-frames/bodyweight-squat/4.webp",
+      "sha256": "baa7885e53b4d720cf0a1454fc43bd71e4bef12cfc592cdc82e993c3d53d57a1",
+      "source": {
+        "path": "docs/exercise-art/pilots/bodyweight-squat/4-bottom.png",
+        "sha256": "a3a90abc7637e4c183029638737c04071f434c70c56ea4bdd87c44f04d34cd50"
+      }
+    },
+    {
+      "path": "form-frames/bodyweight-squat/5.webp",
+      "sha256": "c016924fd0e2c1525f93b8eedb7fb47a004b5e60cecd65106f5eec6a490618ab",
+      "source": {
+        "path": "docs/exercise-art/pilots/bodyweight-squat/5-rise.png",
+        "sha256": "6095934c4c5bf90a5e96bd6e815980fedcc60d7aeb779af7347157665fe948c2"
+      }
+    },
+    {
+      "path": "form-frames/bodyweight-squat/6.webp",
+      "sha256": "251e5a92663b9bea7a8e9164d99eb281eebe83b4067f12a0ad08a0fdf85757dd",
+      "source": {
+        "path": "docs/exercise-art/pilots/bodyweight-squat/6-return.png",
+        "sha256": "c66a73dc3b96bba22c0a3b5bf41291ed853d60a3088997312c5b4e2791040618"
+      }
+    }
+  ],
+  "cueSha256": "7a929542e476aa961845a3609511843a112367ab4587fc9dc9b225173119318b",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    }
+  },
+  "findings": [
+    "Original selected frames retain shoe bounds within1px; whole-body anatomy and depth still require review.",
+    "Original middle and bottom poses are close in depth. Better-spaced 3-mid-v2 moved soles up30–33px; 3-mid-registered still leaves soles10–13px high. Both replacements rejected.",
+    "Full visual acceptance under the strict artwork review contract is outstanding."
+  ],
+  "encoding": {
+    "format": "WebP",
+    "quality": 92,
+    "method": 6,
+    "resize": false,
+    "crop": false
+  }
+}

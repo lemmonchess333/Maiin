@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { EXERCISES } from "../src/lib/exercises";
 import { FORM_ARTWORK } from "../src/lib/formArtwork";
 import { getAuthoredBeats } from "../src/lib/bodyRig";
+import { validateOwnerArtworkRelease } from "../src/lib/formArtOwnerRelease";
 import { validateArtworkReview } from "../src/lib/formArtReview";
 
 export const sha256 = (bytes: string | Buffer) =>
@@ -48,6 +49,14 @@ for (const [id, artwork] of Object.entries(FORM_ARTWORK)) {
   if (!EXERCISES.some((exercise) => exercise.id === id))
     errors.push(`${id}: unknown exercise ID`);
   if (artwork.status === "draft") continue;
+  if (
+    ![
+      "existing-needs-review",
+      "approved",
+      "owner-released-with-findings",
+    ].includes(artwork.status)
+  )
+    errors.push(`${id}: unknown release status`);
   const beats = getAuthoredBeats(id);
   if (artwork.frames.length !== 6 || beats?.length !== 6)
     errors.push(`${id}: exactly six images and authored cues required`);
@@ -66,14 +75,19 @@ for (const [id, artwork] of Object.entries(FORM_ARTWORK)) {
       errors.push(`${id}, frame ${i + 1}: ${String(error)}`);
     }
   });
-  if (artwork.status === "approved") {
+  if (
+    artwork.status === "approved" ||
+    artwork.status === "owner-released-with-findings"
+  ) {
     try {
       if (!artwork.reviewFile) throw new Error("Review file required");
       const review: unknown = JSON.parse(
         readFileSync(artwork.reviewFile, "utf8")
       );
       errors.push(
-        ...validateArtworkReview(review, {
+        ...(artwork.status === "approved"
+          ? validateArtworkReview
+          : validateOwnerArtworkRelease)(review, {
           exerciseId: id,
           version: artwork.version,
           width: artwork.width,
@@ -121,6 +135,9 @@ console.log(
       ).length,
       newlyApproved: inventory.filter((row) => row.status === "approved")
         .length,
+      ownerReleasedWithFindings: inventory.filter(
+        (row) => row.status === "owner-released-with-findings"
+      ).length,
       releasedBytes: bytes,
       errors,
       ...(process.argv.includes("--json") ? { inventory } : {}),

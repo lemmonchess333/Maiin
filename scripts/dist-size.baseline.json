@@ -1,6 +1,6 @@
 {
   "tolerance": 0.05,
-  "total": 5146768,
+  "total": 5155420,
   "chunks": {
     "AccordionSection": 1611,
     "activationTracker": 308,
@@ -51,7 +51,7 @@
     "ellipsis": 355,
     "EmptyState": 1739,
     "ErrorState": 898,
-    "ExerciseFormContent": 159693,
+    "ExerciseFormContent": 168345,
     "ExerciseHistory": 11157,
     "ExerciseProgressChart": 2263,
     "external-link": 252,

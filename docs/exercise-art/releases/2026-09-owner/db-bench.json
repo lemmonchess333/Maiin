@@ -1,0 +1,125 @@
+{
+  "exerciseId": "db-bench",
+  "version": "owner-release-2026-09",
+  "width": 1536,
+  "height": 1024,
+  "decision": "owner-released-with-findings",
+  "approval": {
+    "actor": "repository owner",
+    "instruction": "Merge the new artwork",
+    "context": "User requested activation after being told the previous merge kept these ten complete sets as drafts."
+  },
+  "reference": {
+    "path": "form-frames/db-bench/1.webp",
+    "sha256": "2d0960ef1036edcdd7ccd6e95c958001ceab4892fcaae58d575161c5537219af"
+  },
+  "frames": [
+    {
+      "path": "form-frames/db-bench/1.webp",
+      "sha256": "2d0960ef1036edcdd7ccd6e95c958001ceab4892fcaae58d575161c5537219af",
+      "source": {
+        "path": "docs/exercise-art/pilots/db-bench/1-master.png",
+        "sha256": "dec10471eca129c22a7bbc9b9067ecca04247b418ced40d05601807ae1bb9d35"
+      }
+    },
+    {
+      "path": "form-frames/db-bench/2.webp",
+      "sha256": "ccd754b27b6bcef1dc299d4b857b1d18bea516d73bf1d9ceec737de67ecf46b0",
+      "source": {
+        "path": "docs/exercise-art/pilots/db-bench/2-early.png",
+        "sha256": "b5bf91c44ee8e47e05d2afc4a3b8f6ce3fd65444a95a8d9fb2036cabb652fd80"
+      }
+    },
+    {
+      "path": "form-frames/db-bench/3.webp",
+      "sha256": "6146abd6fc646ab0744ed8b6587e68cbd517304ba4946b6916a48ef3358f3156",
+      "source": {
+        "path": "docs/exercise-art/pilots/db-bench/3-mid.png",
+        "sha256": "5a30bf26a8ce8cb388d03a93bab3e9ad58e51f34ae42b4769d3426b9e5b8da2f"
+      }
+    },
+    {
+      "path": "form-frames/db-bench/4.webp",
+      "sha256": "420a2e73c4f68dedfa8496de1fdc63c3b9825f86a9c9661c6291264c1b6312e2",
+      "source": {
+        "path": "docs/exercise-art/pilots/db-bench/4-bottom.png",
+        "sha256": "74f9834b532d5ec83e6bb16efcdea4c4bf9953df2c5e0d95c3ffd5eea5830ce6"
+      }
+    },
+    {
+      "path": "form-frames/db-bench/5.webp",
+      "sha256": "6146abd6fc646ab0744ed8b6587e68cbd517304ba4946b6916a48ef3358f3156",
+      "source": {
+        "path": "docs/exercise-art/pilots/db-bench/5-press.png",
+        "sha256": "5a30bf26a8ce8cb388d03a93bab3e9ad58e51f34ae42b4769d3426b9e5b8da2f"
+      }
+    },
+    {
+      "path": "form-frames/db-bench/6.webp",
+      "sha256": "ccd754b27b6bcef1dc299d4b857b1d18bea516d73bf1d9ceec737de67ecf46b0",
+      "source": {
+        "path": "docs/exercise-art/pilots/db-bench/6-return.png",
+        "sha256": "b5bf91c44ee8e47e05d2afc4a3b8f6ce3fd65444a95a8d9fb2036cabb652fd80"
+      }
+    }
+  ],
+  "cueSha256": "3124787178f8446117dd6ebd6d70babc583193b0a9c598df0ffc9041a404e146",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    }
+  },
+  "findings": [
+    "Elbow angle and wrist-over-elbow alignment need technique review.",
+    "Near upper arm silhouette and dumbbell orientation/size require comparison; requested degree values are not verified.",
+    "Full visual acceptance under the strict artwork review contract is outstanding."
+  ],
+  "encoding": {
+    "format": "WebP",
+    "quality": 92,
+    "method": 6,
+    "resize": false,
+    "crop": false
+  }
+}

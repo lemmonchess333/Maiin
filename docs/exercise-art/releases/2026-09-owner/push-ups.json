@@ -1,0 +1,125 @@
+{
+  "exerciseId": "push-ups",
+  "version": "owner-release-2026-09",
+  "width": 1536,
+  "height": 1024,
+  "decision": "owner-released-with-findings",
+  "approval": {
+    "actor": "repository owner",
+    "instruction": "Merge the new artwork",
+    "context": "User requested activation after being told the previous merge kept these ten complete sets as drafts."
+  },
+  "reference": {
+    "path": "form-frames/push-ups/1.webp",
+    "sha256": "97400d4b75765abbe20c50baaaaa52f82167ff5de0f84af614f1c72eb14e45aa"
+  },
+  "frames": [
+    {
+      "path": "form-frames/push-ups/1.webp",
+      "sha256": "97400d4b75765abbe20c50baaaaa52f82167ff5de0f84af614f1c72eb14e45aa",
+      "source": {
+        "path": "docs/exercise-art/pilots/push-ups/1-master.png",
+        "sha256": "a34c813085bd75c2e8f10d5aef4c77b7f94ac77c33e77cbf212455bd244008ea"
+      }
+    },
+    {
+      "path": "form-frames/push-ups/2.webp",
+      "sha256": "a21190b6a42d2981304ebe86fd5463004ca224757671920c8ca8b74f95a2fb3f",
+      "source": {
+        "path": "docs/exercise-art/pilots/push-ups/2-early.png",
+        "sha256": "2436b01b968110234808ad14a301616b9cb08f9b6723bc7c805fabb4e4227e67"
+      }
+    },
+    {
+      "path": "form-frames/push-ups/3.webp",
+      "sha256": "e92bf11ec48839e01a11e2a89d03787a391caad5b10596463aa09edb65ec9735",
+      "source": {
+        "path": "docs/exercise-art/pilots/push-ups/3-mid.png",
+        "sha256": "88ff1401b3467f6c27314df496b2877e5428d683c77aa3288fa47db7ad446de6"
+      }
+    },
+    {
+      "path": "form-frames/push-ups/4.webp",
+      "sha256": "2977bf11b5d13a88a764d3c383916f7cea092e37873d18ba8ac403f860748a0f",
+      "source": {
+        "path": "docs/exercise-art/pilots/push-ups/4-bottom.png",
+        "sha256": "faf7a1ff1349bf458e62a43551377ed226bc3f3ba681d2f6147786de387ab0b9"
+      }
+    },
+    {
+      "path": "form-frames/push-ups/5.webp",
+      "sha256": "e92bf11ec48839e01a11e2a89d03787a391caad5b10596463aa09edb65ec9735",
+      "source": {
+        "path": "docs/exercise-art/pilots/push-ups/5-rise.png",
+        "sha256": "88ff1401b3467f6c27314df496b2877e5428d683c77aa3288fa47db7ad446de6"
+      }
+    },
+    {
+      "path": "form-frames/push-ups/6.webp",
+      "sha256": "a21190b6a42d2981304ebe86fd5463004ca224757671920c8ca8b74f95a2fb3f",
+      "source": {
+        "path": "docs/exercise-art/pilots/push-ups/6-return.png",
+        "sha256": "2436b01b968110234808ad14a301616b9cb08f9b6723bc7c805fabb4e4227e67"
+      }
+    }
+  ],
+  "cueSha256": "8bc4a1ad5868a4a3a4eab54ddd4f96a9e6a2fc5ed05ae565620280bcf52f6f12",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    }
+  },
+  "findings": [
+    "Near-hand region has up to 8px horizontal bound change; wrist inclusion limits interpretation.",
+    "Review body-line alignment, neck and elbow stacking in all four unique poses.",
+    "Full visual acceptance under the strict artwork review contract is outstanding."
+  ],
+  "encoding": {
+    "format": "WebP",
+    "quality": 92,
+    "method": 6,
+    "resize": false,
+    "crop": false
+  }
+}

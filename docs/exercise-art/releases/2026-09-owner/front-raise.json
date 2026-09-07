@@ -1,0 +1,125 @@
+{
+  "exerciseId": "front-raise",
+  "version": "owner-release-2026-09",
+  "width": 1024,
+  "height": 1536,
+  "decision": "owner-released-with-findings",
+  "approval": {
+    "actor": "repository owner",
+    "instruction": "Merge the new artwork",
+    "context": "User requested activation after being told the previous merge kept these ten complete sets as drafts."
+  },
+  "reference": {
+    "path": "form-frames/front-raise/1.webp",
+    "sha256": "7d1860d321996f975a0dd4cd672c6bc9326ea94da096487622af16c3a2ee981c"
+  },
+  "frames": [
+    {
+      "path": "form-frames/front-raise/1.webp",
+      "sha256": "7d1860d321996f975a0dd4cd672c6bc9326ea94da096487622af16c3a2ee981c",
+      "source": {
+        "path": "docs/exercise-art/pilots/front-raise/1-master.png",
+        "sha256": "813df8deed18516707dc7925eda17b69cc96a5ac060e42188a758fd600b94c07"
+      }
+    },
+    {
+      "path": "form-frames/front-raise/2.webp",
+      "sha256": "508025d409b071fd5e1eacbc9149055ed3d25a092799968592d46c490299591b",
+      "source": {
+        "path": "docs/exercise-art/pilots/front-raise/2-early-v2.png",
+        "sha256": "442f99ea00e3cd53eb9dd94184f9250cd2826ce65eecfc0e8b7226b6232904b7"
+      }
+    },
+    {
+      "path": "form-frames/front-raise/3.webp",
+      "sha256": "c7a59394fe016a23d62c77d08a78ebe6e74c40fb8d11e749191b52a3c3980042",
+      "source": {
+        "path": "docs/exercise-art/pilots/front-raise/3-mid.png",
+        "sha256": "c74e669d1e510f538dca6a5ef586778a08f3b8517abdeeabbeb7e442845dff32"
+      }
+    },
+    {
+      "path": "form-frames/front-raise/4.webp",
+      "sha256": "49d6dae57469f5d4cb7810ae6c5650a7e740a8bbc9835194337a724cda2069ec",
+      "source": {
+        "path": "docs/exercise-art/pilots/front-raise/4-top.png",
+        "sha256": "1771951b91a37bbc369f96decc0ad447d0a933646cf032318341c5fef6d1f8be"
+      }
+    },
+    {
+      "path": "form-frames/front-raise/5.webp",
+      "sha256": "c7a59394fe016a23d62c77d08a78ebe6e74c40fb8d11e749191b52a3c3980042",
+      "source": {
+        "path": "docs/exercise-art/pilots/front-raise/5-lower.png",
+        "sha256": "c74e669d1e510f538dca6a5ef586778a08f3b8517abdeeabbeb7e442845dff32"
+      }
+    },
+    {
+      "path": "form-frames/front-raise/6.webp",
+      "sha256": "508025d409b071fd5e1eacbc9149055ed3d25a092799968592d46c490299591b",
+      "source": {
+        "path": "docs/exercise-art/pilots/front-raise/6-return-v2.png",
+        "sha256": "442f99ea00e3cd53eb9dd94184f9250cd2826ce65eecfc0e8b7226b6232904b7"
+      }
+    }
+  ],
+  "cueSha256": "4f7579f2032760c1a72ca687d02b7872673d7fa6cbf32af24e27e49356a4d8ce",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    }
+  },
+  "findings": [
+    "Early pose corrected to a smaller forward raise; identical corrected pose reused for return. Requested numerical angles remain unverified.",
+    "Static inspection: upright torso and planted shoes retained; compare dumbbell silhouettes, wrists and shoulder anatomy at full resolution before release.",
+    "Full visual acceptance under the strict artwork review contract is outstanding."
+  ],
+  "encoding": {
+    "format": "WebP",
+    "quality": 92,
+    "method": 6,
+    "resize": false,
+    "crop": false
+  }
+}
