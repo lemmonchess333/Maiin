@@ -1,3 +1,4 @@
+import { RELEASED_FORM_PLACARDS } from "./releasedFormPlacards";
 import { getReleasedFormArtwork } from "./formArtwork";
 /**
  * Body rig — animated exercise demos built from the REAL muscle-map figure.
@@ -9541,16 +9542,6 @@ export interface DemoMuscleKey {
 }
 
 const FORM_BEATS: Record<string, FormPlacard> = {
-  "db-curl": {
-    beats: [
-      { t: 0, label: "Set up", cue: "Stand tall, palms forward, elbows by ribs." },
-      { t: 0.25, label: "Initiate curl", cue: "Bend both elbows; keep your torso still." },
-      { t: 0.6, label: "Mid curl", cue: "Upper arms still, wrists straight." },
-      { t: 1, label: "Top contraction", cue: "Curl up without lifting your elbows." },
-      { t: 0.6, label: "Controlled lower", cue: "Lower slowly along the same arc." },
-      { t: 0.15, label: "Finish return", cue: "Return towards straight arms without bouncing." },
-    ],
-  },
 
   /* Dips — the first placard demo. Six positions on the dip's own t,
    * where 0 is the locked-out top and 1 the bottom. The cues are the
@@ -9933,16 +9924,6 @@ const FORM_BEATS: Record<string, FormPlacard> = {
    * bodyRig.test.ts check the labels against that, not against a
    * convention assumed here. */
 
-  squat: {
-    beats: [
-      { t: 0, label: "Set up", cue: "Bar on the traps, chest tall, brace." },
-      { t: 0.3, label: "Descend", cue: "Hips back and knees out together." },
-      { t: 0.7, label: "Parallel", cue: "Hip crease level with the knee." },
-      { t: 1, label: "Bottom", cue: "Depth without the lower back rounding." },
-      { t: 0.45, label: "Drive", cue: "Push the floor away, chest up." },
-      { t: 0, label: "Stand", cue: "Hips and knees lock out together." },
-    ],
-  },
 
   deadlift: {
     beats: [
@@ -10045,6 +10026,7 @@ const FORM_BEATS: Record<string, FormPlacard> = {
       secondaryFill: "solid",
     },
   },
+  ...RELEASED_FORM_PLACARDS,
 };
 
 /**

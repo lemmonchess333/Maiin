@@ -1,0 +1,126 @@
+{
+  "exerciseId": "hammer-curl",
+  "version": "owner-release-2026-09",
+  "width": 1024,
+  "height": 1536,
+  "decision": "owner-released-with-findings",
+  "approval": {
+    "actor": "repository owner",
+    "instruction": "Merge the new artwork",
+    "context": "User requested activation after being told the previous merge kept these ten complete sets as drafts."
+  },
+  "reference": {
+    "path": "form-frames/hammer-curl/1.webp",
+    "sha256": "41b9c15bb2992ba4b64feb074fb1fe1028170d7eb783b96ff5aef2d0f040a753"
+  },
+  "frames": [
+    {
+      "path": "form-frames/hammer-curl/1.webp",
+      "sha256": "41b9c15bb2992ba4b64feb074fb1fe1028170d7eb783b96ff5aef2d0f040a753",
+      "source": {
+        "path": "docs/exercise-art/pilots/hammer-curl/1-master.png",
+        "sha256": "1ea22590746b7bcde478551a914542b6da33cb9764c4b4a2f597fcd687511f01"
+      }
+    },
+    {
+      "path": "form-frames/hammer-curl/2.webp",
+      "sha256": "bd88936e133e7d04f31fa39f62c394137ef8592b54ce9df2365e6657c5871ee1",
+      "source": {
+        "path": "docs/exercise-art/pilots/hammer-curl/2-early-corrected.png",
+        "sha256": "a69ee2b2e6183ac986c280859312799985bc7174831cfbb96d22bc27b2304691"
+      }
+    },
+    {
+      "path": "form-frames/hammer-curl/3.webp",
+      "sha256": "419ff9174c02608d81f63cd007ebaac9b31bf06d24cb07754390939ce34334d6",
+      "source": {
+        "path": "docs/exercise-art/pilots/hammer-curl/3-mid.png",
+        "sha256": "7058b9b77bcc9436c01eb81c90deee3f48b252e3440d64d4c40cd94665f7ba8e"
+      }
+    },
+    {
+      "path": "form-frames/hammer-curl/4.webp",
+      "sha256": "62a2f958478b1542740183b59be66deca6afccf85bfc4441a555ad461c071f90",
+      "source": {
+        "path": "docs/exercise-art/pilots/hammer-curl/4-top.png",
+        "sha256": "d642b7e3123179f79cd0e247900d07bf4aac5590ddcb51e1a06e39fff71e2530"
+      }
+    },
+    {
+      "path": "form-frames/hammer-curl/5.webp",
+      "sha256": "419ff9174c02608d81f63cd007ebaac9b31bf06d24cb07754390939ce34334d6",
+      "source": {
+        "path": "docs/exercise-art/pilots/hammer-curl/5-lower.png",
+        "sha256": "7058b9b77bcc9436c01eb81c90deee3f48b252e3440d64d4c40cd94665f7ba8e"
+      }
+    },
+    {
+      "path": "form-frames/hammer-curl/6.webp",
+      "sha256": "bd88936e133e7d04f31fa39f62c394137ef8592b54ce9df2365e6657c5871ee1",
+      "source": {
+        "path": "docs/exercise-art/pilots/hammer-curl/6-return.png",
+        "sha256": "a69ee2b2e6183ac986c280859312799985bc7174831cfbb96d22bc27b2304691"
+      }
+    }
+  ],
+  "cueSha256": "32cd221a236266e4cbc3e3a6f580b56285081338b56bc27ea5a7cd196b43cf24",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    }
+  },
+  "findings": [
+    "Upper-arm proportions and dumbbell handle/axis consistency require manual review.",
+    "2-early.png superseded because dumbbell orientation did not track the neutral wrist.",
+    "3-equipment-v2 is an unselected diameter-correction candidate. Visual comparison suggests original mid-pose end heads shrink; correction is closer but still needs measured equipment review.",
+    "Full visual acceptance under the strict artwork review contract is outstanding."
+  ],
+  "encoding": {
+    "format": "WebP",
+    "quality": 92,
+    "method": 6,
+    "resize": false,
+    "crop": false
+  }
+}

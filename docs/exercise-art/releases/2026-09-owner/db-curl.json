@@ -1,0 +1,125 @@
+{
+  "exerciseId": "db-curl",
+  "version": "owner-release-2026-09",
+  "width": 1024,
+  "height": 1536,
+  "decision": "owner-released-with-findings",
+  "approval": {
+    "actor": "repository owner",
+    "instruction": "Merge the new artwork",
+    "context": "User requested activation after being told the previous merge kept these ten complete sets as drafts."
+  },
+  "reference": {
+    "path": "form-frames/db-curl/1.webp",
+    "sha256": "36f32c7edb3f44982e406e8bf78095a5a1ad302193d61bcea81744ae36f96d4f"
+  },
+  "frames": [
+    {
+      "path": "form-frames/db-curl/1.webp",
+      "sha256": "36f32c7edb3f44982e406e8bf78095a5a1ad302193d61bcea81744ae36f96d4f",
+      "source": {
+        "path": "docs/exercise-art/pilots/db-curl/1-master.png",
+        "sha256": "b6e662d9791512eb1af157a1e4b383eb9ae02b3831da7f9bafc5dddaa121c98b"
+      }
+    },
+    {
+      "path": "form-frames/db-curl/2.webp",
+      "sha256": "fbab55aa4a6fec4f22ba4ec8333b1b67f1deaa50358b5443a025335f05c1bb18",
+      "source": {
+        "path": "docs/exercise-art/pilots/db-curl/2-early-candidate.png",
+        "sha256": "4c53286512a4c11f4ec0db7ae90825edd3e19b2c917da8c5af5bb3d75c271285"
+      }
+    },
+    {
+      "path": "form-frames/db-curl/3.webp",
+      "sha256": "dd5b53976d9255b0f2692ded06b4b6bcead1ff7e454a3d1101f755659caddb0c",
+      "source": {
+        "path": "docs/exercise-art/pilots/db-curl/3-mid-candidate.png",
+        "sha256": "61a625a2ca5c6880804a127e35c8e39919f3cd346ea9c76948af3df77c17b20f"
+      }
+    },
+    {
+      "path": "form-frames/db-curl/4.webp",
+      "sha256": "bfeff1ddfa6743d542930be1282b34d5e51c51031703d3fbde50b6474fa46746",
+      "source": {
+        "path": "docs/exercise-art/pilots/db-curl/4-top-colour-candidate.png",
+        "sha256": "81f1f22ddb75f115e816a54b340bd06ef6819472b33a208d673024e8c192213f"
+      }
+    },
+    {
+      "path": "form-frames/db-curl/5.webp",
+      "sha256": "dd5b53976d9255b0f2692ded06b4b6bcead1ff7e454a3d1101f755659caddb0c",
+      "source": {
+        "path": "docs/exercise-art/pilots/db-curl/5-lower-candidate.png",
+        "sha256": "61a625a2ca5c6880804a127e35c8e39919f3cd346ea9c76948af3df77c17b20f"
+      }
+    },
+    {
+      "path": "form-frames/db-curl/6.webp",
+      "sha256": "e36ce7fde9a23d4b1d57bd076308402a302563d5757d96cf071a0aab80c99e12",
+      "source": {
+        "path": "docs/exercise-art/pilots/db-curl/6-return-candidate.png",
+        "sha256": "5f6dbfaf360023163f54df69f7385efe1fdf7fda61ebab7166075c3fc0192e4c"
+      }
+    }
+  ],
+  "cueSha256": "6839d86d2601a7cecaf00047ec61bb07b73e8f294dbe3d16ee24c9980b594e0b",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    }
+  },
+  "findings": [
+    "Equipment dimensions, elbow pivots, forearm projection and canonical character shading remain unverified.",
+    "Mobile light/dark playback remains unverified; see DB_CURL_REVIEW.md.",
+    "Full visual acceptance under the strict artwork review contract is outstanding."
+  ],
+  "encoding": {
+    "format": "WebP",
+    "quality": 92,
+    "method": 6,
+    "resize": false,
+    "crop": false
+  }
+}
