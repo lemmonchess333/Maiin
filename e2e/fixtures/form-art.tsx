@@ -40,6 +40,10 @@ export default function Review() {
   const curlDraft = id === "db-curl (draft)";
   const batchDraft = batchDrafts[id];
   const draft = curlDraft || Boolean(batchDraft);
+  const hasReleasedArtwork = Object.hasOwn(
+    FORM_ARTWORK,
+    id.replace(/ \(draft\)$/, ""),
+  );
   const beats = curlDraft
     ? getAuthoredBeats("db-curl")!.map((beat, i) => ({
         ...beat,
@@ -76,8 +80,9 @@ export default function Review() {
           {draft ? (
             <>
               <p role="status" className="text-small text-muted-foreground">
-                Original PNG preview. WebP delivery is owner-released with findings;
-                visual and mobile playback checks remain outstanding.
+                {hasReleasedArtwork
+                  ? "Original PNG preview. Production artwork is available for this exercise; recorded review findings remain below."
+                  : "Unreleased draft. Visual and mobile playback checks remain outstanding."}
               </p>
               <ExerciseFormFrames
                 key={`${id}-${request?.serial ?? 0}`}

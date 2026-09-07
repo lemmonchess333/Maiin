@@ -1,0 +1,78 @@
+{
+  "exerciseId": "crunches",
+  "status": "master-only-edit-blocked",
+  "canvas": [
+    1536,
+    1024
+  ],
+  "variation": "Bodyweight bent-knee floor crunch, hands lightly behind head.",
+  "camera": "Fixed side three-quarter; head left, feet right, abdomen visible.",
+  "anchors": [
+    "Both shoes and sole contacts",
+    "Tailbone and lower back on floor",
+    "Hip and knee positions"
+  ],
+  "invariants": [
+    "Limb lengths",
+    "Head size",
+    "Pelvis-to-feet geometry"
+  ],
+  "primary": [
+    "Rectus abdominis"
+  ],
+  "secondary": [
+    "Obliques, pale stabilizing tint only"
+  ],
+  "catalogueNote": "Do not visually suggest hip flexors should drive the curl despite catalogue secondary-muscle listing.",
+  "techniqueSource": "https://www.acefitness.org/resources/everyone/exercise-library/52/crunch/",
+  "frames": [
+    {
+      "frame": 1,
+      "label": "Set up",
+      "cue": "Lie back with knees bent and hands lightly behind head.",
+      "t": 0,
+      "state": "Supine, feet planted; hands support head without pulling; elbows comfortably open."
+    },
+    {
+      "frame": 2,
+      "label": "Begin curl",
+      "cue": "Brace your abs and start lifting your shoulder blades.",
+      "t": 0.25,
+      "state": "Small upper-spine curl, head supported in alignment."
+    },
+    {
+      "frame": 3,
+      "label": "Continue curl",
+      "cue": "Bring your ribs towards your pelvis without neck pulling.",
+      "t": 0.6,
+      "state": "Shoulder blades rise further; low back and tailbone remain down."
+    },
+    {
+      "frame": 4,
+      "label": "Top crunch",
+      "cue": "Pause with shoulder blades raised and feet planted.",
+      "t": 1,
+      "state": "Modest upper-back lift; never a sit-up or hip hinge."
+    },
+    {
+      "frame": 5,
+      "label": "Controlled lower",
+      "cue": "Uncurl your upper back slowly.",
+      "t": 0.6,
+      "state": "Same as 3 while lowering."
+    },
+    {
+      "frame": 6,
+      "label": "Finish lowering",
+      "cue": "Return your shoulders gently towards the floor.",
+      "t": 0.25,
+      "state": "Same as 2 while lowering; loop returns to floor."
+    }
+  ],
+  "generationFailure": {
+    "stage": "output",
+    "code": "moderation_blocked",
+    "requestId": "1a789530-1560-46fe-a298-5d3f3e289311",
+    "result": "No frame 2 image produced. Preserve master and continue unaffected exercises; do not count as complete."
+  }
+}

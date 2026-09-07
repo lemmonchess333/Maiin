@@ -1,0 +1,769 @@
+{
+  "scope": 141,
+  "releasedOrInRelease": 17,
+  "remaining": 124,
+  "nextBatch": [
+    "glute-bridge",
+    "crunches",
+    "incline-db-press",
+    "db-shoulder-press",
+    "db-row",
+    "romanian-deadlift"
+  ],
+  "queue": [
+    {
+      "id": "incline-bench",
+      "name": "Incline Bench Press",
+      "equipment": "Barbell",
+      "status": "queued"
+    },
+    {
+      "id": "decline-bench",
+      "name": "Decline Bench Press",
+      "equipment": "Barbell",
+      "status": "queued"
+    },
+    {
+      "id": "incline-db-press",
+      "name": "Incline Dumbbell Press",
+      "equipment": "Dumbbells",
+      "status": "six-frame-draft-needs-repair",
+      "path": "docs/exercise-art/pilots/batch-04/incline-db-press"
+    },
+    {
+      "id": "decline-db-press",
+      "name": "Decline Dumbbell Press",
+      "equipment": "Dumbbells",
+      "status": "queued"
+    },
+    {
+      "id": "db-flyes",
+      "name": "Dumbbell Flyes",
+      "equipment": "Dumbbells",
+      "status": "queued"
+    },
+    {
+      "id": "cable-crossover",
+      "name": "Cable Crossover",
+      "equipment": "Cable Machine",
+      "status": "queued"
+    },
+    {
+      "id": "chest-press-machine",
+      "name": "Chest Press Machine",
+      "equipment": "Machine",
+      "status": "queued"
+    },
+    {
+      "id": "pec-deck",
+      "name": "Pec Deck",
+      "equipment": "Machine",
+      "status": "queued"
+    },
+    {
+      "id": "machine-chest-fly",
+      "name": "Machine Chest Fly",
+      "equipment": "Machine",
+      "status": "queued"
+    },
+    {
+      "id": "smith-bench-press",
+      "name": "Smith Machine Bench Press",
+      "equipment": "Machine",
+      "status": "queued"
+    },
+    {
+      "id": "pike-push-up",
+      "name": "Pike Push-Up",
+      "equipment": "Bodyweight",
+      "status": "queued"
+    },
+    {
+      "id": "weighted-push-ups",
+      "name": "Weighted Push-Ups",
+      "equipment": "Bodyweight",
+      "status": "queued"
+    },
+    {
+      "id": "barbell-floor-press",
+      "name": "Barbell Floor Press",
+      "equipment": "Barbell",
+      "status": "queued"
+    },
+    {
+      "id": "weighted-chest-dip",
+      "name": "Weighted Chest Dip",
+      "equipment": "Bodyweight",
+      "status": "queued"
+    },
+    {
+      "id": "deadlift",
+      "name": "Deadlift",
+      "equipment": "Barbell",
+      "status": "queued"
+    },
+    {
+      "id": "pendlay-row",
+      "name": "Pendlay Row",
+      "equipment": "Barbell",
+      "status": "queued"
+    },
+    {
+      "id": "db-row",
+      "name": "Dumbbell Row",
+      "equipment": "Dumbbells",
+      "status": "six-frame-draft-needs-repair",
+      "path": "docs/exercise-art/pilots/batch-04/db-row"
+    },
+    {
+      "id": "chest-supported-db-row",
+      "name": "Chest-Supported Dumbbell Row",
+      "equipment": "Dumbbells",
+      "status": "queued"
+    },
+    {
+      "id": "meadows-row",
+      "name": "Meadows Row",
+      "equipment": "Barbell",
+      "status": "queued"
+    },
+    {
+      "id": "pull-ups",
+      "name": "Pull-Ups",
+      "equipment": "Bodyweight",
+      "status": "queued"
+    },
+    {
+      "id": "chin-ups",
+      "name": "Chin-Ups",
+      "equipment": "Bodyweight",
+      "status": "queued"
+    },
+    {
+      "id": "lat-pulldown",
+      "name": "Lat Pulldown",
+      "equipment": "Cable Machine",
+      "status": "queued"
+    },
+    {
+      "id": "single-arm-lat-pulldown",
+      "name": "Single-Arm Lat Pulldown",
+      "equipment": "Cable Machine",
+      "status": "queued"
+    },
+    {
+      "id": "seated-row",
+      "name": "Seated Cable Row",
+      "equipment": "Cable Machine",
+      "status": "queued"
+    },
+    {
+      "id": "t-bar-row",
+      "name": "T-Bar Row",
+      "equipment": "Barbell",
+      "status": "queued"
+    },
+    {
+      "id": "face-pulls",
+      "name": "Face Pulls",
+      "equipment": "Cable Machine",
+      "status": "queued"
+    },
+    {
+      "id": "rack-pull",
+      "name": "Rack Pull",
+      "equipment": "Barbell",
+      "status": "queued"
+    },
+    {
+      "id": "straight-arm-pulldown",
+      "name": "Straight-Arm Pulldown",
+      "equipment": "Cable Machine",
+      "status": "queued"
+    },
+    {
+      "id": "inverted-row",
+      "name": "Inverted Row",
+      "equipment": "Bodyweight",
+      "status": "queued"
+    },
+    {
+      "id": "db-shoulder-press",
+      "name": "Dumbbell Shoulder Press",
+      "equipment": "Dumbbells",
+      "status": "six-frame-draft-needs-repair",
+      "path": "docs/exercise-art/pilots/batch-04/db-shoulder-press"
+    },
+    {
+      "id": "reverse-pec-deck",
+      "name": "Reverse Pec Deck",
+      "equipment": "Machine",
+      "status": "queued"
+    },
+    {
+      "id": "cable-lateral-raise",
+      "name": "Cable Lateral Raise",
+      "equipment": "Cable Machine",
+      "status": "queued"
+    },
+    {
+      "id": "reverse-flyes",
+      "name": "Reverse Flyes",
+      "equipment": "Dumbbells",
+      "status": "queued"
+    },
+    {
+      "id": "rear-delt-machine-fly",
+      "name": "Rear Delt Machine Fly",
+      "equipment": "Machine",
+      "status": "queued"
+    },
+    {
+      "id": "arnold-press",
+      "name": "Arnold Press",
+      "equipment": "Dumbbells",
+      "status": "queued"
+    },
+    {
+      "id": "shoulder-press-machine",
+      "name": "Shoulder Press Machine",
+      "equipment": "Machine",
+      "status": "queued"
+    },
+    {
+      "id": "smith-shoulder-press",
+      "name": "Smith Machine Shoulder Press",
+      "equipment": "Machine",
+      "status": "queued"
+    },
+    {
+      "id": "barbell-upright-row",
+      "name": "Barbell Upright Row",
+      "equipment": "Barbell",
+      "status": "queued"
+    },
+    {
+      "id": "shrugs",
+      "name": "Shrugs",
+      "equipment": "Dumbbells",
+      "status": "queued"
+    },
+    {
+      "id": "cuban-press",
+      "name": "Cuban Press",
+      "equipment": "Dumbbells",
+      "status": "queued"
+    },
+    {
+      "id": "lu-raise",
+      "name": "Lu Raise",
+      "equipment": "Dumbbells",
+      "status": "queued"
+    },
+    {
+      "id": "landmine-press",
+      "name": "Landmine Press",
+      "equipment": "Barbell",
+      "status": "queued"
+    },
+    {
+      "id": "ez-bar-curl",
+      "name": "EZ Bar Curl",
+      "equipment": "Barbell",
+      "status": "queued"
+    },
+    {
+      "id": "incline-db-curl",
+      "name": "Incline Dumbbell Curl",
+      "equipment": "Dumbbells",
+      "status": "queued"
+    },
+    {
+      "id": "cross-body-hammer-curl",
+      "name": "Cross-Body Hammer Curl",
+      "equipment": "Dumbbells",
+      "status": "queued"
+    },
+    {
+      "id": "zottman-curl",
+      "name": "Zottman Curl",
+      "equipment": "Dumbbells",
+      "status": "queued"
+    },
+    {
+      "id": "preacher-curl",
+      "name": "Preacher Curl",
+      "equipment": "Barbell",
+      "status": "queued"
+    },
+    {
+      "id": "cable-curl",
+      "name": "Cable Curl",
+      "equipment": "Cable Machine",
+      "status": "queued"
+    },
+    {
+      "id": "bayesian-cable-curl",
+      "name": "Bayesian Cable Curl",
+      "equipment": "Cable Machine",
+      "status": "queued"
+    },
+    {
+      "id": "concentration-curl",
+      "name": "Concentration Curl",
+      "equipment": "Dumbbells",
+      "status": "queued"
+    },
+    {
+      "id": "spider-db-curl",
+      "name": "Spider Dumbbell Curl",
+      "equipment": "Dumbbells",
+      "status": "queued"
+    },
+    {
+      "id": "reverse-barbell-curl",
+      "name": "Reverse Barbell Curl",
+      "equipment": "Barbell",
+      "status": "queued"
+    },
+    {
+      "id": "overhead-extension",
+      "name": "Overhead Tricep Extension",
+      "equipment": "Dumbbells",
+      "status": "queued"
+    },
+    {
+      "id": "overhead-cable-tricep-extension",
+      "name": "Overhead Cable Tricep Extension",
+      "equipment": "Cable Machine",
+      "status": "queued"
+    },
+    {
+      "id": "tricep-dips",
+      "name": "Tricep Dips",
+      "equipment": "Bodyweight",
+      "status": "queued"
+    },
+    {
+      "id": "bench-dips",
+      "name": "Bench Dips",
+      "equipment": "Bodyweight",
+      "status": "queued"
+    },
+    {
+      "id": "close-grip-bench",
+      "name": "Close Grip Bench Press",
+      "equipment": "Barbell",
+      "status": "queued"
+    },
+    {
+      "id": "tricep-kickback",
+      "name": "Tricep Kickback",
+      "equipment": "Dumbbells",
+      "status": "queued"
+    },
+    {
+      "id": "single-arm-cable-pushdown",
+      "name": "Single-Arm Cable Pushdown",
+      "equipment": "Cable Machine",
+      "status": "queued"
+    },
+    {
+      "id": "reverse-grip-cable-pushdown",
+      "name": "Reverse Grip Cable Pushdown",
+      "equipment": "Cable Machine",
+      "status": "queued"
+    },
+    {
+      "id": "jm-press",
+      "name": "JM Press",
+      "equipment": "Barbell",
+      "status": "queued"
+    },
+    {
+      "id": "diamond-push-ups",
+      "name": "Diamond Push-Ups",
+      "equipment": "Bodyweight",
+      "status": "queued"
+    },
+    {
+      "id": "front-squat",
+      "name": "Front Squat",
+      "equipment": "Barbell",
+      "status": "queued"
+    },
+    {
+      "id": "sissy-squat",
+      "name": "Sissy Squat",
+      "equipment": "Bodyweight",
+      "status": "queued"
+    },
+    {
+      "id": "smith-machine-squat",
+      "name": "Smith Machine Squat",
+      "equipment": "Machine",
+      "status": "queued"
+    },
+    {
+      "id": "hack-squat",
+      "name": "Hack Squat",
+      "equipment": "Machine",
+      "status": "queued"
+    },
+    {
+      "id": "leg-press",
+      "name": "Leg Press",
+      "equipment": "Machine",
+      "status": "queued"
+    },
+    {
+      "id": "leg-extension",
+      "name": "Leg Extension",
+      "equipment": "Machine",
+      "status": "queued"
+    },
+    {
+      "id": "seated-leg-curl",
+      "name": "Seated Leg Curl",
+      "equipment": "Machine",
+      "status": "queued"
+    },
+    {
+      "id": "romanian-deadlift",
+      "name": "Romanian Deadlift",
+      "equipment": "Barbell",
+      "status": "six-frame-draft-needs-repair",
+      "path": "docs/exercise-art/pilots/batch-04/romanian-deadlift"
+    },
+    {
+      "id": "db-rdl",
+      "name": "Dumbbell Romanian Deadlift",
+      "equipment": "Dumbbells",
+      "status": "queued"
+    },
+    {
+      "id": "nordic-hamstring-curl",
+      "name": "Nordic Hamstring Curl",
+      "equipment": "Bodyweight",
+      "status": "queued"
+    },
+    {
+      "id": "glute-ham-raise",
+      "name": "Glute-Ham Raise",
+      "equipment": "Machine",
+      "status": "queued"
+    },
+    {
+      "id": "sumo-deadlift",
+      "name": "Sumo Deadlift",
+      "equipment": "Barbell",
+      "status": "queued"
+    },
+    {
+      "id": "trap-bar-deadlift",
+      "name": "Trap Bar Deadlift",
+      "equipment": "Barbell",
+      "status": "queued"
+    },
+    {
+      "id": "lunges",
+      "name": "Lunges",
+      "equipment": "Dumbbells",
+      "status": "queued"
+    },
+    {
+      "id": "bodyweight-lunge",
+      "name": "Bodyweight Lunge",
+      "equipment": "Bodyweight",
+      "status": "queued"
+    },
+    {
+      "id": "walking-dumbbell-lunges",
+      "name": "Walking Dumbbell Lunges",
+      "equipment": "Dumbbells",
+      "status": "queued"
+    },
+    {
+      "id": "bulgarian-split",
+      "name": "Bulgarian Split Squat",
+      "equipment": "Dumbbells",
+      "status": "queued"
+    },
+    {
+      "id": "barbell-step-ups",
+      "name": "Barbell Step-Ups",
+      "equipment": "Barbell",
+      "status": "queued"
+    },
+    {
+      "id": "calf-raise",
+      "name": "Calf Raise",
+      "equipment": "Machine",
+      "status": "queued"
+    },
+    {
+      "id": "standing-calf-raise",
+      "name": "Standing Calf Raise",
+      "equipment": "Machine",
+      "status": "queued"
+    },
+    {
+      "id": "seated-calf-raise",
+      "name": "Seated Calf Raise",
+      "equipment": "Machine",
+      "status": "queued"
+    },
+    {
+      "id": "donkey-calf-raise",
+      "name": "Donkey Calf Raise",
+      "equipment": "Machine",
+      "status": "queued"
+    },
+    {
+      "id": "single-leg-calf-raise",
+      "name": "Single-Leg Calf Raise",
+      "equipment": "Bodyweight",
+      "status": "queued"
+    },
+    {
+      "id": "hip-thrust",
+      "name": "Hip Thrust",
+      "equipment": "Barbell",
+      "status": "queued"
+    },
+    {
+      "id": "glute-bridge",
+      "name": "Glute Bridge",
+      "equipment": "Bodyweight",
+      "status": "master-only-edit-blocked",
+      "path": "docs/exercise-art/pilots/batch-04/glute-bridge"
+    },
+    {
+      "id": "hip-abduction-machine",
+      "name": "Hip Abduction Machine",
+      "equipment": "Machine",
+      "status": "queued"
+    },
+    {
+      "id": "hip-adduction-machine",
+      "name": "Hip Adduction Machine",
+      "equipment": "Machine",
+      "status": "queued"
+    },
+    {
+      "id": "cable-glute-kickback",
+      "name": "Cable Glute Kickback",
+      "equipment": "Cable Machine",
+      "status": "queued"
+    },
+    {
+      "id": "pistol-squat",
+      "name": "Pistol Squats",
+      "equipment": "Bodyweight",
+      "status": "queued"
+    },
+    {
+      "id": "plank",
+      "name": "Plank",
+      "equipment": "Bodyweight",
+      "status": "queued"
+    },
+    {
+      "id": "superman-hold",
+      "name": "Superman Hold",
+      "equipment": "Bodyweight",
+      "status": "queued"
+    },
+    {
+      "id": "side-plank",
+      "name": "Side Plank",
+      "equipment": "Bodyweight",
+      "status": "queued"
+    },
+    {
+      "id": "weighted-plank",
+      "name": "Weighted Plank",
+      "equipment": "Bodyweight",
+      "status": "queued"
+    },
+    {
+      "id": "crunches",
+      "name": "Crunches",
+      "equipment": "Bodyweight",
+      "status": "master-only-edit-blocked",
+      "path": "docs/exercise-art/pilots/batch-04/crunches"
+    },
+    {
+      "id": "bicycle-crunch",
+      "name": "Bicycle Crunch",
+      "equipment": "Bodyweight",
+      "status": "queued"
+    },
+    {
+      "id": "decline-sit-up",
+      "name": "Decline Sit-Up",
+      "equipment": "Bodyweight",
+      "status": "queued"
+    },
+    {
+      "id": "leg-raise",
+      "name": "Hanging Leg Raise",
+      "equipment": "Bodyweight",
+      "status": "queued"
+    },
+    {
+      "id": "toe-touches",
+      "name": "Toe Touches",
+      "equipment": "Bodyweight",
+      "status": "queued"
+    },
+    {
+      "id": "russian-twist",
+      "name": "Russian Twist",
+      "equipment": "Bodyweight",
+      "status": "queued"
+    },
+    {
+      "id": "mountain-climbers",
+      "name": "Mountain Climbers",
+      "equipment": "Bodyweight",
+      "status": "queued"
+    },
+    {
+      "id": "cable-crunch",
+      "name": "Cable Crunch",
+      "equipment": "Cable Machine",
+      "status": "queued"
+    },
+    {
+      "id": "cable-woodchopper",
+      "name": "Cable Woodchopper",
+      "equipment": "Cable Machine",
+      "status": "queued"
+    },
+    {
+      "id": "pallof-press",
+      "name": "Pallof Press",
+      "equipment": "Cable Machine",
+      "status": "queued"
+    },
+    {
+      "id": "dead-bug",
+      "name": "Dead Bug",
+      "equipment": "Bodyweight",
+      "status": "queued"
+    },
+    {
+      "id": "dragon-flag",
+      "name": "Dragon Flag",
+      "equipment": "Bodyweight",
+      "status": "queued"
+    },
+    {
+      "id": "ab-wheel",
+      "name": "Ab Wheel Rollout",
+      "equipment": "Ab Wheel",
+      "status": "queued"
+    },
+    {
+      "id": "l-sit",
+      "name": "L-Sit",
+      "equipment": "Bodyweight",
+      "status": "queued"
+    },
+    {
+      "id": "clean-and-press",
+      "name": "Clean and Press",
+      "equipment": "Barbell",
+      "status": "queued"
+    },
+    {
+      "id": "kettlebell-swing",
+      "name": "Kettlebell Swing",
+      "equipment": "Kettlebell",
+      "status": "queued"
+    },
+    {
+      "id": "burpees",
+      "name": "Burpees",
+      "equipment": "Bodyweight",
+      "status": "queued"
+    },
+    {
+      "id": "thrusters",
+      "name": "Thrusters",
+      "equipment": "Barbell",
+      "status": "queued"
+    },
+    {
+      "id": "farmers-carry",
+      "name": "Farmer's Carry",
+      "equipment": "Dumbbells",
+      "status": "queued"
+    },
+    {
+      "id": "sled-push-pull",
+      "name": "Sled Push/Pull",
+      "equipment": "Machine",
+      "status": "queued"
+    },
+    {
+      "id": "landmine-squat",
+      "name": "Landmine Squat",
+      "equipment": "Barbell",
+      "status": "queued"
+    },
+    {
+      "id": "zercher-squat",
+      "name": "Zercher Squat",
+      "equipment": "Barbell",
+      "status": "queued"
+    },
+    {
+      "id": "turkish-get-up",
+      "name": "Turkish Get-Up",
+      "equipment": "Kettlebell",
+      "status": "queued"
+    },
+    {
+      "id": "man-maker",
+      "name": "Man Maker",
+      "equipment": "Dumbbells",
+      "status": "queued"
+    },
+    {
+      "id": "battle-ropes",
+      "name": "Battle Ropes",
+      "equipment": "Battle Ropes",
+      "status": "queued"
+    },
+    {
+      "id": "box-jumps",
+      "name": "Box Jumps",
+      "equipment": "Box",
+      "status": "queued"
+    },
+    {
+      "id": "muscle-ups",
+      "name": "Muscle-Ups",
+      "equipment": "Bodyweight",
+      "status": "queued"
+    },
+    {
+      "id": "handstand-push-ups",
+      "name": "Handstand Push-Ups",
+      "equipment": "Bodyweight",
+      "status": "queued"
+    },
+    {
+      "id": "cable-fly",
+      "name": "Cable Fly",
+      "equipment": "Cable Machine",
+      "status": "queued"
+    }
+  ],
+  "newSixFrameDrafts": 4,
+  "newDraftFrames": 24,
+  "blockedMasterOnly": 2,
+  "notYetAttemptedInBatch04": 118
+}
