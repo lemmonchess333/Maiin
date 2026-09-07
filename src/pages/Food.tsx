@@ -1826,18 +1826,16 @@ export default function Food() {
       {/* Logging group: the eligible usual, then the composer and slot.
           The usual row leads because it is the one-tap repeat, and because
           it has to clear the fold: `companion-food.capture.spec.ts` asserts
-          its Log button ends above 760px at 375px wide. Restoring the
-          calorie hero in #2187 pushed this whole group down ~250px and put
-          that button at 1007 — the capture gate caught it. Ordering the row
-          first buys back the ~90px the composer and slot picker occupy and
-          costs the hero nothing. Keep it above the composer. */}
+          its Log button ends above 760px at 375px wide, and the calorie
+          hero above it leaves only just enough room. Keep it first. */}
       {usual && (
-        /* Compact by requirement, not by taste. The row has to clear the
-           fold at 375px (see the ordering note above), and the name, the
-           kcal and the portion each having their own line cost ~36px more
-           than the budget allowed. Name and figures now share a baseline
-           row — the name truncates, the figures never do, because the
-           figures are what makes this row tappable without thinking. */
+        /* Compact by requirement, not by taste: this row has to clear the
+           fold at 375px (see the ordering note above), and a separate line
+           each for the name, the kcal and the portion does not fit. Name
+           and figures share a baseline row — the name truncates, the
+           figures never do, because the figures are what make the row
+           tappable without thinking. The button row stays 44px: that is
+           the touch-target floor. */
         <div
           className="rounded-2xl bg-card card-shadow p-3 space-y-1"
           aria-label="Your usual meal"
