@@ -6,6 +6,14 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **History remembers what happened.** The Badges tab is now Milestones: your
+  first workout, your first run, your best lift on each exercise and every
+  badge you have earned, in one list newest first and grouped by month. The
+  badge collection stays beneath it, so what is still in progress is still
+  visible.
+
 ### Changed
 
 - **Security audit (2026-09-07):** re-check the active account before every offline queue replay; keep callable and food-analysis requests within the configured emulator/project boundary; constrain server-written comment avatars to supported origins; escape formula-like content in CSV exports. Added HTTP authentication/authorisation regression tests and a deployed-source verification step for comment functions.

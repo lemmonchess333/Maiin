@@ -87,7 +87,12 @@ const ShoeMileageSection = lazyRetry(
 const PerformanceSection = lazyRetry(
   () => import("@/components/analytics/PerformanceSection")
 );
+import { useStreaks } from "@/features/streaks/useStreaks";
+
 const PRsTab = lazyRetry(() => import("@/components/analytics/PRsTab"));
+const MilestonesTab = lazyRetry(
+  () => import("@/components/analytics/MilestonesTab")
+);
 const BadgeGrid = lazyRetry(() =>
   import("@/features/streaks/BadgeGrid").then((m) => ({ default: m.BadgeGrid }))
 );
@@ -108,9 +113,9 @@ const CalorieBalanceChart = lazyRetry(
    current state / lifetime achievements / progress milestones).
    "All" was renamed "analytics" to match the page's frame
    commitment (Hist5a). */
-type FilterTab = "analytics" | "prs" | "badges";
+type FilterTab = "analytics" | "prs" | "milestones";
 
-const VALID_TABS: FilterTab[] = ["analytics", "prs", "badges"];
+const VALID_TABS: FilterTab[] = ["analytics", "prs", "milestones"];
 
 /* Hist5c pin 11 — legacy `?tab=` redirect map. Old URLs from
    share-cards, bookmarks, and pre-Hist5 deep-links continue to
@@ -125,6 +130,11 @@ const LEGACY_TAB_REDIRECTS: Record<string, FilterTab> = {
   lifting: "analytics",
   nutrition: "analytics",
   performance: "analytics",
+  /* The Badges tab became Milestones — the badge collection is now one
+     entry type inside the chronology rather than the tab's whole subject.
+     Bookmarks and the capture rig's stashed-tab value both still say
+     "badges", so it redirects like any other retired tab value. */
+  badges: "milestones",
 };
 
 /* Tab values that, in addition to a `?tab=` rewrite, also force a
@@ -161,7 +171,8 @@ function FilterPills({
       onChange={setFilter}
       options={VALID_TABS.map((f) => ({
         value: f,
-        label: f === "analytics" ? "Analytics" : f === "prs" ? "PRs" : "Badges",
+        label:
+          f === "analytics" ? "Analytics" : f === "prs" ? "PRs" : "Milestones",
       }))}
     />
   );
@@ -399,6 +410,37 @@ export default function History() {
   const trainingLoad = useTrainingLoadSeries(rangeDays);
   const { meals, loading: mealsLoading } = useMeals();
   const lifetimeRuns = useLifetimeRunStats();
+  const { earnedBadges } = useStreaks();
+  /**
+   * Earned badges, reduced to the chronology's shape. `earnedAt` is stored
+   * in several shapes across the badge history (a Firestore Timestamp on
+   * server-awarded badges, an ISO string on locally-awarded ones), so it is
+   * normalised to a local "yyyy-MM-dd" here; anything unparseable is
+   * dropped rather than dated with today, which would put an old badge at
+   * the top of the list every time the page loaded.
+   */
+  const milestoneBadges = useMemo(
+    () =>
+      earnedBadges.flatMap((badge) => {
+        const raw = badge.earnedAt as unknown;
+        const date =
+          raw && typeof (raw as { toDate?: unknown }).toDate === "function"
+            ? (raw as { toDate: () => Date }).toDate()
+            : typeof raw === "string"
+              ? new Date(raw)
+              : null;
+        if (!date || Number.isNaN(date.getTime())) return [];
+        return [
+          {
+            id: badge.id,
+            name: badge.name,
+            description: badge.description,
+            earnedOn: localDateString(date),
+          },
+        ];
+      }),
+    [earnedBadges]
+  );
   const { profile } = useAuth();
   const unit = useDistanceUnit();
   /**
@@ -1223,8 +1265,24 @@ export default function History() {
           </div>
         }
       >
-        {filter === "badges" ? (
-          <BadgeGrid />
+        {filter === "milestones" ? (
+          <SectionErrorBoundary sectionName="milestones-tab">
+            <div className="space-y-8">
+              <MilestonesTab
+                workouts={workouts}
+                runs={lifetimeRuns.firstRun ? [lifetimeRuns.firstRun] : []}
+                liftBests={liftingData.lifetimePRs}
+                badges={milestoneBadges}
+                unit={unit}
+              />
+              {/* The badge COLLECTION stays, below the story. Earned badges
+                  are now entries in the chronology above, but the grid
+                  answers a different question — what is still in progress
+                  and how close it is — which a list of things that already
+                  happened structurally cannot. */}
+              <BadgeGrid />
+            </div>
+          </SectionErrorBoundary>
         ) : filter === "prs" ? (
           <SectionErrorBoundary sectionName="prs-tab">
             <PRsTab
