@@ -72,6 +72,11 @@ jobs:
       - name: Deploy Storage rules
         run: firebase deploy --only storage --project adaptive-fitness-af8bb --force
 
+      - name: Verify active Storage Rules source
+        env:
+          TROPOS_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+        run: python3 scripts/verify_deployed_rules.py --service storage
+
   # ── LOUD SKIP ────────────────────────────────────────────────────────────
   # The gate above is intentional, but a skipped job leaves the WORKFLOW
   # green — and this workflow only ever triggers when storage.rules or

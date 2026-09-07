@@ -1,0 +1,33 @@
+name: Verify Active Production Rules
+
+# Read-only audit, independent of the Storage deployment/approval gate.
+# No credentials or production access on pull requests.
+on:
+  push:
+    branches: [main]
+    paths:
+      - scripts/verify_deployed_rules.py
+      - scripts/test_verify_deployed_rules.py
+      - .github/workflows/verify-production-rules.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Test Rules source verifier without credentials
+        run: python3 -m unittest discover -s scripts -p 'test_verify_deployed_rules.py' -v
+      - name: Authenticate with the existing deploy identity
+        uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - name: Compare active Firestore and Storage source
+        env:
+          TROPOS_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+        run: python3 scripts/verify_deployed_rules.py
