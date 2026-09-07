@@ -18,7 +18,7 @@
  *     'FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 GCLOUD_PROJECT=demo-tropos npm test --prefix functions'
  */
 
-import { describe, it, expect, beforeAll, beforeEach } from "vitest";
+import { describe, it, expect, beforeAll, beforeEach, vi } from "vitest";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
@@ -93,14 +93,21 @@ suite("rateLimiter — emulator integration", () => {
   });
 
   it("rate limit clears after the window expires", async () => {
-    // Use a 50ms window so the test doesn't have to sleep for a
-    // minute. Fill the bucket, wait past the window, retry.
-    for (let i = 0; i < 3; i++) {
-      await isRateLimited(db, "user-d", "askGemini", 3, 50);
+    // Control only the policy clock. Real emulator RPCs can take longer
+    // than 50ms; wall-clock sleeps made this check expire while filling.
+    // Keep transport timers real so the transaction path is still exercised.
+    const clock = vi.spyOn(Date, "now").mockReturnValue(1_800_000_000_000);
+    try {
+      for (let i = 0; i < 3; i++) {
+        expect(await isRateLimited(db, "user-d", "askGemini", 3, 50)).toBe(false);
+      }
+      clock.mockReturnValue(1_800_000_000_049);
+      expect(await isRateLimited(db, "user-d", "askGemini", 3, 50)).toBe(true);
+      clock.mockReturnValue(1_800_000_000_050);
+      expect(await isRateLimited(db, "user-d", "askGemini", 3, 50)).toBe(false);
+    } finally {
+      clock.mockRestore();
     }
-    expect(await isRateLimited(db, "user-d", "askGemini", 3, 50)).toBe(true);
-    await new Promise((resolve) => setTimeout(resolve, 70));
-    expect(await isRateLimited(db, "user-d", "askGemini", 3, 50)).toBe(false);
   });
 
   it("rate limit keys are scoped per (uid, action) pair", async () => {

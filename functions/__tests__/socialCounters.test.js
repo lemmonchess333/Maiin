@@ -281,12 +281,12 @@ describe("addComment", () => {
       activityId: "A1",
       text: "hi",
       authorName: "Alice",
-      authorPhotoURL: "https://example.com/a.png",
+      authorPhotoURL: "https://lh3.googleusercontent.com/a.png",
       increment,
       serverTimestamp,
     });
     const setOp = firestore._writes.find((w) => w.op === "set");
-    expect(setOp.data.authorPhotoURL).toBe("https://example.com/a.png");
+    expect(setOp.data.authorPhotoURL).toBe("https://lh3.googleusercontent.com/a.png");
   });
 });
 

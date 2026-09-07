@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Security audit (2026-09-07):** re-check the active account before every offline queue replay; keep callable and food-analysis requests within the configured emulator/project boundary; constrain server-written comment avatars to supported origins; escape formula-like content in CSV exports. Added HTTP authentication/authorisation regression tests and a deployed-source verification step for comment functions.
+
 - Setup has five named chapters, an early interactive draft week, a spinning weight scale with direct typing, and an editable plan review. Goals and limitations require explicit choices; free running stays unscheduled, and nutrition clearly starts at maintenance.
 - Home puts today’s training and logging first, then the weekly performance ring. Food brings the composer and usual meal into view sooner, below the calorie ring and macro breakdown, with the full detail still in Details.
 - The meal slot you are adding to is a filled orange pill again, on Food and when editing servings.

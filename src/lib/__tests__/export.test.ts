@@ -30,6 +30,19 @@ beforeEach(() => {
 });
 
 describe("exportWorkoutsCSV", () => {
+  it("keeps formula-like exercise names and set types as text", async () => {
+    seedIn(WORKOUTS, [
+      {
+        date: "2026-09-07",
+        exercises: [
+          { name: "=1+1", sets: [{ weightKg: 80, reps: 8, type: "+1+1" }] },
+        ],
+      },
+    ]);
+    expect(await exportWorkoutsCSV(UID)).toContain(
+      '2026-09-07,"\'=1+1",1,80,8,"\'+1+1"'
+    );
+  });
   it("returns header row when no workouts", async () => {
     const csv = await exportWorkoutsCSV("user1");
     expect(csv).toBe("Date,Exercise,Set,Weight (kg),Reps,Type");
@@ -103,6 +116,36 @@ describe("exportWorkoutsCSV", () => {
 });
 
 describe("exportMealsCSV", () => {
+  it.each([
+    "=1+1",
+    "+1+1",
+    "-1+1",
+    "@SUM(1)",
+    "\t=1+1",
+    "\r=1+1",
+    "  =1+1",
+    "\u0000=1+1",
+    "＝1+1",
+  ])("neutralises formula-like meal names: %j", async (name) => {
+    seedIn(MEALS, [
+      { date: "2026-09-07", createdAt: 1, foodName: name, totalCalories: 100 },
+    ]);
+    expect(await exportMealsCSV(UID)).toContain(`"'${name}",100,0,0,0`);
+  });
+
+  it("contains embedded separators and formula-like numeric fields within their own cells", async () => {
+    seedIn(MEALS, [
+      {
+        date: "2026-09-07",
+        createdAt: 1,
+        foodName: 'Oats,"\n=1+1',
+        totalCalories: "=2+2",
+      },
+    ]);
+    expect(await exportMealsCSV(UID)).toContain(
+      '2026-09-07,"Oats,""\n=1+1","\'=2+2",0,0,0'
+    );
+  });
   it("returns header row when no meals", async () => {
     const csv = await exportMealsCSV("user1");
     expect(csv).toBe("Date,Meal,Calories,Protein (g),Carbs (g),Fat (g)");

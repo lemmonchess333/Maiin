@@ -95,6 +95,11 @@ jobs:
       - name: Deploy functions
         run: firebase deploy --only functions --project adaptive-fitness-af8bb --force
 
+      # Read the DEPLOYED source, including the injected commit marker. A
+      # green upload log alone does not establish which bundle is executing.
+      - name: Verify deployed comment function source
+        run: python3 scripts/verify-deployed-functions-source.py
+
       # A failed PRODUCTION deploy must be loud. CI on PRs stays green
       # (deploys only run post-merge), so without this step a deploy
       # failure is invisible unless someone reads the Actions tab —

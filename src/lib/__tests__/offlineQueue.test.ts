@@ -18,6 +18,10 @@ import {
 } from "@/test/firestoreHarness";
 
 vi.mock("firebase/firestore");
+const { auth } = vi.hoisted(() => ({
+  auth: { currentUser: { uid: "user-a" } as { uid: string } | null },
+}));
+vi.mock("@/lib/firebase", () => ({ auth }));
 
 /** Ids the fake mints for `doc(collectionRef)` — the client-minted-id
  *  shape these tests pin. */
@@ -53,6 +57,53 @@ describe("offlineQueue", () => {
   beforeEach(() => {
     resetFirestore();
     localStorage.clear();
+    auth.currentUser = { uid: UID_A };
+  });
+
+  it.each([null, { uid: UID_B }])(
+    "keeps an old flush queued when the current account is %j",
+    async (currentUser) => {
+      queueWrite(
+        UID_A,
+        `users/${UID_A}/logs`,
+        { calories: 100 },
+        "2026-09-07",
+        true
+      );
+      auth.currentUser = currentUser;
+      expect(
+        await flushQueue({} as Parameters<typeof flushQueue>[0], UID_A)
+      ).toBe(0);
+      expect(writeLog()).toEqual([]);
+      expect(getQueueLength(UID_A)).toBe(1);
+      auth.currentUser = { uid: UID_A };
+      expect(
+        await flushQueue({} as Parameters<typeof flushQueue>[0], UID_A)
+      ).toBe(1);
+      expect(getQueueLength(UID_A)).toBe(0);
+    }
+  );
+
+  it("stops between writes when the account changes during an acknowledgement", async () => {
+    queueWrite(UID_A, `users/${UID_A}/logs`, { calories: 100 }, "first", true);
+    queueWrite(UID_A, `users/${UID_A}/logs`, { calories: 200 }, "second", true);
+    deferWrites();
+    const flushing = flushQueue({} as Parameters<typeof flushQueue>[0], UID_A);
+    await vi.waitFor(() =>
+      expect(pendingWrites()).toEqual([`users/${UID_A}/logs/first`])
+    );
+    auth.currentUser = { uid: UID_B };
+    resumeWrites();
+    releaseAllWrites();
+    expect(await flushing).toBe(1);
+    expect(writeLog().map((w) => w.path)).toEqual([
+      `users/${UID_A}/logs/first`,
+    ]);
+    expect(getQueueLength(UID_A)).toBe(1);
+    auth.currentUser = { uid: UID_A };
+    expect(
+      await flushQueue({} as Parameters<typeof flushQueue>[0], UID_A)
+    ).toBe(1);
   });
 
   it("starts with empty queue", () => {
