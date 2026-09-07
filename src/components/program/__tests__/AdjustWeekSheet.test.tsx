@@ -390,7 +390,7 @@ describe("AdjustWeekSheet — undoing an easier week", () => {
     const { toast } = await import("@/lib/toast");
     await vi.waitFor(() =>
       expect(toast.success).toHaveBeenCalledWith(
-        "Easier week undone — this week is back to plan."
+        "Easier week undone. This week is back to plan."
       )
     );
   });

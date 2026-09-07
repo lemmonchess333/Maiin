@@ -78,7 +78,7 @@ export default function RunFitnessSection({
       );
       haptic("success");
     } catch {
-      setError("Couldn't save — check your connection and try again.");
+      setError("Couldn't save. Check your connection and try again.");
     } finally {
       setConfirming(false);
     }
@@ -91,7 +91,7 @@ export default function RunFitnessSection({
     try {
       await updateProfile({ runFitness: null }, { throwOnError: true });
     } catch {
-      setError("Couldn't remove — check your connection and try again.");
+      setError("Couldn't remove. Check your connection and try again.");
     }
   }
 
@@ -104,7 +104,7 @@ export default function RunFitnessSection({
     const meters = RACE_OPTIONS.find((o) => o.value === distance)!.meters;
     const vdot = vdotFromRace(meters, seconds);
     if (vdot <= 0) {
-      setError("That time doesn't look right — check it and try again.");
+      setError("That time doesn't look right. Check it and try again.");
       return;
     }
     setError(null);
@@ -128,7 +128,7 @@ export default function RunFitnessSection({
       setEditing(false);
       setTimeStr("");
     } catch {
-      setError("Couldn't save — check your connection and try again.");
+      setError("Couldn't save. Check your connection and try again.");
     } finally {
       setSaving(false);
     }

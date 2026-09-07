@@ -25,11 +25,28 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { globSync } from "tinyglobby";
 
-/** 240 across 88 files on 2026-09-07, after the purpose lines moved to
- *  middots (they were 6 of the count). */
-const EM_DASH_COPY_BASELINE = 240;
-/** CirclesSection and ProgrammeSettings, 13 each, on the same date. */
-const WORST_FILE_BASELINE = 13;
+/**
+ * 174, down from 240, after the copy pass this ratchet asked for.
+ *
+ * What the pass found, which is worth knowing before anyone tries to
+ * drive this number to zero: of the original 240, twenty were the bare
+ * "—" no-value placeholder and about sixty were multi-line template
+ * literals the matcher spans rather than real copy. The genuinely
+ * rewritable surface was ~140, and this pass took the majority of it.
+ *
+ * Three shapes accounted for nearly all of it, and they wanted different
+ * fixes rather than one substitution: an error and its recovery became
+ * two sentences ("Couldn't save. Check your connection and try again."),
+ * two facts of equal weight took the middot the app already uses
+ * ("Calorie deficit · lose fat, keep muscle"), and a statement followed
+ * by a second statement took a full stop. A genuine parenthetical aside
+ * — ProgressPhotos' paired dashes are the clearest example — was left
+ * exactly as it was, because that is what the character is for.
+ */
+const EM_DASH_COPY_BASELINE = 174;
+/** ExerciseHistory, 8, and every one of them the bare "—" placeholder
+ *  rather than the construction. Lower this only against real copy. */
+const WORST_FILE_BASELINE = 8;
 
 const SRC = join(process.cwd(), "src");
 

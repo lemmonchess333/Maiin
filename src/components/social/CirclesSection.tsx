@@ -308,7 +308,7 @@ export default function CirclesSection({
       setTargetBusy(false);
       if (ok) {
         haptic("light");
-        toast.success("Target extended — keep it going");
+        toast.success("Target extended. Keep it going.");
         setExtendOpen(false);
         setNewTargetDate("");
       } else {
@@ -326,7 +326,7 @@ export default function CirclesSection({
       setTargetBusy(false);
       if (ok) {
         haptic("light");
-        toast.success("Circle wrapped — nice work");
+        toast.success("Circle wrapped. Nice work.");
       } else {
         toast.error("Couldn't wrap the Circle. Try again.");
       }
@@ -499,7 +499,7 @@ export default function CirclesSection({
         );
         toast.success("Invite copied.");
       } catch {
-        toast.error("Couldn't copy — long-press the code to select it.");
+        toast.error("Couldn't copy. Long-press the code to select it.");
       }
     }
   };
@@ -511,7 +511,7 @@ export default function CirclesSection({
       );
       toast.success("Invite code copied.");
     } catch {
-      toast.error("Couldn't copy — long-press the code to select it.");
+      toast.error("Couldn't copy. Long-press the code to select it.");
     }
   };
 
@@ -553,7 +553,7 @@ export default function CirclesSection({
       toast.success("You're in.");
     } else {
       toast.error(
-        "Couldn't join — the invite may be wrong or the circle full."
+        "Couldn't join. The invite may be wrong, or the circle may be full."
       );
     }
   };
@@ -984,7 +984,7 @@ export default function CirclesSection({
           }
         }}
         title="Start a circle"
-        description="Invite-only, 2–8 people. Numbers, meals and photos stay private — a circle only ever sees check-ins."
+        description="Invite-only, 2–8 people. Numbers, meals and photos stay private. A circle only ever sees check-ins."
       >
         <div className="px-4 space-y-3 pb-2">
           {goalPrechosen ? (
@@ -1064,7 +1064,7 @@ export default function CirclesSection({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             maxLength={60}
-            placeholder="Name it — e.g. Autumn strength block"
+            placeholder="Name it (e.g. Autumn strength block)"
             aria-label="Circle name"
             className="w-full min-h-[44px] px-3 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
@@ -1212,9 +1212,7 @@ export default function CirclesSection({
                         )
                         .then(() => toast.success("Invite code copied."))
                         .catch(() =>
-                          toast.error(
-                            "Couldn't copy — long-press to select it."
-                          )
+                          toast.error("Couldn't copy. Long-press to select it.")
                         );
                     }}
                   >
@@ -1351,7 +1349,7 @@ export default function CirclesSection({
           if (!o) setInviteHandoff(null);
         }}
         title="Your Circle is ready"
-        description="Invite 1–7 people — the circle only ever sees check-ins, never numbers, meals or photos."
+        description="Invite 1–7 people. The circle only ever sees check-ins, never numbers, meals or photos."
       >
         {inviteHandoff && (
           <div className="px-4 space-y-3 pb-2">

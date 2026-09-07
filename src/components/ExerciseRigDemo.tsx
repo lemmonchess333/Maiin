@@ -305,7 +305,7 @@ function LegacyExerciseRigDemo({
     return (
       <div
         role="img"
-        aria-label={`${name} demonstration — start and end positions`}
+        aria-label={`${name} demonstration · start and end positions`}
         className="bg-stage rounded-2xl p-4 mt-4 flex justify-center gap-3"
         data-demo-still="two-up"
       >
@@ -338,7 +338,7 @@ function LegacyExerciseRigDemo({
       <div className="bg-stage rounded-2xl p-4 mt-4">
         <div
           role="img"
-          aria-label={`${name} demonstration — stepping through each position`}
+          aria-label={`${name} demonstration · stepping through each position`}
         >
           <Figure html={initialHtml} figureRef={figureRef} />
         </div>
@@ -366,7 +366,7 @@ function LegacyExerciseRigDemo({
 
   return (
     <div className="bg-stage rounded-2xl p-4 mt-4">
-      <div role="img" aria-label={`${name} demonstration — looping reps`}>
+      <div role="img" aria-label={`${name} demonstration · looping reps`}>
         <Figure html={initialHtml} figureRef={figureRef} />
       </div>
       {/* Phase cue — the teaching half of the loop. aria-live=polite reads

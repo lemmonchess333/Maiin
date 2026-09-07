@@ -232,7 +232,7 @@ export default function AdjustWeekSheet({
         action: "easier_week_undone",
       });
       clearEasedWeekKey(uid);
-      toast.success("Easier week undone — this week is back to plan.");
+      toast.success("Easier week undone. This week is back to plan.");
       close(false);
     } catch (err) {
       logger.error("[adjustWeek] easier-week undo failed", err);
@@ -340,7 +340,7 @@ export default function AdjustWeekSheet({
         if (!o) close(true);
       }}
       title="Adjust this week"
-      description="Your race date stays put — this only shapes the week."
+      description="Your race date stays put. This only shapes the week."
     >
       <div className="px-4 pb-6 pt-3 space-y-2">
         {busy && (
@@ -486,11 +486,11 @@ export default function AdjustWeekSheet({
             </div>
             <p className="text-sm text-muted-foreground">
               {step.timing === "healthy" &&
-                "Your remaining weeks re-plan from today with room to spare — the race date stays put."}
+                "Your remaining weeks re-plan from today with room to spare. The race date stays put."}
               {step.timing === "compressible" &&
                 "The remaining time is tight, so the re-planned block will be compressed toward your race date."}
               {step.timing === "below-floor" &&
-                "There isn't enough time left for a full build — the plan will switch to a mostly-easy shape (all easy running, no big jumps)."}
+                "There isn't enough time left for a full build, so the plan will switch to a mostly-easy shape (all easy running, no big jumps)."}
             </p>
             <div className="flex gap-2 pt-1">
               <Button

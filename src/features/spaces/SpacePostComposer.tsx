@@ -97,7 +97,7 @@ function attachableLabel(a: Attachable, unit: DistanceUnit): string {
     .slice(0, 2)
     .map((e) => e.exerciseName)
     .join(", ");
-  return `Workout — ${names}${a.workout.exercises.length > 2 ? "…" : ""}`;
+  return `Workout · ${names}${a.workout.exercises.length > 2 ? "…" : ""}`;
 }
 
 export default function SpacePostComposer({
@@ -184,7 +184,7 @@ export default function SpacePostComposer({
     if (offline && photoFile) {
       haptic("error");
       toast.error(
-        "Photos need a connection — remove the photo to post now, or try again when you're back online."
+        "Photos need a connection. Remove the photo to post now, or try again when you're back online."
       );
       return;
     }
@@ -199,7 +199,7 @@ export default function SpacePostComposer({
       } catch {
         haptic("error");
         toast.error(
-          "Photo upload failed — try again, or remove the photo to post without it."
+          "Photo upload failed. Try again, or remove the photo to post without it."
         );
         setBusy(false);
         return;
@@ -234,7 +234,7 @@ export default function SpacePostComposer({
       write.catch((err) =>
         logger.warn("[SpacePostComposer] queued post rejected", err)
       );
-      finish("Post queued — it goes up when you reconnect");
+      finish("Post queued. It goes up when you reconnect.");
       setBusy(false);
       return;
     }

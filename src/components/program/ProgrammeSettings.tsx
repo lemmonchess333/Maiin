@@ -273,17 +273,17 @@ const NUTRITION_OPTIONS: { id: Goal; label: string; desc: string }[] = [
   {
     id: "cut",
     label: "Cutting",
-    desc: "Calorie deficit — lose fat, keep muscle",
+    desc: "Calorie deficit · lose fat, keep muscle",
   },
   {
     id: "lean bulk",
     label: "Lean bulk",
-    desc: "Small surplus — build muscle slowly",
+    desc: "Small surplus · build muscle slowly",
   },
   {
     id: "recomp",
     label: "Recomp",
-    desc: "Maintenance — recompose at current weight",
+    desc: "Maintenance · recompose at current weight",
   },
 ];
 
@@ -360,7 +360,7 @@ const INJURY_OPTIONS: {
   {
     id: "none",
     label: "No injuries",
-    desc: "All clear — no limitations",
+    desc: "No limitations",
     icon: <Check size={20} style={{ color: THEME.success }} />,
   },
   {
@@ -683,7 +683,7 @@ export default function ProgrammeSettings({
         code === "functions/invalid-argument" ||
         code === "invalid-argument"
       ) {
-        toast.error("Plan didn't validate — try a different combination.");
+        toast.error("Plan didn't validate. Try a different combination.");
       } else {
         toast.error("Couldn't save your plan. Try again.");
       }
@@ -871,8 +871,8 @@ export default function ProgrammeSettings({
                 </span>
                 <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
                   {saved.runMode === "race_prep"
-                    ? `${saved.weeklyRunDays} run ${saved.weeklyRunDays === 1 ? "day" : "days"}/week — tap to edit in Run plan`
-                    : "Run whenever you like — tap to set a race goal"}
+                    ? `${saved.weeklyRunDays} run ${saved.weeklyRunDays === 1 ? "day" : "days"}/week · tap to edit in Run plan`
+                    : "Run whenever you like · tap to set a race goal"}
                 </span>
               </span>
               <ChevronRight
@@ -977,7 +977,7 @@ export default function ProgrammeSettings({
       {/* ── Group 4: Advanced (engine toggles — live-save, no rebuild) ── */}
       <ProgrammeSettingsGroup
         title="Advanced"
-        subtitle="Fine-tune progression behaviour. Saved instantly — no rebuild."
+        subtitle="Fine-tune progression behaviour. Saved instantly, with no rebuild."
       >
         <div className="space-y-3">
           <div className="flex items-center justify-between">
@@ -1023,7 +1023,7 @@ export default function ProgrammeSettings({
         <ProgrammeSettingsGroup
           title="Danger zone"
           tone="danger"
-          subtitle="Resetting rebuilds your programme from scratch — you'll start at Week 1 and past week summaries clear. Logged workouts and runs stay in History."
+          subtitle="Resetting rebuilds your programme from scratch. You'll start at Week 1, and past week summaries clear. Logged workouts and runs stay in History."
         >
           <Button
             variant="destructive-tinted"
@@ -1100,7 +1100,7 @@ export default function ProgrammeSettings({
                   </h3>
                   <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                     {confirmReset
-                      ? "We'll rebuild your programme from scratch with your current settings. You'll start fresh at Week 1 — past week summaries clear. Your logged workouts and runs stay in History."
+                      ? "We'll rebuild your programme from scratch with your current settings. You'll start fresh at Week 1, and past week summaries clear. Your logged workouts and runs stay in History."
                       : focusChangedSameFrequency
                         ? `New focus: ${labelFor(FOCUS_OPTIONS, primaryGoal)}. Update your sessions to re-aim working sets at ${focusRepSummary(primaryGoal)} reps — weights adjust down where a target rises, and your exercises, sets, history and week number stay. Or keep your current sessions and change the focus only.`
                         : programmePreservationNote({

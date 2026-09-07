@@ -340,7 +340,7 @@ export default function ProgressPhotos() {
         } catch (e) {
           logger.error("[UPLOAD] Encryption failed:", e);
           throw new Error(
-            "Couldn't encrypt the photo on this device — upload cancelled to keep it private. Try again."
+            "Couldn't encrypt the photo on this device. The upload was cancelled to keep it private. Try again."
           );
         }
 
@@ -741,7 +741,7 @@ export default function ProgressPhotos() {
           if (!v && !savingCheckIn) setComposer(null);
         }}
         title={composer?.checkInId ? "Edit check-in" : "New check-in"}
-        description="Front, side and back are optional — one photo still counts. Private to your account."
+        description="Front, side and back are optional. One photo still counts, and it stays private to your account."
       >
         {composer && (
           <div className="px-5 pb-5 pt-3 space-y-4">

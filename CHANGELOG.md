@@ -29,6 +29,11 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Clearer wording across the app.** Errors now say what failed and what to
+  do in two short sentences instead of joining them with a dash ("Couldn't
+  save. Check your connection and try again."), and paired facts use the
+  same middot the rest of the app uses.
+
 - **Home no longer shows a zero while it is still loading.** Today's
   calories and macros wait for your meals to arrive instead of briefly
   reading "0 eaten", which was indistinguishable from having eaten nothing.

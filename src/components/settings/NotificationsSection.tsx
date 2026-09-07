@@ -61,9 +61,9 @@ export default function NotificationsSection({
       >(functions, "sendTestPush");
       const { data } = await fn();
       if (data.ok) {
-        toast.success("Test push sent — should arrive in a few seconds.");
+        toast.success("Test push sent. It should arrive in a few seconds.");
       } else if (data.reason === "no-registered-device") {
-        toast.error("No device registered yet — toggle push off and on again.");
+        toast.error("No device registered yet. Toggle push off and on again.");
       } else {
         // Surface the FCM reason/detail so a non-delivering send is diagnosable
         // (e.g. send-failed: messaging/third-party-auth-error).
@@ -121,7 +121,9 @@ export default function NotificationsSection({
     haptic("light");
     const ok = await sendTestNotification(kind);
     if (ok) {
-      toast.success("Test notification sent — should arrive in a few seconds.");
+      toast.success(
+        "Test notification sent. It should arrive in a few seconds."
+      );
       // Refresh pending so the test notification appears in the list
       // (and disappears once it fires).
       setTimeout(refreshPending, 500);
@@ -455,7 +457,7 @@ export default function NotificationsSection({
                 if (uid) {
                   const result = await registerDeviceToken(uid);
                   if (result.ok) {
-                    toast.success("Push on — this device is registered.");
+                    toast.success("Push on. This device is registered.");
                   } else {
                     // Surface the exact failure (iOS web push fails quietly).
                     toast.error(

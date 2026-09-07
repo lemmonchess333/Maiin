@@ -240,12 +240,13 @@ test.describe("form demo screenshots", () => {
   async function shootBoth(page: Page, name: string) {
     /* The reduced-motion root, by attribute rather than by accessible
        name. It used to wait on the two-up's EXACT label, because
-       `/demonstration/i` alone also matches the animated player
-       ("... demonstration — looping reps") and a looser locator once
-       shipped frames of a running loop. That string then stopped
-       existing for a placard demo, whose still version is a six-panel
-       storyboard, and this spec broke at `dips` — taking every demo
-       after it in the same run with it.
+       `/demonstration/i` alone also matches the animated player, and a
+       looser locator once shipped frames of a running loop. That label
+       then stopped existing for a placard demo, whose still version is a
+       six-panel storyboard, and this spec broke at `dips` — taking every
+       demo after it in the same run with it. The player's label has since
+       been reworded again, which is exactly why quoting it here would keep
+       going stale: the attribute below is the durable hook.
 
        `data-demo-still` is on the two reduced-motion roots and nowhere
        else, so it survives a change of presentation while keeping the
