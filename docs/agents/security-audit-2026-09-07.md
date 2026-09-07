@@ -2,6 +2,8 @@
 
 Source baseline: `6f550f849b12b1af39cfed4adacd1acbf5f761b7`. The public Firebase Hosting `/sw.js` served `BUILD_STAMP = "6f550f849b12"` at the start of this audit. This is a bounded source review and regression pass, not an ASVS certification or a claim that no vulnerabilities remain.
 
+The [follow-up pass](security-followup-2026-09-07.md) addresses the development-tool advisories and App Check build/CSP integration. Counts below describe the original pass, not the updated dependency tree.
+
 ## Confirmed findings and changes
 
 | Finding | Assessment | Reproduction and fix |

@@ -32,7 +32,7 @@
  * dynamic re-import per test, so each case starts from a clean
  * "App Check has never been initialised" baseline.
  */
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import type { Mock } from "vitest";
 
 // Mock the Firebase App Check SDK so we can assert provider
@@ -94,6 +94,7 @@ function setEnv(overrides: Record<string, string | undefined>) {
 }
 
 beforeEach(() => {
+  vi.unstubAllEnvs();
   vi.resetModules();
   initializeAppCheckMock.mockReset();
   getTokenMock.mockReset();
@@ -109,6 +110,8 @@ beforeEach(() => {
     VITE_APP_CHECK_DEBUG_TOKEN: undefined,
   });
 });
+
+afterEach(() => vi.unstubAllEnvs());
 
 describe("initAppCheck — native routing", () => {
   beforeEach(() => {
@@ -206,7 +209,8 @@ describe("initAppCheck — web routing", () => {
     expect(isAppCheckActive()).toBe(true);
   });
 
-  it("sets FIREBASE_APPCHECK_DEBUG_TOKEN on self when VITE_APP_CHECK_DEBUG_TOKEN is configured", async () => {
+  it("sets the configured debug token during development", async () => {
+    vi.stubEnv("DEV", true);
     setEnv({
       VITE_RECAPTCHA_V3_SITE_KEY: "site-key-abc123",
       VITE_APP_CHECK_DEBUG_TOKEN: "debug-token-zzz",
@@ -220,6 +224,24 @@ describe("initAppCheck — web routing", () => {
       (self as unknown as { FIREBASE_APPCHECK_DEBUG_TOKEN?: string })
         .FIREBASE_APPCHECK_DEBUG_TOKEN
     ).toBe("debug-token-zzz");
+  });
+
+  it("never installs an env debug token in production", async () => {
+    vi.stubEnv("DEV", false);
+    setEnv({
+      VITE_RECAPTCHA_V3_SITE_KEY: "site-key-abc123",
+      VITE_APP_CHECK_DEBUG_TOKEN: "production-must-not-use-this-token",
+    });
+    initializeAppCheckMock.mockReturnValue({});
+    const { initAppCheck } = await import("../appCheck");
+
+    expect(initAppCheck(fakeApp)).toBe(true);
+    expect(initializeAppCheckMock).toHaveBeenCalledTimes(1);
+    expect(reCaptchaV3ProviderMock).toHaveBeenCalledWith("site-key-abc123");
+    expect(
+      (self as unknown as { FIREBASE_APPCHECK_DEBUG_TOKEN?: string })
+        .FIREBASE_APPCHECK_DEBUG_TOKEN
+    ).toBeUndefined();
   });
 
   it("does NOT set the debug-token global when the env var is unset", async () => {

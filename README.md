@@ -33,7 +33,7 @@ Hot-reload dev server runs on http://localhost:5173/Maiin/ (note the
 - **Charts:** Recharts 3
 - **Maps:** MapLibre GL 5
 - **Animation:** Framer Motion 12 (gated through `useReducedMotion`)
-- **PWA:** vite-plugin-pwa + Workbox
+- **PWA:** custom service worker (`public/sw.js`) and registration (`src/lib/register-sw.ts`)
 - **Native:** Capacitor 8 (iOS + Android)
 - **Payments:** Stripe Checkout (web/Android), Apple In-App Purchase (iOS)
 - **Testing:** Vitest 4 + React Testing Library + jsdom (unit),
@@ -64,6 +64,13 @@ VITE_FIREBASE_APP_ID=
 VITE_RECAPTCHA_V3_SITE_KEY=           # from Firebase console → App Check
 VITE_APP_CHECK_DEBUG_TOKEN=           # optional, local dev only
 ```
+
+App Check debug tokens work only with the local development server. Every Vite
+build rejects a configured debug token, including values in `.env.local` and
+custom-mode env files. Remove that value before building; never publish it.
+
+Artwork preview/extraction scripts use the direct `sharp` development dependency.
+PWA icons are committed assets; the build does not run an icon generator.
 
 ### Stripe (web + Android payments)
 

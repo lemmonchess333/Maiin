@@ -76,9 +76,10 @@ jobs:
       # vite.config.ts is a raised warning, not a budget — this is the budget.
       - run: npm run check:dist-size
 
-  # Dependency advisories, as a PR gate for the ROOT tree: `npm audit`
+  # Dependency advisories, as a PR gate for the full ROOT tree: `npm audit`
   # fails on high or critical, so a new advisory has to be fixed or
-  # consciously documented before it merges. Both production dependency
+  # consciously addressed before it merges. Development tooling processes
+  # images too, so the root gate includes it. Both dependency
   # trees gate on high/critical. Compatible transitive updates cleared the
   # Functions high/critical advisories on 2026-09-07 without an Admin SDK
   # major migration; do not restore the former report-only `|| true` lane.
@@ -92,8 +93,8 @@ jobs:
           node-version: 22
           cache: "npm"
       - run: npm ci
-      - name: Audit root dependencies (gates on high and critical)
-        run: npm audit --omit=dev --audit-level=high
+      - name: Audit root and development dependencies (gates on high and critical)
+        run: npm audit --audit-level=high
       - name: Audit functions dependencies (gates on high and critical)
         working-directory: functions
         run: |

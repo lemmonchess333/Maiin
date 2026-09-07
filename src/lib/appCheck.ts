@@ -130,7 +130,11 @@ export function initAppCheck(app: FirebaseApp): boolean {
   // Honour the Firebase SDK's debug-provider global for local
   // development. Set VITE_APP_CHECK_DEBUG_TOKEN to a token copied
   // from the Firebase console to bypass App Check in dev.
-  const debugToken = import.meta.env.VITE_APP_CHECK_DEBUG_TOKEN;
+  // Keep debug credentials out of release code as well as runtime setup.
+  // Vite removes this development-only branch from production bundles.
+  const debugToken = import.meta.env.DEV
+    ? import.meta.env.VITE_APP_CHECK_DEBUG_TOKEN
+    : undefined;
   if (debugToken && typeof self !== "undefined") {
     (
       self as unknown as { FIREBASE_APPCHECK_DEBUG_TOKEN?: string }

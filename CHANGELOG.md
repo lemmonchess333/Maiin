@@ -6,6 +6,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- Security follow-up: release builds reject App Check debug tokens; the web CSP permits only the required reCAPTCHA paths. Unused PWA build packages are removed, artwork tooling uses patched Sharp directly, and CI checks development dependencies for high/critical advisories.
+
 ### Changed
 
 - **Security audit (2026-09-07):** re-check the active account before every offline queue replay; keep callable and food-analysis requests within the configured emulator/project boundary; constrain server-written comment avatars to supported origins; escape formula-like content in CSV exports. Added HTTP authentication/authorisation regression tests and a deployed-source verification step for comment functions.

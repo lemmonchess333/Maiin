@@ -45,6 +45,23 @@ function e2eMarkerPlugin(): Plugin {
   };
 }
 
+/** Debug tokens bypass device attestation. Read Vite's resolved env so this
+ * also catches .env.local / mode files and native or custom-mode builds.
+ * Never include the token value in an error or a build artifact. */
+function releaseDebugTokenGuard(): Plugin {
+  return {
+    name: "tropos-release-debug-token-guard",
+    apply: "build",
+    configResolved(config) {
+      if (config.env.VITE_APP_CHECK_DEBUG_TOKEN?.trim()) {
+        throw new Error(
+          "Refusing to build with VITE_APP_CHECK_DEBUG_TOKEN. Remove it from the build environment and .env files; use it only with the local development server."
+        );
+      }
+    },
+  };
+}
+
 /**
  * Function form so we can read the resolved Vite mode. `--mode=test`
  * builds (driven by `npm run build:e2e` and the emulator-tests
@@ -59,6 +76,7 @@ export default defineConfig(({ mode }) => ({
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version || "1.1.0"),
   },
   plugins: [
+    releaseDebugTokenGuard(),
     react(),
     tailwindcss(),
     ...(mode === "test" ? [e2eMarkerPlugin()] : []),
