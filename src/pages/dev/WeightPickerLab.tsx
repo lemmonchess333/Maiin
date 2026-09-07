@@ -33,7 +33,7 @@ function Ruler({
       el.scrollLeft = offset;
   }, [value]);
   return (
-    <div className="relative">
+    <div className="relative min-w-0 w-full overflow-hidden">
       <div
         className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-primary pointer-events-none z-10"
         aria-hidden="true"
@@ -46,7 +46,7 @@ function Ruler({
         aria-valuemax={maximum}
         aria-valuenow={value}
         tabIndex={0}
-        className="h-24 flex overflow-x-auto overflow-y-hidden motion-safe:snap-x motion-safe:snap-mandatory focus-visible:ring-2 focus-visible:ring-primary"
+        className="h-24 w-full min-w-0 flex overflow-x-auto overflow-y-hidden motion-safe:snap-x motion-safe:snap-mandatory focus-visible:ring-2 focus-visible:ring-primary"
         style={{ paddingInline: "calc(50% - 6px)", scrollbarWidth: "none" }}
         onKeyDown={(event) => {
           if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
@@ -247,7 +247,7 @@ function TrialPanel({
     setTask(task + 1);
   };
   return (
-    <section className="ds-card p-4 space-y-4" aria-label={`${picker} trial`}>
+    <section className="min-w-0 ds-card p-4 space-y-4" aria-label={`${picker} trial`}>
       <h2 className="text-lg font-semibold">
         {picker === "ruler" ? "Horizontal ruler" : "Three-column wheel"}
       </h2>
@@ -387,7 +387,7 @@ export default function WeightPickerLab() {
     URL.revokeObjectURL(url);
   };
   return (
-    <main className="max-w-5xl mx-auto px-4 py-8 space-y-6 bg-background text-foreground">
+    <main className="w-full min-w-0 max-w-5xl mx-auto px-4 py-8 space-y-6 bg-background text-foreground">
       <h1 className="text-2xl font-bold">Weight picker lab</h1>
       <p className="text-sm text-muted-foreground">
         Five target weights and one unit switch per control. Use a fresh reload
