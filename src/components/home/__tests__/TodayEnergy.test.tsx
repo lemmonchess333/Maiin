@@ -370,3 +370,60 @@ describe("TodayEnergy — infeasible target notice", function () {
     expect(screen.queryByText(/essential fat alone exceeds/)).toBeNull();
   });
 });
+
+describe("TodayEnergy — loading is not the same as having eaten nothing", function () {
+  /**
+   * A confident "0 eaten" while the day's meals are still in flight is a
+   * false statement rather than a neutral placeholder: it is byte-identical
+   * to the display for a user who has genuinely eaten nothing, and the
+   * reader most likely to meet it is the returning user who ate a full day
+   * yesterday. Home has no page-level skeleton past the profile load, so
+   * this component owns the distinction.
+   */
+  it("shows no calorie figure while meals are still loading", function () {
+    renderAt({ calories: 0, totalLifetimeMeals: 420, mealsLoading: true });
+    // The literal the pre-fix render produced.
+    expect(screen.queryByText("0")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("status", { name: /calories still loading/i })
+    ).toBeInTheDocument();
+  });
+
+  it("shows no macro figures while meals are still loading", function () {
+    renderAt({ calories: 0, totalLifetimeMeals: 420, mealsLoading: true });
+    expect(screen.queryByText(/^P 0\/160g/)).not.toBeInTheDocument();
+  });
+
+  it("shows the real figure once meals have loaded", function () {
+    renderAt({
+      calories: 1450,
+      protein: 90,
+      carbs: 150,
+      fat: 45,
+      totalLifetimeMeals: 420,
+      mealsLoading: false,
+    });
+    expect(screen.getByText("1,450")).toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("keeps a figure it already has rather than flickering back to a skeleton", function () {
+    // A refetch with data in hand must not blank the number: the guard is
+    // `calories === 0`, not `mealsLoading` alone.
+    renderAt({
+      calories: 1450,
+      protein: 90,
+      carbs: 150,
+      fat: 45,
+      totalLifetimeMeals: 420,
+      mealsLoading: true,
+    });
+    expect(screen.getByText("1,450")).toBeInTheDocument();
+  });
+
+  it("still shows a real zero once loading is done", function () {
+    // The genuinely-eaten-nothing case must survive the fix.
+    renderAt({ calories: 0, totalLifetimeMeals: 420, mealsLoading: false });
+    expect(screen.getByText("0")).toBeInTheDocument();
+  });
+});

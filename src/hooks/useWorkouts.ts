@@ -73,6 +73,10 @@ export interface WorkoutExercise {
   exerciseName: string;
   category: string;
   repUnit?: "reps" | "seconds";
+  /** What the lifter typed against this exercise during the session
+   *  ("Level 8, 6.0 incline"). Absent when they wrote nothing, and on
+   *  every workout logged before notes were persisted. */
+  notes?: string;
   sets: WorkoutSet[];
   caloriesBurned: number;
   // Cardio-specific (optional)

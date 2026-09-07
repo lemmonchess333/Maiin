@@ -8,6 +8,7 @@ import { ChevronDown, ChevronUp, UtensilsCrossed } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import { formatCalories, CALORIE_UNIT } from "@/utils/formatNutrition";
+import { Skeleton } from "@/components/LoadingSkeleton";
 import type { DailyBurn } from "@/utils/dailyBurn";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 import MacroRing from "@/components/home/MacroRing";
@@ -99,6 +100,16 @@ export default function TodayEnergy({
   // do. Returning users with a logged history keep the summary.
   const isColdStart =
     !mealsLoading && calories === 0 && totalLifetimeMeals === 0;
+  /**
+   * A confident "0 eaten" while the day's meals are still arriving is a
+   * false statement, not a neutral placeholder: it is indistinguishable
+   * from having eaten nothing, and the reader most likely to see it is
+   * the returning user who ate a full day yesterday. The guard is
+   * `calories === 0` rather than `mealsLoading` alone so a load that
+   * already has a figure keeps showing it instead of flickering back to a
+   * skeleton. Same shape as WeightStepsTiles' `pending`.
+   */
+  const caloriesPending = mealsLoading && calories === 0;
   const nudgeText =
     postWorkoutNudge && postWorkoutNudge.proteinRemaining > 0
       ? postWorkoutNudge.type === "run"
@@ -161,9 +172,15 @@ export default function TodayEnergy({
           </span>
         </div>
         <div className="flex items-baseline gap-2">
-          <span className="text-2xl font-bold font-mono tabular-nums leading-none text-foreground">
-            {formatCalories(calories || 0)}
-          </span>
+          {caloriesPending ? (
+            <span role="status" aria-label="Today's calories still loading">
+              <Skeleton className="h-6 w-16" />
+            </span>
+          ) : (
+            <span className="text-2xl font-bold font-mono tabular-nums leading-none text-foreground">
+              {formatCalories(calories || 0)}
+            </span>
+          )}
           <span className="text-micro text-muted-foreground">eaten</span>
           <span className="text-micro text-muted-foreground font-mono tabular-nums">
             / {formatCalories(tCal)} {CALORIE_UNIT}
@@ -199,11 +216,17 @@ export default function TodayEnergy({
             </div>
           );
         })()}
-        {!isColdStart && !expanded && (
-          <p className="mt-2.5 text-micro text-muted-foreground font-mono tabular-nums">
-            {macroSummary}
-          </p>
-        )}
+        {!isColdStart &&
+          !expanded &&
+          (caloriesPending ? (
+            // Same reasoning as the calorie figure: "P 0/150g" is a claim,
+            // not a placeholder.
+            <Skeleton className="mt-2.5 h-3 w-48" />
+          ) : (
+            <p className="mt-2.5 text-micro text-muted-foreground font-mono tabular-nums">
+              {macroSummary}
+            </p>
+          ))}
       </button>
 
       {/* A target below the essential-fat floor's own cost: the summary

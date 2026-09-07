@@ -126,7 +126,11 @@ const batchCommits = () =>
     );
 
 vi.mock("firebase/firestore");
-vi.mock("@/lib/firebase", () => ({ db: {}, functions: {}, auth: { currentUser: { uid: "test-user-1" } } }));
+vi.mock("@/lib/firebase", () => ({
+  db: {},
+  functions: {},
+  auth: { currentUser: { uid: "test-user-1" } },
+}));
 
 import {
   seedFirestore,
@@ -1900,6 +1904,77 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
     )!;
     expect(workout.data.date).toBe(localDateString(new Date(startedAt)));
     expect(workout.data.date).not.toBe(localDateString());
+  });
+
+  it("keeps the notes typed during the session on the workout doc", async () => {
+    // These were written to the resume draft and dropped on Finish, so they
+    // survived closing a session and were lost by completing one — and the
+    // draft is deleted the moment the workout commits, which made Finish the
+    // last point at which they existed anywhere.
+    seedProgramWithDay(true);
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+
+    await act(async () => {
+      await result.current.completeWorkoutDay(0, {
+        ...session("cid-notes"),
+        setLogs: [[{ weight: 100, reps: 5, completed: true }], []],
+        exerciseNotes: { 0: "Level 8, 6.0 incline" },
+      });
+    });
+
+    const workout = batchCommits()[0].find(
+      (w) => w.ref.__id === "programme-cid-notes"
+    )!;
+    const exercises = workout.data.exercises as Array<Record<string, unknown>>;
+    expect(exercises[0].notes).toBe("Level 8, 6.0 incline");
+    // Keyed by exercise INDEX: a note on the first exercise must not land on
+    // the second, which is the failure mode an off-by-one here would produce.
+    expect(exercises[1]).not.toHaveProperty("notes");
+  });
+
+  it("omits an empty or whitespace-only note rather than storing one", async () => {
+    // An empty string reads as "there is a note" to every consumer that
+    // checks for presence, and would render an empty italic row in history.
+    seedProgramWithDay();
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+
+    await act(async () => {
+      await result.current.completeWorkoutDay(0, {
+        ...session("cid-blank"),
+        exerciseNotes: { 0: "   " },
+      });
+    });
+
+    const workout = batchCommits()[0].find(
+      (w) => w.ref.__id === "programme-cid-blank"
+    )!;
+    const exercises = workout.data.exercises as Array<Record<string, unknown>>;
+    expect(exercises[0]).not.toHaveProperty("notes");
+  });
+
+  it("a session with no notes writes no notes field", async () => {
+    // The overwhelming majority of sessions, and every pre-existing one.
+    seedProgramWithDay();
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+
+    await act(async () => {
+      await result.current.completeWorkoutDay(0, session("cid-nonotes"));
+    });
+
+    const workout = batchCommits()[0].find(
+      (w) => w.ref.__id === "programme-cid-nonotes"
+    )!;
+    const exercises = workout.data.exercises as Array<Record<string, unknown>>;
+    expect(exercises[0]).not.toHaveProperty("notes");
   });
 
   it("a rejected commit throws and does NOT mark the day completed locally", async () => {
