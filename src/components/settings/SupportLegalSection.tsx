@@ -66,7 +66,7 @@ export default function SupportLegalSection({
     <AccordionSection
       inline={inline}
       icon={<Scale className="size-5 text-primary" />}
-      title="Support & Legal"
+      title="Support & legal"
       subtitle="Help, privacy policy, terms"
     >
       <a
@@ -76,7 +76,7 @@ export default function SupportLegalSection({
         <div className="flex items-center gap-3">
           <Mail className="size-5" />
           <div>
-            <p className="text-sm text-foreground">Help & Support</p>
+            <p className="text-sm text-foreground">Help & support</p>
             <p className="text-xs text-muted-foreground">
               support@troposfit.com
             </p>

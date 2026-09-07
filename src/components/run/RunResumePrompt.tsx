@@ -179,7 +179,7 @@ export default function RunResumePrompt({
               className="text-stage-foreground hover:bg-stage-foreground/10"
               leftIcon={<ArrowLeft size={16} />}
             >
-              Back to Run
+              Back to run
             </Button>
             <Button
               variant="ghost"

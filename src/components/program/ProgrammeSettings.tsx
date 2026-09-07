@@ -982,7 +982,7 @@ export default function ProgrammeSettings({
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-foreground">Auto Progression</p>
+              <p className="text-sm text-foreground">Auto progression</p>
               <p className="text-xs text-muted-foreground">
                 Bumps next session's weight when you complete every set cleanly
               </p>
@@ -1030,7 +1030,7 @@ export default function ProgrammeSettings({
             fullWidth
             onClick={() => setConfirmReset(true)}
           >
-            Reset Programme
+            Reset programme
           </Button>
         </ProgrammeSettingsGroup>
       )}

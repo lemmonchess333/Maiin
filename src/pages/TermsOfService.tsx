@@ -150,7 +150,7 @@ export default function TermsOfService() {
             <p>
               We may suspend or terminate your account if you violate these
               Terms. You can delete your account at any time from Settings &gt;
-              Delete Account. Upon deletion, everything held on our servers is
+              Delete account. Upon deletion, everything held on our servers is
               erased immediately. Meal photos live on your device rather than
               our servers, so they are cleared from the device you delete from;
               see the Privacy Policy for what that does and does not reach.

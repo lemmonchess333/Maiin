@@ -23,7 +23,7 @@ interface StatCardProps {
    *
    * This card is a numeral primitive — 30px extrabold Archivo, tabular
    * figures, `whitespace-nowrap` — and that treatment is right for "47"
-   * and wrong for a word. The Load Band card passes "Establishing", which
+   * and wrong for a word. The Load band card passes "Establishing", which
    * at 30px extrabold is far wider than a half-width grid cell, so it ran
    * off the card and the user saw "Establishin". The comment above the
    * value span claimed the layout "gives every realistic value enough
@@ -132,7 +132,7 @@ export default function StatCard({
             >
               {/* Without this the axis defaults to [0, dataMax], which
                   pins every series to the top of the band and turns a
-                  steady one into a solid slab — Avg Pace beside Monthly
+                  steady one into a solid slab — Avg pace beside Monthly
                   Distance was the visible case. */}
               <YAxis hide domain={sparklineDomain(sparklineData!)} />
               <ChartAreaGradient id={gradientId} color={accentColor} />

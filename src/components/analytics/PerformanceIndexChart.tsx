@@ -143,8 +143,8 @@ export default function PerformanceIndexChart({ weeks }: Props) {
             formatter={(value, name) => {
               const labels: Record<string, string> = {
                 pi: "PI",
-                liftLoad: "Lift Load",
-                runLoad: "Run Load",
+                liftLoad: "Lift load",
+                runLoad: "Run load",
                 recovery: "Recovery",
               };
 

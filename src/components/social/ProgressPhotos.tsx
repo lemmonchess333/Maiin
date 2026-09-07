@@ -124,7 +124,7 @@ interface ComposerState {
 }
 
 /**
- * Private Progress Vault (BODY-VAULT-01, extends the BODY-VAULT-00
+ * Private progress Vault (BODY-VAULT-01, extends the BODY-VAULT-00
  * private-only contract). Photos group into dated CHECK-INS — an optional
  * front/side/back set plus a neutral note — and comparison is between two
  * dated check-ins rather than two arbitrary photos. Photos logged before

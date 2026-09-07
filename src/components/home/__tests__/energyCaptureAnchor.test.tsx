@@ -112,7 +112,7 @@ function renderEnergy(finalTarget: number) {
   );
 }
 
-describe("capture spec — Today's Energy readiness anchor", () => {
+describe("capture spec — Today's energy readiness anchor", () => {
   it("extracts the anchor from the spec — the fixture this rests on", () => {
     // Without this, a broken extractor would leave every assertion below
     // vacuously satisfied.
@@ -124,7 +124,7 @@ describe("capture spec — Today's Energy readiness anchor", () => {
     const rx = anchorPattern();
     expect(
       rx.test(container.textContent ?? ""),
-      `the capture anchor ${rx} does not match a loaded Today's Energy card. ` +
+      `the capture anchor ${rx} does not match a loaded Today's energy card. ` +
         `That assertion is HARD and gates four frames — in CI this costs a ` +
         `red capture job twelve minutes in.`
     ).toBe(true);

@@ -1,5 +1,5 @@
 /**
- * Reverted "Today's Energy" collapsible-card capture (2026-07-20 3rd
+ * Reverted "Today's energy" collapsible-card capture (2026-07-20 3rd
  * pass — the card restored from pre-declutter c4c5de17). Proves the
  * card is collapsible again: collapsed = muted summary; tap the header
  * → expands to the macro rings + burned-today breakdown. Light + dark.
@@ -82,7 +82,7 @@ test.describe("energy collapsible card", () => {
     // Collapsed default.
     await shootLightDark(page, "energy-collapsed");
 
-    // Expand: the card header is a button carrying "Today's Energy".
+    // Expand: the card header is a button carrying "Today's energy".
     const header = page
       .getByRole("button", { name: /today's energy/i })
       .first();

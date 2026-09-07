@@ -466,7 +466,7 @@ export default function RunDetail() {
               {elevationLabel(run.elevationGain ?? 0, unit)}
             </p>
             <p className="text-xs uppercase tracking-widest text-muted-foreground mt-0.5">
-              Elevation Gain
+              Elevation gain
             </p>
           </div>
           <div className="p-3 rounded-xl bg-card text-center card-shadow flex flex-col justify-center">

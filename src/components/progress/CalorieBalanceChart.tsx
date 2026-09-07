@@ -62,7 +62,7 @@ export default function CalorieBalanceChart({ meals }: { meals: Meal[] }) {
   return (
     <div className="p-4 rounded-2xl bg-card space-y-3">
       <div className="flex items-center justify-between">
-        <SectionLabel>Calorie Balance</SectionLabel>
+        <SectionLabel>Calorie balance</SectionLabel>
         <span className="text-xs text-muted-foreground">14 days</span>
       </div>
       <p className="text-xs text-muted-foreground">

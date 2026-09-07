@@ -40,7 +40,7 @@ function dotRenderer(accent: string) {
     if (payload?.isPR) {
       // Filled ring with a bright centre — reads as a "milestone" marker
       // without needing a true star polygon (which gets noisy at small
-      // sizes). Same visual language the Weight Trend chart uses.
+      // sizes). Same visual language the Weight trend chart uses.
       return (
         <g>
           <circle cx={cx} cy={cy} r={6} fill={accent} opacity={0.2} />

@@ -217,9 +217,9 @@ export default function NotificationsSection({
         </div>
       )}
 
-      {/* Meal Reminders */}
+      {/* Meal reminders */}
       <div className="space-y-3">
-        <p className="text-sm font-medium text-foreground">Meal Reminders</p>
+        <p className="text-sm font-medium text-foreground">Meal reminders</p>
 
         <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
           <div>
@@ -302,9 +302,9 @@ export default function NotificationsSection({
         )}
       </div>
 
-      {/* Workout Reminders */}
+      {/* Workout reminders */}
       <div className="space-y-3">
-        <p className="text-sm font-medium text-foreground">Workout Reminders</p>
+        <p className="text-sm font-medium text-foreground">Workout reminders</p>
 
         <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
           <div>
@@ -364,9 +364,9 @@ export default function NotificationsSection({
         )}
       </div>
 
-      {/* Streak Reminders */}
+      {/* Streak reminders */}
       <div className="space-y-3">
-        <p className="text-sm font-medium text-foreground">Streak Reminders</p>
+        <p className="text-sm font-medium text-foreground">Streak reminders</p>
 
         <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
           <div className="pr-3">

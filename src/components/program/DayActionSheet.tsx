@@ -548,7 +548,7 @@ export default function DayActionSheet({
                       real "Finished" path is deliberately absent —
                       race-day completion is strictly real-saved-
                       run-only (Q1 P4 / Q2 P21); logging the run via
-                      Start Run is the only valid completion path. */}
+                      Start run is the only valid completion path. */}
                     {run.isStartable && isRaceTemplate && (
                       <>
                         <button

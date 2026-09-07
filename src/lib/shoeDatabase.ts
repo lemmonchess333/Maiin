@@ -1,6 +1,6 @@
 /**
  * Curated list of popular running shoes — powers the typeahead in the
- * "My Shoes" settings card so users can tap a known model instead of
+ * "My shoes" settings card so users can tap a known model instead of
  * typing. Intentionally not exhaustive: covers the eight dominant run
  * brands with their current flagship daily trainers, max-cushion, race
  * shoes, and stability picks. New releases get added as they appear.

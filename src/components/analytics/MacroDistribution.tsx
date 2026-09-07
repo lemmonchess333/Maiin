@@ -58,7 +58,7 @@ export default function MacroDistribution({
 
   return (
     <div className="p-4 rounded-2xl bg-card card-shadow">
-      <SectionLabel className="mb-3">Macro Distribution</SectionLabel>
+      <SectionLabel className="mb-3">Macro distribution</SectionLabel>
       <div className="flex items-center gap-4">
         {/* Donut is decorative re: VoiceOver — the legend below it
             already announces the same percentages + grams as text.

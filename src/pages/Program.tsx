@@ -1402,7 +1402,7 @@ function ProgramInner() {
                                 setShowSkipConfirm(true);
                               }}
                             >
-                              Skip Session
+                              Skip session
                             </Button>
 
                             {/* PROGRAM-SESSION-ORDER-01: real weeks rarely
@@ -1421,7 +1421,7 @@ function ProgramInner() {
                                 }}
                                 className="min-h-[44px] px-4 inline-flex items-center justify-center text-sm font-medium text-muted-foreground active:scale-[0.97] transition-transform"
                               >
-                                Make This Next
+                                Make this next
                               </button>
                             )}
                             {status === "today" &&
@@ -1434,7 +1434,7 @@ function ProgramInner() {
                                   }}
                                   className="min-h-[44px] px-4 inline-flex items-center justify-center text-sm font-medium text-muted-foreground active:scale-[0.97] transition-transform"
                                 >
-                                  Follow Programme Order
+                                  Follow programme order
                                 </button>
                               )}
                           </div>
@@ -1682,7 +1682,7 @@ function ProgramInner() {
                         </div>
                       )}
 
-                      {/* ── + Add Exercise (not on completed/skipped) ── */}
+                      {/* ── + Add exercise (not on completed/skipped) ── */}
                       {status !== "completed" && status !== "skipped" && (
                         <button
                           type="button"
@@ -1692,7 +1692,7 @@ function ProgramInner() {
                           }}
                           className="w-full py-3 text-center active:scale-[0.97] transition-all flex items-center justify-center gap-2 bg-card rounded-xl text-primary font-medium text-sm"
                         >
-                          <Plus className="size-4" /> Add Exercise
+                          <Plus className="size-4" /> Add exercise
                         </button>
                       )}
 
@@ -1811,7 +1811,7 @@ function ProgramInner() {
                 }}
                 className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-destructive-strong hover:bg-muted transition-colors border-b border-border/30"
               >
-                <Trash2 className="size-4" /> Remove Exercise
+                <Trash2 className="size-4" /> Remove exercise
               </button>
               <button
                 type="button"
@@ -1821,7 +1821,7 @@ function ProgramInner() {
                 disabled={contextMenu.exIndex === 0}
                 className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors border-b border-border/30 disabled:opacity-30"
               >
-                <ArrowUp className="size-4 text-muted-foreground" /> Move Up
+                <ArrowUp className="size-4 text-muted-foreground" /> Move up
               </button>
               <button
                 type="button"
@@ -1836,7 +1836,7 @@ function ProgramInner() {
                 }
                 className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors disabled:opacity-30"
               >
-                <ArrowDown className="size-4 text-muted-foreground" /> Move Down
+                <ArrowDown className="size-4 text-muted-foreground" /> Move down
               </button>
             </motion.div>
           </>
@@ -2017,7 +2017,7 @@ function ProgramInner() {
       {/* Exercise Picker — Add mode (scoped to addPickerDayIndex) */}
       <ExercisePicker
         open={showAddPicker}
-        headerTitle="Add Exercise"
+        headerTitle="Add exercise"
         existingExerciseIds={
           programState.workouts[addPickerDayIndex ?? idx]?.exercises.map(
             (ex) => ex.exerciseId

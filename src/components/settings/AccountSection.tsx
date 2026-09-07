@@ -305,7 +305,7 @@ export default function AccountSection({
       <AccordionSection
         inline={inline}
         icon={<Download className="size-5 text-primary" />}
-        title="Data & Account"
+        title="Data & account"
         subtitle="Export, sign out"
       >
         {/*
@@ -328,7 +328,7 @@ export default function AccountSection({
           <DataExportSection user={user} />
         </TrackSettingsSectionView>
 
-        {/* Sign Out is `outline`, Delete Account is `destructive` — the
+        {/* Sign out is `outline`, Delete account is `destructive` — the
             way round the actions actually rank. It was the reverse: Sign
             Out wore a filled `bg-destructive` at 16px/46px and shouted
             louder than anything else on the page, while the irreversible
@@ -339,7 +339,7 @@ export default function AccountSection({
             Both now route through the `Button` primitive, which is where
             the 44px floor, the focus ring and the 0.97 press live. */}
         <Button variant="outline" fullWidth onClick={signOut}>
-          <LogOut className="size-4" /> Sign Out
+          <LogOut className="size-4" /> Sign out
         </Button>
 
         {/* Account Deletion (App Store Guideline 5.1.1(v)) */}
@@ -359,7 +359,7 @@ export default function AccountSection({
             }
           }}
         >
-          <Trash2 className="size-4" /> Delete Account
+          <Trash2 className="size-4" /> Delete account
         </Button>
       </AccordionSection>
 
@@ -412,7 +412,7 @@ export default function AccountSection({
         </div>
       </Dialog>
 
-      {/* Delete Account Modal (App Store Guideline 5.1.1(v)) */}
+      {/* Delete account Modal (App Store Guideline 5.1.1(v)) */}
       <Dialog
         open={showDeleteModal}
         onClose={closeAndReset}
@@ -426,7 +426,7 @@ export default function AccountSection({
             modalState.phase === "deleting") && (
             <>
               <h3 className="text-base font-semibold text-destructive-strong">
-                Delete Account
+                Delete account
               </h3>
               <p className="text-sm text-muted-foreground">
                 This will permanently delete your account and all associated
@@ -477,7 +477,7 @@ export default function AccountSection({
                       Deleting…
                     </>
                   ) : (
-                    "Delete Account"
+                    "Delete account"
                   )}
                 </button>
               </div>

@@ -16,7 +16,7 @@ const DIFFICULTY_LABEL: Record<string, string> = {
 export default function GuidedRunPicker({ selected, onSelect }: Props) {
   return (
     <div className="space-y-2">
-      <SectionLabel>Pick a Guided Run</SectionLabel>
+      <SectionLabel>Pick a guided run</SectionLabel>
       <div className="space-y-2">
         {GUIDED_WORKOUTS.map((w) => {
           const isSelected = selected?.id === w.id;

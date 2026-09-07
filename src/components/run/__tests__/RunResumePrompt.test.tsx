@@ -90,7 +90,7 @@ describe("Run recovery choices", () => {
   it.each(["button", "escape"])("leaves safely via %s", (method) => {
     const actions = setup();
     if (method === "button")
-      fireEvent.click(screen.getByRole("button", { name: "Back to Run" }));
+      fireEvent.click(screen.getByRole("button", { name: "Back to run" }));
     else fireEvent.keyDown(document, { key: "Escape" });
     expect(actions.onBack).toHaveBeenCalledOnce();
     expect(actions.onResume).not.toHaveBeenCalled();

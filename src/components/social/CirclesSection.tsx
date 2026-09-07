@@ -111,7 +111,7 @@ const HYBRID_TEMPLATE: {
 
 /* SOCIAL-HOME-01 — cold-start goal selector options. The first three
    ARE the lock-pinned launch templates, plus the hybrid the create
-   sheet appends; "Private Progress" (its own button below) routes to
+   sheet appends; "Private progress" (its own button below) routes to
    the private Momentum check-in page and NEVER creates a circle.
 
    DERIVED, not re-listed. This used to be a second hand-written copy
@@ -686,7 +686,7 @@ export default function CirclesSection({
 
       {/* SOCIAL-HOME-01 — cold-start goal selector. Genuinely-empty
           only (!loadFailed). Four options preselect a create-sheet
-          template; "Private Progress" routes to the private Momentum
+          template; "Private progress" routes to the private Momentum
           check-in page and never creates a circle. "Join with code"
           stays below so invited users aren't funneled into creating. */}
       {!loading && !loadFailed && circles.length === 0 && (
@@ -728,7 +728,7 @@ export default function CirclesSection({
               className="w-full min-h-[44px] p-3 rounded-xl text-left bg-muted transition-colors active:scale-[0.97]"
             >
               <p className="text-sm font-semibold text-foreground">
-                Private Progress
+                Private progress
               </p>
               <p className="text-xs text-muted-foreground">
                 Private — just for you, never shared.

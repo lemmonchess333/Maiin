@@ -175,7 +175,7 @@ test.describe("app screenshots", () => {
       // and a log line makes the silent-miss visible in the CI output.
       if (name === "history") {
         await page
-          .getByText(/Muscle Groups Trained/i)
+          .getByText(/Muscle groups trained/i)
           .first()
           .waitFor({ state: "visible", timeout: 40000 })
           .catch(() =>

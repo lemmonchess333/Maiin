@@ -117,19 +117,19 @@ export function BadgeGrid() {
           <p className="text-3xl font-extrabold font-mono tabular-nums text-achievement-strong">
             {currentStreak}
           </p>
-          <p className="text-xs text-muted-foreground mt-1">Current Streak</p>
+          <p className="text-xs text-muted-foreground mt-1">Current streak</p>
         </div>
         <div className="p-3 rounded-xl bg-card border border-border/50">
           <p className="text-3xl font-extrabold font-mono tabular-nums text-primary">
             {Number.isFinite(longestStreak) ? longestStreak : 0}
           </p>
-          <p className="text-xs text-muted-foreground mt-1">Longest Streak</p>
+          <p className="text-xs text-muted-foreground mt-1">Longest streak</p>
         </div>
         <div className="p-3 rounded-xl bg-card border border-border/50">
           <p className="text-3xl font-extrabold font-mono tabular-nums text-foreground">
             {earnedBadges.length}
           </p>
-          <p className="text-xs text-muted-foreground mt-1">Badges Earned</p>
+          <p className="text-xs text-muted-foreground mt-1">Badges earned</p>
         </div>
       </div>
 

@@ -69,7 +69,7 @@ export default function PrivacySection({
       <AccordionSection
         inline={inline}
         icon={<Users className="size-5 text-primary" />}
-        title="Social & Privacy"
+        title="Social & privacy"
         subtitle="Visibility, auto-post, GPS zones"
       >
         <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
@@ -140,7 +140,7 @@ export default function PrivacySection({
         </div>
 
         {/* Shared-route end clipping — default-on home-location protection,
-            independent of (and composed with) explicit Privacy Zones below. */}
+            independent of (and composed with) explicit Privacy zones below. */}
         <div className="flex items-center justify-between p-3 rounded-lg bg-muted">
           <div className="flex-1 mr-3">
             <p className="text-sm font-medium text-foreground">
@@ -167,13 +167,13 @@ export default function PrivacySection({
           />
         </div>
 
-        {/* Privacy Zones */}
+        {/* Privacy zones */}
         <div className="p-4 rounded-lg bg-muted space-y-3">
           <div className="flex items-center gap-2">
             <MapPin className="size-4 text-primary" />
             <div>
               <p className="text-sm font-medium text-foreground">
-                Privacy Zones
+                Privacy zones
               </p>
               <p className="text-xs text-muted-foreground">
                 Hide route start/end near saved locations
@@ -254,18 +254,18 @@ export default function PrivacySection({
               }
             }}
           >
-            Add Current Location
+            Add current location
           </Button>
         </div>
 
-        {/* Blocked Users (#25) */}
+        {/* Blocked users (#25) */}
         <div className="p-4 rounded-lg bg-muted space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Shield className="size-4 text-primary" />
               <div>
                 <p className="text-sm font-medium text-foreground">
-                  Blocked Users
+                  Blocked users
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Manage users you&apos;ve blocked

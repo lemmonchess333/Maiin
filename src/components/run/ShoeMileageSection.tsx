@@ -65,7 +65,7 @@ export default function ShoeMileageSection() {
     >
       <div className="flex items-center gap-2">
         <Footprints className="size-4 text-muted-foreground" />
-        <SectionLabel className="flex-1">Shoe Mileage</SectionLabel>
+        <SectionLabel className="flex-1">Shoe mileage</SectionLabel>
         <ChevronRight className="size-4 text-muted-foreground" />
       </div>
       <div className="space-y-3">

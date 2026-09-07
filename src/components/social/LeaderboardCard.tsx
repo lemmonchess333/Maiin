@@ -113,7 +113,7 @@ export default function LeaderboardCard({
             the variable-length half ("Weekly Distance" vs "Hybrid
             Score"), so it truncates and this stays whole. */}
         <span className="shrink-0 text-caption font-mono tabular-nums text-muted-foreground">
-          This Week
+          This week
         </span>
       </div>
 
@@ -189,7 +189,7 @@ export default function LeaderboardCard({
           onClick={onViewFull}
           className="flex items-center justify-center gap-1 w-full mt-3 pt-3 min-h-[44px] border-t border-border/30 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
         >
-          See Full Leaderboard
+          See full leaderboard
           <ChevronRight size={14} />
         </button>
       )}

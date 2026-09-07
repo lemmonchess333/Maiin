@@ -449,7 +449,7 @@ export default function PerformanceTab() {
       {/* Weekly insight bullets */}
       {insightBullets && insightBullets.length > 0 && (
         <div className="p-4 rounded-2xl bg-card space-y-2">
-          <SectionLabel as="h3">Weekly Insights</SectionLabel>
+          <SectionLabel as="h3">Weekly insights</SectionLabel>
           <ul className="space-y-1.5">
             {insightBullets.map((bullet, i) => (
               <li
@@ -506,13 +506,13 @@ export default function PerformanceTab() {
                   Breakdown
                 </h3>
                 <ScoreBar
-                  label="Lift Load"
+                  label="Lift load"
                   value={b.liftLoadScore}
                   color={THEME.lifting}
                   textColor="hsl(var(--lifting-strong))"
                 />
                 <ScoreBar
-                  label="Run Load"
+                  label="Run load"
                   value={b.runLoadScore}
                   color={THEME.running}
                   textColor="hsl(var(--running-strong))"
@@ -534,7 +534,7 @@ export default function PerformanceTab() {
               {/* Load band + adjustments */}
               <div className="grid grid-cols-2 gap-3">
                 <StatCard
-                  label="Load Band"
+                  label="Load band"
                   /* Was `labels?.loadBand || "—"`, so this card rendered a
                      literal em-dash for every user. Same canonical read. */
                   value={
@@ -562,7 +562,7 @@ export default function PerformanceTab() {
 
               <div className="p-4 rounded-2xl bg-card">
                 <h3 className="text-sm font-semibold text-foreground mb-2">
-                  This Week Adjustments
+                  This week adjustments
                 </h3>
                 {/*
                   Every figure here is a RATIO AGAINST BASELINE
@@ -617,7 +617,7 @@ export default function PerformanceTab() {
                         <div className="flex items-center gap-2 mb-2">
                           <Dumbbell className="size-4 text-lifting" />
                           <h3 className="text-sm font-semibold text-lifting-strong">
-                            Lifting Suggestions
+                            Lifting suggestions
                           </h3>
                         </div>
                         <ul className="space-y-1">
@@ -637,7 +637,7 @@ export default function PerformanceTab() {
                         <div className="flex items-center gap-2 mb-2">
                           <Footprints className="size-4 text-running" />
                           <h3 className="text-sm font-semibold text-running-strong">
-                            Running Suggestions
+                            Running suggestions
                           </h3>
                         </div>
                         <ul className="space-y-1">

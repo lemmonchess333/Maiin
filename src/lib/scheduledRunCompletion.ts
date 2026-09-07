@@ -137,7 +137,7 @@ function distanceAndBucketOk(
        Then it was reachable but still WRONG for most real races, because
        it also required the SAVED run to be race-templated. `actualTemplateId`
        is only set when the run was launched from the scheduled slot
-       (`freeformPlanMetadata` writes null), so anyone who taps Start Run on
+       (`freeformPlanMetadata` writes null), so anyone who taps Start run on
        the start line — the obvious race-morning behaviour — saved a run with
        no template. That fell through to the pace bar, which is 270 s/km:
        a 42.2 km finish on the right date at 5:30/km read as "easy" and left

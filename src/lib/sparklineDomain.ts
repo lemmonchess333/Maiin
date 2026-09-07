@@ -12,14 +12,14 @@
  * pace that held steady, a target that never changed) gets `[0, v]`, which
  * pins the line to the very top and fills the entire band — a solid slab
  * that reads as a broken card rather than as "steady". Analytics showed
- * exactly this: Monthly Distance drew a shape, Avg Pace beside it drew a
+ * exactly this: Monthly Distance drew a shape, Avg pace beside it drew a
  * block, and the two peer cards looked like different components.
  *
  * Note which series were NEVER affected, so this is not mistaken for a
  * universal fix: one that runs from near zero to its own peak already used
  * the whole band, because the zero floor happened to be its floor. Weekly
  * distance buckets are exactly that — which is why Monthly Distance looked
- * fine and Avg Pace, in seconds per km, could not. The rendered-geometry
+ * fine and Avg pace, in seconds per km, could not. The rendered-geometry
  * tests measure all three cases.
  *
  * So: bound the band by the DATA, with headroom either side, and give a

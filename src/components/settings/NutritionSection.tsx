@@ -140,7 +140,7 @@ export default function NutritionSection({
             the point. */}
       <AccordionSection
         icon={<Calculator className="size-5 text-primary" />}
-        title="TDEE Calculator"
+        title="TDEE calculator"
         subtitle={`${tdee.targetCalories} cal/day target`}
       >
         <div>
@@ -163,7 +163,7 @@ export default function NutritionSection({
         </div>
 
         <div>
-          <span className="text-sm text-muted-foreground">Activity Level</span>
+          <span className="text-sm text-muted-foreground">Activity level</span>
           <div className="mt-1 space-y-1">
             {(Object.entries(ACTIVITY_LABELS) as [ActivityLevel, string][]).map(
               ([key, label]) => (
@@ -209,12 +209,12 @@ export default function NutritionSection({
         </div>
       </AccordionSection>
 
-      {/* Goal Weight — owns the nutrition direction (target vs current → phase) */}
+      {/* Goal weight — owns the nutrition direction (target vs current → phase) */}
       <div className="bg-card rounded-2xl p-4 space-y-3">
         <div className="flex items-center gap-3">
           <Target className="size-5 text-primary" />
           <div>
-            <p className="text-sm font-medium text-foreground">Goal Weight</p>
+            <p className="text-sm font-medium text-foreground">Goal weight</p>
             <p className="text-xs text-muted-foreground">
               Sets your calorie target — current{" "}
               <span className="font-mono tabular-nums">

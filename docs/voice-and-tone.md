@@ -39,6 +39,47 @@ When writing or reviewing any user-facing string — button, toast, empty state,
 - **Badge/streak names** can be lightly playful (Duolingo-style: "Week Warrior", "Speed Demon") — but never hype-cringe. Judge each; when in doubt, plainer.
 - **Nutrition copy is never judgmental about food** — no "bad", "cheat", or "fail" verdicts. Surplus is stated as a neutral quantity ("200 cal over"), never a telling-off.
 
+## Capitalisation (decided 2026-09-07)
+
+**Sentence case for every user-facing string**, with one closed list of
+exceptions. Buttons, settings rows, section titles, card titles, stat
+labels, tab labels, placeholders, toasts, empty states — all of it.
+"Delete account", not "Delete Account". "Weight trend", not "Weight
+Trend".
+
+The exceptions, and nothing else:
+
+| Keeps its capitals                  | Why                                                                           |
+| ----------------------------------- | ----------------------------------------------------------------------------- |
+| **Performance Index**               | A named metric with its own tab, tooltip, `PI` abbreviation and stored field. |
+| **Progress Vault**                  | A named feature.                                                              |
+| **Weekly Review**                   | A named surface with its own route (`/review`).                               |
+| **Together**, **Feed**, **Explore** | Tab names. Lowercasing "Open Together" reads as an adverb.                    |
+| Real-world names                    | Privacy Policy, Terms of Service, Apple Health, London Marathon 2026.         |
+| Acronyms                            | TDEE, PI, GPS, PR.                                                            |
+
+Adding to that table is a deliberate act, not a way to keep a capital you
+like. The test is whether the phrase is the NAME of something, not
+whether it describes something important.
+
+**What this replaced, and why it is not "codifying what we had".** The
+2026-09-05 pass recorded this as a choice between applying sentence case
+and writing down the split the app already had — titles Title Case,
+controls sentence case. There was no such split. Measured across `src/`
+on 2026-09-07: 84 distinct Title Case strings against 416 sentence case,
+and the same ROLE appeared in both registers. Buttons read `Start Run`,
+`Save Run`, `Sign Out`, `Delete Account` — and also `Block user`, `Apply
+deload week`, `Re-plan from today`. Settings rows read `Height Unit`,
+`Dark Mode` — and also `Body weight unit`, `Reminder time`. So there was
+nothing coherent to write down; the only options were to pick a direction
+or leave the coin-flip in place.
+
+`circle` and `space` are common nouns here, settled by counting rather
+than taste: running copy had them lowercase 42 and 33 times against 16
+and 3 capitalised. So "Share to circle", not "Share to Circle".
+
+Pinned by `src/lib/__tests__/copyCasing.test.ts`.
+
 ## Judgment calls (decided in the 2026-06-11 audit)
 
 So the next person doesn't re-litigate these:
