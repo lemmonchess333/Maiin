@@ -186,22 +186,22 @@ async function flushQueueOnce(db: Firestore, uid: string): Promise<number> {
 
   let flushed = 0;
   const landed = new Set<string>();
+  const { auth } = await import("@/lib/firebase");
 
   for (const item of queue) {
     // Not our user's item — leave it for the next time that user signs in.
     if (item.uid !== uid) continue;
     try {
+      // A queued flush can start after sign-out, or resume after another
+      // account signs in while an earlier write awaits acknowledgement.
+      // Check the live identity for EVERY write, including legacy entries.
+      if (auth.currentUser?.uid !== uid) break;
       if (item.durable && !navigator.onLine) break;
-      if (item.durable) {
-        const { auth } = await import("@/lib/firebase");
-        if (auth.currentUser?.uid !== uid) break;
-      }
       const decoded = item.durable ? decode(item.data) as Record<string, unknown> : item.data;
       const payload = { ...decoded, _offlineCreatedAt: item.timestamp };
       if (item.docId) {
         const docRef = doc(db, item.collectionPath, item.docId);
         if (item.durable && !item.merge) {
-          const { auth } = await import("@/lib/firebase");
           await runTransaction(db, async (transaction) => {
             const current = await transaction.get(docRef);
             if (auth.currentUser?.uid !== uid) throw new Error("Sign in again to sync food.");

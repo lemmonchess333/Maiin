@@ -27,6 +27,7 @@
 const {
   assertCanInteractWithActivity,
 } = require("./activityAccess");
+const { publicPhotoUrl } = require("./publicPhotoUrl");
 
 /**
  * Toggle kudos: if the kudos sub-doc exists for {uid} on
@@ -155,9 +156,8 @@ async function addComment({
       text: trimmed,
       createdAt: serverTimestamp(),
     };
-    if (authorPhotoURL && typeof authorPhotoURL === "string") {
-      data.authorPhotoURL = authorPhotoURL.slice(0, 500);
-    }
+    const photo = publicPhotoUrl(authorPhotoURL);
+    if (photo) data.authorPhotoURL = photo;
     txn.set(commentRef, data);
     txn.update(activityRef, { commentCount: increment(1) });
   });

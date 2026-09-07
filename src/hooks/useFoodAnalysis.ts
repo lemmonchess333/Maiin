@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { auth } from "@/lib/firebase";
 import { logger } from "@/lib/logger";
+import { functionEndpoint } from "@/lib/functionEndpoint";
 
-const FUNCTION_URL =
-  "https://us-central1-adaptive-fitness-af8bb.cloudfunctions.net/analyzeFood";
-const TEXT_FUNCTION_URL =
-  "https://us-central1-adaptive-fitness-af8bb.cloudfunctions.net/analyzeFoodText";
+const FUNCTION_URL = functionEndpoint("analyzeFood");
+const TEXT_FUNCTION_URL = functionEndpoint("analyzeFoodText");
 
 /* A stalled request (accepted, response never arrives) is different from
    offline: nothing rejects until the TCP stack gives up, which can be

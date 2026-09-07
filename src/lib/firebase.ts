@@ -8,7 +8,7 @@ import {
   connectFirestoreEmulator,
 } from "firebase/firestore";
 import { connectStorageEmulator, getStorage } from "firebase/storage";
-import { getFunctions } from "firebase/functions";
+import { connectFunctionsEmulator, getFunctions } from "firebase/functions";
 import { logger } from "@/lib/logger";
 import { initAppCheck } from "@/lib/appCheck";
 import { initAnalytics } from "@/lib/analyticsProvider";
@@ -94,4 +94,7 @@ if (import.meta.env.VITE_USE_EMULATORS === "true") {
   // were previously unverifiable in the emulator rig because the app
   // only wired auth + firestore.
   connectStorageEmulator(storage, "127.0.0.1", 9199);
+  // getFunctions() callers share this default-app instance. Emulator builds
+  // must never fall through to cloud callables when a local service is absent.
+  connectFunctionsEmulator(functions, "127.0.0.1", 5001);
 }

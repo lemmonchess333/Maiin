@@ -22,6 +22,7 @@
 /** Thrown-code the callable maps to a generic permission error —
  *  never disclose whether a post exists vs was removed. */
 const POST_NOT_ACCESSIBLE = "space-post-not-accessible";
+const { publicPhotoUrl } = require("./publicPhotoUrl");
 
 async function toggleSpacePostLike({
   firestore,
@@ -116,9 +117,8 @@ async function addSpacePostComment({
       text: trimmed,
       createdAt: serverTimestamp(),
     };
-    if (authorPhotoURL && typeof authorPhotoURL === "string") {
-      data.authorPhotoURL = authorPhotoURL.slice(0, 500);
-    }
+    const photo = publicPhotoUrl(authorPhotoURL);
+    if (photo) data.authorPhotoURL = photo;
     txn.set(commentRef, data);
     txn.update(postRef, { commentCount: increment(1) });
   });
