@@ -44,6 +44,10 @@ export interface RunRecord {
   duration?: number; // seconds
   avgPace?: number; // sec/km
   activityType?: ActivityType | string;
+  /** Local "yyyy-MM-dd". Absent on older run documents, which is why every
+   *  consumer of it must tolerate the field being missing. */
+  date?: string;
+  id?: string;
 }
 
 /** Narrower input for {@link isPaceTrendEligible} — caller-side shapes
@@ -110,6 +114,18 @@ export function isPaceTrendEligible(run: RunPaceTrendInput): boolean {
 export interface LifetimeRunTotals {
   runCount: number;
   totalDistanceM: number;
+  /**
+   * The earliest eligible run, for the History chronology's "first run".
+   *
+   * Derived HERE rather than at the surface because this reducer already
+   * walks the whole collection — History's own `runs` are scoped to the
+   * selected time range, so taking the earliest from those would report
+   * whichever run happens to open the current window as the user's first,
+   * and the answer would change every time they moved the range.
+   *
+   * Null when no run passes the eligibility filter.
+   */
+  firstRun: { id: string; date: string; distanceMetres: number } | null;
 }
 
 /**
@@ -132,10 +148,20 @@ export function sumLifetimeRunTotals(
 ): LifetimeRunTotals {
   let runCount = 0;
   let totalDistanceM = 0;
+  let firstRun: LifetimeRunTotals["firstRun"] = null;
   for (const run of runs) {
     if (!isVolumeEligible(run)) continue;
     runCount += 1;
     totalDistanceM += run.distance ?? 0;
+    // A run with no date cannot be placed in a chronology; it still counts
+    // towards the totals, which need no date to be correct.
+    if (run.date && (!firstRun || run.date < firstRun.date)) {
+      firstRun = {
+        id: run.id ?? run.date,
+        date: run.date,
+        distanceMetres: run.distance ?? 0,
+      };
+    }
   }
-  return { runCount, totalDistanceM };
+  return { runCount, totalDistanceM, firstRun };
 }

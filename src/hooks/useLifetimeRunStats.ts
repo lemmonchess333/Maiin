@@ -8,6 +8,9 @@ import { sumLifetimeRunTotals } from "@/lib/runStatsEligibility";
 export interface LifetimeRunStats {
   runCount: number;
   totalDistanceM: number;
+  /** Earliest eligible run, or null. See LifetimeRunTotals for why it is
+   *  derived from this whole-collection read rather than at the surface. */
+  firstRun: { id: string; date: string; distanceMetres: number } | null;
 }
 
 /**
@@ -29,6 +32,7 @@ export function useLifetimeRunStats(options?: { enabled?: boolean }) {
   const [stats, setStats] = useState<LifetimeRunStats>({
     runCount: 0,
     totalDistanceM: 0,
+    firstRun: null,
   });
   const [loading, setLoading] = useState(true);
   /**
@@ -52,7 +56,13 @@ export function useLifetimeRunStats(options?: { enabled?: boolean }) {
         const snap = await getDocs(collection(db, "users", uid, "runs"));
         if (cancelled) return;
         setFailed(false);
-        setStats(sumLifetimeRunTotals(snap.docs.map((d) => d.data())));
+        // `id` is carried through so the chronology's first-run entry has a
+        // stable key; the doc data does not contain it.
+        setStats(
+          sumLifetimeRunTotals(
+            snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+          )
+        );
       } catch (err) {
         logger.error("useLifetimeRunStats error:", err);
         if (!cancelled) setFailed(true);
