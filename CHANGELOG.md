@@ -8,6 +8,11 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Coming back to lifting is acknowledged.** After a week or more away,
+  Home offers a short welcome back: pick up where you left off, or head to
+  your programme and start with an easier session. It states how long it
+  has been and nothing else — no missed-session count, no streak language —
+  and it asks once per absence.
 - **About once a month, the weekly check-in asks two questions about the
   app** — whether the plan made sense, and whether logging was easy. Both
   optional, on the check-in you already answer, and absent the other three
