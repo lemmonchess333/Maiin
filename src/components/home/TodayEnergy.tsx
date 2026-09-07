@@ -17,7 +17,7 @@ import { usePersistedToggle } from "@/hooks/usePersistedToggle";
 import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
 
 /**
- * Today's Energy — Home's nutrition summary.
+ * Today's energy — Home's nutrition summary.
  *
  * One compact summary, one logging action, one disclosure. The header
  * carries everything a glance needs — calories eaten / target, the phase,
@@ -148,7 +148,7 @@ export default function TodayEnergy({
               className="text-xs font-semibold"
               style={{ color: "hsl(var(--muted-foreground))" }}
             >
-              Today's Energy
+              Today's energy
             </p>
             {burn.phase && (
               // HOME-TARGET-01: the phase label only — the real adjustment

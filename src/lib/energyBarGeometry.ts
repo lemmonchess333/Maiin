@@ -1,5 +1,5 @@
 /**
- * Geometry for Today's Energy calorie bar.
+ * Geometry for Today's energy calorie bar.
  *
  * The track normally runs 0→target, but stretches to at most 130% of
  * target once intake passes it, so an overshoot has somewhere to go. That

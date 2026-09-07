@@ -63,17 +63,17 @@ describe("SettingsSection — page chrome", () => {
 });
 
 describe("SettingsSection — back-arrow behaviour", () => {
-  it("renders a back-arrow button labelled 'Back to Settings'", () => {
+  it("renders a back-arrow button labelled 'Back to settings'", () => {
     renderWith(<SettingsSection title="Training">child</SettingsSection>);
     expect(
-      screen.getByRole("button", { name: /Back to Settings/i })
+      screen.getByRole("button", { name: /Back to settings/i })
     ).toBeInTheDocument();
   });
 
   it("navigates to /settings (not browser back) when the arrow is tapped", () => {
     navigateMock.mockClear();
     renderWith(<SettingsSection title="Training">child</SettingsSection>);
-    fireEvent.click(screen.getByRole("button", { name: /Back to Settings/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Back to settings/i }));
     // Always /settings — deeplinks from Programme should pop to the
     // index, not back to Programme.
     expect(navigateMock).toHaveBeenCalledWith("/settings");
@@ -81,7 +81,7 @@ describe("SettingsSection — back-arrow behaviour", () => {
 
   it("back button meets the 44px touch-target floor", () => {
     renderWith(<SettingsSection title="Training">child</SettingsSection>);
-    const btn = screen.getByRole("button", { name: /Back to Settings/i });
+    const btn = screen.getByRole("button", { name: /Back to settings/i });
     expect(btn.className).toContain("min-h-[44px]");
   });
 });

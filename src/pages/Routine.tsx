@@ -331,7 +331,7 @@ export default function Routine() {
           onClick={() => navigate("/program")}
           className="text-xs font-medium text-primary"
         >
-          Back to Program
+          Back to program
         </button>
       </div>
     );

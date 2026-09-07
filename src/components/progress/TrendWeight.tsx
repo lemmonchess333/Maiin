@@ -70,7 +70,7 @@ export function TrendWeight() {
     const d = parseLocalDate(entry.date);
     return (
       <div className="p-4 rounded-2xl bg-card text-center py-6 space-y-2">
-        <SectionLabel>Weight Trend</SectionLabel>
+        <SectionLabel>Weight trend</SectionLabel>
         {hideNumber ? (
           <p className="text-lg font-bold text-foreground">First weigh-in</p>
         ) : (
@@ -191,7 +191,7 @@ export function TrendWeight() {
   return (
     <div className="p-4 rounded-2xl bg-card space-y-3">
       <div className="flex items-center justify-between">
-        <SectionLabel>Weight Trend</SectionLabel>
+        <SectionLabel>Weight trend</SectionLabel>
         <p className="text-xs text-foreground font-medium">
           {hideNumber ? (
             <span className="text-primary font-bold">{hiddenHeadline}</span>

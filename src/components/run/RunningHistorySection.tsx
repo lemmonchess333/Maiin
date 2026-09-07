@@ -45,7 +45,7 @@ export default function RunningHistorySection() {
       {weeklyData.length > 0 && (
         <div className="p-4 rounded-2xl bg-card border border-border">
           <p className="text-xs text-muted-foreground mb-3">
-            Weekly Distance (km)
+            Weekly distance (km)
           </p>
           <ResponsiveContainer width="100%" height={120}>
             <BarChart data={weeklyData}>

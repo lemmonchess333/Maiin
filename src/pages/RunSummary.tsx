@@ -1723,11 +1723,11 @@ export default function RunSummary() {
             </div>
           )}
 
-          {/* Best Efforts */}
+          {/* Best efforts */}
           {bestEfforts.length > 0 && (
             <div className="mx-4 mb-4 p-4 rounded-2xl bg-card">
               <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                Best Efforts
+                Best efforts
               </h3>
               <div className="grid grid-cols-3 gap-2">
                 {bestEfforts.map((effort) => (
@@ -1868,7 +1868,7 @@ export default function RunSummary() {
                 onClick={handleSave}
                 loading={saveStatus === "saving"}
               >
-                Save Run
+                Save run
               </Button>
             )}
 
@@ -1915,7 +1915,7 @@ export default function RunSummary() {
 
             {canShowDone({ saveStatus }) && (
               /* Replaces the removed auto-navigation timeouts. Sits in the
-             same primary-action slot as Save Run so the user's eye
+             same primary-action slot as Save run so the user's eye
              doesn't move when the state transitions saved → saved. */
               <button
                 type="button"
@@ -1958,7 +1958,7 @@ export default function RunSummary() {
                 fullWidth
                 onClick={() => setCircleShareOpen(true)}
               >
-                Share to Circle
+                Share to circle
               </Button>
             )}
 

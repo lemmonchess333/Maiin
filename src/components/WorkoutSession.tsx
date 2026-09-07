@@ -284,7 +284,7 @@ export default function WorkoutSession({
   );
   // CIRCLE-SESSION-01 — explicit Circle share from the completion
   // screen. The sheet mounts ONLY while open so its Circle reads
-  // never fire unless the user taps "Share to Circle".
+  // never fire unless the user taps "Share to circle".
   const resumeCursor = initialDraft
     ? nextIncompleteSet(initialDraft.setLogs, initialDraft.currentExIndex)
     : null;
@@ -615,7 +615,7 @@ export default function WorkoutSession({
 
   // Rest timer. PR E (audit P1 #13): pre-PR-E the target was
   // hardcoded to 90s and never read profile.defaultRestSeconds —
-  // the Settings → Workout Preferences slider had no effect on
+  // the Settings → Workout preferences slider had no effect on
   // the actual session. Now the default is sourced from the
   // profile with a 90s fallback for users who haven't set one.
   const [restSeconds, setRestSeconds] = useState(0);
@@ -675,7 +675,7 @@ export default function WorkoutSession({
    * End the session — stamp its duration, THEN show the complete screen.
    *
    * These two were separate statements and only the auto-complete-on-last-set
-   * path performed both; the green "Finish Workout" button flipped
+   * path performed both; the green "Finish workout" button flipped
    * `sessionComplete` alone, so duration kept its `useState(0)` initial and
    * the completion screen read "0m". That 0 does not stay cosmetic: it is
    * sent in the save payload, where `useProgram` substitutes a fabricated
@@ -2016,7 +2016,7 @@ export default function WorkoutSession({
                 onClick={completeSession}
                 className="w-full py-3.5 rounded-xl bg-success text-success-foreground font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
               >
-                <Trophy className="size-4" /> Finish Workout
+                <Trophy className="size-4" /> Finish workout
               </button>
             );
           }

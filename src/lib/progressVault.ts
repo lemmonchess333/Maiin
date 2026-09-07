@@ -1,5 +1,5 @@
 /**
- * Private Progress Vault (BODY-VAULT-01) — pure model + persistence.
+ * Private progress Vault (BODY-VAULT-01) — pure model + persistence.
  *
  * Adds a date-based CHECK-IN layer over the existing owner-only progress
  * photos: one check-in groups an optional front/side/back photo set for a

@@ -237,7 +237,7 @@ export default function ExercisePicker({
                         onClick={() => setShowDiscardConfirm(false)}
                         className="px-3 py-1.5 text-xs font-medium text-muted-foreground rounded-lg hover:bg-card"
                       >
-                        Keep Browsing
+                        Keep browsing
                       </button>
                       <button
                         type="button"

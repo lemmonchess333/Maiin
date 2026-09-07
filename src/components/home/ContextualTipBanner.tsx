@@ -50,7 +50,7 @@ export default function ContextualTipBanner({
   title,
   description,
   visible,
-  ctaLabel = "Open Settings",
+  ctaLabel = "Open settings",
   ctaHref = "/settings",
   lanePriority = 0,
 }: ContextualTipBannerProps) {

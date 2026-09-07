@@ -1,5 +1,5 @@
 /**
- * TDEE Calculator using Mifflin-St Jeor equation (more accurate than Harris-Benedict).
+ * TDEE calculator using Mifflin-St Jeor equation (more accurate than Harris-Benedict).
  * Provides macro recommendations based on fitness goal.
  */
 

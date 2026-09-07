@@ -65,7 +65,7 @@ export default function RunBackgroundGrantNote({
             className="mt-2 inline-flex min-h-[44px] items-center rounded-xl px-4 text-sm font-semibold active:scale-[0.97]"
             style={{ background: THEME.running, color: "#fff" }}
           >
-            Open Settings
+            Open settings
           </button>
         </div>
         <button

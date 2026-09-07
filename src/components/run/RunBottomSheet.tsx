@@ -58,7 +58,7 @@ interface RunBottomSheetProps {
   onDiscard?: () => void;
   /* Drives the End-run dialog's primary-action choice. When the live
      run is sub-threshold (the misclick case: tapped Stop at 0:05/0km),
-     surface Discard Run as the red primary CTA and demote ending the
+     surface Discard run as the red primary CTA and demote ending the
      run to a small "End anyway" text link below — defaulting the
      user toward not-saving rather than routing them through the
      summary + InvalidRunReview path. Derived once in Run.tsx via
@@ -1063,7 +1063,7 @@ export default function RunBottomSheet({
             </div>
           </div>
           {/* Primary-action swap: for sub-threshold runs the safest
-              default is to discard, so Discard Run becomes the red
+              default is to discard, so Discard run becomes the red
               CTA and ending the run drops to a small text link
               ("Review anyway"). DOM order matches visual priority
               so VoiceOver reaches the primary action first. The
@@ -1083,7 +1083,7 @@ export default function RunBottomSheet({
                 className="w-full py-3.5 rounded-xl font-semibold text-white text-sm"
                 style={{ background: "hsl(var(--destructive))" }}
               >
-                Discard Run
+                Discard run
               </button>
               <button
                 type="button"
@@ -1094,7 +1094,7 @@ export default function RunBottomSheet({
                   border: "1px solid rgba(255,255,255,0.15)",
                 }}
               >
-                Keep Going
+                Keep going
               </button>
               <button
                 type="button"
@@ -1119,7 +1119,7 @@ export default function RunBottomSheet({
                 className="w-full py-3.5 rounded-xl font-semibold text-white text-sm"
                 style={{ background: "hsl(var(--destructive))" }}
               >
-                End Run
+                End run
               </button>
               {onDiscard && (
                 <button
@@ -1134,7 +1134,7 @@ export default function RunBottomSheet({
                     border: "1px solid rgba(255,255,255,0.15)",
                   }}
                 >
-                  Discard Run
+                  Discard run
                 </button>
               )}
               <button
@@ -1146,7 +1146,7 @@ export default function RunBottomSheet({
                   border: "1px solid rgba(255,255,255,0.15)",
                 }}
               >
-                Keep Going
+                Keep going
               </button>
             </div>
           )}

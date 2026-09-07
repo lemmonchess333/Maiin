@@ -202,7 +202,10 @@ async function completeOnboardingDirect(
 /** List a user's `logs` subcollection straight from the emulator,
  *  bypassing rules — the server-side ground truth the queue assertions
  *  need (what actually landed, under whom). */
-async function listLogDocs(uid: string, collection = "logs"): Promise<RestDoc[]> {
+async function listLogDocs(
+  uid: string,
+  collection = "logs"
+): Promise<RestDoc[]> {
   const res = await fetch(
     `http://${FS_HOST}/v1/projects/demo-tropos/databases/(default)/documents/users/${uid}/${collection}`,
     { headers: { Authorization: "Bearer owner" } }
@@ -323,7 +326,7 @@ async function dismissBadgeCelebration(
 /** Click the app's Sign Out (rendered on /settings/account) and wait
  *  for the Login screen. */
 async function signOutViaUI(page: Page): Promise<void> {
-  const signOut = page.getByRole("button", { name: "Sign Out" });
+  const signOut = page.getByRole("button", { name: "Sign out" });
   await signOut.waitFor({ state: "visible", timeout: 20_000 });
   // The badge celebration can mount late over this page too (both
   // accounts log their first activity in this journey).
@@ -361,7 +364,9 @@ async function logMealViaComposer(
       timeout: 15_000,
     });
   } else {
-    await expect(page.getByText(/Saved on this phone — syncs when/)).toBeVisible({
+    await expect(
+      page.getByText(/Saved on this phone — syncs when/)
+    ).toBeVisible({
       timeout: 15_000,
     });
   }
@@ -433,8 +438,12 @@ test.describe("offline-queue uid isolation across an account switch", () => {
       .poll(async () => await readQueue(page), { timeout: 10_000 })
       .toHaveLength(2);
     const initialQueue = await readQueue(page);
-    const queued = initialQueue.find((entry) => entry.collectionPath === `users/${uidA}/logs`)!;
-    const queuedMeal = initialQueue.find((entry) => entry.collectionPath === `users/${uidA}/meals`)!;
+    const queued = initialQueue.find(
+      (entry) => entry.collectionPath === `users/${uidA}/logs`
+    )!;
+    const queuedMeal = initialQueue.find(
+      (entry) => entry.collectionPath === `users/${uidA}/meals`
+    )!;
     expect(queuedMeal.uid).toBe(uidA);
     expect(queuedMeal.docId).toBeTruthy();
     expect(queued.uid).toBe(uidA);
@@ -476,14 +485,18 @@ test.describe("offline-queue uid isolation across an account switch", () => {
       );
     });
     await page
-      .getByRole("button", { name: "Save Run" })
+      .getByRole("button", { name: "Save run" })
       .click({ timeout: 20_000 });
     // Pre-#1887 this await parked forever offline; now the save
     // confirms on the durable local commit. Sharing is an explicit action.
-    await expect(page.getByRole("button", { name: "Done", exact: true })).toBeVisible({
+    await expect(
+      page.getByRole("button", { name: "Done", exact: true })
+    ).toBeVisible({
       timeout: 15_000,
     });
-    await page.getByRole("button", { name: "Share this session", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Share this session", exact: true })
+      .click();
     await page
       .getByRole("button", { name: "Share to followers" })
       .click({ timeout: 15_000 });
@@ -532,8 +545,12 @@ test.describe("offline-queue uid isolation across an account switch", () => {
     expect(queueAtSignOut.length).toBeGreaterThanOrEqual(2);
     for (const entry of queueAtSignOut) {
       expect(entry.uid).toBe(uidA);
-      expect([`users/${uidA}/logs`, `users/${uidA}/meals`]).toContain(entry.collectionPath);
-      expect(entry.docId).toBe(entry.collectionPath.endsWith("/meals") ? queuedMeal.docId : queuedDocId);
+      expect([`users/${uidA}/logs`, `users/${uidA}/meals`]).toContain(
+        entry.collectionPath
+      );
+      expect(entry.docId).toBe(
+        entry.collectionPath.endsWith("/meals") ? queuedMeal.docId : queuedDocId
+      );
     }
     expect(await readShareQueue(page)).toHaveLength(1);
 
@@ -665,11 +682,17 @@ test.describe("offline-queue uid isolation across an account switch", () => {
     expect(flushed.fields?._offlineCreatedAt).toBeDefined();
 
     // The original stable meal ID arrives once, under its owner only.
-    await expect.poll(async () => await listLogDocs(uidA, "meals"), { timeout: 20_000 }).toHaveLength(1);
+    await expect
+      .poll(async () => await listLogDocs(uidA, "meals"), { timeout: 20_000 })
+      .toHaveLength(1);
     const [flushedMeal] = await listLogDocs(uidA, "meals");
     expect(flushedMeal.name.endsWith(`/meals/${queuedMeal.docId}`)).toBe(true);
     expect(flushedMeal.fields?.createdAt?.timestampValue).toBeDefined();
-    expect((await listLogDocs(uidB, "meals")).some((meal) => meal.name.endsWith(`/meals/${queuedMeal.docId}`))).toBe(false);
+    expect(
+      (await listLogDocs(uidB, "meals")).some((meal) =>
+        meal.name.endsWith(`/meals/${queuedMeal.docId}`)
+      )
+    ).toBe(false);
 
     // The flush consumed A's entries.
     await expect

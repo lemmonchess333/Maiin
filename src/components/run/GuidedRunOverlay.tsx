@@ -35,7 +35,7 @@ export default function GuidedRunOverlay({
         }}
       >
         <p className="text-lg font-bold" style={{ color: THEME.success }}>
-          Workout Complete!
+          Workout complete!
         </p>
         <p className="text-xs mt-1" style={{ color: THEME.success }}>
           Great session — keep it up

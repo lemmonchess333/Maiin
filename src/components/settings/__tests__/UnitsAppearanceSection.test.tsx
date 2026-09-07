@@ -84,7 +84,7 @@ describe("distance & pace unit toggle", () => {
     });
 
     track.mockReset();
-    fireEvent.click(screen.getByText("Height Unit"));
+    fireEvent.click(screen.getByText("Height unit"));
     expect(track).toHaveBeenCalledWith("settings_toggle_changed", {
       toggle: "height_unit",
       value: "ft",

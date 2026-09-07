@@ -37,7 +37,7 @@ export default function UnitsAppearanceSection({
     <AccordionSection
       inline={inline}
       icon={<Palette className="size-5 text-primary" />}
-      title="Units & Appearance"
+      title="Units & appearance"
       subtitle="Weight, distance, height, dark mode"
     >
       <div className="space-y-2">
@@ -152,7 +152,7 @@ export default function UnitsAppearanceSection({
         >
           <div className="flex items-center gap-3">
             <Ruler className="size-5" />
-            <span>Height Unit</span>
+            <span>Height unit</span>
           </div>
           <span className="font-medium">
             {profile.preferredHeightUnit.toUpperCase()}
@@ -177,7 +177,7 @@ export default function UnitsAppearanceSection({
             ) : (
               <Sun className="size-5" />
             )}
-            <span>Dark Mode</span>
+            <span>Dark mode</span>
           </div>
           <span className="font-medium">{profile.darkMode ? "ON" : "OFF"}</span>
         </button>

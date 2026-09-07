@@ -15,7 +15,7 @@ export default function SettingsAccount() {
     >
       <SecuritySection inline user={user} />
       {/*
-        Export lives INSIDE AccountSection's "Data & Account" block, not
+        Export lives INSIDE AccountSection's "Data & account" block, not
         here. #1923 rendered DataExportSection at this level believing the
         page advertised export and shipped none — but AccountSection had
         been carrying a verbatim inline copy the whole time, so the screen

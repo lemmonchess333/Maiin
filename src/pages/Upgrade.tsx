@@ -208,7 +208,7 @@ export default function Upgrade() {
             onClick={() => navigate("/settings")}
             type="button"
             className="size-11 inline-flex items-center justify-center -ml-2 rounded-lg hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-            aria-label="Back to Settings"
+            aria-label="Back to settings"
           >
             <ArrowLeft className="size-5 text-foreground" />
           </button>

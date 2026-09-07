@@ -10,7 +10,7 @@ import { readString, writeString } from "@/lib/localStore";
  * expand/collapse needs — so expandable cards kept reaching for bare
  * `useState` and forgetting the choice on every visit.
  *
- * Home's Today's Energy card was the reported case: it defaults closed
+ * Home's Today's energy card was the reported case: it defaults closed
  * for a documented reason (keeping the Home scroll calm), but the state
  * was plain `useState`, so a user who wanted the macro breakdown had to
  * re-open it every single time they landed on Home. Persisting turns one

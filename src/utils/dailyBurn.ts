@@ -1,7 +1,7 @@
 import type { FitnessGoal } from "@/lib/tdee";
 
 /**
- * Daily calorie summary for the Home "Today's Energy" card.
+ * Daily calorie summary for the Home "Today's energy" card.
  *
  * The target (phaseAdjustedTdee) is the user's stored targetCalories from the
  * profile — written by onboarding / Settings via calculateTDEE, which already

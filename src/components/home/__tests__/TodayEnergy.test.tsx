@@ -158,7 +158,7 @@ describe("TodayEnergy — collapsed macro summary vs expanded rings (Wave3 E1)",
       fat: 38,
       totalLifetimeMeals: 420,
     });
-    fireEvent.click(screen.getByText("Today's Energy"));
+    fireEvent.click(screen.getByText("Today's energy"));
     expect(screen.getAllByTestId("macro-ring")).toHaveLength(3);
     // summary line hides once expanded (rings carry the detail)
     expect(screen.queryByText(/P 80\/160g/)).toBeNull();
@@ -186,7 +186,7 @@ describe("TodayEnergy — collapsed macro summary vs expanded rings (Wave3 E1)",
     };
     const first = renderAt(props);
     expect(screen.queryByTestId("macro-ring")).toBeNull();
-    fireEvent.click(screen.getByText("Today's Energy"));
+    fireEvent.click(screen.getByText("Today's energy"));
     expect(screen.getAllByTestId("macro-ring")).toHaveLength(3);
     first.unmount();
 
@@ -232,7 +232,7 @@ describe("TodayEnergy — one logging action, no duplicated target rows (cohesio
   it("an active day has exactly one way into the food log", function () {
     renderAt({ calories: 1450, totalLifetimeMeals: 420 });
     expect(foodLinks()).toHaveLength(1);
-    fireEvent.click(screen.getByText("Today's Energy"));
+    fireEvent.click(screen.getByText("Today's energy"));
     // Expanding must not add a second one ("View food log" is gone).
     expect(foodLinks()).toHaveLength(1);
   });
@@ -253,7 +253,7 @@ describe("TodayEnergy — one logging action, no duplicated target rows (cohesio
 
   it("the details omit the plan-target row when it equals the header target", function () {
     renderAt({ calories: 1450, totalLifetimeMeals: 420 });
-    fireEvent.click(screen.getByText("Today's Energy"));
+    fireEvent.click(screen.getByText("Today's energy"));
     // burn.phaseAdjustedTdee (2200) === targets.finalTarget (2200), and no
     // activity burned: nothing in the details restates the header.
     expect(screen.queryAllByTestId("breakdown-row")).toHaveLength(0);
@@ -269,7 +269,7 @@ describe("TodayEnergy — one logging action, no duplicated target rows (cohesio
       totalLifetimeMeals: 420,
       burn: { ...burn, phaseAdjustedTdee: 2400 },
     });
-    fireEvent.click(screen.getByText("Today's Energy"));
+    fireEvent.click(screen.getByText("Today's energy"));
     expect(screen.queryAllByTestId("breakdown-row")).toHaveLength(0);
     expect(screen.queryByText(/Plan target/)).toBeNull();
   });

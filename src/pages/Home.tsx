@@ -277,7 +277,7 @@ export default function Home() {
     effectiveTargets?.protein ?? null
   );
 
-  // Daily burn for Today's Energy card.
+  // Daily burn for Today's energy card.
   // Workout burn reads through `effectiveTargets.actualLiftBurn` (sums
   // stored `totalCalories` for today's workouts via the same
   // `isWorkoutOnDate` rule). Pre-cleanup `useHomeData` re-derived this
@@ -1023,7 +1023,7 @@ export default function Home() {
           Today
         </SectionLabel>
 
-        {/* Today's Energy promoted above the CTA stack — calorie/macro tracking
+        {/* Today's energy promoted above the CTA stack — calorie/macro tracking
           is the primary daily answer this page has to give, and buried at the
           bottom of the scroll it was below the fold on first load. Now lives
           directly under the Health Score card so it's always visible in the

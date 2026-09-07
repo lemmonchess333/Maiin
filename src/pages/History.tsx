@@ -1471,7 +1471,7 @@ export default function History() {
                     }
                     text="Complete your first run to see running analytics here"
                     to="/run"
-                    ctaLabel="Start Run"
+                    ctaLabel="Start run"
                     variant="sport"
                   />
                 ) : (
@@ -1488,7 +1488,7 @@ export default function History() {
                         accentColor={THEME.running}
                       />
                       <StatCard
-                        label="Avg Pace"
+                        label="Avg pace"
                         value={paceMinSec(runningTotals.avgPace, unit)}
                         unit={paceUnitLabel(unit)}
                         direction="down-good"
@@ -1530,7 +1530,7 @@ export default function History() {
                     icon={<Trophy className="size-5 shrink-0 text-lifting" />}
                     text="Log a workout to see your lifting analytics here"
                     to="/program"
-                    ctaLabel="Start Lift"
+                    ctaLabel="Start lift"
                     variant="primary"
                   />
                 ) : (
@@ -1711,7 +1711,7 @@ export default function History() {
                   showSparklines / showDelta in the nutrition memo). */}
                     <div className="grid grid-cols-2 gap-2 mt-2">
                       <StatCard
-                        label="Avg Calories"
+                        label="Avg calories"
                         value={nutrition.avgCalories.toLocaleString()}
                         unit="kcal/day"
                         delta={

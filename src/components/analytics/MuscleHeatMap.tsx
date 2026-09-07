@@ -174,7 +174,7 @@ export default function MuscleHeatMap({ data, recovery }: MuscleHeatMapProps) {
   return (
     <div className="p-4 rounded-2xl border border-border/50 bg-card">
       <h3 className="text-sm font-semibold mb-3 text-foreground">
-        Muscle Groups Trained
+        Muscle groups trained
       </h3>
       <div className="flex flex-col items-center">
         <div

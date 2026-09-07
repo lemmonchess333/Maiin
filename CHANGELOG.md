@@ -34,6 +34,13 @@ follows [Semantic Versioning](https://semver.org/).
   save. Check your connection and try again."), and paired facts use the
   same middot the rest of the app uses.
 
+- **Buttons, labels and titles now read consistently.** Capitalisation was
+  a coin-flip across the app — "Delete Account" beside "Block user",
+  "Height Unit" beside "Body weight unit" — sometimes on the same screen.
+  Everything is sentence case now, except names: Performance Index,
+  Progress Vault, Weekly Review, and real-world names like Privacy Policy
+  and Apple Health.
+
 - **Home no longer shows a zero while it is still loading.** Today's
   calories and macros wait for your meals to arrive instead of briefly
   reading "0 eaten", which was indistinguishable from having eaten nothing.

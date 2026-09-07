@@ -70,7 +70,7 @@ describe("SpacesDirectory — Races & Events", () => {
   it("full directory requests races and renders them in their own row", () => {
     renderDirectory();
     expect(mockUseSpacesDirectory).toHaveBeenCalledWith(true);
-    expect(screen.getByText("Races & Events")).toBeInTheDocument();
+    expect(screen.getByText("Races & events")).toBeInTheDocument();
     expect(screen.getByText("Great North Run")).toBeInTheDocument();
     // Interest row unchanged alongside
     expect(screen.getByText("Spaces")).toBeInTheDocument();
@@ -105,7 +105,7 @@ describe("SpacesDirectory — Races & Events", () => {
     });
     renderDirectory({ compact: true, title: "Spaces for you" });
     expect(mockUseSpacesDirectory).toHaveBeenCalledWith(false);
-    expect(screen.queryByText("Races & Events")).not.toBeInTheDocument();
+    expect(screen.queryByText("Races & events")).not.toBeInTheDocument();
   });
 
   it("races row collapses when no upcoming races are in the entries", () => {
@@ -114,7 +114,7 @@ describe("SpacesDirectory — Races & Events", () => {
       refresh: vi.fn(),
     });
     renderDirectory();
-    expect(screen.queryByText("Races & Events")).not.toBeInTheDocument();
+    expect(screen.queryByText("Races & events")).not.toBeInTheDocument();
     expect(screen.getByText("Runners")).toBeInTheDocument();
   });
 });

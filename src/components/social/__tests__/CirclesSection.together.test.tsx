@@ -2,7 +2,7 @@
  * SOCIAL-HOME-01 Stage C — CirclesSection Together-surface contract:
  * (a) a failed list read renders the retry block (Retry → reload),
  *     never the cold-start selector; (b) a genuinely-empty list
- *     renders the five-option goal selector, with "Private Progress"
+ *     renders the five-option goal selector, with "Private progress"
  *     routing to /review and never creating a circle; (c) the first
  *     ACTIVE circle leads as the featured hero card (title tap-target
  *     + weekly-focus action) fed by exactly ONE eager loadDetail,
@@ -130,7 +130,7 @@ describe("CirclesSection (SOCIAL-HOME-01 Together surface)", () => {
       "Race Journey",
       "Consistency Reset",
       "Hybrid",
-      "Private Progress",
+      "Private progress",
     ]) {
       expect(screen.getByText(label)).toBeInTheDocument();
     }
@@ -194,7 +194,7 @@ describe("CirclesSection (SOCIAL-HOME-01 Together surface)", () => {
     }
   });
 
-  it("Private Progress navigates to /review and never creates a circle", () => {
+  it("Private progress navigates to /review and never creates a circle", () => {
     const value = hookValue();
     mockUseGoalSpaces.mockReturnValue(value);
     render(
@@ -203,7 +203,7 @@ describe("CirclesSection (SOCIAL-HOME-01 Together surface)", () => {
       </MemoryRouter>
     );
 
-    fireEvent.click(screen.getByText("Private Progress"));
+    fireEvent.click(screen.getByText("Private progress"));
     expect(navigateMock).toHaveBeenCalledWith("/review");
     expect(value.createCircle).not.toHaveBeenCalled();
   });

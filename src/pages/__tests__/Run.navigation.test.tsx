@@ -130,7 +130,7 @@ describe("Run setup navigation", () => {
       const snapshot = saveInterruptedRun();
       open("/run");
       if (method === "button")
-        fireEvent.click(screen.getByRole("button", { name: "Back to Run" }));
+        fireEvent.click(screen.getByRole("button", { name: "Back to run" }));
       else fireEvent.keyDown(document, { key: "Escape" });
       expect(screen.getByTestId("destination")).toHaveTextContent(
         "/program?tab=run"

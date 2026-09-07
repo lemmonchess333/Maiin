@@ -288,7 +288,7 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
   }, [user]);
 
   // ── Subscribe to windowed workouts + runs (for informational burn) ──────
-  // Nutr1: burn no longer drives the target, but the Today's Energy tiles and
+  // Nutr1: burn no longer drives the target, but the Today's energy tiles and
   // Food drill-down still display it, so the windowed subscriptions remain.
   useEffect(() => {
     if (!user) {

@@ -16,9 +16,9 @@
  * safe to pick.
  *
  * It also removes the reason two share controls used to sit on the
- * completion screen BEFORE the save ran: "Share to Circle" published a
+ * completion screen BEFORE the save ran: "Share to circle" published a
  * `session_completed` event and "Share Workout" exported a card, while
- * "Save Workout" was a different button entirely. Share to Circle → Close
+ * "Save Workout" was a different button entirely. Share to circle → Close
  * without saving left a Circle post claiming a session with no record
  * behind it. Sharing from a record that already exists cannot do that.
  *
@@ -306,7 +306,7 @@ export default function WorkoutDetail() {
               onClick={() => setCircleOpen(true)}
               leftIcon={<Users className="size-4 shrink-0" />}
             >
-              Share to Circle
+              Share to circle
             </Button>
           )}
         </div>

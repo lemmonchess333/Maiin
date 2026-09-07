@@ -1,4 +1,4 @@
-/** SettingsUnitsAppearance — Units & Appearance nested page (Set1.2). */
+/** SettingsUnitsAppearance — Units & appearance nested page (Set1.2). */
 import { useAuth } from "@/lib/auth";
 import { writeString } from "@/lib/localStore";
 import SettingsSection from "@/components/settings/SettingsSection";
@@ -52,11 +52,11 @@ export default function SettingsUnitsAppearance() {
     await updateProfile({ hideWeightNumber: !profile?.hideWeightNumber });
   }
 
-  if (!profile) return <SettingsSection title="Units & Appearance" />;
+  if (!profile) return <SettingsSection title="Units & appearance" />;
 
   return (
     <SettingsSection
-      title="Units & Appearance"
+      title="Units & appearance"
       subtitle="Weight, distance, height, dark mode"
       section="units_appearance"
     >

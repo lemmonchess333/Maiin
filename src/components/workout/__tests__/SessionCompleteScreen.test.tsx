@@ -158,8 +158,8 @@ describe("SessionCompleteScreen — header stats agree with each other", () => {
  * No share affordance on this screen — the phantom-post regression pin.
  *
  * Until 2026-08-04 this screen carried "Share Workout" (image card) and
- * "Share to Circle". Both fired BEFORE the save, because "Save Workout" is a
- * separate button — so "Share to Circle" → "Close without saving" published
+ * "Share to circle". Both fired BEFORE the save, because "Save Workout" is a
+ * separate button — so "Share to circle" → "Close without saving" published
  * a `session_completed` event for a session that was never written. Sharing
  * moved to `/workout/:id`, where the record exists first and that sequence
  * is impossible.

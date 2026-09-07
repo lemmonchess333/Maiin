@@ -271,7 +271,7 @@ export default function SpacesDirectory({
         <CardRow label={title} entries={interest} compact={compact} />
       )}
       {races.length > 0 && (
-        <CardRow label="Races & Events" entries={races} compact={compact} />
+        <CardRow label="Races & events" entries={races} compact={compact} />
       )}
     </div>
   );
