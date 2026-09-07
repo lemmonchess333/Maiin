@@ -142,9 +142,8 @@ export function collapseBodyweightLogs(
  * persist-every-mirrored-field rule: the consumers read a different
  * location from the one the write path updated.
  *
- * Sub-0.05 kg deltas return null — re-logging the same weight should not
- * burn a profile write. One decimal, matching what the profile edit
- * surface displays. ADR-0007's point-in-time hold is untouched: that is
+ * Re-logging the same canonical value skips a profile write. Display
+ * rounding stays at the UI boundary so pounds round-trip correctly. ADR-0007's point-in-time hold is untouched: that is
  * about HISTORICAL budget recomputes; this keeps the forward-looking
  * anchor honest.
  */
@@ -153,14 +152,15 @@ export function weighInProfileMirror(
   loggedKg: number
 ): { weightKg: number } | null {
   if (!Number.isFinite(loggedKg) || loggedKg <= 0) return null;
-  const rounded = Math.round(loggedKg * 10) / 10;
+  // Preserve canonical precision; rounding here breaks 180.0 lb round-trips.
+  const precise = loggedKg;
   if (
     typeof prevProfileKg === "number" &&
-    Math.abs(prevProfileKg - rounded) < 0.05
+    Math.abs(prevProfileKg - precise) < 1e-9
   ) {
     return null;
   }
-  return { weightKg: rounded };
+  return { weightKg: precise };
 }
 
 /** The profile slice the weigh-in patch reads. Structural, so tests and

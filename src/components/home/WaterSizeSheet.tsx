@@ -41,6 +41,7 @@ export default function WaterSizeSheet({
   targetMl,
   servingMl = 250,
   onServingChange,
+  recentSizes = [],
 }: {
   open: boolean;
   onClose: () => void;
@@ -48,6 +49,7 @@ export default function WaterSizeSheet({
   consumedMl: number;
   targetMl: number;
   servingMl?: number;
+  recentSizes?: number[];
   onServingChange?: (ml: number) => void;
 }) {
   const [custom, setCustom] = useState("");
@@ -77,6 +79,23 @@ export default function WaterSizeSheet({
     >
       <div className="px-5 pb-6 pt-4 space-y-4">
         <div className="w-9 h-1 rounded-full bg-border mx-auto" />
+
+        {recentSizes.length > 0 && (
+          <section aria-label="Recent water sizes" className="space-y-2">
+            <SectionLabel>Recent</SectionLabel>
+            <div className="flex flex-wrap gap-2">
+              {recentSizes.map((size) => (
+                <Button
+                  key={size}
+                  variant="secondary"
+                  onClick={() => log(size)}
+                >
+                  <span className="font-mono tabular-nums">{size}</span> ml
+                </Button>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Running total against target */}
         <div className="flex items-center gap-3">

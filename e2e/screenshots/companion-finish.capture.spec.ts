@@ -33,7 +33,9 @@ test("a saved lift has one finish and Done returns to Program", async ({
   );
   expect(signup.ok()).toBe(true);
   const { localId: uid } = await signup.json();
-  for (const suffix of ["", "/programState/current"]) {
+  // Copy only the profile; the app creates this fresh account's programme.
+  // Depending on the shared account's programme makes isolated runs order-dependent.
+  for (const suffix of [""]) {
     const sourceDoc = await request.get(
       `${DOCS}/users/${source.localId}${suffix}`,
       { headers }
