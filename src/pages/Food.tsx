@@ -1691,9 +1691,10 @@ export default function Food() {
         <h1 className="text-xl font-extrabold text-foreground">Food</h1>
       </motion.div>
 
-      {/* Hero card — ring + macros on a single white card */}
+      {/* Compact energy summary; detailed macros remain in the existing Details sheet. */}
       <motion.div variants={itemVariant} key={selectedDate}>
         <FoodHeroCard
+          compact
           selectedDate={selectedDate}
           isToday={isToday}
           dailyTargets={dailyTargets}
@@ -1779,12 +1780,7 @@ export default function Food() {
         </motion.div>
       )}
 
-      {/* Composer: the ONE food entry surface (wave2 D) — NL textarea
-          with the scan icon, Add-to pills, and the dropdown. Quick Add
-          lives INSIDE the dropdown's empty-focus state now (the old
-          standing chip strip at two page positions is gone); the same
-          items render as instant-add rows when the input is focused
-          and empty, framed as examples for cold-start accounts. */}
+      {/* Logging group: composer, slot and eligible usual stay together. */}
       <motion.div variants={itemVariant}>
         <FoodComposerCard
           ref={suggestionsRef}
@@ -1821,9 +1817,9 @@ export default function Food() {
       </motion.div>
 
       {usual && (
-        <div className="ds-card p-4 space-y-2">
-          <p className="text-sm">Your usual at {usualSlot}</p>
-          <p className="text-sm">{usual.name}</p>
+        <div className="rounded-2xl bg-card card-shadow p-4 space-y-2" aria-label="Your usual meal">
+          <p className="text-caption text-muted-foreground">Your usual at {usualSlot}</p>
+          <p className="text-base font-semibold">{usual.name}</p>
           <p className="text-xs text-muted-foreground"><span className="font-mono tabular-nums">{Math.round(usual.cal)}</span> kcal · {usual.portionSize}</p>
           <div className="flex gap-2">
             <Button disabled={quickAdding !== null} onClick={() => void handleQuickMealAdd(usual)}>Log</Button>

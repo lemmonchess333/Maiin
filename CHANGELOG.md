@@ -8,6 +8,9 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- Setup has five named chapters, an early interactive draft week, a spinning weight scale with direct typing, and an editable plan review. Goals and limitations require explicit choices; free running stays unscheduled, and nutrition clearly starts at maintenance.
+- Home puts today’s training and logging before a compact performance summary and tips. Food brings the composer and usual meal into view sooner, with full nutrition available in Details.
+
 - Weigh-ins use a spinning scale dial with a fixed pointer, precise tenths, direct typing and keyboard adjustment.
 
 - Water offers the last three sizes used on this account. Weigh-ins support kg, lb and stone, retain conversion precision and offer dates within the last 30 days.

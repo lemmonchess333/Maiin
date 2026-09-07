@@ -190,12 +190,9 @@ export function FoodSkeleton() {
   return (
     <div role="status" aria-label="Loading" className="space-y-4">
       <Bar className="h-7 w-24" />
-      {/* Calorie ring hero card */}
-      <Bar className="h-56 w-full rounded-2xl" />
-      {/* Three macro tiles */}
-      <StatTilesSkeleton />
-      {/* NL input + a couple of meal sections */}
-      <Bar className="h-12 w-full rounded-xl" />
+      {/* Match the compact summary and standing logging group. */}
+      <Bar className="h-32 w-full rounded-2xl" />
+      <Bar className="h-36 w-full rounded-xl" />
       <SkelCard>
         <Bar className="h-4 w-1/3" />
         <Bar className="h-10 w-full" />

@@ -103,6 +103,12 @@ export interface OnboardingDraft {
   weightUnit: (typeof DRAFT_UNITS_WEIGHT)[number];
   trainingWhy: string;
   experience: (typeof DRAFT_EXPERIENCE)[number];
+  /** Additive flow metadata: v2 answers remain resumable after the redesign. */
+  goalConfirmed?: boolean;
+  runConfirmed?: boolean;
+  displayName?: string;
+  weightDisplayUnit?: "kg" | "lbs" | "st";
+  returnToReview?: boolean;
 }
 
 interface DraftEnvelope {
@@ -155,7 +161,13 @@ export function isValidDraft(
     oneOf(DRAFT_UNITS_HEIGHT, d.heightUnit) &&
     oneOf(DRAFT_UNITS_WEIGHT, d.weightUnit) &&
     typeof d.trainingWhy === "string" &&
-    oneOf(DRAFT_EXPERIENCE, d.experience)
+    oneOf(DRAFT_EXPERIENCE, d.experience) &&
+    (d.goalConfirmed === undefined || typeof d.goalConfirmed === "boolean") &&
+    (d.runConfirmed === undefined || typeof d.runConfirmed === "boolean") &&
+    (d.displayName === undefined || typeof d.displayName === "string") &&
+    (d.weightDisplayUnit === undefined ||
+      oneOf(["kg", "lbs", "st"], d.weightDisplayUnit)) &&
+    (d.returnToReview === undefined || typeof d.returnToReview === "boolean")
   );
 }
 

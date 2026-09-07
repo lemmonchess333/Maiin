@@ -204,6 +204,12 @@ Never repurpose one of these for an unrelated feature.
 | `text-small`   | 14px  | Secondary descriptions                                           |
 | `text-micro`   | 12px  | Labels, captions, uppercase tracking headers (floor)             |
 
+**Onboarding question role (approved first release, 7 September 2026):**
+The question heading uses the existing `text-h1` token with `font-extrabold`,
+tight leading and natural wrapping. Standard route titles keep their existing
+page-title treatment. The five named chapters orient the seven setup screens;
+no additional typeface, colour or entrance animation is introduced.
+
 **Weight rules (strict):**
 
 - `800` extrabold → hero numbers + page titles

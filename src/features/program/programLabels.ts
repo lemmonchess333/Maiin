@@ -51,17 +51,6 @@ export function goalLabel(g: PrimaryGoal): string {
   }
 }
 
-export function runFreqLabel(r: RunFrequency): string {
-  switch (r) {
-    case "regular":
-      return "Runs 3x/week integrated";
-    case "occasional":
-      return "Runs 1-2x/week integrated";
-    case "none":
-      return "No running";
-  }
-}
-
 export function experienceLabel(e: Experience): string {
   switch (e) {
     case "beginner":
