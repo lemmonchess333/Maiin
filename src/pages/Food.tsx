@@ -1823,7 +1823,47 @@ export default function Food() {
         </motion.div>
       )}
 
-      {/* Logging group: composer, slot and eligible usual stay together. */}
+      {/* Logging group: the eligible usual, then the composer and slot.
+          The usual row leads because it is the one-tap repeat, and because
+          it has to clear the fold: `companion-food.capture.spec.ts` asserts
+          its Log button ends above 760px at 375px wide. Restoring the
+          calorie hero in #2187 pushed this whole group down ~250px and put
+          that button at 1007 — the capture gate caught it. Ordering the row
+          first buys back the ~90px the composer and slot picker occupy and
+          costs the hero nothing. Keep it above the composer. */}
+      {usual && (
+        <div
+          className="rounded-2xl bg-card card-shadow p-4 space-y-2"
+          aria-label="Your usual meal"
+        >
+          <p className="text-caption text-muted-foreground">
+            Your usual at {usualSlot}
+          </p>
+          <p className="text-base font-semibold">{usual.name}</p>
+          <p className="text-xs text-muted-foreground">
+            <span className="font-mono tabular-nums">
+              {Math.round(usual.cal)}
+            </span>{" "}
+            kcal · {usual.portionSize}
+          </p>
+          <div className="flex gap-2">
+            <Button
+              disabled={quickAdding !== null}
+              onClick={() => void handleQuickMealAdd(usual)}
+            >
+              Log
+            </Button>
+            <Button
+              variant="secondary"
+              disabled={quickAdding !== null}
+              onClick={() => setPortionMeal(usual)}
+            >
+              Adjust portion or meal
+            </Button>
+          </div>
+        </div>
+      )}
+
       <motion.div variants={itemVariant}>
         <FoodComposerCard
           ref={suggestionsRef}
@@ -1858,39 +1898,6 @@ export default function Food() {
           onManualOpen={() => setManualOpen(true)}
         />
       </motion.div>
-
-      {usual && (
-        <div
-          className="rounded-2xl bg-card card-shadow p-4 space-y-2"
-          aria-label="Your usual meal"
-        >
-          <p className="text-caption text-muted-foreground">
-            Your usual at {usualSlot}
-          </p>
-          <p className="text-base font-semibold">{usual.name}</p>
-          <p className="text-xs text-muted-foreground">
-            <span className="font-mono tabular-nums">
-              {Math.round(usual.cal)}
-            </span>{" "}
-            kcal · {usual.portionSize}
-          </p>
-          <div className="flex gap-2">
-            <Button
-              disabled={quickAdding !== null}
-              onClick={() => void handleQuickMealAdd(usual)}
-            >
-              Log
-            </Button>
-            <Button
-              variant="secondary"
-              disabled={quickAdding !== null}
-              onClick={() => setPortionMeal(usual)}
-            >
-              Adjust portion or meal
-            </Button>
-          </div>
-        </div>
-      )}
       {copyPreviewOpen && (
         <BottomSheet
           open
