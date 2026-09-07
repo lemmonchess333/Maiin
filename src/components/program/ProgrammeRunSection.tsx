@@ -362,7 +362,7 @@ export default function ProgrammeRunSection({
     // Storage unavailable / quota — the in-memory state still hides the
     // prompt for this session.
     writeString(raceRecentDismissKey, "1");
-    toast("Got it — we'll wrap up your plan.");
+    toast("Got it. We'll wrap up your plan.");
   }
 
   // #975: one-time "Set a race goal" nudge for freeform runners — the skip
@@ -900,7 +900,7 @@ export default function ProgrammeRunSection({
       {contextualPrompt === "no-show" && raceGoal && (
         <Banner
           variant="warning"
-          title={`${raceGoal.distance.toUpperCase()} — ${raceGoal.targetDate}`}
+          title={`${raceGoal.distance.toUpperCase()} · ${raceGoal.targetDate}`}
           description="We marked this as no-show after 3 days with no log. Log it now if you ran it."
           action={
             <div className="flex flex-col gap-2">
@@ -1044,7 +1044,7 @@ export default function ProgrammeRunSection({
       {currentMode === "race_prep" && raceGoal && inRecovery && (
         <Banner
           variant="info"
-          title={`Recovering — ${recoveryDaysLeft} day${recoveryDaysLeft === 1 ? "" : "s"} left`}
+          title={`Recovering · ${recoveryDaysLeft} day${recoveryDaysLeft === 1 ? "" : "s"} left`}
           description="Easy runs this week. Templates auto-set to easy_30 until recovery ends."
           action={
             <button
@@ -1462,16 +1462,16 @@ export default function ProgrammeRunSection({
                 <SectionLabel tier="section">{selectedDateLabel}</SectionLabel>
                 <p className="text-sm font-bold text-foreground mt-0.5">
                   {selectedRun.isCompleted
-                    ? `${selectedTemplate?.name ?? "Run"} — done`
+                    ? `${selectedTemplate?.name ?? "Run"} · done`
                     : selectedRun.status === "skipped"
-                      ? `${selectedTemplate?.name ?? "Run"} — skipped`
+                      ? `${selectedTemplate?.name ?? "Run"} · skipped`
                       : "No run scheduled"}
                 </p>
                 <p className="text-micro text-muted-foreground mt-0.5">
                   {selectedRun.isCompleted
                     ? "Add another whenever you like."
                     : selectedRun.status === "skipped"
-                      ? "Marked as skipped — you can still head out."
+                      ? "Marked as skipped. You can still head out."
                       : "Rest day. Head out whenever you like."}
                 </p>
                 <Button
@@ -1558,8 +1558,8 @@ export default function ProgrammeRunSection({
           {postEaseBounce && (
             <p className="text-xs text-muted-foreground px-1">
               {postEaseBounce === "recovered"
-                ? "Back inside the pace window after the easier week — the plan resumes as scheduled."
-                : "Still outside the pace window after the easier week — worth keeping this week gentle too. You decide."}
+                ? "Back inside the pace window after the easier week. The plan resumes as scheduled."
+                : "Still outside the pace window after the easier week. Worth keeping this week gentle too, but you decide."}
             </p>
           )}
 

@@ -251,7 +251,7 @@ export default function PeopleView({
               }}
               aria-label={
                 isRestricted
-                  ? "Search is unavailable — your account is restricted"
+                  ? "Search is unavailable while your account is restricted"
                   : "Search athletes"
               }
               disabled={isRestricted}
@@ -489,7 +489,7 @@ export default function PeopleView({
                   disabled={isRestricted}
                   aria-label={
                     isRestricted
-                      ? "Inviting is unavailable — your account is restricted"
+                      ? "Inviting is unavailable while your account is restricted"
                       : undefined
                   }
                   className="w-full min-h-[44px] py-2.5 rounded-xl text-white font-medium text-sm active:scale-[0.97] transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
@@ -505,7 +505,7 @@ export default function PeopleView({
                 disabled={isRestricted}
                 aria-label={
                   isRestricted
-                    ? "Inviting is unavailable — your account is restricted"
+                    ? "Inviting is unavailable while your account is restricted"
                     : undefined
                 }
                 className="w-full min-h-[44px] py-2.5 rounded-xl text-white font-medium text-sm active:scale-[0.97] transition-transform disabled:opacity-50 disabled:cursor-not-allowed"

@@ -1250,7 +1250,7 @@ export default function WorkoutSession({
       // re-enabled) Save button again and hits the exact same workout doc.
       logger.error("[WorkoutSession] finish failed:", error);
       toast.error(
-        "Couldn't save your workout. Your completed session is still here — try again."
+        "Couldn't save your workout. Your completed session is still here, so try again."
       );
     } finally {
       finishPending.current = false;

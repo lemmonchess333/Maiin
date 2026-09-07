@@ -18,12 +18,12 @@ const STEPS: {
   {
     icon: Unlock,
     when: "Today",
-    what: "Full Pro access unlocks — every feature, no payment due.",
+    what: "Full Pro access unlocks. Every feature, no payment due.",
   },
   {
     icon: Crown,
     when: "Day 7",
-    what: "Your subscription starts unless you've cancelled — cancel anytime before.",
+    what: "Your subscription starts unless you've cancelled. You can cancel any time before then.",
   },
 ];
 

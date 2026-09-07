@@ -448,7 +448,7 @@ export default function DayActionSheet({
                   disabled={!run.isStartable || isRaceTemplate}
                   aria-label={
                     isRaceTemplate
-                      ? "Race day — template locked"
+                      ? "Race day · template locked"
                       : run.isStartable
                         ? "Run template"
                         : `${run.status} — template locked`

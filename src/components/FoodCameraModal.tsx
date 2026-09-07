@@ -352,7 +352,7 @@ export default function FoodCameraModal({
         };
       } catch (e: unknown) {
         logger.error(e);
-        if (!cancelled) setBarcodeHint("Scanner failed — try again");
+        if (!cancelled) setBarcodeHint("Scanner failed. Try again.");
       }
     };
 
@@ -467,7 +467,7 @@ export default function FoodCameraModal({
               }
             : {
                 title: "No food detected",
-                sub: "Try a clearer shot of the plate — or type it in.",
+                sub: "Try a clearer shot of the plate, or type it in.",
               },
         error: {
           title: "Couldn't read this one",
@@ -480,7 +480,7 @@ export default function FoodCameraModal({
         },
         offline: {
           title: "You're offline",
-          sub: "Scanning needs a connection — typing it in still works.",
+          sub: "Scanning needs a connection. Typing it in still works.",
         },
       }[failure]
     : null;
@@ -1201,7 +1201,7 @@ export default function FoodCameraModal({
                 className="text-center text-xs text-white/70"
               >
                 {tab === "barcode"
-                  ? "Aim at the barcode — auto-detects"
+                  ? "Aim at the barcode · auto-detects"
                   : tab === "label"
                     ? "Align the nutrition label"
                     : "Point at your meal"}
