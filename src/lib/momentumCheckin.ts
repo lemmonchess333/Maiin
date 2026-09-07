@@ -29,6 +29,18 @@ export interface MomentumCheckin {
   weekKey: string;
   feel: PlanFeel;
   focus: MomentumFocus | null;
+  /**
+   * The two app-experience answers, 1-5, present only on the weeks the
+   * monthly cadence asks for them. Distinct from `feel`, which is about
+   * the PLAN's load ("Good fit" / "A bit much" / "Too light"): these ask
+   * whether the app made the week legible and logging cheap, which the
+   * load answer cannot report on.
+   *
+   * Optional because most weeks never ask, and because a user can answer
+   * the training half and skip these.
+   */
+  clarity?: number;
+  ease?: number;
   /** True when the user dismissed the card without answering — the
    *  card must not re-nag for the same review week. */
   dismissed?: boolean;
@@ -48,6 +60,41 @@ export const FOCUS_OPTIONS: Array<{ value: MomentumFocus; label: string }> = [
   { value: "food_logging", label: "Log food consistently" },
   { value: "weigh_ins", label: "Weigh in consistently" },
 ];
+
+/** 1-5, the range both app-experience answers use. */
+export const EXPERIENCE_SCALE = [1, 2, 3, 4, 5] as const;
+
+/**
+ * Weeks between askings of the two app-experience questions.
+ *
+ * The check-in is weekly and already asks two questions. Asking two more
+ * every week would turn a decision moment into a survey, which is the
+ * thing the check-in was built NOT to be — so these ride along roughly
+ * monthly and are absent the rest of the time.
+ */
+export const EXPERIENCE_EVERY_N_WEEKS = 4;
+
+/**
+ * Whether this review week should carry the app-experience questions.
+ *
+ * Derived from the week key alone, so it needs no history read and gives
+ * the same answer on every render and every device. The anchor is the
+ * Unix epoch's own Monday (1970-01-05); which weeks land on the cadence
+ * is arbitrary, but it is STABLE, which is the property that matters —
+ * a cadence computed from "when did they last answer" would move every
+ * time someone skipped one.
+ *
+ * Returns false for an unparseable key: a malformed week should show the
+ * ordinary check-in, never a surprise extra pair of questions.
+ */
+export function asksExperienceQuestions(weekKey: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(weekKey)) return false;
+  const ms = Date.parse(`${weekKey}T00:00:00Z`);
+  if (Number.isNaN(ms)) return false;
+  const ANCHOR_MS = Date.parse("1970-01-05T00:00:00Z"); // first Monday
+  const weeks = Math.round((ms - ANCHOR_MS) / (7 * 24 * 3600 * 1000));
+  return weeks % EXPERIENCE_EVERY_N_WEEKS === 0;
+}
 
 export interface NextAction {
   label: string;
@@ -144,10 +191,21 @@ export function parseCheckin(data: unknown): MomentumCheckin | null {
     focus === "weigh_ins"
       ? focus
       : null;
+  // Validated on the way back in, not just on the way out: a stored value
+  // outside 1-5 (a hand-edited doc, a future scale change) must not reach
+  // a consumer that trusts the range. Out-of-range reads as unanswered.
+  const inScale = (v: unknown): v is number =>
+    typeof v === "number" &&
+    Number.isInteger(v) &&
+    v >= 1 &&
+    v <= EXPERIENCE_SCALE.length;
+
   return {
     weekKey: d.weekKey,
     feel,
     focus: validFocus,
+    ...(inScale(d.clarity) ? { clarity: d.clarity } : {}),
+    ...(inScale(d.ease) ? { ease: d.ease } : {}),
     createdAt: d.createdAt,
   };
 }

@@ -8,6 +8,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **About once a month, the weekly check-in asks two questions about the
+  app** — whether the plan made sense, and whether logging was easy. Both
+  optional, on the check-in you already answer, and absent the other three
+  weeks.
 - **Notes you write during a session are kept.** A note typed against an
   exercise ("Level 8, 6.0 incline") now saves with the workout and shows on
   that session in History. Previously it survived closing and reopening a
