@@ -241,6 +241,7 @@ describe("sumLifetimeRunTotals", () => {
     expect(sumLifetimeRunTotals([eligible, eligible])).toEqual({
       runCount: 2,
       totalDistanceM: 10000,
+      firstRun: null,
     });
   });
 
@@ -255,6 +256,7 @@ describe("sumLifetimeRunTotals", () => {
     expect(sumLifetimeRunTotals([eligible, misclick])).toEqual({
       runCount: 1,
       totalDistanceM: 5000,
+      firstRun: null,
     });
   });
 
@@ -268,7 +270,7 @@ describe("sumLifetimeRunTotals", () => {
     const tooBrief: RunRecord = { distance: 5000, duration: 20 };
     expect(
       sumLifetimeRunTotals([eligible, invalid, tooShort, tooBrief])
-    ).toEqual({ runCount: 1, totalDistanceM: 5000 });
+    ).toEqual({ runCount: 1, totalDistanceM: 5000, firstRun: null });
   });
 
   it("treats a missing distance as zero rather than NaN", () => {
@@ -284,10 +286,47 @@ describe("sumLifetimeRunTotals", () => {
     expect(totalDistanceM).toBe(100);
   });
 
+  it("picks the earliest ELIGIBLE run as the first, not the earliest run", () => {
+    // The ineligible one is older. A first-run milestone built on it would
+    // celebrate a misclick the totals deliberately refuse to count.
+    const older: RunRecord = {
+      id: "misclick",
+      date: "2026-01-01",
+      distance: 20000,
+      duration: 480,
+      savedAnyway: true,
+    };
+    const real: RunRecord = {
+      id: "real",
+      date: "2026-03-01",
+      distance: 5000,
+      duration: 1800,
+    };
+    expect(sumLifetimeRunTotals([older, real]).firstRun).toEqual({
+      id: "real",
+      date: "2026-03-01",
+      distanceMetres: 5000,
+    });
+  });
+
+  it("ignores an undated run for the first-run pick but still counts it", () => {
+    const undated: RunRecord = { distance: 5000, duration: 1800 };
+    const dated: RunRecord = {
+      id: "d",
+      date: "2026-03-01",
+      distance: 5000,
+      duration: 1800,
+    };
+    const totals = sumLifetimeRunTotals([undated, dated]);
+    expect(totals.runCount).toBe(2);
+    expect(totals.firstRun?.id).toBe("d");
+  });
+
   it("is empty for an empty collection", () => {
     expect(sumLifetimeRunTotals([])).toEqual({
       runCount: 0,
       totalDistanceM: 0,
+      firstRun: null,
     });
   });
 });

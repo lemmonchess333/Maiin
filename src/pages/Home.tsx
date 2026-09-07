@@ -671,12 +671,12 @@ export default function Home() {
                 to="/history"
                 onClick={() => {
                   try {
-                    sessionStorage.setItem("history-tab", "badges");
+                    sessionStorage.setItem("history-tab", "milestones");
                   } catch {
                     /* private mode — fine, user lands on the default tab */
                   }
                 }}
-                aria-label={`View badges — ${streak}-day streak`}
+                aria-label={`View milestones — ${streak}-day streak`}
                 className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
               >
                 <StreakFlame

@@ -27,7 +27,11 @@ export type HistoryTab =
   | "lifting"
   | "nutrition"
   | "performance"
-  | "badges";
+  // "badges" is the retired tab's wire value, kept so a dashboard built on
+  // it does not lose its history at the rename. New selections emit
+  // "milestones".
+  | "badges"
+  | "milestones";
 
 export type HistoryRange = "1W" | "1M" | "3M" | "6M" | "1Y";
 
