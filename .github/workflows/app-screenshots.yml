@@ -93,7 +93,7 @@ jobs:
           GCLOUD_PROJECT: demo-tropos
         run: |
           firebase emulators:exec --only auth,firestore --project demo-tropos \
-            'npm run seed:e2e && npm run seed:rich && npm run seed:circles && npm run seed:experience && npm run seed:fellbehind && npm run test:e2e -- "companion-.*capture.spec.ts|weight-picker-lab.capture.spec.ts|races-cta.*capture.spec.ts" --project=auth-emulator'
+            'npm run seed:e2e && npm run seed:rich && npm run seed:circles && npm run seed:experience && npm run seed:fellbehind && npm run test:e2e -- capture.spec.ts --project=auth-emulator'
 
       - name: Diff against the previous capture
         if: always()
