@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { liftSessionExplainer, liftWeekLabel } from "../liftSessionExplainer";
+import {
+  liftSessionExplainer,
+  liftWeekLabel,
+  MAX_EXPLAINER_CHARS,
+} from "../liftSessionExplainer";
 import { generateWeekPrescription } from "@/features/program/programEngine";
 import { FOCUS_ORDER, focusLabel } from "@/features/program/trainingBlock";
 import type {
@@ -87,10 +91,10 @@ describe("session purpose derives from programme facts", () => {
   it("only describes double progression when every supplied exercise uses it", () => {
     expect(
       liftSessionExplainer(state, today, "full", ["double", "double"])
-    ).toContain("reps build");
+    ).toContain("reps first");
     expect(
       liftSessionExplainer(state, today, "full", ["double", "linear"])
-    ).not.toContain("reps build");
+    ).not.toContain("reps first");
   });
   for (const focus of FOCUS_ORDER) {
     for (const pace of ["full", "lighter", "easing"] as BlockPace[]) {
@@ -98,8 +102,8 @@ describe("session purpose derives from programme facts", () => {
         const context = { ...state, trainingBlock: { ...block, focus, pace } };
         const line = liftSessionExplainer(context, today)!;
         expect(line).toContain(focusLabel(focus));
-        expect(line.length).toBeLessThanOrEqual(90);
-        expect(line.includes("loads hold")).toBe(pace === "easing");
+        expect(line.length).toBeLessThanOrEqual(MAX_EXPLAINER_CHARS);
+        expect(line.includes("easing in")).toBe(pace === "easing");
         expect(liftWeekLabel(context, today)).toBe(
           `Week 2 of 8 · ${focusLabel(focus)}`
         );

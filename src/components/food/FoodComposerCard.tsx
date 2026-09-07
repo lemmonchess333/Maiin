@@ -292,16 +292,20 @@ function FoodComposerCard({
             />
           </div>
         )}
-      {/* Meal-slot picker — the one single-select control (SegmentedControl,
-          ADR-0003): radiogroup semantics, keyboard and 44px targets for free,
-          and the same selected-state language as every other picker in the
-          app. This row and EditServingsSheet's "Meal slot" were two
-          hand-rolled chip rows that painted the same state in two colours
-          (nutrition orange here, brand purple there); the label above is the
-          DS2 11px section tier. */}
+      {/* Meal-slot picker — SegmentedControl (ADR-0003) for the radiogroup
+          semantics, keyboard handling and 44px targets, in its `solid`
+          emphasis so the selected slot is a filled orange pill. The orange
+          is load-bearing: it is the food domain's identity, it matches the
+          meal-section add button, and "which meal" therefore reads as one
+          colour across the surface. The neutral track that briefly replaced
+          it made this the only domain in the app with no colour of its own.
+          EditServingsSheet's "Meal slot" mirrors this exactly; the label
+          above is the DS2 11px section tier. */}
       <div className="mt-2 space-y-1.5">
         <SectionLabel tier="section">Add to</SectionLabel>
         <SegmentedControl
+          emphasis="solid"
+          tone="nutrition"
           ariaLabel="Add to meal"
           options={MEAL_ORDER.map((mealKey) => ({
             value: mealKey,

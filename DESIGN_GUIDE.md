@@ -179,6 +179,39 @@ values in light mode). Use the raw values only for dots/tints/bars.
 
 Never repurpose one of these for an unrelated feature.
 
+### 3f. Uniformity stops where identity starts
+
+The design system exists to make spacing, type scale, touch targets and
+control behaviour the same everywhere. It is **not** a mandate to make every
+surface look alike. A handful of elements are where the product has a face,
+and consistency must yield to them:
+
+| Element               | Keeps                                                       |
+| --------------------- | ----------------------------------------------------------- |
+| Food hero             | The photo, the calorie ring, the three macro cards          |
+| Home performance card | The ring, its warm gradient, the delta chip                 |
+| Meal slot picker      | Filled orange pills (`SegmentedControl` `emphasis="solid"`) |
+| Sport coding          | Purple lifting / coral running, everywhere they appear      |
+
+A 2026-09 cohesion pass flattened the meal pills onto the neutral segmented
+track, and a later release rendered both hero cards through a `compact`
+prop. Between them the food surface lost the only colour it owned and the
+weekly verdict became a row of digits. Both were consistency applied past
+the point where it helps. Before you unify something, ask whether the thing
+you are unifying IS the identity of its surface; if it is, unify the
+behaviour (roles, keyboard, target size) and leave the treatment alone.
+
+### 3g. Em dashes: one rhythm is the problem, not one character
+
+Copy that reaches for "statement — explanation" at every beat reads as
+machine-written even when each line is fine on its own. Prefer the middot
+the app already uses for `fact · fact`, or a full stop between two
+independent statements. Keep the em dash for a genuine aside.
+`emDashCopy.test.ts` ratchets the total and caps any single component, so
+the count can only fall; `liftSessionExplainerLength.test.ts` additionally
+bans it outright in the session purpose lines, which are capped at 45
+characters so they render on one line.
+
 ---
 
 ## 4. Typography

@@ -258,9 +258,9 @@ function EditServingsSheet({
           </p>
         </div>
 
-        {/* F5a meal-slot picker — the same SegmentedControl as the composer's
-            "Add to" row, so the picked state reads in one language across
-            the Food surface. Hidden when source.currentMeal is null AND the
+        {/* F5a meal-slot picker — the same solid SegmentedControl as the
+            composer's "Add to" row, so the picked slot reads as one orange
+            across the Food surface. Hidden when source.currentMeal is null AND the
             picker hasn't been touched — that covers groups spanning multiple
             slots, where snapping all docs to one slot via this picker IS the
             intended outcome but the section label here would be
@@ -270,6 +270,8 @@ function EditServingsSheet({
             Meal slot
           </SectionLabel>
           <SegmentedControl
+            emphasis="solid"
+            tone="nutrition"
             ariaLabel="Meal slot"
             options={MEAL_ORDER.map((slot) => ({
               value: slot,

@@ -53,10 +53,18 @@ export interface SegmentedControlProps<T extends string | number> {
   /** Required accessible name for the radiogroup. */
   ariaLabel: string;
   /** Selected-label tint. `brand` = neutral foreground (default),
-   *  `running` = coral, `lifting` = brand purple. The sport tones colour
-   *  the selected segment's label + (currentColor) icon so the Programme
-   *  Lift/Run switch reads its sport identity symmetrically. */
-  tone?: "brand" | "running" | "lifting";
+   *  `running` = coral, `lifting` = brand purple, `nutrition` = food
+   *  orange. The sport tones colour the selected segment's label +
+   *  (currentColor) icon so the Programme Lift/Run switch reads its sport
+   *  identity symmetrically; `nutrition` exists for `emphasis="solid"`. */
+  tone?: "brand" | "running" | "lifting" | "nutrition";
+  /** `track` = the iOS track look (default). `solid` = rounded-full pills
+   *  with the SELECTED one filled in the tone colour. Solid is for a
+   *  domain whose colour IS the meaning — today that is the Food
+   *  surface's meal slot, and `mealSlotPickerIdentity.test.tsx` pins it
+   *  there. Reach for `track` everywhere else; a second solid group on a
+   *  neutral surface is the drift this primitive exists to stop. */
+  emphasis?: "track" | "solid";
   /** `fill` = equal-width row (default); `wrap` = auto-width pills. */
   layout?: "fill" | "wrap";
   /** Disable the whole group (e.g. a write in progress). */
@@ -78,6 +86,7 @@ function SegmentedControl<T extends string | number>({
   onChange,
   ariaLabel,
   tone = "brand",
+  emphasis = "track",
   layout = "fill",
   disabled = false,
   className,
@@ -146,9 +155,11 @@ function SegmentedControl<T extends string | number>({
         // Track look for the equal-width row; wrap mode can't share a
         // single contiguous track, so it drops the track and lets each
         // pill carry its own background below.
-        layout === "wrap"
-          ? "flex-wrap gap-1.5"
-          : "gap-1 p-1 rounded-xl bg-muted",
+        emphasis === "solid"
+          ? "flex-wrap items-center gap-2"
+          : layout === "wrap"
+            ? "flex-wrap gap-1.5"
+            : "gap-1 p-1 rounded-xl bg-muted",
         className
       )}
     >
@@ -169,21 +180,32 @@ function SegmentedControl<T extends string | number>({
             onKeyDown={(e) => onKeyDown(e, i)}
             className={cn(
               OPTION_BASE,
-              layout === "fill" ? "flex-1" : "px-4",
-              selected
-                ? cn(
-                    "bg-card shadow-sm",
-                    tone === "running"
-                      ? "text-running-strong"
-                      : tone === "lifting"
-                        ? "text-lifting-strong"
-                        : "text-foreground"
-                  )
-                : // Unselected: transparent on the shared track (fill), or
-                  // an individual muted pill when wrapped (no track behind).
-                  layout === "wrap"
-                  ? "bg-muted text-muted-foreground"
-                  : "text-muted-foreground"
+              emphasis === "solid"
+                ? "rounded-full border px-4"
+                : layout === "fill"
+                  ? "flex-1"
+                  : "px-4",
+              emphasis === "solid"
+                ? selected
+                  ? cn(
+                      "border-transparent text-white",
+                      tone === "nutrition" ? "bg-nutrition-fill" : "bg-primary"
+                    )
+                  : "border-border/80 bg-card text-muted-foreground hover:bg-muted/60"
+                : selected
+                  ? cn(
+                      "bg-card shadow-sm",
+                      tone === "running"
+                        ? "text-running-strong"
+                        : tone === "lifting"
+                          ? "text-lifting-strong"
+                          : "text-foreground"
+                    )
+                  : // Unselected: transparent on the shared track (fill), or
+                    // an individual muted pill when wrapped (no track behind).
+                    layout === "wrap"
+                    ? "bg-muted text-muted-foreground"
+                    : "text-muted-foreground"
             )}
           >
             {opt.label}
