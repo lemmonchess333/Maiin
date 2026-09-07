@@ -139,7 +139,27 @@ test("free running, typed metrics, editable review and recoverable commit", asyn
   expect(requests).toBe(1);
   await capture(page, "save-retry");
 });
-test("Home puts the next task before progress at 375 px", async ({ page }) => {
+/**
+ * Home's reading order at 375px: the week strip, then the week's verdict,
+ * then today's task — with the task still inside the first viewport.
+ *
+ * The order of the last two flipped by owner decision (2026-09-07): the
+ * performance ring sits under the week strip, so the strip says which days
+ * you trained and the ring says what they added up to, read as one answer
+ * before the page moves on to today. What is NOT negotiable, and is what
+ * this test exists for, is that putting the ring up there must not push the
+ * session card below the fold.
+ *
+ * The progress locator matches on the href rather than the accessible name.
+ * The name is composed from live data on the full card ("Performance Index
+ * 92, Backing off"), and a fixed string here matched only the compact
+ * rendering that #2187 removed — which is how this spec silently stopped
+ * finding the card at all. The emulator capture lane is `continue-on-error`,
+ * so nothing failed when it did.
+ */
+test("Home shows the week's verdict above today's task, task still above the fold, at 375 px", async ({
+  page,
+}) => {
   await suppressCoachmarks(page);
   await signInAsTestUser(page);
   await page.goto("/");
@@ -178,15 +198,16 @@ test("Home puts the next task before progress at 375 px", async ({ page }) => {
   expect(
     (await training.getByRole("button").first().boundingBox())!.y
   ).toBeLessThan(760);
-  const progress = page.getByRole("link", { name: "View performance details" });
+  const progress = page.locator('a[href$="/history#performance"]').first();
   const task = page.getByLabel("Today’s training");
   // Reading order and the first viewport are captured even for a rest-day fixture.
   await expect(progress).toBeAttached();
   await expect(task).toBeVisible();
+  // The task stays reachable without scrolling — the guard that makes the
+  // order above safe rather than merely preferred.
   expect((await task.boundingBox())!.y).toBeLessThan(650);
-  if (await task.count())
-    expect((await task.boundingBox())!.y).toBeLessThan(
-      (await progress.boundingBox())!.y
-    );
+  expect((await progress.boundingBox())!.y).toBeLessThan(
+    (await task.boundingBox())!.y
+  );
   await capture(page, "home");
 });
