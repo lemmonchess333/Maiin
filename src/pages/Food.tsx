@@ -497,9 +497,9 @@ export default function Food() {
     // there's no single mealKey driving this call.
     setCopyingMealKey("__all__");
     haptic("light");
+    const createdIds: string[] = [];
     try {
       let total = 0;
-      const createdIds: string[] = [];
       const copied: string[] = [];
       for (const mealKey of slotsToCopyFromYesterday) {
         const items = yesterdaySegmented[mealKey] ?? [];
@@ -529,9 +529,12 @@ export default function Food() {
       setCopyPreviewOpen(false);
     } catch (err) {
       logger.error("[copy-all] Failed:", err);
-      toast.error("Couldn't copy from yesterday", {
-        id: "food-copy-yesterday",
-      });
+      if (createdIds.length > 0) {
+        setCopyPreviewOpen(false);
+        notifyMealsLogged(uid, createdIds, `Copied ${createdIds.length} meals; the remaining meals could not be saved`);
+      } else {
+        toast.error("Couldn't copy from yesterday", { id: "food-copy-yesterday" });
+      }
     } finally {
       setCopyingMealKey(null);
     }
@@ -1059,12 +1062,9 @@ export default function Food() {
       return;
     }
     haptic("light");
+    const createdIds: string[] = [];
     try {
       if (targetCount > currentCount) {
-        /* Increment branch — no undo needed. The user can
-           always step the count back down (which routes through
-           the decrement branch with its own undo window) or
-           swipe-delete an extra entry. */
         /* `source` is the PRE-EDIT snapshot: editingGroup.meals is captured
            when the sheet opens and never refreshed, so cloning it verbatim
            carried none of the rename / slot / macro change that the editMeal
@@ -1080,7 +1080,6 @@ export default function Food() {
           targetName,
           targetMacros,
         });
-        const createdIds: string[] = [];
         for (let i = 0; i < adds; i++) {
           const added = await createMealEntry(uid, {
             date: selectedDate,
@@ -1135,7 +1134,13 @@ export default function Food() {
         );
       }
     } catch {
-      toast.error("Couldn't update. Try again.", { id: "food-edit-error" });
+      if (createdIds.length > 0) {
+        setEditingGroup(null);
+        setOpenRowId(null);
+        notifyMealsLogged(uid, createdIds, `Added ${createdIds.length} servings; the remaining servings could not be saved`);
+      } else {
+        toast.error("Couldn't update. Try again.", { id: "food-edit-error" });
+      }
     }
   };
 
