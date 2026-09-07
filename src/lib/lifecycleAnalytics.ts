@@ -62,7 +62,8 @@ export type ReturnSurface =
   | "trial-expired"
   | "fell-behind"
   | "badge"
-  | "priming";
+  | "priming"
+  | "lift-return";
 
 /**
  * What the user did with a return surface. `dismissed` is the close with

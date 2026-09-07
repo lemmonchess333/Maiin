@@ -15,6 +15,7 @@ import { readString, writeString } from "@/lib/localStore";
 import { useAuth } from "@/lib/auth";
 import { useUidForStorageKey } from "@/lib/auth";
 import { useWorkouts } from "@/hooks/useWorkouts";
+import { assessLiftReturn } from "@/features/program/liftLayoff";
 import { useMeals } from "@/hooks/useMeals";
 import { useHomeData } from "@/hooks/useHomeData";
 import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
@@ -71,6 +72,7 @@ import SectionLabel from "@/components/ui/SectionLabel";
 import WeekStrip from "@/components/home/WeekStrip";
 import DayPeekCard from "@/components/home/DayPeekCard";
 import FellBehindSheet from "@/components/program/FellBehindSheet";
+import LiftReturnSheet from "@/components/program/LiftReturnSheet";
 import { useSurface } from "@/components/SurfaceCoordinatorProvider";
 import { useEducationCard } from "@/components/EducationLaneProvider";
 import StackedCTACards from "@/components/home/StackedCTACards";
@@ -459,6 +461,31 @@ export default function Home() {
     id: "badge",
     priority: 20,
     eligible: !!newBadge,
+    suppressedBy: ["fell-behind"],
+  });
+
+  /**
+   * The lifter's return. Measured from logged sessions rather than from the
+   * programme's own idea of what should have happened: a plan full of
+   * uncompleted days is not evidence of absence, and a lifter training off
+   * plan is not away.
+   */
+  const liftReturn = useMemo(
+    () => assessLiftReturn(workouts, localDateString()),
+    [workouts]
+  );
+  // `useDismissOnce` scopes by uid, so a dismissal cannot leak across a
+  // shared device; the key identifies the absence, so dismissing settles
+  // this one and a later gap asks again.
+  const { dismissed: liftReturnDismissed, dismiss: dismissLiftReturn } =
+    useDismissOnce(`tropos-lift-return:${liftReturn.dismissKey ?? "none"}`);
+  const liftReturnSurface = useSurface({
+    id: "lift-return",
+    priority: 28,
+    eligible: liftReturn.layoff !== "none" && !liftReturnDismissed,
+    // The run side speaks first when it has something to say about the same
+    // absence: two welcome-backs in one visit is the pile-up the coordinator
+    // exists to prevent, and the run sheet carries the race stakes.
     suppressedBy: ["fell-behind"],
   });
 
@@ -1341,6 +1368,23 @@ export default function Home() {
             dismissGoalReached();
             goalReachedSurface.dismiss();
           }}
+        />
+      )}
+
+      {liftReturn.daysAway !== null && liftReturn.layoff !== "none" && (
+        <LiftReturnSheet
+          open={liftReturnSurface.active}
+          onClose={() => {
+            dismissLiftReturn();
+            liftReturnSurface.dismiss();
+          }}
+          onGoToProgramme={() => {
+            dismissLiftReturn();
+            liftReturnSurface.dismiss();
+            navigate("/program");
+          }}
+          daysAway={liftReturn.daysAway}
+          layoff={liftReturn.layoff}
         />
       )}
 
