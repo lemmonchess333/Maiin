@@ -1,0 +1,16 @@
+{
+  "status": "draft-awaiting-review",
+  "visualApproval": false,
+  "staticImagesInspected": true,
+  "sequentialPlaybackVerified": false,
+  "mobileLightDarkVerified": false,
+  "findings": [
+    "Shoe threshold bounds remain within 1px across the selected sequence; bench and trunk appear stable in static comparison. This is not playback approval.",
+    "Dumbbell image extents vary at the overhead endpoint and projected arm lengths change; rigid-equipment and anatomy checks remain unresolved.",
+    "Initial early edit moved about140px rather than55px; selected as midpoint and an additional intermediate pose was generated. Top transition remains larger than early transitions.",
+    "Backrest supports trunk/pelvis; master head is above the backrest, so the plan no longer claims direct head contact."
+  ],
+  "referencePath": "public/form-frames/barbell-row/1.webp",
+  "referenceSha256": "6f514489bd36819239d4beab383cabf54140cf9d8b9115c1fe8995bab1093d10",
+  "cueSha256": "334b17f9a05d8b658341a48f6a103cd79851afee8e9c9bae79252667e3594e5c"
+}

@@ -1,0 +1,75 @@
+{
+  "exerciseId": "incline-db-press",
+  "status": "six-frame-draft-review",
+  "canvas": [
+    1536,
+    1024
+  ],
+  "variation": "Bilateral incline dumbbell press on a 30-degree bench, palms forward.",
+  "camera": "Side front three-quarter; head left and feet right; both grips visible.",
+  "equipment": "Adjustable bench fixed at 30 degrees; two identical modest black round dumbbells.",
+  "anchors": [
+    "Head and upper back on inclined padding",
+    "Pelvis on seat",
+    "Both shoes and foot contacts",
+    "Entire bench"
+  ],
+  "invariants": [
+    "Bench angle and dimensions",
+    "Dumbbell diameters, thicknesses, handle lengths and plate counts",
+    "Limb lengths and body scale"
+  ],
+  "primary": [
+    "Upper pectorals"
+  ],
+  "secondary": [
+    "Triceps",
+    "Anterior deltoids"
+  ],
+  "techniqueSource": "https://www.muscleandstrength.com/exercises/incline-dumbbell-bench-press.html",
+  "catalogueSpecificChoice": "30-degree backrest from src/lib/exercises.ts; not attributed to the source.",
+  "frames": [
+    {
+      "frame": 1,
+      "label": "Set up",
+      "cue": "Lie supported on a 30\u00b0 bench, weights over upper chest.",
+      "t": 0,
+      "state": "Top position, elbows nearly straight, palms forward, weights separated."
+    },
+    {
+      "frame": 2,
+      "label": "Begin lowering",
+      "cue": "Lower slowly with wrists stacked over elbows.",
+      "t": 0.25,
+      "state": "Small elbow bend; both weights lower slightly and separate."
+    },
+    {
+      "frame": 3,
+      "label": "Continue lowering",
+      "cue": "Keep shoulder blades supported as elbows bend.",
+      "t": 0.6,
+      "state": "Mid descent with forearms vertical and elbows angled below shoulders."
+    },
+    {
+      "frame": 4,
+      "label": "Bottom position",
+      "cue": "Stop at a comfortable chest-level depth.",
+      "t": 1,
+      "state": "Comfortable lower endpoint, elbows below wrists without shoulder rolling."
+    },
+    {
+      "frame": 5,
+      "label": "Press upward",
+      "cue": "Press up and slightly inward over your upper chest.",
+      "t": 0.6,
+      "state": "Same pose as frame 3 while ascending."
+    },
+    {
+      "frame": 6,
+      "label": "Finish press",
+      "cue": "Continue upward without knocking the weights together.",
+      "t": 0.25,
+      "state": "Same pose as frame 2 while ascending; loop completes to frame 1."
+    }
+  ]
+}

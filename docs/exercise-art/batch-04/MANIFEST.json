@@ -1,0 +1,469 @@
+{
+  "schemaVersion": 1,
+  "batch": "2026-09-batch-04",
+  "releaseApproved": false,
+  "selectedFrameCount": 24,
+  "completeDraftSets": [
+    {
+      "exerciseId": "incline-db-press",
+      "status": "draft-awaiting-review",
+      "camera": "Side front three-quarter; head left and feet right; both grips visible.",
+      "anchors": [
+        "Head and upper back on inclined padding",
+        "Pelvis on seat",
+        "Both shoes and foot contacts",
+        "Entire bench"
+      ],
+      "equipment": "Adjustable bench fixed at 30 degrees; two identical modest black round dumbbells.",
+      "muscles": {
+        "primary": [
+          "Upper pectorals"
+        ],
+        "secondary": [
+          "Triceps",
+          "Anterior deltoids"
+        ],
+        "stabilisers": "Qualitative pale tint only; no measured activation claims."
+      },
+      "reviewFindings": [
+        "Selected shoes stay within 1px in threshold bounds; bench remains visibly fixed at the catalogue 30-degree setup.",
+        "First bottom candidate swapped the apparent near/far arm path and is excluded. A constrained local-motion replacement preserves ordering.",
+        "Selected midpoint and bottom remain close, with the near upper arm strongly tucked and limited lower depth. Technique and motion-spacing review remain unresolved.",
+        "Dumbbell perspective/extents and the far wrist path vary; static images do not establish rigid-equipment consistency.",
+        "Sequential playback and mobile light/dark review remain unverified."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/batch-04/incline-db-press/1-master.png",
+          "caption": "SET UP 1/6",
+          "dimensions": [
+            1536,
+            1024
+          ],
+          "bytes": 864046,
+          "sha256": "767371f8698295af102eb45c1e3bc8dbff6509ab99dc6ca89f7034db2251e059",
+          "reusedFrom": null,
+          "cue": "Lie supported on a 30\u00b0 bench, weights over upper chest.",
+          "progress": 0
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/batch-04/incline-db-press/2-early.png",
+          "caption": "BEGIN LOWERING 2/6",
+          "dimensions": [
+            1536,
+            1024
+          ],
+          "bytes": 858881,
+          "sha256": "5b004f1a0c8d62c8d01d38d0be9d0c51ef9bda8c808eac2b3a41cccfd88f8179",
+          "reusedFrom": null,
+          "cue": "Lower slowly with wrists stacked over elbows.",
+          "progress": 0.25
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/batch-04/incline-db-press/3-mid.png",
+          "caption": "CONTINUE LOWERING 3/6",
+          "dimensions": [
+            1536,
+            1024
+          ],
+          "bytes": 1135817,
+          "sha256": "55e87359c0ed070c862bef88fec82757fe2c7ee5dbc3698e69c86c04ade6eb7a",
+          "reusedFrom": null,
+          "cue": "Keep shoulder blades supported as elbows bend.",
+          "progress": 0.6
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/batch-04/incline-db-press/4-bottom.png",
+          "caption": "BOTTOM POSITION 4/6",
+          "dimensions": [
+            1536,
+            1024
+          ],
+          "bytes": 1249309,
+          "sha256": "1c5ae75e839a4e6ae521635a9dada02ff7638afa7a8b327c6855660789bb7fe1",
+          "reusedFrom": null,
+          "cue": "Stop at a comfortable chest-level depth.",
+          "progress": 1
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/batch-04/incline-db-press/5-press.png",
+          "caption": "PRESS UPWARD 5/6",
+          "dimensions": [
+            1536,
+            1024
+          ],
+          "bytes": 1135817,
+          "sha256": "55e87359c0ed070c862bef88fec82757fe2c7ee5dbc3698e69c86c04ade6eb7a",
+          "reusedFrom": 3,
+          "cue": "Press up and slightly inward over your upper chest.",
+          "progress": 0.6
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/batch-04/incline-db-press/6-return.png",
+          "caption": "FINISH PRESS 6/6",
+          "dimensions": [
+            1536,
+            1024
+          ],
+          "bytes": 858881,
+          "sha256": "5b004f1a0c8d62c8d01d38d0be9d0c51ef9bda8c808eac2b3a41cccfd88f8179",
+          "reusedFrom": 2,
+          "cue": "Continue upward without knocking the weights together.",
+          "progress": 0.25
+        }
+      ]
+    },
+    {
+      "exerciseId": "db-shoulder-press",
+      "status": "draft-awaiting-review",
+      "camera": "Front three-quarter, athlete facing slightly left; both hands and weights clearly visible.",
+      "anchors": [
+        "Both shoes and sole contacts",
+        "Entire bench frame and padding",
+        "Pelvis on seat",
+        "Head position fixed; trunk and pelvis supported against backrest"
+      ],
+      "equipment": "Fixed upright bench with dark padding, two identical modest round dumbbells.",
+      "muscles": {
+        "primary": [
+          "Deltoids"
+        ],
+        "secondary": [
+          "Triceps",
+          "Upper pectorals"
+        ],
+        "stabilisers": "Qualitative pale tint only; no measured activation claims."
+      },
+      "reviewFindings": [
+        "Shoe threshold bounds remain within 1px across the selected sequence; bench and trunk appear stable in static comparison. This is not playback approval.",
+        "Dumbbell image extents vary at the overhead endpoint and projected arm lengths change; rigid-equipment and anatomy checks remain unresolved.",
+        "Initial early edit moved about140px rather than55px; selected as midpoint and an additional intermediate pose was generated. Top transition remains larger than early transitions.",
+        "Backrest supports trunk/pelvis; master head is above the backrest, so the plan no longer claims direct head contact.",
+        "Sequential playback and mobile light/dark review remain unverified."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/batch-04/db-shoulder-press/1-master.png",
+          "caption": "SET UP 1/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 950746,
+          "sha256": "99b3565ba45ba0b0ec02cf3354451871c87425e19f9771c3f2e1e1b9b09ba8aa",
+          "reusedFrom": null,
+          "cue": "Sit supported, palms forward, wrists over elbows.",
+          "progress": 0
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/batch-04/db-shoulder-press/2-early.png",
+          "caption": "BEGIN PRESS 2/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1398974,
+          "sha256": "a4dcdfc5c4a8b6f186476773250d80f4443de44654d0b9d5eb7a5839cdb93f9d",
+          "reusedFrom": null,
+          "cue": "Press upward while keeping your trunk braced.",
+          "progress": 0.25
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/batch-04/db-shoulder-press/3-mid.png",
+          "caption": "CONTINUE PRESS 3/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1201682,
+          "sha256": "5f76a461c1870c94725377727be07a9f1cc8535f82bf86ac9defec1d0a870ca0",
+          "reusedFrom": null,
+          "cue": "Extend elbows without leaning away from support.",
+          "progress": 0.6
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/batch-04/db-shoulder-press/4-top.png",
+          "caption": "TOP POSITION 4/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1329819,
+          "sha256": "a8c5f3dd4ac76062cea44482124054e0ee8f400df90a8e653f6bdeb0da400c33",
+          "reusedFrom": null,
+          "cue": "Reach overhead without knocking the weights together.",
+          "progress": 1
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/batch-04/db-shoulder-press/5-lower.png",
+          "caption": "CONTROLLED LOWER 5/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1201682,
+          "sha256": "5f76a461c1870c94725377727be07a9f1cc8535f82bf86ac9defec1d0a870ca0",
+          "reusedFrom": 3,
+          "cue": "Lower both dumbbells slowly under control.",
+          "progress": 0.6
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/batch-04/db-shoulder-press/6-return.png",
+          "caption": "FINISH LOWERING 6/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1398974,
+          "sha256": "a4dcdfc5c4a8b6f186476773250d80f4443de44654d0b9d5eb7a5839cdb93f9d",
+          "reusedFrom": 2,
+          "cue": "Return towards shoulder height with wrists straight.",
+          "progress": 0.25
+        }
+      ]
+    },
+    {
+      "exerciseId": "db-row",
+      "status": "draft-awaiting-review",
+      "camera": "Fixed side three-quarter from right working side; head left, hips right; view working lat and grip.",
+      "anchors": [
+        "Left hand and left knee on bench",
+        "Right shoe on floor",
+        "Bench geometry",
+        "Head, torso and pelvis with no twist"
+      ],
+      "equipment": "One modest round black dumbbell, flat dark bench.",
+      "muscles": {
+        "primary": [
+          "Right latissimus dorsi"
+        ],
+        "secondary": [
+          "Rhomboids",
+          "Rear deltoid",
+          "Biceps"
+        ],
+        "stabilisers": "Qualitative pale tint only; no measured activation claims."
+      },
+      "reviewFindings": [
+        "Selected support hand, shoe and head threshold bounds remain within 1px; support hand/knee and opposite-foot setup match the catalogue.",
+        "Generated early pose is closer to midpoint than requested; movement spacing and the 6-to-1 return need repair/review.",
+        "Dumbbell appears smaller after the hanging master; working shoulder and chest exposure change during the pull, requiring equipment and no-torso-rotation review.",
+        "Sequential playback and mobile light/dark review remain unverified."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/batch-04/db-row/1-master.png",
+          "caption": "SET UP 1/6",
+          "dimensions": [
+            1536,
+            1024
+          ],
+          "bytes": 898520,
+          "sha256": "66dc7ae834dbdcc8f3bd9005793698000244ca0658b24d9101338fe71ecf441d",
+          "reusedFrom": null,
+          "cue": "Support one hand and same-side knee; let the weight hang.",
+          "progress": 0
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/batch-04/db-row/2-early.png",
+          "caption": "BEGIN ROW 2/6",
+          "dimensions": [
+            1536,
+            1024
+          ],
+          "bytes": 944836,
+          "sha256": "f0f735f47e07d7d7d543c72c15c86c0824b911ea8ea6e0a8510ec441a186e890",
+          "reusedFrom": null,
+          "cue": "Draw the elbow back towards your hip.",
+          "progress": 0.25
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/batch-04/db-row/3-mid.png",
+          "caption": "CONTINUE ROW 3/6",
+          "dimensions": [
+            1536,
+            1024
+          ],
+          "bytes": 1372679,
+          "sha256": "9824854faae1272014435f8528fb56a5e52bac0a760e54885d8fa8ac0b1d9b3d",
+          "reusedFrom": null,
+          "cue": "Keep your torso still as the elbow passes your ribs.",
+          "progress": 0.6
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/batch-04/db-row/4-top.png",
+          "caption": "TOP ROW 4/6",
+          "dimensions": [
+            1536,
+            1024
+          ],
+          "bytes": 1319614,
+          "sha256": "ddf95258de771e1e90de7837517d8107c47f209d33e65b5960e3d7d08e0d3ba9",
+          "reusedFrom": null,
+          "cue": "Bring the weight beside your hip without twisting.",
+          "progress": 1
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/batch-04/db-row/5-lower.png",
+          "caption": "CONTROLLED LOWER 5/6",
+          "dimensions": [
+            1536,
+            1024
+          ],
+          "bytes": 1372679,
+          "sha256": "9824854faae1272014435f8528fb56a5e52bac0a760e54885d8fa8ac0b1d9b3d",
+          "reusedFrom": 3,
+          "cue": "Lower slowly while keeping your back still.",
+          "progress": 0.6
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/batch-04/db-row/6-return.png",
+          "caption": "FINISH LOWERING 6/6",
+          "dimensions": [
+            1536,
+            1024
+          ],
+          "bytes": 944836,
+          "sha256": "f0f735f47e07d7d7d543c72c15c86c0824b911ea8ea6e0a8510ec441a186e890",
+          "reusedFrom": 2,
+          "cue": "Extend the arm back towards the starting stretch.",
+          "progress": 0.25
+        }
+      ]
+    },
+    {
+      "exerciseId": "romanian-deadlift",
+      "status": "draft-awaiting-review",
+      "camera": "Fixed side three-quarter, facing left, showing hip hinge and both grips.",
+      "anchors": [
+        "Both shoes and sole contacts",
+        "Bar orientation and grip width"
+      ],
+      "equipment": "Straight barbell with one equal modest round plate per side.",
+      "muscles": {
+        "primary": [
+          "Hamstrings"
+        ],
+        "secondary": [
+          "Glutes"
+        ],
+        "stabilisers": "Qualitative pale tint only; no measured activation claims."
+      },
+      "reviewFindings": [
+        "Initial master had a tight nonstandard 961x1637 crop and is excluded; selected set uses1024x1536 with hinge clearance.",
+        "Original bottom raised the near sole31px. Selected fixed-anchor warp restores the sole to y1330 and preserves both plate regions and all pixels above y990 exactly; calf continuity and lower-leg proportions still require review.",
+        "Knee bend, bar/plate extents and head/neck alignment vary; comfortable endpoint and rigid-equipment checks remain unresolved.",
+        "Plan intended a just-below-knee endpoint, while selected image is closer to knee level. Do not treat the intended pose description as verified output.",
+        "Sequential playback and mobile light/dark review remain unverified."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/batch-04/romanian-deadlift/1-master.png",
+          "caption": "SET UP 1/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 663740,
+          "sha256": "4c8cf219385b9c11d0916c3f38891cae6438a5c116584eb9564551ecfb304f60",
+          "reusedFrom": null,
+          "cue": "Stand tall with soft knees and the bar close to your thighs.",
+          "progress": 0
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/batch-04/romanian-deadlift/2-early.png",
+          "caption": "BEGIN HINGE 2/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 853164,
+          "sha256": "0f3d8a9f2e522683e8fc01c4b913a468e31672f140adae8c4fb53cd619d11b07",
+          "reusedFrom": null,
+          "cue": "Push your hips back while keeping the bar close.",
+          "progress": 0.25
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/batch-04/romanian-deadlift/3-mid.png",
+          "caption": "CONTINUE HINGE 3/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 899233,
+          "sha256": "921f0825c9d26d64aba716393bf7c413cdc311baf0c8d07ef5b8570a79002c2a",
+          "reusedFrom": null,
+          "cue": "Lower along your legs with a long, braced spine.",
+          "progress": 0.6
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/batch-04/romanian-deadlift/4-fixed-anchor-warp-candidate.png",
+          "caption": "BOTTOM HINGE 4/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 609222,
+          "sha256": "9521099c60bfb00ed09aa972ddc941b920171166b77954eec1c35cbbf1924e76",
+          "reusedFrom": null,
+          "cue": "Stop at your hamstring limit with your back position held.",
+          "progress": 1
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/batch-04/romanian-deadlift/5-rise.png",
+          "caption": "DRIVE HIPS FORWARD 5/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 899233,
+          "sha256": "921f0825c9d26d64aba716393bf7c413cdc311baf0c8d07ef5b8570a79002c2a",
+          "reusedFrom": 3,
+          "cue": "Stand by bringing your hips forward under your torso.",
+          "progress": 0.6
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/batch-04/romanian-deadlift/6-return.png",
+          "caption": "FINISH STANDING 6/6",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 853164,
+          "sha256": "0f3d8a9f2e522683e8fc01c4b913a468e31672f140adae8c4fb53cd619d11b07",
+          "reusedFrom": 2,
+          "cue": "Return tall without leaning backwards.",
+          "progress": 0.25
+        }
+      ]
+    }
+  ],
+  "blockedMasterOnly": [
+    "glute-bridge",
+    "crunches"
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "nearShoe": {
+    "master": [
+      540,
+      1240,
+      758,
+      1330
+    ],
+    "originalBottom": [
+      540,
+      1240,
+      757,
+      1299
+    ],
+    "repairedBottom": [
+      540,
+      1240,
+      757,
+      1330
+    ]
+  },
+  "farShoe": {
+    "master": [
+      498,
+      1190,
+      679,
+      1277
+    ],
+    "originalBottom": [
+      498,
+      1190,
+      679,
+      1277
+    ],
+    "repairedBottom": [
+      498,
+      1190,
+      679,
+      1277
+    ]
+  },
+  "farPlatePixelsUnchanged": true,
+  "nearPlatePixelsUnchanged": true,
+  "upperBodyPixelsUnchanged": true,
+  "method": "Continuous lower-shin y warp restores31px lost length; shoes translated rigidly31px, plates and upper body unchanged. Lower-leg anatomy still needs review.",
+  "sourceSha256": "8731320d3cde7ce072b672a3643d81e09a2cb092d216ca1f6eb7634282771b3f",
+  "candidateSha256": "9521099c60bfb00ed09aa972ddc941b920171166b77954eec1c35cbbf1924e76",
+  "visualApproval": false
+}

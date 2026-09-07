@@ -1,0 +1,1534 @@
+{
+  "db-shoulder-press": {
+    "method": "Read-only threshold bounds within named ROIs; not a technique or playback approval. Equipment pixels: achromatic RGB range<12, max 14..110. Anchor pixels: min>90,max>150.",
+    "anchorROIs": {
+      "nearShoe": [
+        370,
+        1270,
+        590,
+        1460
+      ],
+      "farShoe": [
+        40,
+        1220,
+        290,
+        1390
+      ],
+      "head": [
+        450,
+        225,
+        610,
+        430
+      ]
+    },
+    "equipmentROIsByUniquePose": [
+      [
+        [
+          180,
+          320,
+          440,
+          470
+        ],
+        [
+          645,
+          315,
+          930,
+          475
+        ]
+      ],
+      [
+        [
+          180,
+          260,
+          440,
+          410
+        ],
+        [
+          645,
+          245,
+          930,
+          410
+        ]
+      ],
+      [
+        [
+          180,
+          180,
+          440,
+          335
+        ],
+        [
+          645,
+          175,
+          935,
+          340
+        ]
+      ],
+      [
+        [
+          300,
+          15,
+          555,
+          165
+        ],
+        [
+          565,
+          10,
+          845,
+          170
+        ]
+      ]
+    ],
+    "frames": [
+      {
+        "file": "1-master.png",
+        "dimensions": [
+          1024,
+          1536
+        ],
+        "sha256": "99b3565ba45ba0b0ec02cf3354451871c87425e19f9771c3f2e1e1b9b09ba8aa",
+        "anchorBounds": {
+          "nearShoe": [
+            381,
+            1270,
+            568,
+            1427
+          ],
+          "farShoe": [
+            65,
+            1220,
+            273,
+            1370
+          ],
+          "head": [
+            453,
+            229,
+            609,
+            429
+          ]
+        },
+        "equipment": [
+          {
+            "bounds": [
+              191,
+              329,
+              429,
+              469
+            ],
+            "span": [
+              239,
+              141
+            ]
+          },
+          {
+            "bounds": [
+              645,
+              323,
+              916,
+              474
+            ],
+            "span": [
+              272,
+              152
+            ]
+          }
+        ]
+      },
+      {
+        "file": "2-early.png",
+        "dimensions": [
+          1024,
+          1536
+        ],
+        "sha256": "a4dcdfc5c4a8b6f186476773250d80f4443de44654d0b9d5eb7a5839cdb93f9d",
+        "anchorBounds": {
+          "nearShoe": [
+            381,
+            1270,
+            568,
+            1427
+          ],
+          "farShoe": [
+            65,
+            1220,
+            273,
+            1370
+          ],
+          "head": [
+            453,
+            228,
+            609,
+            429
+          ]
+        },
+        "equipment": [
+          {
+            "bounds": [
+              190,
+              271,
+              429,
+              409
+            ],
+            "span": [
+              240,
+              139
+            ]
+          },
+          {
+            "bounds": [
+              645,
+              258,
+              919,
+              409
+            ],
+            "span": [
+              275,
+              152
+            ]
+          }
+        ]
+      },
+      {
+        "file": "3-mid.png",
+        "dimensions": [
+          1024,
+          1536
+        ],
+        "sha256": "5f76a461c1870c94725377727be07a9f1cc8535f82bf86ac9defec1d0a870ca0",
+        "anchorBounds": {
+          "nearShoe": [
+            381,
+            1270,
+            568,
+            1427
+          ],
+          "farShoe": [
+            65,
+            1220,
+            272,
+            1370
+          ],
+          "head": [
+            453,
+            229,
+            609,
+            429
+          ]
+        },
+        "equipment": [
+          {
+            "bounds": [
+              191,
+              193,
+              429,
+              334
+            ],
+            "span": [
+              239,
+              142
+            ]
+          },
+          {
+            "bounds": [
+              656,
+              188,
+              919,
+              339
+            ],
+            "span": [
+              264,
+              152
+            ]
+          }
+        ]
+      },
+      {
+        "file": "4-top.png",
+        "dimensions": [
+          1024,
+          1536
+        ],
+        "sha256": "a8c5f3dd4ac76062cea44482124054e0ee8f400df90a8e653f6bdeb0da400c33",
+        "anchorBounds": {
+          "nearShoe": [
+            381,
+            1270,
+            567,
+            1427
+          ],
+          "farShoe": [
+            65,
+            1220,
+            272,
+            1370
+          ],
+          "head": [
+            450,
+            229,
+            608,
+            429
+          ]
+        },
+        "equipment": [
+          {
+            "bounds": [
+              312,
+              26,
+              546,
+              164
+            ],
+            "span": [
+              235,
+              139
+            ]
+          },
+          {
+            "bounds": [
+              577,
+              21,
+              830,
+              169
+            ],
+            "span": [
+              254,
+              149
+            ]
+          }
+        ]
+      },
+      {
+        "file": "5-lower.png",
+        "dimensions": [
+          1024,
+          1536
+        ],
+        "sha256": "5f76a461c1870c94725377727be07a9f1cc8535f82bf86ac9defec1d0a870ca0",
+        "anchorBounds": {
+          "nearShoe": [
+            381,
+            1270,
+            568,
+            1427
+          ],
+          "farShoe": [
+            65,
+            1220,
+            272,
+            1370
+          ],
+          "head": [
+            453,
+            229,
+            609,
+            429
+          ]
+        },
+        "equipment": [
+          {
+            "bounds": [
+              191,
+              193,
+              429,
+              334
+            ],
+            "span": [
+              239,
+              142
+            ]
+          },
+          {
+            "bounds": [
+              656,
+              188,
+              919,
+              339
+            ],
+            "span": [
+              264,
+              152
+            ]
+          }
+        ]
+      },
+      {
+        "file": "6-return.png",
+        "dimensions": [
+          1024,
+          1536
+        ],
+        "sha256": "a4dcdfc5c4a8b6f186476773250d80f4443de44654d0b9d5eb7a5839cdb93f9d",
+        "anchorBounds": {
+          "nearShoe": [
+            381,
+            1270,
+            568,
+            1427
+          ],
+          "farShoe": [
+            65,
+            1220,
+            273,
+            1370
+          ],
+          "head": [
+            453,
+            228,
+            609,
+            429
+          ]
+        },
+        "equipment": [
+          {
+            "bounds": [
+              190,
+              271,
+              429,
+              409
+            ],
+            "span": [
+              240,
+              139
+            ]
+          },
+          {
+            "bounds": [
+              645,
+              258,
+              919,
+              409
+            ],
+            "span": [
+              275,
+              152
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "incline-db-press": {
+    "method": "Read-only threshold bounds within named ROIs; not a technique or playback approval. Equipment pixels: achromatic RGB range<12, max 14..110. Anchor pixels: min>90,max>150.",
+    "anchorROIs": {
+      "nearShoe": [
+        1055,
+        820,
+        1300,
+        960
+      ],
+      "farShoe": [
+        900,
+        780,
+        1080,
+        865
+      ],
+      "head": [
+        310,
+        290,
+        490,
+        430
+      ]
+    },
+    "equipmentROIsByUniquePose": [
+      [
+        [
+          365,
+          20,
+          610,
+          160
+        ],
+        [
+          610,
+          20,
+          850,
+          175
+        ]
+      ],
+      [
+        [
+          350,
+          95,
+          590,
+          245
+        ],
+        [
+          650,
+          140,
+          890,
+          295
+        ]
+      ],
+      [
+        [
+          415,
+          190,
+          645,
+          350
+        ],
+        [
+          690,
+          260,
+          925,
+          405
+        ]
+      ],
+      [
+        [
+          450,
+          220,
+          680,
+          380
+        ],
+        [
+          705,
+          295,
+          935,
+          445
+        ]
+      ]
+    ],
+    "frames": [
+      {
+        "file": "1-master.png",
+        "dimensions": [
+          1536,
+          1024
+        ],
+        "sha256": "767371f8698295af102eb45c1e3bc8dbff6509ab99dc6ca89f7034db2251e059",
+        "anchorBounds": {
+          "nearShoe": [
+            1055,
+            820,
+            1281,
+            938
+          ],
+          "farShoe": [
+            908,
+            780,
+            1066,
+            852
+          ],
+          "head": [
+            318,
+            290,
+            489,
+            429
+          ]
+        },
+        "equipment": [
+          {
+            "bounds": [
+              377,
+              28,
+              594,
+              157
+            ],
+            "span": [
+              218,
+              130
+            ]
+          },
+          {
+            "bounds": [
+              621,
+              36,
+              843,
+              174
+            ],
+            "span": [
+              223,
+              139
+            ]
+          }
+        ]
+      },
+      {
+        "file": "2-early.png",
+        "dimensions": [
+          1536,
+          1024
+        ],
+        "sha256": "5b004f1a0c8d62c8d01d38d0be9d0c51ef9bda8c808eac2b3a41cccfd88f8179",
+        "anchorBounds": {
+          "nearShoe": [
+            1055,
+            820,
+            1282,
+            938
+          ],
+          "farShoe": [
+            908,
+            780,
+            1066,
+            852
+          ],
+          "head": [
+            318,
+            290,
+            489,
+            429
+          ]
+        },
+        "equipment": [
+          {
+            "bounds": [
+              359,
+              104,
+              576,
+              244
+            ],
+            "span": [
+              218,
+              141
+            ]
+          },
+          {
+            "bounds": [
+              661,
+              152,
+              883,
+              294
+            ],
+            "span": [
+              223,
+              143
+            ]
+          }
+        ]
+      },
+      {
+        "file": "3-mid.png",
+        "dimensions": [
+          1536,
+          1024
+        ],
+        "sha256": "55e87359c0ed070c862bef88fec82757fe2c7ee5dbc3698e69c86c04ade6eb7a",
+        "anchorBounds": {
+          "nearShoe": [
+            1055,
+            820,
+            1282,
+            938
+          ],
+          "farShoe": [
+            907,
+            780,
+            1066,
+            852
+          ],
+          "head": [
+            318,
+            294,
+            489,
+            429
+          ]
+        },
+        "equipment": [
+          {
+            "bounds": [
+              415,
+              204,
+              638,
+              349
+            ],
+            "span": [
+              224,
+              146
+            ]
+          },
+          {
+            "bounds": [
+              690,
+              268,
+              916,
+              404
+            ],
+            "span": [
+              227,
+              137
+            ]
+          }
+        ]
+      },
+      {
+        "file": "4-bottom.png",
+        "dimensions": [
+          1536,
+          1024
+        ],
+        "sha256": "1c5ae75e839a4e6ae521635a9dada02ff7638afa7a8b327c6855660789bb7fe1",
+        "anchorBounds": {
+          "nearShoe": [
+            1055,
+            820,
+            1282,
+            938
+          ],
+          "farShoe": [
+            907,
+            780,
+            1066,
+            852
+          ],
+          "head": [
+            318,
+            294,
+            489,
+            429
+          ]
+        },
+        "equipment": [
+          {
+            "bounds": [
+              450,
+              230,
+              667,
+              379
+            ],
+            "span": [
+              218,
+              150
+            ]
+          },
+          {
+            "bounds": [
+              706,
+              304,
+              927,
+              443
+            ],
+            "span": [
+              222,
+              140
+            ]
+          }
+        ]
+      },
+      {
+        "file": "5-press.png",
+        "dimensions": [
+          1536,
+          1024
+        ],
+        "sha256": "55e87359c0ed070c862bef88fec82757fe2c7ee5dbc3698e69c86c04ade6eb7a",
+        "anchorBounds": {
+          "nearShoe": [
+            1055,
+            820,
+            1282,
+            938
+          ],
+          "farShoe": [
+            907,
+            780,
+            1066,
+            852
+          ],
+          "head": [
+            318,
+            294,
+            489,
+            429
+          ]
+        },
+        "equipment": [
+          {
+            "bounds": [
+              415,
+              204,
+              638,
+              349
+            ],
+            "span": [
+              224,
+              146
+            ]
+          },
+          {
+            "bounds": [
+              690,
+              268,
+              916,
+              404
+            ],
+            "span": [
+              227,
+              137
+            ]
+          }
+        ]
+      },
+      {
+        "file": "6-return.png",
+        "dimensions": [
+          1536,
+          1024
+        ],
+        "sha256": "5b004f1a0c8d62c8d01d38d0be9d0c51ef9bda8c808eac2b3a41cccfd88f8179",
+        "anchorBounds": {
+          "nearShoe": [
+            1055,
+            820,
+            1282,
+            938
+          ],
+          "farShoe": [
+            908,
+            780,
+            1066,
+            852
+          ],
+          "head": [
+            318,
+            290,
+            489,
+            429
+          ]
+        },
+        "equipment": [
+          {
+            "bounds": [
+              359,
+              104,
+              576,
+              244
+            ],
+            "span": [
+              218,
+              141
+            ]
+          },
+          {
+            "bounds": [
+              661,
+              152,
+              883,
+              294
+            ],
+            "span": [
+              223,
+              143
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "db-row": {
+    "method": "Read-only threshold bounds within named ROIs; not a technique or playback approval. Equipment pixels: achromatic RGB range<12, max 14..110. Anchor pixels: min>90,max>150.",
+    "anchorROIs": {
+      "nearShoe": [
+        680,
+        830,
+        925,
+        980
+      ],
+      "farShoe": [
+        1180,
+        440,
+        1360,
+        585
+      ],
+      "head": [
+        275,
+        10,
+        445,
+        220
+      ],
+      "supportHand": [
+        250,
+        505,
+        390,
+        550
+      ]
+    },
+    "equipmentROIsByUniquePose": [
+      [
+        [
+          455,
+          630,
+          680,
+          795
+        ]
+      ],
+      [
+        [
+          505,
+          425,
+          715,
+          580
+        ]
+      ],
+      [
+        [
+          545,
+          400,
+          755,
+          555
+        ]
+      ],
+      [
+        [
+          600,
+          270,
+          810,
+          420
+        ]
+      ]
+    ],
+    "frames": [
+      {
+        "file": "1-master.png",
+        "dimensions": [
+          1536,
+          1024
+        ],
+        "sha256": "66dc7ae834dbdcc8f3bd9005793698000244ca0658b24d9101338fe71ecf441d",
+        "anchorBounds": {
+          "nearShoe": [
+            685,
+            830,
+            912,
+            960
+          ],
+          "farShoe": [
+            1180,
+            448,
+            1342,
+            578
+          ],
+          "head": [
+            280,
+            18,
+            444,
+            219
+          ],
+          "supportHand": [
+            256,
+            505,
+            389,
+            543
+          ]
+        },
+        "equipment": [
+          {
+            "bounds": [
+              455,
+              630,
+              679,
+              785
+            ],
+            "span": [
+              225,
+              156
+            ]
+          }
+        ]
+      },
+      {
+        "file": "2-early.png",
+        "dimensions": [
+          1536,
+          1024
+        ],
+        "sha256": "f0f735f47e07d7d7d543c72c15c86c0824b911ea8ea6e0a8510ec441a186e890",
+        "anchorBounds": {
+          "nearShoe": [
+            686,
+            830,
+            912,
+            960
+          ],
+          "farShoe": [
+            1180,
+            448,
+            1342,
+            578
+          ],
+          "head": [
+            280,
+            18,
+            444,
+            219
+          ],
+          "supportHand": [
+            256,
+            505,
+            389,
+            543
+          ]
+        },
+        "equipment": [
+          {
+            "bounds": [
+              505,
+              425,
+              714,
+              579
+            ],
+            "span": [
+              210,
+              155
+            ]
+          }
+        ]
+      },
+      {
+        "file": "3-mid.png",
+        "dimensions": [
+          1536,
+          1024
+        ],
+        "sha256": "9824854faae1272014435f8528fb56a5e52bac0a760e54885d8fa8ac0b1d9b3d",
+        "anchorBounds": {
+          "nearShoe": [
+            686,
+            830,
+            912,
+            960
+          ],
+          "farShoe": [
+            1180,
+            448,
+            1342,
+            578
+          ],
+          "head": [
+            280,
+            18,
+            444,
+            219
+          ],
+          "supportHand": [
+            256,
+            505,
+            389,
+            543
+          ]
+        },
+        "equipment": [
+          {
+            "bounds": [
+              545,
+              400,
+              754,
+              554
+            ],
+            "span": [
+              210,
+              155
+            ]
+          }
+        ]
+      },
+      {
+        "file": "4-top.png",
+        "dimensions": [
+          1536,
+          1024
+        ],
+        "sha256": "ddf95258de771e1e90de7837517d8107c47f209d33e65b5960e3d7d08e0d3ba9",
+        "anchorBounds": {
+          "nearShoe": [
+            686,
+            830,
+            912,
+            960
+          ],
+          "farShoe": [
+            1180,
+            448,
+            1342,
+            578
+          ],
+          "head": [
+            280,
+            18,
+            444,
+            219
+          ],
+          "supportHand": [
+            256,
+            505,
+            389,
+            543
+          ]
+        },
+        "equipment": [
+          {
+            "bounds": [
+              600,
+              270,
+              809,
+              419
+            ],
+            "span": [
+              210,
+              150
+            ]
+          }
+        ]
+      },
+      {
+        "file": "5-lower.png",
+        "dimensions": [
+          1536,
+          1024
+        ],
+        "sha256": "9824854faae1272014435f8528fb56a5e52bac0a760e54885d8fa8ac0b1d9b3d",
+        "anchorBounds": {
+          "nearShoe": [
+            686,
+            830,
+            912,
+            960
+          ],
+          "farShoe": [
+            1180,
+            448,
+            1342,
+            578
+          ],
+          "head": [
+            280,
+            18,
+            444,
+            219
+          ],
+          "supportHand": [
+            256,
+            505,
+            389,
+            543
+          ]
+        },
+        "equipment": [
+          {
+            "bounds": [
+              545,
+              400,
+              754,
+              554
+            ],
+            "span": [
+              210,
+              155
+            ]
+          }
+        ]
+      },
+      {
+        "file": "6-return.png",
+        "dimensions": [
+          1536,
+          1024
+        ],
+        "sha256": "f0f735f47e07d7d7d543c72c15c86c0824b911ea8ea6e0a8510ec441a186e890",
+        "anchorBounds": {
+          "nearShoe": [
+            686,
+            830,
+            912,
+            960
+          ],
+          "farShoe": [
+            1180,
+            448,
+            1342,
+            578
+          ],
+          "head": [
+            280,
+            18,
+            444,
+            219
+          ],
+          "supportHand": [
+            256,
+            505,
+            389,
+            543
+          ]
+        },
+        "equipment": [
+          {
+            "bounds": [
+              505,
+              425,
+              714,
+              579
+            ],
+            "span": [
+              210,
+              155
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "romanian-deadlift": {
+    "method": "Read-only threshold bounds within named ROIs; not a technique or playback approval. Equipment pixels: achromatic RGB range<12, max 14..110. Anchor pixels: min>90,max>150.",
+    "anchorROIs": {
+      "nearShoe": [
+        545,
+        1240,
+        770,
+        1340
+      ],
+      "farShoe": [
+        485,
+        1180,
+        675,
+        1285
+      ]
+    },
+    "equipmentROIsByUniquePose": [
+      [
+        [
+          310,
+          705,
+          510,
+          920
+        ],
+        [
+          750,
+          700,
+          990,
+          975
+        ]
+      ],
+      [
+        [
+          335,
+          730,
+          520,
+          950
+        ],
+        [
+          750,
+          735,
+          990,
+          1005
+        ]
+      ],
+      [
+        [
+          325,
+          800,
+          525,
+          1010
+        ],
+        [
+          735,
+          810,
+          985,
+          1080
+        ]
+      ],
+      [
+        [
+          305,
+          835,
+          510,
+          1050
+        ],
+        [
+          750,
+          835,
+          990,
+          1110
+        ]
+      ]
+    ],
+    "frames": [
+      {
+        "file": "1-master.png",
+        "dimensions": [
+          1024,
+          1536
+        ],
+        "sha256": "4c8cf219385b9c11d0916c3f38891cae6438a5c116584eb9564551ecfb304f60",
+        "anchorBounds": {
+          "nearShoe": [
+            545,
+            1240,
+            758,
+            1330
+          ],
+          "farShoe": [
+            498,
+            1180,
+            674,
+            1284
+          ]
+        },
+        "equipment": [
+          {
+            "bounds": [
+              317,
+              717,
+              509,
+              910
+            ],
+            "span": [
+              193,
+              194
+            ]
+          },
+          {
+            "bounds": [
+              750,
+              700,
+              977,
+              964
+            ],
+            "span": [
+              228,
+              265
+            ]
+          }
+        ]
+      },
+      {
+        "file": "2-early.png",
+        "dimensions": [
+          1024,
+          1536
+        ],
+        "sha256": "0f3d8a9f2e522683e8fc01c4b913a468e31672f140adae8c4fb53cd619d11b07",
+        "anchorBounds": {
+          "nearShoe": [
+            545,
+            1240,
+            757,
+            1330
+          ],
+          "farShoe": [
+            497,
+            1180,
+            674,
+            1284
+          ]
+        },
+        "equipment": [
+          {
+            "bounds": [
+              342,
+              741,
+              519,
+              935
+            ],
+            "span": [
+              178,
+              195
+            ]
+          },
+          {
+            "bounds": [
+              750,
+              751,
+              978,
+              994
+            ],
+            "span": [
+              229,
+              244
+            ]
+          }
+        ]
+      },
+      {
+        "file": "3-mid.png",
+        "dimensions": [
+          1024,
+          1536
+        ],
+        "sha256": "921f0825c9d26d64aba716393bf7c413cdc311baf0c8d07ef5b8570a79002c2a",
+        "anchorBounds": {
+          "nearShoe": [
+            545,
+            1240,
+            757,
+            1330
+          ],
+          "farShoe": [
+            497,
+            1180,
+            674,
+            1284
+          ]
+        },
+        "equipment": [
+          {
+            "bounds": [
+              335,
+              810,
+              524,
+              1002
+            ],
+            "span": [
+              190,
+              193
+            ]
+          },
+          {
+            "bounds": [
+              735,
+              823,
+              967,
+              1079
+            ],
+            "span": [
+              233,
+              257
+            ]
+          }
+        ]
+      },
+      {
+        "file": "4-bottom.png",
+        "dimensions": [
+          1024,
+          1536
+        ],
+        "sha256": "8731320d3cde7ce072b672a3643d81e09a2cb092d216ca1f6eb7634282771b3f",
+        "anchorBounds": {
+          "nearShoe": [
+            545,
+            1240,
+            757,
+            1299
+          ],
+          "farShoe": [
+            498,
+            1180,
+            674,
+            1284
+          ]
+        },
+        "equipment": [
+          {
+            "bounds": [
+              315,
+              844,
+              509,
+              1038
+            ],
+            "span": [
+              195,
+              195
+            ]
+          },
+          {
+            "bounds": [
+              750,
+              850,
+              973,
+              1098
+            ],
+            "span": [
+              224,
+              249
+            ]
+          }
+        ]
+      },
+      {
+        "file": "5-rise.png",
+        "dimensions": [
+          1024,
+          1536
+        ],
+        "sha256": "921f0825c9d26d64aba716393bf7c413cdc311baf0c8d07ef5b8570a79002c2a",
+        "anchorBounds": {
+          "nearShoe": [
+            545,
+            1240,
+            757,
+            1330
+          ],
+          "farShoe": [
+            497,
+            1180,
+            674,
+            1284
+          ]
+        },
+        "equipment": [
+          {
+            "bounds": [
+              335,
+              810,
+              524,
+              1002
+            ],
+            "span": [
+              190,
+              193
+            ]
+          },
+          {
+            "bounds": [
+              735,
+              823,
+              967,
+              1079
+            ],
+            "span": [
+              233,
+              257
+            ]
+          }
+        ]
+      },
+      {
+        "file": "6-return.png",
+        "dimensions": [
+          1024,
+          1536
+        ],
+        "sha256": "0f3d8a9f2e522683e8fc01c4b913a468e31672f140adae8c4fb53cd619d11b07",
+        "anchorBounds": {
+          "nearShoe": [
+            545,
+            1240,
+            757,
+            1330
+          ],
+          "farShoe": [
+            497,
+            1180,
+            674,
+            1284
+          ]
+        },
+        "equipment": [
+          {
+            "bounds": [
+              342,
+              741,
+              519,
+              935
+            ],
+            "span": [
+              178,
+              195
+            ]
+          },
+          {
+            "bounds": [
+              750,
+              751,
+              978,
+              994
+            ],
+            "span": [
+              229,
+              244
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

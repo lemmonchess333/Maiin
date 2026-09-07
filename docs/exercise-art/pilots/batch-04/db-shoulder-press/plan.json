@@ -1,0 +1,74 @@
+{
+  "exerciseId": "db-shoulder-press",
+  "status": "six-frame-draft-review",
+  "canvas": [
+    1024,
+    1536
+  ],
+  "variation": "Bilateral seated dumbbell shoulder press with upright back support and palms forward.",
+  "camera": "Front three-quarter, athlete facing slightly left; both hands and weights clearly visible.",
+  "equipment": "Fixed upright bench with dark padding, two identical modest round dumbbells.",
+  "anchors": [
+    "Both shoes and sole contacts",
+    "Entire bench frame and padding",
+    "Pelvis on seat",
+    "Head position fixed; trunk and pelvis supported against backrest"
+  ],
+  "invariants": [
+    "Dumbbell head diameter and handle length",
+    "Humerus and forearm lengths",
+    "Bench dimensions"
+  ],
+  "primary": [
+    "Deltoids"
+  ],
+  "secondary": [
+    "Triceps",
+    "Upper pectorals"
+  ],
+  "techniqueSource": "https://www.acefitness.org/resources/everyone/exercise-library/45/seated-overhead-press/",
+  "frames": [
+    {
+      "frame": 1,
+      "label": "Set up",
+      "cue": "Sit supported, palms forward, wrists over elbows.",
+      "t": 0,
+      "state": "Upright supported seated start; elbows below hands, dumbbells at shoulder level."
+    },
+    {
+      "frame": 2,
+      "label": "Begin press",
+      "cue": "Press upward while keeping your trunk braced.",
+      "t": 0.25,
+      "state": "Small press; elbows extend slightly, shoulder flexion increases."
+    },
+    {
+      "frame": 3,
+      "label": "Continue press",
+      "cue": "Extend elbows without leaning away from support.",
+      "t": 0.6,
+      "state": "Halfway press; upper arms rise and elbows extend."
+    },
+    {
+      "frame": 4,
+      "label": "Top position",
+      "cue": "Reach overhead without knocking the weights together.",
+      "t": 1,
+      "state": "Comfortable overhead endpoint, elbows near straight; no contact between weights."
+    },
+    {
+      "frame": 5,
+      "label": "Controlled lower",
+      "cue": "Lower both dumbbells slowly under control.",
+      "t": 0.6,
+      "state": "Same as 3 on return."
+    },
+    {
+      "frame": 6,
+      "label": "Finish lowering",
+      "cue": "Return towards shoulder height with wrists straight.",
+      "t": 0.25,
+      "state": "Same as 2 on return; transition to 1 continues lowering."
+    }
+  ]
+}

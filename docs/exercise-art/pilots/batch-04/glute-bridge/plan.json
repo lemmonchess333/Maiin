@@ -1,0 +1,78 @@
+{
+  "exerciseId": "glute-bridge",
+  "status": "master-only-edit-blocked",
+  "canvas": [
+    1536,
+    1024
+  ],
+  "variation": "Bilateral bodyweight floor glute bridge; arms by sides, palms down, shoes on.",
+  "camera": "Slightly elevated side three-quarter, head left, feet right; show both legs and both feet.",
+  "equipment": "None. No bench, weight, bands or raised platform.",
+  "primary": [
+    "Gluteus maximus"
+  ],
+  "secondary": [
+    "Hamstrings"
+  ],
+  "stabilisers": [
+    "Abdominals"
+  ],
+  "anchors": [
+    "Head and upper shoulders on floor",
+    "Both shoe sole contact regions",
+    "Palms on floor"
+  ],
+  "invariants": [
+    "Femur length",
+    "Tibia length",
+    "Shoe dimensions",
+    "Character anatomy and camera"
+  ],
+  "techniqueSource": "https://www.acefitness.org/resources/everyone/exercise-library/49/glute-bridge/",
+  "reviewNote": "Sequence sampling and camera are production choices; no measured anatomy or playback approval is asserted.",
+  "frames": [
+    {
+      "frame": 1,
+      "label": "Set up",
+      "cue": "Lie back, knees bent, feet planted.",
+      "t": 0,
+      "state": "Supine; head, shoulders, pelvis, palms and both soles supported. Knees bent; feet hip-width."
+    },
+    {
+      "frame": 2,
+      "label": "Begin lift",
+      "cue": "Brace and lift hips through your heels.",
+      "t": 0.25,
+      "state": "Pelvis clears floor slightly; heels, head, shoulders and palms retain contact."
+    },
+    {
+      "frame": 3,
+      "label": "Continue lift",
+      "cue": "Raise hips while keeping your ribs down.",
+      "t": 0.6,
+      "state": "Pelvis halfway to shoulder-knee line; hip extension increases without lumbar arch."
+    },
+    {
+      "frame": 4,
+      "label": "Top bridge",
+      "cue": "Align shoulders, hips and knees without arching.",
+      "t": 1,
+      "state": "Hip line meets shoulder-knee line; head and shoulder support retained, knees follow toes."
+    },
+    {
+      "frame": 5,
+      "label": "Controlled lower",
+      "cue": "Lower your hips slowly under control.",
+      "t": 0.6,
+      "state": "Same joint configuration as frame 3 on the controlled return."
+    },
+    {
+      "frame": 6,
+      "label": "Finish lowering",
+      "cue": "Return towards the floor without bouncing.",
+      "t": 0.25,
+      "state": "Same joint configuration as frame 2; next frame finishes lowering to floor."
+    }
+  ],
+  "generationFailure": "The frame-2 request received an output-stage sexual moderation block; no frame 2 was produced. The request was an educational exercise edit. No bypass or passing review is claimed."
+}

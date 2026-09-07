@@ -1,0 +1,16 @@
+{
+  "status": "draft-awaiting-review",
+  "visualApproval": false,
+  "staticImagesInspected": true,
+  "sequentialPlaybackVerified": false,
+  "mobileLightDarkVerified": false,
+  "findings": [
+    "Selected shoes stay within 1px in threshold bounds; bench remains visibly fixed at the catalogue 30-degree setup.",
+    "First bottom candidate swapped the apparent near/far arm path and is excluded. A constrained local-motion replacement preserves ordering.",
+    "Selected midpoint and bottom remain close, with the near upper arm strongly tucked and limited lower depth. Technique and motion-spacing review remain unresolved.",
+    "Dumbbell perspective/extents and the far wrist path vary; static images do not establish rigid-equipment consistency."
+  ],
+  "referencePath": "public/form-frames/barbell-row/1.webp",
+  "referenceSha256": "6f514489bd36819239d4beab383cabf54140cf9d8b9115c1fe8995bab1093d10",
+  "cueSha256": "979d306fef3d80554918045fa8921cca6dd853b765ad8a81074cb99b832d3ac4"
+}

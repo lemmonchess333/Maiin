@@ -1,0 +1,15 @@
+{
+  "status": "draft-awaiting-review",
+  "visualApproval": false,
+  "staticImagesInspected": true,
+  "sequentialPlaybackVerified": false,
+  "mobileLightDarkVerified": false,
+  "findings": [
+    "Selected support hand, shoe and head threshold bounds remain within 1px; support hand/knee and opposite-foot setup match the catalogue.",
+    "Generated early pose is closer to midpoint than requested; movement spacing and the 6-to-1 return need repair/review.",
+    "Dumbbell appears smaller after the hanging master; working shoulder and chest exposure change during the pull, requiring equipment and no-torso-rotation review."
+  ],
+  "referencePath": "public/form-frames/barbell-row/1.webp",
+  "referenceSha256": "6f514489bd36819239d4beab383cabf54140cf9d8b9115c1fe8995bab1093d10",
+  "cueSha256": "6021f6dfd734a5bfe08c626dbfa595f49a10d0a192233f575412100f72c5e379"
+}
