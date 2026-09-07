@@ -128,6 +128,11 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: "000000000000"
           VITE_FIREBASE_APP_ID: "1:000000000000:web:0000000000000000000000"
 
+      # Actual browser enforcement, with locally fulfilled synthetic resources.
+      # This spec explicitly keeps CSP enabled and makes no Firebase requests.
+      - name: Verify App Check CSP in Chromium
+        run: npm run test:e2e -- e2e/appCheckCsp.spec.ts --project=chromium --reporter=line
+
       # ── Suite 1: Firestore rules tests
       # Uses the firebase emulators:exec wrapper which boots the
       # emulator, runs the command, then tears it down. Project ID

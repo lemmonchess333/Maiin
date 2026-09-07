@@ -35,6 +35,36 @@ const firebaseJson = JSON.parse(
 ) as FirebaseJson;
 const indexHtml = readFileSync(resolve(repoRoot, "index.html"), "utf8");
 
+describe("App Check reCAPTCHA CSP requirements", () => {
+  const policy =
+    indexHtml.match(
+      /http-equiv="Content-Security-Policy"\s+content="([\s\S]*?)"/
+    )?.[1] ?? "";
+  const directives = new Map(
+    policy.split(";").map((part) => {
+      const [name, ...sources] = part.trim().split(/\s+/);
+      return [name, sources];
+    })
+  );
+
+  it.each(["script-src", "frame-src", "connect-src"])(
+    "allows reCAPTCHA's required path in %s without allowing the whole Google origin",
+    (name) => {
+      const sources = directives.get(name) ?? [];
+      expect(sources).toContain("https://www.google.com/recaptcha/");
+      expect(sources).not.toContain("https://www.google.com");
+      expect(sources).not.toContain("https://*.google.com");
+      expect(sources).not.toContain("*");
+    }
+  );
+
+  it("allows the secondary reCAPTCHA frame origin", () => {
+    expect(directives.get("frame-src")).toContain(
+      "https://recaptcha.google.com/recaptcha/"
+    );
+  });
+});
+
 function headersFor(source: string): Map<string, string> {
   const rule = firebaseJson.hosting.headers.find((h) => h.source === source);
   expect(
