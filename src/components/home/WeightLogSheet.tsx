@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import BottomSheet from "@/components/ui/BottomSheet";
 import Button from "@/components/ui/Button";
 import WeightScaleDial from "./WeightScaleDial";
@@ -16,6 +16,7 @@ import { localDateString } from "@/lib/dateHelpers";
 import { parseWeightEntry, validWeightDate } from "@/lib/weightEntry";
 import { queueWeightEntry } from "@/lib/weightQueue";
 import { toast } from "@/lib/toast";
+import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 
 export default function WeightLogSheet({
   uid,
@@ -45,6 +46,28 @@ export default function WeightLogSheet({
   const [error, setError] = useState("");
   const pending = useRef(false);
   const [preciseKg, setPreciseKg] = useState<number | null>(initialKg ?? null);
+
+  /**
+   * B0 effort instrumentation. `interactions` counts CONTROL CHANGES, not
+   * literal screen taps — a dial drag registers per settled value and a run
+   * of typing registers per keystroke. It is a within-path trend, so
+   * comparing a dialled save against a typed one by this number alone would
+   * be reading noise; `typed` / `picker` are what separate the paths.
+   */
+  // Stamped in the mount effect, not at useRef(Date.now()): an impure call
+  // during render trips react-hooks/purity, and the same workaround is
+  // already the house pattern for Food's render-timing ref.
+  const openedAt = useRef(0);
+  const interactions = useRef(0);
+  const typedRef = useRef(false);
+  const pickerRef = useRef(false);
+  const noteInteraction = () => {
+    interactions.current += 1;
+  };
+  useEffect(() => {
+    openedAt.current = Date.now();
+    trackHomeEvent("weight_sheet_open");
+  }, []);
   const parsedKg = () => {
     if (preciseKg !== null) return preciseKg;
     if (selectedUnit !== "st") return parseWeightEntry(value, selectedUnit);
@@ -55,6 +78,7 @@ export default function WeightLogSheet({
     return kg >= 20 && kg <= 350 ? kg : null;
   };
   const changeUnit = (next: DisplayUnit) => {
+    noteInteraction();
     const kg = parsedKg();
     if (kg !== null) {
       const stone = kgToStonePounds(kg);
@@ -69,6 +93,8 @@ export default function WeightLogSheet({
   };
   const dialKg = parsedKg() ?? initialKg ?? 80;
   const changeDial = (amount: number) => {
+    pickerRef.current = true;
+    noteInteraction();
     const kg = selectedUnit === "kg" ? amount : lbToKg(amount);
     setPreciseKg(kg);
     const stone = kgToStonePounds(kg);
@@ -95,6 +121,17 @@ export default function WeightLogSheet({
     setError("");
     try {
       const undo = queueWeightEntry(uid, date, kg);
+      trackHomeEvent("weight_log_saved", {
+        taps: interactions.current,
+        typed: typedRef.current,
+        picker: pickerRef.current,
+        unit: selectedUnit,
+        // 0 only if a save somehow beat the mount effect; treated as
+        // unknown rather than reported as an instantaneous log.
+        ...(openedAt.current > 0
+          ? { durationMs: Math.round(Date.now() - openedAt.current) }
+          : {}),
+      });
       window.dispatchEvent(new Event("tropos:weight-changed"));
       let undoing = false;
       toast.success(
@@ -173,6 +210,8 @@ export default function WeightLogSheet({
               onChange={(event) => {
                 setValue(event.target.value);
                 setPreciseKg(null);
+                typedRef.current = true;
+                noteInteraction();
                 setError("");
               }}
             />
@@ -214,14 +253,20 @@ export default function WeightLogSheet({
           <Button
             variant="secondary"
             disabled={saving}
-            onClick={() => setDate(localDateString())}
+            onClick={() => {
+              noteInteraction();
+              setDate(localDateString());
+            }}
           >
             Today
           </Button>
           <Button
             variant="secondary"
             disabled={saving}
-            onClick={() => setDate(localDateString(subDays(new Date(), 1)))}
+            onClick={() => {
+              noteInteraction();
+              setDate(localDateString(subDays(new Date(), 1)));
+            }}
           >
             Yesterday
           </Button>
@@ -238,6 +283,7 @@ export default function WeightLogSheet({
           max={localDateString()}
           disabled={saving}
           onChange={(e) => {
+            noteInteraction();
             setDate(e.target.value);
             setError("");
           }}

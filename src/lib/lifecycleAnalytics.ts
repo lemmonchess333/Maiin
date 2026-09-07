@@ -44,9 +44,40 @@ export type LifecycleEvent =
   | "run_completed"
   | "food_logged"
   | "trial_started"
-  | "subscription_started";
+  | "subscription_started"
+  // Companion batch B0 — the training loop, as distinct from the
+  // activation funnel above: a session is started, the finish shows some
+  // number of surfaces, a return visit offers one surface and the user
+  // picks something. These are per-occurrence and ongoing, not once-ever.
+  | "session_started"
+  | "completion_surfaces"
+  | "return_surface_shown"
+  | "return_choice"
+  | "checkin_answered";
 
 export type SignupMethod = "email" | "google" | "apple";
+
+/** The tier-4 surfaces the coordinator arbitrates (ADR-0004). */
+export type ReturnSurface =
+  | "trial-expired"
+  | "fell-behind"
+  | "badge"
+  | "priming";
+
+/**
+ * What the user did with a return surface. `dismissed` is the close with
+ * no action; the rest map to the actions those surfaces actually offer.
+ */
+export type ReturnChoice =
+  | "dismissed"
+  | "realign"
+  | "rebuild"
+  | "shift"
+  | "compress"
+  | "skip"
+  | "upgrade"
+  | "enable"
+  | "acknowledge";
 
 export interface LifecycleEventMetadata {
   /** signup_completed: which auth provider created the account. */
@@ -63,6 +94,34 @@ export interface LifecycleEventMetadata {
   runMode?: string;
   /** Generic timing dimension (ms). */
   durationMs?: number;
+  /** session_started: which discipline. */
+  kind?: "lift" | "run";
+  /**
+   * session_started (runs only): the run did not match its planned slot.
+   * Read straight from `computePlanMetadata`, which already decides this.
+   *
+   * The B0 brief asked for a planned/actual date pair. A LIFT has no
+   * planned date to compare against — ADR-0002 pins lifts as split-ordered
+   * and runs as date-pinned — so that pair is undefined for half the
+   * sessions it was meant to cover. Runs, meanwhile, already have the
+   * answer computed. Absent on lifts, deliberately, rather than filled.
+   */
+  offPlan?: boolean;
+  /**
+   * completion_surfaces: dialogs plus toasts shown between the session
+   * ending and the user reaching the page again. Exists to catch the
+   * pile-up creeping back after it was collapsed to one screen, so it is
+   * read as a regression signal rather than as a metric.
+   */
+  count?: number;
+  /** return_surface_shown / return_choice: which surface was shown. */
+  surface?: ReturnSurface;
+  /** return_choice: what the user picked. */
+  choice?: ReturnChoice;
+  /** checkin_answered: 1-5, "did this week's plan make sense?". */
+  clarity?: number;
+  /** checkin_answered: 1-5, "was logging easy this week?". */
+  ease?: number;
 }
 
 export function track(

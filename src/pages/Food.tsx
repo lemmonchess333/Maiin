@@ -71,7 +71,7 @@ import {
   inferMostLikelyMealSlot,
   type MealKey,
 } from "@/components/food/mealConstants";
-import { mealSlotFor } from "@/lib/mealSlots";
+import { mealLoggedAt, mealSlotFor } from "@/lib/mealSlots";
 import { track as trackFoodEvent } from "@/lib/foodAnalytics";
 import { sweepFoodPhotosOnce } from "@/lib/foodPhotoStore";
 
@@ -530,7 +530,8 @@ export default function Food() {
       notifyMealsLogged(
         uid,
         createdIds,
-        `Copied ${total} item${total === 1 ? "" : "s"} into ${joinHumanList(copied)}`
+        `Copied ${total} item${total === 1 ? "" : "s"} into ${joinHumanList(copied)}`,
+        { path: "copy" }
       );
       setCopyPreviewOpen(false);
     } catch (err) {
@@ -540,7 +541,8 @@ export default function Food() {
         notifyMealsLogged(
           uid,
           createdIds,
-          `Copied ${createdIds.length} meals; the remaining meals could not be saved`
+          `Copied ${createdIds.length} meals; the remaining meals could not be saved`,
+          { path: "copy" }
         );
       } else {
         toast.error("Couldn't copy from yesterday", {
@@ -821,7 +823,9 @@ export default function Food() {
       });
       void addFavourite({ ...food, source: "search" });
       setOffDrawerFood(null);
-      notifyMealsLogged(uid, [added.id], `Logged ${food.name}`);
+      notifyMealsLogged(uid, [added.id], `Logged ${food.name}`, {
+        path: "barcode",
+      });
       // No success toast — the food appears in the meal list and the
       // macro tiles animate, which is the confirmation. See ToastProvider
       // commit notes for the wider rule.
@@ -955,12 +959,15 @@ export default function Food() {
            Local NL parser keeps the existing item-count copy
            (the user typed it themselves). */
         if (confidence === "ai-parse") {
-          notifyMealsLogged(uid, [added.id], "Logged from AI estimate");
+          notifyMealsLogged(uid, [added.id], "Logged from AI estimate", {
+            path: "nl",
+          });
         } else {
           notifyMealsLogged(
             uid,
             [added.id],
-            `${items.length} ${itemNoun} logged${mergedSuffix}`
+            `${items.length} ${itemNoun} logged${mergedSuffix}`,
+            { path: "nl" }
           );
         }
 
@@ -1107,6 +1114,10 @@ export default function Food() {
         }
         setEditingGroup(null);
         setOpenRowId(null);
+        // No `food_log_saved` telemetry on this branch or its catch: adding
+        // servings to a row already in the diary is a CORRECTION, not an
+        // entry path. Counting it would inflate the log totals and blunt the
+        // path comparison the event exists for. The omission is deliberate.
         notifyMealsLogged(
           uid,
           createdIds,
@@ -1180,6 +1191,25 @@ export default function Food() {
        symmetric across all IDs — they go in and out of pending together
        so the toast's "Undo" action restores the entire group. */
     if (mealIds.length === 0) return;
+
+    // B0: how long the entry survived. A correction made in seconds and a
+    // change of mind made hours later look identical in a raw delete count
+    // and want opposite fixes — the first is a mis-tap the entry path
+    // should have prevented, the second is ordinary diary editing. Age is
+    // taken from the OLDEST meal in the group, so a row built up over time
+    // reports the life of the row rather than of its newest serving.
+    const loggedTimes = mealIds
+      .map((id) => meals.find((m) => m.id === id))
+      .map((m) => (m ? mealLoggedAt(m.createdAt)?.getTime() : undefined))
+      .filter((t): t is number => typeof t === "number");
+    if (loggedTimes.length > 0) {
+      trackFoodEvent("meal_deleted", {
+        ageSeconds: Math.max(
+          0,
+          Math.round((Date.now() - Math.min(...loggedTimes)) / 1000)
+        ),
+      });
+    }
 
     // 1. Optimistic hide for every meal in the group.
     setPendingDeleteIds((prev) => {
@@ -1878,7 +1908,16 @@ export default function Food() {
           nlParsing={nlParsing}
           inputFocused={inputFocused}
           setInputFocused={(v) => {
-            if (v && !inputFocused) trackFoodEvent("food_composer_focused");
+            if (v && !inputFocused) {
+              trackFoodEvent("food_composer_focused");
+              // Opens a logging attempt, to be paired with `food_log_saved`
+              // so an abandoned attempt is visible as an unmatched start.
+              // `slot` is the targeted slot when the user picked one, and
+              // the slot the clock implies otherwise.
+              trackFoodEvent("food_log_start", {
+                slot: targetMeal ?? mealSlotFor(undefined),
+              });
+            }
             setInputFocused(v);
           }}
           setSuggestionsActive={setSuggestionsActive}

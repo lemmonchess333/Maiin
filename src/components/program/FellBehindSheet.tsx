@@ -26,10 +26,15 @@
  * which buttons appear when.
  */
 
+import { useEffect, useRef } from "react";
 import { Footprints } from "lucide-react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { ChoiceSheet, type Choice } from "@/components/ui/ChoiceSheet";
 import type { LayoffClass } from "@/features/program/layoffDetection";
+import {
+  track as trackLifecycleEvent,
+  type ReturnChoice,
+} from "@/lib/lifecycleAnalytics";
 
 interface FellBehindSheetProps {
   open: boolean;
@@ -82,6 +87,25 @@ export default function FellBehindSheet({
   const percent = Math.round(prompt.completedRatio * 100);
   const detrained = recentLayoff === "detrained";
 
+  /**
+   * `return_choice`, paired with the `return_surface_shown` the coordinator
+   * emits. Reported at most once per opening: an outside-tap close after a
+   * button has already run would otherwise land a second `dismissed` on top
+   * of the real answer and read as indecision that never happened.
+   */
+  const choiceReported = useRef(false);
+  // Re-arm per opening. The sheet is not guaranteed to unmount between
+  // openings, and a ref that survived one would silence every opening
+  // after the first.
+  useEffect(() => {
+    if (open) choiceReported.current = false;
+  }, [open]);
+  const reportChoice = (choice: ReturnChoice) => {
+    if (choiceReported.current) return;
+    choiceReported.current = true;
+    trackLifecycleEvent("return_choice", { surface: "fell-behind", choice });
+  };
+
   const choices: Choice[] = [
     ...(raceModeActive
       ? [
@@ -90,13 +114,19 @@ export default function FellBehindSheet({
             label: detrained ? "Rebuild my plan" : "Realign my plan",
             pendingLabel: detrained ? "Rebuilding…" : "Realigning…",
             variant: "primary" as const,
-            onSelect: realignRacePlan,
+            onSelect: async () => {
+              reportChoice(detrained ? "rebuild" : "realign");
+              await realignRacePlan();
+            },
           },
           {
             id: "race-moved",
             label: "My race moved →",
             variant: "secondary" as const,
-            onSelect: async () => onRaceMoved(),
+            onSelect: async () => {
+              reportChoice("shift");
+              onRaceMoved();
+            },
           },
         ]
       : []),
@@ -105,14 +135,20 @@ export default function FellBehindSheet({
       label: "Not now",
       pendingLabel: "Dismissing…",
       variant: "ghost" as const,
-      onSelect: dismissFellBehindPrompt,
+      onSelect: async () => {
+        reportChoice("skip");
+        await dismissFellBehindPrompt();
+      },
     },
   ];
 
   return (
     <ChoiceSheet
       open={open}
-      onClose={onClose}
+      onClose={() => {
+        reportChoice("dismissed");
+        onClose();
+      }}
       title={detrained ? "Welcome back" : "Last week didn't go to plan"}
       description="Pick how you want to adjust"
       hideHeader
