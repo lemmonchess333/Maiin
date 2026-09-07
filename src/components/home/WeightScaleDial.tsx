@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { haptic } from "@/lib/haptic";
+import { RangeInput } from "@/components/ui/RangeInput";
 
 const ANGLE_PER_TICK = 1.7;
 const RADIUS = 332;
@@ -189,8 +190,7 @@ export default function WeightScaleDial({
       >
         {/* Native range supplies keyboard and VoiceOver adjustment; pointer
             dragging uses the much finer physical scale above it. */}
-        <input
-          type="range"
+        <RangeInput
           className="sr-only"
           aria-label="Weight scale"
           aria-valuetext={textValue}
