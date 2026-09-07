@@ -72,12 +72,12 @@ describe("everyday entry sheets", () => {
     expect(
       readDoc(`users/u1/bodyweightLogs/${localDateString()}`)
     ).toBeUndefined();
-    fireEvent.click(screen.getByRole("radio", { name: "lb", exact: true }));
+    fireEvent.click(screen.getByRole("radio", { name: "lb" }));
     expect(screen.getByLabelText("Weight (lb)")).toHaveValue(
       kgToLb(81.6).toFixed(1)
     );
-    fireEvent.click(screen.getByRole("radio", { name: "st", exact: true }));
-    fireEvent.click(screen.getByRole("radio", { name: "kg", exact: true }));
+    fireEvent.click(screen.getByRole("radio", { name: "st" }));
+    fireEvent.click(screen.getByRole("radio", { name: "kg" }));
     fireEvent.click(screen.getByRole("button", { name: "Log weight" }));
     await waitFor(() => expect(close).toHaveBeenCalledOnce());
     expect(
@@ -110,7 +110,7 @@ describe("everyday entry sheets", () => {
         onClose={vi.fn()}
       />
     );
-    fireEvent.click(screen.getByRole("radio", { name: "st", exact: true }));
+    fireEvent.click(screen.getByRole("radio", { name: "st" }));
     fireEvent.change(screen.getByRole("slider", { name: "Weight scale" }), {
       target: { value: "168" },
     });
