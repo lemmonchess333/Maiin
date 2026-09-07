@@ -1832,20 +1832,28 @@ export default function Food() {
           first buys back the ~90px the composer and slot picker occupy and
           costs the hero nothing. Keep it above the composer. */}
       {usual && (
+        /* Compact by requirement, not by taste. The row has to clear the
+           fold at 375px (see the ordering note above), and the name, the
+           kcal and the portion each having their own line cost ~36px more
+           than the budget allowed. Name and figures now share a baseline
+           row — the name truncates, the figures never do, because the
+           figures are what makes this row tappable without thinking. */
         <div
-          className="rounded-2xl bg-card card-shadow p-4 space-y-2"
+          className="rounded-2xl bg-card card-shadow p-3 space-y-1"
           aria-label="Your usual meal"
         >
-          <p className="text-caption text-muted-foreground">
+          <p className="text-caption leading-tight text-muted-foreground">
             Your usual at {usualSlot}
           </p>
-          <p className="text-base font-semibold">{usual.name}</p>
-          <p className="text-xs text-muted-foreground">
-            <span className="font-mono tabular-nums">
-              {Math.round(usual.cal)}
-            </span>{" "}
-            kcal · {usual.portionSize}
-          </p>
+          <div className="flex items-baseline justify-between gap-2">
+            <p className="text-base font-semibold truncate">{usual.name}</p>
+            <p className="text-xs text-muted-foreground shrink-0">
+              <span className="font-mono tabular-nums">
+                {Math.round(usual.cal)}
+              </span>{" "}
+              kcal · {usual.portionSize}
+            </p>
+          </div>
           <div className="flex gap-2">
             <Button
               disabled={quickAdding !== null}
