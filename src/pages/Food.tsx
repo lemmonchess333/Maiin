@@ -249,7 +249,9 @@ export default function Food() {
      changes — vanished items drop, new items append at the end
      via `orderQuickAddItems` rather than rebuilding the whole
      cache and reintroducing the reshuffle bug. */
-  const [quickAddOrderCache, setQuickAddOrderCache] = useState<Map<string, string[]>>(() => new Map());
+  const [quickAddOrderCache, setQuickAddOrderCache] = useState<
+    Map<string, string[]>
+  >(() => new Map());
 
   const [offResults, setOffResults] = useState<OFFResult[]>([]);
   const [, setOffLoading] = useState(false);
@@ -525,15 +527,25 @@ export default function Food() {
       haptic(15);
       // Toast names the slots that received copies so the user can see
       // exactly what happened, not just an opaque item count.
-      notifyMealsLogged(uid, createdIds, `Copied ${total} item${total === 1 ? "" : "s"} into ${joinHumanList(copied)}`);
+      notifyMealsLogged(
+        uid,
+        createdIds,
+        `Copied ${total} item${total === 1 ? "" : "s"} into ${joinHumanList(copied)}`
+      );
       setCopyPreviewOpen(false);
     } catch (err) {
       logger.error("[copy-all] Failed:", err);
       if (createdIds.length > 0) {
         setCopyPreviewOpen(false);
-        notifyMealsLogged(uid, createdIds, `Copied ${createdIds.length} meals; the remaining meals could not be saved`);
+        notifyMealsLogged(
+          uid,
+          createdIds,
+          `Copied ${createdIds.length} meals; the remaining meals could not be saved`
+        );
       } else {
-        toast.error("Couldn't copy from yesterday", { id: "food-copy-yesterday" });
+        toast.error("Couldn't copy from yesterday", {
+          id: "food-copy-yesterday",
+        });
       }
     } finally {
       setCopyingMealKey(null);
@@ -945,7 +957,11 @@ export default function Food() {
         if (confidence === "ai-parse") {
           notifyMealsLogged(uid, [added.id], "Logged from AI estimate");
         } else {
-          notifyMealsLogged(uid, [added.id], `${items.length} ${itemNoun} logged${mergedSuffix}`);
+          notifyMealsLogged(
+            uid,
+            [added.id],
+            `${items.length} ${itemNoun} logged${mergedSuffix}`
+          );
         }
 
         /* F2d grill — auto-add to Quick Add pantry. Fire-and-forget
@@ -1091,7 +1107,11 @@ export default function Food() {
         }
         setEditingGroup(null);
         setOpenRowId(null);
-        notifyMealsLogged(uid, createdIds, `Added ${adds} ${adds === 1 ? "serving" : "servings"}`);
+        notifyMealsLogged(
+          uid,
+          createdIds,
+          `Added ${adds} ${adds === 1 ? "serving" : "servings"}`
+        );
       } else {
         /* Decrement branch — actual data loss. Mirrors the
            handleDeleteMeal pattern (line 733+): optimistically
@@ -1137,7 +1157,11 @@ export default function Food() {
       if (createdIds.length > 0) {
         setEditingGroup(null);
         setOpenRowId(null);
-        notifyMealsLogged(uid, createdIds, `Added ${createdIds.length} servings; the remaining servings could not be saved`);
+        notifyMealsLogged(
+          uid,
+          createdIds,
+          `Added ${createdIds.length} servings; the remaining servings could not be saved`
+        );
       } else {
         toast.error("Couldn't update. Try again.", { id: "food-edit-error" });
       }
@@ -1351,7 +1375,8 @@ export default function Food() {
         pro: entry.meal.totalProtein || 0,
         carb: entry.meal.totalCarbs || 0,
         fat: entry.meal.totalFat || 0,
-        portionSize: items.length === 1 ? items[0].portionSize || "1 serving" : "1 meal",
+        portionSize:
+          items.length === 1 ? items[0].portionSize || "1 serving" : "1 meal",
         /* FOOD-01: multi-item historical meals repeat as a BUNDLE — the
            original foodName + full items[] ride on the chip so a tap
            re-logs the real composition (and the real name) instead of
@@ -1397,9 +1422,17 @@ export default function Food() {
 
   const cachedQuickOrder = quickAddOrderCache.get(selectedDate);
   if (!cachedQuickOrder) {
-    setQuickAddOrderCache(new Map(quickAddOrderCache).set(selectedDate, Array.from(quickMealCandidates.keys())));
+    setQuickAddOrderCache(
+      new Map(quickAddOrderCache).set(
+        selectedDate,
+        Array.from(quickMealCandidates.keys())
+      )
+    );
   }
-  const quickMeals = useMemo(() => orderQuickAddItems(cachedQuickOrder ?? [], quickMealCandidates, 5), [cachedQuickOrder, quickMealCandidates]);
+  const quickMeals = useMemo(
+    () => orderQuickAddItems(cachedQuickOrder ?? [], quickMealCandidates, 5),
+    [cachedQuickOrder, quickMealCandidates]
+  );
 
   const hasStrongQuickAddSuggestions = useMemo(() => {
     if (quickMeals.length === 0) return false;
@@ -1483,11 +1516,18 @@ export default function Food() {
     });
   };
 
-  const usualSlot = targetMeal ?? inferMostLikelyMealSlot(new Date().getHours());
-  const usual = useMemo(() => usualMeal(meals, usualSlot, selectedDate), [meals, usualSlot, selectedDate]);
+  const usualSlot =
+    targetMeal ?? inferMostLikelyMealSlot(new Date().getHours());
+  const usual = useMemo(
+    () => usualMeal(meals, usualSlot, selectedDate),
+    [meals, usualSlot, selectedDate]
+  );
   const [copyPreviewOpen, setCopyPreviewOpen] = useState(false);
   const [portionMeal, setPortionMeal] = useState<QuickAddItem | null>(null);
-  const handleQuickMealAdd = async (meal: QuickAddItem, slot = targetMeal): Promise<boolean> => {
+  const handleQuickMealAdd = async (
+    meal: QuickAddItem,
+    slot = targetMeal
+  ): Promise<boolean> => {
     if (meal.example) {
       setNlInput(meal.name);
       setSuggestionsActive(false);
@@ -1510,25 +1550,30 @@ export default function Food() {
       const undo = await saveQuickMeal(uid, meal, selectedDate, slot);
       if (slot) setTargetMeal(slot);
       let undoing = false;
-      toast.success(navigator.onLine ? `Logged ${meal.name}${slot ? ` to ${slot}` : ""}` : "Saved on this phone — syncs when you're back online", {
-        duration: 5000,
-        action: {
-          label: "Undo",
-          onClick: async () => {
-            if (undoing) return;
-            undoing = true;
-            try {
-              await undo();
-              toast.success("Meal entry undone");
-            } catch (err) {
-              toast.error(
-                err instanceof Error ? err.message : "Couldn't undo meal."
-              );
-              undoing = false;
-            }
+      toast.success(
+        navigator.onLine
+          ? `Logged ${meal.name}${slot ? ` to ${slot}` : ""}`
+          : "Saved on this phone — syncs when you're back online",
+        {
+          duration: 5000,
+          action: {
+            label: "Undo",
+            onClick: async () => {
+              if (undoing) return;
+              undoing = true;
+              try {
+                await undo();
+                toast.success("Meal entry undone");
+              } catch (err) {
+                toast.error(
+                  err instanceof Error ? err.message : "Couldn't undo meal."
+                );
+                undoing = false;
+              }
+            },
           },
-        },
-      });
+        }
+      );
       return true;
     } catch (err) {
       toast.error(
@@ -1691,10 +1736,8 @@ export default function Food() {
         <h1 className="text-xl font-extrabold text-foreground">Food</h1>
       </motion.div>
 
-      {/* Compact energy summary; detailed macros remain in the existing Details sheet. */}
       <motion.div variants={itemVariant} key={selectedDate}>
         <FoodHeroCard
-          compact
           selectedDate={selectedDate}
           isToday={isToday}
           dailyTargets={dailyTargets}
@@ -1817,24 +1860,61 @@ export default function Food() {
       </motion.div>
 
       {usual && (
-        <div className="rounded-2xl bg-card card-shadow p-4 space-y-2" aria-label="Your usual meal">
-          <p className="text-caption text-muted-foreground">Your usual at {usualSlot}</p>
+        <div
+          className="rounded-2xl bg-card card-shadow p-4 space-y-2"
+          aria-label="Your usual meal"
+        >
+          <p className="text-caption text-muted-foreground">
+            Your usual at {usualSlot}
+          </p>
           <p className="text-base font-semibold">{usual.name}</p>
-          <p className="text-xs text-muted-foreground"><span className="font-mono tabular-nums">{Math.round(usual.cal)}</span> kcal · {usual.portionSize}</p>
+          <p className="text-xs text-muted-foreground">
+            <span className="font-mono tabular-nums">
+              {Math.round(usual.cal)}
+            </span>{" "}
+            kcal · {usual.portionSize}
+          </p>
           <div className="flex gap-2">
-            <Button disabled={quickAdding !== null} onClick={() => void handleQuickMealAdd(usual)}>Log</Button>
-            <Button variant="secondary" disabled={quickAdding !== null} onClick={() => setPortionMeal(usual)}>Adjust portion or meal</Button>
+            <Button
+              disabled={quickAdding !== null}
+              onClick={() => void handleQuickMealAdd(usual)}
+            >
+              Log
+            </Button>
+            <Button
+              variant="secondary"
+              disabled={quickAdding !== null}
+              onClick={() => setPortionMeal(usual)}
+            >
+              Adjust portion or meal
+            </Button>
           </div>
         </div>
       )}
       {copyPreviewOpen && (
-        <BottomSheet open title="Copy yesterday's meals" onOpenChange={setCopyPreviewOpen}>
+        <BottomSheet
+          open
+          title="Copy yesterday's meals"
+          onOpenChange={setCopyPreviewOpen}
+        >
           <div className="px-4 pb-6 space-y-3">
-            {slotsToCopyFromYesterday.map((slot) => <div key={slot}>
-              <p className="text-sm">{MEAL_LABELS[slot]}</p>
-              {(yesterdaySegmented[slot] ?? []).map((meal) => <p key={meal.id} className="text-sm text-muted-foreground">{meal.foodName}</p>)}
-            </div>)}
-            <Button fullWidth loading={copyingMealKey !== null} onClick={() => void handleCopyAllMissingFromYesterday()}>Log these meals</Button>
+            {slotsToCopyFromYesterday.map((slot) => (
+              <div key={slot}>
+                <p className="text-sm">{MEAL_LABELS[slot]}</p>
+                {(yesterdaySegmented[slot] ?? []).map((meal) => (
+                  <p key={meal.id} className="text-sm text-muted-foreground">
+                    {meal.foodName}
+                  </p>
+                ))}
+              </div>
+            ))}
+            <Button
+              fullWidth
+              loading={copyingMealKey !== null}
+              onClick={() => void handleCopyAllMissingFromYesterday()}
+            >
+              Log these meals
+            </Button>
           </div>
         </BottomSheet>
       )}

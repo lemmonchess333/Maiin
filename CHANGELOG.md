@@ -9,7 +9,7 @@ follows [Semantic Versioning](https://semver.org/).
 ### Changed
 
 - Setup has five named chapters, an early interactive draft week, a spinning weight scale with direct typing, and an editable plan review. Goals and limitations require explicit choices; free running stays unscheduled, and nutrition clearly starts at maintenance.
-- Home puts today’s training and logging before a compact performance summary and tips. Food brings the composer and usual meal into view sooner, with full nutrition available in Details.
+- Home puts today’s training and logging first, then the weekly performance ring. Food brings the composer and usual meal into view sooner, below the calorie ring and macro breakdown, with the full detail still in Details.
 
 - Weigh-ins use a spinning scale dial with a fixed pointer, precise tenths, direct typing and keyboard adjustment.
 
