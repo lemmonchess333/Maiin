@@ -157,7 +157,7 @@ test("free running, typed metrics, editable review and recoverable commit", asyn
  * finding the card at all. The emulator capture lane is `continue-on-error`,
  * so nothing failed when it did.
  */
-test("Home shows the week's verdict above today's task, task still above the fold, at 375 px", async ({
+test("Home leads with today's task and puts the week's verdict below it, task above the fold, at 375 px", async ({
   page,
 }) => {
   await suppressCoachmarks(page);
@@ -203,11 +203,14 @@ test("Home shows the week's verdict above today's task, task still above the fol
   // Reading order and the first viewport are captured even for a rest-day fixture.
   await expect(progress).toBeAttached();
   await expect(task).toBeVisible();
-  // The task stays reachable without scrolling — the guard that makes the
-  // order above safe rather than merely preferred.
-  expect((await task.boundingBox())!.y).toBeLessThan(650);
-  expect((await progress.boundingBox())!.y).toBeLessThan(
-    (await task.boundingBox())!.y
+  // Today's action leads; the week's verdict follows it. The first thing on
+  // the scroll should be something to do today rather than a score for the
+  // week just gone — a rest day especially should not open on a verdict.
+  expect((await task.boundingBox())!.y).toBeLessThan(
+    (await progress.boundingBox())!.y
   );
+  // Kept, though it is the weaker of the two now that the task leads: it
+  // still catches anything large being inserted above it.
+  expect((await task.boundingBox())!.y).toBeLessThan(650);
   await capture(page, "home");
 });
