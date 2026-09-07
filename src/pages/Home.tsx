@@ -989,39 +989,6 @@ export default function Home() {
         </motion.div>
       </div>
 
-      {/* PI1 + PI4: consolidated Performance hero. Replaces the
-          earlier HealthScoreCard (daily 0-100 composite) + the
-          PerformanceCard compact tile. Single ring + verb + line +
-          delta chip driven by the weekly PI doc. Tap →
-          /history#performance per the canonical deep-link target.
-          Sits directly under the week strip: the strip says which days you
-          trained, the ring says what the week added up to, so the two read
-          as one answer before the page moves on to today's actions. It sat
-          at the foot of the scroll for one release and was easy to miss
-          there. Detailed interpretation remains in Analytics. */}
-      <div className="space-y-2.5">
-        <SectionLabel tier="section" className="px-1">
-          Performance
-        </SectionLabel>
-        <motion.div
-          variants={{
-            hidden: { opacity: 0, y: 12 },
-            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-          }}
-        >
-          <TrackSectionView section="hero">
-            <SectionErrorBoundary sectionName="performance-hero">
-              <PerformanceHeroCard
-                currentWeek={perfWeek ?? null}
-                previousWeek={perfPrevWeek}
-                weeksAvailable={perfWeeks.length}
-                loading={perfLoading}
-              />
-            </SectionErrorBoundary>
-          </TrackSectionView>
-        </motion.div>
-      </div>
-
       {/* Home2-hierarchy: Today group — contextual nudges + energy +
           quick actions + insight, clustered under one "Today" header. */}
       <div className="space-y-2.5">
@@ -1173,6 +1140,38 @@ export default function Home() {
             loads high, ease this week" + "Consider a deload week" on one
             scroll). The hero carries the verdict; the strip's richer
             bullets live on in Analytics. */}
+      </div>
+
+      {/* PI1 + PI4: consolidated Performance hero. Replaces the
+          earlier HealthScoreCard (daily 0-100 composite) + the
+          PerformanceCard compact tile. Single ring + verb + line +
+          delta chip driven by the weekly PI doc. Tap →
+          /history#performance per the canonical deep-link target.
+          Sits below today's session and the logging actions, so a daily
+          action is the first thing on the scroll; the full ring, verb and
+          delta chip stay — a compact numbers row does not carry the weekly
+          verdict the same way. Detailed interpretation remains in Analytics. */}
+      <div className="space-y-2.5">
+        <SectionLabel tier="section" className="px-1">
+          Performance
+        </SectionLabel>
+        <motion.div
+          variants={{
+            hidden: { opacity: 0, y: 12 },
+            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+          }}
+        >
+          <TrackSectionView section="hero">
+            <SectionErrorBoundary sectionName="performance-hero">
+              <PerformanceHeroCard
+                currentWeek={perfWeek ?? null}
+                previousWeek={perfPrevWeek}
+                weeksAvailable={perfWeeks.length}
+                loading={perfLoading}
+              />
+            </SectionErrorBoundary>
+          </TrackSectionView>
+        </motion.div>
       </div>
 
       <div className="space-y-2.5" aria-label="Helpful tips">
