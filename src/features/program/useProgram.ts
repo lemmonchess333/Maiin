@@ -106,6 +106,20 @@ export interface CompletedSessionData {
    *  activity-feed payload below — the variant (and any recovery
    *  reason behind it) never crosses a social or analytics boundary. */
   sessionVariant?: "express45" | "express30" | "easier_today";
+  /**
+   * Free-text notes the lifter typed against an exercise during the
+   * session, keyed by its index in the day's exercise list.
+   *
+   * These were held in session state and written to the resume draft, so
+   * they survived closing and reopening a session and were then dropped
+   * on Finish — the one moment the user would expect them to be kept.
+   * "Level 8, 6.0 incline" is exactly the setting they want back next
+   * week, and the draft is deleted the moment the workout commits.
+   *
+   * Optional and additive on the workout doc; older documents simply have
+   * no notes, and nothing derives a number from them.
+   */
+  exerciseNotes?: Record<number, string>;
   /** Lift3 — when the session STARTED (ms). The workout doc is dated by its
    *  start, not by the Finish tap: a session begun at 23:30 and finished at
    *  00:20 belongs to the day it began (streak, active day, PI window and
@@ -1160,11 +1174,17 @@ export function useProgram() {
               weightKg: plannedWeight,
             });
 
+        // Trimmed, and omitted entirely when empty: a whitespace-only note
+        // would otherwise persist an empty string that reads as "there is a
+        // note" to every consumer that checks for presence.
+        const note = sessionData.exerciseNotes?.[exIndex]?.trim();
+
         return {
           exerciseId: ex.exerciseId,
           exerciseName: ex.name,
           category: ex.movementCategory,
           ...(ex.repUnit !== undefined ? { repUnit: ex.repUnit } : {}),
+          ...(note ? { notes: note } : {}),
           sets,
           // D2: how many sets were PRESCRIBED, against `sets.length` which is
           // how many were completed. The array stays completed-only — every

@@ -8,6 +8,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Notes you write during a session are kept.** A note typed against an
+  exercise ("Level 8, 6.0 incline") now saves with the workout and shows on
+  that session in History. Previously it survived closing and reopening a
+  session but was discarded the moment you finished one.
 - **History remembers what happened.** The Badges tab is now Milestones: your
   first workout, your first run, your best lift on each exercise and every
   badge you have earned, in one list newest first and grouped by month. The
@@ -15,6 +19,10 @@ follows [Semantic Versioning](https://semver.org/).
   visible.
 
 ### Changed
+
+- **Home no longer shows a zero while it is still loading.** Today's
+  calories and macros wait for your meals to arrive instead of briefly
+  reading "0 eaten", which was indistinguishable from having eaten nothing.
 
 - **Security audit (2026-09-07):** re-check the active account before every offline queue replay; keep callable and food-analysis requests within the configured emulator/project boundary; constrain server-written comment avatars to supported origins; escape formula-like content in CSV exports. Added HTTP authentication/authorisation regression tests and a deployed-source verification step for comment functions.
 - Updated compatible Functions dependencies to clear high/critical advisories, made that audit a blocking CI check, and installed releases from the tested lockfile.

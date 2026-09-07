@@ -222,6 +222,8 @@ interface Props {
       sessionVariant?: "express45" | "express30" | "easier_today";
       /** Lift3 — when the session started (ms); the doc is dated by it. */
       startedAt?: number;
+      /** Per-exercise notes typed during the session, by exercise index. */
+      exerciseNotes?: Record<number, string>;
     }
   ) => Promise<unknown>;
   onClose: () => void;
@@ -1163,6 +1165,11 @@ export default function WorkoutSession({
         // Lift3: the doc is dated by when the session STARTED (draft-resume
         // aware — sessionStartRef is backdated by the draft's elapsed time).
         startedAt: sessionStartRef.current,
+        // These were written to the resume draft and dropped on Finish, so
+        // they survived closing a session and were lost by completing one.
+        // The draft is deleted the moment the workout commits, so Finish was
+        // the last point at which they still existed.
+        exerciseNotes,
       });
 
       // Persist PR map to Firestore for history beyond 50-session window.

@@ -378,8 +378,20 @@ behaviour.
 
 ## 10. Accessibility floors (hard requirements)
 
-- **Touch targets ≥ 44px** for anything interactive (iOS HIG). `Button md` and
+- **Touch targets ≥ 44px** for anything interactive. `Button md` and
   `IconButton` meet this by default.
+
+  The three figures people quote are in three different logical units and
+  are not interchangeable physical pixels, so keep them straight rather
+  than averaging them: Apple asks for **44 × 44 pt**, Google for **48 × 48
+  dp**, and WCAG 2.2 sets **24 × 24 CSS px** at AA (SC 2.5.8, with
+  exceptions) and **44 × 44** only at AAA (SC 2.5.5, also with
+  exceptions). Tropos targets **44 × 44 CSS px** on the web as a product
+  decision — comfortably above the AA floor, matching the native platform
+  we ship on. And the size alone does not make a control accessible: it
+  still needs an accessible name, a visible focus state, and enough
+  separation from its neighbours.
+
 - **WCAG AA contrast** for text. This is _why_ `primary-strong`,
   `MACROS_TEXT_LIGHT`, and the darker semantic tokens exist — use them.
 - **Body text ≥ 16px**, micro labels ≥ 12px — with one named floor below it:
@@ -389,6 +401,29 @@ behaviour.
 - **Keyboard:** focusable, Enter/Escape behave, focus returns to the trigger
   after a popover/sheet closes.
 - **Reduced motion** respected (see §8).
+
+---
+
+## 10a. Every surface owes six states, not one
+
+A polished happy state is one sixth of a feature. Before a surface is
+done, decide what it says in each of these — and say the thing that is
+true, which is the whole point of separating them.
+
+| State                    | What it must tell the person                                                                                                                                                                                                                                                         |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **First use**            | What this is for, and one useful first step. Reach for the `EmptyState` primitive (§7); do not hand-roll a centred icon block.                                                                                                                                                       |
+| **No results**           | What did not match, and how to recover — broaden, clear a filter, or add it manually. An illustration alone is not recovery.                                                                                                                                                         |
+| **Loading / saving**     | That something is in progress. **A zero is a claim, not a placeholder**: "0 eaten" is byte-identical to the display for someone who has genuinely eaten nothing. Show a `Skeleton` while a figure is unknown, and keep a figure you already have rather than flickering back to one. |
+| **Offline / queued**     | Whether the entry is saved on this device and waiting to sync — and say this ONLY where the app actually provides that guarantee. Claiming a durability we do not have is worse than saying nothing.                                                                                 |
+| **Error / interruption** | What failed, what was preserved, and the next safe action. A failed map must not take the run controls with it.                                                                                                                                                                      |
+| **Success / correction** | What changed, in neutral specific copy, plus Undo or an edit route. No automatic sharing, no extra celebration dialog.                                                                                                                                                               |
+
+The trap this table exists to catch is the middle one: a loading state
+that is height-stable and confident reads as final. Home renders past the
+profile skeleton with live data still arriving, so each card owns its own
+pending treatment — `WeightStepsTiles` and `TodayEnergy` are the
+reference implementations.
 
 ---
 

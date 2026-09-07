@@ -256,6 +256,17 @@ export default function WorkoutDetail() {
                       ))}
                     </div>
                   )}
+                  {/* The note the lifter typed during the session. This is
+                      the point of keeping it: "Level 8, 6.0 incline" is the
+                      machine setting they want back next time, and until now
+                      it was discarded on Finish. Absent on every session
+                      logged before notes were persisted, so the row simply
+                      does not render rather than showing an empty label. */}
+                  {ex.notes && (
+                    <p className="text-xs text-muted-foreground italic">
+                      {ex.notes}
+                    </p>
+                  )}
                 </div>
               );
             })
