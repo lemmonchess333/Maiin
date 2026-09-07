@@ -78,11 +78,10 @@ jobs:
 
   # Dependency advisories, as a PR gate for the ROOT tree: `npm audit`
   # fails on high or critical, so a new advisory has to be fixed or
-  # consciously documented before it merges. The functions/ tree is
-  # report-only — CLAUDE.md ("functions/ dependency advisories — the bump
-  # was TRIED and declined") records why its count cannot move: 13.x has
-  # no in-range fix and 14.x is a namespaced-to-modular migration that
-  # still leaves four transitive advisories in place.
+  # consciously documented before it merges. Both production dependency
+  # trees gate on high/critical. Compatible transitive updates cleared the
+  # Functions high/critical advisories on 2026-09-07 without an Admin SDK
+  # major migration; do not restore the former report-only `|| true` lane.
   audit:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -95,8 +94,8 @@ jobs:
       - run: npm ci
       - name: Audit root dependencies (gates on high and critical)
         run: npm audit --omit=dev --audit-level=high
-      - name: Audit functions dependencies (report only)
+      - name: Audit functions dependencies (gates on high and critical)
         working-directory: functions
         run: |
           npm ci
-          npm audit --omit=dev || true
+          npm audit --omit=dev --audit-level=high

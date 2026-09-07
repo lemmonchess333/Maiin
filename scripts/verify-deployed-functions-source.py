@@ -17,7 +17,7 @@ def verify():
         ["gcloud", "auth", "print-access-token"], text=True
     ).strip()
     root = pathlib.Path(__file__).resolve().parent.parent / "functions"
-    paths = ["index.js", "lib/publicPhotoUrl.js", "lib/socialCounters.js", "lib/spacePostEngagement.js"]
+    paths = ["index.js", "package-lock.json", "lib/publicPhotoUrl.js", "lib/socialCounters.js", "lib/spacePostEngagement.js"]
     for name in ["addCommentCallable", "addSpacePostCommentCallable"]:
         endpoint = (
             "https://cloudfunctions.googleapis.com/v1/projects/"

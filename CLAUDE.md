@@ -1406,6 +1406,16 @@ Firestore emulator up — 1156 tests, 76 files, none skipped.
 
 ### `functions/` dependency advisories — the bump was TRIED and declined
 
+**STATUS 2026-09-07 — high/critical hold superseded by a fresh measurement.**
+Compatible transitive updates (including grpc-js, protobufjs, websocket-driver,
+form-data and fast-xml-builder) now clear the high and critical advisories
+without changing firebase-admin's major version or its namespaced API. The
+security audit updates the lockfile and makes the Functions CI audit fail on
+high/critical advisories. The old counts and "no in-range fix" conclusion below
+are historical, not permission to skip a fresh audit. The Admin SDK v14 migration
+warning still applies. See `docs/agents/security-audit-2026-09-07.md` for this
+pass's measured dependency state and residual limits.
+
 `npm audit --omit=dev` in `functions/` reports 18 (1 low, 12 moderate, 4 high,
 1 critical). The obvious move — bump `firebase-admin`, the only DIRECT
 dependency implicated — was attempted on 2026-08-02, measured, and reverted.
