@@ -11,14 +11,12 @@ import { AuthProvider, useAuth } from "@/lib/auth";
 import { usePushTokenRefresh } from "@/hooks/usePushTokenRefresh";
 import { RevenueCatIdentity } from "@/hooks/useRevenueCatIdentity";
 import { ToastProvider } from "@/components/ToastProvider";
-import ShareComposerSheet from "@/components/social/ShareComposerSheet";
 import OneTimeMaintenance from "@/components/OneTimeMaintenance";
 import { NotificationBubbleProvider } from "@/components/NotificationBubble";
 import RouteErrorBoundary from "@/components/RouteErrorBoundary";
 import AuthSessionBoundary from "@/components/AuthSessionBoundary";
 import { StreakReminderPrimingModal } from "@/components/StreakReminderPrimingModal";
 import { StreaksProvider } from "@/features/streaks/useStreaks";
-import { DailyNutritionSnapshot } from "@/hooks/useDailyNutritionSnapshot";
 import { RemindersProvider } from "@/hooks/RemindersProvider";
 import { DailyLogsProvider } from "@/hooks/DailyLogsProvider";
 import { SurfaceCoordinatorProvider } from "@/components/SurfaceCoordinatorProvider";
@@ -34,7 +32,28 @@ import MinVersionGate from "@/components/MinVersionGate";
 // Shipped ambient brand glow — eager (tiny, renders on every authed page).
 import AmbientGlow from "@/components/AmbientGlow";
 
+/* Two root-mounted components that render null until something happens.
+   A static import is unconditional, so theirs were the entire reason a
+   SIGNED-OUT visitor downloaded the programme engine, the exercise
+   database, the run scheduler and 81 KB of French profanity before the
+   login form painted — they were the only two static chains reaching any
+   of it. `eagerGraph.test.ts` fails if either comes back.
+
+   Neither can miss work by arriving late, which is the thing to check
+   before deferring a subscriber. DailyNutritionSnapshot is a writer keyed
+   off the current day, and subscribeShareComposer replays current state
+   to a new listener, so a share opened before the chunk lands is
+   delivered the moment it mounts. */
 // Lazy-loaded pages & layout for code splitting
+const ShareComposerSheet = lazyRetry(
+  () => import("@/components/social/ShareComposerSheet")
+);
+const DailyNutritionSnapshot = lazyRetry(() =>
+  import("@/hooks/useDailyNutritionSnapshot").then((m) => ({
+    default: m.DailyNutritionSnapshot,
+  }))
+);
+
 const Layout = lazyRetry(() => import("@/components/Layout"));
 const Login = lazyRetry(() => import("@/pages/Login"));
 const Onboarding = lazyRetry(() => import("@/pages/Onboarding"));
@@ -342,7 +361,9 @@ function AppRoutes() {
     const tryFlush = () => {
       if (!navigator.onLine) return;
       // Lazy-load so this only ships when the user is signed in.
-      void import("@/lib/weightQueue").then(({ flushQueuedWeights }) => flushQueuedWeights(uid));
+      void import("@/lib/weightQueue").then(({ flushQueuedWeights }) =>
+        flushQueuedWeights(uid)
+      );
       import("@/lib/offlineQueue").then(({ flushQueue }) => {
         import("@/lib/firebase").then(({ db }) => {
           flushQueue(db, uid).catch(() => {});
@@ -448,7 +469,9 @@ function AppRoutes() {
         <StreaksProvider>
           {/* Single session-wide writer for the per-day macro-target snapshot
             (users/{uid}/dailyNutrition/{date}) the nutrition badges read. */}
-          <DailyNutritionSnapshot />
+          <Suspense fallback={null}>
+            <DailyNutritionSnapshot />
+          </Suspense>
           {/* RemindersProvider runs the three reminder hooks once at the
             authenticated root so scheduling doesn't drift whenever the
             user skips the Settings page. Must sit inside StreaksProvider
@@ -829,7 +852,9 @@ function App() {
                     fast-follow). Wraps the root-level overlays + all routes. */}
                 <BackDismissProvider>
                   <ToastProvider />
-                  <ShareComposerSheet />
+                  <Suspense fallback={null}>
+                    <ShareComposerSheet />
+                  </Suspense>
                   <OneTimeMaintenance />
                   <RevenueCatIdentity />
                   <AppRoutes />
