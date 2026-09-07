@@ -29,11 +29,11 @@ something happens. Static imports are unconditional, so both landed in
 the eager `index` chunk regardless of the fact that neither shows
 anything to a signed-out visitor:
 
-| root                     | chain                                       | dragged in                                                   |
-| ------------------------ | ------------------------------------------- | ------------------------------------------------------------ |
-| `DailyNutritionSnapshot` | → `useEffectiveTargets` → `trainingSignals` | `programEngine` (107 KB) → `exercises` (105 KB)              |
-| ″                        | → `useEffectiveTargets` → `taperNutrition`  | `runScheduler` (66 KB)                                       |
-| `ShareComposerSheet`     | → `profanityFilter`                         | `leo-profanity`, whose bundled **French** word list is 81 KB |
+| root                     | chain                                       | dragged in                                                                                |
+| ------------------------ | ------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `DailyNutritionSnapshot` | → `useEffectiveTargets` → `trainingSignals` | `programEngine` (107 KB) → `exercises` (105 KB)                                           |
+| ″                        | → `useEffectiveTargets` → `taperNutrition`  | `runScheduler` (66 KB)                                                                    |
+| `ShareComposerSheet`     | → `profanityFilter`                         | `leo-profanity` and its three bundled word lists (~103 KB; the French one alone is 81 KB) |
 
 The French profanity list is the one that makes the shape obvious: an
 English-language fitness app was shipping 81 KB of French swear words on
@@ -105,6 +105,36 @@ The lesson is the prompt's own: the named suspects were plausible and
 both wrong, and the actual defect — a share sheet putting French
 profanity on the login critical path — was not something anyone would
 have guessed.
+
+## The dist-size gate caught the trade-off, correctly
+
+`check:dist-size` (in the `unit` CI job, not `npm run test` — which is why
+a local run was green) failed this change, and it was right to. Splitting
+the eager chunk creates new chunks and some duplication, so total dist
+grew 5,034.6 → 5,106.3 kB, **+1.4% against its 5% tolerance**. The gate
+does not fail on that total; it fails on new chunks at or above 20 kB,
+which must be named deliberately.
+
+They are the modules this change moved, and attributing them confirmed
+the intent:
+
+| new chunk                   | contents                                                                                                                    |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `exercises` 86.7 kB         | the exercise database, one module                                                                                           |
+| `programEngine` 38.4 kB     | programme engine + volume/variation/overlap models                                                                          |
+| `VerifyEmailNotice` 97.7 kB | Rollup named the shared profanity chunk after a member: french-badwords 80.9, leo-profanity 12.5, **russian-bad-words 9.7** |
+| `BottomSheet` 61.1 kB       | `vaul` + radix, which left the eager chunk with ShareComposerSheet                                                          |
+| `RunSummary` +2.3 kB        | splitting cost — it no longer gets a shared module free from the eager chunk                                                |
+
+Two things worth recording. **leo-profanity bundles a third dictionary** —
+Russian, 9.7 kB — so the eager cost was ~103 kB of word lists, not the
+81 kB the French list alone suggested. And `vaul` at 77 kB left the eager
+path too, which the index-chunk figure already counts but the chunk list
+makes visible.
+
+Baseline updated with `--update` in this PR, as the gate's own docstring
+requires. Total bytes on disk up 1.4%; bytes before first paint down 21%.
+That is the trade, made deliberately.
 
 ## The guard
 
