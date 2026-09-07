@@ -320,7 +320,7 @@ jobs:
           PLAYWRIGHT_HTML_OUTPUT_DIR: capture-report
         run: |
           firebase emulators:exec --only auth,firestore --project demo-tropos \
-            'npm run seed:e2e && npm run seed:rich && npm run seed:circles && npm run seed:experience && npm run seed:fellbehind && npm run test:e2e -- capture.spec.ts --project=auth-emulator'
+            'npm run seed:e2e && npm run seed:rich && npm run seed:circles && npm run seed:experience && npm run seed:fellbehind && npm run seed:liftreturn && npm run test:e2e -- capture.spec.ts --project=auth-emulator'
 
       - if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

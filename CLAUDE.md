@@ -625,7 +625,10 @@ reduced-motion` always gets the settled static state — no entrance, no
 **The capture specs are a PR gate as well as a screenshot source.** The
 `capture-specs` job in `emulator-tests.yml` runs every
 `e2e/screenshots/*.capture.spec.ts` on pull requests and on main, blocking,
-with the same build and the same five seeds `app-screenshots.yml` uses.
+with the same build and the same seed chain `app-screenshots.yml` uses
+(the two lists must stay identical, pinned by `captureSeedChain.test.ts`;
+a seed added to only one leaves its spec failing on login in the gate, or
+its frame reading as `removed` in the diff report).
 Before that job existed these specs ran ONLY on a push to
 `claude/screenshot-app`, so their ~98 assertions could not fail a PR:
 #2187 removed an `aria-label` a spec located by, the locator matched zero
