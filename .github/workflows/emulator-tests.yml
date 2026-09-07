@@ -214,3 +214,112 @@ jobs:
           name: design-qa-report
           path: design-qa-report/
           retention-days: 7
+
+  # ── Capture specs as a PR gate ──────────────────────────────────────
+  #
+  # WHY THIS JOB EXISTS. `e2e/screenshots/*.capture.spec.ts` carry ~98
+  # assertions — locators, copy, reading order, above-the-fold geometry —
+  # and until this job they ran in exactly one place: app-screenshots.yml,
+  # which triggers only on push to `claude/screenshot-app` or by hand. So
+  # they never ran on a pull request, and a broken one could not turn
+  # anything red.
+  #
+  # That is not hypothetical. #2187 deleted the `compact` rendering of
+  # PerformanceHeroCard, taking its `aria-label="View performance details"`
+  # with it. designer-onboarding.capture.spec.ts located the card by that
+  # exact name, so from that merge onward the locator matched ZERO elements
+  # and the spec's first assertion was dead. Two merges passed green before
+  # it was found by hand, and the fix (#2188) could only be verified
+  # locally.
+  #
+  # WHY BLOCKING. A `continue-on-error` lane reproduces the same
+  # invisibility with extra steps — a red X nobody has to look at is what
+  # we already had. Flake risk is absorbed by `retries: 2` (set for CI in
+  # playwright.config.ts); the flakes CLAUDE.md documents for this suite
+  # are PIXEL diffs between runs, which live in the diff report and are not
+  # assertions.
+  #
+  # WHY A SEPARATE JOB. It runs concurrently with emulator-tests rather
+  # than extending that job past its 15-minute budget. The duplicated
+  # setup block is the accepted cost of the parallelism.
+  #
+  # WHY IT STILL WRITES SCREENSHOTS. The specs run byte-for-byte as
+  # app-screenshots.yml runs them, minus the diff and commit steps. An
+  # "assertions-only" mode would be a second way of running the same
+  # files, and a divergence between the copy under test and the copy that
+  # ships frames is exactly the drift this repo keeps paying for. Frames
+  # land in the gitignored `screenshots/` and are thrown away with the
+  # runner; the visual-diff channel remains app-screenshots.yml's job.
+  capture-specs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: "npm"
+
+      # Same JVM requirement as the job above — firebase-tools errors out
+      # hard on JDK < 21.
+      - name: Set up Java 21
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - run: npm ci
+
+      - name: Get Playwright version
+        id: playwright-version
+        run: |
+          PW_VERSION=$(node -e "console.log(require('./node_modules/@playwright/test/package.json').version)")
+          echo "version=$PW_VERSION" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+      - name: Install Chromium for Playwright
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+      - name: Install Chromium deps only (cache hit path)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      - run: npm install -g firebase-tools
+
+      # Identical env to app-screenshots.yml's build — the specs assert
+      # against this exact bundle, so the two must not drift.
+      - name: Build app with emulator wiring
+        run: npm run build:e2e
+        env:
+          VITE_USE_EMULATORS: "true"
+          VITE_FIREBASE_API_KEY: emulator-dummy-key
+          VITE_FIREBASE_AUTH_DOMAIN: demo-tropos.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: demo-tropos
+          VITE_FIREBASE_STORAGE_BUCKET: demo-tropos.appspot.com
+          VITE_FIREBASE_MESSAGING_SENDER_ID: "000000000000"
+          VITE_FIREBASE_APP_ID: "1:000000000000:web:0000000000000000000000"
+
+      # The seed list matches app-screenshots.yml exactly. A spec that
+      # depends on a seed missing here would pass there and fail here,
+      # which is the drift this job is meant to prevent, not create.
+      - name: Run capture specs
+        env:
+          E2E_AUTH_EMULATOR: "1"
+          FIRESTORE_EMULATOR_HOST: 127.0.0.1:8080
+          FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9099
+          GCLOUD_PROJECT: demo-tropos
+          PLAYWRIGHT_HTML_OUTPUT_DIR: capture-report
+        run: |
+          firebase emulators:exec --only auth,firestore --project demo-tropos \
+            'npm run seed:e2e && npm run seed:rich && npm run seed:circles && npm run seed:experience && npm run seed:fellbehind && npm run test:e2e -- capture.spec.ts --project=auth-emulator'
+
+      - if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: capture-report
+          path: capture-report/
+          retention-days: 7
