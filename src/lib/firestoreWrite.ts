@@ -32,6 +32,7 @@
 
 import {
   addDoc as fbAddDoc,
+  doc,
   deleteDoc as fbDeleteDoc,
   setDoc as fbSetDoc,
   updateDoc as fbUpdateDoc,
@@ -47,8 +48,14 @@ import { stripUndefined } from "@/lib/firestoreGuards";
 /** `addDoc` with the payload stripped of `undefined`. */
 export function addDocGuarded<T extends DocumentData>(
   reference: CollectionReference<T>,
-  data: WithFieldValue<T>
+  data: WithFieldValue<T>,
+  queued?: { id?: string; enqueue: (ref: DocumentReference<T>, clean: WithFieldValue<T>) => void }
 ): Promise<DocumentReference<T>> {
+  if (queued) {
+    const ref = queued.id ? doc(reference, queued.id) : doc(reference);
+    queued.enqueue(ref, stripUndefined(data));
+    return Promise.resolve(ref);
+  }
   return fbAddDoc(reference, stripUndefined(data));
 }
 

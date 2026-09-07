@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useSyncExternalStore } from "react";
 import {
   collection,
   query,
@@ -20,6 +20,7 @@ import { db } from "@/lib/firebase";
 import { useUid } from "@/lib/auth";
 import { activeMealDocs, sumMealTotals } from "@/lib/mealTotals";
 import { validateFoodEntry } from "@/lib/foodValidation";
+import { pendingDocumentWrites, queuedWritesVersion, subscribeQueuedWrites } from "@/lib/offlineQueue";
 import { logger } from "@/lib/logger";
 
 export interface MealItem {
@@ -185,7 +186,18 @@ export function useMeals() {
   // Internal store holds BOTH active and soft-deleted meals; the
   // returned `meals` filters to active only, `deletedMeals` to
   // soft-deleted only. Single subscription powers both surfaces.
-  const [allMeals, setAllMeals] = useState<Meal[]>([]);
+  const [snapshotMeals, setAllMeals] = useState<Meal[]>([]);
+  const [snapshotUid, setSnapshotUid] = useState<string | null>(null);
+  const queueVersion = useSyncExternalStore(subscribeQueuedWrites, queuedWritesVersion, queuedWritesVersion);
+  const allMeals = useMemo(() => {
+    // A queue mutation invalidates this projection even before a server snapshot.
+    void queueVersion;
+    const byId = new Map((snapshotUid === uid ? snapshotMeals : []).map((meal) => [meal.id, meal]));
+    if (uid) for (const pending of pendingDocumentWrites(uid, `users/${uid}/meals`)) {
+      byId.set(pending.id, parseMealDoc(pending.id, { ...(pending.merge ? byId.get(pending.id) : {}), ...pending.data }));
+    }
+    return Array.from(byId.values());
+  }, [snapshotMeals, snapshotUid, uid, queueVersion]);
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot | null>(null);
@@ -215,6 +227,7 @@ export function useMeals() {
         const data = snapshot.docs.map((d) =>
           parseMealDoc(d.id, d.data() as Record<string, unknown>)
         );
+        setSnapshotUid(uid);
         setAllMeals(data);
         setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
         setHasMore(snapshot.docs.length >= PAGE_SIZE);

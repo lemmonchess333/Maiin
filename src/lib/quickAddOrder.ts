@@ -55,6 +55,8 @@ export interface QuickAddItem {
    *  non-removable because removing them has no persistent
    *  meaning (they re-derive from meal history each render). */
   favouriteId?: string;
+  /** Illustrative copy only: opens the composer and cannot be logged. */
+  example?: boolean;
   /** FOOD-01: present when the chip repeats a whole historical
    *  multi-item meal. Carries the ORIGINAL foodName + items[] so a
    *  repeat re-logs the real composition instead of flattening the

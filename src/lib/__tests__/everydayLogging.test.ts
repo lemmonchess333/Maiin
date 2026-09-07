@@ -6,7 +6,8 @@ vi.mock("@/lib/firebase", () => ({
   auth: { currentUser: { uid: "u1" } },
 }));
 vi.mock("@/lib/toast", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
-import { auth } from "@/lib/firebase";
+import { flushQueue } from "../offlineQueue";
+import { auth, db } from "@/lib/firebase";
 import {
   resetFirestore,
   seedFirestore,
@@ -220,42 +221,28 @@ describe("repeat meal correction", () => {
     expect(meal.cal).toBe(300);
     expect(meal.bundle?.items[0].protein).toBe(14);
   });
-  it("reuses an uncertain entry and undo removes only that occurrence", async () => {
-    const remove = vi
-      .spyOn(Storage.prototype, "removeItem")
-      .mockImplementation(() => {
-        throw new Error("storage");
-      });
-    await expect(saveQuickMeal("u1", meal, today)).rejects.toThrow(
-      "Meal saved"
-    );
+  it("reuses a retained retry identity and soft-deletes only its occurrence", async () => {
+    const remove = vi.spyOn(Storage.prototype, "removeItem").mockImplementation(() => { throw new Error("storage"); });
+    await saveQuickMeal("u1", meal, today);
     remove.mockRestore();
     const undo = await saveQuickMeal("u1", meal, today);
+    await flushQueue(db, "u1");
     expect(allPaths().filter((p) => p.includes("/meals/"))).toHaveLength(1);
     await saveQuickMeal("u1", meal, today);
     await undo();
-    expect(allPaths().filter((p) => p.includes("/meals/"))).toHaveLength(1);
+    await flushQueue(db, "u1");
+    const entries = allPaths().filter((p) => p.includes("/meals/")).map((path) => readDoc(path)!);
+    expect(entries).toHaveLength(2);
+    expect(entries.filter((entry) => !entry.deletedAt)).toHaveLength(1);
   });
-  it("recognises unchanged items even if Firestore returns reordered fields", async () => {
+  it("undo preserves an edited meal in Recently Deleted", async () => {
     const undo = await saveQuickMeal("u1", meal, today);
-    const path = allPaths().find((p) => p.includes("/meals/"))!;
-    const saved = readDoc(path)!;
-    seedFirestore({
-      [path]: {
-        ...saved,
-        items: (saved.items as Record<string, unknown>[]).map((i) =>
-          Object.fromEntries(Object.entries(i).reverse())
-        ),
-      },
-    });
-    await undo();
-    expect(readDoc(path)).toBeUndefined();
-  });
-  it("does not undo an entry subsequently edited in the diary", async () => {
-    const undo = await saveQuickMeal("u1", meal, today);
+    await flushQueue(db, "u1");
     const path = allPaths().find((p) => p.includes("/meals/"))!;
     seedFirestore({ [path]: { ...readDoc(path), totalCalories: 500 } });
-    await expect(undo()).rejects.toThrow("edited");
+    await undo();
+    await flushQueue(db, "u1");
     expect(readDoc(path)?.totalCalories).toBe(500);
+    expect(readDoc(path)?.deletedAt).toBeTruthy();
   });
 });
