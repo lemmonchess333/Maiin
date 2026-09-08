@@ -1,35 +1,49 @@
 import { useState, useEffect, useRef } from "react";
-import SectionLabel from "@/components/ui/SectionLabel";
 import { motion } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 import { macroRingState } from "@/utils/formatters";
 
+/**
+ * One macro's progress toward its daily target: grams logged in the
+ * centre, the nutrient's name and its target beneath.
+ *
+ * The track is NEUTRAL rather than a tint of the macro's own hue, and
+ * that is a contrast decision rather than a stylistic one. A track drawn
+ * as `color + "18"` measured 1.06:1 against the card for carbs, 1.08:1
+ * for fat and 1.12:1 for protein — invisible, so a ring with nothing
+ * logged read as a disabled control instead of an empty one. Raising the
+ * alpha does not fix it: carbs is #EAB308, and yellow cannot clear
+ * 1.26:1 on white at ANY alpha, so the three rings would stay unequal
+ * with the worst one still unreadable. A neutral groove at
+ * `--muted-foreground / 0.22` measures 1.34:1 light and 1.48:1 dark for
+ * all three alike, and the macro's identity stays where it carries
+ * meaning: the filled arc. Same reasoning as the Food macro columns,
+ * which put the hue on the icon and bar and leave the number neutral.
+ *
+ * The arc is clamped at one full turn (`macroRingState` caps at 1.3 and
+ * the dash array takes `min(pct, 1)`), so going over target never wraps
+ * the ring back around and understates itself. The centre keeps the real
+ * logged figure, uncapped.
+ */
 export default function MacroRing({
   value,
   target,
   color,
   label,
   unit = "",
-  displayMode = "consumed",
 }: {
   value: number;
   target: number;
   color: string;
   label: string;
   unit?: string;
-  /** "consumed" (default) shows progress toward the target with the
-   *  target as the small sub-label. "left" flips to remaining-to-go
-   *  with a "left" sub-label — cal.ai-style tap-to-flip. The ring
-   *  stroke always shows consumed/target so progress reads the same
-   *  visually regardless of mode. */
-  displayMode?: "consumed" | "left";
 }) {
-  const size = 68;
-  const r = size / 2 - 6;
+  const size = 64;
+  const r = size / 2 - 5;
   const circ = 2 * Math.PI * r;
   // Nutr3: a target of 0 means NO goal (a calorie target below the
   // essential-fat floor funds no protein or carbs), not "0 g to eat" — so
-  // the ring stays empty and the sub-label reads "—" instead of "0g".
+  // the ring stays empty and the sub-label says so in words.
   const hasTarget = target > 0;
   const { pct, done } = hasTarget
     ? macroRingState(value, target)
@@ -54,23 +68,13 @@ export default function MacroRing({
     [done]
   );
 
-  // cal.ai-style: "left" clamps at 0 (no negative when over-target).
-  const displayValue =
-    displayMode === "consumed" || !hasTarget
-      ? value
-      : Math.max(0, target - value);
-  const subLabel = !hasTarget
-    ? "—"
-    : displayMode === "consumed"
-      ? `${target}${unit}`
-      : "left";
-
   return (
     <div className="flex flex-col items-center gap-1.5">
       <div className="relative" style={{ width: size, height: size }}>
         <svg
           width={size}
           height={size}
+          aria-hidden="true"
           style={{
             transform: "rotate(-90deg)",
             position: "absolute",
@@ -82,8 +86,8 @@ export default function MacroRing({
             cy={size / 2}
             r={r}
             fill="none"
-            stroke={color + "18"}
-            strokeWidth="4.5"
+            stroke="hsl(var(--muted-foreground) / 0.22)"
+            strokeWidth="5"
           />
           {pct > 0 && (
             <circle
@@ -92,7 +96,7 @@ export default function MacroRing({
               r={r}
               fill="none"
               stroke={color}
-              strokeWidth="4.5"
+              strokeWidth="5"
               strokeDasharray={`${circ * Math.min(pct, 1)} ${circ}`}
               strokeLinecap="round"
               style={{ transition: "stroke-dasharray 0.5s ease" }}
@@ -100,14 +104,24 @@ export default function MacroRing({
           )}
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-xs font-bold font-mono tabular-nums leading-none text-foreground">
-            {Math.round(displayValue)}
+          <span className="text-sm font-bold font-mono tabular-nums leading-none text-foreground">
+            {Math.round(value)}
             {unit}
           </span>
           {done && (
-            <span className="text-xs" style={{ color }}>
-              &#10003;
-            </span>
+            <>
+              {/* The tick is the only place a macro hue lands on a glyph,
+                  and it is decorative: the sr-only phrase below carries
+                  the same fact, so contrast is not load-bearing here. */}
+              <span
+                className="text-micro leading-none mt-0.5"
+                style={{ color }}
+                aria-hidden="true"
+              >
+                &#10003;
+              </span>
+              <span className="sr-only">{label} target reached</span>
+            </>
           )}
         </div>
         {/* Completion flash overlay */}
@@ -122,13 +136,18 @@ export default function MacroRing({
           />
         )}
       </div>
-      <div className="text-center">
-        <SectionLabel>{label}</SectionLabel>
+      <div className="text-center leading-tight">
+        {/* Foreground, sentence case, medium — deliberately NOT the
+            uppercase muted SectionLabel treatment. At 12px, muted and
+            letter-spaced, a nutrient name reads as chrome rather than as
+            the ring's own label, which is half of what makes an unfilled
+            ring look switched off rather than empty. */}
+        <p className="text-xs font-medium text-foreground">{label}</p>
         <p
-          className="text-micro"
+          className="text-micro font-mono tabular-nums"
           style={{ color: "hsl(var(--muted-foreground))" }}
         >
-          {subLabel}
+          {hasTarget ? `Target ${Math.round(target)}${unit}` : "No target"}
         </p>
       </div>
     </div>

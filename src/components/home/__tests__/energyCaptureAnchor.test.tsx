@@ -58,9 +58,6 @@ vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/components/home/MacroRing", () => ({
   default: () => <div data-testid="macro-ring" />,
 }));
-vi.mock("@/components/home/BreakdownRow", () => ({
-  default: () => <div data-testid="breakdown-row" />,
-}));
 
 import TodayEnergy from "../TodayEnergy";
 
@@ -76,7 +73,7 @@ const SPEC = readFileSync(
 /** The anchor regex the spec actually uses — read out, not copied. */
 function anchorPattern(): RegExp {
   const m = SPEC.match(
-    /page\.getByText\(\/(\\\/ \[1-9\][^/]*?)\/\)\.first\(\)/
+    /page\.getByText\(\/(Target \[1-9\][^/]*?)\/\)\.first\(\)/
   );
   if (!m) {
     throw new Error(
@@ -112,7 +109,7 @@ function renderEnergy(finalTarget: number) {
   );
 }
 
-describe("capture spec — Today's energy readiness anchor", () => {
+describe("capture spec — Today's nutrition readiness anchor", () => {
   it("extracts the anchor from the spec — the fixture this rests on", () => {
     // Without this, a broken extractor would leave every assertion below
     // vacuously satisfied.
@@ -124,7 +121,7 @@ describe("capture spec — Today's energy readiness anchor", () => {
     const rx = anchorPattern();
     expect(
       rx.test(container.textContent ?? ""),
-      `the capture anchor ${rx} does not match a loaded Today's energy card. ` +
+      `the capture anchor ${rx} does not match a loaded Today's nutrition card. ` +
         `That assertion is HARD and gates four frames — in CI this costs a ` +
         `red capture job twelve minutes in.`
     ).toBe(true);
@@ -153,11 +150,13 @@ describe("capture spec — Today's energy readiness anchor", () => {
     renderEnergy(2200);
     expect(
       screen.getByText(
-        new RegExp(`/ ${rendered.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} kcal`)
+        new RegExp(
+          `Target ${rendered.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} kcal`
+        )
       )
     ).toBeInTheDocument();
     expect(
-      anchorPattern().test(`/ ${rendered} kcal`),
+      anchorPattern().test(`Target ${rendered} kcal`),
       `formatCalories(2200) renders "${rendered}" on this runtime, and the ` +
         `capture anchor does not match it. The anchor is written against a ` +
         `comma separator; this runtime groups differently.`

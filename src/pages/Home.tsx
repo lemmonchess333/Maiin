@@ -1083,9 +1083,7 @@ export default function Home() {
                   fat={dailyFat}
                   burn={dailyBurn}
                   targets={effectiveTargets}
-                  totalLifetimeMeals={totalLifetimeMeals}
                   mealsLoading={mealsLoading}
-                  uid={user?.uid ?? null}
                   // Computed by useHomeData against the same protein target
                   // the rings show (HOME-TARGET-01) — and never passed here
                   // before, so the nudge it computed rendered nowhere.
