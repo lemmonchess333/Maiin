@@ -130,7 +130,11 @@ describe("applyPrivacyZones — interior crossings", () => {
       outsidePoint3,
     ];
     const result = applyPrivacyZones(points, [londonZone]);
-    expect(result).toEqual([outsidePoint1, outsidePoint2, outsidePoint3]);
+    expect(result).toEqual([
+      outsidePoint1,
+      outsidePoint2,
+      { ...outsidePoint3, breakBefore: true },
+    ]);
     // Stated as its own assertion because it is the actual privacy claim.
     expect(result).not.toContain(insidePoint1);
     expect(result).not.toContain(insidePoint2);
@@ -146,7 +150,11 @@ describe("applyPrivacyZones — interior crossings", () => {
       outsidePoint3,
     ];
     const result = applyPrivacyZones(points, [londonZone]);
-    expect(result).toEqual([outsidePoint1, outsidePoint2, outsidePoint3]);
+    expect(result).toEqual([
+      outsidePoint1,
+      { ...outsidePoint2, breakBefore: true },
+      { ...outsidePoint3, breakBefore: true },
+    ]);
   });
 
   it("still keeps a route that never enters a zone untouched", () => {
@@ -174,7 +182,10 @@ describe("applyPrivacyZones — interior crossings", () => {
     const points = [outsidePoint2, insidePoint1, outsidePoint1, outsidePoint3];
     const result = applyPrivacyZones(points, [londonZone, workZone]);
     // outsidePoint1 sits at the centre of workZone.
-    expect(result).toEqual([outsidePoint2, outsidePoint3]);
+    expect(result).toEqual([
+      outsidePoint2,
+      { ...outsidePoint3, breakBefore: true },
+    ]);
   });
 });
 

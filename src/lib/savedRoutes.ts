@@ -22,6 +22,7 @@ import {
 } from "firebase/firestore";
 import { addDocGuarded, deleteDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
+import { sampleRoute } from "./routeSegments";
 import { routeTotalDistance, type GPSPoint } from "@/lib/gps";
 
 export type SavedRouteSource = "gpx" | "run" | "planned";
@@ -33,6 +34,8 @@ export interface SavedRoute {
   source: SavedRouteSource;
   /** Flat polyline: [lon0, lat0, lon1, lat1, …]. */
   coords: number[];
+  /** Point indices that start a new disconnected segment (legacy routes omit). */
+  segmentStarts?: number[];
   createdAt?: Timestamp;
 }
 
@@ -63,12 +66,17 @@ export function downsampleCoords(
 }
 
 /** Reconstruct GPSPoints (a plan — no timestamps) from a flat coords array. */
-export function coordsToPoints(coords: number[]): GPSPoint[] {
+export function coordsToPoints(
+  coords: number[],
+  segmentStarts: number[] = []
+): GPSPoint[] {
+  const starts = new Set(segmentStarts);
   const points: GPSPoint[] = [];
   for (let i = 0; i + 1 < coords.length; i += 2) {
     const lon = coords[i];
     const lat = coords[i + 1];
     points.push({
+      ...(starts.has(i / 2) && i > 0 ? { breakBefore: true } : {}),
       lat,
       lon,
       altitude: null,
@@ -92,11 +100,20 @@ export async function saveRoute(
   uid: string,
   input: SaveRouteInput
 ): Promise<string> {
+  // Keep segment boundaries before flattening. Never silently reconnect a
+  // privacy-trimmed GPX when the saved route is followed or shared later.
+  const sampled = sampleRoute(input.points, MAX_COORDS);
+  const segmentStarts = sampled.flatMap((point, index) =>
+    point.breakBefore && index > 0 ? [index] : []
+  );
   const ref = await addDocGuarded(collection(db, "users", uid, "savedRoutes"), {
     name: input.name,
     distanceMeters: Math.round(routeTotalDistance(input.points)),
     source: input.source,
-    coords: downsampleCoords(input.points),
+    // Sampling can leave a single segment. Flatten that result, never the
+    // original trace, or discarded isolated points would be joined again.
+    coords: downsampleCoords(sampled),
+    ...(segmentStarts.length ? { segmentStarts } : {}),
     createdAt: serverTimestamp(),
   });
   return ref.id;

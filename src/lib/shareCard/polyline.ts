@@ -19,6 +19,7 @@
  * module is the part worth unit-testing in isolation.
  */
 
+import { splitRouteSegments } from "@/lib/routeSegments";
 import { haversine, type GPSPoint } from "@/lib/gps";
 
 /** Metres per degree of latitude (and of longitude at the equator). */
@@ -112,8 +113,9 @@ export function simplifyRoute(
   toleranceMeters: number = DEFAULT_SIMPLIFY_TOLERANCE_M
 ): GPSPoint[] {
   if (points.length <= 2) return points.slice();
-  const simplified = douglasPeucker(project(points), toleranceMeters);
-  return simplified.map((pp) => points[pp.i]);
+  return splitRouteSegments(points).flatMap((segment) =>
+    douglasPeucker(project(segment), toleranceMeters).map((pp) => segment[pp.i])
+  );
 }
 
 /**
@@ -265,7 +267,7 @@ export function buildRoutePath(
     `M${coords[0]}` +
     coords
       .slice(1)
-      .map((c) => `L${c}`)
+      .map((c, index) => `${simplified[index + 1].breakBefore ? "M" : "L"}${c}`)
       .join("");
   return { d, width, height, pointCount: plane.length };
 }

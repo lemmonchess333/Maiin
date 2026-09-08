@@ -12,22 +12,26 @@ import type { PrivacyZone } from "@/lib/privacyZones";
 
 export function usePrivacyZones() {
   const uid = useUid();
-  const [zones, setZones] = useState<PrivacyZone[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [snapshot, setSnapshot] = useState<{
+    uid: string | null;
+    zones: PrivacyZone[];
+    loading: boolean;
+    error: boolean;
+  }>({ uid: null, zones: [], loading: true, error: false });
+  // Never expose a previous account's zones while its successor is loading.
+  const current = snapshot.uid === uid;
+  const zones = current ? snapshot.zones : [];
+  const loading = !!uid && (!current || snapshot.loading);
+  const error = !uid || (current && snapshot.error);
 
   useEffect(() => {
-    if (!uid) {
-      const reset = () => {
-        setZones([]);
-        setLoading(false);
-      };
-      reset();
-      return;
-    }
+    if (!uid) return;
+    let active = true;
 
     const ref = collection(db, "users", uid, "privacyZones");
     const unsub = onSnapshot(
       ref,
+      { includeMetadataChanges: true },
       (snap) => {
         const result: PrivacyZone[] = snap.docs.map((d) => ({
           id: d.id,
@@ -36,13 +40,30 @@ export function usePrivacyZones() {
           lon: d.data().lon,
           radiusMeters: d.data().radiusMeters || 500,
         }));
-        setZones(result);
-        setLoading(false);
+        if (active)
+          setSnapshot({
+            uid,
+            zones: result,
+            // A cold empty cache is not evidence that no zones are configured.
+            // Coordinate sharing waits for a server-confirmed snapshot, also
+            // when offline; cached zones remain visible in Settings.
+            loading:
+              !snap.metadata ||
+              snap.metadata.fromCache ||
+              snap.metadata.hasPendingWrites,
+            error: false,
+          });
       },
-      () => setLoading(false)
+      () => {
+        if (active)
+          setSnapshot({ uid, zones: [], loading: false, error: true });
+      }
     );
 
-    return unsub;
+    return () => {
+      active = false;
+      unsub();
+    };
   }, [uid]);
 
   const addZone = useCallback(
@@ -64,5 +85,5 @@ export function usePrivacyZones() {
     [uid]
   );
 
-  return { zones, loading, addZone, removeZone };
+  return { zones, loading, error, addZone, removeZone };
 }

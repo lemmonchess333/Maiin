@@ -2,6 +2,7 @@ import { useRef, useEffect, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Plus, Minus, LocateFixed, Compass } from "lucide-react";
+import { splitRouteSegments } from "@/lib/routeSegments";
 import type { GPSPoint } from "../../lib/gps";
 import { THEME } from "../../lib/theme";
 import { IconButton } from "@/components/ui/IconButton";
@@ -244,7 +245,9 @@ export default function RunMap({
     const updateRoute = () => {
       const visiblePoints =
         replayIndex !== undefined ? points.slice(0, replayIndex + 1) : points;
-      const coords = visiblePoints.map((p) => [p.lon, p.lat]);
+      const coords = splitRouteSegments(visiblePoints)
+        .filter((segment) => segment.length > 1)
+        .map((segment) => segment.map((p) => [p.lon, p.lat]));
 
       const routeSource = map.getSource("route") as
         | maplibregl.GeoJSONSource
@@ -252,7 +255,7 @@ export default function RunMap({
       if (routeSource) {
         routeSource.setData({
           type: "Feature",
-          geometry: { type: "LineString", coordinates: coords },
+          geometry: { type: "MultiLineString", coordinates: coords },
           properties: {},
         });
       }
@@ -264,6 +267,7 @@ export default function RunMap({
           properties: { color: string };
         }[] = [];
         for (let i = 1; i < visiblePoints.length; i++) {
+          if (visiblePoints[i].breakBefore) continue;
           const dist = haversineQuick(
             visiblePoints[i - 1].lat,
             visiblePoints[i - 1].lon,
@@ -395,6 +399,7 @@ export default function RunMap({
       ) {
         let total = 0;
         for (let i = 1; i < visiblePoints.length; i++) {
+          if (visiblePoints[i].breakBefore) continue;
           total += haversineQuick(
             visiblePoints[i - 1].lat,
             visiblePoints[i - 1].lon,
@@ -468,8 +473,10 @@ export default function RunMap({
       src?.setData({
         type: "Feature",
         geometry: {
-          type: "LineString",
-          coordinates: targetRoute.map((p) => [p.lon, p.lat]),
+          type: "MultiLineString",
+          coordinates: splitRouteSegments(targetRoute)
+            .filter((segment) => segment.length > 1)
+            .map((segment) => segment.map((p) => [p.lon, p.lat])),
         },
         properties: {},
       });
@@ -599,6 +606,7 @@ function positionAtDistance(
 ): [number, number] | null {
   let cum = 0;
   for (let i = 1; i < pts.length; i++) {
+    if (pts[i].breakBefore) continue;
     const seg = haversineQuick(
       pts[i - 1].lat,
       pts[i - 1].lon,

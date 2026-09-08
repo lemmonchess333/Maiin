@@ -40,6 +40,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Shared routes keep privacy gaps.** Maps, share images, GPX exports and saved
+  routes preserve disconnected sections. Sharing waits for confirmed privacy
+  settings, and the post composer shows the route that will be included.
+
 - **Run audio repeats less.** Cue phrasing varies between runs; pace alerts are
   capped per off-pace stretch and acknowledge a sustained return to the band.
 

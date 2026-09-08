@@ -14,6 +14,29 @@ function isInsideZone(lat: number, lon: number, zones: PrivacyZone[]): boolean {
   return zones.some((z) => haversine(lat, lon, z.lat, z.lon) <= z.radiusMeters);
 }
 
+/** A sparse GPS trace can jump across a zone without a fix inside it.
+ * Check the drawn segment too, on the same local longitude/latitude plane
+ * used to render it. A small radius margin avoids rounding at the edge. */
+function crossesZone(a: GPSPoint, b: GPSPoint, zones: PrivacyZone[]): boolean {
+  return zones.some((zone) => {
+    const scale = Math.cos((zone.lat * Math.PI) / 180);
+    const ax = (a.lon - zone.lon) * scale;
+    const ay = a.lat - zone.lat;
+    const bx = (b.lon - zone.lon) * scale;
+    const by = b.lat - zone.lat;
+    const dx = bx - ax,
+      dy = by - ay;
+    const lengthSquared = dx * dx + dy * dy;
+    const t =
+      lengthSquared === 0
+        ? 0
+        : Math.max(0, Math.min(1, -(ax * dx + ay * dy) / lengthSquared));
+    const metres =
+      ((Math.hypot(ax + t * dx, ay + t * dy) * Math.PI) / 180) * 6371000;
+    return metres <= zone.radiusMeters * 1.01;
+  });
+}
+
 /** Extra points dropped either side of a cut so the surviving endpoints do
  *  not sit exactly on the zone circle. Without it an observer can fit a
  *  circle to the endpoints and recover the centre — which is the house.
@@ -29,27 +52,9 @@ function jitterMargin(routeLength: number): number {
   return Math.floor(Math.random() * variation);
 }
 
-/**
- * Remove GPS points that fall within a privacy zone — ANYWHERE in the route,
- * not only at its ends.
- *
- * This used to trim inward from the start and inward from the end, breaking
- * at the first point outside a zone. That left every interior crossing in
- * the shared route: an out-and-back past your own front door, or a loop that
- * starts at the park and passes home in the middle, published the exact home
- * coordinates. Neither of those is an edge case, and `LAUNCH_TODO.md` carried
- * the feature as "verified" while the only tests were start-trim, end-trim
- * and the empty cases — no fixture ever crossed a zone mid-route.
- *
- * The route is returned as ONE array, so removing an interior run leaves the
- * polyline drawing a straight chord across the zone. That is deliberate and
- * is the honest limit of this signature: the chord reveals that the route
- * passed through the area, but not the path taken inside it, where it
- * stopped, or which building it ended at. Rendering a true gap needs the
- * consumers to accept segments (`GPSPoint[][]`) and draw several polylines —
- * a bigger change to both call sites, and worth doing separately rather than
- * smuggling into a privacy fix.
- */
+/** Remove every zone crossing and mark the surviving disconnected segments.
+ * The marker is serializable in a flat Firestore array; maps and exports must
+ * split on it, never draw a chord over the removed coordinates. */
 export function applyPrivacyZones(
   points: GPSPoint[],
   zones: PrivacyZone[]
@@ -57,7 +62,15 @@ export function applyPrivacyZones(
   if (zones.length === 0 || points.length === 0) return points;
 
   const inside = points.map((p) => isInsideZone(p.lat, p.lon, zones));
-  if (!inside.some(Boolean)) return points;
+  const breaks = points.map(
+    (point, index) =>
+      index > 0 &&
+      !point.breakBefore &&
+      !inside[index - 1] &&
+      !inside[index] &&
+      crossesZone(points[index - 1], point, zones)
+  );
+  if (!inside.some(Boolean) && !breaks.some(Boolean)) return points;
 
   // Drop every in-zone point, plus a jittered margin either side of each
   // contiguous run of them.
@@ -82,5 +95,20 @@ export function applyPrivacyZones(
     i = j;
   }
 
-  return points.filter((_, idx) => !drop[idx]);
+  const safe: GPSPoint[] = [];
+  let cut = false;
+  for (let index = 0; index < points.length; index++) {
+    if (drop[index]) {
+      cut = true;
+      continue;
+    }
+    const point = points[index];
+    safe.push(
+      (cut || breaks[index]) && safe.length > 0
+        ? { ...point, breakBefore: true }
+        : point
+    );
+    cut = false;
+  }
+  return safe;
 }

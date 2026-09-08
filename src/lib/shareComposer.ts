@@ -50,6 +50,9 @@ export interface ActivityPreview {
   title: string;
   /** Short stat line, e.g. ["1h 12m", "12,840kg volume"] */
   meta: string[];
+  /** Redacted coordinates, identical to the eventual post; never raw GPS. */
+  routePreview?: import("./routeSegments").RouteCoordinate[];
+  routePrivacyNote?: string;
 }
 
 export interface ShareDecision {

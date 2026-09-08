@@ -91,6 +91,7 @@ describe("reading zones", () => {
     const { result } = renderHook(() => usePrivacyZones());
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.zones).toEqual([]);
+    expect(result.current.error).toBe(true);
   });
 });
 
