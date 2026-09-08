@@ -199,7 +199,7 @@ export default function RouteSetupSection({
                   type="button"
                   onClick={() =>
                     setPreview({
-                      points: coordsToPoints(r.coords),
+                      points: coordsToPoints(r.coords, r.segmentStarts),
                       name: r.name,
                       source: r.source,
                       showSave: false,
@@ -220,7 +220,10 @@ export default function RouteSetupSection({
                   icon={<Share2 />}
                   className="text-muted-foreground"
                   onClick={() =>
-                    shareRouteWithPrivacy(r.name, coordsToPoints(r.coords))
+                    shareRouteWithPrivacy(
+                      r.name,
+                      coordsToPoints(r.coords, r.segmentStarts)
+                    )
                   }
                 />
                 <IconButton

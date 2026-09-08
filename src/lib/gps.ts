@@ -1,3 +1,4 @@
+import { splitRouteSegments } from "./routeSegments";
 import { METRES_PER_MILE, type DistanceUnit } from "./distanceUnits";
 import { estimateRunBurn } from "./workoutBurn";
 
@@ -57,6 +58,7 @@ export interface RouteProgress {
 export function routeTotalDistance(route: GPSPoint[]): number {
   let total = 0;
   for (let i = 1; i < route.length; i++) {
+    if (route[i].breakBefore) continue;
     total += haversine(
       route[i - 1].lat,
       route[i - 1].lon,
@@ -94,6 +96,7 @@ export function routeProgress(
   let bestCovered = 0;
   let cum = 0;
   for (let i = 1; i < route.length; i++) {
+    if (route[i].breakBefore) continue;
     const ax = route[i - 1].lon * mPerLon;
     const ay = route[i - 1].lat * mPerLat;
     const bx = route[i].lon * mPerLon;
@@ -145,6 +148,7 @@ export function routeTimeAtDistance(
 
   let cum = 0;
   for (let i = 1; i < route.length; i++) {
+    if (route[i].breakBefore) continue;
     const seg = haversine(
       route[i - 1].lat,
       route[i - 1].lon,
@@ -202,6 +206,8 @@ export class KalmanFilter {
 }
 
 export interface GPSPoint {
+  /** Begins a disconnected segment after a privacy cut or GPX track break. */
+  breakBefore?: boolean;
   lat: number;
   lon: number;
   altitude: number | null;
@@ -473,6 +479,7 @@ export function totalElevationGain(points: GPSPoint[]): number {
 export function totalDistance(points: GPSPoint[]): number {
   let dist = 0;
   for (let i = 1; i < points.length; i++) {
+    if (points[i].breakBefore) continue;
     dist += haversine(
       points[i - 1].lat,
       points[i - 1].lon,
@@ -549,19 +556,24 @@ function escapeXml(s: string): string {
 }
 
 export function toGPX(points: GPSPoint[], name: string): string {
-  const trkpts = points
-    .map((p) => {
-      const time = new Date(p.timestamp).toISOString();
-      const ele =
-        p.altitude != null ? `<ele>${p.altitude.toFixed(1)}</ele>` : "";
-      return `      <trkpt lat="${p.lat}" lon="${p.lon}">${ele}<time>${time}</time></trkpt>`;
+  const segments = splitRouteSegments(points)
+    .map((segment) => {
+      const trkpts = segment
+        .map((p) => {
+          const time = new Date(p.timestamp).toISOString();
+          const ele =
+            p.altitude != null ? `<ele>${p.altitude.toFixed(1)}</ele>` : "";
+          return `      <trkpt lat="${p.lat}" lon="${p.lon}">${ele}<time>${time}</time></trkpt>`;
+        })
+        .join("\n");
+      return `    <trkseg>\n${trkpts}\n    </trkseg>`;
     })
     .join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="Tropos">
-  <trk><name>${escapeXml(name)}</name><trkseg>
-${trkpts}
-  </trkseg></trk>
+  <trk><name>${escapeXml(name)}</name>
+${segments}
+  </trk>
 </gpx>`;
 }
 

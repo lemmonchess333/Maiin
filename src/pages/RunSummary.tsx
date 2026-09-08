@@ -47,6 +47,7 @@ import {
   type PaceInsightRun,
 } from "../hooks/usePaceInsight";
 import { usePrivacyZones } from "../hooks/usePrivacyZones";
+import { sampleRoute } from "@/lib/routeSegments";
 import { applyPrivacyZones } from "../lib/privacyZones";
 import { clipRouteEnds, DEFAULT_CLIP_METERS } from "../lib/shareCard/polyline";
 import { useShoes } from "../hooks/useShoes";
@@ -397,7 +398,7 @@ export default function RunSummary() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const unit = useDistanceUnit();
-  const { zones: privacyZones } = usePrivacyZones();
+  const { zones: privacyZones, loading: privacyZonesLoading, error: privacyZonesError } = usePrivacyZones();
   const { isOnline } = useOnlineStatus();
   const { updateMileage, defaultShoe } = useShoes();
   // PR-J Q2 chunk B2: completeRunDay deleted. The saved-run write
@@ -619,6 +620,11 @@ export default function RunSummary() {
     return meters ? getDistanceComparison(meters / 1000) : null;
   }, [editedDistanceMeters, state?.distance]);
 
+  const points = useMemo(
+    () => state ? applyPrivacyZones(state.points, privacyZones) : [],
+    [state, privacyZones]
+  );
+
   // A redirect is an element, not a call made while rendering: React Router
   // warns on navigate() in render, and a re-render before the navigation
   // commits would fire it twice.
@@ -627,7 +633,6 @@ export default function RunSummary() {
   }
 
   const {
-    points: rawPoints,
     distance: originalDistance,
     elapsed,
     splits,
@@ -642,7 +647,6 @@ export default function RunSummary() {
      reads from this so the edit propagates cleanly without
      touching each call site. */
   const distance = editedDistanceMeters ?? originalDistance;
-  const points = applyPrivacyZones(rawPoints, privacyZones);
   /* Mile laps are recomputed from the trace rather than converted — a mile
      split is a different CUT of the run. Privacy-zone trimming happens
      first, so the rows match the map the user is looking at. */
@@ -914,10 +918,7 @@ export default function RunSummary() {
       avgPace: avgPaceSeconds,
       calories,
       elevationGain,
-      points:
-        points.length > 500
-          ? points.filter((_, i) => i % Math.ceil(points.length / 500) === 0)
-          : points,
+      points: sampleRoute(points, 500),
       splits,
       startedAt: Timestamp.fromDate(startedAtDate),
       completedAt: Timestamp.now(),
@@ -1055,11 +1056,23 @@ export default function RunSummary() {
           const km = distance / 1000;
           const mins = Math.floor(elapsed / 60);
           const secs = Math.round(elapsed % 60);
+          // Compute once before the choice: this exact geometry is previewed
+          // and posted. Loading/failed privacy settings withhold the route.
+          const sharedRoutePoints = privacyZonesLoading || privacyZonesError ? [] : (
+            profile?.hideSharedRouteEnds === false ? points : clipRouteEnds(points, DEFAULT_CLIP_METERS)
+          );
+          const routePreview = sampleRoute(sharedRoutePoints, 20).map((p) => ({
+            lat: p.lat, lon: p.lon, ...(p.breakBefore ? { breakBefore: true } : {}),
+          }));
           const decision = await compose(
             user.uid,
             {
               type: "run",
               title: runName,
+              routePreview,
+              routePrivacyNote: privacyZonesLoading || privacyZonesError
+                ? "Route withheld because privacy settings are unavailable."
+                : "This is the route included in your post.",
               meta: [
                 `${km.toFixed(2)} km`,
                 `${mins}:${secs.toString().padStart(2, "0")}`,
@@ -1074,19 +1087,6 @@ export default function RunSummary() {
           // Decided (posted, queued or declined) — never prompt again for
           // this run, even if a later step fails and the chain resumes.
           if (decision && auth.currentUser?.uid === user.uid) {
-            // Shared-route privacy default. The public activity routePreview is
-            // rendered as a REAL map on the feed, so a user who hasn't set
-            // explicit privacy zones would otherwise broadcast their home/start
-            // to anyone who follows them (follows are unilateral). Clip ~200m off
-            // each end by default. Scoped to the SHARE only — the user's own map
-            // + saved run keep the full `points`. Opt out in Settings → Privacy
-            // (profile.hideSharedRouteEnds === false). Already-zoned points stay
-            // zoned (this composes on top). clipRouteEnds is self-protecting: a
-            // route too short to clip is returned whole, never emptied.
-            const sharedRoutePoints =
-              profile?.hideSharedRouteEnds === false
-                ? points
-                : clipRouteEnds(points, DEFAULT_CLIP_METERS);
             const payload = {
               authorId: user.uid,
               authorName: profile?.displayName || "Athlete",
@@ -1103,15 +1103,7 @@ export default function RunSummary() {
               avgPace,
               elevationGain,
               calories,
-              routePreview:
-                sharedRoutePoints.length > 20
-                  ? sharedRoutePoints
-                      .filter(
-                        (_, i) =>
-                          i % Math.ceil(sharedRoutePoints.length / 20) === 0
-                      )
-                      .map((p) => ({ lat: p.lat, lon: p.lon }))
-                  : sharedRoutePoints.map((p) => ({ lat: p.lat, lon: p.lon })),
+              routePreview,
             };
             const runSource = { kind: "run" as const, id: savedId };
             if (isOnline) {
@@ -1215,6 +1207,10 @@ export default function RunSummary() {
   };
 
   const handleExportGPX = () => {
+    if (privacyZonesLoading || privacyZonesError) {
+      toast.error("Couldn't check your privacy settings. Try again");
+      return;
+    }
     // Track name travels into other apps with the export — a stable
     // "22 Aug 2026", not whatever the device locale renders.
     const gpx = toGPX(points, `Tropos Run ${formatDayMonthYear(new Date())}`);
@@ -2058,7 +2054,7 @@ export default function RunSummary() {
             month: "short",
             year: "numeric",
           }),
-          points,
+          points: privacyZonesLoading || privacyZonesError ? [] : points,
           distanceKm: distance / 1000,
           durationSec: elapsed,
           paceSecPerKm: avgPaceSeconds,

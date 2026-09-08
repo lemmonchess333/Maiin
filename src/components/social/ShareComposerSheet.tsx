@@ -1,3 +1,4 @@
+import RouteScene from "./RouteScene";
 import { useEffect, useState } from "react";
 import { Users, Globe, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -174,6 +175,18 @@ export default function ShareComposerSheet() {
             </p>
           )}
         </div>
+
+        {state.preview.routePreview &&
+          state.preview.routePreview.length > 1 && (
+            <div className="h-32 overflow-hidden rounded-xl bg-muted/50">
+              <RouteScene preview={state.preview.routePreview} />
+            </div>
+          )}
+        {state.preview.routePrivacyNote && (
+          <p className="text-xs text-muted-foreground">
+            {state.preview.routePrivacyNote}
+          </p>
+        )}
 
         {/* Optional caption */}
         <div className="relative">
