@@ -776,7 +776,7 @@ export default function Home() {
         >
           <div className="flex items-center justify-between">
             <p className="text-sm font-bold text-foreground">
-              Welcome to Tropos!
+              Welcome to Tropos
             </p>
             <button
               type="button"
@@ -1166,7 +1166,7 @@ export default function Home() {
           tipKey="body-metrics-v1"
           lanePriority={20}
           title="Personalise your calorie targets"
-          description="Add your age and sex so we can tune your TDEE more accurately than the defaults."
+          description="Add your age and sex to make your calorie target more accurate."
           visible={!profile?.age || !profile?.sex}
         />
 

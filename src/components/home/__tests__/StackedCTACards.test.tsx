@@ -164,12 +164,12 @@ describe("StackedCTACards", function () {
     it("shows the FirstMealCard instead of RestDayCard on a rest day when firstMeal is set", function () {
       renderCards({ todayType: "rest", firstMeal: true });
       expect(screen.getByText("Log your first meal")).toBeInTheDocument();
-      expect(screen.queryByText("Recover & refuel")).not.toBeInTheDocument();
+      expect(screen.queryByText("Take it easy")).not.toBeInTheDocument();
     });
 
     it("shows the normal RestDayCard on a rest day when firstMeal is not set", function () {
       renderCards({ todayType: "rest", firstMeal: false });
-      expect(screen.getByText("Recover & refuel")).toBeInTheDocument();
+      expect(screen.getByText("Take it easy")).toBeInTheDocument();
       expect(screen.queryByText("Log your first meal")).not.toBeInTheDocument();
     });
   });

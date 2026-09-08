@@ -180,7 +180,7 @@ export default function ProfileInfoSection({
 
       <div>
         <label htmlFor="profile-why" className="text-xs text-muted-foreground">
-          Your why
+          Why you train
         </label>
         <input
           id="profile-why"

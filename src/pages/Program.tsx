@@ -334,7 +334,7 @@ function ProgramInner() {
   const [sessionDayIndex, setSessionDayIndex] = useState<number | null>(null);
   // PROGRAM-FLEX-01: Express Session chooser target + chosen variant.
   // The chooser only opens when a budget would actually change the day
-  // (expressChoices > 1); otherwise Begin Workout stays one tap.
+  // (expressChoices > 1); otherwise Start workout stays one tap.
   const [expressChooserDay, setExpressChooserDay] = useState<number | null>(
     null
   );
@@ -1153,7 +1153,7 @@ function ProgramInner() {
             disabled={advancing}
             leftIcon={<FastForward className="size-4" />}
           >
-            {advancing ? "Advancing..." : "Advance to Next Week"}
+            {advancing ? "Starting…" : "Start next week"}
           </Button>
         </div>
       )}
@@ -1293,7 +1293,7 @@ function ProgramInner() {
                         }
                         primaryActionLabel={
                           status === "today" && !selectedWorkout.completed
-                            ? "Begin Workout"
+                            ? "Start workout"
                             : undefined
                         }
                         onPrimaryAction={
