@@ -53,12 +53,19 @@ export function useWaterLog() {
     window.addEventListener(WATER_CHANGED, update);
     window.addEventListener("focus", update);
     window.addEventListener("storage", update);
+    /* Connectivity is read at render time (below) to decide whether a
+       queued entry is in flight or stranded, so it has to re-render when
+       connectivity changes rather than waiting on the 30s interval. */
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
     document.addEventListener("visibilitychange", update);
     return () => {
       window.clearInterval(timer);
       window.removeEventListener(WATER_CHANGED, update);
       window.removeEventListener("focus", update);
       window.removeEventListener("storage", update);
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
       document.removeEventListener("visibilitychange", update);
     };
   }, []);
@@ -147,11 +154,24 @@ export function useWaterLog() {
     servingMl,
     recentSizes: recentWaterSizes(uid),
     setServingMl,
+    /* A write that is merely in flight says nothing.
+       queueWater notifies before flushWater's transaction resolves, so
+       every tap opens a window where the queue is non-empty. Reporting
+       that window grows the card by a status line plus a 44px Retry
+       button for the length of a Firestore round-trip, and items-stretch
+       on the tile grid resizes the weight tile with it — a whole-row jump
+       on the most repeated action in the app. The optimistic total and
+       the fill are the feedback; a successful write needs no commentary.
+       A write that cannot proceed does speak: a sync error, or an entry
+       queued with no connection to carry it. The offline arm is
+       load-bearing rather than decorative — flushWater's loop is gated on
+       navigator.onLine, so without it an offline entry would sit in the
+       queue indefinitely and silently. */
     syncStatus:
       readError || (uid && waterSyncError(uid))
         ? "Couldn't sync water. Your pending entries are kept."
-        : pending.length
-          ? "Waiting to sync water…"
+        : pending.length && !navigator.onLine
+          ? "Saved on this device. It'll sync when you're back online."
           : "",
     retry: () => {
       setReadVersion((v) => v + 1);
