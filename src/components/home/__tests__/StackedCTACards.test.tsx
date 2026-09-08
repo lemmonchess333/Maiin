@@ -211,7 +211,7 @@ describe("HOME-ACTION-01 — deep-link + terminal states", function () {
       } as any,
     });
     expect(screen.getByText("Done")).toBeInTheDocument();
-    fireEvent.click(screen.getByText("Easy 30"));
+    fireEvent.click(screen.getByRole("button", { name: /Easy 30/ }));
     expect(navigate).toHaveBeenCalledWith("/program?tab=run");
     expect(navigate).not.toHaveBeenCalledWith(expect.stringContaining("/run"));
   });
@@ -230,7 +230,7 @@ describe("HOME-ACTION-01 — deep-link + terminal states", function () {
       } as any,
     });
     expect(screen.getByText("Go")).toBeInTheDocument();
-    fireEvent.click(screen.getByText("Easy 30"));
+    fireEvent.click(screen.getByRole("button", { name: /Easy 30/ }));
     expect(navigate).toHaveBeenCalledWith(
       expect.stringContaining("/run?template=easy_30")
     );

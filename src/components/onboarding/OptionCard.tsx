@@ -9,6 +9,7 @@ export default function OptionCard({
   label,
   desc,
   disabled,
+  tone = "lifting",
 }: {
   selected: boolean;
   onSelect: () => void;
@@ -16,6 +17,7 @@ export default function OptionCard({
   label: string;
   desc?: string;
   disabled?: boolean;
+  tone?: "lifting" | "running";
 }) {
   return (
     <Button
@@ -26,10 +28,20 @@ export default function OptionCard({
       aria-pressed={selected}
       className={cn(
         "h-auto justify-start gap-3 p-4 rounded-2xl text-left whitespace-normal",
-        selected ? "bg-primary/10 border-primary/50" : "bg-card"
+        selected
+          ? tone === "running"
+            ? "bg-running/10 border-running/50"
+            : "bg-primary/10 border-primary/50"
+          : "bg-card"
       )}
     >
-      <span className="shrink-0 text-lifting-strong" aria-hidden="true">
+      <span
+        className={cn(
+          "shrink-0",
+          tone === "running" ? "text-running-strong" : "text-lifting-strong"
+        )}
+        aria-hidden="true"
+      >
         {icon}
       </span>
       <span className="flex-1 min-w-0">
@@ -41,7 +53,14 @@ export default function OptionCard({
         )}
       </span>
       <span className="w-4 shrink-0" aria-hidden="true">
-        {selected && <Check className="size-4 text-lifting-strong" />}
+        {selected && (
+          <Check
+            className={cn(
+              "size-4",
+              tone === "running" ? "text-running-strong" : "text-lifting-strong"
+            )}
+          />
+        )}
       </span>
     </Button>
   );

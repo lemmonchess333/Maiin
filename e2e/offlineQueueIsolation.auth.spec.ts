@@ -454,7 +454,7 @@ test.describe("offline-queue uid isolation across an account switch", () => {
     expect(await listLogDocs(uidA)).toHaveLength(0);
     expect(await listLogDocs(uidA, "meals")).toHaveLength(0);
     // The user-facing offline banner counts the queued change.
-    await expect(page.getByText(/2 changes saved locally/i)).toBeVisible({
+    await expect(page.getByText(/2 changes saved on this phone/i)).toBeVisible({
       timeout: 10_000,
     });
 

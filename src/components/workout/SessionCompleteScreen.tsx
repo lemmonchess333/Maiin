@@ -31,6 +31,7 @@ interface SessionCompleteScreenProps {
   sessionVariant?: "express45" | "express30" | "easier_today";
   completing: boolean;
   saved?: boolean;
+  saveStatus?: "queued" | "synced" | "needs-attention";
   planContext?: { progress: string; next: string };
   onShare?: () => Promise<void>;
   onFinish: () => void;
@@ -46,6 +47,7 @@ export default function SessionCompleteScreen({
   sessionVariant,
   completing,
   saved = false,
+  saveStatus,
   planContext,
   onShare,
   onFinish,
@@ -143,20 +145,80 @@ export default function SessionCompleteScreen({
           ) : null}
         </motion.div>
 
+        {/* The result stays visible; only the exercise breakdown is optional. */}
+        <motion.div
+          className="grid grid-cols-3 gap-3"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <div className="p-4 rounded-2xl bg-card text-center space-y-1">
+            <Clock
+              className="size-4 mx-auto"
+              style={{ color: "hsl(var(--muted-foreground))" }}
+            />
+            <p className="text-lg font-bold font-mono tabular-nums text-foreground">
+              {durationDisplay}
+            </p>
+            <SectionLabel>Duration</SectionLabel>
+          </div>
+          <div className="p-4 rounded-2xl bg-card text-center space-y-1">
+            <Dumbbell className="size-4 mx-auto text-lifting" />
+            <p className="text-lg font-bold font-mono tabular-nums text-foreground">
+              {totalVolumeDisplay}
+              <span
+                className="ml-1 text-xs font-normal font-sans"
+                style={{ color: "hsl(var(--muted-foreground))" }}
+              >
+                kg
+              </span>
+            </p>
+            <SectionLabel>Volume</SectionLabel>
+          </div>
+          <div className="p-4 rounded-2xl bg-card text-center space-y-1">
+            <Target
+              className="size-4 mx-auto"
+              style={{ color: THEME.semantic.positive }}
+            />
+            <p className="text-lg font-bold font-mono tabular-nums text-foreground">
+              {totalSetsCompleted}
+            </p>
+            <SectionLabel>Sets</SectionLabel>
+          </div>
+        </motion.div>
+
         <div className="space-y-2">
           <p
             role="status"
             className="text-center text-sm text-muted-foreground"
           >
-            {saved ? "Saved" : completing ? "Saving workout…" : "Not saved yet"}
+            {completing
+              ? "Saving workout…"
+              : saveStatus === "queued"
+                ? "Saved on this phone · waiting to sync"
+                : saveStatus === "needs-attention"
+                  ? "Needs attention · your session is here to retry"
+                  : saved
+                    ? "Synced"
+                    : "Not saved yet"}
           </p>
           <Button
             fullWidth
-            aria-label={saved ? "Done" : "Save Workout"}
+            aria-label={
+              saved
+                ? "Done"
+                : saveStatus === "needs-attention"
+                  ? "Retry sync"
+                  : "Save Workout"
+            }
             onClick={saved ? onClose : onFinish}
             loading={completing}
           >
-            {saved ? "Done" : "Save Workout"}
+            {saved
+              ? "Done"
+              : saveStatus === "needs-attention"
+                ? "Retry sync"
+                : "Save Workout"}
           </Button>
           {!saved && (
             <Button
@@ -165,7 +227,9 @@ export default function SessionCompleteScreen({
               onClick={onClose}
               disabled={completing}
             >
-              Close without saving
+              {saveStatus === "needs-attention"
+                ? "Close"
+                : "Close without saving"}
             </Button>
           )}
         </div>
@@ -195,48 +259,6 @@ export default function SessionCompleteScreen({
           <summary className="min-h-11 py-3 cursor-pointer text-sm font-semibold text-foreground">
             Session details
           </summary>
-          {/* Stat Cards Row */}
-          <motion.div
-            className="grid grid-cols-3 gap-3"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <div className="p-4 rounded-2xl bg-card text-center space-y-1">
-              <Clock
-                className="size-4 mx-auto"
-                style={{ color: "hsl(var(--muted-foreground))" }}
-              />
-              <p className="text-lg font-bold font-mono tabular-nums text-foreground">
-                {durationDisplay}
-              </p>
-              <SectionLabel>Duration</SectionLabel>
-            </div>
-            <div className="p-4 rounded-2xl bg-card text-center space-y-1">
-              <Dumbbell className="size-4 mx-auto text-lifting" />
-              <p className="text-lg font-bold font-mono tabular-nums text-foreground">
-                {totalVolumeDisplay}
-                <span
-                  className="ml-1 text-xs font-normal font-sans"
-                  style={{ color: "hsl(var(--muted-foreground))" }}
-                >
-                  kg
-                </span>
-              </p>
-              <SectionLabel>Volume</SectionLabel>
-            </div>
-            <div className="p-4 rounded-2xl bg-card text-center space-y-1">
-              <Target
-                className="size-4 mx-auto"
-                style={{ color: THEME.semantic.positive }}
-              />
-              <p className="text-lg font-bold font-mono tabular-nums text-foreground">
-                {totalSetsCompleted}
-              </p>
-              <SectionLabel>Sets</SectionLabel>
-            </div>
-          </motion.div>
-
           {/* Exercise Breakdown */}
           <motion.div
             className="rounded-2xl bg-card overflow-hidden"

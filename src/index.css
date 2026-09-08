@@ -259,6 +259,8 @@
   /* Bright specular hairline along the nav's top edge — the cue that makes
      the frosted bar read as GLASS rather than a flat translucent strip. */
   --nav-frost-highlight: rgba(255, 255, 255, 0.85);
+  --nav-surface-opacity: 82%;
+  --nav-active-foreground: var(--ds-purple-700);
   /* Semantic status colours — light mode.
      Destructive is a darker red than the legacy #e04040 because that
      value was borderline for white text on the filled surface; this
@@ -394,6 +396,8 @@
   --skeleton-shimmer: rgba(255, 255, 255, 0.04);
   /* Fainter sheen on dark glass. */
   --nav-frost-highlight: rgba(255, 255, 255, 0.1);
+  --nav-surface-opacity: 88%;
+  --nav-active-foreground: var(--ds-purple-400);
   /* Semantic status colours — dark mode.
      Destructive/success/warning are brighter than in :root because
      dark cards need higher-luminance text for AA contrast. Since
@@ -443,7 +447,10 @@
    pages don't hand-roll `pb-20` / `pt-6` values. Values assume the
    iPhone safe-area envs are set; desktop falls back to 0. */
 :root {
-  --tab-bar-height: 64px; /* icon + label + py-3 vertical rhythm */
+  --tab-bar-gap: 8px;
+  --tab-bar-height: calc(
+    64px + var(--tab-bar-gap)
+  ); /* capsule + floating gap */
   --page-x: 1rem; /* horizontal gutter (matches px-4) */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);

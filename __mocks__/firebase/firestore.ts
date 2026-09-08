@@ -96,6 +96,11 @@ export async function getDoc(ref: DocRef) {
   return firestoreFake.maybeDefer(ref.path, firestoreFake.docSnap(ref));
 }
 
+/** The fake's normal reads are server reads; cache is a separate store. */
+export async function getDocFromServer(ref: DocRef) {
+  return getDoc(ref);
+}
+
 export async function getDocs(ref: CollectionRef) {
   firestoreFake.failIfArmed("getDocs", ref.path);
   return firestoreFake.maybeDefer(ref.path, firestoreFake.querySnap(ref));
@@ -149,8 +154,16 @@ export async function getCountFromServer(ref: CollectionRef) {
 export function onSnapshot(
   ref: DocRef | CollectionRef,
   a: unknown,
-  b?: unknown
+  b?: unknown,
+  c?: unknown
 ): () => void {
+  // Match the SDK overload used by metadata-sensitive privacy listeners.
+  const withOptions =
+    a != null && typeof a === "object" && "includeMetadataChanges" in a;
+  if (withOptions) {
+    a = b;
+    b = c;
+  }
   const next =
     typeof a === "function"
       ? (a as (snap: unknown) => void)
@@ -165,10 +178,15 @@ export function onSnapshot(
     fire: () => {
       try {
         firestoreFake.failIfArmed("onSnapshot", ref.path);
+        const snapshot = isDocRef(ref)
+          ? firestoreFake.docSnap(ref)
+          : firestoreFake.querySnap(ref);
+        // Harness reads are authoritative unless a test supplies a cache
+        // snapshot explicitly through its own controlled listener.
         next(
-          isDocRef(ref)
-            ? firestoreFake.docSnap(ref)
-            : firestoreFake.querySnap(ref)
+          Object.assign(snapshot, {
+            metadata: { fromCache: false, hasPendingWrites: false },
+          })
         );
       } catch (err) {
         onError?.(err);

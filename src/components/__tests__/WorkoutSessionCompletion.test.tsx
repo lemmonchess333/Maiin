@@ -23,7 +23,14 @@ vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: h.user, profile: null }),
   useUidForStorageKey: () => "test",
 }));
-vi.mock("@/lib/firebase", () => ({ db: {} }));
+vi.mock("@/lib/firebase", () => ({
+  db: {},
+  auth: {
+    get currentUser() {
+      return h.user;
+    },
+  },
+}));
 vi.mock("firebase/firestore");
 vi.mock("@/features/streaks/useStreaks", () => ({
   useStreaks: () => ({ awardEventBadge: vi.fn() }),
@@ -87,6 +94,7 @@ function openSession(onCompleteDay = vi.fn(), onClose = vi.fn()) {
 beforeEach(() => {
   vi.clearAllMocks();
   h.user = null;
+  h.save.mockReturnValue(true);
   resetFirestore();
   vi.stubGlobal(
     "ResizeObserver",
@@ -211,8 +219,8 @@ describe("workout save acknowledgement", () => {
     expect(h.clear).not.toHaveBeenCalled();
     expect(close).not.toHaveBeenCalled();
     expect(h.success).not.toHaveBeenCalledWith("Workout saved");
-    fireEvent.click(screen.getByRole("button", { name: "Save Workout" }));
-    fireEvent.click(screen.getByRole("button", { name: "Save Workout" }));
+    fireEvent.click(screen.getByRole("button", { name: "Retry sync" }));
+    fireEvent.click(screen.getByRole("button", { name: "Retry sync" }));
     expect(complete).toHaveBeenCalledTimes(2);
     expect(h.success).not.toHaveBeenCalledWith("Workout saved");
     await act(async () => {
@@ -228,4 +236,194 @@ describe("workout save acknowledgement", () => {
       complete.mock.calls[1][1].completionId
     );
   });
+});
+
+async function finishAndSave(complete = vi.fn().mockResolvedValue(undefined)) {
+  openSession(complete);
+  for (let i = 0; i < 3; i++) {
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Mark set complete" })[0]
+    );
+  }
+  await vi.waitFor(() =>
+    expect(
+      screen.getByRole("button", { name: "Save Workout" })
+    ).toBeInTheDocument()
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Save Workout" }));
+}
+
+it("keeps the recovery draft while queued, then clears it only when synced", async () => {
+  let settle!: (outcome: "synced" | "failed") => void;
+  const sync = new Promise<"synced" | "failed">((resolve) => {
+    settle = resolve;
+  });
+  await finishAndSave(
+    vi.fn().mockResolvedValue({ syncStatus: "queued", sync })
+  );
+  await vi.waitFor(() =>
+    expect(
+      screen.getByText("Saved on this phone · waiting to sync")
+    ).toBeVisible()
+  );
+  expect(h.clear).not.toHaveBeenCalled();
+  expect(h.save).toHaveBeenCalledWith(
+    expect.objectContaining({ completionPending: true, completionId: "test" })
+  );
+  await act(async () => settle("synced"));
+  expect(screen.getByText("Synced")).toBeVisible();
+  expect(h.clear).toHaveBeenCalledWith("test");
+});
+
+it("a reconnect rejection keeps the session and retries the same completion", async () => {
+  let settle!: (outcome: "synced" | "failed") => void;
+  const sync = new Promise<"synced" | "failed">((resolve) => {
+    settle = resolve;
+  });
+  const complete = vi
+    .fn()
+    .mockResolvedValueOnce({ syncStatus: "queued", sync })
+    .mockResolvedValueOnce(undefined);
+  await finishAndSave(complete);
+  await vi.waitFor(() =>
+    expect(screen.getByRole("button", { name: "Done" })).toBeInTheDocument()
+  );
+  await act(async () => settle("failed"));
+  expect(
+    screen.getByText("Needs attention · your session is here to retry")
+  ).toBeVisible();
+  expect(h.clear).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Retry sync" }));
+  await vi.waitFor(() => expect(screen.getByText("Synced")).toBeVisible());
+  expect(complete.mock.calls[0][1]).toEqual(complete.mock.calls[1][1]);
+});
+
+it("never reports an offline save when recovery storage refuses the write", async () => {
+  vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+  h.save.mockReturnValue(false);
+  const complete = vi.fn();
+  await finishAndSave(complete);
+  await vi.waitFor(() =>
+    expect(
+      screen.getByRole("button", { name: "Retry sync" })
+    ).toBeInTheDocument()
+  );
+  expect(complete).not.toHaveBeenCalled();
+  expect(h.clear).not.toHaveBeenCalled();
+  expect(
+    screen.queryByText("Saved on this phone · waiting to sync")
+  ).not.toBeInTheDocument();
+  vi.restoreAllMocks();
+});
+
+it("ignores a late completion acknowledgement after account switch", async () => {
+  h.user = { uid: "outgoing-user" };
+  let settle!: (outcome: "synced" | "failed") => void;
+  const sync = new Promise<"synced" | "failed">((resolve) => {
+    settle = resolve;
+  });
+  await finishAndSave(
+    vi.fn().mockResolvedValue({ syncStatus: "queued", sync })
+  );
+  await vi.waitFor(() =>
+    expect(
+      screen.getByText("Saved on this phone · waiting to sync")
+    ).toBeVisible()
+  );
+  h.user = { uid: "incoming-user" };
+  await act(async () => settle("synced"));
+  expect(h.clear).not.toHaveBeenCalled();
+});
+
+it("shows the previous note with its date, and reuses it only on request", async () => {
+  h.user = { uid: "notes-user" };
+  seedFirestore({
+    "users/notes-user/workouts/previous": {
+      date: "2026-09-06",
+      exercises: [
+        {
+          exerciseId: "test",
+          exerciseName: "Test exercise",
+          notes: "Seat at 4",
+          sets: [{ reps: 8, weightKg: 20 }],
+        },
+      ],
+    },
+  });
+  await act(async () => openSession());
+  expect(screen.getByText("Seat at 4")).toBeVisible();
+  expect(screen.getByText(/Last note/).textContent).toContain("6 Sept 2026");
+  expect(screen.getByRole("textbox", { name: "Exercise notes" })).toHaveValue(
+    ""
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Use and edit note" }));
+  expect(screen.getByRole("textbox", { name: "Exercise notes" })).toHaveValue(
+    "Seat at 4"
+  );
+  expect(screen.getByRole("textbox", { name: "Exercise notes" })).toHaveFocus();
+  fireEvent.change(screen.getByRole("textbox", { name: "Exercise notes" }), {
+    target: { value: "Seat at 5" },
+  });
+  expect(
+    screen.queryByRole("button", { name: "Use and edit note" })
+  ).not.toBeInTheDocument();
+});
+
+it("reopens an unsynced completion with its original date and retry identity", async () => {
+  const startedAt = new Date("2026-09-06T12:00:00").getTime();
+  h.load.mockReturnValueOnce({
+    dayIndex: 0,
+    dayName: "Test lift",
+    identity: "test",
+    completionId: "pending-original",
+    completionCommandId: "pending-original",
+    completionPending: true,
+    startedAt,
+    elapsedSeconds: 1500,
+    currentExIndex: 0,
+    exerciseNotes: { 0: "Seat at 4" },
+    setLogs: [[{ reps: 8, weight: 20, completed: true, type: "working" }]],
+  } as never);
+  const complete = vi.fn().mockResolvedValue(undefined);
+  openSession(complete);
+  expect(screen.queryByText("Resume workout?")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Retry sync" }));
+  await vi.waitFor(() => expect(screen.getByText("Synced")).toBeVisible());
+  expect(complete).toHaveBeenCalledWith(
+    0,
+    expect.objectContaining({
+      completionId: "pending-original",
+      startedAt,
+      durationMinutes: 25,
+      exerciseNotes: { 0: "Seat at 4" },
+    })
+  );
+});
+
+it("recognises a server-acknowledged completion after reopening instead of writing again", async () => {
+  h.user = { uid: "reopened-user" };
+  h.load.mockReturnValueOnce({
+    dayIndex: 0,
+    dayName: "Test lift",
+    identity: "test",
+    completionId: "landed-original",
+    completionCommandId: "landed-original",
+    completionPending: true,
+    elapsedSeconds: 1500,
+    currentExIndex: 0,
+    exerciseNotes: {},
+    setLogs: [[{ reps: 8, weight: 20, completed: true, type: "working" }]],
+  } as never);
+  seedFirestore({
+    "users/reopened-user/workouts/programme-landed-original": {
+      completionId: "landed-original",
+      date: "2026-09-06",
+      exercises: [],
+    },
+  });
+  const complete = vi.fn();
+  await act(async () => openSession(complete));
+  await vi.waitFor(() => expect(screen.getByText("Synced")).toBeVisible());
+  expect(complete).not.toHaveBeenCalled();
+  expect(h.clear).toHaveBeenCalledWith("landed-original");
 });

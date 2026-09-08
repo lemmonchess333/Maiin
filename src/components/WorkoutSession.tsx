@@ -7,7 +7,7 @@ import {
   Suspense,
 } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
-import { formatClock } from "@/utils/formatters";
+import { formatClock, formatDayMonthYear } from "@/utils/formatters";
 import {
   showsRpeByDefault,
   toExperience,
@@ -42,7 +42,7 @@ import {
   isSetEligibleForStrengthPr,
   progressionSetFor,
 } from "@/features/program/sessionSetPolicy";
-import { db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { DEFAULT_REST_SECONDS } from "@/features/program/programTypes";
 import { useStreaks } from "@/features/streaks/useStreaks";
@@ -98,6 +98,7 @@ import {
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { IconButton } from "@/components/ui/IconButton";
 import { Spinner } from "@/components/ui/Spinner";
+import InlineNumerals from "@/components/ui/InlineNumerals";
 // Form guide is heavy (react-body-highlighter) — lazy-load so it only hydrates
 // when the user opens the "How to" sheet mid-workout (D-LIFT-14).
 const ExerciseFormContent = lazyRetry(
@@ -280,7 +281,7 @@ export default function WorkoutSession({
     initialDraft?.completionCommandId ?? completionIdRef.current
   );
   const [showResumePrompt, setShowResumePrompt] = useState(
-    initialDraft !== null
+    initialDraft !== null && !initialDraft.completionPending
   );
   // CIRCLE-SESSION-01 — explicit Circle share from the completion
   // screen. The sheet mounts ONLY while open so its Circle reads
@@ -315,6 +316,11 @@ export default function WorkoutSession({
   const [exerciseNotes, setExerciseNotes] = useState<Record<number, string>>(
     initialDraft?.exerciseNotes ?? {}
   );
+  const [previousNotes, setPreviousNotes] = useState<
+    Record<number, { text: string; date: string }>
+  >({});
+  const notesInputRef = useRef<HTMLInputElement>(null);
+  const completionPendingRef = useRef(initialDraft?.completionPending ?? false);
   const [typePopover, setTypePopover] = useState<number | null>(null);
   const popoverPosRef = useRef<{ top: number; left: number; bottom: number }>({
     top: 0,
@@ -345,7 +351,9 @@ export default function WorkoutSession({
     // Backdate session start on resume so sessionDurationMinutes reflects
     // actual training time, not wall-clock from when the user returned.
     sessionStartRef.current = initialDraft
-      ? Date.now() - initialDraft.elapsedSeconds * 1000
+      ? initialDraft.completionPending && initialDraft.startedAt !== undefined
+        ? initialDraft.startedAt
+        : Date.now() - initialDraft.elapsedSeconds * 1000
       : Date.now();
   }, [initialDraft]);
 
@@ -397,9 +405,31 @@ export default function WorkoutSession({
 
       const prevWeights: Record<string, { weight: number; reps: number }[]> =
         {};
+      const notes: Record<number, { text: string; date: string }> = {};
 
       snap.docs.forEach((d) => {
         const data = d.data();
+        if (data.completionId === completionIdRef.current) return;
+        day.exercises.forEach((exercise, index) => {
+          if (notes[index]) return;
+          const previous = (data.exercises ?? []).find(
+            (entry: {
+              exerciseId?: string;
+              exerciseName?: string;
+              notes?: string;
+            }) =>
+              (entry.exerciseId && exercise.exerciseId
+                ? entry.exerciseId === exercise.exerciseId
+                : entry.exerciseName === exercise.name) && entry.notes?.trim()
+          );
+          if (
+            previous &&
+            typeof data.date === "string" &&
+            /^\d{4}-\d{2}-\d{2}$/.test(data.date)
+          ) {
+            notes[index] = { text: previous.notes.trim(), date: data.date };
+          }
+        });
         (data.exercises || []).forEach(
           (ex: {
             exerciseName: string;
@@ -415,6 +445,7 @@ export default function WorkoutSession({
           }
         );
       });
+      setPreviousNotes(notes);
 
       // Double-progression suggestions from the same history the prefill
       // uses (one fetch, two consumers).
@@ -592,6 +623,7 @@ export default function WorkoutSession({
       exSets.some((s) => s.completed)
     );
     if (!hasProgress) return;
+    if (completionPendingRef.current) return;
     saveDraft({
       dayIndex,
       dayName: day.dayName,
@@ -601,6 +633,7 @@ export default function WorkoutSession({
       currentExIndex,
       completionId: completionIdRef.current,
       completionCommandId: completionCommandIdRef.current,
+      startedAt: sessionStartRef.current,
     });
   }, [
     setLogs,
@@ -662,14 +695,63 @@ export default function WorkoutSession({
   }, []);
 
   // Session state
-  const [sessionComplete, setSessionComplete] = useState(false);
+  const [sessionComplete, setSessionComplete] = useState(
+    initialDraft?.completionPending ?? false
+  );
   const [showFinishEarly, setShowFinishEarly] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<
+    "queued" | "synced" | "needs-attention" | undefined
+  >(initialDraft?.completionPending ? "needs-attention" : undefined);
   const [shareSaved, setShareSaved] = useState<
     (() => Promise<void>) | undefined
   >();
-  const [sessionDurationMinutes, setSessionDurationMinutes] = useState(0);
+  const [sessionDurationMinutes, setSessionDurationMinutes] = useState(
+    initialDraft?.completionPending
+      ? Math.round(initialDraft.elapsedSeconds / 60)
+      : 0
+  );
+  useEffect(() => {
+    if (!initialDraft?.completionPending || !user?.uid || !navigator.onLine)
+      return;
+    let cancelled = false;
+    const uid = user.uid;
+    // A server acknowledgement may have arrived while this view was closed.
+    // Only a server read can discharge the recovery record after a restart.
+    void (async () => {
+      try {
+        const { doc, getDocFromServer } = await import("firebase/firestore");
+        const source = draftScope?.startsWith("routine:")
+          ? "routine"
+          : "programme";
+        const snapshot = await getDocFromServer(
+          doc(
+            db,
+            "users",
+            uid,
+            "workouts",
+            `${source}-${initialDraft.completionId}`
+          )
+        );
+        if (
+          cancelled ||
+          auth.currentUser?.uid !== uid ||
+          !snapshot.exists() ||
+          snapshot.data().completionId !== initialDraft.completionId
+        )
+          return;
+        clearDraft(initialDraft.completionId);
+        setSaved(true);
+        setSaveStatus("synced");
+      } catch {
+        // A missing server acknowledgement never removes the recovery copy.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [initialDraft, user?.uid, draftScope, clearDraft]);
 
   /**
    * End the session — stamp its duration, THEN show the complete screen.
@@ -1149,8 +1231,25 @@ export default function WorkoutSession({
     if (finishPending.current || saved) return;
     finishPending.current = true;
     setCompleting(true);
+    const completionUid = user?.uid;
 
     try {
+      completionPendingRef.current = true;
+      const recoveryStored = saveDraft({
+        dayIndex,
+        dayName: day.dayName,
+        setLogs,
+        exerciseNotes,
+        elapsedSeconds: sessionDurationMinutes * 60,
+        currentExIndex,
+        completionId: completionIdRef.current,
+        completionCommandId: completionCommandIdRef.current,
+        completionPending: true,
+        startedAt: sessionStartRef.current,
+      });
+      if (navigator.onLine === false && !recoveryStored) {
+        throw new Error("Offline recovery storage is unavailable.");
+      }
       // Pass the wall-clock duration + per-set logs so the saved workout
       // record reflects actual execution instead of planned placeholders.
       // The stable completionId makes a retry target the SAME workout doc.
@@ -1172,67 +1271,96 @@ export default function WorkoutSession({
         exerciseNotes,
       });
 
+      // A callback from an outgoing account must never recreate its draft
+      // after sign-out, mark the next user's session saved, or award a badge.
+      if (completionUid && auth.currentUser?.uid !== completionUid) return;
+      const queuedReceipt =
+        receipt &&
+        typeof receipt === "object" &&
+        "syncStatus" in receipt &&
+        receipt.syncStatus === "queued" &&
+        "sync" in receipt &&
+        receipt.sync instanceof Promise
+          ? (receipt.sync as Promise<"synced" | "failed">)
+          : null;
+      const acknowledge = () => {
+        clearDraft(completionIdRef.current);
+        setSaved(true);
+        setSaveStatus("synced");
+        if (firedPRs.size > 0) awardEventBadge("first_pr");
+      };
+      if (queuedReceipt) {
+        setSaved(true);
+        setSaveStatus("queued");
+        void queuedReceipt.then((outcome) => {
+          if (completionUid && auth.currentUser?.uid !== completionUid) return;
+          if (outcome === "synced") acknowledge();
+          else {
+            setSaved(false);
+            setSaveStatus("needs-attention");
+            setShareSaved(undefined);
+          }
+        });
+      } else acknowledge();
+
       // Persist PR map to Firestore for history beyond 50-session window.
       // Best-effort — the workout already committed above.
       if (user?.uid && Object.keys(prMap).length > 0) {
-        try {
-          // Backlog #2: persist volume bests derived from the FINAL set
-          // logs — undo-safe (an undone set never inflates the record).
-          const volDate = new Date().toISOString().split("T")[0];
-          /* The rule (a hold has no volume) and the carry-forward live in
+        void (async () => {
+          try {
+            if (queuedReceipt && (await queuedReceipt) !== "synced") return;
+            if (auth.currentUser?.uid !== user.uid) return;
+            // Backlog #2: persist volume bests derived from the FINAL set
+            // logs — undo-safe (an undone set never inflates the record).
+            const volDate = new Date().toISOString().split("T")[0];
+            /* The rule (a hold has no volume) and the carry-forward live in
              `nextVolumeBest`, where a test can reach them — this block had
              none, in a file that has none. */
-          const finalVolumeBest: VolumeBestMap = nextVolumeBest(
-            volumeBest,
-            setLogs.map((exSets, exIdx) => ({
-              name: day.exercises[exIdx]?.name ?? "",
-              repUnit: day.exercises[exIdx]?.repUnit,
-              sets: exSets
-                .filter((s2) => s2.completed && s2.type !== "warmup")
-                .map((s2) => ({ weightKg: s2.weight, reps: s2.reps })),
-            })),
-            volDate
-          );
-          // THIS session counts toward the 3-session minimum. The counts
-          // were loaded, never incremented, and persisted back verbatim —
-          // so they froze at their first-persist values and the PR gate
-          // never opened for anyone whose doc predated their third session
-          // (see bumpSessionCounts). Only exercises with a completed
-          // working set count: an all-skipped exercise wasn't trained.
-          const finalSessionCounts = bumpSessionCounts(
-            sessionCounts,
-            setLogs.flatMap((exSets, exIdx) => {
-              const name = day.exercises[exIdx]?.name;
-              if (!name) return [];
-              return exSets.some((s2) => s2.completed && s2.type !== "warmup")
-                ? [name]
-                : [];
-            })
-          );
-          const { doc: fbDoc } = await import("firebase/firestore");
-          const { Timestamp } = await import("firebase/firestore");
-          await setDocGuarded(
-            fbDoc(db, "users", user.uid, "stats", "prMap"),
-            {
-              map: prMap,
-              sessionCounts: finalSessionCounts,
-              volumeBest: finalVolumeBest,
-              updatedAt: Timestamp.now(),
-            },
-            { merge: true }
-          );
-        } catch {
-          // Non-critical — map can be rebuilt from history
-        }
+            const finalVolumeBest: VolumeBestMap = nextVolumeBest(
+              volumeBest,
+              setLogs.map((exSets, exIdx) => ({
+                name: day.exercises[exIdx]?.name ?? "",
+                repUnit: day.exercises[exIdx]?.repUnit,
+                sets: exSets
+                  .filter((s2) => s2.completed && s2.type !== "warmup")
+                  .map((s2) => ({ weightKg: s2.weight, reps: s2.reps })),
+              })),
+              volDate
+            );
+            // THIS session counts toward the 3-session minimum. The counts
+            // were loaded, never incremented, and persisted back verbatim —
+            // so they froze at their first-persist values and the PR gate
+            // never opened for anyone whose doc predated their third session
+            // (see bumpSessionCounts). Only exercises with a completed
+            // working set count: an all-skipped exercise wasn't trained.
+            const finalSessionCounts = bumpSessionCounts(
+              sessionCounts,
+              setLogs.flatMap((exSets, exIdx) => {
+                const name = day.exercises[exIdx]?.name;
+                if (!name) return [];
+                return exSets.some((s2) => s2.completed && s2.type !== "warmup")
+                  ? [name]
+                  : [];
+              })
+            );
+            const { doc: fbDoc } = await import("firebase/firestore");
+            const { Timestamp } = await import("firebase/firestore");
+            if (auth.currentUser?.uid !== user.uid) return;
+            await setDocGuarded(
+              fbDoc(db, "users", user.uid, "stats", "prMap"),
+              {
+                map: prMap,
+                sessionCounts: finalSessionCounts,
+                volumeBest: finalVolumeBest,
+                updatedAt: Timestamp.now(),
+              },
+              { merge: true }
+            );
+          } catch {
+            // Non-critical — map can be rebuilt from history
+          }
+        })();
       }
-
-      // Clear the draft only after the workout is saved.
-      clearDraft();
-
-      // first_pr badge — a genuine PR fired this session. Event-based, so
-      // awarded here at the moment it happens; idempotent + celebration via
-      // the standard queue.
-      if (firedPRs.size > 0) awardEventBadge("first_pr");
 
       if (
         receipt &&
@@ -1243,12 +1371,12 @@ export default function WorkoutSession({
         const share = receipt.share as () => Promise<void>;
         setShareSaved(() => share);
       }
-      setSaved(true);
     } catch (error) {
       // The core save failed. Do NOT clear the draft, reset set logs, close
       // the session, or mint a new completion id — the user taps the (now
       // re-enabled) Save button again and hits the exact same workout doc.
       logger.error("[WorkoutSession] finish failed:", error);
+      setSaveStatus("needs-attention");
       toast.error(
         "Couldn't save your workout. Your completed session is still here, so try again."
       );
@@ -1266,6 +1394,7 @@ export default function WorkoutSession({
     setCurrentSetIndex(0);
     sessionStartRef.current = Date.now();
     clearDraft();
+    completionPendingRef.current = false;
     setShowResumePrompt(false);
   };
 
@@ -1293,6 +1422,7 @@ export default function WorkoutSession({
           sessionVariant={sessionVariant}
           completing={completing}
           saved={saved}
+          saveStatus={saveStatus}
           planContext={planContext}
           onShare={shareSaved}
           onFinish={handleFinish}
@@ -1521,8 +1651,38 @@ export default function WorkoutSession({
       {/* Main content area */}
       <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-4">
         {/* Notes input */}
-        <div>
+        <div className="space-y-2">
+          {previousNotes[currentExIndex] && (
+            <div className="text-sm text-muted-foreground">
+              <p className="text-xs">
+                Last note ·{" "}
+                <InlineNumerals>
+                  {formatDayMonthYear(
+                    new Date(`${previousNotes[currentExIndex].date}T12:00:00`)
+                  )}
+                </InlineNumerals>
+              </p>
+              <p className="mt-1 whitespace-pre-wrap break-words">
+                {previousNotes[currentExIndex].text}
+              </p>
+              {!exerciseNotes[currentExIndex]?.trim() && (
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setExerciseNotes((prev) => ({
+                      ...prev,
+                      [currentExIndex]: previousNotes[currentExIndex].text,
+                    }));
+                    notesInputRef.current?.focus();
+                  }}
+                >
+                  Use and edit note
+                </Button>
+              )}
+            </div>
+          )}
           <input
+            ref={notesInputRef}
             type="text"
             placeholder="Notes (e.g. Level 8, 6.0 incline)"
             aria-label="Exercise notes"
@@ -1533,7 +1693,7 @@ export default function WorkoutSession({
                 [currentExIndex]: e.target.value,
               }))
             }
-            className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-xs text-foreground placeholder:text-muted-foreground"
+            className="ds-input min-h-11 w-full text-sm"
           />
         </div>
 

@@ -8,6 +8,17 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Saved workouts remain accessible.** History opens saved records, and changing
+  accounts or workout routes clears the previous record and sharing state.
+
+- **Choose lifting, running or both during setup.** Running-only plans skip
+  lifting setup. Inspect the actual generated sessions before creating the plan.
+- **Copy selected meals from yesterday.** Choose meals and adjust each portion
+  within the existing sheet; totals update before logging and Undo affects only
+  the meals just created. Food quick-add and meal-slot pills retain their styling.
+- **Milestones link back to the session.** Earlier strength bests, recorded races
+  and completed training blocks remain discoverable in the existing chronology.
+
 - **Coming back to lifting is acknowledged.** After a week or more away,
   Home offers a short welcome back: pick up where you left off, or head to
   your programme and start with an easier session. It states how long it
@@ -28,6 +39,23 @@ follows [Semantic Versioning](https://semver.org/).
   visible.
 
 ### Changed
+
+- **Run audio repeats less.** Cue phrasing varies between runs; pace alerts are
+  capped per off-pace stretch and acknowledge a sustained return to the band.
+
+- **Home keeps macro rings visible.** Protein, Carbs and Fat remain readable
+  without opening Details. Existing training cards and water/weight readings
+  use clearer alignment and wrapping within the same design system.
+- **Workout finishes show the session first.** Duration, volume and sets sit
+  beneath the title. Dated previous exercise notes can be explicitly reused.
+- **Saved on this phone and synced are distinct states.** Completed workouts
+  queue durable records and recover across programme changes without replacing
+  the current plan. Pending changes remain visible after reconnect, with Retry
+  for workouts that need attention.
+
+- **The bottom navigation floats above the page.** A compact frosted capsule
+  keeps all five labels visible, with a clear purple selected tab. Solid
+  fallbacks support reduced transparency and browsers without backdrop blur.
 
 - **Logging water no longer pops a confirmation.** The card already shows
   it: the number and the fill both move as you tap. The toast covered the

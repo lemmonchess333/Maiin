@@ -235,3 +235,23 @@ describe("chapter redesign metadata", () => {
     ).toBe(false);
   });
 });
+
+describe("activity choices", () => {
+  it("round-trips running-only and remembers lifting choices for switching back", () => {
+    const draft = makeDraft({
+      daysPerWeek: 0,
+      trainingActivity: "running",
+      liftDaysPreference: 5,
+    });
+    saveOnboardingDraft(UID_A, draft);
+    expect(loadOnboardingDraft(UID_A, MAX_STEP)).toEqual(draft);
+  });
+  it("rejects invalid activity or lift preference metadata", () => {
+    expect(
+      isValidDraft({ ...makeDraft(), trainingActivity: "swimming" }, MAX_STEP)
+    ).toBe(false);
+    expect(
+      isValidDraft({ ...makeDraft(), liftDaysPreference: 0 }, MAX_STEP)
+    ).toBe(false);
+  });
+});

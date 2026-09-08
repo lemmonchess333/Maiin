@@ -3,8 +3,12 @@ import { useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
 import { doc, Timestamp } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
+import {
+  hasQueuedWorkoutCompletion,
+  queueWorkoutCompletion,
+} from "@/lib/offlineQueue";
 import { logger } from "../lib/logger";
-import { db } from "../lib/firebase";
+import { auth, db } from "../lib/firebase";
 import { useAuth } from "../lib/auth";
 import { getSavedRoutine, type SavedRoutine } from "../lib/savedRoutines";
 import { exerciseFromRoutine } from "../features/program/routineExercise";
@@ -97,6 +101,7 @@ export default function Routine() {
         durationMinutes: number;
         /** Lift3 — the doc is dated by when the session started. */
         startedAt?: number;
+        exerciseNotes?: Record<number, string>;
         setLogs: Array<
           Array<{
             weight: number;
@@ -110,7 +115,12 @@ export default function Routine() {
     ) => {
       // Fail CLOSED — returning silently would let WorkoutSession clear the
       // draft + navigate as if the save succeeded.
-      if (!user || !routine || !synthDay) {
+      if (
+        !user ||
+        !routine ||
+        !synthDay ||
+        auth.currentUser?.uid !== user.uid
+      ) {
         throw new Error(
           "Cannot save a routine without an active user + routine."
         );
@@ -140,6 +150,7 @@ export default function Routine() {
           reps: ex.reps,
           weightKg: ex.weight,
         });
+        const note = sessionData.exerciseNotes?.[exIndex]?.trim();
         return {
           exerciseId: ex.exerciseId,
           exerciseName: ex.name,
@@ -151,6 +162,7 @@ export default function Routine() {
              this field to skip timed work — cannot tell it apart from
              weight moved. */
           ...(ex.repUnit !== undefined ? { repUnit: ex.repUnit } : {}),
+          ...(note ? { notes: note } : {}),
           sets,
           caloriesBurned: 0,
         };
@@ -184,33 +196,32 @@ export default function Routine() {
 
       // ── CORE write. Propagate a failure so WorkoutSession keeps the
       // completed session mounted, retains the draft, and re-enables Save.
-      try {
-        const workoutWrite = setDocGuarded(workoutRef, {
-          date: today,
-          exercises,
-          totalCalories,
-          durationMinutes: effectiveDurationMin,
-          /* Same omission as the programme path: every server consumer of
+      const queued =
+        navigator.onLine === false ||
+        hasQueuedWorkoutCompletion(user.uid, workoutId);
+      let sync: Promise<"synced" | "failed">;
+      const workoutData = {
+        date: today,
+        exercises,
+        totalCalories,
+        durationMinutes: effectiveDurationMin,
+        /* Same omission as the programme path: every server consumer of
              a workout doc reads `totalVolume`, and it was only ever
              written onto the social activity post. */
-          totalVolume: tonnage,
-          notes: `Routine: ${routine.name} (saved from ${routine.sourceAuthorName})`,
-          createdAt: Timestamp.now(),
-          source: "routine",
-          completionId: sessionData.completionId,
-          routineId: routine.id,
-          routineName: routine.name,
-        });
-        if (navigator.onLine) {
-          await workoutWrite;
+        totalVolume: tonnage,
+        notes: `Routine: ${routine.name} (saved from ${routine.sourceAuthorName})`,
+        createdAt: Timestamp.now(),
+        source: "routine",
+        completionId: sessionData.completionId,
+        routineId: routine.id,
+        routineName: routine.name,
+      };
+      try {
+        if (!queued) {
+          await setDocGuarded(workoutRef, workoutData);
+          sync = Promise.resolve("synced");
         } else {
-          // #1887 — offline, the ack arrives only on reconnect; awaiting
-          // it parked the chain (session hang, share enqueue below
-          // unreachable). The write is durably queued in IndexedDB —
-          // proceed, and log a post-reconnect rejection.
-          void workoutWrite.catch((err) =>
-            logger.error("[Routine] queued offline write failed:", err)
-          );
+          sync = queueWorkoutCompletion(db, user.uid, workoutId, workoutData);
         }
       } catch (err) {
         logger.error("[Routine] completion write failed:", err);
@@ -219,95 +230,101 @@ export default function Routine() {
       }
 
       // ── POST-SAVE best-effort: sharing must not invalidate a saved workout.
-      try {
-        /* Share composer: same flow as useProgram.completeWorkoutDay.
+      let shared = false;
+      const share = async () => {
+        if (shared || auth.currentUser?.uid !== user.uid) return;
+        try {
+          /* Share composer: same flow as useProgram.completeWorkoutDay.
            Title uses the routine name so the social card identifies
            the workout the same way the user thinks of it. */
-        const decision = await compose(
-          user.uid,
-          {
-            type: "workout",
-            title: routine.name,
-            meta: [
-              `${synthDay.exercises.length} exercise${synthDay.exercises.length === 1 ? "" : "s"}`,
-              tonnage > 0
-                ? `${Math.round(tonnage).toLocaleString()} kg volume`
-                : "",
-              effectiveDurationMin > 0 ? `${effectiveDurationMin} min` : "",
-            ].filter(Boolean),
-          },
-          { needsEmailVerification: needsEmailVerification(user) }
-        );
-        if (decision) {
-          const payload = {
-            authorId: user.uid,
-            authorName: profile?.displayName || "Athlete",
-            ...(profile?.photoURL ? { authorPhotoURL: profile.photoURL } : {}),
-            type: "workout" as const,
-            visibility: decision.visibility,
-            ...(decision.caption ? { caption: decision.caption } : {}),
-            workoutName: routine.name,
-            activityTitle: routine.name,
-            exerciseCount: synthDay.exercises.length,
-            totalVolume: tonnage,
-            duration: effectiveDurationMin * 60,
-            exercises: synthDay.exercises.map((ex) => {
-              const setCount = ex.sets;
-              const targetReps = ex.reps;
-              const targetWeightKg = ex.weight;
-              return {
-                name: ex.name,
-                exerciseId: ex.exerciseId,
-                summary: `${setCount}×${targetReps}×${targetWeightKg} kg`,
-                setCount,
-                targetReps,
-                targetWeightKg,
-              };
-            }),
-          };
-          if (typeof navigator !== "undefined" && navigator.onLine === false) {
-            /* #1887 — pre-gate, not a catch: a parked postActivity never
+          const decision = await compose(
+            user.uid,
+            {
+              type: "workout",
+              title: routine.name,
+              meta: [
+                `${synthDay.exercises.length} exercise${synthDay.exercises.length === 1 ? "" : "s"}`,
+                tonnage > 0
+                  ? `${Math.round(tonnage).toLocaleString()} kg volume`
+                  : "",
+                effectiveDurationMin > 0 ? `${effectiveDurationMin} min` : "",
+              ].filter(Boolean),
+            },
+            {
+              needsEmailVerification: needsEmailVerification(user),
+              forcePrompt: true,
+            }
+          );
+          if (decision && auth.currentUser?.uid === user.uid) {
+            const payload = {
+              authorId: user.uid,
+              authorName: profile?.displayName || "Athlete",
+              ...(profile?.photoURL
+                ? { authorPhotoURL: profile.photoURL }
+                : {}),
+              type: "workout" as const,
+              visibility: decision.visibility,
+              ...(decision.caption ? { caption: decision.caption } : {}),
+              workoutName: routine.name,
+              activityTitle: routine.name,
+              exerciseCount: synthDay.exercises.length,
+              totalVolume: tonnage,
+              duration: effectiveDurationMin * 60,
+              exercises: synthDay.exercises.map((ex) => {
+                const setCount = ex.sets;
+                const targetReps = ex.reps;
+                const targetWeightKg = ex.weight;
+                return {
+                  name: ex.name,
+                  exerciseId: ex.exerciseId,
+                  summary: `${setCount}×${targetReps}×${targetWeightKg} kg`,
+                  setCount,
+                  targetReps,
+                  targetWeightKg,
+                };
+              }),
+            };
+            if (
+              typeof navigator !== "undefined" &&
+              navigator.onLine === false
+            ) {
+              /* #1887 — pre-gate, not a catch: a parked postActivity never
                throws offline, so the old catch-only branch could not
                fire. Queue up-front; ShareComposerSheet's drain effect
                replays it on reconnect. */
-            enqueueShare(user.uid, payload, {
-              kind: "workout",
-              id: workoutId,
-            });
-            showQueuedToast();
-          } else {
-            try {
-              const activityId = await postActivity(payload);
-              // Dedupe + delete link, via the one shared helper.
-              await recordSharedActivity(
-                user.uid,
-                { kind: "workout", id: workoutId },
-                activityId
-              );
-            } catch (socialErr) {
-              logger.warn("Routine post failed:", socialErr);
+              enqueueShare(user.uid, payload, {
+                kind: "workout",
+                id: workoutId,
+              });
+              shared = true;
+              showQueuedToast();
+            } else {
+              try {
+                const activityId = await postActivity(payload);
+                shared = true;
+                // Dedupe + delete link, via the one shared helper.
+                await recordSharedActivity(
+                  user.uid,
+                  { kind: "workout", id: workoutId },
+                  activityId
+                );
+              } catch (socialErr) {
+                logger.warn("Routine post failed:", socialErr);
+              }
             }
           }
+        } catch (err) {
+          logger.warn("[Routine] post-save sharing failed:", err);
         }
-      } catch (err) {
-        logger.warn("[Routine] post-save sharing failed:", err);
-      }
-
-      /* Hist5d Stress 19 / PR 7b — return-link toast closes the
-         PRs-tab cold-start loop. Any saved workout may have set
-         a per-exercise lifetime or recent-bests PR, so we surface
-         a quick way back to the PRs tab. Sonner auto-dismisses in 4s;
-         tap "View PRs" → /history?tab=prs. No navigate("/program") here —
-         WorkoutSession's onClose handles navigation on success; a thrown
-         core-write error keeps the completed session mounted. */
-      toast.success("Workout saved", {
-        action: {
-          label: "View PRs",
-          onClick: () => navigate("/history?tab=prs"),
-        },
-      });
+      };
+      return {
+        workoutId,
+        share,
+        syncStatus: queued ? ("queued" as const) : ("synced" as const),
+        sync,
+      };
     },
-    [user, routine, synthDay, profile, navigate]
+    [user, routine, synthDay, profile]
   );
 
   if (loading) {

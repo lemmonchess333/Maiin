@@ -1,15 +1,30 @@
 import { useState } from "react";
 import { Dumbbell, Footprints, Minus } from "lucide-react";
 import Button from "@/components/ui/Button";
-import { DAY_LABELS, type ScheduleDay } from "@/lib/scheduleUtils";
+import InlineNumerals from "@/components/ui/InlineNumerals";
+import {
+  DAY_LABELS,
+  liftIndexForDayOfWeek,
+  type ScheduleDay,
+} from "@/lib/scheduleUtils";
+import type {
+  WorkoutDay,
+  ScheduledRunDay,
+} from "@/features/program/programTypes";
+import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { parseLocalDate } from "@/lib/dateHelpers";
 import { cn } from "@/lib/utils";
 
 export default function WeekPreview({
   schedule,
+  workouts = [],
+  runDays = [],
   draft = false,
   freeRunning = false,
 }: {
   schedule: ScheduleDay[];
+  workouts?: WorkoutDay[];
+  runDays?: ScheduledRunDay[];
   draft?: boolean;
   freeRunning?: boolean;
 }) {
@@ -21,6 +36,22 @@ export default function WeekPreview({
   const runs = schedule.filter(
     (day) => day.type === "run" || day.type === "both"
   ).length;
+  // A free-running-only week has open days, not seven prescribed rest days.
+  const openWeek =
+    freeRunning && lifts === 0 && runs === 0 && workouts.length === 0;
+  const workout = detail
+    ? workouts[liftIndexForDayOfWeek(schedule, detail.day)]
+    : undefined;
+  const run =
+    detail &&
+    runDays.find(
+      (day) => day.date && parseLocalDate(day.date).getDay() === detail.day
+    );
+  const runTemplate =
+    run &&
+    RUN_TEMPLATES.find(
+      (template) => template.id === (run.userOverride || run.templateId)
+    );
   return (
     <section
       className="rounded-2xl bg-card card-shadow p-4 space-y-3"
@@ -31,26 +62,32 @@ export default function WeekPreview({
           {draft ? "Draft week" : "Your week shape"}
         </h2>
         <p className="text-sm text-muted-foreground" aria-live="polite">
-          <span className="font-mono tabular-nums">{lifts}</span> lifts
-          {runs > 0 && (
+          {openWeek ? (
+            "Free running"
+          ) : (
             <>
-              {" "}
-              · <span className="font-mono tabular-nums">{runs}</span> runs
+              <span className="font-mono tabular-nums">{lifts}</span> lifts
+              {runs > 0 && (
+                <>
+                  {" "}
+                  · <span className="font-mono tabular-nums">{runs}</span> runs
+                </>
+              )}
+              {freeRunning && " · free running"}
             </>
           )}
-          {freeRunning && " · free running"}
         </p>
       </div>
-      <div className="grid grid-cols-7 gap-0.5 -mx-2">
+      <div className="flex gap-0.5 -mx-2 overflow-x-auto">
         {schedule.map(({ day, type }) => (
           <Button
             key={day}
             variant="ghost"
             aria-pressed={selected === day}
-            aria-label={`${DAY_LABELS[day]}: ${type === "both" ? "lift and run" : type}`}
+            aria-label={`${DAY_LABELS[day]}: ${openWeek ? "open day" : type === "both" ? "lift and run" : type}`}
             onClick={() => setSelected(selected === day ? null : day)}
             className={cn(
-              "min-w-11 min-h-16 px-0 flex-col gap-1 text-caption",
+              "min-w-11 min-h-16 flex-1 px-0 flex-col gap-1 text-caption",
               selected === day && "bg-muted ring-1 ring-primary"
             )}
           >
@@ -69,11 +106,45 @@ export default function WeekPreview({
           </Button>
         ))}
       </div>
-      <p className="text-sm text-muted-foreground" aria-live="polite">
-        {detail
-          ? `${DAY_LABELS[detail.day]} · ${detail.type === "both" ? "Lift and run share this day." : detail.type === "lift" ? "A lifting slot. Sessions follow your split in order." : detail.type === "run" ? "A planned running slot." : "No planned session."}`
-          : "Tap a day to inspect. Lifts follow your split in order."}
-      </p>
+      <div className="space-y-3" aria-live="polite">
+        <p className="text-sm text-muted-foreground">
+          {detail
+            ? `${DAY_LABELS[detail.day]} · ${openWeek ? "Run when it suits you." : detail.type === "both" ? "Lift and run share this day." : detail.type === "lift" ? "Lifts follow your split in order." : detail.type === "run" ? "A planned running slot." : "No planned session."}`
+            : lifts > 0
+              ? "Tap a day to inspect the sessions. Lifts follow your split in order."
+              : "Tap a day to inspect your week."}
+        </p>
+        {workout && (
+          <div className="space-y-2">
+            <h3 className="text-base font-semibold text-lifting-strong">
+              {workout.dayName}
+            </h3>
+            <ul className="divide-y divide-border">
+              {workout.exercises.map((exercise, index) => (
+                <li
+                  key={exercise.instanceId ?? `${exercise.name}-${index}`}
+                  className="flex justify-between items-baseline gap-3 py-2 text-sm"
+                >
+                  <span>{exercise.name}</span>
+                  <span className="shrink-0 text-muted-foreground">
+                    <InlineNumerals>{`${exercise.sets} × ${exercise.reps}${exercise.repUnit === "seconds" ? " s" : " reps"}`}</InlineNumerals>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {runTemplate && (
+          <div className="space-y-1">
+            <h3 className="text-base font-semibold text-running-strong">
+              <InlineNumerals>{`${runTemplate.name} · ${runTemplate.estimatedDuration} min`}</InlineNumerals>
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {runTemplate.description}
+            </p>
+          </div>
+        )}
+      </div>
       {freeRunning && (
         <p className="text-sm text-muted-foreground">
           Run when it suits you. Tropos won’t schedule your runs.

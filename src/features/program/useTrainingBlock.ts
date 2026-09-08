@@ -33,6 +33,8 @@ import type { ReviewWorkoutDoc } from "./blockReviewViewModel";
 export function useTrainingBlock(uid: string | undefined) {
   // null = loading; [] = loaded, none
   const [blocks, setBlocks] = useState<TrainingBlock[] | null>(null);
+  const [loadedUid, setLoadedUid] = useState<string | undefined>();
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     if (!uid) return;
@@ -46,9 +48,15 @@ export function useTrainingBlock(uid: string | undefined) {
           .filter((b): b is TrainingBlock => b !== null)
           .sort((a, b) => b.createdAt - a.createdAt);
         setBlocks(parsed);
+        setLoadedUid(uid);
+        setFailed(false);
       } catch (err) {
         logger.error("trainingBlock: load failed", err);
-        if (!cancelled) setBlocks([]);
+        if (!cancelled) {
+          setBlocks([]);
+          setLoadedUid(uid);
+          setFailed(true);
+        }
       }
     })();
     return () => {
@@ -73,6 +81,7 @@ export function useTrainingBlock(uid: string | undefined) {
           block,
           ...(prev ?? []).filter((b) => b.id !== block.id),
         ]);
+        setLoadedUid(uid);
         return true;
       } catch (err) {
         logger.error("trainingBlock: archive failed", err);
@@ -126,8 +135,9 @@ export function useTrainingBlock(uid: string | undefined) {
   );
 
   return {
-    loading: uid !== undefined && blocks === null,
-    blocks: blocks ?? [],
+    loading: uid !== undefined && (blocks === null || loadedUid !== uid),
+    blocks: uid !== undefined && loadedUid === uid ? (blocks ?? []) : [],
+    failed: uid !== undefined && loadedUid === uid && failed,
     archiveBlock,
     loadReviewWorkouts,
   };

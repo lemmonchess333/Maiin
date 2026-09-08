@@ -1,5 +1,20 @@
 import { describe, it, expect } from "vitest";
-import { buildOnboardingPlan } from "../onboardingPlan";
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+const {
+  sanitizeProfileData,
+} = require("../../../functions/profileSanitizer.js");
+const {
+  sanitizeProgramState,
+} = require("../../../functions/lib/programStateSanitizer.js");
+const {
+  validatePlanPayload,
+} = require("../../../functions/lib/validatePlanPayload.js");
+import {
+  buildOnboardingPlan,
+  onboardingActivity,
+  onboardingFlow,
+} from "../onboardingPlan";
 import type { OnboardingDraft } from "../onboardingDraft";
 import { getRaceGoalPlannerState } from "../raceGoalPlanner";
 
@@ -99,5 +114,62 @@ describe("onboarding preview and commit plan", () => {
       )
     ).toHaveLength(preview.recommendedRunDays);
     expect(plan.profileUpdates.weekSchedule).toEqual(plan.weekSchedule);
+  });
+});
+
+describe("supported running-only plans", () => {
+  it.each(["freeform", "race_prep"] as const)(
+    "creates %s with zero lifts using the existing builder",
+    (runMode) => {
+      const plan = buildOnboardingPlan(
+        {
+          ...draft,
+          primaryGoal: "running",
+          daysPerWeek: 0,
+          runMode,
+          raceTargetDate: "2026-12-13",
+        },
+        "recomp",
+        today
+      );
+      expect(plan.programState.workouts).toEqual([]);
+      const profileData = sanitizeProfileData({
+        ...plan.profileUpdates,
+        daysPerWeek: 0,
+      });
+      const programState = sanitizeProgramState(plan.programState).value;
+      expect(profileData.daysPerWeek).toBe(0);
+      expect(profileData.weeklyWorkoutsTarget).toBe(0);
+      expect(programState.workouts).toEqual([]);
+      expect(
+        validatePlanPayload({
+          profileData,
+          programState,
+          weekSchedule: plan.weekSchedule,
+        })
+      ).toEqual([]);
+      expect(
+        plan.weekSchedule.some(
+          (day) => day.type === "lift" || day.type === "both"
+        )
+      ).toBe(false);
+      expect(plan.profileUpdates.weeklyWorkoutsTarget).toBe(0);
+      expect(plan.profileUpdates.weeklyRunDaysTarget).toBe(
+        runMode === "freeform" ? 0 : 3
+      );
+      expect(plan.programState.runDays?.length ?? 0).toBe(
+        runMode === "freeform" ? 0 : 3
+      );
+    }
+  );
+  it("derives activity from older drafts without changing their week", () => {
+    expect(onboardingActivity(draft)).toBe("both");
+    expect(onboardingActivity({ ...draft, runFrequency: "none" })).toBe(
+      "lifting"
+    );
+    expect(onboardingActivity({ ...draft, daysPerWeek: 0 })).toBe("running");
+    expect(onboardingFlow("running")).toEqual([0, 1, 3, 5, 7]);
+    expect(onboardingFlow("lifting")).toEqual([0, 1, 2, 4, 5, 7]);
+    expect(onboardingFlow("both")).toEqual([0, 1, 3, 2, 4, 5, 7]);
   });
 });

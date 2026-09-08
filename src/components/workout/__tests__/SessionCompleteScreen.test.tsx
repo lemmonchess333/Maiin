@@ -13,7 +13,7 @@
  * volume card were untested when their bugs shipped.
  */
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
 import SessionCompleteScreen from "../SessionCompleteScreen";
 import type { ProgramExercise } from "@/features/program/programTypes";
@@ -67,6 +67,23 @@ function renderScreen(
 }
 
 describe("SessionCompleteScreen — header stats agree with each other", () => {
+  it("shows the result before Save without opening Session details", async () => {
+    renderScreen([
+      [{ reps: 12, weight: 10, completed: true, type: "working" }],
+    ]);
+    await waitFor(() => expect(screen.getByText("24m")).toBeVisible());
+    expect(screen.getByText("120")).toBeVisible();
+    expect(screen.getByText("1")).toBeVisible();
+    expect(screen.getByText("24m").closest("details")).toBeNull();
+    expect(
+      screen
+        .getByText("24m")
+        .compareDocumentPosition(
+          screen.getByRole("button", { name: "Save Workout" })
+        ) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
   it("SETS counts working sets only, not the warm-up ramp", () => {
     // The production shape: two warm-up rows the ramp generated, two working
     // sets the user actually prescribed. Pre-fix this rendered SETS 4.

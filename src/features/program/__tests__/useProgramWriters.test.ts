@@ -289,6 +289,7 @@ beforeEach(() => {
   // One reset clears documents, the cache, the write log and the batch
   // log together — the four things this suite used to zero by hand.
   resetFirestore();
+  localStorage.clear();
   writeMark = 0;
   batchMark = 0;
   mockProfile = null;
@@ -1825,6 +1826,32 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
     completionCommandId: completionId,
     durationMinutes: 30,
     setLogs: [[{ weight: 100, reps: 5, completed: true }]],
+  });
+
+  it("returns an observable failed receipt for an offline rejection", async () => {
+    const online = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+    try {
+      seedProgramWithDay();
+      const { result } = renderHook(() => useProgram());
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      failNextFirestore("commit");
+      await act(async () => {
+        const receipt = await result.current.completeWorkoutDay(
+          0,
+          session("offline-rejected")
+        );
+        expect(receipt.syncStatus).toBe("queued");
+        online.mockReturnValue(true);
+        const { flushQueue } = await import("@/lib/offlineQueue");
+        await flushQueue({} as Parameters<typeof flushQueue>[0], "test-user-1");
+        await expect(receipt.sync).resolves.toBe("failed");
+      });
+      await waitFor(() =>
+        expect(result.current.programState?.workouts[0].completed).toBe(false)
+      );
+    } finally {
+      online.mockRestore();
+    }
   });
 
   it("saves without a composer and shares only performed exercises on demand", async () => {

@@ -18,8 +18,14 @@
  *     one workout in the feed twice.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup, waitFor } from "@testing-library/react";
-import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { render, screen, cleanup, waitFor, act } from "@testing-library/react";
+import {
+  MemoryRouter,
+  Routes,
+  Route,
+  createMemoryRouter,
+  RouterProvider,
+} from "react-router-dom";
 
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {} }));
@@ -44,7 +50,12 @@ vi.mock("@/components/social/CircleShareSheet", () => ({
 }));
 
 import WorkoutDetail from "../WorkoutDetail";
-import { seedFirestore, resetFirestore } from "@/test/firestoreHarness";
+import {
+  seedFirestore,
+  resetFirestore,
+  failNextFirestore,
+  unfiredFailures,
+} from "@/test/firestoreHarness";
 
 const SAVED = {
   date: "2026-08-01",
@@ -82,6 +93,31 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("WorkoutDetail", () => {
+  it.each(["missing", "failed"])(
+    "clears the previous workout when the next record is %s",
+    async (state) => {
+      seedFirestore({ "users/u1/workouts/w1": SAVED });
+      const router = createMemoryRouter(
+        [{ path: "/workout/:workoutId", element: <WorkoutDetail /> }],
+        { initialEntries: ["/workout/w1"] }
+      );
+      render(<RouterProvider router={router} />);
+      expect(await screen.findByText("Barbell Bench Press")).toBeTruthy();
+      if (state === "failed") {
+        failNextFirestore("getDoc", { path: "users/u1/workouts/w2" });
+      }
+      await act(async () => {
+        await router.navigate("/workout/w2");
+      });
+      expect(await screen.findByText("Workout not found")).toBeTruthy();
+      expect(screen.queryByText("Barbell Bench Press")).toBeNull();
+      expect(
+        screen.queryByRole("button", { name: /share to feed/i })
+      ).toBeNull();
+      expect(unfiredFailures()).toHaveLength(0);
+    }
+  );
+
   it("renders the session's working sets — the only surface that shows them", async () => {
     seedFirestore({ "users/u1/workouts/w1": SAVED });
     renderAt("w1");

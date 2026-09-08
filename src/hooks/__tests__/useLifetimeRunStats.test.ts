@@ -48,6 +48,49 @@ beforeEach(() => {
 });
 
 describe("useLifetimeRunStats", () => {
+  it("never exposes the previous account's races when the next account's read fails", async () => {
+    seedFirestore({
+      "users/u1/runs/race": run(10000, {
+        activityType: "race",
+        date: "2026-05-01",
+      }),
+    });
+    const { result, rerender } = renderHook(() => useLifetimeRunStats());
+    await waitFor(() => expect(result.current.races).toHaveLength(1));
+    failNextFirestore("getDocs", { path: "users/u2/runs" });
+    mockUser = { uid: "u2" };
+    rerender();
+    await waitFor(() => expect(result.current.failed).toBe(true));
+    expect(result.current.races).toEqual([]);
+    expect(result.current.firstRun).toBeNull();
+    expect(result.current.runCount).toBe(0);
+  });
+  it("returns saved race records alongside the totals and clears them on account change", async () => {
+    seedFirestore({
+      "users/u1/runs/race": run(10000, {
+        activityType: "race",
+        date: "2026-05-01",
+      }),
+      "users/u1/runs/easy": run(5000, {
+        activityType: "easy",
+        date: "2026-05-02",
+      }),
+      "users/u2/runs/other": run(5000, {
+        activityType: "race",
+        date: "2026-06-01",
+      }),
+    });
+    const { result, rerender } = renderHook(() => useLifetimeRunStats());
+    await waitFor(() => expect(result.current.races).toHaveLength(1));
+    expect(result.current.races[0].id).toBe("race");
+    mockUser = { uid: "u2" };
+    rerender();
+    expect(result.current.races).toEqual([]);
+    await waitFor(() => expect(result.current.races[0]?.id).toBe("other"));
+    mockUser = null;
+    rerender();
+    expect(result.current.races).toEqual([]);
+  });
   it("sums every run, however old", async () => {
     // The point of the hook: a windowed query would drop the 2019 run.
     seedFirestore({

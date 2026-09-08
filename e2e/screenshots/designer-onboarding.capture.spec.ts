@@ -72,6 +72,7 @@ test("free running, typed metrics, editable review and recoverable commit", asyn
   await capture(page, "aim");
   await page.getByRole("button", { name: /Build muscle/ }).click();
   await next();
+  await page.getByRole("radio", { name: "Both", exact: true }).click();
   await page.getByRole("radio", { name: "5", exact: true }).click();
   await page.getByRole("button", { name: /Mon:/ }).click();
   await capture(page, "draft-week");
