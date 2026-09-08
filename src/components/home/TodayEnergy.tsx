@@ -7,7 +7,6 @@ import { UtensilsCrossed } from "lucide-react";
 import { haptic } from "@/lib/haptic";
 import { formatCalories, CALORIE_UNIT } from "@/utils/formatNutrition";
 import { Skeleton } from "@/components/LoadingSkeleton";
-import type { DailyBurn } from "@/utils/dailyBurn";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 import MacroRing from "@/components/home/MacroRing";
 import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
@@ -48,7 +47,6 @@ export default function TodayEnergy({
   protein,
   carbs,
   fat,
-  burn,
   targets,
   mealsLoading = false,
   postWorkoutNudge,
@@ -57,7 +55,6 @@ export default function TodayEnergy({
   protein: number;
   carbs: number;
   fat: number;
-  burn: DailyBurn;
   targets: EffectiveTargets;
   mealsLoading?: boolean;
   postWorkoutNudge?: {
@@ -122,19 +119,8 @@ export default function TodayEnergy({
             "08 0%, transparent 70%)",
         }}
       >
-        <div className="flex items-center gap-2 mb-2.5">
+        <div className="mb-2.5">
           <SectionLabel>Today's nutrition</SectionLabel>
-          {burn.phase && (
-            // HOME-TARGET-01: the phase label only — the real adjustment
-            // already lives in `targets.finalTarget`, the number below.
-            <span className="text-micro font-semibold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-              {burn.phase === "lean bulk"
-                ? "Bulk"
-                : burn.phase === "cut"
-                  ? "Cut"
-                  : "Recomp"}
-            </span>
-          )}
         </div>
 
         {/* Calories. The target is NAMED rather than implied by a slash:

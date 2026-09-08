@@ -93,16 +93,6 @@ function renderEnergy(finalTarget: number) {
         protein={0}
         carbs={0}
         fat={0}
-        burn={
-          {
-            phase: null,
-            phaseLabel: "Maintain",
-            phaseAdjustedTdee: 2200,
-            workoutCalories: 0,
-            runCalories: 0,
-            stepCalories: 0,
-          } as any
-        }
         targets={{ finalTarget, protein: 160, carbs: 220, fat: 70 } as any}
       />
     </MemoryRouter>

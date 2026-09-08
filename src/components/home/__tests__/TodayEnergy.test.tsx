@@ -48,14 +48,6 @@ vi.mock("@/lib/haptic", function () {
    its own content is not what these tests are about. */
 import TodayEnergy from "../TodayEnergy";
 
-const burn: any = {
-  phase: null,
-  phaseLabel: "Maintain",
-  phaseAdjustedTdee: 2200,
-  workoutCalories: 0,
-  runCalories: 0,
-  stepCalories: 0,
-};
 const targets: any = {
   finalTarget: 2200,
   protein: 160,
@@ -71,7 +63,6 @@ function renderAt(props: any = {}) {
         protein={0}
         carbs={0}
         fat={0}
-        burn={burn}
         targets={targets}
         {...props}
       />
@@ -216,23 +207,35 @@ describe("TodayEnergy — over target stays truthful", function () {
 
   it("a reached target is announced, not signalled by colour alone", function () {
     renderAt({ calories: 2200, protein: 155, carbs: 56, fat: 38 });
-    expect(screen.getByText("Protein target reached")).toBeInTheDocument();
-    expect(screen.queryByText("Carbs target reached")).toBeNull();
+    expect(
+      screen.getByText(/^Protein: 155 grams logged.*target reached$/)
+    ).toBeInTheDocument();
+    // Carbs is nowhere near its 220g target, so it must not claim one.
+    expect(screen.getByText(/^Carbs: 56 grams logged/)).toBeInTheDocument();
+    expect(screen.queryByText(/^Carbs:.*target reached$/)).toBeNull();
   });
 });
 
 describe("TodayEnergy — HOME-TARGET-01 truthful targets/copy", () => {
-  it("phase chip shows the label WITHOUT a fabricated +300/−500 delta", () => {
-    renderAt({ calories: 1000, burn: { ...burn, phase: "cut" } });
-    expect(screen.getByText("Cut")).toBeInTheDocument();
-    expect(screen.queryByText(/−500/)).toBeNull();
-    expect(screen.queryByText(/\+300/)).toBeNull();
+  it("carries no nutrition-phase chip", () => {
+    /* The chip named the phase ("Cut" / "Bulk" / "Recomp") on a card
+       about today's log. It was a profile setting, not a fact about the
+       day: it never moved as you ate, and HOME-TARGET-01 had already
+       barred it from showing the adjustment it stands for, leaving a
+       label with no number. The phase still shows where it is set and
+       explained, in Settings > Nutrition. */
+    renderAt(A_DAY);
+    for (const phase of ["Cut", "Bulk", "Recomp"]) {
+      expect(screen.queryByText(phase)).toBeNull();
+    }
   });
 
-  it("bulk phase likewise shows only the label", () => {
-    renderAt({ calories: 1000, burn: { ...burn, phase: "lean bulk" } });
-    expect(screen.getByText("Bulk")).toBeInTheDocument();
-    expect(screen.queryByText(/\+300/)).toBeNull();
+  it("never fabricates a target adjustment", () => {
+    // The invariant the two phase-chip tests used to carry: whatever the
+    // phase, the card states the target and never a +300/-500 delta.
+    renderAt({ ...A_DAY, targets: { ...targets, finalTarget: 1700 } });
+    expect(screen.getByText("Target 1,700 kcal")).toBeInTheDocument();
+    expect(screen.queryByText(/[+\u2212-]\s?\d{3}/)).toBeNull();
   });
 
   it("post-lift protein nudge ties to the target, not a recovery claim", () => {
@@ -244,28 +247,18 @@ describe("TodayEnergy — HOME-TARGET-01 truthful targets/copy", () => {
     expect(screen.queryByText(/for recovery/i)).toBeNull();
   });
 
-  it("never restates a 'plan target' row, whatever the breakdown's base says", () => {
-    // The row this pinned could not render in the app: Home builds the
-    // breakdown FROM the header's target (HOME-TARGET-01), so the two
-    // never differed and the branch was dead.
-    renderAt({ ...A_DAY, burn: { ...burn, phaseAdjustedTdee: 2400 } });
-    expect(screen.queryByText(/Plan target/)).toBeNull();
-  });
-
   it("does not restate the activity breakdown Food's drill-down owns", () => {
     /* Nutr1 is not weakened by this — Food's "Nutrition breakdown" sheet
        carries the same figures split by lifting and running, the total,
        and the "already counted, no need to eat it back" sentence. Home
        paid 93px for the copy, and only on days the user had trained,
-       which is exactly when the card is most crowded. */
-    renderAt({
-      ...A_DAY,
-      burn: { ...burn, workoutCalories: 420, runCalories: 310 },
-    });
+       which is exactly when the card is most crowded. The card no longer
+       takes a `burn` prop at all, so there is nothing to restate — and
+       the target it shows is unchanged by activity (no eat-back). */
+    renderAt(A_DAY);
     expect(screen.queryByText(/already in your target/i)).toBeNull();
     expect(screen.queryByText("Workout")).toBeNull();
-    expect(screen.queryByText("Run")).toBeNull();
-    // The calorie target itself is unchanged by activity (no eat-back).
+    expect(screen.queryByText(/Plan target/)).toBeNull();
     expect(screen.getByText("Target 2,200 kcal")).toBeInTheDocument();
   });
 });

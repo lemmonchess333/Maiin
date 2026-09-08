@@ -62,7 +62,6 @@ import { useClaimMap } from "@/hooks/useClaimMap";
 import { goalReachedOffer } from "@/lib/goalWeightPlan";
 import GoalReachedSheet from "@/components/home/GoalReachedSheet";
 import { localDateString, localWeekKey } from "@/lib/dateHelpers";
-import { calcDailyBurn } from "@/utils/dailyBurn";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import { useCountUp } from "@/hooks/useCountUp";
@@ -88,7 +87,6 @@ import { useSnoozeDismiss } from "@/hooks/useSnoozeDismiss";
 
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
-import { getNutritionPhase } from "@/lib/nutritionPhase";
 import TrackSectionView from "@/components/home/TrackSectionView";
 import ContextualTipBanner from "@/components/home/ContextualTipBanner";
 import { IconButton } from "@/components/ui/IconButton";
@@ -262,7 +260,6 @@ export default function Home() {
     dailyProt,
     dailyCarbs,
     dailyFat,
-    todayRunCals,
     lastWeightInfo,
     weightTrend,
     postWorkoutNudge,
@@ -275,47 +272,6 @@ export default function Home() {
     // HOME-TARGET-01, protein half: the post-workout nudge must quote the
     // same target the macro rings on this screen show.
     effectiveTargets?.protein ?? null
-  );
-
-  // Daily burn for Today's energy card.
-  // Workout burn reads through `effectiveTargets.actualLiftBurn` (sums
-  // stored `totalCalories` for today's workouts via the same
-  // `isWorkoutOnDate` rule). Pre-cleanup `useHomeData` re-derived this
-  // number inline with a "should match Food's useEffectiveTargets"
-  // comment — drift hazard, deleted.
-  const todayWorkoutCals = effectiveTargets?.actualLiftBurn ?? 0;
-
-  // Hoisted out of the memo below: calling getNutritionPhase(profile) inside
-  // the useMemo makes the React Compiler infer the whole `profile` as a
-  // dependency (less specific than the manual dep array), tripping
-  // react-hooks/preserve-manual-memoization. Computing the phase here keeps
-  // the memo body referencing a primitive string, so the inferred deps match.
-  const nutritionPhase = getNutritionPhase(profile);
-  const dailyBurn = useMemo(
-    function () {
-      // HOME-TARGET-01: one target everywhere. The breakdown base is the
-      // SAME `effectiveTargets.finalTarget` the header shows (it already
-      // includes activityLevel-aware TDEE + phase deficit, and any adaptive
-      // adjustment), so the breakdown can't disagree with the headline
-      // number. Falls back to the stored `targetCalories` while the
-      // effective targets resolve, then a sane default.
-      const targetCalories =
-        effectiveTargets?.finalTarget ?? profile?.targetCalories ?? 2200;
-      return calcDailyBurn(
-        targetCalories,
-        nutritionPhase,
-        todayWorkoutCals,
-        todayRunCals,
-        0
-      );
-    },
-    [
-      effectiveTargets?.finalTarget,
-      profile?.targetCalories,
-      nutritionPhase,
-      todayWorkoutCals,
-      todayRunCals,
-    ]
   );
 
   // Performance data for the hero card.
@@ -1081,7 +1037,6 @@ export default function Home() {
                   protein={dailyProt}
                   carbs={dailyCarbs}
                   fat={dailyFat}
-                  burn={dailyBurn}
                   targets={effectiveTargets}
                   mealsLoading={mealsLoading}
                   // Computed by useHomeData against the same protein target

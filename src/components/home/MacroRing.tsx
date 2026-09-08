@@ -48,6 +48,16 @@ export default function MacroRing({
   const { pct, done } = hasTarget
     ? macroRingState(value, target)
     : { pct: 0, done: false };
+  /* One sentence for assistive tech, and the visual fragments hidden
+     from it. Read as three separate nodes the ring announced
+     "98g / Protein / Target 140g" — and "98g" is spoken "ninety-eight
+     gee", because `g` beside a numeral is a glyph, not a word. The
+     Food macro tiles already carry their state this way. */
+  const a11yLabel = hasTarget
+    ? `${label}: ${Math.round(value)} grams logged, target ${Math.round(
+        target
+      )} grams${done ? ", target reached" : ""}`
+    : `${label}: ${Math.round(value)} grams logged, no target`;
   const [flashKey, setFlashKey] = useState(0);
   const prevDoneRef = useRef(done);
 
@@ -70,7 +80,12 @@ export default function MacroRing({
 
   return (
     <div className="flex flex-col items-center gap-1.5">
-      <div className="relative" style={{ width: size, height: size }}>
+      <span className="sr-only">{a11yLabel}</span>
+      <div
+        className="relative"
+        aria-hidden="true"
+        style={{ width: size, height: size }}
+      >
         <svg
           width={size}
           height={size}
@@ -104,24 +119,17 @@ export default function MacroRing({
           )}
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-sm font-bold font-mono tabular-nums leading-none text-foreground">
+          <span className="text-base font-bold font-mono tabular-nums leading-none text-foreground">
             {Math.round(value)}
             {unit}
           </span>
           {done && (
-            <>
-              {/* The tick is the only place a macro hue lands on a glyph,
-                  and it is decorative: the sr-only phrase below carries
-                  the same fact, so contrast is not load-bearing here. */}
-              <span
-                className="text-micro leading-none mt-0.5"
-                style={{ color }}
-                aria-hidden="true"
-              >
-                &#10003;
-              </span>
-              <span className="sr-only">{label} target reached</span>
-            </>
+            /* The tick is the only place a macro hue lands on a glyph, and
+               it is decorative: the sr-only sentence above says "target
+               reached" in words, so contrast is not load-bearing here. */
+            <span className="text-micro leading-none mt-0.5" style={{ color }}>
+              &#10003;
+            </span>
           )}
         </div>
         {/* Completion flash overlay */}
@@ -136,7 +144,7 @@ export default function MacroRing({
           />
         )}
       </div>
-      <div className="text-center leading-tight">
+      <div className="text-center leading-tight" aria-hidden="true">
         {/* Foreground, sentence case, medium — deliberately NOT the
             uppercase muted SectionLabel treatment. At 12px, muted and
             letter-spaced, a nutrient name reads as chrome rather than as

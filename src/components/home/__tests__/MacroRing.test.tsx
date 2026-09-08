@@ -107,13 +107,43 @@ describe("MacroRing — what the ring says without a tap", () => {
     }
   });
 
-  it("announces a reached target to a screen reader, not by colour alone", () => {
+  it("gives assistive tech ONE sentence, not three fragments", () => {
+    /* Read as separate nodes the ring announced "98g / Protein / Target
+       140g", and "42g" is spoken "forty-two gee" — `g` beside a numeral
+       is a glyph, not a word. The visual fragments are aria-hidden and
+       this sentence stands in for them. */
+    renderRing();
+    expect(
+      screen.getByText("Protein: 42 grams logged, target 120 grams")
+    ).toBeInTheDocument();
+  });
+
+  it("hides the visual fragments from assistive tech, so nothing doubles", () => {
+    /* The sr-only sentence REPLACES the fragments; it does not sit
+       alongside them. Without the aria-hidden wrappers a reader hears
+       the sentence and then "98g Protein Target 140g" again. Pinned
+       because removing either wrapper is invisible to every other
+       assertion in this file. */
+    renderRing();
+    for (const node of [screen.getByText("42g"), screen.getByText("Protein")]) {
+      expect(node.closest('[aria-hidden="true"]')).not.toBeNull();
+    }
+  });
+
+  it("says a reached target in words, not by colour alone", () => {
     renderRing({ value: 118 });
-    expect(screen.getByText("Protein target reached")).toBeInTheDocument();
+    expect(screen.getByText(/target reached/)).toBeInTheDocument();
   });
 
   it("says nothing about a target that is not reached", () => {
     renderRing({ value: 42 });
     expect(screen.queryByText(/target reached/)).not.toBeInTheDocument();
+  });
+
+  it("names the no-target case for assistive tech too", () => {
+    renderRing({ value: 80, target: 0 });
+    expect(
+      screen.getByText("Protein: 80 grams logged, no target")
+    ).toBeInTheDocument();
   });
 });
