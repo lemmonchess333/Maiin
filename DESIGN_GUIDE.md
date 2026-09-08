@@ -248,7 +248,18 @@ no additional typeface, colour or entrance animation is introduced.
 - `800` extrabold → hero numbers + page titles
 - `700` bold → section headings + card titles
 - `600` semibold → pill text + button labels
+- `500` medium → **small-text emphasis only**: secondary labels, meta rows
+  and inline emphasis at `text-sm` / `text-xs`
 - **Never mix 700 and 800 in the same visual tier.**
+- **Never use `500` at `text-lg` or above.** Hierarchy at heading scale is
+  600 / 700 / 800; 500 there reads as an accident. Pinned by
+  `designSystemInvariants.test.ts`, which asserts zero rather than a
+  ratchet — the codebase has never crossed this line.
+
+`500` was undocumented for a long time and briefly treated as drift to be
+burned down. It is not: of 269 sized uses, 113 are `text-sm` and 105 are
+`text-xs`, with none above. It earned its place in the scale by being used
+consistently; the guard now protects the boundary rather than the count.
 
 Section labels are a deliberate style: UPPERCASE, wide letter-spacing, muted
 colour, at exactly two sizes — `SectionLabel tier="section"` (11px,
@@ -286,13 +297,13 @@ and the permitted exceptions — is `docs/cohesion-spec-2026-09.md`.
 
 ## 6. Card patterns
 
-| Pattern                                            | Recipe                                                                                                   |
-| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| **Standard card**                                  | `bg-card` white, `rounded-xl` (12px), `p-3`–`p-4`, `shadow-card` (very subtle). Or use `.ds-card`.       |
-| **Hero card** (Health Score, Water)                | `rounded-2xl` (16px), `p-4`, 48px icon container in a purple-tinted square.                              |
-| **Compact tile** (Weight, Steps)                   | `rounded-xl`, `p-3`, `bg-muted`, 2-col grid.                                                             |
-| **CTA card** (today's workout/run)                 | `rounded-xl`, sport-tinted bg at ~8% opacity, Play pill right-aligned.                                   |
-| **Action pill** (Quick Log / Start Run / Log Food) | `rounded-xl`, sport-tinted bg ~6%, icon + 11px semibold label, equal-width flex row, ≥44px touch target. |
+| Pattern                                           | Recipe                                                                                                                                                                             |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Standard card**                                 | `bg-card` white, `rounded-xl` (12px), `p-3`–`p-4`, `shadow-card` (very subtle). Or use `.ds-card`.                                                                                 |
+| **Hero card** (Health Score, Water)               | `rounded-2xl` (16px), `p-4`, 48px icon container in a purple-tinted square.                                                                                                        |
+| **Compact tile** (Weight, Steps)                  | `rounded-xl`, `p-3`, `bg-muted`, 2-col grid.                                                                                                                                       |
+| **CTA card** (today's workout/run)                | `rounded-xl`, sport-tinted bg at ~8% opacity, Play pill right-aligned.                                                                                                             |
+| **Sport CTA card** (`LiftCTACard` / `RunCTACard`) | `rounded-xl`, sport-tinted bg ~8%, icon + title + purpose line, right-aligned Start control, ≥44px touch target. Replaced the three-pill quick-action row, which no longer exists. |
 
 - Use `.ds-card` for static grouped surfaces and `.ds-card-interactive` **only**
   on a real `<button>`/`<a>` (never a wrapped `div`) for pressable cards.

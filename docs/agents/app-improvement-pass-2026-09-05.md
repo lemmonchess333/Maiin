@@ -109,6 +109,33 @@ also surfaced eight latent type errors there — one of them a
   `claude/screenshot-app` once to re-baseline `app-screenshots`; the
   baseline there at the time of writing is #2154's head.
 
+## Open design questions — ALL FIVE NOW SETTLED
+
+Delegated to the agent and decided on evidence. Kept below in full,
+because what each option cost is the useful part; the verdict is at the
+head of each row.
+
+1. **Is 500 a weight tier? → YES, documented.** Counting where it lands
+   settled it: of 269 sized uses, 113 are `text-sm`, 105 are `text-xs`,
+   and zero are `text-lg` or above. That is a convention, not drift, so
+   migrating 285 uses would have been visual risk on every screen to
+   delete something already consistent. DESIGN_GUIDE §Typography now
+   documents 500 as the small-text emphasis weight, and the count
+   ratchet is replaced by the boundary that matters — never at heading
+   scale, asserted as zero.
+2. **Home badge → A, nothing.** As recommended. Every candidate signal
+   already announces itself with its own surface, so a badge would be a
+   second notification for one event.
+3. **Copy casing → sentence case, shipped in #2202.** The framing was
+   wrong: there was no existing split to codify.
+4. **Comment delete → keep the confirm.** As recommended. Undo needs a
+   new callable or a delayed delete because comments are server-written,
+   which is real server work to save one tap on a rare action.
+5. **Performance → measured and acted on, #2203.** Both named suspects
+   were wrong. See `performance-pass-2026-09-07.md`.
+
+## The original rows, as written
+
 ## Open design questions (owner calls — both options measured)
 
 1. **Is 500 a weight tier?** `font-medium` sits on 302 class chunks in

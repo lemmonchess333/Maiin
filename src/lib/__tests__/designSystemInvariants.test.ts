@@ -263,17 +263,42 @@ describe("DS ratchets — surface-level drift", () => {
     expectRatchet("raw <button>", total, RAW_BUTTON_BASELINE, byFile);
   });
 
-  // font-medium is not on the weight scale (800 hero / 700 heading /
-  // 600 pill+button). It keeps appearing as a "slightly bold" reflex.
-  const FONT_MEDIUM_BASELINE = 285;
-  it("font-medium does not increase (the scale is 800 / 700 / 600)", () => {
-    const { total, byFile } = scan((src) =>
-      classNameChunks(src).reduce(
-        (n, c) => n + (c.match(/\bfont-medium\b/g) ?? []).length,
-        0
-      )
-    );
-    expectRatchet("font-medium", total, FONT_MEDIUM_BASELINE, byFile);
+  /* font-medium (500) is the small-text emphasis weight, and this pins the
+     boundary rather than a count.
+
+     It used to be a count ratchet on the theory that 500 was off-scale
+     drift — a "slightly bold" reflex against a documented 800/700/600.
+     Counting where it actually lands settled that: of 269 uses carrying a
+     size, 113 are text-sm and 105 are text-xs, and ZERO are text-lg or
+     above. A convention that consistent across ~96 components is the
+     scale, not drift, so DESIGN_GUIDE §Typography now documents 500 and
+     the count is no longer interesting.
+
+     What IS interesting is the boundary the codebase has never crossed:
+     500 at heading scale would be a real regression, because that is
+     where 600/700/800 carry the hierarchy. It sits at zero, which makes
+     it the rare invariant that can be asserted outright. */
+  it("font-medium never appears at heading scale (text-lg and above)", () => {
+    const offenders: string[] = [];
+    /* Per className CHUNK, not per line: the dominant pattern here is
+       `className={cn(...)}` spanning several lines, where the weight and
+       the size sit in different arguments. A line-wise check would miss
+       exactly those. */
+    scan((src, rel) => {
+      for (const chunk of classNameChunks(src)) {
+        if (!/\bfont-medium\b/.test(chunk)) continue;
+        const size = chunk.match(/\btext-(lg|xl|2xl|3xl|4xl|5xl)\b/);
+        if (size) offenders.push(`${rel}  font-medium + text-${size[1]}`);
+      }
+      return 0;
+    });
+    expect(
+      offenders,
+      `font-medium at heading scale. 500 is the small-text emphasis ` +
+        `weight (text-sm / text-xs); hierarchy at text-lg and above is ` +
+        `carried by 600 / 700 / 800. See DESIGN_GUIDE.md §Typography.\n` +
+        offenders.join("\n")
+    ).toEqual([]);
   });
 
   // Ambient animation must respect prefers-reduced-motion: `motion-safe:`
