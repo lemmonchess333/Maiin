@@ -1,3 +1,8 @@
+import {
+  encryptProgressPhoto,
+  decryptProgressPhoto,
+  type ProgressPhotoEncryption,
+} from "@/lib/progressPhotoCrypto";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { IconButton } from "@/components/ui/IconButton";
@@ -34,78 +39,6 @@ import {
   type VaultPhoto,
 } from "@/lib/progressVault";
 
-/**
- * Photo encryption key.
- *
- * READ THIS BEFORE DESCRIBING THIS FEATURE ANYWHERE. What it provides is
- * encryption AT REST against casual exposure: raw storage holds ciphertext,
- * not JPEGs. What it does NOT provide is confidentiality from whoever holds
- * the bucket, and the Privacy Policy now says so in those words.
- *
- * The key is derived from the uid with a fixed suffix and a fixed salt.
- * Every one of those inputs is public — the uid IS the storage path
- * (`progress-photos/{uid}/…`), and the suffix, the salt and this function
- * all ship in the client bundle. So anyone who can read the ciphertext can
- * derive the key.
- *
- * The 100k PBKDF2 iterations do not change that, which is worth saying
- * because the number reads as reassuring: iteration count hardens a
- * LOW-ENTROPY SECRET against brute force. There is no secret here, so it
- * costs an attacker one derivation rather than a search.
- *
- * This was documented as "client-side AES-GCM, verified" on the launch
- * checklist for a while, because the check confirmed the ALGORITHM and
- * never asked whether the key was secret. Real end-to-end encryption needs
- * a key the server never sees — a user passphrase, or a device-held key
- * with sync — and both trade away recoverability: forget the passphrase and
- * the photos are gone. That is a product decision, tracked in
- * `docs/LAUNCH_TODO.md`, not something to change quietly here.
- */
-async function getEncryptionKey(uid: string): Promise<CryptoKey> {
-  const enc = new TextEncoder();
-  const keyMaterial = await crypto.subtle.importKey(
-    "raw",
-    enc.encode(uid + "_tropos_photos_v1"),
-    "PBKDF2",
-    false,
-    ["deriveKey"]
-  );
-  return crypto.subtle.deriveKey(
-    {
-      name: "PBKDF2",
-      salt: enc.encode("tropos-salt"),
-      iterations: 100000,
-      hash: "SHA-256",
-    },
-    keyMaterial,
-    { name: "AES-GCM", length: 256 },
-    false,
-    ["encrypt", "decrypt"]
-  );
-}
-
-async function encryptBlob(data: ArrayBuffer, key: CryptoKey) {
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const encrypted = await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv: iv as unknown as Uint8Array<ArrayBuffer> },
-    key,
-    data
-  );
-  return { encrypted, iv };
-}
-
-async function decryptBlob(
-  encrypted: ArrayBuffer,
-  key: CryptoKey,
-  iv: Uint8Array
-) {
-  return crypto.subtle.decrypt(
-    { name: "AES-GCM", iv: iv as unknown as Uint8Array<ArrayBuffer> },
-    key,
-    encrypted
-  );
-}
-
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([
     promise,
@@ -136,6 +69,19 @@ interface ComposerState {
  */
 export default function ProgressPhotos() {
   const uid = useUid();
+  // A new account receives a new vault instance: rows, decrypted URLs, key,
+  // selected files and composer drafts must never survive an account switch.
+  return uid ? <AccountProgressPhotos key={uid} uid={uid} /> : null;
+}
+
+function AccountProgressPhotos({ uid }: { uid: string }) {
+  const activeRef = useRef(true);
+  useEffect(() => {
+    activeRef.current = true;
+    return () => {
+      activeRef.current = false;
+    };
+  }, []);
   const [photos, setPhotos] = useState<VaultPhoto[]>([]);
   const [checkIns, setCheckIns] = useState<ProgressCheckIn[]>([]);
   const [decryptedUrls, setDecryptedUrls] = useState<Record<string, string>>(
@@ -149,7 +95,6 @@ export default function ProgressPhotos() {
   const [composer, setComposer] = useState<ComposerState | null>(null);
   const [savingCheckIn, setSavingCheckIn] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const keyRef = useRef<CryptoKey | null>(null);
   const pendingFileRef = useRef<File | null>(null);
   const pendingSlotRef = useRef<CheckInSlot | null>(null);
 
@@ -160,17 +105,6 @@ export default function ProgressPhotos() {
   const photoById = useMemo(
     () => new Map(photos.map((p) => [p.id, p])),
     [photos]
-  );
-
-  // Helper to cache encryption key (#14)
-  const getOrDeriveKey = useCallback(
-    async (uid: string): Promise<CryptoKey> => {
-      if (keyRef.current) return keyRef.current;
-      const key = await getEncryptionKey(uid);
-      keyRef.current = key;
-      return key;
-    },
-    []
   );
 
   // Revoke every object URL on unmount. The cleanup runs once, so it must
@@ -196,21 +130,25 @@ export default function ProgressPhotos() {
       orderBy("createdAt", "desc")
     );
     const snap = await getDocs(q);
+    if (!activeRef.current) return;
     setPhotos(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as VaultPhoto));
   }, [uid]);
 
   const loadCheckIns = useCallback(async () => {
     if (!uid) return;
     try {
-      setCheckIns(await loadProgressCheckIns(uid));
+      const rows = await loadProgressCheckIns(uid);
+      if (activeRef.current) setCheckIns(rows);
     } catch (err) {
       logger.error("[Vault] check-in load failed:", err);
     }
   }, [uid]);
 
   useEffect(() => {
-    loadPhotos();
-    loadCheckIns();
+    void loadPhotos().catch((err) =>
+      logger.error("[Vault] photo load failed:", err)
+    );
+    void loadCheckIns();
   }, [loadPhotos, loadCheckIns]);
 
   // Auto-decrypt the 6 most recent photos on mount
@@ -222,8 +160,6 @@ export default function ProgressPhotos() {
     let cancelled = false;
 
     const autoDecrypt = async () => {
-      const key = await getOrDeriveKey(uid);
-
       for (const photo of photos.slice(0, 6)) {
         if (cancelled) return;
         if (decryptedUrls[photo.id]) continue;
@@ -234,9 +170,13 @@ export default function ProgressPhotos() {
           const url = await getDownloadURL(storageRef);
           const response = await fetch(url);
           const encryptedBuffer = await response.arrayBuffer();
-          const iv = new Uint8Array(photo.iv);
-          const decrypted = await decryptBlob(encryptedBuffer, key, iv);
+          const decrypted = await decryptProgressPhoto(
+            encryptedBuffer,
+            uid,
+            photo
+          );
           if (cancelled) return;
+          if (!activeRef.current) return;
           const blob = new Blob([decrypted], { type: "image/webp" });
           const objectUrl = URL.createObjectURL(blob);
           setDecryptedUrls((prev) => ({ ...prev, [photo.id]: objectUrl }));
@@ -265,18 +205,17 @@ export default function ProgressPhotos() {
   const decryptPhoto = useCallback(
     async (photo: VaultPhoto) => {
       if (!uid || decryptedUrls[photo.id]) return;
-      const key = await getOrDeriveKey(uid);
       const storageRef = ref(storage, photo.storagePath);
       const url = await getDownloadURL(storageRef);
       const response = await fetch(url);
       const encryptedBuffer = await response.arrayBuffer();
-      const iv = new Uint8Array(photo.iv);
-      const decrypted = await decryptBlob(encryptedBuffer, key, iv);
+      const decrypted = await decryptProgressPhoto(encryptedBuffer, uid, photo);
+      if (!activeRef.current) return;
       const blob = new Blob([decrypted], { type: "image/webp" });
       const objectUrl = URL.createObjectURL(blob);
       setDecryptedUrls((prev) => ({ ...prev, [photo.id]: objectUrl }));
     },
-    [uid, decryptedUrls, getOrDeriveKey]
+    [uid, decryptedUrls]
   );
 
   /** Compress → encrypt (fail-closed) → upload → write metadata doc.
@@ -325,14 +264,17 @@ export default function ProgressPhotos() {
         // below is kept so legacy unencrypted photos (pre-fix fallback
         // uploads) still render for their owner.
         let encrypted: ArrayBuffer;
-        let iv: Uint8Array;
-        let key: CryptoKey;
+        let metadata: ProgressPhotoEncryption;
+        const path = `progress-photos/${uid}/${crypto.randomUUID()}.enc`;
         logger.log("[UPLOAD] 3. Starting encryption...");
         try {
-          key = await getOrDeriveKey(uid);
-          const result = await encryptBlob(await blob.arrayBuffer(), key);
+          const result = await encryptProgressPhoto(
+            await blob.arrayBuffer(),
+            uid,
+            path
+          );
           encrypted = result.encrypted;
-          iv = result.iv;
+          metadata = result.metadata;
           logger.log(
             "[UPLOAD] 4. Encryption complete, encrypted size:",
             encrypted.byteLength
@@ -344,15 +286,18 @@ export default function ProgressPhotos() {
           );
         }
 
+        if (!activeRef.current) return null;
+
         // Step 3: Upload to Firebase Storage
         // NOTE: Requires VITE_FIREBASE_STORAGE_BUCKET env var to be set (see firebase.ts)
         // Always .enc — the write path is fail-closed on encryption
         // (unencrypted .webp blobs only exist from the legacy fallback).
-        const path = `progress-photos/${uid}/${Date.now()}.enc`;
         logger.log("[UPLOAD] 5. Creating Firebase Storage reference:", path);
         try {
           await withTimeout(
             uploadBytes(ref(storage, path), new Uint8Array(encrypted), {
+              // Existing Storage rules allow the source image MIME; the
+              // body is ciphertext and carries no key in Storage metadata.
               contentType: "image/webp",
             }),
             25000
@@ -363,6 +308,8 @@ export default function ProgressPhotos() {
           throw e;
         }
 
+        if (!activeRef.current) return null;
+
         // Step 4: Write Firestore document
         logger.log("[UPLOAD] 7. Writing Firestore document...");
         let docRef;
@@ -370,8 +317,7 @@ export default function ProgressPhotos() {
           docRef = await addDocGuarded(
             collection(db, "users", uid, "progressPhotos"),
             {
-              storagePath: path,
-              iv: Array.from(iv),
+              ...metadata,
               date: new Date().toISOString().split("T")[0],
               // Progress photos are owner-only by contract: both
               // firestore.rules (users/{uid}/progressPhotos) and
@@ -390,31 +336,17 @@ export default function ProgressPhotos() {
           throw new Error("Failed to save photo metadata");
         }
 
+        if (!activeRef.current) return null;
         await loadPhotos();
 
-        // Auto-decrypt/display newly uploaded photo
-        try {
-          if (iv.some((b) => b !== 0) && key) {
-            const newUrl = await getDownloadURL(ref(storage, path));
-            const encResponse = await fetch(newUrl);
-            const encBuffer = await encResponse.arrayBuffer();
-            const decryptedData = await decryptBlob(encBuffer, key, iv);
-            const decBlob = new Blob([decryptedData], { type: "image/webp" });
-            const objectUrl = URL.createObjectURL(decBlob);
-            setDecryptedUrls((prev) => ({ ...prev, [docRef.id]: objectUrl }));
-          } else {
-            // Unencrypted — create URL from the original blob
-            const objectUrl = URL.createObjectURL(blob);
-            setDecryptedUrls((prev) => ({ ...prev, [docRef.id]: objectUrl }));
-          }
-        } catch (e) {
-          logger.error(
-            "[UPLOAD] Auto-decrypt after upload failed (non-critical):",
-            e
-          );
+        // The original compressed image is already available. Encryption and
+        // both remote writes have succeeded; no second download/key exposure.
+        if (activeRef.current) {
+          const objectUrl = URL.createObjectURL(blob);
+          setDecryptedUrls((prev) => ({ ...prev, [docRef.id]: objectUrl }));
         }
 
-        return docRef.id;
+        return activeRef.current ? docRef.id : null;
       } catch (err) {
         logger.error("[UPLOAD] Upload failed:", err);
         // Surface the actual error so the user can tell what went
@@ -432,7 +364,7 @@ export default function ProgressPhotos() {
         if (fileInputRef.current) fileInputRef.current.value = "";
       }
     },
-    [uid, loadPhotos, getOrDeriveKey]
+    [uid, loadPhotos]
   );
 
   /** File picked for a composer slot → upload → attach to the draft. */

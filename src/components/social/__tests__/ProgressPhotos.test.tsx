@@ -15,13 +15,24 @@
  *      jsdom doesn't provide.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  waitFor,
+  act,
+  fireEvent,
+} from "@testing-library/react";
+import { Blob as NodeBlob } from "node:buffer";
+import { webcrypto } from "node:crypto";
+import { uploadBytes } from "firebase/storage";
+import { addDocGuarded } from "@/lib/firestoreWrite";
+import { decryptProgressPhoto } from "@/lib/progressPhotoCrypto";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
+let currentUid: string | null = "u-self";
 vi.mock("../../../lib/auth", () => ({
-  useAuth: () => ({ user: { uid: "u-self" } }),
-  useUid: () => ({ user: { uid: "u-self" } }).user?.uid ?? null,
+  useUid: () => currentUid,
 }));
 
 vi.mock("../../../lib/firebase", () => ({
@@ -42,14 +53,24 @@ vi.mock("@/lib/firestoreWrite", () => ({
 }));
 
 import ProgressPhotos from "../ProgressPhotos";
-import { seedFirestore, resetFirestore } from "@/test/firestoreHarness";
+import {
+  seedFirestore,
+  resetFirestore,
+  deferReads,
+  pendingReads,
+  releaseRead,
+} from "@/test/firestoreHarness";
 
 const VAULT = "users/u-self/progressPhotos";
 
 beforeEach(() => {
+  currentUid = "u-self";
   resetFirestore();
 });
 afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+  vi.clearAllMocks();
   resetFirestore();
 });
 
@@ -145,5 +166,165 @@ describe("ProgressPhotos — private-only contract (BODY-VAULT-00)", () => {
     );
     expect(source).not.toMatch(/Falling back to unencrypted/i);
     expect(source).not.toMatch(/zero IV indicates unencrypted/i);
+  });
+});
+
+describe("ProgressPhotos account isolation", () => {
+  it("clears loaded private entries immediately on account change and sign-out", async () => {
+    seedFirestore({
+      "users/u-self/progressPhotos/photo": {
+        date: "2026-09-01",
+        storagePath: "progress-photos/u-self/p.enc",
+        iv: [1],
+        createdAt: 1,
+      },
+      "users/other/progressPhotos/photo": {
+        date: "2026-09-02",
+        storagePath: "progress-photos/other/p.enc",
+        iv: [1],
+        createdAt: 1,
+      },
+      "users/u-self/progressCheckins/a": {
+        date: "2026-09-01",
+        note: "A private note",
+        photoIds: { front: "photo" },
+      },
+      "users/other/progressCheckins/b": {
+        date: "2026-09-02",
+        note: "B private note",
+        photoIds: { front: "photo" },
+      },
+    });
+    const { rerender } = render(<ProgressPhotos />);
+    await screen.findByText("A private note");
+    deferReads();
+    currentUid = "other";
+    rerender(<ProgressPhotos />);
+    expect(screen.queryByText("A private note")).toBeNull();
+    expect(pendingReads()).toContain("users/other/progressCheckins");
+    await act(async () => {
+      expect(
+        releaseRead(pendingReads().indexOf("users/other/progressPhotos"))
+      ).toBe(true);
+      expect(
+        releaseRead(pendingReads().indexOf("users/other/progressCheckins"))
+      ).toBe(true);
+    });
+    await screen.findByText("B private note");
+    currentUid = null;
+    rerender(<ProgressPhotos />);
+    expect(screen.queryByText("B private note")).toBeNull();
+  });
+
+  it("cannot paint an old account's successful late read over the new account", async () => {
+    seedFirestore({
+      "users/u-self/progressPhotos/photo": {
+        date: "2026-09-01",
+        storagePath: "progress-photos/u-self/p.enc",
+        iv: [1],
+        createdAt: 1,
+      },
+      "users/other/progressPhotos/photo": {
+        date: "2026-09-02",
+        storagePath: "progress-photos/other/p.enc",
+        iv: [1],
+        createdAt: 1,
+      },
+      "users/u-self/progressCheckins/a": {
+        date: "2026-09-01",
+        note: "A private note",
+        photoIds: { front: "photo" },
+      },
+      "users/other/progressCheckins/b": {
+        date: "2026-09-02",
+        note: "B private note",
+        photoIds: { front: "photo" },
+      },
+    });
+    deferReads();
+    const { rerender } = render(<ProgressPhotos />);
+    currentUid = "other";
+    rerender(<ProgressPhotos />);
+    await act(async () => {
+      expect(
+        releaseRead(pendingReads().indexOf("users/other/progressPhotos"))
+      ).toBe(true);
+      expect(
+        releaseRead(pendingReads().indexOf("users/other/progressCheckins"))
+      ).toBe(true);
+    });
+    await screen.findByText("B private note");
+    await act(async () => {
+      expect(
+        releaseRead(pendingReads().indexOf("users/u-self/progressPhotos"))
+      ).toBe(true);
+      expect(
+        releaseRead(pendingReads().indexOf("users/u-self/progressCheckins"))
+      ).toBe(true);
+    });
+    expect(screen.getByText("B private note")).toBeInTheDocument();
+    expect(screen.queryByText("A private note")).toBeNull();
+  });
+});
+
+describe("ProgressPhotos encrypted upload", () => {
+  function prepareImage() {
+    vi.stubGlobal("crypto", webcrypto);
+    vi.stubGlobal("Blob", NodeBlob);
+    vi.stubGlobal(
+      "createImageBitmap",
+      vi.fn(async () => ({ width: 16, height: 16 }))
+    );
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({
+      drawImage: vi.fn(),
+    } as never);
+    vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation(
+      (callback) =>
+        callback(new Blob(["compressed image"], { type: "image/webp" }))
+    );
+    URL.createObjectURL = vi.fn(() => "blob:private-photo");
+    URL.revokeObjectURL = vi.fn();
+  }
+
+  it("stores only ciphertext in Storage and the matching random key in private account metadata", async () => {
+    prepareImage();
+    const { container } = render(<ProgressPhotos />);
+    fireEvent.change(container.querySelector('input[type="file"]')!, {
+      target: {
+        files: [new File(["source"], "photo.webp", { type: "image/webp" })],
+      },
+    });
+    await waitFor(() => expect(addDocGuarded).toHaveBeenCalledOnce());
+    const metadata = vi.mocked(addDocGuarded).mock.calls[0][1];
+    expect(metadata).toMatchObject({
+      visibility: "private",
+      encryptionVersion: 2,
+    });
+    expect(metadata.encryptionKey).toHaveLength(32);
+    expect(metadata.storagePath).toMatch(/^progress-photos\/u-self\/.+\.enc$/);
+    const [, encrypted, options] = vi.mocked(uploadBytes).mock.calls[0];
+    expect(options).toEqual({ contentType: "image/webp" });
+    const restored = await decryptProgressPhoto(
+      (encrypted as Uint8Array).buffer as ArrayBuffer,
+      "u-self",
+      metadata as never
+    );
+    expect(new TextDecoder().decode(restored)).toBe("compressed image");
+  });
+
+  it("uploads nothing when random key generation fails", async () => {
+    prepareImage();
+    vi.spyOn(webcrypto.subtle, "generateKey").mockRejectedValueOnce(
+      new Error("Crypto unavailable")
+    );
+    const { container } = render(<ProgressPhotos />);
+    fireEvent.change(container.querySelector('input[type="file"]')!, {
+      target: {
+        files: [new File(["source"], "photo.webp", { type: "image/webp" })],
+      },
+    });
+    await screen.findByText(/Couldn't encrypt the photo/);
+    expect(uploadBytes).not.toHaveBeenCalled();
+    expect(addDocGuarded).not.toHaveBeenCalled();
   });
 });
