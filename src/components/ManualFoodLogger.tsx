@@ -270,7 +270,7 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
               ) : saving ? (
                 "Saving meal..."
               ) : (
-                "Log This Meal"
+                "Log meal"
               )}
             </motion.button>
           </AnimatePresence>

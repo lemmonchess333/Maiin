@@ -37,10 +37,10 @@ export default function RestDayCard() {
           Today · Rest day
         </p>
         <p className="text-base font-bold text-foreground leading-tight">
-          Recover &amp; refuel
+          Take it easy
         </p>
         <p className="text-xs text-muted-foreground mt-0.5">
-          Rest is part of the programme — your body is adapting
+          Rest is part of the programme
         </p>
       </div>
     </motion.div>

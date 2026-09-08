@@ -1389,7 +1389,7 @@ export default function History() {
                 icon={LineChart}
                 accent={THEME.brand}
                 headline="No analytics yet"
-                sub="Log a workout, run, or meal and your trends — volume, pace, calories and your Performance Index — will show up here."
+                sub="Log a workout, run or meal and your trends will show up here."
                 action={{ label: "Start a workout", href: "/program" }}
               />
             )}

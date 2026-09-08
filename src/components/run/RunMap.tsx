@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState } from "react";
-import maplibregl from "maplibre-gl";
+import * as maplibregl from "maplibre-gl";
+import "@/lib/maplibreWorker";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Plus, Minus, LocateFixed, Compass } from "lucide-react";
 import { splitRouteSegments } from "@/lib/routeSegments";

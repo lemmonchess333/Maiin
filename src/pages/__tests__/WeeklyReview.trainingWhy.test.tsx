@@ -72,7 +72,7 @@ describe("WeeklyReview — D16 resurfaces the why", () => {
     mockProfile = { trainingWhy: "Feel stronger" };
     mockReview = QUIET_REVIEW;
     renderReview();
-    expect(screen.getByText("Your why")).toBeTruthy();
+    expect(screen.getByText("Why you train")).toBeTruthy();
     expect(screen.getByText(/Feel stronger/)).toBeTruthy();
   });
 
@@ -80,20 +80,20 @@ describe("WeeklyReview — D16 resurfaces the why", () => {
     mockProfile = { trainingWhy: "" };
     mockReview = QUIET_REVIEW;
     renderReview();
-    expect(screen.queryByText("Your why")).toBeNull();
+    expect(screen.queryByText("Why you train")).toBeNull();
   });
 
   it("treats a whitespace-only why as unset", () => {
     mockProfile = { trainingWhy: "   " };
     mockReview = QUIET_REVIEW;
     renderReview();
-    expect(screen.queryByText("Your why")).toBeNull();
+    expect(screen.queryByText("Why you train")).toBeNull();
   });
 
   it("does not show the why before a review exists (empty first week)", () => {
     mockProfile = { trainingWhy: "Feel stronger" };
     mockReview = null;
     renderReview();
-    expect(screen.queryByText("Your why")).toBeNull();
+    expect(screen.queryByText("Why you train")).toBeNull();
   });
 });

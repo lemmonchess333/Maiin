@@ -320,7 +320,7 @@ export default function Login() {
             fullWidth
             size="md"
           >
-            {isSignUp ? "Create Account" : "Sign In"}
+            {isSignUp ? "Create account" : "Sign In"}
           </Button>
         </form>
 
