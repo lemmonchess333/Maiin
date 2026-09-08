@@ -1,33 +1,40 @@
-import { useState } from "react";
 import { energyBarGeometry } from "@/lib/energyBarGeometry";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { THEME } from "@/lib/theme";
 import { Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, ChevronUp, UtensilsCrossed } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import { UtensilsCrossed } from "lucide-react";
 import { haptic } from "@/lib/haptic";
 import { formatCalories, CALORIE_UNIT } from "@/utils/formatNutrition";
 import { Skeleton } from "@/components/LoadingSkeleton";
-import type { DailyBurn } from "@/utils/dailyBurn";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 import MacroRing from "@/components/home/MacroRing";
-import BreakdownRow from "@/components/home/BreakdownRow";
-import { usePersistedToggle } from "@/hooks/usePersistedToggle";
 import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
 
 /**
- * Today's energy — Home's nutrition summary.
+ * Today's nutrition — Home's food summary.
  *
- * One compact summary, one logging action, one disclosure. The header
- * carries everything a glance needs — calories eaten / target, the phase,
- * the progress bar and the three macros in the same eaten/target
- * framing — and is the single tap that opens the details. The details
- * hold only what explains the target: the macro rings (with their
- * consumed/remaining flip), what today's training already contributed, and
- * the post-workout protein nudge. The one way into the food log is the
- * "Log food" action at the foot of the card; the cold-start state is a
- * status line above it, not a second link.
+ * One card, everything visible, no disclosure. Calories against their
+ * target, the three macros against theirs, and a single way into the
+ * food log. Calories and macros are everyday information: they were
+ * behind a "Details" toggle, with a compact "P 98/140g · C 141/273g ·
+ * F 38/61g" line standing in for them, which asked the reader to decode
+ * a string to learn what three rings say at a glance — and cost a tap
+ * to see the rings that were the point.
+ *
+ * The verb is "logged", not "eaten". The app knows what reached the
+ * diary; it does not know what reached the person. An empty diary is a
+ * statement about the log, so an empty card reads "0 kcal logged"
+ * rather than asserting the reader has eaten nothing.
+ *
+ * The "Burned today" breakdown is deliberately NOT here, and its absence
+ * is a de-duplication rather than a loss: Food's nutrition drill-down
+ * already carries an "Activity today" section with the same figures split
+ * by lifting and running, the same total, and the same Nutr1 sentence
+ * about not eating them back. Keeping both meant the one surface a user
+ * reads every day paid 93px for a copy of the explanation, and paid it
+ * only on the days they had actually trained, which is when the card is
+ * most crowded.
  *
  * Two rows were removed because nothing could ever render them: a
  * "Plan target" line shown when the header's target differed from the
@@ -40,74 +47,45 @@ export default function TodayEnergy({
   protein,
   carbs,
   fat,
-  burn,
   targets,
-  totalLifetimeMeals = 0,
-  daysSinceLastMeal = Infinity,
   mealsLoading = false,
-  uid,
   postWorkoutNudge,
 }: {
   calories: number;
   protein: number;
   carbs: number;
   fat: number;
-  burn: DailyBurn;
   targets: EffectiveTargets;
-  totalLifetimeMeals?: number;
-  daysSinceLastMeal?: number;
   mealsLoading?: boolean;
-  /** Scopes the remembered expand state per account (shared-device rule). */
-  uid?: string | null;
   postWorkoutNudge?: {
     type: "lift" | "run" | "both";
     proteinRemaining: number;
   } | null;
 }) {
-  // Remembered per account, closed by default (Wave3 E1 keeps the Home
-  // scroll calm by holding the three macro hues inside the disclosure);
-  // opening it counts as a choice, and a shared device must not carry one
-  // account's layout into another's session.
-  const { value: expanded, toggle: toggleExpanded } = usePersistedToggle(
-    `tropos-today-energy-expanded:${uid ?? "anon"}`
-  );
-  // Macro rings flip between consumed and remaining on tap; the mode lives
-  // here so all three rings stay in sync.
-  const [macroMode, setMacroMode] = useState<"consumed" | "left">("consumed");
   const tCal = targets.finalTarget;
   // Nutr3: below the essential-fat floor the split funds no protein or
-  // carbs, so those two carry NO goal (0 → "—" on the rings and the summary)
-  // rather than a 0 g goal every meal "meets". Fat keeps its floor figure.
+  // carbs, so those two carry NO goal ("No target" on the rings) rather
+  // than a 0 g goal every meal "meets". Fat keeps its floor figure.
   const tProt = targets.targetInfeasible ? 0 : targets.protein;
   const tCarbs = targets.targetInfeasible ? 0 : targets.carbs;
   const tFat = targets.fat;
   const calPct = (calories / tCal) * 100;
 
-  const proteinColor = THEME.macros.protein;
-  const carbsColor = THEME.macros.carbs;
-  const fatColor = THEME.macros.fat;
-
-  // The compact macros read eaten/target exactly as the calorie line does.
-  // Nothing is clamped: an over-target macro shows as "200/160g", so going
-  // over stays visible without colour saying it (no macro hue renders
-  // collapsed). Grams are unspaced on the food surface, house style.
-  const macroSummary = targets.targetInfeasible
-    ? `P ${Math.round(protein)}g · C ${Math.round(carbs)}g · F ${Math.round(fat)}/${Math.round(tFat)}g`
-    : `P ${Math.round(protein)}/${Math.round(tProt)}g · C ${Math.round(carbs)}/${Math.round(tCarbs)}g · F ${Math.round(fat)}/${Math.round(tFat)}g`;
-
-  // A brand-new user with no meals ever: the macros carry no information
-  // at 0g, so the summary line yields to a status line that says what to
-  // do. Returning users with a logged history keep the summary.
-  const isColdStart =
-    !mealsLoading && calories === 0 && totalLifetimeMeals === 0;
   /**
-   * A confident "0 eaten" while the day's meals are still arriving is a
-   * false statement, not a neutral placeholder: it is indistinguishable
-   * from having eaten nothing, and the reader most likely to see it is
-   * the returning user who ate a full day yesterday. The guard is
-   * `calories === 0` rather than `mealsLoading` alone so a load that
-   * already has a figure keeps showing it instead of flickering back to a
-   * skeleton. Same shape as WeightStepsTiles' `pending`.
+   * A confident "0 kcal logged" while the day's meals are still arriving
+   * is a false statement, not a neutral placeholder: it is
+   * indistinguishable from a day with nothing logged, and the reader most
+   * likely to see it is the returning user who logged a full day
+   * yesterday. The guard is `calories === 0` rather than `mealsLoading`
+   * alone so a load that already has a figure keeps showing it instead of
+   * flickering back to a skeleton. Same shape as WeightStepsTiles'
+   * `pending`.
+   *
+   * It gates the RINGS as well as the calorie figure, which is also what
+   * keeps MacroRing's completion flash honest: mounting the rings only
+   * once the day has settled means their `done` baseline is the real one,
+   * so arriving data cannot fire a celebration for a target that was
+   * already met before this render.
    */
   const caloriesPending = mealsLoading && calories === 0;
   const nudgeText =
@@ -118,23 +96,22 @@ export default function TodayEnergy({
           // not a claimed recovery effect.
           `Post-lift — ${postWorkoutNudge.proteinRemaining}g protein to your target`
       : null;
-  const showLapsedNote =
-    !mealsLoading &&
-    calories === 0 &&
-    totalLifetimeMeals > 0 &&
-    daysSinceLastMeal >= 3;
+
+  const macros = [
+    {
+      label: "Protein",
+      value: protein,
+      target: tProt,
+      color: THEME.macros.protein,
+    },
+    { label: "Carbs", value: carbs, target: tCarbs, color: THEME.macros.carbs },
+    { label: "Fat", value: fat, target: tFat, color: THEME.macros.fat },
+  ];
 
   return (
     <div className="rounded-2xl bg-card overflow-hidden">
-      {/* Summary header — the one tap that opens the details. */}
-      <button
-        type="button"
-        onClick={function () {
-          haptic();
-          toggleExpanded();
-        }}
-        aria-expanded={expanded}
-        className="w-full text-left px-4 pt-4 pb-3 border-b border-border/30"
+      <div
+        className="px-4 pt-4 pb-4"
         style={{
           background:
             "linear-gradient(135deg, " +
@@ -142,55 +119,50 @@ export default function TodayEnergy({
             "08 0%, transparent 70%)",
         }}
       >
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <p
-              className="text-xs font-semibold"
-              style={{ color: "hsl(var(--muted-foreground))" }}
-            >
-              Today's energy
-            </p>
-            {burn.phase && (
-              // HOME-TARGET-01: the phase label only — the real adjustment
-              // already lives in `targets.finalTarget`, the number below.
-              <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-                {burn.phase === "lean bulk"
-                  ? "Bulk"
-                  : burn.phase === "cut"
-                    ? "Cut"
-                    : "Recomp"}
+        <div className="mb-2.5">
+          <SectionLabel>Today's nutrition</SectionLabel>
+        </div>
+
+        {/* Calories. The target is NAMED rather than implied by a slash:
+            "/ 2,200 kcal" beside a big number leaves the reader to infer
+            which of the two figures is the goal. */}
+        <div className="flex items-baseline justify-between gap-3">
+          <div className="flex items-baseline gap-1.5 min-w-0">
+            {caloriesPending ? (
+              <span role="status" aria-label="Today's calories still loading">
+                <Skeleton className="h-7 w-20" />
+              </span>
+            ) : (
+              <span className="text-3xl font-extrabold font-mono tabular-nums leading-none text-foreground">
+                {formatCalories(calories || 0)}
               </span>
             )}
+            <span className="text-xs text-muted-foreground">
+              {CALORIE_UNIT} logged
+            </span>
           </div>
-          <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground">
-            Details
-            {expanded ? (
-              <ChevronUp className="size-3.5" aria-hidden="true" />
-            ) : (
-              <ChevronDown className="size-3.5" aria-hidden="true" />
-            )}
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            Target{" "}
+            <span className="font-mono tabular-nums">
+              {formatCalories(tCal)}
+            </span>{" "}
+            {CALORIE_UNIT}
           </span>
         </div>
-        <div className="flex items-baseline gap-2">
-          {caloriesPending ? (
-            <span role="status" aria-label="Today's calories still loading">
-              <Skeleton className="h-6 w-16" />
-            </span>
-          ) : (
-            <span className="text-2xl font-bold font-mono tabular-nums leading-none text-foreground">
-              {formatCalories(calories || 0)}
-            </span>
-          )}
-          <span className="text-micro text-muted-foreground">eaten</span>
-          <span className="text-micro text-muted-foreground font-mono tabular-nums">
-            / {formatCalories(tCal)} {CALORIE_UNIT}
-          </span>
-        </div>
+
         {(() => {
           const { barWidth, tickPct } = energyBarGeometry(calPct);
           return (
             <div className="relative h-2.5 mt-2.5">
-              <div className="absolute inset-0 rounded-full bg-muted overflow-hidden">
+              {/* Same neutral groove as the macro rings below. `bg-muted`
+                  measures 1.06:1 against the card, so an unfilled bar was
+                  as invisible as the rings were. */}
+              <div
+                className="absolute inset-0 rounded-full overflow-hidden"
+                style={{
+                  backgroundColor: "hsl(var(--muted-foreground) / 0.22)",
+                }}
+              >
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: barWidth + "%" }}
@@ -216,173 +188,55 @@ export default function TodayEnergy({
             </div>
           );
         })()}
-        {!isColdStart &&
-          !expanded &&
-          (caloriesPending ? (
-            // Same reasoning as the calorie figure: "P 0/150g" is a claim,
-            // not a placeholder.
-            <Skeleton className="mt-2.5 h-3 w-48" />
-          ) : (
-            <p className="mt-2.5 text-micro text-muted-foreground font-mono tabular-nums">
-              {macroSummary}
-            </p>
-          ))}
-      </button>
 
-      {/* A target below the essential-fat floor's own cost: the summary
-          above would otherwise read "P 125/0g" as if 0 g were the goal.
+        {/* The three macros, always visible. */}
+        <div className="mt-3.5 grid grid-cols-3 gap-1">
+          {caloriesPending
+            ? macros.map((m) => (
+                <div
+                  key={m.label}
+                  className="flex flex-col items-center gap-1.5"
+                  aria-hidden="true"
+                >
+                  <Skeleton className="size-16 rounded-full" />
+                  <Skeleton className="h-3 w-12" />
+                  <Skeleton className="h-3 w-14" />
+                </div>
+              ))
+            : macros.map((m) => (
+                <MacroRing
+                  key={m.label}
+                  value={m.value}
+                  target={m.target}
+                  color={m.color}
+                  label={m.label}
+                  unit="g"
+                />
+              ))}
+        </div>
+      </div>
+
+      {/* A target below the essential-fat floor's own cost: the rings
+          above would otherwise read "Target 0g" as if 0 g were the goal.
           Same sentence as Settings and Food (macroInfeasibility.ts). */}
       {targets.targetInfeasible && (
         <p
           role="status"
-          className="px-4 py-2.5 text-xs leading-snug border-b border-border/30"
+          className="px-4 py-2.5 text-xs leading-snug border-t border-border/30"
           style={{ color: "hsl(var(--warning-strong))" }}
         >
           {macroInfeasibilityMessage(targets.minFeasibleKcal)}
         </p>
       )}
 
-      {/* Details — only what explains the numbers above. */}
-      <AnimatePresence>
-        {expanded && (
-          <motion.div
-            key="breakdown"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <div className="p-4 space-y-2.5">
-              {!isColdStart && (
-                <motion.button
-                  type="button"
-                  layout
-                  onClick={() => {
-                    haptic();
-                    setMacroMode((m) =>
-                      m === "consumed" ? "left" : "consumed"
-                    );
-                  }}
-                  aria-label={
-                    macroMode === "consumed"
-                      ? "Macros showing consumed. Tap to switch to remaining."
-                      : "Macros showing remaining. Tap to switch to consumed."
-                  }
-                  className={cn(
-                    "w-full flex items-center justify-around pb-1 motion-safe:active:scale-[0.99] transition-transform",
-                    calories === 0 && "opacity-50"
-                  )}
-                >
-                  <MacroRing
-                    value={protein}
-                    target={tProt}
-                    color={proteinColor}
-                    label="Protein"
-                    unit="g"
-                    displayMode={macroMode}
-                  />
-                  <MacroRing
-                    value={carbs}
-                    target={tCarbs}
-                    color={carbsColor}
-                    label="Carbs"
-                    unit="g"
-                    displayMode={macroMode}
-                  />
-                  <MacroRing
-                    value={fat}
-                    target={tFat}
-                    color={fatColor}
-                    label="Fat"
-                    unit="g"
-                    displayMode={macroMode}
-                  />
-                </motion.button>
-              )}
-              {/* Nutr1: activity is INFORMATIONAL — it's already counted in
-                  the target above, never added back (no eat-back budget). */}
-              {(burn.workoutCalories > 0 ||
-                burn.runCalories > 0 ||
-                burn.stepCalories > 0) && (
-                <>
-                  <div className="h-px bg-border/50" />
-                  <SectionLabel tier="section">
-                    Burned today · already in your target
-                  </SectionLabel>
-                  {burn.workoutCalories > 0 && (
-                    <BreakdownRow
-                      label="Workout"
-                      value={burn.workoutCalories}
-                      color={THEME.semantic.positive}
-                    />
-                  )}
-                  {burn.runCalories > 0 && (
-                    <BreakdownRow
-                      label="Run"
-                      value={burn.runCalories}
-                      color={THEME.semantic.vitals}
-                    />
-                  )}
-                  {burn.stepCalories > 0 && (
-                    <BreakdownRow
-                      label="Steps"
-                      value={burn.stepCalories}
-                      color={"hsl(var(--muted-foreground))"}
-                    />
-                  )}
-                </>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Situational notes — never a second way into the food log. */}
-      {(nudgeText || showLapsedNote || isColdStart) && (
-        <div className="px-4 pt-3 pb-3 space-y-2">
-          {nudgeText && (
-            <p
-              className="text-xs font-medium text-center"
-              style={{ color: THEME.semantic.nutrition }}
-            >
-              {nudgeText}
-            </p>
-          )}
-          {showLapsedNote && (
-            <p className="text-xs text-muted-foreground text-center">
-              Nothing logged yet today
-            </p>
-          )}
-          {isColdStart && (
-            /* Home2c-locked phrase, one sentence. A status, not a link: the
-               Log food action directly below is the one way in, so this
-               block explains rather than duplicates it. */
-            <div
-              role="status"
-              aria-label="No meals logged today. Log a meal to see your daily energy."
-              className="flex flex-col items-center justify-center rounded-xl px-6 py-5"
-              style={{ backgroundColor: THEME.semantic.nutrition + "0A" }}
-            >
-              <div
-                className="size-10 rounded-lg flex items-center justify-center mb-2"
-                style={{ backgroundColor: THEME.semantic.nutrition + "14" }}
-              >
-                <UtensilsCrossed
-                  className="size-5"
-                  style={{ color: THEME.semantic.nutrition }}
-                  aria-hidden="true"
-                />
-              </div>
-              <p
-                className="text-sm font-semibold text-center"
-                style={{ color: THEME.semantic.nutrition }}
-              >
-                Log a meal to see your daily energy
-              </p>
-            </div>
-          )}
-        </div>
+      {/* Situational note — never a second way into the food log. */}
+      {nudgeText && (
+        <p
+          className="px-4 pb-3 text-xs font-medium text-center"
+          style={{ color: THEME.semantic.nutrition }}
+        >
+          {nudgeText}
+        </p>
       )}
 
       {/* The one logging action (#973): its own control, nutrition-orange,

@@ -15,7 +15,7 @@ import type { Page } from "@playwright/test";
  *
  * The one-pixel moves are rounding. The 267px jump is a different page:
  * Home is data-heavy (`useHomeData`, lazily-mounted cards, Firestore
- * snapshots), and its anchor — "Today's energy" becoming visible — sits
+ * snapshots), and its anchor — "Today's nutrition" becoming visible — sits
  * near the TOP, so the shutter can fire while a card below the fold is
  * still arriving. A frame that swings 267px between runs cannot be diffed,
  * which means a real regression on Home has somewhere to hide.

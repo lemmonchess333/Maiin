@@ -17,7 +17,6 @@ import type { UserProfile } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { sumMealTotals, type MealTotalsInput } from "@/lib/mealTotals";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
-import { estimateRunCalories } from "@/lib/gps";
 import { calcWeightTrend } from "@/utils/weightTrend";
 import {
   collapseBodyweightLogs,
@@ -55,7 +54,6 @@ interface HomeDataState {
   // mismatch (e.g. Home showing 200g carbs, Food showing 400g).
   dailyCarbs: number;
   dailyFat: number;
-  todayRunCals: number;
   /* Epoch ms of the most recent countable run finished today, or null.
      Drives the "run" half of the post-workout nudge — see the effect
      below for why a run cannot be recognised from `workouts`. */
@@ -101,7 +99,6 @@ export function useHomeData(
     dailyProt: 0,
     dailyCarbs: 0,
     dailyFat: 0,
-    todayRunCals: 0,
     lastRunAtMs: null,
     lastWeightInfo: null,
     weightTrend: null,
@@ -173,7 +170,6 @@ export function useHomeData(
           let prot = 0;
           let carb = 0;
           let fat = 0;
-          let rCals = 0;
           let lastRunAtMs: number | null = null;
           let weightInfo: WeightInfo | null = null;
           let weightTrend: WeightTrendDirection = null;
@@ -199,20 +195,14 @@ export function useHomeData(
             errors.push("Failed to load meals");
           }
 
-          // Runs — today's run-calorie aggregate feeds the Home energy
-          // tile and the HybridBalanceCard. P0.5: skip non-countable
-          // runs so a saved-anyway "too-fast" 20km / 0:08 misclick
-          // doesn't credit the user ~1500kcal of phantom burn and
-          // distort the daily energy picture.
+          // Runs — read for the newest countable finish, which is the
+          // post-workout nudge's only evidence a run happened. P0.5: skip
+          // non-countable runs so a saved-anyway "too-fast" 20km / 0:08
+          // misclick can't trigger a refuel prompt.
           if (results[1].status === "fulfilled") {
-            const weightKg = profile?.weightKg || 70;
             results[1].value.docs.forEach(function (d) {
               const data = d.data();
               if (!isVolumeEligible(data)) return;
-              rCals += estimateRunCalories(data.distance || 0, weightKg);
-              // Newest countable finish — the nudge's only evidence a run
-              // happened. Same eligibility gate as the calorie tally, so a
-              // saved-anyway misclick can't trigger a refuel prompt either.
               const at = data.completedAt?.toMillis?.();
               if (
                 typeof at === "number" &&
@@ -320,7 +310,6 @@ export function useHomeData(
             dailyProt: prot,
             dailyCarbs: carb,
             dailyFat: fat,
-            todayRunCals: rCals,
             lastRunAtMs,
             lastWeightInfo: weightInfo,
             weightTrend,
@@ -424,7 +413,6 @@ export function useHomeData(
     dailyProt: state.dailyProt,
     dailyCarbs: state.dailyCarbs,
     dailyFat: state.dailyFat,
-    todayRunCals: state.todayRunCals,
     lastWeightInfo: state.lastWeightInfo,
     weightTrend: state.weightTrend,
     postWorkoutNudge,

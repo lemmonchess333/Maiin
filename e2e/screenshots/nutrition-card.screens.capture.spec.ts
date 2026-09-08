@@ -1,8 +1,16 @@
 /**
- * Reverted "Today's energy" collapsible-card capture (2026-07-20 3rd
- * pass — the card restored from pre-declutter c4c5de17). Proves the
- * card is collapsible again: collapsed = muted summary; tap the header
- * → expands to the macro rings + burned-today breakdown. Light + dark.
+ * Home's "Today's nutrition" card, light + dark.
+ *
+ * This spec previously filmed the card's two states — collapsed summary,
+ * then tapped open to the macro rings. There is one state now: calories
+ * against their target, the three macros against theirs, and the log
+ * action, none of it behind a disclosure. So the pair of frames became
+ * one pair per theme, and the tap step went with the button it drove.
+ *
+ * Light AND dark both matter here beyond the usual: the ring track is a
+ * neutral groove at `--muted-foreground / 0.22`, chosen because a track
+ * tinted with the macro's own hue measured 1.06:1 against the card for
+ * carbs. These frames are where that reads as fixed or does not.
  *
  * Same rig conventions as home.screens.capture.spec.ts (mobile
  * viewport, rich-seeded user, best-effort waits).
@@ -19,7 +27,7 @@ test.use({
     : {}),
 });
 
-test.describe("energy collapsible card", () => {
+test.describe("today's nutrition card", () => {
   test.skip(
     !emulatorActive,
     "needs the Firebase emulator (auth-emulator project)"
@@ -60,7 +68,7 @@ test.describe("energy collapsible card", () => {
     );
   }
 
-  test("collapsed then expanded — light + dark", async ({ page }) => {
+  test("the one state — light + dark", async ({ page }) => {
     test.setTimeout(120_000);
     await page.goto("");
     await page
@@ -79,17 +87,16 @@ test.describe("energy collapsible card", () => {
       await page.waitForTimeout(350);
     }
 
-    // Collapsed default.
-    await shootLightDark(page, "energy-collapsed");
-
-    // Expand: the card header is a button carrying "Today's energy".
-    const header = page
-      .getByRole("button", { name: /today's energy/i })
-      .first();
-    await header.click({ timeout: 5000 }).catch(() => {
-      /* header copy changed — capture stays on the collapsed state */
-    });
-    await page.waitForTimeout(700);
-    await shootLightDark(page, "energy-expanded");
+    /* Anchor on the card being LOADED, not merely present. The heading
+       renders immediately while the target arrives from the profile, and
+       an unloaded card shows "/ 0 kcal" with every ring at 0g — a frame
+       that looks like a legitimate empty day rather than a miss.
+       Separator-agnostic for the reason `energyCaptureAnchor.test.tsx`
+       records: `formatCalories` is `toLocaleString()` with no locale. */
+    await page
+      .getByText(/Target [1-9][\d.,\s\u00a0\u202f]*kcal/)
+      .first()
+      .waitFor({ state: "visible", timeout: 20000 });
+    await shootLightDark(page, "nutrition-card");
   });
 });

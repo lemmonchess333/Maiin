@@ -168,32 +168,13 @@ describe("useHomeData", { timeout: 5000 }, () => {
     expect(result.current.dailyProt).toBe(40);
   });
 
-  it("counts ONLY runs completed today — an older run is filtered out", async () => {
-    // Same gap on the runs side: `where("completedAt", ">=", todayTs)`.
-    const yesterday = new Date(todayStart);
-    yesterday.setDate(yesterday.getDate() - 1);
-    seedFirestore({
-      [`${RUNS}/today`]: {
-        completedAt: Timestamp.fromDate(todayStart),
-        distance: 5000,
-        duration: 1800,
-      },
-      [`${RUNS}/old`]: {
-        completedAt: Timestamp.fromDate(yesterday),
-        distance: 40000,
-        duration: 14400,
-      },
-    });
-
-    const profile = makeProfile({ weightKg: 70 });
-    const { result } = renderHook(() =>
-      useHomeData({ uid: "u1" }, profile, [], "kg")
-    );
-    await waitFor(() => expect(result.current.loading).toBe(false));
-
-    // 70 * 5 * 1.036 = 362.6 -> 363. The 40km row would dwarf this.
-    expect(result.current.todayRunCals).toBe(363);
-  });
+  /* "counts ONLY runs completed today" lived here. Its only observable
+     was the run-calorie aggregate, which this hook no longer returns, and
+     the `where("completedAt", ">=", todayTs)` clause it covered is now
+     redundant with the nudge's own two-hour staleness gate for the single
+     remaining consumer — an older run is rejected either way. The clause
+     stays because it narrows the read; it no longer changes an answer, so
+     there is nothing left to assert that could fail. */
 
   it("returns zero defaults when no user", () => {
     const { result } = renderHook(() => useHomeData(null, null, [], "kg"));
@@ -222,80 +203,12 @@ describe("useHomeData", { timeout: 5000 }, () => {
     expect(result.current.dailyProt).toBe(60);
   });
 
-  it("computes run calories using weight and distance", async () => {
-    const runsRows = [{ distance: 5000, duration: 1800 }];
-    seedHome([], runsRows, []);
-
-    const profile = makeProfile({ weightKg: 80 });
-    const { result } = renderHook(() =>
-      useHomeData({ uid: "u1" }, profile, [], "kg")
-    );
-
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
-    });
-
-    // 80 * 5 * 1.036 = 414.4 → 414
-    expect(result.current.todayRunCals).toBe(414);
-  });
-
-  // P0.5 run-stat hygiene: a saved-anyway invalid run (the
-  // misclick / fat-fingered-distance case from PR #480) must not
-  // contribute phantom calories to today's energy aggregate.
-  // Pre-fix this hook only read `distance` and the calorie estimate
-  // pulled in ~414kcal for a 5km "too-fast" save the user never
-  // ran.
-  it("excludes isInvalid runs from todayRunCals", async () => {
-    const runsRows = [{ distance: 5000, duration: 1800, isInvalid: true }];
-    seedHome([], runsRows, []);
-
-    const profile = makeProfile({ weightKg: 80 });
-    const { result } = renderHook(() =>
-      useHomeData({ uid: "u1" }, profile, [], "kg")
-    );
-
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
-    });
-
-    expect(result.current.todayRunCals).toBe(0);
-  });
-
-  it("excludes savedAnyway runs from todayRunCals", async () => {
-    const runsRows = [{ distance: 5000, duration: 1800, savedAnyway: true }];
-    seedHome([], runsRows, []);
-
-    const profile = makeProfile({ weightKg: 80 });
-    const { result } = renderHook(() =>
-      useHomeData({ uid: "u1" }, profile, [], "kg")
-    );
-
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
-    });
-
-    expect(result.current.todayRunCals).toBe(0);
-  });
-
-  it("still counts legacy runs (no isInvalid / savedAnyway fields)", async () => {
-    // Pre-PR-#480 docs have neither flag. The eligibility predicate
-    // treats missing flags as not-flagged so historic runs stay in
-    // the aggregate; the distance/duration floors (50m + 30s) still
-    // gate them. Regression guard for the missing-field branch.
-    const runsRows = [{ distance: 5000, duration: 1800 }];
-    seedHome([], runsRows, []);
-
-    const profile = makeProfile({ weightKg: 80 });
-    const { result } = renderHook(() =>
-      useHomeData({ uid: "u1" }, profile, [], "kg")
-    );
-
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
-    });
-
-    expect(result.current.todayRunCals).toBe(414);
-  });
+  /* The P0.5 run-hygiene trio (isInvalid / savedAnyway / legacy rows)
+     asserted those flags against the run-calorie aggregate this hook no
+     longer computes. The predicate itself is pinned in
+     runStatsEligibility.test.ts and runEligibility.cross.test.ts, and it
+     is still exercised through THIS hook by "an ineligible run does not
+     prompt a refuel" below — the composition that remains live. */
 
   it("falls back to profile weight when bodyweightLogs is empty (kg)", async () => {
     seedHome([], [], []);
@@ -355,8 +268,10 @@ describe("useHomeData", { timeout: 5000 }, () => {
     // "runs still computed" half below.
     expect(unfiredFailures()).toEqual([]);
     expect(result.current.error).toContain("Failed to load meals");
-    // Runs still computed: 70 * 3 * 1.036 = 217.56 → 218
-    expect(result.current.todayRunCals).toBe(218);
+    // The non-meal half still resolved. Anchored on weight rather than
+    // runs because the run aggregate is gone; without a positive here the
+    // test would pass on a hook that resolved nothing at all.
+    expect(result.current.lastWeightInfo).not.toBeNull();
   });
 
   it("converts weight to lbs when weightUnit is lbs", async () => {
@@ -558,16 +473,15 @@ describe("useHomeData", { timeout: 5000 }, () => {
     });
 
     it("an ineligible run does not prompt a refuel", async () => {
-      // Same gate as the calorie tally: a saved-anyway misclick must not
-      // credit burn OR trigger a refuel prompt. Anchored on the loaded
-      // state (todayRunCals settles to 0) so the null read is not just the
-      // effect's initial value — `toBeNull` alone passes at t=0.
+      // A saved-anyway misclick must not trigger a refuel prompt.
+      // Anchored on the meal the harness seeds having landed, so the null
+      // read is not just the effect's initial value — `toBeNull` alone
+      // passes at t=0.
       const { result } = renderWith(
         [{ ...countableRun, savedAnyway: true }],
         []
       );
-      await waitFor(() => expect(result.current.loading).toBe(false));
-      expect(result.current.todayRunCals).toBe(0);
+      await waitFor(() => expect(result.current.dailyCal).toBe(500));
       expect(result.current.postWorkoutNudge).toBeNull();
     });
 
@@ -583,12 +497,9 @@ describe("useHomeData", { timeout: 5000 }, () => {
         ],
         []
       );
-      // Anchored on the run having actually been READ (it still counts
-      // toward today's calories) — otherwise this passes while the runs
-      // query returns nothing.
-      await waitFor(() =>
-        expect(result.current.todayRunCals).toBeGreaterThan(0)
-      );
+      // Anchored on the seeded meal having landed — otherwise this passes
+      // while the hook has resolved nothing at all.
+      await waitFor(() => expect(result.current.dailyCal).toBe(500));
       expect(result.current.postWorkoutNudge).toBeNull();
     });
   });

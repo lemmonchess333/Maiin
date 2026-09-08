@@ -92,7 +92,6 @@ const OWNED_ID = /tropos:reconcileDismissed:/;
 const KEY_IS_A_PARAMETER: Record<string, string> = {
   "useDismissOnce.ts":
     "the hook prefixes the uid itself; the inner reader takes the finished key",
-  "usePersistedToggle.ts": "generic toggle — caller supplies the key",
   "useSnoozeDismiss.ts": "generic snooze — caller supplies the key",
   "useFeedSubTabFreshness.ts": "builds its key from the uid prop it is given",
   "useWorkoutDraft.ts":
