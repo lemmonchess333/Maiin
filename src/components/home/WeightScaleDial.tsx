@@ -214,6 +214,18 @@ export default function WeightScaleDial({
           {ticks.map((tick) => {
             const angle = (tick - position) * ANGLE_PER_TICK;
             const radians = (angle * Math.PI) / 180;
+            /* Fade the drum out towards its edges. The window is 22 ticks
+               either side of centre, so the outermost markings sit at
+               ~37 degrees: far enough round that they render as long,
+               steeply-rotated strokes with their labels stranded below
+               the arc, which reads as the scale breaking rather than
+               curving away. Every physical scale this imitates dissolves
+               at the edge for the same reason. Full strength through the
+               readable middle, gone by the rim. */
+            const edgeFade = Math.max(
+              0,
+              Math.min(1, (34 - Math.abs(angle)) / 16)
+            );
             const major = tick % 10 === 0;
             const middle = tick % 5 === 0;
             const inner = RADIUS - (major ? 24 : middle ? 17 : 10);
@@ -231,6 +243,7 @@ export default function WeightScaleDial({
                   y2={CENTRE_Y - inner * Math.cos(radians)}
                   stroke="currentColor"
                   strokeWidth={major ? 1.5 : 1}
+                  opacity={edgeFade}
                   className={
                     major ? "text-foreground" : "text-muted-foreground"
                   }
@@ -242,6 +255,7 @@ export default function WeightScaleDial({
                     textAnchor="middle"
                     dominantBaseline="middle"
                     fill="currentColor"
+                    opacity={edgeFade}
                     className="text-micro text-muted-foreground font-mono tabular-nums"
                   >
                     {label}

@@ -21,6 +21,8 @@ import {
   queueWater,
   pendingWater,
   flushWater,
+  settledWater,
+  retireSettled,
   waterSyncError,
   type WaterAction,
 } from "../waterActions";
@@ -148,6 +150,61 @@ describe("durable water actions", () => {
     ).toBe(100);
   });
 });
+describe("committed water awaiting its snapshot", () => {
+  /* The queue entry has to go the moment the transaction commits or the
+     flush loop spins on it, but the listener is a separate round-trip.
+     Between the two the card had a fresh total nowhere to read and no
+     queued action left to add, so it rendered the figure from BEFORE
+     the tap. `waterFlash.auth.spec.ts` covers the window itself in a
+     real browser — the fake here delivers snapshots on a drained
+     microtask queue, so the gap does not exist in jsdom. What IS
+     testable here is the overlay's own contract. */
+  it("moves a committed tap out of the queue and into the overlay", async () => {
+    queueWater("u1", drink("s1", 250));
+    expect(pendingWater("u1")).toHaveLength(1);
+    expect(settledWater("u1")).toHaveLength(0);
+
+    await flushWater("u1");
+
+    expect(
+      pendingWater("u1"),
+      "the flush loop would spin on a kept entry"
+    ).toHaveLength(0);
+    expect(settledWater("u1").map((a) => a.id)).toEqual(["s1"]);
+  });
+
+  it("holds the overlay while the snapshot still lacks the receipt", async () => {
+    queueWater("u1", drink("s2", 250));
+    await flushWater("u1");
+    retireSettled("u1", {});
+    expect(settledWater("u1").map((a) => a.id)).toEqual(["s2"]);
+  });
+
+  it("retires it the moment a snapshot carries its receipt", async () => {
+    queueWater("u1", drink("s3", 250));
+    await flushWater("u1");
+    retireSettled("u1", { s3: { delta: 250 } });
+    expect(settledWater("u1")).toHaveLength(0);
+  });
+
+  it("re-applying a retired-late tap is a no-op, never a double count", () => {
+    /* Why holding the overlay is safe at all: once the receipt exists,
+       applying the same action again returns the state untouched. If
+       this stopped holding, the overlay would inflate the total for as
+       long as it lived rather than merely bridging a gap. */
+    const action = drink("s4", 250);
+    const after = applyWaterAction(250, { s4: { delta: 250 } }, action);
+    expect(after.ml).toBe(250);
+  });
+
+  it("scopes the overlay to the account that logged it", async () => {
+    queueWater("u1", drink("s5", 250));
+    await flushWater("u1");
+    expect(settledWater("u1")).toHaveLength(1);
+    expect(settledWater("u2")).toHaveLength(0);
+  });
+});
+
 describe("weight correction", () => {
   it("accepts commas and pounds, rejects malformed or future dates", () => {
     expect(parseWeightEntry("78,4", "kg")).toBe(78.4);
@@ -222,7 +279,11 @@ describe("repeat meal correction", () => {
     expect(meal.bundle?.items[0].protein).toBe(14);
   });
   it("reuses a retained retry identity and soft-deletes only its occurrence", async () => {
-    const remove = vi.spyOn(Storage.prototype, "removeItem").mockImplementation(() => { throw new Error("storage"); });
+    const remove = vi
+      .spyOn(Storage.prototype, "removeItem")
+      .mockImplementation(() => {
+        throw new Error("storage");
+      });
     await saveQuickMeal("u1", meal, today);
     remove.mockRestore();
     const undo = await saveQuickMeal("u1", meal, today);
@@ -231,7 +292,9 @@ describe("repeat meal correction", () => {
     await saveQuickMeal("u1", meal, today);
     await undo();
     await flushQueue(db, "u1");
-    const entries = allPaths().filter((p) => p.includes("/meals/")).map((path) => readDoc(path)!);
+    const entries = allPaths()
+      .filter((p) => p.includes("/meals/"))
+      .map((path) => readDoc(path)!);
     expect(entries).toHaveLength(2);
     expect(entries.filter((entry) => !entry.deletedAt)).toHaveLength(1);
   });

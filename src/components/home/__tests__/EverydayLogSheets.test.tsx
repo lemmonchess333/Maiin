@@ -41,6 +41,48 @@ describe("everyday entry sheets", () => {
       readDoc(`users/u1/bodyweightLogs/${localDateString()}`)?.weight
     ).toBe(78.412);
   });
+  it("keeps the picker behind Earlier, and saves the day it is set to", async () => {
+    /* The picker used to sit open under a "Date" label with Today and
+       Yesterday as separate buttons above it — three controls for one
+       value. It is now the third segment's disclosure. */
+    const close = vi.fn();
+    render(<WeightLogSheet uid="u1" unit="kg" onClose={close} />);
+    expect(screen.queryByLabelText("Date")).toBeNull();
+
+    fireEvent.change(screen.getByLabelText("Weight (kg)"), {
+      target: { value: "78.4" },
+    });
+    fireEvent.click(screen.getByRole("radio", { name: "Earlier" }));
+    const older = new Date();
+    older.setDate(older.getDate() - 5);
+    fireEvent.change(screen.getByLabelText("Date"), {
+      target: { value: localDateString(older) },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Log weight" }));
+    await waitFor(() => expect(close).toHaveBeenCalledOnce());
+    expect(
+      readDoc(`users/u1/bodyweightLogs/${localDateString(older)}`)
+    ).toBeDefined();
+  });
+
+  it("reads the segment off the date, so the two cannot disagree", async () => {
+    /* `dayChoice` is derived rather than stored beside `date`. With a
+       second source, picking yesterday inside Earlier would leave the
+       control reading Earlier while the value said yesterday — the
+       class of drift a duplicated field always eventually produces. */
+    render(<WeightLogSheet uid="u1" unit="kg" onClose={vi.fn()} />);
+    expect(screen.getByRole("radio", { name: "Today" })).toBeChecked();
+
+    fireEvent.click(screen.getByRole("radio", { name: "Earlier" }));
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    fireEvent.change(screen.getByLabelText("Date"), {
+      target: { value: localDateString(yesterday) },
+    });
+    expect(screen.getByRole("radio", { name: "Yesterday" })).toBeChecked();
+    expect(screen.queryByLabelText("Date")).toBeNull();
+  });
+
   it("accepts a comma entry and date locally, then retries a failed sync", async () => {
     const close = vi.fn();
     const yesterday = new Date();
@@ -50,9 +92,8 @@ describe("everyday entry sheets", () => {
     fireEvent.change(screen.getByLabelText("Weight (kg)"), {
       target: { value: "78,4" },
     });
-    fireEvent.change(screen.getByLabelText("Date"), {
-      target: { value: date },
-    });
+    // Yesterday is a one-tap segment now, not a trip through the picker.
+    fireEvent.click(screen.getByRole("radio", { name: "Yesterday" }));
     failNextFirestore("commit");
     fireEvent.click(screen.getByRole("button", { name: "Log weight" }));
     await waitFor(() => expect(close).toHaveBeenCalledOnce());
