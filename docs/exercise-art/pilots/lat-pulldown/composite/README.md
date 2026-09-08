@@ -9,7 +9,7 @@ draft, not a production activation or a passing anatomy/mobile review.
 
 `build.py` uses the original `../1-stack-corrected.png`, the partial pull from
 `../2-early.png`, and `bottom-source.png`. The latter is the inspected generated
-bottom-pose candidate, retained for reproducibility. Python, Pillow and NumPy
+bottom-pose candidate, retained for reproducibility. Python, Pillow, NumPy and SciPy
 are required. Run from any working directory:
 
 ```sh
@@ -24,8 +24,16 @@ stack, lower body, seat and right machine frame are checked against the master.
 Continuous guide rails are restored once using the existing cylindrical texture.
 
 The source upper-body poses are composited into the fixed scene, with a 16-pixel
-transition at y860–875. This is not a claim of unchanged upper-body anatomy or
-constant grip spacing. `review.json` records those remaining findings.
+transition at y860–875. `repair_handle.py` then restores the master bar as one rigid layer and registers
+the generated finger/palm cores with integer translations. The forearm joins use
+a smooth displacement field; the left-hand field stops before the neck. The
+connected athlete silhouette provides occlusion, so the bar does not overwrite
+the body. Source hashes pin these scene-specific masks.
+
+Central shaft and both bar-end samples are checked against the translated master.
+Each measured finger/palm core is checked against its own source pose without
+rescaling. These checks establish local pixel invariants, not identical generated
+finger anatomy or a passing technique review. `review.json` retains the findings.
 
 ## Review deliverables
 
@@ -38,7 +46,7 @@ constant grip spacing. `review.json` records those remaining findings.
 The frames are in the draft manifest and intentionally absent from `public/`
 and the released artwork registry. The older PR's whole-stack movement must not
 be shipped as a substitute for these corrected drafts. Remaining checks cover
-grip/bar-end consistency, forward neck clearance, final chest position and real
+forearm-join anatomy, forward neck clearance, final chest position and real
 mobile playback in both themes.
 
 ## Verification safety

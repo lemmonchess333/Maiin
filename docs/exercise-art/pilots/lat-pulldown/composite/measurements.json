@@ -3,7 +3,7 @@
     1024,
     1536
   ],
-  "method": "integer plate translation from the master",
+  "method": "integer master plate/bar translation and registered hand cores",
   "barProbeX": 450,
   "fourSelectedPlates": true,
   "strictVisualApproval": false,
@@ -16,6 +16,8 @@
       "selectedPlateTravelPx": 0,
       "observedPlateTopPx": 746,
       "platePixelsExact": true,
+      "rigidBarSamplesExact": true,
+      "gripCoreRegistration": [],
       "lowerStackExact": true,
       "pelvisFeetSeatExact": true,
       "rightFrameExact": true,
@@ -29,10 +31,37 @@
       "selectedPlateTravelPx": 136,
       "observedPlateTopPx": 610,
       "platePixelsExact": true,
+      "rigidBarSamplesExact": true,
+      "gripCoreRegistration": [
+        {
+          "targetCoreCenter": [
+            166,
+            446
+          ],
+          "translationPx": [
+            0,
+            0
+          ],
+          "translatedCorePixels": 480,
+          "corePixelsExact": true
+        },
+        {
+          "targetCoreCenter": [
+            586,
+            427
+          ],
+          "translationPx": [
+            0,
+            -8
+          ],
+          "translatedCorePixels": 480,
+          "corePixelsExact": true
+        }
+      ],
       "lowerStackExact": true,
       "pelvisFeetSeatExact": true,
       "rightFrameExact": true,
-      "sha256": "75291c34e8ebdde7e7139837bc4a82564cd648cfcd74a28464aa1a68b646d2eb"
+      "sha256": "0638e3b6eda110029e22abc2fb9ebfb9a5926f793a3b92950fb875ef881922fe"
     },
     {
       "frame": 3,
@@ -42,10 +71,37 @@
       "selectedPlateTravelPx": 327,
       "observedPlateTopPx": 419,
       "platePixelsExact": true,
+      "rigidBarSamplesExact": true,
+      "gripCoreRegistration": [
+        {
+          "targetCoreCenter": [
+            166,
+            637
+          ],
+          "translationPx": [
+            29,
+            10
+          ],
+          "translatedCorePixels": 480,
+          "corePixelsExact": true
+        },
+        {
+          "targetCoreCenter": [
+            586,
+            618
+          ],
+          "translationPx": [
+            13,
+            -12
+          ],
+          "translatedCorePixels": 480,
+          "corePixelsExact": true
+        }
+      ],
       "lowerStackExact": true,
       "pelvisFeetSeatExact": true,
       "rightFrameExact": true,
-      "sha256": "00054465dcc43d170487519753dc1335c1714c5487aff51f85b1173deaf58a86"
+      "sha256": "04dd6af7bdbeea626fc7e6afbcdf2abb8f1b4eb9b09df9b9e36c1b9b80d4c2d9"
     },
     {
       "frame": 4,
@@ -55,10 +111,37 @@
       "selectedPlateTravelPx": 327,
       "observedPlateTopPx": 419,
       "platePixelsExact": true,
+      "rigidBarSamplesExact": true,
+      "gripCoreRegistration": [
+        {
+          "targetCoreCenter": [
+            166,
+            637
+          ],
+          "translationPx": [
+            29,
+            10
+          ],
+          "translatedCorePixels": 480,
+          "corePixelsExact": true
+        },
+        {
+          "targetCoreCenter": [
+            586,
+            618
+          ],
+          "translationPx": [
+            13,
+            -12
+          ],
+          "translatedCorePixels": 480,
+          "corePixelsExact": true
+        }
+      ],
       "lowerStackExact": true,
       "pelvisFeetSeatExact": true,
       "rightFrameExact": true,
-      "sha256": "00054465dcc43d170487519753dc1335c1714c5487aff51f85b1173deaf58a86"
+      "sha256": "04dd6af7bdbeea626fc7e6afbcdf2abb8f1b4eb9b09df9b9e36c1b9b80d4c2d9"
     },
     {
       "frame": 5,
@@ -68,10 +151,37 @@
       "selectedPlateTravelPx": 136,
       "observedPlateTopPx": 610,
       "platePixelsExact": true,
+      "rigidBarSamplesExact": true,
+      "gripCoreRegistration": [
+        {
+          "targetCoreCenter": [
+            166,
+            446
+          ],
+          "translationPx": [
+            0,
+            0
+          ],
+          "translatedCorePixels": 480,
+          "corePixelsExact": true
+        },
+        {
+          "targetCoreCenter": [
+            586,
+            427
+          ],
+          "translationPx": [
+            0,
+            -8
+          ],
+          "translatedCorePixels": 480,
+          "corePixelsExact": true
+        }
+      ],
       "lowerStackExact": true,
       "pelvisFeetSeatExact": true,
       "rightFrameExact": true,
-      "sha256": "75291c34e8ebdde7e7139837bc4a82564cd648cfcd74a28464aa1a68b646d2eb"
+      "sha256": "0638e3b6eda110029e22abc2fb9ebfb9a5926f793a3b92950fb875ef881922fe"
     },
     {
       "frame": 6,
@@ -81,6 +191,8 @@
       "selectedPlateTravelPx": 0,
       "observedPlateTopPx": 746,
       "platePixelsExact": true,
+      "rigidBarSamplesExact": true,
+      "gripCoreRegistration": [],
       "lowerStackExact": true,
       "pelvisFeetSeatExact": true,
       "rightFrameExact": true,
