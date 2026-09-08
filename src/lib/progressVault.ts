@@ -51,6 +51,8 @@ export interface VaultPhoto {
   date: string; // YYYY-MM-DD
   storagePath: string;
   iv: number[];
+  encryptionVersion?: number;
+  encryptionKey?: number[];
 }
 
 /** Stored check-in doc (users/{uid}/progressCheckins/{id}). */

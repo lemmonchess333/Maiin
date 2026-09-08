@@ -1,5 +1,13 @@
 import UIKit
 import Capacitor
+import FirebaseCore
+import FirebaseAppCheck
+
+private final class TroposAppCheckProviderFactory: NSObject, AppCheckProviderFactory {
+    func createProvider(with app: FirebaseApp) -> AppCheckProvider? {
+        return AppAttestProvider(app: app)
+    }
+}
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -7,7 +15,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        // Must precede Firebase configuration by any Capacitor plugin.
+        AppCheck.setAppCheckProviderFactory(TroposAppCheckProviderFactory())
         return true
     }
 

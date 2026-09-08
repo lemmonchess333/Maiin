@@ -20,7 +20,9 @@
  * maplibre chunk loads only when the planner opens.
  */
 import { useEffect, useId, useRef, useState } from "react";
-import maplibregl from "maplibre-gl";
+import type { Feature } from "geojson";
+import * as maplibregl from "maplibre-gl";
+import "@/lib/maplibreWorker";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Undo2, Trash2, LocateFixed, X } from "lucide-react";
 import { THEME } from "@/lib/theme";
@@ -80,6 +82,7 @@ export default function RoutePlannerSheet({
   const unit = useDistanceUnit();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
+  const [mapUnavailable, setMapUnavailable] = useState(false);
   const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
   const [saveOpen, setSaveOpen] = useState(false);
   const [name, setName] = useState("");
@@ -111,15 +114,22 @@ export default function RoutePlannerSheet({
   useEffect(() => {
     if (!open || !containerRef.current || mapRef.current) return;
 
-    const map = new maplibregl.Map({
-      container: containerRef.current,
-      style: darkMode ? TILE_STYLES.dark : TILE_STYLES.light,
-      center: initialCenter
-        ? [initialCenter.lon, initialCenter.lat]
-        : [-0.1276, 51.5072],
-      zoom: initialCenter ? 15 : 2,
-      attributionControl: false,
-    });
+    let map: maplibregl.Map;
+    try {
+      map = new maplibregl.Map({
+        container: containerRef.current,
+        style: darkMode ? TILE_STYLES.dark : TILE_STYLES.light,
+        center: initialCenter
+          ? [initialCenter.lon, initialCenter.lat]
+          : [-0.1276, 51.5072],
+        zoom: initialCenter ? 15 : 2,
+        attributionControl: false,
+      });
+    } catch {
+      setMapUnavailable(true);
+      return;
+    }
+    setMapUnavailable(false);
     mapRef.current = map;
 
     map.on("load", () => {
@@ -329,7 +339,9 @@ export default function RoutePlannerSheet({
               Plan a route
             </h3>
             <p className="text-xs text-muted-foreground">
-              Tap the map to drop points along your route.
+              {mapUnavailable
+                ? "Close the planner to return to your run."
+                : "Tap the map to drop points along your route."}
             </p>
           </div>
           <p className="shrink-0 font-mono text-lg font-extrabold tabular-nums text-running-strong">
@@ -339,9 +351,18 @@ export default function RoutePlannerSheet({
 
         <div className="relative h-[50vh] min-h-[280px]">
           <div ref={containerRef} className="absolute inset-0" />
+          {mapUnavailable && (
+            <div
+              role="status"
+              className="absolute inset-0 flex items-center justify-center bg-muted p-6 text-center text-foreground"
+            >
+              Map unavailable
+            </div>
+          )}
           <div className="absolute right-2 top-2 flex flex-col gap-1.5">
             <IconButton
               aria-label="Centre on my location"
+              disabled={mapUnavailable}
               icon={<LocateFixed />}
               onClick={recenter}
               className="bg-card/90 text-foreground shadow-md"
@@ -486,7 +507,7 @@ export default function RoutePlannerSheet({
 function syncPlanSource(map: maplibregl.Map, wps: Waypoint[]) {
   const source = map.getSource("plan") as maplibregl.GeoJSONSource | undefined;
   if (!source) return;
-  const features: GeoJSON.Feature[] = wps.map((w, i) => ({
+  const features: Feature[] = wps.map((w, i) => ({
     type: "Feature",
     properties: { index: i },
     geometry: { type: "Point", coordinates: [w.lon, w.lat] },

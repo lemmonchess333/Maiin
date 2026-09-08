@@ -1,6 +1,6 @@
 {
   "tolerance": 0.05,
-  "total": 5294846,
+  "total": 5688105,
   "chunks": {
     "AccordionSection": 1612,
     "activationTracker": 308,
@@ -110,7 +110,9 @@
     "mail-warning": 325,
     "ManualFoodLogger": 6664,
     "map-pin": 260,
-    "maplibre": 1022611,
+    "maplibre": 946568,
+    "maplibre-gl-worker": 468843,
+    "maplibreWorker": 459,
     "mealSlots": 476,
     "mealTotals": 494,
     "medal": 436,

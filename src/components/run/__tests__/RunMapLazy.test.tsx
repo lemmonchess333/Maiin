@@ -6,12 +6,11 @@ const h = vi.hoisted(() => ({
   map: { on: vi.fn(), off: vi.fn(), remove: vi.fn() },
 }));
 vi.mock("maplibre-gl", () => ({
-  default: {
-    Map: vi.fn(function () {
-      if (h.fail) throw new Error("Failed to initialize WebGL");
-      return h.map;
-    }),
-  },
+  setWorkerUrl: vi.fn(),
+  Map: vi.fn(function () {
+    if (h.fail) throw new Error("Failed to initialize WebGL");
+    return h.map;
+  }),
 }));
 import RunMapLazy from "../RunMapLazy";
 

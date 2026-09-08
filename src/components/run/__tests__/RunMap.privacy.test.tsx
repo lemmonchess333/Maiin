@@ -7,38 +7,37 @@ const state = vi.hoisted(() => ({
   sources: {} as Record<string, { setData: ReturnType<typeof vi.fn> }>,
 }));
 vi.mock("maplibre-gl", () => ({
-  default: {
-    Map: class {
-      on(event: string, fn: () => void) {
-        if (event === "load") state.load.push(fn);
-        return this;
-      }
-      off() {
-        return this;
-      }
-      addSource(name: string) {
-        state.sources[name] = { setData: vi.fn() };
-      }
-      getSource(name: string) {
-        return state.sources[name];
-      }
-      addLayer() {}
-      setLayoutProperty() {}
-      loaded() {
-        return false;
-      }
-      fitBounds() {}
-      remove() {}
-    },
-    Marker: class {
-      setLngLat() {
-        return this;
-      }
-      addTo() {
-        return this;
-      }
-      remove() {}
-    },
+  setWorkerUrl: vi.fn(),
+  Map: class {
+    on(event: string, fn: () => void) {
+      if (event === "load") state.load.push(fn);
+      return this;
+    }
+    off() {
+      return this;
+    }
+    addSource(name: string) {
+      state.sources[name] = { setData: vi.fn() };
+    }
+    getSource(name: string) {
+      return state.sources[name];
+    }
+    addLayer() {}
+    setLayoutProperty() {}
+    loaded() {
+      return false;
+    }
+    fitBounds() {}
+    remove() {}
+  },
+  Marker: class {
+    setLngLat() {
+      return this;
+    }
+    addTo() {
+      return this;
+    }
+    remove() {}
   },
 }));
 import RunMap from "../RunMap";

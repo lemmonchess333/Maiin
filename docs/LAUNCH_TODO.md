@@ -681,6 +681,19 @@ trusting:
       confidentiality, accepting that a forgotten passphrase means the
       photos are unrecoverable and that multi-device needs key sync;
       (c) accept and state the limitation plainly in the policy.
+  - **IMPLEMENTED 2026-09-08 — account-recoverable random keys for new uploads.**
+    Each new photo uses an independent AES-GCM-256 key and IV. The random key
+    is stored in its owner-only Firestore metadata, never the Storage object,
+    and ciphertext is authenticated against the account and storage path.
+    Account recovery and access from another signed-in device still work.
+    This protects new photos from disclosure of Storage ciphertext alone;
+    it is not end-to-end encryption because Tropos can access both stores.
+    The versioned reader retains legacy UID-derived and zero-IV uploads.
+    Existing photos are not silently rewritten and do not acquire the new
+    protection until re-uploaded. The policy states this distinction.
+    The vault also resets all private state on account changes and rejects
+    late results from an old account. True end-to-end encryption remains a
+    separate user-held-key/recovery choice, not a claim made by this change.
     - Whichever wins, the app should not ship claiming "not readable in
       storage" while the key is a function of a public identifier.
 - ✅ Subscription auto-renew / cancellation — Terms §4
