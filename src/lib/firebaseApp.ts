@@ -20,6 +20,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
 import { logger } from "@/lib/logger";
+import { registerNativeAppCheck } from "@/lib/appCheckNative";
 import { initAppCheck } from "@/lib/appCheck";
 import { initAnalytics } from "@/lib/analyticsProvider";
 
@@ -50,6 +51,7 @@ export const app = initializeApp(firebaseConfig);
 // That ordering still holds after the split: `firebase.ts` imports this
 // module, so this file's body runs to completion before any of those
 // handles exist. See src/lib/appCheck.ts for the web / native split.
+registerNativeAppCheck();
 initAppCheck(app);
 
 // Analytics provider — the delivery backend behind analyticsClient.emit().
