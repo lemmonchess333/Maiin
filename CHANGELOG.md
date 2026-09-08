@@ -35,10 +35,11 @@ follows [Semantic Versioning](https://semver.org/).
   same middot the rest of the app uses.
 
 - **The app opens faster, especially on a phone.** Signing in used to
-  download the whole app — the workout programme engine, the exercise
-  database, the run scheduler — before the login screen appeared, none of
-  which it needs. On a mid-tier phone on 4G that is about 0.6 seconds off
-  the first screen, and a third less to download before anything shows.
+  download the whole app before the login screen appeared — the workout
+  programme engine, the exercise database, the run scheduler, and the
+  entire offline database engine — none of which it needs to show you a
+  login form. On a mid-tier phone on 4G that is about 1.3 seconds off the
+  first screen, and half as much to download before anything shows.
 
 - **Buttons, labels and titles now read consistently.** Capitalisation was
   a coin-flip across the app — "Delete Account" beside "Block user",

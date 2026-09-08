@@ -11,14 +11,9 @@ import { AuthProvider, useAuth } from "@/lib/auth";
 import { usePushTokenRefresh } from "@/hooks/usePushTokenRefresh";
 import { RevenueCatIdentity } from "@/hooks/useRevenueCatIdentity";
 import { ToastProvider } from "@/components/ToastProvider";
-import OneTimeMaintenance from "@/components/OneTimeMaintenance";
 import { NotificationBubbleProvider } from "@/components/NotificationBubble";
 import RouteErrorBoundary from "@/components/RouteErrorBoundary";
 import AuthSessionBoundary from "@/components/AuthSessionBoundary";
-import { StreakReminderPrimingModal } from "@/components/StreakReminderPrimingModal";
-import { StreaksProvider } from "@/features/streaks/useStreaks";
-import { RemindersProvider } from "@/hooks/RemindersProvider";
-import { DailyLogsProvider } from "@/hooks/DailyLogsProvider";
 import { SurfaceCoordinatorProvider } from "@/components/SurfaceCoordinatorProvider";
 import { BackDismissProvider } from "@/lib/BackDismissProvider";
 import { EducationLaneProvider } from "@/components/EducationLaneProvider";
@@ -44,6 +39,37 @@ import AmbientGlow from "@/components/AmbientGlow";
    off the current day, and subscribeShareComposer replays current state
    to a new listener, so a share opened before the chunk lands is
    delivered the moment it mounts. */
+/* The authenticated-only providers, deferred for the same reason as the two
+   above: each pulls Firestore, and a static import is unconditional, so
+   AuthProvider's own module graph put the 369 KB firebase-db chunk ahead of
+   the LOGIN screen's first paint — for stores a signed-out visitor never
+   reads. They render only inside the authenticated branch, already behind
+   its Suspense, so the bytes now load alongside the page chunks instead of
+   before anything paints. */
+const StreakReminderPrimingModal = lazyRetry(() =>
+  import("@/components/StreakReminderPrimingModal").then((m) => ({
+    default: m.StreakReminderPrimingModal,
+  }))
+);
+const OneTimeMaintenance = lazyRetry(
+  () => import("@/components/OneTimeMaintenance")
+);
+const StreaksProvider = lazyRetry(() =>
+  import("@/features/streaks/useStreaks").then((m) => ({
+    default: m.StreaksProvider,
+  }))
+);
+const RemindersProvider = lazyRetry(() =>
+  import("@/hooks/RemindersProvider").then((m) => ({
+    default: m.RemindersProvider,
+  }))
+);
+const DailyLogsProvider = lazyRetry(() =>
+  import("@/hooks/DailyLogsProvider").then((m) => ({
+    default: m.DailyLogsProvider,
+  }))
+);
+
 // Lazy-loaded pages & layout for code splitting
 const ShareComposerSheet = lazyRetry(
   () => import("@/components/social/ShareComposerSheet")
@@ -499,7 +525,9 @@ function AppRoutes() {
             on every foreground event regardless of which page the user is
             on. The modal internally gates on currentStreak >= 2 and
             primingShown === false — renders nothing on most sessions. */}
-                  <StreakReminderPrimingModal />
+                  <Suspense fallback={null}>
+                    <StreakReminderPrimingModal />
+                  </Suspense>
                   <Routes>
                     <Route path="/privacy" element={<PrivacyPolicy />} />
                     <Route path="/terms" element={<TermsOfService />} />
@@ -855,7 +883,9 @@ function App() {
                   <Suspense fallback={null}>
                     <ShareComposerSheet />
                   </Suspense>
-                  <OneTimeMaintenance />
+                  <Suspense fallback={null}>
+                    <OneTimeMaintenance />
+                  </Suspense>
                   <RevenueCatIdentity />
                   <AppRoutes />
                 </BackDismissProvider>

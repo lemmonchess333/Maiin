@@ -58,6 +58,14 @@ const DEFERRED: { path: string; kb: number; why: string }[] = [
     why: "the exercise variation database",
   },
   {
+    path: "src/lib/firebase.ts",
+    kb: 369,
+    why:
+      "the Firestore + Storage handles. Importing it pulls the firebase-db " +
+      "chunk, which the login screen never reads a document from — take " +
+      "`auth` from @/lib/firebaseApp instead",
+  },
+  {
     path: "src/lib/profanityFilter.ts",
     kb: 81,
     why: "pulls leo-profanity, whose bundled French word list alone is 81 KB",
@@ -139,9 +147,14 @@ describe("eager import graph — what Login pays for", () => {
   );
 
   it("walks a real graph, so an empty result cannot pass this file", () => {
-    /* A resolver bug would make every assertion below vacuously true. */
-    expect(reachable.size).toBeGreaterThan(50);
+    /* A resolver bug would make every assertion below vacuously true, so
+       this is a floor rather than a target — the graph SHRINKING is the
+       point of the file, and it has (77 modules before Firestore was
+       deferred, 49 after). The containment check is the load-bearing half;
+       the number only rules out a graph that collapsed to nothing. */
+    expect(reachable.size).toBeGreaterThan(25);
     expect(reachable).toContain("src/lib/auth.tsx");
+    expect(reachable).toContain("src/lib/firebaseApp.ts");
   });
 
   for (const { path, kb, why } of DEFERRED) {

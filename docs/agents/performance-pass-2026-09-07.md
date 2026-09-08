@@ -71,7 +71,58 @@ that do not overlap; the payload figures are deterministic. The FCP
 numbers are from this sandbox and are useful as an A/B, not as an
 absolute — a real device is its own measurement.
 
-## What is next, with the case already made
+## Stage two — Firestore off the critical path (done, owner-approved)
+
+The section below was written as a decline: the refactor reached into the
+auth and persistence core and I judged the risk poor against ~0.5 s. The
+owner approved it, so it shipped, and two things about the original
+estimate were wrong.
+
+**"65 import sites" was the wrong number.** That is the whole codebase.
+Only **14** eager modules pulled Firestore, and eight of those were
+authenticated-only providers that App.tsx imported statically — the same
+defect as stage one, not a data-layer problem at all. The genuinely hard
+part was five files.
+
+**What actually changed.** `firebase.ts` was split: `firebaseApp.ts` owns
+`app` + `auth` + App Check + analytics and imports no Firestore;
+`firebase.ts` keeps `db` / `storage` / `functions` and re-exports the app
+half, so every existing `import { auth, db } from "@/lib/firebase"` is
+untouched. Then four modules take Firestore on first use rather than at
+import — `auth.tsx` (5 preludes over 11 call sites, all already inside
+post-auth paths), `errorReporting`, `pushNotifications` — and five
+authenticated-only components became lazy.
+
+Nothing moved. Each deferral changes how the symbols arrive, not what the
+code does, which is what made a refactor of this file reviewable at all.
+
+Two ordering properties were checked rather than assumed: App Check must
+install before the Firestore/Storage/Functions handles exist (it does —
+`firebase.ts` imports `firebaseApp`, whose body runs first), and
+`refreshProfile` must capture its uid before any await, so an account
+switch mid-read drops A's snapshot rather than hydrating it as B (the
+prelude goes after the capture).
+
+|                     | FCP           | JS+CSS before first paint | firebase-db pre-FCP |
+| ------------------- | ------------- | ------------------------- | ------------------- |
+| before any of this  | ~3,330 ms     | 1,619 KB                  | yes                 |
+| after stage one     | ~2,700 ms     | 1,277 KB                  | yes                 |
+| **after stage two** | **~2,030 ms** | **838 KB**                | **no**              |
+
+Roughly **1.3 s off first paint in total, and 48% of the pre-paint
+payload gone.** The eager app chunk went 542 → 170 KB across the two.
+
+Verified beyond the unit suite, because unit tests do not exercise
+sign-in: the auth-critical e2e specs pass on the emulator —
+`coldstart`, `journeys`, `bodyweightUpsert`, and `offlineQueueIsolation`,
+which is the one that pins the uid-scoping security property.
+
+The split also broke three suites that mock `@/lib/firebase` wholesale —
+the documented "adding an import breaks a wholesale mock" gotcha, landing
+exactly as CLAUDE.md says it does. Fixed by mirroring each mock onto
+`firebaseApp` rather than by weakening an assertion.
+
+## The original decline, kept for the reasoning
 
 **`firebase-db` — 369 KB, still blocking first paint.** Now the largest
 single pre-FCP item. `src/lib/firebase.ts` is one eager module that
