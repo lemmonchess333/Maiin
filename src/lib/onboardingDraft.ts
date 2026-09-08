@@ -78,7 +78,13 @@ export const DRAFT_PRIMARY_GOALS = [
   "general",
   "running",
 ] as const;
-export const DRAFT_DAYS_PER_WEEK = [2, 3, 4, 5, 6] as const;
+export const DRAFT_DAYS_PER_WEEK = [0, 2, 3, 4, 5, 6] as const;
+export const DRAFT_TRAINING_ACTIVITIES = [
+  "lifting",
+  "running",
+  "both",
+] as const;
+export type OnboardingActivity = (typeof DRAFT_TRAINING_ACTIVITIES)[number];
 export const DRAFT_RUN_FREQUENCIES = ["regular", "occasional", "none"] as const;
 export const DRAFT_RUN_MODES = ["freeform", "structured", "race_prep"] as const;
 export const DRAFT_UNITS_HEIGHT = ["cm", "ft"] as const;
@@ -109,6 +115,9 @@ export interface OnboardingDraft {
   displayName?: string;
   weightDisplayUnit?: "kg" | "lbs" | "st";
   returnToReview?: boolean;
+  trainingActivity?: OnboardingActivity;
+  /** Keep the chosen lifting rhythm when switching to running and back. */
+  liftDaysPreference?: Exclude<OnboardingDraft["daysPerWeek"], 0>;
 }
 
 interface DraftEnvelope {
@@ -167,7 +176,11 @@ export function isValidDraft(
     (d.displayName === undefined || typeof d.displayName === "string") &&
     (d.weightDisplayUnit === undefined ||
       oneOf(["kg", "lbs", "st"], d.weightDisplayUnit)) &&
-    (d.returnToReview === undefined || typeof d.returnToReview === "boolean")
+    (d.returnToReview === undefined || typeof d.returnToReview === "boolean") &&
+    (d.trainingActivity === undefined ||
+      oneOf(DRAFT_TRAINING_ACTIVITIES, d.trainingActivity)) &&
+    (d.liftDaysPreference === undefined ||
+      oneOf([2, 3, 4, 5, 6], d.liftDaysPreference))
   );
 }
 

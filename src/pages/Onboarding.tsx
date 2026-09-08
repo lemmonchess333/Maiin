@@ -19,7 +19,7 @@ import {
   experienceLabel,
   goalLabel,
 } from "@/features/program/programLabels";
-import { localDateString } from "@/lib/dateHelpers";
+import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import { getRaceGoalPlannerState } from "@/lib/raceGoalPlanner";
 import {
@@ -28,8 +28,17 @@ import {
   clearOnboardingDraft,
   DRAFT_AGE_RANGES,
   type OnboardingDraft,
+  type OnboardingActivity,
 } from "@/lib/onboardingDraft";
-import { buildOnboardingPlan } from "@/lib/onboardingPlan";
+import {
+  buildOnboardingPlan,
+  onboardingActivity,
+  onboardingFlow,
+} from "@/lib/onboardingPlan";
+import InlineNumerals from "@/components/ui/InlineNumerals";
+import SectionLabel from "@/components/ui/SectionLabel";
+import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { formatDayMonth } from "@/utils/formatters";
 import {
   Dumbbell,
   Flame,
@@ -49,7 +58,6 @@ import { validateDisplayName } from "@/lib/displayName";
 import { formatWeightInUnit, formatStonePounds } from "@/lib/weightUnits";
 
 // Stable stored step IDs survive the chapter redesign; old preview (6) merges into review (7).
-const FLOW = [0, 1, 3, 2, 4, 5, 7];
 const STEP_IDS = [
   "goal",
   "days",
@@ -77,7 +85,7 @@ const STEP_META = [
   ],
   [
     "Find your starting rhythm",
-    "Choose lift sessions per week. You can change this later.",
+    "Choose the training you want in your week. You can change this later.",
   ],
   [
     "Make the plan fit your setup",
@@ -126,7 +134,7 @@ const GOALS = [
   {
     id: "running",
     label: "Improve running",
-    desc: "Strength work to support running. Choose your run setup next.",
+    desc: "Free running or a race goal, with optional lifting alongside it.",
     icon: Footprints,
   },
 ] as const;
@@ -137,13 +145,20 @@ export default function Onboarding() {
   const [draft] = useState(() =>
     user ? loadOnboardingDraft(user.uid, 7) : null
   );
-  const [step, setStep] = useState(() =>
-    draft?.step === 6
-      ? 7
-      : draft?.step === 2 && draft.runConfirmed === undefined
-        ? 3
-        : (draft?.step ?? 0)
+  const [trainingActivity, setTrainingActivity] = useState<OnboardingActivity>(
+    () => onboardingActivity(draft)
   );
+  const hasLifting = trainingActivity !== "running";
+  const flow = onboardingFlow(trainingActivity);
+  const [step, setStep] = useState(() => {
+    const storedStep =
+      draft?.step === 6
+        ? 7
+        : draft?.step === 2 && draft.runConfirmed === undefined
+          ? 3
+          : (draft?.step ?? 0);
+    return flow.includes(storedStep) ? storedStep : 1;
+  });
   const [saving, setSaving] = useState(false);
   const pending = useRef(false);
   const onboardingCompletedRef = useRef(false);
@@ -160,24 +175,28 @@ export default function Onboarding() {
   const [goalConfirmed, setGoalConfirmed] = useState(
     draft?.goalConfirmed ?? Boolean(draft && draft.step > 0)
   );
-  const [runConfirmed, setRunConfirmed] = useState(
+  const [runningConfirmed, setRunConfirmed] = useState(
     draft?.runConfirmed ?? Boolean(draft && draft.step > 3)
   );
   const [primaryGoal, setPrimaryGoal] = useState<
     OnboardingDraft["primaryGoal"]
   >(draft?.primaryGoal ?? "hypertrophy");
-  const [daysPerWeek, setDaysPerWeek] = useState<
-    OnboardingDraft["daysPerWeek"]
-  >(draft?.daysPerWeek ?? 4);
+  const [liftDaysPreference, setDaysPerWeek] = useState<
+    Exclude<OnboardingDraft["daysPerWeek"], 0>
+  >(draft?.liftDaysPreference ?? (draft?.daysPerWeek || 4));
+  const daysPerWeek = hasLifting ? liftDaysPreference : 0;
   const [equipment, setEquipment] = useState<OnboardingDraft["equipment"]>(
     draft?.equipment ?? "full_gym"
   );
   const [experience, setExperience] = useState<OnboardingDraft["experience"]>(
     draft?.experience ?? "intermediate"
   );
-  const [runFrequency, setRunFrequency] = useState<
+  const [chosenRunFrequency, setRunFrequency] = useState<
     OnboardingDraft["runFrequency"]
   >(draft?.runFrequency ?? "occasional");
+  const runFrequency =
+    trainingActivity === "lifting" ? "none" : chosenRunFrequency;
+  const runConfirmed = trainingActivity === "lifting" || runningConfirmed;
   const [runMode, setRunMode] = useState<"freeform" | "race_prep">(
     draft?.runMode === "race_prep" ? "race_prep" : "freeform"
   );
@@ -233,6 +252,8 @@ export default function Onboarding() {
       displayName,
       weightDisplayUnit,
       returnToReview,
+      trainingActivity,
+      liftDaysPreference,
     }),
     [
       step,
@@ -258,6 +279,8 @@ export default function Onboarding() {
       displayName,
       weightDisplayUnit,
       returnToReview,
+      trainingActivity,
+      liftDaysPreference,
     ]
   );
   useEffect(() => {
@@ -269,11 +292,11 @@ export default function Onboarding() {
   useEffect(() => {
     trackLifecycle("onboarding_step_viewed", {
       step: STEP_IDS[step],
-      stepIndex: FLOW.indexOf(step),
+      stepIndex: onboardingFlow(trainingActivity).indexOf(step),
     });
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
     headingRef.current?.focus({ preventScroll: true });
-  }, [step]);
+  }, [step, trainingActivity]);
   const activityLevel: ActivityLevel =
     daysPerWeek >= 6 ? "very_active" : daysPerWeek >= 4 ? "moderate" : "light";
   const goalPlan = useMemo(
@@ -373,11 +396,14 @@ export default function Onboarding() {
     true,
     goalConfirmed &&
       validRun &&
-      injuries.length > 0 &&
+      (!hasLifting || injuries.length > 0) &&
       validBody &&
       displayNameValidation.valid,
   ];
-  const chapter = CHAPTER_FOR_STEP[step];
+  const chapters = hasLifting
+    ? CHAPTERS
+    : CHAPTERS.filter((name) => name !== "Your setup");
+  const chapter = chapters.indexOf(CHAPTERS[CHAPTER_FOR_STEP[step]]);
   const edit = (next: number) => {
     setReturnToReview(true);
     setSaveError("");
@@ -387,13 +413,13 @@ export default function Onboarding() {
     if (!canAdvance[step] || pending.current) return;
     trackLifecycle("onboarding_step_completed", {
       step: STEP_IDS[step],
-      stepIndex: FLOW.indexOf(step),
+      stepIndex: flow.indexOf(step),
     });
     if (step === 7) {
       void handleFinish();
       return;
     }
-    setStep(returnToReview ? 7 : FLOW[FLOW.indexOf(step) + 1]);
+    setStep(returnToReview ? 7 : flow[flow.indexOf(step) + 1]);
     setReturnToReview(false);
   };
   const handleFinish = async () => {
@@ -414,7 +440,12 @@ export default function Onboarding() {
         weeklyMealsTarget: 10,
         weeklyRunsTarget: effectiveRunDays,
         weeklyRunDaysTarget: effectiveRunDays,
-        athleteType: "Lifter",
+        athleteType:
+          trainingActivity === "running"
+            ? "Runner"
+            : trainingActivity === "both"
+              ? "Hybrid"
+              : "Lifter",
         gender,
         ageRange,
         heightCm,
@@ -543,9 +574,11 @@ export default function Onboarding() {
         toast.success("Setting up your program…");
         // Brief delay so the toast renders before the reload swallows it.
         await new Promise((r) => setTimeout(r, 600));
-        // Reload to the app root (basename-aware) so we re-read the
-        // server's completed profile and land on Home, not back here.
-        window.location.assign(import.meta.env.BASE_URL || "/");
+        // Re-read the completed profile at the same relevant Train tab.
+        // Preserve the hosting basename as well as the selected activity.
+        window.location.assign(
+          `${import.meta.env.BASE_URL || "/"}${firstActivityPath.slice(1)}`
+        );
         return;
       }
 
@@ -593,9 +626,9 @@ export default function Onboarding() {
 
       // Save succeeded — leave the onboarding surface explicitly. Flipping
       // onboardingComplete=true makes App.tsx switch to the authenticated
-      // route set; navigating to "/" lands the user on Home. `replace` so
-      // Back doesn't return into the finished onboarding flow.
-      navigate("/", { replace: true });
+      // route set; open the activity shown in the review. `replace` keeps
+      // Back from returning into the finished onboarding flow.
+      navigate(firstActivityPath, { replace: true });
     } catch (err) {
       logger.error("Onboarding save failed:", err);
       const code = (err as { code?: string })?.code?.replace("functions/", "");
@@ -612,6 +645,21 @@ export default function Onboarding() {
     }
   };
   const firstWorkout = plan.programState.workouts[0];
+  const runningFirst =
+    trainingActivity === "running" ||
+    (trainingActivity === "both" && primaryGoal === "running");
+  const firstActivityPath = runningFirst
+    ? "/program?tab=run"
+    : "/program?tab=lift";
+  const firstRun = plan.programState.runDays
+    ?.filter((run) => run.date && run.date >= currentDate)
+    .sort((a, b) => a.date!.localeCompare(b.date!))[0];
+  const firstRunTemplate =
+    firstRun &&
+    RUN_TEMPLATES.find(
+      (template) =>
+        template.id === (firstRun.userOverride || firstRun.templateId)
+    );
   const freeRunning =
     runConfirmed && runFrequency !== "none" && effectiveRunMode === "freeform";
   const runSummary = !runConfirmed
@@ -633,12 +681,14 @@ export default function Onboarding() {
         <div className="flex justify-between items-center text-sm">
           <span className="font-semibold">Tropos</span>
           <span className="text-muted-foreground">
-            {CHAPTERS[chapter]} ·{" "}
-            <span className="font-mono tabular-nums">{chapter + 1} / 5</span>
+            {chapters[chapter]} ·{" "}
+            <span className="font-mono tabular-nums">
+              {chapter + 1} / {chapters.length}
+            </span>
           </span>
         </div>
         <ol className="flex gap-2" aria-label="Setup chapters">
-          {CHAPTERS.map((name, index) => (
+          {chapters.map((name, index) => (
             <li
               key={name}
               aria-current={chapter === index ? "step" : undefined}
@@ -656,7 +706,10 @@ export default function Onboarding() {
         className="flex-1 overflow-y-auto min-h-0 pt-5 pb-6 space-y-6"
       >
         <div className="space-y-3">
-          {(chapter === 1 || chapter === 2) && (
+          {((step === 1 && trainingActivity !== "lifting") ||
+            step === 3 ||
+            step === 2 ||
+            step === 4) && (
             <p className="text-caption text-muted-foreground">
               {step === 1 || step === 2 ? "1 of 2" : "2 of 2"} in this chapter
             </p>
@@ -669,20 +722,29 @@ export default function Onboarding() {
             {STEP_META[step][0]}
           </h1>
           <p className="text-base text-muted-foreground">
-            {STEP_META[step][1]}
+            {step === 5 && !hasLifting
+              ? "Check these starting values. They help estimate your nutrition targets."
+              : STEP_META[step][1]}
           </p>
         </div>
         <fieldset disabled={saving} className="min-w-0 space-y-5">
-          <legend className="sr-only">{CHAPTERS[chapter]}</legend>
+          <legend className="sr-only">{chapters[chapter]}</legend>
           {step === 0 && (
             <div className="space-y-3">
               {GOALS.map((goal) => (
                 <OptionCard
                   key={goal.id}
+                  tone={goal.id === "running" ? "running" : "lifting"}
                   selected={goalConfirmed && primaryGoal === goal.id}
                   onSelect={() => {
                     setPrimaryGoal(goal.id);
                     setGoalConfirmed(true);
+                    if (goal.id === "running" && !goalConfirmed) {
+                      setTrainingActivity("running");
+                      if (chosenRunFrequency === "none")
+                        setRunFrequency("occasional");
+                      setRunConfirmed(false);
+                    }
                   }}
                   icon={
                     <goal.icon
@@ -709,25 +771,51 @@ export default function Onboarding() {
           )}
           {step === 1 && (
             <div className="space-y-5">
-              <SegmentedControl<OnboardingDraft["daysPerWeek"]>
-                ariaLabel="Lift sessions per week"
-                value={daysPerWeek}
-                options={([2, 3, 4, 5, 6] as const).map((n) => ({
-                  value: n,
-                  label: (
-                    <span className="font-mono tabular-nums text-xl">{n}</span>
-                  ),
-                }))}
-                onChange={setDaysPerWeek}
-                tone="lifting"
-                className="py-2"
+              <SegmentedControl<OnboardingActivity>
+                ariaLabel="Training activities"
+                value={trainingActivity}
+                options={[
+                  { value: "lifting", label: "Lifting" },
+                  { value: "running", label: "Running" },
+                  { value: "both", label: "Both" },
+                ]}
+                onChange={(activity) => {
+                  if (trainingActivity === "lifting" && activity !== "lifting")
+                    setRunConfirmed(false);
+                  setTrainingActivity(activity);
+                  if (activity !== "lifting" && chosenRunFrequency === "none") {
+                    setRunFrequency("occasional");
+                    setRunConfirmed(false);
+                  }
+                }}
+                tone={trainingActivity === "running" ? "running" : "lifting"}
               />
+              {hasLifting && (
+                <SegmentedControl<Exclude<OnboardingDraft["daysPerWeek"], 0>>
+                  ariaLabel="Lift sessions per week"
+                  value={liftDaysPreference}
+                  options={([2, 3, 4, 5, 6] as const).map((n) => ({
+                    value: n,
+                    label: (
+                      <span className="font-mono tabular-nums text-xl">
+                        {n}
+                      </span>
+                    ),
+                  }))}
+                  onChange={setDaysPerWeek}
+                  tone="lifting"
+                  className="py-2"
+                />
+              )}
               <p className="text-sm text-muted-foreground">
-                Starting suggestion: four lifts. Choose the rhythm that fits
-                your week.
+                {hasLifting
+                  ? "Choose lift sessions per week. The draft below updates with your plan."
+                  : "No lifts will be scheduled. Next, choose free running or prepare for a race."}
               </p>
               <WeekPreview
                 schedule={plan.weekSchedule}
+                workouts={plan.programState.workouts}
+                runDays={plan.programState.runDays}
                 draft
                 freeRunning={freeRunning}
               />
@@ -753,24 +841,19 @@ export default function Onboarding() {
                       label: "Occasional runner",
                       desc: "Usually one or two runs a week.",
                     },
-                    {
-                      id: "none",
-                      label: "I don’t run",
-                      desc: "Keep this plan focused on lifting.",
-                    },
                   ] as const
                 ).map((option) => (
                   <OptionCard
                     key={option.id}
                     selected={runConfirmed && runFrequency === option.id}
+                    tone="running"
                     icon={<Footprints className="size-5 text-running-strong" />}
                     label={option.label}
                     desc={option.desc}
                     onSelect={() => {
                       setRunConfirmed(true);
                       setRunFrequency(option.id);
-                      if (option.id === "none") setRunMode("freeform");
-                      else setWeeklyRunDays(option.id === "regular" ? 3 : 2);
+                      setWeeklyRunDays(option.id === "regular" ? 3 : 2);
                     }}
                   />
                 ))}
@@ -865,6 +948,8 @@ export default function Onboarding() {
               {runConfirmed && (
                 <WeekPreview
                   schedule={plan.weekSchedule}
+                  workouts={plan.programState.workouts}
+                  runDays={plan.programState.runDays}
                   draft
                   freeRunning={freeRunning}
                 />
@@ -939,6 +1024,13 @@ export default function Onboarding() {
                   />
                 ))}
               </div>
+              <WeekPreview
+                schedule={plan.weekSchedule}
+                workouts={plan.programState.workouts}
+                runDays={plan.programState.runDays}
+                draft
+                freeRunning={freeRunning}
+              />
             </div>
           )}
           {step === 4 && (
@@ -1037,9 +1129,10 @@ export default function Onboarding() {
                 </summary>
                 <p>
                   Height, weight and the midpoint of your age range estimate
-                  starting calories. Activity is derived from your lift
-                  frequency. “Prefer not to say” uses the male calculation.
-                  These are estimates you can adjust in Settings.
+                  starting calories. The initial activity estimate uses planned
+                  lifting frequency; running is accounted for as you log it.
+                  “Prefer not to say” uses the male calculation. These are
+                  estimates you can adjust in Settings.
                 </p>
               </details>
             </div>
@@ -1048,32 +1141,69 @@ export default function Onboarding() {
             <div className="space-y-5">
               <section
                 className="rounded-2xl bg-card card-shadow p-5 space-y-3"
-                aria-label="First lift preview"
+                aria-label={
+                  runningFirst ? "First run preview" : "First lift preview"
+                }
               >
-                <p className="text-caption text-lifting-strong font-semibold">
-                  YOUR FIRST LIFT
-                </p>
-                <h2 className="text-xl font-bold">{firstWorkout.dayName}</h2>
+                <SectionLabel
+                  className={
+                    runningFirst ? "text-running-strong" : "text-lifting-strong"
+                  }
+                >
+                  {runningFirst
+                    ? firstRunTemplate
+                      ? "Your first planned run"
+                      : effectiveRunMode === "race_prep"
+                        ? "Your race plan"
+                        : "Your running setup"
+                    : "Your first lift"}
+                </SectionLabel>
+                <h2 className="text-xl font-bold">
+                  {runningFirst
+                    ? (firstRunTemplate?.name ??
+                      (effectiveRunMode === "race_prep"
+                        ? `${racePreview.distanceLabel} plan`
+                        : "Free running"))
+                    : firstWorkout?.dayName}
+                </h2>
                 <p className="text-sm text-muted-foreground">
-                  {firstWorkout.exercises.length} exercises ·{" "}
-                  {goalLabel(primaryGoal)}
+                  <InlineNumerals>
+                    {runningFirst
+                      ? firstRunTemplate
+                        ? `${firstRunTemplate.estimatedDuration} min · ${firstRun?.date ? formatDayMonth(parseLocalDate(firstRun.date)) : ""}`
+                        : effectiveRunMode === "race_prep"
+                          ? `${effectiveRunDays} runs per week · see your upcoming week in Train.`
+                          : "Choose your route and pace. No scheduled runs or weekly quota."
+                      : `${firstWorkout?.exercises.length ?? 0} exercises · ${goalLabel(primaryGoal)}`}
+                  </InlineNumerals>
                 </p>
-                <div className="flex flex-wrap gap-2 text-sm">
-                  {firstWorkout.exercises.slice(0, 3).map((exercise) => (
-                    <span
-                      key={exercise.name}
-                      className="rounded-lg bg-muted px-3 py-2"
-                    >
-                      {exercise.name}
-                    </span>
-                  ))}
-                </div>
+                {!runningFirst && firstWorkout && (
+                  <div className="flex flex-wrap gap-2 text-sm">
+                    {firstWorkout.exercises.slice(0, 3).map((exercise) => (
+                      <span
+                        key={exercise.name}
+                        className="rounded-lg bg-muted px-3 py-2"
+                      >
+                        {exercise.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {runningFirst && firstRunTemplate && (
+                  <p className="text-sm text-muted-foreground">
+                    {firstRunTemplate.description}
+                  </p>
+                )}
                 <p className="text-sm text-muted-foreground">
-                  Create your plan to open the full session in Train.
+                  {runningFirst
+                    ? "Create your plan to open your runs in Train."
+                    : "Create your plan to open the full session in Train."}
                 </p>
               </section>
               <WeekPreview
                 schedule={plan.weekSchedule}
+                workouts={plan.programState.workouts}
+                runDays={plan.programState.runDays}
                 freeRunning={freeRunning}
               />
               <div className="rounded-2xl bg-card card-shadow divide-y divide-border px-4">
@@ -1087,10 +1217,16 @@ export default function Onboarding() {
                   },
                   {
                     label: "Lift sessions",
-                    value: `${daysPerWeek} per week`,
+                    value: hasLifting
+                      ? `${daysPerWeek} per week`
+                      : "No lifting planned",
                     target: 1,
                   },
-                  { label: "Running", value: runSummary, target: 3 },
+                  {
+                    label: "Running",
+                    value: runSummary,
+                    target: trainingActivity === "lifting" ? 1 : 3,
+                  },
                   {
                     label: "Setup",
                     value: `${equipmentLabel(equipment)} · ${experienceLabel(experience)}`,
@@ -1112,33 +1248,41 @@ export default function Onboarding() {
                     value: `${weightDisplayUnit === "st" ? formatStonePounds(weightKg) : `${formatWeightInUnit(weightKg, weightUnit)} ${weightUnit === "lbs" ? "lb" : "kg"}`} · ${Number(heightCm.toFixed(1))} cm · age ${ageRange}`,
                     target: 5,
                   },
-                ].map((row) => (
-                  <div key={row.label} className="flex items-center gap-3 py-3">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-muted-foreground">
-                        {row.label}
-                      </p>
-                      <p className="text-sm font-semibold">{row.value}</p>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      onClick={() => edit(row.target)}
-                      aria-label={`Edit ${row.label.toLowerCase()}`}
+                ]
+                  .filter(
+                    (row) =>
+                      hasLifting || (row.target !== 2 && row.target !== 4)
+                  )
+                  .map((row) => (
+                    <div
+                      key={row.label}
+                      className="flex items-center gap-3 py-3"
                     >
-                      Edit
-                    </Button>
-                  </div>
-                ))}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-muted-foreground">
+                          {row.label}
+                        </p>
+                        <p className="text-sm font-semibold">{row.value}</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        onClick={() => edit(row.target)}
+                        aria-label={`Edit ${row.label.toLowerCase()}`}
+                      >
+                        Edit
+                      </Button>
+                    </div>
+                  ))}
               </div>
               {validBody && (
-                <section
-                  className="rounded-2xl bg-card card-shadow p-4 space-y-3"
-                  aria-label="Starting nutrition"
-                >
+                <details className="rounded-2xl bg-card card-shadow p-4 space-y-3">
+                  <summary className="min-h-11 py-3 cursor-pointer text-base font-semibold">
+                    Starting nutrition
+                  </summary>
                   <div className="flex items-center justify-between gap-2">
-                    <h2 className="text-base font-semibold">
-                      Starting nutrition
-                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Based on your starting details
+                    </p>
                     <Button
                       variant="ghost"
                       onClick={() => edit(5)}
@@ -1169,7 +1313,7 @@ export default function Onboarding() {
                     <span className="font-mono tabular-nums">{tdee.fat} g</span>{" "}
                     fat
                   </p>
-                </section>
+                </details>
               )}
               <div className="space-y-2">
                 <label
@@ -1223,7 +1367,7 @@ export default function Onboarding() {
               onClick={() => {
                 setSaveError("");
                 setStep(
-                  returnToReview ? 7 : FLOW[Math.max(0, FLOW.indexOf(step) - 1)]
+                  returnToReview ? 7 : flow[Math.max(0, flow.indexOf(step) - 1)]
                 );
                 setReturnToReview(false);
               }}

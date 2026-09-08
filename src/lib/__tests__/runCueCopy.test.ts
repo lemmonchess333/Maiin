@@ -15,6 +15,10 @@ import {
   intervalRecoveryCue,
   strideRepCue,
   floatCue,
+  warmupCue,
+  cooldownCue,
+  walkBackCue,
+  paceResolvedCue,
 } from "../runCueCopy";
 
 describe("splitCue", () => {
@@ -279,5 +283,79 @@ describe("interval cue vocabulary — no wallpaper", () => {
     }
     const floats = [0, 1, 2].map((i) => floatCue(i));
     expect(new Set(floats).size).toBe(3);
+  });
+});
+
+describe("session bookends rotate across runs", () => {
+  /* The warm-up, cool-down and completion lines were the last fixed
+     strings in the module — spoken identically on every structured
+     session a user ever ran. Pools now; the per-run seed picks the
+     entry, so two runs open differently and one run stays stable. */
+  it("warm-up, cool-down, walk-back and completion all vary by seed", () => {
+    for (const cue of [
+      warmupCue,
+      cooldownCue,
+      walkBackCue,
+      sessionCompleteCue,
+    ]) {
+      const lines = [0, 1, 2].map((seed) => cue(seed));
+      expect(new Set(lines).size, cue.name).toBe(3);
+    }
+  });
+
+  it("an unseeded caller still gets the historical lines", () => {
+    // Variant 0 is the pre-pool string, so nothing about a legacy call
+    // site's behaviour changed out from under it.
+    expect(warmupCue(0)).toBe("Warming up. Keep it easy and conversational.");
+    expect(cooldownCue(0)).toBe("Cooling down. Nice and easy from here.");
+    expect(sessionCompleteCue()).toBe("Session complete. Great work today.");
+  });
+
+  it("keeps the ban on exclamation cheer — bookends are chrome, not sprints", () => {
+    for (let v = 0; v < 8; v++) {
+      expect(warmupCue(v)).not.toMatch(/!/);
+      expect(cooldownCue(v)).not.toMatch(/!/);
+      expect(sessionCompleteCue(v)).not.toMatch(/!/);
+    }
+  });
+});
+
+describe("seed offsets never break within-session uniqueness", () => {
+  /* The builders pass `seed + rep` as the variant. That is only safe if
+     a CONSTANT offset preserves the no-repeat property the unseeded
+     rotation guarantees — modular rotation maps distinct indices to
+     distinct entries, but this pins it so a future non-linear pick()
+     has to come back here. */
+  it("middle-rep clauses stay distinct at any seed", () => {
+    for (const seed of [0, 1, 5, 9, 13, 9972]) {
+      const cues = Array.from({ length: 8 }, (_, i) =>
+        intervalRepCue(i + 1, 8, seed + i + 1)
+      );
+      const clauses = cues.map((c) =>
+        c.replace(/^Rep \d+ of \d+\.\s*(\d+ to go after this\.\s*)?/, "")
+      );
+      expect(new Set(clauses).size, `seed ${seed}`).toBe(8);
+    }
+  });
+
+  it("two different seeds produce a different opener", () => {
+    // The cross-run point of the whole change: the same session on two
+    // different days should not start with the same sentence.
+    expect(intervalRepCue(1, 5, 1)).not.toBe(intervalRepCue(1, 5, 2));
+    expect(warmupCue(3)).not.toBe(warmupCue(4));
+  });
+});
+
+describe("pace-alert resolution cue", () => {
+  it("exists, rotates, and sounds like recovery — not another correction", () => {
+    const lines = [0, 1, 2].map((v) => paceResolvedCue(v));
+    expect(new Set(lines).size).toBe(3);
+    for (const line of lines) {
+      expect(line).toMatch(/pace|target/i);
+      // A close-out must never read as a fresh instruction to speed up
+      // or slow down — that's the alert's job, and mixing the registers
+      // makes recovery sound like criticism.
+      expect(line).not.toMatch(/slow|behind|drift|ease off|lift/i);
+    }
   });
 });

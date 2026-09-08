@@ -107,6 +107,8 @@ test.describe("onboarding screenshots", () => {
     await tap(page, /build muscle/i);
     await next(page);
 
+    // Select both activities for the race + lifting walkthrough.
+    await page.getByRole("radio", { name: "Both", exact: true }).click();
     // Step 1 — days per week (a default may already be selected).
     await shootBoth(page, "onboarding-1-days");
     await next(page);

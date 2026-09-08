@@ -9,6 +9,11 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
+import {
+  hasQueuedWorkoutCompletion,
+  queueWorkoutCompletion,
+  workoutCompletionDayIdentity,
+} from "@/lib/offlineQueue";
 import { describeRejection, stripCallablePrefix } from "@/lib/callableErrors";
 import { stripUndefined } from "@/lib/firestoreGuards";
 import { auth, db } from "@/lib/firebase";
@@ -1111,7 +1116,7 @@ export function useProgram() {
     async (dayIndex: number, sessionData: CompletedSessionData) => {
       // Fail CLOSED — returning silently here would let the session UI clear
       // its draft as if the workout persisted. The caller surfaces the throw.
-      if (!programState || !user) {
+      if (!programState || !user || auth.currentUser?.uid !== user.uid) {
         throw new Error(
           "Cannot complete a workout without an active programme and user."
         );
@@ -1252,66 +1257,74 @@ export function useProgram() {
       );
       const workoutId = `programme-${sessionData.completionId}`;
       const workoutRef = doc(db, "users", user.uid, "workouts", workoutId);
+      const queued =
+        navigator.onLine === false ||
+        hasQueuedWorkoutCompletion(user.uid, workoutId);
+      let sync: Promise<"synced" | "failed">;
 
-      try {
-        const batch = writeBatch(db);
-        batch.set(
-          programRef,
-          stripUndefined({ ...updated, updatedAt: Date.now() })
-        );
-        batch.set(
-          workoutRef,
-          stripUndefined({
-            date: today,
-            exercises,
-            totalCalories,
-            durationMinutes: effectiveDurationMin,
-            /* The field every SERVER consumer of a workout doc reads —
+      const workoutData = stripUndefined({
+        date: today,
+        exercises,
+        totalCalories,
+        durationMinutes: effectiveDurationMin,
+        /* The field every SERVER consumer of a workout doc reads —
                `workoutChallengeIncrements` (total_volume + the hybrid
                score's kg term) and `liftVolumeKgFor` (lifetime volume).
                It was computed here for the social activity post and never
                written onto the workout itself, so all three credited zero
                for every lift ever logged. */
-            totalVolume: tonnage,
-            notes: `${day.dayName} — Programme Week ${programState.weekNumber}`,
-            createdAt: Timestamp.now(),
-            source: "programme",
-            completionId: sessionData.completionId,
-            sessionVariant: sessionData.sessionVariant,
-            // D2: session-level provenance for any per-set RPE above. Helms
-            // p139 keeps novices on %1RM rather than RPE for their first
-            // month, and p73 claims accuracy only for lifters who are
-            // advanced AND RPE-familiar AND near failure — so a future
-            // consumer must be able to tell whose number it is holding rather
-            // than calibrating on an uncalibrated beginner's guess. Recorded
-            // once per session because it cannot vary within one.
-            rpeProvenance: {
-              experience: profile?.experience,
-              shownByDefault: showsRpeByDefault(
-                toExperience(profile?.experience)
-              ),
-            },
-          })
-        );
-        if (navigator.onLine) {
+        totalVolume: tonnage,
+        notes: `${day.dayName} — Programme Week ${programState.weekNumber}`,
+        createdAt: Timestamp.now(),
+        source: "programme",
+        completionId: sessionData.completionId,
+        sessionVariant: sessionData.sessionVariant,
+        // D2: session-level provenance for any per-set RPE above. Helms
+        // p139 keeps novices on %1RM rather than RPE for their first
+        // month, and p73 claims accuracy only for lifters who are
+        // advanced AND RPE-familiar AND near failure — so a future
+        // consumer must be able to tell whose number it is holding rather
+        // than calibrating on an uncalibrated beginner's guess. Recorded
+        // once per session because it cannot vary within one.
+        rpeProvenance: {
+          experience: profile?.experience,
+          shownByDefault: showsRpeByDefault(toExperience(profile?.experience)),
+        },
+      });
+
+      try {
+        if (!queued) {
+          const batch = writeBatch(db);
+          batch.set(
+            programRef,
+            stripUndefined({ ...updated, updatedAt: Date.now() })
+          );
+          batch.set(workoutRef, workoutData);
           await batch.commit();
+          sync = Promise.resolve("synced");
         } else {
-          /* #1887 — offline, commit() acks only on reconnect, so
-             awaiting it parked the whole completion chain: the session
-             UI hung on Finish and the share composer (whose offline
-             branch below queues the post) was unreachable. The batch is
-             queued durably in IndexedDB either way and stays atomic;
-             proceed on the local commit and log a post-reconnect
-             rejection, mirroring the offline queue's trade-off. */
-          void batch
-            .commit()
-            .catch((err) =>
-              logger.error("[Program] queued offline completion failed:", err)
-            );
+          const dayIdentity = workoutCompletionDayIdentity(day);
+          sync = queueWorkoutCompletion(
+            db,
+            user.uid,
+            workoutId,
+            workoutData,
+            dayIdentity
+              ? {
+                  weekNumber: programState.weekNumber,
+                  dayIndex,
+                  dayIdentity,
+                  trainingBlockId: programState.trainingBlock?.id,
+                }
+              : undefined
+          );
+          void sync.then((status) => {
+            if (status === "failed" && auth.currentUser?.uid === user.uid)
+              void refetchProgramState();
+          });
         }
-        // Local programme state changes only after BOTH docs commit
-        // (offline: after both are durably queued as one atomic batch).
-        setProgramState(updated);
+        // Optimistic while offline; completion receipt carries the distinction.
+        if (auth.currentUser?.uid === user.uid) setProgramState(updated);
       } catch (error) {
         logger.error("[Program] completion batch failed:", error);
         toast.error(
@@ -1426,9 +1439,14 @@ export function useProgram() {
           throw err;
         }
       };
-      return { workoutId, share };
+      return {
+        workoutId,
+        share,
+        syncStatus: queued ? ("queued" as const) : ("synced" as const),
+        sync,
+      };
     },
-    [programState, user, profile]
+    [programState, user, profile, refetchProgramState]
   );
 
   // Skip a workout day (no stats, no social post)

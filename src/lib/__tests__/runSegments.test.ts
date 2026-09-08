@@ -222,3 +222,52 @@ describe("segmentsFromGuided", () => {
     });
   });
 });
+
+describe("cross-run cue rotation (seed)", () => {
+  const shape = {
+    reps: 5,
+    workDistance: 1000,
+    restDuration: 90,
+    warmupDuration: 600,
+    cooldownDuration: 300,
+  };
+
+  it("same seed → identical spoken script (reproducible runs)", () => {
+    const a = segmentsFromIntervals(shape, "km", 7).map((s) => s.cue);
+    const b = segmentsFromIntervals(shape, "km", 7).map((s) => s.cue);
+    expect(a).toEqual(b);
+  });
+
+  it("different seeds → a different script, same structure", () => {
+    // The whole point: a 5×1K on Tuesday must not open with the same
+    // sentence as the 5×1K last Tuesday. Structure (labels, targets)
+    // must not move — only the phrasing.
+    const a = segmentsFromIntervals(shape, "km", 0);
+    const b = segmentsFromIntervals(shape, "km", 1);
+    expect(a.map((s) => s.label)).toEqual(b.map((s) => s.label));
+    expect(a.map((s) => s.cue)).not.toEqual(b.map((s) => s.cue));
+    expect(a[0].cue).not.toBe(b[0].cue); // the warm-up opener itself
+  });
+
+  it("unseeded call keeps the historical script", () => {
+    const segs = segmentsFromIntervals(shape, "km");
+    expect(segs[0].cue).toBe("Warming up. Keep it easy and conversational.");
+    expect(segs[segs.length - 1].cue).toBe(
+      "Cooling down. Nice and easy from here."
+    );
+  });
+
+  it("stride walk-backs no longer repeat one sentence all session", () => {
+    // The last within-session repeat to survive STRUCT-SESS-02: every
+    // walk-back spoke the identical line, five times in eight minutes.
+    const segs = segmentsFromEasyWithStrides(30, {
+      reps: 5,
+      workSeconds: 20,
+    });
+    const walkBacks = segs
+      .filter((s) => s.label === "Walk back")
+      .map((s) => s.cue);
+    expect(walkBacks.length).toBe(5);
+    expect(new Set(walkBacks).size).toBe(5);
+  });
+});

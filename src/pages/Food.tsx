@@ -25,12 +25,12 @@ import { useMeals, type Meal } from "@/hooks/useMeals";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { Timestamp } from "firebase/firestore";
 import { createMealEntry, notifyMealsLogged } from "@/lib/mealEntry";
+import { copySelectedMeals, type MealCopySelection } from "@/lib/mealCopy";
 import { usualMeal } from "@/lib/usualMeal";
 import { duplicatedServingPayload } from "@/lib/servingEdit";
 import { parseFoodText, getFoodSuggestions } from "@/lib/nlFoodParser";
 import type { ParsedFood, FoodSuggestion } from "@/lib/nlFoodParser";
 import { RotateCcw, X } from "lucide-react";
-import BottomSheet from "@/components/ui/BottomSheet";
 import IconButton from "@/components/ui/IconButton";
 const FoodAnalyzer = lazyRetry(() => import("@/components/FoodAnalyzer"));
 const ProModal = lazyRetry(() => import("@/components/ProModal"));
@@ -55,6 +55,7 @@ import FoodTimeline from "@/components/food/FoodTimeline";
 import FoodDateBar from "@/components/food/FoodDateBar";
 import FoodOfflineBanner from "@/components/food/FoodOfflineBanner";
 import EditServingsSheet from "@/components/food/EditServingsSheet";
+import CopyMealsSheet from "@/components/food/CopyMealsSheet";
 import { useScanUsage } from "@/hooks/useScanUsage";
 import { useInFlightGuard } from "@/hooks/useInFlightGuard";
 import { useScanButtonOverrides } from "@/components/food/scanButtonOverrides";
@@ -215,9 +216,8 @@ export default function Food() {
     () => new Set()
   );
 
-  // Copy-from-yesterday: tracks which meal section is being copied so the
-  // pill stays disabled until the Firestore subscription propagates the new
-  // entries and the section actually becomes populated. Prevents double-taps.
+  // Copy-from-yesterday: the trigger stays disabled while the selected
+  // entries are accepted by the durable local queue.
   const [copyingMealKey, setCopyingMealKey] = useState<string | null>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const {
@@ -486,69 +486,24 @@ export default function Food() {
     });
   }, [yesterdaySegmented, mealSegmentedMeals]);
 
-  /**
-   * Copy every yesterday meal that today is missing in the same slot.
-   * Skips slots today already has so we never produce duplicates. Used by
-   * the bottom-of-page "Copy yesterday's …" button — replaces the
-   * per-section "Copy yesterday's lunch" pills that used to sit beneath
-   * each empty section header.
-   */
-  const handleCopyAllMissingFromYesterday = async () => {
-    if (copyingMealKey || !uid) return;
-    // Use a sentinel value so the in-flight UI guard works even though
-    // there's no single mealKey driving this call.
+  const handleCopySelectedFromYesterday = async (selections: readonly MealCopySelection[]) => {
+    if (copyingMealKey || !uid) return { created: [], error: new Error("Sign in again to log food.") };
     setCopyingMealKey("__all__");
-    haptic("light");
-    const createdIds: string[] = [];
     try {
-      let total = 0;
-      const copied: string[] = [];
-      for (const mealKey of slotsToCopyFromYesterday) {
-        const items = yesterdaySegmented[mealKey] ?? [];
-        if (items.length === 0) continue;
-        for (const item of items) {
-          const added = await createMealEntry(uid, {
-            date: selectedDate,
-            meal: mealKey,
-            foodName: item.foodName,
-            items: item.items ?? [],
-            totalCalories: item.totalCalories ?? 0,
-            totalProtein: item.totalProtein ?? 0,
-            totalCarbs: item.totalCarbs ?? 0,
-            totalFat: item.totalFat ?? 0,
-            confidence: "copy",
-            createdAt: Timestamp.now(),
-          });
-          createdIds.push(added.id);
-          total++;
-        }
-        copied.push(MEAL_LABELS[mealKey]);
-      }
-      haptic(15);
-      // Toast names the slots that received copies so the user can see
-      // exactly what happened, not just an opaque item count.
-      notifyMealsLogged(
-        uid,
-        createdIds,
-        `Copied ${total} item${total === 1 ? "" : "s"} into ${joinHumanList(copied)}`,
-        { path: "copy" }
-      );
-      setCopyPreviewOpen(false);
-    } catch (err) {
-      logger.error("[copy-all] Failed:", err);
-      if (createdIds.length > 0) {
-        setCopyPreviewOpen(false);
+      const result = await copySelectedMeals(uid, selectedDate, selections);
+      if (result.created.length > 0) {
+        const slots = MEAL_ORDER.filter((slot) => result.created.some((entry) => entry.slot === slot));
+        const count = result.created.length;
+        haptic(15);
         notifyMealsLogged(
           uid,
-          createdIds,
-          `Copied ${createdIds.length} meals; the remaining meals could not be saved`,
+          result.created.map((entry) => entry.id),
+          `Copied ${count} item${count === 1 ? "" : "s"} into ${joinHumanList(slots.map((slot) => MEAL_LABELS[slot]))}`,
           { path: "copy" }
         );
-      } else {
-        toast.error("Couldn't copy from yesterday", {
-          id: "food-copy-yesterday",
-        });
       }
+      if (result.error !== null) logger.error("[copy-selected] Failed:", result.error);
+      return result;
     } finally {
       setCopyingMealKey(null);
     }
@@ -1944,31 +1899,12 @@ export default function Food() {
         />
       </motion.div>
       {copyPreviewOpen && (
-        <BottomSheet
-          open
-          title="Copy yesterday's meals"
-          onOpenChange={setCopyPreviewOpen}
-        >
-          <div className="px-4 pb-6 space-y-3">
-            {slotsToCopyFromYesterday.map((slot) => (
-              <div key={slot}>
-                <p className="text-sm">{MEAL_LABELS[slot]}</p>
-                {(yesterdaySegmented[slot] ?? []).map((meal) => (
-                  <p key={meal.id} className="text-sm text-muted-foreground">
-                    {meal.foodName}
-                  </p>
-                ))}
-              </div>
-            ))}
-            <Button
-              fullWidth
-              loading={copyingMealKey !== null}
-              onClick={() => void handleCopyAllMissingFromYesterday()}
-            >
-              Log these meals
-            </Button>
-          </div>
-        </BottomSheet>
+        <CopyMealsSheet
+          key={`${uid}:${selectedDate}`}
+          sources={slotsToCopyFromYesterday.flatMap((slot) => yesterdaySegmented[slot] ?? [])}
+          onClose={() => setCopyPreviewOpen(false)}
+          onSave={handleCopySelectedFromYesterday}
+        />
       )}
 
       {scanOpen && (

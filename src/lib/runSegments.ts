@@ -32,10 +32,13 @@ import {
   type DistanceUnit,
 } from "./distanceUnits";
 import {
-  intervalRepCue,
-  intervalRecoveryCue,
-  strideRepCue,
+  cooldownCue,
   floatCue,
+  intervalRecoveryCue,
+  intervalRepCue,
+  strideRepCue,
+  walkBackCue,
+  warmupCue,
 } from "./runCueCopy";
 
 export type SegmentTarget =
@@ -112,7 +115,13 @@ function workLabel(shape: IntervalShape): string {
 
 export function segmentsFromIntervals(
   shape: IntervalShape,
-  unit: DistanceUnit
+  unit: DistanceUnit,
+  /** Rotates every variation pool so two RUNS of the same session don't
+   *  speak an identical script (variant = seed + rep keeps the
+   *  within-session no-repeat guarantee — a constant offset never maps
+   *  two distinct indices onto one pool entry). Callers derive it from
+   *  run identity; 0 keeps the historical script. */
+  seed: number = 0
 ): SessionSegment[] {
   const out: SessionSegment[] = [];
   if (shape.warmupDuration) {
@@ -121,7 +130,7 @@ export function segmentsFromIntervals(
       label: "Warm-up",
       instruction: "Easy jogging",
       target: { kind: "duration", seconds: shape.warmupDuration },
-      cue: "Warming up. Keep it easy and conversational.",
+      cue: warmupCue(seed),
     });
   }
   const pace = shape.workPace
@@ -139,7 +148,7 @@ export function segmentsFromIntervals(
       rep,
       totalReps: shape.reps,
       effort: workLabel(shape),
-      cue: intervalRepCue(rep, shape.reps, rep),
+      cue: intervalRepCue(rep, shape.reps, seed + rep),
     });
     if (rep < shape.reps) {
       out.push({
@@ -149,7 +158,7 @@ export function segmentsFromIntervals(
         target: { kind: "duration", seconds: shape.restDuration },
         rep,
         totalReps: shape.reps,
-        cue: intervalRecoveryCue(rep, shape.reps, rep),
+        cue: intervalRecoveryCue(rep, shape.reps, seed + rep),
       });
     }
   }
@@ -159,7 +168,7 @@ export function segmentsFromIntervals(
       label: "Cool-down",
       instruction: "Easy jogging",
       target: { kind: "duration", seconds: shape.cooldownDuration },
-      cue: "Cooling down. Nice and easy from here.",
+      cue: cooldownCue(seed),
     });
   }
   return out;
@@ -174,7 +183,9 @@ export function segmentsFromTempo(
      *  race prep), not a fitness-derived threshold — cues say so and
      *  the pace is pinned against band re-suffixing. */
     atGoalPace?: boolean;
-  }
+  },
+  /** Same cross-run rotation contract as segmentsFromIntervals. */
+  seed: number = 0
 ): SessionSegment[] {
   const out: SessionSegment[] = [];
   out.push({
@@ -182,7 +193,7 @@ export function segmentsFromTempo(
     label: "Warm-up",
     instruction: "Easy jogging",
     target: { kind: "duration", seconds: shape.warmupSec },
-    cue: "Warming up. Keep it easy and conversational.",
+    cue: warmupCue(seed),
   });
   const pace = paceTarget
     ? ` @ ${paceMinSec(paceTarget, unit)}${paceUnitLabel(unit)}`
@@ -194,7 +205,7 @@ export function segmentsFromTempo(
         label: "Float",
         instruction: `${min(shape.floatSec)} min easy between tempo blocks`,
         target: { kind: "duration", seconds: shape.floatSec },
-        cue: floatCue(i),
+        cue: floatCue(seed + i),
       });
     }
     const atGoal = opts?.atGoalPace && paceTarget;
@@ -229,7 +240,7 @@ export function segmentsFromTempo(
     label: "Cool-down",
     instruction: "Easy jogging",
     target: { kind: "duration", seconds: shape.cooldownSec },
-    cue: "Cooling down. Nice and easy from here.",
+    cue: cooldownCue(seed),
   });
   return out;
 }
@@ -241,7 +252,9 @@ export function segmentsFromTempo(
  */
 export function segmentsFromEasyWithStrides(
   totalMinutes: number,
-  strides: StridesShape
+  strides: StridesShape,
+  /** Same cross-run rotation contract as segmentsFromIntervals. */
+  seed: number = 0
 ): SessionSegment[] {
   const stridesBlockSec =
     strides.reps * (strides.workSeconds + STRIDE_RECOVERY_SECONDS);
@@ -264,7 +277,7 @@ export function segmentsFromEasyWithStrides(
       rep,
       totalReps: strides.reps,
       effort: `Stride ${rep} of ${strides.reps}`,
-      cue: strideRepCue(rep, strides.reps, rep),
+      cue: strideRepCue(rep, strides.reps, seed + rep),
     });
     out.push({
       type: "recovery",
@@ -273,7 +286,7 @@ export function segmentsFromEasyWithStrides(
       target: { kind: "duration", seconds: STRIDE_RECOVERY_SECONDS },
       rep,
       totalReps: strides.reps,
-      cue: "Walk it back. Full recovery.",
+      cue: walkBackCue(seed + rep),
     });
   }
   return out;

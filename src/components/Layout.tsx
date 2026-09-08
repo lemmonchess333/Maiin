@@ -1,6 +1,5 @@
-import { Outlet, NavLink, useLocation } from "react-router-dom";
-import { cn } from "@/lib/utils";
-import { activeTabForPath } from "@/lib/activeTab";
+import { Outlet, useLocation } from "react-router-dom";
+import BottomNavigation from "@/components/BottomNavigation";
 import {
   Home,
   BarChart3,
@@ -9,41 +8,57 @@ import {
   WifiOff,
   Check,
   Apple,
+  CloudUpload,
 } from "lucide-react";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
-import { getQueueLength } from "@/lib/offlineQueue";
+import {
+  getQueueLength,
+  getFailedWorkoutCompletionCount,
+  subscribeQueuedWrites,
+  flushQueue,
+} from "@/lib/offlineQueue";
+import { db } from "@/lib/firebase";
+import Button from "@/components/ui/Button";
+import InlineNumerals from "@/components/ui/InlineNumerals";
+import { haptic } from "@/lib/haptic";
 import { outboxLength } from "@/features/program/commandOutbox";
 import { useUid } from "@/lib/auth";
-import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
-import { haptic } from "@/lib/haptic";
+import { motion, AnimatePresence } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import { useEffect, useSyncExternalStore, useCallback, useState } from "react";
 
-/** Subscribe to offline queue length — polls every 3s while offline */
-function useQueueCount(isOnline: boolean, uid: string | null): number {
+/** Queue state describes local persistence, not network connectivity. */
+function useQueuedChanges(uid: string | null) {
   const subscribe = useCallback(
     (cb: () => void) => {
-      if (isOnline) return () => {};
+      if (!uid) return () => {};
+      // Firestore queue changes publish immediately. Programme commands
+      // retain the existing poll; it must continue after reconnection.
+      const unsubscribe = subscribeQueuedWrites(cb);
       const id = setInterval(cb, 3000);
-      return () => clearInterval(id);
+      window.addEventListener("storage", cb);
+      return () => {
+        unsubscribe();
+        clearInterval(id);
+        window.removeEventListener("storage", cb);
+      };
     },
-    [isOnline]
+    [uid]
   );
   const getSnapshot = useCallback(
-    // Two queues, one count. `offlineQueue` holds Firestore writes;
-    // `commandOutbox` holds programme COMMANDS, which cannot ride the same
-    // queue because they are callable invocations rather than `setDoc` calls
-    // (P6). A user whose deload is waiting to sync should see the same pending
-    // state as one whose meal is — the distinction is ours, not theirs.
-    // Both counts are THIS account's: entries are uid-tagged, and
-    // an unscoped count on a shared device showed another account's pending
-    // work as yours.
-    () => (isOnline || !uid ? 0 : getQueueLength(uid) + outboxLength(uid)),
-    [isOnline, uid]
+    // A stable primitive snapshot avoids allocating a new object on each
+    // external-store read. Both queues and failures belong to THIS account.
+    () =>
+      uid
+        ? `${getQueueLength(uid) + outboxLength(uid)}:${getFailedWorkoutCompletionCount(uid)}`
+        : "0:0",
+    [uid]
   );
-  return useSyncExternalStore(subscribe, getSnapshot);
+  const snapshot = useSyncExternalStore(subscribe, getSnapshot);
+  const [count, failedWorkouts] = snapshot.split(":").map(Number);
+  return { count, failedWorkouts };
 }
 
 const tabs: { to: string; icon: typeof Home; label: string }[] = [
@@ -57,15 +72,32 @@ const tabs: { to: string; icon: typeof Home; label: string }[] = [
 export default function Layout() {
   const location = useLocation();
   const hideNav = location.pathname === "/run";
-  // Single source of truth for the active tab — drives the pill below instead
-  // of each NavLink's own isActive (which let the shared layoutId pill linger
-  // on non-tab routes like /upgrade and /run/:id). null = no tab active.
-  const activeTab = activeTabForPath(location.pathname);
   const { isOnline, wasOffline } = useOnlineStatus();
   const { count: unreadCount, markSeen } = useUnreadCount();
   const prefersReducedMotion = useReducedMotion();
   const uid = useUid();
-  const queueCount = useQueueCount(isOnline, uid);
+  const { count: queueCount, failedWorkouts } = useQueuedChanges(uid);
+  const [retryingUid, setRetryingUid] = useState<string | null>(null);
+  const waitingCount = Math.max(0, queueCount - failedWorkouts);
+  const pendingText =
+    failedWorkouts > 0
+      ? `${failedWorkouts} workout${failedWorkouts === 1 ? " needs" : "s need"} attention · saved on this phone${waitingCount > 0 ? `. ${waitingCount} other change${waitingCount === 1 ? "" : "s"} waiting to sync` : ""}`
+      : `${queueCount} change${queueCount === 1 ? "" : "s"} saved on this phone · waiting to sync`;
+
+  async function retryWorkouts() {
+    if (!uid) return;
+    const owner = uid;
+    haptic();
+    setRetryingUid(owner);
+    try {
+      await flushQueue(db, owner);
+    } catch {
+      // The durable record remains queued. Keep its status visible; a
+      // failed retry must never turn into a server-saved acknowledgement.
+    } finally {
+      setRetryingUid((current) => (current === owner ? null : current));
+    }
+  }
 
   // Swipe-between-tabs. Active only on the tab roots (the hook no-ops on
   // sub-pages); conflict avoidance lives in the hook + the data-no-page-swipe
@@ -142,16 +174,16 @@ export default function Layout() {
           stops with slightly different text ('Skip to main content'
           vs 'Skip to content') for the same destination. */}
 
-      {/* Offline / back-online banner.
+      {/* Connectivity and pending local changes use the existing banner.
           Animations gated on `prefersReducedMotion` — the
           height/opacity reveal is decorative, not informational.
           aria-live="polite" announces the banner text regardless of
           whether the transition plays. */}
       <div aria-live="polite">
         <AnimatePresence>
-          {!isOnline && (
+          {(!isOnline || queueCount > 0) && (
             <motion.div
-              key="offline"
+              key="pending-sync"
               initial={prefersReducedMotion ? false : { height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={
@@ -165,17 +197,36 @@ export default function Layout() {
               className="overflow-hidden"
             >
               <div className="ds-status-banner ds-status-banner--warning">
-                <WifiOff className="size-3.5 shrink-0" />
+                {isOnline ? (
+                  <CloudUpload
+                    className="size-3.5 shrink-0"
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <WifiOff className="size-3.5 shrink-0" aria-hidden="true" />
+                )}
                 <span>
-                  You're offline
-                  {queueCount > 0
-                    ? ` — ${queueCount} change${queueCount > 1 ? "s" : ""} saved locally`
-                    : " — changes will sync when reconnected"}
+                  <InlineNumerals>
+                    {queueCount > 0
+                      ? `${isOnline ? "" : "You're offline · "}${pendingText}`
+                      : "You're offline"}
+                  </InlineNumerals>
                 </span>
+                {isOnline && failedWorkouts > 0 && (
+                  <Button
+                    variant="ghost"
+                    className="shrink-0 px-2 text-xs text-warning-strong"
+                    loading={retryingUid === uid}
+                    onClick={retryWorkouts}
+                    aria-label="Retry syncing workouts"
+                  >
+                    Retry
+                  </Button>
+                )}
               </div>
             </motion.div>
           )}
-          {isOnline && wasOffline && (
+          {isOnline && wasOffline && queueCount === 0 && (
             <motion.div
               key="back-online"
               initial={prefersReducedMotion ? false : { height: 0, opacity: 0 }}
@@ -191,8 +242,8 @@ export default function Layout() {
               className="overflow-hidden"
             >
               <div className="ds-status-banner ds-status-banner--success">
-                <Check className="size-3.5 shrink-0" />
-                <span>Back online — syncing changes</span>
+                <Check className="size-3.5 shrink-0" aria-hidden="true" />
+                <span>Back online</span>
               </div>
             </motion.div>
           )}
@@ -224,159 +275,12 @@ export default function Layout() {
 
       {/* Bottom tab bar */}
       {!hideNav && (
-        <nav
-          aria-label="Main navigation"
-          data-tab-bar
-          className="fixed bottom-0 left-0 right-0 bottom-nav-frost safe-area-pb z-30"
-          style={{ overflow: "visible" }}
-        >
-          <LayoutGroup>
-            {/* The wrapping <nav aria-label="Main navigation"> on the
-            parent element already gives this surface the correct
-            semantics. The Codex PR added role="tablist" but a real
-            tablist needs role="tab" + aria-selected + roving tabindex
-            + tabpanel relationships — none of which fit the
-            page-navigation pattern. Removing the role rather than
-            implementing a half-tablist that would confuse screen
-            readers. */}
-            <div className="max-w-md mx-auto flex items-end px-1.5">
-              {tabs.map((tab) => {
-                const hasBadge = tab.to === "/social" && unreadCount > 0;
-                const Icon = tab.icon;
-                const isActive = activeTab === tab.to;
-                return (
-                  <NavLink
-                    key={tab.to}
-                    to={tab.to}
-                    end={tab.to === "/"}
-                    aria-label={
-                      hasBadge
-                        ? `${tab.label}, ${
-                            unreadCount > 9 ? "9+" : unreadCount
-                          } unread`
-                        : tab.label
-                    }
-                    onClick={() => {
-                      haptic("light");
-                      if (tab.to === "/social") markSeen();
-                      /* Tap on an already-active tab → scroll to top. The
-                     standard iOS tab-bar convention applies to ALL tabs
-                     (matches Twitter/X / Apple's first-party apps), so the
-                     plain scroll-to-top runs for Home/Programme/Food/
-                     Social/Analytics alike.
-                       Soc5 cross-cutting pin (3) additionally locks the
-                     Social tab to *refresh its feed* on retap — that part
-                     stays scoped to /social via the retap CustomEvent below;
-                     the other tabs get scroll-to-top only. */
-                      if (location.pathname === tab.to) {
-                        try {
-                          window.scrollTo({ top: 0, behavior: "smooth" });
-                        } catch {
-                          window.scrollTo(0, 0);
-                        }
-                        if (tab.to === "/social") {
-                          window.dispatchEvent(
-                            new CustomEvent("tropos:social-tab-retap")
-                          );
-                        }
-                      }
-                    }}
-                    className={cn(
-                      // `min-w-0` lets flex-1 actually shrink the cells on
-                      // iPhone SE width so the longest label ("Analytics")
-                      // doesn't push siblings off-screen. Active state comes
-                      // from activeTabForPath (not NavLink's isActive) so the
-                      // pill never lingers on non-tab routes.
-                      "relative flex-1 min-w-0 min-h-[60px] flex flex-col items-center justify-center gap-1 rounded-2xl py-2.5 transition-colors",
-                      isActive
-                        ? "text-primary"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/45"
-                    )}
-                    aria-current={isActive ? "page" : undefined}
-                  >
-                    {
-                      <>
-                        {/* Active-destination indicator: a single shared pill
-                            (layoutId) that GLIDES + morphs between tabs with a
-                            crisp spring — motion continuity is what makes the
-                            bar feel premium vs a per-cell cross-fade. Inset so
-                            it reads as a contained chip, sitting behind the
-                            icon + label. Reduced-motion → static, no slide. */}
-                        {isActive &&
-                          (prefersReducedMotion ? (
-                            <div className="absolute inset-x-1.5 inset-y-1.5 rounded-xl bg-primary/12 ring-1 ring-inset ring-primary/15 z-0" />
-                          ) : (
-                            <motion.div
-                              layoutId="nav-active-pill"
-                              className="absolute inset-x-1.5 inset-y-1.5 rounded-xl bg-primary/12 ring-1 ring-inset ring-primary/15 z-0"
-                              transition={{
-                                type: "spring",
-                                stiffness: 600,
-                                damping: 38,
-                              }}
-                            />
-                          ))}
-                        <motion.div
-                          className="relative z-10"
-                          whileTap={
-                            prefersReducedMotion ? undefined : { scale: 0.85 }
-                          }
-                          transition={{
-                            type: "spring",
-                            stiffness: 400,
-                            damping: 17,
-                          }}
-                        >
-                          <motion.div
-                            initial={false}
-                            animate={{
-                              scale:
-                                !prefersReducedMotion && isActive ? 1.06 : 1,
-                            }}
-                            transition={{
-                              type: "spring",
-                              stiffness: 500,
-                              damping: 30,
-                            }}
-                          >
-                            <Icon
-                              aria-hidden="true"
-                              className={cn(
-                                "size-5",
-                                isActive && "ds-tab-active-icon"
-                              )}
-                              fill={isActive ? "currentColor" : "none"}
-                              strokeWidth={isActive ? 2 : 1.75}
-                            />
-                          </motion.div>
-                          {/* Notification badge */}
-                          {/* Unread Social activity is "new", not an error —
-                              use the brand token, NOT bg-destructive (reserved
-                              for genuine errors / destructive states; a red dot
-                              over-escalates ordinary unread to "problem"). The
-                              dot stays small to keep the 5-tab nav calm; the
-                              count + accessible unread detail live in the
-                              aria-label above and the Social header. */}
-                          {hasBadge && (
-                            <div className="absolute -top-1 -right-1 size-2 rounded-full bg-primary" />
-                          )}
-                        </motion.div>
-                        <span
-                          className={cn(
-                            "relative z-10 max-w-full truncate text-xs tracking-wide",
-                            isActive ? "font-semibold" : "font-medium"
-                          )}
-                        >
-                          {tab.label}
-                        </span>
-                      </>
-                    }
-                  </NavLink>
-                );
-              })}
-            </div>
-          </LayoutGroup>
-        </nav>
+        <BottomNavigation
+          tabs={tabs}
+          pathname={location.pathname}
+          unreadCount={unreadCount}
+          onSocialVisit={markSeen}
+        />
       )}
     </div>
   );

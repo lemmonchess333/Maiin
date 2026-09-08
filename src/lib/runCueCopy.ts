@@ -139,11 +139,71 @@ export function finalStretchCue(unit: DistanceUnit, variant: number): string {
   return pick(finalStretchPool(unit), variant);
 }
 
+/* ── Session bookends ─────────────────────────────────────────────────
+ *
+ * The warm-up, cool-down and completion lines used to be single fixed
+ * strings, spoken on EVERY structured session — the only cues left with
+ * no variation at all, so a weekly interval runner opened and closed
+ * every session of their life with identical sentences. Pools now, like
+ * everything else here; the caller's seed decides which entry a given
+ * run gets, so consecutive runs open differently.
+ */
+
+const WARMUP = [
+  "Warming up. Keep it easy and conversational.",
+  "Warming up. Loosen off — the work comes later.",
+  "Warm up easy. Let the legs wake up on their own.",
+  "Easy warm-up. Nothing to prove yet.",
+  "Warming up. Slow is exactly right.",
+];
+
+export function warmupCue(variant: number): string {
+  return pick(WARMUP, variant);
+}
+
+const COOLDOWN = [
+  "Cooling down. Nice and easy from here.",
+  "Cool down. Let the pace drain away.",
+  "Cooling down. Jog light, breathe slow.",
+  "That's the work done. Ease home.",
+  "Cool down easy. The session is already banked.",
+];
+
+export function cooldownCue(variant: number): string {
+  return pick(COOLDOWN, variant);
+}
+
 /** STRUCT-SESS-02: per-segment cue copy now lives ON the segments
  *  (runSegments.ts builders author it with the labels); only the terminal
  *  line stays here — it belongs to the session, not to any segment. */
-export function sessionCompleteCue(): string {
-  return "Session complete. Great work today.";
+const SESSION_COMPLETE = [
+  "Session complete. Great work today.",
+  "Session complete. That's the job done.",
+  "Done. Solid session.",
+  "Session complete. Nicely run.",
+  "That's the session. Good work.",
+];
+
+export function sessionCompleteCue(variant: number = 0): string {
+  return pick(SESSION_COMPLETE, variant);
+}
+
+/* ── Pace-alert resolution ────────────────────────────────────────────
+ *
+ * The pace alert only ever spoke when something was WRONG — a runner who
+ * corrected got silence, and could not tell recovery from the app giving
+ * up. One positive close-out when the pace comes back inside the band
+ * (useAudioCues holds it for a settle period first, so a single good GPS
+ * sample can't trigger it).
+ */
+const PACE_RESOLVED = [
+  "Back on pace. Nice.",
+  "That's it — back on target.",
+  "On pace again. Hold it there.",
+];
+
+export function paceResolvedCue(variant: number): string {
+  return pick(PACE_RESOLVED, variant);
 }
 
 /* ── Repeated-segment vocabulary ──────────────────────────────────────
@@ -286,6 +346,25 @@ export function strideRepCue(
   const head = `Stride ${rep} of ${totalReps}.`;
   if (rep >= totalReps) return `${head} Last one — relaxed and quick.`;
   return `${head} ${pick(STRIDE, variant)}`;
+}
+
+/* Strides' walk-back recovery spoke one fixed sentence per stride — the
+ * only within-session repeat to survive STRUCT-SESS-02, five identical
+ * announcements in eight minutes on a 5-stride finisher. Pool sized past
+ * the common 4-8 stride range like STRIDE above. */
+const WALK_BACK = [
+  "Walk it back. Full recovery.",
+  "Walk back easy — take the whole rest.",
+  "All the way back to easy.",
+  "Walk it out. No hurry.",
+  "Full recovery — stroll it.",
+  "Walk back. Let the breathing settle.",
+  "Easy walk back — ready for the next one.",
+];
+
+/** `Walk it back. Full recovery.` — the recovery between strides. */
+export function walkBackCue(variant: number): string {
+  return pick(WALK_BACK, variant);
 }
 
 const FLOAT = [

@@ -12,12 +12,25 @@
  * wall of dates otherwise and the month heading is the cheapest way to
  * make it scannable.
  */
-import { useMemo } from "react";
-import { Dumbbell, Footprints, Trophy, Sparkles } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import {
+  Dumbbell,
+  Footprints,
+  Trophy,
+  Sparkles,
+  ChevronRight,
+} from "lucide-react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { formatDayMonth } from "@/utils/formatters";
 import { THEME } from "@/lib/theme";
+import { useUid } from "@/lib/auth";
+import { useTrainingBlock } from "@/features/program/useTrainingBlock";
+import { buildBlockReview } from "@/features/program/blockReviewViewModel";
+import { formatOneRepMaxRange } from "@/lib/analytics";
+import { Button } from "@/components/ui/Button";
+import { BottomSheet } from "@/components/ui/BottomSheet";
 import {
   buildMilestones,
   type Milestone,
@@ -33,6 +46,8 @@ const KIND_STYLE: Record<
   "lift-pr": { Icon: Dumbbell, tint: THEME.brand },
   "first-run": { Icon: Footprints, tint: THEME.running },
   badge: { Icon: Trophy, tint: THEME.brand },
+  "block-complete": { Icon: Dumbbell, tint: THEME.brand },
+  "race-complete": { Icon: Footprints, tint: THEME.running },
 };
 
 /**
@@ -68,36 +83,100 @@ function dayLabel(isoDate: string): string {
   return formatDayMonth(new Date(year, month - 1, day));
 }
 
-function MilestoneRow({ milestone }: { milestone: Milestone }) {
+function MilestoneRow({
+  milestone,
+  onOpenBlock,
+}: {
+  milestone: Milestone;
+  onOpenBlock: (id: string) => void;
+}) {
   const { Icon, tint } = KIND_STYLE[milestone.kind];
-  return (
-    <li className="flex items-start gap-3 py-2.5">
-      <div
+  const content = (
+    <>
+      <span
         className="size-9 rounded-lg flex items-center justify-center shrink-0"
         style={{ background: `${tint}1a` }}
       >
-        <Icon className="size-4" style={{ color: tint }} />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-foreground leading-tight">
+        <Icon aria-hidden="true" className="size-4" style={{ color: tint }} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-semibold text-foreground leading-tight">
           {milestone.title}
-        </p>
+        </span>
         {milestone.detail && (
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <span
+            className={`block text-xs text-muted-foreground mt-0.5${milestone.kind === "badge" ? "" : " font-mono tabular-nums"}`}
+          >
             {milestone.detail}
-          </p>
+          </span>
         )}
-      </div>
-      <p className="text-xs text-muted-foreground font-mono tabular-nums shrink-0 pt-0.5">
+      </span>
+      <span className="text-xs text-muted-foreground font-mono tabular-nums shrink-0 pt-0.5">
         {dayLabel(milestone.date)}
-      </p>
+      </span>
+      {(milestone.href || milestone.blockId) && (
+        <ChevronRight
+          aria-hidden="true"
+          className="size-4 shrink-0 mt-0.5 text-muted-foreground"
+        />
+      )}
+    </>
+  );
+  return (
+    <li>
+      {milestone.href ? (
+        <Link
+          to={milestone.href}
+          className="flex min-h-11 items-start gap-3 py-2.5 pressable focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-lg"
+        >
+          {content}
+        </Link>
+      ) : milestone.blockId ? (
+        <Button
+          variant="ghost"
+          fullWidth
+          className="h-auto min-h-11 items-start justify-start gap-3 py-2.5 px-0 text-left whitespace-normal"
+          onClick={() => onOpenBlock(milestone.blockId!)}
+        >
+          {content}
+        </Button>
+      ) : (
+        <div className="flex items-start gap-3 py-2.5">{content}</div>
+      )}
     </li>
   );
 }
 
-export default function MilestonesTab(sources: MilestoneSources) {
+export default function MilestonesTab(
+  sources: MilestoneSources & {
+    workoutsLoading?: boolean;
+    runsLoading?: boolean;
+  }
+) {
+  const uid = useUid();
+  // This component mounts only on Milestones. Programme archives are read
+  // once there; the review reuses History's already-loaded workout records.
+  const archive = useTrainingBlock(
+    sources.blocks ? undefined : (uid ?? undefined)
+  );
+  const blocks = sources.blocks ?? archive.blocks;
+  const [selectedBlock, setSelectedBlock] = useState<{
+    uid: string | null;
+    id: string;
+  } | null>(null);
+  const block =
+    selectedBlock?.uid === uid
+      ? blocks.find((b) => b.id === selectedBlock.id)
+      : undefined;
+  const review = useMemo(
+    () =>
+      block && !sources.workoutsLoading
+        ? buildBlockReview(block, sources.workouts.slice())
+        : null,
+    [block, sources.workouts, sources.workoutsLoading]
+  );
   const months = useMemo(() => {
-    const milestones = buildMilestones(sources);
+    const milestones = buildMilestones({ ...sources, blocks });
     const grouped: Array<{ heading: string; items: Milestone[] }> = [];
     for (const milestone of milestones) {
       const heading = monthHeading(milestone.date);
@@ -106,9 +185,15 @@ export default function MilestonesTab(sources: MilestoneSources) {
       else grouped.push({ heading, items: [milestone] });
     }
     return grouped;
-  }, [sources]);
+  }, [sources, blocks]);
 
-  if (months.length === 0) {
+  if (
+    months.length === 0 &&
+    !archive.loading &&
+    !archive.failed &&
+    !sources.workoutsLoading &&
+    !sources.runsLoading
+  ) {
     return (
       <EmptyState
         icon={Sparkles}
@@ -120,16 +205,94 @@ export default function MilestonesTab(sources: MilestoneSources) {
 
   return (
     <div className="space-y-5">
+      {archive.loading && (
+        <p className="text-sm text-muted-foreground" role="status">
+          Loading completed blocks…
+        </p>
+      )}
+      {(sources.workoutsLoading || sources.runsLoading) && (
+        <p className="text-sm text-muted-foreground" role="status">
+          Loading saved sessions…
+        </p>
+      )}
+      {archive.failed && (
+        <p className="text-sm text-muted-foreground" role="status">
+          Completed blocks couldn’t load. Your other milestones are still shown.
+        </p>
+      )}
       {months.map((month) => (
         <section key={month.heading}>
           <SectionLabel tier="section">{month.heading}</SectionLabel>
           <ul className="mt-1 divide-y divide-border/50">
             {month.items.map((milestone) => (
-              <MilestoneRow key={milestone.id} milestone={milestone} />
+              <MilestoneRow
+                key={milestone.id}
+                milestone={milestone}
+                onOpenBlock={(id) => setSelectedBlock({ uid, id })}
+              />
             ))}
           </ul>
         </section>
       ))}
+      <BottomSheet
+        open={Boolean(block)}
+        onOpenChange={(open) => {
+          if (!open) setSelectedBlock(null);
+        }}
+        title={block?.title ?? "Completed block"}
+        description="How the block went"
+      >
+        {block && sources.workoutsLoading && (
+          <p className="px-4 py-8 text-sm text-muted-foreground" role="status">
+            Loading the block’s sessions…
+          </p>
+        )}
+        {block && review && (
+          <div className="px-4 pt-3 pb-4 space-y-4">
+            <p className="text-sm text-foreground">{review.verdict}</p>
+            <p className="text-xs text-muted-foreground">
+              <span className="font-mono tabular-nums">
+                {review.completedLifts}
+              </span>{" "}
+              of{" "}
+              <span className="font-mono tabular-nums">
+                {review.plannedLifts}
+              </span>{" "}
+              planned lifts.
+            </p>
+            {review.anchors.some((a) => a.endE1rm) && (
+              <div className="space-y-1.5">
+                <SectionLabel>Main lifts</SectionLabel>
+                {review.anchors
+                  .filter((a) => a.endE1rm)
+                  .map((anchor) => (
+                    <div
+                      key={anchor.exerciseId}
+                      className="flex items-baseline justify-between gap-3"
+                    >
+                      <p className="text-xs text-foreground">
+                        {anchor.exerciseName}
+                      </p>
+                      <p className="text-xs text-muted-foreground font-mono tabular-nums shrink-0">
+                        ~{formatOneRepMaxRange(anchor.endE1rm!)}
+                      </p>
+                    </div>
+                  ))}
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Based on your saved sessions from this block.
+            </p>
+            <Button
+              variant="secondary"
+              fullWidth
+              onClick={() => setSelectedBlock(null)}
+            >
+              Done
+            </Button>
+          </div>
+        )}
+      </BottomSheet>
     </div>
   );
 }

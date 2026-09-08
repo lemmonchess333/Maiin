@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import LiftCTACard from "../LiftCTACard";
 import RunCTACard from "../RunCTACard";
 import SessionCommandCard from "@/components/program/SessionCommandCard";
@@ -9,6 +9,9 @@ import {
 } from "@/lib/runSessionExplainer";
 import { liftSessionExplainer } from "@/lib/liftSessionExplainer";
 import type { ScheduledRunDay } from "@/features/program/runScheduler";
+
+vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
+vi.mock("@/lib/homeAnalytics", () => ({ track: vi.fn() }));
 
 describe("session purpose command surfaces", () => {
   it("shows the same lift reason on Home and Program while preserving the muscle meta", () => {
@@ -29,7 +32,7 @@ describe("session purpose command surfaces", () => {
       />
     );
     expect(screen.getByRole("button")).toHaveTextContent(purpose);
-    expect(screen.getByText("Back · Biceps")).toBeInTheDocument();
+    expect(screen.getByRole("button")).toHaveTextContent("Back · Biceps");
     cleanup();
     render(
       <SessionCommandCard
@@ -86,5 +89,69 @@ describe("session purpose command surfaces", () => {
       "Free running · your choice today"
     );
     expect(screen.getByRole("button")).not.toHaveTextContent(/week \d/i);
+  });
+});
+
+describe("Home session actions and metadata", () => {
+  it("shows an exercise count with muscle groups and preserves the selected lift day", () => {
+    const navigate = vi.fn();
+    render(
+      <LiftCTACard
+        nextWorkout={{
+          dayName: "Upper body",
+          dayType: "upper",
+          exercises: [{ name: "Bench" }, { name: "Row" }],
+        }}
+        muscleGroups="Chest · Back"
+        dayIndex={2}
+        navigate={navigate}
+      />
+    );
+    expect(screen.getByRole("button")).toHaveTextContent(
+      "2 exercises · Chest · Back"
+    );
+    fireEvent.click(screen.getByRole("button"));
+    expect(navigate).toHaveBeenCalledWith("/program?day=2");
+  });
+
+  it("uses the real template duration and preserves the planned run identity", () => {
+    const navigate = vi.fn();
+    render(
+      <RunCTACard
+        todayRun={
+          {
+            id: "planned run",
+            templateId: "easy_30",
+            status: "planned",
+          } as ScheduledRunDay
+        }
+        navigate={navigate}
+      />
+    );
+    expect(screen.getByRole("button")).toHaveTextContent("30 min");
+    fireEvent.click(screen.getByRole("button"));
+    expect(navigate).toHaveBeenCalledWith(
+      "/run?template=easy_30&scheduledRunId=planned%20run"
+    );
+  });
+
+  it("a completed run still opens its programme review and cannot start again", () => {
+    const navigate = vi.fn();
+    render(
+      <RunCTACard
+        todayRun={
+          {
+            id: "done",
+            templateId: "easy_30",
+            status: "completed_exact",
+          } as ScheduledRunDay
+        }
+        navigate={navigate}
+      />
+    );
+    expect(screen.getByRole("button")).toHaveTextContent("Done");
+    expect(screen.queryByText("Go")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button"));
+    expect(navigate).toHaveBeenCalledWith("/program?tab=run");
   });
 });

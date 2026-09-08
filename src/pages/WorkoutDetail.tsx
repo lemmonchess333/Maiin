@@ -85,6 +85,14 @@ function workingSets(ex: Workout["exercises"][number]) {
 
 export default function WorkoutDetail() {
   const { workoutId } = useParams<{ workoutId: string }>();
+  const { user } = useAuth();
+  // A route/account change must clear the prior record and its share state
+  // immediately, including while the next read is pending or fails.
+  return <WorkoutDetailContent key={JSON.stringify([user?.uid, workoutId])} />;
+}
+
+function WorkoutDetailContent() {
+  const { workoutId } = useParams<{ workoutId: string }>();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
 
@@ -107,7 +115,7 @@ export default function WorkoutDetail() {
       .then((snap) => {
         if (cancelled) return;
         if (snap.exists()) {
-          const data = { id: snap.id, ...snap.data() } as Workout;
+          const data = { ...snap.data(), id: snap.id } as Workout;
           setWorkout(data);
           setSharedActivityId(data.sharedActivityId ?? null);
         }

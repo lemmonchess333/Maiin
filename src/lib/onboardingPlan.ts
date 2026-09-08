@@ -6,7 +6,7 @@ import {
 } from "@/features/program/matchTemplate";
 import { templateToProgramState } from "@/features/program/templateConversion";
 import type { Goal, ProgramState } from "@/features/program/programTypes";
-import type { OnboardingDraft } from "./onboardingDraft";
+import type { OnboardingDraft, OnboardingActivity } from "./onboardingDraft";
 import { resolveOnboardingRunMode } from "./onboardingRunMode";
 
 /** The review and the commit consume this SAME result, including template selection. */
@@ -51,7 +51,7 @@ export function buildOnboardingPlan(
     PROGRAM_TEMPLATES
   );
   let existingState: ProgramState | undefined;
-  if (match.isGoalMatch) {
+  if (draft.daysPerWeek > 0 && match.isGoalMatch) {
     const template = applyInjuryFilters(
       match.template,
       draft.injuries,
@@ -88,4 +88,26 @@ export function buildOnboardingPlan(
   if (existingState?.templateId)
     plan.programState.templateId = existingState.templateId;
   return plan;
+}
+
+/** Additive draft metadata: older drafts keep the week they already chose. */
+export function onboardingActivity(
+  draft: OnboardingDraft | null
+): OnboardingActivity {
+  if (draft?.trainingActivity) return draft.trainingActivity;
+  if (draft?.daysPerWeek === 0) return "running";
+  if (draft && draft.runFrequency !== "none") return "both";
+  return "lifting";
+}
+
+/** Stored IDs stay stable even when irrelevant lifting/running chapters are omitted. */
+export function onboardingFlow(activity: OnboardingActivity): number[] {
+  return [
+    0,
+    1,
+    ...(activity !== "lifting" ? [3] : []),
+    ...(activity !== "running" ? [2, 4] : []),
+    5,
+    7,
+  ];
 }

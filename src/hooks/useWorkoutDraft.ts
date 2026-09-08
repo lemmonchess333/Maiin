@@ -86,6 +86,10 @@ export interface WorkoutDraft {
    *  a second receipt. Defaults to `completionId` when repairing an older
    *  draft. */
   completionCommandId: string;
+  /** A finished session awaiting server acknowledgement must not expire. */
+  completionPending?: boolean;
+  /** Preserve the original date when retrying a finished session later. */
+  startedAt?: number;
 }
 
 /**
@@ -141,9 +145,8 @@ export function computeDraftIdentity(parts: DraftIdentityParts): string {
   ].join("|");
 }
 
-function writeDraftAt(key: string, draft: WorkoutDraft): void {
-  // Quota exhausted or storage unavailable — draft protection is best effort.
-  writeJson(key, draft);
+function writeDraftAt(key: string, draft: WorkoutDraft): boolean {
+  return writeJson(key, draft);
 }
 
 /**
@@ -167,7 +170,7 @@ function readDraftAt(key: string): WorkoutDraft | null {
       remove(key);
       return null;
     }
-    if (Date.now() - parsed.savedAt > MAX_AGE_MS) {
+    if (!parsed.completionPending && Date.now() - parsed.savedAt > MAX_AGE_MS) {
       remove(key);
       return null;
     }
@@ -210,7 +213,8 @@ function pruneUserDrafts(uid: string): void {
   // millisecond) the later-written draft must survive the cap.
   for (const key of keysWithPrefix(v2UserKeyPrefix(uid)).reverse()) {
     const draft = readDraftAt(key);
-    if (draft) drafts.push({ key, savedAt: draft.savedAt });
+    if (draft && !draft.completionPending)
+      drafts.push({ key, savedAt: draft.savedAt });
   }
   drafts
     .sort((a, b) => b.savedAt - a.savedAt)
@@ -229,6 +233,19 @@ export function clearWorkoutDraft(uid: string): void {
   for (const key of keysWithPrefix(v2UserKeyPrefix(uid))) remove(key);
   remove(v1StorageKey(uid));
   remove(LEGACY_STORAGE_KEY);
+}
+
+/** Retire a server-acknowledged completion even after the user changes week. */
+export function clearCompletedWorkoutDraft(
+  uid: string,
+  completionId: string
+): void {
+  if (!uid || !completionId) return;
+  for (const key of keysWithPrefix(v2UserKeyPrefix(uid))) {
+    const draft = readDraftAt(key);
+    if (draft?.completionPending && draft.completionId === completionId)
+      remove(key);
+  }
 }
 
 export function useWorkoutDraft(
@@ -268,23 +285,40 @@ export function useWorkoutDraft(
 
   const save = useCallback(
     (draft: Omit<WorkoutDraft, "savedAt" | "identity">) => {
-      if (!uid || !key) return;
-      writeDraftAt(key, { ...draft, identity, savedAt: Date.now() });
+      if (!uid || !key) return false;
+      const existing = readDraftAt(key);
+      if (
+        existing?.completionPending &&
+        existing.completionId !== draft.completionId
+      )
+        return false;
+      const stored = writeDraftAt(key, {
+        ...draft,
+        identity,
+        savedAt: Date.now(),
+      });
       pruneUserDrafts(uid);
+      return stored;
     },
     [uid, key, identity]
   );
 
-  const clear = useCallback(() => {
-    if (!uid || !key) return;
-    remove(key);
-    // Also clear a matching V1 key so a not-yet-migrated slot can't resurface.
-    const oldKey = v1StorageKey(uid);
-    const v1 = readDraftAt(oldKey);
-    if (v1 && v1.identity === identity && v1.dayIndex === dayIndex) {
-      remove(oldKey);
-    }
-  }, [uid, key, dayIndex, identity]);
+  const clear = useCallback(
+    (completionId?: string) => {
+      if (!uid || !key) return;
+      const existing = readDraftAt(key);
+      if (completionId && existing && existing.completionId !== completionId)
+        return;
+      remove(key);
+      // Also clear a matching V1 key so a not-yet-migrated slot can't resurface.
+      const oldKey = v1StorageKey(uid);
+      const v1 = readDraftAt(oldKey);
+      if (v1 && v1.identity === identity && v1.dayIndex === dayIndex) {
+        remove(oldKey);
+      }
+    },
+    [uid, key, dayIndex, identity]
+  );
 
   return { load, save, clear };
 }

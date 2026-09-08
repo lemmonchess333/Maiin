@@ -117,7 +117,7 @@ export default function WeightStepsTiles({
           onLogWeight();
         }}
         aria-label={weightAriaLabel}
-        className="p-3 rounded-xl text-left active:scale-[0.97] bg-muted h-full flex flex-col"
+        className="p-3 rounded-xl text-left motion-safe:active:scale-[0.97] bg-muted h-full flex flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         <div className="flex items-center gap-2 mb-1.5">
           <div
@@ -132,11 +132,10 @@ export default function WeightStepsTiles({
           </div>
           <SectionLabel>Weight</SectionLabel>
         </div>
-        {/* Value centred in the tile's remaining height so the number
-            fills the (water-matched) tile instead of clustering at the
-            top. No chevron \u2014 the whole tile taps to log, same as the
-            water card. */}
-        <div className="flex-1 flex flex-col justify-center min-h-0">
+        {/* Align the reading beneath the label, like the adjacent water
+            tile. Extra height stays below the date rather than displacing
+            the number as water controls or sync status change. */}
+        <div className="flex-1 flex flex-col min-h-0">
           {pending ? (
             <Skeleton className="h-6 w-16" />
           ) : hidden ? (
@@ -151,7 +150,7 @@ export default function WeightStepsTiles({
               </p>
             </div>
           ) : (
-            <div className="flex items-baseline gap-1">
+            <div className="flex flex-wrap items-baseline gap-x-1 gap-y-1">
               <p className="text-2xl font-extrabold leading-none text-foreground font-mono tabular-nums">
                 {lastWeight ? lastWeight : "\u2014"}
               </p>
@@ -188,7 +187,7 @@ export default function WeightStepsTiles({
             if (!stepsConnected) onConnectSteps?.();
           }}
           aria-label={stepsAriaLabel}
-          className="p-3 rounded-xl text-left active:scale-[0.97] bg-muted group"
+          className="p-3 rounded-xl text-left motion-safe:active:scale-[0.97] bg-muted group"
         >
           <div className="flex items-center gap-2 mb-1.5">
             <div
@@ -205,7 +204,7 @@ export default function WeightStepsTiles({
           </div>
           {stepsConnected ? (
             <>
-              <div className="flex items-baseline gap-1">
+              <div className="flex flex-wrap items-baseline gap-x-1 gap-y-1">
                 {/* Same tier as the weight figure directly above it.
                     These two are peer tiles stacked in one column, and
                     they had drifted apart — steps at text-xl / 700 under

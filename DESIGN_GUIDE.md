@@ -272,12 +272,12 @@ the classes.
 ---
 
 **Numerals against a target — slash spacing.** The default is the spaced
-slash: `1,790 eaten / 2,200 kcal` on the energy header, `125 / 140g` on a
-macro tile. A single-line compact summary (Home's collapsed macro line,
-`P 125/140g · C 172/273g · F 56/61g`) drops the spaces, because at that
-size the spaced form overflows the 256px content width of a 320px device.
-Two forms, one rule: spaced unless the line has to stay a line. Decided
-2026-09-05. The whole-app role map — which treatment each UI role takes,
+slash: `1,790 eaten / 2,200 kcal` on the energy header, `125 / 140 g` on a
+macro tile. Home keeps the existing three macro rings visible, with full
+Protein, Carbs and Fat labels; there is no collapsed P/C/F summary. The
+card has no Details disclosure; keep the current always-visible presentation.
+Keep values and targets on separate lines where space requires it rather
+than abbreviating the labels. Updated 2026-09-08. The whole-app role map — which treatment each UI role takes,
 and the permitted exceptions — is `docs/cohesion-spec-2026-09.md`.
 
 ## 5. Spacing & layout
@@ -292,6 +292,14 @@ and the permitted exceptions — is `docs/cohesion-spec-2026-09.md`.
   breathing room). Don't hardcode `pb-20`.
 - **Safe areas:** respect `--safe-top` / `--safe-bottom`. Run pages (`/run`,
   `/run-summary`) render full-screen _without_ the nav Layout wrapper.
+
+**Bottom navigation glass (owner-requested, 8 September 2026):** The web
+navigation uses an inset frosted capsule, with the safe-area gap outside its
+surface. This treatment is limited to `BottomNavigation`; data cards stay
+solid. Reuse the existing palette, frost and shadow tokens, keep labels
+opaque and the active pill contrast stable, and provide solid fallbacks for
+reduced transparency and unsupported blur. It is a CSS approximation; native
+Apple Liquid Glass would require a separate iOS navigation renderer.
 
 ---
 
