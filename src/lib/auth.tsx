@@ -33,18 +33,9 @@ import {
 } from "@/lib/nativeAuth";
 import { setErrorReportingUid } from "./errorReporting";
 import { remove, writeString } from "@/lib/localStore";
-import {
-  doc,
-  getDoc,
-  getDocFromCache,
-  serverTimestamp,
-  writeBatch,
-  Timestamp,
-  type FieldValue,
-} from "firebase/firestore";
+import type { FieldValue, Timestamp } from "firebase/firestore";
 import { sendVerificationEmail } from "@/lib/accountSecurity";
 import { getDeviceTimezone, shouldUpdateTimezone } from "@/lib/captureTimezone";
-import { setDocGuarded, updateDocGuarded } from "@/lib/firestoreWrite";
 import {
   invalidatePushTokenLifecycle,
   stopListeningForForegroundPush,
@@ -54,10 +45,37 @@ import {
 import { clearStoredRun } from "@/lib/runResumeStorage";
 import { clearWorkoutDraft } from "@/hooks/useWorkoutDraft";
 import { stripUndefined } from "@/lib/firestoreGuards";
-import { auth, db } from "./firebase";
+import { auth } from "./firebaseApp";
 import { logger } from "./logger";
 import type { Goal } from "./types";
 import type { PreferredSplit } from "@/features/program/programTypes";
+
+/* ================================
+   FIRESTORE, ON FIRST USE
+================================ */
+
+/**
+ * Firestore + the guarded writers, loaded on first use.
+ *
+ * AuthProvider is mounted for EVERY visitor including signed-out ones, so a
+ * static `firebase/firestore` import here put the whole 369 KB SDK ahead of
+ * the login form's first paint — to read a profile that only exists once
+ * somebody has signed in. Every call site below sits inside a post-auth
+ * path (a `if (firebaseUser)` branch, or a method that takes a uid), so
+ * none of them can run before this resolves.
+ *
+ * The dynamic import is cached after the first call, so the later sites
+ * pay nothing. `eagerGraph.test.ts` fails if Firestore becomes statically
+ * reachable from App.tsx again.
+ */
+async function firestore() {
+  const [fs, write, { db }] = await Promise.all([
+    import("firebase/firestore"),
+    import("@/lib/firestoreWrite"),
+    import("./firebase"),
+  ]);
+  return { ...fs, ...write, db };
+}
 
 /* ================================
    OAUTH TRANSPORT (popup vs redirect)
@@ -808,6 +826,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // the authoritative server read below reconciles. Pure paint:
         // hydrateProfile does no writes, and the timezone-capture write stays
         // on the server branch only so it isn't double-fired.
+        /* Inside `if (firebaseUser)`, so a profile exists to read. */
+        const { doc, getDoc, getDocFromCache, updateDocGuarded, db } =
+          await firestore();
         try {
           const cachedDoc = await getDocFromCache(
             doc(db, "users", firebaseUser.uid)
@@ -930,6 +951,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // in a single batch so a half-landed create can't leak a user with no
   // public projection. Shared by email signup, Google, and Apple flows.
   const writeNewProfileDocs = async (uid: string, newProfile: UserProfile) => {
+    const { doc, writeBatch, serverTimestamp, db } = await firestore();
     const batch = writeBatch(db);
     batch.set(doc(db, "users", uid), {
       ...newProfile,
@@ -992,6 +1014,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const finishOAuthSignIn = useCallback(
     async (cred: UserCredential, method: "google" | "apple") => {
       const uid = cred.user.uid;
+      const { doc, getDoc, db } = await firestore();
       const profileDoc = await getDoc(doc(db, "users", uid));
 
       if (!profileDoc.exists()) {
@@ -1212,6 +1235,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // default (most callers want it) — opt-in `throwOnError` for
       // call sites that want to handle the error themselves.
       try {
+        const { doc, writeBatch, setDocGuarded, db } = await firestore();
         if (Object.keys(publicPatch).length > 0) {
           // Strip undefined from both writes — Firestore rejects any doc
           // containing an explicit `undefined` outright. The non-batch
@@ -1279,6 +1303,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // it to stamp a snapshot fetched under a different UID. If the account
     // switched during the read, drop A's snapshot rather than hydrate it as B.
     const uid = currentUser.uid;
+    const { doc, getDoc, db } = await firestore();
     const snap = await getDoc(doc(db, "users", uid));
     if (auth.currentUser?.uid !== uid) return;
     if (snap.exists()) {

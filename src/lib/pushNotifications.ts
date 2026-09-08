@@ -24,8 +24,19 @@ import {
   onMessage,
 } from "firebase/messaging";
 import { getFunctions, httpsCallable } from "firebase/functions";
-import { doc, getDoc } from "firebase/firestore";
-import { app, auth, db } from "@/lib/firebase";
+import { app, auth } from "@/lib/firebaseApp";
+
+/* Firestore on first read, not at import. AuthProvider imports this module
+   eagerly (it releases the device token on sign-out), so a static Firestore
+   import here reached the login screen's critical path. The one read below
+   needs a uid, so it can never run before this resolves. */
+async function firestore() {
+  const [fs, { db }] = await Promise.all([
+    import("firebase/firestore"),
+    import("@/lib/firebase"),
+  ]);
+  return { ...fs, db };
+}
 import { logger } from "@/lib/logger";
 import { readJson, remove, writeJson } from "@/lib/localStore";
 import { DEFAULT_PUSH_CONSENT, type PushConsent } from "@/lib/pushConsent";
@@ -408,6 +419,7 @@ export async function refreshDeviceTokenForCurrentUser(
 ): Promise<void> {
   if (!uid || !isCurrentUser(uid)) return;
   try {
+    const { doc, getDoc, db } = await firestore();
     const snapshot = await getDoc(doc(db, "users", uid, "settings", "push"));
     if (!isCurrentUser(uid)) return;
 

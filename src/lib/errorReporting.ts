@@ -4,9 +4,20 @@
  * Stores recent errors in memory and logs critical errors to Firestore.
  */
 
-import { doc, collection, serverTimestamp } from "firebase/firestore";
-import { setDocGuarded } from "@/lib/firestoreWrite";
-import { db } from "./firebase";
+/* Firestore is loaded on first WRITE, not at import.
+   This module is reached from App.tsx and RouteErrorBoundary, so a static
+   import here put the whole Firestore SDK ahead of the login screen's
+   first paint — for a persistence path that only runs once an error has
+   actually happened AND a uid exists. See firebaseApp.ts for the split
+   and eagerGraph.test.ts for the guard. */
+async function firestore() {
+  const [fs, write, { db }] = await Promise.all([
+    import("firebase/firestore"),
+    import("@/lib/firestoreWrite"),
+    import("./firebase"),
+  ]);
+  return { ...fs, ...write, db };
+}
 
 export interface ErrorReport {
   message: string;
@@ -101,6 +112,8 @@ async function persistToFirestore(report: ErrorReport): Promise<void> {
     return;
   }
   try {
+    const { collection, doc, serverTimestamp, setDocGuarded, db } =
+      await firestore();
     const errorsCol = collection(db, "users", _currentUid, "errors");
     const errDoc = doc(errorsCol);
     await setDocGuarded(errDoc, {

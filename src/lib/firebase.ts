@@ -1,5 +1,17 @@
-import { initializeApp } from "firebase/app";
-import { getAuth, connectAuthEmulator } from "firebase/auth";
+/**
+ * The data-service handles: Firestore, Storage, Functions.
+ *
+ * `app`, `auth` and `firebaseConfig` now live in `firebaseApp.ts` and are
+ * re-exported here, so every existing `import { auth, db } from
+ * "@/lib/firebase"` keeps working. The split exists so that importing
+ * AUTH alone does not drag the Firestore SDK onto the critical path —
+ * see the header of `firebaseApp.ts` for why, and `eagerGraph.test.ts`
+ * for the guard.
+ *
+ * Importing anything from THIS module pulls Firestore. That is correct
+ * for a signed-in surface and wrong for the login screen; if you only
+ * need `auth`, import from `@/lib/firebaseApp`.
+ */
 import {
   initializeFirestore,
   persistentLocalCache,
@@ -10,46 +22,11 @@ import {
 import { connectStorageEmulator, getStorage } from "firebase/storage";
 import { connectFunctionsEmulator, getFunctions } from "firebase/functions";
 import { logger } from "@/lib/logger";
-import { initAppCheck } from "@/lib/appCheck";
-import { initAnalytics } from "@/lib/analyticsProvider";
+import { app, firebaseConfig } from "./firebaseApp";
 
-// Firebase config now lives in the shared pure module so the service-worker
-// registration derives the same values (packet 17).
-import { firebaseConfig } from "./firebaseConfig";
-export { firebaseConfig } from "./firebaseConfig";
-
-// Loud self-report when the web build shipped without a Firebase config (the
-// VITE_FIREBASE_* secrets were unset at build time). A blank apiKey makes EVERY
-// sign-in fail with auth/internal-error ("Sign-in is temporarily unavailable"),
-// so surface the real cause in the console instead of leaving it a mystery.
-// Skipped for emulator builds, which don't need real config.
-if (!firebaseConfig.apiKey && import.meta.env.VITE_USE_EMULATORS !== "true") {
-  logger.error(
-    "[Firebase] VITE_FIREBASE_API_KEY is empty — this build has no Firebase " +
-      "config, so ALL auth/data calls will fail with auth/internal-error. This " +
-      "is a deploy/secrets issue (set the VITE_FIREBASE_* GitHub Actions " +
-      "secrets and redeploy), not a user error."
-  );
-}
-
-export const app = initializeApp(firebaseConfig);
-
-// App Check runs BEFORE Firestore / Storage / Functions handles are
-// created — the first call into those services triggers the App
-// Check token request, so we need the provider installed by then.
-// See src/lib/appCheck.ts for the web / native split.
-initAppCheck(app);
-
-// Analytics provider — the delivery backend behind analyticsClient.emit().
-// Web-only, lazily loaded, and a no-op unless VITE_FIREBASE_MEASUREMENT_ID
-// is set. See src/lib/analyticsProvider.ts for gating + the native split.
-initAnalytics(app);
-
-// Auth keeps Firebase's default local persistence on purpose: Tropos is a
-// mobile-first app and a session that survives an app restart is the
-// expected behaviour. Destructive actions (account deletion) re-authenticate
-// on their own path rather than by shortening the session.
-export const auth = getAuth(app);
+// Re-exported so existing call sites are untouched by the split. App Check
+// is installed by firebaseApp's module body, which runs before this one.
+export { app, auth, firebaseConfig } from "./firebaseApp";
 
 // Try persistent cache first; fall back to memory cache if IndexedDB is unavailable
 // (e.g. Safari private browsing, restricted environments)
@@ -76,19 +53,10 @@ if (!firebaseConfig.storageBucket) {
 }
 export const functions = getFunctions(app);
 
-// Connect to emulators when the build sets VITE_USE_EMULATORS=true.
-// Previously this also required `import.meta.env.DEV`, which scoped
-// it to `npm run dev` only — CI's `npm run build` runs in
-// production mode, so the gate never fired even when CI explicitly
-// wanted emulator wiring. Dropping the DEV check lets the
-// preview-built E2E suite point Firebase at the emulators by
-// passing VITE_USE_EMULATORS=true at build time.
-//
-// Production builds without the flag set are unaffected — the
-// emulator-connect calls only fire when the env var is the
-// literal string "true".
+// Emulator wiring for the data services. Auth connects in firebaseApp.ts.
+// Each handle is wired at its own module scope, so it is always connected
+// before anything can use it.
 if (import.meta.env.VITE_USE_EMULATORS === "true") {
-  connectAuthEmulator(auth, "http://127.0.0.1:9099");
   connectFirestoreEmulator(db, "127.0.0.1", 8080);
   // Storage too (Spc1 PR4) — photo uploads (space posts, food, profile)
   // were previously unverifiable in the emulator rig because the app
