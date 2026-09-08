@@ -1,0 +1,90 @@
+{
+  "canvas": [
+    1024,
+    1536
+  ],
+  "method": "integer plate translation from the master",
+  "barProbeX": 450,
+  "fourSelectedPlates": true,
+  "strictVisualApproval": false,
+  "frames": [
+    {
+      "frame": 1,
+      "caption": "SET UP 1/6",
+      "pose": 0,
+      "barTravelPx": 0,
+      "selectedPlateTravelPx": 0,
+      "observedPlateTopPx": 746,
+      "platePixelsExact": true,
+      "lowerStackExact": true,
+      "pelvisFeetSeatExact": true,
+      "rightFrameExact": true,
+      "sha256": "7b4e90ae31ef44458ca26a31b49898a5bcee2a5f2783bd47dd396687621f4242"
+    },
+    {
+      "frame": 2,
+      "caption": "BEGIN PULL 2/6",
+      "pose": 1,
+      "barTravelPx": 136,
+      "selectedPlateTravelPx": 136,
+      "observedPlateTopPx": 610,
+      "platePixelsExact": true,
+      "lowerStackExact": true,
+      "pelvisFeetSeatExact": true,
+      "rightFrameExact": true,
+      "sha256": "75291c34e8ebdde7e7139837bc4a82564cd648cfcd74a28464aa1a68b646d2eb"
+    },
+    {
+      "frame": 3,
+      "caption": "FINISH PULL 3/6",
+      "pose": 2,
+      "barTravelPx": 327,
+      "selectedPlateTravelPx": 327,
+      "observedPlateTopPx": 419,
+      "platePixelsExact": true,
+      "lowerStackExact": true,
+      "pelvisFeetSeatExact": true,
+      "rightFrameExact": true,
+      "sha256": "00054465dcc43d170487519753dc1335c1714c5487aff51f85b1173deaf58a86"
+    },
+    {
+      "frame": 4,
+      "caption": "BRIEF HOLD 4/6",
+      "pose": 2,
+      "barTravelPx": 327,
+      "selectedPlateTravelPx": 327,
+      "observedPlateTopPx": 419,
+      "platePixelsExact": true,
+      "lowerStackExact": true,
+      "pelvisFeetSeatExact": true,
+      "rightFrameExact": true,
+      "sha256": "00054465dcc43d170487519753dc1335c1714c5487aff51f85b1173deaf58a86"
+    },
+    {
+      "frame": 5,
+      "caption": "CONTROL RETURN 5/6",
+      "pose": 1,
+      "barTravelPx": 136,
+      "selectedPlateTravelPx": 136,
+      "observedPlateTopPx": 610,
+      "platePixelsExact": true,
+      "lowerStackExact": true,
+      "pelvisFeetSeatExact": true,
+      "rightFrameExact": true,
+      "sha256": "75291c34e8ebdde7e7139837bc4a82564cd648cfcd74a28464aa1a68b646d2eb"
+    },
+    {
+      "frame": 6,
+      "caption": "REACH UP 6/6",
+      "pose": 0,
+      "barTravelPx": 0,
+      "selectedPlateTravelPx": 0,
+      "observedPlateTopPx": 746,
+      "platePixelsExact": true,
+      "lowerStackExact": true,
+      "pelvisFeetSeatExact": true,
+      "rightFrameExact": true,
+      "sha256": "7b4e90ae31ef44458ca26a31b49898a5bcee2a5f2783bd47dd396687621f4242"
+    }
+  ]
+}
