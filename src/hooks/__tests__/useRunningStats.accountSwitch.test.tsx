@@ -32,6 +32,7 @@ vi.mock("firebase/firestore");
 vi.mock("../../lib/firebase", () => ({ db: {} }));
 
 import { useRunningStats } from "../useRunningStats";
+import { splitRouteSegments } from "@/lib/routeSegments";
 
 import {
   seedFirestore,
@@ -73,6 +74,30 @@ afterEach(() => {
 });
 
 describe("useRunningStats — account switch", () => {
+  it("preserves privacy gaps in saved-run previews used by Space attachments", async () => {
+    const west = Array.from({ length: 25 }, (_, i) => ({
+      lat: 51.5,
+      lon: -0.1 + i * 0.001,
+    }));
+    const east = Array.from({ length: 25 }, (_, i) => ({
+      lat: 51.5,
+      lon: 0.01 + i * 0.001,
+      ...(i === 0 ? { breakBefore: true } : {}),
+    }));
+    seedFirestore({ [`${A_RUNS}/a-run`]: { ...run(), points: [...west, ...east] } });
+
+    const { result } = renderHook(() => useRunningStats(30));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    const preview = result.current.runs[0].routePreview!;
+    expect(preview.length).toBeLessThanOrEqual(20);
+    const sections = splitRouteSegments(preview);
+    expect(sections).toHaveLength(2);
+    expect(sections[0][0]).toEqual(west[0]);
+    expect(sections[0].at(-1)).toEqual(west.at(-1));
+    expect(sections[1][0]).toEqual(east[0]);
+    expect(sections[1].at(-1)).toEqual(east.at(-1));
+  });
+
   it("B's later data wins even when A resolves last", async () => {
     deferReads();
     const { result, rerender } = renderHook(() => useRunningStats(30));
