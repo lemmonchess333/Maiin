@@ -5,122 +5,67 @@ across web + native. Audit P0 #6 was the trigger; the rollout is staged
 across four phases so a misconfigured client never bricks Firestore /
 Storage / Cloud Functions for users in flight.
 
-## Current state (after PR F scaffolding)
+## Current state
 
-- **Web (production + dev):** `ReCaptchaV3Provider` initialised from
-  `VITE_RECAPTCHA_V3_SITE_KEY`. Debug-provider bypass via
-  `VITE_APP_CHECK_DEBUG_TOKEN`. Configured in Firebase console under
-  App Check → Register web app.
-- **Native (Capacitor iOS / Android):** **no attestation today.**
-  `initAppCheck()` returns `false` on native unless
-  `setNativeAppCheckProvider()` has been called with a factory.
-  Until the plugin lands, the Cloud Functions referenced by native
-  builds have no device-attestation signal — a modified iOS / Android
-  client can call any Cloud Function without proving it's a genuine
-  app installation.
+- Web uses `ReCaptchaV3Provider` with `VITE_RECAPTCHA_V3_SITE_KEY`.
+  `VITE_APP_CHECK_DEBUG_TOKEN` is read only in development builds.
+- Native bootstrap registers `appCheckNative.ts` synchronously before Firebase
+  services are created. Its CustomProvider lazily loads the pinned
+  `@capacitor-firebase/app-check` plugin, awaits initialization, and forwards
+  the native SDK's token and exact `expireTimeMillis`. Missing or expired
+  tokens fail; no one-hour expiry or debug token is invented.
+- iOS installs its App Attest provider factory in AppDelegate before native
+  Firebase configuration. The signing entitlement specifies the production environment.
+- Client wiring is implemented; signed-device attestation is **not verified**.
+  Backend enforcement remains off. The Android project is not committed, so
+  Android registration and build verification remain outstanding.
 
-## Phase 1 — Install the native plugin (DEV ONLY)
+## Phases 1–2 — Install and wire the native client
 
-Run from a workstation with Xcode + Android Studio installed (cannot
-ship from headless code environments).
+The dependency, provider bridge, bootstrap, iOS entitlement and SPM registration
+are committed. On the build workstation run:
 
 ```bash
-npm install @capacitor-firebase/app-check
-npx cap sync
+npm ci
+npm run build
+npx cap sync ios
 ```
 
-iOS additional steps:
+Capacitor 8.4's SPM symlink option avoids the App Check package identity
+collision. Generated symlinks are machine-local and recreated by `cap sync`.
+The regenerated package manifest also registers existing background location,
+RevenueCat, Health and Live Activities dependencies.
 
-1. Open `ios/App/App.xcworkspace` in Xcode.
-2. Verify the App Attest capability is added to the target's "Signing
-   & Capabilities" tab.
-3. In Firebase console → App Check → iOS app → register an App
-   Attest provider. Copy the App ID prefix into Apple's Developer
-   portal under App Attest configuration.
+Before releasing an iOS build:
 
-Android additional steps:
+1. Open `ios/App/App.xcodeproj` in a compatible Xcode version and resolve SPM.
+   Compile/archive the actual native project; a web build does not check Swift.
+2. Add the correct `GoogleService-Info.plist` to the app target. Confirm its
+   Firebase app and the signed bundle both identify `com.tropos.app`.
+3. Enable App Attest for the Apple App ID and provisioning profile. Inspect
+   the signed app's production App Attest entitlement.
+4. Register the iOS app with the App Attest provider in Firebase App Check.
+5. Use a signed physical iPhone to verify token issuance, refresh and normal
+   authenticated requests. Exercise offline and unsupported-device behavior.
+   Do not put token contents in logs, screenshots or release notes.
 
-1. Open `android/` in Android Studio.
-2. Confirm `applicationId` matches the package name registered in
-   Firebase console.
-3. Firebase console → App Check → Android app → register Play
-   Integrity. Add the SHA-256 fingerprint(s) for debug + release
-   signing keys.
+The bridge tests cover initialization ordering, exact expiry, web exclusion,
+failure propagation and retry. These tests cannot establish device attestation.
+Firebase's [App Attest setup](https://firebase.google.com/docs/app-check/ios/app-attest-provider)
+describes the native initialization and registration requirements.
 
-## Phase 2 — Wire the provider (CLIENT)
+## Phase 3 — Verify in unenforced mode (at least 1 week)
 
-In a new bootstrap file `src/lib/appCheckNative.ts` (created during
-Phase 2, not in PR F):
+Deploy the client without changing enforcement. Follow the operator gate in
+CLAUDE.md: wait 24–48 hours for telemetry, then require **at least 99% verified
+requests sustained for at least seven days** before any per-callable flip.
+Measure the legitimate web and released native population, including the actual
+callable being considered. Do not substitute mocked test results for metrics.
 
-```ts
-import { FirebaseAppCheck } from "@capacitor-firebase/app-check";
-import { CustomProvider } from "firebase/app-check";
-import { setNativeAppCheckProvider } from "@/lib/appCheck";
-
-// Call once at app boot, BEFORE initAppCheck.
-export function registerNativeAppCheck() {
-  setNativeAppCheckProvider(
-    () =>
-      new CustomProvider({
-        getToken: async () => {
-          const { token } = await FirebaseAppCheck.getToken();
-          // Plugin returns opaque token + expiry. Firebase's
-          // CustomProvider expects millis-since-epoch.
-          return {
-            token,
-            expireTimeMillis: Date.now() + 60 * 60 * 1000, // 1h
-          };
-        },
-      })
-  );
-}
-```
-
-Then in `src/main.tsx` (or wherever `initAppCheck` is currently
-called):
-
-```ts
-import { Capacitor } from "@capacitor/core";
-import { initAppCheck } from "@/lib/appCheck";
-
-if (Capacitor.isNativePlatform()) {
-  const { registerNativeAppCheck } = await import("@/lib/appCheckNative");
-  registerNativeAppCheck();
-}
-initAppCheck(firebaseApp);
-```
-
-The dynamic import ensures the plugin's native code only loads on
-native builds — web bundles stay slim.
-
-## Phase 3 — Verify in unenforced mode (1 week)
-
-Deploy the Phase 2 client. Do NOT flip enforcement yet.
-
-Use the Firebase console's **App Check → Recent requests** view to
-confirm:
-
-- Web app: > 95% of requests carry a verified App Check token.
-- iOS app: > 90% of requests carry a verified token. (Some App
-  Attest requests legitimately fail on devices that don't support
-  it — old hardware, jailbroken, restricted by MDM. 10% is the
-  guideline failure budget Apple publishes.)
-- Android app: > 95% verified token rate.
-
-If any rate is below threshold, stop here and diagnose. Common
-causes:
-
-- iOS: bundle ID mismatch between Firebase console and Xcode
-  project.
-- Android: SHA-256 fingerprint not registered for the signing key
-  currently shipping.
-- Web: reCAPTCHA site key for the wrong domain.
-
-Diagnostics inside the app: the operator diagnostics page (audit P2
-#17, separate ticket) reads `getAppCheckToken()` and `isAppCheckActive()`
-from `src/lib/appCheck.ts` to surface "App Check: active / inactive"
-
-- a debug-only token preview.
+If coverage is below the gate, diagnose bundle ID, signing registration,
+reCAPTCHA domain, unsupported devices and transient failures. Resolve legitimate
+client failures before enforcing. Registration being active only means the
+provider was installed; it does not prove that attestation succeeded.
 
 ## Phase 4 — Enable enforcement (per-service, staged)
 

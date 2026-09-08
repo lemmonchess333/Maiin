@@ -195,7 +195,6 @@ const KNOWN_ORPHAN_EXPORTS = [
   // Web ships the real path, native calls the setter from its boot path
   // once the Capacitor plugin lands. CLAUDE.md names the appCheck split as
   // THE reference for "if native parity is deferred, leave the seam".
-  "src/lib/appCheck.ts:setNativeAppCheckProvider",
   "src/lib/shareCard/instagramShare.ts:setNativeInstagramProvider",
 
   // Test-harness accessor with a named future consumer: the web popstate

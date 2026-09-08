@@ -36,6 +36,14 @@ const config: CapacitorConfig = {
       providers: ["google.com", "apple.com"],
     },
   },
+  // Capacitor 8.4+ avoids the App Check Swift package identity collision.
+  experimental: {
+    ios: {
+      spm: {
+        packageOptions: { "@capacitor-firebase/app-check": { symlink: true } },
+      },
+    },
+  },
   ios: {
     contentInset: "automatic",
     scheme: "Tropos",
