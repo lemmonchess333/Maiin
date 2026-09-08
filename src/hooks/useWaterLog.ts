@@ -107,26 +107,15 @@ export function useWaterLog() {
         );
         return;
       }
+      /* No confirmation toast on a water add.
+         The card is the confirmation: the number and the fill both move
+         the moment you tap. An undo affordance is redundant beside a
+         minus button that sits next to the plus and does the same thing
+         in one tap, and a 5-second overlay covering the surface below is
+         a real cost for the most repeated, most trivially reversible
+         action in the app. Errors still surface — only the success
+         confirmation goes. */
       if (delta > 0) rememberWaterSize(uid, Math.round(delta));
-      if (delta > 0)
-        toast.success(`Added ${Math.round(delta)} ml`, {
-          duration: 5000,
-          action: {
-            label: "Undo",
-            onClick: () => {
-              if (
-                !queueWater(uid, {
-                  ...action,
-                  id: crypto.randomUUID(),
-                  queuedAt: Date.now(),
-                  delta: -action.delta,
-                  undoOf: action.id,
-                })
-              )
-                toast.error("Couldn't keep the undo. Try again.");
-            },
-          },
-        });
     },
     [uid, target]
   );
