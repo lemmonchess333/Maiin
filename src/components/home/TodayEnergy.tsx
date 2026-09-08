@@ -141,8 +141,12 @@ export default function TodayEnergy({
               {CALORIE_UNIT} logged
             </span>
           </div>
-          <span className="text-xs text-muted-foreground font-mono tabular-nums whitespace-nowrap">
-            Target {formatCalories(tCal)} {CALORIE_UNIT}
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            Target{" "}
+            <span className="font-mono tabular-nums">
+              {formatCalories(tCal)}
+            </span>{" "}
+            {CALORIE_UNIT}
           </span>
         </div>
 

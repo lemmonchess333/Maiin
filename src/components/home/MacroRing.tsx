@@ -151,11 +151,28 @@ export default function MacroRing({
             the ring's own label, which is half of what makes an unfilled
             ring look switched off rather than empty. */}
         <p className="text-xs font-medium text-foreground">{label}</p>
+        {/* "Target" is a word, so it sets in the display font; only the
+            figure takes the numeral face. Wrapping the whole string in
+            font-mono put the label itself in Archivo, which this codebase
+            reserves for numbers — and it is what made three of these in a
+            row read as a stutter, since the repeated word carried the same
+            typographic weight as the data it qualifies. Same split the
+            weight tile uses for its unit. */}
         <p
-          className="text-micro font-mono tabular-nums"
+          className="text-micro"
           style={{ color: "hsl(var(--muted-foreground))" }}
         >
-          {hasTarget ? `Target ${Math.round(target)}${unit}` : "No target"}
+          {hasTarget ? (
+            <>
+              Target{" "}
+              <span className="font-mono tabular-nums">
+                {Math.round(target)}
+                {unit}
+              </span>
+            </>
+          ) : (
+            "No target"
+          )}
         </p>
       </div>
     </div>

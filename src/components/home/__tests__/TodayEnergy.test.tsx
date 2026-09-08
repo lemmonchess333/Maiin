@@ -70,6 +70,22 @@ function renderAt(props: any = {}) {
   );
 }
 
+/**
+ * Matches text that spans child elements. The target labels set the WORD
+ * in the display font and the FIGURE in the numeral font, so "Target
+ * 140g" is a `<p>` wrapping a `<span>` rather than one text node, and a
+ * plain string matcher finds nothing. The children check excludes
+ * ancestors, which would otherwise match too.
+ */
+function spanning(text: string) {
+  const norm = (s: string | null | undefined) =>
+    (s ?? "").replace(/\s+/g, " ").trim();
+  return (_: string, el: Element | null) =>
+    !!el &&
+    norm(el.textContent) === text &&
+    !Array.from(el.children).some((c) => norm(c.textContent) === text);
+}
+
 const A_DAY = {
   calories: 1450,
   protein: 80,
@@ -93,9 +109,9 @@ describe("TodayEnergy — everything visible, no disclosure", function () {
 
   it("names every macro target rather than abbreviating them into a row", function () {
     renderAt(A_DAY);
-    expect(screen.getByText("Target 160g")).toBeInTheDocument();
-    expect(screen.getByText("Target 220g")).toBeInTheDocument();
-    expect(screen.getByText("Target 70g")).toBeInTheDocument();
+    expect(screen.getByText(spanning("Target 160g"))).toBeInTheDocument();
+    expect(screen.getByText(spanning("Target 220g"))).toBeInTheDocument();
+    expect(screen.getByText(spanning("Target 70g"))).toBeInTheDocument();
     // The cramped summary line is gone in every state.
     expect(screen.queryByText(/P \d+\/\d+g/)).toBeNull();
   });
@@ -145,12 +161,12 @@ describe("TodayEnergy — the calorie line is about the LOG", function () {
     expect(screen.getByText(/kcal logged/)).toBeInTheDocument();
     // Zero is information, not a reason to hide the rings.
     expect(screen.getAllByText("0g")).toHaveLength(3);
-    expect(screen.getByText("Target 160g")).toBeInTheDocument();
+    expect(screen.getByText(spanning("Target 160g"))).toBeInTheDocument();
   });
 
   it("labels the daily target", function () {
     renderAt(A_DAY);
-    expect(screen.getByText("Target 2,200 kcal")).toBeInTheDocument();
+    expect(screen.getByText(spanning("Target 2,200 kcal"))).toBeInTheDocument();
   });
 
   it("drops the lapsed 'Nothing logged yet today' row — the zeros say it", function () {
@@ -202,7 +218,7 @@ describe("TodayEnergy — over target stays truthful", function () {
     expect(screen.getByText("300g")).toBeInTheDocument();
     expect(screen.getByText("90g")).toBeInTheDocument();
     // The targets they are over are still named beside them.
-    expect(screen.getByText("Target 160g")).toBeInTheDocument();
+    expect(screen.getByText(spanning("Target 160g"))).toBeInTheDocument();
   });
 
   it("a reached target is announced, not signalled by colour alone", function () {
@@ -234,7 +250,7 @@ describe("TodayEnergy — HOME-TARGET-01 truthful targets/copy", () => {
     // The invariant the two phase-chip tests used to carry: whatever the
     // phase, the card states the target and never a +300/-500 delta.
     renderAt({ ...A_DAY, targets: { ...targets, finalTarget: 1700 } });
-    expect(screen.getByText("Target 1,700 kcal")).toBeInTheDocument();
+    expect(screen.getByText(spanning("Target 1,700 kcal"))).toBeInTheDocument();
     expect(screen.queryByText(/[+\u2212-]\s?\d{3}/)).toBeNull();
   });
 
@@ -259,7 +275,7 @@ describe("TodayEnergy — HOME-TARGET-01 truthful targets/copy", () => {
     expect(screen.queryByText(/already in your target/i)).toBeNull();
     expect(screen.queryByText("Workout")).toBeNull();
     expect(screen.queryByText(/Plan target/)).toBeNull();
-    expect(screen.getByText("Target 2,200 kcal")).toBeInTheDocument();
+    expect(screen.getByText(spanning("Target 2,200 kcal"))).toBeInTheDocument();
   });
 });
 
@@ -302,7 +318,7 @@ describe("TodayEnergy — infeasible target notice", function () {
       targets: infeasible,
     });
     expect(screen.getAllByText("No target")).toHaveLength(2);
-    expect(screen.getByText("Target 42g")).toBeInTheDocument();
+    expect(screen.getByText(spanning("Target 42g"))).toBeInTheDocument();
     expect(screen.queryByText(/Target 0g/)).toBeNull();
   });
 

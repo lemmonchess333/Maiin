@@ -24,7 +24,7 @@
  * measure that bet instead of taking it.
  */
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -137,14 +137,26 @@ describe("capture spec — Today's nutrition readiness anchor", () => {
        CI ever runs under a locale that groups with "." or U+202F, this
        fails here instead of in the capture job. */
     const rendered = formatCalories(2200);
-    renderEnergy(2200);
+    const { container } = renderEnergy(2200);
+    /* Asserted the way PLAYWRIGHT resolves it: some single ELEMENT whose
+       own text matches, not merely the document containing the string.
+       The distinction became real when the label was split so the word
+       sets in the display font and the figure in the numeral one — the
+       anchor now spans a child, and a matcher that only looked at one
+       text node would have gone quiet here and taken four frames red
+       twelve minutes into the capture job instead. */
+    const wanted = new RegExp(
+      `Target ${rendered.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} kcal`
+    );
+    const carrier = Array.from(container.querySelectorAll("*")).find((el) =>
+      wanted.test((el.textContent ?? "").replace(/\s+/g, " ").trim())
+    );
     expect(
-      screen.getByText(
-        new RegExp(
-          `Target ${rendered.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} kcal`
-        )
-      )
-    ).toBeInTheDocument();
+      carrier,
+      `no element carries "${wanted}". Playwright's getByText resolves ` +
+        `against an element's text, so an anchor that exists only as ` +
+        `separate nodes cannot be located in the capture spec.`
+    ).toBeTruthy();
     expect(
       anchorPattern().test(`Target ${rendered} kcal`),
       `formatCalories(2200) renders "${rendered}" on this runtime, and the ` +

@@ -22,6 +22,22 @@ vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 
 import MacroRing from "../MacroRing";
 
+/**
+ * Matches text that spans child elements. The target labels set the WORD
+ * in the display font and the FIGURE in the numeral font, so "Target
+ * 140g" is a `<p>` wrapping a `<span>` rather than one text node, and a
+ * plain string matcher finds nothing. The children check excludes
+ * ancestors, which would otherwise match too.
+ */
+function spanning(text: string) {
+  const norm = (s: string | null | undefined) =>
+    (s ?? "").replace(/\s+/g, " ").trim();
+  return (_: string, el: Element | null) =>
+    !!el &&
+    norm(el.textContent) === text &&
+    !Array.from(el.children).some((c) => norm(c.textContent) === text);
+}
+
 function renderRing(props: Partial<Parameters<typeof MacroRing>[0]> = {}) {
   return render(
     <MacroRing
@@ -40,14 +56,14 @@ describe("MacroRing — what the ring says without a tap", () => {
     renderRing();
     expect(screen.getByText("42g")).toBeInTheDocument();
     // "Target 120g", not a bare "120g" the reader has to interpret.
-    expect(screen.getByText("Target 120g")).toBeInTheDocument();
+    expect(screen.getByText(spanning("Target 120g"))).toBeInTheDocument();
     expect(screen.getByText("Protein")).toBeInTheDocument();
   });
 
   it("keeps the real figure past target — never clamped, never negative", () => {
     renderRing({ value: 150 });
     expect(screen.getByText("150g")).toBeInTheDocument();
-    expect(screen.getByText("Target 120g")).toBeInTheDocument();
+    expect(screen.getByText(spanning("Target 120g"))).toBeInTheDocument();
     expect(screen.queryByText(/^-/)).not.toBeInTheDocument();
   });
 
