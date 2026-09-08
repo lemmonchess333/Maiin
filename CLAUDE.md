@@ -490,13 +490,16 @@ Use the `/browse` skill from gstack for **all web browsing**. Never use `mcp__cl
   - Micro: 12px — labels, captions, uppercase tracking headers
 - **Weight rules:** 800 (extrabold) for hero numbers and page titles. 700 (bold) for section headings and card titles. 600 (semibold) for pill text and button labels. Never mix 700 and 800 in the same visual tier.
 - **Numeric displays:** Always use font-mono + tabular-nums for alignment
-- **Medium (500, `font-medium`) is not a documented tier.** It appears on
-  ~300 class chunks across ~108 components, ratcheted by
-  `FONT_MEDIUM_BASELINE` in `designSystemInvariants.test.ts` (302 on
-  2026-09-05). Whether it becomes the documented "secondary label" weight
-  or migrates to 400/600 is an owner call, recorded with both options
-  measured in `docs/agents/app-improvement-pass-2026-09-05.md`. Until it
-  is made, do not add new `font-medium`.
+- **Medium (500, `font-medium`) IS a tier — the small-text emphasis
+  weight.** Use it at `text-sm` and `text-xs` for secondary labels, meta
+  rows and pill text; hierarchy at `text-lg` and above is carried by
+  600 / 700 / 800. It was previously held under a count ratchet on the
+  theory that it was off-scale drift. Counting where it actually lands
+  settled that: of 269 sized uses, 113 are `text-sm`, 105 are `text-xs`,
+  and **zero** are `text-lg` or above. A convention that consistent
+  across ~96 components is the scale, not drift. The count ratchet is
+  gone; `designSystemInvariants.test.ts` now pins the boundary that
+  matters — font-medium never appears at heading scale.
 
 ### Card Patterns
 
@@ -504,7 +507,9 @@ Use the `/browse` skill from gstack for **all web browsing**. Never use `mcp__cl
 - **Hero card (Health Score, Water):** rounded-2xl (16px), padding 4, larger icon (48px container), icon in purple-tinted bg square
 - **Compact tile (Weight, Steps):** rounded-xl, padding 3, bg-muted (slightly darker than white), 2-col grid
 - **CTA card (Today's workout/run):** rounded-xl, sport-coloured tinted background (8% opacity), Play button pill right-aligned
-- **Action pills (Quick Log, Start Run, Log Food):** rounded-xl, sport-coloured tinted bg (6% opacity), icon + 11px semibold label, flex row with equal widths, minimum 44px touch target
+- **Quick actions:** there is no longer a pill row. Today's actions are
+  the sport-coloured CTA cards (`LiftCTACard` / `RunCTACard`), and food
+  logging is the "Log food" action at the foot of `TodayEnergy`.
 - **Section labels:** `SectionLabel` — uppercase, wider letter-spacing, muted; 11px (`tier="section"`, page sections) or 12px (default, card captions). No hand-rolled label classes, no third size
 
 ### Training plan primitives
@@ -787,7 +792,18 @@ or touching a CTA button, route it through `Button` with the variant above.
 ### Component Architecture
 
 - **Pages:** src/pages/ — route-level, lazy-loaded
-- **Home screen built from:** WeekStrip → DayPeekCard → PerformanceHeroCard → StackedCTACards (action pills + health/water/weight/steps) → TodayEnergy → TodayGuidanceCard. This line named `HybridBalanceCard` until 2026-08-10; that component rendered NOWHERE, and had been superseded by `PerformanceHeroCard` / `TodayGuidanceCard` taking over the "how is my week going" role. Its only mention anywhere in the repo was this sentence — which is exactly why `componentReachability` strips comments before matching, and why a prose reference must never be what keeps a component looking alive.
+- **Home screen built from:** WeekStrip → DayPeekCard → StackedCTACards
+  (LiftCTACard / RunCTACard / RestDayCard — no pills) → TodayEnergy →
+  WaterCard → WeightStepsTiles → WeeklyReviewEntry → PerformanceHeroCard.
+  Performance sits LAST by owner decision: the first thing on the scroll
+  should be something to do today, not a verdict on the week just gone.
+  This line has now rotted twice. It named `HybridBalanceCard` until it
+  was caught rendering nowhere, and the replacement text then named
+  `TodayGuidanceCard` (also gone) and credited StackedCTACards with
+  action pills and the health/water/weight/steps tiles it has never
+  owned. `componentReachability` catches a dead COMPONENT; nothing
+  catches a dead SENTENCE, which is why this one is worth re-reading
+  against `src/pages/Home.tsx` rather than trusting.
 - **Icons:** lucide-react (individual imports only)
 - **Toasts:** sonner
 - **Charts:** Recharts (bar charts, line charts in History)
@@ -808,7 +824,6 @@ or touching a CTA button, route it through `Button` with the variant above.
 
 ### Current Known Design Considerations
 
-- The Quick Log / Start Run / Log Food action pills were recently shrunk to make room for the hero cards (Health Score, Water). The visual weight difference between the large hero cards and small pills is intentional — the hero cards are glanceable data, the pills are secondary quick actions.
 - The water card has a complex animated fill effect (WaterWave + WaterBubbles) — treat carefully when modifying
 - Section labels use uppercase with tracking at 11px/12px (`SectionLabel`'s two tiers) — a deliberate typographic choice, not an error; the 11px tier is the one place text sits below the 12px micro floor
 - The "NEW" badge on PR items uses orange background — this is the nutrition/warm accent colour
